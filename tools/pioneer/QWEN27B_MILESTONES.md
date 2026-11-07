@@ -70,6 +70,13 @@ allocations have the same length. Upload and manifest checks reject a changed
 format label. This is host-side metadata, not yet a kernel binding or proof
 of the bytes on the card.
 
+The kernel's token-owner bind and memory owner now also reject an explicitly
+hybrid layout with an original worker, or an original layout with the QGW5
+hybrid worker, before staging. An earlier QGW5 journal fixture used the original
+layout; it has been corrected. This check cannot identify the contents of a
+presence-only upload ledger: the actual session still needs a trusted format
+binding before it can prevent mislabeled bytes from being executed.
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored

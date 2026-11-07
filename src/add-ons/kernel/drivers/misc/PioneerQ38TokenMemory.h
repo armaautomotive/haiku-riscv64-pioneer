@@ -114,7 +114,7 @@ public:
   const uint8_t* initialized,unsigned pages)const{
   if(!started || unsafe || closed || launched || proof!=&dram || banks!=&owner || cohort!=&participants || canonical!=&plan
    || startup!=&data || ledger!=initialized || !initialized || pages!=PioneerResidentBanks::Pages || !(identity==id) || !id.Valid()
-   || !plan.Ready() || !owner.Matches(dram) || participants.unsafe || participants.closed || participants.rootRunning
+   || !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(plan) || !owner.Matches(dram) || participants.unsafe || participants.closed || participants.rootRunning
    || participants.prepared!=120 || participants.bootAttempted || participants.booted)return false;
   for(unsigned worker=0;worker<120;worker++){
    const auto& node=participants.worker[worker];const auto& store=node.master?*node.master:node.store;
@@ -129,7 +129,8 @@ public:
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   static_assert(P::CancelBoundary==1,"full native candidate requires DISTINCT cancellable FP32 firmware");
   if(started || unsafe || installed || closed || launched || proof || banks || cohort || canonical || startup || ledger
-   || !id.Valid() || !initialized || pages!=PioneerResidentBanks::Pages || !plan.Ready() || !owner.Matches(dram)
+   || !id.Valid() || !initialized || pages!=PioneerResidentBanks::Pages
+   || !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(plan) || !owner.Matches(dram)
    || participants.unsafe || participants.closed || participants.rootRunning || participants.prepared!=120
    || participants.bootAttempted || participants.booted || result.version!=1 || result.started || result.phase || result.worker || result.word
    || result.unsafe || result.installed || result.closed || result.savedWords || result.verifiedOriginalWords || result.installedWords || result.restoredWords)return false;

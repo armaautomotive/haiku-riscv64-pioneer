@@ -54,6 +54,11 @@ public:
  PioneerQ38TokenStartupPlan(const PioneerQ38TokenStartupPlan&)=delete;
  PioneerQ38TokenStartupPlan& operator=(const PioneerQ38TokenStartupPlan&)=delete;
  ~PioneerQ38TokenStartupPlan(){for(auto* layer:layers)delete layer;}
+ // Pair fixed geometry with the compiled worker grammar before any native
+ // memory staging. This checks the selected layout, not the uploaded bytes.
+ static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
+  return PioneerQ38SelectedWorkerHybrid?c.HybridFormatLayout():c.OriginalFormatLayout();
+ }
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  bool BindPreparedSource(const PioneerQ38PreparedNativeSource& source){
   if(attempted || ready || preparedSource || !source.Ready())return false;

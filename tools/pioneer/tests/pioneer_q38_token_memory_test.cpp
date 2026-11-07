@@ -185,11 +185,17 @@ int main(int argc,char** argv){
  if(!strcmp(argv[1],"--hybrid-manifest")){
   {
    TokenMemoryFixture f;auto before=f.io.data;
+   auto original=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(original->Build());
+   auto wrongStartup=std::make_unique<PioneerQ38TokenStartupPlan>();const uint32_t prompt[]={248319,17};
+   assert(wrongStartup->Build(*original,0,f.id,&f.cohort->authority.source[0][0],prompt,2,3,false,248318,248317));
+   const auto priorTouches=f.io.touches;
+   assert(!PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*original)
+    && !f.memory->PrepareHeld(f.io,f.dram,f.banks,*f.cohort,*original,*wrongStartup,f.id,f.ledger.data(),f.ledger.size(),f.result)
+    && f.io.touches==priorTouches && !f.result.started && !f.result.unsafe);
    assert(f.PrepareMemory() && f.memory->Installed());
    std::array<uint32_t,64> boot={};
    assert(Geometry().startup->ReadBoot(1,boot.data()) && PioneerQ38SelectedGlobalWorker::BootShape(boot.data())
     && boot[0]==0x35574751 && boot[49]==0 && boot[50]==0x1fff0000);
-   auto original=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(original->Build());
    PioneerQ38HybridJobBinding binding;std::array<uint32_t,64*3*7> expected={};
    assert(binding.Bind(*original,UINT64_C(0x1fff000000000000)) && binding.RootManifest(expected.data(),expected.size()));
    assert(f.memory->InstallHybridManifestHeld(f.io,f.result));

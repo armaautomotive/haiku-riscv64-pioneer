@@ -71,9 +71,9 @@ if bf16_deferred:profile+=['-DPIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS=1']
 if hybrid_journal:profile+=['-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1']
 if hybrid_header is not None:
     profile+=['-DPIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC=1',
-              '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"','-I'+str(here.parent)]
-if args==['--hybrid-manifest']:
-    profile+=['-DPIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_JOB_DIAGNOSTIC=1']
+              '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"',
+              '-DPIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_JOB_DIAGNOSTIC=1',
+              '-I'+str(here.parent)]
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',

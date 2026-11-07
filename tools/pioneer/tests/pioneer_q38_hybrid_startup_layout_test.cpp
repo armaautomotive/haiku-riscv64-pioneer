@@ -43,6 +43,10 @@ int main(){
  PioneerQ38HybridModelPlan::Proposal proposal;
  assert(PioneerQ38HybridModelPlan::Build(*original,UINT64_C(0x1fff000000000000),proposal));
  auto hybrid=std::make_unique<Canonical>();assert(hybrid->BuildHybridDiagnostic());
+ assert(original->OriginalFormatLayout() && !original->HybridFormatLayout()
+  && hybrid->HybridFormatLayout() && !hybrid->OriginalFormatLayout());
+ assert(PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*hybrid)==bool(PioneerQ38SelectedWorkerHybrid));
+ assert(PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*original)!=bool(PioneerQ38SelectedWorkerHybrid));
  assert(hybrid->Count()==original->Count() && hybrid->Count()==proposal.parts.size());
  unsigned moved=0,eight=0,regions=0,weights=0;
  for(unsigned i=0;i<hybrid->Count();i++){

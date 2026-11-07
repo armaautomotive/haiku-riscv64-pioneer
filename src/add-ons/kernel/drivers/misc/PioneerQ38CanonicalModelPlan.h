@@ -27,6 +27,8 @@ class PioneerQ38CanonicalModelPlan {
  uint64_t used[7]={};
  unsigned count=0,recurrentCount=0,tensors=0;
  bool attempted=false,ready=false;
+ enum LayoutKind {UnbuiltLayout,OriginalLayout,HybridLayout};
+ LayoutKind layout=UnbuiltLayout;
  static bool Tensor(unsigned layer,unsigned role,Shape& s) {
   static constexpr Shape common[]={{5120,1,0},{5120,1,0},{5120,17408,12},{5120,17408,12},{17408,5120,12}};
   static constexpr Shape delta[]={{5120,6144,8},{5120,10240,8},{48,1,0},{48,1,0},{128,1,0},
@@ -98,7 +100,7 @@ public:
    if(count>=6144 || used[bank]>Capacity || bytes>Capacity-used[bank])return false;
    workspace[bank]=count;parts[count++]={WorkspaceKind,64,0,0,bank,0,1,bytes,uint32_t(used[bank]),bytes,bytes};used[bank]+=bytes;
   }
-  ready=true;return true;
+  layout=OriginalLayout;ready=true;return true;
  }
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
  // Experimental full-layout repack for OFFLINE startup consumers only. Start
@@ -111,7 +113,7 @@ public:
  // firmware, initialize state, own memory, or launch inference.
  bool BuildHybridDiagnostic() {
   if(!Build())return false;
-  ready=false;
+  ready=false;layout=UnbuiltLayout;
   uint64_t next[7]={};unsigned converted=0,region=0;
   for(unsigned i=0;i<count;i++){
    auto& p=parts[i];if(p.bank>=7 || !p.bytes || p.bytes>p.allocated
@@ -142,10 +144,13 @@ public:
     || parts[workspace[bank]].bank!=bank)return false;
    used[bank]=next[bank];
   }
-  ready=true;return true;
+  layout=HybridLayout;ready=true;return true;
  }
 #endif
  bool Ready()const{return ready;}
+ // Immutable geometry identity only: it does not authenticate uploaded bytes.
+ bool OriginalFormatLayout()const{return ready && layout==OriginalLayout;}
+ bool HybridFormatLayout()const{return ready && layout==HybridLayout;}
  unsigned Count()const{return ready?count:0;}
  const PioneerQ38CanonicalPart* Part(unsigned i)const{return ready && i<count?&parts[i]:nullptr;}
  const PioneerQ38CanonicalPart* FfnStripe(unsigned layer,unsigned role,unsigned stripe)const {

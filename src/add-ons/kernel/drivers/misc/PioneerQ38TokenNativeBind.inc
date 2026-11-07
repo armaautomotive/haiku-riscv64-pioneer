@@ -142,7 +142,8 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 #endif
  // FULL851 coverage BEFORE epoch/reservation/model publication,without
  // inventing120 NoC source identities to build a startup template early.
- if(!state->canonical.Build() || !PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(state->canonical,c.initialized,PioneerResidentBanks::Pages)
+ if(!state->canonical.Build() || !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(state->canonical)
+  || !PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(state->canonical,c.initialized,PioneerResidentBanks::Pages)
   || !c.io.TokenModelSourceScope(true)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   || !state->preparedSource->MatchesPlan(state->canonical)
