@@ -1,4 +1,4 @@
-Alternative eleven-layer precision placement: CPU-ONLY, RUN IN PROGRESS
+Alternative eleven-layer precision placement: CPU-ONLY, ONE FIXED TOKEN
 ======================================================================
 
 Question: is QGW8's FFN error sensitive to which eleven of the 64 layers
@@ -17,9 +17,23 @@ the earlier QGW8 measurement. It compares the FFN layouts only, retaining the
 original output head. This is not a full answer, physical card run, speed
 benchmark, or general model-quality qualification.
 
-The new comparator and invalid-mask/role tests passed. Binary SHA-256:
+The comparator and invalid-mask/role tests passed. Binary SHA-256:
 38d3931305e8cd253befd2c2b8677650ead64180883fab4d1ef179943ec9da2d.
-Its 48..58 run was started on the authenticated model; temporary private log:
-/private/tmp/pioneer-q38-mask11-4858-20261107-a.log. Its existence does not
-prove the process is live or successful. Inspect the process handle and the
-completion/exit markers before reporting results. A timeout is not failure.
+The run completed with PASS and CAPTURE_EXIT 0. It ran 14:29:37 to 14:39:03
+local time and recorded 64 original and 64 candidate layers. The 36166-byte
+private transcript /private/tmp/pioneer-q38-mask11-4858-20261107-a.log has
+SHA-256 7eccb6987ebe3832d2b718b48b62eee8bfb5455760869281722d95e50eae0ddc;
+this temporary file is not an archival backup.
+
+For this one fixed position, both placements used the original head and the
+same independently pinned baseline. KL is original-to-candidate in nats:
+
+ FFN BFP8 layers   original top  candidate top  KL           top-five overlap
+ 50..60 (QGW8)     70253         70253          0.321765477  4/5
+ 48..58 (new)      70253         70253          0.198909067  3/5
+
+The new placement has lower KL for this token, but a worse top-five overlap.
+It is not a general quality win or an independently generated answer. The
+existing ROOT/worker/layout and caches remain 50..60; changing them requires
+separately designed format identity and more quality evidence. Neither path
+has a new physical P100A inference or token-rate measurement.

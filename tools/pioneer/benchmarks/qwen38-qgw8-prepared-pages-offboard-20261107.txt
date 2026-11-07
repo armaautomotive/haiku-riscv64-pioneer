@@ -49,6 +49,18 @@ This is NOT a card upload: the existing native session and receipt ledger
 remain fixed to the older layout. A format-bound owner/receipt and a new
 qualified runtime are still needed; presence-only ledger entries do not
 prove which format was uploaded. The old driver must not accept this layout.
+
+Non-loadable kernel inspection follow-up: a separate fixed-size QGW8 layout
+records explicit original/BFP4/BFP8/head-BFP8 encodings and matches the host
+proposal on all 4678 parts and seven banks. A separate QGW8 receipt checks
+22035 ordered extents against a synthetic ledger and owner/FD/team/generation,
+refusing altered/extra ledger entries and quarantining uncertain cases. Both
+compile as freestanding RISC-V objects, with maximum individual static frames
+192 and 880 bytes; neither object is a loadable driver or attached to the
+real span service. The legacy receipt's independent tests also passed.
+The format identity is a DECLARATION checked against geometry and host page
+hash bookkeeping, not cryptographic model authentication, conversion proof,
+or verification of card memory. No physical test or execution is implied.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.
