@@ -110,7 +110,7 @@ int main(int argc,char** argv){
  assert(image.Execute());
  const auto* expected=argc==4?privateExpected.data():PioneerNativeBfp4BandGolden(width);assert(expected);
  for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)assert(image.l1[image.Index(Dram4Image::D::Output+pass*128+row*4)]==expected[row]);
- printf("PASS actual OFFBOARD BFP4 GDDR RV32 K%u: two independent loads, 64 rounded outputs, same NoC/unpack L1, synthetic clocks, stack%u, steps%u; NO physical/model/speed claim\n",width,0x70000-image.minSP,image.steps);
+ printf("PASS actual OFFBOARD BFP4 GDDR RV32 K%u %s: two independent loads, 64 rounded outputs, same NoC/unpack L1, synthetic clocks, stack%u, steps%u; NO physical/model/speed claim\n",width,argc==4?"EXTERNAL_SAMPLE":"SYNTHETIC_WEIGHTS",0x70000-image.minSP,image.steps);
  if(width==5120 && argc==3){
   unsigned failures=0;
   for(unsigned word=0;word<8;word++){

@@ -30,11 +30,12 @@ K6144 b26bdfa8763e753c817f78431e1efcadbfd47509a312018933939545290a4d63,
 K17408 f9ef5793db7bb107dcdca9e7c45921ef74c47c24cb6e1f329e4d312ddb1686c2.
 These hashes are code identities, not hardware launch permission.
 
-An isolated CPU-only exporter was built to authenticate the complete same-open
-original GGUF and prepare three small, private BFP4 bands from tensor7. It
-has not yet run on the original source. Its sample weight/dot errors cannot
-establish language-model quality. The exported derived weights must stay out
-of Git. CPU diagnostic reference work is not selected by Work inference.
+The isolated CPU-only exporter has since authenticated the complete same-open
+original GGUF and prepared three private BFP4 bands from tensor7. All three
+pass this image's OFFBOARD GDDR/compute observer; fixed-input dot relative L2
+is 0.085870063..0.158307754, not a language-model quality measurement. See
+qwen38-bfp4-real-band-offboard-20261106.txt. Derived weights stay out of Git;
+CPU diagnostic reference work is not selected by Work inference.
 
 Before a physical trial, real-weight checks and a separately tested owner,
 NIU/GDDR/L1 lifetime, protocol, admission and restore path are required.

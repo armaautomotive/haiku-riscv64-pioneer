@@ -34,6 +34,9 @@ Four compact goals
    synthetic test on the P100A, measuring 24779/24803 card cycles for a
    preloaded 32-row band. This does NOT include GDDR loading and has NOT
    been integrated into the model or shown to improve model speed.
+   Three real-weight bands pass the offline GDDR/compute observer. Their
+   synthetic-input output errors are 8.6%–15.8%, so model quality remains
+   an important open question before using the approximate format.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -53,4 +56,5 @@ Snapshot experiment (build/data only): benchmarks/qwen38-early-job-snapshot-buil
 Native BFP4 candidate (offboard only): benchmarks/qwen38-bfp4-band-offboard-20261106.txt
 Native BFP4 K5120 physical correctness: benchmarks/qwen38-bfp4-band-physical-20261106.txt
 Native BFP4 K5120 physical timing: benchmarks/qwen38-bfp4-band-timing-physical-20261106.txt
+Real-weight BFP4 sample and quality caveat: benchmarks/qwen38-bfp4-real-band-offboard-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

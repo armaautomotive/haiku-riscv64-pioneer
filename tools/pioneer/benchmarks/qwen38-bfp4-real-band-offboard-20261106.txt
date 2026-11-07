@@ -1,0 +1,43 @@
+Authenticated Qwen 27B BFP4 samples: OFFBOARD GDDR/compute check
+================================================================
+November 6, 2026. Actual Qwen weights; OFFBOARD simulated device execution,
+not an actual P100A run, model-quality benchmark or tokens/sec measurement.
+
+The CPU-only exporter was run once on the Pioneer. Its original SSH session
+actually exited0 after authenticating the entire SAME OPEN 18,973,870,528-byte
+original against SHA256 c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+It required the expected 851-tensor layout and tensor7 blk.0.ffn_gate.weight,
+then produced three private 32-row, K5120 BFP4 diagnostic bands. The model
+and existing cache were only read, and no GPU was opened. Private derived
+weight data is not stored in Git. Original metadata before the run was
+owner0, links1, mode600, size18973870528; independently checked afterward
+with the same result. Separate postflight reported stable041/gen16 idle and
+all three private sample files owned by root, mode600. The nearby export log
+is a transcription of the closed SSH session's text, not a remote log file.
+
+sample first row  private SHA256                                                     weight rel-L2  dot rel-L2
+0      0          edbc6d7cadcd85d0114ff16a5c44afb3627296497a7a0e03f76efa41da5ac7dd   0.112755650    0.158307754
+1      8704       59f05959ef8486021eefd0b7e02e083b6f18a7eef747f15d5e24e6e87c587695   0.112423775    0.130065923
+2      17376      036bcee72fc9bb84fedb9c6f93a6d22358f9d7c90c610cc5c19159f002a587e3   0.113257635    0.085870063
+
+Weight rel-L2 compares BFP4 to original dequantized Q4 values within each
+band. Dot rel-L2 compares 32 outputs of the BFP4- and original-weight bands
+using ONE fixed synthetic BF16 input vector; it is NOT a real prompt state,
+logit comparison, perplexity score, or general model quality result. These
+8.6% to 15.8% sampled dot errors are material enough to demand a model-level
+quality test before any approximate mode is accepted. Exact Q4 Work remains
+available and unchanged; there is no automatic conversion/fallback.
+
+After the exporter terminated, all three files were privately copied to the
+Mac and independently matched the SHA256 values above. The fixed actual
+compiled RV32 GDDR-loader/BFP4-compute image ran in the OFFBOARD shared-L1
+instruction/NoC observer against each sample. For each, two simulated loads
+and jobs produced all64 documented-rounded words equal to the exporter's
+separate reference. This is not a real card, real prompt, or throughput test.
+The same run also passed synthetic widths5120/6144/17408 and 18 injected
+frame/NIU/counter/transfer faults. The optional private sample path verifies
+owner/mode/link count/size/hash before and after each image execution.
+
+Next: evaluate quality with real activations and complete model outputs, and
+build a separate fail-closed physical GDDR owner/diagnostic to measure actual
+device loading plus BFP4 compute. No 27B speed increase is established.
