@@ -6,6 +6,7 @@
 #define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_BANKS_MOCK_ONLY 1
+#include "../PioneerQ38TokenStartupPlan.h"
 #include "pioneer_resident_banks_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #include "../PioneerQ38HybridHeadModelPlan.h"
@@ -15,7 +16,7 @@
 
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--tamper") || !strcmp(argv[1],"--extra")
-  || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--late"))));
+  || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--late") || !strcmp(argv[1],"--late-canonical"))));
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
  BanksMock io;auto proof=BankProof(io);PioneerResidentBanks banks;assert(banks.Bind(proof));
  std::vector<uint8_t> ledger(PioneerResidentBanks::Pages);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages);
@@ -54,7 +55,7 @@ int main(int argc,char** argv){
  assert(!receipt->Seal(foreignSpan));
  span.saved=true;span.closed=true;span.nonce=spans-1;assert(!receipt->Seal(span));
  span.nonce=spans;span.ready=span.dirty=false;
- if(argc==2 && strcmp(argv[1],"--late")){
+ if(argc==2 && strcmp(argv[1],"--late") && strcmp(argv[1],"--late-canonical")){
   if(!strcmp(argv[1],"--tamper"))hashes[0]^=1;
   else {unsigned extra=0;while(extra<ledger.size() && ledger[extra])extra++;assert(extra<ledger.size());ledger[extra]=1;}
   assert(!receipt->Seal(span) && !receipt->Sealed() && banks.Quarantined());
@@ -62,12 +63,38 @@ int main(int argc,char** argv){
  }
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->PageDigest() && receipt->Layout());
  auto bound=std::make_unique<PioneerQ38Qgw8KernelLayout>();
+ auto native=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(!receipt->DeriveBoundCanonical(*native,&context,&foreign,hashes.data(),ledger.data(),17,42) && !native->Ready());
+ if(argc==2 && !strcmp(argv[1],"--late-canonical")){
+  hashes[0]^=1;assert(!receipt->DeriveBoundCanonical(*native,&context,&cookie,hashes.data(),ledger.data(),17,42)
+   && banks.Quarantined() && !receipt->Sealed() && !native->Ready());
+  puts("PASS QGW8 canonical refuses changed post-seal ledger; no device");return 0;
+ }
  if(argc==2){hashes[0]^=1;assert(!receipt->DeriveBoundLayout(*bound,&context,&cookie,hashes.data(),ledger.data(),17,42)
   && banks.Quarantined() && !receipt->Sealed());
   puts("PASS QGW8 post-seal ledger mutation quarantines; no device");return 0;}
  assert(!receipt->DeriveBoundLayout(*bound,&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(receipt->DeriveBoundLayout(*bound,&context,&cookie,hashes.data(),ledger.data(),17,42) && bound->Ready()
   && bound->Count()==4678 && !receipt->DeriveBoundLayout(*bound,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->DeriveBoundCanonical(*native,&context,&cookie,hashes.data(),ledger.data(),17,42)
+  && native->Qgw8InspectionLayout() && !native->OriginalFormatLayout() && !native->HybridFormatLayout());
+ assert(!PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*native)
+  && PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(*native,ledger.data(),ledger.size()));
+ unsigned recurrent=0;
+ for(unsigned i=0;i<native->Count();i++){
+  const auto* p=native->Part(i);const auto* old=canonical->Part(i);const auto& expected=host.parts[i];
+  assert(p && old && p->kind==old->kind && p->layer==old->layer && p->role==old->role && p->type==old->type
+   && p->firstRow==old->firstRow && p->rows==old->rows && p->rowBytes==old->rowBytes
+   && p->bank==expected.bank && p->offset==expected.offset && p->bytes==expected.bytes && p->allocated==expected.allocated);
+  if(p->kind==PioneerQ38CanonicalModelPlan::RecurrentKind){
+   const auto& r=native->RecurrentRegions()[recurrent++];
+   assert(r.layer==p->layer && r.slot==p->role && r.firstHead==p->firstRow && r.heads==p->rows
+    && r.bank==p->bank && r.offset==p->offset);
+  }
+ }
+ assert(recurrent==672);
+ for(unsigned b=0;b<7;b++)assert(native->Workspace(b) && native->Workspace(b)->bank==b && native->Used(b)==bound->Used(b));
+ assert(!receipt->DeriveBoundCanonical(*native,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Seal(span) && !receipt->Next(bank,offset,length));
  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
  printf("PASS QGW8 receipt: %u host-plan-matched extents, 3551 fragments, %llu bytes; synthetic owner/ledger only, no device\n",

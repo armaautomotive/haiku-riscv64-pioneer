@@ -15,6 +15,19 @@ common = [cxx, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror']
 probes = [str(here / 'pioneer_q38_qgw8_kernel_layout_role_probe.cpp'),
           str(here / 'pioneer_q38_qgw8_upload_receipt_role_probe.cpp')]
 role = ['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1']
+canonical_probe = str(here / 'pioneer_q38_qgw8_canonical_role_probe.cpp')
+for flags in ([], role):
+    subprocess.run(common + flags + ['-fsyntax-only', canonical_probe], check=True)
+for flags in (['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=0'], role + ['-D_KERNEL_MODE=1'],
+              *(role + ['-D' + name] for name in ('PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
+                'PIONEER_Q38_FULL_OFFLOAD_NATIVE', 'PIONEER_Q38_FULL_OFFLOAD_CLIENT',
+                'PIONEER_Q38_BF16_FULL_NATIVE', 'PIONEER_Q38_BF16_FULL_CLIENT',
+                'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',
+                'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'))):
+    result = subprocess.run(common + flags + ['-fsyntax-only', canonical_probe], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode == 0 or 'QGW8 canonical layout is non-loadable inspection data only' not in result.stderr:
+        raise RuntimeError('QGW8 canonical role not refused: ' + repr(flags))
 for probe in probes:
     subprocess.run(common + role + ['-fsyntax-only', probe], check=True)
     for flags in ([], ['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=0'], role + ['-D_KERNEL_MODE=1'],
@@ -49,7 +62,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
     receipt = str(out / 'receipt-test')
     subprocess.run(common + ['-Wno-unused-function', '-Wno-unused-variable', '-fsanitize=address,undefined',
         str(here / 'pioneer_q38_qgw8_upload_receipt_test.cpp'), '-o', receipt], check=True)
-    for args in ([], ['--tamper'], ['--extra'], ['--abort'], ['--late']):
+    for args in ([], ['--tamper'], ['--extra'], ['--abort'], ['--late'], ['--late-canonical']):
         subprocess.run([receipt, *args], check=True)
     image = out / 'span-image'
     subprocess.run(['sh', str(here.parent / 'build_qwen38_span_image.sh'), str(sdk), str(image)], check=True)
@@ -61,7 +74,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
     headers = sdk / 'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
     for name, symbols in (('kernel_layout', ('qgw8_kernel_layout_build',)),
                           ('upload_receipt', ('qgw8_receipt_begin', 'qgw8_receipt_span', 'qgw8_receipt_record',
-                                              'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout')),
+                                              'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout',
+                                              'qgw8_receipt_canonical')),
                           ('span_service', ('qgw8_span_receipt_kind',))):
         obj = out / (name + '.o')
         source = ('pioneer_q38_qgw8_kernel_layout_compile.cpp' if name == 'kernel_layout' else

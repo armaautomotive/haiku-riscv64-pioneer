@@ -2,6 +2,15 @@
 #include "../../../../../tools/pioneer/PioneerQ38HybridKernelCompileOnly.h"
 #ifndef PIONEER_Q38_CANONICAL_MODEL_PLAN_H
 #define PIONEER_Q38_CANONICAL_MODEL_PLAN_H
+#if defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) && (PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \
+ || (defined(_KERNEL_MODE) && (!defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) || PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY != 1)) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || defined(PIONEER_Q38_BF16_FULL_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error QGW8 canonical layout is non-loadable inspection data only
+#endif
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) && (PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC != 1 \
  || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY)) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -27,7 +36,7 @@ class PioneerQ38CanonicalModelPlan {
  uint64_t used[7]={};
  unsigned count=0,recurrentCount=0,tensors=0;
  bool attempted=false,ready=false;
- enum LayoutKind {UnbuiltLayout,OriginalLayout,HybridLayout};
+ enum LayoutKind {UnbuiltLayout,OriginalLayout,HybridLayout,Qgw8Layout};
  LayoutKind layout=UnbuiltLayout;
  static bool Tensor(unsigned layer,unsigned role,Shape& s) {
   static constexpr Shape common[]={{5120,1,0},{5120,1,0},{5120,17408,12},{5120,17408,12},{17408,5120,12}};
@@ -104,6 +113,53 @@ public:
  }
 private:
  friend class PioneerQ38HybridUploadReceipt;
+#ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+ friend class PioneerQ38Qgw8UploadReceipt;
+ // Translate the independently constructed QGW8 receipt layout into the
+ // canonical shape used by the runtime, including relocated recurrent
+ // regions. Original type/rowBytes describe logical source geometry, NOT
+ // the encoding of converted bytes. This is inspection data only: it does
+ // not authorize a native worker, upload, initialization or execution.
+ template<class Layout> bool BuildQgw8Inspection(const Layout& proposal) {
+  if(!proposal.Ready() || !Build())return false;
+  ready=false;layout=UnbuiltLayout;
+  if(proposal.Count()!=count)return false;
+  uint64_t next[7]={};unsigned region=0,four=0,eight=0,head=0;
+  for(unsigned i=0;i<count;i++){
+   auto& p=parts[i];const auto* q=proposal.At(i);
+   if(!q || q->original!=i || p.bank>=7 || q->bank!=p.bank || q->offset!=next[p.bank]
+    || !q->bytes || q->bytes>q->allocated || (q->offset&4095) || (q->allocated&4095)
+    || q->allocated-q->bytes>=4096 || next[p.bank]>Capacity || q->allocated>Capacity-next[p.bank])return false;
+   uint32_t expected=Layout::Original;uint64_t bytes=p.bytes;
+   if(p.kind==WeightKind && p.layer<64 && p.role>=2 && p.role<=4){
+    const uint64_t width=p.role==4?17408:5120;
+    if(p.type!=12 || !p.rows || ((p.firstRow|p.rows)&31) || p.rowBytes!=width*9/16
+     || uint64_t(p.rows)*p.rowBytes!=p.bytes)return false;
+    if(p.layer>=50 && p.layer<=60){expected=Layout::Bfp8;bytes=uint64_t(p.rows)*width*17/16;eight++;}
+    else{expected=Layout::Bfp4;four++;}
+   }else if(p.kind==WeightKind && p.layer==64 && p.role==1){
+    if(p.type!=14 || !p.rows || ((p.firstRow|p.rows)&63) || p.rowBytes!=4240
+     || uint64_t(p.rows)*p.rowBytes!=p.bytes)return false;
+    expected=Layout::HeadBfp8;bytes=uint64_t(p.rows)*5440;head++;
+   }
+   if(q->encoding!=expected || bytes!=q->bytes || ((bytes+4095)&~UINT64_C(4095))!=q->allocated)return false;
+   if(p.kind==RecurrentKind){
+    if(region>=recurrentCount)return false;auto& r=recurrent[region++];
+    if(r.layer!=p.layer || r.slot!=p.role || r.firstHead!=p.firstRow || r.heads!=p.rows
+     || r.bank!=p.bank || r.offset!=p.offset)return false;
+    r.offset=q->offset;
+   }
+   p.offset=q->offset;p.bytes=q->bytes;p.allocated=q->allocated;next[p.bank]+=q->allocated;
+  }
+  if(four!=1113 || eight!=231 || head!=7 || region!=672)return false;
+  for(unsigned b=0;b<7;b++){
+   if(workspace[b]>=count || parts[workspace[b]].kind!=WorkspaceKind || parts[workspace[b]].bank!=b
+    || next[b]!=proposal.Used(b))return false;
+   used[b]=next[b];
+  }
+  layout=Qgw8Layout;ready=true;return true;
+ }
+#endif
  // Fixed full-layout repack for the distinct hybrid upload receipt. Start
  // from the fixed canonical order and banks; enlarge exactly the thirteen
  // BFP8 FFN layers and relocate every following part, including state and
@@ -154,6 +210,9 @@ public:
  // Immutable geometry identity only: it does not authenticate uploaded bytes.
  bool OriginalFormatLayout()const{return ready && layout==OriginalLayout;}
  bool HybridFormatLayout()const{return ready && layout==HybridLayout;}
+#ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+ bool Qgw8InspectionLayout()const{return ready && layout==Qgw8Layout;}
+#endif
  unsigned Count()const{return ready?count:0;}
  const PioneerQ38CanonicalPart* Part(unsigned i)const{return ready && i<count?&parts[i]:nullptr;}
  const PioneerQ38CanonicalPart* FfnStripe(unsigned layer,unsigned role,unsigned stripe)const {

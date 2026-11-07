@@ -117,6 +117,31 @@ public:
   }
   return true;
  }
+ // Build the runtime-shaped geometry from this same sealed receipt. The
+ // converted head/FFN encoding still requires distinct worker selection;
+ // geometry and the non-cryptographic upload ledger do not grant execution.
+ bool DeriveBoundCanonical(PioneerQ38CanonicalModelPlan& output,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t target=reinterpret_cast<uintptr_t>(&output),self=reinterpret_cast<uintptr_t>(this);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const size_t hb=size_t(PioneerResidentBanks::Pages)*sizeof(*h),lb=PioneerResidentBanks::Pages;
+  if(!Matches(c,fd,h,initialized,owner,gen) || target>UINTPTR_MAX-sizeof(output) || self>UINTPTR_MAX-sizeof(*this)
+   || hp>UINTPTR_MAX-hb || lp>UINTPTR_MAX-lb || (target<self+sizeof(*this) && self<target+sizeof(output))
+   || (target<hp+hb && hp<target+sizeof(output)) || (target<lp+lb && lp<target+sizeof(output)))return false;
+  if(!LedgerMatches())return Fail();
+  if(!output.BuildQgw8Inspection(layout) || !output.Qgw8InspectionLayout() || output.OriginalFormatLayout()
+   || output.HybridFormatLayout() || output.Count()!=original.Count() || output.RecurrentCount()!=original.RecurrentCount())return false;
+  for(unsigned b=0;b<7;b++)if(output.Used(b)!=layout.Used(b))return false;
+  for(unsigned i=0;i<layout.Count();i++){
+   const auto* a=original.Part(i);const auto* q=layout.At(i);const auto* b=output.Part(i);
+   if(!a || !q || !b || a->kind!=b->kind || a->layer!=b->layer || a->role!=b->role || a->type!=b->type
+    || a->bank!=b->bank || a->firstRow!=b->firstRow || a->rows!=b->rows || a->rowBytes!=b->rowBytes
+    || q->bank!=b->bank || q->offset!=b->offset || q->bytes!=b->bytes || q->allocated!=b->allocated)return false;
+  }
+  if(!Matches(c,fd,h,initialized,owner,gen))return false;
+  if(!LedgerMatches())return Fail();
+  return true;
+ }
  uint64_t PageDigest()const{return Sealed()?digest:0;}
  unsigned Spans()const{return spans;}
 };

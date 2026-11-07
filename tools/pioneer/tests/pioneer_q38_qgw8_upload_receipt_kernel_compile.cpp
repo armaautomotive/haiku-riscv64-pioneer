@@ -15,3 +15,5 @@ extern "C" bool qgw8_receipt_after(PioneerQ38Qgw8UploadReceipt& r){return r.Afte
 extern "C" bool qgw8_receipt_seal(PioneerQ38Qgw8UploadReceipt& r,const PioneerQ38SpanLease& lease){return r.Seal(lease);}
 extern "C" bool qgw8_receipt_layout(PioneerQ38Qgw8UploadReceipt& r,PioneerQ38Qgw8KernelLayout& out,const void* c,const void* fd,
  const uint32_t* hashes,const uint8_t* ledger,int64_t team,uint64_t generation){return r.DeriveBoundLayout(out,c,fd,hashes,ledger,team,generation);}
+extern "C" bool qgw8_receipt_canonical(PioneerQ38Qgw8UploadReceipt& r,PioneerQ38CanonicalModelPlan& out,const void* c,const void* fd,
+ const uint32_t* hashes,const uint8_t* ledger,int64_t team,uint64_t generation){return r.DeriveBoundCanonical(out,c,fd,hashes,ledger,team,generation);}

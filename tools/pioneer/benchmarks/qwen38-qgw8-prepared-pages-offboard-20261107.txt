@@ -118,6 +118,18 @@ the ROOT ELF SHA-256 was
 This tests a metadata handoff, not the complete coordinator/worker lifecycle,
 physical device, model inference, or performance.
 
+The sealed QGW8 inspection receipt can now derive a distinct canonical
+runtime-shaped plan, relocating all 4678 parts and 672 recurrent regions
+from the receipt's independently built layout. In synthetic tests the plan
+matched the host proposal, all seven workspaces, and the full learned-page
+ledger; a changed ledger quarantined the synthetic owner. The existing
+worker-compatibility check refused the QGW8 plan, and the legacy original
+and hybrid identities remain distinct. Original type and row-byte fields
+continue to describe source geometry, not the converted bytes' encoding.
+The derived plan and receipt remain non-loadable inspection-only; this is
+not native binding, worker selection, a complete token, hardware execution or
+proof of source bytes on the card. No QGW8 speed or quality is measured.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file
