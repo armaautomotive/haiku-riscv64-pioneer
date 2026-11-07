@@ -18,10 +18,11 @@ the synthetic same-FD tests reject tags125/126 and close only on uncertain
 control results. Work mode and Assistant do not select this candidate.
 
 The previous tag126 QGW5 driver and full client rebuilt to their previously
-recorded 65583dd1... and 8b65e83f... hashes. The candidate build used an
-existing SDK and a worktree containing unrelated prior edits; two build
-directories do not independently verify the compiler, SDK or source tree.
-The separately pinned code packages were rebuilt and checked previously.
+recorded 65583dd1... and 8b65e83f... hashes. To exclude unrelated worktree
+edits, an archive of committed source 4b1c33a47b independently rebuilt the
+tag127 driver and client to the same two hashes. All builds used the same
+existing SDK; this does not independently verify the compiler or SDK. The
+separately pinned code packages were rebuilt and checked previously.
 
 The non-loadable QGW7 native simulation also executed 119 worker boots and
 the ROOT's synthetic Q4_K embedding, with all 5120 values matching a separate
