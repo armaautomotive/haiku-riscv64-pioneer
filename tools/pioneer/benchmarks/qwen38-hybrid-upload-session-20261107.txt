@@ -16,9 +16,10 @@ Tests completed:
   Actual prepared-page dispatch was also combined with the actual session
   and fake transport for the complete synthetic model. This is NOT hardware.
 * Existing prepared-page checks and refactored verifier negative-path and
-  role-exclusion checks passed. The actual refactored reader's real-model
-  CPU-only preflight is running separately in foreground session 47329;
-  do not restart it merely because a poll returns no output.
+  role-exclusion checks passed. The refactored reader's real-model CPU-only
+  preflight verified all 1344 converted fragments and actually exited 0.
+  Its complete stdout is qwen38-hybrid-refactored-preflight-run-20261107.log,
+  SHA256 3bc3f8a0046d544adf495e57a46b042acd1bda034017ca2f173611a6caad60fa.
 * Two independent Haiku builds were byte-identical. Diagnostic SHA256:
   560fc11a161ce54867dbe84c557a4a94d3513f4227d94903cef4e2096558e11c.
 * On the Pioneer, an invalid option exited 2 and nonexistent cache paths
@@ -27,7 +28,7 @@ Tests completed:
   tag2026102100010012, generation20, no active owner and cold0.
 
 The staged executable lives in /boot/home/pioneer-hybrid-upload-test.KtEQ8Xj6.
-No physical upload has been attempted. A separate one-shot monitor now passes
+A separate one-shot monitor passes
 13 fake precondition, transcript, failure and no-retry cases. Its SHA256 is
 dc0abd35d3d33e950c7eddb8f42bff3ac225e0e597ccec02c2995fec60c60ca2; the
 matching staged parent-v2.sh and its pinned output checker were verified.
@@ -36,7 +37,12 @@ transcript on Haiku without accessing the card. The monitor requires the
 known driver tag/generation, idle ownership, full CPU/RAM and exact hashes,
 and records a permanent once-only marker before starting the client.
 
-A hardware test still requires completion of the refactored-cache preflight
-and fresh admission checks. On any uncertain client outcome, the monitor
-issues no further GPU query, END, retry or reset. Upload success by itself
-would still not establish model execution, answer quality or tokens/second.
+After the real-model preflight actually exited 0, fresh idle driver/identity
+checks passed and the one-shot parent was started. The permanent .upload-once
+marker exists; parent PID 4258 and child PID 4282 were observed live. The
+child was still performing its own source/cache authentication at observation;
+the eventual upload result is NOT established. Poll only OS process state and
+the stage files while it runs; do not start another client or query the GPU.
+On any uncertain client outcome, the monitor issues no further GPU query, END,
+retry or reset. Upload success by itself would still not establish model
+execution, answer quality or tokens/second.

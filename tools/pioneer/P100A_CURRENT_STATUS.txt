@@ -127,9 +127,10 @@ Four compact goals
    with fake transport, not on the card. It is not linked to Work/Assistant
    or an authorized native session. See
    benchmarks/qwen38-hybrid-span-upload-20261107.txt.
-   An isolated upload-and-release session is now composed with that reader
-   and fake-tested; a new real-model CPU-only reader preflight is running.
-   No physical upload or model execution has been attempted. See
+   An isolated upload-and-release session is composed with that reader and
+   fake-tested; the refactored real-model preflight passed. A one-shot
+   physical upload/release test is running; its result is not yet established
+   and it performs no model execution. See
    benchmarks/qwen38-hybrid-upload-session-20261107.txt.
    The full BFP4 portion is in a new dedicated Pioneer directory. See
    benchmarks/qwen38-hybrid-bfp4-cache-run-20261107.txt.
