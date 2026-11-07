@@ -60,6 +60,11 @@ One matched-input BFP4 CPU prediction for the first band now differs from
 the archived Q4 card output by 0.14342 relative L2 (32 values). This is a
 quality warning, not a full-model verdict or a BFP4 card timing. See
 benchmarks/qwen38-matched-band-preparation-20261107.txt.
+The corresponding matched BFP4 band subsequently ran on the P100A: its two
+passes took 227257/227156 cycles versus the archived Q4's 643321/643229,
+with the same 0.14342 relative L2 output difference. This demonstrates a
+faster operation on one band, NOT a full-model speed or quality pass. See
+benchmarks/qwen38-matched-band-physical-20261107.txt.
 
 Before further full-model integration, define a model-relevant accuracy gate,
 measure representative real weights and prompts against the Q4 reference,

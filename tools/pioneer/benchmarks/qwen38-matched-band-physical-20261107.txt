@@ -1,0 +1,55 @@
+Matched-input Q4/BFP4 first-band P100A result, November 7 2026
+================================================================
+
+Actual result: diagnostic121 completed on the P100A with actual foreground
+parent exit 0. Three fixed BFP4 samples each produced 64 words matching their
+CPU diagnostic reference, followed by explicit verified END and restoration.
+The one-shot stage is spent; do not replay it.
+
+For sample0 only, tensor7 blk.0.ffn_gate.weight rows 0..31, K5120, the
+matched BFP4 input bytes equal the saved input from the older Q4 physical
+diagnostic, SHA256 5dbd04b0cd25a054d499db2bde60e55c5ecf345491350e9147016cf6d4527f99.
+Both operations include on-card loading and compute. Their archived Q4 and
+new BFP4 output words were checked against their own independent reference.
+
+  Q4 card cycles, two passes:   643321, 643229
+  BFP4 card cycles, two passes: 227257, 227156
+  Ratio of two-pass means:      2.831235x (Q4 cycles / BFP4 cycles)
+  Relative L2 output difference: 0.143424420 across 32 outputs
+
+This is an operation-level, synthetic-input comparison on one real-model
+band, with two passes in separate diagnostic runs, NOT a full-model speed
+result, repeatability study, natural-prompt quality test, or evidence that
+20 tokens/sec is achievable. The representations and arithmetic differ;
+14.3% relative L2 is an accuracy warning, not a percentage of wrong answers.
+The BFP4 path is NOT installed in Work or Assistant. The latest measured
+full-27B generation remains about 0.1729 tokens/sec.
+
+For completeness, the additional BFP4 bands at rows8704 and17376 measured
+227257/227147 and 227270/227147 cycles respectively. No matched physical Q4
+timing is claimed for those bands here. No clock-frequency assumption or
+conversion to tokens/sec was used.
+
+Parent restored stable041/tag2026102100010012/generation20. Independent
+postflight reported quiesced0, cold0, active_owner0, open_count1, guard1,
+the installed SHA256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+64 CPUs and total memory 137034936320 bytes. The closed client exit record
+was 0, stderr was empty, and diagnostic parent/client processes were absent.
+No reboot, SD or hardware-connection change occurred.
+
+The complete local parent transcript remains private at
+/private/tmp/pioneer-bfp4-matched121-physical.2k86ZYjY/parent.stdout,
+SHA256 e9a366321f56a491361663472a6e974100631692874d99301b31d11b456aaea7.
+The closed Pioneer client transcript SHA256 is
+ab974475182a71db0d77f18add64e99b03ccf3a26ec93c0e6fe00e3e0a242e1e.
+They contain model-derived diagnostic output and are not stored in Git.
+The companion transcript checker confirms all 64 Q4 and 64 BFP4 sample0
+words, timing records, final metadata and marker. Actual process exit and
+the independent postflight were checked separately; transcript text alone is
+not evidence of either. Test preparation and fault qualification are in
+qwen38-matched-band-preparation-20261107.txt.
+
+Decision: this is evidence that the BFP4 operation is faster for this matched
+band, with materially different output. It motivates further representative
+quality testing and an integrated full-model benchmark; it does not qualify
+the approximation for production Work or Assistant.

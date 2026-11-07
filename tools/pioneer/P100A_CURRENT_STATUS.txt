@@ -112,15 +112,17 @@ Four compact goals
    position; KL was 0.20372 and 0.02355, with top-five overlap 4/5 and 5/5.
    This is not natural answer quality, P100A execution or a speed result.
    See benchmarks/qwen38-hybrid-two-token-cpu-20261107.txt.
-   Matched-input BFP4 diagnostic121 now passes offboard execution, source,
-   owner and endpoint checks; it has NOT been installed or run on the card.
-   See benchmarks/qwen38-matched-band-preparation-20261107.txt.
+   Matched-input diagnostic121 completed physically: on one tensor7/32-row
+   band and two passes, Q4 took 643321/643229 cycles and BFP4 took
+   227257/227156 cycles, a 2.83x ratio of means. The outputs differed by
+   14.34% relative L2. This is NOT full-model speed or answer quality;
+   see benchmarks/qwen38-matched-band-physical-20261107.txt.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
 Platform
 --------
-Last observed: stable041/gen18 restored and idle after independent postflight; 64 CPUs and
+Last observed: stable041/gen20 restored and idle after independent postflight; 64 CPUs and
 full137034936320B RAM. Assistant/runtime files unchanged. No reboot, power,
 SD or hardware connection changed. Pre-existing local work is preserved.
 
