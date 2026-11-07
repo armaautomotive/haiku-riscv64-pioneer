@@ -40,13 +40,22 @@ lifetime are still required. Thus 13 is not a hardware authorization. The
 14+ aggregate excess is decisive only for the stated unchanged-allocation
 assumptions, not a claim that all possible other designs are impossible.
 
-Two CPU-only first-token observations are actually running. The last16-BFP8
-case is a numerical upper control, NOT a fitting configuration under the
-above assumptions. The last13-BFP8 case preserves the potentially feasible
-capacity bound. Both use BFP4 for earlier FFNs and original precision for all
-other model calculations. Results remain pending:
+The last16-BFP8 first-token control completed actual exit0. This is a
+numerical control, NOT a fitting configuration under the above assumptions.
+It used 144 BFP4 and 48 BFP8 FFN projections; the printed error metrics
+through layer47 match the earlier first48-BFP4 comparison exactly. Original
+and hybrid both chose token70253; final-logit relative L2 difference was
+0.248480202, KL(original||hybrid) was 0.183871630 nats, and top5 overlap
+was 4/5. Original top probability was 0.0273437673; hybrid was 0.0319197617.
+The corresponding all-BFP4 control had KL0.344661064 and overlap3/5. This
+is an improvement for ONE token, not a measured answer-quality or speed pass.
  /private/tmp/pioneer-q38-hybrid48-cpu-20261107-a.log
+ transcript SHA 3eaf458ebba03384d2cef148def4522f69fe58b861770dd69e658f9a8694098f
  executable SHA d85393f82cb1d6e60f4faaa000f40c01b98e5b6275256154a500da90d59ce43b
+
+The last13-BFP8 case preserves the potentially feasible capacity bound and
+is still actually running. It uses BFP4 for earlier FFNs and original
+precision for all other model calculations. Its result remains pending:
  /private/tmp/pioneer-q38-hybrid51-cpu-20261107-a.log
  executable SHA 00de2b5562be3f7ed3259a18e71fce6335ccb298ec7bb39e2b15c36362c5bb67
 
