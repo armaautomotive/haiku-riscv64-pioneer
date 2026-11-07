@@ -1,0 +1,23 @@
+BFP4 worker bulk reads: host simulation only
+==========================================
+
+The current worker issues a separate NoC read for each weight and input
+tile. This isolated prototype fetches groups of 16 contiguous tiles into an
+experimental scratch area, then copies them into the original padded layout.
+It has no native driver, Work or Assistant capability and was not installed.
+
+For both widths, two bands and workers 1, 63 and 119, a host mock produced
+the same staged weight/input bytes and headers as the old loader; the test
+also checks untouched surrounding L1, missing completion, extra counter and
+invalid requests. It counts 20 rather than 320 requests at K5120 and 68
+rather than 1,088 at K17408. Payload flits are unchanged.
+
+The tradeoff is substantial: counting all mock local and MMIO reads/writes,
+K5120 used 64,069 events versus 16,189 before; K17408 used 217,189 versus
+54,397. These event counts are not processor instructions or hardware time,
+and local L1 accesses and NoC register accesses do not necessarily cost the
+same. There is no evidence yet that this candidate is faster. Do not promote
+it based on the request count. Actual scratch ownership, emitted RV32 code,
+end-to-end numerical behavior and physical timing all remain unproven.
+
+Reproduce: python3 tools/pioneer/tests/run_pioneer_q38_bfp4_bulk_worker_loader_tests.py
