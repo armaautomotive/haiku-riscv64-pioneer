@@ -1,5 +1,5 @@
-Hybrid BFP4 full-cache preparation: IN PROGRESS, 2026-11-07
-===========================================================
+Hybrid BFP4 full-cache preparation: COMPLETE, 2026-11-07
+========================================================
 
 The previously tested CPU-only preparer was started on the Pioneer for the
 1071 BFP4 fragments in the proposed hybrid (BFP8 layers48..60 excluded).
@@ -14,10 +14,15 @@ Executable SHA256:
 6caecadac05b15b20110579ab1a7d101fb4d066dd6b54e263f397d7d368871b1.
 Local SSH stdout capture:
 /private/tmp/pioneer-hybrid-bfp4-prepare.XNzgMKPj/prepare.stdout.
-The foreground SSH session was live and authenticating the model at last
-observation. Do not start another preparer solely because an observation
-times out; check that same process and its eventual actual exit first.
+The foreground SSH process actually exited 0 after reporting 1071 verified
+fragments, zero cache hits and 7670661120 bytes. Its full stdout is archived
+in sibling qwen38-hybrid-bfp4-cache-run-20261107.log, SHA256
+46a09b515068c6b1b8d975381ae9ff8216c5ebaffd8736af6bf455676a829380.
+The BFP8 cache and separate combined-cache read-only preflight are not yet
+complete. This success does not prove that the full hybrid can be uploaded
+or used on the card.
 
 This cache is not yet linked to the real model uploader; BFP8 preparation,
 relocation/ownership, full-card integration, quality, and real inference
-performance remain unfinished. IN PROGRESS is not an inference speed claim.
+performance remain unfinished. Cache preparation is not an inference speed
+claim.

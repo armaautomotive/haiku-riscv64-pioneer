@@ -106,14 +106,17 @@ Four compact goals
    The normal BF16 ROOT rebuild is byte-for-byte unchanged. This experimental
    path is NOT installed or fully executed, authenticates neither its table
    nor uploaded pages, and cannot reuse the old native owner/journal.
-   A CPU-only hybrid preparation tool now builds for Haiku and can create or
-   verify the 1071 BFP4 cache fragments; a full-model run is in progress but
-   is not yet complete. A separate page adapter selects BFP4, existing BFP8 or original
+   Offline relocated startup integration now matches all 4678 hybrid parts,
+   2352 conv state spans and 22848 ROOT projection job addresses; a CPU-only
+   Haiku run also passes using the experimental worker selector. This is not
+   a device upload, execution, quality or speed result; see
+   benchmarks/qwen38-hybrid-startup-layout-20261107.txt.
+   A CPU-only hybrid preparation tool built and verified the 1071 BFP4 cache
+   fragments on Haiku, with actual process exit 0. A separate page adapter selects BFP4, existing BFP8 or original
    pages and can preflight all 1344 converted fragments. Its full-coverage
    test uses simulated readers; one BFP4 fragment uses an actual disk-cache
    fixture. The adapter is not linked to a card uploader or Work/Assistant.
-   The full BFP4 portion of the proposed cache has now been started in a new
-   dedicated Pioneer directory; completion is not yet established. See
+   The full BFP4 portion is in a new dedicated Pioneer directory. See
    benchmarks/qwen38-hybrid-bfp4-cache-run-20261107.txt.
    A 39-tensor BFP8 batch preparer also builds and passes synthetic selection
    and frozen-converter checks; its real-model preparation is in progress. See

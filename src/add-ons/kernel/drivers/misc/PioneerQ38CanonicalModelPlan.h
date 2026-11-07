@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_CANONICAL_MODEL_PLAN_H
 #define PIONEER_Q38_CANONICAL_MODEL_PLAN_H
+#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) && (PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC != 1 || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT))
+#error Hybrid canonical repack is diagnostic DATA only, not a native or Work capability
+#endif
 #include "PioneerQ38GdnBanks.h"
 // KERNEL-PRIVATE,HEAP ONLY. Reconstruct the FIXED public27B original-TC
 // tiled layout,8192 context,TWO recurrent slots. No GGUF descriptor order,
@@ -93,6 +98,51 @@ public:
   }
   ready=true;return true;
  }
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+ // Experimental full-layout repack for OFFLINE startup consumers only. Start
+ // from the fixed canonical order and banks; enlarge exactly the thirteen
+ // BFP8 FFN layers and relocate every following part, including state and
+ // workspace. Existing rowBytes/type retain the original logical Q4 job
+ // geometry: these fields MUST NOT authorize a Q4 worker on converted bytes.
+ // One-shot failure leaves the object unavailable. No native role may compile
+ // this method; it does not authenticate or upload weights, select worker
+ // firmware, initialize state, own memory, or launch inference.
+ bool BuildHybridDiagnostic() {
+  if(!Build())return false;
+  ready=false;
+  uint64_t next[7]={};unsigned converted=0,region=0;
+  for(unsigned i=0;i<count;i++){
+   auto& p=parts[i];if(p.bank>=7 || !p.bytes || p.bytes>p.allocated
+    || (p.offset&4095) || (p.allocated&4095) || p.allocated-p.bytes>=4096)return false;
+   const bool eight=p.kind==WeightKind && p.layer>=48 && p.layer<=60 && p.role>=2 && p.role<=4;
+   uint64_t bytes=p.bytes,allocated=p.allocated;
+   if(eight){
+    const uint64_t width=p.role==4?17408:5120;
+    if(p.type!=12 || !p.rows || ((p.firstRow|p.rows)&31) || p.rowBytes!=width*9/16
+     || uint64_t(p.rows)*p.rowBytes!=p.bytes)return false;
+    bytes=uint64_t(p.rows)*width*17/16;allocated=(bytes+4095)&~uint64_t(4095);converted++;
+   }
+   if(!bytes || bytes>UINT32_MAX || allocated>UINT32_MAX || next[p.bank]>Capacity
+    || allocated>Capacity-next[p.bank])return false;
+   if(p.kind==RecurrentKind){
+    if(region>=recurrentCount)return false;
+    auto& r=recurrent[region++];
+    if(r.layer!=p.layer || r.slot!=p.role || r.firstHead!=p.firstRow || r.heads!=p.rows
+     || r.bank!=p.bank || r.offset!=p.offset)return false;
+    r.offset=uint32_t(next[p.bank]);
+   }
+   p.offset=uint32_t(next[p.bank]);p.bytes=uint32_t(bytes);p.allocated=uint32_t(allocated);
+   next[p.bank]+=allocated;
+  }
+  if(converted!=13*3*7 || region!=672)return false;
+  for(unsigned bank=0;bank<7;bank++){
+   if(workspace[bank]>=count || parts[workspace[bank]].kind!=WorkspaceKind
+    || parts[workspace[bank]].bank!=bank)return false;
+   used[bank]=next[bank];
+  }
+  ready=true;return true;
+ }
+#endif
  bool Ready()const{return ready;}
  unsigned Count()const{return ready?count:0;}
  const PioneerQ38CanonicalPart* Part(unsigned i)const{return ready && i<count?&parts[i]:nullptr;}

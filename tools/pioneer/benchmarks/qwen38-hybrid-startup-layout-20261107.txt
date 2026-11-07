@@ -1,0 +1,45 @@
+Hybrid 27B relocated startup layout: CPU-only integration check
+===============================================================
+November 7, 2026. This is not a driver, device upload, P100A execution,
+full-model result, quality acceptance, or measured speedup.
+
+Problem: the BFP8 conversion enlarges FFN stripes in layers48..60. The
+non-FFN weights, recurrent/conv/KV state and workspaces following them also
+move. The old canonical startup plan therefore cannot describe this layout
+unchanged; changing only FFN worker addresses would be insufficient.
+
+Change: a strictly diagnostic-only, one-shot method constructs the complete
+relocated canonical plan from fixed original geometry. It preserves the
+original Q4 type/rowBytes for logical job planning; these do not authorize
+an original Q4 worker on converted weights. The compiler refuses the method
+in kernel, native-client and Work roles. It does not alter ordinary Build().
+
+Actual tests, both CPU only:
+* Mac ASan/UBSan: 4678 relocated parts match the independent hybrid proposal;
+  2002 offsets move, including 273 BFP8 stripes, 3551 learned parts and 672
+  recurrent regions. All seven banks' existing startup serializers build all
+  64 layer packages and 119 worker boot shapes. 2352 serialized convolution
+  spans match relocated addresses. All 22848 ROOT projection job addresses
+  match independent old-plan leaf binding. A synthetic old-layout ledger is
+  rejected; the new full learned ledger passes and missing-page tests across
+  every layer/global group refuse. Role-exclusion preprocessor tests pass.
+* Cross-built Haiku test with the actual experimental QGW5 ROOT selector:
+  same full checks and 119-worker boot shapes, selected hybrid worker 1,
+  executed on Pioneer as a CPU process and actually exited 0. Executable
+  SHA256 bf9872a61114d53a303ba603387008523815ec32939c30f1cbdacbd38e443305.
+  No accelerator device was opened. Dedicated test directory:
+  /boot/home/pioneer-hybrid-startup-qgw5.4VFQz1Np.
+* Original canonical-plan regression passed (ASan/UBSan): 9356 independent
+  host-part comparisons, 45696 worker job-part comparisons, 208325 refusals.
+  Original startup binding regression also actually exited 0, all 7 banks.
+
+Run local test: sh tools/pioneer/tests/run_pioneer_q38_hybrid_startup_layout_test.sh
+Cross-build: python3 tools/pioneer/tests/build_pioneer_q38_hybrid_startup_qgw5.py
+  ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT
+
+The next real device integration still needs authenticated converted-page
+upload, live relocated state initialization/ownership and peer memory journal
+covering BFP8 staging and moved GDN code, an authenticated ROOT manifest,
+full ROOT/worker lifetime coordination, and hardware fault/cleanup testing.
+The diagnostic API is not a substitute for those steps. Work/Assistant remains
+unchanged, and quality and end-to-end generation performance remain unproven.

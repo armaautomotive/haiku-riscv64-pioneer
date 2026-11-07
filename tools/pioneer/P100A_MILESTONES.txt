@@ -84,10 +84,10 @@ benchmarks/qwen38-matched-band-physical-20261107.txt.
 Current work: a three-position CPU-only hybrid comparison finished with the
 same greedy choice as the original at all three positions. That single raw
 prefix is not a generated answer or broad quality pass; see
-benchmarks/qwen38-hybrid-hello-three-cpu-20261107.txt. Preparation of the
-actual model's BFP4/BFP8 disk caches is in progress. Neither is an on-card
-full-model speed result. Both caches must finish successfully and pass the
-combined read-only preflight before they can be used for a device test.
+benchmarks/qwen38-hybrid-hello-three-cpu-20261107.txt. The BFP4 disk cache
+finished successfully; the BFP8 cache is still being prepared. Neither is an
+on-card full-model speed result. Both caches must finish successfully and
+pass the combined read-only preflight before use in a device test.
 
 Before further full-model integration, define a model-relevant accuracy gate,
 measure representative real weights and prompts against the Q4 reference,
