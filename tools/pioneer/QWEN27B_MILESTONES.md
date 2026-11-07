@@ -63,6 +63,22 @@ measured bottlenecks, and compare against the same prompt and settings. Keep
 CPU validation separate from Work mode. An isolated kernel's speedup or
 accuracy result does not establish full-model speed or quality.
 
+The saved full-model profile attributed about 48.85% of its measured
+generation body to four projection phases. Even hypothetically eliminating
+those phases entirely, with everything else unchanged, would yield only about
+0.34 tokens/s from the 0.173 baseline. This is an upper bound for that
+specific hypothetical, not a prediction or a limit on a broader redesign.
+The 2.83x BFP4 result is for one small operation and does not show a path to
+20 tokens/s by itself. A usable solution also needs major improvements to the
+other on-card work; evaluate the integrated hybrid once, then reassess.
+
+One architectural direction to investigate is overlapping data movement and
+matrix work. The current experimental BFP4 band explicitly drains its engine
+twice per input tile; whether that is a dominant cost needs measurement.
+Tenstorrent's [compute-engine documentation](https://github.com/tenstorrent/tt-metal/blob/main/docs/source/tt-metalium/tt_metal/advanced_topics/compute_engines_and_dataflow_within_tensix.rst)
+describes the separate unpacker, matrix and vector engines, but does not
+establish the achievable speed of this implementation or this card.
+
 ## Milestone 4: Assistant
 
 **Not yet passed.** Expose the faster, qualified path in Assistant while

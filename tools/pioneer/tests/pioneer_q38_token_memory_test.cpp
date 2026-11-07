@@ -70,7 +70,11 @@ struct TokenMemoryIO:CodeIO {
  bool TokenMemoryReadChecked(unsigned worker,uint32_t address,uint32_t& output){
   Touch();reads++;if(badKind==1 && AtWord()){observed=touches;return false;}
   output=FullRead(worker,address);if(dropPending){dropPending=false;observed=touches;}
-  if(badKind==2 && AtWord()){output^=1;observed=touches;}return true;
+  if((badKind==2 && AtWord())
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+   || (badKind==13 && AtMemory() && address==0x16c400+badOrdinal*4)
+#endif
+   ){output^=1;observed=touches;}return true;
  }
  bool TokenMemoryWrite(unsigned worker,uint32_t address,uint32_t value){
   Touch();writes++;
@@ -190,6 +194,7 @@ int main(int argc,char** argv){
    assert(binding.Bind(*original,UINT64_C(0x1fff000000000000)) && binding.RootManifest(expected.data(),expected.size()));
    assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
    for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
+   assert(f.memory->VerifyHybridManifestHeld(f.io,f.result));
    const auto touches=f.io.touches;assert(!f.memory->InstallHybridManifestHeld(f.io,f.result) && f.io.touches==touches);
    assert(f.CloseMemory() && f.memory->Closed() && f.io.data==before);
   }
@@ -198,7 +203,12 @@ int main(int argc,char** argv){
    f.io.badKind=3;f.io.badPhase=8;f.io.badWorker=0;f.io.badOrdinal=64*3*7-1;
    assert(!f.memory->InstallHybridManifestHeld(f.io,f.result));f.Unknown();
   }
-  puts("PASS QGW5 boot grammar and 1344-word relocated manifest staged/read back under held journal, originals restored, late write failure quarantined; SIMULATED ONLY");return 0;
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result));
+   f.io.badKind=13;f.io.badPhase=9;f.io.badWorker=0;f.io.badOrdinal=64*3*7-1;
+   assert(!f.memory->VerifyHybridManifestHeld(f.io,f.result));f.Unknown();
+  }
+  puts("PASS QGW5 boot and 1344-word held manifest staging/reverification/restore; late write and later read corruption quarantined; SIMULATED ONLY");return 0;
  }
 #endif
  if(!strcmp(argv[1],"--hybrid-faults")){
