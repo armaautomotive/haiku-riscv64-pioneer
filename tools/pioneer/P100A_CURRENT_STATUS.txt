@@ -30,8 +30,8 @@ Four compact goals
 1. Identify the fastest engine's bottleneck: COMPLETE for one request.
 2. Remove one measured overhead: CURRENT. Test reusing a job descriptor
    already constructed on card; SDK build, synthetic DATA and selected RV32
-   instruction checks pass. Paired synthetic instruction slices are shorter,
-   but GPU correctness and speed remain untested.
+   instruction checks pass. The distinct test driver/worker also build; paired
+   instruction slices are shorter, but GPU correctness and speed are untested.
 3. Measure an accepted improvement on the complete 27B model: NOT STARTED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

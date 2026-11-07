@@ -65,12 +65,29 @@ or a speedup measurement. No NoC transfers, waits, complete invocation,
 concurrent workers or physical timing were represented. This is evidence
 for continuing the comparison, not evidence of a practical speed gain.
 
+Distinct diagnostic build, not installed or run:
+the existing vector92 kernel driver and vocabulary-only USER worker were
+rebuilt byte-for-byte. A private, frozen source overlay reproduced both
+whole original translation units before binding the candidate ROOT and a
+new driver/client tag117, with a mandatory experimental-only marker.
+Fourteen embedded firmware sections were checked against their exact source
+bytes. The USER worker retained the same 11 vocabulary imports as vector92;
+CPU inference and Work selections were refused. Two builds from independent
+candidate ROOT output directories produced identical diagnostic binaries:
+ driver 68803b259e93f0abcda40df71d216b200a7f0f8bda35589cf7c66d0835fdac2c
+ worker 74adae678e1c2344e3c6f86bea6f8a30c80374de56cb85ac3cf090059f97cd29
+ client fa0d81296c9a130eaba9fefed03d38033b28087d5df92ca8e672a9eb16058c65
+The generated tag117 one-shot parent retains the entire known vector92
+guarded flow with only 10 pinned identity/path/generation substitutions.
+The existing 54+120 fake-endpoint parent failure checks passed, and the
+generated parent passed shell syntax; no live hardware was touched.
+
 Open gates and decision
 -----------------------
 No physical device has run this image. It remains EXPERIMENTAL, not accepted
 as faster or ready for Assistant. Still required: compare the actual complete
-old/new returning RV32 paths and their fault behavior, construct a separately pinned
-native diagnostic with safe ownership/END, then run a fresh bounded identical-
+old/new returning RV32 paths and their fault behavior, qualify the separately
+pinned native diagnostic's safe ownership/END, then run a fresh bounded identical-
 input hardware comparison and restore/verify the stable driver. Reject if
 not faster or if safe fault behavior cannot be established. The live check
 costs instructions and may erase the expected gain; even a successful change
