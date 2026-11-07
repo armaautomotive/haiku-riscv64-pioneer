@@ -27,21 +27,23 @@ and [CPU-only hybrid comparison](benchmarks/qwen38-bfp-hybrid-cpu-quality-202611
 
 ## Milestone 1: upload the prepared model
 
-**In progress.** Converted cache files passed a real, read-only preflight.
-A one-shot upload-and-release test was started on November 7. Its live process
-has reported verifying all 1,344 converted fragments and started uploading,
-but its upload and cleanup have not yet completed. The running binary predates the separate
-batched-read change, which has passed simulated tests and cross-compilation but
-has not been timed on the Pioneer. A subsequent source-plan check now fetches
-the plan three times instead of once per fragment while still comparing every
-fragment and rechecking source identity. It too is offline-tested, not yet
-timed on the Pioneer, and is not in the running binary. See
+**Passed for upload and release.** On November 7 the one-shot test verified
+all 1,344 converted fragments, uploaded 21.14 GB to the P100A, and released
+the span and bank owners cleanly. The client exited 0; its full transcript,
+driver state, 64 CPUs and full RAM were independently checked. The measured
+session took 6,277.803 seconds (about 104.6 minutes), excluding the earlier
+model/cache preflight. That is end-to-end loading and release time, not PCIe
+bandwidth or inference time. The test released the weights and ran no model.
+
+The tested binary predates the separate batched-read change, which has passed
+simulated tests and cross-compilation but has not been timed on the Pioneer.
+A subsequent source-plan check now fetches the plan three times instead of
+once per fragment while still comparing every fragment and rechecking source
+identity. It too is offline-tested and has not been timed on the Pioneer. See
 [`benchmarks/qwen38-hybrid-upload-session-20261107.txt`](benchmarks/qwen38-hybrid-upload-session-20261107.txt)
 for its stage, safety constraints and observation details.
 
-Pass requires a real successful upload and clean release, backed by the
-diagnostic's complete output and process exit. The running test intentionally
-releases weights and does not run a token.
+This pass does not establish a held-weight inference session or a token rate.
 
 ## Milestone 2: hold weights and run the model
 

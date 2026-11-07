@@ -1,5 +1,5 @@
-Hybrid 27B cache upload/release session: RUNNING, NOT YET COMPLETE
-================================================================
+Hybrid 27B cache upload/release session: COMPLETED CLEANLY
+=========================================================
 November 7, 2026. An isolated userspace diagnostic now retains the SAME
 authenticated model and verified cache readers, checks the pinned stable
 driver/idle generation, reserves the existing seven-bank session, transfers
@@ -37,14 +37,28 @@ transcript on Haiku without accessing the card. The monitor requires the
 known driver tag/generation, idle ownership, full CPU/RAM and exact hashes,
 and records a permanent once-only marker before starting the client.
 
-After the real-model preflight actually exited 0, fresh idle driver/identity
-checks passed and the one-shot parent was started. The permanent .upload-once
-marker exists; parent PID 4258 and child PID 4282 were observed live. The
-child subsequently reported all 1344 preflight fragments and, at 11:08 UTC,
-537149440 of 21137039360 uploaded bytes. Both processes remained live, stderr
-was empty, and no terminal state or exit record existed at that observation.
-The eventual upload result and cleanup are NOT established. Poll only OS process state and
-the stage files while it runs; do not start another client or query the GPU.
-On any uncertain client outcome, the monitor issues no further GPU query, END,
-retry or reset. Upload success by itself would still not establish model
-execution, answer quality or tokens/second.
+Actual result at 12:52 UTC: the one-shot client exited 0, stderr was empty,
+and its complete transcript passed the pinned checker. It transferred 3,551
+learned fragments in 22,005 span calls, totaling 21,137,039,360 bytes, and
+explicitly ended both spans and banks. The recorded 6,277.803 seconds covers
+the session from before device open through release, including page reads and
+verification; original model/cache preflight was before that clock. This is
+NOT a PCIe bandwidth measurement. Weights were released and no model ran.
+
+The monitor wrote UPLOAD_RELEASE_VERIFIED_NO_MODEL_EXECUTION to state.clean.
+Independent read-only postflight confirmed exit 0, empty stderr, no failed
+marker, the checker passing, and parent PID 4258 and child PID 4282 absent.
+Driver status was driver55/tag2026102100010012/generation20, quiesced0,
+cold0, active_owner0, guard1; sysinfo reported 64 CPUs and 137,034,936,320
+bytes total RAM. The parent had also verified the installed stable driver,
+admin and guard hashes. The later optimized loader was not used in this test.
+
+Independent copies of the scoped records are in
+/private/tmp/pioneer-upload-verified.p1FQOnZd. The copied stdout SHA-256 is
+046a277ad088fa70dcde0c71043f8ddbfac381badf0a6cc290c009056343e1eb; stderr is
+empty (SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855).
+The checker SHA-256 is cef4455c58280294c5e434f453052e67d679685526087029fda87cc3c319af97.
+Both copied hashes matched the Pioneer, and the copied transcript passed the
+same checker locally. The spent stage must not be replayed. This result is
+only an upload/release pass: it does not establish model inference, answer
+quality, token rate, or the safety of retaining weights for inference.
