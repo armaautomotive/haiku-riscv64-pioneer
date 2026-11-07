@@ -65,6 +65,19 @@ physical start, model result, numerical quality, or performance.
 Direct root-start regression with the same pinned input artifacts:
   python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --execution --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
 
+The next simulated extension resumed the same root past its startup marker.
+The actual pinned instructions read the staged session, prompt and head
+metadata and issued their first 2,304-byte learned-data request. The test
+paused while that request was outstanding, then verified that the native
+observer accepts the busy state and a cancellation request is written and
+read back without retry. It did not deliver the learned data, compute an
+embedding, consume the cancellation, or produce a token. The corresponding
+original-layout regression also passed. This remains simulated OS/VM/NoC,
+not a physical device, full-model correctness result or speed measurement.
+
+Direct first-data-request regression with the same pinned artifacts:
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --execution-traffic --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
+
 Reproducible integration command:
   python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
 The QGW5 program header is pinned by SHA-256

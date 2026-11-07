@@ -15,7 +15,7 @@ if '--hybrid-qgw5-header' in sys.argv:
     assert sys.argv.count('--hybrid-qgw5-header')==1
     index=sys.argv.index('--hybrid-qgw5-header');assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
-    assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution')) and hybrid_header.is_absolute() and hybrid_header.is_file()
+    assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')) and hybrid_header.is_absolute() and hybrid_header.is_file()
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()=='2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
 manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
