@@ -51,7 +51,11 @@ out_index = probe.index('-o')
 del probe[out_index:out_index + 2]
 probe.append('-fsyntax-only')
 subprocess.run(probe, check=True, cwd=out)
+session_probe = list(probe)
+session_probe[session_probe.index(str(here / 'tests' / 'pioneer_q38_hybrid_head_prepared_actual_compile.cpp'))] = str(
+    here / 'tests' / 'pioneer_q38_qgw8_upload_session_compile.cpp')
+subprocess.run(session_probe, check=True, cwd=out)
 print('QGW8_FFN_BFP4_CONVERTER_FINGERPRINT', four)
 print('QGW8_HEAD_BFP8_CONVERTER_FINGERPRINT', built['fingerprint'])
 print('QGW8_PREFLIGHT_BINARY_SHA256', hashlib.sha256(binary.read_bytes()).hexdigest())
-print('BUILD ONLY: preflight binary and real page-to-span types; no model, cache, device or inference access')
+print('BUILD ONLY: preflight binary and real page/span/session types; no model, cache, device or inference access')

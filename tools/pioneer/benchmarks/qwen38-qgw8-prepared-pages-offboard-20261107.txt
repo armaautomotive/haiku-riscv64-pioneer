@@ -84,6 +84,20 @@ The handler also cross-compiles against kernel-shaped stubs with maximum
 individual static frame 880 bytes. Neither this nor the existing regression
 tests establishes physical upload, correct model bytes, a loadable QGW8
 driver, or any inference speed.
+
+The separate QGW8 inspection session now joins the actual prepared-page
+router and span builder to the QGW8 receipt using one simulated retained
+owner. A complete synthetic run covered 3551 parts, 22035 spans, the exact
+21167624192 bytes of proposed allocation, matching FFN ROOT metadata and
+clean owner release. Invalid preflight, real legacy-driver tag, damaged
+BEGIN, uncertain first span, and a damaged SEAL reply were refused without
+retry; uncertain owned sessions were retained/quarantined. Memory-sanitized
+tests passed; real page/span/session types cross-compile for Haiku. The
+inspection control uses a fake-only identity and no actual ioctl number;
+no real device was opened. The ledger hashes are synthetic transport data,
+not source authentication, converted-weight correctness or card readback.
+Head descriptor integration, a qualified driver/owner and a real inference
+trial remain incomplete.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.

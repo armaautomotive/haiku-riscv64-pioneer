@@ -65,6 +65,7 @@ struct ForgedPages {
  const PioneerQ38HybridModelPlan::Part* Part(unsigned i)const{return i==index?&forged:pages.Part(i);}
  bool ReadPages(unsigned i,unsigned p,unsigned n,uint8_t* out,unsigned cap,std::string& e){return pages.ReadPages(i,p,n,out,cap,e);}
 };
+#ifndef PIONEER_Q38_QGW8_SPAN_BRIDGE_FIXTURE_ONLY
 int main(){
  Fixture f;FakeTransport transport{f};std::string error;
  // Legacy selection must reject the new head BEFORE any transport call.
@@ -94,3 +95,4 @@ int main(){
  printf("PASS actual prepared-page router -> span packet builder: %u synthetic parts, %u packets, %llu bytes; NO MODEL, DEVICE, OWNERSHIP OR TPS\n",
   upload.UploadedParts(),upload.UploadedSpans(),(unsigned long long)expected);
 }
+#endif
