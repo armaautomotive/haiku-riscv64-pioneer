@@ -12,6 +12,7 @@
 struct WorkerImage:Machine {
  Band4Machine native;IO transfer;std::vector<uint8_t> code;unsigned stores=0,acks=0,dropAckAt=0,minSP=0x70000;
  bool awaiting=false,stackSeen=false,damageFrame=false,inputPreservationChecked=false,damageInput=false,inputDamaged=false,dropAfterFirstBand=false,faultAfterFirstBand=false;
+ bool damageHeader=false,damageOnMath=false;
  static W::Job MakeBands(unsigned worker,unsigned width,unsigned bands){
   auto job=Make(worker,width);job.words[4]=bands;assert(W::Shape(job));return job;
  }
@@ -53,7 +54,11 @@ struct WorkerImage:Machine {
  void Instruction(uint32_t op)override{
   assert(Loaded());
   if(op==0xa2101816){assert(!gpr63 && !awaiting);awaiting=true;}
-  else if(op==0x4500017e){assert(awaiting && !gpr63);acks++;if(acks!=dropAckAt){native.Drain();gpr63=1;awaiting=false;}}
+  else if(op==0x4500017e){assert(awaiting && !gpr63);acks++;if(acks!=dropAckAt){native.Drain();gpr63=1;awaiting=false;
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT
+   if(damageOnMath && native.matrixOps && !inputDamaged){transfer.l1[L::Input+1]^=1;inputDamaged=true;}
+#endif
+  }}
   else if((op>>24)==0x26)PioneerBlackholeArithmeticObserver::Matrix(native,op,true,[&]{native.Op(op);});
   else native.Op(op);
  }
@@ -75,6 +80,7 @@ struct WorkerImage:Machine {
    inputPreservationChecked=true;
   }
   if(stores==32 && damageInput && !inputDamaged){transfer.l1[L::Input+1]^=1;inputDamaged=true;}
+  if(stores==32 && damageHeader && !inputDamaged){transfer.l1[L::Input-L::Header]^=1;inputDamaged=true;}
   if(stores==32 && dropAfterFirstBand){dropAckAt=acks+1;dropAfterFirstBand=false;}
   if(stores==32 && faultAfterFirstBand){transfer.fault=5;faultAfterFirstBand=false;}
 #endif
@@ -87,7 +93,7 @@ struct WorkerImage:Machine {
    assert(native.Clean() && Loaded());unsigned row=(a-0xffbd8000)/64,col=(a%64)/4;
    assert(native.valid[row] && (row==32 || row==40));native.outputReads++;return Bits(native.destination[row][col]);
   }
-  if(transfer.Header(a)||Range(a,0xffb20000,0x2000))return transfer.Read(a);
+  if(transfer.Header(a)||transfer.InputScratch(a)||Range(a,0xffb20000,0x2000))return transfer.Read(a);
   assert(CodeAddress(a)||Range(a,0x6e000,8192)||Range(a,0x74000,64)||Range(a,0x17ffc0,12)||Range(a,W::Output,8*32*4));
   return l1[Index(a)];
  }
@@ -136,11 +142,21 @@ int main(int argc,char** argv){
   printf("PASS OFFBOARD input reuse K%u bands%u: %u exact output words, %u NoC reads, steps%u; NO DEVICE\n",width,bands,bands*32,image.transfer.issues,image.steps);
  }
  { // Deliberate corruption demonstrates why a real retained-input lifetime proof is mandatory.
-  WorkerImage image(argv[1],63,5120);image.damageInput=true;assert(image.Execute() && image.inputDamaged);
+  WorkerImage image(argv[1],63,5120);image.damageInput=true;
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT
+  assert(!image.Execute() && image.inputDamaged && image.stores==32);
+  puts("PASS on-card diagnostic checksum stopped the tested staged-input corruption before the second band; NO DEVICE OR OWNERSHIP PROOF");
+#else
+  assert(image.Execute() && image.inputDamaged);
   const auto* expected=PioneerNativeBfp4BandGolden(5120);bool changed=false;
   for(unsigned row=0;row<32;row++)changed|=image.l1[image.Index(W::Output+(32+row)*4)]!=expected[row];
   assert(changed);puts("PASS negative control: staged-input corruption can change the second band without a fault; NO PRODUCTION AUTHORITY");
+#endif
  }
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT
+ {WorkerImage image(argv[1],63,5120);image.damageHeader=true;assert(!image.Execute() && image.inputDamaged && image.stores==32);}
+ {WorkerImage image(argv[1],63,5120);image.damageOnMath=true;assert(!image.Execute() && image.inputDamaged && !image.stores);}
+#endif
 #endif
  for(unsigned word=0;word<W::Words;word++){
   WorkerImage image(argv[1],1,5120);image.l1[image.Index(0x74000+word*4)]=UINT32_MAX;

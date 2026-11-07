@@ -110,7 +110,10 @@ each output band. Simulated worker output matched the existing BFP4 result,
 with fewer on-card network reads; there is no card timing or full-model rate.
 A corruption control showed that changing the retained input can silently
 change later output, so a real ownership/lifetime proof is required before
-integration. See the [input-reuse experiment](benchmarks/qwen38-bfp4-input-reuse-offboard-20261107.txt).
+integration. A separate on-card checksum diagnostic caught the tested
+corruptions in simulation but is expensive there and is not an ownership
+proof; it is not included in the fast experiment. See the
+[input-reuse experiment](benchmarks/qwen38-bfp4-input-reuse-offboard-20261107.txt).
 
 ## Milestone 4: Assistant
 

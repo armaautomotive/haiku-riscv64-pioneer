@@ -37,11 +37,33 @@ full-model or physical performance result. The earlier failed unpack-reuse
 experiment is not retried here; this experiment retains input L1 bytes,
 not unpack/source-bank ownership.
 
+Separate checksum diagnostic
+----------------------------
+A third build adds a local on-card diagnostic checksum over the staged input
+and headers, after initial loading, around later loads and after each compute.
+It has no CPU-reference inference. In the emitted-RV32 simulator it retained
+the same successful outputs and stopped the tested payload, header and
+during-compute corruptions before publishing the affected band's outputs.
+This is a non-cryptographic detector: collisions and mutation between checks
+are possible. It is NOT proof of exclusive ownership or safe hardware reuse.
+The unchecked experiment and original images are unchanged, and the tests
+confirm the checksum routine is absent from both. The diagnostic image is
+8,036 of the leaf's 8,192 available code bytes, SHA-256
+59fae2c4467f7053be92568934f0dc5e5e053be01dd5909f1072fcd9b40d6d56.
+
+For the same worker119 two-band simulations, the diagnostic required
+500,291 RV32 steps at K5120 and 1,693,079 at K17408. The unchecked candidate
+required 162,372 and 545,673 respectively. These are NOT hardware times; they
+show the full scan is expensive in this simulator and must not silently enter
+the requested fast, no-reference mode. None of the variants was run on card.
+
 Reproduce from the checkout, with the three private pinned fixtures:
   python3 tools/pioneer/tests/run_pioneer_q38_bfp4_worker_tests.py \
     /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_FIXTURE_DIR
   python3 tools/pioneer/tests/run_pioneer_q38_bfp4_worker_tests.py \
     --reuse-input /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_FIXTURE_DIR
+  python3 tools/pioneer/tests/run_pioneer_q38_bfp4_worker_tests.py \
+    --reuse-input-checksum /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_FIXTURE_DIR
 
 The physical full-model upload/release session already running on the
 Pioneer is independent of this candidate. It was not interrupted and does

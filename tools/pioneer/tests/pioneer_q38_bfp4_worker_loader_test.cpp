@@ -39,6 +39,9 @@ struct IO {
   }
   return false;
  }
+ bool InputScratch(unsigned a)const{
+  return a>=L::Input-L::Header && a-(L::Input-L::Header)<L::Tiles(job.words[2])*L::InputStride;
+ }
  void Flush(){
   assert(pending.size()==16);
   for(const auto& p:pending){
@@ -52,7 +55,7 @@ struct IO {
  }
  unsigned Read(unsigned a){
   events++;
-  if(Header(a)){return l1[a]|unsigned(l1[a+1])<<8|unsigned(l1[a+2])<<16|unsigned(l1[a+3])<<24;}
+  if(Header(a) || InputScratch(a)){return l1[a]|unsigned(l1[a+1])<<8|unsigned(l1[a+2])<<16|unsigned(l1[a+3])<<24;}
   const unsigned xy=job.words[7],x=xy&63,y=xy>>6,xi=x<6?0:x<12?1:2,yi=y<6?0:1;
   const unsigned xs=(x<6?x:x<12?x-6:x-12)*5,ys=(y<6?y:y-6)*5;
   if(a==0xffb20044)return (17<<12)|(12<<19)|xy|(fault==1?0x20:0);
