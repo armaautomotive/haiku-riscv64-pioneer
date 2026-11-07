@@ -133,6 +133,8 @@ now carries that same sealed hybrid receipt through binding and all three
 native state initializers using the real zero program on simulated endpoints.
 It passed without modifying the simulated learned ledger. This is not a
 physical startup, model execution, quality or speed result.
+The same simulated owner also passed preparation and restoration of held
+worker memory for all 120 workers; no worker was launched.
 
 The corrected build and diagnostic now have a separate tag126 identity;
 their offline lifecycle tests reject the older tag125. The tag125 driver

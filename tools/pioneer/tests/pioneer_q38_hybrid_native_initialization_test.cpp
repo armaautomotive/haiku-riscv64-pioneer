@@ -7,7 +7,10 @@
 #undef main
 
 int main(int argc,char** argv){
+ assert(argc==2 || (argc==3 && !strcmp(argv[2],"--held")));
+#ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  assert(argc==2);
+#endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
  std::fill(f.learned.begin(),f.learned.end(),0);c.hashes=hashes.data();c.initialized=f.learned.data();c.span={};
@@ -47,4 +50,7 @@ int main(int argc,char** argv){
  assert(!f.Recurrent(recurrent) && !f.History(history) && !f.Projection(projection) && io.touches==touches);
  assert(!c.q38TokenNative->Unsafe() && !c.banks.Quarantined() && f.learned==before);
  puts("PASS real sealed hybrid receipt/bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+ if(argc==3)CheckNativeHeld(f,0);
+#endif
 }

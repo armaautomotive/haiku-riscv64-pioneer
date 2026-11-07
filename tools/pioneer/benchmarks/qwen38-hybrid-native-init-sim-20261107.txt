@@ -18,6 +18,17 @@ simulated I/O. A separate original-layout native initialization regression
 also passed. These are not hardware startup, KV initialization, model
 execution, a quality comparison, or proof that a real device can recover.
 
+The same sealed receipt and initialized owner also passed the real held-memory
+preparation and restoration code against simulated hardware/VM endpoints.
+The test covered all 120 workers, 119 newly prepared store leases, four
+simulated aliases, and the converted address manifest. It saved and restored
+34,453,122 words and installed 3,452,256 program words, leaving workers held
+and the learned-page ledger unchanged. No worker was launched. This is not a
+physical execution, a full token, or proof of real hardware cleanup.
+
+Direct held-memory regression with the pinned input artifacts:
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --held --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
+
 Reproducible integration command:
   python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
 The QGW5 program header is pinned by SHA-256
