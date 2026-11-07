@@ -144,6 +144,9 @@ a cancellation request; the test paused before model arithmetic and did not
 verify cancellation consumption or a token.
 An extended run reached its first simulated learned-data request, but paused
 before the data was delivered or any embedding was computed.
+A further test delivered a synthetic Q4 row and computed its 5,120-value
+embedding on the simulated root, matching a separate test decoder. This was
+one artificial row, not a real model, full layer, token or hardware test.
 
 The corrected build and diagnostic now have a separate tag126 identity;
 their offline lifecycle tests reject the older tag125. The tag125 driver

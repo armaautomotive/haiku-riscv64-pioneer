@@ -316,7 +316,11 @@ static void CheckNativeExecution(Fixture& f){
  printf("PASS native SAME genuine ROOT normalized+quantized layer0 input/fresh-call cancel WHILE actual first worker doorbell transfer is OUTSTANDING/one32bit request+exact readback/ROOT instructions%u writtenStack%u;NOT worker matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE)
  assert(io.Core(0).pending && io.executionCpu->submitted==28 && io.executionCpu->completed==27);
+#ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
+ printf("PASS native SYNTHETIC EMBEDDING+simulated GDDR publication/SAME ROOT/119worker histories/fresh-call cancel while next layer0 metadata packet OUTSTANDING/one32bit request+exact readback+duplicate refusal/ROOT instructions%u writtenStack%u;NOT real model/layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#else
  printf("PASS native original EMBEDDING+verified GDDR publication/SAME ROOT/119worker histories/fresh-call cancel while next layer0 metadata packet OUTSTANDING/one32bit request+exact readback+duplicate refusal/ROOT instructions%u writtenStack%u;NOT layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#endif
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE)
  assert(io.Core(0).pending && io.executionCpu->submitted==4 && io.executionCpu->completed==3);
  printf("PASS native SAME owner+119actual boots+ROOT actual immutable metadata NoC reads/fresh-call CANCEL WHILE learned NoC request is OUTSTANDING/one32bit monotonic request+exact readback+duplicate refusal/no command/reset/host packet or model product/ROOT instructions%u writtenStack%u;NOT actual cancel consumption/embedding/matrix/layer/token/STOP/END/physical/Work/TPS\n",

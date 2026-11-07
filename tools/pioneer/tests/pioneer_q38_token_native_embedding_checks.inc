@@ -43,7 +43,11 @@ static bool CheckNativeEmbedding(Fixture& f){
  }
  assert(values==5120 && cpu.original->Ready() && io.runtimePackets==hostPackets && io.resets.size()==rootResets
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
+#ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
+ printf("PASS SAME full851 native owner+119 simulated worker histories/ROOT ACTUAL SYNTHETIC Q4_K embedding/20 synthetic RAW tiles+2 simulated GDDR writes+2 verified readbacks/ALL5120 LOCAL+SHADOW+GDDR values bit-exact vs separate synthetic-row decoder OBSERVER ONLY/%u ROOT instructions/%u scalar FP instructions/max writtenStack%u/next layer0 metadata request outstanding/no CPU product upload or private-history transplant;SIMULATED endpoints,NOT real model/layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#else
  printf("PASS SAME full851 native owner+119 genuine worker histories/ROOT ACTUAL original27B Q4_K embedding/20 authenticated RAW tiles+2 real GDDR writes+2 verified readbacks/ALL5120 LOCAL+SHADOW+GDDR values bit-exact vs separate original-row decoder OBSERVER ONLY/%u ROOT instructions/%u scalar FP instructions/max writtenStack%u/next layer0 metadata request outstanding/no CPU product upload or private-history transplant;SIMULATED endpoints,NOT model layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#endif
   cpu.steps,cpu.floatOps,0x70000-cpu.minStack);
  return true;
 }

@@ -10,12 +10,17 @@ import sys
 import tempfile
 
 root_profile=None
+synthetic_embedding='--synthetic-embedding' in sys.argv
+if synthetic_embedding:
+    assert sys.argv.count('--synthetic-embedding')==1
+    sys.argv.remove('--synthetic-embedding')
 hybrid_header=None
 if '--hybrid-qgw5-header' in sys.argv:
     assert sys.argv.count('--hybrid-qgw5-header')==1
     index=sys.argv.index('--hybrid-qgw5-header');assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
-    assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')) and hybrid_header.is_absolute() and hybrid_header.is_file()
+    assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
+            or synthetic_embedding and len(sys.argv)==4 and sys.argv[2]=='--execution-embedding') and hybrid_header.is_absolute() and hybrid_header.is_file()
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()=='2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
 manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
@@ -329,6 +334,10 @@ assert backend_init_faults or full_end_contract or clock_contract or preparation
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
+if synthetic_embedding:
+    assert len(sys.argv)==4 and sys.argv[2]=='--execution-embedding'
+    fixture=pathlib.Path(sys.argv[3]);assert fixture.is_absolute() and fixture.is_file()
+    assert fixture.read_bytes()==b'SYNTHETIC_Q4K_EMBEDDING_V1\n'
 image = pathlib.Path(sys.argv[1])
 assert image.is_absolute() and hashlib.sha256((image/'text.bin').read_bytes()).hexdigest() == '39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'
 here = pathlib.Path(__file__).resolve().parent
@@ -352,6 +361,7 @@ if hybrid_header:
     defines.update(PIONEER_Q38_HYBRID_TRACKED_UPLOAD='1',PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY='1',
                    PIONEER_Q38_TOKEN_BF16_PROGRAMS='1',PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC='1',
                    PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC='1',PIONEER_Q38_HYBRID_PROGRAMS_HEADER='"'+str(hybrid_header)+'"')
+if synthetic_embedding:defines['PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST']='1'
 if precise_context:
     defines.update(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1',
                    PIONEER_DRIVER_BUILD_TAG='0x5154324e4f445256ULL')
@@ -687,13 +697,16 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         # RAW byte transport is a separate TEST-only TU,without native-role
         # defines. Never promote its CPU-validation preprocessor role into
         # the native factory/driver candidate or its SDK/Work build.
-        raw_object = base/'original-raw.o'
-        subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
-                        '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(raw_object)], check=True)
+        if not synthetic_embedding:
+            raw_object = base/'original-raw.o'
+            subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
+                            '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(raw_object)], check=True)
+            extra += [str(raw_object)]
         bridge_object = base/'embedding-raw-bridge.o'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
-                        '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_embedding_raw_test_bridge.cpp'), '-o', str(bridge_object)], check=True)
-        extra += [str(raw_object), str(bridge_object)]
+                        '-fsanitize=address,undefined', *(['-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1'] if synthetic_embedding else []),
+                        '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
+        extra += [str(bridge_object)]
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent),

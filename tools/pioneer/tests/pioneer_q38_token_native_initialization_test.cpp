@@ -2,6 +2,10 @@
 // Actual native factory/lock/phase callbacks/initializers and actual frozen
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
+#if defined(PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST) && (PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST != 1 \
+ || !defined(PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE) || !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY))
+#error Synthetic embedding is restricted to the private offline native test fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE) && !defined(PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE)
 #error Fresh-slot sampler reader requires its own complete original native TEST binding
 #endif
@@ -832,7 +836,12 @@ int main(int argc,char** argv){
  const bool faults=!backendInitFaults && !fullEndContract && !clockContract && !preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
  assert(fullEndContract || embedding);Q38EmbeddingRawTestBridge original;
- if(!fullEndContract){puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
+ if(!fullEndContract){
+#ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
+  puts("START SYNTHETIC Q4_K FIXTURE ONLY;NO real model or CPU-product injection");
+#else
+  puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
+#endif
   assert(original.Open(argv[3]) && original.Ready());}
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE

@@ -7,24 +7,34 @@
 #undef main
 
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic"))));
+ assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic")))
+  || (argc==4 && !strcmp(argv[2],"--execution-embedding")));
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  assert(argc==2);
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
- assert(argc!=3 || (strcmp(argv[2],"--runtime") && strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic")));
+ assert(argc==2 || (strcmp(argv[2],"--runtime") && strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic") && strcmp(argv[2],"--execution-embedding")));
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
- assert(argc!=3 || (strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic")));
+ assert(argc==2 || (strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic") && strcmp(argv[2],"--execution-embedding")));
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
- assert(argc!=3 || (strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic")));
+ assert(argc==2 || (strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic") && strcmp(argv[2],"--execution-embedding")));
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
- assert(argc!=3 || strcmp(argv[2],"--execution-traffic"));
+ assert(argc==2 || (strcmp(argv[2],"--execution-traffic") && strcmp(argv[2],"--execution-embedding")));
+#endif
+#ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
+ assert(argc==4 && !strcmp(argv[2],"--execution-embedding"));
+ Q38EmbeddingRawTestBridge original;assert(original.Open(argv[3]) && original.Ready());
+#else
+ assert(argc!=4);
 #endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
+ io.executionCpu->original=&original;
+#endif
  std::fill(f.learned.begin(),f.learned.end(),0);c.hashes=hashes.data();c.initialized=f.learned.data();c.span={};
  c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;auto& receipt=*c.q38HybridReceipt;
  assert(receipt.Begin(&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration,c.banks,f.proof,f.learned.size()));
@@ -66,9 +76,9 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  io.runtimeWorkspace=io.workspaceAddress;
 #endif
- if(argc==3)CheckNativeHeld(f,0);
+ if(argc>=3)CheckNativeHeld(f,0);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
- if(argc==3 && (!strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic")))CheckNativeExecution(f);
+ if(argc>=3 && (!strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-embedding")))CheckNativeExecution(f);
 #endif
 }

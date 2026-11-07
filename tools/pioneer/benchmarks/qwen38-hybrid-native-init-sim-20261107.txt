@@ -78,6 +78,22 @@ not a physical device, full-model correctness result or speed measurement.
 Direct first-data-request regression with the same pinned artifacts:
   python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --execution-traffic --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
 
+Synthetic embedding extension
+-----------------------------
+With the same simulated owner/startup/worker history, the QGW5 root consumed
+20 synthetic Q4_K tiles, computed the 5,120-value embedding, wrote it to the
+simulated workspace, read it back, and reached the next layer-data request.
+All values matched an independent test decoder used only as an observer. The
+original-layout simulation also passed. The fixture is one synthetic token
+row with fixed finite scales (d=1, dmin=0) and varied quantized bytes. It is
+not real model data, a representative quality test, a whole layer, a token,
+real accelerator execution, or a performance result. A separate host-only
+bridge has role guards and no fallback to real-model or Work code.
+
+The synthetic test is selected explicitly with --synthetic-embedding; the
+sentinel file is tools/pioneer/tests/synthetic_q4_embedding.fixture. Normal
+authenticated-original tests retain their existing source implementation.
+
 Reproducible integration command:
   python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
 The QGW5 program header is pinned by SHA-256
