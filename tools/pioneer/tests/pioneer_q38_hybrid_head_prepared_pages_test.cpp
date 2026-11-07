@@ -31,6 +31,7 @@ template<class Source>unsigned FakeHead<Source>::read=0;
 template<class Source>bool FakeHead<Source>::allowed=true;
 template<class Source>bool FakeHead<Source>::change=false;
 using HeadPages=PioneerQ38HybridHeadPreparedPages<FakeSource,FakePlan,FakeBfp8,FakeFour,FakeHead>;
+#ifndef PIONEER_Q38_HYBRID_HEAD_PREPARED_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakeSource source;FakePlan packed;packed.source=&source;std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -105,3 +106,4 @@ int main(){
   && headStats.fragments==7 && headStats.hits==7 && FakeHead<FakeSource>::opened==7);
  puts("PASS QGW8 complete prepared page routing: all 1351 converted stripes, FFN format boundaries, head, original data, missing/changed/failed cache atomicity; synthetic source only, NO device or TPS");
 }
+#endif

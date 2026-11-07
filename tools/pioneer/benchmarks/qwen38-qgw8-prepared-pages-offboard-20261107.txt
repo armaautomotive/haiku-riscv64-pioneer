@@ -37,6 +37,18 @@ Its head converter fingerprint is now
 e0e45dce6f1d95124aaeb956e2ee4076aff5b11d35d8079e205054cf33cf316f;
 the preceding preparer binary's different fingerprint must not be mixed with
 this preflight. Rebuild the head preparer with the same sources as preflight.
+
+The existing span-packet builder now also accepts a separate explicitly
+selected QGW8 plan; its default remains the prior 13-layer plan. With the
+actual QGW8 prepared-page router over fake sources and transport, it checked
+all 3551 weight fragments and 22035 packets, totaling 21167624192 synthetic
+bytes. The old plan rejects these pages before the first transport call;
+bad geometry and uncertain transport responses stop without retry. The real
+GGUF/cache page-source and packet-builder types also cross-compile together.
+This is NOT a card upload: the existing native session and receipt ledger
+remain fixed to the older layout. A format-bound owner/receipt and a new
+qualified runtime are still needed; presence-only ledger entries do not
+prove which format was uploaded. The old driver must not accept this layout.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.

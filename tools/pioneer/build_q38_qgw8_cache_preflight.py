@@ -37,7 +37,21 @@ cmd[1:1] = ['-DPIONEER_BFP4_IMPLEMENTATION_SHA256="' + four + '"',
             '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 subprocess.run(cmd, check=True, cwd=out)
 (out / 'qgw8-preflight-build-argv.txt').write_text('\t'.join(cmd) + '\n')
+# Instantiate the real QGW8 page source and the explicitly selected span
+# packet builder together under the Haiku compiler. This is compile-only;
+# it neither creates an owner nor links or opens a device.
+probe = list(cmd)
+probe[probe.index(str(here / 'pioneer_q38_qgw8_cache_preflight.cpp'))] = str(
+    here / 'tests' / 'pioneer_q38_hybrid_head_prepared_actual_compile.cpp')
+for item in (str(here / 'PioneerModelWeightCache.cpp'), str(sdk / 'objects/haiku/riscv64/release/kits/shared/libshared.a'), '-lbe'):
+    if probe.count(item) != 1:
+        raise RuntimeError('unexpected compile-only probe input: ' + item)
+    probe.remove(item)
+out_index = probe.index('-o')
+del probe[out_index:out_index + 2]
+probe.append('-fsyntax-only')
+subprocess.run(probe, check=True, cwd=out)
 print('QGW8_FFN_BFP4_CONVERTER_FINGERPRINT', four)
 print('QGW8_HEAD_BFP8_CONVERTER_FINGERPRINT', built['fingerprint'])
 print('QGW8_PREFLIGHT_BINARY_SHA256', hashlib.sha256(binary.read_bytes()).hexdigest())
-print('BUILD ONLY: no model, cache, device or inference access')
+print('BUILD ONLY: preflight binary and real page-to-span types; no model, cache, device or inference access')

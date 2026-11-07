@@ -17,6 +17,30 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
+
+// Preserve the existing 13-layer format as the only default. QGW8 uses a
+// distinct explicitly selected diagnostic plan and cannot be silently
+// accepted by existing owners, manifests or driver identities.
+struct PioneerQ38HybridLegacyUploadPlan {
+ using Proposal=PioneerQ38HybridModelPlan::Proposal;
+ template<class Canonical>static bool Build(const Canonical& source,Proposal& output){
+  return PioneerQ38HybridModelPlan::Build(source,UINT64_C(0x1fff000000000000),output);
+ }
+};
+#ifdef PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC
+#if PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC != 1 \
+ || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1
+#error QGW8 span upload requires its distinct head-plan inspection role
+#endif
+#include "PioneerQ38HybridHeadModelPlan.h"
+struct PioneerQ38HybridHeadUploadPlan {
+ using Proposal=PioneerQ38HybridHeadModelPlan::Proposal;
+ template<class Canonical>static bool Build(const Canonical& source,Proposal& output){
+  return PioneerQ38HybridHeadModelPlan::Build(source,output);
+ }
+};
+#endif
 
 // One-shot adapter from preverified hybrid pages to the EXISTING Work span
 // wire protocol, for a separately qualified experimental userspace owner.
@@ -26,7 +50,13 @@
 // or uncertain Call is NOT safe release: the caller must retain its owner and
 // obey the driver's quarantine/recovery rules. Success likewise leaves the
 // span and bank owner held; it is not inference or model-quality evidence.
-template<class Pages,class IO> class PioneerQ38HybridSpanUpload {
+template<class Pages,class IO,class Plan=PioneerQ38HybridLegacyUploadPlan> class PioneerQ38HybridSpanUpload {
+#ifdef PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC
+ static_assert(std::is_same<Plan,PioneerQ38HybridLegacyUploadPlan>::value || std::is_same<Plan,PioneerQ38HybridHeadUploadPlan>::value,
+  "Only explicit hybrid upload plans are supported");
+#else
+ static_assert(std::is_same<Plan,PioneerQ38HybridLegacyUploadPlan>::value,"Only the legacy hybrid upload plan is enabled");
+#endif
  using C=PioneerQ38CanonicalModelPlan;
  bool attempted=false,touched=false,complete=false,failed=false;
  uint64_t bytes=0,uploaded=0;unsigned spans=0,parts=0;
@@ -44,8 +74,8 @@ public:
   if(attempted)return Fail(error,"Hybrid upload is one-shot; no retry.");
   attempted=true;
   if(fd<0 || !pages.AllVerified() || !canonical.Ready())return Fail(error,"Hybrid upload requires a preverified live source and caller-owned session.");
-  PioneerQ38HybridModelPlan::Proposal expected;
-  if(!PioneerQ38HybridModelPlan::Build(canonical,UINT64_C(0x1fff000000000000),expected)
+  typename Plan::Proposal expected;
+  if(!Plan::Build(canonical,expected)
    || canonical.Count()!=4678 || expected.parts.size()!=canonical.Count())return Fail(error,"Invalid full-model hybrid geometry.");
   unsigned weights=0;
   for(unsigned i=0;i<canonical.Count();i++){
