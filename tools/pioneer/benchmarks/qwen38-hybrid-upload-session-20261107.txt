@@ -1,0 +1,34 @@
+Hybrid 27B cache upload/release session: NOT YET RUN ON CARD
+============================================================
+November 7, 2026. An isolated userspace diagnostic now retains the SAME
+authenticated model and verified cache readers, checks the pinned stable
+driver/idle generation, reserves the existing seven-bank session, transfers
+all prepared weights through its existing span ABI, and explicitly ends the
+span and bank session. It is upload-and-release ONLY: weights do not remain
+loaded and it never issues a model or token START. Any uncertain call closes
+once only; it must not retry, issue END, reset or infer cleanup from output.
+It is separate from Work/Assistant and performs no CPU-reference inference.
+
+Tests completed:
+* ASan/UBSan fake transport exercised all 3551 fragments, 22005 packets,
+  21137039360 synthetic bytes and the full BEGIN/END sequence. Sixteen
+  early/late transport or reply failures were close-only with no later call.
+  Actual prepared-page dispatch was also combined with the actual session
+  and fake transport for the complete synthetic model. This is NOT hardware.
+* Existing prepared-page checks and refactored verifier negative-path and
+  role-exclusion checks passed. The actual refactored reader's real-model
+  CPU-only preflight is running separately in foreground session 47329;
+  do not restart it merely because a poll returns no output.
+* Two independent Haiku builds were byte-identical. Diagnostic SHA256:
+  560fc11a161ce54867dbe84c557a4a94d3513f4227d94903cef4e2096558e11c.
+* On the Pioneer, an invalid option exited 2 and nonexistent cache paths
+  exited 1 before opening the device. The installed driver hash matched the
+  known stable 041 image, and a read-only status query reported driver55,
+  tag2026102100010012, generation20, no active owner and cold0.
+
+The staged executable lives in /boot/home/pioneer-hybrid-upload-test.KtEQ8Xj6.
+No physical upload has been attempted. A one-shot, monitored hardware test
+requires completion of the actual refactored-cache preflight, fresh driver
+and owner checks, an independently tested parent/exit-record procedure and
+the established failure/quarantine recovery rules. Upload success by itself
+would still not establish model execution, answer quality or tokens/second.

@@ -32,6 +32,7 @@ struct UploadIO {
   calls++;packet.result={1,TT_RUNTIME_PASSED,packet.bytes,count,calls,1,1,1,0,0,0,0};return true;
  }
 };
+#ifndef PIONEER_Q38_HYBRID_PREPARED_UPLOAD_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  PioneerQ38HybridModelPlan::Proposal proposal;
@@ -64,3 +65,4 @@ int main(){
  printf("PASS actual hybrid prepared-page dispatch into %u fake span calls, %llu synthetic bytes; "
   "NO card, model data, inference or performance result\n",io.calls,(unsigned long long)io.bytes);
 }
+#endif

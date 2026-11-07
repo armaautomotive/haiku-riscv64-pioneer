@@ -20,4 +20,9 @@ for role in _KERNEL_MODE PIONEER_Q38_WORK_INFERENCE TT_PIONEER_Q38_WORK_MODE PIO
   -DPIONEER_BFP4_IMPLEMENTATION_SHA256="\"$fingerprint\"" -fsyntax-only "$directory/../pioneer_q38_hybrid_cache_preflight.cpp" 2> "$temporary/$role.stderr";then exit 1;fi
  rg -q 'Hybrid cache preflight requires its distinct CPU-only preparation role' "$temporary/$role.stderr"
 done
-printf 'PASS hybrid cache preflight negative paths and 5 forbidden roles; NO MODEL, DEVICE OR CACHE WRITES\n'
+for role in PIONEER_Q38_FULL_OFFLOAD_CLIENT PIONEER_Q38_FULL_OFFLOAD_NATIVE PIONEER_Q38_BF16_FULL_CLIENT PIONEER_Q38_BF16_FULL_NATIVE PIONEER_Q38_TOKEN_NATIVE_CONTEXT PIONEER_DRIVER_BUILD_TAG;do
+ if ${CXX:-c++} $common -DPIONEER_Q38_BFP4_PREPARATION_DIAGNOSTIC=1 -D"$role" \
+  -DPIONEER_BFP4_IMPLEMENTATION_SHA256="\"$fingerprint\"" -fsyntax-only "$directory/../pioneer_q38_hybrid_cache_preflight.cpp" 2> "$temporary/model-$role.stderr";then exit 1;fi
+ rg -q 'Hybrid verified model requires the isolated preparation role' "$temporary/model-$role.stderr"
+done
+printf 'PASS hybrid cache preflight negative paths and 11 forbidden roles; NO MODEL, DEVICE OR CACHE WRITES\n'

@@ -51,6 +51,7 @@ struct FakeIO {
   return true;
  }
 };
+#ifndef PIONEER_Q38_HYBRID_SPAN_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<Canonical>();assert(canonical->Build());std::string error;
  using Upload=PioneerQ38HybridSpanUpload<FakePages,FakeIO>;
@@ -103,3 +104,4 @@ int main(){
  }
  puts("PASS preflight mismatch, read failure, 12 reply fields, uncertain call, changed request, revoked source and no retry");
 }
+#endif
