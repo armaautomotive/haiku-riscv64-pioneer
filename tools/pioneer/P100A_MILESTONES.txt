@@ -46,6 +46,12 @@ single BFP4 band took roughly 227k card cycles including GDDR and compute,
 versus roughly 643k in a prior Q4 diagnostic, but inputs and representations
 are not an equivalent-accuracy paired benchmark. Whole-model quality is not
 established; one-token hybrid quality tests are warnings, not a pass.
+Source inspection also confirms the recorded Q4 and BFP4 timing runs did not
+use the same input vector: the Q4 exporter uses a (column*19 + block*11)
+pattern, while the BFP4 exporter uses an (input*13) pattern. Thus even their
+input data are not paired; do not quote their cycle ratio as an A/B speedup.
+See pioneer_native_compact_q4_stream_export.cpp and
+pioneer_bfp4_real_band_export.cpp for the exact BF16 encodings.
 
 Before further full-model integration, define a model-relevant accuracy gate,
 measure representative real weights and prompts against the Q4 reference,
