@@ -1,5 +1,5 @@
-QGW8 combined FFN/head comparison: CPU-ONLY, RUN IN PROGRESS
-============================================================
+QGW8 combined FFN/head comparison: CPU-ONLY, ONE FIXED TOKEN
+===========================================================
 
 An isolated one-token test compares original model logits with the QGW8
 11-layer-BFP8 FFN alternative and a BFP8 output head, all on the host CPU.
@@ -10,12 +10,28 @@ weights, and software BFP8 conversion/matrix arithmetic to calculate all
 only quantization error. It is not card execution, a throughput benchmark,
 Work-mode integration, natural chat or an answer-quality qualification.
 
-The test executable was built from the accompanying source and started at
-approximately 14:16 local time on November 7, 2026, with binary SHA-256
+The test executable was built from the accompanying source and ran from
+14:16:28 to 14:26:36 local time on November 7, 2026, with binary SHA-256
 2b08451e0ef37f914c8eedc00224007abacdd772bcedbd7578e4ebb56bc258a6.
 The private capture is /private/tmp/pioneer-qgw8-cpu-head-compare-20261107-a.log.
-As of 14:17, the authenticated original-model pass was progressing. The
-log is temporary and its existence alone does not establish a live process
-or a successful result. Inspect the live process handle and CAPTURE_EXIT/PASS
-markers before claiming completion; do not restart simply because polling
-times out. No result or inference speed is yet claimed.
+It exited 0 with PASS and CAPTURE_EXIT 0; the 31120-byte transcript has SHA-256
+87cddcfa1614c87dad1eebdeca032019ed2bf77a040f62ab322753927b20e206.
+It records 64 original layers, 64 converted-FFN layers, all 192 FFN
+projections, and all 7760 32-row head bands. The temporary file is not an
+archival backup.
+
+The three comparisons use the entire 248320-token distribution. KL is
+original-to-candidate in nats. The middle comparison uses the same converted
+FFN hidden state with each head, isolating head format AND arithmetic changes:
+
+ comparison                original top  candidate top  KL          top-5 overlap
+ FFN conversion only       70253         70253          0.321765477  4/5
+ head, same hidden         70253         70253          0.000365890  4/5
+ combined FFN and head     70253         70253          0.322986945  3/5
+
+The head-only error was much smaller than the combined error on this single
+input, while the combined KL and 3/5 top-five overlap are substantial enough
+to require further investigation and broader evaluation. A matching greedy
+token is not a quality pass. The unconverted reference head and converted
+head use different software arithmetic as well as different weight formats.
+No P100A instructions, performance, generated answer or Work path were tested.
