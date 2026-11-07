@@ -37,3 +37,27 @@ Next: measure this operation on genuine P100A hardware with a bounded,
 recoverable diagnostic and compare representative actual-model inputs and
 quality. Integrate only after those checks, then time the real full model.
 The known full-model rate is still approximately 0.173 tokens/s; 20 is unmet.
+
+Additional real-input screening, November 7
+------------------------------------------
+The same two emitted RV32 images were run in the simulator on THREE existing
+Qwen-derived layer-zero vectors for token 248319. The private input fixtures
+were checked against previously recorded SHA-256 values:
+20880 bytes: 75dfd208b58e224e0575e211a735f03b34b316a9e548bf63d1d48e10a261e594
+290848 bytes: 85d4ada0aa8cfa847bb06e7a4296dd9992829947e8c5bf03b7ed9dadfd39f523
+Changed private fixtures are refused before instruction simulation.
+
+Weights were fixed to 1.0 to isolate the reduction; these were NOT the
+model's learned RMS weights. Precise versus candidate results:
+
+  Input                         Changed / 5120   Relative L2      Instructions
+  Post-attention normalized                 0             0      555354 / 246618
+  Post-attention residual                   0             0      555378 / 246627
+  Layer-zero final residual              5120   2.47886242e-7    555344 / 246615
+
+The last row's maximum absolute difference was 1.52587891e-5. This is not
+a physical timing, a second generated token, model-quality qualification,
+or evidence of any full-model speedup.
+
+Reproduce using the existing private fixture (not stored in Git):
+  python3 tools/pioneer/tests/run_pioneer_q38_fast_f32_hidden_rms_image_tests.py /ABSOLUTE/HAIKU/BUILD --prompt-fixture /ABSOLUTE/PRIVATE/prompt-input.bin --ffn-fixture /ABSOLUTE/PRIVATE/first-ffn-reference.bin
