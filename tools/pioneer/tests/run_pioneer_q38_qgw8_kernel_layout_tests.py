@@ -80,7 +80,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
     for name, symbols in (('kernel_layout', ('qgw8_kernel_layout_build',)),
                           ('upload_receipt', ('qgw8_receipt_begin', 'qgw8_receipt_span', 'qgw8_receipt_record',
                                               'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout',
-                                              'qgw8_receipt_canonical', 'qgw8_runtime_ranges')),
+                                              'qgw8_receipt_canonical', 'qgw8_runtime_ranges', 'qgw8_manifest')),
                           ('span_service', ('qgw8_span_receipt_kind',)),
                           ('startup', ('qgw8_startup_build', 'qgw8_startup_head'))):
         obj = out / (name + '.o')

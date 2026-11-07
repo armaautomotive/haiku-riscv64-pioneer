@@ -5,6 +5,7 @@
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RuntimeRanges.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridManifest.h"
 extern "C" bool qgw8_receipt_begin(PioneerQ38Qgw8UploadReceipt& r,const void* c,const void* fd,const uint32_t* hashes,
  const uint8_t* ledger,int64_t team,uint64_t generation,PioneerResidentBanks& banks,const tt_dram_samples_result& proof,unsigned pages){
  return r.Begin(c,fd,hashes,ledger,team,generation,banks,proof,pages);
@@ -20,4 +21,7 @@ extern "C" bool qgw8_receipt_canonical(PioneerQ38Qgw8UploadReceipt& r,PioneerQ38
  const uint32_t* hashes,const uint8_t* ledger,int64_t team,uint64_t generation){return r.DeriveBoundCanonical(out,c,fd,hashes,ledger,team,generation);}
 extern "C" bool qgw8_runtime_ranges(const PioneerQ38CanonicalModelPlan& plan,PioneerResidentMutableRange (&ranges)[7]){
  return PioneerQ38RuntimeRanges(plan,ranges);
+}
+extern "C" bool qgw8_manifest(const PioneerQ38CanonicalModelPlan& plan,uint32_t* output,unsigned words){
+ return PioneerQ38HybridManifest::Build(plan,output,words);
 }

@@ -156,6 +156,18 @@ the combined session fixtures select that role before the canonical header.
 These checks do not bind the matching real worker, run the full ROOT/worker
 lifecycle, authenticate real converted weights or establish any device speed.
 
+The shared hybrid journal's FFN address-table derivation now understands
+both the existing layers-48--60 BFP8 layout and the separate inspection-only
+QGW8 layers-50--60 layout. It checks all entries before publishing the table.
+The QGW8 table matched the independent host plan, and the existing ROOT pair
+and relocation routines produced the expected addresses for all 22848 FFN
+worker jobs in a host simulation, including both format boundaries. The
+older QGW5 held-journal staging, verification, fault and restore regression
+passed against its pinned image; the RISC-V template also cross-compiled.
+This is not QGW8 journal installation on the P100A, a complete coordinator
+run or a performance measurement; the matching QGW8 worker/owner remains
+unconnected to the actual driver.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

@@ -6,6 +6,9 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenStartupPlan.h"
 #include "PioneerQ38GraphCsrProbe.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+#include "PioneerQ38HybridManifest.h"
+#endif
 // DISTINCT full-token held L1 journal. Not the three-layer prefix journal,
 // an embedding producer,initialized state,model-source/clock/host permission,
 // a launched owner or a caller-supplied STOP/clean capability. Genuine native
@@ -27,7 +30,7 @@ class PioneerQ38TokenMemory {
  uint32_t saved[PioneerQ38TokenL1::SavedWords]; // ALL arbitrary originals;HEAP ONLY
  unsigned sampled=0;bool started=false,installed=false,closed=false,unsafe=false,launched=false,launchClosed=false;
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
- enum {HybridManifestAddress=0x16c400,HybridManifestWords=64*3*7};
+ enum {HybridManifestAddress=0x16c400,HybridManifestWords=PioneerQ38HybridManifest::Words};
  // This owner is heap-only. Keep the 5,376-byte derivation workspace here,
  // not on a future kernel caller's limited stack. It is private to the same
  // one-shot owner and is rebuilt from the held model before each operation.
@@ -79,20 +82,7 @@ class PioneerQ38TokenMemory {
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   if(!staged || !canonical || !startup || !ledger || canonical->Count()!=4678
    || !startup->LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return false;
-  for(unsigned i=0;i<HybridManifestWords;i++)staged[i]=0;
-  unsigned found=0;
-  for(unsigned layer=0;layer<64;layer++)for(unsigned role=2;role<=4;role++)for(unsigned stripe=0;stripe<7;stripe++){
-   const auto* p=canonical->ProjectionStripe(layer,role,stripe);const unsigned width=role==4?17408:5120;
-   const bool eight=layer>=48 && layer<=60;
-   if(!p || p->kind!=PioneerQ38CanonicalModelPlan::WeightKind || p->layer!=layer || p->role!=role
-    || p->type!=12 || p->bank>=7 || !p->rows || ((p->firstRow|p->rows)&31) || p->rowBytes!=width*9/16
-    || p->bytes!=uint64_t(p->rows)*width*(eight?17:9)/16
-    || p->allocated!=((uint64_t(p->bytes)+4095U) & ~UINT64_C(4095)) || (p->offset&4095)
-    || p->offset>UINT32_MAX-PioneerQ38CanonicalModelPlan::Base)return false;
-   const unsigned at=(layer*3+role-2)*7+p->bank;if(staged[at])return false;
-   staged[at]=PioneerQ38CanonicalModelPlan::Base+p->offset;found++;
-  }
-  if(found!=HybridManifestWords)return false;
+  if(!PioneerQ38HybridManifest::Build(*canonical,staged,HybridManifestWords))return false;
   for(unsigned i=0;i<HybridManifestWords;i++){
    uint32_t ignored=0;const uint32_t address=HybridManifestAddress+i*4;
    if(!staged[i] || !L::SnapshotContains(0,address) || P::ProgramWord(0,address,ignored))return false;

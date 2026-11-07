@@ -2,6 +2,7 @@
 // Exact QGW8 receipt against synthetic bank proof, ledger, and host plan.
 #define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
 #define PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_HEAD_MATRIX_SIMULATION 1
 #define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
 #define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
@@ -9,14 +10,35 @@
 #define PIONEER_BANKS_MOCK_ONLY 1
 #include "../PioneerQ38TokenStartupPlan.h"
 #include "../PioneerQ38HybridHeadLayout.h"
+#include "../PioneerQ38Bf16RootPairs.h"
+#include "../PioneerQ38HybridRootPairs.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionMutableBanks.h"
 #include "pioneer_resident_banks_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RuntimeRanges.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridManifest.h"
 #include "../PioneerQ38HybridHeadModelPlan.h"
 #include <cstring>
 #include <memory>
 #include <vector>
+
+struct Qgw8RootProbe {
+ const PioneerQ38ProjectionJobs& input;
+ unsigned parts[119][8]={},rows[119]={},table[7][4]={};
+ unsigned Part(unsigned w,unsigned i)const{
+  const auto* p=input.Part(w);assert(p);
+  return i==0?PioneerQ38CanonicalModelPlan::Base+unsigned(p->offset):i==1?p->bank:i==2?p->groups:
+   i==4?Route(p->bank):i==5?Source(w):0;
+ }
+ unsigned Row(unsigned w)const{return input.Part(w)->firstRow;}
+ unsigned Route(unsigned bank)const{return PioneerQ38ProjectionRoute(bank);}
+ unsigned Source(unsigned w)const{return w+1;}
+ unsigned Result(unsigned w,unsigned i)const{return parts[w][i];}
+ unsigned ResultRow(unsigned w)const{return rows[w];}
+ unsigned Table(unsigned bank,unsigned field)const{return table[bank][field];}
+ void Output(unsigned w,unsigned i,unsigned value){parts[w][i]=value;}
+ void OutputRow(unsigned w,unsigned value){rows[w]=value;}
+};
 
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--tamper") || !strcmp(argv[1],"--extra")
@@ -99,6 +121,43 @@ int main(int argc,char** argv){
  }
  assert(recurrent==672);
  for(unsigned b=0;b<7;b++)assert(native->Workspace(b) && native->Workspace(b)->bank==b && native->Used(b)==bound->Used(b));
+ std::array<uint32_t,PioneerQ38HybridManifest::Words> manifest={},expectedManifest={};
+ assert(PioneerQ38HybridManifest::Build(*native,manifest.data(),manifest.size())
+  && PioneerQ38HybridHeadModelPlan::Manifest(*canonical,host,expectedManifest.data(),expectedManifest.size())
+  && manifest==expectedManifest);
+ auto refusesManifest=[&]{
+  auto untouched=expectedManifest;untouched.fill(0xa5a5a5a5U);const auto before=untouched;
+  assert(!PioneerQ38HybridManifest::Build(*native,untouched.data(),untouched.size()) && untouched==before);
+ };
+ for(unsigned layer:{49U,50U,60U,61U}){
+  auto* p=const_cast<PioneerQ38CanonicalPart*>(native->ProjectionStripe(layer,2,0));assert(p);
+  const auto saved=*p;p->bytes+=4096;refusesManifest();*p=saved;
+  p->type=8;refusesManifest();*p=saved;p->offset++;refusesManifest();*p=saved;
+ }
+ auto untouched=expectedManifest;assert(!PioneerQ38HybridManifest::Build(*canonical,untouched.data(),untouched.size())
+  && untouched==expectedManifest);
+ unsigned relocatedJobs=0;
+ for(unsigned layer=0;layer<64;layer++)for(unsigned role=2;role<=4;role++){
+  auto jobs=std::make_unique<PioneerQ38ProjectionJobs>();assert(jobs->Build(*native,layer,role,8191) && jobs->Count()==119);
+  Qgw8RootProbe root{*jobs};const PioneerQ38CanonicalPart* byBank[7]={};
+  for(unsigned stripe=0;stripe<7;stripe++){
+   const auto* p=native->ProjectionStripe(layer,role,stripe);assert(p);
+   assert(p->bank<7 && !byBank[p->bank]);byBank[p->bank]=p;
+   root.table[p->bank][0]=native->Base+p->offset;
+   root.table[p->bank][1]=manifest[(layer*3+role-2)*7+p->bank];
+   root.table[p->bank][2]=p->firstRow;root.table[p->bank][3]=p->rows;
+  }
+  assert(PioneerQ38Bf16RootPairs::Build(root,jobs->Inputs(),jobs->Outputs())
+   && PioneerQ38HybridRootPairs::Relocate(root,layer,jobs->Inputs(),jobs->Outputs()));
+  for(unsigned w=0;w<119;w++){
+   const unsigned bank=root.parts[w][1],row=root.rows[w];assert(bank<7);const auto* stripe=byBank[bank];
+   assert(stripe && row>=stripe->firstRow && row<stripe->firstRow+stripe->rows && !((row-stripe->firstRow)&31));
+   const unsigned width=role==4?17408:5120;const bool eight=layer>=50 && layer<=60;
+   const uint64_t expected=uint64_t(native->Base)+stripe->offset+uint64_t(row-stripe->firstRow)*width*(eight?17:9)/16;
+   assert(root.parts[w][0]==expected && root.parts[w][4]==PioneerQ38ProjectionRoute(bank));relocatedJobs++;
+  }
+ }
+ assert(relocatedJobs==64*3*119);
  std::array<uint32_t,1920> sources={};for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
  const PioneerQ38GdnIdentity startupId={1,2,3,42};const uint32_t prompt[]={248319,17};
  for(unsigned bank=0;bank<7;bank++){
@@ -182,6 +241,6 @@ int main(int argc,char** argv){
  assert(!second->BindCanonical(banks,proof,id,ledger.data(),ledger.size(),*native,0));
  assert(!receipt->Seal(span) && !receipt->Next(bank,offset,length));
  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
- printf("PASS QGW8 receipt and actual runtime reservation: %u host-plan-matched extents, 3551 fragments, %llu bytes; synthetic owner/ledger only, no device\n",
-  spans,(unsigned long long)total);
+ printf("PASS QGW8 receipt and actual runtime reservation: %u host-plan-matched extents, 3551 fragments, %llu bytes, %u FFN jobs; synthetic owner/ledger only, no device\n",
+  spans,(unsigned long long)total,relocatedJobs);
 }
