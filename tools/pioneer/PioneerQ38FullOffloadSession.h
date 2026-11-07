@@ -67,7 +67,8 @@ class PioneerQ38FullOffloadSession {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  unsigned observedCount=0;
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  PioneerQ38TokenPhaseProfileControl::Packet phaseProfile;
  bool phaseProfileRead=false;
 #endif
@@ -315,10 +316,17 @@ public:
    std::copy(packet->records,packet->records+count*64,records.begin()+cursor*64);cursor+=count;
   }while(cursor<committed);
   state=Drained;
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   {namespace C=PioneerQ38TokenPhaseProfileControl;
    C::Packet observed;const auto request=observed.request;
-   if(phaseProfileRead || !Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE,observed)
+   if(phaseProfileRead || !Call(
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+    TT_PCI_PROBE_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE,
+#else
+    TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE,
+#endif
+    observed)
     || std::memcmp(&observed.request,&request,sizeof(request)) || !C::ReplyShape(observed)
     || observed.reply.status || observed.reply.ready!=1 || observed.reply.detail[8]!=committed)return Stop("phase_profile");
    phaseProfile=observed;phaseProfileRead=true;}
@@ -328,7 +336,8 @@ public:
    if(r.ready!=1 || r.stage!=11 || d[3]!=1 || d[4] || d[5]!=1 || d[6] || d[7])return Stop("finish_reply");}
   const int owned=fd;fd=-1;if(io.Close(owned))return Stop("close");state=Complete;return true;
  } // full STOP/HOLD/drain/restore/END before any answer is published
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  bool CopyPhaseProfile(PioneerQ38TokenPhaseProfileControl::Packet& output)const{
   const uintptr_t out=reinterpret_cast<uintptr_t>(&output),self=reinterpret_cast<uintptr_t>(this);
   if(out>UINTPTR_MAX-sizeof(output) || self>UINTPTR_MAX-sizeof(*this)

@@ -7,7 +7,8 @@
 #include "pioneer_qwen38_gguf_test.cpp"
 #include "../PioneerQ38FullOffloadSession.h"
 #include <sys/wait.h>
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 #include "pioneer_q38_full_offload_phase_profile_fixture.h"
 #endif
 struct Sweep {
@@ -82,7 +83,8 @@ struct IO {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  unsigned publications=0;
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  unsigned phaseReads=0;bool invalidPhaseClock=false;
  std::function<void()> duringPhaseRead;
 #endif
@@ -162,12 +164,19 @@ struct IO {
    if(polls==2 && sweep.Clone([&]{d[7]=0;}))return true;
    if(sweep.Clone([&]{m.request.reserved[0]=1;}))return true;
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
-  }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE){
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
+  }else if(op==
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+   TT_PCI_PROBE_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#else
+   TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#endif
+  ){
    namespace C=PioneerQ38TokenPhaseProfileControl;auto& p=*static_cast<C::Packet*>(data);
    assert(size==sizeof(p) && C::RequestShape(p) && holds==1 && reads && cursor==Records() && !ends && !phaseReads++);
    if(duringPhaseRead)duringPhaseRead();
-   FillFullPhaseMetric(p,Records(),invalidPhaseClock);
+   FillFullPhaseMetric(p,Records(),invalidPhaseClock,prompts);
    for(unsigned word=0;word<sizeof(p)/4;word++)
     if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&p)[word]^=1;}))return true;
 #endif
@@ -209,7 +218,8 @@ struct IO {
     for(unsigned word:{7U,8U,9U,10U,11U,14U,15U})if(sweep.Clone([&]{d[word]^=1;}))return true;
     cursor+=count;
    }else if(action==P::Finish){assert(cursor==Records() && reads && !ends++);
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
     assert(phaseReads==1);
 #endif
     r.stage=d[2]=11;r.complete=1;d[3]=d[5]=1;}
@@ -234,7 +244,8 @@ int main(){
   ,PreparedFixture
 #endif
   >>(io,source);
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  PioneerQ38TokenPhaseProfileControl::Packet unavailable;
  assert(!session->CopyPhaseProfile(unavailable) && !io.calls);
  io.duringPhaseRead=[&]{PioneerQ38TokenPhaseProfileControl::Packet p;
@@ -252,7 +263,8 @@ int main(){
  bool okay=session->Probe();
  if(okay){assert(io.opens==1 && io.closes==1 && !io.begins && !io.starts);okay=session->Begin(prompt,96,32,248044,248046);}
  if(okay)assert(!session->KnownClean());
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  if(okay && sweep.Clone([&]{sweep.enabled=false;io.invalidPhaseClock=true;})){
   assert(session->Poll() && session->Poll() && session->Finish() && session->Completed() && io.phaseReads==1 && io.ends==1);
   PioneerQ38TokenPhaseProfileControl::Packet p;
@@ -308,7 +320,8 @@ int main(){
  assert(io.publications==194 && session->partsUploaded==4895 && session->bytesPlanned==UINT64_C(20470759424));
  puts("PASS prepared USER all4895_upload_spans and194_same_FD_source_publications before_START;synthetic cache/transport,no native/card/TPS");
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  {PioneerQ38TokenPhaseProfileControl::Packet p;const auto calls=io.calls;
   assert(io.phaseReads==1 && session->CopyPhaseProfile(p) && p.reply.detail[7] && p.reply.detail[8]==127 && io.calls==calls);
   auto dirty=p;const auto before=dirty;

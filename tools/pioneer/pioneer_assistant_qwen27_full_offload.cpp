@@ -14,7 +14,8 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "PioneerQ38TokenRateSamples.h" // observation arithmetic,NO model reference
 #endif
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 #include "PioneerQ38StartupTiming.h"
 #endif
 #include "../../src/apps/assistant/Qwen27Protocol.h"
@@ -30,7 +31,8 @@ struct Runtime {
   Runtime& runtime;
   int Open(){return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);}
   bool Call(int fd,unsigned operation,void* data,size_t bytes){
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
    if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD && bytes==sizeof(tt_q38_span_upload)){
     const auto count=static_cast<const tt_q38_span_upload*>(data)->bytes;
     const auto before=system_time();const bool okay=!runtime.lost && ioctl(fd,operation,data,bytes)==0;
@@ -58,7 +60,8 @@ struct Runtime {
  unsigned eos0=0,eos1=0;bool loaded=false,lost=false,cancelled=false,failed=false;
  const char* vocabularyFailure="not_started";
  double lastProgress=0;
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  PioneerQ38StartupTiming startup;
 #endif
  bool Emit(unsigned kind,unsigned value=0,const std::string& text=""){
@@ -101,7 +104,8 @@ struct Runtime {
   return true;
  } // source/vocabulary ONLY;no accelerator FD or model context
  bool Load(unsigned threads){
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   startup.LoadBegin(system_time());
 #endif
   if(loaded || !threads || threads>64 || !Emit(A::Progress,UINT32_MAX,
@@ -109,13 +113,15 @@ struct Runtime {
   session=std::make_unique<Session>(io,source);
   if(!session->Probe())return false; // metadata only,never BEGIN during Load
   loaded=true;
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   startup.LoadReady(system_time());
 #endif
   return Emit(A::Ready,0,"QWEN27_FULL_OFFLOAD_VOCAB_READY");
  }
  bool Generate(const A::Frame& frame){
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   const auto requestBegin=system_time();
 #endif
   if(!loaded || failed || lost)return false;
@@ -133,11 +139,13 @@ struct Runtime {
   if(session->Completed())session=std::make_unique<Session>(io,source);
   const double began=Now();if(began<0 || !PollCancel())return false;
   if(cancelled)return Emit(A::Done,A::Cancelled,"Stopped before accelerator BEGIN.");
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   startup.Begin(requestBegin,unsigned(count),unsigned(count)+frame.value-1);
 #endif
   if(!session->Begin(ids,unsigned(count),frame.value,eos0,eos1))return false;
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   startup.Ready(system_time());
 #endif
   if(!PollCancel())return false;
@@ -151,7 +159,8 @@ struct Runtime {
    const auto before=system_time();F::CounterPacket metric;
    if(!session->ObserveCount(metric))return false;
    const auto after=system_time();
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
    startup.Observe(metric.reply.detail[7],metric.reply.detail[9],metric.reply.detail[8],before,after);
 #endif
    if(timingValid && !samples.Observe(metric,before,after))timingValid=false;
@@ -204,24 +213,39 @@ struct Runtime {
   else snprintf(metric,sizeof(metric),"Full-card rate unavailable: insufficient post-prompt window or invalid timing;AFTER_CLEAN_END,no extrapolation.");
   if(!Emit(A::Progress,UINT32_MAX,metric))return false;
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   {namespace Q=PioneerQ38SelectedPhaseProfileData;
    PioneerQ38TokenPhaseProfileControl::Packet p;
    if(!session->CopyPhaseProfile(p))return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+   char description[512];
+#else
    char description[320];
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+   snprintf(description,sizeof(description),"Full-card fast decode profile valid%u committed%u window_start%u last_position%u begin_cycles%llu end_cycles%llu state%u error%u;AFTER_CLEAN_END,generation_layer0_through_final_STOP,not_host_counter_endpoints.",
+    p.reply.detail[7],p.reply.detail[8],p.words[Q::WindowStart],p.words[Q::LastPosition],
+    (unsigned long long)Q::Get(p.words,Q::BeginCycle),(unsigned long long)Q::Get(p.words,Q::EndCycle),p.words[Q::State],p.words[Q::Error]);
+#else
    snprintf(description,sizeof(description),"Full-card phase profile valid%u committed%u begin_cycles%llu end_cycles%llu state%u error%u;AFTER_CLEAN_END,clock DATA,no frequency assumption.",
     p.reply.detail[7],p.reply.detail[8],(unsigned long long)Q::Get(p.words,Q::BeginCycle),
     (unsigned long long)Q::Get(p.words,Q::EndCycle),p.words[Q::State],p.words[Q::Error]);
+#endif
    if(!Emit(A::Progress,UINT32_MAX,description))return false;
    if(p.reply.detail[7])for(unsigned phase=0;phase<Q::Phases;phase++){
     const unsigned bucket=Q::Buckets+phase*3;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+    snprintf(description,sizeof(description),"Full-card fast decode profile bucket%u segments%u cycles%llu;AFTER_CLEAN_END,clock DATA,no frequency assumption.",
+#else
     snprintf(description,sizeof(description),"Full-card phase profile bucket%u segments%u cycles%llu;AFTER_CLEAN_END,clock DATA,no frequency assumption.",
+#endif
      phase,p.words[bucket],(unsigned long long)Q::Get(p.words,bucket+1));
     if(!Emit(A::Progress,UINT32_MAX,description))return false;
    }
   }
 #endif
-#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   // All genuine END/Close,token/source/cancel checks above have succeeded.
   // Answer-ready is not first visible text: IPC/UI delivery happens later.
   char startupMetric[768];

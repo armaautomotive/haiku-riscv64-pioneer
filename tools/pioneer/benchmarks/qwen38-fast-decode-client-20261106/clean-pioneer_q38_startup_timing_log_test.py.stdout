@@ -1,0 +1,4 @@
+PASS independent full-card rate whole-log reader:2 valid available/unavailable fixtures/130 truncation,missing,ordering,count,rate,timestamp,hex,stderr refusals;synthetic ONLY,NO physical result or cleanup authority
+PASS_PHASE_PROFILE_LOG complete10_buckets_exact_counts_cycles_sum/no_frequency_guess/invalid_timing_available_for_diagnosis/235_mode_order_count_cycle_truncation_refusals;SYNTHETIC_NO_HARDWARE_OR_TPS
+PASS BF16 rate log14 ordered buckets/exact sums/original upload/old grammar preserved/199 mode,count,cycle,truncation refusals;SYNTHETIC_NO_HARDWARE_OR_TPS
+PASS startup timing explicit selected log/available+unavailable+skipped-commit DATA/110 order,mode,bounds,truncation refusals;SYNTHETIC_NO_HARDWARE_OR_TPS

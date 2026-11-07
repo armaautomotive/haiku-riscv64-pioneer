@@ -89,8 +89,12 @@ LOCAL QUALIFIED: all12 main/clean children0/stderr0, complete modules exact,
 old vector92/default43 exact, all15 arrays and the exact1496B added journal
 verified; actual held-read/packet algorithms plus simulated journal faults
 pass. See benchmarks/qwen38-fast-decode-native-20261106.txt. No new model rate.
-Next connect/qualify the benchmark client and fresh one-shot parent, then
-run the actual model profile. Do not repeat these unchanged local suites
+Benchmark client/fresh one-shot parent now LOCAL QUALIFIED: all16 main/clean
+children0/stderr0,94 frozen sources,whole worker/client exact,old vector92
+worker/client exact,real USER lifecycle over synthetic transport and distinct
+generation-only whole-log validation. See fast-decode-client report.
+Next run ONE actual model profile after pushed code and fresh admission.
+Do not repeat these unchanged local suites
 as performance progress. Never borrow an old lease.
 See benchmarks/qwen38-fast-decode-profile-root-20261106.txt for exact scope,
 including separate FinalStop and non-identical host counter endpoints.

@@ -1,0 +1,78 @@
+Fast vector92 generation profile: benchmark client locally qualified
+===================================================================
+November6,2026. Software checkpoint, NOT a new model run or speed result.
+Best complete27B remains0.173tok/s;latest0.082.20tok/s/usableAssistant unmet.
+
+Changed code
+------------
+The distinct tag116 vocabulary-only worker reads native opcode8807 exactly
+once after genuine HOLD and complete committed-record drain. It copies the
+v3 timing record only after normal model END and FD Close. Invalid metric
+DATA remains diagnostic/unavailable, not permission to reset or skip cleanup.
+No old phase/prepared/BF16 flag is used to borrow that endpoint's authority.
+All original851/raw source bindings,128-position public request bounds,
+8192context/two state slots/full vocabulary and native calculation stay.
+
+The new worker emits distinct fast-decode header/window/buckets plus existing
+host startup observations. It retains real first-generation layer0 through
+119-worker STOP scope, NOT identical to the ordinary host counter endpoints.
+Whole-log reader requires explicit --fast-decode-profile, validates generation
+counts using committed minus authenticated prompts (31of62 in planned run),
+and excludes FinalStop from generation-body fractions. It cannot relabel old
+BF16/prompt+generation totals. Clock cycles are not converted using guessed Hz.
+Rate,load/prefill/answer readiness and answer quality remain separate evidence.
+
+The fresh one-shot parent retains the ENTIRE accepted vector92 physical flow,
+except immutable stage/binary/tag/hash/generation substitutions. It is NOT a
+replay of that spent stage. It admits normal041/gen8 -> native116/gen9 ->
+normal041/gen10, checks exact artifacts/platform/idle, and restores only after
+actual clean child completion; UNKNOWN has no retry/reset/automatic restore.
+
+Closed local qualification
+--------------------------
+Primary84346 ACTUALLY0. All16 main/clean children ACTUALLY0,stderr0,94 public
+source inputs and four original libraries frozen. Only two pre-existing dirty
+role/protocol files differ between trees; their resident WIP was not imported.
+Both complete USER executables reproduce byte-for-byte. The builder reads
+llama ABI headers from fixed commitc060ca974c773c7c3d17fd1b66dc9d312bc292c0,
+not dirty submodule working files. Clean tree links to that repository only
+for the same read-only fixed-commit archive operation.
+
+* Actual USER protocol/session over synthetic source/transport:127positions,
+  two record drains,all5EOS/3cancel boundaries,379 fail-closed COW cases;
+  one phase read,96 packet-word mutations,invalid timing still clean END,
+  no publication before END/Close or after source withdrawal.
+* Explicit new whole-log parser:313 mode/window/count/sum/order/truncation
+  refusals,31of51 synthetic generation positions,14 exclusive buckets,
+  finalSTOP separate. Synthetic fixture speed is NOT hardware throughput.
+* Parent entire-source equality and all prior fake failure cases first.
+* Old prepared/BF16 phase and startup log regression readers pass.
+* Actual IPC/process rate client with fake worker:3 valid/15 failing startup
+  histories plus CLI/data checks; no model or hardware execution.
+* SDK worker has exact11 vocabulary/model-container llama imports; no CPU
+  inference context/decode/logits/threadpool/ggml backend or fallback.22 role
+  refusals. Old vector92 worker and rate client reproduce their whole saved
+  hashes FIRST. No replacement of installed Assistant/runtime libraries.
+* Separate original prepared-profile protocol/session/control regression
+  runner also ACTUALLY0 after fixture extension (803 COW session cases).
+
+Worker83144B55ef6bc39f21e0291746af322ee2f55f8a242f2cc76a52169dd22f3eb706cc35
+Client231968B72be2cde10f30fda938e1c49f55033fbab50018d4679e2d0e776ed787e4bad60
+Parent10c89569f42a69c0ef1e20c1c441c733812f1e33d5a0eec95b18fce12b7bfcea
+Native116 module remains f592d38d635d017b0e36f60ba58e3de6da5912aadd01a99f6dd171abfc9c7816.
+Evidence:/private/tmp/pioneer-fast-decode-client.OY0lV7/final; sibling archive
+has literal closed exits,stdout/stderr,source/library hashes and commands.
+No binaries,original/converted model weights or learned payloads published.
+
+Decision / next action
+----------------------
+ACCEPT diagnostic client/parent software qualification, NOT Assistant or speed
+promotion. No repeated unchanged local suites or new UI/cache work needed.
+Fresh read-only Pioneer check ACTUALLY0:normal041/gen8,idle,no test/inference
+owner,64CPUs/maxRAM137034936320B,original model metadata correct,stage116-a
+absent. This is admission evidence only, NOT a completed hardware trial.
+Push code before staging. Then run ONE real31-prompt/32-output original27B
+profile in fresh116-a; retain same protected primary handle through actual
+termination and independent restoration. Report real rate/setup/quality and
+dominant generation cost, then choose ONE supported structural improvement
+or explicitly say evidence is insufficient. Overall objective stays active.

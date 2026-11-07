@@ -10,6 +10,7 @@ import json
 import pathlib
 import re
 from parse_pioneer_q38_full_offload_log import AUTH,RUNNING,TOTAL,PREPARED_TOTAL,NUMBER,InvalidLog,require,stable_text,upload_prefix
+from parse_pioneer_q38_fast_decode_profile import fast_decode_suffix
 
 READY='FULL_OFFLOAD_RATE_READY_NO_CPU_CONTEXT;REQUEST_MAX32_PUBLIC_COUNTING'
 PREFIX='FULL_OFFLOAD_PROGRESS id2 value4294967295 '
@@ -63,11 +64,13 @@ def phase_profile_suffix(lines,cursor,committed,*,bf16_profile=False):
     for row in buckets:row['share_percent']=str(Decimal(row['cycles'])*100/Decimal(total))
     result.update(total_cycles=total,buckets=buckets)
     return cursor,result
-def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_profile=False,startup_timing=False):
+def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_profile=False,startup_timing=False,fast_decode_profile=False):
     require(type(prepared_q4) is bool,'explicit prepared-layout selector required')
     require(type(bf16_profile) is bool and (not bf16_profile or (phase_profile is True and prepared_q4 is False)),'explicit distinct BF16 timing selector required')
     require(type(phase_profile) is bool and (not phase_profile or prepared_q4 or bf16_profile),'explicit compatible phase-profile selector required')
-    require(type(startup_timing) is bool and (not startup_timing or bf16_profile is True),'startup timing requires explicit BF16 profile')
+    require(type(fast_decode_profile) is bool and (not fast_decode_profile or
+            (prepared_q4 is False and phase_profile is False and bf16_profile is False)), 'distinct raw fast generation selector required')
+    require(type(startup_timing) is bool and (not startup_timing or bf16_profile is True or fast_decode_profile is True),'startup timing requires explicit timing profile')
     planned=PREPARED_TOTAL if prepared_q4 else TOTAL
     require(isinstance(stderr,str) and not stderr,'nonempty/unknown stderr')
     require(isinstance(text,str) and len(text)<=16*1024*1024 and text.isascii() and text.endswith('\n')
@@ -103,6 +106,8 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
     else:require(lines[cursor]==UNAVAILABLE,'unavailable is explicit,never an inferred rate')
     cursor+=1;profile=None
     if phase_profile:cursor,profile=phase_profile_suffix(lines,cursor,counts[-1],bf16_profile=bf16_profile)
+    fast_profile=None
+    if fast_decode_profile:cursor,fast_profile=fast_decode_suffix(lines,cursor,counts[-1],prompts)
     startup=None
     if startup_timing:cursor,startup=startup_suffix(lines,cursor,planned)
     require(len(lines)-cursor==3,'exact done/answer/final suffix,no unselected timing rows')
@@ -121,6 +126,7 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
             'execution_or_cleanup_authority_from_log':False,'isolated_token_latency':False}
     if phase_profile:result['on_card_phase_profile']=profile
     if bf16_profile:result['bf16_profile']=True
+    if fast_decode_profile:result['on_card_fast_decode_profile']=fast_profile
     if startup_timing:result['host_startup_observations']=startup
     return result
 def main():
@@ -129,8 +135,9 @@ def main():
     parser.add_argument('--phase-profile',action='store_true',help='require the complete card-clock timing suffix;requires --prepared-q4 or --bf16-profile')
     parser.add_argument('--bf16-profile',action='store_true',help='require separate BF16 fourteen-phase timing and original weight layout;requires --phase-profile')
     parser.add_argument('--startup-timing',action='store_true',help='require explicit host startup/first-commit DATA;requires --bf16-profile')
+    parser.add_argument('--fast-decode-profile',action='store_true',help='require distinct v3 generation-only vector92 timing; cannot mix with old/prepared/BF16 phase selectors')
     args=parser.parse_args()
-    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4,phase_profile=args.phase_profile,bf16_profile=args.bf16_profile,startup_timing=args.startup_timing)
+    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4,phase_profile=args.phase_profile,bf16_profile=args.bf16_profile,startup_timing=args.startup_timing,fast_decode_profile=args.fast_decode_profile)
     except (OSError,InvalidLog,ValueError) as error:raise SystemExit('REFUSE_FULL_CARD_RATE_LOG '+str(error))
     print(json.dumps(result,sort_keys=True))
     print('PASS_COMPLETE_FULL_CARD_RATE_TRANSCRIPT_DATA_ONLY;NOT_BROAD_QUALITY_ISOLATED_LATENCY_OR_NATIVE_CLEANUP_AUTHORITY')

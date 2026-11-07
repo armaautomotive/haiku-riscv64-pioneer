@@ -1,0 +1,4 @@
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  libggml-base.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  libggml-cpu.so.0.21.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  libggml.so.0.21.0
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  libllama.so.0.2.0

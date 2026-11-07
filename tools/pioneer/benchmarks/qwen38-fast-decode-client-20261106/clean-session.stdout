@@ -1,0 +1,5 @@
+PASS full-card metrics DATA 199680 bounded count observations/all request bytes and out-of-range counts refused;NO timing,lifecycle or hardware authority
+PASS full-offload pointer-free grammar 3072 valid/212150 refusals;old fixed diagnostic unchanged;NO inference or hardware
+PASS full-model phase read exactly_ONCE after_HOLD_and_FULL_record_drain before_END;all96_packet_word_mutations;invalid_clock_still_cleans;no_metric_publication_before_END_Close_or_after_source_withdrawal;NO_DEVICE_OR_TPS
+PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,379 fail-closed COW fixtures;synthetic ONLY,no physical or numerical result
+PASS fast decode USER protocol/session: exact8807/v3/HOLD+full-record-drain before read/END+Close before publication/all5EOS+3cancel boundaries;SYNTHETIC_NO_HARDWARE_OR_TPS

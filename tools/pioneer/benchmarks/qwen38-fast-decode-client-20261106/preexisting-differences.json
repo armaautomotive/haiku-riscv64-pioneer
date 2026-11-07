@@ -1,0 +1,4 @@
+[
+  "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h",
+  "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
+]

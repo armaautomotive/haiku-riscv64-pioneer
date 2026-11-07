@@ -1,0 +1,2 @@
+PASS independent full-card rate whole-log reader:2 valid available/unavailable fixtures/130 truncation,missing,ordering,count,rate,timestamp,hex,stderr refusals;synthetic ONLY,NO physical result or cleanup authority
+PASS_FAST_DECODE_PROFILE_LOG v3/31of51_generation_positions/14exclusive_buckets/final_STOP_excluded_from_body/host_endpoints_distinct/invalid_timing_still_diagnostic/313_mode_window_count_sum_order_truncation_refusals;SYNTHETIC_NO_HARDWARE_OR_SPEED

@@ -1,0 +1,3 @@
+PASS actual full-card batched89 parent: 54 typed-metadata/idle/64CPU+RAM/one-shot-flow cases;unknown child/stderr/text/identity failures never auto-restore;FAKE endpoints ONLY,no hardware exchange
+PASS actual full-card90 rate parent:120 typed metadata/final DATA/one-shot failure cases;ALL old54 parent cases FIRST;clean-unavailable distinct from failure;no unknown auto-restore;FAKE endpoints ONLY,no hardware
+PASS fast generation116 parent: entire tested vector92 flow exact except immutable stage/hash/tag/generation identity; prior fake failure cases FIRST;NO_DEVICE_OR_SPEED
