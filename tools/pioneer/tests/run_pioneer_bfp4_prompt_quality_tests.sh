@@ -9,6 +9,12 @@ ${CXX:-c++} $common "$directory/pioneer_bfp4_prompt_quality_test.cpp" -o "$tempo
 "$temporary/math"
 ${CXX:-c++} $common "$directory/pioneer_bfp4_ffn_quality_test.cpp" -o "$temporary/ffn"
 "$temporary/ffn"
+${CXX:-c++} $common "$directory/pioneer_bfp8_prompt_physical_record_test.cpp" -o "$temporary/bfp8-record"
+record5120="$directory/../benchmarks/qwen38-native-bfp-band-physical-20261104/k5120/band5120.stdout"
+record17408="$directory/../benchmarks/qwen38-native-bfp-band-physical-20261104/remaining/band17408.stdout"
+[ "$(shasum -a 256 "$record5120" | awk '{print $1}')" = 5c3a33f4a124860f81714eacf3a234204877c73cb31fe2c9f07c43faacdf491e ]
+[ "$(shasum -a 256 "$record17408" | awk '{print $1}')" = e357e6b1bdfc5d36f17a136ed1088b12c0163d2223f68a4dffd4dd14c6de79ba ]
+"$temporary/bfp8-record" "$record5120" "$record17408"
 ${CXX:-c++} $common "$directory/pioneer_bfp4_prompt_quality_source_test.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/source"
 "$temporary/source" "$temporary"
 ${CXX:-c++} $common -DPIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC=1 "$directory/pioneer_q38_bfp4_first_input_test.cpp" "$directory/pioneer_q38_cpu_model_reference.cpp" -o "$temporary/observer"

@@ -6,6 +6,7 @@ int main(){
  assert(!Q38Bfp4CpuOpen(nullptr,1));assert(!Q38Bfp4CpuOpen("relative.gguf",1));
  assert(!Q38Bfp4CpuOpen("/definitely-not-a-pioneer-model.gguf",1));
  assert(!Q38Bfp4CpuOpen("/definitely-not-a-pioneer-model.gguf",0));assert(!Q38Bfp4CpuComplete(nullptr));
+ assert(!Q38Bfp4CpuOpen("/definitely-not-a-pioneer-model.gguf",1,2));
  std::vector<float> input(5120),output(1,42);
  assert(!Q38Bfp4CpuProject(nullptr,0,2,input,output) && output==std::vector<float>{42});
  assert(!Q38Bfp4CpuProject(nullptr,64,2,input,output) && output==std::vector<float>{42});

@@ -1,0 +1,50 @@
+BFP4/BFP8 hybrid candidate: CPU PREPARATION, 2026-11-06
+=======================================================
+
+Goal: retain faster native BFP4 FFN arithmetic in earlier layers and use
+higher-precision native BFP8 for later layers that were sensitive in the
+single-token comparison. This is a CPU-only study, NOT a new installed
+driver, P100A inference result, accepted model quality or speedup.
+
+The extended numerical observer uses two BFP4 fidelity phases or all four
+BFP8 phases. Its BFP8 predictions reproduce all 64 saved synthetic output
+words at each of K5120 and K17408 from the previous *physical* P100A full-K
+tests. Those archived physical-output hashes match their existing reports:
+5c3a33f4a124860f81714eacf3a234204877c73cb31fe2c9f07c43faacdf491e and
+e357e6b1bdfc5d36f17a136ed1088b12c0163d2223f68a4dffd4dd14c6de79ba.
+This validates THESE arithmetic fixtures only: no learned BFP8 weight,
+GDDR/NoC loader, cohort, full-model quality, rate or new hardware run.
+
+Capacity necessary-condition check, using the existing canonical 8192-token,
+two-delta-slot, seven-bank 3GiB-per-bank plan, including its existing state
+and workspace, with every other allocation retained:
+
+  Last layers at BFP8   Extra aligned bytes   Total required    Seven-bank limit    Aggregate excess
+          13               1738014720           22452543488        22548578304             0
+          14               1871708160           22586236928        22548578304      37658624
+          16               2139095040           22853623808        22548578304     305045504
+
+The same-bank aggregate lower-bound check also passes for 13, with only
+10,457,088 bytes of smallest per-bank arithmetic slack; it is NOT an actual
+layout. Expanding existing Q4 fragments in place would overlap their
+neighbors. A new allocator/layout, compatible GDDR loader, bank reservations,
+workspace/headroom, initialized-page proofs and real context lifetime are
+still required. Thus 13 is not a capacity or hardware authorization. The
+14+ aggregate excess is decisive only for the stated unchanged-allocation
+assumptions, not a claim that all possible other designs are impossible.
+
+Two CPU-only first-token observations are actually running. The last16-BFP8
+case is a numerical upper control, NOT a fitting configuration under the
+above assumptions. The last13-BFP8 case preserves the potentially feasible
+capacity bound. Both use BFP4 for earlier FFNs and original precision for all
+other model calculations. Results remain pending:
+ /private/tmp/pioneer-q38-hybrid48-cpu-20261107-a.log
+ executable SHA d85393f82cb1d6e60f4faaa000f40c01b98e5b6275256154a500da90d59ce43b
+ /private/tmp/pioneer-q38-hybrid51-cpu-20261107-a.log
+ executable SHA 00de2b5562be3f7ed3259a18e71fce6335ccb298ec7bb39e2b15c36362c5bb67
+
+Tests: run_pioneer_bfp4_prompt_quality_tests.sh and
+run_pioneer_q38_hybrid_capacity_test.sh; the latter tests aligned per-bank
+arithmetic for the last8,12,13,14,16 and64 layers against the exact canonical
+baseline. The synthetic numerical and distribution-comparator tests also
+pass. The unchanged Q4 Work path and Assistant remain untouched.

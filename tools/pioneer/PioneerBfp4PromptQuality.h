@@ -15,8 +15,9 @@
 // Caller authenticates source/sample/input and supplies original-Q4 results.
 namespace PioneerBfp4PromptQuality {
 struct Result {double relativeL2,maxAbsolute;};
-inline bool Predict(const uint8_t* packed,size_t packedBytes,const uint32_t* input,unsigned width,std::array<uint32_t,32>& output){
- if(!packed || !input || !width || width>17408 || width%32 || packedBytes!=size_t(width/32)*576)return false;
+inline bool PredictFormat(PioneerBlackholeBlockFloat::Format format,const uint8_t* packed,size_t packedBytes,const uint32_t* input,unsigned width,std::array<uint32_t,32>& output){
+ const unsigned tileBytes=PioneerBlackholeBlockFloat::Bytes(format);
+ if(!tileBytes || !packed || !input || !width || width>17408 || width%32 || packedBytes!=size_t(width/32)*tileBytes)return false;
  std::vector<uint16_t> operands(width);
  for(unsigned i=0;i<width;i++){
   uint32_t bits=input[i];if((bits&0x7f800000)==0x7f800000)return false;
@@ -26,17 +27,21 @@ inline bool Predict(const uint8_t* packed,size_t packedBytes,const uint32_t* inp
  std::array<uint32_t,32> actual={};
  for(unsigned tile=0;tile<width/32;tile++){
   std::array<float,1024> decoded={};
-  if(!PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,packed+tile*576,576,decoded.data(),1024))return false;
+  if(!PioneerBlackholeBlockFloat::UnpackTile(format,packed+tile*tileBytes,tileBytes,decoded.data(),1024))return false;
   for(unsigned row=0;row<32;row++)for(unsigned half=0;half<2;half++){
    uint16_t a[16],b[16];
    for(unsigned k=0;k<16;k++){
     uint32_t bits=0;std::memcpy(&bits,&decoded[row*32+half*16+k],4);if(bits&65535)return false;
     a[k]=uint16_t(bits>>16);b[k]=operands[tile*32+half*16+k];
    }
-   for(unsigned phase:{0U,2U})if(!PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,actual[row],actual[row]))return false;
+   for(unsigned phase=0;phase<4;phase++)if((format==PioneerBlackholeBlockFloat::Format::Bfp8B || !(phase&1))
+    && !PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,actual[row],actual[row]))return false;
   }
  }
  output=actual;return true;
+}
+inline bool Predict(const uint8_t* packed,size_t packedBytes,const uint32_t* input,unsigned width,std::array<uint32_t,32>& output){
+ return PredictFormat(PioneerBlackholeBlockFloat::Format::Bfp4B,packed,packedBytes,input,width,output);
 }
 inline bool Compute(const uint8_t* packed,size_t packedBytes,const uint32_t* input,const uint32_t* original,Result& result){
  if(!original)return false;

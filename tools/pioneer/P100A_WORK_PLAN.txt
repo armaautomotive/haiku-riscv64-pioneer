@@ -79,9 +79,12 @@ warning, not a quality pass or a card speed measurement. Study selective or
 higher-precision conversion before considering Work integration. See
 qwen38-bfp4-full-cpu-quality-20261106 in benchmarks/.
 The first48 versus last16 selective tests gave 24.8% versus 26.7% raw-logit
-differences on that one token; all three chose the same next token. A
-shift-invariant probability check is underway. See the selective CPU quality
-report; these results do not establish answer quality or card throughput.
+differences on that one token; all chose the same next token. The all-BFP4
+probability check measured KL 0.34466 nats and 3/5 top-token overlap. Mixed
+BFP4/BFP8 is now under study: last16-BFP8 exceeds the current retained-state
+arena even in aggregate, while last13 passes a necessary per-bank arithmetic
+bound but has no usable allocator. See the selective and hybrid CPU quality
+reports; these results do not establish answer quality or card throughput.
 
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves
 the original fragment byte footprint. A separate versioned disk cache passes

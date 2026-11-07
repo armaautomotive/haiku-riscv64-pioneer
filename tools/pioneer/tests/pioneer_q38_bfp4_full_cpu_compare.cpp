@@ -40,8 +40,10 @@ static bool FullPin(const Q38CpuTokenTrace& t){
 }
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned reference byte order");
- if(argc!=3 || (strcmp(argv[1],"--first") && strcmp(argv[1],"--full") && strcmp(argv[1],"--split48")) || argv[2][0]!='/')return 2;
+ if(argc!=3 || (strcmp(argv[1],"--first") && strcmp(argv[1],"--full") && strcmp(argv[1],"--split48")
+  && strcmp(argv[1],"--hybrid48") && strcmp(argv[1],"--hybrid51") && strcmp(argv[1],"--bfp8")) || argv[2][0]!='/')return 2;
  setvbuf(stdout,nullptr,_IOLBF,0);const bool first=!strcmp(argv[1],"--first"),split=!strcmp(argv[1],"--split48");
+ const bool hybrid=!strcmp(argv[1],"--hybrid48"),hybrid51=!strcmp(argv[1],"--hybrid51"),all8=!strcmp(argv[1],"--bfp8");
  puts("CPU_BFP4_COMPARE authenticating original model; NO accelerator or Work");
  WholeModelOriginalBytes source;if(!source.Open(argv[2]) || !source.Ready())return 1;
  Q38CpuModelReference original;if(!original.Bind(source))return 1;
@@ -53,9 +55,10 @@ int main(int argc,char** argv){
  puts("CPU_BFP4_COMPARE original trace matches independent pinned reference");
  for(unsigned experiment=0;experiment<(split?2U:1U);experiment++){
   const uint64_t layers=split?(experiment?UINT64_C(0xffff000000000000):UINT64_C(0x0000ffffffffffff)):~uint64_t(0);
-  const char* name=split?(experiment?"late16":"early48"):"all64";
-  printf("CPU_BFP4_EXPERIMENT %s layer_mask%016llx; ORIGINAL_Q4_ON_UNSELECTED_LAYERS\n",name,(unsigned long long)layers);
-  std::unique_ptr<void,decltype(&Q38Bfp4CpuClose)> backend(Q38Bfp4CpuOpen(argv[2],layers),Q38Bfp4CpuClose);
+  const uint64_t layers8=hybrid?UINT64_C(0xffff000000000000):hybrid51?UINT64_C(0xfff8000000000000):all8?~uint64_t(0):0;
+  const char* name=split?(experiment?"late16":"early48"):hybrid?"hybrid48":hybrid51?"hybrid51":all8?"all8":"all64";
+  printf("CPU_BFP4_EXPERIMENT %s layer_mask%016llx bfp8_mask%016llx; ORIGINAL_Q4_ON_UNSELECTED_LAYERS\n",name,(unsigned long long)layers,(unsigned long long)layers8);
+  std::unique_ptr<void,decltype(&Q38Bfp4CpuClose)> backend(Q38Bfp4CpuOpen(argv[2],layers,layers8),Q38Bfp4CpuClose);
   if(!backend || !source.Ready())return 1;
   Q38CpuModelReference candidate;if(!candidate.Bind(source))return 1;
   if(first){

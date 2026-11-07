@@ -41,10 +41,16 @@ No P100A driver, Assistant, model or device is modified.
 After the selective executable was built, source gained a CPU-only stable
 softmax/KL and top-five comparison with synthetic, shift-invariance and
 analytic KL tests. That added reporting is NOT present in the selective
-executable. A NEW one-token all64 probability comparison is now actually
-running through its own process, transcript
+executable. A NEW one-token all64 probability comparison ran through its
+own process, transcript
 /private/tmp/pioneer-q38-bfp4-full-probability-20261107-a.log, executable
 SHA256 4e251ac2aba28b8ebb853a7d5de7bcccd61530f477b3cab6970ae313ee66e580.
-Its original trace matches the pinned baseline; its BFP4 result is pending.
+It completed actual exit0; original trace matches the pinned baseline and
+all64 reported layer errors match the preceding all-BFP4 run. For one token,
+original/candidate top1 both 70253; top5 overlap3/5; original top1 probability
+0.0273437673 versus candidate 0.0381271489; KL(original||candidate)
+0.344661064 nats. This is not solely a common logit shift, nor an answer-
+quality evaluation. Completed transcript SHA256
+dcbee398c6811ef721ae9b0bf23d6026241a2aeb64083612c2f899d78c5a3afb.
 These diagnostics are one-token quality evidence, not a P100A throughput
 measurement or answer-quality pass.

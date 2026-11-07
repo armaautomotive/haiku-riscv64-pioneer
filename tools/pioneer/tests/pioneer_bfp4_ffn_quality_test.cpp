@@ -17,7 +17,13 @@ int main(){
  std::vector<uint32_t> input(32,Bits(1.f)),output={99};
  assert(Project(source,0,input,output) && output.size()==32 && source.reads==32);
  for(auto word:output)assert(word==Bits(32.f));
+ source.reads=0;std::vector<uint32_t> output8;
+ assert(ProjectFormat(source,0,input,PioneerBlackholeBlockFloat::Format::Bfp8B,output8) && output8==output && source.reads==32);
  std::vector<uint8_t> packed={7};assert(PackBand(source,0,0,packed) && packed.size()==576);
+ std::vector<uint8_t> packed8;assert(PackBandFormat(source,0,0,PioneerBlackholeBlockFloat::Format::Bfp8B,packed8) && packed8.size()==1088);
+ const auto saved8=packed8;const auto invalidFormat=static_cast<PioneerBlackholeBlockFloat::Format>(7);
+ assert(!PackBandFormat(source,0,0,invalidFormat,packed8) && packed8==saved8);
+ auto beforeInvalid=output8;assert(!ProjectFormat(source,0,input,invalidFormat,output8) && output8==beforeInvalid);
  const auto packedBefore=packed;assert(!PackBand(source,0,1,packed) && packed==packedBefore);
  auto saved=output;source.okay=false;assert(!Project(source,0,input,output) && output==saved);source.okay=true;
  source.tensors[0].inputs=31;assert(!Project(source,0,input,output) && output==saved);
