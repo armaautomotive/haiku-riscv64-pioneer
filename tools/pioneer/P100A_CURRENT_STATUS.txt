@@ -68,7 +68,8 @@ Four compact goals
    A BFP4/BFP8 hybrid is under CPU study. With current 8192-token state and
    workspace, the existing seven-bank capacity arithmetic cannot fit BFP8
    for the last14 or more FFN layers while retaining all other allocations;
-   last13 passes a necessary arithmetic bound but lacks a real allocator.
+   last13 has a nonoverlapping offline repack proposal but lacks a real
+   device allocator and loader.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

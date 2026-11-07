@@ -82,8 +82,8 @@ The first48 versus last16 selective tests gave 24.8% versus 26.7% raw-logit
 differences on that one token; all chose the same next token. The all-BFP4
 probability check measured KL 0.34466 nats and 3/5 top-token overlap. Mixed
 BFP4/BFP8 is now under study: last16-BFP8 exceeds the current retained-state
-arena even in aggregate, while last13 passes a necessary per-bank arithmetic
-bound but has no usable allocator. See the selective and hybrid CPU quality
+arena even in aggregate, while last13 has an offline nonoverlapping per-bank
+repack proposal but no usable device allocator. See the selective and hybrid CPU quality
 reports; these results do not establish answer quality or card throughput.
 
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves

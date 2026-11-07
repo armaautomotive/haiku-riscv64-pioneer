@@ -25,11 +25,18 @@ and workspace, with every other allocation retained:
           16               2139095040           22853623808        22548578304     305045504
 
 The same-bank aggregate lower-bound check also passes for 13, with only
-10,457,088 bytes of smallest per-bank arithmetic slack; it is NOT an actual
-layout. Expanding existing Q4 fragments in place would overlap their
-neighbors. A new allocator/layout, compatible GDDR loader, bank reservations,
-workspace/headroom, initialized-page proofs and real context lifetime are
-still required. Thus 13 is not a capacity or hardware authorization. The
+10,457,088 bytes of smallest per-bank arithmetic slack. A distinct OFFLINE
+repacking proposal now walks all 4678 canonical parts in their original
+per-bank order and assigns nonoverlapping aligned offsets; the final 13
+layers convert 273 FFN stripes. Other parts retain their byte lengths and
+bank assignments. Zero-conversion reproduces all original offsets; one and
+13 layers pass, while 14 layers, an unready source and 9 malformed part
+cases refuse without changing the output. Five Work/kernel/reference build
+contexts refuse the proposal. This is DATA, not an installed allocator.
+Expanding the old Q4 fragments in place would overlap their neighbors. A new
+native consumer of these proposed offsets, compatible GDDR loader, bank
+reservations, workspace/headroom, initialized-page proofs and real context
+lifetime are still required. Thus 13 is not a hardware authorization. The
 14+ aggregate excess is decisive only for the stated unchanged-allocation
 assumptions, not a claim that all possible other designs are impossible.
 
