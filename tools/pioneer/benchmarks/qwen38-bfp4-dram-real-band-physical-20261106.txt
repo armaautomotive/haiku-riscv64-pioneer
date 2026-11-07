@@ -1,0 +1,46 @@
+Real-weight BFP4 GDDR-to-compute diagnostic: physical result, 2026-11-06
+======================================================================
+
+Result: three fixed bands from the authenticated Qwen3.8-27B Q4_K_M
+blk.0.ffn_gate.weight were converted to BFP4 and run on the P100A. Each band
+has 32 output rows and K=5120. All 192 returned words (two jobs for each
+band) exactly matched the independent BFP4 debug reference. All three band
+admissions completed explicit clean ENDs; original Q4 Work was not changed.
+
+Measured card cycles per 32-row job, INCLUDING card GDDR/NoC and compute:
+  rows 0-31:        227275, 227158
+  rows 8704-8735:   227280, 227157
+  rows 17376-17407: 227285, 227142
+
+The earlier paired original-Q4 test of tensor7 rows 0-31 measured 643321
+and 643229 cycles, also including on-card loading and compute. These are
+different implementations and numerical formats, with diagnostic inputs;
+they are not an equivalent-accuracy A/B test, model inference measurement,
+or evidence of an end-to-end tokens/sec speedup. Two passes per sample do
+not establish statistical repeatability, and no clock frequency is assumed.
+The CPU reference here checks BFP4 calculation, not full-model quality.
+The earlier fixed-input comparison against original Q4 showed 8.6%-15.8%
+relative output error across the three bands, which is a serious quality
+question. The approximation is not integrated into Work or Assistant.
+
+One protected SSH parent completed with actual exit 0; there was no retry.
+Original model SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+was verified from the same open file before regenerating all samples and
+predictions. A separate CPU-only source check also completed exit 0.
+The fixed client checked returned words, two timing records, explicit END,
+ownership/restore fields and source stability; the parent independently
+checked its complete transcript before restoring the stable driver.
+
+Independent postflight: stable driver SHA
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012 generation18, quiesced0 cold0 active_owner0 open_count1,
+64 CPUs and 137034936320 bytes RAM. No reboot or SD/hardware change.
+
+Private model-derived transcript remains on the Pioneer at
+/boot/home/pioneer-native-bfp4-dram120-20261106-a/band5120.stdout,
+SHA256 9698f6828a4c1e6c206923331e7fece0588a9fcdf3e5458215cdf006d70420d3.
+Its stderr was empty; state STABLE041_RESTORED_BFP4_GDDR_BANDS_EXACT192_PASSED.
+No model weights or derived output values are published in this report.
+
+Next: assess accuracy at model-relevant scope and work out integration of the
+faster band into the real full-card service before claiming any token gain.

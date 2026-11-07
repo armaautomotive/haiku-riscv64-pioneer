@@ -37,17 +37,17 @@ Four compact goals
    Three real-weight bands pass the offline GDDR/compute observer. Their
    synthetic-input output errors are 8.6%–15.8%, so model quality remains
    an important open question before using the approximate format.
-   A separate GDDR diagnostic driver now builds and passes simulated
-   ownership and endpoint tests. It is NOT installed or tested on the card;
-   the physical timing, accuracy and full-model impact remain unknown.
-   The source-authenticating client and guarded test parent also pass their
-   simulated failure checks. A CPU-only source check is running on Haiku.
+   The real-weight BFP4 diagnostic now runs on the card with GDDR loading:
+   three K5120 bands returned all 192 expected BFP4 words, with each 32-row
+   job taking 227142-227285 card cycles. This is NOT an equivalent-Q4 or
+   full-model speed result: the conversion is lossy, and the BFP4 path is
+   not integrated. See the physical report for scope and quality limits.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
 Platform
 --------
-Last observed: stable041/gen16 restored and idle after independent postflight; 64 CPUs and
+Last observed: stable041/gen18 restored and idle after independent postflight; 64 CPUs and
 full137034936320B RAM. Assistant/runtime files unchanged. No reboot, power,
 SD or hardware connection changed. Pre-existing local work is preserved.
 
@@ -63,4 +63,5 @@ Native BFP4 K5120 physical correctness: benchmarks/qwen38-bfp4-band-physical-202
 Native BFP4 K5120 physical timing: benchmarks/qwen38-bfp4-band-timing-physical-20261106.txt
 Real-weight BFP4 sample and quality caveat: benchmarks/qwen38-bfp4-real-band-offboard-20261106.txt
 GDDR diagnostic build and simulated safety checks: benchmarks/qwen38-bfp4-dram-driver-offboard-20261106.txt
+GDDR real-weight physical measurement: benchmarks/qwen38-bfp4-dram-real-band-physical-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt
