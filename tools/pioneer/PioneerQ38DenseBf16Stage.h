@@ -118,16 +118,23 @@ public:
     || !(probabilities+count*4<=MatrixHigh-16 || probabilities>=VectorLow+512))return false;
   const unsigned scratch[]={MatrixHigh,MatrixLow,VectorHigh,VectorLow};
   for(unsigned s=0;s<4;s++)for(unsigned i=1;i<=4;i++)io.Write(scratch[s]-i*4,0);
-  for(unsigned face=0;face<4;face++)for(unsigned row=0;row<16;row++)for(unsigned pair=0;pair<8;pair++){
+  // Two adjacent output dimensions share one packed FP16 source word.
+  // Decode that word once per token and transpose both rows together.
+  for(unsigned face=0;face<4;face++)for(unsigned row=0;row<16;row+=2)for(unsigned pair=0;pair<8;pair++){
    const unsigned dimension=block*32+(face/2)*16+row,token=(face%2)*16+pair*2;
-   unsigned high[2]={0,0},low[2]={0,0};
+   unsigned high[2][2]={{0,0},{0,0}},low[2][2]={{0,0},{0,0}};
    for(unsigned j=0;j<2;j++)if(token+j<count){
-    const unsigned halves=io.Read(values+(token+j)*512+(dimension&~1U)*2);
-    const unsigned half=dimension&1?halves>>16:halves&65535;
-    if((half&0x7c00)==0x7c00 || !Pair(PioneerAttentionBits(PioneerAttentionHalf(uint16_t(half))),high[j],low[j]))return false;
+    const unsigned halves=io.Read(values+(token+j)*512+dimension*2);
+    for(unsigned lane=0;lane<2;lane++){
+     const unsigned half=(halves>>(lane*16))&65535;
+     if((half&0x7c00)==0x7c00 || !Pair(PioneerAttentionBits(PioneerAttentionHalf(uint16_t(half))),high[lane][j],low[lane][j]))return false;
+    }
    }
-   const unsigned offset=(face*256+row*16+pair*2)*2;
-   io.Write(MatrixHigh+offset,high[0]|(high[1]<<16));io.Write(MatrixLow+offset,low[0]|(low[1]<<16));
+   for(unsigned lane=0;lane<2;lane++){
+    const unsigned offset=(face*256+(row+lane)*16+pair*2)*2;
+    io.Write(MatrixHigh+offset,high[lane][0]|(high[lane][1]<<16));
+    io.Write(MatrixLow+offset,low[lane][0]|(low[lane][1]<<16));
+   }
   }
   for(unsigned half=0;half<2;half++)for(unsigned pair=0;pair<8;pair++){
    unsigned high[2]={0,0},low[2]={0,0};const unsigned token=half*16+pair*2;

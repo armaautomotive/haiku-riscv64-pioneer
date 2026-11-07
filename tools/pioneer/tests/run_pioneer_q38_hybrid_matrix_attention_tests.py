@@ -13,20 +13,20 @@ sdk, image, leaf4, image8, leaf8 = map(Path, sys.argv[1:])
 assert all(path.is_absolute() and path.is_dir() for path in (sdk,image,leaf4,image8,leaf8))
 pins = {
  'boot.bin':(4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
- 'globalworker.bin':(10756,'9d18659a0c413f5ee14c51887f2d572c111a8d24b71e827b798de3ea5ff146bf'),
+ 'globalworker.bin':(10756,'4973fd3165f56166a919bcccf7b2874bdf93369ac053a417d3eac67c635ecb64'),
  'bf16producer.bin':(7360,'8b3e477d51eeca467e155b72234bed728c7109947f78cfb4361ce6dbc7afb2c3'),
  'cachedfpu.bin':(12668,'bcc704d361936935e26c57b138693accc5a22207ab5e45019d78baec1385abc9'),
- 'dense.bin':(13656,'e0adac5fafa542351877d41f05180afa13ae63a3d0ade7db5849755f1b67b0e6'),
+ 'dense.bin':(13788,'fc334f0e2c671940d485773ffbd1b6b89c27ed27f327aa59f0abfc69a561774c'),
  'text.bin':(5984,'2548ed0d4fdb68ce48325cd6f8581bff6bdc5b34a87f3ba217e36e4a37ed6e5c'),
  'affine.bin':(5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
  'ffn.bin':(16456,'c1dc115dadb20b1ee1d18fb04ce61f15a1d1644a523ccfec8fea70dbd5164e45'),
  'service.bin':(9888,'3b3cdbd88d049b3f0c72016d8eccfad7eab3fd6861a5353a50f26d7d4b46795f'),
  'gdn.bin':(35564,'dd982ac614d163795442942529ef9f4e5519552097b438f5fc4464b40eab3436'),
- 'program.elf':(156896,'157ed4d4563b2e131fbd48c48e776d11d36e5d7c3097570b2434054ce85016b5'),
+ 'program.elf':(156896,'69b81b378cb62646bd2f72cdd46fbaf2377971c33697f94adde59c884b2b2793'),
 }
 pins8 = dict(pins)
-pins8['globalworker.bin']=(10756,'96a858d90c71d23c0b65e25cebc9210ff26e8c7b8db4e715be5075b605cfcb34')
-pins8['program.elf']=(156896,'754783440ca97629abe2513252a522623f30a1deadcf885adb52439e2f01b0c9')
+pins8['globalworker.bin']=(10756,'3bc4d65e1f90c6fccff8a6415366a9601d00070395e8949d161e16d35a37e170')
+pins8['program.elf']=(156896,'5a95ace24b8d5a02f8d4a6c614180d5ba56b9173e4a460cc7fb6d1a5b05a8422')
 def check(folder, entries):
     for name, (size, digest) in entries.items():
         data=(folder/name).read_bytes()

@@ -47,16 +47,16 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw7-root-',dir='/private/tmp')
  if worker:
   expected={
    'boot.bin':'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c',
-   'globalworker.bin':'9d18659a0c413f5ee14c51887f2d572c111a8d24b71e827b798de3ea5ff146bf',
+   'globalworker.bin':'4973fd3165f56166a919bcccf7b2874bdf93369ac053a417d3eac67c635ecb64',
    'bf16producer.bin':'8b3e477d51eeca467e155b72234bed728c7109947f78cfb4361ce6dbc7afb2c3',
-   'dense.bin':'e0adac5fafa542351877d41f05180afa13ae63a3d0ade7db5849755f1b67b0e6',
+   'dense.bin':'fc334f0e2c671940d485773ffbd1b6b89c27ed27f327aa59f0abfc69a561774c',
    'cachedfpu.bin':'bcc704d361936935e26c57b138693accc5a22207ab5e45019d78baec1385abc9',
    'ffn.bin':'c1dc115dadb20b1ee1d18fb04ce61f15a1d1644a523ccfec8fea70dbd5164e45',
    'service.bin':'3b3cdbd88d049b3f0c72016d8eccfad7eab3fd6861a5353a50f26d7d4b46795f',
    'affine.bin':'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78',
    'text.bin':'2548ed0d4fdb68ce48325cd6f8581bff6bdc5b34a87f3ba217e36e4a37ed6e5c',
    'gdn.bin':'dd982ac614d163795442942529ef9f4e5519552097b438f5fc4464b40eab3436',
-   'program.elf':'157ed4d4563b2e131fbd48c48e776d11d36e5d7c3097570b2434054ce85016b5'}
+   'program.elf':'69b81b378cb62646bd2f72cdd46fbaf2377971c33697f94adde59c884b2b2793'}
   for name,digest in expected.items():assert hashlib.sha256((worker/name).read_bytes()).hexdigest()==digest,name
   assert (worker/'program.symbols').read_bytes()==subprocess.check_output([nm,'-n',str(worker/'program.elf')])
   for name,digest in (('boot.bin','d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'),

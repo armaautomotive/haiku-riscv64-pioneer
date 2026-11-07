@@ -190,7 +190,9 @@ int main(){
   card.expectedWeight=0xa5000;card.alternateWeight=0xa6000;
   card.expectedInput=0xa7000;card.alternateInput=0xa7400;
   PioneerQ38DenseBf16ValuesCachedStage<L1IO> cached(valueIO,v,p,count,block);
+  const unsigned beforeCached=valueIO.reads;
   assert(PioneerQ38DenseBf16Matrix::ValuesCached(card,cached));
+  assert(valueIO.reads-beforeCached==17*count); // 16 packed V words + one probability per token
   const auto precise=card.Results();double preciseError=0,preciseNorm=0;
   for(unsigned row=0;row<32;row++){
    const unsigned d=block*32+row;double reference=0,absolute=0;
@@ -205,11 +207,19 @@ int main(){
    assert(error<=0.00001*absolute+0.00000001);
   }
   assert(card.matrixOps==80 && valueIO.fences==2 && !cached.Prepare());
+  // Compare every packed operand word with the independent original
+  // four-pass converter, including padded tokens and both BF16 components.
+  for(unsigned part=0;part<4;part++){
+   PioneerQ38DenseBf16ValuesStage<L1IO> reference(valueIO,v,p,matrix,vector,count,block,part);
+   assert(reference.Tile(0));
+   for(unsigned i=0;i<2048;i+=4)assert(valueIO.Read(matrix+i)==valueIO.Read(cached.Matrix(part)+i));
+   for(unsigned i=0;i<512;i+=4)assert(valueIO.Read(vector+i)==valueIO.Read(cached.Vector(part)+i));
+  }
   std::printf("cached four-product pv rows=%u block=%u relative_l2=%.9g\n",count,block,std::sqrt(preciseError/preciseNorm));
  }
- for(unsigned badKind: {0U,1U}){
+ for(unsigned badKind: {0U,1U,2U}){
   NativeBfpMachine card;L1IO valueIO{card};
-  valueIO.Write(0xa0000,badKind==0?0x00007c00:0x00000000);
+  valueIO.Write(0xa0000,badKind==0?0x00007c00:badKind==2?0x7c000000:0x00000000);
   valueIO.Write(0x82000,badKind==1?0x7f800000:0);
   PioneerQ38DenseBf16ValuesStage<L1IO> invalidPV(valueIO,0xa0000,0x82000,0x90000,0x91000,1,0);
   assert(!PioneerQ38DenseBf16Matrix::Values(card,invalidPV,0x90000,0x91000));
@@ -225,5 +235,10 @@ int main(){
  PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidCachedStage(cachedInvalidIO,0xa0000,0x82000,1,0);
  assert(!PioneerQ38DenseBf16Matrix::ValuesCached(cachedInvalid,invalidCachedStage));
  assert(cachedInvalid.matrixOps==0 && cachedInvalid.outputReads==0 && cachedInvalidIO.fences==0);
+ NativeBfpMachine cachedInvalidHigh;L1IO cachedInvalidHighIO{cachedInvalidHigh};
+ cachedInvalidHighIO.Write(0xa0000,0x7c000000);cachedInvalidHighIO.Write(0x82000,0);
+ PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidCachedHigh(cachedInvalidHighIO,0xa0000,0x82000,1,0);
+ assert(!PioneerQ38DenseBf16Matrix::ValuesCached(cachedInvalidHigh,invalidCachedHigh));
+ assert(cachedInvalidHigh.matrixOps==0 && cachedInvalidHigh.outputReads==0 && cachedInvalidHighIO.fences==0);
  std::puts("nonfinite V/probability and invalid PV block refused");
 }

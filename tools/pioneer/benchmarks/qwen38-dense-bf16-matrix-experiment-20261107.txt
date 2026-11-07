@@ -98,10 +98,26 @@ tests verify the vector rows' bit patterns, bounded query read counts and
 nonfinite-query refusal. On the same 1-, 33- and 65-token synthetic inputs,
 one actual-instruction worker per case produced bit-identical scores,
 probabilities and partial outputs versus the previous QDM2 image. Two
-independently built QDM2 code images match
-(SHA-256 5708c68c3acb456789a90523cbecf2214c20bdd16ed7a5d5fb0113b3613c37ae),
-and two QGW7 linked images also match. The QGW7 mixed-worker and direct ROOT
+independently built QDM2 code images matched
+(SHA-256 5708c68c3acb456789a90523cbecf2214c20bdd16ed7a5d5fb0113b3613c37ae)
+before the later paired-value optimization below, and two QGW7 linked images
+also matched. The QGW7 mixed-worker and direct ROOT
 job handoff simulations passed with the new code; they remain offline tests.
+
+Paired-value reuse: each packed FP16 V word supplies two adjacent output
+dimensions. The QDM2 PV packer now reads each packed word once and writes
+the BF16 components for both matrix rows, reducing V reads from 32 to 16 per
+token per output block; one probability read per token is unchanged. Tests
+compared every packed operand word against the independent original four-pass
+converter, including partial chunks and nonfinite-value refusals. On the same
+65-token/24-partition fixture as above, actual simulated worker RV32 steps
+fell from 45375233 to 40362809 (about 11.0%); at 33 tokens they fell from
+33200813 to 29218517 (about 12.0%). Matrix-op counts remained 84480 and
+65280 and printed merged errors were unchanged. One worker per 1-, 33- and
+65-token input had bit-identical scores, probabilities and partial outputs
+versus the query-reuse predecessor. These are synthetic simulations, not
+card timing, real-model quality or tokens/sec. Two independent QDM2 builds
+matched SHA-256 ac7719bb3a1b84268fbc2fce96f8993a07ff3b128244442462a00cd7c18fd5fa.
 
 A separately identified experimental hybrid mixed-worker link and transition
 simulation are described in qwen38-hybrid-matrix-attention-20261107.txt.

@@ -35,6 +35,8 @@ products; reuse of converted operands cut simulated worker instructions by
 about 60% on one fixture, but whether it is faster on the card remains unknown.
 Reusing the staged query conversion subsequently cut another 7.5% from that
 fixture's simulated worker instruction count; physical speed is still unknown.
+Reading packed value pairs once cut a further 11.0% from that fixture's
+simulated instruction count, also without a hardware speed measurement.
 A separate hybrid worker now links this attention code and passed a simulated
 projection/attention/projection transition. A matching experimental ROOT now
 builds reproducibly, and its projection job functions passed simulation;
