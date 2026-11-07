@@ -1,0 +1,22 @@
+QGW7 hybrid raw-What quality diagnostic: IN PROGRESS
+==================================================
+
+This separate CPU-only diagnostic compares original Q4 with the experimental
+BFP4/BFP8 FFN substitution, using distinct original and candidate recurrent,
+attention and convolution state. It begins with raw vocabulary token 3710,
+whose bytes are the literal "What", then teacher-forces the original path's
+greedy token for two positions. Vocabulary metadata alone does not establish
+a chat template or natural-language prompt. Neither the reference nor its
+outputs are used by Work, the P100A or the candidate driver.
+
+The vocabulary probe authenticated the 18,973,870,528-byte original model
+against SHA-256 c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+and found exactly one literal What entry. The diagnostic executable SHA-256
+is ac87c9e2130c214e1368f1e7aec6e5a78791d1d8588799a138724f663eaec6dd.
+The comparator's synthetic distribution/backend and role-refusal tests passed.
+
+At this checkpoint the real comparison was started but has not been observed
+to exit. No result, quality verdict, card execution or speed is claimed.
+The baseline for this prefix is not independently pinned. This small
+teacher-forced comparison cannot establish broad answer quality even if it
+completes. Update this record only after observing the same process finish.

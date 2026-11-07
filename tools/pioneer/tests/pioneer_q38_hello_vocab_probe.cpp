@@ -9,7 +9,7 @@
 #include <cstring>
 #include <memory>
 int main(int argc,char** argv){
- if(argc!=2 || argv[1][0]!='/')return 2;
+ if((argc!=2 && (argc!=3 || strcmp(argv[2],"--candidate-prefixes"))) || argv[1][0]!='/')return 2;
  std::unique_ptr<FILE,decltype(&fclose)> f(fopen(argv[1],"rb"),&fclose);
  if(!f)return 1;
  PioneerQwen38Gguf model;if(!model.Open(f.get()) || !model.Stable())return 1;
@@ -20,7 +20,9 @@ int main(int argc,char** argv){
   || !model.Stable() || fseeko(f.get(),0,SEEK_SET))return 1;
  PioneerGgufReader r(f.get(),PioneerQwen38Gguf::FullBytes);
  if(r.Number(4)!=0x46554747 || r.Number(4)!=3 || r.Number(8)!=851)return 1;
- const auto count=r.Number(8);unsigned found=0,id=0;bool tokens=false;
+ const char* words[]={"Hello","What","Why","The","def"};
+ constexpr unsigned choices=sizeof(words)/sizeof(words[0]);unsigned found[choices]={},id[choices]={};
+ const auto count=r.Number(8);bool tokens=false;
  for(uint64_t i=0;i<count;i++){
   char key[513];if(!r.String(key,sizeof(key)))return 1;
   const auto type=uint32_t(r.Number(4));
@@ -29,12 +31,14 @@ int main(int argc,char** argv){
   tokens=true;
   for(unsigned n=0;n<248320;n++){
    const auto len=r.Number(8);if(!r.good || len>32*1024*1024)return 1;
-   if(len!=5){if(!r.Skip(len))return 1;continue;}
-   char value[5];if(!r.Take(value,5))return 1;
-   if(!memcmp(value,"Hello",5)){found++;id=n;}
+   if(len>5){if(!r.Skip(len))return 1;continue;}
+   char value[5];if(!r.Take(value,len))return 1;
+   for(unsigned w=0;w<choices;w++)if(len==strlen(words[w]) && !memcmp(value,words[w],len)){found[w]++;id[w]=n;}
   }
  }
- if(!tokens || found!=1 || !r.good || !model.Stable())return 1;
- printf("VOCAB_HELLO_TOKEN %u; METADATA_MATCH_ONLY_NOT_TOKENIZER_OR_MODEL_QUALITY\n",id);
+ if(!tokens || found[0]!=1 || id[0]!=9419 || !r.good || !model.Stable())return 1;
+ printf("VOCAB_HELLO_TOKEN %u; METADATA_MATCH_ONLY_NOT_TOKENIZER_OR_MODEL_QUALITY\n",id[0]);
+ if(argc==3)for(unsigned w=1;w<choices;w++)
+  printf("VOCAB_CANDIDATE word=%s matches=%u id=%u; METADATA_ONLY\n",words[w],found[w],id[w]);
  return fflush(stdout)?1:0;
 }

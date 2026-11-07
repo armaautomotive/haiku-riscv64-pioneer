@@ -12,7 +12,9 @@
 #include "pioneer_q38_bfp4_full_cpu_backend.h"
 #include "pioneer_q38_distribution_compare.h"
 #include "../PioneerModelWeightCache.h"
+#include <cerrno>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 
@@ -25,18 +27,26 @@ static bool FirstPin(const Q38CpuTokenTrace& t){
 }
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned reference byte order");
- if(argc!=3 || (strcmp(argv[1],"--two-fixed-window13") && strcmp(argv[1],"--hello-three-window13")) || argv[2][0]!='/')return 2;
- const bool hello=!strcmp(argv[1],"--hello-three-window13");
+ const bool prefix=argc==4 && !strcmp(argv[1],"--prefix-three-window13");
+ if((!prefix && (argc!=3 || (strcmp(argv[1],"--two-fixed-window13") && strcmp(argv[1],"--hello-three-window13")))) || argv[2][0]!='/')return 2;
+ unsigned initial=9419;
+ if(prefix){
+  if(argv[3][0]<'0' || argv[3][0]>'9')return 2;
+  char* end=nullptr;errno=0;const unsigned long value=strtoul(argv[3],&end,10);
+  if(errno || !end || *end || value>=248320)return 2;initial=unsigned(value);
+ }
+ const bool hello=prefix || !strcmp(argv[1],"--hello-three-window13");
  setvbuf(stdout,nullptr,_IOLBF,0);
- puts(hello?"CPU_SEQUENCE authenticating model; raw Hello token9419, then original greedy tokens; teacher-forced; NO DEVICE OR WORK":
-  "CPU_SEQUENCE authenticating model; fixed inputs 248319,17; teacher-forced; NO DEVICE OR WORK");
+ if(prefix)printf("CPU_SEQUENCE authenticating model; raw initial token%u, then original greedy tokens; teacher-forced; NO DEVICE OR WORK\n",initial);
+ else if(hello)puts("CPU_SEQUENCE authenticating model; raw Hello token9419, then original greedy tokens; teacher-forced; NO DEVICE OR WORK");
+ else puts("CPU_SEQUENCE authenticating model; fixed inputs 248319,17; teacher-forced; NO DEVICE OR WORK");
  WholeModelOriginalBytes source;if(!source.Open(argv[2]) || !source.Ready())return 1;
  Q38CpuModelReference original,candidate;
  if(!original.Bind(source) || !candidate.Bind(source))return 1;
  constexpr uint64_t layers=~uint64_t(0),bfp8=UINT64_C(0x1fff000000000000);
  unsigned previousOriginal=0;
  for(unsigned position=0;position<(hello?3U:2U);position++){
-  const unsigned token=hello?(position?previousOriginal:9419U):(position?17U:248319U);
+  const unsigned token=hello?(position?previousOriginal:initial):(position?17U:248319U);
   Q38CpuTokenTrace baseline,changed;
   if(!original.Step(token,baseline) || baseline.position!=position || baseline.input!=token
    || (!hello && !position && !FirstPin(baseline)) || (!hello && position==1 && baseline.selected!=17)
@@ -56,7 +66,7 @@ int main(int argc,char** argv){
    result.topFiveOverlap,result.originalTopProbability,result.candidateTopProbability);
  }
  if(!source.Ready() || !original.Ready() || !candidate.Ready())return 1;
- puts(hello?"PASS_THREE_TOKEN_HELLO_CPU_SEQUENCE; BASELINE_NOT_INDEPENDENTLY_PINNED_NOT_ANSWER_QUALITY_CARD_OR_SPEED":
+ puts(prefix?"PASS_THREE_TOKEN_PREFIX_CPU_SEQUENCE; BASELINE_NOT_INDEPENDENTLY_PINNED_NOT_ANSWER_QUALITY_CARD_OR_SPEED":hello?"PASS_THREE_TOKEN_HELLO_CPU_SEQUENCE; BASELINE_NOT_INDEPENDENTLY_PINNED_NOT_ANSWER_QUALITY_CARD_OR_SPEED":
   "PASS_TWO_TOKEN_CPU_SEQUENCE; NOT NATURAL_ANSWER_QUALITY, CARD_EXECUTION OR SPEED");
  return fflush(stdout)?1:0;
 }
