@@ -1,0 +1,23 @@
+Hybrid full-cache preflight: BUILD/OFFBOARD, 2026-11-07
+=======================================================
+
+A separate CPU-only preflight now authenticates the same-open original GGUF,
+binds the existing BFP8 cache reader and the BFP4 fragment reader, then
+verifies the proposed 1071 BFP4 and 273 BFP8 fragments before any future
+accelerator acquisition. It uses the existing fixed 8192/two-slot model plan,
+the frozen BFP4 converter fingerprint and the existing BFP8 cache recipe.
+
+The Haiku binary built with BFP4 converter fingerprint
+5dc4ffb1257bf99a8b38f7139e5fe95d04e42f11d63beda382d78aeacb1dc45c
+and SHA256 40a1b5cccda453890884dc035daba87ed455d81fba75a5f6942153c88c8cb74d.
+It was staged at /boot/home/pioneer-hybrid-cache-preflight-20261107 and
+the remote SHA matched. Negative-path checks refused missing, relative and
+symlink cache directories without creating them; five kernel/Work/reference
+roles were refused. Existing prepared-page tests cover full 1344-fragment
+selection with synthetic readers and one real-format synthetic BFP4 fixture.
+
+The two real-model cache preparation processes are still running. The actual
+preflight has NOT been run on those caches; do not run it until both writers
+have exited successfully. It is not a GPU owner, a weight upload, a model
+execution, a quality pass or a speed measurement. The source/directory
+existence checks precede cache Open; cache entry reads remain hash checked.
