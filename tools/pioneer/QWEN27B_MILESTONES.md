@@ -110,6 +110,10 @@ marker means do not start it a second time. The guard restores the verified
 stops without retry, reset or automatic restore. The single-token input is
 248319 with up to 32 generated tokens. Even a clean run needs independent
 quality checking and its reported post-START interval includes prompt work.
+The initial model/cache preflight subsequently passed all 1,344 fragments;
+the candidate driver loaded and the same one-shot parent started full-client
+PID 5654. Its own same-session preflight was underway at the last check, with
+no device open reported yet. No token or speed result is available.
 
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
