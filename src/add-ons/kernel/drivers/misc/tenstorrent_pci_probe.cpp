@@ -4,6 +4,14 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#if PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || !defined(PIONEER_Q38_SPAN_PRELOAD) \
+ || !defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_BF16_FULL_NATIVE)
+#error Hybrid tracked upload requires its isolated non-loadable token context
+#endif
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110300010078ULL && !defined(PIONEER_NATIVE_BFP_DIAGNOSTIC)
 #error Native BFP tag78 is reserved for its distinct fixed-fixture driver
 #endif
@@ -3471,6 +3479,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	PioneerQ38SpanLease* q38Span=NULL;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+	PioneerQ38HybridUploadReceipt* q38HybridReceipt=NULL; // same FD and bank owner;known-clean destruction only
+#endif
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	PioneerQ38DispatchLease* q38Dispatch=NULL;
@@ -3595,6 +3606,9 @@ struct PioneerStoreContext {
 		delete q38GdnBanks;
 #endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		delete q38HybridReceipt; // before its borrowed span/banks/ledger owners
+#endif
 		delete q38Span;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
@@ -6886,7 +6900,11 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		if (status!=B_OK || request.version!=1 || request.reserved) return status!=B_OK?status:B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
 		auto* c=cookie->context;
-		if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || !c->q38Span) status=B_NOT_ALLOWED;
+		if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || !c->q38Span
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+			|| !c->q38HybridReceipt
+#endif
+			) status=B_NOT_ALLOWED;
 		else {
 			request.closed=unsigned(PioneerQ38SpanEndService(*c)); request.recovery_required=0;
 			if (!request.closed) {
@@ -6894,6 +6912,12 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 				request.recovery_required=1;
 			}
 			status=user_memcpy(data,&request,sizeof(request));
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+			if (status!=B_OK && request.closed) {
+				c->q38HybridReceipt->Invalidate();c->q38Span->unsafe=true;
+				tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+			}
+#endif
 		}
 		release_sem(sLock); return status;
 	}
@@ -6909,7 +6933,11 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	}
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
-	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)) status=B_NOT_ALLOWED;
+	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		|| !c->q38HybridReceipt
+#endif
+		) status=B_NOT_ALLOWED;
 	else {
 		PioneerQ38SpanExtent extent;
 		if (!PioneerQ38SpanAuthorize(c->banks,c->baseline.baseline.baseline.baseline.dram,c->initialized,
@@ -6920,22 +6948,39 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 			else {
 				bool passed;
 #ifdef PIONEER_Q38_SPAN_FAST
-				if (operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD) passed=PioneerQ38SpanUploadService<PioneerStoreContext,true>(*c,*request);
+				if (operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD) passed=PioneerQ38SpanUploadService<PioneerStoreContext,true>(*c,*request
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+					,c->q38HybridReceipt
+#endif
+					);
 				else
 #endif
-				passed=PioneerQ38SpanUploadService(*c,*request);
+				passed=PioneerQ38SpanUploadService(*c,*request
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+					,c->q38HybridReceipt
+#endif
+					);
 				if (!passed || c->Unsafe()) {
 					c->q38Span->unsafe=true; tt_resident_session_result retained={}; RetainQ38DispatchOwner(*c,retained);
 					request->result.state=TT_RUNTIME_COMPLETION_FAILED; request->result.pages=0;
 					request->result.host_exact=0; request->result.recovery_required=1;
 				}
 				status=user_memcpy(data,request,sizeof(*request));
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+				if (status!=B_OK && passed) {
+					c->q38HybridReceipt->Invalidate();c->q38Span->unsafe=true;
+					tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+				}
+#endif
 			}
 		}
 	}
 	release_sem(sLock); free(request); return status;
 }
 // PIONEER_Q38_SPAN_CONTROL_END
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#include "PioneerQ38HybridUploadControl.inc"
+#endif
 #endif
 
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
@@ -8590,6 +8635,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
   return DriverReloadControl(instance,operation,data,length);
  if(operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN || operation==TT_PCI_PROBE_Q38_BANK_END)
   return Q38BankControl(instance,operation,data,length);
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+ if(operation==TT_PCI_PROBE_Q38_HYBRID_UPLOAD_CONTROL)
+  return Q38HybridUploadControl(instance,data,length);
+#endif
  if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)
   return Q38SpanControl(instance,operation,data,length);
  return B_NOT_ALLOWED;

@@ -93,6 +93,7 @@ public:
   return true;
  }
  void Abort(){if(pending)Fail();} // uncertainty after preparation retains/quarantines the banks
+ void Invalidate(){Fail();} // reply/lifetime uncertainty, never hardware IO or cleanup
  bool Seal(const PioneerQ38SpanLease& span){
   if(!Current() || pending || sealed || &span!=lease || part!=plan.Count() || page || parts!=3551 || spans!=22005
    || pages!=5160410 || bytes!=UINT64_C(21137039360) || !span.closed || !span.saved || span.nonce!=spans || span.dirty

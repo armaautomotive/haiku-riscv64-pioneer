@@ -80,11 +80,13 @@ binding before it can prevent mislabeled bytes from being executed.
 An opt-in kernel receipt now tracks the fixed hybrid upload order, the same
 owner/FD/team/generation, the span lease and the existing page-hash ledger;
 it can derive the matching hybrid layout after a complete, closed upload.
-The span-service connection and changed-ledger refusals have passed simulated
-tests and an RISC-V kernel-object compile. It is **not wired into the real
-driver control path**, and its non-cryptographic page hashes do not prove
-the format or contents of card memory. The trusted loader, driver control,
-firmware and cleanup still need to be connected and tested together.
+The receipt is now connected to the actual span-control and native-bind code
+in a **non-loadable test configuration**. Simulated control tests cover
+same-FD/team admission, an upload, incomplete-seal refusal and reply-failure
+quarantine; the actual native context also cross-compiles for Haiku RISC-V.
+The loader and matching QGW5 firmware are not yet wired into a runnable
+driver. Non-cryptographic page hashes do not prove the format or contents of
+card memory, and no full-model or hardware test is implied.
 
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory

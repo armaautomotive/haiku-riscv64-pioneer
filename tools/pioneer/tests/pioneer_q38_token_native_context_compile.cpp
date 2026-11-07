@@ -23,6 +23,14 @@ extern "C" {
 #define find_device pioneer_q38_token_context_body_find_device
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
 
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+extern "C" status_t pioneer_token_context_hybrid_control(PioneerProbeCookie* cookie,void* data,size_t length){
+ return Q38HybridUploadControl(cookie,data,length);
+}
+extern "C" status_t pioneer_token_context_hybrid_span(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length){
+ return Q38SpanControl(cookie,operation,data,length);
+}
+#endif
 extern "C" bool pioneer_token_context_scoped_bind(PioneerProbeCookie* cookie,unsigned bank){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
  return c && BindQ38TokenNative(*c,bank);

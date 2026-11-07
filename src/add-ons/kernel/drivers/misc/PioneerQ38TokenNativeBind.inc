@@ -83,6 +83,9 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   || !state->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)
   || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::MemoryClosed
   || (!audit && state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+ if(state && (!c->q38HybridReceipt || !c->q38HybridReceipt->Matches(c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)))return false;
+#endif
  if(cohort){
   const auto* d=c->q38Dispatch;
   if(!d || d!=state->participants || !state->memory || !state->startup || !fleetEnabled || d->worker[0].master!=&c->lease
@@ -131,6 +134,9 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
 static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext& c,unsigned bank){
  if(bank>=7 || sQ38TokenModelEpoch==UINT64_MAX || !c.io.TokenModelSourceScope(true))return false;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+ if(!c.q38HybridReceipt || !c.q38HybridReceipt->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  if(!c.q38PreparedSource || !c.q38PreparedSource->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
 #endif
@@ -142,14 +148,24 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 #endif
  // FULL851 coverage BEFORE epoch/reservation/model publication,without
  // inventing120 NoC source identities to build a startup template early.
- if(!state->canonical.Build() || !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(state->canonical)
+ if(
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+  !c.q38HybridReceipt->DeriveBoundLayout(state->canonical,&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration)
+#else
+  !state->canonical.Build()
+#endif
+  || !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(state->canonical)
   || !PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(state->canonical,c.initialized,PioneerResidentBanks::Pages)
   || !c.io.TokenModelSourceScope(true)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   || !state->preparedSource->MatchesPlan(state->canonical)
 #endif
   ){
-  delete state;return false; // unpublished CPU heap only,no claims/device IO
+  delete state;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+  if(c.banks.Quarantined()){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
+#endif
+  return false; // unpublished CPU heap only,no claims/device IO
  }
  sQ38TokenModelEpoch++;c.q38TokenNative=state;c.runtimeCoreMode=1;c.io.q38SpanAllowed=false;
  bool okay=state->graph.BindCanonical(c.banks,c.baseline.baseline.baseline.baseline.dram,identity,c.initialized,

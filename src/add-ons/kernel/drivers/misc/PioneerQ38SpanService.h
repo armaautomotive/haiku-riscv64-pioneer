@@ -8,6 +8,7 @@
 #error Hybrid tracked upload requires its exact distinct session and mutable-bank layout
 #endif
 #include "PioneerQ38HybridUploadReceipt.h"
+#include "PioneerQ38HybridUploadProtocol.h"
 #endif
 // Native adapter's shared kernel-only core. Complete owner/fresh-page proof
 // BEFORE allocation/preparation IO, and publish ALL page authority only

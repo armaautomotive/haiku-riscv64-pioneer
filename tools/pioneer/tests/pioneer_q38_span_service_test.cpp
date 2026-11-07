@@ -31,6 +31,9 @@ struct NativeSpanContext {
 	PioneerOutputBufferLease& bulkHost;
 	PioneerWideOutputLease& wideHost;
 	PioneerQ38SpanLease* q38Span=nullptr;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+	PioneerQ38HybridUploadReceipt* q38HybridReceipt=nullptr;void* q38TokenNative=nullptr;
+#endif
 	PioneerQ38DispatchLease* q38Dispatch=nullptr;
 	void* q38Cohort=nullptr; void* fleet=nullptr;
 	struct { bool saved=false; } panelProbe,streamProbe;
@@ -45,12 +48,20 @@ struct NativeSpanContext {
 		baseline{{{{fixture.owner.dram},fixture.owner.noc}}} {}
 	bool Unsafe() { return banks.Quarantined() || lease.recovery_required || bulk.unsafe || wideHost.quarantined
 		|| bulkHost.quarantined || (q38Span && (q38Span->unsafe || q38Span->running)); }
-	~NativeSpanContext() { delete q38Span; }
+	~NativeSpanContext() {
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		delete q38HybridReceipt;
+#endif
+		delete q38Span;
+	}
 };
 using PioneerStoreContext=NativeSpanContext;
 struct PioneerProbeCookie { uint32_t magic=0x50313030; int team=17; NativeSpanContext* context=nullptr; };
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sBankStorageOnly=false,sColdRecoveryRequired=false;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+static bool sReloadQuiesced=false;static uint64_t sReloadGeneration=20;
+#endif
 static int sLock=1,acquired=0,released=0,copyCalls=0,failCopy=0;
 static status_t acquire_sem(int lock) { assert(lock==1); acquired++; return B_OK; }
 static void release_sem(int lock) { assert(lock==1); released++; }
@@ -60,6 +71,12 @@ static status_t user_memcpy(void* to,const void* from,size_t bytes) {
 }
 #include "pioneer_retain_memory.inc"
 #include "pioneer_span_control.inc"
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+static int fixture_geteuid(){return 0;}
+#define geteuid fixture_geteuid
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadControl.inc"
+#undef geteuid
+#endif
 static std::unique_ptr<tt_q38_span_upload> Request(unsigned bytes=4096,unsigned bank=0,uint64_t offset=0)
 {
 	auto r=std::make_unique<tt_q38_span_upload>(); r->version=1; r->bank=bank; r->offset=offset; r->bytes=bytes;
@@ -69,6 +86,7 @@ static std::unique_ptr<tt_q38_span_upload> Request(unsigned bytes=4096,unsigned 
 static void Bind(PioneerProbeCookie& cookie,NativeSpanContext& c)
 { cookie.context=&c; sRuntimeOwner=&cookie; sBankStorageOnly=true; }
 static void Unbind() { sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false; failCopy=0; }
+#ifndef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 int main(int argc,char** argv)
 {
 	assert(argc==2);
@@ -236,3 +254,4 @@ int main(int argc,char** argv)
 	assert(acquired==released);
 	puts("PASS REAL span handler+service+actual loader: logical bounds/team/FD/cohort isolation before IO, all7 banks/1MiB exact transport, atomic page/hash publication, explicit END/no second prepare, UNKNOWN retains ALL owners and refuses later IO; NO DEVICE IO");
 }
+#endif
