@@ -52,6 +52,14 @@ Assistant or Work-mode implementation. Model layout, firmware, ownership and
 safe cleanup must all be integrated and qualified together before a real
 full-model run.
 
+**Integration blocker:** An offline upload-layout test recorded every
+accepted synthetic page and applied the native startup page-presence check.
+Both the hybrid layout and the original Q4 layout passed, even though their
+weight formats differ. Page presence alone therefore cannot select a safe
+worker. The new native owner must bind the uploaded format and layout to the
+matching firmware throughout the same session. The test did not use the card
+and does not show that the installed Q4 Assistant is using converted weights.
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored

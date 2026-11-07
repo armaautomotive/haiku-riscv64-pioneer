@@ -3,12 +3,16 @@
 // adapter over synthetic cache/model and fake device endpoint; NO DEVICE IO.
 #define PIONEER_Q38_HYBRID_PREPARED_UPLOAD_FIXTURE_ONLY 1
 #define PIONEER_Q38_HYBRID_JOB_DIAGNOSTIC 1
+#define PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC 1
 #include "pioneer_q38_hybrid_prepared_upload_test.cpp"
 #include "../PioneerQ38HybridUploadSession.h"
 #include "../PioneerQ38HybridJobBinding.h"
+#include "../PioneerQ38TokenStartupPlan.h"
 
 struct PreparedSessionIO {
  UploadIO upload;unsigned calls=0,opens=0,closes=0,begins=0,spanEnds=0,bankEnds=0;bool owned=false;
+ std::vector<uint8_t> ledger=std::vector<uint8_t>(PioneerResidentBanks::Pages);
+ unsigned recordedPages=0;
  PreparedSessionIO(const PioneerQ38CanonicalModelPlan& c,const PioneerQ38HybridModelPlan::Proposal& p):upload{c,p}{}
  int Open(){assert(!opens++);return 42;}
  int Close(int fd){assert(fd==42 && !closes++);return 0;}
@@ -26,7 +30,15 @@ struct PreparedSessionIO {
    q.result={};q.result.version=1;q.result.state=TT_RESIDENT_SESSION_READY;q.result.active=q.result.host_ready=1;
    q.result.bytes=PioneerResidentBanks::Total;
   }else if(op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD){
-   assert(owned && !spanEnds && !bankEnds);return upload.Call(fd,op,data,size);
+   assert(owned && !spanEnds && !bankEnds);
+   auto& packet=*static_cast<tt_q38_span_upload*>(data);
+   const unsigned first=packet.bank*unsigned(PioneerQ38CanonicalModelPlan::Capacity/4096)+unsigned(packet.offset/4096);
+   const unsigned count=packet.bytes/4096;
+   assert(first<ledger.size() && count<=ledger.size()-first);
+   for(unsigned page=0;page<count;page++)assert(!ledger[first+page]);
+   if(!upload.Call(fd,op,data,size))return false;
+   for(unsigned page=0;page<count;page++)ledger[first+page]=1;
+   recordedPages+=count;return true;
   }else if(op==TT_PCI_PROBE_Q38_SPAN_END){
    assert(owned && !spanEnds++);*static_cast<tt_q38_span_end*>(data)={1,0,1,0};
   }else{
@@ -64,6 +76,19 @@ int main(){
  PreparedSessionIO io(*canonical,proposal);PioneerQ38HybridUploadSession<MockPages,PreparedSessionIO> session(pages,io);
  assert(session.Begin(*canonical,error) && session.WeightsHeld() && io.owned && !io.bankEnds
   && io.calls==22010 && io.upload.calls==22005 && !io.closes);
+ // Feed the exact accepted request extents into the same page-presence check
+ // used by native startup. A presence-only ledger is NOT format provenance.
+ auto relocated=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(relocated->BuildHybridDiagnostic());
+ assert(io.recordedPages==UINT64_C(21137039360)/4096);
+ assert(PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(*relocated,io.ledger.data(),io.ledger.size()));
+ assert(PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(*canonical,io.ledger.data(),io.ledger.size()));
+ // The original plan also passes, although the uploaded bytes are not Q4.
+ // Never use that fact to authorize either plan, or to launch a worker.
+ const auto* last=relocated->ProjectionStripe(60,4,6);assert(last);
+ const unsigned missing=last->bank*unsigned(relocated->Capacity/4096)+last->offset/4096;
+ assert(io.ledger[missing]);io.ledger[missing]=0;
+ assert(!PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(*relocated,io.ledger.data(),io.ledger.size()));
+ io.ledger[missing]=1;
  std::array<uint32_t,decltype(session)::RootManifestWords> actualManifest={},expectedManifest={};
  PioneerQ38HybridJobBinding binding;
  assert(binding.Bind(*canonical,UINT64_C(0x1fff000000000000))
@@ -82,5 +107,5 @@ int main(){
  assert(session.Finish(error) && session.Complete() && !session.FailedState()
   && io.calls==22012 && io.upload.calls==22005 && io.closes==1 && !io.owned
   && session.Upload().UploadedBytes()==UINT64_C(21137039360));
- printf("PASS actual prepared-page/owner-session/span composition: BFP4 %u/%u and BFP8 %u/%u synthetic pages/batched reads; no device or inference\n",expectedPages,expectedBatches,eightPages,eightBatches);
+ printf("PASS actual prepared-page/owner-session/span composition: BFP4 %u/%u and BFP8 %u/%u synthetic pages/batched reads; BOTH hybrid and original presence-only startup checks accept this ledger, so format binding is required; no device or inference\n",expectedPages,expectedBatches,eightPages,eightBatches);
 }
