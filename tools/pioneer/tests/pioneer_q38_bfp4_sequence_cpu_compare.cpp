@@ -27,7 +27,8 @@ static bool FirstPin(const Q38CpuTokenTrace& t){
 }
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned reference byte order");
- const bool window11=argc==4 && !strcmp(argv[1],"--prefix-three-window11");
+ const bool early11=argc==4 && !strcmp(argv[1],"--prefix-three-window11-early");
+ const bool window11=early11 || (argc==4 && !strcmp(argv[1],"--prefix-three-window11"));
  const bool prefix=argc==4 && (!strcmp(argv[1],"--prefix-three-window13") || window11);
  if((!prefix && (argc!=3 || (strcmp(argv[1],"--two-fixed-window13") && strcmp(argv[1],"--hello-three-window13")))) || argv[2][0]!='/')return 2;
  unsigned initial=9419;
@@ -38,14 +39,14 @@ int main(int argc,char** argv){
  }
  const bool hello=prefix || !strcmp(argv[1],"--hello-three-window13");
  setvbuf(stdout,nullptr,_IOLBF,0);
- if(prefix)printf("CPU_SEQUENCE authenticating model; raw initial token%u, then original greedy tokens; FFN_BFP8_layers=%s; teacher-forced; NO DEVICE OR WORK\n",initial,window11?"50..60":"48..60");
+ if(prefix)printf("CPU_SEQUENCE authenticating model; raw initial token%u, then original greedy tokens; FFN_BFP8_layers=%s; teacher-forced; NO DEVICE OR WORK\n",initial,early11?"48..58":window11?"50..60":"48..60");
  else if(hello)puts("CPU_SEQUENCE authenticating model; raw Hello token9419, then original greedy tokens; teacher-forced; NO DEVICE OR WORK");
  else puts("CPU_SEQUENCE authenticating model; fixed inputs 248319,17; teacher-forced; NO DEVICE OR WORK");
  WholeModelOriginalBytes source;if(!source.Open(argv[2]) || !source.Ready())return 1;
  Q38CpuModelReference original,candidate;
  if(!original.Bind(source) || !candidate.Bind(source))return 1;
  constexpr uint64_t layers=~uint64_t(0);
- const uint64_t bfp8=window11?UINT64_C(0x1ffc000000000000):UINT64_C(0x1fff000000000000);
+ const uint64_t bfp8=early11?UINT64_C(0x07ff000000000000):window11?UINT64_C(0x1ffc000000000000):UINT64_C(0x1fff000000000000);
  unsigned previousOriginal=0;
  for(unsigned position=0;position<(hello?3U:2U);position++){
   const unsigned token=hello?(position?previousOriginal:initial):(position?17U:248319U);

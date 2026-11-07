@@ -34,6 +34,9 @@ if "$temporary/sequence-compare" --prefix-three-window13 /not-a-model 1x;then ex
 if "$temporary/sequence-compare" --prefix-three-window11 relative.gguf 42;then exit 1;fi
 if "$temporary/sequence-compare" --prefix-three-window11 /not-a-model 248320;then exit 1;fi
 if "$temporary/sequence-compare" --prefix-three-window11 /not-a-model 1x;then exit 1;fi
+if "$temporary/sequence-compare" --prefix-three-window11-early relative.gguf 42;then exit 1;fi
+if "$temporary/sequence-compare" --prefix-three-window11-early /not-a-model 248320;then exit 1;fi
+if "$temporary/sequence-compare" --prefix-three-window11-early /not-a-model 1x;then exit 1;fi
 if "$temporary/sequence-compare" --invalid /not-a-model;then exit 1;fi
 for role in _KERNEL_MODE PIONEER_Q38_WORK_INFERENCE TT_PIONEER_Q38_WORK_MODE PIONEER_Q38_CPU_VALIDATION PIONEER_Q38_FULL_MODEL_CPU_REFERENCE;do
  if ${CXX:-c++} -std=c++17 -D"$role" -E "$directory/pioneer_q38_bfp4_full_cpu_backend.cpp" > /dev/null 2> "$temporary/$role.stderr";then exit 1;fi

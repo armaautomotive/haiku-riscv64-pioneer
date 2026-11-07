@@ -37,3 +37,13 @@ It is not a general quality win or an independently generated answer. The
 existing ROOT/worker/layout and caches remain 50..60; changing them requires
 separately designed format identity and more quality evidence. Neither path
 has a new physical P100A inference or token-rate measurement.
+
+Follow-up started: three teacher-forced positions beginning with raw token
+3710, using the 48..58 placement, to compare against the earlier 50..60 run
+on the same prefix. The separately retained CPU states and original Q6 head
+are used; this remains a diagnostic, not generated-answer quality. Binary
+SHA-256 98153e7b3143d68badaefbf22ce5cc2a55eb9afe3201ed731487f23a693213af;
+temporary private capture /private/tmp/pioneer-q38-window11-early-what-20261107-a.log.
+The process was live after launch; a log alone is not proof of a live process
+or completed result. Check its handle and exit/completion markers before
+reporting any result, and do not restart merely because observation times out.

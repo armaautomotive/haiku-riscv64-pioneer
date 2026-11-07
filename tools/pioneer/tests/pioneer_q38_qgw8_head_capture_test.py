@@ -5,7 +5,8 @@ import subprocess
 import sys
 import tempfile
 
-for name in ('capture_pioneer_q38_qgw8_head_compare.py', 'capture_pioneer_q38_mask11_compare.py'):
+for name in ('capture_pioneer_q38_qgw8_head_compare.py', 'capture_pioneer_q38_mask11_compare.py',
+             'capture_pioneer_q38_window11_early_compare.py'):
     wrapper = Path(__file__).with_name(name)
     with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-head-capture-') as directory:
         root = Path(directory)
@@ -23,4 +24,4 @@ for name in ('capture_pioneer_q38_qgw8_head_compare.py', 'capture_pioneer_q38_ma
         assert bad.returncode and failure.read_text() == bad.stdout and bad.stdout.endswith('CAPTURE_EXIT 1\n')
         invalid = subprocess.run([sys.executable, str(wrapper), 'relative', str(model), str(root / 'unused')], capture_output=True)
         assert invalid.returncode and not (root / 'unused').exists()
-print('PASS both private captures, no overwrite, argument and child-failure checks; no model/device')
+print('PASS all three private captures, no overwrite, argument and child-failure checks; no model/device')
