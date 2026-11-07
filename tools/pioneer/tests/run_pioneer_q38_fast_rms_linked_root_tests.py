@@ -54,6 +54,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-fast-rms-linked-root-',dir='/pr
     run(sys.executable,builder,sdk,old,*flags)
     run(sys.executable,builder,sdk,new,*flags,'--fast-rms')
     check_image(old,ROOT_PINS);check_image(new,candidate_pins)
+    # Check that selecting the different RMS implementation does not change
+    # the linked coordinator's hybrid job translation at format boundaries.
+    nm=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm')
+    (new/'program.demangled').write_bytes(subprocess.check_output([nm,'-nC',str(new/'program.elf')]))
+    job_test=temp/'hybrid-jobs'
+    run(os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
+        '-fsanitize=address,undefined',here/'pioneer_q38_hybrid_actual_root_test.cpp','-o',job_test)
+    run(job_test,new)
     binary=temp/'test'
     run(os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
         '-fsanitize=address,undefined',here/'pioneer_q38_fast_rms_linked_root_test.cpp',root/'PioneerModelWeightCache.cpp','-o',binary)
