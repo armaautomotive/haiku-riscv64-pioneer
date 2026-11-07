@@ -19,11 +19,12 @@
 // failure. After any uncertain call, close once only: the driver is solely
 // responsible for retaining/quarantining uncertain resources. Begin leaves
 // the uploaded weights held after SPAN_END; Finish explicitly releases them.
+// The caller must retain the same canonical plan until Finish or destruction.
 // This diagnostic has no inference or warm-load interface.
 template<class Pages,class IO> class PioneerQ38HybridUploadSession {
  using C=PioneerQ38CanonicalModelPlan;
  enum State {Virgin,Open,Owned,SpansClosed,BanksClosed,Done,Failed};
- Pages& pages;IO& io;int fd=-1;State state=Virgin;uint64_t generation=0;
+ Pages& pages;IO& io;const C* layout=nullptr;int fd=-1;State state=Virgin;uint64_t generation=0;
  PioneerQ38HybridSpanUpload<Pages,IO> upload;
  bool attempted=false;
  bool Stop(std::string& error,const char* reason){
@@ -50,7 +51,46 @@ public:
  ~PioneerQ38HybridUploadSession(){if(fd>=0)io.Close(fd);} // close only, never implicit END
  bool Complete()const{return state==Done;}
  bool FailedState()const{return state==Failed;}
- bool WeightsHeld()const{return state==SpansClosed && fd>=0 && pages.AllVerified() && upload.CompleteHeld();}
+ bool WeightsHeld()const{return state==SpansClosed && fd>=0 && layout && layout->Ready()
+  && pages.AllVerified() && upload.CompleteHeld();}
+ enum {RootManifestWords=64*3*7};
+ // Address table for the experimental ROOT, derived from this session's
+ // actual uploaded parts while the SAME source and bank owner remain held.
+ // This is data only: it does not install firmware or authorize inference.
+ bool RootManifest(uint32_t* output,unsigned words)const{
+  if(!output || words!=RootManifestWords || !WeightsHeld())return false;
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
+  const uintptr_t source=reinterpret_cast<uintptr_t>(&pages),model=reinterpret_cast<uintptr_t>(layout);
+  const size_t bytes=sizeof(uint32_t)*RootManifestWords;
+  if((out&3) || out>UINTPTR_MAX-bytes || self>UINTPTR_MAX-sizeof(*this)
+   || source>UINTPTR_MAX-sizeof(pages) || model>UINTPTR_MAX-sizeof(*layout)
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<source+sizeof(pages) && source<out+bytes)
+   || (out<model+sizeof(*layout) && model<out+bytes))return false;
+  PioneerQ38HybridModelPlan::Proposal expected;
+  if(!PioneerQ38HybridModelPlan::Build(*layout,UINT64_C(0x1fff000000000000),expected)
+   || expected.parts.size()!=layout->Count())return false;
+  uint32_t staged[RootManifestWords]={};unsigned found=0;
+  for(unsigned i=0;i<layout->Count();i++){
+   const auto* original=layout->Part(i);const auto* actual=pages.Part(i);
+   if(!original || !actual)return false;
+   const uintptr_t address=reinterpret_cast<uintptr_t>(actual);
+   if(address>UINTPTR_MAX-sizeof(*actual) || (out<address+sizeof(*actual) && address<out+bytes))return false;
+   const auto& want=expected.parts[i];
+   if(actual->original!=want.original || actual->bank!=want.bank || actual->offset!=want.offset
+    || actual->bytes!=want.bytes || actual->allocated!=want.allocated || actual->encoding!=want.encoding)return false;
+   if(original->kind!=C::WeightKind || original->layer>=64 || original->role<2 || original->role>4)continue;
+   const bool eight=original->layer>=48 && original->layer<=60;
+   if(original->bank>=7 || actual->original!=i || actual->bank!=original->bank
+    || actual->encoding!=(eight?8U:0U) || !actual->allocated || (actual->offset&4095)
+    || actual->offset>UINT32_MAX-C::Base || actual->offset>C::Capacity
+    || actual->allocated>C::Capacity-actual->offset)return false;
+   const unsigned at=(original->layer*3+original->role-2)*7+original->bank;
+   if(staged[at])return false;
+   staged[at]=C::Base+actual->offset;found++;
+  }
+  if(found!=RootManifestWords || !WeightsHeld())return false;
+  std::memcpy(output,staged,bytes);return true;
+ }
  const PioneerQ38HybridSpanUpload<Pages,IO>& Upload()const{return upload;}
  bool Begin(const C& canonical,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
   if(attempted){error="Hybrid upload session is one-shot; no retry.";return false;}
@@ -77,7 +117,7 @@ public:
   tt_q38_span_end spanEnd={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,spanEnd) || spanEnd.version!=1 || spanEnd.reserved
    || spanEnd.closed!=1 || spanEnd.recovery_required)return Stop(error,"Span END uncertain; close only.");
-  state=SpansClosed;error.clear();return true;
+  layout=&canonical;state=SpansClosed;error.clear();return true;
  }
  bool Finish(std::string& error){
   if(state!=SpansClosed){error="No held hybrid upload to finish.";return false;}

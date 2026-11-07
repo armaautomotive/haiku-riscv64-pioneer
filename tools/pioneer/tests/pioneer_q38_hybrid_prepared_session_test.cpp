@@ -2,8 +2,10 @@
 // Connect actual prepared-page dispatch, actual session and actual span packet
 // adapter over synthetic cache/model and fake device endpoint; NO DEVICE IO.
 #define PIONEER_Q38_HYBRID_PREPARED_UPLOAD_FIXTURE_ONLY 1
+#define PIONEER_Q38_HYBRID_JOB_DIAGNOSTIC 1
 #include "pioneer_q38_hybrid_prepared_upload_test.cpp"
 #include "../PioneerQ38HybridUploadSession.h"
+#include "../PioneerQ38HybridJobBinding.h"
 
 struct PreparedSessionIO {
  UploadIO upload;unsigned calls=0,opens=0,closes=0,begins=0,spanEnds=0,bankEnds=0;bool owned=false;
@@ -62,6 +64,11 @@ int main(){
  PreparedSessionIO io(*canonical,proposal);PioneerQ38HybridUploadSession<MockPages,PreparedSessionIO> session(pages,io);
  assert(session.Begin(*canonical,error) && session.WeightsHeld() && io.owned && !io.bankEnds
   && io.calls==22010 && io.upload.calls==22005 && !io.closes);
+ std::array<uint32_t,decltype(session)::RootManifestWords> actualManifest={},expectedManifest={};
+ PioneerQ38HybridJobBinding binding;
+ assert(binding.Bind(*canonical,UINT64_C(0x1fff000000000000))
+  && binding.RootManifest(expectedManifest.data(),expectedManifest.size())
+  && session.RootManifest(actualManifest.data(),actualManifest.size()) && actualManifest==expectedManifest);
  unsigned expectedBatches=0,expectedPages=0,eightBatches=0,eightPages=0;
  for(unsigned i=0;i<canonical->Count();i++){
   const auto& p=*canonical->Part(i);

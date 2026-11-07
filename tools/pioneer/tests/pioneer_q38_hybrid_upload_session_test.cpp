@@ -78,17 +78,29 @@ int main(){
   // exact uploaded weights and the exclusive bank session are still held.
   assert(session.WeightsHeld() && !session.Complete() && !session.FailedState()
    && io.calls==22010 && io.begins==1 && io.spanEnds==1 && !io.bankEnds && io.owned && !io.closes);
+  std::array<uint32_t,Session::RootManifestWords> manifest;manifest.fill(0xdeadbeef);
+  assert(!session.RootManifest(manifest.data(),manifest.size()-1) && manifest[0]==0xdeadbeef);
+  assert(session.RootManifest(manifest.data(),manifest.size()));
+  const auto first=manifest[0];pages.proposal.parts[0].offset+=4096;
+  assert(!session.RootManifest(manifest.data(),manifest.size()) && manifest[0]==first);
+  pages.proposal.parts[0].offset-=4096;
+  const auto prior=pages.proposal.parts[0];
+  assert(!session.RootManifest(reinterpret_cast<uint32_t*>(pages.proposal.parts.data()),manifest.size())
+   && pages.proposal.parts[0].offset==prior.offset && pages.proposal.parts[0].original==prior.original);
   assert(!session.Begin(*canonical,error) && session.WeightsHeld() && io.calls==22010);
   assert(session.Finish(error));
   assert(session.Complete() && !session.FailedState() && io.calls==22012 && io.begins==1
    && io.spanEnds==1 && io.bankEnds==1 && io.statuses==2 && !io.owned && io.closes==1
    && session.Upload().UploadedParts()==3551 && session.Upload().UploadedSpans()==22005 && progress==22005);
-  assert(!session.WeightsHeld() && !session.Finish(error) && io.calls==22012 && io.closes==1);
+  assert(!session.WeightsHeld() && !session.RootManifest(manifest.data(),manifest.size())
+   && !session.Finish(error) && io.calls==22012 && io.closes==1);
  }
  {
   FakePages pages(*canonical);SessionIO io(*canonical,pages);Session session(pages,io);
   assert(session.Begin(*canonical,error) && session.WeightsHeld());
   pages.live=false;assert(!session.WeightsHeld());
+  std::array<uint32_t,Session::RootManifestWords> manifest;manifest.fill(0xdeadbeef);
+  assert(!session.RootManifest(manifest.data(),manifest.size()) && manifest[0]==0xdeadbeef);
   // Revoked source must not be treated as a clean BANK_END: close only.
   assert(!session.Finish(error) && session.FailedState() && io.calls==22010
    && io.owned && !io.bankEnds && io.closes==1);

@@ -15,6 +15,11 @@ its precise scope are in
 The target of 20 tokens/s remains unmet, and there is no demonstrated faster
 full-model hybrid result.
 
+The experimental hybrid path converts some Q4_K_M weights to BFP4/BFP8;
+it is not numerically identical to the original. One matched 32-output band
+had 14.3% relative L2 difference, and full-model quality is not established.
+See [`benchmarks/qwen38-matched-band-physical-20261107.txt`](benchmarks/qwen38-matched-band-physical-20261107.txt).
+
 ## Milestone 1: upload the prepared model
 
 **In progress.** Converted cache files passed a real, read-only preflight.
@@ -35,7 +40,9 @@ releases weights and does not run a token.
 **Not yet passed.** The experimental upload session can now keep the bank
 session held after upload until explicitly released. Its held/release and
 failure behavior have only been exercised using synthetic data and a fake
-device. It is not connected to the native inference owner, and it is not an
+device. The held session can derive the coordinator's address table from that
+same uploaded layout; this is not yet staged to the card. It is not connected
+to the native inference owner, and it is not an
 Assistant or Work-mode implementation. Model layout, firmware, ownership and
 safe cleanup must all be integrated and qualified together before a real
 full-model run.
