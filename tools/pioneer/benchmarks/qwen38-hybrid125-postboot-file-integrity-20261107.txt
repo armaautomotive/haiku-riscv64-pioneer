@@ -114,3 +114,16 @@ reallocated sectors, uncorrectable errors and interface CRC errors each
 reported zero. These indicators do not rule out a flush, power-loss,
 controller, filesystem or other data-integrity problem. Keep the existing
 recovery guard intact; the backup hash alone does not resolve the anomaly.
+
+Current Linux boot and PCI identification, read-only
+----------------------------------------------------
+At 2026-11-07 23:42 UTC the photo-verified Linux SSH identity was reachable.
+Linux reported boot ID abd322af-634d-4699-8ffd-19a72dd63c3a, the same ID as
+the independent raw follow-up above, and 11444 seconds of uptime. Therefore
+this observation is not evidence of another fresh boot or power epoch since
+that follow-up. The Samsung disk serial remained S14CNSAD300075H. PCI function
+0002:81:00.0 was enumerated as 1e52:b140 and its Linux sysfs driver link was
+absent. Enumeration is not a card health, execution, recovery, numerical
+quality, or speed test. No accelerator command, relay action, filesystem
+write, repair, driver exchange or spent-trial retry was performed. The
+restoration guard and the unresolved storage-integrity issue remain unchanged.
