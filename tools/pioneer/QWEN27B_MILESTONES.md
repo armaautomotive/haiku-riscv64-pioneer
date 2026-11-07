@@ -47,17 +47,14 @@ This pass does not establish a held-weight inference session or a token rate.
 
 ## Milestone 2: hold weights and run the model
 
-**Not yet passed.** The experimental upload session can now keep the bank
-session held after upload until explicitly released. Its held/release and
-failure behavior have only been exercised using synthetic data and a fake
-device. The held session can derive the coordinator's address table from that
-same uploaded layout; this is not yet staged to the card. It is not connected
-to the native inference owner, and it is not an
-Assistant or Work-mode implementation. Model layout, firmware, ownership and
-safe cleanup must all be integrated and qualified together before a real
-full-model run.
+**Not yet passed.** The experimental upload session holds the bank session
+after upload and derives the coordinator's address table from that same
+layout. It is now connected to a separately built native inference candidate;
+its end-to-end lifecycle has passed synthetic tests, but not yet a real
+full-model run. It is not an Assistant or Work-mode implementation. Model
+layout, firmware, ownership and safe cleanup still need physical qualification.
 
-**Integration blocker:** An offline upload-layout test recorded every
+**Why the tracked integration was necessary:** An offline upload-layout test recorded every
 accepted synthetic page and applied the native startup page-presence check.
 Both the hybrid layout and the original Q4 layout passed, even though their
 weight formats differ. Page presence alone therefore cannot select a safe
@@ -74,8 +71,8 @@ The kernel's token-owner bind and memory owner now also reject an explicitly
 hybrid layout with an original worker, or an original layout with the QGW5
 hybrid worker, before staging. An earlier QGW5 journal fixture used the original
 layout; it has been corrected. This check cannot identify the contents of a
-presence-only upload ledger: the actual session still needs a trusted format
-binding before it can prevent mislabeled bytes from being executed.
+presence-only upload ledger. The tracked receipt described below adds a
+format and session binding; its actual on-card behavior remains unqualified.
 
 An opt-in kernel receipt now tracks the fixed hybrid upload order, the same
 owner/FD/team/generation, the span lease and the existing page-hash ledger;
