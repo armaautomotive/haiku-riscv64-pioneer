@@ -12,6 +12,7 @@ struct Q38CpuModelReference::Impl {
  bool attempted=false,bound=false,failed=false;
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
  Q38CpuFfnDiagnostic ffnDiagnostic=nullptr;void* ffnContext=nullptr;uint64_t ffnLayers=~uint64_t(0);
+ bool ffnSequence=false;
 #endif
  std::array<Q38OriginalTensor,851> tensors;
  std::array<std::array<unsigned,14>,65> index={};
@@ -217,6 +218,9 @@ Q38CpuModelReference::~Q38CpuModelReference()=default;
 bool Q38CpuModelReference::Bind(Q38OriginalRows& s){return impl->Bind(s);}
 bool Q38CpuModelReference::Ready()const{return impl->Current(true);}
 bool Q38CpuModelReference::Step(unsigned token,Q38CpuTokenTrace& out){
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+ if(impl->ffnSequence){impl->failed=true;return false;}
+#endif
  if(!impl->Step(token,out)){impl->failed=true;return false;}return true;
 }
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
@@ -231,9 +235,17 @@ bool Q38CpuModelReference::StepWithFfnDiagnostic(unsigned token,Q38CpuFfnDiagnos
  return StepWithSelectedFfnDiagnostic(token,~uint64_t(0),fn,context,trace);
 }
 bool Q38CpuModelReference::StepWithSelectedFfnDiagnostic(unsigned token,uint64_t layers,Q38CpuFfnDiagnostic fn,void* context,Q38CpuTokenTrace& trace){
- if(!layers || !fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}
+ if(!layers || !fn || !context || !impl->Current(true) || impl->position!=0 || impl->ffnSequence){impl->failed=true;return false;}
  impl->ffnDiagnostic=fn;impl->ffnContext=context;impl->ffnLayers=layers;
  const bool okay=impl->Step(token,trace);impl->failed=true;return okay;
+}
+bool Q38CpuModelReference::StepWithSelectedFfnSequence(unsigned token,uint64_t layers,Q38CpuFfnDiagnostic fn,void* context,Q38CpuTokenTrace& trace){
+ if(!layers || !fn || !context || !impl->Current(true) || impl->position>=3
+  || (!impl->ffnSequence && impl->position!=0)
+  || (impl->ffnSequence && (impl->ffnDiagnostic!=fn || impl->ffnLayers!=layers))){impl->failed=true;return false;}
+ impl->ffnSequence=true;impl->ffnDiagnostic=fn;impl->ffnContext=context;impl->ffnLayers=layers;
+ const bool okay=impl->Step(token,trace);impl->ffnContext=nullptr;
+ if(!okay)impl->failed=true;return okay;
 }
 bool Q38CpuModelReference::ObserveFirstFfnWithDiagnostic(unsigned token,Q38CpuFfnDiagnostic fn,void* context,Q38CpuFirstFfnTrace& trace){
  if(!fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}

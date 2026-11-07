@@ -1,0 +1,57 @@
+/* SPDX-License-Identifier: MIT */
+// Two fixed, teacher-forced tokens with independent retained CPU state.
+// Diagnostic only: not P100A execution, Work, or an answer-quality pass.
+#if !defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC) || PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
+#error CPU-only BFP4 sequence comparison role required
+#endif
+#define PIONEER_Q38_FULL_MODEL_CPU_REFERENCE 1
+#define PIONEER_Q38_CPU_VALIDATION 1
+#include "pioneer_q38_cpu_model_reference.h"
+#include "pioneer_q38_whole_original_bytes.h"
+#include "pioneer_q38_bfp4_full_cpu_backend.h"
+#include "pioneer_q38_distribution_compare.h"
+#include "../PioneerModelWeightCache.h"
+#include <cstdio>
+#include <cstring>
+#include <memory>
+
+static bool FirstPin(const Q38CpuTokenTrace& t){
+ if(t.position || t.input!=248319 || t.hidden.size()!=65*5120 || t.logits.size()!=248320)return false;
+ std::vector<uint32_t> words={0x31524651,1,t.position,t.input,t.selected,t.runnerUp,t.best,t.second,65,5120,248320,0,0,0,0,0};
+ words.insert(words.end(),t.hidden.begin(),t.hidden.end());words.insert(words.end(),t.logits.begin(),t.logits.end());words.push_back(0x454e4451);
+ return PioneerModelWeightCache::Hex(PioneerModelWeightCache::Hash(words.data(),words.size()*sizeof(uint32_t)))==
+  "9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937";
+}
+int main(int argc,char** argv){
+ static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned reference byte order");
+ if(argc!=3 || strcmp(argv[1],"--two-fixed-window13") || argv[2][0]!='/')return 2;
+ setvbuf(stdout,nullptr,_IOLBF,0);
+ puts("CPU_SEQUENCE authenticating model; fixed inputs 248319,17; teacher-forced; NO DEVICE OR WORK");
+ WholeModelOriginalBytes source;if(!source.Open(argv[2]) || !source.Ready())return 1;
+ Q38CpuModelReference original,candidate;
+ if(!original.Bind(source) || !candidate.Bind(source))return 1;
+ constexpr uint64_t layers=~uint64_t(0),bfp8=UINT64_C(0x1fff000000000000);
+ for(unsigned position=0;position<2;position++){
+  const unsigned token=position?17U:248319U;
+  Q38CpuTokenTrace baseline,changed;
+  if(!original.Step(token,baseline) || baseline.position!=position || baseline.input!=token
+   || (!position && !FirstPin(baseline)) || (position==1 && baseline.selected!=17)
+   || !source.Ready())return 1;
+  // Re-authenticate and create a fresh ordered FFN sweep for each token. The
+  // candidate's convolution/GDN/attention history remains in candidate.
+  std::unique_ptr<void,decltype(&Q38Bfp4CpuClose)> backend(Q38Bfp4CpuOpen(argv[2],layers,bfp8),Q38Bfp4CpuClose);
+  if(!backend || !candidate.StepWithSelectedFfnSequence(token,layers,Q38Bfp4CpuProject,backend.get(),changed)
+   || !Q38Bfp4CpuComplete(backend.get()) || changed.position!=position || changed.input!=token
+   || changed.hidden.size()!=65*5120 || changed.logits.size()!=248320 || !source.Ready())return 1;
+  Q38DistributionCompare::Result result={};
+  if(!Q38DistributionCompare::Compute(baseline.logits,changed.logits,result)
+   || result.originalTop!=baseline.selected || result.candidateTop!=changed.selected)return 1;
+  printf("CPU_SEQUENCE_RESULT position%u input%u original%u candidate%u same%u kl_original_to_candidate%.9g top5_overlap%u original_top_probability%.9g candidate_top_probability%.9g; TEACHER_FORCED_CPU_ONLY\n",
+   position,token,baseline.selected,changed.selected,unsigned(baseline.selected==changed.selected),result.kl,
+   result.topFiveOverlap,result.originalTopProbability,result.candidateTopProbability);
+ }
+ if(!source.Ready() || !original.Ready() || !candidate.Ready())return 1;
+ puts("PASS_TWO_TOKEN_CPU_SEQUENCE; NOT NATURAL_ANSWER_QUALITY, CARD_EXECUTION OR SPEED");
+ return fflush(stdout)?1:0;
+}

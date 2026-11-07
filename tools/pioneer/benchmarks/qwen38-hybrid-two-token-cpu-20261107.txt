@@ -1,0 +1,28 @@
+Hybrid two-token accuracy diagnostic: IN PROGRESS, November 7 2026
+==================================================================
+
+Purpose: extend the existing first-token check to a fixed two-token sequence
+with separate original and candidate attention/GDN/convolution histories.
+The fixed inputs 248319,17 are teacher-forced on both paths. This is a small
+numerical diagnostic, not a natural conversation, broad quality verdict,
+device benchmark, or production feature. The candidate uses BFP8 FFN for
+layers 48..60 and BFP4 FFN elsewhere. CPU reference is never used by Work.
+
+The new sequence entry refuses ordinary-Step mixing, callback/layer-mask
+changes, invalid inputs, and retries after a failed observation. Its tests
+passed two synthetic zero-weight positions with separate per-position callback
+contexts and retained state; three forked negative tests refused changed
+mask, changed callback and ordinary Step after position zero. The existing
+one-token synthetic and role tests passed. These are not real-model results.
+
+The real-model comparison was started on the Mac; completion is NOT yet
+established. Its first original-token complete trace is required to match the
+existing independent pinned SHA; original position 1 is checked against the
+previous two-position control's selected token. Both paths read the same
+authenticated original model, with independent state and a newly authenticated
+ordered FFN sweep per candidate position. Run output is retained locally at
+/private/tmp/pioneer-q38-sequence-quality.sGkzYrUv/comparison.log.
+The started binary SHA-256 is
+eae17cb2ad3fc607c14a1b955650b8f4f6fc6c0763aefc945db2dee1a1f1299a.
+Until actual exit status and both result lines are checked, do not describe
+this comparison as complete or claim a numerical result from it.

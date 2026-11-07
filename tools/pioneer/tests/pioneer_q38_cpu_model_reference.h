@@ -60,6 +60,11 @@ public:
  // Only selected layers use the diagnostic; all others deliberately use
  // original Q4. CPU experiment only, never a runtime fallback policy.
  bool StepWithSelectedFfnDiagnostic(unsigned token,uint64_t selectedLayers,Q38CpuFfnDiagnostic,void*,Q38CpuTokenTrace&);
+ // Separate bounded sequence for CPU-only comparisons. The same layer mask
+ // and callback are required at each position; context may be renewed after
+ // the caller finishes its preceding projection sweep. No ordinary Step or
+ // one-shot diagnostic can be mixed into this sequence.
+ bool StepWithSelectedFfnSequence(unsigned token,uint64_t selectedLayers,Q38CpuFfnDiagnostic,void*,Q38CpuTokenTrace&);
  bool ObserveFirstFfnWithDiagnostic(unsigned token,Q38CpuFfnDiagnostic,void*,Q38CpuFirstFfnTrace&);
 #endif
  // CPU-private COPY only,never a mutable view or device-product supplier.
