@@ -11,6 +11,12 @@
 #endif
 #include "PioneerQ38HybridSpanUpload.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
+#if PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT != 1
+#error Hybrid tracked upload client requires its distinct diagnostic selection
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadProtocol.h"
+#endif
 
 // A single upload-only diagnostic session around the existing seven-bank
 // owner and span transport. The source must remain authenticated and ALL
@@ -21,7 +27,10 @@
 // the uploaded weights held after SPAN_END; Finish explicitly releases them.
 // The caller must retain the same canonical plan until Finish or destruction.
 // This diagnostic has no inference or warm-load interface.
-template<class Pages,class IO> class PioneerQ38HybridUploadSession {
+template<class Pages,class IO,bool Tracked=false> class PioneerQ38HybridUploadSession {
+#ifndef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
+ static_assert(!Tracked,"tracked hybrid upload requires its distinct client selection");
+#endif
  using C=PioneerQ38CanonicalModelPlan;
  enum State {Virgin,Open,Owned,SpansClosed,BanksClosed,Done,Failed};
  Pages& pages;IO& io;const C* layout=nullptr;int fd=-1;State state=Virgin;uint64_t generation=0;
@@ -39,11 +48,19 @@ template<class Pages,class IO> class PioneerQ38HybridUploadSession {
  bool Identity(unsigned owner){
   tt_pioneer_driver_reload q={};q.version=1;
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,q) || !PioneerDriverReloadRequest(q) || q.expected_tag || q.expected_generation
-   || q.driver!=55 || q.guard_version!=1 || q.build_tag!=UINT64_C(0x2026102100010012)
+   || q.driver!=55 || q.guard_version!=1 || q.build_tag!=(Tracked?UINT64_C(0x51544b4e4f445256):UINT64_C(0x2026102100010012))
    || !q.generation || (generation && generation!=q.generation) || q.quiesced || q.cold
    || q.active_owner!=owner || q.open_count!=1)return false;
   generation=q.generation;return true;
  }
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
+ bool Receipt(unsigned operation,unsigned expectedSpans,bool sealed){
+  namespace H=PioneerQ38HybridUpload;H::Packet p;p.operation=operation;
+  return H::Request(p) && Call(TT_PCI_PROBE_Q38_HYBRID_UPLOAD_CONTROL,p)
+   && p.magic==H::Magic && p.version==H::Version && p.operation==operation && !p.reserved
+   && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
+ }
+#endif
 public:
  PioneerQ38HybridUploadSession(Pages& prepared,IO& transport):pages(prepared),io(transport){}
  PioneerQ38HybridUploadSession(const PioneerQ38HybridUploadSession&)=delete;
@@ -112,12 +129,20 @@ public:
    || begin.result.cold || begin.result.capabilities || begin.result.bytes!=PioneerResidentBanks::Total)
    return Stop(error,"Bank BEGIN uncertain; close only.");
   state=Owned;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
+  if constexpr(Tracked)if(!Receipt(PioneerQ38HybridUpload::Begin,0,false))
+   return Stop(error,"Tracked hybrid receipt BEGIN uncertain; close only.");
+#endif
   if(!upload.Run(pages,canonical,io,fd,error,progress) || !upload.CompleteHeld()
-   || upload.UploadedParts()!=3551 || upload.UploadedBytes()!=UINT64_C(21137039360))
+   || upload.UploadedParts()!=3551 || upload.UploadedSpans()!=22005 || upload.UploadedBytes()!=UINT64_C(21137039360))
    return Stop(error,"Hybrid upload uncertain; close only.");
   tt_q38_span_end spanEnd={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,spanEnd) || spanEnd.version!=1 || spanEnd.reserved
    || spanEnd.closed!=1 || spanEnd.recovery_required)return Stop(error,"Span END uncertain; close only.");
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
+  if constexpr(Tracked)if(!Receipt(PioneerQ38HybridUpload::Seal,upload.UploadedSpans(),true))
+   return Stop(error,"Tracked hybrid receipt SEAL uncertain; close only.");
+#endif
   layout=&canonical;state=SpansClosed;error.clear();return true;
  }
  bool Finish(std::string& error){

@@ -6,9 +6,12 @@ import runpy
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv)!=3:
-    raise SystemExit('use ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT_DIRECTORY')
-sdk,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
+args=sys.argv[1:];tracked='--tracked-compile-only' in args
+if tracked:
+    assert args.count('--tracked-compile-only')==1;args.remove('--tracked-compile-only')
+if not __debug__ or len(args)!=2:
+    raise SystemExit('use [--tracked-compile-only] ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT_DIRECTORY')
+sdk,out=map(Path,args);here=Path(__file__).resolve().parent
 saved=sys.argv
 try:
     sys.argv=[str(here/'build_q38_hybrid_cache_preflight.py'),str(sdk),str(out)]
@@ -22,6 +25,7 @@ if cmd.count(old)!=1 or cmd.count(str(base['binary']))!=1:
 cmd[cmd.index(old)]=str(here/'pioneer_q38_hybrid_upload_diagnostic.cpp')
 cmd[cmd.index(str(base['binary']))]=str(binary)
 cmd.insert(1,'-DPIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC=1')
+if tracked:cmd.insert(1,'-DPIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT=1')
 subprocess.run(cmd,check=True,cwd=out)
 print('HYBRID_UPLOAD_DIAGNOSTIC_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
-print('BUILD ONLY; NO DEVICE ACCESS, UPLOAD OR INFERENCE')
+print('BUILD ONLY; NO DEVICE ACCESS, UPLOAD OR INFERENCE'+('; TRACKED CLIENT REQUIRES NON-LOADABLE TAG' if tracked else ''))

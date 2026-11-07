@@ -15,7 +15,8 @@ source=(root/'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_t
 def run(*args):subprocess.run([str(v) for v in args],check=True)
 with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-control-',dir='/private/tmp') as directory:
  out=Path(directory)
- for marker,name in (('PROBE_LOCK','pioneer_lock'),('Q38_RETAIN_MEMORY','pioneer_retain_memory'),('Q38_SPAN_CONTROL','pioneer_span_control')):
+ for marker,name in (('PROBE_LOCK','pioneer_lock'),('Q38_RETAIN_MEMORY','pioneer_retain_memory'),
+                     ('Q38_SPAN_CONTROL','pioneer_span_control'),('Q38_DISPATCH_COOKIE_RELEASE','pioneer_cookie_release')):
   begin='// PIONEER_'+marker+'_BEGIN';end='// PIONEER_'+marker+'_END'
   assert source.count(begin)==source.count(end)==1
   (out/(name+'.inc')).write_text(source.split(begin,1)[1].split(end,1)[0])
@@ -26,6 +27,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-control-',dir='/private/
   '-fsanitize=address,undefined','-DTT_PIONEER_EXPERIMENTAL_Q38_BANKS','-I'+str(out),
   here/'pioneer_q38_hybrid_upload_control_test.cpp','-o',binary)
  run(binary,image)
+ close=out/'close-test';run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
+  '-I'+str(out),here/'pioneer_q38_hybrid_cookie_close_test.cpp','-o',close)
+ run(close)
  # Compile the actual private whole-driver context with the experimental
  # route enabled. The context renames every conventional driver entry.
  kernel=root/'src/add-ons/kernel/drivers/misc';release=sdk/'objects/haiku/riscv64/release'

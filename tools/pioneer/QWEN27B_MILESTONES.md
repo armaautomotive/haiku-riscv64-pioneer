@@ -84,9 +84,13 @@ The receipt is now connected to the actual span-control and native-bind code
 in a **non-loadable test configuration**. Simulated control tests cover
 same-FD/team admission, an upload, incomplete-seal refusal and reply-failure
 quarantine; the actual native context also cross-compiles for Haiku RISC-V.
-The loader and matching QGW5 firmware are not yet wired into a runnable
-driver. Non-cryptographic page hashes do not prove the format or contents of
-card memory, and no full-model or hardware test is implied.
+The verified-model loader now sends the matching BEGIN and SEAL handshake;
+a complete synthetic upload passed through that loader and the kernel receipt.
+An uncertain FD close now retains the tracked owner instead of implicitly
+ending it. The tracked client accepts only the private non-loadable test tag;
+the matching QGW5 firmware is not yet wired into a runnable driver.
+Non-cryptographic page hashes do not prove the format or contents of card
+memory, and no full-model or hardware test is implied.
 
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory

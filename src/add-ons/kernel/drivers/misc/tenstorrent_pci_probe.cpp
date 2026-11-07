@@ -6525,6 +6525,13 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		status_t status=acquire_sem(sLock);
 		if (status!=B_OK) return status; // retain ownership, never silently free a possibly live page
 		tt_resident_session_result result={};
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		// A client may close after an uncertain upload or lost control reply.
+		// Only explicit BANK_END may retire the tracked owner; CLOSE never does IO.
+		if (cookie->context->q38HybridReceipt) {
+			RetainQ38DispatchOwner(*cookie->context,result);release_sem(sLock);return B_OK;
+		}
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		// Scope presence alone requires explicit END,even if a future
 		// allocation bug misbound the context as a legacy/non-bank session.

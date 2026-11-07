@@ -37,7 +37,14 @@ int main(int argc,char** argv){
  }
  auto* pages=model->PreparedPages();const auto* canonical=model->Canonical();
  if(!pages || !canonical)return 1;
- Transport io;PioneerQ38HybridUploadSession<PioneerQ38HybridVerifiedModel::Pages,Transport> session(*pages,io);
+ Transport io;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
+ // The tracked client only accepts the private non-loadable context tag.
+ // A distinct qualified real driver and its exact tag are still required.
+ PioneerQ38HybridUploadSession<PioneerQ38HybridVerifiedModel::Pages,Transport,true> session(*pages,io);
+#else
+ PioneerQ38HybridUploadSession<PioneerQ38HybridVerifiedModel::Pages,Transport> session(*pages,io);
+#endif
  const uint64_t start=Now();if(!start)return 1;
  uint64_t next=UINT64_C(256)*1024*1024;
  if(!session.Run(*canonical,error,[&](uint64_t done,uint64_t total){
