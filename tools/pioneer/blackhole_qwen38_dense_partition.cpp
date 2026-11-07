@@ -174,20 +174,22 @@ static void Scores(unsigned first,unsigned count,unsigned head){
   Floats(L::Scores)[head*L::Stride+first+row]=score;
  }
 }
-static void Values(unsigned first,unsigned count,unsigned head){
+static void ValuesAllHeads(unsigned first,unsigned count){
  for(unsigned block=0;block<8;block++){
   MatrixIO io;MatrixEmitter e;
-  PioneerQ38DenseBf16ValuesCachedStage<MatrixIO> stage(io,L::Chunk,L::Scores+(head*L::Stride+first)*4,count,block);
-  if(!PioneerQ38DenseBf16Matrix::ValuesCached(e,stage))scalar_fault_park();
-  for(unsigned row=0;row<32;row++){
-   unsigned bits=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
-   if((bits&0x7f800000)==0x7f800000)scalar_fault_park();
-   const unsigned highIndex=head*512+block*64+row,lowIndex=highIndex+32;
-   float high=PioneerAttentionFloat(Words(L::Accumulate)[highIndex]);
-   float low=PioneerAttentionFloat(Words(L::Accumulate)[lowIndex]);
-   PioneerAttentionAdd(PioneerAttentionFloat(bits),high,low);
-   Words(L::Accumulate)[highIndex]=PioneerAttentionBits(high);
-   Words(L::Accumulate)[lowIndex]=PioneerAttentionBits(low);
+  PioneerQ38DenseBf16ValuesCachedStage<MatrixIO> stage(io,L::Chunk,L::Scores+first*4,count,block,L::Stride*4);
+  for(unsigned head=0;head<6;head++){
+   if(!PioneerQ38DenseBf16Matrix::ValuesCached(e,stage))scalar_fault_park();
+   for(unsigned row=0;row<32;row++){
+    unsigned bits=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
+    if((bits&0x7f800000)==0x7f800000)scalar_fault_park();
+    const unsigned highIndex=head*512+block*64+row,lowIndex=highIndex+32;
+    float high=PioneerAttentionFloat(Words(L::Accumulate)[highIndex]);
+    float low=PioneerAttentionFloat(Words(L::Accumulate)[lowIndex]);
+    PioneerAttentionAdd(PioneerAttentionFloat(bits),high,low);
+    Words(L::Accumulate)[highIndex]=PioneerAttentionBits(high);
+    Words(L::Accumulate)[lowIndex]=PioneerAttentionBits(low);
+   }
   }
  }
 }
@@ -268,7 +270,11 @@ static void LocalValues(const uint32_t* d,const uint32_t* p,const float* global,
 #endif
   for(unsigned first=0;first<d[49];first+=32){
    unsigned count=Chunk(1,first,d,tracked,job,p);
+#ifdef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
+   ValuesAllHeads(first,count);
+#else
    for(unsigned h=0;h<6;h++)Values(first,count,h);
+#endif
   }
 #ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
   Drain();

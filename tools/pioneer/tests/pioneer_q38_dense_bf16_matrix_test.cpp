@@ -225,11 +225,57 @@ int main(){
   assert(!PioneerQ38DenseBf16Matrix::Values(card,invalidPV,0x90000,0x91000));
   assert(card.matrixOps==0 && valueIO.fences==0);
  }
+ // A shared V tile must remain bit-identical to the old per-head packer
+ // while six independent probability vectors are staged in order.
+ for(unsigned count:{1U,17U,32U})for(unsigned block:{0U,3U,7U}){
+  NativeBfpMachine card;L1IO sharedIO{card};const unsigned v=0xa0000,p=0x82000,m=0x90000,x=0x91000;
+  for(unsigned t=0;t<count;t++){
+   for(unsigned d=0;d<256;d+=2){
+    unsigned lo=0x3000+((t*83+d*31)%0x1000),hi=0x3000+((t*83+(d+1)*31)%0x1000);
+    if((t+d)%3==0)lo|=0x8000;if((t+d)%5==0)hi|=0x8000;
+    sharedIO.Write(v+t*512+d*2,lo|(hi<<16));
+   }
+   for(unsigned h=0;h<6;h++)sharedIO.Write(p+h*384*4+t*4,
+    PioneerAttentionBits(PioneerAttentionHalf(PioneerAttentionToHalf(float((h+1)*(t+1))/1024.f))));
+  }
+  PioneerQ38DenseBf16ValuesCachedStage<L1IO> shared(sharedIO,v,p,count,block,384*4);
+  for(unsigned h=0;h<6;h++){
+   const unsigned before=sharedIO.reads;assert(shared.Prepare());
+   assert(sharedIO.reads-before==(h?count:17*count));
+   for(unsigned part=0;part<4;part++){
+    PioneerQ38DenseBf16ValuesStage<L1IO> reference(sharedIO,v,p+h*384*4,m,x,count,block,part);
+    assert(reference.Tile(0));
+    for(unsigned i=0;i<2048;i+=4)assert(sharedIO.Read(m+i)==sharedIO.Read(shared.Matrix(part)+i));
+    for(unsigned i=0;i<512;i+=4)assert(sharedIO.Read(x+i)==sharedIO.Read(shared.Vector(part)+i));
+   }
+  }
+  const unsigned before=sharedIO.reads;assert(!shared.Prepare() && sharedIO.reads==before);
+ }
  NativeBfpMachine invalidBlock;L1IO blockIO{invalidBlock};
  PioneerQ38DenseBf16ValuesStage<L1IO> blockStage(blockIO,0xa0000,0x82000,0x90000,0x91000,1,8);
  assert(!blockStage.Tile(0) && blockIO.fences==0);
  PioneerQ38DenseBf16ValuesCachedStage<L1IO> overlapping(blockIO,0xa5000,0x82000,1,0);
  assert(!overlapping.Prepare() && blockIO.fences==0);
+ PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidStride(blockIO,0xa0000,0x82000,1,0,4);
+ assert(!invalidStride.Prepare() && blockIO.fences==0);
+ // A later head must fail before its first matrix op if its own vector is
+ // invalid; prior heads' completed products are not a success for this head.
+ NativeBfpMachine badHead;L1IO badHeadIO{badHead};
+ badHead.expectedWeight=0xa5000;badHead.alternateWeight=0xa6000;
+ badHead.expectedInput=0xa7000;badHead.alternateInput=0xa7400;
+ for(unsigned i=0;i<128;i++)badHeadIO.Write(0xa0000+i*4,0);
+ for(unsigned h=0;h<6;h++)badHeadIO.Write(0x82000+h*384*4,h==4?0x7f800000:0);
+ PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidHead(badHeadIO,0xa0000,0x82000,1,0,384*4);
+ for(unsigned h=0;h<4;h++)assert(PioneerQ38DenseBf16Matrix::ValuesCached(badHead,invalidHead));
+ const unsigned priorOps=badHead.matrixOps,priorReads=badHead.outputReads;
+ assert(!PioneerQ38DenseBf16Matrix::ValuesCached(badHead,invalidHead));
+ assert(priorOps==4*64 && badHead.matrixOps==priorOps && badHead.outputReads==priorReads);
+ NativeBfpMachine overlapHead;L1IO overlapHeadIO{overlapHead};
+ for(unsigned i=0;i<128;i++)overlapHeadIO.Write(0x90000+i*4,0);
+ for(unsigned h=0;h<3;h++)overlapHeadIO.Write(0xa4000+h*384*4,0);
+ PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidLaterOverlap(overlapHeadIO,0x90000,0xa4000,1,0,384*4);
+ for(unsigned h=0;h<3;h++)assert(invalidLaterOverlap.Prepare());
+ const unsigned beforeOverlap=overlapHeadIO.reads;assert(!invalidLaterOverlap.Prepare() && overlapHeadIO.reads==beforeOverlap);
  NativeBfpMachine cachedInvalid;L1IO cachedInvalidIO{cachedInvalid};
  cachedInvalidIO.Write(0xa0000,0x00007c00);cachedInvalidIO.Write(0x82000,0);
  PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidCachedStage(cachedInvalidIO,0xa0000,0x82000,1,0);

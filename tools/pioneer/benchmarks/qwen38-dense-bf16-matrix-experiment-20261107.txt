@@ -117,7 +117,29 @@ fell from 45375233 to 40362809 (about 11.0%); at 33 tokens they fell from
 65-token input had bit-identical scores, probabilities and partial outputs
 versus the query-reuse predecessor. These are synthetic simulations, not
 card timing, real-model quality or tokens/sec. Two independent QDM2 builds
-matched SHA-256 ac7719bb3a1b84268fbc2fce96f8993a07ff3b128244442462a00cd7c18fd5fa.
+matched SHA-256 ac7719bb3a1b84268fbc2fce96f8993a07ff3b128244442462a00cd7c18fd5fa
+before the subsequent six-head reuse change.
+
+Six-head V reuse: the six query heads in one worker share the same V tile,
+but the preceding implementation packed that tile independently for each
+head. The new experimental path packs each 32-dimension V block once, then
+updates only the probability vector for each of the six heads. It still
+performs all four BF16 component products for each head and preserves the
+per-head/per-chunk output accumulation order. The shared V and matrix scratch
+must remain immutable and exclusively owned through all six heads; this is
+an additional lifetime assumption, not a native memory-ownership proof.
+Host tests compared every packed operand against the original four-pass
+converter for six distinct probability vectors, including padded chunks;
+invalid later vectors and scratch overlaps were refused before new matrix
+operations. One actual-instruction worker per 1-, 33- and 65-token fixture
+produced bit-identical scores, probabilities and partial outputs versus the
+paired-value predecessor. In the 65-token/24-partition software fixture,
+worker RV32 steps fell from 40362809 to 20894373 (48.2%); at 33 tokens they
+fell from 29218517 to 15415420 (47.2%). Matrix operation counts were
+unchanged at 84480 and 65280; printed merged relative errors were unchanged.
+Those are simulated instructions, not physical time or model throughput.
+The standalone QDM2 image was independently rebuilt with SHA-256
+1eaf166599edaa1c96376e9f25cd393d9e751a9fa9b4de02ad452faf188871ee.
 
 A separately identified experimental hybrid mixed-worker link and transition
 simulation are described in qwen38-hybrid-matrix-attention-20261107.txt.

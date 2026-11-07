@@ -94,12 +94,14 @@ public:
 };
 
 // Cache both BF16 components of the 32x32 V tile and probability vector
-// once per head/chunk/block. Four products then switch private unpacker
-// addresses without repeating FP16 decode or rewriting live source banks.
+// once per chunk/block, optionally reusing the V tile across six heads.
+// Four products switch private unpacker addresses without re-decoding V.
+// The caller must retain exclusive, immutable V and matrix scratch through
+// the final head; input-source lifetime is not a native ownership grant.
 // The scratch reservation is QDM2-only: it does not establish coexistence
 // with the mixed worker, model state, driver, or any other owner.
 template<class IO> class PioneerQ38DenseBf16ValuesCachedStage {
- IO& io;unsigned values,probabilities,count,block,done;
+ IO& io;unsigned values,probabilities,count,block,headStride,done;
  static bool Pair(uint32_t original,unsigned& high,unsigned& low){
   if(!PioneerQ38Bf16Input::Lane(original,high))return false;
   const float residual=PioneerAttentionFloat(original)-PioneerAttentionFloat(high<<16);
@@ -107,20 +109,22 @@ template<class IO> class PioneerQ38DenseBf16ValuesCachedStage {
  }
 public:
  enum : unsigned {MatrixHigh=0xa5000,MatrixLow=0xa6000,VectorHigh=0xa7000,VectorLow=0xa7400};
- PioneerQ38DenseBf16ValuesCachedStage(IO& access,unsigned v,unsigned p,unsigned rows,unsigned dimensionBlock)
-  :io(access),values(v),probabilities(p),count(rows),block(dimensionBlock),done(0){}
+ PioneerQ38DenseBf16ValuesCachedStage(IO& access,unsigned v,unsigned p,unsigned rows,unsigned dimensionBlock,unsigned stride=0)
+  :io(access),values(v),probabilities(p),count(rows),block(dimensionBlock),headStride(stride),done(0){}
  static unsigned Matrix(unsigned part){return part&1?MatrixLow:MatrixHigh;}
  static unsigned Vector(unsigned part){return part&2?VectorLow:VectorHigh;}
  bool Prepare(){
-  if(done || !count || count>32 || block>=8 || (values&3) || (probabilities&3)
-    || values>0x16c000-count*512 || probabilities>0x16c000-count*4
+  if((done && !headStride) || done>=6 || (headStride && headStride!=384*4)
+    || !count || count>32 || block>=8 || (values&3) || (probabilities&3)
+    || values>0x16c000-count*512 || probabilities>0x16c000-count*4-done*headStride
     || !(values+count*512<=MatrixHigh-16 || values>=VectorLow+512)
-    || !(probabilities+count*4<=MatrixHigh-16 || probabilities>=VectorLow+512))return false;
+    || !(probabilities+done*headStride+count*4<=MatrixHigh-16 || probabilities+done*headStride>=VectorLow+512))return false;
+  const unsigned currentProbabilities=probabilities+done*headStride;
   const unsigned scratch[]={MatrixHigh,MatrixLow,VectorHigh,VectorLow};
   for(unsigned s=0;s<4;s++)for(unsigned i=1;i<=4;i++)io.Write(scratch[s]-i*4,0);
   // Two adjacent output dimensions share one packed FP16 source word.
   // Decode that word once per token and transpose both rows together.
-  for(unsigned face=0;face<4;face++)for(unsigned row=0;row<16;row+=2)for(unsigned pair=0;pair<8;pair++){
+  if(!done)for(unsigned face=0;face<4;face++)for(unsigned row=0;row<16;row+=2)for(unsigned pair=0;pair<8;pair++){
    const unsigned dimension=block*32+(face/2)*16+row,token=(face%2)*16+pair*2;
    unsigned high[2][2]={{0,0},{0,0}},low[2][2]={{0,0},{0,0}};
    for(unsigned j=0;j<2;j++)if(token+j<count){
@@ -138,13 +142,13 @@ public:
   }
   for(unsigned half=0;half<2;half++)for(unsigned pair=0;pair<8;pair++){
    unsigned high[2]={0,0},low[2]={0,0};const unsigned token=half*16+pair*2;
-   for(unsigned j=0;j<2;j++)if(token+j<count && !Pair(io.Read(probabilities+(token+j)*4),high[j],low[j]))return false;
+   for(unsigned j=0;j<2;j++)if(token+j<count && !Pair(io.Read(currentProbabilities+(token+j)*4),high[j],low[j]))return false;
    for(unsigned row=0;row<8;row++){
     const unsigned offset=((half*8+row)*16+pair*2)*2;
     io.Write(VectorHigh+offset,high[0]|(high[1]<<16));io.Write(VectorLow+offset,low[0]|(low[1]<<16));
    }
   }
-  io.Fence();done=1;return true;
+  io.Fence();done++;return true;
  }
 };
 static_assert(0xa5000+2048<=0xa6000-16 && 0xa6000+2048<=0xa7000-16

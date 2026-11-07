@@ -12,13 +12,13 @@ if len(sys.argv) not in (3,4):
 matrix, original = map(pathlib.Path, sys.argv[1:3]);previous=pathlib.Path(sys.argv[3]) if len(sys.argv)==4 else None
 entries=[
     (matrix, 'boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
-    (matrix, 'code.bin', 14176, 'ac7719bb3a1b84268fbc2fce96f8993a07ff3b128244442462a00cd7c18fd5fa'),
+    (matrix, 'code.bin', 14308, '1eaf166599edaa1c96376e9f25cd393d9e751a9fa9b4de02ad452faf188871ee'),
     (original, 'boot.bin', 4, 'd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6'),
     (original, 'code.bin', 14428, 'e33cb65be5c53d77f486ee7ea2371a2ffc78638e5ed72bfa8b2fe2bf8cf19736'),
 ]
 if previous:
     entries += [(previous,'boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
-                (previous,'code.bin',14068,'5708c68c3acb456789a90523cbecf2214c20bdd16ed7a5d5fb0113b3613c37ae')]
+                (previous,'code.bin',14176,'ac7719bb3a1b84268fbc2fce96f8993a07ff3b128244442462a00cd7c18fd5fa')]
 for directory, name, size, digest in entries:
     data = (directory/name).read_bytes()
     assert len(data) == size and hashlib.sha256(data).hexdigest() == digest

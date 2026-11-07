@@ -37,6 +37,9 @@ Reusing the staged query conversion subsequently cut another 7.5% from that
 fixture's simulated worker instruction count; physical speed is still unknown.
 Reading packed value pairs once cut a further 11.0% from that fixture's
 simulated instruction count, also without a hardware speed measurement.
+Reusing a converted value tile across six heads cut that fixture's simulated
+worker instruction count by another 48.2%; exclusive scratch lifetime and
+physical speed still need qualification.
 A separate hybrid worker now links this attention code and passed a simulated
 projection/attention/projection transition. A matching experimental ROOT now
 builds reproducibly, and its projection job functions passed simulation;
