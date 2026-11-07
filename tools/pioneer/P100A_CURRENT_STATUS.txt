@@ -102,11 +102,14 @@ Four compact goals
    path is NOT installed or fully executed, authenticates neither its table
    nor uploaded pages, and cannot reuse the old native owner/journal.
    A CPU-only hybrid preparation tool now builds for Haiku and can create or
-   verify the 1071 BFP4 cache fragments; it has NOT been run on the full
-   model. A separate page adapter selects BFP4, existing BFP8 or original
+   verify the 1071 BFP4 cache fragments; a full-model run is in progress but
+   is not yet complete. A separate page adapter selects BFP4, existing BFP8 or original
    pages and can preflight all 1344 converted fragments. Its full-coverage
    test uses simulated readers; one BFP4 fragment uses an actual disk-cache
    fixture. The adapter is not linked to a card uploader or Work/Assistant.
+   The full BFP4 portion of the proposed cache has now been started in a new
+   dedicated Pioneer directory; completion is not yet established. See
+   benchmarks/qwen38-hybrid-bfp4-cache-run-20261107.txt.
    A two-position teacher-forced CPU comparison completed with independently
    retained candidate/original state. Both selected the same token at each
    position; KL was 0.20372 and 0.02355, with top-five overlap 4/5 and 5/5.

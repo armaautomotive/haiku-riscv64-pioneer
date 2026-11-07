@@ -1,0 +1,23 @@
+Hybrid BFP4 full-cache preparation: IN PROGRESS, 2026-11-07
+===========================================================
+
+The previously tested CPU-only preparer was started on the Pioneer for the
+1071 BFP4 fragments in the proposed hybrid (BFP8 layers48..60 excluded).
+It authenticates the full same-open original model before creating data,
+uses a new dedicated directory, validates every fragment and keeps a minimum
+2GiB of free-space headroom per entry. It does not access the P100A, install
+software, or change Assistant. The old probe cache remains untouched.
+
+At launch, /boot had 28.4GiB free. Target path:
+/boot/home/pioneer-hybrid-bfp4-20261107-cache (confirmed absent beforehand).
+Executable SHA256:
+6caecadac05b15b20110579ab1a7d101fb4d066dd6b54e263f397d7d368871b1.
+Local SSH stdout capture:
+/private/tmp/pioneer-hybrid-bfp4-prepare.XNzgMKPj/prepare.stdout.
+The foreground SSH session was live and authenticating the model at last
+observation. Do not start another preparer solely because an observation
+times out; check that same process and its eventual actual exit first.
+
+This cache is not yet linked to the real model uploader; BFP8 preparation,
+relocation/ownership, full-card integration, quality, and real inference
+performance remain unfinished. IN PROGRESS is not an inference speed claim.
