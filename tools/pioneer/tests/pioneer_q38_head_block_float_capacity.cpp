@@ -55,4 +55,21 @@ int main(){
   printf("ALTERNATIVE dropped_layers=%u mask=%016llx head_bfp8_same_bank_capacity=%u; DATA_ONLY not a numeric qualification\n",
    drop,(unsigned long long)mask,unsigned(sameBankFits));
  }
+ // Same 11 FFN layers' worth of BFP8, placed at 48..58. This is a proposed
+ // comparison candidate only: current QGW8 workers cannot select this mask.
+ const uint64_t alternative=UINT64_C(0x07ff000000000000);
+ PioneerQ38HybridModelPlan::Proposal proposed;assert(PioneerQ38HybridModelPlan::Build(*original,alternative,proposed));
+ uint64_t need[7]={};unsigned stripes=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);assert(p);
+  if(p->kind!=original->WeightKind || p->layer!=64 || p->role!=1)continue;
+  const uint64_t size=(uint64_t(p->rows)*5440+4095)&~uint64_t(4095);
+  assert(p->bank<7 && size>=p->allocated && proposed.parts[i].allocated==p->allocated);
+  need[p->bank]+=size-p->allocated;stripes++;
+ }
+ assert(stripes==7);bool fitsAlternative=true;
+ for(unsigned b=0;b<7;b++)fitsAlternative &= need[b]<=original->Capacity-proposed.used[b];
+ assert(fitsAlternative);
+ printf("ALTERNATIVE mask=%016llx head_bfp8_same_bank_capacity=%u; DATA_ONLY not a numeric qualification\n",
+  (unsigned long long)alternative,unsigned(fitsAlternative));
 }

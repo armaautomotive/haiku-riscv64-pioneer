@@ -1,0 +1,25 @@
+Alternative eleven-layer precision placement: CPU-ONLY, RUN IN PROGRESS
+======================================================================
+
+Question: is QGW8's FFN error sensitive to which eleven of the 64 layers
+receive BFP8? The existing placement is 50..60; the new comparison selects
+48..58, moving the two BFP8 layers from 59/60 to 48/49. Both retain BFP4
+for all other FFNs. This is a hypothesis, not a quality or speed claim.
+
+The same-bank capacity arithmetic with the converted BFP8 output head says
+both eleven-layer allocations fit. It does not allocate or upload any data,
+and the existing QGW8 worker/ROOT/parser only accept the 50..60 layout. The
+alternative must not be fed to those images, the old driver, or Work.
+
+The single-position diagnostic uses fixed input 248319, the independently
+pinned original full trace and the same CPU FFN comparison method used in
+the earlier QGW8 measurement. It compares the FFN layouts only, retaining the
+original output head. This is not a full answer, physical card run, speed
+benchmark, or general model-quality qualification.
+
+The new comparator and invalid-mask/role tests passed. Binary SHA-256:
+38d3931305e8cd253befd2c2b8677650ead64180883fab4d1ef179943ec9da2d.
+Its 48..58 run was started on the authenticated model; temporary private log:
+/private/tmp/pioneer-q38-mask11-4858-20261107-a.log. Its existence does not
+prove the process is live or successful. Inspect the process handle and the
+completion/exit markers before reporting results. A timeout is not failure.

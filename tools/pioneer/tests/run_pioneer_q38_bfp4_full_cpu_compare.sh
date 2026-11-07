@@ -21,6 +21,11 @@ ${CXX:-c++} $common -DPIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC=1 \
  "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/sequence-compare"
 if "$temporary/compare" --full relative.gguf;then exit 1;fi
 if "$temporary/compare" --invalid /not-a-model;then exit 1;fi
+for mask in 0000000000000000 07ff00000000000g 07ff00000000000 1fff000000000000;do
+ if "$temporary/compare" --fixed-mask11 /not-a-model "$mask";then exit 1;else [ "$?" = 2 ] || exit 1;fi
+done
+if "$temporary/compare" --fixed-mask11 relative.gguf 07ff000000000000;then exit 1;else [ "$?" = 2 ] || exit 1;fi
+if "$temporary/compare" --fixed-mask11 /not-a-model 07ff000000000000;then exit 1;else [ "$?" = 1 ] || exit 1;fi
 if "$temporary/sequence-compare" --two-fixed-window13 relative.gguf;then exit 1;fi
 if "$temporary/sequence-compare" --hello-three-window13 relative.gguf;then exit 1;fi
 if "$temporary/sequence-compare" --prefix-three-window13 relative.gguf 42;then exit 1;fi
