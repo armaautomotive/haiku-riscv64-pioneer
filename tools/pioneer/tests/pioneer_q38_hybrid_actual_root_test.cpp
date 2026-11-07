@@ -9,7 +9,7 @@
 #include <string>
 struct ActualRoot:Machine {
  std::vector<std::pair<unsigned,std::vector<uint8_t>>> rom;
- std::map<unsigned,unsigned> memory;std::vector<unsigned> build,job;
+ std::map<unsigned,unsigned> memory;std::vector<unsigned> build,job,denseJob;
  unsigned minSP=0x70000;
  ActualRoot(const char* image){
   for(auto p:{std::make_pair("bf16",0x20000U),{"text",0x40000U},{"terminal",0x60000U},{"conv",0x64000U}})
@@ -18,6 +18,7 @@ struct ActualRoot:Machine {
   while(std::getline(f,line)){
    if(line.find("Projection::BfBuildPairs(")!=std::string::npos)build.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
    if(line.find("Projection::BfMatrixJob(")!=std::string::npos)job.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
+   if(line.find("DensePartitionRoot::Job(")!=std::string::npos)denseJob.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
   }
   assert(build.size()==2 && job.size()==2);
  }
@@ -43,6 +44,7 @@ struct ActualRoot:Machine {
   return pc==0x60004;
  }
 };
+#ifndef PIONEER_Q38_HYBRID_ACTUAL_ROOT_MACHINE_ONLY
 int main(int argc,char** argv){
  (void)&HW::JobShape;
  assert(argc==2);auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
@@ -97,3 +99,4 @@ int main(int argc,char** argv){
  puts("PASS actual linked hybrid ROOT paired translation and job construction: 72 jobs across both real component functions, both formats/widths and boundary layers; manifest mutation faults; simulated only");
 #endif
 }
+#endif

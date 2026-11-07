@@ -36,7 +36,9 @@ about 60% on one fixture, but whether it is faster on the card remains unknown.
 A separate hybrid worker now links this attention code and passed a simulated
 projection/attention/projection transition. A matching experimental ROOT now
 builds reproducibly, and its projection job functions passed simulation;
-the complete ROOT-to-worker attention path and full model are not yet tested.
+its actual attention job code also drove one simulated worker through all
+three attention phases, using a synthetic frame and direct test delivery.
+The complete ROOT/NoC-to-worker attention path and full model are not yet tested.
 See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
 and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 

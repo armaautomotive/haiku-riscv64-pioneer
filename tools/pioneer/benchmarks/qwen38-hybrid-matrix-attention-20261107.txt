@@ -65,6 +65,21 @@ Reproduce with tests/run_pioneer_q38_hybrid_matrix_root_tests.py SDK and
 tests/pioneer_q38_hybrid_matrix_roles_test.py SDK. Neither build is a native
 or Work-mode authorization.
 
+A focused coordinator-to-worker simulation now executes the actual linked
+ROOT DensePartitionRoot::Job instructions and delivers their three phase
+jobs to the actual QGW7/QDM2 worker, after three synthetic projection jobs
+and before another projection, without resetting its simulated registers,
+matrix state, banks, L1 or NoC counters. Independent checks covered score,
+value and subsequent projection output. An actual QGW5 ROOT job was rejected
+by the QGW7 worker before any new NoC request or matrix operation. This is
+one peer and one current token: its frame and input were synthesized and the
+test harness directly delivered the ROOT's jobs, rather than executing the
+ROOT's transfer, wait, global reduction or real NoC paths. It is not a full
+coordinator lifecycle or multi-token result. Reproduce by supplying SDK,
+QGW7 worker directory and BFP4 leaf directory to
+tests/run_pioneer_q38_hybrid_matrix_root_tests.py; the runner checks their
+image hashes, rebuilds both ROOT identities and uses ASan/UBSan.
+
 A native owner/format identity, full ROOT-to-worker L1 lifecycle,
 prior-token attention transport, multi-layer/token checks, quality and
 physical benchmarking remain required. No new throughput has been measured.

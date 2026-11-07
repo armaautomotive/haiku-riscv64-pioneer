@@ -7,9 +7,12 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and len(sys.argv)==2 and not os.environ.get('PYTHONOPTIMIZE')
+assert __debug__ and len(sys.argv) in (2,4) and not os.environ.get('PYTHONOPTIMIZE')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk=Path(sys.argv[1]);assert sdk.is_absolute() and sdk.is_dir()
+worker=leaf=None
+if len(sys.argv)==4:
+ worker,leaf=map(Path,sys.argv[2:]);assert all(p.is_absolute() and p.is_dir() for p in (worker,leaf))
 here=Path(__file__).resolve().parent;root=here.parent
 sys.path.insert(0,str(root));from PioneerQ38HybridProgramPins import ROOT_PINS
 flags=['--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
@@ -34,12 +37,38 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw7-root-',dir='/private/tmp')
  assert pins(first)==pins(second),'QGW7 ROOT did not independently reproduce'
  assert pins(first)!=pins(old),'QGW7 cannot share the old ROOT identity'
  nm=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm')
- (first/'program.demangled').write_bytes(subprocess.check_output([nm,'-nC',str(first/'program.elf')]))
+ for image in (first,old):
+  (image/'program.demangled').write_bytes(subprocess.check_output([nm,'-nC',str(image/'program.elf')]))
  binary=tmp/'actual-root'
  run(os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
   '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
   '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1',here/'pioneer_q38_hybrid_actual_root_test.cpp','-o',binary)
  run(binary,first)
+ if worker:
+  expected={
+   'boot.bin':'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c',
+   'globalworker.bin':'f95c7c30f00ac983efa7c21b3969bb45ca4ee63f805572572cb3ba681da4016d',
+   'bf16producer.bin':'8b3e477d51eeca467e155b72234bed728c7109947f78cfb4361ce6dbc7afb2c3',
+   'dense.bin':'0617388cc5f4817b44534f2bf2fff4de70025bd9f2073572107a8b55219352db',
+   'cachedfpu.bin':'bcc704d361936935e26c57b138693accc5a22207ab5e45019d78baec1385abc9',
+   'ffn.bin':'c1dc115dadb20b1ee1d18fb04ce61f15a1d1644a523ccfec8fea70dbd5164e45',
+   'service.bin':'3b3cdbd88d049b3f0c72016d8eccfad7eab3fd6861a5353a50f26d7d4b46795f',
+   'affine.bin':'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78',
+   'text.bin':'2548ed0d4fdb68ce48325cd6f8581bff6bdc5b34a87f3ba217e36e4a37ed6e5c',
+   'gdn.bin':'dd982ac614d163795442942529ef9f4e5519552097b438f5fc4464b40eab3436',
+   'program.elf':'01df39527010cc3c7149526d78c5bb20b4decca4959ba504e9ee93cae115d587'}
+  for name,digest in expected.items():assert hashlib.sha256((worker/name).read_bytes()).hexdigest()==digest,name
+  assert (worker/'program.symbols').read_bytes()==subprocess.check_output([nm,'-n',str(worker/'program.elf')])
+  for name,digest in (('boot.bin','d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'),
+                      ('text.bin','04d43a4e5ad5b766fea07d0d3f9f48168557abda4772826d804f643db644faaf')):
+   assert hashlib.sha256((leaf/name).read_bytes()).hexdigest()==digest,name
+  connected=tmp/'root-worker'
+  run(os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
+   '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
+   '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1',here/'pioneer_q38_hybrid_matrix_root_worker_test.cpp','-o',connected)
+  run(connected,first,old,worker,leaf)
+ else:
+  print('SKIP coordinator-to-worker handoff: supply QGW7 worker and BFP4 leaf directories')
  print('PASS QGW7 ROOT independent builds match; QGW5 pins unchanged; four incompatible profiles refused')
  for pin in pins(first):print(pin)
  print('OFFLINE ONLY: no full lifecycle, real weights, device execution, native/Work authorization or measured TPS')

@@ -106,6 +106,7 @@ struct TransitionImage:HybridImage {
   for(unsigned i=0;i<64;i++)Put(HW::Job+i*4,j[i]);Put(HW::Doorbell,sequence);
  }
 };
+#ifndef PIONEER_Q38_HYBRID_MATRIX_TRANSITION_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);TransitionImage image(argv[1],argv[2]);image.Boot();
  for(unsigned layer=0;layer<3;layer++){
@@ -137,3 +138,4 @@ int main(int argc,char** argv){
   assert(image.Get(W::Output+(band*32+row)*4)==golden[row]);
  puts("PASS actual QGW7 BFP4 down layers 0/1/2 -> QDM2 attention phases 1/2/3 -> BFP4 down layer 3; same simulated registers/banks/L1/NoC history, synthetic data/controller; NO HARDWARE OR SPEED");
 }
+#endif
