@@ -48,7 +48,7 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<128;i++)assert(m->memory.at(destination+i*4)==0xa5a5a5a5);
  }
  if(argc==5){
-  std::array<uint32_t,272> observed={};std::ifstream stream(argv[4],std::ios::binary);
+  std::array<uint32_t,288> observed={};std::ifstream stream(argv[4],std::ios::binary);
   stream.read(reinterpret_cast<char*>(observed.data()),sizeof(observed));assert(stream.gcount()==sizeof(observed) && stream.peek()==EOF);
   const unsigned proof=0x90000,before=0xa1000,after=0xa1100;
   for(unsigned i=0;i<64;i++){m->memory[out+i*4]=observed[i];m->memory[peer+i*4]=observed[64+i];m->memory[proof+i*4]=observed[128+i];}

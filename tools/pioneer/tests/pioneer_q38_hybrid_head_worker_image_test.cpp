@@ -49,9 +49,10 @@ int main(int argc,char** argv){
    assert(!PioneerQ38HybridMatrixReceipt::Matrix(damaged.data(),job.data(),image->boot.data(),before.data(),after.data()));
   }
   if(argc==5){
-   assert(argv[4][0]=='/');std::array<uint32_t,272> fixture={};
+   assert(argv[4][0]=='/');std::array<uint32_t,288> fixture={};
    for(unsigned i=0;i<64;i++){fixture[i]=job[i];fixture[64+i]=image->boot[i];fixture[128+i]=proof[i];fixture[192+i]=image->Get(HW::Partial+i*4);}
    for(unsigned i=0;i<8;i++){fixture[256+i]=before[i];fixture[264+i]=after[i];}
+   for(unsigned i=0;i<16;i++)fixture[272+i]=image->Get(HW::Status+i*4);
    int fd=open(argv[4],O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);assert(fd>=0);
    assert(write(fd,fixture.data(),sizeof(fixture))==sizeof(fixture) && !fsync(fd) && !close(fd));
   }

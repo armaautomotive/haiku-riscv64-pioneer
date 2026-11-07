@@ -79,10 +79,18 @@ refused a damaged relocation manifest. The emitted ROOT head shape/job
 matched the independent plan, and actual BF16 packing matched independent
 rounding for 256 values and atomically refused invalid inputs. A 256-output
 worker proof was consumed by the ROOT's actual emitted receipt function;
-64 individual corrupted proof words were refused. The complete Gather
-transaction, ROOT-to-worker NoC sequence, all 64 layers and a real generated
-token have NOT been executed in that test. The worker test injects completed
-layer history and all operands/fabric are synthetic.
+64 individual corrupted proof words were refused. A follow-up ran the actual
+linked ROOT Gather function against a synthetic NoC endpoint replaying the
+simulated worker's actual partial/proof/status/boot/job/counter data. It
+accepted the 256-row result, advanced the expected counters and rejected
+three independent corruptions before updating output or worker counters.
+This injects both the worker's prior layer history and the ROOT's completed
+parent state; it is not a complete ROOT-to-worker execution, all 64 layers,
+or a real generated token. All operands/fabric are synthetic.
+
+Read-only Linux PCI enumeration after the user's power-on showed
+0002:81:00.0, PCI ID 1e52:b140. This only confirms enumeration; the card was
+not opened, reset, benchmarked, or established healthy by that observation.
 
 The 11-layer FFN numerical comparison with original weights is complete,
 separately from this worker test; its results/limits are recorded in

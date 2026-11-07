@@ -68,10 +68,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-head-root-',dir='/private/
  assert r.returncode and not forbidden.exists()
  for name,_,_ in pins:shutil.copyfile(first/name,image/name)
  (image/'program.demangled').write_bytes(subprocess.check_output([tool+'nm','-nC',str(image/'program.elf')]))
- plan=tmp/'plan';job=tmp/'job';manifest=tmp/'manifest';metadata=tmp/'metadata';actual=tmp/'actual';helpers=tmp/'helpers';peer=tmp/'peer';proof=tmp/'proof'
+ plan=tmp/'plan';job=tmp/'job';manifest=tmp/'manifest';metadata=tmp/'metadata';actual=tmp/'actual';helpers=tmp/'helpers';peer=tmp/'peer';proof=tmp/'proof';gather=tmp/'gather'
  subprocess.run([compiler,*flags,str(here/'pioneer_q38_hybrid_head_plan_test.cpp'),'-o',str(plan)],check=True)
  subprocess.run([compiler,*flags,*sim,str(here/'pioneer_q38_hybrid_head_actual_root_test.cpp'),'-o',str(actual)],check=True)
  subprocess.run([compiler,*flags,*sim,str(here/'pioneer_q38_hybrid_head_root_helpers_test.cpp'),'-o',str(helpers)],check=True)
+ subprocess.run([compiler,*flags,str(here/'pioneer_q38_hybrid_head_gather_test.cpp'),'-o',str(gather)],check=True)
  workerRoles=['-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_HYBRID_WORKER_IMAGE=1',
   '-DPIONEER_Q38_BF16_WORKER_IMAGE=1','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
   '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
@@ -81,4 +82,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-head-root-',dir='/private/
  subprocess.run([str(peer),str(worker),str(leaf),str(job),str(proof)],check=True,env=env)
  subprocess.run([str(actual),str(image),str(manifest)],check=True,env=env)
  subprocess.run([str(helpers),str(image),str(metadata),str(job),str(proof)],check=True,env=env)
+ subprocess.run([str(gather),str(image),str(metadata),str(proof)],check=True,env=env)
 print('PASS QGW8 ROOT independently reproduced, QGW7 ROOT unchanged; actual returning ROOT job instructions, synthetic data only; NO hardware or TPS')
