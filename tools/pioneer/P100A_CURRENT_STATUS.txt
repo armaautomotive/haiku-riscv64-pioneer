@@ -71,8 +71,9 @@ Four compact goals
    last13 has a nonoverlapping offline repack proposal but lacks a real
    device allocator and loader.
    On one token, a last16-BFP8 numerical control improved top5 overlap to
-   4/5 (KL 0.18387 nats), but exceeds that capacity bound. Last13 is still
-   being evaluated; no P100A inference or throughput improvement is proven.
+   4/5 (KL 0.18387 nats), but exceeds that capacity bound. Last13-BFP8 gave
+   3/5 and KL 0.37343, no improvement over all-BFP4 on this token. Another
+   13-layer selection is being evaluated. No P100A speedup is proven.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

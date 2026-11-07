@@ -24,6 +24,7 @@ struct MutatedPlan {
 };
 int main(){
  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
+ for(unsigned layer=0;layer<64;layer++)assert(bool(UINT64_C(0x1fff000000000000) & (uint64_t(1)<<layer))==(layer>=48 && layer<=60));
  for(unsigned lastLayers:{8U,12U,13U,14U,16U,64U}){
   uint64_t extra[7]={},base=0,totalExtra=0;unsigned stripes=0,unaligned=0;
   for(unsigned layer=64-lastLayers;layer<64;layer++)for(unsigned role=0;role<3;role++){
@@ -52,7 +53,7 @@ int main(){
    (unsigned long long)totalCapacity,(unsigned long long)(required>totalCapacity?required-totalCapacity:0),unsigned(fits));
  }
  using Hybrid=PioneerQ38HybridModelPlan;Hybrid::Proposal proposal;
- for(uint64_t mask:{UINT64_C(0),UINT64_C(0x8000000000000000),UINT64_C(0xfff8000000000000)}){
+ for(uint64_t mask:{UINT64_C(0),UINT64_C(0x8000000000000000),UINT64_C(0xfff8000000000000),UINT64_C(0x1fff000000000000)}){
   assert(Hybrid::Build(*plan,mask,proposal) && proposal.bfp8Layers==mask && proposal.parts.size()==plan->Count());
   uint64_t end[7]={};unsigned selected=0;
   for(unsigned i=0;i<proposal.parts.size();i++){
