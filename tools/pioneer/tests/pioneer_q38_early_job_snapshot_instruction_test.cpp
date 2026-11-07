@@ -28,7 +28,7 @@ struct SnapshotSlice : Machine {
   assert(at < 0x180000);return mem[at/4];
  }
  void Store(uint32_t at,uint32_t value) override {
-  assert(!(at&3) && ((at>=Stack-1024 && at<Stack)
+  assert(!(at&3) && ((at>=Stack-2048 && at<Stack)
    || (dispatch && ((at>=0x78000 && at<0x78100) || (at>=dispatchJob && at<dispatchJob+256)))));
   mem[at/4]=value;
  }
@@ -88,16 +88,47 @@ struct SnapshotSlice : Machine {
   for(unsigned i=0;i<64;i++)assert(mem[(dispatchJob+4*i)/4]==expected[i] && mem[(0x78000+4*i)/4]==expected[i]);
   assert(mem[(Nonce+4*w)/4]==sequence-1 && !matrixInstructions && !configWrites && !drains && !inputWrites && !outputReads);
  }
+ unsigned RunOriginalSlices(unsigned w,unsigned type,unsigned sequence){
+  Prepare(w,type,sequence);std::array<uint32_t,64> expected;dispatchJob=Job+w*256;
+  for(unsigned i=0;i<64;i++)expected[i]=mem[(dispatchJob+4*i)/4];
+  mem[(Nonce+4*w)/4]=sequence-1;
+  std::fill(regs,regs+32,0);steps=0;regs[2]=Stack-1024;regs[8]=Stack;
+  if(dense){pc=0x53004;regs[18]=Header;regs[21]=w;regs[22]=Nonce+4*w;}
+  else{pc=0x51e84;regs[24]=Header;regs[19]=w;regs[20]=Nonce+4*w;}
+  dispatch=true;const unsigned dispatchEnd=dense?0x5301c:0x51e9c;
+  while(pc!=dispatchEnd)Step();
+  for(unsigned i=0;i<64;i++)assert(mem[(0x78000+4*i)/4]==expected[i]);
+  const unsigned dispatchSteps=steps;mem[(Nonce+4*w)/4]=sequence;
+  std::fill(regs,regs+32,0);steps=0;regs[2]=Stack-1024;regs[8]=Stack;
+  if(dense){
+   pc=0x530f0;regs[26]=Header;regs[24]=w;regs[29]=Nonce+4*w;regs[6]=uint32_t(-(Stack-304));
+   mem[(Stack-788)/4]=w*256;
+  }else{
+   pc=0x51f60;regs[24]=Header;regs[26]=w;
+   mem[(Stack-788)/4]=Nonce+4*w;mem[(Stack-792)/4]=w*256;
+  }
+  const unsigned gatherEnd=dense?0x53140:0x51fa4;
+  while(pc!=gatherEnd)Step();dispatch=false;
+  for(unsigned i=0;i<64;i++)assert(mem[(dispatchJob+4*i)/4]==expected[i]);
+  return dispatchSteps+steps;
+ }
 };
 int main(int argc,char** argv){
- assert(argc==2);unsigned passed=0,refused=0,dispatches=0;
+ assert(argc==3);unsigned passed=0,refused=0,dispatches=0,faster=0;uint64_t oldTotal=0,newTotal=0;
+ int minimumSaved=1000000,maximumSaved=-1000000;
  for(bool dense:{false,true}){
-  SnapshotSlice m(argv[1],dense);
+  SnapshotSlice m(argv[1],dense),old(argv[2],dense);
   for(unsigned w=0;w<119;w++)for(unsigned type:{8U,12U,14U}){
    if(!dense && type==14)continue;
    for(unsigned sequence:{1U,13U,0x7ffffffeU}){
-    m.RunDispatch(w,type,sequence);++dispatches;
-    m.Prepare(w,type,sequence);assert(m.RunSlice());++passed;
+    m.RunDispatch(w,type,sequence);const unsigned dispatchSteps=m.steps;++dispatches;
+    m.Prepare(w,type,sequence);assert(m.RunSlice());
+    const unsigned candidateSteps=dispatchSteps+m.steps;
+    const unsigned originalSteps=old.RunOriginalSlices(w,type,sequence);
+    const int saved=int(originalSteps)-int(candidateSteps);
+    minimumSaved=std::min(minimumSaved,saved);maximumSaved=std::max(maximumSaved,saved);
+    if(saved>0)++faster;
+    oldTotal+=originalSteps;newTotal+=candidateSteps;++passed;
     for(unsigned i=0;i<27;i++){
      m.Prepare(w,type,sequence);m.mem[(m.Job+w*256+4*i)/4]^=1;assert(!m.RunSlice());++refused;
     }
@@ -112,4 +143,6 @@ int main(int argc,char** argv){
   }
  }
  printf("PASS actual RV32 slices: %u dispatch snapshots, %u valid and %u corrupted Gather fixtures; synthetic L1/initial registers; NO device, receipt, math or speed qualification\n",dispatches,passed,refused);
+ printf("Synthetic slice instructions old%llu candidate%llu; candidate shorter %u/%u, savings %d..%d instructions per case (no NoC, wait, full controller or hardware timing)\n",
+  static_cast<unsigned long long>(oldTotal),static_cast<unsigned long long>(newTotal),faster,passed,minimumSaved,maximumSaved);
 }

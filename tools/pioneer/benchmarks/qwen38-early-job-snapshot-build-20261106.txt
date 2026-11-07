@@ -53,6 +53,18 @@ registers were synthetic: admission, NoC, receipt, worker execution and the
 full Run function were not emulated. This tests emitted code at two bounded
 slices, NOT the full old/new path, physical correctness or timing.
 
+Paired original-versus-candidate instruction slices, same synthetic cases:
+the original full-batched vector92 text and candidate text were separately
+SHA-256 pinned. Each fixture ran actual emitted job creation through its
+dispatch boundary and the later Gather job reconstruction/check through
+its next boundary. Both constructed the same 64 job words. Across 1,785
+valid cases the original executed 2,138,979 instructions, the candidate
+1,577,418: the candidate used 314 or 315 fewer in each case. This is a
+count of simulated controller instructions, NOT card cycles, model throughput
+or a speedup measurement. No NoC transfers, waits, complete invocation,
+concurrent workers or physical timing were represented. This is evidence
+for continuing the comparison, not evidence of a practical speed gain.
+
 Open gates and decision
 -----------------------
 No physical device has run this image. It remains EXPERIMENTAL, not accepted
