@@ -54,7 +54,13 @@ struct Band4Machine : NativeBfpMachine {
   fidelity=(fidelity+((thread[29]>>13)&3))&3;matrixOps++;mathPending=true;
  }
  void Op(unsigned op){
-  if(op==0x10180000){assert(clears<2 && unpacks[0]==clears*tiles && unpacks[1]==unpacks[0] && matrixOps==clears*tiles*8);clears++;NativeBfpMachine::Op(op);}
+  if(op==0x10180000){assert(clears<
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+   8
+#else
+   2
+#endif
+   && unpacks[0]==clears*tiles && unpacks[1]==unpacks[0] && matrixOps==clears*tiles*8);clears++;NativeBfpMachine::Op(op);}
   else if(op==0x420000c1 || op==0x428000c1){cycle++;Advance();UnpackBand((op>>23)&1);}
   else if((op>>24)==0x26){cycle++;Advance();Broadcast(op);}
   else NativeBfpMachine::Op(op);

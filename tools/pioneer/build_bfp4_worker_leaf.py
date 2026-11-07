@@ -7,7 +7,8 @@ from pathlib import Path
 import subprocess
 
 assert __debug__ and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('haiku_build',type=Path);p.add_argument('output',type=Path);a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('haiku_build',type=Path);p.add_argument('output',type=Path)
+p.add_argument('--reuse-input',action='store_true',help='build the separate offboard input-reuse experiment');a=p.parse_args()
 assert a.haiku_build.is_absolute() and a.haiku_build.is_dir()
 assert a.output.is_absolute() and not a.output.exists() and not a.output.is_symlink()
 a.output.mkdir(mode=0o700);here=Path(__file__).resolve().parent
@@ -22,6 +23,7 @@ commands=[
  [tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(here/'blackhole_q38_native_dram_band.ld'),
   str(a.output/'start.o'),str(a.output/'program.o'),'-Map',str(a.output/'program.map'),'-o',str(a.output/'program.elf')],
 ]
+if a.reuse_input:commands[0].insert(1,'-DPIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT=1')
 for section in ('boot','text'):
  commands.append([tool+'objcopy','-O','binary','-j','.'+section,str(a.output/'program.elf'),str(a.output/(section+'.bin'))])
 for cmd in commands:subprocess.run(cmd,check=True,cwd=a.output)

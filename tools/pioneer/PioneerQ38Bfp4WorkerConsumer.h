@@ -21,7 +21,13 @@ public:
   W::Job job;for(unsigned i=0;i<W::Words;i++)job.words[i]=input.words[i];
   for(unsigned band=0;band<job.words[4];band++){
    if(!guard.Check(job,band))return Fail();
-   PioneerQ38Bfp4WorkerLoader loader;if(!loader.Run(io,job,band) || !guard.Check(job,band))return Fail();
+   PioneerQ38Bfp4WorkerLoader loader;
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+   const bool loaded=band?loader.RunReusingInput(io,job,band):loader.Run(io,job,band);
+#else
+   const bool loaded=loader.Run(io,job,band);
+#endif
+   if(!loaded || !guard.Check(job,band))return Fail();
    if(!PioneerQ38Bfp4WorkerCompute::Compute(emitter,job.words[2]) || !emitter.Healthy() || !guard.Check(job,band))return Fail();
    uint32_t output[32];
    for(unsigned row=0;row<2;row++)for(unsigned col=0;col<16;col++){

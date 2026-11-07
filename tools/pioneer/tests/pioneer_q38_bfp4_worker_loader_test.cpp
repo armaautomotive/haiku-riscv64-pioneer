@@ -72,9 +72,15 @@ struct IO {
   events++;
   if(Header(a)){headers++;assert(!value);if(fault!=11 || headers!=1)std::memset(l1.data()+a,0,4);return;}
   if(a==0xffb20040){
-   if(autoBand)band=issues/(2*L::Tiles(job.words[2]));
+   const unsigned tiles=L::Tiles(job.words[2]);
+   unsigned operand=(issues/tiles)%2,tile=issues%tiles;
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+   if(autoBand && issues>=2*tiles){band=1+(issues-2*tiles)/tiles;operand=0;tile=(issues-2*tiles)%tiles;}
+   else
+#endif
+   if(autoBand)band=issues/(2*tiles);
    assert(value==1 && pending.size()<16);W::Read expected={};
-   assert(W::Packet(job,band,(issues/L::Tiles(job.words[2]))%2,issues%L::Tiles(job.words[2]),expected));
+   assert(W::Packet(job,band,operand,tile,expected));
    assert(command[0]==expected.source && command[2]==expected.route && command[3]==expected.destination && command[5]==job.words[7] && command[8]==expected.bytes);
    assert(!command[1] && !command[4] && !command[6] && !command[7] && !command[9]);pending.push_back(expected);issues++;return;
   }

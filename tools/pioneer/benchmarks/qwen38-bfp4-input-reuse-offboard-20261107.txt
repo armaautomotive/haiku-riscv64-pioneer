@@ -1,0 +1,48 @@
+BFP4 worker input reuse: offline experiment, 2026-11-07
+======================================================
+
+The existing BFP4 worker fetches the same ROOT-L1 BF16 input again for
+every 32-row output band in one job. This separate, explicitly selected
+leaf experiment fetches that input for the first band only and reuses the
+worker's staged bytes for subsequent bands. Each band's distinct GDDR
+weights are still fetched normally. It changes no FPU unpack or matrix
+instruction sequence. The normal worker's rebuilt text SHA-256 remains
+04d43a4e5ad5b766fea07d0d3f9f48168557abda4772826d804f643db644faaf.
+Experimental text SHA-256:
+92e364491d424108a12daef30019a40a8f8f1d76145280b7cf1b32ea44978748.
+
+Actual emitted RV32 instructions were run in the offline shared-L1,
+NoC and arithmetic simulator. Two-band jobs on workers 1, 63 and 119
+returned the same 64 expected output words at K5120 and K17408. Three
+private real-weight samples also produced the expected output. Jobs of
+1 through 8 bands were checked at both widths, including alternating
+nonzero and zero weight bands; input staging was checked after the first
+compute. Frame mutation, first/later missing acknowledgments and invalid
+jobs were also exercised. The normal worker suite passed independently.
+
+For a two-band job, the simulator observed 3*K/32 NoC reads rather than
+4*K/32: 480 versus 640 at K5120, and 1,632 versus 2,176 at K17408.
+For worker119, emitted RV32 steps were 162,372 versus 206,946 at K5120,
+and 545,673 versus 688,910 at K17408. These are instruction counts in a
+simulator, NOT P100A cycle measurements, model throughput or quality.
+
+Important safety result: an explicit simulator negative control altered
+the staged input after band zero. The second output changed without the
+worker reporting a fault. Therefore a real implementation must establish
+that the same input was correctly produced and remains exclusively owned
+and unchanged through the entire job, and must qualify the actual hardware
+behavior. This leaf is compile-time forbidden in a hybrid worker image or
+driver and is NOT installed or selectable in Work/Assistant. It has no
+full-model or physical performance result. The earlier failed unpack-reuse
+experiment is not retried here; this experiment retains input L1 bytes,
+not unpack/source-bank ownership.
+
+Reproduce from the checkout, with the three private pinned fixtures:
+  python3 tools/pioneer/tests/run_pioneer_q38_bfp4_worker_tests.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_FIXTURE_DIR
+  python3 tools/pioneer/tests/run_pioneer_q38_bfp4_worker_tests.py \
+    --reuse-input /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_FIXTURE_DIR
+
+The physical full-model upload/release session already running on the
+Pioneer is independent of this candidate. It was not interrupted and does
+not execute model inference.

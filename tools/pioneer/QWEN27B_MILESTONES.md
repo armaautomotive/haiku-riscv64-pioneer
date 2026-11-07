@@ -105,6 +105,13 @@ linked final-RMS entry has been simulated; full layer execution and real-card
 or model-quality tests remain outstanding. See
 [`benchmarks/qwen38-fast-rms-synthetic-20261107.txt`](benchmarks/qwen38-fast-rms-synthetic-20261107.txt).
 
+Another isolated worker experiment avoids refetching the same activation for
+each output band. Simulated worker output matched the existing BFP4 result,
+with fewer on-card network reads; there is no card timing or full-model rate.
+A corruption control showed that changing the retained input can silently
+change later output, so a real ownership/lifetime proof is required before
+integration. See the [input-reuse experiment](benchmarks/qwen38-bfp4-input-reuse-offboard-20261107.txt).
+
 ## Milestone 4: Assistant
 
 **Not yet passed.** Expose the faster, qualified path in Assistant while

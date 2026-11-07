@@ -6,6 +6,10 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error BFP4 worker loader is an isolated offboard diagnostic, not Work or device authority
 #endif
+#if defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) && (PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_DRIVER_BUILD_TAG))
+#error Input reuse requires its explicit isolated leaf experiment; no hybrid image or driver
+#endif
 #include "PioneerQ38Bfp4WorkerJob.h"
 #include "PioneerDramCohortReadSweep.h"
 // One 32-row band. Weight reads target its firmware-bound GDDR bank;
@@ -50,14 +54,29 @@ public:
  }
  PioneerQ38Bfp4WorkerLoader(const PioneerQ38Bfp4WorkerLoader&)=delete;
  PioneerQ38Bfp4WorkerLoader& operator=(const PioneerQ38Bfp4WorkerLoader&)=delete;
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+private:
+ friend class PioneerQ38Bfp4WorkerConsumer;
+ template<class IO> bool RunInternal(IO& io,const W::Job& selected,unsigned band,bool reuseInput){
+#else
  template<class IO> bool Run(IO& io,const W::Job& selected,unsigned band){
+#endif
   if(attempted || failed)return false;
   attempted=1;
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+  if(reuseInput && !band)return Fail(); // the enclosing consumer loads band zero first
+#endif
   if(!W::Shape(selected) || band>=selected.words[4])return Fail(); // ZERO IO
   for(unsigned i=0;i<W::Words;i++)job.words[i]=selected.words[i];
   if(!Quiet(io))return Fail();
   for(unsigned i=0;i<9;i++)baseline[i]=io.Read(Counter(i));
-  for(unsigned operand=0;operand<2;operand++){
+  for(unsigned operand=0;operand<
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+    (reuseInput?1U:2U)
+#else
+    2U
+#endif
+    ;operand++){
    for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++){
     W::Read packet;if(!W::SelectedPacket(job,band,operand,tile,packet))return Fail();
     for(unsigned word=0;word<L::Header/4;word++){
@@ -82,8 +101,24 @@ public:
     if(!Drain(io))return Fail();
    }
   }
-  if(issued!=2*L::Tiles(job.words[2]) || flits!=10*L::Tiles(job.words[2]) || !Quiet(io) || !Commands(io))return Fail();
+  if(issued!=
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+    (reuseInput?L::Tiles(job.words[2]):2*L::Tiles(job.words[2]))
+    || flits!=(reuseInput?9*L::Tiles(job.words[2]):10*L::Tiles(job.words[2]))
+#else
+    2*L::Tiles(job.words[2]) || flits!=10*L::Tiles(job.words[2])
+#endif
+    || !Quiet(io) || !Commands(io))return Fail();
   return true;
  }
+#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+public:
+ template<class IO> bool Run(IO& io,const W::Job& selected,unsigned band){return RunInternal(io,selected,band,false);}
+private:
+ // Only the single-job consumer may reuse the input it loaded for band zero.
+ // This is experimental; the real producer must retain the input throughout
+ // the whole job and the card must establish that compute preserves staging.
+ template<class IO> bool RunReusingInput(IO& io,const W::Job& selected,unsigned band){return RunInternal(io,selected,band,true);}
+#endif
 };
 #endif
