@@ -8,14 +8,18 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and len(sys.argv)==3 and not os.environ.get('PYTHONOPTIMIZE')
-sdk,private=map(Path,sys.argv[1:])
+assert __debug__ and len(sys.argv) in (3,4) and (len(sys.argv)==3 or sys.argv[3]=='--matched-q4-input') and not os.environ.get('PYTHONOPTIMIZE')
+sdk,private=map(Path,sys.argv[1:3])
+matched=len(sys.argv)==4
 assert sdk.is_absolute() and sdk.is_dir() and private.is_absolute() and not private.is_symlink()
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 info=private.stat()
 assert stat.S_ISDIR(info.st_mode) and info.st_uid==os.geteuid() and stat.S_IMODE(info.st_mode)==0o700
-pins={'PioneerNativeBfp4DramModelData.h':'51bd25cb2a624a4f979eb93b1b2eca2dcd72b5076bb354ad6480595ac9b74298',
+legacy_pins={'PioneerNativeBfp4DramModelData.h':'51bd25cb2a624a4f979eb93b1b2eca2dcd72b5076bb354ad6480595ac9b74298',
       'PioneerNativeBfp4DramModelMetadata.h':'9842393b3be3329d272cd9d9d358d3194b4d5c31aeb39f43728241a323a8ffa2'}
+matched_pins={'PioneerNativeBfp4DramModelData.h':'44a04a036aa297a162435fa6b32f0debdf7a0444fe0c9ab5ab731acefbb44592',
+      'PioneerNativeBfp4DramModelMetadata.h':'b627b009aca25ac65c53d66a36164aabdf2cbd8ab8291372b7dc6f56340bc986'}
+pins=matched_pins if matched else legacy_pins
 def unchanged():
     for name,digest in pins.items():
         path=private/name
@@ -31,6 +35,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfp4-dram-lease-',dir='/private
     compiler=os.environ.get('CXX','c++')
     common=[compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-function',
             '-ffp-contract=off','-fsanitize=address,undefined','-I'+str(private),'-I'+str(here.parent)]
+    if matched:common+=['-DPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC=1']
     subprocess.run([*common,str(here/'pioneer_native_bfp4_dram_model_lease_test.cpp'),'-o',str(root/'test')],check=True)
     subprocess.run([str(root/'test'),str(root/'image')],check=True,
                    env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
@@ -39,8 +44,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfp4-dram-lease-',dir='/private
         for value in ('0','1'):
             result=subprocess.run([*common,'-D'+macro+'='+value,'-fsyntax-only','-x','c++','-'],input=source,text=True,capture_output=True)
             assert result.returncode and 'BFP4 GDDR lease requires its separate diagnostic' in result.stderr,(macro,value,result.stderr)
+    tag='0x2026110700010121ULL' if matched else '0x2026110600010120ULL'
     role=['-D_KERNEL_MODE','-DPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC=1','-DTT_PIONEER_DRIVER_RELOAD',
-          '-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010120ULL']
+          '-DPIONEER_DRIVER_BUILD_TAG='+tag]
     result=subprocess.run([*common,*role,'-fsyntax-only','-x','c++','-'],input=source,text=True,capture_output=True)
     assert result.returncode==0,result.stderr
     for extra in (['-UPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC'],['-UPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC','-DPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC=0'],

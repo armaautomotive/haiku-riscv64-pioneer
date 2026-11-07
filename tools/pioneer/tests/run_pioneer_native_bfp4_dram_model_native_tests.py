@@ -8,18 +8,25 @@ import stat
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv) != 4:
-    raise SystemExit('Use non-optimized Python NATIVE_BUILD PRIVATE_EXPORT NEW_OUTPUT')
+if not __debug__ or len(sys.argv) not in (4, 5) or (len(sys.argv) == 5 and sys.argv[4] != '--matched-q4-input'):
+    raise SystemExit('Use non-optimized Python NATIVE_BUILD PRIVATE_EXPORT NEW_OUTPUT [--matched-q4-input]')
 build, private, output = map(pathlib.Path, sys.argv[1:4])
-flags = ['-DPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC=1', '-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010120ULL']
+matched = len(sys.argv) == 5
+tag = '0x2026110700010121ULL' if matched else '0x2026110600010120ULL'
+flags = ['-DPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC=1', '-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG='+tag]
+if matched:
+    flags.append('-DPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC=1')
 assert build.is_absolute() and build.is_dir() and private.is_absolute() and not private.is_symlink()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 root = here.parents[2]
 driver = root / 'src/add-ons/kernel/drivers/misc'
-pins = {'PioneerNativeBfp4DramModelData.h': '51bd25cb2a624a4f979eb93b1b2eca2dcd72b5076bb354ad6480595ac9b74298',
+legacy_pins = {'PioneerNativeBfp4DramModelData.h': '51bd25cb2a624a4f979eb93b1b2eca2dcd72b5076bb354ad6480595ac9b74298',
         'PioneerNativeBfp4DramModelMetadata.h': '9842393b3be3329d272cd9d9d358d3194b4d5c31aeb39f43728241a323a8ffa2'}
+matched_pins = {'PioneerNativeBfp4DramModelData.h': '44a04a036aa297a162435fa6b32f0debdf7a0444fe0c9ab5ab731acefbb44592',
+        'PioneerNativeBfp4DramModelMetadata.h': 'b627b009aca25ac65c53d66a36164aabdf2cbd8ab8291372b7dc6f56340bc986'}
+pins = matched_pins if matched else legacy_pins
 assert stat.S_IMODE(private.stat().st_mode) == 0o700 and private.stat().st_uid == os.geteuid()
 for name, digest in pins.items():
     info = (private / name).lstat()
@@ -85,4 +92,4 @@ for name, digest in pins.items():
 for path, digest in source_pins.items():
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
 (output / 'native-source-sha256.txt').write_text('\n'.join(digest + '  ' + str(path.relative_to(root)) for path, digest in source_pins.items()) + '\n')
-print('PASS actual native120/control endpoint fixtures; PRIVATE headers unchanged; NO native ARC/prerequisite/engine/hardware/full-model/speed proof:', output)
+print('PASS actual native'+('121' if matched else '120')+'/control endpoint fixtures; PRIVATE headers unchanged; NO native ARC/prerequisite/engine/hardware/full-model/speed proof:', output)

@@ -112,6 +112,9 @@ Four compact goals
    position; KL was 0.20372 and 0.02355, with top-five overlap 4/5 and 5/5.
    This is not natural answer quality, P100A execution or a speed result.
    See benchmarks/qwen38-hybrid-two-token-cpu-20261107.txt.
+   Matched-input BFP4 diagnostic121 now passes offboard execution, source,
+   owner and endpoint checks; it has NOT been installed or run on the card.
+   See benchmarks/qwen38-matched-band-preparation-20261107.txt.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

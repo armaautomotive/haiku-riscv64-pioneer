@@ -15,6 +15,7 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build',type=Path)
 parser.add_argument('private',type=Path)
 parser.add_argument('output',type=Path)
+parser.add_argument('--matched-q4-input',action='store_true',help='Build separate matched-input diagnostic 121')
 args=parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.private.is_absolute() and not args.private.is_symlink()
@@ -22,8 +23,11 @@ assert args.output.is_absolute() and not args.output.exists() and not args.outpu
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 info=args.private.stat()
 assert stat.S_ISDIR(info.st_mode) and info.st_uid==os.geteuid() and stat.S_IMODE(info.st_mode)==0o700
-pins={'PioneerNativeBfp4DramModelData.h':'51bd25cb2a624a4f979eb93b1b2eca2dcd72b5076bb354ad6480595ac9b74298',
+legacy_pins={'PioneerNativeBfp4DramModelData.h':'51bd25cb2a624a4f979eb93b1b2eca2dcd72b5076bb354ad6480595ac9b74298',
       'PioneerNativeBfp4DramModelMetadata.h':'9842393b3be3329d272cd9d9d358d3194b4d5c31aeb39f43728241a323a8ffa2'}
+matched_pins={'PioneerNativeBfp4DramModelData.h':'44a04a036aa297a162435fa6b32f0debdf7a0444fe0c9ab5ab731acefbb44592',
+      'PioneerNativeBfp4DramModelMetadata.h':'b627b009aca25ac65c53d66a36164aabdf2cbd8ab8291372b7dc6f56340bc986'}
+pins=matched_pins if args.matched_q4_input else legacy_pins
 def unchanged():
     for name,digest in pins.items():
         path=args.private/name
@@ -73,7 +77,9 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
         '-fno-strict-aliasing','-fno-delete-null-pointer-checks','-mcmodel=medany','-fpic','-D_KERNEL_MODE']
 roles=['BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR']
 native=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name for name in roles]
-native+=['-DTT_PIONEER_DRIVER_RELOAD','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010120ULL','-DPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC=1']
+tag='0x2026110700010121ULL' if args.matched_q4_input else '0x2026110600010120ULL'
+matched_role=['-DPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC=1'] if args.matched_q4_input else []
+native+=['-DTT_PIONEER_DRIVER_RELOAD','-DPIONEER_DRIVER_BUILD_TAG='+tag,'-DPIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC=1',*matched_role]
 driver=root/'src/add-ons/kernel/drivers/misc'
 commands=[]
 def run(command):
@@ -83,11 +89,12 @@ run(common+includes+['-c',str(driver/'PioneerPciProfile.cpp'),'-o',str(args.outp
 run(common+native+includes+['-c',str(driver/'pioneer_native_bfp4_dram_model_driver.cpp'),'-o',str(args.output/'native.o')])
 run(common+includes+['-c',str(driver/'tenstorrent_pci_probe.cpp'),'-o',str(args.output/'control.o')])
 def compiler_path(name):return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
-for obj,name in (('native.o','tenstorrent_pci_probe-native-bfp4-dram120'),('control.o','tenstorrent_pci_probe-default43-control')):
+driver_name='tenstorrent_pci_probe-native-bfp4-matched121' if args.matched_q4_input else 'tenstorrent_pci_probe-native-bfp4-dram120'
+for obj,name in (('native.o',driver_name),('control.o','tenstorrent_pci_probe-default43-control')):
     run([cxx,'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenstorrent_pci_probe',compiler_path('crtbeginS.o'),
          str(release/'system/glue/haiku_version_glue.o'),str(args.output/obj),str(args.output/'profile.o'),
          str(release/'system/kernel/kernel.so'),compiler_path('libgcc.a'),compiler_path('crtendS.o'),'-o',str(args.output/name)])
-binary=args.output/'tenstorrent_pci_probe-native-bfp4-dram120'
+binary=args.output/driver_name
 exports=subprocess.check_output([tool+'nm','-D',str(binary)],text=True)
 names={line.split()[-1] for line in exports.splitlines() if line.split()}
 assert {'api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device'}<=names
@@ -105,6 +112,12 @@ for macro in ('PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC','PIONEER_NATIVE_DRAM_M
               'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
     cases.append(['-D'+macro+'=1'])
 cases.append(['-ffast-math'])
+if args.matched_q4_input:
+    cases.extend([['-UPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC'],
+                  ['-UPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC','-DPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC=0'],
+                  ['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010120ULL']])
+else:
+    cases.append(['-DPIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC=1'])
 for extra in cases:
     # Preprocessed output contains private model bytes; never persist it.
     result=subprocess.run([*common,*native,*extra,*includes,'-E',str(driver/'pioneer_native_bfp4_dram_model_driver.cpp')],
@@ -118,7 +131,7 @@ libs=['-L'+str(path) for path in sorted((build/'build_packages').glob('gcc_sysli
 client=args.output/'pioneer-native-bfp4-dram-model-diagnostic'
 source_check=args.output/'pioneer-native-bfp4-dram-source-check'
 for source,binary_path in (('pioneer_native_bfp4_dram_model_diagnostic.cpp',client),('pioneer_native_bfp4_dram_source_check.cpp',source_check)):
-    run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(args.private),
+    run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*matched_role,*user_includes,'-I'+str(args.private),
          '-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot'),
          '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),*libs,
          str(here/source),str(here/'PioneerModelWeightCache.cpp'),
@@ -128,4 +141,4 @@ unchanged()
 print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name)
 print(hashlib.sha256(client.read_bytes()).hexdigest(),client.name)
 print(hashlib.sha256(source_check.read_bytes()).hexdigest(),source_check.name)
-print('PASS BUILD_ONLY private BFP4 GDDR driver/client,',len(cases),'role refusals; NO install or device authorization')
+print('PASS BUILD_ONLY private BFP4 GDDR driver/client',('MATCHED121' if args.matched_q4_input else 'LEGACY120'),len(cases),'role refusals; NO install or device authorization')

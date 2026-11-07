@@ -7,7 +7,11 @@
 #include "PioneerModelWeightCache.h"
 #include "PioneerQ38NativeWeightTiles.h"
 #include "PioneerBlackholeBf16Arithmetic.h"
+#include "PioneerQ38Bfp4BandInput.h"
 #include "PioneerNativeBfp4DramModelMetadata.h" // PRIVATE predictions
+#if defined(PIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC) && PIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC != 1
+#error The matched-input BFP4 diagnostic role must be explicitly 1
+#endif
 #include <array>
 #include <cfenv>
 #include <fcntl.h>
@@ -46,9 +50,17 @@ public:
   if(!tensor || tensor->inputs!=5120 || tensor->outputs!=17408 || tensor->type!=12 || unsigned(tensor-model.Tensors().data())!=7)
    return Fail(error,"Pinned learned matrix identity changed.");
   const unsigned firsts[3]={0,8704,17376};
+#if defined(PIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC)
+  constexpr bool matchedQ4=true;
+  const char* pins[3]={"916ef0df61974947e4eff96294bb4e306ec8aa1400f2db22699bd3a0e6482eb0",
+   "9b5630aa0cb72812452e6d194b7e3e3108cee0e72f593f0c63ef72d1cf75bb41",
+   "065fdac4a43dd744844e4ee2030ca2db44e4c822b7bc9cf68e540839c8c40745"};
+#else
+  constexpr bool matchedQ4=false;
   const char* pins[3]={"edbc6d7cadcd85d0114ff16a5c44afb3627296497a7a0e03f76efa41da5ac7dd",
    "59f05959ef8486021eefd0b7e02e083b6f18a7eef747f15d5e24e6e87c587695",
    "036bcee72fc9bb84fedb9c6f93a6d22358f9d7c90c610cc5c19159f002a587e3"};
+#endif
   for(unsigned sample=0;sample<3;sample++){
    std::vector<uint8_t> data;data.reserve(102544);Append(data,0x34504252);Append(data,1);Append(data,5120);Append(data,firsts[sample]);
    std::array<uint32_t,32> expected={};
@@ -65,12 +77,12 @@ public:
       unsigned column=half*16+k,input=tile*32+column;uint32_t bits=0;memcpy(&bits,&decoded[row*32+column],4);
       if(bits&65535)return Fail(error,"Converted weight is not BF16.");
       a[k]=uint16_t(bits>>16);
-      b[k]=uint16_t(0x3f00+(input*13)%256+((input&3)==2?0x8000:0));
+      b[k]=PioneerQ38Bfp4BandInput::Word(input,matchedQ4);
      }
      for(unsigned phase:{0U,2U})if(!PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,expected[row],expected[row]))return Fail(error,"Reference arithmetic refused.");
     }
    }
-   for(unsigned i=0;i<5120;i++){uint16_t b=uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0));data.push_back(uint8_t(b));data.push_back(uint8_t(b>>8));}
+   for(unsigned i=0;i<5120;i++){uint16_t b=PioneerQ38Bfp4BandInput::Word(i,matchedQ4);data.push_back(uint8_t(b));data.push_back(uint8_t(b>>8));}
    for(auto word:expected)Append(data,word);
    const auto* golden=Meta::Golden(sample);
    if(data.size()!=102544 || !golden || Cache::Hex(Cache::Hash(data.data(),data.size()))!=pins[sample]

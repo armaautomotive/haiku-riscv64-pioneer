@@ -11,15 +11,20 @@ assert __debug__ and not os.environ.get('PYTHONOPTIMIZE')
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('samples',type=Path)
 parser.add_argument('output',type=Path)
+parser.add_argument('--matched-q4-input',action='store_true',help='Use separately pinned Q4-matched diagnostic samples')
 args=parser.parse_args()
 assert args.samples.is_absolute() and not args.samples.is_symlink()
 directory=args.samples.stat()
 assert stat.S_ISDIR(directory.st_mode) and directory.st_uid==os.geteuid() and stat.S_IMODE(directory.st_mode)==0o700
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-pins=('edbc6d7cadcd85d0114ff16a5c44afb3627296497a7a0e03f76efa41da5ac7dd',
+legacy_pins=('edbc6d7cadcd85d0114ff16a5c44afb3627296497a7a0e03f76efa41da5ac7dd',
       '59f05959ef8486021eefd0b7e02e083b6f18a7eef747f15d5e24e6e87c587695',
       '036bcee72fc9bb84fedb9c6f93a6d22358f9d7c90c610cc5c19159f002a587e3')
+matched_pins=('916ef0df61974947e4eff96294bb4e306ec8aa1400f2db22699bd3a0e6482eb0',
+      '9b5630aa0cb72812452e6d194b7e3e3108cee0e72f593f0c63ef72d1cf75bb41',
+      '065fdac4a43dd744844e4ee2030ca2db44e4c822b7bc9cf68e540839c8c40745')
+pins=matched_pins if args.matched_q4_input else legacy_pins
 samples=[]
 for i,digest in enumerate(pins):
     path=args.samples/('band'+str(i)+'.rbp4')
@@ -68,4 +73,6 @@ for name in ('PioneerNativeBfp4DramModelData.h','PioneerNativeBfp4DramModelMetad
     path=args.output/name
     assert stat.S_IMODE(path.stat().st_mode)==0o600
     print(hashlib.sha256(path.read_bytes()).hexdigest(),name)
-print('PASS PRIVATE fixed BFP4 header generation; NO device or Work access')
+print('PASS PRIVATE fixed BFP4 header generation',
+      'MATCHED_Q4_INPUT' if args.matched_q4_input else 'LEGACY_INPUT',
+      '; NO device, Work access, or hardware authorization')

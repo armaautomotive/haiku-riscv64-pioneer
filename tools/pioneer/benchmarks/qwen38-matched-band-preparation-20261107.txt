@@ -37,3 +37,27 @@ passed and the Haiku binary was not installed. This is not a paired P100A
 timing: matched-input BFP4 device ownership, source authentication, execution,
 restoration and timing still need their own validated, uniquely identified
 diagnostic before a hardware run can be considered.
+
+Follow-up: the three matched real-model samples each passed an OFFBOARD run
+of the actual linked RV32 GDDR/compute image, including two loads and 64
+outputs per sample. This is simulated NoC/L1/FPU execution with synthetic
+clocks, not P100A execution or a timing result. The 18 existing image fault
+controls also passed. The same-open CPU source checker regenerated the three
+pinned samples and 96 expected words from the original model; a deliberately
+mixed legacy metadata header was refused on a real-source check. The old
+and matched header generators each rejected the other's samples before
+creating output; the legacy private-header hashes were unchanged.
+
+A distinct matched diagnostic121 now builds under tag 2026110700010121 and
+opcodes 8923..8925; legacy diagnostic120 remains tag 2026110600010120 and
+opcodes 8920..8922. Cross-tag requests and a defined-zero role were refused.
+Both variants passed offboard owner/endpoint tests and 147 lease fault/close
+cases. The legacy driver rebuilt byte-for-byte to the prior driver SHA
+98e28838a606fd00f32cdee8b027894ad9e7e3a8a49021c5371d9eb44aff239f.
+Matched driver build SHA
+ad9bffb2ca52de673e69a2a07e395cf86b8dbe0d8f9f32157fa40bcff9187325;
+matched client SHA c7ab8febf490b4925a81b6e3a067a7af08db47cc935d37db3397e6e67ff094e9;
+matched source check SHA bb16fad2dbb938e37ffa4b857e1aef1002affacb42b6dc730ef30469ad220dcf.
+These are BUILD/OFFBOARD results only: no matched driver installation or
+hardware run has been performed. A fresh, fault-tested one-shot parent,
+current ownership/restore proof, and separate physical qualification remain.

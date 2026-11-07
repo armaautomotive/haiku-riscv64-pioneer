@@ -2,11 +2,20 @@
 #ifndef PIONEER_NATIVE_BFP4_DRAM_PROTOCOL_H
 #define PIONEER_NATIVE_BFP4_DRAM_PROTOCOL_H
 #include "PioneerNativeBfpProtocol.h"
+#if defined(PIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC) && PIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC != 1
+#error The matched-input BFP4 diagnostic role must be explicitly 1
+#endif
 // New fixed-sample BFP4 GDDR diagnostic. Not arbitrary payloads, model Work,
 // the earlier BFP8 GDDR diagnostic, or a capability to reset/retry the card.
 struct PioneerNativeBfp4DramVariant {
- static constexpr unsigned Role=120,Marker=0x34534442,Fault=0x4542444e,Count=0x02001400,Opcode=0x8920;
+ static constexpr unsigned Role=120,Marker=0x34534442,Fault=0x4542444e,Count=0x02001400;
+#if defined(PIONEER_Q38_BFP4_MATCHED_DIAGNOSTIC)
+ static constexpr unsigned Opcode=0x8923;
+ static constexpr unsigned long long Tag=0x2026110700010121ULL;
+#else
+ static constexpr unsigned Opcode=0x8920;
  static constexpr unsigned long long Tag=0x2026110600010120ULL;
+#endif
 };
 constexpr uint32_t PioneerNativeBfp4DramNone=UINT32_MAX;
 enum {PIONEER_NATIVE_BFP4_DRAM_SUPPORT=B_DEVICE_OP_CODES_END+PioneerNativeBfp4DramVariant::Opcode,
