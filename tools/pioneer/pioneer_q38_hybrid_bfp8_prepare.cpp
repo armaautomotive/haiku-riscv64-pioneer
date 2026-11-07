@@ -10,6 +10,9 @@
 #if !defined(PIONEER_Q38_ALL_BFP8_CACHE) || PIONEER_Q38_ALL_BFP8_CACHE != 1
 #error The frozen all-BFP8 converter must be selected
 #endif
+#if defined(PIONEER_Q38_HYBRID_BFP8_WINDOW11) && PIONEER_Q38_HYBRID_BFP8_WINDOW11 != 1
+#error QGW8 BFP8 selection requires an explicit value of 1
+#endif
 #include "PioneerQ38HybridBfp8Selection.h"
 #include <cstring>
 static unsigned selectedTensors=0;
@@ -17,7 +20,11 @@ struct PioneerQ38HybridBfp8Tiles {
  using Base=PioneerQ38NativeBfp8WeightTiles;
  using Layout=Base::Layout;
  static bool Describe(const PioneerQ38Tensor& tensor,Layout& out){
+#ifdef PIONEER_Q38_HYBRID_BFP8_WINDOW11
+  if(!PioneerQ38HybridBfp8Selection::MatchQgw8(tensor))return false;
+#else
   if(!PioneerQ38HybridBfp8Selection::Match(tensor))return false;
+#endif
   Layout stage;if(!Base::Describe(tensor,stage) || stage.format!=PioneerBlackholeBlockFloat::Format::Bfp8B)return false;
   selectedTensors++;out=stage;return true;
  }
@@ -38,10 +45,16 @@ int main(int argc,char** argv){
   fputs("Use --build ABSOLUTE_ORIGINAL_GGUF ABSOLUTE_DEDICATED_CACHE; CPU-only.\n",stderr);return 2;
  }
  const int result=PioneerQ38FrozenBfp8WriterMain(argc,argv);
- if(result || selectedTensors!=39){
+ const unsigned required=
+#ifdef PIONEER_Q38_HYBRID_BFP8_WINDOW11
+  33;
+#else
+  39;
+#endif
+ if(result || selectedTensors!=required){
   fprintf(stderr,"HYBRID_BFP8_PREPARATION_INCOMPLETE selected%u; NO DEVICE\n",selectedTensors);return 1;
  }
- puts("PASS_HYBRID_BFP8_PREPARATION 39 selected FFN tensors, frozen all-BFP8 recipe; NO DEVICE OR SPEED");
+ printf("PASS_HYBRID_BFP8_PREPARATION %u selected FFN tensors, frozen all-BFP8 recipe; NO DEVICE OR SPEED\n",required);
  return fflush(stdout)?1:0;
 }
 #endif

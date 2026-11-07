@@ -6,17 +6,20 @@
 #error Hybrid BFP8 selection is CPU preparation only
 #endif
 #include "PioneerQ38NativeBfp8WeightTiles.h"
-// Select only the exact 39 BFP8 FFN tensors of the proposed hybrid. Numerical
+// Select the exact BFP8 FFN tensors of the chosen hybrid proposal. Numerical
 // conversion remains the existing frozen all-BFP8 writer/codec, not a new
 // recipe. This is selection data, not an uploader or model-quality claim.
 struct PioneerQ38HybridBfp8Selection {
- static bool Match(const PioneerQ38Tensor& tensor){
-  for(unsigned layer=48;layer<=60;layer++)for(unsigned role=2;role<=4;role++){
+ static bool MatchFrom(const PioneerQ38Tensor& tensor,unsigned first){
+  if(first!=48 && first!=50)return false;
+  for(unsigned layer=first;layer<=60;layer++)for(unsigned role=2;role<=4;role++){
    PioneerQ38Tensor wanted;if(!PioneerQ38Expected(layer,role,wanted))return false;
    if(tensor.name==wanted.name)return tensor.type==wanted.type && tensor.rank==wanted.rank
     && tensor.inputs==wanted.inputs && tensor.outputs==wanted.outputs && tensor.bytes==wanted.bytes;
   }
   return false;
  }
+ static bool Match(const PioneerQ38Tensor& tensor){return MatchFrom(tensor,48);}
+ static bool MatchQgw8(const PioneerQ38Tensor& tensor){return MatchFrom(tensor,50);}
 };
 #endif

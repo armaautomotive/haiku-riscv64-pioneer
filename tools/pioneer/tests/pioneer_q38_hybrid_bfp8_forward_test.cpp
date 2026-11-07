@@ -7,7 +7,12 @@
 #include "../pioneer_q38_hybrid_bfp8_prepare.cpp"
 int main(){
  Source source(12,5120,17408);PioneerQ38Tensor expected;
- assert(PioneerQ38Expected(48,2,expected));source.tensors[0].name=expected.name;
+#ifdef PIONEER_Q38_HYBRID_BFP8_WINDOW11
+ assert(PioneerQ38Expected(50,2,expected));
+#else
+ assert(PioneerQ38Expected(48,2,expected));
+#endif
+ source.tensors[0].name=expected.name;
  PioneerQ38HybridBfp8Tiles::Layout wrapped,original;
  assert(PioneerQ38HybridBfp8Tiles::Describe(source.tensors[0],wrapped));
  assert(PioneerQ38NativeBfp8WeightTiles::Describe(source.tensors[0],original));

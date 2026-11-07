@@ -13,6 +13,11 @@ the previous 13-layer options retain their original behavior. A separate
 CPU-only head preparer checks the full same-open model hash and prepares or
 verifies all seven head cache entries, using an independently keyed converter
 fingerprint. Neither preparer is integrated with Work or the native uploader.
+The BFP8 preparer also supports a separately built --qgw8 selection: it
+reuses the frozen conversion recipe but selects only 33 tensors (layers
+50-60) rather than 39. Layout arithmetic shows this avoids converting
+568197120 bytes belonging to the six unused layers 48 and 49 tensors. This
+is potential preparation work avoided, not a measured load-time speedup.
 
 Tests use fake complete-model sources and caches to exercise routing,
 boundaries, preflight coverage, changed inputs, failures, atomic destination
