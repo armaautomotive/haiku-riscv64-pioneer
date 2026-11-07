@@ -16,15 +16,25 @@ static inline bool PioneerQ38RuntimeRanges(const PioneerQ38CanonicalModelPlan& p
   const auto* p=plan.Part(i);
   if(!p || p->bank>=7 || !p->rows || !p->rowBytes || !p->bytes || !p->allocated)return false;
   uint64_t physicalBytes=uint64_t(p->rows)*p->rowBytes;
-  // In the fixed hybrid layout only these FFN stripes expand from logical
-  // Q4 row geometry to BFP8 storage. Preserve the logical job geometry and
-  // check the exact converted size; never treat arbitrary padding as valid.
-  if(plan.HybridFormatLayout() && p->kind==plan.WeightKind && p->layer>=48 && p->layer<=60
+  // Converted rows keep source geometry in rowBytes. Check their exact
+  // physical sizes rather than treating expansion as arbitrary padding.
+  bool convertedFfn=plan.HybridFormatLayout() && p->layer>=48 && p->layer<=60;
+#ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+  const bool qgw8=plan.Qgw8InspectionLayout();
+  convertedFfn=convertedFfn || (qgw8 && p->layer>=50 && p->layer<=60);
+#endif
+  if(convertedFfn && p->kind==plan.WeightKind
    && p->role>=2 && p->role<=4){
    const unsigned width=p->role==4?17408:5120;
    if(p->type!=12 || ((p->firstRow|p->rows)&31) || p->rowBytes!=width*9/16)return false;
    physicalBytes=uint64_t(p->rows)*width*17/16;
   }
+#ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+  else if(qgw8 && p->kind==plan.WeightKind && p->layer==64 && p->role==1){
+   if(p->type!=14 || ((p->firstRow|p->rows)&63) || p->rowBytes!=4240)return false;
+   physicalBytes=uint64_t(p->rows)*5440;
+  }
+#endif
   if(p->offset!=end[p->bank] || (p->offset&4095) || (p->allocated&4095)
    || physicalBytes!=p->bytes
    || ((uint64_t(p->bytes)+4095)&~UINT64_C(4095))!=p->allocated

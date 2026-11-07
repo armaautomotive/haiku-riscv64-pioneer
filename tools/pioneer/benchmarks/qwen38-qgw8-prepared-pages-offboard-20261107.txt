@@ -130,6 +130,19 @@ The derived plan and receipt remain non-loadable inspection-only; this is
 not native binding, worker selection, a complete token, hardware execution or
 proof of source bytes on the card. No QGW8 speed or quality is measured.
 
+The actual shared runtime-range validator now recognizes the QGW8 converted
+head and 50--60 BFP8 FFN sizes only in the non-loadable inspection build;
+the earlier original and hybrid formats retain their old checks. A sealed
+synthetic receipt's canonical plan now passes that validator and the actual
+joint bank-reservation code for one workspace bank. The seven state suffixes
+match the host geometry, learned pages remain outside the reservation,
+recurrent/history/projection initialization remains empty, and a second
+owner is refused. Corrupted converted sizes/types/row geometry were refused
+without publishing ranges. The existing original decoder-runtime and older
+hybrid receipt regressions and the RISC-V compile-only witness also passed.
+These are fake bank/ledger endpoints: no actual state was initialized and
+there is still no loadable QGW8 owner, worker launch, token or measured rate.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

@@ -75,7 +75,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
     for name, symbols in (('kernel_layout', ('qgw8_kernel_layout_build',)),
                           ('upload_receipt', ('qgw8_receipt_begin', 'qgw8_receipt_span', 'qgw8_receipt_record',
                                               'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout',
-                                              'qgw8_receipt_canonical')),
+                                              'qgw8_receipt_canonical', 'qgw8_runtime_ranges')),
                           ('span_service', ('qgw8_span_receipt_kind',))):
         obj = out / (name + '.o')
         source = ('pioneer_q38_qgw8_kernel_layout_compile.cpp' if name == 'kernel_layout' else

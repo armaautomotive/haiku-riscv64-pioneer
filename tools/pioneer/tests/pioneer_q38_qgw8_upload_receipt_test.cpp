@@ -5,10 +5,13 @@
 #define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
 #define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
+#define PIONEER_Q38_DECODER_RUNTIME 1
 #define PIONEER_BANKS_MOCK_ONLY 1
 #include "../PioneerQ38TokenStartupPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionMutableBanks.h"
 #include "pioneer_resident_banks_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RuntimeRanges.h"
 #include "../PioneerQ38HybridHeadModelPlan.h"
 #include <cstring>
 #include <memory>
@@ -94,9 +97,45 @@ int main(int argc,char** argv){
  }
  assert(recurrent==672);
  for(unsigned b=0;b<7;b++)assert(native->Workspace(b) && native->Workspace(b)->bank==b && native->Used(b)==bound->Used(b));
+ PioneerResidentMutableRange ranges[7]={};assert(PioneerQ38RuntimeRanges(*native,ranges));
+ uint64_t learnedEnd[7]={};
+ for(unsigned i=0;i<canonical->Count();i++){
+  const auto* p=canonical->Part(i);const auto& q=host.parts[i];
+  if(p->kind==PioneerQ38CanonicalModelPlan::WeightKind)learnedEnd[q.bank]=uint64_t(q.offset)+q.allocated;
+ }
+ for(unsigned b=0;b<7;b++)assert(ranges[b].bank==b && ranges[b].firstPage==learnedEnd[b]/4096
+  && ranges[b].pages==(host.used[b]-learnedEnd[b])/4096);
+ // Reject wrong converted physical geometry without publishing any range.
+ for(unsigned i=0;i<native->Count();i++){
+  auto* p=const_cast<PioneerQ38CanonicalPart*>(native->Part(i));
+  if(p->kind!=PioneerQ38CanonicalModelPlan::WeightKind || !((p->layer==64 && p->role==1)
+   || (p->layer==50 && p->role==2)))continue;
+  const auto saved=*p;
+  auto refuses=[&]{
+   PioneerResidentMutableRange untouched[7];std::memset(untouched,0xa5,sizeof(untouched));
+   PioneerResidentMutableRange before[7];std::memcpy(before,untouched,sizeof(before));
+   assert(!PioneerQ38RuntimeRanges(*native,untouched) && !std::memcmp(before,untouched,sizeof(before)));*p=saved;
+  };
+  p->bytes--;refuses();p->rowBytes++;refuses();p->type=8;refuses();p->firstRow++;refuses();
+  p->layer=p->layer==64?63:49;refuses();
+ }
  assert(!receipt->DeriveBoundCanonical(*native,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ auto graph=std::make_unique<PioneerQ38ProjectionMutableBanks>();PioneerQ38ProjectionIdentity id={1,2,3,42};
+ assert(graph->BindCanonical(banks,proof,id,ledger.data(),ledger.size(),*native,0));
+ auto* history=graph->ConvHistory(id);auto* recurrentOwner=graph->Recurrent(id);auto* projection=graph->Projection(id);
+ assert(history && recurrentOwner && projection && graph->CanonicalModel(id)==native.get());
+ unsigned progress=~0U;
+ assert(history->InitializationProgress(id,progress) && !progress && !history->InitializationPublished(id));
+ assert(recurrentOwner->InitializationProgress(id,progress) && !progress && !recurrentOwner->InitializationPublished(id));
+ assert(projection->InitializationProgress(id,progress) && !progress && !projection->InitializationPublished(id));
+ for(unsigned b=0;b<7;b++){
+  assert(banks.ImmutableRange(proof,b,learnedEnd[b]-4096,4096));
+  assert(!banks.ImmutableRange(proof,b,learnedEnd[b],4096));
+ }
+ auto second=std::make_unique<PioneerQ38ProjectionMutableBanks>();
+ assert(!second->BindCanonical(banks,proof,id,ledger.data(),ledger.size(),*native,0));
  assert(!receipt->Seal(span) && !receipt->Next(bank,offset,length));
  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
- printf("PASS QGW8 receipt: %u host-plan-matched extents, 3551 fragments, %llu bytes; synthetic owner/ledger only, no device\n",
+ printf("PASS QGW8 receipt and actual runtime reservation: %u host-plan-matched extents, 3551 fragments, %llu bytes; synthetic owner/ledger only, no device\n",
   spans,(unsigned long long)total);
 }
