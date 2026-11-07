@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=24 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input'}
+assert 3<=len(sys.argv)<=24 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -39,6 +39,11 @@ if reuse_input:
  assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
   '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
   '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-reuse-input'},'input reuse requires the exact tested ROOT profile'
+matrix_attention='--hybrid-matrix-attention' in options
+if matrix_attention:
+ assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
+  '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'},'QGW7 requires the exact offline ROOT profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -57,7 +62,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
@@ -66,6 +71,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_G
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP=1'] if hybrid else []),
  *(['-DPIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION=1'] if reuse_input else []),
+ *(['-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1','-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1'] if matrix_attention else []),
  *(['-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),

@@ -50,8 +50,23 @@ tests/pioneer_q38_hybrid_matrix_roles_test.py checks role and identity
 refusals. Existing standalone QDM2 tests continue to cover 24 simulated
 partitions and a multi-chunk frame, separately from this transition test.
 
-The existing ROOT still emits the old QGW5/QDW1 identities; it cannot drive
-QGW7/QDM2. A matching ROOT, native owner/format identity, full L1 lifecycle,
+Coordinator integration, offline only: an exact --hybrid-matrix-attention
+build profile propagates both QGW7 and QDM2 defines to the real linked ROOT,
+recurrent and dense components. Two independent builds produced identical
+files (program.elf SHA-256 f9be15a56b126b8809880eb3dee32217c4c6cfa41f7e546714add7747b814c83).
+The existing QGW5 ROOT rebuilt with its original pinned files. An actual RV32
+ROOT function simulator generated 72 projection jobs across both linked
+components, formats, widths and boundary layers; the job layouts matched the
+independent canonical planner, passed QGW7 worker shape checks and rejected
+old QGW5 identities and mutated manifest data. This exercises functions,
+not the whole ROOT lifecycle or its dense-attention transfer path. Build
+profiles and the shared grammar reject QDM2 with the old worker identity.
+Reproduce with tests/run_pioneer_q38_hybrid_matrix_root_tests.py SDK and
+tests/pioneer_q38_hybrid_matrix_roles_test.py SDK. Neither build is a native
+or Work-mode authorization.
+
+A native owner/format identity, full ROOT-to-worker L1 lifecycle,
 prior-token attention transport, multi-layer/token checks, quality and
-physical benchmarking remain required. The storage anomaly also remains
-unresolved and its recovery guard has not been bypassed.
+physical benchmarking remain required. No new throughput has been measured.
+The storage anomaly remains unresolved and its recovery guard has not been
+bypassed.

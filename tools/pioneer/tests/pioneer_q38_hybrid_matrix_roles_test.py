@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fail closed on QGW7/QDM2 identity and old/native/Work role mixtures."""
 from pathlib import Path
+import os
 import subprocess
 import sys
 
@@ -39,4 +40,16 @@ for source,base in ((global_source,global_base),(dense_source,dense_base)):
         for value in (0,1): negative.append((source,[*base,matrix,identity,'-D'+macro+'='+str(value)]))
 for source,flags in negative:
     preprocess(source,flags,False)
-print('PASS QGW7/QDM2 matching role and '+str(len(negative))+' incompatible/missing/defined-zero build refusals; NO DEVICE')
+# Exercise the shared coordinator grammar itself, not just the worker source
+# image gates. A QDM2 inner frame must never inherit the old QGW5 identity.
+grammar_cases=[([],True),([matrix,identity],True),([matrix],False),([identity],False),
+               ([matrix,identity,'-DPIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION=1'],False)]
+for macro in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY',
+              'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_HYBRID_FULL_NATIVE'):
+    for value in (0,1):grammar_cases.append(([matrix,identity,'-D'+macro+'='+str(value)],False))
+for flags,success in grammar_cases:
+    result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++11','-E','-x','c++','-I',str(root),*flags,'-'],
+                          input=b'#include "PioneerQ38HybridWorkerLayout.h"\n',
+                          stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+    assert (result.returncode==0)==success,(flags,result.stderr[-1200:])
+print('PASS QGW7/QDM2 matching role, '+str(len(negative))+' incompatible worker builds and '+str(len(grammar_cases))+' direct coordinator-grammar gates; NO DEVICE')

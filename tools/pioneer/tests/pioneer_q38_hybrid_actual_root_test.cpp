@@ -76,10 +76,24 @@ int main(int argc,char** argv){
    else {PioneerQ38Bfp4WorkerJob::Job j={};assert(binding.Build4(paired,layer,role,0,w,7,j));for(unsigned i=0;i<16;i++)expected[i]=j.words[i];}
    for(unsigned i=0;i<16;i++)assert(m->memory.at(0x78000+(16+i)*4)==expected[i]);
    assert(m->memory.at(0x78000+32*4)==paired.Part(w)->firstRow && m->memory.at(0x78000+35*4)==(layer>=48 && layer<=60?8U:4U));
+   uint32_t frame[64],boot[64];for(unsigned i=0;i<64;i++){
+    frame[i]=m->memory.at(0x78000+i*4);boot[i]=m->memory.at(0x170000+w*256+i*4);
+   }
+   assert(HW::JobShape(frame,boot,6,0));
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+   assert(frame[0]==0x37574751U && boot[0]==0x37574751U);
+   frame[0]=0x35574751U;assert(!HW::JobShape(frame,boot,6,0));
+   frame[0]=HW::Magic;boot[0]=0x35574751U;assert(!HW::JobShape(frame,boot,6,0));
+#endif
    compared++;
   }
   const unsigned index=(layer*3+role-2)*7;m->memory[0x16c400+index*4]^=1;
   assert(!m->Run(m->job[component],d,0,8));
  }
- assert(compared==72);puts("PASS actual linked ROOT paired translation and QGW5 job construction: 72 jobs across both real component functions, both formats/widths and boundary layers; manifest mutation faults; simulated only");
+ assert(compared==72);
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+ puts("PASS actual linked QGW7 ROOT paired translation and job construction: 72 jobs, both components/formats/widths, boundary layers; old identity and manifest mutation refused; simulated only");
+#else
+ puts("PASS actual linked hybrid ROOT paired translation and job construction: 72 jobs across both real component functions, both formats/widths and boundary layers; manifest mutation faults; simulated only");
+#endif
 }

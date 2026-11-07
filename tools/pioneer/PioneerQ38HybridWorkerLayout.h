@@ -18,6 +18,14 @@
  || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION))
 #error Matrix attention inspection must be explicit and distinct from QGW6 input reuse
 #endif
+#if defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) && !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
+#error A hybrid coordinator or worker cannot combine QDM2 with the old QGW5/QGW6 identity
+#endif
+#if defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) && (defined(_KERNEL_MODE) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) \
+ || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE))
+#error QGW7 matrix-attention inspection has no native or kernel authority
+#endif
 
 #include "PioneerQ38Bf16WorkerLayout.h"
 #include "PioneerQ38Bfp4WorkerJob.h"

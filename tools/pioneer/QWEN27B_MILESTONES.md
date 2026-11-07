@@ -34,8 +34,10 @@ the full model or run on the card. The more accurate PV path uses four matrix
 products; reuse of converted operands cut simulated worker instructions by
 about 60% on one fixture, but whether it is faster on the card remains unknown.
 A separate hybrid worker now links this attention code and passed a simulated
-projection/attention/projection transition; the ROOT and full model still do
-not use it. See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
+projection/attention/projection transition. A matching experimental ROOT now
+builds reproducibly, and its projection job functions passed simulation;
+the complete ROOT-to-worker attention path and full model are not yet tested.
+See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
 and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 
 **Hardware recovery is on hold:** after reboot, several saved trial records
