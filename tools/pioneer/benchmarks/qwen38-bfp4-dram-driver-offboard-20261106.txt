@@ -1,0 +1,29 @@
+Qwen 27B BFP4 card-memory diagnostic: OFFBOARD checkpoint, November 6, 2026
+============================================================================
+
+Question: can the experimental native BFP4 band include card-memory loading
+in an eventual real-weight card measurement, with its own isolated driver?
+
+Completed, without accessing hardware:
+* Compiled a separate diagnostic120 Haiku RISC-V driver and exact-pinned
+  K5120 card image. Fourteen incompatible build-role combinations rejected.
+* Three original-model-derived bands passed the RV32+memory simulation,
+  including two card-memory loads and exact predicted rounded outputs.
+* Simulated journal recovery passed 147 failure/admission/close cases.
+* Actual diagnostic120 native/control methods passed 307 valid and 723
+  refused fixture cases, including timing block gating, PCI/VM ownership,
+  separate command admission, memory domain checks and failure retention.
+* Previous diagnostic84 native/control fixtures passed 307 valid and 659
+  refused cases after the shared adapter changed.
+* Private model-derived data and compiled artifacts are not committed.
+
+This is NOT an installation, physical GDDR test, inference-speed result,
+model-quality qualification or claim that the card supports the approximation
+accurately. Three bands under one synthetic activation showed 8.6%-15.8%
+relative output error; broader model quality must be evaluated. Original Q4
+Work inference and the working driver remain unchanged.
+
+Next: implement and test a source-authenticated single-use diagnostic client
+and guarded physical-test orchestration before considering a card trial.
+Never retry or clean up device resources after an uncertain native failure.
+Only a successful physical run can provide actual GDDR-plus-compute timing.

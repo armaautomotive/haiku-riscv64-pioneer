@@ -95,6 +95,7 @@ struct Dram4Image:Machine {
   assert(PioneerNativeBfp4BandTiming::Later(timing+12,timing+6));return true;
  }
 };
+#ifndef PIONEER_BFP4_DRAM_IMAGE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || argc==4);unsigned width=unsigned(std::stoul(argv[2]));Dram4Image image(argv[1],width);
  std::array<uint32_t,32> privateExpected={};
@@ -125,3 +126,4 @@ int main(int argc,char** argv){
   printf("PASS actual OFFBOARD BFP4 GDDR RV32 %u frame/NIU/counter/header/completion fault controls, no retry; NO physical authority\n",failures);
  }
 }
+#endif

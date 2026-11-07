@@ -4,7 +4,15 @@
 // arbitrary payload or old sweep/cohort/Work factory is introduced.
 #include "BlackholeDramSweepArcClock.h"
 #include "BlackholeDramSweepRoutes.h"
-#if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC)
+#include "../../../../../tools/pioneer/PioneerNativeBfp4DramModelLease.h"
+#include "PioneerNativeBfp4DramModelGeneratedImage.h"
+namespace PioneerNativeBfp4Dram120 {
+using PioneerNativeDramModelBandLease=PioneerNativeBfp4DramModelLease;
+using PioneerNativeDramBandLayout=PioneerNativeBfp4DramBandLayout;
+constexpr uint32 NativeResultMarker=PioneerNativeBfp4DramVariant::Marker,NativeResultCount=PioneerNativeBfp4DramVariant::Count;
+constexpr const char* MapName="P100A isolated BFP4 GDDR band120 C64";
+#elif defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
 #include "../../../../../tools/pioneer/PioneerNativeDramLoadLease.h"
 #include "PioneerNativeDramLoadGeneratedImage.h"
 namespace PioneerNativeDram82 {
@@ -311,7 +319,14 @@ bool IO::NativeL1Read(unsigned a,uint32& v) {
 		const bool status=a>=0x17ffc0 && a<0x17ffcc;
 		const bool output=a>=PioneerNativeDramBandLayout::Output && a<PioneerNativeDramBandLayout::Output+256 && r.phase==0x7000c && r.count==NativeResultCount && r.marker==NativeResultMarker
 			&& (r.pc[0]==0x70038 || r.pc[0]==0x7003c) && (r.pc[1]==0x70038 || r.pc[1]==0x7003c);
-#if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC)
+		// Read ONLY the snapshotted timing block after this exact image has
+		// reached a stable terminal PC; never permit arbitrary stack reads.
+		const bool timing=a>=PioneerNativeBfp4BandTiming::Address && a<PioneerNativeBfp4BandTiming::Address+64
+			&& r.phase==0x7000c && r.count==NativeResultCount && r.marker==NativeResultMarker
+			&& (r.pc[0]==0x70038 || r.pc[0]==0x7003c) && (r.pc[1]==0x70038 || r.pc[1]==0x7003c);
+		if(owner.lease.Result().phase!=5 || (!status && !output && !timing))return false;
+#elif defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
 		// Exact82/83 images have NO FPU path and spin at the known park.
 		// Permit READ ONLY comparison of owned bytes BEFORE any stop/reset.
 		const bool loadedPark=r.state==PIONEER_NATIVE_BFP_RESULT && r.completed==1 && r.phase==0x7000c
@@ -333,7 +348,11 @@ bool IO::NativeL1Write(unsigned a,uint32 v) {
 	PioneerWrite32(memory+a/4,v);return true;
 }
 static bool DramAddress(unsigned a) {
+#if defined(PIONEER_NATIVE_BFP4_DRAM_DIAGNOSTIC)
+	return !(a&3) && ((a>=0x04000000 && a<0x04016800) || (a>=0x04100000 && a<0x04102800));
+#else
 	return !(a&3) && ((a>=0x04000000 && a<0x0402a800) || (a>=0x04100000 && a<0x04102800));
+#endif
 }
 bool IO::NativeDramRead(unsigned a,uint32& v) {
 	if(!DramAddress(a))return false;
