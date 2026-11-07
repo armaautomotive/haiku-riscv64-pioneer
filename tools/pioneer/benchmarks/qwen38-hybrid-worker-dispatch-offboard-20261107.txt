@@ -46,3 +46,14 @@ snapshots have identical geometry. The stage shares the dense-attention
 scratch region, so a real owner also needs proven phase/lifetime separation.
 These observations do not implement save/restore or establish other ranges
 are safe; they expressly prohibit reusing the old snapshot for this image.
+
+Converted-address translation follow-up: from the existing original paired
+recipe and a proposed seven-bank stripe table, a freestanding helper derives
+converted job addresses and checks geometry before publishing any result.
+Host tests compare all 22848 jobs against the independent canonical planner,
+including both widths, all 64 layers and table/recipe fault controls. The
+separately compiled actual RV32 helper executes 1190 assignments in the
+simulator across both formats, both widths and BFP8 boundary layers; invalid
+table input returns without output writes. The actual model ROOT does not yet
+call it. An aligned but incorrect destination can pass geometry, so actual
+ownership, table authentication and initialized-page proof are still needed.

@@ -5,12 +5,31 @@
 #define PIONEER_BANKS_MOCK_ONLY
 #include "../PioneerQ38HybridJobBinding.h"
 #include "../PioneerQ38HybridWorkerLayout.h"
+#include "../PioneerQ38Bf16RootPairs.h"
+#include "../PioneerQ38HybridRootPairs.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionJobs.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <memory>
 #include <vector>
 namespace HW=PioneerQ38HybridWorkerLayout;
+struct RootProbe {
+ const PioneerQ38ProjectionJobs& original;
+ unsigned parts[119][8]={},rows[119]={},table[7][4]={};
+ unsigned Part(unsigned w,unsigned i)const{
+  const auto* p=original.Part(w);assert(p);
+  return i==0?PioneerQ38CanonicalModelPlan::Base+unsigned(p->offset):i==1?p->bank:i==2?p->groups:i==4?Route(p->bank):i==5?Source(w):0;
+ }
+ unsigned Row(unsigned w)const{return original.Part(w)->firstRow;}
+ unsigned Route(unsigned b)const{return PioneerQ38ProjectionRoute(b);}
+ unsigned Source(unsigned w)const{return w+1;}
+ unsigned Result(unsigned w,unsigned i)const{return parts[w][i];}
+ unsigned ResultRow(unsigned w)const{return rows[w];}
+ unsigned Table(unsigned bank,unsigned i)const{return table[bank][i];}
+ void Output(unsigned w,unsigned i,unsigned value){parts[w][i]=value;}
+ void OutputRow(unsigned w,unsigned value){rows[w]=value;}
+};
 template<class W>static void CheckWorker(const typename W::Job& leaf,unsigned layer,unsigned role,unsigned firstRow){
  uint32_t boot[64]={};boot[0]=HW::Magic;boot[1]=1;boot[2]=64;boot[3]=leaf.words[6];boot[4]=leaf.words[7];
  boot[5]=0x14000;boot[6]=8192;boot[7]=64;
@@ -30,6 +49,7 @@ template<class W>static void CheckWorker(const typename W::Job& leaf,unsigned la
  boot[50]^=1;assert(!HW::JobShape(j,boot,j[1]-1,0));boot[50]^=1;
  j[16]=PioneerQ38Q4FpuCachedLayout::Magic;assert(!HW::JobShape(j,boot,j[1]-1,0));
 }
+#ifndef PIONEER_Q38_HYBRID_BINDING_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();auto foreign=std::make_unique<PioneerQ38CanonicalModelPlan>();
  assert(canonical->Build() && foreign->Build());const uint64_t mask=UINT64_C(0x1fff000000000000);
@@ -38,6 +58,44 @@ int main(){
  unsigned jobs4=0,jobs8=0,bands=0;
  for(unsigned layer=0;layer<64;layer++)for(unsigned role=2;role<=4;role++){
   PioneerQ38PairedProjectionJobs paired;assert(paired.Build(*canonical,layer,role,8191) && paired.Count()==119);
+  auto old=std::make_unique<PioneerQ38ProjectionJobs>();assert(old->Build(*canonical,layer,role,8191) && old->Count()==119);
+  auto root=std::make_unique<RootProbe>(RootProbe{*old});
+  for(unsigned stripeNumber=0;stripeNumber<7;stripeNumber++){
+   const auto* stripe=canonical->ProjectionStripe(layer,role,stripeNumber);assert(stripe);
+   unsigned index=canonical->Count();for(unsigned i=0;i<canonical->Count();i++)if(canonical->Part(i)==stripe){index=i;break;}
+   assert(index<relocation->parts.size());const auto& dest=relocation->parts[index];
+   root->table[stripe->bank][0]=canonical->Base+stripe->offset;
+   root->table[stripe->bank][1]=canonical->Base+dest.offset;
+   root->table[stripe->bank][2]=stripe->firstRow;root->table[stripe->bank][3]=stripe->rows;
+  }
+  assert(PioneerQ38Bf16RootPairs::Build(*root,paired.Inputs(),paired.Outputs()));
+  for(unsigned bank=0;bank<7;bank++)for(unsigned field=0;field<4;field++){
+   const unsigned saved=root->table[bank][field];root->table[bank][field]^=1;
+   unsigned before[119];for(unsigned w=0;w<119;w++)before[w]=root->parts[w][0];
+   assert(!PioneerQ38HybridRootPairs::Relocate(*root,layer,paired.Inputs(),paired.Outputs()));
+   for(unsigned w=0;w<119;w++)assert(before[w]==root->parts[w][0]);
+   root->table[bank][field]=saved;
+  }
+  for(unsigned w:{0U,59U,118U})for(unsigned which=0;which<4;which++){
+   const unsigned saved=which==3?root->rows[w]:root->parts[w][which==0?0:which==1?1:2];
+   if(which==3)root->rows[w]^=32;else root->parts[w][which==0?0:which==1?1:2]^=which==0?64:which==1?8:1;
+   unsigned before[119];for(unsigned x=0;x<119;x++)before[x]=root->parts[x][0];
+   assert(!PioneerQ38HybridRootPairs::Relocate(*root,layer,paired.Inputs(),paired.Outputs()));
+   for(unsigned x=0;x<119;x++)assert(before[x]==root->parts[x][0]);
+   if(which==3)root->rows[w]=saved;else root->parts[w][which==0?0:which==1?1:2]=saved;
+  }
+  if(layer==48 && role==2){
+   // Geometry is deliberately not a weight-authentication capability: a
+   // different aligned in-range destination is still a valid shape. A real
+   // owner must bind the table to initialized converted pages separately.
+   auto alternate=std::make_unique<RootProbe>(*root);alternate->table[0][1]+=4096;
+   assert(PioneerQ38HybridRootPairs::Relocate(*alternate,layer,paired.Inputs(),paired.Outputs()));
+   bool differs=false;for(unsigned w=0;w<119;w++)if(alternate->parts[w][1]==0){
+    PioneerQ38Bfp8WorkerJob::Job expected={};assert(binding.Build8(paired,layer,role,8191,w,7,expected));
+    differs|=alternate->parts[w][0]!=expected.words[3];
+   }assert(differs);
+  }
+  assert(PioneerQ38HybridRootPairs::Relocate(*root,layer,paired.Inputs(),paired.Outputs()));
   const bool eight=mask & (uint64_t(1)<<layer);std::vector<unsigned> coverage(paired.Outputs(),0);
   for(unsigned ordinal=0;ordinal<paired.Count();ordinal++){
    const auto* part=paired.Part(ordinal);assert(part);const auto* stripe=canonical->ProjectionStripe(layer,role,part->stripe);assert(stripe);
@@ -47,6 +105,8 @@ int main(){
    const uint64_t within=uint64_t((part->firstRow-stripe->firstRow)/32)*bandBytes;
    const uint64_t address=uint64_t(canonical->Base)+dest.offset+within;
    assert(dest.bank==part->bank && dest.encoding==(eight?8U:0U) && within+uint64_t(part->groups/2)*bandBytes<=dest.bytes);
+   assert(root->parts[ordinal][0]==address && root->parts[ordinal][1]==part->bank
+    && root->parts[ordinal][2]==part->groups && root->rows[ordinal]==part->firstRow);
    if(eight){
     PioneerQ38Bfp8WorkerJob::Job job={};assert(binding.Build8(paired,layer,role,8191,ordinal,7,job));
     assert(binding.Matches8(paired,layer,role,8191,ordinal,7,job) && job.words[3]==address && job.words[4]==part->groups/2);
@@ -78,3 +138,4 @@ int main(){
   && !impossible.Bind(*canonical,mask));
  printf("PASS relocated hybrid jobs and experimental QGW5 worker grammar: BFP4 %u/BFP8 %u, %u bands, all layers/119 peers, format, rows and bank bounds; NO DEVICE\n",jobs4,jobs8,bands);
 }
+#endif

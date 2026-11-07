@@ -39,6 +39,21 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-suite-',dir='/private/tmp'
   '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32',
   '-c',here/'pioneer_q38_hybrid_receipt_probe.cpp','-o',probe)
  assert not subprocess.check_output([tool+'nm','-u',str(probe)]).strip(), 'receipt probe needs unsupported runtime helpers'
+ rootobj=temp/'root-pairs.o';rootstart=temp/'root-start.o';rootelf=temp/'root-pairs.elf'
+ run(tool+'g++','-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-builtin',
+  '-fno-exceptions','-fno-rtti','-fno-stack-protector','-fno-pic','-fno-pie','-ffunction-sections','-fdata-sections',
+  '-fno-unwind-tables','-fno-asynchronous-unwind-tables','-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32',
+  '-c',here/'blackhole_q38_hybrid_root_pair_probe.cpp','-o',rootobj)
+ run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',root/'blackhole_q38_native_dram_band_start.S','-o',rootstart)
+ run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',root/'blackhole_q38_native_dram_band.ld',rootstart,rootobj,'-o',rootelf)
+ assert not subprocess.check_output([tool+'nm','-u',str(rootelf)]).strip()
+ image=temp/'root-pair-image';image.mkdir()
+ for section in ('boot','text'):run(tool+'objcopy','-O','binary','-j','.'+section,rootelf,image/(section+'.bin'))
+ (image/'symbols').write_bytes(subprocess.check_output([tool+'nm','-n',str(rootelf)]))
+ binary=temp/'root-pair-test'
+ run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
+  '-fsanitize=address,undefined',here/'pioneer_q38_hybrid_root_pairs_image_test.cpp','-o',binary)
+ run(binary,image)
  for macro in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
   'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
   result=subprocess.run([compiler,'-std=c++17','-D'+macro,'-E',str(here/'pioneer_q38_hybrid_job_binding_test.cpp')],

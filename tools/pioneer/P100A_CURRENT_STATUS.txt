@@ -94,6 +94,11 @@ Four compact goals
    An experimental receipt checker passes tests against actual simulated
    worker proofs; it cannot authenticate weight addresses by itself and is
    not yet connected to a ROOT coordinator or hardware.
+   A ROOT-compatible converted-address translation now matches the
+   independently generated host plan for all 22848 jobs. A separately linked
+   RV32 helper matches 1190 jobs in simulation. It is NOT yet called by the
+   model's real ROOT, nor does it authenticate the destination table or
+   upload weights; old native ownership still cannot be reused.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
