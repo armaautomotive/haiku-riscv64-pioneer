@@ -50,11 +50,12 @@ sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
     args = args[:-2]
-assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'], ['--hybrid-faults'])
+assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest'])
 assert args != ['--capsule-faults'] or precise or pushed or bf16, 'capsule faults require explicit code DATA'
 assert not bf16 or sdk is None, 'QTP4 kernel subject is built by build_q38_bf16_full_native.py,not the old NODRV template'
-assert not hybrid_journal or (sdk is None and args in (['--positive'], ['--hybrid-faults'])), 'hybrid journal is an offline fixture only'
+assert not hybrid_journal or (sdk is None and args in (['--positive'], ['--hybrid-faults'], ['--hybrid-manifest'])), 'hybrid journal is an offline fixture only'
 assert args != ['--hybrid-faults'] or hybrid_journal, 'hybrid faults need their explicit offline footprint'
+assert args != ['--hybrid-manifest'] or (hybrid_journal and hybrid_header is not None), 'hybrid manifest needs the exact QGW5 program and layout'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
@@ -70,12 +71,14 @@ if hybrid_journal:profile+=['-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1']
 if hybrid_header is not None:
     profile+=['-DPIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC=1',
               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"','-I'+str(here.parent)]
+if args==['--hybrid-manifest']:
+    profile+=['-DPIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_JOB_DIAGNOSTIC=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *flags, *profile,
                     str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
-    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults']) else [[], ['--faults']]):
+    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk:
         headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'

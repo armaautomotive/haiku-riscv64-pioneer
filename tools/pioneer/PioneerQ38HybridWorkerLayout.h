@@ -23,7 +23,7 @@ using namespace PioneerQ38GlobalWorkerLayout;
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
 #define QGW5_GRAMMAR __attribute__((noinline,section(".bf16.root")))
 #else
-#define QGW5_GRAMMAR __attribute__((noinline))
+#define QGW5_GRAMMAR __attribute__((noinline,unused))
 #endif
 enum : unsigned {Magic=0x35574751, JobWitness=0x354f4751,
 #ifdef PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0

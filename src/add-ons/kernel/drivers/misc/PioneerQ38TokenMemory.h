@@ -25,6 +25,9 @@ class PioneerQ38TokenMemory {
  PioneerQ38GdnIdentity identity={};uint32_t command[120][10]={},counters[120][8]={};
  uint32_t saved[PioneerQ38TokenL1::SavedWords]; // ALL arbitrary originals;HEAP ONLY
  unsigned sampled=0;bool started=false,installed=false,closed=false,unsafe=false,launched=false,launchClosed=false;
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+ bool hybridManifestInstalled=false;
+#endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenMemoryResult& result){
   unsafe=true;installed=false;result.unsafe=1;
   if(cohort && banks)PioneerQ38DispatchQuarantine(*cohort,*banks);
@@ -147,6 +150,47 @@ public:
   if(result.installedWords!=P::CodeWords(0)+119*P::CodeWords(1) || !Guard(io,0))return Fail(io,result);
   installed=true;result.installed=1;return true;
  }
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+ // QGW5 diagnostic only: derive the table from the SAME relocated canonical
+ // model and initialized ledger, write only its snapshotted ROOT L1 range,
+ // and verify every word while all workers are held. This does NOT permit
+ // native/Work compilation, a launch, inference, or post-launch restoration.
+ template<class IO> bool InstallHybridManifestHeld(IO& io,PioneerQ38TokenMemoryResult& result){
+  namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
+  enum {Address=0x16c400,Words=64*3*7};
+  if(!Installed() || hybridManifestInstalled || !canonical || !startup || !ledger
+   || result.version!=1 || result.started!=1 || result.phase!=4 || result.installed!=1
+   || result.closed || result.unsafe || result.restoredWords || result.savedWords!=L::SavedWords
+   || result.verifiedOriginalWords!=L::SavedWords || result.installedWords!=P::CodeWords(0)+119*P::CodeWords(1)
+   || canonical->Count()!=4678 || !startup->LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return false;
+  uint32_t staged[Words]={};unsigned found=0;
+  for(unsigned layer=0;layer<64;layer++)for(unsigned role=2;role<=4;role++)for(unsigned stripe=0;stripe<7;stripe++){
+   const auto* p=canonical->ProjectionStripe(layer,role,stripe);const unsigned width=role==4?17408:5120;
+   const bool eight=layer>=48 && layer<=60;
+   if(!p || p->kind!=PioneerQ38CanonicalModelPlan::WeightKind || p->layer!=layer || p->role!=role
+    || p->type!=12 || p->bank>=7 || !p->rows || ((p->firstRow|p->rows)&31) || p->rowBytes!=width*9/16
+    || p->bytes!=uint64_t(p->rows)*width*(eight?17:9)/16
+    || p->allocated!=((uint64_t(p->bytes)+4095U) & ~UINT64_C(4095)) || (p->offset&4095)
+    || p->offset>UINT32_MAX-PioneerQ38CanonicalModelPlan::Base)return false;
+   const unsigned at=(layer*3+role-2)*7+p->bank;if(staged[at])return false;
+   staged[at]=PioneerQ38CanonicalModelPlan::Base+p->offset;found++;
+  }
+  if(found!=Words)return false;
+  for(unsigned i=0;i<Words;i++){
+   uint32_t ignored=0;const uint32_t address=Address+i*4;
+   if(!staged[i] || !L::SnapshotContains(0,address) || P::ProgramWord(0,address,ignored))return false;
+  }
+  result.phase=8;result.worker=0;
+  if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
+  for(unsigned i=0;i<Words;i++){
+   result.word=i;uint32_t actual=0;
+   if(!io.TokenMemoryWrite(0,Address+i*4,staged[i])
+    || !io.TokenMemoryReadChecked(0,Address+i*4,actual) || actual!=staged[i])return Fail(io,result);
+  }
+  if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
+  hybridManifestInstalled=true;return true;
+ }
+#endif
  // NEVER-launched journal only. No public clean/STOP hint is accepted.
  // Launched restoration belongs to the future DISTINCT native token owner.
  template<class IO> bool CloseHeldNoLaunch(IO& io,PioneerQ38TokenMemoryResult& result){

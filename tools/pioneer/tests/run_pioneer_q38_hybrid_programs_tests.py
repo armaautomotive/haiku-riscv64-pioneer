@@ -103,7 +103,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
                               input=source,capture_output=True,text=True)
         assert result.returncode and 'program DATA cannot alias' in result.stderr,role
     if journal:
-        for mode in ('--positive','--hybrid-faults'):
+        for mode in ('--positive','--hybrid-faults','--hybrid-manifest'):
             run(sys.executable,here/'run_pioneer_q38_token_memory_tests.py',
                 '--bf16-programs','--hybrid-journal','--hybrid-programs',out,mode)
 print('PASS complete QGW5 image section/ELF binding, immutable output, corruption refusals and role exclusions; NO DEVICE')

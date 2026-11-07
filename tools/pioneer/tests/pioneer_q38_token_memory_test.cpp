@@ -11,6 +11,9 @@
 #define TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+#include "../PioneerQ38HybridJobBinding.h"
+#endif
 #define PIONEER_Q38_FFN_CODE_OWNER_MOCK_ONLY
 #include "pioneer_q38_ffn_graph_code_owner_test.cpp"
 namespace TOKL=PioneerQ38TokenL1;namespace TOKP=PioneerQ38TokenPrograms;
@@ -73,7 +76,11 @@ struct TokenMemoryIO:CodeIO {
   Touch();writes++;
   assert(memoryState && memoryState->savedWords==TOKL::SavedWords && memoryState->verifiedOriginalWords>=TOKL::SavedWords);
   if(memoryState->phase==3){uint32_t expected;assert(TOKP::ProgramWord(worker,address,expected) && expected==value);}
-  else assert(memoryState->phase==6 && TOKL::SnapshotContains(worker,address));
+  else assert((memoryState->phase==6
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+   || (memoryState->phase==8 && worker==0 && address>=0x16c400 && address<0x16c400+64*3*7*4)
+#endif
+   ) && TOKL::SnapshotContains(worker,address));
   if(badKind==3 && AtWord()){observed=touches;return false;}
   if(badKind==5 && AtWord()){assert(FullRead(worker,address)!=value);dropPending=true;return true;}
   FullWrite(worker,address,value);return true;
@@ -90,7 +97,12 @@ struct TokenMemoryGeometry {
   if(ready){for(unsigned i=0;i<1920;i++)assert(source[i]==current[i]);return;}
   for(unsigned i=0;i<1920;i++)source[i]=current[i];
   const uint32_t prompt[]={248319,17};
-  assert(canonical->Build() && startup->Build(*canonical,0,{1,2,3,4},source.data(),prompt,2,3,false,248318,248317));ready=true;
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+  assert(canonical->BuildHybridDiagnostic());
+#else
+  assert(canonical->Build());
+#endif
+  assert(startup->Build(*canonical,0,{1,2,3,4},source.data(),prompt,2,3,false,248318,248317));ready=true;
  }
 };
 static TokenMemoryGeometry& Geometry(){static TokenMemoryGeometry geometry;return geometry;}
@@ -133,6 +145,9 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
   || !strcmp(argv[1],"--hybrid-faults")
 #endif
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+  || !strcmp(argv[1],"--hybrid-manifest")
+#endif
   )));setvbuf(stdout,nullptr,_IOLBF,0);
  if(argc==1){
   TokenMemoryFixture f;auto before=f.io.data;std::vector<uint32_t> panels;
@@ -148,6 +163,10 @@ int main(int argc,char** argv){
   assert(prepared && f.memory->Installed() && !f.memory->Unsafe());
   assert(f.result.savedWords==TOKL::SavedWords && f.result.verifiedOriginalWords==TOKL::SavedWords
    && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1) && !f.io.armed && !f.io.released);
+#if defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) && !defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC)
+  const unsigned beforeWrongLayout=f.io.touches;
+  assert(!f.memory->InstallHybridManifestHeld(f.io,f.result) && f.io.touches==beforeWrongLayout);
+#endif
   assert(f.CloseMemory() && f.memory->Closed() && f.io.data==before && f.result.restoredWords==TOKL::SavedWords
    && f.result.verifiedOriginalWords==2*TOKL::SavedWords);
   unsigned touches=f.io.touches;assert(!f.PrepareMemory() && !f.CloseMemory() && f.io.touches==touches);
@@ -158,6 +177,30 @@ int main(int argc,char** argv){
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
  }
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+ if(!strcmp(argv[1],"--hybrid-manifest")){
+  {
+   TokenMemoryFixture f;auto before=f.io.data;
+   assert(f.PrepareMemory() && f.memory->Installed());
+   std::array<uint32_t,64> boot={};
+   assert(Geometry().startup->ReadBoot(1,boot.data()) && PioneerQ38SelectedGlobalWorker::BootShape(boot.data())
+    && boot[0]==0x35574751 && boot[49]==0 && boot[50]==0x1fff0000);
+   auto original=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(original->Build());
+   PioneerQ38HybridJobBinding binding;std::array<uint32_t,64*3*7> expected={};
+   assert(binding.Bind(*original,UINT64_C(0x1fff000000000000)) && binding.RootManifest(expected.data(),expected.size()));
+   assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
+   for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
+   const auto touches=f.io.touches;assert(!f.memory->InstallHybridManifestHeld(f.io,f.result) && f.io.touches==touches);
+   assert(f.CloseMemory() && f.memory->Closed() && f.io.data==before);
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory());
+   f.io.badKind=3;f.io.badPhase=8;f.io.badWorker=0;f.io.badOrdinal=64*3*7-1;
+   assert(!f.memory->InstallHybridManifestHeld(f.io,f.result));f.Unknown();
+  }
+  puts("PASS QGW5 boot grammar and 1344-word relocated manifest staged/read back under held journal, originals restored, late write failure quarantined; SIMULATED ONLY");return 0;
+ }
+#endif
  if(!strcmp(argv[1],"--hybrid-faults")){
   auto fault=[](unsigned kind,unsigned phase,unsigned worker,unsigned address){
    TokenMemoryFixture f;f.io.badKind=kind;f.io.badPhase=phase;f.io.badWorker=worker;

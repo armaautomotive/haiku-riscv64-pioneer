@@ -41,6 +41,15 @@
 #include "PioneerQ38HybridWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38HybridWorkerLayout;
 enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
+#elif defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC)
+#if PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
+ || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) \
+ || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1
+#error Hybrid QGW5 startup DATA requires the exact offline hybrid journal and program selectors
+#endif
+#include "PioneerQ38HybridWorkerLayout.h"
+namespace PioneerQ38SelectedGlobalWorker=PioneerQ38HybridWorkerLayout;
+enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 #include "PioneerQ38Bf16WorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38Bf16WorkerLayout;
@@ -59,7 +68,7 @@ namespace PioneerQ38SelectedGlobalWorker=PioneerQ38GlobalWorkerLayout;
 enum {PioneerQ38SelectedWorkerBootEnd=46,PioneerQ38SelectedWorkerPrecise=0,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0,PioneerQ38SelectedWorkerHybrid=0};
 #endif
 #endif
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) || defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC)
 static_assert(PioneerQ38SelectedWorkerHybrid==1,"late hybrid ROOT selection");
 #else
 static_assert(PioneerQ38SelectedWorkerHybrid==0,"late hybrid ROOT removal");
