@@ -71,6 +71,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
     selected=tmp/'selection'
     run(compiler,'-std=c++17','-O2','-Wall','-Wextra','-Werror','-I'+str(root),*selectflags,selection,'-o',selected)
     run(selected)
+    # The real sealed receipt must also pass the actual QGW5 native binding
+    # body, not merely the loader's fake control or a layout-only simulation.
+    run(sys.executable,here/'run_pioneer_q38_token_native_binding_tests.py','--hybrid',out)
     for role in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
                  'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT',
                  'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):

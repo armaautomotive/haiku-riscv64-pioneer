@@ -14,9 +14,19 @@ static inline bool PioneerQ38RuntimeRanges(const PioneerQ38CanonicalModelPlan& p
  bool runtime=false;unsigned seen=0;
  for(unsigned i=0;i<plan.Count();i++){
   const auto* p=plan.Part(i);
-  if(!p || p->bank>=7 || !p->rows || !p->rowBytes || !p->bytes || !p->allocated
-   || p->offset!=end[p->bank] || (p->offset&4095) || (p->allocated&4095)
-   || uint64_t(p->rows)*p->rowBytes!=p->bytes
+  if(!p || p->bank>=7 || !p->rows || !p->rowBytes || !p->bytes || !p->allocated)return false;
+  uint64_t physicalBytes=uint64_t(p->rows)*p->rowBytes;
+  // In the fixed hybrid layout only these FFN stripes expand from logical
+  // Q4 row geometry to BFP8 storage. Preserve the logical job geometry and
+  // check the exact converted size; never treat arbitrary padding as valid.
+  if(plan.HybridFormatLayout() && p->kind==plan.WeightKind && p->layer>=48 && p->layer<=60
+   && p->role>=2 && p->role<=4){
+   const unsigned width=p->role==4?17408:5120;
+   if(p->type!=12 || ((p->firstRow|p->rows)&31) || p->rowBytes!=width*9/16)return false;
+   physicalBytes=uint64_t(p->rows)*width*17/16;
+  }
+  if(p->offset!=end[p->bank] || (p->offset&4095) || (p->allocated&4095)
+   || physicalBytes!=p->bytes
    || ((uint64_t(p->bytes)+4095)&~UINT64_C(4095))!=p->allocated
    || end[p->bank]>plan.Capacity || p->allocated>plan.Capacity-end[p->bank])return false;
   if(p->kind==plan.WeightKind){if(runtime || workspace)return false;}

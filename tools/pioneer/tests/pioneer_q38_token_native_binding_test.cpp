@@ -4,6 +4,9 @@
 // Actual canonical plan, learned-page checks and atomic bank claims are used.
 // NO zero/init, code upload, launch, MMIO, original-model or hardware proof.
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadReceipt.h"
+#endif
 struct PioneerHostPageIO{bool quarantined=false;void QuarantineHostPage(){quarantined=true;}};
 struct PioneerSessionIO:PioneerHostPageIO {
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPreparationAuditMember.inc"
@@ -34,16 +37,26 @@ struct PioneerStoreContext {
  MockForeignOwner *q38GdnBanks=nullptr,*q38StateZero=nullptr;
  PioneerQ38DispatchLease* q38Dispatch=nullptr;MockCohort* q38Cohort=nullptr;MockFleet* fleet=nullptr;
  PioneerQ38GdnIdentity q38FfnModelIdentity={},q38GdnIdentity={};
- MockLease q38Delta,panelProbe,streamProbe,span,bulk,secondLease,secondNoc,idle;
+ MockLease q38Delta,panelProbe,streamProbe,bulk,secondLease,secondNoc,idle;
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+ PioneerQ38SpanLease span;
+ PioneerQ38HybridUploadReceipt* q38HybridReceipt=nullptr;
+#else
+ MockLease span;
+#endif
  PioneerResidentLease lease;uint32 savedLease[2048]={};
  MockLease peerAttention[8],decoder,layer,coordinator,attention,compute,secondCompute;
- MockLease* q38Span=&span;MockHost bulkHost,wideHost;MockClock q38Clock;
+ decltype(span)* q38Span=&span;MockHost bulkHost,wideHost;MockClock q38Clock;
  tt_host_page_result host={};uint8* initialized=nullptr;uint32* hashes=nullptr;
  thread_id q38GdnCallThread=-1;uint64 bytes=PioneerResidentBanks::Total;
  bool bankStorageOnly=true,dispatchOwnerRetained=false,q38DispatchRoutes=false;unsigned q38EndPhase=0;int runtimeCoreMode=-1;
  auto& Pci(){return pci;}
 #include "token_native_unsafe.inc"
- ~PioneerStoreContext(){delete q38TokenNative;} // CPU-only fixture disposal; NO live device resources exist
+ ~PioneerStoreContext(){delete q38TokenNative;
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+  delete q38HybridReceipt;
+#endif
+ } // CPU-only fixture disposal; NO live device resources exist
 };
 #include "token_native_lock.inc"
 static void TestKernelLog(const char*,...){}
@@ -238,4 +251,5 @@ int main(){
  }
  assert(lockAcquires==lockReleases && !lockHeld);
  printf("PASS production full851 token binding/WHOLE actual shared-lock ordinary+delta exclusion/SAME-owner session reentry/native scope/retention/Unsafe/incomplete-END banks%u/refusals%u/epoch wrap+stale generation+atomic claim failure/NO following device IO;OS+clock+unused foreign owners SIMULATED;NOT init/upload/RUN/STOP/physical/TPS\n",positive,refused);
+ return 0;
 }

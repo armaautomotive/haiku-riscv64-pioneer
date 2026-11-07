@@ -117,6 +117,18 @@ authorize cleanup or a retry.
 The closed-evidence hashes are recorded in the
 [failed-trial record](benchmarks/qwen38-hybrid125-start-failed-20261107.txt).
 
+**Offline startup defect found and fixed; hardware confirmation pending.**
+A new test feeds the actual complete tracked receipt into the real QGW5
+native binding code with simulated OS and bank endpoints. Before the fix,
+binding failed because the runtime-region validator required BFP8-converted
+FFN stripes to have the original Q4 byte size. The fixed check accepts only
+the exact BFP8 size for the designated converted stripes; malformed test
+layouts still fail. The joined test now reaches a successful native bind
+without contacting a device. The physical trial did not report its internal
+failure stage, so this is a concrete defect consistent with that trial, not
+proof that it was the only failure or that inference now works.
+See the [offline binding result](benchmarks/qwen38-hybrid-runtime-bind-offline-20261107.txt).
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored

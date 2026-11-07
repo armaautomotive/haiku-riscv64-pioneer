@@ -1,0 +1,34 @@
+Qwen hybrid runtime binding: reproducible format-size mismatch
+============================================================
+November 7, 2026. Offline simulation only; no accelerator, model inference,
+numerical-quality result, or token/s measurement.
+
+The existing isolated tests checked the tracked receipt and native binding
+separately. The new joined test feeds the actual 22,005-extent sealed receipt,
+with synthetic page ledger and bank/OS endpoints, to the actual QGW5 native
+binding implementation. Before the fix it reproduced binding failure: layout
+derivation, worker compatibility, learned-page presence and source scope all
+passed; PioneerQ38RuntimeRanges refused the layout and the native bind
+quarantined its simulated owner. The first conflicting part was index 2669:
+2,496 rows, logical Q4 rowBytes 2,880, converted physical bytes 13,578,240.
+The old check demanded rows * logical rowBytes instead of the fixed BFP8
+storage size. The real failed trial did not expose its internal failure
+stage, so the observed physical cause remains unconfirmed.
+
+The fix retains exact original-layout checks and accepts the converted size
+only for the fixed hybrid layers 48..60, FFN roles 2..4 and original type 12,
+with the exact expected logical row width, row alignment and BFP8 byte count.
+The test checks all 273 converted stripes and verifies that six corruptions
+are rejected without publishing output ranges. The complete synthetic receipt
+now binds successfully and does not quarantine its simulated bank owner.
+
+Passing checks after the change:
+- run_pioneer_q38_hybrid_programs_tests.py with the Haiku RISC-V build SDK;
+- run_pioneer_q38_token_native_binding_tests.py, original and hybrid roles;
+- run_pioneer_q38_decoder_runtime_tests.sh (all seven original banks);
+- run_pioneer_q38_hybrid_upload_control_tests.py with the pinned QGW5 header,
+  including the actual non-loadable native-context RISC-V cross-build.
+
+This removes one demonstrated blocker; it does not prove initialization,
+worker startup, the physical failure's cause, model correctness, or speed.
+No corrected physical driver has been installed or run.
