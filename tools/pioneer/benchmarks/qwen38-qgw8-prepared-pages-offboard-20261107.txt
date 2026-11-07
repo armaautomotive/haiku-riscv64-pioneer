@@ -109,6 +109,15 @@ This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.
 
+The session-derived head metadata was also passed to the actual linked QGW8
+ROOT image in the instruction simulator. Its shape and first job matched the
+host descriptor, and the ROOT BF16 packing checks passed. The synthetic
+session and ROOT helper ran with address and undefined-behavior sanitizers;
+the ROOT ELF SHA-256 was
+8b7bac64e64d963e729e347a209c3ca4be951992aa924ead0c48d97e0e79478f.
+This tests a metadata handoff, not the complete coordinator/worker lifecycle,
+physical device, model inference, or performance.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

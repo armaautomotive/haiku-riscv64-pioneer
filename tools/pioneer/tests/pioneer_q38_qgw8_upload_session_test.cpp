@@ -86,7 +86,8 @@ static std::array<uint32_t,64> RootBoot(){
  assert(H::C::BootShape(b.data()));return b;
 }
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && !strcmp(argv[1],"--bad-seal")));
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--bad-seal") || !strcmp(argv[1],"--emit-head-fixture"))));
+ const bool emit=argc==2 && !strcmp(argv[1],"--emit-head-fixture");
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
  if(argc==1){
   Fixture f;auto io=std::make_unique<SimOwner>(f);Session session(f.pages,*io);std::string error;f.source.live=false;
@@ -107,7 +108,8 @@ int main(int argc,char** argv){
   assert(!session.Begin(*f.canonical,error) && session.FailedState() && io->closes==1 && io->owned && io->retained
    && io->banks.Quarantined() && !io->spanEnd && !io->bankEnd);
  }
- Fixture f;auto io=std::make_unique<SimOwner>(f);Session session(f.pages,*io);std::string error;io->badSeal=argc==2;
+ Fixture f;auto io=std::make_unique<SimOwner>(f);Session session(f.pages,*io);std::string error;
+ io->badSeal=argc==2 && !strcmp(argv[1],"--bad-seal");
  if(io->badSeal){
   assert(!session.Begin(*f.canonical,error) && session.FailedState() && io->owned && io->retained
    && io->closes==1 && io->spanEnd==1 && io->seals==1 && !io->bankEnd && io->banks.Quarantined());
@@ -175,6 +177,24 @@ int main(int argc,char** argv){
   for(unsigned row=first;row<first+rows;row++){assert(!coverage[row]);coverage[row]=1;covered++;}
  }
  assert(covered==248320);for(uint8_t seen:coverage)assert(seen==1);
+ if(emit){
+  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"simulation fixture uses little endian words");
+  namespace W=PioneerQ38HybridHeadWorkerLayout;std::array<uint32_t,64> workerBoot={},job={};
+  workerBoot[0]=W::Magic;workerBoot[1]=1;workerBoot[2]=64;workerBoot[3]=1;workerBoot[4]=W::Peer(1);
+  workerBoot[5]=workerBoot[16]=0x14000;workerBoot[6]=8192;workerBoot[7]=64;
+  for(unsigned i=0;i<8;i++)workerBoot[8+i]=boot[8+i];
+  for(unsigned i=40;i<=50;i++)workerBoot[i]=W::BootWord(i);
+  assert(PioneerQ38HybridHeadLayout::Job(head.data(),0,0,0,workerBoot.data(),job.data()));
+  std::array<uint32_t,256> fixture={};
+  std::copy(boot.begin(),boot.end(),fixture.begin());std::copy(head.begin(),head.end(),fixture.begin()+64);
+  std::copy(workerBoot.begin(),workerBoot.end(),fixture.begin()+192);
+  auto print=[](const char* label,const void* bytes,size_t count){
+   printf("%s ",label);const auto* p=static_cast<const uint8_t*>(bytes);
+   for(size_t i=0;i<count;i++)printf("%02x",unsigned(p[i]));putchar('\n');
+  };
+  print("QGW8_HELD_HEAD_FIXTURE",fixture.data(),sizeof(fixture));
+  print("QGW8_HELD_HEAD_JOB",job.data(),sizeof(job));
+ }
  const auto savedHead=head;f.original.parts[0].bytes++;
  assert(!session.HeadMetadata(boot.data(),boot.size(),0,head.data(),head.size()) && head==savedHead);
  f.original.parts[0].bytes--;
