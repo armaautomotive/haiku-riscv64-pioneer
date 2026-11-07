@@ -115,7 +115,11 @@ Four compact goals
    fragments on Haiku, with actual process exit 0. A separate page adapter selects BFP4, existing BFP8 or original
    pages and can preflight all 1344 converted fragments. Its full-coverage
    test uses simulated readers; one BFP4 fragment uses an actual disk-cache
-   fixture. The adapter is not linked to a card uploader or Work/Assistant.
+   fixture. A separate diagnostic adapter now connects it to the actual
+   span-upload packet interface; full geometry and failure behavior passed
+   with fake transport, not on the card. It is not linked to Work/Assistant
+   or an authorized native session. See
+   benchmarks/qwen38-hybrid-span-upload-20261107.txt.
    The full BFP4 portion is in a new dedicated Pioneer directory. See
    benchmarks/qwen38-hybrid-bfp4-cache-run-20261107.txt.
    A 39-tensor BFP8 batch preparer also builds and passes synthetic selection

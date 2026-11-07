@@ -59,6 +59,7 @@ template<class Source>unsigned FakeFour<Source>::opened=0;
 template<class Source>unsigned FakeFour<Source>::read=0;
 using Pages=PioneerQ38HybridPreparedPages<FakeSource,FakePlan,FakeBfp8>;
 using MockPages=PioneerQ38HybridPreparedPages<FakeSource,FakePlan,FakeBfp8,FakeFour>;
+#ifndef PIONEER_Q38_PREPARED_PAGES_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==2);auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakeSource source;FakePlan packed;packed.source=&source;std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -134,3 +135,4 @@ int main(int argc,char** argv){
   && statistics.fragments==1071 && statistics.hits==1071 && FakeFour<FakeSource>::opened==1071);
  puts("PASS hybrid prepared page dispatch: full fixed geometry, real BFP4 cache reopen, BFP8/original simulated readers, boundaries, zero padding and revoked source; NO DEVICE");
 }
+#endif

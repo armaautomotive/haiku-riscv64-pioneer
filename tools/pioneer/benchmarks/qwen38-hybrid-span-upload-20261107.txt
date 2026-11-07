@@ -1,0 +1,42 @@
+Hybrid prepared weights to span transport: offline integration
+==============================================================
+November 7, 2026. NO device upload, model execution, answer-quality result
+or inference-speed claim. The installed driver and Assistant are unchanged.
+
+The CPU-only preverified hybrid page reader is now connected to the existing
+1 MiB Work span-upload wire protocol in a separate diagnostic adapter. It
+rebuilds and checks the complete fixed 4678-part hybrid layout before any
+transport call, streams only the 3551 learned fragments to their relocated
+bank/offset addresses, and validates each real-format reply and nonce. It
+performs no CPU-reference inference. This is deliberately not compiled in
+the native driver, normal inference client, Work, or CPU-validation roles.
+
+The adapter does not create or authenticate a bank session or driver; the
+caller must own the SAME exclusive fresh banks. It issues no BEGIN, END,
+START, reset, close or recovery. Even success leaves the span/bank owner
+held; an uncertain call or any later failure must retain that owner and obey
+the driver's quarantine/recovery rules. A failed adapter is one-shot and
+cannot retry. This does not itself grant authority to run a device test.
+
+Evidence: run tools/pioneer/tests/run_pioneer_q38_hybrid_span_upload_test.sh
+under sh. ASan/UBSan tests actually passed:
+* All 3551 fragments, 22005 packets, 5160410 pages and 21137039360 synthetic
+  learned bytes traverse fake transport at their independent expected bank,
+  offset and page contents; full simulated output is not learned data.
+* A separate test joins the ACTUAL PioneerQ38HybridPreparedPages dispatch
+  and preflight to the adapter, with simulated BFP4/BFP8/original readers,
+  across the same 22005 packets and byte count. The prior prepared-page test
+  also passes, including one real-format BFP4 cache fixture.
+* Bad preflight geometry, initial/later read failures, initial/later uncertain
+  calls, each of the 12 reply fields, changed request fields and revoked
+  source refuse; no second attempt or implicit cleanup is emitted.
+* Experimental-role exclusions passed; Haiku RISC-V cross-compiler syntax
+  check of the upload adapter and synthetic endpoint passed with warnings as
+  errors. No Haiku hardware execution was performed for this test.
+
+The complete BFP4 real-model cache has been prepared; BFP8 preparation and
+combined read-only cache verification remain outstanding. Physical use also
+requires a distinct qualified bank/session owner, initialization and native
+consumer of the relocated plan, authenticated ROOT manifest, expanded peer
+memory save/restore, failure/cleanup qualification and a model-quality gate.
+None is supplied by this upload adapter or its synthetic tests.
