@@ -90,10 +90,22 @@ result matched the synthetic reference. The 29 modeled packets use checked
 ROOT source/counter/command seals, and an injected command-readback fault
 stopped the ROOT before issuing an additional packet. The fabric completes
 packets synchronously and the fixture supplies ROOT private frame and inputs;
-it does not execute the complete ROOT Launch/Snapshot/global reduction,
+that initial test did not execute ROOT Launch/Snapshot/global reduction,
 96-worker coordination, prefix-KV NoC reads, full token or physical silicon.
 The same root-test runner executes this case when the worker and leaf
 directories are supplied. This is not a Work-mode or hardware speed result.
+
+The same one-peer test subsequently added the actual linked ROOT Snapshot
+routine after each of the three phases. Its Wait, boot, frame, job,
+doorbell, summary, counter, parameter and local-result checks run against
+the real simulated QGW7 worker. The initial worker counter baseline comes
+from that worker after its three simulated projection jobs, not a newly
+invented worker history. Injected receipt and counter corruptions each
+caused the actual ROOT to fault without issuing a later packet in the
+faulted test branch; command-readback corruption was also refused. The
+fabric, reset/PC-register responses, initial ROOT frame and inputs remain
+synthetic. One peer and one current token do not qualify the 96-worker
+Launch/global reductions, prefix-KV traffic, full model or physical device.
 
 A native owner/format identity, full ROOT-to-worker L1 lifecycle,
 prior-token attention transport, multi-layer/token checks, quality and
