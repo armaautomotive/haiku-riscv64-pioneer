@@ -3,6 +3,7 @@
 // independent unpack/broadcast observer, not a model or silicon qualification.
 #include "pioneer_q38_native_bfp_machine.h"
 #include "../PioneerQ38NativeBfp4Band.h"
+#include "../PioneerNativeBfp4BandFixture.h"
 
 struct Band4Machine : NativeBfpMachine {
  unsigned tiles, clears=0;
@@ -62,7 +63,9 @@ struct Fixture {
  explicit Fixture(unsigned k):packed(k/32),input(k/32){
   for(unsigned tile=0;tile<k/32;tile++){
    std::array<float,1024> original{},decoded{};
-   for(unsigned r=0;r<32;r++)for(unsigned c=0;c<32;c++)original[r*32+c]=float(int((r*37+c*19+tile*11)%255)-127)/128;
+   // Vary shared exponents across tiles so long reductions exercise real
+   // alignment/rounding, not just an exactly representable fixed-point sum.
+   for(unsigned r=0;r<32;r++)for(unsigned c=0;c<32;c++)original[r*32+c]=std::ldexp(float(int((r*37+c*19+tile*11)%255)-127)/128,int(tile%13)-6);
    for(unsigned c=0;c<32;c++)input[tile][c]=uint16_t(0x3f00+((c*13+tile*7)%256)+((c&3)==2?0x8000:0));
    assert(PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,original.data(),1024,packed[tile].data(),576));
    assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,packed[tile].data(),576,decoded.data(),1024));
@@ -88,6 +91,21 @@ struct Fixture {
 int main(){
  for(unsigned k:{5120U,6144U,17408U}){
   Fixture f(k);Band4Machine m(k);f.Stage(m);m.delay[0]=100003;m.delay[1]=7;
+  // The future device fixture is independently integer-packed. Check every
+  // byte/header against the codec-based test fixture before using any oracle.
+  for(unsigned tile=0;tile<k/32;tile++){
+   for(unsigned offset=0;offset<592;offset+=4){
+    unsigned address=0x90000-16+tile*592+offset,word=0;
+    for(unsigned b=0;b<4;b++)word|=unsigned(m.l1[address+b])<<(8*b);
+    assert(word==PioneerNativeBfp4BandFixture::Word(k,address));
+   }
+   for(unsigned offset=0;offset<80;offset+=4){
+    unsigned address=0x124000-16+tile*80+offset,word=0;
+    for(unsigned b=0;b<4;b++)word|=unsigned(m.l1[address+b])<<(8*b);
+    assert(word==PioneerNativeBfp4BandFixture::Word(k,address));
+   }
+  }
+  assert(!PioneerNativeBfp4BandFixture::Word(k,0x90001) && !PioneerNativeBfp4BandFixture::Word(32,0x90000));
   assert(PioneerQ38NativeBfp4Band::Run(m,k));assert(m.Clean());auto actual=m.Results();
   for(unsigned row=0;row<32;row++)assert(NativeBfpMachine::Bits(actual[row])==NativeBfpMachine::Bits(f.expected[row]));
   assert(m.clears==1 && m.unpacks[0]==k/32 && m.unpacks[1]==k/32 && m.matrixOps==8*k/32);

@@ -65,6 +65,7 @@ struct Band4RV32:Machine {
   return true;
  }
 };
+#ifndef PIONEER_NATIVE_BFP4_BAND_IMAGE_ONLY
 int main(int argc,char** argv){
  assert(argc==4);unsigned width=unsigned(std::stoul(argv[2]));
  assert(!strcmp(argv[3],"mmio") || !strcmp(argv[3],"direct"));bool direct=!strcmp(argv[3],"direct");
@@ -90,3 +91,4 @@ int main(int argc,char** argv){
   puts("PASS actual linked image fault controls: config and completion park, two missing producers refused, two omitted phases change result; OFFBOARD only");
  }
 }
+#endif

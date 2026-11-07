@@ -34,6 +34,16 @@ python3 tools/pioneer/tests/run_pioneer_q38_native_bfp4_band_image_tests.py
   These tests model ideal phasewise arithmetic, not silicon rounding or
   hardware timing. They do not establish model quality, speed or ownership.
 
+python3 tools/pioneer/tests/pioneer_blackhole_arithmetic_bfp4_band_image_test.py /Volumes/HaikuBuildLocal/generated.riscv64
+  With varied tile exponents, separately computed exact-rational predictions
+  match every one of 64 words from each of six interpreted linked images.
+  All 32 rows differ from the idealized FP32 model at each width; thus the
+  ideal-only comparator is insufficient for a later hardware test. Fixed
+  synthetic fixture bytes and frozen predictions are separately cross-checked
+  against codec-generated fixture bytes and the rational model. The first
+  version's constant-scale fixture did not exercise rounding; it was replaced
+  before these results. This is still OFFBOARD, not a physical measurement.
+
 Decision and next gate
 ----------------------
 Keep this separate, uninstalled and unavailable to Work/validation roles.
