@@ -11,7 +11,7 @@ Baseline
 The full model runs on card, including attention/state. One short counting
 response measured 0.17287tok/s; this is not a usable service or broad quality
 test. Setup was 25.65 minutes and weights were released at END. Current
-stable041/gen14 was restored after a later BFP4 synthetic diagnostic; it is a rollback driver, not
+stable041/gen16 was restored after a later timed BFP4 synthetic diagnostic; it is a rollback driver, not
 the experimental fast engine. This is the last recorded state, not a live
 assertion about the machine.
 
@@ -63,8 +63,9 @@ the evidence and expected scope before implementing; avoid further tiny
 descriptor-only experiments. Preserve full model, safety and Work separation.
 
 Candidate under development: native BFP4 matrix tiles. The full-K prototype
-passes offboard instruction/linked-image tests for all three widths and one
-physical synthetic K5120 test; there is NO card timing or inference integration. It requantizes weights,
+passes offboard instruction/linked-image tests for all three widths and a
+physical synthetic K5120 test. A preloaded-L1 timing is 24779/24803 cycles;
+GDDR loading and model integration remain unmeasured. It requantizes weights,
 so it must be a distinct, explicitly qualified mode, not a silent change to
 Q4_K_M. Existing single-sample BFP4 error does not establish model quality.
 First demonstrate full-K hardware correctness and compare matrix throughput

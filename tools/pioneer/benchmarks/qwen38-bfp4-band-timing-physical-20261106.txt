@@ -1,0 +1,44 @@
+Native BFP4 band timing on the P100A: synthetic L1-input test
+==============================================================
+November 6, 2026. One K5120, 32-output-row synthetic test on one card core,
+two passes. All 64 output words exactly matched the independent rounded
+predictions. Read-only card cycle counter:
+
+ pass0: start1078  end25857  = 24779 cycles
+ pass1: start26452 end51255  = 24803 cycles
+
+These numbers include setup, per-tile BFP4 unpack, matrix work and drains.
+All weights and activations were staged in local L1 BEFORE the measurement;
+model conversion, GDDR/NoC reads, full-model execution, CPU setup and the
+diagnostic save/restore are excluded. Two passes are not a repeatability
+study. No hardware frequency or conversion to seconds is assumed.
+
+The earlier Q4 K5120 32-row test measured 690318 and 690195 card cycles,
+but it includes on-card GDDR/NoC loading and uses a different Q4 path and
+test data. These measurements are NOT apples-to-apples and do not prove an
+inference speedup or tokens/sec. They indicate native BFP4 is worth testing
+with real weights and an on-card resident loader. Quantization is lossy and
+requires a separate quality gate; the existing Q4 Work mode stays unchanged.
+
+One primary SSH session actually exited 0. Its single-use parent used
+stable041/tag12/gen14 -> timed119/gen15 -> stable041/tag12/gen16. The client
+reported polls2 and explicit END/L1/TLB/PCI restoration; the parent checked
+all outputs and both ordered timestamp/cycle records before restoration.
+Stage /boot/home/pioneer-native-bfp4-timed-119-20261106-a is SPENT FOREVER.
+
+After the primary session terminated, separate postflight confirmed
+stable041/tag12/gen16 idle, quiesced0/cold0/active_owner0/open_count1/guard1,
+64 CPUs, 137034936320 bytes maximum RAM, no diagnostic process and unchanged
+installed driver/Assistant worker/Assistant service hashes. No reboot,
+power, SD or Assistant installation change occurred. The test did not read
+model weights or run the model.
+
+Archived child stdout SHA256 df10a67284455c879fb0ee9661fd21bdd0007cd99c0d3686b2171c940843a3f6
+matches the separately obtained remote SHA; stderr is empty, exit0 and final
+state are retained with the output. The saved-record regression verifies
+every result and exact cycles. It cannot alone prove live run provenance.
+
+Next: test native BFP4 with on-card GDDR/NoC loading using representative real
+weights, then compare timing and model quality to the current full-model Q4
+path. The last actual 27B generation remains approximately 0.173 tokens/sec;
+20 tokens/sec is unmet and no new model performance has been demonstrated.

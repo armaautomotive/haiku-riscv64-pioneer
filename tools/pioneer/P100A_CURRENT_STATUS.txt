@@ -31,14 +31,15 @@ Four compact goals
 2. Remove one measured overhead: TESTED/REJECTED as a meaningful gain.
    Descriptor reuse ran the complete 27B request but measured essentially
    the same speed. A native BFP4 matrix prototype passed a full-width K5120
-   synthetic correctness test on the P100A, but has NOT been timed or
-   integrated into the model.
+   synthetic test on the P100A, measuring 24779/24803 card cycles for a
+   preloaded 32-row band. This does NOT include GDDR loading and has NOT
+   been integrated into the model or shown to improve model speed.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
 Platform
 --------
-Stable041/gen14 restored and idle after independent postflight; 64 CPUs and
+Stable041/gen16 restored and idle after independent postflight; 64 CPUs and
 full137034936320B RAM. Assistant/runtime files unchanged. No reboot, power,
 SD or hardware connection changed. Pre-existing local work is preserved.
 
@@ -51,4 +52,5 @@ Rejected slower Q4 candidate: benchmarks/qwen38-prepared-bf16-q4-physical-202611
 Snapshot experiment (build/data only): benchmarks/qwen38-early-job-snapshot-build-20261106.txt
 Native BFP4 candidate (offboard only): benchmarks/qwen38-bfp4-band-offboard-20261106.txt
 Native BFP4 K5120 physical correctness: benchmarks/qwen38-bfp4-band-physical-20261106.txt
+Native BFP4 K5120 physical timing: benchmarks/qwen38-bfp4-band-timing-physical-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt
