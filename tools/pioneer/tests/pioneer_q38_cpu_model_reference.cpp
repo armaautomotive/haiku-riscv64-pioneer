@@ -123,8 +123,8 @@ struct Q38CpuModelReference::Impl {
   return Attention(qg,key,value,qnorm,knorm,position,s.key,s.value,attention) && Project(layer,10,attention,output);
  }
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
- bool ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>& output,std::vector<uint32_t>& final){
-  if(&output==&final || token!=248319 || position!=0 || !Current(true))return false;
+ bool ObserveFirstFfnTrace(unsigned token,Q38CpuFirstFfnTrace& output){
+  if(token!=248319 || position!=0 || !Current(true))return false;
   std::vector<float> hidden,norm,post,normalized,projection,residual(5120),input;
   if(!Embedding(token,hidden) || !Weight(0,0,norm) || !Weight(0,1,post) || !Rms(hidden,norm,normalized)
    || !Recurrent(0,normalized,projection))return false;
@@ -136,10 +136,12 @@ struct Q38CpuModelReference::Impl {
    activation[i]=(gate[i]*Sigmoid(gate[i]))*up[i];if(!Bounded(activation[i]))return false;
   }
   if(!Project(0,4,activation,down) || !Current(true))return false;
-  std::vector<uint32_t> result;result.reserve(input.size());for(float value:input)result.push_back(Bits(value));
-  std::vector<uint32_t> completed;completed.reserve(5120);
-  for(unsigned i=0;i<5120;i++){float value=residual[i]+down[i];if(!Bounded(value,0x4c800000))return false;completed.push_back(Bits(value));}
-  output=std::move(result);final=std::move(completed);return true;
+  Q38CpuFirstFfnTrace result;
+  auto copy=[](const std::vector<float>& values,std::vector<uint32_t>& bits){bits.reserve(values.size());for(float value:values)bits.push_back(Bits(value));};
+  copy(input,result.input);copy(residual,result.residual);copy(gate,result.gate);copy(up,result.up);copy(activation,result.activation);copy(down,result.down);
+  result.final.reserve(5120);
+  for(unsigned i=0;i<5120;i++){float value=residual[i]+down[i];if(!Bounded(value,0x4c800000))return false;result.final.push_back(Bits(value));}
+  output=std::move(result);return true;
  }
 #endif
  bool Step(unsigned token,Q38CpuTokenTrace& output){
@@ -197,7 +199,11 @@ bool Q38CpuModelReference::Step(unsigned token,Q38CpuTokenTrace& out){
 }
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
 bool Q38CpuModelReference::ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>& out,std::vector<uint32_t>& final){
- const bool okay=impl->ObserveFirstFfnInput(token,out,final);impl->failed=true;return okay;
+ Q38CpuFirstFfnTrace trace;const bool okay=&out!=&final && impl->ObserveFirstFfnTrace(token,trace);impl->failed=true;
+ if(okay){out=std::move(trace.input);final=std::move(trace.final);}return okay;
+}
+bool Q38CpuModelReference::ObserveFirstFfnTrace(unsigned token,Q38CpuFirstFfnTrace& trace){
+ const bool okay=impl->ObserveFirstFfnTrace(token,trace);impl->failed=true;return okay;
 }
 #endif
 bool Q38CpuModelReference::Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(completed,layer,kind,out);}

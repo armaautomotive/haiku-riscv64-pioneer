@@ -32,6 +32,12 @@ struct Q38CpuTokenTrace {
  std::vector<uint32_t> hidden; // embedding then64 layer outputs; CPU-private
  std::vector<uint32_t> logits;
 };
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+// Private CPU diagnostic data only; no runtime/device interfaces.
+struct Q38CpuFirstFfnTrace {
+ std::vector<uint32_t> input,residual,gate,up,activation,down,final;
+};
+#endif
 class Q38CpuModelReference {
  struct Impl;std::unique_ptr<Impl> impl;
 public:
@@ -43,6 +49,7 @@ public:
  // CPU-private first prompt position only. Consumes this reference object;
  // the resulting values are never eligible for card Work or upload.
  bool ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>&,std::vector<uint32_t>&);
+ bool ObserveFirstFfnTrace(unsigned token,Q38CpuFirstFfnTrace&);
 #endif
  // CPU-private COPY only,never a mutable view or device-product supplier.
  // kind0:GDN FP32 after2/3 steps;kind1:Conv FP32 after3;kind2/3:packed

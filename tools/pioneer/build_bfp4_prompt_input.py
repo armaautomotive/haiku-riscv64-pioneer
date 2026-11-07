@@ -27,6 +27,10 @@ cmd=[cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-Wn
  str(here/'tests/pioneer_q38_bfp4_prompt_input.cpp'),str(here/'tests/pioneer_q38_cpu_model_reference.cpp'),
  str(here/'PioneerModelWeightCache.cpp'),str(release/'kits/shared/libshared.a'),'-lbe','-o',str(binary)]
 subprocess.run(cmd,check=True,cwd=a.output)
+ffn_reference=a.output/'pioneer-bfp4-first-ffn-reference'
+ffn_cmd=[str(here/'tests/pioneer_q38_bfp4_first_ffn_reference.cpp') if item==str(here/'tests/pioneer_q38_bfp4_prompt_input.cpp')
+         else str(ffn_reference) if item==str(binary) else item for item in cmd]
+subprocess.run(ffn_cmd,check=True,cwd=a.output)
 quality=a.output/'pioneer-bfp4-prompt-quality'
 quality_cmd=[cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*includes,
  '-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot'),
@@ -34,7 +38,13 @@ quality_cmd=[cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werr
  str(here/'pioneer_bfp4_prompt_quality.cpp'),str(here/'PioneerModelWeightCache.cpp'),
  str(release/'kits/shared/libshared.a'),'-lbe','-o',str(quality)]
 subprocess.run(quality_cmd,check=True,cwd=a.output)
-(a.output/'build-argv.txt').write_text('\t'.join(cmd)+'\n'+'\t'.join(quality_cmd)+'\n')
+ffn_quality=a.output/'pioneer-bfp4-first-ffn-quality'
+ffn_quality_cmd=[str(here/'pioneer_bfp4_first_ffn_quality.cpp') if item==str(here/'pioneer_bfp4_prompt_quality.cpp')
+                 else str(ffn_quality) if item==str(quality) else item for item in quality_cmd]
+subprocess.run(ffn_quality_cmd,check=True,cwd=a.output)
+(a.output/'build-argv.txt').write_text('\n'.join('\t'.join(line) for line in (cmd,ffn_cmd,quality_cmd,ffn_quality_cmd))+'\n')
 print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name)
+print(hashlib.sha256(ffn_reference.read_bytes()).hexdigest(),ffn_reference.name)
 print(hashlib.sha256(quality.read_bytes()).hexdigest(),quality.name)
+print(hashlib.sha256(ffn_quality.read_bytes()).hexdigest(),ffn_quality.name)
 print('BUILD ONLY CPU prompt-input observer; NO device, model quality or speed proof')

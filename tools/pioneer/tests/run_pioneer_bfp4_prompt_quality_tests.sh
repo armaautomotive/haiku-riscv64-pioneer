@@ -7,6 +7,8 @@ temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-bfp4-prompt-quality.XXXXXXXX")
 common='-std=c++17 -O1 -g -Wall -Wextra -Werror -ffp-contract=off -fsanitize=address,undefined'
 ${CXX:-c++} $common "$directory/pioneer_bfp4_prompt_quality_test.cpp" -o "$temporary/math"
 "$temporary/math"
+${CXX:-c++} $common "$directory/pioneer_bfp4_ffn_quality_test.cpp" -o "$temporary/ffn"
+"$temporary/ffn"
 ${CXX:-c++} $common "$directory/pioneer_bfp4_prompt_quality_source_test.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/source"
 "$temporary/source" "$temporary"
 ${CXX:-c++} $common -DPIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC=1 "$directory/pioneer_q38_bfp4_first_input_test.cpp" "$directory/pioneer_q38_cpu_model_reference.cpp" -o "$temporary/observer"

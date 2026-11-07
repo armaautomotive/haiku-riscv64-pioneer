@@ -15,16 +15,16 @@
 // Caller authenticates source/sample/input and supplies original-Q4 results.
 namespace PioneerBfp4PromptQuality {
 struct Result {double relativeL2,maxAbsolute;};
-inline bool Compute(const uint8_t* packed,size_t packedBytes,const uint32_t* input,const uint32_t* original,Result& result){
- if(!packed || packedBytes!=160*576 || !input || !original)return false;
- std::array<uint16_t,5120> operands={};
- for(unsigned i=0;i<5120;i++){
+inline bool Predict(const uint8_t* packed,size_t packedBytes,const uint32_t* input,unsigned width,std::array<uint32_t,32>& output){
+ if(!packed || !input || !width || width>17408 || width%32 || packedBytes!=size_t(width/32)*576)return false;
+ std::vector<uint16_t> operands(width);
+ for(unsigned i=0;i<width;i++){
   uint32_t bits=input[i];if((bits&0x7f800000)==0x7f800000)return false;
   if((bits&0x7f800000)==0)operands[i]=uint16_t((bits>>16)&0x8000);
   else {bits+=0x7fff+((bits>>16)&1);operands[i]=uint16_t(bits>>16);if((operands[i]&0x7f80)==0x7f80)return false;}
  }
  std::array<uint32_t,32> actual={};
- for(unsigned tile=0;tile<160;tile++){
+ for(unsigned tile=0;tile<width/32;tile++){
   std::array<float,1024> decoded={};
   if(!PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,packed+tile*576,576,decoded.data(),1024))return false;
   for(unsigned row=0;row<32;row++)for(unsigned half=0;half<2;half++){
@@ -36,6 +36,11 @@ inline bool Compute(const uint8_t* packed,size_t packedBytes,const uint32_t* inp
    for(unsigned phase:{0U,2U})if(!PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,actual[row],actual[row]))return false;
   }
  }
+ output=actual;return true;
+}
+inline bool Compute(const uint8_t* packed,size_t packedBytes,const uint32_t* input,const uint32_t* original,Result& result){
+ if(!original)return false;
+ std::array<uint32_t,32> actual={};if(!Predict(packed,packedBytes,input,5120,actual))return false;
  long double energy=0,error=0;double maximum=0;
  for(unsigned i=0;i<32;i++){
   float reference=0,observed=0;std::memcpy(&reference,original+i,4);std::memcpy(&observed,actual.data()+i,4);

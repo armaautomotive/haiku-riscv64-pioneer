@@ -1,0 +1,28 @@
+Complete first FFN quality probe: preparation, 2026-11-06
+=========================================================
+
+The prior three-band comparison was too narrow to assess propagation through
+the feed-forward block. This separate CPU-only observer now reconstructs
+the actual first prompt token's layer-0 FFN reference: all gate/up values,
+activated intermediate, down output, residual and final hidden state. Its
+final 5120 words exactly match the independently pinned original-model CPU
+trace before private reference data is published. No GPU or Work path is used.
+
+Actual reference producer completed exit 0. Private reference.bin is mode
+0600, 290848 bytes, SHA256
+85d4ada0aa8cfa847bb06e7a4296dd9992829947e8c5bf03b7ed9dadfd39f523.
+The original model SHA was authenticated from the same open description.
+The data itself is not committed or uploaded to the GPU.
+
+The separate streaming BFP4 observer has passed synthetic projection,
+activation, error-metric, identity/permission, role-separation and failure
+tests. Its exact arithmetic reproduced all 96 predictions from the three
+earlier physically tested real-weight bands. Before computing, it also
+re-packs those bands from the newly authenticated model and requires exact
+byte equality with the pinned physical samples. The Q4 model reference's
+normal non-diagnostic regression passed separately.
+
+The original comparison process was started on the Pioneer CPU only. It
+is a live job, NOT yet a numerical result or an inference speed measurement.
+Even a successful first-block comparison is only one token of one layer,
+not a full-model quality benchmark. Work and the stable driver are unchanged.

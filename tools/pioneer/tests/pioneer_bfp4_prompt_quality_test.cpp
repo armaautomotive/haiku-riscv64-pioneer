@@ -19,5 +19,10 @@ int main(){
  assert(!PioneerBfp4PromptQuality::Compute(packed.data(),packed.size()-1,input.data(),original.data(),result));
  input[0]=0x7f800000;assert(!PioneerBfp4PromptQuality::Compute(packed.data(),packed.size(),input.data(),original.data(),result));
  assert(result.relativeL2==saved.relativeL2 && result.maxAbsolute==saved.maxAbsolute);
+ std::vector<uint8_t> full;for(unsigned i=0;i<544;i++)full.insert(full.end(),tile.begin(),tile.end());
+ std::vector<uint32_t> downInput(17408,Bits(1.f));std::array<uint32_t,32> down={};
+ assert(PioneerBfp4PromptQuality::Predict(full.data(),full.size(),downInput.data(),17408,down));
+ for(auto word:down)assert(word==Bits(17408.f));
+ const auto before=down;assert(!PioneerBfp4PromptQuality::Predict(full.data(),full.size(),downInput.data(),17407,down) && down==before);
  puts("PASS BFP4 real-input evaluator: synthetic exact and known 100% error, invalid/atomic refusals; NO MODEL OR DEVICE");
 }

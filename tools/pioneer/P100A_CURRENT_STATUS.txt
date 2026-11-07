@@ -45,6 +45,8 @@ Four compact goals
    A CPU comparison using the first prompt token's reconstructed layer-0 FFN input
    measured 5.7%-7.2% relative output error across those three bands versus
    the independent Q4 reference. This is not a full-model quality score.
+   A CPU-only comparison of the full first FFN block is running; its
+   numerical result and any full-model or speed implication are not yet known.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
