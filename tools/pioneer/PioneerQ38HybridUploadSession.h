@@ -17,8 +17,9 @@
 // converted cache entries preverified throughout. No token/compute START,
 // validation arithmetic, driver swap, retry, reset or automatic END on a
 // failure. After any uncertain call, close once only: the driver is solely
-// responsible for retaining/quarantining uncertain resources. A clean END
-// deliberately releases weights; it is not an inference or warm-load path.
+// responsible for retaining/quarantining uncertain resources. Begin leaves
+// the uploaded weights held after SPAN_END; Finish explicitly releases them.
+// This diagnostic has no inference or warm-load interface.
 template<class Pages,class IO> class PioneerQ38HybridUploadSession {
  using C=PioneerQ38CanonicalModelPlan;
  enum State {Virgin,Open,Owned,SpansClosed,BanksClosed,Done,Failed};
@@ -49,8 +50,9 @@ public:
  ~PioneerQ38HybridUploadSession(){if(fd>=0)io.Close(fd);} // close only, never implicit END
  bool Complete()const{return state==Done;}
  bool FailedState()const{return state==Failed;}
+ bool WeightsHeld()const{return state==SpansClosed && fd>=0 && pages.AllVerified() && upload.CompleteHeld();}
  const PioneerQ38HybridSpanUpload<Pages,IO>& Upload()const{return upload;}
- bool Run(const C& canonical,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
+ bool Begin(const C& canonical,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
   if(attempted){error="Hybrid upload session is one-shot; no retry.";return false;}
   attempted=true;error.clear();
   if(!canonical.Ready() || !pages.AllVerified())return Stop(error,"Preverified model and caches required before device open.");
@@ -75,13 +77,22 @@ public:
   tt_q38_span_end spanEnd={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,spanEnd) || spanEnd.version!=1 || spanEnd.reserved
    || spanEnd.closed!=1 || spanEnd.recovery_required)return Stop(error,"Span END uncertain; close only.");
-  state=SpansClosed;tt_q38_bank_session bankEnd={};bankEnd.version=1;
+  state=SpansClosed;error.clear();return true;
+ }
+ bool Finish(std::string& error){
+  if(state!=SpansClosed){error="No held hybrid upload to finish.";return false;}
+  error.clear();
+  if(!WeightsHeld())return Stop(error,"Held hybrid source or upload changed; close only.");
+  tt_q38_bank_session bankEnd={};bankEnd.version=1;
   if(!Call(TT_PCI_PROBE_Q38_BANK_END,bankEnd) || bankEnd.version!=1 || bankEnd.reserved || bankEnd.result.version!=1
    || bankEnd.result.state!=TT_RESIDENT_SESSION_CLOSED || bankEnd.result.active || bankEnd.result.cold
    || bankEnd.result.pci_restored!=1 || bankEnd.result.host_released!=1)return Stop(error,"Bank END uncertain; close only.");
   state=BanksClosed;if(!Identity(0))return Stop(error,"Post-END driver state uncertain; close only.");
   const int owned=fd;fd=-1;if(io.Close(owned)!=0)return Stop(error,"Device close failed.");
   state=Done;error.clear();return true;
+ }
+ bool Run(const C& canonical,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
+  return Begin(canonical,error,progress) && Finish(error);
  }
 };
 #endif

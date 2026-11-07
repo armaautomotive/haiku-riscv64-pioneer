@@ -59,7 +59,9 @@ int main(){
  assert(pages.Bind(source,packed,*canonical,eight,digest,fingerprint,"/fixture",[]{return true;},error)
   && pages.VerifyAll(error) && pages.AllVerified());
  PreparedSessionIO io(*canonical,proposal);PioneerQ38HybridUploadSession<MockPages,PreparedSessionIO> session(pages,io);
- assert(session.Run(*canonical,error) && session.Complete() && !session.FailedState()
+ assert(session.Begin(*canonical,error) && session.WeightsHeld() && io.owned && !io.bankEnds
+  && io.calls==22010 && io.upload.calls==22005 && !io.closes);
+ assert(session.Finish(error) && session.Complete() && !session.FailedState()
   && io.calls==22012 && io.upload.calls==22005 && io.closes==1 && !io.owned
   && session.Upload().UploadedBytes()==UINT64_C(21137039360));
  puts("PASS actual prepared-page/owner-session/span composition over complete synthetic model, no device or inference");

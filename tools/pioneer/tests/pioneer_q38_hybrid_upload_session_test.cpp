@@ -72,10 +72,26 @@ int main(){
  }
  {
   FakePages pages(*canonical);SessionIO io(*canonical,pages);Session session(pages,io);unsigned progress=0;
-  assert(session.Run(*canonical,error,[&](uint64_t done,uint64_t total){assert(done<=total);progress++;}));
+  assert(!session.Finish(error) && !io.opens && !io.calls);
+  assert(session.Begin(*canonical,error,[&](uint64_t done,uint64_t total){assert(done<=total);progress++;}));
+  // SPAN_END restored the upload machinery, but BANK_END has not run: the
+  // exact uploaded weights and the exclusive bank session are still held.
+  assert(session.WeightsHeld() && !session.Complete() && !session.FailedState()
+   && io.calls==22010 && io.begins==1 && io.spanEnds==1 && !io.bankEnds && io.owned && !io.closes);
+  assert(!session.Begin(*canonical,error) && session.WeightsHeld() && io.calls==22010);
+  assert(session.Finish(error));
   assert(session.Complete() && !session.FailedState() && io.calls==22012 && io.begins==1
    && io.spanEnds==1 && io.bankEnds==1 && io.statuses==2 && !io.owned && io.closes==1
    && session.Upload().UploadedParts()==3551 && session.Upload().UploadedSpans()==22005 && progress==22005);
+  assert(!session.WeightsHeld() && !session.Finish(error) && io.calls==22012 && io.closes==1);
+ }
+ {
+  FakePages pages(*canonical);SessionIO io(*canonical,pages);Session session(pages,io);
+  assert(session.Begin(*canonical,error) && session.WeightsHeld());
+  pages.live=false;assert(!session.WeightsHeld());
+  // Revoked source must not be treated as a clean BANK_END: close only.
+  assert(!session.Finish(error) && session.FailedState() && io.calls==22010
+   && io.owned && !io.bankEnds && io.closes==1);
  }
  {
   FakePages pages(*canonical);SessionIO io(*canonical,pages);Session session(pages,io);io.failClose=true;

@@ -1,0 +1,57 @@
+# Qwen 27B on the Pioneer P100A: milestones
+
+This is the short progress tracker. Do not treat a synthetic test, cached
+weights, or a completed upload as full-model inference or a speed result.
+
+## Baseline: measured, not yet usable
+
+The November 6 full-model counting test ran its model inference, including
+attention and state, on the P100A. The CPU handled loading, tokenization and
+lifecycle. Its observed post-prompt rate was approximately **0.173 tokens/s**;
+the first answer was ready approximately 35 minutes after Generate. This is
+one limited counting test, not a broad quality assessment. The benchmark and
+its precise scope are in
+[`benchmarks/qwen38-fast-decode-profile-physical-20261106.txt`](benchmarks/qwen38-fast-decode-profile-physical-20261106.txt).
+The target of 20 tokens/s remains unmet, and there is no demonstrated faster
+full-model hybrid result.
+
+## Milestone 1: upload the prepared model
+
+**In progress.** Converted cache files passed a real, read-only preflight.
+A one-shot upload-and-release test was started on November 7. At last
+observation its live process was still reauthenticating the files and had not
+opened the device. See
+[`benchmarks/qwen38-hybrid-upload-session-20261107.txt`](benchmarks/qwen38-hybrid-upload-session-20261107.txt)
+for its stage, safety constraints and observation details.
+
+Pass requires a real successful upload and clean release, backed by the
+diagnostic's complete output and process exit. The running test intentionally
+releases weights and does not run a token.
+
+## Milestone 2: hold weights and run the model
+
+**Not yet passed.** The experimental upload session can now keep the bank
+session held after upload until explicitly released. Its held/release and
+failure behavior have only been exercised using synthetic data and a fake
+device. It is not connected to the native inference owner, and it is not an
+Assistant or Work-mode implementation. Model layout, firmware, ownership and
+safe cleanup must all be integrated and qualified together before a real
+full-model run.
+
+Pass requires a real 27B request using the held weights on the P100A, checked
+output, and safe cleanup. Report actual loading time and generation rate.
+
+## Milestone 3: improve the measured full-model rate
+
+**Not yet passed.** Profile the real end-to-end request, change the largest
+measured bottlenecks, and compare against the same prompt and settings. Keep
+CPU validation separate from Work mode. An isolated kernel's speedup or
+accuracy result does not establish full-model speed or quality.
+
+## Milestone 4: Assistant
+
+**Not yet passed.** Expose the faster, qualified path in Assistant while
+preserving the existing working mode and the machine's CPU/RAM/boot behavior.
+
+Keep existing source, logs and experimental files until their ownership and
+value are reviewed. Cleanup does not imply deleting them.
