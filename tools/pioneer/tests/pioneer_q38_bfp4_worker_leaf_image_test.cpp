@@ -4,13 +4,19 @@
 #include "pioneer_tensix_image_test.cpp"
 #define PIONEER_BFP4_WORKER_LOADER_TEST_ONLY
 #include "pioneer_q38_bfp4_worker_loader_test.cpp"
+#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+#include "pioneer_q38_bfp4_bulk_io_fixture.h"
+using Transfer=BulkIO;
+#else
+using Transfer=IO;
+#endif
 #define PIONEER_NATIVE_BFP4_MACHINE_ONLY
 #include "pioneer_q38_native_bfp4_band_numeric_test.cpp"
 #include "pioneer_blackhole_arithmetic_observer.h"
 #include "../PioneerNativeBfp4BandGolden.h"
 #include <string>
 struct WorkerImage:Machine {
- Band4Machine native;IO transfer;std::vector<uint8_t> code;unsigned stores=0,acks=0,dropAckAt=0,minSP=0x70000;
+ Band4Machine native;Transfer transfer;std::vector<uint8_t> code;unsigned stores=0,acks=0,dropAckAt=0,minSP=0x70000;
  bool awaiting=false,stackSeen=false,damageFrame=false,inputPreservationChecked=false,damageInput=false,inputDamaged=false,dropAfterFirstBand=false,faultAfterFirstBand=false;
  bool damageHeader=false,damageOnMath=false;
  static W::Job MakeBands(unsigned worker,unsigned width,unsigned bands){
@@ -44,11 +50,16 @@ struct WorkerImage:Machine {
  }
  bool CodeAddress(uint32_t a)const override{return a==0x6000 || Range(a,0x70000,unsigned(code.size()));}
  unsigned StepLimit()const override{return 10000000+PioneerDramQueuedReadSweep::PollLimit*2048;}
- bool Loaded()const{return transfer.completions>=2*native.tiles
+ bool Loaded()const{return transfer.completions>=
+#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+  2*native.tiles/16 && !(transfer.completions%(2*native.tiles/16))
+#else
+  2*native.tiles
 #ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
   && !((transfer.completions-2*native.tiles)%native.tiles)
 #else
   && !(transfer.completions%(2*native.tiles))
+#endif
 #endif
   && transfer.pending.empty();}
  void Instruction(uint32_t op)override{
@@ -66,7 +77,11 @@ struct WorkerImage:Machine {
   assert(!(a&3));if(a==0xffe40000){Instruction(value);return;}
   if(a==0xffe000fc){assert(!value && Loaded());gpr63=0;return;}
   if(Range(a,0xffef0000,224*4)){assert(Loaded());native.Config((a-0xffef0000)/4,value);return;}
-  if(transfer.Header(a) || Range(a,0xffb20000,0x2000)){transfer.Write(a,value);return;}
+  if(transfer.Header(a) || Range(a,0xffb20000,0x2000)
+#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+   || transfer.Local(a)
+#endif
+  ){transfer.Write(a,value);return;}
   assert(Range(a,0x6e000,8192)||Range(a,0x17ffc0,12)||Range(a,W::Output,8*32*4));
   if(Range(a,W::Output,8*32*4)){assert(native.Clean() && Loaded());stores++;}
   l1[Index(a)]=value;
@@ -93,7 +108,11 @@ struct WorkerImage:Machine {
    assert(native.Clean() && Loaded());unsigned row=(a-0xffbd8000)/64,col=(a%64)/4;
    assert(native.valid[row] && (row==32 || row==40));native.outputReads++;return Bits(native.destination[row][col]);
   }
-  if(transfer.Header(a)||transfer.InputScratch(a)||Range(a,0xffb20000,0x2000))return transfer.Read(a);
+  if(transfer.Header(a)||transfer.InputScratch(a)||Range(a,0xffb20000,0x2000)
+#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+   || transfer.Local(a)
+#endif
+  )return transfer.Read(a);
   assert(CodeAddress(a)||Range(a,0x6e000,8192)||Range(a,0x74000,64)||Range(a,0x17ffc0,12)||Range(a,W::Output,8*32*4));
   return l1[Index(a)];
  }
@@ -106,6 +125,8 @@ struct WorkerImage:Machine {
   assert(Loaded() && native.Clean() && stores==bands*32 && native.outputReads==bands*32 && native.clears==bands && !transfer.scalar);
 #ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
   assert(inputPreservationChecked && transfer.issues==(bands+1)*native.tiles && transfer.completions==transfer.issues);
+#elif defined(PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT)
+  assert(transfer.issues==2*bands*native.tiles/16 && transfer.completions==transfer.issues);
 #else
   assert(transfer.issues==2*bands*native.tiles && transfer.completions==transfer.issues);
 #endif

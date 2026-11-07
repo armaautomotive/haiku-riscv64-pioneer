@@ -16,8 +16,18 @@ The tradeoff is substantial: counting all mock local and MMIO reads/writes,
 K5120 used 64,069 events versus 16,189 before; K17408 used 217,189 versus
 54,397. These event counts are not processor instructions or hardware time,
 and local L1 accesses and NoC register accesses do not necessarily cost the
-same. There is no evidence yet that this candidate is faster. Do not promote
-it based on the request count. Actual scratch ownership, emitted RV32 code,
-end-to-end numerical behavior and physical timing all remain unproven.
+same. Both the existing and candidate leaf were then compiled to RV32 and
+executed in the shared-L1/NoC/FPU simulator: both matched the expected output
+for two bands, all three sampled workers, both widths, and three additional
+private real-weight samples. The normal emitted text remained byte-identical
+to its pinned build. On worker 119, the simulated instruction counts increased
+from 206,946 to 658,739 at K5120 and from 688,910 to 2,216,175 at K17408.
 
-Reproduce: python3 tools/pioneer/tests/run_pioneer_q38_bfp4_bulk_worker_loader_tests.py
+These counts do not model hardware timing or real NoC latency. There is no
+evidence that this candidate is faster, and the increased instruction work
+makes it a low priority for a physical trial. Do not promote it based on the
+request count. Actual scratch ownership, full-model numerical behavior and
+physical timing all remain unproven.
+
+Reproduce: python3 tools/pioneer/tests/run_pioneer_q38_bfp4_bulk_worker_loader_tests.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_SAMPLE_DIRECTORY

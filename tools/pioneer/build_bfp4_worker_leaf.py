@@ -11,6 +11,7 @@ p=argparse.ArgumentParser(description=__doc__);p.add_argument('haiku_build',type
 group=p.add_mutually_exclusive_group()
 group.add_argument('--reuse-input',action='store_true',help='build the separate offboard input-reuse experiment')
 group.add_argument('--reuse-input-checksum',action='store_true',help='build the separate on-card diagnostic checksum experiment')
+group.add_argument('--bulk-load',action='store_true',help='build the separate offboard bulk-load experiment')
 a=p.parse_args()
 assert a.haiku_build.is_absolute() and a.haiku_build.is_dir()
 assert a.output.is_absolute() and not a.output.exists() and not a.output.is_symlink()
@@ -28,6 +29,7 @@ commands=[
 ]
 if a.reuse_input or a.reuse_input_checksum:commands[0].insert(1,'-DPIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT=1')
 if a.reuse_input_checksum:commands[0].insert(1,'-DPIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT=1')
+if a.bulk_load:commands[0].insert(1,'-DPIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT=1')
 for section in ('boot','text'):
  commands.append([tool+'objcopy','-O','binary','-j','.'+section,str(a.output/'program.elf'),str(a.output/(section+'.bin'))])
 for cmd in commands:subprocess.run(cmd,check=True,cwd=a.output)

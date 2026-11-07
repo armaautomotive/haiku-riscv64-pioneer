@@ -21,7 +21,7 @@
 // behavior, on-card speed and model correctness are NOT established here.
 class PioneerQ38Bfp4BulkWorkerLoader {
  using W=PioneerQ38Bfp4WorkerJob;using L=PioneerNativeBfp4DramBandLayout;using Q=PioneerDramQueuedReadSweep;
- W::Job job={};uint32_t baseline[9]={},command[10]={};unsigned attempted=0,failed=0,issued=0,flits=0;
+ W::Job job;uint32_t baseline[9],command[10];unsigned attempted,failed,issued,flits;
  bool Fail(){failed=1;return false;}
  static unsigned Counter(unsigned i){const unsigned indices[9]={1,2,3,4,5,8,10,12,14};return 0xffb20200+indices[i]*4;}
  unsigned Expected(unsigned i)const{return i==2?flits:(i==1 || i==3 || i==4 || i==8)?issued:0;}
@@ -50,11 +50,17 @@ class PioneerQ38Bfp4BulkWorkerLoader {
  }
 public:
  enum : unsigned {Scratch=0x150000,Group=16,ScratchBytes=Group*L::WeightPayload};
- PioneerQ38Bfp4BulkWorkerLoader()=default;
+ PioneerQ38Bfp4BulkWorkerLoader(){
+  volatile uint32_t* words=job.words;for(unsigned i=0;i<W::Words;i++)words[i]=0;
+  volatile uint32_t* first=baseline;for(unsigned i=0;i<9;i++)first[i]=0;
+  volatile uint32_t* second=command;for(unsigned i=0;i<10;i++)second[i]=0;
+  attempted=failed=issued=flits=0;
+ }
  PioneerQ38Bfp4BulkWorkerLoader(const PioneerQ38Bfp4BulkWorkerLoader&)=delete;
  PioneerQ38Bfp4BulkWorkerLoader& operator=(const PioneerQ38Bfp4BulkWorkerLoader&)=delete;
  template<class IO> bool Run(IO& io,const W::Job& selected,unsigned band){
-  if(attempted || failed)return false;attempted=1;
+  if(attempted || failed)return false;
+  attempted=1;
   if(!W::Shape(selected) || band>=selected.words[4] || L::Tiles(selected.words[2])%Group)return Fail();
   for(unsigned i=0;i<W::Words;i++)job.words[i]=selected.words[i];
   if(!Quiet(io))return Fail();
@@ -79,13 +85,15 @@ public:
     if(io.Read(0xffb20000)!=p.source)return Fail();
     io.Fence();io.Write(0xffb20040,1);if(io.Read(0xffb20040)>1)return Fail();
     io.Fence();issued++;flits+=bytes/64;if(!Drain(io))return Fail();
+    unsigned offset=0;
     for(unsigned tile=0;tile<Group;tile++){
      W::Read target;if(!W::Packet(job,band,operand,batch+tile,target)
-      || target.source!=p.source+tile*p.bytes || target.bytes!=p.bytes || target.route!=p.route)return Fail();
+      || target.source!=p.source+offset || target.bytes!=p.bytes || target.route!=p.route)return Fail();
      for(unsigned word=0;word<p.bytes/4;word++){
-      const unsigned value=io.Read(Scratch+tile*p.bytes+word*4);
+      const unsigned value=io.Read(Scratch+offset+word*4);
       io.Write(target.destination+word*4,value);
      }
+     offset+=p.bytes;
     }
     io.Fence();
    }

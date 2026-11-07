@@ -3,6 +3,9 @@
 #define PIONEER_Q38_BFP4_WORKER_CONSUMER_H
 #include "PioneerQ38Bfp4WorkerLoader.h"
 #include "PioneerQ38Bfp4WorkerCompute.h"
+#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+#include "PioneerQ38Bfp4BulkWorkerLoader.h"
+#endif
 #if defined(PIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT) && (PIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT != 1 \
  || !defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) || PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT != 1)
 #error Input-reuse checksum requires the separate isolated input-reuse experiment
@@ -49,7 +52,11 @@ public:
 #ifdef PIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT
    if(band && (!Same(retained,Checksum(io,job.words[2])) || !guard.Check(job,band)))return Fail();
 #endif
+#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+   PioneerQ38Bfp4BulkWorkerLoader loader;
+#else
    PioneerQ38Bfp4WorkerLoader loader;
+#endif
 #ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
    const bool loaded=band?loader.RunReusingInput(io,job,band):loader.Run(io,job,band);
 #else
