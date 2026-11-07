@@ -71,6 +71,8 @@ int main(int argc,char** argv){
  if(argc==3){unsigned action=unsigned(atoi(argv[2]));assert(action>=1 && action<=6);
   if(!strcmp(argv[1],"--fail"))io.failAction=action;else io.badAction=action;}
  auto session=std::make_unique<PioneerQ38HybridFullSession<FakePages,FullIO>>(pages,io);
+ using Observation=PioneerQ38HybridFullSession<FakePages,FullIO>::ControlObservation;
+ Observation unavailable;unavailable.action=99;assert(!session->FailureObservation(unavailable) && unavailable.action==99);
  uint32_t input[96];for(unsigned i=0;i<96;i++)input[i]=17+i;
  uint32_t answer[32]={};unsigned count=999;const unsigned inputs=longRun?96:3,outputs=longRun?32:2;
  assert(!session->Poll() && !session->Finish() && !session->CopyGeneratedTokens(answer,32,count));
@@ -90,6 +92,22 @@ int main(int argc,char** argv){
   puts("PASS synthetic full hybrid same FD: upload, seal, START, poll, HOLD, READ, FINISH, close; NO DEVICE");
  }else{
   assert(!ok && session->FailedState() && io.closes==1 && !io.bankEnd);
+  Observation observed;observed.action=99;
+  if(io.badSupport)assert(!session->FailureObservation(observed) && observed.action==99);
+  else{
+   const auto controlsBeforeObservation=io.controls;
+   assert(session->FailureObservation(observed));
+   assert(io.controls==controlsBeforeObservation); // observation never calls the device
+   const unsigned expected=io.badRecord?PioneerQ38TokenControl::Read:lost?PioneerQ38TokenControl::Observe:
+    io.failAction?io.failAction:io.badAction;
+   assert(observed.action==expected && observed.requestUnchanged==1);
+   if(lost)assert(!observed.callPassed && !observed.reply.version);
+   else{
+    assert(observed.callPassed==unsigned(io.failAction!=expected));
+    assert(observed.reply.version==1 && observed.reply.operation==expected && observed.reply.stage);
+    assert(observed.reply.unsafe==unsigned(io.badAction==expected));
+   }
+  }
   assert(!session->CopyGeneratedTokens(answer,32,count) && count==999);
   const auto controls=io.controls;assert(!session->Poll() && !session->Finish() && !session->Cancel());
   assert(io.controls==controls && io.opens==1);

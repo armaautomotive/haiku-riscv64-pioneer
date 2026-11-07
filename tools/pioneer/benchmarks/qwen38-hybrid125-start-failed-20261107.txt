@@ -1,0 +1,30 @@
+Qwen hybrid candidate 125: first physical startup failed
+========================================================
+November 7, 2026. Stage /boot/home/pioneer-hybrid125-full-trial-20261107-a
+is spent: its .trial-once marker prohibits rerunning it. Its parent and
+client exited; the state is FAILED_70_NO_AUTO_RETRY_RESET_OR_RESTORE.
+
+Preflight passed all 1,344 prepared fragments. The upload progress reached
+21,137,039,360 of 21,137,039,360 bytes. After that the full client reported
+HYBRID_START_FAILED start; close only and exited 1. It did not produce any
+token or report an inference rate. These observations do not identify the
+failed internal start stage, establish numerical quality, or establish a
+performance result. The separate original-weight full-model baseline remains
+approximately 0.173 tokens/second, not a result from this candidate.
+
+The candidate tag 2026110700010125 loaded as generation 21 before the test;
+failure did not authorize another device operation, reset, or automatic
+restoration. A single controlled OFF was followed after settling by one ON;
+subsequent console output shows a new Linux boot, but SSH host identity and
+restoration of the stable 041 driver were not verified at this writing.
+
+Closed evidence copied to /private/tmp/pioneer-hybrid125-failed.h6FLuiMP/:
+3bce1c40bc5a6f07b157a73ad0f284edb4434758a84f42c63d1725de3e192134  state
+a58a9e280debf17d63dd8b5a9300a48251ca38cd2f3df94cfa0d3bfae3ba2eaf  trial.stdout
+1a0a0100639af812b389f109a5cd3164d58ce3f24f67f39caefb8a0ca7508322  trial.stderr
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  trial.exit
+4c6d8fc40ded1eac534c42ff6ab20f448039431850b5640b45f29fd581b2085c  parent.stdout
+
+The temporary copy is not archival storage. Preserve the original stage and
+its one-shot marker. Any later failure-stage reply is untrusted observation,
+not permission to retry or clear a potentially quarantined device.

@@ -50,9 +50,9 @@ This pass does not establish a held-weight inference session or a token rate.
 **Not yet passed.** The experimental upload session holds the bank session
 after upload and derives the coordinator's address table from that same
 layout. It is now connected to a separately built native inference candidate;
-its end-to-end lifecycle has passed synthetic tests, but not yet a real
-full-model run. It is not an Assistant or Work-mode implementation. Model
-layout, firmware, ownership and safe cleanup still need physical qualification.
+its end-to-end lifecycle has passed synthetic tests, but its first real
+full-model startup failed. It is not an Assistant or Work-mode implementation.
+Model layout, firmware, ownership and safe cleanup still need physical qualification.
 
 **Why the tracked integration was necessary:** An offline upload-layout test recorded every
 accepted synthetic page and applied the native startup page-presence check.
@@ -89,7 +89,7 @@ programs, stages the hybrid address table and rechecks it immediately before
 worker startup. A separately tagged hybrid driver candidate now cross-builds
 with the matching pinned programs; a matching upload/release diagnostic also
 cross-builds, and simulated tests check its same-FD receipt and failure paths.
-The candidate has not been installed or run on the card. A separate full
+The candidate was subsequently installed for the trial described below. A separate full
 client now connects upload, seal, generation and final cleanup on the same
 FD; synthetic tests cover normal output, cancellation, long requests and
 failure cleanup. A Haiku test client cross-builds with that path. No real
@@ -99,21 +99,23 @@ client reject each other's driver identity.
 Non-cryptographic page hashes do not prove the format or contents of card
 memory, and no full-model or hardware test is implied.
 
-**First physical hybrid trial started, result pending.** On November 7 at
-14:18 UTC the one-shot parent was live as PID 5273 on Haiku, with its
-preflight child PID 5307 verifying the original model and caches. At that
-observation it had not exchanged the driver or opened the card. The stage is
-`/boot/home/pioneer-hybrid125-full-trial-20261107-a`; inspect its `state`,
-processes and logs before taking any action. The permanent `.trial-once`
-marker means do not start it a second time. The guard restores the verified
-041 driver only after a fully closed successful request; an uncertain result
-stops without retry, reset or automatic restore. The single-token input is
-248319 with up to 32 generated tokens. Even a clean run needs independent
-quality checking and its reported post-START interval includes prompt work.
-The initial model/cache preflight subsequently passed all 1,344 fragments;
-the candidate driver loaded and the same one-shot parent started full-client
-PID 5654. Its own same-session preflight was underway at the last check, with
-no device open reported yet. No token or speed result is available.
+**First physical hybrid trial failed at startup.** On November 7 the one-shot
+test completed the model/cache preflight and uploaded all 21,137,039,360
+bytes, but the client reported `HYBRID_START_FAILED start; close only` and
+exited 1. The parent recorded `FAILED_70_NO_AUTO_RETRY_RESET_OR_RESTORE`.
+No tokens were produced and there is no hybrid speed or quality result. The
+error does not identify the internal startup stage or cause. The one-shot
+stage is `/boot/home/pioneer-hybrid125-full-trial-20261107-a`; the permanent
+`.trial-once` marker means do not rerun it. A copy of the available logs is
+in `/private/tmp/pioneer-hybrid125-failed.h6FLuiMP/` on the development Mac.
+Following the failure a controlled single power-off and single power-on were
+sent; verify a fresh boot and the driver state before claiming recovery or
+running any further card work. The candidate is not automatically restored
+on failure. Improved failure reporting is in development; a reported reply
+on a failed control operation is untrusted diagnostic data only and cannot
+authorize cleanup or a retry.
+The closed-evidence hashes are recorded in the
+[failed-trial record](benchmarks/qwen38-hybrid125-start-failed-20261107.txt).
 
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory

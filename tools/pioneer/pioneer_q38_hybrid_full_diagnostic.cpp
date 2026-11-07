@@ -31,6 +31,17 @@ static bool Number(const char* text,unsigned max,unsigned& value){
  if(errno || !end || *end || result>max)return false;
  value=unsigned(result);return true;
 }
+template<class Session> static void ReportFailure(const Session& session){
+ typename Session::ControlObservation observed;
+ if(!session.FailureObservation(observed))return;
+ const auto& r=observed.reply;
+ fprintf(stderr,"HYBRID_CONTROL_OBSERVATION action=%u call_passed=%u request_unchanged=%u "
+  "version=%u operation=%u started=%u ready=%u unsafe=%u complete=%u stage=%u records=%u status=%ld detail=",
+  observed.action,observed.callPassed,observed.requestUnchanged,r.version,r.operation,r.started,r.ready,r.unsafe,
+  r.complete,r.stage,r.records,(long)r.status);
+ for(unsigned i=0;i<16;i++)fprintf(stderr,"%s%u",i?",":"",r.detail[i]);
+ fputs("; UNTRUSTED_DIAGNOSTIC_ONLY_NO_RETRY_OR_CLEANUP_AUTHORITY\n",stderr);
+}
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
  if(argc<6 || argc>5+F::MaxPrompt || strcmp(argv[1],"--run-hybrid-candidate") || argv[2][0]!='/' || argv[3][0]!='/'){
@@ -54,12 +65,12 @@ int main(int argc,char** argv){
   if(done>=next || done==total){printf("HYBRID_UPLOAD %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);
    while(next<=done)next+=UINT64_C(256)*1024*1024;}
  })){
-  fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());return 1;
+  fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);return 1;
  }
  const uint64_t started=Now();if(!started || started<begin){session->Abort();return 1;}
  printf("HYBRID_STARTED upload_and_start_seconds=%.3f\n",double(started-begin)*1e-9);
  while(!session->TerminalReady()){
-  if(!session->Poll()){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());return 1;}
+  if(!session->Poll()){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);return 1;}
   if(!session->TerminalReady()){
    const uint64_t now=Now();if(!now || now<started || now-started>UINT64_C(7200)*1000000000){
     session->Abort();fputs("HYBRID_TIMEOUT close only; recovery may be required\n",stderr);return 1;
@@ -69,7 +80,7 @@ int main(int argc,char** argv){
  }
  const uint64_t terminal=Now();
  if(!terminal || terminal<started){session->Abort();return 1;}
- if(!session->Finish()){fprintf(stderr,"HYBRID_FINISH_FAILED %s; close only\n",session->failure.c_str());return 1;}
+ if(!session->Finish()){fprintf(stderr,"HYBRID_FINISH_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);return 1;}
  unsigned tokens[F::MaxOutput]={},count=0;
  if(!session->CopyGeneratedTokens(tokens,F::MaxOutput,count))return 1;
  printf("HYBRID_RESULT prompt_tokens=%u generated_tokens=%u post_start_seconds=%.3f (includes prompt processing)\n",

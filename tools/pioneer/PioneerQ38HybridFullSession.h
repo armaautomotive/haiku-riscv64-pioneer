@@ -23,12 +23,19 @@
 template<class Pages,class IO> class PioneerQ38HybridFullSession {
  using Upload=PioneerQ38HybridUploadSession<Pages,IO,true>;
  using Packet=PioneerQ38TokenControl::Packet;
+public:
+ struct ControlObservation {
+  unsigned action=0,callPassed=0,requestUnchanged=0;
+  PioneerQ38TokenControl::Reply reply={};
+ }; // untrusted diagnostic data only;never grants retry,cleanup or device authority
+private:
  enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed};
  Upload upload;
  std::unique_ptr<Packet> packet=std::make_unique<Packet>();
  std::array<uint32_t,PioneerQ38FullOffload::MaxPositions*64> records={};
  std::array<uint32_t,PioneerQ38FullOffload::MaxPrompt> prompt={};
  State state=Virgin;
+ ControlObservation lastControl={};bool observedControl=false;
  unsigned prompts=0,limit=0,committed=0,position=0,layers=0,terminalStage=0;
  bool attempted=false,cancelAttempted=false,cancelled=false;
  bool Stop(const char* why){
@@ -48,7 +55,11 @@ template<class Pages,class IO> class PioneerQ38HybridFullSession {
    std::copy(prompt.begin(),prompt.begin()+prompts,packet->prompt);}
   if(!PioneerQ38FullOffload::RequestShape(*packet))return false;
   const auto request=q;
-  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
+  const bool passed=Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet);
+  const bool same=!std::memcmp(&q,&request,sizeof(q));
+  lastControl.action=action;lastControl.callPassed=unsigned(passed);lastControl.requestUnchanged=unsigned(same);
+  lastControl.reply=packet->reply;observedControl=true;
+  if(!passed || !same)return false;
   for(unsigned i=0;i<P::Context;i++)if(packet->prompt[i]!=(action==P::Start && i<prompts?prompt[i]:0U))return false;
   const auto& r=packet->reply;
   if(r.version!=P::Version || r.operation!=action || r.status || r.started!=1 || r.unsafe || r.ready>1
@@ -82,6 +93,10 @@ public:
  bool TerminalReady()const{return state==Terminal;}
  bool Completed()const{return state==Complete;}
  bool FailedState()const{return state==Failed;}
+ bool FailureObservation(ControlObservation& out)const{
+  if(state!=Failed || !observedControl)return false;
+  out=lastControl;return true;
+ } // snapshot only,which may be zero,partial,stale or corrupt on a failed syscall
  bool Begin(const PioneerQ38CanonicalModelPlan& plan,const uint32_t* ids,unsigned count,unsigned outputs,
   const std::function<void(uint64_t,uint64_t)>& progress={}){
   namespace F=PioneerQ38FullOffload;
