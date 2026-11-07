@@ -24,9 +24,15 @@ Mac and Haiku wrapper builds succeeded; the build also checks that the
 preprocessed original writer actually binds the filtered adapter. The
 Haiku build SHA256 is
 d9088676e2f1bfc2751452b5fc8d0b1609382e418e76c19538ff993c27593836.
-The binary has NOT been installed or run on the real model, and no 39-tensor
-cache is claimed. Full same-open hash, source stability, cache atomicity,
-space guards and converted-byte checks remain the frozen writer's behavior.
+The binary was copied to /boot/home/pioneer-hybrid-bfp8-prepare-20261107;
+its remote SHA matched. A real-model preparation was started in the new,
+previously absent /boot/home/pioneer-hybrid-bfp8-20261107-cache. The local
+capture is /private/tmp/pioneer-hybrid-bfp8-prepare.iIT9JAZ7/prepare.stdout.
+The foreground session was live and authenticating the original at last
+observation; completion is NOT established, and no 39-tensor cache is claimed.
+Do not restart on a polling timeout. Full same-open hash, source stability,
+cache atomicity, space guards and converted-byte checks remain the frozen
+writer's behavior.
 
 This is CPU-only model-data preparation, not a device owner, an uploader,
 Assistant integration, a natural-answer quality pass or a tokens/sec result.
