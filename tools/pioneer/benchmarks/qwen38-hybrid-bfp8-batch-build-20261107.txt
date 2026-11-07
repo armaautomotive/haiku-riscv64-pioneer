@@ -35,8 +35,8 @@ The 42-line stdout is archived as qwen38-hybrid-bfp8-batch-run-20261107.log,
 SHA256 ad266e69c8bcd5817b75295dde256589f998154d197f886f0caa717b8d05f1f0.
 Full same-open hash, source stability, cache atomicity, space guards and
 converted-byte checks remain the frozen writer's behavior. A separate
-combined-cache preflight was started after BOTH cache runs actually exited 0;
-its completion has not yet been established.
+combined-cache preflight ran after BOTH cache writers exited 0 and separately
+verified all 1344 fragments; see qwen38-hybrid-cache-preflight-build-20261107.
 
 This is CPU-only model-data preparation, not a device owner, an uploader,
 Assistant integration, a natural-answer quality pass or a tokens/sec result.

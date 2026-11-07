@@ -18,9 +18,9 @@ The foreground SSH process actually exited 0 after reporting 1071 verified
 fragments, zero cache hits and 7670661120 bytes. Its full stdout is archived
 in sibling qwen38-hybrid-bfp4-cache-run-20261107.log, SHA256
 46a09b515068c6b1b8d975381ae9ff8216c5ebaffd8736af6bf455676a829380.
-The BFP8 cache and separate combined-cache read-only preflight are not yet
-complete. This success does not prove that the full hybrid can be uploaded
-or used on the card.
+The BFP8 cache and combined-cache preflight later completed successfully; see
+qwen38-hybrid-cache-preflight-build-20261107.txt. This does not prove that
+the full hybrid can be uploaded or used on the card.
 
 This cache is not yet linked to the real model uploader; BFP8 preparation,
 relocation/ownership, full-card integration, quality, and real inference

@@ -34,8 +34,8 @@ under sh. ASan/UBSan tests actually passed:
   check of the upload adapter and synthetic endpoint passed with warnings as
   errors. No Haiku hardware execution was performed for this test.
 
-The complete BFP4 real-model cache has been prepared; BFP8 preparation and
-combined read-only cache verification remain outstanding. Physical use also
+The BFP4/BFP8 real-model caches and combined preflight later completed; see
+qwen38-hybrid-cache-preflight-build-20261107.txt. Physical use still
 requires a distinct qualified bank/session owner, initialization and native
 consumer of the relocated plan, authenticated ROOT manifest, expanded peer
 memory save/restore, failure/cleanup qualification and a model-quality gate.

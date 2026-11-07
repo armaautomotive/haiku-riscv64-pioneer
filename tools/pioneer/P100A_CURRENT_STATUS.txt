@@ -132,8 +132,8 @@ Four compact goals
    A 39-tensor BFP8 batch preparer also builds and passes synthetic selection
    and frozen-converter checks; its real-model preparation exited 0. See
    benchmarks/qwen38-hybrid-bfp8-batch-build-20261107.txt.
-   A CPU-only preflight for the combined real caches is now running; success
-   has not yet been established. See
+   A CPU-only preflight of both real caches verified all 1344 fragments and
+   exited 0; this is not device upload or inference. See
    benchmarks/qwen38-hybrid-cache-preflight-build-20261107.txt.
    A two-position teacher-forced CPU comparison completed with independently
    retained candidate/original state. Both selected the same token at each

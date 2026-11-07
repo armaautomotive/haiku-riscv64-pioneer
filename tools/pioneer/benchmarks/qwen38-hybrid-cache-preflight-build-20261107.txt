@@ -16,11 +16,13 @@ symlink cache directories without creating them; five kernel/Work/reference
 roles were refused. Existing prepared-page tests cover full 1344-fragment
 selection with synthetic readers and one real-format synthetic BFP4 fixture.
 
-Both real-model cache writers have actually exited successfully. After
-independently rechecking the staged binary SHA, the preflight was started
-against those two dedicated caches. The live foreground SSH session 17832
-reported it was authenticating the original model; its final result has not
-yet been observed. Do not restart it merely because a poll yields no output.
+Both real-model cache writers actually exited successfully. After independently
+rechecking the staged binary SHA, the preflight ran against those dedicated
+caches and the foreground SSH process actually exited 0. It authenticated the
+same-open original GGUF and reported all 1344 converted fragments verified:
+1071 BFP4 and 273 BFP8. The complete 66-line stdout is archived in sibling
+qwen38-hybrid-cache-preflight-run-20261107.log, SHA256
+3bc3f8a0046d544adf495e57a46b042acd1bda034017ca2f173611a6caad60fa.
 It is not a GPU owner, a weight upload, a model
 execution, a quality pass or a speed measurement. The source/directory
 existence checks precede cache Open; cache entry reads remain hash checked.
