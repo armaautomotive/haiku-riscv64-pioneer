@@ -2,6 +2,31 @@
 #if defined(PIONEER_Q38_FULL_OFFLOAD_PROTOCOL_H) || defined(PIONEER_Q38_BF16_FULL_PROTOCOL_H)
 #error Hybrid full-card protocol cannot alias an older driver protocol
 #endif
+#if (defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) && PIONEER_Q38_HYBRID_MATRIX_NATIVE_127 != 1) \
+ || (defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127) && PIONEER_Q38_HYBRID_MATRIX_CLIENT_127 != 1)
+#error Matrix candidate protocol selectors require exact value one
+#endif
+#if (defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)) \
+ && (defined(PIONEER_Q38_HYBRID_FIXED_126) || (defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) && defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)))
+#error Matrix candidate protocol cannot alias another candidate or its client role
+#endif
+#ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
+#define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
+#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+enum {PioneerQ38HybridProtocolIdentity=127};
+#elif defined(PIONEER_Q38_HYBRID_FIXED_126)
+enum {PioneerQ38HybridProtocolIdentity=126};
+#else
+enum {PioneerQ38HybridProtocolIdentity=125};
+#endif
+#endif
+#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+static_assert(PioneerQ38HybridProtocolIdentity==127,"late matrix protocol identity change");
+#elif defined(PIONEER_Q38_HYBRID_FIXED_126)
+static_assert(PioneerQ38HybridProtocolIdentity==126,"late fixed protocol identity change");
+#else
+static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identity removal");
+#endif
 #ifndef PIONEER_Q38_HYBRID_FULL_PROTOCOL_H
 #define PIONEER_Q38_HYBRID_FULL_PROTOCOL_H
 #include "PioneerQ38TokenControlPacket.h"
@@ -9,7 +34,9 @@
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#ifdef PIONEER_Q38_HYBRID_FIXED_126
+#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010127);
+#elif defined(PIONEER_Q38_HYBRID_FIXED_126)
 static_assert(PIONEER_Q38_HYBRID_FIXED_126==1,"exact fixed candidate selection required");
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
 #else

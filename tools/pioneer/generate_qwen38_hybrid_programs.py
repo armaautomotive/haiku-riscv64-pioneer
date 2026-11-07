@@ -5,15 +5,20 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];matrix='--matrix-attention-inspection' in args
+args=sys.argv[1:];candidate='--matrix-native-candidate' in args
+if candidate:
+    if args.count('--matrix-native-candidate')!=1 or '--matrix-attention-inspection' in args:raise SystemExit('ambiguous matrix selector')
+    args.remove('--matrix-native-candidate')
+matrix=candidate or '--matrix-attention-inspection' in args
 if matrix:
-    if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
-    args.remove('--matrix-attention-inspection')
+    if not candidate:
+        if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
+        args.remove('--matrix-attention-inspection')
     from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
 else:
     from PioneerQ38HybridProgramPins import ROOT_PINS, WORKER_PINS
 if not __debug__ or len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--matrix-attention-inspection] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
+    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--matrix-attention-inspection|--matrix-native-candidate] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
 root, worker, output=map(Path,args)
 if not all(p.is_absolute() for p in (root,worker,output)) or output.exists() or output.is_symlink():
     raise SystemExit('new absolute output and absolute input paths required')
@@ -28,7 +33,7 @@ units += [(w,name,label,address) for name,label,address in (
 require_complete_sections(units,(r,w))
 family='0x37505451' if matrix else '0x35505451'
 name='QTP7/QGW7' if matrix else 'QTP5/QGW5'
-lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+' code DATA, OFFLINE ONLY; not a runtime capability.',
+lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
  ' || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS_H) \\',
@@ -37,9 +42,15 @@ lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+' code DATA, OF
  '#error Exact offline QGW5 program DATA selector required', '#endif']
 if matrix:
     lines += ['#if !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \\',
-              ' || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \\',
-              ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
-              '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
+              ' || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \\']
+    if candidate:
+        lines += [' || !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || PIONEER_Q38_HYBRID_MATRIX_NATIVE_127 != 1 \\',
+                  ' || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \\',
+                  ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
+                  '#error QGW7 candidate data requires the exclusive tag127 native role', '#endif']
+    else:
+        lines += [' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
+                  '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
 lines += [
  '#ifndef PIONEER_Q38_HYBRID_PROGRAMS_H','#define PIONEER_Q38_HYBRID_PROGRAMS_H',
  'namespace PioneerQ38HybridPrograms {',

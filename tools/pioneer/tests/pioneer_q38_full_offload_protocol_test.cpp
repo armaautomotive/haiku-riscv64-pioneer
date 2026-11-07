@@ -24,7 +24,9 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
 }
 int main(){
 #ifdef PIONEER_Q38_HYBRID_FULL_PROTOCOL_TEST
-#ifdef PIONEER_Q38_HYBRID_FIXED_126
+#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+ static_assert(F::BuildTag==UINT64_C(0x2026110700010127),"exact matrix hybrid candidate identity");
+#elif defined(PIONEER_Q38_HYBRID_FIXED_126)
  static_assert(F::BuildTag==UINT64_C(0x2026110700010126),"exact fixed hybrid candidate identity");
 #else
  static_assert(F::BuildTag==UINT64_C(0x2026110700010125),"exact hybrid candidate identity");

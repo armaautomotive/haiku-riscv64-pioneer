@@ -137,10 +137,12 @@ has since been corrected. The test stopped before returning the learned data
 or computing an embedding, matrix, layer or token; it is not proof of a
 complete native lifecycle or physical execution.
 Cross-family packages, missing selectors, altered input sections/ELFs,
-existing output paths, physical-driver and Work roles were refused. The
+existing output paths, physical-driver and Work roles for the inspection
+package were refused. The
 unchanged QGW5 generator and tag126 driver reproduced their existing pinned
-hashes; the QGW5 program/owner regression also passed. QGW7 cannot yet be
-selected by a loadable driver and has not run on the P100A. Reproduce the
+hashes; the QGW5 program/owner regression also passed. A separately packaged
+tag127 candidate was later cross-built, but has not run on the P100A; see
+qwen38-hybrid-matrix127-build-offline-20261107.txt. Reproduce the
 packaging and binding checks with tests/run_pioneer_q38_hybrid_matrix_native_tests.py
 SDK ROOT_DIR WORKER_DIR PINNED_QGW5_HEADER; run the initializers separately
 with the generated state-zero image and --hybrid-qgw7-header, or include

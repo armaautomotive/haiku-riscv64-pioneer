@@ -22,9 +22,10 @@
 #error A hybrid coordinator or worker cannot combine QDM2 with the old QGW5/QGW6 identity
 #endif
 #if defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) && (((defined(_KERNEL_MODE) \
- || defined(PIONEER_DRIVER_BUILD_TAG)) && !defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)) \
- || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE))
-#error QGW7 matrix-attention inspection permits only the non-loadable native test context
+ || defined(PIONEER_DRIVER_BUILD_TAG)) && !defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) \
+ && !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)) || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) \
+ || (defined(PIONEER_Q38_HYBRID_FULL_NATIVE) && !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)))
+#error QGW7 matrix attention requires its non-loadable inspection or exact tag127 candidate
 #endif
 
 #include "PioneerQ38Bf16WorkerLayout.h"

@@ -20,11 +20,13 @@ from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
 compiler=os.environ.get('CXX','c++')
 def run(*args):subprocess.run([str(a) for a in args],check=True)
 with tempfile.TemporaryDirectory(prefix='pioneer-qgw7-native-',dir='/private/tmp') as name:
- tmp=Path(name);header=tmp/'matrix.h';again=tmp/'matrix-again.h'
+ tmp=Path(name);header=tmp/'matrix.h';again=tmp/'matrix-again.h';candidate=tmp/'matrix-candidate.h'
  gen=tools/'generate_qwen38_hybrid_programs.py'
  for target in (header,again):run(sys.executable,gen,'--matrix-attention-inspection',root_image,worker,target)
+ run(sys.executable,gen,'--matrix-native-candidate',root_image,worker,candidate)
  data=header.read_bytes();assert data==again.read_bytes()
  assert hashlib.sha256(data).hexdigest()=='5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7'
+ assert hashlib.sha256(candidate.read_bytes()).hexdigest()=='03c7673557c60f37c9773c323de7857158f79ceb452ce2b18f4d7cbdae1ed3dc'
  refused=subprocess.run([sys.executable,str(gen),'--matrix-attention-inspection',str(root_image),str(worker),str(header)],capture_output=True)
  assert refused.returncode and header.read_bytes()==data
  objcopy=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-objcopy'
@@ -76,5 +78,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw7-native-',dir='/private/tmp
  assert okay.returncode==0,okay.stderr.decode()[:1000]
  refused=subprocess.run([compiler,'-std=c++17',*physical,*flags[-2:],'-E','-x','c++',str(role)],capture_output=True)
  assert refused.returncode and b'Hybrid full native requires' in refused.stderr
+ matrix_physical=[f for f in physical if f!='-DPIONEER_Q38_HYBRID_FIXED_126=1' and not f.startswith('-DPIONEER_DRIVER_BUILD_TAG=')]
+ matrix_physical+=['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010127ULL','-DPIONEER_Q38_HYBRID_MATRIX_NATIVE_127=1',*flags[-2:]]
+ okay=subprocess.run([compiler,'-std=c++17',*matrix_physical,'-E','-x','c++',str(role)],capture_output=True)
+ assert okay.returncode==0,okay.stderr.decode()[:1000]
+ for chosen,selectors,passes in ((candidate,matrix_physical,True),(header,matrix_physical,False),
+                                  (old_header,matrix_physical,False),(candidate,physical,False),(candidate,flags,False)):
+  result=subprocess.run([compiler,'-std=c++17','-I'+str(tools),*selectors,
+   '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(chosen)+'"','-fsyntax-only',str(selection)],capture_output=True)
+  assert (result.returncode==0)==passes,(chosen,selectors,result.stderr.decode()[:1000])
  run(sys.executable,here/'run_pioneer_q38_token_native_binding_tests.py','--hybrid-matrix-inspection',header)
  print('PASS QGW7 authenticated image packaging, all 120 code maps, identity/role refusals and non-loadable native binding; no device or TPS')

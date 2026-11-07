@@ -7,6 +7,12 @@
   || PIONEER_Q38_HYBRID_FIXED_126 != 1)
 #error Tag126 is reserved for the corrected tracked hybrid full-card candidate
 #endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
+ && PIONEER_DRIVER_BUILD_TAG == 0x2026110700010127ULL \
+ && (!defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \
+  || !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || PIONEER_Q38_HYBRID_MATRIX_NATIVE_127 != 1)
+#error Tag127 is reserved for the isolated QGW7 matrix-attention candidate
+#endif
 #ifndef PIONEER_DRIVER_RELOAD_PROTOCOL_H
 #define PIONEER_DRIVER_RELOAD_PROTOCOL_H
 #include <stdint.h>

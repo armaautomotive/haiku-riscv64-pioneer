@@ -1,0 +1,43 @@
+QGW7 matrix-attention tag127 candidate: offline only
+===================================================
+The pinned QGW7 ROOT, worker and QDM2 matrix-attention capsule now have a
+separate candidate header and Haiku RISC-V driver/client build profile. The
+candidate is not installed or authorized for a physical trial by this build.
+The earlier failed tag125 trial is not to be retried, its recovery guard has
+not been bypassed, and the unresolved storage-record anomaly remains a gate.
+
+Two independent builds in this worktree, using the same SDK, produced:
+03c7673557c60f37c9773c323de7857158f79ceb452ce2b18f4d7cbdae1ed3dc  candidate program header
+9a2da2a5378bc0a9df0d4da9cbdd8bb4c9d507978522391859b8127d4452ba08  tenstorrent_pci_probe-matrix127
+665503164754dccb2d6c1a972cd3ab2704a56578f492fa298ee9720e43e67880  pioneer-q38-hybrid-full-diagnostic
+The candidate header is generated separately from the non-loadable inspection
+header; each rejects the other's role. The loader checks all 15 embedded code
+sections and rejects missing parents, wrong/old tags and alternate roles.
+The tag127 client checks the driver identity before beginning uploads, and
+the synthetic same-FD tests reject tags125/126 and close only on uncertain
+control results. Work mode and Assistant do not select this candidate.
+
+The previous tag126 QGW5 driver and full client rebuilt to their previously
+recorded 65583dd1... and 8b65e83f... hashes. The candidate build used an
+existing SDK and a worktree containing unrelated prior edits; two build
+directories do not independently verify the compiler, SDK or source tree.
+The separately pinned code packages were rebuilt and checked previously.
+
+The non-loadable QGW7 native simulation also executed 119 worker boots and
+the ROOT's synthetic Q4_K embedding, with all 5120 values matching a separate
+synthetic decoder. It continued to the layer-zero metadata request. No real
+model layer or token was completed in that simulation. Existing earlier
+one-worker matrix-attention tests are not proof of the full 96-worker path.
+
+No card execution, real 27B numerical quality, throughput, complete native
+lifecycle, safe recovery, physical boot, or Assistant integration is claimed.
+The converted BFP4/BFP8 weights are lossy; the prior synthetic quality
+differences are an additional unresolved gate. The latest real full-model
+measurement remains approximately 0.173 tokens/second on the prior path;
+there is no measured tag127 result or demonstrated speedup.
+
+Reproduce with build_q38_hybrid_full_native.py --matrix-127, the generated
+--matrix-native-candidate header and a new output directory; separately run
+run_pioneer_q38_hybrid_matrix_native_tests.py and
+run_pioneer_q38_hybrid_full_session_tests.py. These checks do not grant a
+physical run, retry, cleanup, driver install, or recovery authorization.

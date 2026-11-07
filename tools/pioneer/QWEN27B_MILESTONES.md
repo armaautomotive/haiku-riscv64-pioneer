@@ -61,8 +61,13 @@ passed on simulated endpoints. The same simulated native owner staged its
 metadata, booted 119 QGW7 worker instruction emulators, and ran the actual
 coordinator to its first outstanding learned-data request. It did not
 complete a layer or token. The older tag126 driver rebuilt byte-for-byte
-unchanged, and Work or a loadable driver still cannot select QGW7. This is
-not device qualification or an Assistant integration.
+unchanged, and the existing Work path cannot select QGW7. This is not device
+qualification or an Assistant integration.
+An explicitly separate tag127 QGW7 candidate driver and matching diagnostic
+now cross-build and pass offline role/session checks; neither is installed or
+physically qualified. The synthetic native run additionally completed one
+embedding, not a real layer or token. See the
+[tag127 build record](benchmarks/qwen38-hybrid-matrix127-build-offline-20261107.txt).
 See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
 and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 

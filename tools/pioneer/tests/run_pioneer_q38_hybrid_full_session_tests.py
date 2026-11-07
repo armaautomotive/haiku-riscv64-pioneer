@@ -23,6 +23,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-full-session-',dir='/pri
  run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-variable',
   '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_FIXED_126=1',here/'pioneer_q38_hybrid_full_session_test.cpp','-o',fixed)
  run(fixed);run(fixed,'--fail',1);run(fixed,'--bad',1)
+ matrix=out/'matrix-test'
+ run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-variable',
+  '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=1',here/'pioneer_q38_hybrid_full_session_test.cpp','-o',matrix)
+ for args in ((),('--long',),('--cancel',),('--bad-record',),('--fail',1),('--bad',1)):run(matrix,*args)
+ tracked=out/'matrix-tracked'
+ run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-variable','-fsanitize=address,undefined',
+  '-DPIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT=1','-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=1',
+  here/'pioneer_q38_hybrid_tracked_session_test.cpp','-o',tracked)
+ run(tracked)
  # Separate full candidate cannot be silently turned into validation, Work,
  # a kernel, an old full client, or the untracked upload diagnostic.
  header=root/'PioneerQ38HybridFullSession.h'
@@ -40,6 +49,22 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-full-session-',dir='/pri
   result=subprocess.run([compiler,'-std=c++17',*valid,'-D'+forbidden+'=1','-E','-x','c++','-'],
    input=source,capture_output=True,text=True)
   assert result.returncode and 'Hybrid full candidate is a separate' in result.stderr,forbidden
+ protocol=root.parent.parent/'src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h'
+ protocol_source='#include "'+str(protocol)+'"\n'
+ base=['-DB_DEVICE_OP_CODES_END=1000']
+ for selectors in ([],['-DPIONEER_Q38_HYBRID_FIXED_126=1'],['-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=1'],
+                   ['-DPIONEER_Q38_HYBRID_MATRIX_NATIVE_127=1']):
+  result=subprocess.run([compiler,'-std=c++17',*base,*selectors,'-fsyntax-only','-x','c++','-'],input=protocol_source,capture_output=True,text=True)
+  assert result.returncode==0,result.stderr[:1000]
+ for selectors in (['-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=0'],
+                   ['-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=1','-DPIONEER_Q38_HYBRID_FIXED_126=1'],
+                   ['-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=1','-DPIONEER_Q38_HYBRID_MATRIX_NATIVE_127=1']):
+  result=subprocess.run([compiler,'-std=c++17',*base,*selectors,'-fsyntax-only','-x','c++','-'],input=protocol_source,capture_output=True,text=True)
+  assert result.returncode,selectors
+ late=protocol_source+'#undef PIONEER_Q38_HYBRID_MATRIX_CLIENT_127\n#include "'+str(protocol)+'"\n'
+ result=subprocess.run([compiler,'-std=c++17',*base,'-DPIONEER_Q38_HYBRID_MATRIX_CLIENT_127=1','-fsyntax-only','-x','c++','-'],input=late,capture_output=True,text=True)
+ assert result.returncode and 'late hybrid protocol identity removal' in result.stderr
  run(sys.executable,root/'build_q38_hybrid_full_diagnostic.py',sdk,out/'cross-build')
  run(sys.executable,root/'build_q38_hybrid_full_diagnostic.py','--fixed-126',sdk,out/'fixed-cross-build')
+ run(sys.executable,root/'build_q38_hybrid_full_diagnostic.py','--matrix-127',sdk,out/'matrix-cross-build')
  print('PASS hybrid full client lifecycle and Haiku cross-build; simulated only, no physical inference or speed')

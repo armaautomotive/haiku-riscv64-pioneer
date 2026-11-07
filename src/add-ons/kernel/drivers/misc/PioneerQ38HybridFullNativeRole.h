@@ -47,14 +47,30 @@
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H
+#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+enum {PioneerQ38TokenNativePhysicalSelection=7};
+#else
 enum {PioneerQ38TokenNativePhysicalSelection=5};
 #endif
+#endif
+#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+static_assert(PioneerQ38TokenNativePhysicalSelection==7,"distinct matrix candidate subject required");
+#else
 static_assert(PioneerQ38TokenNativePhysicalSelection==5,"distinct hybrid native subject required");
+#endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
 #define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
+#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+enum {PioneerQ38TokenNativeProfile=7};
+#else
 enum {PioneerQ38TokenNativeProfile=5};
 #endif
+#endif
+#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+static_assert(PioneerQ38TokenNativeProfile==7,"QGW7 candidate token program family required");
+#else
 static_assert(PioneerQ38TokenNativeProfile==5,"QGW5 token program family required");
+#endif
 #ifdef PIONEER_Q38_TOKEN_FOOTPRINT_H
 static_assert(PioneerQ38TokenL1::Family==0x35505451 && PioneerQ38TokenL1::SavedBytes==137812488,
  "hybrid native needs its complete expanded arbitrary-original journal");
