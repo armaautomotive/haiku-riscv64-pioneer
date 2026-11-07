@@ -101,7 +101,8 @@ int main(int argc,char** argv){
  const unsigned rowsRead=source.reads;assert(rowsRead==packed.parts[four].rows);
  std::array<uint8_t,4096> expected={},actual={};assert(prepare.ReadPage(22,expected.data(),expected.size(),error));
  bool authorized=true;Pages pages;assert(pages.Bind(source,packed,*canonical,bfp8,digest,fingerprint,directory.c_str(),[&]{return authorized;},error));
- assert(pages.Ready() && pages.Part(four) && pages.Part(eight)->encoding==8);
+ assert(pages.Ready() && pages.Part(four)->encoding==PioneerQ38HybridModelPlan::Bfp4
+  && pages.Part(eight)->encoding==PioneerQ38HybridModelPlan::Bfp8);
  assert(pages.ReadPage(four,22,actual.data(),actual.size(),error) && actual==expected && source.reads==rowsRead);
  std::vector<uint8_t> batch(16*4096,0),individual(batch.size(),0);
  // Crossing the 64 KiB checksum boundary and all supported page counts

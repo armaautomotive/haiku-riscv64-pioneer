@@ -100,11 +100,11 @@ public:
   std::vector<uint8_t> stage(count*4096,0);
   if(part.layer<64 && part.role>=2 && part.role<=4){
    if(part.layer>=48 && part.layer<=60){
-    if(dest.encoding!=8)return Lose(error,"BFP8 fragment encoding differs from the plan.");
+    if(dest.encoding!=PioneerQ38HybridModelPlan::Bfp8)return Lose(error,"BFP8 fragment encoding differs from the plan.");
     if(!bfp8->ReadStripePages(part.tensor,part.firstRow,part.rows,page,count,stage.data(),unsigned(stage.size()),error))
      return Lose(error,"Prepared BFP8 stripe is missing, changed or unreadable.");
    }else{
-    if(dest.encoding!=0)return Lose(error,"BFP4 fragment encoding differs from the plan.");
+    if(dest.encoding!=PioneerQ38HybridModelPlan::Bfp4)return Lose(error,"BFP4 fragment encoding differs from the plan.");
     if(active!=fragment){
      auto next=std::make_unique<FourCache<Source>>();
      if(!next->OpenPrepared(*source,part,digest,implementation,directory.c_str(),error))
@@ -115,7 +115,7 @@ public:
      return Lose(error,"Prepared BFP4 page range failed verification.");
    }
   }else{
-   if(dest.encoding!=0)return Lose(error,"Original-format fragment encoding differs from the plan.");
+   if(dest.encoding!=PioneerQ38HybridModelPlan::Original)return Lose(error,"Original-format fragment encoding differs from the plan.");
    for(unsigned i=0;i<count;i++)if(!packed->ReadWeightPage(*source,fragment,page+i,stage.data()+i*4096,4096))
     return Lose(error,"Original-format model page could not be read.");
   }

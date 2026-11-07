@@ -32,7 +32,8 @@ class PioneerQ38HybridJobBinding {
   const unsigned index=stripeIndex[layer][role-2][part->stripe];
   if(index>=proposal.parts.size() || source->Part(index)!=stripe)return false;
   const auto& relocated=proposal.parts[index];
-  if(relocated.original!=index || relocated.bank!=stripe->bank || relocated.encoding!=(eight?8U:0U))return false;
+  if(relocated.original!=index || relocated.bank!=stripe->bank
+   || relocated.encoding!=(eight?PioneerQ38HybridModelPlan::Bfp8:PioneerQ38HybridModelPlan::Bfp4))return false;
   const uint64_t bandBytes=uint64_t(paired.Inputs()/32)*Layout::WeightPayload;
   const uint64_t within=uint64_t((part->firstRow-stripe->firstRow)/32)*bandBytes,bytes=uint64_t(part->groups/2)*bandBytes;
   if(within>relocated.bytes || bytes>uint64_t(relocated.bytes)-within || uint64_t(relocated.offset)+within>UINT32_MAX-Canonical::Base)return false;
@@ -85,7 +86,8 @@ public:
     const unsigned index=stripeIndex[layer][role-2][stripe];
     if(!part || part->bank>=7 || (seen&(1U<<part->bank)) || index>=proposal.parts.size() || source->Part(index)!=part)return false;
     const auto& dest=proposal.parts[index];const bool eight=(mask&(UINT64_C(1)<<layer))!=0;
-    if(dest.original!=index || dest.bank!=part->bank || dest.encoding!=(eight?8U:0U)
+    if(dest.original!=index || dest.bank!=part->bank
+     || dest.encoding!=(eight?PioneerQ38HybridModelPlan::Bfp8:PioneerQ38HybridModelPlan::Bfp4)
      || dest.offset>UINT32_MAX-Canonical::Base || (dest.offset&4095))return false;
     staged[(layer*3+role-2)*7+part->bank]=Canonical::Base+dest.offset;seen|=1U<<part->bank;
    }

@@ -81,7 +81,8 @@ public:
    if(original->kind!=C::WeightKind || original->layer>=64 || original->role<2 || original->role>4)continue;
    const bool eight=original->layer>=48 && original->layer<=60;
    if(original->bank>=7 || actual->original!=i || actual->bank!=original->bank
-    || actual->encoding!=(eight?8U:0U) || !actual->allocated || (actual->offset&4095)
+    || actual->encoding!=(eight?PioneerQ38HybridModelPlan::Bfp8:PioneerQ38HybridModelPlan::Bfp4)
+    || !actual->allocated || (actual->offset&4095)
     || actual->offset>UINT32_MAX-C::Base || actual->offset>C::Capacity
     || actual->allocated>C::Capacity-actual->offset)return false;
    const unsigned at=(original->layer*3+original->role-2)*7+original->bank;

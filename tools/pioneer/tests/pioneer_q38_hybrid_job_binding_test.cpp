@@ -108,7 +108,8 @@ int main(){
    const uint64_t bandBytes=uint64_t(paired.Inputs()/32)*(eight?1088:576);
    const uint64_t within=uint64_t((part->firstRow-stripe->firstRow)/32)*bandBytes;
    const uint64_t address=uint64_t(canonical->Base)+dest.offset+within;
-   assert(dest.bank==part->bank && dest.encoding==(eight?8U:0U) && within+uint64_t(part->groups/2)*bandBytes<=dest.bytes);
+   assert(dest.bank==part->bank && dest.encoding==(eight?PioneerQ38HybridModelPlan::Bfp8:PioneerQ38HybridModelPlan::Bfp4)
+    && within+uint64_t(part->groups/2)*bandBytes<=dest.bytes);
    assert(root->parts[ordinal][0]==address && root->parts[ordinal][1]==part->bank
     && root->parts[ordinal][2]==part->groups && root->rows[ordinal]==part->firstRow);
    if(eight){

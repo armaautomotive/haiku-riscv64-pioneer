@@ -58,9 +58,10 @@ int main(){
   uint64_t end[7]={};unsigned selected=0;
   for(unsigned i=0;i<proposal.parts.size();i++){
    const auto& p=proposal.parts[i];const auto* old=plan->Part(i);assert(old && p.original==i && p.bank==old->bank && p.offset==end[p.bank]);
-   const bool chosen=old->kind==PioneerQ38CanonicalModelPlan::WeightKind && old->type==12 && old->layer<64
-    && old->role>=2 && old->role<=4 && (mask & (uint64_t(1)<<old->layer));
-   assert(p.encoding==(chosen?8U:0U) && !(p.allocated&4095) && p.bytes<=p.allocated);
+   const bool ffn=old->kind==PioneerQ38CanonicalModelPlan::WeightKind && old->type==12 && old->layer<64
+    && old->role>=2 && old->role<=4;
+   const bool chosen=ffn && (mask & (uint64_t(1)<<old->layer));
+   assert(p.encoding==(chosen?Hybrid::Bfp8:ffn?Hybrid::Bfp4:Hybrid::Original) && !(p.allocated&4095) && p.bytes<=p.allocated);
    if(chosen)selected++;else assert(p.bytes==old->bytes && p.allocated==old->allocated);
    if(!mask)assert(p.offset==old->offset);
    end[p.bank]+=p.allocated;assert(end[p.bank]<=PioneerQ38CanonicalModelPlan::Capacity);

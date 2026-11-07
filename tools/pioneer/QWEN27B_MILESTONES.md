@@ -64,6 +64,11 @@ weight formats differ. Page presence alone therefore cannot select a safe
 worker. The new native owner must bind the uploaded format and layout to the
 matching firmware throughout the same session. The test did not use the card
 and does not show that the installed Q4 Assistant is using converted weights.
+The loader's layout metadata now distinguishes original, BFP4 and BFP8
+fragments explicitly; it previously labeled BFP4 as original because their
+allocations have the same length. Upload and manifest checks reject a changed
+format label. This is host-side metadata, not yet a kernel binding or proof
+of the bytes on the card.
 
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory

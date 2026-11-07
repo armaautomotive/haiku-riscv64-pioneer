@@ -84,6 +84,12 @@ int main(){
   const auto first=manifest[0];pages.proposal.parts[0].offset+=4096;
   assert(!session.RootManifest(manifest.data(),manifest.size()) && manifest[0]==first);
   pages.proposal.parts[0].offset-=4096;
+  unsigned converted=0;
+  while(converted<pages.proposal.parts.size() && pages.proposal.parts[converted].encoding!=PioneerQ38HybridModelPlan::Bfp4)converted++;
+  assert(converted<pages.proposal.parts.size());
+  pages.proposal.parts[converted].encoding=PioneerQ38HybridModelPlan::Original;
+  assert(!session.RootManifest(manifest.data(),manifest.size()) && manifest[0]==first);
+  pages.proposal.parts[converted].encoding=PioneerQ38HybridModelPlan::Bfp4;
   const auto prior=pages.proposal.parts[0];
   assert(!session.RootManifest(reinterpret_cast<uint32_t*>(pages.proposal.parts.data()),manifest.size())
    && pages.proposal.parts[0].offset==prior.offset && pages.proposal.parts[0].original==prior.original);

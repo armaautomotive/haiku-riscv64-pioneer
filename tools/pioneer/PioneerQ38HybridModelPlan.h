@@ -10,12 +10,13 @@
 #include <vector>
 
 // Repack every part in canonical order within its EXISTING bank. Selected
-// FFN stripes switch to native BFP8 tile geometry; everything else retains
-// its exact byte/allocation length. The resulting offsets are NEW, not
+// FFN stripes use BFP4 or native BFP8 tile geometry; BFP4 retains the
+// original allocation length but not the original Q4 encoding. The resulting offsets are NEW, not
 // authorized by the old canonical/native owner. This data-only proposal does
 // not upload, initialize, authenticate, grant or touch any device resource.
 struct PioneerQ38HybridModelPlan {
- struct Part {uint32_t original,bank,offset,bytes,allocated,encoding;}; // encoding 0 original,8 BFP8
+ enum Encoding : uint32_t {Original=0,Bfp4=4,Bfp8=8};
+ struct Part {uint32_t original,bank,offset,bytes,allocated,encoding;};
  struct Proposal {std::vector<Part> parts;std::array<uint64_t,7> used{};uint64_t bfp8Layers=0;};
  template<class Canonical>static bool Build(const Canonical& source,uint64_t bfp8Layers,Proposal& output){
   if(!source.Ready() || !source.Count() || source.Count()>6144)return false;
@@ -27,8 +28,8 @@ struct PioneerQ38HybridModelPlan {
     || p->offset!=oldUsed[p->bank] || p->allocated-p->bytes>=4096 || p->allocated>Canonical::Capacity
     || oldUsed[p->bank]>Canonical::Capacity-p->allocated)return false;
    oldUsed[p->bank]+=p->allocated;
-   const bool select=p->kind==Canonical::WeightKind && p->type==12 && p->layer<64 && p->role>=2 && p->role<=4
-    && (bfp8Layers&(uint64_t(1)<<p->layer));
+   const bool ffn=p->kind==Canonical::WeightKind && p->type==12 && p->layer<64 && p->role>=2 && p->role<=4;
+   const bool select=ffn && (bfp8Layers&(uint64_t(1)<<p->layer));
    uint64_t bytes=p->bytes,allocated=p->allocated;
    if(select){
     const uint64_t width=p->role==4?17408:5120;
@@ -37,7 +38,7 @@ struct PioneerQ38HybridModelPlan {
    }
    auto& at=stage.used[p->bank];
    if(!bytes || bytes>UINT32_MAX || allocated>UINT32_MAX || at>Canonical::Capacity || allocated>Canonical::Capacity-at)return false;
-   stage.parts.push_back({i,p->bank,uint32_t(at),uint32_t(bytes),uint32_t(allocated),select?8U:0U});at+=allocated;
+   stage.parts.push_back({i,p->bank,uint32_t(at),uint32_t(bytes),uint32_t(allocated),select?Bfp8:ffn?Bfp4:Original});at+=allocated;
   }
   unsigned selected=0;for(unsigned layer=0;layer<64;layer++)selected+=unsigned((bfp8Layers>>layer)&1);
   if(converted!=selected*3*7)return false;

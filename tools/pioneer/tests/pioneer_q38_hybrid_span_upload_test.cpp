@@ -69,6 +69,17 @@ int main(){
   FakePages pages(*canonical);FakeIO io{*canonical,pages};Upload upload;pages.proposal.parts[0].offset+=4096;
   assert(!upload.Run(pages,*canonical,io,42,error) && upload.Failed() && !upload.DeviceTouched() && !io.calls);
  }
+ // The BFP4 fragment has the same length as original Q4, but must not be
+ // accepted with an original-format tag (or vice versa).
+ for(unsigned wanted:{unsigned(PioneerQ38HybridModelPlan::Original),unsigned(PioneerQ38HybridModelPlan::Bfp4),
+                      unsigned(PioneerQ38HybridModelPlan::Bfp8)}){
+  FakePages pages(*canonical);FakeIO io{*canonical,pages};Upload upload;unsigned index=0;
+  while(index<pages.proposal.parts.size() && pages.proposal.parts[index].encoding!=wanted)index++;
+  assert(index<pages.proposal.parts.size());
+  pages.proposal.parts[index].encoding=wanted==PioneerQ38HybridModelPlan::Bfp4
+   ?PioneerQ38HybridModelPlan::Original:PioneerQ38HybridModelPlan::Bfp4;
+  assert(!upload.Run(pages,*canonical,io,42,error) && upload.Failed() && !upload.DeviceTouched() && !io.calls);
+ }
  {
   FakePages pages(*canonical);FakeIO io{*canonical,pages};Upload upload;pages.failRead=1;
   assert(!upload.Run(pages,*canonical,io,42,error) && upload.Failed() && !upload.DeviceTouched() && !io.calls);
