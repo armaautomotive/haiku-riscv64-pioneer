@@ -55,9 +55,10 @@ Four compact goals
    A distinct 32-row BFP4 worker leaf now compiles and passes simulated
    RISC-V tests with inputs from ROOT L1 and converted weights from GDDR.
    It is NOT installed or integrated into full-model inference.
-   A CPU-only full-token accuracy diagnostic is running; its first-layer
-   control reproduces the previous 1.81% final-hidden error. No whole-token
-   BFP4 accuracy result or card speed improvement has been established yet.
+   A CPU-only full-token accuracy diagnostic completed all 64 layers with
+   BFP4 FFN substitutions. Final logits differed by 35.9% relative L2,
+   though both paths picked the same next token. This one-token result is a
+   warning, not an answer-quality pass, and not a card speed measurement.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

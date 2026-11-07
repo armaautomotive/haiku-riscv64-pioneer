@@ -11,7 +11,7 @@ Baseline
 The full model runs on card, including attention/state. One short counting
 response measured 0.17287tok/s; this is not a usable service or broad quality
 test. Setup was 25.65 minutes and weights were released at END. Current
-stable041/gen16 was restored after a later timed BFP4 synthetic diagnostic; it is a rollback driver, not
+stable041/gen18 was restored after the later real-weight BFP4 diagnostic; it is a rollback driver, not
 the experimental fast engine. This is the last recorded state, not a live
 assertion about the machine.
 
@@ -70,6 +70,14 @@ one prompt token showed 1.81% relative L2 error at the residual output and
 10.72% at the intermediate activation. These are NOT model tokens/sec or
 full-model quality results; see qwen38-bfp4-dram-real-band-physical-20261106
 and qwen38-bfp4-first-ffn-quality-20261106 in benchmarks/.
+
+Current quality gate: a CPU-only one-token comparison completed all 64 layers
+with BFP4 substituted into all 192 FFN projections. Its original Q4 trace
+matches the pinned reference exactly. The experimental path selected the
+same next token but produced 35.9% relative L2 logit difference; this is a
+warning, not a quality pass or a card speed measurement. Study selective or
+higher-precision conversion before considering Work integration. See
+qwen38-bfp4-full-cpu-quality-20261106 in benchmarks/.
 
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves
 the original fragment byte footprint. A separate versioned disk cache passes
