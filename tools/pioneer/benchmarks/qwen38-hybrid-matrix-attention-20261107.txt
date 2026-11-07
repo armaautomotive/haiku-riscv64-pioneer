@@ -80,6 +80,21 @@ QGW7 worker directory and BFP4 leaf directory to
 tests/run_pioneer_q38_hybrid_matrix_root_tests.py; the runner checks their
 image hashes, rebuilds both ROOT identities and uses ASan/UBSan.
 
+A subsequent one-peer synthetic-fabric test executes the actual linked
+QGW7 ROOT Transfer instructions and the actual worker instructions, after
+three real simulated projection jobs have established worker history. The
+ROOT transfer code sends the dense frame, query, current K/V, two parameter
+frames, three jobs and doorbells; it then reads boot/status/doorbells,
+three-phase internal jobs and receipts, and the 12 KiB partial result. The
+result matched the synthetic reference. The 29 modeled packets use checked
+ROOT source/counter/command seals, and an injected command-readback fault
+stopped the ROOT before issuing an additional packet. The fabric completes
+packets synchronously and the fixture supplies ROOT private frame and inputs;
+it does not execute the complete ROOT Launch/Snapshot/global reduction,
+96-worker coordination, prefix-KV NoC reads, full token or physical silicon.
+The same root-test runner executes this case when the worker and leaf
+directories are supplied. This is not a Work-mode or hardware speed result.
+
 A native owner/format identity, full ROOT-to-worker L1 lifecycle,
 prior-token attention transport, multi-layer/token checks, quality and
 physical benchmarking remain required. No new throughput has been measured.

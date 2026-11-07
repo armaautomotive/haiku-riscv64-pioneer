@@ -75,7 +75,7 @@ struct TransitionImage:HybridImage {
   transfer.issues=transfer.completions=0;transfer.band=0;
   native.clears=0;native.unpacks[0]=native.unpacks[1]=0;native.matrixOps=0;stores=0;
  }
- void StageDense(unsigned phase,unsigned sequence){
+ void StageDense(unsigned phase,unsigned sequence,bool stageJob=true){
   assert(phase>=1 && phase<=3);denseMode=true;
   if(phase==1){
    unsigned d[64]={};const unsigned first[]={Dense::Magic,1,64,3,0,3,0,1,0x10000000,0x20000000,0,1,Dense::Route(0),Dense::Route(1),boot[4],73};
@@ -100,6 +100,7 @@ struct TransitionImage:HybridImage {
     (phase==3 && i>=8 && i<14)?PioneerAttentionBits(1.f):0;
    WordWrite(Dense::Parameters+i*4,value);
   }
+  if(!stageJob)return;
   unsigned j[64]={};j[0]=HW::Magic;j[1]=sequence;j[2]=HW::DenseScores+phase-1;j[3]=73;j[4]=boot[4];j[5]=3;j[6]=0;j[7]=2025;
   for(unsigned i=0;i<8;i++)j[8+i]=boot[8+i];
   assert(HW::JobShape(j,boot.data(),sequence-1,phase-1));

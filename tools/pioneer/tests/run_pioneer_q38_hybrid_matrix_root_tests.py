@@ -67,6 +67,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw7-root-',dir='/private/tmp')
    '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
    '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1',here/'pioneer_q38_hybrid_matrix_root_worker_test.cpp','-o',connected)
   run(connected,first,old,worker,leaf)
+  noc=tmp/'root-worker-noc'
+  run(os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
+   '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
+   '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1',here/'pioneer_q38_hybrid_matrix_noc_test.cpp','-o',noc)
+  run(noc,first,worker,leaf)
  else:
   print('SKIP coordinator-to-worker handoff: supply QGW7 worker and BFP4 leaf directories')
  print('PASS QGW7 ROOT independent builds match; QGW5 pins unchanged; four incompatible profiles refused')

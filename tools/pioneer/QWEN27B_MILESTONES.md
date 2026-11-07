@@ -47,7 +47,9 @@ projection/attention/projection transition. A matching experimental ROOT now
 builds reproducibly, and its projection job functions passed simulation;
 its actual attention job code also drove one simulated worker through all
 three attention phases, using a synthetic frame and direct test delivery.
-The complete ROOT/NoC-to-worker attention path and full model are not yet tested.
+Its actual ROOT packet-transfer code also exchanged inputs, jobs, receipts
+and output with one simulated worker. The complete 96-worker ROOT lifecycle,
+real NoC and full model are not yet tested.
 See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
 and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 

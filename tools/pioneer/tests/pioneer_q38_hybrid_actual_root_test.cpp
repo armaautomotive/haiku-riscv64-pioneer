@@ -9,7 +9,7 @@
 #include <string>
 struct ActualRoot:Machine {
  std::vector<std::pair<unsigned,std::vector<uint8_t>>> rom;
- std::map<unsigned,unsigned> memory;std::vector<unsigned> build,job,denseJob;
+ std::map<unsigned,unsigned> memory;std::vector<unsigned> build,job,denseJob,transfers;
  unsigned minSP=0x70000;
  ActualRoot(const char* image){
   for(auto p:{std::make_pair("bf16",0x20000U),{"text",0x40000U},{"terminal",0x60000U},{"conv",0x64000U}})
@@ -19,6 +19,7 @@ struct ActualRoot:Machine {
    if(line.find("Projection::BfBuildPairs(")!=std::string::npos)build.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
    if(line.find("Projection::BfMatrixJob(")!=std::string::npos)job.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
    if(line.find("DensePartitionRoot::Job(")!=std::string::npos)denseJob.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
+   if(line.find("DensePartitionRoot::Transfer(")!=std::string::npos)transfers.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
   }
   assert(build.size()==2 && job.size()==2);
  }
