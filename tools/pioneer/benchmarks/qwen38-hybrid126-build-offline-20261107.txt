@@ -1,0 +1,28 @@
+Qwen hybrid corrected candidate: build and identity only
+=======================================================
+November 7, 2026. No device was opened, no driver was installed and no
+inference, accuracy or token/s measurement occurred.
+
+The corrected candidate has tag 2026110700010126, distinct from failed
+tag125. The candidate builder requires explicit --fixed-126 and refuses to
+build another tag125. The shared reload protocol reserves tag126 for the
+matching full-native role; omission, zero-valued selectors, late selector
+changes and the old tag are refused by the build's role checks. The tag126
+client expects tag126, and synthetic uploader tests reject tag125 and the
+other driver identities. Failed control replies remain untrusted diagnostic
+data, not permission to retry or release resources.
+
+Two independent RISC-V builds of the candidate from this worktree produced
+the same SHA-256:
+65583dd13eb545b24f42d18918d8e741f5e90d56040a1b6dfe610ae890f1440b  tenstorrent_pci_probe-hybrid126
+The matching full diagnostic cross-build was:
+8b65e83fa356e2fa56761960d0446f4c70bead7eaae5ca02414c8a6d7f92cecb  pioneer-q38-hybrid-full-diagnostic
+These are temporary build-only artifacts, not approved deployable releases.
+The worktree contained pre-existing unrelated edits while they were built;
+audit exact driver dependencies and source provenance before physical use.
+
+The pinned QGW5 image/ELF tests, full client lifecycle/failure simulation and
+tracked receipt tests passed. The complete real-driver link verifies its
+expected code sections and absence of selected CPU-reference symbols. These
+checks do not establish actual hardware startup, output quality or speed.
+The failed tag125 one-shot harness must not be reused for this build.

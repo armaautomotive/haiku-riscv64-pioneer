@@ -129,6 +129,17 @@ failure stage, so this is a concrete defect consistent with that trial, not
 proof that it was the only failure or that inference now works.
 See the [offline binding result](benchmarks/qwen38-hybrid-runtime-bind-offline-20261107.txt).
 
+The corrected build and diagnostic now have a separate tag126 identity;
+their offline lifecycle tests reject the older tag125. The tag125 driver
+builder is retired so changed code cannot silently reuse that identity. A
+tag126 driver and client cross-build successfully, but neither has been
+installed or run. The existing tag125 one-shot parent is not a tag126 test
+harness and must not be reused. Recovery of the normal driver, an independently
+guarded new test, and physical confirmation are still required. The build was
+made from a worktree with other pre-existing changes; audit the exact build
+inputs before any deployment rather than treating this as a clean release.
+See the [tag126 build record](benchmarks/qwen38-hybrid126-build-offline-20261107.txt).
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored

@@ -6,12 +6,15 @@ import runpy
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv)!=3:
-    raise SystemExit('use ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT')
-sdk,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
+args=sys.argv[1:];fixed='--fixed-126' in args
+if fixed:
+    assert args.count('--fixed-126')==1;args.remove('--fixed-126')
+if not __debug__ or len(args)!=2:
+    raise SystemExit('use [--fixed-126] ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT')
+sdk,out=map(Path,args);here=Path(__file__).resolve().parent
 saved=sys.argv
 try:
-    sys.argv=[str(here/'build_q38_hybrid_upload_diagnostic.py'),'--candidate-build-only',str(sdk),str(out)]
+    sys.argv=[str(here/'build_q38_hybrid_upload_diagnostic.py'),'--candidate-build-only',*(['--fixed-126'] if fixed else []),str(sdk),str(out)]
     base=runpy.run_path(sys.argv[0],run_name='__main__')
 finally:
     sys.argv=saved

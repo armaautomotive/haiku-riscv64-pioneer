@@ -7,9 +7,15 @@ import re
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv)!=4 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
- raise SystemExit('use ABSOLUTE_HAIKU_BUILD PINNED_QGW5_HEADER NEW_ABSOLUTE_OUTPUT')
-sdk,header,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent;root=here.parent.parent
+args=sys.argv[1:];fixed='--fixed-126' in args
+if fixed:
+ assert args.count('--fixed-126')==1;args.remove('--fixed-126')
+if not __debug__ or len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+ raise SystemExit('use [--fixed-126] ABSOLUTE_HAIKU_BUILD PINNED_QGW5_HEADER NEW_ABSOLUTE_OUTPUT')
+if not fixed:
+ raise SystemExit('tag125 is retired after its physical failure; use --fixed-126 for the corrected candidate')
+sdk,header,out=map(Path,args);here=Path(__file__).resolve().parent;root=here.parent.parent
+tag='0x2026110700010126ULL'
 if not all(p.is_absolute() for p in (sdk,header,out)) or not sdk.is_dir() or not header.is_file() or out.exists() or out.is_symlink():
  raise SystemExit('invalid SDK, header or output')
 headerDigest=hashlib.sha256(header.read_bytes()).hexdigest()
@@ -29,15 +35,15 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
  '-fno-strict-aliasing','-fno-delete-null-pointer-checks','-mcmodel=medany','-fpic','-D_KERNEL_MODE=1']
 flags=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
  ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
-flags+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010125ULL',
- '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"']
+flags+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+tag,
+ '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"','-DPIONEER_Q38_HYBRID_FIXED_126=1']
 driver=root/'src/add-ons/kernel/drivers/misc';source=driver/'pioneer_q38_hybrid_full_driver.cpp';commands=[]
 role=driver/'PioneerQ38HybridFullNativeRole.h'
 declared=re.findall(r'^#define ([A-Z][A-Z0-9_]*) 1$',source.read_text(),re.M)
 roleflags=['-D_KERNEL_MODE=1',*['-D'+name+'=1' for name in declared],
  *['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
  ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')],
- '-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010125ULL']
+ '-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+tag,'-DPIONEER_Q38_HYBRID_FIXED_126=1']
 def rolecheck(args,shouldPass):
  result=subprocess.run([cxx,'-std=gnu++17',*args,'-E','-x','c++',str(role)],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
  assert (result.returncode==0)==shouldPass,result.stderr[:1000]
@@ -57,11 +63,30 @@ for flag in ('PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY','PIONEER_Q38_HYBRID_NATIVE
  'PIONEER_Q38_TOKEN_PHASE_PROFILE_BENCHMARK_NATIVE'):
  rolecheck([*roleflags,'-D'+flag+'=1'],False)
 rolecheck([v for v in roleflags if not v.startswith('-DPIONEER_DRIVER_BUILD_TAG=')]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026102100010012ULL'],False)
+rolecheck([v for v in roleflags if not v.startswith('-DPIONEER_DRIVER_BUILD_TAG=')]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010125ULL'],False)
+# Even a different driver including the shared reload protocol must not
+# claim tag126. Removing either selector or changing its value must fail.
+reloadHeader=driver/'PioneerDriverReloadProtocol.h'
+fixedRole=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+tag,
+           '-DPIONEER_Q38_HYBRID_FULL_NATIVE=1','-DPIONEER_Q38_HYBRID_FIXED_126=1']
+for removed in (None,2,3):
+ probe=[v for i,v in enumerate(fixedRole) if i!=removed]
+ result=subprocess.run([cxx,'-std=gnu++17',*probe,*includes,'-E','-x','c++',str(reloadHeader)],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+ assert (result.returncode==0)==(removed is None),result.stderr[:1000]
+for index in (2,3):
+ probe=list(fixedRole);probe[index]=probe[index].split('=')[0]+'=0'
+ result=subprocess.run([cxx,'-std=gnu++17',*probe,*includes,'-E','-x','c++',str(reloadHeader)],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+ assert result.returncode,'tag126 accepted a disabled selector'
+for selector in ('PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_HYBRID_FIXED_126'):
+ late='#include "'+str(reloadHeader)+'"\n#undef '+selector+'\n#include "'+str(reloadHeader)+'"\n'
+ result=subprocess.run([cxx,'-std=gnu++17',*fixedRole,*includes,'-E','-x','c++','-'],input=late,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+ assert result.returncode and 'Tag126 is reserved' in result.stderr,'late tag126 role change accepted'
 def run(*args):
  commands.append([str(v) for v in args]);subprocess.run(commands[-1],check=True,cwd=out)
 protocolTest=out/'protocol-test'
 run(os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
  '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_FULL_PROTOCOL_TEST=1',
+ '-DPIONEER_Q38_HYBRID_FIXED_126=1',
  here/'tests/pioneer_q38_full_offload_protocol_test.cpp','-o',protocolTest)
 run(protocolTest)
 dep=subprocess.check_output([*common,*flags,*includes,'-MM',str(source)],text=True)
@@ -70,7 +95,7 @@ dependencies.add(Path(__file__).resolve());frozen={p:hashlib.sha256(p.read_bytes
 run(*common,*includes,'-c',driver/'PioneerPciProfile.cpp','-o',out/'profile.o')
 run(*common,*flags,*includes,'-c',source,'-o',out/'native.o')
 def compiler_path(name):return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
-binary=out/'tenstorrent_pci_probe-hybrid125'
+binary=out/'tenstorrent_pci_probe-hybrid126'
 run(cxx,'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenstorrent_pci_probe',compiler_path('crtbeginS.o'),
  release/'system/glue/haiku_version_glue.o',out/'native.o',out/'profile.o',release/'system/kernel/kernel.so',
  compiler_path('libgcc.a'),compiler_path('crtendS.o'),'-o',binary)
@@ -99,5 +124,5 @@ assert frames and all(len(row)==3 and row[2]=='static' and int(row[1])<=4096 for
 selected=[int(row[1]) for row in frames if 'Token' in row[0] or 'HybridUpload' in row[0]];assert selected and max(selected)<=2048
 assert headerDigest==hashlib.sha256(header.read_bytes()).hexdigest()
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
-print('HYBRID125_BINARY_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
-print('PASS candidate build: exact tag125, 15 pinned QGW5 sections, no CPU inference symbols; NOT installed, run, numerically qualified or speed-tested')
+print('HYBRID126_BINARY_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
+print('PASS candidate build: exact tag126, 15 pinned QGW5 sections, no CPU inference symbols; NOT installed, run, numerically qualified or speed-tested')

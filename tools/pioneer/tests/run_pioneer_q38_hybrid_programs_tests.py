@@ -159,5 +159,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
     if native:
         run(sys.executable,here/'run_pioneer_q38_hybrid_upload_control_tests.py','--qgw5-header',out,sdk)
     if candidate:
-        run(sys.executable,root/'build_q38_hybrid_full_native.py',sdk,out,tmp/'hybrid125')
+        refused=subprocess.run([sys.executable,str(root/'build_q38_hybrid_full_native.py'),str(sdk),str(out),str(tmp/'legacy125')],capture_output=True,text=True)
+        assert refused.returncode and 'tag125 is retired' in refused.stderr and not (tmp/'legacy125').exists()
+        run(sys.executable,root/'build_q38_hybrid_full_native.py','--fixed-126',sdk,out,tmp/'hybrid126')
 print('PASS complete QGW5 image section/ELF binding, immutable output, corruption refusals and role exclusions; NO DEVICE')

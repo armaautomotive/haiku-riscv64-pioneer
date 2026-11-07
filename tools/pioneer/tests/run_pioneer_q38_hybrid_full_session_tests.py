@@ -19,6 +19,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-full-session-',dir='/pri
   run(binary,*args)
  for mode in ('--fail','--bad'):
   for action in range(1,7):run(binary,mode,action)
+ fixed=out/'fixed-test'
+ run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-variable',
+  '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_FIXED_126=1',here/'pioneer_q38_hybrid_full_session_test.cpp','-o',fixed)
+ run(fixed);run(fixed,'--fail',1);run(fixed,'--bad',1)
  # Separate full candidate cannot be silently turned into validation, Work,
  # a kernel, an old full client, or the untracked upload diagnostic.
  header=root/'PioneerQ38HybridFullSession.h'
@@ -37,4 +41,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-full-session-',dir='/pri
    input=source,capture_output=True,text=True)
   assert result.returncode and 'Hybrid full candidate is a separate' in result.stderr,forbidden
  run(sys.executable,root/'build_q38_hybrid_full_diagnostic.py',sdk,out/'cross-build')
+ run(sys.executable,root/'build_q38_hybrid_full_diagnostic.py','--fixed-126',sdk,out/'fixed-cross-build')
  print('PASS hybrid full client lifecycle and Haiku cross-build; simulated only, no physical inference or speed')

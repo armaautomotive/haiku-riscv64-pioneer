@@ -23,7 +23,11 @@ struct TrackedIO {
    auto& q=*static_cast<tt_pioneer_driver_reload*>(data);assert(bytes==sizeof(q));
    q.driver=55;q.guard_version=1;q.build_tag=wrongTag?wrongTag:
 #ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
+#ifdef PIONEER_Q38_HYBRID_FIXED_126
+    UINT64_C(0x2026110700010126);
+#else
     UINT64_C(0x2026110700010125);
+#endif
 #else
     UINT64_C(0x51544b4e4f445256);
 #endif
@@ -72,9 +76,14 @@ int main(int argc,char** argv){
  using Session=PioneerQ38HybridUploadSession<FakePages,TrackedIO,true>;
  if(argc==1)for(uint64_t tag:{UINT64_C(0x2026102100010012),
 #ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
-  UINT64_C(0x51544b4e4f445256)
-#else
+  UINT64_C(0x51544b4e4f445256),
+#ifdef PIONEER_Q38_HYBRID_FIXED_126
   UINT64_C(0x2026110700010125)
+#else
+  UINT64_C(0x2026110700010126)
+#endif
+#else
+  UINT64_C(0x2026110700010125),UINT64_C(0x2026110700010126)
 #endif
  }){
   FakePages p(*canonical);TrackedIO io(*canonical,p);Session s(p,io);io.wrongTag=tag;

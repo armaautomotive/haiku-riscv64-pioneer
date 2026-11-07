@@ -23,6 +23,10 @@
 #error Hybrid candidate uploader requires the distinct tracked client
 #endif
 #endif
+#if defined(PIONEER_Q38_HYBRID_FIXED_126) && (!defined(PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT) \
+ || PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT != 1 || PIONEER_Q38_HYBRID_FIXED_126 != 1)
+#error Fixed tag126 client requires the distinct candidate uploader
+#endif
 #ifdef PIONEER_Q38_HYBRID_FULL_CLIENT
 #if PIONEER_Q38_HYBRID_FULL_CLIENT != 1 || !defined(PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT) \
  || PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT != 1
@@ -55,7 +59,12 @@ template<class Pages,class IO,bool Tracked=false> class PioneerQ38HybridUploadSe
  PioneerQ38HybridSpanUpload<Pages,IO> upload;
  bool attempted=false;
 #ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
+#ifdef PIONEER_Q38_HYBRID_FIXED_126
+ static_assert(PIONEER_Q38_HYBRID_FIXED_126==1,"exact fixed candidate selection required");
+ static constexpr uint64_t TrackedTag=UINT64_C(0x2026110700010126);
+#else
  static constexpr uint64_t TrackedTag=UINT64_C(0x2026110700010125);
+#endif
 #else
  static constexpr uint64_t TrackedTag=UINT64_C(0x51544b4e4f445256); // non-loadable context only
 #endif

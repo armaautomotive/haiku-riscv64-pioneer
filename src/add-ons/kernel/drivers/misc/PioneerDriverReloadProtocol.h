@@ -1,4 +1,12 @@
 /* SPDX-License-Identifier: MIT */
+// The fixed hybrid candidate must not share its identity with another driver.
+// Recheck outside the include guard so a later role/tag change is rejected.
+#if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
+ && PIONEER_DRIVER_BUILD_TAG == 0x2026110700010126ULL \
+ && (!defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 || !defined(PIONEER_Q38_HYBRID_FIXED_126) \
+  || PIONEER_Q38_HYBRID_FIXED_126 != 1)
+#error Tag126 is reserved for the corrected tracked hybrid full-card candidate
+#endif
 #ifndef PIONEER_DRIVER_RELOAD_PROTOCOL_H
 #define PIONEER_DRIVER_RELOAD_PROTOCOL_H
 #include <stdint.h>

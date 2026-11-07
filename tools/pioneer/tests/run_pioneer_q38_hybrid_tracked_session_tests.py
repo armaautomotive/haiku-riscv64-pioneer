@@ -21,9 +21,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-tracked-session-',dir='/private
   '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT=1',
   here/'pioneer_q38_hybrid_tracked_session_test.cpp','-o',candidate)
  run(candidate);run(candidate,'--seal-failure');run(candidate,'--bad-seal')
+ fixed=out/'fixed-candidate-test'
+ run(compiler,'-std=c++17','-O2','-g','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-variable',
+  '-fsanitize=address,undefined','-DPIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT=1','-DPIONEER_Q38_HYBRID_FIXED_126=1',
+  here/'pioneer_q38_hybrid_tracked_session_test.cpp','-o',fixed)
+ run(fixed);run(fixed,'--seal-failure');run(fixed,'--bad-seal')
  # Cross-build both explicitly tagged, non-interchangeable client variants.
  run(sys.executable,root/'build_q38_hybrid_upload_diagnostic.py','--tracked-compile-only',sdk,out/'build')
  run(sys.executable,root/'build_q38_hybrid_upload_diagnostic.py','--candidate-build-only',sdk,out/'candidate-build')
+ run(sys.executable,root/'build_q38_hybrid_upload_diagnostic.py','--candidate-build-only','--fixed-126',sdk,out/'fixed-build')
  source='#define PIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC 1\n#include "'+str(root/'PioneerQ38HybridUploadSession.h')+'"\n'
  result=subprocess.run([compiler,'-std=c++17','-DPIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT=0','-E','-x','c++','-'],
   input=source,capture_output=True,text=True)
@@ -33,6 +39,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-tracked-session-',dir='/private
   result=subprocess.run([compiler,'-std=c++17',*flags,'-E','-x','c++','-'],
    input=source,capture_output=True,text=True)
   assert result.returncode and 'Hybrid candidate uploader requires the distinct tracked client' in result.stderr
+ for flags in (['-DPIONEER_Q38_HYBRID_FIXED_126=1'],
+               ['-DPIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT=1','-DPIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT=1','-DPIONEER_Q38_HYBRID_FIXED_126=0']):
+  result=subprocess.run([compiler,'-std=c++17',*flags,'-E','-x','c++','-'],input=source,capture_output=True,text=True)
+  assert result.returncode and 'Fixed tag126 client requires' in result.stderr
  result=subprocess.run([sys.executable,str(root/'build_q38_hybrid_upload_diagnostic.py'),
   '--candidate-build-only','--tracked-compile-only',str(sdk),str(out/'invalid')],capture_output=True,text=True)
  assert result.returncode and not (out/'invalid').exists()

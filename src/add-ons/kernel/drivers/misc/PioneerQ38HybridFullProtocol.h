@@ -9,7 +9,12 @@
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
+#ifdef PIONEER_Q38_HYBRID_FIXED_126
+static_assert(PIONEER_Q38_HYBRID_FIXED_126==1,"exact fixed candidate selection required");
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
+#else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010125);
+#endif
 enum {Version=1,MaxPrompt=96,MaxOutput=32,MaxPositions=128,Vocabulary=248320};
 enum {Matrices=1,Attention=2,Recurrent=4,KV=8,Embedding=16,Normalize=32,
  Residual=64,Activation=128,Greedy=256,AllCompute=511};
