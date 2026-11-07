@@ -29,6 +29,19 @@ physical execution, a full token, or proof of real hardware cleanup.
 Direct held-memory regression with the pinned input artifacts:
   python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --held --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
 
+The next runtime-staging regression also passed for both the hybrid and the
+original layout. Following initialization and held-memory preparation, the
+actual native runtime factory staged and read back 37,782,528 bytes of startup
+metadata, prompt, position data and empty output areas using 4,616 simulated
+transfers, checked all 120 worker boot-data records and restored the held
+memory journal. The expected bytes were built independently from the same
+canonical startup-plan implementation; this is not an independent model or
+numerical oracle. No worker was started and no model weights or tokens were
+computed. The unchanged original path passed the same runtime check.
+
+Direct runtime regression with the same pinned input artifacts:
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --runtime --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
+
 Reproducible integration command:
   python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
 The QGW5 program header is pinned by SHA-256

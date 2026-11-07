@@ -134,7 +134,9 @@ native state initializers using the real zero program on simulated endpoints.
 It passed without modifying the simulated learned ledger. This is not a
 physical startup, model execution, quality or speed result.
 The same simulated owner also passed preparation and restoration of held
-worker memory for all 120 workers; no worker was launched.
+worker memory for all 120 workers, followed by runtime-metadata staging and
+readback; no worker was launched. The original-layout runtime regression also
+passed. These are simulated startup checks, not physical inference.
 
 The corrected build and diagnostic now have a separate tag126 identity;
 their offline lifecycle tests reject the older tag125. The tag125 driver

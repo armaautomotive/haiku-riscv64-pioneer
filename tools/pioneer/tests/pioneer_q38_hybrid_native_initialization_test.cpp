@@ -7,9 +7,12 @@
 #undef main
 
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && !strcmp(argv[2],"--held")));
+ assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime"))));
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  assert(argc==2);
+#endif
+#ifndef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+ assert(argc!=3 || strcmp(argv[2],"--runtime"));
 #endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
@@ -51,6 +54,9 @@ int main(int argc,char** argv){
  assert(!c.q38TokenNative->Unsafe() && !c.banks.Quarantined() && f.learned==before);
  puts("PASS real sealed hybrid receipt/bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+ io.runtimeWorkspace=io.workspaceAddress;
+#endif
  if(argc==3)CheckNativeHeld(f,0);
 #endif
 }
