@@ -101,6 +101,12 @@ Four compact goals
    The normal BF16 ROOT rebuild is byte-for-byte unchanged. This experimental
    path is NOT installed or fully executed, authenticates neither its table
    nor uploaded pages, and cannot reuse the old native owner/journal.
+   A CPU-only hybrid preparation tool now builds for Haiku and can create or
+   verify the 1071 BFP4 cache fragments; it has NOT been run on the full
+   model. A separate page adapter selects BFP4, existing BFP8 or original
+   pages and can preflight all 1344 converted fragments. Its full-coverage
+   test uses simulated readers; one BFP4 fragment uses an actual disk-cache
+   fixture. The adapter is not linked to a card uploader or Work/Assistant.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

@@ -51,6 +51,10 @@ public:
 		error.clear();return true;
 	}
 	bool Ready() const{return model && sourceReady && sourceReady() && model->Ready() && model->Epoch()==epoch && model->Stable();}
+	bool MatchesSource(const PioneerQwen38Gguf& source) const{return Ready() && model==&source;}
+	bool MatchesIdentity(const PioneerQwen38Gguf& source,const Cache::Digest& sha) const{
+		return MatchesSource(source) && original==sha;
+	}
 	// Key metadata only,not a claim that cached data exists or is verified.
 	bool KeyFor(unsigned tensor,Cache::Key& key) const {
 		if(!Ready() || tensor>=model->Tensors().size())return false;

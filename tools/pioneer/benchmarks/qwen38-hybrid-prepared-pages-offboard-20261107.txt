@@ -1,0 +1,39 @@
+Hybrid weight preparation, November 7 2026: OFFBOARD / CPU-ONLY
+================================================================
+
+The hybrid model layout uses 1071 BFP4 FFN fragments and 273 BFP8 FFN
+fragments; all other weights retain their original format. A new userspace
+adapter binds a fixed authenticated-source declaration to the original
+packed plan and canonical proposed relocated layout. It reads BFP4 cache
+entries with OpenExisting (never repairs an entry), BFP8 stripe pages through
+the existing cache reader, and other weights through the original tiled page
+reader. Destination coordinates are only proposal data, not device grants.
+
+The adapter has a full converted-fragment preflight. Tests used a real BFP4
+fragment cache created from SYNTHETIC model rows, simulated BFP8/original
+readers, and fake caches to exercise all 1344 preflight selections. They also
+cover missing caches, corruption refusal, source/plan changes, padding,
+unchanged output on failure and wrong source identity. The actual GGUF and
+BFP8 source types compile with the adapter; no full real model was converted.
+
+The CPU-only Haiku preparer can create or verify all 1071 BFP4 fragments:
+  python3 tools/pioneer/build_q38_hybrid_bfp4_prepare.py HAIKU_BUILD NEW_OUTPUT
+  pioneer-q38-hybrid-bfp4-prepare --prepare-bfp4 ABSOLUTE_DEDICATED_CACHE
+  pioneer-q38-hybrid-bfp4-prepare --verify-bfp4 ABSOLUTE_DEDICATED_CACHE
+It checks the full same-open original model hash before cache operations.
+The Haiku binary cross-build succeeded; neither command was run on the real
+model. BFP8 tensor entries must also be prepared separately; they were not.
+
+The shared cache implementation was left unchanged to preserve its existing
+BFP8 recipe fingerprint 7db613bfdde463be7f933f25123a00dbe39928cbd8a070aa2481c6cb936753d0.
+The SSH endpoint initially presented an unexpected host key. Its public key
+was subsequently matched against the previously recorded Pioneer fingerprint
+and the generated Haiku host public key. Using a separate pinned known-hosts
+file and the recorded Haiku account, a read-only connection succeeded. The
+CPU-only preparer was copied to /boot/home/pioneer-hybrid-bfp4-prepare-20261107;
+its remote SHA-256 matches the local build:
+6caecadac05b15b20110579ab1a7d101fb4d066dd6b54e263f397d7d368871b1.
+The preparer was not run, and no driver, model file or physical card was
+changed. Adapter integration into the
+native uploader, ownership, relocated non-FFN metadata, accuracy and physical
+27B speed remain unverified. The previous real full-model rate is 0.17290 t/s.

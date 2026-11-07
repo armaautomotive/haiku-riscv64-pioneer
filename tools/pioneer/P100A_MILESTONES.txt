@@ -1,0 +1,73 @@
+P100A / Qwen 27B: compact milestones and work inventory
+=======================================================
+November 7, 2026. This is a navigation aid, not evidence of a new benchmark.
+Keep the full objective: usable self-hosted inference on the P100A, targeting
+20 tokens/second, with no CPU-reference inference in Work. Validation remains
+separate; preserve the working system and do not discard existing work.
+
+Baseline: one short full-27B request executed inference on the card at about
+0.1729 tokens/second, with about 35 minutes from Generate to answer-ready.
+The response was a truncated counting example, not broad quality validation.
+The 20-token/second target is unproven. Evidence:
+benchmarks/qwen38-fast-decode-profile-physical-20261106.txt and
+benchmarks/qwen38-early-job-snapshot-physical-20261106.txt.
+
+Milestone 1: account for and preserve work
+------------------------------------------
+Keep experimental files distinct from the last working rollback, and check in
+identifiable, tested work without staging other experiments accidentally.
+Do not erase files, reset the tree, alter the submodule, or touch installed
+drivers in the name of cleanup. Check git status before each checkpoint.
+
+The November 7 checkout included these separate work groups:
+* Hybrid BFP4/BFP8 preparation, experimental only: cache/page source headers,
+  a CPU-only preparer, tests, and the hybrid preparation benchmark note.
+* Uncommitted resident-driver and native build experiments under
+  src/add-ons/kernel/drivers/misc/ and tools/pioneer/. They need their own
+  provenance and tests before staging or use; they are not part of the
+  preparation checkpoint.
+* Flash Next and mixed-FPU exploratory sources, tests, and reports under
+  tools/pioneer/. Keep as found; no performance claim follows from their
+  presence in the tree.
+* Modified llama.cpp submodule sources: common/arg.cpp, common/common.cpp,
+  common/download.cpp, and ggml/src/ggml-cpu/ggml-cpu.c. Do not commit or
+  reset these as part of the unrelated preparation checkpoint.
+* Historical untracked WIP reports, logs, and compiler .su files. Preserve
+  them; their age or untracked status does not make them safe to delete.
+
+Inventory is a dated snapshot; use git status, submodule status, and the
+actual diffs for current state. The stable driver is a rollback, not proof
+that every uncommitted experiment is safe or currently installed.
+
+Milestone 2: make a go/no-go decision on one candidate
+-----------------------------------------------------
+Candidate: converted BFP4/BFP8 FFN weights and native card operations. A
+single BFP4 band took roughly 227k card cycles including GDDR and compute,
+versus roughly 643k in a prior Q4 diagnostic, but inputs and representations
+are not an equivalent-accuracy paired benchmark. Whole-model quality is not
+established; one-token hybrid quality tests are warnings, not a pass.
+
+Before further full-model integration, define a model-relevant accuracy gate,
+measure representative real weights and prompts against the Q4 reference,
+and establish a matched on-card operation comparison including data movement.
+Report the results and accept, improve, or abandon the candidate. Avoid
+claiming model speed from band cycles or treating cache preparation as a gain.
+Relevant evidence: benchmarks/qwen38-bfp4-dram-real-band-physical-20261106.txt
+and benchmarks/qwen38-bfp-hybrid-cpu-quality-20261106.txt.
+
+Milestone 3: prove full-model improvement
+-----------------------------------------
+Only after the candidate passes its gate, connect it safely to the real
+model and compare matched full-27B requests, including correctness, generation
+tokens/second, loading time, repeatability and safe driver restoration.
+An isolated operation or a successful build does not complete this milestone.
+
+Milestone 4: usable Assistant
+-----------------------------
+Keep a qualified model loaded across requests, expose the proven Work mode in
+Assistant, verify load/unload and real use, and measure warm response latency.
+Do not replace the working Assistant with an unqualified experiment.
+
+At each milestone report: change, test scope, measured result, quality limits,
+decision, and next action. More detailed history remains in P100A_WORK_PLAN.txt,
+P100A_CURRENT_STATUS.txt and benchmarks/. Do not delete the evidence.

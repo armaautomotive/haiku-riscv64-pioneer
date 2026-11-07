@@ -3,6 +3,9 @@
 #define PIONEER_Q38_BFP4_FRAGMENT_CACHE_H
 #include "PioneerQ38Bfp4FragmentSource.h"
 #include "PioneerModelWeightCache.h"
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 // Separate derived-weight cache for this EXPERIMENTAL representation only.
 // Callers must authenticate the original same-open model and compute the
@@ -14,12 +17,10 @@ template<class Source> class PioneerQ38Bfp4FragmentCache {
  PioneerQ38Bfp4FragmentSource<Source> converter;Cache cache;Cache::Reader reader;Cache::Key key;
  bool attempted=false,ready=false;
  static bool Fail(std::string& error,const char* text){error=text;return false;}
-public:
- bool Ready()const{return ready && converter.Ready() && reader.IsOpen();}
- bool Prepare(Source& source,const PioneerQ38PackedPart& part,const Cache::Digest& authenticatedSource,
-  const Cache::Digest& implementation,const char* directory,bool& hit,std::string& error){
+ bool Initialize(Source& source,const PioneerQ38PackedPart& part,const Cache::Digest& authenticatedSource,
+  const Cache::Digest& implementation,const char* directory,bool existingOnly,std::string& error){
   if(attempted)return Fail(error,"BFP4 fragment cache preparation is one-shot.");
-  attempted=true;hit=false;
+  attempted=true;
   if(!std::any_of(authenticatedSource.begin(),authenticatedSource.end(),[](uint8_t v){return v!=0;})
    || !std::any_of(implementation.begin(),implementation.end(),[](uint8_t v){return v!=0;}))
    return Fail(error,"BFP4 cache requires source and implementation identities.");
@@ -29,7 +30,32 @@ public:
   key.sourceSHA256=authenticatedSource;key.conversionSHA256=Cache::Hash(recipe.data(),recipe.size());
   key.entry=(uint64_t(part.layer)<<48)|(uint64_t(part.role)<<40)|(uint64_t(part.firstRow)<<16)|part.rows;
   key.bytes=part.allocated;
-  if(!cache.Open(directory,error))return false;
+  if(!existingOnly)return cache.Open(directory,error);
+  // The common cache API can create a new directory. Refuse a missing or
+  // unsafe path up front and pin its identity while it opens an EXISTING
+  // marked directory; OpenExisting below never creates or repairs entries.
+  int fd=open(directory,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);struct stat before={},after={};
+  if(fd<0 || fstat(fd,&before) || !S_ISDIR(before.st_mode) || before.st_uid!=geteuid() || (before.st_mode&07777)!=0700){
+   if(fd>=0)close(fd);
+   return Fail(error,"Prepared BFP4 cache directory is missing or unsafe.");
+  }
+  const bool opened=cache.Open(directory,error);
+  const bool unchanged=!lstat(directory,&after) && S_ISDIR(after.st_mode) && before.st_dev==after.st_dev && before.st_ino==after.st_ino;
+  close(fd);if(!unchanged)return Fail(error,"Prepared BFP4 cache directory changed while opening.");
+  return opened;
+ }
+public:
+ bool Ready()const{return ready && converter.Ready() && reader.IsOpen();}
+ bool OpenPrepared(Source& source,const PioneerQ38PackedPart& part,const Cache::Digest& authenticatedSource,
+  const Cache::Digest& implementation,const char* directory,std::string& error){
+  if(!Initialize(source,part,authenticatedSource,implementation,directory,true,error))return false;
+  if(!cache.OpenExisting(key,[this]{return converter.Ready();},reader,error)
+   || !converter.Ready() || !reader.IsOpen() || reader.Size()!=key.bytes)return false;
+  ready=true;error.clear();return true;
+ }
+ bool Prepare(Source& source,const PioneerQ38PackedPart& part,const Cache::Digest& authenticatedSource,
+  const Cache::Digest& implementation,const char* directory,bool& hit,std::string& error){
+  hit=false;if(!Initialize(source,part,authenticatedSource,implementation,directory,false,error))return false;
   auto live=[this]{return converter.Ready();};
   auto produce=[this](uint64_t offset,unsigned bytes,uint8_t* out,std::string& why){
    if(!out || (offset&4095) || !bytes || (bytes&4095) || bytes>Cache::ChunkBytes || offset>key.bytes || bytes>key.bytes-offset)

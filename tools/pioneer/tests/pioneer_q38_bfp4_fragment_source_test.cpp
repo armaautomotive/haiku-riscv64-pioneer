@@ -59,6 +59,14 @@ int main(int argc,char** argv){
   const unsigned savedReads=s.reads;PioneerQ38Bfp4FragmentCache<RowSource> warm;
   assert(warm.Prepare(s,part,sourceHash,fingerprint,directory.c_str(),hit,error) && hit && s.reads==savedReads);
   assert(warm.ReadPage(22,actual.data(),actual.size(),error) && actual==expected && s.reads==savedReads);
+  PioneerQ38Bfp4FragmentCache<RowSource> existing;
+  assert(existing.OpenPrepared(s,part,sourceHash,fingerprint,directory.c_str(),error) && existing.Ready()
+   && existing.ReadPage(22,actual.data(),actual.size(),error) && actual==expected && s.reads==savedReads);
+  const auto missingRecipe=PioneerModelWeightCache::Hash("missing-recipe",14);
+  PioneerQ38Bfp4FragmentCache<RowSource> missing;
+  assert(!missing.OpenPrepared(s,part,sourceHash,missingRecipe,directory.c_str(),error) && !missing.Ready() && s.reads==savedReads);
+  const std::string noDir=std::string(argv[1])+"/no-directory";PioneerQ38Bfp4FragmentCache<RowSource> absent;struct stat info={};
+  assert(!absent.OpenPrepared(s,part,sourceHash,fingerprint,noDir.c_str(),error) && lstat(noDir.c_str(),&info) && errno==ENOENT);
   const auto other=PioneerModelWeightCache::Hash("implementation-b",16);PioneerQ38Bfp4FragmentCache<RowSource> different;
   assert(different.Prepare(s,part,sourceHash,other,directory.c_str(),hit,error) && !hit && s.reads==savedReads+64);
   PioneerQ38Bfp4FragmentCache<RowSource> corrupted;assert(corrupted.Prepare(s,part,sourceHash,fingerprint,directory.c_str(),hit,error) && hit);
@@ -71,6 +79,9 @@ int main(int argc,char** argv){
   int fd=open(file.c_str(),O_RDWR);assert(fd>=0);uint8_t value=0;const off_t payload=256+3*32;
   assert(pread(fd,&value,1,payload)==1);value^=1;assert(pwrite(fd,&value,1,payload)==1 && !close(fd));
   assert(!corrupted.ReadPage(0,actual.data(),actual.size(),error) && actual==saved && !corrupted.Ready());
+  PioneerQ38Bfp4FragmentCache<RowSource> refuseCorrupt;const unsigned readsBefore=s.reads;
+  assert(!refuseCorrupt.OpenPrepared(s,part,sourceHash,fingerprint,directory.c_str(),error)
+   && !refuseCorrupt.Ready() && s.reads==readsBefore);
  }
  puts("PASS BFP4 FFN fragment conversion: 5 exact pages incl cross-band, cold/warm disk cache and recipe isolation, 13 geometry and 3 permanent-failure refusals; NO DEVICE OR WORK");
 }
