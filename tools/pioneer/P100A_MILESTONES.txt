@@ -46,6 +46,10 @@ single BFP4 band took roughly 227k card cycles including GDDR and compute,
 versus roughly 643k in a prior Q4 diagnostic, but inputs and representations
 are not an equivalent-accuracy paired benchmark. Whole-model quality is not
 established; one-token hybrid quality tests are warnings, not a pass.
+A two-position fixed-token CPU comparison retained separate original and
+candidate state and matched the top token on each position; this is still
+not a natural-prompt or broad model-quality pass. See
+benchmarks/qwen38-hybrid-two-token-cpu-20261107.txt.
 Source inspection also confirms the recorded Q4 and BFP4 timing runs did not
 use the same input vector: the Q4 exporter uses a (column*19 + block*11)
 pattern, while the BFP4 exporter uses an (input*13) pattern. Thus even their

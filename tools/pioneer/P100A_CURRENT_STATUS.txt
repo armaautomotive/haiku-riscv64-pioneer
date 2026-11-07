@@ -107,6 +107,11 @@ Four compact goals
    pages and can preflight all 1344 converted fragments. Its full-coverage
    test uses simulated readers; one BFP4 fragment uses an actual disk-cache
    fixture. The adapter is not linked to a card uploader or Work/Assistant.
+   A two-position teacher-forced CPU comparison completed with independently
+   retained candidate/original state. Both selected the same token at each
+   position; KL was 0.20372 and 0.02355, with top-five overlap 4/5 and 5/5.
+   This is not natural answer quality, P100A execution or a speed result.
+   See benchmarks/qwen38-hybrid-two-token-cpu-20261107.txt.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

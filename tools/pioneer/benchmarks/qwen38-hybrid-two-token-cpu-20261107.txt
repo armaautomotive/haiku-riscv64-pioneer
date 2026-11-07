@@ -1,5 +1,5 @@
-Hybrid two-token accuracy diagnostic: IN PROGRESS, November 7 2026
-==================================================================
+Hybrid two-token accuracy diagnostic: COMPLETED, November 7 2026
+================================================================
 
 Purpose: extend the existing first-token check to a fixed two-token sequence
 with separate original and candidate attention/GDN/convolution histories.
@@ -15,14 +15,28 @@ contexts and retained state; three forked negative tests refused changed
 mask, changed callback and ordinary Step after position zero. The existing
 one-token synthetic and role tests passed. These are not real-model results.
 
-The real-model comparison was started on the Mac; completion is NOT yet
-established. Its first original-token complete trace is required to match the
+The real-model comparison completed on the Mac with actual process exit 0.
+Its first original-token complete trace matched the
 existing independent pinned SHA; original position 1 is checked against the
 previous two-position control's selected token. Both paths read the same
 authenticated original model, with independent state and a newly authenticated
 ordered FFN sweep per candidate position. Run output is retained locally at
 /private/tmp/pioneer-q38-sequence-quality.sGkzYrUv/comparison.log.
-The started binary SHA-256 is
+The executed binary SHA-256 is
 eae17cb2ad3fc607c14a1b955650b8f4f6fc6c0763aefc945db2dee1a1f1299a.
-Until actual exit status and both result lines are checked, do not describe
-this comparison as complete or claim a numerical result from it.
+The completed transcript SHA-256 is
+24d0e79c9c1e0cbba261124cbc2f5b60fcaf5b08aee81b79489ea539a01ee780.
+Its log contains 128 completed original layer records, 128 completed
+candidate layer records and 384 candidate FFN projection starts across the
+two positions. No device or installed driver was used or changed.
+
+Results (same fixed inputs, original-to-candidate KL in nats):
+* Position 0: original and candidate selected 70253; KL 0.203715882;
+  top-five overlap 4/5. This reproduces the existing one-token result.
+* Position 1: original and candidate selected 17; KL 0.0235543568;
+  top-five overlap 5/5. Both paths used their OWN state from position 0.
+
+Decision: retain the hybrid as an experimental candidate, but do NOT qualify
+it for Work/Assistant or claim a speedup. Two teacher-forced positions in
+one synthetic token sequence do not establish natural answer quality,
+multi-prompt behavior, card correctness, performance or 20 tokens/second.
