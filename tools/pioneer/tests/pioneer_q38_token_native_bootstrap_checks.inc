@@ -42,5 +42,10 @@ static void CheckNativeBootstrap(Fixture& f,PioneerQ38TokenMemoryResult& held){
  const unsigned touches=io.touches;PioneerQ38TokenBootstrapResult again;
  assert(!BootstrapQ38TokenNativeWorkers(c,again) && !CloseQ38TokenNativeHeld(c,held) && io.touches==touches);
  printf("PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW%u instruction boots DIRECT shared L1+CSR backing/%llu actual instructions/maxWrittenStack%u/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS\n",
-  PioneerQ38SelectedWorkerPrecise+PioneerQ38SelectedWorkerPushed+1,(unsigned long long)steps,0x70000-stack);
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+  5U,
+#else
+  PioneerQ38SelectedWorkerPrecise+PioneerQ38SelectedWorkerPushed+1,
+#endif
+  (unsigned long long)steps,0x70000-stack);
 }

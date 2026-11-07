@@ -42,6 +42,17 @@ computed. The unchanged original path passed the same runtime check.
 Direct runtime regression with the same pinned input artifacts:
   python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --runtime --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
 
+The native worker-bootstrap stage also passed in simulation, starting from
+the same hybrid receipt, initialization and runtime-staging history. All
+119 simulated workers executed the actual pinned QGW5 boot instructions
+and reached their idle wait; the root remained held. The test observed
+14,896,896 worker instructions and no matrix or model computation. The
+original-layout bootstrap regression also passed. This verifies simulated
+worker boot only, not root launch, model output, physical cleanup or speed.
+
+Direct bootstrap regression with the same pinned input artifacts:
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --bootstrap --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
+
 Reproducible integration command:
   python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
 The QGW5 program header is pinned by SHA-256

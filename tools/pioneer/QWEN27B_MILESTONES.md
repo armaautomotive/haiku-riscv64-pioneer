@@ -137,6 +137,8 @@ The same simulated owner also passed preparation and restoration of held
 worker memory for all 120 workers, followed by runtime-metadata staging and
 readback; no worker was launched. The original-layout runtime regression also
 passed. These are simulated startup checks, not physical inference.
+An extended simulation then booted the actual QGW5 program on all 119 worker
+emulators; they reached idle with the root still held. No model token was run.
 
 The corrected build and diagnostic now have a separate tag126 identity;
 their offline lifecycle tests reject the older tag125. The tag125 driver
