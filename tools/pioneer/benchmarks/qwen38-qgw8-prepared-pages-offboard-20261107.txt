@@ -56,11 +56,22 @@ proposal on all 4678 parts and seven banks. A separate QGW8 receipt checks
 22035 ordered extents against a synthetic ledger and owner/FD/team/generation,
 refusing altered/extra ledger entries and quarantining uncertain cases. Both
 compile as freestanding RISC-V objects, with maximum individual static frames
-192 and 880 bytes; neither object is a loadable driver or attached to the
-real span service. The legacy receipt's independent tests also passed.
+192 and 880 bytes; neither object is a loadable driver or attached to a
+running driver. The legacy receipt's independent tests also passed.
 The format identity is a DECLARATION checked against geometry and host page
 hash bookkeeping, not cryptographic model authentication, conversion proof,
 or verification of card memory. No physical test or execution is implied.
+
+The actual span-service core now has a separate, non-loadable QGW8 inspection
+entry; the legacy entry keeps its original receipt type. A simulated-fabric
+test submitted the first QGW8 span through the actual service, emitted RV32
+span instructions and new receipt. It checked host page hashes/ledger,
+wrong-order refusal before IO and quarantine/no retry after a packet fault.
+This covers one simulated span, not the full physical upload, and does not
+bind the new receipt to a driver, owner-control API or Work path. QGW8 receipt
+plus Work and unspecified receipt types are compile-time refusals.
+The existing untracked and tracked span/owner/control regression suites and
+the legacy tracked native-context cross-compile also passed after the refactor.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.

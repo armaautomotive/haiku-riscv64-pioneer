@@ -10,6 +10,21 @@
 #include "PioneerQ38HybridUploadReceipt.h"
 #include "PioneerQ38HybridUploadProtocol.h"
 #endif
+#ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
+#if PIONEER_Q38_QGW8_SPAN_INSPECTION != 1 || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) \
+ || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) \
+ || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1
+#error QGW8 span inspection requires the distinct non-loadable tracked receipt role
+#endif
+#include "PioneerQ38Qgw8UploadReceipt.h"
+#endif
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+template<class Receipt> struct PioneerQ38SpanReceiptKind {enum {Value=0};};
+template<> struct PioneerQ38SpanReceiptKind<PioneerQ38HybridUploadReceipt> {enum {Value=1};};
+#ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
+template<> struct PioneerQ38SpanReceiptKind<PioneerQ38Qgw8UploadReceipt> {enum {Value=2};};
+#endif
+#endif
 // Native adapter's shared kernel-only core. Complete owner/fresh-page proof
 // BEFORE allocation/preparation IO, and publish ALL page authority only
 // after the existing exact transport/terminal/host-visibility proof passes.
@@ -33,12 +48,20 @@ template<class C> static bool PioneerQ38SpanPrepareService(C& c)
 	return ready && c.io.SelectRuntimeCore(0) && c.io.MapQ38Panel()
 		&& PioneerQ38SpanPrepare(c.io,dram,noc,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38Span);
 }
-template<class C,bool Work=false> static bool PioneerQ38SpanUploadService(C& c,tt_q38_span_upload& request
+template<class C,bool Work=false
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
- ,PioneerQ38HybridUploadReceipt* receipt
+ ,class Receipt=PioneerQ38HybridUploadReceipt
+#endif
+ > static bool PioneerQ38SpanUploadCore(C& c,tt_q38_span_upload& request
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+ ,Receipt* receipt
 #endif
  )
 {
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+	static_assert(PioneerQ38SpanReceiptKind<Receipt>::Value==1
+		|| (PioneerQ38SpanReceiptKind<Receipt>::Value==2 && !Work),"Unsupported tracked span receipt/Work pairing");
+#endif
 	request.result={}; request.result.version=1; request.result.state=TT_RUNTIME_CONFIG_FAILED;
 	if (!PioneerQ38SpanOwner(c) || !PioneerQ38SpanPublicShape(request.version,request.bank,request.offset,request.bytes,request.reserved)) return false;
 	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
@@ -76,6 +99,28 @@ template<class C,bool Work=false> static bool PioneerQ38SpanUploadService(C& c,t
 #endif
 	return true;
 }
+// The installed/legacy call keeps its exact original receipt type. The
+// QGW8 overload is a separate non-loadable inspection entry point and cannot
+// be selected through the existing driver control or Work path.
+template<class C,bool Work=false> static bool PioneerQ38SpanUploadService(C& c,tt_q38_span_upload& request
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+ ,PioneerQ38HybridUploadReceipt* receipt
+#endif
+ )
+{
+	return PioneerQ38SpanUploadCore<C,Work>(c,request
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		,receipt
+#endif
+	);
+}
+#ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
+template<class C> static bool PioneerQ38Qgw8SpanUploadInspection(C& c,tt_q38_span_upload& request,
+ PioneerQ38Qgw8UploadReceipt* receipt)
+{
+	return PioneerQ38SpanUploadCore<C,false>(c,request,receipt);
+}
+#endif
 template<class C> static bool PioneerQ38SpanEndService(C& c)
 {
 	return PioneerQ38SpanOwner(c) && c.q38Span && !c.Unsafe()

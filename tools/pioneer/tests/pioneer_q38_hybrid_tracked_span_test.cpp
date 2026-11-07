@@ -23,6 +23,7 @@ struct TrackedContext {
   initialized(fixture.initialized.data()),hashes(hashWords.data()),baseline{{{{fixture.owner.dram},fixture.owner.noc}}}{}
  bool Unsafe(){return banks.Quarantined() || q38Span->unsafe;}
 };
+#ifndef PIONEER_Q38_HYBRID_TRACKED_SPAN_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==2);(void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  TrackedContext c(argv[1]);int cookie=0;auto receipt=std::make_unique<PioneerQ38HybridUploadReceipt>();
@@ -39,3 +40,4 @@ int main(int argc,char** argv){
  assert(PioneerQ38SpanEndService(c) && !receipt->Seal(*c.q38Span) && !receipt->Sealed());
  c.fixture.Finish();puts("PASS actual tracked span service publishes page hashes into same receipt; wrong order/null refused before IO; NO CARD");
 }
+#endif

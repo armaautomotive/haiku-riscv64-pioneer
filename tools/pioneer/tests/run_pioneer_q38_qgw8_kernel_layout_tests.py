@@ -27,6 +27,19 @@ for probe in probes:
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode == 0 or 'non-loadable inspection data only' not in result.stderr:
             raise RuntimeError('QGW8 layout/receipt role not refused: ' + repr(flags))
+span_probe = str(here / 'pioneer_q38_qgw8_span_service_role_probe.cpp')
+span_role = role + ['-DPIONEER_Q38_QGW8_SPAN_INSPECTION=1']
+subprocess.run(common + ['-fsyntax-only', span_probe], check=True)
+subprocess.run(common + span_role + ['-fsyntax-only', span_probe], check=True)
+for flags, reason in (
+        (['-DPIONEER_Q38_QGW8_SPAN_INSPECTION=1'], 'distinct non-loadable tracked receipt role'),
+        (span_role + ['-DPIONEER_TEST_OMIT_TRACKED'], 'distinct non-loadable tracked receipt role'),
+        (role + ['-DPIONEER_Q38_QGW8_SPAN_INSPECTION=0'], 'distinct non-loadable tracked receipt role'),
+        (span_role + ['-DPIONEER_TEST_QGW8_WORK_PAIR'], 'Unsupported tracked span receipt/Work pairing')):
+    result = subprocess.run(common + flags + ['-fsyntax-only', span_probe], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode == 0 or reason not in result.stderr:
+        raise RuntimeError('QGW8 span-service role not refused: ' + repr(flags))
 with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as directory:
     out = Path(directory)
     test = str(out / 'layout-test')
@@ -38,17 +51,28 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
         str(here / 'pioneer_q38_qgw8_upload_receipt_test.cpp'), '-o', receipt], check=True)
     for args in ([], ['--tamper'], ['--extra'], ['--abort'], ['--late']):
         subprocess.run([receipt, *args], check=True)
+    image = out / 'span-image'
+    subprocess.run(['sh', str(here.parent / 'build_qwen38_span_image.sh'), str(sdk), str(image)], check=True)
+    span = str(out / 'tracked-span-test')
+    subprocess.run(common + ['-ffp-contract=off', '-DTT_PIONEER_EXPERIMENTAL_Q38_BANKS',
+        '-fsanitize=address,undefined', str(here / 'pioneer_q38_qgw8_tracked_span_test.cpp'), '-o', span], check=True)
+    subprocess.run([span, str(image)], check=True)
     tool = sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku'
     headers = sdk / 'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
     for name, symbols in (('kernel_layout', ('qgw8_kernel_layout_build',)),
                           ('upload_receipt', ('qgw8_receipt_begin', 'qgw8_receipt_span', 'qgw8_receipt_record',
-                                              'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout'))):
+                                              'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout')),
+                          ('span_service', ('qgw8_span_receipt_kind',))):
         obj = out / (name + '.o')
+        source = ('pioneer_q38_qgw8_kernel_layout_compile.cpp' if name == 'kernel_layout' else
+                  'pioneer_q38_qgw8_upload_receipt_kernel_compile.cpp' if name == 'upload_receipt' else
+                  'pioneer_q38_qgw8_span_service_role_probe.cpp')
+        selectors = (['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1', '-DPIONEER_Q38_QGW8_SPAN_INSPECTION=1',
+                      '-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=1'] if name == 'span_service' else [])
         subprocess.run([str(tool) + '-g++', '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror',
             '-Wno-misleading-indentation', '-fno-exceptions', '-fno-rtti', '-ffreestanding', '-fstack-usage',
-            '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE=1', '-I' + str(headers), '-idirafter', str(headers / 'posix'),
-            '-c', str(here / ('pioneer_q38_qgw8_' + name + '_compile.cpp' if name == 'kernel_layout' else
-                             'pioneer_q38_qgw8_upload_receipt_kernel_compile.cpp')), '-o', str(obj)], check=True)
+            '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE=1', *selectors, '-I' + str(headers),
+            '-idirafter', str(headers / 'posix'), '-c', str(here / source), '-o', str(obj)], check=True)
         frames = [line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
         if not frames or any(len(row) != 3 or row[2] != 'static' or int(row[1]) > 2048 for row in frames):
             raise RuntimeError('Kernel layout/receipt stack usage refused')
