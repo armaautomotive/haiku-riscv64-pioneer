@@ -27,8 +27,16 @@ Tests completed:
   tag2026102100010012, generation20, no active owner and cold0.
 
 The staged executable lives in /boot/home/pioneer-hybrid-upload-test.KtEQ8Xj6.
-No physical upload has been attempted. A one-shot, monitored hardware test
-requires completion of the actual refactored-cache preflight, fresh driver
-and owner checks, an independently tested parent/exit-record procedure and
-the established failure/quarantine recovery rules. Upload success by itself
+No physical upload has been attempted. A separate one-shot monitor now passes
+13 fake precondition, transcript, failure and no-retry cases. Its SHA256 is
+dc0abd35d3d33e950c7eddb8f42bff3ac225e0e597ccec02c2995fec60c60ca2; the
+matching staged parent-v2.sh and its pinned output checker were verified.
+The checker accepted a synthetic good transcript and rejected a malformed
+transcript on Haiku without accessing the card. The monitor requires the
+known driver tag/generation, idle ownership, full CPU/RAM and exact hashes,
+and records a permanent once-only marker before starting the client.
+
+A hardware test still requires completion of the refactored-cache preflight
+and fresh admission checks. On any uncertain client outcome, the monitor
+issues no further GPU query, END, retry or reset. Upload success by itself
 would still not establish model execution, answer quality or tokens/second.
