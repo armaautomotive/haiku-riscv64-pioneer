@@ -1,0 +1,22 @@
+"""Independently rebuilt QGW7/QDM2 inspection images, not device authority."""
+ROOT_PINS = (
+ ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',129972,'ecbc0ccce592a08430a67a9fbd8d567c6528f7fcce56e9d44d6ed7fb2030f314'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',21328,'6f917fdaf3df5870c337f85a8d17d14f79a9c6fda8362b4425eabfab62f58801'),
+ ('bf16.bin',33768,'b9cc6b376083e5c082ec3cf3e69d13dda742d5ed6693fe24164d3601907f96c8'),
+ ('program.elf',216916,'f9be15a56b126b8809880eb3dee32217c4c6cfa41f7e546714add7747b814c83'),
+)
+WORKER_PINS = (
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',10756,'02969656a32de00780f767dff21dce1226cc9dd404bf46ad3e2156a52c2a1db2'),
+ ('bf16producer.bin',7360,'8b3e477d51eeca467e155b72234bed728c7109947f78cfb4361ce6dbc7afb2c3'),
+ ('dense.bin',14468,'d40bb04efbd330252fb679691f7cc65d3a9fd2e15ed051ce21e557e9d3e93c0d'),
+ ('cachedfpu.bin',12668,'bcc704d361936935e26c57b138693accc5a22207ab5e45019d78baec1385abc9'),
+ ('ffn.bin',16456,'c1dc115dadb20b1ee1d18fb04ce61f15a1d1644a523ccfec8fea70dbd5164e45'),
+ ('service.bin',9888,'3b3cdbd88d049b3f0c72016d8eccfad7eab3fd6861a5353a50f26d7d4b46795f'),
+ ('affine.bin',5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
+ ('text.bin',5984,'2548ed0d4fdb68ce48325cd6f8581bff6bdc5b34a87f3ba217e36e4a37ed6e5c'),
+ ('gdn.bin',35564,'dd982ac614d163795442942529ef9f4e5519552097b438f5fc4464b40eab3436'),
+ ('program.elf',156896,'3b1a85fb54b82445732fef91e795bc6c1ba0a950eac6ab6d7ac2da5128767565'),
+)

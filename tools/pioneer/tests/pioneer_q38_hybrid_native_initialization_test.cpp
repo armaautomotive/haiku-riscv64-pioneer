@@ -5,6 +5,15 @@
 #define main pioneer_original_initialization_fixture_main
 #include "pioneer_q38_token_native_initialization_test.cpp"
 #undef main
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==7 && PioneerQ38TokenPrograms::Family==0x37505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x37574751,
+ "native initialization must use the QGW7 inspection image and grammar");
+#else
+static_assert(PioneerQ38TokenNativeProfile==5 && PioneerQ38TokenPrograms::Family==0x35505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x35574751,
+ "ordinary hybrid initialization must retain the QGW5 identity");
+#endif
 
 int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic")))

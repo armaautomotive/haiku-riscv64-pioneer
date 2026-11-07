@@ -4,6 +4,15 @@
 #define main pioneer_original_binding_fixture_main
 #include "pioneer_q38_token_native_binding_test.cpp"
 #undef main
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==7 && PioneerQ38TokenPrograms::Family==0x37505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x37574751,
+ "native inspection must bind the QGW7 program and worker grammar together");
+#else
+static_assert(PioneerQ38TokenNativeProfile==5 && PioneerQ38TokenPrograms::Family==0x35505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x35574751,
+ "ordinary hybrid inspection must retain the QGW5 identity");
+#endif
 
 int main(){
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
@@ -58,5 +67,5 @@ int main(){
  assert(bound && f.Binding() && c.q38TokenNative && !c.q38TokenNative->Unsafe());
  assert(c.q38TokenNative->MatchesReservation(c.banks,f.Dram()));
  f.Inert();
- puts("PASS real sealed hybrid receipt to native QGW5 bind; synthetic ledger/OS/banks only; NO DEVICE OR INFERENCE");
+ puts("PASS real sealed hybrid receipt to non-loadable native bind; synthetic ledger/OS/banks only; NO DEVICE OR INFERENCE");
 }

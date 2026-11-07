@@ -64,7 +64,9 @@ static_assert(PioneerQ38TokenNativePhysicalSelection==0,"late physical-to-NODRV 
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
 #define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
-#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+#if defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) && defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
+enum {PioneerQ38TokenNativeProfile=7};
+#elif defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)
 enum {PioneerQ38TokenNativeProfile=5};
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 enum {PioneerQ38TokenNativeProfile=3};
@@ -74,7 +76,9 @@ enum {PioneerQ38TokenNativeProfile=2};
 enum {PioneerQ38TokenNativeProfile=1};
 #endif
 #endif
-#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+#if defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) && defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
+static_assert(PioneerQ38TokenNativeProfile==7,"late non-loadable QGW7 native profile change");
+#elif defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)
 static_assert(PioneerQ38TokenNativeProfile==5,"late QGW5 private native profile change");
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 static_assert(PioneerQ38TokenNativeProfile==3,"late QTP3 native profile change");

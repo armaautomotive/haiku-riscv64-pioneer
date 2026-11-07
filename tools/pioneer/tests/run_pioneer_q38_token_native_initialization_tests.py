@@ -15,13 +15,16 @@ if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
 hybrid_header=None
-if '--hybrid-qgw5-header' in sys.argv:
-    assert sys.argv.count('--hybrid-qgw5-header')==1
-    index=sys.argv.index('--hybrid-qgw5-header');assert index+1<len(sys.argv)
+matrix_inspection='--hybrid-qgw7-header' in sys.argv
+if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
+    selector='--hybrid-qgw7-header' if matrix_inspection else '--hybrid-qgw5-header'
+    assert sys.argv.count(selector)==1 and not (matrix_inspection and '--hybrid-qgw5-header' in sys.argv)
+    index=sys.argv.index(selector);assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
             or synthetic_embedding and len(sys.argv)==4 and sys.argv[2]=='--execution-embedding') and hybrid_header.is_absolute() and hybrid_header.is_file()
-    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()=='2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    expected='5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
     assert sys.argv.count('--manual-ttsync')==1
@@ -361,6 +364,7 @@ if hybrid_header:
     defines.update(PIONEER_Q38_HYBRID_TRACKED_UPLOAD='1',PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY='1',
                    PIONEER_Q38_TOKEN_BF16_PROGRAMS='1',PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC='1',
                    PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC='1',PIONEER_Q38_HYBRID_PROGRAMS_HEADER='"'+str(hybrid_header)+'"')
+if matrix_inspection:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
 if synthetic_embedding:defines['PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST']='1'
 if precise_context:
     defines.update(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1',

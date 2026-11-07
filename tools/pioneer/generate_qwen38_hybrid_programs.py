@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Generate pinned QGW5 code DATA for offline tests only; never install/run."""
+"""Generate pinned QGW5 or QGW7 code DATA; never install or run it."""
 import hashlib
 import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-from PioneerQ38HybridProgramPins import ROOT_PINS, WORKER_PINS
-
-if not __debug__ or len(sys.argv)!=4 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: generate_qwen38_hybrid_programs.py ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
-root, worker, output=map(Path,sys.argv[1:])
+args=sys.argv[1:];matrix='--matrix-attention-inspection' in args
+if matrix:
+    if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
+    args.remove('--matrix-attention-inspection')
+    from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
+else:
+    from PioneerQ38HybridProgramPins import ROOT_PINS, WORKER_PINS
+if not __debug__ or len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--matrix-attention-inspection] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
+root, worker, output=map(Path,args)
 if not all(p.is_absolute() for p in (root,worker,output)) or output.exists() or output.is_symlink():
     raise SystemExit('new absolute output and absolute input paths required')
 r=authenticated(root,ROOT_PINS);w=authenticated(worker,WORKER_PINS)
@@ -21,16 +26,24 @@ units += [(w,name,label,address) for name,label,address in (
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
-lines=['/* SPDX-License-Identifier: MIT */','// Generated QTP5/QGW5 code DATA, OFFLINE ONLY; not a runtime capability.',
+family='0x37505451' if matrix else '0x35505451'
+name='QTP7/QGW7' if matrix else 'QTP5/QGW5'
+lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+' code DATA, OFFLINE ONLY; not a runtime capability.',
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
  ' || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS_H) \\',
  ' || defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS_H) \\',
  ' || defined(PIONEER_Q38_TOKEN_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H)',
- '#error Exact offline QGW5 program DATA selector required', '#endif',
+ '#error Exact offline QGW5 program DATA selector required', '#endif']
+if matrix:
+    lines += ['#if !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \\',
+              ' || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \\',
+              ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
+              '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
+lines += [
  '#ifndef PIONEER_Q38_HYBRID_PROGRAMS_H','#define PIONEER_Q38_HYBRID_PROGRAMS_H',
  'namespace PioneerQ38HybridPrograms {',
- 'enum {Family=0x35505451,Version=1,CancelBoundary=1,Bf16=1,EogCount=5};']
+ 'enum {Family='+family+',Version=1,CancelBoundary=1,Bf16=1,EogCount=5};']
 for source,name,label,address in units:
     data=source[name+'.bin']
     if not data or len(data)%4:
@@ -69,9 +82,9 @@ for i,(_,_,label,_) in enumerate(units[5:]):
     lines.append('   case %u:data=%s;break;'%(i,label))
 lines += ['  }if(!data)return false;output=data[(address-s.address)/4];return true;',
  ' }return false; // no implicit executable padding or runtime-data access','}',
- '}','#endif','static_assert(PioneerQ38HybridPrograms::Family==0x35505451,"late QGW5 DATA selection");']
+ '}','#endif','static_assert(PioneerQ38HybridPrograms::Family=='+family+',"late '+('QGW7' if matrix else 'QGW5')+' DATA selection");']
 encoded=('\n'.join(lines)+'\n').encode()
 with output.open('xb') as target:
     if target.write(encoded)!=len(encoded):
         raise OSError('incomplete generated output')
-print('PASS PINNED QGW5 DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')
+print('PASS PINNED '+('QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')

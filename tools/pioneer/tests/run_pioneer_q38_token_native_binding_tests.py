@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Actual full851 native bind/scope/retention; simulated OS/unused endpoints."""
+import hashlib
 import os
 import pathlib
 import re
@@ -9,10 +10,12 @@ import tempfile
 
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 args = sys.argv[1:]
-assert not args or (len(args) == 2 and args[0] == '--hybrid')
+assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection'))
+matrix = bool(args and args[0] == '--hybrid-matrix-inspection')
 hybrid = pathlib.Path(args[1]) if args else None
 if hybrid:
     assert hybrid.is_absolute() and hybrid.is_file()
+    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()=='5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7'
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2]/'src/add-ons/kernel/drivers/misc'
 role = (kernel/'PioneerQ38TokenNativeRole.h').read_text()
@@ -27,6 +30,7 @@ if hybrid:
     defines.update(PIONEER_Q38_HYBRID_TRACKED_UPLOAD='1', PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY='1',
                    PIONEER_Q38_TOKEN_BF16_PROGRAMS='1', PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC='1',
                    PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC='1', PIONEER_Q38_HYBRID_PROGRAMS_HEADER='"'+str(hybrid)+'"')
+if matrix:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)

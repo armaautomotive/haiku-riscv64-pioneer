@@ -120,7 +120,35 @@ transport, run other workers' down projections, reach attention, exercise
 the real model, or establish hardware behavior. It is included in the
 same ASan/UBSan runner when the worker and leaf are supplied.
 
-A native owner/format identity, full ROOT-to-worker L1 lifecycle,
+Native integration, offline only: QGW7 ROOT and worker now have a separate
+authenticated 15-section package with SHA-256
+5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7.
+Every generated code word was checked for all 120 worker mappings against
+its pinned section, and all sections were checked against their ELF images.
+The non-loadable native test context selects a QGW7 worker grammar and a
+distinct profile 7, while reusing the expanded hybrid journal geometry. The
+actual sealed hybrid receipt and native bind, followed by three real RV32
+zero-state initializers, passed against simulated OS/MMIO/DRAM endpoints.
+An expanded simulation then used the same native owner to stage metadata,
+execute all 119 virgin QGW7 worker boot histories and start the actual ROOT
+until its first learned-data request was outstanding. The initial bootstrap
+log incorrectly labeled those selected QGW7 images QGW5; its format string
+has since been corrected. The test stopped before returning the learned data
+or computing an embedding, matrix, layer or token; it is not proof of a
+complete native lifecycle or physical execution.
+Cross-family packages, missing selectors, altered input sections/ELFs,
+existing output paths, physical-driver and Work roles were refused. The
+unchanged QGW5 generator and tag126 driver reproduced their existing pinned
+hashes; the QGW5 program/owner regression also passed. QGW7 cannot yet be
+selected by a loadable driver and has not run on the P100A. Reproduce the
+packaging and binding checks with tests/run_pioneer_q38_hybrid_matrix_native_tests.py
+SDK ROOT_DIR WORKER_DIR PINNED_QGW5_HEADER; run the initializers separately
+with the generated state-zero image and --hybrid-qgw7-header, or include
+--execution-traffic to reproduce the 119 boots and first ROOT learned request.
+This does not
+qualify the native lifecycle, full model, model quality, or performance.
+
+A qualified physical native owner/format identity, full ROOT-to-worker L1 lifecycle,
 prior-token attention transport, multi-layer/token checks, quality and
 physical benchmarking remain required. No new throughput has been measured.
 The storage anomaly remains unresolved and its recovery guard has not been

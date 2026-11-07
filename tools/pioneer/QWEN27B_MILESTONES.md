@@ -54,6 +54,15 @@ checks passed all three phases and rejected injected corruption. The complete
 Another synthetic-fabric test connects all 68 actual gated producers to a
 single worker's BFP4 down projection while preserving its private ordering;
 the ROOT transport and the remaining down-projection workers are not covered.
+The QGW7 coordinator and worker are now packaged with a distinct pinned
+identity and selected by the real native binding in a non-loadable test
+context. The actual hybrid receipt, bind and three zero-state initializers
+passed on simulated endpoints. The same simulated native owner staged its
+metadata, booted 119 QGW7 worker instruction emulators, and ran the actual
+coordinator to its first outstanding learned-data request. It did not
+complete a layer or token. The older tag126 driver rebuilt byte-for-byte
+unchanged, and Work or a loadable driver still cannot select QGW7. This is
+not device qualification or an Assistant integration.
 See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
 and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 

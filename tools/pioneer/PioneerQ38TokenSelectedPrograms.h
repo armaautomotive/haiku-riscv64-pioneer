@@ -21,8 +21,13 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x37505451 && PioneerQ38TokenL1::Family==0x35505451,
+ "QGW7 inspection programs require the expanded hybrid journal geometry");
+#else
 static_assert(PioneerQ38TokenPrograms::Family==0x35505451 && PioneerQ38TokenL1::Family==0x35505451,
  "QGW5 program and expanded journal must remain paired");
+#endif
 #else
 #if defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS) && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS != 1)

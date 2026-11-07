@@ -48,6 +48,6 @@ int main(int argc,char** argv){
   && !P::ProgramWord(1,0x17ffc0,untouched) && untouched==0x12345678
   && !P::CodeSpans(120) && P::CodeAddress(120,0)==UINT32_MAX);
  assert(!P::ProgramWord(0,0x6000,const_cast<uint32_t&>(P::RootBoot[0])));
- printf("PASS pinned QGW5 complete emitted code/%llu words/all 120 workers/15 binary sections/relocated GDN/alias rejection; "
+ printf("PASS pinned hybrid complete emitted code/%llu words/all 120 workers/15 binary sections/relocated GDN/alias rejection; "
   "NO DEVICE, OWNER, MODEL OR SPEED\n",checked);
 }
