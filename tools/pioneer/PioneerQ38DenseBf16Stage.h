@@ -35,11 +35,13 @@ public:
    }
    io.Write(matrix+(face*256+row*16+pair*2)*2,lo|(hi<<16));
   }
-  for(unsigned half=0;half<2;half++)for(unsigned row=0;row<8;row++)for(unsigned pair=0;pair<8;pair++){
+  // All eight vector rows carry the same 16-element half. Convert each
+  // query pair once, then duplicate the resulting bits into every row.
+  for(unsigned half=0;half<2;half++)for(unsigned pair=0;pair<8;pair++){
    unsigned lo=0,hi=0,dimension=tile*32+half*16+pair*2;
    if(!PioneerQ38Bf16Input::Lane(io.Read(query+dimension*4),lo)
      || !PioneerQ38Bf16Input::Lane(io.Read(query+(dimension+1)*4),hi))return false;
-   io.Write(vector+((half*8+row)*16+pair*2)*2,lo|(hi<<16));
+   for(unsigned row=0;row<8;row++)io.Write(vector+((half*8+row)*16+pair*2)*2,lo|(hi<<16));
   }
   io.Fence();next++;return true;
  }

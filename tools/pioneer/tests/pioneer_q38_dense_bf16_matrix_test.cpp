@@ -6,8 +6,8 @@
 #include <cstdio>
 
 struct L1IO {
- NativeBfpMachine& m;unsigned fences=0;
- unsigned Read(unsigned a){assert(a%4==0 && a+4<=m.l1.size());unsigned v;memcpy(&v,m.l1.data()+a,4);return v;}
+ NativeBfpMachine& m;unsigned fences=0,reads=0;
+ unsigned Read(unsigned a){assert(a%4==0 && a+4<=m.l1.size());reads++;unsigned v;memcpy(&v,m.l1.data()+a,4);return v;}
  void Write(unsigned a,unsigned v){assert(a%4==0 && a+4<=m.l1.size());memcpy(m.l1.data()+a,&v,4);}
  void Fence(){fences++;}
 };
@@ -115,6 +115,17 @@ int main(){
   }
   PioneerQ38DenseBf16Stage<L1IO> actual(io,keys,query,matrix,vector,count);
   assert(PioneerQ38DenseBf16Matrix::Scores(card,actual,matrix,vector));
+  // 16 packed K words per row plus 32 FP32 query words per K32 tile.
+  // Every query is converted once, not once per repeated vector row.
+  assert(io.reads==8*(count*16+32));
+  // The last staged tile must duplicate precisely the same BF16 bit pattern
+  // in every vector row, including both halves and every column.
+  for(unsigned half=0;half<2;half++)for(unsigned row=0;row<8;row++)for(unsigned pair=0;pair<8;pair++){
+   const unsigned dimension=7*32+half*16+pair*2;unsigned lo=0,hi=0;
+   assert(PioneerQ38Bf16Input::Lane(io.Read(query+dimension*4),lo));
+   assert(PioneerQ38Bf16Input::Lane(io.Read(query+(dimension+1)*4),hi));
+   assert(io.Read(vector+((half*8+row)*16+pair*2)*2)==(lo|(hi<<16)));
+  }
   const auto result=card.Results();double squared=0,referenceSquared=0,maxAbsolute=0;
   for(unsigned r=0;r<count;r++){
    double reference=0,absolute=0;
@@ -138,6 +149,13 @@ int main(){
  assert(!PioneerQ38DenseBf16Matrix::Scores(invalid,invalidStage,0x90000,0x91000));
  assert(invalid.matrixOps==0 && io.fences==0);
  std::puts("nonfinite K refused before any matrix multiply");
+ NativeBfpMachine invalidQuery;L1IO badQueryIO{invalidQuery};
+ for(unsigned i=0;i<16;i++)badQueryIO.Write(0xa0000+i*4,0);
+ for(unsigned i=0;i<32;i++)badQueryIO.Write(0x85000+i*4,0);
+ badQueryIO.Write(0x85000,0x7fc00000);
+ PioneerQ38DenseBf16Stage<L1IO> badQuery(badQueryIO,0xa0000,0x85000,0x90000,0x91000,1);
+ assert(!PioneerQ38DenseBf16Matrix::Scores(invalidQuery,badQuery,0x90000,0x91000));
+ assert(invalidQuery.matrixOps==0 && invalidQuery.outputReads==0 && badQueryIO.fences==0);
  // PV uses a different layout: transpose token-major FP16 values into
  // output-dimension rows, with probabilities as the BF16 vector.
  for(unsigned count: {1U,17U,32U})for(unsigned block: {0U,3U,7U}){

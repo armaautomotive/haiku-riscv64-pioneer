@@ -47,7 +47,8 @@ worker. The ordinary QDW1 image still rebuilds byte-for-byte unchanged, and
 its existing role/build guards passed. The individual math/staging observers
 above do NOT execute the new complete QDM2 phase protocol. The QDM2 code.bin
 SHA-256 was b690682466747bef944e77c3c2c4540207f5a47f5ccbed869fad7c0a33d2a313
-for this exact source and SDK. To reproduce in a new output directory:
+before the later query-reuse optimization below. To reproduce the current
+image in a new output directory:
   python3 tools/pioneer/build_qwen38_dense_matrix_image.py ABSOLUTE_SDK ABSOLUTE_OUTPUT
 
 An instruction-level observer executes the actual QDM2 RV32 image through
@@ -82,6 +83,25 @@ not cycles, PCIe traffic, physical latency or token throughput. They cannot
 establish a real speedup. New L1 reservations and reordered accumulation are
 unqualified on silicon and in the mixed worker. Fault tests include rejected
 staging order and no successful publication after an interrupted part.
+
+Query-reuse optimization: QK staging formerly read and converted each FP32
+query component eight times, once for each repeated vector row. It now reads
+and converts each component once per tile, and copies the resulting bits to
+all eight rows. The input remains on-card and no numerical reference or CPU
+fallback is involved. On the same 65-token/24-partition synthetic fixture,
+RV32 worker steps fell from 49074401 to 45375233 (about 7.5%); at 33 tokens
+they fell from 36059261 to 33200813 (about 7.9%). Both versions issued 84480
+and 65280 matrix operations respectively, and the printed merged relative
+L2 errors were unchanged at 0.00168827224 and 0.00109330609. These counts
+are a software instruction model, NOT physical timing or tokens/sec. The
+tests verify the vector rows' bit patterns, bounded query read counts and
+nonfinite-query refusal. On the same 1-, 33- and 65-token synthetic inputs,
+one actual-instruction worker per case produced bit-identical scores,
+probabilities and partial outputs versus the previous QDM2 image. Two
+independently built QDM2 code images match
+(SHA-256 5708c68c3acb456789a90523cbecf2214c20bdd16ed7a5d5fb0113b3613c37ae),
+and two QGW7 linked images also match. The QGW7 mixed-worker and direct ROOT
+job handoff simulations passed with the new code; they remain offline tests.
 
 A separately identified experimental hybrid mixed-worker link and transition
 simulation are described in qwen38-hybrid-matrix-attention-20261107.txt.

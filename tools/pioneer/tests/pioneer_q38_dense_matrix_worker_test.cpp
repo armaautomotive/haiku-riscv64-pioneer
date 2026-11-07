@@ -182,9 +182,45 @@ static void RunFullGroup(const char* image,const char* reference,unsigned tokens
  unsigned ops=0;uint64_t steps=0;for(auto& worker:pool){assert(worker->fpu.Clean());ops+=worker->fpu.matrixOps;worker->Stop();steps+=worker->steps;}
  printf("PASS simulated ACTUAL QDM2 24 partitions, six heads, tokens=%u; merged_PV_relative_l2=%.9g matrix_ops=%u rv32_steps=%llu; synthetic global controller/NoC, NOT hardware or speed\n",tokens,relative,ops,(unsigned long long)steps);
 }
+static void ComparePrevious(const char* image,const char* previous,const char* reference,unsigned tokens){
+ ProducedGroup input(reference,0,tokens);MatrixPartitionMachine before(previous,input,0),after(image,input,0);
+ assert(before.Boot() && after.Boot() && before.RunPhase(1) && after.RunPhase(1));
+ const unsigned count=before.header[49];assert(count==after.header[49]);
+ for(unsigned h=0;h<6;h++){
+  for(unsigned t=0;t<count;t++)assert(before.memory.at(W::Scores+(h*384+t)*4)==after.memory.at(W::Scores+(h*384+t)*4));
+  assert(before.memory.at(W::Local+(4+h)*4)==after.memory.at(W::Local+(4+h)*4));
+ }
+ before.Stage(2);after.Stage(2);
+ for(unsigned h=0;h<6;h++){
+  const unsigned maximum=before.memory.at(W::Local+(4+h)*4);
+  before.memory[W::Parameters+h*4]=maximum;after.memory[W::Parameters+h*4]=maximum;
+ }
+ assert(before.Wait(2) && after.Wait(2));uint32_t maxima[6],inverse[6];
+ for(unsigned h=0;h<6;h++){
+  maxima[h]=before.memory.at(W::Parameters+h*4);
+  for(unsigned i=0;i<4;i++)assert(before.memory.at(W::Local+(16+h*4+i)*4)==after.memory.at(W::Local+(16+h*4+i)*4));
+  const unsigned hi=before.memory.at(W::Local+(16+h*4)*4),lo=before.memory.at(W::Local+(17+h*4)*4);
+  const int exponent=int32_t(before.memory.at(W::Local+(18+h*4)*4));
+  const double sum=std::ldexp(double(hi)*4294967296.0+double(lo),exponent-52);
+  assert(sum>=1);inverse[h]=PioneerAttentionBits(float(1.0/sum));
+ }
+ before.Stage(3);after.Stage(3);
+ for(unsigned h=0;h<6;h++)for(auto* worker:{&before,&after}){
+  worker->memory[W::Parameters+h*4]=maxima[h];worker->memory[W::Parameters+(8+h)*4]=inverse[h];
+ }
+ assert(before.Wait(3) && after.Wait(3));
+ for(unsigned h=0;h<6;h++){
+  for(unsigned t=0;t<count;t++)assert(before.memory.at(W::Scores+(h*384+t)*4)==after.memory.at(W::Scores+(h*384+t)*4));
+  for(unsigned d=0;d<512;d++)assert(before.memory.at(W::Partial+(h*512+d)*4)==after.memory.at(W::Partial+(h*512+d)*4));
+ }
+ assert(before.fpu.matrixOps==after.fpu.matrixOps && before.fpu.Clean() && after.fpu.Clean());
+ before.Stop();after.Stop();assert(after.steps<before.steps);
+ printf("PASS old/new QDM2 bit-identical scores, probabilities and partials, tokens=%u; rv32_steps=%u -> %u; simulated only\n",tokens,before.steps,after.steps);
+}
 int main(int argc,char** argv){
- assert(argc==3);(void)&D::Run;(void)&Group;(void)&Geometry;(void)&Faults;
+ assert(argc==3 || argc==4);(void)&D::Run;(void)&Group;(void)&Geometry;(void)&Faults;
  for(unsigned tokens: {1U,33U,65U})RunCase(argv[1],argv[2],tokens);
  RunCase(argv[1],argv[2],769,true); // 33-token partition spans two chunks
  for(unsigned tokens: {1U,33U,65U})RunFullGroup(argv[1],argv[2],tokens);
+ if(argc==4)for(unsigned tokens: {1U,33U,65U})ComparePrevious(argv[1],argv[3],argv[2],tokens);
 }

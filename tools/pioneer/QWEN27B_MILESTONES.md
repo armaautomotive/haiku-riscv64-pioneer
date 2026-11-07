@@ -33,6 +33,8 @@ tests, with a test-only global controller; it has not been integrated into
 the full model or run on the card. The more accurate PV path uses four matrix
 products; reuse of converted operands cut simulated worker instructions by
 about 60% on one fixture, but whether it is faster on the card remains unknown.
+Reusing the staged query conversion subsequently cut another 7.5% from that
+fixture's simulated worker instruction count; physical speed is still unknown.
 A separate hybrid worker now links this attention code and passed a simulated
 projection/attention/projection transition. A matching experimental ROOT now
 builds reproducibly, and its projection job functions passed simulation;
