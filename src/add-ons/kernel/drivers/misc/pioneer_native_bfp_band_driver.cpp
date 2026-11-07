@@ -1,16 +1,16 @@
 /* SPDX-License-Identifier: MIT */
-// Distinct full-K synthetic BFP8/broadcast diagnostic,tag79. Legacy driver supplies PCI discovery,
+// Distinct full-K synthetic BFP8/tag79 or BFP4/tag118 diagnostic. Legacy driver supplies PCI discovery,
 // reload guard and read-only baseline machinery ONLY; none of its compute,
 // model,Work,arbitrary-data or automatic-close routes are published here.
 #include <Drivers.h>
-#if !defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1
-#error Build only through build_native_bfp_band_diagnostic.py
+#if (!defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1) && (!defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC != 1)
+#error Build only through an explicit fixed native BFP band diagnostic role
 #endif
 #if defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL
-#error Distinct exact native-BFP diagnostic identity required
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || (defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL)) || (defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && PIONEER_DRIVER_BUILD_TAG != 0x2026110600010118ULL)
+#error Distinct exact native-BFP band diagnostic identity required
 #endif
 #define PIONEER_NATIVE_BFP_DIAGNOSTIC 1 // PRIVATE inert-base hook gate only
 #define find_device PioneerNativeBfpBandLegacyFindDevice
@@ -18,8 +18,24 @@
 #undef find_device
 #undef PIONEER_NATIVE_BFP_DIAGNOSTIC
 #include "../../../../../tools/pioneer/PioneerNativeBfpBandLease.h"
+#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
+#include "PioneerNativeBfp4BandProtocol.h"
+#include "PioneerNativeBfp4BandGeneratedImage.h"
+// Reuse the fixed audited lifecycle with a distinct role, protocol, image,
+// completion marker and fixture. Its saved BFP8-layout spans are a safe
+// superset of BFP4's actual spans; no new physical addresses are admitted.
+#define PioneerNativeBfpBandLease PioneerNativeBfp4BandLease
+#define PioneerNativeBfpBandTag PioneerNativeBfp4BandTag
+#define PioneerNativeBfpBandRequest PioneerNativeBfp4BandRequest
+#define PioneerNativeBfpBandRequestValid PioneerNativeBfp4BandRequestValid
+#define PioneerNativeBfpBandGeneratedImage PioneerNativeBfp4BandGeneratedImage
+#define PIONEER_NATIVE_BFP_BAND_SUPPORT PIONEER_NATIVE_BFP4_BAND_SUPPORT
+#define PIONEER_NATIVE_BFP_BAND_RUN PIONEER_NATIVE_BFP4_BAND_RUN
+#define PIONEER_NATIVE_BFP_BAND_END PIONEER_NATIVE_BFP4_BAND_END
+#else
 #include "PioneerNativeBfpBandProtocol.h"
 #include "PioneerNativeBfpBandGeneratedImage.h"
+#endif
 
 namespace {
 struct NativeCookie { PioneerProbeCookie* base=NULL;bool used=false; };

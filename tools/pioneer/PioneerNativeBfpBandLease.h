@@ -1,21 +1,42 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_BFP_BAND_LEASE_H
 #define PIONEER_NATIVE_BFP_BAND_LEASE_H
-#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC))
+#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && !defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC))
 #error Full-K band lease is an offboard owner prototype,not an admitted driver/Work/validation path
 #endif
 #if defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL)
 #error Full-K kernel owner requires its explicit distinct diagnostic79 role
 #endif
+#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110600010118ULL || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC))
+#error Full-K kernel owner requires its explicit distinct BFP4 diagnostic118 role
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfpProtocol.h"
 #include "PioneerNativeBfpBandFixture.h"
-// Separate NEW full-K/broadcast/four-fidelity lifecycle. Never accepts old
-// NFB1 completion or a runtime payload/code/address. Kernel compilation is
-// reserved for its distinct diagnostic79 adapter;never installed Work.
+#include "PioneerNativeBfp4BandFixture.h"
+// Separate fixed full-K/broadcast lifecycle. Each role accepts only its own
+// fidelity and marker, never old NFB1 or a runtime payload/code/address.
+// Kernel compilation is reserved for diagnostic79 or diagnostic118; neither
+// is installed Work or grants authority to execute an untested build.
 // Allocate this0.66MB saved-state owner on the HEAP,not a kernel stack.
 // No destructor IO. UNKNOWN retains every saved span/TLB and never retries.
-class PioneerNativeBfpBandLease {
+template<unsigned Bits> struct PioneerNativeBfpBandPolicy;
+template<> struct PioneerNativeBfpBandPolicy<8> {
+	static constexpr unsigned Phases=4,Marker=0x3342464e;
+	static uint32_t Word(unsigned k,unsigned address){return PioneerNativeBfpBandFixture::Word(k,address);}
+};
+template<> struct PioneerNativeBfpBandPolicy<4> {
+	static constexpr unsigned Phases=2,Marker=0x3442464e;
+	static uint32_t Word(unsigned k,unsigned address){return PioneerNativeBfp4BandFixture::Word(k,address);}
+};
+template<unsigned Bits> class PioneerNativeBfpBandLeaseFor {
+	static_assert(Bits==4 || Bits==8,"only distinct fixed synthetic BFP4/BFP8 leases");
+#if defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC)
+	static_assert(Bits==8,"diagnostic79 must never admit BFP4");
+#elif defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
+	static_assert(Bits==4,"diagnostic118 must never admit BFP8");
+#endif
+	using Policy=PioneerNativeBfpBandPolicy<Bits>;
 	using B=PioneerNativeBfpBandLayout;
 	uint32_t saved[164164]={},tlb[2][3]={};
 	unsigned width=0;
@@ -34,7 +55,7 @@ class PioneerNativeBfpBandLease {
 	template<class IO> bool Terminal(IO& io,const tt_dram_samples_result& baseline) {
 		if(!Scope(io,baseline,0x46800))return false;
 		result.phase=io.BfpRead(0x17ffc0);result.count=io.BfpRead(0x17ffc4);result.marker=io.BfpRead(0x17ffc8);
-		if(result.phase!=0x7000c || result.count!=(0x04000000|width) || result.marker!=0x3342464e)return false;
+		if(result.phase!=0x7000c || result.count!=((Policy::Phases<<24)|width) || result.marker!=Policy::Marker)return false;
 		io.Pause();result.pc[0]=io.BfpPcRead();io.Pause();result.pc[1]=io.BfpPcRead();
 		for(unsigned pc:result.pc)if(pc!=0x70038 && pc!=0x7003c)return false;
 		return Scope(io,baseline,0x46800) && io.BfpRead(0x17ffc0)==result.phase
@@ -62,12 +83,12 @@ public:
 		if(a==0x6000)return Image::Boot;
 		if(a>=0x70000 && a<0x71000)return Image::Word((a-0x70000)/4);
 		if(a>=B::Output && a<B::Output+256)return 0x7fc00001;
-		return PioneerNativeBfpBandFixture::Word(k,a); // headers/stack/status zero
+		return Policy::Word(k,a); // fixed synthetic data,headers/stack/status zero
 	}
 	const PioneerNativeBfpResult& Result()const{return result;}
 	void Abandon(){if(owned)Unknown();} // CPU metadata only
 	template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned k) {
-		static_assert(B::Width(Image::Width) && Image::Phases==4,"fixed full-K ALL-four-fidelity image only");
+		static_assert(B::Width(Image::Width) && Image::Phases==Policy::Phases,"fixed full-K and exact format fidelity only");
 		if(attempted || !B::Width(k) || k!=Image::Width)return false;
 		attempted=true;width=k;result.state=PIONEER_NATIVE_BFP_REFUSED;
 		if(baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK || baseline.routes_verified!=7
@@ -97,7 +118,7 @@ public:
 			const uint64_t now=io.BfpNow();if(now<began || now-began>UINT64_C(2000000000))return Unknown();
 			const uint32_t marker=io.BfpRead(0x17ffc8);
 			if(marker==0x4542464e)return Unknown();
-			if(marker==0x3342464e){complete=Terminal(io,baseline);break;}
+			if(marker==Policy::Marker){complete=Terminal(io,baseline);break;}
 			io.Pause();
 		}
 		if(!complete)return Unknown();
@@ -125,5 +146,11 @@ public:
 		result.tlb_restored=1;result.state=PIONEER_NATIVE_BFP_CLOSED;owned=false;return true;
 	}
 };
+using PioneerNativeBfpBandLease=PioneerNativeBfpBandLeaseFor<8>;
+using PioneerNativeBfp4BandLease=PioneerNativeBfpBandLeaseFor<4>;
+#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
+static_assert(PioneerNativeBfp4BandLease::SavedWords(17408)==PioneerNativeBfp4BandLease::MaxSavedWords,"exact bounded heap snapshot");
+#else
 static_assert(PioneerNativeBfpBandLease::SavedWords(17408)==PioneerNativeBfpBandLease::MaxSavedWords,"exact bounded heap snapshot");
+#endif
 #endif

@@ -47,7 +47,7 @@ struct IO {
 		0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0};
 	uint32_t tlb[2][3]={{1,2,3},{4,5,6}},reset=0x47800;
 	unsigned width,reads=0,writes=0,resets=0,tlbWrites=0,pauses=0,dropL1=0,dropReset=0,dropTlb=0;
-	bool timeout=false,badPC=false,faultMarker=false,oldMarker=false,badCount=false,sourceChanged=false,failRestore=false,executed=false,started=false;
+	bool timeout=false,badPC=false,faultMarker=false,oldMarker=false,bfp4Marker=false,badCount=false,sourceChanged=false,failRestore=false,executed=false,started=false;
 	std::string directory;uint64_t now=1000000;
 	IO(unsigned k,const char* path):width(k),directory(path) {
 		for(unsigned i=0;i<memory.size();i++)memory[i]=0x9e370000U^(i*71);original=memory;
@@ -101,8 +101,9 @@ struct IO {
 			assert(reset==0x87ffff && !started);started=true;reset=v;if(!timeout)Execute();
 			if(faultMarker)memory[0x17ffc8/4]=0x4542464e;
 			if(oldMarker)memory[0x17ffc8/4]=0x3142464e;
+			if(bfp4Marker)memory[0x17ffc8/4]=0x3442464e;
 			if(badCount)memory[0x17ffc4/4]^=1;
-		}else{if(started)assert(executed && !timeout && !badPC && !sourceChanged && !faultMarker && !oldMarker && !badCount);reset=v;}
+		}else{if(started)assert(executed && !timeout && !badPC && !sourceChanged && !faultMarker && !oldMarker && !bfp4Marker && !badCount);reset=v;}
 	}
 	uint64_t BfpNow(){return now;}
 	void Pause(){pauses++;now+=100000;}
@@ -143,15 +144,16 @@ template<unsigned K>static void Positive(const char* path) {
 	for(unsigned row=0;row<32;row++)printf("BAND_LEASE_SYNTHETIC_REFERENCE k%u row%u word%08x\n",K,row,reference[row]);
 	printf("PASS OFFBOARD full-K owner K%u words%u bytes%u;actual compiled RV32 image,two jobs/exact64 rounded outputs,complete L1/TLB restore,unowned holes unchanged;NO physical/NoC/GDDR/driver/model-speed authority\n",K,Lease::SavedWords(K),Lease::SavedWords(K)*4);
 }
+#ifndef PIONEER_NATIVE_BFP_BAND_OWNER_ONLY
 int main(int argc,char** argv) {
 	assert(argc==4);Prepare<5120>(argv[1]);Prepare<6144>(argv[2]);Prepare<17408>(argv[3]);
 	Positive<5120>(argv[1]);Positive<6144>(argv[2]);Positive<17408>(argv[3]);
 	unsigned faults=0;
-	for(unsigned fault=0;fault<14;fault++) {
+	for(unsigned fault=0;fault<15;fault++) {
 		IO io(5120,argv[1]);auto baseline=io.Baseline();auto lease=std::make_unique<Lease>();
 		if(fault==0)io.timeout=true;if(fault==1)io.badPC=true;if(fault==2)io.faultMarker=true;if(fault==3)io.sourceChanged=true;
 		if(fault==4)io.dropL1=1024;if(fault==5)io.dropReset=1;if(fault==6)io.dropReset=2;if(fault==7)io.dropTlb=2;
-		if(fault==12)io.oldMarker=true;if(fault==13)io.badCount=true;
+		if(fault==12)io.oldMarker=true;if(fault==13)io.badCount=true;if(fault==14)io.bfp4Marker=true;
 		bool ran=lease->Run<IO,Image<5120>>(io,baseline,5120);
 		if(fault>=8 && fault<12) {
 			assert(ran);if(fault==8)io.dropReset=3;if(fault==9)io.dropReset=4;
@@ -175,3 +177,4 @@ int main(int argc,char** argv) {
 	}
 	printf("PASS OFFBOARD full-K owner:%u failure/no-retry/close cases;bad geometry NO IO,old NFB1/wrong-width completion refused,uncertain stage/start/park/source/STOP/L1/TLB restore retain owner;NO retry/reset/destructor cleanup\n",faults);
 }
+#endif

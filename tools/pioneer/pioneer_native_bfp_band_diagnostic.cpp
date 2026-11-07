@@ -1,10 +1,26 @@
 /* SPDX-License-Identifier: MIT */
 // Separate fixed full-K synthetic diagnostic. NEVER model/Work inference.
 #include <Drivers.h>
+#if defined(PIONEER_NATIVE_BFP4_BAND_CLIENT)
+#include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfp4BandProtocol.h"
+#include "PioneerNativeBfp4BandFixture.h"
+#include "PioneerNativeBfp4BandGolden.h"
+#define PioneerNativeBfpBandTag PioneerNativeBfp4BandTag
+#define PioneerNativeBfpBandRequest PioneerNativeBfp4BandRequest
+#define PioneerNativeBfpBandRequestValid PioneerNativeBfp4BandRequestValid
+#define PioneerNativeBfpBandFixture PioneerNativeBfp4BandFixture
+#define PioneerNativeBfpBandGolden PioneerNativeBfp4BandGolden
+#define PIONEER_NATIVE_BFP_BAND_SUPPORT PIONEER_NATIVE_BFP4_BAND_SUPPORT
+#define PIONEER_NATIVE_BFP_BAND_RUN PIONEER_NATIVE_BFP4_BAND_RUN
+#define PIONEER_NATIVE_BFP_BAND_END PIONEER_NATIVE_BFP4_BAND_END
+static constexpr unsigned kPhases=2,kMarker=0x3442464e;
+#else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfpBandProtocol.h"
-#include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include "PioneerNativeBfpBandFixture.h"
 #include "PioneerNativeBfpBandGolden.h"
+static constexpr unsigned kPhases=4,kMarker=0x3342464e;
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include "PioneerBlackholeBf16Arithmetic.h"
 #include <cstdio>
 #include <cstring>
@@ -12,11 +28,19 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 namespace {
-uint16_t Weight(int n) {
+uint16_t Weight(unsigned tile,int n) {
+#if defined(PIONEER_NATIVE_BFP4_BAND_CLIENT)
+	const unsigned q=PioneerNativeBfp4BandFixture::QuantizedNibble(n),magnitude=q&7;
+	if(!magnitude)return 0;
+	unsigned top=0;for(unsigned scan=magnitude;scan>>=1;)top++;
+	return uint16_t(((q&8)?0x8000:0)|((118+tile%13+top)<<7)|((magnitude<<(7-top))-128));
+#else
+	(void)tile;
 	if(!n)return 0;
 	const unsigned magnitude=unsigned(n<0?-n:n);
 	unsigned top=0;for(unsigned scan=magnitude;scan>>=1;)top++;
 	return uint16_t((n<0?0x8000:0)|((120+top)<<7)|((magnitude<<(7-top))-128));
+#endif
 }
 bool Reference(unsigned width) {
 	const auto* golden=PioneerNativeBfpBandGolden(width);if(!golden)return false;
@@ -24,10 +48,13 @@ bool Reference(unsigned width) {
 		uint32_t total=0;
 		for(unsigned tile=0;tile<width/32;tile++)for(unsigned first=0;first<32;first+=16) {
 			uint16_t a[16],b[16];for(unsigned k=0;k<16;k++) {
-				a[k]=Weight(PioneerNativeBfpBandFixture::Numerator(tile,row,first+k));
+				a[k]=Weight(tile,PioneerNativeBfpBandFixture::Numerator(tile,row,first+k));
 				b[k]=PioneerNativeBfpBandFixture::InputBits(tile,first+k);
 			}
-			for(unsigned phase=0;phase<4;phase++)if(!PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,total,total))return false;
+			for(unsigned term=0;term<kPhases;term++) {
+				const unsigned phase=kPhases==2?term*2:term;
+				if(!PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,total,total))return false;
+			}
 		}
 		if(total!=golden[row])return false;
 	}
@@ -38,7 +65,7 @@ bool Result(const PioneerNativeBfpBandRequest& r,unsigned width,uint64_t generat
 		|| r.nonce!=1 || r.reserved || r.accept!=unsigned(state==PIONEER_NATIVE_BFP_CLOSED)
 		|| r.result.state!=state || r.result.cold || r.result.started!=1 || r.result.completed!=1
 		|| !r.result.polls || r.result.polls>20000 || r.result.phase!=0x7000c
-		|| r.result.count!=(0x04000000|width) || r.result.marker!=0x3342464e)return false;
+		|| r.result.count!=((kPhases<<24)|width) || r.result.marker!=kMarker)return false;
 	for(unsigned pc:r.result.pc)if(pc!=0x70038 && pc!=0x7003c)return false;
 	const unsigned restored=unsigned(state==PIONEER_NATIVE_BFP_CLOSED);
 	return r.result.held==restored && r.result.l1_restored==restored && r.result.tlb_restored==restored;
@@ -86,7 +113,7 @@ int main(int argc,char** argv) {
 	}
 	if(close(fd))return 1;
 	Dump(stdout,r,width);
-	printf("PASS_NATIVE_BFP_FULL_K bits8 width%u rows32 dual_jobs2 phases4 exact_words64 polls%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_MODEL_QUALITY_OR_SPEED_CLAIM\n",width,r.result.polls,(unsigned long long)metadata.generation);
+	printf("PASS_NATIVE_BFP_FULL_K bits%u width%u rows32 dual_jobs2 phases%u exact_words64 polls%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_MODEL_QUALITY_OR_SPEED_CLAIM\n",kPhases==2?4U:8U,width,kPhases,r.result.polls,(unsigned long long)metadata.generation);
 	if(fflush(stdout) || ferror(stdout))return 1;
 	return 0;
 }

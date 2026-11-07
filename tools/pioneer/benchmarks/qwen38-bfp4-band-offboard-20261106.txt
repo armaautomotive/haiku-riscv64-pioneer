@@ -46,9 +46,22 @@ python3 tools/pioneer/tests/pioneer_blackhole_arithmetic_bfp4_band_image_test.py
 
 Decision and next gate
 ----------------------
-Keep this separate, uninstalled and unavailable to Work/validation roles.
-Next establish a fresh, narrowly scoped physical full-K BFP4 diagnostic with
-independent silicon-arithmetic expectations and compare its throughput with
-the existing real Q4 path. A passing host simulation is not permission to
-install a production driver or run the model. If hardware performance or
-model quality is inadequate, reject this candidate and preserve evidence.
+The separate BFP4/tag118 diagnostic driver and client now cross-compile, but
+remain uninstalled. Its fixture and output protocol differ from BFP8/tag79;
+the BFP8 snapshot spans are a safe superset of the BFP4 L1 data spans.
+Offline tests execute all three linked RV32 images under the owner with exact
+rounded results, simulate restoration, and cover 20 failure/no-retry cases.
+The actual diagnostic client passes 200 fake-endpoint cases. The prior BFP8
+owner regression (22 fault/refusal cases) and client (200 cases) also pass.
+Both kernel roles reject the other format and Work/validation builds.
+
+One uninstalled build produced driver SHA256 c5882d54033948ce1531359ab262d24b84653c75c97b73a78be374cdffa88db8
+and client SHA256 7d6ec8b8a8ac3a0724f31c6c764fd97733791cd18f25e7c25e714ea0ce697516.
+The rebuilt BFP8 binaries differ from the historic pinned ones; old physical
+scripts must not be used with new binaries. No machine was contacted.
+
+Next: make and test a fresh single-use launch/restore gate, establish useful
+device-side timing for a comparison with the current path, and only then run
+the isolated card test. A passing host simulation is not permission to install
+a production driver or run the model. If hardware performance or model
+quality is inadequate, reject this candidate and preserve evidence.
