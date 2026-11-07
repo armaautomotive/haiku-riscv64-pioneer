@@ -9,6 +9,10 @@ import sys
 import tempfile
 
 args=sys.argv[1:];journal='--journal' in args;native='--native-context' in args;candidate='--candidate-driver' in args
+initializers='--initializers' in args
+if initializers:
+    assert args.count('--initializers')==1
+    args.remove('--initializers')
 if candidate:
     assert args.count('--candidate-driver')==1
     args.remove('--candidate-driver')
@@ -74,6 +78,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
     # The real sealed receipt must also pass the actual QGW5 native binding
     # body, not merely the loader's fake control or a layout-only simulation.
     run(sys.executable,here/'run_pioneer_q38_token_native_binding_tests.py','--hybrid',out)
+    if initializers:
+        zero=tmp/'state-zero'
+        run('sh',root/'build_qwen38_state_zero_image.sh',sdk,zero)
+        run(sys.executable,here/'run_pioneer_q38_token_native_initialization_tests.py',zero,'--hybrid-qgw5-header',out)
     for role in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
                  'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT',
                  'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):

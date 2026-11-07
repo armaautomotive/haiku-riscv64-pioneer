@@ -21,6 +21,9 @@
 #error Corrected output package requires its own complete native TEST binding
 #endif
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadReceipt.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
 #include "pioneer_q38_token_native_manual_ttsync_role.h"
 #endif
@@ -564,9 +567,15 @@ struct PioneerStoreContext {
  PioneerQ38TokenNativeState* q38TokenNative=nullptr;PioneerQ38CanonicalModelPlan* q38FfnModelPlan=nullptr;
  MockForeignOwner *q38GraphMutable=nullptr,*q38FfnZero=nullptr,*q38FfnGraph=nullptr,*q38FfnCode=nullptr,*q38GdnBanks=nullptr,*q38StateZero=nullptr;
  PioneerQ38DispatchLease* q38Dispatch=nullptr;MockCohort* q38Cohort=nullptr;MockFleet* fleet=nullptr;
- PioneerQ38GdnIdentity q38FfnModelIdentity={},q38GdnIdentity={};MockLease q38Delta,panelProbe,streamProbe,span,secondLease,secondNoc,idle;
+ PioneerQ38GdnIdentity q38FfnModelIdentity={},q38GdnIdentity={};MockLease q38Delta,panelProbe,streamProbe,secondLease,secondNoc,idle;
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+ PioneerQ38SpanLease span;
+ PioneerQ38HybridUploadReceipt* q38HybridReceipt=nullptr;
+#else
+ MockLease span;
+#endif
  MockLease peerAttention[8],decoder,layer,coordinator,attention,compute,secondCompute;
- MockLease* q38Span=&span;
+ decltype(span)* q38Span=&span;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
  tt_pioneer_profile tokenClockProfile;tt_arc_queue_result tokenClockMapping={};
  PioneerQ38ClockIO q38ClockIO;PioneerQ38ClockLease<PioneerQ38ClockIO> q38Clock;
@@ -585,7 +594,11 @@ struct PioneerStoreContext {
   ,lease(owner.store),bulk(b),bulkHost(transfer),wideHost(wide),host(owner.host){}
  auto& Pci(){return pci;}
 #include "token_native_unsafe.inc"
- ~PioneerStoreContext(){delete q38TokenNative;delete q38Dispatch;} // CPU-only fixture disposal;no physical resources exist
+ ~PioneerStoreContext(){delete q38TokenNative;delete q38Dispatch;
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+  delete q38HybridReceipt;
+#endif
+ } // CPU-only fixture disposal;no physical resources exist
 };
 #include "token_native_lock.inc"
 static void TestKernelLog(const char*,...){}
@@ -1126,6 +1139,7 @@ int main(int argc,char** argv){
   puts("PASS SAME full851 native owner/actual zero RV32 672GDN regions73728pages BOTHslots+336history1680pages+2workspace512pages/1010actualRUN+STOP+HOLD/full coverage+private clean CLOSE publications/code+scratch restored/learned unchanged/no BME;SIMULATED endpoints,NOT KV/metadata/model execution/physical/TPS/END permission");
  }
  assert(!lockHeld && lockAcquires==lockReleases);
+ return 0;
 }
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMPTY_RECEIPT_POLL_FIXTURE
 static_assert(PioneerQ38TokenPrograms::EmptyReceiptPoll==1

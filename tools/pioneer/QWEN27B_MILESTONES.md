@@ -128,6 +128,11 @@ without contacting a device. The physical trial did not report its internal
 failure stage, so this is a concrete defect consistent with that trial, not
 proof that it was the only failure or that inference now works.
 See the [offline binding result](benchmarks/qwen38-hybrid-runtime-bind-offline-20261107.txt).
+An additional [offline integration test](benchmarks/qwen38-hybrid-native-init-sim-20261107.txt)
+now carries that same sealed hybrid receipt through binding and all three
+native state initializers using the real zero program on simulated endpoints.
+It passed without modifying the simulated learned ledger. This is not a
+physical startup, model execution, quality or speed result.
 
 The corrected build and diagnostic now have a separate tag126 identity;
 their offline lifecycle tests reject the older tag125. The tag125 driver

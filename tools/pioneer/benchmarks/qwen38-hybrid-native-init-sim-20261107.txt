@@ -1,0 +1,28 @@
+Hybrid 27B native initialization: simulated endpoints
+=====================================================
+November 7, 2026. No Pioneer/card, real model weights, full inference,
+numerical-quality result or speed measurement was used or established.
+
+The integration regression constructs the real 22,005-extent sealed hybrid
+receipt with synthetic page/hash ledgers; runs the actual native binding;
+then executes the production recurrent, convolution-history and projection
+initializers with the real pinned zero-program RV32 instructions against
+simulated OS, MMIO and DRAM. The simulator is populated with addresses from
+the relocated hybrid layout, not the original Q4 layout.
+
+PASS: all 672 recurrent regions (73,728 pages), 336 history regions (1,680
+pages), and selected projection workspace (512 pages) initialized and
+closed. The simulated learned-page ledger remained unchanged; no bank was
+quarantined. A second initialization attempt was refused with no additional
+simulated I/O. A separate original-layout native initialization regression
+also passed. These are not hardware startup, KV initialization, model
+execution, a quality comparison, or proof that a real device can recover.
+
+Reproducible integration command:
+  python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
+The QGW5 program header is pinned by SHA-256
+2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49.
+The zero-program text is pinned by SHA-256
+39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b.
+The real physical failure did not report its internal startup stage; this
+result does not prove that the fixed candidate will run on the Pioneer.

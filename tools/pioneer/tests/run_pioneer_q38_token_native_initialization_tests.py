@@ -10,6 +10,13 @@ import sys
 import tempfile
 
 root_profile=None
+hybrid_header=None
+if '--hybrid-qgw5-header' in sys.argv:
+    assert sys.argv.count('--hybrid-qgw5-header')==1
+    index=sys.argv.index('--hybrid-qgw5-header');assert index+1<len(sys.argv)
+    hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
+    assert len(sys.argv)==2 and hybrid_header.is_absolute() and hybrid_header.is_file()
+    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()=='2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
 manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
     assert sys.argv.count('--manual-ttsync')==1
@@ -341,6 +348,10 @@ parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b
 assert len(parents) == 21
 defines = dict.fromkeys(parents, '1')
 defines['PIONEER_DRIVER_BUILD_TAG'] = '0x51544b4e4f445256ULL'
+if hybrid_header:
+    defines.update(PIONEER_Q38_HYBRID_TRACKED_UPLOAD='1',PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY='1',
+                   PIONEER_Q38_TOKEN_BF16_PROGRAMS='1',PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC='1',
+                   PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC='1',PIONEER_Q38_HYBRID_PROGRAMS_HEADER='"'+str(hybrid_header)+'"')
 if precise_context:
     defines.update(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1',
                    PIONEER_DRIVER_BUILD_TAG='0x5154324e4f445256ULL')
@@ -685,7 +696,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         extra += [str(raw_object), str(bridge_object)]
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
-                    '-I'+str(base), '-I'+str(kernel), str(here/'pioneer_q38_token_native_initialization_test.cpp'),
+                    '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent),
+                    str(here/('pioneer_q38_hybrid_native_initialization_test.cpp' if hybrid_header else 'pioneer_q38_token_native_initialization_test.cpp')),
                     *extra, '-o', str(binary)], check=True)
     if compile_link_only:
         print('COMPILE/LINK ONLY: actual native TEST fixture+selected bridge objects linked;binary NEVER executed,NO initialization/RUN/STOP/END/model/physical/TPS qualification')
