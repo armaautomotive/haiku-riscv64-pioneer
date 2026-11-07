@@ -35,6 +35,10 @@ bf16_profile='--bf16-profile' in options
 assert not bf16_profile or (bf16 and cancel and f32),'BF16 timing requires explicit BF16/cancel/FP32 inspect parents'
 deferred_audit='--deferred-prepare-audit' in options
 assert not deferred_audit or (bf16_profile and inspect and worker_admission and single_audit and not pushed),'deferred prepare audit requires exact BF16 timing/sealed-worker/single-audit BUILD'
+if reuse_input:
+ assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
+  '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-reuse-input'},'input reuse requires the exact tested ROOT profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options

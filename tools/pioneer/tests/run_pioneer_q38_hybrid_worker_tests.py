@@ -25,7 +25,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-suite-',dir='/private/tmp'
   rootFlags=['--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
    '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
    '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp']
-  for extra in (['--hybrid-reuse-input'],[*rootFlags,'--hybrid-reuse-input','--fast-rms']):
+  for extra in (['--hybrid-reuse-input'],[*rootFlags,'--hybrid-reuse-input','--fast-rms'],
+                [*rootFlags,'--hybrid-reuse-input','--bf16-profile']):
    refused=temp/'refused-root'
    result=subprocess.run([sys.executable,str(root/'build_qwen38_token_root.py'),str(sdk),str(refused),*extra],capture_output=True)
    assert result.returncode and not refused.exists()
