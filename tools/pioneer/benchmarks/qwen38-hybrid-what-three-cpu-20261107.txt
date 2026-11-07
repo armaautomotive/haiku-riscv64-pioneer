@@ -1,5 +1,5 @@
-QGW7 hybrid raw-What quality diagnostic: IN PROGRESS
-==================================================
+QGW7 hybrid raw-What quality diagnostic: COMPLETED
+=================================================
 
 This separate CPU-only diagnostic compares original Q4 with the experimental
 BFP4/BFP8 FFN substitution, using distinct original and candidate recurrent,
@@ -15,8 +15,20 @@ and found exactly one literal What entry. The diagnostic executable SHA-256
 is ac87c9e2130c214e1368f1e7aec6e5a78791d1d8588799a138724f663eaec6dd.
 The comparator's synthetic distribution/backend and role-refusal tests passed.
 
-At this checkpoint the real comparison was started but has not been observed
-to exit. No result, quality verdict, card execution or speed is claimed.
-The baseline for this prefix is not independently pinned. This small
-teacher-forced comparison cannot establish broad answer quality even if it
-completes. Update this record only after observing the same process finish.
+The same diagnostic process exited 0 and printed its three-position PASS
+marker. Two individual result lines were retained in the observation:
+
+ position 0: input 3710; original top token 369; candidate top token 369;
+   KL(original||candidate) 0.00155616389; top-5 overlap 5/5;
+   original/candidate top probabilities 0.460683241 / 0.461381529.
+ position 2: input 279; original top token 7193; candidate top token 7193;
+   KL(original||candidate) 0.00604887704; top-5 overlap 4/5;
+   original/candidate top probabilities 0.0556409131 / 0.05226958.
+
+The position 1 result line was not retained in the collected transcript. The
+process's final PASS and exit code show its own three-position checks ran,
+but do not recover that missing line or establish whether its top tokens
+matched. Do not infer its numerical result. The original and candidate use
+the same CPU reference implementation for other model operations, so this is
+not an independently pinned end-to-end baseline. This short teacher-forced
+prefix cannot establish broad answer quality, P100A correctness or speed.
