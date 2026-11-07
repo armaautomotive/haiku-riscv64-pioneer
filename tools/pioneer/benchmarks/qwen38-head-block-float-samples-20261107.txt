@@ -1,0 +1,59 @@
+27B output-head block-float investigation: CPU ONLY
+==================================================
+
+The QGW7 candidate still sends output.weight through its original on-card
+Q6 instruction path, not its BFP matrix worker. This checkpoint implements
+only an isolated original-Q6 -> BFP4_B/BFP8_B 32-row tile-band converter,
+not a head matrix worker, repacked runtime, cache, driver, Assistant mode,
+or device execution. It has no route, ownership or GPU interface. Its role
+refuses Work, CPU validation/native and kernel configurations. The caller
+must independently authenticate the source; conversion is lossy.
+
+After authenticating the complete 18,973,870,528-byte original GGUF against
+SHA-256 c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+the final diagnostic binary SHA-256
+68fed2433d05d539bcd49859ba897511c1d3b59837f97bb792e7cf387780d7a3
+exited 0 after reading the real output.weight Q6 rows. Sample bands start at
+0, 35456, 70912, 106432, 141888, 177344, 212800 and 248288, each 32 rows.
+The input was a deterministic synthetic 5120-element vector. Original Q6
+rows were decoded and dotted with that vector in host double arithmetic;
+converted outputs use the existing SOFTWARE block-float/BF16 matrix model.
+The two outputs therefore include differences from both conversion and that
+arithmetic model, not solely weight quantization. This is 256 of 248320
+logits and does not use a real model hidden state.
+
+                 relative L2 error    max absolute error    max sampled row
+ BFP4_B           0.132570548          0.127354299           141900
+ BFP8_B           0.00751089952         0.00844435068        141900
+ original Q6      reference             reference             141900
+
+An independent run of the same source before a role-only preprocessor guard
+change printed the same values. The matching sampled maximum does NOT imply
+that the full-vocabulary argmax matches, that generated answers are valid,
+or that either approximation is safe. The BFP4 error here is materially
+larger than BFP8; do not select it for the head based on this sample alone.
+
+Memory geometry, NOT actual allocated or uploaded card resources:
+* All output weights, no per-stripe alignment: existing tiled Q6 1052876800
+  bytes; BFP4 715161600; BFP8 1350860800.
+* Replacing the current Q6 head with BFP8 within the existing QGW7 fixed
+  seven-bank/13-BFP8-FFN layout needs approximately 42.5 MB extra in each
+  bank, while each bank has only 9.7-16.3 MB free. No bank fits.
+* Rebuilding the complete offline hybrid proposal with layers 48 and 49
+  switched from BFP8 to BFP4, mask 1ffc000000000000, leaves enough space in
+  every original bank for the BFP8 head according to capacity arithmetic.
+  Dropping only layer 48 does not. This is an illustrative layout tradeoff,
+  NOT proof that those layers can tolerate BFP4, not a complete head repack,
+  nor proof of working physical allocations, source identity or performance.
+  The earlier three-token QGW7 CPU comparison used the original 13-layer
+  mask and does not qualify this alternative.
+
+Verification: run_pioneer_q38_head_block_float_tests.py compiles under
+ASan/UBSan, compares 640 synthetic Q6-derived BFP4/BFP8 tiles with the
+independent original-row tile reader plus the shared codec, checks source,
+metadata, rounding and role refusals, checks invalid real-CLI arguments, and
+reproduces the bank-capacity results above. These tests and the real-weight
+sampling are CPU-only. No model was loaded on the card and there is no new
+measured tokens/second. Future work needs actual head worker, all-page
+conversion/relocation and authenticated lifecycle, comprehensive quality
+comparison for the altered FFN mask, and guarded hardware benchmarking.
