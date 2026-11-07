@@ -38,6 +38,11 @@ int main(){
   }
  }
  auto b=Boot(1);auto good=Job(b,8,0,0);assert(H::HeadJob(good.data()) && H::FpuJob(good.data()));
+ assert(H::HeadShape(good.data(),b.data(),0,0));
+ for(unsigned word=0;word<64;word++)for(unsigned bit=0;bit<32;bit++){
+  auto j=good;j[word]^=uint32_t(1U)<<bit;
+  assert(H::HeadShape(j.data(),b.data(),0,0)==(H::HeadJob(j.data()) && H::JobShape(j.data(),b.data(),0,0)));
+ }
  for(unsigned field:{0U,1U,2U,3U,4U,5U,7U,8U,16U,17U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U,28U,33U,35U}){
   auto j=good;j[field]=0;assert(!H::JobShape(j.data(),b.data(),0,0));refused++;
  }

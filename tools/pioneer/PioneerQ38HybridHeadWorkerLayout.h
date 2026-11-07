@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
 #define PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
-#if !defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
- || !defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || PIONEER_Q38_HYBRID_WORKER_IMAGE != 1 \
- || !defined(PIONEER_Q38_BF16_WORKER_IMAGE) || PIONEER_Q38_BF16_WORKER_IMAGE != 1 \
+#if (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION)) \
+ || (defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
+  || !defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || PIONEER_Q38_HYBRID_WORKER_IMAGE != 1 \
+  || !defined(PIONEER_Q38_BF16_WORKER_IMAGE) || PIONEER_Q38_BF16_WORKER_IMAGE != 1 \
+  || defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION))) \
+ || (defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \
+  || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE))) \
  || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
  || defined(PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0) || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) \
@@ -34,6 +38,20 @@ static inline bool BootShape(const uint32_t* b){
 }
 static inline bool HeadJob(const uint32_t* j){return j && j[2]==GlobalMatrix && j[16]==PioneerQ38Bfp8WorkerJob::Magic;}
 static inline bool FpuJob(const uint32_t* j){return HeadJob(j) || Base::FpuJob(j);}
+// The head-only coordinator must not link the much larger FFN/general job
+// grammar into its small ROM. Equivalent head restrictions, DATA only.
+static inline bool HeadShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+ if(!j || !BootShape(b) || j[0]!=Magic || !HeadJob(j) || densePhase || previous>=0x7ffffffe
+  || j[1]!=previous+1 || !j[1] || j[1]>=0x7fffffff || j[3]!=b[3] || j[4]!=b[4] || j[5]!=64
+  || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff)return false;
+ for(unsigned i=8;i<16;i++)if(j[i]!=b[i])return false;
+ PioneerQ38Bfp8WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
+ if(!PioneerQ38Bfp8WorkerJob::Shape(leaf) || leaf.words[2]!=5120 || leaf.words[6]!=b[3] || leaf.words[7]!=b[4]
+  || leaf.words[11]!=j[1] || (j[32]&31) || j[32]>=Vocabulary || leaf.words[4]*32>Vocabulary-j[32]
+  || j[33]!=Vocabulary || j[34]>=Waves || (j[34]==8 && b[3]>21) || j[35]!=JobWitness)return false;
+ for(unsigned i=36;i<64;i++)if(j[i])return false;
+ return true;
+}
 static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  if(FpuJob(j)){

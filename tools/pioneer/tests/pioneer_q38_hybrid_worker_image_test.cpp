@@ -32,7 +32,7 @@ struct HybridImage:WorkerImage {
  unsigned waitPC=0,faultPC=0,stopPC=0,seal=0,trace[32]={},traceIndex=0;
  HybridImage(const char* worker,const char* leaf,unsigned peer,unsigned width,unsigned bands=2)
 #ifdef PIONEER_TEST_BFP8
-  :WorkerImage(leaf,peer,width){assert(bands==2);
+  :WorkerImage(leaf,peer,width,bands){
 #else
   :WorkerImage(leaf,peer,width,bands){
 #endif

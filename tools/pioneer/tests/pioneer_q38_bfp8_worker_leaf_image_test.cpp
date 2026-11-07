@@ -12,8 +12,8 @@
 struct WorkerImage:Machine {
  NativeBfpBandMachine native;IO transfer;std::vector<uint8_t> code;unsigned stores=0,acks=0,dropAckAt=0,minSP=0x70000;
  bool awaiting=false,stackSeen=false,damageFrame=false;
- WorkerImage(const char* folder,unsigned worker,unsigned width)
-  :native(width,4,L::Weight,L::Input,L::WeightStride,L::InputStride,L::Header,L::Output),transfer(Make(worker,width),0,&native.l1){
+ WorkerImage(const char* folder,unsigned worker,unsigned width,unsigned bands=2)
+  :native(width,4,L::Weight,L::Input,L::WeightStride,L::InputStride,L::Header,L::Output,bands),transfer(Make(worker,width,bands),0,&native.l1){
   transfer.autoBand=true;std::string root=folder;code=Read((root+"/text.bin").c_str());auto boot=Read((root+"/boot.bin").c_str());
   assert(boot.size()==4 && !code.empty() && code.size()<=8192 && !(code.size()&3));
   std::fill(std::begin(l1),std::end(l1),0xdeadbeef);l1[0]=Word(boot,0);
@@ -22,7 +22,7 @@ struct WorkerImage:Machine {
   for(unsigned i=0;i<3;i++)l1[Index(0x17ffc0+i*4)]=0;
   const auto fixture=NativeBfpBandMachine::Data(width);
   for(unsigned tile=0;tile<native.tiles;tile++){
-   for(unsigned band=0;band<2;band++)std::memcpy(transfer.weights.data()+(band*native.tiles+tile)*1088,fixture.packed[tile].data(),1088);
+   for(unsigned band=0;band<bands;band++)std::memcpy(transfer.weights.data()+(band*native.tiles+tile)*1088,fixture.packed[tile].data(),1088);
    for(unsigned c=0;c<32;c++){transfer.root[tile*64+c*2]=uint8_t(fixture.input[tile][c]);transfer.root[tile*64+c*2+1]=uint8_t(fixture.input[tile][c]>>8);}
   }
  }

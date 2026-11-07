@@ -72,15 +72,25 @@ check, not a full conversion, independent codec, card access or quality
 qualification. Neither that check nor the synthetic cache check wrote a
 real-model derived-weight cache.
 
-A separate teacher-forced CPU check is running with the two BFP8 FFN layers
+A separate teacher-forced CPU check completed with the two BFP8 FFN layers
 48 and 49 changed to BFP4 (mask 1ffc000000000000) and raw initial token
 3710. Its capture log is /private/tmp/pioneer-q38-window11-what-20261107-a.log;
 the comparison executable's SHA-256 is
 5ac6210ed4e3b468d319d94fb62d94c57c0b7a3dfaf50ca7f662bce66def9b71.
+Its complete captured transcript has SHA-256
+56114e3b707b509f3f3316df76035ac498a46f6c18920e0fa1ee7f7e5efbef00,
+contains three result lines, a three-position PASS marker and CAPTURE_EXIT 0:
+
+ position input original-top candidate-top KL(original||candidate) top-5-overlap
+ 0        3710  369          369           0.00157201276          5/5
+ 1        369   279          279           0.0034329374           5/5
+ 2        279   7193         7193          0.00701567725          4/5
+
 It compares only FFN conversion against original weights; it does NOT use a
-converted output head. Do not assert its result until its captured exit and
-three positions have been verified. Its source model is authenticated by the
+converted output head. Both paths share much of the CPU model implementation,
+the baseline is not independently pinned, and the prefix is not a natural
+chat or broad quality test. Its source model was authenticated by the
 diagnostic. No model was loaded on the card and there is no new measured
-tokens/second. Future work still needs an actual head matrix worker, full
-repack and authenticated lifecycle, comprehensive combined-format quality
-validation, and guarded hardware benchmarking.
+tokens/second. Future work still needs linked ROOT and authenticated
+residency/lifecycle, comprehensive combined-format quality validation, and
+guarded hardware benchmarking.

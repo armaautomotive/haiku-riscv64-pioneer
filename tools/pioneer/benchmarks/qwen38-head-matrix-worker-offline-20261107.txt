@@ -10,8 +10,8 @@ differs from QGW7/tag127; old Q6 head frames and mixed image identities are
 refused. The source role forbids driver/native, Work, CPU-validation,
 test-layer0 and other incompatible role combinations.
 
-This is NOT a complete runtime. No corresponding ROOT, head-job planner,
-authenticated repacker/owner, cache upload, model-quality pass, driver,
+This is NOT a complete runtime. No corresponding linked ROOT, authenticated
+repacker/owner, cache upload, model-quality pass, driver,
 Assistant mode or physical test exists for QGW8. It must not be installed,
 combined with tag127, or used as permission to test the card. The earlier
 GPU/storage recovery guard remains in place. Code outside the large matrix
@@ -39,8 +39,26 @@ Offline tests under ASan/UBSan:
   its disassembly. No device, real learned weights or independent hardware
   arithmetic is involved.
 
-The 11-layer FFN numerical comparison with original weights is still in
-progress, separately from this worker test; its log/limits are recorded in
+Follow-up: a separate offline QGW8 repack and head-job planner now maps the
+complete 248320-row vocabulary to 973 jobs over nine waves with 1..8 bands
+per job. It preserves bank assignments while relocating all subsequent
+parts, validates the 11-layer FFN layout and head metadata, and rejects
+malformed or over-capacity plans. An ASan/UBSan test checked every row exactly
+once, each job's BFP8 source range and all seven banks. The freestanding RV32
+shape/job helpers compiled with no undefined symbols or forbidden opcodes;
+3724 isolated text bytes and a 544-byte largest individual static frame are
+NOT proof of linked ROOT fit or total stack safety. The specialized head
+grammar was cross-checked against the general worker grammar on 2048
+single-bit mutations. The old job/worker format remains distinct.
+
+An end-to-end synthetic bridge generated a real planner job, submitted it to
+the actual compiled QGW8 worker and BFP8 leaf under simulated NoC/FPU, and
+checked all 256 outputs and its argmax receipt. It injected the same fake
+modelLayer=64 state after worker boot; it did NOT execute the preceding 64
+layers or use real weights. A corrupted frame was refused before work.
+
+The 11-layer FFN numerical comparison with original weights is complete,
+separately from this worker test; its results/limits are recorded in
 qwen38-head-block-float-samples-20261107.txt. It does not include the BFP8
 head. Physical 27B speed remains the previously recorded ~0.173 token/s on
 the older non-all-matrix path; this worker has no tokens/second measurement.

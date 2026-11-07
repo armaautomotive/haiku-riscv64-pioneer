@@ -7,12 +7,13 @@
 // first-tile observer and strict RV32 decoder are UNCHANGED. Arithmetic here
 // remains that observer's IDEAL phasewise FP32 model, NOT silicon rounding.
 struct NativeBfpBandMachine:NativeBfpMachine {
-	unsigned tiles,phases,clears=0;
+	unsigned tiles,phases,clears=0;const unsigned maxBands;
 	const unsigned weightBase,inputBase,weightStride,inputStride,headerBytes,operandLimit;
 	NativeBfpBandMachine(unsigned k,unsigned fidelity,unsigned w=0x90000,unsigned b=0x124000,
-		unsigned ws=1104,unsigned bs=80,unsigned h=16,unsigned limit=0x130000)
-		:tiles(k/32),phases(fidelity),weightBase(w),inputBase(b),weightStride(ws),inputStride(bs),headerBytes(h),operandLimit(limit) {
+		unsigned ws=1104,unsigned bs=80,unsigned h=16,unsigned limit=0x130000,unsigned bands=2)
+		:tiles(k/32),phases(fidelity),maxBands(bands),weightBase(w),inputBase(b),weightStride(ws),inputStride(bs),headerBytes(h),operandLimit(limit) {
 		assert((k==5120 || k==6144 || k==17408) && (phases==1 || phases==4));
+		assert(bands>=1 && bands<=8);
 		assert(h>=16 && !(h&15) && ws==1088+h && bs==64+h && w>=h && b>=h);
 		assert(w-h+tiles*ws<=b-h && b-h+tiles*bs<=limit && limit<=l1.size());
 	}
@@ -64,7 +65,7 @@ struct NativeBfpBandMachine:NativeBfpMachine {
 	}
 	void Op(unsigned op) {
 		if(op==0x10180000) {
-			assert(clears<2 && unpacks[0]==clears*tiles && unpacks[1]==unpacks[0] && matrixOps==clears*tiles*4*phases);clears++;
+			assert(clears<maxBands && unpacks[0]==clears*tiles && unpacks[1]==unpacks[0] && matrixOps==clears*tiles*4*phases);clears++;
 			NativeBfpMachine::Op(op);
 		}else if(op==0x420000c1 || op==0x428000c1){cycle++;Advance();UnpackBand((op>>23)&1);}
 		else if((op>>24)==0x26){cycle++;Advance();BroadcastMatrix(op);}

@@ -57,3 +57,37 @@ This is not proof of full storage safety or authorization to weaken the
 guard. The installed driver remains tag125 and no accelerator experiment is
 authorized by these observations. Investigate persistence and protect the
 filesystem before any new restore or physical inference trial.
+
+Independent Linux raw follow-up
+-------------------------------
+After the user later confirmed the Pioneer was off, one ON pulse was sent;
+the user said it needed time and no further relay action was taken. After the
+user powered on, the existing photo-verified Linux SSH host key matched.
+On 2026-11-07 at 20:33 UTC Linux 6.1.31 boot ID
+abd322af-634d-4699-8ffd-19a72dd63c3a reported 64 CPUs and MemTotal
+131976904 kB. The expected Samsung SATA disk S14CNSAD300075H was present.
+The exact read-only evidence program verified disk and partition identity,
+size, partition start, BFS UUID/geometry, and no mount in its namespace,
+then opened /dev/sda1 O_RDONLY. It rechecked the four recorded inode numbers,
+sizes and non-overlapping extents before hashing data from those extents:
+
+ state         094397c8680a2bb50de5ca274f1468d53861415c400bb0057af66c8d7a3f5591
+ trial.stderr  97224f9450e7d5ed6fc6e071d7a17fe39a90a368a8855f182cebac9bfa7e1cfb
+ trial.stdout  cc67398cdf4d67e740c063928b2253e4e06afae79f35e9bfd5cd768e873d23aa
+ stable.backup 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+
+Each matches the respective preserved post-failure Mac copy, not the three
+original pre-power record hashes. The three altered records still equal the
+previously recorded portions of stable.backup. This independently confirms
+the pattern in Linux's raw view after a new boot; it is not just Haiku's
+file-cache view. It does not identify the cause or prove future write
+durability, and disk/controller caching or remapping cannot be excluded.
+No filesystem repair, metadata update, driver exchange, card work or bypass
+of the one-shot recovery guard was performed.
+
+Linux reports the SATA device's write cache as "write back" and queue FUA
+capability as 0. A read-only SMART query reported overall health PASSED;
+reallocated sectors, uncorrectable errors and interface CRC errors each
+reported zero. These indicators do not rule out a flush, power-loss,
+controller, filesystem or other data-integrity problem. Keep the existing
+recovery guard intact; the backup hash alone does not resolve the anomaly.

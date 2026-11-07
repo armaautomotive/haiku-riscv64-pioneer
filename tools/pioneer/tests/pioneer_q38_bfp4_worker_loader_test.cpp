@@ -16,8 +16,8 @@ using W=PioneerQ38Bfp4WorkerJob;using WorkerLoader=PioneerQ38Bfp4WorkerLoader;
 #include <cstring>
 #include <vector>
 using L=W::L;
-static W::Job Make(unsigned worker,unsigned width){
- W::Job j={{W::Magic,W::Version,width,0x04000000,2,786,worker,W::Existing::Peer(worker),PioneerQ38Bf16Wire::Magic,
+static W::Job Make(unsigned worker,unsigned width,unsigned bands=2){
+ W::Job j={{W::Magic,W::Version,width,0x04000000,bands,786,worker,W::Existing::Peer(worker),PioneerQ38Bf16Wire::Magic,
   W::RootInput,W::RootRoute,7,W::Output,0,0,0}};
  assert(W::Shape(j));return j;
 }
