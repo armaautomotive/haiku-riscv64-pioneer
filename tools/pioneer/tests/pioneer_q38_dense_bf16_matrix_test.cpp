@@ -11,6 +11,12 @@ struct L1IO {
  void Write(unsigned a,unsigned v){assert(a%4==0 && a+4<=m.l1.size());memcpy(m.l1.data()+a,&v,4);}
  void Fence(){fences++;}
 };
+struct FailedFourStage {
+ PioneerQ38DenseBf16ValuesStage<L1IO> stage;
+ FailedFourStage(L1IO& io):stage(io,0xa0000,0x82000,0x90000,0x91000,1,0){}
+ bool Select(unsigned part){return part!=2 && stage.Select(part);}
+ bool Tile(unsigned tile){return stage.Tile(tile);}
+};
 
 struct TileStage {
  NativeBfpMachine& machine;
@@ -80,6 +86,19 @@ int main(){
  assert(!PioneerQ38DenseBf16Matrix::Scores(bad,noio,0x90000,0x90800));
  assert(!PioneerQ38DenseBf16Matrix::Scores(bad,noio,0x90001,0x91000));
  assert(noio.calls==0 && bad.drains==0 && bad.matrixOps==0);
+ NativeBfpMachine interrupted;L1IO interruptedIO{interrupted};
+ interruptedIO.Write(0xa0000,0);interruptedIO.Write(0x82000,0);
+ FailedFourStage incomplete(interruptedIO);
+ assert(!PioneerQ38DenseBf16Matrix::ValuesFour(interrupted,incomplete,0x90000,0x91000));
+ assert(interrupted.matrixOps==32 && interrupted.Clean() && interrupted.outputReads==0);
+ NativeBfpMachine sequenceCard;L1IO sequenceIO{sequenceCard};
+ sequenceIO.Write(0xa0000,0);sequenceIO.Write(0x82000,0);
+ PioneerQ38DenseBf16ValuesStage<L1IO> sequence(sequenceIO,0xa0000,0x82000,0x90000,0x91000,1,0);
+ assert(!sequence.Select(1) && sequence.Select(0) && !sequence.Select(1));
+ assert(sequence.Tile(0) && sequence.Select(1) && sequence.Tile(0));
+ assert(!sequence.Select(3) && sequence.Select(2) && sequence.Tile(0) && sequence.Select(3) && sequence.Tile(0));
+ assert(!sequence.Select(4) && sequenceIO.fences==4);
+ std::puts("four-product stage ordering and third-part refusal pass");
  // The real staging code reads the existing token-major binary16 KV and
  // float32 private query layout; the independent reference stays binary16.
  for(unsigned count: {1U,17U,32U}){
@@ -150,6 +169,25 @@ int main(){
   }
   assert(valueIO.fences==1 && card.matrixOps==16);
   std::printf("pv rows=%u block=%u simulated_max_abs_error=%.9g relative_l2=%.9g\n",count,block,maxAbsolute,std::sqrt(squared/referenceSquared));
+  card.expectedWeight=0xa5000;card.alternateWeight=0xa6000;
+  card.expectedInput=0xa7000;card.alternateInput=0xa7400;
+  PioneerQ38DenseBf16ValuesCachedStage<L1IO> cached(valueIO,v,p,count,block);
+  assert(PioneerQ38DenseBf16Matrix::ValuesCached(card,cached));
+  const auto precise=card.Results();double preciseError=0,preciseNorm=0;
+  for(unsigned row=0;row<32;row++){
+   const unsigned d=block*32+row;double reference=0,absolute=0;
+   for(unsigned t=0;t<count;t++){
+    unsigned pair=valueIO.Read(v+t*512+(d&~1U)*2);
+    const uint16_t half=uint16_t(d&1?pair>>16:pair);
+    double product=double(PioneerAttentionHalf(half))*PioneerAttentionFloat(valueIO.Read(p+t*4));
+    reference+=product;absolute+=std::abs(product);
+   }
+   const double error=std::abs(precise[row]-reference);
+   preciseError+=error*error;preciseNorm+=reference*reference;
+   assert(error<=0.00001*absolute+0.00000001);
+  }
+  assert(card.matrixOps==80 && valueIO.fences==2 && !cached.Prepare());
+  std::printf("cached four-product pv rows=%u block=%u relative_l2=%.9g\n",count,block,std::sqrt(preciseError/preciseNorm));
  }
  for(unsigned badKind: {0U,1U}){
   NativeBfpMachine card;L1IO valueIO{card};
@@ -162,5 +200,12 @@ int main(){
  NativeBfpMachine invalidBlock;L1IO blockIO{invalidBlock};
  PioneerQ38DenseBf16ValuesStage<L1IO> blockStage(blockIO,0xa0000,0x82000,0x90000,0x91000,1,8);
  assert(!blockStage.Tile(0) && blockIO.fences==0);
+ PioneerQ38DenseBf16ValuesCachedStage<L1IO> overlapping(blockIO,0xa5000,0x82000,1,0);
+ assert(!overlapping.Prepare() && blockIO.fences==0);
+ NativeBfpMachine cachedInvalid;L1IO cachedInvalidIO{cachedInvalid};
+ cachedInvalidIO.Write(0xa0000,0x00007c00);cachedInvalidIO.Write(0x82000,0);
+ PioneerQ38DenseBf16ValuesCachedStage<L1IO> invalidCachedStage(cachedInvalidIO,0xa0000,0x82000,1,0);
+ assert(!PioneerQ38DenseBf16Matrix::ValuesCached(cachedInvalid,invalidCachedStage));
+ assert(cachedInvalid.matrixOps==0 && cachedInvalid.outputReads==0 && cachedInvalidIO.fences==0);
  std::puts("nonfinite V/probability and invalid PV block refused");
 }

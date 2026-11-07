@@ -20,6 +20,13 @@ copy is in /private/tmp/pioneer-hybrid125-failed.h6FLuiMP. Temporary copies
 are not archival backups. None of this proves the cause; stale file data,
 cache/flush problems, wrong block mapping and other explanations remain open.
 
+The preserved trial wrapper was also inspected: it ran sync during driver
+exchange, but its failure trap and the final writes of state/trial stdout,
+stderr and exit status did not explicitly flush those files. A missing final
+flush is consistent with stale data after a forced power-off, but this alone
+does not establish whether a later external sync occurred or prove the cause.
+Future trial wrappers need explicit checked durability before power cycling.
+
 The BFS inode maps were read without mutation. The affected state, stderr and
 stdout data occupy group118 blocks 3694, 3692 and 3660-3662 respectively;
 stable.backup occupies 118:65124-65475 and 119:62946-63112. Thus their

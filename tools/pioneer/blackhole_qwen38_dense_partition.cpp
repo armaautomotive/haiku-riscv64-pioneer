@@ -170,10 +170,9 @@ static void Scores(unsigned first,unsigned count,unsigned head){
 }
 static void Values(unsigned first,unsigned count,unsigned head){
  for(unsigned block=0;block<8;block++){
-  for(unsigned part=0;part<4;part++){
   MatrixIO io;MatrixEmitter e;
-  PioneerQ38DenseBf16ValuesStage<MatrixIO> stage(io,L::Chunk,L::Scores+(head*L::Stride+first)*4,0xa5000,0xa6000,count,block,part);
-  if(!PioneerQ38DenseBf16Matrix::Values(e,stage,0xa5000,0xa6000))scalar_fault_park();
+  PioneerQ38DenseBf16ValuesCachedStage<MatrixIO> stage(io,L::Chunk,L::Scores+(head*L::Stride+first)*4,count,block);
+  if(!PioneerQ38DenseBf16Matrix::ValuesCached(e,stage))scalar_fault_park();
   for(unsigned row=0;row<32;row++){
    unsigned bits=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
    if((bits&0x7f800000)==0x7f800000)scalar_fault_park();
@@ -183,7 +182,6 @@ static void Values(unsigned first,unsigned count,unsigned head){
    PioneerAttentionAdd(PioneerAttentionFloat(bits),high,low);
    Words(L::Accumulate)[highIndex]=PioneerAttentionBits(high);
    Words(L::Accumulate)[lowIndex]=PioneerAttentionBits(low);
-  }
   }
  }
 }

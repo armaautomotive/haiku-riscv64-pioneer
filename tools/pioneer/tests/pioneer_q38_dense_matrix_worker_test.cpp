@@ -9,9 +9,10 @@
 struct MatrixPartitionMachine:PartitionMachine {
  NativeBfpMachine fpu;bool matrix=false;
  MatrixPartitionMachine(const char* image,const ProducedGroup& input,unsigned ordinal)
-  :PartitionMachine(image,input,ordinal){fpu.expectedWeight=0xa5000;fpu.expectedInput=0xa6000;}
+  :PartitionMachine(image,input,ordinal){fpu.expectedWeight=0xa5000;fpu.alternateWeight=0xa6000;
+   fpu.expectedInput=0xa6000;fpu.alternateInput=0xa7000;fpu.thirdInput=0xa7400;}
  uint32_t Load(uint32_t a)override{
-  if((a>=0xa4ff0 && a<0xa5800) || (a>=0xa5ff0 && a<0xa6200)){
+  if(a>=0xa4ff0 && a<0xa7600){
    assert(!(a&3));uint32_t v;memcpy(&v,fpu.l1.data()+a,4);return v;
   }
   if(matrix && a==0xffe000fc){fpu.Drain();return 1;}
@@ -23,7 +24,7 @@ struct MatrixPartitionMachine:PartitionMachine {
   return PartitionMachine::Load(a);
  }
  void Store(uint32_t a,uint32_t v)override{
-  if((a>=0xa4ff0 && a<0xa5800) || (a>=0xa5ff0 && a<0xa6200)){
+  if(a>=0xa4ff0 && a<0xa7600){
    assert(!(a&3));memcpy(fpu.l1.data()+a,&v,4);return;
   }
   if(a==0xffe40000 && v==0xb2000000)matrix=false;
@@ -111,8 +112,8 @@ static void RunCase(const char* image,const char* reference,unsigned tokens,bool
  assert(std::sqrt(error/norm)<0.01 && std::sqrt(scoreError/scoreNorm)<0.01);
  assert(worker.fpu.matrixOps==6*chunks*(128+4*8*16) && worker.fpu.Clean());
  worker.Stop();
- printf("PASS simulated ACTUAL QDM2 phases 1/2/3/STOP, six heads, tokens=%u partition=%u; score_relative_l2=%.9g PV_relative_l2=%.9g matrix_ops=%u; synthetic local controller/NoC, NOT hardware or speed\n",
-  tokens,count,std::sqrt(scoreError/scoreNorm),std::sqrt(error/norm),worker.fpu.matrixOps);
+ printf("PASS simulated ACTUAL QDM2 phases 1/2/3/STOP, six heads, tokens=%u partition=%u; score_relative_l2=%.9g PV_relative_l2=%.9g matrix_ops=%u rv32_steps=%u; synthetic local controller/NoC, NOT hardware or speed\n",
+  tokens,count,std::sqrt(scoreError/scoreNorm),std::sqrt(error/norm),worker.fpu.matrixOps,worker.steps);
 }
 static void RunFullGroup(const char* image,const char* reference,unsigned tokens){
  ProducedGroup input(reference,0,tokens);
@@ -178,8 +179,8 @@ static void RunFullGroup(const char* image,const char* reference,unsigned tokens
  const double relative=std::sqrt(error/norm);
  if(relative>=0.01){fprintf(stderr,"FAIL 24-partition tokens=%u total_l2=%.9g qk_l2=%.9g probability_l2=%.9g pv_l2=%.9g threshold=0.01\n",tokens,relative,std::sqrt(scoreDifference/scoreNorm),std::sqrt(probError/probNorm),std::sqrt(pvError/pvNorm));fflush(stderr);}
  assert(relative<0.01);
- unsigned ops=0;for(auto& worker:pool){assert(worker->fpu.Clean());ops+=worker->fpu.matrixOps;worker->Stop();}
- printf("PASS simulated ACTUAL QDM2 24 partitions, six heads, tokens=%u; merged_PV_relative_l2=%.9g matrix_ops=%u; synthetic global controller/NoC, NOT hardware or speed\n",tokens,relative,ops);
+ unsigned ops=0;uint64_t steps=0;for(auto& worker:pool){assert(worker->fpu.Clean());ops+=worker->fpu.matrixOps;worker->Stop();steps+=worker->steps;}
+ printf("PASS simulated ACTUAL QDM2 24 partitions, six heads, tokens=%u; merged_PV_relative_l2=%.9g matrix_ops=%u rv32_steps=%llu; synthetic global controller/NoC, NOT hardware or speed\n",tokens,relative,ops,(unsigned long long)steps);
 }
 int main(int argc,char** argv){
  assert(argc==3);(void)&D::Run;(void)&Group;(void)&Geometry;(void)&Faults;

@@ -31,7 +31,8 @@ A separate dense-attention worker now puts QK and PV products on matrix
 engines. Its actual instructions passed simulated six-head and 24-partition
 tests, with a test-only global controller; it has not been integrated into
 the full model or run on the card. The more accurate PV path uses four matrix
-products, so whether it is faster remains unknown. See the
+products; reuse of converted operands cut simulated worker instructions by
+about 60% on one fixture, but whether it is faster on the card remains unknown. See the
 [experiment and qualification limits](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt).
 
 **Hardware recovery is on hold:** after reboot, several saved trial records

@@ -46,7 +46,7 @@ RV32 image; softmax and the existing high/low cross-chunk merge remain in the
 worker. The ordinary QDW1 image still rebuilds byte-for-byte unchanged, and
 its existing role/build guards passed. The individual math/staging observers
 above do NOT execute the new complete QDM2 phase protocol. The QDM2 code.bin
-SHA-256 was 0896f4edc570ab4f338550353448ae0d587b89895ffdf35684edd55aa9902f12
+SHA-256 was 9d1ca5509a6fdcdc07297a8734fce3b7b9345c8713b4f50d38096cb535005ac5
 for this exact source and SDK. To reproduce in a new output directory:
   python3 tools/pioneer/build_qwen38_dense_matrix_image.py ABSOLUTE_SDK ABSOLUTE_OUTPUT
 
@@ -67,6 +67,21 @@ quality, or a speed measurement. One first
 compile emitted an unsupported byte store; the flag is now word-sized and the
 builder explicitly rejects byte stores. Run the observer with:
   python3 tools/pioneer/tests/run_pioneer_q38_dense_matrix_worker_tests.py ABSOLUTE_QDM2_DIR ABSOLUTE_QDA_DIR
+
+Reuse experiment: the original correct four-product worker reconfigured and
+cleared Dst separately for every product and converted its inputs four times.
+The new worker retains Dst across four products and creates both BF16 operand
+components only once in private L1, switching operand addresses between
+products. On the identical simulated 65-token/24-partition fixture, the
+observed worker RV32 instruction total fell from 122345677 to 49075745
+(about 59.9% fewer); matrix operations remained 84480 and merged output
+relative L2 versus the existing QDA reference changed from 0.00168826612 to
+0.00168827224. At 33 tokens, steps fell from 88470424 to 36060605 and the
+matrix operation count remained 65280. These are instruction-model counts,
+not cycles, PCIe traffic, physical latency or token throughput. They cannot
+establish a real speedup. New L1 reservations and reordered accumulation are
+unqualified on silicon and in the mixed worker. Fault tests include rejected
+staging order and no successful publication after an interrupted part.
 
 No mixed/native integration, complete L1 coexistence proof,
 physical ownership, timeout recovery, silicon correctness or measurement is

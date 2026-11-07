@@ -21,7 +21,8 @@
 // quality, real instructions and timing still require qualification.
 struct PioneerQ38DenseBf16Matrix {
  static constexpr unsigned Width=256, TileWidth=32, Tiles=Width/TileWidth;
- template<class E,class Stage> static bool Product(E& e,Stage& stage,unsigned matrix,unsigned vector,unsigned tiles) {
+private:
+ template<class E> static bool Begin(E& e,unsigned matrix,unsigned vector,unsigned tiles) {
   // Header, payload and address ownership are caller duties; these two
   // spans must not overlap even when the caller supplies malformed input.
   if((tiles!=1 && tiles!=Tiles) || (matrix&15) || (vector&15) || matrix<16 || vector<16
@@ -35,18 +36,26 @@ struct PioneerQ38DenseBf16Matrix {
   e.Config(84,0x00400080);
   e.Config(76,matrix/16-1);e.Config(124,vector/16-1);
   e.Op(0x3700000f);e.Op(0x10180000);e.Drain(); // clear once, NOT per K32
+  return true;
+ }
+ template<class E> static void AccumulateTile(E& e){
+  e.Op(0x3700000f);e.Op(0x5e2ffc00);e.Op(0x5e43fc00);
+  e.Op(0x5160000b);e.Op(0x5460000f);
+  e.Op(0x420000c1);e.Op(0x428000c1);e.Drain();
+  for(unsigned face=0;face<4;face++) {
+   if(face){e.Op(0x37040201);e.Op(0x37040201);}
+   e.Op(face&1?0x3700200a:0x3700000a);
+   for(unsigned phase=0;phase<4;phase++)
+    e.Op(0x26004000|(face<2?32:40)|((face==3 && phase==3)?0x00c00000:0));
+  }
+  e.Drain(); // both source banks released before stage can rewrite inputs
+ }
+public:
+ template<class E,class Stage> static bool Product(E& e,Stage& stage,unsigned matrix,unsigned vector,unsigned tiles) {
+  if(!Begin(e,matrix,vector,tiles))return false;
   for(unsigned tile=0;tile<tiles;tile++) {
    if(!stage.Tile(tile))return false; // no successful score publication
-   e.Op(0x3700000f);e.Op(0x5e2ffc00);e.Op(0x5e43fc00);
-   e.Op(0x5160000b);e.Op(0x5460000f);
-   e.Op(0x420000c1);e.Op(0x428000c1);e.Drain();
-   for(unsigned face=0;face<4;face++) {
-    if(face){e.Op(0x37040201);e.Op(0x37040201);}
-    e.Op(face&1?0x3700200a:0x3700000a);
-    for(unsigned phase=0;phase<4;phase++)
-     e.Op(0x26004000|(face<2?32:40)|((face==3 && phase==3)?0x00c00000:0));
-   }
-   e.Drain(); // both source banks released before stage can rewrite inputs
+   AccumulateTile(e);
   }
   return true;
  }
@@ -55,6 +64,27 @@ struct PioneerQ38DenseBf16Matrix {
  }
  template<class E,class Stage> static bool Values(E& e,Stage& stage,unsigned matrix,unsigned vector){
   return Product(e,stage,matrix,vector,1);
+ }
+ // Preserve Dst across all four BF16 component products. This avoids three
+ // redundant hardware setups, Dst clears and intermediate result readbacks.
+ // Changed FP32 accumulation order is approximate and needs validation.
+ template<class E,class Stage> static bool ValuesFour(E& e,Stage& stage,unsigned matrix,unsigned vector){
+  if(!Begin(e,matrix,vector,1))return false;
+  for(unsigned part=0;part<4;part++){
+   if(!stage.Select(part) || !stage.Tile(0))return false;
+   AccumulateTile(e);
+  }
+  return true;
+ }
+ // Preconvert both input components once. The four distinct products reuse
+ // those immutable L1 buffers and the same destination accumulator.
+ template<class E,class Stage> static bool ValuesCached(E& e,Stage& stage){
+  if(!Begin(e,Stage::Matrix(0),Stage::Vector(0),1) || !stage.Prepare())return false;
+  for(unsigned part=0;part<4;part++){
+   if(part){e.Config(76,Stage::Matrix(part)/16-1);e.Config(124,Stage::Vector(part)/16-1);}
+   AccumulateTile(e);
+  }
+  return true;
  }
 };
 #endif

@@ -51,7 +51,7 @@ public:
 // pad missing tokens with zero. This is a single partial PV, not a merge
 // across chunks or heads. All inputs stay on the card; no CPU products.
 template<class IO> class PioneerQ38DenseBf16ValuesStage {
- IO& io;unsigned values,probabilities,matrix,vector,count,block,part,done;
+ IO& io;unsigned values,probabilities,matrix,vector,count,block,part,done,selections;
 public:
  // For binary16-origin inputs, high+low reconstructs the original exactly.
  // This is input-format preparation, not a host numerical fallback.
@@ -63,7 +63,11 @@ public:
   return PioneerQ38Bf16Input::Lane(PioneerAttentionBits(residual),result);
  }
  PioneerQ38DenseBf16ValuesStage(IO& access,unsigned v,unsigned p,unsigned m,unsigned x,unsigned rows,unsigned dimensionBlock,unsigned productPart=0)
-  :io(access),values(v),probabilities(p),matrix(m),vector(x),count(rows),block(dimensionBlock),part(productPart),done(0){}
+  :io(access),values(v),probabilities(p),matrix(m),vector(x),count(rows),block(dimensionBlock),part(productPart),done(0),selections(0){}
+ bool Select(unsigned productPart){
+  if(productPart!=selections || productPart>=4 || (selections && !done) || (!selections && done))return false;
+  part=productPart;done=0;selections++;return true;
+ }
  bool Tile(unsigned tile){
   if(done || tile || !count || count>32 || block>=8 || part>=4 || (values&3) || (probabilities&3) || (matrix&15) || (vector&15))return false;
   for(unsigned i=1;i<=4;i++){io.Write(matrix-i*4,0);io.Write(vector-i*4,0);}
@@ -86,4 +90,54 @@ public:
   io.Fence();done=1;return true;
  }
 };
+
+// Cache both BF16 components of the 32x32 V tile and probability vector
+// once per head/chunk/block. Four products then switch private unpacker
+// addresses without repeating FP16 decode or rewriting live source banks.
+// The scratch reservation is QDM2-only: it does not establish coexistence
+// with the mixed worker, model state, driver, or any other owner.
+template<class IO> class PioneerQ38DenseBf16ValuesCachedStage {
+ IO& io;unsigned values,probabilities,count,block,done;
+ static bool Pair(uint32_t original,unsigned& high,unsigned& low){
+  if(!PioneerQ38Bf16Input::Lane(original,high))return false;
+  const float residual=PioneerAttentionFloat(original)-PioneerAttentionFloat(high<<16);
+  return PioneerQ38Bf16Input::Lane(PioneerAttentionBits(residual),low);
+ }
+public:
+ enum : unsigned {MatrixHigh=0xa5000,MatrixLow=0xa6000,VectorHigh=0xa7000,VectorLow=0xa7400};
+ PioneerQ38DenseBf16ValuesCachedStage(IO& access,unsigned v,unsigned p,unsigned rows,unsigned dimensionBlock)
+  :io(access),values(v),probabilities(p),count(rows),block(dimensionBlock),done(0){}
+ static unsigned Matrix(unsigned part){return part&1?MatrixLow:MatrixHigh;}
+ static unsigned Vector(unsigned part){return part&2?VectorLow:VectorHigh;}
+ bool Prepare(){
+  if(done || !count || count>32 || block>=8 || (values&3) || (probabilities&3)
+    || values>0x16c000-count*512 || probabilities>0x16c000-count*4
+    || !(values+count*512<=MatrixHigh-16 || values>=VectorLow+512)
+    || !(probabilities+count*4<=MatrixHigh-16 || probabilities>=VectorLow+512))return false;
+  const unsigned scratch[]={MatrixHigh,MatrixLow,VectorHigh,VectorLow};
+  for(unsigned s=0;s<4;s++)for(unsigned i=1;i<=4;i++)io.Write(scratch[s]-i*4,0);
+  for(unsigned face=0;face<4;face++)for(unsigned row=0;row<16;row++)for(unsigned pair=0;pair<8;pair++){
+   const unsigned dimension=block*32+(face/2)*16+row,token=(face%2)*16+pair*2;
+   unsigned high[2]={0,0},low[2]={0,0};
+   for(unsigned j=0;j<2;j++)if(token+j<count){
+    const unsigned halves=io.Read(values+(token+j)*512+(dimension&~1U)*2);
+    const unsigned half=dimension&1?halves>>16:halves&65535;
+    if((half&0x7c00)==0x7c00 || !Pair(PioneerAttentionBits(PioneerAttentionHalf(uint16_t(half))),high[j],low[j]))return false;
+   }
+   const unsigned offset=(face*256+row*16+pair*2)*2;
+   io.Write(MatrixHigh+offset,high[0]|(high[1]<<16));io.Write(MatrixLow+offset,low[0]|(low[1]<<16));
+  }
+  for(unsigned half=0;half<2;half++)for(unsigned pair=0;pair<8;pair++){
+   unsigned high[2]={0,0},low[2]={0,0};const unsigned token=half*16+pair*2;
+   for(unsigned j=0;j<2;j++)if(token+j<count && !Pair(io.Read(probabilities+(token+j)*4),high[j],low[j]))return false;
+   for(unsigned row=0;row<8;row++){
+    const unsigned offset=((half*8+row)*16+pair*2)*2;
+    io.Write(VectorHigh+offset,high[0]|(high[1]<<16));io.Write(VectorLow+offset,low[0]|(low[1]<<16));
+   }
+  }
+  io.Fence();done=1;return true;
+ }
+};
+static_assert(0xa5000+2048<=0xa6000-16 && 0xa6000+2048<=0xa7000-16
+ && 0xa7000+512<=0xa7400-16 && 0xa7400+512<=0x16c000,"QDM2 four private operands do not overlap");
 #endif
