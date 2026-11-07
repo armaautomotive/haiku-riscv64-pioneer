@@ -27,6 +27,18 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-suite-',dir='/private/tmp'
  run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
   here/'pioneer_q38_hybrid_job_binding_test.cpp','-o',binding)
  run(binding)
+ audit=temp/'old-snapshot-audit'
+ run(compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
+  here/'pioneer_q38_hybrid_old_snapshot_audit.cpp','-o',audit)
+ run(audit)
+ tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
+ probe=temp/'receipt.o'
+ run(tool+'g++','-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-builtin',
+  '-fno-exceptions','-fno-rtti','-fno-stack-protector','-fno-pic','-fno-pie',
+  '-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
+  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32',
+  '-c',here/'pioneer_q38_hybrid_receipt_probe.cpp','-o',probe)
+ assert not subprocess.check_output([tool+'nm','-u',str(probe)]).strip(), 'receipt probe needs unsupported runtime helpers'
  for macro in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
   'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
   result=subprocess.run([compiler,'-std=c++17','-D'+macro,'-E',str(here/'pioneer_q38_hybrid_job_binding_test.cpp')],

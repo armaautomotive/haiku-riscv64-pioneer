@@ -89,6 +89,11 @@ Four compact goals
    Full peer-memory ownership, input lifetime, ROOT coordination, cache
    loading, on-card execution, model quality and speed are NOT established.
    This is not connected to the live model or installed in Work/Assistant.
+   A reproducible audit confirms the old peer save/restore footprint omits
+   most BFP8 staging and the relocated GDN code, so it cannot be reused.
+   An experimental receipt checker passes tests against actual simulated
+   worker proofs; it cannot authenticate weight addresses by itself and is
+   not yet connected to a ROOT coordinator or hardware.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

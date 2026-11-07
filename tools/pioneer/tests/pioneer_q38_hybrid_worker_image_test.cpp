@@ -11,6 +11,7 @@ static constexpr unsigned kBits=8;
 static constexpr unsigned kBits=4;
 #endif
 #include "../PioneerQ38HybridWorkerLayout.h"
+#include "../PioneerQ38HybridMatrixReceipt.h"
 #include <array>
 namespace HW=PioneerQ38HybridWorkerLayout;
 struct HybridImage:WorkerImage {
@@ -81,9 +82,9 @@ struct HybridImage:WorkerImage {
   assert(HW::JobShape(j,boot.data(),sequence-1,0));if(corrupt)j[35]^=1;
   for(unsigned i=0;i<64;i++)Put(HW::Job+i*4,j[i]);Put(HW::Doorbell,sequence);
  }
- bool Finish(unsigned sequence){
+ bool Finish(unsigned sequence,bool expectFault=false){
   while(pc!=faultPC && !(pc==waitPC && Get(HW::Status+4)==sequence))StepWorker();
-  if(pc==faultPC){fprintf(stderr,"worker fault after %u steps, last PCs:",steps);for(unsigned i=0;i<32;i++)fprintf(stderr," %x",trace[(traceIndex+i)%32]);fprintf(stderr,"\n");}
+  if(pc==faultPC && !expectFault){fprintf(stderr,"worker fault after %u steps, last PCs:",steps);for(unsigned i=0;i<32;i++)fprintf(stderr," %x",trace[(traceIndex+i)%32]);fprintf(stderr,"\n");}
   return pc!=faultPC;
  }
 };
@@ -91,7 +92,10 @@ int main(int argc,char** argv){
  assert(argc==3);
  for(unsigned width:{5120U,17408U})for(unsigned peer:{1U,119U}){
   if(width==17408 && peer<=68)continue; // requires prior real activation producer
-  HybridImage image(argv[1],argv[2],peer,width);image.Boot();image.Stage(0,1,width==5120?2:4);assert(image.Finish(1));
+  HybridImage image(argv[1],argv[2],peer,width);image.Boot();
+  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8];
+  for(unsigned i=0;i<8;i++)before[i]=image.transfer.counters[indices[i]];
+  image.Stage(0,1,width==5120?2:4);assert(image.Finish(1));
 #ifdef PIONEER_TEST_BFP8
   const auto* expected=PioneerNativeBfpBandGolden(width);
 #else
@@ -100,10 +104,26 @@ int main(int argc,char** argv){
   assert(expected);
   for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
   assert(image.Get(0x83f40)==64 && image.Get(0x83f44)==1 && image.Get(0x83f4c)==W::Magic);
-  printf("PASS actual QGW5 dispatcher -> BFP%u leaf K%u peer%u, 64 exact synthetic words, simulated NoC/FPU; NO DEVICE\n",
+  uint32_t proof[64],job[64];for(unsigned i=0;i<64;i++){proof[i]=image.Get(0x83f00+i*4);job[i]=image.Get(HW::Job+i*4);}
+  for(unsigned i=0;i<8;i++)after[i]=image.transfer.counters[indices[i]];
+  assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
+  for(unsigned word=0;word<64;word++)for(unsigned bit=0;bit<32;bit++){
+   proof[word]^=1U<<bit;assert(!PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));proof[word]^=1U<<bit;
+  }
+  for(unsigned i=0;i<8;i++){
+   after[i]++;assert(!PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));after[i]--;
+  }
+  // The last NIU command reads the input vector, not the weights: a receipt
+  // alone cannot prove which GDDR weight address the worker used. ROOT must
+  // independently compare its sealed closed job to the canonical placement.
+  job[19]^=64;
+  assert(HW::JobShape(job,image.boot.data(),job[1]-1,0)
+   && PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
+  job[19]^=64;
+  printf("PASS actual QGW5 dispatcher -> BFP%u leaf K%u peer%u, 64 exact synthetic words and receipt/2056 mutations, simulated NoC/FPU; NO DEVICE\n",
    kBits,width,peer);
  }
  HybridImage invalid(argv[1],argv[2],119,5120);invalid.Boot();invalid.Stage(0,1,2,true);
- assert(!invalid.Finish(1) && !invalid.transfer.issues && !invalid.stores);
+ assert(!invalid.Finish(1,true) && !invalid.transfer.issues && !invalid.stores);
  puts("PASS malformed QGW5 job faults before any transfers; NO DEVICE OR WORK");
 }

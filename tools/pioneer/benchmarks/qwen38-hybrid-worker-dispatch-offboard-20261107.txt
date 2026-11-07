@@ -30,3 +30,19 @@ ROOT canonical job coverage, producer lifetime, and completion receipts;
 authenticate and upload converted weights; validate full-model quality; then
 test on hardware under single-owner safeguards and measure real 27B speed.
 Existing full-model physical measurement remains 0.17290 tokens/sec.
+
+Follow-up: the worker receipt predicate is exercised against all six
+simulated dispatcher results, with 2056 independent proof/counter mutations
+per result rejected, and cross-compiles for RV32IMF without runtime helpers.
+The final NoC command reads the input, not the weights: altering a valid
+weight address in the job can leave the receipt valid. ROOT must compare
+the actual closed job against independently authenticated placement; a receipt
+is not that comparison. No ROOT or production path calls this predicate yet.
+
+The read-only old-journal audit finds, per peer, 118768 words of maximum
+BFP8 weight staging, all 17408 input-staging words and 9216 words of the
+relocated GDN reservation outside the old QGW4 saved ranges. All 119 peer
+snapshots have identical geometry. The stage shares the dense-attention
+scratch region, so a real owner also needs proven phase/lifetime separation.
+These observations do not implement save/restore or establish other ranges
+are safe; they expressly prohibit reusing the old snapshot for this image.
