@@ -8,11 +8,11 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -ffp-contract=off -fsanitize
  "$directory/pioneer_q38_native_bfp_band_data_test.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$temporary"
 for header in PioneerQ38NativeBfpBandData.h PioneerQ38NativeBfpBandSource.h;do
- for selection in _KERNEL_MODE PIONEER_Q38_WORK_INFERENCE PIONEER_Q38_CPU_VALIDATION;do
+ for selection in _KERNEL_MODE PIONEER_Q38_WORK_INFERENCE TT_PIONEER_Q38_WORK_MODE PIONEER_Q38_CPU_VALIDATION PIONEER_Q38_FULL_MODEL_CPU_REFERENCE;do
   if printf '#include "%s/%s"\n' "$directory/.." "$header" | \
    ${CXX:-c++} -std=c++17 -D"$selection" -x c++ -c - -o "$temporary/forbidden-$header-$selection.o" 2> "$temporary/forbidden-$header-$selection.stderr";then exit 1;fi
-  grep -q 'Native BFP band is an unqualified offboard prototype' "$temporary/forbidden-$header-$selection.stderr"
+  grep -q 'Native BFP band data is isolated from driver, Work and reference roles' "$temporary/forbidden-$header-$selection.stderr"
  done
 done
-printf 'PASS native band DATA/source build guards:6 driver/Work/validation selections refused\n'
+printf 'PASS native band DATA/source build guards:10 driver/Work/validation selections refused\n'
 printf 'CPU-only native band data evidence: %s\n' "$temporary"

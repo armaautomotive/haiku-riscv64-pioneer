@@ -44,6 +44,23 @@ lifetime are still required. Thus 13 is not a hardware authorization. The
 14+ aggregate excess is decisive only for the stated unchanged-allocation
 assumptions, not a claim that all possible other designs are impossible.
 
+Prepared-weight path: the existing all-BFP8 cache reader now exposes packed
+4KiB stripe pages without requiring an activation vector or converting,
+creating, repairing or reopening an entry. Padding is zero and cannot leak
+the next stripe. The existing cache recipe and file format are unchanged.
+96 synthetic/data checks and ten build-role refusals passed, including bad
+geometry, source loss, cache corruption and atomic failure. A separate real
+CPU-only test authenticated the original model and compared nine cache pages
+from three K5120 bands against fresh conversion byte-for-byte, including
+padding; it actually exited0. Existing cache file SHA before/after remained
+a61faf385e1090e7d19777774c8c4c491ce456b07dcb5924ef1e28403e1e73de.
+Real-test log /private/tmp/pioneer-q38-bfp8-stripe-real-20261107-a.log SHA
+fd442b5c08231a22c540c2e35560b254d119426ef1552e3b057805c9c3c0c8cb.
+The real-test binary predates the later Work/reference build-guard tightening;
+that change did not alter its cache page arithmetic or read logic.
+This is one cached tensor and three bands, not a full model cache, actual
+card upload, P100A inference result or timing.
+
 The last16-BFP8 first-token control completed actual exit0. This is a
 numerical control, NOT a fitting configuration under the above assumptions.
 It used 144 BFP4 and 48 BFP8 FFN projections; the printed error metrics
@@ -68,12 +85,18 @@ putting BFP8 in the last13 did NOT improve this distribution comparison.
  transcript SHA 82c0201231095467b179d503e21923b1348e6a43878f3dfd823690d2bd0aa766
  executable SHA 00de2b5562be3f7ed3259a18e71fce6335ccb298ec7bb39e2b15c36362c5bb67
 
-A new CPU-only comparison of BFP8 layers48..60, BFP4 elsewhere, is actually
-running to test a different 13-layer placement suggested by the earlier
-late-layer result. Its per-bank nonoverlapping DATA proposal passes the same
-canonical layout tests, but it is still not an installed allocator. Result
-pending:
+A new CPU-only comparison of BFP8 layers48..60, BFP4 elsewhere, completed
+actual exit0. It used 153 BFP4 and 39 BFP8 projections. Original and hybrid
+both selected token70253; raw-logit relative L2 was 0.268310343, top5 overlap
+4/5 and KL(original||hybrid) 0.203715882 nats. Candidate top probability
+was 0.0360720204 versus the original 0.0273437673. This is better than
+all-BFP4 (KL0.344661064, overlap3/5) on this ONE token, not a general
+accuracy pass or evidence of performance. First48 printed per-layer error
+metrics match the preceding first48-BFP4 control. Its per-bank nonoverlapping
+DATA proposal passes the canonical layout tests, but is not an installed
+allocator or device execution capability.
  /private/tmp/pioneer-q38-hybrid-window13-cpu-20261107-a.log
+ transcript SHA 41f075c46a51e8f263c6e82c819516140a3b7cf7d6b8b49e32bfc40a1a4cb76d
  executable SHA b031f887df5ccf2a08589ae079979e592506cddf7486df07a1a4d96e5b4261a0
 
 Tests: run_pioneer_bfp4_prompt_quality_tests.sh and

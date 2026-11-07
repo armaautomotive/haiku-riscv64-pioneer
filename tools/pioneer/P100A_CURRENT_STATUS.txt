@@ -70,10 +70,14 @@ Four compact goals
    for the last14 or more FFN layers while retaining all other allocations;
    last13 has a nonoverlapping offline repack proposal but lacks a real
    device allocator and loader.
+   A new preparation-only page reader can use the existing BFP8 disk-cache
+   format; nine pages from three bands of one real tensor matched fresh
+   conversion. Full-model cache/upload remains unfinished.
    On one token, a last16-BFP8 numerical control improved top5 overlap to
    4/5 (KL 0.18387 nats), but exceeds that capacity bound. Last13-BFP8 gave
-   3/5 and KL 0.37343, no improvement over all-BFP4 on this token. Another
-   13-layer selection is being evaluated. No P100A speedup is proven.
+   3/5 and KL 0.37343, no improvement over all-BFP4 on this token. BFP8 in
+   layers48..60 instead gave 4/5 and KL 0.20372, and has a fitting offline
+   layout proposal. This is one token, not a quality or P100A speed pass.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

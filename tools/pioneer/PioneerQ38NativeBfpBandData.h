@@ -1,9 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Native BFP band data is isolated from driver, Work and reference roles
+#endif
 #ifndef PIONEER_Q38_NATIVE_BFP_BAND_DATA_H
 #define PIONEER_Q38_NATIVE_BFP_BAND_DATA_H
 #include "PioneerQ38NativeBfpBand.h"
 #include "PioneerModelWeightCache.h"
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <functional>
 #include <vector>
@@ -49,6 +54,26 @@ private:
 		return true;
 	}
 public:
+ // Read one zero-padded 4KiB page of packed BFP8 stripe DATA from an
+ // already verified tensor cache. The stripe starts and ends on 32-row tile
+ // boundaries. No BF16 activations or per-inference host traffic are used.
+ // The caller must bind the tensor/cache/source/relocated device allocation.
+ template<class Reader> static bool ReadStripePage(Reader& reader,unsigned width,unsigned rows,unsigned first,unsigned count,
+  unsigned page,const std::function<bool()>& ready,uint8_t* output,unsigned capacity,std::string& error){
+  if(!PioneerQ38NativeBfpBand::Width(width) || !rows || rows>248320 || !count || (first&31) || (count&31)
+   || first>rows || count>rows-first || !output || capacity<4096 || reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-4096){
+   error="Invalid native BFP8 stripe page geometry or output.";return false;
+  }
+  const uint64_t bandBytes=uint64_t(width/32)*1088,totalBytes=((uint64_t(rows)+31)/32)*bandBytes;
+  const uint64_t start=uint64_t(first/32)*bandBytes,stripeBytes=uint64_t(count/32)*bandBytes;
+  const uint64_t padded=(stripeBytes+4095)&~uint64_t(4095),at=uint64_t(page)*4096;
+  if(at>=padded || !ready || !ready() || !reader.IsOpen() || reader.Size()!=totalBytes){error="Native BFP8 stripe source or page unavailable.";return false;}
+  const unsigned take=unsigned(std::min(uint64_t(4096),stripeBytes-at));std::array<uint8_t,4096> staged{};
+  if(!take || !reader.Read(start+at,take,staged.data(),take,error) || !ready() || !reader.IsOpen()){
+   error="Native BFP8 stripe cache/source changed during read.";return false;
+  }
+  std::memcpy(output,staged.data(),staged.size());error.clear();return true;
+ }
 	// Reader must already be opened for the exact authenticated source/recipe
 	// key by the bound source below. Generic Reader support is for synthetic
 	// tests only,not a declaration that arbitrary bytes are authenticated.

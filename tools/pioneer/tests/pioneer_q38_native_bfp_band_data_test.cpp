@@ -76,6 +76,31 @@ int main(int argc,char** argv) {
 		if(corruption==5)reader.raw[0]=7;
 		assert(!Data::Assemble(reader,5120,48,first,input.data(),5120,4,[]{return true;},packet,error) && Equal(packet,sentinel));cases++;
 	}
+	// Whole 32-row stripes are read from the verified cache as packed pages,
+	// with zero padding rather than leaking the following stripe's bytes.
+	for(unsigned width:{5120U,17408U})for(unsigned first:{0U,32U}){
+		MemoryReader reader(width,64);const uint64_t bandBytes=uint64_t(width/32)*1088;
+		const unsigned pages=unsigned((bandBytes+4095)/4096);std::array<uint8_t,4096> page;
+		for(unsigned n=0;n<pages;n++){
+			page.fill(0xa5);assert(Data::ReadStripePage(reader,width,64,first,32,n,[]{return true;},page.data(),page.size(),error));
+			const uint64_t at=uint64_t(n)*4096;const unsigned take=unsigned(std::min(uint64_t(4096),bandBytes-at));
+			assert(!memcmp(page.data(),reader.raw.data()+uint64_t(first/32)*bandBytes+at,take));
+			for(unsigned i=take;i<4096;i++)assert(!page[i]);
+		}
+		page.fill(0xa5);const auto saved=page;const unsigned before=reader.reads;
+		assert(!Data::ReadStripePage(reader,width,64,first,32,pages,[]{return true;},page.data(),page.size(),error));
+		assert(page==saved && reader.reads==before);cases++;
+	}
+	for(unsigned bad=0;bad<10;bad++){
+		MemoryReader reader(5120,64);std::array<uint8_t,4096> page;page.fill(0xa5);const auto saved=page;bool ready=true;
+		unsigned first=0,rows=32,width=5120,capacity=4096;uint8_t* out=page.data();
+		if(bad==0)first=1;if(bad==1)rows=31;if(bad==2)width=5119;if(bad==3)capacity=4095;
+		if(bad==4)out=nullptr;if(bad==5)reader.failAt=1;if(bad==6)reader.onRead=[&]{ready=false;};
+		if(bad==7)reader.sizeOverride=reader.raw.size()+1;if(bad==8)ready=false;
+		if(bad==9)out=reinterpret_cast<uint8_t*>(UINTPTR_MAX-1);
+		assert(!Data::ReadStripePage(reader,width,64,first,rows,0,[&]{return ready;},out,capacity,error) && page==saved);
+		if(bad<5 || bad>=7)assert(!reader.reads);cases++;
+	}
 	// Exact851-tensor SPARSE fixture;its declared pin/Ready is intentionally
 	// synthetic,NOT proof of full original SHA authentication or model quality.
 	Fixture fixture;PioneerQwen38Gguf model;assert(model.Open(fixture.file));Cache cache;
@@ -106,6 +131,15 @@ int main(int argc,char** argv) {
 		Cache::Reader r;bool hit=false;assert(cache.GetOrCreate(key,stable,produce,r,hit,error));
 	}
 	const unsigned before=conversions;
+	{
+		std::array<uint8_t,4096> page;const unsigned last=unsigned((uint64_t(160)*1088-1)/4096);
+		assert(source.ReadStripePage(tensor,0,32,0,page.data(),page.size(),error) && !memcmp(page.data(),data.raw.data(),4096));
+		assert(source.ReadStripePage(tensor,0,32,last,page.data(),page.size(),error));
+		const unsigned take=160*1088-last*4096;assert(!memcmp(page.data(),data.raw.data()+last*4096,take));
+		for(unsigned i=take;i<4096;i++)assert(!page[i]);
+		const auto saved=page;assert(!source.ReadStripePage(tensor,0,32,last+1,page.data(),page.size(),error) && page==saved);
+		assert(conversions==before);cases++;
+	}
 	for(unsigned first:{0U,32U})for(unsigned phases:{1U,4U}) {
 		assert(source.Stage(tensor,first,input.data(),5120,phases,packet,error) && packet.key.entry==tensor && packet.key.bytes==key.bytes && packet.key.sourceSHA256==Source::OriginalPin() && packet.key.conversionSHA256==Source::ConversionPin() && packet.sourceEpoch==model.Epoch() && conversions==before);cases++;
 	}
@@ -119,6 +153,9 @@ int main(int argc,char** argv) {
 	const std::string entry=std::string(argv[1])+"/synthetic-native/"+Cache::EntryName(key);
 	assert(!chmod(entry.c_str(),0600));int fd=open(entry.c_str(),O_WRONLY);assert(fd>=0);uint8_t byte=0;assert(pwrite(fd,&byte,1,0)==1 && !close(fd) && !chmod(entry.c_str(),0400));
 	assert(!source.Stage(tensor,0,input.data(),5120,4,packet,error) && Equal(packet,sentinel) && error.find("not reopened")!=std::string::npos);cases++;
+	std::array<uint8_t,4096> corruptedPage;corruptedPage.fill(0xa5);const auto beforeCorruption=corruptedPage;
+	assert(!source.ReadStripePage(tensor,0,32,0,corruptedPage.data(),corruptedPage.size(),error)
+		&& corruptedPage==beforeCorruption && error.find("not reopened")!=std::string::npos);cases++;
 	assert(model.Open(fixture.file) && !source.Ready());assert(!source.Stage(tensor,0,input.data(),5120,4,packet,error));cases++;
 	printf("PASS native cache-to-band DATA:%u checks;all widths/padded rows/fidelity variants,zero headers/exact payload and BF16 bytes,bounded chunk reads,atomic failure,invalid/corrupt/source-revoked refusal;frozen original/recipe/tensor key,no create/repair/conversion in bound source,changed reader NOT reopened;SYNTHETIC declared pin is NOT authentication,NO GPU/model-quality/speed proof\n",cases);
 }

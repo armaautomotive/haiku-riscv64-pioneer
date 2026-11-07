@@ -84,8 +84,10 @@ probability check measured KL 0.34466 nats and 3/5 top-token overlap. Mixed
 BFP4/BFP8 is now under study: last16-BFP8 exceeds the current retained-state
 arena even in aggregate, while last13 has an offline nonoverlapping per-bank
 repack proposal but no usable device allocator. The last13-BFP8 one-token KL
-was 0.37343, worse than all-BFP4's 0.34466, so a different 13-layer placement
-is under test. See the selective and hybrid CPU quality
+was 0.37343, worse than all-BFP4's 0.34466. BFP8 layers48..60 gave KL
+0.20372 and top5 overlap4/5 in this same token, with a fitting DATA proposal.
+This motivates broader quality checks and an experimental card path, not
+production promotion. See the selective and hybrid CPU quality
 reports; these results do not establish answer quality or card throughput.
 
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves

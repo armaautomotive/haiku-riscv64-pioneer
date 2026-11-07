@@ -1,4 +1,8 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Native BFP band data is isolated from driver, Work and reference roles
+#endif
 #ifndef PIONEER_Q38_NATIVE_BFP_BAND_SOURCE_H
 #define PIONEER_Q38_NATIVE_BFP_BAND_SOURCE_H
 #include "PioneerQ38NativeBfpBandData.h"
@@ -19,6 +23,15 @@ class PioneerQ38NativeBfpBandSource {
 			out[i]=uint8_t((nibble(text[i*2])<<4)|nibble(text[i*2+1]));
 		}
 		return out;
+	}
+	bool OpenTensor(unsigned tensor,const Cache::Key& key,std::string& error){
+		if(activeTensor!=tensor) {
+			active.reset();activeTensor=UINT32_MAX;auto next=std::make_unique<Cache::Reader>();
+			if(!cache.OpenExisting(key,[this]{return Ready();},*next,error) || !Ready() || !next->IsOpen())return false;
+			active=std::move(next);activeTensor=tensor;
+		}
+		if(!active || !active->IsOpen()){error="Prepared native cache reader changed;not reopened.";return false;}
+		return true;
 	}
 public:
 	explicit PioneerQ38NativeBfpBandSource(Cache& opened):cache(opened){}
@@ -45,20 +58,31 @@ public:
 		if(t.name=="token_embd.weight" || !PioneerQ38NativeBfpBand::Width(unsigned(t.inputs)) || !PioneerQ38NativeBfp8WeightTiles::Describe(t,layout))return false;
 		Cache::Key next;next.sourceSHA256=original;next.conversionSHA256=ConversionPin();next.entry=tensor;next.bytes=layout.bytes;key=next;return true;
 	}
+	// Preparation-only cache DATA, not a device uploader or ownership grant.
+	// Uses the already qualified all-BFP8 cache recipe; never converts,
+	// creates or repairs an entry. Last-page padding is generated as zeros.
+	bool ReadStripePage(unsigned tensor,unsigned first,unsigned rows,unsigned page,uint8_t* output,unsigned capacity,std::string& error){
+		Cache::Key key;if(!KeyFor(tensor,key)){error="Native BFP8 stripe tensor/source unavailable.";return false;}
+		const auto t=model->Tensors()[tensor];
+		if(!rows || (first&31) || (rows&31) || first>t.outputs || rows>t.outputs-first || !output || capacity<4096
+			|| reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-4096){
+			error="Invalid native BFP8 stripe geometry or output.";return false;
+		}
+		const uint64_t bytes=uint64_t(rows/32)*(t.inputs/32)*1088;
+		if(uint64_t(page)*4096>=((bytes+4095)&~uint64_t(4095))){error="Native BFP8 stripe page out of range.";return false;}
+		if(!OpenTensor(tensor,key,error))return false;
+		return PioneerQ38NativeBfpBandData::ReadStripePage(*active,unsigned(t.inputs),unsigned(t.outputs),first,rows,page,
+			[this]{return Ready();},output,capacity,error);
+	}
 	bool Stage(unsigned tensor,unsigned first,const uint16_t* input,unsigned count,unsigned phases,
 		PioneerQ38NativeBfpBandData::Packet& output,std::string& error) {
 		Cache::Key key;if(!KeyFor(tensor,key)){error="Native band tensor/source is unavailable or unsupported.";return false;}
 		const auto t=model->Tensors()[tensor];
 		std::vector<uint16_t> captured;
 		if(!PioneerQ38NativeBfpBandData::Capture(unsigned(t.inputs),unsigned(t.outputs),first,input,count,phases,captured,error))return false;
-		if(activeTensor!=tensor) {
-			active.reset();activeTensor=UINT32_MAX;auto next=std::make_unique<Cache::Reader>();
-			if(!cache.OpenExisting(key,[this]{return Ready();},*next,error) || !Ready() || !next->IsOpen())return false;
-			active=std::move(next);activeTensor=tensor;
-		}
-		// Preserve one verified reader across bands,not repeated whole-tensor
-		// hashes. Mutation revokes it;NEVER implicitly reopen/repair a changed FD.
-		if(!active || !active->IsOpen()){error="Prepared native cache reader changed;not reopened.";return false;}
+		// Preserve one verified reader across bands/stripes; never implicitly
+		// reopen or repair a changed FD for the same tensor.
+		if(!OpenTensor(tensor,key,error))return false;
 		PioneerQ38NativeBfpBandData::Packet next;
 		if(!PioneerQ38NativeBfpBandData::Assemble(*active,unsigned(t.inputs),unsigned(t.outputs),first,captured.data(),count,phases,
 			[this]{return Ready();},next,error))return false;
