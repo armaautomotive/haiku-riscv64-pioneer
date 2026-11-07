@@ -61,3 +61,16 @@ matched source check SHA bb16fad2dbb938e37ffa4b857e1aef1002affacb42b6dc730ef3046
 These are BUILD/OFFBOARD results only: no matched driver installation or
 hardware run has been performed. A fresh, fault-tested one-shot parent,
 current ownership/restore proof, and separate physical qualification remain.
+
+The one-shot matched121 parent can be generated from the SHA-pinned legacy
+parent using build_bfp4_matched_parent.py. Its generated SHA-256 is
+5e7265d3c93d491e585c7a1de13146dfc4748b3d2466f13ff44e630acc92a67d.
+It fixes stable gen18 -> matched gen19 -> stable gen20 and uses a fresh stage.
+The actual generated parent passed shell syntax and the inherited fake-flow
+suite: 10 flow cases, 19 exchange-failure boundaries, 8 prior-record checks,
+9 one-shot checks, 6 idle checks, and 424 transcript mutation refusals. These
+are simulated and are not a physical run. A read-only Pioneer check found
+the stable041 SHA, gen18 idle/cold0/owner0, full 64-CPU/137034936320-byte
+RAM, and the expected closed prior119/prior120 records. State may change;
+the parent checks again immediately before the one-shot transaction. No
+matched driver has been installed or card operation attempted as of this note.

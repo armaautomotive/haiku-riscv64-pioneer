@@ -4,12 +4,24 @@ import pathlib
 import runpy
 import subprocess
 import tempfile
+import sys
 
 assert __debug__
 here=pathlib.Path(__file__).resolve().parent
-source=(here.parent/'pioneer_native_bfp4_dram_physical_120.sh').read_text()
+if len(sys.argv) not in (1, 2):
+ raise SystemExit('use [GENERATED_MATCHED_PARENT]')
+matched=len(sys.argv)==2
+source=(pathlib.Path(sys.argv[1]) if matched else here.parent/'pioneer_native_bfp4_dram_physical_120.sh').read_text()
+if matched:
+ assert 'stage=/boot/home/pioneer-native-bfp4-matched121-20261107-a' in source
+ assert '2026110700010121' in source and 'awk -v generation=19' in source
+ assert '2026110600010120' not in source
+newtag='2026110700010121' if matched else '2026110600010120'
+finalstate=('STABLE041_RESTORED_MATCHED_BFP4_GDDR_EXACT192_PASSED' if matched else
+            'STABLE041_RESTORED_BFP4_GDDR_BANDS_EXACT192_PASSED')
 flow=source.split('# BFP4_FLOW_BEGIN\n',1)[1].split('# BFP4_FLOW_END',1)[0]
 normal=runpy.run_path(str(here/'pioneer_native_bfp4_dram_output_test.py'))['lines']
+if matched:normal=[line.replace('generation17','generation19') for line in normal]
 folder=pathlib.Path(tempfile.mkdtemp(prefix='pioneer-bfp4-dram-parent.'))
 client=folder/'client'
 client.write_text('''#!/bin/sh
@@ -41,10 +53,10 @@ for mode,output in cases:
  result=subprocess.run(['sh',str(program),str(stage),str(client),mode,str(here.parent/'pioneer_native_bfp4_dram_output.awk')],capture_output=True,text=True)
  events=(stage/'events').read_text().splitlines()
  if mode=='pass':
-  assert result.returncode==0 and events.count('run')==1 and events.count('exchange:2026110600010120:2026102100010012')==1,(result.stdout,result.stderr,events)
-  assert (stage/'state').read_text().strip()=='STABLE041_RESTORED_BFP4_GDDR_BANDS_EXACT192_PASSED'
+  assert result.returncode==0 and events.count('run')==1 and events.count('exchange:'+newtag+':2026102100010012')==1,(result.stdout,result.stderr,events)
+  assert (stage/'state').read_text().strip()==finalstate
  else:
-  assert result.returncode!=0 and 'exchange:2026110600010120:2026102100010012' not in events,(mode,events)
+  assert result.returncode!=0 and 'exchange:'+newtag+':2026102100010012' not in events,(mode,events)
   if 'run' in events:assert events[-1]=='run',(mode,events)
 exchange=source.split('exchange(){\n',1)[1].split('\n}\n',1)[0]
 exchange_program=folder/'exchange.sh'
