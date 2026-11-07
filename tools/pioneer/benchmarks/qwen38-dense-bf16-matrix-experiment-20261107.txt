@@ -1,0 +1,43 @@
+Experimental matrix-engine dense attention scores
+=================================================
+November 7, 2026. NOT installed, hardware-tested, a full decoder, or a speed
+result. Current Work and validation modes are unchanged.
+
+The existing dense worker computes QK and PV with the card SFPU; it does not
+compute them using ordinary CPU fallback, but neither multiplication uses the
+matrix engine. The separate BF16 experiment issues actual MVMUL instruction
+words for a 32-key by 256-element query score batch. Its staging code reads
+the existing private-query FP32 and token-major FP16 key-chunk layouts and
+converts them to BF16. Padded keys are zeroed. All four fidelity phases are
+issued and eight K32 tiles accumulate in Dst before score publication.
+Softmax, PV, recurrent attention and integration are NOT implemented by this
+experiment. The staging conversion itself currently uses card scalar work;
+its speed and any alternative packing or reuse are unmeasured.
+
+The offline ISA observer exercised 1, 17 and 32 keys, 128 matrix commands per
+batch, with independent dot-product comparisons, zero-padded keys, invalid
+geometry, a failed staging callback, and nonfinite FP16 input. Using the
+actual FP16-to-BF16 stage, synthetic relative L2 score errors were 0.000209,
+0.000318 and 0.000318 respectively. These are only artificial fixtures:
+they do not establish real-model accuracy, token quality or equivalence to
+the existing compensated FP16 path. The observer is a software model, not
+proof that the BF16 unpack configuration works on physical Blackhole silicon.
+
+Reproduce with:
+  sh tools/pioneer/tests/run_pioneer_q38_dense_bf16_matrix_tests.sh
+
+The RV32 experiment also compiled with the local Haiku cross-compiler and
+freestanding rv32imf options. No integration, complete L1 coexistence proof,
+physical ownership, timeout recovery, silicon correctness or measurement is
+established. Do not substitute this leaf into the production Work path yet.
+
+Recovery caution: following a single OFF/ON and confirmed fresh Linux/Haiku
+boot, SSH host keys were verified. The existing one-shot stable-driver restore
+refused before a driver change because the four preserved on-disk trial
+records no longer matched the recorded pre-power hashes. Their file sizes
+were unchanged, but their contents read as binary rather than the previously
+saved text. The cause and extent are not yet known; this does not establish
+that the whole filesystem is damaged. The locally copied pre-power evidence
+remains separately available. Do not weaken the guard or rerun the failed
+accelerator trial. The current driver is still the rejected tag125, although
+fresh-epoch CPU-only reload metadata says cold0/owner0; no inference was run.

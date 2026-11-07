@@ -1,0 +1,54 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_H
+#define PIONEER_Q38_DENSE_BF16_MATRIX_H
+#if !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
+#error Experimental offline dense matrix kernel only; not a driver or Work selection
+#endif
+#include "PioneerQ38NativeBfpMatvec.h"
+
+// One query against 32 keys, each 256 BF16 elements. The caller supplies
+// eight consecutive K32 tiles via stage.Tile(i), which must fill the private
+// caller-selected matrix and vector operands and their headers, then fence.
+// Matrix operands are four face-major 16x16 BF16 faces; the query has eight
+// copies of each 16-element half. Padded key rows must be zeroed by stage.
+// Dst rows 32/40 retain the sums until the caller consumes them, and score
+// scaling/masking/softmax is intentionally outside this producer.
+//
+// The caller must own L1, FPU configuration, both unpack/source banks and Dst
+// for the whole call. This is neither a device ownership grant nor integrated
+// attention: BF16 rounding, existing FP16 KV conversion, errors, numerical
+// quality, real instructions and timing still require qualification.
+struct PioneerQ38DenseBf16Matrix {
+ static constexpr unsigned Width=256, TileWidth=32, Tiles=Width/TileWidth;
+ template<class E,class Stage> static bool Scores(E& e,Stage& stage,unsigned matrix,unsigned vector) {
+  // Header, payload and address ownership are caller duties; these two
+  // spans must not overlap even when the caller supplies malformed input.
+  if((matrix&15) || (vector&15) || matrix<16 || vector<16
+    || matrix>0x16b800 || vector>0x16be00
+    || !(matrix+2048<=vector-16 || vector+512<=matrix-16))return false;
+  // Start from the existing four-fidelity-phase setup; change *both* SrcA
+  // format declarations and its byte-addressed destination for BF16.
+  if(!PioneerQ38NativeBfpMatvec::Setup(e,8))return false;
+  e.Config(0,0x42b5);e.Config(1,0x60aa0000);
+  e.Config(64,0x01000015);e.Config(72,0x125);
+  e.Config(84,0x00400080);
+  e.Config(76,matrix/16-1);e.Config(124,vector/16-1);
+  e.Op(0x3700000f);e.Op(0x10180000);e.Drain(); // clear once, NOT per K32
+  for(unsigned tile=0;tile<Tiles;tile++) {
+   if(!stage.Tile(tile))return false; // no successful score publication
+   e.Op(0x3700000f);e.Op(0x5e2ffc00);e.Op(0x5e43fc00);
+   e.Op(0x5160000b);e.Op(0x5460000f);
+   e.Op(0x420000c1);e.Op(0x428000c1);e.Drain();
+   for(unsigned face=0;face<4;face++) {
+    if(face){e.Op(0x37040201);e.Op(0x37040201);}
+    e.Op(face&1?0x3700200a:0x3700000a);
+    for(unsigned phase=0;phase<4;phase++)
+     e.Op(0x26004000|(face<2?32:40)|((face==3 && phase==3)?0x00c00000:0));
+   }
+   e.Drain(); // both source banks released before stage can rewrite inputs
+  }
+  return true;
+ }
+};
+#endif
