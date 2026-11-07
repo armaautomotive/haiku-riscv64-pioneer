@@ -101,4 +101,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-programs-', dir='/private/
         '-Wno-unused-variable', '-fsanitize=address,undefined', '-I' + str(tools), *selected_flags,
         here / 'pioneer_q38_qgw8_upload_receipt_test.cpp', '-o', selected)
     run(selected, env=env)
-print('PASS pinned QGW8 program pair, 120-worker code coverage and selected startup; synthetic only, no device/inference/TPS')
+    run(sys.executable, here / 'run_pioneer_q38_token_memory_tests.py', '--bf16-programs', '--hybrid-journal',
+        '--hybrid-programs', first, '--qgw8-journal')
+print('PASS pinned QGW8 program pair, selected startup and held journal; synthetic only, no device/inference/TPS')

@@ -11,6 +11,10 @@
 #define TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
+#include "../PioneerQ38HybridHeadModelPlan.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
 #include "../PioneerQ38HybridJobBinding.h"
 #endif
@@ -71,7 +75,7 @@ struct TokenMemoryIO:CodeIO {
   Touch();reads++;if(badKind==1 && AtWord()){observed=touches;return false;}
   output=FullRead(worker,address);if(dropPending){dropPending=false;observed=touches;}
   if((badKind==2 && AtWord())
-#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION)
    || (badKind==13 && AtMemory() && address==0x16c400+badOrdinal*4)
 #endif
    ){output^=1;observed=touches;}return true;
@@ -81,7 +85,7 @@ struct TokenMemoryIO:CodeIO {
   assert(memoryState && memoryState->savedWords==TOKL::SavedWords && memoryState->verifiedOriginalWords>=TOKL::SavedWords);
   if(memoryState->phase==3){uint32_t expected;assert(TOKP::ProgramWord(worker,address,expected) && expected==value);}
   else assert((memoryState->phase==6
-#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION)
    || (memoryState->phase==8 && worker==0 && address>=0x16c400 && address<0x16c400+64*3*7*4)
 #endif
    ) && TOKL::SnapshotContains(worker,address));
@@ -96,12 +100,31 @@ struct TokenMemoryGeometry {
  std::unique_ptr<PioneerQ38CanonicalModelPlan> canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();
  std::unique_ptr<PioneerQ38TokenStartupPlan> startup=std::make_unique<PioneerQ38TokenStartupPlan>();
  std::array<uint32_t,1920> source={};bool ready=false;
- void Bind(const PioneerQ38DispatchLease& cohort){
+ void Bind(const PioneerQ38DispatchLease& cohort,PioneerResidentBanks& banks,const tt_dram_samples_result& proof){
+  (void)banks;(void)proof;
   const auto* current=&cohort.authority.source[0][0];
   if(ready){for(unsigned i=0;i<1920;i++)assert(source[i]==current[i]);return;}
   for(unsigned i=0;i<1920;i++)source[i]=current[i];
   const uint32_t prompt[]={248319,17};
-#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+  // Derive exactly the receipt-owned relocated layout; this synthetic
+  // upload is geometry/ledger evidence, not real model or hardware bytes.
+  std::vector<uint8_t> pages(PioneerResidentBanks::Pages);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages);
+  auto receipt=std::make_unique<PioneerQ38Qgw8UploadReceipt>();int cookie=0;
+  assert(receipt->Begin(&cohort,&cookie,hashes.data(),pages.data(),1,4,banks,proof,pages.size()));
+  PioneerQ38SpanLease span;unsigned bank=0,length=0,spans=0;uint64_t offset=0;
+  while(receipt->Next(bank,offset,length)){
+   assert(receipt->Before(&cohort,hashes.data(),pages.data(),&span,bank,offset,length));
+   const unsigned first=unsigned(uint64_t(bank)*(PioneerResidentBanks::Capacity/4096)+offset/4096);
+   for(unsigned p=0;p<length/4096;p++){
+    const unsigned i=first+p;const uint32_t hash=i*2654435761U;pages[i]=1;hashes[i]=hash;assert(receipt->RecordPage(i,hash));
+   }
+   span.saved=span.ready=span.dirty=true;span.nonce=++spans;assert(receipt->After());
+  }
+  span.closed=true;span.ready=span.dirty=false;
+  assert(spans==22035 && receipt->Seal(span)
+   && receipt->DeriveBoundCanonical(*canonical,&cohort,&cookie,hashes.data(),pages.data(),1,4));
+#elif defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC)
   assert(canonical->BuildHybridDiagnostic());
 #else
   assert(canonical->Build());
@@ -125,7 +148,7 @@ struct TokenMemoryFixture {
    node.noc=owners[worker]->noc;if(worker)node.noc.version=PioneerWorkerVersion(worker);
    assert(PioneerQ38DispatchPrepareRole(io,dram,banks,*cohort,worker));
   }
-  auto& data=Geometry();data.Bind(*cohort);
+  auto& data=Geometry();data.Bind(*cohort,banks,dram);
   for(unsigned i=0;i<data.canonical->Count();i++){
    const auto* part=data.canonical->Part(i);if(part->kind!=data.canonical->WeightKind)continue;
    unsigned first=part->bank*unsigned(data.canonical->Capacity/4096)+part->offset/4096;
@@ -146,6 +169,9 @@ struct TokenMemoryFixture {
 int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--faults") || !strcmp(argv[1],"--capsule-faults")
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+  || !strcmp(argv[1],"--qgw8-journal")
+#endif
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
   || !strcmp(argv[1],"--hybrid-faults")
 #endif
@@ -180,6 +206,48 @@ int main(int argc,char** argv){
   }
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
  }
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+ if(!strcmp(argv[1],"--qgw8-journal")){
+  {
+   TokenMemoryFixture f;auto before=f.io.data;std::vector<uint32_t> panels;
+   f.io.track=false;for(unsigned worker=0;worker<120;worker++){
+    assert(f.io.SelectRuntimeCore(worker));panels.push_back(f.io.BootstrapIO::RuntimeCodeRead(0));
+    for(unsigned i=0;i<4096;i++)panels.push_back(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4));
+   }
+   f.io.track=true;
+   assert(PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*Geometry().canonical));
+   auto original=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(original->Build()
+    && !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*original));
+   PioneerQ38HybridHeadModelPlan::Proposal host;assert(PioneerQ38HybridHeadModelPlan::Build(*original,host));
+   std::array<uint32_t,PioneerQ38HybridHeadModelPlan::ManifestWords> expected={};
+   assert(PioneerQ38HybridHeadModelPlan::Manifest(*original,host,expected.data(),expected.size()));
+   assert(f.PrepareMemory() && f.memory->Installed() && f.result.savedWords==TOKL::SavedWords
+    && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1));
+   std::array<uint32_t,64> boot={};
+   assert(Geometry().startup->ReadBoot(1,boot.data()) && PioneerQ38SelectedGlobalWorker::BootShape(boot.data())
+    && boot[0]==0x38574751 && boot[49]==0 && boot[50]==0x1ffc0000);
+   assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
+   for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
+   assert(f.memory->VerifyHybridManifestHeld(f.io,f.result));
+   assert(f.CloseMemory() && f.memory->Closed() && f.io.data==before && f.result.restoredWords==TOKL::SavedWords);
+   f.io.track=false;unsigned at=0;for(unsigned worker=0;worker<120;worker++){
+    assert(f.io.SelectRuntimeCore(worker) && f.io.BootstrapIO::RuntimeCodeRead(0)==panels[at++]);
+    for(unsigned i=0;i<4096;i++)assert(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4)==panels[at++]);
+   }
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory());
+   f.io.badKind=3;f.io.badPhase=8;f.io.badWorker=0;f.io.badOrdinal=64*3*7-1;
+   assert(!f.memory->InstallHybridManifestHeld(f.io,f.result));f.Unknown();
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result));
+   f.io.badKind=13;f.io.badPhase=9;f.io.badWorker=0;f.io.badOrdinal=64*3*7-1;
+   assert(!f.memory->VerifyHybridManifestHeld(f.io,f.result));f.Unknown();
+  }
+  puts("PASS QGW8 held journal and manifest install/verify/restore and fault quarantine; SIMULATED ONLY");return 0;
+ }
+#endif
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
  if(!strcmp(argv[1],"--hybrid-manifest")){

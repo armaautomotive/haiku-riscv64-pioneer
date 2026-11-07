@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Full-token journal tests with simulated endpoints. NEVER actual device IO."""
+import hashlib
 import os
 import pathlib
 import re
@@ -17,6 +18,10 @@ hybrid_journal = '--hybrid-journal' in args
 if hybrid_journal:
     assert args.count('--hybrid-journal') == 1
     args.remove('--hybrid-journal')
+qgw8 = '--qgw8-journal' in args
+if qgw8:
+    assert args.count('--qgw8-journal') == 1
+    args.remove('--qgw8-journal')
 bf16_deferred='--bf16-deferred-audit' in args
 if bf16_deferred:
     assert args.count('--bf16-deferred-audit')==1
@@ -46,14 +51,20 @@ assert not bf16_paired or (bf16_profile and bf16),'paired journal requires its e
 assert not bf16_deferred or (bf16_profile and bf16 and not bf16_paired),'deferred journal requires its distinct QTP4/timing DATA parents'
 assert not hybrid_journal or (bf16 and not bf16_profile and not bf16_paired and not bf16_deferred), 'hybrid footprint fixture requires original QTP4 test DATA only'
 assert hybrid_header is None or hybrid_journal, 'QGW5 DATA requires its distinct offline hybrid journal'
+assert not qgw8 or (hybrid_journal and hybrid_header is not None and not args), 'QGW8 needs its isolated program and journal fixture'
+if qgw8:
+    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest() == 'e1f239fd4965583249e855223711b4270d253f9a2015bace2abf3b717a7ac6ed', 'wrong QGW8 program DATA'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
     args = args[:-2]
 assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest'])
+if qgw8:
+    assert sdk is None, 'QGW8 journal is user-space inspection only'
+    args=['--qgw8-journal']
 assert args != ['--capsule-faults'] or precise or pushed or bf16, 'capsule faults require explicit code DATA'
 assert not bf16 or sdk is None or (hybrid_journal and args==['--hybrid-manifest']), 'only the hybrid kernel template witness is allowed here'
-assert not hybrid_journal or (args in (['--positive'], ['--hybrid-faults'], ['--hybrid-manifest'])
+assert not hybrid_journal or (args in (['--positive'], ['--hybrid-faults'], ['--hybrid-manifest'], ['--qgw8-journal'])
                               and (sdk is None or args==['--hybrid-manifest'])), 'hybrid journal is an offline fixture only'
 assert args != ['--hybrid-faults'] or hybrid_journal, 'hybrid faults need their explicit offline footprint'
 assert args != ['--hybrid-manifest'] or (hybrid_journal and hybrid_header is not None), 'hybrid manifest needs the exact QGW5 program and layout'
@@ -72,14 +83,19 @@ if hybrid_journal:profile+=['-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1']
 if hybrid_header is not None:
     profile+=['-DPIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC=1',
               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"',
-              '-DPIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_JOB_DIAGNOSTIC=1',
               '-I'+str(here.parent)]
+    if qgw8:
+        profile+=['-DPIONEER_Q38_QGW8_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1',
+                  '-DPIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION=1','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
+                  '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
+    else:
+        profile+=['-DPIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_JOB_DIAGNOSTIC=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *flags, *profile,
                     str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
-    if args == ['--hybrid-manifest']:
+    if args in (['--hybrid-manifest'], ['--qgw8-journal']):
         # These methods stage a 1,344-word address table. Their scratch must
         # stay in the heap-only owner, not silently return to a 5 KiB frame.
         # Check an unsanitized no-inline HOST build separately: ASan marks
@@ -93,8 +109,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
         for name in ('InstallHybridManifestHeld', 'VerifyHybridManifestHeld'):
             matching=[row for row in rows if name in row[0]]
             assert len(matching)==1 and len(matching[0])==3 and matching[0][2]=='static' and int(matching[0][1])<=2048,(name,matching)
-        print('PASS hybrid manifest install and verification frames <=2048 bytes in host diagnostic build',flush=True)
-    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest']) else [[], ['--faults']]):
+        print('PASS hybrid/QGW8 manifest install and verification frames <=2048 bytes in host diagnostic build',flush=True)
+    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest'], ['--qgw8-journal']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk:
         headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
