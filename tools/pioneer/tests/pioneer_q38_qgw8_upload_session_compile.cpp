@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Instantiate actual QGW8 source/session types; no execution or real IO.
-#include "pioneer_q38_hybrid_head_prepared_actual_compile.cpp"
 #define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
+#include "pioneer_q38_hybrid_head_prepared_actual_compile.cpp"
 #define PIONEER_Q38_QGW8_SPAN_INSPECTION 1
 #define PIONEER_Q38_QGW8_CONTROL_INSPECTION 1
 #define PIONEER_Q38_HYBRID_TRACKED_UPLOAD 1

@@ -143,6 +143,19 @@ hybrid receipt regressions and the RISC-V compile-only witness also passed.
 These are fake bank/ledger endpoints: no actual state was initialized and
 there is still no loadable QGW8 owner, worker launch, token or measured rate.
 
+In the non-loadable QGW8 inspection profile, the existing full-token startup
+serializer now derives its matrix-head descriptor from the same canonical
+plan produced by the sealed receipt. Synthetic tests built startup data for
+all seven workspace banks, compared every head stripe with the independent
+host proposal, and refused a damaged head part without publishing output.
+The first startup-derived head job was consumed by the pinned linked ROOT
+instructions in the simulator. The original hybrid startup regression passed;
+the RISC-V startup witness compiled with a maximum individual static frame of
+1216 bytes. A late inspection-role definition is now explicitly refused, and
+the combined session fixtures select that role before the canonical header.
+These checks do not bind the matching real worker, run the full ROOT/worker
+lifecycle, authenticate real converted weights or establish any device speed.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

@@ -61,4 +61,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-held-head-root-') as direc
     metadata.write_bytes(fixture('QGW8_HELD_HEAD_FIXTURE', 1024))
     job.write_bytes(fixture('QGW8_HELD_HEAD_JOB', 256))
     subprocess.run([str(helpers), str(image), str(metadata), str(job)], check=True, env=env)
-print('PASS held-session-derived head metadata -> actual linked QGW8 ROOT instructions, synthetic data; no device/inference/TPS')
+    receipt = tmp / 'receipt'
+    subprocess.run(common + ['-Wno-unused-variable', str(here / 'pioneer_q38_qgw8_upload_receipt_test.cpp'),
+                             '-o', str(receipt)], check=True)
+    result = subprocess.run([str(receipt), '--emit-startup-fixture'], env=env, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    lines = result.stdout.splitlines()
+    if not any(line.startswith('PASS QGW8 receipt and actual runtime reservation:') for line in lines):
+        raise RuntimeError('Synthetic QGW8 receipt/startup did not finish')
+    metadata.write_bytes(fixture('QGW8_STARTUP_HEAD_FIXTURE', 1024))
+    job.write_bytes(fixture('QGW8_STARTUP_HEAD_JOB', 256))
+    subprocess.run([str(helpers), str(image), str(metadata), str(job)], check=True, env=env)
+print('PASS held-session and receipt-derived startup head metadata -> actual linked QGW8 ROOT instructions, synthetic data; no device/inference/TPS')

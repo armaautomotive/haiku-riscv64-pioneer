@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Real QGW8 page router, span builder, session and kernel receipt joined by
 // a simulated owner/transport. No real device, model bytes, or inference.
+#define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
 #define PIONEER_Q38_QGW8_SPAN_BRIDGE_FIXTURE_ONLY
 #include "pioneer_q38_hybrid_head_span_bridge_test.cpp"
-#define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
 #define PIONEER_Q38_QGW8_SPAN_INSPECTION 1
 #define PIONEER_Q38_QGW8_CONTROL_INSPECTION 1
 #define PIONEER_Q38_HYBRID_TRACKED_UPLOAD 1

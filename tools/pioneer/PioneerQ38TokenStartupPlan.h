@@ -3,7 +3,11 @@
 #define PIONEER_Q38_TOKEN_STARTUP_PLAN_H
 #include "PioneerQ38TokenPackage.h"
 #include "PioneerQ38TokenLayout.h"
+#ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+#include "PioneerQ38Qgw8HeadPlanInspection.h"
+#else
 #include "PioneerQ38GlobalHeadPlan.h"
+#endif
 #include <new>
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PreparedNativeSource.h"
@@ -19,7 +23,11 @@ class PioneerQ38TokenStartupPlan {
  const PioneerQ38PreparedNativeSource* preparedSource=nullptr;
 #endif
  PioneerQ38TokenPackage* layers[64]={};
+#ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+ PioneerQ38Qgw8HeadPlanInspection head;
+#else
  PioneerQ38GlobalHeadPlan head;
+#endif
  PioneerQ38GdnIdentity identity={};
  uint32_t sources[1920]={},boot[64]={},session[128]={},prompt[8192]={};
  unsigned bank=7,workspace=0;bool attempted=false,ready=false,published=false;

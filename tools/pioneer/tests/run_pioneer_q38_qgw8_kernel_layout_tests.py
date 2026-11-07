@@ -15,6 +15,11 @@ common = [cxx, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror']
 probes = [str(here / 'pioneer_q38_qgw8_kernel_layout_role_probe.cpp'),
           str(here / 'pioneer_q38_qgw8_upload_receipt_role_probe.cpp')]
 role = ['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1']
+late_probe = str(here / 'pioneer_q38_qgw8_late_role_probe.cpp')
+late = subprocess.run(common + ['-fsyntax-only', late_probe], text=True,
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+if late.returncode == 0 or 'QGW8 inspection role must be selected before the canonical model header' not in late.stderr:
+    raise RuntimeError('QGW8 late role selection not explicitly refused')
 canonical_probe = str(here / 'pioneer_q38_qgw8_canonical_role_probe.cpp')
 for flags in ([], role):
     subprocess.run(common + flags + ['-fsyntax-only', canonical_probe], check=True)
@@ -76,10 +81,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
                           ('upload_receipt', ('qgw8_receipt_begin', 'qgw8_receipt_span', 'qgw8_receipt_record',
                                               'qgw8_receipt_after', 'qgw8_receipt_seal', 'qgw8_receipt_layout',
                                               'qgw8_receipt_canonical', 'qgw8_runtime_ranges')),
-                          ('span_service', ('qgw8_span_receipt_kind',))):
+                          ('span_service', ('qgw8_span_receipt_kind',)),
+                          ('startup', ('qgw8_startup_build', 'qgw8_startup_head'))):
         obj = out / (name + '.o')
         source = ('pioneer_q38_qgw8_kernel_layout_compile.cpp' if name == 'kernel_layout' else
                   'pioneer_q38_qgw8_upload_receipt_kernel_compile.cpp' if name == 'upload_receipt' else
+                  'pioneer_q38_qgw8_startup_kernel_compile.cpp' if name == 'startup' else
                   'pioneer_q38_qgw8_span_service_role_probe.cpp')
         selectors = (['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1', '-DPIONEER_Q38_QGW8_SPAN_INSPECTION=1',
                       '-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=1'] if name == 'span_service' else [])

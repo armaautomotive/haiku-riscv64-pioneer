@@ -11,6 +11,9 @@
 #error QGW8 kernel layout is non-loadable inspection data only
 #endif
 #include "PioneerQ38CanonicalModelPlan.h"
+#if !defined(PIONEER_Q38_QGW8_CANONICAL_PRESENT) || PIONEER_Q38_QGW8_CANONICAL_PRESENT != 1
+#error QGW8 inspection role must be selected before the canonical model header
+#endif
 
 // Freestanding fixed-size QGW8 geometry for a future kernel receipt. Unlike
 // the legacy canonical layout this records an explicit encoding for every
