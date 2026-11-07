@@ -78,6 +78,10 @@ same next token but produced 35.9% relative L2 logit difference; this is a
 warning, not a quality pass or a card speed measurement. Study selective or
 higher-precision conversion before considering Work integration. See
 qwen38-bfp4-full-cpu-quality-20261106 in benchmarks/.
+The first48 versus last16 selective tests gave 24.8% versus 26.7% raw-logit
+differences on that one token; all three chose the same next token. A
+shift-invariant probability check is underway. See the selective CPU quality
+report; these results do not establish answer quality or card throughput.
 
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves
 the original fragment byte footprint. A separate versioned disk cache passes

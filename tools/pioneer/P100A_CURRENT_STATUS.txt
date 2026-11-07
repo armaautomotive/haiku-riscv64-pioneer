@@ -59,6 +59,9 @@ Four compact goals
    BFP4 FFN substitutions. Final logits differed by 35.9% relative L2,
    though both paths picked the same next token. This one-token result is a
    warning, not an answer-quality pass, and not a card speed measurement.
+   Selective conversion of the first48 or last16 layers gave 24.8% and
+   26.7% raw-logit differences, respectively, for the same token. The
+   different layer counts and a single token prevent a general conclusion.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -85,4 +88,5 @@ Real-prompt BFP4 accuracy probe: benchmarks/qwen38-bfp4-real-prompt-quality-2026
 Complete first FFN CPU accuracy result: benchmarks/qwen38-bfp4-first-ffn-quality-20261106.txt
 Returning BFP4 worker offboard checkpoint: benchmarks/qwen38-bfp4-worker-leaf-offboard-20261106.txt
 Whole-token CPU quality diagnostic: benchmarks/qwen38-bfp4-full-cpu-quality-20261106.txt
+Selective FFN quality comparison: benchmarks/qwen38-bfp4-selective-cpu-quality-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

@@ -1,4 +1,4 @@
-Selective BFP4 whole-token CPU diagnostic: IN PROGRESS, 2026-11-06
+Selective BFP4 whole-token CPU diagnostic: COMPLETED, 2026-11-06
 ==================================================================
 
 The all-64-layer BFP4 FFN experiment had a 35.9% relative L2 difference
@@ -11,9 +11,24 @@ choice, not a production fallback or permission to alter Work.
 The original baseline again completed all64 layers and matched pinned
 hidden-plus-logits SHA256
 9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937.
-The two selective observations are RUNNING through one live process; no
-result is claimed yet. Log:
-/private/tmp/pioneer-q38-bfp4-split48-cpu-20261107-a.log.
+The two selective observations completed in one process, actual exit 0:
+
+  Selected FFN layers  Converted projections  Final hidden relative L2   Logit relative L2   Next token
+  first 48                  144                    0.243851506              0.247639294       70253
+  last 16                    48                    0.257314266              0.266558629       70253
+  all 64 (prior run)        192                    0.346744779              0.359367507       70253
+  original Q4                 0                    baseline                 baseline          70253
+
+For the last16 case, ALL48 original-layer hidden comparisons had zero
+relative and absolute differences. The first48 case's printed per-layer
+error metrics through layer47 exactly match the earlier all64 case. These
+checks establish the intended path selection, not card execution. On this
+one token, the last16-only raw-logit difference was comparable to the
+first48-only difference; this suggests those layers are sensitive, but
+neither difference is a model accuracy percentage or a validated answer.
+
+Log: /private/tmp/pioneer-q38-bfp4-split48-cpu-20261107-a.log, SHA256
+bddb53b9d3f74e82477505c292cd74d1ec7ab294ab18e0fff10adc7010488c4d.
 The executed binary has SHA256
 5886258312a7c36918d7aba9026e46f9c351de6859615794b3c22400094a9d40.
 
@@ -23,9 +38,13 @@ masks, skipping an original layer before reaching the selected layer, atomic
 callback failure, numerical/domain refusals, and unchanged Work role guards.
 No P100A driver, Assistant, model or device is modified.
 
-After the running executable was built, source gained a CPU-only stable
+After the selective executable was built, source gained a CPU-only stable
 softmax/KL and top-five comparison with synthetic, shift-invariance and
-analytic KL tests. That added reporting is NOT present in the running
-executable; future builds can measure whether differences in raw logits
-materially alter next-token probabilities. These diagnostics are one-token
-quality evidence, not a P100A throughput measurement or answer-quality pass.
+analytic KL tests. That added reporting is NOT present in the selective
+executable. A NEW one-token all64 probability comparison is now actually
+running through its own process, transcript
+/private/tmp/pioneer-q38-bfp4-full-probability-20261107-a.log, executable
+SHA256 4e251ac2aba28b8ebb853a7d5de7bcccd61530f477b3cab6970ae313ee66e580.
+Its original trace matches the pinned baseline; its BFP4 result is pending.
+These diagnostics are one-token quality evidence, not a P100A throughput
+measurement or answer-quality pass.
