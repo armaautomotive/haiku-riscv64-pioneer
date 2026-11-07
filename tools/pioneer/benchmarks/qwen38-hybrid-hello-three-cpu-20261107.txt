@@ -1,0 +1,26 @@
+Hybrid raw-Hello three-position comparison: IN PROGRESS, 2026-11-07
+==================================================================
+
+The authenticated original model's GGUF vocabulary contains exactly one
+literal "Hello" token, ID 9419; a separate earlier 27B smoke used Hello as
+a one-token input. This probe checks vocabulary metadata, not the complete
+tokenizer pipeline or an Assistant chat template. The new CPU diagnostic
+begins with token9419, then supplies both paths with the ORIGINAL path's
+previous greedy token for two further positions. Candidate and original keep
+independent attention, GDN and convolution histories; each diagnostic
+projection sweep is separately authenticated. This is teacher forcing, not
+an independently generated answer and not a model-speed or card test.
+
+The CPU reference's earlier fixed-token baseline has an independent pinned
+trace; the raw-Hello baseline in this new test does NOT. Do not treat its
+results alone as an independent whole-model validation, a natural-conversation
+quality pass or evidence for Work/Assistant promotion. The experimental
+format uses BFP8 FFN layers48..60 and BFP4 FFN elsewhere.
+
+The comparator compiled; the three-position synthetic zero-state test passed,
+including callback/mask/ordinary-step isolation and fourth-position refusal.
+The real comparison was started from binary SHA256
+0397ff8216933628859750ee7a1111743343be655472eeb0d40cf2eebbba0b10.
+Its log is /private/tmp/pioneer-q38-hello-quality.BE2A1m2H/comparison.log.
+Until all three result lines and the actual process exit are checked, it is
+IN PROGRESS and there is no new quality or speed result.

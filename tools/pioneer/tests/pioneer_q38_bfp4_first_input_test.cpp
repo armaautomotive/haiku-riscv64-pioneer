@@ -90,10 +90,11 @@ int main(int argc,char** argv){
   assert(!observer.StepWithSelectedFfnSequence(17,~uint64_t(0),Diagnostic,&calls,trace));}
  if(argc==2){
   ReferenceRowsProbe source;Q38CpuModelReference observer;assert(observer.Bind(source));
-  for(unsigned position=0;position<2;position++){
+  for(unsigned position=0;position<3;position++){
    FfnCalls calls;Q38CpuTokenTrace trace;
-   assert(observer.StepWithSelectedFfnSequence(position?17:248319,~uint64_t(0),SequenceZeros,&calls,trace));
-   assert(calls.count==192 && trace.position==position && trace.input==(position?17U:248319U));
+   const unsigned token=position==0?248319:position==1?17:0;
+   assert(observer.StepWithSelectedFfnSequence(token,~uint64_t(0),SequenceZeros,&calls,trace));
+   assert(calls.count==192 && trace.position==position && trace.input==token);
    assert(trace.hidden.size()==65*5120 && trace.logits.size()==248320 && trace.selected==0 && observer.Ready());
    for(auto b:trace.hidden)assert(!(b&0x7fffffff));for(auto b:trace.logits)assert(!(b&0x7fffffff));
    if(!position)for(unsigned fault=0;fault<3;fault++){
@@ -108,9 +109,14 @@ int main(int argc,char** argv){
     int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && WEXITSTATUS(status)==0 && observer.Ready());
    }
   }
+  {const pid_t child=fork();assert(child>=0);
+   if(!child){FfnCalls calls;Q38CpuTokenTrace untouched;untouched.hidden={0xabcdef};
+    assert(!observer.StepWithSelectedFfnSequence(0,~uint64_t(0),SequenceZeros,&calls,untouched));
+    assert(!calls.count && !observer.Ready() && untouched.hidden==std::vector<uint32_t>{0xabcdef});_exit(0);}
+   int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && WEXITSTATUS(status)==0 && observer.Ready());}
   Q38CpuTokenTrace trace;trace.hidden={0xabcdef};
   assert(!observer.Step(0,trace) && !observer.Ready() && trace.hidden==std::vector<uint32_t>{0xabcdef});
-  puts("PASS two-position CPU diagnostic sequence with independent retained zero state and renewed contexts; NO MODEL OR DEVICE");
+  puts("PASS three-position CPU diagnostic sequence with independent retained zero state and renewed contexts; NO MODEL OR DEVICE");
  }
  puts("PASS first-FFN-input CPU-only observer: synthetic zero, exact prompt gate, alias/refusal, one-shot isolation; NO MODEL QUALITY OR DEVICE CLAIM");
 }

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// Two fixed, teacher-forced tokens with independent retained CPU state.
+// Short teacher-forced sequences with independent retained CPU state.
 // Diagnostic only: not P100A execution, Work, or an answer-quality pass.
 #if !defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC) || PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC != 1 \
  || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
@@ -25,19 +25,23 @@ static bool FirstPin(const Q38CpuTokenTrace& t){
 }
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned reference byte order");
- if(argc!=3 || strcmp(argv[1],"--two-fixed-window13") || argv[2][0]!='/')return 2;
+ if(argc!=3 || (strcmp(argv[1],"--two-fixed-window13") && strcmp(argv[1],"--hello-three-window13")) || argv[2][0]!='/')return 2;
+ const bool hello=!strcmp(argv[1],"--hello-three-window13");
  setvbuf(stdout,nullptr,_IOLBF,0);
- puts("CPU_SEQUENCE authenticating model; fixed inputs 248319,17; teacher-forced; NO DEVICE OR WORK");
+ puts(hello?"CPU_SEQUENCE authenticating model; raw Hello token9419, then original greedy tokens; teacher-forced; NO DEVICE OR WORK":
+  "CPU_SEQUENCE authenticating model; fixed inputs 248319,17; teacher-forced; NO DEVICE OR WORK");
  WholeModelOriginalBytes source;if(!source.Open(argv[2]) || !source.Ready())return 1;
  Q38CpuModelReference original,candidate;
  if(!original.Bind(source) || !candidate.Bind(source))return 1;
  constexpr uint64_t layers=~uint64_t(0),bfp8=UINT64_C(0x1fff000000000000);
- for(unsigned position=0;position<2;position++){
-  const unsigned token=position?17U:248319U;
+ unsigned previousOriginal=0;
+ for(unsigned position=0;position<(hello?3U:2U);position++){
+  const unsigned token=hello?(position?previousOriginal:9419U):(position?17U:248319U);
   Q38CpuTokenTrace baseline,changed;
   if(!original.Step(token,baseline) || baseline.position!=position || baseline.input!=token
-   || (!position && !FirstPin(baseline)) || (position==1 && baseline.selected!=17)
+   || (!hello && !position && !FirstPin(baseline)) || (!hello && position==1 && baseline.selected!=17)
    || !source.Ready())return 1;
+  previousOriginal=baseline.selected;
   // Re-authenticate and create a fresh ordered FFN sweep for each token. The
   // candidate's convolution/GDN/attention history remains in candidate.
   std::unique_ptr<void,decltype(&Q38Bfp4CpuClose)> backend(Q38Bfp4CpuOpen(argv[2],layers,bfp8),Q38Bfp4CpuClose);
@@ -52,6 +56,7 @@ int main(int argc,char** argv){
    result.topFiveOverlap,result.originalTopProbability,result.candidateTopProbability);
  }
  if(!source.Ready() || !original.Ready() || !candidate.Ready())return 1;
- puts("PASS_TWO_TOKEN_CPU_SEQUENCE; NOT NATURAL_ANSWER_QUALITY, CARD_EXECUTION OR SPEED");
+ puts(hello?"PASS_THREE_TOKEN_HELLO_CPU_SEQUENCE; BASELINE_NOT_INDEPENDENTLY_PINNED_NOT_ANSWER_QUALITY_CARD_OR_SPEED":
+  "PASS_TWO_TOKEN_CPU_SEQUENCE; NOT NATURAL_ANSWER_QUALITY, CARD_EXECUTION OR SPEED");
  return fflush(stdout)?1:0;
 }

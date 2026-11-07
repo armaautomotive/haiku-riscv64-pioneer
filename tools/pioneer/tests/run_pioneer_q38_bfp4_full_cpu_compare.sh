@@ -22,6 +22,7 @@ ${CXX:-c++} $common -DPIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC=1 \
 if "$temporary/compare" --full relative.gguf;then exit 1;fi
 if "$temporary/compare" --invalid /not-a-model;then exit 1;fi
 if "$temporary/sequence-compare" --two-fixed-window13 relative.gguf;then exit 1;fi
+if "$temporary/sequence-compare" --hello-three-window13 relative.gguf;then exit 1;fi
 if "$temporary/sequence-compare" --invalid /not-a-model;then exit 1;fi
 for role in _KERNEL_MODE PIONEER_Q38_WORK_INFERENCE TT_PIONEER_Q38_WORK_MODE PIONEER_Q38_CPU_VALIDATION PIONEER_Q38_FULL_MODEL_CPU_REFERENCE;do
  if ${CXX:-c++} -std=c++17 -D"$role" -E "$directory/pioneer_q38_bfp4_full_cpu_backend.cpp" > /dev/null 2> "$temporary/$role.stderr";then exit 1;fi
