@@ -81,6 +81,14 @@ different engine and aggregates prompt+generation. See performance-route
 report for conditional Amdahl limits, assumptions and exact inventory.
 
 Immediate bounded task: ONE distinct fast-engine ROOT phase profile.
+ROOT timer implementation is LOCAL QUALIFIED:12 main/clean children,155
+source fingerprints, all6images exact, original ROOT/3TUs exact FIRST,
+actual RV32 timing helpers7positive/13refused, DATA4/74, SDK roles6/85.
+This is NOT native or hardware/model qualification. Next bind the new1496B
+6c000 code view and v3 timing DATA to a distinct journalled native identity,
+then qualify and run the actual model profile. Never borrow an old lease.
+See benchmarks/qwen38-fast-decode-profile-root-20261106.txt for exact scope,
+including separate FinalStop and non-identical host counter endpoints.
 Keep accepted vector92 worker/math bytes unchanged, and split actual
 post-prompt preparation/dispatch/gather/finish/outside-call costs. Preserve
 all851 tensors,8192context,two state slots,full vocabulary/row cover and

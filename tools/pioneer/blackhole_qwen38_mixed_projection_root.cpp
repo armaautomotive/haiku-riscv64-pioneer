@@ -9,6 +9,10 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#include "PioneerQ38FastDecodeProfileBuildRole.h"
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#include "PioneerQ38FastDecodeProfileScope.h"
+#endif
 #ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
 #include "PioneerQ38Bf16ProfileScope.h"
 #endif
@@ -230,7 +234,9 @@ static unsigned Run(const uint32_t* d){
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  PioneerQ38Bf16DeferredAudit audit;
 #endif
-#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+ PioneerQ38FastDecodeProfileScope timing(PioneerQ38FastDecodeProfileData::MatrixPrepare);
+#elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  PioneerQ38Bf16ProfileScope timing(PioneerQ38Bf16ProfileData::MatrixPrepare);
 #endif
  CaptureRecipe(d);
@@ -261,12 +267,16 @@ static unsigned Run(const uint32_t* d){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t incoming[4];PushedBegin(d,tracked,incoming);
 #endif
-#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+ timing.Next(PioneerQ38FastDecodeProfileData::MatrixDispatch);
+#elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixDispatch);
 #endif
  for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
-#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+ timing.Next(PioneerQ38FastDecodeProfileData::MatrixGatherWait);
+#elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixGatherWait);
 #endif
  for(unsigned w=0;w<d[7];w++){
@@ -275,7 +285,9 @@ static unsigned Run(const uint32_t* d){
   if(BfQ4(d) && !audit.MatrixClosed(w))scalar_fault_park();
 #endif
  }
-#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+ timing.Next(PioneerQ38FastDecodeProfileData::MatrixFinish);
+#elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixFinish);
 #endif
  // Non-pushed Gather observes DONE/WAIT,boot/job and current counters.

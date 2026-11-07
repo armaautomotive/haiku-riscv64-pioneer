@@ -1,0 +1,15 @@
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/boot.bin
+9cab5bb4e8498d1d396b28af4c1b907a5b6c6f569b6d24c0c594ff830a421dd8  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/build-argv.txt
+abc7bf03ad5668530331116092f3aac6c240230922d2b7bb955b0798c99d5ccf  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/conv.bin
+e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/program.elf
+468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/terminal.bin
+c9f60a2c5b34686b3c7a1e2d6b062d3588821128a09be2e24967a3748204b12c  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/text.bin
+637b869c8f6f238d930e2b649353338895765679867d69a09792b7e4576febd4  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/token.o
+5a50bc65f228b20ac61a52152cd3bbba1c82358db52add2db5547de1275787ca  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/compile-dense-argv.txt
+03b7d0301b9b68d3e48a013cde754eaa9b95b5e1f813adda5a48e67947b7cfa2  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/compile-recurrent-argv.txt
+b979355205bc7ff022f421f5d271c171fdbdab7f8cb05983e81954027d60a82f  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/components-NOBOOT.o
+d3f11ffefa5384e01d9915b099dafd3796529c5df0541cb7602f304ddc30c6a3  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/output-closure-dense.o
+6da3875077aa9b3d321103c49ac75d149c3574a4f579e4fb76b42d68c1895189  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/output-closure-recurrent.o
+8dbd4d80dd8a9c9c63c8be301726d05b56fdbb7f5c40e542018f3a6e02cd46ae  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/unchanged-batched/unchanged-flat/unchanged-empty/unchanged-read-source/unchanged-counter/unchanged-tid/unchanged-packet/unchanged-cohort/unchanged-commit/unchanged-retained/unchanged-frontier/start.o
+8c2626d34501e53dc25368cb8f67c48c9de778fec5d880e21901034795c083f2  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/unchanged-batched/unchanged-flat/unchanged-empty/unchanged-read-source/unchanged-counter/unchanged-tid/unchanged-packet/unchanged-cohort/unchanged-commit/unchanged-retained/unchanged-frontier/unchanged-root/qualified-components/unchanged-feedback/feedback.o
+e770a9bde85baadaf9239b7e40985af6415b99650866fad745fe4691a3196395  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/unchanged-output-closure/unchanged-batched/unchanged-flat/unchanged-empty/unchanged-read-source/unchanged-counter/unchanged-tid/unchanged-packet/unchanged-cohort/unchanged-commit/unchanged-retained/unchanged-frontier/unchanged-root/qualified-components/unchanged-feedback/root_conv_sections.o

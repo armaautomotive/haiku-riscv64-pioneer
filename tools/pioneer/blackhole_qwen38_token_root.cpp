@@ -2,12 +2,17 @@
 // Experimental persistent on-card parent. Not installed/native-qualified.
 #include "PioneerQ38TokenImageRole.h"
 #include "PioneerQ38TokenCommitBoundaryRole.h"
+#include "PioneerQ38FastDecodeProfileBuildRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38TokenMetadata.h"
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
-#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#include "PioneerQ38FastDecodeProfileData.h"
+namespace QPhase=PioneerQ38FastDecodeProfileData;
+extern "C" void q38_fast_decode_profile_position(unsigned,unsigned);
+#elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
 #include "PioneerQ38Bf16ProfileData.h"
 namespace QPhase=PioneerQ38Bf16ProfileData;
 #else
@@ -147,7 +152,7 @@ extern "C" void q38_global_chain_main(){
  Bootstrap();
  for(;;){
   for(unsigned layer=0;layer<64;layer++){
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE) && !defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE)
    q38_token_phase_mark(QPhase::Metadata);
 #endif
    unsigned position=owned.state[Position],token=owned.state[Token];
@@ -156,6 +161,10 @@ extern "C" void q38_global_chain_main(){
     position=owned.state[Committed];token=owned.state[NextToken];
     if(position>=owned.state[Limit] || position>=8192)scalar_fault_park();
    }else if(owned.state[Completed]!=layer || owned.phase!=1)scalar_fault_park();
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+   if(!layer)q38_fast_decode_profile_position(position,owned.state[PromptCount]);
+   q38_token_phase_mark(QPhase::Metadata);
+#endif
    uint32_t package=0;if(!L::Address(owned.state[Workspace],layer,package))scalar_fault_park();
    Transfer(package,512,false);for(unsigned i=0;i<128;i++)next[i]=Words(R::Scratch)[i];
    if(!M::Outer(next,layer,position,token,owned.state[Bank],owned.state[Workspace],owned.boot))scalar_fault_park();

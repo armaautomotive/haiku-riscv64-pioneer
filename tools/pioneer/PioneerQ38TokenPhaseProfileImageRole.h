@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Recheck every include. Profiling is a distinct BUILD, never a Work grant.
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
-#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#include "PioneerQ38FastDecodeProfileBuildRole.h"
+#elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
 #include "PioneerQ38Bf16ProfileBuildRole.h"
 #else
 #if PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE != 1 \

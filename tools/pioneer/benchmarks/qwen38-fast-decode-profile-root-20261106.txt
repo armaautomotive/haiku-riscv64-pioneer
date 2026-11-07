@@ -1,0 +1,103 @@
+Fast vector92 generation-only ROOT timer -- software checkpoint
+===============================================================
+November6,2026. IMPLEMENTED/LOCAL QUALIFIED, NOT NATIVE OR HARDWARE READY.
+No new model rate, speedup, quality or20TPS result. Best complete27B remains
+0.173tok/s, latest0.082; the overall usable27B/Assistant goal remains active.
+
+Changed code
+-------------
+Separate fast-decode BUILD, no BF16/prepared arithmetic or cache changes.
+ROOT uses the original full-EOG/pushed/output-closure parent of vector92.
+Version3 timing DATA uses the SAME60 reserved progress words75710..75800,
+retaining the first4 frontier words. WindowStart is the authenticated real
+parent prompt count; LastPosition checks consecutive actual layer0 entries.
+For31 prompts/32 outputs, bucket counts cover positions31..61 ONLY, while
+Committed retains the complete session count62, not a relabelled31.
+No clock reads during prefill; no CPU reference/inference/fallback added.
+The complete14-bucket record distinguishes matrix preparation, dispatch,
+gather/wait, finish and outside-call work. It is DATA, not owner authority.
+Invalid/missing/backward/overflowed clocks invalidate metrics only; no
+inference predicate or forced park/END/reset is introduced.
+
+Window scope -- not identical to the host observer's endpoints
+-------------------------------------------------------------
+The first clock sample is at generation position31's actual layer0 entry,
+before its metadata fetch, not exactly the preceding commit31 store. The
+last sample follows real final119-worker STOPs. FinalStop has its OWN bucket;
+exclude that bucket when analyzing generation-body fractions. Do not label
+the whole sum isolated decode latency or equate it to the host31->62 count
+window. The normal host counter rate remains a separate measurement.
+These boundaries intentionally retain real STOP before telemetry Complete.
+
+Completed local checks
+-----------------------
+Source-frozen main and independent clean ACTUALLY0:12 children, all stderr0,
+155 consumed public sources and15 frozen reusable control inputs. Main/clean
+source maps match byte-for-byte; pre-existing dirty work was not imported.
+All SIX complete image/ELF files match, not just selected code prefixes.
+
+* ENTIRE accepted original ROOT e93c1a57... relinks byte-exact FIRST. All3
+  current original recurrent/dense/token TUs reproduce their whole old
+  objects before compiling changed variants. No ancestors were rebuilt as
+  purported performance progress.
+* DATA state machine:4 positive/74 refused;31of62 and extreme1..8192 bounds,
+  counts/sums/header mutations, pending/changed/skipped/repeated positions,
+  zero prefill clocks, invalid/overflow/backward clocks and sticky failure.
+* Actual linked RV32 helper instructions, using the unchanged strict machine:
+  7 positive/13 refused, exact raw-CSR sums for all14 buckets,31of62/rollover/
+  large64-bit deltas, callee-saved ABI/stack and first4 progress words intact.
+  Metric writes only within the60 reserved words, no MMIO/coprocessor IO,
+  no later CSR/metric writes after invalidation. ASan/UBSan enabled.
+  These are DIRECT HELPERS with fabricated clocks, NOT full ROOT/model flow.
+* Actual SDK role checks:6 positive/85 refused across the real token and both
+  returning component profiles; late selection/removal, CPU/Work/native,
+  BF16/prepared and wrong/missing parent combinations refuse.
+* All21 existing program families refuse the new complete ROOT identity
+  before worker IO/output. Do NOT borrow an old native lease or spent stage.
+* Linked call-site audit binds begin/position to the real parent, enter/mark
+  to both actual Projection::Run bodies, and complete to Finish. Only3 read-
+  only CSRRS opcodes, in q38_token_phase_clock. This is emitted-structure
+  evidence, not proof of a complete original-model execution.
+
+Exact BUILD package
+--------------------
+boot4B32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text130580B0b118528adadb2ab5be46c8d263ebbc9ff3dab02488efea9c9e3b437a6125b34
+terminal8B468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+conv32216Bb76f012be20af78ae5d7a3b027bf22e8dbab56ae2f7f0182f669832c2fc4de59
+NEW fast_decode1496Ba37bab87fc21f140236413c673352966bf9452212bf89e7956868c1cea15f9d1
+ELF193672B882d2e1cf08ad5ccbd69c52a7ecb7daf5e7101527f669431faf962f158b5b425
+The NEW6c000..6c5d8 code view is below the unchanged6e000 stack but is NOT
+covered by old native grants merely because it fits. Text/conv stay within
+their old128KiB/32KiB maxima; boot/STOP bytes unchanged.
+Original vector92 program header3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389
+is unchanged, including ALL ten peer arrays. No worker math was compiled or
+replaced as part of this diagnostic ROOT checkpoint.
+
+Next required implementation
+-----------------------------
+Bind a distinct generated program/native/public diagnostic identity to the
+new complete ROOT, code-view journal/readback/restoration and v3 timing
+schema. Retain actual source/FD/thread/generation/PCI/VM/clock/NoC ownership,
+full original851 source/8192context/two state slots and clean graph terminal.
+Metrics must not substitute for graph completion or turn clock failure into
+a permission to reset/release. Old modules/roles do NOT authorize this code.
+Qualify that binding before ONE actual31-prompt/32-output model profile;
+independent stable-driver/platform restoration and honest real rate required.
+No integration into Assistant until a faster engine is actually demonstrated.
+
+Reproduce / preservation
+-------------------------
+python3 tools/pioneer/build_qwen38_full_offload_batched_root.py SDK FRESH_CONTROL
+python3 tools/pioneer/build_qwen38_fast_decode_profile_root.py SDK CONTROL FRESH_DISCOVERY --inspect-candidate
+python3 tools/pioneer/tests/run_pioneer_q38_fast_decode_profile_tests.py SDK CONTROL DISCOVERY FRESH_QUALIFICATION
+Use absolute paths; output directories must be fresh and outside the repo.
+Completed evidence:/private/tmp/pioneer-fast-decode-profile.SSHrzI/final-r2.
+Sibling archive contains actual exits, source/control fingerprints and whole
+main/clean build/DATA/RV32/role stdout. No binaries/learned payloads saved.
+First runner attempt stopped on a binary/directory naming collision, before
+hardware; corrected runner also captures literal legacy pin-script inputs.
+No firmware change was needed for that harness correction.
+No Pioneer/driver/model/Assistant/boot/power/SD/hardware operation occurred.
+Last independent board check remains normal041/gen8,idle,64CPUs/fullRAM,
+apps/runtime preserved; this is NOT a fresh board or UI verification.
