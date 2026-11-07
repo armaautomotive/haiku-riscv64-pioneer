@@ -1,0 +1,21 @@
+QGW8 combined FFN/head comparison: CPU-ONLY, RUN IN PROGRESS
+============================================================
+
+An isolated one-token test compares original model logits with the QGW8
+11-layer-BFP8 FFN alternative and a BFP8 output head, all on the host CPU.
+The original fixed-token trace must match the independently pinned trace.
+The candidate uses the actual final hidden state, the original output RMS
+weights, and software BFP8 conversion/matrix arithmetic to calculate all
+248320 output logits. This comparison includes arithmetic differences, not
+only quantization error. It is not card execution, a throughput benchmark,
+Work-mode integration, natural chat or an answer-quality qualification.
+
+The test executable was built from the accompanying source and started at
+approximately 14:16 local time on November 7, 2026, with binary SHA-256
+2b08451e0ef37f914c8eedc00224007abacdd772bcedbd7578e4ebb56bc258a6.
+The private capture is /private/tmp/pioneer-qgw8-cpu-head-compare-20261107-a.log.
+As of 14:17, the authenticated original-model pass was progressing. The
+log is temporary and its existence alone does not establish a live process
+or a successful result. Inspect the live process handle and CAPTURE_EXIT/PASS
+markers before claiming completion; do not restart simply because polling
+times out. No result or inference speed is yet claimed.
