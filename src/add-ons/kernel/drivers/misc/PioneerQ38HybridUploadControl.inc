@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
+#include "PioneerQ38Qgw8UploadProtocol.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 // One actual retained FD and global lock. This source assertion is supplied
 // by the trusted loader; it is not a device readback or model authentication.
@@ -13,7 +16,11 @@ static __attribute__((noinline)) status_t Q38HybridUploadControl(PioneerProbeCoo
  status=AcquireProbeLock(cookie,true);if(status!=B_OK)return status;
  auto* c=cookie->context;bool okay=false;
  if(c && sRuntimeOwner==cookie && sBankStorageOnly && !sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration
-  && PioneerQ38SpanOwner(*c) && !c->q38TokenNative && !c->Unsafe() && c->io.SpanBeforeCohort()){
+  && PioneerQ38SpanOwner(*c) && !c->q38TokenNative
+#ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
+  && !c->q38Qgw8Receipt
+#endif
+  && !c->Unsafe() && c->io.SpanBeforeCohort()){
   if(packet.operation==H::Begin && !c->q38HybridReceipt && !c->q38Span && !c->uploadedPages){
    auto* receipt=new(std::nothrow) PioneerQ38HybridUploadReceipt;
    if(receipt && receipt->Begin(c,cookie,c->hashes,c->initialized,cookie->team,sReloadGeneration,

@@ -72,6 +72,18 @@ bind the new receipt to a driver, owner-control API or Work path. QGW8 receipt
 plus Work and unspecified receipt types are compile-time refusals.
 The existing untracked and tracked span/owner/control regression suites and
 the legacy tracked native-context cross-compile also passed after the refactor.
+
+A distinct QGW8 inspection packet and control handler now exercise the same
+FD/team/lock and bank-owner checks with the QGW8 receipt; no ioctl number or
+driver dispatch has been allocated. Synthetic tests reject the old packet
+magic, simultaneous legacy/QGW8 receipts in either order, an incomplete
+seal, wrong team/owner and ambiguous reply delivery. One actual span-service
+transaction ran with simulated fabric; a separate complete synthetic ledger
+was sealed through the control, and a failed seal reply quarantined the owner.
+The handler also cross-compiles against kernel-shaped stubs with maximum
+individual static frame 880 bytes. Neither this nor the existing regression
+tests establishes physical upload, correct model bytes, a loadable QGW8
+driver, or any inference speed.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.
