@@ -67,14 +67,20 @@ public:
   if(!cache.GetOrCreate(key,live,produce,reader,hit,error) || !converter.Ready() || !reader.IsOpen() || reader.Size()!=key.bytes)return false;
   ready=true;error.clear();return true;
  }
- bool ReadPage(unsigned page,uint8_t* out,unsigned capacity,std::string& error){
-  if(!out || capacity<4096 || page>=key.bytes/4096)return Fail(error,"Invalid BFP4 cache page.");
+ bool ReadPages(unsigned page,unsigned count,uint8_t* out,unsigned capacity,std::string& error){
+  if(!out || !count || count>Cache::ChunkBytes/4096 || capacity<count*4096
+   || page>=key.bytes/4096 || count>key.bytes/4096-page
+   || reinterpret_cast<uintptr_t>(out)>UINTPTR_MAX-count*4096)
+   return Fail(error,"Invalid BFP4 cache page range.");
   if(!Ready()){ready=false;return Fail(error,"BFP4 cache source not ready.");}
-  std::array<uint8_t,4096> staged={};
-  if(!reader.Read(uint64_t(page)*4096,4096,staged.data(),staged.size(),error) || !Ready()){
+  std::vector<uint8_t> staged(count*4096);
+  if(!reader.Read(uint64_t(page)*4096,unsigned(staged.size()),staged.data(),unsigned(staged.size()),error) || !Ready()){
    ready=false;return Fail(error,"BFP4 cache read or source stability failed.");
   }
   std::memcpy(out,staged.data(),staged.size());return true;
+ }
+ bool ReadPage(unsigned page,uint8_t* out,unsigned capacity,std::string& error){
+  return ReadPages(page,1,out,capacity,error);
  }
 };
 #endif

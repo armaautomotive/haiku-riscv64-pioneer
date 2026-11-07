@@ -81,18 +81,21 @@ public:
   return true; // preflight only; later cache reads still check integrity
  }
  const PioneerQ38HybridModelPlan::Part* Part(unsigned i)const{return Current() && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
- bool ReadPage(unsigned fragment,unsigned page,uint8_t* output,unsigned capacity,std::string& error){
-  if(!output || capacity<4096 || reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-4096
+ bool ReadPages(unsigned fragment,unsigned page,unsigned count,uint8_t* output,unsigned capacity,std::string& error){
+  if(!output || !count || count>Cache::ChunkBytes/4096 || capacity<count*4096
+   || reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-count*4096
    || fragment>=proposal.parts.size())return Fail(error,"Invalid hybrid page destination or part.");
   if(!Current())return Lose(error,"Authenticated model or prepared source changed.");
   const auto& dest=proposal.parts[fragment];const auto part=packed->Parts()[fragment];
   if(!Same(part,sourceParts[fragment]))return Lose(error,"Original model plan changed after binding.");
-  if(part.kind!=Canonical::WeightKind || page>=dest.allocated/4096)return Fail(error,"Hybrid page is not a valid learned-weight page.");
-  std::array<uint8_t,4096> stage={};
+  if(part.kind!=Canonical::WeightKind || page>=dest.allocated/4096 || count>dest.allocated/4096-page)
+   return Fail(error,"Hybrid page range is not valid learned-weight data.");
+  std::vector<uint8_t> stage(count*4096,0);
   if(part.layer<64 && part.role>=2 && part.role<=4){
    if(part.layer>=48 && part.layer<=60){
-    if(dest.encoding!=8 || !bfp8->ReadStripePage(part.tensor,part.firstRow,part.rows,page,stage.data(),stage.size(),error))
-     return Lose(error,"Prepared BFP8 stripe is missing, changed or unreadable.");
+    if(dest.encoding!=8)return Lose(error,"BFP8 fragment encoding differs from the plan.");
+    for(unsigned i=0;i<count;i++)if(!bfp8->ReadStripePage(part.tensor,part.firstRow,part.rows,page+i,
+     stage.data()+i*4096,4096,error))return Lose(error,"Prepared BFP8 stripe is missing, changed or unreadable.");
    }else{
     if(dest.encoding!=0)return Lose(error,"BFP4 fragment encoding differs from the plan.");
     if(active!=fragment){
@@ -101,14 +104,19 @@ public:
       return Lose(error,"Prepared BFP4 fragment is missing, changed or unreadable.");
      four=std::move(next);active=fragment;
     }
-    if(!four || !four->ReadPage(page,stage.data(),stage.size(),error))return Lose(error,"Prepared BFP4 page failed verification.");
+    if(!four || !four->ReadPages(page,count,stage.data(),unsigned(stage.size()),error))
+     return Lose(error,"Prepared BFP4 page range failed verification.");
    }
   }else{
-   if(dest.encoding!=0 || !packed->ReadWeightPage(*source,fragment,page,stage.data(),stage.size()))
+   if(dest.encoding!=0)return Lose(error,"Original-format fragment encoding differs from the plan.");
+   for(unsigned i=0;i<count;i++)if(!packed->ReadWeightPage(*source,fragment,page+i,stage.data()+i*4096,4096))
     return Lose(error,"Original-format model page could not be read.");
   }
   if(!Current() || !Same(packed->Parts()[fragment],part))return Lose(error,"Authenticated model or plan changed during hybrid page read.");
   std::memcpy(output,stage.data(),stage.size());error.clear();return true;
+ }
+ bool ReadPage(unsigned fragment,unsigned page,uint8_t* output,unsigned capacity,std::string& error){
+  return ReadPages(fragment,page,1,output,capacity,error);
  }
  // Expensive read-only preflight BEFORE any future device acquisition: open
  // and verify every converted fragment/tensor. Original pages are covered by

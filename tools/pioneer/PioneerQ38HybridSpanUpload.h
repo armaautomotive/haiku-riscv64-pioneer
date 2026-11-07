@@ -70,9 +70,12 @@ public:
     packet->bank=p.bank;packet->offset=uint64_t(p.offset)+uint64_t(at)*4096;packet->bytes=count*4096;
     if(!PioneerQ38SpanPublicShape(packet->version,packet->bank,packet->offset,packet->bytes,packet->reserved))
      return Fail(error,"Invalid relocated span.");
-    for(unsigned page=0;page<count;page++)if(!pages.ReadPage(i,at+page,
-     reinterpret_cast<uint8_t*>(packet->data)+page*4096,4096,error)){
-     failed=true;if(error.empty())error="Prepared page read failed; retain any caller-owned session.";return false;
+    for(unsigned page=0;page<count;){
+     const unsigned batch=std::min(16U,count-page);
+     if(!pages.ReadPages(i,at+page,batch,reinterpret_cast<uint8_t*>(packet->data)+page*4096,batch*4096,error)){
+      failed=true;if(error.empty())error="Prepared page read failed; retain any caller-owned session.";return false;
+     }
+     page+=batch;
     }
     if(!pages.AllVerified())return Fail(error,"Source changed before upload.");
     const unsigned bank=packet->bank,packetBytes=packet->bytes;const uint64_t offset=packet->offset;

@@ -22,6 +22,11 @@ struct FakePages {
   }
   std::memset(out,int((part+page)%251+1),4096);return true;
  }
+ bool ReadPages(unsigned part,unsigned page,unsigned count,uint8_t* out,unsigned capacity,std::string& error){
+  if(!count || count>16 || capacity<count*4096)return false;
+  for(unsigned i=0;i<count;i++)if(!ReadPage(part,page+i,out+i*4096,4096,error))return false;
+  return true;
+ }
 };
 struct FakeIO {
  const Canonical& canonical;FakePages& pages;unsigned calls=0,fragment=0,page=0,failCall=0,badField=0;

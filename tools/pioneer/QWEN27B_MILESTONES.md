@@ -19,8 +19,10 @@ full-model hybrid result.
 
 **In progress.** Converted cache files passed a real, read-only preflight.
 A one-shot upload-and-release test was started on November 7. At last
-observation its live process was still reauthenticating the files and had not
-opened the device. See
+observation its live process was verifying converted files and had not opened
+the device. The running binary predates the separate batched-read change,
+which has passed simulated tests and cross-compilation but has not been timed
+on the Pioneer. See
 [`benchmarks/qwen38-hybrid-upload-session-20261107.txt`](benchmarks/qwen38-hybrid-upload-session-20261107.txt)
 for its stage, safety constraints and observation details.
 

@@ -29,7 +29,7 @@ struct FakePlan {
  }
 };
 struct FakeBfp8 {
- const FakeSource* source=nullptr;bool live=true;unsigned reads=0;PioneerModelWeightCache::Digest digest={};
+ const FakeSource* source=nullptr;bool live=true;unsigned reads=0,failAt=0;PioneerModelWeightCache::Digest digest={};
  bool MatchesSource(const FakeSource& s)const{return source==&s && live && s.live;}
  bool MatchesIdentity(const FakeSource& s,const PioneerModelWeightCache::Digest& hash)const{return MatchesSource(s) && digest==hash;}
  bool ReadStripePage(unsigned tensor,unsigned first,unsigned rows,unsigned page,uint8_t* out,unsigned cap,std::string&){
@@ -38,11 +38,12 @@ struct FakeBfp8 {
   const uint64_t bytes=uint64_t(rows/32)*(t.inputs/32)*1088,offset=uint64_t(page)*4096;
   if(offset>=((bytes+4095)&~uint64_t(4095)))return false;
   const unsigned count=unsigned(std::min(uint64_t(4096),bytes>offset?bytes-offset:0));
-  std::memset(out,0,4096);std::memset(out,0x8b,count);reads++;return true;
+  if(++reads==failAt)return false;
+  std::memset(out,0,4096);std::memset(out,0x8b,count);return true;
  }
 };
 template<class Source>struct FakeFour {
- static unsigned opened,read;Source* source=nullptr;
+ static unsigned opened,read,batches;Source* source=nullptr;
  bool OpenPrepared(Source& s,const PioneerQ38PackedPart&,const PioneerModelWeightCache::Digest&,
   const PioneerModelWeightCache::Digest&,const char*,std::string&){source=&s;opened++;return s.live;}
  bool Prepare(Source& s,const PioneerQ38PackedPart& p,const PioneerModelWeightCache::Digest& a,
@@ -50,13 +51,17 @@ template<class Source>struct FakeFour {
   hit=false;return OpenPrepared(s,p,a,b,directory,error);
  }
  bool Ready()const{return source && source->live;}
- bool ReadPage(unsigned,uint8_t* output,unsigned capacity,std::string&){
-  if(!source || !source->live || capacity<4096)return false;
-  std::memset(output,0x4b,4096);read++;return true;
+ bool ReadPages(unsigned,unsigned count,uint8_t* output,unsigned capacity,std::string&){
+  if(!source || !source->live || !count || count>16 || capacity<count*4096)return false;
+  std::memset(output,0x4b,count*4096);read+=count;batches++;return true;
+ }
+ bool ReadPage(unsigned page,uint8_t* output,unsigned capacity,std::string& error){
+  return ReadPages(page,1,output,capacity,error);
  }
 };
 template<class Source>unsigned FakeFour<Source>::opened=0;
 template<class Source>unsigned FakeFour<Source>::read=0;
+template<class Source>unsigned FakeFour<Source>::batches=0;
 using Pages=PioneerQ38HybridPreparedPages<FakeSource,FakePlan,FakeBfp8>;
 using MockPages=PioneerQ38HybridPreparedPages<FakeSource,FakePlan,FakeBfp8,FakeFour>;
 #ifndef PIONEER_Q38_PREPARED_PAGES_FIXTURE_ONLY
@@ -92,6 +97,17 @@ int main(int argc,char** argv){
  bool authorized=true;Pages pages;assert(pages.Bind(source,packed,*canonical,bfp8,digest,fingerprint,directory.c_str(),[&]{return authorized;},error));
  assert(pages.Ready() && pages.Part(four) && pages.Part(eight)->encoding==8);
  assert(pages.ReadPage(four,22,actual.data(),actual.size(),error) && actual==expected && source.reads==rowsRead);
+ std::vector<uint8_t> batch(16*4096,0),individual(batch.size(),0);
+ // Crossing the 64 KiB checksum boundary and all supported page counts
+ // must reproduce individually authenticated reads exactly.
+ for(unsigned count=1;count<=16;count++){
+  assert(pages.ReadPages(four,15,count,batch.data(),unsigned(batch.size()),error));
+  for(unsigned i=0;i<count;i++)assert(prepare.ReadPage(15+i,individual.data()+i*4096,4096,error));
+  assert(std::equal(batch.begin(),batch.begin()+count*4096,individual.begin()));
+ }
+ const auto priorBatch=batch;
+ assert(!pages.ReadPages(four,0,17,batch.data(),unsigned(batch.size()),error) && batch==priorBatch);
+ assert(!pages.ReadPages(four,pages.Part(four)->allocated/4096-1,2,batch.data(),unsigned(batch.size()),error) && batch==priorBatch);
  assert(pages.ReadPage(eight,0,actual.data(),actual.size(),error) && actual[0]==0x8b && bfp8.reads==1);
  const auto* e=pages.Part(eight);const unsigned last=e->allocated/4096-1;
  assert(pages.ReadPage(eight,last,actual.data(),actual.size(),error));
@@ -99,6 +115,11 @@ int main(int argc,char** argv){
  assert(pages.ReadPage(unchanged,0,actual.data(),actual.size(),error) && actual[0]==0x5a && packed.reads==1);
  const auto saved=actual;assert(!pages.ReadPage(state,0,actual.data(),actual.size(),error) && actual==saved && pages.Ready());
  assert(!pages.ReadPage(eight,last+1,actual.data(),actual.size(),error) && actual==saved && pages.Ready());
+ FakeBfp8 failedBatchSource{&source};failedBatchSource.digest=digest;failedBatchSource.failAt=2;Pages failedBatch;
+ assert(failedBatch.Bind(source,packed,*canonical,failedBatchSource,digest,fingerprint,directory.c_str(),[]{return true;},error));
+ std::vector<uint8_t> unpublished(2*4096,0x71);const auto originalOutput=unpublished;
+ assert(!failedBatch.ReadPages(eight,0,2,unpublished.data(),unsigned(unpublished.size()),error)
+  && unpublished==originalOutput && !failedBatch.Ready());
  authorized=false;assert(!pages.ReadPage(four,0,actual.data(),actual.size(),error) && actual==saved && !pages.Ready());
  authorized=true;assert(!pages.Ready() && !pages.ReadPage(four,0,actual.data(),actual.size(),error));
  Pages partial;assert(partial.Bind(source,packed,*canonical,bfp8,digest,fingerprint,directory.c_str(),[]{return true;},error));

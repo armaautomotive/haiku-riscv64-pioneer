@@ -58,11 +58,20 @@ int main(){
  FakeBfp8 eight{&source};eight.digest=digest;MockPages pages;std::string error;
  assert(pages.Bind(source,packed,*canonical,eight,digest,fingerprint,"/fixture",[]{return true;},error)
   && pages.VerifyAll(error) && pages.AllVerified());
+ FakeFour<FakeSource>::batches=0;FakeFour<FakeSource>::read=0;
  PreparedSessionIO io(*canonical,proposal);PioneerQ38HybridUploadSession<MockPages,PreparedSessionIO> session(pages,io);
  assert(session.Begin(*canonical,error) && session.WeightsHeld() && io.owned && !io.bankEnds
   && io.calls==22010 && io.upload.calls==22005 && !io.closes);
+ unsigned expectedBatches=0,expectedPages=0;
+ for(unsigned i=0;i<canonical->Count();i++){
+  const auto& p=*canonical->Part(i);
+  if(p.kind!=canonical->WeightKind || p.layer>=64 || p.role<2 || p.role>4 || (p.layer>=48 && p.layer<=60))continue;
+  const unsigned n=proposal.parts[i].allocated/4096;expectedPages+=n;expectedBatches+=(n+15)/16;
+ }
+ assert(FakeFour<FakeSource>::read==expectedPages && FakeFour<FakeSource>::batches==expectedBatches
+  && expectedBatches<expectedPages/10);
  assert(session.Finish(error) && session.Complete() && !session.FailedState()
   && io.calls==22012 && io.upload.calls==22005 && io.closes==1 && !io.owned
   && session.Upload().UploadedBytes()==UINT64_C(21137039360));
- puts("PASS actual prepared-page/owner-session/span composition over complete synthetic model, no device or inference");
+ printf("PASS actual prepared-page/owner-session/span composition: %u synthetic BFP4 pages in %u batched reads; no device or inference\n",expectedPages,expectedBatches);
 }
