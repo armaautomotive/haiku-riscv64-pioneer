@@ -71,8 +71,11 @@ journal has staged and verified the 1,344-word address table and restored
 the original memory; a simulated late write failure was quarantined. Neither
 check is a hardware launch or proof of production-safe cleanup. The table's
 5,376-byte temporary workspace now lives in the heap-only diagnostic owner;
-a host-build stack check passed, but the native kernel path is not built or
-qualified with this diagnostic.
+a host-build stack check passed. A separate compile-only check now also builds
+the hybrid layout and manifest/journal templates with the real Haiku RISC-V
+kernel toolchain (maximum reported static frame: 1,216 bytes). The object has
+undefined mock I/O hooks and cannot be loaded as a driver; role checks reject
+native and Work builds. This does not connect or qualify the inference path.
 
 Pass requires a real 27B request using the held weights on the P100A, checked
 output, and safe cleanup. Report actual loading time and generation rate.

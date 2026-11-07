@@ -18,3 +18,10 @@ extern "C" bool pioneer_q38_token_memory_template_prepare(PioneerQ38TokenMemory&
 }
 extern "C" bool pioneer_q38_token_memory_template_close(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
  PioneerQ38TokenMemoryResult& result){return heap.CloseHeldNoLaunch(io,result);}
+#ifdef PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY
+extern "C" bool pioneer_q38_hybrid_layout_template(PioneerQ38CanonicalModelPlan& heap){return heap.BuildHybridDiagnostic();}
+extern "C" bool pioneer_q38_hybrid_manifest_install_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
+ PioneerQ38TokenMemoryResult& result){return heap.InstallHybridManifestHeld(io,result);}
+extern "C" bool pioneer_q38_hybrid_manifest_verify_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
+ PioneerQ38TokenMemoryResult& result){return heap.VerifyHybridManifestHeld(io,result);}
+#endif

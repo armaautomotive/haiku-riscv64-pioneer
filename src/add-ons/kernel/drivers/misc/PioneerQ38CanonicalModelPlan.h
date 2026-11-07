@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
+#include "../../../../../tools/pioneer/PioneerQ38HybridKernelCompileOnly.h"
 #ifndef PIONEER_Q38_CANONICAL_MODEL_PLAN_H
 #define PIONEER_Q38_CANONICAL_MODEL_PLAN_H
-#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) && (PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC != 1 || defined(_KERNEL_MODE) \
+#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) && (PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC != 1 \
+ || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY)) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT))
 #error Hybrid canonical repack is diagnostic DATA only, not a native or Work capability

@@ -102,8 +102,28 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
         result=subprocess.run([compiler,'-std=c++17','-I'+str(root),*selectflags,'-x','c++','-E','-'],
                               input=source,capture_output=True,text=True)
         assert result.returncode and 'program DATA cannot alias' in result.stderr,role
+    # Kernel-SDK template inspection must never become a driver or native
+    # capability, including when an incompatible selector is added late.
+    compileOnly=root/'PioneerQ38HybridKernelCompileOnly.h'
+    for forbidden in ('PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
+                      'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT',
+                      'PIONEER_Q38_BF16_FULL_NATIVE','PIONEER_Q38_BF16_FULL_CLIENT',
+                      'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
+                      'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+        result=subprocess.run([compiler,'-std=c++17','-D_KERNEL_MODE=1','-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=1',
+                               '-D'+forbidden,'-E','-x','c++',str(compileOnly)],capture_output=True,text=True)
+        assert result.returncode and 'Hybrid kernel template inspection forbids a driver' in result.stderr,forbidden
+    for options in ([],['-D_KERNEL_MODE=1','-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=0']):
+        if not options:options=['-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=1']
+        result=subprocess.run([compiler,'-std=c++17',*options,'-E','-x','c++',str(compileOnly)],capture_output=True,text=True)
+        assert result.returncode and 'Hybrid kernel template inspection forbids a driver' in result.stderr
+    late='#include "'+str(compileOnly)+'"\n#define PIONEER_DRIVER_BUILD_TAG 1\n#include "'+str(compileOnly)+'"\n'
+    result=subprocess.run([compiler,'-std=c++17','-D_KERNEL_MODE=1','-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=1',
+                           '-x','c++','-E','-'],input=late,capture_output=True,text=True)
+    assert result.returncode and 'Hybrid kernel template inspection forbids a driver' in result.stderr
     if journal:
         for mode in ('--positive','--hybrid-faults','--hybrid-manifest'):
             run(sys.executable,here/'run_pioneer_q38_token_memory_tests.py',
-                '--bf16-programs','--hybrid-journal','--hybrid-programs',out,mode)
+                '--bf16-programs','--hybrid-journal','--hybrid-programs',out,mode,
+                *(['--sdk',sdk] if mode=='--hybrid-manifest' else []))
 print('PASS complete QGW5 image section/ELF binding, immutable output, corruption refusals and role exclusions; NO DEVICE')
