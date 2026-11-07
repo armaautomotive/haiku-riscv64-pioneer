@@ -232,6 +232,18 @@ instructions in total; the ROOT remained held. No model token was executed.
 This was simulated OS/VM/NoC memory, not the P100A, and does not qualify
 root launch, inference quality/speed, launched-worker cleanup or a driver.
 
+The fake-tag QGW8 native fixture then started the actual linked ROOT in the
+instruction simulator after the same receipt, state initialization, held
+journal, runtime staging and 119 worker boots. It fetched native-staged
+session/prompt/head metadata, consumed 20 synthetic Q4_K embedding tiles,
+and produced 5120 values that matched an independent synthetic-row observer.
+It published and read back that embedding in simulated GDDR, then paused at
+the next layer-0 metadata request. A cancellation request was written and
+read back while that request remained outstanding, but was not consumed.
+The ROOT executed 1249687 simulated instructions through this observation.
+This is one synthetic embedding row, not real model data, a complete layer
+or token, real P100A execution, cleanup qualification, quality or speed.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file
