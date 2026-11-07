@@ -9,6 +9,9 @@
 #define B_DEVICE_OP_CODES_END 1000
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPhaseProfilePacket.h"
 #include "actual_phase_result.inc"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "pioneer_q38_fast_decode_profile_metric_fixture.h"
+#endif
 using status_t=int;
 enum {B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_DEV_NOT_READY=-3,B_NO_MEMORY=-4};
 struct Context {unsigned reads=0,retains=0;};
@@ -36,6 +39,9 @@ struct PioneerQ38TokenCallScope {
  status_t Status()const{return owned?B_OK:-82;}
 };
 static std::array<uint32_t,60> RawMetric(){
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+ return FastDecodeMetricFixture();
+#else
  namespace Q=PioneerQ38SelectedPhaseProfileData;
  std::array<uint32_t,60> p={};uint64_t now=UINT64_C(1)<<40;Q::Initialize(p.data(),true,now);
  auto mark=[&](unsigned next){now+=19;Q::Advance(p.data(),true,now,next);};
@@ -51,6 +57,7 @@ static std::array<uint32_t,60> RawMetric(){
   for(unsigned next:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(next);
  }
  mark(Q::FinalStop);Q::Advance(p.data(),true,now+19,Q::Phases,34);assert(Q::Closed(p.data()));return p;
+#endif
 }
 static bool ReadQ38TokenNativePhaseProfile(Context& c,uint32_t* out,PioneerQ38TokenPhaseProfileResult& r){
  assert(locks==1);c.reads++;for(unsigned i=0;i<64;i++)assert(!out[i]);

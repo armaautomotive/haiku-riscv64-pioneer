@@ -64,7 +64,10 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "PioneerQ38FullOffloadFastDecodeRole.h"
+enum {PioneerQ38FullOffloadFirmwareSelection=12};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
 #include "PioneerQ38FullOffloadFixedConfigQ4Role.h"
 enum {PioneerQ38FullOffloadFirmwareSelection=11};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
@@ -93,7 +96,10 @@ enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
-#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "PioneerQ38FullOffloadFastDecodeRole.h"
+static_assert(PioneerQ38FullOffloadFirmwareSelection==12,"late fast decode profile selection");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
 #include "PioneerQ38FullOffloadFixedConfigQ4Role.h"
 static_assert(PioneerQ38FullOffloadFirmwareSelection==11,"late full-card fixed-config Q4 selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
@@ -146,7 +152,11 @@ enum {PioneerQ38TokenNativeProfile=3};
 #endif
 static_assert(PioneerQ38TokenNativeProfile==3,"full offload requires actual G3 programs");
 #ifdef PIONEER_Q38_TOKEN_FOOTPRINT_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::FastDecode==1
+ && PioneerQ38TokenL1::PreparedQ4==0 && PioneerQ38TokenL1::SavedBytes==53915328,
+ "fast decode ROOT code must be journaled exactly through6c5d8");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::PreparedQ4==1
  && PioneerQ38TokenL1::SavedBytes==53922024,"prepared ROOT code must be journaled through6e000");
 #else

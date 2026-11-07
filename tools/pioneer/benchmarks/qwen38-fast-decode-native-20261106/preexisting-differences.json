@@ -1,0 +1,9 @@
+[
+  "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h",
+  "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h",
+  "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadRole.h",
+  "src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc",
+  "src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc",
+  "src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp",
+  "tools/pioneer/build_qwen38_full_offload_native.py"
+]

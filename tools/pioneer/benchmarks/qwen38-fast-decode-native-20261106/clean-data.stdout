@@ -1,0 +1,4 @@
+3fd94232de0b045e5a74c41d59e0f80b8dba0369e54974a77e62800bf5106f8a programs.h
+DATA_ONLY distinct full-card15 sections; exact new1496B code view; ten vector92 peers unchanged; NO install/run/speed result
+PASS fast decode native DATA: all120 workers/13478832 snapshot words/3128650 code words/2390 aliases+endpoints refused/exact374-word extension/no padding or stack code grant;NOT hardware lifecycle or TPS
+PASS distinct fast decode native DATA/roles:4 positive/157 missing,wrong,late,old-package,CPU,Work refusals; NO hardware or TPS

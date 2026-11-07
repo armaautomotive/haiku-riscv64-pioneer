@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "PioneerQ38FullOffloadFastDecodeRole.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 #include "PioneerQ38FullOffloadPhaseProfileRole.h"
 #else
 #include "PioneerQ38TokenPhaseProfileRole.h"

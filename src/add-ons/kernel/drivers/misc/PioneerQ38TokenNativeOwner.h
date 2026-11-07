@@ -7,7 +7,8 @@
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
 #include "../../../../../tools/pioneer/PioneerQ38TokenMatrixPhaseData.h"
 #endif
-#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 #include "../../../../../tools/pioneer/PioneerQ38SelectedPhaseProfileData.h"
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
@@ -66,7 +67,8 @@ struct PioneerQ38TokenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,firstRecord=0;
  uint32_t recordCount=0,packets=0,bytesRead=0,drained=0,firstPC=0,secondPC=0,reserved[2]={};
 };
-#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 struct PioneerQ38TokenPhaseProfileResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,valid=0;
  uint32_t committed=0,words=0,metricState=0,metricError=0,firstPC=0,secondPC=0,reserved[2]={};
@@ -129,7 +131,8 @@ class PioneerQ38TokenNativeOwner {
  bool terminalObserved=false,holding=false,held=false;
  uint32_t observedTerminal[64]={},terminalCounters[120][8]={},terminalNonces[120]={};
  bool readoutPending=false,readoutDrained=false,readoutCommandKnown=false;
-#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  bool phaseProfileRead=false;
 #endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
@@ -227,7 +230,8 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenTerminalResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenHoldResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenReadResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
-#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  template<class IO> bool Fail(IO& io,PioneerQ38TokenPhaseProfileResult& r){
   r.unsafe=1;r.ready=r.valid=r.committed=r.words=r.metricState=r.metricError=0;return FailOwner(io);
  }
@@ -1136,7 +1140,8 @@ public:
   readoutCursor+=records;readoutInput=input;readoutDrained=readoutCursor==observedTerminal[3];
   r.ready=1;r.recordCount=records;r.drained=readoutDrained;r.phase=4;return true;
  } // immutable generated DATA only;NO current-state reuse,L1/CSR restore,END/disposal or running-ROOT NIU access.
-#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 #include "PioneerQ38TokenPhaseProfileRead.inc"
 #endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE

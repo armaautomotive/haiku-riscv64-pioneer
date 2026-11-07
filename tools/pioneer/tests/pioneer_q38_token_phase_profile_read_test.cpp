@@ -9,6 +9,9 @@
 #include <algorithm>
 #include "actual_phase_result.inc"
 namespace Q=PioneerQ38SelectedPhaseProfileData;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "pioneer_q38_fast_decode_profile_metric_fixture.h"
+#endif
 namespace PioneerQ38TokenPrograms {enum {TokenPhaseProfile=1,PhaseProfileAddress=0x75710,PhaseProfileWords=60};}
 struct PioneerResidentBanks {enum {Pages=16};};
 struct PioneerQ38TokenReadResult {unsigned word=0;};
@@ -60,6 +63,9 @@ bool ReadIO::TokenMemoryReadChecked(unsigned worker,uint32_t address,uint32_t& o
  reads++;if(!Touch())return false;out=raw[(address-Q::Address)/4];if(reads==mismatch)out^=1;return true;
 } // No writes,NoC,reset,DMA,unreserve,END or CPU products exist in this IO.
 static std::array<uint32_t,Q::Words> Metric(){
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+ return FastDecodeMetricFixture();
+#else
  std::array<uint32_t,Q::Words> p={};uint64_t now=UINT64_C(1)<<40;
  Q::Initialize(p.data(),true,now);
  auto mark=[&](unsigned next){now+=19;Q::Advance(p.data(),true,now,next);};
@@ -75,6 +81,7 @@ static std::array<uint32_t,Q::Words> Metric(){
   for(unsigned next:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(next);
  }
  mark(Q::FinalStop);Q::Advance(p.data(),true,now+19,Q::Phases,34);assert(Q::Closed(p.data()));return p;
+#endif
 }
 struct Fixture {
  ReadOwner owner;ReadIO io;std::array<uint32_t,64> output={};

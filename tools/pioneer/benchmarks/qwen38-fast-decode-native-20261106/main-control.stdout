@@ -1,0 +1,2 @@
+PASS actual384B packet+extracted phase adapter:5 valid+invalid-metric+unsafe+admission DATA positives/3561 all3072 request-bits,length,scope,reply corruptions/8 request+locked reply-copy faults/immutable user snapshot/SAME lock through copy/retentionONLY no following IO;MOCK FD,OS,reader,quarantine,NOT real native owner or physical/Work/timing proof
+ACTUAL_PHASE_ADAPTER_SHA256 85278037d6fbcadef0077d08b4c47f0241117b36a0bc74c4e622ec351631cb45;FD/source/OS/reader/retention are MOCK;not a real native owner or physical qualification

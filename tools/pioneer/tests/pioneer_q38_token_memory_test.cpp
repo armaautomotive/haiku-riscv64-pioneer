@@ -1,11 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 // Real full-token journal algorithm;simulated CSR/L1 endpoints ONLY.
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 // Select the SAME mock panel ABI before ANY shared header is included.
 // Load production metadata before the fixture's global Input() helper.
 #define TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 #define TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+#ifndef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #define TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
 #define PIONEER_Q38_FFN_CODE_OWNER_MOCK_ONLY
 #include "pioneer_q38_ffn_graph_code_owner_test.cpp"
@@ -32,6 +36,14 @@ struct TokenMemoryIO:CodeIO {
   const PioneerQ38GdnIdentity&,const uint8_t*,unsigned){assert(startup==&actual);if(!scopeAllowed)observed=touches;return scopeAllowed;}
  void TokenMemoryRetainHostOwners(){retained=true;}
  bool TokenMemoryMappingStable(unsigned worker){Touch();assert(worker==current);if(badKind==4 && AtMemory()){observed=touches;return false;}return true;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+ // Explicit simulated FIFO endpoints for testing the real native-mode
+ // journal template. No actual device read, launch or owner authority.
+ bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32_t& output){
+  Touch();assert(worker==current);
+  output=overflow?0:(BootstrapIO::ResidentNocRead(BlackholeDramSourceOffset(0))&0x10000U)?0x10101010U:0;return true;
+ }
+#endif
  uint32_t ResetRead(){auto value=CodeIO::ResetRead();if(badKind==6 && AtMemory()){observed=touches;return value^1;}return value;}
  uint32_t SourceRead(unsigned i){auto value=CodeIO::SourceRead(i);if(badKind==7 && AtMemory()){observed=touches;return value^1;}return value;}
  uint32_t ResidentNocRead(uint32_t a){auto value=CodeIO::ResidentNocRead(a);
@@ -124,7 +136,12 @@ int main(int argc,char** argv){
    assert(f.io.SelectRuntimeCore(worker));panels.push_back(f.io.BootstrapIO::RuntimeCodeRead(0));
    for(unsigned i=0;i<4096;i++)panels.push_back(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4));
   }
-  f.io.track=true;assert(f.PrepareMemory() && f.memory->Installed() && !f.memory->Unsafe());
+  f.io.track=true;const bool prepared=f.PrepareMemory();
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+  if(!prepared)fprintf(stderr,"MOCK journal stopped phase%u worker%u word%u saved%u verified%u installed%u unsafe%u\n",
+   f.result.phase,f.result.worker,f.result.word,f.result.savedWords,f.result.verifiedOriginalWords,f.result.installedWords,f.result.unsafe);
+#endif
+  assert(prepared && f.memory->Installed() && !f.memory->Unsafe());
   assert(f.result.savedWords==TOKL::SavedWords && f.result.verifiedOriginalWords==TOKL::SavedWords
    && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1) && !f.io.armed && !f.io.released);
   assert(f.CloseMemory() && f.memory->Closed() && f.io.data==before && f.result.restoredWords==TOKL::SavedWords
@@ -248,4 +265,5 @@ int main(int argc,char** argv){
   }
  }
  printf("PASS full-token held-journal faults%u/inert preconditionRefusals%u/newterminal+aux+lastpeer/all7phases/read+write+mismatch+silentdrop/source+reset+PCI+counter+command+scope/first UNKNOWN retains all owners/no subsequent IO/retry/cleanup;SIMULATED endpoints,NOT genuine native/full-model/Work/TPS\n",faults,refusals);
+ return 0;
 }

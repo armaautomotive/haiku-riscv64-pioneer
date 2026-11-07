@@ -63,6 +63,12 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
 #include "PioneerQ38FullOffloadPhaseProfileRole.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "PioneerQ38FullOffloadFastDecodeRole.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110600010116ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
+#error Tag116 requires its distinct fast decode profile role
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
 #include "PioneerQ38FullOffloadInstructionPrefetchRole.h"
 #endif
@@ -8541,6 +8547,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+  return Q38TokenPhaseProfileControl(instance,data,length);
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   return Q38TokenPhaseProfileControl(instance,data,length);
 #endif
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT)

@@ -24,6 +24,11 @@
 #include "PioneerQ38TokenFrontierPacket.h" // pointer-free DATA only,not its old ioctl/diagnostic role
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER (B_DEVICE_OP_CODES_END+0x8802)
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "PioneerQ38FullOffloadFastDecodeRole.h"
+#include "PioneerQ38TokenPhaseProfilePacket.h"
+#define TT_PCI_PROBE_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE (B_DEVICE_OP_CODES_END+0x8807)
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
 #include "PioneerQ38FullOffloadPhaseProfileRole.h"
 #include "PioneerQ38TokenPhaseProfilePacket.h" // fixed DATA,not old endpoint authority
@@ -42,7 +47,9 @@
 #include "PioneerQ38FullOffloadVectorQ4Role.h"
 #endif
 namespace PioneerQ38FullOffload {
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110600010116);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010103);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)

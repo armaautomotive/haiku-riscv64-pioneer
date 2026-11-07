@@ -8,8 +8,9 @@ import sys
 import tempfile
 
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
-assert sys.argv[1:] in ([],['--bf16-profile'])
-flags=['-DPIONEER_Q38_BF16_FULL_PROFILE=1'] if sys.argv[1:] else []
+assert sys.argv[1:] in ([],['--bf16-profile'],['--fast-decode-profile'])
+flags=['-DPIONEER_Q38_BF16_FULL_PROFILE=1'] if sys.argv[1:]==['--bf16-profile'] else \
+      ['-DPIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE=1'] if sys.argv[1:] else []
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2] / 'src/add-ons/kernel/drivers/misc'
 source = (kernel / 'PioneerQ38TokenNativeOwner.h').read_text()

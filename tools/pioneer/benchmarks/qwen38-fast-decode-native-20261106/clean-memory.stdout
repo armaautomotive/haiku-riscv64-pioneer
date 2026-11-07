@@ -1,0 +1,2 @@
+PASS DISTINCT full-token HELD journal/ALL120/saved13478832/installed3128650/restored13478832/secondOriginal26957664/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant
+PASS fast decode journal: complete positive plus22 new-region first/last save,verify,install,silent-drop,readback,final-code,restore,final-original faults;sticky retain/no retry or following IO;MOCK endpoints,NOT physical launch or END

@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_TOKEN_PUSHED_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_PUSHED_FOOTPRINT_H
 #include <stdint.h>
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadFastDecodeRole.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadPreparedQ4Role.h"
 #endif
@@ -13,9 +16,11 @@ namespace PioneerQ38TokenPushedL1 {
 struct Span {uint32_t address,words;};
 enum {Family=0x33505451,Precise=1,Pushed=1,Workers=120,FrontBytes=0x3000,
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
- PreparedQ4=1,RootAuxWords=10240,RootSavedWords=318987,
+ PreparedQ4=1,FastDecode=0,RootAuxWords=10240,RootSavedWords=318987,
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
+ PreparedQ4=0,FastDecode=1,RootAuxWords=8566,RootSavedWords=317313,
 #else
- PreparedQ4=0,RootAuxWords=8192,RootSavedWords=316939,
+ PreparedQ4=0,FastDecode=0,RootAuxWords=8192,RootSavedWords=316939,
 #endif
  PeerSavedWords=110601,
  SavedWords=RootSavedWords+119*PeerSavedWords,SavedBytes=SavedWords*4};
@@ -59,13 +64,19 @@ static inline bool SnapshotContains(unsigned worker,uint32_t address){
 }
 static_assert(1+32768+2+RootAuxWords+2048+273920+8==RootSavedWords,"complete ROOT including receipt slots and terminals");
 static_assert(1+3072+16384+4096+16384+61440+9216+8==PeerSavedWords,"QGW3 front window including padding");
-static_assert(SavedWords==13478458+PreparedQ4*2048 && SavedBytes==53913832+PreparedQ4*8192,"distinct full120 QTP3 journal;HEAP ONLY");
+static_assert(SavedWords==13478458+PreparedQ4*2048+FastDecode*374
+ && SavedBytes==53913832+PreparedQ4*8192+FastDecode*1496,"distinct full120 QTP3 journal;HEAP ONLY");
 }
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 static_assert(PioneerQ38TokenPushedL1::PreparedQ4==1,"late prepared Q4 journal selection");
 #else
 static_assert(PioneerQ38TokenPushedL1::PreparedQ4==0,"late prepared Q4 journal removal");
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+static_assert(PioneerQ38TokenPushedL1::FastDecode==1,"late fast decode journal selection");
+#else
+static_assert(PioneerQ38TokenPushedL1::FastDecode==0,"late fast decode journal removal");
 #endif
 // Every generated QTP3 package includes this common geometry AFTER setting
 // its own DATA guard. Recheck outside the geometry guard so direct old

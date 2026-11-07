@@ -1,0 +1,14 @@
+{
+  "clean-build": 0,
+  "clean-control": 0,
+  "clean-data": 0,
+  "clean-memory": 0,
+  "clean-memory-compile": 0,
+  "clean-read": 0,
+  "main-build": 0,
+  "main-control": 0,
+  "main-data": 0,
+  "main-memory": 0,
+  "main-memory-compile": 0,
+  "main-read": 0
+}

@@ -1,0 +1,105 @@
+Fast-engine generation timer: distinct native binding, software qualified
+========================================================================
+November 6, 2026. LOCAL ONLY. No Pioneer access, driver installation, model
+run, Assistant change, reboot, power, SD or hardware operation.
+No new tokens/sec result. Best complete 27B remains 0.173 tokens/sec;
+latest complete model experiment remains 0.082. Neither is usable speed.
+The overall fast self-hosted 27B/Assistant objective remains unmet.
+
+Changed code
+------------
+Distinct native/public identity tag116 (2026110600010116), firmware selector
+12, raw vector92 source format. New flag FULL_OFFLOAD_FAST_DECODE_PROFILE
+requires exact batched+metrics parents; no old vector/prepared/BF16 selector,
+CPU inference/reference, Work or resident-service alias. Diagnostic ONLY.
+The generated package authenticates the six qualified ROOT/ELF inputs and
+keeps all ten vector92 peer arrays byte-for-byte unchanged. No math rewrite.
+
+All five ROOT code views participate in the actual generic installation,
+readback/final-code checks and restoration. The added helper is exactly
+374 words at 6c000..6c5d8 (exclusive), not the old prepared-Q4 8KiB grant.
+ROOT auxiliary journal extends contiguously by those 1496 bytes only:
+RootAuxWords8566, RootSavedWords317313, whole journal53915328 bytes.
+Stack6e000..70000 and all119 peer journals remain unchanged; PreparedQ4=0.
+Every code word is covered by the selected arbitrary-original journal;
+neither adjacent padding nor stack becomes executable ProgramWord DATA.
+
+New pointer-free opcode8807 exposes the version3/magic33485051 timing
+record through the existing actual owner held-read method and FD/team/thread
+lock. It is separate from old opcode8806/6609 authority. Reads still require
+real terminal/HOLD and committed-record drain, two identical snapshots,
+fresh source/clock/frontier/HOLD seals and one-shot publication. Invalid
+timing remains DATA unavailable, not a hardware fault or reset/END grant.
+No cursor, terminal, inference or cleanup predicate was replaced by metrics.
+
+Timing scope is unchanged from the qualified ROOT report: first generation
+position's layer0 entry to final real119 STOPs, with FinalStop separate.
+Committed retains total session positions. Do not equate whole bucket sum
+with the host counter's endpoints or use it as isolated token latency.
+
+Closed local checks
+-------------------
+Primary qualification96157 ACTUALLY exited0. All12 main/clean children
+ACTUALLY0 with empty stderr,3119 source inputs per tree frozen. Private
+-isystem header inputs are included, not silently omitted from -MMD.
+Main/clean differ only in seven recorded pre-existing dirty files; none of
+those resident-lifecycle changes was imported into the clean source tree.
+The complete resulting tag116 modules match byte-for-byte.
+
+* Exact generated header reproduction, all15 extracted compiled code arrays,
+  all120 code/journal address maps and all13478832 arbitrary-original words.
+  ProgramWord aliases/endpoints refused2390; exact374-word extension bounds.
+* Native/USER role checks:4 positive/157 refused, including missing/zero/late
+  parents, old tags/packages, CPU/Work and timing-schema selection changes.
+* Actual complete held-only memory algorithm with simulated PCI/FIFO/source/
+  HOLD/L1: full save/second-original/install/readback/final-code/restore/
+  final-original success and22 first/last-helper-word fault cases. Faults
+  retain owners, are sticky and permit no following IO/retry/cleanup.
+  This is NOT a launched-owner END or a physical hardware lifecycle test.
+* Actual extracted held-read member+Fail, MOCK authority:63 stable/invalid
+  successes,101 refusals,905 IO-event/second-pass mutation faults. No partial
+  publication, no repeated read; invalid timing does not quarantine.
+* Actual fixed384B packet+extracted adapter, MOCK FD/OS/reader:5 positives,
+  3561 request/length/scope/reply refusals,8 copy faults. Same lock through
+  reply; immutable user snapshot and retained uncertain ownership.
+* Existing old and BF16 read/control regression runners also ACTUALLY0.
+* Real RISC-V SDK native module includes actual held reader/control and
+  normal driver ABI, with all15 code arrays exact. No llama/ggml/CPU model,
+  prepared-source or resident-service controls/imports. Largest individual
+  Token/FullOffload static frame1232 bytes; NOT whole-stack certification.
+* Original vector92 and default43 modules reproduce their existing whole
+  hashes FIRST in both builds. New geometry/selector hooks do not change
+  their linked code or substitute another engine as the control.
+
+During test bring-up, the new native-mode fixture initially used the global
+DRAM config instead of the worker's NoC config for its simulated FIFO value.
+Corrected that MOCK endpoint, retained all production checks. Test-only macro
+guards and explicit return permit reuse of the unchanged journal fixture.
+First final-run staging also lacked a tracked ECAM policy header; it stopped
+before any child. Added the actual HEAD input. Final-r2 is the closed run.
+No firmware arithmetic or hardware retry was used to fix these harness issues.
+
+Exact identities
+----------------
+Program header3fd94232de0b045e5a74c41d59e0f80b8dba0369e54974a77e62800bf5106f8a
+Native116 module2877024B f592d38d635d017b0e36f60ba58e3de6da5912aadd01a99f6dd171abfc9c7816
+Unchanged vector92 c21b9bb80bfe7bb6d62540c267254fea33505842c2421cfd2732a389053be014
+Unchanged default43 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ROOT/ELF inputs are pinned in generate_qwen38_fast_decode_profile_programs.py
+and qwen38-fast-decode-profile-root-20261106.txt. No binaries/weights saved.
+Closed evidence:/private/tmp/pioneer-fast-decode-native.QLOVXL/final-r2.
+Sibling archive contains literal exits, stdout/stderr, source/image hashes,
+pre-existing difference list and executed commands. No learned payloads.
+
+Decision / exact next action
+----------------------------
+ACCEPT this native software binding; do not repeat its unchanged local suites
+as performance work. NOT installed, full-model, speed or Assistant accepted.
+Connect the vocabulary-only benchmark session/client to opcode8807 and v3
+window metadata, preserving genuine END/Close before publishing measurements.
+Qualify that client and a fresh one-shot parent, then run ONE real original
+31-prompt/32-output27B profile with this distinct module and unchanged math.
+Fresh board admission and independent restoration are still required; the
+last board observation was normal041/gen8/idle, not a fresh check this turn.
+Deliver actual rate/setup/quality/phase shares and ONE supported next change,
+or explicit insufficient data. No UI/cache detour or spent-stage replay.

@@ -48,9 +48,11 @@ Performance-route assessment CLOSED: exact model inventory is18.68GB per
 ideal single-pass card-format weight read. Advertised448GB/s gives a
 weight-only ideal limit~24tok/s;20 would need83% of peak before other costs.
 This is NOT measured/expected speed or proof20 is feasible. No supported
-116x improvement route yet. Faster vector92's generation-only ROOT timer now
-passes main/clean builds and actual helper execution. Native binding for its
-new code view and the real model profile are still PENDING. No UI/cache detour.
+116x improvement route yet. Faster vector92's generation-only ROOT timer and
+distinct native116 driver now PASS local main/clean checks. The new code's
+exact1496B journal and read-only v3 endpoint are connected; math is unchanged.
+Benchmark-client connection and the real model profile remain PENDING.
+No new hardware result or speed gain. No UI/cache detour.
 
 Four compact goals
 -------------------
@@ -75,6 +77,7 @@ Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
 Latest card result: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
 Performance-route decision: benchmarks/qwen38-performance-route-20261106.txt
 Generation timer, software only: benchmarks/qwen38-fast-decode-profile-root-20261106.txt
+Timer driver, software only: benchmarks/qwen38-fast-decode-native-20261106.txt
 New prepared-BF16 code: benchmarks/qwen38-prepared-bf16-q4-component-20261106.txt
 Returning comparison: benchmarks/qwen38-prepared-bf16-q4-returning-20261106.txt
 Native115 qualification: benchmarks/qwen38-prepared-bf16-q4-native-20261106.txt

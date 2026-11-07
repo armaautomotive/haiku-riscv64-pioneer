@@ -148,7 +148,9 @@ static_assert(PioneerQ38TokenPrograms::Version==2,"late BF16 timing program sele
 #error QTP3 native selector requires its actual native parent
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#include "PioneerQ38FullOffloadFastDecodePrograms.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
 #include "PioneerQ38FullOffloadFixedConfigQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
 #include "PioneerQ38FullOffloadQueuedQ4Programs.h"
@@ -222,7 +224,13 @@ static_assert(PioneerQ38TokenPrograms::Version==2,"late BF16 timing program sele
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadFastDecodePrograms;
+static_assert(PioneerQ38TokenPrograms::FastDecodeProfile==1 && PioneerQ38TokenPrograms::TokenPhaseProfile==1
+ && PioneerQ38TokenPrograms::PhaseProfileVersion==3 && PioneerQ38TokenPrograms::RootSections==5
+ && PioneerQ38TokenPrograms::VectorQ4Metadata==1 && PioneerQ38TokenPrograms::WideGdn==1
+ && PioneerQ38TokenPrograms::EogCount==5,"exact fast decode ROOT and unchanged vector92 workers required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadFixedConfigQ4Programs;
 static_assert(PioneerQ38TokenPrograms::FixedConfigQ4==1 && PioneerQ38TokenPrograms::FixedConfigFields==6
  && PioneerQ38TokenPrograms::FixedConfigSeedWords==24 && PioneerQ38TokenPrograms::FixedConfigLowBytes==2
