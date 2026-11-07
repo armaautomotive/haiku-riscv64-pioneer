@@ -17,6 +17,7 @@ struct HeadSource:Source {
   return true;
  }
 };
+#ifndef PIONEER_HEAD_FIXTURE_ONLY
 int main(){
  using namespace PioneerQ38HeadBlockFloatDiagnostic;
  unsigned compared=0;
@@ -47,3 +48,4 @@ int main(){
  assert(!std::fesetround(FE_TONEAREST));
  printf("PASS Q6 output-head BFP4/BFP8 conversion: %u exact synthetic tiles, 13 input/source failures and rounding refusal; NO original model, device, model quality or speed\n",compared);
 }
+#endif

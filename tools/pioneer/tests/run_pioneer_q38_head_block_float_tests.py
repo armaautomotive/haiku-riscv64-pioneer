@@ -21,14 +21,22 @@ for forbidden in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WO
                   'PIONEER_DRIVER_BUILD_TAG','__FAST_MATH__'):
  check([required,'-D'+forbidden+'=1'],False)
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-head-block-float-',dir='/private/tmp') as directory:
- tmp=Path(directory);fixture=tmp/'fixture';real=tmp/'real';capacity=tmp/'capacity'
+ tmp=Path(directory);fixture=tmp/'fixture';fragment=tmp/'fragment';cache=tmp/'cache-test';real=tmp/'real';realPages=tmp/'real-pages';capacity=tmp/'capacity'
  flags=['-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off','-fsanitize=address,undefined']
  subprocess.run([compiler,*flags,str(here/'pioneer_q38_head_block_float_test.cpp'),'-o',str(fixture)],check=True)
  subprocess.run([str(fixture)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+ subprocess.run([compiler,*flags,str(here/'pioneer_q38_head_bfp8_fragment_test.cpp'),'-o',str(fragment)],check=True)
+ subprocess.run([str(fragment)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+ subprocess.run([compiler,*flags,str(here/'pioneer_q38_head_bfp8_cache_test.cpp'),str(root/'PioneerModelWeightCache.cpp'),'-o',str(cache)],check=True)
+ subprocess.run([str(cache),str(tmp)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
  subprocess.run([compiler,*flags,str(here/'pioneer_q38_head_block_float_real_diagnostic.cpp'),
   str(root/'PioneerModelWeightCache.cpp'),'-o',str(real)],check=True)
  for args in ([],['relative'],['/private/tmp/nonexistent-pioneer-q38-head-model']):
   assert subprocess.run([str(real),*args],capture_output=True).returncode!=0
+ subprocess.run([compiler,*flags,str(here/'pioneer_q38_head_bfp8_real_pages.cpp'),
+  str(root/'PioneerModelWeightCache.cpp'),'-o',str(realPages)],check=True)
+ for args in ([],['relative'],['/private/tmp/nonexistent-pioneer-q38-head-model']):
+  assert subprocess.run([str(realPages),*args],capture_output=True).returncode!=0
  subprocess.run([compiler,*flags,'-Wno-unused-function',str(here/'pioneer_q38_head_block_float_capacity.cpp'),
   '-o',str(capacity)],check=True)
  report=subprocess.check_output([str(capacity)],text=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})

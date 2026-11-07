@@ -52,8 +52,35 @@ Verification: run_pioneer_q38_head_block_float_tests.py compiles under
 ASan/UBSan, compares 640 synthetic Q6-derived BFP4/BFP8 tiles with the
 independent original-row tile reader plus the shared codec, checks source,
 metadata, rounding and role refusals, checks invalid real-CLI arguments, and
-reproduces the bank-capacity results above. These tests and the real-weight
-sampling are CPU-only. No model was loaded on the card and there is no new
-measured tokens/second. Future work needs actual head worker, all-page
-conversion/relocation and authenticated lifecycle, comprehensive quality
-comparison for the altered FFN mask, and guarded hardware benchmarking.
+reproduces the bank-capacity results above.
+
+Follow-up, still CPU-only: an isolated BFP8 head-stripe source now exposes
+4-KiB pages in the new format, with distinct source and derived lengths. Its
+cache keys bind the original model digest, Q6-to-BFP8 recipe, implementation
+fingerprint and logical stripe. Synthetic checks cover all 85 pages of a
+64-row stripe including the cross-band page, cold and warm cache reads,
+no conversion on hit, recipe isolation, source changes and corruption.
+This is not selected by Work, a driver, or an upload path.
+
+On the authenticated original model, real-pages diagnostic executable
+SHA-256 64b7102db55395fd11dec1e2e83cd6c793ac980bdf80a9b9c1e217e257793214
+exited 0. It built the original tiled plan and compared page 0, cross-band
+page 42 and the last page from each of the seven head stripes with the
+separate original-row tile reader. All 21 pages matched, covering stripes
+from first row 0 through final row 248319. This is a sampled read-only
+check, not a full conversion, independent codec, card access or quality
+qualification. Neither that check nor the synthetic cache check wrote a
+real-model derived-weight cache.
+
+A separate teacher-forced CPU check is running with the two BFP8 FFN layers
+48 and 49 changed to BFP4 (mask 1ffc000000000000) and raw initial token
+3710. Its capture log is /private/tmp/pioneer-q38-window11-what-20261107-a.log;
+the comparison executable's SHA-256 is
+5ac6210ed4e3b468d319d94fb62d94c57c0b7a3dfaf50ca7f662bce66def9b71.
+It compares only FFN conversion against original weights; it does NOT use a
+converted output head. Do not assert its result until its captured exit and
+three positions have been verified. Its source model is authenticated by the
+diagnostic. No model was loaded on the card and there is no new measured
+tokens/second. Future work still needs an actual head matrix worker, full
+repack and authenticated lifecycle, comprehensive combined-format quality
+validation, and guarded hardware benchmarking.
