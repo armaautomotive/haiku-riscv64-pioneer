@@ -222,6 +222,16 @@ simulated owners without publishing successful initialization. The older
 QGW7 initializer regression also passed. This is not physical initialization,
 worker execution, launched-worker cleanup, a completed token or a speed test.
 
+The QGW8 fake-tag native fixture has now continued the same synthetic
+receipt/owner through actual runtime staging and all 119 worker bootstraps.
+It verified 2308 metadata writes and readbacks (37782528 bytes each way),
+including the QGW8 head descriptor and all 120 boot frames, against an
+independently serialized startup and untouched workspace slack. All 119
+emulated workers reached their QGW8 idle state, executing 14957824 RV32
+instructions in total; the ROOT remained held. No model token was executed.
+This was simulated OS/VM/NoC memory, not the P100A, and does not qualify
+root launch, inference quality/speed, launched-worker cleanup or a driver.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

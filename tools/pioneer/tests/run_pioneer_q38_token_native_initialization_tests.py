@@ -27,8 +27,8 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
             or qgw8_inspection and sys.argv[2]=='--faults')
             or synthetic_embedding and len(sys.argv)==4 and sys.argv[2]=='--execution-embedding') and hybrid_header.is_absolute() and hybrid_header.is_file()
     if qgw8_inspection:
-        assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults')) and not synthetic_embedding, \
-            'QGW8 profile is limited to initializer, fault or held-only inspection'
+        assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults','--runtime','--bootstrap')) and not synthetic_embedding, \
+            'QGW8 profile is limited to initializer, fault, held, runtime or bootstrap inspection'
     expected='72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 manual_ttsync='--manual-ttsync' in sys.argv

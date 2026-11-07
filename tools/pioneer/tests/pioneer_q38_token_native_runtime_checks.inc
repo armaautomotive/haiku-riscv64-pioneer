@@ -58,7 +58,9 @@ static bool CheckNativeRuntime(Fixture& f){
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.HostReadMock::quarantined && !io.wideQuarantined);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
  const uint32 prompt[]={248319,17};const PioneerQ38GdnIdentity id={sQ38TokenModelEpoch,1,1,sReloadGeneration};
-#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ assert(c.q38Qgw8Receipt && c.q38Qgw8Receipt->DeriveBoundCanonical(*canonical,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
+#elif defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)
  assert(c.q38HybridReceipt && c.q38HybridReceipt->DeriveBoundLayout(*canonical,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
 #else
  assert(canonical->Build());
