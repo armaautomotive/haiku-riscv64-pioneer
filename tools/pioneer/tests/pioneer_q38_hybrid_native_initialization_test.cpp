@@ -7,15 +7,18 @@
 #undef main
 
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap"))));
+ assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution"))));
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  assert(argc==2);
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
- assert(argc!=3 || (strcmp(argv[2],"--runtime") && strcmp(argv[2],"--bootstrap")));
+ assert(argc!=3 || (strcmp(argv[2],"--runtime") && strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution")));
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
- assert(argc!=3 || strcmp(argv[2],"--bootstrap"));
+ assert(argc!=3 || (strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution")));
+#endif
+#ifndef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+ assert(argc!=3 || strcmp(argv[2],"--execution"));
 #endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
@@ -61,5 +64,8 @@ int main(int argc,char** argv){
  io.runtimeWorkspace=io.workspaceAddress;
 #endif
  if(argc==3)CheckNativeHeld(f,0);
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+ if(argc==3 && !strcmp(argv[2],"--execution"))CheckNativeExecution(f);
 #endif
 }

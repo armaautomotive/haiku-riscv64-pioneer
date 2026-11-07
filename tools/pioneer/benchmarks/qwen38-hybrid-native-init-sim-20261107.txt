@@ -53,6 +53,18 @@ worker boot only, not root launch, model output, physical cleanup or speed.
 Direct bootstrap regression with the same pinned input artifacts:
   python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --bootstrap --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
 
+An extended simulated startup also released the root after those worker
+boots. The actual pinned root program executed 5,137 startup instructions
+and reached its real startup marker, where the test paused it. Pending-state
+checks refused terminal hold, token readout and cleanup; a single cancellation
+request was issued and read back in the simulated environment. The request
+was not consumed and no model arithmetic or token was run. The unchanged
+original-layout root-start regression also passed. This does not establish a
+physical start, model result, numerical quality, or performance.
+
+Direct root-start regression with the same pinned input artifacts:
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABSOLUTE_ZERO_IMAGE --execution --hybrid-qgw5-header ABSOLUTE_QGW5_HEADER
+
 Reproducible integration command:
   python3 tools/pioneer/tests/run_pioneer_q38_hybrid_programs_tests.py --initializers ABSOLUTE_HAIKU_BUILD
 The QGW5 program header is pinned by SHA-256
