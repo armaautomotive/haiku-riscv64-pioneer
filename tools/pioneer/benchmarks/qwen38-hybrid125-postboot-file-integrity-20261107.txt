@@ -47,6 +47,11 @@ also affect accounting. No repair was requested or executed. Filtered BFS,
 journal and I/O error searches of the current system log yielded no lines.
 
 Driver125 and the stable041 binary separately matched their pinned hashes.
+The complete 18,973,870,528-byte Qwen3.8-27B-Q4_K_M.gguf was read on the
+running Haiku system and its SHA-256 matched the previously pinned
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+This verifies that one file's contents on that read, not other files or the
+future durability of writes.
 Fresh boot CPU-only reload metadata reported tag125/generation1/cold0/owner0.
 This is not proof of full storage safety or authorization to weaken the
 guard. The installed driver remains tag125 and no accelerator experiment is

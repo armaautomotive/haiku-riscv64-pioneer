@@ -32,13 +32,17 @@ engines. Its actual instructions passed simulated six-head and 24-partition
 tests, with a test-only global controller; it has not been integrated into
 the full model or run on the card. The more accurate PV path uses four matrix
 products; reuse of converted operands cut simulated worker instructions by
-about 60% on one fixture, but whether it is faster on the card remains unknown. See the
-[experiment and qualification limits](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt).
+about 60% on one fixture, but whether it is faster on the card remains unknown.
+A separate hybrid worker now links this attention code and passed a simulated
+projection/attention/projection transition; the ROOT and full model still do
+not use it. See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
+and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 
 **Hardware recovery is on hold:** after reboot, several saved trial records
 read back as unrelated old binary bytes. Their pre-reboot copies still match
 their recorded hashes, and a check-only filesystem scan did not report
 missing or multiply allocated blocks, but did report freeable blocks. The
+full 27B model file has since matched its recorded SHA-256 on a read. The
 driver-restoration guard refused and the unqualified tag125 driver remains
 installed. No recovery guard has been bypassed and no new card test has run.
 See the [file-integrity investigation](benchmarks/qwen38-hybrid125-postboot-file-integrity-20261107.txt).

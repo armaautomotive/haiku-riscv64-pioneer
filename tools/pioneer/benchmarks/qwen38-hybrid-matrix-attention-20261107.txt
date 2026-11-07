@@ -1,0 +1,57 @@
+QGW7: hybrid projection plus matrix-engine attention
+=====================================================
+November 7, 2026. OFFLINE experiment only, not a driver, Work/Assistant mode,
+full model, physical-card execution, quality assessment, or speed result.
+
+The returning BF16 matrix attention capsule is linked into the experimental
+hybrid BFP4/BFP8 persistent worker. It uses distinct QGW7 external and QDM2
+inner-frame identities: the simulated QGW7 dispatcher refused QGW5 boot
+and job records before any transfer. The previously pinned QGW5 image was
+rebuilt and checked unchanged. The new dense code fits in the QGW5 proposed
+16 KiB dense-code snapshot range; its QDM2 scratch addresses also lie within
+the proposed peer snapshot. That is geometry, not evidence of native
+ownership, lifetime safety, or safe installation.
+
+The actual QGW7 RV32 image ran BFP4 synthetic projections through its real
+dispatcher for two matrix widths and peers 1/119. A separate TEST-ONLY image
+changes the BFP8 layer mask to layer 0 so the actual BFP8 leaf can be tested
+without fabricating 48 layers of model history; it passed the same cases.
+Both formats validated receipts and faulted on malformed jobs; QGW5 identity
+was refused. The test-only mask is not a real-model worker.
+
+An additional instruction-level simulation retained a single worker's
+registers, tensor configuration, source banks, L1 and NoC counters across
+three genuine BFP4 down-projection jobs for layers 0/1/2, all three QDM2
+attention phases at layer 3 with nonzero query/key and one current token,
+and another BFP4 down projection at layer 3. The independent attention
+score/partial-value and final projection output checks passed. Observer-only
+bookkeeping counters were rearmed between synthetic projection jobs; the
+simulated hardware state was not reset. Dense writes were checked against the
+proposed peer snapshot. This covers one worker and a one-token attention
+frame, not a full layer sequence, prior-token NoC attention reads, the ROOT,
+global reduction, actual weights or real model inference.
+
+Integration testing caught two generated calls into legacy byte-at-a-time
+copy/set routines: a local route table and a zero-initialized descriptor.
+The QGW7-only path now uses direct route selection and volatile word stores.
+The new globalworker and dense sections have no byte-store instructions or
+calls to those routines; the unchanged ancestral GDN object still contains
+byte-copy fallback code, whose reachability and silicon behavior are not
+established here. One attempt to start BFP8 directly at layer 48 correctly
+faulted because the worker had no prior layer history. The test-only layer-0
+mask was used instead, and does not establish the real layer-48 path.
+
+Reproduction: build a QGW7 image and a separate --test-bfp8-layer0 image
+with build_q38_hybrid_matrix_attention_worker.py; build independent BFP4 and
+BFP8 leaves; then run tests/run_pioneer_q38_hybrid_matrix_attention_tests.py
+with SDK, QGW7, BFP4 leaf, test-only QGW7, and BFP8 leaf directories. The
+runner verifies the ELF/section pins and runs under ASan/UBSan. The 31-case
+tests/pioneer_q38_hybrid_matrix_roles_test.py checks role and identity
+refusals. Existing standalone QDM2 tests continue to cover 24 simulated
+partitions and a multi-chunk frame, separately from this transition test.
+
+The existing ROOT still emits the old QGW5/QDW1 identities; it cannot drive
+QGW7/QDM2. A matching ROOT, native owner/format identity, full L1 lifecycle,
+prior-token attention transport, multi-layer/token checks, quality and
+physical benchmarking remain required. The storage anomaly also remains
+unresolved and its recovery guard has not been bypassed.

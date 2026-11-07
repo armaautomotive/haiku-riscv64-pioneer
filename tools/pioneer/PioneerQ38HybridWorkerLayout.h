@@ -13,6 +13,11 @@
 #if defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) && PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION != 1
 #error Input-reuse inspection must be explicitly selected
 #endif
+#if defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) && (PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION))
+#error Matrix attention inspection must be explicit and distinct from QGW6 input reuse
+#endif
 
 #include "PioneerQ38Bf16WorkerLayout.h"
 #include "PioneerQ38Bfp4WorkerJob.h"
@@ -30,7 +35,11 @@ using namespace PioneerQ38GlobalWorkerLayout;
 #define QGW5_GRAMMAR __attribute__((noinline,unused))
 #endif
 enum : unsigned {
-#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+ // QGW7 also changes the dense inner frame to QDM2; QGW5/6 ROOTs cannot
+ // drive this candidate. This is not an installed or native identity.
+ Magic=0x37574751, JobWitness=0x374f4751,
+#elif defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION)
  // Distinct inspection-only grammar: an old worker or ROOT must not accept
  // the new completion protocol even when a one-band job happens to match.
  Magic=0x36574751, JobWitness=0x364f4751,

@@ -12,7 +12,7 @@ if len(sys.argv) != 3:
 matrix, original = map(pathlib.Path, sys.argv[1:])
 for directory, name, size, digest in (
     (matrix, 'boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
-    (matrix, 'code.bin', 14204, '9d1ca5509a6fdcdc07297a8734fce3b7b9345c8713b4f50d38096cb535005ac5'),
+    (matrix, 'code.bin', 14076, 'b690682466747bef944e77c3c2c4540207f5a47f5ccbed869fad7c0a33d2a313'),
     (original, 'boot.bin', 4, 'd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6'),
     (original, 'code.bin', 14428, 'e33cb65be5c53d77f486ee7ea2371a2ffc78638e5ed72bfa8b2fe2bf8cf19736'),
 ):

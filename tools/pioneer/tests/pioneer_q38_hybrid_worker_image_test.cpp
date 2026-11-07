@@ -105,7 +105,14 @@ struct HybridImage:WorkerImage {
   return pc!=faultPC;
  }
 };
+#ifndef PIONEER_Q38_HYBRID_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
+ const unsigned testLayer=0;
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+ const char* workerName="QGW7";
+#else
+ const char* workerName="QGW5";
+#endif
 #ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
  assert(argc==5);
  auto linked=std::make_unique<HybridLinkedReceipt>(argv[3]),oldLinked=std::make_unique<HybridLinkedReceipt>(argv[4]);
@@ -117,7 +124,7 @@ int main(int argc,char** argv){
   HybridImage image(argv[1],argv[2],peer,width);image.Boot();
   const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8];
   for(unsigned i=0;i<8;i++)before[i]=image.transfer.counters[indices[i]];
-  image.Stage(0,1,width==5120?2:4);assert(image.Finish(1));
+  image.Stage(testLayer,1,width==5120?2:4);assert(image.Finish(1));
 #ifdef PIONEER_TEST_BFP8
   const auto* expected=PioneerNativeBfpBandGolden(width);
 #else
@@ -154,8 +161,8 @@ int main(int argc,char** argv){
   assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
 #endif
   job[19]^=64;
-  printf("PASS actual QGW5 dispatcher -> BFP%u leaf K%u peer%u, 64 exact synthetic words and receipt/2056 mutations, simulated NoC/FPU; NO DEVICE\n",
-   kBits,width,peer);
+  printf("PASS actual %s dispatcher -> BFP%u leaf K%u peer%u, 64 exact synthetic words and receipt/2056 mutations, simulated NoC/FPU; NO DEVICE\n",
+   workerName,kBits,width,peer);
  }
 #ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
  for(unsigned bands:{1U,3U,8U}){
@@ -174,7 +181,15 @@ int main(int argc,char** argv){
  {HybridImage oldBoot(argv[1],argv[2],119,5120);oldBoot.Put(HW::Boot,0x35574751);
   assert(!oldBoot.TryBoot() && !oldBoot.transfer.issues && !oldBoot.stores);}
 #endif
- HybridImage invalid(argv[1],argv[2],119,5120);invalid.Boot();invalid.Stage(0,1,2,true);
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+ {HybridImage oldBoot(argv[1],argv[2],119,5120);oldBoot.Put(HW::Boot,0x35574751);
+  assert(!oldBoot.TryBoot() && !oldBoot.transfer.issues && !oldBoot.stores);}
+ {HybridImage oldJob(argv[1],argv[2],119,5120);oldJob.Boot();oldJob.Stage(testLayer,1,2);
+  oldJob.Put(HW::Job,0x35574751);assert(!oldJob.Finish(1,true) && !oldJob.transfer.issues && !oldJob.stores);}
+ puts("PASS QGW7 refuses QGW5 boot and jobs before any transfer; NO DEVICE");
+#endif
+ HybridImage invalid(argv[1],argv[2],119,5120);invalid.Boot();invalid.Stage(testLayer,1,2,true);
  assert(!invalid.Finish(1,true) && !invalid.transfer.issues && !invalid.stores);
- puts("PASS malformed QGW5 job faults before any transfers; NO DEVICE OR WORK");
+ printf("PASS malformed %s job faults before any transfers; NO DEVICE OR WORK\n",workerName);
 }
+#endif

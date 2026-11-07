@@ -14,12 +14,18 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38LearnedRms.h"
 #include "PioneerQ38DensePartitionLayout.h"
+#if defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) && !defined(PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE)
+#error QGW7 matrix attention requires its distinct returning dense capsule
+#endif
 #ifdef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
-#if PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 || defined(PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE)
-#error Matrix attention is an isolated standalone experiment, not a mixed/native worker
+#if PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || (defined(PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE) && (!defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1))
+#error Matrix attention requires standalone QDM2 or the distinct offline hybrid inspection capsule
 #endif
 #include "PioneerQ38DenseBf16Matrix.h"
 #include "PioneerQ38DenseBf16Stage.h"
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
+#error Hybrid matrix attention requires the exact BF16 matrix capsule
 #endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 extern "C" unsigned partition_wait(unsigned);

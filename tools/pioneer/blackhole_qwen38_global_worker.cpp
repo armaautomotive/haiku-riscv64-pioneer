@@ -1,6 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
+#if defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) && (PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || PIONEER_Q38_HYBRID_WORKER_IMAGE != 1 \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION))
+#error Hybrid matrix attention is a distinct offline QGW7 worker image only
+#endif
+#if defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) && !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
+#error A QDM2 dense descriptor cannot be silently paired with an older global worker
+#endif
 #if defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) && (!defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) \
  || PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION != 1)
 #error Hybrid input-reuse accounting requires its distinct worker inspection image
@@ -271,7 +280,15 @@ extern "C" void q38_global_worker_main(){
    for(unsigned i=0;i<16;i++)if(dense[16+i]!=seal.boot[16+i])block_fault_park();
    for(unsigned i=0;i<8;i++)if(dense[32+i]!=seal.boot[8+i])block_fault_park();
    unsigned phase=op-M::DenseScores+1;
+#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+   // The experimental build must not lower zero-initialization to the
+   // linked byte-at-a-time memset implementation on the card core.
+   volatile uint32_t j[16];for(unsigned i=0;i<16;i++)j[i]=0;
+   j[0]=D::Magic;j[1]=phase;j[2]=request;j[3]=dense[40];j[4]=worker;
+   j[5]=dense[3];j[6]=dense[4];j[7]=dense[5];j[8]=dense[48];j[9]=dense[49];
+#else
    const uint32_t j[]={D::Magic,phase,request,dense[40],worker,dense[3],dense[4],dense[5],dense[48],dense[49],0,0,0,0,0,0};
+#endif
    for(unsigned i=0;i<16;i++)Words(D::Job)[i]=j[i];
    Words(D::Doorbell)[0]=request;Fence();
    q38_mixed_dense_phase(dense,phase,request,local,global);
