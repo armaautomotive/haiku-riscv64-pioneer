@@ -19,7 +19,24 @@ The matching full diagnostic cross-build was:
 8b65e83fa356e2fa56761960d0446f4c70bead7eaae5ca02414c8a6d7f92cecb  pioneer-q38-hybrid-full-diagnostic
 These are temporary build-only artifacts, not approved deployable releases.
 The worktree contained pre-existing unrelated edits while they were built;
-audit exact driver dependencies and source provenance before physical use.
+the source reproducibility check below separates those edits from the build.
+
+Committed-source reproduction
+-----------------------------
+A separate source snapshot extracted with git archive from commit
+78895c4b061030daf8176269b03ecb9137120733 used the committed tools/pioneer,
+driver/misc, pci/ecam, headers/private and build/config_headers directories.
+It built the driver and client again. Both SHA-256 values matched the two
+values above byte for byte. No user worktree edits were copied into that
+source snapshot. The existing Haiku RISC-V SDK/build output was reused;
+this is not an independent toolchain or complete SDK reproducibility audit.
+The cross-compiler executable SHA-256 was
+9ff9f5c8346fec6acf21c037de380a3f9268d5acd56edd42f0b7ba040ea7e072;
+the pinned generated QGW5 header used in both builds was
+2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49.
+The pinned QGW5 program generator separately checked the full linked image
+and section hashes. Neither source reproducibility nor this binary comparison
+authorizes installing or running the candidate.
 
 The pinned QGW5 image/ELF tests, full client lifecycle/failure simulation and
 tracked receipt tests passed. The complete real-driver link verifies its

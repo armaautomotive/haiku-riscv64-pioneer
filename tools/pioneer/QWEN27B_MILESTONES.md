@@ -135,9 +135,10 @@ builder is retired so changed code cannot silently reuse that identity. A
 tag126 driver and client cross-build successfully, but neither has been
 installed or run. The existing tag125 one-shot parent is not a tag126 test
 harness and must not be reused. Recovery of the normal driver, an independently
-guarded new test, and physical confirmation are still required. The build was
-made from a worktree with other pre-existing changes; audit the exact build
-inputs before any deployment rather than treating this as a clean release.
+guarded new test, and physical confirmation are still required. A source
+snapshot from commit 78895c4b06 reproduced the driver and client byte-for-byte
+using the same SDK, excluding unrelated worktree edits; the SDK itself has not
+been independently reproduced. Neither build is approved for deployment.
 See the [tag126 build record](benchmarks/qwen38-hybrid126-build-offline-20261107.txt).
 
 The QGW5 test configuration previously selected the older QGW4 startup
