@@ -92,10 +92,13 @@ programs, stages the hybrid address table and rechecks it immediately before
 worker startup. A separately tagged hybrid driver candidate now cross-builds
 with the matching pinned programs; a matching upload/release diagnostic also
 cross-builds, and simulated tests check its same-FD receipt and failure paths.
-The candidate has not been installed or run on the card. Its uploader cannot
-yet start inference on its held weights, so this is not a full-model result.
-The private non-loadable test client and candidate client reject each other's
-driver identity.
+The candidate has not been installed or run on the card. A separate full
+client now connects upload, seal, generation and final cleanup on the same
+FD; synthetic tests cover normal output, cancellation, long requests and
+failure cleanup. A Haiku test client cross-builds with that path. No real
+model has yet generated a token through it, so there is no measured hybrid
+speed or quality result. The private non-loadable test client and candidate
+client reject each other's driver identity.
 Non-cryptographic page hashes do not prove the format or contents of card
 memory, and no full-model or hardware test is implied.
 

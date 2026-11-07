@@ -101,4 +101,5 @@ int main(int argc,char** argv){
  assert(io.receipt.Sealed() && io.receipt.Matches(&io.context,&io.cookie,io.hashes.data(),io.ledger.data(),17,20));
  assert(session.Finish(error) && session.Complete() && io.calls==22014 && !io.owned && io.closes==1 && io.bankEnd==1);
  puts("PASS tracked loader + kernel receipt: full synthetic upload, same FD, BEGIN/SPAN_END/SEAL/BANK_END; NO DEVICE OR INFERENCE");
+ return 0;
 }

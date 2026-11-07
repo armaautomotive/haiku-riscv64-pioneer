@@ -23,6 +23,14 @@
 #error Hybrid candidate uploader requires the distinct tracked client
 #endif
 #endif
+#ifdef PIONEER_Q38_HYBRID_FULL_CLIENT
+#if PIONEER_Q38_HYBRID_FULL_CLIENT != 1 || !defined(PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT) \
+ || PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT != 1
+#error Hybrid full client requires its explicit candidate uploader
+#endif
+template<class Pages,class IO> class PioneerQ38HybridFullSession;
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
+#endif
 
 // A single upload-only diagnostic session around the existing seven-bank
 // owner and span transport. The source must remain authenticated and ALL
@@ -32,8 +40,12 @@
 // responsible for retaining/quarantining uncertain resources. Begin leaves
 // the uploaded weights held after SPAN_END; Finish explicitly releases them.
 // The caller must retain the same canonical plan until Finish or destruction.
-// This diagnostic has no inference or warm-load interface.
+// Its public interface has no inference or warm-load operation; the separate
+// candidate-only full session is a friend so it can retain the same FD.
 template<class Pages,class IO,bool Tracked=false> class PioneerQ38HybridUploadSession {
+#ifdef PIONEER_Q38_HYBRID_FULL_CLIENT
+ friend class PioneerQ38HybridFullSession<Pages,IO>;
+#endif
 #ifndef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
  static_assert(!Tracked,"tracked hybrid upload requires its distinct client selection");
 #endif
@@ -128,6 +140,13 @@ public:
   fd=io.Open();if(fd<0)return Stop(error,"Cannot open the P100A diagnostic device.");
   state=Open;
   if(!Identity(0))return Stop(error,"Driver identity or exclusive idle state refused.");
+#ifdef PIONEER_Q38_HYBRID_FULL_CLIENT
+  if constexpr(Tracked){
+   PioneerQ38FullOffload::Support support={};
+   if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) || !PioneerQ38FullOffload::Supported(support))
+    return Stop(error,"Hybrid full-card capability refused before upload.");
+  }
+#endif
   tt_q38_bank_support banks={};tt_q38_span_support spans={};
   if(!Call(TT_PCI_PROBE_Q38_BANK_SUPPORT,banks) || banks.driver!=45 || banks.version!=1 || banks.banks!=7
    || banks.page_bytes!=4096 || banks.max_pages!=4 || banks.storage_only!=1 || banks.bytes_per_bank!=C::Capacity
