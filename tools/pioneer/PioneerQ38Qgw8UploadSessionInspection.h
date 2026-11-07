@@ -17,6 +17,7 @@
 #error QGW8 upload session is an isolated non-loadable inspection only
 #endif
 #include "PioneerQ38HybridSpanUpload.h"
+#include "PioneerQ38HybridHeadLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadProtocol.h"
 
@@ -25,6 +26,8 @@
 // an inspection-only interface: no real ioctl number is assigned. The fixed
 // tag below is a synthetic test identity, NEVER a physical driver tag.
 // After an uncertain operation, close once and never END/reset/retry here.
+// IO.OutputSafe must refuse destinations overlapping any dynamically owned
+// transport/ledger/receipt storage, even though it grants no device access.
 template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  using C=PioneerQ38CanonicalModelPlan;using Plan=PioneerQ38HybridHeadModelPlan;
  enum State {Virgin,Open,Owned,SpansClosed,BanksClosed,Done,Failed};
@@ -66,13 +69,17 @@ public:
  // Only metadata derived from this held synthetic-owner session. The
  // manifest is not itself a device pointer grant, ROOT launch or inference.
  bool RootManifest(uint32_t* output,unsigned words)const{
-  if(!output || words!=RootManifestWords || !WeightsHeld())return false;
+  if(!output || words!=RootManifestWords || !WeightsHeld()
+   || !pages.OutputSafe(output,size_t(RootManifestWords)*sizeof(uint32_t))
+   || !io.OutputSafe(output,size_t(RootManifestWords)*sizeof(uint32_t)))return false;
   const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
   const uintptr_t source=reinterpret_cast<uintptr_t>(&pages),model=reinterpret_cast<uintptr_t>(canonical);
+  const uintptr_t transport=reinterpret_cast<uintptr_t>(&io);
   const size_t bytes=sizeof(uint32_t)*RootManifestWords;
   if((out&3) || out>UINTPTR_MAX-bytes || self>UINTPTR_MAX-sizeof(*this) || source>UINTPTR_MAX-sizeof(pages)
-   || model>UINTPTR_MAX-sizeof(*canonical) || (out<self+sizeof(*this) && self<out+bytes)
-   || (out<source+sizeof(pages) && source<out+bytes) || (out<model+sizeof(*canonical) && model<out+bytes))return false;
+   || model>UINTPTR_MAX-sizeof(*canonical) || transport>UINTPTR_MAX-sizeof(io)
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<source+sizeof(pages) && source<out+bytes)
+   || (out<model+sizeof(*canonical) && model<out+bytes) || (out<transport+sizeof(io) && transport<out+bytes))return false;
   Plan::Proposal expected;if(!Plan::Build(*canonical,expected) || expected.parts.size()!=canonical->Count())return false;
   for(unsigned i=0;i<canonical->Count();i++){
    const auto* p=pages.Part(i);if(!p)return false;const auto& q=expected.parts[i];
@@ -82,8 +89,59 @@ public:
     || p->allocated!=q.allocated || p->encoding!=q.encoding)return false;
   }
   uint32_t staged[RootManifestWords]={};
-  if(!Plan::Manifest(*canonical,expected,staged,RootManifestWords) || !WeightsHeld())return false;
+  if(!Plan::Manifest(*canonical,expected,staged,RootManifestWords) || !WeightsHeld()
+   || !pages.OutputSafe(output,bytes) || !io.OutputSafe(output,bytes))return false;
   std::memcpy(output,staged,bytes);return true;
+ }
+ // Descriptor data for the QGW8 matrix-head coordinator, derived only
+ // from this held session's exact relocated pages. It does not initialize
+ // the workspace, authenticate a boot image, start workers or grant a RUN.
+ bool HeadMetadata(const uint32_t* rootBoot,unsigned bootWords,unsigned workspaceBank,uint32_t* output,unsigned words)const{
+  namespace H=PioneerQ38HybridHeadLayout;namespace W=PioneerQ38HybridHeadWorkerLayout;
+  if(!rootBoot || !output || bootWords!=64 || words!=H::Words || workspaceBank>=7 || !WeightsHeld()
+   || !pages.OutputSafe(output,size_t(H::Words)*sizeof(uint32_t)) || !io.OutputSafe(output,size_t(H::Words)*sizeof(uint32_t)))return false;
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),boot=reinterpret_cast<uintptr_t>(rootBoot);
+  const uintptr_t self=reinterpret_cast<uintptr_t>(this),source=reinterpret_cast<uintptr_t>(&pages),model=reinterpret_cast<uintptr_t>(canonical);
+  const uintptr_t transport=reinterpret_cast<uintptr_t>(&io);
+  const size_t outBytes=H::Words*sizeof(uint32_t),bootBytes=64*sizeof(uint32_t);
+  if(((out|boot)&3) || out>UINTPTR_MAX-outBytes || boot>UINTPTR_MAX-bootBytes || self>UINTPTR_MAX-sizeof(*this)
+   || source>UINTPTR_MAX-sizeof(pages) || model>UINTPTR_MAX-sizeof(*canonical) || transport>UINTPTR_MAX-sizeof(io)
+   || (out<boot+bootBytes && boot<out+outBytes) || (out<self+sizeof(*this) && self<out+outBytes)
+   || (out<source+sizeof(pages) && source<out+outBytes) || (out<model+sizeof(*canonical) && model<out+outBytes)
+   || (out<transport+sizeof(io) && transport<out+outBytes))return false;
+  uint32_t captured[64];std::memcpy(captured,rootBoot,sizeof(captured));if(!H::C::BootShape(captured))return false;
+  Plan::Proposal expected;if(!Plan::Build(*canonical,expected) || expected.parts.size()!=canonical->Count())return false;
+  uint32_t staged[H::Words]={};unsigned heads=0,work=0,norm=0,workspace=0,normBank=0,normAddress=0;
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);const auto* actual=pages.Part(i);if(!p || !actual)return false;
+   const auto& q=expected.parts[i];const uintptr_t address=reinterpret_cast<uintptr_t>(actual);
+   if(address>UINTPTR_MAX-sizeof(*actual) || (out<address+sizeof(*actual) && address<out+outBytes)
+    || actual->original!=q.original || actual->bank!=q.bank || actual->offset!=q.offset || actual->bytes!=q.bytes
+    || actual->allocated!=q.allocated || actual->encoding!=q.encoding || q.offset>UINT32_MAX-C::Base)return false;
+   if(p->kind==C::WorkspaceKind && p->bank==workspaceBank){
+    if(++work!=1 || q.encoding!=PioneerQ38HybridModelPlan::Original || q.bytes!=H::C::WorkspaceBytes)return false;
+    workspace=C::Base+q.offset;
+   }else if(p->kind==C::WeightKind && p->layer==64 && p->role==2){
+    if(++norm!=1 || q.encoding!=PioneerQ38HybridModelPlan::Original || q.bytes!=20480 || p->rows!=1 || p->firstRow)return false;
+    normBank=q.bank;normAddress=C::Base+q.offset;
+   }else if(p->kind==C::WeightKind && p->layer==64 && p->role==1){
+    if(q.encoding!=Plan::HeadBfp8 || q.bank>=7 || staged[H::Stripe+q.bank*H::StripeWords+3]
+     || q.bytes!=uint64_t(p->rows)*H::RowBytes)return false;
+    uint32_t* stripe=staged+H::Stripe+q.bank*H::StripeWords;
+    const uint32_t values[]={q.bank,C::Base+q.offset,p->firstRow,p->rows,H::RowBytes,q.bytes,q.allocated,139};
+    for(unsigned j=0;j<H::StripeWords;j++)stripe[j]=values[j];heads++;
+   }
+  }
+  if(work!=1 || norm!=1 || heads!=7 || workspace>UINT32_MAX-H::C::HeadOffset)return false;
+  const uint32_t fixed[]={H::Magic,1,H::Words,workspaceBank,workspace,workspace+H::C::HeadOffset,
+   normBank,normAddress,5120,248320,H::Jobs,H::Waves,119,8,H::RowBytes,20480};
+  for(unsigned i=0;i<16;i++){staged[i]=fixed[i];staged[16+i]=captured[16+i];}
+  for(unsigned i=0;i<8;i++)staged[32+i]=captured[8+i];
+  const uint32_t witness[]={W::Magic,H::C::Magic,64,0,32,8,0,1};
+  for(unsigned i=0;i<8;i++)staged[40+i]=witness[i];
+  if(!H::Shape(staged,captured,workspaceBank,workspace) || !WeightsHeld() || !pages.OutputSafe(output,outBytes)
+   || !io.OutputSafe(output,outBytes))return false;
+  std::memcpy(output,staged,outBytes);return true;
  }
  bool Begin(const C& source,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
   if(attempted){error="QGW8 inspection session is one-shot; no retry.";return false;}

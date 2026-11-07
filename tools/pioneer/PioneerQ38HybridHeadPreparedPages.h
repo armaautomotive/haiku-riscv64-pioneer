@@ -88,6 +88,26 @@ public:
   if(!verified || !Current())return false;const auto& current=packed->Parts();if(current.size()!=parts.size())return false;
   for(unsigned i=0;i<parts.size();i++)if(!Same(current[i],parts[i]))return false;return Current();
  }
+ // Out-of-band metadata must never overwrite either the bound page source
+ // or the original plan/tensor descriptors. This is deliberately not on
+ // the hot per-page path; metadata publication calls it before copying.
+ bool OutputSafe(const void* destination,size_t bytes)const{
+  const auto* output=static_cast<const uint8_t*>(destination);
+  if(!output || !bytes || reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-bytes || !Current())return false;
+  const auto& live=packed->Parts();const auto& tensors=source->Tensors();
+  if(live.size()!=parts.size() || live.size()>SIZE_MAX/sizeof(live[0]) || tensors.size()>SIZE_MAX/sizeof(tensors[0])
+   || parts.size()>SIZE_MAX/sizeof(parts[0]) || proposal.parts.size()>SIZE_MAX/sizeof(proposal.parts[0]))return false;
+  if(Overlaps(output,bytes,this,sizeof(*this)) || Overlaps(output,bytes,source,sizeof(*source))
+   || Overlaps(output,bytes,packed,sizeof(*packed)) || Overlaps(output,bytes,bfp8,sizeof(*bfp8))
+   || Overlaps(output,bytes,canonical,sizeof(*canonical)) || Overlaps(output,bytes,parts.data(),parts.size()*sizeof(parts[0]))
+   || Overlaps(output,bytes,proposal.parts.data(),proposal.parts.size()*sizeof(proposal.parts[0]))
+   || Overlaps(output,bytes,live.data(),live.size()*sizeof(live[0]))
+   || Overlaps(output,bytes,tensors.data(),tensors.size()*sizeof(tensors[0])))return false;
+  for(const auto& tensor:tensors){
+   if(tensor.name.capacity()==SIZE_MAX || Overlaps(output,bytes,tensor.name.data(),tensor.name.capacity()+1))return false;
+  }
+  return Current();
+ }
  const PioneerQ38HybridModelPlan::Part* Part(unsigned i)const{return Current() && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
  bool ReadPages(unsigned fragment,unsigned page,unsigned count,uint8_t* output,unsigned capacity,std::string& error){
   if(!output || !count || count>Cache::ChunkBytes/4096 || capacity<count*4096
@@ -102,6 +122,11 @@ public:
    || Overlaps(output,bytes,proposal.parts.data(),proposal.parts.size()*sizeof(proposal.parts[0])))
    return Fail(error,"QGW8 page destination overlaps source or routing state.");
   const auto& liveParts=packed->Parts();if(liveParts.size()!=parts.size())return Lose(error,"Original plan became unavailable.");
+  const auto& tensors=source->Tensors();
+  if(liveParts.size()>SIZE_MAX/sizeof(liveParts[0]) || tensors.size()>SIZE_MAX/sizeof(tensors[0])
+   || Overlaps(output,bytes,liveParts.data(),liveParts.size()*sizeof(liveParts[0]))
+   || Overlaps(output,bytes,tensors.data(),tensors.size()*sizeof(tensors[0])))
+   return Fail(error,"QGW8 page destination overlaps live source descriptors.");
   const auto part=liveParts[fragment];if(!Same(part,parts[fragment]))return Lose(error,"Original plan changed after binding.");
   const auto dest=proposal.parts[fragment];
   if(part.kind!=Canonical::WeightKind || page>=dest.allocated/4096 || count>dest.allocated/4096-page)

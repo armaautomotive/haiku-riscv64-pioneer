@@ -59,8 +59,13 @@ int main(){
  FakeBfp8 eight{&source};eight.digest=digest;std::string error;bool permit=true;HeadPages pages;
  auto bind=[&](HeadPages& p,FakePlan& plan,FakeBfp8& b){return p.Bind(source,plan,*canonical,b,digest,fourHash,headHash,"/private/tmp/four","/private/tmp/head",[&]{return permit;},error);};
  assert(bind(pages,packed,eight));std::array<uint8_t,4096> out={};
+ assert(pages.OutputSafe(out.data(),out.size()));
+ assert(!pages.OutputSafe(packed.parts.data(),128) && !pages.OutputSafe(source.tensors.data(),128));
+ assert(!pages.OutputSafe(source.tensors[0].name.data(),128) && !pages.OutputSafe(&source,128));
  assert(!pages.ReadPage(f48,0,reinterpret_cast<uint8_t*>(&pages),4096,error) && pages.Ready());
  assert(!pages.ReadPage(f48,0,reinterpret_cast<uint8_t*>(&source),4096,error) && pages.Ready());
+ assert(!pages.ReadPage(f48,0,reinterpret_cast<uint8_t*>(packed.parts.data()),4096,error) && pages.Ready());
+ assert(!pages.ReadPage(f48,0,reinterpret_cast<uint8_t*>(source.tensors.data()),4096,error) && pages.Ready());
  assert(!pages.ReadPage(f48,0,reinterpret_cast<uint8_t*>(const_cast<PioneerQ38HybridModelPlan::Part*>(pages.Part(f48))),4096,error) && pages.Ready());
  for(unsigned i:{f48,f49,f61})assert(pages.Part(i)->encoding==PioneerQ38HybridModelPlan::Bfp4 && pages.ReadPage(i,0,out.data(),out.size(),error) && out[0]==0x4b);
  for(unsigned i:{f50,f60})assert(pages.Part(i)->encoding==PioneerQ38HybridModelPlan::Bfp8 && pages.ReadPage(i,0,out.data(),out.size(),error) && out[0]==0x8b);

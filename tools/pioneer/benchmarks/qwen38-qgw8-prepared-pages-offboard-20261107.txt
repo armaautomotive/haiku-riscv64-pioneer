@@ -96,8 +96,15 @@ tests passed; real page/span/session types cross-compile for Haiku. The
 inspection control uses a fake-only identity and no actual ioctl number;
 no real device was opened. The ledger hashes are synthetic transport data,
 not source authentication, converted-weight correctness or card readback.
-Head descriptor integration, a qualified driver/owner and a real inference
-trial remain incomplete.
+The held inspection session can now derive the QGW8 output-head descriptor
+from the exact relocated pages and a validated ROOT boot frame. Synthetic
+tests checked all seven possible workspace banks, source/transport alias
+refusals, revoked source, malformed frames and no metadata before BEGIN or
+after END. The resulting descriptor generated all 973 host-side jobs with
+exactly one visit to each of the 248320 vocabulary rows. This is metadata
+only: the ROOT boot frame, initialized workspace, real card ownership and
+full coordinator/worker lifecycle are not established. A qualified driver,
+real inference trial and performance measurement remain incomplete.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.
