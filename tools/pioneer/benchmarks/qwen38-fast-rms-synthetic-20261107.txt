@@ -1,0 +1,39 @@
+Approximate RMS candidate: synthetic screening only
+===================================================
+November 7, 2026. The existing recurrent ROOT invokes a 5120-element RMS
+whose positive sum emulates binary64 on one scalar controller. A separate
+experimental function instead reduces rounded FP32 squares into 16 FP32
+accumulators. This changes arithmetic; the old precise implementation is
+unchanged. Neither CPU reference inference nor model validation is part of
+the candidate function.
+
+On this Mac, a host-only comparison over 256 synthetic rows reported
+968144 differing words, worst row relative L2 2.6101209e-7 and worst absolute
+error 4.76837158e-7, relative to the existing precise function. Invalid
+inputs and output aliasing were refused. This is NOT a real model or quality
+evaluation.
+
+Both algorithms were also separately compiled into the existing isolated RV32
+RMS test transport. Over six matched synthetic rows, the simulator executed
+3105100 precise versus 1479737 candidate instructions (2.0984x ratio), with
+9795 differing words and worst row relative L2 1.15798038e-7. Thirteen
+invalid-input cases refused without publishing output. This is an instruction
+count, NOT P100A cycles, elapsed time, whole-token speed or proof that RMS is
+the dominant measured bottleneck. Simulated hardware endpoints and synthetic
+inputs do not establish full-model quality.
+
+Candidate image: code SHA-256
+cc4970eb566ca559999489d0dd85cb798c9db15a0313d8392734352098687e99;
+full ELF SHA-256 dfede6e5cfd28cf76aa62c11e5cc5e842d6df09cab422a36c9754f42a13bfac0.
+Baseline image matches the existing pinned exact FP32 RMS test image. The
+separate role refuses native/Work compilation. It has not been installed,
+run on the card, integrated into Qwen or compared against real hidden states.
+
+Reproduce:
+  bash tools/pioneer/tests/run_pioneer_q38_fast_f32_hidden_rms_tests.sh
+  python3 tools/pioneer/tests/run_pioneer_q38_fast_f32_hidden_rms_image_tests.py /ABSOLUTE/HAIKU/BUILD
+
+Next: measure this operation on genuine P100A hardware with a bounded,
+recoverable diagnostic and compare representative actual-model inputs and
+quality. Integrate only after those checks, then time the real full model.
+The known full-model rate is still approximately 0.173 tokens/s; 20 is unmet.

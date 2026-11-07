@@ -79,6 +79,10 @@ Tenstorrent's [compute-engine documentation](https://github.com/tenstorrent/tt-m
 describes the separate unpacker, matrix and vector engines, but does not
 establish the achievable speed of this implementation or this card.
 
+A separate approximate RMS candidate has passed synthetic host and emitted
+RV32 simulations, not a real-card or model-quality test. See
+[`benchmarks/qwen38-fast-rms-synthetic-20261107.txt`](benchmarks/qwen38-fast-rms-synthetic-20261107.txt).
+
 ## Milestone 4: Assistant
 
 **Not yet passed.** Expose the faster, qualified path in Assistant while
