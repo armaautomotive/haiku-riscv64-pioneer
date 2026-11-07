@@ -137,10 +137,15 @@ std::string PioneerModelWeightCache::Hex(const Digest& d) {
 std::string PioneerModelWeightCache::EntryName(const Key& k) {
 	const auto h=Header(k,Digest{},Digest{});return "p100a-weight-v1-"+Hex(Hash(h.data(),h.size()))+".cache";
 }
-bool PioneerModelWeightCache::Open(const char* path,std::string& error) {
+bool PioneerModelWeightCache::Open(const char* path,std::string& error) {return OpenDirectory(path,error,true);}
+bool PioneerModelWeightCache::OpenExistingDirectory(const char* path,std::string& error) {return OpenDirectory(path,error,false);}
+bool PioneerModelWeightCache::OpenDirectory(const char* path,std::string& error,bool create) {
 	if(directoryFD>=0 || !path || path[0]!='/')return Fail(error,"A dedicated absolute converted-weight cache directory is required.");
-	bool created=!mkdir(path,0700);
-	if(!created && errno!=EEXIST)return Fail(error,"Cannot create converted-weight cache directory.");
+	bool created=false;
+	if(create) {
+		created=!mkdir(path,0700);
+		if(!created && errno!=EEXIST)return Fail(error,"Cannot create converted-weight cache directory.");
+	}
 	int fd=open(path,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);struct stat st{};
 	if(fd<0 || fstat(fd,&st) || !S_ISDIR(st.st_mode) || st.st_uid!=geteuid() || (st.st_mode&07777)!=0700) {
 		if(fd>=0)close(fd);

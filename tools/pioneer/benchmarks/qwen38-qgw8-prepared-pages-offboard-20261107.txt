@@ -27,6 +27,16 @@ model was converted for this layout, no new driver was installed, no P100A
 computation was performed, and no QGW8 inference or tokens/sec was measured.
 Both CPU-only preparers also cross-compiled for RISC-V Haiku; they have not
 been installed or run on the Pioneer.
+An isolated CPU-only QGW8 preflight now retains the authenticated original
+and checks the three dedicated prepared-cache formats together. Missing
+directories are refused without creating them; existing-only cache opens now
+avoid a previous mkdir race. Synthetic routing/role tests, real synthetic
+cache tests, the old hybrid-preflight regression, and Haiku cross-builds
+passed. The new preflight has not been run on the real model or real caches.
+Its head converter fingerprint is now
+e0e45dce6f1d95124aaeb956e2ee4076aff5b11d35d8079e205054cf33cf316f;
+the preceding preparer binary's different fingerprint must not be mixed with
+this preflight. Rebuild the head preparer with the same sources as preflight.
 This is not a quality qualification or a claim of Work-mode readiness. The
 last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
 using the earlier mixed implementation.

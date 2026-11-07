@@ -27,14 +27,7 @@ template<class Source>class PioneerQ38HeadBfp8FragmentCache {
   key.entry=(UINT64_C(64)<<48)|(UINT64_C(1)<<40)|(uint64_t(part.firstRow)<<16)|part.rows;
   key.bytes=uint64_t(converter.Pages())*4096;
   if(!existingOnly)return cache.Open(directory,error);
-  int fd=open(directory,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);struct stat before={},after={};
-  if(fd<0 || fstat(fd,&before) || !S_ISDIR(before.st_mode) || before.st_uid!=geteuid() || (before.st_mode&07777)!=0700){
-   if(fd>=0)close(fd);return Fail(error,"Prepared head BFP8 cache directory is missing or unsafe.");
-  }
-  const bool opened=cache.Open(directory,error);
-  const bool unchanged=!lstat(directory,&after) && S_ISDIR(after.st_mode) && before.st_dev==after.st_dev && before.st_ino==after.st_ino;
-  close(fd);if(!unchanged)return Fail(error,"Prepared head BFP8 cache directory changed while opening.");
-  return opened;
+  return cache.OpenExistingDirectory(directory,error);
  }
 public:
  bool Ready()const{return ready && converter.Ready() && reader.IsOpen();}

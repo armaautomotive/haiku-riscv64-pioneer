@@ -46,6 +46,9 @@ public:
 	// Creates only the exact dedicated leaf directory. Existing directories
 	// require our marker;never takes over an arbitrary existing user folder.
 	bool Open(const char* directory,std::string& error);
+	// Open only an already-existing marked cache directory. Never mkdir or
+	// create its marker, even if the directory disappears during lookup.
+	bool OpenExistingDirectory(const char* directory,std::string& error);
 	// A verified hit performs ZERO Produce calls. Miss/corrupt owned entry
 	// builds privately and publishes by atomic rename only after complete
 	// payload/chunk SHA,source Ready,fsync and read-only mode. Source failure
@@ -64,6 +67,7 @@ public:
 	static std::string EntryName(const Key&);
 private:
 	int directoryFD=-1;
+	bool OpenDirectory(const char*,std::string&,bool create);
 	bool Load(const Key&,Reader&,std::string&,const Progress&,bool& missing,bool& unsafe);
 };
 #endif

@@ -77,7 +77,7 @@ public:
    || digest!=PioneerQ38NativeBfpBandSource::OriginalPin() || !Digest(PIONEER_BFP4_IMPLEMENTATION_SHA256,fingerprint))
    return Fail(error,"Original model hash or frozen converter fingerprint refused.");
   if(!packed.Build(model,8192,true,true) || !Current() || !canonical->Build())return Fail(error,"Model geometry refused.");
-  if(!cache8.Open(directory8,error) || !Current())return Fail(error,"BFP8 cache refused.");
+  if(!cache8.OpenExistingDirectory(directory8,error) || !Current())return Fail(error,"BFP8 cache refused.");
   auto live=[this]{return Current();};
   if(!eight.Bind(model,digest,live,error) || !pages.Bind(model,packed,*canonical,eight,digest,fingerprint,directory4,live,error)
    || !pages.VerifyAll(error,progress) || !pages.AllVerified() || !Current())return Fail(error,"Hybrid cache verification failed.");

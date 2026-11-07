@@ -38,7 +38,20 @@ int main(int argc,char** argv) {
 	unsigned unsupported=0;
 	assert(Cache::Hex(Cache::Hash(nullptr,0))=="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 	assert(Cache::Hex(Cache::Hash("abc",3))=="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+	{
+		Cache missing;const std::string name=base+"/absent";struct stat st{};
+		assert(!missing.OpenExistingDirectory(name.c_str(),error) && lstat(name.c_str(),&st) && errno==ENOENT);
+		const std::string unmarked=base+"/existing-only-unmarked";assert(!mkdir(unmarked.c_str(),0700));
+		Cache unsafe;assert(!unsafe.OpenExistingDirectory(unmarked.c_str(),error));
+		const std::string marker=unmarked+"/.p100a-weights-v1";
+		assert(lstat(marker.c_str(),&st) && errno==ENOENT);
+	}
 	Cache cache;assert(cache.Open(directory.c_str(),error));
+	{
+		Cache existing;assert(existing.OpenExistingDirectory(directory.c_str(),error));
+		const std::string linkpath=base+"/cache-link";assert(!symlink(directory.c_str(),linkpath.c_str()));
+		Cache linked;assert(!linked.OpenExistingDirectory(linkpath.c_str(),error));
+	}
 	Cache::Key key;const char model[]="fully-authenticated-fixture-model",recipe[]="experimental-native-bfp4b-v1";
 	key.sourceSHA256=Cache::Hash(model,sizeof(model)-1);
 	key.conversionSHA256=Cache::Hash(recipe,sizeof(recipe)-1);key.entry=7;key.bytes=Cache::ChunkBytes*3+17;
