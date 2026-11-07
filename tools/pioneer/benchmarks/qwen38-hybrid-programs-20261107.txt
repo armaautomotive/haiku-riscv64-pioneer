@@ -1,0 +1,42 @@
+QGW5 hybrid full-token image DATA: offline integration only
+============================================================
+November 7, 2026. No P100A code installation, full-model execution, answer
+quality, Work/Assistant selection or inference-speed result is claimed.
+
+The experimental persistent ROOT and QGW5/BFP4/BFP8 worker were each rebuilt
+twice in independent directories. All 17 complete ELF/section artifacts were
+byte-identical between the two builds. Their fixed sizes and SHA256 pins are
+in PioneerQ38HybridProgramPins.py. The worker is the proposed layers48..60
+BFP8 mask, not the layer-zero BFP8 simulator-only variant.
+
+The generator authenticates the two complete ELFs and all 15 code sections
+from same-open snapshots, then emits distinct offline QGW5 program DATA with
+the GDN section at 0x170000. The two builds emitted byte-identical headers,
+SHA256 2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49.
+Generated DATA is a build artifact, not checked-in device firmware.
+
+Evidence:
+* ASan/UBSan compared 3452256 emitted code words against actual binary
+  sections over all 120 workers and the expanded journal footprint. An
+  independent objcopy extraction matched every section to its full ELF;
+  changed worker section, changed ROOT ELF, existing output and forbidden
+  roles were refused. Run tests/run_pioneer_q38_hybrid_programs_tests.py with
+  the absolute Haiku build path and --journal to also run the following held
+  journal and fault tests using its freshly generated DATA.
+* The actual generic held-journal algorithm saved/verified all 34453122
+  arbitrary original words, installed and checked all 3452256 of the ACTUAL
+  generated QGW5 code words into simulated endpoints, then restored and
+  reverified all originals. The process exited 0. New-range read, verification
+  and restore fault simulations retained/quarantined their fake owners. This
+  did not launch the worker or simulate a post-launch restore.
+* The separately linked actual hybrid ROOT pair/job functions passed 72 RV32
+  simulated jobs. The unchanged QTP4 ROOT pins matched. This is not full
+  coordinator+worker execution. Original QTP1 and QTP4 held-journal
+  regressions also passed; the existing live driver selection remains intact.
+
+The selector accepting this DATA is an explicit offline-only test path. It
+rejects kernel, native client/owner, Work and CPU-validation roles and cannot
+be treated as a device capability. Remaining work includes real retained bank
+and page authentication, manifest publication, on-card mutable-state and
+peer ownership, launched stop/restore, phase/lifetime proof, hardware failure
+qualification, real model-quality tests and end-to-end speed measurement.

@@ -100,6 +100,9 @@ Four compact goals
    and new-range failure tests, but native ownership, launched restoration,
    phase separation and hardware remain unproven. See
    benchmarks/qwen38-hybrid-token-journal-20261107.txt.
+   Distinct pinned QGW5 ROOT/worker code DATA now also passes the actual
+   held-journal algorithm on simulated endpoints; no launch or driver change.
+   See benchmarks/qwen38-hybrid-programs-20261107.txt.
    An experimental receipt checker passes tests against actual simulated
    worker proofs; it cannot authenticate weight addresses by itself.
    A ROOT-compatible converted-address translation now matches the

@@ -7,6 +7,12 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+hybrid_header = None
+if '--hybrid-programs' in args:
+    index=args.index('--hybrid-programs')
+    assert args.count('--hybrid-programs')==1 and index+1<len(args)
+    hybrid_header=pathlib.Path(args[index+1]);del args[index:index+2]
+    assert hybrid_header.is_absolute() and hybrid_header.is_file()
 hybrid_journal = '--hybrid-journal' in args
 if hybrid_journal:
     assert args.count('--hybrid-journal') == 1
@@ -39,6 +45,7 @@ assert not bf16_profile or bf16, 'timing journal requires its explicit QTP4 DATA
 assert not bf16_paired or (bf16_profile and bf16),'paired journal requires its explicit QTP4/timing DATA parents'
 assert not bf16_deferred or (bf16_profile and bf16 and not bf16_paired),'deferred journal requires its distinct QTP4/timing DATA parents'
 assert not hybrid_journal or (bf16 and not bf16_profile and not bf16_paired and not bf16_deferred), 'hybrid footprint fixture requires original QTP4 test DATA only'
+assert hybrid_header is None or hybrid_journal, 'QGW5 DATA requires its distinct offline hybrid journal'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
@@ -60,6 +67,9 @@ if bf16_profile:profile+=['-DPIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS=1']
 if bf16_paired:profile+=['-DPIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS=1']
 if bf16_deferred:profile+=['-DPIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS=1']
 if hybrid_journal:profile+=['-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1']
+if hybrid_header is not None:
+    profile+=['-DPIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC=1',
+              '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"','-I'+str(here.parent)]
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',

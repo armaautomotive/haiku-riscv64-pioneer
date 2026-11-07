@@ -1,4 +1,27 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC)
+#if PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_HYBRID_PROGRAMS_HEADER) \
+ || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
+ || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || defined(PIONEER_Q38_BF16_FULL_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Hybrid QGW5 program selection is an offline journal fixture only
+#endif
+#include PIONEER_Q38_HYBRID_PROGRAMS_HEADER
+#include "PioneerQ38TokenFootprint.h"
+#ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
+#define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
+namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
+#endif
+static_assert(PioneerQ38TokenPrograms::Family==0x35505451 && PioneerQ38TokenL1::Family==0x35505451,
+ "QGW5 program and expanded journal must remain paired");
+#else
 #if defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS) && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS != 1)
 #error Deferred BF16 DATA requires its complete distinct program selection
@@ -356,3 +379,4 @@ static_assert(PioneerQ38TokenPrograms::Family==0x33505451,"late QTP3 package sel
 #include "PioneerQ38TokenPrograms.h"
 #endif
 #endif // distinct QTP4 selection versus all old packages
+#endif // offline QGW5 fixture versus existing native/legacy selection

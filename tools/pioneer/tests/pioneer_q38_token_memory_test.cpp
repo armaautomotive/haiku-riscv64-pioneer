@@ -170,7 +170,11 @@ int main(int argc,char** argv){
   fault(1,1,1,0x12c000); // new BFP8 input region: fail before any write
   fault(2,2,1,0x13c000); // new input verification mismatch: still no write
   fault(3,6,119,0x170000); // relocated GDN restore failure: retain/quarantine
+#ifdef PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC
+  puts("PASS hybrid journal new-region read/verify/restore fault retention;SIMULATED QGW5 DATA,NO DEVICE EXECUTION");
+#else
   puts("PASS hybrid journal new-region read/verify/restore fault retention;SIMULATED QTP4 DATA,NO QGW5 DEVICE EXECUTION");
+#endif
   return 0;
  }
 #endif

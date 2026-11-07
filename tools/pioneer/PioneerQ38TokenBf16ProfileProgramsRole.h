@@ -9,7 +9,8 @@
  || defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_BF16_PROFILE_IMAGE) \
  || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
- || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__) \
+ || defined(PIONEER_Q38_HYBRID_PROGRAMS_H)
 #error Exact BF16 timing program DATA cannot alias old arrays,BUILD,CPU or Work
 #endif
 #ifdef _KERNEL_MODE
