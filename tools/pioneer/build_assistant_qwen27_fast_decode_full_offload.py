@@ -35,7 +35,7 @@ compile.remove('-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1')
 compile.insert(1, '-DPIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE=1')
 compile[compile.index(str(old['source']))] = str(source)
 compile[compile.index(str(old['obj']))] = str(obj)
-dependency_text = subprocess.check_output([*compile[:compile.index('-c')], '-MM', str(source)], text=True)
+dependency_text = subprocess.check_output([*compile[:compile.index('-c')], '-MM', str(source)], text=True, cwd=out)
 dependencies = {Path(p).resolve() for p in dependency_text.replace('\\\n', '').split(':', 1)[1].split()
                 if Path(p).resolve().is_relative_to(root)}
 dependencies.update((Path(__file__).resolve(), here/'build_assistant_qwen27_full_offload.py',
@@ -71,7 +71,7 @@ for macro in ('_KERNEL_MODE', 'PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4', 'PIONEER_Q38
               'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE'):
     refusals.append((macro+'defined0', ['-D'+macro+'=0']))
 for label, flags in refusals:
-    result = subprocess.run([*compile[:compile.index('-c')], *flags, '-fsyntax-only', str(source)], capture_output=True, text=True)
+    result = subprocess.run([*compile[:compile.index('-c')], *flags, '-fsyntax-only', str(source)], capture_output=True, text=True, cwd=out)
     assert result.returncode and ('requires' in result.stderr or 'Full-offload client is separate' in result.stderr), label
 client = out/'pioneer-q38-fast-decode-rate-smoke'
 client_command = old['rate_command'][:]

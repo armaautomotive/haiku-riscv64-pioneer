@@ -1,88 +1,47 @@
 P100A / Qwen 27B: current status
 ================================
-Updated November 6, 2026. This is the short project scoreboard.
-Model: Qwen3.8-27B Q4_K_M.
-The objective remains fast, self-hosted 27B inference on P100A, targeting
-20 tokens/sec. It has NOT been delivered; 20 tokens/sec is unproven.
+Updated November 6, 2026. Model: Qwen3.8-27B Q4_K_M.
 
-Delivered
-----------
-* Haiku boot, 64 CPUs and 137,034,936,320 bytes max RAM preserved.
-* A short 27B counting response completed with ALL model inference on the
-  P100A, including attention/state. CPU handled files, preparation, text and
-  lifecycle, not model inference, reference or fallback.
-* This is a prototype, not broad answer-quality or production qualification.
+The target is fast self-hosted inference, ideally 20 tokens/sec. It has NOT
+been delivered, and 20 tokens/sec is unproven. A short 27B request runs all
+model inference on the P100A, including attention and state; the CPU handles
+files, preparation, vocabulary/text and lifecycle, not inference or fallback.
 
-Actual full-model speed
------------------------
-Best saved: tag 92, 0.173 tokens/sec, about 5.8 seconds/token.
-Latest full-model experiment: tag 110, 0.082 tokens/sec, about 12.2 seconds/token.
-One public 31-prompt/32-output-token counting request per variant; not
-repeatability data. Latest setup took 26.43 minutes; the answer was ready
-42.72 minutes after Generate. Weights were released at END; a warm,
-persistently loaded service remains unfinished.
-No subsequent local test or small card calculation changes these rates.
+Latest real result
+------------------
+* Generation: 0.17287 tokens/sec, about 5.8 seconds per committed position.
+* The previous fast run was 0.17281; these single runs do NOT prove a speedup.
+* The answer counted from 1 through 14 before the 32-token output cap. This
+  is one short response, not broad correctness or production qualification.
+* Setup took 25.65 minutes; answer-ready took 35.13 minutes after Generate.
+  Weights were released at END. A warm, persistent Assistant is unfinished.
 
-Latest completed experiment
-----------------------------
-The replacement Q4 calculations are correct for BOTH isolated test shapes:
-32 output rows at input widths 5,120/17,408. All 128 old/new words match their
-respective predefined references; two clean ENDs and independent restoration.
-Latest native115 prepared-BF16 test used 58.34%/70.73% MORE cycles than the
-same-run old calculation. Native114 used 8.17%/8.72% more; native113 used
-31.39%/34.21% more. Decision: REJECT speed promotion for all three.
-No full-model upload or Assistant integration of these slower candidates.
-These are fixed diagnostic inputs, not whole-model quality or throughput.
-
-Current checkpoint: make one Q4 calculation demonstrably faster
----------------------------------------------------------------
-The pending prepared-BF16 experiment is now CLOSED: correct but slower.
-Audit correction: the EXISTING native Q4 cache/SM3+escape route was already
-integrated in the earlier integer-activation engine (tags97..103). Do NOT
-rebuild that route or describe it as missing. It did not beat tag92.
-Native115 consumed that SAME format with full-BF16 inputs and no per-weight
-decoding/PACK. Its qualified package now has a real two-shape hardware
-result, exact128/two clean ENDs and independent normal-driver restoration.
-Fewer static operations did NOT make it faster. No replay or promotion.
-Performance-route assessment CLOSED: exact model inventory is18.68GB per
-ideal single-pass card-format weight read. Advertised448GB/s gives a
-weight-only ideal limit~24tok/s;20 would need83% of peak before other costs.
-This is NOT measured/expected speed or proof20 is feasible. No supported
-116x improvement route yet. Faster vector92's generation-only ROOT timer and
-distinct native116 driver now PASS local main/clean checks. The new code's
-exact1496B journal and read-only v3 endpoint are connected; math is unchanged.
-Benchmark client/one-shot parent now PASS16 main/clean local checks; the
-real model profile remains PENDING. Fresh board check: normal041/gen8,idle.
-No new hardware result or speed gain. No UI/cache detour.
+Measured generation bottlenecks
+-------------------------------
+The valid on-card profile attributes 48.85% of generation-body cycles to the
+four projection-call phases, 33.67% to remaining recurrent+dense paths, and
+11.87% to the output-head matrix. These are controller cycle shares, not
+pure FPU/bandwidth measurements. Removing all projection time for free would
+still yield only about 1.95x in that scoped breakdown, if everything else
+stayed unchanged. No supported 116x route is established.
 
 Four compact goals
 -------------------
-1. Correct calculation on card: PASS for two pinned cases in native113/114/115.
-2. Faster calculation on card: UNMET. Candidates113/114/115 rejected as slower.
-3. Complete 27B quality/speed with accepted engine: NOT STARTED for new path.
-4. Persistent loading and proven Assistant mode: NOT STARTED.
+1. Identify the fastest engine's bottleneck: COMPLETE for one request.
+2. Remove one measured overhead: CURRENT. Test reusing a job descriptor
+   already constructed on card; no speedup is assumed.
+3. Measure an accepted improvement on the complete 27B model: NOT STARTED.
+4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
-Current verified platform
---------------------------
-Normal041/gen8 rollback driver, idle, cold0/owner0; 64 CPUs and full RAM.
-Three Assistant files and four runtime libraries unchanged; not a new UI test.
-No test/inference process remains after independent postflight.
-No reboot or power/SD/hardware change was needed for native113/114/115.
-Saved experiments and pre-existing dirty work are preserved, not deleted.
-Full-card inference already exists; the missing outcome is USABLE SPEED.
+Platform
+--------
+Stable041/gen10 restored and idle after independent postflight; 64 CPUs and
+full137034936320B RAM. Assistant/runtime files unchanged. No reboot, power,
+SD or hardware connection changed. Pre-existing local work is preserved.
 
-Evidence (relative to tools/pioneer)
-------------------------------------
-Best model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
-Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
-Latest card result: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
-Performance-route decision: benchmarks/qwen38-performance-route-20261106.txt
-Generation timer, software only: benchmarks/qwen38-fast-decode-profile-root-20261106.txt
-Timer driver, software only: benchmarks/qwen38-fast-decode-native-20261106.txt
-Timer client, software only: benchmarks/qwen38-fast-decode-client-20261106.txt
-New prepared-BF16 code: benchmarks/qwen38-prepared-bf16-q4-component-20261106.txt
-Returning comparison: benchmarks/qwen38-prepared-bf16-q4-returning-20261106.txt
-Native115 qualification: benchmarks/qwen38-prepared-bf16-q4-native-20261106.txt
-The physical report's sibling contains the complete closed trial/postflight.
-Detailed historical experiments remain under benchmarks/, not new progress.
-P100A_WORK_PLAN.txt defines finish criteria and what is deliberately deferred.
+Evidence
+--------
+Actual profile and evidence: benchmarks/qwen38-fast-decode-profile-physical-20261106.txt
+Previous fast model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
+Rejected slower Q4 candidate: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
+Long-term plan: P100A_WORK_PLAN.txt

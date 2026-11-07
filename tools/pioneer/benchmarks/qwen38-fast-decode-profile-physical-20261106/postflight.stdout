@@ -1,0 +1,20 @@
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133769957376 bytes free      (used/max 3264978944 / 137034936320)
+                           (cached   19199283200)
+     64486 semaphores free (used/max       1050 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+915309cabbb162a1f1fdc9f51b630ddffc239dc96089594109c948fce05d91f4  /boot/home/pioneer-q38-fast-decode-116-a/parent.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-fast-decode-116-a/parent.stderr
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /boot/home/pioneer-q38-fast-decode-116-a/parent.exit
+3bfd8cdc117626f3b5c82e18ee42f163c8189f5e2db81ed63d3da90c460c2a19  /boot/home/pioneer-q38-fast-decode-116-a/rate.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-fast-decode-116-a/rate.stderr
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /boot/home/pioneer-q38-fast-decode-116-a/rate.exit
+22f61d22dc3c969bbe2b1b82211755d5906e6af0567523f5f48e3944d71ff06b  /boot/home/pioneer-q38-fast-decode-116-a/state
+5c47a0b0ba3fc2784f3948cae9c07ca9f77a5bd9ea44869523a828c5a1f62b16  /boot/home/pioneer-q38-fast-decode-116-a/launcher.pid
+7a3ecc37f9fd43a4632070e467e713a15789ad555799527db43f968d4a4da9a1  /boot/home/pioneer-q38-fast-decode-116-a/parent.pid
+10c89569f42a69c0ef1e20c1c441c733812f1e33d5a0eec95b18fce12b7bfcea  /boot/home/pioneer-q38-fast-decode-116-a/pioneer_q38_fast_decode_profile_physical.sh
+PASS_FAST_116_INDEPENDENT_POSTFLIGHT normal041_gen10_idle_64cpu_fullram_apps_libraries_unchanged_all_trial_pids_absent

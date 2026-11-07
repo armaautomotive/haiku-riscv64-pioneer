@@ -1,0 +1,92 @@
+Fast vector92 engine: actual Qwen3.8-27B generation profile
+===========================================================
+November6,2026. ONE real31-prompt/32-output-token public counting request.
+All model inference, including attention/state, was on P100A; CPU handled
+source authentication/upload preparation, vocabulary/text and lifecycle.
+The diagnostic uses original raw weights and unchanged vector92 worker math.
+NOT a released Assistant mode or broad quality qualification.
+
+Actual speed, quality and loading
+---------------------------------
+Observed post-prompt counter window31->62:31 steps over179320894..179324220us,
+0.172871238..0.172874445tokens/sec (~5.79seconds per committed step).
+These are timestamp-observation bounds, NOT repeatability confidence bounds
+or isolated token latency. Previous vector92 single-run result was
+0.172813448..0.172816755tokens/sec; their tiny difference does NOT establish
+a speedup.20tokens/sec remains unmet, roughly116x the measured rate.
+
+The32-output-token limit produced numbers1 through14, matching the earlier
+short counting answer. This truncated answer is NOT broad model quality.
+Vocabulary/source authentication311.919s occurred before Generate. Generate
+to START setup1539.228s (25.65min); upload window1211.135s for19399024640B
+includes between-call preparation, not pure DMA bandwidth. Answer-ready was
+2107.906s (35.13min) after Generate. Post-START prompt+generation359.096s.
+These overlapping intervals are not additive. Weights were released at END;
+the warm, persistently loaded Assistant remains unfinished.
+
+Actual ROOT generation profile
+-------------------------------
+Valid v3 timing,31 generation positions31..61; committed62 total positions.
+Starts at the first generation position's layer0 entry and ends after real
+119-worker STOPs: NOT identical endpoints to the host counter window.
+Whole242184177542 cycles includes81601748 final STOP cycles. Percentages use
+the242102575794-cycle body EXCLUDING final STOP; no clock-Hz assumption.
+
+Phase                              Cycles             Body share
+Generation entry                   248                   ~0.00%
+Metadata                           10989310829            4.54%
+Recurrent outside projection calls  51470231910           21.26%
+Dense outside projection calls      30051093268           12.41%
+Head normalization                 59171211               0.02%
+Head matrix                        28743133648           11.87%
+Feedback                           51152738               0.02%
+State commit                       2454995460             1.01%
+Publication                        27160795               0.01%
+Matrix preparation                 41403063962           17.10%
+Matrix dispatch                    19455644819            8.04%
+Matrix gather/wait                 32669649050           13.49%
+Matrix finish                      24727967856           10.21%
+
+Four projection phases total48.85%; recurrent+dense OUTSIDE those calls
+total33.67%; head matrix11.87%. Outside buckets include other on-card
+controller, attention, state and wait work, not pure arithmetic. Gather/wait
+includes completion, receipts, NoC and output collection, not pure bandwidth
+or FPU utilization. Shares are not a PCIe/CPU inference attribution.
+Even ideally removing all four projection phases for free, with other scoped
+cycles unchanged, gives only ~1.95x—not116x. NOT an achieved/predicted speed.
+
+One next candidate, NOT an established speedup
+-----------------------------------------------
+For each active worker, RAW pushed Projection::Run constructs the same
+64-word job for dispatch and AGAIN in Gather before saving it for receipt
+validation. After ALL prior admissions and PushedBegin, save the first job
+and reuse that exact snapshot in Gather. Preserve nonces, descriptors,
+receipt checks, source/counter ownership, existing job/doorbell ordering,
+numerical results and clean END. Keep the original path for validation.
+
+This removes duplicate ON-CARD descriptor construction, not PCIe traffic or
+all NoC packets. It is an unmeasured subset of13.49% gather/wait and cannot
+by itself establish20tok/s. Prove equivalence/fault boundaries, then compare
+identical inputs on hardware; integrate only if measured faster. Do not merge
+the separately ordered job/doorbell writes without proof. Tenstorrent notes
+Blackhole NoC data/semaphore ordering and flush pitfalls in its bring-up guide:
+https://github.com/tenstorrent/tt-metal/blob/main/tech_reports/Blackhole/BlackholeBringUpProgrammingGuide.md
+
+Completion and evidence
+------------------------
+Stage /boot/home/pioneer-q38-fast-decode-116-a is SPENT FOREVER.
+Primary98586 ACTUALLY0, parent.exit/rate.exit0, clean worker exit, empty
+primary/parent/rate stderr and stable driver restored. Independent postflight
+ACTUALLY0: normal041/gen10 idle,cold0/owner0/open1/guard1, all trial PIDs
+absent,64CPUs/full137034936320B RAM; driver,guard,admin,three Assistant files,
+four runtime libraries and original model metadata unchanged. No reboot,
+power,SD,mains or installed Assistant change.
+All10 complete downloaded records match independent postflight SHA-256.
+Unchanged main and independent clean whole-log readers ACTUALLY0,stderr0,
+stdout byte-identical with --fast-decode-profile --startup-timing. Sibling
+archive contains closed logs,trial source,hash manifest and both readers.
+No model weights or learned payloads are stored in Git.
+
+After closure, moved compiler syntax-check scratch .su output into its
+private build directory; complete worker/client rebuild byte-for-byte.
+Removed only our newly generated zero-byte .su; pre-existing work is intact.
