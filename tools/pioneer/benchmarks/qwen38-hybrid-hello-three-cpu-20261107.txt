@@ -1,5 +1,5 @@
-Hybrid raw-Hello three-position comparison: IN PROGRESS, 2026-11-07
-==================================================================
+Hybrid raw-Hello three-position comparison: COMPLETE, 2026-11-07
+===============================================================
 
 The authenticated original model's GGUF vocabulary contains exactly one
 literal "Hello" token, ID 9419; a separate earlier 27B smoke used Hello as
@@ -21,6 +21,23 @@ The comparator compiled; the three-position synthetic zero-state test passed,
 including callback/mask/ordinary-step isolation and fourth-position refusal.
 The real comparison was started from binary SHA256
 0397ff8216933628859750ee7a1111743343be655472eeb0d40cf2eebbba0b10.
-Its log is /private/tmp/pioneer-q38-hello-quality.BE2A1m2H/comparison.log.
-Until all three result lines and the actual process exit are checked, it is
-IN PROGRESS and there is no new quality or speed result.
+The actual process exited 0. Its full 87261-byte log is archived as sibling
+qwen38-hybrid-hello-three-cpu-20261107.log with SHA256
+534120d1d4924fa1efc6663670c91aac0e294425e3078414267bb372f2c25557,
+matching the original temporary log. The log contains 192 completed
+original layers, 192 completed candidate layers, 576 candidate FFN starts,
+three result lines, and the completion marker; no FAIL or ERROR was found.
+
+Results: original and candidate chose the same greedy token at every tested
+position. The KL divergence below is original-to-candidate in nats, and the
+overlap is between their five most probable next-token choices:
+
+position  input  original  candidate  KL             top-5 overlap
+0         9419   11        11         0.0100932869   4/5
+1         11     353       353        0.0532202303   4/5
+2         353    2688      2688       0.0089129232   5/5
+
+Decision: retain the hybrid for further quality study; this is not acceptance
+for Work or Assistant. Three teacher-forced positions on one raw token prefix,
+with no independently pinned Hello trace, are not generated-answer quality,
+independent complete-model validation, P100A execution, or throughput.

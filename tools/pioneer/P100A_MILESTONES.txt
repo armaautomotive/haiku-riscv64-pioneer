@@ -12,6 +12,21 @@ The 20-token/second target is unproven. Evidence:
 benchmarks/qwen38-fast-decode-profile-physical-20261106.txt and
 benchmarks/qwen38-early-job-snapshot-physical-20261106.txt.
 
+Use the unchanged vector92 result as the comparison baseline: the prompt is
+"Count from 1 to 50, one number per line. Do not add explanations." It used
+31 prompt tokens, up to 32 output tokens and a 31-step post-prompt count
+window. The archived rate is 0.172813448..0.172816755 tokens/second; its
+range describes timestamp observation, not run-to-run variation. To check
+the archived complete transcript without touching the Pioneer, run from the
+repository root:
+
+python3 tools/pioneer/tests/parse_pioneer_q38_full_offload_rate_log.py tools/pioneer/benchmarks/qwen38-vector-q4-full-card-20261104/rate.stdout tools/pioneer/benchmarks/qwen38-vector-q4-full-card-20261104/rate.stderr
+
+This checks the recorded transcript, not a new hardware run or a model-quality
+test. The original test stage is spent and must never be replayed. A future
+candidate comparison needs a new independently qualified stage, matching
+prompt, model, token limit and measurement window, plus clean recovery.
+
 Milestone 1: account for and preserve work
 ------------------------------------------
 Keep experimental files distinct from the last working rollback, and check in
@@ -65,6 +80,14 @@ passes took 227257/227156 cycles versus the archived Q4's 643321/643229,
 with the same 0.14342 relative L2 output difference. This demonstrates a
 faster operation on one band, NOT a full-model speed or quality pass. See
 benchmarks/qwen38-matched-band-physical-20261107.txt.
+
+Current work: a three-position CPU-only hybrid comparison finished with the
+same greedy choice as the original at all three positions. That single raw
+prefix is not a generated answer or broad quality pass; see
+benchmarks/qwen38-hybrid-hello-three-cpu-20261107.txt. Preparation of the
+actual model's BFP4/BFP8 disk caches is in progress. Neither is an on-card
+full-model speed result. Both caches must finish successfully and pass the
+combined read-only preflight before they can be used for a device test.
 
 Before further full-model integration, define a model-relevant accuracy gate,
 measure representative real weights and prompts against the Q4 reference,

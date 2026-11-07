@@ -78,6 +78,11 @@ Four compact goals
    3/5 and KL 0.37343, no improvement over all-BFP4 on this token. BFP8 in
    layers48..60 instead gave 4/5 and KL 0.20372, and has a fitting offline
    layout proposal. This is one token, not a quality or P100A speed pass.
+   A separate three-position raw-Hello teacher-forced CPU comparison with
+   BFP8 layers48..60 matched the original greedy choice at all three positions
+   (KL 0.01009, 0.05322, 0.00891; top-five overlap 4/5, 4/5, 5/5). This is
+   one prefix with no independently pinned Hello trace, not generated-answer
+   quality or P100A speed; see qwen38-hybrid-hello-three-cpu-20261107.txt.
    A BFP8 worker image and relocated BFP4/BFP8 job mapping now pass offline
    RV32/synthetic/three-real-sample tests. They are not connected to the
    live dispatcher or proven on the card.

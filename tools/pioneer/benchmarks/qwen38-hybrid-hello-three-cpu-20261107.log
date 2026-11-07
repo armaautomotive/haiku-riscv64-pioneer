@@ -1,0 +1,1349 @@
+CPU_SEQUENCE authenticating model; raw Hello token9419, then original greedy tokens; teacher-forced; NO DEVICE OR WORK
+CPU_REFERENCE_BEGIN position0/layer0/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer0/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer1/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer1/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer2/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer2/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer3/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer3/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer4/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer4/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer5/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer5/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer6/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer6/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer7/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer7/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer8/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer8/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer9/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer9/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer10/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer10/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer11/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer11/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer12/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer12/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer13/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer13/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer14/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer14/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer15/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer15/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer16/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer16/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer17/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer17/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer18/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer18/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer19/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer19/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer20/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer20/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer21/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer21/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer22/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer22/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer23/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer23/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer24/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer24/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer25/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer25/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer26/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer26/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer27/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer27/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer28/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer28/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer29/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer29/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer30/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer30/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer31/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer31/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer32/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer32/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer33/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer33/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer34/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer34/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer35/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer35/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer36/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer36/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer37/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer37/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer38/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer38/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer39/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer39/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer40/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer40/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer41/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer41/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer42/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer42/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer43/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer43/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer44/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer44/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer45/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer45/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer46/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer46/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer47/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer47/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer48/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer48/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer49/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer49/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer50/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer50/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer51/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer51/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer52/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer52/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer53/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer53/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer54/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer54/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer55/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer55/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer56/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer56/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer57/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer57/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer58/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer58/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer59/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer59/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer60/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer60/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer61/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer61/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer62/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer62/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer63/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer63/original row-major weights/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer0/diagnostic FFN
+BFP4_CPU_BEGIN layer0 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer0 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer0 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer0/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer1/diagnostic FFN
+BFP4_CPU_BEGIN layer1 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer1 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer1 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer1/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer2/diagnostic FFN
+BFP4_CPU_BEGIN layer2 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer2 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer2 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer2/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer3/diagnostic FFN
+BFP4_CPU_BEGIN layer3 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer3 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer3 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer3/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer4/diagnostic FFN
+BFP4_CPU_BEGIN layer4 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer4 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer4 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer4/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer5/diagnostic FFN
+BFP4_CPU_BEGIN layer5 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer5 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer5 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer5/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer6/diagnostic FFN
+BFP4_CPU_BEGIN layer6 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer6 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer6 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer6/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer7/diagnostic FFN
+BFP4_CPU_BEGIN layer7 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer7 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer7 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer7/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer8/diagnostic FFN
+BFP4_CPU_BEGIN layer8 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer8 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer8 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer8/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer9/diagnostic FFN
+BFP4_CPU_BEGIN layer9 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer9 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer9 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer9/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer10/diagnostic FFN
+BFP4_CPU_BEGIN layer10 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer10 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer10 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer10/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer11/diagnostic FFN
+BFP4_CPU_BEGIN layer11 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer11 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer11 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer11/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer12/diagnostic FFN
+BFP4_CPU_BEGIN layer12 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer12 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer12 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer12/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer13/diagnostic FFN
+BFP4_CPU_BEGIN layer13 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer13 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer13 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer13/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer14/diagnostic FFN
+BFP4_CPU_BEGIN layer14 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer14 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer14 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer14/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer15/diagnostic FFN
+BFP4_CPU_BEGIN layer15 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer15 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer15 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer15/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer16/diagnostic FFN
+BFP4_CPU_BEGIN layer16 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer16 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer16 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer16/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer17/diagnostic FFN
+BFP4_CPU_BEGIN layer17 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer17 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer17 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer17/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer18/diagnostic FFN
+BFP4_CPU_BEGIN layer18 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer18 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer18 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer18/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer19/diagnostic FFN
+BFP4_CPU_BEGIN layer19 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer19 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer19 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer19/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer20/diagnostic FFN
+BFP4_CPU_BEGIN layer20 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer20 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer20 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer20/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer21/diagnostic FFN
+BFP4_CPU_BEGIN layer21 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer21 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer21 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer21/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer22/diagnostic FFN
+BFP4_CPU_BEGIN layer22 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer22 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer22 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer22/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer23/diagnostic FFN
+BFP4_CPU_BEGIN layer23 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer23 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer23 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer23/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer24/diagnostic FFN
+BFP4_CPU_BEGIN layer24 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer24 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer24 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer24/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer25/diagnostic FFN
+BFP4_CPU_BEGIN layer25 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer25 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer25 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer25/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer26/diagnostic FFN
+BFP4_CPU_BEGIN layer26 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer26 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer26 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer26/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer27/diagnostic FFN
+BFP4_CPU_BEGIN layer27 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer27 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer27 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer27/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer28/diagnostic FFN
+BFP4_CPU_BEGIN layer28 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer28 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer28 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer28/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer29/diagnostic FFN
+BFP4_CPU_BEGIN layer29 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer29 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer29 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer29/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer30/diagnostic FFN
+BFP4_CPU_BEGIN layer30 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer30 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer30 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer30/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer31/diagnostic FFN
+BFP4_CPU_BEGIN layer31 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer31 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer31 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer31/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer32/diagnostic FFN
+BFP4_CPU_BEGIN layer32 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer32 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer32 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer32/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer33/diagnostic FFN
+BFP4_CPU_BEGIN layer33 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer33 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer33 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer33/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer34/diagnostic FFN
+BFP4_CPU_BEGIN layer34 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer34 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer34 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer34/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer35/diagnostic FFN
+BFP4_CPU_BEGIN layer35 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer35 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer35 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer35/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer36/diagnostic FFN
+BFP4_CPU_BEGIN layer36 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer36 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer36 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer36/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer37/diagnostic FFN
+BFP4_CPU_BEGIN layer37 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer37 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer37 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer37/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer38/diagnostic FFN
+BFP4_CPU_BEGIN layer38 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer38 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer38 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer38/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer39/diagnostic FFN
+BFP4_CPU_BEGIN layer39 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer39 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer39 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer39/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer40/diagnostic FFN
+BFP4_CPU_BEGIN layer40 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer40 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer40 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer40/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer41/diagnostic FFN
+BFP4_CPU_BEGIN layer41 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer41 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer41 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer41/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer42/diagnostic FFN
+BFP4_CPU_BEGIN layer42 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer42 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer42 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer42/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer43/diagnostic FFN
+BFP4_CPU_BEGIN layer43 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer43 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer43 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer43/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer44/diagnostic FFN
+BFP4_CPU_BEGIN layer44 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer44 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer44 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer44/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer45/diagnostic FFN
+BFP4_CPU_BEGIN layer45 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer45 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer45 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer45/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer46/diagnostic FFN
+BFP4_CPU_BEGIN layer46 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer46 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer46 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer46/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer47/diagnostic FFN
+BFP4_CPU_BEGIN layer47 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer47 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer47 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer47/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer48/diagnostic FFN
+BFP8_CPU_BEGIN layer48 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer48 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer48 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer48/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer49/diagnostic FFN
+BFP8_CPU_BEGIN layer49 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer49 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer49 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer49/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer50/diagnostic FFN
+BFP8_CPU_BEGIN layer50 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer50 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer50 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer50/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer51/diagnostic FFN
+BFP8_CPU_BEGIN layer51 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer51 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer51 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer51/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer52/diagnostic FFN
+BFP8_CPU_BEGIN layer52 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer52 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer52 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer52/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer53/diagnostic FFN
+BFP8_CPU_BEGIN layer53 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer53 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer53 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer53/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer54/diagnostic FFN
+BFP8_CPU_BEGIN layer54 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer54 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer54 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer54/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer55/diagnostic FFN
+BFP8_CPU_BEGIN layer55 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer55 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer55 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer55/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer56/diagnostic FFN
+BFP8_CPU_BEGIN layer56 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer56 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer56 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer56/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer57/diagnostic FFN
+BFP8_CPU_BEGIN layer57 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer57 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer57 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer57/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer58/diagnostic FFN
+BFP8_CPU_BEGIN layer58 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer58 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer58 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer58/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer59/diagnostic FFN
+BFP8_CPU_BEGIN layer59 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer59 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer59 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer59/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer60/diagnostic FFN
+BFP8_CPU_BEGIN layer60 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer60 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer60 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer60/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer61/diagnostic FFN
+BFP4_CPU_BEGIN layer61 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer61 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer61 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer61/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer62/diagnostic FFN
+BFP4_CPU_BEGIN layer62 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer62 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer62 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer62/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position0/layer63/diagnostic FFN
+BFP4_CPU_BEGIN layer63 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer63 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer63 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position0/layer63/diagnostic FFN/independent retained state;CPU-private only
+CPU_SEQUENCE_RESULT position0 input9419 original11 candidate11 same1 kl_original_to_candidate0.0100932869 top5_overlap4 original_top_probability0.428655241 candidate_top_probability0.405070259; TEACHER_FORCED_CPU_ONLY
+CPU_REFERENCE_BEGIN position1/layer0/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer0/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer1/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer1/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer2/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer2/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer3/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer3/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer4/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer4/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer5/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer5/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer6/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer6/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer7/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer7/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer8/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer8/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer9/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer9/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer10/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer10/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer11/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer11/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer12/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer12/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer13/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer13/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer14/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer14/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer15/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer15/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer16/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer16/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer17/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer17/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer18/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer18/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer19/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer19/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer20/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer20/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer21/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer21/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer22/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer22/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer23/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer23/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer24/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer24/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer25/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer25/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer26/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer26/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer27/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer27/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer28/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer28/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer29/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer29/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer30/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer30/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer31/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer31/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer32/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer32/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer33/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer33/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer34/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer34/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer35/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer35/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer36/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer36/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer37/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer37/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer38/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer38/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer39/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer39/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer40/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer40/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer41/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer41/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer42/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer42/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer43/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer43/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer44/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer44/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer45/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer45/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer46/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer46/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer47/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer47/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer48/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer48/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer49/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer49/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer50/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer50/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer51/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer51/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer52/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer52/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer53/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer53/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer54/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer54/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer55/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer55/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer56/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer56/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer57/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer57/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer58/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer58/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer59/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer59/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer60/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer60/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer61/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer61/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer62/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer62/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer63/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer63/original row-major weights/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer0/diagnostic FFN
+BFP4_CPU_BEGIN layer0 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer0 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer0 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer0/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer1/diagnostic FFN
+BFP4_CPU_BEGIN layer1 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer1 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer1 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer1/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer2/diagnostic FFN
+BFP4_CPU_BEGIN layer2 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer2 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer2 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer2/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer3/diagnostic FFN
+BFP4_CPU_BEGIN layer3 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer3 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer3 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer3/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer4/diagnostic FFN
+BFP4_CPU_BEGIN layer4 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer4 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer4 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer4/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer5/diagnostic FFN
+BFP4_CPU_BEGIN layer5 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer5 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer5 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer5/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer6/diagnostic FFN
+BFP4_CPU_BEGIN layer6 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer6 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer6 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer6/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer7/diagnostic FFN
+BFP4_CPU_BEGIN layer7 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer7 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer7 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer7/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer8/diagnostic FFN
+BFP4_CPU_BEGIN layer8 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer8 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer8 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer8/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer9/diagnostic FFN
+BFP4_CPU_BEGIN layer9 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer9 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer9 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer9/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer10/diagnostic FFN
+BFP4_CPU_BEGIN layer10 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer10 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer10 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer10/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer11/diagnostic FFN
+BFP4_CPU_BEGIN layer11 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer11 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer11 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer11/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer12/diagnostic FFN
+BFP4_CPU_BEGIN layer12 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer12 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer12 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer12/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer13/diagnostic FFN
+BFP4_CPU_BEGIN layer13 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer13 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer13 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer13/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer14/diagnostic FFN
+BFP4_CPU_BEGIN layer14 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer14 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer14 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer14/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer15/diagnostic FFN
+BFP4_CPU_BEGIN layer15 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer15 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer15 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer15/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer16/diagnostic FFN
+BFP4_CPU_BEGIN layer16 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer16 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer16 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer16/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer17/diagnostic FFN
+BFP4_CPU_BEGIN layer17 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer17 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer17 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer17/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer18/diagnostic FFN
+BFP4_CPU_BEGIN layer18 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer18 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer18 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer18/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer19/diagnostic FFN
+BFP4_CPU_BEGIN layer19 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer19 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer19 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer19/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer20/diagnostic FFN
+BFP4_CPU_BEGIN layer20 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer20 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer20 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer20/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer21/diagnostic FFN
+BFP4_CPU_BEGIN layer21 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer21 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer21 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer21/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer22/diagnostic FFN
+BFP4_CPU_BEGIN layer22 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer22 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer22 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer22/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer23/diagnostic FFN
+BFP4_CPU_BEGIN layer23 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer23 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer23 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer23/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer24/diagnostic FFN
+BFP4_CPU_BEGIN layer24 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer24 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer24 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer24/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer25/diagnostic FFN
+BFP4_CPU_BEGIN layer25 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer25 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer25 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer25/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer26/diagnostic FFN
+BFP4_CPU_BEGIN layer26 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer26 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer26 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer26/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer27/diagnostic FFN
+BFP4_CPU_BEGIN layer27 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer27 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer27 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer27/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer28/diagnostic FFN
+BFP4_CPU_BEGIN layer28 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer28 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer28 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer28/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer29/diagnostic FFN
+BFP4_CPU_BEGIN layer29 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer29 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer29 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer29/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer30/diagnostic FFN
+BFP4_CPU_BEGIN layer30 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer30 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer30 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer30/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer31/diagnostic FFN
+BFP4_CPU_BEGIN layer31 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer31 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer31 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer31/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer32/diagnostic FFN
+BFP4_CPU_BEGIN layer32 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer32 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer32 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer32/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer33/diagnostic FFN
+BFP4_CPU_BEGIN layer33 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer33 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer33 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer33/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer34/diagnostic FFN
+BFP4_CPU_BEGIN layer34 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer34 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer34 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer34/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer35/diagnostic FFN
+BFP4_CPU_BEGIN layer35 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer35 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer35 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer35/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer36/diagnostic FFN
+BFP4_CPU_BEGIN layer36 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer36 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer36 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer36/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer37/diagnostic FFN
+BFP4_CPU_BEGIN layer37 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer37 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer37 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer37/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer38/diagnostic FFN
+BFP4_CPU_BEGIN layer38 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer38 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer38 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer38/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer39/diagnostic FFN
+BFP4_CPU_BEGIN layer39 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer39 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer39 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer39/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer40/diagnostic FFN
+BFP4_CPU_BEGIN layer40 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer40 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer40 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer40/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer41/diagnostic FFN
+BFP4_CPU_BEGIN layer41 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer41 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer41 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer41/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer42/diagnostic FFN
+BFP4_CPU_BEGIN layer42 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer42 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer42 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer42/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer43/diagnostic FFN
+BFP4_CPU_BEGIN layer43 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer43 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer43 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer43/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer44/diagnostic FFN
+BFP4_CPU_BEGIN layer44 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer44 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer44 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer44/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer45/diagnostic FFN
+BFP4_CPU_BEGIN layer45 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer45 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer45 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer45/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer46/diagnostic FFN
+BFP4_CPU_BEGIN layer46 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer46 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer46 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer46/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer47/diagnostic FFN
+BFP4_CPU_BEGIN layer47 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer47 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer47 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer47/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer48/diagnostic FFN
+BFP8_CPU_BEGIN layer48 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer48 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer48 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer48/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer49/diagnostic FFN
+BFP8_CPU_BEGIN layer49 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer49 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer49 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer49/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer50/diagnostic FFN
+BFP8_CPU_BEGIN layer50 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer50 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer50 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer50/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer51/diagnostic FFN
+BFP8_CPU_BEGIN layer51 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer51 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer51 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer51/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer52/diagnostic FFN
+BFP8_CPU_BEGIN layer52 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer52 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer52 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer52/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer53/diagnostic FFN
+BFP8_CPU_BEGIN layer53 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer53 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer53 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer53/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer54/diagnostic FFN
+BFP8_CPU_BEGIN layer54 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer54 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer54 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer54/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer55/diagnostic FFN
+BFP8_CPU_BEGIN layer55 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer55 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer55 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer55/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer56/diagnostic FFN
+BFP8_CPU_BEGIN layer56 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer56 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer56 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer56/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer57/diagnostic FFN
+BFP8_CPU_BEGIN layer57 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer57 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer57 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer57/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer58/diagnostic FFN
+BFP8_CPU_BEGIN layer58 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer58 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer58 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer58/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer59/diagnostic FFN
+BFP8_CPU_BEGIN layer59 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer59 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer59 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer59/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer60/diagnostic FFN
+BFP8_CPU_BEGIN layer60 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer60 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer60 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer60/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer61/diagnostic FFN
+BFP4_CPU_BEGIN layer61 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer61 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer61 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer61/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer62/diagnostic FFN
+BFP4_CPU_BEGIN layer62 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer62 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer62 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer62/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position1/layer63/diagnostic FFN
+BFP4_CPU_BEGIN layer63 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer63 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer63 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position1/layer63/diagnostic FFN/independent retained state;CPU-private only
+CPU_SEQUENCE_RESULT position1 input11 original353 candidate353 same1 kl_original_to_candidate0.0532202303 top5_overlap4 original_top_probability0.265255493 candidate_top_probability0.398269913; TEACHER_FORCED_CPU_ONLY
+CPU_REFERENCE_BEGIN position2/layer0/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer0/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer1/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer1/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer2/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer2/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer3/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer3/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer4/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer4/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer5/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer5/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer6/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer6/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer7/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer7/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer8/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer8/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer9/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer9/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer10/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer10/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer11/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer11/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer12/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer12/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer13/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer13/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer14/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer14/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer15/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer15/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer16/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer16/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer17/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer17/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer18/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer18/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer19/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer19/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer20/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer20/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer21/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer21/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer22/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer22/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer23/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer23/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer24/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer24/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer25/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer25/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer26/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer26/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer27/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer27/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer28/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer28/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer29/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer29/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer30/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer30/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer31/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer31/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer32/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer32/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer33/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer33/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer34/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer34/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer35/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer35/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer36/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer36/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer37/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer37/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer38/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer38/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer39/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer39/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer40/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer40/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer41/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer41/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer42/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer42/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer43/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer43/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer44/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer44/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer45/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer45/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer46/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer46/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer47/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer47/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer48/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer48/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer49/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer49/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer50/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer50/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer51/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer51/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer52/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer52/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer53/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer53/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer54/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer54/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer55/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer55/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer56/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer56/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer57/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer57/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer58/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer58/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer59/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer59/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer60/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer60/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer61/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer61/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer62/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer62/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer63/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer63/original row-major weights/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer0/diagnostic FFN
+BFP4_CPU_BEGIN layer0 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer0 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer0 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer0/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer1/diagnostic FFN
+BFP4_CPU_BEGIN layer1 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer1 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer1 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer1/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer2/diagnostic FFN
+BFP4_CPU_BEGIN layer2 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer2 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer2 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer2/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer3/diagnostic FFN
+BFP4_CPU_BEGIN layer3 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer3 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer3 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer3/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer4/diagnostic FFN
+BFP4_CPU_BEGIN layer4 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer4 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer4 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer4/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer5/diagnostic FFN
+BFP4_CPU_BEGIN layer5 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer5 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer5 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer5/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer6/diagnostic FFN
+BFP4_CPU_BEGIN layer6 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer6 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer6 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer6/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer7/diagnostic FFN
+BFP4_CPU_BEGIN layer7 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer7 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer7 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer7/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer8/diagnostic FFN
+BFP4_CPU_BEGIN layer8 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer8 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer8 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer8/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer9/diagnostic FFN
+BFP4_CPU_BEGIN layer9 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer9 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer9 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer9/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer10/diagnostic FFN
+BFP4_CPU_BEGIN layer10 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer10 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer10 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer10/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer11/diagnostic FFN
+BFP4_CPU_BEGIN layer11 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer11 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer11 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer11/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer12/diagnostic FFN
+BFP4_CPU_BEGIN layer12 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer12 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer12 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer12/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer13/diagnostic FFN
+BFP4_CPU_BEGIN layer13 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer13 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer13 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer13/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer14/diagnostic FFN
+BFP4_CPU_BEGIN layer14 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer14 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer14 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer14/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer15/diagnostic FFN
+BFP4_CPU_BEGIN layer15 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer15 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer15 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer15/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer16/diagnostic FFN
+BFP4_CPU_BEGIN layer16 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer16 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer16 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer16/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer17/diagnostic FFN
+BFP4_CPU_BEGIN layer17 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer17 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer17 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer17/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer18/diagnostic FFN
+BFP4_CPU_BEGIN layer18 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer18 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer18 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer18/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer19/diagnostic FFN
+BFP4_CPU_BEGIN layer19 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer19 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer19 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer19/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer20/diagnostic FFN
+BFP4_CPU_BEGIN layer20 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer20 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer20 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer20/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer21/diagnostic FFN
+BFP4_CPU_BEGIN layer21 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer21 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer21 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer21/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer22/diagnostic FFN
+BFP4_CPU_BEGIN layer22 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer22 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer22 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer22/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer23/diagnostic FFN
+BFP4_CPU_BEGIN layer23 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer23 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer23 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer23/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer24/diagnostic FFN
+BFP4_CPU_BEGIN layer24 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer24 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer24 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer24/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer25/diagnostic FFN
+BFP4_CPU_BEGIN layer25 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer25 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer25 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer25/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer26/diagnostic FFN
+BFP4_CPU_BEGIN layer26 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer26 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer26 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer26/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer27/diagnostic FFN
+BFP4_CPU_BEGIN layer27 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer27 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer27 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer27/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer28/diagnostic FFN
+BFP4_CPU_BEGIN layer28 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer28 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer28 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer28/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer29/diagnostic FFN
+BFP4_CPU_BEGIN layer29 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer29 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer29 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer29/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer30/diagnostic FFN
+BFP4_CPU_BEGIN layer30 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer30 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer30 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer30/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer31/diagnostic FFN
+BFP4_CPU_BEGIN layer31 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer31 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer31 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer31/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer32/diagnostic FFN
+BFP4_CPU_BEGIN layer32 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer32 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer32 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer32/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer33/diagnostic FFN
+BFP4_CPU_BEGIN layer33 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer33 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer33 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer33/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer34/diagnostic FFN
+BFP4_CPU_BEGIN layer34 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer34 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer34 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer34/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer35/diagnostic FFN
+BFP4_CPU_BEGIN layer35 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer35 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer35 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer35/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer36/diagnostic FFN
+BFP4_CPU_BEGIN layer36 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer36 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer36 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer36/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer37/diagnostic FFN
+BFP4_CPU_BEGIN layer37 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer37 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer37 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer37/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer38/diagnostic FFN
+BFP4_CPU_BEGIN layer38 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer38 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer38 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer38/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer39/diagnostic FFN
+BFP4_CPU_BEGIN layer39 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer39 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer39 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer39/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer40/diagnostic FFN
+BFP4_CPU_BEGIN layer40 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer40 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer40 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer40/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer41/diagnostic FFN
+BFP4_CPU_BEGIN layer41 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer41 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer41 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer41/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer42/diagnostic FFN
+BFP4_CPU_BEGIN layer42 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer42 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer42 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer42/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer43/diagnostic FFN
+BFP4_CPU_BEGIN layer43 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer43 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer43 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer43/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer44/diagnostic FFN
+BFP4_CPU_BEGIN layer44 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer44 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer44 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer44/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer45/diagnostic FFN
+BFP4_CPU_BEGIN layer45 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer45 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer45 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer45/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer46/diagnostic FFN
+BFP4_CPU_BEGIN layer46 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer46 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer46 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer46/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer47/diagnostic FFN
+BFP4_CPU_BEGIN layer47 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer47 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer47 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer47/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer48/diagnostic FFN
+BFP8_CPU_BEGIN layer48 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer48 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer48 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer48/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer49/diagnostic FFN
+BFP8_CPU_BEGIN layer49 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer49 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer49 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer49/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer50/diagnostic FFN
+BFP8_CPU_BEGIN layer50 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer50 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer50 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer50/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer51/diagnostic FFN
+BFP8_CPU_BEGIN layer51 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer51 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer51 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer51/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer52/diagnostic FFN
+BFP8_CPU_BEGIN layer52 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer52 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer52 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer52/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer53/diagnostic FFN
+BFP8_CPU_BEGIN layer53 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer53 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer53 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer53/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer54/diagnostic FFN
+BFP8_CPU_BEGIN layer54 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer54 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer54 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer54/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer55/diagnostic FFN
+BFP8_CPU_BEGIN layer55 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer55 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer55 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer55/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer56/diagnostic FFN
+BFP8_CPU_BEGIN layer56 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer56 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer56 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer56/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer57/diagnostic FFN
+BFP8_CPU_BEGIN layer57 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer57 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer57 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer57/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer58/diagnostic FFN
+BFP8_CPU_BEGIN layer58 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer58 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer58 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer58/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer59/diagnostic FFN
+BFP8_CPU_BEGIN layer59 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer59 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer59 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer59/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer60/diagnostic FFN
+BFP8_CPU_BEGIN layer60 role2; CPU_ONLY
+BFP8_CPU_BEGIN layer60 role3; CPU_ONLY
+BFP8_CPU_BEGIN layer60 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer60/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer61/diagnostic FFN
+BFP4_CPU_BEGIN layer61 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer61 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer61 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer61/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer62/diagnostic FFN
+BFP4_CPU_BEGIN layer62 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer62 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer62 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer62/diagnostic FFN/independent retained state;CPU-private only
+CPU_BFP4_REFERENCE_BEGIN position2/layer63/diagnostic FFN
+BFP4_CPU_BEGIN layer63 role2; CPU_ONLY
+BFP4_CPU_BEGIN layer63 role3; CPU_ONLY
+BFP4_CPU_BEGIN layer63 role4; CPU_ONLY
+CPU_BFP4_REFERENCE position2/layer63/diagnostic FFN/independent retained state;CPU-private only
+CPU_SEQUENCE_RESULT position2 input353 original2688 candidate2688 same1 kl_original_to_candidate0.0089129232 top5_overlap5 original_top_probability0.36783125 candidate_top_probability0.378668741; TEACHER_FORCED_CPU_ONLY
+PASS_THREE_TOKEN_HELLO_CPU_SEQUENCE; BASELINE_NOT_INDEPENDENTLY_PINNED_NOT_ANSWER_QUALITY_CARD_OR_SPEED
