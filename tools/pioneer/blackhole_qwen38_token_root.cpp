@@ -7,6 +7,11 @@
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38TokenMetadata.h"
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+#include "PioneerQ38HybridHeadLayout.h"
+#include "PioneerQ38Bf16Input.h"
+#include "PioneerQ38HybridMatrixReceipt.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
 #ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
 #include "PioneerQ38FastDecodeProfileData.h"

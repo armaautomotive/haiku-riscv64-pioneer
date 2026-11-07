@@ -5,6 +5,9 @@
 #define PIONEER_BANKS_MOCK_ONLY
 #include "../PioneerQ38HybridJobBinding.h"
 #include "../PioneerQ38HybridWorkerLayout.h"
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_SIMULATION)
+#include "../PioneerQ38HybridHeadWorkerLayout.h"
+#endif
 #include "../PioneerQ38Bf16RootPairs.h"
 #include "../PioneerQ38HybridRootPairs.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionJobs.h"
@@ -13,7 +16,11 @@
 #include <cstdio>
 #include <memory>
 #include <vector>
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_SIMULATION)
+namespace HW=PioneerQ38HybridHeadWorkerLayout;
+#else
 namespace HW=PioneerQ38HybridWorkerLayout;
+#endif
 struct RootProbe {
  const PioneerQ38ProjectionJobs& original;
  unsigned parts[119][8]={},rows[119]={},table[7][4]={};

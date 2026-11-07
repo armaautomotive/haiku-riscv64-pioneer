@@ -36,5 +36,33 @@ struct PioneerQ38HybridHeadModelPlan {
   if(headCount!=7 || rows!=248320 || banks!=127 || staged.parts.size()!=source.Count())return false;
   output=std::move(staged);return true;
  }
+ enum : unsigned {ManifestWords=64*3*7};
+ template<class Canonical>static bool Manifest(const Canonical& source,const Proposal& proposal,uint32_t* output,unsigned words){
+  if(!output || words!=ManifestWords || (reinterpret_cast<uintptr_t>(output)&3))return false;
+  const uintptr_t o=reinterpret_cast<uintptr_t>(output),c=reinterpret_cast<uintptr_t>(&source),p=reinterpret_cast<uintptr_t>(&proposal);
+  if(proposal.parts.size()>SIZE_MAX/sizeof(Base::Part))return false;
+  const uintptr_t storage=reinterpret_cast<uintptr_t>(proposal.parts.data()),limit=~uintptr_t(0);
+  const size_t bytes=ManifestWords*sizeof(uint32_t),partBytes=proposal.parts.size()*sizeof(Base::Part);
+  if(o>limit-bytes || c>limit-sizeof(source) || p>limit-sizeof(proposal) || storage>limit-partBytes
+   || (o<c+sizeof(source) && c<o+bytes) || (o<p+sizeof(proposal) && p<o+bytes)
+   || (partBytes && o<storage+partBytes && storage<o+bytes))return false;
+  Proposal expected;if(!Build(source,expected) || expected.parts.size()!=proposal.parts.size() || expected.used!=proposal.used)return false;
+  for(unsigned i=0;i<expected.parts.size();i++){
+   const auto& a=expected.parts[i];const auto& b=proposal.parts[i];
+   if(a.original!=b.original || a.bank!=b.bank || a.offset!=b.offset || a.bytes!=b.bytes || a.allocated!=b.allocated || a.encoding!=b.encoding)return false;
+  }
+  uint32_t staged[ManifestWords]={};unsigned count=0;
+  for(unsigned i=0;i<source.Count();i++){
+   const auto* p=source.Part(i);if(!p)return false;
+   if(p->kind!=Canonical::WeightKind || p->layer>=64 || p->role<2 || p->role>4)continue;
+   const auto& q=expected.parts[i];const unsigned at=(p->layer*3+p->role-2)*7+p->bank;
+   if(p->bank>=7 || at>=ManifestWords || staged[at] || q.bank!=p->bank || q.offset>UINT32_MAX-Canonical::Base)return false;
+   staged[at]=Canonical::Base+q.offset;count++;
+  }
+  if(count!=ManifestWords)return false;
+  for(unsigned i=0;i<ManifestWords;i++){if(!staged[i])return false;}
+  for(unsigned i=0;i<ManifestWords;i++)output[i]=staged[i];
+  return true;
+ }
 };
 #endif

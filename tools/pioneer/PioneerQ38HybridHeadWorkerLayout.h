@@ -1,12 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
 #define PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
-#if (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION)) \
+#if (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION)) \
  || (defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
   || !defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || PIONEER_Q38_HYBRID_WORKER_IMAGE != 1 \
   || !defined(PIONEER_Q38_BF16_WORKER_IMAGE) || PIONEER_Q38_BF16_WORKER_IMAGE != 1 \
-  || defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION))) \
+  || defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION))) \
  || (defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \
+  || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE) || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION))) \
+ || (defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION != 1 \
+  || !defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) || PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP != 1 \
+  || !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU != 1 \
   || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE))) \
  || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
@@ -27,10 +31,15 @@ namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;
 enum : unsigned {Magic=0x38574751,JobWitness=0x384f4751,Bfp8MaskLow=0,Bfp8MaskHigh=0x1ffc0000};
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+#define QGW8_HEAD_FN static __attribute__((noinline,unused,section(".bf16.head")))
+#else
+#define QGW8_HEAD_FN static inline
+#endif
 static inline unsigned BootWord(unsigned i){
  return i==40?unsigned(JobWitness):i==49?unsigned(Bfp8MaskLow):i==50?unsigned(Bfp8MaskHigh):Base::BootWord(i);
 }
-static inline bool BootShape(const uint32_t* b){
+QGW8_HEAD_FN bool BootShape(const uint32_t* b){
  if(!b || b[0]!=Magic || b[40]!=JobWitness || b[49]!=Bfp8MaskLow || b[50]!=Bfp8MaskHigh)return false;
  uint32_t old[64];for(unsigned i=0;i<64;i++)old[i]=b[i];
  old[0]=Base::Magic;old[40]=Base::JobWitness;old[49]=Base::Bfp8MaskLow;old[50]=Base::Bfp8MaskHigh;
@@ -40,7 +49,7 @@ static inline bool HeadJob(const uint32_t* j){return j && j[2]==GlobalMatrix && 
 static inline bool FpuJob(const uint32_t* j){return HeadJob(j) || Base::FpuJob(j);}
 // The head-only coordinator must not link the much larger FFN/general job
 // grammar into its small ROM. Equivalent head restrictions, DATA only.
-static inline bool HeadShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+QGW8_HEAD_FN bool HeadShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic || !HeadJob(j) || densePhase || previous>=0x7ffffffe
   || j[1]!=previous+1 || !j[1] || j[1]>=0x7fffffff || j[3]!=b[3] || j[4]!=b[4] || j[5]!=64
   || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff)return false;
@@ -52,7 +61,7 @@ static inline bool HeadShape(const uint32_t* j,const uint32_t* b,unsigned previo
  for(unsigned i=36;i<64;i++)if(j[i])return false;
  return true;
 }
-static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+QGW8_HEAD_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  if(FpuJob(j)){
   if(densePhase || previous>=0x7ffffffe || j[1]!=previous+1 || !j[1] || j[1]>=0x7fffffff
@@ -79,5 +88,6 @@ static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previou
  oldBoot[49]=Base::Bfp8MaskLow;oldBoot[50]=Base::Bfp8MaskHigh;
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
 }
+#undef QGW8_HEAD_FN
 }
 #endif

@@ -32,7 +32,17 @@
 #endif
 #ifndef PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
 #define PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP)
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION)
+#if PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) \
+ || PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) \
+ || PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU != 1 || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
+#error QGW8 ROOT requires its exact non-loadable hybrid BF16 inspection profile
+#endif
+#define PIONEER_DRAM_SWEEP_FREESTANDING 1
+#include "PioneerQ38HybridHeadWorkerLayout.h"
+namespace PioneerQ38SelectedGlobalWorker=PioneerQ38HybridHeadWorkerLayout;
+enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP)
 #if PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) \
  || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 #error Hybrid ROOT requires a distinct experimental BF16 build, not an installed program selector

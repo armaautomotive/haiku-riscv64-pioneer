@@ -10,8 +10,8 @@ differs from QGW7/tag127; old Q6 head frames and mixed image identities are
 refused. The source role forbids driver/native, Work, CPU-validation,
 test-layer0 and other incompatible role combinations.
 
-This is NOT a complete runtime. No corresponding linked ROOT, authenticated
-repacker/owner, cache upload, model-quality pass, driver,
+This is NOT a complete runtime. No corresponding native ROOT owner,
+authenticated repacker, cache upload, model-quality pass, driver,
 Assistant mode or physical test exists for QGW8. It must not be installed,
 combined with tag127, or used as permission to test the card. The earlier
 GPU/storage recovery guard remains in place. Code outside the large matrix
@@ -56,6 +56,33 @@ the actual compiled QGW8 worker and BFP8 leaf under simulated NoC/FPU, and
 checked all 256 outputs and its argmax receipt. It injected the same fake
 modelLayer=64 state after worker boot; it did NOT execute the preceding 64
 layers or use real weights. A corrupted frame was refused before work.
+
+Linked inspection ROOT follow-up: the separate QGW8 parent and both layer
+components now compile with the new worker identity. Its head path packs
+live normalized FP32 values directly into BF16 RNE input, rather than using
+the old Q6 head's Q8_K operands, constructs BFP8 head jobs and checks the
+partial and BFP8 worker proof. Layers 48 and 49 select BFP4 and layers
+50..60 BFP8. The offline plan can produce the 1344-entry relocated FFN
+manifest only after recomputing and comparing the entire proposal; this is
+metadata, not proof that converted pages were uploaded or held stable.
+
+Two same-SDK ROOT builds matched, ELF SHA-256
+8b7bac64e64d963e729e347a209c3ca4be951992aa924ead0c48d97e0e79478f;
+text 129480/131072 bytes, BF16 section 39716/65536 bytes. The old QGW7 ROOT
+also independently rebuilt to its previous ELF hash. The old tag127
+program generator rejects the new identity. The build checked per-function
+frames, but this is not proof of complete combined-stack or runtime safety.
+
+With synthetic data and simulated instructions, actual QGW8 recurrent and
+dense ROOT code built 72 expected FFN jobs across format boundaries and
+refused a damaged relocation manifest. The emitted ROOT head shape/job
+matched the independent plan, and actual BF16 packing matched independent
+rounding for 256 values and atomically refused invalid inputs. A 256-output
+worker proof was consumed by the ROOT's actual emitted receipt function;
+64 individual corrupted proof words were refused. The complete Gather
+transaction, ROOT-to-worker NoC sequence, all 64 layers and a real generated
+token have NOT been executed in that test. The worker test injects completed
+layer history and all operands/fabric are synthetic.
 
 The 11-layer FFN numerical comparison with original weights is complete,
 separately from this worker test; its results/limits are recorded in

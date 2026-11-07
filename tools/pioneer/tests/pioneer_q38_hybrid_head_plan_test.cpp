@@ -41,7 +41,7 @@ static std::array<uint32_t,64> WorkerBoot(const std::array<uint32_t,64>& root,un
  assert(W::BootShape(b.data()));return b;
 }
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && argv[1][0]=='/'));
+ assert(argc==1 || (argc>=2 && argc<=4 && argv[1][0]=='/' && (argc<3 || argv[2][0]=='/') && (argc<4 || argv[3][0]=='/')));
  auto canonical=std::make_unique<Canonical>();assert(canonical->Build());Plan::Proposal proposal;
  assert(Plan::Build(*canonical,proposal) && proposal.parts.size()==canonical->Count());
  PioneerQ38HybridModelPlan::Proposal reference;
@@ -63,6 +63,15 @@ int main(int argc,char** argv){
  }
  assert(work<canonical->Count() && norm<canonical->Count() && heads==7);
  for(unsigned b=0;b<7;b++)assert(next[b]==proposal.used[b]);
+ std::vector<uint32_t> manifest(Plan::ManifestWords);assert(Plan::Manifest(*canonical,proposal,manifest.data(),manifest.size()));
+ for(unsigned i=0;i<canonical->Count();i++){
+  const auto* p=canonical->Part(i);assert(p);
+  if(p->kind==Canonical::WeightKind && p->layer<64 && p->role>=2 && p->role<=4)
+   assert(manifest[(p->layer*3+p->role-2)*7+p->bank]==Canonical::Base+proposal.parts[i].offset);
+ }
+ auto changed=proposal;changed.parts[0].offset+=4096;auto intact=manifest;
+ assert(!Plan::Manifest(*canonical,changed,manifest.data(),manifest.size()) && manifest==intact);
+ assert(!Plan::Manifest(*canonical,proposal,reinterpret_cast<uint32_t*>(proposal.parts.data()),manifest.size()));
  const auto& wp=proposal.parts[work];const auto& np=proposal.parts[norm];const unsigned workspace=Canonical::Base+wp.offset;
  const unsigned fixed[]={H::Magic,1,128,0,workspace,workspace+H::C::HeadOffset,np.bank,Canonical::Base+np.offset,5120,248320,973,9,119,8,5440,20480};
  for(unsigned i=0;i<16;i++){h[i]=fixed[i];h[16+i]=root[16+i];}for(unsigned i=0;i<8;i++)h[32+i]=root[8+i];
@@ -82,11 +91,20 @@ int main(int argc,char** argv){
  }
  assert(total==248320);for(auto c:coverage)assert(c==1);
  auto boot=WorkerBoot(root,1);std::array<uint32_t,64>out;out.fill(0xa5a5a5a5);const auto untouched=out;
- if(argc==2){
+ if(argc>=2){
   static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"fixture uses little-endian worker words");
   std::array<uint32_t,64> fixture={};assert(H::Job(h.data(),0,0,0,boot.data(),fixture.data()));
   int fd=open(argv[1],O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);assert(fd>=0);
   assert(write(fd,fixture.data(),sizeof(fixture))==sizeof(fixture) && !fsync(fd) && !close(fd));
+ }
+ if(argc>=3){
+  int fd=open(argv[2],O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);assert(fd>=0);
+  assert(write(fd,manifest.data(),manifest.size()*sizeof(uint32_t))==ssize_t(manifest.size()*sizeof(uint32_t)) && !fsync(fd) && !close(fd));
+ }
+ if(argc==4){
+  int fd=open(argv[3],O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);assert(fd>=0);
+  assert(write(fd,root.data(),sizeof(root))==sizeof(root) && write(fd,h.data(),sizeof(h))==sizeof(h)
+   && write(fd,boot.data(),sizeof(boot))==sizeof(boot) && !fsync(fd) && !close(fd));
  }
  assert(!H::Job(h.data(),973,0,0,boot.data(),out.data()) && !H::Job(h.data(),0,0x7ffffffe,0,boot.data(),out.data())
   && !H::Job(h.data(),0,0,8192,boot.data(),out.data()) && out==untouched);

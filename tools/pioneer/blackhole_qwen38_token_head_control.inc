@@ -177,7 +177,12 @@ static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
  for(unsigned wave=0;wave<9;wave++){
   InputSeal();unsigned workers=wave==8?21:119;
   for(unsigned w=0;w<workers;w++){
-   uint32_t job[64];if(!T::Job(header,p->state[Position],wave*119+w,Words(R::Nonces)[w],PeerBoot(w),job))scalar_fault_park();
+   uint32_t job[64];
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+   if(!H::Job(header,wave*119+w,Words(R::Nonces)[w],p->state[Position],PeerBoot(w),job))scalar_fault_park();
+#else
+   if(!T::Job(header,p->state[Position],wave*119+w,Words(R::Nonces)[w],PeerBoot(w),job))scalar_fault_park();
+#endif
    for(unsigned i=0;i<64;i++)Words(R::PeerJobs+w*256)[i]=job[i];
    Dispatch(header,w);
   }

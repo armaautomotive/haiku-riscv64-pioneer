@@ -1,7 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Inside the NEW global parent namespace. No host-ready entry point. Only
 // reached after all64 real returning calls under this SAME private owner.
-namespace H=PioneerQ38GlobalHeadLayout;namespace G=PioneerQ38SelectedGlobalWorker;
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+namespace H=PioneerQ38HybridHeadLayout;
+#else
+namespace H=PioneerQ38GlobalHeadLayout;
+#endif
+namespace G=PioneerQ38SelectedGlobalWorker;
 static const uint32_t* PeerBoot(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerBoots+w*256);}
 static const uint32_t* PeerJob(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerJobs+w*256);}
 static void HeadSeal(const uint32_t* h,bool counters=true){
@@ -60,6 +65,11 @@ static void InputSeal(){
  for(unsigned i=0;i<2560;i++)if(Words(R::Native)[i]!=Words(R::NativeShadow)[i])scalar_fault_park();
  for(unsigned i=0;i<32;i++)if(Words(R::Scales)[i]!=Words(R::ScaleShadow)[i])scalar_fault_park();
 }
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+static __attribute__((noinline,section(".bf16.head"))) bool HeadBf16Pack(const uint32_t* input,uint32_t* output){
+ return PioneerQ38Bf16Input::Pack(input,256,output,128);
+}
+#endif
 static void Normalize(const uint32_t* h){
  unsigned workspace=Owner()->state[Workspace],bank=Owner()->state[Bank];
  for(unsigned at=0;at<20480;at+=16384){
@@ -72,10 +82,15 @@ static void Normalize(const uint32_t* h){
  for(unsigned i=0;i<5120;i++)Words(R::InputShadow)[i]=Words(R::Input)[i];
  for(unsigned i=0;i<32;i++)Words(R::Scales)[i]=0;
  for(unsigned at=0;at<5120;at+=256){
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+  if(!HeadBf16Pack(reinterpret_cast<const uint32_t*>(R::Input+at*4),
+    reinterpret_cast<uint32_t*>(R::Native+at*2)))scalar_fault_park();
+#else
   // Same existing576B numeric capsule,not a second quantizer or CPU path.
   if(!q38_global_chain_quantize14(reinterpret_cast<const float*>(R::Input+at*4),reinterpret_cast<void*>(R::QuantizedChunk)))scalar_fault_park();
   for(unsigned i=0;i<128;i++)Words(R::Native)[at/2+i]=Words(R::QuantizedChunk)[i];
   Words(R::Scales)[at>>8]=Words(R::QuantizedChunk)[128];
+#endif
  }
  for(unsigned i=0;i<2560;i++)Words(R::NativeShadow)[i]=Words(R::Native)[i];
  for(unsigned i=0;i<32;i++)Words(R::ScaleShadow)[i]=Words(R::Scales)[i];
@@ -126,7 +141,34 @@ static void Release(const uint32_t* h,unsigned w){
  unsigned n=Words(R::Nonces)[w];if(n>=0x7ffffffe || PeerJob(w)[1]!=n+1)scalar_fault_park();
  *Words(R::Scratch)=n+1;PeerPacket(h,w,G::Doorbell,4,true);Words(R::Nonces)[w]=n+1;
 }
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+static __attribute__((noinline,section(".bf16.head"))) void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestRow,unsigned& bestBits,unsigned& rows){
+#else
 static void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestRow,unsigned& bestBits,unsigned& rows){
+#endif
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+ uint32_t expectedJob[64];unsigned n=Words(R::Nonces)[w];
+ if(!n || !H::Job(h,ordinal,n-1,Owner()->state[Position],PeerBoot(w),expectedJob))scalar_fault_park();
+ for(unsigned i=0;i<64;i++)if(PeerJob(w)[i]!=expectedJob[i])scalar_fault_park();
+ Wait(h,w,false);const auto* j=PeerJob(w);const auto* b=PeerBoot(w);
+ PeerPacket(h,w,G::Partial,512,false);uint32_t p[64],proof[64],before[8];
+ for(unsigned i=0;i<64;i++){p[i]=Words(R::Scratch)[i];proof[i]=Words(R::Scratch+256)[i];}
+ for(unsigned i=0;i<8;i++)before[i]=Words(R::Counters)[w*8+i];
+ const unsigned first=j[32],count=j[20]*32;
+ const unsigned expected[]={G::PartialMagic,j[1],64,j[6],w+1,j[34],first,count,p[8],p[9],1,j[7],248320,5120,8,1};
+ for(unsigned i=0;i<16;i++)if(p[i]!=expected[i])scalar_fault_park();
+ if((p[9]&0x7f800000)==0x7f800000 || p[8]<first || p[8]>=first+count || j[2]!=G::GlobalMatrix
+  || !PioneerQ38HybridMatrixReceipt::Matrix(proof,j,b,before,p+16))scalar_fault_park();
+ for(unsigned i=0;i<10;i++)if(p[24+i]!=proof[20+i])scalar_fault_park();
+ for(unsigned i=0;i<16;i++)if(p[34+i]!=b[16+i])scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(p[50+i]!=b[8+i])scalar_fault_park();
+ for(unsigned i=58;i<64;i++)if(p[i])scalar_fault_park();
+ if(p[18]!=p[22])scalar_fault_park();
+ for(unsigned i=0;i<8;i++)Words(R::Counters)[w*8+i]=p[16+i];
+ Closed(h,w);
+ if(bestRow==248320 || G::Better(p[9],p[8],bestBits,bestRow)){bestRow=p[8];bestBits=p[9];}
+ rows+=count;
+#else
  uint32_t expectedJob[64];unsigned n=Words(R::Nonces)[w];
 #ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
  if(!n || !T::Job(h,Owner()->state[Position],ordinal,n-1,PeerBoot(w),expectedJob))scalar_fault_park();
@@ -168,6 +210,7 @@ static void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestR
  Closed(h,w);
  if(bestRow==248320 || G::Better(p[9],p[8],bestBits,bestRow)){bestRow=p[8];bestBits=p[9];}
  rows+=groups*16;
+#endif
 }
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
 #include "blackhole_qwen38_global_feedback_control.inc"

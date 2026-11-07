@@ -6,6 +6,11 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error Hybrid ROOT translation is experimental and cannot select native or Work roles
 #endif
+#if defined(PIONEER_Q38_HEAD_MATRIX_SIMULATION) && (PIONEER_Q38_HEAD_MATRIX_SIMULATION != 1 \
+ || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE))
+#error QGW8 synthetic relocation is DATA-only, not a ROOT build
+#endif
 
 // Translate the actual ROOT's existing canonical paired plan to the proposed
 // converted layout. The caller MUST authenticate the seven destination entries
@@ -20,7 +25,11 @@ struct PioneerQ38HybridRootPairs {
  template<class IO> static bool Relocate(IO& io,unsigned layer,unsigned k,unsigned rows){
 #endif
   if(layer>=64 || (k!=5120 && k!=17408) || rows!=(k==5120?17408U:5120U))return false;
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_SIMULATION)
+  const bool eight=layer>=50 && layer<=60;
+#else
   const bool eight=layer>=48 && layer<=60;
+#endif
   const unsigned oldBand=k==5120?92160U:313344U;
   const unsigned newBand=eight?(k==5120?174080U:591872U):oldBand;
   unsigned original[7],destination[7],first[7],bands[7],done[7];

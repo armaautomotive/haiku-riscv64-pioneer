@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #define PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #include "PioneerQ38HybridWorkerLayout.h"
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)
+#include "PioneerQ38HybridHeadWorkerLayout.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
 #include "PioneerQ38HybridInputReuseProfile.h"
 #endif
@@ -19,7 +22,11 @@ struct PioneerQ38HybridMatrixReceipt {
  bool Matrix(const uint32_t* p,const uint32_t* j,const uint32_t* b,
 #endif
   const uint32_t* before,const uint32_t* after){
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)
+  namespace M=PioneerQ38HybridHeadWorkerLayout;
+#else
   namespace M=PioneerQ38HybridWorkerLayout;
+#endif
   if(!p || !j || !b || !before || !after || !j[1] || !M::FpuJob(j)
    || !M::JobShape(j,b,j[1]-1,0) || before[2]!=before[6] || after[2]!=after[6])return false;
   const bool eight=j[16]==PioneerQ38Bfp8WorkerJob::Magic;

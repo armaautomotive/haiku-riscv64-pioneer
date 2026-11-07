@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_HYBRID_HEAD_LAYOUT_H
 #define PIONEER_Q38_HYBRID_HEAD_LAYOUT_H
-#if !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1
-#error QGW8 head metadata is isolated offline plan DATA only
+#if (!defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1) \
+ && (!defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION != 1)
+#error QGW8 head metadata requires isolated plan or ROOT inspection
 #endif
 #include "PioneerQ38HybridHeadWorkerLayout.h"
 #include "PioneerQ38GlobalChainLayout.h"
@@ -13,7 +14,12 @@
 namespace PioneerQ38HybridHeadLayout {
 namespace C=PioneerQ38GlobalChainLayout;namespace G=PioneerQ38HybridHeadWorkerLayout;
 enum : unsigned {Magic=0x38485651,Words=128,Stripe=64,StripeWords=8,Jobs=973,Waves=9,RowBytes=5440};
-static inline bool Shape(const uint32_t* h,const uint32_t* boot,unsigned bank,unsigned workspace){
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+#define QGW8_LAYOUT_FN static __attribute__((noinline,unused,section(".bf16.head")))
+#else
+#define QGW8_LAYOUT_FN static inline
+#endif
+QGW8_LAYOUT_FN bool Shape(const uint32_t* h,const uint32_t* boot,unsigned bank,unsigned workspace){
  if(!h || !C::BootShape(boot) || bank>=7 || workspace<0x04000000 || workspace>0xc0000000 || (workspace&4095))return false;
  const unsigned fixed[]={Magic,1,128,bank,workspace,workspace+C::HeadOffset,0,0,5120,248320,973,9,119,8,RowBytes,20480};
  for(unsigned i=0;i<16;i++)if(i!=6 && i!=7 && h[i]!=fixed[i])return false;
@@ -39,7 +45,7 @@ static inline bool Shape(const uint32_t* h,const uint32_t* boot,unsigned bank,un
  for(unsigned i=120;i<128;i++)if(h[i])return false;
  return rows==248320;
 }
-static inline bool Job(const uint32_t* h,unsigned ordinal,unsigned previous,unsigned position,const uint32_t* boot,uint32_t* j){
+QGW8_LAYOUT_FN bool Job(const uint32_t* h,unsigned ordinal,unsigned previous,unsigned position,const uint32_t* boot,uint32_t* j){
  if(!h || !boot || !j || ordinal>=Jobs || previous>=0x7ffffffe || position>=8192 || !G::BootShape(boot))return false;
  using Address=__UINTPTR_TYPE__;Address o=reinterpret_cast<Address>(j),a=reinterpret_cast<Address>(h),b=reinterpret_cast<Address>(boot),max=~Address(0);
  if(((o|a|b)&3) || o>max-256 || a>max-512 || b>max-256 || (o<a+512 && a<o+256) || (o<b+256 && b<o+256))return false;
@@ -62,5 +68,6 @@ static inline bool Job(const uint32_t* h,unsigned ordinal,unsigned previous,unsi
  for(unsigned i=0;i<64;i++)j[i]=stage[i];
  return true;
 }
+#undef QGW8_LAYOUT_FN
 }
 #endif

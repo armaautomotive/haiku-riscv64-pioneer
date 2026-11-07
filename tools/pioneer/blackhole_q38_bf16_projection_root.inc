@@ -198,7 +198,11 @@ static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
  const unsigned h[]={M::Magic,n,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};
  for(unsigned i=0;i<8;i++){Words(L::Scratch)[i]=h[i];Words(L::Scratch)[8+i]=d[32+i];}
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+#ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
+ const bool eight=d[42]>=50 && d[42]<=60;
+#else
  const bool eight=d[42]>=48 && d[42]<=60;
+#endif
  const unsigned leaf[]={eight?unsigned(PioneerQ38Bfp8WorkerJob::Magic):unsigned(PioneerQ38Bfp4WorkerJob::Magic),
   1,d[14],p[0],p[2]/2,p[4],w+1,M::Peer(w+1),BFP::Format,0xa0000,129,n,0x84000,0,0,0};
 #else
