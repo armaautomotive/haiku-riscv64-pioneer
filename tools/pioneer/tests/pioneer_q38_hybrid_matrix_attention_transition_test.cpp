@@ -9,7 +9,7 @@ namespace Dense=PioneerQ38DensePartitionLayout;
 
 struct TransitionImage:HybridImage {
  bool denseMode=false;uint32_t fp[32]={};unsigned matrixBefore=0;
- TransitionImage(const char* worker,const char* leaf):HybridImage(worker,leaf,73,17408){
+ TransitionImage(const char* worker,const char* leaf,unsigned peer=73):HybridImage(worker,leaf,peer,17408){
   native.expectedWeight=0xa5000;native.alternateWeight=0xa6000;
   native.expectedInput=0xa6000;native.alternateInput=0xa7000;native.thirdInput=0xa7400;
  }

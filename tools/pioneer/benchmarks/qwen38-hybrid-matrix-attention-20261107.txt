@@ -107,6 +107,19 @@ fabric, reset/PC-register responses, initial ROOT frame and inputs remain
 synthetic. One peer and one current token do not qualify the 96-worker
 Launch/global reductions, prefix-KV traffic, full model or physical device.
 
+A separate offline test executes all 68 actual QGW7 gated activation
+producers and transports their emitted BF16 bytes through a synthetic fabric
+into the input of an actual QGW7 BFP4 full-K down projection on worker 1.
+That worker keeps its own real simulated producer/NoC/register history;
+attempting its down projection without its producer is refused before any
+matrix operation. All 64 output words match a post-hoc calculation from
+the emitted input and independently unpacked test weights, using the same
+instruction arithmetic model as the matrix observer. It does not verify
+the activation against an independent oracle, execute the real ROOT
+transport, run other workers' down projections, reach attention, exercise
+the real model, or establish hardware behavior. It is included in the
+same ASan/UBSan runner when the worker and leaf are supplied.
+
 A native owner/format identity, full ROOT-to-worker L1 lifecycle,
 prior-token attention transport, multi-layer/token checks, quality and
 physical benchmarking remain required. No new throughput has been measured.

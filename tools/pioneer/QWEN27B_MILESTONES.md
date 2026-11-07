@@ -51,6 +51,9 @@ Its actual ROOT packet-transfer code also exchanged inputs, jobs, receipts
 and output with one simulated worker; the real ROOT receipt and counter
 checks passed all three phases and rejected injected corruption. The complete
 96-worker ROOT lifecycle, real NoC and full model are not yet tested.
+Another synthetic-fabric test connects all 68 actual gated producers to a
+single worker's BFP4 down projection while preserving its private ordering;
+the ROOT transport and the remaining down-projection workers are not covered.
 See the [attention experiment](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt)
 and [hybrid-worker test](benchmarks/qwen38-hybrid-matrix-attention-20261107.txt).
 
