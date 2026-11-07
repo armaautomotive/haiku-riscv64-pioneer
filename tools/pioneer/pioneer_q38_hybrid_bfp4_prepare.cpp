@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// Explicit CPU-only preparation of 1071 hybrid FFN cache entries. No GPU.
+// Explicit CPU-only preparation of hybrid FFN cache entries. No GPU.
 #if !defined(PIONEER_Q38_BFP4_PREPARATION_DIAGNOSTIC) || PIONEER_Q38_BFP4_PREPARATION_DIAGNOSTIC != 1
 #error Hybrid preparation requires the separate CPU-only preparation role
 #endif
@@ -45,10 +45,12 @@ static bool ParseDigest(const char* hex,PioneerModelWeightCache::Digest& result)
  return true;
 }
 int main(int argc,char** argv){
- if(argc!=3 || (strcmp(argv[1],"--prepare-bfp4") && strcmp(argv[1],"--verify-bfp4")) || argv[2][0]!='/'){
-  fprintf(stderr,"Usage: %s --prepare-bfp4|--verify-bfp4 ABSOLUTE_DEDICATED_CACHE\n",argv[0]);return 2;
+ if(argc!=3 || (strcmp(argv[1],"--prepare-bfp4") && strcmp(argv[1],"--verify-bfp4")
+  && strcmp(argv[1],"--prepare-qgw8-bfp4") && strcmp(argv[1],"--verify-qgw8-bfp4")) || argv[2][0]!='/'){
+  fprintf(stderr,"Usage: %s --prepare-bfp4|--verify-bfp4|--prepare-qgw8-bfp4|--verify-qgw8-bfp4 ABSOLUTE_DEDICATED_CACHE\n",argv[0]);return 2;
  }
- const bool verifyOnly=!strcmp(argv[1],"--verify-bfp4");
+ const bool qgw8=!strcmp(argv[1],"--prepare-qgw8-bfp4") || !strcmp(argv[1],"--verify-qgw8-bfp4");
+ const bool verifyOnly=!strcmp(argv[1],"--verify-bfp4") || !strcmp(argv[1],"--verify-qgw8-bfp4");
  int fd=open("/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf",O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return 1;
  struct stat identity={};if(fstat(fd,&identity) || !S_ISREG(identity.st_mode) || identity.st_uid!=geteuid()
   || identity.st_nlink!=1 || (identity.st_mode&0022) || uint64_t(identity.st_size)!=PioneerQwen38Gguf::FullBytes){close(fd);return 1;}
@@ -64,14 +66,19 @@ int main(int argc,char** argv){
  }
  PioneerQwen38PackedPlan plan;if(!plan.Build(model,8192,true,true))return 1;
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!canonical->Build())return 1;
- AuthenticatedPlan checked{plan};using Preparation=PioneerQ38HybridBfp4Preparation<AuthenticatedSource,AuthenticatedPlan>;
- Preparation::Statistics stats;
- const bool okay=Preparation::Run(source,checked,*canonical,digest,fingerprint,argv[2],verifyOnly,stats,error,
-  [](unsigned done,unsigned total,bool hit){if(done%21==0 || done==total){
+ AuthenticatedPlan checked{plan};
+ auto run=[&](auto preparation){
+  using Preparation=decltype(preparation);typename Preparation::Statistics stats;
+  const bool okay=Preparation::Run(source,checked,*canonical,digest,fingerprint,argv[2],verifyOnly,stats,error,
+   [](unsigned done,unsigned total,bool hit){if(done%21==0 || done==total){
    printf("BFP4 fragments %u/%u; last %s\n",done,total,hit?"verified cache hit":"newly prepared");fflush(stdout);
-  }});
- if(!okay){fprintf(stderr,"Hybrid BFP4 preparation stopped: %s\n",error.c_str());return 1;}
- printf("BFP4 %s: %u verified fragments, %u hits, %llu bytes; no P100A access or speed claim.\n",
-  verifyOnly?"verification":"preparation",stats.fragments,stats.hits,(unsigned long long)stats.bytes);
- return fflush(stdout)?1:0;
+   }});
+  if(!okay){fprintf(stderr,"Hybrid BFP4 preparation stopped: %s\n",error.c_str());return 1;}
+  printf("BFP4 %s: %u verified fragments, %u hits, %llu bytes; no P100A access or speed claim.\n",
+   verifyOnly?"verification":"preparation",stats.fragments,stats.hits,(unsigned long long)stats.bytes);
+  return fflush(stdout)?1:0;
+ };
+ using Old=PioneerQ38HybridBfp4Preparation<AuthenticatedSource,AuthenticatedPlan>;
+ using Qgw8=PioneerQ38HybridBfp4Preparation<AuthenticatedSource,AuthenticatedPlan,PioneerQ38Bfp4FragmentCache,UINT64_C(0x1ffc000000000000)>;
+ return qgw8?run(Qgw8{}):run(Old{});
 }

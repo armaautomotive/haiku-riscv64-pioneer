@@ -1,0 +1,32 @@
+QGW8 converted-page preparation, November 7 2026: OFFBOARD ONLY
+================================================================
+
+This isolated proposal routes the output head to BFP8, FFN layers 50-60
+to BFP8, remaining FFN layers to BFP4, and other learned weights to their
+original format. Its read-only adapter binds the authenticated original
+source and relocated plan, refuses unavailable or changed sources and caches,
+and stages reads before publishing. Its full converted-stripe preflight
+checks 1113 BFP4 FFN, 231 BFP8 FFN, and 7 BFP8 head fragments.
+
+The existing CPU-only FFN preparer now has distinct explicit QGW8 options;
+the previous 13-layer options retain their original behavior. A separate
+CPU-only head preparer checks the full same-open model hash and prepares or
+verifies all seven head cache entries, using an independently keyed converter
+fingerprint. Neither preparer is integrated with Work or the native uploader.
+
+Tests use fake complete-model sources and caches to exercise routing,
+boundaries, preflight coverage, changed inputs, failures, atomic destination
+and role guards; actual model source types are compiled. Separate existing
+synthetic-data tests exercise the real head converter and cache. No full real
+model was converted for this layout, no new driver was installed, no P100A
+computation was performed, and no QGW8 inference or tokens/sec was measured.
+Both CPU-only preparers also cross-compiled for RISC-V Haiku; they have not
+been installed or run on the Pioneer.
+This is not a quality qualification or a claim of Work-mode readiness. The
+last recorded actual full-27B rate remains approximately 0.173 tokens/sec,
+using the earlier mixed implementation.
+
+Unresolved before physical inference: qualify the output-head precision and
+the combined format numerically, integrate and validate model upload and
+driver ownership for the new layout, and resolve the post-failure file
+integrity/guard conditions documented in the postboot integrity record.

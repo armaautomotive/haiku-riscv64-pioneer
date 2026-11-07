@@ -5,11 +5,14 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
 #include <functional>
 
-// Prepare or verify all 1071 BFP4 fragments for the fixed hybrid layer mask.
+// Prepare or verify all BFP4 fragments for the explicit supported hybrid mask.
 // The caller supplies an independently authenticated, stable same-open model;
 // no accelerator, mutable-state upload, inference or quality is implied.
-template<class Source,class Plan,template<class>class Fragment=PioneerQ38Bfp4FragmentCache>
+template<class Source,class Plan,template<class>class Fragment=PioneerQ38Bfp4FragmentCache,
+ uint64_t Bfp8Layers=UINT64_C(0x1fff000000000000)>
 struct PioneerQ38HybridBfp4Preparation {
+ static_assert(Bfp8Layers==UINT64_C(0x1fff000000000000) || Bfp8Layers==UINT64_C(0x1ffc000000000000),
+  "Only the known 13-layer and QGW8 11-layer preparation masks are supported");
  struct Statistics {unsigned fragments=0,hits=0;uint64_t bytes=0;};
  static bool Run(Source& source,const Plan& plan,const PioneerQ38CanonicalModelPlan& canonical,
   const PioneerModelWeightCache::Digest& digest,const PioneerModelWeightCache::Digest& fingerprint,
@@ -19,14 +22,16 @@ struct PioneerQ38HybridBfp4Preparation {
   if(!directory || directory[0]!='/' || !source.Ready() || !source.Stable() || !source.Epoch()
    || !plan.MatchesSource(source) || !plan.Tiled() || plan.DeltaSlots()!=2 || !canonical.Ready()
    || plan.Parts().size()!=canonical.Count())return fail("Invalid hybrid preparation source or plan.");
-  const uint64_t epoch=source.Epoch();unsigned expected=0;
+  const uint64_t epoch=source.Epoch();unsigned expected=0,eightCount=0;
+  for(unsigned layer=0;layer<64;layer++)eightCount+=unsigned((Bfp8Layers>>layer)&1);
+  const unsigned required=64*3*7-eightCount*3*7;
   // Validate EVERY selected original stripe before the first cache write.
   for(unsigned i=0;i<canonical.Count();i++){
    const auto* c=canonical.Part(i);const auto& p=plan.Parts()[i];
    if(!c || p.kind!=c->kind || p.layer!=c->layer || p.role!=c->role || p.bank!=c->bank || p.firstRow!=c->firstRow
     || p.rows!=c->rows || p.rowBytes!=c->rowBytes || p.proposedAddress!=canonical.Base+c->offset
     || p.bytes!=c->bytes || p.allocated!=c->allocated)return fail("Original and canonical model layouts differ.");
-   if(c->kind==canonical.WeightKind && c->layer<64 && c->role>=2 && c->role<=4 && (c->layer<48 || c->layer>60)){
+   if(c->kind==canonical.WeightKind && c->layer<64 && c->role>=2 && c->role<=4 && !(Bfp8Layers&(UINT64_C(1)<<c->layer))){
     PioneerQ38Tensor expectedTensor;
     if(p.tensor>=source.Tensors().size() || !PioneerQ38Expected(p.layer,p.role,expectedTensor))return fail("Selected tensor is invalid.");
     const auto& tensor=source.Tensors()[p.tensor];
@@ -36,7 +41,7 @@ struct PioneerQ38HybridBfp4Preparation {
     expected++;
    }
   }
-  if(expected!=1071)return fail("Hybrid BFP4 fragment count is not canonical.");
+  if(expected!=required)return fail("Hybrid BFP4 fragment count is not canonical.");
   Statistics staged;
   for(unsigned i=0;i<canonical.Count();i++){
    if(plan.Parts().size()!=canonical.Count())return fail("Original plan changed during preparation.");
@@ -44,7 +49,7 @@ struct PioneerQ38HybridBfp4Preparation {
    if(!c || p.kind!=c->kind || p.layer!=c->layer || p.role!=c->role || p.bank!=c->bank || p.firstRow!=c->firstRow
     || p.rows!=c->rows || p.rowBytes!=c->rowBytes || p.proposedAddress!=canonical.Base+c->offset
     || p.bytes!=c->bytes || p.allocated!=c->allocated)return fail("Original plan changed during preparation.");
-   if(p.kind!=canonical.WeightKind || p.layer>=64 || p.role<2 || p.role>4 || (p.layer>=48 && p.layer<=60))continue;
+   if(p.kind!=canonical.WeightKind || p.layer>=64 || p.role<2 || p.role>4 || (Bfp8Layers&(UINT64_C(1)<<p.layer)))continue;
    if(!source.Ready() || !source.Stable() || source.Epoch()!=epoch || !plan.MatchesSource(source))return fail("Model changed during hybrid preparation.");
    Fragment<Source> fragment;bool hit=true;
    if(existingOnly){if(!fragment.OpenPrepared(source,p,digest,fingerprint,directory,error))return false;}
