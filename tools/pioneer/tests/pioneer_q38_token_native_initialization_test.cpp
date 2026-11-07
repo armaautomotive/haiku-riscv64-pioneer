@@ -28,6 +28,9 @@
 #ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadReceipt.h"
 #endif
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
 #include "pioneer_q38_token_native_manual_ttsync_role.h"
 #endif
@@ -575,6 +578,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
  PioneerQ38SpanLease span;
  PioneerQ38HybridUploadReceipt* q38HybridReceipt=nullptr;
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ PioneerQ38Qgw8UploadReceipt* q38Qgw8Receipt=nullptr;
+#endif
 #else
  MockLease span;
 #endif
@@ -601,6 +607,9 @@ struct PioneerStoreContext {
  ~PioneerStoreContext(){delete q38TokenNative;delete q38Dispatch;
 #ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
   delete q38HybridReceipt;
+#endif
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+  delete q38Qgw8Receipt;
 #endif
  } // CPU-only fixture disposal;no physical resources exist
 };

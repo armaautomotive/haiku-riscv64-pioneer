@@ -5,7 +5,11 @@
 #define main pioneer_original_initialization_fixture_main
 #include "pioneer_q38_token_native_initialization_test.cpp"
 #undef main
-#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==8 && PioneerQ38TokenPrograms::Family==0x38505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x38574751,
+ "native initialization must use the QGW8 inspection image and grammar");
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
 static_assert(PioneerQ38TokenNativeProfile==7 && PioneerQ38TokenPrograms::Family==0x37505451
  && PioneerQ38SelectedGlobalWorker::Magic==0x37574751,
  "native initialization must use the QGW7 inspection image and grammar");
@@ -16,10 +20,18 @@ static_assert(PioneerQ38TokenNativeProfile==5 && PioneerQ38TokenPrograms::Family
 #endif
 
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic")))
+ assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic")
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+  || !strcmp(argv[2],"--faults")
+#endif
+  ))
   || (argc==4 && !strcmp(argv[2],"--execution-embedding")));
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ assert(argc==2 || (argc==3 && !strcmp(argv[2],"--faults")));
+#else
  assert(argc==2);
+#endif
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  assert(argc==2 || (strcmp(argv[2],"--runtime") && strcmp(argv[2],"--bootstrap") && strcmp(argv[2],"--execution") && strcmp(argv[2],"--execution-traffic") && strcmp(argv[2],"--execution-embedding")));
@@ -45,7 +57,11 @@ int main(int argc,char** argv){
  io.executionCpu->original=&original;
 #endif
  std::fill(f.learned.begin(),f.learned.end(),0);c.hashes=hashes.data();c.initialized=f.learned.data();c.span={};
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ c.q38Qgw8Receipt=new PioneerQ38Qgw8UploadReceipt;auto& receipt=*c.q38Qgw8Receipt;
+#else
  c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;auto& receipt=*c.q38HybridReceipt;
+#endif
  assert(receipt.Begin(&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration,c.banks,f.proof,f.learned.size()));
  unsigned bank=0,length=0,spans=0;uint64 offset=0,total=0;
  while(receipt.Next(bank,offset,length)){
@@ -58,9 +74,17 @@ int main(int argc,char** argv){
   c.span.saved=c.span.ready=c.span.dirty=true;c.span.nonce=++spans;assert(receipt.After());total+=length;
  }
  c.span.closed=true;c.span.ready=c.span.dirty=false;
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ assert(spans==22035 && total==UINT64_C(21167624192) && receipt.Seal(c.span));
+#else
  assert(spans==22005 && total==UINT64_C(21137039360) && receipt.Seal(c.span));
+#endif
  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ assert(receipt.DeriveBoundCanonical(*plan,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
+#else
  assert(receipt.DeriveBoundLayout(*plan,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
+#endif
  unsigned pages=0;
  for(unsigned i=0;i<672;i++){
   io.recurrent[i]=plan->RecurrentRegions()[i];io.recurrent[i].offset+=plan->Base;
@@ -74,13 +98,23 @@ int main(int argc,char** argv){
  assert(n==336);io.workspaceAddress=plan->Base+plan->Workspace(0)->offset;io.workspaceBank=0;
  const auto before=f.learned;assert(f.Bind());
  PioneerQ38StateZeroResult recurrent;PioneerQ38ConvHistoryZeroResult history;PioneerQ38ProjectionZeroResult projection;
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ if(argc==3 && !strcmp(argv[2],"--faults")){
+  io.failRun=1;assert(!f.Recurrent(recurrent));f.Unknown();assert(f.learned==before);
+  puts("PASS QGW8 native initializer failure retains/quarantines simulated owners; NO DEVICE OR INFERENCE");return 0;
+ }
+#endif
  assert(f.Recurrent(recurrent) && f.History(history) && f.Projection(projection));
  assert(c.q38TokenNative && c.q38TokenNative->InitializationsClosed(c.banks,f.proof)
   && !c.q38TokenNative->Unsafe() && !c.banks.Quarantined() && f.learned==before && !lockHeld);
  const unsigned touches=io.touches;
  assert(!f.Recurrent(recurrent) && !f.History(history) && !f.Projection(projection) && io.touches==touches);
  assert(!c.q38TokenNative->Unsafe() && !c.banks.Quarantined() && f.learned==before);
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ puts("PASS QGW8 sealed receipt/native bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");
+#else
  puts("PASS real sealed hybrid receipt/bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  io.runtimeWorkspace=io.workspaceAddress;

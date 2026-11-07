@@ -15,15 +15,21 @@ if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
 hybrid_header=None
-matrix_inspection='--hybrid-qgw7-header' in sys.argv
+qgw8_inspection='--qgw8-header' in sys.argv
+matrix_inspection='--hybrid-qgw7-header' in sys.argv or qgw8_inspection
 if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
-    selector='--hybrid-qgw7-header' if matrix_inspection else '--hybrid-qgw5-header'
-    assert sys.argv.count(selector)==1 and not (matrix_inspection and '--hybrid-qgw5-header' in sys.argv)
+    selectors=('--qgw8-header','--hybrid-qgw7-header','--hybrid-qgw5-header')
+    assert sum(sys.argv.count(s) for s in selectors)==1
+    selector='--qgw8-header' if qgw8_inspection else '--hybrid-qgw7-header' if matrix_inspection else '--hybrid-qgw5-header'
     index=sys.argv.index(selector);assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
-    assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
+    assert (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
+            or qgw8_inspection and sys.argv[2]=='--faults')
             or synthetic_embedding and len(sys.argv)==4 and sys.argv[2]=='--execution-embedding') and hybrid_header.is_absolute() and hybrid_header.is_file()
-    expected='5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    if qgw8_inspection:
+        assert (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults')) and not synthetic_embedding, \
+            'QGW8 profile is limited to initializer, fault or held-only inspection'
+    expected='72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
@@ -365,6 +371,8 @@ if hybrid_header:
                    PIONEER_Q38_TOKEN_BF16_PROGRAMS='1',PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC='1',
                    PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC='1',PIONEER_Q38_HYBRID_PROGRAMS_HEADER='"'+str(hybrid_header)+'"')
 if matrix_inspection:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
+if qgw8_inspection:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
+                                  PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
 if synthetic_embedding:defines['PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST']='1'
 if precise_context:
     defines.update(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1',
