@@ -1,0 +1,61 @@
+Qwen hybrid recovery: bounded BFS persistence probe
+===================================================
+November 7, 2026. The prior tag125 recovery guard remains intact and the
+failed trial was neither altered nor retried. Before any new card trial,
+investigate the stale post-power-cycle trial records described in
+qwen38-hybrid125-postboot-file-integrity-20261107.txt.
+
+The current Haiku boot volume reports BFS device /dev/disk/scsi/0/3/0/0,
+2048-byte filesystem blocks; it is not the NVMe device path. This is a
+SCSI-presented device and does not by itself identify the physical transport.
+Source inspection found that BFS fsync calls Inode::Sync and file_cache_sync;
+the VFS common_sync path does not itself issue B_FLUSH_DRIVE_CACHE. The
+global sync path requests a device flush but discards that ioctl result.
+BFS journal flushes also request a device flush and discard its result.
+These facts are not proof that lack of a flush caused the old failure.
+
+The separately built pioneer_bfs_durability_probe.cpp creates only a fresh,
+private /boot/home/pioneer-bfs-durability-XXXXXX directory and four small
+deterministic files. It checks file writes and fsync, invokes global sync
+(which has no useful return value), then checks the result of an explicit
+B_FLUSH_DRIVE_CACHE ioctl on the exact expected boot device and reads the
+files back. Its verify operation is read-only and refuses changed contents,
+unexpected device, mode or path. It does not touch the GPU, trial, driver,
+other existing files, SD cards or raw disk writes. Host-only fake-flush tests
+check invalid-device/path/content/mode/symlink and simulated-flush-failure
+refusals; the cross-compiled Haiku binary was SHA-256
+99c9914460f8d5a68c92b7b1ffa28b22205585d11be6715e46156995ccac54af.
+
+On the pinned Haiku SSH connection the exact device was verified and the
+real checked flush returned success. The created stage remains at
+/boot/home/pioneer-bfs-durability-w9D6AH. An independent immediate verify
+and SHA-256 reads reported the following; byte counts are 41, 38, 4704 and
+131072, respectively:
+
+ac636099b29bad8665499a4106f186b7ee45851480cdd533face3795d5ca92d7  small41
+847cf68aa7d49debeaec45b027132245e16b744c3eb11534d9279f84bfcb46b9  small38
+c6e288b37734632ac24053634917173e8a9bc551390e00e3d1cc5c5caa2bb98c  log4704
+fc241e050924f326e1621e60116406873a08c42529c473a34fc090d31b66fd30  blocks131072
+
+The read-only BFS inode records named separate direct allocation runs in
+group 59, starting at blocks 694, 695, 696 and 699; their lengths were 1, 1,
+3 and 64 blocks. Given the observed 16-bit allocation-group shift, read-only
+device-path reads from absolute partition blocks 3867318, 3867319, 3867320
+and 3867323, truncated to the respective file lengths, gave the same four
+hashes. These are reads through the running OS and do not independently
+exclude caching, drive faults, incorrect device acknowledgments, or other
+file corruption. The checked ioctl returned success, but persistence across
+an actual reboot is NOT tested. A successful later check would establish only
+these four files in that one trial, not whole-volume or power-loss safety.
+
+No reboot, power pulse, card operation, recovery guard bypass or repair was
+performed. CPU-only metadata still reported driver tag2026110700010125,
+generation1, cold0 and active_owner0. Verify on a separately observed future
+fresh boot using the same pinned Haiku identity and this exact stage:
+
+ /boot/home/pioneer-bfs-durability-probe-20261107-b --verify /boot/home/pioneer-bfs-durability-w9D6AH /dev/disk/scsi/0/3/0/0
+
+The probe does not attest that a reboot occurred. Do not interpret an
+immediate verify, successful flush or these four files as authorization to
+discard failed-trial evidence, weaken the restoration guard, install a new
+driver or run the spent accelerator trial.

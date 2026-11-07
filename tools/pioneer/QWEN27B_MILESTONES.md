@@ -52,6 +52,10 @@ full 27B model file has since matched its recorded SHA-256 on a read. The
 driver-restoration guard refused and the unqualified tag125 driver remains
 installed. No recovery guard has been bypassed and no new card test has run.
 See the [file-integrity investigation](benchmarks/qwen38-hybrid125-postboot-file-integrity-20261107.txt).
+An isolated [BFS durability probe](benchmarks/qwen38-bfs-durability-probe-20261107.txt)
+has now flushed and read back four small test files; their direct device-view
+hashes also matched. This was before reboot and does not resolve the earlier
+corruption or authorize a driver change.
 
 ## Milestone 1: upload the prepared model
 
