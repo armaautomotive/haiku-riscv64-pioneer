@@ -1,0 +1,32 @@
+Hybrid BFP8 selected-tensor preparer: BUILD/OFFBOARD, 2026-11-07
+================================================================
+
+The proposed hybrid also needs BFP8 FFN weights in layers48..60. The existing
+all-BFP8 cache writer can select one tensor, but doing that 39 times would
+rehash the 19GB original 39 times. A new wrapper includes the frozen original
+writer source and narrows only its Describe selection to those 39 exact FFN
+tensors. It delegates the actual ReadRange conversion unchanged to the
+original all-BFP8 codec and uses the existing cache recipe/keys. The original
+writer, existing cache files, and cache-reader ConversionPin are unchanged.
+
+The build refuses if the frozen original source fingerprint differs from
+7db613bfdde463be7f933f25123a00dbe39928cbd8a070aa2481c6cb936753d0.
+The corresponding original cache recipe hash was independently checked as
+551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897.
+The wrapper counts exactly 39 selections and must exit 0 with its own final
+PASS_HYBRID_BFP8_PREPARATION line; the included writer's earlier PASS line
+alone is not evidence of the wrapper's full selected-tensor coverage.
+
+Synthetic checks covered all 851 canonical tensor identities, the 39 desired
+names and shapes, 195 malformed selected shapes, forbidden build roles, and
+byte-identical wrapper/original conversion at three cross-tile offsets. Both
+Mac and Haiku wrapper builds succeeded; the build also checks that the
+preprocessed original writer actually binds the filtered adapter. The
+Haiku build SHA256 is
+d9088676e2f1bfc2751452b5fc8d0b1609382e418e76c19538ff993c27593836.
+The binary has NOT been installed or run on the real model, and no 39-tensor
+cache is claimed. Full same-open hash, source stability, cache atomicity,
+space guards and converted-byte checks remain the frozen writer's behavior.
+
+This is CPU-only model-data preparation, not a device owner, an uploader,
+Assistant integration, a natural-answer quality pass or a tokens/sec result.

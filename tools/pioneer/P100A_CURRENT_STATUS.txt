@@ -110,6 +110,9 @@ Four compact goals
    The full BFP4 portion of the proposed cache has now been started in a new
    dedicated Pioneer directory; completion is not yet established. See
    benchmarks/qwen38-hybrid-bfp4-cache-run-20261107.txt.
+   A 39-tensor BFP8 batch preparer also builds and passes synthetic selection
+   and frozen-converter checks, but has not run on the real model. See
+   benchmarks/qwen38-hybrid-bfp8-batch-build-20261107.txt.
    A two-position teacher-forced CPU comparison completed with independently
    retained candidate/original state. Both selected the same token at each
    position; KL was 0.20372 and 0.02355, with top-five overlap 4/5 and 5/5.
