@@ -89,8 +89,13 @@ a complete synthetic upload passed through that loader and the kernel receipt.
 An uncertain FD close now retains the tracked owner instead of implicitly
 ending it. The private native context now selects the matching pinned QGW5
 programs, stages the hybrid address table and rechecks it immediately before
-worker startup. The tracked client accepts only the private non-loadable test
-tag; this code is not yet a runnable driver or a physical inference result.
+worker startup. A separately tagged hybrid driver candidate now cross-builds
+with the matching pinned programs; a matching upload/release diagnostic also
+cross-builds, and simulated tests check its same-FD receipt and failure paths.
+The candidate has not been installed or run on the card. Its uploader cannot
+yet start inference on its held weights, so this is not a full-model result.
+The private non-loadable test client and candidate client reject each other's
+driver identity.
 Non-cryptographic page hashes do not prove the format or contents of card
 memory, and no full-model or hardware test is implied.
 

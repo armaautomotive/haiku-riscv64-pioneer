@@ -6,11 +6,14 @@ import runpy
 import subprocess
 import sys
 
-args=sys.argv[1:];tracked='--tracked-compile-only' in args
+args=sys.argv[1:];candidate='--candidate-build-only' in args;tracked='--tracked-compile-only' in args
+if candidate:
+    assert args.count('--candidate-build-only')==1 and not tracked;args.remove('--candidate-build-only')
 if tracked:
     assert args.count('--tracked-compile-only')==1;args.remove('--tracked-compile-only')
+tracked=tracked or candidate
 if not __debug__ or len(args)!=2:
-    raise SystemExit('use [--tracked-compile-only] ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT_DIRECTORY')
+    raise SystemExit('use [--tracked-compile-only|--candidate-build-only] ABSOLUTE_HAIKU_BUILD NEW_ABSOLUTE_OUTPUT_DIRECTORY')
 sdk,out=map(Path,args);here=Path(__file__).resolve().parent
 saved=sys.argv
 try:
@@ -26,6 +29,7 @@ cmd[cmd.index(old)]=str(here/'pioneer_q38_hybrid_upload_diagnostic.cpp')
 cmd[cmd.index(str(base['binary']))]=str(binary)
 cmd.insert(1,'-DPIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC=1')
 if tracked:cmd.insert(1,'-DPIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT=1')
+if candidate:cmd.insert(1,'-DPIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT=1')
 subprocess.run(cmd,check=True,cwd=out)
 print('HYBRID_UPLOAD_DIAGNOSTIC_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
-print('BUILD ONLY; NO DEVICE ACCESS, UPLOAD OR INFERENCE'+('; TRACKED CLIENT REQUIRES NON-LOADABLE TAG' if tracked else ''))
+print('BUILD ONLY; NO DEVICE ACCESS, UPLOAD OR INFERENCE'+('; CANDIDATE TAG125, NOT QUALIFIED' if candidate else '; TRACKED CLIENT REQUIRES NON-LOADABLE TAG' if tracked else ''))

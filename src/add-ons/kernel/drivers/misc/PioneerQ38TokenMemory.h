@@ -10,8 +10,8 @@
 // an embedding producer,initialized state,model-source/clock/host permission,
 // a launched owner or a caller-supplied STOP/clean capability. Genuine native
 // IO must bind this SAME object+startup+source+FD+thread+generation lifetime.
-// The existing token driver uses this owner; the hybrid selection remains
-// restricted to the separate non-loadable native test configuration.
+// The existing token driver uses this owner; the hybrid selection is a
+// separate candidate and is not qualified merely by compilation.
 struct PioneerQ38TokenMemoryResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,installed=0,closed=0;
  uint32_t savedWords=0,verifiedOriginalWords=0,installedWords=0,restoredWords=0;

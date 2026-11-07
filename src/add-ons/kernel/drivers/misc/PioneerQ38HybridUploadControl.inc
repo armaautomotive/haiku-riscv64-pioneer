@@ -2,7 +2,7 @@
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 // One actual retained FD and global lock. This source assertion is supplied
 // by the trusted loader; it is not a device readback or model authentication.
-static status_t Q38HybridUploadControl(PioneerProbeCookie* cookie,void* data,size_t length){
+static __attribute__((noinline)) status_t Q38HybridUploadControl(PioneerProbeCookie* cookie,void* data,size_t length){
  namespace H=PioneerQ38HybridUpload;
  if(geteuid()!=0)return B_NOT_ALLOWED;
  if(!cookie || cookie->magic!=0x50313030 || !data || length!=sizeof(H::Packet))return B_BAD_VALUE;

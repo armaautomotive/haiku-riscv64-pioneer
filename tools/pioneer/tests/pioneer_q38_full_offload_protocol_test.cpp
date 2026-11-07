@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
-#ifdef PIONEER_Q38_BF16_FULL_CLIENT
+#ifdef PIONEER_Q38_HYBRID_FULL_PROTOCOL_TEST
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
+#elif defined(PIONEER_Q38_BF16_FULL_CLIENT)
 #include "../PioneerQ38Bf16FullClientRole.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProtocol.h"
 #else
@@ -21,7 +23,9 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
  return p;
 }
 int main(){
-#ifdef PIONEER_Q38_BF16_FULL_CLIENT
+#ifdef PIONEER_Q38_HYBRID_FULL_PROTOCOL_TEST
+ static_assert(F::BuildTag==UINT64_C(0x2026110700010125),"exact hybrid candidate identity");
+#elif defined(PIONEER_Q38_BF16_FULL_CLIENT)
 #ifdef PIONEER_Q38_BF16_DEFERRED_FULL
  static_assert(F::BuildTag==UINT64_C(0x2026110600010110),"exact deferred BF16 USER/native identity");
 #elif defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL)

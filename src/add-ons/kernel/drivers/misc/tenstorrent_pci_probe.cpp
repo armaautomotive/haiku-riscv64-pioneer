@@ -6,11 +6,14 @@
  */
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 #if PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
- || !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || !defined(PIONEER_Q38_SPAN_PRELOAD) \
- || !defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
- || defined(PIONEER_Q38_BF16_FULL_NATIVE)
-#error Hybrid tracked upload requires its isolated non-loadable token context
+ || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
+ || (!defined(PIONEER_Q38_HYBRID_FULL_NATIVE) && (!defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE))) \
+ || (defined(PIONEER_Q38_HYBRID_FULL_NATIVE) && (defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)))
+#error Hybrid tracked upload requires its distinct token owner and matching role
 #endif
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110700010125ULL && !defined(PIONEER_Q38_HYBRID_FULL_NATIVE)
+#error Tag125 is reserved for the separate tracked hybrid full-card candidate
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110300010078ULL && !defined(PIONEER_NATIVE_BFP_DIAGNOSTIC)
 #error Native BFP tag78 is reserved for its distinct fixed-fixture driver
@@ -6884,7 +6887,11 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 // PIONEER_Q38_SPAN_CONTROL_BEGIN
-static status_t
+static
+#ifdef PIONEER_Q38_HYBRID_FULL_NATIVE
+__attribute__((noinline))
+#endif
+status_t
 Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!data) return B_BAD_VALUE;

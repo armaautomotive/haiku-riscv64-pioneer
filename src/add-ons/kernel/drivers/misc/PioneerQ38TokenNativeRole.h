@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../../../tools/pioneer/PioneerQ38HybridKernelCompileOnly.h"
-#ifdef PIONEER_Q38_BF16_FULL_NATIVE
+#ifdef PIONEER_Q38_HYBRID_FULL_NATIVE
+#include "PioneerQ38HybridFullNativeRole.h"
+#elif defined(PIONEER_Q38_BF16_FULL_NATIVE)
 #include "PioneerQ38Bf16FullNativeRole.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
 #include "PioneerQ38FullOffloadRole.h"

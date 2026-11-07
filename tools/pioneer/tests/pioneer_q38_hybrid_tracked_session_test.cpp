@@ -13,7 +13,7 @@ struct TrackedIO {
  std::vector<uint32_t> hashes=std::vector<uint32_t>(PioneerResidentBanks::Pages);
  PioneerQ38HybridUploadReceipt receipt;PioneerQ38SpanLease lease;
  int context=0,cookie=0;unsigned calls=0,opens=0,closes=0,begin=0,seal=0,bankEnd=0,spanEnd=0;
- bool owned=false,retained=false,badTag=false,failBegin=false,failSeal=false,badSeal=false;unsigned badBeginField=0;
+ bool owned=false,retained=false,failBegin=false,failSeal=false,badSeal=false;unsigned badBeginField=0;uint64_t wrongTag=0;
  TrackedIO(const Canonical& c,FakePages& p):spanIO{c,p},proof(BankProof(bankIO)){assert(banks.Bind(proof));}
  int Open(){assert(!opens++);return 42;}
  int Close(int fd){assert(fd==42 && !closes++);if(owned && begin)retained=true;return 0;}
@@ -21,7 +21,12 @@ struct TrackedIO {
   assert(fd==42 && opens==1 && !closes);calls++;
   if(op==TT_PCI_PROBE_RELOAD_STATUS){
    auto& q=*static_cast<tt_pioneer_driver_reload*>(data);assert(bytes==sizeof(q));
-   q.driver=55;q.guard_version=1;q.build_tag=badTag?UINT64_C(0x2026102100010012):UINT64_C(0x51544b4e4f445256);
+   q.driver=55;q.guard_version=1;q.build_tag=wrongTag?wrongTag:
+#ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
+    UINT64_C(0x2026110700010125);
+#else
+    UINT64_C(0x51544b4e4f445256);
+#endif
    q.generation=20;q.open_count=1;q.active_owner=unsigned(owned);
   }else if(op==TT_PCI_PROBE_Q38_BANK_SUPPORT){
    auto& q=*static_cast<tt_q38_bank_support*>(data);q={45,1,7,4096,4,1,Canonical::Capacity};
@@ -65,8 +70,14 @@ int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--seal-failure") || !strcmp(argv[1],"--bad-seal"))));
  auto canonical=std::make_unique<Canonical>();assert(canonical->Build());std::string error;
  using Session=PioneerQ38HybridUploadSession<FakePages,TrackedIO,true>;
- if(argc==1){
-  FakePages p(*canonical);TrackedIO io(*canonical,p);Session s(p,io);io.badTag=true;
+ if(argc==1)for(uint64_t tag:{UINT64_C(0x2026102100010012),
+#ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
+  UINT64_C(0x51544b4e4f445256)
+#else
+  UINT64_C(0x2026110700010125)
+#endif
+ }){
+  FakePages p(*canonical);TrackedIO io(*canonical,p);Session s(p,io);io.wrongTag=tag;
   assert(!s.Run(*canonical,error) && s.FailedState() && io.calls==1 && io.closes==1 && !io.owned);
  }
  if(argc==1){

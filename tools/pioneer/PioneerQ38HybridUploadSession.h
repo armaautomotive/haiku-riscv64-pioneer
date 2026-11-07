@@ -17,6 +17,12 @@
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadProtocol.h"
 #endif
+#ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
+#if PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT != 1 || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT) \
+ || PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT != 1
+#error Hybrid candidate uploader requires the distinct tracked client
+#endif
+#endif
 
 // A single upload-only diagnostic session around the existing seven-bank
 // owner and span transport. The source must remain authenticated and ALL
@@ -36,6 +42,11 @@ template<class Pages,class IO,bool Tracked=false> class PioneerQ38HybridUploadSe
  Pages& pages;IO& io;const C* layout=nullptr;int fd=-1;State state=Virgin;uint64_t generation=0;
  PioneerQ38HybridSpanUpload<Pages,IO> upload;
  bool attempted=false;
+#ifdef PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT
+ static constexpr uint64_t TrackedTag=UINT64_C(0x2026110700010125);
+#else
+ static constexpr uint64_t TrackedTag=UINT64_C(0x51544b4e4f445256); // non-loadable context only
+#endif
  bool Stop(std::string& error,const char* reason){
   if(error.empty())error=reason;
   state=Failed;
@@ -48,7 +59,7 @@ template<class Pages,class IO,bool Tracked=false> class PioneerQ38HybridUploadSe
  bool Identity(unsigned owner){
   tt_pioneer_driver_reload q={};q.version=1;
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,q) || !PioneerDriverReloadRequest(q) || q.expected_tag || q.expected_generation
-   || q.driver!=55 || q.guard_version!=1 || q.build_tag!=(Tracked?UINT64_C(0x51544b4e4f445256):UINT64_C(0x2026102100010012))
+   || q.driver!=55 || q.guard_version!=1 || q.build_tag!=(Tracked?TrackedTag:UINT64_C(0x2026102100010012))
    || !q.generation || (generation && generation!=q.generation) || q.quiesced || q.cold
    || q.active_owner!=owner || q.open_count!=1)return false;
   generation=q.generation;return true;

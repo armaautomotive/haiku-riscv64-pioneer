@@ -8,7 +8,10 @@ import subprocess
 import sys
 import tempfile
 
-args=sys.argv[1:];journal='--journal' in args;native='--native-context' in args
+args=sys.argv[1:];journal='--journal' in args;native='--native-context' in args;candidate='--candidate-driver' in args
+if candidate:
+    assert args.count('--candidate-driver')==1
+    args.remove('--candidate-driver')
 if native:
     assert args.count('--native-context')==1
     args.remove('--native-context')
@@ -152,4 +155,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
                 *(['--sdk',sdk] if mode=='--hybrid-manifest' else []))
     if native:
         run(sys.executable,here/'run_pioneer_q38_hybrid_upload_control_tests.py','--qgw5-header',out,sdk)
+    if candidate:
+        run(sys.executable,root/'build_q38_hybrid_full_native.py',sdk,out,tmp/'hybrid125')
 print('PASS complete QGW5 image section/ELF binding, immutable output, corruption refusals and role exclusions; NO DEVICE')

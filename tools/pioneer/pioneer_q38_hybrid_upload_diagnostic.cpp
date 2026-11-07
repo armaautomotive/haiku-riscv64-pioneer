@@ -39,8 +39,8 @@ int main(int argc,char** argv){
  if(!pages || !canonical)return 1;
  Transport io;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT
- // The tracked client only accepts the private non-loadable context tag.
- // A distinct qualified real driver and its exact tag are still required.
+ // Identity is either the non-loadable context or an explicitly selected,
+ // separate candidate driver tag; neither build proves hardware safety.
  PioneerQ38HybridUploadSession<PioneerQ38HybridVerifiedModel::Pages,Transport,true> session(*pages,io);
 #else
  PioneerQ38HybridUploadSession<PioneerQ38HybridVerifiedModel::Pages,Transport> session(*pages,io);

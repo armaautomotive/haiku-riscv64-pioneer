@@ -6,7 +6,9 @@
 #include "PioneerQ38PreparedSourceNative.inc"
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_BF16_FULL_NATIVE
+#ifdef PIONEER_Q38_HYBRID_FULL_NATIVE
+#include "PioneerQ38HybridFullProtocol.h"
+#elif defined(PIONEER_Q38_BF16_FULL_NATIVE)
 #include "PioneerQ38Bf16FullProtocol.h"
 #else
 #include "PioneerQ38FullOffloadProtocol.h"

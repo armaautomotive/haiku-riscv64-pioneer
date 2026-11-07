@@ -129,7 +129,7 @@ class PioneerQ38TokenNativeState {
  PioneerQ38ProjectionZeroLease projectionZero;
  PioneerQ38TokenStartupPlan* startup=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;
-#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+#if defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE)
  PioneerQ38TokenMemoryResult hybridManifestReceipt; // same held journal,never a caller-supplied ready flag
 #endif
  PioneerQ38TokenNativeOwner* runtime=nullptr;
