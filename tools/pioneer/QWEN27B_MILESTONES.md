@@ -102,6 +102,18 @@ client reject each other's driver identity.
 Non-cryptographic page hashes do not prove the format or contents of card
 memory, and no full-model or hardware test is implied.
 
+**First physical hybrid trial started, result pending.** On November 7 at
+14:18 UTC the one-shot parent was live as PID 5273 on Haiku, with its
+preflight child PID 5307 verifying the original model and caches. At that
+observation it had not exchanged the driver or opened the card. The stage is
+`/boot/home/pioneer-hybrid125-full-trial-20261107-a`; inspect its `state`,
+processes and logs before taking any action. The permanent `.trial-once`
+marker means do not start it a second time. The guard restores the verified
+041 driver only after a fully closed successful request; an uncertain result
+stops without retry, reset or automatic restore. The single-token input is
+248319 with up to 32 generated tokens. Even a clean run needs independent
+quality checking and its reported post-START interval includes prompt work.
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored
