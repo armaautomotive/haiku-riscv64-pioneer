@@ -7,6 +7,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+hybrid_journal = '--hybrid-journal' in args
+if hybrid_journal:
+    assert args.count('--hybrid-journal') == 1
+    args.remove('--hybrid-journal')
 bf16_deferred='--bf16-deferred-audit' in args
 if bf16_deferred:
     assert args.count('--bf16-deferred-audit')==1
@@ -34,17 +38,20 @@ if bf16:
 assert not bf16_profile or bf16, 'timing journal requires its explicit QTP4 DATA parent'
 assert not bf16_paired or (bf16_profile and bf16),'paired journal requires its explicit QTP4/timing DATA parents'
 assert not bf16_deferred or (bf16_profile and bf16 and not bf16_paired),'deferred journal requires its distinct QTP4/timing DATA parents'
+assert not hybrid_journal or (bf16 and not bf16_profile and not bf16_paired and not bf16_deferred), 'hybrid footprint fixture requires original QTP4 test DATA only'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
     args = args[:-2]
-assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'])
+assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'], ['--hybrid-faults'])
 assert args != ['--capsule-faults'] or precise or pushed or bf16, 'capsule faults require explicit code DATA'
 assert not bf16 or sdk is None, 'QTP4 kernel subject is built by build_q38_bf16_full_native.py,not the old NODRV template'
+assert not hybrid_journal or (sdk is None and args in (['--positive'], ['--hybrid-faults'])), 'hybrid journal is an offline fixture only'
+assert args != ['--hybrid-faults'] or hybrid_journal, 'hybrid faults need their explicit offline footprint'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
-if bf16_profile:
+if bf16_profile or hybrid_journal:
     # Use non-Work dispatcher metadata,as in the BF16 native build,not the
     # unrelated legacy shader-test feature set. Do not bypass the DATA role.
     flags=['-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR','-DPIONEER_Q38_SPAN_FAST']
@@ -52,12 +59,13 @@ profile = ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1'] if bf16 else ['-DPIONEER_Q38_T
 if bf16_profile:profile+=['-DPIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS=1']
 if bf16_paired:profile+=['-DPIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS=1']
 if bf16_deferred:profile+=['-DPIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS=1']
+if hybrid_journal:profile+=['-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *flags, *profile,
                     str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
-    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults']) else [[], ['--faults']]):
+    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk:
         headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'

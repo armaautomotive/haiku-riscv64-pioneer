@@ -1,5 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38TokenBf16DataBoundary.h"
+#if defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
+ && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
+ || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
+ || defined(PIONEER_Q38_BF16_FULL_CLIENT) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Hybrid journal fixture requires QTP4 test DATA and forbids native or Work roles
+#endif
 #ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
 #if PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 #error Exact QTP4 footprint cannot alias old program DATA
@@ -30,8 +40,13 @@ static_assert(PioneerQ38TokenBf16FootprintSelection==0,"late QTP4 footprint remo
 #ifndef PIONEER_Q38_TOKEN_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_FOOTPRINT_H
 #ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+#include "PioneerQ38HybridTokenFootprint.h"
+namespace PioneerQ38TokenL1=PioneerQ38HybridTokenL1;
+#else
 #include "PioneerQ38TokenBf16Footprint.h"
 namespace PioneerQ38TokenL1=PioneerQ38TokenBf16L1;
+#endif
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 #include "PioneerQ38TokenPushedFootprint.h"
 namespace PioneerQ38TokenL1=PioneerQ38TokenPushedL1;
@@ -92,7 +107,9 @@ static_assert(SavedWords==11406906 && SavedBytes==45627624,"ALL120 arbitrary ori
 }
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+static_assert(PioneerQ38TokenL1::Family==0x35505451 && PioneerQ38TokenL1::Bf16==1,"late diagnostic hybrid footprint selection");
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 static_assert(PioneerQ38TokenL1::Family==0x34505451 && PioneerQ38TokenL1::Bf16==1,"late QTP4 footprint selection");
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::Pushed==1,"late QTP3 footprint selection");

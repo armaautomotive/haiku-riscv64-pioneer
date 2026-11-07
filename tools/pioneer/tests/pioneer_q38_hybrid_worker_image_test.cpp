@@ -12,6 +12,8 @@ static constexpr unsigned kBits=4;
 #endif
 #include "../PioneerQ38HybridWorkerLayout.h"
 #include "../PioneerQ38HybridMatrixReceipt.h"
+#define PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC 1
+#include "../PioneerQ38HybridTokenFootprint.h"
 #include <array>
 namespace HW=PioneerQ38HybridWorkerLayout;
 struct HybridImage:WorkerImage {
@@ -23,6 +25,11 @@ struct HybridImage:WorkerImage {
    {"dense",0x40000U},{"cachedfpu",0x50000U},{"ffn",0x60000U},{"service",0x68000U},
    {"affine",0x70b00U},{"text",0x72000U},{"gdn",0x170000U}})
    rom.push_back({part.second,Read((std::string(worker)+"/"+part.first+".bin").c_str())});
+  for(const auto& section:rom){
+   assert(!(section.second.size()&3));
+   for(unsigned i=0;i<section.second.size();i+=4)
+    assert(PioneerQ38HybridTokenL1::SnapshotContains(peer,section.first+i));
+  }
   std::ifstream symbols(std::string(worker)+"/program.symbols");std::string a,k,n;
   while(symbols>>a>>k>>n){const unsigned p=unsigned(std::stoul(a,nullptr,16));
    if(n=="block_peer_wait_load")waitPC=p;if(n=="block_fault_stopped")faultPC=p;if(n=="block_peer_stopped")stopPC=p;}
@@ -65,6 +72,7 @@ struct HybridImage:WorkerImage {
  }
  void Store(uint32_t a,uint32_t value)override{
   assert(!CodeAddress(a)); // never write through a simulated immutable code view
+  if(a<0x180000)assert(PioneerQ38HybridTokenL1::SnapshotContains(boot[3],a));
   if(Range(a,HW::Status,64)||Range(a,0x74000,96)||a==0x74100||Range(a,0x83f00,256)){Put(a,value);return;}
   WorkerImage::Store(a,value);
  }

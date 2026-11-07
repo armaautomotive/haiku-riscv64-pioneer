@@ -96,6 +96,10 @@ Four compact goals
    This is not connected to the live model or installed in Work/Assistant.
    A reproducible audit confirms the old peer save/restore footprint omits
    most BFP8 staging and the relocated GDN code, so it cannot be reused.
+   A larger experimental footprint passes simulated held-journal restoration
+   and new-range failure tests, but native ownership, launched restoration,
+   phase separation and hardware remain unproven. See
+   benchmarks/qwen38-hybrid-token-journal-20261107.txt.
    An experimental receipt checker passes tests against actual simulated
    worker proofs; it cannot authenticate weight addresses by itself.
    A ROOT-compatible converted-address translation now matches the
@@ -123,10 +127,10 @@ Four compact goals
    The full BFP4 portion is in a new dedicated Pioneer directory. See
    benchmarks/qwen38-hybrid-bfp4-cache-run-20261107.txt.
    A 39-tensor BFP8 batch preparer also builds and passes synthetic selection
-   and frozen-converter checks; its real-model preparation is in progress. See
+   and frozen-converter checks; its real-model preparation exited 0. See
    benchmarks/qwen38-hybrid-bfp8-batch-build-20261107.txt.
-   A CPU-only preflight for the combined real caches now builds and is staged;
-   it has not been run because preparation is still in progress. See
+   A CPU-only preflight for the combined real caches is now running; success
+   has not yet been established. See
    benchmarks/qwen38-hybrid-cache-preflight-build-20261107.txt.
    A two-position teacher-forced CPU comparison completed with independently
    retained candidate/original state. Both selected the same token at each

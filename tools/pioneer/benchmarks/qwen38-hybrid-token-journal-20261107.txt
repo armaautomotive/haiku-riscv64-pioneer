@@ -1,0 +1,40 @@
+Hybrid worker memory journal: simulated safety checks only
+==========================================================
+November 7, 2026. The old QGW4 journal omits large parts of the BFP8 staging
+and relocated GDN code, so it is not safe for the experimental QGW5 image.
+
+An explicitly diagnostic-only snapshot footprint now conservatively includes
+the old ROOT/peer footprint, both staging regions, the output guard and the
+entire relocated GDN code/status reservation. It totals 34453122 words, or
+137812488 bytes (~131.43 MiB) across 120 workers. The geometry is a proposal,
+not a live memory reservation or permission to write hardware.
+
+Actual checks:
+* ASan/UBSan address test checks all 15444538 old saved words are included,
+  each new word is inside the existing alias arithmetic, the ROOT manifest,
+  maximum BFP8 weight/input ranges, output guard and linked-code reservation.
+  Native/Work roles are rejected at preprocessing, including late selection.
+* The existing real PioneerQ38TokenMemory held-journal algorithm ran against
+  simulated endpoints with this expanded footprint and ORIGINAL QTP4 fixture
+  firmware, not QGW5: all 34453122 arbitrary original words were saved and
+  verified, then restored and reverified; actual process exit 0. Injected
+  read/verification faults in new staging and restore failure in new GDN
+  area stopped and retained/quarantined fake owners. No device was touched.
+* Rebuilt actual experimental QGW5/BFP4 and QGW5/BFP8 RV32 worker images
+  passed the existing simulated NoC/FPU dispatcher cases. The simulator now
+  checks every linked code word and each tested scalar L1 store against the
+  proposed footprint. BFP8 uses the test-only layer-zero mask. This does not
+  prove every possible job, DMA effect, hardware alias or phase lifetime.
+* Separate unchanged QTP1 and QTP4 held-journal positive regressions both
+  actually exited 0, restoring 11406906 and 15444538 words respectively.
+
+Commands:
+ sh tools/pioneer/tests/run_pioneer_q38_hybrid_token_footprint_test.sh
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --positive
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-faults
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_worker_tests.py ABSOLUTE_HAIKU_BUILD
+
+Not yet established: live QGW5 firmware package selection, actual device
+memory ownership/mapping, alias and FIFO proof, phase/lifetime separation,
+launched-worker stop and restore, failure behavior on hardware, or speed.
+This fixture must not be used as a native driver or Work capability.

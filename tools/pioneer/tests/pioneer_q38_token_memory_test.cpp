@@ -129,7 +129,11 @@ struct TokenMemoryFixture {
 };
 int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
- assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--faults") || !strcmp(argv[1],"--capsule-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--faults") || !strcmp(argv[1],"--capsule-faults")
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+  || !strcmp(argv[1],"--hybrid-faults")
+#endif
+  )));setvbuf(stdout,nullptr,_IOLBF,0);
  if(argc==1){
   TokenMemoryFixture f;auto before=f.io.data;std::vector<uint32_t> panels;
   f.io.track=false;for(unsigned worker=0;worker<120;worker++){
@@ -153,6 +157,23 @@ int main(int argc,char** argv){
   }
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
  }
+#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+ if(!strcmp(argv[1],"--hybrid-faults")){
+  auto fault=[](unsigned kind,unsigned phase,unsigned worker,unsigned address){
+   TokenMemoryFixture f;f.io.badKind=kind;f.io.badPhase=phase;f.io.badWorker=worker;
+   assert(TOKL::SnapshotContains(worker,address));
+   f.io.badOrdinal=TokenMemoryIO::Index(worker,address)-TOKL::SnapshotBase(worker);
+   if(phase<3){assert(!f.PrepareMemory() && !f.io.writes);}
+   else{assert(f.PrepareMemory());assert(!f.CloseMemory());}
+   f.Unknown();
+  };
+  fault(1,1,1,0x12c000); // new BFP8 input region: fail before any write
+  fault(2,2,1,0x13c000); // new input verification mismatch: still no write
+  fault(3,6,119,0x170000); // relocated GDN restore failure: retain/quarantine
+  puts("PASS hybrid journal new-region read/verify/restore fault retention;SIMULATED QTP4 DATA,NO QGW5 DEVICE EXECUTION");
+  return 0;
+ }
+#endif
  if(!strcmp(argv[1],"--capsule-faults")){
 #if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
   unsigned cases=0;

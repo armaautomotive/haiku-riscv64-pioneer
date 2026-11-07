@@ -16,8 +16,11 @@ symlink cache directories without creating them; five kernel/Work/reference
 roles were refused. Existing prepared-page tests cover full 1344-fragment
 selection with synthetic readers and one real-format synthetic BFP4 fixture.
 
-The two real-model cache preparation processes are still running. The actual
-preflight has NOT been run on those caches; do not run it until both writers
-have exited successfully. It is not a GPU owner, a weight upload, a model
+Both real-model cache writers have actually exited successfully. After
+independently rechecking the staged binary SHA, the preflight was started
+against those two dedicated caches. The live foreground SSH session 17832
+reported it was authenticating the original model; its final result has not
+yet been observed. Do not restart it merely because a poll yields no output.
+It is not a GPU owner, a weight upload, a model
 execution, a quality pass or a speed measurement. The source/directory
 existence checks precede cache Open; cache entry reads remain hash checked.
