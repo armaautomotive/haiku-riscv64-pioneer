@@ -38,12 +38,26 @@ def parse_inode(raw,number,size,expected,total_blocks):
 
 def digest(data):return hashlib.sha256(data).hexdigest()
 
+def occurrences(data,needle):
+    """Return every exact occurrence, including overlaps, without printing data."""
+    require(bool(needle),'empty search pattern')
+    offsets=[];position=0
+    while True:
+        position=data.find(needle,position)
+        if position<0:return offsets
+        offsets.append(position);position+=1
+
 def read_exact(fd,size,offset):
     data=os.pread(fd,size,offset)
     require(len(data)==size,'short raw read')
     return data
 
 def self_test():
+    assert occurrences(b'ababa',b'aba')==[0,2]
+    assert occurrences(b'ababa',b'xyz')==[]
+    try:occurrences(b'ababa',b'')
+    except RuntimeError:pass
+    else:raise AssertionError('empty search pattern accepted')
     for name,number,size,extents in FILES:
         raw=bytearray(BLOCK)
         struct.pack_into('<I',raw,0,INODE_MAGIC)
@@ -96,6 +110,15 @@ def main():
         for name,offset in (('state',69632),('trial.stderr',65536),('trial.stdout',0)):
             matched=files[name]==files['stable.backup'][offset:offset+len(files[name])]
             print(f'{name} equals_backup_offset_{offset}={int(matched)}')
+        # Examine whole allocated blocks, including bytes past logical EOF.
+        # Do not emit their contents: they may contain unrelated old data.
+        for name,_,_,extents in FILES[:3]:
+            for group,start,count in extents:
+                for index in range(count):
+                    block=(group<<GROUP_SHIFT)+start+index
+                    data=read_exact(fd,BLOCK,block*BLOCK)
+                    offsets=occurrences(files['stable.backup'],data)
+                    print(f'{name} allocation_block={block} whole_block_backup_offsets={offsets}')
         print('READ ONLY: unmounted raw partition and verified inode extents; no filesystem or GPU changes')
     finally:os.close(fd)
 

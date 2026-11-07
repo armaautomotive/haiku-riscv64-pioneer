@@ -85,6 +85,29 @@ durability, and disk/controller caching or remapping cannot be excluded.
 No filesystem repair, metadata update, driver exchange, card work or bypass
 of the one-shot recovery guard was performed.
 
+Whole-allocation-block follow-up on the same pinned Linux boot
+-------------------------------------------------------------
+The read-only evidence program was extended to read every full 2048-byte
+allocated block for the three affected files and search the entire verified
+stable.backup for exact matches. The same device serial, partition geometry,
+unmounted state, inode sizes and allocation runs were rechecked before the
+reads. No raw contents were printed, including data beyond logical file EOF.
+Each block matched exactly once in the backup:
+
+ state         block 7736942 -> backup offset 69632
+ trial.stderr  block 7736940 -> backup offset 65536
+ trial.stdout  block 7736908 -> backup offset 0
+ trial.stdout  block 7736909 -> backup offset 2048
+ trial.stdout  block 7736910 -> backup offset 4096
+
+This strengthens the evidence that whole old backup blocks are present at
+the affected allocation locations, including beyond those files' logical
+ends. It does not establish whether this came from stale reused blocks,
+misdirected writes, cache or controller behavior, or another cause; it also
+does not establish general volume or power-loss safety. The guard remains
+unchanged and no card, filesystem repair, driver exchange or writes to the
+Haiku partition were performed.
+
 Linux reports the SATA device's write cache as "write back" and queue FUA
 capability as 0. A read-only SMART query reported overall health PASSED;
 reallocated sectors, uncorrectable errors and interface CRC errors each
