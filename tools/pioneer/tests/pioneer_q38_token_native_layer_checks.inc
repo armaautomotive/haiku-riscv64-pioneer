@@ -58,6 +58,10 @@ static void CheckNativeLayerDispatch(Fixture& f){
  assert(W::JobShape(job.data(),boot.data(),0,0) && job[2]==1 && !job[5] && !job[6] && !io.Raw(worker,W::Doorbell));
  for(const auto& p:io.bootstrapPeer)assert(p->Idle() && !p->matrixInstructions && !p->floatOps && !p->requests && !p->responses);
  assert(io.runtimePackets==hostPackets && io.resets.size()==resets && !io.pciWrites && !io.HostReadMock::bmeWrites && !state->Unsafe());
+#ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
+ printf("PASS SAME native owner+119 simulated worker histories/ROOT synthetic embedding and synthetic layer0 norm -> ALL5120 RMS+native operands/scales vs independent OBSERVERS ONLY/actual valid worker%u matrix job delivered/doorbell packet PENDING/ROOTsteps%u layerPackets%u peerR%u peerW%u;NO CPU product upload or worker completion;NOT real model/matrix/layer/token/STOP/END/physical/TPS\n",
+#else
  printf("PASS SAME native full851+1010 actual zero jobs+119 VIRGIN boot histories/unchanged full scalar ISA from first ROOT instruction/original27B embedding -> genuine layer0 metadata+RAW norm+ALL5120 bit-exact RMS+ALL native operands/scales vs independent OBSERVERS ONLY/actual valid worker%u matrix job delivered/doorbell packet PENDING/ROOTsteps%u layerPackets%u peerR%u peerW%u;NO CPU products,worker completion or private-history transplant;NOT matrix/layer/token/STOP/END/physical/Work/TPS\n",
+#endif
   worker,cpu.steps,cpu.layerPackets,cpu.layerPeerReads,cpu.layerPeerWrites);
 }

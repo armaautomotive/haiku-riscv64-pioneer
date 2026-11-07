@@ -14,6 +14,7 @@ synthetic_embedding='--synthetic-embedding' in sys.argv
 if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
+synthetic_layer=synthetic_embedding and '--execution-layer-dispatch' in sys.argv
 hybrid_header=None
 qgw8_inspection='--qgw8-header' in sys.argv
 matrix_inspection='--hybrid-qgw7-header' in sys.argv or qgw8_inspection
@@ -25,10 +26,10 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
             or qgw8_inspection and sys.argv[2]=='--faults')
-            or synthetic_embedding and len(sys.argv)==4 and sys.argv[2]=='--execution-embedding') and hybrid_header.is_absolute() and hybrid_header.is_file()
+            or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')) and hybrid_header.is_absolute() and hybrid_header.is_file()
     if qgw8_inspection:
         assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults','--runtime','--bootstrap','--execution','--execution-traffic'))
-                or synthetic_embedding and len(sys.argv)==4 and sys.argv[2]=='--execution-embedding'), \
+                or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
     expected='72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
@@ -345,9 +346,10 @@ if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 if synthetic_embedding:
-    assert len(sys.argv)==4 and sys.argv[2]=='--execution-embedding'
+    assert len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')
+    assert not synthetic_layer or qgw8_inspection, 'synthetic layer weights require the isolated QGW8 profile'
     fixture=pathlib.Path(sys.argv[3]);assert fixture.is_absolute() and fixture.is_file()
-    assert fixture.read_bytes()==b'SYNTHETIC_Q4K_EMBEDDING_V1\n'
+    assert fixture.read_bytes()==(b'SYNTHETIC_Q4K_QGW8_LAYER_V1\n' if synthetic_layer else b'SYNTHETIC_Q4K_EMBEDDING_V1\n')
 image = pathlib.Path(sys.argv[1])
 assert image.is_absolute() and hashlib.sha256((image/'text.bin').read_bytes()).hexdigest() == '39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'
 here = pathlib.Path(__file__).resolve().parent
@@ -718,7 +720,21 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         bridge_object = base/'embedding-raw-bridge.o'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', *(['-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1'] if synthetic_embedding else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST=1'] if synthetic_layer else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
+        if synthetic_layer:
+            fixture_test=base/'synthetic-layer-test'
+            subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror',
+                            '-fsanitize=address,undefined',str(here/'pioneer_q38_synthetic_qgw8_layer_test.cpp'),
+                            str(bridge_object),'-o',str(fixture_test)],check=True)
+            subprocess.run([str(fixture_test),sys.argv[3],str(here/'synthetic_q4_embedding.fixture')],check=True,
+                           env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+            for forbidden in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE',
+                              'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT'):
+                result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1',
+                    '-DPIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST=1','-D'+forbidden,'-fsyntax-only',
+                    str(here/'pioneer_q38_synthetic_embedding_bridge.cpp')],capture_output=True,text=True)
+                assert result.returncode and 'Synthetic embedding bytes require their isolated host-test implementation' in result.stderr,forbidden
         extra += [str(bridge_object)]
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],

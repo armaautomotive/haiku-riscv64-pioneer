@@ -244,6 +244,20 @@ The ROOT executed 1249687 simulated instructions through this observation.
 This is one synthetic embedding row, not real model data, a complete layer
 or token, real P100A execution, cleanup qualification, quality or speed.
 
+With a separate test-only synthetic layer-zero norm fixture, the same QGW8
+ROOT continued beyond the synthetic embedding, read its relocated layer
+metadata and norm weights, computed 5120 normalized values and packed
+operands, and delivered a valid first worker job. The worker doorbell packet
+was still pending; the worker did not execute or return a matrix result.
+An independent observer checked the normalized values and packed operands;
+it did not feed them to the simulated ROOT. Before that first dispatch the
+simulator observed 17929471 ROOT instructions, 7561 layer packets including
+7497 peer reads, and 3 peer writes. Those counts identify a potential
+control-traffic optimization target, not physical latency or tokens/sec.
+The synthetic fixture's wrong signature, route, offset, size and revoked
+source were refused, and native/Work role exclusions were checked. No real
+model weights, full layer, token, device execution or speed was established.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

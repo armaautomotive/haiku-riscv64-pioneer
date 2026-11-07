@@ -11,6 +11,18 @@
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
+#ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
+#if PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST != 1
+#error Synthetic QGW8 layer data requires the exact isolated test selector
+#endif
+#define PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
+#define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
+#define PIONEER_Q38_GDN_MUTABLE_STATE 1
+#include "../PioneerQ38HybridHeadModelPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
+#include <memory>
+#endif
 #include <cstdio>
 #include <cstring>
 
@@ -22,20 +34,52 @@ void Block(unsigned token,unsigned block,uint8_t (&bytes)[BlockBytes]){
  for(unsigned i=16;i<BlockBytes;i++)bytes[i]=uint8_t(token*13U+block*37U+i*19U);
 }
 }
-struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;};
+struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;
+#ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
+ uint32_t normRoute=0,normAddress=0;
+#endif
+};
 Q38EmbeddingRawTestBridge::Q38EmbeddingRawTestBridge():source(new Source){}
 Q38EmbeddingRawTestBridge::~Q38EmbeddingRawTestBridge(){delete source;}
 bool Q38EmbeddingRawTestBridge::Open(const char* path){
  if(!source || source->ready || source->revoked || !path)return false;
  FILE* file=fopen(path,"rb");if(!file)return false;
  char bytes[64]={};const size_t n=fread(bytes,1,sizeof(bytes),file);bool okay=!ferror(file);if(fclose(file)!=0)okay=false;
+ #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
+ static constexpr char signature[]="SYNTHETIC_Q4K_QGW8_LAYER_V1\n";
+ #else
  static constexpr char signature[]="SYNTHETIC_Q4K_EMBEDDING_V1\n";
- source->ready=okay && n==sizeof(signature)-1 && !memcmp(bytes,signature,sizeof(signature)-1);return source->ready;
+ #endif
+ source->ready=okay && n==sizeof(signature)-1 && !memcmp(bytes,signature,sizeof(signature)-1);
+#ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
+ if(source->ready){
+  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();PioneerQ38HybridHeadModelPlan::Proposal proposal;
+  if(!canonical->Build() || !PioneerQ38HybridHeadModelPlan::Build(*canonical,proposal))return source->ready=false;
+  unsigned found=0;
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);const auto& q=proposal.parts[i];
+   if(p->kind!=canonical->WeightKind || p->layer!=0 || p->role!=0)continue;
+   if(++found!=1 || q.bank>=7 || q.encoding!=PioneerQ38HybridHeadModelPlan::Base::Original
+    || q.bytes!=20480 || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+   source->normRoute=PioneerQ38ProjectionRoute(q.bank);source->normAddress=canonical->Base+q.offset;
+  }
+  if(found!=1)return source->ready=false;
+ }
+#endif
+ return source->ready;
 }
 bool Q38EmbeddingRawTestBridge::Ready()const{return source && source->ready && !source->revoked;}
 void Q38EmbeddingRawTestBridge::Revoke(){if(source)source->revoked=true;}
 bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* out,unsigned count){
  uint32_t geometry[8]={};
+#ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
+ if(Ready() && out && route==source->normRoute && ((address==source->normAddress && count==16384)
+  || (address==source->normAddress+16384 && count==4096))){
+  // Test-only finite unit weights; never real model weights or worker results.
+  for(unsigned i=0;i<count;i++)out[i]=(i&3)==2?0x80:(i&3)==3?0x3f:0;
+  return true;
+ }
+#endif
  if(!Ready() || !out || count!=TileBytes || !PioneerQ38GlobalFeedbackLayout::Describe(Token,0,0,0xc0000000U,geometry)
   || route!=PioneerQ38ProjectionRoute(geometry[4]) || address<geometry[5]
   || address-geometry[5]>=Blocks*TileBytes || (address-geometry[5])%TileBytes)return false;

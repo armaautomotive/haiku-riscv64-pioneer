@@ -25,7 +25,7 @@ int main(int argc,char** argv){
   || !strcmp(argv[2],"--faults")
 #endif
   ))
-  || (argc==4 && !strcmp(argv[2],"--execution-embedding")));
+  || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch"))));
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
  assert(argc==2 || (argc==3 && !strcmp(argv[2],"--faults")));
@@ -46,7 +46,7 @@ int main(int argc,char** argv){
  assert(argc==2 || (strcmp(argv[2],"--execution-traffic") && strcmp(argv[2],"--execution-embedding")));
 #endif
 #ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
- assert(argc==4 && !strcmp(argv[2],"--execution-embedding"));
+ assert(argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch")));
  Q38EmbeddingRawTestBridge original;assert(original.Open(argv[3]) && original.Ready());
 #else
  assert(argc!=4);
@@ -122,6 +122,6 @@ int main(int argc,char** argv){
  if(argc>=3)CheckNativeHeld(f,0);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
- if(argc>=3 && (!strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-embedding")))CheckNativeExecution(f);
+ if(argc>=3 && (!strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch")))CheckNativeExecution(f);
 #endif
 }
