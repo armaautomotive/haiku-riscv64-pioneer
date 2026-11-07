@@ -150,3 +150,25 @@ map to establish that history; misdirected writes, cache behavior, journal
 ordering and other causes are not excluded. This is not proof of a filesystem
 failure mode, power-loss safety, a fresh power epoch, or permission to relax
 the restoration guard. No block was modified and no GPU operation was issued.
+
+Linux BeFS model-read limitation
+--------------------------------
+The same Linux boot mounted the identified /dev/sda1 BeFS volume with
+ro,nosuid,nodev,noexec to assess use of the real model without writing Haiku.
+It reported the expected model file size, 18973870528 bytes, but a sequential
+read returned only 2147483648 bytes. Reads at 2047 MiB returned a full MiB;
+at 2048 MiB they returned EOF, and larger seeks could not reach the requested
+offset. Linux sha256sum nevertheless returned success and printed
+3b058ab0c1a0db9926f57910f0614297f177a66347458deb1216571b229af6a8: this
+is a hash of the truncated stream, NOT a valid hash of the stated file size.
+
+The local 18973870528-byte copy at generated.pioneer/models has full SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747; its
+first exactly 2147483648 bytes hash to the same 3b058a... value. The Linux
+view's first MiB matched the corresponding local MiB. This explains the
+initial whole-file hash discrepancy as a short Linux read; it does NOT prove
+that the unread remainder on the Haiku disk is intact, or that BeFS on this
+Linux build can verify large files. Small stable.backup and state hashes
+matched the earlier Linux raw-block observations. The partition was then
+unmounted and findmnt no longer listed it. No Haiku write, GPU operation,
+repair, replacement or power action was performed.
