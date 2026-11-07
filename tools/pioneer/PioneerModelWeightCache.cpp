@@ -101,16 +101,22 @@ uint64_t PioneerModelWeightCache::Reader::Size() const { return IsOpen()?data->k
 bool PioneerModelWeightCache::Reader::Read(uint64_t offset,unsigned bytes,void* output,unsigned capacity,std::string& error) {
 	if(!IsOpen() || !output || !bytes || bytes>ChunkBytes || capacity<bytes
 		|| offset>data->key.bytes || bytes>data->key.bytes-offset)return Fail(error,"Invalid or changed converted-weight cache read.");
-	std::vector<uint8_t> result(bytes),chunk(ChunkBytes);unsigned copied=0;
+	std::vector<uint8_t> result(bytes),chunk;unsigned copied=0;
 	while(copied<bytes) {
 		const uint64_t position=offset+copied,index=position/ChunkBytes,first=index*ChunkBytes;
 		const unsigned count=unsigned(std::min(uint64_t(ChunkBytes),data->key.bytes-first));
-		Digest expected;std::memcpy(expected.data(),data->chunks.data()+index*32,32);
-		if(!IO(data->fd,chunk.data(),count,PayloadOffset(data->key)+first,false)
-			|| Hash(chunk.data(),count)!=expected
-			|| !data->Stable())return Fail(error,"Converted-weight cache chunk failed integrity verification.");
 		const unsigned within=unsigned(position-first),take=std::min(bytes-copied,count-within);
-		std::memcpy(result.data()+copied,chunk.data()+within,take);copied+=take;
+		// Complete chunks can be authenticated in the private result buffer.
+		// Partial chunks still need their full bytes to check the stored hash.
+		const bool complete=within==0 && take==count;
+		if(!complete && chunk.empty())chunk.resize(ChunkBytes);
+		uint8_t* target=complete?result.data()+copied:chunk.data();
+		Digest expected;std::memcpy(expected.data(),data->chunks.data()+index*32,32);
+		if(!IO(data->fd,target,count,PayloadOffset(data->key)+first,false)
+			|| Hash(target,count)!=expected
+			|| !data->Stable())return Fail(error,"Converted-weight cache chunk failed integrity verification.");
+		if(!complete)std::memcpy(result.data()+copied,chunk.data()+within,take);
+		copied+=take;
 	}
 	if(!data->Stable())return Fail(error,"Converted-weight cache changed while reading.");
 	std::memcpy(output,result.data(),bytes);return true;

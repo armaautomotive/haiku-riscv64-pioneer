@@ -71,6 +71,17 @@ int main(int argc,char** argv) {
 	{
 		Cache::Reader r;const unsigned before=produced;
 		assert(cache.GetOrCreate(key,sourceReady,produce,r,hit,error) && hit && produced==before);Exact(r,original);
+		// Exercise the aligned whole-chunk fast path, including the short
+		// final chunk, and an unaligned read spanning two chunks.
+		for(uint64_t offset:{UINT64_C(0),uint64_t(Cache::ChunkBytes),uint64_t(Cache::ChunkBytes)*2,uint64_t(Cache::ChunkBytes)*3}) {
+			const unsigned count=unsigned(std::min(uint64_t(Cache::ChunkBytes),key.bytes-offset));
+			std::vector<uint8_t> exact(count+2,0xa7);
+			assert(r.Read(offset,count,exact.data()+1,count,error));
+			assert(exact.front()==0xa7 && exact.back()==0xa7 && !memcmp(exact.data()+1,original.data()+offset,count));
+		}
+		const uint64_t offset=Cache::ChunkBytes-7;std::vector<uint8_t> crossing(22,0xa7);
+		assert(r.Read(offset,20,crossing.data()+1,20,error));
+		assert(crossing.front()==0xa7 && crossing.back()==0xa7 && !memcmp(crossing.data()+1,original.data()+offset,20));
 		std::vector<uint8_t> output(32,0xa7);const auto prior=output;
 		assert(!r.Read(key.bytes-1,2,output.data(),32,error) && output==prior);
 		assert(!r.Read(0,0,output.data(),32,error) && !r.Read(0,33,output.data(),32,error));cases++;
@@ -175,6 +186,21 @@ int main(int argc,char** argv) {
 		assert(!Cache::HashFile(fd,original.size()-1,hashed,error) && hashed==prior);
 		auto change=[&](uint64_t,uint64_t,bool) { uint8_t byte=17;assert(pwrite(fd,&byte,1,0)==1 && !fsync(fd)); };
 		assert(!Cache::HashFile(fd,original.size(),hashed,error,change) && hashed==prior);
+		assert(!close(fd));cases++;
+	}
+	{
+		// A stream that ends after fstat must fail without publishing a hash
+		// for the prefix. This models a short source read; it does not emulate
+		// the Linux BeFS implementation or establish filesystem health.
+		const std::string path=base+"/short-hash-fixture";
+		int fd=open(path.c_str(),O_RDWR|O_CREAT|O_EXCL,0600);assert(fd>=0);
+		const off_t size=off_t(1024*1024+32);assert(!ftruncate(fd,size));
+		Cache::Digest hashed=Cache::Hash("unchanged",9);const auto before=hashed;unsigned callbacks=0;
+		auto truncate=[&](uint64_t done,uint64_t total,bool verifying){
+			assert(!verifying && done==1024*1024 && total==uint64_t(size));
+			callbacks++;assert(!ftruncate(fd,off_t(done)));
+		};
+		assert(!Cache::HashFile(fd,uint64_t(size),hashed,error,truncate) && hashed==before && callbacks==1);
 		assert(!close(fd));cases++;
 	}
 	printf("PASS CPU-only converted-weight disk cache:%u checks;%u unsupported filesystem fixtures;verified hits ZERO conversion,full/chunk SHA,source/recipe/version keys,atomic rebuild/cancellation,private marked directory,supported link/FIFO/permission refusals;NO GPU or model-speed claim\n",cases,unsupported);
