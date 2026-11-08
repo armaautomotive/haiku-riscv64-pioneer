@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection'}
+assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-commit-boundary'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -42,12 +42,14 @@ if reuse_input:
 matrix_attention='--hybrid-matrix-attention' in options
 queued_counters='--hybrid-queued-counters' in options
 head_matrix='--head-matrix-inspection' in options
+qgw8_commit='--qgw8-commit-boundary' in options
+assert not qgw8_commit or (inspect and head_matrix and not bf16_profile),'QGW8 commit candidate requires the separate non-profiled head-matrix inspection ROOT'
 assert not queued_counters or matrix_attention,'queued counters require the QGW7 matrix profile'
 assert not head_matrix or (matrix_attention and not queued_counters),'QGW8 head requires its own matrix inspection profile'
 if matrix_attention:
  assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
   '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
-  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -77,6 +79,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_G
  *(['-DPIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION=1'] if reuse_input else []),
  *(['-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1','-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1'] if matrix_attention else []),
  *(['-DPIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION=1'] if head_matrix else []),
+ *(['-DPIONEER_Q38_QGW8_COMMIT_BOUNDARY_IMAGE=1'] if qgw8_commit else []),
  *(['-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),

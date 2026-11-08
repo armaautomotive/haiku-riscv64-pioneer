@@ -134,10 +134,15 @@ namespace After {
 #include PIONEER_Q38_COMMIT_STATE_FRAGMENT
 }
 #undef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
+#define PIONEER_Q38_QGW8_COMMIT_BOUNDARY_IMAGE 1
+namespace Qgw8After {
+#include PIONEER_Q38_COMMIT_STATE_FRAGMENT
+}
+#undef PIONEER_Q38_QGW8_COMMIT_BOUNDARY_IMAGE
 #undef __attribute__
-static bool Run(Fixture& f,bool after,bool feedback){
+static bool Run(Fixture& f,unsigned variant,bool feedback){
  assert(!f.faulted);current=&f;uint32_t h[128]={};
- try{if(after)After::CommitState(h,feedback);else Before::CommitState(h,feedback);}
+ try{if(variant==2)Qgw8After::CommitState(h,feedback);else if(variant==1)After::CommitState(h,feedback);else Before::CommitState(h,feedback);}
  catch(const Fault&){current=nullptr;assert(f.faulted);return false;}
  current=nullptr;return true;
 }
@@ -149,36 +154,39 @@ int main(){
  for(const auto& n:Numbers){assert(!CB::NumericDisjoint(n.address,n.words*4));}
  assert(!CB::Apart(0xfffffff0U,32,0x100,4) && !CB::Apart(0x100,4,0xfffffff0U,32));
  for(bool feedback:{false,true}){
-  auto before=std::make_unique<Fixture>(),after=std::make_unique<Fixture>();
-  assert(Run(*before,false,feedback) && Run(*after,true,feedback));valid+=2;
-  assert(before->commands==after->commands && before->l1==after->l1);
+  auto before=std::make_unique<Fixture>(),after=std::make_unique<Fixture>(),qgw8=std::make_unique<Fixture>();
+  assert(Run(*before,0,feedback) && Run(*after,1,feedback) && Run(*qgw8,2,feedback));valid+=3;
+  assert(before->commands==after->commands && before->l1==after->l1
+   && after->commands==qgw8->commands && after->l1==qgw8->l1);
   assert(after->transfers==48 && after->packets==2016 && after->owner.phase==6
    && after->owner.state[Committed]==1 && after->owner.state[Slot]==1);
   assert(before->inputScans==(feedback?2786U:1393U) && after->inputScans==(feedback?4U:2U));
   assert(before->feedbackScans==(feedback?1393U:0U) && after->feedbackScans==(feedback?2U:0U));
+  assert(qgw8->inputScans==after->inputScans && qgw8->feedbackScans==after->feedbackScans
+   && qgw8->owner.phase==6 && qgw8->owner.state[Committed]==1 && qgw8->owner.state[Slot]==1);
   for(unsigned layer=0;layer<64;layer++)if(!L::Dense(layer))for(unsigned span=0;span<7;span++){
    const auto& d=after->layers[layer].table;const auto& result=after->layers[layer].spans[span].destination;
    const auto& expected=after->layers[layer].history;const unsigned first=d[8+span*8+2]*3;
    assert(std::equal(result.begin(),result.end(),expected.begin()+first));
-   assert(result==before->layers[layer].spans[span].destination);
+   assert(result==before->layers[layer].spans[span].destination && result==qgw8->layers[layer].spans[span].destination);
   }
   printf("OBSERVED MOCK CommitState feedback%u identical2064commands+5898240copiedbytes+slotflip1;"
          "actualInputSealCalls old%u new%u actualFeedbackSealCalls old%u new%u;NOT cycles_or_TPS\n",
          unsigned(feedback),before->inputScans,after->inputScans,before->feedbackScans,after->feedbackScans);
   for(unsigned family=0;family<(feedback?10U:8U);family++)for(bool last:{false,true}){
    const unsigned address=Numbers[family].address+(last?Numbers[family].words-1:0)*4;
-   for(bool optimized:{false,true}){
+   for(unsigned optimized:{0U,1U,2U}){
     auto f=std::make_unique<Fixture>();f->l1[address/4]^=1;
     assert(!Run(*f,optimized,feedback));NotCommitted(*f);refused++;
     assert(f->packets==0 && f->transfers==(optimized?0U:1U));
    }
-   for(unsigned at:{1U,2016U}){
+   for(unsigned at:{1U,2016U})for(unsigned optimized:{1U,2U}){
     auto f=std::make_unique<Fixture>();f->hook=Hook::Numeric;f->numeric=address;f->injectAt=at;
-    assert(!Run(*f,true,feedback));NotCommitted(*f);refused++;
+    assert(!Run(*f,optimized,feedback));NotCommitted(*f);refused++;
     assert(f->injected && f->packets==2016 && f->transfers==48); // detected BEFORE flip,not earlier
    }
   }
-  for(bool optimized:{false,true})for(Hook hook:{Hook::Mirror,Hook::Head,Hook::Readback,Hook::Unknown}){
+  for(unsigned optimized:{0U,1U,2U})for(Hook hook:{Hook::Mirror,Hook::Head,Hook::Readback,Hook::Unknown}){
    auto f=std::make_unique<Fixture>();f->hook=hook;f->injectAt=hook==Hook::Readback?3:1;
    assert(!Run(*f,optimized,feedback));NotCommitted(*f);refused++;
    assert(f->injected && f->transfers==1 && f->packets<4);

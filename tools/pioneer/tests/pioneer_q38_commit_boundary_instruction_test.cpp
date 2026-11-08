@@ -19,7 +19,7 @@ namespace F=PioneerQ38GlobalFeedbackLayout;namespace M=PioneerQ38TokenMetadata;
 struct CommitMachine:Machine {
 #include "actual_token_commit_private.inc"
  enum {Parent=0x6f800,Stack=0x6e000,Return=0x60004,Header=0x17e000};
- struct Image {std::vector<uint8_t> text,conv,terminal;unsigned commit,input,feedback;bool optimized;};
+ struct Image {std::vector<uint8_t> text,conv,terminal,bf16;unsigned commit,input,feedback;bool optimized;};
  struct Segment {unsigned route,address,kind;std::vector<uint32_t> words;};
  struct Numeric {unsigned address,words;};
  static constexpr Numeric Numbers[]={{R::Original,5120},{R::OriginalCopy,5120},
@@ -85,12 +85,14 @@ struct CommitMachine:Machine {
   regs[1]=Return;regs[2]=Parent;regs[27]=Parent;regs[10]=Header;regs[11]=unsigned(feed);pc=image.commit;
  }
  bool CodeAddress(unsigned address)const override{
-  return !(address&3) && ((address>=0x40000 && address-0x40000<image.text.size())
+  return !(address&3) && ((address>=0x20000 && address-0x20000<image.bf16.size())
+   || (address>=0x40000 && address-0x40000<image.text.size())
    || (address>=0x64000 && address-0x64000<image.conv.size()) || (address>=0x60000 && address<0x60008));
  }
  uint32_t CodeWord(unsigned address)const{
   assert(CodeAddress(address));return address>=0x64000?Word(image.conv,address-0x64000):
-   address>=0x60000?Word(image.terminal,address-0x60000):Word(image.text,address-0x40000);
+   address>=0x60000?Word(image.terminal,address-0x60000):
+   address>=0x40000?Word(image.text,address-0x40000):Word(image.bf16,address-0x20000);
  }
  unsigned Index(unsigned address)override{l1[8180]=CodeWord(address);return 8180;}
  uint32_t Load(uint32_t address)override{
@@ -190,9 +192,10 @@ int main(int argc,char** argv){
  // Metadata's shared header also declares generators outside this unit's
  // scope. Keep warnings enabled without claiming to exercise those bodies.
  (void)&M::Recipe;(void)&M::Conv;(void)&M::Gdn;(void)&M::Dense;
- assert(argc==8 && std::string(argv[6])=="--synthetic-predecessor-and-noc");const std::string directory=argv[1];
+ const bool qgw8=argc==9 && std::string(argv[8])=="--qgw8-bf16";
+ assert((argc==8 || qgw8) && std::string(argv[6])=="--synthetic-predecessor-and-noc");const std::string directory=argv[1];
  CommitMachine::Image image={Read((directory+"/text.bin").c_str()),Read((directory+"/conv.bin").c_str()),
-  Read((directory+"/terminal.bin").c_str()),unsigned(std::stoul(argv[2],nullptr,16)),
+  Read((directory+"/terminal.bin").c_str()),qgw8?Read((directory+"/bf16.bin").c_str()):std::vector<uint8_t>{},unsigned(std::stoul(argv[2],nullptr,16)),
   unsigned(std::stoul(argv[3],nullptr,16)),unsigned(std::stoul(argv[4],nullptr,16)),std::string(argv[5])=="1"};
  assert(std::string(argv[5])==(image.optimized?"1":"0"));unsigned valid=0,bad=0;
  for(bool feedback:{false,true}){

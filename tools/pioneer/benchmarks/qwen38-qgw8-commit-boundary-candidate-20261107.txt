@@ -1,0 +1,67 @@
+Isolated QGW8 state-commit optimization: BUILD and synthetic execution only
+2026-11-07
+
+The real tag128 QGW8 physical trial returned the wrong first token; that
+numerical failure is unresolved. This new QGW8 ROOT build is NOT packaged as a
+driver, installed, run on the P100A, enabled in Assistant, or qualified for
+Work. It is an optimization candidate, not an inference or speed result.
+
+The separate --qgw8-commit-boundary build selector hoists the immutable
+InputSeal and FeedbackSeal scans out of individual state-copy chunks to the
+entry and exit of the same commit transaction, before the slot/frontier flip.
+All state-table, HeadSeal, packet, NoC counter, and destination-readback
+checks remain. The candidate uses the existing compile-time L1-disjointness
+assertions. A mid-copy numeric corruption can be detected at transaction exit
+instead of at the next chunk: copy writes may occur before detection, but no
+slot/commit publication is permitted after detection. This is an intentional
+change in fault timing and requires real-owner/NoC and hardware qualification.
+
+With the selector absent, the current-source QGW8 ROOT rebuilt byte-for-byte
+to the exact physical trial ELF, SHA-256
+8b7bac64e64d963e729e347a209c3ca4be951992aa924ead0c48d97e0e79478f.
+Two builds from the same source of the optimized candidate produced identical
+ELFs, SHA-256
+9ee84a211ba8a0acb13aff818711f679dd1b88ba4be9a7f385a4c0f60377d401.
+The build alone does not establish correctness, speed, or hardware safety.
+
+The actual linked old/new RV32 CommitState and called guard/NoC code ran in
+the instruction observer with explicitly SYNTHETIC private predecessor and
+immediate-completion simulated NoC. Both produced byte-identical modeled
+state, numeric buffers, commands and copy destinations (12077444 bytes per
+fixture). The observer counted:
+
+ case       old instructions  new instructions  InputSeal calls old -> new
+ terminal          153537724          53540924      1393 -> 2
+ feedback          335626505          53802358      2786 -> 4
+
+These are interpreter instruction counts for isolated synthetic commit
+transactions, NOT physical cycles or a token/second measurement. The old
+and new actual RV32 tests passed 94 and 96 injected fault cases respectively,
+covering entry/final-copy damage and the optimized mid-copy numeric fault.
+The production-source fragment fixture passed 6 valid transactions and 276
+synthetic fault cases for default, earlier, and QGW8 variants. It preserves
+2064 modeled commands, 5898240 copied bytes, readbacks and slot-flip behavior.
+
+An emitted-code audit authenticated both ELFs/sections, verified StateSeal's
+numeric calls moved to CommitState entry/exit, and found the packet bytes and
+the retained Packet/Transfer/HeadSeal/InputSeal/FeedbackSeal/Scope
+instructions and exact callees unchanged after direct-call relocation
+normalization. It is static evidence, not proof of runtime path feasibility.
+The distinct QGW8 build-role test passed 69 positive/negative syntax checks;
+the earlier commit-boundary role regression passed its 73 negative cases.
+The earlier 48b2/83677 legacy ROOTs also rebuilt to their existing exact
+hashes and passed their old instruction-observer regression (94/96 injected
+faults, exact modeled transaction bytes). This checks the observer's optional
+BF16-code support without claiming that the legacy model ran on hardware.
+
+Tests and build inputs:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_commit_boundary_role_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_commit_boundary_role_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_commit_boundary_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_commit_emitted_tests.py OLD_ROOT NEW_ROOT
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_commit_instruction_tests.py OLD_ROOT NEW_ROOT
+Builds: /private/tmp/pioneer-qgw8-commit-opt.gtJTOgIR/{baseline,root,repeat};
+OLD_ROOT=baseline, NEW_ROOT=root. These temporary files are not archival
+backups. Before any device test, resolve or isolate the wrong-token failure,
+bind a distinct driver/program identity, prove integration/ownership and
+recovery, and measure real tokens/sec separately from startup and loading.

@@ -2,6 +2,7 @@
 // Experimental persistent on-card parent. Not installed/native-qualified.
 #include "PioneerQ38TokenImageRole.h"
 #include "PioneerQ38TokenCommitBoundaryRole.h"
+#include "PioneerQ38Qgw8CommitBoundaryRole.h"
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
@@ -31,7 +32,7 @@ extern "C" void q38_token_phase_begin();
 extern "C" void q38_token_phase_mark(unsigned);
 extern "C" void q38_token_phase_complete(unsigned);
 #endif
-#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
+#if defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE) || defined(PIONEER_Q38_QGW8_COMMIT_BOUNDARY_IMAGE)
 #include "PioneerQ38TokenCommitBoundaryLayout.h"
 #endif
 extern "C" unsigned q38_return_recurrent_layer();
