@@ -9,8 +9,10 @@ set -eu
 PATH=/boot/system/bin:/bin
 export PATH
 backup=5f6cea34aa32016fab6703f2ef6ef8ca9e7d52beb5a2f200d26a9b1c9ef2239d
-[ "$#" = 2 ] && [ "$1" = --attest-verified-backup ] && [ "$2" = "$backup" ] \
+[ "$#" = 3 ] && { [ "$1" = --check-only ] || [ "$1" = --restore ]; } \
+ && [ "$2" = --attest-verified-backup ] && [ "$3" = "$backup" ] \
  && [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
+action=$1
 umask 077
 stage=/boot/home/pioneer-hybrid125-full-trial-20261107-a
 archive=/HaikuData/pioneer-hybrid125-evidence-ssqFWSMo
@@ -88,6 +90,10 @@ exact /boot/home/config/non-packaged/servers/HaikuAssistantQwen27 861e5287e6f417
 health=$(sysinfo) || exit 1
 printf '%s\n' "$health" | awk '/^64 .*running at/{cpus++} /used\/max [0-9]+ \/ 137034936320\)/{ram++} END{if(cpus!=1 || ram!=1)exit 1}' || exit 1
 idle && metadata 2026110700010125 1 || exit 1
+if [ "$action" = --check-only ]; then
+ printf '%s\n' POSTLOSS_RESTORE_CHECK_ONLY_PASSED_BACKUP_ATTESTATION_NOT_INDEPENDENTLY_VERIFIED
+ exit 0
+fi
 
 # A new exclusive stage is spent even if any later operation fails. The old
 # trial and its own refusal guard are never modified. No automatic retry or

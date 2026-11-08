@@ -49,7 +49,7 @@ sha256sum(){
 
 with tempfile.TemporaryDirectory(prefix='pioneer-postloss-restore-') as directory:
     base = Path(directory)
-    for mode in ('pass','bad-backup','bad-stage','bad-pre','bad-post','no-epoch','bad-epoch','old-spent','new-spent','same-device','bad-flush-hash',
+    for mode in ('pass','check-only','bad-backup','bad-stage','bad-pre','bad-post','no-epoch','bad-epoch','old-spent','new-spent','same-device','bad-flush-hash',
                  'bad-health','busy','cold','owner','wrong-tag','wrong-generation','flush1','quiesce-fail',
                  'changed-after-quiesce','flush2','wait-fail'):
         root=base/mode/'home';archive=base/mode/'data'/'pioneer-hybrid125-evidence-ssqFWSMo'
@@ -99,11 +99,15 @@ count=$(grep -c '^--flush$' "$SIM_EVENTS")
         program.write_text(source.replace('set -eu\n','set -eu\n'+shim,1).replace('/boot/home',str(root)).replace('/HaikuData',str(base/mode/'data')))
         events=base/mode/'events';events.write_text('')
         env={**os.environ,'SIM_MODE':mode,'SIM_EVENTS':str(events),'SIM_INSTALLED':str(installed)}
-        result=subprocess.run(['sh',str(program),'--attest-verified-backup','bad' if mode=='bad-backup' else backup],
+        result=subprocess.run(['sh',str(program),'--check-only' if mode=='check-only' else '--restore',
+                               '--attest-verified-backup','bad' if mode=='bad-backup' else backup],
                               env=env,capture_output=True,text=True)
         calls=events.read_text().splitlines();work=root/'pioneer-hybrid125-postloss-restore-20261107-a'
         assert (stage/'state').read_text()=='TEST DATA' and (stage/'.trial-once').is_dir()
-        if mode=='pass':
+        if mode=='check-only':
+            assert result.returncode==0 and calls==['--status'] and not work.exists()
+            assert installed.read_text()=='NATIVE' and 'CHECK_ONLY_PASSED' in result.stdout
+        elif mode=='pass':
             assert result.returncode==0,(result.stdout,result.stderr,calls)
             assert calls==['--status','--flush','--quiesce','--flush','--wait','--status']
             assert installed.read_text()=='STABLE' and (work/'previous125').read_text()=='NATIVE'
