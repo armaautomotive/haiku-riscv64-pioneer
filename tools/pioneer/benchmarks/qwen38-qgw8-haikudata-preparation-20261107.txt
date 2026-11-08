@@ -20,3 +20,16 @@ combined QGW8 three-format preflight has been started separately and its
 result was not yet available at the time of this record. The old installed
 driver and the recovery guard remain unchanged. No P100A execution, complete
 model token, throughput or performance improvement is claimed.
+
+Combined real-model preflight completed
+---------------------------------------
+The separate Haiku CPU-only QGW8 preflight subsequently exited 0 and reported
+PASS_QGW8_PREFLIGHT: all 1113 BFP4 FFN, 231 BFP8 FFN, and seven BFP8 head
+fragments were verified against an authenticated same-open original model.
+It used the two new HaikuData cache directories above and the existing
+/boot/home/pioneer-hybrid-bfp8-20261107-cache directory. This establishes
+that the three cache sets are present and accepted together on Haiku for the
+proposed QGW8 layout. It does not open the P100A, upload weights, execute a
+model token, establish model quality, qualify a loadable QGW8 driver or
+measure tokens per second. The installed driver and recovery guard remain
+unchanged.
