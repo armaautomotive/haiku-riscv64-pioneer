@@ -32,3 +32,10 @@ Do not start another trial while this process is active. If it fails or its
 state is uncertain, preserve its output and do not retry/reset/auto-restore.
 The system backup and earlier trial evidence remain separate. At this
 writing there is no token, numerical quality result or new speed result.
+
+Live follow-up: the same client completed its own 1351-fragment preflight
+and then reported HYBRID_UPLOAD progress of 805339136 / 21167624192 bytes.
+The parent and client were still active and stderr was empty when observed.
+This is an in-progress real driver/card upload, not a completed upload,
+independent card-memory readback, token, quality result or inference speed.
+No separate accelerator command or retry was issued while monitoring it.
