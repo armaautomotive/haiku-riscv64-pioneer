@@ -38,15 +38,27 @@ e0e45dce6f1d95124aaeb956e2ee4076aff5b11d35d8079e205054cf33cf316f;
 the preceding preparer binary's different fingerprint must not be mixed with
 this preflight. Rebuild the head preparer with the same sources as preflight.
 
-The shared derived-cache reader now reads a complete cache chunk directly
-into its private result buffer before checking its existing SHA-256 and file
-identity. This avoids a second chunk allocation and copy for aligned complete
-chunk reads; partial or boundary-spanning reads still authenticate full chunks
-before copying. Caller output remains untouched on failure. Cache file format,
-hash checks, and converter fingerprints are unchanged. Synthetic cache and
-QGW8 page-routing tests passed, and the preflight cross-compiled for Haiku.
-This is a loading-path source optimization, not a measured load-time or
-inference-rate improvement, and it has not been installed on the Pioneer.
+Correction: the earlier shared cache-reader optimization did NOT preserve
+every converter fingerprint. The frozen BFP8 writer fingerprints the cache
+header and implementation; the prior existing-directory API addition and the
+reader optimization both change those inputs. The earlier statement that all
+fingerprints were unchanged was incorrect: only BFP4 and head were checked.
+
+The hybrid BFP8 builder now compiles a separate, byte-exact copy of the old
+cache header and implementation, and refuses a changed frozen-source digest.
+Its QGW8 writer cross-builds for Haiku and builds for macOS with the original
+7db613bf source fingerprint and 551c6713 cache recipe. Separate synthetic
+processes verified that the frozen writer's cache can be opened by the current
+reader, whose optimized whole-chunk path and existing-directory API remain.
+The original reader API and conversion codec are otherwise unchanged. This
+does not prove cross-platform numerical equivalence for real converted weights.
+No Pioneer cache was modified, and no loading or inference speedup is claimed.
+One completed 94699520-byte BFP8 tensor cache entry generated on macOS with
+the repaired frozen writer was also compared to the existing Haiku-generated
+entry via an explicitly read-only Linux BeFS mount. Both complete 94746016-byte
+cache files hashed to c526f5720d4186e0401c07c08002f6271ce8f5fb71f90ed61c2531f41d705fc0.
+This is one real entry, not proof for all tensors or permission to use the
+candidate on the card. The Haiku partition was unmounted after the check.
 
 The existing span-packet builder now also accepts a separate explicitly
 selected QGW8 plan; its default remains the prior 13-layer plan. With the
