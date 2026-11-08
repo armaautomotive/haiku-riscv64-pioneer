@@ -1,0 +1,27 @@
+CPU-only first-token hidden references for QGW8 diagnosis, 2026-11-07
+
+The independently authenticated original model produced its existing pinned
+three-token CPU reference traces, all with the expected SHA-256 values. A
+separate complete CPU run computed one fixed input 248319 using the QGW8
+converted FFN selection and BFP8 head, and saved the ORIGINAL and converted
+FFN final hidden vectors. Both selected token 70253. These are model-derived
+reference DATA, not device observations, Work outputs or speed measurements.
+
+Independent verification confirms the saved original hidden vector is bitwise
+identical to layer64 of the pinned original token-0 trace. The converted FFN
+hidden differs in all 5120 words: relative L2 0.318669483, maximum absolute
+error 13.7314987. This is a substantial conversion/arithmetic difference,
+not a numerical acceptance threshold or a diagnosis of the card's token error.
+The separate head comparison still selected 70253; the card selected 108133.
+
+Private mode-0700 reference directory (not checked into Git):
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/qgw8-hidden-reference.Yn7npdOx
+ original-token0.bin SHA-256 9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937
+ cpu-hidden.bin SHA-256 ce1ed4778227d6deb4bc0fd85440facf2a680c7d60b2e7d92c60e74abd73c98a
+ cpu-hidden.log SHA-256 1850cf486952525c7c9c7401cdf922ab84fa35d29850f35526b04395de259dee
+
+The reference verifier opens the pinned CPU trace and snapshot as stable
+single-file snapshots, verifies the original SHA and exact embedded original
+hidden words, checks shape and finite values, and reports error without
+granting a numerical pass. No P100A hidden snapshot has been captured yet.
+This private directory is a local copy, not an independent off-machine backup.
