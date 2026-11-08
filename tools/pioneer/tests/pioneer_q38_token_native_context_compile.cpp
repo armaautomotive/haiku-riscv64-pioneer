@@ -34,6 +34,14 @@ extern "C" status_t pioneer_token_context_hybrid_span(PioneerProbeCookie* cookie
 extern "C" status_t pioneer_token_context_qgw8_control(PioneerProbeCookie* cookie,void* data,size_t length){
  return ProbeControl(cookie,TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL,data,length);
 }
+#ifdef PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION
+extern "C" status_t pioneer_token_context_qgw8_full_support(PioneerProbeCookie* cookie,void* data,size_t length){
+ return ProbeControl(cookie,TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,data,length);
+}
+extern "C" status_t pioneer_token_context_qgw8_full_control(PioneerProbeCookie* cookie,void* data,size_t length){
+ return ProbeControl(cookie,TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,data,length);
+}
+#endif
 #endif
 #endif
 extern "C" bool pioneer_token_context_scoped_bind(PioneerProbeCookie* cookie,unsigned bank){

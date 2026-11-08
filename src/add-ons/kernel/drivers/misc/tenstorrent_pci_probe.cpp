@@ -8659,6 +8659,14 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL)
   return Q38TokenNativeControl(instance,data,length);
 #endif
+// PIONEER_QGW8_FULL_CONTROL_DISPATCH_BEGIN
+#ifdef PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT)
+  return Q38FullOffloadSupport(data,length);
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL)
+  return Q38TokenNativeControl(instance,data,length);
+#endif
+// PIONEER_QGW8_FULL_CONTROL_DISPATCH_END
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE
  if(operation==TT_PCI_PROBE_Q38_TOKEN_MATRIX_PHASE_READ)
   return Q38TokenMatrixPhaseControl(instance,data,length);

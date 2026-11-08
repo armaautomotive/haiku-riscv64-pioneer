@@ -59,8 +59,26 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-control-',dir='/private/
  if qgw8:
   parents.update(('PIONEER_Q38_QGW8_NATIVE_INSPECTION','PIONEER_Q38_QGW8_LAYOUT_INSPECTION',
    'PIONEER_Q38_QGW8_PROGRAMS_INSPECTION','PIONEER_Q38_QGW8_SPAN_INSPECTION','PIONEER_Q38_QGW8_CONTROL_INSPECTION',
+   'PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION',
    'PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION','PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION',
    'PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT','PIONEER_Q38_SPAN_FAST'))
+  protocol=kernel/'PioneerQ38HybridFullProtocol.h'
+  source_probe='#include "'+str(protocol)+'"\nstatic_assert(PioneerQ38FullOffload::BuildTag==0x51544b4e4f445256ULL);\n'
+  flags=['-D'+name+'=1' for name in sorted(parents)] + ['-DPIONEER_DRIVER_BUILD_TAG=0x51544b4e4f445256ULL',
+   '-DB_DEVICE_OP_CODES_END=1000'] + ['-D'+name+'=qgw8_fake_'+name for name in
+    ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')]
+  def probe(values):
+   return subprocess.run([compiler,'-std=c++17',*values,'-fsyntax-only','-x','c++','-'],
+    input=source_probe,capture_output=True,text=True)
+  assert probe(flags).returncode==0
+  for name in ('PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION','PIONEER_Q38_QGW8_NATIVE_INSPECTION',
+               'PIONEER_Q38_QGW8_CONTROL_INSPECTION','PIONEER_Q38_QGW8_SPAN_INSPECTION'):
+   assert probe([flag for flag in flags if flag!='-D'+name+'=1']).returncode,name
+  for name in ('PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_HYBRID_FULL_NATIVE',
+               'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION'):
+   assert probe(flags+['-D'+name+'=1']).returncode,name
+  wrong=[flag for flag in flags if not flag.startswith('-DPIONEER_DRIVER_BUILD_TAG=')]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010127ULL']
+  assert probe(wrong).returncode,'real candidate tag accepted by fake native role'
  tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku';obj=out/'native-context.o'
  run(str(tool)+'-g++','-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti','-fstack-usage',
   *(['-Wno-misleading-indentation'] if qgw8 else []),
@@ -71,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-control-',dir='/private/
   *includes,'-c',here/'pioneer_q38_token_native_context_compile.cpp','-o',obj)
  symbols=subprocess.check_output([str(tool)+'-nm','-C','--defined-only',str(obj)],text=True)
  required=('pioneer_token_context_hybrid_control', 'pioneer_token_context_hybrid_span', 'pioneer_token_context_scoped_bind')
- if qgw8:required+=('pioneer_token_context_qgw8_control',)
+ if qgw8:required+=('pioneer_token_context_qgw8_control','pioneer_token_context_qgw8_full_support','pioneer_token_context_qgw8_full_control')
  missing=[name for name in required if name not in symbols];assert not missing,missing
  assert not any(line.split()[-1] in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')
   for line in symbols.splitlines() if line.split())
@@ -94,7 +112,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hybrid-control-',dir='/private/
   print('PASS all 15 emitted '+('QGW8' if qgw8 else 'QGW5')+' code arrays match the pinned linked images')
  frames=[line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
  tracked=[int(row[1]) for row in frames if len(row)==3 and
-  ('Q38HybridUpload' in row[0] or 'Q38Qgw8Upload' in row[0] or 'BindQ38TokenNative' in row[0])]
+  ('Q38HybridUpload' in row[0] or 'Q38Qgw8Upload' in row[0] or 'BindQ38TokenNative' in row[0]
+   or (qgw8 and ('Q38FullOffloadSupport' in row[0] or 'Q38TokenNativeControl' in row[0])))]
  assert tracked and max(tracked)<=2048
  if qgw8:assert any(len(row)==3 and 'Q38Qgw8Upload' in row[0] and row[2]=='static' for row in frames)
  print('PASS actual tracked '+('QGW8 ' if qgw8 else 'QGW5 ' if header else '')+'native context RISC-V object; max tracked static frame',max(tracked),'; renamed ABI and no device')

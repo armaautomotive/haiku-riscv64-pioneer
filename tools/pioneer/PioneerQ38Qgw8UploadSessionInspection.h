@@ -77,7 +77,11 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
    && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
  }
 public:
- static constexpr uint64_t InspectionTag=UINT64_C(0x385747514f4e4452);
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+ static constexpr uint64_t InspectionTag=UINT64_C(0x51544b4e4f445256); // exact renamed native-context fake tag
+#else
+ static constexpr uint64_t InspectionTag=UINT64_C(0x385747514f4e4452); // isolated upload-only fake tag
+#endif
  enum {RootManifestWords=64*3*7};
  PioneerQ38Qgw8UploadSessionInspection(Pages& p,IO& transport):pages(p),io(transport){}
  PioneerQ38Qgw8UploadSessionInspection(const PioneerQ38Qgw8UploadSessionInspection&)=delete;

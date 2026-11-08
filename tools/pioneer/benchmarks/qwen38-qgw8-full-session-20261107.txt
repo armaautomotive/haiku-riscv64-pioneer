@@ -9,7 +9,9 @@ OBSERVE, HOLD, READ and FINISH, and closes only after the driver's explicit
 finish. Uncertain operations close once and retain/quarantine the owner;
 they do not retry, reset, or issue BANK_END.
 
-The QGW8 inspection protocol uses its own synthetic identity. Role guards
+The QGW8 full-session inspection protocol uses the renamed native-context
+synthetic identity; the separate upload-only inspection retains a different
+synthetic identity. Role guards
 reject legacy or physical driver/Work selectors, CPU-reference modes, and
 late changes between upload-only and full-session roles. A Haiku RISC-V
 compile-only witness instantiates the actual prepared QGW8 page source and

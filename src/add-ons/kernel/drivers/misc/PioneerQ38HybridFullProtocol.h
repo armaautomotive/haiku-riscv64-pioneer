@@ -1,4 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION
+#include "../../../../../tools/pioneer/PioneerQ38Qgw8NativeInspectionRole.h"
+#if PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) || PIONEER_Q38_QGW8_NATIVE_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_CONTROL_INSPECTION) || PIONEER_Q38_QGW8_CONTROL_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_SPAN_INSPECTION) || PIONEER_Q38_QGW8_SPAN_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+#error QGW8 native full control requires its exact non-loadable native inspection role
+#endif
+#endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_PROTOCOL_H) || defined(PIONEER_Q38_BF16_FULL_PROTOCOL_H)
 #error Hybrid full-card protocol cannot alias an older driver protocol
 #endif
@@ -24,7 +34,7 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 enum {PioneerQ38HybridProtocolIdentity=8};
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 enum {PioneerQ38HybridProtocolIdentity=127};
@@ -34,7 +44,7 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 static_assert(PioneerQ38HybridProtocolIdentity==8,"late QGW8 protocol identity change");
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 static_assert(PioneerQ38HybridProtocolIdentity==127,"late matrix protocol identity change");
@@ -50,8 +60,8 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
-static constexpr uint64_t BuildTag=UINT64_C(0x385747514f4e4452); // fake inspection identity only
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
+static constexpr uint64_t BuildTag=UINT64_C(0x51544b4e4f445256); // fake native inspection identity only
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010127);
 #elif defined(PIONEER_Q38_HYBRID_FIXED_126)

@@ -5,8 +5,8 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "PioneerQ38PreparedSourceNative.inc"
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_HYBRID_FULL_NATIVE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 #include "PioneerQ38HybridFullProtocol.h"
 #elif defined(PIONEER_Q38_BF16_FULL_NATIVE)
 #include "PioneerQ38Bf16FullProtocol.h"
@@ -85,7 +85,7 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
  auto* packet=new(std::nothrow) P::Packet;if(!packet)return B_NO_MEMORY;
  status=user_memcpy(packet,data,sizeof(*packet));
  if(status!=B_OK || !P::RequestShape(*packet)
-#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#if defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
   || !PioneerQ38FullOffload::RequestShape(*packet)
 #endif
 #ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE

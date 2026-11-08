@@ -32,7 +32,8 @@ for name in ('_KERNEL_MODE', '__FAST_MATH__', 'PIONEER_Q38_CPU_VALIDATION', 'PIO
              'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_FULL_OFFLOAD_CLIENT',
              'PIONEER_Q38_FULL_OFFLOAD_NATIVE', 'PIONEER_Q38_BF16_FULL_CLIENT', 'PIONEER_Q38_BF16_FULL_NATIVE',
              'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_HYBRID_FULL_NATIVE',
-             'PIONEER_Q38_HYBRID_MATRIX_NATIVE_127', 'PIONEER_Q38_HYBRID_FULL_CLIENT',
+             'PIONEER_Q38_HYBRID_MATRIX_NATIVE_127', 'PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION',
+             'PIONEER_Q38_HYBRID_FULL_CLIENT',
              'PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT', 'PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT',
              'PIONEER_Q38_HYBRID_FIXED_126', 'PIONEER_Q38_HYBRID_MATRIX_CLIENT_127'):
     assert probe(roles + ['-D' + name + '=1']).returncode, name
@@ -61,6 +62,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-full-session-') as name:
         '-fsanitize=address,undefined', str(here / 'pioneer_q38_qgw8_full_session_test.cpp'),
         str(root / 'PioneerModelWeightCache.cpp'), '-o', binary], check=True)
     env = dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1')
-    for args in (['--bad-support'], [], ['--fail-start'], ['--bad-record']):
+    for args in (['--wrong-tag'], ['--bad-support'], [], ['--fail-start'], ['--bad-record']):
         subprocess.run([binary, *args], check=True, env=env)
 print('PASS QGW8 session role guards and synthetic same-FD token lifecycle; no driver, device, model or TPS')

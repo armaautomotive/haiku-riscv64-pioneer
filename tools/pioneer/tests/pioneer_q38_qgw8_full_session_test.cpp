@@ -9,7 +9,7 @@
 struct FullIO:SimOwner {
  unsigned support=0,starts=0,polls=0,holds=0,reads=0,finishes=0;
  bool failStart=false,badRecord=false,badSupport=false;
- explicit FullIO(Fixture& fixture):SimOwner(fixture){}
+ explicit FullIO(Fixture& fixture):SimOwner(fixture){tag=UINT64_C(0x51544b4e4f445256);}
  bool Call(int fd,unsigned op,void* data,size_t size){
   namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
   if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT){
@@ -52,11 +52,13 @@ struct FullIO:SimOwner {
 };
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--fail-start") || !strcmp(argv[1],"--bad-record")
-  || !strcmp(argv[1],"--bad-support"))));
- static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x385747514f4e4452),"fake QGW8 tag only");
+  || !strcmp(argv[1],"--bad-support") || !strcmp(argv[1],"--wrong-tag"))));
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x51544b4e4f445256),"renamed native-context fake tag only");
  Fixture fixture;auto io=std::make_unique<FullIO>(fixture);
  io->failStart=argc==2 && !strcmp(argv[1],"--fail-start");io->badRecord=argc==2 && !strcmp(argv[1],"--bad-record");
  io->badSupport=argc==2 && !strcmp(argv[1],"--bad-support");
+ const bool wrongTag=argc==2 && !strcmp(argv[1],"--wrong-tag");
+ if(wrongTag)io->tag=UINT64_C(0x385747514f4e4452); // old upload-only fixture is not the native full owner
  PioneerQ38HybridFullSession<HeadPages,FullIO> session(fixture.pages,*io);
  const uint32_t input[]={17};uint32_t tokens[32]={};unsigned count=99;
  bool ok=session.Begin(*fixture.canonical,input,1,2);
@@ -67,6 +69,9 @@ int main(int argc,char** argv){
    && io->holds==1 && io->reads==1 && io->finishes==1);
   assert(session.CopyGeneratedTokens(tokens,32,count) && count==2 && tokens[0]==1000 && tokens[1]==1001);
   puts("PASS QGW8 sealed upload through same-FD synthetic START/OBSERVE/HOLD/READ/FINISH; NO MODEL OR DEVICE");
+ }else if(wrongTag){
+  assert(!ok && session.FailedState() && !io->support && io->closes==1 && !io->owned && !io->begins);
+  puts("PASS upload-only fake tag refused before full-session capability or upload; NO DEVICE");
  }else if(io->badSupport){
   assert(!ok && session.FailedState() && io->support==1 && io->closes==1 && !io->owned && !io->retained
    && !io->begins && !io->seals && !io->spanEnd && !io->bankEnd);

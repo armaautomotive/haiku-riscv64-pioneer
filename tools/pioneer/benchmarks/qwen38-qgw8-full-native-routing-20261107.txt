@@ -1,0 +1,33 @@
+QGW8 full-session/native fake-identity alignment
+================================================
+
+The QGW8 full-session client previously expected fake tag
+0x385747514f4e4452, while the existing renamed native-context inspection
+uses fake tag 0x51544b4e4f445256. The full-session and native-context
+inspection roles now both use the latter; the independent upload-only
+fixture keeps its original distinct tag. A full-session client presented
+with the upload-only tag refuses before capability checks or bank BEGIN.
+
+The distinct, non-loadable QGW8 native-full inspection role now compiles the
+existing full-offload SUPPORT and token-control handlers into the renamed
+native context and routes those operations from the actual ProbeControl body.
+The same pinned QGW8 15-section program package remains selected. Inspection
+role checks refuse missing parents, legacy physical identities, conventional
+driver ABI, physical Work and CPU-reference selectors. An extracted dispatch
+test exercises SUPPORT, CONTROL and an unrecognized selector against inert
+stubs. The Haiku RISC-V whole-context compile verifies the renamed symbols
+and control/bind frames no larger than 288 bytes; the hybrid full-client regressions
+and the synthetic QGW8 upload/token lifecycle also pass.
+The existing tag127 candidate rebuild remains byte-identical to the
+immediately preceding current-source build (SHA-256 6a8da89773288f5f9f726863a4a574f0f61db0b9bbd645b25e395e2b3393802f);
+it was not installed or run.
+
+This is still not a loadable QGW8 driver, a connected physical P100A session,
+an actual model token, output-quality validation, or a tokens/second result.
+The matching fake identity enables a future joined inspection, not hardware.
+
+Tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_upload_control_tests.py --qgw8-header PINNED_HEADER HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_control_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_full_session_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_full_session_tests.py HAIKU_BUILD
