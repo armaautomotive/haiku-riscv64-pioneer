@@ -1,0 +1,43 @@
+12 TB Western Digital HaikuData volume, 2026-11-07
+=================================================
+
+The user authorized erasing the entire new drive after being told it held
+three NTFS partitions. Linux identified the disk by serial B0196SUD, model
+WDC WD122KRYZ-01CDAB0 and exact size 12000138625024 bytes. The original
+MBR had PTUUID c46129f1. The old NTFS partition table was replaced, not
+securely erased; old data recovery is not guaranteed. Other disks were not
+partitioned or formatted. The first sgdisk attempt refused without writing;
+the corrected MBR-to-GPT sequence was tested on a disposable sparse image
+before the identity- and mount-checked physical operation.
+
+The resulting single GPT partition is type
+42465331-3BA3-10F1-802A-4861696B7521, unique GUID
+EF238BC7-4FE0-4566-87F7-00BA60F0ED8C, starts at byte 1048576 and is
+12000137559552 bytes long. GPT verification reported no problems. Haiku
+reported the same raw size, partition offset, size, parent path and GPT
+type/unique GUID before formatting, while /boot was on the separate Samsung
+disk. Haiku mkfs initialized the new partition as BFS, named HaikuData,
+with 8192-byte blocks. The read-back superblock reported block_size 8192,
+block_shift 13. The system mounted it at /HaikuData and reported 11176.0G.
+A small copied test file matched its source by cmp and SHA-256 after sync;
+only that newly-created test file and its temporary directory were removed.
+This is a basic live read/write smoke test, not a forced-power-loss or full
+surface test. The volume is data storage; formatting alone did not install
+Haiku or make this disk independently bootable.
+
+Adding the drive changed Linux's SATA names: the new disk became /dev/sda,
+Samsung S14CNSAD300075H became /dev/sdb, and build SSD E201610050040028
+became /dev/sdc. A revised opt-in SMP boot helper resolves the existing two
+disks using their persistent serial-bearing links, then verifies ancestry,
+serials, filesystem UUIDs, capacity, start offset, mount state and pinned
+artifacts. It accepts only the two previously recorded RTL hashes. Journal
+overlay profiles remain refused when Samsung is not /dev/sda, because their
+separate verifier is pinned to that old numbering. Synthetic disk-order and
+failure tests, existing boot-helper tests and private-no-SD tests passed; the
+revised helper twice booted Haiku with 64 CPUs and full memory. The original
+deployed helper was left unchanged; the new helper is staged separately.
+
+The Linux 2 GiB BeFS large-file read limitation remains; do not assume Linux
+can use HaikuData as a writable backup volume or validate large files through
+its BeFS reader. The P100A driver-recovery guard remains intact. No new
+P100A inference or throughput measurement was performed in this operation.

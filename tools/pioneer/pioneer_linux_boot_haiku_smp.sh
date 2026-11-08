@@ -135,17 +135,49 @@ hash_is()
  [ -f "$1" ] && [ ! -L "$1" ] || fail 'Expected regular pinned input'
  [ "$(sha256sum "$1" | cut -d ' ' -f1)" = "$2" ] || fail "Hash mismatch: $1"
 }
+hash_is_recorded_rtl()
+{
+ [ -f "$1" ] && [ ! -L "$1" ] || fail 'Expected regular pinned RTL override'
+ digest=$(sha256sum "$1" | cut -d ' ' -f1) || fail 'Cannot hash RTL override'
+ # Original MSI-only driver and the separately qualified serialized update.
+ case "$digest" in
+  fe6273c985de229e0c6d8fba9dcc27d7978cb9ab2b419670058ceb0198a13c00|0b83ceed0071f3dab3f9b175355bd83fe7364176676264ae66d751ddba2b7c9a) ;;
+  *) fail 'Hash mismatch: RTL override';;
+ esac
+}
 [ "$(findmnt -n -o SOURCE /)" = /dev/nvme0n1p3 ] || fail 'Unexpected root'
 [ "$(findmnt -n -o SOURCE /boot)" = /dev/nvme0n1p2 ] || fail 'Unexpected boot volume'
-[ "$(findmnt -n -o SOURCE /mnt/ssd)" = /dev/sdb2 ] || fail 'Unexpected build disk'
+# Linux drive letters can change when another SATA disk is attached. Resolve
+# only the two recorded serial-bearing links; check both partition ancestry
+# and the on-device identities before using either resulting path.
+resolve_recorded_disks()
+{
+samsung_disk=$(readlink -f /dev/disk/by-id/ata-Samsung_SSD_840_Series_S14CNSAD300075H) || fail 'Samsung identity link missing'
+samsung_partition=$(readlink -f /dev/disk/by-id/ata-Samsung_SSD_840_Series_S14CNSAD300075H-part1) || fail 'Samsung partition link missing'
+build_disk=$(readlink -f /dev/disk/by-id/ata-R3SL480G_E201610050040028) || fail 'Build disk identity link missing'
+build_partition=$(readlink -f /dev/disk/by-id/ata-R3SL480G_E201610050040028-part2) || fail 'Build partition link missing'
+case "$samsung_disk" in /dev/sd[a-z]) ;; *) fail 'Unexpected Samsung device path';; esac
+case "$build_disk" in /dev/sd[a-z]) ;; *) fail 'Unexpected build device path';; esac
+[ "$samsung_partition" = "${samsung_disk}1" ] && [ "$build_partition" = "${build_disk}2" ] \
+ && [ "$samsung_disk" != "$build_disk" ] || fail 'Unexpected SATA partition ancestry'
+[ "$(lsblk -dn -o SERIAL "$samsung_disk" | tr -d ' ')" = S14CNSAD300075H ] || fail 'Wrong Samsung serial'
+[ "$(lsblk -dn -o SERIAL "$build_disk" | tr -d ' ')" = E201610050040028 ] || fail 'Wrong build disk serial'
+[ "$(blkid -s UUID -o value "$build_partition")" = d7acf635-9bfa-43b5-abf9-a35bf5abfd82 ] || fail 'Wrong build filesystem identity'
+[ "$(findmnt -n -o SOURCE /mnt/ssd)" = "$build_partition" ] || fail 'Unexpected build disk'
+[ "$(blockdev --getsize64 "$samsung_disk")" = 120034123776 ] || fail 'Wrong Samsung capacity'
+[ "$(blkid -s UUID -o value "$samsung_partition")" = 020147de08752551 ] || fail 'Wrong BFS identity'
+[ "$(cat "/sys/class/block/${samsung_partition##*/}/start")" = 64 ] || fail 'Wrong partition offset'
+[ -z "$(findmnt -rn -S "$samsung_partition")" ] || fail 'Samsung must be unmounted'
+}
+resolve_recorded_disks
 [ "$(cat /sys/devices/system/cpu/online)" = 0-63 ] || fail 'Expected all 64 Linux CPUs'
 [ "$(cat /proc/sys/kernel/tainted)" = 0 ] || fail 'Unexpected tainted kernel'
 for device in /sys/block/mmcblk*; do [ ! -e "$device" ] || fail 'Remove SD only while powered off'; done
-[ "$(blockdev --getsize64 /dev/sda)" = 120034123776 ] || fail 'Wrong Samsung capacity'
-[ "$(lsblk -dn -o SERIAL /dev/sda | tr -d ' ')" = S14CNSAD300075H ] || fail 'Wrong Samsung serial'
-[ "$(blkid -s UUID -o value /dev/sda1)" = 020147de08752551 ] || fail 'Wrong BFS identity'
-[ "$(cat /sys/class/block/sda1/start)" = 64 ] || fail 'Wrong partition offset'
-[ -z "$(findmnt -rn -S /dev/sda1)" ] || fail 'Samsung must be unmounted'
+# The old journal-overlay verifier is independently pinned to /dev/sda1.
+# Do not let it run against any differently enumerated disk.
+if [ "$journal_view" = 1 ]; then
+ [ "$samsung_disk" = /dev/sda ] || fail 'Journal verifier requires original Samsung numbering'
+fi
 [ ! -e /usr/lib/systemd/system-shutdown/pioneer-kexec-trace ] && [ ! -L /usr/lib/systemd/system-shutdown/pioneer-kexec-trace ] || fail 'Clean up diagnostic hook first'
 [ ! -e /run/pioneer-kexec-trace ] && [ ! -L /run/pioneer-kexec-trace ] || fail 'Clean up diagnostic arm state first'
 hash_is /boot/extlinux/extlinux.conf 53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c
@@ -162,7 +194,7 @@ root_manifest()
  disk=120034123776
  set -- 1 "$(printf '%x' "$((disk >> 32))")" "$(printf '%x' "$((disk & 4294967295))")" 0 8000
  for offset in 0 512 32768 33280 120034123264; do
-  sum=$(dd if=/dev/sda bs=512 skip="$((offset / 512))" count=1 status=none |
+  sum=$(dd if="$samsung_disk" bs=512 skip="$((offset / 512))" count=1 status=none |
    od -An -tu4 --endian=little -v | awk '{for(i=1;i<=NF;i++){sum+=$i;words++}} END {if(words!=128)exit 1;printf "%.0f",sum%4294967296}') || return 1
   set -- "$@" "$(printf '%x' "$((offset >> 32))")" "$(printf '%x' "$((offset & 4294967295))")" "$(printf '%x' "$sum")"
  done
@@ -243,8 +275,8 @@ case "$action" in
    hash_is "$journal_verifier" 8ff6ad3643e4baab6734cbb7799c1ba02bb8beb197cf43f3540a66c2b02c7ff9
    sh "$journal_verifier" "$session"
   else
-   mount -t befs -o ro,nosuid,nodev,noexec /dev/sda1 "$run/source-check"; mounted=1
-   hash_is "$run/source-check/home/config/non-packaged/add-ons/kernel/drivers/dev/net/rtl8125" fe6273c985de229e0c6d8fba9dcc27d7978cb9ab2b419670058ceb0198a13c00
+   mount -t befs -o ro,nosuid,nodev,noexec "$samsung_partition" "$run/source-check"; mounted=1
+   hash_is_recorded_rtl "$run/source-check/home/config/non-packaged/add-ons/kernel/drivers/dev/net/rtl8125"
    hash_is "$run/source-check/system/packages/haiku-r1~beta6_hrev99999-1-riscv64.hpkg" 6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a
    umount "$run/source-check"; mounted=0
   fi
