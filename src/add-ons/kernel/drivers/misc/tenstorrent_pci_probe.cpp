@@ -6926,7 +6926,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		auto* c=cookie->context;
 		if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || !c->q38Span
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+			|| c->q38HybridReceipt || !c->q38Qgw8Receipt
+#elif defined(PIONEER_Q38_QGW8_SPAN_INSPECTION)
 			|| (!!c->q38HybridReceipt == !!c->q38Qgw8Receipt)
 #else
 			|| !c->q38HybridReceipt
@@ -6969,7 +6971,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+		|| c->q38HybridReceipt || !c->q38Qgw8Receipt
+#elif defined(PIONEER_Q38_QGW8_SPAN_INSPECTION)
 		|| (!!c->q38HybridReceipt == !!c->q38Qgw8Receipt)
 #else
 		|| !c->q38HybridReceipt
@@ -7035,7 +7039,7 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	release_sem(sLock); free(request); return status;
 }
 // PIONEER_Q38_SPAN_CONTROL_END
-#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#if defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
 #include "PioneerQ38HybridUploadControl.inc"
 #endif
 #ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
@@ -8703,7 +8707,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
   return DriverReloadControl(instance,operation,data,length);
  if(operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN || operation==TT_PCI_PROBE_Q38_BANK_END)
   return Q38BankControl(instance,operation,data,length);
-#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#if defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
  if(operation==TT_PCI_PROBE_Q38_HYBRID_UPLOAD_CONTROL)
   return Q38HybridUploadControl(instance,data,length);
 #endif

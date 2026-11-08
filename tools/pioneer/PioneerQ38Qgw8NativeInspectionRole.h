@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
-// Rechecked on every include. This exact fake-tag native-context profile is
-// compile/simulation only and can never authorize a loadable driver or Work.
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+// Rechecked on every include. The original profile remains fake-tag and
+// non-loadable. The separately selected exact tag128 candidate is unqualified
+// and must never alias the fake role, an old driver, or validation/Work.
+#if defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
 #if PIONEER_Q38_QGW8_NATIVE_INSPECTION != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
  || !defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) || PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY != 1 \
  || !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY != 1 \
@@ -22,5 +23,33 @@
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error QGW8 native inspection requires the renamed fake-tag non-loadable profile
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+#if PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128 != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
+ || !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) || PIONEER_Q38_QGW8_NATIVE_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 \
+ || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_CONTROL_INSPECTION) || PIONEER_Q38_QGW8_CONTROL_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_SPAN_INSPECTION) || PIONEER_Q38_QGW8_SPAN_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110700010128ULL \
+ || defined(api_version) || defined(init_hardware) || defined(init_driver) || defined(uninit_driver) \
+ || defined(publish_devices) || defined(find_device) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) \
+ || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) \
+ || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) \
+ || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) \
+ || defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_FIXED_126) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
+ || defined(PIONEER_Q38_BF16_FULL_CLIENT) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error QGW8 candidate requires the exact isolated tag128 native profile
 #endif
 #endif

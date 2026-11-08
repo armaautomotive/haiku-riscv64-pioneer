@@ -47,26 +47,34 @@
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H
-#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+enum {PioneerQ38TokenNativePhysicalSelection=8};
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)
 enum {PioneerQ38TokenNativePhysicalSelection=7};
 #else
 enum {PioneerQ38TokenNativePhysicalSelection=5};
 #endif
 #endif
-#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+static_assert(PioneerQ38TokenNativePhysicalSelection==8,"distinct QGW8 candidate subject required");
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)
 static_assert(PioneerQ38TokenNativePhysicalSelection==7,"distinct matrix candidate subject required");
 #else
 static_assert(PioneerQ38TokenNativePhysicalSelection==5,"distinct hybrid native subject required");
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
 #define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
-#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+enum {PioneerQ38TokenNativeProfile=8};
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)
 enum {PioneerQ38TokenNativeProfile=7};
 #else
 enum {PioneerQ38TokenNativeProfile=5};
 #endif
 #endif
-#ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+static_assert(PioneerQ38TokenNativeProfile==8,"QGW8 candidate token program family required");
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)
 static_assert(PioneerQ38TokenNativeProfile==7,"QGW7 candidate token program family required");
 #else
 static_assert(PioneerQ38TokenNativeProfile==5,"QGW5 token program family required");

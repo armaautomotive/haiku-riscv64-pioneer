@@ -9,7 +9,13 @@
 struct FullIO:SimOwner {
  unsigned support=0,starts=0,polls=0,holds=0,reads=0,finishes=0;
  bool failStart=false,badRecord=false,badSupport=false;
- explicit FullIO(Fixture& fixture):SimOwner(fixture){tag=UINT64_C(0x51544b4e4f445256);}
+ explicit FullIO(Fixture& fixture):SimOwner(fixture){
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
+  tag=UINT64_C(0x2026110700010128);
+#else
+  tag=UINT64_C(0x51544b4e4f445256);
+#endif
+ }
  bool Call(int fd,unsigned op,void* data,size_t size){
   namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
   if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT){
@@ -52,13 +58,19 @@ struct FullIO:SimOwner {
 };
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--fail-start") || !strcmp(argv[1],"--bad-record")
-  || !strcmp(argv[1],"--bad-support") || !strcmp(argv[1],"--wrong-tag"))));
+  || !strcmp(argv[1],"--bad-support") || !strcmp(argv[1],"--wrong-tag") || !strcmp(argv[1],"--fake-tag"))));
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110700010128),"exact candidate tag");
+#else
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x51544b4e4f445256),"renamed native-context fake tag only");
+#endif
  Fixture fixture;auto io=std::make_unique<FullIO>(fixture);
  io->failStart=argc==2 && !strcmp(argv[1],"--fail-start");io->badRecord=argc==2 && !strcmp(argv[1],"--bad-record");
  io->badSupport=argc==2 && !strcmp(argv[1],"--bad-support");
+ const bool fakeTag=argc==2 && !strcmp(argv[1],"--fake-tag");
  const bool wrongTag=argc==2 && !strcmp(argv[1],"--wrong-tag");
  if(wrongTag)io->tag=UINT64_C(0x385747514f4e4452); // old upload-only fixture is not the native full owner
+ if(fakeTag)io->tag=UINT64_C(0x51544b4e4f445256);
  PioneerQ38HybridFullSession<HeadPages,FullIO> session(fixture.pages,*io);
  const uint32_t input[]={17};uint32_t tokens[32]={};unsigned count=99;
  bool ok=session.Begin(*fixture.canonical,input,1,2);
@@ -69,7 +81,7 @@ int main(int argc,char** argv){
    && io->holds==1 && io->reads==1 && io->finishes==1);
   assert(session.CopyGeneratedTokens(tokens,32,count) && count==2 && tokens[0]==1000 && tokens[1]==1001);
   puts("PASS QGW8 sealed upload through same-FD synthetic START/OBSERVE/HOLD/READ/FINISH; NO MODEL OR DEVICE");
- }else if(wrongTag){
+ }else if(wrongTag || fakeTag){
   assert(!ok && session.FailedState() && !io->support && io->closes==1 && !io->owned && !io->begins);
   puts("PASS upload-only fake tag refused before full-session capability or upload; NO DEVICE");
  }else if(io->badSupport){

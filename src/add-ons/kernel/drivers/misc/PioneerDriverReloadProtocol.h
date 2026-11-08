@@ -13,6 +13,17 @@
   || !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || PIONEER_Q38_HYBRID_MATRIX_NATIVE_127 != 1)
 #error Tag127 is reserved for the isolated QGW7 matrix-attention candidate
 #endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
+ && PIONEER_DRIVER_BUILD_TAG == 0x2026110700010128ULL \
+ && (!defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \
+  || !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128 != 1)
+#error Tag128 is reserved for the isolated QGW8 matrix-head candidate
+#endif
+#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) && (PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128 != 1 \
+ || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110700010128ULL)
+#error QGW8 native candidate requires its exact tag128 reload identity
+#endif
 #ifndef PIONEER_DRIVER_RELOAD_PROTOCOL_H
 #define PIONEER_DRIVER_RELOAD_PROTOCOL_H
 #include <stdint.h>

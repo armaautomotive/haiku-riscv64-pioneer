@@ -1,0 +1,48 @@
+QGW8 tag128 driver and client: offline candidate only
+====================================================
+
+An explicitly selected tag128 QGW8 candidate now joins the QGW8 BFP4/BFP8
+FFN and BFP8 output-head program package, tracked upload, native owner and
+full token-control protocol in a conventional Haiku RISC-V driver build.
+Its separate diagnostic client preflights the existing three converted
+caches, checks the exact tag and full-generation capability, uploads using the
+same retained descriptor, and can report generated tokens per second including
+prompt processing. It performs no CPU model-reference validation or fallback.
+It is not yet integrated into Assistant or its Work hardware selection.
+
+The candidate selector is distinct from tag125/126/127 and from both the
+fake-native and upload-only inspection profiles. The reload tag is reserved,
+role checks reject wrong/disabled parents, aliasing, CPU-reference or Work
+selectors, and the driver build checks the 15 pinned code-section hashes,
+expected control/owner symbols, absence of llama/ggml/reference symbols,
+source stability and static kernel stack bounds. The candidate exposes only
+the QGW8 tracked upload control, not the older hybrid upload selector. The QGW8 close-retention
+fix is included. Two isolated driver builds and a workspace build produced:
+
+ program DATA header  8ddeb0cfa01857557be9416fa61c8029040570cf67bd412e6dd1f59fdc32eecb
+ driver               676d929e4ae0044d91e5f0b0adfe014374359a0130b12ea34d54c71f6b63e95b
+ diagnostic client    92b2b42fad192dba52d576752427e2a89c08fad0974e1384f5a0156167776905
+
+The separate current-source tag127 driver rebuild retains its existing
+6a8da89773288f5f9f726863a4a574f0f61db0b9bbd645b25e395e2b3393802f hash.
+These builds used the same existing SDK and are not independent compiler or
+hardware verification. Synthetic candidate-client tests cover tag refusal,
+capability refusal before upload, the full 22035-span same-FD lifecycle and
+failure retention; fake-native QGW8 and legacy regressions are separate.
+
+The candidate has NOT been installed, run on the P100A, validated for model
+quality, proven to safely complete its physical lifecycle, or benchmarked.
+It must not replace the installed driver while the existing failed-trial
+recovery guard and storage-integrity investigation remain unresolved. The
+first reported rate, if eventually run, includes prompt processing and is not
+a pure steady-state decode rate. No speedup or target attainment is claimed.
+
+Build only, with freshly generated pinned QGW8 ROOT/worker images:
+ python3 tools/pioneer/generate_qwen38_hybrid_programs.py --qgw8-native-candidate ROOT WORKER NEW_HEADER
+ python3 tools/pioneer/build_q38_qgw8_candidate128.py HAIKU_BUILD NEW_HEADER NEW_OUTPUT
+ python3 tools/pioneer/build_q38_qgw8_candidate_client128.py HAIKU_BUILD NEW_OUTPUT
+
+Offline tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_full_session_tests.py --candidate128
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_kernel_layout_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_token_native_binding_tests.py --qgw8-inspection INSPECTION_HEADER --sdk HAIKU_BUILD

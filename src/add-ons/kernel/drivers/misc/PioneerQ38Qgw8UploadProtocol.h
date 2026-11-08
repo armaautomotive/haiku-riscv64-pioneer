@@ -10,15 +10,15 @@
   && (!defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) || PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY != 1)) \
  || ((defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)) \
   && !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)) \
- || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || (defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_BF16_FULL_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error QGW8 upload control is non-loadable inspection only
 #endif
 #include <stdint.h>
-// Distinct selector and packet for isolated kernel/native inspection only.
-// The strict fake-tag role checks still forbid use in a loadable driver.
+// Distinct selector and packet for QGW8. The fake-native role remains
+// non-loadable; the separate tag128 candidate is not qualified by this ABI.
 // Neither the packet nor the selector authenticates uploaded model bytes.
 #define TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8831)
 namespace PioneerQ38Qgw8Upload {

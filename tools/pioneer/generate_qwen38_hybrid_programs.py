@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Generate pinned QGW5, QGW7 or inspection-only QGW8 program DATA."""
+"""Generate pinned QGW5/QGW7/QGW8 program DATA; no execution authority."""
 import hashlib
 import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgw8='--qgw8-head-inspection' in args
+args=sys.argv[1:];qgw8candidate='--qgw8-native-candidate' in args
+if qgw8candidate:
+    if args.count('--qgw8-native-candidate')!=1 or '--qgw8-head-inspection' in args:raise SystemExit('ambiguous QGW8 candidate selector')
+    args.remove('--qgw8-native-candidate');args.insert(0,'--qgw8-head-inspection')
+qgw8='--qgw8-head-inspection' in args
 if qgw8:
     if args.count('--qgw8-head-inspection')!=1 or '--matrix-native-candidate' in args or '--matrix-attention-inspection' in args:
         raise SystemExit('ambiguous QGW8 selector')
@@ -49,7 +53,13 @@ lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate co
 if matrix:
     lines += ['#if !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \\',
               ' || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \\']
-    if qgw8:
+    if qgw8 and qgw8candidate:
+        lines += [' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
+                  ' || !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128 != 1 \\',
+                  ' || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \\',
+                  ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
+                  '#error QGW8 candidate data requires the exclusive tag128 native role', '#endif']
+    elif qgw8:
         lines += [' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \\',

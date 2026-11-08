@@ -2,6 +2,13 @@
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) && PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1
 #error QGW8 full-session inspection selector must equal one
 #endif
+#if defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) && (PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
+ || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error QGW8 tag128 client requires its distinct candidate role
+#endif
 #ifndef PIONEER_Q38_QGW8_UPLOAD_SESSION_ROLE_BOUND
 #define PIONEER_Q38_QGW8_UPLOAD_SESSION_ROLE_BOUND
 #ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
@@ -43,9 +50,9 @@ static_assert(PioneerQ38Qgw8UploadSessionRole==0,"late QGW8 upload-only selector
 template<class Pages,class IO> class PioneerQ38HybridFullSession;
 // One retained diagnostic session from verified QGW8 pages through the
 // existing span builder to an explicitly distinct QGW8 receipt. The control
-// uses the same IO.Call interface as the other driver requests, but this
-// entire profile remains non-loadable. The fixed tag below is a synthetic
-// test identity, NEVER a physical driver tag.
+// uses the same IO.Call interface as the other driver requests. The default
+// profiles use synthetic identities; only the explicitly selected tag128
+// candidate uses its distinct unqualified physical-driver identity.
 // After an uncertain operation, close once and never END/reset/retry here.
 // IO.OutputSafe must refuse destinations overlapping any dynamically owned
 // transport/ledger/receipt storage, even though it grants no device access.
@@ -77,7 +84,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
    && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
  }
 public:
-#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010128);
+#elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
  static constexpr uint64_t InspectionTag=UINT64_C(0x51544b4e4f445256); // exact renamed native-context fake tag
 #else
  static constexpr uint64_t InspectionTag=UINT64_C(0x385747514f4e4452); // isolated upload-only fake tag

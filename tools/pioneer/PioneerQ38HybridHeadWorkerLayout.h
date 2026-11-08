@@ -17,7 +17,7 @@
  || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
  || defined(PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0) || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) \
  || ((defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)) \
-  && !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+  && !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)) || (defined(PIONEER_Q38_HYBRID_FULL_NATIVE) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)) \
  || defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) \
  || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) || defined(__FAST_MATH__) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -28,7 +28,7 @@
 
 // QGW8 inspection frame: all head jobs use the BFP8 leaf; old Q6 head
 // frames are rejected. FFN mask uses BFP8 only in layers 50..60. This is
-// geometry and format only, never source/producer, native, or device authority.
+// geometry and format only, never source authentication or device authority.
 namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;

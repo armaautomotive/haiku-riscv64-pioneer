@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8NativeInspectionRole.h"
-// Rechecked on every include. The first selector is a kernel-SDK template
-// witness; the second permits only the renamed, non-loadable native test
-// context. Neither selector grants a physical driver, Work or execution.
+// Rechecked on every include. Kernel and fake-native selectors remain
+// non-loadable. The distinct tag128 candidate is separately guarded and is
+// not qualified for installation or execution merely by compiling it.
 #ifdef PIONEER_Q38_HYBRID_MATRIX_NATIVE_127
 #if PIONEER_Q38_HYBRID_MATRIX_NATIVE_127 != 1 || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
  || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 || !defined(PIONEER_DRIVER_BUILD_TAG) \
@@ -31,12 +31,13 @@
  || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 \
  || !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \
  || !defined(PIONEER_DRIVER_BUILD_TAG) \
- || (!defined(PIONEER_Q38_HYBRID_FIXED_126) && !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) && PIONEER_DRIVER_BUILD_TAG != 0x2026110700010125ULL) \
+ || (!defined(PIONEER_Q38_HYBRID_FIXED_126) && !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) && PIONEER_DRIVER_BUILD_TAG != 0x2026110700010125ULL) \
  || (defined(PIONEER_Q38_HYBRID_FIXED_126) && (PIONEER_Q38_HYBRID_FIXED_126 != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026110700010126ULL)) \
  || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) \
  || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0) \
  || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) \
- || ((defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT)) && !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127)) \
+ || ((defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT)) \
+  && !defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) && !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)) \
  || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
  || defined(PIONEER_Q38_BF16_FULL_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \

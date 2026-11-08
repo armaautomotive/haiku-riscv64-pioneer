@@ -1,4 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+#include "../../../../../tools/pioneer/PioneerQ38Qgw8NativeInspectionRole.h"
+#endif
+#if defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) && (PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
+ || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error QGW8 tag128 client protocol requires its exact separate candidate role
+#endif
 #ifdef PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8NativeInspectionRole.h"
 #if PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION != 1 \
@@ -34,7 +44,9 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
+enum {PioneerQ38HybridProtocolIdentity=128};
+#elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 enum {PioneerQ38HybridProtocolIdentity=8};
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 enum {PioneerQ38HybridProtocolIdentity=127};
@@ -44,7 +56,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
+static_assert(PioneerQ38HybridProtocolIdentity==128,"late QGW8 candidate protocol identity change");
+#elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 static_assert(PioneerQ38HybridProtocolIdentity==8,"late QGW8 protocol identity change");
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 static_assert(PioneerQ38HybridProtocolIdentity==127,"late matrix protocol identity change");
@@ -60,7 +74,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010128);
+#elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 static constexpr uint64_t BuildTag=UINT64_C(0x51544b4e4f445256); // fake native inspection identity only
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010127);
