@@ -1,0 +1,39 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+P100A_RELOAD driver55 tag2026110700010128 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110700010128 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110700010128 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+QGW8_SHAPE_CLEAN outputs=32 first_token=108133 inference_seconds=893.683;QUALITY_NOT_VALIDATED
+P100A_RELOAD driver55 tag2026110700010128 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110700010128 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+P100A_RELOAD driver55 tag2026110700010128 generation3 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+VOLUME bfs /dev/disk/scsi/0/3/0/0
+PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee
+QGW8_FULL_ONE_SHOT_CLOSED_STABLE_RESTORED_NO_QUALITY_CLAIM

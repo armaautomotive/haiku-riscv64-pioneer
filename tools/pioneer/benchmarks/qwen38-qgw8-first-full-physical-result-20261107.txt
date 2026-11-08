@@ -32,9 +32,11 @@ Completed trial stdout SHA-256:
 e00253bd88d1c17a0b359ff5c3675700b4d9b9d05008a8b7a0ca995756eab6b8
 Completed parent stdout SHA-256:
 69e85585e0a27f8ea4647052530c7881846741560514f90222c9b9c4f8b49a96
-Both stderr files were empty (SHA-256 e3b0c442...b855). Exact transcripts
-remain on the Pioneer under /boot/home/pioneer-qgw8-full-trial-20261107-a and
-were copied to /private/tmp/pioneer-qgw8-result.ZK4SsaJy for analysis.
+Both stderr files were empty (SHA-256 e3b0c442...b855). Exact transcripts are
+archived alongside this note as qwen38-qgw8-first-full-physical-20261107.log
+and qwen38-qgw8-first-full-physical-parent-20261107.log. They also remain on
+the Pioneer under /boot/home/pioneer-qgw8-full-trial-20261107-a and were copied
+to /private/tmp/pioneer-qgw8-result.ZK4SsaJy for analysis.
 
 Post-run independent read-only checks: stable driver SHA-256
 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
