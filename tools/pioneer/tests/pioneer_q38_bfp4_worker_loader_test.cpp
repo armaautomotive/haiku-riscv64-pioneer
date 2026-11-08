@@ -77,7 +77,7 @@ struct IO {
   if(a==0xffb20040){
    const unsigned tiles=L::Tiles(job.words[2]);
    unsigned operand=(issues/tiles)%2,tile=issues%tiles;
-#ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
+#if defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT)
    if(autoBand && issues>=2*tiles){band=1+(issues-2*tiles)/tiles;operand=0;tile=(issues-2*tiles)%tiles;}
    else
 #endif

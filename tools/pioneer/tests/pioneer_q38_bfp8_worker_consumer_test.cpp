@@ -54,7 +54,13 @@ int main(){
    && prior.events[i].index==current.events[i].index && prior.events[i].value==current.events[i].value);
   auto job=Make(63,width);ConsumerIO io(job);Emitter emitter;Guard guard{io,job};PioneerQ38Bfp8WorkerConsumer consumer;
   assert(consumer.Run(io,emitter,guard,job) && guard.calls==10 && io.fpuReads==64 && io.outputWrites==64 && io.outputReads==64);
-  assert(emitter.ops && emitter.configs && emitter.drains && io.issues==4*L::Tiles(width) && !io.scalar);
+  assert(emitter.ops && emitter.configs && emitter.drains && io.issues==
+#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+   3*L::Tiles(width)
+#else
+   4*L::Tiles(width)
+#endif
+   && !io.scalar);
   for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++){
    unsigned a=W::Output+(band*32+row)*4;uint32_t got=0;for(unsigned i=0;i<4;i++)got|=unsigned(io.l1[a+i])<<(8*i);
    assert(got==ConsumerIO::Value(band,row));

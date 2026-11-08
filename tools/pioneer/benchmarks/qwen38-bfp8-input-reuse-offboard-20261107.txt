@@ -1,0 +1,40 @@
+BFP8 worker retained-input experiment: OFFBOARD ONLY
+===================================================
+
+The existing BFP8 worker reads the same ROOT-L1 BF16 input for each 32-row
+band. A separately selected leaf experiment reads it for band zero and reuses
+the worker's staged input for the rest of that one job; each band's distinct
+BFP8 weights and the matrix/unpack instruction sequence remain unchanged.
+The option is forbidden in hybrid worker, QGW8, driver, native, Work, and
+CPU-reference roles. It is not connected to the coordinator or Assistant.
+
+The normal worker's rebuilt text remains SHA-256
+4cbd9db9777a528cde91cece928ba5aa205adcbdac3435a2571a89259c181b67.
+The separate experimental worker text is 7476 bytes, SHA-256
+76341ce62314cb654d47e49e9fa2d50232ce9400d6ad55a1aa2aca64b987f7dc.
+
+Actual emitted RV32 instructions were run in a simulated NoC/L1/Tensix
+environment. Two-band jobs at both widths and workers 1, 63 and 119 matched
+the existing synthetic outputs; three private real-weight samples matched
+their prior expected outputs. For one, three, and eight bands at widths 5120
+and 17408, the experiment matched expected outputs including alternating
+nonzero and zero weight bands. The test confirmed input bytes and headers
+were preserved after the first compute. Failed acknowledgments, corrupted
+frames, and a transfer fault after the first band stopped the test.
+
+At K5120 with two bands, 480 simulated NoC reads replace 640. At eight
+bands the count is 1440 instead of 2560. The peer63 two-band simulation
+executed 161243 RV32 steps versus 205625 for the unchanged leaf. These are
+simulator counts, not hardware latency, model quality, or tokens per second.
+
+Safety limitation: changing the retained input between bands changed the
+second output without a fault. The test therefore proves that reuse alone
+does not establish input integrity or ownership; it must not be integrated
+into a loadable worker or Work mode until an actual lifetime and isolation
+proof and hardware qualification exist. No physical device was accessed and
+no model generation or throughput result is claimed.
+
+Reproduce the offline experiment and unchanged regression with the Haiku
+cross-build and the existing private sample directory:
+  python3 tools/pioneer/tests/run_pioneer_q38_bfp8_worker_tests.py --reuse-input HAIKU_BUILD PRIVATE_SAMPLES
+  python3 tools/pioneer/tests/run_pioneer_q38_bfp8_worker_tests.py HAIKU_BUILD PRIVATE_SAMPLES

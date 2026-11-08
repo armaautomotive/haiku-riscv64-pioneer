@@ -6,6 +6,16 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC)
 #error BFP8 worker loader is an isolated offboard diagnostic, not Work or device authority
 #endif
+#if defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) && (PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_BF16_WORKER_IMAGE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+ || defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION))
+#error BFP8 input reuse is an isolated leaf experiment, never a hybrid or driver image
+#endif
 #include "PioneerQ38Bfp8WorkerJob.h"
 #include "PioneerDramCohortReadSweep.h"
 // C64 batched GDDR weight reads plus ROOT-L1 BF16 input reads. The caller
@@ -47,14 +57,29 @@ public:
  }
  PioneerQ38Bfp8WorkerLoader(const PioneerQ38Bfp8WorkerLoader&)=delete;
  PioneerQ38Bfp8WorkerLoader& operator=(const PioneerQ38Bfp8WorkerLoader&)=delete;
+#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+private:
+ friend class PioneerQ38Bfp8WorkerConsumer;
+ template<class IO> bool RunInternal(IO& io,const W::Job& selected,unsigned band,bool reuseInput){
+#else
  template<class IO> bool Run(IO& io,const W::Job& selected,unsigned band){
+#endif
   if(attempted || failed)return false;
   attempted=1;
+#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+  if(reuseInput && !band)return Fail();
+#endif
   if(!W::Shape(selected) || band>=selected.words[4])return Fail();
   for(unsigned i=0;i<W::Words;i++)job.words[i]=selected.words[i];
   if(!Quiet(io))return Fail();
   for(unsigned i=0;i<9;i++)baseline[i]=io.Read(Counter(i));
-  for(unsigned operand=0;operand<2;operand++){
+  for(unsigned operand=0;operand<
+#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+    (reuseInput?1U:2U)
+#else
+    2U
+#endif
+    ;operand++){
    for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++){
     W::Read packet;if(!W::SelectedPacket(job,band,operand,tile,packet))return Fail();
     for(unsigned word=0;word<L::Header/4;word++){
@@ -78,8 +103,23 @@ public:
     if(!Drain(io))return Fail();
    }
   }
-  if(issued!=2*L::Tiles(job.words[2]) || flits!=18*L::Tiles(job.words[2]) || !Quiet(io) || !Commands(io))return Fail();
+  if(issued!=
+#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+    (reuseInput?L::Tiles(job.words[2]):2*L::Tiles(job.words[2]))
+    || flits!=(reuseInput?17*L::Tiles(job.words[2]):18*L::Tiles(job.words[2]))
+#else
+    2*L::Tiles(job.words[2]) || flits!=18*L::Tiles(job.words[2])
+#endif
+    || !Quiet(io) || !Commands(io))return Fail();
   return true;
  }
+#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+public:
+ template<class IO> bool Run(IO& io,const W::Job& selected,unsigned band){return RunInternal(io,selected,band,false);}
+private:
+ // Valid only inside the same consumer after its first band loaded input.
+ // Input ownership and preservation are NOT proved by this experiment.
+ template<class IO> bool RunReusingInput(IO& io,const W::Job& selected,unsigned band){return RunInternal(io,selected,band,true);}
+#endif
 };
 #endif
