@@ -3,6 +3,7 @@
 #include "PioneerQ38TokenImageRole.h"
 #include "PioneerQ38TokenCommitBoundaryRole.h"
 #include "PioneerQ38Qgw8CommitBoundaryRole.h"
+#include "PioneerQ38Qgw8CoarseProfileRole.h"
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"

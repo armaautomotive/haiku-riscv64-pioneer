@@ -1,0 +1,50 @@
+QGW8 coarse on-card phase timing: offline BUILD only, 2026-11-08
+================================================================
+
+The full QGW8 physical run is both very slow and numerically incorrect.
+Existing profiling measurements describe a different original-Q4 worker,
+so they cannot identify the QGW8 bottleneck. This separate, opt-in ROOT build
+adds coarse cycle counters for bootstrap, metadata, recurrent, dense, head
+normalization, head matrix, feedback, state commit, publication and final
+stop. It does not add CPU inference or reference validation to Work.
+
+The unprofiled current source rebuilds exactly to the earlier physical QGW8
+ROOT ELF SHA-256 8b7bac64e64d963e729e347a209c3ca4be951992aa924ead0c48d97e0e79478f.
+Two separate builds of the profiled ROOT produce identical ELF SHA-256
+7be485638726e4ee50bbc3af62e9aeed3b73b0a739ab68029fd4d9b397cc095c.
+Both use the same local SDK; these are not independent compiler results.
+The actual linked layer component and feedback object bytes match the
+unprofiled build. Whole ROOT, program sections and code addresses do differ.
+
+Profile text is 130748/131072 bytes, conv 19684/32768, BF16 39716/65536;
+the existing root build reports max individual frame 1616 bytes. Individual
+frame sizes do not establish the total stack, kernel stack or runtime safety.
+The only emitted CSR sequence is three bounded read-only mcycleh/mcycle/
+mcycleh reads in the sampling helper. Raw cycles are not wall time without a
+verified clock rate; sampling has overhead and buckets are inclusive.
+
+Offline checks: 89 role-isolation cases; the previous commit-optimization
+role regression; legacy phase-data and role tests; exact instruction-level
+verification of all emitted timing call sites; separate section extraction;
+and actual linked helper execution against synthetic clocks for 21 histories,
+including rollover and nine invalid-data cases. The old QGW8 program builder
+refuses the new image before opening a worker or creating a header. These
+checks do not execute the entire ROOT, model, native owner or physical card.
+
+No program header, native driver, held-record reader, client or hardware
+test is provided for this profile yet. The image MUST NOT be installed or
+treated as a speedup, correctness qualification, Assistant mode or Work mode.
+The independently running tag129 hidden-state diagnostic is unchanged.
+Only after that run closes and its incorrect-token cause is localized should
+this distinct timing image be integrated with its own identity, ownership,
+safe observation and device tests. Measure paired real runs and separate
+startup, upload and steady-state generation before deciding an optimization.
+
+Build (new absolute output directory):
+ python3 tools/pioneer/build_qwen38_token_root.py HAIKU_BUILD NEW_ROOT \
+  --inspect-candidate --cancel-boundary --f32-hidden --unroll-dense-seals \
+  --boundary-seals --unroll-quiet --worker-local-source-guards --precise-activation \
+  --single-closed-audit --worker-sealed-admission --bf16-fpu --hybrid-bfp \
+  --hybrid-matrix-attention --head-matrix-inspection --qgw8-coarse-profile
+Offline test:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_coarse_profile_image_tests.py HAIKU_BUILD BASELINE_ROOT PROFILE_ROOT

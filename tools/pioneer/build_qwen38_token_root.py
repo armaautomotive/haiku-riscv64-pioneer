@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-commit-boundary'}
+assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-commit-boundary','--qgw8-coarse-profile'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -43,13 +43,15 @@ matrix_attention='--hybrid-matrix-attention' in options
 queued_counters='--hybrid-queued-counters' in options
 head_matrix='--head-matrix-inspection' in options
 qgw8_commit='--qgw8-commit-boundary' in options
+qgw8_profile='--qgw8-coarse-profile' in options
 assert not qgw8_commit or (inspect and head_matrix and not bf16_profile),'QGW8 commit candidate requires the separate non-profiled head-matrix inspection ROOT'
+assert not qgw8_profile or (inspect and head_matrix and not bf16_profile and not qgw8_commit),'QGW8 timing requires its separate original-commit head-matrix inspection ROOT'
 assert not queued_counters or matrix_attention,'queued counters require the QGW7 matrix profile'
 assert not head_matrix or (matrix_attention and not queued_counters),'QGW8 head requires its own matrix inspection profile'
 if matrix_attention:
  assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
   '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
-  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()) | ({'--qgw8-coarse-profile'} if qgw8_profile else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -74,6 +76,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if bf16_profile else []),
+ *(['-DPIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if qgw8_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP=1'] if hybrid else []),
  *(['-DPIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION=1'] if reuse_input else []),
@@ -95,6 +98,15 @@ if bf16_profile:
   '-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1','-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1',
   '-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1','-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1',
   '-c',here/'blackhole_q38_bf16_profile.cpp','-o',profile_objects[0])
+elif qgw8_profile:
+ profile_objects=[out/'qgw8-coarse-profile.o']
+ run(tool+'g++',*flags,'-DPIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1',
+  '-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+  '-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1','-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1',
+  '-DPIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP=1','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
+  '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1','-DPIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION=1',
+  '-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1',
+  '-c',here/'blackhole_qwen38_token_phase_profile.cpp','-o',profile_objects[0])
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_chain_start.S','-o',out/'start.o')
 link=here/'blackhole_qwen38_global_chain.ld'
 if bf16:
@@ -139,7 +151,7 @@ for line in subprocess.check_output([tool+'objdump','-t',str(out/'program.elf')]
    assert (0x40000<=start and start+size<=0x60000) or (0x64000<=start and start+size<=0x6c000) or (bf16 and 0x20000<=start and start+size<=0x30000)
    intervals.append((start,start+size))
    if p[5]=='q38_token_phase_clock':clock_intervals.append((start,start+size))
-assert len(clock_intervals)==int(bf16_profile),'only the separate BF16 timing image has a clock sampler'
+assert len(clock_intervals)==int(bf16_profile or qgw8_profile),'only separate timing images have a clock sampler'
 instructions=[];clock_reads=[]
 for line in dis.splitlines():
  m=re.match(r'\s*[0-9a-f]+:\s+([0-9a-f]{8})\s',line)
@@ -149,17 +161,18 @@ for line in dis.splitlines():
  assert not address&3 and int(m[1],16)&3==3,'RV32IMF functions contain only 32-bit instructions'
  word=int(m[1],16)
  if word&127==0x73:
-  assert bf16_profile and any(begin<=address<end for begin,end in clock_intervals),'no CSR outside the separate sampler'
+  assert (bf16_profile or qgw8_profile) and any(begin<=address<end for begin,end in clock_intervals),'no CSR outside the separate sampler'
   assert (word>>12)&7==2 and not ((word>>15)&31) and (word>>7)&31,'only read-only CSRRS with rs1=x0 and a result register'
   clock_reads.append(word>>20)
  assert not (int(m[1],16)&127==0x67 and not ((int(m[1],16)>>15)&31)), 'absolute JALR through x0 cannot reach owned ROOT ROM'
  instructions.append(line)
-assert clock_reads==([0xb80,0xb00,0xb80] if bf16_profile else []),'exact bounded mcycleh/mcycle/mcycleh read sequence only'
+assert clock_reads==([0xb80,0xb00,0xb80] if bf16_profile or qgw8_profile else []),'exact bounded mcycleh/mcycle/mcycleh read sequence only'
 code='\n'.join(instructions)
 assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|fmsub|fnmadd|fnmsub|fcvt\.wu?\.s|ebreak)\b',code)
 assert len([s for s in instructions if re.search(r'\bmv\s+s11,\w+\s*$',s)])==5,'one parent + two existing bind/restore pairs'
 frames=[int(line.split('\t')[1]) for line in (out/'program.su').read_text().splitlines()]
 if bf16_profile:frames += [int(line.split('\t')[1]) for line in (out/'bf16-profile.su').read_text().splitlines()]
+if qgw8_profile:frames += [int(line.split('\t')[1]) for line in (out/'qgw8-coarse-profile.su').read_text().splitlines()]
 assert frames and max(frames)<=2048,max(frames)
 sections=subprocess.check_output([tool+'objdump','-h',str(out/'program.elf')],text=True).splitlines()
 for i,row in enumerate(sections):

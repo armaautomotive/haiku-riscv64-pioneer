@@ -5,6 +5,8 @@
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
 #include "PioneerQ38Bf16ProfileBuildRole.h"
+#elif defined(PIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE)
+#include "PioneerQ38Qgw8CoarseProfileRole.h"
 #else
 #if PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE != 1 \
  || !defined(__riscv) || __riscv != 1 \
