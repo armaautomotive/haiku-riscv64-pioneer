@@ -22,11 +22,13 @@ def case(root,mode):
  for name,text in (('installed','stable\n'),('stable','stable\n'),('guard','guard\n'),('model','model\n')):(d/name).write_text(text)
  (stage/'tenstorrent_pci_probe-qgw8-128').write_text('candidate\n')
  if mode=='spent':(stage/'.trial-once').mkdir()
+ if mode in ('preverified','preverified-bad'):
+  (stage/'real-preflight.attestation').write_text('WRONG\n' if mode=='preverified-bad' else 'QGW8_REAL_MODEL_AND_THREE_CACHES_VERIFIED_EXTERNALLY\n')
  (stage/'pioneer_q38_qgw8_full_output.awk').write_bytes((here.parent/'pioneer_q38_qgw8_full_output.awk').read_bytes())
  (d/'device').symlink_to('../../bin/tenstorrent_pci_probe')
  script(bindir/'uname','echo Haiku');script(bindir/'id','echo 0')
  script(bindir/'stat',r'''case "$2" in
- '%u:%a') echo 0:700;; '%u:%h:%a') case "$3" in */pioneer_q38_qgw8_full_output.awk) echo 0:1:644;; *) echo 0:1:755;; esac;;
+ '%u:%a') echo 0:700;; '%u:%h:%a') case "$3" in */pioneer_q38_qgw8_full_output.awk) echo 0:1:644;; */real-preflight.attestation) echo 0:1:600;; *) echo 0:1:755;; esac;;
  '%u:%h:%a:%s') echo 0:1:600:18973870528;; '%d') echo 42;; *) exit 2;; esac''')
  script(bindir/'sha256sum',f'''case "$1" in
  */installed|*/stable|*/tenstorrent_pci_probe-qgw8-128|*/stable.backup|*/driver.incoming)
@@ -53,6 +55,7 @@ def case(root,mode):
  count=$(grep -c '^--flush$' "{events}")
  [ "$MOCK_MODE" != "flush$count" ]''')
  script(stage/'pioneer-q38-qgw8-cache-preflight',r'''[ "$1" = --verify-qgw8 ] || exit 2
+ [ "$MOCK_MODE" != preverified ] || exit 99
  [ "$MOCK_MODE" != preflight-fail ] || exit 4
  echo 'PASS_QGW8_PREFLIGHT 1113 BFP4 FFN, 231 BFP8 FFN, 7 BFP8 head fragments; NO_DEVICE_UPLOAD_MODEL_EXECUTION_OR_SPEED' ''')
  script(stage/'pioneer-q38-qgw8-full-candidate128',r'''[ "$1" = --run-qgw8-candidate ] && [ "$5" = 32 ] && [ "$6" = 248319 ] || exit 2
@@ -80,16 +83,18 @@ def case(root,mode):
  for old,new in replacements.items():
   assert text.count(old)==1,(old,text.count(old));text=text.replace(old,new)
  parent=d/'parent';parent.write_text(text);env=dict(os.environ,MOCK_MODE=mode)
- result=subprocess.run(['sh',str(parent),*(['--check-only'] if mode=='check-only' else [])],env=env,capture_output=True,text=True)
+ args=['--check-only'] if mode=='check-only' else ['--preverified'] if mode.startswith('preverified') else []
+ result=subprocess.run(['sh',str(parent),*args],env=env,capture_output=True,text=True)
  calls=events.read_text().splitlines();current=(d/'installed').read_text()
  if mode=='check-only':
   assert result.returncode==0 and 'QGW8_ONE_SHOT_CHECK_ONLY_PASSED' in result.stdout
   assert current=='stable\n' and calls==['--status '] and not (stage/'.trial-once').exists()
- elif mode=='ok':
+ elif mode in ('ok','preverified'):
   assert result.returncode==0,(result.stdout,result.stderr,calls)
   assert (stage/'state').read_text().strip()=='CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED'
   assert current=='stable\n' and sum(x.startswith('--quiesce') for x in calls)==2
- elif mode in ('busy','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag'):
+  if mode=='preverified':assert (stage/'preflight.source').read_text().strip()=='OPERATOR_ATTESTED_PREVIOUS_CPU_PREFLIGHT'
+ elif mode in ('busy','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag','preverified-bad','preverified-missing'):
   assert result.returncode and not (stage/'.trial-once').exists() and not any(x.startswith('--quiesce') for x in calls)
  elif mode=='spent':assert result.returncode and not calls
  elif mode in ('preflight-fail','flush1'):
@@ -106,7 +111,7 @@ def case(root,mode):
   before=events.read_text();again=subprocess.run(['sh',str(parent)],env=env,capture_output=True,text=True)
   assert again.returncode and events.read_text()==before
 with tempfile.TemporaryDirectory(prefix='qgw8-parent-',dir='/private/tmp') as directory:
- for mode in ('ok','check-only','busy','spent','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag',
+ for mode in ('ok','preverified','preverified-bad','preverified-missing','check-only','busy','spent','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag',
               'preflight-fail','client-fail','bad-output','quiesce-fail','candidate-wait-fail',
               'restore-wait-fail','flush1','flush5','flush7','flush9'):case(Path(directory),mode)
-print('PASS actual QGW8 one-shot parent and 19 synthetic refusal/failure cases; NO DEVICE')
+print('PASS actual QGW8 one-shot parent, preverified mode, and synthetic refusal/failure cases; NO DEVICE')

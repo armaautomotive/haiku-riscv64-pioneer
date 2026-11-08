@@ -4,7 +4,7 @@
 set -eu
 PATH=/boot/system/bin:/bin
 export PATH
-[ "$#" = 0 ] || { [ "$#" = 1 ] && [ "$1" = --check-only ]; } || exit 2
+[ "$#" = 0 ] || { [ "$#" = 1 ] && { [ "$1" = --check-only ] || [ "$1" = --preverified ]; }; } || exit 2
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
 action=${1:---run}
 umask 077
@@ -80,12 +80,21 @@ exchange(){
  metadata "$newtag" "$newgeneration"
 }
 private_dir "$stage" && private_dir "$cache4" && private_dir "$cache8" && private_dir "$cachehead" || exit 1
-for name in .trial-once parent.pid driver.incoming stable.backup preflight.stdout preflight.stderr preflight.exit trial.stdout trial.stderr trial.exit state; do
+for name in .trial-once parent.pid driver.incoming stable.backup preflight.stdout preflight.stderr preflight.exit preflight.source trial.stdout trial.stderr trial.exit state; do
  test ! -e "$stage/$name" && test ! -L "$stage/$name" || exit 1
 done
 exact "$stable" "$stable_hash" && exact "$installed" "$stable_hash" && exact "$candidate" "$candidate_hash" || exit 1
 exact "$client" "$client_hash" && exact "$preflight" "$preflight_hash" && exact "$admin" "$admin_hash" && \
  exact "$guard" "$guard_hash" && exact "$flush" "$flush_hash" && exact_data "$gate" "$gate_hash" || exit 1
+if [ "$action" = --preverified ]; then
+ # This is an OPERATOR ATTESTATION after observing the independent preflight
+ # exit and PASS, not self-verifying proof. The candidate still authenticates
+ # the complete model and every cache fragment itself before any device open.
+ attestation=$stage/real-preflight.attestation
+ test -f "$attestation" && test ! -L "$attestation" && \
+  [ "$(stat -c '%u:%h:%a' "$attestation")" = 0:1:600 ] && \
+  [ "$(cat "$attestation")" = QGW8_REAL_MODEL_AND_THREE_CACHES_VERIFIED_EXTERNALLY ] || exit 1
+fi
 original=/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
 test -f "$original" && test ! -L "$original" && [ "$(stat -c '%u:%h:%a:%s' "$original")" = 0:1:600:18973870528 ] || exit 1
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || exit 1
@@ -99,12 +108,18 @@ mkdir "$stage/.trial-once"
 printf '%s\n' "$$" > "$stage/parent.pid"
 trap 'code=$?; if [ "$code" -ne 0 ]; then printf "FAILED_%s_NO_AUTO_RETRY_RESET_OR_RESTORE\n" "$code" > "$stage/state"; fi' EXIT
 checked_flush || exit 1
-printf '%s\n' VERIFYING_MODEL_AND_CACHES_NO_DEVICE > "$stage/state"
-if "$preflight" --verify-qgw8 "$cache4" "$cache8" "$cachehead" > "$stage/preflight.stdout" 2> "$stage/preflight.stderr"; then result=0;else result=$?;fi
-printf '%s\n' "$result" > "$stage/preflight.exit"
-checked_flush || exit 1
-[ "$result" = 0 ] && test ! -s "$stage/preflight.stderr" && \
- [ "$(tail -1 "$stage/preflight.stdout")" = 'PASS_QGW8_PREFLIGHT 1113 BFP4 FFN, 231 BFP8 FFN, 7 BFP8 head fragments; NO_DEVICE_UPLOAD_MODEL_EXECUTION_OR_SPEED' ] || exit 69
+if [ "$action" = --preverified ]; then
+ printf '%s\n' OPERATOR_ATTESTED_PREFLIGHT_NO_DEVICE > "$stage/state"
+ printf '%s\n' OPERATOR_ATTESTED_PREVIOUS_CPU_PREFLIGHT > "$stage/preflight.source"
+ checked_flush || exit 1
+else
+ printf '%s\n' VERIFYING_MODEL_AND_CACHES_NO_DEVICE > "$stage/state"
+ if "$preflight" --verify-qgw8 "$cache4" "$cache8" "$cachehead" > "$stage/preflight.stdout" 2> "$stage/preflight.stderr"; then result=0;else result=$?;fi
+ printf '%s\n' "$result" > "$stage/preflight.exit"
+ checked_flush || exit 1
+ [ "$result" = 0 ] && test ! -s "$stage/preflight.stderr" && \
+  [ "$(tail -1 "$stage/preflight.stdout")" = 'PASS_QGW8_PREFLIGHT 1113 BFP4 FFN, 231 BFP8 FFN, 7 BFP8 head fragments; NO_DEVICE_UPLOAD_MODEL_EXECUTION_OR_SPEED' ] || exit 69
+fi
 exact "$client" "$client_hash" && exact "$preflight" "$preflight_hash" && exact "$candidate" "$candidate_hash" && exact_data "$gate" "$gate_hash" || exit 1
 idle && metadata 2026102100010012 2 && health || exit 1
 cp -p "$stable" "$stage/stable.backup"
