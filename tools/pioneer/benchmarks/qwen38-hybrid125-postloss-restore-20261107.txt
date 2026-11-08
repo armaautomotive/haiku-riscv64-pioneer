@@ -1,0 +1,37 @@
+Hybrid125: evidence-gated restore of stable041, November 7 2026
+================================================================
+
+Following the separately documented raw Samsung backup and both complete
+SHA-256 readbacks, Haiku was booted via the untimed 64-CPU/full-memory
+SD-free profile. The original 125 one-shot recovery guard continued to
+refuse the changed trial records. It and the original trial stage were not
+modified. An independently developed restore procedure instead recognized
+the specifically recorded post-loss hashes, required matching pre- and
+post-power archives on the separate HaikuData volume, checked the existing
+fresh-power attestation, Assistant binaries, idle CPU-only reload metadata,
+driver and guard hashes, and accepted the backup hash as an operator
+attestation. The backup had been independently verified on Linux immediately
+before boot; the script itself cannot verify that Linux service result.
+
+The recovery script and its 21 synthetic refusal/fault cases were pushed at
+f942ac983a. Its Haiku copy SHA-256 was
+ed4c2cf278f3ef5eecaee1c09a1012d6f6b57f438eda24094e8073fd44699f47.
+Its read-only preflight passed on the pinned Haiku SSH host. The explicit
+one-shot restore then copied and checked the previous driver to a new private
+recovery directory, copied the pinned stable041 driver, checked device flush,
+quiesced tag125, replaced the installed file, checked another device flush,
+and verified the reload. The work directory is spent and must not be reused.
+No automatic reset, rollback, failed-trial replay or inference was performed.
+
+Independent subsequent SSH checks found:
+ installed SHA-256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ preserved125 SHA-256 379c12385a8069a2ca4d8b71dd3039cff7340022ca4fe3ad090427d5a7a46099
+ reload metadata tag2026102100010012 generation2 quiesced0 cold0 owner0 guard1
+ 64 CPUs and 137034936320 maximum memory bytes
+
+All four altered files in the original spent trial stage still matched the
+recorded post-loss hashes. app_server, Tracker, Deskbar and input_server were
+present; desktop visibility/input were not independently checked. This is a
+stable-driver restoration, not proof that the earlier storage anomaly has
+been explained, that the accelerator is healthy under load, or that the
+QGW8 candidate works. No tokens or new performance were measured.
