@@ -1,0 +1,27 @@
+QGW8 upload-control dispatch, non-loadable profile
+=================================================
+
+The QGW8 upload session previously used a test-only IO.Control method,
+while the actual driver API uses IO.Call/ioctl. The session now uses IO.Call
+with the distinct QGW8 upload-control selector 0x8831 relative to
+B_DEVICE_OP_CODES_END. The driver source includes the QGW8 BEGIN/SEAL handler
+and contains the matching dispatch under the existing QGW8 inspection role.
+That role still forbids a loadable driver and physical Work; the synthetic
+driver identity is unchanged.
+
+The tests extract the actual dispatch from the driver source. In the
+simulated owner they verify the distinct selector, refusal of the legacy
+selector, BEGIN/SEAL control, the routed fast and strict spans, ownership and
+failure handling. The handler and extracted dispatch also compile using the
+Haiku RISC-V kernel toolchain with kernel-shaped stubs and no driver ABI.
+The full 22035-span session test uses the same IO.Call interface with a
+synthetic driver/ledger. The legacy tracked-control test remains unchanged.
+
+This does not make a physical QGW8 driver or Assistant option: the inspection
+role is still non-loadable, the native execution lifecycle has not been
+connected, and no P100A upload, model token or inference speed was measured.
+
+Tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_control_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_session_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_upload_control_tests.py HAIKU_BUILD

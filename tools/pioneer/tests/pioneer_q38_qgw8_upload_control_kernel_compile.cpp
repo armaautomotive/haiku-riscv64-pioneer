@@ -7,6 +7,7 @@
 #define PIONEER_Q38_HYBRID_TRACKED_UPLOAD 1
 #define PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY 1
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
+#define B_DEVICE_OP_CODES_END 1000
 #include <stddef.h>
 #include <new>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
@@ -35,4 +36,8 @@ extern void RetainQ38DispatchOwner(ProbeContext&,tt_resident_session_result&);
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadControlInspection.inc"
 extern "C" status_t qgw8_upload_control_compile(PioneerProbeCookie* cookie,void* data,size_t length){
  return Q38Qgw8UploadControlInspection(cookie,data,length);
+}
+extern "C" status_t qgw8_upload_control_dispatch_compile(PioneerProbeCookie* instance,uint32 operation,void* data,size_t length){
+#include "pioneer_qgw8_dispatch.inc"
+ return B_NOT_ALLOWED;
 }

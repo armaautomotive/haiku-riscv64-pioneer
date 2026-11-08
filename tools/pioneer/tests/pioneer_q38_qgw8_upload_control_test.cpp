@@ -11,6 +11,15 @@ static int qgw8_fixture_geteuid(){return 0;}
 #define geteuid qgw8_fixture_geteuid
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadControlInspection.inc"
 #undef geteuid
+// Extracted verbatim from ProbeControl: the renamed simulated outer owner
+// supplies the same instance/operation/length, with no device authority.
+static status_t Qgw8Dispatch(PioneerProbeCookie* instance,uint32 operation,void* data,size_t length){
+#include "pioneer_qgw8_dispatch.inc"
+ return B_NOT_ALLOWED;
+}
+static status_t Qgw8Control(PioneerProbeCookie* instance,void* data,size_t length){
+ return Qgw8Dispatch(instance,TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL,data,length);
+}
 
 static void CompleteSyntheticReceipt(NativeSpanContext& c){
  assert(c.q38Qgw8Receipt && !c.q38Span);c.q38Span=new PioneerQ38SpanLease;
@@ -39,20 +48,24 @@ int main(int argc,char** argv){
  PioneerProbeCookie cookie,foreign;
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
+  static_assert(TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL!=TT_PCI_PROBE_Q38_HYBRID_UPLOAD_CONTROL,
+   "QGW8 control must have its own selector");
+  assert(Qgw8Dispatch(&cookie,TT_PCI_PROBE_Q38_HYBRID_UPLOAD_CONTROL,&packet,sizeof(packet))==B_NOT_ALLOWED
+   && !c.q38Qgw8Receipt);
   H::Packet legacy;std::memcpy(&legacy,&packet,sizeof(legacy));assert(!H::Request(legacy) && Q::Request(packet));
-  packet.magic=H::Magic;assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_BAD_VALUE && !c.q38Qgw8Receipt);
+  packet.magic=H::Magic;assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_BAD_VALUE && !c.q38Qgw8Receipt);
   packet.magic=Q::Magic;packet.reserved=1;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_BAD_VALUE && !c.q38Qgw8Receipt);
-  packet.reserved=0;team=18;assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED);team=17;
-  assert(Q38Qgw8UploadControlInspection(&foreign,&packet,sizeof(packet))==B_BUSY && !c.q38Qgw8Receipt);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_BAD_VALUE && !c.q38Qgw8Receipt);
+  packet.reserved=0;team=18;assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED);team=17;
+  assert(Qgw8Control(&foreign,&packet,sizeof(packet))==B_BUSY && !c.q38Qgw8Receipt);
   c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.q38Qgw8Receipt);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.q38Qgw8Receipt);
   delete c.q38HybridReceipt;c.q38HybridReceipt=nullptr;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK && packet.accepted && !packet.sealed && !packet.spans);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_OK && packet.accepted && !packet.sealed && !packet.spans);
   H::Packet oldPacket;oldPacket.operation=H::Begin;
   assert(Q38HybridUploadControl(&cookie,&oldPacket,sizeof(oldPacket))==B_NOT_ALLOWED && !c.q38HybridReceipt);
   packet=Q::Packet{};packet.operation=Q::Begin;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
   auto request=Request(length,bank,offset);const unsigned touches=c.io.touches;
   c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;
@@ -64,15 +77,15 @@ int main(int argc,char** argv){
    && request->result.state==TT_RUNTIME_PASSED && !request->result.host_exact && !request->result.matched_words
    && c.io.wideLoads==loads && c.q38Qgw8Receipt->Spans()==1);
   packet=Q::Packet{};packet.operation=Q::Seal;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.Unsafe());
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.Unsafe());
   tt_q38_span_end end={1,0,0,0};
   assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed && !end.recovery_required);
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.Unsafe());
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.Unsafe());
   Unbind();
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_OK);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
   auto request=Request(length,bank,offset);const unsigned loads=c.io.wideLoads;
   assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_UPLOAD,request.get(),sizeof(*request))==B_OK
@@ -84,7 +97,7 @@ int main(int argc,char** argv){
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_OK);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
   auto request=Request(length,bank,offset);copyCalls=0;failCopy=2;
   assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==-99
@@ -93,7 +106,7 @@ int main(int argc,char** argv){
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_OK);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
   auto request=Request(length,bank,offset);
   assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
@@ -104,16 +117,16 @@ int main(int argc,char** argv){
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
-  copyCalls=0;failCopy=2;assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==-99);
+  copyCalls=0;failCopy=2;assert(Qgw8Control(&cookie,&packet,sizeof(packet))==-99);
   assert(c.q38Qgw8Receipt && c.banks.Quarantined() && c.dispatchOwnerRetained && sColdRecoveryRequired);
   Unbind();
  }
  for(unsigned fault=0;fault<2;fault++){
   NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
-  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  assert(Qgw8Control(&cookie,&packet,sizeof(packet))==B_OK);
   CompleteSyntheticReceipt(c);packet=Q::Packet{};packet.operation=Q::Seal;copyCalls=0;
   if(fault)failCopy=2;
-  const status_t status=Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet));
+  const status_t status=Qgw8Control(&cookie,&packet,sizeof(packet));
   if(fault){
    assert(status==-99 && c.banks.Quarantined() && c.dispatchOwnerRetained && sColdRecoveryRequired
     && !c.q38Qgw8Receipt->Sealed());

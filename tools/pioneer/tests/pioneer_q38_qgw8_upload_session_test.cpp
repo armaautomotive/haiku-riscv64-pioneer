@@ -48,6 +48,9 @@ struct SimOwner {
    auto& q=*static_cast<tt_pioneer_driver_reload*>(data);assert(size==sizeof(q));
    q.driver=55;q.guard_version=1;q.build_tag=tag?tag:UINT64_C(0x385747514f4e4452);
    q.generation=20;q.open_count=1;q.active_owner=unsigned(owned);
+  }else if(op==TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL){
+   assert(size==sizeof(PioneerQ38Qgw8Upload::Packet));
+   return Control(fd,*static_cast<PioneerQ38Qgw8Upload::Packet*>(data));
   }else if(op==TT_PCI_PROBE_Q38_BANK_SUPPORT){
    *static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,4,1,Canonical::Capacity};
   }else if(op==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT){

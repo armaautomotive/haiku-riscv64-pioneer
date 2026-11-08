@@ -10,7 +10,6 @@
 struct NoDeviceTransport {
  int Open(){return -1;}int Close(int){return 0;}
  bool Call(int,unsigned,void*,size_t){return false;}
- bool Control(int,PioneerQ38Qgw8Upload::Packet&){return false;}
  bool OutputSafe(const void*,size_t)const{return true;}
 };
 bool CompileQgw8Session(Prepared& pages,const PioneerQ38CanonicalModelPlan& canonical,NoDeviceTransport& io,std::string& error){

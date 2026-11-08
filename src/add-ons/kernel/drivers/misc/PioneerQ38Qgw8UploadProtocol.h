@@ -14,9 +14,10 @@
 #error QGW8 upload control is non-loadable inspection only
 #endif
 #include <stdint.h>
-// No ioctl number is allocated by this inspection packet. The magic is
-// intentionally distinct from the legacy hybrid declaration; this does not
-// authenticate the source or authorize a physical driver.
+// Distinct selector and packet for the isolated inspection route only. The
+// compile-role checks above still forbid use in a loadable driver. Neither
+// the packet nor the selector authenticates the uploaded model bytes.
+#define TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8831)
 namespace PioneerQ38Qgw8Upload {
 enum {Version=1,Begin=1,Seal=2,Magic=0x38554851};
 struct Packet {

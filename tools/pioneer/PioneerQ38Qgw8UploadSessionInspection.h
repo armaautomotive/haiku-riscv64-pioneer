@@ -22,9 +22,10 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadProtocol.h"
 
 // One retained diagnostic session from verified QGW8 pages through the
-// existing span builder to an explicitly distinct QGW8 receipt. IO.Control is
-// an inspection-only interface: no real ioctl number is assigned. The fixed
-// tag below is a synthetic test identity, NEVER a physical driver tag.
+// existing span builder to an explicitly distinct QGW8 receipt. The control
+// uses the same IO.Call interface as the other driver requests, but this
+// entire profile remains non-loadable. The fixed tag below is a synthetic
+// test identity, NEVER a physical driver tag.
 // After an uncertain operation, close once and never END/reset/retry here.
 // IO.OutputSafe must refuse destinations overlapping any dynamically owned
 // transport/ledger/receipt storage, even though it grants no device access.
@@ -50,7 +51,7 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  }
  bool Receipt(unsigned operation,unsigned expectedSpans,bool sealed){
   namespace Q=PioneerQ38Qgw8Upload;Q::Packet p;p.operation=operation;
-  return fd>=0 && state!=Failed && pages.AllVerified() && Q::Request(p) && io.Control(fd,p) && pages.AllVerified()
+  return Q::Request(p) && Call(TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL,p)
    && p.magic==Q::Magic && p.version==Q::Version && p.operation==operation && !p.reserved
    && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
  }

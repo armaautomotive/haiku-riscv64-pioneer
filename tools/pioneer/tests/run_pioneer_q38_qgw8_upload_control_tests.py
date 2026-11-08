@@ -29,10 +29,12 @@ for flags in ([], ['-DPIONEER_Q38_QGW8_CONTROL_INSPECTION=0'],
     if result.returncode == 0 or 'non-loadable inspection only' not in result.stderr:
         raise RuntimeError('QGW8 control role not refused: ' + repr(flags))
 source = (root / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
+if source.count('#include "PioneerQ38Qgw8UploadControlInspection.inc"') != 1:
+    raise RuntimeError('QGW8 handler must be included exactly once by the driver source')
 with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-control-') as name:
     out = Path(name)
     for marker, filename in (('PROBE_LOCK', 'pioneer_lock'), ('Q38_RETAIN_MEMORY', 'pioneer_retain_memory'),
-                             ('Q38_SPAN_CONTROL', 'pioneer_span_control')):
+                             ('Q38_SPAN_CONTROL', 'pioneer_span_control'), ('QGW8_CONTROL_DISPATCH', 'pioneer_qgw8_dispatch')):
         begin, end = '// PIONEER_' + marker + '_BEGIN', '// PIONEER_' + marker + '_END'
         if source.count(begin) != 1 or source.count(end) != 1:
             raise RuntimeError('Missing or ambiguous existing driver fixture: ' + marker)
@@ -51,13 +53,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-control-') as name:
     obj = out / 'control-kernel.o'
     subprocess.run([str(tool) + '-g++', '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror',
         '-Wno-misleading-indentation', '-fno-exceptions', '-fno-rtti', '-ffreestanding', '-fstack-usage',
-        '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE=1', '-I' + str(headers), '-idirafter', str(headers / 'posix'),
+        '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE=1', '-I' + str(out), '-I' + str(headers), '-idirafter', str(headers / 'posix'),
         '-c', str(here / 'pioneer_q38_qgw8_upload_control_kernel_compile.cpp'), '-o', str(obj)], check=True)
     frames = [line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
     if not frames or any(len(row) != 3 or row[2] != 'static' or int(row[1]) > 2048 for row in frames):
         raise RuntimeError('QGW8 control kernel compile exceeded stack bound')
     names = subprocess.check_output([str(tool) + '-nm', '--defined-only', str(obj)], text=True)
-    if 'qgw8_upload_control_compile' not in names:
+    if not all(name in names for name in ('qgw8_upload_control_compile', 'qgw8_upload_control_dispatch_compile')):
         raise RuntimeError('QGW8 control compile-only witness missing')
     forbidden = {'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device'}
     if any(line.split()[-1] in forbidden for line in names.splitlines() if line.split()):

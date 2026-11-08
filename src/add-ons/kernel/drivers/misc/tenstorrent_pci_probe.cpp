@@ -7034,6 +7034,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 #include "PioneerQ38HybridUploadControl.inc"
 #endif
+#ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
+#include "PioneerQ38Qgw8UploadControlInspection.inc"
+#endif
 #endif
 
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
@@ -8692,6 +8695,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
  if(operation==TT_PCI_PROBE_Q38_HYBRID_UPLOAD_CONTROL)
   return Q38HybridUploadControl(instance,data,length);
 #endif
+// PIONEER_QGW8_CONTROL_DISPATCH_BEGIN
+#ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
+ if(operation==TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL)
+  return Q38Qgw8UploadControlInspection(instance,data,length);
+#endif
+// PIONEER_QGW8_CONTROL_DISPATCH_END
  if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)
   return Q38SpanControl(instance,operation,data,length);
  return B_NOT_ALLOWED;

@@ -24,8 +24,8 @@ snapshot; this check shows equality for the two current-source builds only,
 not equivalence to that earlier binary or qualification for installation.
 
 These are simulated devices and a non-loadable inspection role. The QGW8
-receipt BEGIN/SEAL handler still has no real ioctl dispatch, and the QGW8
-native owner and user execution lifecycle are not yet a physical driver.
+receipt BEGIN/SEAL handler is not routed by a loadable physical driver, and
+the QGW8 native owner and user execution lifecycle are not yet a physical driver.
 No model token, real P100A upload, generation rate or speedup was measured.
 The current candidate125 recovery guard is unchanged.
 
