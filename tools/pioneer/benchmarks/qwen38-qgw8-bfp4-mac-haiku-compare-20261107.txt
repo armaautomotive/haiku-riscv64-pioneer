@@ -1,0 +1,41 @@
+QGW8 BFP4 local vs prior Haiku cache, read-only, 2026-11-07
+============================================================
+
+On the pinned Linux host, the Samsung disk serial S14CNSAD300075H and
+Haiku BeFS UUID 020147de08752551 were checked before mounting /dev/sda1
+at /mnt/haiku-check with ro,nosuid,nodev,noexec. The comparison program
+independently read and verified every file header, expected source and
+recipe hashes, canonical cache-key filename, exact length, complete chunk
+table, every chunk and full payload hash. Each open file's identity and
+timestamps were checked before and after reading. It compared the logical
+entry/size and full verified payload hash across the two cache sets.
+
+Result: all 1071 Haiku BFP4 payload SHA-256 values match the corresponding
+1071 of the 1113 Mac QGW8 payloads. The other 42 Mac entries are in layers 48 and 49;
+an additional local header inventory shows 21 entries in each of those
+layers. The run's comparator checked the two layer numbers and total extra
+count; the checked-in follow-up tightens this to 21 per layer. It is covered
+by synthetic wrong-count, mismatch, corruption, short-read, wrong-recipe,
+bad-name, missing and symlink-refusal tests. The Haiku volume was
+unmounted after the comparison; findmnt showed no /dev/sda1 mount.
+
+The shared payload equality is evidence of cross-platform byte equivalence
+for those 1071 entries, not independent proof of converter correctness.
+The 42 additional BFP4 and seven head-BFP8 entries still have no independent
+Haiku equivalent here. No cache was re-keyed or installed, no P100A command
+or driver exchange occurred, and no inference or speed was measured.
+
+PCIe read-only observation on the same Linux boot
+------------------------------------------------
+PCI function 0002:81:00.0 was enumerated with no driver. Its upstream port
+0002:80:00.0 advertises 16 GT/s x8 and targets 16 GT/s; the endpoint advertises
+32 GT/s x16. Both report a currently negotiated 2.5 GT/s x8, with ASPM disabled
+at the upstream port and both devices in D0. No device-status correctable,
+nonfatal or fatal error flag was set in this one observation. This is the
+idle, unbound Linux state, not a transfer benchmark, Haiku observation,
+diagnosis of why it negotiated this way, or evidence of inference throughput.
+In particular, x8 is the upstream port's advertised maximum; only the speed
+is lower than that port's advertised maximum. No PCIe retraining or other
+config writes were performed. A future safe hardware trial should measure
+negotiation and actual transfer bandwidth before deciding whether link speed
+is a loading bottleneck; it would not by itself establish decode speed.
