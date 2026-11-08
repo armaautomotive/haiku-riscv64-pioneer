@@ -16,6 +16,25 @@
 namespace Q38DistributionCompare {
 struct Result {double kl,originalTopProbability,candidateTopProbability,candidateOriginalTopProbability;
  unsigned originalTop,candidateTop,topFiveOverlap;};
+struct ObservedToken {unsigned token,rank,top;double logit,topLogit,probability;};
+// Rank a real observed ID against an independently computed CPU distribution.
+// The result is diagnostic data only, not proof of the source of a mismatch.
+inline bool Observe(const std::vector<uint32_t>& words,unsigned token,ObservedToken& output){
+ if(words.empty() || words.size()>UINT32_MAX || token>=words.size())return false;
+ std::vector<float> values(words.size());unsigned top=0;
+ for(size_t i=0;i<words.size();i++){
+  std::memcpy(&values[i],&words[i],4);if(!std::isfinite(values[i]))return false;
+  if(values[i]>values[top])top=unsigned(i);
+ }
+ unsigned rank=1;double sum=0;
+ for(size_t i=0;i<values.size();i++){
+  if(values[i]>values[token] || (values[i]==values[token] && i<token))rank++;
+  sum+=std::exp(double(values[i])-values[top]);
+ }
+ if(!std::isfinite(sum) || !(sum>0))return false;
+ ObservedToken result={token,rank,top,values[token],values[top],std::exp(double(values[token])-values[top])/sum};
+ output=result;return true;
+}
 inline bool Compute(const std::vector<uint32_t>& original,const std::vector<uint32_t>& candidate,Result& output){
  if(original.size()<5 || original.size()!=candidate.size() || original.size()>UINT32_MAX)return false;
  std::vector<float> a(original.size()),b(original.size());

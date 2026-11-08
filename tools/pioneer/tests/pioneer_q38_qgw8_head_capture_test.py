@@ -24,4 +24,14 @@ for name in ('capture_pioneer_q38_qgw8_head_compare.py', 'capture_pioneer_q38_ma
         assert bad.returncode and failure.read_text() == bad.stdout and bad.stdout.endswith('CAPTURE_EXIT 1\n')
         invalid = subprocess.run([sys.executable, str(wrapper), 'relative', str(model), str(root / 'unused')], capture_output=True)
         assert invalid.returncode and not (root / 'unused').exists()
+        if name == 'capture_pioneer_q38_qgw8_head_compare.py':
+            optional = root / 'optional'
+            extra = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(optional), '108133'],
+                                   text=True, capture_output=True)
+            assert extra.returncode == 0 and optional.read_text() == extra.stdout and 'observed=108133' in extra.stdout
+            for token in ('-1', '248320', '1234567', '1x', '１２'):
+                rejected = root / ('rejected-' + str(len(token)))
+                result = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(rejected), token],
+                                        capture_output=True)
+                assert result.returncode and not rejected.exists()
 print('PASS all three private captures, no overwrite, argument and child-failure checks; no model/device')

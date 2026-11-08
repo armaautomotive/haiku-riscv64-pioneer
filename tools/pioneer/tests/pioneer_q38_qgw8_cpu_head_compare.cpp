@@ -14,6 +14,7 @@
 #include "../PioneerModelWeightCache.h"
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <memory>
 
 static bool Pin(const Q38CpuTokenTrace& t){
@@ -49,9 +50,19 @@ static bool Report(const char* label,const std::vector<uint32_t>& original,const
   label,r.originalTop,r.candidateTop,unsigned(r.originalTop==r.candidateTop),r.kl,r.topFiveOverlap,
   r.originalTopProbability,r.candidateTopProbability);return !fflush(stdout);
 }
+static bool ReportObserved(const char* label,const std::vector<uint32_t>& logits,unsigned token){
+ Q38DistributionCompare::ObservedToken r={};if(!Q38DistributionCompare::Observe(logits,token,r))return false;
+ printf("QGW8_CPU_OBSERVED %s token%u rank%u top%u logit%.9g top_logit%.9g probability%.9g; CPU_ONLY\n",
+  label,r.token,r.rank,r.top,r.logit,r.topLogit,r.probability);return !fflush(stdout);
+}
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned CPU trace byte order");
- if(argc!=3 || strcmp(argv[1],"--fixed-one-qgw8-head") || argv[2][0]!='/')return 2;
+ if((argc!=3 && argc!=4) || strcmp(argv[1],"--fixed-one-qgw8-head") || argv[2][0]!='/')return 2;
+ unsigned observed=UINT32_MAX;
+ if(argc==4){
+  if(!argv[3][0] || strspn(argv[3],"0123456789")!=strlen(argv[3]) || strlen(argv[3])>6)return 2;
+  const unsigned long value=strtoul(argv[3],nullptr,10);if(value>=248320)return 2;observed=unsigned(value);
+ }
  setvbuf(stdout,nullptr,_IOLBF,0);
  puts("QGW8_CPU authenticating original; fixed token 248319; complete logits; no device/Work/TPS");
  WholeModelOriginalBytes source;if(!source.Open(argv[2]) || !source.Ready())return 1;
@@ -59,15 +70,18 @@ int main(int argc,char** argv){
  Q38CpuTokenTrace baseline,ffn;
  if(!original.Step(248319,baseline) || !Pin(baseline) || !source.Ready())return 1;
  puts("QGW8_CPU original trace matches independently pinned fixed-token reference");
+ if(observed!=UINT32_MAX && !ReportObserved("original",baseline.logits,observed))return 1;
  constexpr uint64_t layers=~uint64_t(0),eight=UINT64_C(0x1ffc000000000000);
  std::unique_ptr<void,decltype(&Q38Bfp4CpuClose)> backend(Q38Bfp4CpuOpen(argv[2],layers,eight),Q38Bfp4CpuClose);
  if(!backend || !candidate.StepWithSelectedFfnDiagnostic(248319,layers,Q38Bfp4CpuProject,backend.get(),ffn)
   || !Q38Bfp4CpuComplete(backend.get()) || ffn.logits.size()!=248320 || !source.Ready())return 1;
  if(!Report("ffn_only",baseline.logits,ffn.logits))return 1;
+ if(observed!=UINT32_MAX && !ReportObserved("ffn_converted",ffn.logits,observed))return 1;
  std::vector<uint32_t> input,converted;
  if(!Normalized(source,ffn,input) || !Q38HeadBfp8CpuObserve(argv[2],input,converted)
   || converted.size()!=248320 || !source.Ready())return 1;
  if(!Report("head_only_same_hidden",ffn.logits,converted) || !Report("combined_ffn_and_head",baseline.logits,converted))return 1;
+ if(observed!=UINT32_MAX && !ReportObserved("combined_converted",converted,observed))return 1;
  puts("PASS_QGW8_ONE_TOKEN_CPU_COMPARISON; ONE FIXED TOKEN, SOFTWARE MODEL ONLY; NOT DEVICE, WORK, ANSWER QUALITY OR SPEED");
  return fflush(stdout)?1:0;
 }

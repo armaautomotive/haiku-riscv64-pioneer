@@ -22,7 +22,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-cpu-head-tests-') as tmp:
         str(here / 'pioneer_q38_bfp4_full_cpu_backend.cpp'), backend,
         str(here / 'pioneer_q38_cpu_model_reference.cpp'), str(here / 'pioneer_q38_whole_original_bytes.cpp'),
         str(tools / 'PioneerModelWeightCache.cpp'), '-o', executable], check=True)
-    for args in ([], ['--invalid', '/not-a-model'], ['--fixed-one-qgw8-head', 'relative']):
+    for args in ([], ['--invalid', '/not-a-model'], ['--fixed-one-qgw8-head', 'relative'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '-1'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '248320'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '1234567'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '1x']):
         result = subprocess.run([executable, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode != 2:
             raise RuntimeError('Argument guard failed: ' + repr(args))

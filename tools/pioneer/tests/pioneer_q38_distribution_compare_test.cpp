@@ -13,6 +13,13 @@ int main(){
  assert(std::fabs(result.originalTopProbability-result.candidateTopProbability)<1e-12);
  std::vector<uint32_t> uniform(5,Bits(0.f)),tilted=uniform;tilted[0]=Bits(float(std::log(2.0)));
  assert(Compute(uniform,tilted,result));
+ ObservedToken observed={};assert(Observe(tilted,0,observed));
+ assert(observed.token==0 && observed.rank==1 && observed.top==0 && observed.probability>0.3);
+ assert(Observe(tilted,3,observed) && observed.rank==4 && observed.top==0);
+ auto savedObserved=observed;assert(!Observe(tilted,5,observed) && observed.rank==savedObserved.rank);
+ tilted[2]=Bits(std::numeric_limits<float>::infinity());
+ assert(!Observe(tilted,3,observed) && observed.rank==savedObserved.rank);
+ tilted[2]=Bits(0.f);
  const double w=std::exp(double(float(std::log(2.0))));
  assert(std::fabs(result.kl-(std::log((w+4)/5)-std::log(w)/5))<1e-12);
  b[5]=Bits(30.f);assert(Compute(a,b,result));
