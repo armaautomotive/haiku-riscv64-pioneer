@@ -34,7 +34,8 @@ if source.count('#include "PioneerQ38Qgw8UploadControlInspection.inc"') != 1:
 with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-control-') as name:
     out = Path(name)
     for marker, filename in (('PROBE_LOCK', 'pioneer_lock'), ('Q38_RETAIN_MEMORY', 'pioneer_retain_memory'),
-                             ('Q38_SPAN_CONTROL', 'pioneer_span_control'), ('QGW8_CONTROL_DISPATCH', 'pioneer_qgw8_dispatch'),
+                             ('Q38_SPAN_CONTROL', 'pioneer_span_control'), ('Q38_DISPATCH_COOKIE_RELEASE', 'pioneer_cookie_release'),
+                             ('QGW8_CONTROL_DISPATCH', 'pioneer_qgw8_dispatch'),
                              ('QGW8_FULL_CONTROL_DISPATCH', 'pioneer_qgw8_full_dispatch')):
         begin, end = '// PIONEER_' + marker + '_BEGIN', '// PIONEER_' + marker + '_END'
         if source.count(begin) != 1 or source.count(end) != 1:
@@ -52,6 +53,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-control-') as name:
     routing = out / 'full-routing'
     subprocess.run(common + ['-I' + str(out), str(here / 'pioneer_q38_qgw8_full_routing_test.cpp'), '-o', str(routing)], check=True)
     subprocess.run([str(routing)], check=True)
+    close = out / 'qgw8-close'
+    subprocess.run(common + ['-I' + str(out), str(here / 'pioneer_q38_qgw8_cookie_close_test.cpp'), '-o', str(close)], check=True)
+    subprocess.run([str(close)], check=True)
     tool = sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku'
     headers = sdk / 'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
     obj = out / 'control-kernel.o'

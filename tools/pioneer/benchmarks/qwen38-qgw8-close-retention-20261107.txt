@@ -1,0 +1,22 @@
+QGW8 receipt retention on descriptor close
+===========================================
+
+The actual ReleaseResidentCookie path previously retained an uncertain
+tracked upload only when the legacy hybrid receipt was present. A QGW8-only
+receipt could therefore fall through to normal session cleanup, even though
+the QGW8 client deliberately closes without END after uncertain operations.
+That was unsafe and the synthetic user transport had masked the mismatch.
+
+When the QGW8 span role is selected, the actual close handler now retains the
+owner for either receipt, including the ambiguous case where both are present.
+The existing legacy-only build behavior is unchanged. The simulated OS test
+exercises the actual extracted handler for QGW8-only, both-receipt, ordinary
+and failed-lock cases; it checks that tracked close does not invoke END or I/O.
+The separate existing legacy close and upload-control tests also pass.
+
+This does not prove real-device cleanup, output correctness or performance.
+No driver was installed and no P100A operation or recovery was attempted.
+
+Tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_control_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_upload_control_tests.py HAIKU_BUILD

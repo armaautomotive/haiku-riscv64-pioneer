@@ -6537,7 +6537,11 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 		// A client may close after an uncertain upload or lost control reply.
 		// Only explicit BANK_END may retire the tracked owner; CLOSE never does IO.
-		if (cookie->context->q38HybridReceipt) {
+		if (cookie->context->q38HybridReceipt
+#ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
+			|| cookie->context->q38Qgw8Receipt
+#endif
+			) {
 			RetainQ38DispatchOwner(*cookie->context,result);release_sem(sLock);return B_OK;
 		}
 #endif
