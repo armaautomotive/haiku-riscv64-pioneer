@@ -18,7 +18,7 @@ def analyze(lines):
 
 good = analyze(rows)
 assert good.returncode == 0 and 'match expected=70253 IF_ACTUAL_INPUT=248319' in good.stdout
-assert '0.200000 tokens/s; INCLUDES_PROMPT_NOT_STEADY_DECODE' in good.stdout
+assert '0.200000 tokens/s; INCLUDES_START_AND_PROMPT_NOT_STEADY_DECODE' in good.stdout
 mismatch = analyze(rows[:8] + ['HYBRID_TOKEN 42'] + rows[9:])
 assert mismatch.returncode == 0 and 'mismatch expected=70253' in mismatch.stdout
 wrong_rate = analyze(rows[:7] + [rows[7].replace('0.200000', '20.000000')] + rows[8:])

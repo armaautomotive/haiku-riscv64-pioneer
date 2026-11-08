@@ -11,8 +11,8 @@ rows = [
     'HYBRID_UPLOAD 268435456/21167624192',
     'HYBRID_UPLOAD 21167624192/21167624192',
     'HYBRID_STARTED upload_and_start_seconds=24.000',
-    'HYBRID_RESULT prompt_tokens=1 generated_tokens=2 post_start_seconds=10.000 (includes prompt processing)',
-    'QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_PROMPT 0.200000',
+    'HYBRID_RESULT prompt_tokens=1 generated_tokens=2 inference_seconds=10.000 (includes START and prompt processing)',
+    'QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT 0.200000',
     'HYBRID_TOKEN 70253',
     'HYBRID_TOKEN 17',
     'HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated',
@@ -34,7 +34,7 @@ bad = [
     rows[:8] + ['HYBRID_TOKEN 248320'] + rows[9:],      # Vocabulary limit.
     rows[:3] + [rows[3], rows[3]] + rows[4:],           # Duplicate progress.
     rows[:7] + [rows[7], rows[7]] + rows[8:],           # Duplicate rate.
-    rows[:6] + [rows[6].replace('post_start_seconds=10.000', 'post_start_seconds=0.000')] + rows[7:],
+    rows[:6] + [rows[6].replace('inference_seconds=10.000', 'inference_seconds=0.000')] + rows[7:],
     rows + ['unexpected output'],
     rows[:4] + [rows[4].replace('21167624192', '21137039360')] + rows[5:],
 ]

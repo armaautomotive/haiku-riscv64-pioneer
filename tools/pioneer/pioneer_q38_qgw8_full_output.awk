@@ -18,13 +18,13 @@ BEGIN { stage=0; preflight=0; uploaded=0; tokens=0; rate=0; bad=0 }
  if(stage!=2 || uploaded!=21167624192)bad=1;
  stage=3; next
 }
-/^HYBRID_RESULT prompt_tokens=1 generated_tokens=[0-9]+ post_start_seconds=[0-9]+\.[0-9][0-9][0-9] \(includes prompt processing\)$/ {
+/^HYBRID_RESULT prompt_tokens=1 generated_tokens=[0-9]+ inference_seconds=[0-9]+\.[0-9][0-9][0-9] \(includes START and prompt processing\)$/ {
  if(stage!=3)bad=1;split($3,a,"=");expected=a[2]+0;
  split($4,b,"=");seconds=b[2]+0;
  if(expected>32 || seconds<=0)bad=1;
  stage=4; next
 }
-/^QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_PROMPT [0-9]+\.[0-9][0-9][0-9][0-9][0-9][0-9]$/ {
+/^QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT [0-9]+\.[0-9][0-9][0-9][0-9][0-9][0-9]$/ {
  if(stage!=4 || rate || !expected || tokens)bad=1;
  rate++;next
 }
@@ -39,5 +39,5 @@ BEGIN { stage=0; preflight=0; uploaded=0; tokens=0; rate=0; bad=0 }
 { bad=1 }
 END {
  if(bad || stage!=5)exit 1;
- printf "QGW8_SHAPE_CLEAN outputs=%d first_token=%d post_start_seconds=%.3f;QUALITY_NOT_VALIDATED\n",tokens,tokens?first:-1,seconds
+ printf "QGW8_SHAPE_CLEAN outputs=%d first_token=%d inference_seconds=%.3f;QUALITY_NOT_VALIDATED\n",tokens,tokens?first:-1,seconds
 }

@@ -130,7 +130,7 @@ public:
   out=lastControl;return true;
  } // snapshot only,which may be zero,partial,stale or corrupt on a failed syscall
  bool Begin(const PioneerQ38CanonicalModelPlan& plan,const uint32_t* ids,unsigned count,unsigned outputs,
-  const std::function<void(uint64_t,uint64_t)>& progress={}){
+  const std::function<void(uint64_t,uint64_t)>& progress={},const std::function<bool()>& beforeStart={}){
   namespace F=PioneerQ38FullOffload;
   if(attempted || state!=Virgin || !ids || !count || count>F::MaxPrompt || !outputs || outputs>F::MaxOutput
    || count+outputs-1>F::MaxPositions)return false;
@@ -139,6 +139,7 @@ public:
   std::string error;if(!upload.Begin(plan,error,progress)){failure=error;state=Failed;return false;}
   F::Support support={};
   if(!upload.Identity(1) || !Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) || !F::Supported(support))return Stop("support");
+  if(beforeStart && !beforeStart())return Stop("start_clock");
   if(!Control(PioneerQ38TokenControl::Start))return Stop("start");
   const auto& r=packet->reply;const auto* d=r.detail;
   if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("start_reply");

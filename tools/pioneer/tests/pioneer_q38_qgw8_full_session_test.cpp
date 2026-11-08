@@ -57,7 +57,7 @@ struct FullIO:SimOwner {
  }
 };
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--fail-start") || !strcmp(argv[1],"--bad-record")
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--fail-start") || !strcmp(argv[1],"--bad-clock") || !strcmp(argv[1],"--bad-record")
   || !strcmp(argv[1],"--bad-support") || !strcmp(argv[1],"--wrong-tag") || !strcmp(argv[1],"--fake-tag"))));
 #ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110700010128),"exact candidate tag");
@@ -69,28 +69,34 @@ int main(int argc,char** argv){
  io->badSupport=argc==2 && !strcmp(argv[1],"--bad-support");
  const bool fakeTag=argc==2 && !strcmp(argv[1],"--fake-tag");
  const bool wrongTag=argc==2 && !strcmp(argv[1],"--wrong-tag");
+ const bool badClock=argc==2 && !strcmp(argv[1],"--bad-clock");
  if(wrongTag)io->tag=UINT64_C(0x385747514f4e4452); // old upload-only fixture is not the native full owner
  if(fakeTag)io->tag=UINT64_C(0x51544b4e4f445256);
  PioneerQ38HybridFullSession<HeadPages,FullIO> session(fixture.pages,*io);
  const uint32_t input[]={17};uint32_t tokens[32]={};unsigned count=99;
- bool ok=session.Begin(*fixture.canonical,input,1,2);
+ bool clockCalled=false;
+ bool ok=session.Begin(*fixture.canonical,input,1,2,{},[&]{
+  assert(!clockCalled && io->support==2 && io->seals==1 && !io->starts);
+  clockCalled=true;return !badClock;
+ });
  if(ok)ok=session.Poll();if(ok)ok=session.Poll();if(ok)ok=session.Finish();
  if(argc==1){
-  assert(ok && session.Completed() && !io->owned && io->opens==1 && io->closes==1 && !io->bankEnd);
+  assert(ok && clockCalled && session.Completed() && !io->owned && io->opens==1 && io->closes==1 && !io->bankEnd);
   assert(io->begins==1 && io->seals==1 && io->spanEnd==1 && io->starts==1 && io->polls==2
    && io->holds==1 && io->reads==1 && io->finishes==1);
   assert(session.CopyGeneratedTokens(tokens,32,count) && count==2 && tokens[0]==1000 && tokens[1]==1001);
   puts("PASS QGW8 sealed upload through same-FD synthetic START/OBSERVE/HOLD/READ/FINISH; NO MODEL OR DEVICE");
  }else if(wrongTag || fakeTag){
-  assert(!ok && session.FailedState() && !io->support && io->closes==1 && !io->owned && !io->begins);
+  assert(!ok && !clockCalled && session.FailedState() && !io->support && io->closes==1 && !io->owned && !io->begins);
   puts("PASS upload-only fake tag refused before full-session capability or upload; NO DEVICE");
  }else if(io->badSupport){
-  assert(!ok && session.FailedState() && io->support==1 && io->closes==1 && !io->owned && !io->retained
+  assert(!ok && !clockCalled && session.FailedState() && io->support==1 && io->closes==1 && !io->owned && !io->retained
    && !io->begins && !io->seals && !io->spanEnd && !io->bankEnd);
   puts("PASS unsupported QGW8 full session refused before bank BEGIN or upload; NO DEVICE");
  }else{
-  assert(!ok && session.FailedState() && io->closes==1 && io->owned && io->retained
+  assert(!ok && clockCalled && session.FailedState() && io->closes==1 && io->owned && io->retained
    && io->banks.Quarantined() && !io->bankEnd && !io->finishes);
+  if(badClock)assert(!io->starts && session.failure=="start_clock");
   assert(!session.CopyGeneratedTokens(tokens,32,count) && count==99);
   puts("PASS QGW8 failed token lifecycle closes only and retains owner; NO DEVICE");
  }

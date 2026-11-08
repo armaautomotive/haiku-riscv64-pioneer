@@ -69,14 +69,14 @@ int main(int argc,char** argv){
  }
  auto* pages=model->PreparedPages();const auto* canonical=model->Canonical();if(!pages || !canonical)return 1;
  Transport io;auto session=std::make_unique<PioneerQ38HybridFullSession<PioneerQ38HybridHeadVerifiedModel::Pages,Transport>>(*pages,io);
- const uint64_t begin=Now();if(!begin)return 1;uint64_t next=UINT64_C(256)*1024*1024;
+ const uint64_t begin=Now();if(!begin)return 1;uint64_t next=UINT64_C(256)*1024*1024,inferenceBegin=0;
  if(!session->Begin(*canonical,ids,prompts,outputs,[&](uint64_t done,uint64_t total){
   if(done>=next || done==total){printf("HYBRID_UPLOAD %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);
    while(next<=done)next+=UINT64_C(256)*1024*1024;}
- })){
+ },[&]{inferenceBegin=Now();return inferenceBegin>=begin;})){
   fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;
  }
- const uint64_t started=Now();if(!started || started<begin){session->Abort();return 1;}
+ const uint64_t started=Now();if(!started || !inferenceBegin || started<inferenceBegin){session->Abort();return 1;}
  printf("HYBRID_STARTED upload_and_start_seconds=%.3f\n",double(started-begin)*1e-9);
  while(!session->TerminalReady()){
   if(!session->Poll()){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
@@ -92,10 +92,10 @@ int main(int argc,char** argv){
  if(!session->Finish()){fprintf(stderr,"HYBRID_FINISH_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
  unsigned tokens[F::MaxOutput]={},count=0;
  if(!session->CopyGeneratedTokens(tokens,F::MaxOutput,count))return 1;
- printf("HYBRID_RESULT prompt_tokens=%u generated_tokens=%u post_start_seconds=%.3f (includes prompt processing)\n",
-  prompts,count,double(terminal-started)*1e-9);
- if(count && terminal>started)printf("QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_PROMPT %.6f\n",
-  double(count)*1e9/double(terminal-started));
+ printf("HYBRID_RESULT prompt_tokens=%u generated_tokens=%u inference_seconds=%.3f (includes START and prompt processing)\n",
+  prompts,count,double(terminal-inferenceBegin)*1e-9);
+ if(count && terminal>inferenceBegin)printf("QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT %.6f\n",
+  double(count)*1e9/double(terminal-inferenceBegin));
  for(unsigned i=0;i<count;i++)printf("HYBRID_TOKEN %u\n",tokens[i]);
  puts("HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated");
  return fflush(stdout)?1:0;

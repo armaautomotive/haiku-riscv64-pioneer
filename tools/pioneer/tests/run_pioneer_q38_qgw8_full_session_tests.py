@@ -70,9 +70,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-full-session-') as name:
         '-fsanitize=address,undefined', str(here / 'pioneer_q38_qgw8_full_session_test.cpp'),
         str(root / 'PioneerModelWeightCache.cpp'), '-o', binary], check=True)
     env = dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1')
-    modes = (['--wrong-tag'], ['--bad-support'], [], ['--fail-start'], ['--bad-record'])
+    modes = (['--wrong-tag'], ['--bad-support'], [], ['--bad-clock'], ['--fail-start'], ['--bad-record'])
     if candidate:
-        modes = (['--wrong-tag'], ['--fake-tag'], ['--bad-support'], [], ['--fail-start'], ['--bad-record'])
+        modes = (['--wrong-tag'], ['--fake-tag'], ['--bad-support'], [], ['--bad-clock'], ['--fail-start'], ['--bad-record'])
     for args in modes:
         subprocess.run([binary, *args], check=True, env=env)
 print('PASS QGW8 session role guards and synthetic same-FD token lifecycle; no driver, device, model or TPS')
