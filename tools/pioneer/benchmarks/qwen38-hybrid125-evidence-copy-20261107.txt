@@ -1,0 +1,24 @@
+Hybrid125 evidence copies on HaikuData, 2026-11-07
+==================================================
+
+The pre-failure Mac copies and post-failure Mac copies in /private/tmp were
+copied into new private directories on the newly formatted HaikuData volume:
+
+ /HaikuData/pioneer-hybrid125-evidence-ssqFWSMo/pre-power
+ /HaikuData/pioneer-hybrid125-evidence-ssqFWSMo/post-power
+
+All nine copied pre-power files and seven post-power files were independently
+SHA-256 hashed on Haiku and compared to the corresponding Mac originals;
+all 16 matched. The post-power set includes stable.backup with SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+and driver125 with SHA-256
+379c12385a8069a2ca4d8b71dd3039cff7340022ca4fe3ad090427d5a7a46099.
+The pre-power state/trial logs and post-power changed logs remain separate;
+the original temporary Mac evidence and the original Haiku trial stage were
+not replaced. Directory permissions were 700. Haiku global sync was called.
+
+This records one live read-back, not a post-reboot or power-loss durability
+test, complete disk backup, independent storage-site backup, proof of the
+original corruption mechanism, or authorization to bypass the existing
+recovery guard. The installed driver was not exchanged, the spent trial was
+not retried, and no accelerator command or inference was performed.
