@@ -1,0 +1,20 @@
+QGW8 diagnostic visibility checkpoint (2026-11-07)
+
+The tag128 physical one-shot has uploaded 21,167,624,192 bytes and reported
+HYBRID_STARTED. The running client has no intermediate-poll logging. At the
+time of this note there is no terminal result, token, output quality, or
+tokens-per-second measurement. Startup took 2712.384 seconds including upload.
+Do not interpret the start acknowledgement as a completed model run.
+
+The separately built future diagnostic emits a marker just before the START
+call and, at most every 30 seconds, the two program-counter samples already
+returned by validated pending OBSERVE calls. These are diagnostic samples,
+not proof of progress, correctness, or authorization to manipulate the card.
+It adds no device ioctl and does not affect the running binary or driver.
+The transcript gate accepts both old and new diagnostic output shapes.
+
+Local transcript-shape and post-hoc analyzer tests pass. All seven candidate128
+synthetic same-FD lifecycle and failure-mode tests passed, as did their role
+guards. A separate Haiku cross-build succeeded with client SHA-256
+f4a760b8902150874aa1e4ff23c39ce790f63e4c61103bbd6ba241a6b7aae32d.
+The new binary is not installed, hardware-tested, or qualified.

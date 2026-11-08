@@ -14,9 +14,17 @@ BEGIN { stage=0; preflight=0; uploaded=0; tokens=0; rate=0; bad=0 }
  if((stage!=1 && stage!=2) || preflight!=1351 || n<=uploaded || n>21167624192)bad=1;
  stage=2; uploaded=n; next
 }
+/^HYBRID_START_REQUEST diagnostic only; no completion implied$/ {
+ if(stage!=2 || uploaded!=21167624192 || start_request++)bad=1;
+ next
+}
 /^HYBRID_STARTED upload_and_start_seconds=[0-9]+\.[0-9][0-9][0-9]$/ {
  if(stage!=2 || uploaded!=21167624192)bad=1;
  stage=3; next
+}
+/^HYBRID_PENDING seconds=[0-9]+\.[0-9][0-9][0-9] pc_first=[0-9]+ pc_second=[0-9]+; diagnostic only$/ {
+ if(stage!=3)bad=1;
+ next
 }
 /^HYBRID_RESULT prompt_tokens=1 generated_tokens=[0-9]+ inference_seconds=[0-9]+\.[0-9][0-9][0-9] \(includes START and prompt processing\)$/ {
  if(stage!=3)bad=1;split($3,a,"=");expected=a[2]+0;

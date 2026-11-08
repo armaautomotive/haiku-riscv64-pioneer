@@ -35,7 +35,7 @@ struct FullIO:SimOwner {
    r.stage=d[2]=8;d[3]=1;if(failStart)return false;
   }else if(action==P::Observe){
    assert(starts==1 && !holds);polls++;
-   if(polls==1){r.ready=0;r.stage=d[2]=9;}
+   if(polls==1){r.ready=0;r.stage=d[2]=9;d[12]=123;d[13]=456;}
    else {r.stage=d[2]=11;d[6]=1;d[8]=2;d[9]=1;d[10]=64;}
   }else if(action==P::Hold){
    assert(polls==2 && !holds++);r.stage=d[2]=4;d[6]=1;d[7]=120;
@@ -79,9 +79,14 @@ int main(int argc,char** argv){
   assert(!clockCalled && io->support==2 && io->seals==1 && !io->starts);
   clockCalled=true;return !badClock;
  });
- if(ok)ok=session.Poll();if(ok)ok=session.Poll();if(ok)ok=session.Finish();
+ unsigned pendingObservations=0;
+ if(ok)ok=session.Poll([&](uint32_t first,uint32_t second){
+  assert(first==123 && second==456);pendingObservations++;
+ });
+ if(ok)ok=session.Poll([&](uint32_t,uint32_t){assert(!"terminal must not emit pending observation");});
+ if(ok)ok=session.Finish();
  if(argc==1){
-  assert(ok && clockCalled && session.Completed() && !io->owned && io->opens==1 && io->closes==1 && !io->bankEnd);
+  assert(ok && clockCalled && pendingObservations==1 && session.Completed() && !io->owned && io->opens==1 && io->closes==1 && !io->bankEnd);
   assert(io->begins==1 && io->seals==1 && io->spanEnd==1 && io->starts==1 && io->polls==2
    && io->holds==1 && io->reads==1 && io->finishes==1);
   assert(session.CopyGeneratedTokens(tokens,32,count) && count==2 && tokens[0]==1000 && tokens[1]==1001);

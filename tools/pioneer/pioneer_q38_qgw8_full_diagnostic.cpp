@@ -73,13 +73,20 @@ int main(int argc,char** argv){
  if(!session->Begin(*canonical,ids,prompts,outputs,[&](uint64_t done,uint64_t total){
   if(done>=next || done==total){printf("HYBRID_UPLOAD %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);
    while(next<=done)next+=UINT64_C(256)*1024*1024;}
- },[&]{inferenceBegin=Now();return inferenceBegin>=begin;})){
+ },[&]{puts("HYBRID_START_REQUEST diagnostic only; no completion implied");inferenceBegin=Now();return inferenceBegin>=begin;})){
   fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;
  }
  const uint64_t started=Now();if(!started || !inferenceBegin || started<inferenceBegin){session->Abort();return 1;}
  printf("HYBRID_STARTED upload_and_start_seconds=%.3f\n",double(started-begin)*1e-9);
+ uint64_t nextPending=started;
  while(!session->TerminalReady()){
-  if(!session->Poll()){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
+  if(!session->Poll([&](uint32_t firstPC,uint32_t secondPC){
+   const uint64_t now=Now();if(now>=nextPending){
+    printf("HYBRID_PENDING seconds=%.3f pc_first=%u pc_second=%u; diagnostic only\n",
+     double(now-started)*1e-9,firstPC,secondPC);
+    nextPending=now+UINT64_C(30)*1000000000;
+   }
+  })){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
   if(!session->TerminalReady()){
    const uint64_t now=Now();if(!now || now<started || now-started>UINT64_C(7200)*1000000000){
     session->Abort();fputs("HYBRID_TIMEOUT close only; recovery may be required\n",stderr);return 1;

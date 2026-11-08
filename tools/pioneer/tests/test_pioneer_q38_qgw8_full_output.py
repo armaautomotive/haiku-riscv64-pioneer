@@ -23,6 +23,11 @@ def run(lines):
 
 good = run(rows)
 assert good.returncode == 0 and 'outputs=2 first_token=70253' in good.stdout, good.stderr
+with_diagnostics = rows[:5] + ['HYBRID_START_REQUEST diagnostic only; no completion implied'] + rows[5:6] + [
+    'HYBRID_PENDING seconds=0.001 pc_first=123 pc_second=456; diagnostic only',
+    'HYBRID_PENDING seconds=30.002 pc_first=456 pc_second=789; diagnostic only',
+] + rows[6:]
+assert run(with_diagnostics).returncode == 0
 zero = rows[:6] + [rows[6].replace('generated_tokens=2', 'generated_tokens=0'), rows[-1]]
 assert run(zero).returncode == 0
 bad = [
@@ -37,6 +42,8 @@ bad = [
     rows[:6] + [rows[6].replace('inference_seconds=10.000', 'inference_seconds=0.000')] + rows[7:],
     rows + ['unexpected output'],
     rows[:4] + [rows[4].replace('21167624192', '21137039360')] + rows[5:],
+    rows[:5] + ['HYBRID_START_REQUEST diagnostic only; no completion implied'] * 2 + rows[5:],
+    rows[:5] + ['HYBRID_PENDING seconds=1.000 pc_first=1 pc_second=2; diagnostic only'] + rows[5:],
 ]
 for case in bad:
     assert run(case).returncode != 0, case

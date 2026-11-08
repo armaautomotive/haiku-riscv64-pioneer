@@ -154,13 +154,16 @@ public:
    || d[10] || d[11] || d[12] || d[13] || d[14] || d[15])return Stop("cancel_reply");
   return true;
  }
- bool Poll(){
+ bool Poll(const std::function<void(uint32_t,uint32_t)>& pendingObservation={}){
   if(state!=Running)return false;
   if(!Control(PioneerQ38TokenControl::Observe))return Stop("observe");
   const auto& r=packet->reply;const auto* d=r.detail;
   if(d[5] || d[6]!=r.ready || d[7]>1 || (d[7] && !cancelAttempted) || d[14] || d[15])return Stop("observe_reply");
   if(!r.ready){
    if(r.stage!=9 || d[3] || d[4]>63 || d[7] || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
+   // These program-counter samples are diagnostic only: neither a progress
+   // guarantee nor permission to alter the held session or its hardware.
+   if(pendingObservation)pendingObservation(d[12],d[13]);
    return true;
   }
   if(r.stage!=11 || d[3] || d[8]>limit || d[9]>=limit || !d[10] || d[10]>64)return Stop("terminal_reply");
