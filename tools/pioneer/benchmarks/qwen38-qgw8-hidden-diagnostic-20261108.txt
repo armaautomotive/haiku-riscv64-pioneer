@@ -46,3 +46,31 @@ as an operator attestation; this diagnostic rechecks the source model and all
 1351 cache fragments itself before opening the device. It stops without retry
 or automatic restoration on an uncertain device action. A verified clean
 FINISH/close and snapshot hash are required before restoring the stable driver.
+
+Live run handoff, 2026-11-08
+----------------------------
+The one-shot parent was observed as Pioneer team 2431 and its client as team
+2540. The private stage is /boot/home/pioneer-qgw8-hidden-trial-20261108-a,
+also accessible through /boot/home/q38-hidden-stage-20261108-a. The parent
+records its actual PID in parent.pid. The latest observed stdout had advanced
+through HYBRID_PREFLIGHT 147/1351; neither process was restarted. This is
+verification progress, not card execution or a performance result.
+
+Continue observing the SAME parent and client, their current stdout/stderr,
+exit and state. An absent/stalled network observation does not authorize a
+second launch, cleanup, driver exchange or power action. On a clean terminal
+state, independently verify the stable driver hash, generation6, owner0 and
+system health before copying the private snapshot. The parent requires a
+matching hash and normal FINISH/close before restoration. On failure or
+uncertain ownership, preserve evidence and determine the actual state first.
+
+After a clean result, copy the 20548-byte snapshot to a new private directory,
+match its digest to the actual transcript, and run
+tools/pioneer/tests/compare_pioneer_q38_qgw8_hidden.py with the two pinned CPU
+reference files in generated.pioneer/qualification-inputs/
+qgw8-hidden-reference.Yn7npdOx. If a non-EOS token was recorded, run the
+separate CPU-only head replay described in qwen38-qgw8-card-head-replay-
+20261108.txt on that same verified snapshot and observed token. Keep actual
+snapshot contents private and report any discrepancy and measured timing
+without claiming full-model correctness or a steady-state speed from one
+token.
