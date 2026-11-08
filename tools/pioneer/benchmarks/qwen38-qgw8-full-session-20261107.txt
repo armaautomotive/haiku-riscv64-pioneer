@@ -1,0 +1,33 @@
+QGW8 upload-to-token session, synthetic only
+============================================
+
+The existing full-session lifecycle now has a distinct QGW8 inspection role
+using the QGW8 page uploader and receipt rather than the older hybrid layout.
+It checks the full-generation capability before beginning a bank session or
+uploading weights, holds the same descriptor through upload and START,
+OBSERVE, HOLD, READ and FINISH, and closes only after the driver's explicit
+finish. Uncertain operations close once and retain/quarantine the owner;
+they do not retry, reset, or issue BANK_END.
+
+The QGW8 inspection protocol uses its own synthetic identity. Role guards
+reject legacy or physical driver/Work selectors, CPU-reference modes, and
+late changes between upload-only and full-session roles. A Haiku RISC-V
+compile-only witness instantiates the actual prepared QGW8 page source and
+full-session types with a transport that always refuses to open.
+
+Synthetic tests cover the complete 22035-span QGW8 upload and two returned
+token records using one owner/descriptor, refusal of unsupported capability
+before bank BEGIN, and owner retention after a failed START or malformed
+token record. The old hybrid full-session tests and Haiku candidate-client
+cross-builds also pass. These are synthetic device replies, not a model token
+generated on the P100A; no output quality or tokens/second is established.
+
+The QGW8 control and session are still non-loadable inspection profiles. A
+physical QGW8 driver/owner, safe hardware qualification, real inference and
+Assistant integration remain unfinished.
+
+Tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_full_session_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_session_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_full_session_tests.py HAIKU_BUILD
+ python3 tools/pioneer/build_q38_qgw8_cache_preflight.py HAIKU_BUILD NEW_OUTPUT

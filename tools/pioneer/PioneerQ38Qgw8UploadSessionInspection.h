@@ -1,4 +1,20 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) && PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1
+#error QGW8 full-session inspection selector must equal one
+#endif
+#ifndef PIONEER_Q38_QGW8_UPLOAD_SESSION_ROLE_BOUND
+#define PIONEER_Q38_QGW8_UPLOAD_SESSION_ROLE_BOUND
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+enum {PioneerQ38Qgw8UploadSessionRole=1};
+#else
+enum {PioneerQ38Qgw8UploadSessionRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+static_assert(PioneerQ38Qgw8UploadSessionRole==1,"late QGW8 full-session selector");
+#else
+static_assert(PioneerQ38Qgw8UploadSessionRole==0,"late QGW8 upload-only selector");
+#endif
 #ifndef PIONEER_Q38_QGW8_UPLOAD_SESSION_INSPECTION_H
 #define PIONEER_Q38_QGW8_UPLOAD_SESSION_INSPECTION_H
 #if !defined(PIONEER_Q38_QGW8_USER_SESSION_INSPECTION) || PIONEER_Q38_QGW8_USER_SESSION_INSPECTION != 1 \
@@ -20,7 +36,11 @@
 #include "PioneerQ38HybridHeadLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadProtocol.h"
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
+#endif
 
+template<class Pages,class IO> class PioneerQ38HybridFullSession;
 // One retained diagnostic session from verified QGW8 pages through the
 // existing span builder to an explicitly distinct QGW8 receipt. The control
 // uses the same IO.Call interface as the other driver requests, but this
@@ -30,6 +50,7 @@
 // IO.OutputSafe must refuse destinations overlapping any dynamically owned
 // transport/ledger/receipt storage, even though it grants no device access.
 template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
+ friend class PioneerQ38HybridFullSession<Pages,IO>;
  using C=PioneerQ38CanonicalModelPlan;using Plan=PioneerQ38HybridHeadModelPlan;
  enum State {Virgin,Open,Owned,SpansClosed,BanksClosed,Done,Failed};
  Pages& pages;IO& io;const C* canonical=nullptr;int fd=-1;State state=Virgin;uint64_t generation=0;
@@ -150,6 +171,11 @@ public:
   if(!source.OriginalFormatLayout() || !pages.AllVerified())return Stop(error,"Preverified QGW8 source required before open.");
   fd=io.Open();if(fd<0)return Stop(error,"Cannot open QGW8 inspection transport.");state=Open;
   if(!Identity(0))return Stop(error,"QGW8 inspection identity or exclusive idle state refused.");
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+  PioneerQ38FullOffload::Support support={};
+  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) || !PioneerQ38FullOffload::Supported(support))
+   return Stop(error,"QGW8 full-session capability refused before upload.");
+#endif
   tt_q38_bank_support banks={};tt_q38_span_support spans={};
   if(!Call(TT_PCI_PROBE_Q38_BANK_SUPPORT,banks) || banks.driver!=45 || banks.version!=1 || banks.banks!=7
    || banks.page_bytes!=4096 || banks.max_pages!=4 || banks.storage_only!=1 || banks.bytes_per_bank!=C::Capacity

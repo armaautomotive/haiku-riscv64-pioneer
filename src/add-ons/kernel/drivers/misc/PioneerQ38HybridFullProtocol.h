@@ -6,13 +6,27 @@
  || (defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127) && PIONEER_Q38_HYBRID_MATRIX_CLIENT_127 != 1)
 #error Matrix candidate protocol selectors require exact value one
 #endif
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) && (PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_USER_SESSION_INSPECTION) || PIONEER_Q38_QGW8_USER_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_HYBRID_FIXED_126) || defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) \
+ || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127) || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) \
+ || defined(PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT) || defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT) \
+ || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+ || defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
+#error QGW8 full-session protocol is isolated inspection only
+#endif
 #if (defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)) \
  && (defined(PIONEER_Q38_HYBRID_FIXED_126) || (defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) && defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)))
 #error Matrix candidate protocol cannot alias another candidate or its client role
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+enum {PioneerQ38HybridProtocolIdentity=8};
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 enum {PioneerQ38HybridProtocolIdentity=127};
 #elif defined(PIONEER_Q38_HYBRID_FIXED_126)
 enum {PioneerQ38HybridProtocolIdentity=126};
@@ -20,7 +34,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+static_assert(PioneerQ38HybridProtocolIdentity==8,"late QGW8 protocol identity change");
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 static_assert(PioneerQ38HybridProtocolIdentity==127,"late matrix protocol identity change");
 #elif defined(PIONEER_Q38_HYBRID_FIXED_126)
 static_assert(PioneerQ38HybridProtocolIdentity==126,"late fixed protocol identity change");
@@ -34,7 +50,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+static constexpr uint64_t BuildTag=UINT64_C(0x385747514f4e4452); // fake inspection identity only
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010127);
 #elif defined(PIONEER_Q38_HYBRID_FIXED_126)
 static_assert(PIONEER_Q38_HYBRID_FIXED_126==1,"exact fixed candidate selection required");

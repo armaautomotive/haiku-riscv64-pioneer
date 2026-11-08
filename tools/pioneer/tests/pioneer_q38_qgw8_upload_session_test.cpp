@@ -214,4 +214,5 @@ int main(int argc,char** argv){
   && !session.HeadMetadata(boot.data(),boot.size(),0,head.data(),head.size()));
  printf("PASS QGW8 actual page router/session/receipt: %u synthetic spans, %llu bytes, matching FFN/head metadata and 973 jobs, clean END; no model/device/TPS\n",
   session.Upload().UploadedSpans(),(unsigned long long)session.Upload().UploadedBytes());
+ return 0;
 }

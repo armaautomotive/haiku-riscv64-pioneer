@@ -1,16 +1,43 @@
 /* SPDX-License-Identifier: MIT */
-#if !defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || PIONEER_Q38_HYBRID_FULL_CLIENT != 1 \
+#if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
+#if PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_USER_SESSION_INSPECTION) || PIONEER_Q38_QGW8_USER_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || defined(PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT) \
+ || defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT) || defined(PIONEER_Q38_HYBRID_FIXED_126) \
+ || defined(PIONEER_Q38_HYBRID_MATRIX_CLIENT_127)
+#error QGW8 full session requires its separate non-loadable inspection role
+#endif
+#elif !defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || PIONEER_Q38_HYBRID_FULL_CLIENT != 1 \
  || !defined(PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT) || PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT != 1 \
- || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT != 1 \
- || defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT != 1
+#error Hybrid full candidate is a separate, non-validation client
+#endif
+#if defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT)
 #error Hybrid full candidate is a separate, non-validation client
 #endif
+#ifndef PIONEER_Q38_HYBRID_FULL_SESSION_ROLE_BOUND
+#define PIONEER_Q38_HYBRID_FULL_SESSION_ROLE_BOUND
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+enum {PioneerQ38HybridFullSessionRole=8};
+#else
+enum {PioneerQ38HybridFullSessionRole=1};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+static_assert(PioneerQ38HybridFullSessionRole==8,"late QGW8 full-session role change");
+#else
+static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role change");
+#endif
 #ifndef PIONEER_Q38_HYBRID_FULL_SESSION_H
 #define PIONEER_Q38_HYBRID_FULL_SESSION_H
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+#include "PioneerQ38Qgw8UploadSessionInspection.h"
+#else
 #include "PioneerQ38HybridUploadSession.h"
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
 #include <algorithm>
 #include <array>
@@ -21,7 +48,12 @@
 // receipt/FD. Any uncertain operation closes only; no retry, BANK_END or
 // implicit device cleanup follows. This is not an Assistant integration.
 template<class Pages,class IO> class PioneerQ38HybridFullSession {
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+ using Upload=PioneerQ38Qgw8UploadSessionInspection<Pages,IO>;
+ static_assert(PioneerQ38FullOffload::BuildTag==Upload::InspectionTag,"QGW8 full/upload inspection identity mismatch");
+#else
  using Upload=PioneerQ38HybridUploadSession<Pages,IO,true>;
+#endif
  using Packet=PioneerQ38TokenControl::Packet;
 public:
  struct ControlObservation {
@@ -163,7 +195,13 @@ public:
   upload.state=Upload::Done;state=Complete;return true;
  }
  bool CopyGeneratedTokens(uint32_t* output,unsigned capacity,unsigned& count)const{
-  if(state!=Complete || !failure.empty() || !upload.layout || !upload.layout->Ready() || !upload.pages.AllVerified()
+  if(state!=Complete || !failure.empty()
+#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+   || !upload.canonical || !upload.canonical->Ready()
+#else
+   || !upload.layout || !upload.layout->Ready()
+#endif
+   || !upload.pages.AllVerified()
    || !output || capacity<PioneerQ38FullOffload::MaxOutput)return false;
   if(!cancelled && (layers!=64 || terminalStage || committed!=position+1))return false;
   std::array<uint32_t,PioneerQ38FullOffload::MaxOutput> ids={};unsigned used=0;
