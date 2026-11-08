@@ -24,6 +24,8 @@ The mismatch is a serious correctness failure, not merely unverified quality;
 the numerical cause is not established. Prior CPU reference evidence is in
 qwen38-cpu-original-clean-20261028.log; Q4-to-BFP4 CPU quality checks retain
 the same greedy first token in qwen38-bfp4-selective-cpu-quality-20261106.txt.
+The combined FFN/head converted CPU comparison also selected 70253 for the
+fixed token, as recorded in qwen38-qgw8-head-cpu-observation-20261107.txt.
 These comparisons do not by themselves isolate the faulty operation.
 
 Completed trial stdout SHA-256:
