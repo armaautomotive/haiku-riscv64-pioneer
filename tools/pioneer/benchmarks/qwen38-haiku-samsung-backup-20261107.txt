@@ -1,0 +1,25 @@
+Haiku Samsung system disk: unmounted raw backup, November 7 2026
+================================================================
+
+With the user's approval, Linux boot f8b44cc1-7513-4043-bbb9-656851f23d0b
+copied the entire unmounted Samsung SSD S14CNSAD300075H, 120034123776 bytes,
+to the existing R3SL Linux SSD E201610050040028. The source disk was opened
+read-only; the target was a new private directory and file. The backup is:
+
+ /mnt/ssd/pioneer-haiku-raw-backup-20261107-a/haiku-samsung-disk.raw
+ SHA-256 5f6cea34aa32016fab6703f2ef6ef8ca9e7d52beb5a2f200d26a9b1c9ef2239d
+
+The source-copy hash and buffered full-file readback matched. The snapshot
+service exited successfully, published the 112 GiB image and manifest, and
+reported SNAPSHOT_VERIFIED. A second service then re-read the entire backup
+with Linux O_DIRECT and reported DIRECT_VERIFY_PASS for the same byte count
+and hash; its service also exited successfully. About 82 GiB remained free
+on the destination filesystem. Both service results and the manifest were
+observed through the pinned Linux SSH identity before changing boot state.
+
+This is an image on another disk in the same Pioneer, not an off-site backup
+or tested restore. It preserves the post-failure disk state, including the
+altered 125 trial files; it does not prove the source filesystem was intact,
+explain the earlier write anomaly, establish future power-loss safety, or
+authorize changing the existing trial guard. No driver or accelerator work
+was performed as part of this backup or verification.
