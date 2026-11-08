@@ -76,3 +76,15 @@ write durability. The probe does not attest that a reboot occurred. No card
 operation, recovery guard bypass or repair was performed. Do not interpret
 this result as authorization to discard failed-trial evidence, weaken the
 restoration guard, install a new driver or rerun the spent trial.
+
+Follow-up after 12 TB disk installation
+--------------------------------------
+Following the later Linux shutdown, physical disk installation and fresh
+Linux-to-Haiku boot, the pinned probe binary still hashed to 99c99144... and
+its read-only --verify again reported that all four test files matched. This
+adds another post-restart observation; the precise PSU-power history was not
+independently attested, and it is not a test of abrupt power loss immediately
+after a checked flush or of other files. The same old trial state/stdout/
+stderr/exit still had the previously documented altered hashes; the installed
+125 driver and stable.backup retained their respective pinned hashes. The
+recovery guard was not changed, and no P100A operation was issued.
