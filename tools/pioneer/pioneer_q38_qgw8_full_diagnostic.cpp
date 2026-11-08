@@ -18,9 +18,12 @@
 #include "PioneerQ38HybridFullSession.h"
 
 struct Transport {
- int Open(){return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);}
- bool Call(int fd,unsigned op,void* data,size_t size){return ioctl(fd,op,data,size)==0;}
- int Close(int fd){return close(fd);}
+ unsigned lastOperation=0;int openError=0,lastError=0,closeError=0;
+ int Open(){const int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)openError=errno;return fd;}
+ bool Call(int fd,unsigned op,void* data,size_t size){
+  lastOperation=op;const int result=ioctl(fd,op,data,size);lastError=result==0?0:errno;return result==0;
+ }
+ int Close(int fd){const int result=close(fd);if(result)closeError=errno;return result;}
 };
 static uint64_t Now(){
  timespec t={};if(clock_gettime(CLOCK_MONOTONIC,&t) || t.tv_sec<0 || t.tv_nsec<0 || t.tv_nsec>=1000000000)return 0;
@@ -42,6 +45,11 @@ template<class Session> static void ReportFailure(const Session& session){
   r.complete,r.stage,r.records,(long)r.status);
  for(unsigned i=0;i<16;i++)fprintf(stderr,"%s%u",i?",":"",r.detail[i]);
  fputs("; UNTRUSTED_DIAGNOSTIC_ONLY_NO_RETRY_OR_CLEANUP_AUTHORITY\n",stderr);
+}
+static void ReportTransportFailure(const Transport& io){
+ if(io.openError)fprintf(stderr,"HYBRID_OPEN_FAILURE errno=%d; DIAGNOSTIC_ONLY\n",io.openError);
+ if(io.lastError)fprintf(stderr,"HYBRID_IOCTL_FAILURE operation=%u errno=%d; DIAGNOSTIC_ONLY\n",io.lastOperation,io.lastError);
+ if(io.closeError)fprintf(stderr,"HYBRID_CLOSE_FAILURE errno=%d; DIAGNOSTIC_ONLY\n",io.closeError);
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
@@ -66,12 +74,12 @@ int main(int argc,char** argv){
   if(done>=next || done==total){printf("HYBRID_UPLOAD %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);
    while(next<=done)next+=UINT64_C(256)*1024*1024;}
  })){
-  fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);return 1;
+  fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;
  }
  const uint64_t started=Now();if(!started || started<begin){session->Abort();return 1;}
  printf("HYBRID_STARTED upload_and_start_seconds=%.3f\n",double(started-begin)*1e-9);
  while(!session->TerminalReady()){
-  if(!session->Poll()){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);return 1;}
+  if(!session->Poll()){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
   if(!session->TerminalReady()){
    const uint64_t now=Now();if(!now || now<started || now-started>UINT64_C(7200)*1000000000){
     session->Abort();fputs("HYBRID_TIMEOUT close only; recovery may be required\n",stderr);return 1;
@@ -81,7 +89,7 @@ int main(int argc,char** argv){
  }
  const uint64_t terminal=Now();
  if(!terminal || terminal<started){session->Abort();return 1;}
- if(!session->Finish()){fprintf(stderr,"HYBRID_FINISH_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);return 1;}
+ if(!session->Finish()){fprintf(stderr,"HYBRID_FINISH_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
  unsigned tokens[F::MaxOutput]={},count=0;
  if(!session->CopyGeneratedTokens(tokens,F::MaxOutput,count))return 1;
  printf("HYBRID_RESULT prompt_tokens=%u generated_tokens=%u post_start_seconds=%.3f (includes prompt processing)\n",
