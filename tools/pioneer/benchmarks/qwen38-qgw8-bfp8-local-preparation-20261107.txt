@@ -17,9 +17,14 @@ generated.pioneer/qgw8-bfp8-cache-frozen-20261107; it is git-ignored,
 mode 0700, contains 33 cache entries and no leftover staging names, and
 occupies about 2.9 GiB. It is not an archival backup.
 
-One 94699520-byte tensor payload's full 94746016-byte cache file matched an
-existing Haiku-generated cache file by SHA-256. That is a useful cross-build
-sample, not numerical or quality qualification for all 33 entries. Existing
-Haiku files and the installed driver were not modified. The other QGW8 BFP4
-and head-BFP8 caches, complete native owner and safe physical qualification
-are still required; this preparation did not run a model or measure speed.
+All 33 complete 94746016-byte cache files subsequently matched their existing
+Haiku-generated counterparts by SHA-256, including headers and chunk tables.
+The individual digests are recorded in
+qwen38-qgw8-bfp8-mac-haiku-sha256-20261107.txt. Linux mounted the Haiku
+partition read-only solely for this comparison and it was unmounted afterward.
+This establishes equality with those prior converted entries, not numerical
+model quality, correct card memory, or a complete QGW8 inference path.
+Existing Haiku files and the installed driver were not modified. The other
+QGW8 BFP4 and head-BFP8 caches, complete native owner and safe physical
+qualification are still required; this preparation did not run a model or
+measure speed.
