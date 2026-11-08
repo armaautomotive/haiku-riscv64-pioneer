@@ -1,0 +1,48 @@
+QGW8 tag129 fixed-input hidden diagnostic, 2026-11-08
+=====================================================
+
+Purpose: investigate the severe first-token mismatch observed in the tag128
+full-card 27B experiment. This is a separate diagnostic, not Assistant Work,
+CPU fallback, a numerical pass, or a performance improvement. It uses the same
+pinned QGW8 program sections as the earlier physical trial and fixes input to
+token 248319, one prompt position and one generated token. After terminal HOLD
+and committed-record drain, it reads the canonical 5120-word final-hidden data
+in two guarded chunks. It publishes a snapshot only after FINISH and close.
+
+The post-hoc comparator authenticates the saved original trace and converted
+CPU hidden snapshot and compares the card data to both. Its results are error
+metrics, never a quality acceptance. Snapshot contents are private model data
+and must not be committed. The single captured state cannot by itself prove
+the head correct or pinpoint which preceding layer caused a discrepancy.
+
+Cross builds with the existing Haiku SDK:
+ tag129 driver SHA-256 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f
+ tag129 client SHA-256 6f19856f07da419d665c791fb1e26eab4b6f6af94b4f80aa5586d23cf48fb1ed
+ baseline tag128 driver 676d929e4ae0044d91e5f0b0adfe014374359a0130b12ea34d54c71f6b63e95b
+
+The tag128 rebuild is byte-identical to the previously run candidate. A
+separate tag129 build with compiler call-graph emission produced the same
+driver hash. The partial compiled call graph for its hidden-read handler has a
+4240-byte largest known conservative module chain. External/indirect calls,
+kernel entry and interrupts are not bounded; this is not a kernel-stack grant.
+
+Tests are synthetic or use mock I/O: tag129 role and reload guards; actual
+handler with 4736 malformed cases and copy/ownership failures; extracted read
+methods with 1057 retained faults and 120-peer guard checks; fixed-input
+same-FD client lifecycle and failure cases; snapshot parser and transcript
+shape; and the actual one-shot parent's hash, ownership and failure handling.
+The existing tag128 candidate session regression also passed. Haiku's own awk
+accepted a synthetic transcript, and its check-only preflight verified the
+staged hashes, system health and idle stable-driver generation4. These checks
+do not establish correctness or safe physical execution.
+
+The one-shot run was launched separately after those checks; results must be
+recorded from the actual process and snapshot, not inferred from this note.
+The staged running parent has SHA-256
+566e7bf1623581909b339d2a7cb8594d649676eadfae0f576ced6f33131d7e6a;
+it differs from the checked-in parent only by an extra blank line at EOF.
+The previous full trial's independently pinned preflight transcript was used
+as an operator attestation; this diagnostic rechecks the source model and all
+1351 cache fragments itself before opening the device. It stops without retry
+or automatic restoration on an uncertain device action. A verified clean
+FINISH/close and snapshot hash are required before restoring the stable driver.

@@ -151,7 +151,7 @@
  return s->runtime->ReadPhaseProfile(c.io,output,result);
 } // actual SAME held owner;no caller address,count,source or completion hint.
 #endif
-#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129)
 #include "PioneerQ38TokenHiddenReadRole.h"
 [[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext& c,unsigned part,
  uint32_t* output,unsigned words,PioneerQ38TokenHiddenReadResult& result){

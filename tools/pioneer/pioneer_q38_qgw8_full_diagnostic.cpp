@@ -7,6 +7,7 @@
 #endif
 #include <Drivers.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cerrno>
@@ -29,7 +30,7 @@ static uint64_t Now(){
  timespec t={};if(clock_gettime(CLOCK_MONOTONIC,&t) || t.tv_sec<0 || t.tv_nsec<0 || t.tv_nsec>=1000000000)return 0;
  return uint64_t(t.tv_sec)*1000000000+uint64_t(t.tv_nsec);
 }
-static bool Number(const char* text,unsigned max,unsigned& value){
+[[maybe_unused]] static bool Number(const char* text,unsigned max,unsigned& value){
  if(!text || *text<'0' || *text>'9')return false;
  char* end=nullptr;errno=0;const unsigned long result=strtoul(text,&end,10);
  if(errno || !end || *end || result>max)return false;
@@ -53,12 +54,20 @@ static void ReportTransportFailure(const Transport& io){
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+ if(argc!=6 || strcmp(argv[1],"--run-qgw8-hidden") || argv[2][0]!='/' || argv[3][0]!='/'
+  || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgw8-hidden ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE NEW_ABS_SNAPSHOT\n",stderr);return 2;
+ }
+ unsigned outputs=1,ids[F::MaxPrompt]={PioneerQ38Qgw8Hidden::Input},prompts=1;
+#else
  if(argc<7 || argc>6+F::MaxPrompt || strcmp(argv[1],"--run-qgw8-candidate") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/'){
   fputs("Use --run-qgw8-candidate ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE OUTPUT_COUNT TOKEN_ID...\n",stderr);return 2;
  }
  unsigned outputs=0,ids[F::MaxPrompt]={},prompts=unsigned(argc-6);
  if(!Number(argv[5],F::MaxOutput,outputs) || !outputs || prompts+outputs-1>F::MaxPositions)return 2;
  for(unsigned i=0;i<prompts;i++)if(!Number(argv[6+i],F::Vocabulary-1,ids[i]))return 2;
+#endif
  setvbuf(stdout,nullptr,_IOLBF,0);
  puts("HYBRID_FULL_CANDIDATE preflight; unqualified, no device open yet");
  auto model=std::make_unique<PioneerQ38HybridHeadVerifiedModel>();std::string error;
@@ -105,5 +114,22 @@ int main(int argc,char** argv){
   double(count)*1e9/double(terminal-inferenceBegin));
  for(unsigned i=0;i<count;i++)printf("HYBRID_TOKEN %u\n",tokens[i]);
  puts("HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated");
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+ auto snapshot=std::make_unique<PioneerQ38TokenHiddenSnapshot>();
+ if(!session->CopyHiddenSnapshot(snapshot.get(),sizeof(*snapshot))){fputs("QGW8_HIDDEN_SNAPSHOT_COPY_FAILED; AFTER_CLOSE\n",stderr);return 1;}
+ const int file=open(argv[5],O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
+ if(file<0){fprintf(stderr,"QGW8_HIDDEN_CREATE_FAILED errno=%d; AFTER_CLOSE\n",errno);return 1;}
+ const auto* data=reinterpret_cast<const uint8_t*>(snapshot.get());size_t left=sizeof(*snapshot);bool saved=true;
+ struct stat info={};if(fstat(file,&info) || !S_ISREG(info.st_mode) || info.st_nlink!=1
+  || info.st_uid!=geteuid() || (info.st_mode&077)!=0)saved=false;
+ while(saved && left){const ssize_t n=write(file,data,left);if(n<0 && errno==EINTR)continue;
+  if(n<=0){saved=false;break;}data+=n;left-=size_t(n);}
+ if(saved && fsync(file))saved=false;
+ if(close(file))saved=false;
+ if(!saved || left){fputs("QGW8_HIDDEN_WRITE_FAILED; PARTIAL_FILE_UNTRUSTED AFTER_CLOSE\n",stderr);return 1;}
+ const auto digest=PioneerModelWeightCache::Hash(snapshot.get(),sizeof(*snapshot));
+ printf("QGW8_HIDDEN_SNAPSHOT sha256=%s bytes=%zu; DATA_ONLY_AFTER_CLOSE\n",
+  PioneerModelWeightCache::Hex(digest).c_str(),sizeof(*snapshot));
+#endif
  return fflush(stdout)?1:0;
 }

@@ -5192,6 +5192,7 @@ public:
 #include "PioneerQ38TokenNativeEnd.inc"
 #include "PioneerQ38TokenNativeBackend.inc"
 #include "PioneerQ38TokenNativeControl.inc"
+#include "PioneerQ38Qgw8HiddenControl.inc"
 #include "PioneerQ38TokenHiddenValidationControl.inc"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38ResidentOutputValidationControl.h"
@@ -8675,6 +8676,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
   return Q38TokenNativeControl(instance,data,length);
 #endif
 // PIONEER_QGW8_FULL_CONTROL_DISPATCH_END
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+ if(operation==TT_PCI_PROBE_Q38_QGW8_HIDDEN_READ)
+  return Q38Qgw8HiddenControl(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE
  if(operation==TT_PCI_PROBE_Q38_TOKEN_MATRIX_PHASE_READ)
   return Q38TokenMatrixPhaseControl(instance,data,length);

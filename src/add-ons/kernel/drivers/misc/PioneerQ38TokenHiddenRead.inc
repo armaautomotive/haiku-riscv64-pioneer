@@ -3,7 +3,7 @@
 // or caller-ready input. Exact two-part DATA snapshot of the SAME stopped
 // session's canonical final-hidden region. Existing records must be drained.
 #include "PioneerQ38TokenHiddenReadRole.h"
-static_assert(PioneerQ38TokenHiddenReadSelection==1 || PioneerQ38TokenHiddenReadSelection==2,
+static_assert(PioneerQ38TokenHiddenReadSelection==1 || PioneerQ38TokenHiddenReadSelection==2 || PioneerQ38TokenHiddenReadSelection==3,
  "Explicit private OR separate tag75 held-hidden diagnostic required");
 private:
  unsigned hiddenReadCursor=0;
@@ -69,6 +69,10 @@ public:
   const PioneerQ38TokenHiddenReadResult pristine;
   const auto* a=reinterpret_cast<const uint8_t*>(&r);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+  // Reject a mismatched fixed terminal before any scope or snapshot IO.
+  if(observedTerminal[2]!=1 || observedTerminal[3]!=1 || observedTerminal[4]!=0 || observedTerminal[6]!=64)return false;
+#endif
   if(part>=2 || part!=hiddenReadCursor || words!=(part?1024U:4096U) || !CommittedRecordsRead()
    || restoring || l1Restored || !observedTerminal[6] || observedTerminal[6]>64
    || !HiddenReadOutput(output,size_t(words)*4) || !HiddenReadOutput(&r,sizeof(r)) || !Scope(io))return false;

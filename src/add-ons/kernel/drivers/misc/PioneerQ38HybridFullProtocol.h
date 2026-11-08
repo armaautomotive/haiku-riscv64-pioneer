@@ -2,6 +2,13 @@
 #ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8NativeInspectionRole.h"
 #endif
+#if defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129) && (PIONEER_Q38_QGW8_HIDDEN_CLIENT_129 != 1 \
+ || !defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
+ || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error QGW8 hidden client requires the isolated tag129 diagnostic role
+#endif
 #if defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) && (PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
  || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
  || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(_KERNEL_MODE) \
@@ -44,7 +51,9 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
+#if defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
+enum {PioneerQ38HybridProtocolIdentity=129};
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
 enum {PioneerQ38HybridProtocolIdentity=128};
 #elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 enum {PioneerQ38HybridProtocolIdentity=8};
@@ -56,7 +65,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
+#if defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
+static_assert(PioneerQ38HybridProtocolIdentity==129,"late QGW8 hidden protocol identity change");
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
 static_assert(PioneerQ38HybridProtocolIdentity==128,"late QGW8 candidate protocol identity change");
 #elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 static_assert(PioneerQ38HybridProtocolIdentity==8,"late QGW8 protocol identity change");
@@ -74,7 +85,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
+#if defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010129);
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010128);
 #elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION)
 static constexpr uint64_t BuildTag=UINT64_C(0x51544b4e4f445256); // fake native inspection identity only
@@ -86,7 +99,11 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010125);
 #endif
+#if defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
+enum {Version=1,MaxPrompt=1,MaxOutput=1,MaxPositions=1,Vocabulary=248320};
+#else
 enum {Version=1,MaxPrompt=96,MaxOutput=32,MaxPositions=128,Vocabulary=248320};
+#endif
 enum {Matrices=1,Attention=2,Recurrent=4,KV=8,Embedding=16,Normalize=32,
  Residual=64,Activation=128,Greedy=256,AllCompute=511};
 struct Support {uint32_t driver,version,prompt,output,positions,vocabulary,compute,reserved;};

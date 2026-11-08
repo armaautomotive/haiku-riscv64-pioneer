@@ -12,6 +12,19 @@
  || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT != 1
 #error Hybrid full candidate is a separate, non-validation client
 #endif
+#ifndef PIONEER_Q38_QGW8_HIDDEN_SESSION_ROLE_BOUND
+#define PIONEER_Q38_QGW8_HIDDEN_SESSION_ROLE_BOUND
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+enum {PioneerQ38Qgw8HiddenSessionRole=1};
+#else
+enum {PioneerQ38Qgw8HiddenSessionRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+static_assert(PioneerQ38Qgw8HiddenSessionRole==1,"late QGW8 hidden session selection");
+#else
+static_assert(PioneerQ38Qgw8HiddenSessionRole==0,"late QGW8 hidden session removal");
+#endif
 #if defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
@@ -39,6 +52,10 @@ static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role 
 #include "PioneerQ38HybridUploadSession.h"
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8HiddenProtocol.h"
+#include "PioneerQ38TokenHiddenSnapshot.h"
+#endif
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -66,6 +83,11 @@ private:
  std::unique_ptr<Packet> packet=std::make_unique<Packet>();
  std::array<uint32_t,PioneerQ38FullOffload::MaxPositions*64> records={};
  std::array<uint32_t,PioneerQ38FullOffload::MaxPrompt> prompt={};
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+ std::unique_ptr<PioneerQ38Qgw8Hidden::Packet> hiddenPacket=std::make_unique<PioneerQ38Qgw8Hidden::Packet>();
+ std::array<uint32_t,PioneerQ38Qgw8Hidden::Words> hidden={};
+ unsigned hiddenParts=0;bool hiddenCaptured=false;
+#endif
  State state=Virgin;
  ControlObservation lastControl={};bool observedControl=false;
  unsigned prompts=0,limit=0,committed=0,position=0,layers=0,terminalStage=0;
@@ -117,6 +139,19 @@ private:
   }
   return true;
  }
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+ bool HiddenCall(unsigned part){
+  namespace H=PioneerQ38Qgw8Hidden;
+  if(state!=Drained || part!=hiddenParts || part>=H::Parts || hiddenCaptured)return false;
+  std::memset(hiddenPacket.get(),0,sizeof(*hiddenPacket));auto& q=hiddenPacket->request;
+  q.magic=H::Magic;q.version=H::Version;q.part=part;q.words=H::PartWords(part);
+  if(!H::RequestShape(*hiddenPacket))return false;const auto request=q;
+  if(!Call(TT_PCI_PROBE_Q38_QGW8_HIDDEN_READ,*hiddenPacket) || std::memcmp(&q,&request,sizeof(q))
+   || !H::ReplyShape(*hiddenPacket))return false;
+  std::copy(hiddenPacket->words,hiddenPacket->words+q.words,hidden.begin()+part*H::ChunkWords);
+  hiddenParts++;return true;
+ } // untrusted DATA only; no cleanup, retry or device authority
+#endif
 public:
  std::string failure;
  PioneerQ38HybridFullSession(Pages& pages,IO& io):upload(pages,io){}
@@ -134,6 +169,9 @@ public:
   namespace F=PioneerQ38FullOffload;
   if(attempted || state!=Virgin || !ids || !count || count>F::MaxPrompt || !outputs || outputs>F::MaxOutput
    || count+outputs-1>F::MaxPositions)return false;
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+  if(count!=1 || outputs!=1 || ids[0]!=PioneerQ38Qgw8Hidden::Input)return false;
+#endif
   for(unsigned i=0;i<count;i++)if(ids[i]>=F::Vocabulary)return false;
   attempted=true;prompts=count;limit=count+outputs-1;std::copy(ids,ids+count,prompt.begin());
   std::string error;if(!upload.Begin(plan,error,progress)){failure=error;state=Failed;return false;}
@@ -146,6 +184,9 @@ public:
   state=Running;return true;
  }
  bool Cancel(){
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+  return false; // fixed one-token diagnostic never uses a cancellation boundary
+#else
   if(state!=Running || cancelAttempted)return false;
   cancelAttempted=true;
   if(!Control(PioneerQ38TokenControl::Cancel))return Stop("cancel");
@@ -153,6 +194,7 @@ public:
   if(r.ready!=1 || r.stage!=7 || d[5] || d[6] || d[7] || d[8] || d[9]!=1
    || d[10] || d[11] || d[12] || d[13] || d[14] || d[15])return Stop("cancel_reply");
   return true;
+#endif
  }
  bool Poll(const std::function<void(uint32_t,uint32_t)>& pendingObservation={}){
   if(state!=Running)return false;
@@ -190,6 +232,12 @@ public:
    std::copy(packet->records,packet->records+count*64,records.begin()+cursor*64);cursor+=count;
   }while(cursor<committed);
   state=Drained;
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+  if(cancelled || prompts!=1 || limit!=1 || committed!=1 || position!=0 || layers!=64 || terminalStage
+   || prompt[0]!=PioneerQ38Qgw8Hidden::Input)return Stop("hidden_boundary");
+  if(!HiddenCall(0) || !HiddenCall(1))return Stop("hidden_read");
+  hiddenCaptured=true;
+#endif
   if(!Control(P::Finish))return Stop("finish");
   {const auto& r=packet->reply;const auto* d=r.detail;
    if(r.ready!=1 || r.stage!=11 || d[3]!=1 || d[4] || d[5]!=1 || d[6] || d[7])return Stop("finish_reply");}
@@ -216,6 +264,23 @@ public:
   }
   std::copy(ids.begin(),ids.begin()+used,output);count=used;return true;
  }
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+ bool CopyHiddenSnapshot(PioneerQ38TokenHiddenSnapshot* output,size_t bytes)const{
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
+  const uintptr_t transport=reinterpret_cast<uintptr_t>(&upload.io);
+  if(state!=Complete || !failure.empty() || !hiddenCaptured || hiddenParts!=PioneerQ38Qgw8Hidden::Parts
+   || !output || bytes!=sizeof(*output) || out>UINTPTR_MAX-bytes || self>UINTPTR_MAX-sizeof(*this)
+   || transport>UINTPTR_MAX-sizeof(upload.io) || (out<self+sizeof(*this) && self<out+bytes)
+   || (out<transport+sizeof(upload.io) && transport<out+bytes) || !upload.generation
+   || !upload.pages.AllVerified() || !upload.pages.OutputSafe(output,bytes))return false;
+  const uint64_t tag=PioneerQ38Qgw8Hidden::BuildTag,generation=upload.generation;
+  const uint32_t h[]={PioneerQ38TokenHiddenSnapshotData::Magic,PioneerQ38TokenHiddenSnapshotData::Version,
+   0,PioneerQ38Qgw8Hidden::Input,64,PioneerQ38Qgw8Hidden::Words,1,1,
+   uint32_t(tag),uint32_t(tag>>32),uint32_t(generation),uint32_t(generation>>32),2,0,0,0};
+  std::copy(h,h+16,output->header);std::copy(hidden.begin(),hidden.end(),output->words);
+  output->footer=PioneerQ38TokenHiddenSnapshotData::Footer;return true;
+ } // publication only AFTER both fixed reads and successful native FINISH+close
+#endif
  void Abort(){if(state!=Complete)Stop("aborted");}
 };
 #endif

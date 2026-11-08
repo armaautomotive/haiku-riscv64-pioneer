@@ -2,6 +2,19 @@
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) && PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1
 #error QGW8 full-session inspection selector must equal one
 #endif
+#ifndef PIONEER_Q38_QGW8_HIDDEN_UPLOAD_ROLE_BOUND
+#define PIONEER_Q38_QGW8_HIDDEN_UPLOAD_ROLE_BOUND
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+enum {PioneerQ38Qgw8HiddenUploadRole=1};
+#else
+enum {PioneerQ38Qgw8HiddenUploadRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+static_assert(PioneerQ38Qgw8HiddenUploadRole==1,"late QGW8 hidden upload selection");
+#else
+static_assert(PioneerQ38Qgw8HiddenUploadRole==0,"late QGW8 hidden upload removal");
+#endif
 #if defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) && (PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
  || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
  || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(_KERNEL_MODE) \
@@ -84,7 +97,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
    && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
  }
 public:
-#ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
+#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010129);
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010128);
 #elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
  static constexpr uint64_t InspectionTag=UINT64_C(0x51544b4e4f445256); // exact renamed native-context fake tag

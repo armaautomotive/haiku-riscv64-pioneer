@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""EXPERIMENT: compile tag128 QGW8 candidate only; NEVER install or run."""
+"""Build tag128 or isolated tag129 hidden diagnostic; NEVER install or run."""
 import hashlib
 import os
 from pathlib import Path
@@ -7,9 +7,11 @@ import re
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv)!=4 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('absolute Haiku build, pinned header, new absolute output required')
-sdk,header,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent;root=here.parent.parent
+if not __debug__ or len(sys.argv) not in (4,5) or (len(sys.argv)==5 and sys.argv[4]!='--hidden-129') \
+ or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('absolute Haiku build, pinned header, new absolute output, optional --hidden-129 required')
+hidden=len(sys.argv)==5
+sdk,header,out=map(Path,sys.argv[1:4]);here=Path(__file__).resolve().parent;root=here.parent.parent
 if not all(p.is_absolute() for p in (sdk,header,out)) or not sdk.is_dir() or not header.is_file() or out.exists():
     raise SystemExit('invalid paths')
 if hashlib.sha256(header.read_bytes()).hexdigest()!='8ddeb0cfa01857557be9416fa61c8029040570cf67bd412e6dd1f59fdc32eecb':
@@ -25,7 +27,7 @@ includes+=['-isystem',str(root/'build/config_headers'),'-I'+str(release/'system/
 for path in [headers/'os',*sorted((headers/'os').iterdir())]:
     if path.is_dir():includes+=['-isystem',str(path)]
 common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
- '-fno-exceptions','-fno-rtti','-fstack-usage','-ffreestanding','-finline','-fno-semantic-interposition',
+ '-fno-exceptions','-fno-rtti','-fstack-usage','-fcallgraph-info=su','-ffreestanding','-finline','-fno-semantic-interposition',
  '-fno-tree-vectorize','-fno-use-cxa-atexit','-fno-strict-aliasing','-fno-delete-null-pointer-checks',
  '-mcmodel=medany','-fpic','-D_KERNEL_MODE=1']
 names=('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')
@@ -34,8 +36,9 @@ names=('PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128','PIONEER_Q38_QGW8_NATIVE_INSPECTI
  'PIONEER_Q38_QGW8_PROGRAMS_INSPECTION','PIONEER_Q38_QGW8_CONTROL_INSPECTION','PIONEER_Q38_QGW8_SPAN_INSPECTION',
  'PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION','PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION','PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT')
 flags+=['-D'+name+'=1' for name in names]
-flags+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010128ULL',
+flags+=['-DTT_PIONEER_DRIVER_RELOAD=1', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010129ULL' if hidden else '-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010128ULL',
  '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"']
+if hidden:flags+=['-DPIONEER_Q38_QGW8_HIDDEN_NATIVE_129=1']
 driver=root/'src/add-ons/kernel/drivers/misc'
 source=driver/'pioneer_q38_hybrid_full_driver.cpp'
 declared=re.findall(r'^#define ([A-Z][A-Z0-9_]*) 1$',source.read_text(),re.M)
@@ -49,24 +52,27 @@ for name in ('PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128','PIONEER_Q38_QGW8_NATIVE_IN
  'PIONEER_Q38_QGW8_LAYOUT_INSPECTION','PIONEER_Q38_QGW8_PROGRAMS_INSPECTION',
  'PIONEER_Q38_QGW8_CONTROL_INSPECTION','PIONEER_Q38_QGW8_SPAN_INSPECTION',
  'PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION','PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION',
- 'PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT','PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_FULL_OFFLOAD_NATIVE'):
+ 'PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT','PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_FULL_OFFLOAD_NATIVE',
+ *(['PIONEER_Q38_QGW8_HIDDEN_NATIVE_129'] if hidden else [])):
     missing=[v for v in role if v!='-D'+name+'=1']
     rolecheck(missing,False);rolecheck([*missing,'-D'+name+'=0'],False)
 for name in ('PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION','PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128',
  'PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION','PIONEER_Q38_HYBRID_MATRIX_NATIVE_127',
+ 'PIONEER_Q38_QGW8_HIDDEN_CLIENT_129',
  'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
  'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY',
  'api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device'):
     rolecheck([*role,'-D'+name+'=1'],False)
 rolecheck([v for v in role if not v.startswith('-DPIONEER_DRIVER_BUILD_TAG=')]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010127ULL'],False)
 reload_header=driver/'PioneerDriverReloadProtocol.h'
-reload_flags=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010128ULL',
+reload_flags=['-DTT_PIONEER_DRIVER_RELOAD=1', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010129ULL' if hidden else '-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010128ULL',
  '-DPIONEER_Q38_HYBRID_FULL_NATIVE=1','-DPIONEER_Q38_QGW8_CANDIDATE_NATIVE_128=1']
+if hidden:reload_flags+=['-DPIONEER_Q38_QGW8_HIDDEN_NATIVE_129=1']
 def reloadcheck(values,expected):
     result=subprocess.run([cxx,'-std=gnu++17',*values,*includes,'-E','-x','c++',str(reload_header)],capture_output=True,text=True)
     if (result.returncode==0)!=expected:raise RuntimeError('candidate reload identity mismatch: '+result.stderr[:1000])
 reloadcheck(reload_flags,True)
-for index in (2,3):
+for index in ((2,3,4) if hidden else (2,3)):
     reloadcheck([flag for i,flag in enumerate(reload_flags) if i!=index],False)
     altered=list(reload_flags);altered[index]=altered[index].split('=')[0]+'=0';reloadcheck(altered,False)
 def run(*args):subprocess.run([str(v) for v in args],check=True,cwd=out)
@@ -77,14 +83,15 @@ frozen={p:hashlib.sha256(p.read_bytes()).hexdigest() for p in dependencies}
 run(*common,*includes,'-c',driver/'PioneerPciProfile.cpp','-o',out/'profile.o')
 run(*common,*flags,*includes,'-c',source,'-o',out/'native.o')
 def compiler_path(name):return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
-binary=out/'tenstorrent_pci_probe-qgw8-128'
+binary=out/('tenstorrent_pci_probe-qgw8-hidden-129' if hidden else 'tenstorrent_pci_probe-qgw8-128')
 run(cxx,'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenstorrent_pci_probe',compiler_path('crtbeginS.o'),
  release/'system/glue/haiku_version_glue.o',out/'native.o',out/'profile.o',release/'system/kernel/kernel.so',
  compiler_path('libgcc.a'),compiler_path('crtendS.o'),'-o',binary)
 symbols=subprocess.check_output([str(tool)+'-nm','-C','--defined-only',str(binary)],text=True)
 undefined=subprocess.check_output([str(tool)+'-nm','-u',str(binary)],text=True)
 for name in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device',
-             'Q38Qgw8UploadControlInspection(','Q38SpanControl(','Q38TokenNativeControl(','BeginQ38TokenNativeBackendScoped('):
+             'Q38Qgw8UploadControlInspection(','Q38SpanControl(','Q38TokenNativeControl(','BeginQ38TokenNativeBackendScoped(',
+             *(['Q38Qgw8HiddenControl('] if hidden else [])):
     if name not in symbols:raise RuntimeError('candidate missing required symbol '+name)
 for name in ('llama_','ggml_','Q38WorkControl','Q38HybridUploadControl(','ReferenceProducts','OriginalSource','SyntheticIO'):
     if name in symbols or name in undefined:raise RuntimeError('unexpected CPU/reference symbol '+name)
@@ -106,5 +113,5 @@ if not frames or any(len(row)!=3 or row[2]!='static' or int(row[1])>4096 for row
 selected=[int(row[1]) for row in frames if 'TokenNative' in row[0] or 'Qgw8Upload' in row[0]]
 if not selected or max(selected)>2048:raise RuntimeError('QGW8/token stack limit')
 if any(hashlib.sha256(p.read_bytes()).hexdigest()!=digest for p,digest in frozen.items()):raise RuntimeError('source changed during candidate build')
-print('QGW8_CANDIDATE_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
+print('QGW8_HIDDEN_129_SHA256' if hidden else 'QGW8_CANDIDATE_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
 print('EXPERIMENTAL BUILD ONLY: NOT INSTALLED, TESTED ON DEVICE, OR QUALIFIED')

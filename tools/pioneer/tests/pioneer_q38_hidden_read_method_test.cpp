@@ -53,7 +53,12 @@ struct MockOwner {
   bool ReadBoot(unsigned worker,uint32_t* out){assert(!worker);if(!read)return false;memcpy(out,owner->expectedBoot,256);return true;}
  } ownedStartup{this};Startup* startup=&ownedStartup;
  MockOwner(){
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+  observedTerminal[0]=0x1234;observedTerminal[2]=1;observedTerminal[3]=1;observedTerminal[4]=0;observedTerminal[6]=64;
+  readoutCursor=1;
+#else
   observedTerminal[0]=0x1234;observedTerminal[2]=3;observedTerminal[3]=0;observedTerminal[4]=0;observedTerminal[6]=1;
+#endif
   memcpy(terminal,observedTerminal,256);
   for(unsigned i=0;i<64;i++)expectedBoot[i]=boot[i]=0x1000+i;
   for(unsigned w=0;w<120;w++)for(unsigned i=0;i<8;i++)cores[w].counter[i]=terminalCounters[w][i]=100+w*8+(i==6?2:i);
@@ -138,14 +143,23 @@ int main(){
   Fixture f;
   if(mode&1)for(unsigned w=0;w<120;w++)for(unsigned i=0;i<8;i++)f.owner->cores[w].counter[i]=f.owner->terminalCounters[w][i]=0xfffffff0U;
   const bool full=mode&2;
+#ifndef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
   if(full){f.owner->observedTerminal[2]=1;f.owner->observedTerminal[3]=3;f.owner->observedTerminal[4]=2;
    f.owner->observedTerminal[6]=64;f.owner->readoutCursor=3;memcpy(f.owner->terminal,f.owner->observedTerminal,256);}
+#else
+  (void)full;
+#endif
   const unsigned cursor=f.owner->readoutCursor;
   for(unsigned part=0;part<2;part++){
    f.output.fill(0);PioneerQ38TokenHiddenReadResult r;assert(f.Read(part,r));
    assert(r.ready && !r.unsafe && r.phase==4 && r.part==part && r.firstWord==part*4096
-    && r.wordCount==(part?1024U:4096U) && r.completedLayers==(full?64U:1U)
+    && r.wordCount==(part?1024U:4096U)
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+    && r.completedLayers==64 && r.position==0 && r.terminalKind==1 && r.committed==1
+#else
+    && r.completedLayers==(full?64U:1U)
     && r.position==(full?2U:0U) && r.terminalKind==(full?1U:3U) && r.committed==(full?3U:0U)
+#endif
     && r.packets==1 && r.bytesRead==r.wordCount*4 && f.owner->hiddenReadCursor==part+1
     && f.owner->readoutCursor==cursor && f.owner->drained && !f.owner->readoutPending && !f.io.pcReads);
    for(unsigned i=0;i<r.wordCount;i++)assert(f.output[i]==f.io.hidden[part*4096+i]);
@@ -156,6 +170,12 @@ int main(){
   const unsigned calls=f.io.calls;f.output.fill(0);PioneerQ38TokenHiddenReadResult r;
   assert(!f.Read(0,r) && !f.owner->unsafe && f.io.calls==calls);early++;
  }
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+ for(unsigned index:{2U,3U,4U,6U}){
+  Fixture f;f.owner->observedTerminal[index]^=1;PioneerQ38TokenHiddenReadResult r;
+  Early(f,0,4096,f.output.data(),r);early++;
+ }
+#endif
  for(unsigned kind=0;kind<20;kind++){
   Fixture f;PioneerQ38TokenHiddenReadResult r;unsigned part=0,words=4096;uint32_t* out=f.output.data();
   if(kind==0)part=1;if(kind==1)part=2;if(kind==2)words=0;if(kind==3)words=4095;

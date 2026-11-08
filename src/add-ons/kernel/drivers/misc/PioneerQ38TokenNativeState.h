@@ -41,7 +41,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 [[maybe_unused]] static bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t*,PioneerQ38TokenPhaseProfileResult&);
 #endif
-#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129)
 [[maybe_unused]] static bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
 #endif
 [[maybe_unused]] static bool RestoreQ38TokenNativeL1(PioneerStoreContext&,PioneerQ38TokenRestoreResult&);
@@ -96,7 +96,7 @@ class PioneerQ38TokenNativeState {
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  friend bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t*,PioneerQ38TokenPhaseProfileResult&);
 #endif
-#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129)
  friend bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
 #endif
  friend bool RestoreQ38TokenNativeL1(PioneerStoreContext&,PioneerQ38TokenRestoreResult&);

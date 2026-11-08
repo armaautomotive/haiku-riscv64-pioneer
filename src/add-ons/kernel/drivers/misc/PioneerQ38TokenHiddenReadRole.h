@@ -3,7 +3,9 @@
 // DISTINCT tag75 diagnostic are separate roles;neither promotes tag74/Work.
 #ifndef PIONEER_Q38_TOKEN_HIDDEN_READ_SELECTION_H
 #define PIONEER_Q38_TOKEN_HIDDEN_READ_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+enum {PioneerQ38TokenHiddenReadSelection=3};
+#elif defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 enum {PioneerQ38TokenHiddenReadSelection=2};
 #elif defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC)
 enum {PioneerQ38TokenHiddenReadSelection=1};
@@ -11,7 +13,10 @@ enum {PioneerQ38TokenHiddenReadSelection=1};
 enum {PioneerQ38TokenHiddenReadSelection=0};
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+static_assert(PioneerQ38TokenHiddenReadSelection==3,"late QGW8 hidden diagnostic selection");
+#include "../../../../../tools/pioneer/PioneerQ38Qgw8HiddenNativeRole.h"
+#elif defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 static_assert(PioneerQ38TokenHiddenReadSelection==2,"late physical hidden diagnostic selection");
 #include "PioneerQ38TokenHiddenValidationRole.h"
 #elif defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC)
