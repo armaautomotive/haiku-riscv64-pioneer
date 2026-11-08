@@ -1,0 +1,33 @@
+QGW8 Mac-host-only converted caches, 2026-11-07
+================================================
+
+The isolated Mac preparers authenticated the entire original model against
+the pinned c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+SHA-256. The BFP4 run prepared 1113 fragments (7971471360 payload bytes),
+and the head-BFP8 run prepared seven fragments (1350860800 payload bytes).
+A separate invocation of each preparer in verify-only mode authenticated
+the model again and reported 1113/1113 and 7/7 verified cache hits.
+
+Local directories (not in Git):
+ generated.pioneer/qgw8-host-bfp4-20261107
+ generated.pioneer/qgw8-host-head-bfp8-20261107
+
+The build pinned the actual Mac compiler and source dependencies under
+host-only fingerprints:
+ BFP4      57f8d22c609d2ba9b9a65be5be19452c35f937ec33f69e65aecd4033b703a39c
+ head BFP8 44c4d4b8727890b9a880f2a0e6954a2e2cb306200700f047eec85944e2066bed
+These are deliberately different from the Haiku-target fingerprints. They
+are not Haiku-qualified and cannot simply be substituted in the target
+preflight. Verification reused the same implementation; it establishes
+internal cache integrity on these reads, not independent conversion quality
+or cross-platform equivalence. The existing 1071 Haiku BFP4 fragments can
+be compared by logical entry and verified payload before deciding whether any
+future migration is safe; the remaining 42 and seven head fragments still
+need independent qualification. No cache was installed on the Pioneer, no
+accelerator computation was issued, and no inference or speed was measured.
+
+The current verified Linux SSH identity reports the prior Linux boot ID and
+the P100A PCI function is enumerated without a Linux driver. This is not a
+new recovery epoch or proof the accelerator is safe to execute. The existing
+driver recovery guard and unresolved Haiku-volume durability observations
+remain unchanged.
