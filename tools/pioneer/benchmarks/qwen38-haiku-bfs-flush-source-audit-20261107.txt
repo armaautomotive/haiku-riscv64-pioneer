@@ -1,0 +1,41 @@
+Haiku BFS flush path: source audit, not a power-loss test
+=========================================================
+
+The available source tree was inspected while the offline system-disk
+backup was running. These files had no local modifications at inspection.
+This is source analysis only: the running Haiku kernel's exact build and
+the behavior of the Samsung disk/controller were not checked here.
+
+* The BFS fsync hook calls Inode::Sync(). For a regular inode with a file
+  cache, Inode::Sync() returns file_cache_sync(); the latter returns
+  VMCache::WriteModified(). The inspected path does not explicitly issue
+  a drive-cache flush or a BFS journal flush at the fsync call site.
+* VFS fs_sync() writes vnode caches, calls the filesystem's sync hook, and
+  then attempts B_FLUSH_DRIVE_CACHE on the underlying device. It ignores
+  the return value of that ioctl. It also does not propagate vnode-cache
+  WriteModified() results. BFS's volume sync flushes its log and blocks.
+* _kern_sync() logs filesystem-sync errors but returns B_OK regardless;
+  the public sync() wrapper returns void. Therefore successful invocation
+  of sync alone cannot prove that all those writes or the device flush
+  completed successfully. The physical-drive ioctl status is not reported
+  by that path even if a filesystem status is checked separately.
+* The SCSI disk driver routes B_FLUSH_DRIVE_CACHE to synchronize_cache;
+  the ATA bus-manager source routes SCSI SYNCHRONIZE CACHE to its flush
+  command when it reports write-cache support. Which driver and exact
+  device handle the live Haiku system uses has not been verified here.
+
+Files examined: src/system/kernel/fs/vfs.cpp, src/system/libroot/posix/
+unistd/sync.c, src/add-ons/kernel/file_systems/bfs/kernel_interface.cpp,
+Inode.cpp, Volume.cpp and Journal.cpp, src/system/kernel/cache/file_cache.cpp,
+src/system/kernel/vm/VMCache.cpp, src/add-ons/kernel/drivers/disk/scsi/
+scsi_disk/scsi_disk.cpp, and src/add-ons/kernel/bus_managers/ata/ATADevice.cpp.
+
+Consequences for the next experiment: do not call a trial record durable
+solely because file fsync or sync returned. Preserve evidence on another
+verified host before a forced power-off; establish the exact live storage
+path and check the individual flush result where supported. A checked
+flush still does not by itself prove controller or media power-loss safety.
+The existing tag125 refusal guard remains unchanged. The cause of its
+altered files remains unproven; this audit does not establish that any of
+these source details caused it. No filesystem repair, disk write, reboot,
+driver swap, GPU execution or performance measurement was performed.
