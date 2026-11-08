@@ -29,6 +29,20 @@ for name in ('capture_pioneer_q38_qgw8_head_compare.py', 'capture_pioneer_q38_ma
             extra = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(optional), '108133'],
                                    text=True, capture_output=True)
             assert extra.returncode == 0 and optional.read_text() == extra.stdout and 'observed=108133' in extra.stdout
+            saved = root / 'saved-capture'
+            extra = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(saved), '108133',
+                                    '--save-hidden', str(root / 'snapshot')], text=True, capture_output=True)
+            assert extra.returncode == 0 and 'hidden_snapshot=requested' in extra.stdout
+            invalid_path = root / 'invalid-hidden'
+            bad = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(invalid_path), '108133',
+                                  '--save-hidden', 'relative'], capture_output=True)
+            assert bad.returncode and not invalid_path.exists()
+            existing = root / 'existing-snapshot'
+            existing.write_text('preserve')
+            blocked = root / 'blocked-capture'
+            bad = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(blocked), '108133',
+                                  '--save-hidden', str(existing)], capture_output=True)
+            assert bad.returncode and not blocked.exists() and existing.read_text() == 'preserve'
             for token in ('-1', '248320', '1234567', '1x', '１２'):
                 rejected = root / ('rejected-' + str(len(token)))
                 result = subprocess.run([sys.executable, str(wrapper), '/usr/bin/true', str(model), str(rejected), token],

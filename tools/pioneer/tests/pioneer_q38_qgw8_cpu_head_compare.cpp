@@ -11,6 +11,7 @@
 #include "pioneer_q38_bfp4_full_cpu_backend.h"
 #include "pioneer_q38_head_bfp8_cpu_backend.h"
 #include "pioneer_q38_distribution_compare.h"
+#include "pioneer_q38_qgw8_cpu_hidden_snapshot.h"
 #include "../PioneerModelWeightCache.h"
 #include <cstdio>
 #include <cstring>
@@ -57,9 +58,11 @@ static bool ReportObserved(const char* label,const std::vector<uint32_t>& logits
 }
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned CPU trace byte order");
- if((argc!=3 && argc!=4) || strcmp(argv[1],"--fixed-one-qgw8-head") || argv[2][0]!='/')return 2;
+ if((argc!=3 && argc!=4 && argc!=6) || strcmp(argv[1],"--fixed-one-qgw8-head") || argv[2][0]!='/')return 2;
+ const char* hiddenPath=nullptr;
+ if(argc==6){if(strcmp(argv[4],"--save-hidden") || argv[5][0]!='/')return 2;hiddenPath=argv[5];}
  unsigned observed=UINT32_MAX;
- if(argc==4){
+ if(argc>=4){
   if(!argv[3][0] || strspn(argv[3],"0123456789")!=strlen(argv[3]) || strlen(argv[3])>6)return 2;
   const unsigned long value=strtoul(argv[3],nullptr,10);if(value>=248320)return 2;observed=unsigned(value);
  }
@@ -82,6 +85,14 @@ int main(int argc,char** argv){
   || converted.size()!=248320 || !source.Ready())return 1;
  if(!Report("head_only_same_hidden",ffn.logits,converted) || !Report("combined_ffn_and_head",baseline.logits,converted))return 1;
  if(observed!=UINT32_MAX && !ReportObserved("combined_converted",converted,observed))return 1;
+ if(hiddenPath){
+  std::vector<uint32_t> snapshot;
+  if(!source.Ready() || !Q38Qgw8CpuHiddenSnapshot::Build(baseline.hidden,ffn.hidden,baseline.selected,ffn.selected,snapshot)
+   || !Q38Qgw8CpuHiddenSnapshot::SaveNew(hiddenPath,snapshot) || !source.Ready())return 1;
+  const auto digest=PioneerModelWeightCache::Hash(snapshot.data(),snapshot.size()*sizeof(uint32_t));
+  printf("QGW8_CPU_HIDDEN_SNAPSHOT sha256=%s words=%zu original_and_converted; CPU_ONLY_NOT_DEVICE\n",
+   PioneerModelWeightCache::Hex(digest).c_str(),snapshot.size());
+ }
  puts("PASS_QGW8_ONE_TOKEN_CPU_COMPARISON; ONE FIXED TOKEN, SOFTWARE MODEL ONLY; NOT DEVICE, WORK, ANSWER QUALITY OR SPEED");
  return fflush(stdout)?1:0;
 }

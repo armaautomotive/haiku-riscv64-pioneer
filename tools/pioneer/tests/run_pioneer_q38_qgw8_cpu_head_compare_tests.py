@@ -17,6 +17,22 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-cpu-head-tests-') as tmp:
     subprocess.run(common + ['-Wno-unused-function', '-fsanitize=address,undefined',
         str(here / 'pioneer_q38_head_bfp8_cpu_project_test.cpp'), '-o', unit], check=True)
     subprocess.run([unit], check=True)
+    snapshot = str(Path(tmp) / 'snapshot-test')
+    subprocess.run(common + ['-fsanitize=address,undefined',
+        str(here / 'pioneer_q38_qgw8_cpu_hidden_snapshot_test.cpp'), '-o', snapshot], check=True)
+    subprocess.run([snapshot, tmp], check=True)
+    subprocess.run(['python3', str(here / 'test_pioneer_q38_qgw8_cpu_hidden_snapshot.py')], check=True)
+    snapshot_header = str(here / 'pioneer_q38_qgw8_cpu_hidden_snapshot.h')
+    for role in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', '__FAST_MATH__'):
+        result = subprocess.run(common + ['-DPIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC=1', '-D' + role,
+                                          '-fsyntax-only', '-x', 'c++', snapshot_header],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0 or 'isolated reference data only' not in result.stderr:
+            raise RuntimeError('Hidden snapshot role guard failed: ' + role)
+    result = subprocess.run(common + ['-fsyntax-only', '-x', 'c++', snapshot_header],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode == 0 or 'isolated reference data only' not in result.stderr:
+        raise RuntimeError('Hidden snapshot accepted without diagnostic role')
     executable = str(Path(tmp) / 'compare')
     subprocess.run(common + ['-DPIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC=1', main,
         str(here / 'pioneer_q38_bfp4_full_cpu_backend.cpp'), backend,
@@ -26,7 +42,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-cpu-head-tests-') as tmp:
                  ['--fixed-one-qgw8-head', '/not-a-model', '-1'],
                  ['--fixed-one-qgw8-head', '/not-a-model', '248320'],
                  ['--fixed-one-qgw8-head', '/not-a-model', '1234567'],
-                 ['--fixed-one-qgw8-head', '/not-a-model', '1x']):
+                 ['--fixed-one-qgw8-head', '/not-a-model', '1x'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '108133', '--wrong', '/tmp/new'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '108133', '--save-hidden', 'relative']):
         result = subprocess.run([executable, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode != 2:
             raise RuntimeError('Argument guard failed: ' + repr(args))
