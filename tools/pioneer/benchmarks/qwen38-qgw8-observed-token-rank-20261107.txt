@@ -1,0 +1,18 @@
+QGW8 incorrect output: CPU reference ranking, 2026-11-07
+
+The completed physical trial selected token 108133 for input 248319; the
+original-model CPU control selected 70253. A separate CPU-only diagnostic
+authenticated the original source and reproduced the pinned full original
+trace (SHA-256 9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937).
+In that original distribution, token 108133 is rank 127850 out of 248320,
+with logit 0.183475226 and probability 2.56940761e-07; the top token 70253
+has logit 11.7586288. Rank is one-based, with lower token IDs breaking ties.
+This is not a near-tie in the original distribution. It does not identify
+which operation failed or prove that the numerical path failed in one place.
+
+The same separate process is still computing the converted FFN and BFP8-head
+distributions; results are not yet available. Its private capture is
+/private/tmp/qgw8-observed-token.YhrRBPNE/result.log. This CPU diagnostic
+does not access the P100A or change Work mode and is not an inference-speed
+measurement. Existing independent converted-model evidence still identifies
+70253 as the converted top token; the observed-token rank remains pending.
