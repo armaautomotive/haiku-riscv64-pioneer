@@ -23,3 +23,23 @@ altered 125 trial files; it does not prove the source filesystem was intact,
 explain the earlier write anomaly, establish future power-loss safety, or
 authorize changing the existing trial guard. No driver or accelerator work
 was performed as part of this backup or verification.
+
+After the direct verification, the untimed SD-free 64-CPU/full-memory Haiku
+profile was booted. Its previously pinned SSH identity matched; sysinfo
+reported 64 CPUs and 137034936320 maximum memory bytes. The installed
+tag125 driver and stable041 backup still matched their recorded hashes, and
+CPU-only reload metadata reported generation1, cold0, active_owner0. The
+original trial stage still held the same four post-failure hashes. Separately,
+all four pre-power and all four post-power evidence files on HaikuData were
+read and matched their earlier recorded hashes after this boot. This is not
+proof that the disk anomaly is resolved or permission to bypass the guard;
+no driver exchange, accelerator launch or model inference was performed.
+
+The earlier four-file durability probe still passed its read-only check on
+the mounted BFS boot volume. A newly built flush-only tool was copied into
+the new private directory /boot/home/pioneer-qgw8-flush-tool-20261107-a;
+its on-device SHA-256 matched
+242400b3c143573ad6c8bd890e12114de4c1573b86d70a59499b0ed61227e90d.
+The volume identified itself as /dev/disk/scsi/0/3/0/0 and the explicit
+checked flush returned success. The sync path cannot report all errors and
+the result is not proof of power-loss safety or other files' durability.
