@@ -59,6 +59,9 @@ def check_identity(source='/dev/sdb', destination='/dev/sdc', bad=None):
         paths[mod.SOURCE_PARTITION_LINK] = '/dev/sda1'
     def simulated_output(*args):
         if args[0] == 'lsblk':
+            if args[1] == '-nr':
+                rows = Path(source).name + ' disk\n' + Path(source + '1').name + ' part'
+                return rows + ('\nextra part' if bad == 'layout' else '')
             if args[-1] == source:
                 return 'WRONG' if bad == 'source_serial' else mod.SOURCE_SERIAL
             return 'WRONG' if bad == 'destination_serial' else mod.DESTINATION_SERIAL
@@ -67,15 +70,16 @@ def check_identity(source='/dev/sdb', destination='/dev/sdc', bad=None):
                 return 'WRONG' if bad == 'source_uuid' else mod.SOURCE_UUID
             return 'WRONG' if bad == 'destination_uuid' else 'd7acf635-9bfa-43b5-abf9-a35bf5abfd82'
         if args[0] == 'blockdev':
-            return str(120034123776 if args[-1] == source else 1 if bad == 'size' else mod.SOURCE_SIZE)
+            return str(mod.SOURCE_SIZE if args[-1] == source else 1 if bad == 'size' else mod.PARTITION_SIZE)
         if args[0] == 'findmnt':
             return ('/dev/sda2' if bad == 'mount' else destination + '2') + ' ext4 rw,relatime'
         raise AssertionError(args)
-    fake_source = SimpleNamespace(st_mode=stat.S_IFBLK, st_rdev=os.makedev(8, 17))
+    fake_source = SimpleNamespace(st_mode=stat.S_IFBLK, st_rdev=os.makedev(8, 16))
+    fake_partition = SimpleNamespace(st_mode=stat.S_IFBLK, st_rdev=os.makedev(8, 17))
     fake_destination = SimpleNamespace(st_mode=stat.S_IFBLK, st_rdev=os.makedev(8, 34),
                                        st_dev=os.makedev(8, 35 if bad == 'destination_device' else 34))
     def fake_stat(path):
-        return fake_source if str(path) == source + '1' else fake_destination
+        return fake_source if str(path) == source else fake_partition if str(path) == source + '1' else fake_destination
     with patch.object(mod.sys, 'platform', 'linux'), patch.object(mod.os, 'geteuid', return_value=0), \
          patch.object(mod.os.path, 'realpath', side_effect=lambda path: paths[path]), \
          patch.object(mod.os, 'stat', side_effect=fake_stat), \
@@ -86,10 +90,10 @@ def check_identity(source='/dev/sdb', destination='/dev/sdc', bad=None):
         return mod.check_devices()
 
 
-assert check_identity()[0] == '/dev/sdb1'
-assert check_identity('/dev/sda', '/dev/sdb')[0] == '/dev/sda1'
+assert check_identity()[0] == '/dev/sdb'
+assert check_identity('/dev/sda', '/dev/sdb')[0] == '/dev/sda'
 for invalid in ('ancestry', 'source_serial', 'destination_serial', 'source_uuid', 'destination_uuid',
-                'size', 'offset', 'mount', 'mounted', 'destination_device'):
+                'size', 'offset', 'mount', 'mounted', 'destination_device', 'layout'):
     try:
         check_identity(bad=invalid)
     except RuntimeError:

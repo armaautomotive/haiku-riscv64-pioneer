@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Private, exclusive, verified raw backup of the pinned unmounted Haiku partition.
+"""Private, exclusive, verified raw backup of the pinned unmounted Haiku disk.
 
 Run only on the Pioneer Linux recovery system. No device is opened writable;
 there is deliberately no restore, delete, overwrite, power or mount operation.
@@ -17,7 +17,8 @@ SOURCE_DISK_LINK = '/dev/disk/by-id/ata-Samsung_SSD_840_Series_S14CNSAD300075H'
 SOURCE_PARTITION_LINK = SOURCE_DISK_LINK + '-part1'
 SOURCE_SERIAL = 'S14CNSAD300075H'
 SOURCE_UUID = '020147de08752551'
-SOURCE_SIZE = 120033640448
+SOURCE_SIZE = 120034123776
+PARTITION_SIZE = 120033640448
 DESTINATION = Path('/mnt/ssd')
 DESTINATION_DISK_LINK = '/dev/disk/by-id/ata-R3SL480G_E201610050040028'
 DESTINATION_PARTITION_LINK = DESTINATION_DISK_LINK + '-part2'
@@ -61,16 +62,23 @@ def check_devices():
             or source_partition != source_disk + '1'
             or destination_partition != destination_disk + '2'):
         raise RuntimeError('unexpected recorded disk/partition ancestry')
-    source = os.stat(source_partition)
-    if not stat.S_ISBLK(source.st_mode) or mounted_device(source.st_rdev):
-        raise RuntimeError('source is not the expected unmounted block device')
+    source = os.stat(source_disk)
+    partition = os.stat(source_partition)
+    if not stat.S_ISBLK(source.st_mode) or not stat.S_ISBLK(partition.st_mode):
+        raise RuntimeError('source disk or partition is not a block device')
+    if mounted_device(source.st_rdev) or mounted_device(partition.st_rdev):
+        raise RuntimeError('source disk or partition is mounted')
+    names = output('lsblk', '-nr', '-o', 'NAME,TYPE', source_disk).splitlines()
+    expected = [Path(source_disk).name + ' disk', Path(source_partition).name + ' part']
+    if names != expected:
+        raise RuntimeError('unexpected source partition layout')
     if output('lsblk', '-dn', '-o', 'SERIAL', source_disk) != SOURCE_SERIAL:
         raise RuntimeError('source serial mismatch')
     if output('blkid', '-s', 'UUID', '-o', 'value', source_partition) != SOURCE_UUID:
         raise RuntimeError('source filesystem identity mismatch')
-    if int(output('blockdev', '--getsize64', source_disk)) != 120034123776:
+    if int(output('blockdev', '--getsize64', source_disk)) != SOURCE_SIZE:
         raise RuntimeError('source disk size mismatch')
-    if int(output('blockdev', '--getsize64', source_partition)) != SOURCE_SIZE:
+    if int(output('blockdev', '--getsize64', source_partition)) != PARTITION_SIZE:
         raise RuntimeError('source size mismatch')
     if Path('/sys/class/block/' + Path(source_partition).name + '/start').read_text().strip() != '64':
         raise RuntimeError('source partition offset mismatch')
@@ -88,7 +96,7 @@ def check_devices():
         raise RuntimeError('destination mount device mismatch')
     if destination.st_rdev == source.st_rdev:
         raise RuntimeError('source and destination coincide')
-    return source_partition, source
+    return source_disk, source
 
 
 def free_bytes(path):
@@ -147,11 +155,18 @@ def progress(label, reserve_check=False):
 
 
 def main():
-    if sys.argv[1:] != ['--create-pinned-snapshot']:
-        raise SystemExit('usage: --create-pinned-snapshot')
+    if sys.argv[1:] not in (['--check-only'], ['--create-pinned-snapshot']):
+        raise SystemExit('usage: --check-only | --create-pinned-snapshot')
     source_path, source_info = check_devices()
-    if free_bytes(DESTINATION) < SOURCE_SIZE + RESERVE:
+    available = free_bytes(DESTINATION)
+    if available < SOURCE_SIZE + RESERVE:
         raise RuntimeError('not enough free space plus 60 GiB reserve')
+    if os.path.lexists(STAGE):
+        raise RuntimeError('snapshot destination already exists')
+    if sys.argv[1:] == ['--check-only']:
+        print('CHECK_ONLY source=%s source_bytes=%d destination=%s available_bytes=%d reserve_bytes=%d' %
+              (source_path, SOURCE_SIZE, DESTINATION, available, RESERVE))
+        return
     os.umask(0o077)
     os.mkdir(STAGE, 0o700)  # exclusively new; never reused or removed here
     directory = os.open(STAGE, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
@@ -160,7 +175,7 @@ def main():
         src = os.open(source_path, os.O_RDONLY | os.O_NOFOLLOW)
         if os.fstat(src).st_rdev != source_info.st_rdev or mounted_device(source_info.st_rdev):
             raise RuntimeError('source identity changed or became mounted')
-        dst = os.open('haiku-sda1.raw.incomplete', os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+        dst = os.open('haiku-samsung-disk.raw.incomplete', os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                       0o600, dir_fd=directory)
         source_hash = copy_exact(src, dst, SOURCE_SIZE, progress('COPY', True))
         os.fsync(dst)
@@ -174,22 +189,22 @@ def main():
         if final_path != source_path or final_info.st_rdev != source_info.st_rdev:
             raise RuntimeError('device identity changed during backup')
         verified = os.fstat(dst)
-        named = os.stat('haiku-sda1.raw.incomplete', dir_fd=directory, follow_symlinks=False)
+        named = os.stat('haiku-samsung-disk.raw.incomplete', dir_fd=directory, follow_symlinks=False)
         if (verified.st_dev, verified.st_ino, verified.st_nlink) != (named.st_dev, named.st_ino, 1):
             raise RuntimeError('backup file identity changed before publication')
         # link() refuses an existing destination, unlike rename(). The old
         # name is removed only after the verified inode has a second name.
-        os.link('haiku-sda1.raw.incomplete', 'haiku-sda1.raw', src_dir_fd=directory,
+        os.link('haiku-samsung-disk.raw.incomplete', 'haiku-samsung-disk.raw', src_dir_fd=directory,
                 dst_dir_fd=directory, follow_symlinks=False)
-        published = os.stat('haiku-sda1.raw', dir_fd=directory, follow_symlinks=False)
+        published = os.stat('haiku-samsung-disk.raw', dir_fd=directory, follow_symlinks=False)
         if (published.st_dev, published.st_ino) != (verified.st_dev, verified.st_ino):
             raise RuntimeError('published backup identity mismatch')
-        os.unlink('haiku-sda1.raw.incomplete', dir_fd=directory)
+        os.unlink('haiku-samsung-disk.raw.incomplete', dir_fd=directory)
         os.fsync(directory)
-        manifest = os.open('haiku-sda1.raw.sha256', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+        manifest = os.open('haiku-samsung-disk.raw.sha256', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                            0o600, dir_fd=directory)
         try:
-            write_all(manifest, (source_hash + '  haiku-sda1.raw\n').encode('ascii'))
+            write_all(manifest, (source_hash + '  haiku-samsung-disk.raw\n').encode('ascii'))
             os.fsync(manifest)
         finally:
             os.close(manifest)
