@@ -1,0 +1,28 @@
+Additional QGW8 weights: Mac/Haiku read-only comparison
+========================================================
+
+The 42 BFP4 cache entries for layers 48 and 49 and all seven output-head
+BFP8 entries were prepared independently on Mac and Haiku from the same
+pinned original model. Each implementation used its own distinct compiler/
+source fingerprint and cache recipe; no Mac cache was re-keyed or installed.
+
+The comparison validated the selected Mac cache filenames, source and host
+recipe fields, exact sizes, chunk tables, every chunk and the full payload
+hash. It derived each Haiku filename from the matching logical key and the
+Haiku recipe. Over the pinned Haiku SSH connection, it checked each target
+file's size and stable stat fields, then separately hashed its first 112
+bytes against the expected target header and its complete remaining bytes
+against the corresponding Mac cache. All 42 BFP4 and all seven head files
+matched these expected prefix and suffix hashes. This independently read
+all selected target cache bytes; equality is by SHA-256, not byte-by-byte
+network transfer. Synthetic corruption, truncated-input, symlink and
+mismatching-remote-result tests passed.
+
+Together with the earlier separate comparison of the other 1071 BFP4
+fragments, this checks cross-platform byte equivalence for all 1113 BFP4
+fragments and the seven head fragments. The old separate 33-tensor BFP8
+comparison remains documented in qwen38-qgw8-bfp8-mac-haiku-sha256-20261107.txt.
+These comparisons do not establish output quality, card-memory contents,
+device execution or throughput. The all-cache preflight was still in
+progress at this observation; the recovery guard and installed driver were
+unchanged.
