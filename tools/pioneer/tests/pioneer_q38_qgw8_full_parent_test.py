@@ -80,9 +80,12 @@ def case(root,mode):
  for old,new in replacements.items():
   assert text.count(old)==1,(old,text.count(old));text=text.replace(old,new)
  parent=d/'parent';parent.write_text(text);env=dict(os.environ,MOCK_MODE=mode)
- result=subprocess.run(['sh',str(parent)],env=env,capture_output=True,text=True)
+ result=subprocess.run(['sh',str(parent),*(['--check-only'] if mode=='check-only' else [])],env=env,capture_output=True,text=True)
  calls=events.read_text().splitlines();current=(d/'installed').read_text()
- if mode=='ok':
+ if mode=='check-only':
+  assert result.returncode==0 and 'QGW8_ONE_SHOT_CHECK_ONLY_PASSED' in result.stdout
+  assert current=='stable\n' and calls==['--status '] and not (stage/'.trial-once').exists()
+ elif mode=='ok':
   assert result.returncode==0,(result.stdout,result.stderr,calls)
   assert (stage/'state').read_text().strip()=='CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED'
   assert current=='stable\n' and sum(x.startswith('--quiesce') for x in calls)==2
@@ -103,7 +106,7 @@ def case(root,mode):
   before=events.read_text();again=subprocess.run(['sh',str(parent)],env=env,capture_output=True,text=True)
   assert again.returncode and events.read_text()==before
 with tempfile.TemporaryDirectory(prefix='qgw8-parent-',dir='/private/tmp') as directory:
- for mode in ('ok','busy','spent','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag',
+ for mode in ('ok','check-only','busy','spent','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag',
               'preflight-fail','client-fail','bad-output','quiesce-fail','candidate-wait-fail',
               'restore-wait-fail','flush1','flush5','flush7','flush9'):case(Path(directory),mode)
 print('PASS actual QGW8 one-shot parent and 19 synthetic refusal/failure cases; NO DEVICE')

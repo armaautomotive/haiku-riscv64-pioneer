@@ -4,7 +4,9 @@
 set -eu
 PATH=/boot/system/bin:/bin
 export PATH
-[ "$#" = 0 ] && [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
+[ "$#" = 0 ] || { [ "$#" = 1 ] && [ "$1" = --check-only ]; } || exit 2
+[ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
+action=${1:---run}
 umask 077
 stage=/boot/home/pioneer-qgw8-full-trial-20261107-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
@@ -89,6 +91,10 @@ test -f "$original" && test ! -L "$original" && [ "$(stat -c '%u:%h:%a:%s' "$ori
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || exit 1
 [ "$(stat -c '%d' "$stage")" = "$(stat -c '%d' "$installed")" ] || exit 1
 idle && metadata 2026102100010012 2 && health || exit 1
+if [ "$action" = --check-only ]; then
+ echo QGW8_ONE_SHOT_CHECK_ONLY_PASSED_NO_MODEL_READ_DRIVER_SWAP_OR_GPU_EXECUTION
+ exit 0
+fi
 mkdir "$stage/.trial-once"
 printf '%s\n' "$$" > "$stage/parent.pid"
 trap 'code=$?; if [ "$code" -ne 0 ]; then printf "FAILED_%s_NO_AUTO_RETRY_RESET_OR_RESTORE\n" "$code" > "$stage/state"; fi' EXIT
