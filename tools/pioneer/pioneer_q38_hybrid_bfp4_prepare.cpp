@@ -6,6 +6,12 @@
 #ifndef PIONEER_BFP4_IMPLEMENTATION_SHA256
 #error Hybrid preparation requires the exact converter build fingerprint
 #endif
+#if defined(PIONEER_Q38_HOST_PREPARATION) && (PIONEER_Q38_HOST_PREPARATION != 1 || !defined(__APPLE__) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error External model path is for isolated macOS preparation only
+#endif
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_BANKS_MOCK_ONLY 1
 #include "PioneerQ38HybridBfp4Preparation.h"
@@ -45,13 +51,19 @@ static bool ParseDigest(const char* hex,PioneerModelWeightCache::Digest& result)
  return true;
 }
 int main(int argc,char** argv){
- if(argc!=3 || (strcmp(argv[1],"--prepare-bfp4") && strcmp(argv[1],"--verify-bfp4")
+ const char* modelPath="/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf";
+#ifdef PIONEER_Q38_HOST_PREPARATION
+ if(argc==5 && !strcmp(argv[3],"--model") && argv[4][0]=='/')modelPath=argv[4];
+ else
+#endif
+ if(argc!=3){fputs("Invalid argument count.\n",stderr);return 2;}
+ if((strcmp(argv[1],"--prepare-bfp4") && strcmp(argv[1],"--verify-bfp4")
   && strcmp(argv[1],"--prepare-qgw8-bfp4") && strcmp(argv[1],"--verify-qgw8-bfp4")) || argv[2][0]!='/'){
   fprintf(stderr,"Usage: %s --prepare-bfp4|--verify-bfp4|--prepare-qgw8-bfp4|--verify-qgw8-bfp4 ABSOLUTE_DEDICATED_CACHE\n",argv[0]);return 2;
  }
  const bool qgw8=!strcmp(argv[1],"--prepare-qgw8-bfp4") || !strcmp(argv[1],"--verify-qgw8-bfp4");
  const bool verifyOnly=!strcmp(argv[1],"--verify-bfp4") || !strcmp(argv[1],"--verify-qgw8-bfp4");
- int fd=open("/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf",O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return 1;
+ int fd=open(modelPath,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return 1;
  struct stat identity={};if(fstat(fd,&identity) || !S_ISREG(identity.st_mode) || identity.st_uid!=geteuid()
   || identity.st_nlink!=1 || (identity.st_mode&0022) || uint64_t(identity.st_size)!=PioneerQwen38Gguf::FullBytes){close(fd);return 1;}
  FILE* stream=fdopen(fd,"rb");if(!stream){close(fd);return 1;}
