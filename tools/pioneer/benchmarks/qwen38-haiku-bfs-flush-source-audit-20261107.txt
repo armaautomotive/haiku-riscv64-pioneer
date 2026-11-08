@@ -6,6 +6,13 @@ backup was running. These files had no local modifications at inspection.
 This is source analysis only: the running Haiku kernel's exact build and
 the behavior of the Samsung disk/controller were not checked here.
 
+This substantially repeats the earlier source inspection and real checked
+flush probe in qwen38-bfs-durability-probe-20261107.txt; it is not a new
+finding or a new device test. That earlier probe checked the exact boot
+device flush and four file hashes across orderly restarts, but not sudden
+power loss. The additional details below trace return-value propagation and
+the SCSI/ATA implementation; they do not change the earlier limitations.
+
 * The BFS fsync hook calls Inode::Sync(). For a regular inode with a file
   cache, Inode::Sync() returns file_cache_sync(); the latter returns
   VMCache::WriteModified(). The inspected path does not explicitly issue
