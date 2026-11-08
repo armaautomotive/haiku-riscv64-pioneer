@@ -39,6 +39,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-upload-session-') as direc
     subprocess.run(common + ['-Wno-unused-function', '-Wno-unused-variable', '-fsanitize=address,undefined',
         str(here / 'pioneer_q38_qgw8_upload_session_test.cpp'), str(tools / 'PioneerModelWeightCache.cpp'), '-o', binary], check=True)
     env = dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1')
-    for args in ([], ['--bad-seal']):
+    for args in ([], ['--bad-seal'], ['--strict-reply']):
         subprocess.run([binary, *args], check=True, env=env)
 print('PASS isolated QGW8 session roles and full synthetic owner/receipt lifecycle; no model/device/TPS')

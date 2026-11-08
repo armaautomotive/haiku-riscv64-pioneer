@@ -50,7 +50,7 @@ template<class C> static bool PioneerQ38SpanPrepareService(C& c)
 }
 template<class C,bool Work=false
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
- ,class Receipt=PioneerQ38HybridUploadReceipt
+ ,class Receipt=PioneerQ38HybridUploadReceipt,bool Qgw8Fast=false
 #endif
  > static bool PioneerQ38SpanUploadCore(C& c,tt_q38_span_upload& request
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
@@ -59,8 +59,9 @@ template<class C,bool Work=false
  )
 {
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-	static_assert(PioneerQ38SpanReceiptKind<Receipt>::Value==1
-		|| (PioneerQ38SpanReceiptKind<Receipt>::Value==2 && !Work),"Unsupported tracked span receipt/Work pairing");
+	static_assert((PioneerQ38SpanReceiptKind<Receipt>::Value==1 && !Qgw8Fast)
+		|| (PioneerQ38SpanReceiptKind<Receipt>::Value==2 && ((!Work && !Qgw8Fast) || (Work && Qgw8Fast))),
+		"Unsupported tracked span receipt/Work pairing");
 #endif
 	request.result={}; request.result.version=1; request.result.state=TT_RUNTIME_CONFIG_FAILED;
 	if (!PioneerQ38SpanOwner(c) || !PioneerQ38SpanPublicShape(request.version,request.bank,request.offset,request.bytes,request.reserved)) return false;
@@ -120,6 +121,17 @@ template<class C> static bool PioneerQ38Qgw8SpanUploadInspection(C& c,tt_q38_spa
 {
 	return PioneerQ38SpanUploadCore<C,false>(c,request,receipt);
 }
+#ifdef PIONEER_Q38_SPAN_FAST
+// The QGW8 uploader sends SPAN_WORK_UPLOAD and requires host_exact=0 and
+// matched_words=0. This explicit adapter uses that same fast transport with
+// the QGW8 receipt, without granting a real ioctl or inference capability.
+// The strict inspection adapter above remains available separately.
+template<class C> static bool PioneerQ38Qgw8SpanUploadFastInspection(C& c,tt_q38_span_upload& request,
+ PioneerQ38Qgw8UploadReceipt* receipt)
+{
+	return PioneerQ38SpanUploadCore<C,true,PioneerQ38Qgw8UploadReceipt,true>(c,request,receipt);
+}
+#endif
 #endif
 template<class C> static bool PioneerQ38SpanEndService(C& c)
 {

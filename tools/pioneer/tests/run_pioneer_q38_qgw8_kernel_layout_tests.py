@@ -53,7 +53,9 @@ for flags, reason in (
         (['-DPIONEER_Q38_QGW8_SPAN_INSPECTION=1'], 'distinct non-loadable tracked receipt role'),
         (span_role + ['-DPIONEER_TEST_OMIT_TRACKED'], 'distinct non-loadable tracked receipt role'),
         (role + ['-DPIONEER_Q38_QGW8_SPAN_INSPECTION=0'], 'distinct non-loadable tracked receipt role'),
-        (span_role + ['-DPIONEER_TEST_QGW8_WORK_PAIR'], 'Unsupported tracked span receipt/Work pairing')):
+        (span_role + ['-DPIONEER_TEST_QGW8_WORK_PAIR'], 'Unsupported tracked span receipt/Work pairing'),
+        (span_role + ['-DPIONEER_TEST_QGW8_FALSE_FAST'], 'Unsupported tracked span receipt/Work pairing'),
+        (span_role + ['-DPIONEER_TEST_LEGACY_QGW8_FAST'], 'Unsupported tracked span receipt/Work pairing')):
     result = subprocess.run(common + flags + ['-fsyntax-only', span_probe], text=True,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode == 0 or reason not in result.stderr:
@@ -75,6 +77,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-kernel-layout-') as direct
     subprocess.run(common + ['-ffp-contract=off', '-DTT_PIONEER_EXPERIMENTAL_Q38_BANKS',
         '-fsanitize=address,undefined', str(here / 'pioneer_q38_qgw8_tracked_span_test.cpp'), '-o', span], check=True)
     subprocess.run([span, str(image)], check=True)
+    fast_image = out / 'fast-span-image'
+    subprocess.run(['sh', str(here.parent / 'build_qwen38_span_image.sh'), str(sdk), str(fast_image)],
+                   check=True, env=dict(os.environ, PIONEER_Q38_SPAN_FAST='1'))
+    fast_span = str(out / 'tracked-fast-span-test')
+    subprocess.run(common + ['-ffp-contract=off', '-DTT_PIONEER_EXPERIMENTAL_Q38_BANKS',
+        '-DPIONEER_Q38_SPAN_FAST=1', '-DPIONEER_TEST_QGW8_FAST=1', '-fsanitize=address,undefined',
+        str(here / 'pioneer_q38_qgw8_tracked_span_test.cpp'), '-o', fast_span], check=True)
+    subprocess.run([fast_span, str(fast_image)], check=True)
     tool = sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku'
     headers = sdk / 'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
     for name, symbols in (('kernel_layout', ('qgw8_kernel_layout_build',)),

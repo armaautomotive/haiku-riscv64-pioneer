@@ -20,5 +20,17 @@ bool refuseWork(IncompleteContext& c,tt_q38_span_upload& p,PioneerQ38Qgw8UploadR
  return PioneerQ38SpanUploadCore<IncompleteContext,true>(c,p,r);
 }
 #endif
+#ifdef PIONEER_TEST_QGW8_FALSE_FAST
+struct IncompleteContext;
+bool refuseFalseFast(IncompleteContext& c,tt_q38_span_upload& p,PioneerQ38Qgw8UploadReceipt* r){
+ return PioneerQ38SpanUploadCore<IncompleteContext,false,PioneerQ38Qgw8UploadReceipt,true>(c,p,r);
+}
+#endif
+#ifdef PIONEER_TEST_LEGACY_QGW8_FAST
+struct IncompleteContext;
+bool refuseLegacyFast(IncompleteContext& c,tt_q38_span_upload& p,PioneerQ38HybridUploadReceipt* r){
+ return PioneerQ38SpanUploadCore<IncompleteContext,true,PioneerQ38HybridUploadReceipt,true>(c,p,r);
+}
+#endif
 #endif
 #endif

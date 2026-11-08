@@ -1,0 +1,33 @@
+QGW8 upload reply mismatch and fast span adapter
+================================================
+
+The QGW8 userspace span uploader requests TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD
+and requires the returned host_exact and matched_words fields to both be
+zero. The previous QGW8-only service adapter instead instantiated the strict
+transport, which performs host echo comparison and returns host_exact=1 and
+matched_words=bytes/4. Connecting that adapter directly to the userspace
+uploader would therefore cause the uploader to reject an otherwise successful
+first strict-transport reply. Existing end-to-end session tests used a fake
+span transport which returned the expected fast reply, so they did not cover
+this mismatch.
+
+The new explicitly named QGW8 fast inspection adapter retains the same QGW8
+receipt and span authority checks, but uses the existing fast span transport.
+The prior strict adapter remains available for separate validation. The fast
+adapter's synthetic-fabric test runs the actual fast RV32 span image and
+asserts the full first-span result expected by the uploader, no CPU host-echo
+reads, correct simulated GDDR bytes, receipt/ledger updates, refusal before
+I/O for missing or misordered receipt, and quarantine on injected faults.
+The strict path and legacy hybrid receipt/adapter regressions also pass.
+
+This is an upload-path integration fix, not an inference optimization or a
+measured loading or token-speed improvement. It is not routed by an installed
+driver and has not run on the P100A. The QGW8 driver and real ioctl dispatch,
+full-model numerical qualification and physical lifecycle remain unfinished.
+No change is made to the existing failed-trial recovery guard.
+
+Offline tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_kernel_layout_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_session_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_control_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_upload_receipt_tests.py HAIKU_BUILD

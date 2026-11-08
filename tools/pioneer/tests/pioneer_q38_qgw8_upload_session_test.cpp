@@ -19,7 +19,7 @@ struct SimOwner {
  std::unique_ptr<PioneerQ38Qgw8UploadReceipt> receipt=std::make_unique<PioneerQ38Qgw8UploadReceipt>();
  PioneerQ38SpanLease lease;int context=0,cookie=0;
  unsigned calls=0,opens=0,closes=0,begins=0,seals=0,spanEnd=0,bankEnd=0;
- bool owned=false,retained=false,badBegin=false,failSpan=false,badSeal=false;uint64_t tag=0;
+ bool owned=false,retained=false,badBegin=false,failSpan=false,badSeal=false,strictReply=false;uint64_t tag=0;
  explicit SimOwner(Fixture& f):fixture(f),spans{f},proof(BankProof(bankIO)){assert(banks.Bind(proof));}
  bool OutputSafe(const void* output,size_t bytes)const{
   const uintptr_t o=reinterpret_cast<uintptr_t>(output);if(!output || !bytes || o>UINTPTR_MAX-bytes)return false;
@@ -66,6 +66,7 @@ struct SimOwner {
     ledger[index]=1;hashes[index]=hash;assert(receipt->RecordPage(index,hash));
    }
    lease.saved=lease.ready=lease.dirty=true;lease.nonce++;assert(receipt->After());
+   if(strictReply){q.result.host_exact=1;q.result.matched_words=q.bytes/4;}
   }else if(op==TT_PCI_PROBE_Q38_SPAN_END){
    assert(owned && begins==1 && !spanEnd++);lease.ready=lease.dirty=false;lease.closed=true;
    *static_cast<tt_q38_span_end*>(data)={1,0,1,0};
@@ -86,9 +87,16 @@ static std::array<uint32_t,64> RootBoot(){
  assert(H::C::BootShape(b.data()));return b;
 }
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--bad-seal") || !strcmp(argv[1],"--emit-head-fixture"))));
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--bad-seal") || !strcmp(argv[1],"--emit-head-fixture")
+  || !strcmp(argv[1],"--strict-reply"))));
  const bool emit=argc==2 && !strcmp(argv[1],"--emit-head-fixture");
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
+ if(argc==2 && !strcmp(argv[1],"--strict-reply")){
+  Fixture f;auto io=std::make_unique<SimOwner>(f);Session session(f.pages,*io);std::string error;io->strictReply=true;
+  assert(!session.Begin(*f.canonical,error) && session.FailedState() && io->owned && io->retained
+   && io->receipt->Spans()==1 && io->closes==1 && !io->spanEnd && !io->bankEnd && io->banks.Quarantined());
+  puts("PASS strict transport reply rejected by fast uploader; owner retained, no retry/END; no device");return 0;
+ }
  if(argc==1){
   Fixture f;auto io=std::make_unique<SimOwner>(f);Session session(f.pages,*io);std::string error;f.source.live=false;
   assert(!session.Begin(*f.canonical,error) && session.FailedState() && !io->opens && !io->calls && !io->closes);
