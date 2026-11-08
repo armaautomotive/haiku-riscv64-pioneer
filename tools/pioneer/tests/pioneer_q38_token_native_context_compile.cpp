@@ -6,6 +6,12 @@
 #define PIONEER_Q38_TOKEN_EMIT_CONTEXT_BODY 1
 #define PIONEER_Q38_DECODER_RUNTIME 1
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
+#define api_version pioneer_q38_token_context_body_api_version
+#define init_hardware pioneer_q38_token_context_body_init_hardware
+#define init_driver pioneer_q38_token_context_body_init_driver
+#define uninit_driver pioneer_q38_token_context_body_uninit_driver
+#define publish_devices pioneer_q38_token_context_body_publish_devices
+#define find_device pioneer_q38_token_context_body_find_device
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 extern "C" {
  extern int32 pioneer_q38_token_context_body_api_version;
@@ -15,12 +21,6 @@ extern "C" {
  const char** pioneer_q38_token_context_body_publish_devices();
  device_hooks* pioneer_q38_token_context_body_find_device(const char*);
 }
-#define api_version pioneer_q38_token_context_body_api_version
-#define init_hardware pioneer_q38_token_context_body_init_hardware
-#define init_driver pioneer_q38_token_context_body_init_driver
-#define uninit_driver pioneer_q38_token_context_body_uninit_driver
-#define publish_devices pioneer_q38_token_context_body_publish_devices
-#define find_device pioneer_q38_token_context_body_find_device
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
 
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
@@ -30,6 +30,11 @@ extern "C" status_t pioneer_token_context_hybrid_control(PioneerProbeCookie* coo
 extern "C" status_t pioneer_token_context_hybrid_span(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length){
  return Q38SpanControl(cookie,operation,data,length);
 }
+#ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
+extern "C" status_t pioneer_token_context_qgw8_control(PioneerProbeCookie* cookie,void* data,size_t length){
+ return ProbeControl(cookie,TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL,data,length);
+}
+#endif
 #endif
 extern "C" bool pioneer_token_context_scoped_bind(PioneerProbeCookie* cookie,unsigned bank){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();

@@ -1,0 +1,27 @@
+QGW8 control and complete native-context compile, offline
+========================================================
+
+The QGW8 upload-control protocol can now be selected by the existing exact
+fake-tag QGW8 native-inspection profile as well as the standalone kernel
+inspection profile. Its role guard requires the existing fake tag, renamed
+driver ABI, and all QGW8 layout/program parents; it still rejects physical
+driver, Work and CPU-reference selectors. This permits the actual full
+tenstorrent_pci_probe.cpp native context to compile with the QGW8 receipt,
+fast span routing, upload-control dispatch and native binding in one object.
+
+The Haiku RISC-V kernel compiler compiled that actual context with QGW8
+program DATA SHA-256 72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588.
+All 15 embedded program sections matched their pinned component hashes. The
+object contains the explicit QGW8 control and scoped-bind witnesses, exports
+none of the conventional driver entry names, and its tracked control/bind
+frames are at most 224 bytes. Separate native-binding, upload-control and
+legacy-control regression tests passed.
+
+This is a non-loadable fake-identity object, not a physical driver, installed
+software, a model token, a lifecycle/cleanup qualification, or a speed
+measurement. It does not bypass the existing recovery or source checks.
+
+Reproduce:
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_upload_control_tests.py --qgw8-header PINNED_HEADER HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_control_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_token_native_binding_tests.py --qgw8-inspection PINNED_HEADER --sdk HAIKU_BUILD
