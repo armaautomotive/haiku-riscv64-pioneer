@@ -1,0 +1,42 @@
+First QGW8 tag128 full-candidate physical trial, 2026-11-07
+
+RESULT: the experimental card session completed, but output failed the saved
+first-token comparison and is NOT qualified for Assistant/Work. The actual
+one-shot command used one input token 248319 and requested 32 outputs. The
+client ran without CPU-reference inference or CPU model fallback. Tensix
+matrix workers handle selected matrix operations; this is NOT evidence that
+every operation runs on matrix engines, and no correctness claim follows from
+the driver lifecycle completing.
+
+  Upload:                  21,167,624,192 bytes (complete)
+  Upload + START:          2712.384 seconds
+  Generated non-EOS tokens: 32
+  Inference timer:         893.683 seconds, includes START and prompt
+  Reported average:        0.035807 tokens/second, includes START and prompt
+  First output token:      108133
+  Saved CPU greedy token:  70253 for input 248319, position 0
+  Process exit:            0; stdout shape passed; trial stderr empty
+  Final state:             CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED
+
+The reported rate is not steady-state decode throughput, excludes model upload,
+and is not directly comparable to benchmarks with different timing or input.
+The mismatch is a serious correctness failure, not merely unverified quality;
+the numerical cause is not established. Prior CPU reference evidence is in
+qwen38-cpu-original-clean-20261028.log; Q4-to-BFP4 CPU quality checks retain
+the same greedy first token in qwen38-bfp4-selective-cpu-quality-20261106.txt.
+These comparisons do not by themselves isolate the faulty operation.
+
+Completed trial stdout SHA-256:
+e00253bd88d1c17a0b359ff5c3675700b4d9b9d05008a8b7a0ca995756eab6b8
+Completed parent stdout SHA-256:
+69e85585e0a27f8ea4647052530c7881846741560514f90222c9b9c4f8b49a96
+Both stderr files were empty (SHA-256 e3b0c442...b855). Exact transcripts
+remain on the Pioneer under /boot/home/pioneer-qgw8-full-trial-20261107-a and
+were copied to /private/tmp/pioneer-qgw8-result.ZK4SsaJy for analysis.
+
+Post-run independent read-only checks: stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+reload metadata tag 2026102100010012 generation 4, quiesced=0, cold=0,
+active_owner=0; 64 CPUs and 137034936320 bytes max RAM reported. Haiku
+app_server, input_server, Tracker, and Deskbar processes were present. This
+does not independently prove interactive desktop responsiveness.
