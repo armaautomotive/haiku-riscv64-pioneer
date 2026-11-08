@@ -10,9 +10,18 @@ has logit 11.7586288. Rank is one-based, with lower token IDs breaking ties.
 This is not a near-tie in the original distribution. It does not identify
 which operation failed or prove that the numerical path failed in one place.
 
-The same separate process is still computing the converted FFN and BFP8-head
-distributions; results are not yet available. Its private capture is
-/private/tmp/qgw8-observed-token.YhrRBPNE/result.log. This CPU diagnostic
-does not access the P100A or change Work mode and is not an inference-speed
-measurement. Existing independent converted-model evidence still identifies
-70253 as the converted top token; the observed-token rank remains pending.
+The same CPU-only process completed successfully. With converted FFN and the
+original head, token 108133 ranked 120515, with logit 0.116629422 versus
+11.5226498 for top token 70253. With both converted FFN and BFP8 head it
+ranked 120368, with logit 0.112558424 and probability 3.44155515e-07 versus
+11.5286961 for top token 70253. This rules out neither a bad card conversion
+implementation nor any particular earlier layer, but a close CPU-side
+quantization ranking change is not an adequate explanation for this output.
+
+The complete private-model diagnostic log is archived alongside this note as
+qwen38-qgw8-observed-token-rank-20261107.log, SHA-256
+4c14a3abab917cdf3615e1d5aba8bfb4b117c842452cadca6cd2ad38647266ea; it ends
+with PASS and CAPTURE_EXIT 0. The CPU-only executable SHA-256 was
+8a3efb8b089dde70535c1ef3ca47770e1d0dfa53fd27041a64b543db10f5c17a.
+This diagnostic did not access the P100A or change Work mode and is not an
+inference-speed measurement or a physical reproduction of any component.
