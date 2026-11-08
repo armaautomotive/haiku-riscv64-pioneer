@@ -1,0 +1,34 @@
+QGW8 first full-model one-shot: launch record, November 7 2026
+===============================================================
+
+After the verified raw system backup and separate stable041 restoration,
+the real QGW8 CPU-only preflight authenticated the original model, checked
+all 1113 BFP4 FFN, 231 BFP8 FFN and seven BFP8 head fragments, printed
+PASS_QGW8_PREFLIGHT, and exited 0. It did not open the P100A. The tested
+one-shot runner's read-only preflight passed with stable041 generation2,
+no owner and no cold-recovery flag. The operator then recorded the external
+preflight attestation; it is not itself proof of unchanged files. The
+candidate client independently authenticates the model and all cache
+fragments again before opening the device.
+
+The detached one-shot runner was started once from the pinned Haiku SSH
+host. The stage is /boot/home/pioneer-qgw8-full-trial-20261107-a. The runner
+marked the stage spent, checked device flush, loaded candidate tag
+2026110700010128 as generation3, and reported CPU-only reload metadata with
+cold0 and owner0. Its parent team was 1087 and client team was 1196 when
+observed. The client output at that point was only
+"HYBRID_FULL_CANDIDATE preflight; unqualified, no device open yet". The
+client was running its own CPU-only verification; this is not proof that the
+model has been uploaded or that accelerator execution has started.
+
+Candidate driver SHA-256:
+676d929e4ae0044d91e5f0b0adfe014374359a0130b12ea34d54c71f6b63e95b
+Candidate client SHA-256:
+d5ceac52133805dc744611bb089dc77d66ebd028fa095a032b28c7627bcde874
+Runner SHA-256:
+cd4825929cba52ebe23b8405ba281dfbd1d0603d276a19526f3d32044679a9ba
+
+Do not start another trial while this process is active. If it fails or its
+state is uncertain, preserve its output and do not retry/reset/auto-restore.
+The system backup and earlier trial evidence remain separate. At this
+writing there is no token, numerical quality result or new speed result.
