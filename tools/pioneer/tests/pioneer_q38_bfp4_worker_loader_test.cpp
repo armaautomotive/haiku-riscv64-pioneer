@@ -24,11 +24,17 @@ static W::Job Make(unsigned worker,unsigned width,unsigned bands=2){
 struct IO {
  W::Job job;unsigned band,events=0,issues=0,completions=0,headers=0,scalar=0,fault=0,drop=99;
  std::array<uint32_t,10> command;std::array<uint32_t,16> counters;std::vector<W::Read> pending;
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+ std::array<uint32_t,12> incoming;
+#endif
  std::vector<uint8_t> ownedL1,weights,root;std::vector<uint8_t>& l1;bool autoBand=false;
  IO(const W::Job& j,unsigned b,std::vector<uint8_t>* shared=nullptr):job(j),band(b),ownedL1(shared?0:0x180000,0xa7),
   weights(size_t(j.words[4])*L::Tiles(j.words[2])*L::WeightPayload),root(j.words[2]*2),l1(shared?*shared:ownedL1){
   assert(l1.size()==0x180000);
   command.fill(0xcccccccc);counters.fill(UINT32_MAX-17);
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+  incoming.fill(UINT32_MAX-17);
+#endif
   for(size_t i=0;i<weights.size();i++)weights[i]=uint8_t((i*17+i/L::WeightPayload*13)^0x8b);
   for(size_t i=0;i<root.size();i++)root[i]=uint8_t((i*19+i/64*7)^0x31);
  }
@@ -55,6 +61,12 @@ struct IO {
  }
  unsigned Read(unsigned a){
   events++;
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+  for(unsigned n=0;n<2;n++)for(unsigned i=0;i<6;i++){
+   const unsigned offsets[]={0x2d8,0x2dc,0x2e0,0x2e4,0x2f0,0x2f4};
+   if(a==0xffb20000+n*0x10000+offsets[i])return incoming[n*6+i];
+  }
+#endif
   if(Header(a) || InputScratch(a)){return l1[a]|unsigned(l1[a+1])<<8|unsigned(l1[a+2])<<16|unsigned(l1[a+3])<<24;}
   const unsigned xy=job.words[7],x=xy&63,y=xy>>6,xi=x<6?0:x<12?1:2,yi=y<6?0:1;
   const unsigned xs=(x<6?x:x<12?x-6:x-12)*5,ys=(y<6?y:y-6)*5;

@@ -14,6 +14,9 @@ struct WorkerImage:Machine {
  bool awaiting=false,stackSeen=false,damageFrame=false;
 #ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
  bool damageInput=false,inputDamaged=false,inputPreserved=false,dropAfterFirstBand=false,faultAfterFirstBand=false;
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+ unsigned incomingMutation=12;
+#endif
 #endif
  WorkerImage(const char* folder,unsigned worker,unsigned width,unsigned bands=2,bool distinct=false)
   :native(width,4,L::Weight,L::Input,L::WeightStride,L::InputStride,L::Header,L::Output,bands),transfer(Make(worker,width,bands),0,&native.l1){
@@ -75,6 +78,11 @@ struct WorkerImage:Machine {
    inputPreserved=true;
   }
   if(stores==32 && damageInput && !inputDamaged){transfer.l1[L::Input+1]^=1;inputDamaged=true;}
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+  if(stores==32 && incomingMutation<12 && !inputDamaged){
+   transfer.l1[L::Input+1]^=1;transfer.incoming[incomingMutation]++;inputDamaged=true;
+  }
+#endif
   if(stores==32 && dropAfterFirstBand){dropAckAt=acks+1;dropAfterFirstBand=false;}
   if(stores==32 && faultAfterFirstBand){transfer.fault=5;faultAfterFirstBand=false;}
 #endif
@@ -87,7 +95,11 @@ struct WorkerImage:Machine {
    assert(native.Clean() && Loaded());unsigned row=(a-0xffbd8000)/64,col=(a%64)/4;
    assert(native.valid[row] && (row==32 || row==40));native.outputReads++;return Bits(native.destination[row][col]);
   }
-  if(transfer.Header(a)||Range(a,0xffb20000,0x2000))return transfer.Read(a);
+  if(transfer.Header(a)||Range(a,0xffb20000,0x2000)
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+   || Range(a,0xffb30000,0x2000)
+#endif
+  )return transfer.Read(a);
   assert(CodeAddress(a)||Range(a,0x6e000,8192)||Range(a,0x74000,64)||Range(a,0x17ffc0,12)||Range(a,W::Output,8*32*4));
   return l1[Index(a)];
  }
@@ -131,6 +143,13 @@ int main(int argc,char** argv){
   for(unsigned row=0;row<32;row++)changed|=image.l1[image.Index(W::Output+(32+row)*4)]!=expected[row];
   assert(changed);puts("PASS negative control: changed retained BFP8 input changed output without a fault; NO PRODUCTION AUTHORITY");
  }
+#ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
+ for(unsigned counter=0;counter<12;counter++){
+  WorkerImage image(argv[1],63,5120);image.incomingMutation=counter;
+  assert(!image.Execute() && image.inputDamaged && image.stores==32);
+ }
+ puts("PASS incoming counter diagnostic detected the 12 simulated NoC-counter changes; NOT an ownership proof");
+#endif
 #endif
  for(unsigned word=0;word<W::Words;word++){
   WorkerImage image(argv[1],1,5120);image.l1[image.Index(0x74000+word*4)]=UINT32_MAX;

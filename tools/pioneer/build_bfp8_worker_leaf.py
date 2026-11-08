@@ -8,7 +8,9 @@ import subprocess
 
 assert __debug__ and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('haiku_build',type=Path);p.add_argument('output',type=Path)
-p.add_argument('--reuse-input',action='store_true',help='isolated, unqualified retained-input leaf');a=p.parse_args()
+p.add_argument('--reuse-input',action='store_true',help='isolated, unqualified retained-input leaf')
+p.add_argument('--watch-incoming',action='store_true',help='add unqualified on-card incoming-write diagnostic');a=p.parse_args()
+assert not a.watch_incoming or a.reuse_input
 assert a.haiku_build.is_absolute() and a.haiku_build.is_dir()
 assert a.output.is_absolute() and not a.output.exists() and not a.output.is_symlink()
 a.output.mkdir(mode=0o700);here=Path(__file__).resolve().parent
@@ -19,6 +21,7 @@ commands=[
   '-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
   '-msmall-data-limit=0','-mno-relax','-march=rv32i_zicsr','-mabi=ilp32','-fstack-usage',
   *(['-DPIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT=1'] if a.reuse_input else []),
+  *(['-DPIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT=1'] if a.watch_incoming else []),
   '-c',str(here/'blackhole_q38_bfp8_worker_leaf.cpp'),'-o',str(a.output/'program.o')],
  [tool+'as','-march=rv32i','-mabi=ilp32','-mno-relax',str(here/'blackhole_q38_bfp8_worker_start.S'),'-o',str(a.output/'start.o')],
  [tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(here/'blackhole_q38_native_dram_band.ld'),
@@ -33,4 +36,5 @@ for cmd,name in (([tool+'nm','-n',str(a.output/'program.elf')],'program.symbols'
 for name in ('boot.bin','text.bin'):
  data=(a.output/name).read_bytes();assert len(data)==4 if name=='boot.bin' else 0<len(data)<=8192 and len(data)%4==0
  print(hashlib.sha256(data).hexdigest(),len(data),name)
-print('BUILD ONLY BFP8 worker leaf'+(' with UNQUALIFIED input reuse' if a.reuse_input else '')+'; NO installation, device, Work, model quality or speed proof')
+print('BUILD ONLY BFP8 worker leaf'+(' with UNQUALIFIED input reuse' if a.reuse_input else '')
+ +(' and incoming-write diagnostic' if a.watch_incoming else '')+'; NO installation, device, Work, model quality or speed proof')

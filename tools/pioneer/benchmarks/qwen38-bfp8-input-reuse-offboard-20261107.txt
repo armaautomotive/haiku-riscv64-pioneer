@@ -38,3 +38,37 @@ Reproduce the offline experiment and unchanged regression with the Haiku
 cross-build and the existing private sample directory:
   python3 tools/pioneer/tests/run_pioneer_q38_bfp8_worker_tests.py --reuse-input HAIKU_BUILD PRIVATE_SAMPLES
   python3 tools/pioneer/tests/run_pioneer_q38_bfp8_worker_tests.py HAIKU_BUILD PRIVATE_SAMPLES
+
+Incoming-write counter diagnostic: OFFBOARD ONLY
+------------------------------------------------
+An additional explicit --watch-incoming experiment snapshots atomic-received,
+write-data-received, and write-started counters on both NoC interfaces after
+the first band's load, then checks them around subsequent compute and output.
+This is on-card diagnostic work, not a CPU model comparison. The normal and
+unmonitored experimental images remain unchanged. Its separate linked text is
+7864 of the existing 8192 bytes, SHA-256
+c0f93d08db98084edd0c560558687278ad3d19a53aeaa5a39e8a8be8644c69b4.
+The first larger implementation failed the unchanged 8192-byte link limit;
+the passing build reduces code size without widening that limit.
+
+In the isolated simulated environment, all 12 individually changed watched
+counters caused failure after the first band and before any second-band
+output, while normal synthetic and three prior real-weight samples passed.
+The negative control that mutates local input without a counter event still
+changes the second band's answer without a fault. A K5120/peer63 two-band
+simulation used 162668 RV32 steps with the watch versus 161243 without it;
+these are NOT hardware timings. No real card or model token ran.
+
+This watch is neither a memory protection mechanism nor proof of exclusivity.
+It does not cover local stores, all unsolicited read responses, prior
+in-flight traffic, counter wrap, or every race between sampling and use; it
+also observes whole-NIU activity rather than a particular address, so benign
+traffic can cause a refusal. It begins after the first load and cannot prove
+that input was unmodified before the snapshot. The model follows the published
+[Blackhole NoC counter descriptions](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md)
+and [NIU memory map](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md),
+but the simulator's injected events are NOT physical counter validation.
+Keep the experiment out of hybrid, driver, and Work images; a stronger actual
+ownership/lifetime argument and safe hardware qualification remain necessary.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_bfp8_worker_tests.py --reuse-input --watch-incoming HAIKU_BUILD PRIVATE_SAMPLES
