@@ -1,0 +1,25 @@
+QGW8 BFP8 FFN cache: real local preparation
+============================================
+
+On November 7 the repaired, explicitly filtered frozen BFP8 writer was run
+on the Mac against the local Qwen3.8-27B Q4_K_M GGUF. It authenticated the
+same open model against the pinned full SHA-256 c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+before conversion. The macOS writer binary was SHA-256
+ed3f6f37383e3b192dad64a7aa9c45066181de731e377fd2fd4e8e91c9b59d53;
+its source fingerprint was 7db613bfdde463be7f933f25123a00dbe39928cbd8a070aa2481c6cb936753d0.
+
+The process exited 0 with PASS_HYBRID_BFP8_PREPARATION, creating exactly
+33 layer-50-through-60 FFN tensor entries, 3125084160 payload bytes, and
+47685 conversion chunks, with zero previous hits. Its cache implementation
+reopens and verifies each entry's entire chunk table and payload before
+reporting success. The separate local cache is
+generated.pioneer/qgw8-bfp8-cache-frozen-20261107; it is git-ignored,
+mode 0700, contains 33 cache entries and no leftover staging names, and
+occupies about 2.9 GiB. It is not an archival backup.
+
+One 94699520-byte tensor payload's full 94746016-byte cache file matched an
+existing Haiku-generated cache file by SHA-256. That is a useful cross-build
+sample, not numerical or quality qualification for all 33 entries. Existing
+Haiku files and the installed driver were not modified. The other QGW8 BFP4
+and head-BFP8 caches, complete native owner and safe physical qualification
+are still required; this preparation did not run a model or measure speed.
