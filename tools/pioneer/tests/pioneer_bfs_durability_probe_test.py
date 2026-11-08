@@ -16,6 +16,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfs-probe-test-',dir='/private/
         assert (result.returncode==0)==ok,(args,result.stdout,result.stderr)
         return result
     assert not list(storage.iterdir())
+    run('--flush-only','/dev/wrong',ok=False);assert not list(storage.iterdir())
+    result=run('--flush-only','/dev/pioneer-test');assert 'PASS_CHECKED_DEVICE_FLUSH' in result.stdout
+    assert not list(storage.iterdir())
+    run('--flush-only','/dev/pioneer-test',ok=False,extra={'PIONEER_BFS_PROBE_TEST_FAIL':'flush'})
+    assert not list(storage.iterdir())
     run('--create','/dev/wrong',ok=False);assert not list(storage.iterdir())
     made=run('--create','/dev/pioneer-test')
     stage=Path(next(line[6:] for line in made.stdout.splitlines() if line.startswith('STAGE ')))

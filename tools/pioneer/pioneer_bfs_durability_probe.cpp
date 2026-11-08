@@ -134,5 +134,9 @@ int main(int argc,char** argv){
   if(!Volume(argv[3],device) || !Verify(argv[2],device)){fprintf(stderr,"STOP probe verification failed; do not infer device safety\n");return 1;}
   puts("PASS_VERIFY all probe bytes match; this does not verify other files or device health");return 0;
  }
- fprintf(stderr,"usage: %s --create EXPECTED_BOOT_DEVICE | --verify STAGE EXPECTED_BOOT_DEVICE\n",argv[0]);return 2;
+ if(argc==3 && strcmp(argv[1],"--flush-only")==0){
+  if(!Volume(argv[2],device) || !CheckedFlush(argv[2])){fprintf(stderr,"STOP checked boot-device flush failed or unverified\n");return 1;}
+  puts("PASS_CHECKED_DEVICE_FLUSH sync errors are not observable; no power-loss or file-durability guarantee");return 0;
+ }
+ fprintf(stderr,"usage: %s --create EXPECTED_BOOT_DEVICE | --verify STAGE EXPECTED_BOOT_DEVICE | --flush-only EXPECTED_BOOT_DEVICE\n",argv[0]);return 2;
 }
