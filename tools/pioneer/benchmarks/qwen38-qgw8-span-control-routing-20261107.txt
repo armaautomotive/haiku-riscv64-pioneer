@@ -1,0 +1,34 @@
+QGW8 span-control routing, offline only
+=====================================
+
+The existing Q38SpanControl rejected a QGW8 receipt and always selected the
+legacy hybrid upload service. The distinct QGW8 inspection role now routes
+the existing fast span operation to the QGW8 fast adapter, and the strict
+operation to the separate QGW8 validation adapter. Exactly one of the legacy
+and QGW8 receipts must be present. A failed reply copy after either a span or
+SPAN_END invalidates the matching receipt and retains/quarantines the owner.
+This role also owns its QGW8 receipt in the driver context and destroys it
+before its borrowed span on known-clean destruction.
+
+The real Q38SpanControl body was compiled into the OS/device simulator. The
+test exercises a QGW8 receipt BEGIN followed by the actual handler, actual
+fast RV32 span code, and span END; the fast reply has no host echo comparison.
+It separately exercises strict echo validation, refuses simultaneous legacy
+and QGW8 receipts before device I/O, and injects reply-copy failures for the
+fast upload and END. Existing legacy handler/control regression tests pass.
+The QGW7 tag127 driver was built both from a clean archive of the current
+commit and from that archive with only these span-control changes. Both
+outputs have SHA-256 6a8da89773288f5f9f726863a4a574f0f61db0b9bbd645b25e395e2b3393802f.
+That differs from the 9a2da2a5... binary recorded for the earlier source
+snapshot; this check shows equality for the two current-source builds only,
+not equivalence to that earlier binary or qualification for installation.
+
+These are simulated devices and a non-loadable inspection role. The QGW8
+receipt BEGIN/SEAL handler still has no real ioctl dispatch, and the QGW8
+native owner and user execution lifecycle are not yet a physical driver.
+No model token, real P100A upload, generation rate or speedup was measured.
+The current candidate125 recovery guard is unchanged.
+
+Tests:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_upload_control_tests.py HAIKU_BUILD
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_upload_control_tests.py HAIKU_BUILD

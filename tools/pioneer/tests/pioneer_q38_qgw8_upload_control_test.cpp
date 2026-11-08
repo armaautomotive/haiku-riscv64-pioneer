@@ -54,13 +54,52 @@ int main(int argc,char** argv){
   packet=Q::Packet{};packet.operation=Q::Begin;
   assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
-  c.q38Span=new PioneerQ38SpanLease;auto request=Request(length,bank,offset);
-  assert(PioneerQ38Qgw8SpanUploadInspection(c,*request,c.q38Qgw8Receipt)
-   && request->result.state==TT_RUNTIME_PASSED && c.q38Qgw8Receipt->Spans()==1);
+  auto request=Request(length,bank,offset);const unsigned touches=c.io.touches;
+  c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_NOT_ALLOWED
+   && !c.q38Span && c.io.touches==touches);
+  delete c.q38HybridReceipt;c.q38HybridReceipt=nullptr;
+  const unsigned loads=c.io.wideLoads;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
+   && request->result.state==TT_RUNTIME_PASSED && !request->result.host_exact && !request->result.matched_words
+   && c.io.wideLoads==loads && c.q38Qgw8Receipt->Spans()==1);
   packet=Q::Packet{};packet.operation=Q::Seal;
   assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.Unsafe());
-  assert(PioneerQ38SpanEndService(c));
+  tt_q38_span_end end={1,0,0,0};
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed && !end.recovery_required);
   assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_NOT_ALLOWED && !c.Unsafe());
+  Unbind();
+ }
+ {
+  NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
+  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
+  auto request=Request(length,bank,offset);const unsigned loads=c.io.wideLoads;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_UPLOAD,request.get(),sizeof(*request))==B_OK
+   && request->result.state==TT_RUNTIME_PASSED && request->result.host_exact==1
+   && request->result.matched_words==length/4 && c.io.wideLoads>loads);
+  tt_q38_span_end end={1,0,0,0};
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed);
+  Unbind();
+ }
+ {
+  NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
+  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
+  auto request=Request(length,bank,offset);copyCalls=0;failCopy=2;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==-99
+   && c.banks.Quarantined() && c.q38Span->unsafe && c.dispatchOwnerRetained && sColdRecoveryRequired);
+  Unbind();
+ }
+ {
+  NativeSpanContext c(argv[1]);Bind(cookie,c);Q::Packet packet;packet.operation=Q::Begin;
+  assert(Q38Qgw8UploadControlInspection(&cookie,&packet,sizeof(packet))==B_OK);
+  unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38Qgw8Receipt->Next(bank,offset,length));
+  auto request=Request(length,bank,offset);
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
+  tt_q38_span_end end={1,0,0,0};copyCalls=0;failCopy=2;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==-99
+   && c.banks.Quarantined() && c.q38Span->unsafe && c.dispatchOwnerRetained && sColdRecoveryRequired);
   Unbind();
  }
  {
