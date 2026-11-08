@@ -1,0 +1,44 @@
+QGW8 physical trial: state-commit scan cost candidate, 2026-11-07
+
+This is a code-path and fixture analysis of the ACTUAL successful tag128 trial,
+not a measured device profile, a demonstrated speedup, or a diagnosis of its
+incorrect output. The candidate must not be deployed until numerical failure
+is resolved and any optimization is independently qualified on hardware.
+
+The preserved QGW8 ROOT build /private/tmp/pioneer-qgw8-head-root-20261107-c
+has text, BF16, auxiliary, and terminal section hashes equal to RootText,
+RootBf16, RootAux, and RootTerminal in the actual pinned driver program header
+(header SHA-256 8ddeb0cfa01857557be9416fa61c8029040570cf67bd412e6dd1f59fdc32eecb).
+Its ELF SHA-256 is 8b7bac64e64d963e729e347a209c3ca4be951992aa924ead0c48d97e0e79478f.
+Disassembly of that linked ROOT shows StateSeal directly calling InputSeal,
+and calling FeedbackSeal when feedback is requested; FeedbackSeal itself
+calls InputSeal. These are card-side checks, NOT CPU model validation.
+
+The unchanged CommitState source visits 48 recurrent layers, each with seven
+history spans. Each span is 16896 or 17664 bytes and requires two 16 KiB-or-
+smaller copy chunks. The existing actual-fragment test, run with synthetic
+memory and MOCK transport, reports 1393 InputSeal calls in the final-token
+case and 2786 InputSeal plus 1393 FeedbackSeal calls in the feedback case.
+For the physical trial's 32 non-EOS outputs with one input, the source path
+implies 31 feedback commits and one terminal commit: 87759 InputSeal calls
+and 43183 FeedbackSeal calls inside CommitState alone. Each successful
+InputSeal scans 12832 pairs of words; the derived count is 1126123488 pair
+comparisons, plus 221096960 feedback word-pair comparisons. These figures
+are derived from source/control flow and fixture counts, not instrumented
+physical counters or cycles. They exclude other scans and operations. Exact
+device time and the fraction of runtime attributable to them are UNKNOWN.
+
+An earlier isolated commit-boundary alternative brackets those numeric scans
+around the entire copy transaction, while retaining packet, state-descriptor,
+counter and readback checks. The existing mock test reports 2/4 InputSeal
+calls instead of 1393/2786, and 2 FeedbackSeal calls instead of 1393. That
+alternative changes corruption-detection timing and has NOT been integrated
+with QGW8, qualified on this hardware, or shown to preserve QGW8 correctness.
+See qwen38-commit-boundary-seals-20261101.txt for its exact scope and limits.
+
+The current fragment test initially failed to extract StateSeal because its
+section annotation now has a profiling #if. Its runner was fixed to extract
+the unique common function signature, then passed all four synthetic valid
+cases and 160 injected faults. No P100A action or production firmware change
+was made. Reproduce the fixture with:
+ python3 tools/pioneer/tests/run_pioneer_q38_commit_boundary_tests.py

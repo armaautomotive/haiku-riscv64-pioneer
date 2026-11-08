@@ -13,9 +13,13 @@ token = (here.parent / 'blackhole_qwen38_token_head_control.inc').read_text()
 fragments = {
     'INPUT': head[head.index('static void InputSeal(){'):head.index('static void Normalize(')],
     'FEEDBACK': feedback[feedback.index('static void FeedbackSeal('):feedback.index('static __attribute__((noinline)) void Feedback(')],
-    'STATE': token[token.index('static __attribute__((noinline,section(".conv.token"))) void StateSeal('):
+    # The production function's section attribute is selected by a preceding
+    # profiling #if. Start at the shared signature so both variants retain
+    # the same function body without including half of that conditional.
+    'STATE': token[token.index('void StateSeal('):
                    token.index('#ifdef PIONEER_Q38_TOKEN_FRONTIER_IMAGE')],
 }
+assert token.count('void StateSeal(') == 1
 assert 'StateSeal(h,data,layer,feedback);' in fragments['STATE']
 assert 'p->state[Slot]^=1;p->state[Committed]++;p->phase=6;HeadSeal(h);' in fragments['STATE']
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-commit-boundary-mock-', dir='/private/tmp') as temporary:
