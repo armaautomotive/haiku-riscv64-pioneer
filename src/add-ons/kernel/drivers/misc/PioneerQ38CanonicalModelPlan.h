@@ -15,6 +15,14 @@
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
 #define PIONEER_Q38_QGW8_CANONICAL_PRESENT 1
 #endif
+#if defined(PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION) && (PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Dense Q8 canonical layout is isolated inspection only
+#endif
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) && (PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC != 1 \
  || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY)) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -40,7 +48,11 @@ class PioneerQ38CanonicalModelPlan {
  uint64_t used[7]={};
  unsigned count=0,recurrentCount=0,tensors=0;
  bool attempted=false,ready=false;
- enum LayoutKind {UnbuiltLayout,OriginalLayout,HybridLayout,Qgw8Layout};
+ enum LayoutKind {UnbuiltLayout,OriginalLayout,HybridLayout,Qgw8Layout
+#ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
+  ,DenseQ8Layout
+#endif
+ };
  LayoutKind layout=UnbuiltLayout;
  static bool Tensor(unsigned layer,unsigned role,Shape& s) {
   static constexpr Shape common[]={{5120,1,0},{5120,1,0},{5120,17408,12},{5120,17408,12},{17408,5120,12}};
@@ -207,6 +219,62 @@ private:
   layout=HybridLayout;ready=true;return true;
  }
 public:
+#ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
+ // Distinct physical byte geometry for QGWD inspection. Logical type and
+ // rowBytes retain the original tensor shape; they do NOT grant scalar Q8
+ // access to the converted BFP8 stripes. Reserved tail holes are not
+ // initialized pages. No source, device or launch authority is implied.
+ template<class Layout> bool BuildDenseQ8Inspection(const Layout& proposal){
+  if(!proposal.Ready() || !Build())return false;
+  ready=false;layout=UnbuiltLayout;
+  if(proposal.Count()!=count)return false;
+  uint64_t next[7]={};unsigned region=0,four=0,eight=0,head=0,dense=0,rows[16][3]={};
+  for(unsigned i=0;i<count;i++){
+   auto& p=parts[i];const auto* q=proposal.At(i);
+   if(!q || q->original!=i || p.bank>=7 || q->bank!=p.bank || q->offset!=next[p.bank]
+    || !q->bytes || q->bytes>q->allocated || (q->offset&4095) || (q->allocated&4095)
+    || q->allocated-q->bytes>=4096 || next[p.bank]>Capacity)return false;
+   uint32_t expected=Layout::Original;uint64_t bytes=p.bytes,reservation=p.allocated;
+   if(p.kind==WeightKind && p.layer<64 && p.role>=2 && p.role<=4){
+    const uint64_t width=p.role==4?17408:5120;
+    if(p.type!=12 || !p.rows || ((p.firstRow|p.rows)&31) || p.rowBytes!=width*9/16
+     || uint64_t(p.rows)*p.rowBytes!=p.bytes)return false;
+    if(p.layer>=50 && p.layer<=60){expected=Layout::Bfp8;bytes=uint64_t(p.rows)*width*17/16;eight++;}
+    else{expected=Layout::Bfp4;four++;}
+    reservation=(bytes+4095)&~UINT64_C(4095);
+   }else if(p.kind==WeightKind && p.layer==64 && p.role==1){
+    if(p.type!=14 || !p.rows || ((p.firstRow|p.rows)&63) || p.rowBytes!=4240
+     || uint64_t(p.rows)*p.rowBytes!=p.bytes)return false;
+    expected=Layout::HeadBfp8;bytes=uint64_t(p.rows)*5440;reservation=(bytes+4095)&~UINT64_C(4095);head++;
+   }else if(p.kind==WeightKind && p.layer<64 && p.layer%4==3 && p.role>=5 && p.role<=7){
+    const unsigned l=p.layer/4,r=p.role-5,limit=r?1024:12288;
+    if(p.type!=8 || !p.rows || ((p.firstRow|p.rows)&31) || p.firstRow!=rows[l][r]
+     || p.rows>limit-p.firstRow || p.rowBytes!=5760 || uint64_t(p.rows)*5760!=p.bytes)return false;
+    expected=Layout::DenseQ8Bfp8;bytes=uint64_t(p.rows)*5440;rows[l][r]+=p.rows;dense++;
+    // Keep the entire original allocation reserved, including the hole.
+    reservation=p.allocated;
+   }
+   if(q->encoding!=expected || bytes!=q->bytes || ((bytes+4095)&~UINT64_C(4095))!=q->allocated
+    || reservation<q->allocated || reservation>Capacity-next[p.bank])return false;
+   if(p.kind==RecurrentKind){
+    if(region>=recurrentCount)return false;auto& r=recurrent[region++];
+    if(r.layer!=p.layer || r.slot!=p.role || r.firstHead!=p.firstRow || r.heads!=p.rows
+     || r.bank!=p.bank || r.offset!=p.offset)return false;
+    r.offset=q->offset;
+   }
+   p.offset=q->offset;p.bytes=q->bytes;p.allocated=q->allocated;next[p.bank]+=reservation;
+  }
+  if(four!=1113 || eight!=231 || head!=7 || dense!=336 || region!=672)return false;
+  for(unsigned l=0;l<16;l++)if(rows[l][0]!=12288 || rows[l][1]!=1024 || rows[l][2]!=1024)return false;
+  for(unsigned b=0;b<7;b++){
+   if(workspace[b]>=count || parts[workspace[b]].kind!=WorkspaceKind || parts[workspace[b]].bank!=b
+    || next[b]!=proposal.Used(b))return false;
+   used[b]=next[b];
+  }
+  layout=DenseQ8Layout;ready=true;return true;
+ }
+ bool DenseQ8InspectionLayout()const{return ready && layout==DenseQ8Layout;}
+#endif
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
  bool BuildHybridDiagnostic() { return BuildHybridLayout(); }
 #endif

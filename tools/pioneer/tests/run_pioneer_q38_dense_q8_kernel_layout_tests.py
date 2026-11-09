@@ -29,6 +29,7 @@ with tempfile.TemporaryDirectory(prefix='q38-q8-fixed-',dir='/private/tmp') as t
                  'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
         result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(source)],capture_output=True)
         assert result.returncode and b'Dense Q8 fixed layout is isolated inspection only' in result.stderr,role
+        assert b'Dense Q8 canonical layout is isolated inspection only' in result.stderr,role
         result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(here/'pioneer_q38_dense_q8_ledger_test.cpp')],capture_output=True)
         assert result.returncode and b'Dense Q8 ledger is isolated inspection only' in result.stderr,role
         result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(here/'pioneer_q38_dense_q8_upload_receipt_test.cpp')],capture_output=True)
