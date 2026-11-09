@@ -5,6 +5,10 @@
 #define PIONEER_Q38_QGW8_SPAN_INSPECTION 1
 #define PIONEER_Q38_HYBRID_TRACKED_SPAN_FIXTURE_ONLY
 #include "pioneer_q38_hybrid_tracked_span_test.cpp"
+#if defined(PIONEER_TEST_QGW8_REUSE) && (!defined(PIONEER_TEST_QGW8_FAST) \
+ || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_SPAN_REUSE_CODE))
+#error QGW8 reuse test requires the actual fast transport and code-reuse selection
+#endif
 
 static bool UploadQgw8(TrackedContext& c,tt_q38_span_upload& request,PioneerQ38Qgw8UploadReceipt* receipt){
 #ifdef PIONEER_TEST_QGW8_FAST
@@ -56,5 +60,33 @@ int main(int argc,char** argv){
   assert(!UploadQgw8(c,*request,receipt.get()) && c.io.touches==touches);
   c.fixture.Unsafe();
  }
+#ifdef PIONEER_TEST_QGW8_REUSE
+ {
+  TrackedContext c(argv[1]);int cookie=0;auto receipt=std::make_unique<PioneerQ38Qgw8UploadReceipt>();
+  assert(receipt->Begin(&c,&cookie,c.hashes,c.initialized,17,1,c.banks,c.fixture.owner.dram,PioneerResidentBanks::Pages));
+  auto request=std::make_unique<tt_q38_span_upload>();
+  for(unsigned job=0;job<2;job++){
+   unsigned bank=0,length=0;uint64_t offset=0;assert(receipt->Next(bank,offset,length));
+   *request={};request->version=1;request->bank=bank;request->offset=offset;request->bytes=length;
+   for(unsigned i=0;i<length/4;i++)request->data[i]=0x7fc00000U+i*0x9e3779b9U+job;
+   const unsigned before=c.io.codeLoads;
+   assert(UploadQgw8(c,*request,receipt.get()) && receipt->Spans()==job+1);
+   if(job==1)assert(c.io.codeLoads==before); // Work path reuses the initial code proof
+  }
+  assert(PioneerQ38SpanEndService(c) && c.q38Span->closed && !receipt->Seal(*c.q38Span));
+  c.fixture.Finish();
+ }
+ {
+  TrackedContext c(argv[1]);int cookie=0;auto receipt=std::make_unique<PioneerQ38Qgw8UploadReceipt>();
+  assert(receipt->Begin(&c,&cookie,c.hashes,c.initialized,17,1,c.banks,c.fixture.owner.dram,PioneerResidentBanks::Pages));
+  unsigned bank=0,length=0;uint64_t offset=0;assert(receipt->Next(bank,offset,length));
+  auto request=std::make_unique<tt_q38_span_upload>();request->version=1;request->bank=bank;request->offset=offset;request->bytes=length;
+  assert(UploadQgw8(c,*request,receipt.get()));
+  c.io.view[(0x72000-TT_Q38_SPAN_VIEW_BASE)/4]^=1; // synthetic out-of-contract code mutation
+  assert(!PioneerQ38SpanEndService(c) && !receipt->Sealed());
+  c.fixture.Unsafe(); // no further IO, restore or release after uncertain END
+ }
+ puts("PASS QGW8 fast reuse two spans, zero repeated code reads, END tamper quarantine; SIMULATED ONLY");
+#endif
  puts("PASS actual span service and QGW8 receipt: emitted RV32 simulated, ledger recorded, wrong order refused, fault quarantined; NO CARD");
 }

@@ -129,3 +129,15 @@ after clean trace closure. The actual generated parent passed the prior
 synthetic refusal/fault suite. The device must still pass live admission;
 uncertain actions are never retried or automatically restored. These tests
 do not assert safe operation under power loss or prove numerical output.
+
+Separate loading investigation (not enabled in the current diagnostic): the
+existing opt-in fast loader code-proof reuse was combined with the actual
+QGW8 tracked-span service in an RV32/NoC simulation. Two successive real
+simulated spans recorded their QGW8 receipts, and the second span performed
+zero repeated loader-code reads. A synthetic code mutation before END caused
+END to fail and quarantine resources, with no follow-on IO or release.
+This is a small synthetic test, not full-model or physical qualification,
+and delaying code-corruption detection until END is an explicit safety
+tradeoff. It provides no inference-speed or model-loading-speed result.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_span_reuse_tests.py SDK
