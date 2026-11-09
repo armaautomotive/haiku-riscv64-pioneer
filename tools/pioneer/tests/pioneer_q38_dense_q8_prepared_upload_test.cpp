@@ -5,11 +5,21 @@
 #define PIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC 1
 #define PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC 1
 #define PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION 1
+#define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION 1
+#define PIONEER_Q38_GDN_MUTABLE_STATE
+#define PIONEER_BANKS_MOCK_ONLY
 #define B_DEVICE_OP_CODES_END 1000
+#include "pioneer_resident_banks_test.cpp"
 #include "pioneer_q38_dense_q8_prepared_pages_test.cpp"
 #include "../PioneerQ38HybridSpanUpload.h"
+#include "../PioneerQ38DenseQ8UploadReceiptInspection.h"
 struct FakeDenseIO {
  const PioneerQ38CanonicalModelPlan& canonical;DensePages& pages;
+ PioneerQ38DenseQ8UploadReceiptInspection& receipt;PioneerQ38SpanLease& span;const void* context;
+ std::vector<uint8_t>& ledger;std::vector<uint32_t>& hashes;
  unsigned calls=0,fragment=0,page=0,converted=0;uint64_t bytes=0;
  bool Call(int fd,unsigned op,void* data,size_t size){
   assert(fd==42 && op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD && size==sizeof(tt_q38_span_upload));
@@ -24,6 +34,13 @@ struct FakeDenseIO {
    converted+=n;if(page+n==p->allocated/4096 && (p->bytes&4095))
     assert(reinterpret_cast<const uint8_t*>(q.data)[q.bytes-1]==0);
   }
+  assert(receipt.Before(context,hashes.data(),ledger.data(),&span,q.bank,q.offset,q.bytes));
+  const unsigned first=unsigned(uint64_t(q.bank)*(PioneerResidentBanks::Capacity/4096)+q.offset/4096);
+  for(unsigned i=0;i<n;i++){
+   const unsigned index=first+i;const uint32_t value=index*2654435761U+reinterpret_cast<const uint8_t*>(q.data)[i*4096];
+   ledger[index]=1;hashes[index]=value;assert(receipt.RecordPage(index,value));
+  }
+  span.saved=span.ready=span.dirty=true;span.nonce=calls+1;assert(receipt.After());
   calls++;bytes+=q.bytes;page+=n;if(page==p->allocated/4096){fragment++;page=0;}
   q.result={1,TT_RUNTIME_PASSED,q.bytes,n,calls,1,1,1,0,0,0,0};return true;
  }
@@ -45,8 +62,15 @@ int main(){
  FakeBfp8 eight{&source};eight.digest=digest;std::string error;HeadPages parent;
  assert(parent.Bind(source,packed,*canonical,eight,digest,four,head,"/private/tmp/four","/private/tmp/head",[]{return true;},error));
  assert(parent.VerifyAll(error));DensePages pages;assert(pages.Bind(source,packed,*canonical,eight,parent,digest,error) && pages.VerifyAll(error));
- FakeDenseIO io{*canonical,pages};PioneerQ38HybridSpanUpload<DensePages,FakeDenseIO,PioneerQ38DenseQ8UploadPlan> upload;
+ BanksMock mock;auto proof=BankProof(mock);PioneerResidentBanks banks;assert(banks.Bind(proof));
+ std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages,0);
+ auto receipt=std::make_unique<PioneerQ38DenseQ8UploadReceiptInspection>();PioneerQ38SpanLease span;int context=0,cookie=0;
+ assert(receipt->Begin(&context,&cookie,hashes.data(),ledger.data(),17,42,banks,proof,ledger.size()));
+ FakeDenseIO io{*canonical,pages,*receipt,span,&context,ledger,hashes};
+ PioneerQ38HybridSpanUpload<DensePages,FakeDenseIO,PioneerQ38DenseQ8UploadPlan> upload;
  assert(upload.Run(pages,*canonical,io,42,error) && upload.CompleteHeld());
  assert(upload.UploadedParts()==3551 && upload.UploadedBytes()==io.bytes && io.calls==upload.UploadedSpans() && io.converted>0);
- printf("PASS prepared dense-Q8 pages through %u fake span calls; %u converted pages; NO HARDWARE OR MODEL\n",io.calls,io.converted);
+ span.saved=true;span.closed=true;span.nonce=io.calls;span.ready=span.dirty=false;
+ assert(receipt->Seal(span) && receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ printf("PASS prepared dense-Q8 pages through %u fake span calls and sealed receipt; %u converted pages; NO HARDWARE OR MODEL\n",io.calls,io.converted);
 }

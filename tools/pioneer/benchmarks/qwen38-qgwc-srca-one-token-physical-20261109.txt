@@ -1,0 +1,38 @@
+QGWC SrcA-corrected dense-attention one-token physical test, 2026-11-09
+======================================================================
+
+This is a real P100A trial of the QGWC attention correction, NOT the newer
+QGWD dense-Q8-to-matrix path and NOT a steady-state throughput benchmark.
+It used the fixed single input token 248319, one prompt position and one
+requested output. The controller/client and trial driver were staged by
+tools/pioneer/pioneer_q38_qgwc_srca_physical_once.sh. Candidate driver
+SHA-256 b9691909aa10f2938049588528d3c13236fb60a771b9a4a0d70131640e4bc247;
+client SHA-256 fe818e594653e8a38e12fb82dca731c80eeb0eff7cd7527015149b8813117ea3.
+
+Observed trial:
+  independent preflight exit 0; 1,351 converted fragments verified
+  uploaded bytes 21,167,624,192
+  upload_and_start_seconds 2,853.285 (client-reported interval)
+  prompt_tokens 1, generated_tokens 1
+  inference_seconds 510.229, INCLUDING START and prompt processing
+  first generated token 70253
+  trial exit 0, stderr 0 bytes; native FINISH and close succeeded
+  parent state CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED
+  stable driver tag 2026102100010012 generation 18, quiesced 0, cold 0,
+    active_owner 0; reported by the checked reload/status script
+
+For this same fixed input, the earlier pinned CPU references selected token
+70253; earlier card trials selected 108133 instead. See
+qwen38-qgw8-physical-layer-trace-20261109.txt and
+qwen38-qgw8-layer-trace-root-20261109.txt. This single matching token is
+useful evidence that the observed regression is corrected for this input,
+not proof of general numerical correctness or useful conversation quality.
+
+The client's 0.001960 tokens/second divides one output by the entire 510.229 s
+startup-plus-prompt interval. It is NOT steady-state decode throughput; no
+valid steady-state 27B speed or speedup was measured by this one-token trial.
+The next speed work remains full QGWD integration and real multi-token tests.
+
+Remote evidence directory: /boot/home/pioneer-qgwc-srca-trial-20261109-g16
+trial.stdout SHA-256 e3c122f529a397aea46cc08c5abb252482343547292027a8fdfe6e08d2f31871
+trial.stderr SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
