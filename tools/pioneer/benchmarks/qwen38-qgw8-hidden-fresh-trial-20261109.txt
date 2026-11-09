@@ -27,3 +27,14 @@ driver exchange, and the candidate re-verifies before device open. Only a
 checked FINISH, snapshot hash and output gate authorize automatic restoration.
 Any uncertain device action is retained without retry or automatic reset.
 This live handoff is not a physical result, correctness or speed claim.
+
+Follow-up live observation
+--------------------------
+The independent preflight exited 0 after verifying all 1351 fragments.
+The parent performed the checked driver exchange to tag129 generation5 and
+started client team 1503. That same client completed its own 1351-fragment
+preflight and advanced to HYBRID_UPLOAD 268558336/21167624192; parent team
+1287 and client team 1503 were observed live. The parent state remains
+CANDIDATE_RUNNING_OWNERSHIP_UNKNOWN until a clean terminal result. Do not
+query or operate the card concurrently, infer completion from upload progress,
+or launch a duplicate. Observe the same process and its existing output.
