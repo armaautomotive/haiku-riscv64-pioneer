@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // Actual extracted owner/read methods over MOCK lifecycle and NoC only.
 #define PIONEER_Q38_TRACE_TEST 1
-#define PIONEER_Q38_QGW8_HIDDEN_NATIVE_129 1
+#define PIONEER_Q38_QGW8_TRACE_ASSEMBLER_INSPECTION 1
+#define PIONEER_Q38_QGW8_TRACE_PACKET_INSPECTION 1
+#include "../PioneerQ38Qgw8LayerTraceHandoff.h"
+#include <vector>
 #define main previous_hidden_test_main
 #include "pioneer_q38_hidden_read_method_test.cpp"
 #undef main
@@ -65,6 +68,23 @@ int main(){
   assert(!ReadTrace(f,0,r) && f.owner->unsafe && r.unsafe && !r.ready && !f.owner->traceReadCursor);
   for(auto v:f.output)assert(!v);const unsigned calls=f.io.calls;
   PioneerQ38TokenHiddenReadResult retry;assert(!ReadTrace(f,0,retry) && f.io.calls==calls);refused++;
+ }
+ {
+  // Connect the proposed packet shape and assembler to the actual extracted
+  // reader over mock IO. This is not a native control handler or device.
+  Fixture f;PioneerQ38Qgw8LayerTraceHandoff handoff(UINT64_C(0x123456789abcdef0),f.owner->plan.Workspace());
+  auto packet=std::make_unique<PioneerQ38Qgw8LayerTracePacket::Packet>();
+  for(unsigned ordinal=0;ordinal<G::Chunks;ordinal++){
+   *packet={};assert(handoff.Prepare(*packet));PioneerQ38TokenHiddenReadResult r;
+   assert(f.owner->ReadTraceChunk(f.io,ordinal,packet->words,packet->request.words,r));
+   auto& reply=packet->reply;reply.version=1;reply.ordinal=ordinal;reply.started=r.started;reply.ready=r.ready;
+   reply.unsafe=r.unsafe;reply.words=r.wordCount;std::memcpy(reply.detail,&r,sizeof(r));assert(handoff.Accept(*packet));
+  }
+  std::vector<uint32_t> data(size_t(G::Layers)*G::Words);
+  assert(handoff.Copy(data.data(),data.size()));
+  for(unsigned layer=0;layer<G::Layers;layer++)for(unsigned word=0;word<G::Words;word++)
+   assert(data[layer*G::Words+word]==f.io.hidden[word]);
+  puts("PASS extracted trace reader to 128 proposed packets to offline assembler; MOCK IO ONLY");
  }
  printf("PASS extracted trace read: %u ordered mock chunks, counter wrap, %u early/fault refusals; NO REAL OWNER, ROOT, DEVICE OR SPEED\n",observed,refused);
 }

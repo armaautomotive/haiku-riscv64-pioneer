@@ -68,7 +68,7 @@ struct MockOwner {
   bool ReadBoot(unsigned worker,uint32_t* out){assert(!worker);if(!read)return false;memcpy(out,owner->expectedBoot,256);return true;}
  } ownedStartup{this};Startup* startup=&ownedStartup;
  MockOwner(){
-#ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
+#if defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_TRACE_TEST)
   observedTerminal[0]=0x1234;observedTerminal[2]=1;observedTerminal[3]=1;observedTerminal[4]=0;observedTerminal[6]=64;
   readoutCursor=1;
 #else

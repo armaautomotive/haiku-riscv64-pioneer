@@ -114,5 +114,21 @@ no runtime IO methods. It was replaced by explicitly non-callable compile-
 only IO; the separate extracted-method tests use mock IO. Neither change is
 evidence of an actual driver connection, card safety or throughput.
 
+Offline DATA handoff
+--------------------
+A proposed fixed, pointer-free packet and one-outstanding-request handoff
+now connect the extracted inspection reader to the ordered assembler in an
+end-to-end 128-chunk mock test. Request identity, metadata, unused reply
+fields and tail padding are checked, and any mismatch invalidates the data
+assembly. Tests flipped every request/reply bit and exercised 1540 malformed
+packet/lifecycle cases, raw non-finite DATA, and late or conflicting roles.
+The existing tag129 hidden-read mock regression passed again.
+
+The packet's caller-supplied key is correlation only. These checks do not
+authenticate the source or prove the raw payload correct, and a same-shaped
+altered payload cannot be detected by this DATA handoff alone. There is no
+ioctl assignment, real driver handler, native/Work permission, completed
+ownership proof, FINISH/close guarantee, or physical trace result.
+
 Test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B

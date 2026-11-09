@@ -62,10 +62,31 @@ for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_R
                   'PIONEER_Q38_QGW8_NATIVE_INSPECTION','PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128',
                   'PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128','PIONEER_Q38_QGW8_HIDDEN_NATIVE_129',
                   'PIONEER_Q38_QGW8_HIDDEN_CLIENT_129','PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE',
-                  'PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION','PIONEER_Q38_WORK_INFERENCE',
+                  'PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION','PIONEER_Q38_QGW8_TRACE_READ_INSPECTION','PIONEER_Q38_WORK_INFERENCE',
                   'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','__FAST_MATH__'):
     check(['-D'+assembler_role+'=1','-D'+forbidden+'=1'],assembler,False)
 check(['-D'+assembler_role+'=1'],assembler+'#undef '+assembler_role+'\n'+assembler,False)
+packet_role='PIONEER_Q38_QGW8_TRACE_PACKET_INSPECTION'
+packet='#include "'+str(root/'PioneerQ38Qgw8LayerTracePacket.h')+'"\n'
+check(['-D'+packet_role+'=1'],packet,True)
+check([],packet,False)
+check(['-D'+packet_role+'=0'],packet,False)
+for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
+                  'PIONEER_Q38_QGW8_NATIVE_INSPECTION','PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128',
+                  'PIONEER_Q38_QGW8_HIDDEN_NATIVE_129','PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128',
+                  'PIONEER_Q38_QGW8_HIDDEN_CLIENT_129','PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_FULL_OFFLOAD_NATIVE',
+                  'PIONEER_Q38_HYBRID_FULL_CLIENT','PIONEER_Q38_FULL_OFFLOAD_CLIENT','PIONEER_Q38_BF16_FULL_NATIVE',
+                  'PIONEER_Q38_BF16_FULL_CLIENT','PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE','PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION',
+                  'PIONEER_Q38_QGW8_TRACE_READ_INSPECTION',
+                  'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
+                  'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','__FAST_MATH__'):
+    for value in (0,1):check(['-D'+packet_role+'=1','-D'+forbidden+'='+str(value)],packet,False)
+check(['-D'+packet_role+'=1'],packet+'#undef '+packet_role+'\n'+packet,False)
+handoff='#include "'+str(root/'PioneerQ38Qgw8LayerTraceHandoff.h')+'"\n'
+both=['-D'+assembler_role+'=1','-D'+packet_role+'=1']
+check(both,handoff,True)
+for selected in (assembler_role,packet_role):
+    check(both,handoff+'#undef '+selected+'\n'+handoff,False)
 with tempfile.TemporaryDirectory(prefix='qgw8-layer-trace-test-',dir='/private/tmp') as tmp:
     binary=Path(tmp)/'test'
     geometry=Path(tmp)/'geometry'
@@ -76,6 +97,10 @@ with tempfile.TemporaryDirectory(prefix='qgw8-layer-trace-test-',dir='/private/t
     subprocess.run([cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                     '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_layer_trace_assembler_test.cpp'),'-o',str(assembly)],check=True)
     subprocess.run([str(assembly)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+    handoff=Path(tmp)/'handoff'
+    subprocess.run([cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                    '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_layer_trace_handoff_test.cpp'),'-o',str(handoff)],check=True)
+    subprocess.run([str(handoff)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
     subprocess.run([cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
                     '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_layer_trace_image_test.cpp'),'-o',str(binary)],check=True)
     subprocess.run([str(binary),str(first)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

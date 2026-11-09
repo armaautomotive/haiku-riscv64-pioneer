@@ -57,7 +57,9 @@ signatures=((owner,'template<class IO> bool BootTime('),(owner,'template<class I
 methods=[extract(source,signature) for source,signature in signatures]
 records='\n'.join(extract(owner,'struct '+name+' {')+';' for name in ('PioneerQ38TokenReadResult','PioneerQ38TokenHiddenReadResult'))
 sources=(kernel/'PioneerQ38TokenNativeOwner.h',kernel/'PioneerQ38TokenHiddenRead.inc',kernel/'PioneerQ38Qgw8TraceReadInspection.inc',
-         root/'PioneerQ38Qgw8LayerTraceGeometry.h',here/'pioneer_q38_hidden_read_method_test.cpp',here/'pioneer_q38_qgw8_trace_read_method_test.cpp')
+         root/'PioneerQ38Qgw8LayerTraceGeometry.h',root/'PioneerQ38Qgw8LayerTraceAssembler.h',
+         root/'PioneerQ38Qgw8LayerTracePacket.h',root/'PioneerQ38Qgw8LayerTraceHandoff.h',
+         here/'pioneer_q38_hidden_read_method_test.cpp',here/'pioneer_q38_qgw8_trace_read_method_test.cpp')
 pins={p:hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
 with tempfile.TemporaryDirectory(prefix='qgw8-trace-read-',dir='/private/tmp') as name:
     tmp=Path(name);(tmp/'actual_hidden_records.inc').write_text(records+'\n')

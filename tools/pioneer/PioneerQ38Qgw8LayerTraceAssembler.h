@@ -8,6 +8,7 @@
  || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) \
  || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129) || defined(PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE) \
  || defined(PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION) \
+ || defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
 #error Trace assembly is separate offline DATA inspection only
@@ -48,6 +49,8 @@ public:
  PioneerQ38Qgw8LayerTraceAssembler(const PioneerQ38Qgw8LayerTraceAssembler&)=delete;
  PioneerQ38Qgw8LayerTraceAssembler& operator=(const PioneerQ38Qgw8LayerTraceAssembler&)=delete;
  bool Failed()const{return failed;}uint32_t Cursor()const{return cursor;}
+ bool ExternalBufferSafe(const void* p,size_t bytes)const{return !Overlaps(p,bytes);}
+ bool Invalidate(){return Refuse();} // DATA fail-closed only, not device cleanup
  bool Append(uint64_t key,uint32_t ordinal,const uint32_t* words,size_t count){
   G chunk={};
   if(failed || delivered)return false;
