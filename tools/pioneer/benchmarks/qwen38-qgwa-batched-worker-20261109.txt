@@ -100,3 +100,16 @@ throughput evidence. The shared helper's QGW8 static read-count estimate is
 suppressed in this run because it does not describe QGWA's batching.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_root_jobs_tests.py SDK QGWA_ROOT OLD_ROOT WORKER LEAF
+
+Authenticated QGWA offline package
+----------------------------------
+The separate controller and worker code can now be packaged as QTPD offline
+DATA. Two independently built ROOT/worker pairs produced the same 15-section
+header SHA-256 b615fda5f32852814f5383c6ec66c7a80a4c344cd4e7e196a593825beac462d8.
+All 120 worker maps and 3641753 code words were compared to the pinned
+sections; mixed QGW8/QGWA inputs, missing role selectors, native/driver,
+Work and CPU-validation roles were refused. The existing QTPC diagnostic
+DATA regression passed. This is packaging and identity only, not owner,
+full model, device or throughput qualification.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_programs_tests.py QGWA_ROOT_A QGWA_ROOT_B QGWA_WORKER_A QGWA_WORKER_B QGW8_ROOT QGW8_WORKER
