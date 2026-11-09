@@ -45,3 +45,26 @@ network, memory and matrix hardware are still simulated. It does not establish
 that real card hidden values, upload, scheduling, or matrix arithmetic match.
 No Work, hardware or tokens/second claim follows. Pass the optional absolute
 cpu-hidden.bin path as the fourth runner argument to reproduce this mode.
+
+Private head-band diagnostic data preparation
+---------------------------------------------
+The optional sixth command-line argument to the C++ diagnostic (fifth runner
+argument after program name) names an existing private mode-0700 output
+directory. After all four real-weight worker comparisons pass, it creates
+exclusive, mode-0600 private data/metadata headers for bands 0, 70240 and
+108128 using the pinned CPU-reference normalized input. It does not install,
+open the card or create a driver. An attempted second export to the same
+directory failed without changing either header's hash. Data and binaries
+containing model weights must never be checked into Git or distributed.
+
+The actual emitted BFP8 leaf was separately simulated using the exported
+header's GDDR and input layout; all 64 expected words for each of the three
+samples matched (192 total), and the process exited 0. This confirms the
+exported representation is usable by the existing simulated leaf, not that
+the physical card has run this new workload. A new uniquely identified driver,
+independent source verification, guarded lifecycle, tests and physical
+qualification are still required before this can be run on hardware.
+The temporary private directory is /private/tmp/qgw8-real-head-export.dtpQTaMU;
+data-header SHA-256 d3ff8eeb5830fb33f908a00d1d9dc17860724d41aedc2f0e0bf0045dd8deaae3,
+metadata-header SHA-256 664591584043b713148464b16054ba25d3456bcd603ad34686dc7208535d0fd9.
+Temporary files are not archival backups.

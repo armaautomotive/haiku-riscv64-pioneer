@@ -7,8 +7,8 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) not in (4, 5) or any(not Path(x).is_absolute() for x in sys.argv[1:]):
-    raise SystemExit('usage: ABS_QGW8_WORKER_DIR ABS_BFP8_LEAF_DIR ABS_GGUF [ABS_PINNED_CPU_HIDDEN]')
+if len(sys.argv) not in (4, 5, 6) or any(not Path(x).is_absolute() for x in sys.argv[1:]):
+    raise SystemExit('usage: ABS_QGW8_WORKER_DIR ABS_BFP8_LEAF_DIR ABS_GGUF [ABS_PINNED_CPU_HIDDEN [NEW_PRIVATE_EXPORT_DIR]]')
 if any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ):
     raise SystemExit('Pioneer environment overrides refused')
 worker, leaf, model = map(Path, sys.argv[1:4])

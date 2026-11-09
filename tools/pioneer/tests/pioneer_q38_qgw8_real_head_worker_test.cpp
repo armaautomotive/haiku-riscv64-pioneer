@@ -13,8 +13,24 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static FILE* NewPrivateFile(const std::string& path){
+ int fd=open(path.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC|O_NOFOLLOW,0600);
+ if(fd<0)return nullptr;FILE* f=fdopen(fd,"wb");if(!f)close(fd);return f;
+}
+static bool WriteWords(FILE* f,const char* name,const std::vector<uint8_t>& bytes){
+ if(bytes.size()%4)return false;
+ if(fprintf(f," static const uint32_t %s[%zu]={\n",name,bytes.size()/4)<0)return false;
+ for(size_t i=0;i<bytes.size();i+=4){
+  uint32_t word=uint32_t(bytes[i])|uint32_t(bytes[i+1])<<8|uint32_t(bytes[i+2])<<16|uint32_t(bytes[i+3])<<24;
+  if(fprintf(f,"%s0x%08x%s",i%32?"":"  ",word,i+4==bytes.size()?"\n":i%32==28?",\n":",")<0)return false;
+ }
+ return fputs(" };\n",f)>=0;
+}
+static bool FinishPrivate(FILE* f){bool good=!ferror(f) && !fflush(f) && !fsync(fileno(f));return !fclose(f) && good;}
+
 int main(int argc,char** argv){
- if((argc!=4 && argc!=5) || argv[1][0]!='/' || argv[2][0]!='/' || argv[3][0]!='/' || (argc==5 && argv[4][0]!='/'))return 2;
+ if((argc<4 || argc>6) || argv[1][0]!='/' || argv[2][0]!='/' || argv[3][0]!='/' || (argc>=5 && argv[4][0]!='/') || (argc==6 && argv[5][0]!='/'))return 2;
+ if(argc==6){struct stat d={};if(lstat(argv[5],&d) || !S_ISDIR(d.st_mode) || d.st_uid!=geteuid() || (d.st_mode&07777)!=0700)return 1;}
  int fd=open(argv[3],O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return 1;
  struct stat info={};if(fstat(fd,&info) || !S_ISREG(info.st_mode) || uint64_t(info.st_size)!=PioneerQwen38Gguf::FullBytes){close(fd);return 1;}
  FILE* file=fdopen(fd,"rb");if(!file){close(fd);return 1;}
@@ -25,7 +41,8 @@ int main(int argc,char** argv){
  PioneerQwen38Gguf model;if(!model.Open(file) || !model.Stable()){fclose(file);return 1;}
  const auto* head=model.Find("output.weight");if(!head){fclose(file);return 1;}
  const unsigned index=unsigned(head-model.Tensors().data());
- std::array<uint32_t,5120> input={};
+ std::array<uint32_t,5120> input={};std::array<std::vector<uint8_t>,3> exportWeights;std::vector<uint8_t> exportInput;
+ std::array<std::array<uint32_t,32>,3> exportGolden={};std::array<std::string,3> exportDigest;
  if(argc==4){
   for(unsigned i=0;i<input.size();i++){
    float x=float(int((i*73)%257)-128)*0.00390625f;std::memcpy(&input[i],&x,4);
@@ -83,8 +100,34 @@ int main(int argc,char** argv){
    if(HW::Better(actual,first+row,expected[best],first+best))best=row;
   }
   if(image->Get(HW::Partial+8*4)!=first+best || image->Get(HW::Partial+9*4)!=expected[best] || !model.Stable()){fclose(file);return 1;}
+  if(argc==6 && first!=248288U){
+   unsigned sample=first==0?0:first==70240?1:2;
+   exportWeights[sample].assign(160*1104,0);
+   for(unsigned tile=0;tile<160;tile++)std::memcpy(exportWeights[sample].data()+tile*1104+16,packed.data()+tile*1088,1088);
+   std::vector<uint8_t> wire(160*80,0);
+   for(unsigned tile=0;tile<160;tile++)std::memcpy(wire.data()+tile*80+16,image->transfer.root.data()+tile*64,64);
+   if(sample && wire!=exportInput){fclose(file);return 1;}exportInput=std::move(wire);
+   exportGolden[sample]=expected;std::vector<uint8_t> joined=exportWeights[sample];joined.insert(joined.end(),exportInput.begin(),exportInput.end());
+   exportDigest[sample]=PioneerModelWeightCache::Hex(PioneerModelWeightCache::Hash(joined.data(),joined.size()));
+  }
   printf("QGW8_REAL_HEAD_WORKER first%u rows32 exact32 argmax%u;SIMULATED_NO_DEVICE\n",first,first+best);fflush(stdout);
  }
- printf("PASS_REAL_HEAD_QGW8_WORKER 128 real-weight outputs; %s_SIMULATED_FABRIC_NOT_DEVICE_OR_SPEED\n",argc==5?"PINNED_CPU_REFERENCE_INPUT":"SYNTHETIC_INPUT");
+ if(argc==6){
+  const std::string dir=argv[5];FILE* data=NewPrivateFile(dir+"/PioneerNativeBfpModelBandData.h");if(!data){fclose(file);return 1;}
+  bool ok=fputs("/* PRIVATE MODEL WEIGHTS: DO NOT COMMIT. */\n#ifndef PIONEER_NATIVE_BFP_MODEL_BAND_DATA_H\n#define PIONEER_NATIVE_BFP_MODEL_BAND_DATA_H\n#include <stdint.h>\nstruct PioneerNativeBfpModelBandData {\n static uint32_t Word(unsigned sample,unsigned width,unsigned address){\n if(sample>=3 || width!=5120 || (address&3))return 0;\n",data)>=0;
+  for(unsigned s=0;s<3;s++){char name[8];snprintf(name,sizeof(name),"w%u",s);ok=WriteWords(data,name,exportWeights[s]) && ok;}
+  ok=WriteWords(data,"input",exportInput) && ok;
+  ok=(fputs(" if(address>=0x8fff0 && address<0x8fff0+176640){const unsigned i=(address-0x8fff0)/4;return sample==0?w0[i]:sample==1?w1[i]:w2[i];}\n if(address>=0x123ff0 && address<0x123ff0+12800)return input[(address-0x123ff0)/4];\n return 0;}\n};\n#endif\n",data)>=0) && ok;
+  if(!FinishPrivate(data) || !ok){fclose(file);return 1;}
+  FILE* meta=NewPrivateFile(dir+"/PioneerNativeBfpModelBandMetadata.h");if(!meta){fclose(file);return 1;}
+  ok=fprintf(meta,"/* PRIVATE DIAGNOSTIC: not a device result. */\n#ifndef PIONEER_NATIVE_BFP_MODEL_BAND_METADATA_H\n#define PIONEER_NATIVE_BFP_MODEL_BAND_METADATA_H\n#include <stdint.h>\nstruct PioneerNativeBfpModelBandMetadata {\n static constexpr unsigned Width=5120,Rows=248320,Tensor=%u,Samples=3;\n static unsigned First(unsigned s){const unsigned r[3]={0,70240,108128};return s<3?r[s]:~0U;}\n static const uint32_t* Golden(unsigned sample){\n",index)>=0;
+  for(unsigned s=0;s<3;s++){if(fprintf(meta," static const uint32_t g%u[32]={",s)<0)ok=false;for(unsigned row=0;row<32;row++)if(fprintf(meta,"0x%08x%s",exportGolden[s][row],row==31?"};\n":",")<0)ok=false;}
+  ok=(fputs(" return sample==0?g0:sample==1?g1:sample==2?g2:nullptr;}\n static const char* PayloadSHA(unsigned sample){\n",meta)>=0) && ok;
+  for(unsigned s=0;s<3;s++)if(fprintf(meta," if(sample==%u)return \"%s\";\n",s,exportDigest[s].c_str())<0)ok=false;
+  ok=(fputs(" return nullptr;}\n};\n#endif\n",meta)>=0) && ok;
+  if(!FinishPrivate(meta) || !ok || !model.Stable()){fclose(file);return 1;}
+  puts("QGW8_REAL_HEAD_PRIVATE_EXPORT samples3;PRIVATE_WEIGHTS_NOT_FOR_GIT_NO_DEVICE");
+ }
+ printf("PASS_REAL_HEAD_QGW8_WORKER 128 real-weight outputs; %s_SIMULATED_FABRIC_NOT_DEVICE_OR_SPEED\n",argc>=5?"PINNED_CPU_REFERENCE_INPUT":"SYNTHETIC_INPUT");
  return fclose(file)?1:0;
 }
