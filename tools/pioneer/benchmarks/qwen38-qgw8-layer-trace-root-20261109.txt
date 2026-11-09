@@ -147,6 +147,8 @@ The data-only sanitizer test passed across all seven banks, checking 16716
 disjoint startup chunks, all 80 zero chunks per bank and 28 alias refusals.
 The fake owner also compiled in the Haiku RISC-V SDK. The existing extracted
 trace and tag129 hidden-read mock regressions and isolated ROOT tests passed.
+The isolated initialization role also rejected 56 missing, wrong or
+conflicting selections and two changes made after its first inclusion.
 The complete fake-owner startup passed with 2388 chunks and 4776 simulated
 write/read packets, comparing all 39093248 written bytes and untouched
 workspace slack, plus 120 simulated boot records. Its device and memory
@@ -158,6 +160,7 @@ readout authority, and physical trace testing remain unproven.
 Reproduce the DATA test (the executable path is disposable):
  c++ -std=c++17 -O1 -g -Wall -Wextra -Werror -Wno-misleading-indentation -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_qgw8_trace_runtime_plan_test.cpp -o /private/tmp/qgw8-trace-runtime-plan-test
  /private/tmp/qgw8-trace-runtime-plan-test
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_init_role_tests.py
 
 Fake-owner SDK binding:
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_binding_tests.py --qgw8-trace-init-inspection ABS_PINNED_PROGRAM_HEADER --sdk ABS_HAIKU_SDK
