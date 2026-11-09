@@ -65,5 +65,24 @@ native driver, upload, readout, or hardware permission. It is not an
 inference-speed result. Next work must establish those ownership and data
 contracts and qualify failure recovery before any card operation.
 
+Trace DATA geometry and ordered assembly
+----------------------------------------
+The ROOT's proposed slot constants are now shared with a fixed address
+geometry helper: 64 boundaries, two chunks per boundary, 4096 and 1024
+words. An offline assembler accepts only 128 ordered chunks associated with
+one caller-supplied key and publishes a complete in-process copy only after
+all have arrived. It fails closed on changed key, missing/out-of-order or
+duplicate chunk, wrong length, null data and invalid workspace geometry.
+The caller-supplied key is merely DATA correlation, NOT authenticated
+provenance, driver generation, a held-owner proof or permission to read the
+device. No native transport, FINISH, close or userspace fault handling is
+implemented. A copy into an arbitrary user pointer is NOT claimed atomic.
+
+Synthetic sanitizer tests covered 384 valid geometry cases, eight invalid
+cases, ordered assembly, six malformed streams, output refusal and role
+separation. The trace ROOT rebuilt byte-identically to the previously pinned
+ELF; its emitted helper and delayed synthetic-transfer tests passed again.
+These checks do not establish device ownership or real-layer correctness.
+
 Test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B

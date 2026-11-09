@@ -51,8 +51,31 @@ for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD
     check(flags+['-D'+name+'=1'],include,False)
 check(flags[:-1],include+'#define '+role+' 1\n'+include,False)
 check(flags,include+'#undef '+role+'\n'+include,False)
+assembler_role='PIONEER_Q38_QGW8_TRACE_ASSEMBLER_INSPECTION'
+assembler='#include "'+str(root/'PioneerQ38Qgw8LayerTraceAssembler.h')+'"\n'
+check(['-D'+assembler_role+'=1'],assembler,True)
+check([],assembler,False)
+check(['-D'+assembler_role+'=0'],assembler,False)
+for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
+                  'PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_HYBRID_FULL_CLIENT',
+                  'PIONEER_Q38_FULL_OFFLOAD_CLIENT','PIONEER_Q38_BF16_FULL_NATIVE','PIONEER_Q38_BF16_FULL_CLIENT',
+                  'PIONEER_Q38_QGW8_NATIVE_INSPECTION','PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128',
+                  'PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128','PIONEER_Q38_QGW8_HIDDEN_NATIVE_129',
+                  'PIONEER_Q38_QGW8_HIDDEN_CLIENT_129','PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE',
+                  'PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION','PIONEER_Q38_WORK_INFERENCE',
+                  'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','__FAST_MATH__'):
+    check(['-D'+assembler_role+'=1','-D'+forbidden+'=1'],assembler,False)
+check(['-D'+assembler_role+'=1'],assembler+'#undef '+assembler_role+'\n'+assembler,False)
 with tempfile.TemporaryDirectory(prefix='qgw8-layer-trace-test-',dir='/private/tmp') as tmp:
     binary=Path(tmp)/'test'
+    geometry=Path(tmp)/'geometry'
+    subprocess.run([cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                    '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_layer_trace_geometry_test.cpp'),'-o',str(geometry)],check=True)
+    subprocess.run([str(geometry)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+    assembly=Path(tmp)/'assembly'
+    subprocess.run([cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                    '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_layer_trace_assembler_test.cpp'),'-o',str(assembly)],check=True)
+    subprocess.run([str(assembly)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
     subprocess.run([cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
                     '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_layer_trace_image_test.cpp'),'-o',str(binary)],check=True)
     subprocess.run([str(binary),str(first)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

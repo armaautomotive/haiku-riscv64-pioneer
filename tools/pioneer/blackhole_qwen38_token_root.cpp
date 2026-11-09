@@ -10,6 +10,9 @@
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38TokenMetadata.h"
+#ifdef PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE
+#include "PioneerQ38Qgw8LayerTraceGeometry.h"
+#endif
 #ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
 #include "PioneerQ38HybridHeadLayout.h"
 #include "PioneerQ38Bf16Input.h"
@@ -135,9 +138,11 @@ static __attribute__((noinline,section(".conv.token"))) void Transfer(unsigned r
 // existing scoped transfer/counter journal. This is a new offline image,
 // not a promise that a native owner has allocated or initialized this area.
 static __attribute__((noinline,section(".conv.token"))) void TraceLayer(unsigned layer){
- enum {TraceOffset=0x3500000,TraceStride=20480};
+ namespace Trace=PioneerQ38Qgw8LayerTraceGeometry;
+ enum {TraceOffset=Trace::Offset,TraceStride=Trace::Bytes};
  static_assert(T::OutputOffset+T::Context*T::RecordBytes<=TraceOffset
-  && TraceOffset+64*TraceStride<=L::WorkspaceBytes,"trace must not overlap token records or workspace end");
+  && unsigned(Trace::WorkspaceBytes)==unsigned(L::WorkspaceBytes) && TraceOffset+Trace::Layers*TraceStride<=L::WorkspaceBytes,
+  "trace must not overlap token records or workspace end");
  auto* p=Owner();
  if(layer>=64 || p->phase!=1 || p->state[Position] || p->state[Completed]!=layer+1
   || p->state[Layer]!=layer)scalar_fault_park();
