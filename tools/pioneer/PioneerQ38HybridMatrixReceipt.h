@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Qgw8Bfp8ReuseRole.h"
 #ifndef PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #define PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #include "PioneerQ38HybridWorkerLayout.h"
@@ -48,7 +49,13 @@ struct PioneerQ38HybridMatrixReceipt {
   if(eight){
    PioneerQ38Bfp8WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
    PioneerQ38Bfp8WorkerJob::Read last;
-   if(!PioneerQ38Bfp8WorkerJob::Packet(leaf,bands-1,1,tiles-1,last))return false;
+   if(!PioneerQ38Bfp8WorkerJob::Packet(leaf,bands-1,
+#ifdef PIONEER_Q38_QGW8_BFP8_REUSE_WORKER
+    bands>1?0U:1U,
+#else
+    1U,
+#endif
+    tiles-1,last))return false;
    source=last.source;destination=last.destination;route=last.route;bytes=last.bytes;
   }else{
    PioneerQ38Bfp4WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
@@ -70,6 +77,9 @@ struct PioneerQ38HybridMatrixReceipt {
    const unsigned delta=i==1?
 #ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
     flits:i==0 || i==2 || i==3 || i==6?reads:0U;
+#elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
+    (eight?(bands*17+1)*tiles:bands*tiles*10):i==0 || i==2 || i==3 || i==6?
+    (eight?(bands+1)*tiles:bands*tiles*2):0U;
 #else
     bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?bands*tiles*2:0U;
 #endif

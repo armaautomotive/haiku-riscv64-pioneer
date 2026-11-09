@@ -10,7 +10,8 @@ import sys
 
 assert __debug__ and len(sys.argv) in (3, 4) and not os.environ.get('PYTHONOPTIMIZE')
 test_layer0 = len(sys.argv) == 4 and sys.argv[3] == '--test-bfp8-layer0'
-head_matrix = len(sys.argv) == 4 and sys.argv[3] == '--head-matrix-inspection'
+reuse_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-reuse-inspection'
+head_matrix = len(sys.argv) == 4 and sys.argv[3] in ('--head-matrix-inspection', '--head-bfp8-reuse-inspection')
 assert len(sys.argv) == 3 or test_layer0 or head_matrix
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, out = map(Path, sys.argv[1:3]); here = Path(__file__).resolve().parent
@@ -39,8 +40,15 @@ if test_layer0:
     global_role.append('-DPIONEER_Q38_HYBRID_TEST_BFP8_LAYER0=1')
 if head_matrix:
     global_role.append('-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1')
+if reuse_head:
+    global_role.append('-DPIONEER_Q38_QGW8_BFP8_REUSE_WORKER=1')
 run(tool+'g++', *flags, '-Os', '-ffixed-s11', *global_role, *inspection, '-c',
     here/'blackhole_qwen38_global_worker.cpp', '-o', out/'global.o')
+if reuse_head:
+    run(tool+'g++', *flags, '-O2', '-fno-builtin', '-ffixed-s11', *global_role, *inspection,
+        '-DPIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT=1', '-Dnative_dram_band_fault=block_fault_park',
+        '-Dnative_dram_band_main=q38_bfp8_worker_leaf', '-c',
+        here/'blackhole_q38_bfp8_worker_leaf.cpp', '-o', out/'bfp8.o')
 dense_role = ['-DPIONEER_Q38_MIXED_WORKER_IMAGE=1', '-DPIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE=1',
               '-DPIONEER_Q38_MIXED_CAPSULE_IMAGE=1', '-Dscalar_fault_park=block_fault_park',
               '-include', here/'PioneerQ38MixedCapsuleHook.h']
@@ -54,7 +62,7 @@ link = (out/'baseline/program.ld').read_text()
 (out/'program.ld').write_text(link)
 run(tool+'ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections', '-T', out/'program.ld',
     out/'baseline/baseline/start.o', out/'global.o', out/'baseline/baseline/bf16.o',
-    out/'baseline/bfp4.o', out/'baseline/bfp8.o', out/'dense.o',
+    out/'baseline/bfp4.o', out/('bfp8.o' if reuse_head else 'baseline/bfp8.o'), out/'dense.o',
     *[old_math/(name+'.o') for name in units], '-Map', out/'program.map', '-o', out/'program.elf')
 symbols = subprocess.check_output([tool+'nm', '-n', str(out/'program.elf')], text=True)
 assert not subprocess.check_output([tool+'nm', '-u', str(out/'program.elf')]).strip()
@@ -67,7 +75,7 @@ assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|f
 # The byte-identical ancestral GDN object includes byte-copy fallback paths;
 # the new front/dense sections must add no byte-store instructions. This is
 # not a reachability or hardware-ISA proof for the old fallback paths.
-for section in ('.globalworker', '.dense'):
+for section in (('.globalworker', '.dense', '.cachedfpu') if reuse_head else ('.globalworker', '.dense')):
     section_dis = subprocess.check_output([tool+'objdump', '-d', '-j', section, str(out/'program.elf')], text=True)
     assert not re.search(r'\bsb\b', section_dis), section
     assert not re.search(r'<(?:memcpy|memset)>', section_dis), section+' may not call the old byte-store fallbacks'
@@ -83,7 +91,7 @@ for section in sections:
     path = out/(section+'.bin'); run(tool+'objcopy', '-O', 'binary', '-j', '.'+section, out/'program.elf', path)
     data = path.read_bytes(); assert data and not len(data)%4
     if section == 'dense': assert len(data) <= 16384, 'dense image exceeds captured 0x40000..0x44000'
-    if section not in ('globalworker', 'dense'):
+    if section not in ('globalworker', 'dense') and not (reuse_head and section == 'cachedfpu'):
         # The inputs are the original objects, but changed global function
         # addresses legitimately alter link-time call relocations in their
         # output sections. Require their extents and the boot jump unchanged;
@@ -91,8 +99,11 @@ for section in sections:
         old_data = (out/'baseline'/(section+'.bin')).read_bytes()
         assert len(data) == len(old_data), section
         if section == 'boot': assert data == old_data
-    print('QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
-print('BUILD ONLY QGW8 head-matrix worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if head_matrix
+    print('QGW9_BUILD' if reuse_head else 'QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
+print('BUILD ONLY QGW9 retained-input worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if reuse_head
+      else 'BUILD ONLY QGW8 head-matrix worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if head_matrix
       else 'BUILD ONLY QGW7/QDM2 inspection: NO ROOT/native owner/model/hardware/quality/speed authority')
 if test_layer0:
     print('TEST ONLY BFP8 layer-zero mask; not a real-model worker')
+if reuse_head:
+    print('QGW9 REUSE WORKER INSPECTION ONLY: no ROOT/native/ownership/device/Work authority')

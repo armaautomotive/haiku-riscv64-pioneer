@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Qgw8Bfp8ReuseRole.h"
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
 #if defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
@@ -171,6 +172,11 @@ static void FpuMatrix(const uint32_t* j,const uint32_t* outer,const uint32_t* so
 #ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
  unsigned reads=0,flits=0;bool lastWeight=false;
  if(!PioneerQ38HybridInputReuseProfile::Describe(j[2],j[4],eight,reads,flits,lastWeight))block_fault_park();
+#elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
+ // Inspection-only QGW9: BFP8 retains input for later bands. BFP4 is unchanged.
+ const unsigned tiles=j[2]/32;
+ const unsigned reads=eight?(j[4]+1)*tiles:j[4]*2*tiles;
+ const unsigned flits=eight?(j[4]*17+1)*tiles:j[4]*10*tiles;
 #else
  const unsigned reads=j[4]*2*(j[2]/32),flits=j[4]*(eight?18U:10U)*(j[2]/32);
 #endif

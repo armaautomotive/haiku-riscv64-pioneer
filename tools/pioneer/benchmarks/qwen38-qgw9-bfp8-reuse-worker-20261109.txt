@@ -1,0 +1,45 @@
+QGW9 retained-BFP8-input worker: OFFLINE EXPERIMENT ONLY, 2026-11-09
+
+This integrates the existing retained-input BFP8 leaf into a distinct
+QGW9 head/mixed worker inspection image. A job loads its BF16 activation
+tiles once, then reloads only the weights for later bands. BFP4 is unchanged.
+Worker accounting and the diagnostic receipt expect the new number of reads
+and, for multi-band BFP8, the last weight command rather than an input read.
+Distinct boot/job markers reject QGW8/QGW9 mixing. The new role refuses
+kernel, native, client, Work, CPU-reference and incompatible image selectors.
+There is no matching QGW9 ROOT, native owner, driver or Assistant target.
+
+Two same-SDK experimental worker builds matched SHA-256
+937bd1036260828ca8b3c7b02a8e3911a421f928b215a946a87f621e20103293.
+The rebuilt ordinary QGW8 worker remains byte-identical to its previous
+physical-candidate image (d28edbd5cf25b8184d29ddf189b74efe843d934cd8ebb628976ed3331823897d).
+The experimental image passes the same section bounds, and the changed
+cached-FPU section adds no byte stores or memcpy/memset calls. The first
+build failed because its object filename missed the intended linker section;
+the second failed an old same-size check for the intentionally changed section.
+Those failures were fixed without enlarging the existing linked section bounds.
+
+The actual emitted QGW9 worker ran in a simulated NoC/L1/Tensix environment:
+1, 2, 3 and 8 head bands; BFP8 feed-forward jobs at K5120 and K17408; and
+3 private real-head samples on each of 3 simulated peers (576 exact words).
+The head and receipt tests inject completed layer history; they are not a
+full-model run. A two-band synthetic head job issued 480 reads and 185875
+simulated RV32 steps versus 640 reads and 232884 steps for the pinned QGW8
+worker under the same fixture. These are NOT hardware timings or tokens/sec.
+The simulation checked old/new boot isolation, 2048 proof-bit mutations,
+bad jobs, the last-weight receipt and role refusals.
+
+Important failure: altering the retained input after band one silently changes
+the next band's results. This confirms the existing safety limitation, not a
+passing ownership test. The current candidate must NOT run on the P100A or
+enter Work: it still requires a genuine exclusive input lifetime/NoC and
+memory-isolation proof, coordinated ROOT/native integration, independent
+numerical qualification and a controlled physical benchmark. The earlier
+unpack/source-bank reuse hardware failure was NOT retried.
+
+Reproduce the synthetic/PRIVATE tests using the separately built QGW9 worker,
+old QGW8 worker, matching standalone leaves and pinned private head export:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_bfp8_reuse_worker_tests.py \
+  ABS_QGW9_A ABS_QGW9_B ABS_QGW8 ABS_REUSE_LEAF ABS_OLD_LEAF ABS_PRIVATE_EXPORT
+The test compiles a temporary binary containing private learned data; it must
+not be published. No speedup, full-model quality or hardware result follows.

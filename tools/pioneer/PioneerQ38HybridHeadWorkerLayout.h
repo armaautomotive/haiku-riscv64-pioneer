@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8NativeInspectionRole.h"
+#include "PioneerQ38Qgw8Bfp8ReuseRole.h"
 #ifndef PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
 #define PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
 #if (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION)) \
@@ -32,7 +33,13 @@
 namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;
-enum : unsigned {Magic=0x38574751,JobWitness=0x384f4751,Bfp8MaskLow=0,Bfp8MaskHigh=0x1ffc0000};
+enum : unsigned {
+#ifdef PIONEER_Q38_QGW8_BFP8_REUSE_WORKER
+ Magic=0x39574751,JobWitness=0x394f4751,
+#else
+ Magic=0x38574751,JobWitness=0x384f4751,
+#endif
+ Bfp8MaskLow=0,Bfp8MaskHigh=0x1ffc0000};
 #ifdef PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION
 #define QGW8_HEAD_FN static __attribute__((noinline,unused,section(".bf16.head")))
 #else

@@ -1,20 +1,24 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Qgw8Bfp8ReuseRole.h"
 #ifndef PIONEER_Q38_BFP8_WORKER_LOADER_H
 #define PIONEER_Q38_BFP8_WORKER_LOADER_H
+#if defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) && (!defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT != 1)
+#error QGW8 reuse worker must use the matching BFP8 retained-input leaf
+#endif
 #if !defined(PIONEER_Q38_BFP8_WORKER_DIAGNOSTIC) || PIONEER_Q38_BFP8_WORKER_DIAGNOSTIC != 1 \
  || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC)
 #error BFP8 worker loader is an isolated offboard diagnostic, not Work or device authority
 #endif
 #if defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) && (PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT != 1 \
- || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
- || defined(PIONEER_Q38_BF16_WORKER_IMAGE) || defined(PIONEER_DRIVER_BUILD_TAG) \
- || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) \
+ || (defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) && !defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
+ || (defined(PIONEER_Q38_BF16_WORKER_IMAGE) && !defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || (defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)) || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
  || defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION))
-#error BFP8 input reuse is an isolated leaf experiment, never a hybrid or driver image
+#error BFP8 input reuse requires its isolated leaf or QGW9 inspection role, never a driver
 #endif
 #include "PioneerQ38Bfp8WorkerJob.h"
 #include "PioneerDramCohortReadSweep.h"
