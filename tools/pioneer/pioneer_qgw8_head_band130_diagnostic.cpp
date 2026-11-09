@@ -35,8 +35,8 @@ bool Result(const PioneerNativeDramModelBandRequest& r,unsigned sample,uint64_t 
 bool Delivered(){return !fflush(stdout) && !ferror(stdout);}
 }
 int main(int argc,char** argv){
- if(argc!=2 || strcmp(argv[1],"--fixed-qgw8-head-bands")){
-  fputs("Use --fixed-qgw8-head-bands for three DEBUG samples, not model/Work inference.\n",stderr);return 2;
+ if(argc!=2 || (strcmp(argv[1],"--fixed-qgw8-head-bands") && strcmp(argv[1],"--verify-source-only"))){
+  fputs("Use --verify-source-only or --fixed-qgw8-head-bands for DEBUG, not model/Work inference.\n",stderr);return 2;
  }
  if(geteuid()!=0)return 1;
  PioneerQgw8HeadBandSource source;std::string error;
@@ -45,6 +45,9 @@ int main(int argc,char** argv){
   fprintf(stderr,"HEAD130_SOURCE_REFUSED: %s;NO_DEVICE_OPEN\n",error.c_str());return 1;
  }
  puts("HEAD130_SOURCE_VERIFIED real_head_bands3 fixed_cpu_reference;DEBUG_NOT_WORK");if(!Delivered())return 1;
+ if(!strcmp(argv[1],"--verify-source-only")){
+  puts("PASS_HEAD130_SOURCE_ONLY;NO_DEVICE_OPEN");return Delivered()?0:1;
+ }
  uint64_t seriesGeneration=0;
  for(unsigned sample=0;sample<3;sample++){
   if(!source.Ready())return 1;

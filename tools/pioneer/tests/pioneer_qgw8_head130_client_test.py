@@ -41,6 +41,10 @@ program=program.replace('v.held=v.l1_restored=v.tlb_restored=end;', '''
  r.result.phase=end?10:5;r.result.gddr_restored=r.result.niu_restored=r.result.clock_restored=end;
  r.result.requests=320;r.result.flits=2880;r.result.saved_l1=55372;r.result.saved_gddr=46080;
 ''')
+program=program.replace('scenario==80?bad:option', 'scenario==80?bad:scenario==81?const_cast<char*>("--verify-source-only"):option')
+program=program.replace('scenario==0?0:scenario==80?2:1', '(scenario==0 || scenario==81)?0:scenario==80?2:1')
+program=program.replace('else if(scenario==70 || scenario==80 || scenario==50)',
+                        'else if(scenario==81){assert(prepared==1 && !opened && !closed && !queries && !supports && !runs && !ends);}\n else if(scenario==70 || scenario==80 || scenario==50)')
 program=program.replace('CLIENT_SOURCE',str(here.parent/'pioneer_qgw8_head_band130_diagnostic.cpp')).replace('ACTUAL_RELOAD_CONTROL',control)
 with tempfile.TemporaryDirectory(prefix='qgw8-head130-client-',dir='/private/tmp') as tmp:
     folder=Path(tmp);(folder/'Drivers.h').write_text('#pragma once\n#define B_DEVICE_OP_CODES_END 10000\n')
@@ -54,7 +58,7 @@ with tempfile.TemporaryDirectory(prefix='qgw8-head130-client-',dir='/private/tmp
         for target in range(3):
             for word in (range(64) if scenario in (20,31) else (0,)):
                 cases.append((scenario,target,word))
-    cases.extend((scenario,0,0) for scenario in (50,51,53,60,61,62,70,80))
+    cases.extend((scenario,0,0) for scenario in (50,51,53,60,61,62,70,80,81))
     for scenario,target,word in cases:
         result=subprocess.run([str(folder/'test'),str(scenario),str(target),str(word)],text=True,capture_output=True,
                               env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
@@ -64,6 +68,8 @@ with tempfile.TemporaryDirectory(prefix='qgw8-head130-client-',dir='/private/tmp
             raise RuntimeError('success transcript mismatch')
         if scenario==20 and 'HEAD130_NUMERICAL_MISMATCH' not in result.stderr:
             raise RuntimeError('numerical mismatch not reported')
+        if scenario==81 and (result.stderr or 'PASS_HEAD130_SOURCE_ONLY;NO_DEVICE_OPEN' not in result.stdout):
+            raise RuntimeError('source-only transcript mismatch')
 if hashlib.sha256((private/'PioneerNativeBfpModelBandMetadata.h').read_bytes()).hexdigest()!=pin:
     raise RuntimeError('private metadata changed')
 print('PASS actual head130 client: %d synthetic source/FD/reload/RUN/END/output-fault cases; NO DEVICE'%len(cases))
