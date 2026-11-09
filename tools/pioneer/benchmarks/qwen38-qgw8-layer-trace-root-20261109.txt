@@ -47,5 +47,23 @@ command. A permanently busy synthetic transfer reached the bounded fault
 path without issuing a subsequent packet or publishing the destination.
 This is still synthetic NoC behavior and does not prove hardware safety.
 
+Separate trace program DATA
+---------------------------
+The pinned trace ROOT and unchanged QGW8 worker can now be packaged as a
+distinct offline QTPA family, selected only by an explicit trace-programs
+inspection role. Two independent generated headers match SHA-256
+60803a2dfe96d9e45ec5da6f71f795b2ca2eb1cf82c013ec1a42841bfb517bd1.
+The generator authenticates every input section and the complete ELFs, and
+tests compared 3,608,359 emitted words over all 120 worker layouts. Existing
+QGW8 candidate DATA stayed byte-identical; its generator rejects this trace
+ROOT. Native candidate tag128, hidden tag129, fake native, CPU validation,
+Work and other conflicting roles reject the trace selector, including a
+defined-zero selector. The previous QGW8 coarse-profile regression passed.
+
+This packaging does not allocate or initialize the trace slots and has no
+native driver, upload, readout, or hardware permission. It is not an
+inference-speed result. Next work must establish those ownership and data
+contracts and qualify failure recovery before any card operation.
+
 Test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B
