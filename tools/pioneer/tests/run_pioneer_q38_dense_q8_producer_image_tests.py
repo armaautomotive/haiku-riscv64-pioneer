@@ -43,7 +43,7 @@ flags=['-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_HEAD_M
  '-DPIONEER_Q38_HYBRID_WORKER_IMAGE=1','-DPIONEER_Q38_BF16_WORKER_IMAGE=1',
  '-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1','-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 with tempfile.TemporaryDirectory(prefix='qgwb-dense-producer-image-',dir='/private/tmp') as directory:
-    tests=[('producer',leaf)] + ([('matrix',bfp8)] if bfp8 else [])
+    tests=[('producer',leaf)] + ([('matrix',bfp8),('connected',bfp8)] if bfp8 else [])
     for name,selected_leaf in tests:
         binary=Path(directory)/name
         subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',

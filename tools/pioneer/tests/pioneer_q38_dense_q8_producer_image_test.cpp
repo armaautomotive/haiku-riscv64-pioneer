@@ -11,7 +11,7 @@ struct DenseProducerImage:TransitionImage {
  std::array<uint32_t,256> input={};std::map<unsigned,unsigned> bank;
  std::array<uint32_t,64> descriptor={};std::array<uint32_t,8> before={};
  unsigned packets=0;bool producing=false;
- DenseProducerImage(const char* worker,const char* leaf):TransitionImage(worker,leaf,1){}
+ DenseProducerImage(const char* worker,const char* leaf,unsigned width=17408):TransitionImage(worker,leaf,1,width){}
  static bool ProducerL1(unsigned a){return Range(a,BP::Descriptor,256) || Range(a,0x90000,3712);}
  uint32_t Load(uint32_t a)override{
   if(producing && ProducerL1(a))return WordRead(a);
@@ -62,6 +62,7 @@ struct DenseProducerImage:TransitionImage {
   producing=false;
  }
 };
+#ifndef PIONEER_Q38_DENSE_Q8_CONNECTED_TEST
 int main(int argc,char** argv){
  assert(argc==3);DenseProducerImage image(argv[1],argv[2]);image.Boot();
  // Exact image pin in runner binds this synthetic layer-history injection.
@@ -72,3 +73,4 @@ int main(int argc,char** argv){
  invalid.StageProducer(5,1,true);assert(!invalid.FinishCombined(1) && !invalid.packets);
  puts("PASS actual QGWB dense BF16 producer and proof for Q/G,K,V; synthetic history/NoC; NO HARDWARE OR SPEED");
 }
+#endif
