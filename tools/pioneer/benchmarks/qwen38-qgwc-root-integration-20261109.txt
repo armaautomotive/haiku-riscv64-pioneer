@@ -74,3 +74,11 @@ START/OBSERVE/HOLD/READ/FINISH success path, wrong-tag and unsupported-owner
 refusals, and clock/start/record failure retention. The original tag128
 session suite and the tag134 protocol-role regression also pass. All of these
 use fake endpoints; they do not validate model output or hardware performance.
+
+Physical launch preparation: a separate generation16 -> tag136 generation17
+one-shot parent authenticates the exact stable/candidate driver, client,
+preflight tool and output gate; independently verifies the full model and
+three caches before any driver swap; and restores stable generation18 only
+after a clean FINISH/close and transcript-shape check. A one-use marker blocks
+retries. Synthetic parent-flow and single-token output-gate tests passed;
+no actual full-model result is implied by these preparations.

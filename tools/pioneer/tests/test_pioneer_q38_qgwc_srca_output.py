@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Test one-token transcript shape only; synthetic and no device."""
+from pathlib import Path
+import subprocess
+
+gate=Path(__file__).resolve().parent.parent/'pioneer_q38_qgwc_srca_output.awk'
+rows=['HYBRID_FULL_CANDIDATE preflight; unqualified, no device open yet',
+ 'HYBRID_PREFLIGHT 21/1351','HYBRID_PREFLIGHT 1351/1351',
+ 'HYBRID_UPLOAD 268435456/21167624192','HYBRID_UPLOAD 21167624192/21167624192',
+ 'HYBRID_START_REQUEST diagnostic only; no completion implied','HYBRID_STARTED upload_and_start_seconds=24.000',
+ 'HYBRID_PENDING seconds=30.002 pc_first=456 pc_second=789; diagnostic only',
+ 'HYBRID_RESULT prompt_tokens=1 generated_tokens=1 inference_seconds=10.000 (includes START and prompt processing)',
+ 'QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT 0.100000','HYBRID_TOKEN 70253',
+ 'HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated']
+def run(lines):return subprocess.run(['awk','-f',str(gate)],input='\n'.join(lines)+'\n',text=True,capture_output=True)
+assert run(rows).returncode==0 and 'outputs=1 first_token=70253' in run(rows).stdout
+zero=rows[:8]+[rows[8].replace('generated_tokens=1','generated_tokens=0'),rows[-1]]
+assert run(zero).returncode==0
+bad=[rows[:-1],rows[:2]+rows[3:],rows[:4]+rows[5:],rows[:5]+rows[6:],rows[:9]+rows[10:],
+ rows[:10]+['HYBRID_TOKEN 248320']+rows[11:],rows[:8]+[rows[8].replace('generated_tokens=1','generated_tokens=2')]+rows[9:],
+ rows[:5]+[rows[5],rows[5]]+rows[6:],rows[:8]+[rows[8].replace('inference_seconds=10.000','inference_seconds=0.000')]+rows[9:],rows+['unexpected']]
+for case in bad:assert run(case).returncode!=0,case
+print('PASS QGWC single-token transcript and malformed cases; synthetic only')
