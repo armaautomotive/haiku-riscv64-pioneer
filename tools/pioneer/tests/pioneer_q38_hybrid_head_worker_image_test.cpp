@@ -182,4 +182,5 @@ int main(int argc,char** argv){
  "QGW8",
 #endif
  argc>=4?256U:64U,argc>=4?" using actual planned job":"");
+ return 0;
 }

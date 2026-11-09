@@ -62,3 +62,24 @@ tag133 diagnostic driver rebuilt to its exact prior binary SHA-256
 02208326fff242a9300dd8cc33cdf84ca29282d7ab13d572b4144e58b7eb75e5.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_root_receipt_tests.py PINNED_WORKER PINNED_LEAF
+
+Distinct offline controller image
+---------------------------------
+A separate QGWA controller image now builds with the batched receipt grammar
+and corresponding worker boot identity. Independent builds produced identical
+program.elf SHA-256 99a0dc86b01efa012323b8602668e74b757547927a60a1a4b8808df76a9c07de.
+The tag133 diagnostic ROOT rebuilt to its previous ELF hash, and explicit
+image-role/conflicting-selector refusal checks passed.
+
+The actual linked QGWA ROOT receipt instructions were run in the instruction
+simulator against QGWA worker-produced simulated receipts for 1/2/3/8 head
+bands and BFP8 FFN widths 5120/17408. They accepted those receipts, rejected
+selected corrupted proof/counter fields, and the earlier QGW8 ROOT receipt
+rejected the QGWA worker identity. These tests execute the receipt routine,
+not a complete ROOT lifecycle or real ROOT-worker fabric. Worker history is
+injected and hardware ordering, full model correctness, source ownership,
+native driver, clean lifecycle, Assistant integration and speed remain
+unqualified. The image is not installed or selectable by Work.
+
+ python3 tools/pioneer/tests/test_pioneer_q38_qgwa_batch_root_image_role.py
+ python3 tools/pioneer/tests/run_pioneer_q38_qgwa_linked_root_receipt_tests.py WORKER LEAF QGWA_ROOT OLD_ROOT
