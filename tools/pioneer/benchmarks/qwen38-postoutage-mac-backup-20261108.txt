@@ -1,0 +1,23 @@
+Post-outage Haiku disk backup to Mac, 2026-11-08 local
+======================================================
+
+With the user's explicit approval, the pinned Linux host read the entire
+unmounted Samsung SSD S14CNSAD300075H (120034123776 bytes) read-only over
+the authenticated SSH connection. The source serial, partition UUID, size,
+partition geometry and mount state were checked before the exclusive read.
+The source-side SHA-256 matched the streamed bytes. After an fsync, the Mac
+read the entire 120034123776-byte file and obtained the same SHA-256:
+
+dd524c2f36234dae6153413e2690556eb0bcedda12e80bff55f2d84e6fa403a5
+
+The backup process actually exited 0 and published BACKUP_VERIFIED. Its
+local path is generated.pioneer/haiku-postoutage-backup-8ykeh2ji/samsung.raw.
+The remaining samsung.raw.partial name is a second hard link to the SAME
+inode, not a second backup or second allocation. No copy was deleted. The
+directory is git-ignored. About 21 GiB remained free on the Mac afterward.
+
+This is one full disk image on the Mac, not a tested restore or an independent
+proof of the source filesystem's consistency. The interrupted experiment and
+driver state are included as they stood after the outage and subsequent
+Haiku boot. This backup does not establish the interrupted trial's outcome,
+permit a retry, or qualify the experimental driver for inference.
