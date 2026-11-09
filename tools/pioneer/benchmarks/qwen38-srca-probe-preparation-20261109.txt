@@ -1,0 +1,31 @@
+Qwen 3.8 dense attention SrcA two-base diagnostic preparation
+
+Purpose: distinguish the original 0x80 and hypothesized 0x40 SrcA base on
+physical silicon, using one fixed 32-lane PV fixture instead of uploading
+the full model. This is a diagnostic only: no source here authorizes a launch.
+The previous shift hypothesis is based on separate physical model traces,
+not a same-run capture and not a documented silicon address rule.
+
+The linked RV32 image runs the production cached, four-product BF16 PV
+function twice, with identical input and probability 1.0, original base
+first and candidate base second. It publishes 64 raw output words, not a
+CPU comparison. A separate host test interprets them. It has distinct SCP1
+and SCPF terminal markers and fault-park behavior. Input fixture is 256 FP16
+values (i+1)/256; first 32 are the output lanes; probability is FP32 1.0.
+
+Two independently built images reproduce the same pinned boot and text
+hashes. Host-side control flow and the linked RV32 image reproduce the old
+four-lane shift and corrected output in the alternative address model.
+This is NOT a silicon test and does not establish correctness, speed,
+device ownership, reset safety, hardware qualification, or model quality.
+
+An eventual disposable owner must independently reserve, initialize, audit,
+save and restore every touched address and device resource, including the
+boot word 0x6000, private ROM at 0x70000, stack below it, probability word
+0x82000, 256 output bytes 0x92000, FP16 source at 0xa0000, the two matrix
+regions including headers at 0xa4ff0 and 0xa5ff0, the two vector regions
+including headers at 0xa6ff0 and 0xa73f0, terminal words 0x17ffc0, source
+and destination banks, FPU configuration, tile reset and selected TLBs.
+This list is a preparation checklist, not an audited complete footprint.
+It must refuse concurrent use and retain/quarantine on uncertain completion.
+No change has been made to the installed driver or Assistant Work mode.
