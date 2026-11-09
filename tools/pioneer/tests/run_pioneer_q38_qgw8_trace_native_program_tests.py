@@ -42,11 +42,18 @@ for options,suffix in ((flags,'#undef PIONEER_Q38_QGW8_TRACE_NATIVE_131\n'),
     result=subprocess.run([compiler,'-std=c++17',*options,'-fsyntax-only','-x','c++','-'],
                           input=include+suffix+include,text=True,capture_output=True)
     assert result.returncode,'late native program selection accepted'
-# Until the lifecycle and real control path exist, the existing reload
-# protocol must explicitly refuse this identity even with all role flags.
+# Tag131 has its own reload identity; a valid build is not authorization to
+# install or run it before the remaining lifecycle and physical checks.
 reload=here.parents[2]/'src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h'
-reloaded=subprocess.run([compiler,'-std=c++17',*flags,'-E','-x','c++',str(reload)],capture_output=True,text=True)
-assert reloaded.returncode and 'QGW8 native candidate requires its exact tag128 reload identity' in reloaded.stderr
+def reload_check(options,okay):
+    result=subprocess.run([compiler,'-std=c++17',*options,'-E','-x','c++',str(reload)],capture_output=True,text=True)
+    assert (result.returncode==0)==okay,result.stderr[:1000]
+reload_check(flags,True)
+for name in ('PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_QGW8_TRACE_NATIVE_131','PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128','TT_PIONEER_DRIVER_RELOAD'):
+    option='-D'+name+'=1'
+    reload_check([x for x in flags if x!=option],False)
+    reload_check([x for x in flags if x!=option]+['-D'+name+'=0'],False)
+reload_check([x for x in flags if not x.startswith('-DPIONEER_DRIVER_BUILD_TAG=')]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010129ULL'],False)
 with tempfile.TemporaryDirectory(prefix='qgw8-trace-native-program-',dir='/private/tmp') as name:
     tmp=Path(name); outputs=[]
     protocol=tmp/'protocol'

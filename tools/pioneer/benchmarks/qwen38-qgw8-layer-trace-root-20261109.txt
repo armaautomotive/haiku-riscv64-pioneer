@@ -246,12 +246,20 @@ user-copy and device endpoints; the tag131 RISC-V control test object is not
 a full driver. The ordinary tag129 driver again rebuilt to its previous
 SHA-256 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
 
-No tag131 driver object or client exists. The existing reload protocol
-explicitly refuses tag131. This identity must not be loaded or run; the
-source dispatch has not proven a real FD, lifecycle, buffer ownership,
-combined kernel stack, cleanup, accelerator result or speedup.
+Two same-SDK complete experimental tag131 driver builds now match SHA-256
+30d447d890605684bbc98c61e2f4427014c64024bac1e8bc9a8d17a9d08522b3.
+The builder pins all 15 program sections and checks required driver symbols,
+forbidden CPU/reference symbols and individual stack frames. The reload
+protocol now recognizes only the exact isolated tag131 identity; this is a
+build enabler, not evidence that it is safe to reload. Tag129 still rebuilds
+to its previous SHA-256. The separate trace client and end-to-end lifecycle
+are not finished, and the tag131 binary has NOT been installed or run.
+It must not be loaded or run until real-FD/source/buffer ownership, combined
+stack, fault/cleanup and controlled recovery are established. No hardware
+result or speedup follows from this build.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_native_program_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B ABS_WORKER --sdk ABS_HAIKU_SDK
+ python3 tools/pioneer/build_q38_qgw8_candidate128.py ABS_HAIKU_SDK ABS_PINNED_TAG131_HEADER NEW_ABS_OUTPUT --trace-131
 
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init
