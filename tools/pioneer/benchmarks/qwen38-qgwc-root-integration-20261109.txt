@@ -19,3 +19,14 @@ These are synthetic tests, not a full Qwen inference or P100A benchmark. The
 coordinator build does not itself provide a native owner or model launch path.
 The next required step is an independently identified combined program bundle
 and guarded full-model owner, followed by real token correctness and speed.
+
+QTPF combined bundle update: independently built ROOT and worker pairs produce
+identical authenticated program DATA SHA-256
+fbde4c739bb7bce2c76cb4a1d6ac93c4a083a4de9c559433686e8f036e34a1b0.
+All 15 section arrays were checked against their binaries across all 120
+workers, covering 3,608,293 words inside the conservative hybrid journal.
+Corrupted ELF/section, duplicate selector, mixed-selector and existing-output
+cases were refused. The QTPF and QGWC/QGOC identities are asserted together;
+native/Work selectors are refused. The old QGW8 bundle still generates.
+This package is inspection DATA only: the retained startup plan and native
+owner are not yet adapted, so it cannot launch a full model.

@@ -21,7 +21,10 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
-#if defined(PIONEER_Q38_QGW8_DENSE_VALUE_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134)
+#if defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
+static_assert(PioneerQ38TokenPrograms::Family==0x46505451 && PioneerQ38TokenL1::Family==0x35505451,
+ "QGWC programs require their distinct QTPF identity and hybrid journal geometry");
+#elif defined(PIONEER_Q38_QGW8_DENSE_VALUE_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134)
 static_assert(PioneerQ38TokenPrograms::Family==0x45505451 && PioneerQ38TokenL1::Family==0x35505451,
  "dense-value offline programs require their distinct QTPE identity and expanded journal geometry");
 #elif defined(PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION)
