@@ -1,0 +1,36 @@
+QGW8 all-layer trace ROOT: isolated offline build, 2026-11-09
+
+The physical tag129 run found a substantial final-hidden mismatch, but it
+captured no intermediate layers. This experimental ROOT variant copies each
+of the 64 just-returned layer hidden vectors for position zero to a separate
+workspace slot before moving to the next layer. It uses the existing ROOT
+scoped transfer/counter path, 16384- and 4096-byte chunks, and reserves
+64*20480 = 1,310,720 bytes of address geometry. The chosen proposed slots
+follow the token-record extent and fit within the existing workspace extent.
+They are NOT yet an authenticated allocation or a native-owned trace buffer.
+
+This is a build-only inspection image, NOT a driver, program-ownership
+grant, trace readout, CPU comparison, Work/Assistant feature or speedup.
+It MUST NOT be installed or run on hardware. Before any hardware use, prove
+full workspace ownership/initialization, no alias with all live extents,
+source immutability, write completion and visibility/readback, exact layer
+association, cancellation/fault/cleanup behavior, combined stack, bounded
+owner lifetimes and a separately pinned native/client protocol. The earlier
+physical cancellation experiment failed and quarantined the card; this
+variant does not assume that mechanism works or reuse it as an authority.
+
+The unmodified QGW8 ROOT rebuilt to its prior ELF SHA-256
+8b7bac64e64d963e729e347a209c3ca4be951992aa924ead0c48d97e0e79478f.
+Two same-SDK trace builds matched ELF SHA-256
+a103f6d5134355ba7d0af0479e7f09f34e31591850fa2fc566abfc079821e402;
+their returning-layer and feedback components matched the old ROOT objects.
+The ordinary native-candidate generator rejected the modified ROOT before
+opening its worker input. Role checks reject native, kernel, Work, other
+experiment roles, zero and late selectors. The actual emitted trace helper
+was executed in an RV32 simulator with Owner and Transfer intercepted: all
+64 slot addresses at both workspace extremes and four state refusals passed.
+This tests the compiled helper's call geometry, NOT the actual NoC transfer,
+full ROOT execution, model values, device safety, or physical timing.
+
+Test:
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B

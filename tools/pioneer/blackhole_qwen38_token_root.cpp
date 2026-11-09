@@ -4,6 +4,7 @@
 #include "PioneerQ38TokenCommitBoundaryRole.h"
 #include "PioneerQ38Qgw8CommitBoundaryRole.h"
 #include "PioneerQ38Qgw8CoarseProfileRole.h"
+#include "PioneerQ38Qgw8LayerTraceRole.h"
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
@@ -129,6 +130,25 @@ static __attribute__((noinline,section(".conv.token"))) void Transfer(unsigned r
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
  for(unsigned i=0;i<8;i++)p->state[Counts+i]=expected[i];
 }
+#ifdef PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE
+// Position zero only. Copies the actual just-closed layer state using the
+// existing scoped transfer/counter journal. This is a new offline image,
+// not a promise that a native owner has allocated or initialized this area.
+static __attribute__((noinline,section(".conv.token"))) void TraceLayer(unsigned layer){
+ enum {TraceOffset=0x3500000,TraceStride=20480};
+ static_assert(T::OutputOffset+T::Context*T::RecordBytes<=TraceOffset
+  && TraceOffset+64*TraceStride<=L::WorkspaceBytes,"trace must not overlap token records or workspace end");
+ auto* p=Owner();
+ if(layer>=64 || p->phase!=1 || p->state[Position] || p->state[Completed]!=layer+1
+  || p->state[Layer]!=layer)scalar_fault_park();
+ const unsigned base=p->state[Workspace];
+ for(unsigned at=0;at<TraceStride;at+=16384){
+  const unsigned bytes=TraceStride-at<16384?TraceStride-at:16384;
+  Transfer(base+R::FinalOffset+at,bytes,false);
+  Transfer(base+TraceOffset+layer*TraceStride+at,bytes,true);
+ }
+}
+#endif
 #include "blackhole_qwen38_token_metadata_control.inc"
 #ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
 extern "C" void q38_token_cancellation_point();
@@ -190,6 +210,9 @@ extern "C" void q38_global_chain_main(){
    for(unsigned i=0;i<8;i++)owned.state[Counts+i]=*Words(0xffb20000+Counter(i));
    if(owned.state[Counts+2]!=owned.state[Counts+6])scalar_fault_park();
    owned.state[Completed]=layer+1;owned.phase=1;
+#ifdef PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE
+   if(!position)TraceLayer(layer);
+#endif
    Words(L::Progress)[0]=T::Magic;Words(L::Progress)[1]=position;Words(L::Progress)[2]=layer+1;Fence();
 #ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
    q38_token_cancellation_point();
