@@ -17,7 +17,7 @@ static_assert(PioneerQ38Qgw8HiddenUploadRole==0,"late QGW8 hidden upload removal
 #endif
 #if defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) && (PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
  || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
- || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || defined(PIONEER_Q38_QGW8_COARSE_PROGRAMS_INSPECTION) || defined(_KERNEL_MODE) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
 #error QGW8 tag128 client requires its distinct candidate role

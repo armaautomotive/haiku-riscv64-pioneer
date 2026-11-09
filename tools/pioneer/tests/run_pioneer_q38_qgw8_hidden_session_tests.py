@@ -31,7 +31,8 @@ for name in names:
     assert probe([flag for flag in roles if flag != '-D' + name + '=1']).returncode, name
 for name in ('_KERNEL_MODE', '__FAST_MATH__', 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE',
              'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE',
-             'PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128', 'PIONEER_Q38_QGW8_HIDDEN_NATIVE_129'):
+             'PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128', 'PIONEER_Q38_QGW8_HIDDEN_NATIVE_129',
+             'PIONEER_Q38_QGW8_COARSE_PROGRAMS_INSPECTION'):
     assert probe(roles + ['-D' + name + '=1']).returncode, name
 bad = [f for f in roles if f != '-DPIONEER_Q38_QGW8_HIDDEN_CLIENT_129=1'] + ['-DPIONEER_Q38_QGW8_HIDDEN_CLIENT_129=0']
 assert probe(bad).returncode

@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgw8candidate='--qgw8-native-candidate' in args
+args=sys.argv[1:];qgw8coarse='--qgw8-coarse-profile-inspection' in args
+if qgw8coarse:
+    if args.count('--qgw8-coarse-profile-inspection')!=1 or any(x in args for x in ('--qgw8-native-candidate','--qgw8-head-inspection','--matrix-native-candidate','--matrix-attention-inspection')):
+        raise SystemExit('ambiguous QGW8 coarse profile selector')
+    args.remove('--qgw8-coarse-profile-inspection');args.insert(0,'--qgw8-head-inspection')
+qgw8candidate='--qgw8-native-candidate' in args
 if qgw8candidate:
     if args.count('--qgw8-native-candidate')!=1 or '--qgw8-head-inspection' in args:raise SystemExit('ambiguous QGW8 candidate selector')
     args.remove('--qgw8-native-candidate');args.insert(0,'--qgw8-head-inspection')
@@ -23,12 +28,13 @@ if matrix:
     if not candidate and not qgw8:
         if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
         args.remove('--matrix-attention-inspection')
-    if qgw8:from PioneerQ38Qgw8ProgramPins import ROOT_PINS, WORKER_PINS
+    if qgw8coarse:from PioneerQ38Qgw8CoarseProgramPins import ROOT_PINS, WORKER_PINS
+    elif qgw8:from PioneerQ38Qgw8ProgramPins import ROOT_PINS, WORKER_PINS
     else:from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
 else:
     from PioneerQ38HybridProgramPins import ROOT_PINS, WORKER_PINS
 if not __debug__ or len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--qgw8-head-inspection|--matrix-attention-inspection|--matrix-native-candidate] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
+    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--qgw8-coarse-profile-inspection|--qgw8-head-inspection|--qgw8-native-candidate|--matrix-attention-inspection|--matrix-native-candidate] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
 root, worker, output=map(Path,args)
 if not all(p.is_absolute() for p in (root,worker,output)) or output.exists() or output.is_symlink():
     raise SystemExit('new absolute output and absolute input paths required')
@@ -41,8 +47,8 @@ units += [(w,name,label,address) for name,label,address in (
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
-family='0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name='QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+family='0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
+name='QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -53,7 +59,19 @@ lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate co
 if matrix:
     lines += ['#if !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \\',
               ' || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \\']
-    if qgw8 and qgw8candidate:
+    if qgw8coarse:
+        lines += [' || !defined(PIONEER_Q38_QGW8_COARSE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_COARSE_PROGRAMS_INSPECTION != 1 \\',
+                  ' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
+                  ' || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \\',
+                  ' || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \\',
+                  ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\',
+                  ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) \\',
+                  ' || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) \\',
+                  ' || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) \\',
+                  ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
+                  ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
+                  '#error QGW8 coarse timing data is offline inspection only', '#endif']
+    elif qgw8 and qgw8candidate:
         lines += [' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128 != 1 \\',
                   ' || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \\',
@@ -123,4 +141,4 @@ encoded=('\n'.join(lines)+'\n').encode()
 with output.open('xb') as target:
     if target.write(encoded)!=len(encoded):
         raise OSError('incomplete generated output')
-print('PASS PINNED '+('QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')
+print('PASS PINNED '+('QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')

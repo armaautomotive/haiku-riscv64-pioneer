@@ -42,6 +42,8 @@ for name in ('_KERNEL_MODE', '__FAST_MATH__', 'PIONEER_Q38_CPU_VALIDATION', 'PIO
              'PIONEER_Q38_HYBRID_CANDIDATE_UPLOAD_CLIENT', 'PIONEER_Q38_HYBRID_TRACKED_UPLOAD_CLIENT',
              'PIONEER_Q38_HYBRID_FIXED_126', 'PIONEER_Q38_HYBRID_MATRIX_CLIENT_127'):
     assert probe(roles + ['-D' + name + '=1']).returncode, name
+if candidate:
+    assert probe(roles + ['-DPIONEER_Q38_QGW8_COARSE_PROGRAMS_INSPECTION=1']).returncode
 assert probe([flag for flag in roles if flag != '-DPIONEER_Q38_QGW8_FULL_SESSION_INSPECTION=1']
              + ['-DPIONEER_Q38_QGW8_FULL_SESSION_INSPECTION=0']).returncode
 late = source + ('#undef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION\n'

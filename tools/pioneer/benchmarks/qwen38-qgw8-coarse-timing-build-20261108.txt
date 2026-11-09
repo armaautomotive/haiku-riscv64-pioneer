@@ -23,7 +23,7 @@ The only emitted CSR sequence is three bounded read-only mcycleh/mcycle/
 mcycleh reads in the sampling helper. Raw cycles are not wall time without a
 verified clock rate; sampling has overhead and buckets are inclusive.
 
-Offline checks: 89 role-isolation cases; the previous commit-optimization
+Offline checks: 91 role-isolation cases; the previous commit-optimization
 role regression; legacy phase-data and role tests; exact instruction-level
 verification of all emitted timing call sites; separate section extraction;
 and actual linked helper execution against synthetic clocks for 21 histories,
@@ -31,9 +31,20 @@ including rollover and nine invalid-data cases. The old QGW8 program builder
 refuses the new image before opening a worker or creating a header. These
 checks do not execute the entire ROOT, model, native owner or physical card.
 
-No program header, native driver, held-record reader, client or hardware
-test is provided for this profile yet. The image MUST NOT be installed or
-treated as a speedup, correctness qualification, Assistant mode or Work mode.
+The separate --qgw8-coarse-profile-inspection generator now authenticates
+this entire ROOT and the unchanged QGW8 worker and creates distinct QTP9
+offline program DATA. Independently generated headers matched SHA-256
+1cb876f284e7850491f6c2569bd30fd58b6e9011ddd485e764a8b9b8025cd91f.
+Tests checked every emitted program word across all 120 worker layouts,
+corrupt input, output-overwrite refusal, selector conflicts, and rejection
+of kernel, existing native/client, CPU-reference and Work roles. The existing
+tag128/tag129 native and diagnostic-client role checks also reject the new
+offline selector. The old QGW8 tag128 candidate header remained byte-identical. This is not a new
+driver or launch authority.
+
+No native driver, held-record reader, client or hardware test is provided
+for this profile yet. The image MUST NOT be installed or treated as a
+speedup, correctness qualification, Assistant mode or Work mode.
 The independently running tag129 hidden-state diagnostic is unchanged.
 Only after that run closes and its incorrect-token cause is localized should
 this distinct timing image be integrated with its own identity, ownership,
@@ -48,3 +59,4 @@ Build (new absolute output directory):
   --hybrid-matrix-attention --head-matrix-inspection --qgw8-coarse-profile
 Offline test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_coarse_profile_image_tests.py HAIKU_BUILD BASELINE_ROOT PROFILE_ROOT
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_coarse_programs_tests.py BASELINE_ROOT PROFILE_ROOT_A PROFILE_ROOT_B QGW8_WORKER
