@@ -47,6 +47,22 @@ namespace PioneerQ38SelectedGlobalWorker=PioneerQ38DenseQ8MatrixWorkerLayout;
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38HybridHeadWorkerLayout;
 #endif
 enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
+#elif defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
+#if PIONEER_Q38_QGWD_PROGRAMS_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) \
+ || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 || !defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) \
+ || PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION != 1 || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) \
+ || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 || !defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) \
+ || PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION != 1 || !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) \
+ || !defined(PIONEER_Q38_HYBRID_PROGRAMS_HEADER) || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
+ || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) \
+ || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error QGWD worker DATA requires isolated matching program and expanded journal roles
+#endif
+#include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
+namespace PioneerQ38SelectedGlobalWorker=PioneerQ38DenseQ8MatrixWorkerLayout;
+enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
 #elif defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
 #if PIONEER_Q38_QGWC_PROGRAMS_INSPECTION != 1 || (!defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) && !defined(PIONEER_Q38_QGWC_NATIVE_136)) \
  || (defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) && PIONEER_Q38_QGWC_PLAN_SIMULATION != 1) \

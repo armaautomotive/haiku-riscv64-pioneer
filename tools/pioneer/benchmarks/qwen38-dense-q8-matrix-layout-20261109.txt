@@ -224,3 +224,24 @@ QGWC coordinator/worker test still passes. This new ROOT only uses the
 QGWD identity: it does NOT yet invoke the dense Q8 matrix scheduler or
 establish correct accelerated full-model execution. No hardware or speed
 claim follows from these ROOT identity checks.
+
+Later QGWD inspection work supersedes the identity-only ROOT above. The
+experimental dispatcher now selects the dense Q8 producer/scheduler/matrix
+job/result branches. Direct RV32 simulation checks cover canonical recipe
+capture through producer entry, isolated producer/job/schedule/result
+functions, malformed metadata and the old FFN/head regression. They do NOT
+yet cover the complete root/NoC/worker lifecycle or actual device execution.
+The host plan now preserves all QGW8 addresses, leaving 73,400,320 bytes in
+reserved, uninitialized holes; the separate QGWD ledger checks those holes.
+
+Two rebuilt QGWD ROOT images match ELF SHA-256
+5cf33c2c4eaf010879acd03a99cdd166c931e0a8400cc082322d407fe841aa21;
+the separately rebuilt QGWD worker images match ELF SHA-256
+b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8.
+The QTPG inspection bundle SHA-256 is
+184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328.
+All 15 actual code sections were checked across all 120 proposed expanded
+journal footprints. This is NOT production TokenMemory with QGWD, physical
+mapping/lifetime proof, a driver, or a speed result. ROOT .text is 131028 of
+131072 reserved bytes: only 44 bytes remain; future code must respect the
+linker boundaries rather than silently expanding into the terminal region.

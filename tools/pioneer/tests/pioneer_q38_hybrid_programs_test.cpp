@@ -11,7 +11,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
-namespace P=PioneerQ38HybridPrograms;namespace L=PioneerQ38HybridTokenL1;
+namespace P=PioneerQ38HybridPrograms;
+#ifdef PIONEER_Q38_QGWD_PROGRAMS_INSPECTION
+namespace L=PioneerQ38DenseQ8TokenL1;
+#else
+namespace L=PioneerQ38HybridTokenL1;
+#endif
 struct Section{const char* name;unsigned address;};
 static uint32_t Word(const std::vector<unsigned char>& bytes,unsigned at){
  return uint32_t(bytes[at])|uint32_t(bytes[at+1])<<8|uint32_t(bytes[at+2])<<16|uint32_t(bytes[at+3])<<24;

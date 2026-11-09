@@ -2,8 +2,8 @@
 #include "PioneerQ38HybridKernelCompileOnly.h"
 #include "PioneerQ38TokenBf16DataBoundary.h"
 #if defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) && (!defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
- || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION))
-#error Dense Q8 footprint selection requires the isolated QGW8 journal fixture
+ || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || (!defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) && !defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)))
+#error Dense Q8 footprint selection requires an isolated QGW8 or QGWD journal fixture
 #endif
 #if defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
  && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
