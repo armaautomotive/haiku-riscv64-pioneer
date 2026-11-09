@@ -16,6 +16,7 @@
 #include "pioneer_q38_dense_q8_prepared_pages_test.cpp"
 #include "../PioneerQ38HybridSpanUpload.h"
 #include "../PioneerQ38DenseQ8UploadReceiptInspection.h"
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
 struct FakeDenseIO {
  const PioneerQ38CanonicalModelPlan& canonical;DensePages& pages;
  PioneerQ38DenseQ8UploadReceiptInspection& receipt;PioneerQ38SpanLease& span;const void* context;
@@ -72,5 +73,9 @@ int main(){
  assert(upload.UploadedParts()==3551 && upload.UploadedBytes()==io.bytes && io.calls==upload.UploadedSpans() && io.converted>0);
  span.saved=true;span.closed=true;span.nonce=io.calls;span.ready=span.dirty=false;
  assert(receipt->Seal(span) && receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
- printf("PASS prepared dense-Q8 pages through %u fake span calls and sealed receipt; %u converted pages; NO HARDWARE OR MODEL\n",io.calls,io.converted);
+ std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> manifest={},expected={};
+ PioneerQ38HybridDenseQ8MatrixPlan::Proposal proposal;assert(PioneerQ38HybridDenseQ8MatrixPlan::Build(*canonical,proposal));
+ assert(PioneerQ38DenseQ8MatrixManifest::Build(*canonical,proposal,expected.data(),expected.size()));
+ assert(receipt->DenseManifest(manifest.data(),manifest.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && manifest==expected);
+ printf("PASS prepared dense-Q8 pages through %u fake span calls, sealed receipt and matching ROOT manifest; %u converted pages; NO HARDWARE OR MODEL\n",io.calls,io.converted);
 }
