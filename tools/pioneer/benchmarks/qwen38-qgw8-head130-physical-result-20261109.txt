@@ -2,16 +2,24 @@ QGW8 three real-head bands: physical P100A diagnostic, 2026-11-09
 
 The separately admitted one-shot parent completed with exit 0. Using the
 pinned CPU-reference final hidden state and three freshly verified 32-row
-output.weight bands, the actual P100A C64 GDDR-to-RV32-FPU diagnostic matched
-all 64 output words per band (two jobs per 32-row band), 192 in total. Each
+output.weight bands, the actual P100A C64 GDDR-to-Tensix matrix diagnostic
+matched all 64 output words per band (two jobs per 32-row band), 192 in total. Each
 of the three sessions reported a checked clean END. Band first rows were 0,
 70240 and 108128; the latter two include the reference first token 70253 and
 the wrong token 108133, respectively. This was a diagnostic comparison with a
 CPU reference; it did not change or add CPU validation to Work mode.
 
-The device's BFP8 FPU leaf and GDDR path passed for these bands and this
-input. This is NOT a test of Tensix matrix engines, the entire QGW8 head
-scheduler, a card-produced hidden state, other vocabulary rows, full-model
+The device's BFP8 matrix leaf and GDDR path passed for these bands and this
+input. Correction: an earlier version of this note and the accompanying user
+update incorrectly said this was RV32 floating-point arithmetic and not a
+matrix-engine test. The authenticated C64 image comes from
+blackhole_q38_native_dram_band.cpp, whose RV32 controller calls
+PioneerNativeDramBandCompute::Run; its four-phase producer issues Tensix
+MVMUL matrix instructions through PioneerQ38NativeBfpBand and
+PioneerQ38NativeBfpMatvec. The 192 returned words are physical results from
+that diagnostic, not proof that every operation runs on the matrix engine.
+This is NOT a test of the entire QGW8 head scheduler, a card-produced hidden
+state, other vocabulary rows, full-model
 correctness or inference throughput. The full-model wrong first token is not
 resolved. The result narrows the investigation but cannot locate the fault
 alone. No tokens/second measurement or speedup is asserted.
