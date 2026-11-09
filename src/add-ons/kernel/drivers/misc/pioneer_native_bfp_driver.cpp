@@ -12,7 +12,11 @@
 #if defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+#if PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC != 1 || defined(PIONEER_NATIVE_SRCA_MAP_TEST_ONLY) || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110900010135ULL
+#error Distinct fixed SrcA diagnostic identity required
+#endif
+#elif defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 #if PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC != 1 || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010096ULL
 #error Distinct fixed full-K original-affine identity required
 #endif
@@ -28,6 +32,9 @@
 #undef find_device
 #include "PioneerNativeBfpLease.h"
 #include "PioneerNativeBfpGeneratedImage.h"
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+#include "PioneerNativeSrcaProbeProtocol.h"
+#endif
 #ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
 #include "PioneerNativeExactQ4AffineProtocol.h"
 #endif
@@ -36,7 +43,11 @@
 #endif
 
 namespace {
-#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+using ActiveRequest=PioneerNativeSrcaProbeRequest;
+static constexpr uint32 kSupport=PIONEER_NATIVE_SRCA_PROBE_SUPPORT,kRun=PIONEER_NATIVE_SRCA_PROBE_RUN,kEnd=PIONEER_NATIVE_SRCA_PROBE_END;
+static bool RequestValid(const ActiveRequest& r){return PioneerNativeSrcaProbeRequestValid(r);}
+#elif defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 using ActiveRequest=PioneerNativeExactQ4AffineRequest;
 static constexpr uint32 kSupport=PIONEER_NATIVE_EXACT_Q4_AFFINE_SUPPORT,kRun=PIONEER_NATIVE_EXACT_Q4_AFFINE_RUN,kEnd=PIONEER_NATIVE_EXACT_Q4_AFFINE_END;
 static bool RequestValid(const ActiveRequest& r){return PioneerNativeExactQ4AffineRequestValid(r);}
@@ -56,7 +67,7 @@ struct NativeIO: PioneerComputeNocIO {
 		tt_tensix_reset_result& c,tt_dram_samples_result& d,tt_compute_noc_result& n):PioneerComputeNocIO(p,a,t,c,d,n) {}
 	bool Map() {
 		if(!PioneerComputeNocIO::Map())return false;
-#ifdef PIONEER_NATIVE_SRCA_MAP_TEST_ONLY
+#if defined(PIONEER_NATIVE_SRCA_MAP_TEST_ONLY) || defined(PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC)
 		const uint32_t offsets[]={0x19006000,0x19070000,0x1906e000,0x19080000,0x1917f000,0x19312000,0x19313000};
 		const unsigned sizes[]={4096,4096,8192,0x28000,4096,4096,4096};
 #else
@@ -96,7 +107,7 @@ struct NativeIO: PioneerComputeNocIO {
 #endif
 		)) {view=1;offset=address-0x70000;}
 		else if(Within(address,0x6e000,8192)) {view=2;offset=address-0x6e000;}
-#ifdef PIONEER_NATIVE_SRCA_MAP_TEST_ONLY
+#if defined(PIONEER_NATIVE_SRCA_MAP_TEST_ONLY) || defined(PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC)
 		else if(address==0x82000 || Within(address,0x92000,256) || Within(address,0xa0000,512)
 			|| Within(address,0xa4ff0,2064) || Within(address,0xa5ff0,2064)
 			|| Within(address,0xa6ff0,528) || Within(address,0xa73f0,528)) {view=3;offset=address-0x80000;}
@@ -226,7 +237,7 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 		else {r.result.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;r.result.cold=sColdRecoveryRequired;status=user_memcpy(data,&r,sizeof(r));}
 		release_sem(sLock);return status;
 	}
-#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 	if(r.bits!=4)return B_BAD_VALUE;
 #endif
 	if((r.bits!=4 && r.bits!=8) || (operation==kRun?(r.nonce || r.accept):r.nonce!=1 || r.accept!=1))return B_BAD_VALUE;

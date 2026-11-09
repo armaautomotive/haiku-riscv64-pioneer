@@ -33,7 +33,7 @@ for forbidden_flags in ([], ['-DPIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY=1', '-
     result = subprocess.run([common[0], '-std=c++17', '-DB_DEVICE_OP_CODES_END=10000',
                              '-DPIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC=1', *forbidden_flags,
                              '-fsyntax-only', '-x', 'c++', str(lease)], capture_output=True, text=True)
-    assert result.returncode and 'confined to offline owner tests' in result.stderr, forbidden_flags
+    assert result.returncode and 'SrcA lease requires' in result.stderr, forbidden_flags
 with tempfile.TemporaryDirectory(prefix='q38-srca-probe-', dir='/private/tmp') as directory:
     tmp = Path(directory)
     for name in ('a', 'b'):
@@ -52,4 +52,5 @@ with tempfile.TemporaryDirectory(prefix='q38-srca-probe-', dir='/private/tmp') a
             subprocess.run([str(binary), *args], check=True, env=env)
     subprocess.run([sys.executable, str(here/'pioneer_native_bfp_mapping_test.py'), '--srca'], check=True, env=env)
     subprocess.run([sys.executable, str(here/'pioneer_native_bfp_client_test.py'), '--srca'], check=True, env=env)
+    subprocess.run([sys.executable, str(here/'pioneer_native_bfp_control_test.py'), '--srca'], check=True, env=env)
 print('PASS pinned duplicate images and synthetic tests; NO SILICON OR PERFORMANCE CLAIM')

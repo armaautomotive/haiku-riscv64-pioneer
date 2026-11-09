@@ -8,9 +8,10 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'], ['--exact-q4'], ['--exact-q4-affine'])
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'], ['--exact-q4'], ['--exact-q4-affine'], ['--srca'])
 affine=sys.argv[1:]==['--exact-q4-affine']
-exact = sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'])
+srca=sys.argv[1:]==['--srca']
+exact = sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'],['--srca'])
 band = sys.argv[1:] in (['--band'], ['--model'])
 model = sys.argv[1:]==['--model']
 name = 'pioneer_native_model_band_driver.cpp' if model else 'pioneer_native_bfp_band_driver.cpp' if band else 'pioneer_native_bfp_driver.cpp'
@@ -21,7 +22,7 @@ def extract(a, b):
     return source[start:source.index(b, start)]
 code = extract('static void Fault(', 'static bool FinishMmio(')
 if not band:
-    alias_begin = source.index('#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC', source.index('namespace {'))
+    alias_begin = source.index('#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC', source.index('namespace {'))
     code = source[alias_begin:source.index('struct NativeCookie', alias_begin)] + code
 code += extract('static void DisposeKnown(', 'static status_t Open(')
 code += extract('static status_t Free(', 'static status_t Control(')
@@ -175,6 +176,10 @@ if affine:
     prefix=prefix.replace('PioneerNativeExactQ4','PioneerNativeExactQ4Affine').replace('PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC','PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC')
     tests=tests.replace('PioneerNativeExactQ4','PioneerNativeExactQ4Affine').replace('PIONEER_NATIVE_EXACT_Q4_RUN','PIONEER_NATIVE_EXACT_Q4_AFFINE_RUN').replace('PIONEER_NATIVE_EXACT_Q4_END','PIONEER_NATIVE_EXACT_Q4_AFFINE_END')
     tests=tests.replace('PASS ACTUAL exact Q4','PASS ACTUAL exact Q4 full-K affine')
+if srca:
+    prefix=prefix.replace('PioneerNativeExactQ4','PioneerNativeSrcaProbe').replace('PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC','PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC')
+    tests=tests.replace('PioneerNativeExactQ4','PioneerNativeSrcaProbe').replace('PIONEER_NATIVE_EXACT_Q4_RUN','PIONEER_NATIVE_SRCA_PROBE_RUN').replace('PIONEER_NATIVE_EXACT_Q4_END','PIONEER_NATIVE_SRCA_PROBE_END')
+    tests=tests.replace('PASS ACTUAL exact Q4','PASS ACTUAL SrcA')
 if band:
     prefix = prefix.replace('#include "PioneerNativeBfpProtocol.h"', '#include "PioneerNativeBfpBandProtocol.h"\n#include "PioneerNativeBfpBandLayout.h"')
     prefix = prefix.replace('struct PioneerNativeBfpGeneratedImage{};', 'template<unsigned K>struct PioneerNativeBfpBandGeneratedImage{static constexpr unsigned Width=K;};')

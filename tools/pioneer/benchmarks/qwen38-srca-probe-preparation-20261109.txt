@@ -37,22 +37,33 @@ fall within the journal, and success restores the entire fake memory and two
 TLBs. Twelve injected staging, completion, reset, source and restore failures
 enter UNKNOWN and prohibit retry or implicit cleanup. Existing BFP lease
 regressions also pass. This remains a synthetic alternative-address model.
-The SrcA lease is preprocessor-restricted to offline tests: the existing live
-NativeIO maps a different footprint. Its MMIO mapping, image identity, client,
-parent lifecycle and real-hardware qualification still need separate work.
+At that stage the SrcA lease was restricted to offline tests: the existing live
+NativeIO maps a different footprint. At that stage its MMIO mapping, image
+identity, client, parent lifecycle and physical qualification remained open.
 
 The offline-only SrcA NativeIO mapping now passes exhaustive checks for all
 393216 aligned L1 words against the 4565-word lease journal, including the
 physical offsets, permissions and refusal of out-of-journal addresses. Seven
 partial-map failures and fifteen failed unmaps were injected. The original
 native-BFP and full-K affine mappings passed the same regression tests. The
-new range branch is compile-time prohibited in a kernel/driver build; these
-fake virtual mappings do not establish physical mapping or launch safety.
+new range branch is separately gated by the diagnostic role; these fake
+virtual mappings do not establish physical mapping or launch safety.
 
-A distinct fixed SrcA protocol/client is now prepared but not exposed by any
-driver. It requires a distinct tag, generation, idle ownership, completion
+A distinct fixed SrcA protocol/client was prepared. It requires a distinct
+tag, generation, idle ownership, completion
 marker, exact 64-word signature and explicit END; it prints every returned
 word and issues no END or retry on a mismatch. Eighty-eight synthetic syscall
 cases pass, including 64 separate per-word corruptions. This client deliberately
 accepts only the hypothesized signature; a different physical result causes a
 quarantine and preserves evidence, not a conclusion that the card is broken.
+
+The distinct tag135 diagnostic driver now builds with pinned probe image and
+the SrcA client. Two separate builds reproduce driver SHA-256
+fd07d0a51cc4efe764a1125f4babfe8b32866b5c15c87f1e4b2f197550bd0430
+and client SHA-256
+93bff45b96d1c31633445dd39beb67bd2f600ca9dc3499c5f573607a5f2f789a.
+The actual extracted controller passes 356 fake-endpoint cases, including
+foreign tags/opcodes, malformed requests, all nonzero result bytes, lifecycle
+failures and one-shot ownership. Existing native and exact-Q4 controllers pass
+regressions. This is build-only: no installation, loading or physical launch;
+the protected parent and actual current device state remain to be verified.
