@@ -11,7 +11,7 @@
 #define TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
-#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #include "../PioneerQ38HybridHeadModelPlan.h"
 #endif
@@ -75,7 +75,7 @@ struct TokenMemoryIO:CodeIO {
   Touch();reads++;if(badKind==1 && AtWord()){observed=touches;return false;}
   output=FullRead(worker,address);if(dropPending){dropPending=false;observed=touches;}
   if((badKind==2 && AtWord())
-#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION)
+#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (badKind==13 && AtMemory() && address==0x16c400+badOrdinal*4)
 #endif
    ){output^=1;observed=touches;}return true;
@@ -85,7 +85,7 @@ struct TokenMemoryIO:CodeIO {
   assert(memoryState && memoryState->savedWords==TOKL::SavedWords && memoryState->verifiedOriginalWords>=TOKL::SavedWords);
   if(memoryState->phase==3){uint32_t expected;assert(TOKP::ProgramWord(worker,address,expected) && expected==value);}
   else assert((memoryState->phase==6
-#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION)
+#if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (memoryState->phase==8 && worker==0 && address>=0x16c400 && address<0x16c400+64*3*7*4)
 #endif
    ) && TOKL::SnapshotContains(worker,address));
@@ -106,7 +106,7 @@ struct TokenMemoryGeometry {
   if(ready){for(unsigned i=0;i<1920;i++)assert(source[i]==current[i]);return;}
   for(unsigned i=0;i<1920;i++)source[i]=current[i];
   const uint32_t prompt[]={248319,17};
-#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
   // Derive exactly the receipt-owned relocated layout; this synthetic
   // upload is geometry/ledger evidence, not real model or hardware bytes.
   std::vector<uint8_t> pages(PioneerResidentBanks::Pages);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages);
@@ -169,7 +169,7 @@ struct TokenMemoryFixture {
 int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--faults") || !strcmp(argv[1],"--capsule-faults")
-#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
   || !strcmp(argv[1],"--qgw8-journal")
 #endif
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
@@ -206,7 +206,7 @@ int main(int argc,char** argv){
   }
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
  }
-#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
  if(!strcmp(argv[1],"--qgw8-journal")){
   {
    TokenMemoryFixture f;auto before=f.io.data;std::vector<uint32_t> panels;
@@ -224,20 +224,29 @@ int main(int argc,char** argv){
    assert(f.PrepareMemory() && f.memory->Installed() && f.result.savedWords==TOKL::SavedWords
     && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1));
 #ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
-   // Simulate a future image touching words beyond QGW8's old code extent.
-   // The original bytes must still be restored by the actual journal code.
+   // The QGWD image itself occupies part of the extra range. Preserve its
+   // integrity: a never-launched close deliberately checks all code first.
+   // Mutate only non-code padding, then verify original data is restored.
    f.io.track=false;for(unsigned worker:{1U,119U}){
     assert(f.io.SelectRuntimeCore(worker));
-    for(unsigned address:{0x23000U,0x23358U,0x23ffcU})f.io.FullWrite(worker,address,0x12345678U^address);
+    for(unsigned address:{0x23000U,0x23358U,0x23ffcU}){
+     uint32_t code;if(!TOKP::ProgramWord(worker,address,code))f.io.FullWrite(worker,address,0x12345678U^address);
+     else assert(f.io.FullRead(worker,address)==code);
+    }
    }f.io.track=true;
 #endif
    std::array<uint32_t,64> boot={};
    assert(Geometry().startup->ReadBoot(1,boot.data()) && PioneerQ38SelectedGlobalWorker::BootShape(boot.data())
-    && boot[0]==0x38574751 && boot[49]==0 && boot[50]==0x1ffc0000);
+    && boot[0]==PioneerQ38SelectedGlobalWorker::Magic && boot[49]==0 && boot[50]==0x1ffc0000);
    assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
    for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
    assert(f.memory->VerifyHybridManifestHeld(f.io,f.result));
-   assert(f.CloseMemory() && f.memory->Closed() && f.io.data==before && f.result.restoredWords==TOKL::SavedWords);
+   const bool closeOk=f.CloseMemory();
+   if(!closeOk || !f.memory->Closed() || f.io.data!=before || f.result.restoredWords!=TOKL::SavedWords){
+    fprintf(stderr,"journal close=%d closed=%d restored=%u expected=%u phase=%u unsafe=%d\n",int(closeOk),int(f.memory->Closed()),f.result.restoredWords,TOKL::SavedWords,f.result.phase,int(f.result.unsafe));
+    if(f.io.data!=before)for(size_t i=0;i<before.size();i++)if(f.io.data[i]!=before[i]){fprintf(stderr,"first differing word %zu: %08x != %08x\n",i,f.io.data[i],before[i]);break;}
+   }
+   assert(closeOk && f.memory->Closed() && f.io.data==before && f.result.restoredWords==TOKL::SavedWords);
    f.io.track=false;unsigned at=0;for(unsigned worker=0;worker<120;worker++){
     assert(f.io.SelectRuntimeCore(worker) && f.io.BootstrapIO::RuntimeCodeRead(0)==panels[at++]);
     for(unsigned i=0;i<4096;i++)assert(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4)==panels[at++]);
@@ -261,7 +270,22 @@ int main(int argc,char** argv){
    assert(!f.CloseMemory());f.Unknown();
   }
 #endif
+#ifdef PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory());
+   // The expanded area contains actual code, not just mutable padding.
+   // An altered installed instruction must quarantine before restoration.
+   uint32_t code;assert(TOKP::ProgramWord(119,0x23000,code));
+   f.io.track=false;assert(f.io.SelectRuntimeCore(119));f.io.FullWrite(119,0x23000,code^1);f.io.track=true;
+   assert(!f.CloseMemory() && f.result.phase==5 && f.result.restoredWords==0);
+   // A direct data mutation is not one of the mock's instrumented I/O faults;
+   // begin the no-further-I/O check at the returned failure boundary.
+   f.io.observed=f.io.touches;f.Unknown();
+  }
+  puts("PASS QGWD bundle held journal/expanded worker restore and corruption quarantine; QGW8 logical fixture, SIMULATED ONLY");return 0;
+#else
   puts("PASS QGW8 held journal and manifest install/verify/restore and fault quarantine; SIMULATED ONLY");return 0;
+#endif
  }
 #endif
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC

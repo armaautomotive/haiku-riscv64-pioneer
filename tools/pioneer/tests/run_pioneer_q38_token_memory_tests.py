@@ -8,6 +8,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+qgwd = '--qgwd-journal' in args
+if qgwd:
+    assert args.count('--qgwd-journal') == 1 and '--qgw8-journal' not in args
+    args[args.index('--qgwd-journal')] = '--qgw8-journal'
 dense_q8_footprint='--dense-q8-footprint' in args
 if dense_q8_footprint:
     assert args.count('--dense-q8-footprint')==1
@@ -58,7 +62,9 @@ assert hybrid_header is None or hybrid_journal, 'QGW5 DATA requires its distinct
 assert not qgw8 or (hybrid_journal and hybrid_header is not None and not args), 'QGW8 needs its isolated program and journal fixture'
 assert not dense_q8_footprint or qgw8, 'dense footprint requires isolated QGW8 journal fixture'
 if qgw8:
-    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest() == '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588', 'wrong QGW8 program DATA'
+    expected = '184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328' if qgwd else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588'
+    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest() == expected, 'wrong inspection program DATA'
+    assert not qgwd or dense_q8_footprint, 'QGWD needs its expanded journal footprint'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
@@ -91,9 +97,15 @@ if hybrid_header is not None:
               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"',
               '-I'+str(here.parent)]
     if qgw8:
-        profile+=['-DPIONEER_Q38_QGW8_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1',
+        profile+=['-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1',
                   '-DPIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION=1','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
                   '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
+        if qgwd:
+            profile+=['-DPIONEER_Q38_QGWD_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWD_PLAN_SIMULATION=1',
+                      '-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE=1']
+            print('QGWD simulated journal only: QGW8 logical geometry; no QGWD model, lifecycle or device qualification',flush=True)
+        else:
+            profile+=['-DPIONEER_Q38_QGW8_PROGRAMS_INSPECTION=1']
     else:
         profile+=['-DPIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_JOB_DIAGNOSTIC=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:

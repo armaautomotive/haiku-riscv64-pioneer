@@ -65,7 +65,15 @@ public:
  // Pair fixed geometry with the compiled worker grammar before any native
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
-#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
+#if PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE != 1 || !defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG)
+#error QGWD logical-parent journal fixture is offline inspection only
+#endif
+  // Synthetic parent geometry permits exercising save/restore only. It is
+  // not evidence that QGWD model pages or device execution are compatible.
+  static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x44574751,"fixture requires QGWD worker grammar");
+  return c.Qgw8InspectionLayout();
+#elif defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
 #ifdef PIONEER_Q38_QGWC_PROGRAMS_INSPECTION
   static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x43574751,"QGWC layout requires the SrcA-corrected worker grammar");
 #elif defined(PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION)
