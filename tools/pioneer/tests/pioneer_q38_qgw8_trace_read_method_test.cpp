@@ -78,7 +78,7 @@ int main(){
    *packet={};assert(handoff.Prepare(*packet));PioneerQ38TokenHiddenReadResult r;
    assert(f.owner->ReadTraceChunk(f.io,ordinal,packet->words,packet->request.words,r));
    auto& reply=packet->reply;reply.version=1;reply.ordinal=ordinal;reply.started=r.started;reply.ready=r.ready;
-   reply.unsafe=r.unsafe;reply.words=r.wordCount;std::memcpy(reply.detail,&r,sizeof(r));assert(handoff.Accept(*packet));
+   reply.unsafe=r.unsafe;reply.words=r.wordCount;std::memcpy(reply.detail,&r,sizeof(r));assert(handoff.Accept(*packet,true));
   }
   std::vector<uint32_t> data(size_t(G::Layers)*G::Words);
   assert(handoff.Copy(data.data(),data.size()));

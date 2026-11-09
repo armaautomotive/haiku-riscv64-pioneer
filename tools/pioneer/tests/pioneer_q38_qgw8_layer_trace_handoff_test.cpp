@@ -22,7 +22,7 @@ int main(){
  assert(!h->Copy(out.data(),out.size()) && out[0]==0xdeadbeef);
  for(unsigned ordinal=0;ordinal<G::Chunks;ordinal++){
   *p={};assert(h->Prepare(*p) && P::RequestShape(*p));Reply(*p);assert(P::ReplyShape(*p));
-  assert(h->Accept(*p) && h->Cursor()==ordinal+1);
+  assert(h->Accept(*p,true) && h->Cursor()==ordinal+1);
  }
  assert(!h->Copy(reinterpret_cast<uint32_t*>(h.get()),out.size()));
  assert(h->Copy(out.data(),out.size()) && out[0]==0x7fc12345);
@@ -32,23 +32,28 @@ int main(){
  for(unsigned section=0;section<2;section++)for(unsigned bit=0;bit<(section?sizeof(P::Reply):sizeof(P::Request))*8;bit++){
   auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(a->Prepare(*p));Reply(*p);
   auto* bytes=section?reinterpret_cast<uint8_t*>(&p->reply):reinterpret_cast<uint8_t*>(&p->request);
-  bytes[bit/8]^=uint8_t(1U<<(bit%8));assert(!a->Accept(*p) && a->Failed());
+  bytes[bit/8]^=uint8_t(1U<<(bit%8));assert(!a->Accept(*p,true) && a->Failed());
   out.assign(Total,0xdeadbeef);assert(!a->Copy(out.data(),out.size()) && out[0]==0xdeadbeef);refused++;
  }
  {
-  auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(a->Prepare(*p));Reply(*p);assert(a->Accept(*p));
+  auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(a->Prepare(*p));Reply(*p);assert(a->Accept(*p,true));
   *p={};assert(a->Prepare(*p));Reply(*p);p->words[1024]=1;
-  assert(!a->Accept(*p) && a->Failed());refused++;
+  assert(!a->Accept(*p,true) && a->Failed());refused++;
  }
  {
   auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(a->Prepare(*p));auto other=std::make_unique<P::Packet>();
   assert(!a->Prepare(*other) && a->Failed());refused++;
  }
  {
-  auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(!a->Accept(*p) && a->Failed());refused++;
+  auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(!a->Accept(*p,true) && a->Failed());refused++;
  }
  {
   auto a=std::make_unique<H>(Key,0x04000000);*p={};p->words[0]=1;assert(!a->Prepare(*p) && a->Failed());refused++;
+ }
+ {
+  auto a=std::make_unique<H>(Key,0x04000000);*p={};assert(a->Prepare(*p));Reply(*p);
+  assert(P::ReplyShape(*p) && !a->Accept(*p,false) && a->Failed() && a->Cursor()==0);
+  assert(!a->Accept(*p,true) && !a->Copy(out.data(),out.size()));refused++;
  }
  printf("PASS 128 ordered synthetic packets, raw NaN, %u request/reply/tail/lifecycle refusals; NO SOURCE PROVENANCE OR DEVICE\n",refused);
 }

@@ -28,10 +28,12 @@ public:
   packet.request={Q::Magic,Q::Version,ordinal,ordinal/G::Parts,part,part?1024U:4096U,uint32_t(key),uint32_t(key>>32),{}};
   if(!Q::RequestShape(packet))return assembly.Invalidate();pending=packet.request;waiting=true;return true;
  }
- bool Accept(const P& packet){
+ // Caller MUST pass the actual transport result, not the reply's status.
+ // A failed copy can leave a partially updated packet that appears ready.
+ bool Accept(const P& packet,bool transportSucceeded){
   namespace Q=PioneerQ38Qgw8LayerTracePacket;
   if(Failed())return false;
-  if(!waiting || !ExternalSafe(&packet,sizeof(packet)) || std::memcmp(&pending,&packet.request,sizeof(pending)) || !Q::ReplyShape(packet)
+  if(!transportSucceeded || !waiting || !ExternalSafe(&packet,sizeof(packet)) || std::memcmp(&pending,&packet.request,sizeof(pending)) || !Q::ReplyShape(packet)
    || (uint64_t(pending.keyHigh)<<32|pending.keyLow)!=key)return assembly.Invalidate();
   if(!assembly.Append(key,pending.ordinal,packet.words,pending.words))return false;
   waiting=false;pending={};return true;

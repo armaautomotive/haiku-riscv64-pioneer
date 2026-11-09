@@ -190,6 +190,28 @@ This is not a full-owner trace-read, real-IO, device, cleanup, or speed result.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_context_tests.py
 
+Fake request/copy control inspection
+------------------------------------
+A fake-tag-only request handler now checks the fixed pointer-free packet,
+credentials and same-context call scope before calling the trace wrapper.
+It retains on uncertain successful-read reply shape or output-copy failure,
+and clears its staging payload before attempting a failed response. It is NOT installed or dispatched
+by the real driver: credentials, user copies, source and ownership in the
+test are simulated. Tests passed 128 requests through the actual inspection
+handler and context wrapper with a synthetic underlying owner, plus partial
+copy, malformed request/reply, denied scope, and retention cases. They do
+not establish real user-copy, full-owner, FINISH or physical safety. A
+RISC-V SDK object also compiled with a bounded individual control frame;
+this does not prove the combined kernel stack or real call path.
+
+The offline assembler handoff now requires the caller to report successful
+transport before accepting a reply. A simulated failed transport is rejected
+even when the packet looks valid, and its assembly remains invalid. That
+boolean and the source key are still caller-supplied: this is not proof of
+transport or source authenticity. This closes no physical-access gate.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_control_tests.py --sdk ABS_HAIKU_SDK
+
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init
 
