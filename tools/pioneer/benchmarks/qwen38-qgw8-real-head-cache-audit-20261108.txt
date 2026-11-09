@@ -1,0 +1,50 @@
+QGW8 output-head cache and job layout: real-data OFFLINE check
+=============================================================
+
+The first physical tag128 27B run chose the wrong first token. While its
+follow-on hardware diagnostic could not be reached after a power outage, a
+read-only Mac-side check compared the complete prepared head with fresh
+conversion from the independently authenticated original model. This is not
+a P100A result, inference run, numerical model-quality pass or speed test.
+
+The original 18 GB GGUF matched SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+All seven existing Mac BFP8 output-head fragments were opened using their
+recorded host converter identity, verified by the cache reader, and compared
+page-by-page against the freshly generated BFP8 data, including zero padding:
+
+ bank  pages   rows
+ 0     47090   35456
+ 1     47090   35456
+ 2     47175   35520
+ 3     47175   35520
+ 4     47090   35456
+ 5     47090   35456
+ 6     47090   35456
+
+All 329800 pages / 1350860800 bytes matched byte-for-byte. Actual QGW8 job
+construction also produced 973 jobs covering all 248320 rows exactly once;
+each job's bank route and byte offset matched its cached-stripe coordinate.
+The checker opened the model and caches read-only; it did not repair, rewrite,
+upload or execute them. The actual checker process exited 0. Its binary SHA-256
+is 58efb5f51a9a12ba6027af5635498be4b743ba6146e94cad1868930128cf229a.
+
+The first attempt used the Haiku converter identity against the Mac cache and
+correctly refused a cache miss; it did not change any files. The successful
+attempt used the documented distinct Mac fingerprint. A previous separate
+audit compared the seven Mac and Haiku cache payloads by full SHA-256, as
+recorded in qwen38-qgw8-extra-weights-mac-haiku-20261107.txt. The present
+result does not recheck Haiku after the outage and does not prove what was
+uploaded, retained in card memory, or consumed by the actual matrix engines.
+Fresh conversion and cache construction share code, so this is not an
+independent validation of the conversion mathematics. It narrows one possible
+host cache/job-layout cause but does not identify the incorrect-token cause.
+
+The offline checker build, incompatible-role and invalid-input tests passed.
+The existing head plan's synthetic 973-job coverage and RV32 compile tests
+also passed. No Work-mode validation or reference inference was added.
+
+Reproduce from a newly built checker with the pinned model and existing Mac
+cache, both absolute paths:
+ check --verify-cached-head ABS_ORIGINAL_GGUF ABS_MAC_HEAD_CACHE
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_real_head_cache_check_tests.py
