@@ -9,6 +9,9 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+#include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
+#endif
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #include "PioneerQ38EarlyJobSnapshotBuildRole.h"
 #ifdef PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE

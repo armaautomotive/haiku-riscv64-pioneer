@@ -23,10 +23,10 @@ pins={'boot.bin':'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668
  'bf16.bin':'148a1d0897d07b69f0cd03d553a4f424e0da96f5cba4038ae8e0d991ecaf5f50',
  'program.elf':'d44e18940bcd37cf35bc2f124b314843cfd99314e8aaebd5d4983eb074918eb0'}
 if qgwd:
- pins.update({'text.bin':'f3260990bbabd7f579b3e233b10f0c1086559c6cda8455b30ce0c818738b7654',
-  'conv.bin':'5cadb7525ae93d451a89985bddd3b0419bf1d64c2c6beb51df59a4767ecb8a24',
-  'bf16.bin':'fc69f61d896ebd36bb4e3232d6284453a758c2634f2b60a6764d454b89256306',
-  'program.elf':'939e500215f5b90ae18b5634e7487ee7bc71001a00168aca9e65d3e6d55b83b9'})
+ pins.update({'text.bin':'90b557d171be026fb68e674e848894f6d6fe9cddde0b8b3ee830f5ffdc3ca38a',
+  'conv.bin':'63071f5a8b5175230beda20315ab8ba7acf24a896262945a95317693ac794732',
+  'bf16.bin':'b2c4798c9f51bd60670c467178b24c58aa653835c68572e69cc5094827c710b3',
+  'program.elf':'905847dfb2923460a335168093aa20b37df5af8856f5e2f7b1be103c3a4fe694'})
 for folder in (first,second):
  for name,digest in pins.items():assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest,(folder,name)
 for path,digest in ((worker/'program.elf','b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8' if qgwd else '3450e5b2d46b27e9ac3f81cb62de79d53b0613d85af0acc03a73a149e812e09e'),
@@ -99,4 +99,9 @@ with tempfile.TemporaryDirectory(prefix='qgwc-srca-root-',dir='/private/tmp') as
  for args in ([binaries['plan'],job,manifest,metadata], [binaries['peer'],worker,leaf,job,proof],
               [binaries['actual'],image,manifest], [binaries['helpers'],image,metadata,job,proof]):
   subprocess.run([str(x) for x in args],check=True,env=env)
+ if qgwd:
+  dense=tmp/'dense-producer-root'
+  subprocess.run([*common,*sim,'-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1',
+                  str(here/'pioneer_q38_qgwd_dense_producer_root_test.cpp'),'-o',str(dense)],check=True)
+  subprocess.run([str(dense),str(image)],check=True,env=env)
 print('PASS '+('QGWD' if qgwd else 'QGWC')+' two pinned ROOT images and actual ROOT/worker jobs in simulation; NO full-model or hardware claim')

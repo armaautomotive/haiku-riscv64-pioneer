@@ -7,6 +7,12 @@ using BFC=PioneerQ38Q4FpuCachedLayout;
 using BFR=PioneerQ38Bf16RootPairs;
 #define BF_ROOT_FN __attribute__((noinline,section(".bf16.root")))
 static bool BfQ4(const uint32_t* d){return d[15]==12 && d[43]>=2 && d[43]<=4;}
+static bool BfProducerRole(const uint32_t* d){
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ if(d[15]==8 && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7)return true;
+#endif
+ return BfQ4(d);
+}
 static void MatrixWait(const uint32_t*,uint32_t*,unsigned);
 struct BfPairIO {
  unsigned Part(unsigned w,unsigned i){return Words(L::PartsShadow+w*32)[i];}
@@ -67,7 +73,7 @@ static BF_ROOT_FN void BfBuildPairs(const uint32_t* d){
 }
 static BF_ROOT_FN void BfDescriptor(const uint32_t* d,unsigned w,uint32_t* out){
  const bool gated=d[43]==4;const unsigned chunks=gated?68:20;
- if(!BfQ4(d) || w>=chunks)scalar_fault_park();
+ if(!BfProducerRole(d) || w>=chunks)scalar_fault_park();
  for(unsigned i=0;i<64;i++)out[i]=0;
  out[0]=BFP::Magic;out[1]=1;out[2]=67108864;out[3]=d[3];out[4]=d[4];
  out[5]=w;out[6]=d[6];out[7]=w+1;out[8]=d[8];out[9]=M::Peer(w+1);
@@ -85,7 +91,13 @@ static BF_ROOT_FN void BfProducerJob(const uint32_t* d,unsigned w,unsigned n,uin
  for(unsigned i=0;i<8;i++){out[i]=h[i];out[8+i]=d[32+i];}
  out[16]=BFP::Magic;out[17]=256;out[18]=512;out[19]=d[6];out[20]=12;
  out[27]=d[41];out[28]=d[43];out[29]=d[14];out[30]=BFP::Format;out[31]=BFP::Witness;
- if(!n || !M::JobShape(out,Boot(w),n-1,0))scalar_fault_park();
+ if(!n)scalar_fault_park();
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ if(!BfQ4(d)){
+  if(!PioneerQ38DenseQ8MatrixWorkerLayout::JobShape(out,Boot(w),n-1,0))scalar_fault_park();
+ }else
+#endif
+ if(!M::JobShape(out,Boot(w),n-1,0))scalar_fault_park();
 }
 static BF_ROOT_FN void BfProducerWait(const uint32_t* d,uint32_t* tracked,unsigned w){
  const unsigned n=Words(L::Nonces)[w],op=d[43]==4?3:5;
@@ -104,7 +116,7 @@ static BF_ROOT_FN void BfBankRead(const uint32_t* d,uint32_t* tracked,unsigned o
  const unsigned wire=d[14]*2,lines=(d[14]/256)*128;
  const bool native=offset>=unsigned(BFP::NativeOffset) && offset<=BFP::NativeOffset+wire && bytes<=BFP::NativeOffset+wire-offset;
  const bool trailer=offset>=unsigned(BFP::LinesOffset) && offset<=BFP::LinesOffset+lines && bytes<=BFP::LinesOffset+lines-offset;
- if(!BfQ4(d) || (!native && !trailer) || !bytes || bytes>16384 || ((offset|bytes)&63))scalar_fault_park();
+ if(!BfProducerRole(d) || (!native && !trailer) || !bytes || bytes>16384 || ((offset|bytes)&63))scalar_fault_park();
  q38_mixed_root_packet_seal(d);if(!Quiet())scalar_fault_park();uint32_t expected[8];
  for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();

@@ -16,7 +16,7 @@
 namespace PioneerQ38DenseQ8MatrixWorkerLayout {
 namespace Base=PioneerQ38HybridHeadWorkerLayout;
 using namespace PioneerQ38HybridHeadWorkerLayout;
-#if defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE)
+#if defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
 enum : unsigned {Magic=0x44574751,JobWitness=0x444f4751}; // QGWD/QGOD
 #else
 enum : unsigned {Magic=0x42574751,JobWitness=0x424f4751}; // QGWB/QGOB
@@ -33,7 +33,11 @@ static inline bool DenseJob(const uint32_t* j){
 static inline bool DenseProducerJob(const uint32_t* j){
  return j && j[2]==5 && j[28]>=5 && j[28]<=7;
 }
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+static __attribute__((noinline,unused,section(".bf16.root"))) bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+#else
 static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+#endif
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  if(DenseProducerJob(j)){
   if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
@@ -66,7 +70,7 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
 }
 }
 #endif
-#if defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE)
+#if defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
 static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic==0x44574751,"late QGWD combined worker selection");
 #else
 static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic!=0x44574751,"late QGWD combined worker removal");
