@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38HybridKernelCompileOnly.h"
 #include "PioneerQ38TokenBf16DataBoundary.h"
+#if defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) && (!defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
+ || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION))
+#error Dense Q8 footprint selection requires the isolated QGW8 journal fixture
+#endif
 #if defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
  && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
  || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) && !defined(PIONEER_Q38_HYBRID_FULL_NATIVE)) \
@@ -42,8 +46,13 @@ static_assert(PioneerQ38TokenBf16FootprintSelection==0,"late QTP4 footprint remo
 #define PIONEER_Q38_TOKEN_FOOTPRINT_H
 #ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
+#include "PioneerQ38DenseQ8TokenFootprint.h"
+namespace PioneerQ38TokenL1=PioneerQ38DenseQ8TokenL1;
+#else
 #include "PioneerQ38HybridTokenFootprint.h"
 namespace PioneerQ38TokenL1=PioneerQ38HybridTokenL1;
+#endif
 #else
 #include "PioneerQ38TokenBf16Footprint.h"
 namespace PioneerQ38TokenL1=PioneerQ38TokenBf16L1;
@@ -108,7 +117,9 @@ static_assert(SavedWords==11406906 && SavedBytes==45627624,"ALL120 arbitrary ori
 }
 #endif
 #endif
-#ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+#if defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION)
+static_assert(PioneerQ38TokenL1::Family==0x42505451 && PioneerQ38TokenL1::Bf16==1,"late dense Q8 footprint selection");
+#elif defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC)
 static_assert(PioneerQ38TokenL1::Family==0x35505451 && PioneerQ38TokenL1::Bf16==1,"late diagnostic hybrid footprint selection");
 #elif defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 static_assert(PioneerQ38TokenL1::Family==0x34505451 && PioneerQ38TokenL1::Bf16==1,"late QTP4 footprint selection");

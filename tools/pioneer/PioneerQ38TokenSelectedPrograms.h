@@ -37,8 +37,13 @@ static_assert(PioneerQ38TokenPrograms::Family==0x42505451 && PioneerQ38TokenL1::
 static_assert(PioneerQ38TokenPrograms::Family==0x41505451 && PioneerQ38TokenL1::Family==0x35505451,
  "tag131 requires its distinct QTPA trace program and expanded hybrid journal geometry");
 #elif defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION)
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x38505451 && PioneerQ38TokenL1::Family==0x42505451,
+ "QGW8 DATA may pair with dense Q8 footprint only in the isolated journal fixture");
+#else
 static_assert(PioneerQ38TokenPrograms::Family==0x38505451 && PioneerQ38TokenL1::Family==0x35505451,
  "QGW8 inspection programs require their distinct identity and expanded hybrid journal geometry");
+#endif
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x37505451 && PioneerQ38TokenL1::Family==0x35505451,
  "QGW7 inspection programs require the expanded hybrid journal geometry");

@@ -161,3 +161,17 @@ unpack-and-accumulate arithmetic observer on the produced bytes. Only one
 256-element input chunk per role is produced and copied, with the rest of
 the synthetic input zeroed. This is not full ROOT scheduling, model weights,
 hardware execution, independent silicon-arithmetic proof or speed evidence.
+
+The size constraint now has an isolated journal-layout proposal: extending
+each peer's worker-code snapshot from 12 KiB to 16 KiB covers the 13148-byte
+QGWB section and all old spans, adding 487424 bytes across 119 workers. With
+that layout selected only in an offline fixture, the actual token-journal
+algorithm saved and restored simulated memory, including deliberately changed
+words beyond the old boundary on workers 1 and 119. A forced restore failure
+in that additional region triggered the existing quarantine behavior. The
+fixture used the older pinned QGW8 program, not the new QGWB program. Alias
+checks are address arithmetic, not proof of live mappings, and no driver,
+native program selector, real device save/restore or release was changed.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_footprint_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs ABS_QGW8_HEADER --qgw8-journal --dense-q8-footprint

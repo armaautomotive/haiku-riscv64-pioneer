@@ -223,6 +223,14 @@ int main(int argc,char** argv){
    assert(PioneerQ38HybridHeadModelPlan::Manifest(*original,host,expected.data(),expected.size()));
    assert(f.PrepareMemory() && f.memory->Installed() && f.result.savedWords==TOKL::SavedWords
     && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1));
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
+   // Simulate a future image touching words beyond QGW8's old code extent.
+   // The original bytes must still be restored by the actual journal code.
+   f.io.track=false;for(unsigned worker:{1U,119U}){
+    assert(f.io.SelectRuntimeCore(worker));
+    for(unsigned address:{0x23000U,0x23358U,0x23ffcU})f.io.FullWrite(worker,address,0x12345678U^address);
+   }f.io.track=true;
+#endif
    std::array<uint32_t,64> boot={};
    assert(Geometry().startup->ReadBoot(1,boot.data()) && PioneerQ38SelectedGlobalWorker::BootShape(boot.data())
     && boot[0]==0x38574751 && boot[49]==0 && boot[50]==0x1ffc0000);
@@ -245,6 +253,14 @@ int main(int argc,char** argv){
    f.io.badKind=13;f.io.badPhase=9;f.io.badWorker=0;f.io.badOrdinal=64*3*7-1;
    assert(!f.memory->VerifyHybridManifestHeld(f.io,f.result));f.Unknown();
   }
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory());
+   f.io.badKind=3;f.io.badPhase=6;f.io.badWorker=119;
+   f.io.badOrdinal=TokenMemoryIO::Index(119,0x23358)-TOKL::SnapshotBase(119);
+   assert(!f.CloseMemory());f.Unknown();
+  }
+#endif
   puts("PASS QGW8 held journal and manifest install/verify/restore and fault quarantine; SIMULATED ONLY");return 0;
  }
 #endif

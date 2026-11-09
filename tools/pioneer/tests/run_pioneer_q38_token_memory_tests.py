@@ -8,6 +8,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+dense_q8_footprint='--dense-q8-footprint' in args
+if dense_q8_footprint:
+    assert args.count('--dense-q8-footprint')==1
+    args.remove('--dense-q8-footprint')
 hybrid_header = None
 if '--hybrid-programs' in args:
     index=args.index('--hybrid-programs')
@@ -52,6 +56,7 @@ assert not bf16_deferred or (bf16_profile and bf16 and not bf16_paired),'deferre
 assert not hybrid_journal or (bf16 and not bf16_profile and not bf16_paired and not bf16_deferred), 'hybrid footprint fixture requires original QTP4 test DATA only'
 assert hybrid_header is None or hybrid_journal, 'QGW5 DATA requires its distinct offline hybrid journal'
 assert not qgw8 or (hybrid_journal and hybrid_header is not None and not args), 'QGW8 needs its isolated program and journal fixture'
+assert not dense_q8_footprint or qgw8, 'dense footprint requires isolated QGW8 journal fixture'
 if qgw8:
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest() == '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588', 'wrong QGW8 program DATA'
 sdk = None
@@ -80,6 +85,7 @@ if bf16_profile:profile+=['-DPIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS=1']
 if bf16_paired:profile+=['-DPIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS=1']
 if bf16_deferred:profile+=['-DPIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS=1']
 if hybrid_journal:profile+=['-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1']
+if dense_q8_footprint:profile+=['-DPIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION=1']
 if hybrid_header is not None:
     profile+=['-DPIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC=1',
               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(hybrid_header)+'"',
