@@ -39,3 +39,11 @@ that retained startup were accepted by the actual compiled QGWC ROOT in an
 RV32 simulation. The old QGW8 kernel/layout/receipt/startup regression suite
 also passed, including mutation/failure cases. No P100A upload was performed;
 the native owner, real model correctness and speed remain unqualified.
+
+Native identity preparation: tag 0x2026110900010136 is reserved for a separate
+QGWC full-model diagnostic, with explicit reload/protocol identity and role
+checks. Required flags, incorrect values and tags, late removal, Work/CPU
+validation and conflicting trace/client roles were rejected in compile-only
+tests. Existing tag133 and tag134 role/protocol tests passed regression. The
+new identity alone is NOT a runnable driver: the native program-data and
+retained owner selection still need integration and separate qualification.
