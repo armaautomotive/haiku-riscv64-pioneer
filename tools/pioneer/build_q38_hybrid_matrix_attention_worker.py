@@ -12,9 +12,10 @@ assert __debug__ and len(sys.argv) in (3, 4) and not os.environ.get('PYTHONOPTIM
 test_layer0 = len(sys.argv) == 4 and sys.argv[3] == '--test-bfp8-layer0'
 reuse_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-reuse-inspection'
 batch_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-batch-inspection'
-dense_q8 = len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-matrix-inspection'
-srca_base = len(sys.argv) == 4 and sys.argv[3] == '--head-srca-base-inspection'
-head_matrix = len(sys.argv) == 4 and sys.argv[3] in ('--head-matrix-inspection', '--head-bfp8-reuse-inspection', '--head-bfp8-batch-inspection', '--dense-q8-matrix-inspection', '--head-srca-base-inspection')
+combined = len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-srca-inspection'
+dense_q8 = combined or (len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-matrix-inspection')
+srca_base = combined or (len(sys.argv) == 4 and sys.argv[3] == '--head-srca-base-inspection')
+head_matrix = len(sys.argv) == 4 and sys.argv[3] in ('--head-matrix-inspection', '--head-bfp8-reuse-inspection', '--head-bfp8-batch-inspection', '--dense-q8-matrix-inspection', '--head-srca-base-inspection', '--dense-q8-srca-inspection')
 assert len(sys.argv) == 3 or test_layer0 or head_matrix
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, out = map(Path, sys.argv[1:3]); here = Path(__file__).resolve().parent
@@ -47,6 +48,8 @@ if dense_q8:
     global_role.append('-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1')
 if srca_base:
     global_role.append('-DPIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE=1')
+if combined:
+    global_role.append('-DPIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER=1')
 if reuse_head:
     global_role.append('-DPIONEER_Q38_QGW8_BFP8_REUSE_WORKER=1')
 if batch_head:
@@ -114,8 +117,9 @@ for section in sections:
         old_data = (out/'baseline'/(section+'.bin')).read_bytes()
         assert len(data) == len(old_data), section
         if section == 'boot': assert data == old_data
-    print('QGWC_BUILD' if srca_base else 'QGWB_BUILD' if dense_q8 else 'QGWA_BUILD' if batch_head else 'QGW9_BUILD' if reuse_head else 'QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
-print('BUILD ONLY QGWC SrcA base hypothesis worker: NO ROOT/native owner/model/hardware/quality/speed authority' if srca_base
+    print('QGWD_BUILD' if combined else 'QGWC_BUILD' if srca_base else 'QGWB_BUILD' if dense_q8 else 'QGWA_BUILD' if batch_head else 'QGW9_BUILD' if reuse_head else 'QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
+print('BUILD ONLY QGWD SrcA-corrected dense-Q8 worker: NO ROOT/native owner/model/hardware/quality/speed authority' if combined
+      else 'BUILD ONLY QGWC SrcA base hypothesis worker: NO ROOT/native owner/model/hardware/quality/speed authority' if srca_base
       else 'BUILD ONLY QGWB dense Q8 matrix worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if dense_q8
       else 'BUILD ONLY QGWA batched-input worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if batch_head
       else 'BUILD ONLY QGW9 retained-input worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if reuse_head

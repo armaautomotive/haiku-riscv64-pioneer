@@ -188,3 +188,20 @@ native program selector, real device save/restore or release was changed.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_footprint_tests.py
  python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs ABS_QGW8_HEADER --qgw8-journal --dense-q8-footprint
+
+QGWD combined worker, 2026-11-09: while the QGWC full-model one-token test
+was independently running, a separate offline worker combined the QGWB
+BF16-producer/BFP8 Q/G,K,V matrix jobs with the physically tested 0x40
+attention SrcA correction. The new QGWD/QGOD job identity is distinct from
+QGWB and QGWC. Two independently built RV32 ELFs matched SHA-256
+b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8.
+Actual compiled producer -> synthetic transport -> matrix jobs passed for
+all three Q/G,K,V roles, and BFP4 -> dense-attention -> BFP4 transitions
+passed under the alternative SrcA address model. Existing QGWB producer and
+matrix regressions still pass. These tests use synthetic data and hardware
+models, not a real model, device, complete ROOT, or performance measurement.
+
+The QGWD global-worker image remains 13148 bytes, larger than the old 12288
+byte journal snapshot. It MUST NOT be launched with that journal. The larger
+offline journal proposal, root scheduler/source authentication, and native
+owner/device integration still require their own combined qualification.

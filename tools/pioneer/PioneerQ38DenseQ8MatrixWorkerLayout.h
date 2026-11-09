@@ -15,7 +15,11 @@
 namespace PioneerQ38DenseQ8MatrixWorkerLayout {
 namespace Base=PioneerQ38HybridHeadWorkerLayout;
 using namespace PioneerQ38HybridHeadWorkerLayout;
+#ifdef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER
+enum : unsigned {Magic=0x44574751,JobWitness=0x444f4751}; // QGWD/QGOD
+#else
 enum : unsigned {Magic=0x42574751,JobWitness=0x424f4751}; // QGWB/QGOB
+#endif
 static inline unsigned BootWord(unsigned i){return i==40?unsigned(JobWitness):Base::BootWord(i);}
 static inline bool BootShape(const uint32_t* b){
  if(!b || b[0]!=Magic || b[40]!=JobWitness)return false;
@@ -60,4 +64,9 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
 }
 }
+#endif
+#ifdef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER
+static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic==0x44574751,"late QGWD combined worker selection");
+#else
+static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic!=0x44574751,"late QGWD combined worker removal");
 #endif
