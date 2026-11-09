@@ -40,3 +40,11 @@ regressions also pass. This remains a synthetic alternative-address model.
 The SrcA lease is preprocessor-restricted to offline tests: the existing live
 NativeIO maps a different footprint. Its MMIO mapping, image identity, client,
 parent lifecycle and real-hardware qualification still need separate work.
+
+The offline-only SrcA NativeIO mapping now passes exhaustive checks for all
+393216 aligned L1 words against the 4565-word lease journal, including the
+physical offsets, permissions and refusal of out-of-journal addresses. Seven
+partial-map failures and fifteen failed unmaps were injected. The original
+native-BFP and full-K affine mappings passed the same regression tests. The
+new range branch is compile-time prohibited in a kernel/driver build; these
+fake virtual mappings do not establish physical mapping or launch safety.

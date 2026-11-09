@@ -3,6 +3,9 @@
 // reload guard and read-only baseline machinery ONLY; none of its compute,
 // model,Work,arbitrary-data or automatic-close routes are published here.
 #include <Drivers.h>
+#if defined(PIONEER_NATIVE_SRCA_MAP_TEST_ONLY) && (PIONEER_NATIVE_SRCA_MAP_TEST_ONLY != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG))
+#error SrcA mapping is for offline extraction tests only
+#endif
 #if !defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || PIONEER_NATIVE_BFP_DIAGNOSTIC != 1
 #error Build only through build_native_bfp_diagnostic.py
 #endif
@@ -53,11 +56,16 @@ struct NativeIO: PioneerComputeNocIO {
 		tt_tensix_reset_result& c,tt_dram_samples_result& d,tt_compute_noc_result& n):PioneerComputeNocIO(p,a,t,c,d,n) {}
 	bool Map() {
 		if(!PioneerComputeNocIO::Map())return false;
+#ifdef PIONEER_NATIVE_SRCA_MAP_TEST_ONLY
+		const uint32_t offsets[]={0x19006000,0x19070000,0x1906e000,0x19080000,0x1917f000,0x19312000,0x19313000};
+		const unsigned sizes[]={4096,4096,8192,0x28000,4096,4096,4096};
+#else
 		const uint32_t offsets[]={0x19006000,0x19070000,0x1906e000,0x1908f000,0x1917f000,0x19312000,0x19313000};
 #ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
 		const unsigned sizes[]={4096,8192,8192,32768,4096,4096,4096};
 #else
 		const unsigned sizes[]={4096,4096,8192,16384,4096,4096,4096};
+#endif
 #endif
 		for(unsigned i=0;i<7;i++) {
 			views[i]=map_physical_memory("P100A isolated native BFP owned view",profile.bar0_host_start+offsets[i],sizes[i],
@@ -88,9 +96,15 @@ struct NativeIO: PioneerComputeNocIO {
 #endif
 		)) {view=1;offset=address-0x70000;}
 		else if(Within(address,0x6e000,8192)) {view=2;offset=address-0x6e000;}
+#ifdef PIONEER_NATIVE_SRCA_MAP_TEST_ONLY
+		else if(address==0x82000 || Within(address,0x92000,256) || Within(address,0xa0000,512)
+			|| Within(address,0xa4ff0,2064) || Within(address,0xa5ff0,2064)
+			|| Within(address,0xa6ff0,528) || Within(address,0xa73f0,528)) {view=3;offset=address-0x80000;}
+#else
 		else if(Within(address,0x8fff0,1104) || Within(address,0x90ff0,528) || Within(address,0x92000,256)) {view=3;offset=address-0x8f000;}
 #ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
 		else if(Within(address,0x93ff0,80) || Within(address,0x94070,80) || Within(address,0x95ff0,1040)) {view=3;offset=address-0x8f000;}
+#endif
 #endif
 		else if(Within(address,0x17ffc0,12)) {view=4;offset=address-0x17f000;}
 		else {invalid=true;return NULL;}

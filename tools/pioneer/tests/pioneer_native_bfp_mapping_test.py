@@ -8,7 +8,8 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:] in (['--band'],['--exact-q4-affine']) or (len(sys.argv)==3 and sys.argv[1]=='--model')
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'],['--exact-q4-affine'],['--srca']) or (len(sys.argv)==3 and sys.argv[1]=='--model')
+srca=sys.argv[1:]==['--srca']
 affine=sys.argv[1:]==['--exact-q4-affine']
 band = sys.argv[1:]==['--band'] or (len(sys.argv)==3 and sys.argv[1]=='--model')
 model = len(sys.argv)==3
@@ -69,6 +70,12 @@ int main(){unsigned cases=0;
 }
 '''
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-mapping.'))
+if srca:
+    prefix=prefix.replace('#include "PioneerNativeBfpLease.h"',
+                          '#define PIONEER_NATIVE_SRCA_MAP_TEST_ONLY 1\n#define PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC 1\n#define PIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY 1\n#include "PioneerNativeBfpLease.h"')
+    tests=tests.replace('0x1908f000', '0x19080000')
+    tests=tests.replace('4096,4096,8192,16384,4096,4096,4096', '4096,4096,8192,0x28000,4096,4096,4096')
+    tests=tests.replace('exact3548 owned words', 'exact4565 owned words').replace('PASS ACTUAL NativeIO', 'PASS OFFLINE SrcA NativeIO')
 if affine:
     prefix=prefix.replace('#include "PioneerNativeBfpLease.h"','#define PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC 1\n#include "PioneerNativeBfpLease.h"')
     tests=tests.replace('4096,4096,8192,16384,4096,4096,4096','4096,8192,8192,32768,4096,4096,4096')
