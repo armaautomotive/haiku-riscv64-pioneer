@@ -14,9 +14,10 @@ sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1]);args = args[:-2]
     assert sdk.is_absolute() and sdk.is_dir()
-assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection','--qgw8-trace-read-inspection'))
-trace = bool(args and args[0] == '--qgw8-trace-read-inspection')
-qgw8 = bool(args and args[0] in ('--qgw8-inspection','--qgw8-trace-read-inspection'))
+assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection','--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
+trace_init = bool(args and args[0] == '--qgw8-trace-init-inspection')
+trace = bool(args and args[0] in ('--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
+qgw8 = bool(args and args[0] in ('--qgw8-inspection','--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
 assert sdk is None or qgw8, 'SDK witness is limited to QGW8 inspection'
 matrix = bool(args and args[0] == '--hybrid-matrix-inspection') or qgw8
 hybrid = pathlib.Path(args[1]) if args else None
@@ -41,6 +42,7 @@ if matrix:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PION
 if qgw8:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
                          PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
 if trace:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1')
+if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
 if qgw8:
     role_probe = here/'pioneer_q38_qgw8_native_role_probe.cpp'
     compiler = os.environ.get('CXX', 'c++')

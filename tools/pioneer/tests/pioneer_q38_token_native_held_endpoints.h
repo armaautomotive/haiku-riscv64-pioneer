@@ -389,7 +389,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
    else{c.counters[0]++;c.counters[1]+=bytes/64;c.counters[3]++;}
    c.accepted++;
    if(runtimeFault==1 && runtimePackets==1){sReloadGeneration++;runtimeObserved=touches;}
-   if(runtimeFault==2 && runtimePackets==4616){Raw(0,PioneerQ38GlobalChainLayout::R::Scratch)^=1;runtimeObserved=touches;}
+   if(runtimeFault==2 && runtimePackets==2*PioneerQ38SelectedTokenRuntimePlan::Chunks){Raw(0,PioneerQ38GlobalChainLayout::R::Scratch)^=1;runtimeObserved=touches;}
    if(runtimeFault==3 && runtimePackets==1){c.counters[0]++;runtimeObserved=touches;}
    return;
   }

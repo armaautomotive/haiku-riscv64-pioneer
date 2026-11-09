@@ -132,3 +132,35 @@ ownership proof, FINISH/close guarantee, or physical trace result.
 
 Test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B
+
+Inspection-only trace-slot startup plan
+---------------------------------------
+The existing startup plan did not initialize the proposed trace slots. A
+separate DATA plan now checks that those slots do not overlap any existing
+startup chunks and adds 80 zero-filled 16 KiB chunks. An explicitly
+fake-tag, compile-only owner can select this plan and uses the existing
+write-and-readback startup loop. It is not selectable in Work or a real
+driver. The normal tag129 driver rebuilt byte-for-byte to SHA-256
+0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
+
+The data-only sanitizer test passed across all seven banks, checking 16716
+disjoint startup chunks, all 80 zero chunks per bank and 28 alias refusals.
+The fake owner also compiled in the Haiku RISC-V SDK. The existing extracted
+trace and tag129 hidden-read mock regressions and isolated ROOT tests passed.
+The complete fake-owner startup passed with 2388 chunks and 4776 simulated
+write/read packets, comparing all 39093248 written bytes and untouched
+workspace slack, plus 120 simulated boot records. Its device and memory
+endpoints were mocked, so this is not physical readback.
+These are offline checks, not proof of physical allocation, actual ROOT
+production, card safety, model correctness or speed. Real owner lifetime,
+readout authority, and physical trace testing remain unproven.
+
+Reproduce the DATA test (the executable path is disposable):
+ c++ -std=c++17 -O1 -g -Wall -Wextra -Werror -Wno-misleading-indentation -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_qgw8_trace_runtime_plan_test.cpp -o /private/tmp/qgw8-trace-runtime-plan-test
+ /private/tmp/qgw8-trace-runtime-plan-test
+
+Fake-owner SDK binding:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_native_binding_tests.py --qgw8-trace-init-inspection ABS_PINNED_PROGRAM_HEADER --sdk ABS_HAIKU_SDK
+
+Complete simulated startup (requires the pinned zero image and program):
+ python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init

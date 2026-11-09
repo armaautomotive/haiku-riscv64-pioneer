@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+trace_init='--qgw8-trace-init' in sys.argv
+if trace_init:
+    assert sys.argv.count('--qgw8-trace-init')==1
+    sys.argv.remove('--qgw8-trace-init')
 synthetic_embedding='--synthetic-embedding' in sys.argv
 if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
@@ -25,14 +29,16 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
     index=sys.argv.index(selector);assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
-            or qgw8_inspection and sys.argv[2]=='--faults')
+            or qgw8_inspection and sys.argv[2] in ('--faults','--runtime-faults'))
             or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')) and hybrid_header.is_absolute() and hybrid_header.is_file()
     if qgw8_inspection:
-        assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults','--runtime','--bootstrap','--execution','--execution-traffic'))
+        assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults','--runtime','--runtime-faults','--bootstrap','--execution','--execution-traffic'))
                 or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
     expected='72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
+if trace_init:
+    assert qgw8_inspection and len(sys.argv)==3 and sys.argv[2] in ('--runtime','--runtime-faults')
 manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
     assert sys.argv.count('--manual-ttsync')==1
@@ -376,6 +382,7 @@ if hybrid_header:
 if matrix_inspection:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
 if qgw8_inspection:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
                                   PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
+if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
 if synthetic_embedding:defines['PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST']='1'
 if precise_context:
     defines.update(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1',

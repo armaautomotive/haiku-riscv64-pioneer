@@ -23,6 +23,9 @@ int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic")
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
   || !strcmp(argv[2],"--faults")
+#ifdef PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION
+  || !strcmp(argv[2],"--runtime-faults")
+#endif
 #endif
   ))
   || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch"))));

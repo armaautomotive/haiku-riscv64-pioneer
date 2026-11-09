@@ -5,6 +5,7 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileProgramsRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenMatrixPhaseReadRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceReadInspectionRole.h"
+#include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceInitRole.h"
 #ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8LayerTraceGeometry.h"
 #endif
@@ -20,6 +21,12 @@
 #include "PioneerQ38TokenMemory.h"
 #include "PioneerBulkUpload.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRuntimePlan.h"
+#ifdef PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION
+#include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceRuntimePlan.h"
+using PioneerQ38SelectedTokenRuntimePlan=PioneerQ38Qgw8TraceRuntimePlan;
+#else
+using PioneerQ38SelectedTokenRuntimePlan=PioneerQ38TokenRuntimePlan;
+#endif
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
@@ -125,7 +132,7 @@ class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const PioneerQ38TokenStartupPlan* startup=nullptr;const uint8_t* ledger=nullptr;PioneerQ38GdnIdentity identity={};
- PioneerQ38TokenRuntimePlan plan;uint32_t staging[4096]={};
+ PioneerQ38SelectedTokenRuntimePlan plan;uint32_t staging[4096]={};
  bool started=false,unsafe=false,staged=false,traffic=false,bootAttempted=false,booted=false,launched=false;
  bool running[120]={};uint32_t reset[120]={};
  bool rootAttempted=false,rootStarted=false,rootAcknowledged=false,cancelRequested=false;
@@ -500,7 +507,7 @@ public:
   r.worker=0;
   if(!Local(io,0,T::CancelLocal,staging,16,r) || !Local(io,0,T::RecordLocal,staging,64,r))return Fail(io,r);
   r.phase=3;
-  for(unsigned n=0;n<PioneerQ38TokenRuntimePlan::Chunks;n++){
+  for(unsigned n=0;n<PioneerQ38SelectedTokenRuntimePlan::Chunks;n++){
    r.chunk=n;PioneerQ38TokenRuntimePlan::Chunk d;auto* raw=reinterpret_cast<uint8_t*>(staging);
    if(!plan.Describe(n,d) || !plan.Read(n,raw,d.bytes))return Fail(io,r);
    for(unsigned i=0;i<d.bytes/4;i++)staging[i]=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;
@@ -509,7 +516,8 @@ public:
     if(!io.TokenMemoryReadChecked(0,C::R::Scratch+i*4,actual) || actual!=staging[i])return Fail(io,r);
    }
   }
-  if(r.packets!=4616 || r.writes!=2308 || r.reads!=2308 || r.bytesWritten!=PioneerQ38TokenRuntimePlan::PayloadBytes
+  if(r.packets!=2*PioneerQ38SelectedTokenRuntimePlan::Chunks || r.writes!=PioneerQ38SelectedTokenRuntimePlan::Chunks
+   || r.reads!=PioneerQ38SelectedTokenRuntimePlan::Chunks || r.bytesWritten!=PioneerQ38SelectedTokenRuntimePlan::PayloadBytes
    || r.bytesRead!=r.bytesWritten || !data.ReadPublishedPackage(0,0,reinterpret_cast<uint8_t*>(staging),512))return Fail(io,r);
   {auto* raw=reinterpret_cast<uint8_t*>(staging);
    for(unsigned i=0;i<128;i++)staging[i]=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;}
