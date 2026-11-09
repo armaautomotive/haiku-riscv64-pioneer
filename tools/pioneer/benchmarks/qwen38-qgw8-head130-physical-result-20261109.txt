@@ -1,0 +1,30 @@
+QGW8 three real-head bands: physical P100A diagnostic, 2026-11-09
+
+The separately admitted one-shot parent completed with exit 0. Using the
+pinned CPU-reference final hidden state and three freshly verified 32-row
+output.weight bands, the actual P100A C64 GDDR-to-RV32-FPU diagnostic matched
+all 64 output words per band (two jobs per 32-row band), 192 in total. Each
+of the three sessions reported a checked clean END. Band first rows were 0,
+70240 and 108128; the latter two include the reference first token 70253 and
+the wrong token 108133, respectively. This was a diagnostic comparison with a
+CPU reference; it did not change or add CPU validation to Work mode.
+
+The device's BFP8 FPU leaf and GDDR path passed for these bands and this
+input. This is NOT a test of Tensix matrix engines, the entire QGW8 head
+scheduler, a card-produced hidden state, other vocabulary rows, full-model
+correctness or inference throughput. The full-model wrong first token is not
+resolved. The result narrows the investigation but cannot locate the fault
+alone. No tokens/second measurement or speedup is asserted.
+
+head.stdout SHA-256 b9f0dbcc6ac5d57c9025778bd27fc70a5659351c0f12b196dd6738c75e357cc2
+head.stderr empty SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+The locally copied log hashes match the live Haiku files; temporary copies
+are in /private/tmp/qgw8-head130-result.528WjLBu, not an archival backup.
+
+Independent post-run checks: installed stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag 2026102100010012, generation 4, cold0, active_owner0, guard1; sysinfo
+reported 64 CPUs and 137034936320 bytes maximum memory. Haiku desktop server,
+input server, Tracker and Deskbar processes were present; interactive input
+was not independently verified. The interrupted older tag129 trial and its
+guard remain unchanged and its result remains unknown.
