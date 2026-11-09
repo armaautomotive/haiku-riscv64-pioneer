@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import subprocess
+import tempfile
 
 assert __debug__ and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 here=Path(__file__).resolve().parent;root=here.parent;compiler=os.environ.get('CXX','c++')
@@ -28,6 +29,21 @@ check(parent,[flag for flag in parent_flags if flag!='-DPIONEER_Q38_QGWC_NATIVE_
 protocol=here.parents[2]/'src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h'
 protocol_source='#define B_DEVICE_OP_CODES_END 10000\n#include "'+str(protocol)+'"\nstatic_assert(PioneerQ38HybridProtocolIdentity==136,"tag136 identity");\nstatic_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110900010136),"tag136 protocol");\n'
 check(protocol,parent_flags,True,protocol_source)
+protocol_test=protocol_source+'''
+#include <cassert>
+int main(){
+ namespace F=PioneerQ38FullOffload;namespace C=PioneerQ38TokenControl;
+ static_assert(F::MaxPrompt==1 && F::MaxOutput==1 && F::MaxPositions==1,"single token only");
+ C::Packet p={};auto& r=p.request;r.magic=C::Magic;r.version=C::Version;r.operation=C::Start;
+ r.prompts=r.limit=1;r.stopEos=1;r.eos0=PioneerQ38FullOffloadEog::Eos0;r.eos1=PioneerQ38FullOffloadEog::Eos1;p.prompt[0]=248319;
+ assert(F::RequestShape(p));p.prompt[0]--;assert(!F::RequestShape(p));p.prompt[0]++;
+ r.limit=2;assert(!F::RequestShape(p));r.limit=1;r.stopEos=0;assert(!F::RequestShape(p));
+}
+'''
+with tempfile.TemporaryDirectory(prefix='qgwc-protocol-',dir='/private/tmp') as directory:
+ binary=Path(directory)/'test'
+ subprocess.run([compiler,'-std=c++17',*parent_flags,'-x','c++','-','-o',str(binary)],input=protocol_test,text=True,check=True)
+ subprocess.run([str(binary)],check=True)
 for name in names[1:]:
  reduced=[flag for flag in flags if flag!='-D'+name+'=1'];check(role,reduced,False)
  check(role,reduced+['-D'+name+'=0'],False)

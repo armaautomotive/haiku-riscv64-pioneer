@@ -7,10 +7,18 @@
 #include "../PioneerQ38HybridFullSession.h"
 
 struct FullIO:SimOwner {
+ static constexpr unsigned Input=
+#ifdef PIONEER_Q38_QGWC_CLIENT_136
+  248319;
+#else
+  17;
+#endif
  unsigned support=0,starts=0,polls=0,holds=0,reads=0,finishes=0;
  bool failStart=false,badRecord=false,badSupport=false;
  explicit FullIO(Fixture& fixture):SimOwner(fixture){
-#ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
+#ifdef PIONEER_Q38_QGWC_CLIENT_136
+  tag=UINT64_C(0x2026110900010136);
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
   tag=UINT64_C(0x2026110700010128);
 #else
   tag=UINT64_C(0x51544b4e4f445256);
@@ -21,7 +29,7 @@ struct FullIO:SimOwner {
   if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT){
    assert(fd==42 && support<2 && (support==0?!owned:owned && seals==1 && receipt->Sealed())
     && size==sizeof(F::Support));support++;
-   *static_cast<F::Support*>(data)={55,1,96,32,128,248320,F::AllCompute,0};
+   *static_cast<F::Support*>(data)={55,1,F::MaxPrompt,F::MaxOutput,F::MaxPositions,248320,F::AllCompute,0};
    if(badSupport)static_cast<F::Support*>(data)->compute=0;
    return true;
   }
@@ -31,21 +39,22 @@ struct FullIO:SimOwner {
   const unsigned action=p.request.operation;r.version=1;r.operation=action;r.started=r.ready=1;
   auto* d=r.detail;d[0]=d[1]=1;
   if(action==P::Start){
-   assert(!starts++ && p.request.prompts==1 && p.request.limit==2 && p.prompt[0]==17);
+   assert(!starts++ && p.request.prompts==1 && p.request.limit==(F::MaxOutput==1?1U:2U) && p.prompt[0]==Input);
    r.stage=d[2]=8;d[3]=1;if(failStart)return false;
   }else if(action==P::Observe){
    assert(starts==1 && !holds);polls++;
    if(polls==1){r.ready=0;r.stage=d[2]=9;d[12]=123;d[13]=456;}
-   else {r.stage=d[2]=11;d[6]=1;d[8]=2;d[9]=1;d[10]=64;}
+   else {r.stage=d[2]=11;d[6]=1;d[8]=F::MaxOutput==1?1:2;d[9]=d[8]-1;d[10]=64;}
   }else if(action==P::Hold){
    assert(polls==2 && !holds++);r.stage=d[2]=4;d[6]=1;d[7]=120;
   }else if(action==P::Read){
-   assert(holds==1 && !reads++ && p.request.records==2);r.stage=d[2]=4;r.records=2;
-   d[6]=1;d[8]=2;d[9]=1;d[10]=512;d[11]=1;
-   for(unsigned pos=0;pos<2;pos++){
+   const unsigned count=F::MaxOutput==1?1:2;
+   assert(holds==1 && !reads++ && p.request.records==count);r.stage=d[2]=4;r.records=count;
+   d[6]=1;d[8]=count;d[9]=1;d[10]=count*256;d[11]=1;
+   for(unsigned pos=0;pos<count;pos++){
     auto* v=p.records+pos*64;v[0]=0x31435451;v[1]=1;v[2]=pos;
-    v[3]=pos?1000:17;v[4]=1000+pos;v[5]=0x3f800000;v[6]=pos+1;v[7]=(pos+1)&1;
-    v[9]=unsigned(pos==0);v[10]=64;v[11]=973;
+    v[3]=pos?1000:Input;v[4]=1000+pos;v[5]=0x3f800000;v[6]=pos+1;v[7]=(pos+1)&1;
+    v[9]=unsigned(pos+1<count);v[10]=64;v[11]=973;
     for(unsigned i=12;i<36;i++)v[i]=100+i;
     v[44]=pos+1;v[45]=48;v[46]=119;
    }
@@ -59,7 +68,10 @@ struct FullIO:SimOwner {
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--fail-start") || !strcmp(argv[1],"--bad-clock") || !strcmp(argv[1],"--bad-record")
   || !strcmp(argv[1],"--bad-support") || !strcmp(argv[1],"--wrong-tag") || !strcmp(argv[1],"--fake-tag"))));
-#ifdef PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128
+#ifdef PIONEER_Q38_QGWC_CLIENT_136
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110900010136),"exact corrected candidate tag");
+ static_assert(PioneerQ38FullOffload::MaxPrompt==1 && PioneerQ38FullOffload::MaxOutput==1 && PioneerQ38FullOffload::MaxPositions==1,"one token diagnostic");
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110700010128),"exact candidate tag");
 #else
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x51544b4e4f445256),"renamed native-context fake tag only");
@@ -73,9 +85,9 @@ int main(int argc,char** argv){
  if(wrongTag)io->tag=UINT64_C(0x385747514f4e4452); // old upload-only fixture is not the native full owner
  if(fakeTag)io->tag=UINT64_C(0x51544b4e4f445256);
  PioneerQ38HybridFullSession<HeadPages,FullIO> session(fixture.pages,*io);
- const uint32_t input[]={17};uint32_t tokens[32]={};unsigned count=99;
+ const uint32_t input[]={FullIO::Input};uint32_t tokens[32]={};unsigned count=99;
  bool clockCalled=false;
- bool ok=session.Begin(*fixture.canonical,input,1,2,{},[&]{
+ bool ok=session.Begin(*fixture.canonical,input,1,PioneerQ38FullOffload::MaxOutput==1?1:2,{},[&]{
   assert(!clockCalled && io->support==2 && io->seals==1 && !io->starts);
   clockCalled=true;return !badClock;
  });
@@ -86,10 +98,12 @@ int main(int argc,char** argv){
  if(ok)ok=session.Poll([&](uint32_t,uint32_t){assert(!"terminal must not emit pending observation");});
  if(ok)ok=session.Finish();
  if(argc==1){
+  if(!ok)fprintf(stderr,"full-session synthetic failure: %s\n",session.failure.c_str());
   assert(ok && clockCalled && pendingObservations==1 && session.Completed() && !io->owned && io->opens==1 && io->closes==1 && !io->bankEnd);
   assert(io->begins==1 && io->seals==1 && io->spanEnd==1 && io->starts==1 && io->polls==2
    && io->holds==1 && io->reads==1 && io->finishes==1);
-  assert(session.CopyGeneratedTokens(tokens,32,count) && count==2 && tokens[0]==1000 && tokens[1]==1001);
+  assert(session.CopyGeneratedTokens(tokens,32,count) && count==(PioneerQ38FullOffload::MaxOutput==1?1U:2U) && tokens[0]==1000
+   && (count==1 || tokens[1]==1001));
   puts("PASS QGW8 sealed upload through same-FD synthetic START/OBSERVE/HOLD/READ/FINISH; NO MODEL OR DEVICE");
  }else if(wrongTag || fakeTag){
   assert(!ok && !clockCalled && session.FailedState() && !io->support && io->closes==1 && !io->owned && !io->begins);

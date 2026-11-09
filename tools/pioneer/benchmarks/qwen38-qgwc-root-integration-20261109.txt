@@ -58,3 +58,19 @@ and reference symbols. This is a build result, NOT installation, real-model
 output, hardware execution, an Assistant mode, or a throughput measurement.
 The physical one-shot parent/client and current device state remain to be
 qualified before a test.
+
+One-token diagnostic revision: both driver and distinct user client now
+enforce exactly one input position, one output and input token 248319. No
+model/reference arithmetic is added to the diagnostic client or Work mode.
+Two independently built drivers have SHA-256
+b9691909aa10f2938049588528d3c13236fb60a771b9a4a0d70131640e4bc247;
+the earlier f5b429... build was superseded when these protocol bounds were
+added and must not be used for this one-token test. The matching client
+build has SHA-256
+fe818e594653e8a38e12fb82dca731c80eeb0eff7cd7527015149b8813117ea3.
+Neither binary has been installed or run on the P100A.
+The tag136 full-session synthetic suite passes the sealed-upload, fixed-token
+START/OBSERVE/HOLD/READ/FINISH success path, wrong-tag and unsupported-owner
+refusals, and clock/start/record failure retention. The original tag128
+session suite and the tag134 protocol-role regression also pass. All of these
+use fake endpoints; they do not validate model output or hardware performance.

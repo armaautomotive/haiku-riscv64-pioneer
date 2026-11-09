@@ -193,6 +193,9 @@ public:
 #ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
   if(count!=1 || outputs!=1 || ids[0]!=248319)return false;
 #endif
+#ifdef PIONEER_Q38_QGWC_CLIENT_136
+  if(count!=1 || outputs!=1 || ids[0]!=248319)return false;
+#endif
   for(unsigned i=0;i<count;i++)if(ids[i]>=F::Vocabulary)return false;
   attempted=true;prompts=count;limit=count+outputs-1;std::copy(ids,ids+count,prompt.begin());
   std::string error;if(!upload.Begin(plan,error,progress)){failure=error;state=Failed;return false;}

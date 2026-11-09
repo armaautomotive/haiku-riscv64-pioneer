@@ -6,8 +6,9 @@ import subprocess
 import sys
 import tempfile
 
-assert sys.argv[1:] in ([], ['--roles-only'], ['--candidate128'])
-candidate = sys.argv[1:] == ['--candidate128']
+assert sys.argv[1:] in ([], ['--roles-only'], ['--candidate128'], ['--srca136'])
+srca = sys.argv[1:] == ['--srca136']
+candidate = sys.argv[1:] in (['--candidate128'], ['--srca136'])
 here = Path(__file__).resolve().parent
 root = here.parent
 compiler = os.environ.get('CXX', 'c++')
@@ -15,7 +16,7 @@ assert not any(key.startswith(('PIONEER_', 'TT_PIONEER_')) for key in os.environ
 header = root / 'PioneerQ38HybridFullSession.h'
 source = '#include "' + str(header) + '"\n'
 if candidate:
-    source += 'static_assert(PioneerQ38FullOffload::BuildTag==0x2026110700010128ULL);\n'
+    source += 'static_assert(PioneerQ38FullOffload::BuildTag=='+('0x2026110900010136ULL' if srca else '0x2026110700010128ULL')+');\n'
 names = ('PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION', 'PIONEER_Q38_QGW8_USER_SESSION_INSPECTION',
          'PIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC', 'PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC',
          'PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION', 'PIONEER_Q38_QGW8_LAYOUT_INSPECTION',
@@ -24,6 +25,8 @@ names = ('PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION', 'PIONEER_Q38_QGW8_USER_SESS
          'PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT')
 if candidate:
     names += ('PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128',)
+if srca:
+    names += ('PIONEER_Q38_QGWC_CLIENT_136',)
 roles = ['-D' + name + '=1' for name in names] + ['-DPIONEER_Q38_GDN_MUTABLE_STATE=1',
          '-DPIONEER_BANKS_MOCK_ONLY=1', '-DB_DEVICE_OP_CODES_END=1000']
 common = [compiler, '-std=c++17', '-Wall', '-Wextra', '-Werror']
@@ -56,9 +59,11 @@ assert result.returncode and 'late legacy full-session role change' in result.st
 upload_header = root / 'PioneerQ38Qgw8UploadSessionInspection.h'
 late_upload = ('#include "' + str(upload_header) + '"\n'
                '#define PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION 1\n'
-               + ('#define PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 1\n' if candidate else '')) + source
+               + ('#define PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 1\n' if candidate else '')
+               + ('#define PIONEER_Q38_QGWC_CLIENT_136 1\n' if srca else '')) + source
 upload_roles = [flag for flag in roles if flag not in ('-DPIONEER_Q38_QGW8_FULL_SESSION_INSPECTION=1',
-                                                       '-DPIONEER_Q38_QGW8_CANDIDATE_CLIENT_128=1')]
+                                                       '-DPIONEER_Q38_QGW8_CANDIDATE_CLIENT_128=1',
+                                                       '-DPIONEER_Q38_QGWC_CLIENT_136=1')]
 result = subprocess.run(common + upload_roles + ['-fsyntax-only', '-x', 'c++', '-'], input=late_upload,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 assert result.returncode and 'late QGW8 full-session selector' in result.stderr
@@ -67,7 +72,7 @@ if sys.argv[1:] == ['--roles-only']:
     raise SystemExit(0)
 with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-full-session-') as name:
     binary = str(Path(name) / 'test')
-    subprocess.run(common + (['-DPIONEER_Q38_QGW8_CANDIDATE_CLIENT_128=1'] if candidate else [])
+    subprocess.run(common + (['-DPIONEER_Q38_QGW8_CANDIDATE_CLIENT_128=1'] if candidate else []) + (['-DPIONEER_Q38_QGWC_CLIENT_136=1'] if srca else [])
         + ['-O2', '-g', '-ffp-contract=off', '-Wno-unused-function', '-Wno-unused-variable',
         '-fsanitize=address,undefined', str(here / 'pioneer_q38_qgw8_full_session_test.cpp'),
         str(root / 'PioneerModelWeightCache.cpp'), '-o', binary], check=True)

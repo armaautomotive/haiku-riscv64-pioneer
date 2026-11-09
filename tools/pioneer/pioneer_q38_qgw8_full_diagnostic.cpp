@@ -61,7 +61,12 @@ static void ReportTransportFailure(const Transport& io){
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
-#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+#ifdef PIONEER_Q38_QGWC_CLIENT_136
+ if(argc!=5 || strcmp(argv[1],"--run-qgwc-srca") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/'){
+  fputs("Use --run-qgwc-srca ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE; one fixed token only\n",stderr);return 2;
+ }
+ unsigned outputs=1,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
  if(argc!=6 || strcmp(argv[1],"--run-qgw8-trace") || argv[2][0]!='/' || argv[3][0]!='/'
   || argv[4][0]!='/' || argv[5][0]!='/'){
   fputs("Use --run-qgw8-trace ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE NEW_ABS_TRACE\n",stderr);return 2;
