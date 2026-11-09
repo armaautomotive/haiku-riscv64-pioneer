@@ -254,6 +254,34 @@ layer boundaries; no physical outcome has been asserted.
  python3 tools/pioneer/tests/test_pioneer_q38_dense_value_attention.py
  python3 tools/pioneer/tests/compare_pioneer_q38_dense_value_attention.py ABS_VALUE_TRACE --value-sha256 VALUE_HASH ABS_TAG133_TRACE --attention-sha256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c
 
+Tag134 physical value capture result, 2026-11-09
+------------------------------------------------
+The guarded one-shot completed cleanly with token 108133 and captured
+1310720 bytes, SHA-256 281f29679d1f47b623be43ea07618a7fb94fb23d8889a6c81fbbfa6db7aadfe3.
+The parent closed the session and restored stable driver 041fef18...3403;
+independent metadata shows tag 2026102100010012 generation14, no active
+owner/quiesce/cold and 64 CPUs with 137034936320 bytes maximum RAM. The
+trace and transcript are retained in generated.pioneer/qualification-inputs/
+qgw8-dense-value-physical-20261109/. Token 108133 still differs from the
+reference token 70253. The 506.428-second interval includes START and prompt;
+it is not warm throughput, quality, or a speedup.
+
+CPU replay on the captured value: all 1024 raw F32 values matched the pinned
+reference value projection bit-for-bit, and all 1024 packed F16 values matched
+round-to-nearest conversion of the corresponding raw values. None of those
+raw or packed values were zero. The captured tag134 layer slots 2..63 match
+the earlier tag133 attention-output trace byte-for-byte. In that separate
+run, every head had 64 zeros at dimensions 0..3 modulo 16 even though the
+corresponding newly captured values were nonzero; among the other 192 lanes,
+90, 110, 102 and 102 signs per head respectively disagreed with their group's
+captured value. These findings strongly prioritize the attention value path,
+its data transfers, gating, merge and/or capture after preparation. They do
+not prove same-run intermediate identity or uniquely establish the cause;
+the unchanged slot comparison is cross-run evidence only.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_value_capture_replay.py ABS_TAG134_TRACE --sha256 281f29679d1f47b623be43ea07618a7fb94fb23d8889a6c81fbbfa6db7aadfe3
+ python3 tools/pioneer/tests/compare_pioneer_q38_dense_value_attention.py ABS_TAG134_TRACE --value-sha256 281f29679d1f47b623be43ea07618a7fb94fb23d8889a6c81fbbfa6db7aadfe3 ABS_TAG133_TRACE --attention-sha256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c
+
 Value-path capture preparation (offline only): a distinct layer3/position0
 image records 1024 raw F32 value projection words read from its actual GDDR
 workspace, followed by the 512 words of prepared packed-F16 values, into
