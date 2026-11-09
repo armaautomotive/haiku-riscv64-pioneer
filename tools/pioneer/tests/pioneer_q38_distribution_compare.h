@@ -35,6 +35,15 @@ inline bool Observe(const std::vector<uint32_t>& words,unsigned token,ObservedTo
  ObservedToken result={token,rank,top,values[token],values[top],std::exp(double(values[token])-values[top])/sum};
  output=result;return true;
 }
+// Both results are committed together; failed or non-finite data must not
+// leave a caller with a partially usable comparison.
+inline bool ObservePair(const std::vector<uint32_t>& words,unsigned first,unsigned second,
+ ObservedToken& firstOutput,ObservedToken& secondOutput){
+ if(&firstOutput==&secondOutput)return false;
+ ObservedToken a={},b={};
+ if(!Observe(words,first,a) || !Observe(words,second,b) || a.top!=b.top)return false;
+ firstOutput=a;secondOutput=b;return true;
+}
 inline bool Compute(const std::vector<uint32_t>& original,const std::vector<uint32_t>& candidate,Result& output){
  if(original.size()<5 || original.size()!=candidate.size() || original.size()>UINT32_MAX)return false;
  std::vector<float> a(original.size()),b(original.size());

@@ -68,8 +68,15 @@ int main(int argc,char** argv){
  std::vector<uint32_t> normalized,logits;
  if(!Normalize(source,hidden,normalized) || !Q38HeadBfp8CpuObserve(argv[2],normalized,logits)
   || logits.size()!=248320 || !source.Ready())return 1;
- Q38DistributionCompare::ObservedToken r={};if(!Q38DistributionCompare::Observe(logits,unsigned(observed),r))return 1;
+ Q38DistributionCompare::ObservedToken r={},reference={};
+ // This snapshot format fixes input 248319 and position zero. The saved,
+ // independently pinned original-Q4 CPU trace selected token 70253 there.
+ // Comparing both ranks uses the SAME replayed hidden vector and logits;
+ // it is post-hoc diagnostic data, not validation performed during Work.
+ if(!Q38DistributionCompare::ObservePair(logits,unsigned(observed),70253,r,reference))return 1;
  printf("CARD_HEAD_REPLAY observed_token=%u software_top=%u observed_rank=%u observed_logit=%.9g top_logit=%.9g probability=%.9g; CPU_ONLY_NOT_QUALITY_OR_SPEED; INPUT_PROVENANCE_NOT_PROVEN\n",
   r.token,r.top,r.rank,r.logit,r.topLogit,r.probability);
+ printf("CARD_HEAD_REFERENCE original_cpu_token=%u rank=%u logit=%.9g probability=%.9g; SAME_REPLAYED_CARD_HIDDEN; CPU_ONLY_NOT_QUALITY_OR_SPEED; INPUT_PROVENANCE_NOT_PROVEN\n",
+  reference.token,reference.rank,reference.logit,reference.probability);
  return fflush(stdout)?1:0;
 }

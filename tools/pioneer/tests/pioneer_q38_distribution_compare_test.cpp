@@ -16,6 +16,10 @@ int main(){
  ObservedToken observed={};assert(Observe(tilted,0,observed));
  assert(observed.token==0 && observed.rank==1 && observed.top==0 && observed.probability>0.3);
  assert(Observe(tilted,3,observed) && observed.rank==4 && observed.top==0);
+ ObservedToken first={},second={};assert(ObservePair(tilted,0,3,first,second));
+ assert(first.rank==1 && second.rank==4 && first.top==second.top);
+ assert(!ObservePair(tilted,0,5,first,second) && first.rank==1 && second.rank==4);
+ assert(!ObservePair(tilted,0,3,first,first) && first.rank==1);
  auto savedObserved=observed;assert(!Observe(tilted,5,observed) && observed.rank==savedObserved.rank);
  tilted[2]=Bits(std::numeric_limits<float>::infinity());
  assert(!Observe(tilted,3,observed) && observed.rank==savedObserved.rank);
