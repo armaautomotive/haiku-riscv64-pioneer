@@ -49,6 +49,30 @@ reloaded=subprocess.run([compiler,'-std=c++17',*flags,'-E','-x','c++',str(reload
 assert reloaded.returncode and 'QGW8 native candidate requires its exact tag128 reload identity' in reloaded.stderr
 with tempfile.TemporaryDirectory(prefix='qgw8-trace-native-program-',dir='/private/tmp') as name:
     tmp=Path(name); outputs=[]
+    protocol=tmp/'protocol'
+    subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-fsanitize=address,undefined',str(here/'pioneer_q38_qgw8_trace_native_protocol_test.cpp'),'-o',str(protocol)],check=True)
+    subprocess.run([str(protocol)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+    driver_source=(here.parents[2]/'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
+    control_source=(here.parents[2]/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeControl.inc').read_text()
+    constrained='#ifdef PIONEER_Q38_QGW8_TRACE_NATIVE_131\n  || !PioneerQ38Qgw8TraceNative::ControlRequestShape(*packet)\n#endif'
+    assert control_source.count(constrained)==1, 'fixed trace token-control constraint is not installed'
+    dispatch='#ifdef PIONEER_Q38_QGW8_TRACE_NATIVE_131\n if(operation==TT_PCI_PROBE_Q38_QGW8_TRACE_READ)\n  return Q38Qgw8TraceControlInspection(instance,data,length);\n#endif\n'
+    assert driver_source.count(dispatch)==1, 'missing or ambiguous trace dispatch'
+    fixture=tmp/'dispatch.cpp'
+    fixture.write_text('#include <cassert>\n#include <cstddef>\n#include <cstdint>\n'
+                       '#define B_DEVICE_OP_CODES_END 0x1000\n#include "'+str(here.parents[2]/'src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8TraceNativeProtocol.h')+'"\n'
+                       'static int Q38Qgw8TraceControlInspection(void*,void*,size_t){return 37;}\n'
+                       'static int route(uint32_t operation,void* instance,void* data,size_t length){\n'+dispatch+
+                       ' (void)operation;(void)instance;(void)data;(void)length;return 0;}\n'
+                       'int main(){assert(route(TT_PCI_PROBE_Q38_QGW8_TRACE_READ,nullptr,nullptr,0)==EXPECTED_TRACE);'
+                       'assert(!route(TT_PCI_PROBE_Q38_QGW8_TRACE_READ+1,nullptr,nullptr,0));}\n')
+    for enabled in (False,True):
+        binary=tmp/('dispatch'+str(int(enabled)))
+        options=['-DPIONEER_Q38_QGW8_TRACE_NATIVE_131=1'] if enabled else []
+        subprocess.run([compiler,'-std=c++17','-O1','-Wall','-Wextra','-Werror','-Wno-unused-function',*options,
+                        '-DEXPECTED_TRACE='+('37' if enabled else '0'),str(fixture),'-o',str(binary)],check=True)
+        subprocess.run([str(binary)],check=True)
     for i,image in enumerate((trace_a,trace_b)):
         out=tmp/('native'+str(i)+'.h')
         p=subprocess.run([sys.executable,str(generator),'--qgw8-layer-trace-native',str(image),str(worker),str(out)],capture_output=True,text=True)

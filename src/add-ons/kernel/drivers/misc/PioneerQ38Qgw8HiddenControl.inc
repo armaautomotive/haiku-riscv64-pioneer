@@ -37,3 +37,6 @@ Q38Qgw8HiddenControl(PioneerProbeCookie* cookie,void* data,size_t length){
  return status;
 } // No retry, implicit END, CPU model product or Work activation.
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_NATIVE_131
+#include "PioneerQ38Qgw8TraceControlInspection.inc"
+#endif

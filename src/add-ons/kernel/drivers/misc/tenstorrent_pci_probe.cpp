@@ -8680,6 +8680,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
  if(operation==TT_PCI_PROBE_Q38_QGW8_HIDDEN_READ)
   return Q38Qgw8HiddenControl(instance,data,length);
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_NATIVE_131
+ if(operation==TT_PCI_PROBE_Q38_QGW8_TRACE_READ)
+  return Q38Qgw8TraceControlInspection(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE
  if(operation==TT_PCI_PROBE_Q38_TOKEN_MATRIX_PHASE_READ)
   return Q38TokenMatrixPhaseControl(instance,data,length);

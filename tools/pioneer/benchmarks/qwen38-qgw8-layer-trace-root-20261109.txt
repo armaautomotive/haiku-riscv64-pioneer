@@ -238,10 +238,18 @@ complete lifecycle, and individual frame size is not combined stack usage.
 The normal tag129 driver again rebuilt to its previous SHA-256
 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
 
+The tag131 source now includes the trace control handler and a distinct
+0x8833 trace-read dispatch. Its token-control contract permits only input
+248319, one prompt position, EOS-stop disabled, one record and no cancel.
+The packet/handler and dispatch were exercised with simulated scope, owner,
+user-copy and device endpoints; the tag131 RISC-V control test object is not
+a full driver. The ordinary tag129 driver again rebuilt to its previous
+SHA-256 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
+
 No tag131 driver object or client exists. The existing reload protocol
-explicitly refuses tag131; trace control remains limited to fake-owner
-roles. This identity must not be loaded or run; it neither proves workspace
-ownership nor produces an accelerator result or speedup.
+explicitly refuses tag131. This identity must not be loaded or run; the
+source dispatch has not proven a real FD, lifecycle, buffer ownership,
+combined kernel stack, cleanup, accelerator result or speedup.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_native_program_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B ABS_WORKER --sdk ABS_HAIKU_SDK
 

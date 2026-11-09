@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: MIT */
-#ifndef PIONEER_Q38_QGW8_TRACE_CONTROL_INSPECTION
-#error Trace control is a non-loadable inspection only
+#if !defined(PIONEER_Q38_QGW8_TRACE_CONTROL_INSPECTION) && !defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#error Trace control requires an isolated trace profile
 #endif
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8LayerTracePacket.h"
 
-// Fake owner and fake user-copy harness only: no control opcode, dispatch,
-// caller authentication proof or physical driver path is installed here.
+// Isolated trace handler. A compile-only build or simulated user-copy test
+// provides no caller authentication proof or physical driver qualification.
 [[maybe_unused]] static __attribute__((noinline)) status_t
 Q38Qgw8TraceControlInspection(PioneerProbeCookie* cookie,void* data,size_t length){
  namespace P=PioneerQ38Qgw8LayerTracePacket;

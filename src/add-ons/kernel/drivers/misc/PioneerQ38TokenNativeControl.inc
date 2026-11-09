@@ -29,6 +29,9 @@ static status_t Q38FullOffloadSupport(void* data,size_t length){
 #ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
 #include "PioneerQ38Qgw8HiddenProtocol.h"
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_NATIVE_131
+#include "PioneerQ38Qgw8TraceNativeProtocol.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
 #include "PioneerQ38TokenHiddenValidationProtocol.h"
 #endif
@@ -96,6 +99,9 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
 #endif
 #ifdef PIONEER_Q38_QGW8_HIDDEN_NATIVE_129
   || !PioneerQ38Qgw8Hidden::ControlRequestShape(*packet)
+#endif
+#ifdef PIONEER_Q38_QGW8_TRACE_NATIVE_131
+  || !PioneerQ38Qgw8TraceNative::ControlRequestShape(*packet)
 #endif
 #ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE
   || !PioneerQ38TokenDecodeBenchmark::ControlRequestShape(*packet)

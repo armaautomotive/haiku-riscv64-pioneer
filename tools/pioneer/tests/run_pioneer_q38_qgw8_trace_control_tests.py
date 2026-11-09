@@ -55,6 +55,16 @@ with tempfile.TemporaryDirectory(prefix='qgw8-trace-control-',dir='/private/tmp'
     subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
                     '-fsanitize=address,undefined',*flags,'-I'+str(tmp),str(here/'pioneer_q38_qgw8_trace_control_context_test.cpp'),'-o',str(integrated)],check=True)
     subprocess.run([str(integrated)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+    native_names='''PIONEER_Q38_QGW8_TRACE_NATIVE_131 _KERNEL_MODE PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+PIONEER_Q38_QGW8_NATIVE_INSPECTION PIONEER_Q38_HYBRID_FULL_NATIVE PIONEER_Q38_FULL_OFFLOAD_NATIVE
+PIONEER_Q38_TOKEN_NATIVE_CONTEXT PIONEER_Q38_QGW8_PROGRAMS_INSPECTION PIONEER_Q38_QGW8_LAYOUT_INSPECTION
+PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT TT_PIONEER_DRIVER_RELOAD'''.split()
+    native=['-D'+name+'=1' for name in native_names]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010131ULL']
+    native_test=tmp/'native-profile-test'
+    subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-fsanitize=address,undefined',*native,'-I'+str(tmp),str(here/'pioneer_q38_qgw8_trace_control_context_test.cpp'),'-o',str(native_test)],check=True)
+    subprocess.run([str(native_test)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk is not None:
         cross = sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
         headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
@@ -67,4 +77,13 @@ with tempfile.TemporaryDirectory(prefix='qgw8-trace-control-',dir='/private/tmp'
         control=[row for row in rows if 'Q38Qgw8TraceControlInspection(' in row[0]]
         assert control and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in control), control
         print('PASS fake trace control RISC-V object and bounded individual control frame; NO combined-stack or device proof')
+        native_obj=tmp/'native-control.o'
+        subprocess.run([str(cross),'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                        '-Wno-unused-function','-fno-exceptions','-fno-rtti','-fstack-usage','-mcmodel=medany','-fpic',
+                        *native,'-I'+str(tmp),'-I'+str(headers),'-I'+str(headers/'os'),'-idirafter',str(headers/'posix'),
+                        '-c',str(here/'pioneer_q38_qgw8_trace_control_context_test.cpp'),'-o',str(native_obj)],check=True)
+        native_rows=[line.split('\t') for line in native_obj.with_suffix('.su').read_text().splitlines()]
+        native_control=[row for row in native_rows if 'Q38Qgw8TraceControlInspection(' in row[0]]
+        assert native_control and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in native_control), native_control
+        print('PASS tag131 control RISC-V object using mock endpoints; NO native driver, combined-stack or device proof')
 print('PASS fake control role isolation; actual control called with synthetic endpoints only')
