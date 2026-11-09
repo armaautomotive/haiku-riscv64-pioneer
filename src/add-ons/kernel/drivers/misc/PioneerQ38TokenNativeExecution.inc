@@ -177,9 +177,9 @@
  return s->runtime->ReadHiddenChunk(c.io,part,output,words,result);
 } // private trusted-buffer DATA read ONLY;no opcode,Work,restore or completion grant
 #endif
-#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
-// Non-loadable fake-owner inspection only. This does not install an ioctl or
-// grant device access; it binds the existing reader to the same live context.
+#if defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+// Isolated trace build only. This does not install an ioctl or grant device
+// access; it binds the existing reader to the same live context.
 [[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeTraceChunk(PioneerStoreContext& c,unsigned ordinal,
  uint32_t* output,unsigned words,PioneerQ38TokenHiddenReadResult& result){
  namespace G=PioneerQ38Qgw8LayerTraceGeometry;

@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-// Included inside a separately compiled, non-loadable fake owner only. No
-// device operation or external caller selects this. Trace slots are not yet
-// proven allocated, initialized, written by ROOT, or owned by this owner.
-#ifndef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
-#error Trace read methods require their isolated inspection role
+// Included in the non-loadable fake owner or isolated tag131 build profile.
+// No device operation or external caller selects this. Trace slots are not
+// yet proven allocated, initialized, written by ROOT, or owned by this owner.
+#if !defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) && !defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#error Trace read methods require an isolated trace role
 #endif
 private:
  unsigned traceReadCursor=0;

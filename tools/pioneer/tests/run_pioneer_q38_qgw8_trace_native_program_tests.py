@@ -97,6 +97,52 @@ with tempfile.TemporaryDirectory(prefix='qgw8-trace-native-program-',dir='/priva
                                '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(source)+'"','-I'+str(root),'-I'+str(headers),'-I'+str(headers/'os'),
                                '-idirafter',str(headers/'posix'),'-fsyntax-only','-x','c++',str(plan)],capture_output=True)
         assert result.returncode==0,result.stderr.decode(errors='replace')[:2000]
-        print('PASS tag131 trace program RISC-V syntax-only; NO driver object or device')
+        kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
+        driver=(kernel/'pioneer_q38_hybrid_full_driver.cpp').read_text()
+        parents=re.findall(r'^#define ([A-Z][A-Z0-9_]*) 1$',driver,re.M)
+        ttnames='BANKS PANEL AFFINE BLOCK STREAM ROWS COHORT COHORT_SEALED COHORT_PAYLOAD DISPATCH DISPATCH_VECTOR'.split()
+        more=['-D'+v+'=1' for v in parents]+['-DTT_PIONEER_EXPERIMENTAL_Q38_'+v+'=1' for v in ttnames]
+        probe=tmp/'native-state.cpp'
+        probe.write_text('#include "'+str(kernel/'PioneerQ38TokenNativeState.h')+'"\n'
+                         'static_assert(sizeof(PioneerQ38TokenNativeOwner)>0,"actual owner must compile");\n'+r'''
+static volatile uint32_t dummy;
+struct CompileOnlyIO {
+ template<class... T> bool TokenRuntimeScope(T&&...){return dummy!=0;}
+ bool TokenMemoryReadChecked(unsigned,unsigned,uint32_t& v){v=dummy;return dummy!=0;}
+ bool TokenMemoryMappingStable(unsigned){return dummy!=0;}
+ bool TokenPeerStoreSelect(unsigned){return dummy!=0;}
+ bool SelectRuntimeCore(unsigned){return dummy!=0;}
+ bool TokenFifoReadChecked(unsigned,bool,uint32_t& v){v=dummy;return dummy!=0;}
+ uint32_t ResidentNocRead(unsigned){return dummy;}
+ void ResidentNocWrite(unsigned,uint32_t v){dummy=v;}
+ uint32_t ResetRead(){return dummy;}
+ uint32_t SourceRead(unsigned){return dummy;}
+ uint32_t HostPciRead(unsigned,unsigned,unsigned){return dummy;}
+ uint32_t RuntimePcRead(){return dummy;}
+ uint64_t Q38CohortNow(){return dummy;}
+ void Pause(){dummy++;}
+ void QuarantineHostPage(){dummy++;}
+ void TokenMemoryRetainHostOwners(){dummy++;}
+};
+static auto volatile witness=&PioneerQ38TokenNativeOwner::ReadTraceChunk<CompileOnlyIO>;
+''')
+        result=subprocess.run([str(cross),'-std=gnu++17','-Wno-error',*flags,*more,
+                               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(source)+'"',
+                               '-I'+str(root),'-I'+str(headers),'-I'+str(headers/'os'),'-idirafter',str(headers/'posix'),
+                               '-fsyntax-only',str(probe)],capture_output=True)
+        assert result.returncode==0,result.stderr.decode(errors='replace')[:4000]
+        obj=tmp/'native-state.o'
+        result=subprocess.run([str(cross),'-std=gnu++17','-O2','-fno-exceptions','-fno-rtti','-fstack-usage',*flags,*more,
+                               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(source)+'"',
+                               '-I'+str(root),'-I'+str(headers),'-I'+str(headers/'os'),'-idirafter',str(headers/'posix'),
+                               '-c',str(probe),'-o',str(obj)],capture_output=True)
+        assert result.returncode==0,result.stderr.decode(errors='replace')[:4000]
+        nm=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'
+        names=subprocess.check_output([str(nm),'--defined-only',str(obj)],text=True)
+        assert 'ReadTraceChunk' in names, 'native trace reader did not instantiate'
+        rows=[line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
+        observed=[row for row in rows if 'ReadTraceChunk' in row[0]]
+        assert observed and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in observed),observed
+        print('PASS tag131 actual owner trace reader RISC-V compile-only object and individual frame; NO real IO, driver or device')
     assert len(re.findall(rb'// SHA256 [0-9a-f]{64}\nstatic const uint32_t ',outputs[0]))==15
 print('PASS distinct tag131 build-only QTPA identity, 15 pinned sections, reproducibility and role refusals; NO DRIVER OR DEVICE')

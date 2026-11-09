@@ -44,7 +44,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129)
 [[maybe_unused]] static bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
 #endif
-#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+#if defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 [[maybe_unused]] static bool ReadQ38TokenNativeTraceChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
 #endif
 [[maybe_unused]] static bool RestoreQ38TokenNativeL1(PioneerStoreContext&,PioneerQ38TokenRestoreResult&);
@@ -102,7 +102,7 @@ class PioneerQ38TokenNativeState {
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129)
  friend bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
 #endif
-#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+#if defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
  friend bool ReadQ38TokenNativeTraceChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
 #endif
  friend bool RestoreQ38TokenNativeL1(PioneerStoreContext&,PioneerQ38TokenRestoreResult&);

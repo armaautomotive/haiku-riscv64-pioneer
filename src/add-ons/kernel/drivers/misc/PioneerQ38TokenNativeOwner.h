@@ -6,7 +6,7 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenMatrixPhaseReadRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceReadInspectionRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceInitRole.h"
-#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+#if defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8LayerTraceGeometry.h"
 #endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
@@ -93,7 +93,7 @@ struct PioneerQ38TokenMatrixPhaseResult {
 };
 static_assert(sizeof(PioneerQ38TokenMatrixPhaseResult)==64,"private fixed DATA observation,not lifecycle authority");
 #endif
-#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 struct PioneerQ38TokenHiddenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,part=0;
  uint32_t firstWord=0,wordCount=0,position=0,completedLayers=0,terminalKind=0,committed=0,packets=0,bytesRead=0;
@@ -1162,7 +1162,7 @@ public:
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129)
 #include "PioneerQ38TokenHiddenRead.inc"
 #endif
-#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+#if defined(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 #include "PioneerQ38Qgw8TraceReadInspection.inc"
 #endif
 public:
