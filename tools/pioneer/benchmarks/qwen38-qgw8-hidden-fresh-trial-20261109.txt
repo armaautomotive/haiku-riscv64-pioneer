@@ -1,0 +1,29 @@
+Fresh QGW8 hidden-state diagnostic after outage, 2026-11-09
+
+The previous trial's .trial-once and CANDIDATE_RUNNING_OWNERSHIP_UNKNOWN
+state remain untouched. After a separate recovery and a successful three-band
+physical FPU diagnostic, the stable driver was independently verified at
+tag 2026102100010012 generation 4, cold0 and active_owner0.
+
+The parent gained explicitly selected --fresh-20261109 and
+--check-fresh-20261109 actions using a different private staging directory.
+The mock parent tests pass with the old stage and guard preserved, including
+new-stage success, spent-guard refusal and read-only check-only cases.
+The staged unchanged tag129 driver/client/preflight/gate were copied from
+the old stage and match their existing pinned hashes. The new parent SHA-256
+is c88ffd91aa1d2be8ae01734b714351a4953c43e19d522bd8fb9d27af3bf57a5e.
+The actual --check-fresh-20261109 passed with no model read or driver change.
+
+A first launch wrapper exited before admission; no marker or card operation
+was created. Its logs remain in the new stage. A detached exec launch then
+entered VERIFYING_MODEL_AND_CACHES_NO_DEVICE. The actual parent team 1287
+and CPU-only preflight team 1328 were observed alive. The stage is
+/boot/home/pioneer-qgw8-hidden-trial-20261109-b; examine its state, parent.pid,
+preflight/trial logs and the SAME processes before any further action. Do not
+launch another trial or interpret a stalled network as a terminal result.
+
+The parent performs full independent model and cache verification before
+driver exchange, and the candidate re-verifies before device open. Only a
+checked FINISH, snapshot hash and output gate authorize automatic restoration.
+Any uncertain device action is retained without retry or automatic reset.
+This live handoff is not a physical result, correctness or speed claim.
