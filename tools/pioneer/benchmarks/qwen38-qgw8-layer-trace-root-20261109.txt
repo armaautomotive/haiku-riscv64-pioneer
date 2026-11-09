@@ -203,12 +203,26 @@ comparator accepts this second reference only with an explicit matching
 digest and reports its threshold exceedance separately from the original
 model. A hash confirms file identity, not provenance or numerical validity.
 Synthetic tests cover layer order, finite values, exclusive creation, alias,
-shape, role and reference-hash checks. A real reference run was started;
-its outcome must be checked before any output is treated as usable.
+shape, role and reference-hash checks. A real reference run completed with
+exit 0. Its original-model pass matched the independently pinned CPU result;
+both converted FFN and converted FFN+head selected token 70253 for the fixed
+input. Its 64 converted layer outputs have SHA-256
+cfe8aaf5e0877a2260c957b2d996ce4626be5779a038886f65934893aef93599.
+The private local copy is generated.pioneer/qualification-inputs/
+qgw8-hidden-reference.Yn7npdOx/converted-layers-v1.bin; it is not an
+off-machine backup. These data do not establish P100A execution or speed.
 An independent offline verifier checks that a completed raw export has the
 correct length and finite values and that its final layer matches the
 previously pinned converted CPU hidden snapshot bit-for-bit. That check
 does not independently authenticate its other 63 layers or prove origin.
-The verifier's synthetic refusal and success tests passed.
+The verifier's synthetic refusal and success tests passed; the real final
+layer matched bit-for-bit. The other layers' origin and correctness are
+supported by this run but not independently verified.
+
+Comparing the converted CPU data with pinned original CPU data gives relative
+L2 0.0180785026009 at zero-based layer 0 and 0.318669482813 at layer 63.
+An illustrative threshold of 0.1 is first crossed at zero-based layer 46.
+This is conversion/arithmetic drift between two CPU calculations, not a
+hardware result, causal localization, or a correctness threshold.
 
  python3 tools/pioneer/tests/verify_pioneer_q38_qgw8_cpu_layer_reference.py ABS_CONVERTED_LAYERS ABS_ORIGINAL_TOKEN0 ABS_PRIOR_CPU_HIDDEN_SNAPSHOT
