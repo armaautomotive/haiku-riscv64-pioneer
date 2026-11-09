@@ -2,6 +2,8 @@
 // Complete synthetic QGWD receipt lifecycle; no device or actual model.
 #define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_RECIPE_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
@@ -14,6 +16,7 @@
 #include "../PioneerQ38DenseQ8UploadReceiptInspection.h"
 #include "../PioneerQ38HybridDenseQ8MatrixPlan.h"
 #include "../PioneerQ38DenseQ8MatrixManifest.h"
+#include "../PioneerQ38DenseQ8RecipeInspection.h"
 #include <cstring>
 #include <memory>
 #include <vector>
@@ -69,6 +72,15 @@ int main(int argc,char** argv){
  assert(!receipt->DenseManifest(reinterpret_cast<uint32_t*>(&context),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(PioneerQ38DenseQ8MatrixManifest::Build(*canonical,host,expected.data(),expected.size()));
  assert(receipt->DenseManifest(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==expected);
+ auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>(),physical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(!receipt->DeriveCanonical(*logical,false,&context,&foreign,hashes.data(),ledger.data(),17,42) && !logical->Ready());
+ assert(receipt->DeriveCanonical(*logical,false,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->DeriveCanonical(*physical,true,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(logical->Qgw8InspectionLayout() && physical->DenseQ8InspectionLayout());
+ std::array<uint32_t,1920> sources={};for(unsigned i=0;i<sources.size();i++)sources[i]=0x16005+i*131;
+ auto recipe=std::make_unique<PioneerQ38DenseQ8RecipeInspection>();const PioneerQ38GdnIdentity identity={1,2,3,42};
+ assert(recipe->Build(*logical,*physical,3,0,248319,0,1000,identity,sources.data())
+  && recipe->PhysicalPagesPresent(ledger.data(),ledger.size()) && !recipe->Recipe()->LearnedPagesPresent(ledger.data(),ledger.size()));
  if(argc==2 && !strcmp(argv[1],"--late")){
   hashes[0]^=1;actual.fill(0xa5a5a5a5);
   assert(!receipt->DenseManifest(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42)
