@@ -205,3 +205,10 @@ model. A hash confirms file identity, not provenance or numerical validity.
 Synthetic tests cover layer order, finite values, exclusive creation, alias,
 shape, role and reference-hash checks. A real reference run was started;
 its outcome must be checked before any output is treated as usable.
+An independent offline verifier checks that a completed raw export has the
+correct length and finite values and that its final layer matches the
+previously pinned converted CPU hidden snapshot bit-for-bit. That check
+does not independently authenticate its other 63 layers or prove origin.
+The verifier's synthetic refusal and success tests passed.
+
+ python3 tools/pioneer/tests/verify_pioneer_q38_qgw8_cpu_layer_reference.py ABS_CONVERTED_LAYERS ABS_ORIGINAL_TOKEN0 ABS_PRIOR_CPU_HIDDEN_SNAPSHOT
