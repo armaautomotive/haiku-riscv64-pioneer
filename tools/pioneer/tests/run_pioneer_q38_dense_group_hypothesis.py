@@ -4,9 +4,13 @@ import hashlib
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 here = Path(__file__).resolve().parent
+if len(sys.argv) not in (1, 3) or (len(sys.argv) == 3 and
+        (sys.argv[1] != '--save-reference' or not Path(sys.argv[2]).is_absolute())):
+    raise SystemExit('optional --save-reference ABSOLUTE_NEW_FILE only')
 workspace = here.parents[2]
 layers = workspace / 'generated.pioneer/qualification-inputs/qgw8-hidden-reference.Yn7npdOx/converted-layers-v1.bin'
 trace = workspace / 'generated.pioneer/qualification-inputs/qgw8-dense-stage-physical-20261109/trace.bin'
@@ -32,4 +36,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-groups-', dir='/private/tm
                     str(here / 'pioneer_q38_dense_group_hypothesis.cpp'),
                     str(here / 'pioneer_q38_whole_original_bytes.cpp'),
                     str(here.parent / 'PioneerModelWeightCache.cpp'), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), str(model), str(layers), str(trace), str(cpu)], check=True)
+    subprocess.run([str(binary), str(model), str(layers), str(trace), str(cpu), *sys.argv[1:]], check=True)

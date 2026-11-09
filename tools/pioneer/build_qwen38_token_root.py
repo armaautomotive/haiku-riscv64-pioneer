@@ -7,6 +7,10 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+input_trace='--qgw8-dense-input-trace' in options
+if input_trace:
+ assert '--qgw8-dense-stage-trace' not in options,'distinct capture roles cannot be combined'
+ options=[x if x!='--qgw8-dense-input-trace' else '--qgw8-dense-stage-trace' for x in options]
 assert 3<=len(sys.argv)<=28 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-commit-boundary','--qgw8-coarse-profile','--qgw8-layer-trace','--qgw8-dense-stage-trace'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
@@ -45,8 +49,8 @@ head_matrix='--head-matrix-inspection' in options
 qgw8_commit='--qgw8-commit-boundary' in options
 qgw8_profile='--qgw8-coarse-profile' in options
 qgw8_trace='--qgw8-layer-trace' in options
-dense_trace='--qgw8-dense-stage-trace' in options
-assert not dense_trace or qgw8_trace,'dense-stage trace requires the separate layer-trace inspection root'
+dense_trace='--qgw8-dense-stage-trace' in options and not input_trace
+assert not (dense_trace or input_trace) or qgw8_trace,'dense-stage trace requires the separate layer-trace inspection root'
 assert not qgw8_commit or (inspect and head_matrix and not bf16_profile),'QGW8 commit candidate requires the separate non-profiled head-matrix inspection ROOT'
 assert not qgw8_profile or (inspect and head_matrix and not bf16_profile and not qgw8_commit),'QGW8 timing requires its separate original-commit head-matrix inspection ROOT'
 assert not qgw8_trace or (inspect and head_matrix and not bf16_profile and not qgw8_commit and not qgw8_profile),'QGW8 layer trace requires a distinct non-profiled inspection ROOT'
@@ -55,7 +59,7 @@ assert not head_matrix or (matrix_attention and not queued_counters),'QGW8 head 
 if matrix_attention:
  assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
   '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
-  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()) | ({'--qgw8-coarse-profile'} if qgw8_profile else set()) | ({'--qgw8-layer-trace'} if qgw8_trace else set()) | ({'--qgw8-dense-stage-trace'} if dense_trace else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()) | ({'--qgw8-coarse-profile'} if qgw8_profile else set()) | ({'--qgw8-layer-trace'} if qgw8_trace else set()) | ({'--qgw8-dense-stage-trace'} if dense_trace or input_trace else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -74,7 +78,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []),*(['--hybrid-queued-counters'] if queued_counters else []),*(['--head-matrix-inspection'] if head_matrix else []),*(['--qgw8-dense-stage-trace'] if dense_trace else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []),*(['--hybrid-queued-counters'] if queued_counters else []),*(['--head-matrix-inspection'] if head_matrix else []),*(['--qgw8-dense-input-trace'] if input_trace else (['--qgw8-dense-stage-trace'] if dense_trace else [])))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']

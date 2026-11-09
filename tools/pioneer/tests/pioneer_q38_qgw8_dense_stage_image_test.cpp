@@ -76,4 +76,5 @@ int main(int argc,char** argv){
  {DenseTraceMachine m(argv[1]);m.corruptAfterFirst=true;assert(!m.Call(0x04000000,3,0,0,6) && m.transfers.size()==1);}
  {DenseTraceMachine m(argv[1]);m.neverComplete=true;assert(!m.Call(0x04000000,3,0,0,6) && m.transfers.size()==1 && m.pending);}
  puts("PASS emitted dense stage writer: 2 stages, address extremes, delayed synthetic NoC, phase/range refusals, corrupt command and timeout; SEAL/QUIET INTERCEPTED, NO DEVICE");
+ return 0;
 }

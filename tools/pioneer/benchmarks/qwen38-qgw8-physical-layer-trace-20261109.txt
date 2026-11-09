@@ -191,9 +191,17 @@ before the output projection, at layer 3 and position 0 only. Its geometry
 uses slot 0 and the first 4096 bytes of slot 1, preserving layer slots 2-63.
 The RV32 dense component cross-compiled, role refusals and address extremes
 passed, and ordinary and earlier tag132 dense components rebuilt bit-for-bit.
-It is not enabled in the build system or any loadable driver. No instruction
-emulator, whole-image size/stack check, physical test, cleanup qualification,
-or attention-input CPU reference has been completed for this capture. No
-card operation is authorized merely by these component-only checks.
+The distinct offline image was built twice identically (program.elf SHA-256
+5a8c25655145ced3ebe95d0322f6a6fe7b6b69c3a284d70fdd50312fe644efcd;
+130428 text bytes of 131072). The old stage image rebuilt to its pinned hash.
+Its actual writer passed RV32 instruction simulation with delayed synthetic
+NoC, bounds, corruption and timeout; seal and quiet were intercepted.
+The CPU attention-input reference was saved locally after the corresponding
+CPU output projection reproduced its previous pinned snapshot bit-for-bit:
+24576 bytes, SHA-256 972b0747f8b03d422a7c5315ccd0fd15bf227231b1c316d5e7026c53eaf0ebf0.
+No complete execution/combined-stack, native image/identity, physical test
+or cleanup qualification exists. The build-only image is NOT loadable and
+does not authorize a card operation.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_image_tests.py PINNED_IMAGE_DIRECTORY

@@ -6,7 +6,11 @@
 #include "pioneer_q38_whole_original_bytes.h"
 #include <array>
 #include <cstdio>
+#include <cerrno>
+#include <fcntl.h>
 #include <map>
+#include <sys/stat.h>
+#include <unistd.h>
 using namespace Q38CpuReferenceMath;
 #include "actual_cpu_replay_impl.inc"
 
@@ -28,8 +32,23 @@ static bool Compare(const char* name,const std::vector<float>& reference,const s
  printf("GROUP_HYPOTHESIS %s rel_l2_to_card=%.9g cosine=%.9g; CPU_ONLY\n",name,std::sqrt(error/den),dot/std::sqrt(den*norm));
  return true;
 }
+static bool Save(const char* path,const std::vector<float>& values){
+ if(!path || path[0]!='/' || values.size()!=6144)return false;
+ for(float v:values)if(!std::isfinite(v))return false;
+ int fd=open(path,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);if(fd<0)return false;
+ struct stat info={};bool okay=!fstat(fd,&info) && S_ISREG(info.st_mode) && info.st_nlink==1
+  && info.st_uid==geteuid() && !(info.st_mode&077);
+ const auto* data=reinterpret_cast<const unsigned char*>(values.data());size_t left=values.size()*sizeof(float);
+ while(okay && left){ssize_t n=write(fd,data,left);if(n<0 && errno==EINTR)continue;
+  if(n<=0){okay=false;break;}data+=n;left-=size_t(n);}
+ if(okay && fsync(fd))okay=false;
+ if(close(fd))okay=false;
+ return okay && !left;
+}
 int main(int argc,char** argv){
- if(argc!=5 || std::fegetround()!=FE_TONEAREST)return 2;
+ static_assert(sizeof(float)==4 && __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"little-endian float required");
+ if((argc!=5 && argc!=7) || (argc==7 && (strcmp(argv[5],"--save-reference") || argv[6][0]!='/'))
+  || std::fegetround()!=FE_TONEAREST)return 2;
  std::vector<float> input,card,cpu,norm,normalized,qg,value;
  if(!ReadSlot(argv[2],2,input) || !ReadSlot(argv[3],0,card) || !ReadSlot(argv[4],0,cpu))return 1;
  WholeModelOriginalBytes model;if(!model.Open(argv[1]) || !model.Ready())return 1;
@@ -46,6 +65,9 @@ int main(int argc,char** argv){
   if(!replay.Project(3,10,attention,projection) || projection.size()!=5120)return 1;
   if(mode==0 && memcmp(projection.data(),cpu.data(),5120*sizeof(float))){
    fputs("GROUP_HYPOTHESIS_REFUSED normal CPU projection did not reproduce pinned reference\n",stderr);return 1;
+  }
+  if(mode==0 && argc==7 && !Save(argv[6],attention)){
+   fputs("GROUP_HYPOTHESIS_REFUSED reference save failed; partial file is untrusted\n",stderr);return 1;
   }
   const char* names[]={"normal","interleaved","reverse","all_group_zero"};
   if(!Compare(names[mode],card,projection))return 1;
