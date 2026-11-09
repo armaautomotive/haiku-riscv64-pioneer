@@ -14,8 +14,15 @@ with tempfile.TemporaryDirectory(prefix='q38-q8-fixed-',dir='/private/tmp') as t
     subprocess.run([compiler,'-std=c++17','-O2','-g','-Wall','-Wextra','-Werror',
                     '-Wno-misleading-indentation','-Wno-unused-function','-fsanitize=address,undefined',str(source),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
+    ledger=Path(tmp)/'ledger'
+    subprocess.run([compiler,'-std=c++17','-O2','-g','-Wall','-Wextra','-Werror',
+                    '-Wno-misleading-indentation','-Wno-unused-function','-fsanitize=address,undefined',
+                    str(here/'pioneer_q38_dense_q8_ledger_test.cpp'),'-o',str(ledger)],check=True)
+    subprocess.run([str(ledger)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
     for role in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                  'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
         result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(source)],capture_output=True)
         assert result.returncode and b'Dense Q8 fixed layout is isolated inspection only' in result.stderr,role
+        result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(here/'pioneer_q38_dense_q8_ledger_test.cpp')],capture_output=True)
+        assert result.returncode and b'Dense Q8 ledger is isolated inspection only' in result.stderr,role
 print('PASS dense-Q8 fixed-layout role exclusions; NO DEVICE')

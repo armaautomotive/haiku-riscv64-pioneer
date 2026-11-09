@@ -12,6 +12,7 @@
 #include "../PioneerQ38DenseQ8KernelLayoutInspection.h"
 #include "../PioneerQ38HybridDenseQ8MatrixPlan.h"
 #include <memory>
+#ifndef PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY
 int main(){
  using Fixed=PioneerQ38DenseQ8KernelLayoutInspection;using Host=PioneerQ38HybridDenseQ8MatrixPlan;
  auto source=std::make_unique<PioneerQ38CanonicalModelPlan>();auto parent=std::make_unique<Fixed::Parent>();
@@ -33,3 +34,4 @@ int main(){
  printf("PASS fixed dense Q8 layout matches %u host parts, %u converted stripes, %llu reserved hole bytes; NO DEVICE\n",
   fixed->Count(),converted,(unsigned long long)holes);
 }
+#endif
