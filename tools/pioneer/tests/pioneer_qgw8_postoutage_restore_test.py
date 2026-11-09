@@ -27,12 +27,15 @@ sha256sum(){
   *) return 1;;
  esac
  [ "$MODE:${1##*/}" != record:state ] || h=bad
+ [ "$MODE:${1##*/}" != bad_stable:stable.backup ] || h=bad
+ [ "$MODE:${1##*/}" != bad_candidate:tenstorrent_pci_probe-qgw8-hidden-129 ] || h=bad
+ [ "$MODE:${1##*/}" != bad_guard:pioneer_p100a_reload_guard ] || h=bad
  printf '%s  %s\n' "$h" "$1"
 }
 '''
 
 with tempfile.TemporaryDirectory(prefix='qgw8-postoutage-test-') as tmp:
-    for mode in ('pass', 'check', 'bad_backup', 'no_epoch', 'record', 'exit_present',
+    for mode in ('pass', 'check', 'bad_backup', 'no_epoch', 'record', 'bad_stable', 'bad_candidate', 'bad_guard', 'symlink_stable', 'exit_present',
                  'snapshot_present', 'spent', 'busy', 'health', 'owner', 'wrong_tag',
                  'wrong_generation', 'flush1', 'quiesce', 'changed', 'flush2', 'wait'):
         root = Path(tmp) / mode / 'home'
@@ -43,6 +46,9 @@ with tempfile.TemporaryDirectory(prefix='qgw8-postoutage-test-') as tmp:
                      'tenstorrent_pci_probe-qgw8-hidden-129'):
             (stage / name).write_text('OLD')
         (stage / 'stable.backup').write_text('NEW')
+        if mode == 'symlink_stable':
+            (stage / 'stable.backup').unlink()
+            (stage / 'stable.backup').symlink_to('state')
         if mode == 'exit_present': (stage / 'trial.exit').touch()
         if mode == 'snapshot_present': (stage / 'hidden.bin').touch()
         work = root / 'pioneer-qgw8-postoutage-restore-20261108-a'
@@ -94,7 +100,7 @@ count=$(/usr/bin/grep -c '^--flush$' "$EVENTS")
             assert installed.read_text() == 'NEW' and (work / 'previous129').read_text() == 'OLD'
         else:
             assert result.returncode != 0, (mode, result.stdout, calls)
-            if mode in ('bad_backup', 'no_epoch', 'record', 'exit_present', 'snapshot_present',
+            if mode in ('bad_backup', 'no_epoch', 'record', 'bad_stable', 'bad_candidate', 'bad_guard', 'symlink_stable', 'exit_present', 'snapshot_present',
                         'spent', 'busy', 'health', 'owner', 'wrong_tag', 'wrong_generation'):
                 assert '--quiesce' not in calls and '--flush' not in calls and installed.read_text() == 'OLD', (mode, calls)
             if mode == 'flush1': assert calls == ['--status', '--flush'] and installed.read_text() == 'OLD'
@@ -102,4 +108,4 @@ count=$(/usr/bin/grep -c '^--flush$' "$EVENTS")
             if mode == 'changed': assert calls == ['--status', '--flush', '--quiesce'] and installed.read_text().strip() == 'BAD'
             if mode == 'flush2': assert calls == ['--status', '--flush', '--quiesce', '--flush'] and installed.read_text() == 'NEW'
             if mode == 'wait': assert calls == ['--status', '--flush', '--quiesce', '--flush', '--wait'] and installed.read_text() == 'NEW'
-print('PASS actual post-outage recovery flow and 16 synthetic refusal/fault cases; NO device')
+print('PASS actual post-outage recovery flow and 20 synthetic refusal/fault cases; NO device')
