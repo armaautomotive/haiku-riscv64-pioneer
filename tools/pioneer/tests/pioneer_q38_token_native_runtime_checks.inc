@@ -45,7 +45,7 @@ static bool CheckNativeRuntime(Fixture& f){
   if(io.runtimeFault==1)assert(io.touches==io.runtimeObserved);
   unsigned touches=io.touches;PioneerQ38TokenRuntimeResult again;
   assert(!PrepareQ38TokenNativeRuntime(c,again) && io.touches==touches);f.Unknown();
-  printf("PASS native held runtime fault%u/phase%u/chunk%u/packets%u/actual generation+counter+last-readback faults/ALL owners retained/no retry/cleanup;SIMULATED endpoints,NOT model RUN/physical/TPS\n",io.runtimeFault,result.phase,result.chunk,result.packets);
+  printf("PASS native held runtime fault%u/phase%u/chunk%u/packets%u/owners retained/no retry; SIMULATED endpoints, NOT cleanup/model RUN/physical/TPS\n",io.runtimeFault,result.phase,result.chunk,result.packets);
   return false;
  }
  if(!okay)fprintf(stderr,"RUNTIME_PREPARE_DIAGNOSTIC phase%u worker%u chunk%u word%u packets%u writes%u reads%u unsafe%u last%s:%x=%x;SIMULATED metadata ONLY\n",

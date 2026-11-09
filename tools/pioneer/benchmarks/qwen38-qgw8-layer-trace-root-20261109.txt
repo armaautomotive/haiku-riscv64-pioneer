@@ -153,6 +153,14 @@ The complete fake-owner startup passed with 2388 chunks and 4776 simulated
 write/read packets, comparing all 39093248 written bytes and untouched
 workspace slack, plus 120 simulated boot records. Its device and memory
 endpoints were mocked, so this is not physical readback.
+The first invocation requesting runtime faults actually ran an ordinary
+successful startup: the hybrid fixture accepted the option but did not set
+the fault. That run provides no fault-handling evidence. The fixture now
+selects the final-readback corruption for this inspection profile, and the
+runner rejects that option for the ordinary QGW8 profile. After correction,
+the simulated final-readback fault was detected at chunk 2387 after packet
+4776; the fixture retained its owners and refused retry. This specific run
+does not test generation or counter faults, real IO, or physical cleanup.
 These are offline checks, not proof of physical allocation, actual ROOT
 production, card safety, model correctness or speed. Real owner lifetime,
 readout authority, and physical trace testing remain unproven.

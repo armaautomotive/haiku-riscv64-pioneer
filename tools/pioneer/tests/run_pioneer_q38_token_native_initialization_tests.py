@@ -29,10 +29,10 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
     index=sys.argv.index(selector);assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
-            or qgw8_inspection and sys.argv[2] in ('--faults','--runtime-faults'))
+            or qgw8_inspection and (sys.argv[2]=='--faults' or trace_init and sys.argv[2]=='--runtime-faults'))
             or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')) and hybrid_header.is_absolute() and hybrid_header.is_file()
     if qgw8_inspection:
-        assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and sys.argv[2] in ('--held','--faults','--runtime','--runtime-faults','--bootstrap','--execution','--execution-traffic'))
+        assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--faults','--runtime','--bootstrap','--execution','--execution-traffic') or trace_init and sys.argv[2]=='--runtime-faults'))
                 or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
     expected='72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
