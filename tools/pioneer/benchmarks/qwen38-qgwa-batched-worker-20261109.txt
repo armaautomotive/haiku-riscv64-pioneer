@@ -130,3 +130,18 @@ This is simulated source/banks/transport and function-level ROOT execution,
 not a native owner, live upload, whole-model run, P100A validation or speed.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_held_head_root_bridge.py SDK QGWA_ROOT --qgwa QGWA_WORKER
+
+Synthetic full-session lifecycle
+--------------------------------
+The QGWA plan-inspection head metadata was exercised through the existing
+fake-tag same-FD upload/full-session machinery. Synthetic normal
+START/OBSERVE/HOLD/READ/FINISH and wrong-tag, bad-support, bad-clock,
+failed-start and bad-record paths passed; failed token lifecycles retained
+the simulated owner. This test verifies the pinned QGWA package exists but
+does not execute its program DATA; the startup/worker-boot binding is tested
+separately in the held-plan bridge. These are fake driver replies and cannot
+establish device ownership, live recovery, model output, or throughput.
+Offline QGWA roles additionally reject native/client/Work selector mixing;
+the active tag133 diagnostic driver rebuilt to its same previous SHA-256.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_full_session_tests.py PINNED_QGWA_HEADER
