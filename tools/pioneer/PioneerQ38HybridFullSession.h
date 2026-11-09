@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Qgw8TraceClientRole.h"
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
 #if PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_QGW8_USER_SESSION_INSPECTION) || PIONEER_Q38_QGW8_USER_SESSION_INSPECTION != 1 \
@@ -56,9 +57,14 @@ static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role 
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8HiddenProtocol.h"
 #include "PioneerQ38TokenHiddenSnapshot.h"
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8TraceNativeProtocol.h"
+#include "PioneerQ38Qgw8LayerTraceHandoff.h"
+#endif
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <new>
 
 // One-shot candidate lifecycle. The uploader and its descriptor remain
 // private: START, OBSERVE, HOLD, READ and FINISH use the exact same sealed
@@ -88,6 +94,10 @@ private:
  std::array<uint32_t,PioneerQ38Qgw8Hidden::Words> hidden={};
  unsigned hiddenParts=0;bool hiddenCaptured=false;
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+ std::unique_ptr<PioneerQ38Qgw8LayerTracePacket::Packet> tracePacket=std::make_unique<PioneerQ38Qgw8LayerTracePacket::Packet>();
+ std::unique_ptr<PioneerQ38Qgw8LayerTraceHandoff> traceHandoff;bool traceCaptured=false;
+#endif
  State state=Virgin;
  ControlObservation lastControl={};bool observedControl=false;
  unsigned prompts=0,limit=0,committed=0,position=0,layers=0,terminalStage=0;
@@ -95,6 +105,9 @@ private:
  bool Stop(const char* why){
   if(failure.empty())failure=why;
   state=Failed;records.fill(0);std::string ignored;
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+  traceCaptured=false;traceHandoff.reset();
+#endif
   upload.Stop(ignored,why);return false;
  }
  template<class T> bool Call(unsigned op,T& value){
@@ -104,7 +117,12 @@ private:
   namespace P=PioneerQ38TokenControl;
   std::memset(packet.get(),0,sizeof(*packet));auto& q=packet->request;
   q.magic=P::Magic;q.version=P::Version;q.operation=action;q.records=count;
-  if(action==P::Start){q.prompts=prompts;q.limit=limit;q.stopEos=1;
+  if(action==P::Start){q.prompts=prompts;q.limit=limit;
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+   q.stopEos=0;
+#else
+   q.stopEos=1;
+#endif
    q.eos0=PioneerQ38FullOffloadEog::Eos0;q.eos1=PioneerQ38FullOffloadEog::Eos1;
    std::copy(prompt.begin(),prompt.begin()+prompts,packet->prompt);}
   if(!PioneerQ38FullOffload::RequestShape(*packet))return false;
@@ -172,6 +190,9 @@ public:
 #ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
   if(count!=1 || outputs!=1 || ids[0]!=PioneerQ38Qgw8Hidden::Input)return false;
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+  if(count!=1 || outputs!=1 || ids[0]!=248319)return false;
+#endif
   for(unsigned i=0;i<count;i++)if(ids[i]>=F::Vocabulary)return false;
   attempted=true;prompts=count;limit=count+outputs-1;std::copy(ids,ids+count,prompt.begin());
   std::string error;if(!upload.Begin(plan,error,progress)){failure=error;state=Failed;return false;}
@@ -184,7 +205,7 @@ public:
   state=Running;return true;
  }
  bool Cancel(){
-#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+#if defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
   return false; // fixed one-token diagnostic never uses a cancellation boundary
 #else
   if(state!=Running || cancelAttempted)return false;
@@ -238,6 +259,19 @@ public:
   if(!HiddenCall(0) || !HiddenCall(1))return Stop("hidden_read");
   hiddenCaptured=true;
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+  if(cancelled || prompts!=1 || limit!=1 || committed!=1 || position!=0 || layers!=64 || terminalStage || prompt[0]!=248319
+   || !upload.canonical || !upload.canonical->Ready() || !upload.generation || !tracePacket)return Stop("trace_boundary");
+  {uint32_t workspace=0;if(!upload.TraceWorkspace(workspace))return Stop("trace_workspace");
+   traceHandoff.reset(new(std::nothrow) PioneerQ38Qgw8LayerTraceHandoff(upload.generation,workspace));}
+  if(!traceHandoff || traceHandoff->Failed())return Stop("trace_allocation");
+  for(unsigned ordinal=0;ordinal<PioneerQ38Qgw8LayerTraceGeometry::Chunks;ordinal++){
+   *tracePacket={};if(!traceHandoff->Prepare(*tracePacket))return Stop("trace_prepare");
+   const bool passed=Call(TT_PCI_PROBE_Q38_QGW8_TRACE_READ,*tracePacket);
+   if(!traceHandoff->Accept(*tracePacket,passed))return Stop("trace_read");
+  }
+  traceCaptured=true;
+#endif
   if(!Control(P::Finish))return Stop("finish");
   {const auto& r=packet->reply;const auto* d=r.detail;
    if(r.ready!=1 || r.stage!=11 || d[3]!=1 || d[4] || d[5]!=1 || d[6] || d[7])return Stop("finish_reply");}
@@ -280,6 +314,22 @@ public:
   std::copy(h,h+16,output->header);std::copy(hidden.begin(),hidden.end(),output->words);
   output->footer=PioneerQ38TokenHiddenSnapshotData::Footer;return true;
  } // publication only AFTER both fixed reads and successful native FINISH+close
+#endif
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+ uint64_t TraceGeneration()const{return state==Complete && failure.empty() && traceCaptured?upload.generation:0;}
+ bool CopyTrace(uint32_t* output,size_t words){
+  namespace G=PioneerQ38Qgw8LayerTraceGeometry;
+  const size_t bytes=size_t(G::Layers)*G::Words*sizeof(uint32_t);
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),io=reinterpret_cast<uintptr_t>(&upload.io),
+   control=reinterpret_cast<uintptr_t>(packet.get()),tracePacketAddress=reinterpret_cast<uintptr_t>(tracePacket.get());
+  if(state!=Complete || !failure.empty() || !traceCaptured || !traceHandoff || !output || words!=size_t(G::Layers)*G::Words
+   || out>UINTPTR_MAX-bytes || self>UINTPTR_MAX-sizeof(*this) || io>UINTPTR_MAX-sizeof(upload.io)
+   || !control || control>UINTPTR_MAX-sizeof(Packet) || !tracePacketAddress || tracePacketAddress>UINTPTR_MAX-sizeof(*tracePacket)
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<io+sizeof(upload.io) && io<out+bytes)
+   || (out<control+sizeof(Packet) && control<out+bytes) || (out<tracePacketAddress+sizeof(*tracePacket) && tracePacketAddress<out+bytes)
+   || !upload.pages.AllVerified() || !upload.pages.OutputSafe(output,bytes) || !upload.io.OutputSafe(output,bytes))return false;
+  return traceHandoff->Copy(output,words);
+ }
 #endif
  void Abort(){if(state!=Complete)Stop("aborted");}
 };

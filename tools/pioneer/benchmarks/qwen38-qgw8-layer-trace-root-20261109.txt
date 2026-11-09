@@ -261,14 +261,38 @@ The builder pins all 15 program sections and checks required driver symbols,
 forbidden CPU/reference symbols and individual stack frames. The reload
 protocol now recognizes only the exact isolated tag131 identity; this is a
 build enabler, not evidence that it is safe to reload. Tag129 still rebuilds
-to its previous SHA-256. The separate trace client and end-to-end lifecycle
-are not finished, and the tag131 binary has NOT been installed or run.
+to its previous SHA-256. A separate trace client now exists, but the full
+physical lifecycle is not qualified, and tag131 has NOT been installed or run.
 It must not be loaded or run until real-FD/source/buffer ownership, combined
 stack, fault/cleanup and controlled recovery are established. No hardware
 result or speedup follows from this build.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_native_program_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B ABS_WORKER --sdk ABS_HAIKU_SDK
  python3 tools/pioneer/build_q38_qgw8_candidate128.py ABS_HAIKU_SDK ABS_PINNED_TAG131_HEADER NEW_ABS_OUTPUT --trace-131
+
+Separate trace client
+---------------------
+The separate tag131 client enforces the fixed input and EOS-off policy,
+retains the same verified upload/FD, holds and drains the completed token,
+reads 128 ordered trace chunks, and permits one DATA copy only after native
+FINISH and close report success. Failed transport, malformed data, failed
+finish or failed close prevents DATA publication. The client derives the
+bank-zero workspace from the verified converted-page plan, not the original
+model layout; the source key is correlation, not authentication. It writes
+an exclusive raw little-endian file after close and reports its SHA-256,
+tag and observed generation. No CPU reference is used in this client.
+
+Two same-SDK client builds matched SHA-256
+34c6d9c21c3113d06979bc5e7feaffe6add4760a7b147d7fd6fd44f98f0207c3.
+The older tag129 client rebuilt to its previous SHA-256
+6f19856f07da419d665c791fb1e26eab4b6f6af94b4f80aa5586d23cf48fb1ed.
+The 128-chunk success path and failure cases are tested with synthetic pages
+and transport only. No client has been run on the P100A; full real-FD,
+buffer ownership, combined kernel stack and fault/cleanup qualification
+remain open. Earlier client builds are unqualified and must not be used.
+
+ python3 tools/pioneer/build_q38_qgw8_candidate_client128.py ABS_HAIKU_SDK NEW_ABS_OUTPUT --trace-131
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_session_tests.py
 
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init

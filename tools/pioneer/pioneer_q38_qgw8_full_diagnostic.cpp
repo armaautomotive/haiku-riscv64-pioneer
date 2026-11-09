@@ -20,6 +20,13 @@
 
 struct Transport {
  unsigned lastOperation=0;int openError=0,lastError=0,closeError=0;
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+ bool OutputSafe(const void* output,size_t bytes)const{
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
+  return output && bytes && out<=UINTPTR_MAX-bytes && self<=UINTPTR_MAX-sizeof(*this)
+   && !(out<self+sizeof(*this) && self<out+bytes);
+ }
+#endif
  int Open(){const int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)openError=errno;return fd;}
  bool Call(int fd,unsigned op,void* data,size_t size){
   lastOperation=op;const int result=ioctl(fd,op,data,size);lastError=result==0?0:errno;return result==0;
@@ -54,7 +61,15 @@ static void ReportTransportFailure(const Transport& io){
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
-#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+ if(argc!=6 || strcmp(argv[1],"--run-qgw8-trace") || argv[2][0]!='/' || argv[3][0]!='/'
+  || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgw8-trace ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE NEW_ABS_TRACE\n",stderr);return 2;
+ }
+ struct stat destination={};errno=0;
+ if(lstat(argv[5],&destination)==0 || errno!=ENOENT){fputs("QGW8_TRACE_DESTINATION_REFUSED; no device open\n",stderr);return 2;}
+ unsigned outputs=1,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
  if(argc!=6 || strcmp(argv[1],"--run-qgw8-hidden") || argv[2][0]!='/' || argv[3][0]!='/'
   || argv[4][0]!='/' || argv[5][0]!='/'){
   fputs("Use --run-qgw8-hidden ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE NEW_ABS_SNAPSHOT\n",stderr);return 2;
@@ -130,6 +145,24 @@ int main(int argc,char** argv){
  const auto digest=PioneerModelWeightCache::Hash(snapshot.get(),sizeof(*snapshot));
  printf("QGW8_HIDDEN_SNAPSHOT sha256=%s bytes=%zu; DATA_ONLY_AFTER_CLOSE\n",
   PioneerModelWeightCache::Hex(digest).c_str(),sizeof(*snapshot));
+#elif defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
+ static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"trace DATA is little endian");
+ auto trace=std::make_unique<std::array<uint32_t,PioneerQ38Qgw8LayerTraceGeometry::Layers*PioneerQ38Qgw8LayerTraceGeometry::Words>>();
+ const uint64_t traceGeneration=session->TraceGeneration();
+ if(!traceGeneration || !session->CopyTrace(trace->data(),trace->size())){fputs("QGW8_TRACE_COPY_FAILED; AFTER_CLOSE\n",stderr);return 1;}
+ const int file=open(argv[5],O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
+ if(file<0){fprintf(stderr,"QGW8_TRACE_CREATE_FAILED errno=%d; AFTER_CLOSE\n",errno);return 1;}
+ const auto* data=reinterpret_cast<const uint8_t*>(trace->data());size_t left=trace->size()*sizeof(uint32_t);bool saved=true;
+ struct stat info={};if(fstat(file,&info) || !S_ISREG(info.st_mode) || info.st_nlink!=1
+  || info.st_uid!=geteuid() || (info.st_mode&077)!=0)saved=false;
+ while(saved && left){const ssize_t n=write(file,data,left);if(n<0 && errno==EINTR)continue;
+  if(n<=0){saved=false;break;}data+=n;left-=size_t(n);}
+ if(saved && fsync(file))saved=false;
+ if(close(file))saved=false;
+ if(!saved || left){fputs("QGW8_TRACE_WRITE_FAILED; PARTIAL_FILE_UNTRUSTED AFTER_CLOSE\n",stderr);return 1;}
+ const auto digest=PioneerModelWeightCache::Hash(trace->data(),trace->size()*sizeof(uint32_t));
+ printf("QGW8_TRACE_SNAPSHOT sha256=%s bytes=%zu tag=0x2026110700010131 generation=%llu; DATA_ONLY_AFTER_CLOSE\n",
+  PioneerModelWeightCache::Hex(digest).c_str(),trace->size()*sizeof(uint32_t),(unsigned long long)traceGeneration);
 #endif
  return fflush(stdout)?1:0;
 }

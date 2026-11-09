@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Qgw8TraceClientRole.h"
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) && PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1
 #error QGW8 full-session inspection selector must equal one
 #endif
@@ -96,8 +97,30 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
    && p.magic==Q::Magic && p.version==Q::Version && p.operation==operation && !p.reserved
    && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
  }
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+ // Bank zero is fixed by the native START adapter. Derive its relocated
+ // workspace from the same verified QGW8 page plan, not the original model.
+ bool TraceWorkspace(uint32_t& output)const{
+  if(!WeightsHeld())return false;
+  Plan::Proposal expected;if(!Plan::Build(*canonical,expected) || expected.parts.size()!=canonical->Count())return false;
+  unsigned found=0;uint32_t address=0;
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);if(!p)return false;
+   if(p->kind!=C::WorkspaceKind || p->bank!=0)continue;
+   const auto* actual=pages.Part(i);const auto& q=expected.parts[i];
+   if(++found!=1 || !actual || actual->original!=q.original || actual->bank!=q.bank || actual->offset!=q.offset
+    || actual->bytes!=q.bytes || actual->allocated!=q.allocated || actual->encoding!=q.encoding
+    || q.bank!=0 || q.encoding!=PioneerQ38HybridModelPlan::Original || q.bytes!=67108864 || q.allocated!=67108864
+    || q.offset>UINT32_MAX-C::Base)return false;
+   address=C::Base+q.offset;
+  }
+  if(found!=1 || !WeightsHeld())return false;output=address;return true;
+ }
+#endif
 public:
-#ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
+#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010131);
+#elif defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010129);
 #elif defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010128);

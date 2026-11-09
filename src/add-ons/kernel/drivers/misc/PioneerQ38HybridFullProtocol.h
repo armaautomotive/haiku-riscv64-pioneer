@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceClientRole.h"
 #ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8NativeInspectionRole.h"
 #endif
@@ -51,7 +52,7 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
 enum {PioneerQ38HybridProtocolIdentity=131};
 #elif defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 enum {PioneerQ38HybridProtocolIdentity=129};
@@ -67,7 +68,7 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
 static_assert(PioneerQ38HybridProtocolIdentity==131,"late QGW8 trace protocol identity change");
 #elif defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 static_assert(PioneerQ38HybridProtocolIdentity==129,"late QGW8 hidden protocol identity change");
@@ -89,7 +90,7 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010131);
 #elif defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010129);
@@ -105,7 +106,7 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010125);
 #endif
-#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) \
+#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) \
  || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 enum {Version=1,MaxPrompt=1,MaxOutput=1,MaxPositions=1,Vocabulary=248320};
 #else
@@ -125,7 +126,7 @@ static inline bool Supported(const Support& s){
 static inline bool RequestShape(const PioneerQ38TokenControl::Packet& p){
  namespace P=PioneerQ38TokenControl;if(!P::RequestShape(p))return false;const auto& r=p.request;
  if(r.operation==P::Start)return r.prompts<=MaxPrompt && r.limit<=MaxPositions && r.limit-r.prompts+1<=MaxOutput
-#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
   && r.stopEos==0
 #else
   && r.stopEos==1

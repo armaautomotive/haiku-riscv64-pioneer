@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8TraceControlInspectionRole.h"
+#include "PioneerQ38Qgw8TraceClientRole.h"
 #if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 #include "PioneerQ38Qgw8TraceNativeProgramRole.h"
+#elif defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
+// The distinct trace client may validate its own wire DATA.
 #elif defined(PIONEER_Q38_QGW8_TRACE_CONTROL_INSPECTION)
 // The separately isolated fake owner may check the same DATA shape.
 #elif !defined(PIONEER_Q38_QGW8_TRACE_PACKET_INSPECTION) || PIONEER_Q38_QGW8_TRACE_PACKET_INSPECTION != 1 \
