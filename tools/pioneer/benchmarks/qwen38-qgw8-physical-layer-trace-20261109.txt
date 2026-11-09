@@ -39,3 +39,17 @@ hash, nonfinite, length and role refusal behavior. Synthetic tests do not
 prove physical trace provenance. The converted CPU data's final layer was
 independently checked against its prior snapshot, but the other 63 layers are
 supported by the reference run rather than independently authenticated.
+
+CPU-only layer-3 replay from the retained converted layer-2 boundary
+reproduced the saved converted layer-3 output bit-for-bit, using independently
+reopened authenticated original weights and the converted FFN backend. The
+card boundary differs from this replay by relative L2 0.173485584. As a
+limited hypothesis test, a CPU replay that omits the entire dense-attention
+projection before the same converted FFN is closer to the card result:
+relative L2 0.0575544814. It still differs in all 5120 values and is NOT
+an exact match. This makes attention-path loss or attenuation worth testing,
+but does not prove that attention was omitted: FFN, rounding, projection,
+trace capture, and other faults can also produce these observations. Neither
+replay is a card test, usable inference, or performance evidence.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer3_cpu_replay.py
