@@ -57,6 +57,17 @@ with tempfile.TemporaryDirectory() as directory:
         trace.write_bytes(altered)
         args[3] = hashlib.sha256(altered).hexdigest()
         assert target.main(args) == 1
+        converted = root/'converted.bin'; converted.write_bytes(raw)
+        converted_args = args + ['--converted-reference', str(converted), '--converted-sha256', digest]
+        assert target.main(converted_args) == 1
+        trace.write_bytes(raw); args[3] = digest
+        assert target.main(args + ['--converted-reference', str(converted), '--converted-sha256', digest]) == 0
+        try:
+            target.main(args + ['--converted-reference', str(converted)])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('converted reference without digest accepted')
         os.environ['PIONEER_Q38_WORK_INFERENCE'] = '0'
         try:
             try:

@@ -12,6 +12,7 @@
 #include "pioneer_q38_head_bfp8_cpu_backend.h"
 #include "pioneer_q38_distribution_compare.h"
 #include "pioneer_q38_qgw8_cpu_hidden_snapshot.h"
+#include "pioneer_q38_qgw8_cpu_layer_snapshot.h"
 #include "../PioneerModelWeightCache.h"
 #include <cstdio>
 #include <cstring>
@@ -59,8 +60,13 @@ static bool ReportObserved(const char* label,const std::vector<uint32_t>& logits
 int main(int argc,char** argv){
  static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"pinned CPU trace byte order");
  if((argc!=3 && argc!=4 && argc!=6) || strcmp(argv[1],"--fixed-one-qgw8-head") || argv[2][0]!='/')return 2;
- const char* hiddenPath=nullptr;
- if(argc==6){if(strcmp(argv[4],"--save-hidden") || argv[5][0]!='/')return 2;hiddenPath=argv[5];}
+ const char* hiddenPath=nullptr;const char* layerPath=nullptr;
+ if(argc==6){
+  if(argv[5][0]!='/')return 2;
+  if(!strcmp(argv[4],"--save-hidden"))hiddenPath=argv[5];
+  else if(!strcmp(argv[4],"--save-converted-layers"))layerPath=argv[5];
+  else return 2;
+ }
  unsigned observed=UINT32_MAX;
  if(argc>=4){
   if(!argv[3][0] || strspn(argv[3],"0123456789")!=strlen(argv[3]) || strlen(argv[3])>6)return 2;
@@ -91,6 +97,14 @@ int main(int argc,char** argv){
    || !Q38Qgw8CpuHiddenSnapshot::SaveNew(hiddenPath,snapshot) || !source.Ready())return 1;
   const auto digest=PioneerModelWeightCache::Hash(snapshot.data(),snapshot.size()*sizeof(uint32_t));
   printf("QGW8_CPU_HIDDEN_SNAPSHOT sha256=%s words=%zu original_and_converted; CPU_ONLY_NOT_DEVICE\n",
+   PioneerModelWeightCache::Hex(digest).c_str(),snapshot.size());
+ }
+ if(layerPath){
+  std::vector<uint32_t> snapshot;
+  if(!source.Ready() || !Q38Qgw8CpuLayerSnapshot::Build(ffn.hidden,snapshot)
+   || !Q38Qgw8CpuLayerSnapshot::SaveNew(layerPath,snapshot) || !source.Ready())return 1;
+  const auto digest=PioneerModelWeightCache::Hash(snapshot.data(),snapshot.size()*sizeof(uint32_t));
+  printf("QGW8_CPU_CONVERTED_LAYER_DATA sha256=%s words=%zu fixed_position0; CPU_ONLY_NOT_DEVICE\n",
    PioneerModelWeightCache::Hex(digest).c_str(),snapshot.size());
  }
  puts("PASS_QGW8_ONE_TOKEN_CPU_COMPARISON; ONE FIXED TOKEN, SOFTWARE MODEL ONLY; NOT DEVICE, WORK, ANSWER QUALITY OR SPEED");

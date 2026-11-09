@@ -192,3 +192,16 @@ lengths, role separation and SHA mismatch. No actual trace was available.
 
  python3 tools/pioneer/tests/test_pioneer_q38_qgw8_layer_trace_compare.py ABS_PINNED_ORIGINAL_CPU_DIR
  python3 tools/pioneer/tests/compare_pioneer_q38_qgw8_layer_trace.py ABS_PINNED_ORIGINAL_CPU_DIR ABS_RAW_TRACE --sha256 SHA256 --relative-threshold THRESHOLD
+
+Converted CPU layer controls
+----------------------------
+The separate full-model CPU diagnostic can now exclusively create a raw
+64-layer converted-FFN reference after the original result matches its pin
+and the converted calculation and head checks finish. It prints a digest;
+the output is CPU reference DATA, never a device observation. The offline
+comparator accepts this second reference only with an explicit matching
+digest and reports its threshold exceedance separately from the original
+model. A hash confirms file identity, not provenance or numerical validity.
+Synthetic tests cover layer order, finite values, exclusive creation, alias,
+shape, role and reference-hash checks. A real reference run was started;
+its outcome must be checked before any output is treated as usable.

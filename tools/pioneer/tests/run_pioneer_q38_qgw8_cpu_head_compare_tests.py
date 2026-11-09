@@ -21,6 +21,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-cpu-head-tests-') as tmp:
     subprocess.run(common + ['-fsanitize=address,undefined',
         str(here / 'pioneer_q38_qgw8_cpu_hidden_snapshot_test.cpp'), '-o', snapshot], check=True)
     subprocess.run([snapshot, tmp], check=True)
+    layers = str(Path(tmp) / 'layer-snapshot-test')
+    subprocess.run(common + ['-fsanitize=address,undefined',
+        str(here / 'pioneer_q38_qgw8_cpu_layer_snapshot_test.cpp'), '-o', layers], check=True)
+    subprocess.run([layers, tmp], check=True)
     subprocess.run(['python3', str(here / 'test_pioneer_q38_qgw8_cpu_hidden_snapshot.py')], check=True)
     snapshot_header = str(here / 'pioneer_q38_qgw8_cpu_hidden_snapshot.h')
     for role in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', '__FAST_MATH__'):
@@ -44,6 +48,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-cpu-head-tests-') as tmp:
                  ['--fixed-one-qgw8-head', '/not-a-model', '1234567'],
                  ['--fixed-one-qgw8-head', '/not-a-model', '1x'],
                  ['--fixed-one-qgw8-head', '/not-a-model', '108133', '--wrong', '/tmp/new'],
+                 ['--fixed-one-qgw8-head', '/not-a-model', '108133', '--save-converted-layers', 'relative'],
                  ['--fixed-one-qgw8-head', '/not-a-model', '108133', '--save-hidden', 'relative']):
         result = subprocess.run([executable, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode != 2:
