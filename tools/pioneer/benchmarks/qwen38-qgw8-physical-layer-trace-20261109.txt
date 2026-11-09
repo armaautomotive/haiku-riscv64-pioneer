@@ -145,3 +145,29 @@ the loader-reuse transport. The earlier 22005-extent count applies to a
 different legacy hybrid layout, not this QGW8 diagnostic.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_span_reuse_tests.py SDK
+
+Tag132 physical dense-stage result, 2026-11-09
+------------------------------------------------
+The one-shot completed its single fixed-token request, FINISH and close;
+the parent restored stable tag 2026102100010012, generation 10, with no
+active owner. Its postflight state is CANDIDATE_CLOSED_STABLE_RESTORED_
+QUALITY_UNVERIFIED. A separate sysinfo query reported 64 CPUs. The raw
+1310720-byte trace is saved under generated.pioneer/qualification-inputs/
+qgw8-dense-stage-physical-20261109/trace.bin, SHA-256
+cf9448bb92349b5e38409ee02e6e80abc9824f2cf2454f18d8633fd5ff1f9ae1.
+The returned token was 108133, not the pinned CPU token 70253. The test
+reports 509.853 s including START and prompt for one token, NOT a warm
+decode throughput measurement. This is neither a speedup nor release.
+
+For this input, the layer-3 attention projection differs from the CPU
+reference in all 5120 values: relative L2 1.216962, card norm 3.585812,
+CPU norm 9.931277, cosine -0.485554 and best scalar fit -0.175315. The
+post-attention residual differs in all 5120 values, relative L2 0.175758.
+Trace slots 2 through 63 exactly match the earlier tag131 physical trace,
+supporting reproducibility for this one input and capture setup. The
+projection result is not simply zero or a positive attenuation. It
+localizes the observed discrepancy to the attention path at or before
+the captured projection, OR to capture/reference mapping; it does not
+identify which component or prove that later FFN arithmetic is correct.
+The next investigation must separate its Q/K/V, attention and output
+projection inputs before attempting a numerical fix or performance claim.
