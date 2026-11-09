@@ -47,6 +47,15 @@ for forbidden in ('PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132','PIONEER_Q38_QGW8_DE
     check(input_role+['-D'+forbidden+'=1'],False)
 check(input_role,False,include+'#undef PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133\n'+include)
 check(flags,False,include+'#define PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133 1\n'+include)
+value_role=flags+['-DPIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134=1']
+check(value_role,True)
+check(flags+['-DPIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134=0'],False)
+for forbidden in ('PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134','PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133',
+                  'PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133','PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132',
+                  'PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132','PIONEER_Q38_WORK_INFERENCE','PIONEER_Q38_CPU_VALIDATION'):
+    check(value_role+['-D'+forbidden+'=1'],False)
+check(value_role,False,include+'#undef PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134\n'+include)
+check(flags,False,include+'#define PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134 1\n'+include)
 print('PASS isolated tag133 client role and late-selection refusals; NO SESSION OR DEVICE')
 print('PASS isolated tag132 client role and late-selection refusals; NO SESSION OR DEVICE')
 print('PASS isolated tag131 client role: parent, conflict and late-selection refusals; NO SESSION OR DEVICE')

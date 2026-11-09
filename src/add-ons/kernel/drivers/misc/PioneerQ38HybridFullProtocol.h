@@ -52,7 +52,9 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
+#if defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
+enum {PioneerQ38HybridProtocolIdentity=134};
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
 enum {PioneerQ38HybridProtocolIdentity=133};
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132)
 enum {PioneerQ38HybridProtocolIdentity=132};
@@ -72,7 +74,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
+#if defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
+static_assert(PioneerQ38HybridProtocolIdentity==134,"late QGW8 dense-value protocol identity change");
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
 static_assert(PioneerQ38HybridProtocolIdentity==133,"late QGW8 dense-input protocol identity change");
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132)
 static_assert(PioneerQ38HybridProtocolIdentity==132,"late QGW8 dense-stage protocol identity change");
@@ -98,7 +102,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
+#if defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010134);
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010133);
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010132);

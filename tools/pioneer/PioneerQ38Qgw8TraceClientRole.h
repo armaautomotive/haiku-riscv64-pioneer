@@ -1,5 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 // Separate one-token trace client, never Assistant/Work or CPU validation.
+#if defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134) && (PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134 != 1 \
+ || !defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) || PIONEER_Q38_QGW8_TRACE_CLIENT_131 != 1 \
+ || defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133) \
+ || defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132) \
+ || defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Dense-value client requires its isolated tag134 trace role
+#endif
 #if defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133) && (PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133 != 1 \
  || !defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) || PIONEER_Q38_QGW8_TRACE_CLIENT_131 != 1 \
  || defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132) \
@@ -57,6 +66,19 @@ enum {PioneerQ38Qgw8DenseStageClientRole=1};
 #else
 enum {PioneerQ38Qgw8DenseStageClientRole=0};
 #endif
+#endif
+#ifndef PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_ROLE_BOUND
+#define PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_ROLE_BOUND
+#ifdef PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134
+enum {PioneerQ38Qgw8DenseValueClientRole=1};
+#else
+enum {PioneerQ38Qgw8DenseValueClientRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134
+static_assert(PioneerQ38Qgw8DenseValueClientRole==1,"late dense-value client selection");
+#else
+static_assert(PioneerQ38Qgw8DenseValueClientRole==0,"late dense-value client removal");
 #endif
 #ifndef PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_ROLE_BOUND
 #define PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_ROLE_BOUND

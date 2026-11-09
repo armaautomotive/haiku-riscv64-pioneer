@@ -118,7 +118,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  }
 #endif
 public:
-#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133
+#ifdef PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010134);
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010133);
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010132);

@@ -7,13 +7,14 @@ import runpy
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--hidden-129','--trace-131','--dense-stage-132','--dense-input-133')) \
+if not __debug__ or len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--hidden-129','--trace-131','--dense-stage-132','--dense-input-133','--dense-value-134')) \
  or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('absolute Haiku build, new output, optional --hidden-129 or --trace-131 required')
 hidden=len(sys.argv)==4 and sys.argv[3]=='--hidden-129'
 stage=len(sys.argv)==4 and sys.argv[3]=='--dense-stage-132'
 input_trace=len(sys.argv)==4 and sys.argv[3]=='--dense-input-133'
-trace=stage or input_trace or (len(sys.argv)==4 and sys.argv[3]=='--trace-131')
+value_trace=len(sys.argv)==4 and sys.argv[3]=='--dense-value-134'
+trace=stage or input_trace or value_trace or (len(sys.argv)==4 and sys.argv[3]=='--trace-131')
 sdk,out=map(Path,sys.argv[1:3]);here=Path(__file__).resolve().parent
 if not sdk.is_absolute() or not sdk.is_dir() or not out.is_absolute() or out.exists():raise SystemExit('invalid path')
 saved=sys.argv[:]
@@ -28,6 +29,7 @@ assert cmd.count(old)==1 and cmd.count(old_binary)==1
 binary=out/('pioneer-q38-qgw8-trace-candidate131' if trace else 'pioneer-q38-qgw8-hidden-candidate129' if hidden else 'pioneer-q38-qgw8-full-candidate128')
 if stage:binary=out/'pioneer-q38-qgw8-dense-stage-candidate132'
 if input_trace:binary=out/'pioneer-q38-qgw8-dense-input-candidate133'
+if value_trace:binary=out/'pioneer-q38-qgw8-dense-value-candidate134'
 cmd[cmd.index(old)]=str(here/'pioneer_q38_qgw8_full_diagnostic.cpp')
 cmd[cmd.index(old_binary)]=str(binary)
 names=('PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128','PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION',
@@ -38,11 +40,12 @@ if hidden:names+=('PIONEER_Q38_QGW8_HIDDEN_CLIENT_129',)
 if trace:names+=('PIONEER_Q38_QGW8_TRACE_CLIENT_131',)
 if stage:names+=('PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132',)
 if input_trace:names+=('PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133',)
+if value_trace:names+=('PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134',)
 cmd[1:1]=['-D'+name+'=1' for name in names]
 subprocess.run(cmd,check=True,cwd=out)
 tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku'
 symbols=subprocess.check_output([str(tool)+'-nm','-C',str(binary)],text=True)
 for name in ('llama_','ggml_','ReferenceProducts','SyntheticIO'):
     if name in symbols:raise RuntimeError('unexpected CPU/reference symbol '+name)
-print('QGW8_DENSE_INPUT_CLIENT_133_SHA256' if input_trace else 'QGW8_DENSE_STAGE_CLIENT_132_SHA256' if stage else 'QGW8_TRACE_CLIENT_131_SHA256' if trace else 'QGW8_HIDDEN_CLIENT_129_SHA256' if hidden else 'QGW8_CLIENT_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
+print('QGW8_DENSE_VALUE_CLIENT_134_SHA256' if value_trace else 'QGW8_DENSE_INPUT_CLIENT_133_SHA256' if input_trace else 'QGW8_DENSE_STAGE_CLIENT_132_SHA256' if stage else 'QGW8_TRACE_CLIENT_131_SHA256' if trace else 'QGW8_HIDDEN_CLIENT_129_SHA256' if hidden else 'QGW8_CLIENT_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
 print('EXPERIMENTAL BUILD ONLY: NOT INSTALLED, TESTED ON DEVICE, OR QUALIFIED')

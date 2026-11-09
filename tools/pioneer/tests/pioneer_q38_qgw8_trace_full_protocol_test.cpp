@@ -7,7 +7,9 @@
 #include <memory>
 int main(){
  namespace C=PioneerQ38TokenControl;namespace F=PioneerQ38FullOffload;namespace T=PioneerQ38Qgw8TraceNative;
-#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133
+#ifdef PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134
+ static_assert(F::BuildTag==UINT64_C(0x2026110700010134),"exact dense-value identity");
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133)
  static_assert(F::BuildTag==UINT64_C(0x2026110700010133),"exact dense-input identity");
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132)
  static_assert(F::BuildTag==UINT64_C(0x2026110700010132),"exact dense-stage identity");
@@ -22,7 +24,9 @@ int main(){
  q.stopEos=1;assert(!F::RequestShape(*p) && !T::ControlRequestShape(*p));q.stopEos=0;
  p->prompt[0]--;assert(F::RequestShape(*p) && !T::ControlRequestShape(*p));p->prompt[0]++;
  q.eos0++;assert(!F::RequestShape(*p));
-#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133
+#ifdef PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134
+ puts("PASS actual tag134 full+trace START intersection and exact support identity; NO device");
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133)
  puts("PASS actual tag133 full+trace START intersection and exact support identity; NO device");
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132)
  puts("PASS actual tag132 full+trace START intersection and exact support identity; NO device");

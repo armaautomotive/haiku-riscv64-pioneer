@@ -267,6 +267,28 @@ execution and validation here remain CPU-only, separate from Work mode.
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_programs_tests.py OLD_INPUT VALUE_A VALUE_B WORKER
  python3 tools/pioneer/tests/run_pioneer_q38_dense_value_capture_replay.py ABS_TRACE --sha256 TRACE_HASH
 
+Tag134 value-capture candidate preparation: the new native QTPE package has
+SHA-256 ed4f548f42d1ead00b9c2a6a6ba4afad3e3d8acebecf3ac437b8b2bb7a76cf92.
+Its exact tag134 role/reload/protocol checks and tag133 regression passed.
+Two independent builds matched for driver SHA-256
+22c950146337def4ae733763cf50a2e8411ea3ba6313bfd090913fda3cb3017f and
+client SHA-256 eaa35bfbeed892e30128523b195e8ec29a9a1a0f6db724cbafb83f5e28117a4a.
+The earlier tag133 driver and client rebuilt byte-identically. The tag134
+synthetic same-FD session passed all 128 reads and close/failure paths. The
+tag134 output gate and generated parent passed their synthetic malformed and
+one-shot refusal/failure suites. On the Pioneer the exact staged files and
+non-mutating check-only gate passed with stable041/gen12, no active owner,
+64 CPUs and max RAM 137034936320. The candidate is staged only, not yet
+installed, run or numerically validated. Individual capture frame is 160
+bytes, versus 176 for the tested tag133 writer; this is NOT by itself a
+complete combined-stack or device proof. Parent is pinned as SHA-256
+59890e85c256d263acb1f0f855729d571bd556f7948b8d57b337d6ae76f0a239.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_native_role_tests.py PINNED_NATIVE_HEADER
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_session_tests.py --dense-value
+ python3 tools/pioneer/tests/test_pioneer_q38_qgw8_dense_value_output.py
+ python3 tools/pioneer/tests/pioneer_q38_qgw8_dense_value_parent_test.py
+
 Dense output-projection INPUT capture, component-only preparation: a distinct
 diagnostic role snapshots the 6144-float gated attention output immediately
 before the output projection, at layer 3 and position 0 only. Its geometry
