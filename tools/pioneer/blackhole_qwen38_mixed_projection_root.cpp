@@ -99,12 +99,17 @@ static void Quantize(const uint32_t* d){
 }
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
 #include "blackhole_q38_bf16_projection_root.inc"
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+#define Q38_MATRIX_ROLE(d) BfProducerRole(d)
+#else
+#define Q38_MATRIX_ROLE(d) BfQ4(d)
+#endif
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
 #include "blackhole_qwen38_precise_activation_root.inc"
 #endif
 static void InputsSeal(const uint32_t* d){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
- if(BfQ4(d)){BfInputsSeal(d);return;}
+ if(Q38_MATRIX_ROLE(d)){BfInputsSeal(d);return;}
 #endif
  unsigned k=d[14],blocks=k>>(d[15]==8?5:8),padded=(blocks+15)&~15U;
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) && !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU)
@@ -118,7 +123,7 @@ static void InputsSeal(const uint32_t* d){
 }
 static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
- if(BfQ4(d)){BfMatrixJob(d,w,sequence);return;}
+ if(Q38_MATRIX_ROLE(d)){BfMatrixJob(d,w,sequence);return;}
 #endif
  const auto* p=Words(L::PartsShadow+w*32);
  for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=0;
@@ -158,7 +163,7 @@ static void MatrixWait(const uint32_t* d,uint32_t* tracked,unsigned w){
 #endif
 static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
- if(BfQ4(d)){BfGatherMatrix(d,tracked,w);return;}
+ if(Q38_MATRIX_ROLE(d)){BfGatherMatrix(d,tracked,w);return;}
 #endif
 #ifndef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
@@ -263,7 +268,7 @@ static unsigned Run(const uint32_t* d){
 #endif
  CaptureRecipe(d);
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
- if(BfQ4(d))BfPrepare(d
+ if(Q38_MATRIX_ROLE(d))BfPrepare(d
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
   ,audit
 #endif
@@ -280,12 +285,18 @@ static unsigned Run(const uint32_t* d){
  if(d[15]==12)q38_prepared_q4_stage_shared(d,tracked,Seal);
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
- if(!BfQ4(d)) // BF16 preparation already admitted/proved ALL119 histories.
+ if(!Q38_MATRIX_ROLE(d)) // BF16 preparation already admitted/proved ALL119 histories.
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
  if(!PreciseDown(d)) // PreparePrecise already admits/proves ALL119 histories.
 #endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
- for(unsigned w=0;w<d[7];w++)if(Words(L::Nonces)[w]>=0x7ffffffe)scalar_fault_park();
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ const unsigned active=BfDenseQ8(d)?PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]):d[7];
+#define Q38_ACTIVE active
+#else
+#define Q38_ACTIVE d[7]
+#endif
+ for(unsigned w=0;w<Q38_ACTIVE;w++)if(Words(L::Nonces)[w]>=0x7ffffffe)scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t incoming[4];PushedBegin(d,tracked,incoming);
 #endif
@@ -294,7 +305,7 @@ static unsigned Run(const uint32_t* d){
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixDispatch);
 #endif
- for(unsigned w=0;w<d[7];w++){
+ for(unsigned w=0;w<Q38_ACTIVE;w++){
   MatrixJob(d,w,Words(L::Nonces)[w]+1);
 #ifdef PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE
   // All prior receipts were admitted before PushedBegin. Keep the exact
@@ -303,13 +314,13 @@ static unsigned Run(const uint32_t* d){
 #endif
   Transfer(d,tracked,w,M::Job,256,true);
  }
- for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
+ for(unsigned w=0;w<Q38_ACTIVE;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
 #ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
  timing.Next(PioneerQ38FastDecodeProfileData::MatrixGatherWait);
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixGatherWait);
 #endif
- for(unsigned w=0;w<d[7];w++){
+ for(unsigned w=0;w<Q38_ACTIVE;w++){
   Gather(d,tracked,w);
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
   if(BfQ4(d) && !audit.MatrixClosed(w))scalar_fault_park();
@@ -329,7 +340,7 @@ static unsigned Run(const uint32_t* d){
  // ROOT remote audit. These policies have different fault-observation timing.
  for(unsigned w=
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
-  d[7]
+  Q38_ACTIVE
 #else
   0
 #endif
@@ -358,7 +369,8 @@ static unsigned Run(const uint32_t* d){
  }
  for(unsigned i=0;i<16;i++)s[24+i]=d[16+i];
  for(unsigned i=0;i<8;i++)s[40+i]=d[32+i];
- s[1]=d[7];s[2]=d[11];s[3]=d[14];s[4]=d[42];s[5]=d[43];s[48]=d[48];s[49]=d[40];
+ s[1]=Q38_ACTIVE;s[2]=d[11];s[3]=d[14];s[4]=d[42];s[5]=d[43];s[48]=d[48];s[49]=d[40];
+#undef Q38_ACTIVE
  Fence();s[0]=L::Magic;Fence();return d[11];
 }
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-// QGWD identity-compatible coordinator inspection; no native authority and
-// no claim that dense Q8 matrix jobs are dispatched by this image yet.
+// QGWD coordinator inspection: the dense Q8 dispatch path is experimental,
+// has no native authority, and requires separately staged verified metadata.
 #if defined(PIONEER_Q38_QGWD_ROOT_IMAGE)
 #if PIONEER_Q38_QGWD_ROOT_IMAGE != 1 \
  || !defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION != 1 \
@@ -15,6 +15,7 @@
  || defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) \
  || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) \
  || defined(PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE) \
+ || defined(PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) \
  || defined(PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_TRACE_IMAGE) \
  || defined(PIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE) || defined(PIONEER_Q38_QGW8_COMMIT_BOUNDARY_IMAGE) \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) \
@@ -24,7 +25,7 @@
  || defined(PIONEER_Q38_BF16_FULL_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
-#error QGWD ROOT requires isolated non-dispatching image inspection
+#error QGWD ROOT requires isolated image inspection
 #endif
 #endif
 #ifndef PIONEER_Q38_QGWD_ROOT_IMAGE_ROLE_H

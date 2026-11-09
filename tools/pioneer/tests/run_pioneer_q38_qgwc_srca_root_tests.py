@@ -23,10 +23,10 @@ pins={'boot.bin':'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668
  'bf16.bin':'148a1d0897d07b69f0cd03d553a4f424e0da96f5cba4038ae8e0d991ecaf5f50',
  'program.elf':'d44e18940bcd37cf35bc2f124b314843cfd99314e8aaebd5d4983eb074918eb0'}
 if qgwd:
- pins.update({'text.bin':'979268018da44c5cc82ed78313f0a8bb5bb671da6f2a58f7b81bc198baa2e49a',
-  'conv.bin':'838923b535875e0bc613ea2a1d13c0f52563e128284325bdd13a4bc97c65c968',
-  'bf16.bin':'2758420347aebba555e6c9c9f82e57ef5d7b95ef1cec38c25a4040730ad2ead6',
-  'program.elf':'8931a08da80f7ee160da7ed8c2ca9f3f5d761957e5c9525fa4ee01226459ca4c'})
+ pins.update({'text.bin':'0299104019b7d72e9ec17421658be68851b38115d9f64bb9055810e3d6253e7c',
+  'conv.bin':'009d1b82b67e5534c2a067826062734f8fa1dd736ab7f44a00a055b6ce72c6b1',
+  'bf16.bin':'c9d80f4eae7934d282a09056ccc2d82ecf1ab73beaa066c2fafc5e2d53215a8b',
+  'program.elf':'5cf33c2c4eaf010879acd03a99cdd166c931e0a8400cc082322d407fe841aa21'})
 for folder in (first,second):
  for name,digest in pins.items():assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest,(folder,name)
 for path,digest in ((worker/'program.elf','b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8' if qgwd else '3450e5b2d46b27e9ac3f81cb62de79d53b0613d85af0acc03a73a149e812e09e'),
@@ -64,6 +64,9 @@ for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_WORK_IN
  'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_QGWA_BATCH_ROOT_IMAGE','PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE',
  'PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE','PIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE'):
  rolecheck(flags+['-D'+forbidden+'=1'],False)
+if qgwd:
+ for forbidden in ('PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION'):
+  rolecheck(flags+['-D'+forbidden+'=1'],False)
 include='#include "'+str(role)+'"\n'
 rolecheck(flags,False,include+'#undef '+root_role+'\n'+include)
 if qgwd:
