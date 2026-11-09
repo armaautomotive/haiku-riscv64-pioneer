@@ -40,5 +40,12 @@ any later transfer. The old address/role/guard tests still pass. This is a
 mock of NoC registers and does NOT prove real ordering, source lifetime,
 ownership, fault recovery, full ROOT lifecycle or physical safety.
 
+The mock was then changed to delay each transfer for four busy-register
+reads. The linked routine again copied the expected synthetic contents for
+boundaries 0, 31 and 63 and performed no new transfer after a corrupted
+command. A permanently busy synthetic transfer reached the bounded fault
+path without issuing a subsequent packet or publishing the destination.
+This is still synthetic NoC behavior and does not prove hardware safety.
+
 Test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B

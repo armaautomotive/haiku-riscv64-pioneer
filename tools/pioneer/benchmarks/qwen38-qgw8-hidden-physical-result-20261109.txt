@@ -41,9 +41,17 @@ This confirms the recorded checks, not interactive desktop testing.
 
 The 20548-byte snapshot stays private under the original stage and under
 /private/tmp/qgw8-hidden-result-20261109.QIeBDslo on the Mac; it is not
-committed. The separate CPU-only head replay is running from
-/boot/home/pioneer-qgw8-dualrank-cpu-replay-20261109-a, wrapper team 1833,
-client team 1834, and is authenticating the original model. Its executable
-matched bdb85af5d7df8bff70b7f39da3380edaebe90bcd3bae3b14594da297c2fad72c
-and refused missing arguments. It does not open the card and must not be
-relaunched while the same job is active. Its result is not yet available.
+committed. The separate CPU-only head replay completed with exit 0 and empty
+stderr under /boot/home/pioneer-qgw8-dualrank-cpu-replay-20261109-a. Its
+executable matched bdb85af5d7df8bff70b7f39da3380edaebe90bcd3bae3b14594da297c2fad72c.
+Using the verified captured hidden state, independently authenticated model
+and a software BFP8 head, it ranked the card-observed token 108133 first
+(logit 7.89877844). The prior original-Q4 CPU token 70253 ranked 5566
+(logit 2.89793181) against these SAME replayed logits. This supports the
+conclusion that the wrong hidden state can explain the wrong token; it does
+not establish numerical equality of the complete physical head, identify the
+first failing layer or establish speed. The replay never opens the card.
+Its stdout SHA-256 is a748108f6a9003bc3983ec44dab8c515333a1df84f619defe65ca04f52551531;
+stdout, stderr and exit files were independently copied and hash-matched to
+/private/tmp/qgw8-dualrank-result-20261109.ISHzlOek. Postcheck still reports
+stable driver tag2026102100010012 generation6, cold0 and active_owner0.

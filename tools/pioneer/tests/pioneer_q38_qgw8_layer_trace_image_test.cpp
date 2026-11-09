@@ -10,7 +10,8 @@
 
 struct TraceMachine:Machine {
  std::vector<uint8_t> text,conv;std::map<std::string,unsigned> symbols;std::map<uint32_t,uint32_t> memory;
- std::vector<std::array<uint32_t,3>> transfers;bool executeTransfers=false,corruptAfterFirst=false;
+ std::vector<std::array<uint32_t,3>> transfers;bool executeTransfers=false,corruptAfterFirst=false,neverComplete=false;
+ std::array<uint32_t,10> pending={};unsigned pendingPolls=0,delayReads=0;bool pendingActive=false;
  static constexpr unsigned Return=0x17ff80,Owner=0x70000,Fault=0x60000;
  explicit TraceMachine(const char* path){
   text=Read((std::string(path)+"/text.bin").c_str());conv=Read((std::string(path)+"/conv.bin").c_str());
@@ -23,24 +24,33 @@ struct TraceMachine:Machine {
   assert(!(at&3) && CodeAddress(at));
   l1[8189]=Range(at,0x40000,unsigned(text.size()))?Word(text,at-0x40000):Word(conv,at-0x64000);return 8189;
  }
+ unsigned StepLimit()const override{return 20000000;}
+ void Complete(){
+  assert(pendingActive);const auto& c=pending;const bool write=c[2]==129;
+  for(unsigned i=0;i<c[8];i+=4){assert(memory.count(c[0]+i));memory[c[3]+i]=memory.at(c[0]+i);}
+  const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x228};
+  for(unsigned i=0;i<7;i++){
+   const unsigned delta=i==2?1U:i==(write?4U:0U) || i==(write?6U:3U)?1U:i==(write?5U:1U)?c[8]/64:0U;
+   memory[0xffb20000+offsets[i]]+=delta;
+  }
+  memory[0xffb20040]=0;pendingActive=false;
+  if(corruptAfterFirst && transfers.size()==1)memory[0xffb20000]^=64;
+ }
  uint32_t Load(uint32_t at)override{
   assert(!(at&3));if(CodeAddress(at))return l1[Index(at)];
+  if(at==0xffb20040 && pendingActive){
+   delayReads++;if(!neverComplete && pendingPolls && !--pendingPolls)Complete();
+  }
   assert(memory.count(at));return memory.at(at);
  }
  void Store(uint32_t at,uint32_t value)override{
   assert(!(at&3));
   if(executeTransfers && at==0xffb20040){
-   assert(value==1);uint32_t c[10];for(unsigned i=0;i<10;i++)c[i]=memory.at(0xffb20000+i*4);
+   assert(value==1 && !pendingActive);uint32_t c[10];for(unsigned i=0;i<10;i++)c[i]=memory.at(0xffb20000+i*4);
    const bool write=c[2]==129;assert((write && c[0]==0x78000 && c[7]==0x212)
     || (!write && c[3]==0x78000 && c[5]==129 && !c[7]));
    assert(c[8]==16384 || c[8]==4096);transfers.push_back({write?c[3]:c[0],c[8],unsigned(write)});
-   for(unsigned i=0;i<c[8];i+=4){assert(memory.count(c[0]+i));memory[c[3]+i]=memory.at(c[0]+i);}
-   const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x228};
-   for(unsigned i=0;i<7;i++){
-    const unsigned delta=i==2?1U:i==(write?4U:0U) || i==(write?6U:3U)?1U:i==(write?5U:1U)?c[8]/64:0U;
-    memory[0xffb20000+offsets[i]]+=delta;
-   }
-   memory[at]=0;if(corruptAfterFirst && transfers.size()==1)memory[0xffb20000]^=64;return;
+   for(unsigned i=0;i<10;i++)pending[i]=c[i];pendingActive=true;pendingPolls=4;memory[at]=1;return;
   }
   assert(Range(at,0x6e000,8192) || (executeTransfers && (Range(at,Owner,1100) || Range(at,0xffb20000,40))));memory[at]=value;
  }
@@ -80,13 +90,18 @@ int main(int argc,char** argv){
  }
  for(unsigned layer:{0U,31U,63U}){
   TraceMachine m(argv[1]);m.executeTransfers=true;const unsigned base=0x04000000;
-  assert(m.Call(layer,base,1,0,layer+1,layer) && m.transfers.size()==4);
+  assert(m.Call(layer,base,1,0,layer+1,layer) && m.transfers.size()==4 && m.delayReads==16 && !m.pendingActive);
   for(unsigned i=0;i<20480;i+=4)assert(m.memory.at(base+0x3500000+layer*20480+i)==0x51a00000U+i);
  }
  {
   TraceMachine m(argv[1]);m.executeTransfers=true;m.corruptAfterFirst=true;
   assert(!m.Call(0,0x04000000,1,0,1,0) && m.transfers.size()==1);
  }
+ {
+  TraceMachine m(argv[1]);m.executeTransfers=true;m.neverComplete=true;
+  assert(!m.Call(0,0x04000000,1,0,1,0) && m.transfers.size()==1 && m.pendingActive);
+  assert(!m.memory.count(0x04000000+0x3500000));
+ }
  puts("PASS emitted trace helper: all64 boundaries, address extremes, four scoped transfer calls, four state refusals; intercepted Owner/Transfer, NO ROOT lifecycle/device authority");
- puts("PASS actual emitted Transfer: synthetic copied state at layers 0/31/63 and corrupted command refusal; Scope/Owner intercepted, immediate simulated NoC, NO DEVICE");
+ puts("PASS actual emitted Transfer: delayed synthetic NoC at layers 0/31/63, corrupted command and timeout refusal; Scope/Owner intercepted, NO DEVICE");
 }
