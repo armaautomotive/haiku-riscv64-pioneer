@@ -99,6 +99,25 @@ for line in disassembly.splitlines():
 if instructions != [('add','sp,sp,-16'),('sd','s0,8(sp)'),('add','s0,sp,16'),('ld','s0,8(sp)'),
                     ('li','a0,0'),('add','sp,sp,16'),('ret','')]:
     raise RuntimeError('legacy endpoint is not the pinned null stub')
+user_includes=['-I'+str(sdk/'headers'),'-idirafter',str(sdk/'headers/posix')]
+for p in [sdk/'headers/os',*sorted((sdk/'headers/os').iterdir())]:
+    if p.is_dir(): user_includes+=['-isystem',str(p)]
+user_includes+=['-I'+str(private),'-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot')]
+client_flags=['-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',
+              '-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1','-DPIONEER_QGW8_HEAD_BAND_130=1']
+client=str(here/'pioneer_qgw8_head_band130_diagnostic.cpp')
+for label,extra in (('missing-head',['-UPIONEER_QGW8_HEAD_BAND_130']),('zero-head',['-UPIONEER_QGW8_HEAD_BAND_130','-DPIONEER_QGW8_HEAD_BAND_130=0']),
+                    ('missing-c64',['-UPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64']),('work',['-DTT_PIONEER_Q38_WORK_MODE=1']),
+                    ('reference',['-DPIONEER_Q38_CPU_VALIDATION=1']),('kernel',['-D_KERNEL_MODE=1']),('fast-math',['-ffast-math'])):
+    result=subprocess.run([cxx,*client_flags,*extra,*user_includes,'-E',client],cwd=out,
+                          stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+    if result.returncode==0 or 'Exact isolated QGW8 head-band diagnostic required' not in result.stderr:
+        raise RuntimeError('client role refusal not established: '+label)
+libs=['-L'+str(p) for p in sorted((build/'build_packages').glob('gcc_syslibs-*/lib'))]
+run([cxx,*client_flags,*user_includes,'-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
+     '-L'+str(release/'kits'),*libs,client,str(here/'PioneerModelWeightCache.cpp'),
+     str(release/'kits/shared/libshared.a'),'-lbe','-o',str(out/'pioneer-qgw8-head130')])
 verify()
 print('HEAD130_DRIVER_BUILD_SHA256',hashlib.sha256((out/'tenstorrent_pci_probe-head130').read_bytes()).hexdigest())
-print('PASS isolated driver build, eight role refusals and unchanged default control; PRIVATE BINARY, NO INSTALL OR DEVICE')
+print('HEAD130_CLIENT_BUILD_SHA256',hashlib.sha256((out/'pioneer-qgw8-head130').read_bytes()).hexdigest())
+print('PASS isolated driver/client build, driver/client role refusals and unchanged default control; PRIVATE BINARIES, NO INSTALL OR DEVICE')

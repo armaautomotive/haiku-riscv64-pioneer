@@ -8,11 +8,14 @@ import stat
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv) not in (4, 5) or (len(sys.argv) == 5 and sys.argv[4] != '--alignment64-math'):
+if not __debug__ or len(sys.argv) not in (4, 5) or (len(sys.argv) == 5 and sys.argv[4] not in ('--alignment64-math', '--qgw8-head130')):
     raise SystemExit('Use non-optimized Python NATIVE_BUILD PRIVATE_EXPORT NEW_OUTPUT')
 build, private, output = map(pathlib.Path, sys.argv[1:4])
 aligned = len(sys.argv) == 5
-flags = ['-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1', '-DPioneerNativeDram81=PioneerNativeDram84'] if aligned else []
+head = aligned and sys.argv[4] == '--qgw8-head130'
+flags = (['-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1',
+          '-DPioneerNativeDram81=' + ('PioneerNativeQgw8Head130' if head else 'PioneerNativeDram84')]
+         + (['-DPIONEER_QGW8_HEAD_BAND_130=1'] if head else [])) if aligned else []
 assert build.is_absolute() and build.is_dir() and private.is_absolute() and not private.is_symlink()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -21,6 +24,9 @@ root = here.parents[2]
 driver = root / 'src/add-ons/kernel/drivers/misc'
 pins = {'PioneerNativeBfpModelBandData.h': 'cf8e2ca4d8489b1e2c9dbf3d23486a5b2b53a678f042629cbb4385e68daaa4f5',
         'PioneerNativeBfpModelBandMetadata.h': 'a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c'}
+if head:
+    pins = {'PioneerNativeBfpModelBandData.h': 'd3ff8eeb5830fb33f908a00d1d9dc17860724d41aedc2f0e0bf0045dd8deaae3',
+            'PioneerNativeBfpModelBandMetadata.h': '664591584043b713148464b16054ba25d3456bcd603ad34686dc7208535d0fd9'}
 assert stat.S_IMODE(private.stat().st_mode) == 0o700 and private.stat().st_uid == os.geteuid()
 for name, digest in pins.items():
     info = (private / name).lstat()
@@ -30,6 +36,13 @@ image = build / 'lease-probe/image'
 assert hashlib.sha256((image / 'text.bin').read_bytes()).hexdigest() == ('7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd' if aligned else 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309')
 assert hashlib.sha256((image / 'boot.bin').read_bytes()).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
 output.mkdir(mode=0o700)
+if head:
+    # Only the fixture's role is adapted: the actual image bytes are separately
+    # pinned above, and the lease test checks the resulting writes against them.
+    (output / 'PioneerNativeDramModelBandGeneratedImage.h').write_text(
+        '#include "PioneerNativeDramBandLeaseProbeImage.h"\n'
+        'struct PioneerNativeDramModelBandGeneratedImage:PioneerNativeDramBandLeaseProbeImage '
+        '{static constexpr unsigned LayoutRole=130;};\n')
 # Reuse ONLY the explicit kernel/PCI endpoint definitions,NOT the old owner,
 # old native methods or a successful ARC/baseline proof. Native.inc/control
 # bodies below are included unchanged from the current production sources.
@@ -85,4 +98,4 @@ for name, digest in pins.items():
 for path, digest in source_pins.items():
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
 (output / 'native-source-sha256.txt').write_text('\n'.join(digest + '  ' + str(path.relative_to(root)) for path, digest in source_pins.items()) + '\n')
-print('PASS actual native%d/control endpoint fixtures;PRIVATE headers unchanged;NO native ARC/prerequisite/engine/hardware/full-model/speed proof:' % (84 if aligned else 81), output)
+print('PASS actual native%d/control endpoint fixtures;PRIVATE headers unchanged;NO native ARC/prerequisite/engine/hardware/full-model/speed proof:' % (130 if head else 84 if aligned else 81), output)

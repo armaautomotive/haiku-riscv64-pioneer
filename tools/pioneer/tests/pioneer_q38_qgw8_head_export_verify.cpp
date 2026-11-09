@@ -28,7 +28,8 @@ static bool HashFile(FILE* f,uint64_t size,const char* expected){
  return f && Cache::HashFile(fileno(f),size,digest,error) && Cache::Hex(digest)==expected;
 }
 static FILE* Open(const char* name,uint64_t size){
- if(!name || name[0]!='/')return nullptr;int fd=open(name,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return nullptr;
+ if(!name || name[0]!='/')return nullptr;
+ int fd=open(name,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return nullptr;
  struct stat s={};if(fstat(fd,&s) || !S_ISREG(s.st_mode) || uint64_t(s.st_size)!=size){close(fd);return nullptr;}
  FILE* f=fdopen(fd,"rb");if(!f)close(fd);return f;
 }
