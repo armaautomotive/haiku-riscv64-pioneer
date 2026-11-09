@@ -139,5 +139,9 @@ END to fail and quarantine resources, with no follow-on IO or release.
 This is a small synthetic test, not full-model or physical qualification,
 and delaying code-corruption detection until END is an explicit safety
 tradeoff. It provides no inference-speed or model-loading-speed result.
+Separately, the full QGW8 receipt/plan test passed 22035 synthetic extents,
+3551 fragments and 21167624192 bytes; that ledger-only sweep did not use
+the loader-reuse transport. The earlier 22005-extent count applies to a
+different legacy hybrid layout, not this QGW8 diagnostic.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_span_reuse_tests.py SDK
