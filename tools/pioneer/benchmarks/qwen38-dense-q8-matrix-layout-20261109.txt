@@ -20,3 +20,18 @@ owner and matching startup/job/receipt dispatch, numerical validation,
 physical recovery qualification, and actual Qwen benchmarks.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_plan_tests.py
+
+CPU-only numerical sample of actual layer3 weights and pinned layer2 input:
+the original GGUF was authenticated, the reference activation was
+reconstructed, and three 32-row bands each from Q/G, K and V were converted
+from original Q8 to BFP8 using the existing codec. An ideal CPU dot product
+of the decoded tiles with BF16-rounded activation was compared with the
+original Q8 reference projection. Across these nine bands, sampled weight
+relative L2 was 0.00721..0.00763 and output relative L2 was 0.00527..0.02930
+(cosine 0.999576..0.999986). Two runs gave the same printed results.
+These are just 288 rows from one layer and one input; the same codec packs
+and unpacks the sample, and the CPU dot does not simulate the P100A matrix
+unit. They do not qualify model quality, converted-cache lifetime, full
+coverage, hardware arithmetic or speed.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_bfp8_sample.py
