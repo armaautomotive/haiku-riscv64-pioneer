@@ -52,4 +52,14 @@ but does not prove that attention was omitted: FFN, rounding, projection,
 trace capture, and other faults can also produce these observations. Neither
 replay is a card test, usable inference, or performance evidence.
 
+An additional CPU-only sweep scaled the dense-attention projection before
+the converted FFN by 0, 0.25, 0.5, 0.75 and 1.0. Card-versus-replay
+relative L2 was respectively 0.0575545, 0.0816490, 0.1121294, 0.1432603,
+and 0.1734856. Zero was the closest of these five tested values, but is not
+an exact match and this is neither an exhaustive fit nor a physical proof
+that the card dropped attention. The normal scale 1.0 again reproduced the
+retained converted CPU layer boundary bit-for-bit. These outcomes prioritize
+capturing the actual dense projection and post-attention residual before
+the FFN; they do not authorize changing Work or skipping attention.
+
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer3_cpu_replay.py

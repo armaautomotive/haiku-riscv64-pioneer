@@ -41,23 +41,27 @@ int main(int argc,char** argv){
  std::vector<float> norm,post,normalized,projection,residual(5120),postNormalized,gate,up,activation(17408),down,final(5120);
  if(!replay.Weight(3,0,norm) || !replay.Weight(3,1,post) || !Rms(input,norm,normalized)
   || !replay.Dense(3,normalized,projection) || projection.size()!=5120)return 1;
- for(unsigned mode=0;mode<2;mode++){
+ const float scales[]={1.f,0.f,.25f,.5f,.75f};
+ for(float scale:scales){
   std::unique_ptr<void,decltype(&Q38Bfp4CpuClose)> backend(Q38Bfp4CpuOpen(argv[1],uint64_t(1)<<3),Q38Bfp4CpuClose);
   if(!backend)return 1;
-  for(unsigned i=0;i<5120;i++)residual[i]=mode?input[i]:input[i]+projection[i];
+  for(unsigned i=0;i<5120;i++)residual[i]=scale==0.f?input[i]:input[i]+scale*projection[i];
   if(!Rms(residual,post,postNormalized) || !Q38Bfp4CpuProject(backend.get(),3,2,postNormalized,gate)
    || !Q38Bfp4CpuProject(backend.get(),3,3,postNormalized,up) || gate.size()!=17408 || up.size()!=17408)return 1;
   for(unsigned i=0;i<17408;i++)activation[i]=(gate[i]*Sigmoid(gate[i]))*up[i];
   if(!Q38Bfp4CpuProject(backend.get(),3,4,activation,down) || down.size()!=5120
    || !Q38Bfp4CpuComplete(backend.get()) || !original.Ready())return 1;
   for(unsigned i=0;i<5120;i++)final[i]=residual[i]+down[i];
-  if(!mode){
+  if(scale==1.f){
    Compare("replay_vs_converted_reference",expected,final);
    Compare("card_vs_replay",final,observed);
    if(memcmp(expected.data(),final.data(),5120*4)){
     fputs("LAYER3_REPLAY_REFUSED converted CPU boundary did not reproduce exactly\n",stderr);return 1;
    }
-  }else Compare("card_vs_cpu_without_attention_hypothesis",final,observed);
+  }else{
+   char label[96];snprintf(label,sizeof(label),"card_vs_cpu_attention_scale_%.2f_hypothesis",double(scale));
+   Compare(label,final,observed);
+  }
  }
  puts("PASS_LAYER3_CONVERTED_CPU_REPLAY; NOT DEVICE EXECUTION OR CAUSE PROOF");return 0;
 }
