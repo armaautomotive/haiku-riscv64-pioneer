@@ -161,7 +161,9 @@ int main(int argc,char** argv){
  if(close(file))saved=false;
  if(!saved || left){fputs("QGW8_TRACE_WRITE_FAILED; PARTIAL_FILE_UNTRUSTED AFTER_CLOSE\n",stderr);return 1;}
  const auto digest=PioneerModelWeightCache::Hash(trace->data(),trace->size()*sizeof(uint32_t));
-#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132
+#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_CLIENT_133
+ printf("QGW8_DENSE_INPUT_SNAPSHOT sha256=%s bytes=%zu tag=0x2026110700010133 generation=%llu; DATA_ONLY_AFTER_CLOSE\n",
+#elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132)
  printf("QGW8_DENSE_STAGE_SNAPSHOT sha256=%s bytes=%zu tag=0x2026110700010132 generation=%llu; DATA_ONLY_AFTER_CLOSE\n",
 #else
  printf("QGW8_TRACE_SNAPSHOT sha256=%s bytes=%zu tag=0x2026110700010131 generation=%llu; DATA_ONLY_AFTER_CLOSE\n",

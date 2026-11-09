@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 
 if len(sys.argv)!=2 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('absolute native program header required')
@@ -48,4 +49,10 @@ oldflags=[f for f in flags if f not in ('-DPIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_1
                                         '-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010133ULL')]
 oldflags+=['-DPIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010132ULL']
 check(selected,oldflags+extras,False)
+with tempfile.TemporaryDirectory(prefix='qgw8-input-native-protocol-',dir='/private/tmp') as directory:
+    binary=Path(directory)/'protocol'
+    subprocess.run([compiler,'-std=c++17','-O1','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-fsanitize=address,undefined',*flags,*extras,
+                    str(here/'pioneer_q38_qgw8_trace_full_protocol_test.cpp'),'-o',str(binary)],check=True)
+    subprocess.run([str(binary)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
 print('PASS tag133 native role, exact reload tag and QTPC selection/refusals; BUILD ONLY, NO DRIVER OR DEVICE')

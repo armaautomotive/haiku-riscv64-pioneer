@@ -230,3 +230,21 @@ This does not yet build a tag133 driver or client, establish lifecycle/stack
 safety, install anything, run hardware, or validate inference/performance.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_native_role_tests.py PINNED_NATIVE_HEADER
+
+Tag133 physical-test preparation: two builds each produced the same driver
+SHA-256 02208326fff242a9300dd8cc33cdf84ca29282d7ab13d572b4144e58b7eb75e5
+and client SHA-256 98773555089f139f21c398bc379518aca7c1bf82d93bcf3753dcf1ab00f99e29.
+Tag132 driver/client regressions reproduced their prior byte hashes. The
+fixed request protocol and synthetic same-FD 128-read lifecycle passed,
+including wrong identity, wrong input and injected read/finish/close errors.
+The derived one-shot parent SHA-256
+0eb7e4e8d39f49fc023d8665751d7a82ce2470c79e4ad25f70d0c82b3d35d7fa
+passed the existing synthetic failure suite. Its dedicated output gate
+passed transcript and malformed-output tests. Staged files passed the actual
+non-mutating Pioneer check-only gate, with stable tag 2026102100010012,
+generation10, no active owner, 64 CPUs and max RAM 137034936320 bytes.
+None of these checks execute the new driver or demonstrate performance.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_session_tests.py --dense-input
+ python3 tools/pioneer/tests/pioneer_q38_qgw8_dense_input_parent_test.py
+ python3 tools/pioneer/tests/test_pioneer_q38_qgw8_dense_input_output.py
