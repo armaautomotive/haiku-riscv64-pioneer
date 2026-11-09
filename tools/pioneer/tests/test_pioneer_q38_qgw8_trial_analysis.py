@@ -37,6 +37,17 @@ with tempfile.TemporaryDirectory(prefix='qgw8-trial-analysis-', dir='/private/tm
     reset(); result = run()
     assert result.returncode == 0 and 'reference=converted relative_l2=0 ' in result.stdout, (result.stdout, result.stderr)
     assert 'OFFLINE_ONLY_NOT_CARD_PROVENANCE_OR_QUALITY_OR_SPEED' in result.stdout
+    # Synthetic exact copy of original layer 17: only checks indexing and
+    # reporting, not that the card ran or stopped at that layer.
+    trace_data = trace.read_bytes()
+    boundary = trace_data[64+17*WIDTH*4:64+18*WIDTH*4]
+    synthetic_card = struct.pack('<16I', *header) + boundary + struct.pack('<I', 0x454e4448)
+    synthetic_digest = hashlib.sha256(synthetic_card).hexdigest()
+    (trial/'hidden.bin').write_bytes(synthetic_card)
+    (trial/'trial.stdout').write_text(log.replace(digest, synthetic_digest))
+    result = run()
+    assert result.returncode == 0 and 'nearest_original_completed_layers=17 relative_l2=0 ' in result.stdout
+    assert 'exact_original_layers=17;' in result.stdout and 'SIMILARITY_ONLY_NOT_FAILING_LAYER_OR_PROVENANCE' in result.stdout
     cases = [('state', lambda: (trial/'state').write_text('CANDIDATE_RUNNING_OWNERSHIP_UNKNOWN\n')),
              ('exit', lambda: (trial/'trial.exit').write_text('1\n')),
              ('stderr', lambda: (trial/'trial.stderr').write_text('x')),

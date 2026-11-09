@@ -24,6 +24,15 @@ These metrics show substantial discrepancy before the final output head;
 they do not identify the first failing layer or distinguish all sources of
 that discrepancy. No CPU reference was used by the card during the run.
 
+An offline scan against the authenticated original CPU trace compared the
+captured state to its embedding and every one of 64 layer boundaries. None
+was bit-identical. The smallest relative L2 was 1.31543652113 at the final
+boundary; the largest cosine was 0.148973679481 at boundary 30. Similarity
+does not locate a fault or prove an earlier layer was skipped or copied:
+this run uses converted weights and only the final card state was captured.
+The scan passed a synthetic exact-layer-17 indexing/control test and the
+existing transcript and snapshot failure tests.
+
 After the trial, the installed stable driver matched SHA-256
 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
 reload metadata reported tag2026102100010012 generation6, cold0, quiesced0

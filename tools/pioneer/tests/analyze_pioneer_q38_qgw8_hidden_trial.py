@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 
-from compare_pioneer_q38_observed_trace import CPU_PINS, require, stable_bytes
+from compare_pioneer_q38_observed_trace import CPU_PINS, decode_trace, require, stable_bytes
 from compare_pioneer_q38_qgw8_hidden import CARD_BYTES, CPU_SNAPSHOT_PIN, decode_card, metrics, words32
 from verify_pioneer_q38_qgw8_cpu_hidden_snapshot import SNAPSHOT_BYTES, TRACE_BYTES, WIDTH, inspect
 
@@ -50,7 +50,26 @@ def main():
         relative, maximum, cosine = metrics(reference, actual)
         results.append(f'QGW8_HIDDEN_COMPARE reference={name} relative_l2={relative:.12g} '
                        f'max_abs={maximum:.12g} cosine={cosine if cosine is not None else "undefined"}')
+    # The original trace includes the embedding and all 64 layer boundaries.
+    # Similarity is only a stale-state clue: a match to an earlier layer is
+    # not proof that the card stopped there, and QGW8 uses converted weights.
+    original = decode_trace(trace_data, 0, False)
+    card_words = words32(card[64:-4], 'I')
+    candidates = []
+    for layer in range(65):
+        begin = layer * WIDTH
+        relative, _, cosine = metrics(original['floats'][begin:begin+WIDTH], actual)
+        exact = original['bits'][begin:begin+WIDTH] == card_words
+        candidates.append((layer, relative, cosine, exact))
+    nearest = min(candidates, key=lambda item: (item[1], item[0]))
+    defined = [item for item in candidates if item[2] is not None]
+    aligned = max(defined, key=lambda item: (item[2], -item[0])) if defined else None
+    exact_layers = ','.join(str(item[0]) for item in candidates if item[3]) or 'none'
     for line in results: print(line)
+    print(f'QGW8_HIDDEN_LAYER_SCAN nearest_original_completed_layers={nearest[0]} '
+          f'relative_l2={nearest[1]:.12g} most_aligned_completed_layers={aligned[0] if aligned else "undefined"} '
+          f'cosine={format(aligned[2], ".12g") if aligned else "undefined"} exact_original_layers={exact_layers};'
+          'SIMILARITY_ONLY_NOT_FAILING_LAYER_OR_PROVENANCE')
     print(f'QGW8_TRIAL_DATA outputs={outputs} token={token} snapshot_sha256={digest} '
           f'transcript_sha256={hashlib.sha256(transcript).hexdigest()} generation={generation};'
           'OFFLINE_ONLY_NOT_CARD_PROVENANCE_OR_QUALITY_OR_SPEED')
