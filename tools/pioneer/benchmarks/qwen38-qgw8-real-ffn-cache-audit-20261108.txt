@@ -1,0 +1,44 @@
+QGW8 FFN caches and manifest: real-data OFFLINE check
+====================================================
+
+The first physical QGW8 27B run chose the wrong first token. With the
+follow-on hardware diagnostic unreachable after the outage, these separate
+read-only Mac checks compare prepared FFN data with fresh conversion from
+the authenticated original model and verify the QGW8 planned coordinates.
+They do not execute a model, use the P100A, establish model quality, or
+measure inference speed.
+
+The original GGUF matched SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+For all 1344 FFN stripes, the source, canonical plan, QGW8 bank/offset
+proposal and its 64*3*7 manifest agreed. These are planned coordinates,
+not a claim about what was uploaded to or consumed by the physical card.
+
+The completed BFP4 check opened all 1113 existing Mac-cache fragments with
+the documented host converter identity, read their verified pages and
+compared each page against freshly converted original Q4_K data. All
+1946160 pages / 7971471360 bytes matched byte-for-byte, including padding;
+the actual checker process exited 0. Its binary SHA-256 is
+e5b568fbf88a4e76c16db083ddd78200a0f1752c78e6c70aba46c4ca774c3d5b.
+The cache and model were opened read-only; no cache was repaired or rewritten.
+
+The separate BFP8 check authenticated the same original and compared the
+231 selected FFN stripe ranges against fresh conversion, using the existing
+frozen BFP8 cache reader. All 762960 pages / 3125084160 bytes matched
+byte-for-byte, and the actual checker process exited 0. Its binary SHA-256
+is 9ef43257dcfcd446cb3dfbc1f04ac11c6f2aba5fecaab71672d8c9c03aa5fb7a.
+This was a separate read-only test; no device inference was performed.
+
+Earlier independent cross-platform payload SHA-256 comparisons are recorded
+in qwen38-qgw8-extra-weights-mac-haiku-20261107.txt and
+qwen38-qgw8-bfp8-mac-haiku-sha256-20261107.txt. This audit does not recheck
+Haiku after the outage or validate card memory. Fresh conversion and cache
+production share converter code, so equality is not an independent numerical
+validation of the quantization math. These tests narrow host cache/routing
+causes but do not identify or resolve the incorrect physical token.
+
+Offline checker build, role isolation and invalid-input tests passed; no
+reference validation was added to Work. Reproduce each check from a fresh
+build using absolute paths:
+ check4 --verify-cached-ffn-bfp4 ABS_ORIGINAL_GGUF ABS_MAC_BFP4_CACHE
+ check8 --verify-cached-ffn-bfp8 ABS_ORIGINAL_GGUF ABS_FROZEN_BFP8_CACHE
