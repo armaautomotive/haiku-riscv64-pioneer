@@ -6,6 +6,7 @@
 #include "../PioneerQ38HybridDenseQ8PreparedPages.h"
 using DensePages=PioneerQ38HybridDenseQ8PreparedPages<FakeSource,FakePlan,FakeBfp8,HeadPages>;
 using Plan=PioneerQ38HybridDenseQ8MatrixPlan;
+#ifndef PIONEER_Q38_DENSE_Q8_PREPARED_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakeSource source;FakePlan packed;packed.source=&source;std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -76,3 +77,4 @@ int main(){
  permit=true;assert(!revoked.Ready());
  puts("PASS dense Q8 converted/cache page routing, coverage and failure atomicity; SYNTHETIC NO DEVICE");
 }
+#endif
