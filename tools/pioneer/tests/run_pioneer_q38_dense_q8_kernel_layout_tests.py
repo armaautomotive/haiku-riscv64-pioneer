@@ -19,6 +19,11 @@ with tempfile.TemporaryDirectory(prefix='q38-q8-fixed-',dir='/private/tmp') as t
                     '-Wno-misleading-indentation','-Wno-unused-function','-fsanitize=address,undefined',
                     str(here/'pioneer_q38_dense_q8_ledger_test.cpp'),'-o',str(ledger)],check=True)
     subprocess.run([str(ledger)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
+    recipe=Path(tmp)/'recipe'
+    subprocess.run([compiler,'-std=c++17','-O2','-g','-Wall','-Wextra','-Werror',
+                    '-Wno-misleading-indentation','-Wno-unused-function','-fsanitize=address,undefined',
+                    str(here/'pioneer_q38_dense_q8_recipe_test.cpp'),'-o',str(recipe)],check=True)
+    subprocess.run([str(recipe)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
     receipt=Path(tmp)/'receipt'
     subprocess.run([compiler,'-std=c++17','-O2','-g','-Wall','-Wextra','-Werror',
                     '-Wno-misleading-indentation','-Wno-unused-function','-fsanitize=address,undefined',
@@ -34,4 +39,6 @@ with tempfile.TemporaryDirectory(prefix='q38-q8-fixed-',dir='/private/tmp') as t
         assert result.returncode and b'Dense Q8 ledger is isolated inspection only' in result.stderr,role
         result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(here/'pioneer_q38_dense_q8_upload_receipt_test.cpp')],capture_output=True)
         assert result.returncode and b'Dense Q8 upload receipt is isolated inspection only' in result.stderr,role
+        result=subprocess.run([compiler,'-std=c++17','-D'+role,'-E',str(here/'pioneer_q38_dense_q8_recipe_test.cpp')],capture_output=True)
+        assert result.returncode and b'Dense Q8 recipe is isolated inspection only' in result.stderr,role
 print('PASS dense-Q8 fixed-layout role exclusions; NO DEVICE')

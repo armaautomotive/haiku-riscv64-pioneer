@@ -220,6 +220,12 @@ private:
  }
 public:
 #ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
+ // Separate logical QGW8 parent: only used to describe the original scalar
+ // recipe geometry. It must never stand in for the converted physical layout
+ // or confer page/format authority for the dense Q8 stripes.
+ template<class Layout> bool BuildDenseQ8LogicalParentInspection(const Layout& parent){
+  return BuildQgw8Inspection(parent);
+ }
  // Distinct physical byte geometry for QGWD inspection. Logical type and
  // rowBytes retain the original tensor shape; they do NOT grant scalar Q8
  // access to the converted BFP8 stripes. Reserved tail holes are not
