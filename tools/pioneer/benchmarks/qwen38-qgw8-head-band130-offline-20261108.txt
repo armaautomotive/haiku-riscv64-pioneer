@@ -26,3 +26,25 @@ native driver and separately authenticated client, independent real-model
 source check on the Pioneer, lifecycle/driver tests, safe one-shot exchange,
 and hardware observation remain required. No Assistant/Work mode or measured
 27B inference speed is changed by this preparation.
+
+Native driver build, still OFFLINE
+----------------------------------
+The isolated tag130 diagnostic driver now builds and links against the Haiku
+RISC-V kernel SDK using the private three-band head payload and the exact
+previously qualified C64 image. Two builds (the second including all role and
+legacy-endpoint checks) produced the same private driver SHA-256
+34b6007a22e85ae709e039bf0bff9afcaa2ca50520908b442512d45626be546f.
+The default-driver control matched the pre-existing pinned hash; eight
+incompatible native-role preprocessor checks refused; required exports were
+present and the old legacy find-device entry remained the exact null stub.
+The binaries include private model weights and must not be published.
+
+The first build attempt incorrectly refused the control because the new
+build script had a transcription error in its expected SHA-256. Independent
+hashes of that control and the previously built baseline were equal; the
+script was corrected and the subsequent complete checks passed. The earlier
+refused artifact was not installed or used. Reproduce with
+tools/pioneer/build_qgw8_head_band130.py and its four explicit absolute paths.
+This is a build, not an owner/FD/PCI/VM lifecycle test. A separate native
+client and verifier, rigorous native binding tests, guarded one-shot exchange,
+and real P100A results remain required before any performance inference.
