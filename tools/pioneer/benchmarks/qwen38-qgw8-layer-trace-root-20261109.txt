@@ -175,3 +175,20 @@ Fake-owner SDK binding:
 
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init
+
+Post-run DATA comparison
+------------------------
+An offline comparator consumes the 64 ordered raw position-zero vectors,
+requires an exact caller-specified SHA-256 and an explicit relative-L2
+threshold, and compares them to the independently pinned original CPU
+boundaries. It reports every boundary and the first threshold exceedance;
+it does not use CPU reference work during inference. Its SHA-256 checks
+file identity, not origin, completeness, layer association, or card
+execution. This is not a numerical acceptance test: quantized converted
+weights can differ from the original CPU model, and the threshold is a
+diagnostic choice rather than an established correctness criterion.
+Synthetic controls check indexing, boundary selection, finite values,
+lengths, role separation and SHA mismatch. No actual trace was available.
+
+ python3 tools/pioneer/tests/test_pioneer_q38_qgw8_layer_trace_compare.py ABS_PINNED_ORIGINAL_CPU_DIR
+ python3 tools/pioneer/tests/compare_pioneer_q38_qgw8_layer_trace.py ABS_PINNED_ORIGINAL_CPU_DIR ABS_RAW_TRACE --sha256 SHA256 --relative-threshold THRESHOLD
