@@ -248,3 +248,12 @@ None of these checks execute the new driver or demonstrate performance.
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_session_tests.py --dense-input
  python3 tools/pioneer/tests/pioneer_q38_qgw8_dense_input_parent_test.py
  python3 tools/pioneer/tests/test_pioneer_q38_qgw8_dense_input_output.py
+
+An additional offline check passed the saved CPU attention input through
+both the independent CPU Q6 input quantizer and the actual projection
+producer's local quantization function. All 6144 lanes and all scale words
+matched across 24 chunks. This is host arithmetic on the CPU-derived input;
+it is NOT an emitted-instruction test or an observation of the card input.
+It cannot exclude a different card input, data corruption, or matrix error.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_input_quantizer_replay.py
