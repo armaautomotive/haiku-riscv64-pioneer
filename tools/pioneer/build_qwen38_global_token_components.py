@@ -7,6 +7,10 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+qgwc_root='--qgwc-srca-root' in options
+if qgwc_root:
+ assert options.count('--qgwc-srca-root')==1,'duplicate QGWC root selector'
+ options.remove('--qgwc-srca-root')
 qgwa_root='--qgwa-batch-root' in options
 if qgwa_root:
  assert options.count('--qgwa-batch-root')==1,'duplicate QGWA root selector'
@@ -52,6 +56,7 @@ if reuse_input:
 matrix_attention='--hybrid-matrix-attention' in options
 queued_counters='--hybrid-queued-counters' in options
 head_matrix='--head-matrix-inspection' in options
+assert not qgwc_root or (inspect and head_matrix and not qgwa_root and not input_trace and not value_trace and '--qgw8-dense-stage-trace' not in options), 'QGWC root requires its own untraced inspection profile'
 assert not qgwa_root or (inspect and head_matrix and not input_trace and '--qgw8-dense-stage-trace' not in options), 'QGWA root requires its own untraced inspection profile'
 dense_trace='--qgw8-dense-stage-trace' in options and not (input_trace or value_trace)
 assert not (dense_trace or input_trace or value_trace) or (inspect and head_matrix and not bf16_profile and not deferred_audit),'dense-stage trace requires its explicit QGW8 inspection profile'
@@ -81,6 +86,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
+ *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
@@ -106,6 +112,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
+ *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),

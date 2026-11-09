@@ -4,6 +4,12 @@
 #include "PioneerQ38Qgw8Bfp8BatchRole.h"
 #include "PioneerQ38QgwaBatchRootReceiptRole.h"
 #include "PioneerQ38QgwaBatchRootImageRole.h"
+#include "PioneerQ38QgwcSrcaRootImageRole.h"
+#ifdef PIONEER_Q38_QGWC_PLAN_SIMULATION
+#if PIONEER_Q38_QGWC_PLAN_SIMULATION != 1 || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWC_SRCA_ROOT_IMAGE) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION) || defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error QGWC plan is isolated simulation only
+#endif
+#endif
 #if defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) && (PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE != 1 \
  || !defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
  || defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) \
@@ -46,7 +52,7 @@ namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;
 enum : unsigned {
-#if defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE)
+#if defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) || defined(PIONEER_Q38_QGWC_SRCA_ROOT_IMAGE) || defined(PIONEER_Q38_QGWC_PLAN_SIMULATION)
  Magic=0x43574751,JobWitness=0x434f4751, // QGWC / QGOC, inspection only
 #elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_IMAGE)
  Magic=0x41475751,JobWitness=0x414f4751,
@@ -116,7 +122,7 @@ QGW8_HEAD_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous
 #undef QGW8_HEAD_FN
 }
 #endif
-#ifdef PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE
+#if defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) || defined(PIONEER_Q38_QGWC_SRCA_ROOT_IMAGE) || defined(PIONEER_Q38_QGWC_PLAN_SIMULATION)
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x43574751,"late QGWC candidate selection");
 #else
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic!=0x43574751,"late QGWC candidate removal");

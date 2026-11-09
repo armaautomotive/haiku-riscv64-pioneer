@@ -1,0 +1,21 @@
+QGWC SrcA-corrected ROOT/worker offline integration, 2026-11-09
+
+The P100A fixed-fixture PV test established that the 0x40 SrcA setting
+corrects its tested four-lane shift. QGWC is a separate worker that uses
+that setting and a distinct QGWC job identity; the ROOT now has a matching,
+separately gated QGWC image inspection build. This is NOT a Work selector.
+
+Two ROOT builds produced identical linked program SHA-256
+d44e18940bcd37cf35bc2f124b314843cfd99314e8aaebd5d4983eb074918eb0.
+The actual QGWC ROOT instructions and QGWC worker were exercised in a
+synthetic simulation: 72 recurrent/dense projection jobs, the 973-job head
+plan, an actual worker/leaf head execution and receipt, and the linked ROOT
+head shape, packing and receipt checks. Invalid grammars and receipt mutations
+were refused. The separate transition test also exercised QGWC BFP4 -> dense
+attention -> BFP4 under the hypothetical SrcA address model. A QGW8 ROOT
+regression build retained the original executable section hashes.
+
+These are synthetic tests, not a full Qwen inference or P100A benchmark. The
+coordinator build does not itself provide a native owner or model launch path.
+The next required step is an independently identified combined program bundle
+and guarded full-model owner, followed by real token correctness and speed.
