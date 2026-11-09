@@ -243,6 +243,17 @@ matrix lane layout, stage packing, data movement and capture, but does not
 identify which is at fault. Tag134 was started to capture the raw and packed
 value vectors directly, before attention, and remains in progress.
 
+An offline cross-run comparison is prepared for the pending tag134 value
+trace and the retained tag133 attention capture. It checks both SHA-256
+identities, compares untouched layer boundaries 2..63, and reports raw and
+packed value zeros and per-head sign/zero comparisons. The comparison is
+not a same-run capture and cannot itself establish causality. Its synthetic
+test covers hash refusal, zero-lane counts, sign differences and changed
+layer boundaries; no physical outcome has been asserted.
+
+ python3 tools/pioneer/tests/test_pioneer_q38_dense_value_attention.py
+ python3 tools/pioneer/tests/compare_pioneer_q38_dense_value_attention.py ABS_VALUE_TRACE --value-sha256 VALUE_HASH ABS_TAG133_TRACE --attention-sha256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c
+
 Value-path capture preparation (offline only): a distinct layer3/position0
 image records 1024 raw F32 value projection words read from its actual GDDR
 workspace, followed by the 512 words of prepared packed-F16 values, into
