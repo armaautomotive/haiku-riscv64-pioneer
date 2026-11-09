@@ -257,3 +257,12 @@ it is NOT an emitted-instruction test or an observation of the card input.
 It cannot exclude a different card input, data corruption, or matrix error.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_input_quantizer_replay.py
+
+The separately built standalone Q6 input quantizer's actual RV32/FPU
+instructions were also run in a synthetic machine on the same 24 chunks
+of pinned CPU-derived attention input. All 6144 operands and scale words
+matched an independent reference, with maximum 30001 simulated steps per
+chunk. This does NOT execute the linked ROOT image or the P100A and does not
+establish the card's actual attention input, throughput, or correctness.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_input_quantizer_image_tests.py PINNED_STANDALONE_IMAGE

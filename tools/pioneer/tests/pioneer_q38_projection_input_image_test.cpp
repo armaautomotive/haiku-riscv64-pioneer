@@ -98,4 +98,5 @@ int main(int argc,char** argv){
  }
  for(unsigned type:{0U,1U,9U,UINT32_MAX}){ProjectionInputMachine m(argv[1],8,valid);m.memory[0x74008]=type;m.Refuse();faults++;}
  printf("PASS ACTUAL projection-input RV32/FPU:blocks%u/full-wire-vectors%u/faults%u/host-ranges%u/maxsteps%u/minstack%08x;Q8_0 FP16+ties-away vs K signedF32+ties-even,late-block atomic refusal,strict local memory/NO NoC or driver;NO_NATIVE_SOURCE_OR_SPEED_AUTHORITY\n",blocks,vectors,faults,ranges,maxSteps,minStack);
+ return 0;
 }
