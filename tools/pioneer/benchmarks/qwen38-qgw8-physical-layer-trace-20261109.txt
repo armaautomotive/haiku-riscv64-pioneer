@@ -1,0 +1,41 @@
+QGW8 physical layer trace, 2026-11-09: numerical localization, not a release
+============================================================================
+
+The guarded one-shot tag 2026110700010131 diagnostic completed on the
+Pioneer with one fixed input token 248319. It returned token 108133, whereas
+both pinned original and converted CPU calculations selected 70253. The
+session reported FINISH and close; the parent verified the output shape and
+trace hash, then restored stable tag 2026102100010012. Independent postflight
+reported generation 8, no active owner or cold/quiesced state, stable driver
+SHA-256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+64 CPUs, and 137034936320 bytes maximum physical memory.
+
+The 64-layer raw trace is retained locally at generated.pioneer/
+qualification-inputs/qgw8-card-trace-20261109/trace.bin (1310720 bytes,
+SHA-256 103312ce324384782d322b51a457d654c4c5c1fef181ceecc730aa6a3d82af2e).
+The remote source and full diagnostic stdout remain under
+/boot/home/pioneer-qgw8-trace-trial-20261109-a. This is one execution,
+not independent verification of all trace positions or broad model quality.
+
+Against the pinned converted-FFN CPU reference (SHA-256
+cfe8aaf5e0877a2260c957b2d996ce4626be5779a038886f65934893aef93599),
+zero-based layers 0, 1 and 2 match byte-for-byte. Layer 3 is the first to
+exceed the illustrative 0.1 relative-L2 diagnostic threshold: 0.173485584
+against the converted reference, 0.180059617 against the original CPU model.
+Layer 3 is the first dense-attention layer; layers 0-2 are recurrent. This
+identifies a boundary for investigating the dense path, not a proven cause:
+the trace mechanism, its layer mapping, CPU reference and the components
+within that dense layer still require independent qualification. The first
+three exact matches are evidence for this input only, not general correctness.
+
+The trace output reports 507.715 s for one token INCLUDING START and prompt
+processing, or 0.001970 token/s under that specific diagnostic accounting.
+It is not a warmed decode rate, useful model quality, or evidence of a
+speedup. Upload and start together took 2813.500 s, separately reported.
+The 20 token/s target remains unmet; the installed Assistant is unchanged.
+
+The comparator's 64-boundary synthetic test passed for divergence, threshold,
+hash, nonfinite, length and role refusal behavior. Synthetic tests do not
+prove physical trace provenance. The converted CPU data's final layer was
+independently checked against its prior snapshot, but the other 63 layers are
+supported by the reference run rather than independently authenticated.
