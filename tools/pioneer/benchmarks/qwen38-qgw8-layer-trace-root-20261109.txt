@@ -246,8 +246,17 @@ user-copy and device endpoints; the tag131 RISC-V control test object is not
 a full driver. The ordinary tag129 driver again rebuilt to its previous
 SHA-256 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
 
-Two same-SDK complete experimental tag131 driver builds now match SHA-256
+The first two same-SDK tag131 builds had SHA-256
 30d447d890605684bbc98c61e2f4427014c64024bac1e8bc9a8d17a9d08522b3.
+They are DEFECTIVE: the shared full-model START grammar required EOS-stop
+enabled while the trace grammar required it disabled, making every START
+impossible. Their shared support identity also reported tag128 rather than
+tag131. Neither build was installed or run. Do not use those binaries.
+The corrected shared protocol has exact tag131 identity, one-token bounds,
+and EOS-stop disabled for this trace alone. A test exercises both actual
+START grammars together and rejects incompatible EOS/prompt settings.
+Two corrected same-SDK experimental tag131 builds now match SHA-256
+e289d93fbecc569c249dacd1d72ed5d24eb73017ecfbc49c70c5f3e0a8a8e5e2.
 The builder pins all 15 program sections and checks required driver symbols,
 forbidden CPU/reference symbols and individual stack frames. The reload
 protocol now recognizes only the exact isolated tag131 identity; this is a

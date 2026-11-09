@@ -95,6 +95,10 @@ with tempfile.TemporaryDirectory(prefix='qgw8-trace-native-program-',dir='/priva
     flags+=['-D'+x+'=1' for x in ('PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC','PIONEER_Q38_HYBRID_TRACKED_UPLOAD',
                                   'PIONEER_Q38_TOKEN_BF16_PROGRAMS','PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC',
                                   'PIONEER_Q38_QGW8_CONTROL_INSPECTION','PIONEER_Q38_QGW8_SPAN_INSPECTION')]
+    full_protocol=tmp/'full-protocol'
+    subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-fsanitize=address,undefined',*flags,str(here/'pioneer_q38_qgw8_trace_full_protocol_test.cpp'),'-o',str(full_protocol)],check=True)
+    subprocess.run([str(full_protocol)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
     source=tmp/'native0.h'
     result=subprocess.run([compiler,'-std=c++17',*flags,'-I'+str(root),'-fsyntax-only','-x','c++',str(source)],capture_output=True)
     assert result.returncode==0,result.stderr.decode(errors='replace')[:1000]
