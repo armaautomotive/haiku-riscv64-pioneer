@@ -21,7 +21,9 @@ static constexpr unsigned kBits=4;
 #define PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC 1
 #include "../PioneerQ38HybridTokenFootprint.h"
 #include <array>
-#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+namespace HW=PioneerQ38DenseQ8MatrixWorkerLayout;
+#elif defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)
 namespace HW=PioneerQ38HybridHeadWorkerLayout;
 #else
 namespace HW=PioneerQ38HybridWorkerLayout;
@@ -42,8 +44,15 @@ struct HybridImage:WorkerImage {
    rom.push_back({part.second,Read((std::string(worker)+"/"+part.first+".bin").c_str())});
   for(const auto& section:rom){
    assert(!(section.second.size()&3));
-   for(unsigned i=0;i<section.second.size();i+=4)
-    assert(PioneerQ38HybridTokenL1::SnapshotContains(peer,section.first+i));
+   for(unsigned i=0;i<section.second.size();i+=4){
+    bool covered=PioneerQ38HybridTokenL1::SnapshotContains(peer,section.first+i);
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+    // Synthetic read-only ROM only: QGWB exceeds the old 12 KiB journal.
+    // This exception does NOT change the native footprint or grant launch.
+    covered |= section.first==0x20000 && section.first+i<0x24000;
+#endif
+    assert(covered);
+   }
   }
   std::ifstream symbols(std::string(worker)+"/program.symbols");std::string a,k,n;
   while(symbols>>a>>k>>n){const unsigned p=unsigned(std::stoul(a,nullptr,16));

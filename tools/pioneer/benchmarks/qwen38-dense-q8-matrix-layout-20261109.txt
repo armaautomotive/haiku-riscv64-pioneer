@@ -124,3 +124,19 @@ instruction and per-function stack checks; the ordinary QGW8 worker rebuilt
 with identical section hashes. This has not executed those producer jobs
 in simulation or on hardware. ROOT producer dispatch, authentication, input
 lifetime, end-to-end output accuracy and speed are still unproven.
+
+Two independently rebuilt, byte-identical QGWB worker images have now run
+their actual RV32 dispatcher and BF16 producer instructions against synthetic
+NoC inputs for all three dense roles. The test checks converted BF16 bytes,
+the producer completion proof and malformed-role refusal. It injects a
+synthetic completed-layer history at an offset bound to the exact image hash;
+it is not a full model lifecycle or hardware execution.
+
+The test also found a concrete integration blocker: the new 13148-byte
+global-worker section exceeds the existing journal's 12288-byte code snapshot
+by 860 bytes per worker. The simulated ROM exception is test-only; the native
+journal was NOT enlarged and this image must not be installed. A separate
+correctly sized and validated save/restore footprint is required before any
+native use, in addition to the remaining controller and lifecycle work.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_producer_image_tests.py SDK WORKER_A WORKER_B BFP4_LEAF
