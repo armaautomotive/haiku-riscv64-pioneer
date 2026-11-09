@@ -50,3 +50,17 @@ prepared by this test; this is not a driver, upload, inference or speed.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_prepared_pages_tests.py
  python3 tools/pioneer/tests/run_pioneer_q38_hybrid_head_prepared_pages_tests.py
+
+Separate 32-row matrix job geometry: the existing original-Q8 scheduler
+uses 16-row groups and cannot simply be reinterpreted as BFP8. A distinct
+offline planner now divides the 336 converted Q/G, K and V stripes into
+2928 BFP8 worker jobs, with all 229376 output rows covered exactly once
+across the 16 dense layers. It schedules 119 workers for each Q/G projection
+and 32 for each K or V projection, with 1..8 bands/job, exact bank and
+converted-stripe offsets, bounds and output alias refusal. Tests covered
+all layers/roles, sequence and context bounds, source and row coverage.
+This is not a ROOT scheduler, runnable worker capsule, native owner or
+performance result. In particular, K/V currently use only 32 workers; more
+parallelism would require safe K-dimension splitting and reduction.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_jobs_tests.py
