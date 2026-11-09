@@ -171,3 +171,16 @@ the captured projection, OR to capture/reference mapping; it does not
 identify which component or prove that later FFN arithmetic is correct.
 The next investigation must separate its Q/K/V, attention and output
 projection inputs before attempting a numerical fix or performance claim.
+
+First-token grouping hypothesis screen (CPU only): with one token, softmax
+has one entry, so the retained value and sigmoid gate determine the input
+to the attention output projection. Recomputing normal 6-head-per-KV-group
+attention with the original CPU weights reproduced the pinned CPU projection
+bit-for-bit. Three alternative mappings (head modulo four, reversed groups,
+and every head using group zero) did not reproduce the captured card output:
+their relative L2 errors, normalized to the card output, were respectively
+1.4211, 1.5039 and 1.3507. This does not cover all mappings or emulate the
+card's activation quantization and cannot establish which component failed.
+It only makes these specific simple group substitutions poor explanations.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_group_hypothesis.py
