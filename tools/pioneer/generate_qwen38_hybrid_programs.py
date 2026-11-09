@@ -5,11 +5,16 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgw8stage='--qgw8-dense-stage-inspection' in args
+args=sys.argv[1:];qgw8stagenative='--qgw8-dense-stage-native' in args
+if qgw8stagenative:
+    if args.count('--qgw8-dense-stage-native')!=1 or any(x in args for x in ('--qgw8-dense-stage-inspection','--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
+        raise SystemExit('ambiguous QGW8 dense-stage native selector')
+    args.remove('--qgw8-dense-stage-native');args.insert(0,'--qgw8-dense-stage-inspection')
+qgw8stage='--qgw8-dense-stage-inspection' in args
 if qgw8stage:
     if args.count('--qgw8-dense-stage-inspection')!=1 or any(x in args for x in ('--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
         raise SystemExit('ambiguous QGW8 dense-stage selector')
-    args.remove('--qgw8-dense-stage-inspection');args.insert(0,'--qgw8-layer-trace-inspection')
+    args.remove('--qgw8-dense-stage-inspection');args.insert(0,'--qgw8-layer-trace-native' if qgw8stagenative else '--qgw8-layer-trace-inspection')
 qgw8tracenative='--qgw8-layer-trace-native' in args
 if qgw8tracenative:
     if args.count('--qgw8-layer-trace-native')!=1 or '--qgw8-layer-trace-inspection' in args:
@@ -65,7 +70,7 @@ units += [(w,name,label,address) for name,label,address in (
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
 family='0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name='QTPB/QGW8-DENSE-STAGE' if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+name=('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -134,7 +139,10 @@ if matrix:
     else:
         lines += [' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
                   '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
-if qgw8stage:
+if qgw8stagenative:
+    lines += ['#if !defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132 != 1',
+              '#error QGW8 dense-stage program requires its distinct native role', '#endif']
+elif qgw8stage:
     lines += ['#if !defined(PIONEER_Q38_QGW8_DENSE_STAGE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_DENSE_STAGE_PROGRAMS_INSPECTION != 1',
               '#error QGW8 dense-stage program requires its distinct offline role', '#endif']
 lines += [

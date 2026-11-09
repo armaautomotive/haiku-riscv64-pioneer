@@ -11,7 +11,7 @@
 struct TraceIO:SimOwner {
  unsigned support=0,starts=0,polls=0,holds=0,reads=0,traceCalls=0,finishes=0;
  int failAt=-1;bool badReply=false,failFinish=false,failClose=false;
- explicit TraceIO(Fixture& f):SimOwner(f){tag=UINT64_C(0x2026110700010131);}
+ explicit TraceIO(Fixture& f):SimOwner(f){tag=PioneerQ38FullOffload::BuildTag;}
  int Close(int fd){const int result=SimOwner::Close(fd);return failClose?-1:result;}
  bool Call(int fd,unsigned op,void* data,size_t size){
   namespace F=PioneerQ38FullOffload;namespace C=PioneerQ38TokenControl;namespace T=PioneerQ38Qgw8TraceNative;namespace P=PioneerQ38Qgw8LayerTracePacket;
@@ -61,7 +61,8 @@ int main(int argc,char** argv){
  if(!strcmp(mode,"--fail-first"))io->failAt=0;else if(!strcmp(mode,"--fail-middle"))io->failAt=63;
  else if(!strcmp(mode,"--fail-last"))io->failAt=127;else if(!strcmp(mode,"--bad-reply"))io->badReply=true;
  else if(!strcmp(mode,"--fail-finish"))io->failFinish=true;else if(!strcmp(mode,"--fail-close"))io->failClose=true;
- else if(!strcmp(mode,"--wrong-tag"))io->tag=UINT64_C(0x2026110700010129);
+ else if(!strcmp(mode,"--wrong-tag"))io->tag=
+  PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110700010132)?UINT64_C(0x2026110700010131):UINT64_C(0x2026110700010132);
  else assert(!*mode || !strcmp(mode,"--wrong-input"));
  PioneerQ38HybridFullSession<HeadPages,TraceIO> session(fixture.pages,*io);
  std::vector<uint32_t> result(64U*5120U,0xdeadbeef);assert(!session.TraceGeneration() && !session.CopyTrace(result.data(),result.size()));

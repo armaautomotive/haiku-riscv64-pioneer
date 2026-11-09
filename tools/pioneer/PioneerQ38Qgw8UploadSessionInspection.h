@@ -118,7 +118,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  }
 #endif
 public:
-#ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
+#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010132);
+#elif defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010131);
 #elif defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010129);

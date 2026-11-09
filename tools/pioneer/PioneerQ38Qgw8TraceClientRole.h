@@ -1,5 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Separate one-token trace client, never Assistant/Work or CPU validation.
+#if defined(PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132) && (PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132 != 1 \
+ || !defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) || PIONEER_Q38_QGW8_TRACE_CLIENT_131 != 1 \
+ || defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Dense-stage client requires its isolated tag132 trace role
+#endif
 #ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
 #if PIONEER_Q38_QGW8_TRACE_CLIENT_131 != 1 \
  || !defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
@@ -34,6 +41,19 @@ enum {PioneerQ38Qgw8TraceClientRole=1};
 #else
 enum {PioneerQ38Qgw8TraceClientRole=0};
 #endif
+#endif
+#ifndef PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_ROLE_BOUND
+#define PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_ROLE_BOUND
+#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132
+enum {PioneerQ38Qgw8DenseStageClientRole=1};
+#else
+enum {PioneerQ38Qgw8DenseStageClientRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132
+static_assert(PioneerQ38Qgw8DenseStageClientRole==1,"late dense-stage client selection");
+#else
+static_assert(PioneerQ38Qgw8DenseStageClientRole==0,"late dense-stage client removal");
 #endif
 #ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
 static_assert(PioneerQ38Qgw8TraceClientRole==1,"late trace client selection");

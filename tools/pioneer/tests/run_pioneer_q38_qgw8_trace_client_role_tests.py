@@ -31,4 +31,12 @@ PIONEER_Q38_WORK_INFERENCE TT_PIONEER_Q38_WORK_MODE PIONEER_Q38_CPU_VALIDATION P
     for value in (0,1):check(flags+['-D'+name+'='+str(value)],False)
 check(flags,False,include+'#undef PIONEER_Q38_QGW8_TRACE_CLIENT_131\n'+include)
 check(flags[1:],False,include+'#define PIONEER_Q38_QGW8_TRACE_CLIENT_131 1\n'+include)
+stage=flags+['-DPIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132=1']
+check(stage,True)
+check(flags+['-DPIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132=0'],False)
+check([f for f in stage if f!='-DPIONEER_Q38_QGW8_TRACE_CLIENT_131=1'],False)
+check(stage+['-DPIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132=1'],False)
+check(stage,False,include+'#undef PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132\n'+include)
+check(flags,False,include+'#define PIONEER_Q38_QGW8_DENSE_STAGE_CLIENT_132 1\n'+include)
+print('PASS isolated tag132 client role and late-selection refusals; NO SESSION OR DEVICE')
 print('PASS isolated tag131 client role: parent, conflict and late-selection refusals; NO SESSION OR DEVICE')

@@ -109,3 +109,23 @@ and native/Work/CPU-validation selection; the older offline trace header
 remained byte-identical. QTPB is still inspection-only and cannot be linked
 into the native driver by this change. Distinct native/client identity,
 owner lifecycle and guarded physical verification remain outstanding.
+
+Tag132 dense-stage native preparation: two builds produced driver SHA-256
+df4d8c24d3f3fd181e9433ae15af9141e7e73e3a78137e414ce1c704a3eacb53 and client
+SHA-256 5988d972f927990efd1bd4e89f3125b922fcf82bf216988c1499346d0fe1f15a.
+Tag132 uses QTPB and cannot select the tag131 QTPA program, or conversely.
+Tag131 driver and client still rebuild byte-identically to the previously
+physically tested versions. Tag132 fixed-input/full trace protocol, client
+role and synthetic 128-read lifecycle (including wrong tag, input and
+injected read/finish/close failures) passed; tag131 quick regressions passed.
+These synthetic tests are not physical execution or whole-driver stack proof.
+
+The strict tag132 output gate requires generation9 and its distinct snapshot
+label. A new parent was generated from the exact pinned tag131 parent by a
+counted, hash-checked transformation. The resulting script SHA-256 is
+3c653d6047e2bf82f477fa5b333e13b4380de67173a3dbf6fa78fc1c7bb2d9be;
+it starts only from stable tag/generation8 and restores generation10 only
+after clean trace closure. The actual generated parent passed the prior
+synthetic refusal/fault suite. The device must still pass live admission;
+uncertain actions are never retried or automatically restored. These tests
+do not assert safe operation under power loss or prove numerical output.
