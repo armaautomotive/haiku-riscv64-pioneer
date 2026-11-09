@@ -9,6 +9,20 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error Hybrid span upload is a separate experimental diagnostic, not native or Work authority
 #endif
+#ifdef PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION
+#if PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION != 1 || !defined(PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC) \
+ || PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION) \
+ || PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION != 1
+#error Dense Q8 upload requires its isolated explicit plan role
+#endif
+#include "PioneerQ38HybridDenseQ8MatrixPlan.h"
+struct PioneerQ38DenseQ8UploadPlan {
+ using Proposal=PioneerQ38HybridDenseQ8MatrixPlan::Proposal;
+ template<class Canonical>static bool Build(const Canonical& source,Proposal& output){
+  return PioneerQ38HybridDenseQ8MatrixPlan::Build(source,output);
+ }
+};
+#endif
 #include "PioneerQ38HybridModelPlan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
@@ -52,7 +66,11 @@ struct PioneerQ38HybridHeadUploadPlan {
 // span and bank owner held; it is not inference or model-quality evidence.
 template<class Pages,class IO,class Plan=PioneerQ38HybridLegacyUploadPlan> class PioneerQ38HybridSpanUpload {
 #ifdef PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC
- static_assert(std::is_same<Plan,PioneerQ38HybridLegacyUploadPlan>::value || std::is_same<Plan,PioneerQ38HybridHeadUploadPlan>::value,
+ static_assert(std::is_same<Plan,PioneerQ38HybridLegacyUploadPlan>::value || std::is_same<Plan,PioneerQ38HybridHeadUploadPlan>::value
+#ifdef PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION
+  || std::is_same<Plan,PioneerQ38DenseQ8UploadPlan>::value
+#endif
+  ,
   "Only explicit hybrid upload plans are supported");
 #else
  static_assert(std::is_same<Plan,PioneerQ38HybridLegacyUploadPlan>::value,"Only the legacy hybrid upload plan is enabled");
