@@ -14,8 +14,9 @@ sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1]);args = args[:-2]
     assert sdk.is_absolute() and sdk.is_dir()
-assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection'))
-qgw8 = bool(args and args[0] == '--qgw8-inspection')
+assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection','--qgw8-trace-read-inspection'))
+trace = bool(args and args[0] == '--qgw8-trace-read-inspection')
+qgw8 = bool(args and args[0] in ('--qgw8-inspection','--qgw8-trace-read-inspection'))
 assert sdk is None or qgw8, 'SDK witness is limited to QGW8 inspection'
 matrix = bool(args and args[0] == '--hybrid-matrix-inspection') or qgw8
 hybrid = pathlib.Path(args[1]) if args else None
@@ -39,6 +40,7 @@ if hybrid:
 if matrix:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
 if qgw8:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
                          PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
+if trace:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1')
 if qgw8:
     role_probe = here/'pioneer_q38_qgw8_native_role_probe.cpp'
     compiler = os.environ.get('CXX', 'c++')
@@ -120,4 +122,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/p
         for name in ('BindQ38TokenNative(', 'TokenModelSourceScope('):
             actual=[row for row in rows if name in row[0]]
             assert actual and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in actual),(name,actual)
+        if trace:
+            assert 'ReadTraceChunk' in names, 'trace read must actually instantiate in the SDK object'
+            actual=[row for row in rows if 'ReadTraceChunk' in row[0]]
+            assert actual and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in actual),actual
+            print('PASS QGW8 trace read instantiated with compile-only IO and bounded individual frame; NO real IO or combined-stack proof')
         print('PASS QGW8 fake-native RISC-V bind object and bounded bind/scope frames; no conventional ABI/device')

@@ -84,5 +84,35 @@ separation. The trace ROOT rebuilt byte-identically to the previously pinned
 ELF; its emitted helper and delayed synthetic-transfer tests passed again.
 These checks do not establish device ownership or real-layer correctness.
 
+Private trace read inspection
+-----------------------------
+A new private read method can derive each trace chunk address from that
+shared geometry, require the fixed completed terminal and drained records,
+recheck the existing 120 held/source/counter guards, and stage a whole chunk
+before publishing it to a trusted in-process buffer. Failures after entering
+the read retain/quarantine the mock owner without retry or following IO.
+This method exists ONLY in a fake-tag, non-loadable native inspection role:
+there is no external control operation, real driver route, or permission to
+open the card. The slots still lack a proof of allocation, initialization,
+actual ROOT production and lifetime. Nothing is installed.
+
+Tests extracted the actual new methods and existing guards into a synthetic
+fixture: 256 ordered chunks with counter rollover and 30 early/fault
+refusals passed, including command, source, clock, counter, terminal, boot,
+copy-read and alias failures. Legacy and tag129 hidden-read mock regressions
+each passed 1057 retained faults. The real fake-owner class compiled in the
+Haiku RISC-V SDK, with the new method instantiated against compile-only IO;
+its individual frame was bounded, not its combined stack or real IO path.
+An ordinary tag129 driver rebuilt to the previous SHA-256
+0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
+
+The first fake-owner compile rejected a reload macro required by its existing
+inspection fixture; the guard was corrected while retaining the fake tag,
+compile-only role and native/Work refusals. A subsequent attempt to
+instantiate against the binding-only fixture failed because that fixture has
+no runtime IO methods. It was replaced by explicitly non-callable compile-
+only IO; the separate extracted-method tests use mock IO. Neither change is
+evidence of an actual driver connection, card safety or throughput.
+
 Test:
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer_trace_image_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B

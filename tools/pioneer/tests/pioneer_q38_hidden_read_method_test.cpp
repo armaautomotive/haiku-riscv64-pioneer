@@ -7,9 +7,18 @@
 #include <cstring>
 #include <memory>
 #include <new>
+#ifdef PIONEER_Q38_TRACE_TEST
+#include "../PioneerQ38Qgw8LayerTraceGeometry.h"
+#endif
 #include "actual_hidden_records.inc"
 namespace PioneerQ38GlobalChainLayout {
-enum {WorkspaceBytes=0x400000};
+ enum {WorkspaceBytes=
+#ifdef PIONEER_Q38_TRACE_TEST
+ 0x4000000
+#else
+ 0x400000
+#endif
+ };
 namespace R {enum {Boot=0x10000,Scratch=0x30000,FinalOffset=0x200000};}
 }
 namespace PioneerQ38TokenLayout {enum {TerminalLocal=0x20000};}
@@ -46,7 +55,13 @@ struct MockOwner {
  uint32_t readoutCommand[10]={},terminalCounters[120][8]={},observedTerminal[64]={},terminal[64]={},boot[64]={},expectedBoot[64]={};
  uint32_t staging[4096]={};unsigned hiddenReadCursor=0,failures=0,readoutCursor=0;
  PioneerQ38TokenHiddenReadResult ownResult;
- struct Plan {unsigned bank=0,workspace=0x100000;unsigned Bank()const{return bank;}unsigned Workspace()const{return workspace;}} plan;
+ struct Plan {unsigned bank=0,workspace=
+#ifdef PIONEER_Q38_TRACE_TEST
+ 0x04000000
+#else
+ 0x100000
+#endif
+ ;unsigned Bank()const{return bank;}unsigned Workspace()const{return workspace;}} plan;
  struct Startup {
   MockOwner* owner;bool output=true,read=true;
   bool PublishedOutput(const void*,size_t bytes)const{return output && bytes && bytes<=16384 && !(bytes&63);}
@@ -96,12 +111,18 @@ void MockIO::ResidentNocWrite(unsigned address,uint32_t value){
  Touch();writes++;
  if(address<40 && !(address&3)){command[address/4]=value;return;}
  assert(address==0x40 && value==1 && !selected);packets++;
+#ifdef PIONEER_Q38_TRACE_TEST
+ PioneerQ38Qgw8LayerTraceGeometry::Chunk trace={};assert(PioneerQ38Qgw8LayerTraceGeometry::Describe(owner->plan.Workspace(),owner->traceReadCursor,trace));
+ const uint64_t base=trace.address;const unsigned bytes=trace.words*4,first=trace.firstWord;
+ assert(command[0]==base && !command[1]
+#else
  const uint64_t base=uint64_t(owner->plan.Workspace())+PioneerQ38GlobalChainLayout::R::FinalOffset;
- const unsigned bytes=owner->hiddenReadCursor?4096:16384;
+ const unsigned bytes=owner->hiddenReadCursor?4096:16384,first=owner->hiddenReadCursor*4096;
  assert(command[0]==base+owner->hiddenReadCursor*16384 && !command[1]
+#endif
   && command[2]==PioneerQ38ProjectionRoute(owner->plan.Bank()) && command[3]==PioneerQ38GlobalChainLayout::R::Scratch
   && !command[4] && command[5]==129 && !command[6] && !command[7] && command[8]==bytes && !command[9]);
- lastWords=bytes/4;memcpy(scratch,hidden+owner->hiddenReadCursor*4096,bytes);
+ lastWords=bytes/4;memcpy(scratch,hidden+first,bytes);
  if(!(ActiveFault() && fault==8))for(unsigned i=0;i<8;i++)owner->cores[0].counter[i]+=i==1?bytes/64:i==0 || i==2 || i==3 || i==6?1U:0U;
 }
 bool MockIO::TokenMemoryReadChecked(unsigned worker,uint32_t address,uint32_t& value){
@@ -239,4 +260,5 @@ int main(){
   assert(f.owner->hiddenReadCursor==1);faults++;
  }
  printf("PASS extracted hidden READ methods/%u MOCK parts including raw NaN+counter rollover/%u early refusals/%u retained faults/ALL120 source+FIFO+counter guards/128 post-copy metadata+120 counter faults/no partial publication/no following IO;NO native/model/physical/numerical/Work/TPS proof\n",positives,early,faults);
+ return 0;
 }

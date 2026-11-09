@@ -6,8 +6,36 @@
 #undef main
 static_assert(PioneerQ38TokenNativeProfile==8 && PioneerQ38TokenPrograms::Family==0x38505451
  && PioneerQ38SelectedGlobalWorker::Magic==0x38574751,"distinct QGW8 fake-tag native profile required");
+#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+// The binding fixture's PioneerSessionIO intentionally has no runtime MMIO
+// methods. Provide separate compile-only endpoints, never call them, and force
+// instantiation of the real owner method without inventing device authority.
+static volatile uint32_t traceDummyValue=0;
+struct TraceCompileOnlyIO {
+ template<class... T>bool TokenRuntimeScope(T&&...){return traceDummyValue!=0;}
+ bool TokenMemoryReadChecked(unsigned,unsigned,uint32_t& value){value=traceDummyValue;return traceDummyValue!=0;}
+ bool TokenMemoryMappingStable(unsigned){return traceDummyValue!=0;}
+ bool TokenPeerStoreSelect(unsigned){return traceDummyValue!=0;}
+ bool SelectRuntimeCore(unsigned){return traceDummyValue!=0;}
+ bool TokenFifoReadChecked(unsigned,bool,uint32_t& value){value=traceDummyValue;return traceDummyValue!=0;}
+ uint32_t ResidentNocRead(unsigned){return traceDummyValue;}
+ void ResidentNocWrite(unsigned,uint32_t value){traceDummyValue=value;}
+ uint32_t ResetRead(){return traceDummyValue;}
+ uint32_t SourceRead(unsigned){return traceDummyValue;}
+ uint32_t HostPciRead(unsigned,unsigned,unsigned){return traceDummyValue;}
+ uint32_t RuntimePcRead(){return traceDummyValue;}
+ uint64_t Q38CohortNow(){return traceDummyValue;}
+ void Pause(){traceDummyValue++;}
+ void QuarantineHostPage(){traceDummyValue++;}
+ void TokenMemoryRetainHostOwners(){traceDummyValue++;}
+};
+static auto volatile traceMethodWitness=&PioneerQ38TokenNativeOwner::ReadTraceChunk<TraceCompileOnlyIO>;
+#endif
 
 int main(){
+#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+ assert(traceMethodWitness!=nullptr);
+#endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f;auto& c=*f.c;std::fill(f.learned.begin(),f.learned.end(),0);
  c.hashes=hashes.data();c.initialized=f.learned.data();c.span={};
