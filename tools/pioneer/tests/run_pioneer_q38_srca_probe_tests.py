@@ -51,4 +51,5 @@ with tempfile.TemporaryDirectory(prefix='q38-srca-probe-', dir='/private/tmp') a
             args = [str(worker), str(leaf), str(tmp/image)] if image else []
             subprocess.run([str(binary), *args], check=True, env=env)
     subprocess.run([sys.executable, str(here/'pioneer_native_bfp_mapping_test.py'), '--srca'], check=True, env=env)
+    subprocess.run([sys.executable, str(here/'pioneer_native_bfp_client_test.py'), '--srca'], check=True, env=env)
 print('PASS pinned duplicate images and synthetic tests; NO SILICON OR PERFORMANCE CLAIM')

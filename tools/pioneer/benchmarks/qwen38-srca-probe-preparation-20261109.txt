@@ -48,3 +48,11 @@ partial-map failures and fifteen failed unmaps were injected. The original
 native-BFP and full-K affine mappings passed the same regression tests. The
 new range branch is compile-time prohibited in a kernel/driver build; these
 fake virtual mappings do not establish physical mapping or launch safety.
+
+A distinct fixed SrcA protocol/client is now prepared but not exposed by any
+driver. It requires a distinct tag, generation, idle ownership, completion
+marker, exact 64-word signature and explicit END; it prints every returned
+word and issues no END or retry on a mismatch. Eighty-eight synthetic syscall
+cases pass, including 64 separate per-word corruptions. This client deliberately
+accepts only the hypothesized signature; a different physical result causes a
+quarantine and preserves evidence, not a conclusion that the card is broken.

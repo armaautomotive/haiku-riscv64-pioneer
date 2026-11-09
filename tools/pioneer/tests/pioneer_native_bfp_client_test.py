@@ -10,9 +10,10 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'])
+assert len(sys.argv)==1 or sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'],['--srca'])
 affine=sys.argv[1:]==['--exact-q4-affine']
-exact = sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'])
+srca=sys.argv[1:]==['--srca']
+exact = sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'],['--srca'])
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-client.'))
 (folder / 'Drivers.h').write_text('#pragma once\n#define B_DEVICE_OP_CODES_END 10000\n')
 program = r'''
@@ -118,6 +119,10 @@ if affine:
     program=program.replace('pioneer_native_exact_q4_diagnostic.cpp','pioneer_native_exact_q4_affine_diagnostic.cpp')
     program=program.replace('PioneerNativeExactQ4','PioneerNativeExactQ4Affine').replace('PIONEER_NATIVE_EXACT_Q4_','PIONEER_NATIVE_EXACT_Q4_AFFINE_')
     program=program.replace('0x31433451','0x31413451').replace('"--fixed-exact-q4"','"--fixed-exact-q4-full-k"')
+if srca:
+    program=program.replace('pioneer_native_exact_q4_diagnostic.cpp','pioneer_native_srca_probe_diagnostic.cpp')
+    program=program.replace('PioneerNativeExactQ4','PioneerNativeSrcaProbe').replace('PIONEER_NATIVE_EXACT_Q4_','PIONEER_NATIVE_SRCA_PROBE_')
+    program=program.replace('0x31433451','0x31504353').replace('"--fixed-exact-q4"','"--fixed-srca-probe"')
 (folder / 'test.cpp').write_text(program)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off',
                 '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I' + str(folder),
@@ -131,16 +136,17 @@ for bits in ((4,) if exact else (4, 8)):
                                     ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
             assert result.returncode == 0, (bits, scenario, index, result.stdout, result.stderr)
             if scenario == 0:
-                assert not result.stderr and result.stdout.startswith('PASS_NATIVE_EXACT_Q4_AFFINE_FIXED_KERNEL ' if affine else 'PASS_NATIVE_EXACT_Q4_FIXED_KERNEL ' if exact else 'PASS_NATIVE_BFP_FIXED_KERNEL ')
+                assert not result.stderr and result.stdout.startswith('PASS_NATIVE_SRCA_PROBE_FIXED ' if srca else 'PASS_NATIVE_EXACT_Q4_AFFINE_FIXED_KERNEL ' if affine else 'PASS_NATIVE_EXACT_Q4_FIXED_KERNEL ' if exact else 'PASS_NATIVE_BFP_FIXED_KERNEL ')
             elif scenario == 1:
                 assert not result.stdout
                 lines = result.stderr.splitlines()
-                assert len(lines) == 65 and lines[0].startswith('EXACT_Q4_AFFINE_NUMERICAL_MISMATCH ' if affine else 'EXACT_Q4_NUMERICAL_MISMATCH ' if exact else 'NATIVE_BFP_NUMERICAL_MISMATCH ')
+                assert len(lines) == 65 and lines[0].startswith('SRCA_PROBE_NUMERICAL_MISMATCH ' if srca else 'EXACT_Q4_AFFINE_NUMERICAL_MISMATCH ' if affine else 'EXACT_Q4_NUMERICAL_MISMATCH ' if exact else 'NATIVE_BFP_NUMERICAL_MISMATCH ')
                 assert (f'index{index} ' if exact else f'pass{index//32} row{index%32} ') in lines[0]
                 mismatches = 0
                 for word, line in enumerate(lines[1:]):
                     pattern=r'EXACT_Q4_RETURNED_WORD index([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})' if exact else r'NATIVE_BFP_RETURNED_WORD bits(4|8) pass([01]) row([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})'
                     if affine:pattern=pattern.replace('EXACT_Q4_RETURNED','EXACT_Q4_AFFINE_RETURNED')
+                    if srca:pattern=pattern.replace('EXACT_Q4_RETURNED','SRCA_PROBE_RETURNED')
                     match = re.fullmatch(pattern,line)
                     assert match and (int(match[1])==word if exact else tuple(map(int, match.groups()[:3])) == (bits, word//32, word%32))
                     got, expected = map(lambda v: int(v, 16), match.groups()[1:] if exact else match.groups()[3:])
@@ -148,8 +154,8 @@ for bits in ((4,) if exact else (4, 8)):
                     mismatches += int(got != expected)
                 assert mismatches == 1
             else:
-                assert not result.stdout and ('EXACT_Q4_RETURNED_WORD' if exact else 'NATIVE_BFP_RETURNED_WORD') not in result.stderr
+                assert not result.stdout and ('SRCA_PROBE_RETURNED_WORD' if srca else 'EXACT_Q4_RETURNED_WORD' if exact else 'NATIVE_BFP_RETURNED_WORD') not in result.stderr
                 assert 'AddressSanitizer' not in result.stderr and 'runtime error:' not in result.stderr
             cases += 1
-print(f'PASS ACTUAL {"exact Q4" if exact else "native BFP"} diagnostic client:{cases} cases;all{64 if exact else 128} per-word numerical failures retain all64 returned words and issue NO END/retry/query after RUN;strict acceptance unchanged;FAKE syscalls,no device')
+print(f'PASS ACTUAL {"SrcA" if srca else "exact Q4" if exact else "native BFP"} diagnostic client:{cases} cases;all{64 if exact else 128} per-word numerical failures retain all64 returned words and issue NO END/retry/query after RUN;strict acceptance unchanged;FAKE syscalls,no device')
 print('CPU-only actual client evidence:', folder)
