@@ -99,3 +99,13 @@ its synthetic offset/hash/nonfinite-refusal test passed. Still needed before
 physical execution: a distinct authenticated image/driver/client identity,
 whole-owner safety and cleanup tests, and a fresh guarded run. Do not run or
 install the current image on the basis of these build/simulation checks.
+
+The dense-stage ROOT is now separately pinned as QTPB offline code DATA.
+Two authenticated builds generated the identical 15-section header SHA-256
+b7ed7030d1ba7de08bafc71fa939a14b7612a2021b2cbba80b6327c76db609f6.
+All 120 workers' 3,608,622 program words were checked against the actual
+root/peer sections. Tests refused old/new selector mixing, incomplete roles,
+and native/Work/CPU-validation selection; the older offline trace header
+remained byte-identical. QTPB is still inspection-only and cannot be linked
+into the native driver by this change. Distinct native/client identity,
+owner lifecycle and guarded physical verification remain outstanding.

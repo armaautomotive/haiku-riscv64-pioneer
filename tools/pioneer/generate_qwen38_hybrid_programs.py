@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgw8tracenative='--qgw8-layer-trace-native' in args
+args=sys.argv[1:];qgw8stage='--qgw8-dense-stage-inspection' in args
+if qgw8stage:
+    if args.count('--qgw8-dense-stage-inspection')!=1 or any(x in args for x in ('--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
+        raise SystemExit('ambiguous QGW8 dense-stage selector')
+    args.remove('--qgw8-dense-stage-inspection');args.insert(0,'--qgw8-layer-trace-inspection')
+qgw8tracenative='--qgw8-layer-trace-native' in args
 if qgw8tracenative:
     if args.count('--qgw8-layer-trace-native')!=1 or '--qgw8-layer-trace-inspection' in args:
         raise SystemExit('ambiguous QGW8 layer trace native selector')
@@ -38,7 +43,8 @@ if matrix:
     if not candidate and not qgw8:
         if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
         args.remove('--matrix-attention-inspection')
-    if qgw8trace:from PioneerQ38Qgw8LayerTraceProgramPins import ROOT_PINS, WORKER_PINS
+    if qgw8stage:from PioneerQ38Qgw8DenseStageProgramPins import ROOT_PINS, WORKER_PINS
+    elif qgw8trace:from PioneerQ38Qgw8LayerTraceProgramPins import ROOT_PINS, WORKER_PINS
     elif qgw8coarse:from PioneerQ38Qgw8CoarseProgramPins import ROOT_PINS, WORKER_PINS
     elif qgw8:from PioneerQ38Qgw8ProgramPins import ROOT_PINS, WORKER_PINS
     else:from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
@@ -58,8 +64,8 @@ units += [(w,name,label,address) for name,label,address in (
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
-family='0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name=('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+family='0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
+name='QTPB/QGW8-DENSE-STAGE' if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -128,6 +134,9 @@ if matrix:
     else:
         lines += [' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
                   '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
+if qgw8stage:
+    lines += ['#if !defined(PIONEER_Q38_QGW8_DENSE_STAGE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_DENSE_STAGE_PROGRAMS_INSPECTION != 1',
+              '#error QGW8 dense-stage program requires its distinct offline role', '#endif']
 lines += [
  '#ifndef PIONEER_Q38_HYBRID_PROGRAMS_H','#define PIONEER_Q38_HYBRID_PROGRAMS_H',
  'namespace PioneerQ38HybridPrograms {',
@@ -175,4 +184,4 @@ encoded=('\n'.join(lines)+'\n').encode()
 with output.open('xb') as target:
     if target.write(encoded)!=len(encoded):
         raise OSError('incomplete generated output')
-print('PASS PINNED '+('QGW8-TRACE' if qgw8trace else 'QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')
+print('PASS PINNED '+('QGW8-DENSE-STAGE' if qgw8stage else 'QGW8-TRACE' if qgw8trace else 'QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')
