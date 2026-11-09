@@ -5,10 +5,15 @@
 #include "pioneer_q38_cpu_reference_math.h"
 #include "pioneer_q38_whole_original_bytes.h"
 #include "pioneer_q38_bfp4_full_cpu_backend.h"
+#include "../PioneerModelWeightCache.h"
 #include <cassert>
+#include <cerrno>
 #include <cstdio>
+#include <fcntl.h>
 #include <map>
 #include <memory>
+#include <sys/stat.h>
+#include <unistd.h>
 using namespace Q38CpuReferenceMath;
 #include "actual_cpu_replay_impl.inc"
 
@@ -31,8 +36,28 @@ static void Compare(const char* label,const std::vector<float>& expected,const s
  printf("LAYER3_CPU_REPLAY %s differences=%u max_abs=%.9g relative_l2=%.12g; CPU_ONLY\n",
   label,different,maximum,std::sqrt(sum/den));
 }
+static bool SaveReference(const char* path,const std::vector<float>& projection,const std::vector<float>& input){
+ static_assert(sizeof(float)==4 && __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"reference is little-endian binary32");
+ if(!path || path[0]!='/' || projection.size()!=5120 || input.size()!=5120)return false;
+ std::vector<float> values;values.reserve(10240);values.insert(values.end(),projection.begin(),projection.end());
+ for(unsigned i=0;i<5120;i++)values.push_back(input[i]+projection[i]);
+ for(float value:values)if(!std::isfinite(value))return false;
+ const int fd=open(path,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);if(fd<0)return false;
+ struct stat info={};bool okay=!fstat(fd,&info) && S_ISREG(info.st_mode) && info.st_nlink==1
+  && info.st_uid==geteuid() && !(info.st_mode&077);
+ const auto* data=reinterpret_cast<const unsigned char*>(values.data());size_t left=values.size()*sizeof(float);
+ while(okay && left){ssize_t n=write(fd,data,left);if(n<0 && errno==EINTR)continue;
+  if(n<=0){okay=false;break;}data+=n;left-=size_t(n);}
+ if(okay && fsync(fd))okay=false;
+ if(close(fd))okay=false;
+ if(!okay || left)return false; // interrupted file is partial and untrusted
+ const auto digest=PioneerModelWeightCache::Hash(values.data(),values.size()*sizeof(float));
+ printf("LAYER3_CPU_STAGE_REFERENCE sha256=%s bytes=%zu projection_then_residual; CPU_ONLY\n",
+  PioneerModelWeightCache::Hex(digest).c_str(),values.size()*sizeof(float));return !fflush(stdout);
+}
 int main(int argc,char** argv){
- if(argc!=4 || std::fegetround()!=FE_TONEAREST)return 2;
+ if((argc!=4 && argc!=6) || (argc==6 && (strcmp(argv[4],"--save-reference") || argv[5][0]!='/'))
+  || std::fegetround()!=FE_TONEAREST)return 2;
  setvbuf(stdout,nullptr,_IOLBF,0);
  std::vector<float> input,expected,observed;
  if(!ReadLayer(argv[2],2,input) || !ReadLayer(argv[2],3,expected) || !ReadLayer(argv[3],3,observed))return 1;
@@ -57,6 +82,9 @@ int main(int argc,char** argv){
    Compare("card_vs_replay",final,observed);
    if(memcmp(expected.data(),final.data(),5120*4)){
     fputs("LAYER3_REPLAY_REFUSED converted CPU boundary did not reproduce exactly\n",stderr);return 1;
+   }
+   if(argc==6 && !SaveReference(argv[5],projection,input)){
+    fputs("LAYER3_REFERENCE_SAVE_REFUSED partial file is untrusted\n",stderr);return 1;
    }
   }else{
    char label[96];snprintf(label,sizeof(label),"card_vs_cpu_attention_scale_%.2f_hypothesis",double(scale));

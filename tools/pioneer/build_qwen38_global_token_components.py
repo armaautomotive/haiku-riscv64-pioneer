@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=24 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection'}
+assert 3<=len(sys.argv)<=25 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -42,12 +42,14 @@ if reuse_input:
 matrix_attention='--hybrid-matrix-attention' in options
 queued_counters='--hybrid-queued-counters' in options
 head_matrix='--head-matrix-inspection' in options
+dense_trace='--qgw8-dense-stage-trace' in options
+assert not dense_trace or (inspect and head_matrix and not bf16_profile and not deferred_audit),'dense-stage trace requires its explicit QGW8 inspection profile'
 assert not queued_counters or matrix_attention,'queued counters require the QGW7 matrix profile'
 assert not head_matrix or (matrix_attention and not queued_counters),'QGW8 head requires its own matrix inspection profile'
 if matrix_attention:
  assert set(options)=={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals',
   '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
-  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()),'QGW7/QGW8 requires the exact offline component profile'
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-dense-stage-trace'} if dense_trace else set()),'QGW7/QGW8 requires the exact offline component profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -109,6 +111,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS=1'] if boundary else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1'] if f32 else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1'] if unroll else []),
+ *(['-DPIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE=1'] if dense_trace else []),
  '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_DENSE=1',
  '-DPIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND=1',
  '-c',here/'blackhole_qwen38_return_dense_layer.cpp','-o',out/'dense.o')
@@ -126,6 +129,7 @@ for name in ('q38_return_recurrent_layer','q38_return_dense_layer','q38_global_c
  assert re.search(r' T '+name+r'$',symbols,re.M),name
 assert 'DensePartitionRoot::AdmitGlobalOutput(' in symbols,'the REAL returning admission path must retain the new code'
 assert 'Joined::AppendTokenKv(' in symbols,'the real dense body must retain current-row GDDR append/readback'
+assert ('Block::TraceDenseStage(' in symbols)==dense_trace,'dense-stage writer must exist only in its separate image'
 assert ('PioneerQ38F32HiddenRms(' in symbols)==(f32 and not fast_rms)
 assert ('PioneerQ38F32HiddenResidualRms(' in symbols)==(f32 and not fast_rms)
 assert ('PioneerQ38FastF32HiddenRms(' in symbols)==fast_rms

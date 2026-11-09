@@ -4,9 +4,13 @@ import hashlib
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 here = Path(__file__).resolve().parent
+if len(sys.argv) not in (1, 3) or (len(sys.argv) == 3 and
+        (sys.argv[1] != '--save-reference' or not Path(sys.argv[2]).is_absolute())):
+    raise SystemExit('optional --save-reference ABSOLUTE_NEW_FILE only')
 workspace = here.parents[2]
 converted = workspace / 'generated.pioneer/qualification-inputs/qgw8-hidden-reference.Yn7npdOx/converted-layers-v1.bin'
 card = workspace / 'generated.pioneer/qualification-inputs/qgw8-card-trace-20261109/trace.bin'
@@ -31,5 +35,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-layer3-', dir='/private/tm
                     str(here / 'pioneer_q38_bfp4_full_cpu_backend.cpp'),
                     str(here / 'pioneer_q38_whole_original_bytes.cpp'),
                     str(here.parent / 'PioneerModelWeightCache.cpp'), '-o', str(executable)], check=True)
-    result = subprocess.run([str(executable), str(model), str(converted), str(card)])
+    result = subprocess.run([str(executable), str(model), str(converted), str(card), *sys.argv[1:]])
     raise SystemExit(result.returncode)

@@ -73,9 +73,29 @@ The isolated dense component cross-compiled with the actual RV32 SDK; the
 ordinary dense object remained byte-identical to the earlier trace component
 (SHA-256 b1d5ca2062d284533188e546a32b84a01c0280ee49246bba83830bff81decead).
 Host geometry/invalid-address tests and missing/forbidden-role compilation
-checks passed. These are component tests only: the new writer has not been
-executed in an instruction emulator, linked into a complete image, assigned
-a distinct native driver/client identity, installed, or run on hardware.
-No physical access or Work capability is authorized by this preparation.
+checks passed. At this component-only checkpoint the new writer had not yet
+been executed in an instruction emulator, linked into a complete image,
+assigned a distinct native driver/client identity, installed, or run on
+hardware. No physical access or Work capability was authorized by it.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_stage_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT
+
+The separate dense-stage image now links: two independent builds produced
+identical program.elf SHA-256 9f89d736b357b302edb87be9ed1a4cacd1de9a71b6bc4ee2fc3b6c0e030398c9.
+The earlier full-layer trace image still rebuilds byte-identically. The new
+actual emitted writer passed synthetic instruction execution for both slots,
+two workspace extremes, delayed NoC, wrong stage/phase/address, corrupt
+command and timeout. Seal and quiet were intercepted; full ROOT execution,
+hardware timing, card ownership, stack closure and native driver are untested.
+The image is not an installable driver or a Work capability.
+
+The independently replayed CPU projection and post-attention residual were
+saved as a 40960-byte local reference, SHA-256
+cb6544d071ce526de7ec7cab66189b2ca39f73ecb33111dbd46b0bfeed2c5f8d,
+after the same replay reproduced the converted layer-3 output bit-for-bit.
+This is CPU DATA, not a card result. A separate offline comparison tool
+checks these two values and layers 2-63 against the previous physical trace;
+its synthetic offset/hash/nonfinite-refusal test passed. Still needed before
+physical execution: a distinct authenticated image/driver/client identity,
+whole-owner safety and cleanup tests, and a fresh guarded run. Do not run or
+install the current image on the basis of these build/simulation checks.
