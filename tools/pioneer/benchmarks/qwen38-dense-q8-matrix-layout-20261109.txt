@@ -76,3 +76,14 @@ does not authenticate uploaded metadata or provide worker lifetime/ownership,
 and is not a performance result.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_root_jobs_tests.py
+
+An isolated freestanding RV32 build of the actual scheduling function was
+executed under a synthetic instruction/memory machine for Q/G, K and V
+shapes with seven bank-order permutations. Its outputs matched the host
+function, and malformed or changing tables produced no published jobs.
+The test model implements RV32 unsigned multiply-high/divide/remainder; it
+does not model P100A transfers, actual source ownership, the complete ROOT,
+worker dispatch, inference or speed. The host full-model bridge was rerun
+after making the bounded quota comparisons 32-bit; all 2928 jobs still match.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_root_image_tests.py SDK

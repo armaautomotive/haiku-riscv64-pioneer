@@ -38,8 +38,10 @@ struct PioneerQ38DenseQ8MatrixRootJobs {
   if(!target || target>119)return false;
   for(unsigned extra=minimum;extra<target;extra++){
    unsigned best=7;
+   // Each unit count is at most 384 and each quota at most 119, so these
+   // products fit in 32 bits and require no RV32 wide-multiply helper.
    for(unsigned b=0;b<7;b++)if(quota[b]<units[b]
-    && (best==7 || uint64_t(units[b])*quota[best]>uint64_t(units[best])*quota[b]))best=b;
+    && (best==7 || units[b]*quota[best]>units[best]*quota[b]))best=b;
    if(best==7)return false;quota[best]++;
   }
   uint32_t stage[119][4];unsigned count=0;
