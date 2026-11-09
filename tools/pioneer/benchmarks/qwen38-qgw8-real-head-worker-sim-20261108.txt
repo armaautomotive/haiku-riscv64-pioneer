@@ -1,0 +1,30 @@
+QGW8 emitted head worker with real weights: offline simulation
+===============================================================
+
+Purpose: narrow the severe tag128 first-token mismatch before another
+physical experiment. This is NOT a P100A run, a full-model test, a quality
+pass, a Work-mode change, or a performance measurement.
+
+The original 27B GGUF was authenticated against the existing full SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Four actual output.weight bands (first rows 0, 70240, 108128 and 248288)
+were freshly converted to BFP8. The middle bands contain the reference token
+70253 and the physically observed token 108133. The exact pinned QGW8 RV32
+worker and BFP8 leaf executed under the existing simulated NoC/FPU, with the
+prior 64-layer completion injected and a synthetic BF16 input. A separate
+software arithmetic observer predicted every row; all 128 output words and
+the four local argmax receipts matched exactly. Actual process exit was 0.
+
+The per-band argmax rows were 13, 70256, 108136 and 248302 respectively;
+these are results for synthetic input, not model-generated tokens. This test
+does not use the real normalized hidden vector, card DRAM, physical matrix
+engines, ROOT-to-worker lifetime, actual upload or real model execution. The
+conversion and software arithmetic implementations share code lineage with
+other project tools. Passing therefore does not rule out incorrect physical
+data, hardware behavior, other vocabulary bands, a cross-worker issue, or an
+earlier-layer error. No Work path or GPU state was touched.
+
+Reproduce on the local Mac with pinned worker/leaf directories and original
+GGUF using tools/pioneer/tests/run_pioneer_q38_qgw8_real_head_worker_test.py.
+The runner authenticates every used emitted worker section and leaf image;
+the diagnostic separately authenticates the full same-open model.
