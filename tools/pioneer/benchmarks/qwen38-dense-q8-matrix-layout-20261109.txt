@@ -64,3 +64,15 @@ performance result. In particular, K/V currently use only 32 workers; more
 parallelism would require safe K-dimension splitting and reduction.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_jobs_tests.py
+
+An offline manifest now binds each converted dense stripe to its canonical
+bank, first row and length. A separate controller-side scheduling function
+reads and rechecks those seven entries, then publishes jobs only after the
+whole schedule validates. In synthetic host tests its 2928 output jobs
+matched the independently constructed host jobs across all 48 projections;
+altered, overlapping, out-of-range and mid-read-changing metadata were
+refused before publication. This is not yet linked into a P100A ROOT image,
+does not authenticate uploaded metadata or provide worker lifetime/ownership,
+and is not a performance result.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_root_jobs_tests.py
