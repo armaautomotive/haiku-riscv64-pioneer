@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 int main(int argc,char** argv){
- if(argc!=4 || argv[1][0]!='/' || argv[2][0]!='/' || argv[3][0]!='/')return 2;
+ if((argc!=4 && argc!=5) || argv[1][0]!='/' || argv[2][0]!='/' || argv[3][0]!='/' || (argc==5 && argv[4][0]!='/'))return 2;
  int fd=open(argv[3],O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return 1;
  struct stat info={};if(fstat(fd,&info) || !S_ISREG(info.st_mode) || uint64_t(info.st_size)!=PioneerQwen38Gguf::FullBytes){close(fd);return 1;}
  FILE* file=fdopen(fd,"rb");if(!file){close(fd);return 1;}
@@ -26,8 +26,35 @@ int main(int argc,char** argv){
  const auto* head=model.Find("output.weight");if(!head){fclose(file);return 1;}
  const unsigned index=unsigned(head-model.Tensors().data());
  std::array<uint32_t,5120> input={};
- for(unsigned i=0;i<input.size();i++){
-  float x=float(int((i*73)%257)-128)*0.00390625f;std::memcpy(&input[i],&x,4);
+ if(argc==4){
+  for(unsigned i=0;i<input.size();i++){
+   float x=float(int((i*73)%257)-128)*0.00390625f;std::memcpy(&input[i],&x,4);
+  }
+ }else{
+  int snapshot=open(argv[4],O_RDONLY|O_CLOEXEC|O_NOFOLLOW);struct stat a={},b={};
+  constexpr size_t bytes=(16+2*5120+1)*4;std::vector<uint32_t> words(bytes/4);
+  PioneerModelWeightCache::Digest hash={};
+  if(snapshot<0 || fstat(snapshot,&a) || !S_ISREG(a.st_mode) || size_t(a.st_size)!=bytes
+   || !PioneerModelWeightCache::HashFile(snapshot,bytes,hash,error)
+   || PioneerModelWeightCache::Hex(hash)!="ce1ed4778227d6deb4bc0fd85440facf2a680c7d60b2e7d92c60e74abd73c98a"
+   || lseek(snapshot,0,SEEK_SET)<0){if(snapshot>=0)close(snapshot);fclose(file);return 1;}
+  size_t done=0;while(done<bytes){ssize_t n=read(snapshot,reinterpret_cast<uint8_t*>(words.data())+done,bytes-done);if(n<=0){close(snapshot);fclose(file);return 1;}done+=size_t(n);}
+  if(fstat(snapshot,&b) || a.st_dev!=b.st_dev || a.st_ino!=b.st_ino || a.st_size!=b.st_size || a.st_mtime!=b.st_mtime || a.st_ctime!=b.st_ctime || close(snapshot)
+   || words[0]!=0x38484351 || words[1]!=1 || words[2]!=248319 || words[3]!=64 || words[4]!=5120 || words[5]!=2
+   || words[6]!=70253 || words[7]!=70253 || words.back()!=0x454e4448){fclose(file);return 1;}
+  for(unsigned i=8;i<16;i++)if(words[i]){fclose(file);return 1;}
+  const auto* norm=model.Find("output_norm.weight");std::vector<float> weights(5120),hidden(5120);
+  if(!norm || norm->type!=0 || norm->inputs!=5120 || norm->outputs!=1
+   || !model.ReadRow(unsigned(norm-model.Tensors().data()),0,weights.data(),weights.size())){fclose(file);return 1;}
+  double sum=0;
+  for(unsigned i=0;i<5120;i++){
+   const uint32_t bits=words[16+5120+i];if((bits&0x7f800000)==0x7f800000){fclose(file);return 1;}
+   std::memcpy(&hidden[i],&bits,4);sum+=double(hidden[i]*hidden[i]);
+  }
+  const float scale=1.f/std::sqrt(float(sum/5120)+1e-6f);
+  if(!std::isfinite(scale) || !(scale>0)){fclose(file);return 1;}
+  for(unsigned i=0;i<5120;i++){float x=(hidden[i]*scale)*weights[i];if(!std::isfinite(x)){fclose(file);return 1;}std::memcpy(&input[i],&x,4);}
+  puts("QGW8_REAL_HEAD_WORKER pinned CPU-reference hidden normalized; NOT A CARD SNAPSHOT");fflush(stdout);
  }
  for(unsigned first:{0U,70240U,108128U,248288U}){
   std::vector<uint8_t> packed;std::array<uint32_t,32> expected={};
@@ -37,7 +64,7 @@ int main(int argc,char** argv){
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120,1);
   assert(image->transfer.weights.size()==packed.size());image->transfer.weights=packed;
   for(unsigned i=0;i<5120;i++){
-   const uint32_t bits=input[i];const uint16_t bf=uint16_t((bits+0x7fff+((bits>>16)&1))>>16);
+   const uint32_t bits=input[i];const uint16_t bf=(bits&0x7f800000)?uint16_t((bits+0x7fff+((bits>>16)&1))>>16):uint16_t((bits>>16)&0x8000);
    image->transfer.root[i*2]=uint8_t(bf);image->transfer.root[i*2+1]=uint8_t(bf>>8);
   }
   image->Boot();assert(image->pc==image->waitPC && image->regs[8]==0x70000);
@@ -58,6 +85,6 @@ int main(int argc,char** argv){
   if(image->Get(HW::Partial+8*4)!=first+best || image->Get(HW::Partial+9*4)!=expected[best] || !model.Stable()){fclose(file);return 1;}
   printf("QGW8_REAL_HEAD_WORKER first%u rows32 exact32 argmax%u;SIMULATED_NO_DEVICE\n",first,first+best);fflush(stdout);
  }
- puts("PASS_REAL_HEAD_QGW8_WORKER 128 real-weight outputs; SYNTHETIC_INPUT_SIMULATED_FABRIC_NOT_DEVICE_OR_SPEED");
+ printf("PASS_REAL_HEAD_QGW8_WORKER 128 real-weight outputs; %s_SIMULATED_FABRIC_NOT_DEVICE_OR_SPEED\n",argc==5?"PINNED_CPU_REFERENCE_INPUT":"SYNTHETIC_INPUT");
  return fclose(file)?1:0;
 }

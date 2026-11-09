@@ -28,3 +28,20 @@ Reproduce on the local Mac with pinned worker/leaf directories and original
 GGUF using tools/pioneer/tests/run_pioneer_q38_qgw8_real_head_worker_test.py.
 The runner authenticates every used emitted worker section and leaf image;
 the diagnostic separately authenticates the full same-open model.
+
+Pinned CPU-reference hidden follow-up
+-------------------------------------
+The separate converted-FFN CPU hidden snapshot, SHA-256
+ce1ed4778227d6deb4bc0fd85440facf2a680c7d60b2e7d92c60e74abd73c98a,
+was authenticated and shape-checked. Its converted final hidden vector was
+normalized with the authenticated original output_norm weights and supplied
+to the same emitted-worker simulation. All 128 row outputs matched the
+separate CPU observer, including local argmax 70253 in the 70240..70271
+band. The other local argmax rows were 23, 108147 and 248301. Actual process
+exit was 0. These are band-local selections, not a full-vocabulary result.
+
+This is CPU-reference data, not the missing physical snapshot, and the
+network, memory and matrix hardware are still simulated. It does not establish
+that real card hidden values, upload, scheduling, or matrix arithmetic match.
+No Work, hardware or tokens/second claim follows. Pass the optional absolute
+cpu-hidden.bin path as the fourth runner argument to reproduce this mode.

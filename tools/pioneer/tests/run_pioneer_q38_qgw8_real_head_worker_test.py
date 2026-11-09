@@ -7,11 +7,11 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) != 4 or any(not Path(x).is_absolute() for x in sys.argv[1:]):
-    raise SystemExit('usage: ABS_QGW8_WORKER_DIR ABS_BFP8_LEAF_DIR ABS_GGUF')
+if len(sys.argv) not in (4, 5) or any(not Path(x).is_absolute() for x in sys.argv[1:]):
+    raise SystemExit('usage: ABS_QGW8_WORKER_DIR ABS_BFP8_LEAF_DIR ABS_GGUF [ABS_PINNED_CPU_HIDDEN]')
 if any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ):
     raise SystemExit('Pioneer environment overrides refused')
-worker, leaf, model = map(Path, sys.argv[1:])
+worker, leaf, model = map(Path, sys.argv[1:4])
 pins = {'boot.bin':'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c',
  'globalworker.bin':'5a663114c058168677938681baca39efc5f7e6a3177235c692f37d1d1a064685',
  'bf16producer.bin':'c32a3790c4e5c1387d2a1c6ac2798514d923f7529b2ab073049b02e78d26f8f1',
@@ -40,4 +40,4 @@ with tempfile.TemporaryDirectory(prefix='qgw8-real-head-worker-',dir='/private/t
     subprocess.run([os.environ.get('CXX','c++'),*flags,str(here/'pioneer_q38_qgw8_real_head_worker_test.cpp'),
                     str(here.parent/'PioneerModelWeightCache.cpp'),'-o',str(exe)],check=True)
     env = {**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'}
-    subprocess.run([str(exe),str(worker),str(leaf),str(model)],env=env,check=True)
+    subprocess.run([str(exe),str(worker),str(leaf),str(model),*sys.argv[4:]],env=env,check=True)
