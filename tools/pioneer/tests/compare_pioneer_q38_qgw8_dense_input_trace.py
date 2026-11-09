@@ -65,6 +65,10 @@ def main():
             print(f'cross_head card={head} best_cpu=undefined cosine=undefined')
         else:
             print(f'cross_head card={head} best_cpu={best[0]} cosine={best[1]:.12g}')
+        values=candidate['floats'][head*HEAD_WORDS:(head+1)*HEAD_WORDS]
+        zeros=sum(v==0 for v in values)
+        per_lane=[sum(values[base+lane]==0 for base in range(0,HEAD_WORDS,16)) for lane in range(16)]
+        print(f'zero_lanes card={head} count={zeros} per_mod16='+','.join(map(str,per_lane)))
     for layer in range(2,64):
         changed, maximum, relative = difference(baseline,candidate,layer*LAYER_WORDS,LAYER_WORDS)
         print(f'layer={layer} changed={changed} max_abs={maximum:.12g} relative_l2={relative:.12g}')

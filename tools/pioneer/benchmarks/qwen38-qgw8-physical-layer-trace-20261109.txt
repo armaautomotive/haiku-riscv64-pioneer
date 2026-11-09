@@ -230,6 +230,19 @@ measure speed. A small synthetic sign/bounds sanity check runs first.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_value_sign_screen.py
 
+Further inspection of the same closed tag133 attention-input capture found
+exactly 64 zero floats per head, at lanes 0..3 of every 16-lane block,
+identically across all 24 heads. The six heads within each value group have
+no disagreements in nonzero sign. The sign screen above counts eligibility
+based on nontrivial reference values and includes zero observed values in
+the denominator; among nonzero observed values its prior opposite-sign
+fractions are therefore higher. A cross-family sign screen against CPU
+Q, gate, K and V is inconclusive and selects a best among many comparisons;
+it cannot prove routing. The regular zero pattern suggests investigating
+matrix lane layout, stage packing, data movement and capture, but does not
+identify which is at fault. Tag134 was started to capture the raw and packed
+value vectors directly, before attention, and remains in progress.
+
 Value-path capture preparation (offline only): a distinct layer3/position0
 image records 1024 raw F32 value projection words read from its actual GDDR
 workspace, followed by the 512 words of prepared packed-F16 values, into

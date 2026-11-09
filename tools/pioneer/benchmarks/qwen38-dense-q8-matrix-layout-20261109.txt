@@ -1,0 +1,22 @@
+Dense Q8 Q/G/K/V matrix layout feasibility, 2026-11-09
+=======================================================
+
+The current QGW8 full-card projection controller dispatches the 16 dense
+layers' original Q8_0 query/gate, key and value matrices to the existing
+FPU worker path. This proposal changes their storage geometry to BFP8
+matrix tiles, while retaining the existing QGW8 bank assignments and the
+other proposed encodings. On the fixed canonical 27B layout, all 336
+fragments / 229376 rows pass 32-row alignment and fit in the seven existing
+3-GiB bank capacities. Their allocated size decreases by 73400320 bytes
+relative to the existing QGW8 proposal. This is a layout feasibility
+result, not a model conversion, inference execution or performance claim.
+
+The plan requires exact Q8 source type, row bytes, row ordering, fragment
+coverage and capacity. An unready source and eight malformed-source variants
+were refused without modifying the previous output. The implementation is
+explicitly offline and rejects native, Work and CPU-reference roles. A
+usable matrix path still needs authenticated conversion/caching, a driver
+owner and matching startup/job/receipt dispatch, numerical validation,
+physical recovery qualification, and actual Qwen benchmarks.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_plan_tests.py

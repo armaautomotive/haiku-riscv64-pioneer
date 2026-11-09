@@ -32,26 +32,49 @@ int main(int argc,char** argv){
  if(argc!=5 || std::fegetround()!=FE_TONEAREST)return 2;
  Screen check;Measure(check,2.f,1.f);Measure(check,-2.f,1.f);Measure(check,2.f,3.f);Measure(check,0.0001f,1.f);
  if(check.eligible!=3 || check.opposite!=1 || check.exceeds!=1 || check.dot!=6. || check.nv!=12. || check.no!=11.)return 1;
- std::vector<float> hidden,observed,weights,normalized,value,qg,reference;
+ std::vector<float> hidden,observed,weights,normalized,value,key,qg,reference;
  if(!Read(argv[2],2*5120*4,5120,hidden) || !Read(argv[3],0,6144,observed)
   || !Read(argv[4],0,6144,reference))return 1;
  WholeModelOriginalBytes model;if(!model.Open(argv[1]) || !model.Ready())return 1;
  Q38LayerReplay replay;if(!replay.Bind(model) || !replay.Weight(3,0,weights)
   || !Rms(hidden,weights,normalized) || !replay.Project(3,5,normalized,qg)
-  || !replay.Project(3,7,normalized,value) || value.size()!=1024 || qg.size()!=12288)return 1;
+  || !replay.Project(3,6,normalized,key) || !replay.Project(3,7,normalized,value)
+  || value.size()!=1024 || key.size()!=1024 || qg.size()!=12288)return 1;
  for(unsigned h=0;h<24;h++)for(unsigned i=0;i<256;i++){
   const float expected=Flush(Half(HalfRne(value[(h/6)*256+i]))*Sigmoid(qg[h*512+256+i]));
   if(Bits(expected)!=Bits(reference[h*256+i]))return 1;
  }
  std::puts("CPU reference attention input reproduced bit-for-bit; no device assertion");
  for(unsigned group=0;group<4;group++){
-  unsigned disagreements=0;
+  unsigned disagreements=0,zeroLanes=0;
   for(unsigned i=0;i<256;i++){
    bool positive=false,negative=false;
    for(unsigned h=0;h<6;h++){float v=observed[(group*6+h)*256+i];positive|=v>0;negative|=v<0;}
-   disagreements+=positive && negative;
+   disagreements+=positive && negative;zeroLanes+=!positive && !negative;
   }
-  std::printf("CARD_GROUP_SIGN group=%u disagreeing_dimensions=%u of 256; zero excluded\n",group,disagreements);
+  std::printf("CARD_GROUP_SIGN group=%u disagreeing_dimensions=%u all_six_zero=%u of 256\n",group,disagreements,zeroLanes);
+ }
+ // Cross-family sign screening uses the first head of each shared group.
+ // Selecting the best of many candidates overfits and is not proof of routing.
+ for(unsigned group=0;group<4;group++)for(unsigned family=0;family<4;family++){
+  unsigned best=0,bestEligible=0,bestOpposite=0;double bestFraction=2.;
+  const unsigned count=family<2?4:24;
+  for(unsigned candidate=0;candidate<count;candidate++){
+   unsigned eligible=0,opposite=0;
+   for(unsigned i=0;i<256;i++){
+    const float v=family==0?value[candidate*256+i]:family==1?key[candidate*256+i]:
+     qg[candidate*512+(family==3?256:0)+i];
+    const float o=observed[group*6*256+i];
+    if(std::fabs(v)<0.001f || o==0)continue;
+    eligible++;opposite+=double(v)*o<0;
+   }
+   if(eligible<128)return 1;
+   const double fraction=double(opposite)/eligible;
+   if(fraction<bestFraction){bestFraction=fraction;best=candidate;bestEligible=eligible;bestOpposite=opposite;}
+  }
+  const char* names[]={"value","key","raw_query","raw_gate"};
+  std::printf("PROJECTION_SIGN_SCREEN group=%u family=%s best=%u opposite=%u eligible=%u fraction=%.9g; HYPOTHESIS_ONLY\n",
+   group,names[family],best,bestOpposite,bestEligible,bestFraction);
  }
  for(unsigned head=0;head<24;head++){
   for(unsigned group=0;group<4;group++){
