@@ -113,3 +113,20 @@ DATA regression passed. This is packaging and identity only, not owner,
 full model, device or throughput qualification.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_programs_tests.py QGWA_ROOT_A QGWA_ROOT_B QGWA_WORKER_A QGWA_WORKER_B QGW8_ROOT QGW8_WORKER
+
+Offline held-plan / startup identity bridge
+------------------------------------------
+An initial attempt to feed simulated startup metadata to the new controller
+failed: the head descriptor still contained the earlier QGW8 worker magic.
+The separate, non-native QGWA plan-inspection role now emits the matching
+QGWA witness, and startup explicitly checks QTPD/QGWA worker identity rather
+than the old QTP8/QGW8 identity. With the authenticated offline QTPD package
+selected, the synthetic held upload/session and receipt-derived startup
+metadata passed the actual linked QGWA ROOT's head/job checks; startup also
+checked all 119 worker boot identities. The old QGW8 bridge passed separately,
+and tag133's driver rebuilt byte-identically. A first bridge rerun also
+exposed a missing include search path in the test wrapper; that was corrected.
+This is simulated source/banks/transport and function-level ROOT execution,
+not a native owner, live upload, whole-model run, P100A validation or speed.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_held_head_root_bridge.py SDK QGWA_ROOT --qgwa QGWA_WORKER

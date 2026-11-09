@@ -66,7 +66,11 @@ public:
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
 #ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#ifdef PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION
+  static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x41475751,"QGWA layout requires the batched worker grammar");
+#else
   static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x38574751,"QGW8 layout requires the QGW8 worker grammar");
+#endif
   return c.Qgw8InspectionLayout();
 #else
   return PioneerQ38SelectedWorkerHybrid?c.HybridFormatLayout():c.OriginalFormatLayout();

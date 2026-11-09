@@ -5,6 +5,7 @@
 #error QGW8 runtime head plan requires the non-loadable inspection layout
 #endif
 #include "PioneerQ38GlobalChainLayout.h"
+#include "PioneerQ38QgwaBatchRootReceiptRole.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
 #if !defined(PIONEER_Q38_QGW8_CANONICAL_PRESENT) || PIONEER_Q38_QGW8_CANONICAL_PRESENT != 1
 #error QGW8 inspection role must be selected before the canonical model header
@@ -28,7 +29,13 @@ class PioneerQ38Qgw8HeadPlanInspection {
   const uint32_t fixed[]={0x38485651,1,128,bank,base,base+C::HeadOffset,0,0,5120,248320,973,9,119,8,5440,20480};
   for(unsigned i=0;i<16;i++){staged[i]=fixed[i];staged[16+i]=b[16+i];}
   for(unsigned i=0;i<8;i++)staged[32+i]=b[8+i];
-  const uint32_t witness[]={0x38574751,C::Magic,64,0,32,8,0,1};
+  const uint32_t witness[]={
+#ifdef PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION
+   0x41475751,
+#else
+   0x38574751,
+#endif
+   C::Magic,64,0,32,8,0,1};
   for(unsigned i=0;i<8;i++)staged[40+i]=witness[i];
   unsigned norms=0,stripes=0,rows=0;
   for(unsigned i=0;i<c.Count();i++){

@@ -11,7 +11,11 @@
 #ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
 #define PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC 1
 #include "../PioneerQ38TokenSelectedPrograms.h"
+#ifdef PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x44505451,"QGWA inspection must select its exact program family");
+#else
 static_assert(PioneerQ38TokenPrograms::Family==0x38505451,"QGW8 inspection must select its exact program family");
+#endif
 #endif
 #include "../PioneerQ38TokenStartupPlan.h"
 #include "../PioneerQ38HybridHeadLayout.h"
@@ -180,7 +184,13 @@ int main(int argc,char** argv){
   for(unsigned worker=1;worker<120;worker++){
    std::array<uint32_t,64> peer={};
    assert(startup->ReadBoot(worker,peer.data()) && PioneerQ38SelectedGlobalWorker::BootShape(peer.data())
-    && peer[0]==0x38574751 && peer[49]==0 && peer[50]==0x1ffc0000);
+    && peer[0]==
+#ifdef PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION
+       0x41475751
+#else
+       0x38574751
+#endif
+    && peer[49]==0 && peer[50]==0x1ffc0000);
   }
 #endif
   std::array<uint32_t,128> head={};

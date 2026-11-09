@@ -21,7 +21,10 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
-#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133
+#ifdef PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x44505451 && PioneerQ38TokenL1::Family==0x35505451,
+ "QGWA offline programs require their distinct QTPD identity and expanded journal geometry");
+#elif defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133)
 static_assert(PioneerQ38TokenPrograms::Family==0x43505451 && PioneerQ38TokenL1::Family==0x35505451,
  "tag133 requires its distinct QTPC dense-input program and expanded hybrid journal geometry");
 #elif defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132)
