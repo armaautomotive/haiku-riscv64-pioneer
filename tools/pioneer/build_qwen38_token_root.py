@@ -7,6 +7,10 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+qgwd_root='--qgwd-dense-q8-root' in options
+if qgwd_root:
+ assert options.count('--qgwd-dense-q8-root')==1,'duplicate QGWD root selector'
+ options.remove('--qgwd-dense-q8-root')
 qgwc_root='--qgwc-srca-root' in options
 if qgwc_root:
  assert options.count('--qgwc-srca-root')==1,'duplicate QGWC root selector'
@@ -60,6 +64,7 @@ qgw8_commit='--qgw8-commit-boundary' in options
 qgw8_profile='--qgw8-coarse-profile' in options
 qgw8_trace='--qgw8-layer-trace' in options
 dense_trace='--qgw8-dense-stage-trace' in options and not (input_trace or value_trace)
+assert not qgwd_root or (inspect and head_matrix and not qgwc_root and not qgwa_root and not qgw8_trace and not qgw8_profile and not qgw8_commit and not dense_trace and not input_trace and not value_trace), 'QGWD root requires its separate untraced inspection profile'
 assert not qgwc_root or (inspect and head_matrix and not qgwa_root and not qgw8_trace and not qgw8_profile and not qgw8_commit and not dense_trace and not input_trace and not value_trace), 'QGWC root requires its separate untraced inspection profile'
 assert not qgwa_root or (inspect and head_matrix and not qgw8_trace and not qgw8_profile and not qgw8_commit and not dense_trace and not input_trace and not value_trace), 'QGWA root requires its separate untraced inspection profile'
 assert not (dense_trace or input_trace or value_trace) or qgw8_trace,'dense-stage trace requires the separate layer-trace inspection root'
@@ -90,13 +95,14 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--qgwc-srca-root'] if qgwc_root else []),*(['--qgwa-batch-root'] if qgwa_root else []),*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []),*(['--hybrid-queued-counters'] if queued_counters else []),*(['--head-matrix-inspection'] if head_matrix else []),*(['--qgw8-dense-value-trace'] if value_trace else (['--qgw8-dense-input-trace'] if input_trace else (['--qgw8-dense-stage-trace'] if dense_trace else []))))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--qgwd-dense-q8-root'] if qgwd_root else []),*(['--qgwc-srca-root'] if qgwc_root else []),*(['--qgwa-batch-root'] if qgwa_root else []),*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []),*(['--hybrid-queued-counters'] if queued_counters else []),*(['--head-matrix-inspection'] if head_matrix else []),*(['--qgw8-dense-value-trace'] if value_trace else (['--qgw8-dense-input-trace'] if input_trace else (['--qgw8-dense-stage-trace'] if dense_trace else []))))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
+ *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1'] if qgwd_root else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if qgw8_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),

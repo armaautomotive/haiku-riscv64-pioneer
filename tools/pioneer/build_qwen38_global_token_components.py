@@ -7,6 +7,10 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+qgwd_root='--qgwd-dense-q8-root' in options
+if qgwd_root:
+ assert options.count('--qgwd-dense-q8-root')==1,'duplicate QGWD root selector'
+ options.remove('--qgwd-dense-q8-root')
 qgwc_root='--qgwc-srca-root' in options
 if qgwc_root:
  assert options.count('--qgwc-srca-root')==1,'duplicate QGWC root selector'
@@ -56,6 +60,7 @@ if reuse_input:
 matrix_attention='--hybrid-matrix-attention' in options
 queued_counters='--hybrid-queued-counters' in options
 head_matrix='--head-matrix-inspection' in options
+assert not qgwd_root or (inspect and head_matrix and not qgwc_root and not qgwa_root and not input_trace and not value_trace and '--qgw8-dense-stage-trace' not in options), 'QGWD root requires its separate untraced inspection profile'
 assert not qgwc_root or (inspect and head_matrix and not qgwa_root and not input_trace and not value_trace and '--qgw8-dense-stage-trace' not in options), 'QGWC root requires its own untraced inspection profile'
 assert not qgwa_root or (inspect and head_matrix and not input_trace and '--qgw8-dense-stage-trace' not in options), 'QGWA root requires its own untraced inspection profile'
 dense_trace='--qgw8-dense-stage-trace' in options and not (input_trace or value_trace)
@@ -87,6 +92,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
+ *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1'] if qgwd_root else []),
  *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
@@ -113,6 +119,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
+ *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1'] if qgwd_root else []),
  *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),

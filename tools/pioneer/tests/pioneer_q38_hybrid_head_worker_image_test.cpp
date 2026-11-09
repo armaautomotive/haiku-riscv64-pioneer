@@ -15,7 +15,11 @@ static void StageHead(HybridImage& image,bool corrupt,const std::array<uint32_t,
  assert(image.pc==image.waitPC && image.regs[8]==0x70000);
  // This offset is bound to the pinned exact worker binary by the runner.
  // Synthetic injection tests only the output job after the omitted layers.
+#ifdef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER
+ image.Put(image.regs[8]-1136,64);
+#else
  image.Put(image.regs[8]-1548,64);
+#endif
  auto& leaf=image.transfer.job;leaf.words[11]=1;
  uint32_t j[64]={};j[0]=HW::Magic;j[1]=1;j[2]=HW::GlobalMatrix;j[3]=image.boot[3];j[4]=image.boot[4];j[5]=64;j[7]=2025;
  for(unsigned i=0;i<8;i++)j[8+i]=image.boot[8+i];for(unsigned i=0;i<16;i++)j[16+i]=leaf.words[i];

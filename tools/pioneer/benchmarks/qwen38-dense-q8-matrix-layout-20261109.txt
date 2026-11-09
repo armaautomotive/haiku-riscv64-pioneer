@@ -214,3 +214,13 @@ section and the complete ELF were hash-checked first. This is a reference
 geometry/restore fixture, NOT the production TokenMemory save/restore
 algorithm with the new image, a matched ROOT/worker session, physical
 address mapping or permission to install/use the larger journal.
+
+QGWD coordinator identity preparation: two separately built ROOT images now
+match SHA-256 939e500215f5b90ae18b5634e7487ee7bc71001a00168aca9e65d3e6d55b83b9.
+Their compiled ordinary FFN/head job paths and the pinned QGWD worker/leaf
+passed synthetic compatibility tests, including 72 projection jobs, head
+job/receipt checks and deliberately injected layer history. The earlier
+QGWC coordinator/worker test still passes. This new ROOT only uses the
+QGWD identity: it does NOT yet invoke the dense Q8 matrix scheduler or
+establish correct accelerated full-model execution. No hardware or speed
+claim follows from these ROOT identity checks.
