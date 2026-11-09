@@ -121,6 +121,9 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  io.runtimeWorkspace=io.workspaceAddress;
+#ifdef PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION
+ if(argc==3 && !strcmp(argv[2],"--runtime-faults"))io.runtimeFault=2;
+#endif
 #endif
  if(argc>=3)CheckNativeHeld(f,0);
 #endif
