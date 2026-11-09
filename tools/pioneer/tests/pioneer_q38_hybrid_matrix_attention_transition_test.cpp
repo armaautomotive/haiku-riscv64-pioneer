@@ -137,6 +137,10 @@ int main(int argc,char** argv){
  const auto* golden=PioneerNativeBfp4BandGolden(17408);assert(golden);
  for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++)
   assert(image.Get(W::Output+(band*32+row)*4)==golden[row]);
+#ifdef PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE
+ puts("PASS actual QGWC BFP4 -> QDM2 attention -> BFP4; alternative SrcA-base model, synthetic data/controller; NO HARDWARE OR SPEED");
+#else
  puts("PASS actual QGW7 BFP4 down layers 0/1/2 -> QDM2 attention phases 1/2/3 -> BFP4 down layer 3; same simulated registers/banks/L1/NoC history, synthetic data/controller; NO HARDWARE OR SPEED");
+#endif
 }
 #endif

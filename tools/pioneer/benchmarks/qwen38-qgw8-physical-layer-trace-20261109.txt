@@ -282,6 +282,35 @@ the unchanged slot comparison is cross-run evidence only.
  python3 tools/pioneer/tests/run_pioneer_q38_dense_value_capture_replay.py ABS_TAG134_TRACE --sha256 281f29679d1f47b623be43ea07618a7fb94fb23d8889a6c81fbbfa6db7aadfe3
  python3 tools/pioneer/tests/compare_pioneer_q38_dense_value_attention.py ABS_TAG134_TRACE --value-sha256 281f29679d1f47b623be43ea07618a7fb94fb23d8889a6c81fbbfa6db7aadfe3 ABS_TAG133_TRACE --attention-sha256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c
 
+Fixed shift hypothesis and isolated candidate
+---------------------------------------------
+Using the independently reproduced CPU gates and the reference values (which
+the tag134 card value capture matched bit-for-bit), this fixed hypothesis
+reproduces all 6144 tag133 attention-output floats bit-for-bit: for each
+16-lane block, output lanes 0..3 are zero and lanes 4..15 use values from
+lanes 0..11, multiplied by the gate at the output lane. The tag133/tag134
+intermediate captures are separate runs; this is strong cross-run evidence,
+not a same-run proof of the stage or register responsible.
+
+One specific mechanism could explain the shift: the BF16 SrcA unpack output
+base may be interpreted in 16-bit slots, while our old simulator divides it
+by two. An explicitly ALTERNATIVE simulator model implementing that
+interpretation reproduces the shifted/zero pattern with the existing 0x80
+base and yields the correct synthetic PV with a 0x40 base. This is a
+hypothesis, not an established silicon specification; the same adjustment
+also changes Q/K score unpack and must be validated for multiple positions.
+
+An isolated QGWC worker with its own boot/job identity changes only those
+two dense-code immediate bytes. Two builds were byte-identical; the original
+QGW8 worker rebuilt unchanged. Tests under the alternative model cover
+synthetic attention and its transition from/to FFN workers. The QGWC front
+is 11948 bytes and fits the existing 12288-byte snapshot, unlike the separate
+QGWB dense-Q8 worker. QGWC is NOT a ROOT, driver, hardware run, quality or
+speed result. Do not install or present the hypothesis as a confirmed fix.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_value_sign_screen.py
+ python3 tools/pioneer/tests/run_pioneer_q38_srca_base_hypothesis_tests.py SDK QGWC_A QGWC_B QGW8 BFP4_LEAF
+
 Value-path capture preparation (offline only): a distinct layer3/position0
 image records 1024 raw F32 value projection words read from its actual GDDR
 workspace, followed by the 512 words of prepared packed-F16 values, into

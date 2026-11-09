@@ -5,6 +5,13 @@
  || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
 #error Experimental offline dense matrix kernel only; not a driver or Work selection
 #endif
+#if defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) && (PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE != 1 \
+ || (!defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_TEST_ONLY) && !defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)) \
+ || (defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_TEST_ONLY) && PIONEER_Q38_DENSE_BF16_SRCA_BASE_TEST_ONLY != 1) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Dense BF16 SrcA base candidate requires isolated test or worker inspection
+#endif
 #include "PioneerQ38NativeBfpMatvec.h"
 
 // Matrix-vector product for 32 output rows and either 32 or 256 BF16 inputs.
@@ -33,7 +40,13 @@ private:
   if(!PioneerQ38NativeBfpMatvec::Setup(e,8))return false;
   e.Config(0,0x42b5);e.Config(1,0x60aa0000);
   e.Config(64,0x01000015);e.Config(72,0x125);
+#ifdef PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE
+  // Unverified physical-lane hypothesis: SrcA output base may be measured
+  // in 16-bit slots even when its L1 payload is BF16. Never select in Work.
+  e.Config(84,0x00400040);
+#else
   e.Config(84,0x00400080);
+#endif
   e.Config(76,matrix/16-1);e.Config(124,vector/16-1);
   e.Op(0x3700000f);e.Op(0x10180000);e.Drain(); // clear once, NOT per K32
   return true;

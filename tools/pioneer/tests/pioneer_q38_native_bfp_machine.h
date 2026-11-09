@@ -91,7 +91,16 @@ struct NativeBfpMachine {
 		assert(count==(which?256U:1024U));
 		auto& s=source[which][unpackBank[which]];assert(!s.pending && !s.owner);
 		unsigned destinationBase=which?config[61]:config[49]+(config[84]&65535);
-		if(format==5) { assert(!(destinationBase&1));destinationBase/=2; }
+		if(format==5) {
+			assert(!(destinationBase&1));
+#ifdef PIONEER_TEST_BF16_SRCA_16BIT_BASE
+			// Hypothesis only, motivated by the physical four-lane shift.
+			// SrcB is unchanged; this is not a silicon specification.
+			if(which)destinationBase/=2;
+#else
+			destinationBase/=2;
+#endif
+		}
 		for(unsigned i=0;i<count;i++) {
 			unsigned row=(destinationBase+i)/16,col=(destinationBase+i)%16;
 			if(!which) { assert(row>=4);row=(row-4)&63;

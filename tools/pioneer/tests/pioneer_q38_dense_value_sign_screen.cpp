@@ -45,6 +45,21 @@ int main(int argc,char** argv){
   if(Bits(expected)!=Bits(reference[h*256+i]))return 1;
  }
  std::puts("CPU reference attention input reproduced bit-for-bit; no device assertion");
+ // A fixed shift hypothesis motivated by the earlier zero-lane pattern.
+ // Cross-run and CPU-gate assumptions still apply; do not infer hardware
+ // cause merely because a candidate reproduces the captured vector.
+ {
+  unsigned changed=0,compared=0;double error=0,denominator=0;
+  for(unsigned h=0;h<24;h++)for(unsigned i=0;i<256;i++){
+   const float v=(i&15)<4?0.f:Half(HalfRne(value[(h/6)*256+i-4]));
+   const float expected=Flush(v*Sigmoid(qg[h*512+256+i]));const float actual=observed[h*256+i];
+   changed+=Bits(expected)!=Bits(actual);compared++;
+   error+=double(expected-actual)*double(expected-actual);denominator+=double(actual)*actual;
+  }
+  if(!(denominator>0))return 1;
+  std::printf("FIXED_SHIFT4_SCREEN lanes=%u changed_bits=%u rel_l2=%.12g; CPU_GATE_ASSUMED CROSS_RUN HYPOTHESIS_ONLY\n",
+   compared,changed,std::sqrt(error/denominator));
+ }
  for(unsigned group=0;group<4;group++){
   unsigned disagreements=0,zeroLanes=0;
   for(unsigned i=0;i<256;i++){
@@ -53,6 +68,38 @@ int main(int argc,char** argv){
    disagreements+=positive && negative;zeroLanes+=!positive && !negative;
   }
   std::printf("CARD_GROUP_SIGN group=%u disagreeing_dimensions=%u all_six_zero=%u of 256\n",group,disagreements,zeroLanes);
+ }
+ // Hypothesis only: assume the CPU reference's six gate values are close
+ // to the separate card run. Fit a single shared V per output dimension,
+ // then see if it resembles ANY dimension of that group's captured value.
+ // This can suggest a lane permutation; it cannot prove one or exclude a
+ // bad gate. Selecting a best match across 256 candidates can overfit.
+ for(unsigned group=0;group<4;group++){
+  unsigned fitted=0,near=0,same=0,sameBlock=0;double error=0,energy=0;unsigned modulo[16]={};
+  for(unsigned i=0;i<256;i++){
+   double numerator=0,denominator=0;
+   for(unsigned h=0;h<6;h++){
+    const unsigned head=group*6+h;const double g=Sigmoid(qg[head*512+256+i]);
+    numerator+=g*observed[head*256+i];denominator+=g*g;
+   }
+   if(!(denominator>0))return 1;const double inferred=numerator/denominator;
+   for(unsigned h=0;h<6;h++){
+    const unsigned head=group*6+h;const double actual=observed[head*256+i],predicted=inferred*Sigmoid(qg[head*512+256+i]);
+    error+=(actual-predicted)*(actual-predicted);energy+=actual*actual;
+   }
+   if(inferred==0)continue;fitted++;
+   unsigned best=0;double delta=1e100;
+   for(unsigned candidate=0;candidate<256;candidate++){
+    const double v=Half(HalfRne(value[group*256+candidate]));const double diff=std::fabs(inferred-v);
+    if(diff<delta){delta=diff;best=candidate;}
+   }
+   if(delta<=0.0001+std::fabs(inferred)*0.01){near++;same+=best==i;sameBlock+=best/16==i/16;modulo[(best-i)&15]++;}
+  }
+  if(!fitted || !(energy>0))return 1;
+  std::printf("GATE_FIT_SCREEN group=%u nonzero=%u fit_rel_l2=%.9g nearest_1pct=%u same_lane=%u same_16block=%u shifts=",
+   group,fitted,std::sqrt(error/energy),near,same,sameBlock);
+  for(unsigned i=0;i<16;i++)std::printf("%s%u",i?",":"",modulo[i]);
+  std::puts("; CPU_GATE_ASSUMED CROSS_RUN HYPOTHESIS_ONLY");
  }
  // Cross-family sign screening uses the first head of each shared group.
  // Selecting the best of many candidates overfits and is not proof of routing.
