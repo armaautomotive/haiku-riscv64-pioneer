@@ -100,3 +100,37 @@ any recovery or new device work. A timeout alone is not proof that the
 previous process exited. Do not infer a successful test or overwrite its
 files, and never use the front-panel toggle without actual power-state
 evidence. Continue to preserve unrelated local changes.
+
+Post-outage reconnection, 2026-11-08 local
+-----------------------------------------
+The Mac rejoined the 10.0.0.x network. Linux's previously verified host key
+matched and the project-specific user key succeeded. Linux showed the
+recorded Samsung S14CNSAD300075H, 12 TB WD B0196SUD and build SSD; PCI
+1e52:b140 was enumerated without a bound Linux driver. Linux reported that
+the NVMe EFI FAT volume had not been cleanly unmounted. No repair was made.
+
+The Samsung BFS was mounted read-only under Linux for inspection and then
+unmounted. The installed Haiku driver and saved candidate matched tag129
+SHA-256 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f;
+the saved stable backup matched 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Some trial log bytes looked inconsistent with the expected transcript; do
+not interpret them as a terminal result or assume their cause.
+
+With the SD removed, the previously tested disk-identity-aware 64-CPU,
+128GB SD-free profile passed its pinned checks and booted Haiku. The pinned
+Haiku SSH host key matched. sysinfo reported 64 CPUs and 137034936320 bytes
+maximum memory. CPU-only reload metadata reported tag129 generation1,
+quiesced0, active_owner0, open_count1 and guard1. This is a fresh driver
+generation, not proof of the interrupted job's outcome or card correctness.
+checkfs --check-only /boot exited 0: 58280 nodes, 0 blocks not allocated,
+0 blocks already set, and 40861 blocks that could be freed. This is not a
+file-content integrity or power-loss safety proof; no repair was performed.
+
+Haiku still reports state CANDIDATE_RUNNING_OWNERSHIP_UNKNOWN; trial.exit
+and hidden.bin are absent and the one-shot guard remains. No test was retried,
+no driver was exchanged and no card operation was issued. Private copies of
+the five small state/log files were copied to
+/private/tmp/pioneer-qgw8-outage-record.7n2RWwg8 on the Mac; their SHA-256
+values matched the live Haiku reads. This temporary directory is not an
+archival backup. Preserve the original files and guard; do not infer a clean
+FINISH/close or automatically restore through the original one-shot path.
