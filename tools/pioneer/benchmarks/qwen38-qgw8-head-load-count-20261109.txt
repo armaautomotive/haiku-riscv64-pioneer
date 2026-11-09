@@ -1,0 +1,32 @@
+QGW8 head worker traffic: static plan analysis, 2026-11-09
+
+The actual head job planner and BFP8 packet-shape functions were exercised
+for every one of the 973 jobs, covering the full 248320-row vocabulary.
+For the current loader, which fetches both operands for each 32-row band,
+the plan implies per generated token:
+
+  7760 bands x 160 K-tiles
+  1241600 weight-read requests, 1350860800 weight bytes
+  1241600 activation-read requests, 79462400 activation bytes
+  2483200 total operand-read requests, 1430323200 operand bytes
+
+These are on-card NoC operand reads, not host PCIe round trips, and exclude
+other traffic. They are derived from planned jobs and packet shapes, not a
+hardware traffic counter or measured bottleneck. Job-level parallelism,
+queue overlap, request latency and the other 64 layers are not accounted for.
+
+If the already-existing retained-input experiment were proven safe and
+integrated, exactly one input load per job would mean 155680 input-read
+requests and 9963520 activation bytes: 1085920 fewer requests, or 43.73%
+of these operand requests, but only 69498880 fewer bytes, or 4.86% of operand
+bytes. These counts assume the same job geometry and no replacement traffic;
+they are not a throughput forecast. The experiment's input ownership and
+lifetime remain unproven, and it must not be enabled in a native/Work image
+or tested on the card solely on the basis of this calculation. See
+qwen38-bfp8-input-reuse-offboard-20261107.txt for known failure limitations.
+
+Actual planner/packet test, role guards and freestanding RV32 compile passed:
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_head_plan_tests.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64
+No GPU, full model, numerical quality, inference speed or hardware counter
+measurement follows from this test.

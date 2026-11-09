@@ -78,6 +78,7 @@ int main(int argc,char** argv){
  const unsigned witness[]={W::Magic,H::C::Magic,64,0,32,8,0,1};for(unsigned i=0;i<8;i++)h[40+i]=witness[i];
  assert(H::Shape(h.data(),root.data(),0,workspace));
  std::vector<unsigned char> coverage(248320);unsigned total=0;
+ uint64_t bands=0,weightReads=0,inputReads=0,reusedInputReads=0,weightBytes=0,inputBytes=0,reusedInputBytes=0;
  for(unsigned ordinal=0;ordinal<H::Jobs;ordinal++){
   unsigned worker=ordinal%119+1,wave=ordinal/119,bank=ordinal%7;
   auto boot=WorkerBoot(root,worker);std::array<uint32_t,64>job={};
@@ -87,9 +88,26 @@ int main(int argc,char** argv){
   const auto* stripe=h.data()+H::Stripe+bank*8;const unsigned count=job[20]*32,first=job[32];
   assert(first>=stripe[2] && first+count<=stripe[2]+stripe[3] && job[21]==PioneerQ38ProjectionRoute(bank)
    && job[19]==stripe[1]+((first-stripe[2])/32)*174080);
+  PioneerQ38Bfp8WorkerJob::Job leaf={};for(unsigned i=0;i<16;i++)leaf.words[i]=job[16+i];
+  assert(PioneerQ38Bfp8WorkerJob::Shape(leaf));
+  for(unsigned operand=0;operand<2;operand++){
+   PioneerQ38Bfp8WorkerJob::Read firstPacket={},lastPacket={};
+   assert(PioneerQ38Bfp8WorkerJob::Packet(leaf,0,operand,0,firstPacket)
+    && PioneerQ38Bfp8WorkerJob::Packet(leaf,leaf.words[4]-1,operand,159,lastPacket));
+   assert(firstPacket.bytes==(operand?64U:1088U) && lastPacket.bytes==firstPacket.bytes);
+  }
+  const uint64_t tiles=5120/32;bands+=leaf.words[4];weightReads+=leaf.words[4]*tiles;
+  inputReads+=leaf.words[4]*tiles;reusedInputReads+=tiles;
+  weightBytes+=leaf.words[4]*tiles*1088;inputBytes+=leaf.words[4]*tiles*64;reusedInputBytes+=tiles*64;
   for(unsigned row=first;row<first+count;row++){assert(!coverage[row]);coverage[row]=1;total++;}
  }
  assert(total==248320);for(auto c:coverage)assert(c==1);
+ assert(bands==7760 && weightReads==1241600 && inputReads==1241600 && reusedInputReads==155680
+  && weightBytes==1350860800 && inputBytes==79462400 && reusedInputBytes==9963520);
+ printf("QGW8_HEAD_STATIC_LOAD_COUNTS jobs%u bands%llu weight_reads%llu input_reads%llu weight_bytes%llu input_bytes%llu "
+  "hypothetical_reused_input_reads%llu hypothetical_reused_input_bytes%llu;NO_DEVICE_TIMING_OR_REUSE_AUTHORITY\n",
+  unsigned(H::Jobs),(unsigned long long)bands,(unsigned long long)weightReads,(unsigned long long)inputReads,
+  (unsigned long long)weightBytes,(unsigned long long)inputBytes,(unsigned long long)reusedInputReads,(unsigned long long)reusedInputBytes);
  auto boot=WorkerBoot(root,1);std::array<uint32_t,64>out;out.fill(0xa5a5a5a5);const auto untouched=out;
  if(argc>=2){
   static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"fixture uses little-endian worker words");
