@@ -1,0 +1,32 @@
+QGWA batched input: isolated compiled worker simulation, 2026-11-09
+
+The per-band batched BFP8 input leaf is linked into a separate QGWA worker.
+Its boot and job identities differ from QGW8 and QGW9; it has no ROOT,
+native-driver or Work selector. The worker and receipt account for the
+batched NoC command and counters. The BFP4 path remains unchanged.
+
+Two builds have matching ELF SHA-256:
+e0d7bb5a1434181a8560867f1bfee701a7787a878dff780bce215adf79f2fc47
+An ordinary QGW8 rebuild still matches its original ELF:
+d28edbd5cf25b8184d29ddf189b74efe843d934cd8ebb628976ed3331823897d
+
+ASan/UBSan simulations of emitted worker instructions passed synthetic
+head jobs of 1, 2, 3, and 8 bands, FFN widths 5120 and 17408, 2048
+single-bit receipt mutations, rejection of malformed jobs and mismatched
+boot markers. Corrupting the local input between bands was repaired by the
+next re-fetch in this simulator. Three private real-head bands on each of
+three simulated peers matched 576 output words exactly. Histories were
+injected; this is not a 64-layer model test. QGW8 and QGW9 regression
+simulations passed. The simulated two-band head issued 322 operand reads
+versus QGW8's 640 and took 214538 versus 232884 simulated RV32 steps.
+These are NOT physical timings, throughput, full-model output quality, or
+evidence that either simulated instruction count predicts a speedup.
+
+This design still needs physical same-band input ownership, hardware NoC
+ordering and coherence, full worker scheduling, bounded recovery, complete
+model correctness and end-to-end performance qualification. No device
+authority, driver installation, Assistant selection or Work-mode change is
+granted by this result. The existing live QGW8 diagnostic was not disturbed.
+
+Reproduce the simulation after building the two isolated images:
+python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_worker_tests.py ABS_BUILD_A ABS_BUILD_B ABS_BATCH_LEAF ABS_OLD_WORKER ABS_PRIVATE_EXPORT

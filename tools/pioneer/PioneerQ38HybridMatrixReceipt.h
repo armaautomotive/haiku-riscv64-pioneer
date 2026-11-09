@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8Bfp8ReuseRole.h"
+#include "PioneerQ38Qgw8Bfp8BatchRole.h"
 #ifndef PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #define PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #include "PioneerQ38HybridWorkerLayout.h"
@@ -47,6 +48,12 @@ struct PioneerQ38HybridMatrixReceipt {
   // Derive its complete NIU command from the selected validated leaf.
   unsigned source=0,destination=0,route=0,bytes=0;
   if(eight){
+#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+   const unsigned offset=((width*2-1)/16384)*16384;
+   source=PioneerQ38Bfp8WorkerJob::RootInput+offset;
+   destination=PioneerQ38Bfp8WorkerLayout::Input+offset;
+   route=PioneerQ38Bfp8WorkerJob::RootRoute;bytes=width*2-offset;
+#else
    PioneerQ38Bfp8WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
    PioneerQ38Bfp8WorkerJob::Read last;
    if(!PioneerQ38Bfp8WorkerJob::Packet(leaf,bands-1,
@@ -57,6 +64,7 @@ struct PioneerQ38HybridMatrixReceipt {
 #endif
     tiles-1,last))return false;
    source=last.source;destination=last.destination;route=last.route;bytes=last.bytes;
+#endif
   }else{
    PioneerQ38Bfp4WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
    PioneerQ38Bfp4WorkerJob::Read last;
@@ -80,6 +88,9 @@ struct PioneerQ38HybridMatrixReceipt {
 #elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
     (eight?(bands*17+1)*tiles:bands*tiles*10):i==0 || i==2 || i==3 || i==6?
     (eight?(bands+1)*tiles:bands*tiles*2):0U;
+#elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
+    bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?
+    bands*(eight?tiles+(width*2+16383)/16384:tiles*2):0U;
 #else
     bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?bands*tiles*2:0U;
 #endif

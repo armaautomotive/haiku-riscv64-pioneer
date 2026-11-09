@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8Bfp8ReuseRole.h"
+#include "PioneerQ38Qgw8Bfp8BatchRole.h"
 #if defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT) && (PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT != 1 \
  || defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) \
- || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
- || defined(PIONEER_Q38_BF16_WORKER_IMAGE) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) \
+ || (defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) && !defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
+ || (defined(PIONEER_Q38_BF16_WORKER_IMAGE) && !defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)) \
+ || (defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)) \
  || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
@@ -11,7 +13,7 @@
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
-#error BFP8 batched input is an isolated standalone leaf experiment
+#error BFP8 batching requires an isolated leaf or worker experiment
 #endif
 #ifndef PIONEER_Q38_BFP8_BATCH_INPUT_SELECTION_H
 #define PIONEER_Q38_BFP8_BATCH_INPUT_SELECTION_H
@@ -28,6 +30,9 @@ static_assert(PioneerQ38Bfp8BatchInputSelection==0,"late batched-input removal")
 #endif
 #ifndef PIONEER_Q38_BFP8_WORKER_LOADER_H
 #define PIONEER_Q38_BFP8_WORKER_LOADER_H
+#if defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) && (!defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT) || PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT != 1)
+#error Batching worker must use its matching BFP8 leaf
+#endif
 #if defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) && (!defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT != 1)
 #error QGW8 reuse worker must use the matching BFP8 retained-input leaf
 #endif

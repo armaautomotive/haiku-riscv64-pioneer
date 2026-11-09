@@ -177,6 +177,10 @@ static void FpuMatrix(const uint32_t* j,const uint32_t* outer,const uint32_t* so
  const unsigned tiles=j[2]/32;
  const unsigned reads=eight?(j[4]+1)*tiles:j[4]*2*tiles;
  const unsigned flits=eight?(j[4]*17+1)*tiles:j[4]*10*tiles;
+#elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
+ const unsigned tiles=j[2]/32;
+ const unsigned reads=j[4]*(eight?tiles+(j[2]*2+16383)/16384:2*tiles);
+ const unsigned flits=j[4]*(eight?18U:10U)*tiles;
 #else
  const unsigned reads=j[4]*2*(j[2]/32),flits=j[4]*(eight?18U:10U)*(j[2]/32);
 #endif

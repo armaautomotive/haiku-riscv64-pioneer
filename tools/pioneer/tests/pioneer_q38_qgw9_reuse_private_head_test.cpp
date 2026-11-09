@@ -29,9 +29,14 @@ int main(int argc,char** argv){
   j[32]=PioneerNativeBfpModelBandMetadata::First(sample);j[33]=HW::Vocabulary;j[34]=0;j[35]=HW::JobWitness;
   assert(HW::JobShape(j,image->boot.data(),0,0));
   for(unsigned i=0;i<64;i++)image->Put(HW::Job+i*4,j[i]);image->Put(HW::Doorbell,1);
-  assert(image->Finish(1) && image->inputPreserved && image->transfer.issues==480);
+  assert(image->Finish(1));
+#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+  assert(image->transfer.issues==322);
+#else
+  assert(image->inputPreserved && image->transfer.issues==480);
+#endif
   const auto* expected=PioneerNativeBfpModelBandMetadata::Golden(sample);assert(expected);
   for(unsigned row=0;row<64;row++)assert(image->Get(W::Output+row*4)==expected[row%32]);
  }
- puts("PASS QGW9 emitted worker: 3 private real-head bands x 3 peers, 576 exact words and reduced reads; SIMULATED FABRIC, NO DEVICE OR OWNERSHIP GRANT");
+ puts("PASS emitted worker: 3 private real-head bands x 3 peers, 576 exact words and reduced reads; SIMULATED FABRIC, NO DEVICE OR OWNERSHIP GRANT");
 }

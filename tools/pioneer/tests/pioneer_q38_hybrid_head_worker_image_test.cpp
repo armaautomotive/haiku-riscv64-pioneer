@@ -58,7 +58,9 @@ int main(int argc,char** argv){
   }
   assert(image->native.matrixOps==bands*16*160 && image->stores==count);
   printf("HEAD_WORKER_SIM bands%u issued_reads%u rv32_steps%u;NOT_HARDWARE_TIME\n",bands,image->transfer.issues,image->steps);
-#ifdef PIONEER_Q38_QGW8_BFP8_REUSE_WORKER
+#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+  assert(image->transfer.issues==bands*161);
+#elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
   assert(image->transfer.issues==(bands+1)*160 && image->inputPreserved);
 #endif
  }
@@ -100,9 +102,50 @@ int main(int argc,char** argv){
   assert(changed); // Known negative control: retained input is NOT protected.
  }
  puts("PASS QGW9 1/2/3/8 bands and exact reduced reads; QGW8 boot rejected; mutated retained input silently changes result, NO OWNERSHIP OR DEVICE GRANT");
+#elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
+ for(unsigned bands:{1U,3U,8U}){
+  auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120,bands);image->Boot();
+  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],job[64];
+  for(unsigned i=0;i<8;i++)before[i]=image->transfer.counters[indices[i]];
+  StageHead(*image,false);assert(image->Finish(1) && image->stores==bands*32);
+  assert(image->transfer.issues==bands*161);
+  const auto* golden=PioneerNativeBfpBandGolden(5120);assert(golden);
+  for(unsigned row=0;row<bands*32;row++)assert(image->Get(W::Output+row*4)==golden[row%32]);
+  for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);job[i]=image->Get(HW::Job+i*4);}
+  for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
+  assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image->boot.data(),before,after));
+ }
+ for(unsigned width:{5120U,17408U}){
+  auto image=std::make_unique<HybridImage>(argv[1],argv[2],119,width,2);image->Boot();
+  image->Put(image->regs[8]-1548,50); // Injected history; not a 50-layer run.
+  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],job[64];
+  for(unsigned i=0;i<8;i++)before[i]=image->transfer.counters[indices[i]];
+  image->Stage(50,1,width==5120?2:4);assert(image->Finish(1));
+  assert(image->transfer.issues==2*(width/32+(width*2+16383)/16384));
+  const auto* golden=PioneerNativeBfpBandGolden(width);assert(golden);
+  for(unsigned row=0;row<64;row++)assert(image->Get(W::Output+row*4)==golden[row%32]);
+  for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);job[i]=image->Get(HW::Job+i*4);}
+  for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
+  assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image->boot.data(),before,after));
+ }
+ for(unsigned old:{0x38574751U,0x39574751U}){
+  auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Put(HW::Boot,old);
+  assert(!image->TryBoot() && !image->transfer.issues && !image->stores);
+ }
+ {
+  auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Boot();image->damageInput=true;
+  StageHead(*image,false);assert(image->Finish(1) && image->inputDamaged);
+  const auto* golden=PioneerNativeBfpBandGolden(5120);assert(golden);
+  for(unsigned row=0;row<32;row++)assert(image->Get(W::Output+(32+row)*4)==golden[row]);
+ }
+ puts("PASS QGWA 1/2/3/8 bands and exact batched reads; old boots rejected; NO DEVICE GRANT");
 #else
  {
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Put(HW::Boot,0x39574751);
+  assert(!image->TryBoot() && !image->transfer.issues && !image->stores);
+ }
+ {
+  auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Put(HW::Boot,0x41475751);
   assert(!image->TryBoot() && !image->transfer.issues && !image->stores);
  }
 #endif
@@ -111,7 +154,9 @@ int main(int argc,char** argv){
   assert(!image->Finish(1,true) && !image->native.matrixOps && !image->transfer.issues && !image->stores);
  }
  printf("PASS actual %s head worker/leaf: %u synthetic BFP8 outputs and argmax receipt%s, 2048 proof-bit mutations refused, corrupted job refused before work; injected layer history, NO lifecycle/model/device/TPS\n",
-#ifdef PIONEER_Q38_QGW8_BFP8_REUSE_WORKER
+#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+ "QGWA",
+#elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
  "QGW9",
 #else
  "QGW8",
