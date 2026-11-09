@@ -112,3 +112,15 @@ protects mutable inputs, grants ownership, launches workers, or proves any
 result or speed. Those controller and native-lifecycle integrations remain.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_root_jobs_tests.py SDK
+
+The QGWB worker now also accepts the on-card BF16 input-producer jobs needed
+for dense Q/G, K and V (roles 5..7, only dense layers), using its existing
+FP32 input/256-element packing mechanism. Its producer is rebuilt under the
+same isolated QGWB selector; older worker jobs and boot identities do not
+gain these roles. Synthetic descriptor/capsule checks cover all 16 dense
+layers and all three roles, invalid roles/layers, and late role removal.
+The new producer and dispatcher compile into a linked RV32 worker with
+instruction and per-function stack checks; the ordinary QGW8 worker rebuilt
+with identical section hashes. This has not executed those producer jobs
+in simulation or on hardware. ROOT producer dispatch, authentication, input
+lifetime, end-to-end output accuracy and speed are still unproven.

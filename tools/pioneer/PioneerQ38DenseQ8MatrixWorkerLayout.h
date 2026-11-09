@@ -25,8 +25,21 @@ static inline bool BootShape(const uint32_t* b){
 static inline bool DenseJob(const uint32_t* j){
  return j && j[2]==1 && j[16]==PioneerQ38Bfp8WorkerJob::Magic && j[34]>=5 && j[34]<=7;
 }
+static inline bool DenseProducerJob(const uint32_t* j){
+ return j && j[2]==5 && j[28]>=5 && j[28]<=7;
+}
 static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
+ if(DenseProducerJob(j)){
+  if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
+   || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || (j[5]&3)!=3 || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff
+   || b[3]>20 || j[16]!=Producer::Magic || j[17]!=256 || j[18]!=512 || j[19]!=j[7] || j[20]!=12
+   || j[27]>=248320 || j[29]!=5120 || j[30]!=Producer::Format || j[31]!=Producer::Witness)return false;
+  for(unsigned i=8;i<16;i++)if(j[i]!=b[i])return false;
+  for(unsigned i=21;i<27;i++)if(j[i])return false;
+  for(unsigned i=32;i<64;i++)if(j[i])return false;
+  return true;
+ }
  if(DenseJob(j)){
   if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
    || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || j[5]%4!=3 || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff)return false;

@@ -55,6 +55,9 @@ if reuse_head or batch_head:
         '-DPIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT=1' if reuse_head else '-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1', '-Dnative_dram_band_fault=block_fault_park',
         '-Dnative_dram_band_main=q38_bfp8_worker_leaf', '-c',
         here/'blackhole_q38_bfp8_worker_leaf.cpp', '-o', out/'bfp8.o')
+if dense_q8:
+    run(tool+'g++', *flags, '-O2', '-ffixed-s11', *global_role, *inspection, '-c',
+        here/'blackhole_q38_bf16_persistent_producer.cpp', '-o', out/'bf16.o')
 dense_role = ['-DPIONEER_Q38_MIXED_WORKER_IMAGE=1', '-DPIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE=1',
               '-DPIONEER_Q38_MIXED_CAPSULE_IMAGE=1', '-Dscalar_fault_park=block_fault_park',
               '-include', here/'PioneerQ38MixedCapsuleHook.h']
@@ -67,7 +70,7 @@ assert len(units) + 1 == len(parent['units'])
 link = (out/'baseline/program.ld').read_text()
 (out/'program.ld').write_text(link)
 run(tool+'ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections', '-T', out/'program.ld',
-    out/'baseline/baseline/start.o', out/'global.o', out/'baseline/baseline/bf16.o',
+    out/'baseline/baseline/start.o', out/'global.o', out/('bf16.o' if dense_q8 else 'baseline/baseline/bf16.o'),
     out/'baseline/bfp4.o', out/('bfp8.o' if reuse_head or batch_head else 'baseline/bfp8.o'), out/'dense.o',
     *[old_math/(name+'.o') for name in units], '-Map', out/'program.map', '-o', out/'program.elf')
 symbols = subprocess.check_output([tool+'nm', '-n', str(out/'program.elf')], text=True)
@@ -81,14 +84,15 @@ assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|f
 # The byte-identical ancestral GDN object includes byte-copy fallback paths;
 # the new front/dense sections must add no byte-store instructions. This is
 # not a reachability or hardware-ISA proof for the old fallback paths.
-for section in (('.globalworker', '.dense', '.cachedfpu') if reuse_head or batch_head else ('.globalworker', '.dense')):
+sections_to_audit = ('.globalworker', '.dense') + (('.cachedfpu',) if reuse_head or batch_head else ()) + (('.bf16producer',) if dense_q8 else ())
+for section in sections_to_audit:
     section_dis = subprocess.check_output([tool+'objdump', '-d', '-j', section, str(out/'program.elf')], text=True)
     assert not re.search(r'\bsb\b', section_dis), section
     assert not re.search(r'<(?:memcpy|memset)>', section_dis), section+' may not call the old byte-store fallbacks'
 reserved = [row for row in dis.splitlines() if re.search(r'\bs11\b', row)]
 assert len(reserved) == 2 and sum(bool(re.search(r'\bmv\s+s11,\w+\s*$', row)) for row in reserved) == 1
 assert sum(bool(re.search(r'\bmv\s+\w+,s11\s*$', row)) for row in reserved) == 1, 'exact existing private-seal protocol'
-for name in ('global', 'dense'):
+for name in (('global', 'dense', 'bf16') if dense_q8 else ('global', 'dense')):
     frames = [row.split('\t') for row in (out/(name+'.su')).read_text().splitlines()]
     assert frames and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 2048 for row in frames)
 (out/'program.symbols').write_text(symbols); (out/'program.disassembly').write_text(dis)
@@ -97,7 +101,7 @@ for section in sections:
     path = out/(section+'.bin'); run(tool+'objcopy', '-O', 'binary', '-j', '.'+section, out/'program.elf', path)
     data = path.read_bytes(); assert data and not len(data)%4
     if section == 'dense': assert len(data) <= 16384, 'dense image exceeds captured 0x40000..0x44000'
-    if section not in ('globalworker', 'dense') and not ((reuse_head or batch_head) and section == 'cachedfpu'):
+    if section not in ('globalworker', 'dense') and not ((reuse_head or batch_head) and section == 'cachedfpu') and not (dense_q8 and section == 'bf16producer'):
         # The inputs are the original objects, but changed global function
         # addresses legitimately alter link-time call relocations in their
         # output sections. Require their extents and the boot jump unchanged;

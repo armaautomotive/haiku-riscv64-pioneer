@@ -25,4 +25,8 @@ with tempfile.TemporaryDirectory(prefix='q38-q8-worker-grammar-',dir='/private/t
         result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-fsyntax-only','-x','c++',
                                '-I',str(here.parent),'-'],input=source,text=True,capture_output=True)
         assert result.returncode!=0 and 'isolated offline inspection only' in result.stderr,late
+    source=prefix+'#undef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION\n#include "PioneerQ38Bf16ProducerLayout.h"\n'
+    result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-fsyntax-only','-x','c++',
+                           '-I',str(here.parent),'-'],input=source,text=True,capture_output=True)
+    assert result.returncode and 'late dense Q8 producer removal' in result.stderr
 print('PASS synthetic dense Q8 worker grammar; NO DEVICE')

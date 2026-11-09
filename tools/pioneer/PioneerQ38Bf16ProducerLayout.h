@@ -1,18 +1,37 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION != 1 \
+ || (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION)) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Dense Q8 BF16 producer is isolated offline inspection only
+#endif
 #ifndef PIONEER_Q38_BF16_PRODUCER_LAYOUT_H
 #define PIONEER_Q38_BF16_PRODUCER_LAYOUT_H
 #include "PioneerQ38GlobalWorkerLayout.h"
 #include "PioneerQ38Bf16Wire.h"
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+enum {PioneerQ38Bf16ProducerDenseQ8Role=1};
+#else
+enum {PioneerQ38Bf16ProducerDenseQ8Role=0};
+#endif
 // NEW typed wire DATA,not an old integer-scale producer or native grant.
 namespace PioneerQ38Bf16ProducerLayout {
 enum : unsigned {Magic=0x31504251,Format=PioneerQ38Bf16Wire::Magic,Witness=0x31574251,
  Descriptor=0x74200,GateOffset=0x400000,UpOffset=0x411000,NativeOffset=0x20000,LinesOffset=0x30000,
  ProjectionInput=0xe0000,InputRoot=129}; // QBP1/QBI1/QBW1
+static inline bool DenseQ8Role(const uint32_t* d){
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+ return d && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7;
+#else
+ (void)d;return false;
+#endif
+}
 static inline unsigned Width(const uint32_t* d){return d[43]==4?17408U:5120U;}
 static inline unsigned Reads(const uint32_t* d){return d[43]==4?2U:1U;}
 static inline bool DescriptorShape(const uint32_t* d){
  if(!d || d[0]!=Magic || d[1]!=1 || d[2]!=67108864 || d[3]>=7 || (d[4]&4095)
-  || d[4]<0x04000000 || d[4]>0xc0000000 || (d[43]!=2 && d[43]!=3 && d[43]!=4)
+  || d[4]<0x04000000 || d[4]>0xc0000000 || (d[43]!=2 && d[43]!=3 && d[43]!=4 && !DenseQ8Role(d))
   || d[42]>=64 || d[40]>=8192 || d[41]>=248320)return false;
  const unsigned width=Width(d),chunks=width/256;
  if(d[5]>=chunks || !d[6] || d[6]>=0x7fffffff || d[7]!=d[5]+1
@@ -60,4 +79,9 @@ static inline bool Proof(const uint32_t* p,const uint32_t* j,const uint32_t* d,c
  return true; // DATA consistency only;actual producer/root ownership external.
 }
 }
+#endif
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+static_assert(PioneerQ38Bf16ProducerDenseQ8Role==1,"late dense Q8 producer selection");
+#else
+static_assert(PioneerQ38Bf16ProducerDenseQ8Role==0,"late dense Q8 producer removal");
 #endif

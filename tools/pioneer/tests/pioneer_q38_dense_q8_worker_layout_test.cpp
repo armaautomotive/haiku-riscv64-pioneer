@@ -50,6 +50,27 @@ int main(){
     assert(PioneerQ38HybridMatrixReceipt::Matrix(receipt.data(),job.data(),boot.data(),before.data(),after.data()));
     receipt[54]^=32;assert(!PioneerQ38HybridMatrixReceipt::Matrix(receipt.data(),job.data(),boot.data(),before.data(),after.data()));
     auto oldBoot=boot;oldBoot[0]=H::Magic;oldBoot[40]=H::JobWitness;
+    for(unsigned denseLayer=3;denseLayer<64;denseLayer+=4)for(unsigned denseRole=5;denseRole<=7;denseRole++){
+     std::array<uint32_t,64> outer={},descriptor={};
+     outer[0]=M::Magic;outer[1]=1;outer[2]=5;outer[3]=boot[3];outer[4]=boot[4];outer[5]=denseLayer;outer[7]=3;
+     for(unsigned i=8;i<16;i++)outer[i]=boot[i];
+     outer[16]=M::Producer::Magic;outer[17]=256;outer[18]=512;outer[19]=3;outer[20]=12;
+     outer[28]=denseRole;outer[29]=5120;outer[30]=M::Producer::Format;outer[31]=M::Producer::Witness;
+     assert(M::DenseProducerJob(outer.data()) && M::JobShape(outer.data(),boot.data(),0,0));
+     auto oldProducer=outer;oldProducer[0]=H::Magic;assert(!H::JobShape(oldProducer.data(),oldBoot.data(),0,0));
+     descriptor[0]=M::Producer::Magic;descriptor[1]=1;descriptor[2]=67108864;descriptor[3]=0;descriptor[4]=0x4000000;
+     descriptor[6]=3;descriptor[7]=boot[3];descriptor[8]=PioneerQ38ProjectionRoute(0);descriptor[9]=boot[4];
+     descriptor[10]=M::Producer::ProjectionInput;descriptor[11]=5120;descriptor[12]=M::Producer::NativeOffset;
+     descriptor[13]=M::Producer::LinesOffset;descriptor[14]=M::Producer::Format;descriptor[15]=20;
+     for(unsigned i=0;i<16;i++)descriptor[16+i]=boot[16+i];for(unsigned i=0;i<8;i++)descriptor[32+i]=boot[8+i];
+     descriptor[42]=denseLayer;descriptor[43]=denseRole;
+     std::array<uint32_t,16> capsule={};for(unsigned i=0;i<10;i++)capsule[i]=outer[16+i];
+     capsule[10]=M::Producer::Witness;capsule[11]=boot[3];capsule[12]=1;capsule[13]=5;
+     assert(M::Producer::DescriptorShape(descriptor.data()) && M::Producer::Job(capsule.data(),descriptor.data(),boot.data()+16,boot[3],boot[4]));
+     auto invalid=descriptor;invalid[42]=2;assert(!M::Producer::DescriptorShape(invalid.data()));
+     invalid=descriptor;invalid[43]=8;assert(!M::Producer::DescriptorShape(invalid.data()));
+     outer[5]=2;assert(!M::JobShape(outer.data(),boot.data(),0,0));
+    }
     auto head=job;head[2]=M::GlobalMatrix;head[5]=64;head[32]=0;head[33]=M::Vocabulary;head[34]=0;head[35]=M::JobWitness;
     auto oldHead=head;oldHead[0]=H::Magic;oldHead[35]=H::JobWitness;
     assert(H::JobShape(oldHead.data(),oldBoot.data(),0,0) && M::JobShape(head.data(),boot.data(),0,0));
