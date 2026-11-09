@@ -13,6 +13,9 @@
 #if defined(PIONEER_Q38_HYBRID_BFP8_WINDOW11) && PIONEER_Q38_HYBRID_BFP8_WINDOW11 != 1
 #error QGW8 BFP8 selection requires an explicit value of 1
 #endif
+#if defined(PIONEER_Q38_DENSE_Q8_BFP8_PREPARER) && (PIONEER_Q38_DENSE_Q8_BFP8_PREPARER != 1 || defined(PIONEER_Q38_HYBRID_BFP8_WINDOW11))
+#error Dense Q8 BFP8 selection requires a distinct explicit preparer
+#endif
 #include "PioneerQ38HybridBfp8Selection.h"
 #include <cstring>
 static unsigned selectedTensors=0;
@@ -20,7 +23,9 @@ struct PioneerQ38HybridBfp8Tiles {
  using Base=PioneerQ38NativeBfp8WeightTiles;
  using Layout=Base::Layout;
  static bool Describe(const PioneerQ38Tensor& tensor,Layout& out){
-#ifdef PIONEER_Q38_HYBRID_BFP8_WINDOW11
+#ifdef PIONEER_Q38_DENSE_Q8_BFP8_PREPARER
+  if(!PioneerQ38HybridBfp8Selection::MatchDenseQ8(tensor))return false;
+#elif defined(PIONEER_Q38_HYBRID_BFP8_WINDOW11)
   if(!PioneerQ38HybridBfp8Selection::MatchQgw8(tensor))return false;
 #else
   if(!PioneerQ38HybridBfp8Selection::Match(tensor))return false;
@@ -46,7 +51,9 @@ int main(int argc,char** argv){
  }
  const int result=PioneerQ38FrozenBfp8WriterMain(argc,argv);
  const unsigned required=
-#ifdef PIONEER_Q38_HYBRID_BFP8_WINDOW11
+#ifdef PIONEER_Q38_DENSE_Q8_BFP8_PREPARER
+  48;
+#elif defined(PIONEER_Q38_HYBRID_BFP8_WINDOW11)
   33;
 #else
   39;
@@ -54,7 +61,11 @@ int main(int argc,char** argv){
  if(result || selectedTensors!=required){
   fprintf(stderr,"HYBRID_BFP8_PREPARATION_INCOMPLETE selected%u; NO DEVICE\n",selectedTensors);return 1;
  }
+#ifdef PIONEER_Q38_DENSE_Q8_BFP8_PREPARER
+ printf("PASS_DENSE_Q8_BFP8_PREPARATION %u selected tensors, frozen all-BFP8 recipe; NO DEVICE OR SPEED\n",required);
+#else
  printf("PASS_HYBRID_BFP8_PREPARATION %u selected FFN tensors, frozen all-BFP8 recipe; NO DEVICE OR SPEED\n",required);
+#endif
  return fflush(stdout)?1:0;
 }
 #endif

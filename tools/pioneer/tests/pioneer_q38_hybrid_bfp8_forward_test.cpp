@@ -6,10 +6,13 @@
 #define PIONEER_Q38_HYBRID_BFP8_TILE_TEST_ONLY 1
 #include "../pioneer_q38_hybrid_bfp8_prepare.cpp"
 int main(){
+#ifdef PIONEER_Q38_DENSE_Q8_BFP8_PREPARER
+ Source source(8,5120,12288);PioneerQ38Tensor expected;assert(PioneerQ38Expected(3,5,expected));
+#elif defined(PIONEER_Q38_HYBRID_BFP8_WINDOW11)
  Source source(12,5120,17408);PioneerQ38Tensor expected;
-#ifdef PIONEER_Q38_HYBRID_BFP8_WINDOW11
  assert(PioneerQ38Expected(50,2,expected));
 #else
+ Source source(12,5120,17408);PioneerQ38Tensor expected;
  assert(PioneerQ38Expected(48,2,expected));
 #endif
  source.tensors[0].name=expected.name;

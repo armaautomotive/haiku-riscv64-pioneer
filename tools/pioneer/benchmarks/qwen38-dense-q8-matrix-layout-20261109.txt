@@ -51,6 +51,19 @@ prepared by this test; this is not a driver, upload, inference or speed.
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_prepared_pages_tests.py
  python3 tools/pioneer/tests/run_pioneer_q38_hybrid_head_prepared_pages_tests.py
 
+The original model was authenticated and a separate Mac disk cache has now
+been created for all 48 dense Q8 tensors: 1247805440 converted BFP8 bytes,
+using the existing frozen all-BFP8 conversion recipe. A read-only check
+reopened the model and cache, verified existing cache entries, and compared
+every page of all 336 dense stripes with freshly computed bytes: 304640
+pages matched. This compares the same codec's output, not an independent
+numerical or hardware test. The prepared-page wrapper now accepts a distinct
+same-source dense cache alongside the existing FFN cache; synthetic routing,
+identity revocation and failure-atomicity checks pass. This cache has not
+been uploaded or selected for inference, and no speedup is claimed.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_real_cache_check.py ABS_MODEL ABS_DENSE_CACHE
+
 Separate 32-row matrix job geometry: the existing original-Q8 scheduler
 uses 16-row groups and cannot simply be reinterpreted as BFP8. A distinct
 offline planner now divides the 336 converted Q/G, K and V stripes into

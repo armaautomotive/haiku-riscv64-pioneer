@@ -10,19 +10,20 @@
 #include "PioneerQ38HybridDenseQ8MatrixPlan.h"
 #include "PioneerQ38HybridHeadPreparedPages.h"
 
-// Reuses the authenticated parent and an existing same-source BFP8 cache.
+// Reuses the authenticated parent and a same-source dense BFP8 cache, which
+// may be separate from the parent's FFN cache.
 // It creates/converts no cache, grants no device memory and launches nothing.
 template<class Source,class PackedPlan,class Bfp8,class ParentPages>
 class PioneerQ38HybridDenseQ8PreparedPages {
  using Canonical=PioneerQ38CanonicalModelPlan;using Plan=PioneerQ38HybridDenseQ8MatrixPlan;using Base=PioneerQ38HybridModelPlan;
  using Cache=PioneerModelWeightCache;
  Source* source=nullptr;const PackedPlan* packed=nullptr;const Canonical* canonical=nullptr;
- Bfp8* eight=nullptr;ParentPages* parent=nullptr;Cache::Digest digest{};
+ Bfp8* eight=nullptr;Bfp8* parentEight=nullptr;ParentPages* parent=nullptr;Cache::Digest digest{};
  Plan::Proposal proposal;std::vector<PioneerQ38PackedPart> parts;
  bool attempted=false,ready=false,verified=false,failed=false;
  static bool Fail(std::string& error,const char* why){error=why;return false;}
- bool Current()const{return ready && !failed && source && packed && canonical && eight && parent
-  && parent->MatchesBinding(*source,*packed,*canonical,*eight,digest) && eight->MatchesIdentity(*source,digest)
+ bool Current()const{return ready && !failed && source && packed && canonical && eight && parentEight && parent
+  && parent->MatchesBinding(*source,*packed,*canonical,*parentEight,digest) && eight->MatchesIdentity(*source,digest)
   && parts.size()==proposal.parts.size() && packed->Parts().size()==parts.size();}
  bool Lose(std::string& error,const char* why){failed=true;return Fail(error,why);}
  static bool Same(const PioneerQ38PackedPart& a,const PioneerQ38PackedPart& b){
@@ -40,8 +41,12 @@ public:
  PioneerQ38HybridDenseQ8PreparedPages& operator=(const PioneerQ38HybridDenseQ8PreparedPages&)=delete;
  bool Bind(Source& s,const PackedPlan& p,const Canonical& c,Bfp8& b,ParentPages& base,
   const Cache::Digest& sha,std::string& error){
+  return Bind(s,p,c,b,b,base,sha,error);
+ }
+ bool Bind(Source& s,const PackedPlan& p,const Canonical& c,Bfp8& b,Bfp8& parentBfp8,ParentPages& base,
+  const Cache::Digest& sha,std::string& error){
   if(attempted)return Fail(error,"Dense Q8 page binding is one-shot.");attempted=true;
-  if(!base.MatchesBinding(s,p,c,b,sha) || !base.AllVerified() || !b.MatchesIdentity(s,sha))
+  if(!base.MatchesBinding(s,p,c,parentBfp8,sha) || !base.AllVerified() || !b.MatchesIdentity(s,sha))
    return Fail(error,"Dense Q8 pages require the same verified parent and BFP8 source.");
   Plan::Proposal staged;if(!Plan::Build(c,staged) || staged.parts.size()!=p.Parts().size())
    return Fail(error,"Dense Q8 page geometry differs from source.");
@@ -55,7 +60,7 @@ public:
     || part.proposedAddress!=Canonical::Base+logical->offset || staged.parts[i].original!=i)
     return Fail(error,"Dense Q8 page binding identity differs.");
   }
-  source=&s;packed=&p;canonical=&c;eight=&b;parent=&base;digest=sha;proposal=std::move(staged);parts=std::move(original);ready=true;
+  source=&s;packed=&p;canonical=&c;eight=&b;parentEight=&parentBfp8;parent=&base;digest=sha;proposal=std::move(staged);parts=std::move(original);ready=true;
   if(!Current())return Lose(error,"Dense Q8 source changed during binding.");error.clear();return true;
  }
  bool Ready()const{return Current();}
@@ -67,6 +72,7 @@ public:
  const Base::Part* Part(unsigned i)const{return Current() && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
  bool OutputSafe(const void* out,size_t bytes)const{
   return out && bytes && Current() && parent->OutputSafe(out,bytes)
+   && !Overlap(out,bytes,eight,sizeof(*eight))
    && !Overlap(out,bytes,this,sizeof(*this)) && !Overlap(out,bytes,parts.data(),parts.size()*sizeof(parts[0]))
    && !Overlap(out,bytes,proposal.parts.data(),proposal.parts.size()*sizeof(proposal.parts[0]));
  }

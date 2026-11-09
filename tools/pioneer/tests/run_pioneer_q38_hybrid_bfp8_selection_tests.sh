@@ -10,6 +10,12 @@ ${CXX:-c++} $common "$directory/pioneer_q38_hybrid_bfp8_forward_test.cpp" "$dire
 "$temporary/forward"
 ${CXX:-c++} $common -DPIONEER_Q38_HYBRID_BFP8_WINDOW11=1 "$directory/pioneer_q38_hybrid_bfp8_forward_test.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/forward-qgw8"
 "$temporary/forward-qgw8"
+${CXX:-c++} $common -DPIONEER_Q38_DENSE_Q8_BFP8_PREPARER=1 "$directory/pioneer_q38_hybrid_bfp8_forward_test.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/forward-dense"
+"$temporary/forward-dense"
+if ${CXX:-c++} $common -DPIONEER_Q38_DENSE_Q8_BFP8_PREPARER=0 -fsyntax-only "$directory/pioneer_q38_hybrid_bfp8_forward_test.cpp" 2> "$temporary/dense-zero.stderr";then exit 1;fi
+rg -q 'Dense Q8 BFP8 selection requires a distinct explicit preparer' "$temporary/dense-zero.stderr"
+if ${CXX:-c++} $common -DPIONEER_Q38_DENSE_Q8_BFP8_PREPARER=1 -DPIONEER_Q38_HYBRID_BFP8_WINDOW11=1 -fsyntax-only "$directory/pioneer_q38_hybrid_bfp8_forward_test.cpp" 2> "$temporary/dense-mixed.stderr";then exit 1;fi
+rg -q 'Dense Q8 BFP8 selection requires a distinct explicit preparer' "$temporary/dense-mixed.stderr"
 if ${CXX:-c++} $common -DPIONEER_Q38_HYBRID_BFP8_WINDOW11=0 -fsyntax-only "$directory/pioneer_q38_hybrid_bfp8_forward_test.cpp" 2> "$temporary/window11.stderr";then exit 1;fi
 rg -q 'QGW8 BFP8 selection requires an explicit value of 1' "$temporary/window11.stderr"
 for role in _KERNEL_MODE PIONEER_Q38_WORK_INFERENCE TT_PIONEER_Q38_WORK_MODE PIONEER_Q38_CPU_VALIDATION PIONEER_Q38_FULL_MODEL_CPU_REFERENCE;do

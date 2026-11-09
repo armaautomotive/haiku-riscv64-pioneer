@@ -53,6 +53,14 @@ int main(){
  assert(!pages.ReadPage(dense,0,reinterpret_cast<uint8_t*>(packed.parts.data()),4096,error) && pages.Ready());
  assert(!pages.ReadPage(dense,0,reinterpret_cast<uint8_t*>(const_cast<PioneerQ38HybridModelPlan::Part*>(pages.Part(dense))),4096,error) && pages.Ready());
  assert(!pages.ReadPages(dense,pages.Part(dense)->allocated/4096-1,2,out.data(),out.size(),error) && out==saved);
+ FakeBfp8 denseEight{&source};denseEight.digest=sha;DensePages separate,wrongParent;
+ assert(!wrongParent.Bind(source,packed,*canonical,denseEight,wrongEight,parent,sha,error));
+ assert(separate.Bind(source,packed,*canonical,denseEight,eight,parent,sha,error));
+ const unsigned parentBefore=eight.reads;
+ assert(separate.ReadPage(dense,0,out.data(),out.size(),error) && denseEight.reads==1 && eight.reads==parentBefore);
+ assert(!separate.ReadPage(dense,0,reinterpret_cast<uint8_t*>(&denseEight),4096,error) && separate.Ready());
+ denseEight.live=false;assert(!separate.ReadPage(dense,0,out.data(),out.size(),error) && !separate.Ready());
+ denseEight.live=true;assert(!separate.Ready());
  const unsigned previous=eight.reads;assert(pages.VerifyAll(error) && pages.AllVerified() && eight.reads==previous+336);
  assert(!pages.VerifyAll(error));
  DensePages fail;assert(fail.Bind(source,packed,*canonical,eight,parent,sha,error));

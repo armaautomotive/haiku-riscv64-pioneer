@@ -12,11 +12,14 @@ if not __debug__:
     raise SystemExit('Python assertions must be enabled')
 arguments = sys.argv[1:]
 qgw8 = '--qgw8' in arguments
+dense_q8 = '--dense-q8' in arguments
+if arguments.count('--dense-q8') > 1 or (qgw8 and dense_q8):
+    raise SystemExit('dense and FFN selection must be distinct')
 if arguments.count('--qgw8') > 1:
     raise SystemExit('duplicate --qgw8')
-arguments = [arg for arg in arguments if arg != '--qgw8']
+arguments = [arg for arg in arguments if arg not in ('--qgw8', '--dense-q8')]
 if len(arguments) not in (1, 3):
-    raise SystemExit('use NEW_ABSOLUTE_OUTPUT [--haiku-build ABSOLUTE_BUILD] [--qgw8]')
+    raise SystemExit('use NEW_ABSOLUTE_OUTPUT [--haiku-build ABSOLUTE_BUILD] [--qgw8|--dense-q8]')
 if len(arguments) == 3 and arguments[1] != '--haiku-build':
     raise SystemExit('invalid build option')
 output = Path(arguments[0])
@@ -57,6 +60,8 @@ command = [os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-g', '-Wall', '-W
            '-DPIONEER_Q38_ALL_BFP8_CACHE=1', '-DPIONEER_Q38_HYBRID_BFP8_PREPARER=1']
 if qgw8:
     command.append('-DPIONEER_Q38_HYBRID_BFP8_WINDOW11=1')
+if dense_q8:
+    command.append('-DPIONEER_Q38_DENSE_Q8_BFP8_PREPARER=1')
 if len(arguments) == 3:
     build = Path(arguments[2])
     if not build.is_absolute() or not build.is_dir():
@@ -88,6 +93,9 @@ for name in ('PIONEER_Q38_HYBRID_BFP8_PREPARER', 'PIONEER_Q38_ALL_BFP8_CACHE'):
     refusals += [(['-U'+name], name+' missing'), (['-U'+name, '-D'+name+'=0'], name+' zero')]
 if qgw8:
     refusals.append((['-UPIONEER_Q38_HYBRID_BFP8_WINDOW11', '-DPIONEER_Q38_HYBRID_BFP8_WINDOW11=0'], 'QGW8 zero'))
+if dense_q8:
+    refusals += [(['-UPIONEER_Q38_DENSE_Q8_BFP8_PREPARER', '-DPIONEER_Q38_DENSE_Q8_BFP8_PREPARER=0'], 'dense zero'),
+                 (['-DPIONEER_Q38_HYBRID_BFP8_WINDOW11=1'], 'mixed dense/FFN')]
 for name in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',
              'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
     refusals.append((['-D'+name+'=1'], name))
@@ -98,4 +106,4 @@ for flags, label in refusals:
         raise RuntimeError('forbidden role was accepted: '+label)
 print('HYBRID_BFP8_FROZEN_WRITER', fingerprint)
 print('BINARY_SHA256', hashlib.sha256(binary.read_bytes()).hexdigest())
-print('BUILD ONLY: selected%s, no model, cache, device, quality or speed claim' % ('33' if qgw8 else '39'))
+print('BUILD ONLY: selected%s, no model, cache, device, quality or speed claim' % ('48 dense' if dense_q8 else '33' if qgw8 else '39'))
