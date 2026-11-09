@@ -84,6 +84,11 @@ public:
   if(!Current())return Lose(error,"Source changed while binding QGW8 pages.");error.clear();return true;
  }
  bool Ready()const{return Current();}
+ // Identity bridge for a separately validated derived layout. It exposes no
+ // pointers or GPU capability and does not authenticate the caller's data.
+ bool MatchesBinding(const Source& s,const PackedPlan& p,const Canonical& c,const Bfp8& b,const Cache::Digest& sha)const{
+  return Current() && source==&s && packed==&p && canonical==&c && bfp8==&b && digest==sha;
+ }
  bool AllVerified()const{
   if(!verified || !Current())return false;const auto& current=packed->Parts();if(current.size()!=parts.size())return false;
   for(unsigned i=0;i<parts.size();i++)if(!Same(current[i],parts[i]))return false;return Current();

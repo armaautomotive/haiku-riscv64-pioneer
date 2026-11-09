@@ -35,3 +35,18 @@ unit. They do not qualify model quality, converted-cache lifetime, full
 coverage, hardware arithmetic or speed.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_bfp8_sample.py
+
+Prepared-page routing, still offline: a separate one-shot derived page source
+binds an already verified QGW8 parent and its exact same authenticated model,
+packed plan, canonical plan, digest and prepared all-BFP8 source. It uses
+the proposed dense Q8 layout to route Q/G, K and V stripes to existing BFP8
+cache reads, and delegates other weights to the existing parent. It stages
+reads before publication and permanently fails on source/cache changes or a
+failed read. A synthetic full-layout test covered all 336 converted stripes,
+parent FFN/head/original routes, incorrect identities, aliased output,
+two-page failure atomicity and source/plan revocation. The pre-existing QGW8
+parent preparation regression also passed. No real dense cache has been
+prepared by this test; this is not a driver, upload, inference or speed.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_prepared_pages_tests.py
+ python3 tools/pioneer/tests/run_pioneer_q38_hybrid_head_prepared_pages_tests.py
