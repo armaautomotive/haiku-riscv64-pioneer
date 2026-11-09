@@ -3,7 +3,9 @@
 // Synthetic model history, NoC, weights and FPU; no hardware claim.
 #define PIONEER_TEST_BFP8 1
 #define PIONEER_Q38_DENSE_Q8_CONNECTED_TEST 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
 #include "pioneer_q38_dense_q8_producer_image_test.cpp"
+#include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 int main(int argc,char** argv){
  assert(argc==3);for(unsigned role=5;role<=7;role++){
  DenseProducerImage image(argv[1],argv[2],5120);image.Boot();
@@ -19,9 +21,11 @@ int main(int argc,char** argv){
  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],closed[64];
  for(unsigned i=0;i<8;i++)before[i]=image.transfer.counters[indices[i]];
  auto& leaf=image.transfer.job;leaf.words[11]=2;
- uint32_t job[64]={};job[0]=HW::Magic;job[1]=2;job[2]=1;job[3]=image.boot[3];job[4]=image.boot[4];job[5]=3;job[7]=2025;
- for(unsigned i=0;i<8;i++)job[8+i]=image.boot[8+i];for(unsigned i=0;i<16;i++)job[16+i]=leaf.words[i];
- job[33]=role==5?12288:1024;job[34]=role;job[35]=8;assert(HW::JobShape(job,image.boot.data(),1,0));
+ unsigned bank=7;for(unsigned i=0;i<7;i++)if(PioneerQ38ProjectionRoute(i)==leaf.words[5])bank=i;
+ assert(bank<7);const uint32_t tuple[]={leaf.words[3],bank,0,leaf.words[4]};uint32_t job[64]={};
+ assert(PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,image.boot.data(),3,role,0,2025,1,job));
+ for(unsigned i=0;i<16;i++)assert(job[16+i]==leaf.words[i]);
+ assert(HW::JobShape(job,image.boot.data(),1,0));
  for(unsigned i=0;i<64;i++)image.Put(HW::Job+i*4,job[i]);image.Put(HW::Doorbell,2);
  assert(image.FinishCombined(2) && image.native.Clean());
  for(unsigned i=0;i<64;i++){proof[i]=image.Get(0x83f00+i*4);closed[i]=image.Get(HW::Job+i*4);}
@@ -45,5 +49,5 @@ int main(int argc,char** argv){
  assert(nonzero>200);
  for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
  }
- puts("PASS actual QGWB Q/G,K,V BF16 producer -> byte-only ROOT transport -> BFP8 matrix on SAME worker; synthetic history/NoC/FPU; NO HARDWARE OR SPEED");
+ puts("PASS actual QGWB/QGWD Q/G,K,V BF16 producer -> byte-only transport -> ROOT-generated BFP8 frame -> matrix on SAME worker; synthetic history/NoC/FPU; NO HARDWARE OR SPEED");
 }
