@@ -212,6 +212,24 @@ transport or source authenticity. This closes no physical-access gate.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_control_tests.py --sdk ABS_HAIKU_SDK
 
+Build-only native program identity
+----------------------------------
+The same pinned QTPA trace ROOT and unchanged QGW8 worker can now be emitted
+under an explicitly separate tag131 native-program identity. The generated
+header's 15 program sections match the offline QTPA header byte-for-byte;
+two builds were identical. A RISC-V SDK syntax-only check passed, and role,
+wrong-image and late-selection refusals were checked. The existing tag129
+driver rebuilt to its previous SHA-256
+0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
+
+This is program DATA only: no tag131 driver object or client exists. The
+existing reload protocol explicitly refuses tag131, and the trace startup,
+read and control code remain limited to their fake-owner roles. The new
+identity must not be loaded or run; it neither proves workspace ownership
+nor produces an accelerator result or performance improvement.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_native_program_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B ABS_WORKER --sdk ABS_HAIKU_SDK
+
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init
 

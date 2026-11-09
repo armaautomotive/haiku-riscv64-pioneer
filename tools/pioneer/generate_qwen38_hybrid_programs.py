@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgw8trace='--qgw8-layer-trace-inspection' in args
+args=sys.argv[1:];qgw8tracenative='--qgw8-layer-trace-native' in args
+if qgw8tracenative:
+    if args.count('--qgw8-layer-trace-native')!=1 or '--qgw8-layer-trace-inspection' in args:
+        raise SystemExit('ambiguous QGW8 layer trace native selector')
+    args.remove('--qgw8-layer-trace-native');args.insert(0,'--qgw8-layer-trace-inspection')
+qgw8trace='--qgw8-layer-trace-inspection' in args
 if qgw8trace:
     if args.count('--qgw8-layer-trace-inspection')!=1 or any(x in args for x in ('--qgw8-coarse-profile-inspection','--qgw8-native-candidate','--qgw8-head-inspection','--matrix-native-candidate','--matrix-attention-inspection')):
         raise SystemExit('ambiguous QGW8 layer trace selector')
@@ -40,7 +45,7 @@ if matrix:
 else:
     from PioneerQ38HybridProgramPins import ROOT_PINS, WORKER_PINS
 if not __debug__ or len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--qgw8-layer-trace-inspection|--qgw8-coarse-profile-inspection|--qgw8-head-inspection|--qgw8-native-candidate|--matrix-attention-inspection|--matrix-native-candidate] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
+    raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--qgw8-layer-trace-native|--qgw8-layer-trace-inspection|--qgw8-coarse-profile-inspection|--qgw8-head-inspection|--qgw8-native-candidate|--matrix-attention-inspection|--matrix-native-candidate] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
 root, worker, output=map(Path,args)
 if not all(p.is_absolute() for p in (root,worker,output)) or output.exists() or output.is_symlink():
     raise SystemExit('new absolute output and absolute input paths required')
@@ -54,7 +59,7 @@ units += [(w,name,label,address) for name,label,address in (
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
 family='0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name='QTPA/QGW8-TRACE' if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+name=('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -65,7 +70,13 @@ lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate co
 if matrix:
     lines += ['#if !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \\',
               ' || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \\']
-    if qgw8trace:
+    if qgw8tracenative:
+        lines += [' || !defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || PIONEER_Q38_QGW8_TRACE_NATIVE_131 != 1 \\',
+                  ' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
+                  ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
+                  '#error QGW8 trace native program requires the isolated tag131 build-only role', '#endif',
+                  '#include "PioneerQ38Qgw8TraceNativeProgramRole.h"']
+    elif qgw8trace:
         lines += [' || !defined(PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \\',

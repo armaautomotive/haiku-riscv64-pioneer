@@ -16,7 +16,7 @@
  || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x51544b4e4f445256ULL \
  || !defined(api_version) || !defined(init_hardware) || !defined(init_driver) || !defined(uninit_driver) \
  || !defined(publish_devices) || !defined(find_device) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
- || defined(PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION) \
+ || defined(PIONEER_Q38_QGW8_LAYER_TRACE_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) \
  || defined(PIONEER_Q38_HYBRID_MATRIX_NATIVE_127) \
  || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
@@ -41,8 +41,9 @@
  || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
  || !defined(PIONEER_DRIVER_BUILD_TAG) \
- || (!defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) && PIONEER_DRIVER_BUILD_TAG != 0x2026110700010128ULL) \
+ || (!defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) && !defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) && PIONEER_DRIVER_BUILD_TAG != 0x2026110700010128ULL) \
  || (defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) && PIONEER_DRIVER_BUILD_TAG != 0x2026110700010129ULL) \
+ || (defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) && PIONEER_DRIVER_BUILD_TAG != 0x2026110700010131ULL) \
  || defined(api_version) || defined(init_hardware) || defined(init_driver) || defined(uninit_driver) \
  || defined(publish_devices) || defined(find_device) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) \
  || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) \
@@ -59,3 +60,4 @@
 #endif
 #endif
 #include "PioneerQ38Qgw8HiddenNativeRole.h"
+#include "PioneerQ38Qgw8TraceNativeProgramRole.h"
