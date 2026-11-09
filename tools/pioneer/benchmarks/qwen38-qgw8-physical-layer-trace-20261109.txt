@@ -184,3 +184,16 @@ card's activation quantization and cannot establish which component failed.
 It only makes these specific simple group substitutions poor explanations.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_group_hypothesis.py
+
+Dense output-projection INPUT capture, component-only preparation: a distinct
+diagnostic role snapshots the 6144-float gated attention output immediately
+before the output projection, at layer 3 and position 0 only. Its geometry
+uses slot 0 and the first 4096 bytes of slot 1, preserving layer slots 2-63.
+The RV32 dense component cross-compiled, role refusals and address extremes
+passed, and ordinary and earlier tag132 dense components rebuilt bit-for-bit.
+It is not enabled in the build system or any loadable driver. No instruction
+emulator, whole-image size/stack check, physical test, cleanup qualification,
+or attention-input CPU reference has been completed for this capture. No
+card operation is authorized merely by these component-only checks.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT

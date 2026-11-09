@@ -2,8 +2,10 @@
 // NEW complete dense decoder BLOCK; no native/source/commit/Work grant.
 #include "blackhole_qwen38_mixed_joined_root.cpp"
 #include "PioneerQ38StateMath.h"
-#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE
-#if PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE != 1 \
+#if defined(PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE)
+#if (defined(PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE) && PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE != 1) \
+ || (defined(PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE) && PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE != 1) \
+ || (defined(PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE) && defined(PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE)) \
  || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE != 1 \
  || !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE != 1 \
  || !defined(PIONEER_Q38_LAYER_COMPONENT_DENSE) || PIONEER_Q38_LAYER_COMPONENT_DENSE != 1 \
@@ -15,7 +17,11 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error Dense-stage trace is restricted to its separate QGW8 diagnostic image
 #endif
+#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE
 #include "PioneerQ38Qgw8DenseStageTrace.h"
+#else
+#include "PioneerQ38Qgw8DenseInputTrace.h"
+#endif
 #endif
 extern "C" unsigned mixed_block_wait(unsigned);
 namespace Block {
@@ -76,6 +82,35 @@ static void Activation(L::PrivateSeal* p){
  FfnSeal();q38_mixed_root_seal();
 #endif
 }
+#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE
+// Capture L::Output before the output projection consumes it. Diagnostic
+// only; NoC completion and ownership are not implied by this component.
+static __attribute__((noinline)) void TraceDenseInput(L::PrivateSeal* p){
+ namespace D=PioneerQ38Qgw8DenseInputTrace;const auto* o=p->outer;
+ if(o[3]!=D::Layer || o[4]!=D::Position)return;
+ uint32_t address=0;if(p->phase!=5 || !D::Describe(o[9],o[3],o[4],address))scalar_fault_park();
+ uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));
+ for(unsigned at=0;at<D::Bytes;at+=16384){
+  unsigned bytes=D::Bytes-at;if(bytes>16384)bytes=16384;Copy(L::Scratch,L::Output+at,bytes/4);
+  q38_mixed_root_seal();if(!Quiet())scalar_fault_park();uint32_t expected[8];
+  for(unsigned i=0;i<8;i++){
+   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
+   unsigned delta=i==5?bytes/64:i==2 || i==4 || i==6 || i==7?1:0;expected[i]=tracked[i]+delta;
+  }
+  const unsigned command[]={L::Scratch,0,129,address+at,0,o[8],0,0x212,bytes,0};
+  for(unsigned i=0;i<10;i++)Words(0xffb20000)[i]=command[i];
+  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
+  Fence();*Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();bool done=false;
+  for(unsigned poll=0;poll<65536;poll++){
+   done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];if(done)break;
+  }
+  if(!done)scalar_fault_park();
+  q38_mixed_root_seal();if(!Quiet())scalar_fault_park();
+  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
+  for(unsigned i=0;i<8;i++)tracked[i]=expected[i];
+ }
+}
+#endif
 static void WriteFinal(const uint32_t* o){
  uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));
  for(unsigned at=0;at<20480;at+=16384){

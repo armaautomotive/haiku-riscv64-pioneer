@@ -28,6 +28,9 @@ static void Compute(L::PrivateSeal* p){
  // here, before the following projection/FFN reuses the prepared-row L1.
  Joined::AppendTokenKv(p);
 #endif
+#ifdef PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE
+ Block::TraceDenseInput(p);
+#endif
  Joined::BindProjection(p,3);if(Projection::Run(p->frame)!=5120)scalar_fault_park();
 #ifdef PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE
  Block::TraceDenseStage(p,PioneerQ38Qgw8DenseStageTrace::Projection);
