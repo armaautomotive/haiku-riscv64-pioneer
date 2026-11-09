@@ -294,6 +294,22 @@ remain open. Earlier client builds are unqualified and must not be used.
  python3 tools/pioneer/build_q38_qgw8_candidate_client128.py ABS_HAIKU_SDK NEW_ABS_OUTPUT --trace-131
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_session_tests.py
 
+Controlled physical-test preparation
+------------------------------------
+A new one-shot parent uses a fresh private stage and checks the stable driver,
+exact candidate/client/preflight/gate hashes, real model and three caches,
+idle card, 64 CPUs, RAM, known device generation and disk flush path. It
+backs up the stable driver, reloads the diagnostic only after preflight, and
+restores the stable driver only after successful native FINISH, close and a
+hash-checked 1,310,720-byte trace. An uncertain action fails closed with no
+automatic retry or restore. Its guard and parent were tested with simulated
+success, malformed output, wrong identities, busy/cold/owned device, failed
+preflight, failed flush/reload/client and repeated-use cases. This is NOT a
+physical run or proof the actual card can safely execute the new image.
+
+ python3 tools/pioneer/tests/test_pioneer_q38_qgw8_trace_output.py
+ python3 tools/pioneer/tests/pioneer_q38_qgw8_trace_parent_test.py
+
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init
 
