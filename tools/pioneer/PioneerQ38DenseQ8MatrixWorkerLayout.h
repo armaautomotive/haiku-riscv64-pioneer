@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #if !defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION != 1 \
- || (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION)) \
+ || (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) \
+  && !(defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) && defined(PIONEER_Q38_QGWD_ROOT_IMAGE))) \
  || defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) \
  || defined(PIONEER_Q38_QGWA_BATCH_ROOT_IMAGE) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION) \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
@@ -15,7 +16,7 @@
 namespace PioneerQ38DenseQ8MatrixWorkerLayout {
 namespace Base=PioneerQ38HybridHeadWorkerLayout;
 using namespace PioneerQ38HybridHeadWorkerLayout;
-#ifdef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER
+#if defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE)
 enum : unsigned {Magic=0x44574751,JobWitness=0x444f4751}; // QGWD/QGOD
 #else
 enum : unsigned {Magic=0x42574751,JobWitness=0x424f4751}; // QGWB/QGOB
@@ -65,7 +66,7 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
 }
 }
 #endif
-#ifdef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER
+#if defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE)
 static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic==0x44574751,"late QGWD combined worker selection");
 #else
 static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic!=0x44574751,"late QGWD combined worker removal");

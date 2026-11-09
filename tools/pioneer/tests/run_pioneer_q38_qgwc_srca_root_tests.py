@@ -52,9 +52,9 @@ names=[root_role,'PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION',
  'PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION','PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT',
  'PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE']
 flags=['-D'+name+'=1' for name in names]
-def rolecheck(options,okay,body=None):
+def rolecheck(options,okay,body=None,role_compiler=compiler):
  source=body if body is not None else '#include "'+str(role)+'"\n'
- result=subprocess.run([compiler,'-std=c++17',*options,'-fsyntax-only','-x','c++','-'],input=source,text=True,capture_output=True)
+ result=subprocess.run([role_compiler,'-std=c++17',*options,'-fsyntax-only','-x','c++','-'],input=source,text=True,capture_output=True)
  assert (result.returncode==0)==okay,result.stderr[:1000]
 rolecheck(flags,True);rolecheck(flags[:-1]+['-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1'],True)
 rolecheck(['-D'+root_role+'=0',*flags[1:]],False)
@@ -66,6 +66,18 @@ for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_WORK_IN
  rolecheck(flags+['-D'+forbidden+'=1'],False)
 include='#include "'+str(role)+'"\n'
 rolecheck(flags,False,include+'#undef '+root_role+'\n'+include)
+if qgwd:
+ # The real ROOT compilation role must be able to construct the QGWD dense
+ # job grammar without pretending to be a worker image or enabling native IO.
+ dense_header=here.parent/'PioneerQ38DenseQ8MatrixRootFrame.h'
+ dense_flags=flags+['-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1',
+                    '-DPIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION=1','-DPIONEER_ATTENTION_FREESTANDING=1',
+                    '-DPIONEER_DRAM_SWEEP_FREESTANDING=1']
+ dense_body='#include "'+str(dense_header)+'"\nstatic_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic==0x44574751);\n'
+ rolecheck(dense_flags,True,dense_body,tool+'g++')
+ rolecheck([f for f in dense_flags if f!='-D'+root_role+'=1'],False,dense_body,tool+'g++')
+ for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
+  rolecheck(dense_flags+['-D'+forbidden+'=1'],False,dense_body,tool+'g++')
 with tempfile.TemporaryDirectory(prefix='qgwc-srca-root-',dir='/private/tmp') as directory:
  tmp=Path(directory);image=tmp/'image';image.mkdir()
  root_option='--qgwd-dense-q8-root' if qgwd else '--qgwc-srca-root'
