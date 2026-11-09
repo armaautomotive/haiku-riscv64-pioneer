@@ -63,3 +63,19 @@ capturing the actual dense projection and post-attention residual before
 the FFN; they do not authorize changing Work or skipping attention.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_layer3_cpu_replay.py
+
+Dense-stage capture preparation: an explicit experimental image role records
+the layer-3 position-zero attention projection and post-attention residual
+to trace slots 0 and 1, replacing those two earlier layer snapshots; slots
+2-63 retain their previous mapping. The writer follows the existing checked
+two-chunk transfer sequence and is absent unless the separate role is set.
+The isolated dense component cross-compiled with the actual RV32 SDK; the
+ordinary dense object remained byte-identical to the earlier trace component
+(SHA-256 b1d5ca2062d284533188e546a32b84a01c0280ee49246bba83830bff81decead).
+Host geometry/invalid-address tests and missing/forbidden-role compilation
+checks passed. These are component tests only: the new writer has not been
+executed in an instruction emulator, linked into a complete image, assigned
+a distinct native driver/client identity, installed, or run on hardware.
+No physical access or Work capability is authorized by this preparation.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_stage_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT

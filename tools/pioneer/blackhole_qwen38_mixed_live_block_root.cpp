@@ -29,7 +29,14 @@ static void Compute(L::PrivateSeal* p){
  Joined::AppendTokenKv(p);
 #endif
  Joined::BindProjection(p,3);if(Projection::Run(p->frame)!=5120)scalar_fault_park();
- p->phase=7;Words(L::Status)[5]=7;Block::Norm(p->outer,1);Block::CaptureFfn(p->outer);
+#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE
+ Block::TraceDenseStage(p,PioneerQ38Qgw8DenseStageTrace::Projection);
+#endif
+ p->phase=7;Words(L::Status)[5]=7;Block::Norm(p->outer,1);
+#ifdef PIONEER_Q38_QGW8_DENSE_STAGE_TRACE_IMAGE
+ Block::TraceDenseStage(p,PioneerQ38Qgw8DenseStageTrace::Residual);
+#endif
+ Block::CaptureFfn(p->outer);
  for(unsigned slot=0;slot<2;slot++){Block::BindFfn(p,slot);if(Projection::Run(p->frame)!=17408)scalar_fault_park();}
  Block::Activation(p);Block::BindFfn(p,2);if(Projection::Run(p->frame)!=5120)scalar_fault_park();
  p->phase=12;Words(L::Status)[5]=12;
