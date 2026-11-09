@@ -140,3 +140,14 @@ correctly sized and validated save/restore footprint is required before any
 native use, in addition to the remaining controller and lifecycle work.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_producer_image_tests.py SDK WORKER_A WORKER_B BFP4_LEAF
+
+The same pinned QGWB images have also executed their actual BFP8 matrix leaf
+through the dispatcher for Q/G, K and V, with synthetic NoC/FPU and injected
+layer history. All 64 output words per job matched the existing synthetic
+golden values, completion receipts passed, and a malformed row count was
+refused before matrix execution. This independently exercises matrix jobs;
+the producer and matrix tests are not yet a connected end-to-end sequence.
+The old snapshot still does not cover the larger worker. Building with -Oz
+instead of -Os produced the same 13148-byte section and did not fix it.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_producer_image_tests.py SDK WORKER_A WORKER_B BFP4_LEAF BFP8_LEAF

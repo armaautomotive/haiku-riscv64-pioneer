@@ -7,10 +7,10 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv)!=5 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: absolute-SDK absolute-worker1 absolute-worker2 absolute-BFP4-leaf')
-sdk,first,second,leaf=map(Path,sys.argv[1:])
-if not all(p.is_absolute() and p.is_dir() for p in (sdk,first,second,leaf)):
+if len(sys.argv) not in (5,6) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: absolute-SDK absolute-worker1 absolute-worker2 absolute-BFP4-leaf [absolute-BFP8-leaf]')
+sdk,first,second,leaf=map(Path,sys.argv[1:5]);bfp8=Path(sys.argv[5]) if len(sys.argv)==6 else None
+if not all(p.is_absolute() and p.is_dir() for p in (sdk,first,second,leaf,*((bfp8,) if bfp8 else ()))):
     raise SystemExit('absolute existing directories required')
 pins={'affine.bin':'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78',
  'bf16producer.bin':'531453b71c59409485087339f36cfd0b48700c7edb53b2b4bcdfd3dea913acd8',
@@ -32,6 +32,10 @@ for folder in (first,second):
 for name,digest in {'boot.bin':'d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd',
                     'text.bin':'04d43a4e5ad5b766fea07d0d3f9f48168557abda4772826d804f643db644faaf'}.items():
     assert hashlib.sha256((leaf/name).read_bytes()).hexdigest()==digest,name
+if bfp8:
+    for name,digest in {'boot.bin':'d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd',
+                        'text.bin':'4cbd9db9777a528cde91cece928ba5aa205adcbdac3435a2571a89259c181b67'}.items():
+        assert hashlib.sha256((bfp8/name).read_bytes()).hexdigest()==digest,name
 dis=subprocess.check_output([tool+'objdump','-d','-C','-j','.globalworker',str(first/'program.elf')],text=True)
 assert 'b9042703' in dis and 'lw\ta4,-1136(s0)' in dis,'test-only model-layer injection must match pinned image'
 here=Path(__file__).resolve().parent
@@ -39,10 +43,12 @@ flags=['-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_HEAD_M
  '-DPIONEER_Q38_HYBRID_WORKER_IMAGE=1','-DPIONEER_Q38_BF16_WORKER_IMAGE=1',
  '-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1','-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 with tempfile.TemporaryDirectory(prefix='qgwb-dense-producer-image-',dir='/private/tmp') as directory:
-    binary=Path(directory)/'test'
-    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                    '-Wno-misleading-indentation','-Wno-unused-function','-Wno-unused-variable','-ffp-contract=off',
-                    '-fsanitize=address,undefined',*flags,str(here/'pioneer_q38_dense_q8_producer_image_test.cpp'),'-o',str(binary)],check=True)
-    for folder in (first,second):
-        subprocess.run([str(binary),str(folder),str(leaf)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
+    tests=[('producer',leaf)] + ([('matrix',bfp8)] if bfp8 else [])
+    for name,selected_leaf in tests:
+        binary=Path(directory)/name
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                        '-Wno-misleading-indentation','-Wno-unused-function','-Wno-unused-variable','-ffp-contract=off',
+                        '-fsanitize=address,undefined',*flags,str(here/('pioneer_q38_dense_q8_'+name+'_image_test.cpp')),'-o',str(binary)],check=True)
+        for folder in (first,second):
+            subprocess.run([str(binary),str(folder),str(selected_leaf)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
 print('PASS two pinned QGWB producer images; old journal is TOO SMALL; NO NATIVE OR DEVICE AUTHORITY')
