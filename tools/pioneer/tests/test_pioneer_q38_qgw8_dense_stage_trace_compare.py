@@ -27,6 +27,7 @@ with tempfile.TemporaryDirectory(prefix='qgw8-dense-stage-compare-') as tmp:
     with contextlib.redirect_stdout(stream): subject.main()
     output = stream.getvalue()
     assert 'projection bit_differences=1' in output and 'residual bit_differences=1' in output
+    assert 'best_fit_card_over_cpu=' in output and 'cosine=' in output
     assert 'layer=2 changed=0' in output and 'layer=3 changed=1' in output and 'layer=63 changed=0' in output
     sys.argv[-1] = '0'*64
     try: subject.main()
@@ -37,4 +38,11 @@ with tempfile.TemporaryDirectory(prefix='qgw8-dense-stage-compare-') as tmp:
     try: subject.main()
     except ValueError: pass
     else: raise AssertionError('nonfinite candidate accepted')
+    zero = {'floats': array.array('f', [0.0, 0.0])}
+    unit = {'floats': array.array('f', [1.0, 0.0])}
+    assert subject.projection_diagnostics(zero, unit, 0, 2) == (0.0, 1.0, None, None)
+    assert subject.projection_diagnostics(unit, zero, 0, 2) == (1.0, 0.0, 0.0, None)
+    assert subject.projection_diagnostics(unit, unit, 0, 2) == (1.0, 1.0, 1.0, 1.0)
+    negative = {'floats': array.array('f', [-2.0, 0.0])}
+    assert subject.projection_diagnostics(unit, negative, 0, 2) == (1.0, 2.0, -2.0, -1.0)
 print('PASS synthetic stage/layer offsets, hashes and finite-value refusals; NO DEVICE')

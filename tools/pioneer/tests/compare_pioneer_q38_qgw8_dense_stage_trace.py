@@ -24,6 +24,20 @@ def unpack(data):
     require(all(math.isfinite(v) for v in values), 'nonfinite data')
     return {'bits': bits, 'floats': values}
 
+def projection_diagnostics(reference, candidate, offset, width):
+    """Describe card amplitude and best scalar fit; this does not identify a cause."""
+    ref = reference['floats'][offset:offset+width]
+    got = candidate['floats'][offset:offset+width]
+    ref_sq = math.fsum(float(x)*x for x in ref)
+    got_sq = math.fsum(float(x)*x for x in got)
+    dot = math.fsum(float(x)*y for x, y in zip(ref, got))
+    require(math.isfinite(ref_sq) and math.isfinite(got_sq) and math.isfinite(dot),
+            'nonfinite diagnostic')
+    # A zero reference has no defined gain; keep the result explicitly absent.
+    gain = dot/ref_sq if ref_sq else None
+    cosine = dot/math.sqrt(ref_sq*got_sq) if ref_sq and got_sq else None
+    return math.sqrt(ref_sq), math.sqrt(got_sq), gain, cosine
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('reference', type=Path)
@@ -46,6 +60,10 @@ def main():
         changed, maximum, relative = difference(reference, candidate, stage*WIDTH, WIDTH)
         require(math.isfinite(maximum) and math.isfinite(relative), 'invalid stage comparison')
         print(f'{name} bit_differences={changed} max_abs={maximum:.12g} relative_l2={relative:.12g}')
+        ref_norm, card_norm, gain, cosine = projection_diagnostics(reference, candidate, stage*WIDTH, WIDTH)
+        show = lambda value: 'undefined' if value is None else f'{value:.12g}'
+        print(f'{name} cpu_l2={ref_norm:.12g} card_l2={card_norm:.12g} '
+              f'best_fit_card_over_cpu={show(gain)} cosine={show(cosine)}')
     for layer in range(2,64):
         changed, maximum, relative = difference(baseline, candidate, layer*WIDTH, WIDTH)
         print(f'layer={layer} changed={changed} max_abs={maximum:.12g} relative_l2={relative:.12g}')
