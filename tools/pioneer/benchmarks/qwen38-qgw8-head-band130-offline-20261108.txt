@@ -1,0 +1,28 @@
+QGW8 head-band diagnostic 130: isolated DATA and simulated lease only
+====================================================================
+
+A distinct compile-time identity selects the C64 learned-band journal with
+the private real output-head fixture. It has tag 2026110800010130 and opcode
+0x9500; the original 81/84 tags and selection remain separate. The fixed C64
+on-card image still emits the existing 84 arithmetic marker: the new tag,
+opcode, namespace and image-layout role distinguish the diagnostic, not a
+claim that a new hardware image was executed. Work and CPU-reference build
+roles are explicitly refused. No production default selects this role.
+
+The compile-only role test passed legacy81, legacy84 and head130 identities,
+12 refused incompatible/late selections, including the exact kernel tag guard.
+With the three private, pinned real-head bands and the pinned C64 image,
+the actual shared lease ran under synthetic I/O twice: once in legacy84 and
+once in new head130 selection. Each run produced 192 exact expected words and
+passed 251 injected failure/admission/close cases, with first-uncertainty
+retention and no simulated retry/reset/cleanup. Two additional compile checks
+refused changing the role after the lease was first included. These results
+are offboard simulation, not actual PCI/VM/FD authority or a hardware test.
+
+Reproduce: python3 tools/pioneer/tests/run_pioneer_qgw8_head_band_lease_tests.py
+ABS_PRIVATE_HEAD_EXPORT ABS_PINNED_C64_IMAGE. The export headers and resulting
+binaries contain private model weights and must not be published. A full new
+native driver and separately authenticated client, independent real-model
+source check on the Pioneer, lifecycle/driver tests, safe one-shot exchange,
+and hardware observation remain required. No Assistant/Work mode or measured
+27B inference speed is changed by this preparation.

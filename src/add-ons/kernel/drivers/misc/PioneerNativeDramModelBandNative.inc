@@ -28,7 +28,9 @@ constexpr const char* MapName="P100A isolated GDDR LOAD ONLY82";
 #include "PioneerNativeDramModelBandGeneratedImage.h"
 namespace PioneerNativeDram81 {
 constexpr uint32 NativeResultMarker=PioneerNativeDramModelBandVariant::Marker,NativeResultCount=PioneerNativeDramModelBandVariant::Count;
-#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+#if defined(PIONEER_QGW8_HEAD_BAND_130)
+constexpr const char* MapName="P100A isolated QGW8 head band130 C64";
+#elif defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
 constexpr const char* MapName="P100A isolated GDDR native band84 C64";
 #else
 constexpr const char* MapName="P100A isolated GDDR native band81";

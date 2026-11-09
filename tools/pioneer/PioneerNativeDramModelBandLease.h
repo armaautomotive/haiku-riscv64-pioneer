@@ -5,7 +5,7 @@
 #error GDDR learned-band lease requires distinct diagnostic81,never Work/validation
 #endif
 #if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
-#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010084ULL)
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (defined(PIONEER_QGW8_HEAD_BAND_130) ? PIONEER_DRIVER_BUILD_TAG != 0x2026110800010130ULL : PIONEER_DRIVER_BUILD_TAG != 0x2026110400010084ULL))
 #error Exact kernel diagnostic84 reload role required
 #endif
 #elif defined(PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010081ULL)
@@ -250,6 +250,13 @@ public:
 		result.clock_restored=result.compute.tlb_restored=1;result.phase=10;result.compute.state=PIONEER_NATIVE_BFP_CLOSED;owned=false;return true;
 	}
 };
-static_assert(PioneerNativeDramModelBandLease::L1Words*4==(PioneerNativeDramModelBandVariant::Role==84?221488U:211248U)
+static_assert(PioneerNativeDramModelBandLease::L1Words*4==((PioneerNativeDramModelBandVariant::Role==84 || PioneerNativeDramModelBandVariant::Role==130)?221488U:211248U)
 	&& PioneerNativeDramModelBandLease::DramWords*4==184320,"bounded separate heap journals");
+#endif
+#if defined(PIONEER_QGW8_HEAD_BAND_130)
+static_assert(PioneerNativeDramModelBandVariant::Role==130,"late head-band lease selector change");
+#elif defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+static_assert(PioneerNativeDramModelBandVariant::Role==84,"late C64 lease selector change");
+#else
+static_assert(PioneerNativeDramModelBandVariant::Role==81,"late legacy lease selector change");
 #endif
