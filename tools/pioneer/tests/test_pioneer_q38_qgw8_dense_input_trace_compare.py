@@ -24,6 +24,7 @@ with tempfile.TemporaryDirectory(prefix='qgw8-input-compare-') as tmp:
     assert 'input all changed=3' in output and 'input head=0 changed=1' in output
     assert 'input head=1 changed=1' in output and 'input head=23 changed=1' in output
     assert 'layer=2 changed=1' in output and 'layer=3 changed=0' in output and 'layer=63 changed=0' in output
+    assert 'cross_head card=0 best_cpu=' in output and 'not a permutation or cause proof' in output
     sys.argv[-1]='0'*64
     try:subject.main()
     except ValueError:pass
@@ -32,4 +33,15 @@ with tempfile.TemporaryDirectory(prefix='qgw8-input-compare-') as tmp:
     try:subject.main()
     except ValueError:pass
     else:raise AssertionError('nonfinite capture accepted')
-print('PASS synthetic input/head/layer offsets, hash and finite-value refusals; NO DEVICE')
+
+# Distinct orthogonal heads expose a signed cross-head match; zero input has
+# no defined cosine and ties deterministically select the first reference.
+refs=array.array('f',[0.0]*subject.INPUT_WORDS)
+vals=array.array('f',[0.0]*subject.INPUT_WORDS)
+for head in range(24):refs[head*subject.HEAD_WORDS+head]=1.0
+vals[3*subject.HEAD_WORDS+7]=-2.0
+assert subject.closest_reference_head({'floats':refs},{'floats':vals},3)==(7,-1.0)
+assert subject.closest_reference_head({'floats':refs},{'floats':vals},4) is None
+refs[8*subject.HEAD_WORDS+8]=0.0;refs[8*subject.HEAD_WORDS+7]=1.0
+assert subject.closest_reference_head({'floats':refs},{'floats':vals},3)==(7,-1.0)
+print('PASS synthetic input/head/layer offsets, cross-head signed/zero/tie cases, hash and finite-value refusals; NO DEVICE')

@@ -185,6 +185,34 @@ It only makes these specific simple group substitutions poor explanations.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_group_hypothesis.py
 
+Tag133 physical dense-input result, 2026-11-09
+------------------------------------------------
+The one-shot tag133 run closed cleanly, produced token 108133 and captured
+1310720 bytes, SHA-256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c.
+The saved CPU reference expects token 70253; this is not a qualified answer.
+The 514.269-second diagnostic interval includes START and prompt processing;
+it is not a warm generation throughput measurement. The parent restored the
+stable driver. Independent read-only checks found stable SHA-256 041fef18...
+3403, tag 2026102100010012 generation12, no active owner, 64 CPUs and max RAM
+137034936320 bytes. The closed trace and transcript are retained locally in
+generated.pioneer/qualification-inputs/qgw8-dense-input-physical-20261109/.
+
+All 6144 captured attention-output operands differ in bits from the CPU
+reference: relative L2 1.3273632476, cosine -0.169957993941. A signed
+cross-head cosine screen found no simple high-correlation rearrangement;
+this is a hypothesis screen, not proof of mapping or cause. Saved layers
+2-63 match the earlier tag131 trace byte-for-byte. The separate CPU replay
+of tag133's captured input through the original Q6 projection reproduced
+the earlier tag132 captured card projection exactly: zero changed float
+bits, relative L2 0, cosine 1. This is strong cross-run evidence that the
+observed discrepancy begins at or before the gated attention output, rather
+than at that output projection, for this input. It does NOT establish the
+individual Q/gate/V producer, attention arithmetic, memory transfer or
+capture as the root cause, nor prove same-run identity or performance.
+
+ python3 tools/pioneer/tests/compare_pioneer_q38_qgw8_dense_input_trace.py CPU_INPUT TAG131_TRACE TAG133_TRACE --candidate-sha256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_observed_input_replay.py TAG133_TRACE --candidate-sha256 d26aee7213846431e7bdd223533e6082fd9dc40199174e1228b2a0deefc7024c --snapshot-log TAG133_LOG
+
 Dense output-projection INPUT capture, component-only preparation: a distinct
 diagnostic role snapshots the 6144-float gated attention output immediately
 before the output projection, at layer 3 and position 0 only. Its geometry

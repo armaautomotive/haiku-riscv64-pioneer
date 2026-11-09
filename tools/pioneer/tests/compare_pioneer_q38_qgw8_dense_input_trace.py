@@ -14,6 +14,25 @@ REFERENCE_HASH = '972b0747f8b03d422a7c5315ccd0fd15bf227231b1c316d5e7026c53eaf0eb
 BASELINE_HASH = '103312ce324384782d322b51a457d654c4c5c1fef181ceecc730aa6a3d82af2e'
 LAYER_WORDS, INPUT_WORDS, HEAD_WORDS = 5120, 6144, 256
 
+def closest_reference_head(reference, candidate, head):
+    """Screen cross-head correlations, not proof of a head permutation."""
+    got = candidate['floats'][head*HEAD_WORDS:(head+1)*HEAD_WORDS]
+    got_sq = math.fsum(float(x)*x for x in got)
+    require(math.isfinite(got_sq), 'nonfinite head norm')
+    if not got_sq:
+        return None
+    best = None
+    for source in range(24):
+        ref = reference['floats'][source*HEAD_WORDS:(source+1)*HEAD_WORDS]
+        ref_sq = math.fsum(float(x)*x for x in ref)
+        dot = math.fsum(float(x)*y for x,y in zip(ref,got))
+        require(math.isfinite(ref_sq) and math.isfinite(dot), 'nonfinite cross-head diagnostic')
+        if ref_sq:
+            cosine = dot/math.sqrt(ref_sq*got_sq)
+            if best is None or abs(cosine)>abs(best[1]):
+                best = (source,cosine)
+    return best
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('reference', type=Path)
@@ -40,10 +59,17 @@ def main():
         show = lambda value: 'undefined' if value is None else f'{value:.12g}'
         print(f'input {label} changed={changed} max_abs={maximum:.12g} relative_l2={relative:.12g} '
               f'cpu_l2={ref_norm:.12g} card_l2={card_norm:.12g} fit={show(gain)} cosine={show(cosine)}')
+    for head in range(24):
+        best = closest_reference_head(reference,candidate,head)
+        if best is None:
+            print(f'cross_head card={head} best_cpu=undefined cosine=undefined')
+        else:
+            print(f'cross_head card={head} best_cpu={best[0]} cosine={best[1]:.12g}')
     for layer in range(2,64):
         changed, maximum, relative = difference(baseline,candidate,layer*LAYER_WORDS,LAYER_WORDS)
         print(f'layer={layer} changed={changed} max_abs={maximum:.12g} relative_l2={relative:.12g}')
-    print('RAW DATA ONLY: hash does not prove source, completion, capture identity, correctness or speed')
+    print('RAW DATA ONLY: cross-head correlation is a hypothesis screen, not a permutation or cause proof; '
+          'hash does not prove source, completion, capture identity, correctness or speed')
 
 if __name__ == '__main__':
     try:
