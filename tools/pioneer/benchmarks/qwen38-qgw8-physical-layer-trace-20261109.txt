@@ -218,3 +218,15 @@ Neither code DATA nor a synthetic comparator grants a driver/device test.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_programs_tests.py OLD_STAGE INPUT_A INPUT_B WORKER
  python3 tools/pioneer/tests/test_pioneer_q38_qgw8_dense_input_trace_compare.py
+
+Tag133 input-capture build-only identity preparation: native QTPC DATA was
+generated from the pinned input image and worker with SHA-256
+81cc1a2be97a4246d7ae9a9a7e9594e589f8af795d49912031f0d776c754e412.
+The native program role, exact tag133 reload identity and selected QTPC
+family passed host compile/refusal tests, including rejection of tag131,
+tag132, Work, CPU validation and client/native mixing. The existing tag132
+role, code selection and fixed trace protocol regression also passed.
+This does not yet build a tag133 driver or client, establish lifecycle/stack
+safety, install anything, run hardware, or validate inference/performance.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_native_role_tests.py PINNED_NATIVE_HEADER

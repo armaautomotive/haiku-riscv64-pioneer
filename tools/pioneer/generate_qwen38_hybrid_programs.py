@@ -5,11 +5,16 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgw8input='--qgw8-dense-input-inspection' in args
+args=sys.argv[1:];qgw8inputnative='--qgw8-dense-input-native' in args
+if qgw8inputnative:
+    if args.count('--qgw8-dense-input-native')!=1 or any(x in args for x in ('--qgw8-dense-input-inspection','--qgw8-dense-stage-native','--qgw8-dense-stage-inspection','--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
+        raise SystemExit('ambiguous QGW8 dense-input native selector')
+    args.remove('--qgw8-dense-input-native');args.insert(0,'--qgw8-dense-input-inspection')
+qgw8input='--qgw8-dense-input-inspection' in args
 if qgw8input:
     if args.count('--qgw8-dense-input-inspection')!=1 or any(x in args for x in ('--qgw8-dense-stage-native','--qgw8-dense-stage-inspection','--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
         raise SystemExit('ambiguous QGW8 dense-input selector')
-    args.remove('--qgw8-dense-input-inspection');args.insert(0,'--qgw8-layer-trace-inspection')
+    args.remove('--qgw8-dense-input-inspection');args.insert(0,'--qgw8-layer-trace-native' if qgw8inputnative else '--qgw8-layer-trace-inspection')
 qgw8stagenative='--qgw8-dense-stage-native' in args
 if qgw8stagenative:
     if args.count('--qgw8-dense-stage-native')!=1 or any(x in args for x in ('--qgw8-dense-stage-inspection','--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
@@ -76,7 +81,7 @@ units += [(w,name,label,address) for name,label,address in (
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
 family='0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name='QTPC/QGW8-DENSE-INPUT' if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+name=('QTPC/QGW8-DENSE-INPUT-NATIVE-BUILD-ONLY' if qgw8inputnative else 'QTPC/QGW8-DENSE-INPUT') if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -145,7 +150,11 @@ if matrix:
     else:
         lines += [' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
                   '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
-if qgw8input:
+if qgw8inputnative:
+    lines += ['#if !defined(PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133) || PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133 != 1 \\',
+              ' || defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132) || defined(PIONEER_Q38_QGW8_DENSE_INPUT_PROGRAMS_INSPECTION)',
+              '#error QGW8 dense-input native program requires its exclusive build-only role', '#endif']
+elif qgw8input:
     lines += ['#if !defined(PIONEER_Q38_QGW8_DENSE_INPUT_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_DENSE_INPUT_PROGRAMS_INSPECTION != 1 \\',
               ' || defined(PIONEER_Q38_QGW8_DENSE_STAGE_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132)',
               '#error QGW8 dense-input program requires its exclusive offline role', '#endif']
