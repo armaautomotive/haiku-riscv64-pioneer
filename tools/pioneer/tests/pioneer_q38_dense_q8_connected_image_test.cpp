@@ -6,9 +6,25 @@
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
 #include "pioneer_q38_dense_q8_producer_image_test.cpp"
 #include "../PioneerQ38DenseQ8MatrixRootFrame.h"
+#include "../PioneerQ38DenseQ8MatrixRootJobs.h"
+struct SchedulerIO {
+ uint32_t table[7][3]={},tuple[119][4]={};unsigned fields=0;
+ unsigned Table(unsigned bank,unsigned field){return table[bank][field];}
+ void Output(unsigned worker,unsigned field,unsigned value){tuple[worker][field]=value;fields++;}
+};
 int main(int argc,char** argv){
  assert(argc==3);for(unsigned role=5;role<=7;role++){
- DenseProducerImage image(argv[1],argv[2],5120);image.Boot();
+ // A complete synthetic seven-bank table drives the same scheduling helper
+ // used by the planned ROOT, including its real worker count and band sizes.
+ SchedulerIO scheduler;const unsigned units=role==5?384:32;unsigned first=0;
+ for(unsigned b=0;b<7;b++){
+  const unsigned n=units/7+unsigned(b<units%7);
+  scheduler.table[b][0]=0x04000000;scheduler.table[b][1]=first;scheduler.table[b][2]=n*32;first+=n*32;
+ }
+ assert(PioneerQ38DenseQ8MatrixRootJobs::Build(scheduler,3,role));
+ assert(scheduler.fields==(role==5?119U:32U)*4);
+ const auto* tuple=scheduler.tuple[0];assert(tuple[1]==0 && tuple[2]==0 && tuple[3]);
+ DenseProducerImage image(argv[1],argv[2],5120,tuple[3]);image.Boot();
  assert(image.regs[8]==0x70000);image.Put(image.regs[8]-1136,3);
  for(unsigned i=0;i<256;i++)image.input[i]=PioneerAttentionBits(float(int(i%37)-18)*.03125f);
  image.StageProducer(role,1);image.Check(1);
@@ -21,8 +37,7 @@ int main(int argc,char** argv){
  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],closed[64];
  for(unsigned i=0;i<8;i++)before[i]=image.transfer.counters[indices[i]];
  auto& leaf=image.transfer.job;leaf.words[11]=2;
- unsigned bank=7;for(unsigned i=0;i<7;i++)if(PioneerQ38ProjectionRoute(i)==leaf.words[5])bank=i;
- assert(bank<7);const uint32_t tuple[]={leaf.words[3],bank,0,leaf.words[4]};uint32_t job[64]={};
+ uint32_t job[64]={};
  assert(PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,image.boot.data(),3,role,0,2025,1,job));
  for(unsigned i=0;i<16;i++)assert(job[16+i]==leaf.words[i]);
  assert(HW::JobShape(job,image.boot.data(),1,0));
@@ -47,7 +62,7 @@ int main(int argc,char** argv){
   }
  }
  assert(nonzero>200);
- for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
+ for(unsigned band=0;band<tuple[3];band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
  }
- puts("PASS actual QGWB/QGWD Q/G,K,V BF16 producer -> byte-only transport -> ROOT-generated BFP8 frame -> matrix on SAME worker; synthetic history/NoC/FPU; NO HARDWARE OR SPEED");
+ puts("PASS actual QGWB/QGWD Q/G,K,V BF16 producer -> byte-only transport -> scheduled ROOT BFP8 frame -> matrix on SAME worker; synthetic history/NoC/FPU; NO HARDWARE OR SPEED");
 }

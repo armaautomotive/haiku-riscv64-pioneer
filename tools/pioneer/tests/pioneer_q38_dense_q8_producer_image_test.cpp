@@ -11,7 +11,7 @@ struct DenseProducerImage:TransitionImage {
  std::array<uint32_t,256> input={};std::map<unsigned,unsigned> bank;
  std::array<uint32_t,64> descriptor={};std::array<uint32_t,8> before={};
  unsigned packets=0;bool producing=false;
- DenseProducerImage(const char* worker,const char* leaf,unsigned width=17408):TransitionImage(worker,leaf,1,width){}
+ DenseProducerImage(const char* worker,const char* leaf,unsigned width=17408,unsigned bands=2):TransitionImage(worker,leaf,1,width,bands){}
  static bool ProducerL1(unsigned a){return Range(a,BP::Descriptor,256) || Range(a,0x90000,3712);}
  uint32_t Load(uint32_t a)override{
   if(producing && ProducerL1(a))return WordRead(a);
