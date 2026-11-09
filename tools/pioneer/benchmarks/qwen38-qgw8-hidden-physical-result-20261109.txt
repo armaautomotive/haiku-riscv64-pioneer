@@ -1,0 +1,40 @@
+QGW8 tag129 fixed-input hidden diagnostic, completed 2026-11-09
+
+The fresh one-shot physical trial completed its native FINISH and close,
+saved its 20548-byte hidden snapshot, and restored the stable driver. The
+trial process exited 0 and stderr was empty. It used input token 248319 at
+position zero and generated token 108133, the same mismatched token as the
+earlier 32-token trial; the separately pinned original-Q4 CPU reference
+selected 70253. This is a reproducible mismatch for this input, not a model
+quality assessment for all prompts.
+
+Upload and startup took 2791.102 seconds. The single generated token took
+509.450 seconds measured INCLUDING START and prompt processing (reported
+0.001963 token/s). This is not steady-state decoding throughput and must not
+be compared directly with the previous 32-token rate. No speedup is shown.
+
+Independently matching remote and private local SHA-256 values:
+ trial.stdout d69b58d0e73d43e9ec31ab8fed06ea41918aaac5281e8c0f8138b335cadb3912
+ hidden.bin   719972749df9e02f1e1a0ee2cdca8945b933d1f157c9d5c39b1889ce796e97c3
+The transcript gate passed, and the snapshot identifies tag129 generation5.
+The post-hoc comparison to pinned CPU references reports:
+ original hidden: relative L2 1.31543652113, cosine 0.0605525719566
+ converted hidden: relative L2 1.32502157701, cosine 0.0379368980052
+These metrics show substantial discrepancy before the final output head;
+they do not identify the first failing layer or distinguish all sources of
+that discrepancy. No CPU reference was used by the card during the run.
+
+After the trial, the installed stable driver matched SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+reload metadata reported tag2026102100010012 generation6, cold0, quiesced0
+and active_owner0. sysinfo reported 64 CPUs and max 137034936320 bytes RAM.
+This confirms the recorded checks, not interactive desktop testing.
+
+The 20548-byte snapshot stays private under the original stage and under
+/private/tmp/qgw8-hidden-result-20261109.QIeBDslo on the Mac; it is not
+committed. The separate CPU-only head replay is running from
+/boot/home/pioneer-qgw8-dualrank-cpu-replay-20261109-a, wrapper team 1833,
+client team 1834, and is authenticating the original model. Its executable
+matched bdb85af5d7df8bff70b7f39da3380edaebe90bcd3bae3b14594da297c2fad72c
+and refused missing arguments. It does not open the card and must not be
+relaunched while the same job is active. Its result is not yet available.
