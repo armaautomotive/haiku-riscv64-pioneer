@@ -38,5 +38,37 @@ struct PioneerQ38HybridDenseQ8MatrixPlan {
   if(fragments!=16*3*7 || staged.parts.size()!=source.Count())return false;
   output=std::move(staged);return true;
  }
+ // Dense Q8 repacking shifts subsequent FFN stripes. The parent's FFN
+ // manifest refers to the OLD layout and must not be used with this plan.
+ // This derives geometry only; the caller must authenticate and upload the
+ // exact converted pages before any device owner may use these addresses.
+ enum : unsigned {FfnManifestWords=64*3*7};
+ template<class Canonical>static bool FfnManifest(const Canonical& source,const Proposal& proposal,uint32_t* output,unsigned words){
+  if(!output || words!=FfnManifestWords || (reinterpret_cast<uintptr_t>(output)&3)
+   || proposal.parts.size()>SIZE_MAX/sizeof(Base::Part))return false;
+  const uintptr_t o=reinterpret_cast<uintptr_t>(output),c=reinterpret_cast<uintptr_t>(&source),p=reinterpret_cast<uintptr_t>(&proposal);
+  const uintptr_t storage=reinterpret_cast<uintptr_t>(proposal.parts.data()),limit=~uintptr_t(0);
+  const size_t bytes=FfnManifestWords*sizeof(uint32_t),partBytes=proposal.parts.size()*sizeof(Base::Part);
+  if(o>limit-bytes || c>limit-sizeof(source) || p>limit-sizeof(proposal) || storage>limit-partBytes
+   || (o<c+sizeof(source) && c<o+bytes) || (o<p+sizeof(proposal) && p<o+bytes)
+   || (partBytes && o<storage+partBytes && storage<o+bytes))return false;
+  Proposal expected;if(!Build(source,expected) || expected.used!=proposal.used || expected.parts.size()!=proposal.parts.size())return false;
+  for(unsigned i=0;i<expected.parts.size();i++){
+   const auto& a=expected.parts[i];const auto& b=proposal.parts[i];
+   if(a.original!=b.original || a.bank!=b.bank || a.offset!=b.offset || a.bytes!=b.bytes || a.allocated!=b.allocated || a.encoding!=b.encoding)return false;
+  }
+  uint32_t staged[FfnManifestWords]={};unsigned count=0;
+  for(unsigned i=0;i<source.Count();i++){
+   const auto* part=source.Part(i);if(!part)return false;
+   if(part->kind!=Canonical::WeightKind || part->layer>=64 || part->role<2 || part->role>4)continue;
+   const auto& dest=expected.parts[i];const unsigned at=(part->layer*3+part->role-2)*7+part->bank;
+   if(part->bank>=7 || at>=FfnManifestWords || staged[at] || dest.bank!=part->bank || dest.offset>UINT32_MAX-Canonical::Base)return false;
+   staged[at]=Canonical::Base+dest.offset;count++;
+  }
+  if(count!=FfnManifestWords)return false;
+  for(unsigned i=0;i<FfnManifestWords;i++)if(!staged[i])return false;
+  for(unsigned i=0;i<FfnManifestWords;i++)output[i]=staged[i];
+  return true;
+ }
 };
 #endif

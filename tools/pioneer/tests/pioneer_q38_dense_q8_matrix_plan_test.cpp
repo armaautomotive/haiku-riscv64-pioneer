@@ -45,6 +45,21 @@ int main(){
   }else assert(q.encoding==old.encoding && q.bytes==old.bytes && q.allocated==old.allocated);
  }
  assert(fragments==336 && rows==16*(12288+1024+1024));
+ std::array<uint32_t,Plan::FfnManifestWords> manifest={},oldManifest={};
+ assert(Plan::FfnManifest(*source,candidate,manifest.data(),manifest.size()));
+ assert(Plan::Parent::Manifest(*source,prior,oldManifest.data(),oldManifest.size()));
+ unsigned shifted=0,checked=0;
+ for(unsigned i=0;i<source->Count();i++){
+  const auto* p=source->Part(i);if(p->kind!=Canonical::WeightKind || p->layer>=64 || p->role<2 || p->role>4)continue;
+  const unsigned at=(p->layer*3+p->role-2)*7+p->bank;
+  assert(manifest[at]==Canonical::Base+candidate.parts[i].offset);
+  shifted+=manifest[at]!=oldManifest[at];checked++;
+ }
+ assert(checked==Plan::FfnManifestWords && shifted>0);
+ auto altered=candidate;altered.parts[0].offset+=4096;auto savedManifest=manifest;
+ assert(!Plan::FfnManifest(*source,altered,manifest.data(),manifest.size()) && manifest==savedManifest);
+ assert(!Plan::FfnManifest(*source,candidate,manifest.data(),manifest.size()-1) && manifest==savedManifest);
+ assert(!Plan::FfnManifest(*source,candidate,reinterpret_cast<uint32_t*>(candidate.parts.data()),manifest.size()));
  for(unsigned b=0;b<7;b++)assert(next[b]==candidate.used[b] && next[b]<=prior.used[b] && next[b]<=Canonical::Capacity);
  auto empty=std::make_unique<Canonical>();const auto before=candidate.used;const auto count=candidate.parts.size();
  assert(!Plan::Build(*empty,candidate) && candidate.used==before && candidate.parts.size()==count);
@@ -58,6 +73,6 @@ int main(){
   Mutated malformed{*source,target,fault};
   assert(!Plan::Build(malformed,candidate) && candidate.used==before && candidate.parts.size()==count);
  }
- std::printf("PASS dense Q8 BFP8 proposed geometry fragments=%u rows=%llu allocation_saved=%llu bytes; NO model/device/speed\n",
-  fragments,(unsigned long long)rows,(unsigned long long)saved);
+ std::printf("PASS dense Q8 BFP8 geometry fragments=%u rows=%llu allocation_saved=%llu bytes; FFN entries=%u shifted=%u; NO model/device/speed\n",
+  fragments,(unsigned long long)rows,(unsigned long long)saved,checked,shifted);
 }
