@@ -1,0 +1,34 @@
+P100A physical two-base BF16 PV diagnostic, 2026-11-09
+
+The separately tagged, disposable tag135 diagnostic ran ONE fixed-fixture
+PV test on the Pioneer P100A. The compiled client independently checked all
+64 returned FP32 words: 32 using the old SrcA base 0x80, then 32 using 0x40.
+The 0x80 pass matched the predicted four-lane shift, and the 0x40 pass matched
+all 32 correct fixture values. Both outputs were produced by matrix work on
+the card. On success the client emits the aggregate PASS line, not raw words;
+the per-word values were checked in memory but were not individually archived.
+
+PASS_NATIVE_SRCA_PROBE_FIXED old_shift32 corrected32 polls2 generation15;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_MODEL_OR_SPEED_CLAIM
+
+Saved fixed.stdout SHA-256:
+07ee4c2fd55d4baf39d58e6d6e5fe115383a9e76c279b2af17a51735a99d29fd
+fixed.stderr empty, fixed.exit 0; remote one-use stage:
+/boot/home/pioneer-srca-probe-20261109-g14
+Diagnostic driver SHA-256:
+fd07d0a51cc4efe764a1125f4babfe8b32866b5c15c87f1e4b2f197550bd0430
+Client SHA-256:
+93bff45b96d1c31633445dd39beb67bd2f600ca9dc3499c5f573607a5f2f789a
+
+The diagnostic completed explicit END and restored the saved L1/TLB and PCI
+state. The guarded parent restored the stable driver, independently confirmed
+its SHA-256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+and reported tag2026102100010012 generation16, cold0, active_owner0. Haiku
+reported 64 CPUs and 137034936320 max memory bytes after the test.
+
+This is strong direct evidence for the 0x40 correction on this one PV fixture,
+not proof of the exact undocumented address semantics. It does NOT establish
+correctness of Q/K, other attention sizes or the complete Qwen 27B model, and
+it is NOT a model-generation throughput benchmark or 20-token/s claim. The
+installed Work driver was not modified. The candidate must still be integrated
+with the appropriate full-model root/worker, tested for output quality on real
+inputs, and benchmarked against a comparable baseline.
