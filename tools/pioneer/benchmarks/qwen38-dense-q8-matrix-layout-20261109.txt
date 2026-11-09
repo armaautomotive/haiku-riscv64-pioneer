@@ -100,3 +100,15 @@ neither numerical correctness nor inference speed.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_worker_layout_tests.py
  python3 tools/pioneer/build_q38_hybrid_matrix_attention_worker.py SDK NEW_OUTPUT --dense-q8-matrix-inspection
+
+An offline frame builder now connects each scheduler tuple to the isolated
+QGWB worker grammar. All 2928 canonical synthetic schedules yield the
+same BFP8 leaf fields as the independent host planner and pass worker shape
+checks; bad bounds, invocation, sequence, alignment and output alias are
+refused without changing the output. A freestanding RV32 object compiles;
+it requires the ROOT's aligned memset and has not been linked or executed.
+Neither geometry nor frame shape authenticates the uploaded weight table,
+protects mutable inputs, grants ownership, launches workers, or proves any
+result or speed. Those controller and native-lifecycle integrations remain.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_matrix_root_jobs_tests.py SDK
