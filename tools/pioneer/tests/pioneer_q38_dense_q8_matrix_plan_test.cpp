@@ -37,7 +37,7 @@ int main(){
  assert(candidate.parts.size()==source->Count());unsigned fragments=0;uint64_t saved=0,rows=0,next[7]={};
  for(unsigned i=0;i<source->Count();i++){
   const auto* p=source->Part(i);const auto& old=prior.parts[i];const auto& q=candidate.parts[i];
-  assert(p && q.original==i && q.bank==p->bank && q.offset==next[q.bank]);next[q.bank]+=q.allocated;
+  assert(p && q.original==i && q.bank==p->bank && q.offset==old.offset && q.offset>=next[q.bank]);next[q.bank]=uint64_t(q.offset)+q.allocated;
   if(p->kind==Canonical::WeightKind && p->layer<64 && p->layer%4==3 && p->role>=5 && p->role<=7){
    assert(p->type==8 && q.encoding==Plan::DenseQ8Bfp8 && q.bytes==uint64_t(p->rows)*5440
     && old.bytes==uint64_t(p->rows)*5760 && q.allocated<=old.allocated);
@@ -55,12 +55,12 @@ int main(){
   assert(manifest[at]==Canonical::Base+candidate.parts[i].offset);
   shifted+=manifest[at]!=oldManifest[at];checked++;
  }
- assert(checked==Plan::FfnManifestWords && shifted>0);
+ assert(checked==Plan::FfnManifestWords && shifted==0);
  auto altered=candidate;altered.parts[0].offset+=4096;auto savedManifest=manifest;
  assert(!Plan::FfnManifest(*source,altered,manifest.data(),manifest.size()) && manifest==savedManifest);
  assert(!Plan::FfnManifest(*source,candidate,manifest.data(),manifest.size()-1) && manifest==savedManifest);
  assert(!Plan::FfnManifest(*source,candidate,reinterpret_cast<uint32_t*>(candidate.parts.data()),manifest.size()));
- for(unsigned b=0;b<7;b++)assert(next[b]==candidate.used[b] && next[b]<=prior.used[b] && next[b]<=Canonical::Capacity);
+ for(unsigned b=0;b<7;b++)assert(next[b]<=candidate.used[b] && candidate.used[b]==prior.used[b] && next[b]<=Canonical::Capacity);
  auto empty=std::make_unique<Canonical>();const auto before=candidate.used;const auto count=candidate.parts.size();
  assert(!Plan::Build(*empty,candidate) && candidate.used==before && candidate.parts.size()==count);
  unsigned target=source->Count();
@@ -73,6 +73,6 @@ int main(){
   Mutated malformed{*source,target,fault};
   assert(!Plan::Build(malformed,candidate) && candidate.used==before && candidate.parts.size()==count);
  }
- std::printf("PASS dense Q8 BFP8 geometry fragments=%u rows=%llu allocation_saved=%llu bytes; FFN entries=%u shifted=%u; NO model/device/speed\n",
+ std::printf("PASS dense Q8 BFP8 geometry fragments=%u rows=%llu unused_hole_bytes=%llu; FFN entries=%u shifted=%u; NO model/device/speed\n",
   fragments,(unsigned long long)rows,(unsigned long long)saved,checked,shifted);
 }
