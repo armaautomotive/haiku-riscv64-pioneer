@@ -29,3 +29,14 @@ and destination banks, FPU configuration, tile reset and selected TLBs.
 This list is a preparation checklist, not an audited complete footprint.
 It must refuse concurrent use and retain/quarantine on uncertain completion.
 No change has been made to the installed driver or Assistant Work mode.
+
+Offline lease progression: the fixed fixture and 4565-word L1 journal run
+the compiled probe against simulated PCI/FPU endpoints. All 256 staged FP16
+values are independently checked, actual instruction writes are checked to
+fall within the journal, and success restores the entire fake memory and two
+TLBs. Twelve injected staging, completion, reset, source and restore failures
+enter UNKNOWN and prohibit retry or implicit cleanup. Existing BFP lease
+regressions also pass. This remains a synthetic alternative-address model.
+The SrcA lease is preprocessor-restricted to offline tests: the existing live
+NativeIO maps a different footprint. Its MMIO mapping, image identity, client,
+parent lifecycle and real-hardware qualification still need separate work.

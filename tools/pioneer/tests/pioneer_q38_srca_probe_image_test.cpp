@@ -25,6 +25,7 @@ struct ProbeImage:TransitionImage {
   TransitionImage::Store(a,value);
  }
 };
+#ifndef PIONEER_Q38_SRCA_PROBE_IMAGE_ONLY
 int main(int argc,char** argv){
  assert(argc==4);ProbeImage image(argv[1],argv[2],argv[3]);
  for(unsigned i=0;i<256;i+=2){
@@ -46,3 +47,4 @@ int main(int argc,char** argv){
  assert(image.native.Clean());
  puts("PASS linked RV32 two-base probe, alternative SrcA model; NOT SILICON");
 }
+#endif

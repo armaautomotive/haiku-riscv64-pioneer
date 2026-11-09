@@ -26,6 +26,14 @@ flags = ['-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1', '-DPIONEER_Q38_HYBRID_
          '-DPIONEER_Q38_BF16_WORKER_IMAGE=1', '-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
          '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 env = dict(os.environ, UBSAN_OPTIONS='halt_on_error=1', ASAN_OPTIONS='quarantine_size_mb=32')
+lease = here.parents[2]/'src/add-ons/kernel/drivers/misc/PioneerNativeBfpLease.h'
+for forbidden_flags in ([], ['-DPIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY=1', '-D_KERNEL_MODE=1'],
+              ['-DPIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY=1', '-DPIONEER_Q38_WORK_INFERENCE=1'],
+              ['-DPIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY=1', '-DPIONEER_DRIVER_BUILD_TAG=1']):
+    result = subprocess.run([common[0], '-std=c++17', '-DB_DEVICE_OP_CODES_END=10000',
+                             '-DPIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC=1', *forbidden_flags,
+                             '-fsyntax-only', '-x', 'c++', str(lease)], capture_output=True, text=True)
+    assert result.returncode and 'confined to offline owner tests' in result.stderr, forbidden_flags
 with tempfile.TemporaryDirectory(prefix='q38-srca-probe-', dir='/private/tmp') as directory:
     tmp = Path(directory)
     for name in ('a', 'b'):
@@ -35,10 +43,11 @@ with tempfile.TemporaryDirectory(prefix='q38-srca-probe-', dir='/private/tmp') a
         for image in ('a', 'b'):
             assert hashlib.sha256((tmp/image/name).read_bytes()).hexdigest() == digest
     for name, source, extra in (('control', 'pioneer_q38_srca_probe_test.cpp', []),
-                                ('image', 'pioneer_q38_srca_probe_image_test.cpp', flags)):
+                                ('image', 'pioneer_q38_srca_probe_image_test.cpp', flags),
+                                ('owner', 'pioneer_q38_srca_probe_owner_test.cpp', flags)):
         binary = tmp/name
         subprocess.run([*common, *extra, str(here/source), '-o', str(binary)], check=True)
-        for image in (('a', 'b') if name == 'image' else (None,)):
+        for image in (('a', 'b') if name in ('image', 'owner') else (None,)):
             args = [str(worker), str(leaf), str(tmp/image)] if image else []
             subprocess.run([str(binary), *args], check=True, env=env)
 print('PASS pinned duplicate images and synthetic tests; NO SILICON OR PERFORMANCE CLAIM')

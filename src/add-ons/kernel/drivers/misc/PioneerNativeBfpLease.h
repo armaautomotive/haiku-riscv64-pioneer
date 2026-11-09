@@ -4,6 +4,11 @@
 #include "BlackholeDramSamplesProbe.h"
 #include "PioneerNativeBfpProtocol.h"
 #include "PioneerNativeBfpFixture.h"
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+#if PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC != 1 || !defined(PIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY) || PIONEER_NATIVE_SRCA_PROBE_OWNER_TEST_ONLY != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC) || defined(PIONEER_Q38_WORK_INFERENCE)
+#error SrcA lease is confined to offline owner tests until device mapping is qualified
+#endif
+#endif
 #ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
 #if PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC != 1 || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 #error Distinct fixed full-K affine lease role required
@@ -22,7 +27,15 @@
 // remain in its retained HEAP owner. No destructor IO, guessed completion,
 // retry, watchdog reset, numeric fallback or automatic cleanup on UNKNOWN.
 class PioneerNativeBfpLease {
-#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+	static constexpr uint32_t DoneMarker=0x31504353,FaultMarker=0x46504353;
+	static constexpr unsigned RomWords=1024,ExtraWords=0,TotalWords=4565;
+	// Exact FP16 bits for n/256, 1 <= n <= 256; no floating-point code in driver.
+	static uint32_t SrcaHalf(unsigned n){
+		unsigned power=0;while((1U<<(power+1))<=n)power++;
+		return ((power+7)<<10)|((n-(1U<<power))<<(10-power));
+	}
+#elif defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 	using Fixture=PioneerNativeExactQ4Fixture; // initial disposable DATA;shader replaces every consumed panel
 	static constexpr uint32_t DoneMarker=0x31413451,FaultMarker=0x46413451;
 	static constexpr unsigned RomWords=2048,ExtraWords=300;
@@ -36,7 +49,10 @@ class PioneerNativeBfpLease {
 	static constexpr uint32_t DoneMarker=0x3142464e,FaultMarker=0x4642464e;
 #endif
 #endif
-	uint32_t saved[2524+RomWords+ExtraWords]={},tlb[2][3]={};
+#ifndef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+	static constexpr unsigned TotalWords=2524+RomWords+ExtraWords;
+#endif
+	uint32_t saved[TotalWords]={},tlb[2][3]={};
 	unsigned bits=0;
 	bool attempted=false,owned=false,modified=false;
 	PioneerNativeBfpResult result={};
@@ -63,8 +79,21 @@ class PioneerNativeBfpLease {
 			&& io.BfpRead(0x17ffc0)==result.phase && io.BfpRead(0x17ffc4)==2 && io.BfpRead(0x17ffc8)==result.marker;
 	}
 public:
-	static constexpr unsigned SavedWords=2524+RomWords+ExtraWords;
+	static constexpr unsigned SavedWords=TotalWords;
 	static uint32_t Address(unsigned index) {
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+		if(!index)return 0x6000;
+		index--;if(index<1024)return 0x70000+index*4;
+		index-=1024;if(index<2048)return 0x6e000+index*4;
+		index-=2048;if(!index)return 0x82000;
+		index--;if(index<128)return 0xa0000+index*4;
+		index-=128;if(index<516)return 0xa4ff0+index*4;
+		index-=516;if(index<516)return 0xa5ff0+index*4;
+		index-=516;if(index<132)return 0xa6ff0+index*4;
+		index-=132;if(index<132)return 0xa73f0+index*4;
+		index-=132;if(index<64)return 0x92000+index*4;
+		index-=64;return index<3?0x17ffc0+index*4:UINT32_MAX;
+#else
 		if(!index)return 0x6000;
 		index--;if(index<RomWords)return 0x70000+index*4;
 		index-=RomWords;if(index<2048)return 0x6e000+index*4;
@@ -79,21 +108,30 @@ public:
 		index-=260;
 #endif
 		return index<3?0x17ffc0+index*4:UINT32_MAX;
+#endif
 	}
 	template<class Image> static uint32_t StagedWord(unsigned bits,unsigned index) {
 		const uint32_t address=Address(index);
 		if(address==0x6000)return Image::Boot;
 		if(address>=0x70000 && address<0x70000+RomWords*4)return Image::Word(bits,(address-0x70000)/4);
+#ifdef PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC
+		if(address==0x82000)return 0x3f800000;
+		if(address>=0xa0000 && address<0xa0200){
+			const unsigned pair=(address-0xa0000)/4;
+			return SrcaHalf(pair*2+1)|(SrcaHalf(pair*2+2)<<16);
+		}
+#else
 		if(address>=0x90000 && address<0x90000+Fixture::WeightBytes(bits))
 			return Fixture::WeightWord(bits,(address-0x90000)/4);
 		if(address>=0x91000 && address<0x91200)return Fixture::InputWord((address-0x91000)/4);
+#endif
 		if(address>=0x92000 && address<0x92100)return 0x7fc00001; // invalid until device writes BOTH copies
 		return 0; // private stack,headers,unused weight/code padding,status
 	}
 	const PioneerNativeBfpResult& Result() const { return result; }
 	void Abandon() { if(owned)Unknown(); } // CPU metadata ONLY; no IO on close/failed reply
 	template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned format) {
-#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_SRCA_PROBE_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 		if(format!=4)return false; // no old general-BFP8 route in this family
 #endif
 		if(attempted || (format!=4 && format!=8))return false;
