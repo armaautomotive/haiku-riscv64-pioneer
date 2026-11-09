@@ -47,3 +47,14 @@ validation and conflicting trace/client roles were rejected in compile-only
 tests. Existing tag133 and tag134 role/protocol tests passed regression. The
 new identity alone is NOT a runnable driver: the native program-data and
 retained owner selection still need integration and separate qualification.
+
+Tag136 build update: the corrected QTPF ROOT/worker DATA is now bound to the
+existing full-card native owner under the distinct tag136 diagnostic role.
+Two builds produced the same experimental driver SHA-256
+f5b4297b8ed02e465bb3c8bb22d211d05208545feb3fbfebfafab4a58fc24f75.
+The build rechecked all 15 compiled-in program sections, required driver
+symbols, role/reload identities and stack limits, and rejected CPU inference
+and reference symbols. This is a build result, NOT installation, real-model
+output, hardware execution, an Assistant mode, or a throughput measurement.
+The physical one-shot parent/client and current device state remain to be
+qualified before a test.

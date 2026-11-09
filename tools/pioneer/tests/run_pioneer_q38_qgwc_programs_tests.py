@@ -25,6 +25,12 @@ with tempfile.TemporaryDirectory(prefix='qgwc-programs-',dir='/private/tmp') as 
   subprocess.run([sys.executable,str(generator),'--qgwc-srca-inspection',str(r),str(w),str(out)],check=True)
  assert first.read_bytes()==second.read_bytes()
  assert hashlib.sha256(first.read_bytes()).hexdigest()=='fbde4c739bb7bce2c76cb4a1d6ac93c4a083a4de9c559433686e8f036e34a1b0'
+ native_a=tmp/'native-a.h';native_b=tmp/'native-b.h'
+ for r,w,out in ((root_a,worker_a,native_a),(root_b,worker_b,native_b)):
+  subprocess.run([sys.executable,str(generator),'--qgwc-srca-native',str(r),str(w),str(out)],check=True)
+ assert native_a.read_bytes()==native_b.read_bytes()
+ assert hashlib.sha256(native_a.read_bytes()).hexdigest()=='4e7b07e725198a0a65d5731a07cf3cdf1402b48040ba4cd18ac9242cd5039690'
+ assert native_a.read_bytes()!=first.read_bytes()
  before=first.read_bytes()
  result=subprocess.run([sys.executable,str(generator),'--qgwc-srca-inspection',str(root_a),str(worker_a),str(first)],capture_output=True)
  assert result.returncode and first.read_bytes()==before

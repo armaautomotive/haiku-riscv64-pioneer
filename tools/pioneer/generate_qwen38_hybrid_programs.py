@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwc='--qgwc-srca-inspection' in args
+args=sys.argv[1:];qgwcnative='--qgwc-srca-native' in args
+if qgwcnative:
+    if args.count('--qgwc-srca-native')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--matrix-')) and x!='--qgwc-srca-native' for x in args):
+        raise SystemExit('ambiguous QGWC SrcA native selector')
+    args.remove('--qgwc-srca-native');args.insert(0,'--qgwc-srca-inspection')
+qgwc='--qgwc-srca-inspection' in args
 if qgwc:
     if args.count('--qgwc-srca-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--matrix-')) and x!='--qgwc-srca-inspection' for x in args):
         raise SystemExit('ambiguous QGWC SrcA selector')
@@ -151,7 +156,17 @@ if matrix:
                   ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
                   '#error QGW8 coarse timing data is offline inspection only', '#endif']
     elif qgwc:
-        lines += [' || !defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWC_PROGRAMS_INSPECTION != 1 \\',
+        if qgwcnative:
+            lines += [' || !defined(PIONEER_Q38_QGWC_NATIVE_136) || PIONEER_Q38_QGWC_NATIVE_136 != 1 \\',
+                      ' || !defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWC_PROGRAMS_INSPECTION != 1 \\',
+                      ' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
+                      ' || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \\',
+                      ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
+                      ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
+                      '#error QGWC native data requires the isolated tag136 build role', '#endif',
+                      '#include "PioneerQ38QgwcNativeRole.h"']
+        else:
+            lines += [' || !defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWC_PROGRAMS_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || PIONEER_Q38_QGWC_PLAN_SIMULATION != 1 \\',
                   ' || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \\',
                   ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\',

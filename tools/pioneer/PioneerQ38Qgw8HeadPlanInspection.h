@@ -30,7 +30,7 @@ class PioneerQ38Qgw8HeadPlanInspection {
   for(unsigned i=0;i<16;i++){staged[i]=fixed[i];staged[16+i]=b[16+i];}
   for(unsigned i=0;i<8;i++)staged[32+i]=b[8+i];
   const uint32_t witness[]={
-#ifdef PIONEER_Q38_QGWC_PLAN_SIMULATION
+#if defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWC_NATIVE_136)
    0x43574751,
 #elif defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
    0x41475751,

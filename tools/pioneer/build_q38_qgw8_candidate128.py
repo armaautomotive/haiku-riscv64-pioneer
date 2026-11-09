@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build isolated tag128, tag129 or tag131 candidates; NEVER install or run."""
+"""Build isolated QGW8/QGWC candidates; NEVER install or run."""
 import hashlib
 import os
 from pathlib import Path
@@ -7,10 +7,11 @@ import re
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv) not in (4,5) or (len(sys.argv)==5 and sys.argv[4] not in ('--hidden-129','--trace-131','--dense-stage-132','--dense-input-133','--dense-value-134')) \
+if not __debug__ or len(sys.argv) not in (4,5) or (len(sys.argv)==5 and sys.argv[4] not in ('--hidden-129','--trace-131','--dense-stage-132','--dense-input-133','--dense-value-134','--srca-136')) \
  or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('absolute Haiku build, pinned header, new absolute output, optional --hidden-129 or --trace-131 required')
+    raise SystemExit('absolute Haiku build, pinned header, new absolute output, optional --hidden-129, --trace-131, --dense-stage-132, --dense-input-133, --dense-value-134 or --srca-136')
 hidden=len(sys.argv)==5 and sys.argv[4]=='--hidden-129'
+srca=len(sys.argv)==5 and sys.argv[4]=='--srca-136'
 stage=len(sys.argv)==5 and sys.argv[4]=='--dense-stage-132'
 input_trace=len(sys.argv)==5 and sys.argv[4]=='--dense-input-133'
 value_trace=len(sys.argv)==5 and sys.argv[4]=='--dense-value-134'
@@ -18,7 +19,7 @@ trace=stage or input_trace or value_trace or (len(sys.argv)==5 and sys.argv[4]==
 sdk,header,out=map(Path,sys.argv[1:4]);here=Path(__file__).resolve().parent;root=here.parent.parent
 if not all(p.is_absolute() for p in (sdk,header,out)) or not sdk.is_dir() or not header.is_file() or out.exists():
     raise SystemExit('invalid paths')
-expected_header='ed4f548f42d1ead00b9c2a6a6ba4afad3e3d8acebecf3ac437b8b2bb7a76cf92' if value_trace else '81cc1a2be97a4246d7ae9a9a7e9594e589f8af795d49912031f0d776c754e412' if input_trace else 'd8dede4df3cbfa0b88828fc42dde395aa4647a682827483d4954ba51ab479294' if stage else 'bcb6b4b86349b236c94e1871763b80f38ff72a3bf369e7467baa2ec83767af24' if trace else '8ddeb0cfa01857557be9416fa61c8029040570cf67bd412e6dd1f59fdc32eecb'
+expected_header='4e7b07e725198a0a65d5731a07cf3cdf1402b48040ba4cd18ac9242cd5039690' if srca else 'ed4f548f42d1ead00b9c2a6a6ba4afad3e3d8acebecf3ac437b8b2bb7a76cf92' if value_trace else '81cc1a2be97a4246d7ae9a9a7e9594e589f8af795d49912031f0d776c754e412' if input_trace else 'd8dede4df3cbfa0b88828fc42dde395aa4647a682827483d4954ba51ab479294' if stage else 'bcb6b4b86349b236c94e1871763b80f38ff72a3bf369e7467baa2ec83767af24' if trace else '8ddeb0cfa01857557be9416fa61c8029040570cf67bd412e6dd1f59fdc32eecb'
 if hashlib.sha256(header.read_bytes()).hexdigest()!=expected_header:
     raise SystemExit('candidate program header is not pinned')
 out.mkdir(mode=0o700)
@@ -41,7 +42,7 @@ names=('PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128','PIONEER_Q38_QGW8_NATIVE_INSPECTI
  'PIONEER_Q38_QGW8_PROGRAMS_INSPECTION','PIONEER_Q38_QGW8_CONTROL_INSPECTION','PIONEER_Q38_QGW8_SPAN_INSPECTION',
  'PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION','PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION','PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT')
 flags+=['-D'+name+'=1' for name in names]
-tag='0x2026110700010134ULL' if value_trace else '0x2026110700010133ULL' if input_trace else '0x2026110700010132ULL' if stage else '0x2026110700010131ULL' if trace else '0x2026110700010129ULL' if hidden else '0x2026110700010128ULL'
+tag='0x2026110900010136ULL' if srca else '0x2026110700010134ULL' if value_trace else '0x2026110700010133ULL' if input_trace else '0x2026110700010132ULL' if stage else '0x2026110700010131ULL' if trace else '0x2026110700010129ULL' if hidden else '0x2026110700010128ULL'
 flags+=['-DTT_PIONEER_DRIVER_RELOAD=1', '-DPIONEER_DRIVER_BUILD_TAG='+tag,
  '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"']
 if hidden:flags+=['-DPIONEER_Q38_QGW8_HIDDEN_NATIVE_129=1']
@@ -49,6 +50,7 @@ if trace:flags+=['-DPIONEER_Q38_QGW8_TRACE_NATIVE_131=1']
 if stage:flags+=['-DPIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132=1']
 if input_trace:flags+=['-DPIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133=1']
 if value_trace:flags+=['-DPIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134=1']
+if srca:flags+=['-DPIONEER_Q38_QGWC_NATIVE_136=1','-DPIONEER_Q38_QGWC_PROGRAMS_INSPECTION=1']
 driver=root/'src/add-ons/kernel/drivers/misc'
 source=driver/'pioneer_q38_hybrid_full_driver.cpp'
 declared=re.findall(r'^#define ([A-Z][A-Z0-9_]*) 1$',source.read_text(),re.M)
@@ -66,7 +68,8 @@ for name in ('PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128','PIONEER_Q38_QGW8_NATIVE_IN
  *(['PIONEER_Q38_QGW8_HIDDEN_NATIVE_129'] if hidden else []), *(['PIONEER_Q38_QGW8_TRACE_NATIVE_131'] if trace else []),
  *(['PIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132'] if stage else []),
  *(['PIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133'] if input_trace else []),
- *(['PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134'] if value_trace else [])):
+ *(['PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134'] if value_trace else []),
+ *(['PIONEER_Q38_QGWC_NATIVE_136','PIONEER_Q38_QGWC_PROGRAMS_INSPECTION'] if srca else [])):
     missing=[v for v in role if v!='-D'+name+'=1']
     rolecheck(missing,False);rolecheck([*missing,'-D'+name+'=0'],False)
 for name in ('PIONEER_Q38_QGW8_FULL_NATIVE_INSPECTION','PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128',
@@ -85,6 +88,7 @@ if trace:reload_flags+=['-DPIONEER_Q38_QGW8_TRACE_NATIVE_131=1']
 if stage:reload_flags+=['-DPIONEER_Q38_QGW8_DENSE_STAGE_NATIVE_132=1']
 if input_trace:reload_flags+=['-DPIONEER_Q38_QGW8_DENSE_INPUT_NATIVE_133=1']
 if value_trace:reload_flags+=['-DPIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134=1']
+if srca:reload_flags+=['-DPIONEER_Q38_QGWC_NATIVE_136=1']
 def reloadcheck(values,expected):
     result=subprocess.run([cxx,'-std=gnu++17',*values,*includes,'-E','-x','c++',str(reload_header)],capture_output=True,text=True)
     if (result.returncode==0)!=expected:raise RuntimeError('candidate reload identity mismatch: '+result.stderr[:1000])
@@ -101,6 +105,9 @@ if input_trace:
 if value_trace:
     reloadcheck([f for f in reload_flags if f!='-DPIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134=1'],False)
     reloadcheck([f for f in reload_flags if f!='-DPIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134=1']+['-DPIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134=0'],False)
+if srca:
+    reloadcheck([f for f in reload_flags if f!='-DPIONEER_Q38_QGWC_NATIVE_136=1'],False)
+    reloadcheck([f for f in reload_flags if f!='-DPIONEER_Q38_QGWC_NATIVE_136=1']+['-DPIONEER_Q38_QGWC_NATIVE_136=0'],False)
 def run(*args):subprocess.run([str(v) for v in args],check=True,cwd=out)
 dep=subprocess.check_output([*common,*flags,*includes,'-MM',str(source)],text=True)
 dependencies={Path(p).resolve() for p in dep.replace('\\\n','').split(':',1)[1].split() if Path(p).resolve().is_relative_to(root)}
@@ -113,6 +120,7 @@ binary=out/('tenstorrent_pci_probe-qgw8-trace-131' if trace else 'tenstorrent_pc
 if stage:binary=out/'tenstorrent_pci_probe-qgw8-dense-stage-132'
 if input_trace:binary=out/'tenstorrent_pci_probe-qgw8-dense-input-133'
 if value_trace:binary=out/'tenstorrent_pci_probe-qgw8-dense-value-134'
+if srca:binary=out/'tenstorrent_pci_probe-qgwc-srca-136'
 run(cxx,'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenstorrent_pci_probe',compiler_path('crtbeginS.o'),
  release/'system/glue/haiku_version_glue.o',out/'native.o',out/'profile.o',release/'system/kernel/kernel.so',
  compiler_path('libgcc.a'),compiler_path('crtendS.o'),'-o',binary)
@@ -142,5 +150,5 @@ if not frames or any(len(row)!=3 or row[2]!='static' or int(row[1])>4096 for row
 selected=[int(row[1]) for row in frames if 'TokenNative' in row[0] or 'Qgw8Upload' in row[0]]
 if not selected or max(selected)>2048:raise RuntimeError('QGW8/token stack limit')
 if any(hashlib.sha256(p.read_bytes()).hexdigest()!=digest for p,digest in frozen.items()):raise RuntimeError('source changed during candidate build')
-print('QGW8_DENSE_VALUE_134_SHA256' if value_trace else 'QGW8_DENSE_INPUT_133_SHA256' if input_trace else 'QGW8_DENSE_STAGE_132_SHA256' if stage else 'QGW8_TRACE_131_SHA256' if trace else 'QGW8_HIDDEN_129_SHA256' if hidden else 'QGW8_CANDIDATE_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
+print('QGWC_SRCA_136_SHA256' if srca else 'QGW8_DENSE_VALUE_134_SHA256' if value_trace else 'QGW8_DENSE_INPUT_133_SHA256' if input_trace else 'QGW8_DENSE_STAGE_132_SHA256' if stage else 'QGW8_TRACE_131_SHA256' if trace else 'QGW8_HIDDEN_129_SHA256' if hidden else 'QGW8_CANDIDATE_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
 print('EXPERIMENTAL BUILD ONLY: NOT INSTALLED, TESTED ON DEVICE, OR QUALIFIED')
