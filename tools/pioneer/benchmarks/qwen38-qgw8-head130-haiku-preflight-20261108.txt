@@ -1,0 +1,27 @@
+QGW8 head130 source check and physical parent, 2026-11-08
+
+The source-only client ran on Haiku against the pinned original 27B model and
+the separately pinned CPU hidden snapshot. It authenticated both, independently
+re-derived the three prepared head bands and 96 expected words, and exited 0
+with PASS_HEAD130_SOURCE_ONLY;NO_DEVICE_OPEN. This is not GPU evidence.
+
+Installed stable driver before admission: SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag 2026102100010012, generation 2, cold0, active_owner0. Haiku reported 64
+CPUs and 137034936320 bytes maximum memory. The staged private client SHA-256
+is 0fd16ec71b967dc063e8163b04c4cbee3060efe4c08cdabeca7ee22d842597f7;
+the private driver SHA-256 is
+34b6007a22e85ae709e039bf0bff9afcaa2ca50520908b442512d45626be546f.
+
+Three initial background launcher commands exited before trial admission,
+without creating .trial-once, starting the client or changing drivers. The
+traced third launch showed that its own outer shell, whose arguments included
+the staging path, matched the conservative process-ownership guard. Those
+logs remain in the private stage. A separately detached launch avoided that
+outer-shell lifetime issue. Parent team 904 and source-verification team 937
+were then observed alive with state VERIFYING_SOURCE_NO_DEVICE. This is a
+live observation, not a terminal result; inspect the same parent, state,
+exit and logs before doing anything else. Do not launch a second trial.
+
+This record does not establish any P100A arithmetic, full-model correctness,
+steady-state inference speed or 20-token/s result.
