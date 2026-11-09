@@ -13,6 +13,7 @@
 #include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
 #include "PioneerQ38DenseQ8MatrixRootJobs.h"
+#include "PioneerQ38DenseQ8MatrixRootFrame.h"
 #endif
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #include "PioneerQ38EarlyJobSnapshotBuildRole.h"

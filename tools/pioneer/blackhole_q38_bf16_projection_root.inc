@@ -240,6 +240,16 @@ static BF_ROOT_FN void BfInputsSeal(const uint32_t* d){
  for(unsigned i=0;i<d[14]/2;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
 }
 static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ if(BfDenseQ8(d)){
+  if(w>=PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]) || !n)scalar_fault_park();
+  BfDenseSeal(d);uint32_t tuple[4],job[64];
+  for(unsigned i=0;i<4;i++)tuple[i]=Words(BfDenseScheduleIO::Parts+w*16)[i];
+  if(!PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,Boot(w),d[42],d[43],d[40],d[6],n-1,job))scalar_fault_park();
+  for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=job[i];
+  BfDenseSeal(d);return;
+ }
+#endif
  BF_PAIR_SEAL(d,w);if(!n || n>=0x7ffffffe)scalar_fault_park();const auto* p=Words(BFR::Parts+w*32);
  for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=0;
  const unsigned h[]={M::Magic,n,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};

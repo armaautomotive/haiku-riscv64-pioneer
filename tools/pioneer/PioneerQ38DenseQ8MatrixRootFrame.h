@@ -20,7 +20,11 @@ struct PioneerQ38DenseQ8MatrixRootFrame {
  using M=PioneerQ38Bfp8WorkerJob;
  // tuple is the scheduler's address, bank, first row and band count.
  // Geometry validation does not authenticate the tuple or boot record.
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ static __attribute__((noinline,section(".bf16.q8frame"))) bool Build(const uint32_t* tuple,const uint32_t* boot,unsigned layer,unsigned role,
+#else
  static bool Build(const uint32_t* tuple,const uint32_t* boot,unsigned layer,unsigned role,
+#endif
   unsigned position,unsigned invocation,unsigned previous,uint32_t* output){
   namespace W=PioneerQ38DenseQ8MatrixWorkerLayout;
   if(!tuple || !boot || !output || previous>=0x7ffffffe)return false;
@@ -38,7 +42,8 @@ struct PioneerQ38DenseQ8MatrixRootFrame {
   for(unsigned i=0;i<16;i++)next[16+i]=leaf[i];
   next[32]=tuple[2];next[33]=role==5?12288:1024;next[34]=role;next[35]=8;
   if(!W::JobShape(next,boot,previous,0))return false;
-  for(unsigned i=0;i<64;i++)output[i]=next[i];return true;
+  for(unsigned i=0;i<64;i++)output[i]=next[i];
+  return true;
  }
 };
 #endif

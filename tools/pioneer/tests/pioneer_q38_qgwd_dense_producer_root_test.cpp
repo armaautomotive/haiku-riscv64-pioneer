@@ -6,6 +6,7 @@
 #include "pioneer_q38_hybrid_actual_root_test.cpp"
 #include "../PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #include "../PioneerQ38DenseQ8MatrixRootJobs.h"
+#include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 #include "../PioneerQ38Bf16ProducerLayout.h"
 #include <fstream>
 namespace Q=PioneerQ38DenseQ8MatrixWorkerLayout;
@@ -76,7 +77,15 @@ int main(int argc,char** argv){
    assert(m->memory.at(0x16ebc0+w*16+field*4)==expected.parts[w][field]);
    assert(m->memory.at(0x16f330+w*16+field*4)==expected.parts[w][field]);
   }
-  assert(m->Run(seals[component],d));m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));m->memory[0x16ebc0]^=1;
+  for(unsigned w:{0U,19U}){
+   uint32_t boot[64],frame[64];for(unsigned i=0;i<64;i++)boot[i]=m->memory.at(0x170000+w*256+i*4);
+   assert(PioneerQ38DenseQ8MatrixRootFrame::Build(expected.parts[w],boot,layer,role,0,2025,6,frame));
+   assert(m->Run(m->job[component],d,w,7));
+   for(unsigned i=0;i<64;i++)assert(m->memory.at(out+4*i)==frame[i]);
+  }
+  assert(m->Run(seals[component],d));m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));
+  assert(!m->Run(m->job[component],d,0,7));m->memory[0x16ebc0]^=1;
+  if(role!=5)assert(!m->Run(m->job[component],d,32,7));
   m->memory[0x16dc00+4*index]^=1;assert(!m->Run(seals[component],d));m->memory[0x16dc00+4*index]^=1;
   m->memory[0x16dc00+4*index]++;assert(!m->Run(m->build[component],d));m->memory[0x16dc00+4*index]--;
  }

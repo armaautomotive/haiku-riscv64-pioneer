@@ -23,10 +23,10 @@ pins={'boot.bin':'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668
  'bf16.bin':'148a1d0897d07b69f0cd03d553a4f424e0da96f5cba4038ae8e0d991ecaf5f50',
  'program.elf':'d44e18940bcd37cf35bc2f124b314843cfd99314e8aaebd5d4983eb074918eb0'}
 if qgwd:
- pins.update({'text.bin':'b0ffa7741a18dea791647e0b99974393be0bc718f96958c262cc0989f2ae5144',
+ pins.update({'text.bin':'f6cab19d6abfb75ba3db1ea218404f96191f1976b7133f94bddfa1a131386bea',
   'conv.bin':'ff737435c67d67c87d344a9586aa61f85085ced1b8a58ab468ceae30219ac155',
-  'bf16.bin':'051b497b025c6b335493bf087df4d78d20c42566c427f8e64cfe83d32872c306',
-  'program.elf':'beebaf8cf32054626ec5feca74ef1afc889b2411db78bc7b80c1dde2e03f5721'})
+  'bf16.bin':'06c91a23b12b04ef699d60f6109eed6d3b35082e35f631562e60a2296e55c066',
+  'program.elf':'d73cc1efd67164eb8ed9d15f6f73c74f1d6ddd1d55af3f1abb9a7086c61b65cb'})
 for folder in (first,second):
  for name,digest in pins.items():assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest,(folder,name)
 for path,digest in ((worker/'program.elf','b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8' if qgwd else '3450e5b2d46b27e9ac3f81cb62de79d53b0613d85af0acc03a73a149e812e09e'),
