@@ -74,3 +74,29 @@ separate CPU-only head replay described in qwen38-qgw8-card-head-replay-
 snapshot contents private and report any discrepancy and measured timing
 without claiming full-model correctness or a steady-state speed from one
 token.
+
+Power outage and recovery, 2026-11-08 local
+-----------------------------------------
+The user reported a house power outage and then that power returned. The last
+pre-outage observation had both original processes present, with at least
+5905760256/21167624192 bytes uploaded and no reported client stderr. There
+was no observed terminal result or completed snapshot before the outage.
+
+After power returned, the previously running passive serial monitor's log
+contained a fresh default-Linux boot through its early console handoff. That
+does not establish that Linux completed boot, that the card session finished,
+or that any filesystem writes survived intact. The prior Haiku SSH address
+timed out. The Mac's active network is now on a different IPv4 subnet from
+the old Pioneer address, and the recorded Pioneer Ethernet identities were
+not present in the Mac's existing neighbor table. No network sweep, relay
+pulse, driver change, new device operation, or test retry was performed.
+
+The current Pioneer power state, Linux IP, installed driver on disk, hardware
+ownership and integrity of the trial artifacts remain unverified. The user
+was asked for Linux's current IPv4 address or what is displayed on screen.
+Once a verified connection is available, first identify the OS and boot, read
+the original trial state and logs, and inspect storage/driver integrity before
+any recovery or new device work. A timeout alone is not proof that the
+previous process exited. Do not infer a successful test or overwrite its
+files, and never use the front-panel toggle without actual power-state
+evidence. Continue to preserve unrelated local changes.
