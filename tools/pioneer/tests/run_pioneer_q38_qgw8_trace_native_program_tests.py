@@ -67,12 +67,36 @@ with tempfile.TemporaryDirectory(prefix='qgw8-trace-native-program-',dir='/priva
     source=tmp/'native0.h'
     result=subprocess.run([compiler,'-std=c++17',*flags,'-I'+str(root),'-fsyntax-only','-x','c++',str(source)],capture_output=True)
     assert result.returncode==0,result.stderr.decode(errors='replace')[:1000]
+    selected=root/'PioneerQ38TokenSelectedPrograms.h'
+    def select(header,options):
+        return subprocess.run([compiler,'-std=c++17',*options,'-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"',
+                               '-I'+str(root),'-fsyntax-only','-x','c++',str(selected)],capture_output=True)
+    selection=select(source,flags)
+    assert selection.returncode==0,selection.stderr.decode(errors='replace')[:1000]
+    plan=root/'PioneerQ38Qgw8TraceRuntimePlan.h'
+    plan_result=subprocess.run([compiler,'-std=c++17',*flags,'-DPIONEER_Q38_GDN_MUTABLE_STATE=1',
+                                '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(source)+'"','-I'+str(root),'-fsyntax-only','-x','c++',str(plan)],capture_output=True)
+    assert plan_result.returncode==0,plan_result.stderr.decode(errors='replace')[:2000]
+    old=tmp/'old.h'
+    subprocess.run([sys.executable,str(generator),'--qgw8-native-candidate',str(baseline),str(worker),str(old)],check=True,capture_output=True)
+    assert select(old,flags).returncode, 'tag131 accepted the old QTP8 program'
+    oldflags=[x for x in flags if x not in ('-DPIONEER_Q38_QGW8_TRACE_NATIVE_131=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010131ULL')]
+    oldflags+=['-DPIONEER_DRIVER_BUILD_TAG=0x2026110700010129ULL','-DPIONEER_Q38_QGW8_HIDDEN_NATIVE_129=1']
+    assert select(source,oldflags).returncode, 'tag129 accepted QTPA trace program'
     if sdk is not None:
         cross=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
         headers=sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
         result=subprocess.run([str(cross),'-std=gnu++17',*flags,'-I'+str(root),'-I'+str(headers),'-I'+str(headers/'os'),
                                '-idirafter',str(headers/'posix'),'-fsyntax-only','-x','c++',str(source)],capture_output=True)
         assert result.returncode==0,result.stderr.decode(errors='replace')[:1000]
+        result=subprocess.run([str(cross),'-std=gnu++17',*flags,'-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(source)+'"',
+                               '-I'+str(root),'-I'+str(headers),'-I'+str(headers/'os'),'-idirafter',str(headers/'posix'),
+                               '-fsyntax-only','-x','c++',str(selected)],capture_output=True)
+        assert result.returncode==0,result.stderr.decode(errors='replace')[:1000]
+        result=subprocess.run([str(cross),'-std=gnu++17',*flags,'-DPIONEER_Q38_GDN_MUTABLE_STATE=1',
+                               '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(source)+'"','-I'+str(root),'-I'+str(headers),'-I'+str(headers/'os'),
+                               '-idirafter',str(headers/'posix'),'-fsyntax-only','-x','c++',str(plan)],capture_output=True)
+        assert result.returncode==0,result.stderr.decode(errors='replace')[:2000]
         print('PASS tag131 trace program RISC-V syntax-only; NO driver object or device')
     assert len(re.findall(rb'// SHA256 [0-9a-f]{64}\nstatic const uint32_t ',outputs[0]))==15
 print('PASS distinct tag131 build-only QTPA identity, 15 pinned sections, reproducibility and role refusals; NO DRIVER OR DEVICE')

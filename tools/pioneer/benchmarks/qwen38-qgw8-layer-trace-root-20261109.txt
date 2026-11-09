@@ -222,11 +222,17 @@ wrong-image and late-selection refusals were checked. The existing tag129
 driver rebuilt to its previous SHA-256
 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
 
-This is program DATA only: no tag131 driver object or client exists. The
-existing reload protocol explicitly refuses tag131, and the trace startup,
-read and control code remain limited to their fake-owner roles. The new
-identity must not be loaded or run; it neither proves workspace ownership
-nor produces an accelerator result or performance improvement.
+The normal token-program selector now accepts QTPA only for tag131 and
+refuses the older QTP8 image for that role; conversely tag129 refuses QTPA.
+The tag131 owner selection uses the trace-zeroing startup plan. Host and
+RISC-V SDK syntax-only checks passed for the actual selected program and
+runtime plan; the plan's previous all-bank and fake-owner startup tests
+remain offline, and the native selection has not run against hardware.
+
+No tag131 driver object or client exists. The existing reload protocol
+explicitly refuses tag131; trace read and control code remain limited to
+fake-owner roles. This identity must not be loaded or run; it neither
+proves workspace ownership nor produces an accelerator result or speedup.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_native_program_tests.py ABS_BASELINE ABS_TRACE_A ABS_TRACE_B ABS_WORKER --sdk ABS_HAIKU_SDK
 

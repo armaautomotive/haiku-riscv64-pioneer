@@ -7,6 +7,8 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
 #error Trace runtime DATA test is isolated and not a native or Work role
 #endif
+#elif defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#include "PioneerQ38Qgw8TraceNativeProgramRole.h"
 #elif !defined(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION)
 #error Explicit trace runtime DATA or fake-owner inspection required
 #endif

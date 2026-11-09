@@ -21,7 +21,7 @@
 #include "PioneerQ38TokenMemory.h"
 #include "PioneerBulkUpload.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRuntimePlan.h"
-#ifdef PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION
+#if defined(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceRuntimePlan.h"
 using PioneerQ38SelectedTokenRuntimePlan=PioneerQ38Qgw8TraceRuntimePlan;
 #else
