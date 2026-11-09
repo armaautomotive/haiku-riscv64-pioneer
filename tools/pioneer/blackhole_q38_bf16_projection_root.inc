@@ -292,10 +292,32 @@ static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsig
  // source and retained frontier before its first request.
  return true;
 }
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+// Caller must authenticate the completed worker job and its receipt before
+// publishing any of these values. This copies already-device-produced data;
+// it performs no CPU-reference validation and grants no ownership.
+static BF_ROOT_FN void BfStoreDenseMatrix(const uint32_t* d,unsigned w){
+ if(!BfDenseQ8(d) || w>=PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))scalar_fault_park();
+ BfDenseSeal(d);const unsigned first=Words(BfDenseScheduleIO::Parts+w*16)[2];
+ const unsigned count=Words(BfDenseScheduleIO::Parts+w*16)[3]*32;
+ if(!count || first>=d[11] || count>d[11]-first)scalar_fault_park();
+ for(unsigned i=0;i<count;i++)if((Words(L::Scratch)[64+i]&0x7f800000)==0x7f800000)scalar_fault_park();
+ BfDenseSeal(d);for(unsigned i=0;i<count;i++)Words(L::Projected)[first+i]=Words(L::Scratch)[64+i];
+ BfDenseSeal(d);
+}
+#endif
 static BF_ROOT_FN void BfGatherMatrix(const uint32_t* d,uint32_t* tracked,unsigned w){
- BF_PAIR_SEAL(d,w);MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ if(BfDenseQ8(d))BfDenseSeal(d);else
+#endif
+ BF_PAIR_SEAL(d,w);
+ MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
  BfMatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
- const unsigned groups=Words(BFR::Parts+w*32)[2];
+ const unsigned groups=
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+  BfDenseQ8(d)?Words(BfDenseScheduleIO::Parts+w*16)[3]*2:
+#endif
+  Words(BFR::Parts+w*32)[2];
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
  uint32_t before[8],after[8];
 #ifdef PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE
@@ -311,9 +333,14 @@ static BF_ROOT_FN void BfGatherMatrix(const uint32_t* d,uint32_t* tracked,unsign
 #else
  if(!PioneerQ38Bf16MatrixReceipt::Matrix(proof,reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256),Boot(w),before,after))scalar_fault_park();
 #endif
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ if(BfDenseQ8(d))BfStoreDenseMatrix(d,w);else
+#endif
+ {
  const unsigned first=Words(BFR::Rows)[w];
  for(unsigned i=0;i<groups*16;i++){
   const unsigned bits=Words(L::Scratch)[64+i];if((bits&0x7f800000)==0x7f800000)scalar_fault_park();Words(L::Projected)[first+i]=bits;
+ }
  }
  for(unsigned i=0;i<8;i++){
   Words(L::Counters)[w*8+i]=after[i];

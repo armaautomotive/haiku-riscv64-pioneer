@@ -64,8 +64,9 @@ int main(int argc,char** argv){
  assert(!Call(*m,jobs[0],d,0,0,out,true));
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
  auto validators=Symbols(argv[1],"PioneerQ38DenseQ8MatrixWorkerLayout::JobShape(");
+ auto stores=Symbols(argv[1],"Projection::BfStoreDenseMatrix(");
  for(unsigned layer:{3U,63U})for(unsigned role=5;role<=7;role++)for(unsigned component=0;component<2;component++){
-  m->memory[d+4*42]=layer;m->memory[d+4*43]=role;Schedule expected;
+  m->memory[d+4*42]=layer;m->memory[d+4*43]=role;m->memory[d+4*11]=role==5?12288:1024;Schedule expected;
   const unsigned units=role==5?384:32,index=((layer/4)*3+role-5)*21;unsigned first=0;
   for(unsigned bank=0;bank<7;bank++){
    const unsigned n=units/7+unsigned(bank<units%7);
@@ -86,6 +87,14 @@ int main(int argc,char** argv){
    assert(Call(*m,validators[component],out,0x170000+w*256,6,0,true) && m->regs[10]==1);
    m->memory[out+34*4]=8;assert(Call(*m,validators[component],out,0x170000+w*256,6,0,true) && !m->regs[10]);
    m->memory[out+34*4]=role;
+   const unsigned count=expected.parts[w][3]*32,first=expected.parts[w][2];
+   for(unsigned i=0;i<count;i++)m->memory[out+256+i*4]=0x3f000000+i;
+   assert(m->Run(stores[component],d,w));
+   for(unsigned i=0;i<count;i++)assert(m->memory.at(0x80000+(first+i)*4)==0x3f000000+i);
+   m->memory[out+256+(count-1)*4]=0x7fc00000;
+   for(unsigned i=0;i<count;i++)m->memory[0x80000+(first+i)*4]=0xa5a5a5a5;
+   assert(!m->Run(stores[component],d,w));
+   for(unsigned i=0;i<count;i++)assert(m->memory.at(0x80000+(first+i)*4)==0xa5a5a5a5);
   }
   assert(m->Run(seals[component],d));m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));
   assert(!m->Run(m->job[component],d,0,7));m->memory[0x16ebc0]^=1;
