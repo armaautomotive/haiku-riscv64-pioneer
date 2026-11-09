@@ -22,7 +22,7 @@ int main(int argc,char** argv){
   scheduler.table[b][0]=0x04000000;scheduler.table[b][1]=first;scheduler.table[b][2]=n*32;first+=n*32;
  }
  assert(PioneerQ38DenseQ8MatrixRootJobs::Build(scheduler,3,role));
- assert(scheduler.fields==(role==5?119U:32U)*4);
+ assert(scheduler.fields==PioneerQ38DenseQ8MatrixRootJobs::Active(role)*4);
  const auto* tuple=scheduler.tuple[0];assert(tuple[1]==0 && tuple[2]==0 && tuple[3]);
  DenseProducerImage image(argv[1],argv[2],5120,tuple[3]);image.Boot();
  assert(image.regs[8]==0x70000);image.Put(image.regs[8]-1136,3);

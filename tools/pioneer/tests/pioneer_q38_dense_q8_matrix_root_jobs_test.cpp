@@ -33,10 +33,14 @@ int main(){
  assert(!M::Build(*source,proposal,manifest.data(),manifest.size()-1) && manifest==snapshot);
  assert(!M::Build(*source,proposal,reinterpret_cast<uint32_t*>(proposal.parts.data()),M::Words));
  unsigned covered=0;
+ assert(PioneerQ38DenseQ8MatrixRootJobs::Active(5)==119);
+ assert(PioneerQ38DenseQ8MatrixRootJobs::Active(6)==32 && PioneerQ38DenseQ8MatrixRootJobs::Active(7)==32);
+ assert(PioneerQ38DenseQ8MatrixRootJobs::Active(4)==0 && PioneerQ38DenseQ8MatrixRootJobs::Active(8)==0);
  for(unsigned layer=3;layer<64;layer+=4)for(unsigned role=5;role<=7;role++){
   IO io;for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)io.table[b][f]=manifest[M::Index(layer/4,role-5,b)+f];
   PioneerQ38DenseQ8MatrixJobs host;assert(host.Build(*source,layer,role,0));
-  assert(PioneerQ38DenseQ8MatrixRootJobs::Build(io,layer,role) && io.writes==host.Count()*4);
+  assert(PioneerQ38DenseQ8MatrixRootJobs::Build(io,layer,role) && io.writes==host.Count()*4
+   && host.Count()==PioneerQ38DenseQ8MatrixRootJobs::Active(role));
   for(unsigned w=0;w<host.Count();w++){
    W::Job job={};unsigned first=UINT32_MAX;assert(host.Job(*source,layer,role,0,w,1,job,first));
    assert(io.out[w][0]==job.words[3] && PioneerQ38ProjectionRoute(io.out[w][1])==job.words[5]

@@ -19,6 +19,9 @@ typedef __UINT64_TYPE__ uint64_t;
 // derived address/bank/firstRow/bands. No source authentication, uploaded
 // metadata, worker admission, producer lifetime or launch is implied.
 struct PioneerQ38DenseQ8MatrixRootJobs {
+ // Matrix bands cover 32 rows; the old scalar recipe instead covers 16.
+ // In particular its 64-worker K/V count must never drive this schedule.
+ static unsigned Active(unsigned role){return role==5?119U:(role==6 || role==7)?32U:0U;}
  template<class IO> static bool Build(IO& io,unsigned layer,unsigned role){
   if(layer>=64 || layer%4!=3 || role<5 || role>7)return false;
   const unsigned rows=role==5?12288:1024;unsigned address[7],first[7],units[7],quota[7],done[7],emitted[7];
@@ -35,7 +38,7 @@ struct PioneerQ38DenseQ8MatrixRootJobs {
   }
   if(total!=rows/32)return false;
   const unsigned active=total<119?total:119,target=minimum<active?active:minimum;
-  if(!target || target>119)return false;
+  if(target!=Active(role))return false;
   for(unsigned extra=minimum;extra<target;extra++){
    unsigned best=7;
    // Each unit count is at most 384 and each quota at most 119, so these
