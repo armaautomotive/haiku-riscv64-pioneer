@@ -68,3 +68,18 @@ The temporary private directory is /private/tmp/qgw8-real-head-export.dtpQTaMU;
 data-header SHA-256 d3ff8eeb5830fb33f908a00d1d9dc17860724d41aedc2f0e0bf0045dd8deaae3,
 metadata-header SHA-256 664591584043b713148464b16054ba25d3456bcd603ad34686dc7208535d0fd9.
 Temporary files are not archival backups.
+
+Independent source/layout verification
+--------------------------------------
+A separate CPU-only verifier authenticated the original GGUF and the pinned
+CPU-hidden snapshot, then used the original packed Q6 tile reader rather than
+the exporter's row-reader conversion. For all three bands it freshly converted
+all 480 tiles, compared every private-header weight and input word including
+headers, re-derived the normalized input, checked all 96 expected words and
+matched the three payload SHA-256 values. Its role restrictions and invalid
+argument cases passed; its real-data process exited 0. The independent tile
+and row read paths share the BFP8 codec and reference arithmetic, so this is
+not independent validation of every numerical primitive. It performs no GPU
+operation and is not yet part of a native driver or physical authorization.
+Run tools/pioneer/tests/run_pioneer_q38_qgw8_head_export_verify.py with the
+private export directory, original GGUF and pinned CPU-hidden snapshot.
