@@ -1,0 +1,20 @@
+QGW8 card-hidden head replay: Haiku RISC-V build, 2026-11-09
+
+The CPU-only post-hoc BFP8 head replay now cross-builds for Haiku RISC-V.
+The byte-transport test shim calls Haiku's /bin/sha256sum on Haiku instead
+of redirecting to macOS /usr/bin/shasum; macOS behavior is unchanged. This
+allows later analysis using the original model already on the Pioneer rather
+than requiring another approximately 19 GB copy on the Mac.
+
+Private ELF64 RISC-V build SHA-256
+a0970010505e08ef4c4d9deca87723275585c0a99635fc05a41bee5a99e27b22;
+the binary contains /bin/sha256sum, not /usr/bin/shasum. The existing macOS
+isolated parser/build/role refusal suite and synthetic snapshot comparator
+both pass after this change. No real Haiku replay or Haiku runtime argument
+test has yet been performed; no binary was installed or executed on the
+Pioneer. This does not establish model quality, a card result or throughput.
+The separate live hidden-state trial must finish cleanly first.
+
+Rebuild with a new directory:
+ python3 tools/pioneer/build_q38_qgw8_card_head_replay.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW_ABSOLUTE_DIRECTORY

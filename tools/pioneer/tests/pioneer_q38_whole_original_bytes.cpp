@@ -18,7 +18,11 @@ static FILE* WholeOriginalFopen(const char* path,const char* mode){
 }
 static int WholeOriginalExecv(const char* path,char* const* argv){
  assert(!strcmp(path,"/bin/sha256sum") && !strcmp(argv[0],"sha256sum") && !argv[1]);
+#if defined(__HAIKU__)
+	return execv(path,argv);
+#else
  char name[]="shasum",flag[]="-a",bits[]="256";char* args[]={name,flag,bits,nullptr};return execv("/usr/bin/shasum",args);
+#endif
 }
 #define fopen WholeOriginalFopen
 #define execv WholeOriginalExecv
