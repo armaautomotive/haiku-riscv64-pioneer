@@ -18,10 +18,12 @@ flush='242400b3c143573ad6c8bd890e12114de4c1573b86d70a59499b0ed61227e90d'
 def script(path,text):path.write_text('#!/bin/sh\n'+text+'\n');path.chmod(0o755)
 def case(root,mode):
  d=root/mode;d.mkdir();stage=d/'stage';stage.mkdir();bindir=d/'bin';bindir.mkdir()
+ oldstage=d/'oldstage';oldstage.mkdir();(oldstage/'.trial-once').mkdir()
+ (oldstage/'state').write_text('INTERRUPTED_OLD_TRIAL_PRESERVE\n')
  for name in ('cache4','cache8','cachehead'):(d/name).mkdir()
  for name,text in (('installed','stable\n'),('stable','stable\n'),('guard','guard\n'),('model','model\n')):(d/name).write_text(text)
  (stage/'tenstorrent_pci_probe-qgw8-hidden-129').write_text('candidate\n')
- if mode=='spent':(stage/'.trial-once').mkdir()
+ if mode in ('spent','fresh-spent'):(stage/'.trial-once').mkdir()
  if mode in ('preverified','preverified-bad'):
   (stage/'real-preflight.attestation').write_text('WRONG\n' if mode=='preverified-bad' else 'QGW8_REAL_MODEL_AND_THREE_CACHES_VERIFIED_EXTERNALLY\n')
  (stage/'pioneer_q38_qgw8_hidden_output.awk').write_bytes((here.parent/'pioneer_q38_qgw8_hidden_output.awk').read_bytes())
@@ -69,7 +71,8 @@ def case(root,mode):
  [ "$MOCK_MODE" = bad-output ] || printf '%s\n' 'HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated' 'QGW8_HIDDEN_SNAPSHOT sha256=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bytes=20548; DATA_ONLY_AFTER_CLOSE' ''')
  replacements={
   'PATH=/boot/system/bin:/bin':f'PATH={bindir}:/usr/bin:/bin',
-  'stage=/boot/home/pioneer-qgw8-hidden-trial-20261108-a':f'stage={stage}',
+  'stage=/boot/home/pioneer-qgw8-hidden-trial-20261108-a':f'stage={oldstage if mode.startswith("fresh-") else stage}',
+  'stage=/boot/home/pioneer-qgw8-hidden-trial-20261109-b':f'stage={stage}',
   'installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe':f'installed={d}/installed',
   'device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe':f'device={d}/device',
   'stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18':f'stable={d}/stable',
@@ -85,20 +88,23 @@ def case(root,mode):
  for old,new in replacements.items():
   assert text.count(old)==1,(old,text.count(old));text=text.replace(old,new)
  parent=d/'parent';parent.write_text(text);env=dict(os.environ,MOCK_MODE=mode)
- args=['--check-only'] if mode=='check-only' else ['--preverified'] if mode.startswith('preverified') else []
+ args=(['--check-only'] if mode=='check-only' else ['--check-fresh-20261109'] if mode=='fresh-check-only'
+       else ['--fresh-20261109'] if mode in ('fresh-ok','fresh-spent')
+       else ['--preverified'] if mode.startswith('preverified') else [])
  result=subprocess.run(['sh',str(parent),*args],env=env,capture_output=True,text=True)
+ assert (oldstage/'.trial-once').is_dir() and (oldstage/'state').read_text()=='INTERRUPTED_OLD_TRIAL_PRESERVE\n'
  calls=events.read_text().splitlines();current=(d/'installed').read_text()
- if mode=='check-only':
+ if mode in ('check-only','fresh-check-only'):
   assert result.returncode==0 and 'QGW8_HIDDEN_CHECK_ONLY_PASSED' in result.stdout
   assert current=='stable\n' and calls==['--status '] and not (stage/'.trial-once').exists()
- elif mode in ('ok','preverified'):
+ elif mode in ('ok','preverified','fresh-ok'):
   assert result.returncode==0,(result.stdout,result.stderr,calls)
   assert (stage/'state').read_text().strip()=='CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED'
   assert current=='stable\n' and sum(x.startswith('--quiesce') for x in calls)==2
   if mode=='preverified':assert (stage/'preflight.source').read_text().strip()=='OPERATOR_ATTESTED_PREVIOUS_CPU_PREFLIGHT'
  elif mode in ('busy','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag','preverified-bad','preverified-missing'):
   assert result.returncode and not (stage/'.trial-once').exists() and not any(x.startswith('--quiesce') for x in calls)
- elif mode=='spent':assert result.returncode and not calls
+ elif mode in ('spent','fresh-spent'):assert result.returncode and not calls
  elif mode in ('preflight-fail','flush1'):
   assert result.returncode and (stage/'.trial-once').exists() and not any(x.startswith('--quiesce') for x in calls) and current=='stable\n'
  elif mode in ('client-fail','bad-output','no-snapshot','wrong-snapshot','flush7'):
@@ -110,10 +116,10 @@ def case(root,mode):
   if mode in ('candidate-wait-fail','flush5'):assert current=='candidate\n'
   if mode in ('restore-wait-fail','flush9'):assert current=='stable\n'
  if (stage/'.trial-once').exists():
-  before=events.read_text();again=subprocess.run(['sh',str(parent)],env=env,capture_output=True,text=True)
+  before=events.read_text();again=subprocess.run(['sh',str(parent),*args],env=env,capture_output=True,text=True)
   assert again.returncode and events.read_text()==before
 with tempfile.TemporaryDirectory(prefix='qgw8-parent-',dir='/private/tmp') as directory:
- for mode in ('ok','preverified','preverified-bad','preverified-missing','check-only','busy','spent','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag',
+ for mode in ('ok','fresh-ok','fresh-spent','fresh-check-only','preverified','preverified-bad','preverified-missing','check-only','busy','spent','wrong-candidate','wrong-client','wrong-gate','cold','owner','wrong-generation','wrong-tag',
               'preflight-fail','client-fail','bad-output','no-snapshot','wrong-snapshot','quiesce-fail','candidate-wait-fail',
               'restore-wait-fail','flush1','flush5','flush7','flush9'):case(Path(directory),mode)
 print('PASS actual tag129 one-shot parent, hash-gated snapshot, preverified mode, and synthetic refusal/failure cases; NO DEVICE')

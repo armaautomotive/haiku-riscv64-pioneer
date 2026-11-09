@@ -4,11 +4,14 @@
 set -eu
 PATH=/boot/system/bin:/bin
 export PATH
-[ "$#" = 0 ] || { [ "$#" = 1 ] && { [ "$1" = --check-only ] || [ "$1" = --preverified ]; }; } || exit 2
+[ "$#" = 0 ] || { [ "$#" = 1 ] && { [ "$1" = --check-only ] || [ "$1" = --preverified ] || [ "$1" = --fresh-20261109 ] || [ "$1" = --check-fresh-20261109 ]; }; } || exit 2
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
 action=${1:---run}
 umask 077
 stage=/boot/home/pioneer-qgw8-hidden-trial-20261108-a
+if [ "$action" = --fresh-20261109 ] || [ "$action" = --check-fresh-20261109 ]; then
+ stage=/boot/home/pioneer-qgw8-hidden-trial-20261109-b
+fi
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
@@ -100,7 +103,7 @@ test -f "$original" && test ! -L "$original" && [ "$(stat -c '%u:%h:%a:%s' "$ori
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || exit 1
 [ "$(stat -c '%d' "$stage")" = "$(stat -c '%d' "$installed")" ] || exit 1
 idle && metadata 2026102100010012 4 && health || exit 1
-if [ "$action" = --check-only ]; then
+if [ "$action" = --check-only ] || [ "$action" = --check-fresh-20261109 ]; then
  echo QGW8_HIDDEN_CHECK_ONLY_PASSED_NO_MODEL_READ_DRIVER_SWAP_OR_GPU_EXECUTION
  exit 0
 fi
