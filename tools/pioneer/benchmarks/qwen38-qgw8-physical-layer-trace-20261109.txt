@@ -266,3 +266,16 @@ chunk. This does NOT execute the linked ROOT image or the P100A and does not
 establish the card's actual attention input, throughput, or correctness.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_input_quantizer_image_tests.py PINNED_STANDALONE_IMAGE
+
+An offline observed-input replay is prepared for the pending tag133 result.
+It requires a tag133 close/snapshot transcript and candidate SHA-256, and
+refuses a cross-run comparison unless trace layers 2-63 match the earlier
+tag132 trace exactly. It then applies the CPU reference's Q6 output projection
+to the captured attention input and compares it with tag132's captured card
+projection. A deliberately fabricated tag133 log and mislabeled tag132
+data exercised the positive path, while the real tag132 transcript and a
+wrong digest were refused. The fabricated input is NOT an attention result;
+even a later successful comparison is cross-run evidence, not proof of
+simultaneous capture or complete numerical correctness.
+
+ python3 tools/pioneer/tests/test_pioneer_q38_dense_observed_input_replay.py
