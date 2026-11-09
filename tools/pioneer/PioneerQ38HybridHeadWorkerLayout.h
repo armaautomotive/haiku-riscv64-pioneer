@@ -2,6 +2,7 @@
 #include "PioneerQ38Qgw8NativeInspectionRole.h"
 #include "PioneerQ38Qgw8Bfp8ReuseRole.h"
 #include "PioneerQ38Qgw8Bfp8BatchRole.h"
+#include "PioneerQ38QgwaBatchRootReceiptRole.h"
 #ifndef PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
 #define PIONEER_Q38_HYBRID_HEAD_WORKER_LAYOUT_H
 #if (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION)) \
@@ -35,7 +36,7 @@ namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;
 enum : unsigned {
-#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+#if defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
  Magic=0x41475751,JobWitness=0x414f4751,
 #elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
  Magic=0x39574751,JobWitness=0x394f4751,

@@ -45,3 +45,20 @@ full leaf regression also exposed an outdated expected compiler-error string
 after the new worker role was added; that test expectation was corrected and
 the complete suite rerun successfully with unchanged source. These checks
 still do not model the actual hardware's memory ordering or source lifetime.
+
+Offline root-side receipt grammar preparation
+----------------------------------------------
+A distinct plan-inspection-only receipt predicate now recognizes QGWA's
+batched completion counters and final NoC command. It does not build or
+enable an executable ROOT, driver, native owner, or Work selector. Compiled
+separately from the simulated emitted worker, it accepted that worker's
+head receipts for 1, 2, 3 and 8 bands and FFN BFP8 receipts at widths 5120
+and 17408. The distinct old receipt rejected those records, and all 2048
+single-bit mutations of the two-band head proof were rejected by both the
+worker and new predicate. These are simulated-fabric results, NOT real
+ROOT/worker communication, physical NoC ordering or speed measurements.
+The existing QGWA worker/private-head regression passed, and the unrelated
+tag133 diagnostic driver rebuilt to its exact prior binary SHA-256
+02208326fff242a9300dd8cc33cdf84ca29282d7ab13d572b4144e58b7eb75e5.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_root_receipt_tests.py PINNED_WORKER PINNED_LEAF

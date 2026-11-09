@@ -6,6 +6,10 @@
 #include "pioneer_q38_hybrid_worker_image_test.cpp"
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef PIONEER_Q38_TEST_BATCH_ROOT_RECEIPT
+extern "C" bool qgwa_batch_root_receipt(const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*);
+extern "C" bool qgwa_old_root_receipt(const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*);
+#endif
 
 static void StageHead(HybridImage& image,bool corrupt,const std::array<uint32_t,64>* generated=nullptr){
  assert(image.pc==image.waitPC && image.regs[8]==0x70000);
@@ -44,9 +48,16 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);job[i]=image->Get(HW::Job+i*4);}
   for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
   assert(PioneerQ38HybridMatrixReceipt::Matrix(proof.data(),job.data(),image->boot.data(),before.data(),after.data()));
+#ifdef PIONEER_Q38_TEST_BATCH_ROOT_RECEIPT
+  assert(qgwa_batch_root_receipt(proof.data(),job.data(),image->boot.data(),before.data(),after.data()));
+  assert(!qgwa_old_root_receipt(proof.data(),job.data(),image->boot.data(),before.data(),after.data()));
+#endif
   for(unsigned word=0;word<64;word++)for(unsigned bit=0;bit<32;bit++){
    auto damaged=proof;damaged[word]^=uint32_t(1U)<<bit;
    assert(!PioneerQ38HybridMatrixReceipt::Matrix(damaged.data(),job.data(),image->boot.data(),before.data(),after.data()));
+#ifdef PIONEER_Q38_TEST_BATCH_ROOT_RECEIPT
+   assert(!qgwa_batch_root_receipt(damaged.data(),job.data(),image->boot.data(),before.data(),after.data()));
+#endif
   }
   if(argc==5){
    assert(argv[4][0]=='/');std::array<uint32_t,288> fixture={};
@@ -114,6 +125,10 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);job[i]=image->Get(HW::Job+i*4);}
   for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
   assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image->boot.data(),before,after));
+#ifdef PIONEER_Q38_TEST_BATCH_ROOT_RECEIPT
+  assert(qgwa_batch_root_receipt(proof,job,image->boot.data(),before,after));
+  assert(!qgwa_old_root_receipt(proof,job,image->boot.data(),before,after));
+#endif
  }
  for(unsigned width:{5120U,17408U}){
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],119,width,2);image->Boot();
@@ -128,6 +143,10 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);job[i]=image->Get(HW::Job+i*4);}
   for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
   assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image->boot.data(),before,after));
+#ifdef PIONEER_Q38_TEST_BATCH_ROOT_RECEIPT
+  assert(qgwa_batch_root_receipt(proof,job,image->boot.data(),before,after));
+  assert(!qgwa_old_root_receipt(proof,job,image->boot.data(),before,after));
+#endif
  }
  for(unsigned old:{0x38574751U,0x39574751U}){
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Put(HW::Boot,old);

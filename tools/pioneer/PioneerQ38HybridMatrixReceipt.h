@@ -1,10 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8Bfp8ReuseRole.h"
 #include "PioneerQ38Qgw8Bfp8BatchRole.h"
+#include "PioneerQ38QgwaBatchRootReceiptRole.h"
 #ifndef PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #define PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #include "PioneerQ38HybridWorkerLayout.h"
-#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
 #include "PioneerQ38HybridHeadWorkerLayout.h"
 #endif
 #ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
@@ -24,7 +25,7 @@ struct PioneerQ38HybridMatrixReceipt {
  bool Matrix(const uint32_t* p,const uint32_t* j,const uint32_t* b,
 #endif
   const uint32_t* before,const uint32_t* after){
-#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)
+#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
   namespace M=PioneerQ38HybridHeadWorkerLayout;
 #else
   namespace M=PioneerQ38HybridWorkerLayout;
@@ -48,7 +49,7 @@ struct PioneerQ38HybridMatrixReceipt {
   // Derive its complete NIU command from the selected validated leaf.
   unsigned source=0,destination=0,route=0,bytes=0;
   if(eight){
-#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+#if defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
    const unsigned offset=((width*2-1)/16384)*16384;
    source=PioneerQ38Bfp8WorkerJob::RootInput+offset;
    destination=PioneerQ38Bfp8WorkerLayout::Input+offset;
@@ -88,7 +89,7 @@ struct PioneerQ38HybridMatrixReceipt {
 #elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
     (eight?(bands*17+1)*tiles:bands*tiles*10):i==0 || i==2 || i==3 || i==6?
     (eight?(bands+1)*tiles:bands*tiles*2):0U;
-#elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
+#elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
     bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?
     bands*(eight?tiles+(width*2+16383)/16384:tiles*2):0U;
 #else

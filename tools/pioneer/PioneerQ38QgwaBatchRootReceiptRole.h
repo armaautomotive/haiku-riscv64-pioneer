@@ -1,0 +1,31 @@
+/* SPDX-License-Identifier: MIT */
+// Receipt grammar experiment only. No executable ROOT or device authority.
+#if defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
+#if PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) \
+ || defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) || defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) \
+ || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
+#error QGWA root receipt is an isolated offline grammar inspection
+#endif
+#endif
+#ifndef PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_ROLE_H
+#define PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_ROLE_H
+#ifdef PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION
+enum {PioneerQ38QgwaBatchRootReceiptRole=1};
+#else
+enum {PioneerQ38QgwaBatchRootReceiptRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION
+static_assert(PioneerQ38QgwaBatchRootReceiptRole==1,"late QGWA root receipt selection");
+#else
+static_assert(PioneerQ38QgwaBatchRootReceiptRole==0,"late QGWA root receipt removal");
+#endif
