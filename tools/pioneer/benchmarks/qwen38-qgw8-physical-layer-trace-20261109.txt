@@ -292,3 +292,13 @@ other arithmetic differences. It makes a host-level input-normalization or
 input-quantizer mismatch on this one boundary less likely.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_qkv_input_replay.py
+
+Further CPU-only hypothesis screen: the original CPU output projection was
+decomposed into four group contributions, with combined relative L2 error
+2.7345e-7 against the pinned full CPU projection. Least-squares scaling
+those four contributions to the earlier captured card projection still
+left relative L2 0.8669 when normalized to that card projection. This does
+not exclude permutation, component-dependent errors, nonlinear quantization,
+or capture problems, and is not evidence of a physical fix or a speedup.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_group_hypothesis.py

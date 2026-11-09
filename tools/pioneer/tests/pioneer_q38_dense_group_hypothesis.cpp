@@ -72,6 +72,43 @@ int main(int argc,char** argv){
   const char* names[]={"normal","interleaved","reverse","all_group_zero"};
   if(!Compare(names[mode],card,projection))return 1;
  }
+ // Each group occupies six contiguous heads, a whole number of Q6 input
+ // quantization chunks. Fit four CPU-derived group contributions to the
+ // observed card projection. This is a hypothesis screen, not device math.
+ std::array<std::vector<float>,4> basis;
+ for(unsigned group=0;group<4;group++){
+  std::vector<float> attention(6144,0);
+  for(unsigned h=group*6;h<(group+1)*6;h++)for(unsigned i=0;i<256;i++)
+   attention[h*256+i]=Flush(Half(HalfRne(value[group*256+i]))*Sigmoid(qg[h*512+256+i]));
+  if(!replay.Project(3,10,attention,basis[group]) || basis[group].size()!=5120)return 1;
+ }
+ double splitError=0,splitDen=0;
+ for(unsigned n=0;n<5120;n++){
+  double sum=0;for(unsigned group=0;group<4;group++)sum+=basis[group][n];
+  double d=sum-cpu[n];splitError+=d*d;splitDen+=double(cpu[n])*cpu[n];
+ }
+ if(!(splitDen>0) || std::sqrt(splitError/splitDen)>1e-5){
+  fputs("GROUP_FIT_REFUSED group decomposition does not reproduce CPU projection\n",stderr);return 1;
+ }
+ double matrix[4][5]={};
+ for(unsigned i=0;i<4;i++)for(unsigned j=0;j<5;j++)for(unsigned n=0;n<5120;n++)
+  matrix[i][j]+=double(basis[i][n])*(j<4?basis[j][n]:card[n]);
+ for(unsigned i=0;i<4;i++){
+  unsigned pivot=i;for(unsigned j=i+1;j<4;j++)if(std::fabs(matrix[j][i])>std::fabs(matrix[pivot][i]))pivot=j;
+  if(!(std::fabs(matrix[pivot][i])>1e-20))return 1;
+  for(unsigned j=0;j<5;j++)std::swap(matrix[i][j],matrix[pivot][j]);
+  const double scale=matrix[i][i];for(unsigned j=i;j<5;j++)matrix[i][j]/=scale;
+  for(unsigned row=0;row<4;row++)if(row!=i){
+   const double factor=matrix[row][i];for(unsigned col=i;col<5;col++)matrix[row][col]-=factor*matrix[i][col];
+  }
+ }
+ double error=0,den=0;for(unsigned n=0;n<5120;n++){
+  double fitted=0;for(unsigned group=0;group<4;group++)fitted+=matrix[group][4]*basis[group][n];
+  double d=fitted-card[n];error+=d*d;den+=double(card[n])*card[n];
+ }
+ if(!(den>0) || !std::isfinite(error))return 1;
+ printf("GROUP_LINEAR_FIT coefficients=%.9g,%.9g,%.9g,%.9g rel_l2_to_card=%.9g decomposition_rel_l2=%.9g; CPU_ONLY HYPOTHESIS NOT_CAUSE\n",
+  matrix[0][4],matrix[1][4],matrix[2][4],matrix[3][4],std::sqrt(error/den),std::sqrt(splitError/splitDen));
  if(!model.Ready())return 1;
  puts("CPU_ONLY_HYPOTHESES; not device provenance, proof of cause, or performance");
 }
