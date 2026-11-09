@@ -10,6 +10,11 @@ if qgwa:
     if args.count('--qgwa-batch-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--matrix-')) and x!='--qgwa-batch-inspection' for x in args):
         raise SystemExit('ambiguous QGWA batch selector')
     args.remove('--qgwa-batch-inspection');args.insert(0,'--qgw8-head-inspection')
+qgw8value='--qgw8-dense-value-inspection' in args
+if qgw8value:
+    if args.count('--qgw8-dense-value-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--matrix-')) and x!='--qgw8-dense-value-inspection' for x in args):
+        raise SystemExit('ambiguous QGW8 dense-value selector')
+    args.remove('--qgw8-dense-value-inspection');args.insert(0,'--qgw8-layer-trace-inspection')
 qgw8inputnative='--qgw8-dense-input-native' in args
 if qgw8inputnative:
     if args.count('--qgw8-dense-input-native')!=1 or any(x in args for x in ('--qgw8-dense-input-inspection','--qgw8-dense-stage-native','--qgw8-dense-stage-inspection','--qgw8-layer-trace-native','--qgw8-layer-trace-inspection')):
@@ -64,6 +69,7 @@ if matrix:
         if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
         args.remove('--matrix-attention-inspection')
     if qgwa:from PioneerQ38QgwaBatchProgramPins import ROOT_PINS, WORKER_PINS
+    elif qgw8value:from PioneerQ38Qgw8DenseValueProgramPins import ROOT_PINS, WORKER_PINS
     elif qgw8input:from PioneerQ38Qgw8DenseInputProgramPins import ROOT_PINS, WORKER_PINS
     elif qgw8stage:from PioneerQ38Qgw8DenseStageProgramPins import ROOT_PINS, WORKER_PINS
     elif qgw8trace:from PioneerQ38Qgw8LayerTraceProgramPins import ROOT_PINS, WORKER_PINS
@@ -86,8 +92,8 @@ units += [(w,name,label,address) for name,label,address in (
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
-family='0x44505451' if qgwa else '0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name='QTPD/QGWA-BATCH' if qgwa else ('QTPC/QGW8-DENSE-INPUT-NATIVE-BUILD-ONLY' if qgw8inputnative else 'QTPC/QGW8-DENSE-INPUT') if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+family='0x45505451' if qgw8value else '0x44505451' if qgwa else '0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
+name='QTPE/QGW8-DENSE-VALUE' if qgw8value else 'QTPD/QGWA-BATCH' if qgwa else ('QTPC/QGW8-DENSE-INPUT-NATIVE-BUILD-ONLY' if qgw8inputnative else 'QTPC/QGW8-DENSE-INPUT') if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -156,7 +162,15 @@ if matrix:
     else:
         lines += [' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
                   '#error QGW7 data requires the non-loadable matrix-attention inspection role', '#endif']
-if qgwa:
+if qgw8value:
+    lines += ['#if !defined(PIONEER_Q38_QGW8_DENSE_VALUE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_DENSE_VALUE_PROGRAMS_INSPECTION != 1 \\',
+              ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) \\',
+              ' || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \\',
+              ' || defined(PIONEER_Q38_QGW8_DENSE_INPUT_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGW8_DENSE_STAGE_PROGRAMS_INSPECTION) \\',
+              ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
+              ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
+              '#error QGW8 dense-value program requires exclusive offline DATA inspection', '#endif']
+elif qgwa:
     lines += ['#if !defined(PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION != 1 \\',
               ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) \\',
               ' || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \\',
@@ -225,4 +239,4 @@ encoded=('\n'.join(lines)+'\n').encode()
 with output.open('xb') as target:
     if target.write(encoded)!=len(encoded):
         raise OSError('incomplete generated output')
-print('PASS PINNED '+('QGWA-BATCH' if qgwa else 'QGW8-DENSE-INPUT' if qgw8input else 'QGW8-DENSE-STAGE' if qgw8stage else 'QGW8-TRACE' if qgw8trace else 'QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')
+print('PASS PINNED '+('QGW8-DENSE-VALUE' if qgw8value else 'QGWA-BATCH' if qgwa else 'QGW8-DENSE-INPUT' if qgw8input else 'QGW8-DENSE-STAGE' if qgw8stage else 'QGW8-TRACE' if qgw8trace else 'QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')

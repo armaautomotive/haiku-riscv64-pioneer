@@ -248,6 +248,25 @@ capture, correctness result or speed measurement; do not install the image.
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_image_tests.py PINNED_IMAGE_DIRECTORY
 
+The separately identified QTPE value-capture DATA package was generated from
+both pinned images and the pinned worker, byte-identically, SHA-256
+7474a37501fa874f44b2241a80eb32aa15f023f1158c8d5eb18da8978d421574.
+The all-worker binary-word check and refusal tests passed, and the older
+QTPC input package remained byte-identical. This is offline data only, not
+a native driver, ownership grant or card test.
+
+An offline value comparator now reconstructs CPU layer3 Q/gate/value and
+requires its resulting attention input to reproduce the pinned CPU snapshot
+bit-for-bit. It then compares a supplied hash-checked file's first 1024 F32
+words and following 1024 F16 words to the reference and to each other. A
+deliberately mislabeled tag133 attention-input trace exercised the data path;
+it is NOT a value capture, does not prove source or closure, and its numeric
+output is not a physical value result. A wrong digest was refused. Model
+execution and validation here remain CPU-only, separate from Work mode.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_programs_tests.py OLD_INPUT VALUE_A VALUE_B WORKER
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_value_capture_replay.py ABS_TRACE --sha256 TRACE_HASH
+
 Dense output-projection INPUT capture, component-only preparation: a distinct
 diagnostic role snapshots the 6144-float gated attention output immediately
 before the output projection, at layer 3 and position 0 only. Its geometry
