@@ -205,3 +205,16 @@ does not authorize a card operation.
 
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT
  python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_image_tests.py PINNED_IMAGE_DIRECTORY
+
+The input ROOT now also has a separately authenticated QTPC OFFLINE code
+family: both image builds produced the same 15-section header, SHA-256
+7c7bcb0b285159e58530357342fb98a920354cb6093c2f6c8ea67e96e1aac523.
+All 120 worker maps and 3608589 code words were compared against pinned
+images; old/new selector confusion and CPU/Work/native roles were refused.
+The previously pinned QTPB offline header remained byte-identical. A new
+offline comparator checks all 6144 attention inputs, each of 24 heads, and
+unchanged trace layers 2-63; synthetic offset/hash/nonfinite tests passed.
+Neither code DATA nor a synthetic comparator grants a driver/device test.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_input_programs_tests.py OLD_STAGE INPUT_A INPUT_B WORKER
+ python3 tools/pioneer/tests/test_pioneer_q38_qgw8_dense_input_trace_compare.py
