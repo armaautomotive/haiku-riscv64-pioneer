@@ -87,3 +87,16 @@ worker dispatch, inference or speed. The host full-model bridge was rerun
 after making the bounded quota comparisons 32-bit; all 2928 jobs still match.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_root_image_tests.py SDK
+
+An isolated QGWB worker grammar now accepts the 2928 planned BFP8 dense
+jobs and retains the existing head, FFN and STOP shapes under a distinct
+identity. Synthetic tests cover those jobs, corrupted fields, completion
+receipt geometry and role isolation; the unchanged QGW8 worker sections
+were rebuilt byte-for-byte identical. The QGWB worker itself also builds
+as a freestanding RV32 image within the existing frame checks. Its receipt
+test uses constructed data, not a real device completion. This is not yet
+connected to the controller, native owner, model or card and demonstrates
+neither numerical correctness nor inference speed.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_worker_layout_tests.py
+ python3 tools/pioneer/build_q38_hybrid_matrix_attention_worker.py SDK NEW_OUTPUT --dense-q8-matrix-inspection

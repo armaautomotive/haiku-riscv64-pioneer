@@ -6,6 +6,9 @@
 #ifndef PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #define PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #include "PioneerQ38HybridWorkerLayout.h"
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+#include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
+#endif
 #if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
 #include "PioneerQ38HybridHeadWorkerLayout.h"
 #endif
@@ -26,7 +29,9 @@ struct PioneerQ38HybridMatrixReceipt {
  bool Matrix(const uint32_t* p,const uint32_t* j,const uint32_t* b,
 #endif
   const uint32_t* before,const uint32_t* after){
-#if defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
+#if defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION)
+  namespace M=PioneerQ38DenseQ8MatrixWorkerLayout;
+#elif defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
   namespace M=PioneerQ38HybridHeadWorkerLayout;
 #else
   namespace M=PioneerQ38HybridWorkerLayout;

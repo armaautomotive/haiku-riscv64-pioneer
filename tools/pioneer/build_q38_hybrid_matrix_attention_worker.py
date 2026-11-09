@@ -12,7 +12,8 @@ assert __debug__ and len(sys.argv) in (3, 4) and not os.environ.get('PYTHONOPTIM
 test_layer0 = len(sys.argv) == 4 and sys.argv[3] == '--test-bfp8-layer0'
 reuse_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-reuse-inspection'
 batch_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-batch-inspection'
-head_matrix = len(sys.argv) == 4 and sys.argv[3] in ('--head-matrix-inspection', '--head-bfp8-reuse-inspection', '--head-bfp8-batch-inspection')
+dense_q8 = len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-matrix-inspection'
+head_matrix = len(sys.argv) == 4 and sys.argv[3] in ('--head-matrix-inspection', '--head-bfp8-reuse-inspection', '--head-bfp8-batch-inspection', '--dense-q8-matrix-inspection')
 assert len(sys.argv) == 3 or test_layer0 or head_matrix
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, out = map(Path, sys.argv[1:3]); here = Path(__file__).resolve().parent
@@ -41,6 +42,8 @@ if test_layer0:
     global_role.append('-DPIONEER_Q38_HYBRID_TEST_BFP8_LAYER0=1')
 if head_matrix:
     global_role.append('-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1')
+if dense_q8:
+    global_role.append('-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1')
 if reuse_head:
     global_role.append('-DPIONEER_Q38_QGW8_BFP8_REUSE_WORKER=1')
 if batch_head:
@@ -102,8 +105,9 @@ for section in sections:
         old_data = (out/'baseline'/(section+'.bin')).read_bytes()
         assert len(data) == len(old_data), section
         if section == 'boot': assert data == old_data
-    print('QGWA_BUILD' if batch_head else 'QGW9_BUILD' if reuse_head else 'QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
-print('BUILD ONLY QGWA batched-input worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if batch_head
+    print('QGWB_BUILD' if dense_q8 else 'QGWA_BUILD' if batch_head else 'QGW9_BUILD' if reuse_head else 'QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
+print('BUILD ONLY QGWB dense Q8 matrix worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if dense_q8
+      else 'BUILD ONLY QGWA batched-input worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if batch_head
       else 'BUILD ONLY QGW9 retained-input worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if reuse_head
       else 'BUILD ONLY QGW8 head-matrix worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if head_matrix
       else 'BUILD ONLY QGW7/QDM2 inspection: NO ROOT/native owner/model/hardware/quality/speed authority')

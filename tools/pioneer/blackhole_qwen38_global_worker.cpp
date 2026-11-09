@@ -57,6 +57,9 @@ extern "C" void q38_bf16_persistent_producer(const uint32_t*,const uint32_t*,uns
 #include "PioneerQ38HybridWorkerLayout.h"
 #ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
 #include "PioneerQ38HybridHeadWorkerLayout.h"
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+#include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
+#endif
 #endif
 #ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
 #include "PioneerQ38HybridInputReuseProfile.h"
@@ -89,7 +92,9 @@ extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_
 extern "C" void q38_mixed_dense_phase(const uint32_t*,unsigned,unsigned,float*,float*);
 namespace GlobalWorker {
 #ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
-#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+#ifdef PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION
+namespace M=PioneerQ38DenseQ8MatrixWorkerLayout;
+#elif defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION)
 namespace M=PioneerQ38HybridHeadWorkerLayout;
 #else
 namespace M=PioneerQ38HybridWorkerLayout;
