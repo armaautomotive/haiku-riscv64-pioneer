@@ -16,6 +16,7 @@ struct Probe:Machine {
  std::vector<uint8_t> code;std::map<uint32_t,uint32_t> memory;unsigned writes=0,reads=0,alterAt=0,minStack=0x72000;
  static constexpr unsigned TableBase=0x80000,OutputBase=0x81000,Return=0x60000;
  explicit Probe(const char* path):code(Read(path)){}
+ unsigned StepLimit()const override{return 100000;}
  bool CodeAddress(uint32_t a)const override{return a>=0x40000 && a-0x40000<code.size();}
  unsigned Index(uint32_t a)override{assert(!(a&3) && CodeAddress(a));l1[8191]=Word(code,a-0x40000);return 8191;}
  uint32_t Load(uint32_t a)override{

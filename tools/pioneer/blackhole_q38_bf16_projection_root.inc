@@ -7,9 +7,41 @@ using BFC=PioneerQ38Q4FpuCachedLayout;
 using BFR=PioneerQ38Bf16RootPairs;
 #define BF_ROOT_FN __attribute__((noinline,section(".bf16.root")))
 static bool BfQ4(const uint32_t* d){return d[15]==12 && d[43]>=2 && d[43]<=4;}
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+static bool BfDenseQ8(const uint32_t* d){return d[15]==8 && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7;}
+// Experimental ROOT-local metadata only. The native owner must still
+// authenticate, upload and preserve this table and its BFP8 weights.
+struct BfDenseScheduleIO {
+ enum {Manifest=0x16dc00,ManifestWords=16*3*7*3,Parts=0x16ebc0,Shadow=0x16f330,TableShadow=0x16fac0,End=0x16fb20};
+ unsigned index;
+ unsigned Table(unsigned bank,unsigned field){return Words(Manifest)[index+bank*3+field];}
+ void Output(unsigned worker,unsigned field,unsigned value){Words(Parts+worker*16)[field]=value;Words(Shadow+worker*16)[field]=value;}
+};
+static_assert(BfDenseScheduleIO::Manifest>=0x16da00+7*4
+ && BfDenseScheduleIO::Manifest+BfDenseScheduleIO::ManifestWords*4==BfDenseScheduleIO::Parts
+ && BfDenseScheduleIO::Parts+119*16<=BfDenseScheduleIO::Shadow
+ && BfDenseScheduleIO::Shadow+119*16<=BfDenseScheduleIO::TableShadow
+ && BfDenseScheduleIO::TableShadow+21*4<=BfDenseScheduleIO::End && BfDenseScheduleIO::End<=unsigned(L::PeerBoots),
+ "isolated dense BFP8 schedule metadata must not overlap the FFN table or peer boots");
+static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
+ if(!BfDenseQ8(d))scalar_fault_park();
+ const unsigned index=((d[42]/4)*3+d[43]-5)*21;
+ for(unsigned i=0;i<21;i++)if(Words(BfDenseScheduleIO::Manifest)[index+i]!=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
+ for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
+  if(Words(BfDenseScheduleIO::Parts+w*16)[i]!=Words(BfDenseScheduleIO::Shadow+w*16)[i])scalar_fault_park();
+}
+static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d){
+ if(!BfDenseQ8(d))scalar_fault_park();
+ BfDenseScheduleIO io;io.index=((d[42]/4)*3+d[43]-5)*21;
+ for(unsigned i=0;i<21;i++)Words(BfDenseScheduleIO::TableShadow)[i]=Words(BfDenseScheduleIO::Manifest)[io.index+i];
+ for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)io.Output(w,i,0);
+ Fence();if(!PioneerQ38DenseQ8MatrixRootJobs::Build(io,d[42],d[43]))scalar_fault_park();
+ Fence();BfDenseSeal(d);
+}
+#endif
 static bool BfProducerRole(const uint32_t* d){
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
- if(d[15]==8 && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7)return true;
+ if(BfDenseQ8(d))return true;
 #endif
  return BfQ4(d);
 }
@@ -55,6 +87,9 @@ static BF_ROOT_FN void BfPairSeal(unsigned w){
 #endif
 }
 static BF_ROOT_FN void BfBuildPairs(const uint32_t* d){
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ if(BfDenseQ8(d)){BfBuildDenseSchedule(d);return;}
+#endif
  static_assert(BFR::Parts>=0x167000 && BFR::Rows>=BFR::Parts+119*32 && BFR::Shadow>=BFR::Rows+119*4
   && BFR::RowShadow>=BFR::Shadow+119*32 && BFR::End>=BFR::RowShadow+119*4 && BFR::End<=unsigned(L::PeerBoots),
   "NEW paired metadata extents exclude retired cohort shadows,final hidden and live peer boot/job storage");

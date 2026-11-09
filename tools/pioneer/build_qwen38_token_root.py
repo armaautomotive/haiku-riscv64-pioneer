@@ -140,7 +140,11 @@ run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38
 link=here/'blackhole_qwen38_global_chain.ld'
 if bf16:
  text=link.read_text();assert text.count('SECTIONS {')==1
- text=text.replace('SECTIONS {','SECTIONS {\n .bf16 0x20000 : { *(.bf16*) . = ALIGN(4); }\n ASSERT(SIZEOF(.bf16)>0 && SIZEOF(.bf16)<=0x10000,"NEW BF16 coordinator code extent,not old native ownership")')
+ # GCC places template instantiations in COMDAT .text despite a section
+ # attribute. The QGWD-only scheduler must fit the isolated BF16 code range;
+ # this changes neither the other profiles nor the range/overlap checks.
+ scheduler=' *(.text._ZN31PioneerQ38DenseQ8MatrixRootJobs5Build*)' if qgwd_root else ''
+ text=text.replace('SECTIONS {','SECTIONS {\n .bf16 0x20000 : { *(.bf16*)'+scheduler+' . = ALIGN(4); }\n ASSERT(SIZEOF(.bf16)>0 && SIZEOF(.bf16)<=0x10000,"NEW BF16 coordinator code extent,not old native ownership")')
  link=out/'program.ld';link.write_text(text)
 run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',link,
  out/'start.o',out/'program.o',*profile_objects,components/'token-components-NOBOOT.o',components/'unchanged-feedback/feedback.o',

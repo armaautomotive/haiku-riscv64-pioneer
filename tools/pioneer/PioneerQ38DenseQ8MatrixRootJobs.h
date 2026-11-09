@@ -22,7 +22,11 @@ struct PioneerQ38DenseQ8MatrixRootJobs {
  // Matrix bands cover 32 rows; the old scalar recipe instead covers 16.
  // In particular its 64-worker K/V count must never drive this schedule.
  static unsigned Active(unsigned role){return role==5?119U:(role==6 || role==7)?32U:0U;}
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+ template<class IO> static __attribute__((noinline,section(".bf16.root"))) bool Build(IO& io,unsigned layer,unsigned role){
+#else
  template<class IO> static bool Build(IO& io,unsigned layer,unsigned role){
+#endif
   if(layer>=64 || layer%4!=3 || role<5 || role>7)return false;
   const unsigned rows=role==5?12288:1024;unsigned address[7],first[7],units[7],quota[7],done[7],emitted[7];
   unsigned minimum=0,total=0;
@@ -45,14 +49,19 @@ struct PioneerQ38DenseQ8MatrixRootJobs {
    // products fit in 32 bits and require no RV32 wide-multiply helper.
    for(unsigned b=0;b<7;b++)if(quota[b]<units[b]
     && (best==7 || units[b]*quota[best]>units[best]*quota[b]))best=b;
-   if(best==7)return false;quota[best]++;
+   if(best==7)return false;
+   quota[best]++;
   }
   uint32_t stage[119][4];unsigned count=0;
   while(count<target){
    bool progress=false;
    for(unsigned b=0;b<7;b++){
     if(emitted[b]==quota[b])continue;
-    const unsigned bands=units[b]/quota[b]+unsigned(emitted[b]<units[b]%quota[b]);
+    // ROOT policy forbids variable divide instructions. Counts are bounded
+    // by 384, so this short integer loop has an explicit finite bound.
+    unsigned base=0,remainder=units[b];
+    while(remainder>=quota[b]){remainder-=quota[b];base++;}
+    const unsigned bands=base+unsigned(emitted[b]<remainder);
     if(!bands || bands>8 || done[b]>units[b] || bands>units[b]-done[b])return false;
     stage[count][0]=address[b]+done[b]*174080U;stage[count][1]=b;
     stage[count][2]=first[b]+done[b]*32;stage[count][3]=bands;count++;
