@@ -46,6 +46,15 @@ that real card hidden values, upload, scheduling, or matrix arithmetic match.
 No Work, hardware or tokens/second claim follows. Pass the optional absolute
 cpu-hidden.bin path as the fourth runner argument to reproduce this mode.
 
+For this fixed CPU-reference hidden state, the prepared BFP8 arithmetic
+predicts logits 11.5286961 for reference token 70253 and 0.1125584 for the
+wrong physical token 108133, a pairwise difference of 11.4161376. This is a
+comparison of two model-derived reference values, not a physical logit or a
+full-vocabulary comparison. If the isolated physical bands match, that would
+help narrow the wrong token toward the actual hidden state, other head
+scheduling/data paths, or other vocabulary bands; it would not identify the
+cause by itself.
+
 Private head-band diagnostic data preparation
 ---------------------------------------------
 The optional sixth command-line argument to the C++ diagnostic (fifth runner
