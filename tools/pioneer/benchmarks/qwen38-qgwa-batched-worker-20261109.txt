@@ -83,3 +83,20 @@ unqualified. The image is not installed or selectable by Work.
 
  python3 tools/pioneer/tests/test_pioneer_q38_qgwa_batch_root_image_role.py
  python3 tools/pioneer/tests/run_pioneer_q38_qgwa_linked_root_receipt_tests.py WORKER LEAF QGWA_ROOT OLD_ROOT
+
+Offline job and gather handoff
+------------------------------
+The emitted QGWA controller's recurrent/dense paired-job builders were
+executed for 72 synthetic jobs across BFP4 and BFP8 layer boundaries; the
+independent plan's head proposal covered all 248320 vocabulary rows in 973
+jobs. One plan-produced eight-band head job was executed by the actual
+simulated QGWA worker; its 256 outputs and proof were checked. The linked
+controller's head job/shape, BF16 packing, receipt and Gather routines then
+accepted the corresponding synthetic metadata and worker proof, while
+corrupted manifest, proof and selected NoC failure cases were refused.
+Worker history was injected and ROOT/worker interaction replayed through a
+synthetic fabric: this is NOT a whole-token run, hardware ordering or
+throughput evidence. The shared helper's QGW8 static read-count estimate is
+suppressed in this run because it does not describe QGWA's batching.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_root_jobs_tests.py SDK QGWA_ROOT OLD_ROOT WORKER LEAF
