@@ -134,3 +134,26 @@ the five small state/log files were copied to
 values matched the live Haiku reads. This temporary directory is not an
 archival backup. Preserve the original files and guard; do not infer a clean
 FINISH/close or automatically restore through the original one-shot path.
+
+Verified backup and separate driver recovery
+-------------------------------------------
+The user approved a new Mac backup. The full unmounted Samsung disk image
+and its source and readback SHA-256 are recorded in
+qwen38-postoutage-mac-backup-20261108.txt. Following a further controlled
+single-OFF/ON cycle, the tested disk-identity-aware helper booted Haiku.
+The separate post-outage recovery helper matched local SHA-256
+4ef3438888b3a5a8e0e41db74cc9c137f6dd6293693a0567156dd2280b76058e on Haiku.
+Its check-only action passed with tag129 generation1, no active owner and the
+expected original records. Its separate one-time restore action quiesced the
+driver, installed the saved stable041 image, performed checked device flushes,
+and observed tag2026102100010012 generation2, no active owner and guard1.
+The helper's backup and fresh-cycle arguments are operator attestations;
+the Mac verified the complete backup independently before invocation.
+
+The restore actually exited 0. Independent subsequent checks confirmed
+installed SHA-256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+preserved prior129 SHA-256 0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f,
+stable tag generation2, 64 CPUs and 137034936320 bytes maximum RAM. The old
+trial remains CANDIDATE_RUNNING_OWNERSHIP_UNKNOWN and its .trial-once guard
+remains in place. No accelerator execution, retry, model output or speed was
+measured during this recovery. The interrupted trial's result remains unknown.
