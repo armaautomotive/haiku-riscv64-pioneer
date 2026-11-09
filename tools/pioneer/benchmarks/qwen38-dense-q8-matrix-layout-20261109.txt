@@ -205,3 +205,12 @@ The QGWD global-worker image remains 13148 bytes, larger than the old 12288
 byte journal snapshot. It MUST NOT be launched with that journal. The larger
 offline journal proposal, root scheduler/source authentication, and native
 owner/device integration still require their own combined qualification.
+
+The exact ten pinned QGWD peer code sections have now been loaded into a
+fake L1 and checked against the proposed 16 KiB worker snapshot for every
+one of 119 workers. Simulated snapshot/restore preserved all arbitrary L1
+words, including the 860-byte extension beyond the old snapshot. Every
+section and the complete ELF were hash-checked first. This is a reference
+geometry/restore fixture, NOT the production TokenMemory save/restore
+algorithm with the new image, a matched ROOT/worker session, physical
+address mapping or permission to install/use the larger journal.
