@@ -16,6 +16,7 @@ here=Path(__file__).resolve().parent;root=here.parent;sys.path.insert(0,str(root
 from PioneerQ38QgwcSrcaProgramPins import ROOT_PINS,WORKER_PINS
 generator=root/'generate_qwen38_hybrid_programs.py';compiler=os.environ.get('CXX','c++')
 flags=['-DPIONEER_Q38_QGWC_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWC_PLAN_SIMULATION=1',
+ '-DPIONEER_Q38_QGW8_LAYOUT_INSPECTION=1',
  '-DPIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION=1','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
  '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 with tempfile.TemporaryDirectory(prefix='qgwc-programs-',dir='/private/tmp') as directory:

@@ -65,8 +65,10 @@ public:
  // Pair fixed geometry with the compiled worker grammar before any native
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
-#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
-#ifdef PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION
+#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
+#ifdef PIONEER_Q38_QGWC_PROGRAMS_INSPECTION
+  static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x43574751,"QGWC layout requires the SrcA-corrected worker grammar");
+#elif defined(PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION)
   static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x41475751,"QGWA layout requires the batched worker grammar");
 #else
   static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x38574751,"QGW8 layout requires the QGW8 worker grammar");

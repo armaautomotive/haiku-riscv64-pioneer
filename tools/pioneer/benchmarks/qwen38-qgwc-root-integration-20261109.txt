@@ -28,5 +28,14 @@ workers, covering 3,608,293 words inside the conservative hybrid journal.
 Corrupted ELF/section, duplicate selector, mixed-selector and existing-output
 cases were refused. The QTPF and QGWC/QGOC identities are asserted together;
 native/Work selectors are refused. The old QGW8 bundle still generates.
-This package is inspection DATA only: the retained startup plan and native
-owner are not yet adapted, so it cannot launch a full model.
+This package is inspection DATA only and cannot launch a full model.
+
+Retained startup update: the inspection startup plan now selects QGWC worker
+boot/job identities while reusing the independently checked QGW8 weight-bank
+geometry. A synthetic receipt/ledger validated 22,035 upload extents and the
+21,167,624,192-byte learned layout, then built and checked startup data for
+each of the seven workspace banks. The QGWC head fixture and first job from
+that retained startup were accepted by the actual compiled QGWC ROOT in an
+RV32 simulation. The old QGW8 kernel/layout/receipt/startup regression suite
+also passed, including mutation/failure cases. No P100A upload was performed;
+the native owner, real model correctness and speed remain unqualified.
