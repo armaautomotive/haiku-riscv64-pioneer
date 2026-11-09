@@ -13,6 +13,7 @@
 #include "pioneer_resident_banks_test.cpp"
 #include "../PioneerQ38DenseQ8UploadReceiptInspection.h"
 #include "../PioneerQ38HybridDenseQ8MatrixPlan.h"
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
 #include <cstring>
 #include <memory>
 #include <vector>
@@ -60,8 +61,18 @@ int main(int argc,char** argv){
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->PageDigest());
  assert(!receipt->Revalidate(&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> actual={},expected={};actual.fill(0xa5a5a5a5);
+ const auto untouched=actual;
+ assert(!receipt->DenseManifest(actual.data(),actual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && actual==untouched);
+ assert(!receipt->DenseManifest(actual.data(),actual.size()-1,&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==untouched);
+ assert(!receipt->DenseManifest(hashes.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->DenseManifest(reinterpret_cast<uint32_t*>(&context),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(PioneerQ38DenseQ8MatrixManifest::Build(*canonical,host,expected.data(),expected.size()));
+ assert(receipt->DenseManifest(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==expected);
  if(argc==2 && !strcmp(argv[1],"--late")){
-  hashes[0]^=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42) && banks.Quarantined());
+  hashes[0]^=1;actual.fill(0xa5a5a5a5);
+  assert(!receipt->DenseManifest(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42)
+   && actual==untouched && banks.Quarantined());
   puts("PASS changed sealed dense-Q8 ledger quarantines fake owner");return 0;
  }
  puts("PASS 21907 synthetic dense-Q8 receipt spans, sealed gapped ledger and bound owner identity; NO DEVICE OR MODEL");

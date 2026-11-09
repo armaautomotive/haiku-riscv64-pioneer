@@ -22,6 +22,7 @@ class PioneerQ38DenseQ8UploadReceiptInspection {
  PioneerResidentBanks* banks=nullptr;const tt_dram_samples_result* proof=nullptr;const PioneerQ38SpanLease* lease=nullptr;
  int64_t team=-1;uint64_t generation=0,bytes=0,digest=UINT64_C(14695981039346656037);
  unsigned part=0,page=0,parts=0,spans=0,pages=0,pendingIndex=0,pendingPages=0,recorded=0;
+ uint32_t denseManifestScratch[16*3*7*3]={}; // private heap-only owner workspace
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof
   && original.OriginalFormatLayout() && parent.Ready() && layout.Ready() && team>=0 && generation && banks->Matches(*proof);}
@@ -82,6 +83,35 @@ public:
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
   return PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
+ }
+ enum : unsigned {DenseManifestWords=16*3*7*3};
+ // Derive the actual coordinator table ONLY from the same sealed format,
+ // owner and ledger. This is metadata, not a write or device launch grant.
+ bool DenseManifest(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized),limit=~uintptr_t(0);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t bytes=DenseManifestWords*sizeof(uint32_t),hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(!output || words!=DenseManifestWords || (out&3) || out>limit-bytes || self>limit-sizeof(*this)
+   || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<DenseManifestWords;i++)denseManifestScratch[i]=0;
+  unsigned count=0;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* p=original.Part(i);const auto* q=layout.At(i);if(!p || !q)return Fail();
+   if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4!=3 || p->role<5 || p->role>7)continue;
+   const unsigned at=(((p->layer/4)*3+p->role-5)*7+p->bank)*3;
+   if(p->bank>=7 || at>=DenseManifestWords || q->encoding!=L::DenseQ8Bfp8 || q->bank!=p->bank
+    || q->offset>UINT32_MAX-C::Base || denseManifestScratch[at] || !p->rows)return Fail();
+   denseManifestScratch[at]=C::Base+q->offset;denseManifestScratch[at+1]=p->firstRow;denseManifestScratch[at+2]=p->rows;count++;
+  }
+  if(count!=16*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<DenseManifestWords;i++)output[i]=denseManifestScratch[i];
+  return true;
  }
  unsigned Spans()const{return spans;}
  uint64_t PageDigest()const{return Sealed()?digest:0;}
