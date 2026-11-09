@@ -23,6 +23,9 @@ static W::Job Make(unsigned worker,unsigned width,unsigned bands=2){
 }
 struct IO {
  W::Job job;unsigned band,events=0,issues=0,completions=0,headers=0,scalar=0,fault=0,drop=99;
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+ unsigned scatterWrites=0,dropScatter=0;
+#endif
  std::array<uint32_t,10> command;std::array<uint32_t,16> counters;std::vector<W::Read> pending;
 #ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
  std::array<uint32_t,12> incoming;
@@ -49,7 +52,11 @@ struct IO {
   return a>=L::Input-L::Header && a-(L::Input-L::Header)<L::Tiles(job.words[2])*L::InputStride;
  }
  void Flush(){
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+  assert(pending.size()==16 || (!pending.empty() && pending.size()<=3 && pending[0].route==W::RootRoute));
+#else
   assert(pending.size()==16);
+#endif
   for(const auto& p:pending){
    assert(!(p.source&63) && !(p.destination&63) && !(p.bytes&63));
    if(p.route==W::RootRoute){assert(p.source>=W::RootInput && p.source-W::RootInput+p.bytes<=root.size());std::memcpy(l1.data()+p.destination,root.data()+p.source-W::RootInput,p.bytes);}
@@ -75,7 +82,11 @@ struct IO {
   if(a==0xffb20118+xi*4)return x<<xs;if(a==0xffb20130+yi*4)return y<<ys;
   if(a==0xffb20150 || a==0xffb20154)return 0;
   if(a==0xffb20100)return fault==2?0x4000:0x14000;if(a==0xffb20068)return fault==3?1:0;
-  if(a==0xffb20064){if(pending.size()==16 && fault!=4)Flush();return 0x10101010-unsigned(pending.size());}
+  if(a==0xffb20064){if((pending.size()==16
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+   || (!pending.empty() && pending[0].route==W::RootRoute)
+#endif
+   ) && fault!=4)Flush();return 0x10101010-unsigned(pending.size());}
   if(a==0xffb20040)return fault==8 && issues?2:0;
   if(a==0xffb20840 || a==0xffb21040 || a==0xffb21840)return fault==9?1:0;
   if(a>=0xffb20240 && a<0xffb202c0)return fault==10 && issues?1:0;
@@ -86,8 +97,23 @@ struct IO {
  void Write(unsigned a,unsigned value){
   events++;
   if(Header(a)){headers++;assert(!value);if(fault!=11 || headers!=1)std::memset(l1.data()+a,0,4);return;}
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+  if(InputScratch(a)){
+   scatterWrites++;if(scatterWrites!=dropScatter)for(unsigned byte=0;byte<4;byte++)l1[a+byte]=uint8_t(value>>(byte*8));
+   return;
+  }
+#endif
   if(a==0xffb20040){
    const unsigned tiles=L::Tiles(job.words[2]);
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+   const unsigned chunks=(job.words[2]*2+16383)/16384,perBand=tiles+chunks;
+   if(autoBand)band=issues/perBand;
+   const unsigned index=issues%perBand;W::Read expected={};
+   if(index<tiles)assert(W::Packet(job,band,0,index,expected));
+   else {const unsigned offset=(index-tiles)*16384,remaining=job.words[2]*2-offset;
+    expected={W::RootInput+offset,L::Input+offset,remaining<16384?remaining:16384,W::RootRoute};}
+   assert(value==1 && pending.size()<16);
+#else
    unsigned operand=(issues/tiles)%2,tile=issues%tiles;
 #if defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT)
    if(autoBand && issues>=2*tiles){band=1+(issues-2*tiles)/tiles;operand=0;tile=(issues-2*tiles)%tiles;}
@@ -96,6 +122,7 @@ struct IO {
    if(autoBand)band=issues/(2*tiles);
    assert(value==1 && pending.size()<16);W::Read expected={};
    assert(W::Packet(job,band,operand,tile,expected));
+#endif
    assert(command[0]==expected.source && command[2]==expected.route && command[3]==expected.destination && command[5]==job.words[7] && command[8]==expected.bytes);
    assert(!command[1] && !command[4] && !command[6] && !command[7] && !command[9]);pending.push_back(expected);issues++;return;
   }
@@ -104,7 +131,13 @@ struct IO {
  }
  void Fence(){events++;}
  void Exact()const{
-  assert(issues==2*L::Tiles(job.words[2]) && completions==issues && pending.empty() && !scalar);
+  assert(issues==
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+   L::Tiles(job.words[2])+(job.words[2]*2+16383)/16384
+#else
+   2*L::Tiles(job.words[2])
+#endif
+   && completions==issues && pending.empty() && !scalar);
   std::vector<uint8_t> expected(l1.size(),0xa7);
   for(unsigned op=0;op<2;op++)for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++){
    W::Read p={};assert(W::Packet(job,band,op,tile,p));std::memset(expected.data()+p.destination-L::Header,0,L::Header);
@@ -129,6 +162,13 @@ int main(){
   auto job=Make(1,5120);IO io(job,0);io.drop=drop;WorkerLoader loader;assert(!loader.Run(io,job,0) && !io.issues);
   const auto before=io.events;assert(!loader.Run(io,job,0) && io.events==before);refused++;
  }
+#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+ for(unsigned width:{5120U,17408U}){
+  auto job=Make(1,width);IO io(job,0);io.dropScatter=1;WorkerLoader loader;
+  assert(!loader.Run(io,job,0) && io.scatterWrites==1);
+  const auto before=io.events;assert(!loader.Run(io,job,0) && io.events==before);refused++;
+ }
+#endif
  for(unsigned word=0;word<W::Words;word++){
   auto job=Make(1,5120);IO io(job,0);auto invalid=job;invalid.words[word]=UINT32_MAX;WorkerLoader loader;
   assert(!loader.Run(io,invalid,0) && !io.events);refused++;

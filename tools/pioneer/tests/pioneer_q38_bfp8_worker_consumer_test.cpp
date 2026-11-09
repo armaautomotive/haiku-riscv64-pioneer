@@ -57,6 +57,8 @@ int main(){
   assert(emitter.ops && emitter.configs && emitter.drains && io.issues==
 #ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
    3*L::Tiles(width)
+#elif defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+   2*(L::Tiles(width)+(width*2+16383)/16384)
 #else
    4*L::Tiles(width)
 #endif

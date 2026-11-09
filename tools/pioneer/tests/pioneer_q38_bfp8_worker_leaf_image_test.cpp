@@ -12,7 +12,7 @@
 struct WorkerImage:Machine {
  NativeBfpBandMachine native;IO transfer;std::vector<uint8_t> code;unsigned stores=0,acks=0,dropAckAt=0,minSP=0x70000;
  bool awaiting=false,stackSeen=false,damageFrame=false;
-#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+#if defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
  bool damageInput=false,inputDamaged=false,inputPreserved=false,dropAfterFirstBand=false,faultAfterFirstBand=false;
 #ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
  unsigned incomingMutation=12;
@@ -46,9 +46,16 @@ struct WorkerImage:Machine {
  }
  bool CodeAddress(uint32_t a)const override{return a==0x6000 || Range(a,0x70000,unsigned(code.size()));}
  unsigned StepLimit()const override{return 10000000+PioneerDramQueuedReadSweep::PollLimit*2048;}
- bool Loaded()const{return transfer.completions>=2*native.tiles
+ bool Loaded()const{return transfer.completions>=
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+  native.tiles+(transfer.job.words[2]*2+16383)/16384
+#else
+  2*native.tiles
+#endif
 #ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
   && !((transfer.completions-2*native.tiles)%native.tiles)
+#elif defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+  && !(transfer.completions%(native.tiles+(transfer.job.words[2]*2+16383)/16384))
 #else
   && !(transfer.completions%(2*native.tiles))
 #endif
@@ -64,11 +71,15 @@ struct WorkerImage:Machine {
   assert(!(a&3));if(a==0xffe40000){Instruction(value);return;}
   if(a==0xffe000fc){assert(!value && Loaded());gpr63=0;return;}
   if(Range(a,0xffef0000,224*4)){assert(Loaded());native.Config((a-0xffef0000)/4,value);return;}
-  if(transfer.Header(a) || Range(a,0xffb20000,0x2000)){transfer.Write(a,value);return;}
+  if(transfer.Header(a) || Range(a,0xffb20000,0x2000)
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+   || transfer.InputScratch(a)
+#endif
+  ){transfer.Write(a,value);return;}
   assert(Range(a,0x6e000,8192)||Range(a,0x17ffc0,12)||Range(a,W::Output,8*32*4));
   if(Range(a,W::Output,8*32*4)){assert(native.Clean() && Loaded());stores++;}
   l1[Index(a)]=value;
-#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+#if defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
   if(stores==32 && !inputPreserved){
    for(unsigned tile=0;tile<native.tiles;tile++){
     const unsigned at=L::Input+tile*L::InputStride;
@@ -96,6 +107,9 @@ struct WorkerImage:Machine {
    assert(native.valid[row] && (row==32 || row==40));native.outputReads++;return Bits(native.destination[row][col]);
   }
   if(transfer.Header(a)||Range(a,0xffb20000,0x2000)
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+   || transfer.InputScratch(a)
+#endif
 #ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
    || Range(a,0xffb30000,0x2000)
 #endif
@@ -112,6 +126,8 @@ struct WorkerImage:Machine {
   assert(Loaded() && native.Clean() && stores==bands*32 && native.outputReads==bands*32 && native.clears==bands && !transfer.scalar);
 #ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
   assert(inputPreserved && transfer.issues==(bands+1)*native.tiles && transfer.completions==transfer.issues);
+#elif defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+  assert(inputPreserved && transfer.issues==bands*(native.tiles+(transfer.job.words[2]*2+16383)/16384) && transfer.completions==transfer.issues);
 #else
   assert(transfer.issues==2*bands*native.tiles && transfer.completions==transfer.issues);
 #endif
@@ -128,20 +144,24 @@ int main(int argc,char** argv){
   printf("PASS actual OFFBOARD BFP8 worker RV32 K%u peer%u: 64 exact synthetic words, ROOT-L1/GDDR simulation, steps%u stack%u; NO DEVICE\n",
    width,worker,image.steps,0x70000-image.minSP);
  }
-#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+#if defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
  for(unsigned width:{5120U,17408U})for(unsigned bands:{1U,3U,8U}){
   WorkerImage image(argv[1],63,width,bands,true);assert(image.Execute());const auto* expected=PioneerNativeBfpBandGolden(width);assert(expected);
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const auto value=image.l1[image.Index(W::Output+(band*32+row)*4)];
    if(band&1)assert((value&0x7fffffffU)==0);else assert(value==expected[row]);
   }
-  printf("PASS OFFBOARD BFP8 input reuse K%u bands%u: %u output words, %u NoC reads, steps%u; NO DEVICE\n",width,bands,bands*32,image.transfer.issues,image.steps);
+  printf("PASS OFFBOARD BFP8 input experiment K%u bands%u: %u output words, %u NoC reads, steps%u; NO DEVICE\n",width,bands,bands*32,image.transfer.issues,image.steps);
  }
  { // Demonstrate that local reuse alone does NOT prove stable input ownership.
   WorkerImage image(argv[1],63,5120);image.damageInput=true;assert(image.Execute() && image.inputDamaged);
   const auto* expected=PioneerNativeBfpBandGolden(5120);bool changed=false;
   for(unsigned row=0;row<32;row++)changed|=image.l1[image.Index(W::Output+(32+row)*4)]!=expected[row];
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+  assert(!changed);puts("PASS local input corruption between bands is replaced by the next batch reload; NO PRODUCTION AUTHORITY");
+#else
   assert(changed);puts("PASS negative control: changed retained BFP8 input changed output without a fault; NO PRODUCTION AUTHORITY");
+#endif
  }
 #ifdef PIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT
  for(unsigned counter=0;counter<12;counter++){
@@ -157,7 +177,7 @@ int main(int argc,char** argv){
  }
  {WorkerImage image(argv[1],1,5120);image.damageFrame=true;assert(!image.Execute() && image.stores==32);}
  {WorkerImage image(argv[1],1,5120);image.dropAckAt=1;assert(!image.Execute() && !image.stores);}
-#ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
+#if defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
  {WorkerImage image(argv[1],1,5120);image.dropAfterFirstBand=true;assert(!image.Execute() && image.stores==32);}
  {WorkerImage image(argv[1],1,5120);image.faultAfterFirstBand=true;assert(!image.Execute() && image.stores==32);}
 #endif

@@ -1,5 +1,31 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8Bfp8ReuseRole.h"
+#if defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT) && (PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) \
+ || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_BF16_WORKER_IMAGE) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) \
+ || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+ || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error BFP8 batched input is an isolated standalone leaf experiment
+#endif
+#ifndef PIONEER_Q38_BFP8_BATCH_INPUT_SELECTION_H
+#define PIONEER_Q38_BFP8_BATCH_INPUT_SELECTION_H
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+enum {PioneerQ38Bfp8BatchInputSelection=1};
+#else
+enum {PioneerQ38Bfp8BatchInputSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+static_assert(PioneerQ38Bfp8BatchInputSelection==1,"late batched-input selection");
+#else
+static_assert(PioneerQ38Bfp8BatchInputSelection==0,"late batched-input removal");
+#endif
 #ifndef PIONEER_Q38_BFP8_WORKER_LOADER_H
 #define PIONEER_Q38_BFP8_WORKER_LOADER_H
 #if defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER) && (!defined(PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT) || PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT != 1)
@@ -22,6 +48,11 @@
 #endif
 #include "PioneerQ38Bfp8WorkerJob.h"
 #include "PioneerDramCohortReadSweep.h"
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+static_assert(PioneerQ38Bfp8WorkerLayout::Input+17408U*2 <=
+ PioneerQ38Bfp8WorkerLayout::Input+(17408U/32U-1U)*PioneerQ38Bfp8WorkerLayout::InputStride+64U,
+ "compact input fits the existing expanded input span");
+#endif
 // C64 batched GDDR weight reads plus ROOT-L1 BF16 input reads. The caller
 // still owes immutable weight-page and producer ownership/lifetime proofs.
 class PioneerQ38Bfp8WorkerLoader {
@@ -52,6 +83,42 @@ class PioneerQ38Bfp8WorkerLoader {
   }
   return false;
  }
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+ // Read the contiguous producer once per band, then expand in reverse into
+ // existing per-tile payload slots. It does NOT retain input across bands.
+ // Fixed source/destination geometry only; no native ownership is implied.
+ template<class IO> bool BatchInput(IO& io){
+  const unsigned bytes=job.words[2]*2;
+  if(!bytes || (bytes&63) || !Quiet(io))return false;
+  for(unsigned i=0;i<10;i++){
+   const unsigned value=i==0?W::RootInput:i==2?W::RootRoute:i==3?L::Input:i==5?job.words[7]:i==8?(bytes<16384?bytes:16384):0;
+   command[i]=value;io.Write(0xffb20000+i*4,value);
+  }
+  if(!Commands(io))return false;
+  for(unsigned offset=0;offset<bytes;){
+   const unsigned count=bytes-offset<16384?bytes-offset:16384;
+   if(!Q::Slot(io))return false;
+   command[0]=W::RootInput+offset;command[3]=L::Input+offset;command[8]=count;
+   const unsigned fields[]={0,3,8};for(unsigned index=0;index<3;index++){
+    const unsigned i=fields[index];io.Write(0xffb20000+i*4,command[i]);if(io.Read(0xffb20000+i*4)!=command[i])return false;
+   }
+   io.Fence();io.Write(0xffb20040,1);if(io.Read(0xffb20040)>1)return false;io.Fence();
+   issued++;flits+=count/64;offset+=count;
+  }
+  if(!Drain(io))return false;
+  for(unsigned tile=L::Tiles(job.words[2]);tile-->0;){
+   for(unsigned word=16;word-->0;){
+    const unsigned value=io.Read(L::Input+tile*64+word*4),destination=L::Input+tile*L::InputStride+word*4;
+    io.Write(destination,value);if(io.Read(destination)!=value)return false;
+   }
+  }
+  for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++)for(unsigned word=0;word<L::Header/4;word++){
+   const unsigned address=L::Input-L::Header+tile*L::InputStride+word*4;
+   io.Write(address,0);if(io.Read(address))return false;
+  }
+  io.Fence();return Quiet(io) && Commands(io);
+ }
+#endif
 public:
  PioneerQ38Bfp8WorkerLoader(){
   volatile uint32_t* words=job.words;for(unsigned i=0;i<W::Words;i++)words[i]=0;
@@ -84,6 +151,9 @@ private:
     2U
 #endif
     ;operand++){
+#ifdef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT
+   if(operand==1){if(!BatchInput(io))return Fail();continue;}
+#endif
    for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++){
     W::Read packet;if(!W::SelectedPacket(job,band,operand,tile,packet))return Fail();
     for(unsigned word=0;word<L::Header/4;word++){
@@ -111,6 +181,8 @@ private:
 #ifdef PIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT
     (reuseInput?L::Tiles(job.words[2]):2*L::Tiles(job.words[2]))
     || flits!=(reuseInput?17*L::Tiles(job.words[2]):18*L::Tiles(job.words[2]))
+#elif defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+    L::Tiles(job.words[2])+(job.words[2]*2+16383)/16384 || flits!=18*L::Tiles(job.words[2])
 #else
     2*L::Tiles(job.words[2]) || flits!=18*L::Tiles(job.words[2])
 #endif

@@ -1,0 +1,46 @@
+BFP8 per-band batched input: OFFLINE LEAF EXPERIMENT, 2026-11-09
+
+This separate leaf fetches each band's contiguous ROOT BF16 activation vector
+in aligned chunks of at most 16384 bytes, then scatters it backwards in the
+existing worker L1 input span and zeros the existing per-tile headers. It
+re-fetches for EVERY band: unlike the retained-input experiment it does not
+depend on keeping a previous band's staged input. Matrix instructions and
+weight reads remain unchanged. It is forbidden in hybrid, native, driver,
+Work, CPU-reference and retained-input roles. No ROOT/receipt, card owner,
+device test or Assistant integration exists for this variant.
+
+The maximum input chunk follows the documented L1-to-L1 NoC request limit:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md
+The local simulator's immediate partial-batch completions are not a proof of
+physical NoC ordering, cache coherence, fault behavior or source ownership.
+
+Same-SDK leaf text SHA-256
+77d87adaf6ab3f9c34fc9f1c50c627d6174676b700f24bca34c8a28f0bcd1dd0
+(7840/8192 bytes); normal and retained-input leaves rebuild to their prior
+pins. Simulated actual RV32/matrix instructions pass widths 5120 and 17408,
+peers 1/63/119, 1/2/3/8 bands, and 3 privately exported real head bands.
+All 119 peers and both widths pass simulated loader geometry; fault controls
+include dropped local scatter writes and no further IO after failure. A
+between-band local corruption is overwritten by the next reload. The first
+simulator run failed because the existing mock rejected the new deliberate
+local scratch reads; the mock was extended explicitly to model them, not to
+relax numerical comparisons. Selector, late-binding, section-size and opcode
+checks pass. Private fixtures and compiled private binaries are not published.
+
+In the same two-band K5120 peer63 simulator fixture, the normal leaf issued
+640 operand reads and executed 205625 RV32 steps; the batched leaf issued
+322 operand reads and executed 186968 steps. For K17408 peer63, the counts
+were 2176 reads / 678623 steps versus 1094 / 609356. These are simulated
+instruction and request counts, not card cycles, inference speed or a
+throughput prediction. The new scalar local scatter itself costs work; a
+physical benchmark is necessary to determine whether batching is faster.
+
+This experiment does not prove producer lifetime or protection against
+concurrent writes during a band. Before any physical test it needs separate
+code identity, ROOT command/receipt integration, native memory ownership and
+lifecycle qualification, and safe isolated hardware validation. It is not
+part of the currently running full-card hidden-state trial.
+
+Reproduce with a private verified head export:
+ python3 tools/pioneer/tests/run_pioneer_q38_bfp8_worker_tests.py --batch-input \
+  /Volumes/HaikuBuildLocal/generated.riscv64 ABS_PRIVATE_HEAD_EXPORT
