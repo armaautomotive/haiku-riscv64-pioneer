@@ -173,6 +173,23 @@ Reproduce the DATA test (the executable path is disposable):
 Fake-owner SDK binding:
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_binding_tests.py --qgw8-trace-init-inspection ABS_PINNED_PROGRAM_HEADER --sdk ABS_HAIKU_SDK
 
+The fake-owner-only context wrapper now connects the held, drained session
+to the private trace reader. It checks the context's session phase, model
+source scope, requested chunk geometry, output/result shape and overlap
+before calling the existing reader. There is still no native ioctl, real
+driver role, source authentication proof for returned payload, or hardware
+permission. A test extracted this exact wrapper and passed synthetic
+held/shape/alias/null/zero/source refusals and a mocked positive call.
+During development that test detected a missing null check; it was fixed.
+An unintended change to the existing record reader was also removed, and
+the ordinary tag129 driver rebuilt to the prior SHA-256
+0b61c939d9b461a6c60e0d7f68a2c3bccac588ea052dc634d85b9a35d32b929f.
+The larger fake-owner startup regression also passed again (2388 chunks,
+4776 simulated packets); it compiled the wrapper but did not call it.
+This is not a full-owner trace-read, real-IO, device, cleanup, or speed result.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_trace_context_tests.py
+
 Complete simulated startup (requires the pinned zero image and program):
  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py ABS_ZERO_IMAGE --qgw8-header ABS_PINNED_PROGRAM_HEADER --runtime --qgw8-trace-init
 

@@ -177,6 +177,34 @@
  return s->runtime->ReadHiddenChunk(c.io,part,output,words,result);
 } // private trusted-buffer DATA read ONLY;no opcode,Work,restore or completion grant
 #endif
+#ifdef PIONEER_Q38_QGW8_TRACE_READ_INSPECTION
+// Non-loadable fake-owner inspection only. This does not install an ioctl or
+// grant device access; it binds the existing reader to the same live context.
+[[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeTraceChunk(PioneerStoreContext& c,unsigned ordinal,
+ uint32_t* output,unsigned words,PioneerQ38TokenHiddenReadResult& result){
+ namespace G=PioneerQ38Qgw8LayerTraceGeometry;
+ const PioneerQ38TokenHiddenReadResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ auto* s=c.q38TokenNative;G::Chunk chunk={};
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootHeld || !s->runtime || !s->startup || !s->TerminalHeld()
+  || !s->runtime->CommittedRecordsRead() || !G::Describe(s->startup->Workspace(),ordinal,chunk)
+  || words!=chunk.words || !output || !Q38TokenExecutionOutput(c,&result,sizeof(result)))return false;
+ const unsigned bytes=words*4;const uintptr_t out=reinterpret_cast<uintptr_t>(output),r=reinterpret_cast<uintptr_t>(&result);
+ if((out&3) || out>UINTPTR_MAX-bytes || (out<r+sizeof(result) && r<out+bytes)
+  || !s->startup->PublishedOutput(output,bytes) || !s->runtime->DispatchOutput(output,bytes))return false;
+ const void* objects[]={&c,&c.io,s,s->memory,s->participants,s->runtime,c.initialized,c.hashes,PioneerQ38TokenRope::Data};
+ const size_t sizes[]={sizeof(c),sizeof(c.io),sizeof(*s),sizeof(*s->memory),sizeof(*s->participants),sizeof(*s->runtime),
+  PioneerResidentBanks::Pages,size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t),PioneerQ38TokenRope::Bytes};
+ for(unsigned i=0;i<9;i++){
+  const uintptr_t owned=reinterpret_cast<uintptr_t>(objects[i]);
+  if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+bytes))return false;
+ }
+ for(unsigned i=0;i<words;i++)if(output[i])return false;
+ if(!c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ReadTraceChunk(c.io,ordinal,output,words,result);
+}
+#endif
 [[maybe_unused]] static __attribute__((noinline)) bool RestoreQ38TokenNativeL1(PioneerStoreContext& c,PioneerQ38TokenRestoreResult& result){
  auto* s=c.q38TokenNative;const PioneerQ38TokenRestoreResult pristine;
  const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
