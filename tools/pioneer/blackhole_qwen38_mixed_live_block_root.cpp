@@ -21,7 +21,11 @@ static void Input(L::PrivateSeal* p){
 static void Compute(L::PrivateSeal* p){
  Block::Norm(p->outer,0);Joined::Capture(p->outer);Copy(L::Input,L::RawCopy,5120);
  for(unsigned slot=0;slot<3;slot++){Joined::BindProjection(p,slot);if(Projection::Run(p->frame)!=(slot?1024U:12288U))scalar_fault_park();}
- Joined::Prepare(p);Joined::BindDense(p);if(q38_joined_dense_frame()!=6144)scalar_fault_park();
+ Joined::Prepare(p);Joined::BindDense(p);
+#ifdef PIONEER_Q38_QGW8_DENSE_VALUE_TRACE_IMAGE
+ Block::TraceDenseValue(p);
+#endif
+ if(q38_joined_dense_frame()!=6144)scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND
  // The attention component consumes the current row directly from L1; it
  // deliberately does NOT own canonical cache publication. Append/read back

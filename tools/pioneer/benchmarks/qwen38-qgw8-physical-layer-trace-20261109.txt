@@ -230,6 +230,24 @@ measure speed. A small synthetic sign/bounds sanity check runs first.
 
  python3 tools/pioneer/tests/run_pioneer_q38_dense_value_sign_screen.py
 
+Value-path capture preparation (offline only): a distinct layer3/position0
+image records 1024 raw F32 value projection words read from its actual GDDR
+workspace, followed by the 512 words of prepared packed-F16 values, into
+the first 6144 bytes of trace slot0 before attention runs. Slots1-63 remain
+available for the ordinary layer trace. Two independent full image builds
+produced program.elf SHA-256
+01da0aa95c61878ebae266921511eaa1f83df99e9bc4ee250f72fc8ac98851d7
+(130412 of 131072 text bytes). The separate component cross-compiled and
+the ordinary, input-trace and stage-trace object hashes remained unchanged.
+Geometry/role refusals passed. The actual linked writer executed in a
+synthetic delayed-NoC machine, including both transfers, endpoint bounds,
+command corruption and timeouts, with the seals and quiet checks intercepted.
+This is NOT a full controller/lifecycle/stack proof, native owner, device
+capture, correctness result or speed measurement; do not install the image.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_component_tests.py SDK PINNED_ORDINARY_DENSE_OBJECT
+ python3 tools/pioneer/tests/run_pioneer_q38_qgw8_dense_value_image_tests.py PINNED_IMAGE_DIRECTORY
+
 Dense output-projection INPUT capture, component-only preparation: a distinct
 diagnostic role snapshots the 6144-float gated attention output immediately
 before the output projection, at layer 3 and position 0 only. Its geometry
