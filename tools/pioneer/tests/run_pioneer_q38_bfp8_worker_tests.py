@@ -97,11 +97,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfp8-worker-suite-',dir='/priva
    result=subprocess.run([compiler,'-std=c++17','-DPIONEER_TEST_BFP8=1','-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1',
                           '-D'+selection+'=1','-E',str(here/'pioneer_q38_bfp4_worker_loader_test.cpp')],
                          stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
-   assert result.returncode and 'BFP8 batched input is an isolated standalone leaf experiment' in result.stderr,selection
+   assert result.returncode and 'BFP8 batching requires an isolated leaf or worker experiment' in result.stderr,selection
   result=subprocess.run([compiler,'-std=c++17','-DPIONEER_TEST_BFP8=1','-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=0',
                          '-E',str(here/'pioneer_q38_bfp4_worker_loader_test.cpp')],
                         stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
-  assert result.returncode and 'BFP8 batched input is an isolated standalone leaf experiment' in result.stderr
+  assert result.returncode and 'BFP8 batching requires an isolated leaf or worker experiment' in result.stderr
   loader='#include "'+str(root/'PioneerQ38Bfp8WorkerLoader.h')+'"\n'
   for defs,body in (([],loader+'#define PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT 1\n'+loader),
                     (['-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1'],loader+'#undef PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT\n'+loader)):

@@ -122,6 +122,7 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<8;i++)before[i]=image->transfer.counters[indices[i]];
   image->Stage(50,1,width==5120?2:4);assert(image->Finish(1));
   assert(image->transfer.issues==2*(width/32+(width*2+16383)/16384));
+  assert(image->transfer.delayedRootPolls>=6 && image->transfer.maxRootPending==(width==5120?1U:3U));
   const auto* golden=PioneerNativeBfpBandGolden(width);assert(golden);
   for(unsigned row=0;row<64;row++)assert(image->Get(W::Output+row*4)==golden[row%32]);
   for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);job[i]=image->Get(HW::Job+i*4);}

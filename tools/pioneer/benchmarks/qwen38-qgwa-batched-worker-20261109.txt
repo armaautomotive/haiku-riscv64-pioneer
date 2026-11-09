@@ -30,3 +30,18 @@ granted by this result. The existing live QGW8 diagnostic was not disturbed.
 
 Reproduce the simulation after building the two isolated images:
 python3 tools/pioneer/tests/run_pioneer_q38_qgwa_batch_worker_tests.py ABS_BUILD_A ABS_BUILD_B ABS_BATCH_LEAF ABS_OLD_WORKER ABS_PRIVATE_EXPORT
+
+Follow-up simulated-fabric check
+--------------------------------
+The initial mock completed partial input bursts immediately. It now delays
+completion, queues all three requests for the 17408-wide input, and asserts
+that the simulated worker does not touch its input scratch before completion.
+An injected permanently stalled input must fail without scattering or
+retrying. The full leaf suite passed 238 geometry cases and 40 refusals; the
+compiled QGWA head/FFN and private-data simulations passed again. Its
+two-band head now executes 214622 simulated steps due to the added delay;
+this is a mock schedule, not a physical performance measurement. The first
+full leaf regression also exposed an outdated expected compiler-error string
+after the new worker role was added; that test expectation was corrected and
+the complete suite rerun successfully with unchanged source. These checks
+still do not model the actual hardware's memory ordering or source lifetime.
