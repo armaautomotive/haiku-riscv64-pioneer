@@ -39,8 +39,13 @@
 #error QGW8 ROOT requires its exact non-loadable hybrid BF16 inspection profile
 #endif
 #define PIONEER_DRAM_SWEEP_FREESTANDING 1
+#ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
+#include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
+namespace PioneerQ38SelectedGlobalWorker=PioneerQ38DenseQ8MatrixWorkerLayout;
+#else
 #include "PioneerQ38HybridHeadWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38HybridHeadWorkerLayout;
+#endif
 enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
 #elif defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
 #if PIONEER_Q38_QGWC_PROGRAMS_INSPECTION != 1 || (!defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) && !defined(PIONEER_Q38_QGWC_NATIVE_136)) \

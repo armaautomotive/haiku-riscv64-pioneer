@@ -18,7 +18,7 @@ struct Schedule {
 };
 static std::vector<unsigned> Symbols(const char* folder,const char* name){
  std::ifstream f(std::string(folder)+"/program.demangled");std::string line;std::vector<unsigned> out;
- while(std::getline(f,line))if(line.find(name)!=std::string::npos)out.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
+ while(std::getline(f,line))if(line.find(name)!=std::string::npos && line.find("[clone")==std::string::npos)out.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
  assert(out.size()==2);return out;
 }
 static bool Call(ActualRoot& m,unsigned pc,unsigned d,unsigned worker,unsigned sequence,unsigned output,bool four){
@@ -63,6 +63,7 @@ int main(int argc,char** argv){
  m->memory[d+4*42]=3;assert(!Call(*m,descriptors[0],d,20,0,out,false));
  assert(!Call(*m,jobs[0],d,0,0,out,true));
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
+ auto validators=Symbols(argv[1],"PioneerQ38DenseQ8MatrixWorkerLayout::JobShape(");
  for(unsigned layer:{3U,63U})for(unsigned role=5;role<=7;role++)for(unsigned component=0;component<2;component++){
   m->memory[d+4*42]=layer;m->memory[d+4*43]=role;Schedule expected;
   const unsigned units=role==5?384:32,index=((layer/4)*3+role-5)*21;unsigned first=0;
@@ -82,6 +83,9 @@ int main(int argc,char** argv){
    assert(PioneerQ38DenseQ8MatrixRootFrame::Build(expected.parts[w],boot,layer,role,0,2025,6,frame));
    assert(m->Run(m->job[component],d,w,7));
    for(unsigned i=0;i<64;i++)assert(m->memory.at(out+4*i)==frame[i]);
+   assert(Call(*m,validators[component],out,0x170000+w*256,6,0,true) && m->regs[10]==1);
+   m->memory[out+34*4]=8;assert(Call(*m,validators[component],out,0x170000+w*256,6,0,true) && !m->regs[10]);
+   m->memory[out+34*4]=role;
   }
   assert(m->Run(seals[component],d));m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));
   assert(!m->Run(m->job[component],d,0,7));m->memory[0x16ebc0]^=1;
