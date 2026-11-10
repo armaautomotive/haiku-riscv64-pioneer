@@ -14,10 +14,13 @@ stderr was empty; stdout included PASS_DENSE_Q8_BFP8_PREPARATION 48.
 An independently rebuilt, read-only Haiku checker was started afterwards.
 Its two builds had matching SHA-256
 06b0631f5f5fc86ae128e0340629952ebad2a23b64d62c6db96b03af7a5c14d4.
-It authenticates the model and checks every cached stripe against fresh
-conversion; its result is PENDING in verify-stdout/verify-stderr/
-verify-exit-status in the same evidence directory. The prior Mac cache and
-CPU numerical sample are documented in qwen38-dense-q8-matrix-layout-20261109.txt.
+It authenticated the model and checked every cached stripe against fresh
+conversion: 336/336 fragments and 304,640 pages matched, exit 0, stderr empty.
+Evidence is in verify-stdout/verify-stderr/verify-exit-status in the same
+directory; verify-stdout SHA-256
+63ffb95bf9713cbf7d6f04a37db7feecc8e53d346ad5dd6b338c69b91f683c1c.
+The prior Mac cache and CPU numerical sample are documented in
+qwen38-dense-q8-matrix-layout-20261109.txt.
 
 This Haiku conversion did not access the P100A, install a driver, execute
 inference, validate quality, or establish inference speed. A successful
