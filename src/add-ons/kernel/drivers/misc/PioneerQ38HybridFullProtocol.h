@@ -2,6 +2,26 @@
 #include "../../../../../tools/pioneer/PioneerQ38QgwdClientRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceClientRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38QgwcClientRole.h"
+#if defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) && (PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION != 1 \
+ || !defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGWD_CLIENT_141) || defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error QGWD multi-token simulation is a separate synthetic-only role
+#endif
+#ifndef PIONEER_Q38_QGWD_MULTI_SIM_IDENTITY_H
+#define PIONEER_Q38_QGWD_MULTI_SIM_IDENTITY_H
+#ifdef PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION
+enum {PioneerQ38QgwdMultiSimulationIdentity=1};
+#else
+enum {PioneerQ38QgwdMultiSimulationIdentity=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION
+static_assert(PioneerQ38QgwdMultiSimulationIdentity==1,"late multi-token simulation selection");
+#else
+static_assert(PioneerQ38QgwdMultiSimulationIdentity==0,"late multi-token simulation removal");
+#endif
 #if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) && (PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION) || PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
@@ -153,7 +173,9 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010125);
 #endif
-#if defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_CLIENT_141) || defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
+#if defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION)
+enum {Version=1,MaxPrompt=1,MaxOutput=2,MaxPositions=2,Vocabulary=248320};
+#elif defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_CLIENT_141) || defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
  || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) \
  || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 enum {Version=1,MaxPrompt=1,MaxOutput=1,MaxPositions=1,Vocabulary=248320};

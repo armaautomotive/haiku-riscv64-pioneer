@@ -1,0 +1,15 @@
+QGWD two-token session preparation, offline simulation only
+==========================================================
+
+The distinct PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION role admits exactly
+one prompt token and at most two outputs through the existing QGWD session
+shape. It cannot coexist with the tag 141 client/native, kernel, Work,
+CPU-validation, or CPU-reference roles. The existing real tag 141 remains
+restricted to one fixed input and one output.
+
+The simulated transport returns two fabricated records with a feedback link
+from the first token to the second. Tests exercise normal finish, failure on
+START with quarantine, and refusal/quarantine when that link is corrupted.
+Output bounds and late role changes are rejected before a device is opened.
+These are synthetic replies: no accelerator, ROOT arithmetic, real model,
+output quality, speed, or multi-token hardware capability is demonstrated.
