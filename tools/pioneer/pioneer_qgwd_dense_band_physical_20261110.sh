@@ -5,7 +5,9 @@ set -eu
 PATH=/boot/system/bin:/bin
 export PATH
 umask 077
-[ "$#" = 0 ] && [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
+[ "$#" = 0 ] || { [ "$#" = 1 ] && [ "$1" = --check-only ]; } || exit 2
+[ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
+action=${1:---run}
 stage=/boot/home/pioneer-qgwd-real-dense-band-20261110-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
@@ -80,6 +82,10 @@ idle && metadata 2026102100010012 18 && health || exit 1
 for name in .dense-trial-once dense-stable.backup driver.incoming dense.stdout dense.stderr dense.exit dense.parent.pid dense.state;do
  test ! -e "$stage/$name" && test ! -L "$stage/$name" || exit 1
 done
+if [ "$action" = --check-only ];then
+ echo QGWD_DENSE_CHECK_ONLY_PASSED_NO_DRIVER_SWAP_OR_GPU_EXECUTION
+ exit 0
+fi
 mkdir "$stage/.dense-trial-once"
 printf '%s\n' "$$" > "$stage/dense.parent.pid"
 printf '%s\n' ADMITTED_BEFORE_SWAP > "$stage/dense.state"
