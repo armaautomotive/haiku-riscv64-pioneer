@@ -4,7 +4,14 @@
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC))
 #error Learned-band lease requires its distinct diagnostic80 role,never Work/validation
 #endif
-#if defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010080ULL)
+#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) && (PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC != 1 \
+ || !defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) || !defined(_KERNEL_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) \
+ || PIONEER_DRIVER_BUILD_TAG != 0x2026111000010140ULL)
+#error QGWD dense-band owner requires its separate fixed kernel diagnostic role
+#endif
+#if defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
+ || (PIONEER_DRIVER_BUILD_TAG != 0x2026110400010080ULL && (!defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026111000010140ULL)))
 #error Full-K kernel owner requires its explicit distinct diagnostic80 role
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"

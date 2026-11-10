@@ -7,11 +7,15 @@ import re
 import subprocess
 import sys
 import tempfile
-if not __debug__ or len(sys.argv) != 2:
-    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY')
+if not __debug__ or len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2]!='--qgwd-synthetic'):
+    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY [--qgwd-synthetic]')
 here = pathlib.Path(__file__).resolve().parent
 private = pathlib.Path(sys.argv[1])
-assert hashlib.sha256((private / 'PioneerNativeBfpModelBandMetadata.h').read_bytes()).hexdigest() == 'a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c'
+qgwd=len(sys.argv)==3
+if qgwd:
+    assert private.resolve()==(here/'fixtures/qgwd-dense-source').resolve(), 'only explicit synthetic metadata'
+else:
+    assert hashlib.sha256((private / 'PioneerNativeBfpModelBandMetadata.h').read_bytes()).hexdigest() == 'a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c'
 driver = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
 control = driver.split('// PIONEER_DRIVER_RELOAD_CONTROL_BEGIN\n', 1)[1].split('// PIONEER_DRIVER_RELOAD_CONTROL_END', 1)[0]
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-learned-band-client.'))
@@ -151,6 +155,7 @@ int main(int argc,char** argv){
 (folder / 'test.cpp').write_text(program)
 compiler = os.environ.get('CXX', 'c++')
 subprocess.run([compiler, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
+                *(['-DPIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE=1'] if qgwd else []),
                 '-I' + str(folder), '-I' + str(here.parent), '-I' + str(private), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 cases = [(0, 0, 0)]
 for scenario in (*range(1, 18), 20, 21, 22, *range(30, 41), 45, 46, 52, 63):
@@ -169,7 +174,9 @@ for scenario, target, word in cases:
     elif scenario == 20:
         assert result.stderr.count('NATIVE_LEARNED_BAND_RETURNED_WORD') == 64 and f'sample{target} pass{word//32} row{word%32} ' in result.stderr
 for selection in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION'):
-    result = subprocess.run([compiler, '-std=c++17', '-D' + selection, '-I' + str(folder), '-I' + str(private),
+    result = subprocess.run([compiler, '-std=c++17', '-D' + selection,
+                             *(['-DPIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE=1'] if qgwd else []),
+                             '-I' + str(folder), '-I' + str(private),
                              '-c', str(here.parent / 'pioneer_native_model_band_diagnostic.cpp'), '-o', str(folder / (selection + '.o'))], text=True, capture_output=True)
     assert result.returncode and 'Learned-band CPU reference is a separate diagnostic' in result.stderr
 print(f'PASS ACTUAL learned-band client:{len(cases)} ASan/UBSan cases;ACTUAL driver metadata,all64 RUN/END word mutations in ALL3 samples,source mutation at boundaries,strict protocol/owner/close/channel failures,NO next sample/END/query/retry after uncertainty;3 runtime-role guards;NO device proof')

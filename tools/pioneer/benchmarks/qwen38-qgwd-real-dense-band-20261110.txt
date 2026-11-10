@@ -1,0 +1,26 @@
+Real Qwen dense-attention BFP8 bands, CPU preparation, 2026-11-10
+
+On the Pioneer, the CPU-only exporter authenticated the full original model
+and prepared three private 32-row bands of blk.3.attn_k.weight (tensor 45,
+rows 0, 512 and 992; width 5120). All 480 selected cache tiles matched fresh
+conversion; the exporter exited 0. Private payload/header SHA-256 values:
+ data 3a7aced1e5cb5245105d14c2e8f74327cca708d1cfaf2d230fd5bf14fc165e25
+ metadata 161c882ef8557e9b745ab7bb1d1871329e73019b81b9a17dc4885c4172c48575
+The samples remain in the private Pioneer stage; they are not in the repo.
+
+A separate integer decoder/arithmetic implementation, which does not call
+the original packing or arithmetic helpers, was built twice with identical
+SHA-256 9c8329d8792cf6c391ef1652de42f0f3b3a23390ef40d243ed2c042a92a6a297.
+It ran on the Pioneer and matched all 96 generated outputs across 122,880
+matrix-phase instructions. Its non-sensitive summary SHA-256 is
+68c4a82dac2b80b222d6d6f52dc10748b70fc07486592070960300753ad44676;
+stderr was empty. The checker also matched an already-local independent
+QGW8-head fixture under ASan/UBSan. These are CPU computations, not device
+arithmetic or model-quality validation.
+
+The proposed separate diagnostic tag is 2026111000010140; protocol/owner
+role tests and the actual client's 492 fake-endpoint cases passed. Nothing
+has been installed or run on the P100A. A protected export of private samples
+to the Mac was denied; the independent checker ran on the Pioneer instead.
+Actual on-device driver build, hardware execution, full-model inference and
+tokens/second remain unproven.

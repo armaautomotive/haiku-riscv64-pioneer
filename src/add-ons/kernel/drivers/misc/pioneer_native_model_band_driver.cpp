@@ -9,7 +9,12 @@
 #if defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010080ULL
+#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC)
+#if PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111000010140ULL
+#error Distinct QGWD dense-band diagnostic identity required
+#endif
+#elif !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010080ULL
 #error Distinct exact native-BFP diagnostic identity required
 #endif
 #define PIONEER_NATIVE_BFP_DIAGNOSTIC 1 // PRIVATE inert-base hook gate only

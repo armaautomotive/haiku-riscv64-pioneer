@@ -4,7 +4,15 @@
 #include "PioneerNativeBfpProtocol.h"
 // Distinct fixed learned-weight diagnostic80. Three COMPILED samples only;
 // no runtime weights/code/addresses/route,model inference or Work endpoint.
+#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC
+#if PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC != 1 || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error QGWD dense-band protocol is a separate fixed diagnostic only
+#endif
+constexpr uint64_t PioneerNativeModelBandTag=UINT64_C(0x2026111000010140);
+#else
 constexpr uint64_t PioneerNativeModelBandTag=UINT64_C(0x2026110400010080);
+#endif
 constexpr uint32_t PioneerNativeModelBandNone=UINT32_MAX;
 enum { PIONEER_NATIVE_MODEL_BAND_SUPPORT=B_DEVICE_OP_CODES_END+0x7c00,
 	PIONEER_NATIVE_MODEL_BAND_RUN=B_DEVICE_OP_CODES_END+0x7c01,
