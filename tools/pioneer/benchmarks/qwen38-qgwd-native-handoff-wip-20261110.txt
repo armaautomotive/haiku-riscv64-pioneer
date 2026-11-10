@@ -1,0 +1,24 @@
+QGWD native handoff source integration, 2026-11-10
+
+The token native binding and held-startup source now has a QGWD-specific
+branch. It binds the exact sealed upload receipt and span/cookie/driver
+generation, derives the logical startup layout from that receipt, checks
+physical coverage instead of requiring logical hole pages to be initialized,
+binds the receipt to the worker journal, and stages/verifies the dense matrix
+manifest after the hybrid manifest. Ordinary and QGW8 receipt paths retain
+their previous learned-page checks and admission behavior.
+
+The actual native coverage function was extracted unchanged for the isolated
+QGWD upload-control fixture: a complete synthetic 21,907-span receipt passes;
+conflicting ownership and ledger tampering fail. The same bridge instantiated
+against the actual token-memory journal cross-compiles for the Haiku RISC-V
+kernel ABI in the non-loadable QGWD role. The ordinary and QGW8 native binding
+fixtures and the ordinary held-startup fixture passed with simulated devices.
+
+IMPORTANT: existing role guards still prohibit combining QGWD receipt and
+native contexts, so the new native branches cannot yet be built as a complete
+native driver. The full combined source, call scopes, lifecycle, hardware,
+numerical correctness and performance are not qualified. No card operation,
+driver installation, full-model inference or speedup occurred here. A strict
+non-loadable combined native profile and its end-to-end tests are the next
+integration step before any physical candidate may be considered.

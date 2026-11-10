@@ -4,6 +4,17 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
 #ifdef PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeOwner.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdNativeBinding.h"
+struct QgwdCompileDram {tt_dram_samples_result dram;};
+struct QgwdCompileBase2 {QgwdCompileDram baseline;};
+struct QgwdCompileBase3 {QgwdCompileBase2 baseline;};
+struct QgwdCompileBase4 {QgwdCompileBase3 baseline;};
+struct QgwdCompileContext {
+ PioneerQ38DenseQ8UploadReceiptInspection* q38QgwdReceipt;
+ void* q38HybridReceipt;void* q38Qgw8Receipt;PioneerQ38SpanLease* q38Span;
+ uint32_t* hashes;uint8_t* initialized;PioneerResidentBanks banks;QgwdCompileBase4 baseline;
+};
+struct QgwdCompileCookie {uint32_t magic;QgwdCompileContext* context;int64_t team;};
 #endif
 struct TokenMemoryKernelCompileIO {
  bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
@@ -49,6 +60,10 @@ extern "C" bool pioneer_q38_hybrid_manifest_verify_template(PioneerQ38TokenMemor
 extern "C" bool pioneer_q38_qgwd_bind_template(PioneerQ38TokenMemory& heap,PioneerQ38DenseQ8UploadReceiptInspection& receipt,
  const void* context,const PioneerQ38DispatchLease* cohort,const void* cookie,const uint32_t* hashes,int64_t team,uint64_t generation){
  return heap.BindDenseReceiptInspection(receipt,context,cohort,cookie,hashes,team,generation);
+}
+extern "C" bool pioneer_q38_qgwd_native_journal_bind_template(QgwdCompileContext& context,const QgwdCompileCookie* cookie,
+ uint64_t generation,PioneerQ38DispatchLease* cohort,PioneerQ38TokenMemory& memory){
+ return PioneerQ38QgwdNativeBinding::BindJournal(context,cookie,generation,cohort,memory);
 }
 extern "C" bool pioneer_q38_qgwd_manifest_install_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
  PioneerQ38TokenMemoryResult& result){return heap.InstallDenseManifestHeld(io,result);}

@@ -1,6 +1,25 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 \
+ || (!defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) && !defined(PIONEER_Q38_HYBRID_FULL_NATIVE))
+#error QGWD token handoff requires tracked upload and hybrid manifest staging
+#endif
+#include "PioneerQ38QgwdNativeBinding.h"
+#endif
+// The QGWD logical plan contains intentional holes. Its sealed physical
+// upload receipt, not logical-page coverage, is the authority at boundaries.
+static bool Q38TokenNativeLearnedPresent(PioneerStoreContext& c,const PioneerQ38CanonicalModelPlan& plan){
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ auto* fd=sRuntimeOwner;
+ return PioneerQ38QgwdNativeBinding::Matches(c,fd,sReloadGeneration)
+  && c.q38QgwdReceipt->MatchesLogical(plan,&c,fd,c.hashes,c.initialized,fd->team,sReloadGeneration,
+   c.banks,c.baseline.baseline.baseline.baseline.dram);
+#else
+ return PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(plan,c.initialized,PioneerResidentBanks::Pages);
+#endif
+}
 bool PioneerSessionIO::TokenCallScopeMatches(){
  auto* c=q38MutableContext;auto* fd=sRuntimeOwner;
  if(!c || &c->io!=this || !fd || fd->magic!=0x50313030 || fd->context!=c || fd->team<0
@@ -84,7 +103,9 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::MemoryClosed
   || (!audit && state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ if(state && !PioneerQ38QgwdNativeBinding::Matches(*c,fd,sReloadGeneration))return false;
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  if(state && (c->q38HybridReceipt || !c->q38Qgw8Receipt
   || !c->q38Qgw8Receipt->Matches(c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)))return false;
 #else
@@ -140,7 +161,9 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext& c,unsigned bank){
  if(bank>=7 || sQ38TokenModelEpoch==UINT64_MAX || !c.io.TokenModelSourceScope(true))return false;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ if(!PioneerQ38QgwdNativeBinding::Matches(c,sRuntimeOwner,sReloadGeneration))return false;
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  if(c.q38HybridReceipt || !c.q38Qgw8Receipt
   || !c.q38Qgw8Receipt->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
 #else
@@ -160,7 +183,9 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
  // inventing120 NoC source identities to build a startup template early.
  if(
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  !PioneerQ38QgwdNativeBinding::DeriveLogical(c,sRuntimeOwner,sReloadGeneration,state->canonical)
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
   !c.q38Qgw8Receipt->DeriveBoundCanonical(state->canonical,&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration)
 #else
   !c.q38HybridReceipt->DeriveBoundLayout(state->canonical,&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration)
@@ -169,7 +194,7 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
   !state->canonical.Build()
 #endif
   || !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(state->canonical)
-  || !PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(state->canonical,c.initialized,PioneerResidentBanks::Pages)
+  || !Q38TokenNativeLearnedPresent(c,state->canonical)
   || !c.io.TokenModelSourceScope(true)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   || !state->preparedSource->MatchesPlan(state->canonical)

@@ -95,7 +95,7 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
  if(!s || s->phase!=PioneerQ38TokenNativeState::Initialized || s->memory || s->startup || s->participants || c.q38Dispatch
   || c.io.q38TokenMemoryMapAttempted || !c.io.TokenModelSourceScope(false)
   || !s->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram)
-  || !PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(s->canonical,c.initialized,PioneerResidentBanks::Pages)
+  || !Q38TokenNativeLearnedPresent(c,s->canonical)
   || !prompt || !prompts || prompts>limit || !limit || limit>8192 || eos0>=248320 || eos1>=248320)return false;
  const uintptr_t input=reinterpret_cast<uintptr_t>(prompt),out=reinterpret_cast<uintptr_t>(&result);
  const uintptr_t context=reinterpret_cast<uintptr_t>(&c),state=reinterpret_cast<uintptr_t>(s);
@@ -110,6 +110,11 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
  if(!memory || !startup || !participants){
   delete participants;delete startup;delete memory;return false;
  } // unpublished CPU children ONLY;NEVER delete/detach the existing sticky full-model owner
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ if(!PioneerQ38QgwdNativeBinding::BindJournal(c,sRuntimeOwner,sReloadGeneration,participants,*memory)){
+  delete participants;delete startup;delete memory;return false;
+ }
+#endif
  if(!c.io.TokenModelSourceScope(false)){delete participants;delete startup;delete memory;return false;}
  for(unsigned i=0;i<prompts;i++)s->prompt[i]=prompt[i];
  s->prompts=prompts;s->limit=limit;s->stopEos=stopEos;s->eos[0]=eos0;s->eos[1]=eos1;
@@ -129,7 +134,12 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
  if(okay)okay=s->preparedSource && startup->BindPreparedSource(*s->preparedSource);
 #endif
  if(okay)okay=startup->Build(s->canonical,s->bank,s->identity,&d.authority.source[0][0],s->prompt,s->prompts,s->limit,s->stopEos,s->eos[0],s->eos[1])
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  && startup->MatchesPublishedBinding(s->canonical,s->bank,s->identity,&d.authority.source[0][0])
+  && Q38TokenNativeLearnedPresent(c,s->canonical);
+#else
   && startup->LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages);
+#endif
  if(okay){s->phase=PioneerQ38TokenNativeState::MemoryPreparing;
   okay=c.io.SelectRuntimeCore(0) && c.io.MapTokenMemory() && c.io.q38TokenViews.Bind(c.io)
    && s->hosts.Capture(c.io,c.host,c.bulkHost,c.wideHost,c.io.q38TokenViews)
@@ -137,6 +147,9 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
 #if defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE)
  if(okay)okay=memory->InstallHybridManifestHeld(c.io,result) && memory->VerifyHybridManifestHeld(c.io,result);
  if(okay)s->hybridManifestReceipt=result;
+#endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ if(okay)okay=memory->InstallDenseManifestHeld(c.io,result) && memory->VerifyDenseManifestHeld(c.io,result);
 #endif
  if(okay)s->phase=PioneerQ38TokenNativeState::MemoryInstalled;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);

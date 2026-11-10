@@ -17,7 +17,22 @@
 #include "pioneer_q38_span_service_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdNativeBinding.h"
+// Exercise the unmodified native boundary function in this isolated fixture.
+// The temporary selector is not used to include or authorize any driver.
+#define PioneerStoreContext NativeSpanContext
+#define PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION 1
+#include "pioneer_qgwd_native_coverage.inc"
+#undef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#undef PioneerStoreContext
 static int qgwd_fixture_geteuid(){return 0;}
+struct JournalProbe {
+ bool called=false;
+ bool BindDenseReceiptInspection(PioneerQ38DenseQ8UploadReceiptInspection& receipt,const void* context,
+  const PioneerQ38DispatchLease* cohort,const void* cookie,const uint32_t* hashes,int64_t team,uint64_t generation){
+  called=true;return context && cohort && receipt.Matches(context,cookie,hashes,
+   static_cast<const NativeSpanContext*>(context)->initialized,team,generation);
+ }
+};
 #define geteuid qgwd_fixture_geteuid
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdUploadControlInspection.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadControlInspection.inc"
@@ -87,11 +102,17 @@ int main(int argc,char** argv){
   auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
   assert(PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration)
    && PioneerQ38QgwdNativeBinding::DeriveLogical(c,&cookie,sReloadGeneration,*logical)
-   && logical->Qgw8InspectionLayout());
+   && logical->Qgw8InspectionLayout() && Q38TokenNativeLearnedPresent(c,*logical));
+  auto cohort=std::make_unique<PioneerQ38DispatchLease>();JournalProbe journal;
+  assert(!PioneerQ38QgwdNativeBinding::BindJournal(c,&cookie,sReloadGeneration,
+   static_cast<PioneerQ38DispatchLease*>(nullptr),journal) && !journal.called);
+  assert(!PioneerQ38QgwdNativeBinding::BindJournal(c,&foreign,sReloadGeneration,cohort.get(),journal) && !journal.called);
+  assert(PioneerQ38QgwdNativeBinding::BindJournal(c,&cookie,sReloadGeneration,cohort.get(),journal) && journal.called);
   assert(!PioneerQ38QgwdNativeBinding::Matches(c,&foreign,sReloadGeneration)
    && !PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration+1));
   c.q38Qgw8Receipt=new PioneerQ38Qgw8UploadReceipt;
-  assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration));
+  assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration)
+   && !Q38TokenNativeLearnedPresent(c,*logical));
   delete c.q38Qgw8Receipt;c.q38Qgw8Receipt=nullptr;
   c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;
   assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration));
@@ -99,7 +120,8 @@ int main(int argc,char** argv){
   auto* held=c.q38Span;PioneerQ38SpanLease substituted=*held;c.q38Span=&substituted;
   assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration));c.q38Span=held;
   c.hashes[0]^=1;auto corrupt=std::make_unique<PioneerQ38CanonicalModelPlan>();
-  assert(!PioneerQ38QgwdNativeBinding::DeriveLogical(c,&cookie,sReloadGeneration,*corrupt)
+  assert(!Q38TokenNativeLearnedPresent(c,*logical)
+   && !PioneerQ38QgwdNativeBinding::DeriveLogical(c,&cookie,sReloadGeneration,*corrupt)
    && c.banks.Quarantined() && !corrupt->Ready());
   Unbind();
  }

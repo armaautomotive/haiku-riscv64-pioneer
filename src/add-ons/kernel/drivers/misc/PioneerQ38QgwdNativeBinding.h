@@ -29,5 +29,10 @@ struct PioneerQ38QgwdNativeBinding {
   return Matches(c,fd,generation) && c.q38QgwdReceipt->MatchesLogical(logical,&c,fd,c.hashes,c.initialized,
    fd->team,generation,c.banks,c.baseline.baseline.baseline.baseline.dram);
  }
+ template<class Context,class Cookie,class Cohort,class Journal>
+ static bool BindJournal(Context& c,const Cookie* fd,uint64_t generation,Cohort* cohort,Journal& journal){
+  return cohort && Matches(c,fd,generation)
+   && journal.BindDenseReceiptInspection(*c.q38QgwdReceipt,&c,cohort,fd,c.hashes,fd->team,generation);
+ }
 };
 #endif

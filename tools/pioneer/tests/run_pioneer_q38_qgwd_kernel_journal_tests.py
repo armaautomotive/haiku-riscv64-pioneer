@@ -32,6 +32,7 @@ with tempfile.TemporaryDirectory(prefix='qgwd-kernel-journal-',dir='/private/tmp
            '-DPIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE=1','-DPIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION=1',
            '-DPIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION=1','-DPIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION=1',
            '-DPIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION=1','-DPIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION=1']
+    flags+=['-DPIONEER_Q38_QGWD_CONTROL_INSPECTION=1']
     common=[tool+'g++','-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fno-exceptions','-fno-rtti','-ffreestanding','-fstack-usage','-mcmodel=medany','-fpic',
             '-I'+str(root),'-I'+str(headers),'-idirafter',str(headers/'posix'),*flags]
@@ -43,6 +44,7 @@ with tempfile.TemporaryDirectory(prefix='qgwd-kernel-journal-',dir='/private/tmp
     assert frames and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in frames)
     table=subprocess.check_output([tool+'nm','--defined-only',str(obj)],text=True)
     for name in ('pioneer_q38_token_memory_template_prepare','pioneer_q38_qgwd_bind_template',
+                 'pioneer_q38_qgwd_native_journal_bind_template',
                  'pioneer_q38_qgwd_manifest_install_template','pioneer_q38_qgwd_manifest_verify_template',
                  'pioneer_q38_qgwd_runtime_template','pioneer_q38_qgwd_bootstrap_template',
                  'pioneer_q38_qgwd_start_template','pioneer_q38_qgwd_hold_template',

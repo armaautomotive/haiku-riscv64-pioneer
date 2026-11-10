@@ -30,6 +30,13 @@ with tempfile.TemporaryDirectory(prefix='qgwd-control-', dir='/private/tmp') as 
         begin, end = '// PIONEER_' + marker + '_BEGIN', '// PIONEER_' + marker + '_END'
         assert source.count(begin) == 1 and source.count(end) == 1
         (out / (filename + '.inc')).write_text(source.split(begin, 1)[1].split(end, 1)[0])
+    # Compile the exact native coverage function against the real receipt and
+    # simulated driver context. This does not relax the non-native role guard.
+    binding = (driver.parent / 'PioneerQ38TokenNativeBind.inc').read_text()
+    begin = 'static bool Q38TokenNativeLearnedPresent('
+    end = '\nbool PioneerSessionIO::TokenCallScopeMatches()'
+    assert binding.count(begin) == binding.count(end) == 1
+    (out / 'pioneer_qgwd_native_coverage.inc').write_text(begin + binding.split(begin, 1)[1].split(end, 1)[0])
     binary = str(out / 'control')
     flags = ['-I' + str(out)]
     subprocess.run(common + flags + ['-fsanitize=address,undefined', test, '-o', binary], check=True)
