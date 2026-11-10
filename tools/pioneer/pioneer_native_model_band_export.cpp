@@ -14,7 +14,18 @@
 namespace {
 using Cache=PioneerModelWeightCache;
 using Packet=PioneerQ38NativeBfpBandData::Packet;
+#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT
+#if PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error Dense Q8 learned-band export is private CPU-only preparation
+#endif
+constexpr unsigned First[3]={0,512,992},SelectedRows=1024,SelectedTensor=45,SelectedType=8;
+constexpr const char* SelectedName="blk.3.attn_k.weight";
+#else
 constexpr unsigned First[3]={0,8704,17376};
+constexpr unsigned SelectedRows=17408,SelectedTensor=7,SelectedType=12;
+constexpr const char* SelectedName="blk.0.ffn_gate.weight";
+#endif
 void Require(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 void Require(bool ok,const std::string& why){if(!ok)throw std::runtime_error(why);}
 uint32_t Word(const uint8_t* p){return uint32_t(p[0])|(uint32_t(p[1])<<8)|(uint32_t(p[2])<<16)|(uint32_t(p[3])<<24);}
@@ -66,24 +77,30 @@ int Run(int argc,char** argv) {
 		&& original==PioneerQ38NativeBfpBandSource::OriginalPin() && model.Stable() && model.Epoch()==epoch,"Complete original SHA/stability refused.");
 	Require(!lstat(argv[2],&directory) && S_ISDIR(directory.st_mode) && directory.st_uid==geteuid()
 		&& (directory.st_mode&07777)==0700,"Existing private native cache required.");
-	Cache cache;Require(cache.Open(argv[2],error),error);PioneerQ38NativeBfpBandSource source(cache);
+	Cache cache;
+#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT
+	Require(cache.OpenExistingDirectory(argv[2],error),error);
+#else
+	Require(cache.Open(argv[2],error),error);
+#endif
+	PioneerQ38NativeBfpBandSource source(cache);
 	Require(source.Bind(model,original,[&]{return model.Stable() && model.Epoch()==epoch;},error),error);
-	const auto* tensor=model.Find("blk.0.ffn_gate.weight");Require(tensor && tensor->inputs==5120 && tensor->outputs==17408 && tensor->type==12,"Pinned Q4 matrix shape/type refused.");
-	const unsigned index=unsigned(tensor-model.Tensors().data());Require(index==7,"Pinned matrix ordinal changed.");
+	const auto* tensor=model.Find(SelectedName);Require(tensor && tensor->inputs==5120 && tensor->outputs==SelectedRows && tensor->type==SelectedType,"Pinned matrix shape/type refused.");
+	const unsigned index=unsigned(tensor-model.Tensors().data());Require(index==SelectedTensor,"Pinned matrix ordinal changed.");
 	std::vector<uint16_t> input(5120);for(unsigned i=0;i<5120;i++)input[i]=uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0));
 	std::array<Packet,3> packets;std::array<std::array<uint32_t,32>,3> golden{};std::array<std::string,3> digest;
 	for(unsigned sample=0;sample<3;sample++) {
 		Require(source.Stage(index,First[sample],input.data(),input.size(),4,packets[sample],error),error);const auto& p=packets[sample];
-		Require(p.width==5120 && p.matrixRows==17408 && p.firstRow==First[sample] && p.validRows==32 && p.phases==4
-			&& p.key.entry==7 && p.key.sourceSHA256==original && p.key.conversionSHA256==source.ConversionPin()
+		Require(p.width==5120 && p.matrixRows==SelectedRows && p.firstRow==First[sample] && p.validRows==32 && p.phases==4
+			&& p.key.entry==SelectedTensor && p.key.sourceSHA256==original && p.key.conversionSHA256==source.ConversionPin()
 			&& p.weights.size()==176640 && p.inputs.size()==12800 && p.sourceEpoch==epoch,"Bound packet identity/size refused.");
 		golden[sample]=FreshReference(model,index,First[sample],input,p);
 		std::vector<uint8_t> joined=p.weights;joined.insert(joined.end(),p.inputs.begin(),p.inputs.end());digest[sample]=Cache::Hex(Cache::Hash(joined.data(),joined.size()));
-		printf("VERIFIED_REAL_MODEL_BAND sample%u tensor7 first_row%u width5120 cached_bytes174080 headers_zero full_reference_words32 payload_sha256%s;CPU_ONLY\n",sample,First[sample],digest[sample].c_str());fflush(stdout);
+		printf("VERIFIED_REAL_MODEL_BAND sample%u tensor%u first_row%u width5120 cached_bytes174080 headers_zero full_reference_words32 payload_sha256%s;CPU_ONLY\n",sample,SelectedTensor,First[sample],digest[sample].c_str());fflush(stdout);
 	}
 	Require(source.Ready() && model.Stable() && model.Epoch()==epoch,"Source changed before export.");
 	const std::string output=argv[3];FILE* meta=NewFile(output+"/PioneerNativeBfpModelBandMetadata.h");
-	fputs("/* PRIVATE GENERATED diagnostic predictions;NOT a model/quality/Work certificate. */\n#ifndef PIONEER_NATIVE_BFP_MODEL_BAND_METADATA_H\n#define PIONEER_NATIVE_BFP_MODEL_BAND_METADATA_H\n#include <stdint.h>\nstruct PioneerNativeBfpModelBandMetadata {\n static constexpr unsigned Width=5120,Rows=17408,Tensor=7,Samples=3;\n static unsigned First(unsigned sample){const unsigned rows[3]={0,8704,17376};return sample<3?rows[sample]:~0U;}\n static const uint32_t* Golden(unsigned sample){\n",meta);
+	fprintf(meta,"/* PRIVATE GENERATED diagnostic predictions;NOT a model/quality/Work certificate. */\n#ifndef PIONEER_NATIVE_BFP_MODEL_BAND_METADATA_H\n#define PIONEER_NATIVE_BFP_MODEL_BAND_METADATA_H\n#include <stdint.h>\nstruct PioneerNativeBfpModelBandMetadata {\n static constexpr unsigned Width=5120,Rows=%u,Tensor=%u,Samples=3;\n static unsigned First(unsigned sample){const unsigned rows[3]={%u,%u,%u};return sample<3?rows[sample]:~0U;}\n static const uint32_t* Golden(unsigned sample){\n",SelectedRows,SelectedTensor,First[0],First[1],First[2]);
 	for(unsigned sample=0;sample<3;sample++) {
 		fprintf(meta," static const uint32_t g%u[32]={",sample);for(unsigned row=0;row<32;row++)fprintf(meta,"0x%08x%s",golden[sample][row],row==31?"};\n":",");
 	}
