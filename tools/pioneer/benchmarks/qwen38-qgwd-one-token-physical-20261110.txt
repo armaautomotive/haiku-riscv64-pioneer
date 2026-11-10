@@ -1,0 +1,32 @@
+QGWD dense-Q8 matrix Q/K/V one-token physical diagnostic, 2026-11-10
+===================================================================
+
+Real P100A execution of the pinned QGWD candidate tag 2026111000010141,
+not the subsequent seal-loop optimization. One fixed input token 248319,
+one position and one output. Diagnostic only: no Work mode, no Assistant
+qualification, and no steady-state throughput measurement.
+
+Observed: independent four-cache preflight exit 0; 21,094,223,872 bytes
+uploaded; upload and START interval 2968.008 seconds; START-to-terminal
+527.257 seconds including startup and prompt processing; generated token
+70253; native FINISH and close succeeded; trial exit 0; stderr 0 bytes.
+The client-reported 0.001897 token/sec includes START and prompt processing
+for a single token and must not be represented as decode throughput.
+
+For the same input the earlier QGWC one-token physical result and earlier
+CPU reference both selected token 70253. A matching token is useful evidence
+for this single case only, not broad numerical or conversational quality.
+The earlier QGWC interval was 510.229 seconds; it is one observation with
+startup and prompt processing included, not an apples-to-apples estimate
+of steady-state performance or a statistically validated comparison.
+
+Remote directory: /boot/home/pioneer-qgwd-diagnostic-141-20261110-a
+trial.stdout SHA-256:
+0f275e851f67912673f332a1078f93b7dc0c24920755d9736f529aa4c81eccc3
+Restored driver SHA-256:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+Restored status: tag 2026102100010012, generation 22, quiesced 0, cold 0,
+active owner 0. State: CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED.
+The tested candidate was limited to one fixed input and one output. More
+validation and a real multi-token workload are required before Work or TPS
+claims and before general use through Assistant.
