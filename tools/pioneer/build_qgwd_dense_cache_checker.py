@@ -35,6 +35,6 @@ library_index = filtered.index('-lbe')-1
 filtered[library_index:library_index] = ['-DPIONEER_Q38_REAL_DENSE_Q8_CACHE_CHECK=1',
     '-Wno-misleading-indentation', str(here/'tests/pioneer_q38_dense_q8_real_cache_check.cpp'),
     str(here/'PioneerModelWeightCache.cpp')]
-subprocess.run([*filtered, '-o', str(binary)], check=True, cwd=output)
+subprocess.run([*filtered, '-o', str(binary)], check=True, cwd=writer)
 print('CHECKER_SHA256', hashlib.sha256(binary.read_bytes()).hexdigest(), flush=True)
 print('BUILD ONLY: no model, cache or device access', flush=True)
