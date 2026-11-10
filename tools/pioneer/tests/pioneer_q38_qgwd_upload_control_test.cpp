@@ -5,6 +5,7 @@
 #define PIONEER_Q38_QGW8_SPAN_INSPECTION 1
 #define PIONEER_Q38_QGW8_CONTROL_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION 1
 #define PIONEER_Q38_QGWD_SPAN_INSPECTION 1
@@ -15,6 +16,7 @@
 #define PIONEER_Q38_SPAN_FAST 1
 #include "pioneer_q38_span_service_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdNativeBinding.h"
 static int qgwd_fixture_geteuid(){return 0;}
 #define geteuid qgwd_fixture_geteuid
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdUploadControlInspection.inc"
@@ -81,7 +83,25 @@ int main(int argc,char** argv){
   FillRemainingSynthetic(c);tt_q38_span_end end={1,0,0,0};
   assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed);
   assert(QgwdControl(&cookie,&p,sizeof(p))==B_OK && p.accepted && p.sealed && p.spans==21907);
-  assert(c.q38QgwdReceipt->Revalidate(&c,&cookie,c.hashes,c.initialized,17,sReloadGeneration));Unbind();
+  assert(c.q38QgwdReceipt->Revalidate(&c,&cookie,c.hashes,c.initialized,17,sReloadGeneration));
+  auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+  assert(PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration)
+   && PioneerQ38QgwdNativeBinding::DeriveLogical(c,&cookie,sReloadGeneration,*logical)
+   && logical->Qgw8InspectionLayout());
+  assert(!PioneerQ38QgwdNativeBinding::Matches(c,&foreign,sReloadGeneration)
+   && !PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration+1));
+  c.q38Qgw8Receipt=new PioneerQ38Qgw8UploadReceipt;
+  assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration));
+  delete c.q38Qgw8Receipt;c.q38Qgw8Receipt=nullptr;
+  c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;
+  assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration));
+  delete c.q38HybridReceipt;c.q38HybridReceipt=nullptr;
+  auto* held=c.q38Span;PioneerQ38SpanLease substituted=*held;c.q38Span=&substituted;
+  assert(!PioneerQ38QgwdNativeBinding::Matches(c,&cookie,sReloadGeneration));c.q38Span=held;
+  c.hashes[0]^=1;auto corrupt=std::make_unique<PioneerQ38CanonicalModelPlan>();
+  assert(!PioneerQ38QgwdNativeBinding::DeriveLogical(c,&cookie,sReloadGeneration,*corrupt)
+   && c.banks.Quarantined() && !corrupt->Ready());
+  Unbind();
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);D::Packet p;p.operation=D::Begin;copyCalls=0;failCopy=2;

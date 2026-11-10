@@ -90,6 +90,7 @@ public:
  bool Matches(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen)const{
   return Sealed() && context==c && cookie==fd && hashes==h && ledger==initialized && team==owner && generation==gen;
  }
+ bool MatchesLease(const PioneerQ38SpanLease* span)const{return span && span==lease && Sealed();}
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();

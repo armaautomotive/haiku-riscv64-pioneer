@@ -1,0 +1,19 @@
+QGWD upload-to-native-binding bridge, 2026-11-10
+
+The QGWD binding bridge checks the same context, cookie, team, driver
+generation, bank owner, ledger and hashes as the sealed upload receipt. It
+also requires the exact sealed span lease, not merely an equal copy, and
+rejects coexisting QGW8 or legacy receipts. At the binding boundary it
+revalidates the gapped ledger and derives the logical QGW8-parent canonical
+geometry used to build the QGWD worker recipes.
+
+The actual inspection upload-control and span-service simulation now feeds
+this bridge from the same context/cookie/receipt. Tests cover mismatched
+owner, generation, equal-but-foreign span, competing receipts, and changed
+ledger quarantine. The bridge and canonical derivation also compile with
+kernel-shaped Haiku RISC-V declarations.
+
+This remains an isolated inspection profile. It is not yet called by the
+loadable native owner, does not launch the card, and establishes no inference
+or performance result. A native caller must retain/quarantine ownership if
+boundary revalidation faults.

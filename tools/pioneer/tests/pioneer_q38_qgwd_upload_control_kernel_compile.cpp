@@ -36,6 +36,7 @@ struct ProbeContext {
  uint64_t bytes;unsigned uploadedPages;ProbeIO io;Baseline4 baseline;bool Unsafe();
 };
 struct PioneerProbeCookie {uint32 magic;int team;ProbeContext* context;};
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdNativeBinding.h"
 extern PioneerProbeCookie* sRuntimeOwner;extern bool sBankStorageOnly,sColdRecoveryRequired,sReloadQuiesced;
 extern uint64_t sReloadGeneration;extern int sLock;
 extern status_t AcquireProbeLock(PioneerProbeCookie*,bool);
@@ -61,4 +62,9 @@ extern "C" unsigned qgwd_span_receipt_kind_compile(){
 extern "C" bool qgwd_receipt_identity_compile(const PioneerQ38DenseQ8UploadReceiptInspection* receipt,
  const void* context,const void* cookie,const uint32_t* hashes,const uint8_t* ledger,int64_t team,uint64_t generation){
  return receipt->Matches(context,cookie,hashes,ledger,team,generation);
+}
+extern "C" bool qgwd_native_binding_compile(ProbeContext* context,PioneerProbeCookie* cookie,
+ uint64_t generation,PioneerQ38CanonicalModelPlan* logical){
+ return PioneerQ38QgwdNativeBinding::Matches(*context,cookie,generation)
+  && PioneerQ38QgwdNativeBinding::DeriveLogical(*context,cookie,generation,*logical);
 }
