@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwdClientRole.h"
 #include "PioneerQ38Qgw8TraceClientRole.h"
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
 #if PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
@@ -198,6 +199,9 @@ public:
 #endif
 #ifdef PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION
   if(count!=1 || outputs!=1)return false; // synthetic one-token lifecycle only
+#endif
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+  if(ids[0]!=248319)return false; // exact fixed input before any device open
 #endif
   for(unsigned i=0;i<count;i++)if(ids[i]>=F::Vocabulary)return false;
   attempted=true;prompts=count;limit=count+outputs-1;std::copy(ids,ids+count,prompt.begin());

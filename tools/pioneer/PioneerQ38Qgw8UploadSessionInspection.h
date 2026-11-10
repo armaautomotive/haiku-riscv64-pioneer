@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwdClientRole.h"
 #include "PioneerQ38Qgw8TraceClientRole.h"
 #ifndef PIONEER_Q38_QGWD_UPLOAD_SESSION_ROLE_BOUND
 #define PIONEER_Q38_QGWD_UPLOAD_SESSION_ROLE_BOUND
@@ -155,7 +156,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  }
 #endif
 public:
-#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026111000010141);
+#elif defined(PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION)
  static constexpr uint64_t InspectionTag=UINT64_C(0x445747514f4e4452); // synthetic QGWD only
 #elif defined(PIONEER_Q38_QGWC_CLIENT_136)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110900010136);

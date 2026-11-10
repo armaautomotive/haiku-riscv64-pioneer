@@ -1,0 +1,23 @@
+QGWD tag141 diagnostic client and read-only staging, 2026-11-10
+
+The fixed-token client authenticates the original model and all four cache
+families before opening the device, uses the tag141 QGWD upload/session
+protocol, and refuses an incorrect input token before opening the device.
+Two independent Haiku RISC-V client builds matched SHA-256
+335a557819ac1ffd1c4433d853fec9a4a1ecddf6e793cb5147eb5775122c5559.
+Synthetic successful and failed-START same-FD lifecycles passed. Wrong-tag,
+Work/native/reference role exclusions, transcript-shape rejection and
+one-shot parent success/failure/no-automatic-retry checks were exercised with
+fake endpoints. These are not hardware or numerical-quality results.
+
+The client, tag141 build-only driver and checked one-shot harness were copied
+to /boot/home/pioneer-qgwd-diagnostic-141-20261110-a on Pioneer. Remote
+SHA-256 values matched the local artifacts. The harness's read-only
+--check-only returned success: stable driver tag 2026102100010012 generation
+20, quiesced=0, cold=0, active_owner=0. /boot identified its existing flush
+device as /dev/disk/scsi/0/3/0/0 and reported 20.2 GiB free. No driver was
+swapped and no QGWD hardware/model execution occurred during this staging.
+
+The diagnostic is fixed to one token and cannot measure steady-state
+throughput or establish general quality. Its clean transcript gate is only
+an output/lifecycle shape check; it is not a CPU numerical reference.

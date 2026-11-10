@@ -22,7 +22,13 @@ struct FullIO:SessionOwner {
   auto& packet=*static_cast<P::Packet*>(data);assert(F::RequestShape(packet));auto& r=packet.reply;
   const unsigned action=packet.request.operation;r.version=1;r.operation=action;r.started=r.ready=1;
   auto* d=r.detail;d[0]=d[1]=1;
-  if(action==P::Start){assert(!starts++ && packet.request.prompts==1 && packet.request.limit==1 && packet.prompt[0]==17);
+  if(action==P::Start){assert(!starts++ && packet.request.prompts==1 && packet.request.limit==1 && packet.prompt[0]==
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+   248319
+#else
+   17
+#endif
+  );
    r.stage=d[2]=8;d[3]=1;if(failStart)return false;
   }else if(action==P::Observe){assert(starts==1 && !holds);polls++;
    if(polls==1){r.ready=0;r.stage=d[2]=9;d[12]=123;d[13]=456;}
@@ -30,7 +36,13 @@ struct FullIO:SessionOwner {
   }else if(action==P::Hold){assert(polls==2 && !holds++);r.stage=d[2]=4;d[6]=1;d[7]=120;
   }else if(action==P::Read){assert(holds==1 && !reads++ && packet.request.records==1);r.stage=d[2]=4;r.records=1;
    d[6]=1;d[8]=1;d[9]=1;d[10]=256;d[11]=1;auto* v=packet.records;
-   v[0]=0x31435451;v[1]=1;v[2]=0;v[3]=17;v[4]=1000;v[5]=0x3f800000;v[6]=1;v[7]=1;
+   v[0]=0x31435451;v[1]=1;v[2]=0;v[3]=
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+    248319;
+#else
+    17;
+#endif
+   v[4]=1000;v[5]=0x3f800000;v[6]=1;v[7]=1;
    v[10]=64;v[11]=973;for(unsigned i=12;i<36;i++)v[i]=100+i;v[44]=1;v[45]=48;v[46]=119;
   }else if(action==P::Finish){assert(reads==1 && !finishes++);r.stage=d[2]=11;r.complete=1;d[3]=d[5]=1;owned=false;
   }else assert(!"unexpected synthetic full-session action");return true;
@@ -38,7 +50,11 @@ struct FullIO:SessionOwner {
 };
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && !std::strcmp(argv[1],"--fail-start")));
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111000010141),"distinct QGWD candidate identity");
+#else
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x445747514f4e4452),"distinct synthetic QGWD owner");
+#endif
  static_assert(PioneerQ38FullOffload::MaxPrompt==1 && PioneerQ38FullOffload::MaxOutput==1,"one-token simulation");
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());FakeSource source;FakePlan packed;packed.source=&source;
  std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -59,7 +75,22 @@ int main(int argc,char** argv){
  FakeDenseIO spans{*canonical,pages,*receipt,lease,&initial,ledger,hashes};
  FullIO io(SessionOwner{spans,*receipt,lease,banks,proof,ledger,hashes});
  io.failStart=argc==2;
- PioneerQ38HybridFullSession<DensePages,FullIO> session(pages,io);const uint32_t input[]={17};
+ PioneerQ38HybridFullSession<DensePages,FullIO> session(pages,io);const uint32_t input[]={
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+  248319
+#else
+  17
+#endif
+ };
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+ const uint32_t wrongInput[]={17};
+ assert(!session.Begin(*canonical,wrongInput,1,1) && !io.opens && !session.FailedState());
+ FullIO wrongDriver(SessionOwner{spans,*receipt,lease,banks,proof,ledger,hashes});
+ wrongDriver.tag=UINT64_C(0x2026102100010012);
+ PioneerQ38HybridFullSession<DensePages,FullIO> denied(pages,wrongDriver);
+ assert(!denied.Begin(*canonical,input,1,1) && denied.FailedState() && wrongDriver.opens==1
+  && wrongDriver.closes==1 && !wrongDriver.owned && !wrongDriver.starts && !banks.Quarantined());
+#endif
  bool clockCalled=false;const bool started=session.Begin(*canonical,input,1,1,{},[&]{clockCalled=true;return true;});
  if(io.failStart){
   assert(!started && clockCalled && session.FailedState() && io.owned && io.opens==1 && io.closes==1

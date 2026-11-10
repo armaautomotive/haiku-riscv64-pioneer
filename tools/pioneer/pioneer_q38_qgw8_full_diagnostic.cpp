@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Explicit one-shot candidate test. Token IDs only; no CPU model or fallback.
-#if !defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1 \
+#if ((!defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128 != 1) \
+ && (!defined(PIONEER_Q38_QGWD_CLIENT_141) || PIONEER_Q38_QGWD_CLIENT_141 != 1)) \
  || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_BFP4_PREPARATION_DIAGNOSTIC) || PIONEER_Q38_BFP4_PREPARATION_DIAGNOSTIC != 1
 #error QGW8 full candidate diagnostic needs its exact build roles
@@ -15,7 +16,13 @@
 #include <ctime>
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_BANKS_MOCK_ONLY 1
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+#include "PioneerQ38HybridDenseQ8VerifiedModel.h"
+using DiagnosticModel=PioneerQ38HybridDenseQ8VerifiedModel;
+#else
 #include "PioneerQ38HybridHeadVerifiedModel.h"
+using DiagnosticModel=PioneerQ38HybridHeadVerifiedModel;
+#endif
 #include "PioneerQ38HybridFullSession.h"
 
 struct Transport {
@@ -61,7 +68,12 @@ static void ReportTransportFailure(const Transport& io){
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
-#ifdef PIONEER_Q38_QGWC_CLIENT_136
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+ if(argc!=6 || strcmp(argv[1],"--run-qgwd-141") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgwd-141 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; one fixed token only\n",stderr);return 2;
+ }
+ unsigned outputs=1,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGWC_CLIENT_136)
  if(argc!=5 || strcmp(argv[1],"--run-qgwc-srca") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/'){
   fputs("Use --run-qgwc-srca ABS_FFN_BFP4_CACHE ABS_FFN_BFP8_CACHE ABS_HEAD_BFP8_CACHE; one fixed token only\n",stderr);return 2;
  }
@@ -90,14 +102,18 @@ int main(int argc,char** argv){
 #endif
  setvbuf(stdout,nullptr,_IOLBF,0);
  puts("HYBRID_FULL_CANDIDATE preflight; unqualified, no device open yet");
- auto model=std::make_unique<PioneerQ38HybridHeadVerifiedModel>();std::string error;
- if(!model->Prepare(argv[2],argv[3],argv[4],error,[](unsigned done,unsigned total){
+ auto model=std::make_unique<DiagnosticModel>();std::string error;
+ if(!model->Prepare(argv[2],argv[3],argv[4],
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+  argv[5],
+#endif
+  error,[](unsigned done,unsigned total){
   if(done%21==0 || done==total)printf("HYBRID_PREFLIGHT %u/%u\n",done,total);
  }) || !model->Ready()){
   fprintf(stderr,"HYBRID_PREFLIGHT_REFUSED %s; no device open\n",error.c_str());return 1;
  }
  auto* pages=model->PreparedPages();const auto* canonical=model->Canonical();if(!pages || !canonical)return 1;
- Transport io;auto session=std::make_unique<PioneerQ38HybridFullSession<PioneerQ38HybridHeadVerifiedModel::Pages,Transport>>(*pages,io);
+ Transport io;auto session=std::make_unique<PioneerQ38HybridFullSession<DiagnosticModel::Pages,Transport>>(*pages,io);
  const uint64_t begin=Now();if(!begin)return 1;uint64_t next=UINT64_C(256)*1024*1024,inferenceBegin=0;
  if(!session->Begin(*canonical,ids,prompts,outputs,[&](uint64_t done,uint64_t total){
   if(done>=next || done==total){printf("HYBRID_UPLOAD %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);
@@ -130,7 +146,12 @@ int main(int argc,char** argv){
  if(!session->CopyGeneratedTokens(tokens,F::MaxOutput,count))return 1;
  printf("HYBRID_RESULT prompt_tokens=%u generated_tokens=%u inference_seconds=%.3f (includes START and prompt processing)\n",
   prompts,count,double(terminal-inferenceBegin)*1e-9);
- if(count && terminal>inferenceBegin)printf("QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT %.6f\n",
+ if(count && terminal>inferenceBegin)printf(
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+  "QGWD_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT %.6f\n",
+#else
+  "QGW8_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT %.6f\n",
+#endif
   double(count)*1e9/double(terminal-inferenceBegin));
  for(unsigned i=0;i<count;i++)printf("HYBRID_TOKEN %u\n",tokens[i]);
  puts("HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated");

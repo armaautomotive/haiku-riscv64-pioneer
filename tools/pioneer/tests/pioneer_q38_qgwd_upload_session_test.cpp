@@ -26,7 +26,11 @@ struct SessionOwner {
  FakeDenseIO& spans;PioneerQ38DenseQ8UploadReceiptInspection& receipt;PioneerQ38SpanLease& lease;
  PioneerResidentBanks& banks;const tt_dram_samples_result& proof;std::vector<uint8_t>& ledger;
  std::vector<uint32_t>& hashes;int context=0,cookie=0;bool owned=false;unsigned opens=0,closes=0,seals=0;
+#ifdef PIONEER_Q38_QGWD_CLIENT_141
+ uint64_t tag=UINT64_C(0x2026111000010141);
+#else
  uint64_t tag=UINT64_C(0x445747514f4e4452);
+#endif
  bool OutputSafe(const void* output,size_t bytes)const{
   const uintptr_t o=reinterpret_cast<uintptr_t>(output);
   if(!output || !bytes || o>UINTPTR_MAX-bytes)return false;
