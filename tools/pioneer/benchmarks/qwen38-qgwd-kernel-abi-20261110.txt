@@ -1,0 +1,16 @@
+QGWD Haiku RISC-V kernel-shaped compilation, 2026-11-10
+
+The QGWD fixed layout, gapped receipt, controller, physical/logical canonical
+derivation, dense-manifest method and span receipt type compiled with the
+Haiku RISC-V cross compiler under the existing kernel compile-only profile.
+Maximum reported static frame was 880 bytes; no driver entry points were
+exported. Attempts to combine the profile with a driver tag, native owner,
+Work or CPU-validation role were refused at compile time.
+
+Command:
+  python3 tools/pioneer/tests/run_pioneer_q38_qgwd_kernel_compile_tests.py ABS_HAIKU_BUILD
+
+This is a freestanding, non-loadable compilation against kernel-shaped
+declarations, not a linked driver or hardware test. The real ioctl dispatcher,
+owner lifetime, dense manifest staging and QGWD worker startup still need to
+be connected and validated together before a physical full-model run.

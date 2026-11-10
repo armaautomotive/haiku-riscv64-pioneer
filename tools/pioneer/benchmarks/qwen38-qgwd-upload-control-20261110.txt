@@ -9,12 +9,13 @@ service call was exercised with simulated RV32 transport; the remaining
 
 The test also checked that losing the BEGIN or SEAL reply, tampering with a
 reserved gap, or changing generation before SEAL retains/quarantines the
-owner. Existing QGW8 control is separately regression tested by the runner.
+owner. In the inspection profile both older controls reject BEGIN while the
+QGWD receipt exists; existing QGW8 control is also regression tested.
 
 Command:
   python3 tools/pioneer/tests/run_pioneer_q38_qgwd_upload_control_tests.py ABS_FAST_IMAGE
 
 This handler is NOT installed in a driver and does not dispatch a real ioctl.
-Older controls have not yet been changed to enforce reciprocal exclusion of
-the new receipt. Native owner/manifest integration, hardware execution, model
-quality and inference speed remain unverified.
+Reciprocal exclusion has only been compiled and exercised in the isolated
+profile, not wired into a live driver. Native owner/manifest integration,
+hardware execution, model quality and inference speed remain unverified.

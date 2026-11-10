@@ -20,6 +20,9 @@ static __attribute__((noinline)) status_t Q38HybridUploadControl(PioneerProbeCoo
 #ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
   && !c->q38Qgw8Receipt
 #endif
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+  && !c->q38QgwdReceipt
+#endif
   && !c->Unsafe() && c->io.SpanBeforeCohort()){
   if(packet.operation==H::Begin && !c->q38HybridReceipt && !c->q38Span && !c->uploadedPages){
    auto* receipt=new(std::nothrow) PioneerQ38HybridUploadReceipt;

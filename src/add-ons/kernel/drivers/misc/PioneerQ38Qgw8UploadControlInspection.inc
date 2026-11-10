@@ -14,7 +14,11 @@ static __attribute__((noinline)) status_t Q38Qgw8UploadControlInspection(Pioneer
  status=AcquireProbeLock(cookie,true);if(status!=B_OK)return status;
  auto* c=cookie->context;bool okay=false;
  if(c && sRuntimeOwner==cookie && sBankStorageOnly && !sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration
-  && PioneerQ38SpanOwner(*c) && !c->q38TokenNative && !c->q38HybridReceipt && !c->Unsafe() && c->io.SpanBeforeCohort()){
+  && PioneerQ38SpanOwner(*c) && !c->q38TokenNative && !c->q38HybridReceipt
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+  && !c->q38QgwdReceipt
+#endif
+  && !c->Unsafe() && c->io.SpanBeforeCohort()){
   if(packet.operation==H::Begin && !c->q38Qgw8Receipt && !c->q38Span && !c->uploadedPages){
    auto* receipt=new(std::nothrow) PioneerQ38Qgw8UploadReceipt;
    if(receipt && receipt->Begin(c,cookie,c->hashes,c->initialized,cookie->team,sReloadGeneration,

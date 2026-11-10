@@ -18,6 +18,7 @@
 static int qgwd_fixture_geteuid(){return 0;}
 #define geteuid qgwd_fixture_geteuid
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdUploadControlInspection.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadControlInspection.inc"
 #undef geteuid
 
 static void FillRemainingSynthetic(NativeSpanContext& c){
@@ -55,6 +56,10 @@ int main(int argc,char** argv){
   assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_NOT_ALLOWED && !c.q38QgwdReceipt);
   delete c.q38HybridReceipt;c.q38HybridReceipt=nullptr;
   assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_OK && p.accepted && !p.sealed && !p.spans);
+  W::Packet other;other.operation=W::Begin;
+  assert(Q38Qgw8UploadControlInspection(&cookie,&other,sizeof(other))==B_NOT_ALLOWED && !c.q38Qgw8Receipt);
+  PioneerQ38HybridUpload::Packet hybrid;hybrid.operation=PioneerQ38HybridUpload::Begin;
+  assert(Q38HybridUploadControl(&cookie,&hybrid,sizeof(hybrid))==B_NOT_ALLOWED && !c.q38HybridReceipt);
   p=D::Packet{};p.operation=D::Begin;assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_NOT_ALLOWED);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38QgwdReceipt->Next(bank,offset,length));
   auto request=Request(length,bank,offset);c.q38Span=new PioneerQ38SpanLease;
