@@ -5,8 +5,13 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwd_seal_loop='--qgwd-seal-loop-inspection' in args
-if qgwd_seal_loop:
+args=sys.argv[1:];qgwd_seal_native='--qgwd-seal-loop-native-inspection' in args
+if qgwd_seal_native:
+    if args.count('--qgwd-seal-loop-native-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-seal-loop-native-inspection' for x in args):
+        raise SystemExit('ambiguous QGWD seal-loop native-inspection selector')
+    args.remove('--qgwd-seal-loop-native-inspection');args.insert(0,'--qgwd-dense-q8-native-inspection')
+qgwd_seal_loop=qgwd_seal_native or '--qgwd-seal-loop-inspection' in args
+if qgwd_seal_loop and not qgwd_seal_native:
     if args.count('--qgwd-seal-loop-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-seal-loop-inspection' for x in args):
         raise SystemExit('ambiguous QGWD seal-loop inspection selector')
     args.remove('--qgwd-seal-loop-inspection');args.insert(0,'--qgwd-dense-q8-inspection')
