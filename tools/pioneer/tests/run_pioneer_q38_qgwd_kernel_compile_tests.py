@@ -22,7 +22,8 @@ with tempfile.TemporaryDirectory(prefix='qgwd-kernel-compile-', dir='/private/tm
     assert frames and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 2048 for row in frames)
     names = subprocess.check_output([str(tool) + '-nm', '--defined-only', str(obj)], text=True)
     assert all(symbol in names for symbol in ('qgwd_upload_control_compile', 'qgwd_dense_manifest_compile',
-                                               'qgwd_bound_canonical_compile', 'qgwd_span_receipt_kind_compile'))
+                                               'qgwd_bound_canonical_compile', 'qgwd_span_receipt_kind_compile',
+                                               'qgwd_receipt_identity_compile'))
     forbidden = {'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device'}
     assert not any(line.split()[-1] in forbidden for line in names.splitlines() if line.split())
     for role in ('PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE',

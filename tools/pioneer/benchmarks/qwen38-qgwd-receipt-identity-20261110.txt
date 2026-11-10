@@ -1,0 +1,16 @@
+QGWD receipt per-access identity check, 2026-11-10
+
+QGWD now has the same distinction already used by the QGW8 receipt: Matches
+checks the bound sealed context, FD, hashes/ledger pointers, team, generation,
+and bank proof without rescanning every page. Revalidate continues to scan the
+gapped ledger and quarantine a mismatch. A native implementation must still
+perform full revalidation at the bind, manifest, and pre-launch boundaries;
+the cheap identity check is not source authentication or device readback.
+
+Synthetic tests check mismatched identities, demonstrate that Matches alone
+does not detect a modified hash, and verify that manifest revalidation then
+detects and quarantines the changed ledger. The method also compiled against
+Haiku's RISC-V kernel-shaped ABI in the non-loadable profile.
+
+This prepares a bounded per-access scope for future QGWD native integration.
+It is not yet used by the live driver, and no speedup has been measured.

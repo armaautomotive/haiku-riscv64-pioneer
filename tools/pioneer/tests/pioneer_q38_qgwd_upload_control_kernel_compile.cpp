@@ -58,3 +58,7 @@ extern "C" bool qgwd_bound_canonical_compile(PioneerQ38DenseQ8UploadReceiptInspe
 extern "C" unsigned qgwd_span_receipt_kind_compile(){
  return PioneerQ38SpanReceiptKind<PioneerQ38DenseQ8UploadReceiptInspection>::Value;
 }
+extern "C" bool qgwd_receipt_identity_compile(const PioneerQ38DenseQ8UploadReceiptInspection* receipt,
+ const void* context,const void* cookie,const uint32_t* hashes,const uint8_t* ledger,int64_t team,uint64_t generation){
+ return receipt->Matches(context,cookie,hashes,ledger,team,generation);
+}

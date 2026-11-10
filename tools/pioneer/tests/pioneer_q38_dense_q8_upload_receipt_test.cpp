@@ -62,6 +62,10 @@ int main(int argc,char** argv){
   puts("PASS unexpected gap page quarantines fake owner");return 0;
  }
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->PageDigest());
+ assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->Matches(&foreign,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->Matches(&context,&foreign,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,43));
  assert(!receipt->Revalidate(&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> actual={},expected={};actual.fill(0xa5a5a5a5);
@@ -89,6 +93,9 @@ int main(int argc,char** argv){
   && recipe->PhysicalPagesPresent(ledger.data(),ledger.size()) && !recipe->Recipe()->LearnedPagesPresent(ledger.data(),ledger.size()));
  if(argc==2 && !strcmp(argv[1],"--late")){
   hashes[0]^=1;actual.fill(0xa5a5a5a5);
+  // Fast per-access identity is NOT a ledger-integrity claim; the
+  // boundary manifest verification must still detect the mutation.
+  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
   assert(!receipt->DenseManifest(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42)
    && actual==untouched && banks.Quarantined());
   puts("PASS changed sealed dense-Q8 ledger quarantines fake owner");return 0;

@@ -84,8 +84,14 @@ public:
  }
  bool Sealed()const{return sealed && Current() && !pending && lease && lease->closed && lease->saved
   && lease->nonce==spans && !lease->dirty && !lease->ready && !lease->running && !lease->unsafe;}
+ // Constant-time identity check for native per-access scopes. This does not
+ // rehash the ledger or prove device contents: callers must Revalidate at
+ // the bind/manifest/start boundaries while retaining the same owner.
+ bool Matches(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen)const{
+  return Sealed() && context==c && cookie==fd && hashes==h && ledger==initialized && team==owner && generation==gen;
+ }
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
-  if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
+  if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
 #ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
