@@ -6,6 +6,11 @@
 // One actual retained FD and global lock. This source assertion is supplied
 // by the trusted loader; it is not a device readback or model authentication.
 static __attribute__((noinline)) status_t Q38HybridUploadControl(PioneerProbeCookie* cookie,void* data,size_t length){
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+ // This profile's span dispatcher accepts ONLY a QGWD receipt. Do not
+ // create an older owner that it could never upload or end safely.
+ (void)cookie;(void)data;(void)length;return B_NOT_ALLOWED;
+#endif
  namespace H=PioneerQ38HybridUpload;
  if(geteuid()!=0)return B_NOT_ALLOWED;
  if(!cookie || cookie->magic!=0x50313030 || !data || length!=sizeof(H::Packet))return B_BAD_VALUE;

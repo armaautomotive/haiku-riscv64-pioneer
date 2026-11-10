@@ -20,6 +20,14 @@ static int qgwd_fixture_geteuid(){return 0;}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdUploadControlInspection.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadControlInspection.inc"
 #undef geteuid
+// Extracted from the real ProbeControl dispatcher; synthetic OS only.
+static status_t QgwdDispatch(PioneerProbeCookie* instance,uint32 operation,void* data,size_t length){
+#include "pioneer_qgwd_dispatch.inc"
+ return B_NOT_ALLOWED;
+}
+static status_t QgwdControl(PioneerProbeCookie* cookie,void* data,size_t length){
+ return QgwdDispatch(cookie,TT_PCI_PROBE_Q38_QGWD_UPLOAD_CONTROL,data,length);
+}
 
 static void FillRemainingSynthetic(NativeSpanContext& c){
  unsigned bank=0,length=0;uint64_t offset=0;
@@ -44,6 +52,10 @@ int main(int argc,char** argv){
  PioneerProbeCookie cookie,foreign;
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);D::Packet p;p.operation=D::Begin;
+  W::Packet rejected;rejected.operation=W::Begin;
+  assert(Q38Qgw8UploadControlInspection(&cookie,&rejected,sizeof(rejected))==B_NOT_ALLOWED && !c.q38Qgw8Receipt);
+  PioneerQ38HybridUpload::Packet rejectedHybrid;rejectedHybrid.operation=PioneerQ38HybridUpload::Begin;
+  assert(Q38HybridUploadControl(&cookie,&rejectedHybrid,sizeof(rejectedHybrid))==B_NOT_ALLOWED && !c.q38HybridReceipt);
   W::Packet old;old.operation=W::Begin;std::memcpy(&p,&old,sizeof(p));
   assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_BAD_VALUE && !c.q38QgwdReceipt);
   p=D::Packet{};p.operation=D::Begin;team=18;
@@ -62,17 +74,39 @@ int main(int argc,char** argv){
   assert(Q38HybridUploadControl(&cookie,&hybrid,sizeof(hybrid))==B_NOT_ALLOWED && !c.q38HybridReceipt);
   p=D::Packet{};p.operation=D::Begin;assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_NOT_ALLOWED);
   unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38QgwdReceipt->Next(bank,offset,length));
-  auto request=Request(length,bank,offset);c.q38Span=new PioneerQ38SpanLease;
-  assert(PioneerQ38QgwdSpanUploadFastInspection(c,*request,c.q38QgwdReceipt) && c.q38QgwdReceipt->Spans()==1);
+  auto request=Request(length,bank,offset);
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
+   && request->result.state==TT_RUNTIME_PASSED && c.q38QgwdReceipt->Spans()==1);
   p=D::Packet{};p.operation=D::Seal;assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_NOT_ALLOWED);
-  FillRemainingSynthetic(c);assert(PioneerQ38SpanEndService(c));
-  assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==B_OK && p.accepted && p.sealed && p.spans==21907);
+  FillRemainingSynthetic(c);tt_q38_span_end end={1,0,0,0};
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed);
+  assert(QgwdControl(&cookie,&p,sizeof(p))==B_OK && p.accepted && p.sealed && p.spans==21907);
   assert(c.q38QgwdReceipt->Revalidate(&c,&cookie,c.hashes,c.initialized,17,sReloadGeneration));Unbind();
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);D::Packet p;p.operation=D::Begin;copyCalls=0;failCopy=2;
   assert(Q38QgwdUploadControlInspection(&cookie,&p,sizeof(p))==-99 && c.q38QgwdReceipt
    && c.banks.Quarantined() && c.dispatchOwnerRetained && sColdRecoveryRequired);Unbind();
+ }
+ {
+  NativeSpanContext c(argv[1]);Bind(cookie,c);D::Packet p;p.operation=D::Begin;
+  assert(QgwdControl(&cookie,&p,sizeof(p))==B_OK);
+  unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38QgwdReceipt->Next(bank,offset,length));
+  auto request=Request(length,bank,offset);copyCalls=0;failCopy=2;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==-99
+   && c.q38Span && c.q38Span->unsafe && c.banks.Quarantined() && c.dispatchOwnerRetained && sColdRecoveryRequired);
+  Unbind();
+ }
+ {
+  NativeSpanContext c(argv[1]);Bind(cookie,c);D::Packet p;p.operation=D::Begin;
+  assert(QgwdControl(&cookie,&p,sizeof(p))==B_OK);
+  unsigned bank=0,length=0;uint64_t offset=0;assert(c.q38QgwdReceipt->Next(bank,offset,length));
+  auto request=Request(length,bank,offset);
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
+  tt_q38_span_end end={1,0,0,0};copyCalls=0;failCopy=2;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==-99
+   && c.q38Span->unsafe && c.banks.Quarantined() && c.dispatchOwnerRetained && sColdRecoveryRequired);
+  Unbind();
  }
  {
   NativeSpanContext c(argv[1]);Bind(cookie,c);D::Packet p;p.operation=D::Begin;

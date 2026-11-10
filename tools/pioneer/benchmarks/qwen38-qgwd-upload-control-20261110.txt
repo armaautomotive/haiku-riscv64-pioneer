@@ -15,7 +15,11 @@ QGWD receipt exists; existing QGW8 control is also regression tested.
 Command:
   python3 tools/pioneer/tests/run_pioneer_q38_qgwd_upload_control_tests.py ABS_FAST_IMAGE
 
-This handler is NOT installed in a driver and does not dispatch a real ioctl.
-Reciprocal exclusion has only been compiled and exercised in the isolated
-profile, not wired into a live driver. Native owner/manifest integration,
-hardware execution, model quality and inference speed remain unverified.
+The driver source now contains a separately gated QGWD control dispatch,
+exclusive span selection, close retention and reply-failure quarantine. Tests
+extract and exercise those exact bodies with a simulated OS and transport;
+older-format BEGIN is disabled in this profile, before or after QGWD BEGIN.
+The QGWD profile is still compile/inspection-only: no candidate driver has
+been linked, installed, or used to dispatch a real ioctl. Native owner and
+manifest integration, hardware execution, model quality and speed remain
+unverified.

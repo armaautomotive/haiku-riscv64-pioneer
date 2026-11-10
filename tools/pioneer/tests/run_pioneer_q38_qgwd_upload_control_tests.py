@@ -24,7 +24,9 @@ test = str(here / 'pioneer_q38_qgwd_upload_control_test.cpp')
 with tempfile.TemporaryDirectory(prefix='qgwd-control-', dir='/private/tmp') as directory:
     out = Path(directory)
     for marker, filename in (('PROBE_LOCK', 'pioneer_lock'), ('Q38_RETAIN_MEMORY', 'pioneer_retain_memory'),
-                             ('Q38_SPAN_CONTROL', 'pioneer_span_control'), ('QGW8_CONTROL_DISPATCH', 'pioneer_qgw8_dispatch')):
+                             ('Q38_SPAN_CONTROL', 'pioneer_span_control'), ('QGW8_CONTROL_DISPATCH', 'pioneer_qgw8_dispatch'),
+                             ('QGWD_CONTROL_DISPATCH', 'pioneer_qgwd_dispatch'),
+                             ('Q38_DISPATCH_COOKIE_RELEASE', 'pioneer_cookie_release')):
         begin, end = '// PIONEER_' + marker + '_BEGIN', '// PIONEER_' + marker + '_END'
         assert source.count(begin) == 1 and source.count(end) == 1
         (out / (filename + '.inc')).write_text(source.split(begin, 1)[1].split(end, 1)[0])
@@ -37,6 +39,11 @@ with tempfile.TemporaryDirectory(prefix='qgwd-control-', dir='/private/tmp') as 
     subprocess.run(common + flags + ['-fsanitize=address,undefined',
                    str(here / 'pioneer_q38_qgw8_upload_control_test.cpp'), '-o', old], check=True)
     subprocess.run([old, str(image)], check=True,
+                   env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
+    close = str(out / 'qgwd-close')
+    subprocess.run(common + flags + ['-fsanitize=address,undefined',
+                   str(here / 'pioneer_q38_qgwd_cookie_close_test.cpp'), '-o', close], check=True)
+    subprocess.run([close], check=True,
                    env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
     for role in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                  'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_CPU_VALIDATION'):

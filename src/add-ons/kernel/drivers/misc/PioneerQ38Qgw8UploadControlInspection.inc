@@ -4,6 +4,10 @@
 // points here. Like the existing handler, this trusts the separate loader's
 // source declaration and does not authenticate uploaded model bytes.
 static __attribute__((noinline)) status_t Q38Qgw8UploadControlInspection(PioneerProbeCookie* cookie,void* data,size_t length){
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+ // The QGWD span dispatcher rejects the older receipt format outright.
+ (void)cookie;(void)data;(void)length;return B_NOT_ALLOWED;
+#endif
  namespace H=PioneerQ38Qgw8Upload;
  if(geteuid()!=0)return B_NOT_ALLOWED;
  if(!cookie || cookie->magic!=0x50313030 || !data || length!=sizeof(H::Packet))return B_BAD_VALUE;

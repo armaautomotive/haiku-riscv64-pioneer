@@ -3487,6 +3487,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 	PioneerQ38Qgw8UploadReceipt* q38Qgw8Receipt=NULL; // distinct format; same retained FD and bank owner
 #endif
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+	PioneerQ38DenseQ8UploadReceiptInspection* q38QgwdReceipt=NULL; // gapped format; same retained FD/bank owner
+#endif
 #endif
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
@@ -3615,6 +3618,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 		delete q38Qgw8Receipt; // before its borrowed span/banks/ledger owners
+#endif
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+		delete q38QgwdReceipt; // before its borrowed span/banks/ledger owners
 #endif
 		delete q38HybridReceipt; // before its borrowed span/banks/ledger owners
 #endif
@@ -6542,6 +6548,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 			|| cookie->context->q38Qgw8Receipt
 #endif
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+			|| cookie->context->q38QgwdReceipt
+#endif
 			) {
 			RetainQ38DispatchOwner(*cookie->context,result);release_sem(sLock);return B_OK;
 		}
@@ -6927,7 +6936,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		auto* c=cookie->context;
 		if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || !c->q38Span
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+			|| c->q38HybridReceipt || c->q38Qgw8Receipt || !c->q38QgwdReceipt
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
 			|| c->q38HybridReceipt || !c->q38Qgw8Receipt
 #elif defined(PIONEER_Q38_QGW8_SPAN_INSPECTION)
 			|| (!!c->q38HybridReceipt == !!c->q38Qgw8Receipt)
@@ -6945,6 +6956,10 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 			status=user_memcpy(data,&request,sizeof(request));
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 			if (status!=B_OK && request.closed) {
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+				if(c->q38QgwdReceipt)c->q38QgwdReceipt->Invalidate();
+				else
+#endif
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 				if(c->q38Qgw8Receipt)c->q38Qgw8Receipt->Invalidate();
 				else c->q38HybridReceipt->Invalidate();
@@ -6972,7 +6987,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+		|| c->q38HybridReceipt || c->q38Qgw8Receipt || !c->q38QgwdReceipt
+#elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
 		|| c->q38HybridReceipt || !c->q38Qgw8Receipt
 #elif defined(PIONEER_Q38_QGW8_SPAN_INSPECTION)
 		|| (!!c->q38HybridReceipt == !!c->q38Qgw8Receipt)
@@ -6990,6 +7007,16 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 			if (!c->q38Span) status=B_NO_MEMORY;
 			else {
 				bool passed;
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+				if(c->q38QgwdReceipt){
+#ifdef PIONEER_Q38_SPAN_FAST
+					if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD)
+						passed=PioneerQ38QgwdSpanUploadFastInspection(*c,*request,c->q38QgwdReceipt);
+					else
+#endif
+						passed=PioneerQ38QgwdSpanUploadInspection(*c,*request,c->q38QgwdReceipt);
+				}else
+#endif
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 				if(c->q38Qgw8Receipt){
 #ifdef PIONEER_Q38_SPAN_FAST
@@ -7024,6 +7051,10 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 				status=user_memcpy(data,request,sizeof(*request));
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 				if (status!=B_OK && passed) {
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+					if(c->q38QgwdReceipt)c->q38QgwdReceipt->Invalidate();
+					else
+#endif
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 					if(c->q38Qgw8Receipt)c->q38Qgw8Receipt->Invalidate();
 					else c->q38HybridReceipt->Invalidate();
@@ -7045,6 +7076,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 #endif
 #ifdef PIONEER_Q38_QGW8_CONTROL_INSPECTION
 #include "PioneerQ38Qgw8UploadControlInspection.inc"
+#endif
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+#include "PioneerQ38QgwdUploadControlInspection.inc"
 #endif
 #endif
 
@@ -8726,6 +8760,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
   return Q38Qgw8UploadControlInspection(instance,data,length);
 #endif
 // PIONEER_QGW8_CONTROL_DISPATCH_END
+// PIONEER_QGWD_CONTROL_DISPATCH_BEGIN
+#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+ if(operation==TT_PCI_PROBE_Q38_QGWD_UPLOAD_CONTROL)
+  return Q38QgwdUploadControlInspection(instance,data,length);
+#endif
+// PIONEER_QGWD_CONTROL_DISPATCH_END
  if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)
   return Q38SpanControl(instance,operation,data,length);
  return B_NOT_ALLOWED;
