@@ -15,10 +15,11 @@ Worker 0 Q job 12233 -> 11043; Q result store 10159 -> 8374. K/V job
 12214 -> 11024 and result store 9101 -> 7316. These are instruction counts,
 not card cycles, latency, end-to-end performance or tokens per second.
 
-The expanded test flips bit zero separately in every schedule and shadow
-word and every selected manifest and shadow word for layer 3 Q, on both
-component copies. It also runs the existing 16-layer Q/K/V dispatch,
+The expanded test flips low bit, high bit, and all bits separately in every
+schedule and shadow word and every selected manifest and shadow word for
+layer 3 Q, on both component copies. It also flips every pair of fields in
+each worker's schedule simultaneously, and runs the existing 16-layer Q/K/V dispatch,
 builder, job-frame and store checks. Both images passed under ASan/UBSan.
-This does not cover simultaneous corruptions, arbitrary bit values, races,
+This does not cover all simultaneous corruptions, arbitrary bit values, races,
 full native lifecycle, real hardware, model quality, Assistant, or Work mode.
 The candidate is not qualified for install or execution on the P100A.

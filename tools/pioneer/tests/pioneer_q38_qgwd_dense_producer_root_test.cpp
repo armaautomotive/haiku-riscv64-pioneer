@@ -123,17 +123,21 @@ int main(int argc,char** argv){
   if(layer==3)printf("QGWD_DENSE_SEAL_SIMULATED_INSTRUCTIONS role=%u component=%u instructions=%llu; NOT_CYCLES_OR_TPS\n",
    role,component,static_cast<unsigned long long>(m->steps));
   if(layer==3 && role==5){
-   for(unsigned w=0;w<119;w++)for(unsigned field=0;field<4;field++){
+   for(unsigned w=0;w<119;w++)for(unsigned field=0;field<4;field++)for(uint32_t mask:{1U,0x80000000U,0xffffffffU}){
     const unsigned address=0x16ebc0+w*16+field*4;
-    m->memory[address]^=1;assert(!m->Run(seals[component],d));m->memory[address]^=1;
+    m->memory[address]^=mask;assert(!m->Run(seals[component],d));m->memory[address]^=mask;
     const unsigned shadow=0x16f330+w*16+field*4;
-    m->memory[shadow]^=1;assert(!m->Run(seals[component],d));m->memory[shadow]^=1;
+    m->memory[shadow]^=mask;assert(!m->Run(seals[component],d));m->memory[shadow]^=mask;
    }
-   for(unsigned i=0;i<21;i++){
+   for(unsigned w=0;w<119;w++)for(unsigned first=0;first<4;first++)for(unsigned second=first+1;second<4;second++){
+    const unsigned a=0x16ebc0+w*16+first*4,b=0x16ebc0+w*16+second*4;
+    m->memory[a]^=1;m->memory[b]^=1;assert(!m->Run(seals[component],d));m->memory[a]^=1;m->memory[b]^=1;
+   }
+   for(unsigned i=0;i<21;i++)for(uint32_t mask:{1U,0x80000000U,0xffffffffU}){
     const unsigned address=0x16dc00+4*(index+i);
-    m->memory[address]^=1;assert(!m->Run(seals[component],d));m->memory[address]^=1;
+    m->memory[address]^=mask;assert(!m->Run(seals[component],d));m->memory[address]^=mask;
     const unsigned shadow=0x16fac0+i*4;
-    m->memory[shadow]^=1;assert(!m->Run(seals[component],d));m->memory[shadow]^=1;
+    m->memory[shadow]^=mask;assert(!m->Run(seals[component],d));m->memory[shadow]^=mask;
    }
   }
   m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));
