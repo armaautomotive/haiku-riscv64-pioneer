@@ -115,7 +115,10 @@ int main(int argc,char** argv){
    assert(!m->Run(stores[component],d,w));
    for(unsigned i=0;i<count;i++)assert(m->memory.at(0x80000+(first+i)*4)==0xa5a5a5a5);
   }
-  assert(m->Run(seals[component],d));m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));
+  assert(m->Run(seals[component],d));
+  if(layer==3)printf("QGWD_DENSE_SEAL_SIMULATED_INSTRUCTIONS role=%u component=%u instructions=%llu; NOT_CYCLES_OR_TPS\n",
+   role,component,static_cast<unsigned long long>(m->steps));
+  m->memory[0x16ebc0]^=1;assert(!m->Run(seals[component],d));
   assert(!m->Run(m->job[component],d,0,7));m->memory[0x16ebc0]^=1;
   if(role!=5)assert(!m->Run(m->job[component],d,32,7));
   m->memory[0x16dc00+4*index]^=1;assert(!m->Run(seals[component],d));m->memory[0x16dc00+4*index]^=1;
