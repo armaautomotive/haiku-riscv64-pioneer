@@ -21,3 +21,12 @@ swapped and no QGWD hardware/model execution occurred during this staging.
 The diagnostic is fixed to one token and cannot measure steady-state
 throughput or establish general quality. Its clean transcript gate is only
 an output/lifecycle shape check; it is not a CPU numerical reference.
+
+After the read-only check, an initial background launch exited before creating
+the one-shot marker; the stable driver remained tag 2026102100010012,
+generation 20, cold=0 and active_owner=0. A separate background --check-only
+passed. The subsequent direct nohup launch created the exclusive marker and
+reported VERIFYING_MODEL_AND_CACHES_NO_DEVICE, parent PID 6517, with the
+four-cache preflight process live. At that observation no driver swap, model
+execution, token or speed result had occurred. Future observations must poll
+this same process/stage; never launch a second trial while it is live.
