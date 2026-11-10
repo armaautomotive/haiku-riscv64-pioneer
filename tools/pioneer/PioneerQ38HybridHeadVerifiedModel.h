@@ -20,9 +20,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+class PioneerQ38HybridDenseQ8VerifiedModel;
 // Authenticate one retained original and preflight all three existing cache
 // formats together. No device open, upload, owner, model product or Work.
 class PioneerQ38HybridHeadVerifiedModel {
+ friend class PioneerQ38HybridDenseQ8VerifiedModel; // SAME retained source;no copied identity or device grant
  using Cache=PioneerModelWeightCache;
 public:
  using Pages=PioneerQ38HybridHeadPreparedPages<PioneerQwen38Gguf,PioneerQwen38PackedPlan,PioneerQ38NativeBfpBandSource>;
