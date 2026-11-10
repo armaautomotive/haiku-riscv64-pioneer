@@ -1,10 +1,11 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwdKernelCompileRole.h"
 // Geometry proposal only: not a native journal selector or permission to use
 // the worker. Its separate owner must prove aliases, exclusive lifetime,
 // complete save/restore, image identity and failure handling before launch.
 #if !defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION != 1 \
  || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 \
- || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_BF16_FULL_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
@@ -24,7 +25,7 @@ static inline unsigned SnapshotSpans(unsigned worker){return Old::SnapshotSpans(
 static inline Span SnapshotSpan(unsigned worker,unsigned span){
  auto s=Old::SnapshotSpan(worker,span);if(worker && worker<Workers && span==1)s.words+=1024;return s;
 }
-static inline unsigned SnapshotWords(unsigned worker){return worker>=Workers?0:worker?PeerSavedWords:RootSavedWords;}
+static inline unsigned SnapshotWords(unsigned worker){return worker>=Workers?0U:worker?unsigned(PeerSavedWords):unsigned(RootSavedWords);}
 static inline unsigned SnapshotBase(unsigned worker){return worker>=Workers?UINT32_MAX:worker?RootSavedWords+(worker-1)*PeerSavedWords:0;}
 static inline uint32_t SnapshotAddress(unsigned worker,unsigned ordinal){
  if(worker>=Workers || ordinal>=SnapshotWords(worker))return UINT32_MAX;

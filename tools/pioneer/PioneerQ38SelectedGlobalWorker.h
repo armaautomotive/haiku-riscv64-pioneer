@@ -56,7 +56,7 @@ enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,Pione
  || !defined(PIONEER_Q38_HYBRID_PROGRAMS_HEADER) || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
  || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) \
- || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
 #error QGWD worker DATA requires isolated matching program and expanded journal roles
 #endif

@@ -1,0 +1,17 @@
+QGWD RISC-V kernel-ABI journal compile checkpoint (2026-11-10)
+
+The actual QGWD receipt binding, token startup/journal, and dense manifest
+install/verification templates compile with the Haiku RISC-V cross compiler
+in an explicitly non-loadable kernel-only role. The largest individually
+reported static stack frame is 1216 bytes; this is not a whole-call-chain
+stack bound. Both independently generated program bundles matched the pinned
+15-section digest f5691d5f12cb1c59fc26a7b4044c510d2eb9cd66aa80481c549be0f10b7c6159.
+The original inspection bundle remains unchanged (digest beginning 184f1091).
+Compiler checks reject omitted/zero required role flags, a loadable driver tag,
+driver reload, native context, Work mode and CPU validation.
+
+The independently linked QGWD ROOT head/packing synthetic test and existing
+QGWD program-image/role checks also passed. All use synthetic data. This is
+not a loadable driver, does not establish device residency or run a model,
+and provides no inference throughput measurement. Native owner integration,
+device execution, correctness, and full-model benchmarking remain outstanding.

@@ -18,10 +18,22 @@ extern "C" bool pioneer_q38_token_memory_template_prepare(PioneerQ38TokenMemory&
 }
 extern "C" bool pioneer_q38_token_memory_template_close(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
  PioneerQ38TokenMemoryResult& result){return heap.CloseHeldNoLaunch(io,result);}
-#ifdef PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY
+#if defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)
 extern "C" bool pioneer_q38_hybrid_layout_template(PioneerQ38CanonicalModelPlan& heap){return heap.BuildHybridDiagnostic();}
+#endif
+#ifdef PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY
 extern "C" bool pioneer_q38_hybrid_manifest_install_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
  PioneerQ38TokenMemoryResult& result){return heap.InstallHybridManifestHeld(io,result);}
 extern "C" bool pioneer_q38_hybrid_manifest_verify_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
  PioneerQ38TokenMemoryResult& result){return heap.VerifyHybridManifestHeld(io,result);}
+#endif
+#ifdef PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY
+extern "C" bool pioneer_q38_qgwd_bind_template(PioneerQ38TokenMemory& heap,PioneerQ38DenseQ8UploadReceiptInspection& receipt,
+ const void* context,const PioneerQ38DispatchLease* cohort,const void* cookie,const uint32_t* hashes,int64_t team,uint64_t generation){
+ return heap.BindDenseReceiptInspection(receipt,context,cohort,cookie,hashes,team,generation);
+}
+extern "C" bool pioneer_q38_qgwd_manifest_install_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
+ PioneerQ38TokenMemoryResult& result){return heap.InstallDenseManifestHeld(io,result);}
+extern "C" bool pioneer_q38_qgwd_manifest_verify_template(PioneerQ38TokenMemory& heap,TokenMemoryKernelCompileIO& io,
+ PioneerQ38TokenMemoryResult& result){return heap.VerifyDenseManifestHeld(io,result);}
 #endif

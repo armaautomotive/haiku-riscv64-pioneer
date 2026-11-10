@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8NativeInspectionRole.h"
+#include "PioneerQ38QgwdKernelCompileRole.h"
 // Rechecked on every include. Kernel and fake-native selectors remain
 // non-loadable. The distinct tag128 candidate is separately guarded and is
 // not qualified for installation or execution merely by compiling it.

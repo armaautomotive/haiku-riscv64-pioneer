@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwd='--qgwd-dense-q8-inspection' in args
+args=sys.argv[1:];qgwd_kernel='--qgwd-dense-q8-kernel-compile' in args
+if qgwd_kernel:
+    if args.count('--qgwd-dense-q8-kernel-compile')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-dense-q8-kernel-compile' for x in args):
+        raise SystemExit('ambiguous QGWD kernel-compile selector')
+    args.remove('--qgwd-dense-q8-kernel-compile');args.insert(0,'--qgwd-dense-q8-inspection')
+qgwd='--qgwd-dense-q8-inspection' in args
 if qgwd:
     if args.count('--qgwd-dense-q8-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-dense-q8-inspection' for x in args):
         raise SystemExit('ambiguous QGWD selector')
@@ -131,7 +136,8 @@ if matrix:
                   ' || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 \\',
                   ' || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION != 1 \\',
-                  ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\',
+                  (' || !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) || PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\' if qgwd_kernel
+                   else ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\'),
                   ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
                   ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
                   '#error QGWD program data is isolated inspection only', '#endif']

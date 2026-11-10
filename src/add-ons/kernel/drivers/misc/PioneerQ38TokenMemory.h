@@ -10,7 +10,7 @@
 #include "PioneerQ38HybridManifest.h"
 #endif
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
-#if PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
+#if PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error QGWD receipt journal is simulated inspection only
 #endif
 #include "../../../../../tools/pioneer/PioneerQ38DenseQ8UploadReceiptInspection.h"
@@ -48,7 +48,7 @@ class PioneerQ38TokenMemory {
  PioneerQ38DenseQ8UploadReceiptInspection* denseReceipt=nullptr;const void* denseContext=nullptr;const void* denseCookie=nullptr;
  const PioneerQ38DispatchLease* denseParticipants=nullptr;
  const uint32_t* denseHashes=nullptr;int64_t denseTeam=-1;uint64_t denseGeneration=0;
- static_assert(DenseManifestWords<=HybridManifestWords,"shared manifest workspace must fit dense table");
+ static_assert(unsigned(DenseManifestWords)<=unsigned(HybridManifestWords),"shared manifest workspace must fit dense table");
  bool denseManifestInstalled=false;
  bool DenseBinding(const PioneerQ38CanonicalModelPlan& plan,const PioneerQ38DispatchLease& participants,
   const uint8_t* initialized,const PioneerResidentBanks& owner,const tt_dram_samples_result& dram,uint64_t generation)const{
