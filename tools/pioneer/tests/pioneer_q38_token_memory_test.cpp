@@ -15,6 +15,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #include "../PioneerQ38HybridHeadModelPlan.h"
 #endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
 #include "../PioneerQ38HybridJobBinding.h"
 #endif
@@ -78,6 +81,9 @@ struct TokenMemoryIO:CodeIO {
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (badKind==13 && AtMemory() && address==0x16c400+badOrdinal*4)
 #endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   || (badKind==14 && AtMemory() && address==0x16dc00+badOrdinal*4)
+#endif
    ){output^=1;observed=touches;}return true;
  }
  bool TokenMemoryWrite(unsigned worker,uint32_t address,uint32_t value){
@@ -87,6 +93,9 @@ struct TokenMemoryIO:CodeIO {
   else assert((memoryState->phase==6
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (memoryState->phase==8 && worker==0 && address>=0x16c400 && address<0x16c400+64*3*7*4)
+#endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   || (memoryState->phase==10 && worker==0 && address>=0x16dc00 && address<0x16dc00+16*3*7*3*4)
 #endif
    ) && TOKL::SnapshotContains(worker,address));
   if(badKind==3 && AtWord()){observed=touches;return false;}
@@ -140,6 +149,11 @@ struct TokenMemoryFixture {
  std::vector<std::unique_ptr<PanelOwners>> owners;
  tt_dram_samples_result dram;PioneerResidentBanks banks;
  std::vector<uint8_t> ledger=std::vector<uint8_t>(PioneerResidentBanks::Pages);
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ std::vector<uint32_t> hashes=std::vector<uint32_t>(PioneerResidentBanks::Pages);
+ std::unique_ptr<PioneerQ38DenseQ8UploadReceiptInspection> receipt=std::make_unique<PioneerQ38DenseQ8UploadReceiptInspection>();
+ PioneerQ38SpanLease span;int cookie=0;
+#endif
  PioneerQ38GdnIdentity id={1,2,3,4};PioneerQ38TokenMemoryResult result;
  TokenMemoryFixture(){
   dram=BankProof(*io.core[0]);assert(banks.Bind(dram));
@@ -149,11 +163,29 @@ struct TokenMemoryFixture {
    assert(PioneerQ38DispatchPrepareRole(io,dram,banks,*cohort,worker));
   }
   auto& data=Geometry();data.Bind(*cohort,banks,dram);
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  assert(receipt->Begin(cohort.get(),&cookie,hashes.data(),ledger.data(),1,4,banks,dram,ledger.size()));
+  unsigned bank=0,length=0,spans=0;uint64_t offset=0;
+  while(receipt->Next(bank,offset,length)){
+   assert(receipt->Before(cohort.get(),hashes.data(),ledger.data(),&span,bank,offset,length));
+   const unsigned first=unsigned(uint64_t(bank)*(PioneerResidentBanks::Capacity/4096)+offset/4096);
+   for(unsigned p=0;p<length/4096;p++){
+    const unsigned i=first+p;const uint32_t hash=i*2654435761U;ledger[i]=1;hashes[i]=hash;assert(receipt->RecordPage(i,hash));
+   }
+   span.saved=span.ready=span.dirty=true;span.nonce=++spans;assert(receipt->After());
+  }
+  span.closed=true;span.ready=span.dirty=false;
+  assert(spans==21907 && receipt->Seal(span));
+  assert(!data.startup->LearnedPagesPresent(ledger.data(),ledger.size())); // old logical extent has deliberate holes
+  assert(receipt->MatchesLogical(*data.canonical,cohort.get(),&cookie,hashes.data(),ledger.data(),1,4,banks,dram));
+  assert(memory->BindDenseReceiptInspection(*receipt,&cookie,hashes.data(),1,4));
+#else
   for(unsigned i=0;i<data.canonical->Count();i++){
    const auto* part=data.canonical->Part(i);if(part->kind!=data.canonical->WeightKind)continue;
    unsigned first=part->bank*unsigned(data.canonical->Capacity/4096)+part->offset/4096;
    for(unsigned page=0;page<part->allocated/4096;page++)ledger[first+page]=1;
   }
+#endif
   io.startup=data.startup.get();io.memoryState=&result;io.track=true;
  }
  bool PrepareMemory(){auto& data=Geometry();return memory->PrepareHeld(io,dram,banks,*cohort,*data.canonical,*data.startup,id,ledger.data(),ledger.size(),result);}
@@ -241,6 +273,15 @@ int main(int argc,char** argv){
    assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
    for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
    assert(f.memory->VerifyHybridManifestHeld(f.io,f.result));
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   PioneerQ38HybridDenseQ8MatrixPlan::Proposal denseHost;
+   std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> denseExpected={};
+   assert(PioneerQ38HybridDenseQ8MatrixPlan::Build(*original,denseHost)
+    && PioneerQ38DenseQ8MatrixManifest::Build(*original,denseHost,denseExpected.data(),denseExpected.size()));
+   assert(f.memory->InstallDenseManifestHeld(f.io,f.result));
+   for(unsigned i=0;i<denseExpected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16dc00+i*4)]==denseExpected[i]);
+   assert(f.memory->VerifyDenseManifestHeld(f.io,f.result));
+#endif
    const bool closeOk=f.CloseMemory();
    if(!closeOk || !f.memory->Closed() || f.io.data!=before || f.result.restoredWords!=TOKL::SavedWords){
     fprintf(stderr,"journal close=%d closed=%d restored=%u expected=%u phase=%u unsafe=%d\n",int(closeOk),int(f.memory->Closed()),f.result.restoredWords,TOKL::SavedWords,f.result.phase,int(f.result.unsafe));
@@ -282,7 +323,28 @@ int main(int argc,char** argv){
    // begin the no-further-I/O check at the returned failure boundary.
    f.io.observed=f.io.touches;f.Unknown();
   }
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory());
+   f.hashes[0]^=1;assert(!f.memory->InstallHybridManifestHeld(f.io,f.result));
+   f.io.observed=f.io.touches;f.Unknown();
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result));
+   f.io.badKind=3;f.io.badPhase=10;f.io.badWorker=0;f.io.badOrdinal=16*3*7*3-1;
+   assert(!f.memory->InstallDenseManifestHeld(f.io,f.result));f.Unknown();
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
+   f.io.badKind=14;f.io.badPhase=11;f.io.badWorker=0;f.io.badOrdinal=16*3*7*3-1;
+   assert(!f.memory->VerifyDenseManifestHeld(f.io,f.result));f.Unknown();
+  }
+  puts("PASS QGWD receipt-bound gapped ledger, held dense manifest and restore/fault quarantine; SIMULATED ONLY");return 0;
+#else
   puts("PASS QGWD bundle held journal/expanded worker restore and corruption quarantine; QGW8 logical fixture, SIMULATED ONLY");return 0;
+#endif
 #else
   puts("PASS QGW8 held journal and manifest install/verify/restore and fault quarantine; SIMULATED ONLY");return 0;
 #endif

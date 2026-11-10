@@ -85,6 +85,23 @@ public:
   return PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
 #ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
+ // Check an already-built logical startup view against THIS sealed receipt.
+ // The old logical extents include holes, so their presence must not be
+ // confused with the verified physical ledger. No device authority implied.
+ bool MatchesLogical(const C& logical,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen,const PioneerResidentBanks& bound,const tt_dram_samples_result& dram){
+  if(!logical.Qgw8InspectionLayout() || logical.Count()!=original.Count()
+   || logical.RecurrentCount()!=original.RecurrentCount() || banks!=&bound || proof!=&dram
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned b=0;b<7;b++)if(logical.Used(b)!=parent.Used(b))return false;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* src=original.Part(i);const auto* dst=logical.Part(i);const auto* q=parent.At(i);
+   if(!src || !dst || !q || src->kind!=dst->kind || src->layer!=dst->layer || src->role!=dst->role
+    || src->type!=dst->type || src->firstRow!=dst->firstRow || src->rows!=dst->rows || src->rowBytes!=dst->rowBytes
+    || q->bank!=dst->bank || q->offset!=dst->offset || q->bytes!=dst->bytes || q->allocated!=dst->allocated)return false;
+  }
+  return Revalidate(c,fd,h,initialized,owner,gen);
+ }
  // Produce the two DISTINCT views from this exact sealed receipt. Logical
  // QGW8 metadata describes legacy recipe geometry; physical QGWD describes
  // the uploaded BFP8 bytes. Neither view grants scalar access or execution.

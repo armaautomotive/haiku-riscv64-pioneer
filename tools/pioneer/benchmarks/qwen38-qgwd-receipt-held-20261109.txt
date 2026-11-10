@@ -1,0 +1,22 @@
+QGWD converted-layout receipt and held matrix-manifest integration
+
+The real TokenMemory held journal is exercised with the QGWD inspection
+program, 120 simulated endpoints, and the 21,907-span synthetic QGWD upload
+receipt/ledger. The logical QGW8 startup intentionally fails its old full
+learned-pages check because the converted dense allocations have holes.
+The new inspection-only binding instead matches that startup to the SAME
+sealed physical ledger, owner, proof, cookie, hashes, team and generation.
+
+The simulation installs/verifies the 1,008-word dense projection table at
+0x16dc00, compares it to an independent geometry-derived table, restores
+the complete journal, and checks write/readback, code corruption, and stale
+receipt quarantine. The old QGW8 expanded-journal regression also passes.
+The install/verify host diagnostic build checks <=2048-byte static frames.
+
+Run:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs /private/tmp/qgwd-program-data-20261109-a.h --qgwd-receipt-journal --dense-q8-footprint
+ python3 tools/pioneer/tests/run_pioneer_q38_dense_q8_kernel_layout_tests.py
+
+THIS IS NOT a physical upload, authenticated model, NoC lifecycle, device
+launch, kernel driver qualification, inference correctness or benchmark.
+The receipt and role are deliberately forbidden in native/Work builds.

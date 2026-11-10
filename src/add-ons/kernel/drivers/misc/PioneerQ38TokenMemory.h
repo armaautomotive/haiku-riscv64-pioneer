@@ -9,6 +9,12 @@
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
 #include "PioneerQ38HybridManifest.h"
 #endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
+#error QGWD receipt journal is simulated inspection only
+#endif
+#include "../../../../../tools/pioneer/PioneerQ38DenseQ8UploadReceiptInspection.h"
+#endif
 // DISTINCT full-token held L1 journal. Not the three-layer prefix journal,
 // an embedding producer,initialized state,model-source/clock/host permission,
 // a launched owner or a caller-supplied STOP/clean capability. Genuine native
@@ -36,6 +42,18 @@ class PioneerQ38TokenMemory {
  // one-shot owner and is rebuilt from the held model before each operation.
  uint32_t hybridManifestScratch[HybridManifestWords]={};
  bool hybridManifestInstalled=false;
+#endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ enum {DenseManifestAddress=0x16dc00,DenseManifestWords=PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords};
+ PioneerQ38DenseQ8UploadReceiptInspection* denseReceipt=nullptr;const void* denseCookie=nullptr;
+ const uint32_t* denseHashes=nullptr;int64_t denseTeam=-1;uint64_t denseGeneration=0;
+ static_assert(DenseManifestWords<=HybridManifestWords,"shared manifest workspace must fit dense table");
+ bool denseManifestInstalled=false;
+ bool DenseBinding(const PioneerQ38CanonicalModelPlan& plan,const PioneerQ38DispatchLease& participants,
+  const uint8_t* initialized,const PioneerResidentBanks& owner,const tt_dram_samples_result& dram)const{
+  return denseReceipt && denseReceipt->MatchesLogical(plan,&participants,denseCookie,denseHashes,initialized,
+   denseTeam,denseGeneration,owner,dram);
+ }
 #endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenMemoryResult& result){
   unsafe=true;installed=false;result.unsafe=1;
@@ -80,8 +98,12 @@ class PioneerQ38TokenMemory {
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
  bool BuildHybridManifest(uint32_t* staged)const{
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
-  if(!staged || !canonical || !startup || !ledger || canonical->Count()!=4678
-   || !startup->LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return false;
+  if(!staged || !canonical || !startup || !ledger || canonical->Count()!=4678)return false;
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  if(!denseReceipt || !cohort || !banks || !proof || !DenseBinding(*canonical,*cohort,ledger,*banks,*proof))return false;
+#else
+  if(!startup->LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return false;
+#endif
   if(!PioneerQ38HybridManifest::Build(*canonical,staged,HybridManifestWords))return false;
   for(unsigned i=0;i<HybridManifestWords;i++){
    uint32_t ignored=0;const uint32_t address=HybridManifestAddress+i*4;
@@ -98,6 +120,15 @@ public:
  bool Installed()const{return installed && !unsafe && !closed && !launched;}
  bool Closed()const{return closed && !unsafe && !launched;}
  bool LaunchedJournalClosed()const{return closed && launchClosed && launched && !installed && !unsafe;}
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ // Bind the same synthetic receipt/ledger/owner before the first L1 touch.
+ // This role is forbidden in native builds and is not a launch capability.
+ bool BindDenseReceiptInspection(PioneerQ38DenseQ8UploadReceiptInspection& receipt,const void* cookie,
+  const uint32_t* hashes,int64_t team,uint64_t generation){
+  if(started || denseReceipt || !cookie || !hashes || team<0 || !generation || !receipt.Sealed())return false;
+  denseReceipt=&receipt;denseCookie=cookie;denseHashes=hashes;denseTeam=team;denseGeneration=generation;return true;
+ }
+#endif
  // Distinct launched-journal retirement ONLY;not held END or host-release authority.
  void Fault(){unsafe=true;installed=false;} // MEMORY ONLY;retain every native source/map/host/clock owner
  bool MatchesNativeOwner(const tt_dram_samples_result& dram,const PioneerResidentBanks& owner,const PioneerQ38DispatchLease& participants,
@@ -130,7 +161,12 @@ public:
    if(!node.image.saved || !node.image.ready || node.image.unsafe || node.image.running || !store.ready || store.pending
     || store.recovery_required || node.noc.recovery_required)return false;
   }
-  if(!data.MatchesBinding(plan,data.Bank(),id,&participants.authority.source[0][0]) || !data.LearnedPagesPresent(initialized,pages))return false;
+  if(!data.MatchesBinding(plan,data.Bank(),id,&participants.authority.source[0][0]))return false;
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  if(!DenseBinding(plan,participants,initialized,owner,dram))return false;
+#else
+  if(!data.LearnedPagesPresent(initialized,pages))return false;
+#endif
   started=true;proof=&dram;banks=&owner;cohort=&participants;canonical=&plan;startup=&data;identity=id;ledger=initialized;
   result.started=1;result.phase=1;
   for(unsigned worker=0;worker<120;worker++){
@@ -184,7 +220,14 @@ public:
    || result.version!=1 || result.started!=1 || result.phase!=4 || result.installed!=1
    || result.closed || result.unsafe || result.restoredWords || result.savedWords!=L::SavedWords
    || result.verifiedOriginalWords!=L::SavedWords || result.installedWords!=P::CodeWords(0)+119*P::CodeWords(1))return false;
-  uint32_t* const staged=hybridManifestScratch;if(!BuildHybridManifest(staged))return false;
+  uint32_t* const staged=hybridManifestScratch;
+  if(!BuildHybridManifest(staged)){
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   return Fail(io,result);
+#else
+   return false;
+#endif
+  }
   result.phase=8;result.worker=0;
   if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
   for(unsigned i=0;i<HybridManifestWords;i++){
@@ -210,6 +253,50 @@ public:
    if(!io.TokenMemoryReadChecked(0,HybridManifestAddress+i*4,actual) || actual!=expected[i])return Fail(io,result);
   }
   if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
+  return true;
+ }
+#endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ // Derive and stage QGWD's matrix address table from the same sealed receipt
+ // as the held journal. This is simulated held memory only, not execution.
+ template<class IO> bool InstallDenseManifestHeld(IO& io,PioneerQ38TokenMemoryResult& result){
+  namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
+  uint32_t* const denseScratch=hybridManifestScratch;
+  if(!Installed() || !hybridManifestInstalled || denseManifestInstalled || !denseReceipt || !cohort || !canonical || !banks || !proof
+   || result.version!=1 || result.started!=1 || result.phase!=9 || result.installed!=1 || result.closed || result.unsafe
+   || result.restoredWords)return false;
+  if(!DenseBinding(*canonical,*cohort,ledger,*banks,*proof)
+   || !denseReceipt->DenseManifest(denseScratch,DenseManifestWords,cohort,denseCookie,denseHashes,ledger,denseTeam,denseGeneration))return Fail(io,result);
+  for(unsigned i=0;i<DenseManifestWords;i++){
+   uint32_t code;const uint32_t address=DenseManifestAddress+i*4;
+   if(!L::SnapshotContains(0,address) || P::ProgramWord(0,address,code))return false;
+  }
+  result.phase=10;result.worker=0;
+  if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
+  for(unsigned i=0;i<DenseManifestWords;i++){
+   result.word=i;uint32_t actual=0;
+   if(!io.TokenMemoryWrite(0,DenseManifestAddress+i*4,denseScratch[i])
+    || !io.TokenMemoryReadChecked(0,DenseManifestAddress+i*4,actual) || actual!=denseScratch[i])return Fail(io,result);
+  }
+  if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0)
+   || !DenseBinding(*canonical,*cohort,ledger,*banks,*proof))return Fail(io,result);
+  denseManifestInstalled=true;return true;
+ }
+ template<class IO> bool VerifyDenseManifestHeld(IO& io,PioneerQ38TokenMemoryResult& result){
+  uint32_t* const denseScratch=hybridManifestScratch;
+  if(!Installed() || !denseManifestInstalled || !denseReceipt || !cohort || !canonical || !banks || !proof
+   || result.version!=1 || result.started!=1 || (result.phase!=10 && result.phase!=11)
+   || result.installed!=1 || result.closed || result.unsafe || result.restoredWords)return false;
+  if(!DenseBinding(*canonical,*cohort,ledger,*banks,*proof)
+   || !denseReceipt->DenseManifest(denseScratch,DenseManifestWords,cohort,denseCookie,denseHashes,ledger,denseTeam,denseGeneration))return Fail(io,result);
+  result.phase=11;result.worker=0;
+  if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
+  for(unsigned i=0;i<DenseManifestWords;i++){
+   result.word=i;uint32_t actual=0;
+   if(!io.TokenMemoryReadChecked(0,DenseManifestAddress+i*4,actual) || actual!=denseScratch[i])return Fail(io,result);
+  }
+  if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0)
+   || !DenseBinding(*canonical,*cohort,ledger,*banks,*proof))return Fail(io,result);
   return true;
  }
 #endif

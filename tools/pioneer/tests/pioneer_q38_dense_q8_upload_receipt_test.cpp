@@ -77,6 +77,12 @@ int main(int argc,char** argv){
  assert(receipt->DeriveCanonical(*logical,false,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(receipt->DeriveCanonical(*physical,true,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(logical->Qgw8InspectionLayout() && physical->DenseQ8InspectionLayout());
+ assert(receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42,banks,proof));
+ assert(!receipt->MatchesLogical(*physical,&context,&cookie,hashes.data(),ledger.data(),17,42,banks,proof));
+ assert(!receipt->MatchesLogical(*logical,&context,&foreign,hashes.data(),ledger.data(),17,42,banks,proof));
+ assert(!receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,43,banks,proof));
+ auto otherProof=proof;
+ assert(!receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42,banks,otherProof));
  std::array<uint32_t,1920> sources={};for(unsigned i=0;i<sources.size();i++)sources[i]=0x16005+i*131;
  auto recipe=std::make_unique<PioneerQ38DenseQ8RecipeInspection>();const PioneerQ38GdnIdentity identity={1,2,3,42};
  assert(recipe->Build(*logical,*physical,3,0,248319,0,1000,identity,sources.data())

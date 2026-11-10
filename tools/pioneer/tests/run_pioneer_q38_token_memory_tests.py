@@ -8,6 +8,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+qgwd_receipt = '--qgwd-receipt-journal' in args
+if qgwd_receipt:
+    assert args.count('--qgwd-receipt-journal') == 1 and '--qgwd-journal' not in args
+    args[args.index('--qgwd-receipt-journal')] = '--qgwd-journal'
 qgwd = '--qgwd-journal' in args
 if qgwd:
     assert args.count('--qgwd-journal') == 1 and '--qgw8-journal' not in args
@@ -103,6 +107,10 @@ if hybrid_header is not None:
         if qgwd:
             profile+=['-DPIONEER_Q38_QGWD_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWD_PLAN_SIMULATION=1',
                       '-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE=1']
+            if qgwd_receipt:
+                profile+=['-DPIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION=1','-DPIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION=1',
+                          '-DPIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION=1','-DPIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION=1',
+                          '-DPIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION=1']
             print('QGWD simulated journal only: QGW8 logical geometry; no QGWD model, lifecycle or device qualification',flush=True)
         else:
             profile+=['-DPIONEER_Q38_QGW8_PROGRAMS_INSPECTION=1']
@@ -124,10 +132,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
                         str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(stack_binary)], check=True)
         usage=list(pathlib.Path(tmp).glob('*.su'));assert len(usage)==1,usage
         rows=[line.split('\t') for line in usage[0].read_text().splitlines()]
-        for name in ('InstallHybridManifestHeld', 'VerifyHybridManifestHeld'):
+        stack_methods=['InstallHybridManifestHeld', 'VerifyHybridManifestHeld']
+        if qgwd_receipt:stack_methods+=['InstallDenseManifestHeld','VerifyDenseManifestHeld']
+        for name in stack_methods:
             matching=[row for row in rows if name in row[0]]
             assert len(matching)==1 and len(matching[0])==3 and matching[0][2]=='static' and int(matching[0][1])<=2048,(name,matching)
-        print('PASS hybrid/QGW8 manifest install and verification frames <=2048 bytes in host diagnostic build',flush=True)
+        print('PASS '+('hybrid and QGWD dense' if qgwd_receipt else 'hybrid/QGW8')+' manifest install and verification frames <=2048 bytes in host diagnostic build',flush=True)
     for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest'], ['--qgw8-journal']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk:
