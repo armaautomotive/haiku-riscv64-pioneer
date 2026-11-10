@@ -18,9 +18,22 @@ stderr was empty. The checker also matched an already-local independent
 QGW8-head fixture under ASan/UBSan. These are CPU computations, not device
 arithmetic or model-quality validation.
 
-The proposed separate diagnostic tag is 2026111000010140; protocol/owner
-role tests and the actual client's 492 fake-endpoint cases passed. Nothing
-has been installed or run on the P100A. A protected export of private samples
-to the Mac was denied; the independent checker ran on the Pioneer instead.
-Actual on-device driver build, hardware execution, full-model inference and
-tokens/second remain unproven.
+The separate diagnostic tag is 2026111000010140; protocol/owner role tests
+and the actual client's 492 fake-endpoint cases passed. A protected export of
+private samples to the Mac was denied, so the independent checker and build
+were performed on the Pioneer instead. Two local builds of the isolated
+driver produced SHA-256 45c39bf6b178d663d2af189e103eb444ad56ba2a7476f07e8b2e0cac79316e15;
+the local client SHA-256 is 5ccc6443ef8d745ecef348fec8a54164988005caa323ca4ba573a0501517be53.
+Required exports are present, and the legacy find-device entry returns null.
+Control and Free static stack frames are 1088 and 304 bytes; the inherited
+DRAM samples helper is 2560 bytes. These are private build artifacts that
+include model data and must not be published.
+
+The independent checker produced a per-row reference file on the Pioneer,
+SHA-256 1d9d63581c314d1267a28d48be12cd01da18e1d125f5d6f016c168642b5dfb9e.
+A CPU-only source preflight passed against the actual metadata and fresh
+original, exit 0, stderr empty; stdout SHA-256
+65ef89540dcb6bfefe2f5fb12643df77e7c1d436322d4c7e2320761b7f90ec8a.
+The new guarded physical parent/output gate passed 595 fake-endpoint scenarios.
+Nothing has been installed or run on the P100A; hardware execution, full-model
+inference and tokens/second remain unproven.

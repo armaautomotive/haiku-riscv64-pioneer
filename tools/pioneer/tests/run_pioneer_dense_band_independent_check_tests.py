@@ -15,13 +15,16 @@ with tempfile.TemporaryDirectory(prefix='pioneer-dense-integer-check-',dir='/pri
         return 'const uint32_t '+name+'['+str(count)+']={'+','.join(['0x%08x'%first]+['0x00000000']*(count-1))+'};\n'
     data=''.join(array('w'+str(i),44160) for i in range(3))+array('input',3200)
     header=samples/'PioneerNativeBfpModelBandData.h';metadata=samples/'PioneerNativeBfpModelBandMetadata.h'
-    header.write_text(data);metadata.write_text(''.join(array('g'+str(i),32) for i in range(3)))
+    prefix='Width=5120,Rows=1024,Tensor=45,Samples=3\nconst unsigned rows[3]={0,512,992}\n'
+    header.write_text(data);metadata.write_text(prefix+''.join(array('g'+str(i),32) for i in range(3)))
     result=subprocess.run([str(binary),str(samples)],capture_output=True,text=True,env=env)
     assert result.returncode==0 and 'samples=3 rows=96' in result.stdout,(result.stdout,result.stderr)
+    result=subprocess.run([str(binary),str(samples),'--qgwd-reference'],capture_output=True,text=True,env=env)
+    assert result.returncode==0 and result.stdout.count('DENSE_INTEGER_REFERENCE ')==96 and 'sample2 first992 row31 word00000000' in result.stdout
     metadata.write_text(array('g0',32)+array('g1',32,1)+array('g2',32))
     result=subprocess.run([str(binary),str(samples)],capture_output=True,text=True,env=env)
     assert result.returncode==1 and 'mismatch sample=1 row=0' in result.stderr
-    metadata.write_text(''.join(array('g'+str(i),32) for i in range(3)))
+    metadata.write_text(prefix+''.join(array('g'+str(i),32) for i in range(3)))
     header.write_text(data.replace('0x00000000','0x00000001',1))
     assert subprocess.run([str(binary),str(samples)],capture_output=True,env=env).returncode==1
     assert subprocess.run([str(binary),'relative'],capture_output=True,env=env).returncode==2
