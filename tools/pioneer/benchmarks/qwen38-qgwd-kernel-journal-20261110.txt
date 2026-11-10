@@ -15,3 +15,15 @@ QGWD program-image/role checks also passed. All use synthetic data. This is
 not a loadable driver, does not establish device residency or run a model,
 and provides no inference throughput measurement. Native owner integration,
 device execution, correctness, and full-model benchmarking remain outstanding.
+
+Follow-up: the same non-loadable kernel-ABI test also instantiates the actual
+runtime prepare, worker bootstrap, root start, terminal hold, committed-token
+read, and L1/dispatch/peer/root/shared-mapping restore templates. Compiler
+symbols are checked and the largest individually reported static frame remains
+1216 bytes. IO methods are declarations only; this is not a linked driver,
+execution, complete lifecycle qualification, or throughput evidence.
+
+Read-only Pioneer check: Haiku is reachable, stable driver tag
+2026102100010012 generation 20 reports quiesced=0, cold=0, active_owner=0;
+the system reports 64 CPUs and 137034936320 bytes maximum RAM. No device
+operation or driver change was performed for this follow-up.

@@ -43,7 +43,12 @@ with tempfile.TemporaryDirectory(prefix='qgwd-kernel-journal-',dir='/private/tmp
     assert frames and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in frames)
     table=subprocess.check_output([tool+'nm','--defined-only',str(obj)],text=True)
     for name in ('pioneer_q38_token_memory_template_prepare','pioneer_q38_qgwd_bind_template',
-                 'pioneer_q38_qgwd_manifest_install_template','pioneer_q38_qgwd_manifest_verify_template'):
+                 'pioneer_q38_qgwd_manifest_install_template','pioneer_q38_qgwd_manifest_verify_template',
+                 'pioneer_q38_qgwd_runtime_template','pioneer_q38_qgwd_bootstrap_template',
+                 'pioneer_q38_qgwd_start_template','pioneer_q38_qgwd_hold_template',
+                 'pioneer_q38_qgwd_restore_l1_template','pioneer_q38_qgwd_restore_images_template',
+                 'pioneer_q38_qgwd_restore_peers_template','pioneer_q38_qgwd_restore_root_template',
+                 'pioneer_q38_qgwd_restore_shared_template','pioneer_q38_qgwd_read_template'):
         assert name in table,name
     forbidden={'api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device'}
     assert not any(line.split()[-1] in forbidden for line in table.splitlines() if line.split())
@@ -58,5 +63,5 @@ with tempfile.TemporaryDirectory(prefix='qgwd-kernel-journal-',dir='/private/tmp
         result=subprocess.run([*(f for f in common if f != flag),flag[:-1]+'0',
                                '-fsyntax-only',source],capture_output=True)
         assert result.returncode,'zero '+flag
-    print('PASS pinned QGWD journal/manifest Haiku RISC-V compile; max static frame',
+    print('PASS pinned QGWD journal and runtime lifecycle Haiku RISC-V compile; max static frame',
           max(int(row[1]) for row in frames),'; NOT A LOADABLE DRIVER')
