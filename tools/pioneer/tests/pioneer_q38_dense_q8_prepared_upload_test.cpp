@@ -46,6 +46,7 @@ struct FakeDenseIO {
   q.result={1,TT_RUNTIME_PASSED,q.bytes,n,calls,1,1,1,0,0,0,0};return true;
  }
 };
+#ifndef PIONEER_Q38_DENSE_Q8_PREPARED_UPLOAD_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());FakeSource source;FakePlan packed;packed.source=&source;
  std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -79,3 +80,4 @@ int main(){
  assert(receipt->DenseManifest(manifest.data(),manifest.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && manifest==expected);
  printf("PASS prepared dense-Q8 pages through %u fake span calls, sealed receipt and matching ROOT manifest; %u converted pages; NO HARDWARE OR MODEL\n",io.calls,io.converted);
 }
+#endif

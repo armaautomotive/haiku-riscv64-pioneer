@@ -1,0 +1,21 @@
+QGWD four-cache, same-original-model preflight on Pioneer, 2026-11-10
+
+The single preflight process completed successfully with exit status 0 and
+empty stderr. Its authenticated original model and four prepared caches were
+held by the same verified model object. The final stdout line was:
+
+PASS_QGWD_PREFLIGHT 1113 BFP4 FFN, 231 BFP8 FFN, 7 BFP8 head, 336 BFP8 dense fragments; NO_DEVICE_UPLOAD_MODEL_EXECUTION_OR_SPEED
+
+Pioneer evidence directory:
+/boot/home/pioneer-qgwd-four-cache-preflight-20261110-a
+
+SHA-256:
+  preflight executable  0aee55451ae1d5e90e29060f119ad5a479a411841f6e93096f2456fe6bb668df
+  stdout                d6a570a48e063a4232358edd2246607e7b384984e9ea084c701be8adc544d708
+  stderr                e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  exit-status           9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa
+
+This was CPU-only source/cache validation. It did not acquire the accelerator,
+upload weights, execute QGWD or the full model, test output quality, or measure
+inference speed. The dense cache conversion and fixed physical matrix-band
+diagnostic have their own separate evidence records.

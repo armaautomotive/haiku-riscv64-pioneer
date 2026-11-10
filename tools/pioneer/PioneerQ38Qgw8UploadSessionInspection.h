@@ -1,5 +1,18 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8TraceClientRole.h"
+#ifndef PIONEER_Q38_QGWD_UPLOAD_SESSION_ROLE_BOUND
+#define PIONEER_Q38_QGWD_UPLOAD_SESSION_ROLE_BOUND
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+enum {PioneerQ38QgwdUploadSessionRole=1};
+#else
+enum {PioneerQ38QgwdUploadSessionRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+static_assert(PioneerQ38QgwdUploadSessionRole==1,"late QGWD upload session selection");
+#else
+static_assert(PioneerQ38QgwdUploadSessionRole==0,"late QGWD upload session removal");
+#endif
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) && PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1
 #error QGW8 full-session inspection selector must equal one
 #endif
@@ -38,6 +51,13 @@ static_assert(PioneerQ38Qgw8UploadSessionRole==0,"late QGW8 upload-only selector
 #endif
 #ifndef PIONEER_Q38_QGW8_UPLOAD_SESSION_INSPECTION_H
 #define PIONEER_Q38_QGW8_UPLOAD_SESSION_INSPECTION_H
+#if defined(PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION) && (PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION) || PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) \
+ || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) \
+ || defined(PIONEER_Q38_QGWC_CLIENT_136))
+#error QGWD upload session requires its isolated synthetic role
+#endif
 #if !defined(PIONEER_Q38_QGW8_USER_SESSION_INSPECTION) || PIONEER_Q38_QGW8_USER_SESSION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC) || PIONEER_Q38_HYBRID_UPLOAD_DIAGNOSTIC != 1 \
  || !defined(PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC) || PIONEER_Q38_HYBRID_HEAD_UPLOAD_DIAGNOSTIC != 1 \
@@ -57,6 +77,9 @@ static_assert(PioneerQ38Qgw8UploadSessionRole==0,"late QGW8 upload-only selector
 #include "PioneerQ38HybridHeadLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadProtocol.h"
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdUploadProtocol.h"
+#endif
 #ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
 #endif
@@ -73,9 +96,14 @@ template<class Pages,class IO> class PioneerQ38HybridFullSession;
 template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  friend class PioneerQ38HybridFullSession<Pages,IO>;
  using C=PioneerQ38CanonicalModelPlan;using Plan=PioneerQ38HybridHeadModelPlan;
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+ using UploadPlan=PioneerQ38DenseQ8UploadPlan;
+#else
+ using UploadPlan=PioneerQ38HybridHeadUploadPlan;
+#endif
  enum State {Virgin,Open,Owned,SpansClosed,BanksClosed,Done,Failed};
  Pages& pages;IO& io;const C* canonical=nullptr;int fd=-1;State state=Virgin;uint64_t generation=0;
- PioneerQ38HybridSpanUpload<Pages,IO,PioneerQ38HybridHeadUploadPlan> upload;
+ PioneerQ38HybridSpanUpload<Pages,IO,UploadPlan> upload;
  bool attempted=false;
  bool Stop(std::string& error,const char* reason){
   if(error.empty())error=reason;state=Failed;
@@ -92,8 +120,15 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
   generation=q.generation;return true;
  }
  bool Receipt(unsigned operation,unsigned expectedSpans,bool sealed){
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+  // Distinct selector and magic prevent a QGW8 driver from accepting the
+  // compact, gapped QGWD ledger as its contiguous-prefix receipt.
+  namespace Q=PioneerQ38QgwdUpload;Q::Packet p;p.operation=operation;
+  return Q::Request(p) && Call(TT_PCI_PROBE_Q38_QGWD_UPLOAD_CONTROL,p)
+#else
   namespace Q=PioneerQ38Qgw8Upload;Q::Packet p;p.operation=operation;
   return Q::Request(p) && Call(TT_PCI_PROBE_Q38_QGW8_UPLOAD_CONTROL,p)
+#endif
    && p.magic==Q::Magic && p.version==Q::Version && p.operation==operation && !p.reserved
    && p.accepted==1 && p.sealed==unsigned(sealed) && p.spans==expectedSpans && !p.recovery_required;
  }
@@ -118,7 +153,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  }
 #endif
 public:
-#ifdef PIONEER_Q38_QGWC_CLIENT_136
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+ static constexpr uint64_t InspectionTag=UINT64_C(0x445747514f4e4452); // synthetic QGWD only
+#elif defined(PIONEER_Q38_QGWC_CLIENT_136)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110900010136);
 #elif defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026110700010134);
@@ -146,7 +183,7 @@ public:
  bool FailedState()const{return state==Failed;}
  bool WeightsHeld()const{return state==SpansClosed && fd>=0 && canonical && canonical->Ready()
   && pages.AllVerified() && upload.CompleteHeld();}
- const PioneerQ38HybridSpanUpload<Pages,IO,PioneerQ38HybridHeadUploadPlan>& Upload()const{return upload;}
+ const PioneerQ38HybridSpanUpload<Pages,IO,UploadPlan>& Upload()const{return upload;}
  // Only metadata derived from this held synthetic-owner session. The
  // manifest is not itself a device pointer grant, ROOT launch or inference.
  bool RootManifest(uint32_t* output,unsigned words)const{
@@ -162,12 +199,20 @@ public:
    || (out<self+sizeof(*this) && self<out+bytes) || (out<source+sizeof(pages) && source<out+bytes)
    || (out<model+sizeof(*canonical) && model<out+bytes) || (out<transport+sizeof(io) && transport<out+bytes))return false;
   Plan::Proposal expected;if(!Plan::Build(*canonical,expected) || expected.parts.size()!=canonical->Count())return false;
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+  UploadPlan::Proposal physical;if(!UploadPlan::Build(*canonical,physical) || physical.parts.size()!=canonical->Count())return false;
+#endif
   for(unsigned i=0;i<canonical->Count();i++){
-   const auto* p=pages.Part(i);if(!p)return false;const auto& q=expected.parts[i];
+   const auto* p=pages.Part(i);if(!p)return false;
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+   const auto& actual=physical.parts[i];
+#else
+   const auto& actual=expected.parts[i];
+#endif
    const uintptr_t address=reinterpret_cast<uintptr_t>(p);
    if(address>UINTPTR_MAX-sizeof(*p) || (out<address+sizeof(*p) && address<out+bytes)
-    || p->original!=q.original || p->bank!=q.bank || p->offset!=q.offset || p->bytes!=q.bytes
-    || p->allocated!=q.allocated || p->encoding!=q.encoding)return false;
+    || p->original!=actual.original || p->bank!=actual.bank || p->offset!=actual.offset || p->bytes!=actual.bytes
+    || p->allocated!=actual.allocated || p->encoding!=actual.encoding)return false;
   }
   uint32_t staged[RootManifestWords]={};
   if(!Plan::Manifest(*canonical,expected,staged,RootManifestWords) || !WeightsHeld()
@@ -192,13 +237,21 @@ public:
    || (out<transport+sizeof(io) && transport<out+outBytes))return false;
   uint32_t captured[64];std::memcpy(captured,rootBoot,sizeof(captured));if(!H::C::BootShape(captured))return false;
   Plan::Proposal expected;if(!Plan::Build(*canonical,expected) || expected.parts.size()!=canonical->Count())return false;
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+  UploadPlan::Proposal physical;if(!UploadPlan::Build(*canonical,physical) || physical.parts.size()!=canonical->Count())return false;
+#endif
   uint32_t staged[H::Words]={};unsigned heads=0,work=0,norm=0,workspace=0,normBank=0,normAddress=0;
   for(unsigned i=0;i<canonical->Count();i++){
    const auto* p=canonical->Part(i);const auto* actual=pages.Part(i);if(!p || !actual)return false;
    const auto& q=expected.parts[i];const uintptr_t address=reinterpret_cast<uintptr_t>(actual);
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+   const auto& held=physical.parts[i];
+#else
+   const auto& held=q;
+#endif
    if(address>UINTPTR_MAX-sizeof(*actual) || (out<address+sizeof(*actual) && address<out+outBytes)
-    || actual->original!=q.original || actual->bank!=q.bank || actual->offset!=q.offset || actual->bytes!=q.bytes
-    || actual->allocated!=q.allocated || actual->encoding!=q.encoding || q.offset>UINT32_MAX-C::Base)return false;
+    || actual->original!=held.original || actual->bank!=held.bank || actual->offset!=held.offset || actual->bytes!=held.bytes
+    || actual->allocated!=held.allocated || actual->encoding!=held.encoding || q.offset>UINT32_MAX-C::Base)return false;
    if(p->kind==C::WorkspaceKind && p->bank==workspaceBank){
     if(++work!=1 || q.encoding!=PioneerQ38HybridModelPlan::Original || q.bytes!=H::C::WorkspaceBytes)return false;
     workspace=C::Base+q.offset;
@@ -225,6 +278,11 @@ public:
   std::memcpy(output,staged,outBytes);return true;
  }
  bool Begin(const C& source,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+  namespace ReceiptControl=PioneerQ38QgwdUpload;
+#else
+  namespace ReceiptControl=PioneerQ38Qgw8Upload;
+#endif
   if(attempted){error="QGW8 inspection session is one-shot; no retry.";return false;}
   attempted=true;error.clear();
   if(!source.OriginalFormatLayout() || !pages.AllVerified())return Stop(error,"Preverified QGW8 source required before open.");
@@ -247,14 +305,18 @@ public:
    || begin.result.cold || begin.result.capabilities || begin.result.bytes!=PioneerResidentBanks::Total)
    return Stop(error,"QGW8 inspection bank BEGIN uncertain; close only.");
   state=Owned;
-  if(!Receipt(PioneerQ38Qgw8Upload::Begin,0,false))return Stop(error,"QGW8 receipt BEGIN uncertain; close only.");
+  if(!Receipt(ReceiptControl::Begin,0,false))return Stop(error,"Hybrid receipt BEGIN uncertain; close only.");
   if(!upload.Run(pages,source,io,fd,error,progress) || !upload.CompleteHeld() || upload.UploadedParts()!=3551
+#ifdef PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION
+   || upload.UploadedSpans()!=21907 || upload.UploadedBytes()!=UINT64_C(21094223872))
+#else
    || upload.UploadedSpans()!=22035 || upload.UploadedBytes()!=UINT64_C(21167624192))
+#endif
    return Stop(error,"QGW8 inspection upload uncertain; close only.");
   tt_q38_span_end spanEnd={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,spanEnd) || spanEnd.version!=1 || spanEnd.reserved
    || spanEnd.closed!=1 || spanEnd.recovery_required)return Stop(error,"QGW8 span END uncertain; close only.");
-  if(!Receipt(PioneerQ38Qgw8Upload::Seal,upload.UploadedSpans(),true))return Stop(error,"QGW8 receipt SEAL uncertain; close only.");
+  if(!Receipt(ReceiptControl::Seal,upload.UploadedSpans(),true))return Stop(error,"Hybrid receipt SEAL uncertain; close only.");
   canonical=&source;state=SpansClosed;error.clear();return true;
  }
  bool Finish(std::string& error){
