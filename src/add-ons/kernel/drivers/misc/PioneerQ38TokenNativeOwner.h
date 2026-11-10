@@ -445,8 +445,15 @@ public:
   const PioneerQ38GdnIdentity& id,const uint8_t* initialized,unsigned pages,PioneerQ38TokenRuntimeResult& r){
   const PioneerQ38TokenRuntimeResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);const auto* p=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=p[i])return false;
-  if(started || unsafe || staged || traffic || !mem.Installed() || !mem.MatchesNativeOwner(dram,b,participants,c,data,id,initialized,pages)
-   || !data.LearnedPagesPresent(initialized,pages) || !plan.Bind(c,data,id,&participants.authority.source[0][0]))return false;
+  if(started || unsafe || staged || traffic || !mem.Installed() || !mem.MatchesNativeOwner(dram,b,participants,c,data,id,initialized,pages))return false;
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  // Converted dense stripes have intentional holes in the logical startup
+  // view. Check the sealed physical receipt and exact held table instead.
+  if(!mem.VerifyDenseManifestForRuntimeInspection(io))return false;
+#else
+  if(!data.LearnedPagesPresent(initialized,pages))return false;
+#endif
+  if(!plan.Bind(c,data,id,&participants.authority.source[0][0]))return false;
   started=true;proof=&dram;banks=&b;cohort=&participants;memory=&mem;canonical=&c;startup=&data;identity=id;ledger=initialized;r.started=1;r.phase=1;
   for(auto& value:reset)value=0x47800;
   for(unsigned w=0;w<120;w++){r.worker=w;PioneerQ38TokenMemoryResult image;

@@ -1,0 +1,22 @@
+QGWD receipt-bound held runtime admission, simulated 2026-11-09
+
+The selected QGWD held journal and startup use the compact physical ledger
+from the same synthetic 21,907-span receipt, rather than falsely requiring
+the older logical layout's reserved holes to be initialized. Before the
+actual TokenNativeOwner can prepare its runtime, the inspection-only branch
+revalidates that receipt and re-reads the complete staged dense matrix table.
+
+The real runtime owner rejects admission before the dense table exists,
+without additional I/O. With the correct table, it reaches its next held
+owner check and deliberately fails closed when the test withholds saved panel
+storage. Separately, the real TokenRuntimePlan binds the same startup and
+generates all 2,308 packet payloads (37,782,528 bytes). The real QGW8
+expanded-footprint journal regression also passes.
+
+Command:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs /private/tmp/qgwd-program-data-20261109-a.h --qgwd-receipt-journal --dense-q8-footprint
+
+These are simulated endpoints and synthetic ledger/page hashes. There is no
+runtime packet transfer, NoC/worker lifecycle, device launch, inference,
+model-quality or speed claim. The QGWD receipt role remains unavailable in
+native driver and Work builds; those bindings still need qualification.

@@ -17,6 +17,8 @@
 #endif
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
 #include "../PioneerQ38DenseQ8MatrixManifest.h"
+#include "../PioneerQ38TokenRuntimePlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeOwner.h"
 #endif
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
 #include "../PioneerQ38HybridJobBinding.h"
@@ -46,13 +48,26 @@ struct TokenMemoryIO:CodeIO {
   const PioneerQ38GdnIdentity&,const uint8_t*,unsigned){assert(startup==&actual);if(!scopeAllowed)observed=touches;return scopeAllowed;}
  void TokenMemoryRetainHostOwners(){retained=true;}
  bool TokenMemoryMappingStable(unsigned worker){Touch();assert(worker==current);if(badKind==4 && AtMemory()){observed=touches;return false;}return true;}
-#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
  // Explicit simulated FIFO endpoints for testing the real native-mode
  // journal template. No actual device read, launch or owner authority.
  bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32_t& output){
   Touch();assert(worker==current);
   output=overflow?0:(BootstrapIO::ResidentNocRead(BlackholeDramSourceOffset(0))&0x10000U)?0x10101010U:0;return true;
  }
+#endif
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+ // Runtime admission fixture deliberately has no saved panel storage. If
+ // admission succeeds, the real owner must fail closed at its next check.
+ bool TokenRuntimeScope(const PioneerQ38TokenNativeOwner&,const PioneerQ38TokenMemory&,
+  const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,const PioneerQ38GdnIdentity&,
+  const uint8_t*,unsigned){return true;}
+ bool omitPanelSaved=false;
+ uint32_t* Q38PanelSavedWords(){return omitPanelSaved?nullptr:BootstrapIO::Q38PanelSavedWords();}
+ const uint32_t* BulkSavedWords(){return nullptr;}
+ bool BulkMappingStable(){return false;}
+ bool TokenPeerStoreSelect(unsigned worker){return SelectRuntimeCore(worker);}
+ uint64_t Q38CohortNow(){return 0;}
 #endif
  uint32_t ResetRead(){auto value=CodeIO::ResetRead();if(badKind==6 && AtMemory()){observed=touches;return value^1;}return value;}
  uint32_t SourceRead(unsigned i){auto value=CodeIO::SourceRead(i);if(badKind==7 && AtMemory()){observed=touches;return value^1;}return value;}
@@ -255,6 +270,10 @@ int main(int argc,char** argv){
    assert(PioneerQ38HybridHeadModelPlan::Manifest(*original,host,expected.data(),expected.size()));
    assert(f.PrepareMemory() && f.memory->Installed() && f.result.savedWords==TOKL::SavedWords
     && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1));
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   const unsigned beforeRuntimeTouches=f.io.touches;
+   assert(!f.memory->VerifyDenseManifestForRuntimeInspection(f.io) && f.io.touches==beforeRuntimeTouches);
+#endif
 #ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
    // The QGWD image itself occupies part of the extra range. Preserve its
    // integrity: a never-launched close deliberately checks all code first.
@@ -281,6 +300,20 @@ int main(int argc,char** argv){
    assert(f.memory->InstallDenseManifestHeld(f.io,f.result));
    for(unsigned i=0;i<denseExpected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16dc00+i*4)]==denseExpected[i]);
    assert(f.memory->VerifyDenseManifestHeld(f.io,f.result));
+   assert(f.memory->VerifyDenseManifestForRuntimeInspection(f.io));
+   // The actual runtime packet planner must bind the same published startup
+   // and generate every fixed packet; this is still host-only DATA testing.
+   PioneerQ38TokenRuntimePlan runtime;
+   assert(runtime.Bind(*Geometry().canonical,*Geometry().startup,f.id,&f.cohort->authority.source[0][0]));
+   std::array<uint8_t,16384> bytes={};uint64_t total=0;unsigned kinds[7]={};
+   for(unsigned i=0;i<PioneerQ38TokenRuntimePlan::Chunks;i++){
+    PioneerQ38TokenRuntimePlan::Chunk chunk;
+    assert(runtime.Describe(i,chunk) && chunk.kind>=1 && chunk.kind<=6 && chunk.bytes<=bytes.size()
+     && runtime.Read(i,bytes.data(),chunk.bytes));
+    kinds[chunk.kind]++;total+=chunk.bytes;
+   }
+   assert(total==PioneerQ38TokenRuntimePlan::PayloadBytes && kinds[1]==2048 && kinds[2]==128
+    && kinds[3]==1 && kinds[4]==1 && kinds[5]==2 && kinds[6]==128);
 #endif
    const bool closeOk=f.CloseMemory();
    if(!closeOk || !f.memory->Closed() || f.io.data!=before || f.result.restoredWords!=TOKL::SavedWords){
@@ -324,6 +357,23 @@ int main(int argc,char** argv){
    f.io.observed=f.io.touches;f.Unknown();
   }
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory());
+   auto owner=std::make_unique<PioneerQ38TokenNativeOwner>();PioneerQ38TokenRuntimeResult runtimeResult;
+   const unsigned touches=f.io.touches;
+   assert(!owner->PrepareHeldRuntime(f.io,f.dram,f.banks,*f.cohort,*f.memory,*Geometry().canonical,
+    *Geometry().startup,f.id,f.ledger.data(),f.ledger.size(),runtimeResult));
+   assert(!runtimeResult.started && !runtimeResult.unsafe && f.io.touches==touches);
+   assert(f.memory->InstallHybridManifestHeld(f.io,f.result) && f.memory->VerifyHybridManifestHeld(f.io,f.result)
+    && f.memory->InstallDenseManifestHeld(f.io,f.result));
+   f.io.omitPanelSaved=true;
+   assert(!owner->PrepareHeldRuntime(f.io,f.dram,f.banks,*f.cohort,*f.memory,*Geometry().canonical,
+    *Geometry().startup,f.id,f.ledger.data(),f.ledger.size(),runtimeResult));
+   // The admitted owner reaches the deliberately missing saved-panel owner,
+   // then quarantines without starting traffic; no execution is simulated.
+   assert(runtimeResult.started && runtimeResult.unsafe && runtimeResult.phase==1 && !runtimeResult.packets
+    && owner->Unsafe() && f.memory->Unsafe() && f.banks.Quarantined() && f.io.quarantined && f.io.retained);
+  }
   {
    TokenMemoryFixture f;assert(f.PrepareMemory());
    f.hashes[0]^=1;assert(!f.memory->InstallHybridManifestHeld(f.io,f.result));

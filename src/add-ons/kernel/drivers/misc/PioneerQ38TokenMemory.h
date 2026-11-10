@@ -299,6 +299,13 @@ public:
    || !DenseBinding(*canonical,*cohort,ledger,*banks,*proof))return Fail(io,result);
   return true;
  }
+ // Recheck the exact held table and receipt immediately at the simulated
+ // runtime handoff. A fresh local result is diagnostic state only; it
+ // cannot turn this inspection role into a launch/native capability.
+ template<class IO> bool VerifyDenseManifestForRuntimeInspection(IO& io){
+  PioneerQ38TokenMemoryResult check;check.started=1;check.installed=1;check.phase=10;
+  return VerifyDenseManifestHeld(io,check);
+ }
 #endif
  // NEVER-launched journal only. No public clean/STOP hint is accepted.
  // Launched restoration belongs to the future DISTINCT native token owner.
