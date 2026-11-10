@@ -23,3 +23,8 @@ builder, job-frame and store checks. Both images passed under ASan/UBSan.
 This does not cover all simultaneous corruptions, arbitrary bit values, races,
 full native lifecycle, real hardware, model quality, Assistant, or Work mode.
 The candidate is not qualified for install or execution on the P100A.
+
+Two independent ROOT builds reproduced every pinned binary hash. The full
+offline ROOT/worker job integration suite also passed on both pinned builds,
+including synthetic BFP8 worker/leaf and head-geometry checks. It does not
+emulate the complete native lifecycle or constitute a real-card benchmark.

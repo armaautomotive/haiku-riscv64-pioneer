@@ -9,6 +9,9 @@ import sys
 import tempfile
 
 args=sys.argv[1:];qgwd='--qgwd' in args
+seal_loop='--qgwd-seal-loop' in args
+if seal_loop:
+ assert args.count('--qgwd-seal-loop')==1 and qgwd;args.remove('--qgwd-seal-loop')
 if qgwd:
  assert args.count('--qgwd')==1;args.remove('--qgwd')
 assert __debug__ and len(args)==5 and not os.environ.get('PYTHONOPTIMIZE')
@@ -27,6 +30,10 @@ if qgwd:
   'conv.bin':'009d1b82b67e5534c2a067826062734f8fa1dd736ab7f44a00a055b6ce72c6b1',
   'bf16.bin':'c9d80f4eae7934d282a09056ccc2d82ecf1ab73beaa066c2fafc5e2d53215a8b',
   'program.elf':'5cf33c2c4eaf010879acd03a99cdd166c931e0a8400cc082322d407fe841aa21'})
+if seal_loop:
+ pins.update({'text.bin':'ebbe7c9f13615671f48042b833920a22a173dc09b3cc1d5a0548d7bb72af474b',
+  'bf16.bin':'61f4cf7f3ad3cbb1dcdd8292fd068195fa272c36e9b868c170f2471489f2c558',
+  'program.elf':'2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95'})
 for folder in (first,second):
  for name,digest in pins.items():assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest,(folder,name)
 for path,digest in ((worker/'program.elf','b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8' if qgwd else '3450e5b2d46b27e9ac3f81cb62de79d53b0613d85af0acc03a73a149e812e09e'),
@@ -107,4 +114,4 @@ with tempfile.TemporaryDirectory(prefix='qgwc-srca-root-',dir='/private/tmp') as
   subprocess.run([*common,*sim,'-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1',
                   str(here/'pioneer_q38_qgwd_dense_producer_root_test.cpp'),'-o',str(dense)],check=True)
   subprocess.run([str(dense),str(image)],check=True,env=env)
-print('PASS '+('QGWD' if qgwd else 'QGWC')+' two pinned ROOT images and actual ROOT/worker jobs in simulation; NO full-model or hardware claim')
+print('PASS '+('QGWD_SEAL_LOOP' if seal_loop else 'QGWD' if qgwd else 'QGWC')+' two pinned ROOT images and actual ROOT/worker jobs in simulation; NO full-model or hardware claim')
