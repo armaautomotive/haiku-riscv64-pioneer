@@ -1,0 +1,23 @@
+QGWD tracked span-service integration, 2026-11-10
+
+The existing PioneerQ38SpanUploadCore now admits the distinct QGWD gapped
+receipt in the isolated inspection build, through both the strict and fast
+span adapters. The unchanged legacy/QGW8 receipt selection remains separate.
+
+The test runner exercised actual span-service code with the pinned emitted
+RV32 span images and simulated transport/banks. It checked a successful first
+span, the first converted dense stripe, the uninitialized tail gap, refusal
+of wrong order before I/O, injected packet failure, quarantine, and refusal
+to retry. To reach the dense stripe, intervening ledger records were filled
+synthetically; those skipped calls were not performed on hardware. It also
+checked role exclusions and rejected an invalid fast/strict receipt pairing.
+Both strict and fast runs passed with address and undefined-behavior
+sanitizers. The QGW8 fast reuse/END-tamper regression passed as well.
+
+Command:
+  python3 tools/pioneer/tests/run_pioneer_q38_qgwd_tracked_span_tests.py ABS_STRICT_IMAGE ABS_FAST_REUSE_IMAGE
+
+This is not a live kernel integration, a QGWD driver build, a physical upload,
+model inference, output validation, or a performance measurement. The real
+driver's ioctl dispatch, retained native owner, preboot dense manifest, worker
+bundle and full QGWD execution still need to be connected and validated.

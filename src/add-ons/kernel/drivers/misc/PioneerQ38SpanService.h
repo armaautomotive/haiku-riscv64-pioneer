@@ -18,11 +18,24 @@
 #endif
 #include "PioneerQ38Qgw8UploadReceipt.h"
 #endif
+#ifdef PIONEER_Q38_QGWD_SPAN_INSPECTION
+#if PIONEER_Q38_QGWD_SPAN_INSPECTION != 1 || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) \
+ || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION) \
+ || PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION != 1 || defined(_KERNEL_MODE) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error QGWD span inspection requires its isolated gapped receipt
+#endif
+#include "../../../../../tools/pioneer/PioneerQ38DenseQ8UploadReceiptInspection.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 template<class Receipt> struct PioneerQ38SpanReceiptKind {enum {Value=0};};
 template<> struct PioneerQ38SpanReceiptKind<PioneerQ38HybridUploadReceipt> {enum {Value=1};};
 #ifdef PIONEER_Q38_QGW8_SPAN_INSPECTION
 template<> struct PioneerQ38SpanReceiptKind<PioneerQ38Qgw8UploadReceipt> {enum {Value=2};};
+#endif
+#ifdef PIONEER_Q38_QGWD_SPAN_INSPECTION
+template<> struct PioneerQ38SpanReceiptKind<PioneerQ38DenseQ8UploadReceiptInspection> {enum {Value=3};};
 #endif
 #endif
 // Native adapter's shared kernel-only core. Complete owner/fresh-page proof
@@ -60,7 +73,8 @@ template<class C,bool Work=false
 {
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 	static_assert((PioneerQ38SpanReceiptKind<Receipt>::Value==1 && !Qgw8Fast)
-		|| (PioneerQ38SpanReceiptKind<Receipt>::Value==2 && ((!Work && !Qgw8Fast) || (Work && Qgw8Fast))),
+		|| ((PioneerQ38SpanReceiptKind<Receipt>::Value==2 || PioneerQ38SpanReceiptKind<Receipt>::Value==3)
+			&& ((!Work && !Qgw8Fast) || (Work && Qgw8Fast))),
 		"Unsupported tracked span receipt/Work pairing");
 #endif
 	request.result={}; request.result.version=1; request.result.state=TT_RUNTIME_CONFIG_FAILED;
@@ -130,6 +144,22 @@ template<class C> static bool PioneerQ38Qgw8SpanUploadFastInspection(C& c,tt_q38
  PioneerQ38Qgw8UploadReceipt* receipt)
 {
 	return PioneerQ38SpanUploadCore<C,true,PioneerQ38Qgw8UploadReceipt,true>(c,request,receipt);
+}
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWD_SPAN_INSPECTION
+// Same private span service and transport, but a different, gapped receipt.
+// Inspection only: not a live ioctl, driver selection, or inference grant.
+template<class C> static bool PioneerQ38QgwdSpanUploadInspection(C& c,tt_q38_span_upload& request,
+ PioneerQ38DenseQ8UploadReceiptInspection* receipt)
+{
+	return PioneerQ38SpanUploadCore<C,false>(c,request,receipt);
+}
+#ifdef PIONEER_Q38_SPAN_FAST
+template<class C> static bool PioneerQ38QgwdSpanUploadFastInspection(C& c,tt_q38_span_upload& request,
+ PioneerQ38DenseQ8UploadReceiptInspection* receipt)
+{
+	return PioneerQ38SpanUploadCore<C,true,PioneerQ38DenseQ8UploadReceiptInspection,true>(c,request,receipt);
 }
 #endif
 #endif
