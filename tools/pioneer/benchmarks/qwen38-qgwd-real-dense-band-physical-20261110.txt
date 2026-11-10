@@ -1,0 +1,28 @@
+Real-Qwen dense-weight BFP8 physical matrix diagnostic, 2026-11-10
+
+One controlled P100A test ran the pinned fixed-K=5120, four-fidelity BFP8
+matrix diagnostic on three 32-row bands from Qwen3.8-27B layer 3 key
+weights (original tensor 45; first rows 0, 512 and 992). The BF16 input is
+a fixed synthetic diagnostic vector, not a model activation. All 192 device
+output words (two runs per band) matched the independently generated integer
+reference; all three END operations reported L1/TLB/PCI restoration.
+
+The one-shot client exited 0 with empty stderr. Its parent checked all words
+against the independently generated reference, then restored stable driver
+tag 2026102100010012, generation 20. An independent post-check reported
+quiesced=0, cold=0, active_owner=0, and stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Parent state: STABLE_RESTORED_DENSE_BANDS_EXACT192_PASSED.
+
+Pioneer evidence: /boot/home/pioneer-qgwd-real-dense-band-20261110-a/
+ dense.stdout SHA-256 b3168e469d9e9f35204f044ec633949c493a465fa97492ea456bbb1a6df86112
+ physical-parent.stdout SHA-256 efce8f25437641267779cdcc72b8e004809eea412ecb7137b42e20a71ff4d03e
+ Both corresponding stderr files are empty; dense.exit is 0.
+ Candidate driver SHA-256 45c39bf6b178d663d2af189e103eb444ad56ba2a7476f07e8b2e0cac79316e15
+ Client SHA-256 5ccc6443ef8d745ecef348fec8a54164988005caa323ca4ba573a0501517be53
+ Reference and private payload provenance: qwen38-qgwd-real-dense-band-20261110.txt.
+
+This is a real matrix-engine arithmetic result using model-derived weights,
+but it is a fixed single-tile-owner diagnostic. It is NOT the new QGWD
+119-worker/full-model execution, a quality test, inference latency, a
+tokens-per-second measurement or a claim that the 20 tok/s target is met.
