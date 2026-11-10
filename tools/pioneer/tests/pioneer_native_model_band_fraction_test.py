@@ -8,12 +8,17 @@ import re
 import runpy
 import struct
 import sys
-if not __debug__ or len(sys.argv) != 2:
-    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY')
+if not __debug__ or len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2]!='--qgwd-dense'):
+    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY [--qgwd-dense]')
 here = pathlib.Path(__file__).resolve().parent
 folder = pathlib.Path(sys.argv[1])
 data = (folder / 'PioneerNativeBfpModelBandData.h').read_bytes()
 metadata = (folder / 'PioneerNativeBfpModelBandMetadata.h').read_bytes()
+dense = len(sys.argv)==3
+first_rows = (0,512,992) if dense else (0,8704,17376)
+if dense:
+    assert b'Width=5120,Rows=1024,Tensor=45,Samples=3' in metadata
+    assert b'const unsigned rows[3]={0,512,992}' in metadata
 def array(source, name, count):
     match = re.search(r'const uint32_t '+name+r'\['+str(count)+r'\]=\{([^}]+)\}', source.decode())
     assert match
@@ -55,6 +60,6 @@ for sample in range(3):
                     total = rational['instruction'](a[first:first + 16], b[first:first + 16], phase, total)
                     instructions += 1
         assert total == expected[row], (sample, row, hex(total), hex(expected[row]))
-        print(f'LEARNED_FRACTION_REFERENCE sample{sample} first{(0, 8704, 17376)[sample]} row{row} word{total:08x}')
+        print(f'LEARNED_FRACTION_REFERENCE sample{sample} first{first_rows[sample]} row{row} word{total:08x}')
     print(f'PASS_PRIVATE_LEARNED_FRACTION sample{sample} all32_words exact payload_sha256{digest};NO_DEVICE_MODEL_QUALITY_SPEED_PROOF', flush=True)
 print(f'PASS_PRIVATE_LEARNED_FRACTION samples3 words96 phase_instructions{instructions};NO_CXX_PACK_UNPACK_OR_INTEGER_REFERENCE_CALL,NO_PRIVATE_MODEL_BYTES_PRINTED')
