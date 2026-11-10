@@ -1,0 +1,43 @@
+/* SPDX-License-Identifier: MIT */
+// Distinct QGWD one-token candidate identity. Compiling it is not permission
+// to install, execute, bypass numerical validation, or select Assistant Work.
+#ifdef PIONEER_Q38_QGWD_NATIVE_141
+#if PIONEER_Q38_QGWD_NATIVE_141 != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
+ || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111000010141ULL \
+ || !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) || PIONEER_Q38_QGWD_NATIVE_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128) || PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128 != 1 \
+ || !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) || PIONEER_Q38_QGW8_NATIVE_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || PIONEER_Q38_HYBRID_FULL_NATIVE != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 \
+ || !defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWD_PROGRAMS_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 \
+ || !defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGWD_CONTROL_INSPECTION) || PIONEER_Q38_QGWD_CONTROL_INSPECTION != 1 \
+ || defined(api_version) || defined(init_hardware) || defined(init_driver) || defined(uninit_driver) \
+ || defined(publish_devices) || defined(find_device) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) \
+ || defined(PIONEER_Q38_QGW8_CONTROL_INSPECTION) || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) \
+ || defined(PIONEER_Q38_QGWC_CLIENT_136) || defined(PIONEER_Q38_QGWD_CLIENT_141) \
+ || defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) \
+ || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
+#error QGWD candidate requires exclusive tag141 native diagnostic profile
+#endif
+#endif
+#ifndef PIONEER_Q38_QGWD_CANDIDATE_ROLE_BINDING_H
+#define PIONEER_Q38_QGWD_CANDIDATE_ROLE_BINDING_H
+#ifdef PIONEER_Q38_QGWD_NATIVE_141
+enum {PioneerQ38QgwdCandidateRole=1};
+#else
+enum {PioneerQ38QgwdCandidateRole=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWD_NATIVE_141
+static_assert(PioneerQ38QgwdCandidateRole==1,"late QGWD candidate selection");
+#else
+static_assert(PioneerQ38QgwdCandidateRole==0,"late QGWD candidate removal");
+#endif

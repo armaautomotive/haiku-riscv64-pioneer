@@ -62,7 +62,9 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_NATIVE_141)
+enum {PioneerQ38HybridProtocolIdentity=141};
+#elif defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
 enum {PioneerQ38HybridProtocolIdentity=14};
 #elif defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
 enum {PioneerQ38HybridProtocolIdentity=136};
@@ -88,7 +90,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_NATIVE_141)
+static_assert(PioneerQ38HybridProtocolIdentity==141,"late QGWD candidate protocol identity change");
+#elif defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
 static_assert(PioneerQ38HybridProtocolIdentity==14,"late QGWD full-session identity change");
 #elif defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
 static_assert(PioneerQ38HybridProtocolIdentity==136,"late corrected QGWC protocol identity change");
@@ -120,7 +124,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_NATIVE_141)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026111000010141);
+#elif defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
 static constexpr uint64_t BuildTag=UINT64_C(0x445747514f4e4452); // distinct synthetic QGWD owner only
 #elif defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110900010136);
@@ -146,7 +152,7 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010125);
 #endif
-#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
+#if defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
  || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) \
  || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 enum {Version=1,MaxPrompt=1,MaxOutput=1,MaxPositions=1,Vocabulary=248320};
@@ -167,7 +173,7 @@ static inline bool Supported(const Support& s){
 static inline bool RequestShape(const PioneerQ38TokenControl::Packet& p){
  namespace P=PioneerQ38TokenControl;if(!P::RequestShape(p))return false;const auto& r=p.request;
  if(r.operation==P::Start)return r.prompts<=MaxPrompt && r.limit<=MaxPositions && r.limit-r.prompts+1<=MaxOutput
-#if defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
+#if defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
   && r.prompts==1 && r.limit==1 && p.prompt[0]==248319
 #endif
 #if defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131)

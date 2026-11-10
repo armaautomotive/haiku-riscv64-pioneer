@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwd_native='--qgwd-dense-q8-native-inspection' in args
+args=sys.argv[1:];qgwd_candidate='--qgwd-dense-q8-native-candidate' in args
+if qgwd_candidate:
+    if args.count('--qgwd-dense-q8-native-candidate')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-dense-q8-native-candidate' for x in args):
+        raise SystemExit('ambiguous QGWD native candidate selector')
+    args.remove('--qgwd-dense-q8-native-candidate');args.insert(0,'--qgwd-dense-q8-inspection')
+qgwd_native='--qgwd-dense-q8-native-inspection' in args
 if qgwd_native:
     if args.count('--qgwd-dense-q8-native-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-dense-q8-native-inspection' for x in args):
         raise SystemExit('ambiguous QGWD native-inspection selector')
@@ -141,10 +146,11 @@ if matrix:
                   ' || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 \\',
                   ' || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION != 1 \\',
-                  (' || !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) || PIONEER_Q38_QGWD_NATIVE_INSPECTION != 1 \\' if qgwd_native
+                  (' || !defined(PIONEER_Q38_QGWD_NATIVE_141) || PIONEER_Q38_QGWD_NATIVE_141 != 1 \\' if qgwd_candidate
+                   else ' || !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) || PIONEER_Q38_QGWD_NATIVE_INSPECTION != 1 \\' if qgwd_native
                    else ' || !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) || PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\' if qgwd_kernel
                    else ' || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\'),
-                  ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
+                  ' || (defined(PIONEER_Q38_HYBRID_FULL_NATIVE) && !defined(PIONEER_Q38_QGWD_NATIVE_141)) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\' if qgwd_candidate else ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
                   ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
                   '#error QGWD program data is isolated inspection only', '#endif']
     elif qgw8tracenative:

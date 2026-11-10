@@ -1,0 +1,26 @@
+QGWD one-token diagnostic candidate, 2026-11-10
+
+The QGWD native path has a separate tag 2026111000010141 and a fixed
+one-prompt/one-output-token protocol for token 248319. It excludes Work,
+CPU-reference, old candidate client, and mixed driver roles. Role-negative,
+reload-tag and protocol-shape checks passed; in particular arbitrary prompts
+or multi-token requests are refused. This is a diagnostic, not the requested
+general Assistant mode.
+
+Two independently generated, pinned QGWD candidate program headers matched
+SHA-256 84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72.
+The actual RISC-V candidate source compiled, with selected static frames
+bounded individually to 2048 bytes. Two separate build-only linked drivers
+matched SHA-256 e8dbd864e01407d60e97922f0f47427e87b267997efa489b860391e07c3df5b3;
+the builder checked the 15 emitted program-section hashes, required control
+symbols, forbidden CPU/reference symbols and static frame bounds.
+
+The predecessor QGWD fake-native runtime and all 119 worker bootstrap checks
+passed on simulated endpoints; its ROOT reached the startup marker and was
+paused before model arithmetic. A first runtime test exposed a fixture-only
+wrong-receipt assertion, corrected before the passing rerun.
+
+NO candidate was installed or invoked. There is no QGWD client qualification,
+full-model result, hardware safety/cleanup proof, numerical quality result,
+inference speed or 20-token/s claim. All physical-operation and cleanup
+requirements must be independently checked before contemplating a device run.

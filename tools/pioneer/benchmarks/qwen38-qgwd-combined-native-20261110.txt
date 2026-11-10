@@ -19,6 +19,11 @@ QGW8 binding and the isolated QGWD upload-control regressions also passed.
 The first runtime fixture reached its verification step but failed because
 that fixture attempted to use a QGW8 receipt instead of QGWD; the test was
 corrected and restarted. The earlier failure was not a hardware test.
+After correction, both the native runtime and 119-worker bootstrap fixtures
+passed: 2308 startup chunks, 4616 simulated transfer packets and all
+37782528 startup bytes were read back, with untouched slack verified. All
+119 emitted QGWD worker programs then reached their simulated waiting states;
+the ROOT remained held. These are simulated endpoints, not a device run.
 
 No loadable QGWD profile, model execution, numerical quality, Assistant
 integration, or inference speed follows from these checks. A separately

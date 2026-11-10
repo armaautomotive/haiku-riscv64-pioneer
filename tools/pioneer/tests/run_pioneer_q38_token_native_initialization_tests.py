@@ -384,7 +384,7 @@ if matrix_inspection:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTI
 if qgw8_inspection:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
                                   PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
 if qgwd_inspection:
-    assert len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap'), 'QGWD fixture restricted to held/runtime/bootstrap'
+    assert len(sys.argv)==3 and sys.argv[2] in ('--held','--runtime','--bootstrap','--execution'), 'QGWD fixture restricted to held/runtime/bootstrap/root-start inspection'
     del defines['PIONEER_Q38_QGW8_PROGRAMS_INSPECTION']
     for name in ('PIONEER_Q38_QGWD_NATIVE_INSPECTION','PIONEER_Q38_QGWD_PROGRAMS_INSPECTION',
                  'PIONEER_Q38_QGWD_PLAN_SIMULATION','PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION',

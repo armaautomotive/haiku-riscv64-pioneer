@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-// Rechecked on every include. This profile is for combined native-source
-// testing only: renamed entry points and a fake tag cannot form a driver.
-#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+#include "PioneerQ38QgwdNativeCandidateRole.h"
+// Rechecked on every include. The ordinary inspection profile uses renamed
+// entry points and a fake tag. Only the separately checked tag141 role may
+// select this geometry in a candidate; neither profile is hardware approval.
+#if defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) && !defined(PIONEER_Q38_QGWD_NATIVE_141)
 #if PIONEER_Q38_QGWD_NATIVE_INSPECTION != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
  || !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION) || PIONEER_Q38_QGW8_NATIVE_INSPECTION != 1 \
  || !defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) || PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY != 1 \
