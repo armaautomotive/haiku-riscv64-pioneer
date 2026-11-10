@@ -1,0 +1,24 @@
+QGWD dense BFP8 cache preparation on Pioneer Haiku, 2026-11-09
+
+The CPU-only frozen converter authenticated the same-open original model
+and exited 0 after creating all 48 dense Q/G, K and V tensors. It reported
+1,247,805,440 raw BFP8 bytes, 19,040 conversion chunks and zero cache hits.
+Recipe SHA-256: 551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897.
+Converter binary SHA-256: 6b8082f8429c82485a41de53d4b7af8150101af6475c3c2e56171b570d296935.
+
+Model: /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+Dedicated cache: /HaikuData/pioneer-qgwd-dense-bfp8-20261109-a
+Run evidence: /boot/home/pioneer-qgwd-dense-prepare-20261109-a/{stdout,stderr,exit-status}
+stderr was empty; stdout included PASS_DENSE_Q8_BFP8_PREPARATION 48.
+
+An independently rebuilt, read-only Haiku checker was started afterwards.
+Its two builds had matching SHA-256
+06b0631f5f5fc86ae128e0340629952ebad2a23b64d62c6db96b03af7a5c14d4.
+It authenticates the model and checks every cached stripe against fresh
+conversion; its result is PENDING in verify-stdout/verify-stderr/
+verify-exit-status in the same evidence directory. The prior Mac cache and
+CPU numerical sample are documented in qwen38-dense-q8-matrix-layout-20261109.txt.
+
+This Haiku conversion did not access the P100A, install a driver, execute
+inference, validate quality, or establish inference speed. A successful
+cache comparison would still use the same codec and not validate hardware.
