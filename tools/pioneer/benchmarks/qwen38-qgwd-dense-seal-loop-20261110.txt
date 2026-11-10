@@ -31,3 +31,11 @@ emulate the complete native lifecycle or constitute a real-card benchmark.
 The linked experimental ROOT also passed the startup-head compatibility test
 using the original QGWD synthetic upload fixture and its separately pinned
 program-data header. This is not a native upload or a model test.
+
+A distinct inspection-only 15-section program-data bundle was generated from
+each reproducible ROOT build and the pinned QGWD worker; both bundles have
+SHA-256 56b5d7479610c1862b6d6a5642b4441e3dab25d4bcefdcf00224c58efb675a7e.
+The original and new bundle passed separate section/journal, selector,
+corruption-refusal and missing-role tests. The new header requires its own
+inspection macro and explicitly rejects native, kernel, and Work use. It is
+not a loadable driver and does not qualify a physical test.

@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwd_candidate='--qgwd-dense-q8-native-candidate' in args
+args=sys.argv[1:];qgwd_seal_loop='--qgwd-seal-loop-inspection' in args
+if qgwd_seal_loop:
+    if args.count('--qgwd-seal-loop-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-seal-loop-inspection' for x in args):
+        raise SystemExit('ambiguous QGWD seal-loop inspection selector')
+    args.remove('--qgwd-seal-loop-inspection');args.insert(0,'--qgwd-dense-q8-inspection')
+qgwd_candidate='--qgwd-dense-q8-native-candidate' in args
 if qgwd_candidate:
     if args.count('--qgwd-dense-q8-native-candidate')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-dense-q8-native-candidate' for x in args):
         raise SystemExit('ambiguous QGWD native candidate selector')
@@ -115,6 +120,11 @@ if matrix:
     else:from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
 else:
     from PioneerQ38HybridProgramPins import ROOT_PINS, WORKER_PINS
+if qgwd_seal_loop:
+    changed={'text.bin':(131028,'ebbe7c9f13615671f48042b833920a22a173dc09b3cc1d5a0548d7bb72af474b'),
+             'bf16.bin':(48336,'61f4cf7f3ad3cbb1dcdd8292fd068195fa272c36e9b868c170f2471489f2c558'),
+             'program.elf':(229060,'2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95')}
+    ROOT_PINS=[(name,*changed[name]) if name in changed else (name,size,digest) for name,size,digest in ROOT_PINS]
 if not __debug__ or len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('usage: generate_qwen38_hybrid_programs.py [--qgw8-layer-trace-native|--qgw8-layer-trace-inspection|--qgw8-coarse-profile-inspection|--qgw8-head-inspection|--qgw8-native-candidate|--matrix-attention-inspection|--matrix-native-candidate] ABS_ROOT ABS_WORKER NEW_ABS_OUTPUT')
 root, worker, output=map(Path,args)
@@ -153,6 +163,9 @@ if matrix:
                   ' || (defined(PIONEER_Q38_HYBRID_FULL_NATIVE) && !defined(PIONEER_Q38_QGWD_NATIVE_141)) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\' if qgwd_candidate else ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \\',
                   ' || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)',
                   '#error QGWD program data is isolated inspection only', '#endif']
+        if qgwd_seal_loop:
+            lines += ['#if !defined(PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION) || PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION != 1',
+                      '#error QGWD seal-loop DATA requires its distinct offline inspection role', '#endif']
     elif qgw8tracenative:
         lines += [' || !defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || PIONEER_Q38_QGW8_TRACE_NATIVE_131 != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
