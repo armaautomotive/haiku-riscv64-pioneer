@@ -1,0 +1,17 @@
+QGWD output-head startup witness correction, 2026-11-10
+
+The QGWD startup head producer previously emitted the QGW8 witness 0x38574751
+while the QGWD head parser expects 0x44574751. A new regression using the
+startup-produced descriptor failed specifically at this witness before the
+fix. It now emits the QGWD witness when the QGWD plan is selected. The QGWD
+upload-session metadata path also requires the QGWD plan and produces the
+same witness instead of implicitly selecting QGW8.
+
+The startup descriptor and first head job were fed to the actual pinned,
+linked QGWD ROOT instructions in an RV32 simulator, using synthetic model
+geometry. The ROOT accepted the corrected descriptor/job and rejected the old
+QGW8 witness; BF16 packing checks also passed. QGW8 and QGWC regression tests
+check that their existing witness choices remain intact.
+
+This fixes a concrete would-fail-at-head incompatibility, but is not full-model
+execution, model-quality validation, a P100A run, or a speed measurement.

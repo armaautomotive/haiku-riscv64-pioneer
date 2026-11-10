@@ -2,6 +2,7 @@
 // Actual QGWD page router, span adapter and upload-session lifecycle, joined
 // to the gapped-ledger receipt by a synthetic owner. No hardware or model.
 #define PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION 1
+#define PIONEER_Q38_QGWD_PLAN_SIMULATION 1
 #define PIONEER_Q38_QGW8_SPAN_INSPECTION 1
 #define PIONEER_Q38_QGW8_CONTROL_INSPECTION 1
 #define PIONEER_Q38_HYBRID_TRACKED_UPLOAD 1
@@ -98,7 +99,8 @@ int main(){
  boot[0]=H::C::Magic;boot[1]=1;boot[2]=64;boot[3]=129;boot[4]=boot[16]=0x14000;boot[5]=119;boot[6]=8192;boot[7]=64;
  for(unsigned i=0;i<4;i++)boot[8+i*2]=i+1;
  for(unsigned i=40;i<46;i++)boot[i]=H::C::BootWord(i);
- assert(H::C::BootShape(boot.data()) && session.HeadMetadata(boot.data(),boot.size(),0,headMetadata.data(),headMetadata.size()));
+ assert(H::C::BootShape(boot.data()) && session.HeadMetadata(boot.data(),boot.size(),0,headMetadata.data(),headMetadata.size())
+  && headMetadata[40]==0x44574751);
  assert(session.Finish(error) && session.Complete() && !io.owned && io.closes==1 && !banks.Quarantined());
  puts("PASS QGWD prepared pages through actual synthetic upload session, gapped receipt and logical ROOT manifest; NO DEVICE OR MODEL");
 }

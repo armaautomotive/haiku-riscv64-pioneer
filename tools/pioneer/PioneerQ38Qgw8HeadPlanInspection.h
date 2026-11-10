@@ -29,8 +29,11 @@ class PioneerQ38Qgw8HeadPlanInspection {
   const uint32_t fixed[]={0x38485651,1,128,bank,base,base+C::HeadOffset,0,0,5120,248320,973,9,119,8,5440,20480};
   for(unsigned i=0;i<16;i++){staged[i]=fixed[i];staged[16+i]=b[16+i];}
   for(unsigned i=0;i<8;i++)staged[32+i]=b[8+i];
+  // ROOT checks this witness against its selected head-worker grammar.
   const uint32_t witness[]={
-#if defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWC_NATIVE_136)
+#if defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
+   0x44574751,
+#elif defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWC_NATIVE_136)
    0x43574751,
 #elif defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION)
    0x41475751,

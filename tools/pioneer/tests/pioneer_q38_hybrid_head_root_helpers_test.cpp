@@ -27,6 +27,12 @@ int main(int argc,char** argv){
  const unsigned makeJob=Symbol(argv[1],"PioneerQ38HybridHeadLayout::Job(");
  const unsigned pack=Symbol(argv[1],"GlobalChain::HeadBf16Pack(");
  assert(Call(*m,shape,{head,root,0,fixture[68]}) && m->regs[10]==1);
+#ifdef PIONEER_Q38_QGWD_PLAN_SIMULATION
+ // The linked QGWD ROOT must reject the formerly generated QGW8 witness.
+ m->memory[head+40*4]=0x38574751;
+ assert(Call(*m,shape,{head,root,0,fixture[68]}) && !m->regs[10]);
+ m->memory[head+40*4]=fixture[64+40];
+#endif
  m->memory[head+14*4]^=1;assert(Call(*m,shape,{head,root,0,fixture[68]}) && !m->regs[10]);m->memory[head+14*4]^=1;
  assert(Call(*m,makeJob,{head,0,0,0,peer,out}) && m->regs[10]==1);
  for(unsigned i=0;i<64;i++)assert(m->memory.at(out+i*4)==expectedJob[i]);
@@ -59,5 +65,9 @@ int main(int argc,char** argv){
    m->memory[proof+i*4]^=1;assert(Call(*m,receipt,{proof,out,peer,before,after}) && !m->regs[10]);m->memory[proof+i*4]^=1;
   }
  }
+#ifdef PIONEER_Q38_QGWD_PLAN_SIMULATION
+ puts("PASS actual linked QGWD ROOT head shape/job and BF16 packing; QGW8 witness refused; synthetic data only, NO lifecycle/device/TPS");
+#else
  puts("PASS actual linked QGW8 ROOT head shape/job and BF16 packing: independent 256-lane rounding, invalid inputs atomic; optional actual worker proof+64 corruptions; synthetic data only, NO lifecycle/device/TPS");
+#endif
 }

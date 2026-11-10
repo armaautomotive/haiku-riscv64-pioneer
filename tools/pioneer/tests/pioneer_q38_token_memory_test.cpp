@@ -17,6 +17,7 @@
 #endif
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
 #include "../PioneerQ38DenseQ8MatrixManifest.h"
+#include "../PioneerQ38HybridHeadLayout.h"
 #include "../PioneerQ38TokenRuntimePlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeOwner.h"
 #endif
@@ -316,6 +317,14 @@ int main(int argc,char** argv){
    std::array<uint32_t,PioneerQ38HybridHeadModelPlan::ManifestWords> expected={};
    assert(PioneerQ38HybridHeadModelPlan::Manifest(*original,host,expected.data(),expected.size()));
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   // Check the startup-produced head against the QGWD root's actual parser,
+   // not just against the same producer's own shape reconstruction.
+   std::array<uint32_t,64> rootBoot={};std::array<uint32_t,128> rootHead={};
+   const auto* workspace=Geometry().canonical->Workspace(0);assert(workspace);
+   assert(Geometry().startup->ReadBoot(0,rootBoot.data()));
+   assert(Geometry().startup->ReadHead(0,reinterpret_cast<uint8_t*>(rootHead.data()),sizeof(rootHead)));
+   assert(rootHead[40]==PioneerQ38HybridHeadWorkerLayout::Magic);
+   assert(PioneerQ38HybridHeadLayout::Shape(rootHead.data(),rootBoot.data(),0,Geometry().canonical->Base+workspace->offset));
    // The receipt's driver context and its worker cohort are different
    // objects. Substituting either, or changing generation, must refuse
    // before any L1 I/O.
