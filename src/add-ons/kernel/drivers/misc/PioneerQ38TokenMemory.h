@@ -10,7 +10,7 @@
 #include "PioneerQ38HybridManifest.h"
 #endif
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
-#if PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
+#if PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) || ((defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION))
 #error QGWD receipt journal is simulated inspection only
 #endif
 #include "../../../../../tools/pioneer/PioneerQ38DenseQ8UploadReceiptInspection.h"

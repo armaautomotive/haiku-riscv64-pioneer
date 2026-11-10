@@ -64,7 +64,9 @@ static_assert(PioneerQ38TokenNativePhysicalSelection==0,"late physical-to-NODRV 
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
 #define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
-#if defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)
+enum {PioneerQ38TokenNativeProfile=13};
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
 enum {PioneerQ38TokenNativeProfile=8};
 #elif defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) && defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
 enum {PioneerQ38TokenNativeProfile=7};
@@ -78,7 +80,9 @@ enum {PioneerQ38TokenNativeProfile=2};
 enum {PioneerQ38TokenNativeProfile=1};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)
+static_assert(PioneerQ38TokenNativeProfile==13,"late non-loadable QGWD native profile change");
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
 static_assert(PioneerQ38TokenNativeProfile==8,"late non-loadable QGW8 native profile change");
 #elif defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) && defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
 static_assert(PioneerQ38TokenNativeProfile==7,"late non-loadable QGW7 native profile change");

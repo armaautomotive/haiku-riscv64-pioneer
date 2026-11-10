@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwdNativeInspectionRole.h"
 #include "PioneerQ38Qgw8NativeInspectionRole.h"
 #include "PioneerQ38QgwdKernelCompileRole.h"
 // Rechecked on every include. Kernel and fake-native selectors remain

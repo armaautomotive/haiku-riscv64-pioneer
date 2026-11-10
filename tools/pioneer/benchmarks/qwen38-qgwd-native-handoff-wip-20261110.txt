@@ -22,3 +22,8 @@ numerical correctness and performance are not qualified. No card operation,
 driver installation, full-model inference or speedup occurred here. A strict
 non-loadable combined native profile and its end-to-end tests are the next
 integration step before any physical candidate may be considered.
+
+Update: the earlier guard limitation was subsequently removed ONLY for a
+renamed-entry-point fake-tag non-loadable inspection build. See
+qwen38-qgwd-combined-native-20261110.txt; physical operation and performance
+remain unqualified.

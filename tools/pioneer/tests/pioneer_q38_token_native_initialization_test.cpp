@@ -581,6 +581,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
  PioneerQ38Qgw8UploadReceipt* q38Qgw8Receipt=nullptr;
 #endif
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+ PioneerQ38DenseQ8UploadReceiptInspection* q38QgwdReceipt=nullptr;
+#endif
 #else
  MockLease span;
 #endif
@@ -610,6 +613,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
   delete q38Qgw8Receipt;
+#endif
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+  delete q38QgwdReceipt;
 #endif
  } // CPU-only fixture disposal;no physical resources exist
 };

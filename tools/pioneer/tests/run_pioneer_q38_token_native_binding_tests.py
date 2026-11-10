@@ -14,16 +14,17 @@ sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1]);args = args[:-2]
     assert sdk.is_absolute() and sdk.is_dir()
-assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection','--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
+assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection','--qgw8-trace-read-inspection','--qgw8-trace-init-inspection','--qgwd-inspection'))
+qgwd = bool(args and args[0] == '--qgwd-inspection')
 trace_init = bool(args and args[0] == '--qgw8-trace-init-inspection')
 trace = bool(args and args[0] in ('--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
-qgw8 = bool(args and args[0] in ('--qgw8-inspection','--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
-assert sdk is None or qgw8, 'SDK witness is limited to QGW8 inspection'
+qgw8 = qgwd or bool(args and args[0] in ('--qgw8-inspection','--qgw8-trace-read-inspection','--qgw8-trace-init-inspection'))
+assert sdk is None or qgw8, 'SDK witness is limited to QGW8/QGWD inspection'
 matrix = bool(args and args[0] == '--hybrid-matrix-inspection') or qgw8
 hybrid = pathlib.Path(args[1]) if args else None
 if hybrid:
     assert hybrid.is_absolute() and hybrid.is_file()
-    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()==('72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8 else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7')
+    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()==('90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8 else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7')
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2]/'src/add-ons/kernel/drivers/misc'
 role = (kernel/'PioneerQ38TokenNativeRole.h').read_text()
@@ -41,9 +42,48 @@ if hybrid:
 if matrix:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
 if qgw8:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
                          PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
+if qgwd:
+    del defines['PIONEER_Q38_QGW8_PROGRAMS_INSPECTION']
+    for name in ('PIONEER_Q38_QGWD_NATIVE_INSPECTION','PIONEER_Q38_QGWD_PROGRAMS_INSPECTION',
+                 'PIONEER_Q38_QGWD_PLAN_SIMULATION','PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION',
+                 'PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION','PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE',
+                 'PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION','PIONEER_Q38_QGWD_CONTROL_INSPECTION',
+                 'PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION','PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION',
+                 'PIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION','PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION'):
+        defines[name]='1'
 if trace:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1')
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
-if qgw8:
+if qgwd:
+    role_text='#include "'+str(here.parent/'PioneerQ38QgwdNativeInspectionRole.h')+'"\n'
+    def qgwd_role(values, source=role_text):
+        return subprocess.run([os.environ.get('CXX','c++'),'-std=c++17',
+            *['-D'+k+'='+v for k,v in sorted(values.items())],'-x','c++','-fsyntax-only','-'],
+            input=source,capture_output=True,text=True)
+    assert qgwd_role(defines).returncode==0
+    required=('_KERNEL_MODE','PIONEER_Q38_QGW8_NATIVE_INSPECTION','PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY',
+              'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_HYBRID_TRACKED_UPLOAD',
+              'PIONEER_Q38_QGWD_PROGRAMS_INSPECTION','PIONEER_Q38_QGWD_PLAN_SIMULATION',
+              'PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION','PIONEER_Q38_QGWD_CONTROL_INSPECTION','TT_PIONEER_DRIVER_RELOAD',
+              'PIONEER_DRIVER_BUILD_TAG','api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')
+    for name in required:
+        changed=defines.copy();del changed[name]
+        assert qgwd_role(changed).returncode,name
+    for name in ('PIONEER_Q38_QGW8_PROGRAMS_INSPECTION','PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128',
+                 'PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY','PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY',
+                 'PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT',
+                 'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
+                 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','__FAST_MATH__'):
+        changed=defines.copy();changed[name]='1'
+        assert qgwd_role(changed).returncode,name
+    changed=defines.copy();changed['PIONEER_DRIVER_BUILD_TAG']='0x2026111000010141ULL'
+    assert qgwd_role(changed).returncode
+    changed=defines.copy();changed['PIONEER_Q38_QGWD_NATIVE_INSPECTION']='0'
+    assert qgwd_role(changed).returncode
+    assert qgwd_role(defines,role_text+'#undef PIONEER_Q38_QGWD_NATIVE_INSPECTION\n'+role_text).returncode
+    changed=defines.copy();del changed['PIONEER_Q38_QGWD_NATIVE_INSPECTION']
+    assert qgwd_role(changed,role_text+'#define PIONEER_Q38_QGWD_NATIVE_INSPECTION 1\n'+role_text).returncode
+    print('PASS QGWD fake-tag role parents and physical/Work/validation exclusions; no driver')
+if qgw8 and not qgwd:
     role_probe = here/'pioneer_q38_qgw8_native_role_probe.cpp'
     compiler = os.environ.get('CXX', 'c++')
     def check_role(values):
@@ -104,7 +144,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/p
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent),
-                    str(here/('pioneer_q38_qgw8_native_binding_test.cpp' if qgw8 else 'pioneer_q38_hybrid_native_binding_test.cpp' if hybrid else 'pioneer_q38_token_native_binding_test.cpp')),
+                    str(here/('pioneer_q38_qgwd_native_binding_test.cpp' if qgwd else 'pioneer_q38_qgw8_native_binding_test.cpp' if qgw8 else 'pioneer_q38_hybrid_native_binding_test.cpp' if hybrid else 'pioneer_q38_token_native_binding_test.cpp')),
                     '-o', str(binary)], check=True)
     subprocess.run([str(binary)], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk is not None:
@@ -115,7 +155,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/p
                         '-Wno-misleading-indentation', '-Wno-unused-function', '-fno-exceptions', '-fno-rtti', '-fstack-usage',
                         '-mcmodel=medany', '-fpic', *['-D'+k+'='+v for k,v in sorted(defines.items())],
                         '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent), '-I'+str(headers), '-I'+str(headers/'os'),
-                        '-idirafter', str(headers/'posix'), '-c', str(here/'pioneer_q38_qgw8_native_binding_test.cpp'),
+                        '-idirafter', str(headers/'posix'), '-c', str(here/('pioneer_q38_qgwd_native_binding_test.cpp' if qgwd else 'pioneer_q38_qgw8_native_binding_test.cpp')),
                         '-o', str(obj)], check=True)
         names=subprocess.check_output([str(tool)+'-nm', '--defined-only', str(obj)], text=True)
         forbidden={'api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device'}
@@ -129,4 +169,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/p
             actual=[row for row in rows if 'ReadTraceChunk' in row[0]]
             assert actual and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in actual),actual
             print('PASS QGW8 trace read instantiated with compile-only IO and bounded individual frame; NO real IO or combined-stack proof')
-        print('PASS QGW8 fake-native RISC-V bind object and bounded bind/scope frames; no conventional ABI/device')
+        print('PASS '+('QGWD' if qgwd else 'QGW8')+' fake-native RISC-V bind object and bounded bind/scope frames; no conventional ABI/device')

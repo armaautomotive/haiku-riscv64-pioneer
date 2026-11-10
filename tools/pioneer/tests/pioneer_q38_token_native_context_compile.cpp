@@ -24,6 +24,11 @@ extern "C" {
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
 
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+extern "C" status_t pioneer_token_context_qgwd_control(PioneerProbeCookie* cookie,void* data,size_t length){
+ return ProbeControl(cookie,TT_PCI_PROBE_Q38_QGWD_UPLOAD_CONTROL,data,length);
+}
+#endif
 extern "C" status_t pioneer_token_context_hybrid_control(PioneerProbeCookie* cookie,void* data,size_t length){
  return Q38HybridUploadControl(cookie,data,length);
 }

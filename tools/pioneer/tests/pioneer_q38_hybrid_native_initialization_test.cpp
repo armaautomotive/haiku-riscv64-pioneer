@@ -5,7 +5,10 @@
 #define main pioneer_original_initialization_fixture_main
 #include "pioneer_q38_token_native_initialization_test.cpp"
 #undef main
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x47505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x44574751,"QGWD inspection identity required");
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
 static_assert(PioneerQ38TokenNativeProfile==8 && PioneerQ38TokenPrograms::Family==0x38505451
  && PioneerQ38SelectedGlobalWorker::Magic==0x38574751,
  "native initialization must use the QGW8 inspection image and grammar");
@@ -60,7 +63,9 @@ int main(int argc,char** argv){
  io.executionCpu->original=&original;
 #endif
  std::fill(f.learned.begin(),f.learned.end(),0);c.hashes=hashes.data();c.initialized=f.learned.data();c.span={};
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+ c.q38QgwdReceipt=new PioneerQ38DenseQ8UploadReceiptInspection;auto& receipt=*c.q38QgwdReceipt;
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  c.q38Qgw8Receipt=new PioneerQ38Qgw8UploadReceipt;auto& receipt=*c.q38Qgw8Receipt;
 #else
  c.q38HybridReceipt=new PioneerQ38HybridUploadReceipt;auto& receipt=*c.q38HybridReceipt;
@@ -77,13 +82,17 @@ int main(int argc,char** argv){
   c.span.saved=c.span.ready=c.span.dirty=true;c.span.nonce=++spans;assert(receipt.After());total+=length;
  }
  c.span.closed=true;c.span.ready=c.span.dirty=false;
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+ assert(spans==21907 && total==UINT64_C(21094223872) && receipt.Seal(c.span));
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  assert(spans==22035 && total==UINT64_C(21167624192) && receipt.Seal(c.span));
 #else
  assert(spans==22005 && total==UINT64_C(21137039360) && receipt.Seal(c.span));
 #endif
  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+ assert(PioneerQ38QgwdNativeBinding::DeriveLogical(c,&f.cookie,sReloadGeneration,*plan));
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  assert(receipt.DeriveBoundCanonical(*plan,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
 #else
  assert(receipt.DeriveBoundLayout(*plan,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
@@ -113,7 +122,9 @@ int main(int argc,char** argv){
  const unsigned touches=io.touches;
  assert(!f.Recurrent(recurrent) && !f.History(history) && !f.Projection(projection) && io.touches==touches);
  assert(!c.q38TokenNative->Unsafe() && !c.banks.Quarantined() && f.learned==before);
-#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+ puts("PASS QGWD sealed receipt/native bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");
+#elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  puts("PASS QGW8 sealed receipt/native bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");
 #else
  puts("PASS real sealed hybrid receipt/bind/three initializers, actual zero RV32, 73728+1680+512 pages; SIMULATED ENDPOINTS ONLY");

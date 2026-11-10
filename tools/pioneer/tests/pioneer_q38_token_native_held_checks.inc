@@ -59,6 +59,9 @@ static void CheckNativeHeld(Fixture& f,unsigned fault){
    c.q38Dispatch?c.q38Dispatch->closeDetail[2]:0,c.q38Dispatch?c.q38Dispatch->closeDetail[3]:0,io.lastOp,io.lastAddress,io.lastValue);
   if(fault && fault<3){assert(!prepared);unknown();return;}
   assert(prepared);
+#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+  assert(result.phase==11); // real held path installed and re-read the QGWD manifest
+#endif
   assert(c.q38TokenNative==state && !state->Unsafe() && !state->Closed() && state->InitializationsClosed(c.banks,f.proof)
    && c.q38Dispatch && c.q38Dispatch->prepared==120 && !c.q38Dispatch->unsafe && !c.q38Dispatch->bootAttempted
    && !c.q38Dispatch->booted && !c.q38Dispatch->rootRunning && c.q38DispatchRoutes && io.maps==4

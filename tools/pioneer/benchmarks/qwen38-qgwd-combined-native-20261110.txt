@@ -1,0 +1,27 @@
+QGWD combined native-source integration, 2026-11-10
+
+The actual native token binding now compiles together with the QGWD upload
+control, gapped receipt, logical startup view and dense manifest code in the
+same Haiku RISC-V driver-source object. This profile uses a fake build tag and
+renamed conventional entry points; it cannot be installed as a driver.
+Selected bind, held prepare, runtime prepare, bootstrap and upload-control
+static frames were individually at most 2048 bytes (not a combined stack
+bound). A separate fake-native RISC-V bind object also passed.
+
+The real native binding test consumed a sealed 21,907-span synthetic QGWD
+receipt and reserved runtime state using its gapped physical ledger. Wrong
+owner/hash/generation were rejected. An actual held native-startup fixture
+passed with simulated endpoints, including the three initializer programs,
+all 120 workers, and restoration. This is synthetic, not a card test. The
+two independent pinned QGWD native program bundles matched SHA-256
+90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff.
+QGW8 binding and the isolated QGWD upload-control regressions also passed.
+The first runtime fixture reached its verification step but failed because
+that fixture attempted to use a QGW8 receipt instead of QGWD; the test was
+corrected and restarted. The earlier failure was not a hardware test.
+
+No loadable QGWD profile, model execution, numerical quality, Assistant
+integration, or inference speed follows from these checks. A separately
+guarded physical candidate and real lifecycle/correctness/speed tests are
+still required. The QGWD format converts dense attention projections; this
+checkpoint does not establish that every model operation uses matrix engines.

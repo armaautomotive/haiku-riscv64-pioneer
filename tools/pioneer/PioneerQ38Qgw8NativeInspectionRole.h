@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwdNativeInspectionRole.h"
 // Rechecked on every include. The original profile remains fake-tag and
 // non-loadable. The separately selected exact tag128 candidate is unqualified
 // and must never alias the fake role, an old driver, or validation/Work.
@@ -9,7 +10,7 @@
  || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 \
  || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \
- || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \
+ || (!defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) && (!defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1)) \
  || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \
  || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \

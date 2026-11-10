@@ -66,7 +66,7 @@ public:
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
 #if defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
-#if PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE != 1 || !defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)) || defined(PIONEER_DRIVER_BUILD_TAG)
+#if PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE != 1 || !defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) || (defined(PIONEER_DRIVER_BUILD_TAG) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION))
 #error QGWD logical-parent journal fixture is offline inspection only
 #endif
   // Synthetic parent geometry permits exercising save/restore only. It is

@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdKernelCompileRole.h"
+#include "PioneerQ38QgwdNativeInspectionRole.h"
 // Geometry proposal only: not a native journal selector or permission to use
 // the worker. Its separate owner must prove aliases, exclusive lifetime,
 // complete save/restore, image identity and failure handling before launch.
 #if !defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION != 1 \
  || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) || PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC != 1 \
- || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY)) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) \
+ || ((defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) \
  || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_BF16_FULL_NATIVE) || defined(PIONEER_Q38_BF16_FULL_CLIENT) \
