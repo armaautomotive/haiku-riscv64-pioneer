@@ -1,0 +1,19 @@
+QGWD upload receipt to token-memory owner binding, 2026-11-10
+
+The QGWD control creates its receipt with the PioneerStoreContext as its
+context. The token-memory inspection previously tried to revalidate that
+receipt using the different PioneerQ38DispatchLease address. Its synthetic
+test had accidentally used the dispatch lease as the receipt's context too,
+masking the mismatch. That interface could not have accepted the real
+control-created receipt.
+
+The journal now records the receipt's actual context separately from the
+dispatch cohort. It checks the same sealed receipt, original context, cookie,
+ledger, hashes, team, bank proof, and driver generation while also binding
+the exact worker cohort. The fixture uses distinct context/cohort objects and
+checks rejection of a substituted context, cohort, or generation before L1
+I/O, then exercises the actual QGWD journal and dense-manifest path.
+
+This is an inspection-profile integration correction. It does not enable a
+native driver, establish a real card launch, validate a full model, or measure
+inference speed.

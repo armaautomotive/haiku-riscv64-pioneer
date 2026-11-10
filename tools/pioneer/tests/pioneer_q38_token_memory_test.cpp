@@ -210,7 +210,7 @@ struct TokenMemoryFixture {
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
  std::vector<uint32_t> hashes=std::vector<uint32_t>(PioneerResidentBanks::Pages);
  std::unique_ptr<PioneerQ38DenseQ8UploadReceiptInspection> receipt=std::make_unique<PioneerQ38DenseQ8UploadReceiptInspection>();
- PioneerQ38SpanLease span;int cookie=0;
+ PioneerQ38SpanLease span;int receiptContext=0,cookie=0;
 #endif
  PioneerQ38GdnIdentity id={1,2,3,4};PioneerQ38TokenMemoryResult result;
  TokenMemoryFixture(){
@@ -222,10 +222,10 @@ struct TokenMemoryFixture {
   }
   auto& data=Geometry();data.Bind(*cohort,banks,dram);
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
-  assert(receipt->Begin(cohort.get(),&cookie,hashes.data(),ledger.data(),1,4,banks,dram,ledger.size()));
+  assert(receipt->Begin(&receiptContext,&cookie,hashes.data(),ledger.data(),1,4,banks,dram,ledger.size()));
   unsigned bank=0,length=0,spans=0;uint64_t offset=0;
   while(receipt->Next(bank,offset,length)){
-   assert(receipt->Before(cohort.get(),hashes.data(),ledger.data(),&span,bank,offset,length));
+   assert(receipt->Before(&receiptContext,hashes.data(),ledger.data(),&span,bank,offset,length));
    const unsigned first=unsigned(uint64_t(bank)*(PioneerResidentBanks::Capacity/4096)+offset/4096);
    for(unsigned p=0;p<length/4096;p++){
     const unsigned i=first+p;const uint32_t hash=i*2654435761U;ledger[i]=1;hashes[i]=hash;assert(receipt->RecordPage(i,hash));
@@ -235,8 +235,12 @@ struct TokenMemoryFixture {
   span.closed=true;span.ready=span.dirty=false;
   assert(spans==21907 && receipt->Seal(span));
   assert(!data.startup->LearnedPagesPresent(ledger.data(),ledger.size())); // old logical extent has deliberate holes
-  assert(receipt->MatchesLogical(*data.canonical,cohort.get(),&cookie,hashes.data(),ledger.data(),1,4,banks,dram));
-  assert(memory->BindDenseReceiptInspection(*receipt,&cookie,hashes.data(),1,4));
+  assert(&receiptContext!=reinterpret_cast<void*>(cohort.get()));
+  assert(receipt->MatchesLogical(*data.canonical,&receiptContext,&cookie,hashes.data(),ledger.data(),1,4,banks,dram));
+  assert(!receipt->MatchesLogical(*data.canonical,cohort.get(),&cookie,hashes.data(),ledger.data(),1,4,banks,dram));
+  assert(!memory->BindDenseReceiptInspection(*receipt,nullptr,cohort.get(),&cookie,hashes.data(),1,4));
+  assert(!memory->BindDenseReceiptInspection(*receipt,&receiptContext,nullptr,&cookie,hashes.data(),1,4));
+  assert(memory->BindDenseReceiptInspection(*receipt,&receiptContext,cohort.get(),&cookie,hashes.data(),1,4));
 #else
   for(unsigned i=0;i<data.canonical->Count();i++){
    const auto* part=data.canonical->Part(i);if(part->kind!=data.canonical->WeightKind)continue;
@@ -311,6 +315,20 @@ int main(int argc,char** argv){
    PioneerQ38HybridHeadModelPlan::Proposal host;assert(PioneerQ38HybridHeadModelPlan::Build(*original,host));
    std::array<uint32_t,PioneerQ38HybridHeadModelPlan::ManifestWords> expected={};
    assert(PioneerQ38HybridHeadModelPlan::Manifest(*original,host,expected.data(),expected.size()));
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+   // The receipt's driver context and its worker cohort are different
+   // objects. Substituting either, or changing generation, must refuse
+   // before any L1 I/O.
+   for(unsigned mismatch=0;mismatch<3;mismatch++){
+    auto rejected=std::make_unique<PioneerQ38TokenMemory>();auto other=std::make_unique<PioneerQ38DispatchLease>();
+    int foreignContext=0;PioneerQ38TokenMemoryResult untouched;const unsigned touches=f.io.touches;
+    assert(rejected->BindDenseReceiptInspection(*f.receipt,mismatch==0?&foreignContext:&f.receiptContext,
+     mismatch==1?other.get():f.cohort.get(),&f.cookie,f.hashes.data(),1,mismatch==2?5:4));
+    assert(!rejected->PrepareHeld(f.io,f.dram,f.banks,*f.cohort,*Geometry().canonical,*Geometry().startup,
+     f.id,f.ledger.data(),f.ledger.size(),untouched));
+    assert(!untouched.started && !untouched.unsafe && f.io.touches==touches);
+   }
+#endif
    assert(f.PrepareMemory() && f.memory->Installed() && f.result.savedWords==TOKL::SavedWords
     && f.result.installedWords==TOKP::CodeWords(0)+119*TOKP::CodeWords(1));
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
