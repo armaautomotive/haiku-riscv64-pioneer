@@ -1,0 +1,18 @@
+QGWD linked-ROOT relocated dense recipe check, 2026-11-10
+
+The previous direct QGWD dense entry test used the original canonical model
+layout. The QGWD upload actually uses the QGW8-relocated logical parent and a
+separate physical BFP8 dense manifest, so that test did not cover the real
+geometry that startup will construct.
+
+The test now constructs both original and relocated canonical layouts,
+feeds the actual linked QGWD ROOT their Q/G, K and V recipes for all 16 dense
+layers, and checks the ROOT reaches BF16 producer admission while rejecting
+corrupted recipe parts. Separately, the ROOT's dense scheduler is fed the
+actual full physical BFP8 manifest derived from the upload plan, rather than
+placeholder addresses, for all 16 layers and all three projection roles.
+Its jobs and selected stores are checked against the independent host planner.
+
+The pinned ROOT and worker simulations passed. These are synthetic metadata
+and CPU instruction simulation: no original model bytes, device upload,
+complete inference, quality measurement or tokens/second are established.

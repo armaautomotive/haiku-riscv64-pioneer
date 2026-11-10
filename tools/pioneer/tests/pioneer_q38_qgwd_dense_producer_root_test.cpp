@@ -3,12 +3,17 @@
 // only: no card, live worker, full model, ownership or throughput claim.
 #define PIONEER_Q38_HYBRID_ACTUAL_ROOT_MACHINE_ONLY
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
+#define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
 #include "pioneer_q38_hybrid_actual_root_test.cpp"
 #include "../PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #include "../PioneerQ38DenseQ8MatrixRootJobs.h"
 #include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 #include "../PioneerQ38Bf16ProducerLayout.h"
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DenseProjectionPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8KernelLayout.h"
 #include <fstream>
 namespace Q=PioneerQ38DenseQ8MatrixWorkerLayout;
 namespace P=PioneerQ38Bf16ProducerLayout;
@@ -36,6 +41,11 @@ static bool Reaches(ActualRoot& m,unsigned start,unsigned d,unsigned target){
 }
 int main(int argc,char** argv){
  assert(argc==2);auto m=std::make_unique<ActualRoot>(argv[1]);
+ auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
+ PioneerQ38HybridDenseQ8MatrixPlan::Proposal physical;
+ std::array<uint32_t,PioneerQ38DenseQ8MatrixManifest::Words> physicalManifest={};
+ assert(PioneerQ38HybridDenseQ8MatrixPlan::Build(*canonical,physical)
+  && PioneerQ38DenseQ8MatrixManifest::Build(*canonical,physical,physicalManifest.data(),physicalManifest.size()));
  auto descriptors=Symbols(argv[1],"Projection::BfDescriptor(");auto jobs=Symbols(argv[1],"Projection::BfProducerJob(");
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)m->memory[d+4*i]=0;
  m->memory[d+4*3]=0;m->memory[d+4*4]=0x04000000;m->memory[d+4*6]=2025;
@@ -73,13 +83,14 @@ int main(int argc,char** argv){
  auto validators=Symbols(argv[1],"PioneerQ38DenseQ8MatrixWorkerLayout::JobShape(");
  auto stores=Symbols(argv[1],"Projection::BfStoreDenseMatrix(");
  auto runs=Symbols(argv[1],"Projection::Run(");auto prepares=Symbols(argv[1],"Projection::BfPrepare(");
- for(unsigned layer:{3U,63U})for(unsigned role=5;role<=7;role++)for(unsigned component=0;component<2;component++){
+ for(unsigned layer=3;layer<64;layer+=4)for(unsigned role=5;role<=7;role++)for(unsigned component=0;component<2;component++){
   m->memory[d+4*42]=layer;m->memory[d+4*43]=role;m->memory[d+4*11]=role==5?12288:1024;Schedule expected;
-  const unsigned units=role==5?384:32,index=((layer/4)*3+role-5)*21;unsigned first=0;
+  const unsigned index=((layer/4)*3+role-5)*21;
   for(unsigned bank=0;bank<7;bank++){
-   const unsigned n=units/7+unsigned(bank<units%7);
-   expected.table[bank][0]=0x04000000;expected.table[bank][1]=first;expected.table[bank][2]=n*32;first+=n*32;
-   for(unsigned field=0;field<3;field++)m->memory[0x16dc00+4*(index+bank*3+field)]=expected.table[bank][field];
+   for(unsigned field=0;field<3;field++){
+    expected.table[bank][field]=physicalManifest[index+bank*3+field];
+    m->memory[0x16dc00+4*(index+bank*3+field)]=expected.table[bank][field];
+   }
   }
   assert(PioneerQ38DenseQ8MatrixRootJobs::Build(expected,layer,role));
   assert(m->Run(m->build[component],d));
@@ -112,9 +123,11 @@ int main(int argc,char** argv){
  }
  // Exercise the actual dense-component entry through canonical recipe
  // capture and stop at the BF16 producer entry, before any NoC/MMIO.
- auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
+ auto parent=std::make_unique<PioneerQ38Qgw8KernelLayout>();auto relocated=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(parent->Build(*canonical) && relocated->BuildDenseQ8LogicalParentInspection(*parent) && relocated->Qgw8InspectionLayout());
  std::array<uint32_t,1920> sources={};for(unsigned i=0;i<sources.size();i++)sources[i]=0x16005+i*131;
- auto plan=std::make_unique<PioneerQ38DenseProjectionPlan>();assert(plan->Build(*canonical,3,0,248319,0,1000,{1,2,3,4},sources.data()));
+ for(const auto* geometry:{canonical.get(),relocated.get()})for(unsigned layer=3;layer<64;layer+=4){
+ auto plan=std::make_unique<PioneerQ38DenseProjectionPlan>();assert(plan->Build(*geometry,layer,0,248319,0,1000,{1,2,3,4},sources.data()));
  for(unsigned slot=0;slot<3;slot++){
   uint32_t runtime[64];for(unsigned i=0;i<64;i++)runtime[i]=plan->Frame(slot)[i];
   runtime[0]=0x31504d51;runtime[13]=0x76800;runtime[48]=1;runtime[49]=119;runtime[50]=0x75800;
@@ -130,5 +143,6 @@ int main(int argc,char** argv){
   assert(Reaches(*m,runs[1],d,prepares[1]));
   m->memory[0x75800]++;assert(!Reaches(*m,runs[1],d,prepares[1]));m->memory[0x75800]--;
  }
- puts("PASS actual QGWD dense dispatch reaches BF16 prepare after canonical recipe capture; producer, schedule, jobs and output placement checked in simulation; NO HARDWARE OR TPS");
+ }
+ puts("PASS actual QGWD dense dispatch accepts 16-layer original/relocated recipes and planned physical manifest; producer/schedule/job simulation; NO HARDWARE OR TPS");
 }
