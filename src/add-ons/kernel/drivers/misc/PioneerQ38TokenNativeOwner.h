@@ -563,6 +563,11 @@ public:
    for(unsigned i=0;i<128;i++)staging[i]=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;}
   if(!Exact(io,0,C::R::Outer,staging,128,r))return Fail(io,r);
   staging[0]=1;if(!Exact(io,0,C::R::Doorbell,staging,1,r))return Fail(io,r);
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  // The long held-runtime staging must not silently change the table before
+  // the first worker can be armed. This is still the offline-only role.
+  if(!memory->VerifyDenseManifestForRuntimeInspection(io))return Fail(io,r);
+#endif
   r.phase=2;
   for(unsigned w=1;w<120;w++){
    r.worker=w;if(!Guard(io,w))return Fail(io,r);

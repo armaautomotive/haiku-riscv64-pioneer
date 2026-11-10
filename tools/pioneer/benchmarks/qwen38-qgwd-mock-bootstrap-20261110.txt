@@ -1,0 +1,17 @@
+QGWD full held runtime and mock worker bootstrap, 2026-11-10
+
+The actual full-token owner prepared 2,308 startup packets and readbacks,
+then exercised its bootstrap controller against 119 simulated worker
+endpoints. All mock workers were armed before any was released; the mock
+status/PC fabric reported the QGWD marker and idle PC, and ROOT stayed held.
+This does not execute worker instructions or simulate their arithmetic.
+
+The same test injects a malformed worker status and checks quarantine.
+It also changes the dense table after runtime staging: the new pre-arm
+receipt/table recheck must reject and quarantine before any mock worker is
+armed. A corrupted startup packet is rejected during readback.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs /private/tmp/qgwd-program-data-20261109-a.h --qgwd-receipt-journal --dense-q8-footprint
+
+All endpoints and uploaded-page hashes are synthetic. No P100A was touched;
+this is not a real bootstrap, inference, quality or performance result.

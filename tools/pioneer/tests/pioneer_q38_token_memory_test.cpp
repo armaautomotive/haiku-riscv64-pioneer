@@ -33,7 +33,12 @@ struct TokenMemoryIO:CodeIO {
  unsigned badKind=0,badPhase=0,badWorker=0,badOrdinal=0;
  std::vector<uint32_t> data=std::vector<uint32_t>(TOKL::SavedWords);
  TokenMemoryIO(){for(unsigned i=0;i<data.size();i++)data[i]=i%17?0x9e3779b9U*(i+1)^0xa56b4e37U:UINT32_MAX;}
- uint32_t RuntimePcRead(){assert(false && "held-only journal cannot use a PC sample as STOP/cleanup authority");return 0;}
+ uint32_t RuntimePcRead(){
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  if(runtimeMode && current && C().coreReset==0x46800)return 0x2004c;
+#endif
+  assert(false && "held-only journal cannot use a PC sample as STOP/cleanup authority");return 0;
+ }
  static unsigned Index(unsigned worker,uint32_t address){
   unsigned ordinal=0;for(unsigned n=0;n<TOKL::SnapshotSpans(worker);n++){
    const auto span=TOKL::SnapshotSpan(worker,n);
@@ -63,7 +68,7 @@ struct TokenMemoryIO:CodeIO {
   const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,const PioneerQ38GdnIdentity&,
   const uint8_t*,unsigned){return true;}
  bool omitPanelSaved=false,runtimeMode=false;
- uint32_t runtimeWorkspace=0;unsigned runtimeRequests=0,runtimeCorruptRequest=0;
+ uint32_t runtimeWorkspace=0;unsigned runtimeRequests=0,runtimeCorruptRequest=0,bootCorruptWorker=0;
  std::vector<uint32_t> runtimeBank;
  uint32_t* Q38PanelSavedWords(){return omitPanelSaved?nullptr:BootstrapIO::Q38PanelSavedWords();}
  const uint32_t* BulkSavedWords(){return runtimeMode?C().BulkMock::BulkSavedWords():nullptr;}
@@ -72,8 +77,9 @@ struct TokenMemoryIO:CodeIO {
  uint64_t Q38CohortNow(){return CohortIO::Q38CohortNow();}
  void ResidentNocWrite(uint32_t offset,uint32_t value){
   if(!runtimeMode){CodeIO::ResidentNocWrite(offset,value);return;}
-  assert(!quarantined && current==0);
+  assert(!quarantined);
   if(offset!=0x40){BootstrapIO::ResidentNocWrite(offset,value);return;}
+  assert(current==0);
   auto& node=C();assert(value==1 && !node.pending && node.command[8] && !(node.command[8]&63)
    && node.command[8]<=16384 && !node.command[1] && !node.command[4] && !node.command[6] && !node.command[9]);
   const bool writing=node.command[7]==0x212;assert(writing || !node.command[7]);
@@ -92,6 +98,15 @@ struct TokenMemoryIO:CodeIO {
   if(writing){node.writeCounters[0]++;node.writeCounters[1]+=node.command[8]/64;node.writeCounters[3]++;}
   else{node.counters[0]++;node.counters[1]+=node.command[8]/64;node.counters[3]++;}
   node.accepted++;
+ }
+ void RuntimeResetWrite(uint32_t value){
+  if(!runtimeMode){CodeIO::RuntimeResetWrite(value);return;}
+  assert(!quarantined && current && (value==0x87ffff || value==0x46800));
+  auto& node=C();node.coreReset=value;
+  if(value==0x87ffff){armed++;return;}
+  assert(armed==119);released++;
+  FullWrite(current,PioneerQ38SelectedGlobalWorker::Status+12,
+   PioneerQ38SelectedGlobalWorker::Magic^(current==bootCorruptWorker?1U:0U));
  }
 #endif
  uint32_t ResetRead(){auto value=CodeIO::ResetRead();if(badKind==6 && AtMemory()){observed=touches;return value^1;}return value;}
@@ -398,6 +413,11 @@ int main(int argc,char** argv){
     && runtimeResult.writes==PioneerQ38TokenRuntimePlan::Chunks && runtimeResult.reads==runtimeResult.writes
     && runtimeResult.bytesWritten==PioneerQ38TokenRuntimePlan::PayloadBytes
     && runtimeResult.bytesRead==runtimeResult.bytesWritten && !f.io.armed && !f.io.released);
+   PioneerQ38TokenBootstrapResult bootstrap;
+   assert(owner->BootstrapWorkers(f.io,bootstrap) && owner->WorkersReady() && !owner->Unsafe()
+    && bootstrap.armed==119 && bootstrap.released==119 && bootstrap.workers==119 && bootstrap.ready
+    && f.io.armed==119 && f.io.released==119 && f.io.core[0]->coreReset==0x47800);
+   // Bootstrap status and PCs are synthetic, not executed worker code.
    // Destruction here is simulated-only; no post-launch restoration or
    // physical ownership/launch permission follows from this fixture.
   }
@@ -412,6 +432,32 @@ int main(int argc,char** argv){
    assert(runtimeResult.started && runtimeResult.unsafe && !runtimeResult.staged && runtimeResult.packets==4
     && owner->Unsafe() && f.memory->Unsafe() && f.banks.Quarantined() && f.io.quarantined && f.io.retained
     && !f.io.armed && !f.io.released);
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
+   f.io.runtimeWorkspace=Geometry().startup->Workspace();f.io.runtimeBank.resize(PioneerQ38GlobalChainLayout::WorkspaceBytes/4);
+   f.io.runtimeMode=true;f.io.bootCorruptWorker=60;
+   auto owner=std::make_unique<PioneerQ38TokenNativeOwner>();PioneerQ38TokenRuntimeResult runtimeResult;
+   assert(owner->PrepareHeldRuntime(f.io,f.dram,f.banks,*f.cohort,*f.memory,*Geometry().canonical,
+    *Geometry().startup,f.id,f.ledger.data(),f.ledger.size(),runtimeResult));
+   PioneerQ38TokenBootstrapResult bootstrap;assert(!owner->BootstrapWorkers(f.io,bootstrap));
+   assert(bootstrap.started && bootstrap.unsafe && !bootstrap.ready && bootstrap.armed==119 && bootstrap.released==119
+    && owner->Unsafe() && f.memory->Unsafe() && f.banks.Quarantined() && f.io.quarantined && f.io.retained);
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
+   f.io.runtimeWorkspace=Geometry().startup->Workspace();f.io.runtimeBank.resize(PioneerQ38GlobalChainLayout::WorkspaceBytes/4);
+   f.io.runtimeMode=true;
+   auto owner=std::make_unique<PioneerQ38TokenNativeOwner>();PioneerQ38TokenRuntimeResult runtimeResult;
+   assert(owner->PrepareHeldRuntime(f.io,f.dram,f.banks,*f.cohort,*f.memory,*Geometry().canonical,
+    *Geometry().startup,f.id,f.ledger.data(),f.ledger.size(),runtimeResult));
+   assert(f.io.SelectRuntimeCore(0));const uint32_t tableWord=f.io.FullRead(0,0x16dc00);
+   f.io.FullWrite(0,0x16dc00,tableWord^1);
+   PioneerQ38TokenBootstrapResult bootstrap;assert(!owner->BootstrapWorkers(f.io,bootstrap));
+   assert(bootstrap.started && bootstrap.unsafe && !bootstrap.ready && !bootstrap.armed && !bootstrap.released
+    && !f.io.armed && !f.io.released && owner->Unsafe() && f.memory->Unsafe() && f.banks.Quarantined());
   }
   {
    TokenMemoryFixture f;assert(f.PrepareMemory());
@@ -447,7 +493,7 @@ int main(int argc,char** argv){
    f.io.badKind=14;f.io.badPhase=11;f.io.badWorker=0;f.io.badOrdinal=16*3*7*3-1;
    assert(!f.memory->VerifyDenseManifestHeld(f.io,f.result));f.Unknown();
   }
-  puts("PASS QGWD receipt-bound gapped ledger, held dense manifest, ALL2308 runtime packets/readbacks and fault quarantine; SIMULATED ONLY");return 0;
+  puts("PASS QGWD receipt-bound held runtime/ALL2308 packet readbacks/119-worker mock bootstrap and fault quarantine; SIMULATED ONLY");return 0;
 #else
   puts("PASS QGWD bundle held journal/expanded worker restore and corruption quarantine; QGW8 logical fixture, SIMULATED ONLY");return 0;
 #endif
