@@ -1,0 +1,24 @@
+QGWD dense schedule comparison: offline only
+
+The candidate retains all 21 manifest and 119 x 4 schedule/shadow word
+comparisons. Four comparisons per worker are combined with bitwise OR before
+the fault branch. This changes neither driver nor running hardware trial.
+
+Original ROOT ELF SHA-256:
+5cf33c2c4eaf010879acd03a99cdd166c931e0a8400cc082322d407fe841aa21
+Experimental ROOT ELF SHA-256:
+2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95
+
+Actual RV32 instruction interpreter, both ROOT component copies, layer 3,
+all Q/K/V roles: one complete seal 2894 -> 2299 simulated instructions.
+Worker 0 Q job 12233 -> 11043; Q result store 10159 -> 8374. K/V job
+12214 -> 11024 and result store 9101 -> 7316. These are instruction counts,
+not card cycles, latency, end-to-end performance or tokens per second.
+
+The expanded test flips bit zero separately in every schedule and shadow
+word and every selected manifest and shadow word for layer 3 Q, on both
+component copies. It also runs the existing 16-layer Q/K/V dispatch,
+builder, job-frame and store checks. Both images passed under ASan/UBSan.
+This does not cover simultaneous corruptions, arbitrary bit values, races,
+full native lifecycle, real hardware, model quality, Assistant, or Work mode.
+The candidate is not qualified for install or execution on the P100A.

@@ -27,8 +27,13 @@ static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
  if(!BfDenseQ8(d))scalar_fault_park();
  const unsigned index=((d[42]/4)*3+d[43]-5)*21;
  for(unsigned i=0;i<21;i++)if(Words(BfDenseScheduleIO::Manifest)[index+i]!=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
- for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
-  if(Words(BfDenseScheduleIO::Parts+w*16)[i]!=Words(BfDenseScheduleIO::Shadow+w*16)[i])scalar_fault_park();
+ for(unsigned w=0;w<119;w++){
+  const auto* actual=Words(BfDenseScheduleIO::Parts+w*16);
+  const auto* shadow=Words(BfDenseScheduleIO::Shadow+w*16);
+  const uint32_t difference=(actual[0]^shadow[0])|(actual[1]^shadow[1])
+   |(actual[2]^shadow[2])|(actual[3]^shadow[3]);
+  if(difference)scalar_fault_park();
+ }
 }
 static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d){
  if(!BfDenseQ8(d))scalar_fault_park();
