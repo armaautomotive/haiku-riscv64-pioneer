@@ -28,3 +28,6 @@ Two independent ROOT builds reproduced every pinned binary hash. The full
 offline ROOT/worker job integration suite also passed on both pinned builds,
 including synthetic BFP8 worker/leaf and head-geometry checks. It does not
 emulate the complete native lifecycle or constitute a real-card benchmark.
+The linked experimental ROOT also passed the startup-head compatibility test
+using the original QGWD synthetic upload fixture and its separately pinned
+program-data header. This is not a native upload or a model test.
