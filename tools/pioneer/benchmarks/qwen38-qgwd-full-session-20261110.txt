@@ -1,0 +1,18 @@
+QGWD full-session client integration, 2026-11-10
+
+An explicitly isolated QGWD one-token session now connects the existing
+full-session client to QGWD's prepared-page router, gapped upload plan,
+distinct receipt selector, and same-FD control lifecycle. It uses a distinct
+synthetic driver identity; older QGW8/QGWC candidates and Work/validation
+roles cannot select it. Late changes of the protocol identity are refused.
+
+With synthetic page data, a simulated driver and synthetic token records,
+the actual client performed all 21,907 upload calls, sealed the receipt, then
+completed START, OBSERVE, HOLD, READ, FINISH and close. A separate injected
+START failure retained/quarantined the owner rather than issuing END/retry.
+
+Command:
+  python3 tools/pioneer/tests/run_pioneer_q38_qgwd_full_session_tests.py
+
+This is a client-side integration test, not a model run: no QGWD native
+driver, P100A execution, model output, throughput or quality is established.

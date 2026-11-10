@@ -1,6 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceClientRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38QgwcClientRole.h"
+#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) && (PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION) || PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGW8_CANDIDATE_CLIENT_128) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error QGWD full-session inspection requires its isolated synthetic role
+#endif
 #ifdef PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8NativeInspectionRole.h"
 #endif
@@ -53,7 +62,9 @@
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
+#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
+enum {PioneerQ38HybridProtocolIdentity=14};
+#elif defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
 enum {PioneerQ38HybridProtocolIdentity=136};
 #elif defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
 enum {PioneerQ38HybridProtocolIdentity=134};
@@ -77,7 +88,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
+#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
+static_assert(PioneerQ38HybridProtocolIdentity==14,"late QGWD full-session identity change");
+#elif defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
 static_assert(PioneerQ38HybridProtocolIdentity==136,"late corrected QGWC protocol identity change");
 #elif defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
 static_assert(PioneerQ38HybridProtocolIdentity==134,"late QGW8 dense-value protocol identity change");
@@ -107,7 +120,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
+#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION)
+static constexpr uint64_t BuildTag=UINT64_C(0x445747514f4e4452); // distinct synthetic QGWD owner only
+#elif defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110900010136);
 #elif defined(PIONEER_Q38_QGW8_DENSE_VALUE_NATIVE_134) || defined(PIONEER_Q38_QGW8_DENSE_VALUE_CLIENT_134)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010134);
@@ -131,7 +146,7 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010126);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110700010125);
 #endif
-#if defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
+#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) || defined(PIONEER_Q38_QGWC_NATIVE_136) || defined(PIONEER_Q38_QGWC_CLIENT_136) \
  || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || defined(PIONEER_Q38_QGW8_TRACE_CLIENT_131) \
  || defined(PIONEER_Q38_QGW8_HIDDEN_NATIVE_129) || defined(PIONEER_Q38_QGW8_HIDDEN_CLIENT_129)
 enum {Version=1,MaxPrompt=1,MaxOutput=1,MaxPositions=1,Vocabulary=248320};

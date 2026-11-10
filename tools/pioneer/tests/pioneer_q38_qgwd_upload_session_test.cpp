@@ -62,6 +62,7 @@ struct SessionOwner {
  }
 };
 
+#ifndef PIONEER_Q38_QGWD_UPLOAD_SESSION_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());FakeSource source;FakePlan packed;packed.source=&source;
  std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -101,3 +102,4 @@ int main(){
  assert(session.Finish(error) && session.Complete() && !io.owned && io.closes==1 && !banks.Quarantined());
  puts("PASS QGWD prepared pages through actual synthetic upload session, gapped receipt and logical ROOT manifest; NO DEVICE OR MODEL");
 }
+#endif
