@@ -62,12 +62,37 @@ struct TokenMemoryIO:CodeIO {
  bool TokenRuntimeScope(const PioneerQ38TokenNativeOwner&,const PioneerQ38TokenMemory&,
   const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,const PioneerQ38GdnIdentity&,
   const uint8_t*,unsigned){return true;}
- bool omitPanelSaved=false;
+ bool omitPanelSaved=false,runtimeMode=false;
+ uint32_t runtimeWorkspace=0;unsigned runtimeRequests=0,runtimeCorruptRequest=0;
+ std::vector<uint32_t> runtimeBank;
  uint32_t* Q38PanelSavedWords(){return omitPanelSaved?nullptr:BootstrapIO::Q38PanelSavedWords();}
- const uint32_t* BulkSavedWords(){return nullptr;}
- bool BulkMappingStable(){return false;}
+ const uint32_t* BulkSavedWords(){return runtimeMode?C().BulkMock::BulkSavedWords():nullptr;}
+ bool BulkMappingStable(){return runtimeMode;}
  bool TokenPeerStoreSelect(unsigned worker){return SelectRuntimeCore(worker);}
- uint64_t Q38CohortNow(){return 0;}
+ uint64_t Q38CohortNow(){return CohortIO::Q38CohortNow();}
+ void ResidentNocWrite(uint32_t offset,uint32_t value){
+  if(!runtimeMode){CodeIO::ResidentNocWrite(offset,value);return;}
+  assert(!quarantined && current==0);
+  if(offset!=0x40){BootstrapIO::ResidentNocWrite(offset,value);return;}
+  auto& node=C();assert(value==1 && !node.pending && node.command[8] && !(node.command[8]&63)
+   && node.command[8]<=16384 && !node.command[1] && !node.command[4] && !node.command[6] && !node.command[9]);
+  const bool writing=node.command[7]==0x212;assert(writing || !node.command[7]);
+  const unsigned scratch=writing?node.command[0]:node.command[3];
+  const unsigned address=writing?node.command[3]:node.command[0];
+  assert(scratch==PioneerQ38GlobalChainLayout::R::Scratch && address>=runtimeWorkspace
+   && uint64_t(address-runtimeWorkspace)+node.command[8]<=runtimeBank.size()*4);
+  const unsigned first=(address-runtimeWorkspace)/4;
+  for(unsigned i=0;i<node.command[8]/4;i++){
+   if(writing)runtimeBank[first+i]=FullRead(0,scratch+i*4);
+   else FullWrite(0,scratch+i*4,runtimeBank[first+i]);
+  }
+  runtimeRequests++;
+  if(writing && runtimeRequests==runtimeCorruptRequest)runtimeBank[first]^=1;
+  node.doorbells++;node.doorbellRead=false;
+  if(writing){node.writeCounters[0]++;node.writeCounters[1]+=node.command[8]/64;node.writeCounters[3]++;}
+  else{node.counters[0]++;node.counters[1]+=node.command[8]/64;node.counters[3]++;}
+  node.accepted++;
+ }
 #endif
  uint32_t ResetRead(){auto value=CodeIO::ResetRead();if(badKind==6 && AtMemory()){observed=touches;return value^1;}return value;}
  uint32_t SourceRead(unsigned i){auto value=CodeIO::SourceRead(i);if(badKind==7 && AtMemory()){observed=touches;return value^1;}return value;}
@@ -103,6 +128,9 @@ struct TokenMemoryIO:CodeIO {
  }
  bool TokenMemoryWrite(unsigned worker,uint32_t address,uint32_t value){
   Touch();writes++;
+#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+  if(runtimeMode){assert(TOKL::SnapshotContains(worker,address));FullWrite(worker,address,value);return true;}
+#endif
   assert(memoryState && memoryState->savedWords==TOKL::SavedWords && memoryState->verifiedOriginalWords>=TOKL::SavedWords);
   if(memoryState->phase==3){uint32_t expected;assert(TOKP::ProgramWord(worker,address,expected) && expected==value);}
   else assert((memoryState->phase==6
@@ -358,6 +386,34 @@ int main(int argc,char** argv){
   }
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
   {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
+   f.io.runtimeWorkspace=Geometry().startup->Workspace();
+   f.io.runtimeBank.resize(PioneerQ38GlobalChainLayout::WorkspaceBytes/4);f.io.runtimeMode=true;
+   auto owner=std::make_unique<PioneerQ38TokenNativeOwner>();PioneerQ38TokenRuntimeResult runtimeResult;
+   assert(owner->PrepareHeldRuntime(f.io,f.dram,f.banks,*f.cohort,*f.memory,*Geometry().canonical,
+    *Geometry().startup,f.id,f.ledger.data(),f.ledger.size(),runtimeResult));
+   assert(owner->Staged() && !owner->Unsafe() && runtimeResult.staged && !runtimeResult.unsafe
+    && runtimeResult.boots==120 && runtimeResult.packets==2*PioneerQ38TokenRuntimePlan::Chunks
+    && runtimeResult.writes==PioneerQ38TokenRuntimePlan::Chunks && runtimeResult.reads==runtimeResult.writes
+    && runtimeResult.bytesWritten==PioneerQ38TokenRuntimePlan::PayloadBytes
+    && runtimeResult.bytesRead==runtimeResult.bytesWritten && !f.io.armed && !f.io.released);
+   // Destruction here is simulated-only; no post-launch restoration or
+   // physical ownership/launch permission follows from this fixture.
+  }
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
+   f.io.runtimeWorkspace=Geometry().startup->Workspace();f.io.runtimeBank.resize(PioneerQ38GlobalChainLayout::WorkspaceBytes/4);
+   f.io.runtimeMode=true;f.io.runtimeCorruptRequest=3;
+   auto owner=std::make_unique<PioneerQ38TokenNativeOwner>();PioneerQ38TokenRuntimeResult runtimeResult;
+   assert(!owner->PrepareHeldRuntime(f.io,f.dram,f.banks,*f.cohort,*f.memory,*Geometry().canonical,
+    *Geometry().startup,f.id,f.ledger.data(),f.ledger.size(),runtimeResult));
+   assert(runtimeResult.started && runtimeResult.unsafe && !runtimeResult.staged && runtimeResult.packets==4
+    && owner->Unsafe() && f.memory->Unsafe() && f.banks.Quarantined() && f.io.quarantined && f.io.retained
+    && !f.io.armed && !f.io.released);
+  }
+  {
    TokenMemoryFixture f;assert(f.PrepareMemory());
    auto owner=std::make_unique<PioneerQ38TokenNativeOwner>();PioneerQ38TokenRuntimeResult runtimeResult;
    const unsigned touches=f.io.touches;
@@ -391,7 +447,7 @@ int main(int argc,char** argv){
    f.io.badKind=14;f.io.badPhase=11;f.io.badWorker=0;f.io.badOrdinal=16*3*7*3-1;
    assert(!f.memory->VerifyDenseManifestHeld(f.io,f.result));f.Unknown();
   }
-  puts("PASS QGWD receipt-bound gapped ledger, held dense manifest and restore/fault quarantine; SIMULATED ONLY");return 0;
+  puts("PASS QGWD receipt-bound gapped ledger, held dense manifest, ALL2308 runtime packets/readbacks and fault quarantine; SIMULATED ONLY");return 0;
 #else
   puts("PASS QGWD bundle held journal/expanded worker restore and corruption quarantine; QGW8 logical fixture, SIMULATED ONLY");return 0;
 #endif

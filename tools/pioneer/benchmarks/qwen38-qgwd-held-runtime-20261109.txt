@@ -1,0 +1,16 @@
+QGWD held runtime preparation on simulated endpoints, 2026-11-09
+
+The actual TokenNativeOwner now passes its entire held-runtime preparation
+with the QGWD inspection program, the receipt-bound gapped ledger and both
+staged manifests. The host test simulates NoC and bank memory only. It
+prepares all 120 boots and executes 2,308 writes plus 2,308 readbacks,
+covering 37,782,528 bytes in each direction. It verifies each readback
+against the actual runtime plan's startup bytes and does not arm or release
+any worker. A separately injected corrupted bank write is detected on its
+readback and quarantines the owner, memory and banks with no worker release.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs /private/tmp/qgwd-program-data-20261109-a.h --qgwd-receipt-journal --dense-q8-footprint
+
+These are simulated endpoints and synthetic ledger hashes. They are not
+actual NoC transactions, worker execution, hardware qualification, model
+quality or performance evidence. QGWD remains barred from native/Work roles.
