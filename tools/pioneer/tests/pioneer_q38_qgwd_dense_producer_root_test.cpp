@@ -102,6 +102,8 @@ int main(int argc,char** argv){
    uint32_t boot[64],frame[64];for(unsigned i=0;i<64;i++)boot[i]=m->memory.at(0x170000+w*256+i*4);
    assert(PioneerQ38DenseQ8MatrixRootFrame::Build(expected.parts[w],boot,layer,role,0,2025,6,frame));
    assert(m->Run(m->job[component],d,w,7));
+   if(layer==3 && w==0)printf("QGWD_DENSE_JOB_SIMULATED_INSTRUCTIONS role=%u component=%u instructions=%llu; NOT_CYCLES_OR_TPS\n",
+    role,component,static_cast<unsigned long long>(m->steps));
    for(unsigned i=0;i<64;i++)assert(m->memory.at(out+4*i)==frame[i]);
    assert(Call(*m,validators[component],out,0x170000+w*256,6,0,true) && m->regs[10]==1);
    m->memory[out+34*4]=8;assert(Call(*m,validators[component],out,0x170000+w*256,6,0,true) && !m->regs[10]);
@@ -109,6 +111,8 @@ int main(int argc,char** argv){
    const unsigned count=expected.parts[w][3]*32,first=expected.parts[w][2];
    for(unsigned i=0;i<count;i++)m->memory[out+256+i*4]=0x3f000000+i;
    assert(m->Run(stores[component],d,w));
+   if(layer==3 && w==0)printf("QGWD_DENSE_STORE_SIMULATED_INSTRUCTIONS role=%u component=%u instructions=%llu; NOT_CYCLES_OR_TPS\n",
+    role,component,static_cast<unsigned long long>(m->steps));
    for(unsigned i=0;i<count;i++)assert(m->memory.at(0x80000+(first+i)*4)==0x3f000000+i);
    m->memory[out+256+(count-1)*4]=0x7fc00000;
    for(unsigned i=0;i<count;i++)m->memory[0x80000+(first+i)*4]=0xa5a5a5a5;
