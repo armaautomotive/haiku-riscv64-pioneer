@@ -71,6 +71,9 @@ public:
   if(page==q->allocated/4096){page=0;part++;parts++;Advance();}return true;
  }
  void Abort(){if(pending)Fail();}
+ // A failed userspace copy after a successful control operation leaves the
+ // caller unable to know whether ownership changed. Retain/quarantine it.
+ void Invalidate(){Fail();}
  bool Seal(const PioneerQ38SpanLease& span){
   if(!Current() || pending || sealed || &span!=lease || part!=original.Count() || page || parts!=3551 || spans!=21907
    || pages!=5149957 || bytes!=UINT64_C(21094223872) || !span.closed || !span.saved || span.nonce!=spans
