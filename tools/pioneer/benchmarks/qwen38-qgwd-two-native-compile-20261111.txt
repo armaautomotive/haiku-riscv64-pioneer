@@ -14,6 +14,17 @@ compilation of both real native driver bodies passed, with bounded selected
 stack frames; missing tag142 data markers and cross-role headers were refused.
 The tag142 build script also refused the old tag141 program header.
 
-No tag142 driver has been installed, linked for deployment, executed, or
-tested with a model. This is not a quality result or a performance result.
-The two-token client remains separate from Work and from CPU validation.
+Two independent clean tracked-source snapshots at commit 706f68574d, with
+the same local generated configuration headers and SDK, linked byte-identical
+candidate drivers, SHA-256:
+fccf39747b740c886b2fa762fee0ded24a20c9975b4da538a850782e9c83ab1b
+The same snapshot rebuilt the earlier tag141 driver byte-for-byte, SHA-256:
+e8dbd864e01407d60e97922f0f47427e87b267997efa489b860391e07c3df5b3.
+The first attempted snapshots omitted a tracked PCIe header and failed before
+linking; the header was added to each snapshot and new output directories
+were used. No existing data or output was removed.
+
+No tag142 driver has been installed, executed, or tested with a model. A
+matching driver/client is not by itself authority to run the hardware. This
+is not a quality result or a performance result. The two-token client
+remains separate from Work and from CPU validation.
