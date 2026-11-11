@@ -6,6 +6,9 @@
 #define PIONEER_Q38_QGWD_UPLOAD_SESSION_FIXTURE_ONLY 1
 #include "pioneer_q38_qgwd_upload_session_test.cpp"
 #include "../PioneerQ38HybridFullSession.h"
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN
+static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x45574751,"QGWE simulated plan identity required");
+#endif
 #if defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) || defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
 static constexpr unsigned kOutputs=2;
 #else

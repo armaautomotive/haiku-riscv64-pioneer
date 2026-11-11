@@ -69,6 +69,11 @@ them to the pinned worker's actual entry instructions in a mocked fabric;
 all 119 reached their wait state. The records and source registers are
 synthetic: this is not a real 119-worker native bootstrap or hardware test.
 
+The QGWE plan identity also passed a synthetic two-token upload/session
+lifecycle, failed-START owner quarantine, and corrupted-feedback refusal.
+That harness checks the QGWE package hash but uses fake driver replies and
+does not execute the package; it is not device, model, quality or TPS proof.
+
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
 on the P100A on this evidence. The running tag142 trial does not use this
