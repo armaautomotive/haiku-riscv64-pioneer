@@ -37,4 +37,17 @@ check(flags+['-ffreestanding','-march=rv32imf','-mabi=ilp32',
              '-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1',
              '-DPIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION=1',
              '-DPIONEER_ATTENTION_FREESTANDING=1','-DPIONEER_DRAM_SWEEP_FREESTANDING=1'],True,source,cross)
+plan_header=root/'PioneerQ38HybridHeadWorkerLayout.h'
+plan_source='#include <cstdint>\n#include "'+str(plan_header)+'"\n'
+plan_source+='static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x45574751);\n'
+plan_flags=['-D'+name+'=1' for name in ('PIONEER_Q38_QGWE_BATCH_DENSE_PLAN',
+            'PIONEER_Q38_QGWD_PLAN_SIMULATION','PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION',
+            'PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION','PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT')]
+check(plan_flags,True,plan_source)
+for name in ('PIONEER_Q38_QGWD_PLAN_SIMULATION','PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION'):
+    check([f for f in plan_flags if f!='-D'+name+'=1'],False,plan_source)
+for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_WORK_INFERENCE',
+             'PIONEER_Q38_QGWE_BATCH_DENSE_ROOT','PIONEER_Q38_QGWE_BATCH_DENSE_WORKER'):
+    check(plan_flags+['-D'+name+'=1'],False,plan_source)
+check(plan_flags,False,plan_source+'#undef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN\n#include "'+str(plan_header)+'"\n')
 print('PASS isolated QGWE root identity, parent and incompatible role refusals; NO DEVICE')

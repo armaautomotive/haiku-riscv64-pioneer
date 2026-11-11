@@ -7,6 +7,27 @@
 #include "PioneerQ38QgwcSrcaRootImageRole.h"
 #include "PioneerQ38QgwdRootImageRole.h"
 #include "PioneerQ38QgwdKernelCompileRole.h"
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN
+#if PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 \
+ || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error QGWE plan requires isolated QGWD plan simulation
+#endif
+#endif
+#ifndef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN_BINDING_H
+#define PIONEER_Q38_QGWE_BATCH_DENSE_PLAN_BINDING_H
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN
+enum {PioneerQ38QgweBatchDensePlan=1};
+#else
+enum {PioneerQ38QgweBatchDensePlan=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN
+static_assert(PioneerQ38QgweBatchDensePlan==1,"late QGWE plan selection");
+#else
+static_assert(PioneerQ38QgweBatchDensePlan==0,"late QGWE plan removal");
+#endif
 #ifdef PIONEER_Q38_QGWD_PLAN_SIMULATION
 #if PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) || (defined(PIONEER_DRIVER_BUILD_TAG) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
 #error QGWD plan requires isolated simulation only
@@ -64,7 +85,9 @@ namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;
 enum : unsigned {
-#if defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
+#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
+ Magic=0x45574751,JobWitness=0x454f4751, // QGWE / QGOE, isolated ROOT or plan
+#elif defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
  Magic=0x44574751,JobWitness=0x444f4751, // QGWD / QGOD; not a dense-Q8 scheduler
 #elif defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) || defined(PIONEER_Q38_QGWC_SRCA_ROOT_IMAGE) || defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWC_NATIVE_136)
  Magic=0x43574751,JobWitness=0x434f4751, // QGWC / QGOC, inspection only
@@ -136,7 +159,9 @@ QGW8_HEAD_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous
 #undef QGW8_HEAD_FN
 }
 #endif
-#if defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
+#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
+static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x45574751,"late QGWE coordinator identity selection");
+#elif defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x44574751,"late QGWD coordinator identity selection");
 #elif defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE) || defined(PIONEER_Q38_QGWC_SRCA_ROOT_IMAGE) || defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWC_NATIVE_136)
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x43574751,"late QGWC candidate selection");

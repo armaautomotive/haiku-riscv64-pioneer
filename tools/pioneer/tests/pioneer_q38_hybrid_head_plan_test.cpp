@@ -104,10 +104,12 @@ int main(int argc,char** argv){
  assert(total==248320);for(auto c:coverage)assert(c==1);
  assert(bands==7760 && weightReads==1241600 && inputReads==1241600 && reusedInputReads==155680
   && weightBytes==1350860800 && inputBytes==79462400 && reusedInputBytes==9963520);
+#ifndef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN
  printf("QGW8_HEAD_STATIC_LOAD_COUNTS jobs%u bands%llu weight_reads%llu input_reads%llu weight_bytes%llu input_bytes%llu "
   "hypothetical_reused_input_reads%llu hypothetical_reused_input_bytes%llu;NO_DEVICE_TIMING_OR_REUSE_AUTHORITY\n",
   unsigned(H::Jobs),(unsigned long long)bands,(unsigned long long)weightReads,(unsigned long long)inputReads,
   (unsigned long long)weightBytes,(unsigned long long)inputBytes,(unsigned long long)reusedInputReads,(unsigned long long)reusedInputBytes);
+#endif
  auto boot=WorkerBoot(root,1);std::array<uint32_t,64>out;out.fill(0xa5a5a5a5);const auto untouched=out;
  if(argc>=2){
   static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"fixture uses little-endian worker words");

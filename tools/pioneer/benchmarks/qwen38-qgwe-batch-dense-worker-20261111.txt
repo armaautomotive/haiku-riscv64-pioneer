@@ -32,15 +32,24 @@ passes. The already-built program's execution instructions are unchanged by
 this compile-time guard.
 
 A distinct QGWE controller now builds reproducibly with the batched BFP8
-receipt grammar and new worker identity. Two builds produced ELF SHA-256
-2aed2c3bd11821fbe9317aaefcab98f849a8f5adadebeef8f8365a43173edfe4.
-Its ROOT text occupies 131032 of 131072 reserved bytes. In an instruction
+receipt grammar and new worker identity. The first root's head-job identity
+still used QGWD despite the new worker's QGWE identity; that incompatibility
+was found during job-handoff work and corrected. Two corrected builds produced
+ELF SHA-256 a10e4e5c0971d94b3a60e1a730a5d58f3aeccea67ceacd4c076903a9d554505e.
+The superseded initial ROOT 2aed2c3b... must not be used. Corrected ROOT text
+occupies 131028 of 131072 reserved bytes. In an instruction
 simulator its actual linked receipt accepted the QGWE worker's simulated
 head and FFN proofs, rejected selected corruptions, and the earlier QGWD
 receipt rejected the new identity. Compile-only root role exclusions pass.
 This does not exercise the complete ROOT lifecycle or actual fabric. The
 baseline QGWD ROOT was also rebuilt byte-identically to its existing ELF
 SHA-256 2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95.
+
+The corrected plan/controller/worker simulations covered 973 head jobs and
+all vocabulary rows, one planned 8-band head job executed on the worker,
+72 recurrent/dense pair-job constructions, and the linked dense Q/G/K/V
+dispatch routines. These use synthetic manifests, histories and transport;
+they do not run a complete token or demonstrate real device behavior.
 
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute

@@ -15,7 +15,7 @@ if len({worker,leaf,root,old}) != 4 or not all(p.is_absolute() and p.is_dir() an
 def pin(path, digest):
     assert not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest()==digest, path
 for folder,digest in ((worker,'d3614997705d473f6a2a0c0f23dabcbf1418f587bf7686c3862bcd55c81aaa42'),
-                      (root,'2aed2c3bd11821fbe9317aaefcab98f849a8f5adadebeef8f8365a43173edfe4'),
+                      (root,'a10e4e5c0971d94b3a60e1a730a5d58f3aeccea67ceacd4c076903a9d554505e'),
                       (old,'2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95')):
     pin(folder/'program.elf',digest)
 pin(leaf/'boot.bin','d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd')
