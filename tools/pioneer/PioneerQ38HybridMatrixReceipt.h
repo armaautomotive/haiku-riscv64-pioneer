@@ -73,6 +73,12 @@ struct PioneerQ38HybridMatrixReceipt {
    source=last.source;destination=last.destination;route=last.route;bytes=last.bytes;
 #endif
   }else{
+#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+   const unsigned offset=((width*2-1)/16384)*16384;
+   source=PioneerQ38Bfp4WorkerJob::RootInput+offset;
+   destination=PioneerNativeBfp4DramBandLayout::Input+offset;
+   route=PioneerQ38Bfp4WorkerJob::RootRoute;bytes=width*2-offset;
+#else
    PioneerQ38Bfp4WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
    PioneerQ38Bfp4WorkerJob::Read last;
    if(!PioneerQ38Bfp4WorkerJob::Packet(leaf,bands-1,
@@ -83,6 +89,7 @@ struct PioneerQ38HybridMatrixReceipt {
 #endif
     tiles-1,last))return false;
    source=last.source;destination=last.destination;route=last.route;bytes=last.bytes;
+#endif
   }
   for(unsigned i=0;i<10;i++){
    const unsigned expected=i==0?source:i==2?route:i==3?destination:i==5?b[4]:i==8?bytes:0U;
@@ -95,6 +102,9 @@ struct PioneerQ38HybridMatrixReceipt {
 #elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
     (eight?(bands*17+1)*tiles:bands*tiles*10):i==0 || i==2 || i==3 || i==6?
     (eight?(bands+1)*tiles:bands*tiles*2):0U;
+#elif defined(PIONEER_Q38_QGWF_BATCH4_WORKER)
+    bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?
+    bands*(tiles+(width*2+16383)/16384):0U;
 #elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_IMAGE) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT)
     bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?
     bands*(eight?tiles+(width*2+16383)/16384:tiles*2):0U;

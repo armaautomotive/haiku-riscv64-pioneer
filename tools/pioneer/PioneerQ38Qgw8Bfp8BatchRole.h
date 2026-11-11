@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwfBatch4WorkerRole.h"
 // Separate worker-only batching experiment; no ROOT or device authority.
 // QGWE combines the existing dense-Q8/SrcA worker with BFP8 input batching.
 // Its distinct boot/job identity must never be accepted by an older ROOT.

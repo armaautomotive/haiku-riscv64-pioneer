@@ -135,7 +135,9 @@ struct HybridImage:WorkerImage {
 #ifndef PIONEER_Q38_HYBRID_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
  const unsigned testLayer=0;
-#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+ const char* workerName="QGWF";
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
  const char* workerName="QGW7";
 #else
  const char* workerName="QGW5";

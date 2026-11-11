@@ -1,0 +1,22 @@
+QGWF combined BFP4/BFP8 batching worker, offline only
+====================================================
+
+This distinct worker combines the QGWE BFP8-batched dense/head path with
+per-band BFP4 input batching. It uses a new QGWF/QGOF worker identity and
+has no matching controller, native driver, install or Work authority.
+
+Two independent builds produced identical ELF SHA-256
+c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e.
+The rebuilt QGWE predecessor remained byte-identical to its pinned ELF.
+The QGWF front section occupies 13164 bytes and the combined BFP leaf
+section 14664 bytes. Build-time bounds and instruction audits passed.
+
+Actual emitted QGWF instructions passed simulated BFP4 FFN and BFP8 head
+jobs, both widths, receipt mutation and old-identity refusal checks. Three
+private model-derived BFP4 bands were each checked at three simulated peers
+against 192 expected output words, independently for both builds. No private
+model data are included in this report or repository.
+
+These are simulated memory/fabric results, not full-model quality, physical
+NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.
+The QGWF image must not be installed or used on the P100A on this evidence.

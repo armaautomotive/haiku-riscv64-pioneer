@@ -156,7 +156,9 @@ int main(int argc,char** argv){
   assert(!qgwa_old_root_receipt(proof,job,image->boot.data(),before,after));
 #endif
  }
-#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+ for(unsigned old:{0x38574751U,0x39574751U,0x41475751U,0x44574751U,0x45574751U}){
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER)
  for(unsigned old:{0x38574751U,0x39574751U,0x41475751U,0x44574751U}){
 #else
  for(unsigned old:{0x38574751U,0x39574751U}){
@@ -170,7 +172,9 @@ int main(int argc,char** argv){
   const auto* golden=PioneerNativeBfpBandGolden(5120);assert(golden);
   for(unsigned row=0;row<32;row++)assert(image->Get(W::Output+(32+row)*4)==golden[row]);
  }
-#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+ puts("PASS QGWF 1/2/3/8 bands and exact batched reads; old boots rejected; NO DEVICE GRANT");
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER)
  puts("PASS QGWE 1/2/3/8 bands and exact batched reads; old boots rejected; NO DEVICE GRANT");
 #else
  puts("PASS QGWA 1/2/3/8 bands and exact batched reads; old boots rejected; NO DEVICE GRANT");
@@ -190,7 +194,9 @@ int main(int argc,char** argv){
   assert(!image->Finish(1,true) && !image->native.matrixOps && !image->transfer.issues && !image->stores);
  }
  printf("PASS actual %s head worker/leaf: %u synthetic BFP8 outputs and argmax receipt%s, 2048 proof-bit mutations refused, corrupted job refused before work; injected layer history, NO lifecycle/model/device/TPS\n",
-#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+ "QGWF",
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER)
  "QGWE",
 #elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
  "QGWA",
