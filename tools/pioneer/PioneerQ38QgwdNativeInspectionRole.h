@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdNativeCandidateRole.h"
+#include "PioneerQ38QgweNativeInspectionRole.h"
 // Rechecked on every include. The ordinary inspection profile uses renamed
 // entry points and a fake tag. Only the separately checked tag141 role may
 // select this geometry in a candidate; neither profile is hardware approval.

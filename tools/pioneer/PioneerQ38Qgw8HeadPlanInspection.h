@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgweNativeInspectionRole.h"
 #if defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN) && (PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 \
  || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 \
- || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || ((defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG)) && !defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION)) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE))
 #error QGWE head metadata is an isolated simulated plan only
 #endif

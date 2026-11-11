@@ -5,11 +5,13 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwe='--qgwe-batch-dense-inspection' in args
+args=sys.argv[1:];qgwe_native='--qgwe-batch-dense-native-inspection' in args
+qgwe=qgwe_native or '--qgwe-batch-dense-inspection' in args
 if qgwe:
-    if args.count('--qgwe-batch-dense-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--matrix-')) and x!='--qgwe-batch-dense-inspection' for x in args):
+    selected='--qgwe-batch-dense-native-inspection' if qgwe_native else '--qgwe-batch-dense-inspection'
+    if args.count(selected)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--matrix-')) and x!=selected for x in args):
         raise SystemExit('ambiguous QGWE inspection selector')
-    args.remove('--qgwe-batch-dense-inspection');args.insert(0,'--qgwd-dense-q8-inspection')
+    args.remove(selected);args.insert(0,'--qgwd-dense-q8-native-inspection' if qgwe_native else '--qgwd-dense-q8-inspection')
 qgwd_two_candidate='--qgwd-two-token-native-candidate' in args
 if qgwd_two_candidate:
     if args.count('--qgwd-two-token-native-candidate')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-two-token-native-candidate' for x in args):
@@ -185,10 +187,15 @@ if matrix:
         if qgwe:
             lines += ['#if !defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWE_PROGRAMS_INSPECTION != 1 \\',
                       ' || !defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN) || PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 \\',
-                      ' || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) \\',
-                      ' || defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) \\',
-                      ' || defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) || defined(TT_PIONEER_DRIVER_RELOAD)',
-                      '#error QGWE program DATA is isolated offline inspection only', '#endif']
+                      ' || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) \\']
+            if qgwe_native:
+                lines += [' || defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) \\',
+                          ' || !defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION) || PIONEER_Q38_QGWE_NATIVE_INSPECTION != 1',
+                          '#error QGWE native DATA is compile-only', '#endif', '#include "PioneerQ38QgweNativeInspectionRole.h"']
+            else:
+                lines += [' || defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION) \\',
+                          ' || defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) || defined(TT_PIONEER_DRIVER_RELOAD)',
+                          '#error QGWE program DATA is isolated offline inspection only', '#endif']
         if qgwd_two_candidate:
             lines += ['#if !defined(PIONEER_Q38_QGWD_TWO_NATIVE_142) || PIONEER_Q38_QGWD_TWO_NATIVE_142 != 1',
                       '#error QGWD two-token candidate DATA requires tag142 native role', '#endif',

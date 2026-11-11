@@ -8,13 +8,14 @@ import subprocess
 import sys
 import tempfile
 
+qgwe=len(sys.argv)==4 and sys.argv[1]=='--qgwe-native-inspection'
 two=len(sys.argv)==4 and sys.argv[1]=='--two-candidate'
 candidate=two or len(sys.argv)==4 and sys.argv[1]=='--candidate'
-if len(sys.argv)!=(4 if candidate else 3) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+if len(sys.argv)!=(4 if candidate or qgwe else 3) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('usage: run_pioneer_q38_qgwd_native_source_compile.py [--candidate|--two-candidate] ABS_SDK ABS_PROGRAM_HEADER')
-sdk,header=map(Path,sys.argv[2:] if candidate else sys.argv[1:])
+sdk,header=map(Path,sys.argv[2:] if candidate or qgwe else sys.argv[1:])
 assert sdk.is_absolute() and sdk.is_dir() and header.is_absolute() and header.is_file()
-assert hashlib.sha256(header.read_bytes()).hexdigest()==('f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
+assert hashlib.sha256(header.read_bytes()).hexdigest()==('4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else 'f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
 here=Path(__file__).resolve().parent;root=here.parents[2];pioneer=here.parent
 role=(root/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRole.h').read_text()
 parents=set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role))
@@ -32,6 +33,7 @@ names=parents|set(('PIONEER_Q38_HYBRID_TRACKED_UPLOAD','PIONEER_Q38_HYBRID_NATIV
  'PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION'))
 names.update('TT_PIONEER_EXPERIMENTAL_Q38_'+n for n in ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS',
  'COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR'))
+if qgwe:names.update(('PIONEER_Q38_QGWE_NATIVE_INSPECTION','PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN'))
 if candidate:
     names-={'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY'}
     names.update(('PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_HYBRID_FULL_NATIVE',
@@ -57,6 +59,29 @@ if candidate:
     common+=['-fno-inline'] # inspection object only; force actual static paths to be emitted
 with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp') as directory:
     obj=Path(directory)/'native.o'
+    if qgwe:
+        compiler=os.environ.get('CXX','c++');role=pioneer/'PioneerQ38QgweNativeInspectionRole.h'
+        entry=('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')
+        rename=['-D'+name+'=qgwe_private_'+name for name in entry]
+        probe='#ifndef PIONEER_Q38_QGWE_NATIVE_INSPECTION\n#error missing QGWE inspection\n#endif\n#include "'+str(role)+'"\n'
+        def qgwe_check(arguments,success,body=probe):
+            result=subprocess.run([compiler,'-std=c++17',*arguments,'-x','c++','-fsyntax-only','-'],input=body,capture_output=True,text=True)
+            assert (result.returncode==0)==success,result.stderr[:1000]
+        selected=flags+rename;qgwe_check(selected,True)
+        for name in ('PIONEER_Q38_QGWE_NATIVE_INSPECTION','PIONEER_Q38_QGWD_NATIVE_INSPECTION',
+                     'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY',
+                     'PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN','_KERNEL_MODE'):
+            flag='-D'+name+'=1';assert flag in selected
+            qgwe_check([f for f in selected if f!=flag],False)
+            qgwe_check([f for f in selected if f!=flag]+['-D'+name+'=0'],False)
+        for name in ('PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_HYBRID_FULL_NATIVE',
+                     'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
+                     'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+            qgwe_check(selected+['-D'+name+'=1'],False)
+        tag='-DPIONEER_DRIVER_BUILD_TAG=0x51544b4e4f445256ULL'
+        qgwe_check([f for f in selected if f!=tag]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026111100010142ULL'],False)
+        qgwe_check([f for f in selected if f!=rename[0]],False)
+        qgwe_check(selected,False,probe+'#undef PIONEER_Q38_QGWE_NATIVE_INSPECTION\n#include "'+str(role)+'"\n')
     if candidate:
         compiler=os.environ.get('CXX','c++');role=pioneer/'PioneerQ38QgwdNativeCandidateRole.h'
         def check_role(arguments,success):
@@ -131,4 +156,4 @@ with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp'
         found=[r for r in rows if name in r[0] or candidate and name in fallback
                and fallback[name] in r[0] and ':constprop(' in r[0]]
         assert name in demangled and found and all(len(r)==3 and r[2]=='static' and int(r[1])<=2048 for r in found),(name,found)
-    print('PASS real QGWD '+('candidate source/object' if candidate else 'native source/object with renamed driver ABI')+' and bounded selected frames; COMPILE ONLY, NO DEVICE')
+    print('PASS real '+('QGWE' if qgwe else 'QGWD')+' '+('candidate source/object' if candidate else 'native source/object with renamed driver ABI')+' and bounded selected frames; COMPILE ONLY, NO DEVICE')

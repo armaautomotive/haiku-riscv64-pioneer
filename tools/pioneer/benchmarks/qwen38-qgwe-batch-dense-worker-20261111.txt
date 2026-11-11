@@ -74,6 +74,14 @@ lifecycle, failed-START owner quarantine, and corrupted-feedback refusal.
 That harness checks the QGWE package hash but uses fake driver replies and
 does not execute the package; it is not device, model, quality or TPS proof.
 
+An exclusive QGWE native-inspection DATA variant was generated twice with
+matching SHA-256 4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2.
+With that DATA, the real native context source compiles to an object with
+renamed driver entries and a fake tag; required-role, incompatible-role,
+wrong-tag and late-removal checks passed. Selected stack frames are bounded.
+The prior QGWD renamed-entry native context still compiles. This QGWE object
+is not linked, loadable, installed, run, or authority to access hardware.
+
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
 on the P100A on this evidence. The running tag142 trial does not use this

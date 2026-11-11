@@ -36,6 +36,16 @@ with tempfile.TemporaryDirectory(prefix='qgwd-programs-',dir='/private/tmp') as 
         subprocess.run([sys.executable,str(generator),selector,str(r),str(w),str(out)],check=True)
     assert first.read_bytes()==second.read_bytes()
     assert hashlib.sha256(first.read_bytes()).hexdigest()==('5097fc1b4aa43bf1a9a1418345e138649293c8e2ee2cea7097b92989a7ba14bf' if qgwe else '56b5d7479610c1862b6d6a5642b4441e3dab25d4bcefdcf00224c58efb675a7e' if seal_loop else '184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328')
+    if qgwe:
+        native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwe-batch-dense-native-inspection'
+        for image,worker,out in ((root_a,worker_a,native_a),(root_b,worker_b,native_b)):
+            subprocess.run([sys.executable,str(generator),native_selector,str(image),str(worker),str(out)],check=True)
+        assert native_a.read_bytes()==native_b.read_bytes()
+        assert hashlib.sha256(native_a.read_bytes()).hexdigest()=='4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2'
+        for extra in ([native_selector]*2,[native_selector,selector],[native_selector,'--qgwd-dense-q8-native-candidate']):
+            out=tmp/'ambiguous-qgwe-native.h'
+            result=subprocess.run([sys.executable,str(generator),*extra,str(root_a),str(worker_a),str(out)],capture_output=True)
+            assert result.returncode and not out.exists()
     if seal_loop:
         native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwd-seal-loop-native-inspection'
         for image,worker,out in ((root_a,worker_a,native_a),(root_b,worker_b,native_b)):
