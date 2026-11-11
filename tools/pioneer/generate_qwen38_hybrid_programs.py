@@ -5,7 +5,14 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwe_native='--qgwe-batch-dense-native-inspection' in args
+args=sys.argv[1:];qgwf_native='--qgwf-dual-batch-native-inspection' in args
+qgwf=qgwf_native or '--qgwf-dual-batch-inspection' in args
+if qgwf:
+    selector='--qgwf-dual-batch-native-inspection' if qgwf_native else '--qgwf-dual-batch-inspection'
+    if args.count(selector)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--qgwf-','--matrix-')) and x!=selector for x in args):
+        raise SystemExit('ambiguous QGWF inspection selector')
+    args.remove(selector);args.insert(0,'--qgwe-batch-dense-native-inspection' if qgwf_native else '--qgwe-batch-dense-inspection')
+qgwe_native='--qgwe-batch-dense-native-inspection' in args
 qgwe=qgwe_native or '--qgwe-batch-dense-inspection' in args
 if qgwe:
     selected='--qgwe-batch-dense-native-inspection' if qgwe_native else '--qgwe-batch-dense-inspection'
@@ -125,7 +132,8 @@ if matrix:
     if not candidate and not qgw8:
         if args.count('--matrix-attention-inspection')!=1:raise SystemExit('duplicate matrix selector')
         args.remove('--matrix-attention-inspection')
-    if qgwe:from PioneerQ38QgweBatchDenseProgramPins import ROOT_PINS, WORKER_PINS
+    if qgwf:from PioneerQ38QgwfDualBatchProgramPins import ROOT_PINS, WORKER_PINS
+    elif qgwe:from PioneerQ38QgweBatchDenseProgramPins import ROOT_PINS, WORKER_PINS
     elif qgwd:from PioneerQ38QgwdDenseProgramPins import ROOT_PINS, WORKER_PINS
     elif qgwc:from PioneerQ38QgwcSrcaProgramPins import ROOT_PINS, WORKER_PINS
     elif qgwa:from PioneerQ38QgwaBatchProgramPins import ROOT_PINS, WORKER_PINS
@@ -157,8 +165,8 @@ units += [(w,name,label,address) for name,label,address in (
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
-family='0x48505451' if qgwe else '0x47505451' if qgwd else '0x46505451' if qgwc else '0x45505451' if qgw8value else '0x44505451' if qgwa else '0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
-name='QTPH/QGWE-BATCH-DENSE' if qgwe else 'QTPG/QGWD-DENSE-Q8' if qgwd else 'QTPF/QGWC-SRCA' if qgwc else ('QTPE/QGW8-DENSE-VALUE-NATIVE-BUILD-ONLY' if qgw8valuenative else 'QTPE/QGW8-DENSE-VALUE') if qgw8value else 'QTPD/QGWA-BATCH' if qgwa else ('QTPC/QGW8-DENSE-INPUT-NATIVE-BUILD-ONLY' if qgw8inputnative else 'QTPC/QGW8-DENSE-INPUT') if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
+family='0x49505451' if qgwf else '0x48505451' if qgwe else '0x47505451' if qgwd else '0x46505451' if qgwc else '0x45505451' if qgw8value else '0x44505451' if qgwa else '0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
+name='QTPI/QGWF-DUAL-BATCH' if qgwf else 'QTPH/QGWE-BATCH-DENSE' if qgwe else 'QTPG/QGWD-DENSE-Q8' if qgwd else 'QTPF/QGWC-SRCA' if qgwc else ('QTPE/QGW8-DENSE-VALUE-NATIVE-BUILD-ONLY' if qgw8valuenative else 'QTPE/QGW8-DENSE-VALUE') if qgw8value else 'QTPD/QGWA-BATCH' if qgwa else ('QTPC/QGW8-DENSE-INPUT-NATIVE-BUILD-ONLY' if qgw8inputnative else 'QTPC/QGW8-DENSE-INPUT') if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38DenseQ8TokenFootprint.h"' if qgwd else '#include "PioneerQ38HybridTokenFootprint.h"',
  '#if !defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC) || PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 \\',
@@ -185,6 +193,13 @@ if matrix:
             lines += ['#if !defined(PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION) || PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION != 1',
                       '#error QGWD seal-loop DATA requires its distinct offline inspection role', '#endif']
         if qgwe:
+            if qgwf:
+                lines += ['#if !defined(PIONEER_Q38_QGWF_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWF_PROGRAMS_INSPECTION != 1 \\',
+                          ' || !defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN) || PIONEER_Q38_QGWF_DUAL_BATCH_PLAN != 1 \\',
+                          ' || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_BATCH4_WORKER)'+(' \\' if qgwf_native else ''),
+                          *([' || !defined(PIONEER_Q38_QGWF_NATIVE_INSPECTION) || PIONEER_Q38_QGWF_NATIVE_INSPECTION != 1'] if qgwf_native else []),
+                          '#error QGWF program DATA requires its isolated dual-batch plan', '#endif']
+                if qgwf_native:lines+=['#include "PioneerQ38QgwfNativeInspectionRole.h"']
             lines += ['#if !defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWE_PROGRAMS_INSPECTION != 1 \\',
                       ' || !defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN) || PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 \\',
                       ' || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) \\']
@@ -358,4 +373,4 @@ encoded=('\n'.join(lines)+'\n').encode()
 with output.open('xb') as target:
     if target.write(encoded)!=len(encoded):
         raise OSError('incomplete generated output')
-print('PASS PINNED '+('QGWE-BATCH-DENSE' if qgwe else 'QGWD-DENSE-Q8' if qgwd else 'QGWC-SRCA' if qgwc else 'QGW8-DENSE-VALUE' if qgw8value else 'QGWA-BATCH' if qgwa else 'QGW8-DENSE-INPUT' if qgw8input else 'QGW8-DENSE-STAGE' if qgw8stage else 'QGW8-TRACE' if qgw8trace else 'QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')
+print('PASS PINNED '+('QGWF-DUAL-BATCH' if qgwf else 'QGWE-BATCH-DENSE' if qgwe else 'QGWD-DENSE-Q8' if qgwd else 'QGWC-SRCA' if qgwc else 'QGW8-DENSE-VALUE' if qgw8value else 'QGWA-BATCH' if qgwa else 'QGW8-DENSE-INPUT' if qgw8input else 'QGW8-DENSE-STAGE' if qgw8stage else 'QGW8-TRACE' if qgw8trace else 'QGW8-COARSE' if qgw8coarse else 'QGW8' if qgw8 else 'QGW7' if matrix else 'QGW5')+' DATA 15 sections/two authenticated full ELFs; SHA256 '+hashlib.sha256(encoded).hexdigest()+'; NO DEVICE OR NATIVE AUTHORITY')

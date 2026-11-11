@@ -3,7 +3,10 @@
 #define main pioneer_original_binding_fixture_main
 #include "pioneer_q38_token_native_binding_test.cpp"
 #undef main
-#ifdef PIONEER_Q38_QGWE_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWF_NATIVE_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x49505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x46574751,"fake QGWF native profile required");
+#elif defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION)
 static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x48505451
  && PioneerQ38SelectedGlobalWorker::Magic==0x45574751,"fake QGWE native profile required");
 #else

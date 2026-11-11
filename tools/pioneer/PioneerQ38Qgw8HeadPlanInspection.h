@@ -38,7 +38,9 @@ class PioneerQ38Qgw8HeadPlanInspection {
   for(unsigned i=0;i<8;i++)staged[32+i]=b[8+i];
   // ROOT checks this witness against its selected head-worker grammar.
   const uint32_t witness[]={
-#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
+#if defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN)
+   0x46574751,
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
    0x45574751,
 #elif defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
    0x44574751,

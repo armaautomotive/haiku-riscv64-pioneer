@@ -27,7 +27,10 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
-#if defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION)
+#if defined(PIONEER_Q38_QGWF_PROGRAMS_INSPECTION)
+static_assert(PioneerQ38TokenPrograms::Family==0x49505451 && PioneerQ38TokenL1::Family==0x42505451,
+ "QGWF programs require their distinct QTPI identity and expanded dense-Q8 journal");
+#elif defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x48505451 && PioneerQ38TokenL1::Family==0x42505451,
  "QGWE programs require their distinct QTPH identity and expanded dense-Q8 journal");
 #elif defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)

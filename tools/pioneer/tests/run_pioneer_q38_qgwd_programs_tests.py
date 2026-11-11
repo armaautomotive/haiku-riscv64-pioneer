@@ -8,7 +8,10 @@ import subprocess
 import sys
 import tempfile
 
-args=sys.argv[1:];qgwe='--qgwe' in args
+args=sys.argv[1:];qgwf='--qgwf' in args
+if qgwf:
+    assert args.count('--qgwf')==1;args.remove('--qgwf');args.append('--qgwe')
+qgwe='--qgwe' in args
 if qgwe:
     assert args.count('--qgwe')==1;args.remove('--qgwe')
 seal_loop='--qgwd-seal-loop' in args
@@ -20,7 +23,8 @@ assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root_a,root_b,worker_a,worker_b=map(Path,args)
 assert all(p.is_absolute() and p.is_dir() for p in (sdk,root_a,root_b,worker_a,worker_b))
 here=Path(__file__).resolve().parent;root=here.parent;sys.path.insert(0,str(root))
-if qgwe:from PioneerQ38QgweBatchDenseProgramPins import ROOT_PINS,WORKER_PINS
+if qgwf:from PioneerQ38QgwfDualBatchProgramPins import ROOT_PINS,WORKER_PINS
+elif qgwe:from PioneerQ38QgweBatchDenseProgramPins import ROOT_PINS,WORKER_PINS
 else:from PioneerQ38QgwdDenseProgramPins import ROOT_PINS,WORKER_PINS
 generator=root/'generate_qwen38_hybrid_programs.py';compiler=os.environ.get('CXX','c++')
 flags=['-DPIONEER_Q38_QGWD_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWD_PLAN_SIMULATION=1',
@@ -29,19 +33,20 @@ flags=['-DPIONEER_Q38_QGWD_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWD_PLAN_SIMUL
        '-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1']
 if seal_loop:flags+=['-DPIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION=1']
 if qgwe:flags+=['-DPIONEER_Q38_QGWE_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWE_BATCH_DENSE_PLAN=1']
-selector='--qgwe-batch-dense-inspection' if qgwe else '--qgwd-seal-loop-inspection' if seal_loop else '--qgwd-dense-q8-inspection'
+if qgwf:flags+=['-DPIONEER_Q38_QGWF_PROGRAMS_INSPECTION=1','-DPIONEER_Q38_QGWF_DUAL_BATCH_PLAN=1']
+selector='--qgwf-dual-batch-inspection' if qgwf else '--qgwe-batch-dense-inspection' if qgwe else '--qgwd-seal-loop-inspection' if seal_loop else '--qgwd-dense-q8-inspection'
 with tempfile.TemporaryDirectory(prefix='qgwd-programs-',dir='/private/tmp') as directory:
     tmp=Path(directory);first=tmp/'a.h';second=tmp/'b.h'
     for r,w,out in ((root_a,worker_a,first),(root_b,worker_b,second)):
         subprocess.run([sys.executable,str(generator),selector,str(r),str(w),str(out)],check=True)
     assert first.read_bytes()==second.read_bytes()
-    assert hashlib.sha256(first.read_bytes()).hexdigest()==('5097fc1b4aa43bf1a9a1418345e138649293c8e2ee2cea7097b92989a7ba14bf' if qgwe else '56b5d7479610c1862b6d6a5642b4441e3dab25d4bcefdcf00224c58efb675a7e' if seal_loop else '184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328')
+    assert hashlib.sha256(first.read_bytes()).hexdigest()==('e0931f355b9eee374e8b18e0127fd84c21d9a9ef39a1252fedf3371e6e56ac0d' if qgwf else '5097fc1b4aa43bf1a9a1418345e138649293c8e2ee2cea7097b92989a7ba14bf' if qgwe else '56b5d7479610c1862b6d6a5642b4441e3dab25d4bcefdcf00224c58efb675a7e' if seal_loop else '184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328')
     if qgwe:
-        native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwe-batch-dense-native-inspection'
+        native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwf-dual-batch-native-inspection' if qgwf else '--qgwe-batch-dense-native-inspection'
         for image,worker,out in ((root_a,worker_a,native_a),(root_b,worker_b,native_b)):
             subprocess.run([sys.executable,str(generator),native_selector,str(image),str(worker),str(out)],check=True)
         assert native_a.read_bytes()==native_b.read_bytes()
-        assert hashlib.sha256(native_a.read_bytes()).hexdigest()=='4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2'
+        assert hashlib.sha256(native_a.read_bytes()).hexdigest()==('b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2')
         for extra in ([native_selector]*2,[native_selector,selector],[native_selector,'--qgwd-dense-q8-native-candidate']):
             out=tmp/'ambiguous-qgwe-native.h'
             result=subprocess.run([sys.executable,str(generator),*extra,str(root_a),str(worker_a),str(out)],capture_output=True)
@@ -84,13 +89,13 @@ static_assert(PioneerQ38TokenL1::Family==0x42505451,"expanded journal");
 static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x44574751,"QGWD");
 int main(){return PioneerQ38TokenPrograms::CodeSpans(119)==10?0:1;}
 '''
-    if qgwe:body=body.replace('0x47505451','0x48505451').replace('0x44574751','0x45574751')
+    if qgwe:body=body.replace('0x47505451','0x49505451' if qgwf else '0x48505451').replace('0x44574751','0x46574751' if qgwf else '0x45574751')
     selection=tmp/'selection'
     subprocess.run([compiler,'-std=c++17','-O2','-Wall','-Wextra','-Werror','-I'+str(root),*select,
                     '-x','c++','-','-o',str(selection)],input=body,text=True,check=True)
     subprocess.run([str(selection)],check=True)
     for required in ('PIONEER_Q38_QGWD_PROGRAMS_INSPECTION','PIONEER_Q38_QGWD_PLAN_SIMULATION',
-                     'PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION','PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION')+ (('PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION',) if seal_loop else ()) + (('PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN') if qgwe else ()):
+                     'PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION','PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION')+ (('PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION',) if seal_loop else ()) + (('PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN') if qgwe else ()) + (('PIONEER_Q38_QGWF_PROGRAMS_INSPECTION','PIONEER_Q38_QGWF_DUAL_BATCH_PLAN') if qgwf else ()):
         reduced=[flag for flag in select if flag!='-D'+required+'=1']
         result=subprocess.run([compiler,'-std=c++17','-I'+str(root),*reduced,
                                '-fsyntax-only','-x','c++','-'],input=body,text=True,capture_output=True)
@@ -101,4 +106,4 @@ int main(){return PioneerQ38TokenPrograms::CodeSpans(119)==10?0:1;}
         result=subprocess.run([compiler,'-std=c++17','-I'+str(root),*select,'-D'+forbidden+'=1',
                                '-fsyntax-only','-x','c++','-'],input=body,text=True,capture_output=True)
         assert result.returncode,forbidden
-print('PASS '+('QGWE' if qgwe else 'QGWD_SEAL_LOOP' if seal_loop else 'QGWD')+' 15-section bundle and expanded journal, exact role and corruption refusals; NO DEVICE')
+print('PASS '+('QGWF' if qgwf else 'QGWE' if qgwe else 'QGWD_SEAL_LOOP' if seal_loop else 'QGWD')+' 15-section bundle and expanded journal, exact role and corruption refusals; NO DEVICE')

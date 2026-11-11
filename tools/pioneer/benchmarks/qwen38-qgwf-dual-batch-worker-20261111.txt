@@ -31,6 +31,17 @@ fabric: planned head and dense jobs, BFP4 and BFP8 receipts, corrupted proof
 refusals and old-identity rejection passed. Role isolation tests passed.
 These checks do not cover the complete ROOT lifecycle or physical device.
 
+Native-integration inspection: independently generated 15-section QGWF
+bundles matched SHA-256 e0931f355b9eee374e8b18e0127fd84c21d9a9ef39a1252fedf3371e6e56ac0d
+(offline) and b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6
+(fake-tag native compile only). Corrupted images, incompatible identities,
+ambiguous selectors and missing isolation roles were refused. The existing
+QGWE bundles reproduced their previous hashes. Startup-plan records were
+accepted by emitted code for all 119 synthetic workers, and head metadata
+was accepted by the linked ROOT. Real driver source compiled using renamed
+entry points and the fake tag; simulated sealed-receipt binding and memory
+reservation passed. These are not a loadable driver or hardware test.
+
 These are simulated memory/fabric results, not full-model quality, physical
 NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.
 The QGWF image must not be installed or used on the P100A on this evidence.

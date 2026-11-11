@@ -11,7 +11,9 @@
 #if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
 #define PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC 1
 #include "../PioneerQ38TokenSelectedPrograms.h"
-#ifdef PIONEER_Q38_QGWE_PROGRAMS_INSPECTION
+#ifdef PIONEER_Q38_QGWF_PROGRAMS_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x49505451,"QGWF inspection must select its exact program family");
+#elif defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x48505451,"QGWE inspection must select its exact program family");
 #elif defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x47505451,"QGWD inspection must select its exact program family");
@@ -191,7 +193,9 @@ int main(int argc,char** argv){
    std::array<uint32_t,64> peer={};
    assert(startup->ReadBoot(worker,peer.data()) && PioneerQ38SelectedGlobalWorker::BootShape(peer.data())
     && peer[0]==
-#ifdef PIONEER_Q38_QGWE_PROGRAMS_INSPECTION
+#ifdef PIONEER_Q38_QGWF_PROGRAMS_INSPECTION
+       0x46574751
+#elif defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION)
        0x45574751
 #elif defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
        0x44574751
