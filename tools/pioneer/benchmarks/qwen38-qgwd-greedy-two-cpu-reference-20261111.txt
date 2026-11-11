@@ -1,0 +1,21 @@
+QGWD two-position greedy CPU reference, 2026-11-11
+=================================================
+
+The original Qwen3.8-27B-Q4_K_M model was evaluated on the Mac, with a
+single reference instance retaining its own attention, convolution, and
+recurrent state. Input 248319 produced 70253; that complete first-position
+trace matched the previously pinned SHA-256 in the diagnostic. Feeding
+70253 back as the second input produced 70253 again. The second position
+is a new observation, not an independently pinned reference.
+
+Diagnostic executable SHA-256:
+64a47db9f48f64b0e91577aadc7990c08d067fa7f76780158b79f6d2e7faca02
+The process exited 0 and its source readiness checks passed. The isolated
+build, invalid-input refusals, and kernel/Work/validation role exclusions
+also passed the accompanying test runner.
+
+This is a CPU-only diagnostic of one artificial two-position sequence,
+not a P100A result, a steady-state speed measurement, independent
+second-position validation, or a general model-quality judgment. No CPU
+reference is used by the Work mode. A future card diagnostic must compare
+its own observed records without replacing a mismatching card result.
