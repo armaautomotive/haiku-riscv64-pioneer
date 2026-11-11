@@ -1,0 +1,33 @@
+QGWD two-token physical diagnostic, 2026-11-11
+================================================
+
+The pinned tag142 QGWD candidate ran the full Qwen3.8-27B-derived path on
+the P100A for fixed prompt token 248319 and two requested outputs. The
+recorded outputs were 70253, 70253. The same sequence was observed in the
+earlier CPU diagnostic, although its second position was not independently
+pinned. The client did not perform CPU validation during card execution.
+This is one artificial two-position case, not conversational-quality proof.
+
+The client reported 543.378 seconds from START request through terminal
+observation for both outputs, including initialization and prompt processing.
+Its corresponding 0.003681 output tokens/second includes those costs and is
+NOT steady-state decode throughput. Only two outputs were requested; no
+per-token timing was observed. The prior one-output tag141 measurement of
+527.257 seconds also included startup; subtracting independent run times is
+not a reliable decode benchmark or a statistically established speedup.
+The 20 tokens/second target is not established and remains unmet.
+
+The four-cache preflight exited 0, 21094223872 bytes were uploaded, and
+the two-output transcript passed the shape gate. FINISH and close succeeded;
+trial exit was 0 and trial stderr empty. The parent reported restoration of
+stable driver tag 2026102100010012, generation 24. An independent post-check
+confirmed the installed stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+quiesced=0, cold=0, active_owner=0, 64 CPUs and 137034936320 bytes of RAM.
+Parent and client processes were absent at post-check.
+
+Remote stage: /boot/home/pioneer-qgwd-diagnostic-142-20261111-a
+trial.stdout SHA-256:
+14f53b6fabb832755ead2809d53af5d335875f00fc264ce5dbfa88000b857b7e
+State: CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED.
+The stage is one-shot and must not be replayed or have its markers removed.
