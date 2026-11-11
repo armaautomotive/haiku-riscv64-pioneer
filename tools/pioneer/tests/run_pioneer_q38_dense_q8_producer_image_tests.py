@@ -7,10 +7,11 @@ import subprocess
 import sys
 import tempfile
 
-args=sys.argv[1:];combined='--qgwd' in args
+args=sys.argv[1:];batch='--qgwe' in args;combined='--qgwd' in args or batch
 if combined:
-    if args.count('--qgwd')!=1:raise SystemExit('duplicate QGWD selector')
-    args.remove('--qgwd')
+    selector='--qgwe' if batch else '--qgwd'
+    if args.count(selector)!=1 or ('--qgwd' in args and batch):raise SystemExit('ambiguous worker selector')
+    args.remove(selector)
 if len(args) not in (4,5) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('usage: absolute-SDK absolute-worker1 absolute-worker2 absolute-BFP4-leaf [absolute-BFP8-leaf]')
 sdk,first,second,leaf=map(Path,args[:4]);bfp8=Path(args[4]) if len(args)==5 else None
@@ -31,10 +32,14 @@ if combined:
     pins.update({'globalworker.bin':'cbe9eb61d3d231c254fc0a86f60bbe8b8e89761091fbad12c779e5245c9df85c',
                  'dense.bin':'8d0751a2ca303c122c85bf1952709ff36d8fb0549978f731391fc9ce81845206',
                  'program.elf':'b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8'})
+if batch:
+    pins.update({'globalworker.bin':'7e7282754f9d50027893166429a972325124d461fcb3c9ce527dcc3d44af562f',
+                 'cachedfpu.bin':'2212c2bd6d304df6c4ba7e97ee8e0db2683557f851c366545a312c03f3bc9973',
+                 'program.elf':'d3614997705d473f6a2a0c0f23dabcbf1418f587bf7686c3862bcd55c81aaa42'})
 for folder in (first,second):
     for name,digest in pins.items():
         assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest,(folder,name)
-    assert len((folder/'globalworker.bin').read_bytes())==13148>12288
+    assert len((folder/'globalworker.bin').read_bytes())==(13180 if batch else 13148)>12288
     tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
     assert (folder/'program.symbols').read_bytes()==subprocess.check_output([tool+'nm','-n',str(folder/'program.elf')])
 for name,digest in {'boot.bin':'d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd',
@@ -42,7 +47,7 @@ for name,digest in {'boot.bin':'d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f77
     assert hashlib.sha256((leaf/name).read_bytes()).hexdigest()==digest,name
 if bfp8:
     for name,digest in {'boot.bin':'d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd',
-                        'text.bin':'4cbd9db9777a528cde91cece928ba5aa205adcbdac3435a2571a89259c181b67'}.items():
+                        'text.bin':('77d87adaf6ab3f9c34fc9f1c50c627d6174676b700f24bca34c8a28f0bcd1dd0' if batch else '4cbd9db9777a528cde91cece928ba5aa205adcbdac3435a2571a89259c181b67')}.items():
         assert hashlib.sha256((bfp8/name).read_bytes()).hexdigest()==digest,name
 dis=subprocess.check_output([tool+'objdump','-d','-C','-j','.globalworker',str(first/'program.elf')],text=True)
 assert 'b9042703' in dis and 'lw\ta4,-1136(s0)' in dis,'test-only model-layer injection must match pinned image'
@@ -51,6 +56,7 @@ flags=['-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_HEAD_M
  '-DPIONEER_Q38_HYBRID_WORKER_IMAGE=1','-DPIONEER_Q38_BF16_WORKER_IMAGE=1',
  '-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1','-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 if combined:flags+=['-DPIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE=1','-DPIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER=1']
+if batch:flags+=['-DPIONEER_Q38_QGWE_BATCH_DENSE_WORKER=1','-DPIONEER_Q38_QGW8_BFP8_BATCH_WORKER=1','-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1']
 if combined:
     header=here.parent/'PioneerQ38DenseQ8MatrixWorkerLayout.h'
     source='#include <cstdint>\n#include "'+str(header)+'"\n'
@@ -65,7 +71,7 @@ if combined:
         reduced=[flag for flag in flags if flag!='-D'+name+'=1'];rolecheck(reduced,False)
         rolecheck(reduced+['-D'+name+'=0'],False)
     for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
-                 'PIONEER_Q38_QGW8_BFP8_BATCH_WORKER','PIONEER_Q38_QGW8_BFP8_REUSE_WORKER'):
+                 *([] if batch else ['PIONEER_Q38_QGW8_BFP8_BATCH_WORKER']),'PIONEER_Q38_QGW8_BFP8_REUSE_WORKER'):
         rolecheck(flags+['-D'+name+'=1'],False)
     rolecheck(flags,False,source+'#undef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER\n#include "'+str(header)+'"\n')
 with tempfile.TemporaryDirectory(prefix='qgwb-dense-producer-image-',dir='/private/tmp') as directory:
@@ -79,4 +85,4 @@ with tempfile.TemporaryDirectory(prefix='qgwb-dense-producer-image-',dir='/priva
                         '-fsanitize=address,undefined',*flags,*(['-DPIONEER_TEST_BF16_SRCA_16BIT_BASE=1'] if name=='transition' else []),str(here/source),'-o',str(binary)],check=True)
         for folder in (first,second):
             subprocess.run([str(binary),str(folder),str(selected_leaf)],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
-print('PASS two pinned '+('QGWD' if combined else 'QGWB')+' producer images; old journal is TOO SMALL; NO NATIVE OR DEVICE AUTHORITY')
+print('PASS two pinned '+('QGWE' if batch else 'QGWD' if combined else 'QGWB')+' producer images; old journal is TOO SMALL; NO NATIVE OR DEVICE AUTHORITY')

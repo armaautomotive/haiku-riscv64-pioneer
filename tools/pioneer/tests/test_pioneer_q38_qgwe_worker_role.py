@@ -32,4 +32,6 @@ for name in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'TT_PIONEER_DRIVER_RELO
              'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_QGW8_BFP8_REUSE_WORKER'):
     compile_case(flags + ['-D' + name + '=1'], False)
 compile_case(flags, False, source + '#undef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER\n#include "' + str(header) + '"\n')
+for name in ('PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER', 'PIONEER_Q38_QGW8_BFP8_BATCH_WORKER'):
+    compile_case(flags, False, source + '#undef ' + name + '\n#include "' + str(header) + '"\n')
 print('PASS isolated QGWE identity and invalid-role refusals; compile-only, NO DEVICE OR SPEED')

@@ -22,8 +22,16 @@ re-fetch. The two-band mock reported 322 reads and 218879 RV32 steps. These
 are synthetic transport and instruction counts, not card timings. Layer
 history was injected and the dense-layer arithmetic is not covered here.
 
+The actual linked dense producer, Q/G/K/V matrix jobs and a synthetic
+producer-to-matrix handoff also passed for both pinned workers with mocked
+NoC and FPU, plus the synthetic attention transition. These tests inject
+layer history and synthetic controller data; they are not a full token or
+real ROOT/worker communication. A late macro-removal check initially failed:
+the layout now rechecks the combined role on every include, and the check
+passes. The already-built program's execution instructions are unchanged by
+this compile-time guard.
+
 This is not yet a connected controller/worker, source-ownership proof, full
-token, device test, quality test or speedup. Actual QGWE dense producer and
-matrix behavior still need simulation. Do not install or execute on the P100A
-on this evidence. The running tag142 trial does not use this worker and was
-not interrupted.
+token, device test, quality test or speedup. Do not install or execute on the
+P100A on this evidence. The running tag142 trial does not use this worker and
+was not interrupted.

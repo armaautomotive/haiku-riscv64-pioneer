@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdKernelCompileRole.h"
 #include "PioneerQ38QgwdNativeInspectionRole.h"
+#include "PioneerQ38Qgw8Bfp8BatchRole.h" // Recheck combined-role prerequisites on every include.
 #if !defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION != 1 \
  || (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) \
   && !(defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) && defined(PIONEER_Q38_QGWD_ROOT_IMAGE))) \
