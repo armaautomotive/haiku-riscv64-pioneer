@@ -3,8 +3,13 @@
 #define main pioneer_original_binding_fixture_main
 #include "pioneer_q38_token_native_binding_test.cpp"
 #undef main
+#ifdef PIONEER_Q38_QGWE_NATIVE_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x48505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x45574751,"fake QGWE native profile required");
+#else
 static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x47505451
  && PioneerQ38SelectedGlobalWorker::Magic==0x44574751,"fake QGWD native profile required");
+#endif
 int main(){
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f;auto& c=*f.c;std::fill(f.learned.begin(),f.learned.end(),0);

@@ -82,6 +82,12 @@ wrong-tag and late-removal checks passed. Selected stack frames are bounded.
 The prior QGWD renamed-entry native context still compiles. This QGWE object
 is not linked, loadable, installed, run, or authority to access hardware.
 
+Using the distinct QGWE inspection DATA, the actual native bind and gapped
+receipt logic passed on simulated endpoints. A separate simulated native
+bootstrap exercised initialization and all 119 worker instruction images,
+including shared-memory histories and boot ordering. These are mock OS,
+VM and NoC endpoints, not a physical bootstrap or model inference.
+
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
 on the P100A on this evidence. The running tag142 trial does not use this
