@@ -44,6 +44,11 @@ reservation passed. These are not a loadable driver or hardware test.
 The simulated native bootstrap also passed the three real zero-program
 initializers, 120 L1 installs and 119 virgin QGWF worker boots, with ROOT
 held. This does not test a running ROOT, full inference or card speed.
+The subsequent QGWF native execution fixture reached the emitted ROOT's
+startup marker, after 119 simulated worker boots. Pending execution was
+not accepted as terminal or cleanup authority. The fixture stopped at the
+marker; it did not execute model arithmetic or produce a token. Its
+execution-traffic mode is not enabled for this QGWD-derived inspection.
 
 A separate QGWF frontier ROOT was built twice, ELF SHA-256
 e50ed27fba25611700a3a93b569a37145ad1ea400718ec7707326198ed560665.
@@ -53,6 +58,11 @@ seals and NoC mocked; the count and fence followed successful readbacks and
 seals. The unchanged QGWF control emitted no frontier. This is preparation
 for measuring steady-state throughput, not a native reader, hardware test,
 clock measurement or tokens/sec result. It has no installation authority.
+The frontier ROOT and the dual-batch worker now also have a separately
+identified 15-section offline bundle, reproducible SHA-256
+cdb8becce43a7adbe27a04751f6ace631b6e299ee844a0542beb01686fadf2fa.
+Packaging tests verify both image hashes, identity/role separation and
+corruption refusals; the earlier QGWF bundles remain byte-identical.
 
 These are simulated memory/fabric results, not full-model quality, physical
 NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.
