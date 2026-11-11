@@ -87,6 +87,10 @@ receipt logic passed on simulated endpoints. A separate simulated native
 bootstrap exercised initialization and all 119 worker instruction images,
 including shared-memory histories and boot ordering. These are mock OS,
 VM and NoC endpoints, not a physical bootstrap or model inference.
+The same simulated native lifecycle subsequently reached the real QGWE ROOT
+startup marker after all 119 worker boots and checked pending-state cleanup
+refusals and a cancel request. It deliberately paused before model arithmetic;
+there is no token, native completion, real device, quality or speed evidence.
 
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
