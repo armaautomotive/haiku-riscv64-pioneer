@@ -41,4 +41,13 @@ with tempfile.TemporaryDirectory(prefix='qgwe-worker-test-', dir='/private/tmp')
                                      'UBSAN_OPTIONS':'halt_on_error=1'}, check=True)
         assert not result.stderr and 'PASS QGWE' in result.stdout, result.stdout + result.stderr
         print(result.stdout, end='')
+    boots=Path(tmp)/'all-worker-boots'
+    source=Path(__file__).resolve().parent/'pioneer_q38_qgwe_all_worker_boot_test.cpp'
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra',
+                    '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
+                    *['-D'+name+'=1' for name in names], str(source), '-o', str(boots)], check=True)
+    result=subprocess.run([str(boots),str(first),str(leaf)],capture_output=True,text=True,
+                          env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'},check=True)
+    assert not result.stderr and 'all 119' in result.stdout,result.stdout+result.stderr
+    print(result.stdout,end='')
 print('PASS two pinned workers on mocked transport; NOT full-model, hardware, quality or speed')

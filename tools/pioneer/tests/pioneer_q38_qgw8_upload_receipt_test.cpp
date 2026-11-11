@@ -186,12 +186,16 @@ int main(int argc,char** argv){
   auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
   assert(startup->Build(*native,bank,startupId,sources.data(),prompt,2,8192,true,248318,248317)
    && startup->Matches(*native) && startup->Workspace()==native->Base+native->Workspace(bank)->offset);
-#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
+#if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
   for(unsigned worker=1;worker<120;worker++){
    std::array<uint32_t,64> peer={};
    assert(startup->ReadBoot(worker,peer.data()) && PioneerQ38SelectedGlobalWorker::BootShape(peer.data())
     && peer[0]==
-#ifdef PIONEER_Q38_QGWC_PROGRAMS_INSPECTION
+#ifdef PIONEER_Q38_QGWE_PROGRAMS_INSPECTION
+       0x45574751
+#elif defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
+       0x44574751
+#elif defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
        0x43574751
 #elif defined(PIONEER_Q38_QGWA_BATCH_PROGRAMS_INSPECTION)
        0x41475751
@@ -199,6 +203,13 @@ int main(int argc,char** argv){
        0x38574751
 #endif
     && peer[49]==0 && peer[50]==0x1ffc0000);
+#ifdef PIONEER_Q38_QGWE_PROGRAMS_INSPECTION
+   if(bank==0 && argc==2 && !strcmp(argv[1],"--emit-startup-fixture")){
+    printf("QGWE_STARTUP_WORKER_%u ",worker);
+    for(const auto byte:peer)for(unsigned n=0;n<4;n++)printf("%02x",unsigned((byte>>(n*8))&255));
+    putchar('\n');
+   }
+#endif
   }
 #endif
   std::array<uint32_t,128> head={};

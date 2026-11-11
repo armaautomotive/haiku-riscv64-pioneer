@@ -64,6 +64,10 @@ QGWD head witness. The QGWE inspection plan now publishes its own QGWE
 witness; startup metadata and job passed the actual linked controller's head
 shape checks. The older QGWD startup fixture passed the same regression. No
 actual device or model arithmetic was involved in these startup checks.
+The test now checks all 119 startup-generated worker boot records and feeds
+them to the pinned worker's actual entry instructions in a mocked fabric;
+all 119 reached their wait state. The records and source registers are
+synthetic: this is not a real 119-worker native bootstrap or hardware test.
 
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
