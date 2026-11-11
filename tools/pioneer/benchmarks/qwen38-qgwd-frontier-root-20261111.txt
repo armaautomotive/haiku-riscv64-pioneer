@@ -21,6 +21,14 @@ actual emitted RV32 leaf passed 8194 synthetic inputs, with exactly one
 aligned telemetry write and the expected fence/frame behavior. This leaf
 test does not execute the complete token publication path.
 
+The actual linked publication caller was subsequently emulated for both
+pinned QGWD ROOT images, with the transport and seal dependencies mocked.
+Each passed 8192 complete positions and 296 injected readback, dependency,
+and phase failures. The frontier variant wrote and fenced the count only
+after both mocked readbacks and final seals; the baseline never wrote it.
+This exercises the caller and counter leaf, not the seal bodies, actual NoC
+transport, whole-model execution, or physical hardware.
+
 No native reader, full-session timing protocol, multi-token candidate,
 hardware execution, speed, numerical-quality or Work capability has been
 qualified for this variant. The telemetry word is data only and never
