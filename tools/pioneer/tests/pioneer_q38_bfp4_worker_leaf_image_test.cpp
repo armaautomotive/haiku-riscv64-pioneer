@@ -51,7 +51,10 @@ struct WorkerImage:Machine {
  bool CodeAddress(uint32_t a)const override{return a==0x6000 || Range(a,0x70000,unsigned(code.size()));}
  unsigned StepLimit()const override{return 10000000+PioneerDramQueuedReadSweep::PollLimit*2048;}
  bool Loaded()const{return transfer.completions>=
-#ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+  native.tiles+(transfer.job.words[2]*2+16383)/16384 &&
+  !(transfer.completions%(native.tiles+(transfer.job.words[2]*2+16383)/16384))
+#elif defined(PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT)
   2*native.tiles/16 && !(transfer.completions%(2*native.tiles/16))
 #else
   2*native.tiles
@@ -78,6 +81,9 @@ struct WorkerImage:Machine {
   if(a==0xffe000fc){assert(!value && Loaded());gpr63=0;return;}
   if(Range(a,0xffef0000,224*4)){assert(Loaded());native.Config((a-0xffef0000)/4,value);return;}
   if(transfer.Header(a) || Range(a,0xffb20000,0x2000)
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+   || transfer.InputScratch(a)
+#endif
 #ifdef PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT
    || transfer.Local(a)
 #endif
@@ -125,6 +131,8 @@ struct WorkerImage:Machine {
   assert(Loaded() && native.Clean() && stores==bands*32 && native.outputReads==bands*32 && native.clears==bands && !transfer.scalar);
 #ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
   assert(inputPreservationChecked && transfer.issues==(bands+1)*native.tiles && transfer.completions==transfer.issues);
+#elif defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
+  assert(transfer.issues==bands*(native.tiles+(transfer.job.words[2]*2+16383)/16384) && transfer.completions==transfer.issues);
 #elif defined(PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT)
   assert(transfer.issues==2*bands*native.tiles/16 && transfer.completions==transfer.issues);
 #else

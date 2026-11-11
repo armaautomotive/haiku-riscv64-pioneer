@@ -23,7 +23,7 @@ static W::Job Make(unsigned worker,unsigned width,unsigned bands=2){
 }
 struct IO {
  W::Job job;unsigned band,events=0,issues=0,completions=0,headers=0,scalar=0,fault=0,drop=99;
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
  unsigned scatterWrites=0,dropScatter=0,rootDelay=0,maxRootPending=0,delayedRootPolls=0;bool stallRoot=false;
 #endif
  std::array<uint32_t,10> command;std::array<uint32_t,16> counters;std::vector<W::Read> pending;
@@ -52,7 +52,7 @@ struct IO {
   return a>=L::Input-L::Header && a-(L::Input-L::Header)<L::Tiles(job.words[2])*L::InputStride;
  }
  void Flush(){
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
   assert(pending.size()==16 || (!pending.empty() && pending.size()<=3 && pending[0].route==W::RootRoute));
 #else
   assert(pending.size()==16);
@@ -75,7 +75,7 @@ struct IO {
   }
 #endif
   if(Header(a) || InputScratch(a)){
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    if(InputScratch(a))assert(pending.empty() || pending[0].route!=W::RootRoute);
 #endif
    return l1[a]|unsigned(l1[a+1])<<8|unsigned(l1[a+2])<<16|unsigned(l1[a+3])<<24;}
@@ -87,15 +87,15 @@ struct IO {
   if(a==0xffb20150 || a==0xffb20154)return 0;
   if(a==0xffb20100)return fault==2?0x4000:0x14000;if(a==0xffb20068)return fault==3?1:0;
   if(a==0xffb20064){if((pending.size()==16
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    || (!pending.empty() && pending[0].route==W::RootRoute && !rootDelay)
 #endif
    ) && fault!=4
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    && !(stallRoot && !pending.empty() && pending[0].route==W::RootRoute)
 #endif
    )Flush();
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    else if(!pending.empty() && pending[0].route==W::RootRoute && rootDelay){rootDelay--;delayedRootPolls++;}
 #endif
    return 0x10101010-unsigned(pending.size());}
@@ -108,11 +108,11 @@ struct IO {
  }
  void Write(unsigned a,unsigned value){
   events++;
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
   if(InputScratch(a))assert(pending.empty() || pending[0].route!=W::RootRoute);
 #endif
   if(Header(a)){headers++;assert(!value);if(fault!=11 || headers!=1)std::memset(l1.data()+a,0,4);return;}
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
   if(InputScratch(a)){
    scatterWrites++;if(scatterWrites!=dropScatter)for(unsigned byte=0;byte<4;byte++)l1[a+byte]=uint8_t(value>>(byte*8));
    return;
@@ -120,7 +120,7 @@ struct IO {
 #endif
   if(a==0xffb20040){
    const unsigned tiles=L::Tiles(job.words[2]);
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    const unsigned chunks=(job.words[2]*2+16383)/16384,perBand=tiles+chunks;
    if(autoBand)band=issues/perBand;
    const unsigned index=issues%perBand;W::Read expected={};
@@ -140,11 +140,11 @@ struct IO {
 #endif
    assert(command[0]==expected.source && command[2]==expected.route && command[3]==expected.destination && command[5]==job.words[7] && command[8]==expected.bytes);
    assert(!command[1] && !command[4] && !command[6] && !command[7] && !command[9]);
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    if(expected.route==W::RootRoute && pending.empty())rootDelay=3;
 #endif
    pending.push_back(expected);
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    if(expected.route==W::RootRoute)maxRootPending=std::max(maxRootPending,unsigned(pending.size()));
 #endif
    issues++;return;
@@ -155,7 +155,7 @@ struct IO {
  void Fence(){events++;}
  void Exact()const{
   assert(issues==
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
    L::Tiles(job.words[2])+(job.words[2]*2+16383)/16384
 #else
    2*L::Tiles(job.words[2])
@@ -176,7 +176,7 @@ int main(){
  for(unsigned worker=1;worker<120;worker++)for(unsigned width:{5120U,17408U}){
   auto job=Make(worker,width);IO io(job,1);WorkerLoader loader;
   assert(loader.Run(io,job,1));io.Exact();
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
   assert(io.delayedRootPolls>=3 && io.maxRootPending==(width==5120?1U:3U));
 #endif
   const auto before=io.events;assert(!loader.Run(io,job,1) && io.events==before);valid++;
@@ -189,7 +189,7 @@ int main(){
   auto job=Make(1,5120);IO io(job,0);io.drop=drop;WorkerLoader loader;assert(!loader.Run(io,job,0) && !io.issues);
   const auto before=io.events;assert(!loader.Run(io,job,0) && io.events==before);refused++;
  }
-#if defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)
+#if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
  for(unsigned width:{5120U,17408U}){
   auto job=Make(1,width);IO io(job,0);io.dropScatter=1;WorkerLoader loader;
   assert(!loader.Run(io,job,0) && io.scatterWrites==1);

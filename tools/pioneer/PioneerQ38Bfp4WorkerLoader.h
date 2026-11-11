@@ -1,4 +1,28 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT) && (PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT != 1 \
+ || defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT) || defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT) \
+ || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+ || defined(PIONEER_Q38_HYBRID_FULL_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error BFP4 input batching is isolated leaf inspection only
+#endif
+#ifndef PIONEER_Q38_BFP4_BATCH_INPUT_BINDING_H
+#define PIONEER_Q38_BFP4_BATCH_INPUT_BINDING_H
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+enum {PioneerQ38Bfp4BatchInputSelection=1};
+#else
+enum {PioneerQ38Bfp4BatchInputSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+static_assert(PioneerQ38Bfp4BatchInputSelection==1,"late BFP4 batch selection");
+#else
+static_assert(PioneerQ38Bfp4BatchInputSelection==0,"late BFP4 batch removal");
+#endif
 #ifndef PIONEER_Q38_BFP4_WORKER_LOADER_H
 #define PIONEER_Q38_BFP4_WORKER_LOADER_H
 #if !defined(PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC) || PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC != 1 \
@@ -13,6 +37,11 @@
 #endif
 #include "PioneerQ38Bfp4WorkerJob.h"
 #include "PioneerDramCohortReadSweep.h"
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+static_assert(PioneerNativeBfp4DramBandLayout::Input+17408U*2 <=
+ PioneerNativeBfp4DramBandLayout::Input+(17408U/32U-1U)*PioneerNativeBfp4DramBandLayout::InputStride+64U,
+ "compact BFP4 input fits the existing expanded staging span");
+#endif
 // One 32-row band. Weight reads target its firmware-bound GDDR bank;
 // activation reads target the existing BF16 vector in ROOT L1. Only NoC
 // packets touch payloads. Exclusive source/NIU/FIFO/L1/clock ownership and
@@ -46,6 +75,41 @@ class PioneerQ38Bfp4WorkerLoader {
   }
   return false;
  }
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+ // Contiguous source read per band, then reverse-expand into the existing
+ // tile slots. Ownership and physical NoC ordering remain unproved.
+ template<class IO> bool BatchInput(IO& io){
+  const unsigned bytes=job.words[2]*2;
+  if(!bytes || (bytes&63) || !Quiet(io))return false;
+  for(unsigned i=0;i<10;i++){
+   const unsigned value=i==0?W::RootInput:i==2?W::RootRoute:i==3?L::Input:i==5?job.words[7]:i==8?(bytes<16384?bytes:16384):0;
+   command[i]=value;io.Write(0xffb20000+i*4,value);
+  }
+  if(!Commands(io))return false;
+  for(unsigned offset=0;offset<bytes;){
+   const unsigned count=bytes-offset<16384?bytes-offset:16384;
+   if(!Q::Slot(io))return false;
+   command[0]=W::RootInput+offset;command[3]=L::Input+offset;command[8]=count;
+   const unsigned fields[]={0,3,8};for(unsigned index=0;index<3;index++){
+    const unsigned i=fields[index];io.Write(0xffb20000+i*4,command[i]);if(io.Read(0xffb20000+i*4)!=command[i])return false;
+   }
+   io.Fence();io.Write(0xffb20040,1);if(io.Read(0xffb20040)>1)return false;io.Fence();
+   issued++;flits+=count/64;offset+=count;
+  }
+  if(!Drain(io))return false;
+  for(unsigned tile=L::Tiles(job.words[2]);tile-->0;){
+   for(unsigned word=16;word-->0;){
+    const unsigned value=io.Read(L::Input+tile*64+word*4),destination=L::Input+tile*L::InputStride+word*4;
+    io.Write(destination,value);if(io.Read(destination)!=value)return false;
+   }
+  }
+  for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++)for(unsigned word=0;word<L::Header/4;word++){
+   const unsigned address=L::Input-L::Header+tile*L::InputStride+word*4;
+   io.Write(address,0);if(io.Read(address))return false;
+  }
+  io.Fence();return Quiet(io) && Commands(io);
+ }
+#endif
 public:
  PioneerQ38Bfp4WorkerLoader(){
   volatile uint32_t* words=job.words;for(unsigned i=0;i<W::Words;i++)words[i]=0;
@@ -78,6 +142,9 @@ private:
     2U
 #endif
     ;operand++){
+#ifdef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT
+   if(operand==1){if(!BatchInput(io))return Fail();continue;}
+#endif
    for(unsigned tile=0;tile<L::Tiles(job.words[2]);tile++){
     W::Read packet;if(!W::SelectedPacket(job,band,operand,tile,packet))return Fail();
     for(unsigned word=0;word<L::Header/4;word++){
@@ -106,6 +173,8 @@ private:
 #ifdef PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT
     (reuseInput?L::Tiles(job.words[2]):2*L::Tiles(job.words[2]))
     || flits!=(reuseInput?9*L::Tiles(job.words[2]):10*L::Tiles(job.words[2]))
+#elif defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)
+    L::Tiles(job.words[2])+(job.words[2]*2+16383)/16384 || flits!=10*L::Tiles(job.words[2])
 #else
     2*L::Tiles(job.words[2]) || flits!=10*L::Tiles(job.words[2])
 #endif

@@ -1,0 +1,26 @@
+BFP4 per-band batched input, offline experiment
+==============================================
+
+An isolated BFP4 leaf now reads the contiguous BF16 activation in chunks,
+then reverse-scatters it into the existing per-tile layout. It does not
+reuse data across bands. Driver, hybrid-worker and Work selection are
+explicitly forbidden. No change was made to the running physical trial.
+
+Two builds produced the same text SHA-256
+2942f4c427b17592d3149f3fcaf5cc197f64570702033189390749a851da51c9;
+7956 of 8192 reserved bytes are used. The old leaf rebuilt unchanged with
+text SHA-256 04d43a4e5ad5b766fea07d0d3f9f48168557abda4772826d804f643db644faaf.
+
+The simulated loader passed 238 valid cases across 119 worker IDs and both
+widths, plus 40 refusal/fault cases including delayed input and a stalled
+read. The actual emitted RV32 leaf and synthetic compute simulation passed
+both widths and three worker IDs; three private model-derived BFP4 band
+fixtures each matched 64 expected words. The independent baseline suite
+also passed. Private learned data were not published.
+
+In these synthetic two-band examples on peer 1, the old leaf used 203490
+simulated RV32 steps at K5120 and 678830 at K17408; the batched leaf used
+185905 and 612291 respectively. These are interpreter instruction counts,
+not device cycles, elapsed time or full-model tokens/second. The experiment
+does not establish physical NoC ordering, input ownership, whole-model
+quality, a usable driver, or a speedup. Do not install it on this evidence.

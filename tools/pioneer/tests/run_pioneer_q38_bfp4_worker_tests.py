@@ -9,12 +9,15 @@ import sys
 import tempfile
 
 args=sys.argv[1:];checksum='--reuse-input-checksum' in args
+batch='--batch-input' in args
+if batch:
+ assert args.count('--batch-input')==1;args.remove('--batch-input')
 if checksum:
  assert args.count('--reuse-input-checksum')==1;args.remove('--reuse-input-checksum')
 reuse='--reuse-input' in args
 if reuse:
  assert args.count('--reuse-input')==1;args.remove('--reuse-input')
-assert not (reuse and checksum)
+assert not (reuse and checksum) and not (batch and (reuse or checksum))
 reuse=reuse or checksum
 assert __debug__ and len(args)==2
 build,private=map(Path,args);assert build.is_absolute() and build.is_dir()
@@ -38,7 +41,7 @@ files += [here/name for name in ('pioneer_q38_bfp4_worker_job_test.cpp','pioneer
 before={path:hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
 with tempfile.TemporaryDirectory(prefix='pioneer-bfp4-worker-suite-',dir='/private/tmp') as temporary:
  temp=Path(temporary);image=temp/'image'
- build_flags=['--reuse-input-checksum'] if checksum else ['--reuse-input'] if reuse else []
+ build_flags=['--batch-input'] if batch else ['--reuse-input-checksum'] if checksum else ['--reuse-input'] if reuse else []
  subprocess.run([sys.executable,str(root/'build_bfp4_worker_leaf.py'),str(build),str(image),*build_flags],check=True)
  tool=str(build/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
  assert not subprocess.check_output([tool+'nm','-u',str(image/'program.elf')],text=True).strip()
@@ -49,6 +52,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfp4-worker-suite-',dir='/priva
   binary=temp/name;source=here/f'pioneer_q38_bfp4_worker_{name}_test.cpp'
   subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
                   '-fsanitize=address,undefined',*(['-DPIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT=1'] if reuse and name=='leaf_image' else []),
+                  *(['-DPIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT=1'] if batch and name in ('loader','consumer','leaf_image') else []),
                   *(['-DPIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT=1'] if checksum and name=='leaf_image' else []),
                   str(source),'-o',str(binary)],check=True)
   env=dict(os.environ,ASAN_OPTIONS='quarantine_size_mb=32',UBSAN_OPTIONS='halt_on_error=1')
@@ -75,6 +79,18 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfp4-worker-suite-',dir='/priva
                         '-DPIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT=0','-E',
                         str(here/'pioneer_q38_bfp4_worker_consumer_test.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
   assert result.returncode and 'Input-reuse checksum requires the separate isolated input-reuse experiment' in result.stderr
+ if batch:
+  for selection in ('PIONEER_Q38_HYBRID_WORKER_IMAGE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT',
+                    'PIONEER_Q38_BFP4_BULK_LOAD_EXPERIMENT','PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT','_KERNEL_MODE'):
+   result=subprocess.run([compiler,'-std=c++17','-DPIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT=1','-D'+selection,
+                         '-E',str(here/'pioneer_q38_bfp4_worker_loader_test.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+   assert result.returncode and 'BFP4 input batching is isolated leaf inspection only' in result.stderr,selection
+  code='#define PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC 1\n#include "'+str(root/'PioneerQ38Bfp4WorkerLoader.h')+'"\n'
+  for prefix,change in (('', '#define PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT 1\n'),
+                        ('#define PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT 1\n','#undef PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT\n')):
+   result=subprocess.run([compiler,'-std=c++17','-fsyntax-only','-x','c++','-'],input=prefix+code+change+code,
+                         stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+   assert result.returncode and 'late BFP4 batch' in result.stderr
 samples()
 for path,digest in before.items():assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
-print('PASS dynamic BFP4 worker suite'+(' (input-reuse checksum experiment)' if checksum else ' (input-reuse experiment)' if reuse else '')+': real RV32, 3 private bands, canonical coverage, role refusals; NO DEVICE, native ownership, Work or full-model speed proof')
+print('PASS dynamic BFP4 worker suite'+(' (batched-input experiment)' if batch else ' (input-reuse checksum experiment)' if checksum else ' (input-reuse experiment)' if reuse else '')+': real RV32, 3 private bands, canonical coverage, role refusals; NO DEVICE, native ownership, Work or full-model speed proof')
