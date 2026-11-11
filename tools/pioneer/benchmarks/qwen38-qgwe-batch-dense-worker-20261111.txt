@@ -1,0 +1,21 @@
+QGWE combined dense-Q8 / batched-BFP8 worker: BUILD ONLY
+========================================================
+
+This isolated worker combines the current QGWD dense-Q8/SrcA worker and
+the earlier QGWA per-band batched BFP8 input leaf. It uses new QGWE/QGOE
+boot and job witnesses, so neither existing QGWD nor QGWA controller should
+be assumed compatible. It cannot be selected by the native driver or Work.
+
+Two same-SDK builds produced the identical ELF SHA-256:
+d3614997705d473f6a2a0c0f23dabcbf1418f587bf7686c3862bcd55c81aaa42
+The unchanged QGWD worker rebuilt to its pinned ELF SHA-256:
+b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8
+The builder's section bounds and instruction audits passed. The new global
+worker section is 13180 bytes; cached FPU is 13756 bytes. Compile-only role
+and identity exclusions passed; the prior dense-Q8 layout tests also passed.
+
+This is not yet a connected controller/worker, source-ownership proof, full
+token, device test, quality test or speedup. In particular, actual emitted
+QGWE worker arithmetic and batching behavior still need simulation. Do not
+install or execute on the P100A on this evidence. The running tag142 trial
+does not use this worker and was not interrupted.

@@ -1,5 +1,31 @@
 /* SPDX-License-Identifier: MIT */
 // Separate worker-only batching experiment; no ROOT or device authority.
+// QGWE combines the existing dense-Q8/SrcA worker with BFP8 input batching.
+// Its distinct boot/job identity must never be accepted by an older ROOT.
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+#if PIONEER_Q38_QGWE_BATCH_DENSE_WORKER != 1 \
+ || !defined(PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER) || PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER != 1 \
+ || !defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || PIONEER_Q38_QGW8_BFP8_BATCH_WORKER != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error QGWE is an isolated combined worker experiment
+#endif
+#endif
+#ifndef PIONEER_Q38_QGWE_BATCH_DENSE_BINDING_H
+#define PIONEER_Q38_QGWE_BATCH_DENSE_BINDING_H
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+enum {PioneerQ38QgweBatchDenseWorker=1};
+#else
+enum {PioneerQ38QgweBatchDenseWorker=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+static_assert(PioneerQ38QgweBatchDenseWorker==1,"late QGWE selection");
+#else
+static_assert(PioneerQ38QgweBatchDenseWorker==0,"late QGWE removal");
+#endif
 #if defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
 #if PIONEER_Q38_QGW8_BFP8_BATCH_WORKER != 1 \
  || !defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
