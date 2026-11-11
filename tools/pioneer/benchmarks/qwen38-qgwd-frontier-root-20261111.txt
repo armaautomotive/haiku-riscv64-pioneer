@@ -1,0 +1,27 @@
+QGWD committed-token frontier ROOT, offline build only
+=====================================================
+
+The separate QGWD frontier image publishes the already committed count to
+one aligned card-local telemetry word after the existing token publication
+sequence. It uses the offline seal-loop optimization, not the tag142 image
+currently undergoing its physical trial. It adds no CPU numerical validation.
+
+Rebuilt baseline ROOT SHA-256:
+2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95
+Experimental frontier ROOT SHA-256:
+a569498cca9175e4dbd13cf2f1f3dccb6596cf115b2d9b765a016cf9677a51f2
+Multiple builds matched. Its ROOT text occupies 131064 of 131072 bytes: only
+8 bytes remain in the reserved extent, so any future change requires another
+explicit size check. The baseline ROOT rebuilt byte-for-byte unchanged.
+
+Offline tests verified the distinct build-only role and refusal of missing,
+invalid, late, native, Work and validation selectors. The linked code has
+one frontier publisher reference in the token publication function. Its
+actual emitted RV32 leaf passed 8194 synthetic inputs, with exactly one
+aligned telemetry write and the expected fence/frame behavior. This leaf
+test does not execute the complete token publication path.
+
+No native reader, full-session timing protocol, multi-token candidate,
+hardware execution, speed, numerical-quality or Work capability has been
+qualified for this variant. The telemetry word is data only and never
+authorizes termination, cleanup, reset, or publication of an answer.

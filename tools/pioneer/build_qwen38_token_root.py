@@ -7,10 +7,15 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+qgwd_frontier='--qgwd-frontier-root' in options
+if qgwd_frontier:
+ assert options.count('--qgwd-frontier-root')==1,'duplicate QGWD frontier selector'
+ options.remove('--qgwd-frontier-root')
 qgwd_root='--qgwd-dense-q8-root' in options
 if qgwd_root:
  assert options.count('--qgwd-dense-q8-root')==1,'duplicate QGWD root selector'
  options.remove('--qgwd-dense-q8-root')
+assert not qgwd_frontier or qgwd_root,'QGWD frontier requires its explicit QGWD root'
 qgwc_root='--qgwc-srca-root' in options
 if qgwc_root:
  assert options.count('--qgwc-srca-root')==1,'duplicate QGWC root selector'
@@ -85,7 +90,7 @@ fold_job_boot='--fold-job-boot' in options
 assert not fold_job_boot or (packet_eight and inspect),'job boot fold BUILD requires the explicit eight-way QGW3 inspect profile;NO native/Work permission'
 frontier='--token-frontier' in options
 assert not frontier or (fold_job_boot and inspect),'token frontier BUILD requires the complete job-fold ROOT profile;NO native/readout/Work permission'
-frontier=frontier or bf16_profile
+frontier=frontier or bf16_profile or qgwd_frontier
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -114,6 +119,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_G
  *(['-DPIONEER_Q38_QGW8_LAYER_TRACE_IMAGE=1'] if qgw8_trace else []),
  *(['-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
+ *(['-DPIONEER_Q38_QGWD_FRONTIER_IMAGE=1'] if qgwd_frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
