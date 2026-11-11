@@ -136,7 +136,11 @@ int main(int argc,char** argv){
  }
  for(unsigned width:{5120U,17408U}){
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],119,width,2);image->Boot();
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+  image->Put(image->regs[8]-1136,50); // QGWE pinned image, synthetic history only.
+#else
   image->Put(image->regs[8]-1548,50); // Injected history; not a 50-layer run.
+#endif
   const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],job[64];
   for(unsigned i=0;i<8;i++)before[i]=image->transfer.counters[indices[i]];
   image->Stage(50,1,width==5120?2:4);assert(image->Finish(1));
@@ -152,7 +156,11 @@ int main(int argc,char** argv){
   assert(!qgwa_old_root_receipt(proof,job,image->boot.data(),before,after));
 #endif
  }
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+ for(unsigned old:{0x38574751U,0x39574751U,0x41475751U,0x44574751U}){
+#else
  for(unsigned old:{0x38574751U,0x39574751U}){
+#endif
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Put(HW::Boot,old);
   assert(!image->TryBoot() && !image->transfer.issues && !image->stores);
  }
@@ -162,7 +170,11 @@ int main(int argc,char** argv){
   const auto* golden=PioneerNativeBfpBandGolden(5120);assert(golden);
   for(unsigned row=0;row<32;row++)assert(image->Get(W::Output+(32+row)*4)==golden[row]);
  }
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+ puts("PASS QGWE 1/2/3/8 bands and exact batched reads; old boots rejected; NO DEVICE GRANT");
+#else
  puts("PASS QGWA 1/2/3/8 bands and exact batched reads; old boots rejected; NO DEVICE GRANT");
+#endif
 #else
  {
   auto image=std::make_unique<HybridImage>(argv[1],argv[2],1,5120);image->Put(HW::Boot,0x39574751);
@@ -178,7 +190,9 @@ int main(int argc,char** argv){
   assert(!image->Finish(1,true) && !image->native.matrixOps && !image->transfer.issues && !image->stores);
  }
  printf("PASS actual %s head worker/leaf: %u synthetic BFP8 outputs and argmax receipt%s, 2048 proof-bit mutations refused, corrupted job refused before work; injected layer history, NO lifecycle/model/device/TPS\n",
-#ifdef PIONEER_Q38_QGW8_BFP8_BATCH_WORKER
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+ "QGWE",
+#elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER)
  "QGWA",
 #elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
  "QGW9",

@@ -14,8 +14,16 @@ The builder's section bounds and instruction audits passed. The new global
 worker section is 13180 bytes; cached FPU is 13756 bytes. Compile-only role
 and identity exclusions passed; the prior dense-Q8 layout tests also passed.
 
+Both pinned emitted worker images subsequently passed the existing head
+and FFN instruction simulator with mocked NoC/Tensix: head bands 1/2/3/8,
+FFN input widths 5120/17408, delayed batched input, 2048 proof-bit mutations,
+old QGW8/QGW9/QGWA/QGWD boot refusal, corrupted job refusal and input
+re-fetch. The two-band mock reported 322 reads and 218879 RV32 steps. These
+are synthetic transport and instruction counts, not card timings. Layer
+history was injected and the dense-layer arithmetic is not covered here.
+
 This is not yet a connected controller/worker, source-ownership proof, full
-token, device test, quality test or speedup. In particular, actual emitted
-QGWE worker arithmetic and batching behavior still need simulation. Do not
-install or execute on the P100A on this evidence. The running tag142 trial
-does not use this worker and was not interrupted.
+token, device test, quality test or speedup. Actual QGWE dense producer and
+matrix behavior still need simulation. Do not install or execute on the P100A
+on this evidence. The running tag142 trial does not use this worker and was
+not interrupted.
