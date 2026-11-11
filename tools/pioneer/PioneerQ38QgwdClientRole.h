@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwdTwoTokenRole.h"
 // Separate one-token diagnostic client. This is neither an Assistant Work
 // mode nor authority to install or execute a driver.
 #ifdef PIONEER_Q38_QGWD_CLIENT_141

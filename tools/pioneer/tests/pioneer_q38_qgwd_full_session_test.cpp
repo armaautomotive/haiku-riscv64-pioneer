@@ -6,7 +6,7 @@
 #define PIONEER_Q38_QGWD_UPLOAD_SESSION_FIXTURE_ONLY 1
 #include "pioneer_q38_qgwd_upload_session_test.cpp"
 #include "../PioneerQ38HybridFullSession.h"
-#ifdef PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION
+#if defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) || defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
 static constexpr unsigned kOutputs=2;
 #else
 static constexpr unsigned kOutputs=1;
@@ -58,7 +58,9 @@ struct FullIO:SessionOwner {
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!std::strcmp(argv[1],"--fail-start")
   || (kOutputs==2 && !std::strcmp(argv[1],"--bad-feedback")))));
-#ifdef PIONEER_Q38_QGWD_CLIENT_141
+#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010142),"distinct QGWD two-token client identity");
+#elif defined(PIONEER_Q38_QGWD_CLIENT_141)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111000010141),"distinct QGWD candidate identity");
 #else
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x445747514f4e4452),"distinct synthetic QGWD owner");
@@ -91,18 +93,23 @@ int main(int argc,char** argv){
   17
 #endif
  };
-#ifdef PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION
- const uint32_t twoPrompts[]={17,18};
+#if defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) || defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
+ const uint32_t twoPrompts[]={input[0],18};
  assert(!session.Begin(*canonical,input,1,3) && !session.Begin(*canonical,twoPrompts,2,1)
   && !session.FailedState() && !io.opens && !io.starts);
 #endif
 #ifdef PIONEER_Q38_QGWD_CLIENT_141
  const uint32_t wrongInput[]={17};
- assert(!session.Begin(*canonical,wrongInput,1,1) && !io.opens && !session.FailedState());
+ assert(!session.Begin(*canonical,wrongInput,1,kOutputs) && !io.opens && !session.FailedState());
  FullIO wrongDriver(SessionOwner{spans,*receipt,lease,banks,proof,ledger,hashes});
- wrongDriver.tag=UINT64_C(0x2026102100010012);
+ wrongDriver.tag=
+#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+  UINT64_C(0x2026111000010141); // the earlier driver cannot satisfy tag142
+#else
+  UINT64_C(0x2026102100010012);
+#endif
  PioneerQ38HybridFullSession<DensePages,FullIO> denied(pages,wrongDriver);
- assert(!denied.Begin(*canonical,input,1,1) && denied.FailedState() && wrongDriver.opens==1
+ assert(!denied.Begin(*canonical,input,1,kOutputs) && denied.FailedState() && wrongDriver.opens==1
   && wrongDriver.closes==1 && !wrongDriver.owned && !wrongDriver.starts && !banks.Quarantined());
 #endif
  bool clockCalled=false;const bool started=session.Begin(*canonical,input,1,kOutputs,{},[&]{clockCalled=true;return true;});

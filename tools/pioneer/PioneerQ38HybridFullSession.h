@@ -197,7 +197,9 @@ public:
 #ifdef PIONEER_Q38_QGWC_CLIENT_136
   if(count!=1 || outputs!=1 || ids[0]!=248319)return false;
 #endif
-#if defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) && !defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION)
+#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+  if(count!=1 || outputs!=2 || ids[0]!=248319)return false; // fixed diagnostic only
+#elif defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) && !defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION)
   if(count!=1 || outputs!=1)return false; // synthetic one-token lifecycle only
 #endif
 #ifdef PIONEER_Q38_QGWD_CLIENT_141

@@ -1,0 +1,21 @@
+QGWD fixed two-output client, offline qualification only
+========================================================
+
+The separate tag142 client accepts only input 248319 and exactly two
+requested outputs. The original tag141 client retains its one-output
+limit; its rebuilt RISC-V binary is byte-identical to the previously
+qualified 141 client, SHA-256
+335a557819ac1ffd1c4433d853fec9a4a1ecddf6e793cb5147eb5775122c5559.
+Two independent tag142 client builds match SHA-256
+30db23af60cbe1f21981223eb7295c41b7aa2861bdd0fdad94a58821ce29ed41.
+
+The client protocol refuses wrong token, output count and end-of-sequence
+configuration. The synthetic session rejects a tag141 driver before upload,
+passes the two-record feedback lifecycle, and quarantines on failed START
+or corrupted feedback. Existing tag141 session success and failed-START
+regressions passed. Role tests reject mixed Work, CPU reference and native
+identities. No real model, device, or card was opened for these tests.
+
+There is no compatible tag142 native driver yet. This is not permission to
+install or run the client, a real multi-token result, a general quality pass,
+or a steady-state performance measurement.

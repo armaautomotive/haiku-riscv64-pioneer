@@ -156,7 +156,9 @@ template<class Pages,class IO>class PioneerQ38Qgw8UploadSessionInspection {
  }
 #endif
 public:
-#ifdef PIONEER_Q38_QGWD_CLIENT_141
+#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+ static constexpr uint64_t InspectionTag=UINT64_C(0x2026111100010142);
+#elif defined(PIONEER_Q38_QGWD_CLIENT_141)
  static constexpr uint64_t InspectionTag=UINT64_C(0x2026111000010141);
 #elif defined(PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION)
  static constexpr uint64_t InspectionTag=UINT64_C(0x445747514f4e4452); // synthetic QGWD only

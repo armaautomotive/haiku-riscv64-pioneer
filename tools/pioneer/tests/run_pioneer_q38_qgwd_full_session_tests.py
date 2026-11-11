@@ -34,6 +34,16 @@ with tempfile.TemporaryDirectory(prefix='qgwd-full-session-', dir='/private/tmp'
                    '-o', multi], check=True)
     for args in ([], ['--fail-start'], ['--bad-feedback']):
         subprocess.run([multi, *args], check=True, env=environment)
+    two_client = str(Path(tmp) / 'two-client')
+    subprocess.run(common + ['-DPIONEER_Q38_QGWD_CLIENT_141=1','-DPIONEER_Q38_QGWD_TWO_CLIENT_142=1',
+                   '-DPIONEER_Q38_DENSE_Q8_VERIFIED_MODEL_INSPECTION=1',
+                   '-fsanitize=address,undefined',source,str(here.parent / 'PioneerModelWeightCache.cpp'),
+                   '-o',two_client],check=True)
+    for args in ([], ['--fail-start'], ['--bad-feedback']):
+        subprocess.run([two_client,*args],check=True,env=environment)
+    protocol=str(Path(tmp)/'two-client-protocol')
+    subprocess.run(common+[str(here/'pioneer_q38_qgwd_two_client_protocol_test.cpp'),'-o',protocol],check=True)
+    subprocess.run([protocol],check=True)
     for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_QGWD_CLIENT_141',
                       'PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
                       'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
