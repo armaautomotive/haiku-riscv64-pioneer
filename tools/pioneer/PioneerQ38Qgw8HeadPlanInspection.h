@@ -1,4 +1,10 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN) && (PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 \
+ || !defined(PIONEER_Q38_QGWD_PLAN_SIMULATION) || PIONEER_Q38_QGWD_PLAN_SIMULATION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE))
+#error QGWE head metadata is an isolated simulated plan only
+#endif
 #ifndef PIONEER_Q38_QGW8_HEAD_PLAN_INSPECTION_H
 #define PIONEER_Q38_QGW8_HEAD_PLAN_INSPECTION_H
 #if !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1
@@ -31,7 +37,9 @@ class PioneerQ38Qgw8HeadPlanInspection {
   for(unsigned i=0;i<8;i++)staged[32+i]=b[8+i];
   // ROOT checks this witness against its selected head-worker grammar.
   const uint32_t witness[]={
-#if defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
+#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
+   0x45574751,
+#elif defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
    0x44574751,
 #elif defined(PIONEER_Q38_QGWC_PLAN_SIMULATION) || defined(PIONEER_Q38_QGWC_NATIVE_136)
    0x43574751,

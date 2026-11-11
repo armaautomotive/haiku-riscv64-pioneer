@@ -11,7 +11,9 @@
 #if defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
 #define PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC 1
 #include "../PioneerQ38TokenSelectedPrograms.h"
-#ifdef PIONEER_Q38_QGWD_PROGRAMS_INSPECTION
+#ifdef PIONEER_Q38_QGWE_PROGRAMS_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x48505451,"QGWE inspection must select its exact program family");
+#elif defined(PIONEER_Q38_QGWD_PROGRAMS_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x47505451,"QGWD inspection must select its exact program family");
 #elif defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x46505451,"QGWC inspection must select its exact program family");

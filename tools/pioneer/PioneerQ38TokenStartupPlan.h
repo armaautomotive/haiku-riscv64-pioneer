@@ -71,7 +71,11 @@ public:
 #endif
   // Synthetic parent geometry permits exercising save/restore only. It is
   // not evidence that QGWD model pages or device execution are compatible.
+#ifdef PIONEER_Q38_QGWE_PROGRAMS_INSPECTION
+  static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x45574751,"fixture requires QGWE worker grammar");
+#else
   static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x44574751,"fixture requires QGWD worker grammar");
+#endif
   return c.Qgw8InspectionLayout();
 #elif defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWC_PROGRAMS_INSPECTION)
 #ifdef PIONEER_Q38_QGWC_PROGRAMS_INSPECTION

@@ -59,6 +59,12 @@ journal, role separation and corrupt/ambiguous inputs. The old QGWD sealed
 offline and native-inspection package hashes rebuilt unchanged. No QGWE
 native driver, live upload, real owner or hardware permission follows.
 
+A receipt-derived synthetic startup fixture initially exposed an outdated
+QGWD head witness. The QGWE inspection plan now publishes its own QGWE
+witness; startup metadata and job passed the actual linked controller's head
+shape checks. The older QGWD startup fixture passed the same regression. No
+actual device or model arithmetic was involved in these startup checks.
+
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
 on the P100A on this evidence. The running tag142 trial does not use this
