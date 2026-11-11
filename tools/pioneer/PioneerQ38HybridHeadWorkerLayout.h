@@ -85,7 +85,9 @@ namespace PioneerQ38HybridHeadWorkerLayout {
 namespace Base=PioneerQ38HybridWorkerLayout;
 using namespace PioneerQ38HybridWorkerLayout;
 enum : unsigned {
-#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
+#if defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN)
+ Magic=0x46574751,JobWitness=0x464f4751, // QGWF / QGOF, isolated ROOT or plan
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
  Magic=0x45574751,JobWitness=0x454f4751, // QGWE / QGOE, isolated ROOT or plan
 #elif defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
  Magic=0x44574751,JobWitness=0x444f4751, // QGWD / QGOD; not a dense-Q8 scheduler
@@ -159,7 +161,9 @@ QGW8_HEAD_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous
 #undef QGW8_HEAD_FN
 }
 #endif
-#if defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
+#if defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN)
+static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x46574751,"late QGWF coordinator identity selection");
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x45574751,"late QGWE coordinator identity selection");
 #elif defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || defined(PIONEER_Q38_QGWD_PLAN_SIMULATION)
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x44574751,"late QGWD coordinator identity selection");

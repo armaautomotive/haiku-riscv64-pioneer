@@ -20,7 +20,7 @@
 namespace PioneerQ38DenseQ8MatrixWorkerLayout {
 namespace Base=PioneerQ38HybridHeadWorkerLayout;
 using namespace PioneerQ38HybridHeadWorkerLayout;
-#if defined(PIONEER_Q38_QGWF_BATCH4_WORKER)
+#if defined(PIONEER_Q38_QGWF_BATCH4_WORKER) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN)
 enum : unsigned {Magic=0x46574751,JobWitness=0x464f4751}; // QGWF/QGOF, worker only
 #elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
 enum : unsigned {Magic=0x45574751,JobWitness=0x454f4751}; // QGWE/QGOE; worker only
@@ -78,7 +78,7 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
 }
 }
 #endif
-#if defined(PIONEER_Q38_QGWF_BATCH4_WORKER)
+#if defined(PIONEER_Q38_QGWF_BATCH4_WORKER) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN)
 static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic==0x46574751,"late QGWF worker selection");
 #elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN)
 static_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic==0x45574751,"late QGWE combined worker selection");

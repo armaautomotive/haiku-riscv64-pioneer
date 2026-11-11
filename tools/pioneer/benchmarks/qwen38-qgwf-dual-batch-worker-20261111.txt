@@ -2,8 +2,9 @@ QGWF combined BFP4/BFP8 batching worker, offline only
 ====================================================
 
 This distinct worker combines the QGWE BFP8-batched dense/head path with
-per-band BFP4 input batching. It uses a new QGWF/QGOF worker identity and
-has no matching controller, native driver, install or Work authority.
+per-band BFP4 input batching. It uses a new QGWF/QGOF worker identity.
+A matching controller now exists for offline inspection only; there is no
+matching native driver, install or Work authority.
 
 Two independent builds produced identical ELF SHA-256
 c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e.
@@ -16,6 +17,19 @@ jobs, both widths, receipt mutation and old-identity refusal checks. Three
 private model-derived BFP4 bands were each checked at three simulated peers
 against 192 expected output words, independently for both builds. No private
 model data are included in this report or repository.
+
+The matching controller was independently built twice with identical ELF
+SHA-256 5257f8da3b692ae964a0f29e7d895d0274985c113a8137653c53c655b34d8454.
+The initial build exceeded the existing ROOT text limit. Three BFP4 shape
+helpers were relocated into an existing snapshotted BF16 section, without
+expanding the reserved memory ranges. The resulting ROOT text is 129828 of
+131072 bytes; the BF16 section is 49124 of 65536 bytes. The predecessor
+QGWE controller rebuild remained byte-identical to its pinned ELF.
+
+Offline tests executed emitted ROOT and worker instructions on a mocked
+fabric: planned head and dense jobs, BFP4 and BFP8 receipts, corrupted proof
+refusals and old-identity rejection passed. Role isolation tests passed.
+These checks do not cover the complete ROOT lifecycle or physical device.
 
 These are simulated memory/fabric results, not full-model quality, physical
 NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.

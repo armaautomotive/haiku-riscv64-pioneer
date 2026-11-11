@@ -7,6 +7,10 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+qgwf_root='--qgwf-dual-batch-root' in options
+if qgwf_root:
+ assert options.count('--qgwf-dual-batch-root')==1,'duplicate QGWF root selector'
+ options.remove('--qgwf-dual-batch-root')
 qgwe_root='--qgwe-batch-dense-root' in options
 if qgwe_root:
  assert options.count('--qgwe-batch-dense-root')==1,'duplicate QGWE root selector'
@@ -21,6 +25,7 @@ if qgwd_root:
  options.remove('--qgwd-dense-q8-root')
 assert not qgwd_frontier or qgwd_root,'QGWD frontier requires its explicit QGWD root'
 assert not qgwe_root or (qgwd_root and not qgwd_frontier),'QGWE requires the uninstrumented QGWD root profile'
+assert not qgwf_root or qgwe_root,'QGWF requires the explicit QGWE root profile'
 qgwc_root='--qgwc-srca-root' in options
 if qgwc_root:
  assert options.count('--qgwc-srca-root')==1,'duplicate QGWC root selector'
@@ -105,7 +110,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--qgwe-batch-dense-root'] if qgwe_root else []),*(['--qgwd-dense-q8-root'] if qgwd_root else []),*(['--qgwc-srca-root'] if qgwc_root else []),*(['--qgwa-batch-root'] if qgwa_root else []),*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []),*(['--hybrid-queued-counters'] if queued_counters else []),*(['--head-matrix-inspection'] if head_matrix else []),*(['--qgw8-dense-value-trace'] if value_trace else (['--qgw8-dense-input-trace'] if input_trace else (['--qgw8-dense-stage-trace'] if dense_trace else []))))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--qgwf-dual-batch-root'] if qgwf_root else []),*(['--qgwe-batch-dense-root'] if qgwe_root else []),*(['--qgwd-dense-q8-root'] if qgwd_root else []),*(['--qgwc-srca-root'] if qgwc_root else []),*(['--qgwa-batch-root'] if qgwa_root else []),*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []),*(['--fast-rms'] if fast_rms else []),*(['--hybrid-reuse-input'] if reuse_input else []),*(['--hybrid-matrix-attention'] if matrix_attention else []),*(['--hybrid-queued-counters'] if queued_counters else []),*(['--head-matrix-inspection'] if head_matrix else []),*(['--qgw8-dense-value-trace'] if value_trace else (['--qgw8-dense-input-trace'] if input_trace else (['--qgw8-dense-stage-trace'] if dense_trace else []))))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
@@ -114,6 +119,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_G
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1'] if qgwd_root else []),
  *(['-DPIONEER_Q38_QGWE_BATCH_DENSE_ROOT=1'] if qgwe_root else []),
+ *(['-DPIONEER_Q38_QGWF_DUAL_BATCH_ROOT=1'] if qgwf_root else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_QGW8_COARSE_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if qgw8_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
@@ -156,6 +162,11 @@ if bf16:
  # attribute. The QGWD-only scheduler must fit the isolated BF16 code range;
  # this changes neither the other profiles nor the range/overlap checks.
  scheduler=' *(.text._ZN31PioneerQ38DenseQ8MatrixRootJobs5Build*)' if qgwd_root else ''
+ # QGWF's dual receipt path makes the original ROOT text exceed its fixed
+ # range. Relocate emitted BFP4 job-shape copies into the already
+ # snapshotted 64 KiB BF16 coordinator region; no extent is enlarged.
+ if qgwf_root:
+  scheduler+=' *(.text._ZN28PioneerQ38HybridWorkerLayoutL9LeafShapeI23PioneerQ38Bfp4WorkerJobEEbPKjS3_*)'
  text=text.replace('SECTIONS {','SECTIONS {\n .bf16 0x20000 : { *(.bf16*)'+scheduler+' . = ALIGN(4); }\n ASSERT(SIZEOF(.bf16)>0 && SIZEOF(.bf16)<=0x10000,"NEW BF16 coordinator code extent,not old native ownership")')
  link=out/'program.ld';link.write_text(text)
 run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',link,

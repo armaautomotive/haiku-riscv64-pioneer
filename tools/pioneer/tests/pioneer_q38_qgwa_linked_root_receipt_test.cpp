@@ -29,7 +29,9 @@ int main(int argc,char** argv){
  assert(argc==5);HybridLinkedReceipt root(argv[3]),old(argv[4]);
  for(unsigned bands:{1U,2U,3U,8U})Test(argv[1],argv[2],root,old,5120,bands,true);
  for(unsigned width:{5120U,17408U})Test(argv[1],argv[2],root,old,width,2,false);
-#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+ puts("PASS simulated QGWF BFP8 worker receipts accepted by emitted QGWF ROOT predicate, old ROOT rejected, mutated proofs refused; NO FULL ROOT OR DEVICE");
+#elif defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER)
  puts("PASS simulated QGWE worker receipts accepted by emitted QGWE ROOT predicate, old ROOT rejected, mutated proofs refused; NO FULL ROOT OR DEVICE");
 #else
  puts("PASS simulated QGWA worker receipts accepted by emitted QGWA ROOT predicate, old ROOT rejected, mutated proofs refused; NO FULL ROOT OR DEVICE");

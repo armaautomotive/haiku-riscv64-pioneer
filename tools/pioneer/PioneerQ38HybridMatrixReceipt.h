@@ -73,7 +73,7 @@ struct PioneerQ38HybridMatrixReceipt {
    source=last.source;destination=last.destination;route=last.route;bytes=last.bytes;
 #endif
   }else{
-#ifdef PIONEER_Q38_QGWF_BATCH4_WORKER
+#if defined(PIONEER_Q38_QGWF_BATCH4_WORKER) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT)
    const unsigned offset=((width*2-1)/16384)*16384;
    source=PioneerQ38Bfp4WorkerJob::RootInput+offset;
    destination=PioneerNativeBfp4DramBandLayout::Input+offset;
@@ -102,7 +102,7 @@ struct PioneerQ38HybridMatrixReceipt {
 #elif defined(PIONEER_Q38_QGW8_BFP8_REUSE_WORKER)
     (eight?(bands*17+1)*tiles:bands*tiles*10):i==0 || i==2 || i==3 || i==6?
     (eight?(bands+1)*tiles:bands*tiles*2):0U;
-#elif defined(PIONEER_Q38_QGWF_BATCH4_WORKER)
+#elif defined(PIONEER_Q38_QGWF_BATCH4_WORKER) || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT)
     bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?
     bands*(tiles+(width*2+16383)/16384):0U;
 #elif defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_RECEIPT_INSPECTION) || defined(PIONEER_Q38_QGWA_BATCH_ROOT_IMAGE) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT)

@@ -8,7 +8,10 @@ import subprocess
 import sys
 import tempfile
 
-args=sys.argv[1:];qgwe='--qgwe' in args
+args=sys.argv[1:];qgwf='--qgwf' in args
+if qgwf:
+ assert args.count('--qgwf')==1;args.remove('--qgwf');args.append('--qgwe')
+qgwe='--qgwe' in args
 if qgwe:
  assert args.count('--qgwe')==1;args.remove('--qgwe');args.append('--qgwd')
 qgwd='--qgwd' in args
@@ -42,9 +45,14 @@ if qgwe:
   'conv.bin':'05781d446e5fcd2dd1ae191a0a2492a2557db0f147b9d79d9e5e1a1afd802daf',
   'bf16.bin':'f7306e10ccb7038944bac695e605b134ac32bc7887d972fdd31459cc6de2723b',
   'program.elf':'a10e4e5c0971d94b3a60e1a730a5d58f3aeccea67ceacd4c076903a9d554505e'})
+if qgwf:
+ pins.update({'text.bin':'408d88647b91f97b9d7e97c0769b75064cffe1274f164e730eb031acc0aba732',
+  'conv.bin':'510f0c73b326a50b11423b491b057edbc33902cc2bdb99b3186e8ab02acdcd1b',
+  'bf16.bin':'a693e1cdec1b29f73b032ee1718f119b83a7a4004b439be571d603caa460914f',
+  'program.elf':'5257f8da3b692ae964a0f29e7d895d0274985c113a8137653c53c655b34d8454'})
 for folder in (first,second):
  for name,digest in pins.items():assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest,(folder,name)
-for path,digest in ((worker/'program.elf','d3614997705d473f6a2a0c0f23dabcbf1418f587bf7686c3862bcd55c81aaa42' if qgwe else 'b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8' if qgwd else '3450e5b2d46b27e9ac3f81cb62de79d53b0613d85af0acc03a73a149e812e09e'),
+for path,digest in ((worker/'program.elf','c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e' if qgwf else 'd3614997705d473f6a2a0c0f23dabcbf1418f587bf7686c3862bcd55c81aaa42' if qgwe else 'b9ab4753f2e99734cdbeb16b4fc0077688784c8b841a7e7aba128981a610b6f8' if qgwd else '3450e5b2d46b27e9ac3f81cb62de79d53b0613d85af0acc03a73a149e812e09e'),
                     (leaf/'text.bin','77d87adaf6ab3f9c34fc9f1c50c627d6174676b700f24bca34c8a28f0bcd1dd0' if qgwe else '4cbd9db9777a528cde91cece928ba5aa205adcbdac3435a2571a89259c181b67')):
  assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
 compiler=os.environ.get('CXX','c++');tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -57,11 +65,13 @@ sim=['-DPIONEER_Q38_QGWD_PLAN_SIMULATION=1' if qgwd else '-DPIONEER_Q38_QGWC_PLA
      '-DPIONEER_Q38_HEAD_MATRIX_SIMULATION=1','-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1',
      '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 if qgwe:sim+=['-DPIONEER_Q38_QGWE_BATCH_DENSE_PLAN=1']
+if qgwf:sim+=['-DPIONEER_Q38_QGWF_DUAL_BATCH_PLAN=1']
 worker_flags=['-DPIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE=1','-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1',
  '-DPIONEER_Q38_HYBRID_WORKER_IMAGE=1','-DPIONEER_Q38_BF16_WORKER_IMAGE=1',
  '-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1','-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1']
 if qgwd:worker_flags+=['-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1','-DPIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER=1']
 if qgwe:worker_flags+=['-DPIONEER_Q38_QGWE_BATCH_DENSE_WORKER=1','-DPIONEER_Q38_QGW8_BFP8_BATCH_WORKER=1','-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1']
+if qgwf:worker_flags+=['-DPIONEER_Q38_QGWF_BATCH4_WORKER=1','-DPIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT=1']
 role=here.parent/('PioneerQ38QgwdRootImageRole.h' if qgwd else 'PioneerQ38QgwcSrcaRootImageRole.h')
 root_role='PIONEER_Q38_QGWD_ROOT_IMAGE' if qgwd else 'PIONEER_Q38_QGWC_SRCA_ROOT_IMAGE'
 names=[root_role,'PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION',
@@ -70,6 +80,7 @@ names=[root_role,'PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION',
  'PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE']
 flags=['-D'+name+'=1' for name in names]
 if qgwe:flags+=['-DPIONEER_Q38_QGWE_BATCH_DENSE_ROOT=1']
+if qgwf:flags+=['-DPIONEER_Q38_QGWF_DUAL_BATCH_ROOT=1']
 def rolecheck(options,okay,body=None,role_compiler=compiler):
  source=body if body is not None else '#include "'+str(role)+'"\n'
  result=subprocess.run([role_compiler,'-std=c++17',*options,'-fsyntax-only','-x','c++','-'],input=source,text=True,capture_output=True)
@@ -94,7 +105,7 @@ if qgwd:
  dense_flags=flags+['-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1',
                     '-DPIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION=1','-DPIONEER_ATTENTION_FREESTANDING=1',
                     '-DPIONEER_DRAM_SWEEP_FREESTANDING=1']
- dense_body='#include "'+str(dense_header)+'"\nstatic_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic=='+('0x45574751' if qgwe else '0x44574751')+');\n'
+ dense_body='#include "'+str(dense_header)+'"\nstatic_assert(PioneerQ38DenseQ8MatrixWorkerLayout::Magic=='+('0x46574751' if qgwf else '0x45574751' if qgwe else '0x44574751')+');\n'
  rolecheck(dense_flags,True,dense_body,tool+'g++')
  rolecheck([f for f in dense_flags if f!='-D'+root_role+'=1'],False,dense_body,tool+'g++')
  for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
@@ -110,7 +121,7 @@ with tempfile.TemporaryDirectory(prefix='qgwc-srca-root-',dir='/private/tmp') as
  (image/'program.demangled').write_bytes(subprocess.check_output([tool+'nm','-nC',str(image/'program.elf')]))
  env=dict(os.environ,ASAN_OPTIONS='quarantine_size_mb=32',UBSAN_OPTIONS='halt_on_error=1')
  binaries={}
- for name,source,extra in (('plan','pioneer_q38_hybrid_head_plan_test.cpp',[sim[0]]+(['-DPIONEER_Q38_QGWE_BATCH_DENSE_PLAN=1'] if qgwe else [])),
+ for name,source,extra in (('plan','pioneer_q38_hybrid_head_plan_test.cpp',[sim[0]]+(['-DPIONEER_Q38_QGWE_BATCH_DENSE_PLAN=1'] if qgwe else [])+(['-DPIONEER_Q38_QGWF_DUAL_BATCH_PLAN=1'] if qgwf else [])),
                            ('actual','pioneer_q38_hybrid_head_actual_root_test.cpp',sim),
                            ('helpers','pioneer_q38_hybrid_head_root_helpers_test.cpp',sim),
                            ('peer','pioneer_q38_hybrid_head_worker_image_test.cpp',worker_flags)):
@@ -125,4 +136,4 @@ with tempfile.TemporaryDirectory(prefix='qgwc-srca-root-',dir='/private/tmp') as
   subprocess.run([*common,*sim,'-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1',
                   str(here/'pioneer_q38_qgwd_dense_producer_root_test.cpp'),'-o',str(dense)],check=True)
   subprocess.run([str(dense),str(image)],check=True,env=env)
-print('PASS '+('QGWE' if qgwe else 'QGWD_SEAL_LOOP' if seal_loop else 'QGWD' if qgwd else 'QGWC')+' two pinned ROOT images and actual ROOT/worker jobs in simulation; NO full-model or hardware claim')
+print('PASS '+('QGWF' if qgwf else 'QGWE' if qgwe else 'QGWD_SEAL_LOOP' if seal_loop else 'QGWD' if qgwd else 'QGWC')+' two pinned ROOT images and actual ROOT/worker jobs in simulation; NO full-model or hardware claim')

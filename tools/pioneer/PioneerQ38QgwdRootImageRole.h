@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwfRootRole.h"
 // QGWD coordinator inspection: the dense Q8 dispatch path is experimental,
 // has no native authority, and requires separately staged verified metadata.
 #ifdef PIONEER_Q38_QGWE_BATCH_DENSE_ROOT
