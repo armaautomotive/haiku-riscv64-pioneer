@@ -103,3 +103,9 @@ matched the corresponding pinned band reference for each of two builds.
 The test uses injected history and a mocked fabric; it does not validate a
 full prompt, original-model quality, hardware behavior, or speed. Private
 model-derived headers and compiled test binaries were not published.
+
+For a direct same-fixture comparison, the emitted QGWD and QGWE worker
+instructions both passed the synthetic two-band head output and receipt
+checks. The mocked QGWD fabric issued 640 reads and executed 237142 RV32
+steps; mocked QGWE issued 322 reads and executed 218879 steps. These are
+one simulated job's counts, not physical timings or a model speed estimate.
