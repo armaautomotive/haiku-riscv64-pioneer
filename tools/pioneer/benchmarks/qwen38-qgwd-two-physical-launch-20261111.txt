@@ -1,0 +1,33 @@
+QGWD tag142 fixed two-token physical trial launch, 2026-11-11
+=============================================================
+
+One guarded one-shot trial was staged at
+/boot/home/pioneer-qgwd-diagnostic-142-20261111-a after the read-only guard
+reported stable driver tag 2026102100010012, generation 22, quiesced 0,
+cold 0, active owner 0, 64 CPUs, and max RAM 137034936320 bytes. The stage
+was new, root-owned and mode 700; staged artifact hashes matched locally.
+The fake-endpoint flow and two-token transcript gate passed their tests.
+
+Candidate driver SHA-256:
+fccf39747b740c886b2fa762fee0ded24a20c9975b4da538a850782e9c83ab1b
+Client SHA-256:
+30db23af60cbe1f21981223eb7295c41b7aa2861bdd0fdad94a58821ce29ed41
+Guard script SHA-256:
+2ca19511af6e7bef4d2c5db947fc9c71ff060a0defe04a5619391d45dc6b1a8f
+Transcript gate SHA-256:
+aaaa7f4ea7c200d81c6bcfb5e1f8750f048ed20c8e4a51a884151986b1b10a13
+
+The direct background launch created its one-shot marker. At the initial
+observation parent PID 7749 and four-cache preflight PID 7790 were live;
+state VERIFYING_MODEL_AND_CACHES_NO_DEVICE. No driver exchange or accelerator
+execution had occurred. Poll these existing processes and stage; do not
+launch another copy. On uncertainty the harness deliberately does not retry,
+reset, or restore. The gate checks transcript/lifecycle shape only, not
+model quality or independent numerical correctness.
+
+The fixed input is 248319, with up to two greedy outputs. The separately
+obtained original-weight CPU observation was 70253 then 70253, but this is
+one narrow diagnostic and the second CPU position has no independent pin.
+No CPU computation is part of the candidate or Work. Two outputs cannot
+establish steady-state performance. The candidate uses the earlier proven
+QGWD image, not the later offline-only seal-loop optimization.
