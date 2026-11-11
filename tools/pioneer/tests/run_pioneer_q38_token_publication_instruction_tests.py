@@ -8,11 +8,18 @@ import subprocess
 import sys
 import tempfile
 
-assert len(sys.argv) in (3,5) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+qgwd=len(sys.argv)>1 and sys.argv[1]=='--qgwd'
+if qgwd:
+    del sys.argv[1]
+assert len(sys.argv) in ((3,) if qgwd else (3,5))
 old,new=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert old.is_absolute() and new.is_absolute()
 pins=((old,'430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7'),
       (new,'5585e908bf3326c5410d0998c81ed161c04ab754412cc60891b8eb1f197a58fe'))
+if qgwd:
+    pins=((old,'2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95'),
+          (new,'a569498cca9175e4dbd13cf2f1f3dccb6596cf115b2d9b765a016cf9677a51f2'))
 if len(sys.argv)==5:
     old_fault,new_fault=map(pathlib.Path,sys.argv[3:]);assert old_fault.is_absolute() and new_fault.is_absolute()
     pins+=((old_fault,'d0760386ea3d00616bfbf8bf53b2cff900701eef9491f6dc8efdc16163e422a6'),
