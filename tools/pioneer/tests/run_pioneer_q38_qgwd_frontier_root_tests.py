@@ -8,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 
+qgwf=len(sys.argv)>1 and sys.argv[1]=='--qgwf'
+if qgwf:del sys.argv[1]
 assert __debug__ and len(sys.argv)==5 and not os.environ.get('PYTHONOPTIMIZE')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,old,new_a,new_b=map(Path,sys.argv[1:])
@@ -19,10 +21,15 @@ pins={'boot.bin':'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668
       'conv.bin':'5395ab6f90c53c93e95d5d0b5e280a2d0bf74f76eb4cdd69ccb69daea9f218ba',
       'bf16.bin':'09d75790f0dd7506eef07ff3bca5900d50fe6717168362ad1a2ddeed4e3cfca0',
       'program.elf':'a569498cca9175e4dbd13cf2f1f3dccb6596cf115b2d9b765a016cf9677a51f2'}
-assert hashlib.sha256((old/'program.elf').read_bytes()).hexdigest()=='2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95'
+if qgwf:
+    pins.update({'text.bin':'499a4540977ff4860788be21534d8aa56816f40cded2e8a3bab62cb6e1758a65',
+                 'conv.bin':'15ebb8a550bc96651bfbe254b21606dae474980309136360667c28e1473938c7',
+                 'bf16.bin':'90ddecadd664bb85dd56d5540eff627615a8fa7488b7b29603c6c5556ef839d9',
+                 'program.elf':'e50ed27fba25611700a3a93b569a37145ad1ea400718ec7707326198ed560665'})
+assert hashlib.sha256((old/'program.elf').read_bytes()).hexdigest()==('5257f8da3b692ae964a0f29e7d895d0274985c113a8137653c53c655b34d8454' if qgwf else '2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95')
 for image in (new_a,new_b):
     for name,digest in pins.items():assert hashlib.sha256((image/name).read_bytes()).hexdigest()==digest,(image,name)
-    assert len((image/'text.bin').read_bytes())==131064 # 8 bytes remain in the reserved 128 KiB extent
+    assert len((image/'text.bin').read_bytes())==(129864 if qgwf else 131064)
 tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
 symbols=subprocess.check_output([tool+'nm','-nC',str(new_a/'program.elf')],text=True)
 entries=re.findall(r'^([0-9a-f]+) [tTW] GlobalChain::PublishFrontier\(unsigned int\)$',symbols,re.M)
@@ -73,4 +80,4 @@ with tempfile.TemporaryDirectory(prefix='qgwd-frontier-',dir='/private/tmp') as 
         out=tmp/'must-not-exist'
         result=subprocess.run([sys.executable,str(root/'build_qwen38_token_root.py'),str(tmp/'no-sdk'),str(out),*options],capture_output=True)
         assert result.returncode and not out.exists()
-print('PASS QGWD frontier pinned ROOT build/roles and emitted leaf; NO DEVICE, NATIVE OR TPS')
+print('PASS '+('QGWF' if qgwf else 'QGWD')+' frontier pinned ROOT build/roles and emitted leaf; NO DEVICE, NATIVE OR TPS')

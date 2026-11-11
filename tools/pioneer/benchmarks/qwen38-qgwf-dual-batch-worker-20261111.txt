@@ -45,6 +45,15 @@ The simulated native bootstrap also passed the three real zero-program
 initializers, 120 L1 installs and 119 virgin QGWF worker boots, with ROOT
 held. This does not test a running ROOT, full inference or card speed.
 
+A separate QGWF frontier ROOT was built twice, ELF SHA-256
+e50ed27fba25611700a3a93b569a37145ad1ea400718ec7707326198ed560665.
+Its text is 129864/131072 bytes. Actual emitted publication instructions
+passed 8192 simulated token positions and 296 injected failure cases, with
+seals and NoC mocked; the count and fence followed successful readbacks and
+seals. The unchanged QGWF control emitted no frontier. This is preparation
+for measuring steady-state throughput, not a native reader, hardware test,
+clock measurement or tokens/sec result. It has no installation authority.
+
 These are simulated memory/fabric results, not full-model quality, physical
 NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.
 The QGWF image must not be installed or used on the P100A on this evidence.

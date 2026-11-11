@@ -24,7 +24,7 @@ if qgwd_root:
  assert options.count('--qgwd-dense-q8-root')==1,'duplicate QGWD root selector'
  options.remove('--qgwd-dense-q8-root')
 assert not qgwd_frontier or qgwd_root,'QGWD frontier requires its explicit QGWD root'
-assert not qgwe_root or (qgwd_root and not qgwd_frontier),'QGWE requires the uninstrumented QGWD root profile'
+assert not qgwe_root or (qgwd_root and (not qgwd_frontier or qgwf_root)), 'QGWE requires the uninstrumented QGWD root; only QGWF may select its separate frontier experiment'
 assert not qgwf_root or qgwe_root,'QGWF requires the explicit QGWE root profile'
 qgwc_root='--qgwc-srca-root' in options
 if qgwc_root:

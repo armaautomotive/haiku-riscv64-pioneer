@@ -9,6 +9,8 @@ import sys
 import tempfile
 
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+qgwf=len(sys.argv)>1 and sys.argv[1]=='--qgwf'
+if qgwf:sys.argv[1]='--qgwd'
 qgwd=len(sys.argv)>1 and sys.argv[1]=='--qgwd'
 if qgwd:
     del sys.argv[1]
@@ -20,6 +22,9 @@ pins=((old,'430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7'),
 if qgwd:
     pins=((old,'2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95'),
           (new,'a569498cca9175e4dbd13cf2f1f3dccb6596cf115b2d9b765a016cf9677a51f2'))
+if qgwf:
+    pins=((old,'5257f8da3b692ae964a0f29e7d895d0274985c113a8137653c53c655b34d8454'),
+          (new,'e50ed27fba25611700a3a93b569a37145ad1ea400718ec7707326198ed560665'))
 if len(sys.argv)==5:
     old_fault,new_fault=map(pathlib.Path,sys.argv[3:]);assert old_fault.is_absolute() and new_fault.is_absolute()
     pins+=((old_fault,'d0760386ea3d00616bfbf8bf53b2cff900701eef9491f6dc8efdc16163e422a6'),
