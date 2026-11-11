@@ -96,3 +96,10 @@ This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
 on the P100A on this evidence. The running tag142 trial does not use this
 worker or controller and was not interrupted.
+
+The actual QGWE worker instructions also passed three private model-derived
+BFP8 output-head bands on each of three simulated peers: 576 output words
+matched the corresponding pinned band reference for each of two builds.
+The test uses injected history and a mocked fabric; it does not validate a
+full prompt, original-model quality, hardware behavior, or speed. Private
+model-derived headers and compiled test binaries were not published.

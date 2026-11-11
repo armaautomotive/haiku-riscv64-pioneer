@@ -22,7 +22,11 @@ int main(int argc,char** argv){
     for(unsigned byte=0;byte<4;byte++)image->transfer.root[tile*64+at+byte]=uint8_t(word>>(byte*8));
    }
   }
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+  image->Put(image->regs[8]-1136,64); // QGWE pinned image; synthetic history.
+#else
   image->Put(image->regs[8]-1548,64); // injected history, not a full model.
+#endif
   auto& leaf=image->transfer.job;leaf.words[11]=1;uint32_t j[64]={};
   j[0]=HW::Magic;j[1]=1;j[2]=HW::GlobalMatrix;j[3]=image->boot[3];j[4]=image->boot[4];j[5]=64;j[7]=2025;
   for(unsigned i=0;i<8;i++)j[8+i]=image->boot[8+i];for(unsigned i=0;i<16;i++)j[16+i]=leaf.words[i];
