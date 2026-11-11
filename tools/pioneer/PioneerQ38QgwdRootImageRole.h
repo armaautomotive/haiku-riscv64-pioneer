@@ -1,6 +1,27 @@
 /* SPDX-License-Identifier: MIT */
 // QGWD coordinator inspection: the dense Q8 dispatch path is experimental,
 // has no native authority, and requires separately staged verified metadata.
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_ROOT
+#if PIONEER_Q38_QGWE_BATCH_DENSE_ROOT != 1 || !defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || PIONEER_Q38_QGWD_ROOT_IMAGE != 1 \
+ || defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) || defined(PIONEER_Q38_QGW8_BFP8_BATCH_WORKER) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error QGWE root requires the isolated QGWD root inspection profile
+#endif
+#endif
+#ifndef PIONEER_Q38_QGWE_BATCH_DENSE_ROOT_BINDING_H
+#define PIONEER_Q38_QGWE_BATCH_DENSE_ROOT_BINDING_H
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_ROOT
+enum {PioneerQ38QgweBatchDenseRoot=1};
+#else
+enum {PioneerQ38QgweBatchDenseRoot=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_ROOT
+static_assert(PioneerQ38QgweBatchDenseRoot==1,"late QGWE root selection");
+#else
+static_assert(PioneerQ38QgweBatchDenseRoot==0,"late QGWE root removal");
+#endif
 #if defined(PIONEER_Q38_QGWD_ROOT_IMAGE)
 #if PIONEER_Q38_QGWD_ROOT_IMAGE != 1 \
  || !defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION != 1 \

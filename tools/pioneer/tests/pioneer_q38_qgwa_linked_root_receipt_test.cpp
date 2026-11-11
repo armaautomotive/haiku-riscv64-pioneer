@@ -7,7 +7,11 @@
 static void Test(const char* worker,const char* leaf,HybridLinkedReceipt& root,HybridLinkedReceipt& old,
  unsigned width,unsigned bands,bool head){
  auto image=std::make_unique<HybridImage>(worker,leaf,head?1:119,width,bands);image->Boot();
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+ if(!head)image->Put(image->regs[8]-1136,50); // synthetic history only
+#else
  if(!head)image->Put(image->regs[8]-1548,50); // synthetic history only
+#endif
  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],job[64];
  for(unsigned i=0;i<8;i++)before[i]=image->transfer.counters[indices[i]];
  if(head)StageHead(*image,false);else image->Stage(50,1,width==5120?2:4);
@@ -25,6 +29,10 @@ int main(int argc,char** argv){
  assert(argc==5);HybridLinkedReceipt root(argv[3]),old(argv[4]);
  for(unsigned bands:{1U,2U,3U,8U})Test(argv[1],argv[2],root,old,5120,bands,true);
  for(unsigned width:{5120U,17408U})Test(argv[1],argv[2],root,old,width,2,false);
+#ifdef PIONEER_Q38_QGWE_BATCH_DENSE_WORKER
+ puts("PASS simulated QGWE worker receipts accepted by emitted QGWE ROOT predicate, old ROOT rejected, mutated proofs refused; NO FULL ROOT OR DEVICE");
+#else
  puts("PASS simulated QGWA worker receipts accepted by emitted QGWA ROOT predicate, old ROOT rejected, mutated proofs refused; NO FULL ROOT OR DEVICE");
+#endif
  return 0;
 }

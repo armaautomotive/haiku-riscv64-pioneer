@@ -7,10 +7,15 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+qgwe_root='--qgwe-batch-dense-root' in options
+if qgwe_root:
+ assert options.count('--qgwe-batch-dense-root')==1,'duplicate QGWE root selector'
+ options.remove('--qgwe-batch-dense-root')
 qgwd_root='--qgwd-dense-q8-root' in options
 if qgwd_root:
  assert options.count('--qgwd-dense-q8-root')==1,'duplicate QGWD root selector'
  options.remove('--qgwd-dense-q8-root')
+assert not qgwe_root or qgwd_root,'QGWE requires the explicit QGWD root profile'
 qgwc_root='--qgwc-srca-root' in options
 if qgwc_root:
  assert options.count('--qgwc-srca-root')==1,'duplicate QGWC root selector'
@@ -93,6 +98,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1'] if qgwd_root else []),
+ *(['-DPIONEER_Q38_QGWE_BATCH_DENSE_ROOT=1'] if qgwe_root else []),
  *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
@@ -120,6 +126,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1'] if qgwd_root else []),
+ *(['-DPIONEER_Q38_QGWE_BATCH_DENSE_ROOT=1'] if qgwe_root else []),
  *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),

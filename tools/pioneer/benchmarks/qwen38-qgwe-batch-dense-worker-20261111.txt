@@ -31,7 +31,18 @@ the layout now rechecks the combined role on every include, and the check
 passes. The already-built program's execution instructions are unchanged by
 this compile-time guard.
 
-This is not yet a connected controller/worker, source-ownership proof, full
-token, device test, quality test or speedup. Do not install or execute on the
-P100A on this evidence. The running tag142 trial does not use this worker and
-was not interrupted.
+A distinct QGWE controller now builds reproducibly with the batched BFP8
+receipt grammar and new worker identity. Two builds produced ELF SHA-256
+2aed2c3bd11821fbe9317aaefcab98f849a8f5adadebeef8f8365a43173edfe4.
+Its ROOT text occupies 131032 of 131072 reserved bytes. In an instruction
+simulator its actual linked receipt accepted the QGWE worker's simulated
+head and FFN proofs, rejected selected corruptions, and the earlier QGWD
+receipt rejected the new identity. Compile-only root role exclusions pass.
+This does not exercise the complete ROOT lifecycle or actual fabric. The
+baseline QGWD ROOT was also rebuilt byte-identically to its existing ELF
+SHA-256 2cb7e5f27f12255bd63dbc70b37df2fac1a532ed3c6f9927cde00ff71fca9d95.
+
+This is not yet a fully connected controller/worker, source-ownership proof,
+full token, device test, quality test or speedup. Do not install or execute
+on the P100A on this evidence. The running tag142 trial does not use this
+worker or controller and was not interrupted.
