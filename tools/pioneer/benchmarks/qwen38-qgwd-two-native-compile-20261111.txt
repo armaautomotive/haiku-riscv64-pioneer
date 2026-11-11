@@ -1,0 +1,19 @@
+QGWD fixed two-token native candidate: compile-only checkpoint
+=============================================================
+
+The tag142 native role uses the previously tested QGWD ROOT and worker
+images, with a distinct candidate program-data marker and driver identity.
+Its protocol admits only the fixed input 248319 and exactly two requested
+outputs. Work mode and CPU-reference roles remain excluded. The previously
+tested tag141 remains limited to one fixed output.
+
+Two independent program-data bundles matched SHA-256
+f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687.
+Role, reload-identity and protocol-shape tests passed for both tags. Cross
+compilation of both real native driver bodies passed, with bounded selected
+stack frames; missing tag142 data markers and cross-role headers were refused.
+The tag142 build script also refused the old tag141 program header.
+
+No tag142 driver has been installed, linked for deployment, executed, or
+tested with a model. This is not a quality result or a performance result.
+The two-token client remains separate from Work and from CPU validation.

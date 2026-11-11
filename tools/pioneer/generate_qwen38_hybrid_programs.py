@@ -5,7 +5,12 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwd_seal_native='--qgwd-seal-loop-native-inspection' in args
+args=sys.argv[1:];qgwd_two_candidate='--qgwd-two-token-native-candidate' in args
+if qgwd_two_candidate:
+    if args.count('--qgwd-two-token-native-candidate')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-two-token-native-candidate' for x in args):
+        raise SystemExit('ambiguous QGWD two-token native selector')
+    args.remove('--qgwd-two-token-native-candidate');args.insert(0,'--qgwd-dense-q8-native-candidate')
+qgwd_seal_native='--qgwd-seal-loop-native-inspection' in args
 if qgwd_seal_native:
     if args.count('--qgwd-seal-loop-native-inspection')!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--matrix-')) and x!='--qgwd-seal-loop-native-inspection' for x in args):
         raise SystemExit('ambiguous QGWD seal-loop native-inspection selector')
@@ -171,6 +176,10 @@ if matrix:
         if qgwd_seal_loop:
             lines += ['#if !defined(PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION) || PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION != 1',
                       '#error QGWD seal-loop DATA requires its distinct offline inspection role', '#endif']
+        if qgwd_two_candidate:
+            lines += ['#if !defined(PIONEER_Q38_QGWD_TWO_NATIVE_142) || PIONEER_Q38_QGWD_TWO_NATIVE_142 != 1',
+                      '#error QGWD two-token candidate DATA requires tag142 native role', '#endif',
+                      '#define PIONEER_Q38_QGWD_TWO_NATIVE_DATA_142 1']
     elif qgw8tracenative:
         lines += [' || !defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131) || PIONEER_Q38_QGW8_TRACE_NATIVE_131 != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',

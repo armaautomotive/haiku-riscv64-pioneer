@@ -8,12 +8,13 @@ import subprocess
 import sys
 import tempfile
 
-candidate=len(sys.argv)==4 and sys.argv[1]=='--candidate'
+two=len(sys.argv)==4 and sys.argv[1]=='--two-candidate'
+candidate=two or len(sys.argv)==4 and sys.argv[1]=='--candidate'
 if len(sys.argv)!=(4 if candidate else 3) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: run_pioneer_q38_qgwd_native_source_compile.py [--candidate] ABS_SDK ABS_PROGRAM_HEADER')
+    raise SystemExit('usage: run_pioneer_q38_qgwd_native_source_compile.py [--candidate|--two-candidate] ABS_SDK ABS_PROGRAM_HEADER')
 sdk,header=map(Path,sys.argv[2:] if candidate else sys.argv[1:])
 assert sdk.is_absolute() and sdk.is_dir() and header.is_absolute() and header.is_file()
-assert hashlib.sha256(header.read_bytes()).hexdigest()==('84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
+assert hashlib.sha256(header.read_bytes()).hexdigest()==('f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
 here=Path(__file__).resolve().parent;root=here.parents[2];pioneer=here.parent
 role=(root/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRole.h').read_text()
 parents=set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role))
@@ -35,6 +36,7 @@ if candidate:
     names-={'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY'}
     names.update(('PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_HYBRID_FULL_NATIVE',
                   'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128'))
+    if two:names.add('PIONEER_Q38_QGWD_TWO_NATIVE_142')
 headers=sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
 release=sdk/'objects/haiku/riscv64/release'
 includes=[]
@@ -46,7 +48,7 @@ for path in [headers/'os',*sorted((headers/'os').iterdir())]:
     if path.is_dir():includes+=['-isystem',str(path)]
 cxx=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++')
 flags=['-D'+name+'=1' for name in sorted(names)]
-flags+=['-DPIONEER_DRIVER_BUILD_TAG='+('0x2026111000010141ULL' if candidate else '0x51544b4e4f445256ULL'),'-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"']
+flags+=['-DPIONEER_DRIVER_BUILD_TAG='+('0x2026111100010142ULL' if two else '0x2026111000010141ULL' if candidate else '0x51544b4e4f445256ULL'),'-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"']
 common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
  '-fno-exceptions','-fno-rtti','-fstack-usage','-ffreestanding','-finline','-fno-semantic-interposition',
  '-fno-tree-vectorize','-fno-use-cxa-atexit','-fno-strict-aliasing','-fno-delete-null-pointer-checks',
@@ -75,8 +77,11 @@ with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp'
                      'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
                      'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
             check_role(flags+['-D'+name+'=1'],False)
-        tag='-DPIONEER_DRIVER_BUILD_TAG=0x2026111000010141ULL'
+        tag='-DPIONEER_DRIVER_BUILD_TAG='+('0x2026111100010142ULL' if two else '0x2026111000010141ULL')
         check_role([f for f in flags if f!=tag]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110900010136ULL'],False)
+        if two:
+            check_role([f for f in flags if f!='-DPIONEER_Q38_QGWD_TWO_NATIVE_142=1'],False)
+            check_role([f for f in flags if f!=tag]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026111000010141ULL'],False)
         reload_header=root/'src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h'
         def check_reload(arguments,success):
             result=subprocess.run([compiler,'-std=c++17',*arguments,'-DB_DEVICE_OP_CODES_END=1000',
@@ -84,12 +89,25 @@ with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp'
             assert (result.returncode==0)==success,result.stderr[:1000]
         check_reload(flags,True)
         check_reload([f for f in flags if f!='-DPIONEER_Q38_QGWD_NATIVE_141=1'],False)
+        if two:check_reload([f for f in flags if f!='-DPIONEER_Q38_QGWD_TWO_NATIVE_142=1'],False)
         check_reload([f for f in flags if f!=tag]+['-DPIONEER_DRIVER_BUILD_TAG=0x2026110900010136ULL'],False)
         protocol=Path(directory)/'protocol'
         subprocess.run([compiler,'-std=c++17','-Wall','-Wextra','-Werror',*flags,
                         str(here/'pioneer_q38_qgwd_candidate_protocol_test.cpp'),'-o',str(protocol)],check=True)
         subprocess.run([str(protocol)],check=True)
     source=(root/'src/add-ons/kernel/drivers/misc/pioneer_q38_hybrid_full_driver.cpp') if candidate else (here/'pioneer_q38_token_native_context_compile.cpp')
+    if two:
+        missing=Path(directory)/'missing-two-marker.h'
+        data=header.read_text();marker='#define PIONEER_Q38_QGWD_TWO_NATIVE_DATA_142 1\n'
+        assert data.count(marker)==1;missing.write_text(data.replace(marker,''))
+        old_header='-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"'
+        bad_header='-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(missing)+'"'
+        result=subprocess.run([*(bad_header if f==old_header else f for f in common),'-fsyntax-only',str(source)],capture_output=True)
+        assert result.returncode and b'tag142 requires its distinct two-token candidate DATA' in result.stderr
+        one_tag='-DPIONEER_DRIVER_BUILD_TAG=0x2026111000010141ULL'
+        old_role=[one_tag if f==tag else f for f in common if f!='-DPIONEER_Q38_QGWD_TWO_NATIVE_142=1']
+        result=subprocess.run([*old_role,'-fsyntax-only',str(source)],capture_output=True)
+        assert result.returncode and b'requires tag142 native role' in result.stderr
     result=subprocess.run([*common,'-c',str(source),'-o',str(obj)],capture_output=True,text=True)
     if result.returncode:raise SystemExit('QGWD full native source compile failed:\n'+result.stderr[:12000])
     nm=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm')

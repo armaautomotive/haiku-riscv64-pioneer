@@ -5,13 +5,28 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
 int main(){
  namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
+#ifdef PIONEER_Q38_QGWD_TWO_NATIVE_142
+ static_assert(F::BuildTag==UINT64_C(0x2026111100010142) && F::MaxPrompt==1 && F::MaxOutput==2 && F::MaxPositions==2,
+  "QGWD diagnostic is a distinct two-token capability");
+#else
  static_assert(F::BuildTag==UINT64_C(0x2026111000010141) && F::MaxPrompt==1 && F::MaxOutput==1 && F::MaxPositions==1,
   "QGWD diagnostic is a distinct one-token capability");
+#endif
  P::Packet p={};p.request.magic=P::Magic;p.request.version=P::Version;p.request.operation=P::Start;
- p.request.prompts=p.request.limit=p.request.stopEos=1;p.request.eos0=PioneerQ38FullOffloadEog::Eos0;
+ p.request.prompts=p.request.stopEos=1;
+#ifdef PIONEER_Q38_QGWD_TWO_NATIVE_142
+ p.request.limit=2;
+#else
+ p.request.limit=1;
+#endif
+ p.request.eos0=PioneerQ38FullOffloadEog::Eos0;
  p.request.eos1=PioneerQ38FullOffloadEog::Eos1;p.prompt[0]=248319;
  assert(F::RequestShape(p));p.prompt[0]=17;assert(!F::RequestShape(p));p.prompt[0]=248319;
+#ifdef PIONEER_Q38_QGWD_TWO_NATIVE_142
+ p.request.limit=1;assert(!F::RequestShape(p));p.request.limit=3;assert(!F::RequestShape(p));p.request.limit=2;
+#else
  p.request.limit=2;assert(!F::RequestShape(p));p.request.limit=1;
+#endif
  p.request.prompts=2;assert(!F::RequestShape(p));p.request.prompts=1;
  p.request.stopEos=0;assert(!F::RequestShape(p));p.request.stopEos=1;
  p.request.eos0++;assert(!F::RequestShape(p));p.request.eos0=PioneerQ38FullOffloadEog::Eos0;

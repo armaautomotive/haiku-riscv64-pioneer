@@ -16,6 +16,12 @@
 #error Hybrid QGW5 program selection is an offline journal fixture only
 #endif
 #include PIONEER_Q38_HYBRID_PROGRAMS_HEADER
+#if defined(PIONEER_Q38_QGWD_TWO_NATIVE_142) && (!defined(PIONEER_Q38_QGWD_TWO_NATIVE_DATA_142) || PIONEER_Q38_QGWD_TWO_NATIVE_DATA_142 != 1)
+#error QGWD tag142 requires its distinct two-token candidate DATA
+#endif
+#if !defined(PIONEER_Q38_QGWD_TWO_NATIVE_142) && defined(PIONEER_Q38_QGWD_TWO_NATIVE_DATA_142)
+#error QGWD tag142 DATA cannot be used by another role
+#endif
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
