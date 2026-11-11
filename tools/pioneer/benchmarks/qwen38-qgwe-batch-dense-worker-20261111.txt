@@ -51,6 +51,14 @@ all vocabulary rows, one planned 8-band head job executed on the worker,
 dispatch routines. These use synthetic manifests, histories and transport;
 they do not run a complete token or demonstrate real device behavior.
 
+The corrected QGWE pair also packages reproducibly as a distinct 15-section
+offline DATA family QTPH, SHA-256
+5097fc1b4aa43bf1a9a1418345e138649293c8e2ee2cea7097b92989a7ba14bf.
+The data test checked every code word for all 120 worker maps, the expanded
+journal, role separation and corrupt/ambiguous inputs. The old QGWD sealed
+offline and native-inspection package hashes rebuilt unchanged. No QGWE
+native driver, live upload, real owner or hardware permission follows.
+
 This is not yet a fully connected controller/worker, source-ownership proof,
 full token, device test, quality test or speedup. Do not install or execute
 on the P100A on this evidence. The running tag142 trial does not use this
