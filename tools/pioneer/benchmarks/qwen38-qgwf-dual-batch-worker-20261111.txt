@@ -41,6 +41,9 @@ accepted by emitted code for all 119 synthetic workers, and head metadata
 was accepted by the linked ROOT. Real driver source compiled using renamed
 entry points and the fake tag; simulated sealed-receipt binding and memory
 reservation passed. These are not a loadable driver or hardware test.
+The simulated native bootstrap also passed the three real zero-program
+initializers, 120 L1 installs and 119 virgin QGWF worker boots, with ROOT
+held. This does not test a running ROOT, full inference or card speed.
 
 These are simulated memory/fabric results, not full-model quality, physical
 NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.

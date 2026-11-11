@@ -5,7 +5,10 @@
 #define main pioneer_original_initialization_fixture_main
 #include "pioneer_q38_token_native_initialization_test.cpp"
 #undef main
-#ifdef PIONEER_Q38_QGWE_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_QGWF_NATIVE_INSPECTION
+static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x49505451
+ && PioneerQ38SelectedGlobalWorker::Magic==0x46574751,"QGWF inspection identity required");
+#elif defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION)
 static_assert(PioneerQ38TokenNativeProfile==13 && PioneerQ38TokenPrograms::Family==0x48505451
  && PioneerQ38SelectedGlobalWorker::Magic==0x45574751,"QGWE inspection identity required");
 #elif defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)
