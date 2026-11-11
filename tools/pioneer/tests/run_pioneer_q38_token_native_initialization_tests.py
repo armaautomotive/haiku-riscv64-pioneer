@@ -20,16 +20,17 @@ if synthetic_embedding:
     sys.argv.remove('--synthetic-embedding')
 synthetic_layer=synthetic_embedding and '--execution-layer-dispatch' in sys.argv
 hybrid_header=None
-qgwf_inspection='--qgwf-header' in sys.argv
+qgwf_frontier_inspection='--qgwf-frontier-header' in sys.argv
+qgwf_inspection=qgwf_frontier_inspection or '--qgwf-header' in sys.argv
 qgwe_inspection=qgwf_inspection or '--qgwe-header' in sys.argv
 qgwd_seal_inspection='--qgwd-seal-header' in sys.argv
 qgwd_inspection='--qgwd-header' in sys.argv or qgwd_seal_inspection or qgwe_inspection
 qgw8_inspection='--qgw8-header' in sys.argv or qgwd_inspection
 matrix_inspection='--hybrid-qgw7-header' in sys.argv or qgw8_inspection
 if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
-    selectors=('--qgwf-header','--qgwe-header','--qgwd-seal-header','--qgwd-header','--qgw8-header','--hybrid-qgw7-header','--hybrid-qgw5-header')
+    selectors=('--qgwf-frontier-header','--qgwf-header','--qgwe-header','--qgwd-seal-header','--qgwd-header','--qgw8-header','--hybrid-qgw7-header','--hybrid-qgw5-header')
     assert sum(sys.argv.count(s) for s in selectors)==1
-    selector='--qgwf-header' if qgwf_inspection else '--qgwe-header' if qgwe_inspection else '--qgwd-seal-header' if qgwd_seal_inspection else '--qgwd-header' if qgwd_inspection else '--qgw8-header' if qgw8_inspection else '--hybrid-qgw7-header' if matrix_inspection else '--hybrid-qgw5-header'
+    selector='--qgwf-frontier-header' if qgwf_frontier_inspection else '--qgwf-header' if qgwf_inspection else '--qgwe-header' if qgwe_inspection else '--qgwd-seal-header' if qgwd_seal_inspection else '--qgwd-header' if qgwd_inspection else '--qgw8-header' if qgw8_inspection else '--hybrid-qgw7-header' if matrix_inspection else '--hybrid-qgw5-header'
     index=sys.argv.index(selector);assert index+1<len(sys.argv)
     hybrid_header=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
@@ -39,7 +40,7 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
         assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--faults','--runtime','--bootstrap','--execution','--execution-traffic') or trace_init and sys.argv[2]=='--runtime-faults'))
                 or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
-    expected='b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    expected='7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 if trace_init:
     assert qgw8_inspection and len(sys.argv)==3 and sys.argv[2] in ('--runtime','--runtime-faults')
@@ -399,6 +400,7 @@ if qgwd_inspection:
     if qgwd_seal_inspection:defines['PIONEER_Q38_QGWD_SEAL_LOOP_INSPECTION']='1'
     if qgwe_inspection:defines.update(PIONEER_Q38_QGWE_NATIVE_INSPECTION='1',PIONEER_Q38_QGWE_PROGRAMS_INSPECTION='1',PIONEER_Q38_QGWE_BATCH_DENSE_PLAN='1')
     if qgwf_inspection:defines.update(PIONEER_Q38_QGWF_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_PROGRAMS_INSPECTION='1',PIONEER_Q38_QGWF_DUAL_BATCH_PLAN='1')
+    if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
 if synthetic_embedding:defines['PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST']='1'
 if precise_context:

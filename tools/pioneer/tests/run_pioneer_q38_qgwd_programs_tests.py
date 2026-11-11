@@ -45,13 +45,13 @@ with tempfile.TemporaryDirectory(prefix='qgwd-programs-',dir='/private/tmp') as 
     for r,w,out in ((root_a,worker_a,first),(root_b,worker_b,second)):
         subprocess.run([sys.executable,str(generator),selector,str(r),str(w),str(out)],check=True)
     assert first.read_bytes()==second.read_bytes()
-    assert hashlib.sha256(first.read_bytes()).hexdigest()==('cdb8becce43a7adbe27a04751f6ace631b6e299ee844a0542beb01686fadf2fa' if qgwf_frontier else 'e0931f355b9eee374e8b18e0127fd84c21d9a9ef39a1252fedf3371e6e56ac0d' if qgwf else '5097fc1b4aa43bf1a9a1418345e138649293c8e2ee2cea7097b92989a7ba14bf' if qgwe else '56b5d7479610c1862b6d6a5642b4441e3dab25d4bcefdcf00224c58efb675a7e' if seal_loop else '184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328')
-    if qgwe and not qgwf_frontier:
-        native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwf-dual-batch-native-inspection' if qgwf else '--qgwe-batch-dense-native-inspection'
+    assert hashlib.sha256(first.read_bytes()).hexdigest()==('088f520307f0d77c435c3204486574f8ea30ae765580e3fe70d687adf5cb3295' if qgwf_frontier else 'e0931f355b9eee374e8b18e0127fd84c21d9a9ef39a1252fedf3371e6e56ac0d' if qgwf else '5097fc1b4aa43bf1a9a1418345e138649293c8e2ee2cea7097b92989a7ba14bf' if qgwe else '56b5d7479610c1862b6d6a5642b4441e3dab25d4bcefdcf00224c58efb675a7e' if seal_loop else '184f10919fb20dd04489a64115022f924cf81c270c318c7da2e0cf78491fc328')
+    if qgwe:
+        native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwf-frontier-native-inspection' if qgwf_frontier else '--qgwf-dual-batch-native-inspection' if qgwf else '--qgwe-batch-dense-native-inspection'
         for image,worker,out in ((root_a,worker_a,native_a),(root_b,worker_b,native_b)):
             subprocess.run([sys.executable,str(generator),native_selector,str(image),str(worker),str(out)],check=True)
         assert native_a.read_bytes()==native_b.read_bytes()
-        assert hashlib.sha256(native_a.read_bytes()).hexdigest()==('b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2')
+        assert hashlib.sha256(native_a.read_bytes()).hexdigest()==('7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2')
         for extra in ([native_selector]*2,[native_selector,selector],[native_selector,'--qgwd-dense-q8-native-candidate']):
             out=tmp/'ambiguous-qgwe-native.h'
             result=subprocess.run([sys.executable,str(generator),*extra,str(root_a),str(worker_a),str(out)],capture_output=True)

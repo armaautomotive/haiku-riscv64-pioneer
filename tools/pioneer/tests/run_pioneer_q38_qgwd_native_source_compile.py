@@ -8,7 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-qgwf=len(sys.argv)==4 and sys.argv[1]=='--qgwf-native-inspection'
+qgwf_frontier=len(sys.argv)==4 and sys.argv[1]=='--qgwf-frontier-native-inspection'
+qgwf=qgwf_frontier or len(sys.argv)==4 and sys.argv[1]=='--qgwf-native-inspection'
 qgwe=qgwf or len(sys.argv)==4 and sys.argv[1]=='--qgwe-native-inspection'
 two=len(sys.argv)==4 and sys.argv[1]=='--two-candidate'
 candidate=two or len(sys.argv)==4 and sys.argv[1]=='--candidate'
@@ -16,7 +17,7 @@ if len(sys.argv)!=(4 if candidate or qgwe else 3) or any(k.startswith(('PIONEER_
     raise SystemExit('usage: run_pioneer_q38_qgwd_native_source_compile.py [--candidate|--two-candidate] ABS_SDK ABS_PROGRAM_HEADER')
 sdk,header=map(Path,sys.argv[2:] if candidate or qgwe else sys.argv[1:])
 assert sdk.is_absolute() and sdk.is_dir() and header.is_absolute() and header.is_file()
-assert hashlib.sha256(header.read_bytes()).hexdigest()==('b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else 'f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
+assert hashlib.sha256(header.read_bytes()).hexdigest()==('7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else 'f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
 here=Path(__file__).resolve().parent;root=here.parents[2];pioneer=here.parent
 role=(root/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRole.h').read_text()
 parents=set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role))
@@ -36,6 +37,7 @@ names.update('TT_PIONEER_EXPERIMENTAL_Q38_'+n for n in ('BANKS','PANEL','AFFINE'
  'COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR'))
 if qgwe:names.update(('PIONEER_Q38_QGWE_NATIVE_INSPECTION','PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN'))
 if qgwf:names.update(('PIONEER_Q38_QGWF_NATIVE_INSPECTION','PIONEER_Q38_QGWF_PROGRAMS_INSPECTION','PIONEER_Q38_QGWF_DUAL_BATCH_PLAN'))
+if qgwf_frontier:names.update(('PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION','PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION'))
 if candidate:
     names-={'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY'}
     names.update(('PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_HYBRID_FULL_NATIVE',
@@ -62,10 +64,10 @@ if candidate:
 with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp') as directory:
     obj=Path(directory)/'native.o'
     if qgwe:
-        compiler=os.environ.get('CXX','c++');role=pioneer/('PioneerQ38QgwfNativeInspectionRole.h' if qgwf else 'PioneerQ38QgweNativeInspectionRole.h')
+        compiler=os.environ.get('CXX','c++');role=pioneer/('PioneerQ38QgwfFrontierNativeInspectionRole.h' if qgwf_frontier else 'PioneerQ38QgwfNativeInspectionRole.h' if qgwf else 'PioneerQ38QgweNativeInspectionRole.h')
         entry=('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')
         rename=['-D'+name+'=qgwe_private_'+name for name in entry]
-        inspection='PIONEER_Q38_QGWF_NATIVE_INSPECTION' if qgwf else 'PIONEER_Q38_QGWE_NATIVE_INSPECTION'
+        inspection='PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION' if qgwf_frontier else 'PIONEER_Q38_QGWF_NATIVE_INSPECTION' if qgwf else 'PIONEER_Q38_QGWE_NATIVE_INSPECTION'
         probe='#ifndef '+inspection+'\n#error missing inspection\n#endif\n#include "'+str(role)+'"\n'
         def qgwe_check(arguments,success,body=probe):
             result=subprocess.run([compiler,'-std=c++17',*arguments,'-x','c++','-fsyntax-only','-'],input=body,capture_output=True,text=True)
@@ -73,7 +75,7 @@ with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp'
         selected=flags+rename;qgwe_check(selected,True)
         for name in ('PIONEER_Q38_QGWE_NATIVE_INSPECTION','PIONEER_Q38_QGWD_NATIVE_INSPECTION',
                      'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY',
-                     'PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN','_KERNEL_MODE') + (('PIONEER_Q38_QGWF_NATIVE_INSPECTION','PIONEER_Q38_QGWF_PROGRAMS_INSPECTION','PIONEER_Q38_QGWF_DUAL_BATCH_PLAN') if qgwf else ()):
+                     'PIONEER_Q38_QGWE_PROGRAMS_INSPECTION','PIONEER_Q38_QGWE_BATCH_DENSE_PLAN','_KERNEL_MODE') + (('PIONEER_Q38_QGWF_NATIVE_INSPECTION','PIONEER_Q38_QGWF_PROGRAMS_INSPECTION','PIONEER_Q38_QGWF_DUAL_BATCH_PLAN') if qgwf else ()) + (('PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION','PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION') if qgwf_frontier else ()):
             flag='-D'+name+'=1';assert flag in selected
             qgwe_check([f for f in selected if f!=flag],False)
             qgwe_check([f for f in selected if f!=flag]+['-D'+name+'=0'],False)

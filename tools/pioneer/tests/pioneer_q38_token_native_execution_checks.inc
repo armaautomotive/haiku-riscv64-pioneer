@@ -34,7 +34,7 @@ static void CheckNativeExecution(Fixture& f){
  assert(!lockHeld && c.q38GdnCallThread==-1 && !state->Unsafe() && !state->Closed()
   && !StartQ38TokenNativeRoot(c,start) && !CancelQ38TokenNativeRoot(c,cancel) && !ObserveQ38TokenNativeTerminal(c,terminal)
   && !io.TokenMemoryReadChecked(0,PioneerQ38TokenLayout::CancelLocal,output) && output==0x12345678 && io.touches==before);
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
  PioneerQ38TokenFrontierResult outside;
  assert(!ObserveQ38TokenNativeFrontier(c,outside) && !outside.started && io.touches==before);
 #endif
@@ -70,7 +70,7 @@ static void CheckNativeExecution(Fixture& f){
    && io.executionArms==1 && io.executionStarts==1 && io.executionCpu->markerWrites==1 && io.executionCpu->steps
    && io.executionCpu->minStack>=0x6e000 && !io.executionCpu->matrixInstructions && !io.executionCpu->floatOps
    && io.Raw(0,PioneerQ38GlobalChainLayout::R::Status+12)==PioneerQ38TokenLayout::Magic && c.q38Dispatch->rootRunning);
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
   {
    const unsigned touches=io.touches,steps=io.executionCpu->steps,packets=io.runtimePackets;
    const auto resets=io.resets;PioneerQ38TokenFrontierResult metric;const auto pristineMetric=metric;

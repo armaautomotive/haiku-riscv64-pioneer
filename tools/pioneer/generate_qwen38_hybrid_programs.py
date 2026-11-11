@@ -5,12 +5,13 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwf_frontier='--qgwf-frontier-inspection' in args
+args=sys.argv[1:];qgwf_frontier_native='--qgwf-frontier-native-inspection' in args
+qgwf_frontier=qgwf_frontier_native or '--qgwf-frontier-inspection' in args
 if qgwf_frontier:
-    selector='--qgwf-frontier-inspection'
+    selector='--qgwf-frontier-native-inspection' if qgwf_frontier_native else '--qgwf-frontier-inspection'
     if args.count(selector)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--qgwf-','--matrix-')) and x!=selector for x in args):
         raise SystemExit('ambiguous QGWF frontier inspection selector')
-    args.remove(selector);args.insert(0,'--qgwf-dual-batch-inspection')
+    args.remove(selector);args.insert(0,'--qgwf-dual-batch-native-inspection' if qgwf_frontier_native else '--qgwf-dual-batch-inspection')
 qgwf_native='--qgwf-dual-batch-native-inspection' in args
 qgwf=qgwf_native or '--qgwf-dual-batch-inspection' in args
 if qgwf:
@@ -202,8 +203,10 @@ if matrix:
         if qgwe:
             if qgwf:
                 if qgwf_frontier:
-                    lines += ['#if !defined(PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION != 1',
+                    lines += ['#if !defined(PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION != 1'+(' \\' if qgwf_frontier_native else ''),
+                              *([' || !defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION != 1'] if qgwf_frontier_native else []),
                               '#error QGWF frontier DATA requires its distinct offline inspection', '#endif']
+                    if qgwf_frontier_native:lines+=['#include "PioneerQ38QgwfFrontierNativeInspectionRole.h"']
                 lines += ['#if !defined(PIONEER_Q38_QGWF_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWF_PROGRAMS_INSPECTION != 1 \\',
                           ' || !defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN) || PIONEER_Q38_QGWF_DUAL_BATCH_PLAN != 1 \\',
                           ' || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_BATCH4_WORKER)'+(' \\' if qgwf_native else ''),
@@ -340,6 +343,7 @@ lines += [
  '#ifndef PIONEER_Q38_HYBRID_PROGRAMS_H','#define PIONEER_Q38_HYBRID_PROGRAMS_H',
  'namespace PioneerQ38HybridPrograms {',
  'enum {Family='+family+',Version=1,CancelBoundary=1,Bf16=1,EogCount=5};']
+if qgwf_frontier:lines+=['enum {TokenFrontier=1,FrontierAddress=0x7570c};']
 for source,name,label,address in units:
     data=source[name+'.bin']
     if not data or len(data)%4:

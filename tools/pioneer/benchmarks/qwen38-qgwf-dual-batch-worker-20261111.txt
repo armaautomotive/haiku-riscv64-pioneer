@@ -58,11 +58,16 @@ seals and NoC mocked; the count and fence followed successful readbacks and
 seals. The unchanged QGWF control emitted no frontier. This is preparation
 for measuring steady-state throughput, not a native reader, hardware test,
 clock measurement or tokens/sec result. It has no installation authority.
-The frontier ROOT and the dual-batch worker now also have a separately
-identified 15-section offline bundle, reproducible SHA-256
-cdb8becce43a7adbe27a04751f6ace631b6e299ee844a0542beb01686fadf2fa.
-Packaging tests verify both image hashes, identity/role separation and
-corruption refusals; the earlier QGWF bundles remain byte-identical.
+The frontier ROOT and dual-batch worker now have separately identified
+15-section offline and non-loadable native-inspection bundles, SHA-256
+088f520307f0d77c435c3204486574f8ea30ae765580e3fe70d687adf5cb3295 and
+7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80.
+The new private reader reuses the existing ownership and monotonic-count
+checks. Against simulated OS/VM/NoC with 119 emitted workers booted and
+the actual ROOT at its startup marker, it reported fresh count zero and
+refused 16 non-pristine result buffers without I/O. This is not a positive
+generated-token observation, public ioctl, physical reading or TPS result.
+Packaging and role tests passed; earlier QGWF bundles stayed byte-identical.
 
 These are simulated memory/fabric results, not full-model quality, physical
 NoC ordering, ownership/lifetime, hardware throughput or a speedup claim.

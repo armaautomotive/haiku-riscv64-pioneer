@@ -29,7 +29,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 [[maybe_unused]] static bool ObserveQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 [[maybe_unused]] static bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult&);
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
 [[maybe_unused]] static bool ObserveQ38TokenNativeFrontier(PioneerStoreContext&,PioneerQ38TokenFrontierResult&);
 #endif
 [[maybe_unused]] static bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
@@ -87,7 +87,7 @@ class PioneerQ38TokenNativeState {
  friend bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  friend bool ObserveQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  friend bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult&);
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
  friend bool ObserveQ38TokenNativeFrontier(PioneerStoreContext&,PioneerQ38TokenFrontierResult&);
 #endif
  friend bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
