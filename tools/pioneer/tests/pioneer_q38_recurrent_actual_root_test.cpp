@@ -70,6 +70,23 @@ static bool RunBuildWithTransfer(TransferRoot& m,unsigned pc,unsigned seal,unsig
  }
  assert(seals==2 && m.packets==1);return m.pc==0x60004;
 }
+static bool RunBuildWithRealSeal(TransferRoot& m,unsigned pc,unsigned sourceFrame,unsigned offset,const uint32_t* record,bool corruptSource=false){
+ const unsigned owner=0x6e000,frame=owner+768,tracked=0x6e500;
+ for(unsigned i=0;i<64;i++)m.memory[frame+i*4]=m.memory.at(sourceFrame+i*4);
+ for(unsigned i=0;i<16;i++){
+  const unsigned value=0x10000+i,at=i==0?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;
+  m.memory[owner+(16+i)*4]=value;m.memory[frame+(16+i)*4]=value;m.memory[0xffb20000+at]=value;
+ }
+ for(unsigned i=0;i<8;i++)m.memory[owner+(8+i)*4]=m.memory.at(frame+(32+i)*4);
+ m.memory[owner+256+48*4]=1;m.memory[owner+1024]=2;m.memory[0x75400]=1;
+ if(corruptSource)m.memory[0xffb20100]^=1;
+ for(unsigned i=0;i<8;i++)m.memory[tracked+i*4]=0;
+ for(unsigned i=0;i<32;i++)m.record[i]=record[i];
+ std::fill(std::begin(m.regs),std::end(m.regs),0);m.regs[1]=0x60004;m.regs[2]=0x70000;
+ m.regs[27]=owner;m.regs[10]=frame;m.regs[11]=tracked;m.pc=pc;m.steps=0;m.expectedOffset=offset;m.packets=0;
+ while(m.pc!=0x60004 && m.pc!=0x60000){m.Step();assert(m.regs[2]>=0x6e000 && m.regs[2]<=0x70000);}
+ return m.pc==0x60004 && m.packets==1;
+}
 int main(int argc,char** argv){
  assert(argc==2);auto m=std::make_unique<ActualRoot>(argv[1]);
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
@@ -113,6 +130,16 @@ int main(int argc,char** argv){
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
    assert(transfer->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
   if(layer==0){
+   auto sealed=std::make_unique<TransferRoot>(argv[1]);sealed->memory=m->memory;
+   for(unsigned i=0;i<4;i++)sealed->memory[0xffb20040+i*0x800]=0;
+   for(unsigned i=0;i<32;i++)sealed->memory[0xffb20240+i*4]=0;
+   for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})sealed->memory[0xffb20000+a]=0;
+   assert(RunBuildWithRealSeal(*sealed,builds[0],d,offset,recordData));
+   auto unsealed=std::make_unique<TransferRoot>(argv[1]);unsealed->memory=m->memory;
+   for(unsigned i=0;i<4;i++)unsealed->memory[0xffb20040+i*0x800]=0;
+   for(unsigned i=0;i<32;i++)unsealed->memory[0xffb20240+i*4]=0;
+   for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})unsealed->memory[0xffb20000+a]=0;
+   assert(!RunBuildWithRealSeal(*unsealed,builds[0],d,offset,recordData,true) && !unsealed->packets);
    auto altered=std::make_unique<TransferRoot>(argv[1]);altered->memory=m->memory;
    for(unsigned i=0;i<4;i++)altered->memory[0xffb20040+i*0x800]=0;
    for(unsigned i=0;i<32;i++)altered->memory[0xffb20240+i*4]=0;
