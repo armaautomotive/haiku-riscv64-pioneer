@@ -1,0 +1,23 @@
+QGWD resident diagnostic tag146 staging, 2026-11-12
+
+Four files were placed in the private Pioneer directory
+/boot/home/pioneer-qgwd-resident-diagnostic-146-20261112-a while the
+independent tag145 preflight was running. No driver swap, model upload,
+resident check-only, or card execution was performed for tag146.
+
+Independent Pioneer SHA-256 checks matched the local identities:
+ driver e809110d19ba4b63c93e1eb22c6d6a6c430bc8cefa17debef67a8bca9d69dcf2
+ client 12f5e15d737229810b3c6cce7c229437f782f96727217fb838d47c5f5264d8ec
+ parent 25954f6937356e5d33cc4fd30f395838217ad21b003f371bfbe621693eef41a9
+ gate   deb34cbc0ecfb620dc0549e526b1fe97b149b8cffa07d987a50e035732a3ad08
+The directory was root-owned mode 700; executables were root-owned, single
+link, mode 755; gate was root-owned, single link, mode 644.
+
+Offline resident full-session success and failure simulations, resident
+handoff endpoint fault tests, output-gate tests and parent-flow fake-endpoint
+tests passed. They do not establish card operation, quality, or speed.
+Before --check-only or any physical execution, independently verify successful
+tag145 completion, output and restoration, idle stable driver generation34,
+system health and staging identity. On uncertainty do not launch, retry,
+reset, or replace the driver. The test is two fixed-input requests, not a
+general Assistant integration or a proof of model quality.
