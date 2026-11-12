@@ -11,7 +11,7 @@ struct DenseProducerImage:TransitionImage {
  std::array<uint32_t,256> input={};std::map<unsigned,unsigned> bank;
  std::array<uint32_t,64> descriptor={};std::array<uint32_t,8> before={};
  unsigned packets=0;bool producing=false;
- DenseProducerImage(const char* worker,const char* leaf,unsigned width=17408,unsigned bands=2):TransitionImage(worker,leaf,1,width,bands){}
+ DenseProducerImage(const char* worker,const char* leaf,unsigned width=17408,unsigned bands=2,unsigned peer=1):TransitionImage(worker,leaf,peer,width,bands){}
  static bool ProducerL1(unsigned a){return Range(a,BP::Descriptor,256) || Range(a,0x90000,3712);}
  uint32_t Load(uint32_t a)override{
   if(producing && ProducerL1(a))return WordRead(a);
@@ -43,9 +43,9 @@ struct DenseProducerImage:TransitionImage {
   ));producing=true;packets=0;bank.clear();
   const unsigned width=layer%4!=3 && role==13?6144:5120;
   const unsigned indices[]={2,3,4,5,1,8,4,10};for(unsigned i=0;i<8;i++)before[i]=transfer.counters[indices[i]];
-  auto& d=descriptor;d.fill(0);d[0]=BP::Magic;d[1]=1;d[2]=67108864;d[4]=0x4000000;d[6]=2025;
-  d[7]=boot[3];d[8]=PioneerQ38ProjectionRoute(0);d[9]=boot[4];d[10]=BP::ProjectionInput;
-  d[11]=width;d[12]=BP::NativeOffset;d[13]=BP::LinesOffset;d[14]=BP::Format;d[15]=width/256;
+  auto& d=descriptor;d.fill(0);d[0]=BP::Magic;d[1]=1;d[2]=67108864;d[4]=0x4000000;d[5]=boot[3]-1;d[6]=2025;
+  d[7]=boot[3];d[8]=PioneerQ38ProjectionRoute(0);d[9]=boot[4];d[10]=BP::ProjectionInput+d[5]*1024;
+  d[11]=width;d[12]=BP::NativeOffset+d[5]*512;d[13]=BP::LinesOffset+d[5]*128;d[14]=BP::Format;d[15]=width/256;
   for(unsigned i=0;i<16;i++)d[16+i]=source[i];for(unsigned i=0;i<8;i++)d[32+i]=boot[8+i];
   d[41]=248319;d[42]=layer;d[43]=role;assert(BP::DescriptorShape(d.data()));
   unsigned j[64]={};j[0]=HW::Magic;j[1]=sequence;j[2]=5;j[3]=boot[3];j[4]=boot[4];j[5]=layer;j[7]=2025;

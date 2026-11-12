@@ -8,6 +8,7 @@
 #include "pioneer_q38_dense_q8_producer_image_test.cpp"
 #include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 #include "../PioneerQ38RecurrentQ8MatrixRootJobs.h"
+#include <memory>
 struct SchedulerIO {
  uint32_t table[7][3]={},tuple[119][4]={};unsigned fields=0;
  unsigned Table(unsigned b,unsigned f){return table[b][f];}
@@ -31,6 +32,17 @@ int main(int argc,char** argv){
   for(unsigned at=0;at<512;at+=4){
    unsigned word=image.bank.at(image.descriptor[4]+image.descriptor[12]+at);
    for(unsigned b=0;b<4;b++)image.transfer.root[at+b]=uint8_t(word>>(8*b));
+  }
+  // Every producer runs its compiled program on a separate simulated worker;
+  // only its resulting bytes are copied into the matrix input.
+  for(unsigned chunk=1;chunk<width/256;chunk++){
+   auto producer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,tuple[3],chunk+1);producer->Boot();
+   for(unsigned i=0;i<256;i++)producer->input[i]=PioneerAttentionBits(float(int((chunk*256+i)%37)-18)*.03125f);
+   producer->StageProducer(role,1,false,0);producer->Check(1);
+   for(unsigned at=0;at<512;at+=4){
+    unsigned word=producer->bank.at(producer->descriptor[4]+producer->descriptor[12]+at);
+    for(unsigned b=0;b<4;b++)image.transfer.root[chunk*512+at+b]=uint8_t(word>>(8*b));
+   }
   }
   const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],closed[64];
   for(unsigned i=0;i<8;i++)before[i]=image.transfer.counters[indices[i]];
@@ -56,7 +68,7 @@ int main(int argc,char** argv){
     assert(PioneerBlackholeBf16Arithmetic::Instruction(weights,inputs,phase,expected[row],expected[row]));
    }
   }
-  assert(nonzero>200);
+  assert(nonzero>width*9/10);
   for(unsigned band=0;band<tuple[3];band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
   std::printf("PASS recurrent role%u K%u actual worker producer/transport/matrix simulation; NO DEVICE\n",role,width);
  }
