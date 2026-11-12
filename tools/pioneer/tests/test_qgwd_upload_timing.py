@@ -2,6 +2,7 @@
 """Shape checks only; all timing and model output values are synthetic."""
 import importlib.util
 from pathlib import Path
+import subprocess
 
 path=Path(__file__).resolve().parent.parent/'check_qgwd_upload_timing.py'
 spec=importlib.util.spec_from_file_location('upload_timing_checker',path)
@@ -15,13 +16,20 @@ rows=['HYBRID_FULL_CANDIDATE preflight; unqualified, no device open yet','HYBRID
       'QGWD_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT 0.200000','HYBRID_TOKEN 42','HYBRID_TOKEN 43',
       'HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated']
 assert 'SHAPE_CLEAN' in module.check('\n'.join(rows)+'\n')
+gate=path.parent/'pioneer_q38_qgwd_upload_timing_output.awk'
+def awk(case):return subprocess.run(['awk','-f',str(gate)],input='\n'.join(case)+'\n',text=True,capture_output=True)
+assert awk(rows).returncode==0 and 'read_ns=1000000000 span_ioctl_ns=2000000000' in awk(rows).stdout
+invalid=[r.replace('valid=1','valid=0') for r in rows]
+assert awk(invalid).returncode==0 and 'TIMING_UNAVAILABLE' in awk(invalid).stdout
 cases=[rows[:4]+rows[5:],rows[:5]+[timing]+rows[5:],
        [r.replace('valid=1','valid=0') for r in rows],
        [r.replace('span_calls=21907','span_calls=21906') for r in rows],
        [r.replace('read_bytes=21094223872','read_bytes=1') for r in rows],
        [r.replace('read_ns=1000000000','read_ns=25000000000') for r in rows],
        rows[:4]+[rows[5],timing]+rows[6:],rows+['unexpected']]
-for case in cases:
+for index,case in enumerate(cases):
+    if index in (2,3,4,5):assert awk(case).returncode==0 and 'TIMING_UNAVAILABLE' in awk(case).stdout
+    else:assert awk(case).returncode!=0,case
     try:module.check('\n'.join(case)+'\n')
     except ValueError:continue
     raise AssertionError(case)

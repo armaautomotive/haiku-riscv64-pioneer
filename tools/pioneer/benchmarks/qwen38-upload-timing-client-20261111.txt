@@ -24,4 +24,13 @@ the same SHA recorded for the earlier physical trial. Neither new build
 has been installed or run on the P100A. A distinct checker validates the
 extra timing line, byte/call counts, time bounds and the original tag142
 transcript shape. Its success does not prove quality or hardware recovery.
-A separately qualified one-shot parent is still required for a trial.
+The separate one-shot parent and AWK gate passed simulated success, failure,
+and one-shot tests. Invalid timing alone is reported as unavailable and does
+not prevent driver restoration after a clean diagnostic lifecycle.
+
+The new stage /boot/home/pioneer-qgwd-upload-timing-20261111-a has passed
+read-only check-only against stable tag2026102100010012 generation24; no
+driver swap or device execution happened in that check. Its hashes are:
+client 57d006376bbbf19d9ccf44b670c6d0ab18a1ac131606b3a813981457b79e3eae,
+gate f01ff418c8f73d3f966e301a81d9c9908ccca3b8b9b277529b927e7dcdd733fc,
+parent 1e3054df6d610fed2ed931854c862960dfdbddd13766f9b0a8763c54e6e5e796.
