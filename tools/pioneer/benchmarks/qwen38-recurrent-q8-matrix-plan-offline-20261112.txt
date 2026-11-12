@@ -1,0 +1,24 @@
+Recurrent-layer Q8 to BFP8 matrix geometry, offline only
+
+Current QGWD selects the converted BFP8 producer for dense-layer Q/G, K and V
+and for the existing FFN/head paths. This proposal adds a distinct data-only
+layout for recurrent layers' large Q8 roles 5, 6 and 13: respectively
+5120x6144, 5120x10240 and 6144x5120. The two Q8 48-row projections per
+recurrent layer remain in their original encoding; partial-tile policy and
+their execution are not implemented by this proposal.
+
+The canonical source plan covers 48 recurrent layers. The isolated test
+accepted 1008 stripes and 1,032,192 rows, verified the existing BFP8 tile
+geometry for both 5120- and 6144-wide inputs, rejected altered type/row
+metadata, and confirmed that all other parts, bank assignments, offsets and
+used extents remain unchanged. The converted shapes leave 346,030,080 bytes
+of holes within prior reserved extents; those bytes are NOT reclaimed VRAM.
+ASan/UBSan geometry and native/Work/reference role exclusion tests passed.
+
+This is only a proposed memory layout: it neither creates caches nor
+converts or uploads actual model weights, and no worker or driver selects
+it. BFP8 is a requantization and needs numerical/quality qualification.
+The required next steps include authenticated cache/page production,
+physical layout and ownership proof, new projection schedules and worker
+execution, tests against an independent reference, then guarded on-card
+measurement. There is no hardware, model-quality, token-rate or speedup claim.
