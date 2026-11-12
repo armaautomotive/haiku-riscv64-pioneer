@@ -1,8 +1,17 @@
 /* SPDX-License-Identifier: MIT */
 // Synthetic ownership and ledger only. No real upload or device.
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY 1
+#define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION 1
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
+#define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
+#define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_BANKS_MOCK_ONLY 1
+#include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "pioneer_resident_banks_test.cpp"
 #include "../PioneerQ38RecurrentQ8UploadReceiptInspection.h"
@@ -63,6 +72,15 @@ int main(int argc,char** argv){
  assert(!receipt->Matches(&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,43));
  assert(receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ using W=PioneerQ38RecurrentQ8MatrixWorkspace;
+ std::array<uint32_t,W::Words> actual={},expected={};actual.fill(0xa5a5a5a5);
+ const auto untouched=actual;
+ assert(!receipt->Workspace(actual.data(),actual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && actual==untouched);
+ assert(!receipt->Workspace(actual.data(),actual.size()-1,&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==untouched);
+ assert(!receipt->Workspace(hashes.data(),W::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->Workspace(reinterpret_cast<uint32_t*>(&context),W::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(W::Build(*canonical,host,expected.data(),expected.size()));
+ assert(receipt->Workspace(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==expected);
  ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(banks.Quarantined() && !receipt->Sealed());
  puts("PASS synthetic recurrent span ledger, identity, seal and mutation quarantine; NO DEVICE");

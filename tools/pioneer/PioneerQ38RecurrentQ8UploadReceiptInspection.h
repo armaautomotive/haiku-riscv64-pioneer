@@ -8,6 +8,7 @@
 #ifndef PIONEER_Q38_RECURRENT_Q8_UPLOAD_RECEIPT_INSPECTION_H
 #define PIONEER_Q38_RECURRENT_Q8_UPLOAD_RECEIPT_INSPECTION_H
 #include "PioneerQ38RecurrentQ8LedgerInspection.h"
+#include "PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
 
 // CPU ledger experiment only: FNV is not authentication or card readback.
@@ -84,6 +85,32 @@ public:
   if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38RecurrentQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
+ // Produce metadata only from this sealed ledger and independently rebuilt
+ // layout. No write to card memory, readback or device ownership is implied.
+ bool Workspace(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  using W=PioneerQ38RecurrentQ8MatrixWorkspace;using Plan=PioneerQ38HybridRecurrentQ8MatrixPlan;
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized),limit=~uintptr_t(0);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t outputBytes=W::Bytes,hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(!output || words!=W::Words || (out&3) || out>limit-outputBytes || self>limit-sizeof(*this)
+   || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+outputBytes) || (out<hp+hashBytes && hp<out+outputBytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+outputBytes)
+   || (cp>=out && cp<out+outputBytes) || (fp>=out && fp<out+outputBytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  Plan::Proposal proposal;if(!Plan::Build(original,proposal) || proposal.parts.size()!=layout.Count())return false;
+  for(unsigned i=0;i<layout.Count();i++){
+   const auto* q=layout.At(i);const auto& p=proposal.parts[i];
+   if(!q || p.original!=q->original || p.bank!=q->bank || p.offset!=q->offset
+    || p.bytes!=q->bytes || p.allocated!=q->allocated || p.encoding!=q->encoding)return Fail();
+  }
+  std::array<uint32_t,W::Words> staged={};
+  if(!W::Build(original,proposal,staged.data(),staged.size()) || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<W::Words;i++)output[i]=staged[i];return true;
+ }
  uint64_t PageDigest()const{return Sealed()?digest:0;}
 };
+static_assert(sizeof(PioneerQ38RecurrentQ8UploadReceiptInspection)>524288,"recurrent receipt is heap-only");
 #endif
