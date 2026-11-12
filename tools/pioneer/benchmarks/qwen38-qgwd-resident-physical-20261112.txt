@@ -1,0 +1,26 @@
+QGWD resident tag146 physical diagnostic, 2026-11-12
+
+One fixed-input diagnostic, not a general model-quality or Assistant test.
+Preflight and trial exited 0; parent, preflight and trial stderr were empty.
+An independent transcript-shape check accepted one upload, two 17-ID requests
+and explicit unload. The first request emitted 70253 for all 17 IDs; the
+client reported that the second request matched all 17. The first two IDs
+match a separate two-position CPU diagnostic for this artificial sequence;
+the remaining IDs and general output quality are not independently verified.
+
+Upload plus initial START took 2973.955 seconds. First request inference,
+including START and prompt processing, took 747.421 seconds; its observed
+16-token decode window bounded throughput at 0.073463803--0.073467130 tokens/s.
+The second request used no second upload and took 751.085 seconds including
+fresh START, but excluding its subsequent finish/unload. This demonstrates
+reuse in this diagnostic, not a production multi-conversation service or a
+measured inference-speed improvement. The experimental recurrent matrix path
+was not used. Compared with tag145's 0.073466349--0.073469689 tokens/s, the
+single observed decode windows show no practical established speedup.
+
+After termination, independent checks found no diagnostic parent or client,
+and state CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED. The installed
+stable driver SHA-256 was 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+reload tag2026102100010012 generation36 quiesced0 cold0 active_owner0.
+sysinfo reported 64 CPUs and 137034936320 bytes maximum RAM. These checks do
+not establish desktop input or Assistant model loading and selection.
