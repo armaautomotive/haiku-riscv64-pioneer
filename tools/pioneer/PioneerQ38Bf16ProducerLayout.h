@@ -44,11 +44,21 @@ static inline bool RecurrentQ8Role(const uint32_t* d){
  (void)d;return false;
 #endif
 }
-static inline unsigned Width(const uint32_t* d){return d[43]==4?17408U:RecurrentQ8Role(d) && d[43]==13?6144U:5120U;}
+static inline unsigned Width(const uint32_t* d){
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ return d[43]==4?17408U:RecurrentQ8Role(d) && d[43]==13?6144U:5120U;
+#else
+ return d[43]==4?17408U:5120U;
+#endif
+}
 static inline unsigned Reads(const uint32_t* d){return d[43]==4?2U:1U;}
 static inline bool DescriptorShape(const uint32_t* d){
  if(!d || d[0]!=Magic || d[1]!=1 || d[2]!=67108864 || d[3]>=7 || (d[4]&4095)
-  || d[4]<0x04000000 || d[4]>0xc0000000 || (d[43]!=2 && d[43]!=3 && d[43]!=4 && !DenseQ8Role(d) && !RecurrentQ8Role(d))
+  || d[4]<0x04000000 || d[4]>0xc0000000 || (d[43]!=2 && d[43]!=3 && d[43]!=4 && !DenseQ8Role(d)
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+   && !RecurrentQ8Role(d)
+#endif
+  )
   || d[42]>=64 || d[40]>=8192 || d[41]>=248320)return false;
  const unsigned width=Width(d),chunks=width/256;
  if(d[5]>=chunks || !d[6] || d[6]>=0x7fffffff || d[7]!=d[5]+1
