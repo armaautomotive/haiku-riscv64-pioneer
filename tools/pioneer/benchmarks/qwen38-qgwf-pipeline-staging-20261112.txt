@@ -1,0 +1,20 @@
+QGWF tag144 pipelined-loader staging, 2026-11-12
+
+While the separate rate trial was active, four files were copied into the new
+root-owned 0700 directory /boot/home/pioneer-qgwf-pipeline-diagnostic-144-20261111-a.
+No pipeline script, driver operation, model load, or device execution was run.
+The staged files were re-hashed on Haiku:
+
+  driver   f28498f1e6d53ed205737ac99b398dd6fda3e5873717046a6760b3df0cf36b88
+  client   b29dadb98f5a613854d967bb9409751dcbef6674a4a80448afe9d1dde61d80fc
+  gate     37cd9791141bbf202c3665e61377e349d58557e7101319052471e31994fd61ee
+  parent   48ed0c4a7f958c4121398409b12728ac6fb01a3c03eba2b70f6977127a44b511
+
+This is an unspent staging directory, not test success or evidence of a load
+speedup. Before check-only or launch, independently verify that the running
+rate trial finished, its output/cleanup gates passed, no client remains, and
+the known-good driver is idle at tag2026102100010012 generation30 with full
+CPU/RAM health. Run check-only and verify all staged identities again. If any
+condition is uncertain, do not launch or replay a one-shot. The pipelined
+candidate overlaps host page preparation with upload; it does not by itself
+improve P100A token generation throughput.
