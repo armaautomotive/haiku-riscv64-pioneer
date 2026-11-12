@@ -70,6 +70,20 @@ int main(int argc,char** argv){
   }
   assert(nonzero>width*9/10);
   for(unsigned band=0;band<tuple[3];band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
+  // Exercise middle and last scheduled workers with the full produced input,
+  // including their own address, row offset, band count and route.
+  for(unsigned ordinal:{62U,118U}){
+   const auto* assigned=scheduler.tuple[ordinal];
+   auto peer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,assigned[3],ordinal+1);peer->Boot();
+   peer->transfer.root=image.transfer.root;
+   peer->transfer.job.words[3]=assigned[0];peer->transfer.job.words[5]=PioneerQ38ProjectionRoute(assigned[1]);peer->transfer.job.words[11]=1;
+   uint32_t next[64]={};assert(PioneerQ38DenseQ8MatrixRootFrame::Build(assigned,peer->boot.data(),0,role,0,2025,0,next));
+   for(unsigned i=0;i<16;i++)assert(next[16+i]==peer->transfer.job.words[i]);
+   for(unsigned i=0;i<64;i++)peer->Put(HW::Job+i*4,next[i]);peer->Put(HW::Doorbell,1);
+   assert(peer->FinishCombined(1) && peer->native.Clean());
+   for(unsigned band=0;band<assigned[3];band++)for(unsigned row=0;row<32;row++)
+    assert(peer->Get(W::Output+(band*32+row)*4)==expected[row]);
+  }
   std::printf("PASS recurrent role%u K%u actual worker producer/transport/matrix simulation; NO DEVICE\n",role,width);
  }
 }
