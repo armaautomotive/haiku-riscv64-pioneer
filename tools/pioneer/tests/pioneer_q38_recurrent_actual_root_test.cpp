@@ -15,6 +15,24 @@ struct Schedule {
  unsigned Table(unsigned b,unsigned f){return table[b][f];}
  void Output(unsigned w,unsigned f,unsigned v){parts[w][f]=v;}
 };
+struct TransferRoot:ActualRoot {
+ uint32_t record[32]={};unsigned expectedOffset=0,packets=0;
+ explicit TransferRoot(const char* path):ActualRoot(path){
+  for(unsigned i=0;i<4;i++)memory[0xffb20040+i*0x800]=0;
+  for(unsigned i=0;i<32;i++)memory[0xffb20240+i*4]=0;
+  for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})memory[0xffb20000+a]=0;
+ }
+ void Store(unsigned a,unsigned value)override{
+  if(a==0xffb20040 && value==1){
+   assert(++packets==1 && memory.at(0xffb20000)==0x04000000+expectedOffset
+    && memory.at(0xffb2000c)==0x78000 && memory.at(0xffb20020)==128);
+   for(unsigned i=0;i<32;i++)memory[0x78000+i*4]=record[i];
+   memory[0xffb20208]++;memory[0xffb2020c]+=2;memory[0xffb20210]++;memory[0xffb20214]++;
+   memory[a]=0;return;
+  }
+  ActualRoot::Store(a,value);
+ }
+};
 static std::vector<unsigned> Symbols(const char* folder,const char* name){
  std::ifstream f(std::string(folder)+"/program.demangled");std::string line;std::vector<unsigned> out;
  while(std::getline(f,line))if(line.find(name)!=std::string::npos && line.find("[clone")==std::string::npos)
@@ -39,6 +57,18 @@ static bool RunBuildWithStub(ActualRoot& m,unsigned pc,unsigned read,unsigned d,
  }
  assert(reads==1);return m.pc==0x60004;
 }
+static bool RunBuildWithTransfer(TransferRoot& m,unsigned pc,unsigned seal,unsigned d,unsigned offset,const uint32_t* record){
+ std::fill(std::begin(m.regs),std::end(m.regs),0);m.regs[1]=0x60004;m.regs[2]=0x70000;
+ m.regs[10]=d;m.regs[11]=0x6f000;m.pc=pc;m.steps=0;m.expectedOffset=offset;m.packets=0;
+ for(unsigned i=0;i<32;i++)m.record[i]=record[i];
+ for(unsigned i=0;i<8;i++)m.memory[0x6f000+i*4]=0;
+ unsigned seals=0;
+ while(m.pc!=0x60004 && m.pc!=0x60000){
+  if(m.pc==seal){seals++;m.pc=m.regs[1];}else m.Step();
+  assert(m.regs[2]>=0x6e000 && m.regs[2]<=0x70000);
+ }
+ assert(seals==2 && m.packets==1);return m.pc==0x60004;
+}
 int main(int argc,char** argv){
  assert(argc==2);auto m=std::make_unique<ActualRoot>(argv[1]);
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
@@ -51,6 +81,11 @@ int main(int argc,char** argv){
   assert(!record);record=unsigned(std::stoul(line.substr(0,8),nullptr,16));
  }
  assert(record);
+ std::ifstream symbols2(std::string(argv[1])+"/program.demangled");unsigned packetSeal=0;
+ while(std::getline(symbols2,line))if(line.find(" T q38_layer_return_recurrent_packet_seal")!=std::string::npos){
+  assert(!packetSeal);packetSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
+ }
+ assert(packetSeal);
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
  m->memory[d+4*4]=0x04000000;m->memory[d+4*6]=2025;m->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  m->memory[d+4*15]=8;m->memory[d+4*41]=248319;
@@ -69,6 +104,13 @@ int main(int argc,char** argv){
   uint32_t recordData[32]={};
   for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)recordData[b*3+f]=schedule.table[b][f];
   const unsigned offset=0x3000200U+((layer-layer/4)*3+(role==5?0:role==6?1:2))*128;
+  auto transfer=std::make_unique<TransferRoot>(argv[1]);transfer->memory=m->memory;
+  for(unsigned i=0;i<4;i++)transfer->memory[0xffb20040+i*0x800]=0;
+  for(unsigned i=0;i<32;i++)transfer->memory[0xffb20240+i*4]=0;
+  for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})transfer->memory[0xffb20000+a]=0;
+  assert(RunBuildWithTransfer(*transfer,builds[0],packetSeal,d,offset,recordData));
+  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
+   assert(transfer->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
   assert(RunBuildWithStub(*m,builds[0],reads[0],d,offset,recordData));
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++){
    assert(m->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
