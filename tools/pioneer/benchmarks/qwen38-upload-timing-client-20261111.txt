@@ -34,3 +34,9 @@ driver swap or device execution happened in that check. Its hashes are:
 client 57d006376bbbf19d9ccf44b670c6d0ab18a1ac131606b3a813981457b79e3eae,
 gate f01ff418c8f73d3f966e301a81d9c9908ccca3b8b9b277529b927e7dcdd733fc,
 parent 1e3054df6d610fed2ed931854c862960dfdbddd13766f9b0a8763c54e6e5e796.
+
+One-shot launch: parent PID 8544, confirmed live alongside cache-preflight
+PID 8585 in state VERIFYING_MODEL_AND_CACHES_NO_DEVICE. This stage is now
+spent and must not be launched again or have its marker removed. Observe
+the same parent and stage until terminal; preflight activity is not a
+driver exchange, card execution, completed measurement or speed result.
