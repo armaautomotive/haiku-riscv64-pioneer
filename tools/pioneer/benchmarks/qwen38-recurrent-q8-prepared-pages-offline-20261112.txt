@@ -1,0 +1,24 @@
+Recurrent Q8 BFP8 prepared-page adapter, offline synthetic evidence
+
+This separate page source layers on the verified QGWD dense-Q8 source. It
+routes the 1008 selected recurrent stripes through a same-source BFP8 cache,
+while forwarding all other pages to the parent. It preserves the parent's
+plan snapshot, addresses, bank assignments and reserved extents. It neither
+creates caches nor uploads weights, owns a device, executes a model, or
+enables Work/Assistant.
+
+ASan/UBSan tests with synthetic pages passed for 5120- and 6144-wide targets,
+all 1008 selected stripes, unchanged small recurrent/dense/FFN/raw routing,
+padding, wrong identities, snapshot changes, overlapping output, revoked
+source, and atomic failure during a batch. The old dense prepared-page suite
+also passed; both page suites passed again in an independently extracted
+clean source snapshot. The separate existing all-BFP8 converter suite passed
+for both widths, including Q8, padded rows and source-loss handling. The
+unchanged tag145 diagnostic client rebuilt to its prior SHA-256
+6e36877c9daa9797547e5c066579d3149c78c805351c5607662a66e7f38db3c6.
+
+Binding identity checks are distinct from the explicit full-plan verification
+checkpoint; the latter remains required and catches changes to other parts.
+No real recurrent model cache, numerical output, matrix-worker schedule,
+physical device, model quality, inference speed or production safety has
+been demonstrated by these tests. Further work is required for all of them.
