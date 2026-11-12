@@ -1,0 +1,21 @@
+QGWF tag143 physical one-shot, launched 2026-11-11
+
+The preceding tag142 timing run completed and restored stable tag2026102100010012
+at generation26. Its independent timing/transcript checker passed; sysinfo
+reported 64 CPUs and 137034936320 bytes maximum RAM.
+
+The isolated stage is /boot/home/pioneer-qgwf-diagnostic-143-20261111-a.
+Before launch, the parent, driver, client and output-gate SHA-256 values matched
+their prebuilt pins, and the parent's --check-only confirmed stable tag26,
+idle ownership and system health without opening the model or device.
+Parent process 9024 launched once and its CPU-only cache preflight process 9065
+was observed alive. The candidate is QGWF dual-batch; fixed input 248319 and
+up to two outputs, no CPU reference. This physical test uses the original
+bb9b4529... client, NOT the newer local upload-plan optimization.
+
+This launch is not a result. While either the parent or child is alive, do not
+replay the one-shot, touch its markers, swap drivers, reset the device, or start
+another owner. On any uncertain result the parent intentionally stops without
+automatic retry or restoration. Only clean FINISH/close, accepted output shape
+and exact no-owner metadata permit its single stable-driver restoration to
+generation28. Test output quality and throughput remain unverified.

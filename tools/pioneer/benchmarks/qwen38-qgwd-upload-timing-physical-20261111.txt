@@ -1,0 +1,26 @@
+QGWD tag142 physical upload timing, 2026-11-11
+
+The isolated one-shot run completed with preflight exit 0, client exit 0,
+empty stderr, clean native FINISH/close and stable driver restored. The
+independent transcript checker accepted the counts and lifecycle shape.
+The stable driver SHA-256 was 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+reload metadata reported tag2026102100010012 generation26, no active owner,
+no cold quarantine. Haiku sysinfo reported 64 CPUs and 137034936320 bytes
+maximum RAM. These checks do not validate generated text quality.
+
+21,094,223,872 bytes were read/uploaded. Cumulative host wall times:
+  323,604 page reads:             1,213.943454 s
+   21,907 span upload IOCTLs:     1,237.065436 s
+  upload-and-start total:         3,003.594 s
+
+The total includes work outside those two sums and model START; the roughly
+552.585 s difference cannot be attributed to plan checks alone. The two sums
+are host-side elapsed time, not isolated physical PCIe bandwidth: page reads
+include cache verification/preparation and IOCTLs include driver and card work.
+The current separate local optimization removes one redundant full-plan scan;
+it was NOT present in this physical run and has not been measured on Pioneer.
+
+The generated IDs were 70253, 70253. The 543.408 s inference interval includes
+START and prompt processing; the printed 0.003680 outputs/s is NOT a
+steady-state decode result. No CPU reference was run in this test and there is
+no new output quality or 20 tokens/s claim.
