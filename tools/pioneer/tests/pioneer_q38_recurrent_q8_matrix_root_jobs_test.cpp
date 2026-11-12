@@ -5,9 +5,11 @@
 #define PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY 1
+#include "../PioneerQ38TokenLayout.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "../PioneerQ38HybridRecurrentQ8MatrixPlan.h"
 #include "../PioneerQ38RecurrentQ8MatrixManifest.h"
+#include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "../PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 #include "../PioneerQ38RecurrentQ8MatrixRootJobs.h"
@@ -57,9 +59,17 @@ int main(){
  // Exercise the actual canonical seven-bank partitions and converted offsets,
  // not just the balanced synthetic tables above.
  using C=PioneerQ38CanonicalModelPlan;using P=PioneerQ38HybridRecurrentQ8MatrixPlan;using M=PioneerQ38RecurrentQ8MatrixManifest;
+ using Package=PioneerQ38RecurrentQ8MatrixWorkspace;
  auto source=std::make_unique<C>();P::Proposal proposal;assert(source->Build() && P::Build(*source,proposal));
  std::array<uint32_t,M::Words> manifest={};assert(M::Build(*source,proposal,manifest.data(),manifest.size()));
+ std::array<uint32_t,Package::Words> records={};assert(Package::Build(*source,proposal,records.data(),records.size()));
+ for(unsigned record=0;record<Package::Records;record++)for(unsigned i=0;i<Package::RecordWords;i++)
+  assert(records[record*Package::RecordWords+i]==(i<21?manifest[record*21+i]:0));
  auto original=manifest;auto changed=proposal;changed.parts[0].offset+=4096;
+ auto originalRecords=records;
+ assert(!Package::Build(*source,changed,records.data(),records.size()) && records==originalRecords);
+ assert(!Package::Build(*source,proposal,records.data(),records.size()-1) && records==originalRecords);
+ assert(!Package::Build(*source,proposal,reinterpret_cast<uint32_t*>(proposal.parts.data()),Package::Words));
  assert(!M::Build(*source,changed,manifest.data(),manifest.size()) && manifest==original);
  assert(!M::Build(*source,proposal,manifest.data(),manifest.size()-1) && manifest==original);
  assert(!M::Build(*source,proposal,reinterpret_cast<uint32_t*>(proposal.parts.data()),M::Words));
@@ -73,7 +83,7 @@ int main(){
    actual.table[p->bank][2]=p->rows;parts++;
   }
   for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)
-   assert(actual.table[b][f]==manifest[M::Index(l-l/4,role==5?0:role==6?1:2,b)+f]);
+   assert(actual.table[b][f]==records[((l-l/4)*3+(role==5?0:role==6?1:2))*Package::RecordWords+b*3+f]);
   assert(parts==7 && S::Build(actual,l,role) && actual.writes==119*4);
   Verify(actual,role==5?6144:role==6?10240:5120,role==13?208896:174080);
   for(unsigned w=0;w<119;w++){
