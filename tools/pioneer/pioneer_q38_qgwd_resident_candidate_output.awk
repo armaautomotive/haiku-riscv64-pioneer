@@ -1,5 +1,6 @@
 # Tag146 diagnostic transcript shape only. It cannot establish physical
-# weight integrity, broad model quality, Work suitability or speed.
+# weight integrity, broad model quality, Work suitability or speed. The first
+# two IDs are pinned to the prior fixed-input physical QGWD/QGWF diagnostics.
 BEGIN { stage=0; preflight=0; uploaded=0; tokens=0; rate=0; bad=0 }
 /^HYBRID_FULL_CANDIDATE preflight; unqualified, no device open yet$/ { if(stage!=0)bad=1;stage=1;next }
 /^HYBRID_PREFLIGHT [0-9]+\/1351$/ { split($2,a,"/");n=a[1]+0;if(stage!=1 || n<=preflight || n>1351)bad=1;preflight=n;next }
@@ -13,7 +14,7 @@ BEGIN { stage=0; preflight=0; uploaded=0; tokens=0; rate=0; bad=0 }
 /^QGWD_GENERATED_TOKENS_PER_SECOND_INCLUDING_START_AND_PROMPT [0-9]+\.[0-9][0-9][0-9][0-9][0-9][0-9]$/ { if(stage!=4 || rate || tokens)bad=1;rate++;next }
 /^HYBRID_TOKEN [0-9]+$/ {
  token=$2+0;if(stage!=4 || !rate || token>=248320 || tokens>=17 ||
-  token==248044 || token==248046 || (token>=248063 && token<=248065))bad=1;
+  (tokens<2 && token!=70253) || token==248044 || token==248046 || (token>=248063 && token<=248065))bad=1;
  tokens++;next
 }
 /^QGWD_RESIDENT_FIRST_REQUEST_CLOSED weights retained; output quality not validated$/ {

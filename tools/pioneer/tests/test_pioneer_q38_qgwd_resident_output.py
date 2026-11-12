@@ -41,6 +41,9 @@ for observation in (unavailable, bounds):
     check(valid[:-1] + ['HYBRID_UPLOAD 21094223872/21094223872'] + valid[-1:], False)
     check([line.replace('HYBRID_TOKEN 70253', 'HYBRID_TOKEN 248044', 1) if i == 8 else line
            for i, line in enumerate(valid)], False)
+    for position in (8, 9):
+        check([line.replace('HYBRID_TOKEN 70253', 'HYBRID_TOKEN 70254', 1) if i == position else line
+               for i, line in enumerate(valid)], False)
     check([line.replace('SECOND_MATCH count=17', 'SECOND_MATCH count=16') for line in valid], False)
     check([line.replace('seconds_including_start=20.000', 'seconds_including_start=0.000') for line in valid], False)
 print('PASS resident transcript completion, single-upload, ordered transitions and corrupted/missing/duplicate refusal; NO DEVICE')
