@@ -29,3 +29,10 @@ full native combined-stack proof, complete client/session fault qualification,
 physical NoC and silicon correctness, clean recovery, output quality,
 general prompting and throughput have NOT been established. Do not install
 or run this candidate on the device based on this build report.
+
+An isolated one-shot parent for a later card trial has passed synthetic
+success/failure/no-retry/restore tests. It expects the current upload-timing
+trial to complete and independently restore stable driver generation26;
+without that exact state its check-only and launch must refuse. Nothing in
+this parent is authorization to interrupt or replay the running timing test.
+Parent SHA-256 3a6459a9da0dbca9fb834aef5048220b63ee5d1c404b3d04bf5333bc86cb9b08.
