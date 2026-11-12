@@ -1,0 +1,22 @@
+QGWF tag145 unrolled-worker candidate staging, 2026-11-12
+
+While the separate pipelined-loader tag144 preflight was active, four files
+were copied into the new private directory
+/boot/home/pioneer-qgwf-unroll-diagnostic-145-20261111-a. Initial default
+SFTP failed without creating files; Haiku's legacy SCP transfer succeeded.
+No driver operation, model load, candidate script or card execution occurred.
+
+Independent Haiku SHA-256 checks matched local identities:
+ driver  1b04319105bc77f3b262f7beea9228368c1708abe7ef93979d943a1e7acfc973
+ client  6e36877c9daa9797547e5c066579d3149c78c805351c5607662a66e7f38db3c6
+ parent  22696890a3fd8c6857cc2baa6f9b63d0fe442aec2c0661fa74c23da442170590
+ gate    fe9c2824fe3feedd39c41e6f96bcbe246d3cd80329dd63954b6587d34a448eb9
+Directory ownership/mode is 0:700; executable files are 0:1:755 and the
+gate is 0:1:644. This is staging only, not a performance or quality result.
+
+Before any check-only or launch, independently establish that the pipelined
+tag144 test finished, output and cleanup gates passed, no diagnostic remains,
+and the known-good driver is idle at tag2026102100010012 generation32 with
+64 CPUs and full RAM. Recheck staged identities and run the existing --check-only
+gate. On uncertain ownership, errors, unexpected generation or failed test,
+do not launch, retry, reset or replace the driver.
