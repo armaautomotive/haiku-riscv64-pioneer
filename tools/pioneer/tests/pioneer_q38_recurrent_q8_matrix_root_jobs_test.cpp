@@ -4,6 +4,7 @@
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY 1
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "../PioneerQ38HybridRecurrentQ8MatrixPlan.h"
+#include "../PioneerQ38RecurrentQ8MatrixManifest.h"
 #include "../PioneerQ38RecurrentQ8MatrixRootJobs.h"
 #include <cassert>
 #include <cstdio>
@@ -43,8 +44,13 @@ int main(){
  assert(count==144);
  // Exercise the actual canonical seven-bank partitions and converted offsets,
  // not just the balanced synthetic tables above.
- using C=PioneerQ38CanonicalModelPlan;using P=PioneerQ38HybridRecurrentQ8MatrixPlan;
+ using C=PioneerQ38CanonicalModelPlan;using P=PioneerQ38HybridRecurrentQ8MatrixPlan;using M=PioneerQ38RecurrentQ8MatrixManifest;
  auto source=std::make_unique<C>();P::Proposal proposal;assert(source->Build() && P::Build(*source,proposal));
+ std::array<uint32_t,M::Words> manifest={};assert(M::Build(*source,proposal,manifest.data(),manifest.size()));
+ auto original=manifest;auto changed=proposal;changed.parts[0].offset+=4096;
+ assert(!M::Build(*source,changed,manifest.data(),manifest.size()) && manifest==original);
+ assert(!M::Build(*source,proposal,manifest.data(),manifest.size()-1) && manifest==original);
+ assert(!M::Build(*source,proposal,reinterpret_cast<uint32_t*>(proposal.parts.data()),M::Words));
  for(unsigned l=0;l<64;l++)if(l%4!=3)for(unsigned role: {5U,6U,13U}){
   IO actual;unsigned parts=0;
   for(unsigned i=0;i<source->Count();i++){
@@ -54,6 +60,8 @@ int main(){
    actual.table[p->bank][0]=C::Base+q.offset;actual.table[p->bank][1]=p->firstRow;
    actual.table[p->bank][2]=p->rows;parts++;
   }
+  for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)
+   assert(actual.table[b][f]==manifest[M::Index(l-l/4,role==5?0:role==6?1:2,b)+f]);
   assert(parts==7 && S::Build(actual,l,role) && actual.writes==119*4);
   Verify(actual,role==5?6144:role==6?10240:5120,role==13?208896:174080);
  }
