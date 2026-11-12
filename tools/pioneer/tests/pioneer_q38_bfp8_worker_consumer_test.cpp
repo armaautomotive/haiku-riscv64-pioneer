@@ -47,7 +47,11 @@ struct Recording {
  void Drain(){events.push_back({2,0,0});}
 };
 int main(){
- for(unsigned width:{5120U,17408U}){
+ for(unsigned width:{5120U,17408U
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  ,6144U
+#endif
+  }){
   Recording prior,current;assert(PioneerNativeDramBandCompute::Run(prior,width) && PioneerQ38Bfp8WorkerCompute::Compute(current,width));
   assert(prior.events.size()==current.events.size());
   for(unsigned i=0;i<prior.events.size();i++)assert(prior.events[i].kind==current.events[i].kind

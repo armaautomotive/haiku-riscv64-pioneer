@@ -7,12 +7,26 @@ typedef __UINT32_TYPE__ uint32_t;
 #include <stdint.h>
 #endif
 #include "PioneerQ38Q4FpuCachedLayout.h"
+#if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && (PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
+#error Recurrent BFP8 width is offline inspection only
+#endif
 // Distinct C64 layout follows prior real BFP8 GDDR tests. This is geometry,
 // not proof of physical ownership, uploaded weights or producer lifetime.
 struct PioneerQ38Bfp8WorkerLayout {
  enum : unsigned {Weight=0x90000,Input=0x12c000,Output=0x140000,Header=64,
   WeightPayload=1088,WeightStride=1152,InputPayload=64,InputStride=128};
- static bool Width(unsigned k){return k==5120 || k==17408;}
+ static bool Width(unsigned k){return k==5120 || k==17408
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  || k==6144
+#endif
+  ;}
+ static unsigned BandBytes(unsigned k){return k==5120?174080U:
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  k==6144?208896U:
+#endif
+  591872U;}
  static unsigned Tiles(unsigned k){return Width(k)?k/32:0;}
  struct Read {unsigned source,destination,bytes;};
  static bool Packet(unsigned k,unsigned operand,unsigned tile,Read& output){
@@ -33,7 +47,7 @@ struct PioneerQ38Bfp8WorkerJob {
    || !bands || bands>8 || !Existing::Route(w[5]) || !worker || worker>=120 || w[7]!=Existing::Peer(worker)
    || w[8]!=PioneerQ38Bf16Wire::Magic || w[9]!=RootInput || w[10]!=RootRoute || !w[11] || w[11]>=0x7fffffff
    || w[12]!=Output || w[13] || w[14] || w[15])return false;
-  const unsigned oneBand=width==5120?174080U:591872U;volatile unsigned bytes=0;
+  const unsigned oneBand=L::BandBytes(width);volatile unsigned bytes=0;
   for(unsigned i=0;i<bands;i++)bytes=bytes+oneBand;
   return w[3]<=0xc4000000U-bytes;
  }
@@ -42,7 +56,7 @@ private:
  static bool SelectedPacket(const Job& job,unsigned band,unsigned operand,unsigned tile,Read& output){
   if(band>=job.words[4] || operand>1 || tile>=L::Tiles(job.words[2]))return false;
   L::Read fixed;if(!L::Packet(job.words[2],operand,tile,fixed))return false;
-  const unsigned oneBand=job.words[2]==5120?174080U:591872U;volatile unsigned bandOffset=0;
+  const unsigned oneBand=L::BandBytes(job.words[2]);volatile unsigned bandOffset=0;
   for(unsigned i=0;i<band;i++)bandOffset=bandOffset+oneBand;
   Read next={operand?RootInput+tile*L::InputPayload:job.words[3]+bandOffset+tile*L::WeightPayload,
    fixed.destination,fixed.bytes,operand?unsigned(RootRoute):job.words[5]};output=next;return true;

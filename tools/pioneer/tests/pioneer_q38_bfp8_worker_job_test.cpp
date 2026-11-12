@@ -10,6 +10,7 @@ static W::Job Make(unsigned worker,unsigned width){
   W::RootInput,W::RootRoute,7,W::Output,0,0,0}};return j;
 }
 int main(){
+ assert(!W::Shape(Make(1,6144))); // Experiment must not widen the existing worker.
  unsigned cases=0;
  for(unsigned worker=1;worker<120;worker++)for(unsigned width:{5120U,17408U}){
   auto j=Make(worker,width);assert(W::Shape(j));const unsigned tiles=width/32,bandBytes=tiles*1088;
