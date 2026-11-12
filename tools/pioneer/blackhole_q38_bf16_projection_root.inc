@@ -10,7 +10,7 @@ static bool BfQ4(const uint32_t* d){return d[15]==12 && d[43]>=2 && d[43]<=4;}
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
 static bool BfRecurrentQ8(const uint32_t* d){return d[15]==8 && d[42]<64 && (d[42]&3)!=3 && (d[43]==5 || d[43]==6 || d[43]==13);}
-static unsigned BfRecurrentRecord(const uint32_t* d){
+static __attribute__((noinline,section(".bf16.root"))) unsigned BfRecurrentRecord(const uint32_t* d){
  const unsigned layer=d[42]-d[42]/4,role=d[43]==5?0:d[43]==6?1:2;
  return 0x3000200U+(layer*3+role)*128;
 }

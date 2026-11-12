@@ -32,10 +32,19 @@ int main(int argc,char** argv){
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
  auto producer=Symbols(argv[1],"Projection::BfProducerJob(");
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
+ std::ifstream symbols(std::string(argv[1])+"/program.demangled");std::string line;unsigned record=0;
+ while(std::getline(symbols,line))if(line.find("Projection::BfRecurrentRecord(")!=std::string::npos){
+  assert(!record);record=unsigned(std::stoul(line.substr(0,8),nullptr,16));
+ }
+ assert(record);
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
  m->memory[d+4*4]=0x04000000;m->memory[d+4*6]=2025;m->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  m->memory[d+4*15]=8;m->memory[d+4*41]=248319;
  for(unsigned i=0;i<4;i++)m->memory[d+4*(32+i*2)]=i+1;
+ for(unsigned layer=0;layer<64;layer++)if(layer%4!=3)for(unsigned role:{5U,6U,13U}){
+  m->memory[d+4*42]=layer;m->memory[d+4*43]=role;assert(m->Run(record,d));
+  assert(m->regs[10]==0x3000200U+((layer-layer/4)*3+(role==5?0:role==6?1:2))*128);
+ }
  for(unsigned layer:{0U,1U,2U,4U,62U})for(unsigned role:{5U,6U,13U}){
   const unsigned width=role==13?6144:5120,units=role==5?192:role==6?320:160;
   m->memory[d+4*14]=width;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;
