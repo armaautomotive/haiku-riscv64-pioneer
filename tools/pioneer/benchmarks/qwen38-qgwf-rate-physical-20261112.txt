@@ -17,6 +17,10 @@ and time bounds. This is not an uninstrumented production benchmark.
 All 17 output token IDs were 70253. No CPU reference or text-quality test was
 run. Identical outputs are concerning and this result must not be presented as
 usable, correct inference or a validated speedup. The 20 tokens/s goal is unmet.
+The archived CPU trace for input 248319 also selected 70253 at position zero,
+but its second input was forced to 17, whereas this one-prompt trial fed back
+70253. That older trace therefore does not validate or refute positions 1–16
+of this autoregressive run.
 
 After independent artifact hashes, idle state, stable-driver and health checks,
 the separately staged pipelined-upload comparison passed its --check-only

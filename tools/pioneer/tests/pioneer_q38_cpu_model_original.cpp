@@ -4,6 +4,7 @@
 #include "pioneer_q38_cpu_model_reference.h"
 #include "pioneer_q38_whole_original_bytes.h"
 #include "pioneer_q38_state_snapshot_data.h"
+#include "pioneer_q38_cpu_reference_prompt.h"
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -13,15 +14,19 @@ static void Word(FILE* f,uint32_t word){
  uint8_t bytes[4];for(unsigned i=0;i<4;i++)bytes[i]=uint8_t(word>>(i*8));assert(fwrite(bytes,1,4,f)==4);
 }
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--state-snapshots") || !strcmp(argv[3],"--eos-state-snapshots"))));setvbuf(stdout,nullptr,_IOLBF,0);
- const bool eos=argc==4 && !strcmp(argv[3],"--eos-state-snapshots"),snapshots=argc==4 && !eos;
+ assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--state-snapshots") || !strcmp(argv[3],"--eos-state-snapshots")
+  || !strcmp(argv[3],"--autoregressive"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ const bool eos=argc==4 && !strcmp(argv[3],"--eos-state-snapshots");
+ const bool snapshots=argc==4 && !strcmp(argv[3],"--state-snapshots");
+ const bool autoregressive=argc==4 && !strcmp(argv[3],"--autoregressive");
  unsigned records=0;std::string stateDirectory=std::string(argv[2])+(eos?"/eos-state-cpu":"/state-cpu");
  puts("START CPU-REFERENCE ONLY/full original SHA/all851 tensors/row-major/libm/retained GDN+Conv+KV;NO accelerator or device-product uploads/TPS authority");
+ if(autoregressive)puts("CPU_REFERENCE_PROMPT input248319/then prior CPU-selected token; INDEPENDENT autoregressive diagnostic");
  WholeModelOriginalBytes original;assert(original.Open(argv[1]) && original.Ready());
  Q38CpuModelReference reference;assert(reference.Bind(original) && reference.Ready());
  unsigned selected=0;
  for(unsigned position=0;position<(eos?2U:3U);position++){
-  Q38CpuTokenTrace trace;unsigned token=position==0?248319:position==1?17:selected;
+  Q38CpuTokenTrace trace;unsigned token=PioneerQ38CpuReferenceInput(position,selected,autoregressive);
   assert(reference.Step(token,trace) && reference.Ready() && original.Ready());selected=trace.selected;
   assert(trace.position==position && trace.input==token && trace.hidden.size()==65*5120 && trace.logits.size()==248320);
   if(eos)assert(selected==(position?17U:70253U)); // independent control,not supplied model products

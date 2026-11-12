@@ -6,14 +6,14 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv) == 3 or (len(sys.argv) == 4 and sys.argv[3] in ('--state-snapshots','--eos-state-snapshots'))
+assert len(sys.argv) == 3 or (len(sys.argv) == 4 and sys.argv[3] in ('--state-snapshots','--eos-state-snapshots','--autoregressive'))
 eos = len(sys.argv)==4 and sys.argv[3]=='--eos-state-snapshots'
 model, output = map(pathlib.Path, sys.argv[1:3])
 assert model.is_absolute() and output.is_absolute() and not output.exists() and not output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 output.mkdir(mode=0o700)
-if len(sys.argv)==4:
+if len(sys.argv)==4 and sys.argv[3]!='--autoregressive':
     (output/('eos-state-cpu' if eos else 'state-cpu')).mkdir(mode=0o700)
 with tempfile.TemporaryDirectory(prefix='pioneer-cpu-original-reference-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
