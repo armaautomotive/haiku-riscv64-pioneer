@@ -14,7 +14,9 @@
 int main(){
  namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
  static_assert(F::BuildTag==UINT64_C(
-#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+#ifdef PIONEER_Q38_QGWF_UNROLL_CLIENT_145
+  0x2026111100010145
+#elif defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
   0x2026111100010144
 #elif defined(PIONEER_Q38_QGWF_CLIENT_143)
   0x2026111100010143

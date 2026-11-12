@@ -67,7 +67,9 @@ int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!std::strcmp(argv[1],"--fail-start")
   || (kOutputs>1 && !std::strcmp(argv[1],"--bad-feedback"))
   || (kOutputs==17 && !std::strcmp(argv[1],"--bad-frontier")))));
-#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+#ifdef PIONEER_Q38_QGWF_UNROLL_CLIENT_145
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010145),"distinct QGWF unrolled client identity");
+#elif defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010144),"distinct QGWF rate client identity");
 #elif defined(PIONEER_Q38_QGWF_CLIENT_143)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010143),"distinct QGWF two-token client identity");

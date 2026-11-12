@@ -83,7 +83,9 @@ static_assert(PioneerQ38QgwdMultiSimulationIdentity==0,"late multi-token simulat
 #endif
 #ifndef PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
 #define PIONEER_Q38_HYBRID_PROTOCOL_IDENTITY_BINDING_H
-#if defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
+#if defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) || defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145)
+enum {PioneerQ38HybridProtocolIdentity=145};
+#elif defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
 enum {PioneerQ38HybridProtocolIdentity=144};
 #elif defined(PIONEER_Q38_QGWF_NATIVE_143) || defined(PIONEER_Q38_QGWF_CLIENT_143)
 enum {PioneerQ38HybridProtocolIdentity=143};
@@ -117,7 +119,9 @@ enum {PioneerQ38HybridProtocolIdentity=126};
 enum {PioneerQ38HybridProtocolIdentity=125};
 #endif
 #endif
-#if defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
+#if defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) || defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145)
+static_assert(PioneerQ38HybridProtocolIdentity==145,"late unrolled QGWF protocol identity change");
+#elif defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
 static_assert(PioneerQ38HybridProtocolIdentity==144,"late QGWF rate protocol identity change");
 #elif defined(PIONEER_Q38_QGWF_NATIVE_143) || defined(PIONEER_Q38_QGWF_CLIENT_143)
 static_assert(PioneerQ38HybridProtocolIdentity==143,"late QGWF protocol identity change");
@@ -157,7 +161,9 @@ static_assert(PioneerQ38HybridProtocolIdentity==125,"late hybrid protocol identi
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
 namespace PioneerQ38FullOffload {
-#if defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
+#if defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) || defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026111100010145);
+#elif defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026111100010144);
 #elif defined(PIONEER_Q38_QGWF_NATIVE_143) || defined(PIONEER_Q38_QGWF_CLIENT_143)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026111100010143);

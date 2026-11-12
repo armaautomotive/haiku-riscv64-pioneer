@@ -1,0 +1,30 @@
+QGWF unrolled worker native tag145 candidate, offline only
+
+The existing 17-output QGWF frontier ROOT is paired with the tested unrolled
+worker in a new QTPK program-data family, separate driver tag145, and separate
+client command --run-qgwf-unroll-145. The candidate keeps the existing same-FD
+owner, rate telemetry and failure quarantine behavior. It remains a fixed
+prompt diagnostic, not Assistant, Work, free-form chat, or CPU validation.
+
+Two independent ROOT/worker bundle generations matched SHA-256
+c7182ca788b792067bc55ad373108bd76eeba2b00146af526f9e883576a5ebe9;
+wrong worker, wrong selector, duplicate selector and mixed selector failed.
+Two native driver builds matched SHA-256
+1b04319105bc77f3b262f7beea9228368c1708abe7ef93979d943a1e7acfc973.
+Two user-client builds matched SHA-256
+6e36877c9daa9797547e5c066579d3149c78c805351c5607662a66e7f38db3c6.
+The old tag144 native driver rebuilt byte-identically at f28498f1... .
+
+Role/reload/protocol tests refused mismatched tags, missing parents, Work,
+CPU-reference and cross-client/native roles. The older frontier bundle tests
+still passed. ASan/UBSan synthetic full-session success, failed START, corrupt
+feedback and incorrect frontier were checked with the tag145 client identity.
+An initial synthetic run failed before upload because the fake driver still
+advertised tag144; after fixing the fixture to advertise tag145, all four
+cases passed. This failure was synthetic and did not touch the Pioneer.
+
+The worker's offline instruction results and mutation limitations are recorded
+in qwen38-qgwf-worker-unrolled-seal-offline-20261111.txt. The new candidate
+is not installed, staged, physically executed, quality-qualified, or tested
+in Assistant. There is no measured end-to-end speedup or 20 tokens/s result.
+The live tag143 trial remains independently owned and must complete safely.

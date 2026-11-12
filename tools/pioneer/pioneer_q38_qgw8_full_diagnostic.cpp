@@ -92,7 +92,12 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
  puts("QGWF_PIPELINED_UPLOAD_EXPERIMENT; NO PERFORMANCE OR QUALITY CLAIM");
 #endif
-#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+#ifdef PIONEER_Q38_QGWF_UNROLL_CLIENT_145
+ if(argc!=6 || strcmp(argv[1],"--run-qgwf-unroll-145") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgwf-unroll-145 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; fixed input, up to 17 outputs\n",stderr);return 2;
+ }
+ unsigned outputs=17,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
  if(argc!=6 || strcmp(argv[1],"--run-qgwf-rate-144") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
   fputs("Use --run-qgwf-rate-144 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; one fixed input, up to 17 outputs\n",stderr);return 2;
  }

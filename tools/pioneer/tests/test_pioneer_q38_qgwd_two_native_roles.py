@@ -61,4 +61,12 @@ for name in ('PIONEER_Q38_QGWF_RATE_CLIENT_144','PIONEER_Q38_QGWF_FRONTIER_NATIV
              'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
  check(flags+[tag144,two,*qgwf,*rate,'-D'+name+'=1'],False)
 check(flags+[tag144,two,*qgwf,*rate],False,'#undef PIONEER_Q38_QGWF_RATE_NATIVE_144\n#include "'+str(pioneer/'PioneerQ38QgwfRateRole.h')+'"\n')
-print('PASS tag141/tag142/tag143/tag144 native role, reload and protocol identity isolation; NO DRIVER OR DEVICE')
+tag145='-DPIONEER_DRIVER_BUILD_TAG=0x2026111100010145ULL';unroll='-DPIONEER_Q38_QGWF_UNROLL_NATIVE_145=1'
+check(flags+[tag145,two,*qgwf,*rate,unroll],True,'static_assert(PioneerQ38FullOffload::BuildTag==0x2026111100010145ULL && PioneerQ38FullOffload::MaxOutput==17,"unrolled rate");\n')
+check(flags+[tag145,two,*qgwf,*rate],False);check(flags+[tag144,two,*qgwf,*rate,unroll],False)
+for flag in [two,*qgwf,*rate,unroll]:check(flags+[tag145,*[x for x in [two,*qgwf,*rate,unroll] if x!=flag]],False)
+for name in ('PIONEER_Q38_QGWF_UNROLL_CLIENT_145','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
+             'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+ check(flags+[tag145,two,*qgwf,*rate,unroll,'-D'+name+'=1'],False)
+check(flags+[tag145,two,*qgwf,*rate,unroll],False,'#undef PIONEER_Q38_QGWF_UNROLL_NATIVE_145\n#include "'+str(pioneer/'PioneerQ38QgwfUnrollRole.h')+'"\n')
+print('PASS tag141/tag142/tag143/tag144/tag145 native role, reload and protocol identity isolation; NO DRIVER OR DEVICE')

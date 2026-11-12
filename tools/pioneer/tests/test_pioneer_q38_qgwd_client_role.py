@@ -53,4 +53,11 @@ for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_QGWF_RATE_NA
              'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
     check(rate+['-D'+name+'=1'],False)
 check(rate,False,'#undef PIONEER_Q38_QGWF_RATE_CLIENT_144\n#include "'+str(header)+'"\n')
+unroll=rate+['-DPIONEER_Q38_QGWF_UNROLL_CLIENT_145=1'];check(unroll,True)
+check(qgwf+['-DPIONEER_Q38_QGWF_UNROLL_CLIENT_145=1'],False)
+for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_QGWF_UNROLL_NATIVE_145',
+             'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
+             'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+    check(unroll+['-D'+name+'=1'],False)
+check(unroll,False,'#undef PIONEER_Q38_QGWF_UNROLL_CLIENT_145\n#include "'+str(header)+'"\n')
 print('PASS QGWD/QGWF client parents and native/Work/reference exclusions; no device')
