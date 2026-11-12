@@ -48,6 +48,7 @@ struct Probe:Machine {
   while(pc!=Return)Step();assert(regs[2]==0x72000);return regs[10]!=0;
  }
 };
+#ifndef PIONEER_Q38_ROOT_IMAGE_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);char* end=nullptr;unsigned entry=unsigned(std::strtoul(argv[2],&end,16));assert(end && !*end);
  for(unsigned role:{5U,6U,7U})for(unsigned shift=0;shift<7;shift++){
@@ -64,3 +65,4 @@ int main(int argc,char** argv){
  }
  puts("PASS emitted RV32 dense Q8 schedule, all role geometries and mutation refusal; SYNTHETIC MEMORY NO DEVICE");
 }
+#endif
