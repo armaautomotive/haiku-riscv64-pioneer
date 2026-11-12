@@ -86,7 +86,12 @@ static void ReportTransportFailure(const Transport& io){
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
-#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+#ifdef PIONEER_Q38_QGWF_CLIENT_143
+ if(argc!=6 || strcmp(argv[1],"--run-qgwf-143") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgwf-143 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; one fixed input, two outputs only\n",stderr);return 2;
+ }
+ unsigned outputs=2,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
  if(argc!=6 || strcmp(argv[1],"--run-qgwd-142") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
   fputs("Use --run-qgwd-142 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; one fixed input, two outputs only\n",stderr);return 2;
  }

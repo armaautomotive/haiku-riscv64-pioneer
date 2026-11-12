@@ -61,7 +61,9 @@ struct FullIO:SessionOwner {
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!std::strcmp(argv[1],"--fail-start")
   || (kOutputs==2 && !std::strcmp(argv[1],"--bad-feedback")))));
-#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+#ifdef PIONEER_Q38_QGWF_CLIENT_143
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010143),"distinct QGWF two-token client identity");
+#elif defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010142),"distinct QGWD two-token client identity");
 #elif defined(PIONEER_Q38_QGWD_CLIENT_141)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111000010141),"distinct QGWD candidate identity");

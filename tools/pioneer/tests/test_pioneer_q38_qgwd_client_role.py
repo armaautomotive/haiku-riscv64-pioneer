@@ -37,4 +37,12 @@ for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD
     check(two+['-D'+name+'=1'],False)
 check(flags,False,'#define PIONEER_Q38_QGWD_TWO_CLIENT_142 1\n#include "'+str(header)+'"\n')
 check(two,False,'#undef PIONEER_Q38_QGWD_TWO_CLIENT_142\n#include "'+str(header)+'"\n')
-print('PASS QGWD client parents and native/Work/reference exclusions; no device')
+qgwf=two+['-DPIONEER_Q38_QGWF_CLIENT_143=1'];check(qgwf,True)
+for name in required+('PIONEER_Q38_QGWD_TWO_CLIENT_142',):
+    selected='-D'+name+'=1';check([f for f in qgwf if f!=selected],False)
+for name in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_QGWF_NATIVE_143',
+             'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
+             'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+    check(qgwf+['-D'+name+'=1'],False)
+check(qgwf,False,'#undef PIONEER_Q38_QGWF_CLIENT_143\n#include "'+str(header)+'"\n')
+print('PASS QGWD/QGWF client parents and native/Work/reference exclusions; no device')

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // QGWF ROOT/plan inspection only; the fake-tag plan can compile native code.
 #include "PioneerQ38QgwfNativeInspectionRole.h"
+#include "PioneerQ38QgwfNativeCandidateRole.h"
 #if defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) && (PIONEER_Q38_QGWF_DUAL_BATCH_ROOT != 1 \
  || !defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || PIONEER_Q38_QGWE_BATCH_DENSE_ROOT != 1 \
  || defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN) || defined(PIONEER_Q38_QGWF_BATCH4_WORKER) \
@@ -11,7 +12,7 @@
 #if defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN) && (PIONEER_Q38_QGWF_DUAL_BATCH_PLAN != 1 \
  || !defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN) || PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 \
  || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_BATCH4_WORKER) \
- || ((defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG)) && !defined(PIONEER_Q38_QGWF_NATIVE_INSPECTION)) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || ((defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG)) && !defined(PIONEER_Q38_QGWF_NATIVE_INSPECTION) && !defined(PIONEER_Q38_QGWF_NATIVE_143)) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
 #error QGWF plan requires its isolated QGWE parent plan role
 #endif

@@ -7,7 +7,11 @@ import re
 import subprocess
 import sys
 
-args=sys.argv[1:];two='--two-token-142' in args
+args=sys.argv[1:];qgwf='--qgwf-143' in args
+if qgwf:
+    if args.count('--qgwf-143')!=1 or '--two-token-142' in args:raise SystemExit('ambiguous QGWF selector')
+    args.remove('--qgwf-143');args.insert(0,'--two-token-142')
+two='--two-token-142' in args
 if two:
     if args.count('--two-token-142')!=1:raise SystemExit('duplicate two-token selector')
     args.remove('--two-token-142')
@@ -16,7 +20,7 @@ if len(args)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.envi
 sdk,header,out=map(Path,args)
 if not all(p.is_absolute() for p in (sdk,header,out)) or not sdk.is_dir() or not header.is_file() or out.exists() or out.is_symlink():
     raise SystemExit('invalid build paths')
-if hashlib.sha256(header.read_bytes()).hexdigest()!=('f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72'):
+if hashlib.sha256(header.read_bytes()).hexdigest()!=('27655f372eed92e18243de699866c9cd1de9c63739c98a9a61cd9ac74cbd3c29' if qgwf else 'f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72'):
     raise SystemExit('QGWD candidate program header is not pinned')
 here=Path(__file__).resolve().parent;root=here.parents[1];driver=root/'src/add-ons/kernel/drivers/misc'
 tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku';cxx=str(tool)+'-g++'
@@ -44,9 +48,12 @@ names=('PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_QGWD_NATIVE_INSPECTION','PIONE
  'PIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION','PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION')
 flags=['-D'+name+'=1' for name in names]
 if two:flags+=['-DPIONEER_Q38_QGWD_TWO_NATIVE_142=1']
+if qgwf:flags+=['-DPIONEER_Q38_QGWF_NATIVE_143=1','-DPIONEER_Q38_QGWE_PROGRAMS_INSPECTION=1',
+                '-DPIONEER_Q38_QGWE_BATCH_DENSE_PLAN=1','-DPIONEER_Q38_QGWF_PROGRAMS_INSPECTION=1',
+                '-DPIONEER_Q38_QGWF_DUAL_BATCH_PLAN=1']
 flags+=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS',
  'COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
-flags+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+('0x2026111100010142ULL' if two else '0x2026111000010141ULL'),
+flags+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+('0x2026111100010143ULL' if qgwf else '0x2026111100010142ULL' if two else '0x2026111000010141ULL'),
         '-DPIONEER_Q38_HYBRID_PROGRAMS_HEADER="'+str(header)+'"']
 source=driver/'pioneer_q38_hybrid_full_driver.cpp'
 dep=subprocess.check_output([*common,*flags,*includes,'-MM',str(source)],text=True)
@@ -58,7 +65,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True,cwd=out)
 run(*common,*includes,'-c',driver/'PioneerPciProfile.cpp','-o',out/'profile.o')
 run(*common,*flags,*includes,'-c',source,'-o',out/'native.o')
 def compiler_path(name):return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
-binary=out/('tenstorrent_pci_probe-qgwd-142' if two else 'tenstorrent_pci_probe-qgwd-141')
+binary=out/('tenstorrent_pci_probe-qgwf-143' if qgwf else 'tenstorrent_pci_probe-qgwd-142' if two else 'tenstorrent_pci_probe-qgwd-141')
 run(cxx,'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenstorrent_pci_probe',compiler_path('crtbeginS.o'),
  release/'system/glue/haiku_version_glue.o',out/'native.o',out/'profile.o',release/'system/kernel/kernel.so',
  compiler_path('libgcc.a'),compiler_path('crtendS.o'),'-o',binary)
@@ -88,5 +95,5 @@ if not frames or any(len(r)!=3 or r[2]!='static' or int(r[1])>4096 for r in fram
 selected=[int(r[1]) for r in frames if 'TokenNative' in r[0] or 'QgwdUpload' in r[0]]
 if not selected or max(selected)>2048:raise RuntimeError('QGWD/token stack limit')
 if any(hashlib.sha256(p.read_bytes()).hexdigest()!=digest for p,digest in frozen.items()):raise RuntimeError('source changed during build')
-print('QGWD_CANDIDATE_'+('142' if two else '141')+'_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
+print(('QGWF_CANDIDATE_143' if qgwf else 'QGWD_CANDIDATE_'+('142' if two else '141'))+'_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
 print('EXPERIMENTAL BUILD ONLY: NOT INSTALLED, TESTED ON DEVICE, OR QUALIFIED')

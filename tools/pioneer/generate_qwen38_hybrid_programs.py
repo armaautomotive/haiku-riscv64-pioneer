@@ -5,7 +5,13 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwf_frontier_native='--qgwf-frontier-native-inspection' in args
+args=sys.argv[1:];qgwf_candidate='--qgwf-dual-batch-native-candidate' in args
+if qgwf_candidate:
+    selector='--qgwf-dual-batch-native-candidate'
+    if args.count(selector)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--qgwf-','--matrix-')) and x!=selector for x in args):
+        raise SystemExit('ambiguous QGWF candidate selector')
+    args.remove(selector);args.insert(0,'--qgwd-two-token-native-candidate')
+qgwf_frontier_native='--qgwf-frontier-native-inspection' in args
 qgwf_frontier=qgwf_frontier_native or '--qgwf-frontier-inspection' in args
 if qgwf_frontier:
     selector='--qgwf-frontier-native-inspection' if qgwf_frontier_native else '--qgwf-frontier-inspection'
@@ -13,15 +19,15 @@ if qgwf_frontier:
         raise SystemExit('ambiguous QGWF frontier inspection selector')
     args.remove(selector);args.insert(0,'--qgwf-dual-batch-native-inspection' if qgwf_frontier_native else '--qgwf-dual-batch-inspection')
 qgwf_native='--qgwf-dual-batch-native-inspection' in args
-qgwf=qgwf_native or '--qgwf-dual-batch-inspection' in args
-if qgwf:
+qgwf=qgwf_candidate or qgwf_native or '--qgwf-dual-batch-inspection' in args
+if qgwf and not qgwf_candidate:
     selector='--qgwf-dual-batch-native-inspection' if qgwf_native else '--qgwf-dual-batch-inspection'
     if args.count(selector)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--qgwf-','--matrix-')) and x!=selector for x in args):
         raise SystemExit('ambiguous QGWF inspection selector')
     args.remove(selector);args.insert(0,'--qgwe-batch-dense-native-inspection' if qgwf_native else '--qgwe-batch-dense-inspection')
 qgwe_native='--qgwe-batch-dense-native-inspection' in args
-qgwe=qgwe_native or '--qgwe-batch-dense-inspection' in args
-if qgwe:
+qgwe=qgwf_candidate or qgwe_native or '--qgwe-batch-dense-inspection' in args
+if qgwe and not qgwf_candidate:
     selected='--qgwe-batch-dense-native-inspection' if qgwe_native else '--qgwe-batch-dense-inspection'
     if args.count(selected)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--matrix-')) and x!=selected for x in args):
         raise SystemExit('ambiguous QGWE inspection selector')
@@ -216,7 +222,11 @@ if matrix:
             lines += ['#if !defined(PIONEER_Q38_QGWE_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWE_PROGRAMS_INSPECTION != 1 \\',
                       ' || !defined(PIONEER_Q38_QGWE_BATCH_DENSE_PLAN) || PIONEER_Q38_QGWE_BATCH_DENSE_PLAN != 1 \\',
                       ' || defined(PIONEER_Q38_QGWE_BATCH_DENSE_ROOT) || defined(PIONEER_Q38_QGWE_BATCH_DENSE_WORKER) \\']
-            if qgwe_native:
+            if qgwf_candidate:
+                lines += [' || !defined(PIONEER_Q38_QGWF_NATIVE_143) || PIONEER_Q38_QGWF_NATIVE_143 != 1 \\',
+                          ' || defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_NATIVE_INSPECTION)',
+                          '#error QGWF candidate DATA requires its exact tag143 role', '#endif', '#include "PioneerQ38QgwfNativeCandidateRole.h"']
+            elif qgwe_native:
                 lines += [' || defined(PIONEER_Q38_QGWD_NATIVE_141) || defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) \\',
                           ' || !defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION) || PIONEER_Q38_QGWE_NATIVE_INSPECTION != 1',
                           '#error QGWE native DATA is compile-only', '#endif', '#include "PioneerQ38QgweNativeInspectionRole.h"']

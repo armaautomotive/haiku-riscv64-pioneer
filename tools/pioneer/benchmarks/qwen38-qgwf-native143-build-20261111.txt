@@ -1,0 +1,28 @@
+QGWF dual-batch tag143 candidate, build only
+==========================================
+
+A distinct two-token diagnostic driver and client now bind the QGWF
+dual-batched BFP4/BFP8 controller and worker images. Tag143 is isolated
+from the existing tag141 and tag142 candidates, fake inspection builds,
+Work mode and CPU-reference code. It is not installed or device-qualified.
+The fixed diagnostic still accepts only input 248319 and at most two outputs;
+it is not a general Assistant backend or steady-state benchmark.
+
+Two independent driver builds matched SHA-256
+b263b7d3d2a02328ae6d68dc3f213910a201a898731b1ee84caec422f8f75e15.
+Two independent diagnostic client builds matched SHA-256
+bb9b4529ab26bfb870ad47209aa79c5679ebb74c8907f0694beeff1ebd470ef5.
+The embedded 15-section candidate DATA is pinned at
+27655f372eed92e18243de699866c9cd1de9c63739c98a9a61cd9ac74cbd3c29.
+The QGWF ROOT independently rebuilt as the previously pinned ELF. The
+older tag142 driver and client rebuilt byte-for-byte as their actual prior
+physical-trial hashes fccf39747b740c886b2fa762fee0ded24a20c9975b4da538a850782e9c83ab1b
+and 30db23af60cbe1f21981223eb7295c41b7aa2861bdd0fdad94a58821ce29ed41.
+
+Image-pair authentication, ambiguous selector refusals and tag/role
+isolation passed. The builds inspected 15 embedded arrays and rejected
+CPU-reference/Work imports; individual selected frames were bounded. A
+full native combined-stack proof, client/session fault qualification,
+physical NoC and silicon correctness, clean recovery, output quality,
+general prompting and throughput have NOT been established. Do not install
+or run this candidate on the device based on this build report.

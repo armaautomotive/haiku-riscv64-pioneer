@@ -13,7 +13,13 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
 int main(){
  namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
- static_assert(F::BuildTag==UINT64_C(0x2026111100010142) && F::MaxPrompt==1
+ static_assert(F::BuildTag==UINT64_C(
+#ifdef PIONEER_Q38_QGWF_CLIENT_143
+  0x2026111100010143
+#else
+  0x2026111100010142
+#endif
+  ) && F::MaxPrompt==1
   && F::MaxOutput==2 && F::MaxPositions==2,"isolated bounded diagnostic");
  P::Packet p={};p.request.magic=P::Magic;p.request.version=P::Version;p.request.operation=P::Start;
  p.request.prompts=1;p.request.limit=2;p.request.stopEos=1;p.request.eos0=PioneerQ38FullOffloadEog::Eos0;

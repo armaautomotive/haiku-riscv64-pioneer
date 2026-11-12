@@ -39,4 +39,16 @@ for forbidden in ('PIONEER_Q38_QGWD_TWO_CLIENT_142','PIONEER_Q38_QGWD_CLIENT_141
 check(flags+[tag142,'-DPIONEER_Q38_QGWD_TWO_NATIVE_142=0'],False)
 check(flags+[tag141],False,'#define PIONEER_Q38_QGWD_TWO_NATIVE_142 1\n#include "'+str(pioneer/'PioneerQ38QgwdTwoTokenRole.h')+'"\n')
 check(flags+[tag142,two],False,'#undef PIONEER_Q38_QGWD_TWO_NATIVE_142\n#include "'+str(pioneer/'PioneerQ38QgwdTwoTokenRole.h')+'"\n')
-print('PASS tag141/tag142 native role, reload and protocol identity isolation; NO DRIVER OR DEVICE')
+tag143='-DPIONEER_DRIVER_BUILD_TAG=0x2026111100010143ULL'
+qgwf=['-D'+x+'=1' for x in ('PIONEER_Q38_QGWF_NATIVE_143','PIONEER_Q38_QGWF_PROGRAMS_INSPECTION','PIONEER_Q38_QGWF_DUAL_BATCH_PLAN')]
+check(flags+[tag143,two,*qgwf],True,'static_assert(PioneerQ38FullOffload::BuildTag==0x2026111100010143ULL && PioneerQ38FullOffload::MaxOutput==2,"qgwf");\n')
+check(flags+[tag143,two],False);check(flags+[tag142,two,*qgwf],False);check(flags+[tag141,two,*qgwf],False)
+check(flags+[tag143,two,'-DPIONEER_Q38_QGWF_NATIVE_143=0',*qgwf[1:]],False)
+for flag in qgwf+[two]:check(flags+[tag143,*[x for x in [two,*qgwf] if x!=flag]],False)
+for name in ('PIONEER_Q38_QGWE_NATIVE_INSPECTION','PIONEER_Q38_QGWF_NATIVE_INSPECTION',
+             'PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION','PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION',
+             'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
+             'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+ check(flags+[tag143,two,*qgwf,'-D'+name+'=1'],False)
+check(flags+[tag143,two,*qgwf],False,'#undef PIONEER_Q38_QGWF_NATIVE_143\n#include "'+str(pioneer/'PioneerQ38QgwfNativeCandidateRole.h')+'"\n')
+print('PASS tag141/tag142/tag143 native role, reload and protocol identity isolation; NO DRIVER OR DEVICE')

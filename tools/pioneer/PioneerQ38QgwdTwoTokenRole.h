@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwfNativeCandidateRole.h"
+#include "PioneerQ38QgwfClientRole.h"
 // Reserved identity for a future two-token diagnostic. This header grants no
 // driver, device, Work-mode, or validation authority by itself.
 #if defined(PIONEER_Q38_QGWD_TWO_NATIVE_142) && (PIONEER_Q38_QGWD_TWO_NATIVE_142 != 1 \
  || !defined(PIONEER_Q38_QGWD_NATIVE_141) || PIONEER_Q38_QGWD_NATIVE_141 != 1 \
  || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111100010142ULL \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) \
+ || (!defined(PIONEER_Q38_QGWF_NATIVE_143) && PIONEER_DRIVER_BUILD_TAG != 0x2026111100010142ULL) \
+ || (defined(PIONEER_Q38_QGWF_NATIVE_143) && PIONEER_DRIVER_BUILD_TAG != 0x2026111100010143ULL) \
  || defined(PIONEER_Q38_QGWD_TWO_CLIENT_142) || defined(PIONEER_Q38_QGWD_CLIENT_141) \
  || defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
