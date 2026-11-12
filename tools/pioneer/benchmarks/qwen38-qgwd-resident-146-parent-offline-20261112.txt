@@ -1,0 +1,15 @@
+QGWD resident tag146 one-shot parent preparation, offline only
+
+The script pins the separately built tag146 driver, client and transcript
+gate. It requires a successful tag145 predecessor transcript, idle stable
+driver tag2026102100010012 generation34, and 64-CPU/full-RAM health before
+starting. It expects candidate generation35 and restores stable generation36
+only after the client exits successfully, stderr is empty, and the retained
+two-request/unload transcript passes the strict gate. A failed or uncertain
+run stops without retry, reset, or automatic restoration.
+
+Shell syntax, fake predecessor refusal cases, fake success/failure lifecycle,
+one-shot replay refusal and transcript-gate tests passed. The script was not
+installed or run on the Pioneer. The tag144 hardware trial is still active;
+tag145 and the additional native safety review remain prerequisites. These
+offline results do not establish physical safety, answer quality or speed.
