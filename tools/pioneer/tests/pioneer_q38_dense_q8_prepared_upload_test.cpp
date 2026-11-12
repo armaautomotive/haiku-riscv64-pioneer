@@ -42,7 +42,11 @@ struct FakeDenseIO {
   assert(q.version==1 && !q.reserved && q.bank==p->bank && q.offset==uint64_t(p->offset)+uint64_t(page)*4096 && q.bytes==n*4096);
   const unsigned expected=p->encoding==Plan::DenseQ8Bfp8 || p->encoding==PioneerQ38HybridModelPlan::Bfp8?0x8b:
    p->encoding==PioneerQ38HybridModelPlan::Bfp4?0x4b:p->encoding==Plan::Parent::HeadBfp8?0x8d:0x5a;
-  for(unsigned i=0;i<n;i++)assert(reinterpret_cast<const uint8_t*>(q.data)[i*4096]==expected);
+  for(unsigned i=0;i<n;i++)for(unsigned within:{0U,31U,2048U,4095U}){
+   const uint64_t position=uint64_t(page+i)*4096+within;
+   const bool padded=expected==0x8b && position>=p->bytes;
+   assert(reinterpret_cast<const uint8_t*>(q.data)[i*4096+within]==(padded?0U:expected));
+  }
   if(p->encoding==Plan::DenseQ8Bfp8){
    converted+=n;if(page+n==p->allocated/4096 && (p->bytes&4095))
     assert(reinterpret_cast<const uint8_t*>(q.data)[q.bytes-1]==0);

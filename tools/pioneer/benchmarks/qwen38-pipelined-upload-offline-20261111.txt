@@ -21,6 +21,8 @@ before the first IOCTL and during a subsequent preparation; failed IOCTL and
 malformed reply. The fake driver verified it ran on the owner thread, and a
 barrier demonstrated producer progress while that fake call was active.
 The worker's rapid reuse, exception handling and pending-job join also passed.
+An additional complete pipelined synthetic session checked four byte
+positions per page, including trailing BFP8 padding, across all span packets.
 These tests do not prove hardware safety or performance.
 
 Two separate Haiku cross-builds matched the isolated pipeline client SHA-256:
