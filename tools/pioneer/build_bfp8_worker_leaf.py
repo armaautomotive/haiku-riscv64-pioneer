@@ -10,7 +10,9 @@ assert __debug__ and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in o
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('haiku_build',type=Path);p.add_argument('output',type=Path)
 p.add_argument('--reuse-input',action='store_true',help='isolated, unqualified retained-input leaf')
 p.add_argument('--watch-incoming',action='store_true',help='add unqualified on-card incoming-write diagnostic')
-p.add_argument('--batch-input',action='store_true',help='isolated, unqualified per-band batched-input leaf');a=p.parse_args()
+p.add_argument('--batch-input',action='store_true',help='isolated, unqualified per-band batched-input leaf')
+p.add_argument('--recurrent-width',action='store_true',help='isolated, unqualified 6144-wide recurrent leaf')
+a=p.parse_args()
 assert not a.watch_incoming or a.reuse_input
 assert not a.batch_input or not (a.reuse_input or a.watch_incoming)
 assert a.haiku_build.is_absolute() and a.haiku_build.is_dir()
@@ -24,6 +26,7 @@ commands=[
   '-msmall-data-limit=0','-mno-relax','-march=rv32i_zicsr','-mabi=ilp32','-fstack-usage',
   *(['-DPIONEER_Q38_BFP8_INPUT_REUSE_EXPERIMENT=1'] if a.reuse_input else []),
   *(['-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1'] if a.batch_input else []),
+  *(['-DPIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION=1'] if a.recurrent_width else []),
   *(['-DPIONEER_Q38_BFP8_INCOMING_WATCH_EXPERIMENT=1'] if a.watch_incoming else []),
   '-c',str(here/'blackhole_q38_bfp8_worker_leaf.cpp'),'-o',str(a.output/'program.o')],
  [tool+'as','-march=rv32i','-mabi=ilp32','-mno-relax',str(here/'blackhole_q38_bfp8_worker_start.S'),'-o',str(a.output/'start.o')],
@@ -41,4 +44,5 @@ for name in ('boot.bin','text.bin'):
  print(hashlib.sha256(data).hexdigest(),len(data),name)
 print('BUILD ONLY BFP8 worker leaf'+(' with UNQUALIFIED input reuse' if a.reuse_input else '')
  +(' with UNQUALIFIED per-band input batching' if a.batch_input else '')
+ +(' with UNQUALIFIED recurrent width' if a.recurrent_width else '')
  +(' and incoming-write diagnostic' if a.watch_incoming else '')+'; NO installation, device, Work, model quality or speed proof')

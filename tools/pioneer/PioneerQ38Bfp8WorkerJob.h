@@ -9,7 +9,8 @@ typedef __UINT32_TYPE__ uint32_t;
 #include "PioneerQ38Q4FpuCachedLayout.h"
 #if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && (PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION != 1 \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
- || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
 #error Recurrent BFP8 width is offline inspection only
 #endif
 // Distinct C64 layout follows prior real BFP8 GDDR tests. This is geometry,
