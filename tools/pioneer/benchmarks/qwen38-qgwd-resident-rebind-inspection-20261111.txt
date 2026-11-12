@@ -14,8 +14,8 @@ bank proof and matching route/identity metadata, the complete gapped ledger
 and digest, and exact old/new page-hash and initialization arrays. Fake
 tests refused a foreign FD, changed generation, wrong span, populated gap,
 altered hash, overlapping ledgers and invalid mapping; the successful
-simulated move retained the span and rejected the original context
-afterward. The QGWF fake-tag native source still compiled with this
+two consecutive simulated moves retained the same span and rejected each
+previous context afterward. The QGWF fake-tag native source still compiled with this
 inspection disabled.
 
 This is not a native implementation, hardware continuity check, persistent

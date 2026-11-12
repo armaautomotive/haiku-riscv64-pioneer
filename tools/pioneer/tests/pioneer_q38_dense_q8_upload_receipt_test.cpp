@@ -87,7 +87,14 @@ int main(int argc,char** argv){
   assert(attempt(&cookie,42,&span) && !receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42)
    && receipt->Matches(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42)
    && receipt->MatchesLease(&span) && receipt->Revalidate(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42));
-  puts("PASS offline retained-span receipt rebind: identity, mapping, gap and ledger checks; NO lifecycle or device authority");return 0;
+  int thirdContext=0;auto thirdProof=proof;PioneerResidentBanks thirdBanks;assert(thirdBanks.Bind(thirdProof));
+  auto thirdLedger=nextLedger;auto thirdHashes=nextHashes;
+  assert(receipt->RebindInspection(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42,&span,&thirdContext,
+   thirdHashes.data(),thirdLedger.data(),thirdBanks,thirdProof,thirdLedger.size()));
+  assert(!receipt->Matches(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42)
+   && receipt->Matches(&thirdContext,&cookie,thirdHashes.data(),thirdLedger.data(),17,42)
+   && receipt->MatchesLease(&span) && receipt->Revalidate(&thirdContext,&cookie,thirdHashes.data(),thirdLedger.data(),17,42));
+  puts("PASS two offline retained-span receipt rebinds: identity, mapping, gap and ledger checks; NO lifecycle or device authority");return 0;
  }
  std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> actual={},expected={};actual.fill(0xa5a5a5a5);
  const auto untouched=actual;
