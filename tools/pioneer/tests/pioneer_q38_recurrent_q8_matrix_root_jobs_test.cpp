@@ -1,10 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_ROOT_INSPECTION 1
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY 1
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "../PioneerQ38HybridRecurrentQ8MatrixPlan.h"
 #include "../PioneerQ38RecurrentQ8MatrixManifest.h"
+#include "../PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #include "../PioneerQ38RecurrentQ8MatrixRootJobs.h"
 #include <cassert>
 #include <cstdio>
@@ -15,6 +18,13 @@ struct IO {
  unsigned Table(unsigned b,unsigned f){assert(b<7 && f<3);return table[b][f]^(++reads==alterAt?4096U:0U);}
  void Output(unsigned w,unsigned f,unsigned v){assert(w<119 && f<4);out[w][f]=v;writes++;}
 };
+namespace Worker=PioneerQ38DenseQ8MatrixWorkerLayout;
+static std::array<uint32_t,64> Boot(unsigned worker){
+ std::array<uint32_t,64>b={};b[0]=Worker::Magic;b[1]=1;b[2]=64;b[3]=worker;b[4]=Worker::Peer(worker);
+ b[5]=b[16]=0x14000;b[6]=8192;b[7]=64;
+ for(unsigned i=0;i<4;i++)b[8+i*2]=i+1;for(unsigned i=40;i<=50;i++)b[i]=Worker::BootWord(i);
+ assert(Worker::BootShape(b.data()));return b;
+}
 static IO Fixture(unsigned rows){
  IO io;unsigned next=0,units=rows/32;
  for(unsigned b=0;b<7;b++){
@@ -64,6 +74,26 @@ int main(){
    assert(actual.table[b][f]==manifest[M::Index(l-l/4,role==5?0:role==6?1:2,b)+f]);
   assert(parts==7 && S::Build(actual,l,role) && actual.writes==119*4);
   Verify(actual,role==5?6144:role==6?10240:5120,role==13?208896:174080);
+  for(unsigned w=0;w<119;w++){
+   auto boot=Boot(w+1);uint32_t job[64]={};job[0]=Worker::Magic;job[1]=1;job[2]=1;job[3]=w+1;
+   job[4]=boot[4];job[5]=l;job[7]=3;for(unsigned i=8;i<16;i++)job[i]=boot[i];
+   using J=PioneerQ38Bfp8WorkerJob;
+   const unsigned leaf[]={J::Magic,J::Version,role==13?6144U:5120U,actual.out[w][0],actual.out[w][3],
+    PioneerQ38ProjectionRoute(actual.out[w][1]),w+1,boot[4],PioneerQ38Bf16Wire::Magic,
+    J::RootInput,J::RootRoute,1,J::Output,0,0,0};
+   for(unsigned i=0;i<16;i++)job[16+i]=leaf[i];
+   job[32]=actual.out[w][2];job[33]=role==5?6144:role==6?10240:5120;job[34]=role;job[35]=8;
+   assert(Worker::FpuJob(job) && Worker::DenseJob(job) && Worker::JobShape(job,boot.data(),0,0));
+   job[18]=role==13?5120:6144;assert(!Worker::JobShape(job,boot.data(),0,0));
+  }
+  for(unsigned w=1;w<=(role==13?24U:20U);w++){
+   auto boot=Boot(w);uint32_t job[64]={};job[0]=Worker::Magic;job[1]=1;job[2]=5;job[3]=w;
+   job[4]=boot[4];job[5]=l;job[7]=3;for(unsigned i=8;i<16;i++)job[i]=boot[i];
+   job[16]=Worker::Producer::Magic;job[17]=256;job[18]=512;job[19]=3;job[20]=12;
+   job[28]=role;job[29]=role==13?6144:5120;job[30]=Worker::Producer::Format;job[31]=Worker::Producer::Witness;
+   assert(Worker::DenseProducerJob(job) && Worker::JobShape(job,boot.data(),0,0));
+   job[29]++;assert(!Worker::JobShape(job,boot.data(),0,0));
+  }
  }
  for(unsigned bad=0;bad<8;bad++){
   IO io=Fixture(5120);
