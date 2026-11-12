@@ -1,0 +1,23 @@
+QGWF pipelined-loader physical comparison, 2026-11-12
+
+One physical fixed-input diagnostic, not a production or model-quality test.
+Preflight and trial returned zero with empty stderr. The output-shape gate
+passed for 17 outputs; all reported token IDs were 70253. Output quality and
+full autoregressive equivalence to a CPU reference remain unverified.
+
+The run uploaded 21094223872 bytes. Upload plus START took 2392.429 s versus
+2991.951 s in the earlier single baseline, 599.522 s less (about 20.0%).
+These are single end-to-end wall-time observations, not raw PCIe bandwidth;
+other conditions and variance were not controlled by repeated trials.
+Inference including START and prompt processing took 748.281 s for 17 output
+IDs. The observed 16-token decode window bounded throughput between
+0.073310260 and 0.073313588 tokens/s. The earlier diagnostic window was
+0.073309112 to 0.073312435 tokens/s: no inference speedup is established.
+
+Independent post-run checks: parent state CANDIDATE_CLOSED_STABLE_RESTORED_
+QUALITY_UNVERIFIED; installed driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+reload metadata tag2026102100010012 generation32 quiesced0 cold0
+active_owner0; sysinfo 64 CPUs and 137034936320 bytes maximum RAM. No test
+process remained. These checks do not establish model quality or Assistant
+integration. Next tag145 check-only passed without device access.
