@@ -983,6 +983,9 @@ struct PioneerProbeCookie {
 	uint32 magic=0x50313030;
 	team_id team=-1;
 	PioneerStoreContext* context=NULL;
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+ PioneerStoreContext* qgwdResidentPending=NULL; // retained on any uncertain transfer
+#endif
 };
 static PioneerProbeCookie* sRuntimeOwner=NULL;
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
@@ -3431,6 +3434,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+ bool qgwdResidentRequestClosed=false;
+ uint64_t qgwdResidentSerial=0;
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  PioneerQ38PreparedNativeSource* q38PreparedSource=NULL; // context-owned immutable side-page/table binding
 #endif
@@ -5197,6 +5204,9 @@ public:
 #include "PioneerQ38TokenCallScope.inc"
 #include "PioneerQ38TokenNativeEnd.inc"
 #include "PioneerQ38TokenNativeBackend.inc"
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#include "PioneerQ38QgwdResidentNative.inc"
+#endif
 #include "PioneerQ38TokenNativeControl.inc"
 #include "PioneerQ38Qgw8HiddenControl.inc"
 #include "PioneerQ38TokenHiddenValidationControl.inc"
@@ -6529,6 +6539,15 @@ static status_t
 ReleaseResidentCookie(PioneerProbeCookie* cookie)
 {
 	if (cookie==NULL || cookie->magic!=0x50313030) return B_BAD_VALUE;
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+ if(cookie->context || cookie->qgwdResidentPending){
+  const status_t locked=acquire_sem(sLock);if(locked!=B_OK)return locked;
+  tt_resident_session_result retained={};
+  if(cookie->context)RetainQ38DispatchOwner(*cookie->context,retained);
+  if(cookie->qgwdResidentPending)RetainQ38DispatchOwner(*cookie->qgwdResidentPending,retained);
+  release_sem(sLock);return B_OK;
+ }
+#endif
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
  // This role never creates a legacy model context. A corrupt/foreign one
  // cannot authorize its automatic legacy END/clock/host/DMA cleanup.
@@ -8681,6 +8700,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+ if(operation==TT_PCI_PROBE_Q38_QGWD_RESIDENT_SUPPORT)
+  return Q38QgwdResidentSupport(data,length);
+ if(operation==TT_PCI_PROBE_Q38_QGWD_RESIDENT_CONTROL)
+  return Q38QgwdResidentControl(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  if(operation==TT_PCI_PROBE_Q38_PREPARED_SOURCE)
   return Q38PreparedSourceControl(instance,data,length);

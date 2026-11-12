@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdNativeInspectionRole.h"
+#include "PioneerQ38QgwdResidentRole.h"
 #if defined(PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION) && (PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION != 1 \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -102,12 +103,18 @@ public:
   if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
-#ifdef PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION
- // An offline model of rebinding the SAME closed span receipt to a fresh
- // context. This proves neither hardware continuity nor actual owner/FD
- // locking and must never be enabled by a native driver. All validation
- // precedes pointer updates; a rejected destination leaves the source bound.
+#if defined(PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION) || defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146)
+ // Rebind the SAME closed span receipt to a fresh context. This validates
+ // CPU-side identity only: the native caller must independently prove the
+ // continuous reservation, exclusive FD/team/thread lock, physical mapping,
+ // and safe retained ownership of BOTH contexts through every failure.
+ // All validation precedes pointer updates; a rejected destination leaves
+ // the source bound. The inspection role remains strictly offline-only.
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+ bool RebindResident(const void* oldContext,const void* fd,const uint32_t* oldHashes,const uint8_t* oldLedger,
+#else
  bool RebindInspection(const void* oldContext,const void* fd,const uint32_t* oldHashes,const uint8_t* oldLedger,
+#endif
   int64_t owner,uint64_t gen,const PioneerQ38SpanLease* retainedSpan,const void* nextContext,
   const uint32_t* nextHashes,const uint8_t* nextLedger,PioneerResidentBanks& nextBanks,
   const tt_dram_samples_result& nextProof,unsigned ledgerPages){

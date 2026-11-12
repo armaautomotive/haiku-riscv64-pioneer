@@ -54,6 +54,9 @@ static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role 
 #include "PioneerQ38HybridUploadSession.h"
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdResidentProtocol.h"
+#endif
 #ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8HiddenProtocol.h"
 #include "PioneerQ38TokenHiddenSnapshot.h"
@@ -85,7 +88,11 @@ public:
   PioneerQ38TokenControl::Reply reply={};
  }; // untrusted diagnostic data only;never grants retry,cleanup or device authority
 private:
- enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed};
+ enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+  ,ResidentReady
+#endif
+ };
  Upload upload;
  std::unique_ptr<Packet> packet=std::make_unique<Packet>();
  std::array<uint32_t,PioneerQ38FullOffload::MaxPositions*64> records={};
@@ -117,6 +124,14 @@ private:
  template<class T> bool Call(unsigned op,T& value){
   return state!=Failed && upload.WeightsHeld() && upload.Call(op,value) && upload.WeightsHeld();
  }
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ bool ResidentControl(unsigned operation){
+  namespace R=PioneerQ38QgwdResident;R::Packet p;p.request.operation=operation;
+  if(!R::RequestShape(p))return false;const auto request=p.request;
+  return Call(TT_PCI_PROBE_Q38_QGWD_RESIDENT_CONTROL,p)
+   && !std::memcmp(&p.request,&request,sizeof(request)) && R::SuccessfulReply(p.reply,operation);
+ }
+#endif
  bool Control(unsigned action,unsigned count=0){
   namespace P=PioneerQ38TokenControl;
   std::memset(packet.get(),0,sizeof(*packet));auto& q=packet->request;
@@ -215,6 +230,11 @@ public:
   std::string error;if(!upload.Begin(plan,error,progress)){failure=error;state=Failed;return false;}
   F::Support support={};
   if(!upload.Identity(1) || !Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) || !F::Supported(support))return Stop("support");
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+  PioneerQ38QgwdResident::Support residentSupport={};
+  if(!Call(TT_PCI_PROBE_Q38_QGWD_RESIDENT_SUPPORT,residentSupport)
+   || !PioneerQ38QgwdResident::Supported(residentSupport))return Stop("resident_support");
+#endif
   if(beforeStart && !beforeStart())return Stop("start_clock");
   if(!Control(PioneerQ38TokenControl::Start))return Stop("start");
   const auto& r=packet->reply;const auto* d=r.detail;
@@ -303,6 +323,10 @@ public:
   }
   traceCaptured=true;
 #endif
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+  if(!ResidentControl(PioneerQ38QgwdResident::RequestClose))return Stop("resident_close");
+  state=ResidentReady;return true;
+#else
   if(!Control(P::Finish))return Stop("finish");
   {const auto& r=packet->reply;const auto* d=r.detail;
    if(r.ready!=1 || r.stage!=11 || d[3]!=1 || d[4] || d[5]!=1 || d[6] || d[7])return Stop("finish_reply");}
@@ -310,9 +334,35 @@ public:
   const int owned=upload.fd;upload.fd=-1;
   if(upload.io.Close(owned))return Stop("close");
   upload.state=Upload::Done;state=Complete;return true;
+#endif
  }
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ // Fixed-input diagnostic only. Reuses the original FD and retained weight
+ // reservation, but asks the driver for a genuinely fresh request context.
+ bool NextResidentRequest(){
+  if(state!=ResidentReady)return false;
+  if(!ResidentControl(PioneerQ38QgwdResident::NextRequest))return Stop("resident_next");
+  records.fill(0);committed=position=layers=terminalStage=0;
+  cancelAttempted=cancelled=false;observedFrontier=0;haveFrontier=false;
+  if(!Control(PioneerQ38TokenControl::Start))return Stop("resident_start");
+  const auto& r=packet->reply;const auto* d=r.detail;
+  if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("resident_start_reply");
+  state=Running;return true;
+ }
+ bool EndResident(){
+  if(state!=ResidentReady)return false;
+  if(!ResidentControl(PioneerQ38QgwdResident::ModelEnd))return Stop("resident_end");
+  const int owned=upload.fd;upload.fd=-1;
+  if(upload.io.Close(owned))return Stop("resident_close_fd");
+  upload.state=Upload::Done;state=Complete;return true;
+ }
+#endif
  bool CopyGeneratedTokens(uint32_t* output,unsigned capacity,unsigned& count)const{
-  if(state!=Complete || !failure.empty()
+  if((state!=Complete
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+   && state!=ResidentReady
+#endif
+   ) || !failure.empty()
 #ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
    || !upload.canonical || !upload.canonical->Ready()
 #else

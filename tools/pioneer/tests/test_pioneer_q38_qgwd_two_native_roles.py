@@ -69,4 +69,13 @@ for name in ('PIONEER_Q38_QGWF_UNROLL_CLIENT_145','PIONEER_Q38_WORK_INFERENCE','
              'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
  check(flags+[tag145,two,*qgwf,*rate,unroll,'-D'+name+'=1'],False)
 check(flags+[tag145,two,*qgwf,*rate,unroll],False,'#undef PIONEER_Q38_QGWF_UNROLL_NATIVE_145\n#include "'+str(pioneer/'PioneerQ38QgwfUnrollRole.h')+'"\n')
-print('PASS tag141/tag142/tag143/tag144/tag145 native role, reload and protocol identity isolation; NO DRIVER OR DEVICE')
+tag146='-DPIONEER_DRIVER_BUILD_TAG=0x2026111100010146ULL';resident='-DPIONEER_Q38_QGWD_RESIDENT_NATIVE_146=1'
+check(flags+[tag146,two,*qgwf,*rate,unroll,resident],True,'static_assert(PioneerQ38FullOffload::BuildTag==0x2026111100010146ULL && PioneerQ38FullOffload::MaxOutput==17,"resident");\n')
+check(flags+[tag146,two,*qgwf,*rate,unroll],False);check(flags+[tag145,two,*qgwf,*rate,unroll,resident],False)
+for flag in [two,*qgwf,*rate,unroll,resident]:check(flags+[tag146,*[x for x in [two,*qgwf,*rate,unroll,resident] if x!=flag]],False)
+for name in ('PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION','PIONEER_Q38_FULL_OFFLOAD_RESIDENT','PIONEER_Q38_QGWF_UNROLL_CLIENT_145',
+             'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION',
+             'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+ check(flags+[tag146,two,*qgwf,*rate,unroll,resident,'-D'+name+'=1'],False)
+check(flags+[tag146,two,*qgwf,*rate,unroll,resident],False,'#undef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146\n#include "'+str(pioneer/'PioneerQ38QgwdResidentRole.h')+'"\n')
+print('PASS tag141 through tag146 native role, reload and protocol identity isolation; NO DRIVER OR DEVICE')

@@ -1,0 +1,37 @@
+QGWD tag146 retained-model candidate: offline checkpoint, 2026-11-12
+
+Experimental only: not installed, exercised on the P100A, qualified for
+Assistant/Work, validated for general prompts, or a tokens/second result.
+The user-facing model remains subject to the existing performance limits.
+
+The distinct diagnostic client retains one upload and FD across two fixed
+requests, compares generated IDs and explicitly ends the model. The native
+candidate keeps the OS reservation and sealed QGWD receipt across a fresh
+request context. The fresh context reinitializes request/KV/state ownership;
+the old runtime context is not simply reused. CPU validation is excluded.
+
+Address/undefined-sanitized fake tests covered: two client requests with one
+upload and explicit unload; failed START, corrupt feedback/frontier, and
+invalid resident close/next/end replies; receipt rebinds after freeing old
+mock ledgers/banks/proof; ten real cleanup-stage orchestration failures; the
+actual native handoff body against fake endpoints, with twelve injected
+endpoint failures, generation loss, writable-sample mapping and invalid-entry
+refusals. The output shape gate requires two fixed 17-token requests, first
+two IDs matching the previous physical fixed-input runs, one upload, and explicit unload. These
+tests do not prove live-device ownership, real GDDR preservation, physical
+NoC ordering, full model quality, or a speed improvement.
+
+The original clock ordering would reject all next requests because the span
+was attached too early; the candidate now begins the clock before attaching
+the preallocated span and retains it on failure. Fake clock ordering and
+source parity with one-shot teardown were separately tested.
+
+A development-tree native cross-build produced SHA-256
+e809110d19ba4b63c93e1eb22c6d6a6c430bc8cefa17debef67a8bca9d69dcf2.
+Two local diagnostic-client cross-builds produced SHA-256
+12f5e15d737229810b3c6cce7c229437f782f96727217fb838d47c5f5264d8ec.
+An independently extracted HEAD-plus-selectively-staged source snapshot,
+excluding unrelated local edits, reproduced both binary hashes. Its native
+handoff mock, clock-order check, and teardown parity check also passed.
+Hardware testing requires an independent safety review and successful
+closure of any running trial.

@@ -7,7 +7,12 @@ import runpy
 import subprocess
 import sys
 
-args=sys.argv[1:];unroll='--qgwf-unroll-145' in args
+args=sys.argv[1:];resident='--qgwd-resident-146' in args
+if resident:
+    if args.count('--qgwd-resident-146')!=1 or any(x in args for x in ('--qgwf-unroll-145','--qgwf-rate-144','--qgwf-143','--two-token-142','--pipelined-upload')):
+        raise SystemExit('ambiguous QGWD resident client selector')
+    args.remove('--qgwd-resident-146');args.insert(0,'--qgwf-unroll-145')
+unroll='--qgwf-unroll-145' in args
 if unroll:
     if args.count('--qgwf-unroll-145')!=1 or any(x in args for x in ('--qgwf-rate-144','--qgwf-143','--two-token-142','--pipelined-upload')):
         raise SystemExit('ambiguous QGWF unrolled client selector')
@@ -47,7 +52,7 @@ finally:
     sys.argv=saved
 cmd=list(map(str,built['cmd']));old=str(here/'pioneer_q38_qgw8_cache_preflight.cpp');old_binary=str(built['binary'])
 if cmd.count(old)!=1 or cmd.count(old_binary)!=1:raise RuntimeError('unexpected preflight build command')
-binary=out/('pioneer-q38-qgwf-unroll-client145' if unroll else 'pioneer-q38-qgwf-rate-pipeline-client144' if pipeline else 'pioneer-q38-qgwf-rate-client144' if rate else 'pioneer-q38-qgwf-upload-timing-client143' if qgwf and timing else 'pioneer-q38-qgwf-diagnostic-client143' if qgwf else 'pioneer-q38-qgwd-upload-timing-client142' if timing else 'pioneer-q38-qgwd-diagnostic-client142' if two else 'pioneer-q38-qgwd-diagnostic-client141')
+binary=out/('pioneer-q38-qgwd-resident-client146' if resident else 'pioneer-q38-qgwf-unroll-client145' if unroll else 'pioneer-q38-qgwf-rate-pipeline-client144' if pipeline else 'pioneer-q38-qgwf-rate-client144' if rate else 'pioneer-q38-qgwf-upload-timing-client143' if qgwf and timing else 'pioneer-q38-qgwf-diagnostic-client143' if qgwf else 'pioneer-q38-qgwd-upload-timing-client142' if timing else 'pioneer-q38-qgwd-diagnostic-client142' if two else 'pioneer-q38-qgwd-diagnostic-client141')
 cmd[cmd.index(old)]=str(here/'pioneer_q38_qgw8_full_diagnostic.cpp');cmd[cmd.index(old_binary)]=str(binary)
 names=('PIONEER_Q38_QGWD_CLIENT_141','PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION',
  'PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION','PIONEER_Q38_QGWD_PLAN_SIMULATION',
@@ -62,6 +67,7 @@ if two:cmd.insert(1,'-DPIONEER_Q38_QGWD_TWO_CLIENT_142=1')
 if qgwf:cmd.insert(1,'-DPIONEER_Q38_QGWF_CLIENT_143=1')
 if rate:cmd.insert(1,'-DPIONEER_Q38_QGWF_RATE_CLIENT_144=1')
 if unroll:cmd.insert(1,'-DPIONEER_Q38_QGWF_UNROLL_CLIENT_145=1')
+if resident:cmd.insert(1,'-DPIONEER_Q38_QGWD_RESIDENT_CLIENT_146=1')
 if pipeline:cmd.insert(1,'-DPIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT=1')
 if timing:cmd.insert(1,'-DPIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC=1')
 subprocess.run(cmd,check=True,cwd=out)
@@ -69,5 +75,5 @@ tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku'
 symbols=subprocess.check_output([str(tool)+'-nm','-C',str(binary)],text=True)
 for name in ('llama_','ggml_','ReferenceProducts','SyntheticIO'):
     if name in symbols:raise RuntimeError('unexpected CPU/reference symbol '+name)
-print(('QGWF_UNROLL_CLIENT_145' if unroll else 'QGWF_RATE_PIPELINE_CLIENT_144' if pipeline else 'QGWF_RATE_CLIENT_144' if rate else 'QGWF_CLIENT_143' if qgwf else 'QGWD_CLIENT_'+('142' if two else '141'))+'_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
+print(('QGWD_RESIDENT_CLIENT_146' if resident else 'QGWF_UNROLL_CLIENT_145' if unroll else 'QGWF_RATE_PIPELINE_CLIENT_144' if pipeline else 'QGWF_RATE_CLIENT_144' if rate else 'QGWF_CLIENT_143' if qgwf else 'QGWD_CLIENT_'+('142' if two else '141'))+'_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest())
 print('EXPERIMENTAL BUILD ONLY: NOT INSTALLED, TESTED ON DEVICE, OR QUALIFIED')

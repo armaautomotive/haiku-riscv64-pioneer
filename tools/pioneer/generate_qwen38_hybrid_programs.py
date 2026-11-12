@@ -5,7 +5,13 @@ import os
 from pathlib import Path
 import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
-args=sys.argv[1:];qgwf_unroll_inspection='--qgwf-unrolled-frontier-native-inspection' in args
+args=sys.argv[1:];qgwd_resident_candidate='--qgwd-resident-unrolled-native-candidate' in args
+if qgwd_resident_candidate:
+    selector='--qgwd-resident-unrolled-native-candidate'
+    if args.count(selector)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--qgwf-','--matrix-')) and x!=selector for x in args):
+        raise SystemExit('ambiguous QGWD resident candidate selector')
+    args.remove(selector);args.insert(0,'--qgwf-unrolled-frontier-native-candidate')
+qgwf_unroll_inspection='--qgwf-unrolled-frontier-native-inspection' in args
 if qgwf_unroll_inspection:
     selector='--qgwf-unrolled-frontier-native-inspection'
     if args.count(selector)!=1 or any(x.startswith(('--qgw8-','--qgwa-','--qgwc-','--qgwd-','--qgwe-','--qgwf-','--matrix-')) and x!=selector for x in args):
@@ -198,7 +204,7 @@ units += [(w,name,label,address) for name,label,address in (
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),
  ('gdn','PeerGdn',0x170000))]
 require_complete_sections(units,(r,w))
-family='0x4b505451' if qgwf_unroll_candidate or qgwf_unroll_inspection else '0x4a505451' if qgwf_frontier else '0x49505451' if qgwf else '0x48505451' if qgwe else '0x47505451' if qgwd else '0x46505451' if qgwc else '0x45505451' if qgw8value else '0x44505451' if qgwa else '0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
+family='0x4c505451' if qgwd_resident_candidate else '0x4b505451' if qgwf_unroll_candidate or qgwf_unroll_inspection else '0x4a505451' if qgwf_frontier else '0x49505451' if qgwf else '0x48505451' if qgwe else '0x47505451' if qgwd else '0x46505451' if qgwc else '0x45505451' if qgw8value else '0x44505451' if qgwa else '0x43505451' if qgw8input else '0x42505451' if qgw8stage else '0x41505451' if qgw8trace else '0x39505451' if qgw8coarse else '0x38505451' if qgw8 else '0x37505451' if matrix else '0x35505451'
 name='QTPJ/QGWF-FRONTIER' if qgwf_frontier else 'QTPI/QGWF-DUAL-BATCH' if qgwf else 'QTPH/QGWE-BATCH-DENSE' if qgwe else 'QTPG/QGWD-DENSE-Q8' if qgwd else 'QTPF/QGWC-SRCA' if qgwc else ('QTPE/QGW8-DENSE-VALUE-NATIVE-BUILD-ONLY' if qgw8valuenative else 'QTPE/QGW8-DENSE-VALUE') if qgw8value else 'QTPD/QGWA-BATCH' if qgwa else ('QTPC/QGW8-DENSE-INPUT-NATIVE-BUILD-ONLY' if qgw8inputnative else 'QTPC/QGW8-DENSE-INPUT') if qgw8input else ('QTPB/QGW8-DENSE-STAGE-NATIVE-BUILD-ONLY' if qgw8stagenative else 'QTPB/QGW8-DENSE-STAGE') if qgw8stage else ('QTPA/QGW8-TRACE-NATIVE-BUILD-ONLY' if qgw8tracenative else 'QTPA/QGW8-TRACE') if qgw8trace else 'QTP9/QGW8-COARSE' if qgw8coarse else 'QTP8/QGW8' if qgw8 else 'QTP7/QGW7' if matrix else 'QTP5/QGW5'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated '+name+(' candidate code DATA, NOT QUALIFIED; not a runtime capability.' if candidate else ' code DATA, OFFLINE ONLY; not a runtime capability.'),
  '#include "PioneerQ38DenseQ8TokenFootprint.h"' if qgwd else '#include "PioneerQ38HybridTokenFootprint.h"',
@@ -241,6 +247,10 @@ if matrix:
                         lines+=['#if !defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) || PIONEER_Q38_QGWF_UNROLL_NATIVE_145 != 1',
                                 '#error Unrolled QGWF DATA requires its distinct native145 role', '#endif',
                                 '#include "PioneerQ38QgwfUnrollRole.h"']
+                    if qgwd_resident_candidate:
+                        lines+=['#if !defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || PIONEER_Q38_QGWD_RESIDENT_NATIVE_146 != 1',
+                                '#error Resident QGWD DATA requires its distinct native146 role', '#endif',
+                                '#include "PioneerQ38QgwdResidentRole.h"']
                 lines += ['#if !defined(PIONEER_Q38_QGWF_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWF_PROGRAMS_INSPECTION != 1 \\',
                           ' || !defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN) || PIONEER_Q38_QGWF_DUAL_BATCH_PLAN != 1 \\',
                           ' || defined(PIONEER_Q38_QGWF_DUAL_BATCH_ROOT) || defined(PIONEER_Q38_QGWF_BATCH4_WORKER)'+(' \\' if qgwf_native else ''),

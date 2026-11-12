@@ -19,6 +19,9 @@ static constexpr unsigned kOutputs=1;
 
 struct FullIO:SessionOwner {
  unsigned support=0,starts=0,polls=0,holds=0,reads=0,finishes=0;
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ unsigned residentClosed=0,residentNext=0,residentEnded=0,badResident=0;
+#endif
  bool failStart=false,badFeedback=false,badFrontier=false;
  explicit FullIO(SessionOwner owner):SessionOwner(owner){}
  bool Call(int fd,unsigned op,void* data,size_t size){
@@ -27,12 +30,37 @@ struct FullIO:SessionOwner {
    assert(fd==42 && support<2 && (support==0?!owned:owned && seals==1 && receipt.Sealed()) && size==sizeof(F::Support));support++;
    *static_cast<F::Support*>(data)={55,1,F::MaxPrompt,F::MaxOutput,F::MaxPositions,248320,F::AllCompute,0};return true;
   }
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+  if(op==TT_PCI_PROBE_Q38_QGWD_RESIDENT_SUPPORT){
+   namespace R=PioneerQ38QgwdResident;auto& s=*static_cast<R::Support*>(data);
+   assert(fd==42 && owned && size==sizeof(s) && R::SupportRequest(s));s={55,1,1,1,1,1,{}};return true;
+  }
+  if(op==TT_PCI_PROBE_Q38_QGWD_RESIDENT_CONTROL){
+   namespace R=PioneerQ38QgwdResident;auto& p=*static_cast<R::Packet*>(data);
+   assert(fd==42 && owned && size==sizeof(p) && R::RequestShape(p));auto& r=p.reply;
+   r.operation=p.request.operation;r.started=r.ready=1;r.hostsReleased=3;
+   if(p.request.operation==R::RequestClose){assert(holds==1 && reads==1 && residentClosed==residentNext);
+    residentClosed++;r.stage=10;r.reservationRetained=1;
+   }else if(p.request.operation==R::NextRequest){assert(residentClosed==residentNext+1);
+    residentNext++;polls=holds=reads=0;r.stage=11;r.reservationRetained=r.oldContextRetired=1;
+   }else{assert(p.request.operation==R::ModelEnd && residentClosed==residentNext+1);
+    residentEnded++;owned=false;r.stage=12;r.modelEnded=1;}
+   if(badResident==p.request.operation)r.stage++;
+   return true;
+  }
+#endif
   if(op!=TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL)return SessionOwner::Call(fd,op,data,size);
   assert(fd==42 && owned && seals==1 && receipt.Sealed() && support==2 && size==sizeof(P::Packet));
   auto& packet=*static_cast<P::Packet*>(data);assert(F::RequestShape(packet));auto& r=packet.reply;
   const unsigned action=packet.request.operation;r.version=1;r.operation=action;r.started=r.ready=1;
   auto* d=r.detail;d[0]=d[1]=1;
-  if(action==P::Start){assert(!starts++ && packet.request.prompts==1 && packet.request.limit==kOutputs && packet.prompt[0]==
+  if(action==P::Start){assert(
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+   starts++==residentNext &&
+#else
+   !starts++ &&
+#endif
+   packet.request.prompts==1 && packet.request.limit==kOutputs && packet.prompt[0]==
 #ifdef PIONEER_Q38_QGWD_CLIENT_141
    248319
 #else
@@ -40,7 +68,7 @@ struct FullIO:SessionOwner {
 #endif
   );
    r.stage=d[2]=8;d[3]=1;if(failStart)return false;
-  }else if(action==P::Observe){assert(starts==1 && !holds);polls++;
+  }else if(action==P::Observe){assert(starts>=1 && !holds);polls++;
    if(polls==1){r.ready=0;r.stage=d[2]=9;d[12]=123;d[13]=456;}
    else{r.stage=d[2]=11;d[6]=1;d[8]=kOutputs;d[9]=kOutputs-1;d[10]=64;}
 #ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
@@ -66,8 +94,15 @@ struct FullIO:SessionOwner {
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!std::strcmp(argv[1],"--fail-start")
   || (kOutputs>1 && !std::strcmp(argv[1],"--bad-feedback"))
-  || (kOutputs==17 && !std::strcmp(argv[1],"--bad-frontier")))));
-#ifdef PIONEER_Q38_QGWF_UNROLL_CLIENT_145
+  || (kOutputs==17 && !std::strcmp(argv[1],"--bad-frontier"))
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+  || !std::strcmp(argv[1],"--bad-resident-close") || !std::strcmp(argv[1],"--bad-resident-next")
+  || !std::strcmp(argv[1],"--bad-resident-end")
+#endif
+  )));
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010146),"distinct resident client identity");
+#elif defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010145),"distinct QGWF unrolled client identity");
 #elif defined(PIONEER_Q38_QGWF_RATE_CLIENT_144)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010144),"distinct QGWF rate client identity");
@@ -102,6 +137,11 @@ int main(int argc,char** argv){
  io.failStart=argc==2 && !std::strcmp(argv[1],"--fail-start");
  io.badFeedback=argc==2 && !std::strcmp(argv[1],"--bad-feedback");
  io.badFrontier=argc==2 && !std::strcmp(argv[1],"--bad-frontier");
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ if(argc==2){if(!std::strcmp(argv[1],"--bad-resident-close"))io.badResident=1;
+  else if(!std::strcmp(argv[1],"--bad-resident-next"))io.badResident=2;
+  else if(!std::strcmp(argv[1],"--bad-resident-end"))io.badResident=3;}
+#endif
  PioneerQ38HybridFullSession<DensePages,FullIO> session(pages,io);const uint32_t input[]={
 #ifdef PIONEER_Q38_QGWD_CLIENT_141
   248319
@@ -154,11 +194,31 @@ int main(int argc,char** argv){
   assert(!session.CopyGeneratedTokens(rejected,kOutputs,rejectedCount) && rejectedCount==0 && rejected[0]==0);
   puts("PASS QGWD synthetic two-token feedback mismatch refuses output and quarantines; NO DEVICE OR MODEL");return 0;
  }
- assert(session.Finish() && session.Completed());
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ if(io.badResident==1){assert(!session.Finish() && session.FailedState() && io.closes==1 && io.owned
+   && banks.Quarantined() && !io.residentNext && !io.residentEnded);return 0;}
+#endif
+ assert(session.Finish());
+#ifndef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ assert(session.Completed());
+#endif
  uint32_t output[kOutputs]={};unsigned count=0;assert(session.CopyGeneratedTokens(output,kOutputs,count) && count==kOutputs && output[0]==1000);
  if(kOutputs>1)assert(output[1]==1001);
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ assert(io.residentClosed==1 && io.owned && io.opens==1 && !io.closes && io.seals==1);
+ if(io.badResident==2){assert(!session.NextResidentRequest() && session.FailedState() && io.closes==1
+   && io.owned && banks.Quarantined() && !io.residentEnded && io.starts==1);return 0;}
+ assert(session.NextResidentRequest() && session.Poll() && session.Poll() && session.TerminalReady() && session.Finish());
+ count=0;assert(session.CopyGeneratedTokens(output,kOutputs,count) && count==kOutputs && output[0]==1000);
+ assert(io.residentClosed==2 && io.residentNext==1 && io.owned && io.opens==1 && !io.closes && io.seals==1);
+ if(io.badResident==3){assert(!session.EndResident() && session.FailedState() && io.closes==1
+   && !io.owned && io.residentEnded==1);return 0;}
+ assert(session.EndResident() && session.Completed() && io.residentEnded==1 && io.closes==1 && !io.owned);
+ puts("PASS two synthetic requests retain one upload and FD, then explicitly unload; NO DEVICE OR MODEL");
+#else
  assert(io.support==2 && io.starts==1 && io.polls==2 && io.holds==1 && io.reads==1 && io.finishes==1
   && io.opens==1 && io.closes==1 && !io.owned && !banks.Quarantined());
  puts(kOutputs>1?"PASS QGWD/QGWF synthetic multi-token feedback and same-FD full-session lifecycle; NO DEVICE OR MODEL":
   "PASS QGWD actual prepared upload and same-FD full-session lifecycle with synthetic token; NO DEVICE OR MODEL");
+#endif
 }

@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Separately tagged experimental worker image. No Work or reference role.
+#include "PioneerQ38QgwdResidentRole.h"
 #if defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) && (PIONEER_Q38_QGWF_UNROLL_NATIVE_145 != 1 \
  || !defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) || PIONEER_Q38_QGWF_RATE_NATIVE_144 != 1 \
  || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 || !defined(PIONEER_DRIVER_BUILD_TAG) \
- || PIONEER_DRIVER_BUILD_TAG != 0x2026111100010145ULL || defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145) \
+ || (!defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) && PIONEER_DRIVER_BUILD_TAG != 0x2026111100010145ULL) \
+ || (defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) && PIONEER_DRIVER_BUILD_TAG != 0x2026111100010146ULL) \
+ || defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
 #error Unrolled QGWF native145 requires its exact separate rate candidate

@@ -6,6 +6,9 @@ __attribute__((noinline)) bool PioneerQ38TokenCallScope::Finish(PioneerQ38TokenE
  for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
  auto* c=Context();auto* s=c?c->q38TokenNative:NULL;
  if(!c || !s || destroyed || !cookie || cookie->context!=c || sRuntimeOwner!=cookie || c->q38GdnCallThread!=thread || find_thread(NULL)!=thread
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+  || cookie->qgwdResidentPending
+#endif
   || !s->HostBuffersReleased() || s->reservationReleaseAttempted || s->reservationEndpointAttempted || s->reservationReleased
   || !Q38TokenExecutionOutput(*c,&result,sizeof(result)) || !c->io.TokenHostReleaseScope())return false;
  result.started=1;result.hosts=3;s->reservationReleaseAttempted=true;s->phase=PioneerQ38TokenNativeState::ReservationReleasing;

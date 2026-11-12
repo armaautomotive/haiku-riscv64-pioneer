@@ -10,7 +10,8 @@ assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 candidate_only=sys.argv[1:]==['--candidate-only']
 pipeline_only=sys.argv[1:]==['--pipeline-only']
 unroll_only=sys.argv[1:]==['--unroll-only']
-assert not sys.argv[1:] or candidate_only or pipeline_only or unroll_only
+resident_only=sys.argv[1:]==['--resident-only']
+assert not sys.argv[1:] or candidate_only or pipeline_only or unroll_only or resident_only
 here = Path(__file__).resolve().parent
 source = str(here / 'pioneer_q38_qgwd_full_session_test.cpp')
 compiler = os.environ.get('CXX', 'c++')
@@ -19,17 +20,20 @@ with tempfile.TemporaryDirectory(prefix='qgwd-full-session-', dir='/private/tmp'
     common = [compiler, '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
               '-Wno-misleading-indentation', '-Wno-unused-function']
     environment = dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1')
-    if pipeline_only or unroll_only:
+    if pipeline_only or unroll_only or resident_only:
         pipeline=str(Path(tmp)/('pipeline' if pipeline_only else 'unroll'))
-        extra=['-DPIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT=1','-pthread'] if pipeline_only else ['-DPIONEER_Q38_QGWF_UNROLL_CLIENT_145=1']
+        extra=['-DPIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT=1','-pthread'] if pipeline_only else ['-DPIONEER_Q38_QGWF_UNROLL_CLIENT_145=1']+(['-DPIONEER_Q38_QGWD_RESIDENT_CLIENT_146=1'] if resident_only else [])
         subprocess.run(common+['-DPIONEER_Q38_QGWD_CLIENT_141=1','-DPIONEER_Q38_QGWD_TWO_CLIENT_142=1',
                        '-DPIONEER_Q38_QGWF_CLIENT_143=1','-DPIONEER_Q38_QGWF_RATE_CLIENT_144=1',
                        '-DPIONEER_Q38_DENSE_Q8_VERIFIED_MODEL_INSPECTION=1',*extra,
                        '-fsanitize=address,undefined',source,str(here.parent/'PioneerModelWeightCache.cpp'),
                        '-o',pipeline],check=True)
-        for args in ([],['--fail-start'],['--bad-feedback'],['--bad-frontier']):
+        scenarios=[[],['--fail-start'],['--bad-feedback'],['--bad-frontier']]
+        if resident_only:scenarios += [['--bad-resident-close'],['--bad-resident-next'],['--bad-resident-end']]
+        for args in scenarios:
             subprocess.run([pipeline,*args],check=True,env=environment)
-        print('PASS isolated '+('pipelined' if pipeline_only else 'unrolled')+' QGWF full-session success and failure cases; NO DEVICE OR MODEL')
+        label='resident' if resident_only else 'pipelined' if pipeline_only else 'unrolled'
+        print('PASS isolated '+label+' QGWF full-session success and failure cases; NO DEVICE OR MODEL')
         sys.exit(0)
     if not candidate_only:
         subprocess.run(common + ['-fsanitize=address,undefined', source,

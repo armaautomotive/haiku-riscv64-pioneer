@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#include "PioneerQ38QgwdResidentProtocol.h"
+#endif
 // One real nonreentrant FD/team/thread/global-lock scope for this distinct
 // model family. Unlike the old scope,it can re-enter its OWN retained model;
 // it does not suppress unrelated zero/graph/native unsafe state.
@@ -40,5 +43,8 @@ public:
  PioneerStoreContext* Context()const{return status==B_OK && held?context:NULL;}
  status_t Status()const{return status;}
  bool Finish(PioneerQ38TokenEndResult&);
+#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+ bool NextQgwdResidentRequest(PioneerQ38QgwdResident::Reply&);
+#endif
 };
 #endif

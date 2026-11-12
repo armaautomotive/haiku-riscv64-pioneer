@@ -92,7 +92,12 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
  puts("QGWF_PIPELINED_UPLOAD_EXPERIMENT; NO PERFORMANCE OR QUALITY CLAIM");
 #endif
-#ifdef PIONEER_Q38_QGWF_UNROLL_CLIENT_145
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ if(argc!=6 || strcmp(argv[1],"--run-qgwd-resident-146") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgwd-resident-146 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; two fixed-input requests\n",stderr);return 2;
+ }
+ unsigned outputs=17,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGWF_UNROLL_CLIENT_145)
  if(argc!=6 || strcmp(argv[1],"--run-qgwf-unroll-145") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
   fputs("Use --run-qgwf-unroll-145 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; fixed input, up to 17 outputs\n",stderr);return 2;
  }
@@ -220,6 +225,9 @@ int main(int argc,char** argv){
  if(!session->Finish()){fprintf(stderr,"HYBRID_FINISH_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
  unsigned tokens[F::MaxOutput]={},count=0;
  if(!session->CopyGeneratedTokens(tokens,F::MaxOutput,count))return 1;
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ if(!count){session->Abort();fputs("QGWD_RESIDENT_EMPTY_FIRST_OUTPUT close only; NO COMPARISON\n",stderr);return 1;}
+#endif
  printf("HYBRID_RESULT prompt_tokens=%u generated_tokens=%u inference_seconds=%.3f (includes START and prompt processing)\n",
   prompts,count,double(terminal-inferenceBegin)*1e-9);
  if(count && terminal>inferenceBegin)printf(
@@ -230,7 +238,11 @@ int main(int argc,char** argv){
 #endif
   double(count)*1e9/double(terminal-inferenceBegin));
  for(unsigned i=0;i<count;i++)printf("HYBRID_TOKEN %u\n",tokens[i]);
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ puts("QGWD_RESIDENT_FIRST_REQUEST_CLOSED weights retained; output quality not validated");
+#else
  puts("HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated");
+#endif
 #ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
  PioneerQ38TokenRateSamples::Bounds rateBounds;
  if(rateValid && rateSamples.ObservedBounds(rateBounds) && rateBounds.sampledTokens>=2){
@@ -239,6 +251,43 @@ int main(int argc,char** argv){
    (long long)rateBounds.minElapsedUs,(long long)rateBounds.maxElapsedUs,
    rateBounds.lowerTokensPerSecond,rateBounds.upperTokensPerSecond);
  }else puts("QGWF_OBSERVED_DECODE_UNAVAILABLE insufficient_or_invalid_count_window;NOT_A_SPEED_RESULT");
+#endif
+#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+ const uint64_t secondBegin=Now();
+ if(!secondBegin || !session->NextResidentRequest()){
+  fprintf(stderr,"QGWD_RESIDENT_NEXT_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;
+ }
+ const uint64_t secondStarted=Now();
+ if(!secondStarted || secondStarted<secondBegin){session->Abort();return 1;}
+ puts("QGWD_RESIDENT_SECOND_STARTED no second upload; diagnostic only");
+ uint64_t secondPending=secondStarted;
+ while(!session->TerminalReady()){
+  if(!session->Poll([&](uint32_t firstPC,uint32_t secondPC){
+   const uint64_t now=Now();if(now>=secondPending){
+    printf("QGWD_RESIDENT_SECOND_PENDING seconds=%.3f pc_first=%u pc_second=%u\n",double(now-secondStarted)*1e-9,firstPC,secondPC);
+    secondPending=now+UINT64_C(30)*1000000000;
+   }
+  })){fprintf(stderr,"QGWD_RESIDENT_SECOND_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
+  if(!session->TerminalReady()){
+   const uint64_t now=Now();if(!now || now<secondStarted || now-secondStarted>UINT64_C(7200)*1000000000){
+    session->Abort();fputs("QGWD_RESIDENT_SECOND_TIMEOUT close only\n",stderr);return 1;
+   }
+   usleep(10000);
+  }
+ }
+ const uint64_t secondTerminal=Now();
+ if(!secondTerminal || secondTerminal<secondStarted || !session->Finish()){
+  session->Abort();fputs("QGWD_RESIDENT_SECOND_FINISH_FAILED close only\n",stderr);return 1;
+ }
+ unsigned repeated[F::MaxOutput]={},repeatedCount=0;
+ if(!session->CopyGeneratedTokens(repeated,F::MaxOutput,repeatedCount) || repeatedCount!=count
+  || !std::equal(tokens,tokens+count,repeated)){
+  session->Abort();fputs("QGWD_RESIDENT_TOKEN_MISMATCH close only; quality not established\n",stderr);return 1;
+ }
+ printf("QGWD_RESIDENT_SECOND_MATCH count=%u seconds_including_start=%.3f; QUALITY_NOT_VALIDATED\n",
+  count,double(secondTerminal-secondBegin)*1e-9);
+ if(!session->EndResident()){fprintf(stderr,"QGWD_RESIDENT_END_FAILED %s; close only\n",session->failure.c_str());return 1;}
+ puts("QGWD_RESIDENT_TWO_REQUESTS_UNLOADED; QUALITY_NOT_VALIDATED");
 #endif
 #ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
  auto snapshot=std::make_unique<PioneerQ38TokenHiddenSnapshot>();

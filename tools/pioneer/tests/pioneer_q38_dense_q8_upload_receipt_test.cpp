@@ -70,31 +70,38 @@ int main(int argc,char** argv){
  assert(!receipt->Revalidate(&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  if(argc==2 && !strcmp(argv[1],"--rebind")){
-  int nextContext=0;auto nextProof=proof;PioneerResidentBanks nextBanks;assert(nextBanks.Bind(nextProof));
+  int nextContext=0;auto nextProof=std::make_unique<tt_dram_samples_result>(proof);
+  auto nextBanks=std::make_unique<PioneerResidentBanks>();assert(nextBanks->Bind(*nextProof));
   auto nextLedger=ledger;auto nextHashes=hashes;PioneerQ38SpanLease foreignSpan;
   const auto attempt=[&](const void* fd,uint64_t gen,const PioneerQ38SpanLease* lease){
    return receipt->RebindInspection(&context,fd,hashes.data(),ledger.data(),17,gen,lease,&nextContext,
-    nextHashes.data(),nextLedger.data(),nextBanks,nextProof,nextLedger.size());
+    nextHashes.data(),nextLedger.data(),*nextBanks,*nextProof,nextLedger.size());
   };
   assert(!attempt(&foreign,42,&span) && !attempt(&cookie,43,&span) && !attempt(&cookie,42,&foreignSpan));
   assert(!receipt->RebindInspection(&context,&cookie,hashes.data(),ledger.data(),17,42,&span,&nextContext,
-   reinterpret_cast<const uint32_t*>(nextLedger.data()),nextLedger.data(),nextBanks,nextProof,nextLedger.size()));
+   reinterpret_cast<const uint32_t*>(nextLedger.data()),nextLedger.data(),*nextBanks,*nextProof,nextLedger.size()));
   assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
   nextLedger[hole]=1;assert(!attempt(&cookie,42,&span));nextLedger[hole]=0;
   nextHashes[0]^=1;assert(!attempt(&cookie,42,&span));nextHashes[0]^=1;
-  nextProof.translated[0][0]^=1;assert(!attempt(&cookie,42,&span));nextProof.translated[0][0]^=1;
+  nextProof->translated[0][0]^=1;assert(!attempt(&cookie,42,&span));nextProof->translated[0][0]^=1;
   assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42) && !banks.Quarantined());
   assert(attempt(&cookie,42,&span) && !receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42)
    && receipt->Matches(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42)
    && receipt->MatchesLease(&span) && receipt->Revalidate(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42));
+  // The real handoff eventually retires the old context. Release its mock
+  // ledgers before using the new binding so ASan catches stale-array reads.
+  std::vector<uint8_t>().swap(ledger);std::vector<uint32_t>().swap(hashes);
+  assert(receipt->Revalidate(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42));
   int thirdContext=0;auto thirdProof=proof;PioneerResidentBanks thirdBanks;assert(thirdBanks.Bind(thirdProof));
   auto thirdLedger=nextLedger;auto thirdHashes=nextHashes;
   assert(receipt->RebindInspection(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42,&span,&thirdContext,
    thirdHashes.data(),thirdLedger.data(),thirdBanks,thirdProof,thirdLedger.size()));
-  assert(!receipt->Matches(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42)
-   && receipt->Matches(&thirdContext,&cookie,thirdHashes.data(),thirdLedger.data(),17,42)
+  assert(!receipt->Matches(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42));
+  std::vector<uint8_t>().swap(nextLedger);std::vector<uint32_t>().swap(nextHashes);
+  nextBanks.reset();nextProof.reset();
+  assert(receipt->Matches(&thirdContext,&cookie,thirdHashes.data(),thirdLedger.data(),17,42)
    && receipt->MatchesLease(&span) && receipt->Revalidate(&thirdContext,&cookie,thirdHashes.data(),thirdLedger.data(),17,42));
-  puts("PASS two offline retained-span receipt rebinds: identity, mapping, gap and ledger checks; NO lifecycle or device authority");return 0;
+  puts("PASS two offline retained-span rebinds after retiring old ledgers, banks and proof; NO lifecycle or device authority");return 0;
  }
  std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> actual={},expected={};actual.fill(0xa5a5a5a5);
  const auto untouched=actual;
