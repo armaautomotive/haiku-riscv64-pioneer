@@ -49,11 +49,13 @@ struct PioneerQ38TokenExecutionResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,armed=0,released=0;
  uint32_t acknowledged=0,cancelRequested=0,firstPC=0,secondPC=0,reserved[4]={};
 };
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "PioneerQ38SelectedFullMetricsRole.h"
 #elif defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
 #include "PioneerQ38QgwfFrontierNativeInspectionRole.h"
+#elif defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
+#include "PioneerQ38QgwfRateRole.h"
 #else
 #include "PioneerQ38TokenFrontierNativeRole.h"
 #endif
@@ -138,7 +140,7 @@ class PioneerQ38TokenNativeOwner {
  bool started=false,unsafe=false,staged=false,traffic=false,bootAttempted=false,booted=false,launched=false;
  bool running[120]={};uint32_t reset[120]={};
  bool rootAttempted=false,rootStarted=false,rootAcknowledged=false,cancelRequested=false;
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
  bool frontierZeroed=false;uint32_t frontierLimit=0,frontierPrompts=0,frontierLast=0;
 #endif
  bool terminalObserved=false,holding=false,held=false;
@@ -237,7 +239,7 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRuntimeResult& r){r.unsafe=1;r.staged=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenBootstrapResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenExecutionResult& r){r.unsafe=1;r.acknowledged=r.cancelRequested=0;return FailOwner(io);}
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
  template<class IO> bool Fail(IO& io,PioneerQ38TokenFrontierResult& r){r.unsafe=1;r.ready=r.committed=r.limit=r.prompts=0;return FailOwner(io);}
 #endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenTerminalResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
@@ -678,7 +680,7 @@ public:
    for(unsigned i=0;i<64;i++)if(!io.TokenMemoryWrite(0,address+i*4,0))return Fail(io,r);
    if(!Exact(io,0,address,staging,64,r))return Fail(io,r);
   }
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
   // This SAME owner has saved original L1,installed the exact new ROM,
   // staged its immutable session and cleared/read back ALL progress words
   // while ROOT is STILL HELD. A startup marker alone is NOT this proof.
@@ -767,7 +769,7 @@ public:
   if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);
   r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
  } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
  template<class IO> __attribute__((noinline)) bool ObserveCommittedFrontier(IO& io,PioneerQ38TokenFrontierResult& r){
   const PioneerQ38TokenFrontierResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
@@ -939,7 +941,7 @@ private:
   for(unsigned i=0;i<128;i++)staging[i]=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;
   if(!T::Session(staging,boot,plan.Bank(),plan.Workspace())
    || !PioneerQ38TokenTerminalShape(terminal,boot,progress,staging[5],staging[6],staging[32]!=0,cancelRequested))return Fail(io,r);
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
   uint32_t published=0;
   if(!frontierZeroed || frontierLimit!=staging[5] || frontierPrompts!=staging[6]
    || terminal[3]<frontierLast || !io.TokenMemoryReadChecked(0,PioneerQ38TokenPrograms::FrontierAddress,published)

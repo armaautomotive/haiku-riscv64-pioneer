@@ -24,6 +24,9 @@ using DiagnosticModel=PioneerQ38HybridDenseQ8VerifiedModel;
 using DiagnosticModel=PioneerQ38HybridHeadVerifiedModel;
 #endif
 #include "PioneerQ38HybridFullSession.h"
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+#include "PioneerQ38TokenRateSamples.h"
+#endif
 #ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
 #if PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_QGWD_TWO_CLIENT_142) || PIONEER_Q38_QGWD_TWO_CLIENT_142 != 1
 #error Upload timing is an explicit QGWD two-token diagnostic only
@@ -86,7 +89,12 @@ static void ReportTransportFailure(const Transport& io){
 }
 int main(int argc,char** argv){
  namespace F=PioneerQ38FullOffload;
-#ifdef PIONEER_Q38_QGWF_CLIENT_143
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ if(argc!=6 || strcmp(argv[1],"--run-qgwf-rate-144") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
+  fputs("Use --run-qgwf-rate-144 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; one fixed input, up to 17 outputs\n",stderr);return 2;
+ }
+ unsigned outputs=17,ids[F::MaxPrompt]={248319},prompts=1;
+#elif defined(PIONEER_Q38_QGWF_CLIENT_143)
  if(argc!=6 || strcmp(argv[1],"--run-qgwf-143") || argv[2][0]!='/' || argv[3][0]!='/' || argv[4][0]!='/' || argv[5][0]!='/'){
   fputs("Use --run-qgwf-143 ABS_FFN_BFP4 ABS_FFN_BFP8 ABS_HEAD_BFP8 ABS_DENSE_BFP8; one fixed input, two outputs only\n",stderr);return 2;
  }
@@ -165,7 +173,13 @@ int main(int argc,char** argv){
 #endif
  printf("HYBRID_STARTED upload_and_start_seconds=%.3f\n",double(started-begin)*1e-9);
  uint64_t nextPending=started;
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ PioneerQ38TokenRateSamples rateSamples(prompts,prompts+outputs-1);bool rateValid=true;
+#endif
  while(!session->TerminalReady()){
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  const uint64_t pollBegin=Now();
+#endif
   if(!session->Poll([&](uint32_t firstPC,uint32_t secondPC){
    const uint64_t now=Now();if(now>=nextPending){
     printf("HYBRID_PENDING seconds=%.3f pc_first=%u pc_second=%u; diagnostic only\n",
@@ -173,6 +187,12 @@ int main(int argc,char** argv){
     nextPending=now+UINT64_C(30)*1000000000;
    }
   })){fprintf(stderr,"HYBRID_OBSERVE_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;}
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  const uint64_t pollEnd=Now();unsigned frontier=0;
+  if(!pollBegin || !pollEnd || pollEnd<pollBegin || pollEnd/1000>uint64_t(INT64_MAX)
+   || !session->LatestFrontier(frontier)
+   || !rateSamples.ObserveCount(frontier,int64_t(pollBegin/1000),int64_t(pollEnd/1000)))rateValid=false;
+#endif
   if(!session->TerminalReady()){
    const uint64_t now=Now();if(!now || now<started || now-started>UINT64_C(7200)*1000000000){
     session->Abort();fputs("HYBRID_TIMEOUT close only; recovery may be required\n",stderr);return 1;
@@ -196,6 +216,15 @@ int main(int argc,char** argv){
   double(count)*1e9/double(terminal-inferenceBegin));
  for(unsigned i=0;i<count;i++)printf("HYBRID_TOKEN %u\n",tokens[i]);
  puts("HYBRID_COMPLETE native FINISH and close succeeded; output quality not validated");
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ PioneerQ38TokenRateSamples::Bounds rateBounds;
+ if(rateValid && rateSamples.ObservedBounds(rateBounds) && rateBounds.sampledTokens>=2){
+  printf("QGWF_OBSERVED_DECODE_BOUNDS tokens=%u first=%u last=%u min_us=%lld max_us=%lld lower_tps=%.9f upper_tps=%.9f;COUNT_WINDOW_NOT_QUALITY\n",
+   rateBounds.sampledTokens,rateBounds.firstCommitted,rateBounds.lastCommitted,
+   (long long)rateBounds.minElapsedUs,(long long)rateBounds.maxElapsedUs,
+   rateBounds.lowerTokensPerSecond,rateBounds.upperTokensPerSecond);
+ }else puts("QGWF_OBSERVED_DECODE_UNAVAILABLE insufficient_or_invalid_count_window;NOT_A_SPEED_RESULT");
+#endif
 #ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
  auto snapshot=std::make_unique<PioneerQ38TokenHiddenSnapshot>();
  if(!session->CopyHiddenSnapshot(snapshot.get(),sizeof(*snapshot))){fputs("QGW8_HIDDEN_SNAPSHOT_COPY_FAILED; AFTER_CLOSE\n",stderr);return 1;}

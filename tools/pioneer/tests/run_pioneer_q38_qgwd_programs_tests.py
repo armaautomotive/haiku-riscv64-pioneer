@@ -66,6 +66,17 @@ with tempfile.TemporaryDirectory(prefix='qgwd-programs-',dir='/private/tmp') as 
             out=tmp/'ambiguous-qgwf-candidate.h'
             result=subprocess.run([sys.executable,str(generator),*extra,str(root_a),str(worker_a),str(out)],capture_output=True)
             assert result.returncode and not out.exists()
+    if qgwf_frontier:
+        candidate_a=tmp/'rate-candidate-a.h';candidate_b=tmp/'rate-candidate-b.h'
+        candidate_selector='--qgwf-frontier-native-candidate'
+        for image,worker,out in ((root_a,worker_a,candidate_a),(root_b,worker_b,candidate_b)):
+            subprocess.run([sys.executable,str(generator),candidate_selector,str(image),str(worker),str(out)],check=True)
+        assert candidate_a.read_bytes()==candidate_b.read_bytes()
+        assert hashlib.sha256(candidate_a.read_bytes()).hexdigest()=='630c60ee3b1291f2a68ee2241203713f8d69d662f04a270ad1bc2fe8b79ca551'
+        for extra in ([candidate_selector]*2,[candidate_selector,selector],[candidate_selector,'--qgwf-dual-batch-native-candidate']):
+            out=tmp/'ambiguous-qgwf-rate-candidate.h'
+            result=subprocess.run([sys.executable,str(generator),*extra,str(root_a),str(worker_a),str(out)],capture_output=True)
+            assert result.returncode and not out.exists()
     if seal_loop:
         native_a=tmp/'native-a.h';native_b=tmp/'native-b.h';native_selector='--qgwd-seal-loop-native-inspection'
         for image,worker,out in ((root_a,worker_a,native_a),(root_b,worker_b,native_b)):

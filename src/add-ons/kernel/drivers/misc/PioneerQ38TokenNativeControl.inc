@@ -128,6 +128,17 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
    PioneerQ38TokenTerminalResult result;const bool okay=ObserveQ38TokenNativeTerminal(*c,result);Q38TokenControlDetail(reply,result);
    reply.started=result.started;reply.ready=okay && result.ready;reply.unsafe=result.unsafe;reply.stage=result.phase;
    status=result.unsafe?B_DEV_NOT_READY:okay?B_OK:B_NOT_ALLOWED;retainOnCopyFailure=okay || result.unsafe;
+#ifdef PIONEER_Q38_QGWF_RATE_NATIVE_144
+   // Telemetry is measured under the same FD/thread lock. It is never a
+   // terminal, HOLD, output or cleanup grant. Zero is reserved for absent.
+   if(okay && !result.unsafe){
+    PioneerQ38TokenFrontierResult frontier;const bool observed=ObserveQ38TokenNativeFrontier(*c,frontier);
+    if(!observed || !frontier.ready){
+     reply.ready=0;reply.unsafe=frontier.unsafe;status=frontier.unsafe?B_DEV_NOT_READY:B_NOT_ALLOWED;
+     retainOnCopyFailure=retainOnCopyFailure || frontier.unsafe;
+    }else reply.detail[14]=frontier.committed+1;
+   }
+#endif
   }else if(request.operation==P::Cancel){
    PioneerQ38TokenExecutionResult result;const bool okay=CancelQ38TokenNativeRoot(*c,result);Q38TokenControlDetail(reply,result);
    reply.started=result.started;reply.ready=okay && result.cancelRequested;reply.unsafe=result.unsafe;reply.stage=result.phase;

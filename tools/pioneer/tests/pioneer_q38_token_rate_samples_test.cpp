@@ -20,6 +20,15 @@ static P::Packet Packet(unsigned count,unsigned limit=34,unsigned prompts=2){
 int main(){
  using S=PioneerQ38TokenRateSamples;unsigned positives=0,refusals=0;
  {
+  S s(1,17);S::Bounds b;
+  assert(s.ObserveCount(0,10,20) && s.ObserveCount(1,30,40) && s.ObserveCount(1,50,60)
+   && s.ObserveCount(17,1000,1010) && s.ObservedBounds(b));
+  assert(b.firstCommitted==1 && b.lastCommitted==17 && b.sampledTokens==16
+   && b.minElapsedUs==960 && b.maxElapsedUs==980);
+  S bad(1,17);assert(bad.ObserveCount(2,10,20) && !bad.ObserveCount(1,30,40) && !bad.ObserveCount(17,50,60));
+  S over(1,17);assert(!over.ObserveCount(18,10,20));
+ }
+ {
   S s(2,34);S::Bounds b;const auto original=b;
   S::Window window;
   assert(!s.ObservedBounds(b) && Same(b,original) && !s.ObservedWindow(window));

@@ -14,18 +14,25 @@
 int main(){
  namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
  static_assert(F::BuildTag==UINT64_C(
-#ifdef PIONEER_Q38_QGWF_CLIENT_143
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  0x2026111100010144
+#elif defined(PIONEER_Q38_QGWF_CLIENT_143)
   0x2026111100010143
 #else
   0x2026111100010142
 #endif
-  ) && F::MaxPrompt==1
-  && F::MaxOutput==2 && F::MaxPositions==2,"isolated bounded diagnostic");
+  ) && F::MaxPrompt==1 && F::MaxOutput==
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  17 && F::MaxPositions==17
+#else
+  2 && F::MaxPositions==2
+#endif
+  ,"isolated bounded diagnostic");
  P::Packet p={};p.request.magic=P::Magic;p.request.version=P::Version;p.request.operation=P::Start;
- p.request.prompts=1;p.request.limit=2;p.request.stopEos=1;p.request.eos0=PioneerQ38FullOffloadEog::Eos0;
+ p.request.prompts=1;p.request.limit=F::MaxPositions;p.request.stopEos=1;p.request.eos0=PioneerQ38FullOffloadEog::Eos0;
  p.request.eos1=PioneerQ38FullOffloadEog::Eos1;p.prompt[0]=248319;
  assert(F::RequestShape(p));p.prompt[0]=17;assert(!F::RequestShape(p));p.prompt[0]=248319;
- p.request.limit=1;assert(!F::RequestShape(p));p.request.limit=3;assert(!F::RequestShape(p));p.request.limit=2;
+ p.request.limit=F::MaxPositions-1;assert(!F::RequestShape(p));p.request.limit=F::MaxPositions+1;assert(!F::RequestShape(p));p.request.limit=F::MaxPositions;
  p.request.prompts=2;assert(!F::RequestShape(p));p.request.prompts=1;
  p.request.stopEos=0;assert(!F::RequestShape(p));p.request.stopEos=1;
  p.request.eos1++;assert(!F::RequestShape(p));

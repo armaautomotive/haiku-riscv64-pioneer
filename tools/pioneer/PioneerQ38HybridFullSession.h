@@ -102,6 +102,9 @@ private:
  State state=Virgin;
  ControlObservation lastControl={};bool observedControl=false;
  unsigned prompts=0,limit=0,committed=0,position=0,layers=0,terminalStage=0;
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ unsigned observedFrontier=0;bool haveFrontier=false;
+#endif
  bool attempted=false,cancelAttempted=false,cancelled=false;
  bool Stop(const char* why){
   if(failure.empty())failure=why;
@@ -197,7 +200,9 @@ public:
 #ifdef PIONEER_Q38_QGWC_CLIENT_136
   if(count!=1 || outputs!=1 || ids[0]!=248319)return false;
 #endif
-#ifdef PIONEER_Q38_QGWD_TWO_CLIENT_142
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  if(count!=1 || outputs!=17 || ids[0]!=248319)return false; // fixed bounded rate diagnostic only
+#elif defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
   if(count!=1 || outputs!=2 || ids[0]!=248319)return false; // fixed diagnostic only
 #elif defined(PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION) && !defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION)
   if(count!=1 || outputs!=1)return false; // synthetic one-token lifecycle only
@@ -233,7 +238,16 @@ public:
   if(state!=Running)return false;
   if(!Control(PioneerQ38TokenControl::Observe))return Stop("observe");
   const auto& r=packet->reply;const auto* d=r.detail;
-  if(d[5] || d[6]!=r.ready || d[7]>1 || (d[7] && !cancelAttempted) || d[14] || d[15])return Stop("observe_reply");
+  if(d[5] || d[6]!=r.ready || d[7]>1 || (d[7] && !cancelAttempted) || d[15]
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+   || !d[14] || d[14]-1>limit || (haveFrontier && d[14]-1<observedFrontier) || (r.ready && d[14]-1!=d[8])
+#else
+   || d[14]
+#endif
+   )return Stop("observe_reply");
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  observedFrontier=d[14]-1;haveFrontier=true; // observation only, never lifecycle authority
+#endif
   if(!r.ready){
    if(r.stage!=9 || d[3] || d[4]>63 || d[7] || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
    // These program-counter samples are diagnostic only: neither a progress
@@ -247,6 +261,11 @@ public:
   }else if(d[8]<prompts || d[8]!=d[9]+1 || d[10]!=64 || d[11])return Stop("normal_terminal_reply");
   cancelled=d[7]!=0;committed=d[8];position=d[9];layers=d[10];terminalStage=d[11];state=Terminal;return true;
  }
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ bool LatestFrontier(unsigned& value)const{
+  if(!haveFrontier || (state!=Running && state!=Terminal))return false;value=observedFrontier;return true;
+ }
+#endif
  bool Finish(){
   namespace P=PioneerQ38TokenControl;
   if(state!=Terminal)return false;

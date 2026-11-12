@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-// Distinct QGWF two-token diagnostic candidate identity. A build is not
+#include "PioneerQ38QgwfRateRole.h"
+// Distinct QGWF two-token and frontier-rate diagnostic candidate identities. A build is not
 // permission to install, execute, use Work, or skip separate validation.
 #if defined(PIONEER_Q38_QGWF_NATIVE_143) && (PIONEER_Q38_QGWF_NATIVE_143 != 1 \
  || !defined(PIONEER_Q38_QGWD_NATIVE_141) || PIONEER_Q38_QGWD_NATIVE_141 != 1 \
@@ -9,9 +10,11 @@
  || !defined(PIONEER_Q38_QGWF_PROGRAMS_INSPECTION) || PIONEER_Q38_QGWF_PROGRAMS_INSPECTION != 1 \
  || !defined(PIONEER_Q38_QGWF_DUAL_BATCH_PLAN) || PIONEER_Q38_QGWF_DUAL_BATCH_PLAN != 1 \
  || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 || !defined(PIONEER_DRIVER_BUILD_TAG) \
- || PIONEER_DRIVER_BUILD_TAG != 0x2026111100010143ULL \
+ || (!defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) && PIONEER_DRIVER_BUILD_TAG != 0x2026111100010143ULL) \
+ || (defined(PIONEER_Q38_QGWF_RATE_NATIVE_144) && PIONEER_DRIVER_BUILD_TAG != 0x2026111100010144ULL) \
  || defined(PIONEER_Q38_QGWF_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWE_NATIVE_INSPECTION) \
- || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION) \
+ || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) \
+ || (defined(PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION) && !defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
 #error QGWF native143 requires its exact non-Work two-token candidate profile

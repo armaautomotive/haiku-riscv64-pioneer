@@ -42,11 +42,13 @@
   || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ObserveRoot(c.io,result);
 } // bounded source/marker/PC observation while firmware owns NoC;NEVER a token/STOP/END receipt
-#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION) || defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "PioneerQ38SelectedFullMetricsRole.h"
 #elif defined(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION)
 #include "PioneerQ38QgwfFrontierNativeInspectionRole.h"
+#elif defined(PIONEER_Q38_QGWF_RATE_NATIVE_144)
+#include "PioneerQ38QgwfRateRole.h"
 #else
 #include "PioneerQ38TokenFrontierNativeRole.h"
 #endif

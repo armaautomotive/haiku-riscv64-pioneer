@@ -9,7 +9,9 @@
 #ifdef PIONEER_Q38_QGWE_BATCH_DENSE_PLAN
 static_assert(PioneerQ38HybridHeadWorkerLayout::Magic==0x45574751,"QGWE simulated plan identity required");
 #endif
-#if defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) || defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+static constexpr unsigned kOutputs=17;
+#elif defined(PIONEER_Q38_QGWD_MULTI_TOKEN_SIMULATION) || defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
 static constexpr unsigned kOutputs=2;
 #else
 static constexpr unsigned kOutputs=1;
@@ -17,7 +19,7 @@ static constexpr unsigned kOutputs=1;
 
 struct FullIO:SessionOwner {
  unsigned support=0,starts=0,polls=0,holds=0,reads=0,finishes=0;
- bool failStart=false,badFeedback=false;
+ bool failStart=false,badFeedback=false,badFrontier=false;
  explicit FullIO(SessionOwner owner):SessionOwner(owner){}
  bool Call(int fd,unsigned op,void* data,size_t size){
   namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenControl;
@@ -41,11 +43,14 @@ struct FullIO:SessionOwner {
   }else if(action==P::Observe){assert(starts==1 && !holds);polls++;
    if(polls==1){r.ready=0;r.stage=d[2]=9;d[12]=123;d[13]=456;}
    else{r.stage=d[2]=11;d[6]=1;d[8]=kOutputs;d[9]=kOutputs-1;d[10]=64;}
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+   d[14]=polls==1?2:kOutputs+unsigned(!badFrontier);
+#endif
   }else if(action==P::Hold){assert(polls==2 && !holds++);r.stage=d[2]=4;d[6]=1;d[7]=120;
   }else if(action==P::Read){assert(holds==1 && !reads++ && packet.request.records==kOutputs);r.stage=d[2]=4;r.records=kOutputs;
    d[6]=1;d[8]=kOutputs;d[9]=1;d[10]=256*kOutputs;d[11]=1;
    for(unsigned n=0;n<kOutputs;n++){auto* v=packet.records+n*64;
-   v[0]=0x31435451;v[1]=1;v[2]=n;v[3]=n?1000:
+   v[0]=0x31435451;v[1]=1;v[2]=n;v[3]=n?999+n:
 #ifdef PIONEER_Q38_QGWD_CLIENT_141
     248319;
 #else
@@ -60,8 +65,11 @@ struct FullIO:SessionOwner {
 };
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!std::strcmp(argv[1],"--fail-start")
-  || (kOutputs==2 && !std::strcmp(argv[1],"--bad-feedback")))));
-#ifdef PIONEER_Q38_QGWF_CLIENT_143
+  || (kOutputs>1 && !std::strcmp(argv[1],"--bad-feedback"))
+  || (kOutputs==17 && !std::strcmp(argv[1],"--bad-frontier")))));
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010144),"distinct QGWF rate client identity");
+#elif defined(PIONEER_Q38_QGWF_CLIENT_143)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010143),"distinct QGWF two-token client identity");
 #elif defined(PIONEER_Q38_QGWD_TWO_CLIENT_142)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111100010142),"distinct QGWD two-token client identity");
@@ -91,6 +99,7 @@ int main(int argc,char** argv){
  FullIO io(SessionOwner{spans,*receipt,lease,banks,proof,ledger,hashes});
  io.failStart=argc==2 && !std::strcmp(argv[1],"--fail-start");
  io.badFeedback=argc==2 && !std::strcmp(argv[1],"--bad-feedback");
+ io.badFrontier=argc==2 && !std::strcmp(argv[1],"--bad-frontier");
  PioneerQ38HybridFullSession<DensePages,FullIO> session(pages,io);const uint32_t input[]={
 #ifdef PIONEER_Q38_QGWD_CLIENT_141
   248319
@@ -124,7 +133,18 @@ int main(int argc,char** argv){
   puts("PASS QGWD synthetic full-session failed START retains/quarantines owner; NO DEVICE OR MODEL");return 0;
  }
  assert(started);
- assert(clockCalled && session.Poll() && session.Poll() && session.TerminalReady());
+ assert(clockCalled && session.Poll());
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ unsigned observed=0;assert(session.LatestFrontier(observed) && observed==1);
+ if(io.badFrontier){
+  assert(!session.Poll() && session.FailedState() && io.owned && !io.finishes && io.closes==1 && banks.Quarantined());
+  puts("PASS QGWF rate frontier mismatch rejects output and quarantines; NO DEVICE OR MODEL");return 0;
+ }
+#endif
+ assert(session.Poll() && session.TerminalReady());
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+ assert(session.LatestFrontier(observed) && observed==kOutputs);
+#endif
  if(io.badFeedback){
   assert(!session.Finish() && session.FailedState() && io.owned && io.reads==1 && !io.finishes
    && io.closes==1 && banks.Quarantined());
@@ -134,9 +154,9 @@ int main(int argc,char** argv){
  }
  assert(session.Finish() && session.Completed());
  uint32_t output[kOutputs]={};unsigned count=0;assert(session.CopyGeneratedTokens(output,kOutputs,count) && count==kOutputs && output[0]==1000);
- if(kOutputs==2)assert(output[1]==1001);
+ if(kOutputs>1)assert(output[1]==1001);
  assert(io.support==2 && io.starts==1 && io.polls==2 && io.holds==1 && io.reads==1 && io.finishes==1
   && io.opens==1 && io.closes==1 && !io.owned && !banks.Quarantined());
- puts(kOutputs==2?"PASS QGWD synthetic two-token feedback and same-FD full-session lifecycle; NO DEVICE OR MODEL":
+ puts(kOutputs>1?"PASS QGWD/QGWF synthetic multi-token feedback and same-FD full-session lifecycle; NO DEVICE OR MODEL":
   "PASS QGWD actual prepared upload and same-FD full-session lifecycle with synthetic token; NO DEVICE OR MODEL");
 }

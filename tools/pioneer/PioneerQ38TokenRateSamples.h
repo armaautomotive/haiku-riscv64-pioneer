@@ -30,9 +30,15 @@ public:
  bool Observe(const PioneerQ38TokenFrontierControl::Packet& packet,int64_t begin,int64_t end){
   if(!valid)return false;
   if(!PioneerQ38TokenFrontierControl::ReplyShape(packet) || !packet.reply.ready
-   || packet.reply.detail[8]!=limit || packet.reply.detail[9]!=prompts || begin<0 || end<begin
-   || (observed && (begin<previousEnd || packet.reply.detail[7]<previousCount)))return Fail();
-  const Sample sample={begin,end,packet.reply.detail[7]};
+   || packet.reply.detail[8]!=limit || packet.reply.detail[9]!=prompts)return Fail();
+  return ObserveCount(packet.reply.detail[7],begin,end);
+ }
+ // The caller must independently authenticate the same-owner telemetry
+ // source and clean completion; a count alone never grants that authority.
+ bool ObserveCount(uint32_t count,int64_t begin,int64_t end){
+  if(!valid)return false;
+  if(count>limit || begin<0 || end<begin || (observed && (begin<previousEnd || count<previousCount)))return Fail();
+  const Sample sample={begin,end,count};
   observed=true;previousEnd=end;previousCount=sample.count;
   if(sample.count<prompts)return true; // never count a prompt position as decode
   if(!haveFirst){first=last=sample;haveFirst=true;return true;}

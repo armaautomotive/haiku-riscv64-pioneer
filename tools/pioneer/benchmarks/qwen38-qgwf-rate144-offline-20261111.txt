@@ -1,0 +1,32 @@
+QGWF frontier rate diagnostic, offline build and simulation, 2026-11-11
+
+This separate tag144 candidate requests a fixed prompt and up to 17 outputs.
+Its native Observe path reads a committed-count frontier under the existing
+owner lock. The count is telemetry only: it does not grant HOLD, output,
+cleanup, residency, or Work authority. The client reports bounds for an
+observed post-first-token count window only after clean FINISH and output copy;
+insufficient or invalid timing reports no rate. No CPU reference is performed.
+
+Independent driver builds SHA-256:
+f28498f1e6d53ed205737ac99b398dd6fda3e5873717046a6760b3df0cf36b88
+Independent client builds SHA-256:
+100922b85d93de393d46e03c13269257ece68648fbd467960582d6197de6ef64
+Independently generated pinned program bundle SHA-256:
+630c60ee3b1291f2a68ee2241203713f8d69d662f04a270ad1bc2fe8b79ca551
+The existing tag143 driver rebuilt exactly to its prior b263b7d3... binary.
+
+Address/undefined-behavior-sanitized synthetic full-session tests passed for
+17-token success, failed START, feedback corruption, and frontier/terminal
+disagreement. The latter three retain or quarantine as appropriate. Mock
+control-adapter tests cover pending and terminal counts and failure retention;
+host sample arithmetic tests cover counter/clock errors. Pinned bundle, native
+role, client role, and protocol isolation checks passed. All of these are
+offline tests, not observations of the hardware or model.
+
+The extended aggregate full-session test is still running. Tag144 has NOT been
+installed, physically executed, quality validated, qualified for Assistant or
+Work, or measured for tokens/sec. The currently running physical tag142 upload
+timing diagnostic must terminate and restore the stable driver before any
+separate physical candidate is considered. This diagnostic does NOT implement
+or prove weight persistence across requests; that requires a separate safe
+owner and lifetime design and hardware qualification.

@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38QgwfRateRole.h"
 // Distinct QGWF tag143 diagnostic client; not an Assistant/Work mode.
 #if defined(PIONEER_Q38_QGWF_CLIENT_143) && (PIONEER_Q38_QGWF_CLIENT_143 != 1 \
  || !defined(PIONEER_Q38_QGWD_CLIENT_141) || PIONEER_Q38_QGWD_CLIENT_141 != 1 \
