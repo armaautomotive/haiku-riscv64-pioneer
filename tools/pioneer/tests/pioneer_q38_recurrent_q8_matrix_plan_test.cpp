@@ -4,6 +4,7 @@
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "../PioneerQ38HybridRecurrentQ8MatrixPlan.h"
+#include "../PioneerQ38RecurrentQ8KernelLayoutInspection.h"
 #include "../PioneerQ38NativeBfp8WeightTiles.h"
 
 struct AlteredSource {
@@ -23,6 +24,19 @@ int main(){
  assert(!New::Build(*source,untouched) && untouched.parts.empty() && untouched.used[0]==123);
  assert(source->Build());Old::Proposal old;New::Proposal next;
  assert(Old::Build(*source,old) && New::Build(*source,next));
+ using Fixed=PioneerQ38RecurrentQ8KernelLayoutInspection;
+ auto ancestor=std::make_unique<Fixed::Parent::Parent>();auto parent=std::make_unique<Fixed::Parent>();
+ auto fixed=std::make_unique<Fixed>();
+ assert(ancestor->Build(*source) && parent->Build(*source,*ancestor) && fixed->Build(*source,*parent,*ancestor));
+ assert(fixed->Count()==next.parts.size());
+ for(unsigned i=0;i<fixed->Count();i++){
+  const auto* a=fixed->At(i);const auto& b=next.parts[i];assert(a && a->original==b.original
+   && a->bank==b.bank && a->offset==b.offset && a->bytes==b.bytes && a->allocated==b.allocated && a->encoding==b.encoding);
+ }
+ auto* corrupt=const_cast<Fixed::Part*>(parent->At(0));assert(corrupt);const auto saved=*corrupt;
+ corrupt->offset+=4096;auto rejected=std::make_unique<Fixed>();
+ assert(!rejected->Build(*source,*parent,*ancestor) && !rejected->Ready() && !rejected->At(0));*corrupt=saved;
+ assert(!fixed->Build(*source,*parent,*ancestor)); // one-shot, including after success
  assert(old.parts.size()==4678 && next.parts.size()==old.parts.size() && next.used==old.used);
  unsigned converted=0,small=0;uint64_t holes=0,rows=0;
  for(unsigned i=0;i<source->Count();i++){
