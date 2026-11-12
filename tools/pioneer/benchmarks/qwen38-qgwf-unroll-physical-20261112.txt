@@ -1,0 +1,21 @@
+QGWF unrolled-worker tag145 physical comparison, 2026-11-12
+
+One physical fixed-input diagnostic, not a production or model-quality test.
+Preflight and trial returned zero with empty parent, preflight and trial stderr.
+The output-shape gate passed for 17 outputs; all token IDs were 70253. Output
+quality and full autoregressive equivalence to a CPU reference are unverified.
+
+Upload and START together took 2950.489 s. Inference including START and prompt
+processing took 745.289 s for 17 output IDs. The 16-token observed decode
+window bounded throughput between 0.073466349 and 0.073469689 tokens/s. The
+previous tag144 window was 0.073309112 to 0.073312435 tokens/s. Although this
+single observed window is roughly 0.2% higher, repeated trials and variation
+controls are absent: no practical or statistically established speedup.
+
+Independent post-run checks: state CANDIDATE_CLOSED_STABLE_RESTORED_
+QUALITY_UNVERIFIED; installed stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+reload tag2026102100010012 generation34 quiesced0 cold0 active_owner0;
+sysinfo 64 CPUs and 137034936320 bytes maximum RAM. No candidate process
+remained. The tag146 resident check-only passed with no model read, driver
+swap or GPU execution. Neither diagnostic establishes Assistant integration.
