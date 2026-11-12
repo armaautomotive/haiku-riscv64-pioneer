@@ -1,5 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdNativeInspectionRole.h"
+#if defined(PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION) && (PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Resident receipt rebind is an offline inspection only, not a device ownership transfer
+#endif
 #ifndef PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION_H
 #define PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION_H
 #if !defined(PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION) || PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION != 1 \
@@ -96,6 +102,38 @@ public:
   if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
+#ifdef PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION
+ // An offline model of rebinding the SAME closed span receipt to a fresh
+ // context. This proves neither hardware continuity nor actual owner/FD
+ // locking and must never be enabled by a native driver. All validation
+ // precedes pointer updates; a rejected destination leaves the source bound.
+ bool RebindInspection(const void* oldContext,const void* fd,const uint32_t* oldHashes,const uint8_t* oldLedger,
+  int64_t owner,uint64_t gen,const PioneerQ38SpanLease* retainedSpan,const void* nextContext,
+  const uint32_t* nextHashes,const uint8_t* nextLedger,PioneerResidentBanks& nextBanks,
+  const tt_dram_samples_result& nextProof,unsigned ledgerPages){
+  if(!nextContext || nextContext==oldContext || !nextHashes || !nextLedger
+   || nextHashes==oldHashes || nextLedger==oldLedger || &nextBanks==banks || &nextProof==proof
+   || ledgerPages!=PioneerResidentBanks::Pages || retainedSpan!=lease
+   || !Revalidate(oldContext,fd,oldHashes,oldLedger,owner,gen) || !nextBanks.Matches(nextProof))return false;
+  const uintptr_t ptrs[]={reinterpret_cast<uintptr_t>(oldLedger),reinterpret_cast<uintptr_t>(oldHashes),
+   reinterpret_cast<uintptr_t>(nextLedger),reinterpret_cast<uintptr_t>(nextHashes)};
+  const size_t sizes[]={ledgerPages,size_t(ledgerPages)*sizeof(uint32_t),ledgerPages,size_t(ledgerPages)*sizeof(uint32_t)};
+  const uintptr_t max=~uintptr_t(0);
+  for(unsigned i=0;i<4;i++){
+   if(!ptrs[i] || ptrs[i]>max-sizes[i] || ((i&1) && (ptrs[i]&3)))return false;
+   for(unsigned j=0;j<i;j++)if(ptrs[i]<ptrs[j]+sizes[j] && ptrs[j]<ptrs[i]+sizes[i])return false;
+  }
+  for(unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)if(proof->source[i]!=nextProof.source[i])return false;
+  for(unsigned b=0;b<TT_DRAM_BANKS;b++){
+   for(unsigned i=0;i<2;i++)if(proof->translated[b][i]!=nextProof.translated[b][i])return false;
+   for(unsigned i=0;i<TT_DRAM_ID_WORDS;i++)if(proof->id[b][0][i]!=nextProof.id[b][0][i])return false;
+  }
+  if(!PioneerQ38DenseQ8LedgerInspection::Verify(original,layout,nextLedger,nextHashes,ledgerPages,digest))return false;
+  for(unsigned i=0;i<ledgerPages;i++)if(oldLedger[i]!=nextLedger[i] || oldHashes[i]!=nextHashes[i])return false;
+  context=nextContext;hashes=nextHashes;ledger=nextLedger;banks=&nextBanks;proof=&nextProof;
+  return true; // same FD/team/generation/retained span; offline only
+ }
+#endif
 #ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
  // Check an already-built logical startup view against THIS sealed receipt.
  // The old logical extents include holes, so their presence must not be

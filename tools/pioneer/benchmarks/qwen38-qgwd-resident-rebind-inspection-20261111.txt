@@ -1,0 +1,27 @@
+QGWD matrix-layout resident receipt rebind, offline only
+========================================================
+
+The existing resident prototype is for the original dense layout and
+expects a different learned-page count. QGWD has 5149957 learned pages,
+gapped physical placement, and a receipt bound to its original context,
+ledger, bank proof, FD/team/generation and closed upload-span object.
+Copying only the ledger to a new context would not bind that receipt.
+
+An isolated inspection method now models moving the same sealed receipt
+and retained closed span to a new context. Before changing its pointers,
+it checks the old bound receipt, unchanged FD/team/generation, new valid
+bank proof and matching route/identity metadata, the complete gapped ledger
+and digest, and exact old/new page-hash and initialization arrays. Fake
+tests refused a foreign FD, changed generation, wrong span, populated gap,
+altered hash, overlapping ledgers and invalid mapping; the successful
+simulated move retained the span and rejected the original context
+afterward. The QGWF fake-tag native source still compiled with this
+inspection disabled.
+
+This is not a native implementation, hardware continuity check, persistent
+FD owner, safe request-close/new-request transition, model unload or proof
+that card memory survived. The method is explicitly forbidden in kernel,
+driver, Work and CPU-reference roles. In particular it must not be wired
+into the existing incomplete resident prototype as a physical handoff
+without proving the lifecycle, locking, storage continuity and failure
+quarantine for both contexts. No device, model or speed claim is made.

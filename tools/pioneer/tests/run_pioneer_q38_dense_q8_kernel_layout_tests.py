@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='q38-q8-fixed-',dir='/private/tmp') as t
     subprocess.run([compiler,'-std=c++17','-O2','-g','-Wall','-Wextra','-Werror',
                     '-Wno-misleading-indentation','-Wno-unused-function','-fsanitize=address,undefined',
                     str(here/'pioneer_q38_dense_q8_upload_receipt_test.cpp'),'-o',str(receipt)],check=True)
-    for arguments in ([],['--hole'],['--late'],['--abort']):
+    for arguments in ([],['--hole'],['--late'],['--abort'],['--rebind']):
         subprocess.run([str(receipt),*arguments],check=True,env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
     for role in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                  'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):

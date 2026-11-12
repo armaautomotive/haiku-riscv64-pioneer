@@ -6,6 +6,7 @@
 #define PIONEER_Q38_DENSE_Q8_RECIPE_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_LEDGER_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_UPLOAD_RECEIPT_INSPECTION 1
+#define PIONEER_Q38_QGWD_RESIDENT_REBIND_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
 #define PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION 1
 #define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
@@ -21,7 +22,7 @@
 #include <memory>
 #include <vector>
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--late") || !strcmp(argv[1],"--abort"))));
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--late") || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--rebind"))));
  BanksMock io;auto proof=BankProof(io);PioneerResidentBanks banks;assert(banks.Bind(proof));
  std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages,0);
  auto receipt=std::make_unique<PioneerQ38DenseQ8UploadReceiptInspection>();int context=0,cookie=0,foreign=0;
@@ -68,6 +69,26 @@ int main(int argc,char** argv){
  assert(!receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,43));
  assert(!receipt->Revalidate(&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ if(argc==2 && !strcmp(argv[1],"--rebind")){
+  int nextContext=0;auto nextProof=proof;PioneerResidentBanks nextBanks;assert(nextBanks.Bind(nextProof));
+  auto nextLedger=ledger;auto nextHashes=hashes;PioneerQ38SpanLease foreignSpan;
+  const auto attempt=[&](const void* fd,uint64_t gen,const PioneerQ38SpanLease* lease){
+   return receipt->RebindInspection(&context,fd,hashes.data(),ledger.data(),17,gen,lease,&nextContext,
+    nextHashes.data(),nextLedger.data(),nextBanks,nextProof,nextLedger.size());
+  };
+  assert(!attempt(&foreign,42,&span) && !attempt(&cookie,43,&span) && !attempt(&cookie,42,&foreignSpan));
+  assert(!receipt->RebindInspection(&context,&cookie,hashes.data(),ledger.data(),17,42,&span,&nextContext,
+   reinterpret_cast<const uint32_t*>(nextLedger.data()),nextLedger.data(),nextBanks,nextProof,nextLedger.size()));
+  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
+  nextLedger[hole]=1;assert(!attempt(&cookie,42,&span));nextLedger[hole]=0;
+  nextHashes[0]^=1;assert(!attempt(&cookie,42,&span));nextHashes[0]^=1;
+  nextProof.translated[0][0]^=1;assert(!attempt(&cookie,42,&span));nextProof.translated[0][0]^=1;
+  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42) && !banks.Quarantined());
+  assert(attempt(&cookie,42,&span) && !receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42)
+   && receipt->Matches(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42)
+   && receipt->MatchesLease(&span) && receipt->Revalidate(&nextContext,&cookie,nextHashes.data(),nextLedger.data(),17,42));
+  puts("PASS offline retained-span receipt rebind: identity, mapping, gap and ledger checks; NO lifecycle or device authority");return 0;
+ }
  std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> actual={},expected={};actual.fill(0xa5a5a5a5);
  const auto untouched=actual;
  assert(!receipt->DenseManifest(actual.data(),actual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && actual==untouched);
