@@ -1,5 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38Qgw8Bfp8ReuseRole.h"
+#if defined(PIONEER_Q38_QGWF_UNROLL_SEAL_EXPERIMENT) && (PIONEER_Q38_QGWF_UNROLL_SEAL_EXPERIMENT != 1 \
+ || !defined(PIONEER_Q38_QGWF_BATCH4_WORKER) || PIONEER_Q38_QGWF_BATCH4_WORKER != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error Unrolled worker-seal comparisons are a distinct offline QGWF image experiment
+#endif
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
 #if defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
@@ -264,7 +271,16 @@ extern "C" __attribute__((noinline)) void q38_mixed_seal(){
  // s11 is reserved in EVERY linked capsule. It is never a caller's L1
  // descriptor pointer, a writable global, or recaptured between packets.
  if(reinterpret_cast<unsigned>(s)<0x6e000 || reinterpret_cast<unsigned>(s)>0x6fe00)block_fault_park();
+#ifdef PIONEER_Q38_QGWF_UNROLL_SEAL_EXPERIMENT
+ for(unsigned i=0;i<64;i+=4){
+  if(Words(M::Boot)[i]!=s->boot[i] || Words(M::Job)[i]!=s->job[i])block_fault_park();
+  if(Words(M::Boot)[i+1]!=s->boot[i+1] || Words(M::Job)[i+1]!=s->job[i+1])block_fault_park();
+  if(Words(M::Boot)[i+2]!=s->boot[i+2] || Words(M::Job)[i+2]!=s->job[i+2])block_fault_park();
+  if(Words(M::Boot)[i+3]!=s->boot[i+3] || Words(M::Job)[i+3]!=s->job[i+3])block_fault_park();
+ }
+#else
  for(unsigned i=0;i<64;i++)if(Words(M::Boot)[i]!=s->boot[i] || Words(M::Job)[i]!=s->job[i])block_fault_park();
+#endif
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=s->boot[16+i])block_fault_park();
  if(*Words(M::Doorbell)!=s->job[1])block_fault_park();
 }

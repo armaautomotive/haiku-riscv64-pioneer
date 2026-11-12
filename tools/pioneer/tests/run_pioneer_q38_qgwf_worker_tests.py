@@ -8,13 +8,17 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) not in (5,6) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+args=sys.argv[1:];unroll='--unroll-seal' in args
+if unroll:
+    assert args.count('--unroll-seal')==1;args.remove('--unroll-seal')
+if len(args) not in (4,5) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('usage: ABS_WORKER_A ABS_WORKER_B ABS_BFP4_BATCH_LEAF ABS_BFP8_BATCH_LEAF [ABS_PRIVATE_BANDS]')
-first,second,four,eight=map(Path,sys.argv[1:5]);private=Path(sys.argv[5]) if len(sys.argv)==6 else None
+first,second,four,eight=map(Path,args[:4]);private=Path(args[4]) if len(args)==5 else None
 here=Path(__file__).resolve().parent
 assert len({first,second,four,eight})==4 and all(p.is_absolute() and p.is_dir() and not p.is_symlink() for p in (first,second,four,eight))
-for path,digest in ((first/'program.elf','c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e'),
-                    (second/'program.elf','c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e'),
+worker_hash='14f5f416836f5dee5a07c400952cb0efe8d64ce70edf5d2112ef855632f4cc0d' if unroll else 'c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e'
+for path,digest in ((first/'program.elf',worker_hash),
+                    (second/'program.elf',worker_hash),
                     (four/'text.bin','2942f4c427b17592d3149f3fcaf5cc197f64570702033189390749a851da51c9'),
                     (eight/'text.bin','77d87adaf6ab3f9c34fc9f1c50c627d6174676b700f24bca34c8a28f0bcd1dd0')):
     assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path

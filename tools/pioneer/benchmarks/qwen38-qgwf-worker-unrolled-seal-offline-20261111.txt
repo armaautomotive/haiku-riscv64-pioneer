@@ -1,0 +1,28 @@
+QGWF unrolled worker seal, offline only
+
+The isolated variant unrolls the local boot/job comparison loop by four while
+preserving the same order and short-circuit failure checks. It does not remove
+CPU validation because this is on-card ownership/integrity checking, not a CPU
+reference. Its 13240-byte worker front remains within the existing 16 KiB
+synthetic/native snapshot range; the QGWF predecessor front is 13164 bytes.
+
+Three independently built candidate ELFs matched SHA-256
+14f5f416836f5dee5a07c400952cb0efe8d64ce70edf5d2112ef855632f4cc0d.
+The existing QGWF predecessor rebuilt byte-identically at
+c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e.
+
+An instruction interpreter running the actual linked RV32 code measured a
+clean seal at 972 baseline versus 829 candidate instructions; 768 individual
+boot/job mutations across both variants faulted before any transfer. Separate
+synthetic BFP4 and BFP8 worker/leaf suites passed on both candidate builds,
+including output, receipt, and malformed-job checks. For one synthetic two-band
+head job the interpreter counted 218875 baseline versus 216587 candidate RV32
+instructions, with the same 322 simulated reads. These counts are NOT card
+cycles, measured latency, model throughput, or a prediction of 20 tokens/s.
+
+The candidate is deliberately selected only by an offline build flag and is
+not a pinned native program bundle. It has not been integrated into a native
+driver, installed, tested on the P100A, quality-qualified, or enabled in Work.
+The live tag143 hardware test continues using the unmodified QGWF worker.
+An earlier XOR/OR pairing variant was rejected after disassembly showed more
+instructions in its clean comparison loop; see the separate rejection record.

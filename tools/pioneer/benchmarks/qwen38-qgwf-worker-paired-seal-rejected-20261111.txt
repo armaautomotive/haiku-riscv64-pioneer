@@ -1,0 +1,19 @@
+QGWF worker local seal pairing: rejected, offline inspection only
+
+The worker repeatedly checks local boot/job words in its per-band seal. An
+experiment replaced each pair of short-circuit comparisons with XOR/OR and
+one branch, without dropping either comparison. On a boot mismatch the
+experimental code also reads the paired local job word before parking, but
+does not add a NoC/MMIO access on that path.
+
+Two independently built candidate ELFs matched SHA-256
+70f9b6e2aaec0afb8d3ddd7f21a5183d14786718c4c755fa99494d24503f7413.
+The existing QGWF baseline ELF is
+c6f884e7a594d84832ce6691836ea10e5cffd10abf64ddab08f2b2023e462c0e.
+Actual RV32 disassembly shows the 64-iteration clean loop growing from nine
+to eleven instructions per iteration: one fewer branch, but two XORs and an
+OR. This adds 128 retired instructions per full clean seal. Branch and memory
+cycle costs are not measured, so this does not prove card-time regression, but
+there is no evidence of a speed improvement sufficient to justify advancing
+the candidate. The source change was removed; no native driver, model, device,
+quality or throughput test was performed. The candidate must not be installed.
