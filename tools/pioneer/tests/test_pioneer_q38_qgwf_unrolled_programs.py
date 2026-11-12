@@ -17,8 +17,14 @@ with tempfile.TemporaryDirectory(prefix='qgwf-unroll-bundle-',dir='/private/tmp'
         subprocess.run([sys.executable,str(generator),selector,str(root),str(worker),str(out)],check=True)
     assert outputs[0].read_bytes()==outputs[1].read_bytes()
     assert hashlib.sha256(outputs[0].read_bytes()).hexdigest()=='c7182ca788b792067bc55ad373108bd76eeba2b00146af526f9e883576a5ebe9'
+    inspection=[tmp/'inspect-a.h',tmp/'inspect-b.h'];inspect='--qgwf-unrolled-frontier-native-inspection'
+    for root,worker,out in ((root_a,worker_a,inspection[0]),(root_b,worker_b,inspection[1])):
+        subprocess.run([sys.executable,str(generator),inspect,str(root),str(worker),str(out)],check=True)
+    assert inspection[0].read_bytes()==inspection[1].read_bytes()
+    assert hashlib.sha256(inspection[0].read_bytes()).hexdigest()=='6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8'
     for i,(selectors,root,worker) in enumerate((([selector],root_a,old_worker),
                                                 (['--qgwf-frontier-native-candidate'],root_a,worker_a),
+                                                ([inspect],root_a,old_worker),([selector,inspect],root_a,worker_a),
                                                 ([selector,selector],root_a,worker_a),
                                                 ([selector,'--qgwf-frontier-native-candidate'],root_a,worker_a))):
         out=tmp/('bad'+str(i)+'.h')

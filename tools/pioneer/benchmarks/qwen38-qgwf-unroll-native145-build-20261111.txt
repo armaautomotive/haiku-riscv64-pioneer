@@ -23,8 +23,21 @@ An initial synthetic run failed before upload because the fake driver still
 advertised tag144; after fixing the fixture to advertise tag145, all four
 cases passed. This failure was synthetic and did not touch the Pioneer.
 
+The separately guarded fake-tag native inspection bundle reproduced SHA-256
+6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8 on
+two independent generations. Native startup simulation with the actual ROOT
+and unrolled worker code passed the real initializer and held/runtime setup,
+booted 119 simulated workers and reached the ROOT startup marker. This stops
+before model arithmetic, generated tokens, clean shutdown, or physical card
+behavior; the fake-tag image cannot be promoted to the real tag145 build.
+
 The worker's offline instruction results and mutation limitations are recorded
 in qwen38-qgwf-worker-unrolled-seal-offline-20261111.txt. The new candidate
 is not installed, staged, physically executed, quality-qualified, or tested
 in Assistant. There is no measured end-to-end speedup or 20 tokens/s result.
 The live tag143 trial remains independently owned and must complete safely.
+A separate tag145 one-shot harness has passed fake success/failure tests and
+requires stable generation32, expected only after the earlier tag143, tag144
+and pipeline trials have each finished and restored. It has not been staged
+or run; its existence is not a hardware qualification or permission to bypass
+any uncertain owner, failed trial, or generation mismatch.

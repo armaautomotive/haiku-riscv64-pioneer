@@ -27,7 +27,7 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
-#if defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145)
+#if defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) || defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x4b505451 && PioneerQ38TokenL1::Family==0x42505451,
  "Unrolled QGWF programs require their distinct QTPK identity and expanded dense-Q8 journal");
 #elif defined(PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION)
