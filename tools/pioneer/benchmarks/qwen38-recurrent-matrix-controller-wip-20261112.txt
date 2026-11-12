@@ -1,0 +1,27 @@
+Experimental recurrent matrix controller integration, 2026-11-12
+
+The inspection-only recurrent component now selects roles 5, 6 and 13,
+loads the proposed 128-byte per-projection record from workspace DRAM,
+checks padding, snapshots it into ROOT-local scratch and schedules BFP8
+matrix jobs. The BF16 producer path handles 5120 and 6144 input widths.
+The ROOT-side read does not involve the host CPU, but this is source-level
+experimental logic, not a linked or physical implementation.
+
+Cross-compilation of the actual recurrent component succeeded. The recurrent
+scheduler's stack frame was reduced from 2160 to 1200 bytes. The object had
+only the four expected external symbols and no div/rem/high-multiply
+instructions. The unmodified-mode recurrent component exactly matched the
+previous independently saved object SHA-256
+6ac38d3465d714dfa668fab15750f046b73fd500b4055ceddb1f279b1e8d77b5.
+ASan/UBSan host scheduling, emitted RV32 scheduler simulation and the
+existing all-119-worker synthetic producer/transport/matrix simulation pass.
+The latter runs the prior compiled worker, not this new ROOT component.
+
+NOT COMPLETE: the new component has not been linked into the persistent ROOT,
+run in the ROOT simulator, installed, or exercised on the P100A. The proposed
+DRAM records and cached BFP8 weights have no native initialization, source
+authentication, exclusivity or lifetime authority. Concurrent record changes
+after the read are not detected by a local shadow alone. Full stack depth,
+combined image limits, worker identity, source binding, real model quality,
+Work/Assistant integration, cleanup and performance remain unverified.
+The inspection role must not be used as a native or Work launch grant.

@@ -41,7 +41,9 @@ struct PioneerQ38RecurrentQ8MatrixRootJobs {
    if(best==7)return false;
    quota[best]++;
   }
-  uint32_t stage[119][4];unsigned count=0;
+  // Keep the whole candidate schedule private until validation finishes,
+  // but encode bank/band count compactly to fit the controller stack.
+  uint32_t stage[119][2];unsigned count=0;
   while(count<119){
    bool progress=false;
    for(unsigned b=0;b<7;b++){
@@ -51,8 +53,7 @@ struct PioneerQ38RecurrentQ8MatrixRootJobs {
     while(remainder>=quota[b]){remainder-=quota[b];base++;}
     const unsigned bands=base+unsigned(emitted[b]<remainder);
     if(!bands || bands>8 || done[b]>units[b] || bands>units[b]-done[b])return false;
-    stage[count][0]=address[b]+done[b]*bandBytes;stage[count][1]=b;
-    stage[count][2]=first[b]+done[b]*32;stage[count][3]=bands;count++;
+    stage[count][0]=first[b]+done[b]*32;stage[count][1]=b|(bands<<3);count++;
     done[b]+=bands;emitted[b]++;progress=true;
    }
    if(!progress)return false;
@@ -60,7 +61,11 @@ struct PioneerQ38RecurrentQ8MatrixRootJobs {
   for(unsigned b=0;b<7;b++)
    if(done[b]!=units[b] || emitted[b]!=quota[b] || io.Table(b,0)!=address[b]
     || io.Table(b,1)!=first[b] || io.Table(b,2)!=units[b]*32)return false;
-  for(unsigned w=0;w<119;w++)for(unsigned f=0;f<4;f++)io.Output(w,f,stage[w][f]);
+  for(unsigned w=0;w<119;w++){
+   const unsigned row=stage[w][0],bank=stage[w][1]&7,bands=stage[w][1]>>3;
+   io.Output(w,0,address[bank]+((row-first[bank])/32)*bandBytes);
+   io.Output(w,1,bank);io.Output(w,2,row);io.Output(w,3,bands);
+  }
   return true;
  }
 };

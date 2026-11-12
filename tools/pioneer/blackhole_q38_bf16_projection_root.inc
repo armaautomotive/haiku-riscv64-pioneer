@@ -8,13 +8,34 @@ using BFR=PioneerQ38Bf16RootPairs;
 #define BF_ROOT_FN __attribute__((noinline,section(".bf16.root")))
 static bool BfQ4(const uint32_t* d){return d[15]==12 && d[43]>=2 && d[43]<=4;}
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
-static bool BfDenseQ8(const uint32_t* d){return d[15]==8 && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7;}
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+static bool BfRecurrentQ8(const uint32_t* d){return d[15]==8 && d[42]<64 && (d[42]&3)!=3 && (d[43]==5 || d[43]==6 || d[43]==13);}
+static unsigned BfRecurrentRecord(const uint32_t* d){
+ const unsigned layer=d[42]-d[42]/4,role=d[43]==5?0:d[43]==6?1:2;
+ return 0x3000200U+(layer*3+role)*128;
+}
+static void BfBankRead(const uint32_t*,uint32_t*,unsigned,unsigned);
+#endif
+static bool BfDenseQ8(const uint32_t* d){return (d[15]==8 && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7)
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ || BfRecurrentQ8(d)
+#endif
+ ;}
 // Experimental ROOT-local metadata only. The native owner must still
 // authenticate, upload and preserve this table and its BFP8 weights.
 struct BfDenseScheduleIO {
  enum {Manifest=0x16dc00,ManifestWords=16*3*7*3,Parts=0x16ebc0,Shadow=0x16f330,TableShadow=0x16fac0,End=0x16fb20};
  unsigned index;
- unsigned Table(unsigned bank,unsigned field){return Words(Manifest)[index+bank*3+field];}
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ enum {RecurrentRecord=0x16fb40};
+ bool recurrent;
+#endif
+ unsigned Table(unsigned bank,unsigned field){
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  if(recurrent)return Words(RecurrentRecord)[bank*3+field];
+#endif
+  return Words(Manifest)[index+bank*3+field];
+ }
  void Output(unsigned worker,unsigned field,unsigned value){Words(Parts+worker*16)[field]=value;Words(Shadow+worker*16)[field]=value;}
 };
 static_assert(BfDenseScheduleIO::Manifest>=0x16da00+7*4
@@ -23,10 +44,22 @@ static_assert(BfDenseScheduleIO::Manifest>=0x16da00+7*4
  && BfDenseScheduleIO::Shadow+119*16<=BfDenseScheduleIO::TableShadow
  && BfDenseScheduleIO::TableShadow+21*4<=BfDenseScheduleIO::End && BfDenseScheduleIO::End<=unsigned(L::PeerBoots),
  "isolated dense BFP8 schedule metadata must not overlap the FFN table or peer boots");
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+static_assert(unsigned(BfDenseScheduleIO::RecurrentRecord)>=unsigned(BfDenseScheduleIO::End)
+ && BfDenseScheduleIO::RecurrentRecord+128<=unsigned(L::PeerBoots),"recurrent record must not overlap live ROOT data");
+#endif
 static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
  if(!BfDenseQ8(d))scalar_fault_park();
  const unsigned index=((d[42]/4)*3+d[43]-5)*21;
- for(unsigned i=0;i<21;i++)if(Words(BfDenseScheduleIO::Manifest)[index+i]!=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
+ for(unsigned i=0;i<21;i++)if(
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  (BfRecurrentQ8(d)?Words(BfDenseScheduleIO::RecurrentRecord)[i]:
+#endif
+  Words(BfDenseScheduleIO::Manifest)[index+i]
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  )
+#endif
+  !=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
  for(unsigned w=0;w<119;w++){
   const auto* actual=Words(BfDenseScheduleIO::Parts+w*16);
   const auto* shadow=Words(BfDenseScheduleIO::Shadow+w*16);
@@ -35,12 +68,32 @@ static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
   if(difference)scalar_fault_park();
  }
 }
-static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d){
+static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ ,uint32_t* tracked
+#endif
+ ){
  if(!BfDenseQ8(d))scalar_fault_park();
  BfDenseScheduleIO io;io.index=((d[42]/4)*3+d[43]-5)*21;
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ io.recurrent=BfRecurrentQ8(d);
+ if(io.recurrent){
+  BfBankRead(d,tracked,BfRecurrentRecord(d),128);
+  for(unsigned i=0;i<32;i++)Words(BfDenseScheduleIO::RecurrentRecord)[i]=Words(L::Scratch)[i];
+  for(unsigned i=21;i<32;i++)if(Words(BfDenseScheduleIO::RecurrentRecord)[i])scalar_fault_park();
+ }
+#endif
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)Words(BfDenseScheduleIO::TableShadow)[b*3+f]=io.Table(b,f);
+#else
  for(unsigned i=0;i<21;i++)Words(BfDenseScheduleIO::TableShadow)[i]=Words(BfDenseScheduleIO::Manifest)[io.index+i];
+#endif
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)io.Output(w,i,0);
- Fence();if(!PioneerQ38DenseQ8MatrixRootJobs::Build(io,d[42],d[43]))scalar_fault_park();
+ Fence();if(
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  io.recurrent?!PioneerQ38RecurrentQ8MatrixRootJobs::Build(io,d[42],d[43]):
+#endif
+  !PioneerQ38DenseQ8MatrixRootJobs::Build(io,d[42],d[43]))scalar_fault_park();
  Fence();BfDenseSeal(d);
 }
 #endif
@@ -91,9 +144,17 @@ static BF_ROOT_FN void BfPairSeal(unsigned w){
  for(unsigned i=0;i<7;i++)if(Words(BfPairIO::TableAddress)[index+i]!=Words(BfPairIO::TableShadow)[i])scalar_fault_park();
 #endif
 }
-static BF_ROOT_FN void BfBuildPairs(const uint32_t* d){
+static BF_ROOT_FN void BfBuildPairs(const uint32_t* d
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ ,uint32_t* tracked
+#endif
+ ){
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
- if(BfDenseQ8(d)){BfBuildDenseSchedule(d);return;}
+ if(BfDenseQ8(d)){BfBuildDenseSchedule(d
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  ,tracked
+#endif
+  );return;}
 #endif
  static_assert(BFR::Parts>=0x167000 && BFR::Rows>=BFR::Parts+119*32 && BFR::Shadow>=BFR::Rows+119*4
   && BFR::RowShadow>=BFR::Shadow+119*32 && BFR::End>=BFR::RowShadow+119*4 && BFR::End<=unsigned(L::PeerBoots),
@@ -112,13 +173,23 @@ static BF_ROOT_FN void BfBuildPairs(const uint32_t* d){
 #endif
 }
 static BF_ROOT_FN void BfDescriptor(const uint32_t* d,unsigned w,uint32_t* out){
- const bool gated=d[43]==4;const unsigned chunks=gated?68:20;
+ const bool gated=d[43]==4;const unsigned chunks=gated?68:
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  d[14]/256;
+#else
+  20;
+#endif
  if(!BfProducerRole(d) || w>=chunks)scalar_fault_park();
  for(unsigned i=0;i<64;i++)out[i]=0;
  out[0]=BFP::Magic;out[1]=1;out[2]=67108864;out[3]=d[3];out[4]=d[4];
  out[5]=w;out[6]=d[6];out[7]=w+1;out[8]=d[8];out[9]=M::Peer(w+1);
  out[10]=(gated?unsigned(BFP::GateOffset):unsigned(BFP::ProjectionInput))+w*1024;
- out[11]=gated?BFP::UpOffset+w*1024:5120;
+ out[11]=gated?BFP::UpOffset+w*1024:
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  d[14];
+#else
+  5120;
+#endif
  out[12]=BFP::NativeOffset+w*512;out[13]=BFP::LinesOffset+w*128;out[14]=BFP::Format;out[15]=chunks;
  for(unsigned i=0;i<16;i++)out[16+i]=Boot(w)[16+i];
  for(unsigned i=0;i<8;i++)out[32+i]=d[32+i];
@@ -156,7 +227,12 @@ static BF_ROOT_FN void BfBankRead(const uint32_t* d,uint32_t* tracked,unsigned o
  const unsigned wire=d[14]*2,lines=(d[14]/256)*128;
  const bool native=offset>=unsigned(BFP::NativeOffset) && offset<=BFP::NativeOffset+wire && bytes<=BFP::NativeOffset+wire-offset;
  const bool trailer=offset>=unsigned(BFP::LinesOffset) && offset<=BFP::LinesOffset+lines && bytes<=BFP::LinesOffset+lines-offset;
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ const bool record=BfRecurrentQ8(d) && bytes==128 && offset==BfRecurrentRecord(d);
+ if(!BfProducerRole(d) || (!native && !trailer && !record) || !bytes || bytes>16384 || ((offset|bytes)&63))scalar_fault_park();
+#else
  if(!BfProducerRole(d) || (!native && !trailer) || !bytes || bytes>16384 || ((offset|bytes)&63))scalar_fault_park();
+#endif
  q38_mixed_root_packet_seal(d);if(!Quiet())scalar_fault_park();uint32_t expected[8];
  for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
@@ -204,12 +280,27 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
  ,PioneerQ38Bf16DeferredAudit& audit
 #endif
  ){
- Seal(d);BfBuildPairs(d);uint32_t tracked[8],desc[64],job[64];
+ Seal(d);
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ uint32_t tracked[8],desc[64],job[64];
+ for(unsigned i=0;i<8;i++){tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
+ BfBuildPairs(d,tracked);
+#else
+ BfBuildPairs(d);uint32_t tracked[8],desc[64],job[64];
+#endif
  static_assert(unsigned(L::InputShadow)==unsigned(BFP::ProjectionInput) && unsigned(L::Native)==0xa0000,"actual QGW4 ROOT buffers");
- if(d[43]!=4)for(unsigned i=0;i<5120;i++){
+ if(d[43]!=4)for(unsigned i=0;i<
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  d[14]
+#else
+  5120
+#endif
+  ;i++){
   const unsigned bits=Words(d[53])[i];if((bits&0x7fffffff)>0x477fe000)scalar_fault_park();Words(L::InputShadow)[i]=bits;
  }
+#ifndef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
  for(unsigned i=0;i<8;i++){tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
+#endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  if(!audit.Begin(d[14],d[7]))scalar_fault_park();
@@ -241,13 +332,25 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
  Copy(L::NativeShadow,L::Native,d[14]/2);Seal(d);
 }
 static BF_ROOT_FN void BfInputsSeal(const uint32_t* d){
- if(d[43]!=4)for(unsigned i=0;i<5120;i++)if(Words(d[53])[i]!=Words(L::InputShadow)[i])scalar_fault_park();
+ if(d[43]!=4)for(unsigned i=0;i<
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  d[14]
+#else
+  5120
+#endif
+  ;i++)if(Words(d[53])[i]!=Words(L::InputShadow)[i])scalar_fault_park();
  for(unsigned i=0;i<d[14]/2;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
 }
 static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
  if(BfDenseQ8(d)){
-  if(w>=PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]) || !n)scalar_fault_park();
+  if(w>=
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+   (BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))
+#else
+   PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])
+#endif
+   || !n)scalar_fault_park();
   BfDenseSeal(d);uint32_t tuple[4],job[64];
   for(unsigned i=0;i<4;i++)tuple[i]=Words(BfDenseScheduleIO::Parts+w*16)[i];
   if(!PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,Boot(w),d[42],d[43],d[40],d[6],n-1,job))scalar_fault_park();
@@ -302,7 +405,13 @@ static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsig
 // publishing any of these values. This copies already-device-produced data;
 // it performs no CPU-reference validation and grants no ownership.
 static BF_ROOT_FN void BfStoreDenseMatrix(const uint32_t* d,unsigned w){
- if(!BfDenseQ8(d) || w>=PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))scalar_fault_park();
+ if(!BfDenseQ8(d) || w>=
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  (BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))
+#else
+  PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])
+#endif
+  )scalar_fault_park();
  BfDenseSeal(d);const unsigned first=Words(BfDenseScheduleIO::Parts+w*16)[2];
  const unsigned count=Words(BfDenseScheduleIO::Parts+w*16)[3]*32;
  if(!count || first>=d[11] || count>d[11]-first)scalar_fault_park();

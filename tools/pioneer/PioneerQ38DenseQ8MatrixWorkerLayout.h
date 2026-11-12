@@ -56,34 +56,41 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
 #endif
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  if(DenseProducerJob(j)){
-  unsigned width=5120;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  unsigned width=5120;
   const bool recurrent=j[5]<64 && (j[5]&3)!=3 && (j[28]==5 || j[28]==6 || j[28]==13);
   if(recurrent && j[28]==13)width=6144;
-#else
-  const bool recurrent=false;
-#endif
   if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
    || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || (!recurrent && ((j[5]&3)!=3 || j[28]>7)) || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff
    || b[3]>width/256 || j[16]!=Producer::Magic || j[17]!=256 || j[18]!=512 || j[19]!=j[7] || j[20]!=12
    || j[27]>=248320 || j[29]!=width || j[30]!=Producer::Format || j[31]!=Producer::Witness)return false;
+#else
+  if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
+   || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || (j[5]&3)!=3 || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff
+   || b[3]>20 || j[16]!=Producer::Magic || j[17]!=256 || j[18]!=512 || j[19]!=j[7] || j[20]!=12
+   || j[27]>=248320 || j[29]!=5120 || j[30]!=Producer::Format || j[31]!=Producer::Witness)return false;
+#endif
   for(unsigned i=8;i<16;i++)if(j[i]!=b[i])return false;
   for(unsigned i=21;i<27;i++)if(j[i])return false;
   for(unsigned i=32;i<64;i++)if(j[i])return false;
   return true;
  }
  if(DenseJob(j)){
-  unsigned rows=j[34]==5?12288:1024,width=5120;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  unsigned rows=j[34]==5?12288:1024,width=5120;
   const bool recurrent=j[5]<64 && (j[5]&3)!=3 && (j[34]==5 || j[34]==6 || j[34]==13);
   if(recurrent){rows=j[34]==5?6144:j[34]==6?10240:5120;width=j[34]==13?6144:5120;}
-#else
-  const bool recurrent=false;
-#endif
   if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
    || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || (!recurrent && (j[5]%4!=3 || j[34]>7)) || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff)return false;
+#else
+  if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
+   || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || j[5]%4!=3 || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff)return false;
+#endif
   for(unsigned i=8;i<16;i++)if(j[i]!=b[i])return false;
   PioneerQ38Bfp8WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
+#ifndef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  const unsigned rows=j[34]==5?12288:1024,width=5120;
+#endif
   if(!PioneerQ38Bfp8WorkerJob::Shape(leaf) || leaf.words[2]!=width || leaf.words[6]!=b[3] || leaf.words[7]!=b[4]
    || leaf.words[11]!=j[1] || (j[32]&31) || j[32]>=rows || leaf.words[4]*32>rows-j[32] || j[33]!=rows || j[35]!=8)return false;
   for(unsigned i=36;i<64;i++)if(j[i])return false;

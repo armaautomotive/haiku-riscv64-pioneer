@@ -35,18 +35,30 @@ struct PioneerQ38DenseQ8MatrixRootFrame {
    || (o<t+16 && t<o+256) || (o<b+256 && b<o+256))return false;
   if(tuple[1]>=7 || !W::BootShape(boot))return false;
   uint32_t next[64]={};const unsigned sequence=previous+1,worker=boot[3];
-  unsigned width=5120,rows=role==5?12288:1024;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  unsigned width=5120,rows=role==5?12288:1024;
   if(layer<64 && layer%4!=3 && (role==5 || role==6 || role==13)){
    width=role==13?6144:5120;rows=role==5?6144:role==6?10240:5120;
   }
 #endif
   const unsigned prefix[]={W::Magic,sequence,1,worker,boot[4],layer,position,invocation};
   for(unsigned i=0;i<8;i++){next[i]=prefix[i];next[8+i]=boot[8+i];}
-  const unsigned leaf[]={M::Magic,M::Version,width,tuple[0],tuple[3],PioneerQ38ProjectionRoute(tuple[1]),worker,boot[4],
+  const unsigned leaf[]={M::Magic,M::Version,
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+   width,
+#else
+   5120,
+#endif
+   tuple[0],tuple[3],PioneerQ38ProjectionRoute(tuple[1]),worker,boot[4],
    PioneerQ38Bf16Wire::Magic,M::RootInput,M::RootRoute,sequence,M::Output,0,0,0};
   for(unsigned i=0;i<16;i++)next[16+i]=leaf[i];
-  next[32]=tuple[2];next[33]=rows;next[34]=role;next[35]=8;
+  next[32]=tuple[2];next[33]=
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+   rows;
+#else
+   role==5?12288:1024;
+#endif
+  next[34]=role;next[35]=8;
   if(!W::JobShape(next,boot,previous,0))return false;
   for(unsigned i=0;i<64;i++)output[i]=next[i];
   return true;

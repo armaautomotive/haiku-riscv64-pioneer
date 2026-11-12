@@ -14,6 +14,10 @@
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
 #include "PioneerQ38DenseQ8MatrixRootJobs.h"
 #include "PioneerQ38DenseQ8MatrixRootFrame.h"
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+#define PIONEER_Q38_RECURRENT_Q8_MATRIX_ROOT_INSPECTION 1
+#include "PioneerQ38RecurrentQ8MatrixRootJobs.h"
+#endif
 #endif
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
 #include "PioneerQ38EarlyJobSnapshotBuildRole.h"
@@ -291,7 +295,13 @@ static unsigned Run(const uint32_t* d){
 #endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
- const unsigned active=BfDenseQ8(d)?PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]):d[7];
+ const unsigned active=BfDenseQ8(d)?
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+  (BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])):
+#else
+  PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]):
+#endif
+  d[7];
 #define Q38_ACTIVE active
 #else
 #define Q38_ACTIVE d[7]
