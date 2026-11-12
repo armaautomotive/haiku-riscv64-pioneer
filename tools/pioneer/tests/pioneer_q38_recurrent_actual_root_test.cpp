@@ -36,13 +36,13 @@ int main(int argc,char** argv){
  m->memory[d+4*4]=0x04000000;m->memory[d+4*6]=2025;m->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  m->memory[d+4*15]=8;m->memory[d+4*41]=248319;
  for(unsigned i=0;i<4;i++)m->memory[d+4*(32+i*2)]=i+1;
- for(unsigned role:{5U,6U,13U}){
+ for(unsigned layer:{0U,1U,2U,4U,62U})for(unsigned role:{5U,6U,13U}){
   const unsigned width=role==13?6144:5120,units=role==5?192:role==6?320:160;
-  m->memory[d+4*14]=width;m->memory[d+4*42]=0;m->memory[d+4*43]=role;
+  m->memory[d+4*14]=width;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;
   Schedule schedule;unsigned first=0;
   for(unsigned b=0;b<7;b++){unsigned n=units/7+unsigned(b<units%7);schedule.table[b][0]=0x04000000+b*0x100000;
    schedule.table[b][1]=first;schedule.table[b][2]=n*32;first+=n*32;}
-  assert(PioneerQ38RecurrentQ8MatrixRootJobs::Build(schedule,0,role));
+  assert(PioneerQ38RecurrentQ8MatrixRootJobs::Build(schedule,layer,role));
   for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++){
    m->memory[0x16fb40+(b*3+f)*4]=schedule.table[b][f];
    m->memory[0x16fac0+(b*3+f)*4]=schedule.table[b][f];
@@ -71,7 +71,7 @@ int main(int argc,char** argv){
     assert(false);
    }
    uint32_t frame[64],expected[64];for(unsigned i=0;i<64;i++)frame[i]=m->memory.at(out+i*4);
-   assert(PioneerQ38DenseQ8MatrixRootFrame::Build(schedule.parts[w],boot,0,role,0,2025,6,expected));
+   assert(PioneerQ38DenseQ8MatrixRootFrame::Build(schedule.parts[w],boot,layer,role,0,2025,6,expected));
    for(unsigned i=0;i<64;i++)assert(frame[i]==expected[i]);
   }
   m->memory[0x16fb40]^=1;assert(!m->Run(seals[0],d));m->memory[0x16fb40]^=1;
