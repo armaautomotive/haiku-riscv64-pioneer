@@ -29,6 +29,16 @@ int main(){
   S over(1,17);assert(!over.ObserveCount(18,10,20));
  }
  {
+  // Illustrative fast decode: coarse polling observes only the terminal
+  // count; shorter polls can retain a count window. This is fabricated data,
+  // not a prediction that any hardware will attain this sampling frequency.
+  S coarse(1,17),finer(1,17);S::Bounds b;
+  assert(coarse.ObserveCount(17,100000,100010) && !coarse.ObservedBounds(b));
+  assert(finer.ObserveCount(1,0,10) && finer.ObserveCount(8,10000,10010)
+   && finer.ObserveCount(16,20000,20010) && finer.ObserveCount(17,30000,30010)
+   && finer.ObservedBounds(b) && b.sampledTokens==16 && b.minElapsedUs==29990 && b.maxElapsedUs==30010);
+ }
+ {
   S s(2,34);S::Bounds b;const auto original=b;
   S::Window window;
   assert(!s.ObservedBounds(b) && Same(b,original) && !s.ObservedWindow(window));

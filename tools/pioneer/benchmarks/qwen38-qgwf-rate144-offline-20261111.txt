@@ -10,10 +10,20 @@ insufficient or invalid timing reports no rate. No CPU reference is performed.
 Independent driver builds SHA-256:
 f28498f1e6d53ed205737ac99b398dd6fda3e5873717046a6760b3df0cf36b88
 Independent client builds SHA-256:
-100922b85d93de393d46e03c13269257ece68648fbd467960582d6197de6ef64
+b0a4efe4183ab9782746f5f6983e919b5dc0c836cc46162bd3d45840e04970c6
+This supersedes the earlier 100922b8... client: the rate candidate polls at
+10 ms rather than 100 ms, so short fast decodes are less likely to complete
+between samples. The extra polling can affect the workload; its result is not
+an uninstrumented production throughput measurement.
 Independently generated pinned program bundle SHA-256:
 630c60ee3b1291f2a68ee2241203713f8d69d662f04a270ad1bc2fe8b79ca551
 The existing tag143 driver rebuilt exactly to its prior b263b7d3... binary.
+The current-source tag143 client rebuilt as 029e188e... rather than the
+previous pinned bb9b4529... binary. Inspection found only two differing bytes:
+the order of two independent reserved-word zero checks in Poll was exchanged.
+This is not a byte-identical regression; the planned tag143 physical parent
+still pins and requires the separately saved bb9b4529... client, not the
+current-source rebuild.
 
 Address/undefined-behavior-sanitized synthetic full-session tests passed for
 17-token success, failed START, feedback corruption, and frontier/terminal

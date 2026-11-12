@@ -197,7 +197,14 @@ int main(int argc,char** argv){
    const uint64_t now=Now();if(!now || now<started || now-started>UINT64_C(7200)*1000000000){
     session->Abort();fputs("HYBRID_TIMEOUT close only; recovery may be required\n",stderr);return 1;
    }
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+   // A 100 ms polling interval can miss the entire short decode on a fast
+   // card. This deliberately measures a 10 ms-polling diagnostic workload;
+   // it is not a claim about an uninstrumented production workload.
+   usleep(10000);
+#else
    usleep(100000);
+#endif
   }
  }
  const uint64_t terminal=Now();

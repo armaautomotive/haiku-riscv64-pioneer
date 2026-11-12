@@ -11,6 +11,7 @@ source=(here.parent/'pioneer_q38_qgwf_rate_144_physical_once.sh').read_text()
 flow=source[source.index('mkdir "$stage/.trial-once"'):]
 gate=here.parent/'pioneer_q38_qgwf_rate_candidate_output.awk'
 assert hashlib.sha256(gate.read_bytes()).hexdigest() in source
+assert 'client_hash=b0a4efe4183ab9782746f5f6983e919b5dc0c836cc46162bd3d45840e04970c6' in source
 assert 'metadata 2026102100010012 28 && health' in source
 assert '2026102100010012 28 2026111100010144 29' in source
 assert '2026111100010144 29 2026102100010012 30' in source
