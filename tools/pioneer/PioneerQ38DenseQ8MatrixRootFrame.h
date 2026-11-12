@@ -16,7 +16,11 @@ typedef __UINT32_TYPE__ uint32_t;
 #include <stdint.h>
 #endif
 #include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+struct PioneerQ38RecurrentAwareQ8MatrixRootFrame {
+#else
 struct PioneerQ38DenseQ8MatrixRootFrame {
+#endif
  using M=PioneerQ38Bfp8WorkerJob;
  // tuple is the scheduler's address, bank, first row and band count.
  // Geometry validation does not authenticate the tuple or boot record.
@@ -64,4 +68,9 @@ struct PioneerQ38DenseQ8MatrixRootFrame {
   return true;
  }
 };
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+// Distinct linkage prevents the baseline dense TU from substituting its
+// incompatible COMDAT frame builder into the experimental recurrent TU.
+using PioneerQ38DenseQ8MatrixRootFrame=PioneerQ38RecurrentAwareQ8MatrixRootFrame;
+#endif
 #endif

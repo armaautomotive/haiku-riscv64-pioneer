@@ -15,7 +15,11 @@ typedef __UINT32_TYPE__ uint32_t;
 #endif
 // Distinct C64 layout follows prior real BFP8 GDDR tests. This is geometry,
 // not proof of physical ownership, uploaded weights or producer lifetime.
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+struct PioneerQ38RecurrentBfp8WorkerLayout {
+#else
 struct PioneerQ38Bfp8WorkerLayout {
+#endif
  enum : unsigned {Weight=0x90000,Input=0x12c000,Output=0x140000,Header=64,
   WeightPayload=1088,WeightStride=1152,InputPayload=64,InputStride=128};
  static bool Width(unsigned k){return k==5120 || k==17408
@@ -37,8 +41,15 @@ struct PioneerQ38Bfp8WorkerLayout {
   output=next;return true;
  }
 };
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+using PioneerQ38Bfp8WorkerLayout=PioneerQ38RecurrentBfp8WorkerLayout;
+#endif
 class PioneerQ38Bfp8WorkerLoader;
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+struct PioneerQ38RecurrentBfp8WorkerJob {
+#else
 struct PioneerQ38Bfp8WorkerJob {
+#endif
  using L=PioneerQ38Bfp8WorkerLayout;using Existing=PioneerQ38Q4FpuCachedLayout;
  enum : unsigned {Magic=0x314a3842,Version=1,Words=16,Output=0x84000,RootInput=Existing::InputBase,RootRoute=Existing::InputRoot};
  struct Job {uint32_t words[Words];};struct Read {uint32_t source,destination,bytes,route;};
@@ -67,6 +78,9 @@ public:
   return Shape(job) && SelectedPacket(job,band,operand,tile,output);
  }
 };
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+using PioneerQ38Bfp8WorkerJob=PioneerQ38RecurrentBfp8WorkerJob;
+#endif
 static_assert(PioneerQ38Bfp8WorkerLayout::Weight-PioneerQ38Bfp8WorkerLayout::Header+544*PioneerQ38Bfp8WorkerLayout::WeightStride
  <=PioneerQ38Bfp8WorkerLayout::Input-PioneerQ38Bfp8WorkerLayout::Header,"BFP8 weight/input extent");
 static_assert(PioneerQ38Bfp8WorkerLayout::Input-PioneerQ38Bfp8WorkerLayout::Header+544*PioneerQ38Bfp8WorkerLayout::InputStride

@@ -17,8 +17,19 @@ ASan/UBSan host scheduling, emitted RV32 scheduler simulation and the
 existing all-119-worker synthetic producer/transport/matrix simulation pass.
 The latter runs the prior compiled worker, not this new ROOT component.
 
-NOT COMPLETE: the new component has not been linked into the persistent ROOT,
-run in the ROOT simulator, installed, or exercised on the P100A. The proposed
+The recurrent component subsequently linked into an inspection ROOT using the
+existing parent and dense component. Actual linked RV32 descriptor, producer
+job, matrix job and local mutation-seal helpers passed synthetic ROOT-memory
+simulation for all three recurrent roles and selected workers. This revealed
+an ABI/COMDAT collision: the linker originally selected baseline frame and
+BFP8 job-shape implementations, rejecting the 6144-wide recurrent role.
+Experimental builder/job types now have distinct linkage; the same linked
+test passes. Freshly rebuilt experimental worker images passed the synthetic
+full-input/all-119-worker test. Baseline recurrent component remains byte
+identical to SHA-256 6ac38d3465d714dfa668fab15750f046b73fd500b4055ceddb1f279b1e8d77b5.
+
+NOT COMPLETE: this inspection ROOT has not executed a full ROOT lifecycle or
+the new record read in simulation, been installed, or run on the P100A. The proposed
 DRAM records and cached BFP8 weights have no native initialization, source
 authentication, exclusivity or lifetime authority. Concurrent record changes
 after the read are not detected by a local shadow alone. Full stack depth,
