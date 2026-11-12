@@ -5,6 +5,7 @@
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "../PioneerQ38HybridRecurrentQ8MatrixPlan.h"
 #include "../PioneerQ38RecurrentQ8KernelLayoutInspection.h"
+#include "../PioneerQ38RecurrentQ8LedgerInspection.h"
 #include "../PioneerQ38NativeBfp8WeightTiles.h"
 
 struct AlteredSource {
@@ -37,6 +38,23 @@ int main(){
  corrupt->offset+=4096;auto rejected=std::make_unique<Fixed>();
  assert(!rejected->Build(*source,*parent,*ancestor) && !rejected->Ready() && !rejected->At(0));*corrupt=saved;
  assert(!fixed->Build(*source,*parent,*ancestor)); // one-shot, including after success
+ const unsigned perBank=PioneerResidentBanks::Capacity/4096;
+ std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0);
+ std::vector<uint32_t> hashes(PioneerResidentBanks::Pages,0);
+ uint64_t digest=UINT64_C(14695981039346656037);unsigned firstUsed=UINT32_MAX;
+ for(unsigned i=0;i<source->Count();i++)if(source->Part(i)->kind==C::WeightKind){
+  const auto* part=fixed->At(i);const unsigned base=part->bank*perBank+part->offset/4096;
+  for(unsigned n=0;n<part->allocated/4096;n++){
+   const unsigned at=base+n;assert(!ledger[at]);ledger[at]=1;hashes[at]=at*2654435761U;
+   digest=(digest^at)*UINT64_C(1099511628211);digest=(digest^hashes[at])*UINT64_C(1099511628211);
+   if(firstUsed==UINT32_MAX)firstUsed=at;
+  }
+ }
+ assert(PioneerQ38RecurrentQ8LedgerInspection::Verify(*source,*fixed,ledger.data(),hashes.data(),ledger.size(),digest));
+ ledger[firstUsed]=0;assert(!PioneerQ38RecurrentQ8LedgerInspection::Verify(*source,*fixed,ledger.data(),hashes.data(),ledger.size(),digest));ledger[firstUsed]=1;
+ unsigned hole=0;while(hole<ledger.size() && ledger[hole])hole++;assert(hole<ledger.size());
+ ledger[hole]=1;assert(!PioneerQ38RecurrentQ8LedgerInspection::Verify(*source,*fixed,ledger.data(),hashes.data(),ledger.size(),digest));ledger[hole]=0;
+ hashes[firstUsed]^=1;assert(!PioneerQ38RecurrentQ8LedgerInspection::Verify(*source,*fixed,ledger.data(),hashes.data(),ledger.size(),digest));
  assert(old.parts.size()==4678 && next.parts.size()==old.parts.size() && next.used==old.used);
  unsigned converted=0,small=0;uint64_t holes=0,rows=0;
  for(unsigned i=0;i<source->Count();i++){
