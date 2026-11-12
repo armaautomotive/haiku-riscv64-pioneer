@@ -93,6 +93,14 @@ public:
   if(!verified || !Current())return false;const auto& current=packed->Parts();if(current.size()!=parts.size())return false;
   for(unsigned i=0;i<parts.size();i++)if(!Same(current[i],parts[i]))return false;return Current();
  }
+ // A derived page source may avoid a second full scan on every checkpoint
+ // only after proving its private snapshot equals this verified parent's
+ // private snapshot. Neither snapshot is exposed or made mutable here.
+ bool MatchesVerifiedSnapshot(const std::vector<PioneerQ38PackedPart>& snapshot)const{
+  if(!AllVerified() || snapshot.size()!=parts.size())return false;
+  for(unsigned i=0;i<parts.size();i++)if(!Same(snapshot[i],parts[i]))return false;
+  return AllVerified();
+ }
  // Out-of-band metadata must never overwrite either the bound page source
  // or the original plan/tensor descriptors. This is deliberately not on
  // the hot per-page path; metadata publication calls it before copying.

@@ -10,8 +10,12 @@ insufficient or invalid timing reports no rate. No CPU reference is performed.
 Independent driver builds SHA-256:
 f28498f1e6d53ed205737ac99b398dd6fda3e5873717046a6760b3df0cf36b88
 Independent client builds SHA-256:
-b0a4efe4183ab9782746f5f6983e919b5dc0c836cc46162bd3d45840e04970c6
-This supersedes the earlier 100922b8... client: the rate candidate polls at
+b55259b01e4a7cd786301d39df9cead9e35c30c60a68a7754870f05ea897ae2e
+This supersedes the earlier b0a4efe4... client: it removes a redundant
+derived-page full-plan scan while retaining the parent full-plan check; the
+two private snapshots are explicitly matched at bind. This change has not
+been physically measured. The earlier 100922b8... client was superseded when
+the rate candidate switched to polling at
 10 ms rather than 100 ms, so short fast decodes are less likely to complete
 between samples. The extra polling can affect the workload; its result is not
 an uninstrumented production throughput measurement.

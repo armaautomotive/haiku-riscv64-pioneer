@@ -1,0 +1,24 @@
+Dense Q8 prepared-page upload plan scan reuse, offline qualification
+
+Before this change each DensePages::AllVerified() scanned all packed-plan
+entries and also called its parent, which independently scanned all entries
+against another private snapshot. At binding, the derived object now proves
+its immutable snapshot equals the verified parent's snapshot; subsequent
+checks still require the parent's complete live-plan scan and source/binding
+checks, plus the derived object's own source and binding checks. Per-fragment
+checks in ReadPages are unchanged. Snapshot mismatch fails binding.
+
+The QGWD upload loop invokes AllVerified before and after each of 21907 spans;
+for the 4678-entry plan this removes at least 204,961,892 duplicate field-group
+comparisons per full upload. This is an operation count, not a measured time
+or inference-speed gain. The just-completed tag142 physical timing used the old
+code; the tag143 run currently underway also uses its original pinned client.
+
+ASan/UBSan synthetic page tests passed, including altered snapshot rejection,
+changes to each of the 11 packed fields on a separate live fragment, existing
+cache/source failure atomicity and one-shot binding. Parent-page tests passed.
+The complete synthetic upload/session regression is still running. Two
+independent Haiku tag144 client builds matched SHA-256
+b55259b01e4a7cd786301d39df9cead9e35c30c60a68a7754870f05ea897ae2e;
+they are not installed or physically tested. No Work or Assistant feature
+is qualified by these tests. Compare actual timings after a later safe run.

@@ -60,13 +60,15 @@ public:
     || part.proposedAddress!=Canonical::Base+logical->offset || staged.parts[i].original!=i)
     return Fail(error,"Dense Q8 page binding identity differs.");
   }
+  // Prove the two immutable snapshots are identical once. Thereafter the
+  // parent's full live-plan comparison also proves our snapshot unchanged.
+  if(!base.MatchesVerifiedSnapshot(original))return Fail(error,"Dense Q8 and parent plan snapshots differ.");
   source=&s;packed=&p;canonical=&c;eight=&b;parentEight=&parentBfp8;parent=&base;digest=sha;proposal=std::move(staged);parts=std::move(original);ready=true;
   if(!Current())return Lose(error,"Dense Q8 source changed during binding.");error.clear();return true;
  }
  bool Ready()const{return Current();}
  bool AllVerified()const{
   if(!verified || !Current() || !parent->AllVerified())return false;
-  const auto& live=packed->Parts();for(unsigned i=0;i<parts.size();i++)if(!Same(live[i],parts[i]))return false;
   return Current();
  }
  const Base::Part* Part(unsigned i)const{return Current() && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}

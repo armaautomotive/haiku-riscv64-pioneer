@@ -36,6 +36,9 @@ int main(){
  assert(parent.Bind(source,packed,*canonical,eight,sha,four,headHash,"/private/tmp/four","/private/tmp/head",[&]{return permit;},error));
  DensePages early;assert(!early.Bind(source,packed,*canonical,eight,parent,sha,error));
  assert(parent.VerifyAll(error) && parent.AllVerified());DensePages pages;
+ assert(parent.MatchesVerifiedSnapshot(packed.parts));
+ auto otherSnapshot=packed.parts;otherSnapshot[dense].tensor++;
+ assert(!parent.MatchesVerifiedSnapshot(otherSnapshot) && parent.AllVerified());
  FakeBfp8 wrongEight{&source};wrongEight.digest=sha;DensePages wrong;
  assert(!wrong.Bind(source,packed,*canonical,wrongEight,parent,sha,error));
  auto wrongSha=sha;wrongSha[0]^=1;DensePages wrongIdentity;
@@ -63,6 +66,17 @@ int main(){
  denseEight.live=false;assert(!separate.ReadPage(dense,0,out.data(),out.size(),error) && !separate.Ready());
  denseEight.live=true;assert(!separate.Ready());
  const unsigned previous=eight.reads;assert(pages.VerifyAll(error) && pages.AllVerified() && eight.reads==previous+336);
+ // The parent remains responsible for the complete live-plan check even
+ // when a changed field belongs to a different fragment than the next read.
+ for(unsigned field=0;field<11;field++){
+  auto& p=packed.parts[raw];const auto savedPart=p;
+  switch(field){
+   case 0:p.kind++;break;case 1:p.layer++;break;case 2:p.role++;break;case 3:p.tensor++;break;
+   case 4:p.bank++;break;case 5:p.firstRow++;break;case 6:p.rows++;break;case 7:p.rowBytes++;break;
+   case 8:p.proposedAddress++;break;case 9:p.bytes++;break;case 10:p.allocated++;break;
+  }
+  assert(!pages.AllVerified());p=savedPart;assert(pages.AllVerified());
+ }
  assert(!pages.VerifyAll(error));
  DensePages fail;assert(fail.Bind(source,packed,*canonical,eight,parent,sha,error));
  eight.failAt=eight.reads+2;out.fill(0x71);const auto before=out;
