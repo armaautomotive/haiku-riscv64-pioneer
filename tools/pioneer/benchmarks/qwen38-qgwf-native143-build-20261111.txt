@@ -21,8 +21,11 @@ and 30db23af60cbe1f21981223eb7295c41b7aa2861bdd0fdad94a58821ce29ed41.
 
 Image-pair authentication, ambiguous selector refusals and tag/role
 isolation passed. The builds inspected 15 embedded arrays and rejected
-CPU-reference/Work imports; individual selected frames were bounded. A
-full native combined-stack proof, client/session fault qualification,
+CPU-reference/Work imports; individual selected frames were bounded. The
+tag143 client passed synthetic full-upload/two-token session, failed START
+and bad-feedback quarantine tests. These mock the transport and results;
+they are not a test of the driver or model executing on a card. A
+full native combined-stack proof, complete client/session fault qualification,
 physical NoC and silicon correctness, clean recovery, output quality,
 general prompting and throughput have NOT been established. Do not install
 or run this candidate on the device based on this build report.
