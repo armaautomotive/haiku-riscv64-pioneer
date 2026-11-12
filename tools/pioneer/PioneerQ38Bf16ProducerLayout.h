@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdKernelCompileRole.h"
 #include "PioneerQ38QgwdNativeInspectionRole.h"
+#if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && (PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Recurrent BF16 producer is offline inspection only
+#endif
 #if defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION != 1 \
  || (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) \
   && !(defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) && defined(PIONEER_Q38_QGWD_ROOT_IMAGE))) \
@@ -31,11 +37,18 @@ static inline bool DenseQ8Role(const uint32_t* d){
  (void)d;return false;
 #endif
 }
-static inline unsigned Width(const uint32_t* d){return d[43]==4?17408U:5120U;}
+static inline bool RecurrentQ8Role(const uint32_t* d){
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ return d && d[42]<64 && (d[42]&3)!=3 && (d[43]==5 || d[43]==6 || d[43]==13);
+#else
+ (void)d;return false;
+#endif
+}
+static inline unsigned Width(const uint32_t* d){return d[43]==4?17408U:RecurrentQ8Role(d) && d[43]==13?6144U:5120U;}
 static inline unsigned Reads(const uint32_t* d){return d[43]==4?2U:1U;}
 static inline bool DescriptorShape(const uint32_t* d){
  if(!d || d[0]!=Magic || d[1]!=1 || d[2]!=67108864 || d[3]>=7 || (d[4]&4095)
-  || d[4]<0x04000000 || d[4]>0xc0000000 || (d[43]!=2 && d[43]!=3 && d[43]!=4 && !DenseQ8Role(d))
+  || d[4]<0x04000000 || d[4]>0xc0000000 || (d[43]!=2 && d[43]!=3 && d[43]!=4 && !DenseQ8Role(d) && !RecurrentQ8Role(d))
   || d[42]>=64 || d[40]>=8192 || d[41]>=248320)return false;
  const unsigned width=Width(d),chunks=width/256;
  if(d[5]>=chunks || !d[6] || d[6]>=0x7fffffff || d[7]!=d[5]+1
