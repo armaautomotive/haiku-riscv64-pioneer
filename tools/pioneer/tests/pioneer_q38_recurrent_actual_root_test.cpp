@@ -16,7 +16,7 @@ struct Schedule {
  void Output(unsigned w,unsigned f,unsigned v){parts[w][f]=v;}
 };
 struct TransferRoot:ActualRoot {
- uint32_t record[32]={};unsigned expectedOffset=0,packets=0;
+ uint32_t record[32]={};unsigned expectedOffset=0,packets=0;bool mutateCommand=false;
  explicit TransferRoot(const char* path):ActualRoot(path){
   for(unsigned i=0;i<4;i++)memory[0xffb20040+i*0x800]=0;
   for(unsigned i=0;i<32;i++)memory[0xffb20240+i*4]=0;
@@ -28,6 +28,7 @@ struct TransferRoot:ActualRoot {
     && memory.at(0xffb2000c)==0x78000 && memory.at(0xffb20020)==128);
    for(unsigned i=0;i<32;i++)memory[0x78000+i*4]=record[i];
    memory[0xffb20208]++;memory[0xffb2020c]+=2;memory[0xffb20210]++;memory[0xffb20214]++;
+   if(mutateCommand)memory[0xffb20000]^=64;
    memory[a]=0;return;
   }
   ActualRoot::Store(a,value);
@@ -112,6 +113,11 @@ int main(int argc,char** argv){
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
    assert(transfer->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
   if(layer==0){
+   auto altered=std::make_unique<TransferRoot>(argv[1]);altered->memory=m->memory;
+   for(unsigned i=0;i<4;i++)altered->memory[0xffb20040+i*0x800]=0;
+   for(unsigned i=0;i<32;i++)altered->memory[0xffb20240+i*4]=0;
+   for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})altered->memory[0xffb20000+a]=0;
+   altered->mutateCommand=true;assert(!RunBuildWithTransfer(*altered,builds[0],packetSeal,d,offset,recordData));
    for(unsigned fault=0;fault<3;fault++){
     auto bad=std::make_unique<TransferRoot>(argv[1]);bad->memory=m->memory;
     for(unsigned i=0;i<4;i++)bad->memory[0xffb20040+i*0x800]=0;
