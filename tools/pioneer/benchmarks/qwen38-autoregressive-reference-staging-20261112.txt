@@ -1,0 +1,23 @@
+CPU-only autoregressive reference staging, 2026-11-12
+
+The new autoregressive option starts with token 248319 and feeds back each
+CPU-selected token, matching the input policy of the fixed tag144 diagnostic.
+The previous saved CPU trace instead forced input token 17 at position 1;
+its later results are not a reference for this autoregressive sequence.
+
+The Haiku RISC-V reference was cross-built with the repository build script
+and copied, without execution, to:
+ /boot/home/pioneer-cpu-autoregressive-reference-20261112-a/reference
+Its independently verified SHA-256 is
+ bf7d18f9ca48dbc1e9a29cc65a67425edf9da1f003a1cfc77073db2e86d763c3
+The private stage directory has owner 0/mode 700; the executable is 0:1:755.
+
+No reference model was read and no new CPU or card result was produced by
+this staging. The cross-compiled reference has not run or been checked
+against the existing pinned first-position CPU trace on Haiku. Do not execute
+it concurrently with the running pipelined loader comparison: its original
+model authentication and model reads would contaminate physical timings.
+After that one-shot fully closes and restores the driver, independently
+verify model identity, first-position reference, output directory, process
+completion and results before drawing any quality conclusion. Never feed
+CPU results into Work inference.
