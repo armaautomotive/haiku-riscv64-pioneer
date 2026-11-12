@@ -36,6 +36,8 @@ assert {line.split()[-1] for line in undefined.splitlines()}=={
  'mixed_recurrent_block_stopped','mixed_recurrent_block_wait','q38_mixed_recurrent_root_conv','scalar_fault_park'}
 disassembly=subprocess.check_output([str(tool)+'objdump','-d',str(out)],text=True)
 assert not re.search(r'\b(?:divu?|remu?|mulh[su]*)\b',disassembly),'unsupported controller arithmetic'
+root_code=subprocess.check_output([str(tool)+'objdump','-d','-j','.bf16.root',str(out)],text=True)
+assert not re.search(r'\bsb\b',root_code),'controller BF16 path must not use byte stores'
 frames=out.with_suffix('.su').read_text().splitlines()
 schedule=[row.split('\t') for row in frames if 'PioneerQ38RecurrentQ8MatrixRootJobs::Build' in row]
 assert not baseline or not schedule

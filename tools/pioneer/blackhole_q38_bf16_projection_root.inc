@@ -28,7 +28,7 @@ struct BfDenseScheduleIO {
  unsigned index;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
  enum {RecurrentRecord=0x16fb40};
- bool recurrent;
+ unsigned recurrent;
 #endif
  unsigned Table(unsigned bank,unsigned field){
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION

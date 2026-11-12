@@ -27,11 +27,25 @@ static bool Call(ActualRoot& m,unsigned pc,unsigned d,unsigned worker,unsigned s
  m.pc=pc;m.steps=0;while(m.pc!=0x60004 && m.pc!=0x60000){m.Step();assert(m.regs[2]>=0x6e000 && m.regs[2]<=0x70000);}
  return m.pc==0x60004;
 }
+static bool RunBuildWithStub(ActualRoot& m,unsigned pc,unsigned read,unsigned d,unsigned offset,const uint32_t* record){
+ std::fill(std::begin(m.regs),std::end(m.regs),0);m.regs[1]=0x60004;m.regs[2]=0x70000;
+ m.regs[10]=d;m.regs[11]=0x6f000;m.pc=pc;m.steps=0;unsigned reads=0;
+ while(m.pc!=0x60004 && m.pc!=0x60000){
+  if(m.pc==read){
+   assert(++reads==1 && m.regs[10]==d && m.regs[11]==0x6f000 && m.regs[12]==offset && m.regs[13]==128);
+   for(unsigned i=0;i<32;i++)m.memory[0x78000+i*4]=record[i];m.pc=m.regs[1];
+  }else m.Step();
+  assert(m.regs[2]>=0x6e000 && m.regs[2]<=0x70000);
+ }
+ assert(reads==1);return m.pc==0x60004;
+}
 int main(int argc,char** argv){
  assert(argc==2);auto m=std::make_unique<ActualRoot>(argv[1]);
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
  auto producer=Symbols(argv[1],"Projection::BfProducerJob(");
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
+ auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule(");
+ auto reads=Symbols(argv[1],"Projection::BfBankRead(");
  std::ifstream symbols(std::string(argv[1])+"/program.demangled");std::string line;unsigned record=0;
  while(std::getline(symbols,line))if(line.find("Projection::BfRecurrentRecord(")!=std::string::npos){
   assert(!record);record=unsigned(std::stoul(line.substr(0,8),nullptr,16));
@@ -52,6 +66,15 @@ int main(int argc,char** argv){
   for(unsigned b=0;b<7;b++){unsigned n=units/7+unsigned(b<units%7);schedule.table[b][0]=0x04000000+b*0x100000;
    schedule.table[b][1]=first;schedule.table[b][2]=n*32;first+=n*32;}
   assert(PioneerQ38RecurrentQ8MatrixRootJobs::Build(schedule,layer,role));
+  uint32_t recordData[32]={};
+  for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)recordData[b*3+f]=schedule.table[b][f];
+  const unsigned offset=0x3000200U+((layer-layer/4)*3+(role==5?0:role==6?1:2))*128;
+  assert(RunBuildWithStub(*m,builds[0],reads[0],d,offset,recordData));
+  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++){
+   assert(m->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
+   assert(m->memory.at(0x16f330+w*16+i*4)==schedule.parts[w][i]);
+  }
+  recordData[31]=1;assert(!RunBuildWithStub(*m,builds[0],reads[0],d,offset,recordData));recordData[31]=0;
   for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++){
    m->memory[0x16fb40+(b*3+f)*4]=schedule.table[b][f];
    m->memory[0x16fac0+(b*3+f)*4]=schedule.table[b][f];
