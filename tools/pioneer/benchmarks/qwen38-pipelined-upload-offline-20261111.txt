@@ -26,7 +26,10 @@ These tests do not prove hardware safety or performance.
 Two separate Haiku cross-builds matched the isolated pipeline client SHA-256:
 b29dadb98f5a613854d967bb9409751dcbef6674a4a80448afe9d1dde61d80fc
 The client's extra pipeline marker deliberately causes the existing ordinary
-tag144 physical-output gate to refuse it. It is not staged, installed, run on
-the card, connected to Assistant, or approved as a Work implementation. A
-separate reviewed physical harness and lifecycle test are required after the
-currently live tag143 owner has finished and restored the stable driver.
+tag144 physical-output gate to refuse it. A separate one-shot harness and
+marker-specific output gate now exist and passed synthetic success and failure
+tests; they require stable generation30, expected only after both the current
+tag143 run and the separate non-pipelined tag144 run close cleanly and restore.
+They have not been staged or run. The pipeline is not connected to Assistant
+or approved as a Work implementation. Hardware safety and performance remain
+unverified; no retry or restoration is authorized after an uncertain outcome.
