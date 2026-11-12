@@ -9,7 +9,10 @@
 #define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION 1
 #include "pioneer_q38_hybrid_span_upload_test.cpp"
+#include "../PioneerQ38UploadTiming.h"
 using Upload=PioneerQ38HybridSpanUpload<FakePages,FakeIO,PioneerQ38DenseQ8UploadPlan>;
+static uint64_t clockTick=1;
+static uint64_t TestClock(){return clockTick++;}
 static void SetPlan(FakePages& pages,const Canonical& canonical){
  PioneerQ38DenseQ8UploadPlan::Proposal plan;assert(PioneerQ38DenseQ8UploadPlan::Build(canonical,plan));
  pages.proposal.parts=std::move(plan.parts);pages.proposal.used=plan.used;
@@ -37,5 +40,14 @@ int main(){
    && upload.PlannedBytes()==planned && io.calls==upload.UploadedSpans() && progress==io.calls && pages.reads==planned/4096);
   printf("PASS synthetic dense-Q8 upload: %u fragments, %u span packets, %llu bytes; no hardware or model claim\n",
    upload.UploadedParts(),upload.UploadedSpans(),(unsigned long long)planned);
+ }
+ {
+  FakePages pages(*canonical);SetPlan(pages,*canonical);FakeIO io{*canonical,pages};
+  PioneerQ38UploadTiming timing(TestClock);PioneerQ38TimedPages<FakePages> wrapped(pages,timing);
+  PioneerQ38HybridSpanUpload<PioneerQ38TimedPages<FakePages>,FakeIO,PioneerQ38DenseQ8UploadPlan> upload;
+  assert(upload.Run(wrapped,*canonical,io,42,error) && upload.CompleteHeld());
+  assert(timing.valid && timing.readCalls && timing.readNs==timing.readCalls
+   && timing.readBytes==upload.UploadedBytes() && upload.UploadedSpans()==21907 && pages.reads==5149957);
+  puts("PASS timed wrapper preserves all QGWD upload packets and exact bytes; synthetic transport only");
  }
 }

@@ -15,6 +15,7 @@ struct FakePages {
  PioneerQ38HybridModelPlan::Proposal proposal;bool live=true;unsigned reads=0,failRead=0;
  explicit FakePages(const Canonical& c){assert(PioneerQ38HybridModelPlan::Build(c,UINT64_C(0x1fff000000000000),proposal));}
  bool AllVerified()const{return live;}
+ bool OutputSafe(const void* p,size_t bytes)const{return p && bytes;}
  const PioneerQ38HybridModelPlan::Part* Part(unsigned i)const{return live && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
  bool ReadPage(unsigned part,unsigned page,uint8_t* out,unsigned capacity,std::string& error){
   if(!live || part>=proposal.parts.size() || page>=proposal.parts[part].allocated/4096 || capacity!=4096 || ++reads==failRead){

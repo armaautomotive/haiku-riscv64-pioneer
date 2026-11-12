@@ -7,10 +7,15 @@ import runpy
 import subprocess
 import sys
 
-args=sys.argv[1:];two='--two-token-142' in args
+args=sys.argv[1:];timing='--upload-timing' in args
+if timing:
+    if args.count('--upload-timing')!=1:raise SystemExit('duplicate upload timing selector')
+    args.remove('--upload-timing')
+two='--two-token-142' in args
 if two:
     if args.count('--two-token-142')!=1:raise SystemExit('duplicate two-token selector')
     args.remove('--two-token-142')
+if timing and not two:raise SystemExit('upload timing requires the isolated two-token diagnostic')
 if not __debug__ or len(args)!=2 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
     raise SystemExit('usage: [--two-token-142] ABS_HAIKU_SDK NEW_ABS_OUTPUT')
 sdk,out=map(Path,args);here=Path(__file__).resolve().parent
@@ -24,7 +29,7 @@ finally:
     sys.argv=saved
 cmd=list(map(str,built['cmd']));old=str(here/'pioneer_q38_qgw8_cache_preflight.cpp');old_binary=str(built['binary'])
 if cmd.count(old)!=1 or cmd.count(old_binary)!=1:raise RuntimeError('unexpected preflight build command')
-binary=out/('pioneer-q38-qgwd-diagnostic-client142' if two else 'pioneer-q38-qgwd-diagnostic-client141')
+binary=out/('pioneer-q38-qgwd-upload-timing-client142' if timing else 'pioneer-q38-qgwd-diagnostic-client142' if two else 'pioneer-q38-qgwd-diagnostic-client141')
 cmd[cmd.index(old)]=str(here/'pioneer_q38_qgw8_full_diagnostic.cpp');cmd[cmd.index(old_binary)]=str(binary)
 names=('PIONEER_Q38_QGWD_CLIENT_141','PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION',
  'PIONEER_Q38_QGWD_UPLOAD_SESSION_INSPECTION','PIONEER_Q38_QGWD_PLAN_SIMULATION',
@@ -36,6 +41,7 @@ names=('PIONEER_Q38_QGWD_CLIENT_141','PIONEER_Q38_QGWD_FULL_SESSION_INSPECTION',
  'PIONEER_Q38_DENSE_Q8_VERIFIED_MODEL_INSPECTION')
 cmd[1:1]=['-D'+name+'=1' for name in names]
 if two:cmd.insert(1,'-DPIONEER_Q38_QGWD_TWO_CLIENT_142=1')
+if timing:cmd.insert(1,'-DPIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC=1')
 subprocess.run(cmd,check=True,cwd=out)
 tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku'
 symbols=subprocess.check_output([str(tool)+'-nm','-C',str(binary)],text=True)

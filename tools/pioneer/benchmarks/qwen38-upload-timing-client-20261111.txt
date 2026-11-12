@@ -1,0 +1,27 @@
+QGWD upload timing client, build and simulation only
+===================================================
+
+An opt-in tag142 diagnostic client separates wall time in prepared-page
+reads from wall time inside span-upload ioctls. It records byte and call
+counts and a sticky validity flag for clock or counter errors. These are
+host wall-clock intervals, not raw PCIe bandwidth, DMA utilization or a
+direct measurement of individual kernel/device phases. Other startup and
+setup time is outside those sums. Model preflight precedes the old overall
+upload/start timer and is also outside these sums.
+
+The timing wrapper forwards the real prepared-page provider and does not
+change upload packets or driver code. Output aliases of the wrapper and
+its counters are rejected. A synthetic full QGWD upload checked all 3551
+fragments, 21907 packets and 21094223872 bytes through the actual uploader,
+with exact payload/packet verification; the clock arithmetic test includes
+backward/zero clocks, counter overflow, failed reads and alias refusal.
+
+Haiku RISC-V timing client SHA-256:
+57d006376bbbf19d9ccf44b670c6d0ab18a1ac131606b3a813981457b79e3eae
+The timing-disabled tag142 client independently rebuilt byte-for-byte as
+30db23af60cbe1f21981223eb7295c41b7aa2861bdd0fdad94a58821ce29ed41,
+the same SHA recorded for the earlier physical trial. Neither new build
+has been installed or run on the P100A. A distinct checker validates the
+extra timing line, byte/call counts, time bounds and the original tag142
+transcript shape. Its success does not prove quality or hardware recovery.
+A separately qualified one-shot parent is still required for a trial.

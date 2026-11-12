@@ -24,9 +24,18 @@ using DiagnosticModel=PioneerQ38HybridDenseQ8VerifiedModel;
 using DiagnosticModel=PioneerQ38HybridHeadVerifiedModel;
 #endif
 #include "PioneerQ38HybridFullSession.h"
+#ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
+#if PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_QGWD_TWO_CLIENT_142) || PIONEER_Q38_QGWD_TWO_CLIENT_142 != 1
+#error Upload timing is an explicit QGWD two-token diagnostic only
+#endif
+#include "PioneerQ38UploadTiming.h"
+#endif
 
 struct Transport {
  unsigned lastOperation=0;int openError=0,lastError=0,closeError=0;
+#ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
+ PioneerQ38UploadTiming* timing=nullptr;
+#endif
 #ifdef PIONEER_Q38_QGW8_TRACE_CLIENT_131
  bool OutputSafe(const void* output,size_t bytes)const{
   const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
@@ -36,7 +45,16 @@ struct Transport {
 #endif
  int Open(){const int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)openError=errno;return fd;}
  bool Call(int fd,unsigned op,void* data,size_t size){
-  lastOperation=op;const int result=ioctl(fd,op,data,size);lastError=result==0?0:errno;return result==0;
+#ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
+  const bool span=timing && op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD && data && size==sizeof(tt_q38_span_upload);
+  const uint64_t requested=span?static_cast<tt_q38_span_upload*>(data)->bytes:0;
+  const uint64_t before=span?timing->Begin():0;
+#endif
+  lastOperation=op;const int result=ioctl(fd,op,data,size);lastError=result==0?0:errno;
+#ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
+  if(span)timing->End(before,timing->callNs,timing->callCalls,timing->callBytes,requested);
+#endif
+  return result==0;
  }
  int Close(int fd){const int result=close(fd);if(result)closeError=errno;return result;}
 };
@@ -118,7 +136,14 @@ int main(int argc,char** argv){
   fprintf(stderr,"HYBRID_PREFLIGHT_REFUSED %s; no device open\n",error.c_str());return 1;
  }
  auto* pages=model->PreparedPages();const auto* canonical=model->Canonical();if(!pages || !canonical)return 1;
- Transport io;auto session=std::make_unique<PioneerQ38HybridFullSession<DiagnosticModel::Pages,Transport>>(*pages,io);
+ Transport io;
+#ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
+ PioneerQ38UploadTiming uploadTiming(Now);PioneerQ38TimedPages<DiagnosticModel::Pages> timedPages(*pages,uploadTiming);
+ io.timing=&uploadTiming;
+ auto session=std::make_unique<PioneerQ38HybridFullSession<PioneerQ38TimedPages<DiagnosticModel::Pages>,Transport>>(timedPages,io);
+#else
+ auto session=std::make_unique<PioneerQ38HybridFullSession<DiagnosticModel::Pages,Transport>>(*pages,io);
+#endif
  const uint64_t begin=Now();if(!begin)return 1;uint64_t next=UINT64_C(256)*1024*1024,inferenceBegin=0;
  if(!session->Begin(*canonical,ids,prompts,outputs,[&](uint64_t done,uint64_t total){
   if(done>=next || done==total){printf("HYBRID_UPLOAD %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);
@@ -127,6 +152,12 @@ int main(int argc,char** argv){
   fprintf(stderr,"HYBRID_START_FAILED %s; close only\n",session->failure.c_str());ReportFailure(*session);ReportTransportFailure(io);return 1;
  }
  const uint64_t started=Now();if(!started || !inferenceBegin || started<inferenceBegin){session->Abort();return 1;}
+#ifdef PIONEER_Q38_UPLOAD_TIMING_DIAGNOSTIC
+ printf("HYBRID_UPLOAD_TIMING valid=%u read_calls=%llu read_bytes=%llu read_ns=%llu span_calls=%llu span_bytes=%llu span_ioctl_ns=%llu;HOST_WALL_TIME_NOT_RAW_PCIE\n",
+  unsigned(uploadTiming.valid),(unsigned long long)uploadTiming.readCalls,(unsigned long long)uploadTiming.readBytes,
+  (unsigned long long)uploadTiming.readNs,(unsigned long long)uploadTiming.callCalls,
+  (unsigned long long)uploadTiming.callBytes,(unsigned long long)uploadTiming.callNs);
+#endif
  printf("HYBRID_STARTED upload_and_start_seconds=%.3f\n",double(started-begin)*1e-9);
  uint64_t nextPending=started;
  while(!session->TerminalReady()){
