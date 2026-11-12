@@ -70,9 +70,9 @@ int main(int argc,char** argv){
   }
   assert(nonzero>width*9/10);
   for(unsigned band=0;band<tuple[3];band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
-  // Exercise middle and last scheduled workers with the full produced input,
-  // including their own address, row offset, band count and route.
-  for(unsigned ordinal:{62U,118U}){
+  // Exercise every remaining scheduled worker with the full produced input,
+  // including its own address, row offset, band count and route.
+  for(unsigned ordinal=1;ordinal<119;ordinal++){
    const auto* assigned=scheduler.tuple[ordinal];
    auto peer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,assigned[3],ordinal+1);peer->Boot();
    peer->transfer.root=image.transfer.root;
