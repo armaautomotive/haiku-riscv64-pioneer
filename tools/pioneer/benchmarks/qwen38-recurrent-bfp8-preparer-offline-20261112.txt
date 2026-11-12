@@ -1,0 +1,30 @@
+Recurrent Q8 BFP8 cache preparer, offline evidence only
+
+The separate CPU-only writer selects exactly 144 large recurrent Q8 tensors:
+roles 5, 6 and 13 in each of 48 recurrent layers. It excludes the 96 small
+48-row projections and all unrelated tensors. It uses the unchanged frozen
+all-BFP8 writer and cache ABI, same-open full original-model authentication,
+and its existing conversion recipe. Frozen writer source fingerprint:
+7db613bfdde463be7f933f25123a00dbe39928cbd8a070aa2481c6cb936753d0.
+The resulting existing cache conversion key remains:
+551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897.
+
+Synthetic tests checked all 851 canonical tensor identities, exactly 144
+selections, altered shape/type/byte metadata refusals, and three selected
+5120/6144-wide tensors at three offsets against the frozen BFP8 converter.
+The existing separate converter tests cover synthetic Q8 values independently
+of this selector. Native/Work/reference/fast-math and mixed-preparer roles
+were rejected. A host build rejected invalid arguments and a nonexistent
+original without creating a cache. Two independent Haiku RISC-V candidate
+builds matched SHA-256:
+06e549bf2434f649947babd6243bf97cf23c2b1e46b7124edcaa00bf1a3d51a4.
+An independently extracted clean source snapshot reproduced that same
+candidate hash and passed the selector/forwarding suite.
+The initial builds differed only in a temporary path embedded in DWARF5 line
+data; the final builder uses mapped DWARF4 paths and checks watched source
+files for changes during its build.
+
+BUILD AND SYNTHETIC TESTS ONLY. No real recurrent model cache has been
+created, and no accelerator, driver, model output, quality, inference speed,
+or Work/Assistant readiness is established. Actual conversion and physical
+worker integration require separate checks and must not disturb a live trial.
