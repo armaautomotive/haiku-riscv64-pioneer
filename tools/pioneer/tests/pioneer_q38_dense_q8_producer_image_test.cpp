@@ -35,17 +35,22 @@ struct DenseProducerImage:TransitionImage {
   auto& c=transfer.counters;c[4]++;c[14]++;
   if(write){c[1]++;c[8]+=bytes/64;c[10]++;}else{c[2]++;c[3]+=bytes/64;c[5]++;}
  }
- void StageProducer(unsigned role,unsigned sequence,bool corrupt=false){
-  assert(pc==waitPC && role>=5 && role<=7);producing=true;packets=0;bank.clear();
+ void StageProducer(unsigned role,unsigned sequence,bool corrupt=false,unsigned layer=3){
+  assert(pc==waitPC && ((layer%4==3 && role>=5 && role<=7)
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+   || (layer%4!=3 && (role==5 || role==6 || role==13))
+#endif
+  ));producing=true;packets=0;bank.clear();
+  const unsigned width=layer%4!=3 && role==13?6144:5120;
   const unsigned indices[]={2,3,4,5,1,8,4,10};for(unsigned i=0;i<8;i++)before[i]=transfer.counters[indices[i]];
   auto& d=descriptor;d.fill(0);d[0]=BP::Magic;d[1]=1;d[2]=67108864;d[4]=0x4000000;d[6]=2025;
   d[7]=boot[3];d[8]=PioneerQ38ProjectionRoute(0);d[9]=boot[4];d[10]=BP::ProjectionInput;
-  d[11]=5120;d[12]=BP::NativeOffset;d[13]=BP::LinesOffset;d[14]=BP::Format;d[15]=20;
+  d[11]=width;d[12]=BP::NativeOffset;d[13]=BP::LinesOffset;d[14]=BP::Format;d[15]=width/256;
   for(unsigned i=0;i<16;i++)d[16+i]=source[i];for(unsigned i=0;i<8;i++)d[32+i]=boot[8+i];
-  d[41]=248319;d[42]=3;d[43]=role;assert(BP::DescriptorShape(d.data()));
-  unsigned j[64]={};j[0]=HW::Magic;j[1]=sequence;j[2]=5;j[3]=boot[3];j[4]=boot[4];j[5]=3;j[7]=2025;
+  d[41]=248319;d[42]=layer;d[43]=role;assert(BP::DescriptorShape(d.data()));
+  unsigned j[64]={};j[0]=HW::Magic;j[1]=sequence;j[2]=5;j[3]=boot[3];j[4]=boot[4];j[5]=layer;j[7]=2025;
   for(unsigned i=0;i<8;i++)j[8+i]=boot[8+i];j[16]=BP::Magic;j[17]=256;j[18]=512;j[19]=2025;j[20]=12;
-  j[27]=d[41];j[28]=role;j[29]=5120;j[30]=BP::Format;j[31]=BP::Witness;
+  j[27]=d[41];j[28]=role;j[29]=width;j[30]=BP::Format;j[31]=BP::Witness;
   assert(HW::JobShape(j,boot.data(),sequence-1,0));if(corrupt)j[28]=8;
   for(unsigned i=0;i<64;i++){WordWrite(BP::Descriptor+i*4,d[i]);Put(HW::Job+i*4,j[i]);}
   Put(HW::Doorbell,sequence);
