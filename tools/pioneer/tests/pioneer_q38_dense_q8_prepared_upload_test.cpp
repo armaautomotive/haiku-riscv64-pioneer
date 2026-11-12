@@ -22,10 +22,22 @@ struct FakeDenseIO {
  PioneerQ38DenseQ8UploadReceiptInspection& receipt;PioneerQ38SpanLease& span;const void* context;
  std::vector<uint8_t>& ledger;std::vector<uint32_t>& hashes;
  unsigned calls=0,fragment=0,page=0,converted=0;uint64_t bytes=0;
+#ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
+ Plan::Proposal immutablePlan={};bool planReady=false;
+#endif
  bool Call(int fd,unsigned op,void* data,size_t size){
   assert(fd==42 && op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD && size==sizeof(tt_q38_span_upload));
   while(fragment<canonical.Count() && canonical.Part(fragment)->kind!=canonical.WeightKind)fragment++;
-  assert(fragment<canonical.Count());const auto* p=pages.Part(fragment);assert(p);
+  assert(fragment<canonical.Count());
+#ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
+  // Real driver calls do not inspect the userspace Pages object while the
+  // producer prepares the next packet. Use a separate immutable fake plan.
+  if(!planReady){assert(Plan::Build(canonical,immutablePlan));planReady=true;}
+  const auto* p=&immutablePlan.parts[fragment];
+#else
+  const auto* p=pages.Part(fragment);
+#endif
+  assert(p);
   auto& q=*static_cast<tt_q38_span_upload*>(data);const unsigned n=std::min(256U,p->allocated/4096-page);
   assert(q.version==1 && !q.reserved && q.bank==p->bank && q.offset==uint64_t(p->offset)+uint64_t(page)*4096 && q.bytes==n*4096);
   const unsigned expected=p->encoding==Plan::DenseQ8Bfp8 || p->encoding==PioneerQ38HybridModelPlan::Bfp8?0x8b:

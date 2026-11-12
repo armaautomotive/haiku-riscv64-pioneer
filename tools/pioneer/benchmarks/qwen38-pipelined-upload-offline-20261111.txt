@@ -1,0 +1,32 @@
+QGWF prepared-page/upload overlap experiment, offline only
+
+The measured tag142 run spent 1213.943 s in prepared-page reads and
+1237.065 s in upload IOCTLs. This distinct userspace experiment uses two
+bounded 1 MiB span packets: a single worker prepares the next packet from
+the verified cache while the original owner thread performs the current
+upload IOCTL. It is an opportunity for overlap, not a measured speedup; disk,
+CPU, memory and card contention can prevent ideal overlap.
+
+All device calls, progress and ownership remain on the original thread.
+Only one preparation job may be outstanding. Before touching Pages again,
+the owner waits for that job; source verification continues before and after
+each upload. A failed read, uncertain IOCTL or malformed reply stops without
+retry and joins the worker before buffers can be released. This code does not
+make driver END, close or recovery safe. The experimental role excludes Work,
+CPU validation, kernel builds and the old shared upload-timing instrumentation.
+
+Synthetic ASan/UBSan tests passed: a complete 21907-span same-FD session with
+17 synthetic outputs; failed START, bad feedback, bad frontier; page failure
+before the first IOCTL and during a subsequent preparation; failed IOCTL and
+malformed reply. The fake driver verified it ran on the owner thread, and a
+barrier demonstrated producer progress while that fake call was active.
+The worker's rapid reuse, exception handling and pending-job join also passed.
+These tests do not prove hardware safety or performance.
+
+Two separate Haiku cross-builds matched the isolated pipeline client SHA-256:
+b29dadb98f5a613854d967bb9409751dcbef6674a4a80448afe9d1dde61d80fc
+The client's extra pipeline marker deliberately causes the existing ordinary
+tag144 physical-output gate to refuse it. It is not staged, installed, run on
+the card, connected to Assistant, or approved as a Work implementation. A
+separate reviewed physical harness and lifecycle test are required after the
+currently live tag143 owner has finished and restored the stable driver.

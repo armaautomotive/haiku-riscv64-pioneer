@@ -32,6 +32,10 @@ struct PioneerQ38DenseQ8UploadPlan {
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <vector>
+#ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
+#include "PioneerQ38PrefetchWorker.h"
+#endif
 
 // Preserve the existing 13-layer format as the only default. QGW8 uses a
 // distinct explicitly selected diagnostic plan and cannot be silently
@@ -79,6 +83,62 @@ template<class Pages,class IO,class Plan=PioneerQ38HybridLegacyUploadPlan> class
  bool attempted=false,touched=false,complete=false,failed=false;
  uint64_t bytes=0,uploaded=0;unsigned spans=0,parts=0;
  bool Fail(std::string& error,const char* message){failed=true;error=message;return false;}
+#ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
+ bool RunPipelined(Pages& pages,const C& canonical,const typename Plan::Proposal& expected,IO& io,int fd,
+  std::string& error,const std::function<void(uint64_t,uint64_t)>& progress){
+  struct Chunk{unsigned part,page,count;bool last;};std::vector<Chunk> chunks;
+  for(unsigned i=0;i<canonical.Count();i++){
+   const auto* old=canonical.Part(i);if(!old)return Fail(error,"Missing pipeline part.");
+   if(old->kind!=C::WeightKind)continue;const auto& p=expected.parts[i];
+   for(unsigned at=0;at<p.allocated/4096;){
+    const unsigned count=std::min(256U,p.allocated/4096-at);at+=count;
+    chunks.push_back({i,at-count,count,at==p.allocated/4096});
+   }
+  }
+  if(chunks.empty())return Fail(error,"Empty upload pipeline.");
+  auto first=std::make_unique<tt_q38_span_upload>();auto second=std::make_unique<tt_q38_span_upload>();
+  // Declared after packet buffers: destruction joins before they disappear.
+  PioneerQ38PrefetchWorker worker;if(!worker.Start())return Fail(error,"Cannot start prepared-page worker.");
+  auto submit=[&](size_t index,tt_q38_span_upload* packet){
+   return worker.Submit([&,index,packet](std::string& why){
+    const auto& c=chunks[index];const auto& p=expected.parts[c.part];
+    std::memset(packet,0,sizeof(*packet));packet->version=TT_Q38_SPAN_PUBLIC_VERSION;
+    packet->bank=p.bank;packet->offset=uint64_t(p.offset)+uint64_t(c.page)*4096;packet->bytes=c.count*4096;
+    if(!PioneerQ38SpanPublicShape(packet->version,packet->bank,packet->offset,packet->bytes,packet->reserved)){
+     why="Invalid relocated pipeline span.";return false;
+    }
+    for(unsigned page=0;page<c.count;){
+     const unsigned batch=std::min(16U,c.count-page);
+     if(!pages.ReadPages(c.part,c.page+page,batch,reinterpret_cast<uint8_t*>(packet->data)+page*4096,batch*4096,why))return false;
+     page+=batch;
+    }
+    return true;
+   });
+  };
+  if(!submit(0,first.get()) || !worker.Wait(error))return Fail(error,"Initial prepared-page pipeline failed.");
+  for(size_t i=0;i<chunks.size();i++){
+   if(!pages.AllVerified())return Fail(error,"Source changed before upload.");
+   if(i+1<chunks.size() && !submit(i+1,second.get()))return Fail(error,"Cannot queue next prepared span.");
+   const unsigned bank=first->bank,packetBytes=first->bytes;const uint64_t offset=first->offset;
+   touched=true;
+   if(!io.Call(fd,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,first.get(),sizeof(*first)))return Fail(error,"Uncertain span call; retain owner.");
+   const auto& r=first->result;
+   if(first->version!=TT_Q38_SPAN_PUBLIC_VERSION || first->bank!=bank || first->offset!=offset
+    || first->bytes!=packetBytes || first->reserved || r.version!=1 || r.state!=TT_RUNTIME_PASSED
+    || r.bytes!=packetBytes || r.pages!=chunks[i].count || r.nonce!=spans+1 || r.started!=1 || r.completed!=1
+    || r.held!=1 || r.host_exact || r.matched_words || r.recovery_required || r.reserved)
+    return Fail(error,"Uncertain span reply; retain owner.");
+   // Wait before touching Pages again, including on producer failure; the
+   // worker never has a device pointer and never calls into the driver.
+   if(i+1<chunks.size() && !worker.Wait(error))return Fail(error,"Next prepared-page span failed; retain owner.");
+   uploaded+=packetBytes;spans++;if(chunks[i].last)parts++;
+   if(!pages.AllVerified())return Fail(error,"Source changed after upload; retain owner.");
+   if(progress)progress(uploaded,bytes);first.swap(second);
+  }
+  if(parts!=3551 || uploaded!=bytes || !pages.AllVerified())return Fail(error,"Incomplete full-model pipeline; retain owner.");
+  complete=true;error.clear();return true;
+ }
+#endif
 public:
  PioneerQ38HybridSpanUpload()=default;
  PioneerQ38HybridSpanUpload(const PioneerQ38HybridSpanUpload&)=delete;
@@ -108,6 +168,9 @@ public:
    }
   }
   if(weights!=3551 || !bytes || !pages.AllVerified())return Fail(error,"Incomplete or changed full-model preflight.");
+#ifdef PIONEER_Q38_PIPELINED_UPLOAD_EXPERIMENT
+  return RunPipelined(pages,canonical,expected,io,fd,error,progress);
+#endif
   auto packet=std::make_unique<tt_q38_span_upload>();
   for(unsigned i=0;i<canonical.Count();i++){
    const auto* old=canonical.Part(i);if(old->kind!=C::WeightKind)continue;

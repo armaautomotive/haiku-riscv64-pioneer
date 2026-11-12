@@ -22,6 +22,7 @@ assert run(rows[:-1]+[unavailable]).returncode == 0
 early = prefix[:5]+[prefix[5].replace('=17 ', '=2 ')]+prefix[6:]+['HYBRID_TOKEN 42','HYBRID_TOKEN 248044',complete,unavailable]
 assert run(early).returncode == 0
 bad = [rows[:-2], rows[:-1], rows+['unexpected'], rows[:2]+rows[3:],
+       ['QGWF_PIPELINED_UPLOAD_EXPERIMENT; NO PERFORMANCE OR QUALITY CLAIM']+rows,
        rows[:7]+['HYBRID_TOKEN 248044']+rows[8:], rows[:7]+['HYBRID_TOKEN 248320']+rows[8:],
        early[:-2]+['HYBRID_TOKEN 42',complete,unavailable],
        early[:-1]+[bounded], rows[:-1]+[bounded.replace('tokens=16','tokens=15')],
