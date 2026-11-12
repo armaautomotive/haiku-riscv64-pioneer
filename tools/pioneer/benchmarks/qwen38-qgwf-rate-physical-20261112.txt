@@ -1,0 +1,25 @@
+QGWF tag144 physical rate diagnostic, 2026-11-12
+
+The one-shot run completed preflight and client with exit 0 and empty stderr.
+Its transcript passed pioneer_q38_qgwf_rate_candidate_output.awk. The native
+FINISH/close completed, and the known-good driver was restored with SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Reload metadata was tag2026102100010012 generation30, active_owner0, cold0.
+sysinfo reported 64 CPUs and 137034936320 bytes maximum memory.
+
+The run uploaded 21094223872 bytes. Upload and START together took 2991.951 s.
+For one prompt token and 17 outputs, inference including START and prompt
+processing took 747.465 s, yielding 0.022744 outputs/s under that accounting.
+The independently observed count window from committed token 1 through 17
+gave 0.073309112 to 0.073312435 tokens/s, using the diagnostic's 10 ms polling
+and time bounds. This is not an uninstrumented production benchmark.
+
+All 17 output token IDs were 70253. No CPU reference or text-quality test was
+run. Identical outputs are concerning and this result must not be presented as
+usable, correct inference or a validated speedup. The 20 tokens/s goal is unmet.
+
+After independent artifact hashes, idle state, stable-driver and health checks,
+the separately staged pipelined-upload comparison passed its --check-only
+gate. Its one-shot parent 10422 was started and confirmed live in
+VERIFYING_MODEL_AND_CACHES_NO_DEVICE. The pipeline test is not evidence of
+faster loading until its own physical timing, output and cleanup gates pass.
