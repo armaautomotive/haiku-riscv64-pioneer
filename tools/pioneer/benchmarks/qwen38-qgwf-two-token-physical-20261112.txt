@@ -1,0 +1,35 @@
+QGWF tag143 physical fixed-input diagnostic, inspected 2026-11-12
+
+Scope: two generated token IDs after one fixed input, Qwen3.8-27B Q4_K_M
+prepared caches, P100A, Haiku. This is a bounded experiment, not the
+Assistant Work mode and not a measure of general answer quality.
+
+One-shot stage: /boot/home/pioneer-qgwf-diagnostic-143-20261111-a
+Candidate driver SHA256: b263b7d3d2a02328ae6d68dc3f213910a201a898731b1ee84caec422f8f75e15
+Client SHA256: bb9b4529ab26bfb870ad47209aa79c5679ebb74c8907f0694beeff1ebd470ef5
+Preflight and trial exit status: 0, 0; both stderr files empty.
+Preflight reported 1113 BFP4 FFN, 231 BFP8 FFN, 7 BFP8 head and 336 BFP8
+dense fragments verified. Trial stdout SHA256:
+937e4fbec6573200ce3c0cb0f5cfb0bdaa5a3441afe3abd801474a881f1a21e7
+Preflight stdout SHA256:
+d6a570a48e063a4232358edd2246607e7b384984e9ea084c701be8adc544d708
+Shape gate SHA256:
+aaaa7f4ea7c200d81c6bcfb5e1f8750f048ed20c8e4a51a884151986b1b10a13
+Gate passed: 2 outputs, 70253 then 70253. The IDs match the earlier tag142
+fixed-input diagnostic, but this does not validate natural-language quality.
+
+Uploaded 21094223872 bytes; upload plus START took 3001.426 seconds.
+The reported two-token interval was 544.998 seconds, including START and
+prompt processing, and its arithmetic ratio was 0.003670 tokens/second.
+It is NOT steady-state decode throughput, and is not comparable directly to
+the older 0.1624 tok/s steady decode result. The tag142 comparable two-token
+interval was 543.408 seconds; no speedup is established by this experiment.
+
+The parent and client exited. Final state:
+CANDIDATE_CLOSED_STABLE_RESTORED_QUALITY_UNVERIFIED.
+Stable installed driver SHA256:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+Status: driver55 tag2026102100010012 generation28 quiesced0 cold0
+active_owner0 open_count1 guard1 (CPU metadata only).
+sysinfo showed 64 CPUs and 137034936320 bytes maximum memory.
+No resident multi-request candidate was installed or tested in this trial.
