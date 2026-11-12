@@ -111,6 +111,19 @@ int main(int argc,char** argv){
   assert(RunBuildWithTransfer(*transfer,builds[0],packetSeal,d,offset,recordData));
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
    assert(transfer->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
+  if(layer==0){
+   for(unsigned fault=0;fault<3;fault++){
+    auto bad=std::make_unique<TransferRoot>(argv[1]);bad->memory=m->memory;
+    for(unsigned i=0;i<4;i++)bad->memory[0xffb20040+i*0x800]=0;
+    for(unsigned i=0;i<32;i++)bad->memory[0xffb20240+i*4]=0;
+    for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})bad->memory[0xffb20000+a]=0;
+    uint32_t corrupt[32];for(unsigned i=0;i<32;i++)corrupt[i]=recordData[i];
+    if(fault==0)corrupt[31]=1; // reserved padding
+    if(fault==1)corrupt[0]++; // misaligned device address
+    if(fault==2)corrupt[1]=corrupt[4]; // overlapping rows
+    assert(!RunBuildWithTransfer(*bad,builds[0],packetSeal,d,offset,corrupt));
+   }
+  }
   assert(RunBuildWithStub(*m,builds[0],reads[0],d,offset,recordData));
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++){
    assert(m->memory.at(0x16ebc0+w*16+i*4)==schedule.parts[w][i]);
