@@ -16,7 +16,7 @@ struct Schedule {
  void Output(unsigned w,unsigned f,unsigned v){parts[w][f]=v;}
 };
 struct TransferRoot:ActualRoot {
- uint32_t record[32]={};unsigned expectedOffset=0,packets=0;bool mutateCommand=false;
+ uint32_t record[32]={};unsigned expectedOffset=0,packets=0;bool mutateCommand=false,mutateSourceAfter=false;
  explicit TransferRoot(const char* path):ActualRoot(path){
   for(unsigned i=0;i<4;i++)memory[0xffb20040+i*0x800]=0;
   for(unsigned i=0;i<32;i++)memory[0xffb20240+i*4]=0;
@@ -29,6 +29,7 @@ struct TransferRoot:ActualRoot {
    for(unsigned i=0;i<32;i++)memory[0x78000+i*4]=record[i];
    memory[0xffb20208]++;memory[0xffb2020c]+=2;memory[0xffb20210]++;memory[0xffb20214]++;
    if(mutateCommand)memory[0xffb20000]^=64;
+   if(mutateSourceAfter)memory[0xffb20100]^=1;
    memory[a]=0;return;
   }
   ActualRoot::Store(a,value);
@@ -140,6 +141,12 @@ int main(int argc,char** argv){
    for(unsigned i=0;i<32;i++)unsealed->memory[0xffb20240+i*4]=0;
    for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})unsealed->memory[0xffb20000+a]=0;
    assert(!RunBuildWithRealSeal(*unsealed,builds[0],d,offset,recordData,true) && !unsealed->packets);
+   auto changed=std::make_unique<TransferRoot>(argv[1]);changed->memory=m->memory;
+   for(unsigned i=0;i<4;i++)changed->memory[0xffb20040+i*0x800]=0;
+   for(unsigned i=0;i<32;i++)changed->memory[0xffb20240+i*4]=0;
+   for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})changed->memory[0xffb20000+a]=0;
+   changed->mutateSourceAfter=true;
+   assert(!RunBuildWithRealSeal(*changed,builds[0],d,offset,recordData) && changed->packets==1);
    auto altered=std::make_unique<TransferRoot>(argv[1]);altered->memory=m->memory;
    for(unsigned i=0;i<4;i++)altered->memory[0xffb20040+i*0x800]=0;
    for(unsigned i=0;i<32;i++)altered->memory[0xffb20240+i*4]=0;
