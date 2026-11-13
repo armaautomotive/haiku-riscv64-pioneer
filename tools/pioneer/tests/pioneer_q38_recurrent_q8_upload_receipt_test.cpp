@@ -12,6 +12,7 @@
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_BANKS_MOCK_ONLY 1
 #include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
+#include "../PioneerQ38RecurrentQ8WorkspaceTransferInspection.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "pioneer_resident_banks_test.cpp"
 #include "../PioneerQ38RecurrentQ8UploadReceiptInspection.h"
@@ -81,7 +82,23 @@ int main(int argc,char** argv){
  assert(!receipt->Workspace(reinterpret_cast<uint32_t*>(&context),W::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(W::Build(*canonical,host,expected.data(),expected.size()));
  assert(receipt->Workspace(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==expected);
+ using Transfer=PioneerQ38RecurrentQ8WorkspaceTransferInspection;
+ Transfer wrongBank;assert(!wrongBank.Bind(*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42,7,0x04000000));
+ Transfer overflow;assert(!overflow.Bind(*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42,2,0xffffffe0));
+ Transfer wrongOwner;assert(!wrongOwner.Bind(*receipt,&context,&foreign,hashes.data(),ledger.data(),17,42,2,0x04000000));
+ Transfer transfer;assert(transfer.Bind(*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42,2,0x04000000));
+ assert(!transfer.Bind(*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42,2,0x04000000));
+ std::vector<uint8_t> packed(W::Bytes);PioneerQ38TokenRuntimePlan::Chunk desc={};
+ for(unsigned i=0;i<Transfer::Chunks;i++){
+  assert(transfer.Describe(i,desc) && desc.bank==2 && desc.address==0x04000000+W::Offset+desc.offset);
+  assert(!transfer.Read(i,packed.data()+desc.offset,desc.bytes-1));
+  assert(!transfer.Read(i,reinterpret_cast<uint8_t*>(hashes.data()),desc.bytes));
+  assert(transfer.Read(i,packed.data()+desc.offset,desc.bytes));
+ }
+ assert(!transfer.Describe(Transfer::Chunks,desc));
+ for(unsigned i=0;i<W::Bytes;i++)assert(packed[i]==uint8_t(expected[i/4]>>((i&3)*8)));
  ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(banks.Quarantined() && !receipt->Sealed());
+ assert(!transfer.Describe(0,desc));
  puts("PASS synthetic recurrent span ledger, identity, seal and mutation quarantine; NO DEVICE");
 }
