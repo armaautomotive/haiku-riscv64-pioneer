@@ -61,6 +61,7 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
    subprocess.run([os.environ.get('CXX','c++'),*flags,*['-D'+r+'=1' for r in selected],'-I'+str(private),str(here/source),'-o',str(target)],check=True)
   boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==119*256
   gateJobs=subprocess.run([str(rootbin),str(tmp),'5'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
+  coldJobs=subprocess.run([str(rootbin),str(tmp),'6'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
   qkvJobs=bytearray(subprocess.run([str(rootbin),str(tmp),'6','--after-gate'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout)
   assert len(gateJobs)==len(qkvJobs)==20*512+119*256
   for w in range(20):
@@ -70,6 +71,14 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
   retained=subprocess.run([str(chainbin),str(worker),str(leaf),str(gate),str(qkv),'--reuse-gate-capture'],
    input=gateJobs+qkvJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
   prefix=(6144+10240)*4;snapshotSize=119*4824;assert len(retained)==prefix+2*snapshotSize
+  cold=subprocess.run([str(workerbin),str(worker),str(leaf),'--run-full',str(qkv)],
+   input=coldJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert len(cold)==10240*4+snapshotSize and cold[:10240*4]==retained[6144*4:prefix]
+  coldActual=subprocess.run([str(rootbin),str(tmp),'6','--cold-qkv-prepare'],
+   input=boot+cold[10240*4:],stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+  # The existing layer state machine requires gate history before QKV; a
+  # virgin cohort must be refused rather than used to prove fallback.
+  assert coldActual.returncode and not coldActual.stdout and b'writes=0 matrix=0 descriptors=0' in coldActual.stderr
   gateActual=subprocess.run([str(rootbin),str(tmp),'5','--full-prepare'],input=boot+retained[prefix+snapshotSize:],
    stdout=subprocess.PIPE,check=True,env=env).stdout
   assert gateActual==retained[:6144*4]

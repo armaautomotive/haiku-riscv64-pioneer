@@ -210,7 +210,7 @@ projection. It first requires all 119 previous jobs to match the gate role,
 layer, position, invocation and owner identity, checks the current input and
 both native-input copies, and retains the ordinary complete worker-admission
 step before reusing anything. On a cold or different history it follows the
-ordinary preparation path. This avoids 20 producer jobs in the candidate;
+ordinary preparation path, subject to existing layer-order admission. This avoids 20 producer jobs in the candidate;
 it is not enabled in the installed driver or Work mode.
 
 The linked RV32 predicate passed an ASan/UBSan synthetic-memory check for a
@@ -251,3 +251,10 @@ values. Gate and QKV outputs match the model-derived worker results, and
 changed input or prior proof parks QKV before any new dispatch. NoC remains
 modeled and worker records are transported by the host; this is not a live
 concurrent card cohort, native ownership, answer quality or speed evidence.
+
+Cold-order check: a virgin simulated cohort can independently calculate the
+QKV matrix, but the full ROOT rejects direct cold QKV before any matrix
+dispatch or output because its existing layer state machine requires a gate
+first. This is an expected order refusal, not evidence of successful cold
+fallback through the complete ROOT. Full cold fallback therefore must not be
+claimed from the decision-predicate check alone.

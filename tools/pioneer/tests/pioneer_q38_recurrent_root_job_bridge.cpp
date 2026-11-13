@@ -118,23 +118,24 @@ struct GatherRoot:ActualRoot {
 static bool chainFirst=false,chainSecond=false;
 static std::map<unsigned,unsigned> retainedGate;
 static int RunOne(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--gate-reuse-prepare") || !std::strcmp(argv[3],"--gate-reuse-bad-history") || !std::strcmp(argv[3],"--gate-reuse-bad-input") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--cold-qkv-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--gate-reuse-prepare") || !std::strcmp(argv[3],"--gate-reuse-bad-history") || !std::strcmp(argv[3],"--gate-reuse-bad-input") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
  const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
  const bool badHistory=argc==4 && !std::strcmp(argv[3],"--gate-reuse-bad-history");
  const bool badInput=argc==4 && !std::strcmp(argv[3],"--gate-reuse-bad-input");
  const bool gateReuse=argc==4 && (!std::strcmp(argv[3],"--gate-reuse-prepare") || badHistory || badInput);
+ const bool coldQkv=argc==4 && !std::strcmp(argv[3],"--cold-qkv-prepare");
  const bool afterGatePrepare=argc==4 && (!std::strcmp(argv[3],"--after-gate-prepare") || gateReuse);
  const bool dynamicInput=argc==4 && !std::strcmp(argv[3],"--after-qkv-prepare-input");
  const bool afterQkvPrepare=argc==4 && (!std::strcmp(argv[3],"--after-qkv-prepare") || dynamicInput);
- const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || dynamicInput || afterGatePrepare || afterQkvPrepare);
+ const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || coldQkv || dynamicInput || afterGatePrepare || afterQkvPrepare);
  const bool afterGate=argc==4 && !std::strcmp(argv[3],"--after-gate");
  const bool afterQkv=argc==4 && !std::strcmp(argv[3],"--after-qkv");
  const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe || fullPrepare);
  const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
- if(fullPrepare)assert(role==((afterQkvPrepare || dynamicInput)?13U:afterGatePrepare?6U:5U));
+ if(fullPrepare)assert(role==((afterQkvPrepare || dynamicInput)?13U:(afterGatePrepare || coldQkv)?6U:5U));
  if(afterGate)assert(role==6); // second recurrent projection after gate
  if(afterQkv)assert(role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
