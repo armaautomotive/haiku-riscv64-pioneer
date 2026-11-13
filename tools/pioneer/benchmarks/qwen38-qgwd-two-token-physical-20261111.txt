@@ -8,6 +8,11 @@ those two IDs, but used forced input 17 at its second position rather than the
 card's fed-back 70253. Only position zero is directly comparable; the second
 is not a CPU validation of this autoregressive sequence. The client did not
 perform CPU validation during card execution.
+
+Update, 2026-11-13: the later CPU-only autoregressive reference did feed
+back its own selected tokens and produced 70253 at each of three positions,
+matching both IDs here. See qwen38-autoregressive-cpu-reference-20261112.txt;
+the match does not establish logit accuracy or general model quality.
 This is one artificial two-position case, not conversational-quality proof.
 
 The client reported 543.378 seconds from START request through terminal

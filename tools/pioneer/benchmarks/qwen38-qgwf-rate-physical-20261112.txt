@@ -22,6 +22,12 @@ but its second input was forced to 17, whereas this one-prompt trial fed back
 70253. That older trace therefore does not validate or refute positions 1–16
 of this autoregressive run.
 
+Update, 2026-11-13: the later independently run CPU-only autoregressive
+reference fed each selected ID back and produced 70253 at all three tested
+positions, matching the first three card IDs. Its trace hashes and scope are
+in qwen38-autoregressive-cpu-reference-20261112.txt. This does not establish
+agreement on the other fourteen outputs, logits, or normal-prompt quality.
+
 After independent artifact hashes, idle state, stable-driver and health checks,
 the separately staged pipelined-upload comparison passed its --check-only
 gate. Its one-shot parent 10422 was started and confirmed live in

@@ -28,14 +28,14 @@ with tempfile.TemporaryDirectory(prefix='qgwd-two-analysis-', dir='/private/tmp'
         return subprocess.run([sys.executable, str(analyzer), str(trial)], capture_output=True, text=True)
     reset(); result = run()
     assert result.returncode == 0 and 'MATCH:' in result.stdout and not result.stderr
-    assert 'CPU_REFERENCE_POSITION_ZERO 70253' in result.stdout
-    assert 'SECOND_POSITION_NOT_COMPARABLE_CPU_INPUT_WAS_17' in result.stdout
+    assert 'ORIGINAL_CPU_TRACE_POSITION_ZERO 70253' in result.stdout
+    assert 'ORIGINAL_TRACE_SECOND_INPUT_WAS_17' in result.stdout
     assert 'two-token sequence matches recorded card sequence' in result.stdout
     (trial / 'trial.stdout').write_text(log.replace('HYBRID_TOKEN 70253\nHYBRID_TOKEN 70253',
                                                     'HYBRID_TOKEN 70253\nHYBRID_TOKEN 42'))
     result = run()
     assert result.returncode == 1 and 'MISMATCH:' in result.stdout and not result.stderr
-    assert 'second position is NOT a CPU comparison' in result.stdout
+    assert 'does NOT compare a second CPU position' in result.stdout
     reset()
     early_eos = (log.replace('generated_tokens=2', 'generated_tokens=1')
                  .replace('HYBRID_TOKEN 70253\nHYBRID_TOKEN 70253', 'HYBRID_TOKEN 248044'))

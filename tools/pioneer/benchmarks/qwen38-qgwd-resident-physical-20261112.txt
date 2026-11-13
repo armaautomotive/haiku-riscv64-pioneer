@@ -8,6 +8,11 @@ client reported that the second request matched all 17. The first ID matches
 the CPU diagnostic, but its second input was forced to 17 rather than the
 card's fed-back 70253, so its second output is not a valid comparison here.
 The remaining IDs and general output quality are not independently verified.
+Update, 2026-11-13: a later separate autoregressive CPU-only reference did
+feed back each selected ID and produced 70253 at all three tested positions,
+matching the first three card IDs. See qwen38-autoregressive-cpu-reference-
+20261112.txt. This is token-ID agreement, not a logit or general-quality pass;
+the remaining fourteen card outputs were not compared with that reference.
 
 Upload plus initial START took 2973.955 seconds. First request inference,
 including START and prompt processing, took 747.421 seconds; its observed
