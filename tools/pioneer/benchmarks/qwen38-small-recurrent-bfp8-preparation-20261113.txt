@@ -186,6 +186,13 @@ replays their records through a modeled NoC; six Conv ROOT groups are
 separate. This is not physical execution, full-model quality or a measured
 tokens-per-second improvement.
 
+Cold-beta fallback: the reuse-enabled linked ROOT was also started directly
+on beta with virgin worker histories. It correctly ran all 20 producer jobs
+instead of trusting nonexistent cached input, then produced the independently
+checked beta matrix and scattered its 48 valid rows. The non-reuse bridge and
+existing corruption-refusal cases also passed under ASan/UBSan. This remains
+simulated controller/worker/NoC execution, not a hardware performance result.
+
 Controller-history follow-up: a second simulation carries the actual ROOT
 memory map from the alpha Run to the beta Run instead of reseeding the 119
 worker nonces, closed jobs and counter frontiers. Before the second Run it

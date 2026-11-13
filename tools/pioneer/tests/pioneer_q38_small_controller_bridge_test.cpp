@@ -5,8 +5,8 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--warm-reuse-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export") || !std::strcmp(argv[2],"--reuse-jobs") || !std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior")));
- const bool warmReuse=!std::strcmp(argv[2],"--warm-reuse-jobs"),reuseJobs=!std::strcmp(argv[2],"--reuse-jobs") || warmReuse,reuseChain=!std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior"),badInput=!std::strcmp(argv[2],"--reuse-bad-input"),badNative=!std::strcmp(argv[2],"--reuse-bad-native"),warmJobs=!std::strcmp(argv[2],"--warm-jobs") || warmReuse,jobs=!std::strcmp(argv[2],"--jobs") || warmJobs || reuseJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--reuse-bad-prior"),exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows || reuseChain,full=!std::strcmp(argv[2],"--full") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--warm-reuse-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export") || !std::strcmp(argv[2],"--reuse-jobs") || !std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior") || !std::strcmp(argv[2],"--cold-beta-jobs") || !std::strcmp(argv[2],"--cold-beta")));
+ const bool coldBeta=!std::strcmp(argv[2],"--cold-beta") || !std::strcmp(argv[2],"--cold-beta-jobs"),warmReuse=!std::strcmp(argv[2],"--warm-reuse-jobs"),reuseJobs=!std::strcmp(argv[2],"--reuse-jobs") || warmReuse,reuseChain=!std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior"),badInput=!std::strcmp(argv[2],"--reuse-bad-input"),badNative=!std::strcmp(argv[2],"--reuse-bad-native"),warmJobs=!std::strcmp(argv[2],"--warm-jobs") || warmReuse,jobs=!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--cold-beta-jobs") || warmJobs || reuseJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--reuse-bad-prior"),exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows || reuseChain,full=!std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--cold-beta") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
  const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
@@ -23,11 +23,11 @@ int main(int argc,char** argv){
  for(unsigned i=0;i<4;i++)root->memory[d+(32+i*2)*4]=i+1;
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)root->memory[0x170000+w*256+i*4]=boots[w][i];
  std::map<unsigned,unsigned> retainedRoot;
- for(unsigned kind=0;kind<2;kind++){
-  const unsigned role=10+kind;
+ for(unsigned kind=0;kind<(coldBeta?1U:2U);kind++){
+  const unsigned role=coldBeta?11:10+kind,record=role-10;
   root->memory[d+4*42]=0;root->memory[d+4*43]=role;
   assert(RunBuildWithStub(*root,builds[0],reads[0],d,
-   PioneerQ38SmallRecurrentWorkspace::Offset+kind*128,workspace->data()+kind*32));
+   PioneerQ38SmallRecurrentWorkspace::Offset+record*128,workspace->data()+record*32));
   for(unsigned i=0;i<64;i++)root->memory[0x80000+i*4]=0x7fc00001;
   if(jobs){
    if(warmReuse && kind){uint32_t empty[64]={};for(unsigned i=0;i<40;i++)assert(fwrite(empty,sizeof(empty),1,stdout)==1);}
@@ -42,8 +42,8 @@ int main(int argc,char** argv){
     uint32_t data[64];const unsigned matrixSequence=2+(warmJobs?3:0)+kind*(reuseJobs?1:2);
     assert(root->Run(root->job[0],d,w,matrixSequence));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
-    unsigned bank=0;while(bank<7 && !(*workspace)[kind*32+bank*3])bank++;
-    assert(bank<7 && data[19]==(*workspace)[kind*32+bank*3]+w*174080
+    unsigned bank=0;while(bank<7 && !(*workspace)[record*32+bank*3])bank++;
+    assert(bank<7 && data[19]==(*workspace)[record*32+bank*3]+w*174080
      && data[21]==PioneerQ38ProjectionRoute(bank) && data[32]==w*32 && data[20]==1);
    }
   }else{
@@ -115,7 +115,7 @@ int main(int argc,char** argv){
     const unsigned fields[]={TT_Q38_MIXED_RECURRENT_MATRIX,1,1,8,5120,3,2025,TT_Q38_DENSE_MATRIX_INPUT,1};
     for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=i<9?fields[i]:0;
     for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=i<7?PioneerQ38ProjectionRoute(i):0;
-    for(unsigned i=0;i<32;i++)endpoint->memory[0x04000000+PioneerQ38SmallRecurrentWorkspace::Offset+kind*128+i*4]=(*workspace)[kind*32+i];
+    for(unsigned i=0;i<32;i++)endpoint->memory[0x04000000+PioneerQ38SmallRecurrentWorkspace::Offset+record*128+i*4]=(*workspace)[record*32+i];
     endpoint->memory[0x75000+48*4]=1;
     std::ifstream entries(std::string(argv[1])+"/program.demangled");unsigned run=0,capture=0,prepare=0;
     while(std::getline(entries,line)){const unsigned address=unsigned(std::stoul(line.substr(0,8),nullptr,16));
@@ -161,7 +161,8 @@ int main(int argc,char** argv){
    for(unsigned i=48;i<64;i++)assert(endpoint->memory.at(0x80000+i*4)==0x7fc00001);
   }
  }
- assert(fgetc(stdin)==EOF);if(jobs || exportRows)assert(!fflush(stdout));else if(chain)puts("PASS ROOT alpha/beta Runs preserve actual controller histories; SIMULATED NO DEVICE");
+ assert(fgetc(stdin)==EOF);if(jobs || exportRows)assert(!fflush(stdout));else if(coldBeta)puts("PASS cold beta falls back to full producer preparation; SIMULATED NO DEVICE");
+ else if(chain)puts("PASS ROOT alpha/beta Runs preserve actual controller histories; SIMULATED NO DEVICE");
  else if(full)puts("PASS actual ROOT alpha/beta Run, 119 histories, prepare/dispatch/gather/scatter; SIMULATED NO DEVICE");
  else puts("PASS linked ROOT gathered actual simulated worker receipts and published results; NO DEVICE");
 }

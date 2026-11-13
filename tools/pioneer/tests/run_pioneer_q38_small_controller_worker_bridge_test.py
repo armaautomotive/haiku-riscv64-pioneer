@@ -75,6 +75,11 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
  if reuse:
   for mode in ('--reuse-chain','--reuse-bad-input','--reuse-bad-native','--reuse-bad-prior'):
    subprocess.run([str(rootBinary),str(tmp),mode],input=boots+results,check=True,env=env)
+  coldJobs=subprocess.run([str(rootBinary),str(tmp),'--cold-beta-jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert len(coldJobs)==42*64*4
+  coldSnapshots=subprocess.run([*workerArgs,'--cold-beta',str(alpha),str(beta)],input=coldJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert len(coldSnapshots)==119*4824
+  subprocess.run([str(rootBinary),str(tmp),'--cold-beta'],input=boots+coldSnapshots,check=True,env=env)
  else:
   for mode in ('--publish','--corrupt','--corrupt-producer','--full','--full-corrupt-prior','--chain','--chain-corrupt-prior'):
    subprocess.run([str(rootBinary),str(tmp),mode],input=boots+results,check=True,env=env)
