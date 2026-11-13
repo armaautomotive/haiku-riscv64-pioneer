@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15,19) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')) and (len(sys.argv)!=19 or sys.argv[12]=='--cohort' and sys.argv[15]=='--dynamic-output'))
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15,19,22) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')) and (len(sys.argv)<19 or sys.argv[12]=='--cohort' and sys.argv[15]=='--dynamic-output') and (len(sys.argv)!=22 or sys.argv[19]=='--learned'))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
 mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)>=9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)>=9 and sys.argv[6]=='--full-qkv' else '--out'
@@ -20,7 +20,13 @@ full=Path(sys.argv[7]) if len(sys.argv)>=9 else None
 chain=Path(sys.argv[10]) if len(sys.argv)>=12 else None
 chainOutput=Path(sys.argv[13]) if len(sys.argv)==15 and sys.argv[12]=='--chain-output' else None
 cohort=(Path(sys.argv[13]),Path(sys.argv[14])) if len(sys.argv)>=15 and sys.argv[12]=='--cohort' else None
-dynamicOutput=(Path(sys.argv[16]),sys.argv[17],Path(sys.argv[18])) if len(sys.argv)==19 else None
+dynamicOutput=(Path(sys.argv[16]),sys.argv[17],Path(sys.argv[18])) if len(sys.argv)>=19 else None
+learned=(Path(sys.argv[20]),sys.argv[21]) if len(sys.argv)==22 else None
+learnedBytes=b''
+if learned:
+    path,digest=learned;assert path.is_absolute() and path.is_file() and not path.is_symlink() and len(digest)==64
+    info=path.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600 and info.st_size==164736
+    learnedBytes=path.read_bytes();assert hashlib.sha256(learnedBytes).hexdigest()==digest
 if cohort:
     for directory in cohort:
         assert directory.is_absolute() and directory.is_dir() and not directory.is_symlink()
@@ -145,15 +151,16 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                 cohortbin=Path(tmp)/'cohort'
                 flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
                 subprocess.run([compiler,*common,*flags,str(here/'pioneer_q38_recurrent_projection_cohort_bridge.cpp'),'-o',str(cohortbin)],check=True)
-                gated=subprocess.run([str(cohortbin),*map(str,cohort)],input=retained[:prefix],stdout=subprocess.PIPE,check=True,
+                cohortArgs=[str(cohortbin),*map(str,cohort)]+(['--learned'] if learned else [])
+                gated=subprocess.run(cohortArgs,input=retained[:prefix]+learnedBytes,stdout=subprocess.PIPE,check=True,
                                      env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'}).stdout
                 assert len(gated)==6144*4
                 for offset in (0,6144*4):
                     invalid=bytearray(retained[:prefix]);struct.pack_into('<I',invalid,offset,0x7fc00000)
-                    refused=subprocess.run([str(cohortbin),*map(str,cohort)],input=invalid,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                    refused=subprocess.run(cohortArgs,input=invalid+learnedBytes,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                                            env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'})
                     assert refused.returncode and not refused.stdout
-                print('PASS actual gate/QKV model-weight projection outputs -> separately seeded actual Conv/GDN cohort, all6144 outputs checked; synthetic state/parameters; NOT continuous workers/device/full-model/TPS',flush=True)
+                print('PASS actual gate/QKV projection outputs -> separately seeded actual Conv/GDN cohort, all6144 outputs checked; '+('model Conv/A/dt/norm and zero state, synthetic alpha/beta' if learned else 'synthetic state/parameters')+'; NOT continuous workers/device/full-model/TPS',flush=True)
                 if dynamicOutput:
                     output,digest,privateOut=dynamicOutput
                     refbin=Path(tmp)/'output-reference'
@@ -181,7 +188,7 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                                            stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
                     assert refused.returncode and not refused.stdout and b'writes=0 matrix=0' in refused.stderr
                     assert hashlib.sha256(output.read_bytes()).hexdigest()==digest
-                    print('PASS actual gated outputs -> retained gate/QKV workers -> output producer/matrix -> actual ROOT prepare/gather/scatter; all5120 match independent reference; cohort separate, snapshot replay, synthetic state; NO continuous device/full-model/TPS',flush=True)
+                    print('PASS actual gated outputs -> retained gate/QKV workers -> output producer/matrix -> actual ROOT prepare/gather/scatter; all5120 match independent reference; cohort separate, snapshot replay, '+('model parameters, zero state, synthetic alpha/beta' if learned else 'synthetic state')+'; NO continuous device/full-model/TPS',flush=True)
             chainSnapshots=retained[prefix:prefix+snapshotSize]
             warmed=subprocess.run([str(rootbin),str(root),'6','--after-gate-prepare'],input=boot+chainSnapshots,
                                   stdout=subprocess.PIPE,check=True,env=env).stdout

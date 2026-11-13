@@ -29,6 +29,16 @@ contexts, so these results do not show one uninterrupted worker lifecycle.
 The reference checks are offline validation, not part of Assistant's
 no-CPU-reference Work mode.
 
+Follow-up: the same instruction bridge also passed with layer-0 Conv,
+ssm_a, dt bias and GDN norm bytes from the full-SHA-authenticated original
+GGUF. Their 164736-byte private export has SHA-256
+e850e588b4ea985d75895f4f188d22ef777a095fd5ca49b9d3a797702a46a311.
+All Conv/GDN checks and all 5120 output-reference checks passed with zero
+initial convolution and recurrent state. The normalized input, alpha and
+beta projections are still synthetic; the cohort worker context is still
+separate from the matrix workers. The original synthetic fixture remains
+available and is not reclassified as actual model inference.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.

@@ -5,14 +5,18 @@
 #include "pioneer_q38_mixed_recurrent_cohort_test.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3);
+ assert(argc==3 || (argc==4 && !std::strcmp(argv[3],"--learned")));
+ const bool learned=argc==4;
  std::array<uint32_t,6144> gate;
  std::array<uint32_t,10240> qkv;
+ std::vector<uint32_t> parameters(learned?41184:0);
  assert(fread(gate.data(),4,gate.size(),stdin)==gate.size());
  assert(fread(qkv.data(),4,qkv.size(),stdin)==qkv.size());
+ if(learned)assert(fread(parameters.data(),4,parameters.size(),stdin)==parameters.size());
  assert(fgetc(stdin)==EOF);
  for(uint32_t value:gate)assert(isfinite(Float(value)));
  for(uint32_t value:qkv)assert(isfinite(Float(value)));
+ for(uint32_t value:parameters)assert(isfinite(Float(value)));
  auto m=std::make_unique<NewCohortMachine>(argv[1],argv[2]);
  assert(m->Wait(0));
  const unsigned base=m->header[8],route=m->header[9];
@@ -21,6 +25,27 @@ int main(int argc,char** argv){
  }
  for(unsigned i=0;i<qkv.size();i++){
   m->Put(route,base+PioneerQ38ProjectionResultOffset(6)+i*4,qkv[i]);
+ }
+ if(learned){
+  // Slot zero represents the start of a conversation, not synthetic prior
+  // state. The learned matrices retain their authentic source bytes.
+  for(unsigned w=0;w<120;w++)for(unsigned job=0;job<PioneerQ38ConvBatchCount(w);job++){
+   const auto* d=m->plan->Conv()+w*384+job*64;
+   for(unsigned c=0;c<16;c++){
+    for(unsigned t=0;t<4;t++)m->Put(d[13],d[12]+(c*4+t)*4,parameters[(d[7]+c)*4+t]);
+    for(unsigned t=0;t<3;t++)m->Put(d[41],d[15]+(c*3+t)*4,0);
+   }
+  }
+  for(unsigned w=0;w<96;w++){
+   const auto* in=m->plan->Gdn()+w*192;const auto* st=in+64;const auto* ga=in+128;
+   const unsigned head=w/2,first=head-in[47];assert(first+16<=48);
+   for(unsigned i=0;i<16;i++){
+    m->Put(in[13],in[12]+i*4,parameters[40960+first+i]);
+    m->Put(in[41],in[15]+i*4,parameters[41008+first+i]);
+   }
+   for(unsigned i=0;i<128;i++)m->Put(ga[13],ga[12]+i*4,parameters[41056+i]);
+   for(unsigned i=0;i<8192;i++)m->Put(st[12],st[5]+i*4,0);
+  }
  }
  m->Stage();assert(m->Wait(1));m->Verify();
  // Keep the actual computed result available for the output-projection
