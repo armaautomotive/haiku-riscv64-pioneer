@@ -20,12 +20,13 @@ static void SnapshotStage(DenseProducerImage& image,PioneerRecurrentWorkerStage&
 #ifndef PIONEER_Q38_RECURRENT_WORKER_BRIDGE_HELPER_ONLY
 int main(int argc,char** argv){
  assert((argc==4 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")))
-  || (argc==5 && !std::strcmp(argv[3],"--run-full")));
+  || (argc==5 && (!std::strcmp(argv[3],"--run-full") || !std::strcmp(argv[3],"--run-full-input"))));
  const unsigned tensor=PioneerNativeBfpModelBandMetadata::Tensor;
  assert(tensor==3 || tensor==5 || tensor==16);
  const unsigned role=tensor==3?5:tensor==5?6:13,width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120;
  assert(width==PioneerNativeBfpModelBandMetadata::Width);
- const bool full=argc==5;std::vector<uint8_t> projection;
+ const bool full=argc==5,dynamic=full && !std::strcmp(argv[3],"--run-full-input");std::vector<uint8_t> projection;
+ assert(!dynamic || role==13);
  if(full){
   std::ifstream f(argv[4],std::ios::binary);
   projection.assign(std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>());
@@ -46,7 +47,13 @@ int main(int argc,char** argv){
   assert(fread(producerJobs[w].data(),sizeof(uint32_t),64,stdin)==64);
  }
  std::array<std::array<uint32_t,64>,119> jobs;
- assert(fread(jobs.data(),sizeof(uint32_t),119*64,stdin)==119*64 && fgetc(stdin)==EOF);
+ assert(fread(jobs.data(),sizeof(uint32_t),119*64,stdin)==119*64);
+ std::vector<uint32_t> dynamicInput(dynamic?width:0),dynamicExpected(dynamic?rows:0);
+ if(dynamic){
+  assert(fread(dynamicInput.data(),sizeof(uint32_t),width,stdin)==width);
+  assert(fread(dynamicExpected.data(),sizeof(uint32_t),rows,stdin)==rows);
+ }
+ assert(fgetc(stdin)==EOF);
  std::vector<uint8_t> input(width*2);
  std::array<std::unique_ptr<DenseProducerImage>,24> producers;
  std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{};
@@ -55,7 +62,7 @@ int main(int argc,char** argv){
   auto producer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,chunk+1);producer->Boot();
   SnapshotStage(*producer,snapshots[chunk].initial,false);
   for(unsigned i=0;i<256;i++){const unsigned at=chunk*256+i;
-   producer->input[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
+   producer->input[i]=dynamic?dynamicInput[at]:uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
   producer->StageProducer(role,1,false,0);
   for(unsigned i=0;i<64;i++){
    assert(producer->descriptor[i]==descriptors[chunk][i] && producer->Get(HW::Job+i*4)==producerJobs[chunk][i]);
@@ -107,7 +114,8 @@ int main(int argc,char** argv){
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const unsigned dest=first+band*32+row;assert(!seen[dest]++);
    uint32_t expected;
-   if(full){const size_t weightBytes=size_t(width/32)*1088;
+   if(dynamic)expected=dynamicExpected[dest];
+   else if(full){const size_t weightBytes=size_t(width/32)*1088;
     const size_t source=32+size_t(first/32+band)*(weightBytes+128)+weightBytes+row*4;
     std::memcpy(&expected,projection.data()+source,4);}
    else expected=PioneerNativeBfpModelBandMetadata::Golden((w+band)%3)[row];

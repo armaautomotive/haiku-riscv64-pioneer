@@ -15,9 +15,15 @@ projection hashes are e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755f
 The Conv weights, history, GDN parameters, state and other projection inputs
 remain synthetic. The QRC1 worker machines are freshly seeded with separate
 prior histories: this does not demonstrate continuous retained workers or
-on-card handoff. The 6144 gated results are not yet fed through the output
-matrix in the same test. The numeric reference checks are offline validation,
-not part of Assistant's no-CPU-reference Work mode.
+on-card handoff. The 6144 computed gated results are now passed to a
+separately booted simulated BF16 producer and matrix workers using all rows
+of the model-derived output projection (export SHA-256
+8158c4fbaa3569ae7f3453d367b7d988a6d67d0107817c7af524308f1814d886).
+All 5120 output rows match an independent integer reference calculated from
+the same packed weights and gated input. This last phase also starts fresh
+worker simulations rather than continuing the previous worker contexts.
+The reference checks are offline validation, not part of Assistant's
+no-CPU-reference Work mode.
 
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end

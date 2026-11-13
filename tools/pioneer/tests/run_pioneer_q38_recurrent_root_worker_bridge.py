@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')))
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15,19) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')) and (len(sys.argv)!=19 or sys.argv[12]=='--cohort' and sys.argv[15]=='--dynamic-output'))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
 mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)>=9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)>=9 and sys.argv[6]=='--full-qkv' else '--out'
@@ -19,7 +19,8 @@ geometry={'--gate':(6144,5120),'--qkv':(10240,5120),'--out':(5120,6144)}
 full=Path(sys.argv[7]) if len(sys.argv)>=9 else None
 chain=Path(sys.argv[10]) if len(sys.argv)>=12 else None
 chainOutput=Path(sys.argv[13]) if len(sys.argv)==15 and sys.argv[12]=='--chain-output' else None
-cohort=(Path(sys.argv[13]),Path(sys.argv[14])) if len(sys.argv)==15 and sys.argv[12]=='--cohort' else None
+cohort=(Path(sys.argv[13]),Path(sys.argv[14])) if len(sys.argv)>=15 and sys.argv[12]=='--cohort' else None
+dynamicOutput=(Path(sys.argv[16]),sys.argv[17],Path(sys.argv[18])) if len(sys.argv)==19 else None
 if cohort:
     for directory in cohort:
         assert directory.is_absolute() and directory.is_dir() and not directory.is_symlink()
@@ -54,6 +55,17 @@ roles={'--gate':5,'--qkv':6,'--out':13}
 sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1','7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'),
              '--gate':('c4781e0c6c3963ff1e1b3ac36c1d21fbb1dd74e2785826489cf67cbb139c9f36','a5fadca5d6baeaa921472989cf038dd4aa2a90a666f4c7b3262c8ee141841ff2'),
              '--qkv':('396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a','a81f5268d942344b4c4cfd4d0d02853dc82f36bfe8ab099a5bfa5d47d94de86d')}
+if dynamicOutput:
+    output,digest,privateOut=dynamicOutput
+    assert output.is_absolute() and output.is_file() and not output.is_symlink() and len(digest)==64
+    info=output.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
+    assert info.st_size==32+(5120//32)*((6144//32)*1088+128) and hashlib.sha256(output.read_bytes()).hexdigest()==digest
+    assert privateOut.is_absolute() and privateOut.is_dir() and not privateOut.is_symlink()
+    assert privateOut.stat().st_uid==os.geteuid() and stat.S_IMODE(privateOut.stat().st_mode)==0o700
+    for name,expected in zip(('PioneerNativeBfpModelBandData.h','PioneerNativeBfpModelBandMetadata.h'),sample_pins['--out']):
+        path=privateOut/name;info=path.lstat()
+        assert path.is_file() and not path.is_symlink() and info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
+        assert hashlib.sha256(path.read_bytes()).hexdigest()==expected
 assert all(p.is_absolute() and p.is_dir() and not p.is_symlink() for p in (sdk,root,worker,leaf,private))
 assert private.stat().st_uid==os.geteuid() and stat.S_IMODE(private.stat().st_mode)==0o700
 pins=((root/'program.elf','15461d563708f2087497c1eb14afffac6e55dd701cf1dd846abc29d40f1b3c3f'),
@@ -142,6 +154,26 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                                            env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'})
                     assert refused.returncode and not refused.stdout
                 print('PASS actual gate/QKV model-weight projection outputs -> separately seeded actual Conv/GDN cohort, all6144 outputs checked; synthetic state/parameters; NOT continuous workers/device/full-model/TPS',flush=True)
+                if dynamicOutput:
+                    output,digest,privateOut=dynamicOutput
+                    refbin=Path(tmp)/'output-reference';outbin=Path(tmp)/'output-worker'
+                    subprocess.run([compiler,*common,str(here/'pioneer_q38_output_dynamic_reference.cpp'),'-o',str(refbin)],check=True)
+                    synthetic=subprocess.run([str(refbin),str(output),'--synthetic'],stdout=subprocess.PIPE,check=True,env=env).stdout
+                    assert len(synthetic)==5120*4
+                    for invalidBits in (0x7fc00000,1):
+                        invalid=bytearray(gated);struct.pack_into('<I',invalid,0,invalidBits)
+                        refused=subprocess.run([str(refbin),str(output),'--input'],input=invalid,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+                        assert refused.returncode and not refused.stdout
+                    subprocess.run([compiler,*common,*['-D'+r+'=1' for r in worker_roles],'-I'+str(privateOut),
+                                    str(here/'pioneer_q38_recurrent_worker_job_bridge.cpp'),'-o',str(outbin)],check=True)
+                    reference=subprocess.run([str(refbin),str(output),'--input'],input=gated,stdout=subprocess.PIPE,check=True,env=env).stdout
+                    assert len(reference)==5120*4
+                    outputJob=subprocess.run([str(rootbin),str(root),'13'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
+                    actual=subprocess.run([str(outbin),str(worker),str(leaf),'--run-full-input',str(output)],input=outputJob+gated+reference,
+                                          stdout=subprocess.PIPE,check=True,env=env).stdout
+                    assert len(actual)==5120*4+snapshotSize and actual[:5120*4]==reference
+                    assert hashlib.sha256(output.read_bytes()).hexdigest()==digest
+                    print('PASS actual recurrent gated outputs -> separately booted actual output producers/matrix workers, all5120 rows match independent integer reference; synthetic state/parameters; NO continuous device/full-model/TPS',flush=True)
             chainSnapshots=retained[prefix:prefix+snapshotSize]
             warmed=subprocess.run([str(rootbin),str(root),'6','--after-gate-prepare'],input=boot+chainSnapshots,
                                   stdout=subprocess.PIPE,check=True,env=env).stdout
