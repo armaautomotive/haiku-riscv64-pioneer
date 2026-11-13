@@ -526,3 +526,11 @@ and stopped with its doorbell pending after 20,613,140 ROOT instructions.
 Both ordinary and idle-aware schedulers passed; neither copied worker state
 nor supplied the producers' output. The matrix job was not delivered or
 executed, so this remains synthetic simulation, not a card performance result.
+
+Synthetic matrix input preparation: an explicitly selected host-only source
+now supplies 320 nonzero-pattern BFP8 tiles for layer-0 role 10 at the
+small-recurrent physical address, with the 16 padded rows zeroed. All tiles
+were independently unpacked and checked, including wrong-route, out-of-range
+and revoked-source refusals; the existing synthetic embedding regression also
+passed. These bytes have not yet been consumed by the shared peer matrix
+engine and are not real model weights, a hardware run or a speed result.

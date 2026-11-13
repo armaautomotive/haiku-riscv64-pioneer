@@ -8,6 +8,10 @@
  || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE)
 #error Synthetic embedding bytes require their isolated host-test implementation
 #endif
+#if defined(PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST) && \
+ (!defined(PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST) || PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST != 1)
+#error Synthetic recurrent weights require the isolated synthetic layer fixture
+#endif
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
@@ -22,6 +26,17 @@
 #include "../PioneerQ38HybridHeadModelPlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
 #include <memory>
+#ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
+#if PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST != 1
+#error Synthetic recurrent matrix bytes require the exact test selector
+#endif
+#define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION 1
+#include "../PioneerQ38HybridSmallRecurrentBfp8Plan.h"
+#include "../PioneerBlackholeBlockFloat.h"
+#include <vector>
+#endif
 #endif
 #include <cstdio>
 #include <cstring>
@@ -37,6 +52,9 @@ void Block(unsigned token,unsigned block,uint8_t (&bytes)[BlockBytes]){
 struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;
 #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
  uint32_t normRoute=0,normAddress=0;
+#ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
+ uint32_t matrixRoute=0,matrixAddress=0;std::vector<uint8_t> matrix;
+#endif
 #endif
 };
 Q38EmbeddingRawTestBridge::Q38EmbeddingRawTestBridge():source(new Source){}
@@ -64,6 +82,27 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
    source->normRoute=PioneerQ38ProjectionRoute(q.bank);source->normAddress=canonical->Base+q.offset;
   }
   if(found!=1)return source->ready=false;
+#ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
+  PioneerQ38HybridSmallRecurrentBfp8Plan::Proposal physical;
+  if(!PioneerQ38HybridSmallRecurrentBfp8Plan::Build(*canonical,physical))return source->ready=false;
+  found=0;
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);const auto& q=physical.parts[i];
+   if(p->kind!=canonical->WeightKind || p->layer!=0 || p->role!=10)continue;
+   if(++found!=1 || q.bank>=7 || q.encoding!=PioneerQ38HybridSmallRecurrentBfp8Plan::SmallRecurrentBfp8
+    || q.bytes!=348160 || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+   source->matrixRoute=PioneerQ38ProjectionRoute(q.bank);source->matrixAddress=canonical->Base+q.offset;
+   source->matrix.resize(q.bytes);
+   for(unsigned band=0;band<2;band++)for(unsigned tile=0;tile<160;tile++){
+    float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
+     const unsigned global=band*32+row;values[row*32+col]=global>=48?0.f:float(int((global*7+tile*3+col*5)%17)-8)*0.0625f;
+    }
+    if(!PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,values,1024,
+       source->matrix.data()+(band*160+tile)*1088,1088))return source->ready=false;
+   }
+  }
+  if(found!=1)return source->ready=false;
+#endif
  }
 #endif
  return source->ready;
@@ -73,6 +112,12 @@ void Q38EmbeddingRawTestBridge::Revoke(){if(source)source->revoked=true;}
 bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* out,unsigned count){
  uint32_t geometry[8]={};
 #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
+#ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
+ if(Ready() && out && count && route==source->matrixRoute && address>=source->matrixAddress
+  && address-source->matrixAddress<=source->matrix.size() && count<=source->matrix.size()-(address-source->matrixAddress)){
+  memcpy(out,source->matrix.data()+(address-source->matrixAddress),count);return true;
+ }
+#endif
  if(Ready() && out && route==source->normRoute && ((address==source->normAddress && count==16384)
   || (address==source->normAddress+16384 && count==4096))){
   // Test-only finite unit weights; never real model weights or worker results.
