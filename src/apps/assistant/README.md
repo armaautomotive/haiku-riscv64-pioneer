@@ -6,9 +6,10 @@ Hardware and Models for the pinned Q4_K_M file already on the Pioneer.
 It uses the qualified Work matrix backend (up to 119 workers), with CPU
 reference validation OFF. CPU attention, recurrent state and norms remain;
 the unfinished resident-GDN/mutable-state candidates are NOT enabled.
-The latest Assistant test measured **0.129 tok/s** across seven warm
-generation steps (eight output tokens total), not the 20 tok/s goal or a
-real-world speed qualification.
+The latest isolated Assistant-protocol test measured **0.198 tok/s** across
+three warm generation samples (four output tokens total), not the 20 tok/s
+goal or a real-world speed qualification. This tiny sample is not proof of
+an inference-speed improvement.
 
 The 27B option runs in its own persistent `HaikuAssistantQwen27` process,
 with a private bounded socket protocol and no shell/network listener.
@@ -61,6 +62,11 @@ than silently reconverting weights or falling back to CPU inference.
 next load. **Models** shows preparation/verification progress. Full original
 authentication, cache verification and the first-reply GPU upload still take
 time; this does not remove PCIe transfers or speed up the inference kernels.
+The installed worker now retains the verified cache-entry identity and chunk
+index between preparation and upload, avoiding a second full-entry scan;
+it still authenticates the original model, verifies every complete cache entry
+initially, and checks every chunk read during upload. A single isolated test
+completed successfully; its upload timings are not a controlled comparison.
 The completed cached inference test recorded 851 hits and zero fresh
 conversion, followed by a clean unload. Its three warm generation samples
 measured 0.204 tok/s; that tiny sample is not a demonstrated speedup or the

@@ -23,3 +23,33 @@ existing lossless cache recipe remains the same only for the precisely
 pinned, reviewed source set; the recipe compatibility test passed all
 source-change refusals. No Pioneer run, installed worker, loading-time
 measurement, token-rate result or speedup claim yet.
+
+Physical Work trial completed, 2026-11-13: host-only load/unload and then
+one four-token request both exited 0, with empty stderr and 851 cache hits.
+The original SSH parent exited 0 with CARD_CLOSED_WORK_REQUEST_VERIFIED.
+Host authentication/cache verification took 1263.125 s. The first observed
+0.0-to-1.0 upload progress interval was 1091.032 s, with 490.9 s reported
+in weight reads and 599.5 s in device-upload calls. The complete request,
+including upload, prompt and generation, took 1205.076 s. It produced
+"Hello! How can"; 3 warm-generation samples took 15.124 s (0.198 tok/s).
+This uses P100A projections and CPU attention/state, with CPU reference OFF;
+it is not all-card inference, general quality or 20 tok/s qualification.
+
+The earlier batched trial's corresponding observed progress interval was
+about 1962.06 s and complete request 2128.08 s. These are individual runs,
+not a controlled comparison; no causal speedup or PCIe bandwidth is claimed.
+The unchanged stable driver SHA is
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag 2026102100010012 generation 42, no active owner/cold recovery. The
+machine reported 64 CPUs and 137034936320 bytes RAM. Work stdout at
+/boot/home/pioneer-remembered-cache-20261113-a/card.stdout has SHA-256
+790682a994f81713af89b3ad3cc94a3a34ed8e2209cd80583db56e7af974b1d1.
+Following the successful trial, the candidate worker was installed with
+SHA-256 93f1d09ba0b2e0d0ea73642ccc89bdc5d0bf0cbed4be0ce3bbd47ea94d24008f.
+The previous installed worker was preserved at
+/boot/home/pioneer-remembered-cache-20261113-a/installed-worker-before,
+SHA-256 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74.
+Independent post-install checks confirmed both hashes, the unchanged stable
+driver and idle generation 42, 64 CPUs and 137034936320 bytes RAM. The
+isolated trial used the same worker bytes and Assistant protocol, but no
+new post-install UI interaction or separate inference run is implied.
