@@ -18,23 +18,31 @@ struct PioneerQ38RecurrentQ8MatrixWorkspace {
  using M=PioneerQ38RecurrentQ8MatrixManifest;
  enum : unsigned {Offset=0x3000200,RecordBytes=128,RecordWords=RecordBytes/4,
   Records=M::Layers*M::Roles,Bytes=Records*RecordBytes,Words=Bytes/4};
+ struct Scratch {M::Scratch manifestScratch;std::array<uint32_t,M::Words> manifest={};std::array<uint32_t,Words> stage={};};
  static_assert(Offset>=PioneerQ38TokenLayout::C::HeadOffset+PioneerQ38TokenLayout::C::HeadBytes
   && Offset+Bytes<=PioneerQ38TokenLayout::SessionOffset && !(Offset&63) && !(RecordBytes&63),
   "experimental recurrent records must not overlap head or token session");
- static bool Build(const M::Canonical& source,const M::Plan::Proposal& proposal,uint32_t* output,unsigned words){
+ static bool BuildWithScratch(const M::Canonical& source,const M::Plan::Proposal& proposal,uint32_t* output,unsigned words,Scratch& scratch){
   if(!output || words!=Words || (reinterpret_cast<uintptr_t>(output)&3))return false;
   const uintptr_t dst=reinterpret_cast<uintptr_t>(output),src=reinterpret_cast<uintptr_t>(&source);
   const uintptr_t own=reinterpret_cast<uintptr_t>(&proposal),parts=reinterpret_cast<uintptr_t>(proposal.parts.data());
+  const uintptr_t work=reinterpret_cast<uintptr_t>(&scratch);
   if(proposal.parts.size()>SIZE_MAX/sizeof(proposal.parts[0]))return false;
   const size_t partBytes=proposal.parts.size()*sizeof(proposal.parts[0]);
-  if(dst>UINTPTR_MAX-Bytes || src>UINTPTR_MAX-sizeof(source) || own>UINTPTR_MAX-sizeof(proposal) || parts>UINTPTR_MAX-partBytes
+  if(dst>UINTPTR_MAX-Bytes || src>UINTPTR_MAX-sizeof(source) || own>UINTPTR_MAX-sizeof(proposal) || parts>UINTPTR_MAX-partBytes || work>UINTPTR_MAX-sizeof(scratch)
    || (dst<src+sizeof(source) && src<dst+Bytes) || (dst<own+sizeof(proposal) && own<dst+Bytes)
-   || (partBytes && dst<parts+partBytes && parts<dst+Bytes))return false;
-  std::array<uint32_t,M::Words> manifest={};
-  if(!M::Build(source,proposal,manifest.data(),manifest.size()))return false;
-  std::array<uint32_t,Words> stage={};
+   || (partBytes && dst<parts+partBytes && parts<dst+Bytes)
+   || (dst<work+sizeof(scratch) && work<dst+Bytes) || (work<src+sizeof(source) && src<work+sizeof(scratch))
+   || (work<own+sizeof(proposal) && own<work+sizeof(scratch))
+   || (partBytes && work<parts+partBytes && parts<work+sizeof(scratch)))return false;
+  auto& manifest=scratch.manifest;
+  if(!M::BuildWithScratch(source,proposal,manifest.data(),manifest.size(),scratch.manifestScratch))return false;
+  auto& stage=scratch.stage;stage.fill(0);
   for(unsigned r=0;r<Records;r++)for(unsigned i=0;i<21;i++)stage[r*RecordWords+i]=manifest[r*21+i];
   for(unsigned i=0;i<Words;i++)output[i]=stage[i];return true;
+ }
+ static bool Build(const M::Canonical& source,const M::Plan::Proposal& proposal,uint32_t* output,unsigned words){
+  Scratch scratch;return BuildWithScratch(source,proposal,output,words,scratch);
  }
 };
 #endif

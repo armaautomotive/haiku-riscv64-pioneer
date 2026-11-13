@@ -18,6 +18,18 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-receipt-', dir='/private/
     subprocess.run([compiler, '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                     '-Wno-misleading-indentation', '-Wno-unused-function', '-fsanitize=address,undefined',
                     str(source), '-o', binary], check=True)
+    stack = str(Path(tmp) / 'stack')
+    subprocess.run([compiler, '-std=c++17', '-O2', '-fno-inline', '-fstack-usage', '-Wall', '-Wextra', '-Werror',
+                    '-Wno-misleading-indentation', '-Wno-unused-function', str(source), '-o', stack], check=True)
+    usage = list(Path(tmp).glob('*.su'))
+    assert len(usage) == 1, usage
+    rows = [line.split('\t') for line in usage[0].read_text().splitlines()]
+    for marker, symbol in (('PioneerQ38RecurrentQ8UploadReceiptInspection.h:', 'Workspace'),
+                           ('PioneerQ38RecurrentQ8MatrixWorkspace.h:', 'BuildWithScratch'),
+                           ('PioneerQ38RecurrentQ8MatrixManifest.h:', 'BuildWithScratch')):
+        matched = [row for row in rows if marker in row[0] and symbol in row[0]]
+        assert len(matched) == 1 and len(matched[0]) == 3 and matched[0][2] == 'static' and int(matched[0][1]) <= 2048, (marker, matched)
+    print('PASS receipt and scratch builders have host static frames <=2048; NOT full stack or kernel proof', flush=True)
     for args in ([], ['--abort'], ['--bad-record'], ['--invalidate'], ['--hole']):
         subprocess.run([binary, *args], check=True, env=dict(os.environ, UBSAN_OPTIONS='halt_on_error=1'))
     for forbidden in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',

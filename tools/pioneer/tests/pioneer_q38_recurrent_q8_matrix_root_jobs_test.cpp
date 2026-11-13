@@ -63,10 +63,18 @@ int main(){
  auto source=std::make_unique<C>();P::Proposal proposal;assert(source->Build() && P::Build(*source,proposal));
  std::array<uint32_t,M::Words> manifest={};assert(M::Build(*source,proposal,manifest.data(),manifest.size()));
  std::array<uint32_t,Package::Words> records={};assert(Package::Build(*source,proposal,records.data(),records.size()));
+ auto scratch=std::make_unique<Package::Scratch>();std::array<uint32_t,Package::Words> separate={};
+ assert(Package::BuildWithScratch(*source,proposal,separate.data(),separate.size(),*scratch) && separate==records);
+ assert(!Package::BuildWithScratch(*source,proposal,scratch->stage.data(),Package::Words,*scratch));
+ auto ms=std::make_unique<M::Scratch>();std::array<uint32_t,M::Words> separateManifest={};
+ assert(M::BuildWithScratch(*source,proposal,separateManifest.data(),separateManifest.size(),*ms) && separateManifest==manifest);
+ assert(!M::BuildWithScratch(*source,proposal,ms->stage.data(),M::Words,*ms));
  for(unsigned record=0;record<Package::Records;record++)for(unsigned i=0;i<Package::RecordWords;i++)
   assert(records[record*Package::RecordWords+i]==(i<21?manifest[record*21+i]:0));
  auto original=manifest;auto changed=proposal;changed.parts[0].offset+=4096;
  auto originalRecords=records;
+ assert(!Package::BuildWithScratch(*source,changed,separate.data(),separate.size(),*scratch) && separate==originalRecords);
+ assert(!M::BuildWithScratch(*source,changed,separateManifest.data(),separateManifest.size(),*ms) && separateManifest==original);
  assert(!Package::Build(*source,changed,records.data(),records.size()) && records==originalRecords);
  assert(!Package::Build(*source,proposal,records.data(),records.size()-1) && records==originalRecords);
  assert(!Package::Build(*source,proposal,reinterpret_cast<uint32_t*>(proposal.parts.data()),Package::Words));

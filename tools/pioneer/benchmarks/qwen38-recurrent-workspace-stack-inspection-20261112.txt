@@ -1,0 +1,18 @@
+Recurrent metadata construction scratch, offline inspection, 2026-11-12
+
+The receipt-owned metadata path now uses explicit, non-overlapping scratch
+in its heap-only inspection owner rather than allocating the large staging
+arrays in Workspace and its called manifest/workspace builders. Output is
+still published only after construction and receipt revalidation succeed.
+Scratch/output/source/proposal overlap is rejected; sampled equivalence,
+malformed proposal refusal and receipt quarantine simulations passed.
+
+On this host, an optimized no-inline compiler stack-usage report records
+static frames of 192 bytes for receipt Workspace, 128 for the scratch-based
+workspace builder, and 192 for the scratch-based manifest builder. The old
+convenience workspace Build wrapper still allocates 42,688 bytes on stack;
+it is offline-only and is not used by the receipt-owned path. These are
+individual host frames, not aggregate call depth, RISC-V kernel stack proof,
+or authority to construct this object in a driver. The proposal uses dynamic
+containers, and concurrency/serialization and lifetime remain to be proven.
+No P100A execution, model correctness or speed was measured.

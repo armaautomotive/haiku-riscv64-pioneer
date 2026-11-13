@@ -16,21 +16,26 @@
 struct PioneerQ38RecurrentQ8MatrixManifest {
  using Canonical=PioneerQ38CanonicalModelPlan;using Plan=PioneerQ38HybridRecurrentQ8MatrixPlan;
  enum : unsigned {Fields=3,Banks=7,Roles=3,Layers=48,Words=Layers*Roles*Banks*Fields};
+ struct Scratch {std::array<uint32_t,Words> stage={};};
  static unsigned Index(unsigned layer,unsigned role,unsigned bank){return ((layer*Roles+role)*Banks+bank)*Fields;}
- static bool Build(const Canonical& source,const Plan::Proposal& proposal,uint32_t* output,unsigned words){
+ static bool BuildWithScratch(const Canonical& source,const Plan::Proposal& proposal,uint32_t* output,unsigned words,Scratch& scratch){
   if(!output || words!=Words || (reinterpret_cast<uintptr_t>(output)&3) || proposal.parts.size()>SIZE_MAX/sizeof(proposal.parts[0]))return false;
   const uintptr_t dst=reinterpret_cast<uintptr_t>(output),src=reinterpret_cast<uintptr_t>(&source);
   const uintptr_t own=reinterpret_cast<uintptr_t>(&proposal),parts=reinterpret_cast<uintptr_t>(proposal.parts.data());
+  const uintptr_t work=reinterpret_cast<uintptr_t>(&scratch);
   const size_t bytes=Words*sizeof(uint32_t),partBytes=proposal.parts.size()*sizeof(proposal.parts[0]);
-  if(dst>UINTPTR_MAX-bytes || src>UINTPTR_MAX-sizeof(source) || own>UINTPTR_MAX-sizeof(proposal) || parts>UINTPTR_MAX-partBytes
+  if(dst>UINTPTR_MAX-bytes || src>UINTPTR_MAX-sizeof(source) || own>UINTPTR_MAX-sizeof(proposal) || parts>UINTPTR_MAX-partBytes || work>UINTPTR_MAX-sizeof(scratch)
    || (dst<src+sizeof(source) && src<dst+bytes) || (dst<own+sizeof(proposal) && own<dst+bytes)
-   || (partBytes && dst<parts+partBytes && parts<dst+bytes))return false;
+   || (partBytes && dst<parts+partBytes && parts<dst+bytes)
+   || (dst<work+sizeof(scratch) && work<dst+bytes) || (work<src+sizeof(source) && src<work+sizeof(scratch))
+   || (work<own+sizeof(proposal) && own<work+sizeof(scratch))
+   || (partBytes && work<parts+partBytes && parts<work+sizeof(scratch)))return false;
   Plan::Proposal expected;if(!Plan::Build(source,expected) || expected.used!=proposal.used || expected.parts.size()!=proposal.parts.size())return false;
   for(unsigned i=0;i<expected.parts.size();i++){
    const auto& a=expected.parts[i];const auto& b=proposal.parts[i];
    if(a.original!=b.original || a.bank!=b.bank || a.offset!=b.offset || a.bytes!=b.bytes || a.allocated!=b.allocated || a.encoding!=b.encoding)return false;
   }
-  std::array<uint32_t,Words> stage={};unsigned count=0;
+  auto& stage=scratch.stage;stage.fill(0);unsigned count=0;
   for(unsigned i=0;i<source.Count();i++){
    const auto* p=source.Part(i);if(!p)return false;
    if(p->kind!=Canonical::WeightKind || p->layer>=64 || p->layer%4==3
@@ -45,6 +50,9 @@ struct PioneerQ38RecurrentQ8MatrixManifest {
   if(count!=Layers*Roles*Banks)return false;
   for(unsigned i=0;i<Words;i+=Fields)if(!stage[i] || !stage[i+2])return false;
   for(unsigned i=0;i<Words;i++)output[i]=stage[i];return true;
+ }
+ static bool Build(const Canonical& source,const Plan::Proposal& proposal,uint32_t* output,unsigned words){
+  Scratch scratch;return BuildWithScratch(source,proposal,output,words,scratch);
  }
 };
 #endif

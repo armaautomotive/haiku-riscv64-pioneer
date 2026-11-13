@@ -21,6 +21,10 @@ class PioneerQ38RecurrentQ8UploadReceiptInspection {
  int64_t team=-1;uint64_t generation=0,bytes=0,digest=UINT64_C(14695981039346656037);
  unsigned part=0,page=0,parts=0,spans=0,pages=0,pendingIndex=0,pendingPages=0,recorded=0;
  uint32_t denseManifestScratch[16*3*7*3]={}; // receipt is heap-only
+ // Inspection owner only; callers must serialize metadata derivation. These
+ // buffers preserve all-or-nothing output without large stack temporaries.
+ PioneerQ38RecurrentQ8MatrixWorkspace::Scratch workspaceScratch;
+ std::array<uint32_t,PioneerQ38RecurrentQ8MatrixWorkspace::Words> workspaceStaged={};
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof
   && original.OriginalFormatLayout() && ancestor.Ready() && parent.Ready() && layout.Ready()
@@ -161,9 +165,9 @@ public:
    if(!q || p.original!=q->original || p.bank!=q->bank || p.offset!=q->offset
     || p.bytes!=q->bytes || p.allocated!=q->allocated || p.encoding!=q->encoding)return Fail();
   }
-  std::array<uint32_t,W::Words> staged={};
-  if(!W::Build(original,proposal,staged.data(),staged.size()) || !Revalidate(c,fd,h,initialized,owner,gen))return false;
-  for(unsigned i=0;i<W::Words;i++)output[i]=staged[i];return true;
+  if(!W::BuildWithScratch(original,proposal,workspaceStaged.data(),workspaceStaged.size(),workspaceScratch)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<W::Words;i++)output[i]=workspaceStaged[i];return true;
  }
  enum : unsigned {DenseManifestWords=16*3*7*3};
  // Dense matrices remain in the same physical locations in the recurrent
