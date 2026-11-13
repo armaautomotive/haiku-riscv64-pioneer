@@ -25,7 +25,7 @@ void PreparePeerBytes(){
   if(pendingChanged){physical.pending=pending;physical.done=!pending;}
  }; // actual event DELTAS/explicit CPU writes;unrelated physical faults persist,NO journal recapture
  peerBytes.read=[](void* p,unsigned route,uint32_t address,uint8_t* out,unsigned count){
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE)
   auto& self=*static_cast<PioneerSessionIO*>(p);
   if(!out || !count || count>16384 || (address|count)&3)return false;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
@@ -46,7 +46,7 @@ void PreparePeerBytes(){
 #endif
  };
  peerBytes.put=[](void* p,unsigned route,uint32_t address,uint32_t word){
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE)
   auto& self=*static_cast<PioneerSessionIO*>(p);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
   return self.PutMutableWord(route,address,word)

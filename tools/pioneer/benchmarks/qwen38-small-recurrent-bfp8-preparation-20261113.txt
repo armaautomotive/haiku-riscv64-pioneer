@@ -501,3 +501,20 @@ engine, with each fetched instruction checked against the pinned program
 table. An incorrect worker image was rejected before execution. This test
 stopped at worker boot; no producer has run through the new callback. No
 hardware or inference-speed result follows.
+
+Combined shared-peer boundary: the pinned QTPM controller and all 119
+full peer simulators now share the same simulated L1/CSR backing from boot.
+With synthetic embedding and layer data, the controller reached the first
+small-recurrent producer job; normalization and its descriptor were checked,
+and the test stopped with the doorbell packet pending. This is a combined
+execution history, but it does not execute the producer, matrix arithmetic,
+an entire layer or a token and is not a physical performance measurement.
+
+Producer execution: the first attempt exposed an older host worker-model
+assertion that admitted only job types 1, 2, 7 and 8. After a test-only
+adaptation to the existing BF16 producer transport and recurrent descriptor
+checks, the same booted peer executed the type-5 role-10 producer. Its 256
+synthetic input values were packed to BF16 and matched an independent observer.
+The ROOT was held after its already-issued doorbell was delivered; no worker
+state or result was supplied by the host. This is not matrix execution, an
+entire layer or token, physical card qualification or a speed measurement.

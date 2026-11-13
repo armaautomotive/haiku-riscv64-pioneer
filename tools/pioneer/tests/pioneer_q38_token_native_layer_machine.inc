@@ -131,6 +131,8 @@ void RespondLayer(){
 #endif
      {assert(firstMatrixRunning && io.Raw(worker,W::Job+7*4)==1001 && io.Raw(0,local+i*4)==1);firstMatrixDoorbells++;}
     }
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE)
+    if(at==W::Doorbell)assert(worker==1 && io.Raw(0,local+i*4)==1 && io.Raw(worker,W::Job+8)==5);
 #else
     assert(at!=W::Doorbell);
 #endif

@@ -18,8 +18,10 @@ synthetic_embedding='--synthetic-embedding' in sys.argv
 if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
-synthetic_layer=synthetic_embedding and '--execution-layer-dispatch' in sys.argv
-recurrent_peer='--bootstrap-peer-engines' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_producer='--execution-recurrent-producer' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_layer_peer=('--execution-recurrent-layer-peer' in sys.argv or recurrent_producer) and '--recurrent-native-header' in sys.argv
+synthetic_layer=synthetic_embedding and ('--execution-layer-dispatch' in sys.argv or recurrent_layer_peer)
+recurrent_peer=('--bootstrap-peer-engines' in sys.argv or recurrent_layer_peer) and '--recurrent-native-header' in sys.argv
 hybrid_header=None
 recurrent_inspection='--recurrent-native-header' in sys.argv
 qgwf_unroll_inspection='--qgwf-unroll-frontier-header' in sys.argv
@@ -39,10 +41,12 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
     assert (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution','--execution-traffic')
             or qgw8_inspection and (sys.argv[2]=='--faults' or trace_init and sys.argv[2]=='--runtime-faults'))
             or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')
+            or recurrent_layer_peer and synthetic_embedding and len(sys.argv)==6
             or recurrent_peer and len(sys.argv)==5 and sys.argv[2]=='--bootstrap-peer-engines') and hybrid_header.is_absolute() and hybrid_header.is_file()
     if qgw8_inspection:
         assert (not synthetic_embedding and (len(sys.argv)==2 or len(sys.argv)==3 and (sys.argv[2] in ('--held','--faults','--runtime','--bootstrap','--execution','--execution-traffic') or trace_init and sys.argv[2]=='--runtime-faults'))
                 or synthetic_embedding and len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')
+                or recurrent_layer_peer and synthetic_embedding and len(sys.argv)==6
                 or recurrent_peer and len(sys.argv)==5 and sys.argv[2]=='--bootstrap-peer-engines'), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
     expected='ead7d7cfc06efec27f2480ab96f350e2828c95eaebc1a5b601406cffdd55b3be' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
@@ -345,9 +349,9 @@ if full_layer:
             for cycle in (1, 2):
                 path = pathlib.Path(str(prefix)+'.cycle'+str(cycle)+'.bin')
                 assert not path.exists() and not path.is_symlink()
-embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
+embedding = first_matrix or recurrent_layer_peer or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
 peer_bootstrap = fault_marker or len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
-peer_engines = full_end_contract or peer_bootstrap or first_matrix
+peer_engines = full_end_contract or peer_bootstrap or first_matrix or recurrent_layer_peer
 if precise_beta:
     assert peer_engines, 'precise-beta TEST requires virgin engines or the original full native predecessor;not an endpoint-only alias'
 if precise_context:
@@ -362,7 +366,7 @@ if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 if synthetic_embedding:
-    assert len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')
+    assert len(sys.argv)==4 and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch') or recurrent_layer_peer and len(sys.argv)==6
     assert not synthetic_layer or qgw8_inspection, 'synthetic layer weights require the isolated QGW8 profile'
     fixture=pathlib.Path(sys.argv[3]);assert fixture.is_absolute() and fixture.is_file()
     assert fixture.read_bytes()==(b'SYNTHETIC_Q4K_QGW8_LAYER_V1\n' if synthetic_layer else b'SYNTHETIC_Q4K_EMBEDDING_V1\n')
@@ -401,6 +405,7 @@ if qgwd_inspection:
                                 or recurrent_inspection and sys.argv[2]=='--execution-traffic')
             or recurrent_inspection and synthetic_embedding and len(sys.argv)==4
             and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')
+            or recurrent_layer_peer and synthetic_embedding and len(sys.argv)==6
             or recurrent_peer and len(sys.argv)==5 and sys.argv[2]=='--bootstrap-peer-engines'), \
         'QGWD fixture restricted to startup and explicit synthetic recurrent embedding/layer-dispatch inspection'
     del defines['PIONEER_Q38_QGW8_PROGRAMS_INSPECTION']
@@ -416,6 +421,7 @@ if qgwd_inspection:
     if qgwf_inspection:defines.update(PIONEER_Q38_QGWF_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_PROGRAMS_INSPECTION='1',PIONEER_Q38_QGWF_DUAL_BATCH_PLAN='1')
     if recurrent_inspection:defines.update(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY='1',PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION='1',PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION='1',PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION='1')
     if recurrent_peer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE']='1'
+    if recurrent_producer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
@@ -528,7 +534,7 @@ if terminal_faults or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--exe
 if embedding:
     defines['PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE'] = '1'
     defines['PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE'] = '1'
-    if first_matrix or sys.argv[2] == '--execution-layer-dispatch':
+    if first_matrix or recurrent_layer_peer or sys.argv[2] == '--execution-layer-dispatch':
         defines['PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE'] = '1'
 if peer_engines:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE='1', PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE='1')
@@ -726,6 +732,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         peer_object = base/'native-peer-engine.o'
         peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
         if recurrent_peer:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_TEST=1']
+        if recurrent_producer:
+            peer_flags += ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1','-DPIONEER_Q38_TEST_BF16_CONNECTED_PREPARE=1']
         if precise_context:
             peer_flags += ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1']  # DATA only;never native/kernel roles
         if pushed_context:

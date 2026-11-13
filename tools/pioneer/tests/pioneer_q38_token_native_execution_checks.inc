@@ -1,4 +1,10 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE) \
+  || !defined(PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE) || !defined(PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST) \
+  || defined(PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
+#error Recurrent producer execution requires the isolated synthetic shared-peer fixture
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -253,6 +259,30 @@ static void CheckNativeExecution(Fixture& f){
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
  CheckNativeLayerDispatch(f);
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE
+ {
+  namespace W=PioneerQ38SelectedGlobalWorker;namespace R=PioneerQ38GlobalChainLayout::R;
+  auto& cpu=*io.executionCpu;auto& peer=*io.bootstrapPeer[0];
+  assert(cpu.layerHeld && cpu.dispatchWorker==1 && io.Core(0).pending && peer.Idle() && peer.steps>0);
+  PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+  cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver the already-issued packet; never seed state
+  assert(io.Raw(1,W::Doorbell)==1 && !io.Core(0).pending);
+  for(unsigned n=0;n<1000000;n++){
+   peer.Advance(256);const auto s=peer.cpu->Stats();
+   if(peer.Idle() && s.sequence==1 && !s.active && !s.pending)break;
+  }
+  const auto s=peer.cpu->Stats();assert(peer.Idle() && s.sequence==1 && !s.active && !s.pending && !s.matrixInstructions);
+  for(unsigned i=0;i<128;i++){
+   uint32_t lanes[2];for(unsigned j=0;j<2;j++){
+    const uint32_t value=io.Raw(0,R::Input+(i*2+j)*4);
+    lanes[j]=(value+0x7fff+((value>>16)&1))>>16;
+   }
+   assert(io.runtimeDram.at((0x20000/4)+i)==(lanes[0]|(lanes[1]<<16)));
+  }
+  printf("PASS actual first recurrent input producer on booted shared peer/256 synthetic values matched independent BF16 observer/%u worker steps;SIMULATED ONLY,NOT matrix/layer/token/physical/TPS\n",s.steps);
+  return;
+ }
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE

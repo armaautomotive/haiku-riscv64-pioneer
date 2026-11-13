@@ -44,6 +44,21 @@ void ReceiveBf16Producer(){
  bf16ProducerPackets=0;requests=responses=0;
  for(unsigned i=0;i<8;i++)countBase[i]=physical[i];
  for(unsigned i=0;i<64;i++)descriptor[i]=memory.at(BP::Descriptor+i*4);
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST
+ // This host-only fixture observes the role-10 descriptor emitted by the
+ // recurrent image. The ordinary dense-only BP::DescriptorShape deliberately
+ // rejects it; do not enable its mutually exclusive offline build roles here.
+ const auto& d=descriptor;
+ assert(d[0]==BP::Magic && d[1]==1 && d[2]==67108864 && d[3]<7 && !(d[4]&4095)
+  && d[4]>=0x04000000 && d[4]<=0xc0000000 && d[42]<64 && (d[42]&3)!=3 && d[43]==10
+  && d[40]<8192 && d[41]<248320 && d[5]<20 && d[6] && d[6]<0x7fffffff && d[7]==d[5]+1
+  && d[7]==logicalWorker && d[8]==PioneerQ38ProjectionRoute(d[3]) && d[9]==PioneerQ38GlobalWorkerLayout::Peer(d[7])
+  && d[10]==BP::ProjectionInput+d[5]*1024 && d[11]==5120 && d[12]==BP::NativeOffset+d[5]*512
+  && d[13]==BP::LinesOffset+d[5]*128 && d[14]==BP::Format && d[15]==20 && d[16]);
+ for(unsigned i=32;i<40;i+=2)assert(d[i] || d[i+1]);
+ for(unsigned i=44;i<64;i++)assert(!d[i]);
+#else
  assert(BP::DescriptorShape(descriptor.data()) && descriptor[7]==logicalWorker);
+#endif
  active=true;
 } // Endpoint bookkeeping only: NO PC/register/seal/Tensix/completion setters.

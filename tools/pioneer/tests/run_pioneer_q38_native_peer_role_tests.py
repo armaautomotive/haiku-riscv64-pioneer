@@ -70,6 +70,15 @@ for parent in recurrent_bytes:
         check('pioneer_q38_token_native_peer_bytes.inc',invalid,parent=='PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE' and value is None,True)
 for macro in ('PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
     check('pioneer_q38_token_native_peer_bytes.inc',{**recurrent_bytes,macro:1},False,True)
+producer={'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE':1,
+          'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE':1,
+          'PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE':1,'PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST':1}
+check('pioneer_q38_token_native_execution_checks.inc',producer,True,True)
+for parent in producer:
+    invalid=dict(producer);del invalid[parent]
+    check('pioneer_q38_token_native_execution_checks.inc',invalid,parent=='PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE',True)
+for macro in ('PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
+    check('pioneer_q38_token_native_execution_checks.inc',{**producer,macro:1},False,True)
 stack_header='PioneerQ38InstructionStackObserver.h'
 stack_role='PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST'
 check(stack_header,{stack_role:1},True)
