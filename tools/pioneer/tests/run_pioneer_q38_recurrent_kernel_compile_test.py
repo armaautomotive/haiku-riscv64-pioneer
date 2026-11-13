@@ -15,6 +15,7 @@ required = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\
 required.update(('PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY',
                  'PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION',
                  'PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION',
+                 'PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION',
                  'PIONEER_Q38_QGWD_NATIVE_INSPECTION',
                  'PIONEER_Q38_QGW8_LAYOUT_INSPECTION',
                  'PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION',
@@ -29,7 +30,9 @@ flags += ['-DPIONEER_DRIVER_BUILD_TAG=0x51544b4e4f445256ULL']
 flags += ['-D' + name + '=q38_private_' + name for name in
           ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')]
 source = '''#include "PioneerQ38SmallRecurrentUploadReceiptInspection.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanService.h"
 using R=PioneerQ38SmallRecurrentUploadReceiptInspection;
+static_assert(PioneerQ38SpanReceiptKind<R>::Value==5,"small recurrent span service not selected");
 int size(){return sizeof(R);}
 bool revalidate(R& r,const void* c,const void* f,const uint32_t* h,const uint8_t* l){
  return r.Revalidate(c,f,h,l,17,42);

@@ -334,3 +334,12 @@ the test rejects missing inspection prerequisites, real tag146, Work and CPU
 validation roles. The original offline receipt and layout regressions also
 pass. This is a non-loadable standalone object, not the complete driver,
 registered ioctl, native owner, card execution, model-quality result or TPS.
+
+Span-service boundary: the same fake-tag kernel compile profile can now
+include the actual shared span-service header and select the small-recurrent
+receipt kind. The receipt methods are emitted in the RISC-V standalone
+object; the service templates themselves are not instantiated by that
+object. Separately, the existing host simulation exercises actual normal and
+fast span-service calls with the small receipt, including a failed-transfer
+quarantine. Both tests pass. This is not yet a whole-driver build, ioctl,
+live owner, hardware run, output-quality result or speed measurement.
