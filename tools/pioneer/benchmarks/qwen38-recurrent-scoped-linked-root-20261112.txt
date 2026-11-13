@@ -1,0 +1,20 @@
+Persistent linked recurrent ROOT inspection image, 2026-11-12
+
+The scoped-seal recurrent object was independently rebuilt with the same
+SHA-256 c3051b325d8c5a4bb6cb9b5a1e02a5bad2f8fec8f28bbfbb0f1dc12f9bfa106c.
+It was linked twice with the SHA-pinned QGWF parent, dense, convolution and
+feedback objects. Both complete inspection ELFs are byte-identical; the
+linker reports no unresolved symbols and enforces its ROOT section limits.
+The persistent output also includes both symbol tables for follow-on
+instruction simulation. Key sections:
+
+  BF16: 53,220 / 65,536 bytes
+  main text: 130,692 / 131,072 bytes (380 bytes spare)
+  convolution: 19,632 / 32,768 bytes
+
+This is the same style of inspection-only link used by the helper simulator,
+not a loadable native driver or a full ROOT lifecycle test. Symbol/section
+fit alone does not prove stack depth, runtime ownership, concurrent access,
+model arithmetic, Work integration or device safety. No card work or
+tokens-per-second measurement occurred. The small main-text margin is a real
+constraint for the next connected-image work.
