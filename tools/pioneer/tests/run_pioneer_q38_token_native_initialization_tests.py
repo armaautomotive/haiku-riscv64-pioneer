@@ -390,7 +390,11 @@ if matrix_inspection:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTI
 if qgw8_inspection:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
                                   PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
 if qgwd_inspection:
-    assert len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution') or recurrent_inspection and sys.argv[2]=='--execution-traffic'), 'QGWD fixture restricted to held/runtime/bootstrap/root-start inspection'
+    assert (len(sys.argv)==3 and (sys.argv[2] in ('--held','--runtime','--bootstrap','--execution')
+                                or recurrent_inspection and sys.argv[2]=='--execution-traffic')
+            or recurrent_inspection and synthetic_embedding and len(sys.argv)==4
+            and sys.argv[2] in ('--execution-embedding','--execution-layer-dispatch')), \
+        'QGWD fixture restricted to startup and explicit synthetic recurrent embedding/layer-dispatch inspection'
     del defines['PIONEER_Q38_QGW8_PROGRAMS_INSPECTION']
     for name in ('PIONEER_Q38_QGWD_NATIVE_INSPECTION','PIONEER_Q38_QGWD_PROGRAMS_INSPECTION',
                  'PIONEER_Q38_QGWD_PLAN_SIMULATION','PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION',

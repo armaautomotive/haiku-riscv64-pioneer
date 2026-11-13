@@ -44,7 +44,8 @@ static void CheckNativeLayerDispatch(Fixture& f){
  }
  const unsigned type=io.Raw(0,R::Header+15*4),inputs=io.Raw(0,R::Header+14*4);
  assert(inputs==5120 && (type==8 || type==12 || type==14) && io.Raw(0,R::Header+43*4)==10);
- (void)&PioneerQ38ProjectionQuantize;
+ (void)&PioneerQ38ProjectionQuantize;(void)&ProjectionInputReference;
+#ifndef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
  for(unsigned at=0;at<inputs;at+=256){
   float normalized[256];PioneerQ38ProjectionInput expected;
   for(unsigned i=0;i<256;i++)normalized[i]=Float(io.Raw(0,R::Input+(at+i)*4));
@@ -53,13 +54,31 @@ static void CheckNativeLayerDispatch(Fixture& f){
   const unsigned count=type==8?8:1,first=at>>(type==8?5:8);
   for(unsigned i=0;i<count;i++)assert(io.Raw(0,R::Scales+(first+i)*4)==expected.scale[i]);
  }
+#endif
  const unsigned worker=cpu.dispatchWorker;std::array<uint32,64> boot,job;
  for(unsigned i=0;i<64;i++){boot[i]=io.Raw(worker,W::Boot+i*4);job[i]=io.Raw(worker,W::Job+i*4);}
- assert(W::JobShape(job.data(),boot.data(),0,0) && job[2]==1 && !job[5] && !job[6] && !io.Raw(worker,W::Doorbell));
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ // Match the recurrent producer grammar without enabling the offline-only
+ // recurrent-width role inside the fake native kernel profile.
+ assert(W::BootShape(boot.data()) && job[0]==W::Magic && job[1]==1
+  && job[2]==5 && job[3]==boot[3] && job[3]<=20 && job[4]==boot[4] && !job[5] && !job[6] && job[7] && job[7]<0x7fffffff
+  && job[16]==W::Producer::Magic && job[17]==256 && job[18]==512 && job[19]==job[7] && job[20]==12
+  && job[27]<248320 && job[28]==10 && job[29]==5120 && job[30]==W::Producer::Format && job[31]==W::Producer::Witness);
+ for(unsigned i=8;i<16;i++)assert(job[i]==boot[i]);
+ for(unsigned i=21;i<27;i++)assert(!job[i]);
+ for(unsigned i=32;i<64;i++)assert(!job[i]);
+#else
+ assert(W::JobShape(job.data(),boot.data(),0,0) && job[2]==1 && !job[5] && !job[6]);
+#endif
+ assert(!io.Raw(worker,W::Doorbell));
  for(const auto& p:io.bootstrapPeer)assert(p->Idle() && !p->matrixInstructions && !p->floatOps && !p->requests && !p->responses);
  assert(io.runtimePackets==hostPackets && io.resets.size()==resets && !io.pciWrites && !io.HostReadMock::bmeWrites && !state->Unsafe());
 #ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
- printf("PASS SAME native owner+119 simulated worker histories/ROOT synthetic embedding and synthetic layer0 norm -> ALL5120 RMS+native operands/scales vs independent OBSERVERS ONLY/actual valid worker%u matrix job delivered/doorbell packet PENDING/ROOTsteps%u layerPackets%u peerR%u peerW%u;NO CPU product upload or worker completion;NOT real model/matrix/layer/token/STOP/END/physical/TPS\n",
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ printf("PASS SAME native owner+119 simulated worker histories/ROOT synthetic embedding and layer0 ALL5120 RMS values vs independent OBSERVER ONLY/valid input-reuse producer job staged for worker%u/doorbell packet PENDING/ROOTsteps%u layerPackets%u peerR%u peerW%u;NO quantization,worker completion or CPU product upload;NOT real model/matrix/layer/token/STOP/END/physical/Work/TPS\n",
+#else
+ printf("PASS SAME native owner+119 simulated worker histories/ROOT synthetic embedding and synthetic layer0 norm -> ALL5120 RMS+native operands/scales vs independent OBSERVERS ONLY/actual valid worker%u job staged/doorbell packet PENDING/ROOTsteps%u layerPackets%u peerR%u peerW%u;NO CPU product upload or worker completion;NOT real model/matrix/layer/token/STOP/END/physical/TPS\n",
+#endif
 #else
  printf("PASS SAME native full851+1010 actual zero jobs+119 VIRGIN boot histories/unchanged full scalar ISA from first ROOT instruction/original27B embedding -> genuine layer0 metadata+RAW norm+ALL5120 bit-exact RMS+ALL native operands/scales vs independent OBSERVERS ONLY/actual valid worker%u matrix job delivered/doorbell packet PENDING/ROOTsteps%u layerPackets%u peerR%u peerW%u;NO CPU products,worker completion or private-history transplant;NOT matrix/layer/token/STOP/END/physical/Work/TPS\n",
 #endif

@@ -67,7 +67,11 @@ void SubmitLayer(){
   else
 #endif
   {
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+  assert(io.Raw(worker,W::Job+8)==5); // QTPM stages the input-reuse producer first.
+#else
   assert(io.Raw(worker,W::Job+8)==1);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
   if(firstMatrixRunning && io.Raw(worker,W::Job+7*4)==1001){layerHeld=false;}
   else

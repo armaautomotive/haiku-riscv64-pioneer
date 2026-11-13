@@ -313,7 +313,11 @@ static void CheckNativeExecution(Fixture& f){
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE)
  assert(io.Core(0).pending && io.executionCpu->layerHeld && io.executionCpu->dispatchWorker
   && io.executionCpu->submitted==io.executionCpu->completed+1);
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ printf("PASS native SAME ROOT synthetic normalized layer0 input/fresh-call cancel WHILE first producer doorbell transfer is OUTSTANDING/one32bit request+exact readback/ROOT instructions%u writtenStack%u;NOT quantization/worker matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#else
  printf("PASS native SAME genuine ROOT normalized+quantized layer0 input/fresh-call cancel WHILE actual first worker doorbell transfer is OUTSTANDING/one32bit request+exact readback/ROOT instructions%u writtenStack%u;NOT worker matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#endif
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE)
  assert(io.Core(0).pending && io.executionCpu->submitted==28 && io.executionCpu->completed==27);
 #ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST

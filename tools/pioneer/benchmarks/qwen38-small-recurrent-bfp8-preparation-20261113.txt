@@ -469,3 +469,23 @@ upload progress callback reported monotonically through the exact total.
 The test provides synthetic controller replies and does not execute ROOT,
 generate a token, establish physical-driver authority or measure speed.
 This one-shot controller does not yet establish reuse across requests.
+The broader existing QGWD/QGWF full-session regression subsequently passed
+its synthetic success, failure, multi-token and role-isolation cases.
+
+Synthetic embedding through QTPM: after the same native initialization and
+119 simulated worker boots, the actual QTPM ROOT instruction stream decoded
+20 synthetic Q4_K embedding tiles and published/read back the resulting
+5,120 values in simulated memory. All values matched a separate decoder
+used solely as an observer. The test reached the next layer-0 metadata
+request after 1,249,687 ROOT instructions. It did not use real model data,
+complete a transformer layer, execute inference on hardware or measure speed.
+
+Layer-dispatch investigation: extending the same QTPM native simulation to a
+synthetic layer reached a worker doorbell after more than 16 million ROOT
+instructions, but an existing fixture assertion expected job word 2 to be 1.
+Diagnostic runs identified the actual job as type 5, small recurrent role 10;
+the old fixture also expected quantized operands before that producer ran.
+The corrected fixture passed all 5,120 synthetic normalization values and
+the producer-specific descriptor checks, stopping before delivery of the
+first worker doorbell after 17,550,865 ROOT instructions. No producer or
+matrix operation completed; this is not a physical run or speed measurement.
