@@ -5,6 +5,8 @@
 #include "pioneer_q38_recurrent_gate_qkv_worker_bridge.cpp"
 #include "../PioneerQ38RecurrentSmallMatrixSchedule.h"
 #include "PioneerQ38SmallPlanMachine.h"
+#define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
+#include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 
 int main(int argc,char** argv){
  assert(argc==6);using S=PioneerQ38RecurrentSmallMatrixSchedule;static_assert(sizeof(S::Part)==268,"wire fixture part size");
@@ -27,6 +29,15 @@ int main(int argc,char** argv){
  workers[0]->StageProducer(10,1,false,0);workers[0]->Check(1);
  const uint32_t bases[]={0x10000000,0x11000000},banks[]={0,1},previous[]={1,0,0,0};S::Part parts[4]={};
  assert(S::Build(0,0,2025,bases,banks,boots,previous,parts));
+ for(unsigned w=0;w<4;w++){
+  const uint32_t tuple[]={bases[w/2]+(w%2)*S::BandBytes,banks[w/2],(w%2)*32,1};
+  uint32_t rootFrame[64]={};
+  assert(PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,boots[w],0,10+w/2,0,2025,previous[w],rootFrame));
+  assert(!std::memcmp(rootFrame,parts[w].frame,sizeof(rootFrame)));
+  rootFrame[0]=0x76543210;
+  assert(!PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,boots[w],3,10+w/2,0,2025,previous[w],rootFrame)
+   && rootFrame[0]==0x76543210);
+ }
  PioneerQ38SmallPlanMachine root(argv[5]);
  for(unsigned i=0;i<2;i++){root.memory[0x91000+i*4]=bases[i];root.memory[0x91010+i*4]=banks[i];}
  for(unsigned i=0;i<4;i++)root.memory[0x91020+i*4]=previous[i];

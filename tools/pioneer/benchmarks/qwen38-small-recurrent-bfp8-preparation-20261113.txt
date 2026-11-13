@@ -37,3 +37,12 @@ parent forwarding, snapshot mutation, geometry, source revocation and
 fail-closed/atomic output, as well as the existing parent regression. This
 is not an upload ledger, native owner, scheduler, device execution or speed
 result; the installed Assistant and driver remain unchanged.
+
+Frame-builder follow-up: under the isolated small-worker inspection role,
+the actual recurrent-aware ROOT frame builder now encodes roles 10 and 11
+as 5,120-column, 64-padded-row BFP8 jobs. It has a distinct link symbol
+from the older recurrent builder to prevent incompatible COMDAT substitution.
+All four frames match the separately constructed standalone RV32 schedule,
+and a dense-layer misuse is refused before output. This only supplies a
+controller component: no ROOT schedule/manifest selection, scatter, upload,
+native driver, device run or inference speed is established by this change.

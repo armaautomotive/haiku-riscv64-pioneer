@@ -16,7 +16,9 @@ typedef __UINT32_TYPE__ uint32_t;
 #include <stdint.h>
 #endif
 #include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
-#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+struct PioneerQ38SmallRecurrentAwareQ8MatrixRootFrame {
+#elif defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION)
 struct PioneerQ38RecurrentAwareQ8MatrixRootFrame {
 #else
 struct PioneerQ38DenseQ8MatrixRootFrame {
@@ -44,6 +46,9 @@ struct PioneerQ38DenseQ8MatrixRootFrame {
   if(layer<64 && layer%4!=3 && (role==5 || role==6 || role==13)){
    width=role==13?6144:5120;rows=role==5?6144:role==6?10240:5120;
   }
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  if(layer<64 && layer%4!=3 && (role==10 || role==11)){width=5120;rows=64;}
+#endif
 #endif
   const unsigned prefix[]={W::Magic,sequence,1,worker,boot[4],layer,position,invocation};
   for(unsigned i=0;i<8;i++){next[i]=prefix[i];next[8+i]=boot[8+i];}
@@ -68,7 +73,11 @@ struct PioneerQ38DenseQ8MatrixRootFrame {
   return true;
  }
 };
-#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+// Different linkage prevents an older recurrent frame builder from silently
+// substituting its incompatible role geometry at link time.
+using PioneerQ38DenseQ8MatrixRootFrame=PioneerQ38SmallRecurrentAwareQ8MatrixRootFrame;
+#elif defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION)
 // Distinct linkage prevents the baseline dense TU from substituting its
 // incompatible COMDAT frame builder into the experimental recurrent TU.
 using PioneerQ38DenseQ8MatrixRootFrame=PioneerQ38RecurrentAwareQ8MatrixRootFrame;
