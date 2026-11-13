@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Real sealed hybrid receipt, native bind and three native initializers.
 // Zero-program instructions run against simulated OS/MMIO/DRAM endpoints.
-// No actual card, learned weights, model execution or speed measurement.
+// Optional model-derived matrix fixtures; no actual card, full model execution
+// or speed measurement.
 #define main pioneer_original_initialization_fixture_main
 #include "pioneer_q38_token_native_initialization_test.cpp"
 #undef main

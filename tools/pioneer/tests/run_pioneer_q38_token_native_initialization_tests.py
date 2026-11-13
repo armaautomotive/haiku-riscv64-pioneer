@@ -10,6 +10,12 @@ import sys
 import tempfile
 
 root_profile=None
+model_recurrent=None
+if '--model-recurrent-fixtures' in sys.argv:
+    i=sys.argv.index('--model-recurrent-fixtures');assert sys.argv.count('--model-recurrent-fixtures')==1 and i+2<len(sys.argv)
+    model_recurrent=[pathlib.Path(p) for p in sys.argv[i+1:i+3]];del sys.argv[i:i+3]
+    for p,digest in zip(model_recurrent,('92f7287e9626c4dae6ff4c1118d6d2c64f194cf1c239ac3f7b1b60e477ed4fbb','f6615b16825dbe365aad7d01729b2b6cbd19c2f0d51545890d1fe74933bcb753')):
+        assert p.is_absolute() and p.is_file() and not p.is_symlink() and hashlib.sha256(p.read_bytes()).hexdigest()==digest
 recurrent_matrix_reuse='--recurrent-matrix-reuse' in sys.argv
 if recurrent_matrix_reuse:
     assert sys.argv.count('--recurrent-matrix-reuse')==1
@@ -28,6 +34,7 @@ if synthetic_embedding:
     sys.argv.remove('--synthetic-embedding')
 recurrent_matrix_cohort='--execution-recurrent-matrix-cohort' in sys.argv and '--recurrent-native-header' in sys.argv
 assert not recurrent_matrix_reuse or recurrent_matrix_cohort, 'reuse test requires the isolated matrix cohort'
+assert not model_recurrent or recurrent_matrix_reuse, 'model-weight fixtures require the isolated recurrent reuse test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
@@ -441,6 +448,7 @@ if qgwd_inspection:
     if recurrent_matrix_peer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE']='1'
     if recurrent_matrix_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE']='1'
     if recurrent_matrix_reuse:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE']='1'
+    if model_recurrent:defines['PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
@@ -700,6 +708,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         '-c',str(here/'pioneer_q38_manual_watchdog_host.cpp'),'-o',str(watchdog_object)],check=True)
         extra += [str(watchdog_object)]
     profile_environment={}
+    if model_recurrent:profile_environment.update(Q38_TEST_MODEL_ALPHA=str(model_recurrent[0]),Q38_TEST_MODEL_BETA=str(model_recurrent[1]))
     if counter_gather:
         # Authenticate ALL frozen artifacts before classifying any TEST
         # request. nm consumes the SAME already authenticated ELF snapshot,
@@ -800,6 +809,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         '-fsanitize=address,undefined', *(['-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1'] if synthetic_embedding else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST=1'] if synthetic_layer else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST=1'] if synthetic_recurrent_matrix else []),
+                        *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:
             fixture_test=base/'synthetic-layer-test'
@@ -807,7 +817,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                             '-fsanitize=address,undefined',str(here/'pioneer_q38_synthetic_qgw8_layer_test.cpp'),
                             str(bridge_object),'-o',str(fixture_test)],check=True)
             subprocess.run([str(fixture_test),sys.argv[3],str(here/'synthetic_q4_embedding.fixture')],check=True,
-                           env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+                           env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1',**profile_environment})
             for forbidden in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE',
                               'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT'):
                 result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1',
@@ -815,6 +825,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                     str(here/'pioneer_q38_synthetic_embedding_bridge.cpp')],capture_output=True,text=True)
                 assert result.returncode and 'Synthetic embedding bytes require their isolated host-test implementation' in result.stderr,forbidden
         extra += [str(bridge_object)]
+    if model_recurrent:
+        observer=base/'model-recurrent-observer.o'
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror',
+                        '-Wno-misleading-indentation','-fsanitize=address,undefined','-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1',
+                        '-c',str(here/'pioneer_q38_model_recurrent_observer.cpp'),'-o',str(observer)],check=True)
+        extra.append(str(observer))
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent),
@@ -829,3 +845,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             (prefix/'state-native').mkdir(mode=0o700)
         subprocess.run([str(binary), *sys.argv[1:]], check=True,
                        env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1',**profile_environment})
+        if model_recurrent:
+            for p,digest in zip(model_recurrent,('92f7287e9626c4dae6ff4c1118d6d2c64f194cf1c239ac3f7b1b60e477ed4fbb','f6615b16825dbe365aad7d01729b2b6cbd19c2f0d51545890d1fe74933bcb753')):
+                assert hashlib.sha256(p.read_bytes()).hexdigest()==digest

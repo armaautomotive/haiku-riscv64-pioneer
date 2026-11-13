@@ -25,6 +25,12 @@
  (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE))
 #error Recurrent matrix reuse requires the isolated cohort fixture
 #endif
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+#if PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE)
+#error Model recurrent observer requires the isolated matrix reuse fixture
+#endif
+extern "C" bool Q38ModelRecurrentExpected(const char*,const float*,double*);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -333,6 +339,7 @@ static void CheckNativeExecution(Fixture& f){
      worker,s.pc,s.sequence,s.active,s.pending,s.matrixInstructions,unsigned(p.Idle()),unsigned(p.cpu->ObserveFaulted()),
      io.Raw(worker,W::Status),io.Raw(worker,W::Status+4),io.Raw(worker,W::Status+8),io.Raw(worker,W::Status+12));
    }
+#ifndef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
    for(unsigned row=0;row<64;row++){
     double expected=0;
     if(row<48)for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
@@ -345,19 +352,29 @@ static void CheckNativeExecution(Fixture& f){
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"MATRIX_ROW_MISMATCH row=%u raw=%08x actual=%g expected=%g\n",row,raw,double(actual),expected);
    }
+#endif
   }
   assert(cpu.layerHeld && cpu.recurrentMatrixDoorbells==2 && io.Core(0).pending && !state->Unsafe());
   for(unsigned worker=1;worker<=2;worker++){
    auto& matrixPeer=*io.bootstrapPeer[worker-1];const auto matrix=matrixPeer.cpu->Stats();
    assert(matrixPeer.Idle() && matrix.sequence==2 && !matrix.active && !matrix.pending && matrix.matrixInstructions==2560);
   }
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+  float realInput[5120];double realExpected[64];
+  for(unsigned i=0;i<5120;i++){const uint32_t v=io.Raw(0,R::Input+i*4);realInput[i]=Float(((v+0x7fff+((v>>16)&1))>>16)<<16);}
+  assert(Q38ModelRecurrentExpected(std::getenv("Q38_TEST_MODEL_ALPHA"),realInput,realExpected));
+#endif
   for(unsigned row=0;row<64;row++){
    double expected=0;
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+   expected=realExpected[row];
+#else
    if(row<48)for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
     const uint32_t value=io.Raw(0,R::Input+(tile*32+col)*4);
     const uint32_t bits=((value+0x7fff+((value>>16)&1))>>16)<<16;
     expected+=double(Float(bits))*double(int((row*7+tile*3+col*5)%17)-8)*0.0625;
    }
+#endif
    const float actual=Float(io.Raw(row/32+1,PioneerQ38Bfp8WorkerJob::Output+(row%32)*4));
    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
   }
@@ -375,17 +392,27 @@ static void CheckNativeExecution(Fixture& f){
    auto& p=*io.bootstrapPeer[worker-1];const auto s=p.cpu->Stats();
    assert(p.Idle() && s.sequence==3 && !s.active && !s.pending && s.matrixInstructions==2560);
   }
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+  assert(Q38ModelRecurrentExpected(std::getenv("Q38_TEST_MODEL_BETA"),realInput,realExpected));
+#endif
   for(unsigned row=0;row<64;row++){
    double expected=0;
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+   expected=realExpected[row];
+#else
    if(row<48)for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
     const uint32_t value=io.Raw(0,R::Input+(tile*32+col)*4);
     const uint32_t bits=((value+0x7fff+((value>>16)&1))>>16)<<16;
     expected+=double(Float(bits))*double(int((row*7+tile*3+col*5+3)%17)-8)*0.0625;
    }
+#endif
    const float actual=Float(io.Raw(row/32+1,PioneerQ38Bfp8WorkerJob::Output+(row%32)*4));
    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
   }
-  printf("PASS second recurrent BFP8 matrix/two bands with reused input/64 independent synthetic outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n");
+  printf("PASS second recurrent BFP8 matrix/two bands with reused input/64 independent outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n");
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+  puts("PASS pinned model-derived layer0 alpha/beta BFP8 exports on synthetic input/independent double observer;SIMULATED ONLY,NOT full model or hardware/TPS");
+#endif
 #endif
 #else
   cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver only the already-issued matrix doorbell

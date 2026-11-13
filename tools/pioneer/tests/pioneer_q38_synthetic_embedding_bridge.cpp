@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-// Synthetic Q4_K bytes for the offline ISA test ONLY. Never a model source,
-// native driver, Work path, device transfer or fallback for an original GGUF.
+// Synthetic Q4_K embedding and optional pinned model-derived matrix bytes for
+// the offline ISA test ONLY. Never a native driver, Work path, device transfer
+// or fallback for an original GGUF.
 #if !defined(PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST) || PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST != 1 \
  || defined(_KERNEL_MODE) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
@@ -39,6 +40,7 @@
 #endif
 #endif
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 namespace {
@@ -103,6 +105,22 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
    }
   }
   if(found!=2)return source->ready=false;
+#ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
+  const char* names[]={"Q38_TEST_MODEL_ALPHA","Q38_TEST_MODEL_BETA"};
+  for(unsigned role=0;role<2;role++){
+   const char* path=std::getenv(names[role]);if(!path || path[0]!='/')return source->ready=false;
+   FILE* input=std::fopen(path,"rb");if(!input)return source->ready=false;
+   uint32_t h[8];bool valid=std::fread(h,4,8,input)==8 && h[0]==0x31525051 && h[1]==1
+    && h[3]==5120 && h[4]==64 && h[5]==2 && h[6]==160 && h[7]==1088;
+   for(unsigned band=0;band<2 && valid;band++){
+    valid=std::fread(source->matrix[role].data()+band*160*1088,1,160*1088,input)==160*1088;
+    uint32_t ignored[32];if(valid)valid=std::fread(ignored,4,32,input)==32;
+   }
+   if(valid)valid=std::fgetc(input)==EOF && !std::ferror(input);
+   if(std::fclose(input))valid=false;
+   if(!valid)return source->ready=false;
+  }
+#endif
 #endif
  }
 #endif

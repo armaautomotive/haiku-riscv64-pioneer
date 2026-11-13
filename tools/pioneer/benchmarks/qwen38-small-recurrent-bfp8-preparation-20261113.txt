@@ -615,3 +615,14 @@ observer; the two synthetic roles used different weight patterns. Each worker
 ran 2,560 modeled matrix instructions per operation. Synthetic weight and
 input data are snapshotted by the host-only backend for each job. No complete
 layer, real-model answer, physical driver execution or speed claim follows.
+
+Model-derived weights in continuous simulation: the same two-operation test
+was repeated with the pinned layer-0 alpha and beta BFP8 exports from the
+authenticated original GGUF, rather than synthetic matrix weights. Both
+64-row outputs matched a separate double-precision observer applied to the
+converted BFP8 values and the simulated BF16 input. The observer also matched
+the independently exported reference for the original exporter's input;
+fixture SHA-256 values were checked before and after. Embedding, norm and
+input remain synthetic; the BFP bridge snapshots its input and weights. This
+is not a measurement of conversion error against GGUF during this run, full
+model quality, a native P100A run, or tokens per second.
