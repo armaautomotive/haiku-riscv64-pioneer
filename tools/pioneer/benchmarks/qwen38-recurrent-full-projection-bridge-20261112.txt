@@ -99,3 +99,12 @@ the host. The full ROOT control flow and scatter are not exercised. The
 scoped-seal image is an offline experiment with altered checking timing, not
 an installed or production driver. These results do not prove hardware
 correctness, whole-model generation, output quality, or a speedup.
+
+Packet-seal follow-up: the three full-projection gather simulations now run
+the linked ROOT's real per-packet source seal using synthetic owner, frame,
+doorbell and MMIO state, replacing the stub described above. The source-seal
+negative case changes a synthetic source register and confirms that the real
+seal parks before the first simulated packet. All three projections also
+again reject a corrupted receipt and reproduce the worker outputs. The source
+registers, NoC traffic, and worker lifecycle remain simulated; this does not
+test a concurrent physical cohort, full control flow or inference speed.

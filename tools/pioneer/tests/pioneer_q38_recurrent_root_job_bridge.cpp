@@ -9,7 +9,7 @@
 #include "PioneerRecurrentWorkerSnapshot.h"
 
 // ROOT NoC endpoint backed only by bytes captured from completed worker
-// simulators. Packet source seals are explicitly stubbed by RunGather.
+// simulators. Packet sealing runs against a synthetic owner and MMIO state.
 struct GatherRoot:ActualRoot {
  const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0;
  GatherRoot(const char* path,const std::array<PioneerRecurrentWorkerSnapshot,119>& s):ActualRoot(path),snapshots(s){}
@@ -40,17 +40,18 @@ struct GatherRoot:ActualRoot {
   memory[address]=0;packets++;
  }
  bool RunGather(unsigned function,unsigned seal,unsigned descriptor,unsigned tracked,unsigned worker){
-  std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;
+  std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
   regs[10]=descriptor;regs[11]=tracked;regs[12]=worker;pc=function;steps=0;
-  unsigned last=0;while(pc!=0x60004 && pc!=0x60000){last=pc;if(pc==seal){seals++;pc=regs[1];}else Step();assert(regs[2]>=0x6e000 && regs[2]<=0x70000);}
+  unsigned last=0;while(pc!=0x60004 && pc!=0x60000){last=pc;if(pc==seal)seals++;Step();assert(regs[2]>=0x6e000 && regs[2]<=0x70000);}
   if(pc==0x60000)std::fprintf(stderr,"GATHER_PARK worker=%u last=%x ra=%x packets=%u seals=%u\n",worker,last,regs[1],packets,seals);
   return pc==0x60004;
  }
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather"))));
- const bool store=argc==4 && !std::strcmp(argv[3],"--store"),gather=argc==4 && !std::strcmp(argv[3],"--gather");
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source"))));
+ const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
+ const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
  std::array<std::array<uint32_t,64>,119> boots;
@@ -74,7 +75,17 @@ int main(int argc,char** argv){
  assert(RunBuildWithStub(*m,builds[0],reads[0],d,0x3000200+slot*128,workspace->data()+slot*32));
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)m->memory[0x170000+w*256+i*4]=boots[w][i];
  if(gather){
-  auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=m->memory;endpoint->memory[d+9*4]=129;endpoint->memory[d+11*4]=rows;
+  auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=m->memory;
+  const unsigned owner=0x6e000,frame=owner+768;
+  for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
+  endpoint->memory[frame+9*4]=129;endpoint->memory[frame+11*4]=rows;
+  for(unsigned i=0;i<16;i++){
+   const unsigned value=0x10000+i,at=i==0?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;
+   endpoint->memory[owner+(16+i)*4]=value;endpoint->memory[frame+(16+i)*4]=value;endpoint->memory[0xffb20000+at]=value;
+  }
+  for(unsigned i=0;i<8;i++)endpoint->memory[owner+(8+i)*4]=endpoint->memory.at(frame+(32+i)*4);
+  endpoint->memory[owner+256+48*4]=1;endpoint->memory[owner+1024]=2;endpoint->memory[0x75400]=1;
+  if(badSource)endpoint->memory[0xffb20100]^=1;
   for(unsigned i=0;i<4;i++)endpoint->memory[0xffb20040+i*0x800]=0;
   for(unsigned i=0;i<32;i++)endpoint->memory[0xffb20240+i*4]=0;
   for(unsigned at:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})endpoint->memory[0xffb20000+at]=0;
@@ -88,8 +99,9 @@ int main(int argc,char** argv){
   std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
   while(std::getline(syms,line))if(line.find(" T q38_layer_return_recurrent_packet_seal")!=std::string::npos)packetSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
   assert(packetSeal);
-  for(unsigned w=0;w<119;w++)assert(endpoint->RunGather(gathers[0],packetSeal,d,0x6d000,w));
-  assert(endpoint->Run(seals[0],d) && endpoint->packets && endpoint->seals);
+  if(badSource){assert(!endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,0) && !endpoint->packets && endpoint->seals);return 0;}
+  for(unsigned w=0;w<119;w++)assert(endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,w));
+  assert(endpoint->Run(seals[0],frame) && endpoint->packets && endpoint->seals);
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);
   assert(fwrite(results.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));return 0;
  }
