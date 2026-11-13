@@ -20,6 +20,14 @@ inference speed, numerical-quality or 20-token/s claim. The helper's per-entry
 thread startup and synchronization may outweigh any hashing benefit; compare
 matched real loads before considering installation.
 
+The isolated Assistant builder now accepts
+PIONEER_Q38_PARALLEL_CACHE_VERIFY=1 only with the lossless-cache Work worker,
+and rejects combining it with the ongoing Work phase profile. The separate
+Haiku RISC-V worker cross-linked successfully; its SHA-256 is
+8f18a95e9baf86a4fbec80a29be97abb95eea25ae3b4933d5dafb66b054d554b.
+The combined profile/parallel build was refused with exit 2. This binary was
+not installed or run, and the ordinary builder leaves this option off.
+
 Local synthetic timing follow-up: on the Mac, the committed benchmark used
 one 128 MiB cache entry, four warm serial, four parallel, then four serial and
 four parallel checks. Serial samples ranged 0.118831-0.121874 s; parallel
