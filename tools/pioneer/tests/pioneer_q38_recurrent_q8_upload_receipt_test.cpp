@@ -115,6 +115,7 @@ int main(int argc,char** argv){
  auto runtime=std::make_unique<PioneerQ38RecurrentQ8RuntimePlanInspection>();
  assert(runtime->Bind(*logical,*startup,id,sources.data(),*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(runtime->MatchesBinding(*logical,*startup,id,sources.data()) && runtime->Bank()==2);
+ assert(runtime->Revalidate(*logical,*startup,id,sources.data()));
  auto alteredId=id;alteredId.driverGeneration++;assert(!runtime->MatchesBinding(*logical,*startup,alteredId,sources.data()));
  std::fill(packed.begin(),packed.end(),0);PioneerQ38TokenRuntimePlan::Chunk runtimeChunk={};
  assert(runtime->Describe(0,runtimeChunk));
@@ -135,7 +136,8 @@ int main(int argc,char** argv){
  }
  for(unsigned i=0;i<W::Bytes;i++)assert(packed[i]==uint8_t(expected[i/4]>>((i&3)*8)));
  assert(!runtime->Describe(PioneerQ38RecurrentQ8RuntimePlanInspection::Chunks,runtimeChunk));
- ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ ledger[hole]=1;assert(runtime->MatchesBinding(*logical,*startup,id,sources.data())); // identity only
+ assert(!runtime->Revalidate(*logical,*startup,id,sources.data()));
  assert(banks.Quarantined() && !receipt->Sealed());
  assert(!transfer.Describe(0,desc) && !runtime->Describe(0,runtimeChunk));
  puts("PASS synthetic recurrent span ledger, identity, seal and mutation quarantine; NO DEVICE");

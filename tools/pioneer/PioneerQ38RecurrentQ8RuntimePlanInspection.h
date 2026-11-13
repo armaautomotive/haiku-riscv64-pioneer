@@ -14,6 +14,7 @@ class PioneerQ38RecurrentQ8RuntimePlanInspection {
  using Base=PioneerQ38TokenRuntimePlan;using Transfer=PioneerQ38RecurrentQ8WorkspaceTransferInspection;
  using R=PioneerQ38RecurrentQ8UploadReceiptInspection;
  Base base;Transfer transfer;R* receipt=nullptr;const PioneerQ38TokenStartupPlan* startup=nullptr;
+ const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const void* context=nullptr;const void* cookie=nullptr;const uint32_t* hashes=nullptr;const uint8_t* ledger=nullptr;
  int64_t team=-1;uint64_t generation=0;bool attempted=false,ready=false;
  bool Current()const{return ready && receipt && receipt->Matches(context,cookie,hashes,ledger,team,generation);}
@@ -48,12 +49,17 @@ public:
     Chunk old;if(!base.Describe(i,old) || (old.bank==extra.bank && uint64_t(old.address)<end && begin<uint64_t(old.address)+old.bytes))return false;
    }
   }
-  receipt=&owner;startup=&s;context=ctx;cookie=fd;hashes=h;ledger=initialized;team=ownerTeam;generation=gen;ready=true;return true;
+  receipt=&owner;startup=&s;canonical=&c;context=ctx;cookie=fd;hashes=h;ledger=initialized;team=ownerTeam;generation=gen;ready=true;return true;
  }
  bool MatchesBinding(const PioneerQ38CanonicalModelPlan& c,const PioneerQ38TokenStartupPlan& s,
+  const PioneerQ38GdnIdentity& id,const uint32_t* source)const{
+  return Current() && canonical==&c && startup==&s && id.driverGeneration==generation && base.MatchesBinding(c,s,id,source);
+ }
+ // Expensive model/ledger verification is explicit at lifecycle boundaries;
+ // it is not a per-token CPU model validation or device ownership proof.
+ bool Revalidate(const PioneerQ38CanonicalModelPlan& c,const PioneerQ38TokenStartupPlan& s,
   const PioneerQ38GdnIdentity& id,const uint32_t* source){
-  return Current() && startup==&s && id.driverGeneration==generation && base.MatchesBinding(c,s,id,source)
-   && receipt->MatchesLogical(c,context,cookie,hashes,ledger,team,generation);
+  return MatchesBinding(c,s,id,source) && receipt->MatchesLogical(c,context,cookie,hashes,ledger,team,generation);
  }
  bool Describe(unsigned index,Chunk& out){
   if(!Current() || !startup || index>=Chunks)return false;
