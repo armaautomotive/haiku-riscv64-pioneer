@@ -13,6 +13,7 @@
 #define PIONEER_BANKS_MOCK_ONLY 1
 #include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "../PioneerQ38RecurrentQ8WorkspaceTransferInspection.h"
+#include "../PioneerQ38RecurrentQ8RuntimePlanInspection.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "pioneer_resident_banks_test.cpp"
 #include "../PioneerQ38RecurrentQ8UploadReceiptInspection.h"
@@ -107,8 +108,35 @@ int main(int argc,char** argv){
  }
  assert(!transfer.Describe(Transfer::Chunks,desc));
  for(unsigned i=0;i<W::Bytes;i++)assert(packed[i]==uint8_t(expected[i/4]>>((i&3)*8)));
+ std::array<uint32_t,1920> sources={};for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
+ const PioneerQ38GdnIdentity id={1,2,3,42};const uint32_t prompt[]={248319};
+ auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
+ assert(startup->Build(*logical,2,id,sources.data(),prompt,1,17,false,248318,248317));
+ auto runtime=std::make_unique<PioneerQ38RecurrentQ8RuntimePlanInspection>();
+ assert(runtime->Bind(*logical,*startup,id,sources.data(),*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(runtime->MatchesBinding(*logical,*startup,id,sources.data()) && runtime->Bank()==2);
+ auto alteredId=id;alteredId.driverGeneration++;assert(!runtime->MatchesBinding(*logical,*startup,alteredId,sources.data()));
+ std::fill(packed.begin(),packed.end(),0);PioneerQ38TokenRuntimePlan::Chunk runtimeChunk={};
+ assert(runtime->Describe(0,runtimeChunk));
+ assert(!runtime->Read(0,reinterpret_cast<uint8_t*>(hashes.data()),runtimeChunk.bytes));
+ assert(!runtime->Read(0,reinterpret_cast<uint8_t*>(receipt.get()),runtimeChunk.bytes));
+ assert(!runtime->Read(0,reinterpret_cast<uint8_t*>(&context),runtimeChunk.bytes));
+ PioneerQ38TokenRuntimePlan baseline;assert(baseline.Bind(*logical,*startup,id,sources.data()));
+ PioneerQ38TokenRuntimePlan::Chunk originalChunk={};assert(baseline.Describe(0,originalChunk));
+ assert(!std::memcmp(&originalChunk,&runtimeChunk,sizeof(runtimeChunk)));
+ std::vector<uint8_t> baseBytes(originalChunk.bytes),combinedBytes(originalChunk.bytes);
+ assert(baseline.Read(0,baseBytes.data(),baseBytes.size()) && runtime->Read(0,combinedBytes.data(),combinedBytes.size())
+  && baseBytes==combinedBytes);
+ for(unsigned i=0;i<Transfer::Chunks;i++){
+  const unsigned ordinal=PioneerQ38TokenRuntimePlan::Chunks+i;
+  assert(runtime->Describe(ordinal,runtimeChunk) && runtimeChunk.kind==7 && runtimeChunk.bank==2);
+  assert(!runtime->Read(ordinal,packed.data()+runtimeChunk.offset,runtimeChunk.bytes-1));
+  assert(runtime->Read(ordinal,packed.data()+runtimeChunk.offset,runtimeChunk.bytes));
+ }
+ for(unsigned i=0;i<W::Bytes;i++)assert(packed[i]==uint8_t(expected[i/4]>>((i&3)*8)));
+ assert(!runtime->Describe(PioneerQ38RecurrentQ8RuntimePlanInspection::Chunks,runtimeChunk));
  ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(banks.Quarantined() && !receipt->Sealed());
- assert(!transfer.Describe(0,desc));
+ assert(!transfer.Describe(0,desc) && !runtime->Describe(0,runtimeChunk));
  puts("PASS synthetic recurrent span ledger, identity, seal and mutation quarantine; NO DEVICE");
 }

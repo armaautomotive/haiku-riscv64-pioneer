@@ -1,0 +1,15 @@
+Qwen3.8 recurrent Q8-to-BFP8 cache, 2026-11-12
+
+The local original GGUF authenticated against the frozen source SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+The isolated preparer completed 144 selected recurrent tensors: 5,882,511,360
+payload bytes, 89,760 conversion chunks, zero cache hits, recipe SHA-256
+551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897.
+The cache is local to generated.pioneer/weight-caches/recurrent-bfp8-20261112-a.
+
+The read-only checker reopened that cache and compared all 1,008 canonical
+stripes (1,436,160 4-KiB pages; 5,882,511,360 payload and padded bytes) with
+fresh conversion of the authenticated original. It returned zero. Both paths
+use the same conversion recipe, so this checks cache/routing consistency, not
+independent numerical correctness. No card upload, model inference, quality,
+performance, hardware safety or Assistant integration is established.
