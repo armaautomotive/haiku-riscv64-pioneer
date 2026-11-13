@@ -21,6 +21,9 @@ bool recurrentConvRunning=false;unsigned recurrentConvDoorbells=0;
 bool recurrentGdnRunning=false;unsigned recurrentGdnDoorbells=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
 bool recurrentOutputRunning=false;unsigned recurrentOutputDoorbells=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+bool recurrentOutputMatrixRunning=false;unsigned recurrentOutputMatrixDoorbells=0,recurrentOutputFirst[119]={},recurrentOutputBands[119]={};
+#endif
 #endif
 #endif
 #endif
@@ -120,6 +123,9 @@ void SubmitLayer(){
   if(recurrentGdnRunning && recurrentGdnDoorbells<96)assert(io.Raw(worker,W::Job+8)==8);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
   if(recurrentOutputRunning && recurrentOutputDoorbells<24)assert(io.Raw(worker,W::Job+8)==5);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+  if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119)assert(io.Raw(worker,W::Job+8)==1);
+#endif
 #endif
 #endif
 #endif
@@ -138,6 +144,9 @@ void SubmitLayer(){
   else if(recurrentGdnRunning && recurrentGdnDoorbells<96){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
   else if(recurrentOutputRunning && recurrentOutputDoorbells<24){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+  else if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -242,6 +251,16 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+     else if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119){
+      const unsigned w=recurrentOutputMatrixDoorbells,seq=w<2?9:w<20?7:w<24?6:w<96?5:4;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
+       && io.Raw(worker,W::Job+34*4)==13 && io.Raw(worker,W::Job+33*4)==5120);
+      recurrentOutputFirst[w]=io.Raw(worker,W::Job+32*4);recurrentOutputBands[w]=io.Raw(worker,W::Job+20*4);
+      assert(recurrentOutputBands[w] && recurrentOutputBands[w]<=8 && recurrentOutputFirst[w]<5120
+       && recurrentOutputBands[w]*32<=5120-recurrentOutputFirst[w]);recurrentOutputMatrixDoorbells++;
+     }
+#endif
      else if(recurrentOutputRunning && recurrentOutputDoorbells<24){
       const unsigned w=recurrentOutputDoorbells,seq=w<2?8:w<20?6:5;
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==5);recurrentOutputDoorbells++;

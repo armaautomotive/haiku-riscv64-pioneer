@@ -751,3 +751,13 @@ which remained pending and was not delivered. The test backend accepts the
 6144-wide producer only under a separate test role; its isolation checks passed.
 This is synthetic simulation, not a completed projection/layer, real-model
 quality check, physical P100A run or throughput result.
+
+Output-matrix simulation: an explicitly selected test-only BFP8 source now
+provides all 5120 synthetic role-13 rows over seven banks with 6144 inputs.
+After the same gated-output and BF16 handoff, all 119 simulated matrix
+workers completed their assigned rows; all 5120 outputs matched an independent
+double-precision dot-product observer. The trace included 491520 modeled
+matrix instructions and stopped at the next dispatch. A separate 6144-wide
+backend test and all source-tile checks passed. Input and output weights here
+are synthetic; the test does not establish complete-layer or model correctness,
+physical execution, runtime installation, or tokens per second.

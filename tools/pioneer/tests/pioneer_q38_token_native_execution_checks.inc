@@ -45,6 +45,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE))
 #error Output producers require the isolated GDN cohort fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE))
+#error Output matrix requires the isolated producer fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
 #error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
@@ -638,6 +642,9 @@ static void CheckNativeExecution(Fixture& f){
    io.Raw(cpu.dispatchWorker,W::Job+8),io.Raw(cpu.dispatchWorker,W::Job+34*4));
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+34*4)==13);
   unsigned checked=0,nonzeroEncoded=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+  float outputMatrixInput[6144];
+#endif
   for(unsigned i=0;i<6144;i++){
    const uint32_t packed=io.runtimeDram.at(TT_Q38_PROJECTION_NATIVE_OFFSET/4+i/2);
    const uint16_t operand=uint16_t(packed>>((i&1)*16));
@@ -645,10 +652,36 @@ static void CheckNativeExecution(Fixture& f){
    assert(std::isfinite(Float(input)));
    const uint16_t expected=uint16_t((input+0x7fffU+((input>>16)&1U))>>16);
    assert(operand==expected);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+   outputMatrixInput[i]=Float(uint32_t(operand)<<16);
+#endif
    if(operand&0x7fff)nonzeroEncoded++;checked++;
   }
   assert(checked==6144 && nonzeroEncoded);
   printf("PASS 24 simulated output producers/6144 exact BF16 values/%u nonzero;first output matrix doorbell pending;NOT full layer/model/physical/TPS\n",nonzeroEncoded);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+  cpu.recurrentOutputMatrixRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"OUTPUT_MATRIX_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,cpu.recurrentOutputMatrixDoorbells,cpu.submitted,cpu.completed);
+  assert(cpu.layerHeld && cpu.recurrentOutputMatrixDoorbells==119 && io.Core(0).pending && !state->Unsafe());
+  bool rows[5120]={};unsigned matrixOps=0;
+  for(unsigned w=0;w<119;w++){
+   auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentOutputBands[w],first=cpu.recurrentOutputFirst[w];
+   assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*3072);matrixOps+=s.matrixInstructions;
+   for(unsigned row=0;row<bands*32;row++){
+    const unsigned global=first+row;assert(global<5120 && !rows[global]);rows[global]=true;
+    double expected=0;for(unsigned tile=0;tile<192;tile++)for(unsigned col=0;col<32;col++)
+     expected+=double(outputMatrixInput[tile*32+col])*double(int((global*3+tile*7+col*5+24)%17)-8)*0.0625;
+    const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
+    if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
+     fprintf(stderr,"OUTPUT_MATRIX_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
+    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+   }
+  }
+  for(bool seen:rows)assert(seen);
+  printf("PASS recurrent output matrix/119 workers/5120 synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",matrixOps);
+#endif
 #endif
 #endif
 #endif

@@ -94,6 +94,32 @@ int main(int argc,char** argv){
   assert(!source.PutSyntheticConv(r,a,0));gdnWeights++;
  }
  assert(gdnWeights==3);puts("PASS synthetic GDN a, dt bias and norm weight bounds; NO MODEL OR DEVICE");
+#ifdef PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST
+ unsigned outputRows=0,outputParts=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);const auto& q=proposal.parts[i];
+  if(p->kind!=original->WeightKind || p->layer || p->role!=13)continue;
+  assert(p->firstRow==outputRows && q.bytes==p->rows*6528U);
+  for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<192;tile++){
+   assert(source.Read(PioneerQ38ProjectionRoute(q.bank),original->Base+q.offset+(band*192+tile)*1088,bytes.data(),bytes.size()));
+   assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,bytes.data(),bytes.size(),values.data(),values.size()));
+   for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
+    const unsigned global=p->firstRow+band*32+row;const float expected=float(int((global*3+tile*7+col*5+24)%17)-8)*0.0625f;
+    assert(values[row*32+col]==expected);
+   }
+  }
+  outputRows+=p->rows;outputParts++;
+ }
+ assert(outputRows==5120 && outputParts==7);puts("PASS synthetic role13 BFP8 source 5120 rows across seven banks; NO MODEL OR DEVICE");
+ unsigned postNorm=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);const auto& q=proposal.parts[i];
+  if(p->kind!=original->WeightKind || p->layer || p->role!=1)continue;
+  std::vector<uint8_t> norm(16384);assert(source.Read(PioneerQ38ProjectionRoute(q.bank),original->Base+q.offset,norm.data(),norm.size()));
+  for(unsigned j=0;j<norm.size();j++)assert(norm[j]==((j&3)==2?0x80:(j&3)==3?0x3f:0));postNorm++;
+ }
+ assert(postNorm==1);
+#endif
 #endif
 #endif
 #endif

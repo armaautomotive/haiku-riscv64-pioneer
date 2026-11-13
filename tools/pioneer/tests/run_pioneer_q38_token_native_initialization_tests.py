@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+output_matrix='--recurrent-output-matrix' in sys.argv
+if output_matrix:
+    assert sys.argv.count('--recurrent-output-matrix')==1
+    sys.argv.remove('--recurrent-output-matrix')
 output_producers='--recurrent-output-producers' in sys.argv
 if output_producers:
     assert sys.argv.count('--recurrent-output-producers')==1
@@ -72,6 +76,7 @@ assert not qkv_cohort or gate_cohort, 'QKV cohort requires the isolated gate coh
 assert not conv_cohort or qkv_cohort, 'Conv cohort requires the isolated QKV cohort test'
 assert not gdn_cohort or conv_cohort, 'GDN test requires the isolated Conv cohort test'
 assert not output_producers or gdn_cohort, 'output producers require the isolated GDN cohort test'
+assert not output_matrix or output_producers, 'output matrix requires isolated output producers'
 assert not qkv_conv_fault or qkv_cohort, 'receipt fault requires the isolated QKV cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
@@ -494,6 +499,7 @@ if qgwd_inspection:
         defines['PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST']='1'
     if gdn_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE']='1'
     if output_producers:defines['PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE']='1'
+    if output_matrix:defines['PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE']='1'
     if qkv_conv_fault:
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE']='1'
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)
@@ -843,7 +849,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             bfp_object=base/'native-bfp-peer.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                             '-Wno-misleading-indentation','-Wno-unused-function','-ffp-contract=off','-fsanitize=address,undefined',
-                            '-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1','-c',str(here/'pioneer_q38_native_bfp_peer_bridge.cpp'),'-o',str(bfp_object)],check=True)
+                            '-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1',
+                            *(['-DPIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION=1'] if output_matrix else []),
+                            '-c',str(here/'pioneer_q38_native_bfp_peer_bridge.cpp'),'-o',str(bfp_object)],check=True)
             extra += [str(bfp_object)] # host tensor/queued-read endpoint;no kernel or Work capability
     if embedding or full_end_contract:
         # RAW byte transport is a separate TEST-only TU,without native-role
@@ -863,6 +871,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         *(['-DPIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST=1'] if qkv_cohort else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_CONV_STATE_TEST=1'] if conv_cohort else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST=1'] if gdn_cohort else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST=1'] if output_matrix else []),
                         *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:

@@ -29,6 +29,10 @@
  (PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST))
 #error Synthetic GDN weights require the isolated Conv fixture
 #endif
+#if defined(PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST) && \
+ (PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST))
+#error Synthetic output matrix requires the isolated GDN fixture
+#endif
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
@@ -70,6 +74,9 @@ void Block(unsigned token,unsigned block,uint8_t (&bytes)[BlockBytes]){
 struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;
 #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
  uint32_t normRoute=0,normAddress=0;
+#ifdef PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST
+ uint32_t postNormRoute=0,postNormAddress=0;
+#endif
 #ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
  uint32_t matrixRoute[2]={},matrixAddress[2]={};std::vector<uint8_t> matrix[2];
 #ifdef PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST
@@ -109,6 +116,15 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
    source->normRoute=PioneerQ38ProjectionRoute(q.bank);source->normAddress=canonical->Base+q.offset;
   }
   if(found!=1)return source->ready=false;
+#ifdef PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST
+  found=0;for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);const auto& q=proposal.parts[i];
+   if(p->kind!=canonical->WeightKind || p->layer || p->role!=1)continue;
+   if(++found!=1 || q.bank>=7 || q.bytes!=20480 || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+   source->postNormRoute=PioneerQ38ProjectionRoute(q.bank);source->postNormAddress=canonical->Base+q.offset;
+  }
+  if(found!=1)return source->ready=false;
+#endif
 #ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
   PioneerQ38HybridSmallRecurrentBfp8Plan::Proposal physical;
   if(!PioneerQ38HybridSmallRecurrentBfp8Plan::Build(*canonical,physical))return source->ready=false;
@@ -137,21 +153,27 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
 #ifdef PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST
     && p->role!=6
 #endif
+#ifdef PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST
+    && p->role!=13
+#endif
    ))continue;
    if(q.bank>=7 || q.encoding!=PioneerQ38HybridRecurrentQ8MatrixPlan::RecurrentQ8Bfp8
-    || !p->rows || (p->rows&31) || q.bytes!=p->rows*5440 || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+    || !p->rows || (p->rows&31) || q.bytes!=p->rows*(p->role==13?6528U:5440U) || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
    Source::Gate part{PioneerQ38ProjectionRoute(q.bank),canonical->Base+q.offset,{}};part.bytes.resize(q.bytes);
-   for(unsigned band=0;band<p->rows/32;band++)for(unsigned t=0;t<160;t++){
+   const unsigned tiles=p->role==13?192:160;
+   for(unsigned band=0;band<p->rows/32;band++)for(unsigned t=0;t<tiles;t++){
     float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
      const unsigned global=p->firstRow+band*32+row;values[row*32+col]=float(int((global*3+t*7+col*5+(p->role-5)*3)%17)-8)*0.0625f;
     }
     if(!PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,values,1024,
-      part.bytes.data()+(band*160+t)*1088,1088))return source->ready=false;
+      part.bytes.data()+(band*tiles+t)*1088,1088))return source->ready=false;
    }
    source->gate.push_back(std::move(part));
   }
   if(source->gate.size()!=
-#ifdef PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST
+#ifdef PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST
+   21
+#elif defined(PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST)
    14
 #else
    7
@@ -239,6 +261,12 @@ bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* ou
  for(unsigned role=0;role<2;role++)if(Ready() && out && count && route==source->matrixRoute[role] && address>=source->matrixAddress[role]
   && address-source->matrixAddress[role]<=source->matrix[role].size() && count<=source->matrix[role].size()-(address-source->matrixAddress[role])){
   memcpy(out,source->matrix[role].data()+(address-source->matrixAddress[role]),count);return true;
+ }
+#endif
+#ifdef PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST
+ if(Ready() && out && route==source->postNormRoute && ((address==source->postNormAddress && count==16384)
+  || (address==source->postNormAddress+16384 && count==4096))){
+  for(unsigned i=0;i<count;i++)out[i]=(i&3)==2?0x80:(i&3)==3?0x3f:0;return true;
  }
 #endif
  if(Ready() && out && route==source->normRoute && ((address==source->normAddress && count==16384)
