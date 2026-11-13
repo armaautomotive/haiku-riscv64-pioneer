@@ -325,3 +325,12 @@ the synthetic physical-order lifecycle and upload staging/role-isolation
 tests pass. This removes one host coupling, not all kernel dependencies: the
 receipt is still explicitly inspection-only and is not a registered native
 upload, card execution, quality result or speed improvement.
+
+Freestanding compile boundary: the actual fixed layouts, small ledger and
+receipt can now be included and emitted by the Haiku RISC-V cross-compiler
+under a separate fake-tag, renamed-entry-point kernel inspection profile.
+The emitted object exercises the receipt revalidation and workspace methods;
+the test rejects missing inspection prerequisites, real tag146, Work and CPU
+validation roles. The original offline receipt and layout regressions also
+pass. This is a non-loadable standalone object, not the complete driver,
+registered ioctl, native owner, card execution, model-quality result or TPS.
