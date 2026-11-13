@@ -878,6 +878,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         '-Wno-misleading-indentation','-fsanitize=address,undefined','-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1',
                         '-c',str(here/'pioneer_q38_model_recurrent_observer.cpp'),'-o',str(observer)],check=True)
         extra.append(str(observer))
+    if gdn_cohort:
+        gdn_observer=base/'synthetic-gdn-observer.o'
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror',
+                        '-fsanitize=address,undefined','-DPIONEER_Q38_SYNTHETIC_GDN_OBSERVER_TEST=1',
+                        '-c',str(here/'pioneer_q38_synthetic_gdn_observer.cpp'),'-o',str(gdn_observer)],check=True)
+        extra.append(str(gdn_observer))
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent),

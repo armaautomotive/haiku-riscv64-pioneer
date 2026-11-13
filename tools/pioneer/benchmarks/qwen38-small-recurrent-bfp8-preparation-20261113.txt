@@ -721,3 +721,13 @@ without supplying state values. A subsequent continuous run delivered all
 state-word reads and 786432 writes. This proves neither the numerical values
 nor the complete layer, and uses synthetic recurrent parameters, gate and
 QKV weights. It is not a P100A run, production fix, or TPS measurement.
+
+Independent state comparison: a separately compiled CPU-only test observer
+uses the existing recurrent reference with synthetic ssm_a=-1 and dt.bias=0.
+It snapshots the simulated Conv and alpha/beta outputs before GDN starts and
+does not feed any results back to the workers. In the continuous run all 96
+next-state halves, 786432 values total, matched the reference at the existing
+3e-6 absolute-plus-relative tolerance; all values were nonzero. An independent
+one-hot test and kernel/Work role refusals passed. This validates synthetic
+position-zero recurrent state only, not gated output, the whole layer, real
+model quality, P100A execution or throughput.
