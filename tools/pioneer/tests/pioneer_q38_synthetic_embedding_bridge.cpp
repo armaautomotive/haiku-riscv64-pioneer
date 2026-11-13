@@ -21,6 +21,10 @@
  (PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST))
 #error Synthetic QKV weights require the isolated gate fixture
 #endif
+#if defined(PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST) && \
+ (PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST))
+#error Synthetic Conv state requires the isolated QKV fixture
+#endif
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
@@ -66,6 +70,9 @@ struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;
  uint32_t matrixRoute[2]={},matrixAddress[2]={};std::vector<uint8_t> matrix[2];
 #ifdef PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST
  struct Gate {uint32_t route,address;std::vector<uint8_t> bytes;};std::vector<Gate> gate;
+#ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+ std::vector<Gate> convState,convWeight;
+#endif
 #endif
 #endif
 #endif
@@ -143,6 +150,23 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
    7
 #endif
   )return source->ready=false;
+#ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);const auto& q=physical.parts[i];
+   if(p->layer || !((p->kind==canonical->ConvKind) || (p->kind==canonical->WeightKind && p->role==12)))continue;
+   if(q.bank>=7 || q.encoding!=PioneerQ38HybridModelPlan::Original || !q.bytes || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+   Source::Gate part{PioneerQ38ProjectionRoute(q.bank),canonical->Base+q.offset,{}};part.bytes.resize(q.bytes);
+   if(p->kind==canonical->ConvKind){
+    if(p->rowBytes!=12 || q.bytes!=p->rows*12)return source->ready=false;
+    source->convState.push_back(std::move(part));
+   }else{
+    if(p->rowBytes!=16 || q.bytes!=p->rows*16)return source->ready=false;
+    for(unsigned j=0;j<q.bytes;j+=16){part.bytes[j+14]=0x80;part.bytes[j+15]=0x3f;}
+    source->convWeight.push_back(std::move(part));
+   }
+  }
+  if(source->convState.size()!=7 || source->convWeight.size()!=7)return source->ready=false;
+#endif
 #endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
   const char* names[]={"Q38_TEST_MODEL_ALPHA","Q38_TEST_MODEL_BETA"};
@@ -172,6 +196,13 @@ bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* ou
 #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
 #ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
 #ifdef PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST
+#ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+ for(const auto* parts:{&source->convState,&source->convWeight})for(const auto& part:*parts)
+  if(Ready() && out && count && route==part.route && address>=part.address
+   && address-part.address<=part.bytes.size() && count<=part.bytes.size()-(address-part.address)){
+   memcpy(out,part.bytes.data()+(address-part.address),count);return true;
+  }
+#endif
  for(const auto& part:source->gate)if(Ready() && out && count && route==part.route && address>=part.address
   && address-part.address<=part.bytes.size() && count<=part.bytes.size()-(address-part.address)){
   memcpy(out,part.bytes.data()+(address-part.address),count);return true;
@@ -199,6 +230,16 @@ bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* ou
  }
  return true;
 }
+#ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+bool Q38EmbeddingRawTestBridge::PutSyntheticConv(unsigned route,uint32_t address,uint32_t value){
+ if(!Ready() || (address&3))return false;
+ for(auto& part:source->convState)if(route==part.route && address>=part.address
+  && address-part.address<=part.bytes.size() && 4<=part.bytes.size()-(address-part.address)){
+  for(unsigned b=0;b<4;b++)part.bytes[address-part.address+b]=uint8_t(value>>(b*8));return true;
+ }
+ return false;
+}
+#endif
 bool Q38EmbeddingRawTestBridge::OriginalBlock(unsigned token,unsigned block,uint8_t* out,unsigned count){
  if(!Ready() || token!=Token || block>=Blocks || !out || count!=BlockBytes)return false;
  uint8_t bytes[BlockBytes];Block(token,block,bytes);memcpy(out,bytes,sizeof(bytes));return true;

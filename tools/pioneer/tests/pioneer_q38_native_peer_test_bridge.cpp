@@ -145,15 +145,30 @@ struct NativePeer:NativePeerBase,CohortBytes {
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
  std::unique_ptr<Q38NativeBfpPeerBridge> bfp;
  unsigned bfpOutputWords=0;
+ void RetireBfp(){
+  if(!bfp)return;assert(!active && bfp->Clean() && !pending && !publishedPending);
+  // Transfer only deltas from actual modeled BFP NoC events into the other
+  // endpoint's accounting. Never replace physical counters or CPU state.
+  for(unsigned i=0;i<8;i++){
+   const uint32_t delta=bfp->CounterDelta(i);countBase[i]+=delta;publishedCounts[i]+=delta;
+   assert(Count(i)==publishedCounts[i] && publishedCounts[i]==binding.bytes.noc(binding.bytes.context,logicalWorker,CounterOffset(i)));
+  }
+  for(unsigned i=0;i<10;i++){
+   command[i]=publishedCommands[i]=bfp->LastCommand(i);
+   assert(command[i]==binding.bytes.noc(binding.bytes.context,logicalWorker,i*4));
+  }
+  bfp.reset();bfpOutputWords=0;
+ }
  void Receive(){
   if(memory.at(G::Job+8)==1 && memory.at(G::Job+16*4)==0x314a3842){
    assert(!active && (!bfp || bfp->Clean()) && (pc==waitPC || pc==waitPC+4) && memory.at(G::Job+4)==sequence+1);
-   bfp.reset(); // discard only a drained endpoint, never the worker or its physical counters
+   RetireBfp();
    uint32_t job[16];for(unsigned i=0;i<16;i++)job[i]=memory.at(G::Job+(16+i)*4);
    ClearTensorState();bf16Producing=false;activation=denseActive=gdnActive=convActive=outputActive=false;
    sequence=memory.at(G::Job+4);bfpOutputWords=job[4]*32;assert(bfpOutputWords && bfpOutputWords<=256);
    bfp=std::make_unique<Q38NativeBfpPeerBridge>(job,logicalWorker,binding.bytes);active=true;return;
   }
+  RetireBfp();
   NativePeerBase::Receive();
  }
 #endif

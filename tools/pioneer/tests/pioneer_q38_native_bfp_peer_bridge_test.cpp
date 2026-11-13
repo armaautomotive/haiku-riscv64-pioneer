@@ -42,7 +42,10 @@ struct TensorIO {
 int main(){
  using W=PioneerQ38Bfp8WorkerJob;W::Job job={{W::Magic,W::Version,5120,0x04000000,1,786,1,W::Existing::Peer(1),
   PioneerQ38Bf16Wire::Magic,W::RootInput,W::RootRoute,2,W::Output,0,0,0}};assert(W::Shape(job));
- Endpoints endpoint;for(unsigned i=0;i<2560;i++)endpoint.root[(W::RootInput/4)+i]=0x3f803f80;
+ Endpoints endpoint;const unsigned counters[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};uint32_t initial[8];
+ for(unsigned i=0;i<8;i++)endpoint.csr[counters[i]/4]=UINT32_MAX-80;
+ for(unsigned i=0;i<8;i++)initial[i]=endpoint.csr[counters[i]/4];
+ for(unsigned i=0;i<2560;i++)endpoint.root[(W::RootInput/4)+i]=0x3f803f80;
  for(unsigned tile=0;tile<160;tile++){
   float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++)
    values[row*32+col]=float(int((row*7+tile*3+col*5)%17)-8)*0.0625f;
@@ -51,6 +54,8 @@ int main(){
  const auto bytes=endpoint.Bytes();Q38NativeBfpPeerBridge bridge(job.words,1,bytes);LoaderIO io{bridge};
  PioneerQ38Bfp8WorkerLoader loader;assert(loader.Run(io,job,0) && endpoint.reads && endpoint.events);
  TensorIO tensor{bridge};assert(PioneerQ38Bfp8WorkerCompute::Compute(tensor,5120) && bridge.Clean() && bridge.MatrixInstructions()>0);
+ for(unsigned i=0;i<8;i++)assert(bridge.CounterDelta(i)==uint32_t(endpoint.csr[counters[i]/4]-initial[i]));
+ for(unsigned i=0;i<10;i++)assert(bridge.LastCommand(i)==endpoint.csr[i]);
  for(unsigned row=0;row<32;row++){
   const unsigned dst=row<16?32:40,col=row%16;const uint32_t bits=bridge.Read(0xffbd8000+dst*64+col*4);
   float actual;std::memcpy(&actual,&bits,sizeof(actual));int sum=0;

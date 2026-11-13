@@ -27,5 +27,7 @@ public:
  void Write(uint32_t address,uint32_t value);
  unsigned MatrixInstructions()const;
  bool Clean()const;
+ uint32_t CounterDelta(unsigned index)const;
+ uint32_t LastCommand(unsigned index)const;
 };
 #endif

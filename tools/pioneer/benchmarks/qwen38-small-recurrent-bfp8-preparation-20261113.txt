@@ -685,3 +685,17 @@ job or table was staged. The host only altered the selected read reply; it did
 not alter the worker's own memory, reset state, or grant cleanup authority.
 This checks three particular failure paths, not every field, real device fault
 handling, model quality or performance.
+
+Continuous convolution simulation: the test-only peer bridge now carries
+observed modeled NoC counter deltas across the BFP8-to-scalar transition,
+without resetting physical-counter fixtures or worker processor state. A
+separate bridge test exercises counter wraparound. The Conv test uses seven
+banks of synthetic weights [0,0,0,1] and zero initial history, with bounded
+synthetic state writes. In a continuous simulated run following the small,
+gate and QKV projections, the root and 119 worker cores completed 640 Conv
+groups. All 10,240 output values and updated state rows matched an independent
+observer; all 10,240 inputs and outputs were nonzero. Small projection weights
+were model-derived; embedding, gate, QKV
+and Conv data were synthetic. This run stopped before the first GDN operation;
+it is not a complete layer, physical-card execution, model-quality validation
+or tokens-per-second measurement. No driver was installed or hardware touched.

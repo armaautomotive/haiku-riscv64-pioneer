@@ -62,7 +62,13 @@ void PreparePeerBytes(){
 #endif
    ;
 #else
-  if(route!=PioneerQ38ProjectionRoute(0) || (address&3) || address<self.runtimeWorkspace || address-self.runtimeWorkspace>67108860)return false;
+  if(route!=PioneerQ38ProjectionRoute(0) || (address&3) || address<self.runtimeWorkspace || address-self.runtimeWorkspace>67108860){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+   return self.executionCpu && self.executionCpu->original && self.executionCpu->original->PutSyntheticConv(route,address,word);
+#else
+   return false;
+#endif
+  }
   self.runtimeDram.at((address-self.runtimeWorkspace)/4)=word;return true;
 #endif
 #else

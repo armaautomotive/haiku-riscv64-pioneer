@@ -37,6 +37,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE))
 #error QKV cohort requires the isolated gate cohort fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE) || !defined(PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST))
+#error Conv cohort requires isolated QKV and synthetic state fixtures
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
 #error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
@@ -504,6 +508,9 @@ static void CheckNativeExecution(Fixture& f){
   assert(cpu.layerHeld && cpu.recurrentQkvDoorbells==119 && io.Core(0).pending && !state->Unsafe());
 #endif
   bool qkvRows[10240]={};unsigned qkvMatrices=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+  float qkvObservedOutput[10240]={};
+#endif
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentQkvBands[w],first=cpu.recurrentQkvFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*2560);qkvMatrices+=s.matrixInstructions;
@@ -516,6 +523,9 @@ static void CheckNativeExecution(Fixture& f){
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"QKV_MISMATCH worker=%u row=%u global=%u first=%u bands=%u actual=%g expected=%g\n",w+1,row,global,first,bands,double(actual),expected);
     assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+    qkvObservedOutput[global]=actual;
+#endif
    }
   }
   for(bool seen:qkvRows)assert(seen);
@@ -524,6 +534,46 @@ static void CheckNativeExecution(Fixture& f){
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==7 && io.Raw(1,W::Job+4)==6
    && cpu.recurrentProducerDoorbells==20);
   puts("PASS retained QKV job/receipt/counter admission through pending first Conv doorbell;SIMULATED ONLY,Conv NOT executed");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+  cpu.recurrentConvRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld){
+   fprintf(stderr,"RECURRENT_CONV_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u;NO result supplied\n",
+    cpu.pc,cpu.steps,cpu.recurrentConvDoorbells,cpu.submitted,cpu.completed);
+   fprintf(stderr,"ROOT_RECENT_PC");for(unsigned i=0;i<64 && i<cpu.cohortRecentCount;i++)fprintf(stderr," %x",cpu.cohortRecentPC[(cpu.cohortRecentCount+i)%64]);fprintf(stderr,"\n");
+   bool reported=false;for(unsigned w=0;w<cpu.recurrentConvDoorbells;w++){
+    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();
+    if(!p.Idle() || s.active || s.pending)fprintf(stderr,"CONV_WORKER%u pc=%x sequence=%u active=%u pending=%u fault=%u\n",
+     w+1,s.pc,s.sequence,s.active,s.pending,unsigned(p.cpu->ObserveFaulted()));
+    if(!reported && p.cpu->ObserveFaulted()){p.cpu->ReportRecentInstructions();reported=true;}
+   }
+  }
+  assert(cpu.layerHeld && cpu.recurrentConvDoorbells==119 && io.Core(0).pending && !state->Unsafe()
+   && cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==8);
+  bool convRows[10240]={};unsigned groups=0,nonzeroInputs=0,nonzeroOutputs=0;
+  for(unsigned worker=0;worker<120;worker++)for(unsigned group=0;group<(worker<40?6U:5U);group++){
+   const unsigned base=0x128000+worker*1536+group*256;uint32_t d[64];for(unsigned i=0;i<64;i++)d[i]=io.Raw(0,base+i*4);
+   assert(d[8]==PioneerQ38ProjectionRoute(0) && d[4]>=io.runtimeWorkspace && d[7]+16<=10240);
+   for(unsigned lane=0;lane<16;lane++){
+    const unsigned row=d[7]+lane;assert(!convRows[row]);convRows[row]=true;
+    const uint32_t outAddress=d[4]+d[43]+lane*4;assert(outAddress>=io.runtimeWorkspace && outAddress-io.runtimeWorkspace<=67108860);
+    const float actual=Float(io.runtimeDram.at((outAddress-io.runtimeWorkspace)/4));
+    const double x=qkvObservedOutput[row],expected=x/(1.0+std::exp(-x));
+    if(x!=0)nonzeroInputs++;
+    if(actual!=0)nonzeroOutputs++;
+    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=3e-6*(1+std::fabs(expected)));
+    for(unsigned tap=0;tap<3;tap++){
+     const uint32_t stateAddress=d[4]+d[42]+(lane*3+tap)*4;assert(stateAddress>=io.runtimeWorkspace && stateAddress-io.runtimeWorkspace<=67108860);
+     const float value=Float(io.runtimeDram.at((stateAddress-io.runtimeWorkspace)/4));
+     assert(value==(tap==2?qkvObservedOutput[row]:0.f));
+    }
+   }
+   groups++;
+  }
+  for(bool seen:convRows)assert(seen);
+  assert(nonzeroInputs && nonzeroOutputs);
+  printf("PASS full recurrent Conv/120 simulated cores/%u groups/10240 outputs and state rows vs independent observer/%u nonzero inputs/%u nonzero outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",groups,nonzeroInputs,nonzeroOutputs);
+#endif
 #endif
 #endif
 #endif

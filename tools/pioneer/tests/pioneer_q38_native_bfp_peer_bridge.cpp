@@ -19,7 +19,7 @@
 
 struct Q38NativeBfpPeerBridge::Impl {
  Q38NativePeerTestBytes bytes;unsigned worker;W::Job job;NativeBfpBandMachine native;IO io;
- uint32_t published[8]={},commands[10]={};bool pending=false,awaiting=false;unsigned ack=0;
+ uint32_t published[8]={},initial[8]={},commands[10]={};bool pending=false,awaiting=false;unsigned ack=0;
  static unsigned Index(unsigned i){const unsigned indices[]={2,3,4,5,1,8,4,10};return indices[i];}
  static unsigned Offset(unsigned i){const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};return offsets[i];}
  Impl(const uint32_t in[16],unsigned w,const Q38NativePeerTestBytes& b)
@@ -37,7 +37,7 @@ struct Q38NativeBfpPeerBridge::Impl {
    const uint32_t word=bytes.word(bytes.context,0,job.words[9]+i*4);
    for(unsigned j=0;j<4;j++)io.root[i*4+j]=uint8_t(word>>(j*8));
   }
-  for(unsigned i=0;i<8;i++)published[i]=io.counters[Index(i)]=bytes.noc(bytes.context,worker,Offset(i));
+  for(unsigned i=0;i<8;i++)initial[i]=published[i]=io.counters[Index(i)]=bytes.noc(bytes.context,worker,Offset(i));
   for(unsigned i=0;i<10;i++)commands[i]=io.command[i]=bytes.noc(bytes.context,worker,i*4);
  }
  bool Loaded()const{
@@ -94,3 +94,5 @@ void Q38NativeBfpPeerBridge::Write(uint32_t a,uint32_t value){
 }
 unsigned Q38NativeBfpPeerBridge::MatrixInstructions()const{return impl->native.matrixOps;}
 bool Q38NativeBfpPeerBridge::Clean()const{return impl->Loaded() && impl->native.Clean() && !impl->awaiting;}
+uint32_t Q38NativeBfpPeerBridge::CounterDelta(unsigned i)const{assert(i<8 && Clean());return impl->published[i]-impl->initial[i];}
+uint32_t Q38NativeBfpPeerBridge::LastCommand(unsigned i)const{assert(i<10 && Clean());return impl->commands[i];}

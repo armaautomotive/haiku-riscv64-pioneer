@@ -22,6 +22,9 @@ public:
  Q38EmbeddingRawTestBridge& operator=(const Q38EmbeddingRawTestBridge&)=delete;
  bool Open(const char*);bool Ready()const;void Revoke();
  bool Read(unsigned route,uint32_t address,uint8_t* bytes,unsigned count);
+#ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+ bool PutSyntheticConv(unsigned route,uint32_t address,uint32_t value);
+#endif
  bool OriginalBlock(unsigned token,unsigned block,uint8_t* bytes,unsigned count);
 }; // RAW bytes ONLY,no processor state,computed product or readiness setter
 #endif

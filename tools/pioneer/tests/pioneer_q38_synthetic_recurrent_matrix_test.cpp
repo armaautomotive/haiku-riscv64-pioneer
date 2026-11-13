@@ -62,6 +62,26 @@ int main(int argc,char** argv){
  }
  assert(fragments==7 && qkvRows==10240);
  puts("PASS synthetic role6 BFP8 source 10240 rows across seven banks; NO MODEL OR DEVICE");
+#ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+ unsigned states=0,weights=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);const auto& q=proposal.parts[i];
+  if(p->layer || !((p->kind==original->ConvKind) || (p->kind==original->WeightKind && p->role==12)))continue;
+  const unsigned route=PioneerQ38ProjectionRoute(q.bank),address=original->Base+q.offset;
+  if(p->kind==original->ConvKind){
+   uint8_t state[12];assert(source.Read(route,address,state,sizeof(state)));
+   for(uint8_t b:state)assert(!b);
+   assert(source.PutSyntheticConv(route,address,0x3f000000) && source.Read(route,address,state,sizeof(state))
+    && state[0]==0 && state[1]==0 && state[2]==0 && state[3]==0x3f);
+   assert(!source.PutSyntheticConv(route,address+q.bytes,1));states++;
+  }else{
+   uint8_t weight[16];assert(source.Read(route,address,weight,sizeof(weight)));
+   for(unsigned j=0;j<14;j++)assert(!weight[j]);assert(weight[14]==0x80 && weight[15]==0x3f);
+   assert(!source.PutSyntheticConv(route,address,1));weights++;
+  }
+ }
+ assert(states==7 && weights==7);puts("PASS synthetic Conv weights and bounded mutable state across seven banks; NO MODEL OR DEVICE");
+#endif
 #endif
 #endif
  for(unsigned role=0;role<2;role++)for(unsigned band=0;band<2;band++)for(unsigned tile=0;tile<160;tile++){

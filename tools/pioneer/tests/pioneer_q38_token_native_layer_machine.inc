@@ -15,6 +15,9 @@ bool recurrentMatrixReuseRunning=false;
 bool recurrentGateRunning=false;unsigned recurrentGateDoorbells=0,recurrentGateFirst[119]={},recurrentGateBands[119]={};
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
 bool recurrentQkvRunning=false;unsigned recurrentQkvDoorbells=0,recurrentQkvFirst[119]={},recurrentQkvBands[119]={};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+bool recurrentConvRunning=false;unsigned recurrentConvDoorbells=0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
 bool qkvConvFaultInjected=false;unsigned qkvConvWrites=0;
 #endif
@@ -74,6 +77,10 @@ void SubmitLayer(){
  const bool convScratch=ConvScratchPacket(fullLayerRunning,pc,local,bytes);
  if(!regularScratch && !convScratch)fprintf(stderr,"NATIVE_TEST_SCRATCH_REFUSAL pc%08x/local%08x/remote%08x/bytes%u/family%08x;NO packet submitted\n",pc,local,remote,bytes,unsigned(PioneerQ38TokenPrograms::Family));
  assert(regularScratch || convScratch);
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE)
+ const bool convScratch=ConvScratchPacket(recurrentConvRunning,pc,local,bytes);
+ if(!regularScratch && !convScratch)fprintf(stderr,"CONV_SCRATCH_REFUSAL pc=%x local=%x remote=%x bytes=%u\n",pc,local,remote,bytes);
+ assert(regularScratch || convScratch);
 #else
  assert(regularScratch);
 #endif
@@ -101,6 +108,9 @@ void SubmitLayer(){
   )
 #endif
   assert(io.Raw(worker,W::Job+8)==(recurrentProducersRunning && recurrentProducerDoorbells==20?1U:5U));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+  if(recurrentConvRunning && recurrentConvDoorbells<119)assert(io.Raw(worker,W::Job+8)==7);
+#endif
   if(recurrentProducersRunning && recurrentProducerDoorbells<20){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
   else if(recurrentMatrixRunning && recurrentMatrixDoorbells<2){layerHeld=false;}
@@ -110,6 +120,9 @@ void SubmitLayer(){
   else if(recurrentGateRunning && recurrentGateDoorbells<119){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
   else if(recurrentQkvRunning && recurrentQkvDoorbells<119){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+  else if(recurrentConvRunning && recurrentConvDoorbells<119){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -153,10 +166,16 @@ void RespondLayer(){
     if(write)physical=io.Raw(0,local+i*4);else io.Raw(0,local+i*4)=physical;
    }
   }else{
-   assert(!write && bytes<=16384);std::array<uint8_t,16384> raw;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+   if(write){assert(original);for(unsigned i=0;i<bytes/4;i++)assert(original->PutSyntheticConv(route,remote+i*4,io.Raw(0,local+i*4)));}
+   else
+#else
+   assert(!write);
+#endif
+   {assert(bytes<=16384);std::array<uint8_t,16384> raw;
    assert(original && original->Read(route,remote,raw.data(),bytes));
    for(unsigned i=0;i<bytes/4;i++)io.Raw(0,local+i*4)=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;
-   layerRawReads++;
+   layerRawReads++;}
   }
 #endif
  }else{
@@ -198,6 +217,13 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+     else if(recurrentConvRunning && recurrentConvDoorbells<119){
+      const unsigned w=recurrentConvDoorbells,seq=w<2?6:w<20?4:3;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==7);
+      recurrentConvDoorbells++;
+     }
+#endif
      else if(recurrentQkvRunning && recurrentQkvDoorbells<119){
       const unsigned w=recurrentQkvDoorbells,seq=w<2?5:w<20?3:2;
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
