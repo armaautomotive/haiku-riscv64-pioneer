@@ -300,3 +300,10 @@ changed nonce, layer, position, invocation, identity, width, rows and format
 at three representative workers. The same direct checks passed for the
 gate-only, two-reuse and all-reuse controller builds. This is geometry and
 identity coverage, not real-model accuracy, NoC concurrency or hardware.
+
+The all-reuse image's actual linked QKV-to-alpha and alpha-to-beta decision
+also passed synthetic-history checks for all 48 recurrent layer numbers.
+Changed QKV role at each of 119 alpha predecessors and each of the 18
+beta producer-unused predecessors was refused; changed input or native
+shadow parked. This directly exercises the predicate, not the whole 48-layer
+model, physical device or answer quality.

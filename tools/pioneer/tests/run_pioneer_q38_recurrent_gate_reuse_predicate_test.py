@@ -47,7 +47,7 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
  subprocess.run([os.environ.get('CXX','c++'),*flags,*['-D'+r+'=1' for r in roles],
   str(here/'pioneer_q38_recurrent_gate_reuse_predicate_test.cpp'),'-o',str(test)],check=True)
  env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
- subprocess.run([str(test),str(tmp)],check=True,env=env)
+ subprocess.run([str(test),str(tmp)]+(['--all-reuse'] if allReuse else []),check=True,env=env)
  if len(sys.argv)>=9:
   worker,leaf,private,gate,qkv=map(Path,sys.argv[4:9]);assert all(p.is_absolute() for p in (worker,leaf,private,gate,qkv))
   for path,digest in ((worker/'program.elf','67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d'),
