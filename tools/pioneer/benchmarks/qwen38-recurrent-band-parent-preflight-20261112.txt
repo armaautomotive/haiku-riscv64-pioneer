@@ -1,0 +1,20 @@
+Fixed recurrent-band147 physical parent preparation, 2026-11-12
+
+The separate one-shot parent pins stable driver SHA, diagnostic driver/client,
+private samples, independent reference, exact current generation 36 and CPU
+source preflight; it requires no competing accelerator owner, 64 CPUs and
+the established RAM total. After a clean diagnostic END and independently
+matching all 192 returned words, it alone attempts to restore the stable
+driver and verify generation 38. Any uncertain result refuses reset, retry
+or restore rather than treating a partial result as clean.
+
+Actual parent flow and output gate passed 595 simulated success/failure cases,
+including every returned-word missing/duplicate/mutation, failed swaps,
+dirty output, incorrect generation and source/geometry errors. The staged
+files on the Pioneer matched their pinned hashes; the separate CPU-only
+source preflight was started but had not completed when this was written.
+
+No new driver was installed and no P100A command was issued. This parent is
+specific to the observed generation; do not assume it remains admissible
+after any driver reload or other change. Preflight and the separate recurrent
+cache verifier need their own completed evidence before a hardware attempt.
