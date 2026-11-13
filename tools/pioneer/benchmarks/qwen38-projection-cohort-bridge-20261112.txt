@@ -107,6 +107,18 @@ test stack was 3696 bytes. This standalone data experiment does not execute
 the parent ROOT admission, NoC transfers, live device ownership or parallel
 worker execution; it is not yet an integrated hardware scheduler.
 
+Shared-worker Conv follow-up: the same QGWF RV32 worker and simulator state
+now run BF16 producer -> alpha BFP8 -> beta BFP8 -> recurrent Conv without
+a reset, code reload or counter rebase. The Conv inputs are the previously
+verified full-QKV projection's independently computed export; Conv weights
+are authenticated original layer-0 bytes and history starts at zero.
+All groups assigned to worker 1 match the independent Conv reference and
+its actual service proof/counter deltas. A changed final table word parks
+the worker before any Conv packet. This is one worker, not all 120 groups;
+QKV is supplied as an offline fixture rather than produced in that worker
+lifetime. GDN, a joint ROOT/NoC lifecycle and real hardware remain unproven.
+No installed image, Work path or speed measurement was changed.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
