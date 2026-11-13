@@ -393,3 +393,18 @@ journal. Both isolated and unchanged QGWF RISC-V driver-source profiles
 compile. The actual held journal has not been exercised with this receipt;
 recurrent workspace transfer, model execution, quality and speed remain
 unproven, and no loadable driver was installed.
+
+Held startup transfer: the sealed receipt now derives both the large and
+small recurrent workspace tables. A distinct fake-profile runtime plan adds
+three bounded packets to the existing startup data and verifies they do not
+overlap the original packet ranges. In simulated OS/device tests, the actual
+held journal installed and checked its manifest; the actual runtime owner
+wrote and read back all 2,311 packets, including every word of both recurrent
+tables, then performed a 119-worker mock bootstrap. Corrupting either the
+large or small table transfer failed before worker start and quarantined the
+simulated owner. The fake-tag RISC-V driver source and unchanged QGWF source
+both cross-compile. The low-level owner identity check is constant-time;
+explicit bind/manifest boundaries still revalidate the entire ledger, and a
+mutation test verifies that distinction. These are simulated endpoints and
+an inspection-only image: there is no P100A execution, text-quality result,
+or inference-speed claim.

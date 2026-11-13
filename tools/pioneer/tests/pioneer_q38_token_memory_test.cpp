@@ -15,7 +15,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #include "../PioneerQ38HybridHeadModelPlan.h"
 #endif
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
 #include "../PioneerQ38DenseQ8MatrixManifest.h"
 #include "../PioneerQ38HybridHeadLayout.h"
 #include "../PioneerQ38TokenRuntimePlan.h"
@@ -35,7 +35,7 @@ struct TokenMemoryIO:CodeIO {
  std::vector<uint32_t> data=std::vector<uint32_t>(TOKL::SavedWords);
  TokenMemoryIO(){for(unsigned i=0;i<data.size();i++)data[i]=i%17?0x9e3779b9U*(i+1)^0xa56b4e37U:UINT32_MAX;}
  uint32_t RuntimePcRead(){
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
   if(runtimeMode && current && C().coreReset==0x46800)return 0x2004c;
 #endif
   assert(false && "held-only journal cannot use a PC sample as STOP/cleanup authority");return 0;
@@ -54,7 +54,7 @@ struct TokenMemoryIO:CodeIO {
   const PioneerQ38GdnIdentity&,const uint8_t*,unsigned){assert(startup==&actual);if(!scopeAllowed)observed=touches;return scopeAllowed;}
  void TokenMemoryRetainHostOwners(){retained=true;}
  bool TokenMemoryMappingStable(unsigned worker){Touch();assert(worker==current);if(badKind==4 && AtMemory()){observed=touches;return false;}return true;}
-#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
  // Explicit simulated FIFO endpoints for testing the real native-mode
  // journal template. No actual device read, launch or owner authority.
  bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32_t& output){
@@ -62,7 +62,7 @@ struct TokenMemoryIO:CodeIO {
   output=overflow?0:(BootstrapIO::ResidentNocRead(BlackholeDramSourceOffset(0))&0x10000U)?0x10101010U:0;return true;
  }
 #endif
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
  // Runtime admission fixture deliberately has no saved panel storage. If
  // admission succeeds, the real owner must fail closed at its next check.
  bool TokenRuntimeScope(const PioneerQ38TokenNativeOwner&,const PioneerQ38TokenMemory&,
@@ -137,14 +137,14 @@ struct TokenMemoryIO:CodeIO {
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (badKind==13 && AtMemory() && address==0x16c400+badOrdinal*4)
 #endif
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
    || (badKind==14 && AtMemory() && address==0x16dc00+badOrdinal*4)
 #endif
    ){output^=1;observed=touches;}return true;
  }
  bool TokenMemoryWrite(unsigned worker,uint32_t address,uint32_t value){
   Touch();writes++;
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
   if(runtimeMode){assert(TOKL::SnapshotContains(worker,address));FullWrite(worker,address,value);return true;}
 #endif
   assert(memoryState && memoryState->savedWords==TOKL::SavedWords && memoryState->verifiedOriginalWords>=TOKL::SavedWords);
@@ -153,7 +153,7 @@ struct TokenMemoryIO:CodeIO {
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (memoryState->phase==8 && worker==0 && address>=0x16c400 && address<0x16c400+64*3*7*4)
 #endif
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
    || (memoryState->phase==10 && worker==0 && address>=0x16dc00 && address<0x16dc00+16*3*7*3*4)
 #endif
    ) && TOKL::SnapshotContains(worker,address));
@@ -208,7 +208,7 @@ struct TokenMemoryFixture {
  std::vector<std::unique_ptr<PanelOwners>> owners;
  tt_dram_samples_result dram;PioneerResidentBanks banks;
  std::vector<uint8_t> ledger=std::vector<uint8_t>(PioneerResidentBanks::Pages);
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
  std::vector<uint32_t> hashes=std::vector<uint32_t>(PioneerResidentBanks::Pages);
  std::unique_ptr<PioneerQ38JournalReceipt> receipt=std::make_unique<PioneerQ38JournalReceipt>();
  PioneerQ38SpanLease span;int receiptContext=0,cookie=0;
@@ -222,7 +222,7 @@ struct TokenMemoryFixture {
    assert(PioneerQ38DispatchPrepareRole(io,dram,banks,*cohort,worker));
   }
   auto& data=Geometry();data.Bind(*cohort,banks,dram);
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
   assert(receipt->Begin(&receiptContext,&cookie,hashes.data(),ledger.data(),1,4,banks,dram,ledger.size()));
   unsigned bank=0,length=0,spans=0;uint64_t offset=0;
   while(receipt->Next(bank,offset,length)){
@@ -234,7 +234,7 @@ struct TokenMemoryFixture {
    span.saved=span.ready=span.dirty=true;span.nonce=++spans;assert(receipt->After());
   }
   span.closed=true;span.ready=span.dirty=false;
-#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
   assert(spans==21475 && receipt->Seal(span));
 #else
   assert(spans==21907 && receipt->Seal(span));
@@ -366,7 +366,7 @@ int main(int argc,char** argv){
    assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
    for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
    assert(f.memory->VerifyHybridManifestHeld(f.io,f.result));
-#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
    PioneerQ38HybridDenseQ8MatrixPlan::Proposal recurrentDenseHost;
    std::array<uint32_t,PioneerQ38JournalReceipt::DenseManifestWords> recurrentDenseExpected={};
    assert(PioneerQ38HybridDenseQ8MatrixPlan::Build(*original,recurrentDenseHost)
@@ -439,7 +439,7 @@ int main(int argc,char** argv){
    // begin the no-further-I/O check at the returned failure boundary.
    f.io.observed=f.io.touches;f.Unknown();
   }
-#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
   {
    TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
     && f.memory->VerifyHybridManifestHeld(f.io,f.result));
@@ -447,7 +447,7 @@ int main(int argc,char** argv){
    assert(!f.memory->InstallDenseManifestHeld(f.io,f.result));f.Unknown();
   }
 #endif
-#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
   {
    TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
     && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
@@ -469,6 +469,14 @@ int main(int argc,char** argv){
     f.hashes.data(),f.ledger.data(),1,4));
    const unsigned offset=PioneerQ38RecurrentQ8MatrixWorkspace::Offset/4;
    for(unsigned i=0;i<expected.size();i++)assert(f.io.runtimeBank.at(offset+i)==expected[i]);
+#elif defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
+   std::array<uint32_t,PioneerQ38JournalReceipt::RecurrentWords> large={};
+   std::array<uint32_t,96*32> small={};
+   assert(f.receipt->RecurrentWorkspace(large.data(),large.size(),&f.receiptContext,&f.cookie,f.hashes.data(),f.ledger.data(),1,4));
+   assert(f.receipt->BuildWorkspace(&f.receiptContext,&f.cookie,f.hashes.data(),f.ledger.data(),1,4,small.data(),small.size()));
+   const unsigned offset=PioneerQ38JournalReceipt::RecurrentOffset/4;
+   for(unsigned i=0;i<large.size();i++)assert(f.io.runtimeBank.at(offset+i)==large[i]);
+   for(unsigned i=0;i<small.size();i++)assert(f.io.runtimeBank.at(offset+large.size()+i)==small[i]);
 #endif
    PioneerQ38TokenBootstrapResult bootstrap;
    assert(owner->BootstrapWorkers(f.io,bootstrap) && owner->WorkersReady() && !owner->Unsafe()
@@ -478,15 +486,21 @@ int main(int argc,char** argv){
    // Destruction here is simulated-only; no post-launch restoration or
    // physical ownership/launch permission follows from this fixture.
   }
-  {
+  for(unsigned part=0;part<
+#ifdef PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION
+   2
+#else
+   1
+#endif
+   ;part++){
    TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
     && f.memory->VerifyHybridManifestHeld(f.io,f.result) && f.memory->InstallDenseManifestHeld(f.io,f.result));
    f.io.runtimeWorkspace=Geometry().startup->Workspace();f.io.runtimeBank.resize(PioneerQ38GlobalChainLayout::WorkspaceBytes/4);
    f.io.runtimeMode=true;
-#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) || defined(PIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION)
    // Corrupt the first recurrent metadata write specifically, not a legacy
    // packet, and require its readback to fail before any worker starts.
-   f.io.runtimeCorruptRequest=2*PioneerQ38TokenRuntimePlan::Chunks+1;
+   f.io.runtimeCorruptRequest=2*PioneerQ38TokenRuntimePlan::Chunks+1+part*4;
 #else
    f.io.runtimeCorruptRequest=3;
 #endif

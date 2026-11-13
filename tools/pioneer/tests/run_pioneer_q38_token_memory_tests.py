@@ -8,6 +8,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+small_receipt = '--small-recurrent-receipt-journal' in args
+if small_receipt:
+    assert args.count('--small-recurrent-receipt-journal') == 1 and '--recurrent-receipt-journal' not in args
+    args[args.index('--small-recurrent-receipt-journal')] = '--qgwd-journal'
 recurrent_receipt = '--recurrent-receipt-journal' in args
 if recurrent_receipt:
     assert args.count('--recurrent-receipt-journal') == 1 and '--qgwd-receipt-journal' not in args and '--qgwd-journal' not in args
@@ -119,6 +123,13 @@ if hybrid_header is not None:
                 profile+=['-DPIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION=1','-DPIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION=1',
                           '-DPIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION=1','-DPIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION=1',
                           '-DPIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION=1']
+            if small_receipt:
+                profile+=['-DPIONEER_Q38_SMALL_RECURRENT_JOURNAL_INSPECTION=1',
+                          '-DPIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION=1',
+                          '-DPIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION=1',
+                          '-DPIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION=1',
+                          '-DPIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION=1',
+                          '-DPIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION=1']
             print('QGWD simulated journal only: QGW8 logical geometry; no QGWD model, lifecycle or device qualification',flush=True)
         else:
             profile+=['-DPIONEER_Q38_QGW8_PROGRAMS_INSPECTION=1']
@@ -141,13 +152,25 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
         usage=list(pathlib.Path(tmp).glob('*.su'));assert len(usage)==1,usage
         rows=[line.split('\t') for line in usage[0].read_text().splitlines()]
         stack_methods=['InstallHybridManifestHeld', 'VerifyHybridManifestHeld']
-        if qgwd_receipt or recurrent_receipt:stack_methods+=['InstallDenseManifestHeld','VerifyDenseManifestHeld']
+        if qgwd_receipt or recurrent_receipt or small_receipt:stack_methods+=['InstallDenseManifestHeld','VerifyDenseManifestHeld']
         for name in stack_methods:
             matching=[row for row in rows if name in row[0]]
             assert len(matching)==1 and len(matching[0])==3 and matching[0][2]=='static' and int(matching[0][1])<=2048,(name,matching)
         print('PASS '+('hybrid and QGWD dense' if qgwd_receipt else 'hybrid/QGW8')+' manifest install and verification frames <=2048 bytes in host diagnostic build',flush=True)
     for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest'], ['--qgw8-journal']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
+    if small_receipt:
+        for forbidden in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
+                          'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',
+                          'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+            result = subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', *flags, *profile,
+                                     '-D'+forbidden+'=1', '-E', str(here/'pioneer_q38_token_memory_test.cpp')], capture_output=True)
+            assert result.returncode and b'Small recurrent journal is simulated inspection only' in result.stderr, forbidden
+        for forbidden in ('PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION', 'PIONEER_Q38_QGW8_TRACE_NATIVE_131'):
+            result = subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', *flags, *profile,
+                                     '-D'+forbidden+'=1', '-E', str(here/'pioneer_q38_token_memory_test.cpp')], capture_output=True)
+            assert result.returncode and b'Recurrent inspection runtime cannot select the trace runtime' in result.stderr, forbidden
+        print('PASS small recurrent journal excludes kernel, Work and reference roles; NO DEVICE', flush=True)
     if recurrent_receipt:
         for forbidden in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                           'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',

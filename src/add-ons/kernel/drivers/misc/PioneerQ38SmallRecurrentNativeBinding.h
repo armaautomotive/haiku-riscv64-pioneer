@@ -17,7 +17,7 @@ struct PioneerQ38SmallRecurrentNativeBinding {
    && !c.q38HybridReceipt && !c.q38Qgw8Receipt && !c.q38QgwdReceipt && c.q38SmallRecurrentReceipt && c.q38Span
    && c.q38SmallRecurrentReceipt->MatchesLease(c.q38Span)
    && c.q38SmallRecurrentReceipt->MatchesBanks(&c.banks,&c.baseline.baseline.baseline.baseline.dram)
-   && c.q38SmallRecurrentReceipt->Revalidate(&c,fd,c.hashes,c.initialized,fd->team,generation);
+   && c.q38SmallRecurrentReceipt->Matches(&c,fd,c.hashes,c.initialized,fd->team,generation);
  }
  template<class Context,class Cookie>static bool DeriveLogical(Context& c,const Cookie* fd,uint64_t generation,
   PioneerQ38CanonicalModelPlan& logical){

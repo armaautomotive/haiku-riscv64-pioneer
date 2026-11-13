@@ -23,6 +23,7 @@ class PioneerQ38SmallRecurrentUploadReceiptInspection {
  int64_t team=-1;uint64_t generation=0,digest=UINT64_C(14695981039346656037);
  // This receipt is heap-only: keep the staging buffer off the caller's stack.
  uint32_t workspaceScratch[96*32]={};
+ uint32_t recurrentScratch[48*3*32]={};
  uint32_t denseManifestScratch[16*3*7*3]={};
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof && team>=0 && generation
@@ -93,8 +94,11 @@ public:
   && lease->nonce==spans && !lease->dirty && !lease->ready && !lease->running && !lease->unsafe;}
  unsigned Spans()const{return spans;}
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
-  if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
+  if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38SmallRecurrentLedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
+ }
+ bool Matches(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen)const{
+  return Sealed() && context==c && cookie==fd && hashes==h && ledger==initialized && team==owner && generation==gen;
  }
  bool MatchesBanks(const PioneerResidentBanks* bound,const tt_dram_samples_result* dram)const{
   return Sealed() && bound==banks && dram==proof;
@@ -156,6 +160,36 @@ public:
   }
   if(count!=16*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
   for(unsigned i=0;i<DenseManifestWords;i++)output[i]=denseManifestScratch[i];return true;
+ }
+ enum : unsigned {RecurrentWords=48*3*32,RecurrentOffset=0x3000200};
+ // Derive the large recurrent projection records from the same sealed
+ // converted layout. These bytes are data only, not a transfer or launch.
+ bool RecurrentWorkspace(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t bytes=RecurrentWords*sizeof(uint32_t),hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(!output || !h || !initialized || words!=RecurrentWords || (out&3) || out>limit-bytes || self>limit-sizeof(*this)
+   || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<RecurrentWords;i++)recurrentScratch[i]=0;unsigned count=0;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* p=original.Part(i);const auto* q=layout.At(i);if(!p || !q || q->original!=i || q->bank!=p->bank)return Fail();
+   if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4==3 || (p->role!=5 && p->role!=6 && p->role!=13))continue;
+   const unsigned role=p->role==5?0:p->role==6?1:2,ordinal=p->layer-p->layer/4,stride=role==2?6528:5440;
+   const uint64_t size=uint64_t(p->rows)*stride,allocated=(size+4095)&~uint64_t(4095);
+   if(ordinal>=48 || q->bank>=7 || !p->rows || ((p->firstRow|p->rows)&31)
+    || q->encoding!=L::Parent::RecurrentQ8Bfp8 || size!=q->bytes || allocated!=q->allocated
+    || (q->offset&4095) || q->offset>UINT32_MAX-C::Base)return Fail();
+   const unsigned at=(ordinal*3+role)*32+q->bank*3;if(recurrentScratch[at])return Fail();
+   recurrentScratch[at]=C::Base+q->offset;recurrentScratch[at+1]=p->firstRow;recurrentScratch[at+2]=p->rows;count++;
+  }
+  if(count!=48*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<RecurrentWords;i++)output[i]=recurrentScratch[i];return true;
  }
  // Derive records from the receipt's own fixed layout, without trusting a
  // host proposal. Inspection only: it neither authenticates nor writes DRAM.

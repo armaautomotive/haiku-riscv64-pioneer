@@ -15,6 +15,7 @@
 #include "../PioneerQ38SmallRecurrentUploadReceiptInspection.h" // receipt must not require the host proposal header
 #include "../PioneerQ38SmallRecurrentWorkspaceReceipt.h"
 #include "../PioneerQ38DenseQ8MatrixManifest.h"
+#include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 
 int main(){
@@ -54,6 +55,13 @@ int main(){
  assert(!receipt->DenseManifest(denseActual.data(),denseActual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && denseActual==denseUntouched);
  assert(!receipt->DenseManifest(hashes.data(),DM::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(receipt->DenseManifest(denseActual.data(),denseActual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && denseActual==denseExpected);
+ using RW=PioneerQ38RecurrentQ8MatrixWorkspace;RW::M::Plan::Proposal recurrentPlan;
+ assert(RW::M::Plan::Build(*canonical,recurrentPlan));
+ std::array<uint32_t,RW::Words> recurrentExpected{},recurrentActual{};recurrentActual.fill(0xa5a5a5a5);
+ const auto recurrentUntouched=recurrentActual;assert(RW::Build(*canonical,recurrentPlan,recurrentExpected.data(),recurrentExpected.size()));
+ assert(!receipt->RecurrentWorkspace(recurrentActual.data(),recurrentActual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && recurrentActual==recurrentUntouched);
+ assert(!receipt->RecurrentWorkspace(hashes.data(),RW::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->RecurrentWorkspace(recurrentActual.data(),recurrentActual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && recurrentActual==recurrentExpected);
  std::array<uint32_t,Workspace::Words> actual{},expected{};actual.fill(0xa5a5a5a5);
  assert(Workspace::Build(*canonical,proposal,expected.data(),expected.size()));
  assert(!receipt->BuildWorkspace(&foreign,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()));
@@ -72,7 +80,11 @@ int main(){
  assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
  proposal.parts[0].offset-=4096;
  unsigned hole=0;while(hole<ledger.size() && ledger[hole])hole++;assert(hole<ledger.size());
- ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42) && banks.Quarantined());
+ ledger[hole]=1;
+ // Matches is a constant-time owner identity check, not a ledger audit.
+ // The explicit lifecycle Revalidate must detect the damaged ledger.
+ assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42) && banks.Quarantined());
  assert(!receipt->Sealed());
  assert(!receipt->BuildWorkspace(&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
  assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
