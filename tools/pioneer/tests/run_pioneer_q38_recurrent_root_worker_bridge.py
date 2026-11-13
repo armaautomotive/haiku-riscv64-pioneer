@@ -8,10 +8,15 @@ import subprocess
 import sys
 import tempfile
 
-assert len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6]=='--full')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
 mode=sys.argv[6] if len(sys.argv)==7 else '--out'
+full=Path(sys.argv[7]) if len(sys.argv)==9 else None
+if full:
+    assert full.is_absolute() and full.is_file() and not full.is_symlink() and len(sys.argv[8])==64
+    info=full.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
+    assert info.st_size==33443872 and hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 roles={'--gate':5,'--qkv':6,'--out':13}
 sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1','7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'),
              '--gate':('c4781e0c6c3963ff1e1b3ac36c1d21fbb1dd74e2785826489cf67cbb139c9f36','a5fadca5d6baeaa921472989cf038dd4aa2a90a666f4c7b3262c8ee141841ff2'),
@@ -61,12 +66,14 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
         subprocess.run([compiler,*common,*['-D'+r+'=1' for r in selected_roles],'-I'+str(private),str(here/source),'-o',str(binary)],check=True)
     boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==119*256
     job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout;assert len(job)==119*256
-    subprocess.run([str(workerbin),str(worker),str(leaf),'--run'],input=job,check=True,env=env)
+    runargs=[str(workerbin),str(worker),str(leaf),'--run-full',str(full)] if full else [str(workerbin),str(worker),str(leaf),'--run']
+    subprocess.run(runargs,input=job,check=True,env=env)
     badboot=bytearray(boot);badboot[0]^=1
     rejected=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=badboot,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
     badjob=bytearray(job);badjob[34*4]=7
-    rejected=subprocess.run([str(workerbin),str(worker),str(leaf),'--run'],input=badjob,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    rejected=subprocess.run(runargs,input=badjob,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
+if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 print('PASS invalid simulated boot and wrong-role job rejected; NO DEVICE')

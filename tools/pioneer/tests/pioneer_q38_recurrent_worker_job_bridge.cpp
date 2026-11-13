@@ -3,13 +3,23 @@
 #define main recurrent_worker_helper_main
 #include "pioneer_q38_recurrent_out_real_worker_test.cpp"
 #undef main
+#include <fstream>
 
 int main(int argc,char** argv){
- assert(argc==4 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")));
+ assert((argc==4 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")))
+  || (argc==5 && !std::strcmp(argv[3],"--run-full")));
  const unsigned tensor=PioneerNativeBfpModelBandMetadata::Tensor;
  assert(tensor==3 || tensor==5 || tensor==16);
  const unsigned role=tensor==3?5:tensor==5?6:13,width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120;
  assert(width==PioneerNativeBfpModelBandMetadata::Width);
+ const bool full=argc==5;std::vector<uint8_t> projection;
+ if(full){
+  assert(tensor==16);std::ifstream f(argv[4],std::ios::binary);
+  projection.assign(std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>());
+  assert(projection.size()==32+160*(192*1088+128));
+  const uint32_t expected[]={0x31525051,1,16,6144,5120,160,192,1088};
+  assert(!std::memcmp(projection.data(),expected,sizeof(expected)));
+ }
  if(!std::strcmp(argv[3],"--boot")){
   for(unsigned w=0;w<119;w++){
    DenseProducerImage image(argv[1],argv[2],width,1,w+1);
@@ -34,7 +44,14 @@ int main(int argc,char** argv){
   assert(bands && bands<=8 && job[2]==1 && job[3]==w+1 && job[18]==width && job[34]==role
    && first<rows && bands*32<=rows-first);
   auto image=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,w+1);image->Boot();
-  SetPrivateWeights(*image,w%3,true);image->transfer.root=input;
+  if(full){
+   for(unsigned band=0;band<bands;band++){
+    const unsigned sourceBand=first/32+band;const size_t source=32+size_t(sourceBand)*(192*1088+128);
+    assert(source+192*1088+128<=projection.size());
+    std::memcpy(image->transfer.weights.data()+size_t(band)*192*1088,projection.data()+source,192*1088);
+   }
+  }else SetPrivateWeights(*image,w%3,true);
+  image->transfer.root=input;
   if(!w){
    // Preserve the producer's actual prior nonce and worker state, not a host receipt.
    for(unsigned i=0;i<256;i++)image->input[i]=uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16;
@@ -46,9 +63,13 @@ int main(int argc,char** argv){
   assert(image->FinishCombined(previous+1) && image->native.Clean());
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const unsigned dest=first+band*32+row;assert(!seen[dest]++);
-   assert(image->Get(W::Output+(band*32+row)*4)==PioneerNativeBfpModelBandMetadata::Golden((w+band)%3)[row]);
+   uint32_t expected;
+   if(full){const size_t source=32+size_t(first/32+band)*(192*1088+128)+192*1088+row*4;
+    std::memcpy(&expected,projection.data()+source,4);}
+   else expected=PioneerNativeBfpModelBandMetadata::Golden((w+band)%3)[row];
+   assert(image->Get(W::Output+(band*32+row)*4)==expected);
   }
  }
  for(auto value:seen)assert(value==1);
- std::printf("PASS tensor%u role%u linked ROOT jobs -> 119 matrix workers with interleaved real-weight samples and exact %u-row coverage; SIMULATED TRANSPORT NO DEVICE\n",tensor,role,rows);
+ std::printf("PASS tensor%u role%u linked ROOT jobs -> 119 matrix workers with %s and exact %u-row coverage; SIMULATED TRANSPORT NO DEVICE\n",tensor,role,full?"distinct real-weight bands":"interleaved real-weight samples",rows);
 }

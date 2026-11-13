@@ -1,0 +1,26 @@
+Full learned recurrent output projection, connected instruction simulation
+
+The original 27B GGUF was authenticated against SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+For layer-0 blk.0.ssm_out.weight, all 160 distinct 32-row BFP8 bands were
+read from the existing cache and every tile compared byte-for-byte with fresh
+conversion from that original. A separate integer decoder/arithmetic path
+generated the expected 5,120 outputs for one deterministic synthetic input.
+The 33,443,872-byte private export is not committed; its SHA-256 is
+8158c4fbaa3569ae7f3453d367b7d988a6d67d0107817c7af524308f1814d886.
+
+The actual linked RV32 ROOT scheduler/job builder supplied 119 job packets
+to separately simulated compiled matrix workers. All 160 distinct learned
+bands were assigned using the jobs' row offsets, all 5,120 outputs were
+covered exactly once, and every result matched the independent integer
+reference. The producer instructions constructed the input in 24 chunks.
+Bad boot and wrong-role job tests were refused. Images, private source header
+and full export were hashed before and after; extracted sections and symbol
+tables were checked against their pinned ELFs. ASan/UBSan reported no error.
+
+This is one complete learned projection for a synthetic input, not a full
+layer or model. ROOT-to-worker packets were bridged by host pipes; workers
+were simulated sequentially, with no real NoC, retained 119-worker cohort,
+full ROOT gather/scatter, native ownership or device execution. Conversion
+to BFP8 can change model arithmetic: general quality remains unvalidated.
+There is no hardware timing or tokens-per-second result.
