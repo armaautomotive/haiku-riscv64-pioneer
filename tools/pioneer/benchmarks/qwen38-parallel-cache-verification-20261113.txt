@@ -56,3 +56,19 @@ thread failure paths and end-to-end latency still require qualification before
 installation. The command exited 0; afterward driver55/tag2026102100010012/
 generation42 remained idle/cold0 and 64 CPUs and 137034936320 bytes RAM were
 reported. No GPU session was opened. The synthetic directory is retained.
+
+Real-model host-only qualification: the isolated parallel worker
+8f18a95e9baf86a4fbec80a29be97abb95eea25ae3b4933d5dafb66b054d554b
+and host probe 1e73dddb95f9a9ca8a9fef6411ad619fb4ebeb8ad5b5a411437ee36d6c5161f4
+loaded and unloaded the actual authenticated model, reported all 851 cache
+entries verified, exited 0 and produced empty stderr. Wall-clock seconds
+around the entire host probe were 1794571536..1794572375, or 839 seconds,
+including authentication, verification, model load and unload. This is one
+coarsely timed run, not an isolated verification time or controlled speedup.
+The earlier different serial host trial reported 1263.125 s; the numbers
+alone do not establish causation. This test issued no Generate command, GPU
+upload or inference. Host stdout SHA-256:
+50a3e14ecc4754ecc22aace867828dff84844afd606c40e6e1f951e3d4660212.
+Afterward driver55/tag2026102100010012/generation42 was idle/cold0 with 64
+CPUs and 137034936320 bytes RAM. The installed Assistant was not replaced;
+actual card upload and warm inference using this candidate are untested.
