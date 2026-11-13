@@ -550,3 +550,12 @@ its own input producer for one 256-value chunk; the remaining test inputs
 were explicitly supplied unit values. These worker histories were not the
 shared ROOT/peer histories above. This proves neither continuous model
 execution nor numerical behavior on silicon, and reports no token speed.
+
+Shared-peer BFP8 backend preparation: a separate host-only bridge now wraps
+the existing queued-read and BFP8 tensor models, publishing simulated L1 and
+NoC events through the peer byte interface. A component test supplied a
+nonzero synthetic band and unit BF16 input, drove the loader and tensor
+operations, and checked all 32 outputs against an independent exact result.
+The current bridge snapshots the source bytes on construction and is not yet
+attached to a running worker CPU; its test does not establish continuous
+controller/worker execution, real-model correctness, hardware or throughput.
