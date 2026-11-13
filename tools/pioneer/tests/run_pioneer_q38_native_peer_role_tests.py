@@ -51,6 +51,11 @@ for definitions in ({role:1}, {role:1, storage:0}, {role:1, storage:2},
 for macro in ('_KERNEL_MODE', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_WORK_INFERENCE'):
     for value in (0, 1):
         check('pioneer_q38_native_peer_test_bridge.cpp', {macro:value}, False, True)
+check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':1}, True, True)
+for value in (0,2):
+    check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':value}, False, True)
+for macro in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE'):
+    check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':1,macro:1}, False, True)
 stack_header='PioneerQ38InstructionStackObserver.h'
 stack_role='PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST'
 check(stack_header,{stack_role:1},True)

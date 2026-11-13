@@ -4,6 +4,11 @@
 Q38NativePeerTestBytes peerBytes;
 void PreparePeerBytes(){
  peerBytes.context=this;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE
+ peerBytes.programWord=[](void*,unsigned worker,uint32_t address,uint32_t& word){
+  return PioneerQ38TokenPrograms::ProgramWord(worker,address,word);
+ }; // immutable pinned QTPM program DATA only, not guest memory or processor state
+#endif
  peerBytes.word=[](void* p,unsigned worker,uint32_t address)->uint32_t&{return static_cast<PioneerSessionIO*>(p)->Raw(worker,address);};
  peerBytes.noc=[](void* p,unsigned worker,unsigned offset){return static_cast<PioneerSessionIO*>(p)->Core(worker).ResidentNocRead(offset);};
  peerBytes.events=[](void* p,unsigned worker,const uint32_t* delta,const uint32_t* commands,unsigned mask,bool pendingChanged,bool pending){

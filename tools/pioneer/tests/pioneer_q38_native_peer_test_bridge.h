@@ -22,8 +22,14 @@ struct Q38NativePeerTestBytes {
  bool (*put)(void*,unsigned,uint32_t,uint32_t)=nullptr;
  uint64_t (*clock)(void*)=nullptr;
  void (*push)(void*,unsigned,const uint32_t*,const uint32_t*)=nullptr;
+ bool (*programWord)(void*,unsigned,uint32_t,uint32_t&)=nullptr;
  // Raw emitted NoC packet+bytes;G3 only. Not a ready/product/owner callback.
 }; // RAW L1/CSR/GDDR byte endpoints ONLY;no processor/owner/ready/product callbacks
+static inline bool Q38NativePeerTestProgramWord(const Q38NativePeerTestBytes& bytes,unsigned worker,uint32_t address,uint32_t& output){
+ if(!bytes.context || !bytes.programWord || !worker || worker>=120 || (address&3))return false;
+ uint32_t expected=0;if(!bytes.programWord(bytes.context,worker,address,expected))return false;
+ output=expected;return true;
+} // immutable program DATA, not an instruction/PC/history setter
 struct Q38NativePeerTestStats {
  uint32_t pc,steps,matrixInstructions,moveInstructions,floatOps,requests,responses,pending;
  uint32_t deviceReads,deviceWrites,statusWrites,minStack,sequence,active;

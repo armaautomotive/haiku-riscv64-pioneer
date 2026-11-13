@@ -489,3 +489,12 @@ The corrected fixture passed all 5,120 synthetic normalization values and
 the producer-specific descriptor checks, stopping before delivery of the
 first worker doorbell after 17,550,865 ROOT instructions. No producer or
 matrix operation completed; this is not a physical run or speed measurement.
+
+Worker-engine integration preparation: the isolated native peer simulator can
+now request expected instruction words from an explicitly supplied immutable
+program-DATA callback. The planned QTPM fixture supplies its already pinned
+program table, not guest memory or processor state. A small host test checked
+the callback's worker/address/failure boundaries, and the peer role tests and
+host bridge syntax check passed. The QTPM peer mode is not yet wired into the
+native simulator runner and no worker instruction or producer has run through
+this new callback. No hardware or inference-speed result follows.

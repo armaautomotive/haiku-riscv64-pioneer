@@ -6,6 +6,9 @@
 #endif
 #define PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE 1
 #define PIONEER_Q38_TEST_SHARED_WORKER_STORAGE 1
+#if defined(PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST) && PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST != 1
+#error Recurrent peer fixture requires its exact offline test role
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST
 #if PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST != 1 \
  || !defined(PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST) || PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST != 1 \
@@ -138,6 +141,9 @@ struct NativePeer:NativePeerBase,CohortBytes {
   :NativePeerBase(old,global,worker),binding(b){
   (void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
   assert(!steps && pc==0x6000 && !active && !sequence && !matrixInstructions && !requests && !responses);
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST
+  assert(binding.bytes.programWord); // immutable selected DATA source, required before any instruction
+#endif
   bytes=this;PoisonDst();Poison();
 #ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
   assert(binding.bytes.push);
@@ -160,7 +166,15 @@ struct NativePeer:NativePeerBase,CohortBytes {
  void Put(unsigned route,unsigned address,uint32_t value)override{assert(binding.bytes.put(binding.bytes.context,route,address,value));}
  uint64_t Clock()const override{return binding.bytes.clock(binding.bytes.context);}
  uint32_t RootWord(unsigned address)const override{return binding.bytes.word(binding.bytes.context,0,address);}
- bool CodeAddress(uint32_t address)const override{uint32_t word;return ExpectedProgramWord(logicalWorker,address,word);}
+ bool ExpectedWord(uint32_t address,uint32_t& word)const{
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST
+  (void)&ExpectedProgramWord;
+  return Q38NativePeerTestProgramWord(binding.bytes,logicalWorker,address,word);
+#else
+  return ExpectedProgramWord(logicalWorker,address,word);
+#endif
+ }
+ bool CodeAddress(uint32_t address)const override{uint32_t word;return ExpectedWord(address,word);}
  unsigned Index(uint32_t address)override{assert(!(address&3) && address<0x180000);return address/4;}
  unsigned StepLimit()const override{return 4000000000U;}
  void Publish(unsigned commandWrites=0){
@@ -217,7 +231,7 @@ struct NativePeer:NativePeerBase,CohortBytes {
   if(Range(address,0xffb20000,0x2000))Publish(Range(address,0xffb20000,40)?1U<<((address-0xffb20000)/4):0U);
  }
  void StepBlock()override{
-  uint32_t expected;assert(ExpectedProgramWord(logicalWorker,pc,expected) && binding.Word(pc)==expected);
+  uint32_t expected;assert(ExpectedWord(pc,expected) && binding.Word(pc)==expected);
 #ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
 #ifndef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
 #error Completion-loss endpoint requires the actual manual-wait worker
