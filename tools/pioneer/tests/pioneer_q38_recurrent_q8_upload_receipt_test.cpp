@@ -15,6 +15,7 @@
 #include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "../PioneerQ38RecurrentQ8WorkspaceTransferInspection.h"
 #include "../PioneerQ38RecurrentQ8RuntimePlanInspection.h"
+#include "../PioneerQ38RecurrentQ8NativeBindingInspection.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "pioneer_resident_banks_test.cpp"
 #include "../PioneerQ38RecurrentQ8UploadReceiptInspection.h"
@@ -22,11 +23,19 @@
 #include <cstring>
 #include <memory>
 #include <vector>
+struct FakeContext {
+ void* hybridReceipt=nullptr;void* qgw8Receipt=nullptr;void* denseReceipt=nullptr;
+ PioneerQ38RecurrentQ8UploadReceiptInspection* recurrentReceipt=nullptr;PioneerQ38SpanLease* span=nullptr;
+ PioneerResidentBanks* banks=nullptr;const tt_dram_samples_result* proof=nullptr;
+ uint32_t* hashes=nullptr;uint8_t* initialized=nullptr;
+};
+struct FakeCookie {uint32_t magic=0x50313030;FakeContext* context=nullptr;int64_t team=17;};
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--bad-record"))));
  BanksMock io;auto proof=BankProof(io);PioneerResidentBanks banks;assert(banks.Bind(proof));
  std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages,0);
- auto receipt=std::make_unique<PioneerQ38RecurrentQ8UploadReceiptInspection>();int context=0,cookie=0,foreign=0;
+ auto receipt=std::make_unique<PioneerQ38RecurrentQ8UploadReceiptInspection>();FakeContext context;FakeCookie cookie;int foreign=0;
+ cookie.context=&context;
  assert(receipt->Begin(&context,&cookie,hashes.data(),ledger.data(),17,42,banks,proof,ledger.size()));
  PioneerQ38SpanLease span;assert(!receipt->Seal(span));
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
@@ -70,6 +79,15 @@ int main(int argc,char** argv){
   puts("PASS unexpected gap page quarantines fake owner");return 0;
  }
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->PageDigest());
+ context.recurrentReceipt=receipt.get();context.span=&span;context.banks=&banks;context.proof=&proof;
+ context.hashes=hashes.data();context.initialized=ledger.data();
+ using Bridge=PioneerQ38RecurrentQ8NativeBindingInspection;
+ assert(Bridge::Matches(context,&cookie,42));
+ auto wrongCookie=cookie;wrongCookie.context=nullptr;assert(!Bridge::Matches(context,&wrongCookie,42));
+ assert(!Bridge::Matches(context,&cookie,43));context.denseReceipt=&foreign;assert(!Bridge::Matches(context,&cookie,42));context.denseReceipt=nullptr;
+ PioneerQ38SpanLease otherSpan;context.span=&otherSpan;assert(!Bridge::Matches(context,&cookie,42));context.span=&span;
+ auto bridgeLogical=std::make_unique<PioneerQ38CanonicalModelPlan>();auto bridgePhysical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(Bridge::Derive(context,&cookie,42,*bridgeLogical,false) && Bridge::Derive(context,&cookie,42,*bridgePhysical,true));
  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Matches(&foreign,&cookie,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Matches(&context,&foreign,hashes.data(),ledger.data(),17,42));

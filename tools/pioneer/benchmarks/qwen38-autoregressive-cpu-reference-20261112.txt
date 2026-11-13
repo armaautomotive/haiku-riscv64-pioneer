@@ -1,0 +1,20 @@
+Qwen3.8 three-position CPU-only autoregressive reference, 2026-11-12
+
+The staged Haiku RISC-V reference (SHA-256
+bf7d18f9ca48dbc1e9a29cc65a67425edf9da1f003a1cfc77073db2e86d763c3)
+completed its three-position CPU-only forward sequence on the original model.
+The program emitted its final PASS, stderr was empty and its process exited;
+the detached launch did not separately capture an exit code. The reference
+uses its own retained recurrent, convolution and attention state. Its generated
+IDs are 70253, 70253, 70253 with initial input 248319 and each selected ID fed
+back. This matches the first three IDs of the fixed-input card diagnostic,
+but is not a complete model-quality or general-prompt comparison.
+
+Trace files remain in /boot/home/pioneer-cpu-autoregressive-reference-20261112-b.
+Each is 2,324,548 bytes. SHA-256:
+ position 0: 9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937
+ position 1: 33d11abccf5a77699003c146a94a78ed9a61bcb3cade56a39c343d32258a8aad
+ position 2: c922fd3660172d5d5fe802245e6042f8f9249915c51f981a4886223fd28ced47
+Position 0 matches the earlier pinned CPU trace. The later full traces have
+not been independently reproduced. CPU results are not used in Work mode and
+do not measure or validate accelerator performance.

@@ -10,6 +10,7 @@ source = here / 'pioneer_q38_recurrent_q8_upload_receipt_test.cpp'
 header = here.parent / 'PioneerQ38RecurrentQ8UploadReceiptInspection.h'
 transfer_header = here.parent / 'PioneerQ38RecurrentQ8WorkspaceTransferInspection.h'
 runtime_header = here.parent / 'PioneerQ38RecurrentQ8RuntimePlanInspection.h'
+binding_header = here.parent / 'PioneerQ38RecurrentQ8NativeBindingInspection.h'
 compiler = os.environ.get('CXX', 'c++')
 assert not any(name.startswith(('PIONEER_', 'TT_PIONEER_')) for name in os.environ)
 with tempfile.TemporaryDirectory(prefix='q38-recurrent-receipt-', dir='/private/tmp') as tmp:
@@ -26,6 +27,11 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-receipt-', dir='/private/
         assert result.returncode and b'Recurrent upload receipt is offline inspection only' in result.stderr, forbidden
         assert b'Recurrent workspace transfer is offline inspection only' in result.stderr, forbidden
         assert b'Recurrent runtime plan is offline inspection only' in result.stderr, forbidden
+        direct = subprocess.run([compiler, '-std=c++17', '-D' + forbidden + '=1',
+                                 '-DPIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION=1',
+                                 '-DPIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION=1', '-E', '-x', 'c++', '-'],
+                                input='#include "' + str(binding_header) + '"\n', text=True, capture_output=True)
+        assert direct.returncode and 'Recurrent native binding is offline inspection only' in direct.stderr, forbidden
     late = subprocess.run([compiler, '-std=c++17', '-fsyntax-only', '-x', 'c++', '-'],
                           input='#include "' + str(source) + '"\n'
                                 '#undef PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION\n'
@@ -41,4 +47,9 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-receipt-', dir='/private/
                                         '#undef PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION\n'
                                         '#include "' + str(runtime_header) + '"\n', text=True, capture_output=True)
     assert late_runtime.returncode and 'Recurrent runtime plan is offline inspection only' in late_runtime.stderr
+    late_binding = subprocess.run([compiler, '-std=c++17', '-fsyntax-only', '-x', 'c++', '-'],
+                                  input='#include "' + str(source) + '"\n'
+                                        '#undef PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION\n'
+                                        '#include "' + str(binding_header) + '"\n', text=True, capture_output=True)
+    assert late_binding.returncode and 'Recurrent native binding is offline inspection only' in late_binding.stderr
 print('PASS recurrent receipt excludes native, Work and reference roles; NO DEVICE')
