@@ -1,0 +1,12 @@
+Recurrent Q8 prepared upload, synthetic inspection, 2026-11-12
+
+The real recurrent prepared-page router and span-upload adapter completed
+21,475 simulated spans covering 20,748,193,792 bytes in 3,551 weight parts.
+The fake transport checked sampled data bytes and sealed the matching synthetic
+ledger, including 1,436,160 recurrent BFP8 pages. A deliberately uncertain
+first upload quarantined its fake owner and the one-shot uploader refused a
+retry. The distinct recurrent packet marker and role exclusions also passed.
+
+All sources, caches and endpoints in this test were synthetic. No real model
+bytes, P100A transfer, driver control, execution, quality or inference speed
+were tested. The distinct recurrent protocol has no live ioctl assignment.

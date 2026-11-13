@@ -23,6 +23,20 @@ struct PioneerQ38DenseQ8UploadPlan {
  }
 };
 #endif
+#ifdef PIONEER_Q38_RECURRENT_Q8_UPLOAD_INSPECTION
+#if PIONEER_Q38_RECURRENT_Q8_UPLOAD_INSPECTION != 1 || !defined(PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION) \
+ || PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION != 1 || !defined(PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION) \
+ || PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION != 1
+#error Recurrent Q8 upload requires its isolated explicit plan role
+#endif
+#include "PioneerQ38HybridRecurrentQ8MatrixPlan.h"
+struct PioneerQ38RecurrentQ8UploadPlan {
+ using Proposal=PioneerQ38HybridRecurrentQ8MatrixPlan::Proposal;
+ template<class Canonical>static bool Build(const Canonical& source,Proposal& output){
+  return PioneerQ38HybridRecurrentQ8MatrixPlan::Build(source,output);
+ }
+};
+#endif
 #include "PioneerQ38HybridModelPlan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
@@ -73,6 +87,9 @@ template<class Pages,class IO,class Plan=PioneerQ38HybridLegacyUploadPlan> class
  static_assert(std::is_same<Plan,PioneerQ38HybridLegacyUploadPlan>::value || std::is_same<Plan,PioneerQ38HybridHeadUploadPlan>::value
 #ifdef PIONEER_Q38_DENSE_Q8_UPLOAD_INSPECTION
   || std::is_same<Plan,PioneerQ38DenseQ8UploadPlan>::value
+#endif
+#ifdef PIONEER_Q38_RECURRENT_Q8_UPLOAD_INSPECTION
+  || std::is_same<Plan,PioneerQ38RecurrentQ8UploadPlan>::value
 #endif
   ,
   "Only explicit hybrid upload plans are supported");

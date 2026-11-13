@@ -7,6 +7,7 @@
 using RecurrentPages=PioneerQ38HybridRecurrentQ8PreparedPages<FakeSource,FakePlan,FakeBfp8,DensePages>;
 using RecurrentPlan=PioneerQ38HybridRecurrentQ8MatrixPlan;
 
+#ifndef PIONEER_Q38_RECURRENT_Q8_PREPARED_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakeSource source;FakePlan packed;packed.source=&source;std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -84,3 +85,4 @@ int main(){
  permit=true;assert(!revoked.Ready());
  puts("PASS recurrent BFP8 prepared pages: two widths, parent routing, 1008-stripe coverage, revocation and atomic failures; SYNTHETIC NO DEVICE");
 }
+#endif
