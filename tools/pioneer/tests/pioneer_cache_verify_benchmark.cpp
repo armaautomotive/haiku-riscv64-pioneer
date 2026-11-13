@@ -14,7 +14,8 @@ int main(int argc,char** argv){
  auto ready=[](){return true;};
  if(!std::strcmp(argv[2],"create")){
   auto produce=[](uint64_t offset,unsigned count,uint8_t* out,std::string&){
-   for(unsigned i=0;i<count;i++)out[i]=uint8_t(((offset+i)*71)^((offset+i)>>8)^((offset+i)>>16));return true;
+   for(unsigned i=0;i<count;i++)out[i]=uint8_t(((offset+i)*71)^((offset+i)>>8)^((offset+i)>>16));
+   return true;
   };
   Cache::Reader reader;bool hit=false;
   if(!cache.GetOrCreate(key,ready,produce,reader,hit,error) || hit){std::fprintf(stderr,"create: %s\n",error.c_str());return 1;}

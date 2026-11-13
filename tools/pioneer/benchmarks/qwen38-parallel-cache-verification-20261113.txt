@@ -35,3 +35,9 @@ samples ranged 0.109227-0.128676 s. Most parallel samples were slower and
 the fastest was an outlier. This is not an improvement demonstrated even on
 the Mac; its SHA implementation and storage are not the Pioneer's. The
 fixture measures full verification only, not upload or token generation.
+
+The synthetic benchmark now also cross-links for Haiku RISC-V in both modes.
+Serial SHA-256 e9651764ce7dcf82646d301fe5c051309b7ae585bcb1b5e951974539ac8469b4;
+parallel SHA-256 8a44ed0739a53e2ffc91e8967a1eaa4ddba1ab50f8b0af26de99766383a2600d.
+These binaries have not run on the Pioneer. Their fixture is synthetic and
+must use a fresh isolated temporary directory, never the model cache.
