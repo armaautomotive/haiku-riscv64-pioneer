@@ -15,4 +15,23 @@ against the pinned runtime, SHA-256
 The separate fixed-path host and card probes built with hashes
 94dd11eeb0348a24337948de2e8590be5a750868a9a3cb1aaf5b76420cff9226 and
 b1811688617b93e3e6f553d2ff9b0c4ed130aea5cc840c17799dc4d7cc53132f.
-Build/test only so far: no physical result or speedup is implied.
+At that build checkpoint there was no physical result or speedup evidence.
+
+Physical trial completed, November 13: the host-only cache load/unload and
+the subsequent four-token Work request each exited 0 with empty stderr. The
+parent recorded CARD_CLOSED_WORK_PROFILE_VERIFIED and exited 0. Three warm
+generation samples took 15.028166 s, reported as 0.200 tok/s; they included
+1,515 Work ioctl calls, totalling 12.907725 s of host-monotonic time inside
+those calls (about 85.9% of the measured decode interval). The remaining
+about 2.120 s is outside those calls. This is a short sample and the ioctl
+interval includes kernel/host overhead and waiting; it is NOT a measurement
+of card arithmetic or PCIe time alone. The Work path used P100A projections
+with CPU attention/state, and CPU reference validation was OFF. No comparative
+speedup, broad quality pass, full-card execution, or 20 tok/s is established.
+
+The request reported 1209.0 s including upload and prompt. Upload progress
+reached 100% at 1096.042622 s from its own progress clock. Postflight reported
+stable driver55/tag2026102100010012/generation42, active_owner0, cold0,
+64 CPUs and 137034936320 bytes RAM. Card stdout SHA-256:
+11dd841b2a6137f807b79f92f9c2d271b5c0a2eedb78a0cd788fd7220b2e40d9.
+The installed Assistant and driver were unchanged.
