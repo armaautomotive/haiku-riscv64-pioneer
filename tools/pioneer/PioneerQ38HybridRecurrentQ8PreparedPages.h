@@ -64,6 +64,14 @@ public:
  }
  bool Ready()const{return Current();}
  bool AllVerified()const{return verified && Current() && parent->AllVerified() && Current();}
+ bool MatchesBinding(const Source& s,const PackedPlan& p,const Canonical& c,const Cache::Digest& sha)const{
+  return verified && Current() && source==&s && packed==&p && canonical==&c && digest==sha;
+ }
+ bool MatchesVerifiedSnapshot(const std::vector<PioneerQ38PackedPart>& candidate)const{
+  if(!AllVerified() || candidate.size()!=parts.size())return false;
+  for(unsigned i=0;i<parts.size();i++)if(!Same(candidate[i],parts[i]))return false;
+  return AllVerified();
+ }
  const Base::Part* Part(unsigned i)const{return Current() && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
  bool OutputSafe(const void* out,size_t bytes)const{
   return out && bytes && Current() && parent->OutputSafe(out,bytes)

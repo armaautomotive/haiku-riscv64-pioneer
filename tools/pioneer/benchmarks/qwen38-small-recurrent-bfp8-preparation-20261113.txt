@@ -28,3 +28,12 @@ page routing and invalid geometry. A real-model checker independently
 reconverted and compared all 8,160 pages (33,423,360 bytes) against the
 prepared cache and passed. This is still host-side data preparation only;
 the relocated allocation is not yet wired to an upload or card scheduler.
+
+Prepared-page chain follow-up: an isolated child router binds the verified
+large-recurrent parent snapshot and small BFP8 source identity to the new
+relocated proposal. It selects all 96 padded matrices and forwards unchanged
+weights to the parent. Synthetic ASan/UBSan checks cover all 96 routes,
+parent forwarding, snapshot mutation, geometry, source revocation and
+fail-closed/atomic output, as well as the existing parent regression. This
+is not an upload ledger, native owner, scheduler, device execution or speed
+result; the installed Assistant and driver remain unchanged.
