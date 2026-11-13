@@ -1,0 +1,27 @@
+Qwen3.8 recurrent output projection: physical 6144-wide bands, 2026-11-12
+
+The P100A ran three bands from original model tensor 16
+(blk.0.ssm_out.weight), starting at rows 0, 2560 and 5088. Each band
+produced 64 checked words, including repeated execution, and all 192 words
+matched the independently prepared reference. All three sessions reported
+clean END with L1, TLB and PCI restoration. This diagnostic uses a CPU
+reference; it is not the no-validation Work mode.
+
+The pinned original model SHA-256 was
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+The wrapper authenticated fresh payloads and reference before device use,
+and compared results with the independently prepared reference. The wrapper
+and client each exited 0; both stderr files were empty. Client output SHA-256:
+95ce35631bad657cf69cc66105c4a66ce988a2d855ac56531fc9db199eb6e205.
+Parent output SHA-256:
+bf68de8fda00ee4785a8501716fb564419e9d57f58eb5642a775c709c1e80e63.
+Raw logs: /boot/home/pioneer-recurrent-out-band-20261112-a on the Pioneer.
+
+The stable driver was independently checked after the wrapper completed:
+SHA-256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag 2026102100010012, generation 40, quiesced 0, cold 0, active owner 0.
+Haiku reported 64 CPUs and 137034936320 bytes maximum physical memory.
+
+This establishes sampled projection correctness only. It is not a complete
+recurrent layer, full-model run, output-quality test, production integration,
+or tokens-per-second measurement. The 20 tokens/sec objective remains unmet.
