@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION) && (defined(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131))
+#error Recurrent inspection runtime cannot select the trace runtime
+#endif
 #include "PioneerQ38TokenHiddenReadRole.h"
 #include "PioneerQ38TokenFrontierFailureDetailRole.h"
 #include "PioneerQ38TokenFrontierFailureLinkRole.h"
@@ -21,7 +24,10 @@
 #include "PioneerQ38TokenMemory.h"
 #include "PioneerBulkUpload.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRuntimePlan.h"
-#if defined(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#include "../../../../../tools/pioneer/PioneerQ38RecurrentQ8RuntimePlanInspection.h"
+using PioneerQ38SelectedTokenRuntimePlan=PioneerQ38RecurrentQ8RuntimePlanInspection;
+#elif defined(PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION) || defined(PIONEER_Q38_QGW8_TRACE_NATIVE_131)
 #include "../../../../../tools/pioneer/PioneerQ38Qgw8TraceRuntimePlan.h"
 using PioneerQ38SelectedTokenRuntimePlan=PioneerQ38Qgw8TraceRuntimePlan;
 #else
@@ -450,14 +456,19 @@ public:
   const PioneerQ38TokenRuntimeResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);const auto* p=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=p[i])return false;
   if(started || unsafe || staged || traffic || !mem.Installed() || !mem.MatchesNativeOwner(dram,b,participants,c,data,id,initialized,pages))return false;
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
   // Converted dense stripes have intentional holes in the logical startup
   // view. Check the sealed physical receipt and exact held table instead.
   if(!mem.VerifyDenseManifestForRuntimeInspection(io))return false;
 #else
   if(!data.LearnedPagesPresent(initialized,pages))return false;
 #endif
+#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+  if(!mem.denseReceipt || !plan.Bind(c,data,id,&participants.authority.source[0][0],
+   *mem.denseReceipt,mem.denseContext,mem.denseCookie,mem.denseHashes,initialized,mem.denseTeam,mem.denseGeneration))return false;
+#else
   if(!plan.Bind(c,data,id,&participants.authority.source[0][0]))return false;
+#endif
   started=true;proof=&dram;banks=&b;cohort=&participants;memory=&mem;canonical=&c;startup=&data;identity=id;ledger=initialized;r.started=1;r.phase=1;
   for(auto& value:reset)value=0x47800;
   for(unsigned w=0;w<120;w++){r.worker=w;PioneerQ38TokenMemoryResult image;
@@ -567,7 +578,7 @@ public:
    for(unsigned i=0;i<128;i++)staging[i]=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;}
   if(!Exact(io,0,C::R::Outer,staging,128,r))return Fail(io,r);
   staging[0]=1;if(!Exact(io,0,C::R::Doorbell,staging,1,r))return Fail(io,r);
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
   // The long held-runtime staging must not silently change the table before
   // the first worker can be armed. This is still the offline-only role.
   if(!memory->VerifyDenseManifestForRuntimeInspection(io))return Fail(io,r);
@@ -1483,5 +1494,9 @@ static_assert(sizeof(PioneerQ38TokenRootStoreRestoreResult)==64,"all ROOT-store 
 static_assert(sizeof(PioneerQ38TokenSharedTlbRestoreResult)==64,"all shared-TLB result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenClockResult)==64,"all native clock result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenHardwareSealResult)==64,"all hardware-seal result bytes explicit");
+#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+static_assert(sizeof(PioneerQ38TokenNativeOwner)>32768 && sizeof(PioneerQ38TokenNativeOwner)<49152,"inspection owner HEAP ONLY");
+#else
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
+#endif
 #endif

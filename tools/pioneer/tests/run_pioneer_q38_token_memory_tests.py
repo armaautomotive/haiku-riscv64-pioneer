@@ -155,6 +155,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
             result = subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', *flags, *profile,
                                      '-D'+forbidden+'=1', '-E', str(here/'pioneer_q38_token_memory_test.cpp')], capture_output=True)
             assert result.returncode and b'Recurrent receipt journal is offline inspection only' in result.stderr, forbidden
+        for forbidden in ('PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION', 'PIONEER_Q38_QGW8_TRACE_NATIVE_131'):
+            result = subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', *flags, *profile,
+                                     '-D'+forbidden+'=1', '-E', str(here/'pioneer_q38_token_memory_test.cpp')], capture_output=True)
+            assert result.returncode and b'Recurrent inspection runtime cannot select the trace runtime' in result.stderr, forbidden
         print('PASS recurrent held journal excludes kernel, Work and reference roles; NO DEVICE', flush=True)
     if sdk:
         headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'

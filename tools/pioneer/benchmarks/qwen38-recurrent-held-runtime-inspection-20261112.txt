@@ -1,0 +1,24 @@
+Recurrent metadata held runtime, synthetic inspection, 2026-11-12
+
+The actual held-runtime staging template now selects the recurrent metadata
+plan in the offline-only recurrent-receipt journal role. The owner is 43,080
+bytes in this host inspection build and remains heap-only; the production
+owner's existing size limit and role selection are unchanged.
+
+ASan/UBSan simulation passed: all 2,310 chunks were written and read back,
+including both appended recurrent metadata chunks. The complete added records
+and padding were compared with bytes derived from the same sealed synthetic
+receipt. The mock bootstrap reached 119 workers; deliberately corrupting the
+first recurrent metadata write caused readback failure, retained/quarantined
+ownership and no worker launch. Kernel/native, Work, CPU-reference and
+conflicting trace roles were rejected. The existing QGWD receipt-bound
+2,308-chunk held runtime and mock-bootstrap regression also passed.
+
+Command (replace header path with a local identical pinned QGWD test header):
+python3 tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --hybrid-journal --hybrid-programs /private/tmp/qgwd-program-data-20261109-a.h --recurrent-receipt-journal --dense-q8-footprint
+
+These are simulated endpoints, synthetic receipt and metadata, and mock
+bootstrap status. They do not establish native ownership or driver safety,
+execute a ROOT lifecycle on card, verify model outputs, or measure speed.
+The workspace builder's kernel stack/lifetime and physical authority remain
+unresolved; this is not an installation or Work-mode grant.
