@@ -157,6 +157,23 @@ SHA-256 is 7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c;
 its producer-admission frame is 1216 bytes. ASan/UBSan bridge and scheduler
 regressions passed. No installed driver or measured inference rate changed.
 
+Experimental alpha/beta input reuse: these two matrices consume identical
+5,120-value input. A separate inspection-only ROOT image can reuse the
+prepared BF16 input for beta after alpha, avoiding the second set of 20
+producer jobs. Reuse requires the two alpha matrix histories and all 18
+producer-only histories to match the same layer, position and invocation,
+plus the token in producer history; the actual admission checks still verify
+all 119 worker frontiers and receipts. It also checks the current input and
+both protected native-input copies before reuse. Changed input, changed
+native data and corrupted prior producer proof are each refused before new
+dispatch in linked RV32/simulated-NoC tests; the two model-derived matrix
+outputs match. This image is explicitly rejected in Work builds. The normal
+small-controller object remains byte-identical, and its regressions pass.
+The fixture uses sequential worker snapshots and does not prove physical
+ownership, concurrent NoC operation, whole-model correctness or speed.
+Candidate object SHA-256:
+bed9ed4c8598a50b8448d08fa8e5499580d1b350f2a9c7dc39e307058f04d22a.
+
 Controller-history follow-up: a second simulation carries the actual ROOT
 memory map from the alpha Run to the beta Run instead of reseeding the 119
 worker nonces, closed jobs and counter frontiers. Before the second Run it

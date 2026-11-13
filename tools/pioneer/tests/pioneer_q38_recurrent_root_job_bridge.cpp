@@ -12,7 +12,7 @@
 // simulators. Packet sealing runs against a synthetic owner and MMIO state.
 struct GatherRoot:ActualRoot {
  const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0,writes=0;
- bool controller=false,fullPrepare=false;bool jobs[119]={},released[119]={},descriptors[119]={};unsigned phase[119]={},producerChunks=0;
+ bool controller=false,fullPrepare=false,skipProducer=false;bool jobs[119]={},released[119]={},descriptors[119]={};unsigned phase[119]={},producerChunks=0;
  GatherRoot(const char* path,const std::array<PioneerRecurrentWorkerSnapshot,119>& s):ActualRoot(path),snapshots(s){}
  unsigned StepLimit()const override{return controller?200000000U:4000000U;}
  void Store(unsigned address,unsigned value)override{
@@ -24,7 +24,7 @@ struct GatherRoot:ActualRoot {
    const unsigned destination=memory.at(0xffb20014);unsigned peer=0;
    while(peer<119 && Q::Peer(peer+1)!=destination)peer++;
    if(controller && peer<119){
-    const bool producer=fullPrepare && peer<producerChunks && phase[peer]==0;
+    const bool producer=fullPrepare && !skipProducer && peer<producerChunks && phase[peer]==0;
     if(local==P::Descriptor){assert(producer && bytes==256 && !descriptors[peer]);
      for(unsigned i=0;i<64;i++)assert(memory.at(remote+i*4)==snapshots[peer].producer.descriptor[i]);descriptors[peer]=true;
     }else if(local==Q::Job){assert(bytes==256 && !jobs[peer] && !released[peer]);

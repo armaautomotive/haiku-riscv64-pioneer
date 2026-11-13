@@ -341,6 +341,28 @@ static BF_ROOT_FN void BfGatherProducer(const uint32_t* d,uint32_t* tracked,unsi
  if(!BFP::Line(line,desc,job[12]))scalar_fault_park();
  for(unsigned i=0;i<8;i++)Words(L::Counters)[w*8+i]=after[i];
 }
+#ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
+// The previous completed alpha left the SAME BF16 input in the protected
+// ROOT input/native shadows. Require both alpha matrix histories and all 18
+// producer-only histories to bind the same layer, token and invocation.
+// Actual admission below authenticates every retained job and receipt before
+// this candidate may be used; no caller-ready flag grants reuse.
+static BF_ROOT_FN bool BfSmallReuseCandidate(const uint32_t* d){
+ if(!BfSmallQ8(d) || d[43]!=11 || d[14]!=5120)return false;
+ for(unsigned w=0;w<20;w++){
+  const auto* p=Words(L::PeerJobs+w*256);const unsigned nonce=Words(L::Nonces)[w];
+  if(!nonce || p[0]!=M::Magic || p[1]!=nonce || p[3]!=w+1 || p[4]!=M::Peer(w+1)
+   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6])return false;
+  for(unsigned i=0;i<8;i++)if(p[8+i]!=d[32+i])return false;
+  if(w<2){
+   if(p[2]!=1 || p[16]!=PioneerQ38Bfp8WorkerJob::Magic || p[32]!=w*32 || p[33]!=64 || p[34]!=10 || p[35]!=8)return false;
+  }else if(p[2]!=5 || p[16]!=BFP::Magic || p[27]!=d[41] || p[28]!=10 || p[29]!=5120)return false;
+ }
+ for(unsigned i=0;i<5120;i++)if(Words(d[53])[i]!=Words(L::InputShadow)[i])scalar_fault_park();
+ for(unsigned i=0;i<2560;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
+ return true;
+}
+#endif
 static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  ,PioneerQ38Bf16DeferredAudit& audit
@@ -354,8 +376,15 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #else
  BfBuildPairs(d);uint32_t tracked[8],desc[64],job[64];
 #endif
+#ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
+ const bool reuseSmallInput=BfSmallReuseCandidate(d);
+#endif
  static_assert(unsigned(L::InputShadow)==unsigned(BFP::ProjectionInput) && unsigned(L::Native)==0xa0000,"actual QGW4 ROOT buffers");
- if(d[43]!=4)for(unsigned i=0;i<
+ if(d[43]!=4
+#ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
+  && !reuseSmallInput
+#endif
+ )for(unsigned i=0;i<
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
   d[14]
 #else
@@ -368,6 +397,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
  for(unsigned i=0;i<8;i++){tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
 #endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
+#ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
+ if(reuseSmallInput){Seal(d);return;}
+#endif
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  if(!audit.Begin(d[14],d[7]))scalar_fault_park();
 #endif

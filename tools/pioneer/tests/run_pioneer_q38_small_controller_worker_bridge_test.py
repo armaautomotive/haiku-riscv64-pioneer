@@ -9,9 +9,9 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and len(sys.argv) in (9,14) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert __debug__ and (len(sys.argv) in (9,14) or (len(sys.argv)==10 and sys.argv[9]=='--reuse')) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,recurrent,worker,leaf,private,alpha,beta=map(Path,sys.argv[1:9]);here=Path(__file__).resolve().parent
-followup=tuple(map(Path,sys.argv[9:]))
+reuse=len(sys.argv)==10;followup=tuple(map(Path,sys.argv[9:])) if len(sys.argv)==14 else ()
 assert all(path.is_absolute() for path in (sdk,root,recurrent,worker,leaf,private,alpha,beta))
 assert all(path.is_dir() and not path.is_symlink() for path in (sdk,root,worker,leaf,private))
 pins=((worker/'program.elf','67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d'),
@@ -24,7 +24,7 @@ for path,digest in pins:
  assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
 for path,_ in pins[2:]:
  info=path.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
-rootPins=((recurrent,'7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c'),
+rootPins=((recurrent,'bed9ed4c8598a50b8448d08fa8e5499580d1b350f2a9c7dc39e307058f04d22a' if reuse else '7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c'),
  (root/'start.o','20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6dcf271c535383b46'),
  (root/'program.o','c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037'),
  (root/'qualified-components/dense.o','b1960b90ba1b01b2e43b5889aeaab8a69f5db2f48cd103a340f6480941dfb9f2'),
@@ -68,17 +68,16 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
  workerArgs=[str(workerBinary),str(worker),str(leaf)]
  boots=subprocess.check_output([*workerArgs,'--boot',str(alpha),str(beta)],env=env)
  assert len(boots)==119*64*4
- jobs=subprocess.run([str(rootBinary),str(tmp),'--jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
- assert len(jobs)==2*(20*2+2)*64*4
- results=subprocess.run([*workerArgs,'--run',str(alpha),str(beta)],input=jobs,stdout=subprocess.PIPE,check=True,env=env).stdout
+ jobs=subprocess.run([str(rootBinary),str(tmp),'--reuse-jobs' if reuse else '--jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
+ assert len(jobs)==((20*2+2)+2 if reuse else 2*(20*2+2))*64*4
+ results=subprocess.run([*workerArgs,'--reuse-run' if reuse else '--run',str(alpha),str(beta)],input=jobs,stdout=subprocess.PIPE,check=True,env=env).stdout
  assert len(results)==2*119*4824
- subprocess.run([str(rootBinary),str(tmp),'--publish'],input=boots+results,check=True,env=env)
- subprocess.run([str(rootBinary),str(tmp),'--corrupt'],input=boots+results,check=True,env=env)
- subprocess.run([str(rootBinary),str(tmp),'--corrupt-producer'],input=boots+results,check=True,env=env)
- subprocess.run([str(rootBinary),str(tmp),'--full'],input=boots+results,check=True,env=env)
- subprocess.run([str(rootBinary),str(tmp),'--full-corrupt-prior'],input=boots+results,check=True,env=env)
- subprocess.run([str(rootBinary),str(tmp),'--chain'],input=boots+results,check=True,env=env)
- subprocess.run([str(rootBinary),str(tmp),'--chain-corrupt-prior'],input=boots+results,check=True,env=env)
+ if reuse:
+  for mode in ('--reuse-chain','--reuse-bad-input','--reuse-bad-native','--reuse-bad-prior'):
+   subprocess.run([str(rootBinary),str(tmp),mode],input=boots+results,check=True,env=env)
+ else:
+  for mode in ('--publish','--corrupt','--corrupt-producer','--full','--full-corrupt-prior','--chain','--chain-corrupt-prior'):
+   subprocess.run([str(rootBinary),str(tmp),mode],input=boots+results,check=True,env=env)
  if followup:
   gate,qkv,learned,output,conv=followup
   controllerValues=subprocess.run([str(rootBinary),str(tmp),'--chain-export'],input=boots+results,

@@ -3,8 +3,8 @@
 #define PIONEER_Q38_RECURRENT_GATE_QKV_HELPER_ONLY 1
 #include "pioneer_q38_recurrent_gate_qkv_worker_bridge.cpp"
 int main(int argc,char** argv){
- assert(argc==6 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")));
- const bool bootOnly=!std::strcmp(argv[3],"--boot");std::array<std::unique_ptr<DenseProducerImage>,20> workers;
+ assert(argc==6 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run") || !std::strcmp(argv[3],"--reuse-run")));
+ const bool bootOnly=!std::strcmp(argv[3],"--boot"),reuse=!std::strcmp(argv[3],"--reuse-run");std::array<std::unique_ptr<DenseProducerImage>,20> workers;
  for(unsigned w=0;w<20;w++){workers[w]=std::make_unique<DenseProducerImage>(argv[1],argv[2],5120,1,w+1);workers[w]->Boot();}
  if(bootOnly){
   for(auto& w:workers)assert(fwrite(w->boot.data(),4,64,stdout)==64);
@@ -23,9 +23,10 @@ int main(int argc,char** argv){
   std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{};
   for(unsigned w=0;w<20;w++){
    std::array<uint32_t,64> descriptor,producer;
-   assert(fread(descriptor.data(),4,64,stdin)==64 && fread(producer.data(),4,64,stdin)==64);
    const unsigned sequence=1+kind*(w<2?2:1);SnapshotStage(*workers[w],snapshots[w].initial,kind && w>=2);
    for(unsigned i=0;i<64;i++)snapshots[w].initial.proof[i]=workers[w]->Get(0x83f00+i*4);
+   if(reuse && kind)continue;
+   assert(fread(descriptor.data(),4,64,stdin)==64 && fread(producer.data(),4,64,stdin)==64);
    workers[w]->StageProducer(10+kind,sequence,false,0);
    for(unsigned i=0;i<64;i++){
     if(descriptor[i]!=workers[w]->descriptor[i] || producer[i]!=workers[w]->Get(HW::Job+i*4))
