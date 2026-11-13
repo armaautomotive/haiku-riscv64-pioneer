@@ -19,7 +19,11 @@
 // Experimental ROOT-side interpretation of the actual QGW5 worker proof.
 // The caller must independently authenticate the closed job, physical
 // counters, input lifetime, converted weights, and exclusive ownership.
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+struct PioneerQ38RecurrentHybridMatrixReceipt {
+#else
 struct PioneerQ38HybridMatrixReceipt {
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
  static __attribute__((noinline,section(".bf16.receipt")))
 #else
@@ -116,4 +120,7 @@ struct PioneerQ38HybridMatrixReceipt {
   return true;
  }
 };
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+using PioneerQ38HybridMatrixReceipt=PioneerQ38RecurrentHybridMatrixReceipt;
+#endif
 #endif

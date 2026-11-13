@@ -25,11 +25,11 @@ sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd9
              '--qkv':('396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a','a81f5268d942344b4c4cfd4d0d02853dc82f36bfe8ab099a5bfa5d47d94de86d')}
 assert all(p.is_absolute() and p.is_dir() and not p.is_symlink() for p in (sdk,root,worker,leaf,private))
 assert private.stat().st_uid==os.geteuid() and stat.S_IMODE(private.stat().st_mode)==0o700
-pins=((root/'program.elf','c69b1aa610725fabfe37e28499082eb6b0abae04c556510bad376dfccf414d24'),
-      (root/'bf16.bin','296ab69ff0cf2c2526ecfd606c3aa7e0eeaa6eea795bb3623eb8e5eaf08a4f9f'),
-      (root/'text.bin','4ed3fe2e1548c93f957ccb57c887ae4e75bac452108071a6c32de61a2b9ad1b9'),
+pins=((root/'program.elf','43cffe40e307e42899a9023b604e7142b66febb5eaab805316ba7b3387376de0'),
+      (root/'bf16.bin','de2b0844167f34094275fe71a93c9a34dddb3f00076e09ef33ece084fcfc65a8'),
+      (root/'text.bin','c505d0dcd6e91f64b89972d09f8b9df8efac05af7cfc2f4244fe1ecc4e10c1ef'),
       (root/'terminal.bin','6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
-      (root/'conv.bin','8feb9b7f7f5cdb81a4eb0802e0bb6ad99b1fb43feaee6d9db1895394f1cd2fd3'),
+      (root/'conv.bin','f3021c27a667d8341c02fbda905298319818c2d039c7f7e41484614664c46d01'),
       (worker/'program.elf','e83749ca5a7dc9d66983b9a80e0d6868079b12d8defdf31e40708235fb80366d'),
       (leaf/'program.elf','e8a04408d0c1a2d0ffa90d1d92ca77f3bb56f849c1d714723dfae9f3110ba72f'),
       (private/'PioneerNativeBfpModelBandData.h',sample_pins[mode][0]),
@@ -70,11 +70,20 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
     chunks=geometry[mode][1]//256;assert len(job)==chunks*512+119*256
     runargs=[str(workerbin),str(worker),str(leaf),'--run-full',str(full)] if full else [str(workerbin),str(worker),str(leaf),'--run']
-    result=subprocess.run(runargs,input=job,stdout=subprocess.PIPE,check=True,env=env).stdout
-    assert len(result)==geometry[mode][0]*4
+    captured=subprocess.run(runargs,input=job,stdout=subprocess.PIPE,check=True,env=env).stdout
+    resultBytes=geometry[mode][0]*4;snapshotBytes=119*(2+8+8+16+64+64+256)*4
+    assert len(captured)==resultBytes+snapshotBytes
+    result,snapshots=captured[:resultBytes],captured[resultBytes:]
     stored=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--store'],input=boot+result,
                           stdout=subprocess.PIPE,check=True,env=env).stdout
     assert stored==result
+    gathered=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--gather'],input=boot+snapshots,
+                            stdout=subprocess.PIPE,check=True,env=env).stdout
+    assert gathered==result
+    badproof=bytearray(snapshots);badproof[(2+8+8+16+64)*4]^=1
+    rejected=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--gather'],input=boot+badproof,
+                            stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    assert rejected.returncode and not rejected.stdout
     nonfinite=bytearray(result);nonfinite[:4]=b'\x00\x00\xc0\x7f'
     rejected=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--store'],input=boot+nonfinite,
                             stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
@@ -90,5 +99,5 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     assert rejected.returncode and not rejected.stdout
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
-print('PASS ROOT jobs -> 119 simulated workers with actual receipts -> ROOT result stores and full seal; NO DEVICE')
-print('PASS invalid simulated boot, wrong-role jobs and nonfinite result rejected; NO DEVICE')
+print('PASS ROOT jobs -> 119 simulated workers -> actual ROOT gather and full seal via simulated NoC; NO DEVICE')
+print('PASS invalid boot, wrong-role jobs, corrupt receipt and nonfinite result rejected; NO DEVICE')

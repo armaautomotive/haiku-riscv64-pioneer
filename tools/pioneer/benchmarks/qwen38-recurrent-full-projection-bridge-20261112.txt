@@ -78,3 +78,24 @@ model's exact original execution order. All three regenerated private files
 were byte-identical to the previously tested exports. These results expose
 conversion plus arithmetic differences on one input; they do not establish
 acceptable generative quality or predict error over a full recurrent chain.
+
+Controller gather follow-up, 2026-11-12: the linked recurrent ROOT's actual
+BfGatherMatrix routine now reads each of 119 separately simulated workers'
+captured boot, status, job, proof, counters and output through a simulated
+NoC endpoint. For all three full projections above, its assembled rows match
+the workers' independently checked outputs; invalid boot, wrong-role job,
+corrupt worker receipt and nonfinite result tests are rejected. The fixture
+then invokes the actual full schedule seal. ASan/UBSan were enabled.
+
+This exposed a weak-symbol collision: the recurrent ROOT was calling the
+older dense-only receipt checker, which rejected its valid recurrent job.
+Giving the inspection-only recurrent receipt checker a distinct symbol made
+both implementations coexist and allowed all three checks to pass. The
+linked inspection image has 300 bytes of text space remaining.
+
+Important limits: packet source sealing is stubbed in the gather fixture;
+NoC responses and sequential worker execution are simulated and bridged by
+the host. The full ROOT control flow and scatter are not exercised. The
+scoped-seal image is an offline experiment with altered checking timing, not
+an installed or production driver. These results do not prove hardware
+correctness, whole-model generation, output quality, or a speedup.

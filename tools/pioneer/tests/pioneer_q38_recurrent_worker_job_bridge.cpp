@@ -4,6 +4,7 @@
 #include "pioneer_q38_recurrent_out_real_worker_test.cpp"
 #undef main
 #include <fstream>
+#include "PioneerRecurrentWorkerSnapshot.h"
 
 int main(int argc,char** argv){
  assert((argc==4 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")))
@@ -52,6 +53,7 @@ int main(int argc,char** argv){
   producers[chunk]=std::move(producer);
  }
  std::vector<uint8_t> seen(rows,0);std::vector<uint32_t> actualRows(rows,0);
+ std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{};
  for(unsigned w=0;w<119;w++){
   const auto& job=jobs[w];const unsigned bands=job[20],first=job[32],previous=w<width/256?1:0;
   assert(bands && bands<=8 && job[2]==1 && job[3]==w+1 && job[18]==width && job[34]==role
@@ -76,6 +78,10 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);closed[i]=image->Get(HW::Job+i*4);}
   for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
   assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,closed,image->boot.data(),before,after));
+  auto& snapshot=snapshots[w];snapshot.pc=image->pc;snapshot.doorbell=image->Get(HW::Doorbell);
+  for(unsigned i=0;i<8;i++){snapshot.before[i]=before[i];snapshot.after[i]=after[i];}
+  for(unsigned i=0;i<16;i++)snapshot.status[i]=image->Get(HW::Status+i*4);
+  for(unsigned i=0;i<64;i++){snapshot.job[i]=closed[i];snapshot.proof[i]=proof[i];}
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const unsigned dest=first+band*32+row;assert(!seen[dest]++);
    uint32_t expected;
@@ -84,8 +90,10 @@ int main(int argc,char** argv){
     std::memcpy(&expected,projection.data()+source,4);}
    else expected=PioneerNativeBfpModelBandMetadata::Golden((w+band)%3)[row];
    actualRows[dest]=image->Get(W::Output+(band*32+row)*4);assert(actualRows[dest]==expected);
+   snapshot.output[band*32+row]=actualRows[dest];
   }
  }
  for(auto value:seen)assert(value==1);
- assert(fwrite(actualRows.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));
+ assert(fwrite(actualRows.data(),sizeof(uint32_t),rows,stdout)==rows);
+ assert(fwrite(snapshots.data(),sizeof(PioneerRecurrentWorkerSnapshot),119,stdout)==119 && !fflush(stdout));
 }
