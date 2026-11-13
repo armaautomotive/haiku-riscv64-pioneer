@@ -307,3 +307,12 @@ Changed QKV role at each of 119 alpha predecessors and each of the 18
 beta producer-unused predecessors was refused; changed input or native
 shadow parked. This directly exercises the predicate, not the whole 48-layer
 model, physical device or answer quality.
+
+Ledger allocation follow-up: the small-recurrent physical-order verification
+now traverses each bank's original spans and then appended relocated spans in
+their canonical order, avoiding its prior vector allocation and sort. The
+actual 5,067,109-page synthetic receipt, fixed-layout, staged-upload-order and
+role-isolation tests passed, including hole mutation and uncertain-transfer
+quarantine. This is an integration prerequisite only: the ledger remains
+inspection-only, is not connected to a native owner, and has not run on the
+card. No inference or speed claim follows.
