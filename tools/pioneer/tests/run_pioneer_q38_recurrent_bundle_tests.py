@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-bundle-',dir='/private/tm
     for out in outputs:
         subprocess.run([sys.executable,str(generator),'--qgwf-recurrent-native-inspection',str(root),str(worker),str(out)],check=True)
     assert outputs[0].read_bytes()==outputs[1].read_bytes()
-    assert hashlib.sha256(outputs[0].read_bytes()).hexdigest()=='7b0da287da2afdfa1e9b74ad2faeda8a29363972143d95b8311cde2e80f878b9'
+    assert hashlib.sha256(outputs[0].read_bytes()).hexdigest()=='7466e798ddbe8ce17f81c02a00749d613c595bb022bddb14d49489e533afb760'
     for name,options,bad_root in (
         ('old.h',['--qgwf-recurrent-native-inspection'],old_root),
         ('ambiguous.h',['--qgwf-recurrent-native-inspection','--qgwf-frontier-native-inspection'],root),

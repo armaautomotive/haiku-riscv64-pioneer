@@ -5,11 +5,13 @@
 
 int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && !std::strcmp(argv[2],"--all-reuse")));
- std::ifstream f(std::string(argv[1])+"/program.demangled");std::string line;std::vector<unsigned> functions,smallFunctions;
+ std::ifstream f(std::string(argv[1])+"/program.demangled");std::string line;std::vector<unsigned> functions,smallFunctions,smallToGateFunctions;
  while(std::getline(f,line))if(line.find("Projection::BfRecurrentGateReuseCandidate(")!=std::string::npos)
   functions.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
  f.clear();f.seekg(0);while(std::getline(f,line))if(line.find("Projection::BfSmallReuseCandidate(")!=std::string::npos)
   smallFunctions.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
+ f.clear();f.seekg(0);while(std::getline(f,line))if(line.find("Projection::BfRecurrentSmallToGateReuseCandidate(")!=std::string::npos)
+  smallToGateFunctions.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
  assert(!functions.empty());
  for(unsigned function:functions){
   auto m=std::make_unique<ActualRoot>(argv[1]);const unsigned d=0x74e00,input=0x140000;
@@ -96,6 +98,45 @@ int main(int argc,char** argv){
    m->memory[0xf2000+2559*4]^=1;assert(!m->Run(function,d));
   }
   puts("PASS actual RV32 QKV-to-alpha and alpha-to-beta reuse identity checks on 48 layers; NO DEVICE OR SPEED");
+  // Older pinned inspection images predate this additional optimization.
+  for(unsigned function:smallToGateFunctions){
+   auto m=std::make_unique<ActualRoot>(argv[1]);const unsigned d=0x74e00,input=0x140000;
+   for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
+   m->memory[d+6*4]=2027;m->memory[d+14*4]=5120;m->memory[d+15*4]=8;
+   m->memory[d+40*4]=3;m->memory[d+41*4]=248319;m->memory[d+43*4]=5;m->memory[d+53*4]=input;
+   for(unsigned i=0;i<8;i++)m->memory[d+(32+i)*4]=i+1;
+   for(unsigned w=0;w<20;w++){
+    const unsigned j=0x178000+w*256;m->memory[0x123000+w*4]=3;
+    for(unsigned i=0;i<64;i++)m->memory[j+i*4]=0;
+    m->memory[j]=Q::Magic;m->memory[j+4]=3;m->memory[j+8]=w<2?1:5;m->memory[j+12]=w+1;
+    m->memory[j+16]=Q::Peer(w+1);m->memory[j+24]=3;m->memory[j+28]=w<2?2026:2025;
+    for(unsigned i=0;i<8;i++)m->memory[j+(8+i)*4]=i+1;
+    if(w<2){m->memory[j+16*4]=PioneerQ38Bfp8WorkerJob::Magic;m->memory[j+32*4]=w*32;
+     m->memory[j+33*4]=64;m->memory[j+34*4]=11;m->memory[j+35*4]=8;}
+    else {m->memory[j+16*4]=PioneerQ38Bf16ProducerLayout::Magic;m->memory[j+27*4]=248319;
+     m->memory[j+28*4]=10;m->memory[j+29*4]=5120;}
+   }
+   for(unsigned i=0;i<5120;i++)m->memory[input+i*4]=m->memory[0xe0000+i*4]=0x3f000000U+i;
+   for(unsigned i=0;i<2560;i++)m->memory[0xa0000+i*4]=m->memory[0xf2000+i*4]=i*31;
+   for(unsigned layer=0;layer<64;layer++)if(layer%4!=3){
+    m->memory[d+42*4]=layer;for(unsigned w=0;w<20;w++)m->memory[0x178000+w*256+5*4]=layer;
+    assert(m->Run(function,d) && m->regs[10]==1);
+   }
+   m->memory[d+42*4]=0;for(unsigned w=0;w<20;w++)m->memory[0x178000+w*256+5*4]=0;
+   for(unsigned w=0;w<20;w++)for(unsigned field:{1U,5U,6U,7U,8U,15U,16U}){
+    const unsigned at=0x178000+w*256+field*4;m->memory[at]^=1;
+    assert(m->Run(function,d) && m->regs[10]==0);m->memory[at]^=1;
+   }
+   for(unsigned w=0;w<20;w++){
+    const std::vector<unsigned> fields=w<2?std::vector<unsigned>{2,3,4,32,33,34,35}:std::vector<unsigned>{2,3,4,27,28,29};
+    for(unsigned field:fields){const unsigned at=0x178000+w*256+field*4;m->memory[at]^=1;
+     assert(m->Run(function,d) && m->regs[10]==0);m->memory[at]^=1;}
+   }
+   for(unsigned inv:{0U,1U,2U,2026U,2028U}){m->memory[d+6*4]=inv;assert(m->Run(function,d) && m->regs[10]==0);}
+   m->memory[d+6*4]=2027;m->memory[input]^=1;assert(!m->Run(function,d));m->memory[input]^=1;
+   m->memory[0xf2000+2559*4]^=1;assert(!m->Run(function,d));
+  }
+  puts("PASS actual RV32 role11-to-role5 reuse identity and shadow checks; NO DEVICE OR SPEED");
  }
  puts("PASS actual RV32 gate-to-QKV reuse predicate on 48 recurrent layers and worker/identity mismatches; NO DEVICE OR SPEED");
 }

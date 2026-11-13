@@ -401,6 +401,26 @@ static BF_ROOT_FN bool BfRecurrentGateReuseCandidate(const uint32_t* d){
  for(unsigned i=0;i<2560;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
  return true;
 }
+#ifdef PIONEER_Q38_QKV_ALPHA_INPUT_REUSE_INSPECTION
+// After the small role-11 projection, workers 1 and 2 hold its matrix
+// receipt; workers 3..20 still hold the role-10 producer receipt. The
+// subsequent 119-worker admission authenticates every actual closed job.
+static BF_ROOT_FN bool BfRecurrentSmallToGateReuseCandidate(const uint32_t* d){
+ if(!BfRecurrentQ8(d) || d[43]!=5 || d[14]!=5120 || d[6]<=2)return false;
+ for(unsigned w=0;w<20;w++){
+  const auto* p=Words(L::PeerJobs+w*256);const unsigned nonce=Words(L::Nonces)[w];
+  if(!nonce || p[0]!=M::Magic || p[1]!=nonce || p[3]!=w+1 || p[4]!=M::Peer(w+1)
+   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6]-(w<2?1U:2U))return false;
+  for(unsigned i=0;i<8;i++)if(p[8+i]!=d[32+i])return false;
+  if(w<2){
+   if(p[2]!=1 || p[16]!=PioneerQ38Bfp8WorkerJob::Magic || p[32]!=w*32 || p[33]!=64 || p[34]!=11 || p[35]!=8)return false;
+  }else if(p[2]!=5 || p[16]!=BFP::Magic || p[27]!=d[41] || p[28]!=10 || p[29]!=5120)return false;
+ }
+ for(unsigned i=0;i<5120;i++)if(Words(d[53])[i]!=Words(L::InputShadow)[i])scalar_fault_park();
+ for(unsigned i=0;i<2560;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
+ return true;
+}
+#endif
 #endif
 static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
@@ -420,6 +440,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #endif
 #ifdef PIONEER_Q38_RECURRENT_GATE_INPUT_REUSE_INSPECTION
  const bool reuseGateInput=BfRecurrentGateReuseCandidate(d);
+#ifdef PIONEER_Q38_QKV_ALPHA_INPUT_REUSE_INSPECTION
+ const bool reuseSmallToGateInput=BfRecurrentSmallToGateReuseCandidate(d);
+#endif
 #endif
  static_assert(unsigned(L::InputShadow)==unsigned(BFP::ProjectionInput) && unsigned(L::Native)==0xa0000,"actual QGW4 ROOT buffers");
  if(d[43]!=4
@@ -428,6 +451,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #endif
 #ifdef PIONEER_Q38_RECURRENT_GATE_INPUT_REUSE_INSPECTION
   && !reuseGateInput
+#ifdef PIONEER_Q38_QKV_ALPHA_INPUT_REUSE_INSPECTION
+  && !reuseSmallToGateInput
+#endif
 #endif
  )for(unsigned i=0;i<
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
@@ -447,6 +473,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #endif
 #ifdef PIONEER_Q38_RECURRENT_GATE_INPUT_REUSE_INSPECTION
  if(reuseGateInput){Seal(d);return;}
+#ifdef PIONEER_Q38_QKV_ALPHA_INPUT_REUSE_INSPECTION
+ if(reuseSmallToGateInput){Seal(d);return;}
+#endif
 #endif
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  if(!audit.Begin(d[14],d[7]))scalar_fault_park();

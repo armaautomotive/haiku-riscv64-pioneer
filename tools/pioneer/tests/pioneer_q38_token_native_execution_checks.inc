@@ -25,6 +25,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE))
 #error Recurrent matrix reuse requires the isolated cohort fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE))
+#error Small-to-gate requires the isolated matrix reuse fixture
+#endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
 #if PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE)
 #error Model recurrent observer requires the isolated matrix reuse fixture
@@ -410,6 +414,13 @@ static void CheckNativeExecution(Fixture& f){
    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
   }
   printf("PASS second recurrent BFP8 matrix/two bands with reused input/64 independent outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE
+  fprintf(stderr,"NEXT_GATE_DIAGNOSTIC worker=%u operation=%u sequence=%u role=%u invocation=%u\n",cpu.dispatchWorker,
+   io.Raw(cpu.dispatchWorker,W::Job+8),io.Raw(cpu.dispatchWorker,W::Job+4),io.Raw(cpu.dispatchWorker,W::Job+34*4),io.Raw(cpu.dispatchWorker,W::Job+7*4));
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+4)==4
+   && io.Raw(1,W::Job+34*4)==5 && cpu.recurrentProducerDoorbells==20);
+  puts("PASS next role5 matrix job pending without another producer cohort;SIMULATED ONLY,NOT executed gate/layer/token/physical/TPS");
+#endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
   puts("PASS pinned model-derived layer0 alpha/beta BFP8 exports on synthetic input/independent double observer;SIMULATED ONLY,NOT full model or hardware/TPS");
 #endif

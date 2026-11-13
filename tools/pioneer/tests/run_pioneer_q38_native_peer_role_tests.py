@@ -119,6 +119,11 @@ check('pioneer_q38_token_native_execution_checks.inc',matrix_reuse,True,True)
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**matrix_reuse,'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE':value},False,True)
 check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE':1},False,True)
+small_to_gate={**matrix_reuse,'PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',small_to_gate,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**small_to_gate,'PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE':value},False,True)
+check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE':1},False,True)
 model_observer={**matrix_reuse,'PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST':1}
 check('pioneer_q38_token_native_execution_checks.inc',model_observer,True,True)
 for value in (0,2):

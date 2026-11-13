@@ -626,3 +626,18 @@ fixture SHA-256 values were checked before and after. Embedding, norm and
 input remain synthetic; the BFP bridge snapshots its input and weights. This
 is not a measurement of conversion error against GGUF during this run, full
 model quality, a native P100A run, or tokens per second.
+
+Small-to-gate input reuse: an isolated all-reuse controller candidate now
+recognizes the exact retained role-11 matrix and role-10 producer frontier
+before the next role-5 projection. It validates worker, nonce, identity,
+layer, token, adjacent historical invocations and both input shadows; the
+existing 119-worker admission and receipt checks still run before reuse.
+RV32 predicate tests covered 48 recurrent layers and rejected modified job
+fields, invocations and input shadows. In the continuous host simulation,
+the model-derived alpha and beta matrices produced verified outputs and the
+controller issued the first role-5 matrix doorbell without another group of
+20 producers. That doorbell was held before delivery: the gate matrix and
+the full layer were not executed. Two controller cross-builds matched, the
+bundle regenerated reproducibly, the fake-tag native source cross-compiled,
+and isolated role tests passed. There is no hardware or speed measurement;
+this candidate is not installed in the Assistant or live driver.
