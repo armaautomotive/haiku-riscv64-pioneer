@@ -1,0 +1,32 @@
+Real-Qwen recurrent BFP8 matrix bands: physical diagnostic, 2026-11-12
+
+The Pioneer verified all 1,008 recurrent cache fragments against fresh
+conversion from the authenticated original; exit 0, empty stderr. These
+two conversion paths use the same recipe, so this is cache consistency,
+not independent model-quality proof. The separate source preflight also
+authenticated the original and rederived the three prepared samples.
+
+The fixed-K=5120, four-fidelity P100A matrix diagnostic ran three 32-row
+bands of blk.0.attn_gate.weight (tensor 3; rows 0, 3072, 6112) with a
+synthetic input vector. Two runs per band returned 192 output words. The
+parent compared every word against the separate integer arithmetic reference;
+all matched and all three explicit ENDs reported L1/TLB/PCI restoration.
+Client and physical parent exited 0 with empty stderr. This is a real
+matrix-engine arithmetic result using recurrent model-derived weights, but
+not the experimental 119-worker ROOT lifecycle or a full-model inference.
+
+The one-shot parent restored the stable driver. Independent post-check:
+tag 2026102100010012, generation 38, quiesced 0, cold 0, active_owner 0;
+installed SHA-256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Haiku reported 64 CPUs and 137034936320 bytes total RAM.
+
+Pioneer evidence directory: /boot/home/pioneer-recurrent-band-20261112-a
+recurrent.stdout SHA-256 40c23c8362897d1e38bc743e07fa065462ee160f735ee838994bca4a798bee41
+physical-parent-2.stdout SHA-256 b062b58c61de19a55847b6fce1c408de5f9c70e6c2ca00c74b52992d5907ba7f
+State STABLE_RESTORED_RECURRENT_BANDS_EXACT192_PASSED; both exit files 0.
+The first outer launch exited 126 because the script was not executable;
+inspection confirmed it never entered the script or changed the driver. The
+second launch invoked it explicitly through /bin/sh and is the result above.
+
+This test does not measure tokens per second, assess generated-answer quality,
+test the 6144-input recurrent output projection, or meet the 20 tok/s goal.
