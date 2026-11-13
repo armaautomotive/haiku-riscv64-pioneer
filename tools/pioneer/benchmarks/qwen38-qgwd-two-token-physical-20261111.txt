@@ -3,9 +3,11 @@ QGWD two-token physical diagnostic, 2026-11-11
 
 The pinned tag142 QGWD candidate ran the full Qwen3.8-27B-derived path on
 the P100A for fixed prompt token 248319 and two requested outputs. The
-recorded outputs were 70253, 70253. The same sequence was observed in the
-earlier CPU diagnostic, although its second position was not independently
-pinned. The client did not perform CPU validation during card execution.
+recorded outputs were 70253, 70253. The earlier CPU diagnostic also reported
+those two IDs, but used forced input 17 at its second position rather than the
+card's fed-back 70253. Only position zero is directly comparable; the second
+is not a CPU validation of this autoregressive sequence. The client did not
+perform CPU validation during card execution.
 This is one artificial two-position case, not conversational-quality proof.
 
 The client reported 543.378 seconds from START request through terminal

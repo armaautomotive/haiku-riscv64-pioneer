@@ -4,9 +4,10 @@ One fixed-input diagnostic, not a general model-quality or Assistant test.
 Preflight and trial exited 0; parent, preflight and trial stderr were empty.
 An independent transcript-shape check accepted one upload, two 17-ID requests
 and explicit unload. The first request emitted 70253 for all 17 IDs; the
-client reported that the second request matched all 17. The first two IDs
-match a separate two-position CPU diagnostic for this artificial sequence;
-the remaining IDs and general output quality are not independently verified.
+client reported that the second request matched all 17. The first ID matches
+the CPU diagnostic, but its second input was forced to 17 rather than the
+card's fed-back 70253, so its second output is not a valid comparison here.
+The remaining IDs and general output quality are not independently verified.
 
 Upload plus initial START took 2973.955 seconds. First request inference,
 including START and prompt processing, took 747.421 seconds; its observed

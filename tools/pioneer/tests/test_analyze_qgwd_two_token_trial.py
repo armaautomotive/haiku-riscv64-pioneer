@@ -28,10 +28,14 @@ with tempfile.TemporaryDirectory(prefix='qgwd-two-analysis-', dir='/private/tmp'
         return subprocess.run([sys.executable, str(analyzer), str(trial)], capture_output=True, text=True)
     reset(); result = run()
     assert result.returncode == 0 and 'MATCH:' in result.stdout and not result.stderr
+    assert 'CPU_REFERENCE_POSITION_ZERO 70253' in result.stdout
+    assert 'SECOND_POSITION_NOT_COMPARABLE_CPU_INPUT_WAS_17' in result.stdout
+    assert 'two-token sequence matches recorded card sequence' in result.stdout
     (trial / 'trial.stdout').write_text(log.replace('HYBRID_TOKEN 70253\nHYBRID_TOKEN 70253',
                                                     'HYBRID_TOKEN 70253\nHYBRID_TOKEN 42'))
     result = run()
     assert result.returncode == 1 and 'MISMATCH:' in result.stdout and not result.stderr
+    assert 'second position is NOT a CPU comparison' in result.stdout
     reset()
     early_eos = (log.replace('generated_tokens=2', 'generated_tokens=1')
                  .replace('HYBRID_TOKEN 70253\nHYBRID_TOKEN 70253', 'HYBRID_TOKEN 248044'))
@@ -42,4 +46,4 @@ with tempfile.TemporaryDirectory(prefix='qgwd-two-analysis-', dir='/private/tmp'
                            ('trial.stdout', log.replace('HYBRID_COMPLETE', 'BROKEN_COMPLETE'))):
         reset(); (trial / name).write_text(contents); result = run()
         assert result.returncode == 2 and not result.stdout and result.stderr.startswith('ERROR:'), name
-print('PASS synthetic fixed-reference comparison and closed-trial refusals; NO DEVICE OR QUALITY CLAIM')
+print('PASS synthetic position-zero CPU and historical card comparisons; NO DEVICE OR QUALITY CLAIM')
