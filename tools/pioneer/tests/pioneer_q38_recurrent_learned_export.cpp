@@ -38,4 +38,5 @@ int main(int argc,char** argv){
  size_t at=0;while(at<values.size()){ssize_t n=write(fd,values.data()+at,values.size()-at);assert(n>0);at+=size_t(n);}
  assert(!fsync(fd) && !close(fd) && source.Ready());
  std::printf("PASS authenticated original layer-0 Conv/A/dt/norm export bytes%zu; NO DEVICE OR SPEED\n",values.size());
+ return 0;
 }

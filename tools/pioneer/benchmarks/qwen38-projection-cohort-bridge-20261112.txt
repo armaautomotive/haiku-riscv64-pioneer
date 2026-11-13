@@ -39,6 +39,15 @@ beta projections are still synthetic; the cohort worker context is still
 separate from the matrix workers. The original synthetic fixture remains
 available and is not reclassified as actual model inference.
 
+Further follow-up: alpha/beta may instead come from the independent CPU
+Q8 reference applied to the SAME synthetic BF16 input and authenticated
+original Q8 weights. The 384-byte private reference export SHA-256 is
+da5e7715ca9ba1fc5a2c9d5b7e7bcee86709e2c01d01cadf4655ad8325afd43b.
+With these inputs, the actual simulated Conv/GDN and output-projection
+checks also passed. Alpha/beta are CPU-produced test inputs, NOT device
+execution, and this is still not an original-token, continuous-worker,
+end-to-end inference, throughput or Work-mode result.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
