@@ -675,4 +675,13 @@ it back into the simulated device. Small matrices used pinned model-derived
 weights, while gate/QKV weights and input were synthetic. Bundle generation,
 reuse-predicate regressions and fake-tag native source compilation passed.
 This does not establish a complete layer, real-model inference, P100A
-execution, negative-fault coverage for this new admission branch, or TPS.
+execution, complete fault coverage for this admission branch, or TPS.
+
+QKV-to-Conv fault injection: separate continuous simulated runs changed one
+worker-1 read response during Conv admission: the QKV receipt's row identity,
+the retained job's invocation, or an observed read counter. Each mutation was
+rejected by the controller after the full QKV computation and before any Conv
+job or table was staged. The host only altered the selected read reply; it did
+not alter the worker's own memory, reset state, or grant cleanup authority.
+This checks three particular failure paths, not every field, real device fault
+handling, model quality or performance.

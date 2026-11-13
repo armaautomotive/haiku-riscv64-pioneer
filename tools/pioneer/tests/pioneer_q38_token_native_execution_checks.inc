@@ -37,6 +37,17 @@
  (PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE))
 #error QKV cohort requires the isolated gate cohort fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
+#error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
+ (!defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND) || PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND < 1 || PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND > 3)
+#error QKV-to-Conv fault kind must select a bounded test fault
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND) && !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE)
+#error QKV-to-Conv fault kind requires its isolated fault fixture
+#endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
 #if PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE)
 #error Model recurrent observer requires the isolated matrix reuse fixture
@@ -473,6 +484,11 @@ static void CheckNativeExecution(Fixture& f){
   }
   cpu.recurrentQkvRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
   for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
+  assert(cpu.pc==0x60000 && !cpu.layerHeld && cpu.recurrentQkvDoorbells==119 && cpu.qkvConvFaultInjected
+   && !cpu.qkvConvWrites && !io.Core(0).pending && !state->Unsafe());
+  printf("PASS corrupted QKV-to-Conv observation kind%u rejected before any Conv worker staging;SIMULATED ONLY,NO recovery/physical/TPS claim\n",unsigned(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND));
+#else
   if(!cpu.layerHeld){
    fprintf(stderr,"RECURRENT_QKV_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u;NO result supplied\n",
     cpu.pc,cpu.steps,cpu.recurrentQkvDoorbells,cpu.submitted,cpu.completed);
@@ -486,6 +502,7 @@ static void CheckNativeExecution(Fixture& f){
    }
   }
   assert(cpu.layerHeld && cpu.recurrentQkvDoorbells==119 && io.Core(0).pending && !state->Unsafe());
+#endif
   bool qkvRows[10240]={};unsigned qkvMatrices=0;
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentQkvBands[w],first=cpu.recurrentQkvFirst[w];
@@ -503,9 +520,11 @@ static void CheckNativeExecution(Fixture& f){
   }
   for(bool seen:qkvRows)assert(seen);
   printf("PASS full recurrent role6 QKV matrix/119 workers/10240 independent synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",qkvMatrices);
+#ifndef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==7 && io.Raw(1,W::Job+4)==6
    && cpu.recurrentProducerDoorbells==20);
   puts("PASS retained QKV job/receipt/counter admission through pending first Conv doorbell;SIMULATED ONLY,Conv NOT executed");
+#endif
 #endif
 #endif
 #endif

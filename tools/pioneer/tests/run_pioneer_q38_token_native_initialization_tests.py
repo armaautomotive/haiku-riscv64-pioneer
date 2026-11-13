@@ -10,6 +10,13 @@ import sys
 import tempfile
 
 root_profile=None
+fault_options=('--qkv-conv-receipt-fault','--qkv-conv-job-fault','--qkv-conv-counter-fault')
+selected_faults=[option for option in fault_options if option in sys.argv]
+assert len(selected_faults)<=1
+qkv_conv_fault=1+fault_options.index(selected_faults[0]) if selected_faults else 0
+if qkv_conv_fault:
+    assert sys.argv.count(selected_faults[0])==1
+    sys.argv.remove(selected_faults[0])
 qkv_cohort='--recurrent-qkv-cohort' in sys.argv
 if qkv_cohort:
     assert sys.argv.count('--recurrent-qkv-cohort')==1
@@ -50,6 +57,7 @@ assert not model_recurrent or recurrent_matrix_reuse, 'model-weight fixtures req
 assert not small_to_gate or recurrent_matrix_reuse, 'small-to-gate check requires the isolated recurrent reuse test'
 assert not gate_cohort or small_to_gate, 'gate cohort requires the isolated small-to-gate test'
 assert not qkv_cohort or gate_cohort, 'QKV cohort requires the isolated gate cohort test'
+assert not qkv_conv_fault or qkv_cohort, 'receipt fault requires the isolated QKV cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
@@ -466,6 +474,9 @@ if qgwd_inspection:
     if small_to_gate:defines['PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE']='1'
     if gate_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE']='1'
     if qkv_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE']='1'
+    if qkv_conv_fault:
+        defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE']='1'
+        defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)
     if model_recurrent:defines['PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'

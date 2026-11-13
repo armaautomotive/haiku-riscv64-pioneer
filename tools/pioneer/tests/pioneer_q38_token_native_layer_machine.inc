@@ -15,6 +15,9 @@ bool recurrentMatrixReuseRunning=false;
 bool recurrentGateRunning=false;unsigned recurrentGateDoorbells=0,recurrentGateFirst[119]={},recurrentGateBands[119]={};
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
 bool recurrentQkvRunning=false;unsigned recurrentQkvDoorbells=0,recurrentQkvFirst[119]={},recurrentQkvBands[119]={};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
+bool qkvConvFaultInjected=false;unsigned qkvConvWrites=0;
+#endif
 #endif
 #endif
 #endif
@@ -158,13 +161,21 @@ void RespondLayer(){
 #endif
  }else{
   unsigned worker=1;while(worker<120 && W::Peer(worker)!=route)worker++;assert(worker<120 && io.Core(worker).coreReset==0x46800);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
+  const bool convPhase=recurrentQkvDoorbells==119 && io.Raw(0,C::R::Status+20)==6;
+  if(convPhase && write && (remote==W::Job || remote==0x74800))qkvConvWrites++;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
   if(fullFlowRunning && !write && remote==W::Partial && bytes==512){assert(io.observeVocabulary);io.observeVocabulary(io,worker);}
 #endif
   if(remote==0xffb121b0 || remote==0xffb13140){
    assert(!write && bytes==4);io.Raw(0,local)=remote==0xffb121b0?io.Core(worker).coreReset:livePeerPC(io,worker);
   }else if(remote>=0xffb20000 && remote<0xffb22000){
-   assert(!write && bytes==4);io.Raw(0,local)=io.Core(worker).ResidentNocRead(remote-0xffb20000);
+   assert(!write && bytes==4);uint32_t value=io.Core(worker).ResidentNocRead(remote-0xffb20000);
+#if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND == 3
+   if(convPhase && worker==1 && remote==0xffb20208 && !qkvConvFaultInjected){value^=1;qkvConvFaultInjected=true;}
+#endif
+   io.Raw(0,local)=value;
   }else for(unsigned i=0;i<bytes/4;i++){
    const unsigned at=remote+i*4;assert(PioneerQ38TokenL1::SnapshotContains(worker,at));uint32_t word;
    if(write){
@@ -228,7 +239,18 @@ void RespondLayer(){
 #endif
     io.Raw(worker,at)=io.Raw(0,local+i*4);
    }
-   else io.Raw(0,local+i*4)=io.Raw(worker,at);
+   else {
+    uint32_t value=io.Raw(worker,at);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
+    if(convPhase && worker==1 && !qkvConvFaultInjected
+     && ((PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND==1 && remote==0x83f00 && at==0x83f00+54*4)
+      || (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND==2 && remote==W::Job && at==W::Job+7*4))){
+     value^=PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND==1?32U:1U;
+     qkvConvFaultInjected=true; // corrupt only this test transport reply
+    }
+#endif
+    io.Raw(0,local+i*4)=value;
+   }
   }
   if(write)layerPeerWrites++;else layerPeerReads++;
  }
