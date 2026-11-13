@@ -64,7 +64,7 @@ struct Runtime {
  static bool UploadProgress(void* p,uint64_t bytes,uint64_t total) {
   auto& r=*static_cast<Runtime*>(p); if (!r.PollCancel()) return false;
   double now=Now(); if (now-r.lastProgress<.5 && bytes!=total) return true;
-  r.lastProgress=now; char status[192]; snprintf(status,sizeof(status),"%sQwen27B P100A upload:%.1f/%.1f MiB. Stop waits for this token boundary.",r.cancelled?"Stop pending; finishing token. ":"",double(bytes)/1048576,double(total)/1048576);
+  r.lastProgress=now; char status[256]; snprintf(status,sizeof(status),"%sQwen27B P100A upload:%.1f/%.1f MiB. Weight reads %.1fs; device upload calls %.1fs. Stop waits for this token boundary.",r.cancelled?"Stop pending; finishing token. ":"",double(bytes)/1048576,double(total)/1048576,double(r.session.sourceReadNanos)*1e-9,double(r.session.bulkUploadNanos)*1e-9);
   return r.Emit(A::Progress,total?unsigned(bytes*1000/total):UINT32_MAX,status);
  }
  static bool Multiply(void* p,unsigned tensor,const float* x,unsigned k,float* y,unsigned n) {
