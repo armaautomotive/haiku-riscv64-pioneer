@@ -31,3 +31,19 @@ were independently rehashed on Pioneer:
 e90667171ef9cc512c20df7dbf565e0ac1d49fbfe0f8c118e649550671c6d806
 Admission requires actual successful host exit/state, empty host stderr,
 all 851 verified entries, idle driver generation 40 and CPU/RAM checks.
+
+Host qualification subsequently exited 0 on its original SSH handle, with
+HOST_CLOSED_ALL851_VERIFIED_NO_GENERATE, all 851 hits and no conversion,
+empty stderr, and no remaining parent/probe/worker. Independent postflight:
+host stdout SHA-256 fb523c1b53a9bca5cfc6a49c74a0de34196e7e58ded527496605efebd350039b;
+installed worker 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74;
+driver 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+tag 2026102100010012 generation 40, no active owner or cold recovery;
+64 CPUs and 137034936320 bytes maximum physical memory.
+
+The separate card parent passed its read-only preflight and has now actually
+started (parent 17178, probe 17216, worker 17217). State is
+RUNNING_FIXED_FOUR_TOKEN_WORK_REQUEST; the worker is authenticating the
+original source, stderr empty. The parent has not exited. Do not repeat,
+reset, reload, open the device or infer success from progress. This run is
+the first physical use of the batched reader and has no result yet.
