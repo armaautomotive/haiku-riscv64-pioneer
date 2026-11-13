@@ -21,9 +21,8 @@ class PioneerQ38RecurrentQ8UploadReceiptInspection {
  int64_t team=-1;uint64_t generation=0,bytes=0,digest=UINT64_C(14695981039346656037);
  unsigned part=0,page=0,parts=0,spans=0,pages=0,pendingIndex=0,pendingPages=0,recorded=0;
  uint32_t denseManifestScratch[16*3*7*3]={}; // receipt is heap-only
- // Inspection owner only; callers must serialize metadata derivation. These
- // buffers preserve all-or-nothing output without large stack temporaries.
- PioneerQ38RecurrentQ8MatrixWorkspace::Scratch workspaceScratch;
+ // Inspection owner only; callers must serialize metadata derivation. This
+ // buffer preserves all-or-nothing output without large stack temporaries.
  std::array<uint32_t,PioneerQ38RecurrentQ8MatrixWorkspace::Words> workspaceStaged={};
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof
@@ -148,7 +147,7 @@ public:
  // layout. No write to card memory, readback or device ownership is implied.
  bool Workspace(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
   const uint8_t* initialized,int64_t owner,uint64_t gen){
-  using W=PioneerQ38RecurrentQ8MatrixWorkspace;using Plan=PioneerQ38HybridRecurrentQ8MatrixPlan;
+  using W=PioneerQ38RecurrentQ8MatrixWorkspace;
   const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
   const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized),limit=~uintptr_t(0);
   const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
@@ -159,14 +158,26 @@ public:
    || (out<lp+PioneerResidentBanks::Pages && lp<out+outputBytes)
    || (cp>=out && cp<out+outputBytes) || (fp>=out && fp<out+outputBytes)
    || !Revalidate(c,fd,h,initialized,owner,gen))return false;
-  Plan::Proposal proposal;if(!Plan::Build(original,proposal) || proposal.parts.size()!=layout.Count())return false;
+  // Derive the records directly from the already constructed fixed layout.
+  // The host vector proposal remains an independent test oracle; no vector
+  // allocation or full proposal rebuild belongs in this receipt operation.
+  workspaceStaged.fill(0);unsigned count=0;
   for(unsigned i=0;i<layout.Count();i++){
-   const auto* q=layout.At(i);const auto& p=proposal.parts[i];
-   if(!q || p.original!=q->original || p.bank!=q->bank || p.offset!=q->offset
-    || p.bytes!=q->bytes || p.allocated!=q->allocated || p.encoding!=q->encoding)return Fail();
+   const auto* p=original.Part(i);const auto* q=layout.At(i);
+   if(!p || !q || q->original!=i || q->bank!=p->bank)return Fail();
+   if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4==3
+    || (p->role!=5 && p->role!=6 && p->role!=13))continue;
+   const unsigned role=p->role==5?0:p->role==6?1:2,ordinal=p->layer-p->layer/4;
+   const unsigned stride=role==2?6528:5440;
+   const uint64_t bytes=uint64_t(p->rows)*stride,allocated=(bytes+4095)&~uint64_t(4095);
+   if(ordinal>=48 || q->bank>=7 || !p->rows || ((p->firstRow|p->rows)&31)
+    || q->encoding!=PioneerQ38RecurrentQ8KernelLayoutInspection::RecurrentQ8Bfp8
+    || bytes!=q->bytes || allocated!=q->allocated || (q->offset&4095) || q->offset>UINT32_MAX-C::Base)return Fail();
+   const unsigned at=(ordinal*3+role)*W::RecordWords+q->bank*3;
+   if(workspaceStaged[at])return Fail();
+   workspaceStaged[at]=C::Base+q->offset;workspaceStaged[at+1]=p->firstRow;workspaceStaged[at+2]=p->rows;count++;
   }
-  if(!W::BuildWithScratch(original,proposal,workspaceStaged.data(),workspaceStaged.size(),workspaceScratch)
-   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  if(count!=48*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
   for(unsigned i=0;i<W::Words;i++)output[i]=workspaceStaged[i];return true;
  }
  enum : unsigned {DenseManifestWords=16*3*7*3};
