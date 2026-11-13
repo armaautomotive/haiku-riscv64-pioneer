@@ -232,3 +232,13 @@ The unchanged alpha/beta controller bridge also passed its regressions.
 Workers execute sequentially and the host transports their records into a
 modeled NoC; the preceding gate ROOT Run, real concurrency, native ownership,
 physical execution, model quality and speed are not established.
+
+Gate ROOT follow-up: the same 119 simulated worker instances now export
+their actual gate producer/matrix completion records as well as their QKV
+records. The linked gate ROOT completes its full Run and matches the gate
+worker outputs; the linked QKV ROOT separately completes with the retained
+post-gate histories and reuses the input, matching QKV worker outputs. Bad
+prior proof and changed input still park before QKV dispatch. Both ROOT Runs
+use modeled NoC, separately initialized ROOT state and host-carried worker
+records; this is not yet one continuously running controller/cohort, actual
+card execution, model-quality qualification or a speed measurement.

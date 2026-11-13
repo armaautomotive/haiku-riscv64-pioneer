@@ -65,7 +65,8 @@ static void Matrix(DenseProducerImage& image,const std::array<uint32_t,64>& job,
 #ifndef PIONEER_Q38_RECURRENT_GATE_QKV_HELPER_ONLY
 int main(int argc,char** argv){
  assert(argc==5 || argc==6 || (argc==7 && !std::strcmp(argv[6],"--dynamic")));
- const bool reuseGate=argc==6 && !std::strcmp(argv[5],"--reuse-gate"),third=argc>=6 && !reuseGate,dynamic=argc==7;
+ const bool captureGate=argc==6 && !std::strcmp(argv[5],"--reuse-gate-capture");
+ const bool reuseGate=argc==6 && (!std::strcmp(argv[5],"--reuse-gate") || captureGate),third=argc>=6 && !reuseGate,dynamic=argc==7;
  auto gate=Projection(argv[3],3,5120,6144),qkv=Projection(argv[4],5,5120,10240);
  std::vector<uint8_t> out;if(third)out=Projection(argv[5],16,6144,5120);
  EmittedJobs first,second,last;first.Read(20);second.Read(20);if(third)last.Read(24);
@@ -85,12 +86,14 @@ int main(int argc,char** argv){
  }
  std::vector<uint32_t> gates(6144),qkvs(10240),outputs(third?5120:0);
  std::vector<uint8_t> gateSeen(gates.size()),qkvSeen(qkvs.size()),outSeen(outputs.size());
- std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{},outSnapshots{};
+ std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{},outSnapshots{},gateSnapshots{};
  for(unsigned w=0;w<119;w++){
   const unsigned maxBands=std::max(std::max(first.matrix[w][20],second.matrix[w][20]),third?last.matrix[w][20]:0U);
   DenseProducerImage image(argv[1],argv[2],5120,maxBands,w+1);image.Boot();
+  if(captureGate)SnapshotStage(image,gateSnapshots[w].initial,false);
   if(w<20)Producer(image,w,5,1,first);
-  Matrix(image,first.matrix[w],gate,gateInput,gates,gateSeen,nullptr);
+  if(captureGate && w<20)SnapshotStage(image,gateSnapshots[w].producer,true);
+  Matrix(image,first.matrix[w],gate,gateInput,gates,gateSeen,captureGate?&gateSnapshots[w]:nullptr);
   auto& s=snapshots[w];SnapshotStage(image,s.initial,false);
   for(unsigned i=0;i<64;i++)s.initial.proof[i]=image.Get(0x83f00+i*4);
   if(w<20 && !reuseGate){Producer(image,w,6,3,second);SnapshotStage(image,s.producer,true);}
@@ -110,6 +113,7 @@ int main(int argc,char** argv){
  assert(fwrite(gates.data(),4,gates.size(),stdout)==gates.size());
  assert(fwrite(qkvs.data(),4,qkvs.size(),stdout)==qkvs.size());
  assert(fwrite(snapshots.data(),sizeof(snapshots[0]),snapshots.size(),stdout)==snapshots.size());
+ if(captureGate)assert(fwrite(gateSnapshots.data(),sizeof(gateSnapshots[0]),gateSnapshots.size(),stdout)==gateSnapshots.size());
  if(third){assert(fwrite(outputs.data(),4,outputs.size(),stdout)==outputs.size());
   assert(fwrite(outSnapshots.data(),sizeof(outSnapshots[0]),outSnapshots.size(),stdout)==outSnapshots.size());}
  assert(!fflush(stdout));

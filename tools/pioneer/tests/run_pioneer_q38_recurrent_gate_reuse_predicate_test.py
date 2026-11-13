@@ -67,14 +67,17 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
    at=20*512+w*256
    for field in (1,27):
     offset=at+field*4;value=struct.unpack_from('<I',qkvJobs,offset)[0];assert value==4;struct.pack_into('<I',qkvJobs,offset,3)
-  retained=subprocess.run([str(chainbin),str(worker),str(leaf),str(gate),str(qkv),'--reuse-gate'],
+  retained=subprocess.run([str(chainbin),str(worker),str(leaf),str(gate),str(qkv),'--reuse-gate-capture'],
    input=gateJobs+qkvJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
-  prefix=(6144+10240)*4;snapshotSize=119*4824;assert len(retained)==prefix+snapshotSize
-  actual=subprocess.run([str(rootbin),str(tmp),'6','--gate-reuse-prepare'],input=boot+retained[prefix:],
+  prefix=(6144+10240)*4;snapshotSize=119*4824;assert len(retained)==prefix+2*snapshotSize
+  gateActual=subprocess.run([str(rootbin),str(tmp),'5','--full-prepare'],input=boot+retained[prefix+snapshotSize:],
+   stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert gateActual==retained[:6144*4]
+  actual=subprocess.run([str(rootbin),str(tmp),'6','--gate-reuse-prepare'],input=boot+retained[prefix:prefix+snapshotSize],
    stdout=subprocess.PIPE,check=True,env=env).stdout
   assert actual==retained[6144*4:prefix]
   for failure in ('--gate-reuse-bad-history','--gate-reuse-bad-input'):
-   rejected=subprocess.run([str(rootbin),str(tmp),'6',failure],input=boot+retained[prefix:],
+   rejected=subprocess.run([str(rootbin),str(tmp),'6',failure],input=boot+retained[prefix:prefix+snapshotSize],
     stdout=subprocess.PIPE,check=True,env=env).stdout
    assert rejected==b'PASS damaged gate history or input refused before dispatch; NO DEVICE\n'
-  print('PASS ROOT gate-to-QKV input reuse with 119 retained simulated workers; NO DEVICE OR SPEED')
+  print('PASS ROOT gate and QKV Runs with 119 retained simulated workers and input reuse; NO DEVICE OR SPEED')
