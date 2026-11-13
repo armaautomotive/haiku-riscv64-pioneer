@@ -83,6 +83,9 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     controlled=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--controller'],input=boot+snapshots,
                               stdout=subprocess.PIPE,check=True,env=env).stdout
     assert controlled==result
+    rejectedRecipe=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--bad-recipe'],input=boot+snapshots,
+                                  stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,env=env)
+    assert not rejectedRecipe.stdout and b'packets=0 writes=0' in rejectedRecipe.stderr
     badsource=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--bad-source'],input=boot+snapshots,
                              stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,env=env)
     assert not badsource.stdout
@@ -116,5 +119,5 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 print('PASS ROOT jobs -> 119 simulated workers -> actual ROOT packet seals, gather, full seal and scatter via simulated NoC; NO DEVICE')
-print('PASS actual ROOT Run dispatch -> gather -> scatter; CaptureRecipe and BfPrepare stubbed; sequential snapshots, NO DEVICE')
-print('PASS invalid boot, wrong-role jobs, corrupt source/receipt, blocked scatter and nonfinite result rejected; NO DEVICE')
+print('PASS actual ROOT recipe -> dispatch -> gather -> scatter; BfPrepare stubbed; sequential snapshots, NO DEVICE')
+print('PASS invalid boot/recipe, wrong-role jobs, corrupt source/receipt, blocked scatter and nonfinite result rejected; NO DEVICE')

@@ -137,3 +137,12 @@ execute separately before the controller; no concurrent worker or physical
 NoC behavior is established. The scoped-seal/noinline image is inspection
 only and has 96 bytes of text space left. No model output quality, driver
 ownership, physical execution or inference throughput is demonstrated.
+
+Recipe follow-up: the same actual ROOT Run now executes its own CaptureRecipe
+against a complete valid synthetic 119-worker recurrent recipe. A malformed
+recipe is refused before any simulated packet or job release. All three full
+layer-0 projections again reproduce the precomputed worker output; the
+corrupted receipt still stops before scatter. BfPrepare remains stubbed and its
+postconditions seeded. The recipe addresses and input are synthetic, workers
+are separately simulated snapshots, and no hardware, model quality or speed
+is proven. This supersedes only the CaptureRecipe-stub limitation above.

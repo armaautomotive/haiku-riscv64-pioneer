@@ -7,6 +7,7 @@
 #undef main
 #include <cstdlib>
 #include "PioneerRecurrentWorkerSnapshot.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedRecurrentRecipe.h"
 
 // ROOT NoC endpoint backed only by bytes captured from completed worker
 // simulators. Packet sealing runs against a synthetic owner and MMIO state.
@@ -63,7 +64,7 @@ struct GatherRoot:ActualRoot {
   std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
   regs[10]=descriptor;pc=function;steps=0;controller=true;unsigned captures=0,prepares=0,last=0;
   while(pc!=0x60004 && pc!=0x60000){last=pc;
-   if(pc==capture){captures++;pc=regs[1];}
+   if(pc==capture){captures++;Step();}
    else if(pc==prepare){prepares++;pc=regs[1];}
    else Step();
    assert(regs[2]>=0x6e000 && regs[2]<=0x70000);
@@ -88,10 +89,11 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
- const bool controller=argc==4 && !std::strcmp(argv[3],"--controller");
+ const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
+ const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe);
  const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
@@ -121,6 +123,15 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
   endpoint->memory[frame+9*4]=129;endpoint->memory[frame+11*4]=rows;endpoint->memory[frame+12*4]=rows*4;
   endpoint->memory[frame+53*4]=0xe0000;
+  if(controller){
+   endpoint->memory[frame+0*4]=0x31505251;endpoint->memory[frame+1*4]=1;endpoint->memory[frame+2*4]=67108864;
+   endpoint->memory[frame+7*4]=119;endpoint->memory[frame+10*4]=PioneerQ38MixedRecurrentOffset(role);
+   endpoint->memory[frame+13*4]=0x76800;endpoint->memory[frame+44*4]=119;endpoint->memory[frame+45*4]=1;
+   endpoint->memory[frame+48*4]=1;endpoint->memory[frame+49*4]=119;endpoint->memory[frame+50*4]=0x75800;
+   endpoint->memory[frame+51*4]=0x76b00;endpoint->memory[frame+52*4]=0x76a00;
+   endpoint->memory[frame+53*4]=role==13?0x12a000:0x140000;endpoint->memory[frame+54*4]=0x80000;
+   endpoint->memory[frame+55*4]=0x178000;endpoint->memory[frame+56*4]=0x123000;endpoint->memory[frame+57*4]=0x170000;
+  }
   for(unsigned i=0;i<64;i++)endpoint->memory[owner+i*4]=0;
   for(unsigned i=0;i<128;i++)endpoint->memory[owner+256+i*4]=endpoint->memory[0x75000+i*4]=0;
   for(unsigned i=0;i<16;i++){
@@ -153,11 +164,30 @@ int main(int argc,char** argv){
    endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);
   }
   for(unsigned i=0;i<width;i++)endpoint->memory[0xe0000+i*4]=0;
+  if(controller)for(unsigned i=0;i<width;i++)endpoint->memory[endpoint->memory.at(frame+53*4)+i*4]=0;
   for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
   for(unsigned i=0;i<119*8;i++)endpoint->memory[0x75800+i*4]=endpoint->memory[0x77000+i*4]=0;
   for(unsigned i=0;i<119;i++)endpoint->memory[0x76800+i*4]=endpoint->memory[0x76e00+i*4]=0;
   for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=endpoint->memory[0x76d00+i*4]=0;
   for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=endpoint->memory[0x76d40+i*4]=0;
+  if(controller){
+   uint32_t recipe[64],header[16]={},banks[8]={},parts[119][8]={},first[119]={};
+   for(unsigned i=0;i<64;i++)recipe[i]=i>=48?0:endpoint->memory.at(frame+i*4);
+   recipe[0]=TT_Q38_MIXED_RECURRENT_MATRIX;recipe[13]=TT_Q38_DENSE_MATRIX_ROWS;
+   const unsigned fields[]={TT_Q38_MIXED_RECURRENT_MATRIX,1,1,8,width,119,2025,TT_Q38_DENSE_MATRIX_INPUT,1};
+   for(unsigned i=0;i<9;i++)header[i]=fields[i];
+   for(unsigned i=0;i<7;i++)banks[i]=PioneerQ38ProjectionRoute(i);
+   unsigned next=0;const unsigned groups=rows/16;
+   for(unsigned w=0;w<119;w++){
+    parts[w][0]=0x10000000+w*0x100000;parts[w][1]=w%7;parts[w][2]=groups/119+unsigned(w<groups%119);
+    parts[w][4]=banks[w%7];parts[w][5]=1;first[w]=next;next+=parts[w][2]*16;
+    for(unsigned i=0;i<8;i++)endpoint->memory[0x75800+(w*8+i)*4]=parts[w][i];
+    endpoint->memory[0x76800+w*4]=first[w];
+   }
+   assert(next==rows && PioneerQ38MixedRecurrentRecipe(recipe,header,banks,parts,first));
+   for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=header[i];
+   for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=banks[i];
+  }
   endpoint->memory[0x75000+48*4]=1;
   std::ifstream scatterSymbols(std::string(argv[1])+"/program.demangled");unsigned scatter=0;
   while(std::getline(scatterSymbols,line))if(line.find("Projection::Scatter(")!=std::string::npos)scatter=unsigned(std::stoul(line.substr(0,8),nullptr,16));
@@ -170,12 +200,18 @@ int main(int argc,char** argv){
     if(line.find("Projection::CaptureRecipe(")!=std::string::npos)capture=address;
     if(!prepare && line.find("Projection::BfPrepare(")!=std::string::npos)prepare=address;
    }
-   assert(run && capture && prepare && endpoint->RunController(run,capture,prepare,frame));
+   assert(run && capture && prepare);
+   if(badRecipe){endpoint->memory[0x75800+8]=0;
+    assert(!endpoint->RunController(run,capture,prepare,frame) && !endpoint->packets && !endpoint->writes);
+    for(unsigned w=0;w<119;w++)assert(!endpoint->jobs[w] && !endpoint->released[w]);return 0;
+   }
+   assert(endpoint->RunController(run,capture,prepare,frame));
    for(unsigned w=0;w<119;w++)assert(endpoint->jobs[w] && endpoint->released[w]);
   }else assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000));
   assert(endpoint->writes==(rows*4+16383)/16384);
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);
-  for(unsigned row=0;row<rows;row++)assert(endpoint->memory.at(0x04000000+row*4)==results[row]);
+  const unsigned target=0x04000000+(controller?PioneerQ38MixedRecurrentOffset(role):0);
+  for(unsigned row=0;row<rows;row++)assert(endpoint->memory.at(target+row*4)==results[row]);
   assert(fwrite(results.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));return 0;
  }
  if(store){
