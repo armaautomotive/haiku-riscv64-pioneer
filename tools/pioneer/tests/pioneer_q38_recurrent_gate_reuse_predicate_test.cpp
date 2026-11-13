@@ -14,7 +14,7 @@ int main(int argc,char** argv){
  for(unsigned function:functions){
   auto m=std::make_unique<ActualRoot>(argv[1]);const unsigned d=0x74e00,input=0x140000;
   for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
-  m->memory[d+6*4]=2025;m->memory[d+14*4]=5120;m->memory[d+15*4]=8;
+  m->memory[d+6*4]=2026;m->memory[d+14*4]=5120;m->memory[d+15*4]=8;
   m->memory[d+40*4]=3;m->memory[d+42*4]=0;m->memory[d+43*4]=6;m->memory[d+53*4]=input;
   for(unsigned i=0;i<8;i++)m->memory[d+(32+i)*4]=i+1;
   for(unsigned w=0;w<119;w++){
@@ -29,6 +29,10 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<5120;i++)m->memory[input+i*4]=m->memory[0xe0000+i*4]=0x3f000000U+i;
   for(unsigned i=0;i<2560;i++)m->memory[0xa0000+i*4]=m->memory[0xf2000+i*4]=i*31;
   assert(m->Run(function,d) && m->regs[10]==1);
+  for(unsigned invocation:{0U,1U,2025U,2027U}){
+   m->memory[d+6*4]=invocation;assert(m->Run(function,d) && m->regs[10]==0);
+  }
+  m->memory[d+6*4]=2026;
   for(unsigned layer=0;layer<64;layer++)if(layer%4!=3){
    m->memory[d+42*4]=layer;
    for(unsigned w=0;w<119;w++)m->memory[0x178000+w*256+5*4]=layer;
@@ -53,7 +57,7 @@ int main(int argc,char** argv){
   for(unsigned function:smallFunctions){
    auto m=std::make_unique<ActualRoot>(argv[1]);const unsigned d=0x74e00,input=0x140000;
    for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
-   m->memory[d+6*4]=2025;m->memory[d+14*4]=5120;m->memory[d+15*4]=8;
+   m->memory[d+6*4]=2026;m->memory[d+14*4]=5120;m->memory[d+15*4]=8;
    m->memory[d+40*4]=3;m->memory[d+41*4]=248319;m->memory[d+43*4]=10;m->memory[d+53*4]=input;
    for(unsigned i=0;i<8;i++)m->memory[d+(32+i)*4]=i+1;
    for(unsigned w=0;w<119;w++){
@@ -67,6 +71,11 @@ int main(int argc,char** argv){
    }
    for(unsigned i=0;i<5120;i++)m->memory[input+i*4]=m->memory[0xe0000+i*4]=0x3f000000U+i;
    for(unsigned i=0;i<2560;i++)m->memory[0xa0000+i*4]=m->memory[0xf2000+i*4]=i*31;
+   assert(m->Run(function,d) && m->regs[10]==1);
+   for(unsigned invocation:{0U,1U,2025U,2027U}){
+    m->memory[d+6*4]=invocation;assert(m->Run(function,d) && m->regs[10]==0);
+   }
+   m->memory[d+6*4]=2026;
    for(unsigned layer=0;layer<64;layer++)if(layer%4!=3){
     m->memory[d+42*4]=layer;for(unsigned w=0;w<119;w++)m->memory[0x178000+w*256+5*4]=layer;
     assert(m->Run(function,d) && m->regs[10]==1);

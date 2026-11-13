@@ -599,3 +599,19 @@ candidate has not been installed on the Pioneer.
 Two independent controller cross-builds were byte-identical, the fake-tag
 native source cross-compiled with the new pinned bundle, and isolated role
 guards passed; these are build/test evidence, not permission to load a driver.
+
+Input reuse sequence fix: the next continuous test showed that the prior
+reuse predicates expected the previous worker invocation to equal the new
+projection's invocation. Actual projection descriptors use consecutive
+invocations; the earlier isolated tests mistakenly supplied equal values.
+The predicates now require the immediately preceding nonzero invocation,
+while retaining worker, layer, token, boot, job and input-shadow checks.
+Actual RV32 predicate tests cover 48 recurrent layers and reject zero, equal,
+future and non-adjacent invocations. In one continuous simulated run, the
+same controller and workers executed both synthetic role-10 matrix bands,
+then role-11 directly without another producer doorbell. Both role-11 bands
+completed and all 64 outputs including zero padding matched a separate
+observer; the two synthetic roles used different weight patterns. Each worker
+ran 2,560 modeled matrix instructions per operation. Synthetic weight and
+input data are snapshotted by the host-only backend for each job. No complete
+layer, real-model answer, physical driver execution or speed claim follows.

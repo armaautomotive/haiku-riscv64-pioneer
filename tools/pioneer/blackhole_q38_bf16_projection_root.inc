@@ -344,28 +344,29 @@ static BF_ROOT_FN void BfGatherProducer(const uint32_t* d,uint32_t* tracked,unsi
 #ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
 // The previous completed alpha left the SAME BF16 input in the protected
 // ROOT input/native shadows. Require both alpha matrix histories and all 18
-// producer-only histories to bind the same layer, token and invocation.
+// producer-only histories to bind the same layer and token and the immediately
+// preceding projection invocation.
 // Actual admission below authenticates every retained job and receipt before
 // this candidate may be used; no caller-ready flag grants reuse.
 static BF_ROOT_FN bool BfSmallReuseCandidate(const uint32_t* d){
 #ifndef PIONEER_Q38_QKV_ALPHA_INPUT_REUSE_INSPECTION
- if(!BfSmallQ8(d) || d[43]!=11 || d[14]!=5120)return false;
+ if(!BfSmallQ8(d) || d[43]!=11 || d[14]!=5120 || d[6]<=1)return false;
  for(unsigned w=0;w<20;w++){
   const auto* p=Words(L::PeerJobs+w*256);const unsigned nonce=Words(L::Nonces)[w];
   if(!nonce || p[0]!=M::Magic || p[1]!=nonce || p[3]!=w+1 || p[4]!=M::Peer(w+1)
-   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6])return false;
+   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6]-1)return false;
   for(unsigned i=0;i<8;i++)if(p[8+i]!=d[32+i])return false;
   if(w<2){
    if(p[2]!=1 || p[16]!=PioneerQ38Bfp8WorkerJob::Magic || p[32]!=w*32 || p[33]!=64 || p[34]!=10 || p[35]!=8)return false;
   }else if(p[2]!=5 || p[16]!=BFP::Magic || p[27]!=d[41] || p[28]!=10 || p[29]!=5120)return false;
  }
 #else
- if(!BfSmallQ8(d) || d[14]!=5120)return false;
+ if(!BfSmallQ8(d) || d[14]!=5120 || d[6]<=1)return false;
  const unsigned checked=d[43]==10?119:20;
  for(unsigned w=0;w<checked;w++){
   const auto* p=Words(L::PeerJobs+w*256);const unsigned nonce=Words(L::Nonces)[w];
   if(!nonce || p[0]!=M::Magic || p[1]!=nonce || p[3]!=w+1 || p[4]!=M::Peer(w+1)
-   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6])return false;
+   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6]-1)return false;
   for(unsigned i=0;i<8;i++)if(p[8+i]!=d[32+i])return false;
   if(d[43]==10){
    if(p[2]!=1 || p[16]!=PioneerQ38Bfp8WorkerJob::Magic || p[18]!=5120 || p[33]!=10240 || p[34]!=6 || p[35]!=8)return false;
@@ -388,11 +389,11 @@ static BF_ROOT_FN bool BfSmallReuseCandidate(const uint32_t* d){
 // only when every retained peer belongs to the same gate invocation. Admit
 // still validates the actual closed jobs and receipts before reuse.
 static BF_ROOT_FN bool BfRecurrentGateReuseCandidate(const uint32_t* d){
- if(!BfRecurrentQ8(d) || d[43]!=6 || d[14]!=5120)return false;
+ if(!BfRecurrentQ8(d) || d[43]!=6 || d[14]!=5120 || d[6]<=1)return false;
  for(unsigned w=0;w<119;w++){
   const auto* p=Words(L::PeerJobs+w*256);const unsigned nonce=Words(L::Nonces)[w];
   if(!nonce || p[0]!=M::Magic || p[1]!=nonce || p[2]!=1 || p[3]!=w+1 || p[4]!=M::Peer(w+1)
-   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6] || p[16]!=PioneerQ38Bfp8WorkerJob::Magic
+   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6]-1 || p[16]!=PioneerQ38Bfp8WorkerJob::Magic
    || p[18]!=5120 || p[33]!=6144 || p[34]!=5 || p[35]!=8)return false;
   for(unsigned i=0;i<8;i++)if(p[8+i]!=d[32+i])return false;
  }

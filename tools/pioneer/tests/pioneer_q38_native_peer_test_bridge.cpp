@@ -146,7 +146,8 @@ struct NativePeer:NativePeerBase,CohortBytes {
  std::unique_ptr<Q38NativeBfpPeerBridge> bfp;
  void Receive(){
   if(memory.at(G::Job+8)==1 && memory.at(G::Job+16*4)==0x314a3842){
-   assert(!active && !bfp && (pc==waitPC || pc==waitPC+4) && memory.at(G::Job+4)==sequence+1);
+   assert(!active && (!bfp || bfp->Clean()) && (pc==waitPC || pc==waitPC+4) && memory.at(G::Job+4)==sequence+1);
+   bfp.reset(); // discard only a drained endpoint, never the worker or its physical counters
    uint32_t job[16];for(unsigned i=0;i<16;i++)job[i]=memory.at(G::Job+(16+i)*4);
    ClearTensorState();bf16Producing=false;activation=denseActive=gdnActive=convActive=outputActive=false;
    sequence=memory.at(G::Job+4);bfp=std::make_unique<Q38NativeBfpPeerBridge>(job,logicalWorker,binding.bytes);active=true;return;

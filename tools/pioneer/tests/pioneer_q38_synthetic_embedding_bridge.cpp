@@ -53,7 +53,7 @@ struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;
 #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
  uint32_t normRoute=0,normAddress=0;
 #ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
- uint32_t matrixRoute=0,matrixAddress=0;std::vector<uint8_t> matrix;
+ uint32_t matrixRoute[2]={},matrixAddress[2]={};std::vector<uint8_t> matrix[2];
 #endif
 #endif
 };
@@ -88,20 +88,21 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
   found=0;
   for(unsigned i=0;i<canonical->Count();i++){
    const auto* p=canonical->Part(i);const auto& q=physical.parts[i];
-   if(p->kind!=canonical->WeightKind || p->layer!=0 || p->role!=10)continue;
-   if(++found!=1 || q.bank>=7 || q.encoding!=PioneerQ38HybridSmallRecurrentBfp8Plan::SmallRecurrentBfp8
+   if(p->kind!=canonical->WeightKind || p->layer!=0 || (p->role!=10 && p->role!=11))continue;
+   const unsigned role=p->role-10;
+   if(++found>2 || !source->matrix[role].empty() || q.bank>=7 || q.encoding!=PioneerQ38HybridSmallRecurrentBfp8Plan::SmallRecurrentBfp8
     || q.bytes!=348160 || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
-   source->matrixRoute=PioneerQ38ProjectionRoute(q.bank);source->matrixAddress=canonical->Base+q.offset;
-   source->matrix.resize(q.bytes);
+   source->matrixRoute[role]=PioneerQ38ProjectionRoute(q.bank);source->matrixAddress[role]=canonical->Base+q.offset;
+   source->matrix[role].resize(q.bytes);
    for(unsigned band=0;band<2;band++)for(unsigned tile=0;tile<160;tile++){
     float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
-     const unsigned global=band*32+row;values[row*32+col]=global>=48?0.f:float(int((global*7+tile*3+col*5)%17)-8)*0.0625f;
+     const unsigned global=band*32+row;values[row*32+col]=global>=48?0.f:float(int((global*7+tile*3+col*5+role*3)%17)-8)*0.0625f;
     }
     if(!PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,values,1024,
-       source->matrix.data()+(band*160+tile)*1088,1088))return source->ready=false;
+       source->matrix[role].data()+(band*160+tile)*1088,1088))return source->ready=false;
    }
   }
-  if(found!=1)return source->ready=false;
+  if(found!=2)return source->ready=false;
 #endif
  }
 #endif
@@ -113,9 +114,9 @@ bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* ou
  uint32_t geometry[8]={};
 #ifdef PIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST
 #ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
- if(Ready() && out && count && route==source->matrixRoute && address>=source->matrixAddress
-  && address-source->matrixAddress<=source->matrix.size() && count<=source->matrix.size()-(address-source->matrixAddress)){
-  memcpy(out,source->matrix.data()+(address-source->matrixAddress),count);return true;
+ for(unsigned role=0;role<2;role++)if(Ready() && out && count && route==source->matrixRoute[role] && address>=source->matrixAddress[role]
+  && address-source->matrixAddress[role]<=source->matrix[role].size() && count<=source->matrix[role].size()-(address-source->matrixAddress[role])){
+  memcpy(out,source->matrix[role].data()+(address-source->matrixAddress[role]),count);return true;
  }
 #endif
  if(Ready() && out && route==source->normRoute && ((address==source->normAddress && count==16384)

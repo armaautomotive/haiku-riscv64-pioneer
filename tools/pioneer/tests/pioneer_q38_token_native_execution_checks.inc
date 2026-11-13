@@ -21,6 +21,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE))
 #error Recurrent matrix cohort requires the isolated matrix fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE))
+#error Recurrent matrix reuse requires the isolated cohort fixture
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -358,6 +362,31 @@ static void CheckNativeExecution(Fixture& f){
    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
   }
   printf("PASS recurrent BFP8 two-band cohort/64 outputs including 16 padded/5120 modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE
+  fprintf(stderr,"NEXT_MATRIX_DIAGNOSTIC worker=%u operation=%u sequence=%u role=%u invocation=%u\n",cpu.dispatchWorker,
+   io.Raw(cpu.dispatchWorker,W::Job+8),io.Raw(cpu.dispatchWorker,W::Job+4),io.Raw(cpu.dispatchWorker,W::Job+34*4),io.Raw(cpu.dispatchWorker,W::Job+7*4));
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+34*4)==11);
+  cpu.recurrentMatrixReuseRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<6000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"RECURRENT_MATRIX_REUSE_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u;NO result supplied\n",
+   cpu.pc,cpu.steps,cpu.recurrentMatrixDoorbells,cpu.submitted,cpu.completed);
+  assert(cpu.layerHeld && cpu.recurrentMatrixDoorbells==4 && io.Core(0).pending && !state->Unsafe());
+  for(unsigned worker=1;worker<=2;worker++){
+   auto& p=*io.bootstrapPeer[worker-1];const auto s=p.cpu->Stats();
+   assert(p.Idle() && s.sequence==3 && !s.active && !s.pending && s.matrixInstructions==2560);
+  }
+  for(unsigned row=0;row<64;row++){
+   double expected=0;
+   if(row<48)for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+    const uint32_t value=io.Raw(0,R::Input+(tile*32+col)*4);
+    const uint32_t bits=((value+0x7fff+((value>>16)&1))>>16)<<16;
+    expected+=double(Float(bits))*double(int((row*7+tile*3+col*5+3)%17)-8)*0.0625;
+   }
+   const float actual=Float(io.Raw(row/32+1,PioneerQ38Bfp8WorkerJob::Output+(row%32)*4));
+   assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+  }
+  printf("PASS second recurrent BFP8 matrix/two bands with reused input/64 independent synthetic outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n");
+#endif
 #else
   cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver only the already-issued matrix doorbell
   assert(io.Raw(1,W::Doorbell)==2 && !io.Core(0).pending);
