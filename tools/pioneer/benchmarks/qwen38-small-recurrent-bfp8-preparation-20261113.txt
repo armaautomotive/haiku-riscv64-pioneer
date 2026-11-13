@@ -242,3 +242,12 @@ prior proof and changed input still park before QKV dispatch. Both ROOT Runs
 use modeled NoC, separately initialized ROOT state and host-carried worker
 records; this is not yet one continuously running controller/cohort, actual
 card execution, model-quality qualification or a speed measurement.
+
+Retained-controller follow-up: the simulated gate Run now passes its actual
+ROOT memory map into the QKV Run. Before reuse, the fixture checks retained
+worker nonces, closed jobs, counter frontiers and both input shadows against
+the independently simulated worker histories; it does not reseed those
+values. Gate and QKV outputs match the model-derived worker results, and
+changed input or prior proof parks QKV before any new dispatch. NoC remains
+modeled and worker records are transported by the host; this is not a live
+concurrent card cohort, native ownership, answer quality or speed evidence.

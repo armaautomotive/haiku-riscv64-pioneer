@@ -76,8 +76,17 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
   actual=subprocess.run([str(rootbin),str(tmp),'6','--gate-reuse-prepare'],input=boot+retained[prefix:prefix+snapshotSize],
    stdout=subprocess.PIPE,check=True,env=env).stdout
   assert actual==retained[6144*4:prefix]
+  chained=subprocess.run([str(rootbin),str(tmp),'--gate-reuse-chain'],
+   input=boot+retained[prefix+snapshotSize:]+boot+retained[prefix:prefix+snapshotSize],
+   stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert chained==retained[:prefix]
+  for failure in ('--gate-chain-bad-input','--gate-chain-bad-history'):
+   rejected=subprocess.run([str(rootbin),str(tmp),failure],
+    input=boot+retained[prefix+snapshotSize:]+boot+retained[prefix:prefix+snapshotSize],
+    stdout=subprocess.PIPE,check=True,env=env).stdout
+   assert rejected==retained[:6144*4]+b'PASS damaged gate history or input refused before dispatch; NO DEVICE\n'
   for failure in ('--gate-reuse-bad-history','--gate-reuse-bad-input'):
    rejected=subprocess.run([str(rootbin),str(tmp),'6',failure],input=boot+retained[prefix:prefix+snapshotSize],
     stdout=subprocess.PIPE,check=True,env=env).stdout
    assert rejected==b'PASS damaged gate history or input refused before dispatch; NO DEVICE\n'
-  print('PASS ROOT gate and QKV Runs with 119 retained simulated workers and input reuse; NO DEVICE OR SPEED')
+  print('PASS ROOT gate and QKV Runs with retained ROOT and simulated worker histories; NO DEVICE OR SPEED')

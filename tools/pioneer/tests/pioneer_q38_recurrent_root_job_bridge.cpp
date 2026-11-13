@@ -115,7 +115,9 @@ struct GatherRoot:ActualRoot {
 };
 
 #ifndef PIONEER_Q38_RECURRENT_ROOT_JOB_BRIDGE_HELPER_ONLY
-int main(int argc,char** argv){
+static bool chainFirst=false,chainSecond=false;
+static std::map<unsigned,unsigned> retainedGate;
+static int RunOne(int argc,char** argv){
  assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--gate-reuse-prepare") || !std::strcmp(argv[3],"--gate-reuse-bad-history") || !std::strcmp(argv[3],"--gate-reuse-bad-input") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
@@ -144,7 +146,7 @@ int main(int argc,char** argv){
  if(badHistory)(*snapshots)[0].initial.proof[19]^=1;
  std::vector<uint32_t> input(dynamicInput?width:0);
  if(dynamicInput)assert(fread(input.data(),sizeof(uint32_t),width,stdin)==width);
- assert(fgetc(stdin)==EOF);
+ if(!chainFirst)assert(fgetc(stdin)==EOF);
  for(unsigned w=0;w<119;w++)assert(Q::BootShape(boots[w].data()) && boots[w][3]==w+1);
  auto m=std::make_unique<ActualRoot>(argv[1]);const unsigned d=0x74e00;
  for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
@@ -160,7 +162,9 @@ int main(int argc,char** argv){
  assert(RunBuildWithStub(*m,builds[0],reads[0],d,0x3000200+slot*128,workspace->data()+slot*32));
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)m->memory[0x170000+w*256+i*4]=boots[w][i];
  if(gather){
-  auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=m->memory;endpoint->skipProducer=gateReuse;
+  auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);
+  endpoint->memory=chainSecond?retainedGate:m->memory;endpoint->skipProducer=gateReuse;
+  if(chainSecond)for(unsigned i=0;i<64;i++)endpoint->memory[d+i*4]=m->memory.at(d+i*4);
   const unsigned owner=0x6e000,frame=owner+768;
   for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
   endpoint->memory[frame+9*4]=129;endpoint->memory[frame+11*4]=rows;endpoint->memory[frame+12*4]=rows*4;
@@ -185,14 +189,21 @@ int main(int argc,char** argv){
   if(badSource)endpoint->memory[0xffb20100]^=1;
   for(unsigned i=0;i<4;i++)endpoint->memory[0xffb20040+i*0x800]=0;
   for(unsigned i=0;i<32;i++)endpoint->memory[0xffb20240+i*4]=0;
-  for(unsigned at:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})endpoint->memory[0xffb20000+at]=0;
+  if(!chainSecond)for(unsigned at:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})endpoint->memory[0xffb20000+at]=0;
   for(unsigned i=0;i<8;i++)endpoint->memory[0x6d000+i*4]=0;
   endpoint->memory[0x74800+6*4]=endpoint->memory[0x74800+7*4]=0;
   for(unsigned w=0;w<119;w++){
    const auto& s=(*snapshots)[w];assert(s.doorbell);
-   endpoint->memory[0x123000+w*4]=(afterGatePrepare || afterQkvPrepare)?s.initial.doorbell:fullPrepare?0:s.doorbell-unsigned(controller);
-   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=(afterGatePrepare || afterQkvPrepare)?s.initial.counters[i]:fullPrepare?0:s.before[i];
-   if(fullPrepare)for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=(afterGatePrepare || afterQkvPrepare)?s.initial.job[i]:0;
+   const unsigned nonce=(afterGatePrepare || afterQkvPrepare)?s.initial.doorbell:fullPrepare?0:s.doorbell-unsigned(controller);
+   if(chainSecond)assert(endpoint->memory.at(0x123000+w*4)==nonce);else endpoint->memory[0x123000+w*4]=nonce;
+   for(unsigned i=0;i<8;i++){
+    const unsigned value=(afterGatePrepare || afterQkvPrepare)?s.initial.counters[i]:fullPrepare?0:s.before[i];
+    if(chainSecond)assert(endpoint->memory.at(0x122000+(w*8+i)*4)==value);else endpoint->memory[0x122000+(w*8+i)*4]=value;
+   }
+   if(fullPrepare)for(unsigned i=0;i<64;i++){
+    const unsigned value=(afterGatePrepare || afterQkvPrepare)?s.initial.job[i]:0;
+    if(chainSecond)assert(endpoint->memory.at(0x178000+w*256+i*4)==value);else endpoint->memory[0x178000+w*256+i*4]=value;
+   }
   }
   const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix(");const auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
   std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
@@ -207,19 +218,23 @@ int main(int argc,char** argv){
    endpoint->memory[0x75300+i*4]=endpoint->memory.at(owner+i*4);
    endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);
   }
-  for(unsigned i=0;i<width;i++)endpoint->memory[0xe0000+i*4]=0;
+  if(!chainSecond)for(unsigned i=0;i<width;i++)endpoint->memory[0xe0000+i*4]=0;
   if(controller)for(unsigned i=0;i<width;i++)endpoint->memory[endpoint->memory.at(frame+53*4)+i*4]=
    dynamicInput?input[i]:fullPrepare?uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16:0;
-  for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
+  if(!chainSecond)for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
   if(gateReuse){
    uint32_t inputWords[256],packed[128];
    for(unsigned chunk=0;chunk<20;chunk++){
     for(unsigned i=0;i<256;i++){const unsigned at=chunk*256+i;
      inputWords[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;
-     endpoint->memory[0xe0000+at*4]=inputWords[i];
+     if(chainSecond)assert(endpoint->memory.at(0xe0000+at*4)==inputWords[i]);else endpoint->memory[0xe0000+at*4]=inputWords[i];
     }
     assert(PioneerQ38Bf16Input::Pack(inputWords,256,packed,128));
-    for(unsigned i=0;i<128;i++)endpoint->memory[0xa0000+chunk*512+i*4]=endpoint->memory[0xf2000+chunk*512+i*4]=packed[i];
+    for(unsigned i=0;i<128;i++){
+     const unsigned a=0xa0000+chunk*512+i*4,b=0xf2000+chunk*512+i*4;
+     if(chainSecond)assert(endpoint->memory.at(a)==packed[i] && endpoint->memory.at(b)==packed[i]);
+     else endpoint->memory[a]=endpoint->memory[b]=packed[i];
+    }
    }
    if(badInput)endpoint->memory[0x140000]^=1;
   }
@@ -281,6 +296,7 @@ int main(int argc,char** argv){
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);
   const unsigned target=0x04000000+(controller?PioneerQ38MixedRecurrentOffset(role):0);
   for(unsigned row=0;row<rows;row++)assert(endpoint->memory.at(target+row*4)==results[row]);
+  if(chainFirst)retainedGate=endpoint->memory;
   assert(fwrite(results.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));return 0;
  }
  if(store){
@@ -313,6 +329,20 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++)job[i]=m->memory.at(0x78000+i*4);
   assert(Q::JobShape(job,boots[w].data(),previous,0));assert(fwrite(job,sizeof(uint32_t),64,stdout)==64);
  }
- assert(!fflush(stdout));
+ assert(!fflush(stdout));return 0;
+}
+int main(int argc,char** argv){
+ if(argc==3 && (!std::strcmp(argv[2],"--gate-reuse-chain") || !std::strcmp(argv[2],"--gate-chain-bad-input")
+  || !std::strcmp(argv[2],"--gate-chain-bad-history"))){
+  char gateRole[]="5",qkvRole[]="6",gateMode[]="--full-prepare",qkvMode[]="--gate-reuse-prepare";
+  char badInputMode[]="--gate-reuse-bad-input",badHistoryMode[]="--gate-reuse-bad-history";
+  char* selected=!std::strcmp(argv[2],"--gate-chain-bad-input")?badInputMode:
+   !std::strcmp(argv[2],"--gate-chain-bad-history")?badHistoryMode:qkvMode;
+  char* gateArgv[]={argv[0],argv[1],gateRole,gateMode,nullptr};
+  char* qkvArgv[]={argv[0],argv[1],qkvRole,selected,nullptr};
+  chainFirst=true;const int first=RunOne(4,gateArgv);chainFirst=false;if(first)return first;
+  chainSecond=true;const int second=RunOne(4,qkvArgv);chainSecond=false;return second;
+ }
+ return RunOne(argc,argv);
 }
 #endif
