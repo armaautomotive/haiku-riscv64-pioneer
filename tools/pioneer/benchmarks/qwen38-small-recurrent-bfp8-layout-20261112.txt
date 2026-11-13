@@ -26,3 +26,10 @@ bank memory than their original model order. Synthetic ASan/UBSan checks
 cover 5,067,109 pages plus missing/extra/modified ledger refusals. This is
 still not a native ledger, upload authorization, readback or hardware run;
 the FNV digest is a consistency check, not cryptographic authentication.
+
+Receipt follow-up: an isolated synthetic owner now walks the relocated
+weight allocations in physical bank/address order, binds each span to its
+owner/lease, records exactly 5,067,109 pages, and seals against the sorted
+ledger. ASan/UBSan tests cover wrong owner/offset, unexpected ledger pages,
+source revalidation and quarantine after an uncertain transfer. This is not
+a live ioctl, actual upload, device readback or accelerator ownership grant.
