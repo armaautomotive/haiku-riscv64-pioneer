@@ -21,6 +21,7 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-matrix-plan-', dir='/priv
                       'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
         result = subprocess.run([compiler, '-std=c++17', '-D'+forbidden+'=1', '-E', str(source)], capture_output=True)
         assert result.returncode and b'Recurrent Q8 matrix plan is isolated offline geometry only' in result.stderr, forbidden
+        assert b'Recurrent Q8 canonical layout is offline inspection only' in result.stderr, forbidden
     late = subprocess.run([compiler, '-std=c++17', '-fsyntax-only', '-x', 'c++', '-'],
                           input='#include "'+str(source)+'"\n'
                                 '#undef PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION\n'

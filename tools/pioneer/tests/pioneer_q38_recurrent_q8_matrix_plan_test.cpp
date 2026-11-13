@@ -2,6 +2,7 @@
 // Offline geometry only: no cache conversion, device or inference.
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY 1
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION 1
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "../PioneerQ38HybridRecurrentQ8MatrixPlan.h"
 #include "../PioneerQ38RecurrentQ8KernelLayoutInspection.h"
@@ -30,10 +31,16 @@ int main(){
  auto fixed=std::make_unique<Fixed>();
  assert(ancestor->Build(*source) && parent->Build(*source,*ancestor) && fixed->Build(*source,*parent,*ancestor));
  assert(fixed->Count()==next.parts.size());
+ auto physical=std::make_unique<C>();assert(physical->BuildRecurrentQ8Inspection(*parent,*fixed) && physical->RecurrentQ8InspectionLayout());
  for(unsigned i=0;i<fixed->Count();i++){
   const auto* a=fixed->At(i);const auto& b=next.parts[i];assert(a && a->original==b.original
    && a->bank==b.bank && a->offset==b.offset && a->bytes==b.bytes && a->allocated==b.allocated && a->encoding==b.encoding);
+  const auto* p=physical->Part(i);assert(p && p->bank==a->bank && p->offset==a->offset && p->bytes==a->bytes && p->allocated==a->allocated);
  }
+ for(unsigned b=0;b<7;b++)assert(physical->Used(b)==fixed->Used(b));
+ auto* changedPhysical=const_cast<Fixed::Part*>(fixed->At(0));const auto savedPhysical=*changedPhysical;
+ changedPhysical->offset+=4096;auto badPhysical=std::make_unique<C>();
+ assert(!badPhysical->BuildRecurrentQ8Inspection(*parent,*fixed) && !badPhysical->Ready());*changedPhysical=savedPhysical;
  auto* corrupt=const_cast<Fixed::Part*>(parent->At(0));assert(corrupt);const auto saved=*corrupt;
  corrupt->offset+=4096;auto rejected=std::make_unique<Fixed>();
  assert(!rejected->Build(*source,*parent,*ancestor) && !rejected->Ready() && !rejected->At(0));*corrupt=saved;

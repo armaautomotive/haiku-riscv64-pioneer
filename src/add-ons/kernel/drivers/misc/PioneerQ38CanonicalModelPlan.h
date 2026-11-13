@@ -24,6 +24,13 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
 #error Dense Q8 canonical layout is isolated inspection only
 #endif
+#if defined(PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION) && (PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION) || PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE))
+#error Recurrent Q8 canonical layout is offline inspection only
+#endif
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) && (PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC != 1 \
  || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY)) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -52,6 +59,9 @@ class PioneerQ38CanonicalModelPlan {
  enum LayoutKind {UnbuiltLayout,OriginalLayout,HybridLayout,Qgw8Layout
 #ifdef PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION
   ,DenseQ8Layout
+#endif
+#ifdef PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION
+  ,RecurrentQ8Layout
 #endif
  };
  LayoutKind layout=UnbuiltLayout;
@@ -281,6 +291,40 @@ public:
   layout=DenseQ8Layout;ready=true;return true;
  }
  bool DenseQ8InspectionLayout()const{return ready && layout==DenseQ8Layout;}
+#endif
+#ifdef PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION
+ // Build the dense physical parent independently, then validate every
+ // recurrent conversion without reclaiming any parent reservation holes.
+ // This is geometry only: no authentication, upload or launch permission.
+ template<class Parent,class Layout> bool BuildRecurrentQ8Inspection(const Parent& parent,const Layout& proposal){
+  if(!proposal.Ready() || !BuildDenseQ8Inspection(parent))return false;
+  ready=false;layout=UnbuiltLayout;
+  if(proposal.Count()!=count || parent.Count()!=count)return false;
+  unsigned converted=0,rows[64][3]={};
+  for(unsigned i=0;i<count;i++){
+   auto& p=parts[i];const auto* q=proposal.At(i);const auto* old=parent.At(i);
+   if(!q || !old || q->original!=i || old->original!=i || q->bank!=p.bank || old->bank!=p.bank
+    || q->offset!=p.offset || old->offset!=p.offset || old->bytes!=p.bytes || old->allocated!=p.allocated)return false;
+   uint64_t bytes=p.bytes,allocated=p.allocated;unsigned encoding=old->encoding;
+   if(p.kind==WeightKind && p.layer<64 && p.layer%4!=3 && (p.role==5 || p.role==6 || p.role==13)){
+    const unsigned slot=p.role==5?0:p.role==6?1:2,limit=slot==0?6144:slot==1?10240:5120;
+    const unsigned oldRow=slot==2?6912:5760,newRow=slot==2?6528:5440;
+    if(p.type!=8 || !p.rows || ((p.firstRow|p.rows)&31) || p.firstRow!=rows[p.layer][slot]
+     || p.firstRow>limit || p.rows>limit-p.firstRow || p.rowBytes!=oldRow
+     || uint64_t(p.rows)*oldRow!=p.bytes || old->encoding!=Parent::Original)return false;
+    bytes=uint64_t(p.rows)*newRow;allocated=(bytes+4095)&~UINT64_C(4095);
+    if(allocated>p.allocated)return false;
+    encoding=Layout::RecurrentQ8Bfp8;rows[p.layer][slot]+=p.rows;converted++;
+   }
+   if(q->encoding!=encoding || q->bytes!=bytes || q->allocated!=allocated)return false;
+   p.bytes=q->bytes;p.allocated=q->allocated;
+  }
+  if(converted!=1008)return false;
+  for(unsigned l=0;l<64;l++)if(l%4!=3 && (rows[l][0]!=6144 || rows[l][1]!=10240 || rows[l][2]!=5120))return false;
+  for(unsigned b=0;b<7;b++)if(used[b]!=proposal.Used(b))return false;
+  layout=RecurrentQ8Layout;ready=true;return true;
+ }
+ bool RecurrentQ8InspectionLayout()const{return ready && layout==RecurrentQ8Layout;}
 #endif
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
  bool BuildHybridDiagnostic() { return BuildHybridLayout(); }
