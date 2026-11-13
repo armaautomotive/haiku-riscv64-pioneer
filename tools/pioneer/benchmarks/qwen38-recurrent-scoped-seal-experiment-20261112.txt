@@ -26,6 +26,10 @@ builder for all 119 workers for each role in layer 0. Simulated RV32 dynamic
 instruction counts for one seal were 2334 full versus 165 scoped for roles
 5 and 6, and 2339 versus 169 for role 13. These are instruction counts,
 not device cycles, wall time or a prediction of model throughput.
+The linked result-store routine was also called for all 119 workers of
+each of those roles with synthetic finite result words; their assigned rows
+were checked and a nonfinite word was rejected. The fixture supplied those
+words directly: this is not an end-to-end matrix or receipt lifecycle.
 The
 unselected recurrent object and original baseline reproduced unchanged hashes
 9d860f8892b2171ebf4d2317943b2c3a03669592eb51fcc7673cc9249423c9c0 and

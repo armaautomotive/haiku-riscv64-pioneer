@@ -109,6 +109,7 @@ int main(int argc,char** argv){
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
  auto producer=Symbols(argv[1],"Projection::BfProducerJob(");
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
+ auto stores=Symbols(argv[1],"Projection::BfStoreDenseMatrix(");
  auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule(");
  auto reads=Symbols(argv[1],"Projection::BfBankRead(");
  std::ifstream symbols(std::string(argv[1])+"/program.demangled");std::string line;unsigned record=0;
@@ -251,6 +252,17 @@ int main(int argc,char** argv){
    uint32_t frame[64],expected[64];for(unsigned i=0;i<64;i++)frame[i]=m->memory.at(out+i*4);
    assert(PioneerQ38DenseQ8MatrixRootFrame::Build(schedule.parts[w],boot,layer,role,0,2025,6,expected));
    for(unsigned i=0;i<64;i++)assert(frame[i]==expected[i]);
+  }
+  if(scopedSeal && layer==0){
+   m->memory[d+11*4]=units*32;
+   for(unsigned row=0;row<units*32;row++)m->memory[0x80000+row*4]=0x7fc00001;
+   for(unsigned w=0;w<119;w++){
+    const unsigned first=schedule.parts[w][2],count=schedule.parts[w][3]*32;
+    for(unsigned i=0;i<count;i++)m->memory[0x78000+(64+i)*4]=0x3f000000U+(w*256+i);
+    assert(m->Run(stores[0],d,w));
+    for(unsigned i=0;i<count;i++)assert(m->memory.at(0x80000+(first+i)*4)==0x3f000000U+(w*256+i));
+   }
+   m->memory[0x78000+64*4]=0x7fc00000;assert(!m->Run(stores[0],d,0));
   }
   m->memory[0x16fb40]^=1;assert(!m->Run(seals[0],d));m->memory[0x16fb40]^=1;
   m->memory[0x16ebc0]^=1;assert(!m->Run(seals[0],d));m->memory[0x16ebc0]^=1;
