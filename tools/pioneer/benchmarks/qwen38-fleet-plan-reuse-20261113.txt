@@ -14,3 +14,12 @@ invalid source stops before another request and leaves output untouched. The
 separate CPU-validation failure regression also passes. Synthetic transport,
 not physical device inference. No wall-clock or tokens/sec speedup established;
 the installed Assistant worker and driver are unchanged.
+
+The lossless-cache Assistant Work worker also cross-linked successfully
+against the pinned Haiku RISC-V runtime, with SHA-256
+1a40a5933c7963647bfe27da74ecc2c62964bf6a06c93d57cb22632de3db9875.
+Its existing cache-conversion recipe fingerprint remains
+bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a.
+The local binary was not deployed or run: the verified Pioneer SSH host
+rejected the available root keys. This provides build evidence only, not
+hardware correctness or throughput evidence.
