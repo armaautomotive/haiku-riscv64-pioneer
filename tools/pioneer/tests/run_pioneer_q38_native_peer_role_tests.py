@@ -67,6 +67,12 @@ for value in (0,2):
     check('pioneer_q38_native_peer_test_bridge.cpp',{**matrix_host,'PIONEER_Q38_NATIVE_PEER_RECURRENT_OUTPUT_TEST':value},False,True)
 invalid=dict(output_host);del invalid['PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST']
 check('pioneer_q38_native_peer_test_bridge.cpp',invalid,False,True)
+ffn_host={**output_host,'PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST':1}
+check('pioneer_q38_native_peer_test_bridge.cpp',ffn_host,True,True)
+for value in (0,2):
+    check('pioneer_q38_native_peer_test_bridge.cpp',{**output_host,'PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST':value},False,True)
+invalid=dict(ffn_host);del invalid['PIONEER_Q38_NATIVE_PEER_RECURRENT_OUTPUT_TEST']
+check('pioneer_q38_native_peer_test_bridge.cpp',invalid,False,True)
 for parent in matrix_host:
     invalid=dict(matrix_host);del invalid[parent]
     check('pioneer_q38_native_peer_test_bridge.cpp',invalid,parent=='PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST',True)

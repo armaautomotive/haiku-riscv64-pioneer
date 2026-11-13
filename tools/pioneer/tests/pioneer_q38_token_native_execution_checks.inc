@@ -49,6 +49,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE))
 #error Output matrix requires the isolated producer fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE))
+#error FFN producers require the isolated output matrix fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
 #error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
@@ -700,6 +704,23 @@ static void CheckNativeExecution(Fixture& f){
    if(actual!=0)nonzeroNormalized++;
   }
   assert(nonzeroNormalized);printf("PASS 5120 scattered outputs, residuals and unit-weight RMS values/%u nonzero;first FFN producer pending;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",nonzeroNormalized);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
+  uint16_t expectedFfnInput[5120];for(unsigned i=0;i<5120;i++){
+   const uint32_t value=io.Raw(0,B::PostNormalized+i*4);expectedFfnInput[i]=uint16_t((value+0x7fffU+((value>>16)&1U))>>16);
+  }
+  cpu.recurrentFfnProducersRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"FFN_PRODUCERS_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,cpu.recurrentFfnProducerDoorbells,cpu.submitted,cpu.completed);
+  assert(cpu.layerHeld && cpu.recurrentFfnProducerDoorbells==20 && io.Core(0).pending && !state->Unsafe());
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1);
+  unsigned nonzeroFfnInput=0;
+  for(unsigned i=0;i<5120;i++){
+   const uint32_t packed=io.runtimeDram.at(TT_Q38_PROJECTION_NATIVE_OFFSET/4+i/2);
+   const uint16_t actual=uint16_t(packed>>((i&1)*16));assert(actual==expectedFfnInput[i]);if(actual&0x7fff)nonzeroFfnInput++;
+  }
+  assert(nonzeroFfnInput);printf("PASS 20 simulated FFN input producers/5120 exact BF16 values/%u nonzero;first FFN matrix pending;NOT full layer/model/physical/TPS\n",nonzeroFfnInput);
+#endif
 #endif
 #endif
 #endif

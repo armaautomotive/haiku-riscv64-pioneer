@@ -23,6 +23,9 @@ bool recurrentGdnRunning=false;unsigned recurrentGdnDoorbells=0;
 bool recurrentOutputRunning=false;unsigned recurrentOutputDoorbells=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
 bool recurrentOutputMatrixRunning=false;unsigned recurrentOutputMatrixDoorbells=0,recurrentOutputFirst[119]={},recurrentOutputBands[119]={};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
+bool recurrentFfnProducersRunning=false;unsigned recurrentFfnProducerDoorbells=0;
+#endif
 #endif
 #endif
 #endif
@@ -125,6 +128,9 @@ void SubmitLayer(){
   if(recurrentOutputRunning && recurrentOutputDoorbells<24)assert(io.Raw(worker,W::Job+8)==5);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
   if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119)assert(io.Raw(worker,W::Job+8)==1);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
+  if(recurrentFfnProducersRunning && recurrentFfnProducerDoorbells<20)assert(io.Raw(worker,W::Job+8)==5);
+#endif
 #endif
 #endif
 #endif
@@ -146,6 +152,9 @@ void SubmitLayer(){
   else if(recurrentOutputRunning && recurrentOutputDoorbells<24){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
   else if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
+  else if(recurrentFfnProducersRunning && recurrentFfnProducerDoorbells<20){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -240,6 +249,9 @@ void RespondLayer(){
      if(io.Raw(worker,W::Job+8)==5
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
        && !(recurrentOutputRunning && recurrentOutputDoorbells<24)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
+       && !(recurrentFfnProducersRunning && recurrentFfnProducerDoorbells<20)
+#endif
 #endif
      ){
       assert(recurrentProducersRunning && worker==recurrentProducerDoorbells+1 && worker<=20 && io.Raw(0,local+i*4)==1);recurrentProducerDoorbells++;
@@ -252,6 +264,13 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
+     else if(recurrentFfnProducersRunning && recurrentFfnProducerDoorbells<20){
+      const unsigned w=recurrentFfnProducerDoorbells,seq=w<2?10:8;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==5
+       && io.Raw(worker,W::Job+28*4)==2);recurrentFfnProducerDoorbells++;
+     }
+#endif
      else if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119){
       const unsigned w=recurrentOutputMatrixDoorbells,seq=w<2?9:w<20?7:w<24?6:w<96?5:4;
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1

@@ -770,3 +770,11 @@ calculation within 5e-5 absolute-plus-relative tolerance. All normalized
 values were nonzero. The first feed-forward producer was staged but remained
 pending. This is neither feed-forward execution nor a complete layer/model,
 physical-card test, production driver qualification, or TPS measurement.
+
+FFN input handoff: after the checked output projection and post-residual RMS,
+20 retained simulated workers produced 5120 BF16 inputs for the first FFN
+matrix. Every value matched independent round-to-nearest-even conversion of
+the observed normalized input and was nonzero. The first FFN matrix doorbell
+remained pending and was not delivered. Test-only role and scratch-scope
+refusals passed; this is not FFN completion, full-layer correctness, real
+model quality, P100A execution or a speed result.
