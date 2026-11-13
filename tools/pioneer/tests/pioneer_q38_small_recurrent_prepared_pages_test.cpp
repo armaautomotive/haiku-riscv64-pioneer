@@ -3,6 +3,7 @@
 #define PIONEER_Q38_RECURRENT_Q8_PREPARED_FIXTURE_ONLY 1
 #include "pioneer_q38_recurrent_q8_prepared_pages_test.cpp"
 #include "../PioneerQ38HybridSmallRecurrentPreparedPages.h"
+#include "../PioneerQ38SmallRecurrentUploadPlan.h"
 
 struct FakeSmallBfp8:FakeBfp8 {
  unsigned failPage=UINT32_MAX;
@@ -54,6 +55,10 @@ int main(){
  assert(!pages.ReadPage(state,0,out.data(),out.size(),error) && out==before && pages.Ready());
  assert(!pages.ReadPage(small,0,reinterpret_cast<uint8_t*>(&smallEight),4096,error) && pages.Ready());
  const unsigned previous=smallEight.reads;assert(pages.VerifyAll(error) && pages.AllVerified() && smallEight.reads==previous+96);
+ PioneerQ38SmallRecurrentUploadPlan<SmallPages> staged;assert(staged.Bind(*canonical,pages,error));
+ std::vector<uint8_t> uploadBytes(256*4096,0);unsigned f=0,b=0,n=0;uint64_t address=0;
+ assert(staged.Stage(uploadBytes.data(),uploadBytes.size(),f,b,address,n,error) && n && !(n&4095));
+ assert(staged.Acknowledge(true));
  packed.parts[raw].tensor++;assert(!pages.AllVerified());packed.parts[raw].tensor--;assert(pages.AllVerified());
  SmallPages failed;assert(failed.Bind(source,packed,*canonical,smallEight,recurrent,sha,error));
  smallEight.failPage=1;out.fill(0x71);const auto untouched=out;

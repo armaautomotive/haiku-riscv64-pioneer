@@ -33,3 +33,13 @@ owner/lease, records exactly 5,067,109 pages, and seals against the sorted
 ledger. ASan/UBSan tests cover wrong owner/offset, unexpected ledger pages,
 source revalidation and quarantine after an uncertain transfer. This is not
 a live ioctl, actual upload, device readback or accelerator ownership grant.
+
+Staging follow-up: the prepared-page chain now has a separate bounded
+physical-order staging plan. It derives and checks every destination against
+the canonical relocated layout, stages up to 256 pages in 16-page reads,
+publishes data and metadata atomically, and stops permanently on an uncertain
+acknowledgement. A full synthetic 21,475-span test matched each span against
+the independently constructed receipt and exercised failed reads and
+uncertain completion; a prepared-page-chain binding regression also passed.
+This is host-side staging logic only, not an ioctl, physical transfer or
+performance result.
