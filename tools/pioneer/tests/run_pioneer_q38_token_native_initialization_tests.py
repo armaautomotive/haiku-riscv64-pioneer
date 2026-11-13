@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+gdn_cohort='--recurrent-gdn-cohort' in sys.argv
+if gdn_cohort:
+    assert sys.argv.count('--recurrent-gdn-cohort')==1
+    sys.argv.remove('--recurrent-gdn-cohort')
 conv_cohort='--recurrent-conv-cohort' in sys.argv
 if conv_cohort:
     assert sys.argv.count('--recurrent-conv-cohort')==1
@@ -62,6 +66,7 @@ assert not small_to_gate or recurrent_matrix_reuse, 'small-to-gate check require
 assert not gate_cohort or small_to_gate, 'gate cohort requires the isolated small-to-gate test'
 assert not qkv_cohort or gate_cohort, 'QKV cohort requires the isolated gate cohort test'
 assert not conv_cohort or qkv_cohort, 'Conv cohort requires the isolated QKV cohort test'
+assert not gdn_cohort or conv_cohort, 'GDN test requires the isolated Conv cohort test'
 assert not qkv_conv_fault or qkv_cohort, 'receipt fault requires the isolated QKV cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
@@ -482,6 +487,7 @@ if qgwd_inspection:
     if conv_cohort:
         defines['PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE']='1'
         defines['PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST']='1'
+    if gdn_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE']='1'
     if qkv_conv_fault:
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE']='1'
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)
@@ -849,6 +855,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         *(['-DPIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST=1'] if gate_cohort else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST=1'] if qkv_cohort else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_CONV_STATE_TEST=1'] if conv_cohort else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST=1'] if gdn_cohort else []),
                         *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:

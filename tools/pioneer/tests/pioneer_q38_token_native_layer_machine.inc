@@ -17,6 +17,9 @@ bool recurrentGateRunning=false;unsigned recurrentGateDoorbells=0,recurrentGateF
 bool recurrentQkvRunning=false;unsigned recurrentQkvDoorbells=0,recurrentQkvFirst[119]={},recurrentQkvBands[119]={};
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
 bool recurrentConvRunning=false;unsigned recurrentConvDoorbells=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+bool recurrentGdnRunning=false;unsigned recurrentGdnDoorbells=0;
+#endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
 bool qkvConvFaultInjected=false;unsigned qkvConvWrites=0;
@@ -110,6 +113,9 @@ void SubmitLayer(){
   assert(io.Raw(worker,W::Job+8)==(recurrentProducersRunning && recurrentProducerDoorbells==20?1U:5U));
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
   if(recurrentConvRunning && recurrentConvDoorbells<119)assert(io.Raw(worker,W::Job+8)==7);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+  if(recurrentGdnRunning && recurrentGdnDoorbells<96)assert(io.Raw(worker,W::Job+8)==8);
+#endif
 #endif
   if(recurrentProducersRunning && recurrentProducerDoorbells<20){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
@@ -122,6 +128,9 @@ void SubmitLayer(){
   else if(recurrentQkvRunning && recurrentQkvDoorbells<119){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
   else if(recurrentConvRunning && recurrentConvDoorbells<119){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+  else if(recurrentGdnRunning && recurrentGdnDoorbells<96){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -152,7 +161,7 @@ void RespondLayer(){
  const bool write=request[7]==0x212;const unsigned remote=request[write?3:0],local=request[write?0:3],route=request[write?5:2],bytes=request[8];
  unsigned bank=0;while(bank<7 && PioneerQ38ProjectionRoute(bank)!=route)bank++;
  if(bank<7){
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE)
   assert(io.executionDramRead && io.executionDramPut);
   if(write)for(unsigned i=0;i<bytes/4;i++)assert(io.executionDramPut(io,route,remote+i*4,io.Raw(0,local+i*4)));
   else{std::array<uint8,16384> raw;assert(io.executionDramRead(io,route,remote,raw.data(),bytes));
@@ -218,6 +227,11 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+     else if(recurrentGdnRunning && recurrentGdnDoorbells<96){
+      assert(worker==recurrentGdnDoorbells+1 && io.Raw(worker,W::Job+8)==8);recurrentGdnDoorbells++;
+     }
+#endif
      else if(recurrentConvRunning && recurrentConvDoorbells<119){
       const unsigned w=recurrentConvDoorbells,seq=w<2?6:w<20?4:3;
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==7);

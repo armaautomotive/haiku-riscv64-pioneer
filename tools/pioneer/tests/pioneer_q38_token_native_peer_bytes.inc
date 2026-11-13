@@ -41,6 +41,10 @@ void PreparePeerBytes(){
   if(self.ReadKvBytes(route,address,out,count))return true;
 #endif
 #else
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+  if(auto* span=self.MutableSpan(route,address,count))
+   if(span->kind==0)return self.ReadMutableBytes(route,address,out,count);
+#endif
   if(route==PioneerQ38ProjectionRoute(0) && address>=self.runtimeWorkspace && count<=67108864
    && address-self.runtimeWorkspace<=67108864-count){
    for(unsigned i=0;i<count/4;i++){const uint32 word=self.runtimeDram.at((address-self.runtimeWorkspace)/4+i);
@@ -62,6 +66,10 @@ void PreparePeerBytes(){
 #endif
    ;
 #else
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+  if(auto* span=self.MutableSpan(route,address,4))
+   if(span->kind==0)return self.PutMutableWord(route,address,word);
+#endif
   if(route!=PioneerQ38ProjectionRoute(0) || (address&3) || address<self.runtimeWorkspace || address-self.runtimeWorkspace>67108860){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
    return self.executionCpu && self.executionCpu->original && self.executionCpu->original->PutSyntheticConv(route,address,word);
@@ -87,7 +95,7 @@ void PreparePeerBytes(){
 #endif
  }; // actual producer NoC bytes+ACK into SAME ROOT backing;never sets ready/nonce/processor state
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE)
  executionDramRead=[](TokenHeldEndpoints& p,unsigned route,uint32 address,uint8* out,unsigned bytes){
   auto& native=static_cast<PioneerSessionIO&>(p);return native.peerBytes.read(&native,route,address,out,bytes);
  };

@@ -469,7 +469,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  std::vector<uint32> workspaceWords=std::vector<uint32>(512*1024,0x13579bdf);
 #endif
  std::vector<unsigned> workspaceTouched=std::vector<unsigned>(512);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE)
 #include "pioneer_q38_token_native_mutable_bytes.inc"
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
@@ -735,7 +735,7 @@ struct Fixture {
    assert(n<336);io.history[n++]={p->bank,plan->Base+p->offset,PioneerQ38ProjectionRoute(p->bank),0,p->allocated/4096,p->allocated};
   }
   assert(n==336);io.workspaceAddress=plan->Base+plan->Workspace(0)->offset;io.workspaceBank=0;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE)
   io.BindMutableBytes();
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE

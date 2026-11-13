@@ -710,3 +710,14 @@ past that read but subsequently stopped on unsupported floating-point
 instructions; the 96-worker GDN cohort and its numerical output are NOT yet
 validated. These changes do not alter production model data or the driver and
 do not establish hardware execution, model quality or throughput.
+
+GDN cohort follow-up: the first run with those synthetic parameters reached
+a recurrent-state read that was valid in the receipt-derived hybrid layout,
+but absent from the test memory index. The fixture had indexed the original
+layout before rebinding its region descriptors to the sealed hybrid plan.
+The test now re-indexes the SAME initialized arrays before initialization,
+without supplying state values. A subsequent continuous run delivered all
+96 GDN jobs and reached the next pending dispatch, observing 786432 recurrent
+state-word reads and 786432 writes. This proves neither the numerical values
+nor the complete layer, and uses synthetic recurrent parameters, gate and
+QKV weights. It is not a P100A run, production fix, or TPS measurement.

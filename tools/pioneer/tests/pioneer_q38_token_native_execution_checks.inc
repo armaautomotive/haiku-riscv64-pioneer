@@ -573,6 +573,16 @@ static void CheckNativeExecution(Fixture& f){
   for(bool seen:convRows)assert(seen);
   assert(nonzeroInputs && nonzeroOutputs);
   printf("PASS full recurrent Conv/120 simulated cores/%u groups/10240 outputs and state rows vs independent observer/%u nonzero inputs/%u nonzero outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",groups,nonzeroInputs,nonzeroOutputs);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+  cpu.recurrentGdnRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"GDN_COHORT_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u read=%llu write=%llu\n",
+   cpu.pc,cpu.steps,cpu.recurrentGdnDoorbells,cpu.submitted,cpu.completed,
+   (unsigned long long)io.mutableReadWords[0],(unsigned long long)io.mutableWriteWords[0]);
+  assert(cpu.layerHeld && cpu.recurrentGdnDoorbells==96 && io.Core(0).pending && !state->Unsafe());
+  printf("OBSERVED 96 GDN doorbells delivered; next doorbell pending; recurrent reads=%llu writes=%llu; NO numerical or full-layer claim\n",
+   (unsigned long long)io.mutableReadWords[0],(unsigned long long)io.mutableWriteWords[0]);
+#endif
 #endif
 #endif
 #endif

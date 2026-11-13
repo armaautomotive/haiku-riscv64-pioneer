@@ -140,6 +140,12 @@ int main(int argc,char** argv){
   assert(n<336);io.history[n++]={p->bank,plan->Base+p->offset,PioneerQ38ProjectionRoute(p->bank),0,p->allocated/4096,p->allocated};
  }
  assert(n==336);io.workspaceAddress=plan->Base+plan->Workspace(0)->offset;io.workspaceBank=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+ // The fixture constructor indexed the original layout before the sealed
+ // hybrid receipt existed. Re-index the SAME vectors to the actual bound
+ // plan before any initializer runs; do not copy, clear, or seed data.
+ assert(!io.rootStarts && !io.mutableBytes.empty());io.mutableBytes.clear();io.BindMutableBytes();
+#endif
  const auto before=f.learned;assert(f.Bind());
  PioneerQ38StateZeroResult recurrent;PioneerQ38ConvHistoryZeroResult history;PioneerQ38ProjectionZeroResult projection;
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION

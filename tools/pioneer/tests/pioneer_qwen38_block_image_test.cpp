@@ -107,7 +107,10 @@ struct BlockMachine:RuntimeMachine {
 			assert(!(fp[t]&0x7fffffff) || (fp[t]&0x7f800000));
 			switch (hi) {
 				case 0: assert(f==7 || !f); fp[d]=Bits(a+b); break;
+				case 4: assert(f==7 || !f); fp[d]=Bits(a-b); break;
 				case 8: assert(f==7 || !f); fp[d]=Bits(a*b); break;
+				case 0x10: assert(f<=2); fp[d]=f==0?((fp[s]&0x7fffffffU)|(fp[t]&0x80000000U)):
+					f==1?((fp[s]&0x7fffffffU)|((~fp[t])&0x80000000U)):(fp[s]^(fp[t]&0x80000000U)); break;
 				case 0x50: assert(f<=2); if (d) regs[d]=f==2?a==b:f==1?a<b:a<=b; break;
 				case 0x68: assert(t<=1 && (f==7 || !f)); fp[d]=Bits(t?float(regs[s]):float(int32_t(regs[s]))); break;
 				case 0x70: assert(!t && !f); if (d) regs[d]=fp[s]; break;

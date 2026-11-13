@@ -195,7 +195,9 @@ struct NativePeer:NativePeerBase,CohortBytes {
   memory.ForgetConstruction();buffers.ForgetConstruction();l1.ForgetConstruction();
  }
  uint32_t Get(unsigned route,unsigned address)const override{
-  uint8_t raw[4];assert(binding.bytes.read(binding.bytes.context,route,address,raw,4));
+  uint8_t raw[4];const bool okay=binding.bytes.read(binding.bytes.context,route,address,raw,4);
+  if(!okay)fprintf(stderr,"NATIVE_PEER_READ_REFUSED worker=%u pc=%x route=%x address=%x\n",logicalWorker,pc,route,address);
+  assert(okay);
   return uint32_t(raw[0])|uint32_t(raw[1])<<8|uint32_t(raw[2])<<16|uint32_t(raw[3])<<24;
  }
  void ReadRaw(unsigned route,unsigned address,uint8_t* out,unsigned count)const override{
@@ -243,6 +245,17 @@ struct NativePeer:NativePeerBase,CohortBytes {
   const uint32_t value=NativePeerBase::Load(address);
   if(Range(address,0xffb20000,0x2000))Publish();
   return Range(address,0xffb20000,0x2000)?binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000):value;
+ }
+ void Store8(uint32_t address,uint8_t value)override{
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+  if(gdnActive && address>=0x6e000 && address<0x70000){
+   const uint32_t aligned=address&~3U,shift=(address&3U)*8U;
+   const uint32_t old=binding.Word(aligned);
+   Store(aligned,(old&~(0xffU<<shift))|(uint32_t(value)<<shift));return;
+  }
+#endif
+  fprintf(stderr,"NATIVE_PEER_BYTE_STORE_REFUSED worker=%u pc=%x address=%x value=%x\n",logicalWorker,pc,address,unsigned(value));
+  assert(false && "unqualified peer byte store");
  }
  void Store(uint32_t address,uint32_t value)override{
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
