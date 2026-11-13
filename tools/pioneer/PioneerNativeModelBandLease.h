@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_MODEL_BAND_LEASE_H
 #define PIONEER_NATIVE_MODEL_BAND_LEASE_H
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION) && (PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error Recurrent output band owner is offline inspection only
+#endif
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC))
 #error Learned-band lease requires its distinct diagnostic80 role,never Work/validation
 #endif
@@ -32,7 +37,14 @@
 // No destructor IO. UNKNOWN retains every saved span/TLB and never retries.
 class PioneerNativeModelBandLease {
 	using B=PioneerNativeBfpBandLayout;
-	uint32_t saved[50500]={},tlb[2][3]={};
+#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION
+	enum {FixedWidth=6144,FixedSavedWords=59972};
+#else
+	enum {FixedWidth=5120,FixedSavedWords=50500};
+#endif
+	static_assert(FixedSavedWords==1+1024+2048+B::Tiles(FixedWidth)*(B::WeightStride+B::InputStride)/4+64+3,
+		"snapshot must cover boot, code, stack, exact input/weight extents, output and status");
+	uint32_t saved[FixedSavedWords]={},tlb[2][3]={};
 	unsigned width=0,sample=UINT32_MAX;
 	bool attempted=false,owned=false,modified=false;
 	PioneerNativeBfpResult result={};
@@ -56,9 +68,9 @@ class PioneerNativeModelBandLease {
 			&& io.BfpRead(0x17ffc4)==result.count && io.BfpRead(0x17ffc8)==result.marker;
 	}
 public:
-	static constexpr unsigned MaxSavedWords=50500;
+	static constexpr unsigned MaxSavedWords=FixedSavedWords;
 	static constexpr unsigned SavedWords(unsigned k) {
-		return k==5120?50500:0;
+		return k==FixedWidth?FixedSavedWords:0;
 	}
 	static uint32_t Address(unsigned k,unsigned index) {
 		if(index>=SavedWords(k))return UINT32_MAX;
@@ -82,9 +94,9 @@ public:
 	const PioneerNativeBfpResult& Result()const{return result;}
 	void Abandon(){if(owned)Unknown();} // CPU metadata only
 	template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned selection) {
-		static_assert(Image::Width==5120 && Image::Phases==4,"fixed full-K ALL-four-fidelity image only");
+		static_assert(Image::Width==FixedWidth && Image::Phases==4,"fixed full-K ALL-four-fidelity image only");
 		if(attempted || selection>=3)return false;
-		const unsigned k=5120;attempted=true;width=k;sample=selection;result.state=PIONEER_NATIVE_BFP_REFUSED;
+		const unsigned k=FixedWidth;attempted=true;width=k;sample=selection;result.state=PIONEER_NATIVE_BFP_REFUSED;
 		if(baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK || baseline.routes_verified!=7
 			|| !baseline.tlb_restored || !baseline.data_restored || baseline.recovery_required || !BlackholeDramBuildRoutes(baseline))return false;
 		for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++) {
@@ -140,5 +152,9 @@ public:
 		result.tlb_restored=1;result.state=PIONEER_NATIVE_BFP_CLOSED;owned=false;return true;
 	}
 };
+#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION
+static_assert(PioneerNativeModelBandLease::SavedWords(6144)==PioneerNativeModelBandLease::MaxSavedWords,"exact bounded heap snapshot");
+#else
 static_assert(PioneerNativeModelBandLease::SavedWords(5120)==PioneerNativeModelBandLease::MaxSavedWords,"exact bounded heap snapshot");
+#endif
 #endif

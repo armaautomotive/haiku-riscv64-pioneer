@@ -1,0 +1,19 @@
+Fixed 6144-input recurrent output-band owner: offline inspection
+
+An explicitly non-kernel, non-Work owner variant snapshots 59,972 words
+(239,888 bytes): boot, code, stack, all 192 weight and input tiles, output,
+and status. A compile-time equation fixes the exact snapshot size; the test
+checks every address is unique and covers both full tile extents.
+
+With real private blk.0.ssm_out.weight samples, the actual 6144-wide RV32
+image SHA-256 a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e
+was executed on simulated endpoints. Three samples, two jobs each, matched
+all 192 expected output words; every owned byte and TLB word was restored.
+Seventeen injected fault/invalid-selector cases refused unsafe retry or
+cleanup. The previous 5120-input owner passed the same restoration and
+failure suite. Explicit role checks excluded kernel/native, Work, CPU
+reference and fast-math combinations.
+
+This is simulated instruction execution and endpoint restoration, not a
+loadable driver, actual P100A arithmetic, full-model quality or speed. A
+separate native adapter and lifecycle qualification are still required.
