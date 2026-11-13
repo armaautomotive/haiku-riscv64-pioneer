@@ -20,6 +20,8 @@ class PioneerQ38SmallRecurrentUploadReceiptInspection {
  const void* context=nullptr;const void* cookie=nullptr;const uint32_t* hashes=nullptr;const uint8_t* ledger=nullptr;
  PioneerResidentBanks* banks=nullptr;const tt_dram_samples_result* proof=nullptr;const PioneerQ38SpanLease* lease=nullptr;
  int64_t team=-1;uint64_t generation=0,digest=UINT64_C(14695981039346656037);
+ // This receipt is heap-only: keep the staging buffer off the caller's stack.
+ uint32_t workspaceScratch[96*32]={};
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof && team>=0 && generation
   && original.OriginalFormatLayout() && layout.Ready() && banks->Matches(*proof);}
@@ -91,6 +93,36 @@ public:
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
   return PioneerQ38SmallRecurrentLedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
+ }
+ // Derive records from the receipt's own fixed layout, without trusting a
+ // host proposal. Inspection only: it neither authenticates nor writes DRAM.
+ bool BuildWorkspace(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,
+  int64_t owner,uint64_t gen,uint32_t* output,unsigned words){
+  constexpr unsigned records=96,recordWords=32,wordCount=records*recordWords,bytes=wordCount*4;
+  if(!output || words!=wordCount || (reinterpret_cast<uintptr_t>(output)&3) || !h || !initialized)return false;
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(out>limit-bytes || self>limit-sizeof(*this) || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes))return false;
+  if(!Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<wordCount;i++)workspaceScratch[i]=0;
+  bool seen[records]={};unsigned count=0;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* p=original.Part(i);const auto* q=layout.At(i);if(!p || !q)return false;
+   if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4==3 || (p->role!=10 && p->role!=11))continue;
+   const unsigned record=(p->layer-p->layer/4)*2+p->role-10;
+   if(record>=records || seen[record] || q->original!=i || q->encoding!=PioneerQ38HybridSmallRecurrentBfp8Plan::SmallRecurrentBfp8
+    || q->bank!=p->bank || q->bank>=7 || q->offset>UINT32_MAX-C::Base || (q->offset&4095)
+    || q->bytes!=PioneerQ38HybridSmallRecurrentBfp8Plan::Bytes || q->allocated!=PioneerQ38HybridSmallRecurrentBfp8Plan::Bytes)return false;
+   const unsigned at=record*recordWords+q->bank*3;workspaceScratch[at]=C::Base+q->offset;
+   workspaceScratch[at+2]=64;seen[record]=true;count++;
+  }
+  if(count!=records || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<wordCount;i++)output[i]=workspaceScratch[i];return true;
  }
  // Compare an independently derived host proposal to this sealed receipt's
  // own immutable reconstruction. This does not authenticate card bytes.

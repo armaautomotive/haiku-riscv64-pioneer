@@ -41,6 +41,13 @@ int main(){
  assert(canonical->Build() && Workspace::Plan::Build(*canonical,proposal));
  std::array<uint32_t,Workspace::Words> actual{},expected{};actual.fill(0xa5a5a5a5);
  assert(Workspace::Build(*canonical,proposal,expected.data(),expected.size()));
+ assert(!receipt->BuildWorkspace(&foreign,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()));
+ for(auto value:actual)assert(value==0xa5a5a5a5);
+ assert(!receipt->BuildWorkspace(&context,&cookie,hashes.data(),ledger.data(),17,43,actual.data(),actual.size()));
+ assert(!receipt->BuildWorkspace(&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()-1));
+ assert(!receipt->BuildWorkspace(&context,&cookie,hashes.data(),ledger.data(),17,42,hashes.data(),actual.size()));
+ assert(receipt->BuildWorkspace(&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==expected);
+ actual.fill(0xa5a5a5a5);
  assert(!Bridge::Build(*receipt,*canonical,proposal,&foreign,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()));
  for(auto value:actual)assert(value==0xa5a5a5a5);
  assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,
@@ -52,6 +59,7 @@ int main(){
  unsigned hole=0;while(hole<ledger.size() && ledger[hole])hole++;assert(hole<ledger.size());
  ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42) && banks.Quarantined());
  assert(!receipt->Sealed());
+ assert(!receipt->BuildWorkspace(&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
  assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
  BanksMock io2;auto proof2=BankProof(io2);PioneerResidentBanks banks2;assert(banks2.Bind(proof2));
  std::fill(ledger.begin(),ledger.end(),0);std::fill(hashes.begin(),hashes.end(),0);
