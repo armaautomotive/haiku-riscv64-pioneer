@@ -37,6 +37,17 @@ is still through host pipes, and workers execute sequentially: ROOT's actual
 NoC transactions, full gather/scatter, concurrent scheduling, native ownership,
 whole-layer arithmetic and hardware performance remain unproven.
 
+Return-path follow-up: for each of the three full learned projections, the
+simulated worker's actual matrix receipt and closed job were checked against
+its before/after counters. Only then were the resulting row words sent back
+through host memory to the linked ROOT's actual result-store function. A
+fixture-invoked full schedule seal followed, and every stored row matched the
+worker output. Invalid boot, wrong-role producer/matrix jobs and a nonfinite
+output were rejected. This does not execute ROOT's own receipt-gather or
+scatter control flow: the receipt check and final seal were invoked by the
+host fixture and the two sides were bridged with pipes. It is not a concurrent
+cohort, full recurrent layer, native driver, hardware run or speed result.
+
 Follow-up: the same full-source authentication, fresh tile comparison and
 independent integer reference were applied to the other layer-0 recurrent
 matrices. The 119-worker linked-job simulation passed with every distinct

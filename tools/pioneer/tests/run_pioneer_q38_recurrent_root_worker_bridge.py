@@ -70,7 +70,15 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
     chunks=geometry[mode][1]//256;assert len(job)==chunks*512+119*256
     runargs=[str(workerbin),str(worker),str(leaf),'--run-full',str(full)] if full else [str(workerbin),str(worker),str(leaf),'--run']
-    subprocess.run(runargs,input=job,check=True,env=env)
+    result=subprocess.run(runargs,input=job,stdout=subprocess.PIPE,check=True,env=env).stdout
+    assert len(result)==geometry[mode][0]*4
+    stored=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--store'],input=boot+result,
+                          stdout=subprocess.PIPE,check=True,env=env).stdout
+    assert stored==result
+    nonfinite=bytearray(result);nonfinite[:4]=b'\x00\x00\xc0\x7f'
+    rejected=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--store'],input=boot+nonfinite,
+                            stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    assert rejected.returncode and not rejected.stdout
     badboot=bytearray(boot);badboot[0]^=1
     rejected=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=badboot,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
@@ -82,4 +90,5 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     assert rejected.returncode and not rejected.stdout
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
-print('PASS invalid simulated boot and wrong-role producer/matrix jobs rejected; NO DEVICE')
+print('PASS ROOT jobs -> 119 simulated workers with actual receipts -> ROOT result stores and full seal; NO DEVICE')
+print('PASS invalid simulated boot, wrong-role jobs and nonfinite result rejected; NO DEVICE')

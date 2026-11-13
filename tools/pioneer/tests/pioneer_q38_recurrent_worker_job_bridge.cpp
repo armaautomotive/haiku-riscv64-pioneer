@@ -51,7 +51,7 @@ int main(int argc,char** argv){
    for(unsigned b=0;b<4;b++)input[chunk*512+at+b]=uint8_t(word>>(8*b));}
   producers[chunk]=std::move(producer);
  }
- std::vector<uint8_t> seen(rows,0);
+ std::vector<uint8_t> seen(rows,0);std::vector<uint32_t> actualRows(rows,0);
  for(unsigned w=0;w<119;w++){
   const auto& job=jobs[w];const unsigned bands=job[20],first=job[32],previous=w<width/256?1:0;
   assert(bands && bands<=8 && job[2]==1 && job[3]==w+1 && job[18]==width && job[34]==role
@@ -69,8 +69,13 @@ int main(int argc,char** argv){
   image->transfer.root=input;
   image->transfer.job.words[3]=job[19];image->transfer.job.words[5]=job[21];image->transfer.job.words[11]=previous+1;
   assert(HW::JobShape(job.data(),image->boot.data(),previous,0));
+  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8],proof[64],closed[64];
+  for(unsigned i=0;i<8;i++)before[i]=image->transfer.counters[indices[i]];
   for(unsigned i=0;i<64;i++)image->Put(HW::Job+i*4,job[i]);image->Put(HW::Doorbell,previous+1);
   assert(image->FinishCombined(previous+1) && image->native.Clean());
+  for(unsigned i=0;i<64;i++){proof[i]=image->Get(0x83f00+i*4);closed[i]=image->Get(HW::Job+i*4);}
+  for(unsigned i=0;i<8;i++)after[i]=image->transfer.counters[indices[i]];
+  assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,closed,image->boot.data(),before,after));
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const unsigned dest=first+band*32+row;assert(!seen[dest]++);
    uint32_t expected;
@@ -78,9 +83,9 @@ int main(int argc,char** argv){
     const size_t source=32+size_t(first/32+band)*(weightBytes+128)+weightBytes+row*4;
     std::memcpy(&expected,projection.data()+source,4);}
    else expected=PioneerNativeBfpModelBandMetadata::Golden((w+band)%3)[row];
-   assert(image->Get(W::Output+(band*32+row)*4)==expected);
+   actualRows[dest]=image->Get(W::Output+(band*32+row)*4);assert(actualRows[dest]==expected);
   }
  }
  for(auto value:seen)assert(value==1);
- std::printf("PASS tensor%u role%u linked ROOT jobs -> 119 matrix workers with %s and exact %u-row coverage; SIMULATED TRANSPORT NO DEVICE\n",tensor,role,full?"distinct real-weight bands":"interleaved real-weight samples",rows);
+ assert(fwrite(actualRows.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));
 }
