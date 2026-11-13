@@ -46,3 +46,21 @@ and Work span-service simulations also passed against this historical source.
 These are offline builds and tests; the candidate has not been installed or
 run on the card. A controlled hardware trial and restoration are still owed.
 No complete model load comparison or end-to-end speedup claim is made.
+
+Bounded synthetic hardware comparison: the parent ran once on the Pioneer,
+first using the installed 041fef18... baseline, then the distinct candidate,
+then restored 041fef18... . Both Work-transport trials returned success and
+explicitly closed; each transferred 7,512,064 synthetic bytes in 21 jobs and
+the separate debug client compared every resulting byte. Summed upload-call
+times were 0.961976 seconds baseline and 0.942908 seconds candidate. This
+single baseline-then-candidate pair is not enough to establish a speedup;
+timings include software and transport work and are not raw PCIe bandwidth.
+The test did not load a model or measure inference. Both stderr files were
+empty and the parent actually exited 0 with CLOSED_STABLE_RESTORED.
+
+Raw files remain under /boot/home/pioneer-hash-span-20261112-a; baseline
+stdout SHA-256 a2ebd43cb2cc18ce4e04de1232d42cd8bcfb47830b25922d938d0a79505fbd6b;
+candidate stdout 3f4c93822b5b080b69a7e0dc53b7aec543be77cdf9e27893591fb3a5e586a6ec.
+Independent postflight found stable driver 041fef18..., tag
+2026102100010012 generation42, quiesced0/cold0/active_owner0/guard1, 64 CPUs
+and 137034936320 bytes maximum RAM. No SD or reboot was needed.
