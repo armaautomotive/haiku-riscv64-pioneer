@@ -449,9 +449,17 @@ static BF_ROOT_FN void BfStoreDenseMatrix(const uint32_t* d,unsigned w){
   )scalar_fault_park();
  Q38_DENSE_WORKER_SEAL(d,w);const unsigned first=Words(BfDenseScheduleIO::Parts+w*16)[2];
  const unsigned count=Words(BfDenseScheduleIO::Parts+w*16)[3]*32;
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+ const unsigned publish=PioneerQ38DenseQ8MatrixRootFrame::PublishedRows(d[42],d[43],d[11],first,count);
+ if(!publish)scalar_fault_park();
+ for(unsigned i=0;i<count;i++)if((Words(L::Scratch)[64+i]&0x7f800000)==0x7f800000)scalar_fault_park();
+ if(!PioneerQ38DenseQ8MatrixRootFrame::ZeroPadding(Words(L::Scratch)+64,publish,count))scalar_fault_park();
+ Q38_DENSE_WORKER_SEAL(d,w);for(unsigned i=0;i<publish;i++)Words(L::Projected)[first+i]=Words(L::Scratch)[64+i];
+#else
  if(!count || first>=d[11] || count>d[11]-first)scalar_fault_park();
  for(unsigned i=0;i<count;i++)if((Words(L::Scratch)[64+i]&0x7f800000)==0x7f800000)scalar_fault_park();
  Q38_DENSE_WORKER_SEAL(d,w);for(unsigned i=0;i<count;i++)Words(L::Projected)[first+i]=Words(L::Scratch)[64+i];
+#endif
  Q38_DENSE_WORKER_SEAL(d,w);
 }
 #endif

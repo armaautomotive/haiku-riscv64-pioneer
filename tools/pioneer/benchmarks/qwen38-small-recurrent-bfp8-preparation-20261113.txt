@@ -46,3 +46,11 @@ All four frames match the separately constructed standalone RV32 schedule,
 and a dense-layer misuse is refused before output. This only supplies a
 controller component: no ROOT schedule/manifest selection, scatter, upload,
 native driver, device run or inference speed is established by this change.
+
+Experimental gather follow-up: the small-worker inspection branch of the
+ROOT gather limits a 32-row band at row 32 to 16 published rows and rejects
+nonzero padding before publishing. Helper tests cover both bands, invalid
+geometry, and positive/negative zero versus nonzero padding. This branch is
+not yet selected by ROOT scheduling and has not been built into or run as a
+complete ROOT image. The ordinary QRB1 controller was rebuilt separately and
+matched its pinned binary byte for byte. No native driver or device changed.

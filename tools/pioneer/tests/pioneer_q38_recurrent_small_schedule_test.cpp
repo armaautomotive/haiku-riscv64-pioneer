@@ -34,10 +34,19 @@ int main(int argc,char** argv){
   uint32_t rootFrame[64]={};
   assert(PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,boots[w],0,10+w/2,0,2025,previous[w],rootFrame));
   assert(!std::memcmp(rootFrame,parts[w].frame,sizeof(rootFrame)));
+  assert(PioneerQ38DenseQ8MatrixRootFrame::PublishedRows(0,10+w/2,48,tuple[2],32)==parts[w].valid);
+  assert(!PioneerQ38DenseQ8MatrixRootFrame::PublishedRows(0,10+w/2,48,tuple[2],64));
+  assert(!PioneerQ38DenseQ8MatrixRootFrame::PublishedRows(0,10+w/2,64,tuple[2],32));
+  uint32_t padding[32]={};
+  assert(PioneerQ38DenseQ8MatrixRootFrame::ZeroPadding(padding,parts[w].valid,32));
+  if(w%2){padding[16]=0x80000000;assert(PioneerQ38DenseQ8MatrixRootFrame::ZeroPadding(padding,16,32));
+   padding[16]=1;assert(!PioneerQ38DenseQ8MatrixRootFrame::ZeroPadding(padding,16,32));}
   rootFrame[0]=0x76543210;
   assert(!PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,boots[w],3,10+w/2,0,2025,previous[w],rootFrame)
    && rootFrame[0]==0x76543210);
  }
+ assert(PioneerQ38DenseQ8MatrixRootFrame::PublishedRows(0,6,10240,32,64)==64);
+ assert(!PioneerQ38DenseQ8MatrixRootFrame::PublishedRows(0,6,10240,10208,64));
  PioneerQ38SmallPlanMachine root(argv[5]);
  for(unsigned i=0;i<2;i++){root.memory[0x91000+i*4]=bases[i];root.memory[0x91010+i*4]=banks[i];}
  for(unsigned i=0;i<4;i++)root.memory[0x91020+i*4]=previous[i];

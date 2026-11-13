@@ -24,6 +24,25 @@ struct PioneerQ38RecurrentAwareQ8MatrixRootFrame {
 struct PioneerQ38DenseQ8MatrixRootFrame {
 #endif
  using M=PioneerQ38Bfp8WorkerJob;
+ // Count rows that may be published after the caller verifies the worker's
+ // completion receipt. The padded tail belongs to no logical output.
+ static unsigned PublishedRows(unsigned layer,unsigned role,unsigned total,unsigned first,unsigned count){
+  if(!count || first>=total)return 0;
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  if(role==10 || role==11){
+   if(layer>=64 || layer%4==3 || total!=48 || count!=32 || (first!=0 && first!=32))return 0;
+   return first?16:32;
+  }
+#else
+  (void)layer;(void)role;
+#endif
+  return count<=total-first?count:0;
+ }
+ static bool ZeroPadding(const volatile uint32_t* words,unsigned published,unsigned count){
+  if(!words || !published || published>count || count>256)return false;
+  for(unsigned i=published;i<count;i++)if(words[i]&0x7fffffffU)return false;
+  return true;
+ }
  // tuple is the scheduler's address, bank, first row and band count.
  // Geometry validation does not authenticate the tuple or boot record.
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
