@@ -1,0 +1,16 @@
+Recurrent upload session control, offline simulation
+
+The distinct recurrent Begin/Seal inspection control now checks root/team,
+same cookie, runtime owner, reload generation, span owner, pre-cohort state,
+and exclusion of legacy hybrid/QGW8/QGWD receipts. One prepared span passed
+through the actual fast span-service core on a simulated endpoint; the
+remaining 21,474 spans were recorded synthetically. The actual span close
+service and 21,475-span receipt seal/revalidation passed. Lost Begin or Seal
+replies quarantined the simulated owner and prevented retry; failed incoming
+copy, foreign team/cookie and competing receipt were refused. Existing QGW8
+and QGWD simulated controls passed regression tests.
+
+This control has no ioctl or real dispatch registration and is forbidden in
+kernel/native, Work and CPU-reference roles. It does not authenticate actual
+model data, establish native resource lifetimes or permit device execution.
+It is not a performance measurement.

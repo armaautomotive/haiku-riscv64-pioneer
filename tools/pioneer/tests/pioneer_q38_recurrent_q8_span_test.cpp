@@ -16,6 +16,7 @@
 #include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include "pioneer_q38_span_service_test.cpp"
 
+#ifndef PIONEER_Q38_RECURRENT_Q8_CONTROL_INSPECTION
 int main(int argc,char** argv) {
  assert(argc==2);
  for(unsigned mode=0;mode<3;mode++) {
@@ -39,3 +40,4 @@ int main(int argc,char** argv) {
   Unbind();
  }
 }
+#endif
