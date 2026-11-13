@@ -1,0 +1,30 @@
+Recurrent controller scoped-seal experiment, offline only
+
+The recurrent matrix path previously rescanned all 119 worker tuples multiple
+times for every worker. This opt-in inspection variant checks the whole
+21-word table and the currently consumed worker tuple at those points, with
+the complete 119-tuple seal after schedule construction and again before
+scatter. Dense-layer behavior remains on the full per-call seal. The per-call
+tuple scan is reduced from 119 tuples to one, but no hardware time or token
+rate has been measured.
+
+This intentionally changes fault-observation timing: a different worker's
+tuple can be observed later, when that worker is checked or at the full
+pre-scatter boundary. A transient corruption restored before either check
+can escape detection; no claim of equivalent fault coverage or authority for
+concurrent mutation is made. The inspection-only selector is excluded from
+the kernel, driver-tag, Work and CPU-reference roles. Do not install it.
+
+RV32 cross-build and linked instruction simulation passed all 144 canonical
+records, all scheduler tuples, recurrent matrix job checks, each of the 21
+table-word and 476 worker-field corruptions per tested recurrent role, and
+descriptor changes during a scan. Tests explicitly checked that a noncurrent
+worker change can pass the scoped check but fails its own and the full check.
+The test runner requires the scoped symbol when testing this variant. The
+unselected recurrent object and original baseline reproduced unchanged hashes
+9d860f8892b2171ebf4d2317943b2c3a03669592eb51fcc7673cc9249423c9c0 and
+6ac38d3465d714dfa668fab15750f046b73fd500b4055ceddb1f279b1e8d77b5.
+
+These are helper-level simulated observations, not an executed full ROOT
+lifecycle, actual card safety, model quality, production integration or a
+20-token/sec result. Exclusive metadata ownership still needs proof.

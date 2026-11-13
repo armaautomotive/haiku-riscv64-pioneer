@@ -37,4 +37,6 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-actual-root-',dir='/priva
                     '-Wno-unused-function','-Wno-unused-variable','-Wno-misleading-indentation','-ffp-contract=off',
                     '-fsanitize=address,undefined',*['-D'+name+'=1' for name in flags],
                     str(here/'pioneer_q38_recurrent_actual_root_test.cpp'),'-o',str(binary)],check=True)
-    subprocess.run([str(binary),str(tmp)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+    symbols=subprocess.check_output([str(tool)+'nm','-C',str(recurrent)],text=True)
+    scoped='Projection::BfDenseScopedSeal(' in symbols
+    subprocess.run([str(binary),str(tmp),*(['--expect-scoped'] if scoped else [])],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})

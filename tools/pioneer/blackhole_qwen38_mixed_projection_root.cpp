@@ -369,6 +369,9 @@ static unsigned Run(const uint32_t* d){
  // idle audit above. No projected-data scatter or return before coverage.
  if(BfQ4(d) && !audit.Closed())scalar_fault_park();
 #endif
+#ifdef PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT
+ if(BfRecurrentQ8(d))BfDenseSeal(d); // full schedule before publication
+#endif
  Scatter(d,tracked);InputsSeal(d);Seal(d);for(unsigned w=0;w<119;w++)FrameSeal(w);
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  PushedEnd(d,incoming);

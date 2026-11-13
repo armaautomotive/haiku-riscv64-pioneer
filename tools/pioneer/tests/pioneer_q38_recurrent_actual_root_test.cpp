@@ -105,7 +105,7 @@ static bool RunBuildWithRealSeal(TransferRoot& m,unsigned pc,unsigned sourceFram
  return m.pc==0x60004 && m.packets==1;
 }
 int main(int argc,char** argv){
- assert(argc==2);auto m=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==2 || (argc==3 && !std::strcmp(argv[2],"--expect-scoped")));auto m=std::make_unique<ActualRoot>(argv[1]);
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
  auto producer=Symbols(argv[1],"Projection::BfProducerJob(");
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
@@ -121,6 +121,11 @@ int main(int argc,char** argv){
   assert(!packetSeal);packetSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
  }
  assert(packetSeal);
+ std::ifstream symbols3(std::string(argv[1])+"/program.demangled");unsigned scopedSeal=0;
+ while(std::getline(symbols3,line))if(line.find("Projection::BfDenseScopedSeal(")!=std::string::npos && line.find("[clone")==std::string::npos){
+  assert(!scopedSeal);scopedSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
+ }
+ assert(bool(scopedSeal)==(argc==3));
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
  m->memory[d+4*4]=0x04000000;m->memory[d+4*6]=2025;m->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  m->memory[d+4*15]=8;m->memory[d+4*41]=248319;
@@ -260,6 +265,23 @@ int main(int argc,char** argv){
     auto changed=std::make_unique<MutateSealRoot>(argv[1]);changed->memory=m->memory;
     changed->descriptor=d;changed->field=field;
     assert(!changed->Run(seals[0],d) && changed->changed);
+   }
+   if(scopedSeal){
+    assert(m->Run(scopedSeal,d,0) && !m->Run(scopedSeal,d,119));
+    for(unsigned i=0;i<21;i++){
+     m->memory[0x16fb40+i*4]^=1;assert(!m->Run(scopedSeal,d,0));m->memory[0x16fb40+i*4]^=1;
+    }
+    for(unsigned w=0;w<119;w++)for(unsigned f=0;f<4;f++){
+     const unsigned address=0x16ebc0+w*16+f*4;
+     m->memory[address]^=1;assert(!m->Run(scopedSeal,d,w));
+     if(w){assert(m->Run(scopedSeal,d,0));assert(!m->Run(seals[0],d));}
+     m->memory[address]^=1;
+    }
+    for(unsigned field:{15U,42U,43U}){
+     auto changed=std::make_unique<MutateSealRoot>(argv[1]);changed->memory=m->memory;
+     changed->descriptor=d;changed->field=field;
+     assert(!changed->Run(scopedSeal,d,0) && changed->changed);
+    }
    }
   }
  }

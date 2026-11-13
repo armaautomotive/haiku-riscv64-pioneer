@@ -77,6 +77,32 @@ static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
   if(difference)scalar_fault_park();
  }
 }
+#ifdef PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT
+#if PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT != 1 || !defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Scoped recurrent seals are an inspection-only experiment
+#endif
+// Only this worker's tuple is consumed in the enclosed operation. The full
+// schedule is sealed after construction and again before any scatter. A
+// change to another tuple may therefore be detected later than in the full
+// audit. Each tuple is checked at its own use; exclusive ownership is still
+// required to rule out mutations between checks and use.
+static BF_ROOT_FN void BfDenseScopedSeal(const uint32_t* d,unsigned w){
+ if(!BfRecurrentQ8(d) || w>=119)scalar_fault_park();
+ const volatile uint32_t* descriptor=d;
+ const unsigned layer=descriptor[42],role=descriptor[43],format=descriptor[15];
+ if(format!=8 || layer>=64 || (layer&3)==3 || (role!=5 && role!=6 && role!=13))scalar_fault_park();
+ for(unsigned i=0;i<21;i++)if(Words(BfDenseScheduleIO::RecurrentRecord)[i]!=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
+ const auto* actual=Words(BfDenseScheduleIO::Parts+w*16);
+ const auto* shadow=Words(BfDenseScheduleIO::Shadow+w*16);
+ if((actual[0]^shadow[0])|(actual[1]^shadow[1])|(actual[2]^shadow[2])|(actual[3]^shadow[3]))scalar_fault_park();
+ if(descriptor[42]!=layer || descriptor[43]!=role || descriptor[15]!=format)scalar_fault_park();
+}
+#define Q38_DENSE_WORKER_SEAL(d,w) do { if(BfRecurrentQ8(d))BfDenseScopedSeal(d,w);else BfDenseSeal(d); } while(0)
+#else
+#define Q38_DENSE_WORKER_SEAL(d,w) BfDenseSeal(d)
+#endif
 static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
  ,uint32_t* tracked
@@ -360,11 +386,11 @@ static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
    PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])
 #endif
    || !n)scalar_fault_park();
-  BfDenseSeal(d);uint32_t tuple[4],job[64];
+  Q38_DENSE_WORKER_SEAL(d,w);uint32_t tuple[4],job[64];
   for(unsigned i=0;i<4;i++)tuple[i]=Words(BfDenseScheduleIO::Parts+w*16)[i];
   if(!PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,Boot(w),d[42],d[43],d[40],d[6],n-1,job))scalar_fault_park();
   for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=job[i];
-  BfDenseSeal(d);return;
+  Q38_DENSE_WORKER_SEAL(d,w);return;
  }
 #endif
  BF_PAIR_SEAL(d,w);if(!n || n>=0x7ffffffe)scalar_fault_park();const auto* p=Words(BFR::Parts+w*32);
@@ -421,17 +447,17 @@ static BF_ROOT_FN void BfStoreDenseMatrix(const uint32_t* d,unsigned w){
   PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])
 #endif
   )scalar_fault_park();
- BfDenseSeal(d);const unsigned first=Words(BfDenseScheduleIO::Parts+w*16)[2];
+ Q38_DENSE_WORKER_SEAL(d,w);const unsigned first=Words(BfDenseScheduleIO::Parts+w*16)[2];
  const unsigned count=Words(BfDenseScheduleIO::Parts+w*16)[3]*32;
  if(!count || first>=d[11] || count>d[11]-first)scalar_fault_park();
  for(unsigned i=0;i<count;i++)if((Words(L::Scratch)[64+i]&0x7f800000)==0x7f800000)scalar_fault_park();
- BfDenseSeal(d);for(unsigned i=0;i<count;i++)Words(L::Projected)[first+i]=Words(L::Scratch)[64+i];
- BfDenseSeal(d);
+ Q38_DENSE_WORKER_SEAL(d,w);for(unsigned i=0;i<count;i++)Words(L::Projected)[first+i]=Words(L::Scratch)[64+i];
+ Q38_DENSE_WORKER_SEAL(d,w);
 }
 #endif
 static BF_ROOT_FN void BfGatherMatrix(const uint32_t* d,uint32_t* tracked,unsigned w){
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
- if(BfDenseQ8(d))BfDenseSeal(d);else
+ if(BfDenseQ8(d))Q38_DENSE_WORKER_SEAL(d,w);else
 #endif
  BF_PAIR_SEAL(d,w);
  MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
