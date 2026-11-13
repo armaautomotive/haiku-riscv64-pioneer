@@ -1,0 +1,19 @@
+Qwen3.8-27B small recurrent projection layout proposal, 2026-11-12
+
+Each of the 48 recurrent layers has alpha and beta Q8 matrices with 48
+real rows. The simulated BFP8 matrix worker consumes whole 32-row tiles,
+requiring 64 rows including 16 zero-padded rows per matrix. At 5,440 bytes
+per BFP8 row, each needs 348,160 bytes; the original 48 Q8 rows occupy
+276,480 bytes. Therefore the existing reservation cannot simply be reused.
+
+PioneerQ38HybridSmallRecurrentBfp8Plan is an offline proposal which appends
+the 96 padded tensors after their respective banks' existing high-water
+marks, checks capacity, and preserves every other proposed allocation and
+address. It adds 33,423,360 bytes (31.875 MiB) of address space; original
+small-matrix reservations are left as holes. A synthetic canonical layout
+test checks all 96 positions, unchanged non-target allocations, capacity,
+malformed geometry refusals and isolation from native/Work/reference roles.
+
+This is geometry only: the prepared cache, upload authorization, device
+ledger, ROOT dispatch and Work path do not yet use it. No driver is changed,
+and no card execution, model quality or inference-speed result is claimed.
