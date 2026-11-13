@@ -19,6 +19,9 @@ bool recurrentQkvRunning=false;unsigned recurrentQkvDoorbells=0,recurrentQkvFirs
 bool recurrentConvRunning=false;unsigned recurrentConvDoorbells=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 bool recurrentGdnRunning=false;unsigned recurrentGdnDoorbells=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+bool recurrentOutputRunning=false;unsigned recurrentOutputDoorbells=0;
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
@@ -115,6 +118,9 @@ void SubmitLayer(){
   if(recurrentConvRunning && recurrentConvDoorbells<119)assert(io.Raw(worker,W::Job+8)==7);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
   if(recurrentGdnRunning && recurrentGdnDoorbells<96)assert(io.Raw(worker,W::Job+8)==8);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+  if(recurrentOutputRunning && recurrentOutputDoorbells<24)assert(io.Raw(worker,W::Job+8)==5);
+#endif
 #endif
 #endif
   if(recurrentProducersRunning && recurrentProducerDoorbells<20){layerHeld=false;}
@@ -130,6 +136,9 @@ void SubmitLayer(){
   else if(recurrentConvRunning && recurrentConvDoorbells<119){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
   else if(recurrentGdnRunning && recurrentGdnDoorbells<96){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+  else if(recurrentOutputRunning && recurrentOutputDoorbells<24){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -219,7 +228,11 @@ void RespondLayer(){
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE)
     if(at==W::Doorbell){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
-     if(io.Raw(worker,W::Job+8)==5){
+     if(io.Raw(worker,W::Job+8)==5
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+       && !(recurrentOutputRunning && recurrentOutputDoorbells<24)
+#endif
+     ){
       assert(recurrentProducersRunning && worker==recurrentProducerDoorbells+1 && worker<=20 && io.Raw(0,local+i*4)==1);recurrentProducerDoorbells++;
      }
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
@@ -228,6 +241,12 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+     else if(recurrentOutputRunning && recurrentOutputDoorbells<24){
+      const unsigned w=recurrentOutputDoorbells,seq=w<2?8:w<20?6:5;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==5);recurrentOutputDoorbells++;
+     }
+#endif
      else if(recurrentGdnRunning && recurrentGdnDoorbells<96){
       assert(worker==recurrentGdnDoorbells+1 && io.Raw(worker,W::Job+8)==8);recurrentGdnDoorbells++;
      }

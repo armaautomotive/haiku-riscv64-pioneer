@@ -41,6 +41,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE) || !defined(PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST))
 #error Conv cohort requires isolated QKV and synthetic state fixtures
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE))
+#error Output producers require the isolated GDN cohort fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
 #error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
@@ -623,6 +627,29 @@ static void CheckNativeExecution(Fixture& f){
    if(got!=0)nonzeroGated++;
   }
   assert(nonzeroGated);printf("PASS 6144 synthetic GDN gated outputs against separate reference/%u nonzero;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",nonzeroGated);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==5);
+  cpu.recurrentOutputRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"OUTPUT_PRODUCERS_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,cpu.recurrentOutputDoorbells,cpu.submitted,cpu.completed);
+  assert(cpu.layerHeld && cpu.recurrentOutputDoorbells==24 && io.Core(0).pending && !state->Unsafe());
+  fprintf(stderr,"OUTPUT_NEXT_DIAGNOSTIC worker=%u operation=%u role=%u\n",cpu.dispatchWorker,
+   io.Raw(cpu.dispatchWorker,W::Job+8),io.Raw(cpu.dispatchWorker,W::Job+34*4));
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+34*4)==13);
+  unsigned checked=0,nonzeroEncoded=0;
+  for(unsigned i=0;i<6144;i++){
+   const uint32_t packed=io.runtimeDram.at(TT_Q38_PROJECTION_NATIVE_OFFSET/4+i/2);
+   const uint16_t operand=uint16_t(packed>>((i&1)*16));
+   const uint32_t input=io.runtimeDram.at(TT_Q38_GDN_GATED_OUTPUT/4+i);
+   assert(std::isfinite(Float(input)));
+   const uint16_t expected=uint16_t((input+0x7fffU+((input>>16)&1U))>>16);
+   assert(operand==expected);
+   if(operand&0x7fff)nonzeroEncoded++;checked++;
+  }
+  assert(checked==6144 && nonzeroEncoded);
+  printf("PASS 24 simulated output producers/6144 exact BF16 values/%u nonzero;first output matrix doorbell pending;NOT full layer/model/physical/TPS\n",nonzeroEncoded);
+#endif
 #endif
 #endif
 #endif

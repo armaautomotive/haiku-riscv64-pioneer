@@ -22,7 +22,7 @@ defines.update({name:'pioneer_scratch_scope_test_'+name for name in ('api_versio
 source = (here/'pioneer_q38_token_native_layer_machine.inc').read_text()
 assert source.count('#include "pioneer_q38_token_native_scratch_scope.inc"') == 1
 assert source.count('const bool convScratch=ConvScratchPacket(fullLayerRunning,pc,local,bytes);') == 1
-assert source.count('assert(regularScratch || convScratch);') == 1
+assert source.count('assert(regularScratch || convScratch);') == 2  # full-layer and recurrent-Conv fixtures
 with tempfile.TemporaryDirectory(prefix='pioneer-native-scratch-scope-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',

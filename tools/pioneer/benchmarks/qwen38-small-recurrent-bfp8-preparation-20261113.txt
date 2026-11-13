@@ -741,3 +741,13 @@ one-hot observer test and kernel/Work refusal checks passed. The observer
 never supplies device inputs or results. This ends before output projection,
 and does not establish a complete layer, real-model quality, card execution,
 or throughput.
+
+Output-producer handoff: after the checked GDN state and gated output, the
+recurrent BF16/BFP8 inspection path dispatched 24 retained workers to prepare
+the 6144-value output-projection input. All 6144 packed BF16 values matched
+independent round-to-nearest-even conversion of the actual gated outputs and
+were nonzero. The controller reached the first role-13 output-matrix doorbell,
+which remained pending and was not delivered. The test backend accepts the
+6144-wide producer only under a separate test role; its isolation checks passed.
+This is synthetic simulation, not a completed projection/layer, real-model
+quality check, physical P100A run or throughput result.

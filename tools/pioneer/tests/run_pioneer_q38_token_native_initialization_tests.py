@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+output_producers='--recurrent-output-producers' in sys.argv
+if output_producers:
+    assert sys.argv.count('--recurrent-output-producers')==1
+    sys.argv.remove('--recurrent-output-producers')
 gdn_cohort='--recurrent-gdn-cohort' in sys.argv
 if gdn_cohort:
     assert sys.argv.count('--recurrent-gdn-cohort')==1
@@ -67,6 +71,7 @@ assert not gate_cohort or small_to_gate, 'gate cohort requires the isolated smal
 assert not qkv_cohort or gate_cohort, 'QKV cohort requires the isolated gate cohort test'
 assert not conv_cohort or qkv_cohort, 'Conv cohort requires the isolated QKV cohort test'
 assert not gdn_cohort or conv_cohort, 'GDN test requires the isolated Conv cohort test'
+assert not output_producers or gdn_cohort, 'output producers require the isolated GDN cohort test'
 assert not qkv_conv_fault or qkv_cohort, 'receipt fault requires the isolated QKV cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
@@ -488,6 +493,7 @@ if qgwd_inspection:
         defines['PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE']='1'
         defines['PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST']='1'
     if gdn_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE']='1'
+    if output_producers:defines['PIONEER_Q38_TOKEN_NATIVE_OUTPUT_PRODUCERS_FIXTURE']='1'
     if qkv_conv_fault:
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE']='1'
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)
@@ -804,6 +810,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
         if recurrent_peer:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_TEST=1']
         if recurrent_matrix_peer:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST=1']
+        if output_producers:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_OUTPUT_TEST=1']
         if recurrent_producer:
             peer_flags += ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1','-DPIONEER_Q38_TEST_BF16_CONNECTED_PREPARE=1']
         if precise_context:
