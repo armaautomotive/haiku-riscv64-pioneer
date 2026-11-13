@@ -23,9 +23,26 @@ passed, including 1, 2, 3, 4, 5, 6, 7 and 256-page requests, exact hash
 publication, refusal and cleanup paths. The resident-store tests passed.
 The separate QGWD tracked-receipt span simulation also passed in strict and
 fast modes, including ordering and quarantine checks.
-The distinct hot-reload driver cross-built offline with tag 2026111200010001,
-SHA-256 9b8bd31319e69643db8c2a6ec742e737884ec1fe9a83791b2d59c21d6d98d164.
-This build includes the current working source tree and is not qualified for
-installation. The installed stable driver was not changed. No complete model
-load comparison or physical verification of this driver has been performed;
-no end-to-end speedup or 20 tokens/sec claim is made.
+The first offline hot-reload build (9b8bd313...) did NOT enable the span
+feature, so it did not exercise this implementation and is not an appropriate
+test driver. Subsequent clean source archives, excluding unrelated working-tree
+edits, were built with the full scale-reuse and fast-span selectors. The
+pre-change baseline produced driver SHA-256
+68105500213f503811bf1b73473b08a01bb4b04b78d037817a809d6828b66548;
+the hash-batched source produced
+e37af32ff9d0984da8302da8b4883683727de3dad00ddfb142135cda64227797.
+Both used tag 2026102100010012, but that rebuilt baseline did NOT match the
+installed stable driver, so neither build is qualified for installation.
+
+Follow-up source isolation: a clean archive of historical commit e56d7dab7d,
+with the full scale-reuse/fast-span settings AND the previously omitted
+local-delta-probe setting, reproduced the installed baseline byte-for-byte:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Applying only the same hash interleaving to that historical source and using
+the distinct candidate tag 2026111200010002 produced
+3be6fe0bbfe7574d4cd3fd774e6d914497bc4cb9df19c31220e1afcfef998389;
+the guard and default control remained d1ce2aa4... and 2df0e0f8... . Strict
+and Work span-service simulations also passed against this historical source.
+These are offline builds and tests; the candidate has not been installed or
+run on the card. A controlled hardware trial and restoration are still owed.
+No complete model load comparison or end-to-end speedup claim is made.
