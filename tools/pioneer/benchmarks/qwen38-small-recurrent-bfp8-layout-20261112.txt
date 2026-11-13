@@ -52,3 +52,12 @@ upload is refused. The pre-existing recurrent span-service regression also
 passes. Only the first staged span was exercised through this service; the
 full 21,475-span ordering was checked separately. This adds no live ioctl,
 driver capability, actual device write or inference-speed result.
+
+Workspace/receipt binding follow-up: metadata construction now requires
+the synthetic receipt to be sealed and its full page ledger revalidated,
+then compares the independently derived relocated proposal with the receipt's
+own fixed reconstruction before and after constructing the 96 ROOT records.
+Tests cover mismatched owners, changed proposals, overlapping destinations,
+changed ledgers and atomic publication. This remains an inspection-only
+metadata bridge: FNV consistency is not cryptographic authentication or
+physical readback, and no native workspace write/driver authority is granted.

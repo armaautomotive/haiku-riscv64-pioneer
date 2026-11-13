@@ -3,8 +3,17 @@
 #define PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_FIXTURE_ONLY 1
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_QGW8_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
+#define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
+#define PIONEER_Q38_GDN_MUTABLE_STATE 1
+#define PIONEER_BANKS_MOCK_ONLY 1
+#include "../PioneerQ38SmallRecurrentWorkspaceReceipt.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
-#include "../PioneerQ38SmallRecurrentUploadReceiptInspection.h"
 
 int main(){
  BanksMock io;auto proof=BankProof(io);PioneerResidentBanks banks;assert(banks.Bind(proof));
@@ -27,9 +36,23 @@ int main(){
  assert(spans==21475 && pages==5067109);span.closed=true;span.ready=span.dirty=false;
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Revalidate(&foreign,&cookie,hashes.data(),ledger.data(),17,42));
+ using Workspace=PioneerQ38SmallRecurrentWorkspace;using Bridge=PioneerQ38SmallRecurrentWorkspaceReceipt;
+ auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();Workspace::Plan::Proposal proposal;
+ assert(canonical->Build() && Workspace::Plan::Build(*canonical,proposal));
+ std::array<uint32_t,Workspace::Words> actual{},expected{};actual.fill(0xa5a5a5a5);
+ assert(Workspace::Build(*canonical,proposal,expected.data(),expected.size()));
+ assert(!Bridge::Build(*receipt,*canonical,proposal,&foreign,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()));
+ for(auto value:actual)assert(value==0xa5a5a5a5);
+ assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,
+  reinterpret_cast<uint32_t*>(proposal.parts.data()),Workspace::Words));
+ assert(Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==expected);
+ const auto preserved=actual;proposal.parts[0].offset+=4096;
+ assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
+ proposal.parts[0].offset-=4096;
  unsigned hole=0;while(hole<ledger.size() && ledger[hole])hole++;assert(hole<ledger.size());
  ledger[hole]=1;assert(!receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42) && banks.Quarantined());
  assert(!receipt->Sealed());
+ assert(!Bridge::Build(*receipt,*canonical,proposal,&context,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()) && actual==preserved);
  BanksMock io2;auto proof2=BankProof(io2);PioneerResidentBanks banks2;assert(banks2.Bind(proof2));
  std::fill(ledger.begin(),ledger.end(),0);std::fill(hashes.begin(),hashes.end(),0);
  auto aborted=std::make_unique<Receipt>();assert(aborted->Begin(&context,&cookie,hashes.data(),ledger.data(),17,43,banks2,proof2,ledger.size()));

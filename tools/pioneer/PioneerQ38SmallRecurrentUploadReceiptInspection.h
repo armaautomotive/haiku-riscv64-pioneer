@@ -8,6 +8,7 @@
 #ifndef PIONEER_Q38_SMALL_RECURRENT_UPLOAD_RECEIPT_INSPECTION_H
 #define PIONEER_Q38_SMALL_RECURRENT_UPLOAD_RECEIPT_INSPECTION_H
 #include "PioneerQ38SmallRecurrentLedgerInspection.h"
+#include "PioneerQ38HybridSmallRecurrentBfp8Plan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
 
 // Synthetic-owner receipt: physical-order page accounting only. FNV is not
@@ -90,6 +91,23 @@ public:
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
   return PioneerQ38SmallRecurrentLedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
+ }
+ // Compare an independently derived host proposal to this sealed receipt's
+ // own immutable reconstruction. This does not authenticate card bytes.
+ bool MatchesLayout(const C& source,const PioneerQ38HybridSmallRecurrentBfp8Plan::Proposal& proposed,
+  const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
+  if(!Revalidate(c,fd,h,initialized,owner,gen) || !source.OriginalFormatLayout()
+   || source.Count()!=original.Count() || proposed.parts.size()!=original.Count())return false;
+  for(unsigned b=0;b<7;b++)if(source.Used(b)!=original.Used(b) || proposed.used[b]!=layout.Used(b))return false;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* a=original.Part(i);const auto* b=source.Part(i);const auto* fixed=layout.At(i);const auto& host=proposed.parts[i];
+   if(!a || !b || !fixed || a->kind!=b->kind || a->layer!=b->layer || a->role!=b->role || a->type!=b->type
+    || a->firstRow!=b->firstRow || a->rows!=b->rows || a->rowBytes!=b->rowBytes || a->bank!=b->bank
+    || a->offset!=b->offset || a->bytes!=b->bytes || a->allocated!=b->allocated
+    || fixed->original!=host.original || fixed->bank!=host.bank || fixed->offset!=host.offset
+    || fixed->bytes!=host.bytes || fixed->allocated!=host.allocated || fixed->encoding!=host.encoding)return false;
+  }
+  return Revalidate(c,fd,h,initialized,owner,gen);
  }
 };
 static_assert(sizeof(PioneerQ38SmallRecurrentUploadReceiptInspection)>200000,"receipt is HEAP ONLY");
