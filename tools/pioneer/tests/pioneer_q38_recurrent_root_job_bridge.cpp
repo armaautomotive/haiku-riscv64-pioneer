@@ -86,7 +86,7 @@ struct GatherRoot:ActualRoot {
  bool RunController(unsigned function,unsigned capture,unsigned prepare,unsigned descriptor,bool prepareReal=false){
   std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
   regs[10]=descriptor;pc=function;steps=0;controller=true;fullPrepare=prepareReal;
-  producerChunks=memory.at(descriptor+14*4)/256;unsigned captures=0,prepares=0,last=0;
+  producerChunks=memory.at(descriptor+14*4)/256;unsigned captures=capture?0:1,prepares=0,last=0;
   while(pc!=0x60004 && pc!=0x60000){last=pc;
    if(pc==capture){captures++;Step();}
    else if(pc==prepare){prepares++;if(fullPrepare)Step();else pc=regs[1];}

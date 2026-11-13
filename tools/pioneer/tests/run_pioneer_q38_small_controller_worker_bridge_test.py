@@ -23,7 +23,7 @@ for path,digest in pins:
  assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
 for path,_ in pins[2:]:
  info=path.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
-rootPins=((recurrent,'9402db4add03c8e23cbc4758b975e8b5d6a4979311061e9ba269a2f93d5c854e'),
+rootPins=((recurrent,'7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c'),
  (root/'start.o','20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6dcf271c535383b46'),
  (root/'program.o','c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037'),
  (root/'qualified-components/dense.o','b1960b90ba1b01b2e43b5889aeaab8a69f5db2f48cd103a340f6480941dfb9f2'),
@@ -66,12 +66,14 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
  env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
  workerArgs=[str(workerBinary),str(worker),str(leaf)]
  boots=subprocess.check_output([*workerArgs,'--boot',str(alpha),str(beta)],env=env)
- assert len(boots)==20*64*4
+ assert len(boots)==119*64*4
  jobs=subprocess.run([str(rootBinary),str(tmp),'--jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
  assert len(jobs)==2*(20*2+2)*64*4
  results=subprocess.run([*workerArgs,'--run',str(alpha),str(beta)],input=jobs,stdout=subprocess.PIPE,check=True,env=env).stdout
- assert len(results)==2*20*4824
+ assert len(results)==2*119*4824
  subprocess.run([str(rootBinary),str(tmp),'--publish'],input=boots+results,check=True,env=env)
  subprocess.run([str(rootBinary),str(tmp),'--corrupt'],input=boots+results,check=True,env=env)
  subprocess.run([str(rootBinary),str(tmp),'--corrupt-producer'],input=boots+results,check=True,env=env)
+ subprocess.run([str(rootBinary),str(tmp),'--full'],input=boots+results,check=True,env=env)
+ subprocess.run([str(rootBinary),str(tmp),'--full-corrupt-prior'],input=boots+results,check=True,env=env)
 for path,digest in pins+rootPins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path

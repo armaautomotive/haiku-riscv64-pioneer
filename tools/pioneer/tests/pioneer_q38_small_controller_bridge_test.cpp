@@ -5,12 +5,12 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer")));
- const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer");auto root=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior")));
+ const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior"),full=!std::strcmp(argv[2],"--full") || badPrior;auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
  const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
- uint32_t boots[20][64];assert(fread(boots,sizeof(boots),1,stdin)==1);
+ uint32_t boots[119][64];assert(fread(boots,sizeof(boots),1,stdin)==1);
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)root->memory[d+i*4]=0;
  root->memory[d+4*4]=0x04000000;root->memory[d+4*6]=2025;root->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  root->memory[d+4*11]=48;root->memory[d+4*14]=5120;root->memory[d+4*15]=8;
@@ -21,7 +21,7 @@ int main(int argc,char** argv){
  assert(canonical->Build() && PioneerQ38HybridSmallRecurrentBfp8Plan::Build(*canonical,proposal)
   && PioneerQ38SmallRecurrentWorkspace::Build(*canonical,proposal,workspace->data(),workspace->size()));
  for(unsigned i=0;i<4;i++)root->memory[d+(32+i*2)*4]=i+1;
- for(unsigned w=0;w<20;w++)for(unsigned i=0;i<64;i++)root->memory[0x170000+w*256+i*4]=boots[w][i];
+ for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)root->memory[0x170000+w*256+i*4]=boots[w][i];
  for(unsigned kind=0;kind<2;kind++){
   const unsigned role=10+kind;
   root->memory[d+4*42]=0;root->memory[d+4*43]=role;
@@ -46,9 +46,10 @@ int main(int argc,char** argv){
    }
   }else{
    auto snapshots=std::make_unique<std::array<PioneerRecurrentWorkerSnapshot,119>>();
-   for(unsigned w=0;w<20;w++)assert(fread(&(*snapshots)[w],sizeof((*snapshots)[w]),1,stdin)==1);
+   for(unsigned w=0;w<119;w++)assert(fread(&(*snapshots)[w],sizeof((*snapshots)[w]),1,stdin)==1);
    if(corrupt)(*snapshots)[0].proof[19]^=1;
    if(badProducer)(*snapshots)[0].producer.proof[19]^=1;
+   if(badPrior && kind==1)(*snapshots)[2].initial.proof[19]^=1;
    auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=root->memory;
    const unsigned owner=0x6e000,frame=owner+768;
    for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
@@ -69,6 +70,54 @@ int main(int argc,char** argv){
    std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
    while(std::getline(syms,line))if(line.find(" T q38_layer_return_recurrent_packet_seal")!=std::string::npos)packetSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
    assert(packetSeal);
+   if(full){
+    endpoint->memory[frame]=0x31505251;endpoint->memory[frame+4]=1;endpoint->memory[frame+8]=67108864;
+    endpoint->memory[frame+7*4]=3;endpoint->memory[frame+10*4]=PioneerQ38MixedRecurrentOffset(role);
+    endpoint->memory[frame+13*4]=0x76800;endpoint->memory[frame+44*4]=3;endpoint->memory[frame+45*4]=1;
+    endpoint->memory[frame+48*4]=1;endpoint->memory[frame+49*4]=119;endpoint->memory[frame+50*4]=0x75800;
+    endpoint->memory[frame+51*4]=0x76b00;endpoint->memory[frame+52*4]=0x76a00;
+    endpoint->memory[frame+53*4]=0x140000;endpoint->memory[frame+54*4]=0x80000;
+    endpoint->memory[frame+55*4]=0x178000;endpoint->memory[frame+56*4]=0x123000;endpoint->memory[frame+57*4]=0x170000;
+    for(unsigned i=0;i<64;i++){endpoint->memory[0x75300+i*4]=endpoint->memory.at(owner+i*4);endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);}
+    for(unsigned i=0;i<5120;i++)endpoint->memory[0xe0000+i*4]=0;
+    for(unsigned i=0;i<5120/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
+    for(unsigned i=0;i<119*8;i++)endpoint->memory[0x75800+i*4]=endpoint->memory[0x77000+i*4]=0;
+    for(unsigned i=0;i<119;i++)endpoint->memory[0x76800+i*4]=endpoint->memory[0x76e00+i*4]=0;
+    for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=endpoint->memory[0x76d00+i*4]=0;
+    for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=endpoint->memory[0x76d40+i*4]=0;
+    for(unsigned i=0;i<5120;i++)endpoint->memory[0x140000+i*4]=uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16;
+    for(unsigned w=0;w<119;w++){
+     const auto& s=(*snapshots)[w];endpoint->memory[0x123000+w*4]=s.initial.doorbell;
+     for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=s.initial.counters[i];
+     for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=s.initial.job[i];
+     for(unsigned i=0;i<8;i++)endpoint->memory[0x75800+(w*8+i)*4]=0;
+     endpoint->memory[0x76800+w*4]=0;
+    }
+    for(unsigned w=0;w<3;w++){
+     endpoint->memory[0x75800+(w*8)*4]=0x10000000+w*0x100000;
+     endpoint->memory[0x75800+(w*8+1)*4]=w;endpoint->memory[0x75800+(w*8+2)*4]=1;
+     endpoint->memory[0x75800+(w*8+4)*4]=PioneerQ38ProjectionRoute(w);
+     endpoint->memory[0x75800+(w*8+5)*4]=boots[w][16];endpoint->memory[0x76800+w*4]=w*16;
+    }
+    const unsigned fields[]={TT_Q38_MIXED_RECURRENT_MATRIX,1,1,8,5120,3,2025,TT_Q38_DENSE_MATRIX_INPUT,1};
+    for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=i<9?fields[i]:0;
+    for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=i<7?PioneerQ38ProjectionRoute(i):0;
+    for(unsigned i=0;i<32;i++)endpoint->memory[0x04000000+PioneerQ38SmallRecurrentWorkspace::Offset+kind*128+i*4]=(*workspace)[kind*32+i];
+    endpoint->memory[0x75000+48*4]=1;
+    std::ifstream entries(std::string(argv[1])+"/program.demangled");unsigned run=0,capture=0,prepare=0;
+    while(std::getline(entries,line)){const unsigned address=unsigned(std::stoul(line.substr(0,8),nullptr,16));
+     if(!run && line.find("Projection::Run(")!=std::string::npos)run=address;
+     if(line.find("Projection::CaptureRecipe(")!=std::string::npos)capture=address;
+     if(!prepare && line.find("Projection::BfPrepare(")!=std::string::npos)prepare=address;}
+    assert(run && prepare);const bool accepted=endpoint->RunController(run,capture,prepare,frame,true);
+    if(badPrior && kind==1){assert(!accepted && !endpoint->writes);
+     for(unsigned w=0;w<119;w++)assert(!endpoint->jobs[w] && !endpoint->released[w] && !endpoint->descriptors[w]);
+     puts("PASS damaged prior producer refused before new dispatch; NO DEVICE");return 0;}
+    assert(accepted);
+    for(unsigned w=0;w<119;w++)assert(endpoint->released[w]==(w<2) && endpoint->descriptors[w]==(w<20));
+    for(unsigned row=0;row<48;row++)assert(endpoint->memory.at(0x04000000+PioneerQ38MixedRecurrentOffset(role)+row*4)==(*snapshots)[row/32].output[row%32]);
+    continue;
+   }
    endpoint->fullPrepare=true;
    for(unsigned w=0;w<20;w++){
     const auto& s=(*snapshots)[w];endpoint->phase[w]=1;endpoint->memory[0x123000+w*4]=s.producer.doorbell;
@@ -94,5 +143,6 @@ int main(int argc,char** argv){
    for(unsigned i=48;i<64;i++)assert(endpoint->memory.at(0x80000+i*4)==0x7fc00001);
   }
  }
- assert(fgetc(stdin)==EOF);if(jobs)assert(!fflush(stdout));else puts("PASS linked ROOT gathered actual simulated worker receipts and published results; NO DEVICE");
+ assert(fgetc(stdin)==EOF);if(jobs)assert(!fflush(stdout));else if(full)puts("PASS actual ROOT alpha/beta Run, 119 histories, prepare/dispatch/gather/scatter; SIMULATED NO DEVICE");
+ else puts("PASS linked ROOT gathered actual simulated worker receipts and published results; NO DEVICE");
 }

@@ -136,3 +136,23 @@ receipts are separately rejected before matrix result publication. Both
 roles pass ASan/UBSan. The host still invokes the gathers individually and
 seeds/replays modeled memory; admission, dispatch, concurrency and on-card
 ROOT/NoC operation remain unverified. This is not a hardware or speed result.
+
+Full ROOT Run and admission fix: exercising alpha followed by beta with 119
+worker histories exposed a controller bug. The 18 workers that only produced
+input were left on a BF16 producer receipt, but the next projection's admission
+treated that receipt as an integer-matrix receipt and parked before dispatch.
+The inspection-only small-recurrent image now reconstructs and checks the
+historical producer descriptor and job, validates its receipt against the
+retained and freshly observed counter frontier, and admits it only for roles
+10/11. A damaged historical receipt still parks before any new dispatch or
+scatter. The actual linked RV32 Run now executes preparation, 20 producer
+jobs, two matrix jobs, gather and scatter for each alpha/beta projection;
+the outputs match model-derived worker references. Controller runs are
+separately initialized from retained sequential worker snapshots and use a
+modeled NoC; this is not a concurrent card cohort or whole-model execution.
+The added proof code is placed in the inspection link's BF16 range because
+the ROOT text range otherwise overflows; native layout/ownership is unproven.
+The non-small baseline object remains byte-identical. The new small object
+SHA-256 is 7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c;
+its producer-admission frame is 1216 bytes. ASan/UBSan bridge and scheduler
+regressions passed. No installed driver or measured inference rate changed.

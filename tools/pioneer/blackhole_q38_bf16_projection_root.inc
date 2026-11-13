@@ -453,6 +453,31 @@ static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
  if(!M::JobShape(const_cast<const uint32_t*>(Words(L::Scratch)),Boot(w),n-1,0))scalar_fault_park();
 }
 static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsigned w,const uint32_t* previous){
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+ // A small matrix leaves workers 2..19 on their producer job. Admit that
+ // actual prior frontier rather than treating its receipt as an integer
+ // matrix. Rebuild the descriptor from the closed job's own historical
+ // layer/position/token/role; the current projection may be different.
+ if(previous[2]==5 && previous[16]==BFP::Magic && (previous[28]==10 || previous[28]==11)){
+  if(previous[7]!=d[6] || previous[29]!=5120 || w>=20)scalar_fault_park();
+  uint32_t old[64],desc[64],job[16],proof[64],after[8];
+  for(unsigned i=0;i<64;i++)old[i]=d[i];
+  old[40]=previous[6];old[41]=previous[27];old[42]=previous[5];old[43]=previous[28];old[14]=previous[29];
+  BfDescriptor(old,w,desc);
+  Transfer(d,tracked,w,BFP::Descriptor,256,false);
+  for(unsigned i=0;i<64;i++)if(Words(L::Scratch)[i]!=desc[i])scalar_fault_park();
+  Transfer(d,tracked,w,0x74000,64,false);for(unsigned i=0;i<16;i++)job[i]=Words(L::Scratch)[i];
+  Transfer(d,tracked,w,0x83f00,256,false);for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
+  for(unsigned i=0;i<8;i++){
+   after[i]=Register(d,tracked,w,0xffb20000+Counter(i));
+   if(after[i]!=Words(L::Counters)[w*8+i])scalar_fault_park();
+  }
+  if(!BFP::Proof(proof,job,desc,Boot(w)+16,w+1,M::Peer(w+1),proof,after))scalar_fault_park();
+  for(unsigned i=0;i<10;i++)if(job[i]!=previous[16+i])scalar_fault_park();
+  if(job[12]!=previous[1] || job[13]!=previous[2])scalar_fault_park();
+  return true;
+ }
+#endif
  if(!M::FpuJob(previous))return false;
  Transfer(d,tracked,w,0x83f00,256,false);uint32_t proof[64],after[8];
  for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
