@@ -19,6 +19,8 @@ def check(header, definitions, expected, implementation=False):
     args = [os.environ.get('CXX', 'c++'), '-std=c++17', '-Werror', '-I'+str(here)]
     args += ['-D'+key+'='+str(value) for key, value in definitions.items()]
     if implementation:
+        if header.endswith('.inc'):
+            args += ['-x', 'c++']
         args += ['-E', str(here/header)]
         source = None
     else:
@@ -56,6 +58,18 @@ for value in (0,2):
     check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':value}, False, True)
 for macro in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE'):
     check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':1,macro:1}, False, True)
+recurrent_bytes={'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE':1,
+                 'PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY':1,fixture:1}
+check('pioneer_q38_token_native_peer_bytes.inc',recurrent_bytes,True,True)
+for parent in recurrent_bytes:
+    for value in (None,0,2):
+        invalid=dict(recurrent_bytes)
+        if value is None:del invalid[parent]
+        else:invalid[parent]=value
+        # Omitting the selector is the ordinary legacy byte fixture.
+        check('pioneer_q38_token_native_peer_bytes.inc',invalid,parent=='PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE' and value is None,True)
+for macro in ('PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
+    check('pioneer_q38_token_native_peer_bytes.inc',{**recurrent_bytes,macro:1},False,True)
 stack_header='PioneerQ38InstructionStackObserver.h'
 stack_role='PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST'
 check(stack_header,{stack_role:1},True)

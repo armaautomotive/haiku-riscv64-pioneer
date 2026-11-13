@@ -46,7 +46,11 @@ int main(int argc,char** argv){
 #endif
 #endif
   ))
-  || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch"))));
+  || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch")))
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE
+  || (argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines"))
+#endif
+  );
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
  assert(argc==2 || (argc==3 && !strcmp(argv[2],"--faults")));
@@ -71,6 +75,10 @@ int main(int argc,char** argv){
  Q38EmbeddingRawTestBridge original;assert(original.Open(argv[3]) && original.Ready());
 #else
  assert(argc!=4);
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE
+ assert(argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines"));
+ tokenPeerOriginalImage=argv[3];tokenPeerGlobalImage=argv[4];
 #endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;

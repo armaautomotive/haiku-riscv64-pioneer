@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Members of the native TEST session. These callbacks expose only the SAME
 // physical byte/register endpoints,not an owner/call/ready/completion grant.
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE != 1 || !defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) \
+  || PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE) \
+  || PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE != 1 || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
+#error Recurrent peer bytes require the isolated fake-tag native fixture
+#endif
 Q38NativePeerTestBytes peerBytes;
 void PreparePeerBytes(){
  peerBytes.context=this;

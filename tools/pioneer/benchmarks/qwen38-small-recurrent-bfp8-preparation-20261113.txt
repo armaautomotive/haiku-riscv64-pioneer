@@ -495,6 +495,9 @@ now request expected instruction words from an explicitly supplied immutable
 program-DATA callback. The planned QTPM fixture supplies its already pinned
 program table, not guest memory or processor state. A small host test checked
 the callback's worker/address/failure boundaries, and the peer role tests and
-host bridge syntax check passed. The QTPM peer mode is not yet wired into the
-native simulator runner and no worker instruction or producer has run through
-this new callback. No hardware or inference-speed result follows.
+host bridge syntax check passed. The QTPM peer mode is now wired into the
+native simulator runner: all 119 workers booted using the shared-memory peer
+engine, with each fetched instruction checked against the pinned program
+table. An incorrect worker image was rejected before execution. This test
+stopped at worker boot; no producer has run through the new callback. No
+hardware or inference-speed result follows.
