@@ -28,3 +28,21 @@ The session now also exposes a plan-build count for diagnostics. Offline
 tests assert that two normal full-fleet matrices build exactly one plan,
 while two non-default-worker matrices build twice. The already-running
 physical trial predates this counter; its worker bytes remain unchanged.
+
+Physical isolated Work trial, 2026-11-13: the separately built worker
+1a40a5933c7963647bfe27da74ecc2c62964bf6a06c93d57cb22632de3db9875
+passed the host-only load/unload qualification and one four-token request,
+both with exit 0 and empty stderr. The request produced "Hello! How can";
+three warm generation samples took 14.939 seconds, reported as 0.201 tok/s.
+P100A handles projections; attention and state remain on CPU and CPU reference
+validation is OFF. This is not all-card inference or quality qualification.
+The four-token request including upload and prompt took 1196.556471 seconds;
+upload progress ran from 0.837210 to 1084.465582 seconds, with 490.6 seconds
+in weight reads and 592.2 seconds in upload calls. The previous independent
+trial reported 0.198 tok/s on three samples; these short uncontrolled runs do
+not establish a causal speedup. The trial exited with
+CARD_CLOSED_WORK_REQUEST_VERIFIED, stable driver tag 2026102100010012,
+generation 42, no owner or cold recovery, and unchanged 64-CPU/128-GB
+metadata. Its card stdout SHA-256 is
+892325aa362c6f7ca12687c50fb9fc86170e369f3ad4713cef84d704c2e75b75.
+The installed Assistant worker and driver were not replaced.
