@@ -1,0 +1,15 @@
+Recurrent matrix worker mixed real-band simulation, 2026-11-12
+
+The compiled producer and matrix-worker/leaf instruction images were exercised
+for tensor 3 gate (role 5), tensor 5 QKV (role 6), and tensor 16 recurrent
+output (role 13). All three runs passed for each role: 119 scheduled workers
+per run, with the three independently checked real-weight samples interleaved
+by worker identity and local output band. Previously every worker and band
+received the same sample; this exercises selection and output association
+against differing weights. The first worker still uses one sample throughout.
+
+The runner pins sample headers and images, verifies extracted ELF sections,
+and uses ASan/UBSan. All three runner processes exited zero. This remains a
+simulation with three repeated model slices, not distinct weights for every
+band, a full recurrent ROOT lifecycle, a card run, full-model inference, or
+a performance measurement. No Work-mode or driver changes were installed.

@@ -17,11 +17,12 @@ struct SchedulerIO {
  unsigned Table(unsigned b,unsigned f){return table[b][f];}
  void Output(unsigned w,unsigned f,unsigned v){tuple[w][f]=v;fields++;}
 };
-static void SetPrivateWeights(DenseProducerImage& image,unsigned sample){
+static void SetPrivateWeights(DenseProducerImage& image,unsigned sample,bool mixed=false){
  const unsigned tiles=image.native.tiles;assert(tiles==PioneerNativeBfpModelBandMetadata::Width/32);
  const unsigned bands=unsigned(image.transfer.weights.size()/(tiles*1088));assert(bands && bands*tiles*1088==image.transfer.weights.size());
  for(unsigned band=0;band<bands;band++)for(unsigned tile=0;tile<tiles;tile++)for(unsigned byte=0;byte<1088;byte+=4){
-  const uint32_t word=PioneerNativeBfpModelBandData::Word(sample,PioneerNativeBfpModelBandMetadata::Width,0x8fff0+tile*1104+16+byte);
+  const unsigned selected=mixed?(sample+band)%3:sample;
+  const uint32_t word=PioneerNativeBfpModelBandData::Word(selected,PioneerNativeBfpModelBandMetadata::Width,0x8fff0+tile*1104+16+byte);
   for(unsigned j=0;j<4;j++)image.transfer.weights[(band*tiles+tile)*1088+byte+j]=uint8_t(word>>(8*j));
  }
 }
@@ -88,7 +89,10 @@ int main(int argc,char** argv){
   // including its own address, row offset, band count and route.
   for(unsigned ordinal=1;ordinal<119;ordinal++){
    const auto* assigned=scheduler.tuple[ordinal];
-   auto peer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,assigned[3],ordinal+1);peer->Boot();SetPrivateWeights(*peer,sample);
+   auto peer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,assigned[3],ordinal+1);peer->Boot();
+   // Distinct real bands are interleaved across worker and local band, so
+   // stale/repeated worker output cannot pass merely by matching one sample.
+   const unsigned peerSample=(sample+ordinal)%3;SetPrivateWeights(*peer,peerSample,true);
    peer->transfer.root=image.transfer.root;
    peer->transfer.job.words[3]=assigned[0];peer->transfer.job.words[5]=PioneerQ38ProjectionRoute(assigned[1]);peer->transfer.job.words[11]=1;
    uint32_t next[64]={};assert(PioneerQ38DenseQ8MatrixRootFrame::Build(assigned,peer->boot.data(),0,role,0,2025,0,next));
@@ -96,8 +100,8 @@ int main(int argc,char** argv){
    for(unsigned i=0;i<64;i++)peer->Put(HW::Job+i*4,next[i]);peer->Put(HW::Doorbell,1);
    assert(peer->FinishCombined(1) && peer->native.Clean());
    for(unsigned band=0;band<assigned[3];band++)for(unsigned row=0;row<32;row++)
-    assert(peer->Get(W::Output+(band*32+row)*4)==expected[row]);
+    assert(peer->Get(W::Output+(band*32+row)*4)==PioneerNativeBfpModelBandMetadata::Golden((peerSample+band)%3)[row]);
   }
-  std::printf("PASS real recurrent tensor%u sample%u role%u K%u actual producer and 119 matrix-worker simulation; NO DEVICE\n",tensor,sample,role,width);
+  std::printf("PASS real recurrent tensor%u sample%u role%u K%u actual producer and 119 matrix-worker simulation with interleaved three-band weights; NO DEVICE\n",tensor,sample,role,width);
  }
 }
