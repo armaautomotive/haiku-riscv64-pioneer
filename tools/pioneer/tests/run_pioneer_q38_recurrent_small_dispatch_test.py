@@ -39,11 +39,12 @@ with tempfile.TemporaryDirectory(prefix='q38-small-dispatch-',dir='/private/tmp'
             extracted=Path(tmp)/'section.bin'
             subprocess.run([tool+'objcopy','-O','binary','-j','.'+section,str(image/'program.elf'),str(extracted)],check=True)
             assert extracted.read_bytes()==(image/(section+'.bin')).read_bytes(),(image,section)
-    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                    '-Wno-unused-function','-Wno-unused-variable','-Wno-misleading-indentation','-ffp-contract=off',
-                    '-fsanitize=address,undefined',*['-D'+r+'=1' for r in roles],'-I'+str(private),
-                    str(here/'pioneer_q38_recurrent_small_bfp8_dispatch_test.cpp'),'-o',str(binary)],check=True)
-    subprocess.run([str(binary),str(worker),str(leaf),str(alpha),str(beta)],check=True,
-                   env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+    for name in ('pioneer_q38_recurrent_small_bfp8_dispatch_test.cpp','pioneer_q38_recurrent_small_schedule_test.cpp'):
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                        '-Wno-unused-function','-Wno-unused-variable','-Wno-misleading-indentation','-ffp-contract=off',
+                        '-fsanitize=address,undefined',*['-D'+r+'=1' for r in roles],'-I'+str(private),
+                        str(here/name),'-o',str(binary)],check=True)
+        subprocess.run([str(binary),str(worker),str(leaf),str(alpha),str(beta)],check=True,
+                       env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
 for path,digest in pins:
     assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path

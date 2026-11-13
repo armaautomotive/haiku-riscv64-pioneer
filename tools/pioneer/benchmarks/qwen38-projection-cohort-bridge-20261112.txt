@@ -81,6 +81,18 @@ recurrent-width worker ELF e83749ca5a7dc9d66983b9a80e0d6868079b12d8defdf31e40708
 The new role refuses kernel, Work, native and CPU-validation compilation,
 including explicitly defined-zero values. Nothing was installed.
 
+Four-worker schedule follow-up: a separate data-only inspection plan builds
+four real worker frames, one 32-row band per worker, with two bands each for
+alpha and beta. It specifies that the second band publishes only 16 rows.
+Four simulated QGWF workers, executed sequentially by the test harness,
+matched all 96 model-weight outputs and zero padding against the independent
+integer reference. The data-only copy helper left guard words untouched and
+refused mutated row count, offset, role and shape; overlapping weight ranges
+and a non-recurrent layer were rejected before publishing a plan. One worker
+ran its actual producer; remaining root BF16 input bytes were fixture-provided.
+There is still no ROOT scheduler, device IO, continuous full worker history,
+parallel execution proof, native ownership, model inference or speed result.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
