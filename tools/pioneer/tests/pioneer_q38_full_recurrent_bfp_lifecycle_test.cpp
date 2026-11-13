@@ -42,7 +42,7 @@ static std::vector<uint32_t> IndependentOutput(const std::vector<uint8_t>& proje
  }return result;
 }
 int main(int argc,char** argv){
- assert(argc==10);
+ assert(argc==10 || (argc==11 && !std::strcmp(argv[10],"--controller-input")));
  auto gate=LoadProjection(argv[3],3,5120,6144),qkvWeights=LoadProjection(argv[4],5,5120,10240);
  std::array<std::vector<uint8_t>,2> small;
  for(unsigned k=0;k<2;k++){std::ifstream f(argv[5+k],std::ios::binary);small[k].assign(std::istreambuf_iterator<char>(f),{});assert(small[k].size()==32+2*(160*1088+128));}
@@ -80,6 +80,11 @@ int main(int argc,char** argv){
   assert(PioneerQ38RecurrentSmallMatrixSchedule::CopyRealRows(parts[w],smallRows[w/2].data()+parts[w].first,32,alphaBeta+(w/2)*48,48));
  }
  for(unsigned k=0;k<2;k++)for(unsigned i=0;i<64;i++){assert(smallSeen[k][i]==1);if(i>=48)assert(!smallRows[k][i]);}
+ if(argc==11){
+  uint32_t fromController[96];assert(fread(fromController,sizeof(fromController),1,stdin)==1 && fgetc(stdin)==EOF);
+  for(unsigned i=0;i<96;i++)assert(fromController[i]==alphaBeta[i]);
+  std::memcpy(alphaBeta,fromController,sizeof(alphaBeta));
+ }
  std::vector<uint32_t> conv(10240);std::vector<uint8_t> convSeen(10240);
  for(unsigned w=0;w<119;w++){
   auto& image=*workers[w];image.steps=0;image.StageConv(++sequence[w],qkv,learned);assert(image.FinishCombined(sequence[w]));image.VerifyConv(sequence[w]);

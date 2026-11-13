@@ -170,3 +170,15 @@ token, hardware run, Work-mode change, timing or inference-speed result.
 The pinned ASan/UBSan runner is
 tools/pioneer/tests/run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py;
 private model-derived artifacts remain outside the repository.
+
+Controller-to-recurrent handoff, 2026-11-13: the linked ROOT alpha/beta
+controller simulation exports its 96 scattered result words. A separate
+119-worker recurrent lifecycle checks those words against its independently
+executed model-derived small matrices and then uses the controller values as
+the alpha/beta input for Conv/GDN and the 5,120-row output projection. All
+existing independent arithmetic checks passed under ASan/UBSan. This closes
+the value-level handoff between these two simulated paths, not their physical
+worker ownership: the host pipe transfers the values, the controller and
+recurrent simulations have separate worker instances, Conv's six ROOT groups
+remain separate, and the input/state are synthetic. There is no full layer,
+device run, model-quality result or tokens-per-second claim.

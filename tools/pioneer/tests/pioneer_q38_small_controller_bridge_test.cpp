@@ -5,8 +5,8 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior")));
- const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior"),full=!std::strcmp(argv[2],"--full") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export")));
+ const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior"),exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows,full=!std::strcmp(argv[2],"--full") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
  const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
@@ -123,7 +123,10 @@ int main(int argc,char** argv){
      puts("PASS damaged prior producer refused before new dispatch; NO DEVICE");return 0;}
     assert(accepted);
     for(unsigned w=0;w<119;w++)assert(endpoint->released[w]==(w<2) && endpoint->descriptors[w]==(w<20));
-    for(unsigned row=0;row<48;row++)assert(endpoint->memory.at(0x04000000+PioneerQ38MixedRecurrentOffset(role)+row*4)==(*snapshots)[row/32].output[row%32]);
+    for(unsigned row=0;row<48;row++){
+     const uint32_t result=endpoint->memory.at(0x04000000+PioneerQ38MixedRecurrentOffset(role)+row*4);
+     assert(result==(*snapshots)[row/32].output[row%32]);if(exportRows)assert(fwrite(&result,4,1,stdout)==1);
+    }
     if(chain && !kind)retainedRoot=std::move(endpoint->memory);
     continue;
    }
@@ -152,7 +155,7 @@ int main(int argc,char** argv){
    for(unsigned i=48;i<64;i++)assert(endpoint->memory.at(0x80000+i*4)==0x7fc00001);
   }
  }
- assert(fgetc(stdin)==EOF);if(jobs)assert(!fflush(stdout));else if(chain)puts("PASS ROOT alpha/beta Runs preserve actual controller histories; SIMULATED NO DEVICE");
+ assert(fgetc(stdin)==EOF);if(jobs || exportRows)assert(!fflush(stdout));else if(chain)puts("PASS ROOT alpha/beta Runs preserve actual controller histories; SIMULATED NO DEVICE");
  else if(full)puts("PASS actual ROOT alpha/beta Run, 119 histories, prepare/dispatch/gather/scatter; SIMULATED NO DEVICE");
  else puts("PASS linked ROOT gathered actual simulated worker receipts and published results; NO DEVICE");
 }
