@@ -343,3 +343,12 @@ object. Separately, the existing host simulation exercises actual normal and
 fast span-service calls with the small receipt, including a failed-transfer
 quarantine. Both tests pass. This is not yet a whole-driver build, ioctl,
 live owner, hardware run, output-quality result or speed measurement.
+
+Small-recurrent upload control: a distinct bounded begin/seal packet and
+control function now bind the existing small receipt to a cookie, team,
+generation and span owner. The simulated test runs the real span core,
+fills the complete physical-order receipt, checks duplicate and competing
+owners, and checks retained/quarantined ownership after lost begin and seal
+replies. The separate normal/fast span test still passes. This function is
+not registered in the driver and no real ioctl or card run has occurred;
+native binding, execution, quality and speed remain unproven.

@@ -7,13 +7,15 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and len(sys.argv) == 2 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
-image = Path(sys.argv[1]); assert image.is_absolute() and image.is_dir()
+assert __debug__ and len(sys.argv) in (2, 3) and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
+control = len(sys.argv) == 3 and sys.argv[1] == '--control'
+assert len(sys.argv) == 2 or control
+image = Path(sys.argv[-1]); assert image.is_absolute() and image.is_dir()
 assert hashlib.sha256((image / 'text.bin').read_bytes()).hexdigest() == '9b4e950f3d016d229b7f9ed7c5dd9f2e0fc23a2865a5f1a36f6633216f397609'
 assert hashlib.sha256((image / 'boot.bin').read_bytes()).hexdigest() == 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'
 here = Path(__file__).resolve().parent
 source = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
-test = str(here / 'pioneer_q38_small_recurrent_span_test.cpp')
+test = str(here / ('pioneer_q38_small_recurrent_control_test.cpp' if control else 'pioneer_q38_small_recurrent_span_test.cpp'))
 common = [os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
           '-Wno-unused-function', '-ffp-contract=off', '-DTT_PIONEER_EXPERIMENTAL_Q38_BANKS']
 with tempfile.TemporaryDirectory(prefix='small-recurrent-span-', dir='/private/tmp') as directory:

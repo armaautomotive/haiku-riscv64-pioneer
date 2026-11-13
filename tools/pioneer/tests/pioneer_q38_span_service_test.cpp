@@ -44,6 +44,9 @@ struct NativeSpanContext {
 	PioneerQ38RecurrentQ8UploadReceiptInspection* q38RecurrentReceipt=nullptr;
 	void* q38Qgw8Receipt=nullptr;void* q38QgwdReceipt=nullptr;
 #endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION
+	PioneerQ38SmallRecurrentUploadReceiptInspection* q38SmallRecurrentReceipt=nullptr;
+#endif
 	PioneerQ38DispatchLease* q38Dispatch=nullptr;
 	void* q38Cohort=nullptr; void* fleet=nullptr;
 	struct { bool saved=false; } panelProbe,streamProbe;
@@ -70,6 +73,9 @@ struct NativeSpanContext {
 #endif
 #ifdef PIONEER_Q38_RECURRENT_Q8_CONTROL_INSPECTION
 		delete q38RecurrentReceipt;
+#endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION
+		delete q38SmallRecurrentReceipt;
 #endif
 		delete q38Span;
 	}

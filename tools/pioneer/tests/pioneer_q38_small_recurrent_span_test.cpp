@@ -36,4 +36,5 @@ int main(int argc,char** argv){
   Unbind();
  }
  puts("PASS relocated receipt with real span service, normal/Work transport and failed-transfer quarantine; SIMULATED NO DEVICE");
+ return 0;
 }
