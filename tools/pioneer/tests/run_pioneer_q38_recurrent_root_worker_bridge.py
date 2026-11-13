@@ -25,11 +25,11 @@ sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd9
              '--qkv':('396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a','a81f5268d942344b4c4cfd4d0d02853dc82f36bfe8ab099a5bfa5d47d94de86d')}
 assert all(p.is_absolute() and p.is_dir() and not p.is_symlink() for p in (sdk,root,worker,leaf,private))
 assert private.stat().st_uid==os.geteuid() and stat.S_IMODE(private.stat().st_mode)==0o700
-pins=((root/'program.elf','0fc38c66c224ca302a9a7d010331642a1affa77a79be9be2ddb757ed16346029'),
-      (root/'bf16.bin','42027279e53a4cee0d2ec486d820a1d86f06f8c6b6416b1e0642314533ed7a13'),
-      (root/'text.bin','826a535efb56d64f1e46bc093c3a1eb8d4baa49ebbaa7f08687206cf72fdd8cd'),
+pins=((root/'program.elf','15461d563708f2087497c1eb14afffac6e55dd701cf1dd846abc29d40f1b3c3f'),
+      (root/'bf16.bin','01fa94fa8d319c08d4dcc76b78c6cf67c52336dcd803643103dba33ba577afdd'),
+      (root/'text.bin','42e649a98fc59277df0eca7ebe9f209b3caa665053ff4eed4a383503c85b2922'),
       (root/'terminal.bin','6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
-      (root/'conv.bin','9543002b194584f8274ea2f88fafc74cbd4afef68c9738edfcc00f0c7504ddc9'),
+      (root/'conv.bin','9273e7f572f1b488169bea54d57f0c313a9bce992a2b73c48796649c510d3fd6'),
       (worker/'program.elf','e83749ca5a7dc9d66983b9a80e0d6868079b12d8defdf31e40708235fb80366d'),
       (leaf/'program.elf','e8a04408d0c1a2d0ffa90d1d92ca77f3bb56f849c1d714723dfae9f3110ba72f'),
       (private/'PioneerNativeBfpModelBandData.h',sample_pins[mode][0]),
@@ -80,6 +80,9 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     gathered=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--gather'],input=boot+snapshots,
                             stdout=subprocess.PIPE,check=True,env=env).stdout
     assert gathered==result
+    controlled=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--controller'],input=boot+snapshots,
+                              stdout=subprocess.PIPE,check=True,env=env).stdout
+    assert controlled==result
     badsource=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--bad-source'],input=boot+snapshots,
                              stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,env=env)
     assert not badsource.stdout
@@ -88,6 +91,13 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     assert not badscatter.stdout
     badproof=bytearray(snapshots);badproof[(2+8+8+16+64)*4]^=1
     rejected=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--gather'],input=boot+badproof,
+                            stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    assert rejected.returncode and not rejected.stdout
+    rejected=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--controller'],input=boot+badproof,
+                            stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    assert rejected.returncode and not rejected.stdout and b'writes=0' in rejected.stderr
+    badjob=bytearray(snapshots);badjob[(2+8+8+16)*4]^=1
+    rejected=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--controller'],input=boot+badjob,
                             stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
     nonfinite=bytearray(result);nonfinite[:4]=b'\x00\x00\xc0\x7f'
@@ -106,4 +116,5 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 print('PASS ROOT jobs -> 119 simulated workers -> actual ROOT packet seals, gather, full seal and scatter via simulated NoC; NO DEVICE')
+print('PASS actual ROOT Run dispatch -> gather -> scatter; CaptureRecipe and BfPrepare stubbed; sequential snapshots, NO DEVICE')
 print('PASS invalid boot, wrong-role jobs, corrupt source/receipt, blocked scatter and nonfinite result rejected; NO DEVICE')

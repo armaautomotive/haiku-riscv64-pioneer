@@ -12,19 +12,33 @@
 // simulators. Packet sealing runs against a synthetic owner and MMIO state.
 struct GatherRoot:ActualRoot {
  const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0,writes=0;
+ bool controller=false;bool jobs[119]={},released[119]={};
  GatherRoot(const char* path,const std::array<PioneerRecurrentWorkerSnapshot,119>& s):ActualRoot(path),snapshots(s){}
+ unsigned StepLimit()const override{return controller?200000000U:4000000U;}
  void Store(unsigned address,unsigned value)override{
   if(address!=0xffb20040 || value!=1){ActualRoot::Store(address,value);return;}
   const unsigned remote=memory.at(0xffb20000),route=memory.at(0xffb20008),local=memory.at(0xffb2000c);
   const unsigned command=memory.at(0xffb2001c),bytes=memory.at(0xffb20020);
   if(command==0x212){
-   assert(remote==0x78000 && route==129 && bytes && !(bytes&63) && bytes<=16384);
-   for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=memory.at(remote+i*4);
-   memory[0xffb20210]++;memory[0xffb20204]++;memory[0xffb20220]+=bytes/64;memory[0xffb20228]++;
-   memory[address]=0;writes++;return;
+   assert((remote&~31U)==0x78000 && route==129 && bytes && !(bytes&3) && bytes<=16384);
+   const unsigned destination=memory.at(0xffb20014);unsigned peer=0;
+   while(peer<119 && Q::Peer(peer+1)!=destination)peer++;
+   if(controller && peer<119){
+    if(local==Q::Job){assert(bytes==256 && !jobs[peer] && !released[peer]);
+     for(unsigned i=0;i<64;i++)assert(memory.at(remote+i*4)==snapshots[peer].job[i]);jobs[peer]=true;
+    }else if(local==Q::Doorbell){assert(bytes==4 && jobs[peer] && !released[peer]);
+     assert(memory.at(remote)==snapshots[peer].doorbell);released[peer]=true;
+    }else assert(false);
+   }else{
+    assert(remote==0x78000 && !(bytes&63));
+    for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=memory.at(remote+i*4);writes++;
+   }
+   memory[0xffb20210]++;memory[0xffb20204]++;memory[0xffb20220]+=(bytes+63)/64;memory[0xffb20228]++;
+   memory[address]=0;return;
   }
   assert(!command && bytes && !(bytes&3) && local==0x78000+(remote&31));
   unsigned w=0;while(w<119 && Q::Peer(w+1)!=route)w++;assert(w<119);const auto& s=snapshots[w];
+  if(controller)assert(released[w]);
   for(unsigned i=0;i<bytes/4;i++){
    const unsigned at=remote+i*4;uint32_t word=0;
    if(at==0xffb121b0)word=0x46800;
@@ -45,6 +59,18 @@ struct GatherRoot:ActualRoot {
   memory[0xffb20208]++;memory[0xffb2020c]+=(bytes+63)/64;memory[0xffb20210]++;memory[0xffb20214]++;
   memory[address]=0;packets++;
  }
+ bool RunController(unsigned function,unsigned capture,unsigned prepare,unsigned descriptor){
+  std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
+  regs[10]=descriptor;pc=function;steps=0;controller=true;unsigned captures=0,prepares=0,last=0;
+  while(pc!=0x60004 && pc!=0x60000){last=pc;
+   if(pc==capture){captures++;pc=regs[1];}
+   else if(pc==prepare){prepares++;pc=regs[1];}
+   else Step();
+   assert(regs[2]>=0x6e000 && regs[2]<=0x70000);
+  }
+  if(pc==0x60000)std::fprintf(stderr,"RUN_PARK last=%x ra=%x packets=%u writes=%u\n",last,regs[1],packets,writes);
+  return pc==0x60004 && captures==1 && prepares==1 && regs[10]==memory.at(descriptor+11*4);
+ }
  bool RunScatter(unsigned function,unsigned descriptor,unsigned tracked){
   std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
   regs[10]=descriptor;regs[11]=tracked;pc=function;steps=0;
@@ -62,10 +88,11 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
- const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter);
+ const bool controller=argc==4 && !std::strcmp(argv[3],"--controller");
+ const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
  std::array<std::array<uint32_t,64>,119> boots;
@@ -109,7 +136,7 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<8;i++)endpoint->memory[0x6d000+i*4]=0;
   endpoint->memory[0x74800+6*4]=endpoint->memory[0x74800+7*4]=0;
   for(unsigned w=0;w<119;w++){
-   const auto& s=(*snapshots)[w];endpoint->memory[0x123000+w*4]=s.doorbell;
+   const auto& s=(*snapshots)[w];assert(s.doorbell);endpoint->memory[0x123000+w*4]=s.doorbell-unsigned(controller);
    for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=s.before[i];
   }
   const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix(");const auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
@@ -117,8 +144,10 @@ int main(int argc,char** argv){
   while(std::getline(syms,line))if(line.find(" T q38_layer_return_recurrent_packet_seal")!=std::string::npos)packetSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
   assert(packetSeal);
   if(badSource){assert(!endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,0) && !endpoint->packets && endpoint->seals);return 0;}
-  for(unsigned w=0;w<119;w++)assert(endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,w));
-  assert(endpoint->Run(seals[0],frame) && endpoint->packets && endpoint->seals);
+  if(!controller){
+   for(unsigned w=0;w<119;w++)assert(endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,w));
+   assert(endpoint->Run(seals[0],frame) && endpoint->packets && endpoint->seals);
+  }
   for(unsigned i=0;i<64;i++){
    endpoint->memory[0x75300+i*4]=endpoint->memory.at(owner+i*4);
    endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);
@@ -133,7 +162,18 @@ int main(int argc,char** argv){
   std::ifstream scatterSymbols(std::string(argv[1])+"/program.demangled");unsigned scatter=0;
   while(std::getline(scatterSymbols,line))if(line.find("Projection::Scatter(")!=std::string::npos)scatter=unsigned(std::stoul(line.substr(0,8),nullptr,16));
   if(badScatter){endpoint->memory[0xffb20100]^=1;assert(scatter && !endpoint->RunScatter(scatter,frame,0x6d000) && !endpoint->writes);return 0;}
-  assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000) && endpoint->writes==(rows*4+16383)/16384);
+  if(controller){
+   std::ifstream entries(std::string(argv[1])+"/program.demangled");unsigned run=0,capture=0,prepare=0;
+   while(std::getline(entries,line)){
+    const unsigned address=unsigned(std::stoul(line.substr(0,8),nullptr,16));
+    if(!run && line.find("Projection::Run(")!=std::string::npos)run=address;
+    if(line.find("Projection::CaptureRecipe(")!=std::string::npos)capture=address;
+    if(!prepare && line.find("Projection::BfPrepare(")!=std::string::npos)prepare=address;
+   }
+   assert(run && capture && prepare && endpoint->RunController(run,capture,prepare,frame));
+   for(unsigned w=0;w<119;w++)assert(endpoint->jobs[w] && endpoint->released[w]);
+  }else assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000));
+  assert(endpoint->writes==(rows*4+16383)/16384);
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);
   for(unsigned row=0;row<rows;row++)assert(endpoint->memory.at(0x04000000+row*4)==results[row]);
   assert(fwrite(results.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));return 0;

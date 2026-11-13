@@ -62,7 +62,11 @@ using namespace DensePartitionRoot;
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
 #include "blackhole_qwen38_prepared_q4_root.inc"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT
+static __attribute__((noinline)) void CaptureRecipe(const uint32_t* d){
+#else
 static void CaptureRecipe(const uint32_t* d){
+#endif
  Copy(L::RecipeShadow,L::Header,64);Copy(L::HeaderShadow,L::MatrixHeader,16);Copy(L::BankShadow,L::Banks,8);
  Copy(L::PartsShadow,L::Parts,119*8);Copy(L::RowsShadow,L::Rows,119);
  uint32_t old[64];for(unsigned i=0;i<64;i++)old[i]=i>=48?0:d[i];old[0]=TT_Q38_DENSE_MATRIX_MARKER;old[13]=TT_Q38_DENSE_MATRIX_ROWS;
@@ -265,7 +269,11 @@ static void Scatter(const uint32_t* d,uint32_t* tracked){
   Words(L::Summary)[6]++;Words(L::Summary)[7]+=bytes/64;
  }
 }
+#ifdef PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT
+static __attribute__((noinline)) unsigned Run(const uint32_t* d){
+#else
 static unsigned Run(const uint32_t* d){
+#endif
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  PioneerQ38Bf16DeferredAudit audit;
 #endif

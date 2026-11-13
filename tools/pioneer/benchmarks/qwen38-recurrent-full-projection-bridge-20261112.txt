@@ -120,3 +120,20 @@ The ROOT image has only 152 bytes of text capacity remaining. Scatter was
 invoked by the fixture, not reached by a complete ROOT Run; input state, NoC,
 worker concurrency and hardware ownership remain simulated. This is not a
 model-generation, hardware, quality or tokens-per-second measurement.
+
+ROOT Run follow-up: a second inspection-only noinline build executes the
+actual recurrent Projection::Run dispatcher through 119 job writes, 119
+doorbells, worker receipt gather, schedule seal and scatter. It consumes
+separately produced worker snapshots via a simulated NoC and checks that each
+written job exactly matches its snapshot before releasing that worker. The
+controller's destination matches all rows of each of the three full layer-0
+recurrent projections for the synthetic input. A corrupted receipt parks the
+controller before any simulated scatter; the output-projection case also
+rejects a mismatched worker job. ASan/UBSan were enabled.
+
+This is not a complete real ROOT invocation: the fixture explicitly stubs
+CaptureRecipe and BfPrepare and seeds their synthetic postconditions. Workers
+execute separately before the controller; no concurrent worker or physical
+NoC behavior is established. The scoped-seal/noinline image is inspection
+only and has 96 bytes of text space left. No model output quality, driver
+ownership, physical execution or inference throughput is demonstrated.

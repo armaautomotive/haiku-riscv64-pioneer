@@ -21,7 +21,9 @@ inputs = ((parent / 'start.o', '20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6
           (components / 'unchanged-feedback/feedback.o', '8c2626d34501e53dc25368cb8f67c48c9de778fec5d880e21901034795c083f2'),
           (recurrent, ('c3051b325d8c5a4bb6cb9b5a1e02a5bad2f8fec8f28bbfbb0f1dc12f9bfa106c',
                        'a240f91c29ab537cb3d8abadb6a05ca09928c11113ce9905f5d612e74365b61c',
-                       'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f')))
+                       'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f',
+                       'b283c169543b5293ae21df8d368bbeebdbf96d8b8b9d6c7ebfe96595d8ebdcb5',
+                       '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc')))
 for path, expected in inputs:
     allowed = (expected,) if isinstance(expected, str) else expected
     assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest() in allowed, path
@@ -41,7 +43,9 @@ assert not subprocess.check_output([tool+'nm','-u',str(image)]).strip()
 symbols=subprocess.check_output([tool+'nm','-nC',str(image)],text=True)
 assert symbols.count('Projection::BfDenseScopedSeal(')==1
 if hashlib.sha256(recurrent.read_bytes()).hexdigest() in ('a240f91c29ab537cb3d8abadb6a05ca09928c11113ce9905f5d612e74365b61c',
-                                                         'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f'):
+                                                         'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f',
+                                                         'b283c169543b5293ae21df8d368bbeebdbf96d8b8b9d6c7ebfe96595d8ebdcb5',
+                                                         '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc'):
     assert symbols.count('PioneerQ38HybridMatrixReceipt::Matrix(') == 1
     assert symbols.count('PioneerQ38RecurrentHybridMatrixReceipt::Matrix(') == 1
 (output/'program.demangled').write_text(symbols)
