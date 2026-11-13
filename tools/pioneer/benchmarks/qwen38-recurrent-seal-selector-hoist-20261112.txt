@@ -1,0 +1,22 @@
+Experimental recurrent matrix controller: manifest selection, 2026-11-12
+
+In the inspection-only recurrent-width role, select the recurrent or dense
+manifest once before the 21-word integrity scan. All table and 119-worker
+shadow comparisons remain; volatile descriptor fields are checked again after
+the scan. No device command is issued within that scan. The change is not
+enabled in the baseline controller.
+
+The actual RV32 recurrent component cross-compiled successfully. Disassembly
+shows table selection outside the loop and the three volatile descriptor
+rechecks after it. The linked RV32 helper simulation passed all 144 canonical
+records and all 119 scheduler tuples per record. For each recurrent role, it
+also refused individual corruption of all 21 table words and 476 worker
+fields, plus changes to each descriptor selection field during the scan.
+The baseline component SHA-256 remains
+6ac38d3465d714dfa668fab15750f046b73fd500b4055ceddb1f279b1e8d77b5.
+
+This is a small instruction-path change, not a measured throughput improvement.
+No device, native owner, complete ROOT lifecycle, full-model inference,
+quality test or Assistant Work integration was exercised. In particular, the
+scan cannot guarantee detection of a transient external change that is
+reverted between observations; the native memory-lifetime problem remains.

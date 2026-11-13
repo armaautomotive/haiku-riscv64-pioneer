@@ -51,15 +51,20 @@ static_assert(unsigned(BfDenseScheduleIO::RecurrentRecord)>=unsigned(BfDenseSche
 static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
  if(!BfDenseQ8(d))scalar_fault_park();
  const unsigned index=((d[42]/4)*3+d[43]-5)*21;
+#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+ // No command is issued during this read-only scan. Select the manifest
+ // once, and recheck the descriptor before leaving the scan.
+ const volatile uint32_t* descriptor=d;
+ const unsigned layer=descriptor[42],role=descriptor[43],format=descriptor[15];
+ const auto* table=BfRecurrentQ8(d)?Words(BfDenseScheduleIO::RecurrentRecord)
+  :Words(BfDenseScheduleIO::Manifest)+index;
+ for(unsigned i=0;i<21;i++)if(table[i]!=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
+ if(descriptor[42]!=layer || descriptor[43]!=role || descriptor[15]!=format)scalar_fault_park();
+#else
  for(unsigned i=0;i<21;i++)if(
-#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
-  (BfRecurrentQ8(d)?Words(BfDenseScheduleIO::RecurrentRecord)[i]:
-#endif
   Words(BfDenseScheduleIO::Manifest)[index+i]
-#ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
-  )
-#endif
   !=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
+#endif
  for(unsigned w=0;w<119;w++){
   const auto* actual=Words(BfDenseScheduleIO::Parts+w*16);
   const auto* shadow=Words(BfDenseScheduleIO::Shadow+w*16);

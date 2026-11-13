@@ -38,6 +38,15 @@ struct TransferRoot:ActualRoot {
   ActualRoot::Store(a,value);
  }
 };
+struct MutateSealRoot:ActualRoot {
+ unsigned descriptor=0,field=0;bool changed=false;
+ explicit MutateSealRoot(const char* path):ActualRoot(path){}
+ unsigned Load(unsigned address)override{
+  const unsigned value=ActualRoot::Load(address);
+  if(address==0x16fb40 && !changed){changed=true;memory[descriptor+field*4]^=1;}
+  return value;
+ }
+};
 static std::vector<unsigned> Symbols(const char* folder,const char* name){
  std::ifstream f(std::string(folder)+"/program.demangled");std::string line;std::vector<unsigned> out;
  while(std::getline(f,line))if(line.find(name)!=std::string::npos && line.find("[clone")==std::string::npos)
@@ -238,6 +247,21 @@ int main(int argc,char** argv){
   }
   m->memory[0x16fb40]^=1;assert(!m->Run(seals[0],d));m->memory[0x16fb40]^=1;
   m->memory[0x16ebc0]^=1;assert(!m->Run(seals[0],d));m->memory[0x16ebc0]^=1;
+  if(layer==0){
+   // Every manifest and worker field must still fault when selector work is
+   // hoisted; each mutation is restored before the next invocation.
+   for(unsigned i=0;i<21;i++){
+    m->memory[0x16fb40+i*4]^=1;assert(!m->Run(seals[0],d));m->memory[0x16fb40+i*4]^=1;
+   }
+   for(unsigned i=0;i<119*4;i++){
+    m->memory[0x16ebc0+i*4]^=1;assert(!m->Run(seals[0],d));m->memory[0x16ebc0+i*4]^=1;
+   }
+   for(unsigned field:{15U,42U,43U}){
+    auto changed=std::make_unique<MutateSealRoot>(argv[1]);changed->memory=m->memory;
+    changed->descriptor=d;changed->field=field;
+    assert(!changed->Run(seals[0],d) && changed->changed);
+   }
+  }
  }
  puts("PASS linked RV32 recurrent descriptors, producer jobs, matrix jobs and mutation seals; SYNTHETIC ROOT MEMORY NO DEVICE");
 }
