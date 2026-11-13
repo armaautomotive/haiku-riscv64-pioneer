@@ -73,3 +73,12 @@ non-small component and rerunning the same tests passed. These are synthetic
 ROOT memory/instruction tests, not a full ROOT/worker/NoC lifecycle or device
 run. Workspace records, upload ownership, native integration and real-model
 quality/speed remain unproven; the installed driver is unchanged.
+
+Workspace-record follow-up: 96 proposed 128-byte records are now generated
+from the checked relocated model layout immediately after the existing large
+recurrent records, before the token session workspace. Linked RV32 tests fed
+all 96 actual derived records to the controller scheduler and checked the two
+resulting addresses/worker tuples; modified plans and overlapping output
+were refused without publishing data. This remains host-generated metadata:
+there is no authenticated native upload, resident-lifetime guarantee, or card
+run of these records, and no inference or speed claim.

@@ -10,6 +10,9 @@
 #include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 #include "../PioneerQ38RecurrentQ8MatrixRootJobs.h"
 #include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+#include "../PioneerQ38SmallRecurrentWorkspace.h"
+#endif
 #include <fstream>
 namespace Q=PioneerQ38DenseQ8MatrixWorkerLayout;
 namespace P=PioneerQ38Bf16ProducerLayout;
@@ -134,6 +137,33 @@ int main(int argc,char** argv){
  for(unsigned i=0;i<4;i++)m->memory[d+4*(32+i*2)]=i+1;
 #ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
  assert(small);
+ {
+  using Small=PioneerQ38SmallRecurrentWorkspace;auto canonicalSmall=std::make_unique<PioneerQ38CanonicalModelPlan>();
+  Small::Plan::Proposal plan;auto records=std::make_unique<std::array<uint32_t,Small::Words>>();
+  assert(canonicalSmall->Build() && Small::Plan::Build(*canonicalSmall,plan)
+   && Small::Build(*canonicalSmall,plan,records->data(),records->size()));
+  auto preserved=*records;unsigned chosen=0;
+  while(chosen<plan.parts.size() && plan.parts[chosen].encoding!=Small::Plan::SmallRecurrentBfp8)chosen++;
+  assert(chosen<plan.parts.size());plan.parts[chosen].offset+=4096;
+  assert(!Small::Build(*canonicalSmall,plan,records->data(),records->size()) && *records==preserved);
+  plan.parts[chosen].offset-=4096;
+  assert(!Small::Build(*canonicalSmall,plan,reinterpret_cast<uint32_t*>(plan.parts.data()),Small::Words));
+  unsigned checked=0;
+  for(unsigned layer=0;layer<64;layer++)if(layer%4!=3)for(unsigned role:{10U,11U}){
+   const unsigned slot=(layer-layer/4)*2+role-10,offset=Small::Offset+slot*128;
+   const uint32_t* table=records->data()+slot*32;unsigned bank=7;
+   for(unsigned b=0;b<7;b++)if(table[b*3]){assert(bank==7);bank=b;}
+   assert(bank<7 && table[bank*3+1]==0 && table[bank*3+2]==64);
+   m->memory[d+4*14]=5120;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;m->memory[d+4*11]=48;
+   assert(RunBuildWithStub(*m,builds[0],reads[0],d,offset,table));
+   for(unsigned w=0;w<2;w++)for(unsigned f=0;f<4;f++){
+    const unsigned expected=f==0?table[bank*3]+w*174080:f==1?bank:f==2?w*32:1;
+    assert(m->memory.at(0x16ebc0+w*16+f*4)==expected);
+   }
+   checked++;
+  }
+  assert(checked==96);puts("PASS all96 canonical relocated records -> linked RV32 small scheduler; SIMULATED NO DEVICE");
+ }
  for(unsigned layer:{0U,1U,62U})for(unsigned role:{10U,11U}){
   m->memory[d+4*14]=5120;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;m->memory[d+4*11]=48;
   const unsigned offset=0x3004a00U+((layer-layer/4)*2+role-10)*128;

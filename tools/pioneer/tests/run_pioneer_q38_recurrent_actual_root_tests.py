@@ -36,7 +36,8 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-actual-root-',dir='/priva
     subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                     '-Wno-unused-function','-Wno-unused-variable','-Wno-misleading-indentation','-ffp-contract=off',
                     '-fsanitize=address,undefined',*['-D'+name+'=1' for name in flags],
-                    *(['-DPIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION=1'] if small else []),
+                    *(['-DPIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION=1',
+                       '-DPIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION=1'] if small else []),
                     str(here/'pioneer_q38_recurrent_actual_root_test.cpp'),'-o',str(binary)],check=True)
     symbols=subprocess.check_output([str(tool)+'nm','-C',str(recurrent)],text=True)
     scoped='Projection::BfDenseScopedSeal(' in symbols
