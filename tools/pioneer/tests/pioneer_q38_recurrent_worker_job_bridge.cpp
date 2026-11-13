@@ -27,23 +27,37 @@ int main(int argc,char** argv){
   }
   assert(!fflush(stdout));return 0;
  }
+ std::array<std::array<uint32_t,64>,24> descriptors,producerJobs;
+ for(unsigned w=0;w<width/256;w++){
+  assert(fread(descriptors[w].data(),sizeof(uint32_t),64,stdin)==64);
+  assert(fread(producerJobs[w].data(),sizeof(uint32_t),64,stdin)==64);
+ }
  std::array<std::array<uint32_t,64>,119> jobs;
  assert(fread(jobs.data(),sizeof(uint32_t),119*64,stdin)==119*64 && fgetc(stdin)==EOF);
  std::vector<uint8_t> input(width*2);
+ std::array<std::unique_ptr<DenseProducerImage>,24> producers;
  for(unsigned chunk=0;chunk<width/256;chunk++){
-  auto producer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,1,chunk+1);producer->Boot();
+  const unsigned bands=jobs[chunk][20];assert(bands && bands<=8);
+  auto producer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,chunk+1);producer->Boot();
   for(unsigned i=0;i<256;i++){const unsigned at=chunk*256+i;
    producer->input[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
-  producer->StageProducer(role,1,false,0);producer->Check(1);
+  producer->StageProducer(role,1,false,0);
+  for(unsigned i=0;i<64;i++){
+   assert(producer->descriptor[i]==descriptors[chunk][i] && producer->Get(HW::Job+i*4)==producerJobs[chunk][i]);
+   producer->WordWrite(BP::Descriptor+i*4,descriptors[chunk][i]);producer->Put(HW::Job+i*4,producerJobs[chunk][i]);
+  }
+  producer->Check(1);
   for(unsigned at=0;at<512;at+=4){const unsigned word=producer->bank.at(producer->descriptor[4]+producer->descriptor[12]+at);
    for(unsigned b=0;b<4;b++)input[chunk*512+at+b]=uint8_t(word>>(8*b));}
+  producers[chunk]=std::move(producer);
  }
  std::vector<uint8_t> seen(rows,0);
  for(unsigned w=0;w<119;w++){
-  const auto& job=jobs[w];const unsigned bands=job[20],first=job[32],previous=w?0:1;
+  const auto& job=jobs[w];const unsigned bands=job[20],first=job[32],previous=w<width/256?1:0;
   assert(bands && bands<=8 && job[2]==1 && job[3]==w+1 && job[18]==width && job[34]==role
    && first<rows && bands*32<=rows-first);
-  auto image=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,w+1);image->Boot();
+  auto image=previous?std::move(producers[w]):std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,w+1);
+  assert(image);if(!previous)image->Boot();
   if(full){
    for(unsigned band=0;band<bands;band++){
     const size_t weightBytes=size_t(width/32)*1088;
@@ -53,11 +67,6 @@ int main(int argc,char** argv){
    }
   }else SetPrivateWeights(*image,w%3,true);
   image->transfer.root=input;
-  if(!w){
-   // Preserve the producer's actual prior nonce and worker state, not a host receipt.
-   for(unsigned i=0;i<256;i++)image->input[i]=uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16;
-   image->StageProducer(role,1,false,0);image->Check(1);
-  }
   image->transfer.job.words[3]=job[19];image->transfer.job.words[5]=job[21];image->transfer.job.words[11]=previous+1;
   assert(HW::JobShape(job.data(),image->boot.data(),previous,0));
   for(unsigned i=0;i<64;i++)image->Put(HW::Job+i*4,job[i]);image->Put(HW::Doorbell,previous+1);

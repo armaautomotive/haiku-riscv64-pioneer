@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Inspection-only ROOT job emitter. stdin: 119 simulated worker boot records;
-// stdout: the linked ROOT's 119 matrix jobs. No device access.
+// stdout: linked ROOT producer descriptors/jobs, then 119 matrix jobs.
+// The host pipe is inspection transport, not a simulated ROOT NoC.
 #define main recurrent_root_helper_main
 #include "pioneer_q38_recurrent_actual_root_test.cpp"
 #undef main
@@ -25,8 +26,18 @@ int main(int argc,char** argv){
  const auto reads=Symbols(argv[1],"Projection::BfBankRead(");
  assert(RunBuildWithStub(*m,builds[0],reads[0],d,0x3000200+slot*128,workspace->data()+slot*32));
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)m->memory[0x170000+w*256+i*4]=boots[w][i];
+ const auto descriptors=Symbols(argv[1],"Projection::BfDescriptor(");
+ const auto producers=Symbols(argv[1],"Projection::BfProducerJob(");
+ for(unsigned w=0;w<width/256;w++){
+  uint32_t descriptor[64],producer[64];
+  assert(Call(*m,descriptors[0],d,w,0,0x78000,false));
+  for(unsigned i=0;i<64;i++)descriptor[i]=m->memory.at(0x78000+i*4);
+  assert(Call(*m,producers[0],d,w,1,0x78000,true));
+  for(unsigned i=0;i<64;i++)producer[i]=m->memory.at(0x78000+i*4);
+  assert(fwrite(descriptor,sizeof(uint32_t),64,stdout)==64 && fwrite(producer,sizeof(uint32_t),64,stdout)==64);
+ }
  for(unsigned w=0;w<119;w++){
-  const unsigned previous=w?0:1;assert(m->Run(m->job[0],d,w,previous+1));uint32_t job[64];
+  const unsigned previous=w<width/256?1:0;assert(m->Run(m->job[0],d,w,previous+1));uint32_t job[64];
   for(unsigned i=0;i<64;i++)job[i]=m->memory.at(0x78000+i*4);
   assert(Q::JobShape(job,boots[w].data(),previous,0));assert(fwrite(job,sizeof(uint32_t),64,stdout)==64);
  }

@@ -25,6 +25,18 @@ full ROOT gather/scatter, native ownership or device execution. Conversion
 to BFP8 can change model arithmetic: general quality remains unvalidated.
 There is no hardware timing or tokens-per-second result.
 
+Producer handoff follow-up: the linked ROOT now emits the actual producer
+descriptor and producer job for each 256-value input chunk, followed by the
+119 matrix jobs with the appropriate per-worker sequence. The separate worker
+simulation consumes those bytes, verifies them against its descriptor shape,
+executes the compiled producer, and retains that same worker's simulated
+register/L1/nonce state into its matrix job. Non-producer workers start fresh.
+All three full learned projections again passed for the synthetic input;
+invalid boot and wrong-role producer or matrix jobs were refused. The handoff
+is still through host pipes, and workers execute sequentially: ROOT's actual
+NoC transactions, full gather/scatter, concurrent scheduling, native ownership,
+whole-layer arithmetic and hardware performance remain unproven.
+
 Follow-up: the same full-source authentication, fresh tile comparison and
 independent integer reference were applied to the other layer-0 recurrent
 matrices. The 119-worker linked-job simulation passed with every distinct

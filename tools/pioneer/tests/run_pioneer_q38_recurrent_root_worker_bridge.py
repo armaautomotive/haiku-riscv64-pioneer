@@ -12,11 +12,11 @@ assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
 mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)==9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)==9 and sys.argv[6]=='--full-qkv' else '--out'
+geometry={'--gate':(6144,5120),'--qkv':(10240,5120),'--out':(5120,6144)}
 full=Path(sys.argv[7]) if len(sys.argv)==9 else None
 if full:
     assert full.is_absolute() and full.is_file() and not full.is_symlink() and len(sys.argv[8])==64
     info=full.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
-    geometry={'--gate':(6144,5120),'--qkv':(10240,5120),'--out':(5120,6144)}
     rows,width=geometry[mode];assert info.st_size==32+(rows//32)*((width//32)*1088+128)
     assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 roles={'--gate':5,'--qkv':6,'--out':13}
@@ -67,15 +67,19 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                                 (workerbin,'pioneer_q38_recurrent_worker_job_bridge.cpp',worker_roles)):
         subprocess.run([compiler,*common,*['-D'+r+'=1' for r in selected_roles],'-I'+str(private),str(here/source),'-o',str(binary)],check=True)
     boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==119*256
-    job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout;assert len(job)==119*256
+    job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
+    chunks=geometry[mode][1]//256;assert len(job)==chunks*512+119*256
     runargs=[str(workerbin),str(worker),str(leaf),'--run-full',str(full)] if full else [str(workerbin),str(worker),str(leaf),'--run']
     subprocess.run(runargs,input=job,check=True,env=env)
     badboot=bytearray(boot);badboot[0]^=1
     rejected=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=badboot,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
-    badjob=bytearray(job);badjob[34*4]=7
+    badproducer=bytearray(job);badproducer[256+28*4]=7
+    rejected=subprocess.run(runargs,input=badproducer,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    assert rejected.returncode and not rejected.stdout
+    badjob=bytearray(job);badjob[chunks*512+34*4]=7
     rejected=subprocess.run(runargs,input=badjob,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
-print('PASS invalid simulated boot and wrong-role job rejected; NO DEVICE')
+print('PASS invalid simulated boot and wrong-role producer/matrix jobs rejected; NO DEVICE')
