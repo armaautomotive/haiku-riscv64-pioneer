@@ -17,3 +17,12 @@ malformed geometry refusals and isolation from native/Work/reference roles.
 This is geometry only: the prepared cache, upload authorization, device
 ledger, ROOT dispatch and Work path do not yet use it. No driver is changed,
 and no card execution, model quality or inference-speed result is claimed.
+
+Follow-up: a fixed-size, heap-only independent reconstruction now agrees
+with every proposed part and all 96 relocated matrices. An isolated ledger
+inspection sorts physical addresses before checking non-overlap, page
+coverage, holes and digest, because the relocated tensors appear later in
+bank memory than their original model order. Synthetic ASan/UBSan checks
+cover 5,067,109 pages plus missing/extra/modified ledger refusals. This is
+still not a native ledger, upload authorization, readback or hardware run;
+the FNV digest is a consistency check, not cryptographic authentication.
