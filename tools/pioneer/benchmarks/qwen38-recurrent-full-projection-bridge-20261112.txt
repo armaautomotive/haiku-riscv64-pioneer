@@ -39,3 +39,19 @@ are not committed. SHA-256:
 
 These are three independent projection simulations, not a chained recurrent
 layer or evidence of full-model quality, native ownership, hardware or speed.
+
+Full-row conversion/arithmetic comparison against original Q8 weights:
+for the same single synthetic BF16 input, each simulated BFP8 integer result
+was compared with a double-precision dot product of the original decoded Q8
+weights. Relative L2 error and maximum absolute error over all output rows:
+
+  gate/tensor 3:   0.00725082692, 0.0581591288
+  QKV/tensor 5:    0.00750999155, 0.0970196147
+  output/tensor 16: 0.00255836438, 0.123448424
+
+The independent integer results are the values checked by the simulated
+workers. The original dot products are a numerical comparator, not the
+model's exact original execution order. All three regenerated private files
+were byte-identical to the previously tested exports. These results expose
+conversion plus arithmetic differences on one input; they do not establish
+acceptable generative quality or predict error over a full recurrent chain.
