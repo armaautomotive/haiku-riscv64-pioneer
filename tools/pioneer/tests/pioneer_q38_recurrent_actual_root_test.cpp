@@ -107,6 +107,7 @@ static bool RunBuildWithRealSeal(TransferRoot& m,unsigned pc,unsigned sourceFram
  while(m.pc!=0x60004 && m.pc!=0x60000){m.Step();assert(m.regs[2]>=0x6e000 && m.regs[2]<=0x70000);}
  return m.pc==0x60004 && m.packets==1;
 }
+#ifndef PIONEER_Q38_RECURRENT_ACTUAL_ROOT_HELPER_ONLY
 int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && (!std::strcmp(argv[2],"--expect-scoped") || !std::strcmp(argv[2],"--small"))));
  const bool small=argc==3 && !std::strcmp(argv[2],"--small");auto m=std::make_unique<ActualRoot>(argv[1]);
@@ -398,3 +399,4 @@ int main(int argc,char** argv){
  puts("PASS linked RV32 recurrent descriptors, producer jobs, matrix jobs and recurrent/dense mutation seals; SYNTHETIC ROOT MEMORY NO DEVICE");
  return 0;
 }
+#endif

@@ -82,3 +82,16 @@ resulting addresses/worker tuples; modified plans and overlapping output
 were refused without publishing data. This remains host-generated metadata:
 there is no authenticated native upload, resident-lifetime guarantee, or card
 run of these records, and no inference or speed claim.
+
+Controller/worker bridge follow-up: a host-only test now pipes boot data,
+linked RV32 ROOT-generated descriptors and jobs, and worker results between
+separate controller and retained-worker instruction simulators. For layer 0
+alpha and beta, the worker executes the pinned BFP8 model-weight exports on a
+synthetic input, checks results against the independent reference, and the
+linked ROOT store publishes the valid 48 rows while preserving the padded tail.
+The test checks the pinned input images and controller objects before and
+afterwards; the linked ROOT small-scheduler regression also passed. Host pipes
+and a stubbed metadata read stand in for device transport: this does not test
+the actual on-card NoC, automatic ROOT/worker lifecycle, native resident upload,
+full-model inference, output quality or performance. No installed driver was
+changed.
