@@ -1,0 +1,22 @@
+Assistant batched-loader host-only trial, started 2026-11-12
+
+The candidate worker and a separately built fixed-path LOAD/UNLOAD probe were
+staged under /boot/home/pioneer-batched-cache-20261112-a, without replacing
+the installed Assistant or driver. The probe uses the Assistant protocol and
+requires 851 verified cache hits, no conversions and a clean unload. It never
+sends Generate. Candidate and probe SHA-256 respectively:
+dd3b41e09451f34569129915b4b476a6ab4a4b34a212c1d34a6f5676a29e35b7
+b3c03ab9fa2d555f1039fc698504b144f724729fb581d14317e99d387d536e34
+
+An initial preflight exited before launch: a piped process snapshot included
+the multiline awk parser itself as an invalid process-list continuation. The
+corrected parent first captures the process list, then parses that snapshot;
+the unweakened read-only preflight passed. Parent SHA-256:
+d233e98fb6345840d743cc966fa385a921df701a56bdfaa70cc8859595fe7da1
+The one-shot parent, probe and worker were observed live; state
+RUNNING_HOST_ONLY_NO_GENERATE; source authentication in progress; stderr 0.
+Actual exit and postflight remain pending. Do not infer a result from a quiet
+log or restart this one-shot while the parent is alive.
+
+This host-only check does not execute the new batched upload, run the card or
+measure tokens per second. A later separately admitted card test is needed.
