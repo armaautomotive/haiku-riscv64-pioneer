@@ -316,3 +316,12 @@ role-isolation tests passed, including hole mutation and uncertain-transfer
 quarantine. This is an integration prerequisite only: the ledger remains
 inspection-only, is not connected to a native owner, and has not run on the
 card. No inference or speed claim follows.
+
+Native-boundary follow-up: the fixed-layout upload receipt no longer includes
+or names the host's dynamic proposal type. Its optional proposal comparison
+is instantiated by the host bridge, while the receipt derives the small
+format and size from its own fixed layout. A direct-first include regression,
+the synthetic physical-order lifecycle and upload staging/role-isolation
+tests pass. This removes one host coupling, not all kernel dependencies: the
+receipt is still explicitly inspection-only and is not a registered native
+upload, card execution, quality result or speed improvement.

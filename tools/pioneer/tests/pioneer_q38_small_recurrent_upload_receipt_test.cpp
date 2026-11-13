@@ -12,6 +12,7 @@
 #define PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT 1
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_BANKS_MOCK_ONLY 1
+#include "../PioneerQ38SmallRecurrentUploadReceiptInspection.h" // receipt must not require the host proposal header
 #include "../PioneerQ38SmallRecurrentWorkspaceReceipt.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 

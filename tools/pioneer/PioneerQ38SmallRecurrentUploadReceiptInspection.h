@@ -7,8 +7,8 @@
 #endif
 #ifndef PIONEER_Q38_SMALL_RECURRENT_UPLOAD_RECEIPT_INSPECTION_H
 #define PIONEER_Q38_SMALL_RECURRENT_UPLOAD_RECEIPT_INSPECTION_H
+#include <stddef.h>
 #include "PioneerQ38SmallRecurrentLedgerInspection.h"
-#include "PioneerQ38HybridSmallRecurrentBfp8Plan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
 
 // Synthetic-owner receipt: physical-order page accounting only. FNV is not
@@ -115,9 +115,9 @@ public:
    const auto* p=original.Part(i);const auto* q=layout.At(i);if(!p || !q)return false;
    if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4==3 || (p->role!=10 && p->role!=11))continue;
    const unsigned record=(p->layer-p->layer/4)*2+p->role-10;
-   if(record>=records || seen[record] || q->original!=i || q->encoding!=PioneerQ38HybridSmallRecurrentBfp8Plan::SmallRecurrentBfp8
+   if(record>=records || seen[record] || q->original!=i || q->encoding!=L::SmallRecurrentBfp8
     || q->bank!=p->bank || q->bank>=7 || q->offset>UINT32_MAX-C::Base || (q->offset&4095)
-    || q->bytes!=PioneerQ38HybridSmallRecurrentBfp8Plan::Bytes || q->allocated!=PioneerQ38HybridSmallRecurrentBfp8Plan::Bytes)return false;
+    || q->bytes!=L::Bytes || q->allocated!=L::Bytes)return false;
    const unsigned at=record*recordWords+q->bank*3;workspaceScratch[at]=C::Base+q->offset;
    workspaceScratch[at+2]=64;seen[record]=true;count++;
   }
@@ -126,7 +126,7 @@ public:
  }
  // Compare an independently derived host proposal to this sealed receipt's
  // own immutable reconstruction. This does not authenticate card bytes.
- bool MatchesLayout(const C& source,const PioneerQ38HybridSmallRecurrentBfp8Plan::Proposal& proposed,
+ template<class Proposal> bool MatchesLayout(const C& source,const Proposal& proposed,
   const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   if(!Revalidate(c,fd,h,initialized,owner,gen) || !source.OriginalFormatLayout()
    || source.Count()!=original.Count() || proposed.parts.size()!=original.Count())return false;
