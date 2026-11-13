@@ -8,7 +8,9 @@ enabled in the baseline controller.
 
 The actual RV32 recurrent component cross-compiled successfully. Disassembly
 shows table selection outside the loop and the three volatile descriptor
-rechecks after it. The linked RV32 helper simulation passed all 144 canonical
+rechecks after it. Selection and manifest index now use the same validated
+snapshot; the dense role's own 21 manifest words were also mutation-tested.
+The linked RV32 helper simulation passed all 144 canonical
 records and all 119 scheduler tuples per record. For each recurrent role, it
 also refused individual corruption of all 21 table words and 476 worker
 fields, plus changes to each descriptor selection field during the scan.

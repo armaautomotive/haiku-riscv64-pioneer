@@ -30,7 +30,7 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-receipt-', dir='/private/
         matched = [row for row in rows if marker in row[0] and symbol in row[0]]
         assert len(matched) == 1 and len(matched[0]) == 3 and matched[0][2] == 'static' and int(matched[0][1]) <= 2048, (marker, matched)
     print('PASS receipt and scratch builders have host static frames <=2048; NOT full stack or kernel proof', flush=True)
-    for args in ([], ['--abort'], ['--bad-record'], ['--invalidate'], ['--hole']):
+    for args in ([], ['--abort'], ['--bad-record'], ['--invalidate'], ['--hole'], ['--rebind']):
         subprocess.run([binary, *args], check=True, env=dict(os.environ, UBSAN_OPTIONS='halt_on_error=1'))
     for forbidden in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                       'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',

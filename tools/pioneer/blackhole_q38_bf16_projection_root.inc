@@ -50,17 +50,21 @@ static_assert(unsigned(BfDenseScheduleIO::RecurrentRecord)>=unsigned(BfDenseSche
 #endif
 static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
  if(!BfDenseQ8(d))scalar_fault_park();
- const unsigned index=((d[42]/4)*3+d[43]-5)*21;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
  // No command is issued during this read-only scan. Select the manifest
  // once, and recheck the descriptor before leaving the scan.
  const volatile uint32_t* descriptor=d;
  const unsigned layer=descriptor[42],role=descriptor[43],format=descriptor[15];
- const auto* table=BfRecurrentQ8(d)?Words(BfDenseScheduleIO::RecurrentRecord)
+ const bool recurrent=format==8 && layer<64 && (layer&3)!=3 && (role==5 || role==6 || role==13);
+ const bool dense=format==8 && layer<64 && (layer&3)==3 && role>=5 && role<=7;
+ if(!recurrent && !dense)scalar_fault_park();
+ const unsigned index=((layer/4)*3+role-5)*21;
+ const auto* table=recurrent?Words(BfDenseScheduleIO::RecurrentRecord)
   :Words(BfDenseScheduleIO::Manifest)+index;
  for(unsigned i=0;i<21;i++)if(table[i]!=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();
  if(descriptor[42]!=layer || descriptor[43]!=role || descriptor[15]!=format)scalar_fault_park();
 #else
+ const unsigned index=((d[42]/4)*3+d[43]-5)*21;
  for(unsigned i=0;i<21;i++)if(
   Words(BfDenseScheduleIO::Manifest)[index+i]
   !=Words(BfDenseScheduleIO::TableShadow)[i])scalar_fault_park();

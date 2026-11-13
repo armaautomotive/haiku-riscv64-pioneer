@@ -263,5 +263,13 @@ int main(int argc,char** argv){
    }
   }
  }
- puts("PASS linked RV32 recurrent descriptors, producer jobs, matrix jobs and mutation seals; SYNTHETIC ROOT MEMORY NO DEVICE");
+ // The same inspection binary also seals dense-layer manifests. Check that
+ // role selection does not accidentally use the recurrent record there.
+ m->memory[d+42*4]=3;m->memory[d+43*4]=5;m->memory[d+15*4]=8;
+ for(unsigned i=0;i<21;i++)m->memory[0x16dc00+i*4]=m->memory[0x16fac0+i*4]=0x10000+i;
+ assert(m->Run(seals[0],d));
+ for(unsigned i=0;i<21;i++){
+  m->memory[0x16dc00+i*4]^=1;assert(!m->Run(seals[0],d));m->memory[0x16dc00+i*4]^=1;
+ }
+ puts("PASS linked RV32 recurrent descriptors, producer jobs, matrix jobs and recurrent/dense mutation seals; SYNTHETIC ROOT MEMORY NO DEVICE");
 }

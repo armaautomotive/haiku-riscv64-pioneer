@@ -32,7 +32,7 @@ struct FakeContext {
 };
 struct FakeCookie {uint32_t magic=0x50313030;FakeContext* context=nullptr;int64_t team=17;};
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--bad-record") || !strcmp(argv[1],"--invalidate"))));
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--bad-record") || !strcmp(argv[1],"--invalidate") || !strcmp(argv[1],"--rebind"))));
  BanksMock io;auto proof=BankProof(io);PioneerResidentBanks banks;assert(banks.Bind(proof));
  std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages,0);
  auto receipt=std::make_unique<PioneerQ38RecurrentQ8UploadReceiptInspection>();FakeContext context;FakeCookie cookie;int foreign=0;
@@ -84,6 +84,32 @@ int main(int argc,char** argv){
   puts("PASS unexpected gap page quarantines fake owner");return 0;
  }
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->PageDigest());
+ if(argc==2 && !strcmp(argv[1],"--rebind")){
+  FakeContext next;auto nextProof=std::make_unique<tt_dram_samples_result>(proof);
+  auto nextBanks=std::make_unique<PioneerResidentBanks>();assert(nextBanks->Bind(*nextProof));
+  auto nextLedger=ledger;auto nextHashes=hashes;PioneerQ38SpanLease foreignSpan;
+  const auto attempt=[&](const void* fd,uint64_t gen,const PioneerQ38SpanLease* lease){
+   return receipt->RebindInspection(&context,fd,hashes.data(),ledger.data(),17,gen,lease,&next,
+    nextHashes.data(),nextLedger.data(),*nextBanks,*nextProof,nextLedger.size());
+  };
+  assert(!attempt(&foreign,42,&span) && !attempt(&cookie,43,&span) && !attempt(&cookie,42,&foreignSpan));
+  assert(!receipt->RebindInspection(&context,&cookie,hashes.data(),ledger.data(),17,42,&span,&next,
+   reinterpret_cast<const uint32_t*>(nextLedger.data()),nextLedger.data(),*nextBanks,*nextProof,nextLedger.size()));
+  nextLedger[hole]=1;assert(!attempt(&cookie,42,&span));nextLedger[hole]=0;
+  nextHashes[0]^=1;assert(!attempt(&cookie,42,&span));nextHashes[0]^=1;
+  nextProof->translated[0][0]^=1;assert(!attempt(&cookie,42,&span));nextProof->translated[0][0]^=1;
+  assert(receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42) && !banks.Quarantined());
+  assert(attempt(&cookie,42,&span) && !receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,42));
+  std::vector<uint8_t>().swap(ledger);std::vector<uint32_t>().swap(hashes);
+  assert(receipt->MatchesLease(&span) && receipt->Revalidate(&next,&cookie,nextHashes.data(),nextLedger.data(),17,42));
+  FakeContext third;auto thirdProof=proof;PioneerResidentBanks thirdBanks;assert(thirdBanks.Bind(thirdProof));
+  auto thirdLedger=nextLedger;auto thirdHashes=nextHashes;
+  assert(receipt->RebindInspection(&next,&cookie,nextHashes.data(),nextLedger.data(),17,42,&span,&third,
+   thirdHashes.data(),thirdLedger.data(),thirdBanks,thirdProof,thirdLedger.size()));
+  std::vector<uint8_t>().swap(nextLedger);std::vector<uint32_t>().swap(nextHashes);nextBanks.reset();nextProof.reset();
+  assert(receipt->MatchesLease(&span) && receipt->Revalidate(&third,&cookie,thirdHashes.data(),thirdLedger.data(),17,42));
+  puts("PASS two synthetic recurrent resident rebinds after old storage retirement; NO DEVICE");return 0;
+ }
  context.recurrentReceipt=receipt.get();context.span=&span;context.banks=&banks;context.proof=&proof;
  context.hashes=hashes.data();context.initialized=ledger.data();
  using Bridge=PioneerQ38RecurrentQ8NativeBindingInspection;

@@ -1,0 +1,20 @@
+Recurrent converted-weight ownership transfer, offline inspection
+
+Added a simulated transfer of a sealed recurrent upload receipt to a fresh
+request context while retaining the same span, FD, team and generation. The
+transfer checks disjoint ledger storage, matching DRAM identity and routes,
+complete destination ledger integrity and equality before changing pointers.
+Rejected transfers leave the original binding intact. This is groundwork for
+reusing resident converted weights; it does not itself retain real card RAM.
+
+ASan/UBSan exercised the full synthetic 21,475-span ledger and two successive
+transfers after retiring old arrays, bank objects and proof objects. Foreign
+FD, generation and span, overlapping arrays, a spurious page, altered hash
+and changed route were refused. The existing quarantine, workspace and role
+exclusion regressions also passed. All data, spans and bank endpoints in this
+test were simulated.
+
+The actual exclusive lock, physical reservation continuity, ownership of both
+contexts during failures, copyout handling, device bytes, model execution and
+performance remain unproven. This inspection role is excluded from the real
+driver, Work and CPU-reference modes; no model was run or benchmarked.
