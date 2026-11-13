@@ -21,6 +21,12 @@ table-word and 476 worker-field corruptions per tested recurrent role, and
 descriptor changes during a scan. Tests explicitly checked that a noncurrent
 worker change can pass the scoped check but fails its own and the full check.
 The test runner requires the scoped symbol when testing this variant. The
+actual emitted matrix-job construction also matched the independent frame
+builder for all 119 workers for each role in layer 0. Simulated RV32 dynamic
+instruction counts for one seal were 2334 full versus 165 scoped for roles
+5 and 6, and 2339 versus 169 for role 13. These are instruction counts,
+not device cycles, wall time or a prediction of model throughput.
+The
 unselected recurrent object and original baseline reproduced unchanged hashes
 9d860f8892b2171ebf4d2317943b2c3a03669592eb51fcc7673cc9249423c9c0 and
 6ac38d3465d714dfa668fab15750f046b73fd500b4055ceddb1f279b1e8d77b5.

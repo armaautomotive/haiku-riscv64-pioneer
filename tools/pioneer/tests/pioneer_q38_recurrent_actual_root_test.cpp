@@ -226,7 +226,9 @@ int main(int argc,char** argv){
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)
    m->memory[0x16ebc0+w*16+i*4]=m->memory[0x16f330+w*16+i*4]=schedule.parts[w][i];
   assert(m->Run(seals[0],d));
-  for(unsigned w:{0U,19U,23U,62U,118U}){
+  std::vector<unsigned> workers={0U,19U,23U,62U,118U};
+  if(scopedSeal && layer==0){workers.clear();for(unsigned w=0;w<119;w++)workers.push_back(w);}
+  for(unsigned w:workers){
    uint32_t boot[64]={};boot[0]=Q::Magic;boot[1]=1;boot[2]=64;boot[3]=w+1;boot[4]=Q::Peer(w+1);
    boot[5]=boot[16]=0x14000;boot[6]=8192;boot[7]=64;
    for(unsigned i=0;i<4;i++)boot[8+i*2]=i+1;
@@ -268,6 +270,10 @@ int main(int argc,char** argv){
    }
    if(scopedSeal){
     assert(m->Run(scopedSeal,d,0) && !m->Run(scopedSeal,d,119));
+    assert(m->Run(seals[0],d));const unsigned fullSteps=m->steps;
+    assert(m->Run(scopedSeal,d,0));const unsigned scopedSteps=m->steps;
+    assert(scopedSteps<fullSteps);
+    std::printf("SCOPED_SEAL_RV32_INSTRUCTIONS role%u full%u scoped%u;SIMULATION_NOT_TIME\n",role,fullSteps,scopedSteps);
     for(unsigned i=0;i<21;i++){
      m->memory[0x16fb40+i*4]^=1;assert(!m->Run(scopedSeal,d,0));m->memory[0x16fb40+i*4]^=1;
     }
