@@ -18,3 +18,6 @@ No new driver was installed and no P100A command was issued. This parent is
 specific to the observed generation; do not assume it remains admissible
 after any driver reload or other change. Preflight and the separate recurrent
 cache verifier need their own completed evidence before a hardware attempt.
+The parent explicitly checks the verifier's successful exit, empty error log,
+complete 1,008-fragment marker and protected file ownership; synthetic tests
+also reject missing, unsuccessful, incomplete, errored and symlinked evidence.

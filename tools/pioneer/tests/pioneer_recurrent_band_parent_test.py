@@ -75,4 +75,21 @@ health(){ echo health >> "$events"; }
   inventory=folder/('inventory-'+str(index));inventory.write_text(text)
   result=subprocess.run(['sh',str(idle_program),str(inventory)],text=True,capture_output=True)
   assert (result.returncode==0)==accepted,(text,result.stderr)
+ cache_body=source.split('cache_verified(){\n',1)[1].split('\n}\n',1)[0]
+ cache_body=cache_body.replace('/boot/home/pioneer-recurrent-q8-cache-verify-20261112-a','$1')
+ cache_program=folder/'cache-check.sh'
+ cache_program.write_text('''set -eu
+stat(){ case "$*" in *"%u:%a"*) printf '0:700\\n';; *) printf '0:1:644\\n';; esac; }
+cache_verified(){
+'''+cache_body+'''\n}
+cache_verified "$1"
+''')
+ cache=folder/'cache';cache.mkdir();(cache/'stdout').write_text('RECURRENT_Q8_CACHE_MATCH fragments=1008 pages=1436160 raw=5882511360 padded=5882511360; NO DEVICE OR SPEED\n')
+ (cache/'stderr').write_text('');(cache/'exit').write_text('0\n')
+ def cache_ok():return subprocess.run(['sh',str(cache_program),str(cache)],capture_output=True).returncode==0
+ assert cache_ok()
+ (cache/'exit').write_text('1\n');assert not cache_ok();(cache/'exit').write_text('0\n')
+ (cache/'stderr').write_text('error\n');assert not cache_ok();(cache/'stderr').write_text('')
+ (cache/'stdout').write_text('incomplete\n');assert not cache_ok()
+ (cache/'stdout').unlink();(cache/'stdout').symlink_to(cache/'stderr');assert not cache_ok()
 print(f'PASS real recurrent-parent flow and {len(cases)} synthetic success/failure gate cases; no hardware')
