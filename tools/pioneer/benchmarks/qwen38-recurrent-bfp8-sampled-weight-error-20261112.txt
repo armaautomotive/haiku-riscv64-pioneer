@@ -11,12 +11,22 @@ attn_qkv.weight    0.00724523682          0.000487804413
 attn_gate.weight   0.0073584528           0.00048494339
 ssm_out.weight     0.00723102564          0.000961303711
 
+Also compared full-width dot products from 32 central rows per layer
+using one deterministic synthetic input vector (96 outputs per role):
+
+Role              relative RMS error     maximum absolute error
+attn_qkv.weight    0.00635188767          0.01197147
+attn_gate.weight   0.00621590094          0.0104436958
+ssm_out.weight     0.00732796516          0.0156711638
+
 Reproduce from repository root:
 c++ -std=c++17 -O2 -Wall -Wextra -Werror -ffp-contract=off tools/pioneer/tests/pioneer_q38_recurrent_bfp8_quality.cpp tools/pioneer/PioneerModelWeightCache.cpp -o /private/tmp/pioneer-recurrent-bfp8-quality-20261112
 /private/tmp/pioneer-recurrent-bfp8-quality-20261112 "$PWD/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf"
 
 The metric is sqrt(sum((converted-original)^2)/sum(original^2)); maximum
 is in weight units. This is a small deterministic sample, and unpacking uses
-the project's codec. It does not verify real silicon arithmetic, numerical
-accuracy of a whole projection or model, generated text, or speed. It does
-not qualify the experimental conversion for deployment.
+the project's codec. The dot products use long-double host accumulation,
+not silicon arithmetic, and synthetic input rather than real activations.
+The sample does not establish the numerical accuracy of a whole projection
+or model, generated text, or speed. It does not qualify the experimental
+conversion for deployment.
