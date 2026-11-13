@@ -39,5 +39,20 @@ fixture measures full verification only, not upload or token generation.
 The synthetic benchmark now also cross-links for Haiku RISC-V in both modes.
 Serial SHA-256 e9651764ce7dcf82646d301fe5c051309b7ae585bcb1b5e951974539ac8469b4;
 parallel SHA-256 8a44ed0739a53e2ffc91e8967a1eaa4ddba1ab50f8b0af26de99766383a2600d.
-These binaries have not run on the Pioneer. Their fixture is synthetic and
-must use a fresh isolated temporary directory, never the model cache.
+At build time these binaries had not run on the Pioneer. Their fixture is
+synthetic and must use a fresh isolated temporary directory, never the model cache.
+
+Pioneer synthetic result: after the separate inference profile had completed
+and the stable driver was confirmed idle, these exact binaries ran against a
+new private 128 MiB synthetic cache under /boot/home/pioneer-cache-synthetic.Igc0ZPy0.
+The order was four serial, four parallel, four serial, four parallel checks.
+Serial seconds: 6.570518, 6.568590, 6.568704, 6.568506, 6.583539,
+6.577242, 6.578414, 6.581135 (mean 6.574581). Parallel seconds: 3.511518,
+3.550974, 3.536270, 3.536764, 3.517855, 3.528183, 3.545704, 3.543076
+(mean 3.533793). On this warm synthetic fixture only, verification was about
+46% shorter. This is not a full-model load, upload, inference, or tok/s result;
+the two simultaneous hashers consume additional CPU. Full 851-entry behavior,
+thread failure paths and end-to-end latency still require qualification before
+installation. The command exited 0; afterward driver55/tag2026102100010012/
+generation42 remained idle/cold0 and 64 CPUs and 137034936320 bytes RAM were
+reported. No GPU session was opened. The synthetic directory is retained.
