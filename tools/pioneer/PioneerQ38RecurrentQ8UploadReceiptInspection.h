@@ -100,6 +100,34 @@ public:
   }
   return Revalidate(c,fd,h,initialized,owner,gen);
  }
+#ifdef PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION
+ // Construct one of the two distinct views only from this same sealed
+ // ledger. This does not authenticate card bytes or grant execution.
+ bool DeriveCanonical(C& output,bool physical,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(&output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t bytes=sizeof(output),hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(out>limit-bytes || self>limit-sizeof(*this) || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  if(physical ? !output.BuildRecurrentQ8Inspection(parent,layout) : !output.BuildDenseQ8LogicalParentInspection(ancestor))return false;
+  if(output.Count()!=original.Count() || output.RecurrentCount()!=original.RecurrentCount()
+   || (physical ? !output.RecurrentQ8InspectionLayout() : !output.Qgw8InspectionLayout()))return false;
+  for(unsigned b=0;b<7;b++)if(output.Used(b)!=(physical?layout.Used(b):ancestor.Used(b)))return false;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* src=original.Part(i);const auto* dst=output.Part(i);
+   const auto* q=physical?layout.At(i):ancestor.At(i);
+   if(!src || !dst || !q || src->kind!=dst->kind || src->layer!=dst->layer || src->role!=dst->role
+    || src->type!=dst->type || src->firstRow!=dst->firstRow || src->rows!=dst->rows || src->rowBytes!=dst->rowBytes
+    || q->bank!=dst->bank || q->offset!=dst->offset || q->bytes!=dst->bytes || q->allocated!=dst->allocated)return false;
+  }
+  return Revalidate(c,fd,h,initialized,owner,gen);
+ }
+#endif
  // Produce metadata only from this sealed ledger and independently rebuilt
  // layout. No write to card memory, readback or device ownership is implied.
  bool Workspace(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,

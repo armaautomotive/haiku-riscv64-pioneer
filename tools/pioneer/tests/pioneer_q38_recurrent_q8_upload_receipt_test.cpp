@@ -5,6 +5,7 @@
 #define PIONEER_Q38_DENSE_Q8_KERNEL_LAYOUT_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_CANONICAL_INSPECTION 1
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION 1
 #define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
 #define PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION 1
 #define PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION 1
@@ -78,6 +79,17 @@ int main(int argc,char** argv){
  auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
  assert(logicalAncestor->Build(*canonical) && logical->BuildDenseQ8LogicalParentInspection(*logicalAncestor));
  assert(receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ auto logicalDerived=std::make_unique<PioneerQ38CanonicalModelPlan>();auto physicalDerived=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(!receipt->DeriveCanonical(*logicalDerived,false,&context,&foreign,hashes.data(),ledger.data(),17,42) && !logicalDerived->Ready());
+ assert(receipt->DeriveCanonical(*logicalDerived,false,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->DeriveCanonical(*physicalDerived,true,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->MatchesLogical(*logicalDerived,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->MatchesLogical(*physicalDerived,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ for(unsigned i=0;i<canonical->Count();i++){
+  const auto* part=physicalDerived->Part(i);const auto& expectedPart=host.parts[i];
+  assert(part && part->bank==expectedPart.bank && part->offset==expectedPart.offset
+   && part->bytes==expectedPart.bytes && part->allocated==expectedPart.allocated);
+ }
  assert(!receipt->MatchesLogical(*canonical,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(!receipt->MatchesLogical(*logical,&context,&foreign,hashes.data(),ledger.data(),17,42));
  auto* changed=const_cast<PioneerQ38CanonicalPart*>(logical->Part(0));assert(changed);
