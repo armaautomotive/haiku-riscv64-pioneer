@@ -665,7 +665,7 @@ static void CheckNativeExecution(Fixture& f){
   if(!cpu.layerHeld)fprintf(stderr,"OUTPUT_MATRIX_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
    cpu.pc,cpu.steps,cpu.recurrentOutputMatrixDoorbells,cpu.submitted,cpu.completed);
   assert(cpu.layerHeld && cpu.recurrentOutputMatrixDoorbells==119 && io.Core(0).pending && !state->Unsafe());
-  bool rows[5120]={};unsigned matrixOps=0;
+  bool rows[5120]={};float observedProjected[5120]={};unsigned matrixOps=0;
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentOutputBands[w],first=cpu.recurrentOutputFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*3072);matrixOps+=s.matrixInstructions;
@@ -677,10 +677,29 @@ static void CheckNativeExecution(Fixture& f){
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"OUTPUT_MATRIX_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
     assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+    observedProjected[global]=actual;
    }
   }
   for(bool seen:rows)assert(seen);
   printf("PASS recurrent output matrix/119 workers/5120 synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",matrixOps);
+  // The root has passed residual + RMS and staged, but not delivered, the
+  // first FFN producer. Observe only its own stored bytes, never supply them.
+  namespace B=PioneerQ38MixedRecurrentBlockRootLayout;
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==5 && io.Raw(1,W::Job+28*4)==2);
+  double squareSum=0;float observedResidual[5120];
+  for(unsigned i=0;i<5120;i++){
+   const float scattered=Float(io.Raw(0,R::Projected+i*4)),raw=Float(io.Raw(0,B::OriginalCopy+i*4));
+   const float residual=Float(io.Raw(0,B::PostResidual+i*4));
+   assert(scattered==observedProjected[i] && std::isfinite(raw) && std::isfinite(residual));
+   assert(residual==float(raw+scattered));observedResidual[i]=residual;squareSum+=double(residual)*residual;
+  }
+  const double inverse=1/std::sqrt(squareSum/5120+1e-6);unsigned nonzeroNormalized=0;
+  for(unsigned i=0;i<5120;i++){
+   const float actual=Float(io.Raw(0,B::PostNormalized+i*4));const double expected=double(observedResidual[i])*inverse;
+   assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.00005*(1+std::fabs(expected)));
+   if(actual!=0)nonzeroNormalized++;
+  }
+  assert(nonzeroNormalized);printf("PASS 5120 scattered outputs, residuals and unit-weight RMS values/%u nonzero;first FFN producer pending;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",nonzeroNormalized);
 #endif
 #endif
 #endif

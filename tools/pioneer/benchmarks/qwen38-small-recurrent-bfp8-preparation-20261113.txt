@@ -761,3 +761,12 @@ matrix instructions and stopped at the next dispatch. A separate 6144-wide
 backend test and all source-tile checks passed. Input and output weights here
 are synthetic; the test does not establish complete-layer or model correctness,
 physical execution, runtime installation, or tokens per second.
+
+Output scatter and post-residual RMS: in the same synthetic continuous run,
+all 5120 ROOT-scattered output values matched the preceding worker results,
+all residual additions matched the corresponding FP32 sum, and all 5120
+unit-weight normalized values matched an independent double-precision RMS
+calculation within 5e-5 absolute-plus-relative tolerance. All normalized
+values were nonzero. The first feed-forward producer was staged but remained
+pending. This is neither feed-forward execution nor a complete layer/model,
+physical-card test, production driver qualification, or TPS measurement.
