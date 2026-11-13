@@ -51,6 +51,15 @@ with tempfile.TemporaryDirectory(prefix='q38-synthetic-recurrent-',dir='/private
                     str(here/'pioneer_q38_synthetic_recurrent_matrix_test.cpp'),
                     str(here/'pioneer_q38_synthetic_embedding_bridge.cpp'),'-o',output_binary],check=True)
     subprocess.run([output_binary,str(here/'synthetic_q4_qgw8_layer.fixture')],check=True)
+    ffn_binary=str(Path(tmp)/'ffn-test')
+    subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-fsanitize=address,undefined',*flags,'-DPIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST=1',
+                    '-DPIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST=1','-DPIONEER_Q38_SYNTHETIC_CONV_STATE_TEST=1',
+                    '-DPIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST=1','-DPIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST=1',
+                    '-DPIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST=1',
+                    str(here/'pioneer_q38_synthetic_recurrent_matrix_test.cpp'),
+                    str(here/'pioneer_q38_synthetic_embedding_bridge.cpp'),'-o',ffn_binary],check=True)
+    subprocess.run([ffn_binary,str(here/'synthetic_q4_qgw8_layer.fixture')],check=True)
     for forbidden in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE',
                       'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT'):
         result=subprocess.run([compiler,'-std=c++17',*flags,'-D'+forbidden,'-fsyntax-only',

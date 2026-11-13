@@ -778,3 +778,12 @@ the observed normalized input and was nonzero. The first FFN matrix doorbell
 remained pending and was not delivered. Test-only role and scratch-scope
 refusals passed; this is not FFN completion, full-layer correctness, real
 model quality, P100A execution or a speed result.
+
+BFP4 FFN preparation: the isolated synthetic source now supplies all 17408
+role-2 FFN rows in the actual seven-bank BFP4 layout; every packed tile was
+unpacked and checked against its synthetic values. A distinct host-only BFP4
+queued-read/tensor bridge passed eight alternating synthetic bands, checking
+32 rows per band and NoC-counter wrap; explicit kernel/Work/native role
+refusals passed. This is a component test only: the retained worker has not
+yet been connected to this bridge, and no FFN matrix, complete layer, real
+model, physical-card inference, or TPS result is established by it.

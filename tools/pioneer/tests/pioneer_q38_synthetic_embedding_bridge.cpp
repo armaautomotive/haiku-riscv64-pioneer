@@ -33,6 +33,10 @@
  (PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST))
 #error Synthetic output matrix requires the isolated GDN fixture
 #endif
+#if defined(PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST) && \
+ (PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST))
+#error Synthetic FFN matrix requires the isolated output matrix fixture
+#endif
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
@@ -85,6 +89,9 @@ struct Q38EmbeddingRawTestBridge::Source {bool ready=false,revoked=false;
  std::vector<Gate> convState,convWeight;
 #ifdef PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST
  std::vector<Gate> gdnWeight;
+#endif
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST
+ std::vector<Gate> ffnWeight;
 #endif
 #endif
 #endif
@@ -195,6 +202,24 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
    }
   }
   if(source->convState.size()!=7 || source->convWeight.size()!=7)return source->ready=false;
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);const auto& q=physical.parts[i];
+   if(p->kind!=canonical->WeightKind || p->layer || p->role!=2)continue;
+   if(q.bank>=7 || q.encoding!=PioneerQ38HybridModelPlan::Bfp4 || !p->rows || (p->rows&31)
+    || q.bytes!=p->rows*2880U || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+   Source::Gate part{PioneerQ38ProjectionRoute(q.bank),canonical->Base+q.offset,{}};part.bytes.resize(q.bytes);
+   for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<160;tile++){
+    float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
+     const unsigned global=p->firstRow+band*32+row;values[row*32+col]=float(int((global*3+tile*7+col*5)%7)-3)*0.125f;
+    }
+    if(!PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,values,1024,
+       part.bytes.data()+(band*160+tile)*576,576))return source->ready=false;
+   }
+   source->ffnWeight.push_back(std::move(part));
+  }
+  if(source->ffnWeight.size()!=7)return source->ready=false;
+#endif
 #ifdef PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST
   for(unsigned i=0;i<canonical->Count();i++){
    const auto* p=canonical->Part(i);const auto& q=physical.parts[i];
@@ -241,6 +266,12 @@ bool Q38EmbeddingRawTestBridge::Read(unsigned route,uint32_t address,uint8_t* ou
 #ifdef PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST
 #ifdef PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST
 #ifdef PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST
+ for(const auto& part:source->ffnWeight)if(Ready() && out && count && route==part.route && address>=part.address
+  && address-part.address<=part.bytes.size() && count<=part.bytes.size()-(address-part.address)){
+  memcpy(out,part.bytes.data()+(address-part.address),count);return true;
+ }
+#endif
 #ifdef PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST
  for(const auto& part:source->gdnWeight)if(Ready() && out && count && route==part.route && address>=part.address
   && address-part.address<=part.bytes.size() && count<=part.bytes.size()-(address-part.address)){
