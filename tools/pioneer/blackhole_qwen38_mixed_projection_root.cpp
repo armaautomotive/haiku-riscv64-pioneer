@@ -237,7 +237,11 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
 #endif
  }
 }
+#ifdef PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT
+static __attribute__((noinline)) void Scatter(const uint32_t* d,uint32_t* tracked){
+#else
 static void Scatter(const uint32_t* d,uint32_t* tracked){
+#endif
  InputsSeal(d);
  for(unsigned at=0;at<d[12];at+=16384){
   unsigned bytes=d[12]-at;if(bytes>16384)bytes=16384;Copy(L::Scratch,L::Projected+at,bytes/4);

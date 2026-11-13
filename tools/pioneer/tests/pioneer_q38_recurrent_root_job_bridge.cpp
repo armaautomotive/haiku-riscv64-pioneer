@@ -11,12 +11,18 @@
 // ROOT NoC endpoint backed only by bytes captured from completed worker
 // simulators. Packet sealing runs against a synthetic owner and MMIO state.
 struct GatherRoot:ActualRoot {
- const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0;
+ const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0,writes=0;
  GatherRoot(const char* path,const std::array<PioneerRecurrentWorkerSnapshot,119>& s):ActualRoot(path),snapshots(s){}
  void Store(unsigned address,unsigned value)override{
   if(address!=0xffb20040 || value!=1){ActualRoot::Store(address,value);return;}
   const unsigned remote=memory.at(0xffb20000),route=memory.at(0xffb20008),local=memory.at(0xffb2000c);
   const unsigned command=memory.at(0xffb2001c),bytes=memory.at(0xffb20020);
+  if(command==0x212){
+   assert(remote==0x78000 && route==129 && bytes && !(bytes&63) && bytes<=16384);
+   for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=memory.at(remote+i*4);
+   memory[0xffb20210]++;memory[0xffb20204]++;memory[0xffb20220]+=bytes/64;memory[0xffb20228]++;
+   memory[address]=0;writes++;return;
+  }
   assert(!command && bytes && !(bytes&3) && local==0x78000+(remote&31));
   unsigned w=0;while(w<119 && Q::Peer(w+1)!=route)w++;assert(w<119);const auto& s=snapshots[w];
   for(unsigned i=0;i<bytes/4;i++){
@@ -39,6 +45,13 @@ struct GatherRoot:ActualRoot {
   memory[0xffb20208]++;memory[0xffb2020c]+=(bytes+63)/64;memory[0xffb20210]++;memory[0xffb20214]++;
   memory[address]=0;packets++;
  }
+ bool RunScatter(unsigned function,unsigned descriptor,unsigned tracked){
+  std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
+  regs[10]=descriptor;regs[11]=tracked;pc=function;steps=0;
+  unsigned last=0;while(pc!=0x60004 && pc!=0x60000){last=pc;Step();assert(regs[2]>=0x6e000 && regs[2]<=0x70000);}
+  if(pc==0x60000)std::fprintf(stderr,"SCATTER_PARK last=%x ra=%x writes=%u\n",last,regs[1],writes);
+  return pc==0x60004;
+ }
  bool RunGather(unsigned function,unsigned seal,unsigned descriptor,unsigned tracked,unsigned worker){
   std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
   regs[10]=descriptor;regs[11]=tracked;regs[12]=worker;pc=function;steps=0;
@@ -49,9 +62,10 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
- const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource);
+ const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
+ const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
  std::array<std::array<uint32_t,64>,119> boots;
@@ -78,7 +92,10 @@ int main(int argc,char** argv){
   auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=m->memory;
   const unsigned owner=0x6e000,frame=owner+768;
   for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
-  endpoint->memory[frame+9*4]=129;endpoint->memory[frame+11*4]=rows;
+  endpoint->memory[frame+9*4]=129;endpoint->memory[frame+11*4]=rows;endpoint->memory[frame+12*4]=rows*4;
+  endpoint->memory[frame+53*4]=0xe0000;
+  for(unsigned i=0;i<64;i++)endpoint->memory[owner+i*4]=0;
+  for(unsigned i=0;i<128;i++)endpoint->memory[owner+256+i*4]=endpoint->memory[0x75000+i*4]=0;
   for(unsigned i=0;i<16;i++){
    const unsigned value=0x10000+i,at=i==0?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;
    endpoint->memory[owner+(16+i)*4]=value;endpoint->memory[frame+(16+i)*4]=value;endpoint->memory[0xffb20000+at]=value;
@@ -102,7 +119,23 @@ int main(int argc,char** argv){
   if(badSource){assert(!endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,0) && !endpoint->packets && endpoint->seals);return 0;}
   for(unsigned w=0;w<119;w++)assert(endpoint->RunGather(gathers[0],packetSeal,frame,0x6d000,w));
   assert(endpoint->Run(seals[0],frame) && endpoint->packets && endpoint->seals);
+  for(unsigned i=0;i<64;i++){
+   endpoint->memory[0x75300+i*4]=endpoint->memory.at(owner+i*4);
+   endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);
+  }
+  for(unsigned i=0;i<width;i++)endpoint->memory[0xe0000+i*4]=0;
+  for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
+  for(unsigned i=0;i<119*8;i++)endpoint->memory[0x75800+i*4]=endpoint->memory[0x77000+i*4]=0;
+  for(unsigned i=0;i<119;i++)endpoint->memory[0x76800+i*4]=endpoint->memory[0x76e00+i*4]=0;
+  for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=endpoint->memory[0x76d00+i*4]=0;
+  for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=endpoint->memory[0x76d40+i*4]=0;
+  endpoint->memory[0x75000+48*4]=1;
+  std::ifstream scatterSymbols(std::string(argv[1])+"/program.demangled");unsigned scatter=0;
+  while(std::getline(scatterSymbols,line))if(line.find("Projection::Scatter(")!=std::string::npos)scatter=unsigned(std::stoul(line.substr(0,8),nullptr,16));
+  if(badScatter){endpoint->memory[0xffb20100]^=1;assert(scatter && !endpoint->RunScatter(scatter,frame,0x6d000) && !endpoint->writes);return 0;}
+  assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000) && endpoint->writes==(rows*4+16383)/16384);
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);
+  for(unsigned row=0;row<rows;row++)assert(endpoint->memory.at(0x04000000+row*4)==results[row]);
   assert(fwrite(results.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));return 0;
  }
  if(store){

@@ -108,3 +108,15 @@ seal parks before the first simulated packet. All three projections also
 again reject a corrupted receipt and reproduce the worker outputs. The source
 registers, NoC traffic, and worker lifecycle remain simulated; this does not
 test a concurrent physical cohort, full control flow or inference speed.
+
+Scatter follow-up: an inspection-only noinline build exposes the actual ROOT
+scatter routine. After the fixture gathers all 119 worker outputs and calls
+the full schedule seal, it initializes synthetic frame/input/owner state and
+invokes that routine with simulated NoC writes. All rows of all three full
+projections arrived unchanged at the simulated destination; packet counts match
+the 16 KiB chunking. On the output projection, corrupting a source after
+gather prevented every scatter write. Real controller sealing was executed.
+The ROOT image has only 152 bytes of text capacity remaining. Scatter was
+invoked by the fixture, not reached by a complete ROOT Run; input state, NoC,
+worker concurrency and hardware ownership remain simulated. This is not a
+model-generation, hardware, quality or tokens-per-second measurement.
