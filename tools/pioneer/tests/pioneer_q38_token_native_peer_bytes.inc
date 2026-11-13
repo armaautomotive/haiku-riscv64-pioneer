@@ -16,7 +16,14 @@ void PreparePeerBytes(){
  }; // immutable pinned QTPM program DATA only, not guest memory or processor state
 #endif
  peerBytes.word=[](void* p,unsigned worker,uint32_t address)->uint32_t&{return static_cast<PioneerSessionIO*>(p)->Raw(worker,address);};
- peerBytes.noc=[](void* p,unsigned worker,unsigned offset){return static_cast<PioneerSessionIO*>(p)->Core(worker).ResidentNocRead(offset);};
+ peerBytes.noc=[](void* p,unsigned worker,unsigned offset){
+  auto& physical=static_cast<PioneerSessionIO*>(p)->Core(worker);
+  if(offset==0x44){const unsigned x=PioneerWorkerX(worker),y=PioneerWorkerY(worker);
+   return uint32_t(0x1c611000|BlackholeDramSourceX(physical.source,x)|(BlackholeDramSourceY(physical.source,y)<<6));}
+  if(offset==0x48)return uint32_t(0x10000|worker);
+  if(offset==0x148)return uint32_t(PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6));
+  return physical.ResidentNocRead(offset);
+ };
  peerBytes.events=[](void* p,unsigned worker,const uint32_t* delta,const uint32_t* commands,unsigned mask,bool pendingChanged,bool pending){
   auto& physical=static_cast<PioneerSessionIO*>(p)->Core(worker);assert(worker && worker<120 && delta[2]==delta[6] && !(mask&~1023U));
   physical.counters[0]+=delta[0];physical.counters[1]+=delta[1];physical.counters[3]+=delta[3];physical.accepted+=delta[2];

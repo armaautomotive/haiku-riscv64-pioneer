@@ -29,6 +29,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE))
 #error Small-to-gate requires the isolated matrix reuse fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE))
+#error Gate cohort requires the isolated small-to-gate fixture
+#endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
 #if PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE)
 #error Model recurrent observer requires the isolated matrix reuse fixture
@@ -420,6 +424,40 @@ static void CheckNativeExecution(Fixture& f){
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+4)==4
    && io.Raw(1,W::Job+34*4)==5 && cpu.recurrentProducerDoorbells==20);
   puts("PASS next role5 matrix job pending without another producer cohort;SIMULATED ONLY,NOT executed gate/layer/token/physical/TPS");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
+  cpu.recurrentGateRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<16000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld){
+   fprintf(stderr,"RECURRENT_GATE_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u;NO result supplied\n",
+    cpu.pc,cpu.steps,cpu.recurrentGateDoorbells,cpu.submitted,cpu.completed);
+   fprintf(stderr,"ROOT_RECENT_PC");for(unsigned i=0;i<64 && i<cpu.cohortRecentCount;i++)fprintf(stderr," %x",cpu.cohortRecentPC[(cpu.cohortRecentCount+i)%64]);fprintf(stderr,"\n");
+   bool reported=false;for(unsigned w=0;w<cpu.recurrentGateDoorbells;w++){
+    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();
+    if(!p.Idle() || s.active || s.pending || s.matrixInstructions!=cpu.recurrentGateBands[w]*2560)
+     fprintf(stderr,"GATE_WORKER%u pc=%x sequence=%u active=%u pending=%u matrices=%u bands=%u idle=%u fault=%u\n",
+      w+1,s.pc,s.sequence,s.active,s.pending,s.matrixInstructions,cpu.recurrentGateBands[w],unsigned(p.Idle()),unsigned(p.cpu->ObserveFaulted()));
+    if(!reported && p.cpu->ObserveFaulted()){p.cpu->ReportRecentInstructions();reported=true;}
+   }
+  }
+  assert(cpu.layerHeld && cpu.recurrentGateDoorbells==119 && io.Core(0).pending && !state->Unsafe());
+  bool gateRows[6144]={};unsigned matrices=0;
+  for(unsigned w=0;w<119;w++){
+   auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentGateBands[w],first=cpu.recurrentGateFirst[w];
+   assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*2560);matrices+=s.matrixInstructions;
+   for(unsigned row=0;row<bands*32;row++){
+    const unsigned global=first+row;assert(global<6144 && !gateRows[global]);gateRows[global]=true;
+    double expected=0;for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+     const uint32_t v=io.Raw(0,R::Input+(tile*32+col)*4);
+     const uint32_t bits=((v+0x7fff+((v>>16)&1))>>16)<<16;
+     expected+=double(Float(bits))*double(int((global*3+tile*7+col*5)%17)-8)*0.0625;
+    }
+    const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
+    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+   }
+  }
+  for(bool seen:gateRows)assert(seen);
+  printf("PASS full recurrent role5 matrix/119 workers/6144 independent synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",matrices);
+#endif
 #endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
   puts("PASS pinned model-derived layer0 alpha/beta BFP8 exports on synthetic input/independent double observer;SIMULATED ONLY,NOT full model or hardware/TPS");

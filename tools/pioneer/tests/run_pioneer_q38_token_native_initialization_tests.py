@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+gate_cohort='--recurrent-gate-cohort' in sys.argv
+if gate_cohort:
+    assert sys.argv.count('--recurrent-gate-cohort')==1
+    sys.argv.remove('--recurrent-gate-cohort')
 small_to_gate='--recurrent-small-to-gate' in sys.argv
 if small_to_gate:
     assert sys.argv.count('--recurrent-small-to-gate')==1
@@ -40,6 +44,7 @@ recurrent_matrix_cohort='--execution-recurrent-matrix-cohort' in sys.argv and '-
 assert not recurrent_matrix_reuse or recurrent_matrix_cohort, 'reuse test requires the isolated matrix cohort'
 assert not model_recurrent or recurrent_matrix_reuse, 'model-weight fixtures require the isolated recurrent reuse test'
 assert not small_to_gate or recurrent_matrix_reuse, 'small-to-gate check requires the isolated recurrent reuse test'
+assert not gate_cohort or small_to_gate, 'gate cohort requires the isolated small-to-gate test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
@@ -454,6 +459,7 @@ if qgwd_inspection:
     if recurrent_matrix_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE']='1'
     if recurrent_matrix_reuse:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE']='1'
     if small_to_gate:defines['PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE']='1'
+    if gate_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE']='1'
     if model_recurrent:defines['PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
@@ -815,6 +821,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         '-fsanitize=address,undefined', *(['-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1'] if synthetic_embedding else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST=1'] if synthetic_layer else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST=1'] if synthetic_recurrent_matrix else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST=1'] if gate_cohort else []),
                         *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:

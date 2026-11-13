@@ -641,3 +641,20 @@ the full layer were not executed. Two controller cross-builds matched, the
 bundle regenerated reproducibly, the fake-tag native source cross-compiled,
 and isolated role tests passed. There is no hardware or speed measurement;
 this candidate is not installed in the Assistant or live driver.
+
+Continuous large-gate simulation: the shared controller was extended beyond
+the held role-5 doorbell to all 119 workers, using seven-bank synthetic BFP8
+weights for all 6,144 rows. The first run dispatched all jobs but faulted on
+workers 60 onward before their matrix instructions; the worker trace showed
+an identity check in which the test backend supplied a logical node ID while
+the shared fixture supplied translated physical coordinate tables. The
+host-only endpoint now derives the node ID from the same physical translation
+tables, without changing any device driver or weakening the worker's check.
+After that correction the same continuous run completed both preceding
+model-derived small matrices, then the entire synthetic role-5 matrix on all
+119 workers. All 6,144 outputs matched an independent observer, with 491,520
+modeled matrix instructions. A separate source test checked all synthetic
+gate tiles and seven bank extents. Inputs remain synthetic, the host BFP
+backend snapshots each job's bytes, and the subsequent role-6 matrix was held
+before delivery. This is not an entire layer, full model, physical-card run,
+answer-quality qualification or throughput measurement.

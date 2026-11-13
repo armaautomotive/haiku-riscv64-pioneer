@@ -26,6 +26,25 @@ int main(int argc,char** argv){
   const auto& q=proposal.parts[i];assert(++found<=2 && q.bytes==348160);const unsigned role=p->role-10;route[role]=PioneerQ38ProjectionRoute(q.bank);address[role]=original->Base+q.offset;
  }
  assert(found==2);std::array<uint8_t,1088> bytes;std::array<float,1024> values;
+#ifdef PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST
+ unsigned fragments=0,gateRows=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);const auto& q=proposal.parts[i];
+  if(p->kind!=original->WeightKind || p->layer || p->role!=5)continue;
+  assert(q.encoding==PioneerQ38HybridRecurrentQ8MatrixPlan::RecurrentQ8Bfp8 && p->firstRow==gateRows);
+  for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<160;tile++){
+   assert(source.Read(PioneerQ38ProjectionRoute(q.bank),original->Base+q.offset+(band*160+tile)*1088,bytes.data(),bytes.size()));
+   assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,bytes.data(),bytes.size(),values.data(),values.size()));
+   for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
+    const unsigned global=p->firstRow+band*32+row;const float expected=float(int((global*3+tile*7+col*5)%17)-8)*0.0625f;
+    assert(values[row*32+col]==expected);
+   }
+  }
+  gateRows+=p->rows;fragments++;
+ }
+ assert(fragments==7 && gateRows==6144);
+ puts("PASS synthetic role5 BFP8 source 6144 rows across seven banks; NO MODEL OR DEVICE");
+#endif
  for(unsigned role=0;role<2;role++)for(unsigned band=0;band<2;band++)for(unsigned tile=0;tile<160;tile++){
   assert(source.Read(route[role],address[role]+(band*160+tile)*1088,bytes.data(),bytes.size()));
   assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,bytes.data(),bytes.size(),values.data(),values.size()));

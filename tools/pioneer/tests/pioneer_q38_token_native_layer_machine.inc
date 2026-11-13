@@ -11,6 +11,9 @@ bool recurrentProducersRunning=false;unsigned recurrentProducerDoorbells=0;
 bool recurrentMatrixRunning=false;unsigned recurrentMatrixDoorbells=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE
 bool recurrentMatrixReuseRunning=false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
+bool recurrentGateRunning=false;unsigned recurrentGateDoorbells=0,recurrentGateFirst[119]={},recurrentGateBands[119]={};
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
@@ -82,6 +85,9 @@ void SubmitLayer(){
   if(!recurrentMatrixRunning || recurrentMatrixDoorbells<2
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE
    || (recurrentMatrixReuseRunning && recurrentMatrixDoorbells<4)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
+   || (recurrentGateRunning && recurrentGateDoorbells<119)
+#endif
 #endif
   )
 #endif
@@ -91,6 +97,9 @@ void SubmitLayer(){
   else if(recurrentMatrixRunning && recurrentMatrixDoorbells<2){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE
   else if(recurrentMatrixReuseRunning && recurrentMatrixDoorbells<4){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
+  else if(recurrentGateRunning && recurrentGateDoorbells<119){layerHeld=false;}
+#endif
 #endif
 #endif
   else
@@ -167,6 +176,16 @@ void RespondLayer(){
      }
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
+     else if(recurrentGateRunning && recurrentGateDoorbells<119){
+      const unsigned w=recurrentGateDoorbells,seq=w<2?4:w<20?2:1;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
+       && io.Raw(worker,W::Job+34*4)==5 && io.Raw(worker,W::Job+33*4)==6144);
+      recurrentGateFirst[w]=io.Raw(worker,W::Job+32*4);recurrentGateBands[w]=io.Raw(worker,W::Job+20*4);
+      assert(recurrentGateBands[w] && recurrentGateBands[w]<=8 && recurrentGateFirst[w]<6144
+       && recurrentGateBands[w]*32<=6144-recurrentGateFirst[w]);recurrentGateDoorbells++;
+     }
+#endif
      else {assert(recurrentMatrixRunning && recurrentProducerDoorbells==20
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE
       && (recurrentMatrixDoorbells<2 || (recurrentMatrixReuseRunning && recurrentMatrixDoorbells<4))

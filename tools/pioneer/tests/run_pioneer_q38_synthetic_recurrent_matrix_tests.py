@@ -16,6 +16,12 @@ with tempfile.TemporaryDirectory(prefix='q38-synthetic-recurrent-',dir='/private
                     '-fsanitize=address,undefined',*flags,str(here/'pioneer_q38_synthetic_recurrent_matrix_test.cpp'),
                     str(here/'pioneer_q38_synthetic_embedding_bridge.cpp'),'-o',binary],check=True)
     subprocess.run([binary,str(here/'synthetic_q4_qgw8_layer.fixture')],check=True)
+    gate_binary=str(Path(tmp)/'gate-test')
+    subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-fsanitize=address,undefined',*flags,'-DPIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST=1',
+                    str(here/'pioneer_q38_synthetic_recurrent_matrix_test.cpp'),
+                    str(here/'pioneer_q38_synthetic_embedding_bridge.cpp'),'-o',gate_binary],check=True)
+    subprocess.run([gate_binary,str(here/'synthetic_q4_qgw8_layer.fixture')],check=True)
     for forbidden in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE',
                       'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT'):
         result=subprocess.run([compiler,'-std=c++17',*flags,'-D'+forbidden,'-fsyntax-only',
