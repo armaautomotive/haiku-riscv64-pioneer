@@ -12,6 +12,11 @@ import tempfile
 assert __debug__ and len(sys.argv) in (4,9,14) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,recurrent=map(Path,sys.argv[1:4]);here=Path(__file__).resolve().parent
 assert all(p.is_absolute() for p in (sdk,root,recurrent)) and sdk.is_dir() and root.is_dir() and recurrent.is_file()
+componentHash=hashlib.sha256(recurrent.read_bytes()).hexdigest()
+assert componentHash in ('535301c90398af3dd4ad2ad9e7b9333d93bfae54fa6f54980bf49894b19fb3a1',
+                         '2b0638d38044bd627bf40621bcfddef77e1bb4c7a851e1fac13da171819dafb2',
+                         'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627')
+allReuse=componentHash=='e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627'
 old=root/'qualified-components';tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
 pins=((root/'start.o','20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6dcf271c535383b46'),
  (root/'program.o','c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037'),
@@ -107,18 +112,19 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
     stdout=subprocess.PIPE,check=True,env=env).stdout
    assert exported[:prefix]==retained[:prefix] and len(exported)>=prefix+4
    rootState=exported[prefix:];count=struct.unpack_from('<I',rootState)[0];assert len(rootState)==4+count*8
-   smallJobs=subprocess.run([str(smallbin),str(tmp),'--warm-reuse-jobs'],input=boot,
+   smallJobs=subprocess.run([str(smallbin),str(tmp),'--warm-all-reuse-jobs' if allReuse else '--warm-reuse-jobs'],input=boot,
     stdout=subprocess.PIPE,check=True,env=env).stdout
    snapshots=subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
     *map(str,(sdk,worker,leaf,private,gate,qkv,alpha,beta,learned,output,conv)),
-    '--capture-controller-reuse-prefixed'],input=gateJobs+qkvJobs+smallJobs,
+    '--capture-controller-all-reuse' if allReuse else '--capture-controller-reuse-prefixed'],input=gateJobs+qkvJobs+smallJobs,
     stdout=subprocess.PIPE,check=True,env=env).stdout
    assert len(snapshots)==2*snapshotSize
-   continued=subprocess.run([str(smallbin),str(tmp),'--reuse-chain-import'],input=boot+rootState+snapshots,
+   continued=subprocess.run([str(smallbin),str(tmp),'--reuse-all-import' if allReuse else '--reuse-chain-import'],input=boot+rootState+snapshots,
     stdout=subprocess.PIPE,check=True,env=env).stdout
    assert continued==b'PASS ROOT alpha/beta Runs preserve actual controller histories; SIMULATED NO DEVICE\n'
-   damaged=subprocess.run([str(smallbin),str(tmp),'--reuse-chain-import-bad-prior'],input=boot+rootState+snapshots,
-    stdout=subprocess.PIPE,check=True,env=env).stdout
-   assert damaged==b'PASS damaged input or prior receipt refused before new dispatch; NO DEVICE\n'
+   for failure in (('--reuse-all-bad-alpha','--reuse-all-bad-beta','--reuse-all-bad-input','--reuse-all-bad-native') if allReuse else ('--reuse-chain-import-bad-prior',)):
+    damaged=subprocess.run([str(smallbin),str(tmp),failure],input=boot+rootState+snapshots,
+     stdout=subprocess.PIPE,check=True,env=env).stdout
+    assert damaged==b'PASS damaged input or prior receipt refused before new dispatch; NO DEVICE\n'
    print('PASS gate/QKV/alpha/beta ROOT state carried through retained simulated workers; NO DEVICE OR SPEED')
   print('PASS ROOT gate and QKV Runs with retained ROOT and simulated worker histories; NO DEVICE OR SPEED')

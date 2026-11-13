@@ -5,10 +5,12 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--warm-reuse-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export") || !std::strcmp(argv[2],"--reuse-jobs") || !std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-chain-import") || !std::strcmp(argv[2],"--reuse-chain-import-bad-prior") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior") || !std::strcmp(argv[2],"--cold-beta-jobs") || !std::strcmp(argv[2],"--cold-beta")));
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--warm-reuse-jobs") || !std::strcmp(argv[2],"--warm-all-reuse-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export") || !std::strcmp(argv[2],"--reuse-jobs") || !std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-chain-import") || !std::strcmp(argv[2],"--reuse-all-import") || !std::strcmp(argv[2],"--reuse-all-bad-alpha") || !std::strcmp(argv[2],"--reuse-all-bad-beta") || !std::strcmp(argv[2],"--reuse-all-bad-input") || !std::strcmp(argv[2],"--reuse-all-bad-native") || !std::strcmp(argv[2],"--reuse-chain-import-bad-prior") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior") || !std::strcmp(argv[2],"--cold-beta-jobs") || !std::strcmp(argv[2],"--cold-beta")));
+ const bool allBadAlpha=!std::strcmp(argv[2],"--reuse-all-bad-alpha"),allBadBeta=!std::strcmp(argv[2],"--reuse-all-bad-beta"),allBadInput=!std::strcmp(argv[2],"--reuse-all-bad-input"),allBadNative=!std::strcmp(argv[2],"--reuse-all-bad-native");
+ const bool allJobs=!std::strcmp(argv[2],"--warm-all-reuse-jobs"),allImport=!std::strcmp(argv[2],"--reuse-all-import") || allBadAlpha || allBadBeta || allBadInput || allBadNative;
  const bool importBad=!std::strcmp(argv[2],"--reuse-chain-import-bad-prior");
- const bool importRoot=!std::strcmp(argv[2],"--reuse-chain-import") || importBad;
- const bool coldBeta=!std::strcmp(argv[2],"--cold-beta") || !std::strcmp(argv[2],"--cold-beta-jobs"),warmReuse=!std::strcmp(argv[2],"--warm-reuse-jobs"),reuseJobs=!std::strcmp(argv[2],"--reuse-jobs") || warmReuse,reuseChain=!std::strcmp(argv[2],"--reuse-chain") || importRoot || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior"),badInput=!std::strcmp(argv[2],"--reuse-bad-input"),badNative=!std::strcmp(argv[2],"--reuse-bad-native"),warmJobs=!std::strcmp(argv[2],"--warm-jobs") || warmReuse,jobs=!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--cold-beta-jobs") || warmJobs || reuseJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--reuse-bad-prior") || importBad,exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows || reuseChain,full=!std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--cold-beta") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
+ const bool importRoot=!std::strcmp(argv[2],"--reuse-chain-import") || allImport || importBad;
+ const bool coldBeta=!std::strcmp(argv[2],"--cold-beta") || !std::strcmp(argv[2],"--cold-beta-jobs"),warmReuse=!std::strcmp(argv[2],"--warm-reuse-jobs") || allJobs,reuseJobs=!std::strcmp(argv[2],"--reuse-jobs") || warmReuse,reuseChain=!std::strcmp(argv[2],"--reuse-chain") || importRoot || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior"),badInput=!std::strcmp(argv[2],"--reuse-bad-input"),badNative=!std::strcmp(argv[2],"--reuse-bad-native"),warmJobs=!std::strcmp(argv[2],"--warm-jobs") || warmReuse,jobs=!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--cold-beta-jobs") || warmJobs || reuseJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--reuse-bad-prior") || importBad,exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows || reuseChain,full=!std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--cold-beta") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
  const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
@@ -36,8 +38,8 @@ int main(int argc,char** argv){
    PioneerQ38SmallRecurrentWorkspace::Offset+record*128,workspace->data()+record*32));
   for(unsigned i=0;i<64;i++)root->memory[0x80000+i*4]=0x7fc00001;
   if(jobs){
-   if(warmReuse && kind){uint32_t empty[64]={};for(unsigned i=0;i<40;i++)assert(fwrite(empty,sizeof(empty),1,stdout)==1);}
-   for(unsigned w=0;w<(reuseJobs && kind?0U:20U);w++){
+   if((warmReuse && kind) || allJobs){uint32_t empty[64]={};for(unsigned i=0;i<40;i++)assert(fwrite(empty,sizeof(empty),1,stdout)==1);}
+   for(unsigned w=0;w<(allJobs || (reuseJobs && kind)?0U:20U);w++){
     const unsigned producerSequence=1+(warmJobs?3:0)+kind*(w<2?2:1);
     uint32_t data[64];assert(Call(*root,descriptor[0],d,w,0,out,false));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
@@ -45,7 +47,7 @@ int main(int argc,char** argv){
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
    }
    for(unsigned w=0;w<2;w++){
-    uint32_t data[64];const unsigned matrixSequence=2+(warmJobs?3:0)+kind*(reuseJobs?1:2);
+    uint32_t data[64];const unsigned matrixSequence=2+(warmJobs?3:0)+kind*(reuseJobs?1:2)-unsigned(allJobs);
     assert(root->Run(root->job[0],d,w,matrixSequence));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
     unsigned bank=0;while(bank<7 && !(*workspace)[record*32+bank*3])bank++;
@@ -58,6 +60,8 @@ int main(int argc,char** argv){
    if(corrupt)(*snapshots)[0].proof[19]^=1;
    if(badProducer)(*snapshots)[0].producer.proof[19]^=1;
    if(badPrior && kind==1)(*snapshots)[2].initial.proof[19]^=1;
+   if(allBadAlpha && !kind)(*snapshots)[0].initial.proof[19]^=1;
+   if(allBadBeta && kind==1)(*snapshots)[2].initial.proof[19]^=1;
    auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=(chain && kind) || importRoot?retainedRoot:root->memory;
    const unsigned owner=0x6e000,frame=owner+768;
    for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=root->memory.at(d+i*4);
@@ -96,6 +100,8 @@ int main(int argc,char** argv){
     for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=endpoint->memory[0x76d00+i*4]=0;
     for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=endpoint->memory[0x76d40+i*4]=0;
     for(unsigned i=0;i<5120;i++)endpoint->memory[0x140000+i*4]=uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16;
+    if(!kind && allBadInput)endpoint->memory[0x140000]^=0x10000;
+    if(!kind && allBadNative)endpoint->memory[0xa0000]^=1;
     if(kind && badInput)endpoint->memory[0x140000]^=0x10000;
     if(kind && badNative)endpoint->memory[0xa0000]^=1;
     for(unsigned w=0;w<119;w++){
@@ -128,13 +134,13 @@ int main(int argc,char** argv){
      if(!run && line.find("Projection::Run(")!=std::string::npos)run=address;
      if(line.find("Projection::CaptureRecipe(")!=std::string::npos)capture=address;
      if(!prepare && line.find("Projection::BfPrepare(")!=std::string::npos)prepare=address;}
-    endpoint->skipProducer=reuseChain && kind;
+    endpoint->skipProducer=(reuseChain && kind) || allImport;
     assert(run && prepare);const bool accepted=endpoint->RunController(run,capture,prepare,frame,true);
-    if((badPrior || badInput || badNative) && kind==1){assert(!accepted && !endpoint->writes);
+    if(((badPrior || badInput || badNative || allBadBeta) && kind==1) || ((allBadAlpha || allBadInput || allBadNative) && !kind)){assert(!accepted && !endpoint->writes);
      for(unsigned w=0;w<119;w++)assert(!endpoint->jobs[w] && !endpoint->released[w] && !endpoint->descriptors[w]);
      puts("PASS damaged input or prior receipt refused before new dispatch; NO DEVICE");return 0;}
     assert(accepted);
-    for(unsigned w=0;w<119;w++)assert(endpoint->released[w]==(w<2) && endpoint->descriptors[w]==(w<20 && !(reuseChain && kind)));
+    for(unsigned w=0;w<119;w++)assert(endpoint->released[w]==(w<2) && endpoint->descriptors[w]==(w<20 && !((reuseChain && kind) || allImport)));
     for(unsigned row=0;row<48;row++){
      const uint32_t result=endpoint->memory.at(0x04000000+PioneerQ38MixedRecurrentOffset(role)+row*4);
      assert(result==(*snapshots)[row/32].output[row%32]);if(exportRows)assert(fwrite(&result,4,1,stdout)==1);

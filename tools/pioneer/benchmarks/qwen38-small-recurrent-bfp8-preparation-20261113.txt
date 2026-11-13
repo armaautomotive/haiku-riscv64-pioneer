@@ -272,3 +272,23 @@ processes and workers are simulated sequentially: this is not a continuous
 physical cohort, native execution, answer quality or a speed measurement.
 Combined inspection object SHA-256:
 2b0638d38044bd627bf40621bcfddef77e1bb4c7a851e1fac13da171819dafb2.
+
+QKV-to-alpha candidate: a separate all-reuse inspection image can also reuse
+QKV's prepared 5120-value input for alpha; beta can then use alpha's input
+while workers 2..19 retain their prior QKV matrix history. The candidate
+requires matching layer/position/invocation and all 119 prior QKV jobs,
+unchanged input/native shadows, and the ordinary complete admission of all
+workers. In the simulated gate/QKV/alpha/beta sequence this omits 20 producer
+jobs for each of the three transitions. The linked ROOT state and 119 worker
+histories were carried through the four calls; all model-derived projection
+outputs matched and changed prior QKV proofs or alpha input/native shadow
+parked before new dispatch. The worker simulation also checked Conv, GDN and
+output separately. These are sequential simulators with host-transported
+ROOT/worker records, not native ownership or real card concurrency.
+No answer-quality or tokens/sec improvement is established.
+
+The prior non-reuse and alpha-to-beta-only component objects rebuilt byte-for-
+byte unchanged (7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c
+and bed9ed4c8598a50b8448d08fa8e5499580d1b350f2a9c7dc39e307058f04d22a).
+All-reuse inspection component SHA-256:
+e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627.
