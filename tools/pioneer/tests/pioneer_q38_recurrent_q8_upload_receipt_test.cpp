@@ -73,6 +73,16 @@ int main(int argc,char** argv){
  assert(!receipt->Matches(&context,&foreign,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Matches(&context,&cookie,hashes.data(),ledger.data(),17,43));
  assert(receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
+ auto logicalAncestor=std::make_unique<PioneerQ38Qgw8KernelLayout>();
+ auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(logicalAncestor->Build(*canonical) && logical->BuildDenseQ8LogicalParentInspection(*logicalAncestor));
+ assert(receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->MatchesLogical(*canonical,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->MatchesLogical(*logical,&context,&foreign,hashes.data(),ledger.data(),17,42));
+ auto* changed=const_cast<PioneerQ38CanonicalPart*>(logical->Part(0));assert(changed);
+ const auto saved=*changed;changed->offset+=4096;
+ assert(!receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42));*changed=saved;
+ assert(receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42));
  using W=PioneerQ38RecurrentQ8MatrixWorkspace;
  std::array<uint32_t,W::Words> actual={},expected={};actual.fill(0xa5a5a5a5);
  const auto untouched=actual;

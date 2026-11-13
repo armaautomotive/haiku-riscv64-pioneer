@@ -85,6 +85,21 @@ public:
   if(!Matches(c,fd,h,initialized,owner,gen))return false;
   return PioneerQ38RecurrentQ8LedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
+ // The startup view is the QGW8 logical ancestor, not the physical BFP8
+ // geometry. Matching it does not assert that every logical page is present.
+ bool MatchesLogical(const C& logical,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  if(!logical.Qgw8InspectionLayout() || logical.Count()!=original.Count()
+   || logical.RecurrentCount()!=original.RecurrentCount() || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned b=0;b<7;b++)if(logical.Used(b)!=ancestor.Used(b))return false;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* src=original.Part(i);const auto* dst=logical.Part(i);const auto* q=ancestor.At(i);
+   if(!src || !dst || !q || src->kind!=dst->kind || src->layer!=dst->layer || src->role!=dst->role
+    || src->type!=dst->type || src->firstRow!=dst->firstRow || src->rows!=dst->rows || src->rowBytes!=dst->rowBytes
+    || q->bank!=dst->bank || q->offset!=dst->offset || q->bytes!=dst->bytes || q->allocated!=dst->allocated)return false;
+  }
+  return Revalidate(c,fd,h,initialized,owner,gen);
+ }
  // Produce metadata only from this sealed ledger and independently rebuilt
  // layout. No write to card memory, readback or device ownership is implied.
  bool Workspace(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
