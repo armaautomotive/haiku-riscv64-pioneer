@@ -66,9 +66,9 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
  env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
  workerArgs=[str(workerBinary),str(worker),str(leaf)]
  boots=subprocess.check_output([*workerArgs,'--boot',str(alpha),str(beta)],env=env)
- assert len(boots)==2*64*4
+ assert len(boots)==20*64*4
  jobs=subprocess.run([str(rootBinary),str(tmp),'--jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
- assert len(jobs)==2*2*3*64*4
+ assert len(jobs)==2*(20*2+2)*64*4
  results=subprocess.run([*workerArgs,'--run',str(alpha),str(beta)],input=jobs,stdout=subprocess.PIPE,check=True,env=env).stdout
  assert len(results)==2*2*32*4
  subprocess.run([str(rootBinary),str(tmp),'--publish'],input=boots+results,check=True,env=env)

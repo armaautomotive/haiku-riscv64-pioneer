@@ -102,3 +102,17 @@ linked ROOT jobs' band addresses, bank routes and row spans against those
 records before executing the retained worker instructions. The host still
 supplies weight bytes by fixture, not by simulated DRAM address; consequently
 this does not prove native residency, card-side reads or device execution.
+
+Full input fan-out follow-up: the ROOT job-emission/worker bridge now covers
+all 20 BF16 producer workers for the 5,120-value input, then the two BFP8
+matrix workers for each alpha/beta result. The separate worker simulations
+retain their individual job histories across both roles: the two matrix
+workers receive the next sequence after their matrix job, while the other
+18 retain producer-only sequence history. Each producer executes its actual
+instruction image and receipt checks; its packed bytes are assembled by the
+fixture and fed to the matrix simulators. Both output matrices still match
+their independent model-derived reference, and bounded ROOT publication
+passes. ASan/UBSan are enabled. ROOT admission, receipt gathering and NoC
+handoff are still not exercised by this bridge: the host transports frames
+and producer bytes and the workers execute sequentially. No physical-card or
+throughput claim follows.
