@@ -40,6 +40,16 @@
 #endif
 #include "../../../../../tools/pioneer/PioneerQ38RecurrentQ8UploadReceiptInspection.h"
 #endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION
+#if PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION != 1 || !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) \
+ || PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION) \
+ || PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Small recurrent span service is offline inspection only
+#endif
+#include "../../../../../tools/pioneer/PioneerQ38SmallRecurrentUploadReceiptInspection.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 template<class Receipt> struct PioneerQ38SpanReceiptKind {enum {Value=0};};
 template<> struct PioneerQ38SpanReceiptKind<PioneerQ38HybridUploadReceipt> {enum {Value=1};};
@@ -51,6 +61,9 @@ template<> struct PioneerQ38SpanReceiptKind<PioneerQ38DenseQ8UploadReceiptInspec
 #endif
 #ifdef PIONEER_Q38_RECURRENT_Q8_SPAN_INSPECTION
 template<> struct PioneerQ38SpanReceiptKind<PioneerQ38RecurrentQ8UploadReceiptInspection> {enum {Value=4};};
+#endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION
+template<> struct PioneerQ38SpanReceiptKind<PioneerQ38SmallRecurrentUploadReceiptInspection> {enum {Value=5};};
 #endif
 #endif
 // Native adapter's shared kernel-only core. Complete owner/fresh-page proof
@@ -91,6 +104,9 @@ template<class C,bool Work=false
 		|| ((PioneerQ38SpanReceiptKind<Receipt>::Value==2 || PioneerQ38SpanReceiptKind<Receipt>::Value==3
 #ifdef PIONEER_Q38_RECURRENT_Q8_SPAN_INSPECTION
 			|| PioneerQ38SpanReceiptKind<Receipt>::Value==4
+#endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION
+			|| PioneerQ38SpanReceiptKind<Receipt>::Value==5
 #endif
 			)
 			&& ((!Work && !Qgw8Fast) || (Work && Qgw8Fast))),
@@ -201,6 +217,21 @@ template<class C> static bool PioneerQ38RecurrentQ8SpanUploadFastInspection(C& c
  PioneerQ38RecurrentQ8UploadReceiptInspection* receipt)
 {
  return PioneerQ38SpanUploadCore<C,true,PioneerQ38RecurrentQ8UploadReceiptInspection,true>(c,request,receipt);
+}
+#endif
+#endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION
+// Distinct non-native receipt; no ioctl or live inference capability.
+template<class C> static bool PioneerQ38SmallRecurrentSpanUploadInspection(C& c,tt_q38_span_upload& request,
+ PioneerQ38SmallRecurrentUploadReceiptInspection* receipt)
+{
+ return PioneerQ38SpanUploadCore<C,false>(c,request,receipt);
+}
+#ifdef PIONEER_Q38_SPAN_FAST
+template<class C> static bool PioneerQ38SmallRecurrentSpanUploadFastInspection(C& c,tt_q38_span_upload& request,
+ PioneerQ38SmallRecurrentUploadReceiptInspection* receipt)
+{
+ return PioneerQ38SpanUploadCore<C,true,PioneerQ38SmallRecurrentUploadReceiptInspection,true>(c,request,receipt);
 }
 #endif
 #endif

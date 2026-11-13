@@ -22,6 +22,7 @@ struct FakePrepared {
   return true;
  }
 };
+#ifndef PIONEER_Q38_SMALL_RECURRENT_UPLOAD_PLAN_FIXTURE_ONLY
 int main(){
  using Plan=PioneerQ38SmallRecurrentUploadPlan<FakePrepared>;using Receipt=PioneerQ38SmallRecurrentUploadReceiptInspection;
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
@@ -58,3 +59,4 @@ int main(){
  assert(!uncertain.Acknowledge(false) && !uncertain.Ready());
  puts("PASS all relocated staged spans match receipt physical order; atomic failure and uncertain-transfer refusal; SYNTHETIC NO DEVICE/SPEED");
 }
+#endif

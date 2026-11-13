@@ -43,3 +43,12 @@ the independently constructed receipt and exercised failed reads and
 uncertain completion; a prepared-page-chain binding regression also passed.
 This is host-side staging logic only, not an ioctl, physical transfer or
 performance result.
+
+Span-service follow-up: a new inspection-only receipt specialization passes
+the staged first span through the existing checked span service using the
+actual simulated transport image. Strict and Work-style transport modes pass;
+a simulated packet failure quarantines the synthetic owner, and repeated
+upload is refused. The pre-existing recurrent span-service regression also
+passes. Only the first staged span was exercised through this service; the
+full 21,475-span ordering was checked separately. This adds no live ioctl,
+driver capability, actual device write or inference-speed result.

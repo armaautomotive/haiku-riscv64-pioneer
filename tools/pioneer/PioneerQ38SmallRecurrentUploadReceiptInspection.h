@@ -86,6 +86,7 @@ public:
  }
  bool Sealed()const{return sealed && Current() && !pending && lease && lease->closed && lease->saved
   && lease->nonce==spans && !lease->dirty && !lease->ready && !lease->running && !lease->unsafe;}
+ unsigned Spans()const{return spans;}
  bool Revalidate(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
   return PioneerQ38SmallRecurrentLedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
