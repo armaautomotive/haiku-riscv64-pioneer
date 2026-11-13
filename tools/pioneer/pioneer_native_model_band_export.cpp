@@ -14,7 +14,17 @@
 namespace {
 using Cache=PioneerModelWeightCache;
 using Packet=PioneerQ38NativeBfpBandData::Packet;
-#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT
+#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) && defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT)
+#error Dense and recurrent private exporters are distinct roles
+#endif
+#ifdef PIONEER_NATIVE_RECURRENT_BAND_EXPORT
+#if PIONEER_NATIVE_RECURRENT_BAND_EXPORT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error Recurrent Q8 learned-band export is private CPU-only preparation
+#endif
+constexpr unsigned First[3]={0,3072,6112},SelectedRows=6144,SelectedTensor=3,SelectedType=8;
+constexpr const char* SelectedName="blk.0.attn_gate.weight";
+#elif defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT)
 #if PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
 #error Dense Q8 learned-band export is private CPU-only preparation
@@ -78,7 +88,7 @@ int Run(int argc,char** argv) {
 	Require(!lstat(argv[2],&directory) && S_ISDIR(directory.st_mode) && directory.st_uid==geteuid()
 		&& (directory.st_mode&07777)==0700,"Existing private native cache required.");
 	Cache cache;
-#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT
+#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT)
 	Require(cache.OpenExistingDirectory(argv[2],error),error);
 #else
 	Require(cache.Open(argv[2],error),error);

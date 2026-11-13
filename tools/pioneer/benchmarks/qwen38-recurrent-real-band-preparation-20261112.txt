@@ -1,0 +1,22 @@
+Real recurrent BFP8 matrix-band diagnostic preparation, 2026-11-12
+
+Prepared three private 32-row bands from the pinned original Qwen3.8-27B
+blk.0.attn_gate.weight (tensor 3, Q8_0, width 5120, rows 0/3072/6112),
+using the already prepared recurrent BFP8 cache. The exporter authenticated
+the complete original SHA-256 c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+compared all 480 cached tiles with fresh conversion, and produced private
+diagnostic inputs and predictions. An independent integer decoder/arithmetic
+checker matched all 96 outputs and 122,880 simulated phase instructions.
+
+The RISC-V exporter was built twice with the same SHA-256
+7e65707411e1dba2a2f002be0ed86ce5fce017f89bfa9dd0986efad45ae87050.
+The dense and recurrent exporter roles are mutually exclusive. Synthetic
+integer-parser regression tests pass; the recurrent private export does not
+open or repair a cache or access a device. The generated learned-weight data
+are private temporary artifacts and are not included in this repository.
+
+This is CPU-side preparation, with synthetic input, not P100A arithmetic,
+real activations, whole-model accuracy, native driver integration, or speed.
+The 6144-input recurrent output projection is not covered by this fixed-5120
+diagnostic. Physical testing requires independently guarded source/driver
+preflight, cleanup and stable-driver restoration; no such run is implied here.
