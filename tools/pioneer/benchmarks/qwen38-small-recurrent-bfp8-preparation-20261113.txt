@@ -1,0 +1,20 @@
+Qwen3.8-27B small recurrent BFP8 preparation, 2026-11-13
+
+The isolated preparer cross-built for Haiku RISC-V and built on the Mac. It
+authenticates the original GGUF on the same open descriptor and selects
+exactly the alpha/beta matrices of all 48 recurrent layers. The frozen BFP8
+writer converts and zero-pads each 48-row matrix to 64 rows in a dedicated
+cache; the original GGUF is unchanged.
+
+The real Mac run exited 0 after creating 96 entries, 33,423,360 payload bytes
+and 576 conversion chunks. The separate recipe SHA-256 is
+551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897.
+Independent inspection checked the full and per-chunk SHA-256 of all 96
+entries; layer-0 alpha and beta bytes also matched the earlier independently
+checked model-derived exports exactly. Synthetic ASan/UBSan tests check all
+96 selections, padding, exact byte forwarding and forbidden role refusals.
+The temporary cache is /private/tmp/pioneer-small-recurrent-bfp8-cache-20261113-a.
+
+This is lossy BFP8 preparation, not a model quality qualification. These
+entries are not yet uploaded or bound to the on-card scheduler. No live
+driver, Work mode, accelerator execution or inference speed changed.

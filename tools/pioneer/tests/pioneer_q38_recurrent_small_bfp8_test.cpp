@@ -2,13 +2,17 @@
 #define PIONEER_NATIVE_WEIGHT_TILES_FIXTURE_ONLY
 #include "pioneer_q38_native_weight_tiles_test.cpp"
 #define PIONEER_Q38_RECURRENT_SMALL_BFP8_PREPARER 1
-#include "../PioneerQ38RecurrentSmallBfp8Selection.h"
+#define PIONEER_Q38_ALL_BFP8_CACHE 1
+#define PIONEER_Q38_RECURRENT_SMALL_BFP8_TILE_TEST_ONLY 1
+#include "../pioneer_q38_recurrent_small_bfp8_prepare.cpp"
 int main(){
  unsigned total=0,selected=0;
  for(unsigned layer=0;layer<=64;layer++)for(unsigned role=0;;role++){
   PioneerQ38Tensor t;if(!PioneerQ38Expected(layer,role,t))break;total++;
   const bool expected=layer<64 && layer%4!=3 && (role==10 || role==11);
   assert(PioneerQ38RecurrentSmallBfp8Selection::Match(t)==expected);
+  PioneerQ38RecurrentSmallBfp8Tiles::Layout chosen;
+  assert(PioneerQ38RecurrentSmallBfp8Tiles::Describe(t,chosen)==expected);
   if(expected){
    selected++;assert(t.inputs==5120 && t.outputs==48 && t.type==8);
    for(unsigned field=0;field<5;field++){
@@ -18,8 +22,9 @@ int main(){
    }
   }
  }
- assert(total==851 && selected==96);
+ assert(total==851 && selected==96 && selectedTensors==96);
  Source source(8,5120,48);PioneerQ38NativeBfp8WeightTiles::Layout layout;
+ PioneerQ38Tensor tensor;assert(PioneerQ38Expected(0,10,tensor));source.tensors[0].name=tensor.name;
  assert(PioneerQ38NativeBfp8WeightTiles::Describe(source.tensors[0],layout));
  assert(layout.rowTiles==2 && layout.columnTiles==160 && layout.bytes==2*160*1088);
  for(unsigned column:{0U,79U,159U}){
@@ -27,8 +32,13 @@ int main(){
   const unsigned tile=160+column;
   assert(PioneerQ38NativeWeightTiles::ReadFloatTile(source,0,tile,original.data(),original.size()));
   assert(PioneerQ38NativeBfp8WeightTiles::ReadRange(source,0,uint64_t(tile)*1088,1088,packed.data(),packed.size()));
+  std::array<uint8_t,1088> forwarded{};
+  assert(PioneerQ38RecurrentSmallBfp8Tiles::ReadRange(source,0,uint64_t(tile)*1088,1088,forwarded.data(),forwarded.size()) && forwarded==packed);
   assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,packed.data(),packed.size(),decoded.data(),decoded.size()));
   for(unsigned row=16;row<32;row++)for(unsigned c=0;c<32;c++)assert(original[row*32+c]==0 && decoded[row*32+c]==0);
  }
+ std::array<uint8_t,64> untouched{};untouched.fill(0xa5);const auto before=untouched;
+ source.tensors[0].name="not-a-recurrent-matrix";
+ assert(!PioneerQ38RecurrentSmallBfp8Tiles::ReadRange(source,0,0,untouched.size(),untouched.data(),untouched.size()) && untouched==before);
  puts("PASS 96 separate alpha/beta selections and padded last BFP8 rows; synthetic source, NO device or speed");
 }
