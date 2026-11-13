@@ -95,3 +95,10 @@ and a stubbed metadata read stand in for device transport: this does not test
 the actual on-card NoC, automatic ROOT/worker lifecycle, native resident upload,
 full-model inference, output quality or performance. No installed driver was
 changed.
+
+The same bridge was rerun with layer-0 alpha/beta records generated from the
+canonical relocated workspace instead of synthetic addresses. It asserts the
+linked ROOT jobs' band addresses, bank routes and row spans against those
+records before executing the retained worker instructions. The host still
+supplies weight bytes by fixture, not by simulated DRAM address; consequently
+this does not prove native residency, card-side reads or device execution.

@@ -15,13 +15,18 @@ int main(int argc,char** argv){
  root->memory[d+4*4]=0x04000000;root->memory[d+4*6]=2025;root->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  root->memory[d+4*11]=48;root->memory[d+4*14]=5120;root->memory[d+4*15]=8;
  root->memory[d+4*41]=248319; // Match the worker fixture's token identity.
+ auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ PioneerQ38HybridSmallRecurrentBfp8Plan::Proposal proposal;
+ auto workspace=std::make_unique<std::array<uint32_t,PioneerQ38SmallRecurrentWorkspace::Words>>();
+ assert(canonical->Build() && PioneerQ38HybridSmallRecurrentBfp8Plan::Build(*canonical,proposal)
+  && PioneerQ38SmallRecurrentWorkspace::Build(*canonical,proposal,workspace->data(),workspace->size()));
  for(unsigned i=0;i<4;i++)root->memory[d+(32+i*2)*4]=i+1;
  for(unsigned w=0;w<2;w++)for(unsigned i=0;i<64;i++)root->memory[0x170000+w*256+i*4]=boots[w][i];
  for(unsigned kind=0;kind<2;kind++){
   const unsigned role=10+kind,producerSequence=1+kind*2,matrixSequence=producerSequence+1;
   root->memory[d+4*42]=0;root->memory[d+4*43]=role;
-  uint32_t table[32]={};table[6]=0x10000000+kind*0x100000;table[8]=64;
-  assert(RunBuildWithStub(*root,builds[0],reads[0],d,0x3004a00U+kind*128,table));
+  assert(RunBuildWithStub(*root,builds[0],reads[0],d,
+   PioneerQ38SmallRecurrentWorkspace::Offset+kind*128,workspace->data()+kind*32));
   for(unsigned i=0;i<64;i++)root->memory[0x80000+i*4]=0x7fc00001;
   for(unsigned w=0;w<2;w++){
    if(jobs){
@@ -31,6 +36,9 @@ int main(int argc,char** argv){
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
     assert(root->Run(root->job[0],d,w,matrixSequence));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
+    unsigned bank=0;while(bank<7 && !(*workspace)[kind*32+bank*3])bank++;
+    assert(bank<7 && data[19]==(*workspace)[kind*32+bank*3]+w*174080
+     && data[21]==PioneerQ38ProjectionRoute(bank) && data[32]==w*32 && data[20]==1);
    }else{
     uint32_t rows[32];assert(fread(rows,sizeof(rows),1,stdin)==1);
     for(unsigned i=0;i<32;i++)root->memory[out+(64+i)*4]=rows[i];
