@@ -309,7 +309,11 @@ static unsigned Run(const uint32_t* d){
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
  const unsigned active=BfDenseQ8(d)?
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
-  (BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])):
+  (
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   BfSmallQ8(d)?2U:
+#endif
+   BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])):
 #else
   PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]):
 #endif

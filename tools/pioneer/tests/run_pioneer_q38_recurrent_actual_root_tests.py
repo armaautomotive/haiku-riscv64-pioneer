@@ -5,9 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-if len(sys.argv)!=4 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: ABS_SDK ABS_EXISTING_ROOT ABS_NEW_RECURRENT_OBJECT')
-sdk,root,recurrent=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
+if len(sys.argv) not in (4,5) or (len(sys.argv)==5 and sys.argv[4]!='--small') or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: ABS_SDK ABS_EXISTING_ROOT ABS_NEW_RECURRENT_OBJECT [--small]')
+sdk,root,recurrent=map(Path,sys.argv[1:4]);small=len(sys.argv)==5;here=Path(__file__).resolve().parent
 assert sdk.is_absolute() and root.is_absolute() and recurrent.is_absolute()
 assert sdk.is_dir() and root.is_dir() and recurrent.is_file()
 tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-'
@@ -36,7 +36,9 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-actual-root-',dir='/priva
     subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                     '-Wno-unused-function','-Wno-unused-variable','-Wno-misleading-indentation','-ffp-contract=off',
                     '-fsanitize=address,undefined',*['-D'+name+'=1' for name in flags],
+                    *(['-DPIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION=1'] if small else []),
                     str(here/'pioneer_q38_recurrent_actual_root_test.cpp'),'-o',str(binary)],check=True)
     symbols=subprocess.check_output([str(tool)+'nm','-C',str(recurrent)],text=True)
     scoped='Projection::BfDenseScopedSeal(' in symbols
-    subprocess.run([str(binary),str(tmp),*(['--expect-scoped'] if scoped else [])],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+    assert not (small and scoped)
+    subprocess.run([str(binary),str(tmp),*(['--expect-scoped'] if scoped else ['--small'] if small else [])],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})

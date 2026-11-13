@@ -105,7 +105,8 @@ static bool RunBuildWithRealSeal(TransferRoot& m,unsigned pc,unsigned sourceFram
  return m.pc==0x60004 && m.packets==1;
 }
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && !std::strcmp(argv[2],"--expect-scoped")));auto m=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==2 || (argc==3 && (!std::strcmp(argv[2],"--expect-scoped") || !std::strcmp(argv[2],"--small"))));
+ const bool small=argc==3 && !std::strcmp(argv[2],"--small");auto m=std::make_unique<ActualRoot>(argv[1]);
  auto descriptor=Symbols(argv[1],"Projection::BfDescriptor(");
  auto producer=Symbols(argv[1],"Projection::BfProducerJob(");
  auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
@@ -126,11 +127,64 @@ int main(int argc,char** argv){
  while(std::getline(symbols3,line))if(line.find("Projection::BfDenseScopedSeal(")!=std::string::npos && line.find("[clone")==std::string::npos){
   assert(!scopedSeal);scopedSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
  }
- assert(bool(scopedSeal)==(argc==3));
+ assert(bool(scopedSeal)==(argc==3 && !small));
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)m->memory[d+i*4]=0;
  m->memory[d+4*4]=0x04000000;m->memory[d+4*6]=2025;m->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
  m->memory[d+4*15]=8;m->memory[d+4*41]=248319;
  for(unsigned i=0;i<4;i++)m->memory[d+4*(32+i*2)]=i+1;
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+ assert(small);
+ for(unsigned layer:{0U,1U,62U})for(unsigned role:{10U,11U}){
+  m->memory[d+4*14]=5120;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;m->memory[d+4*11]=48;
+  const unsigned offset=0x3004a00U+((layer-layer/4)*2+role-10)*128;
+  uint32_t table[32]={};table[6]=0x10000000;table[8]=64;
+  if(layer==0 && role==10){
+   auto transfer=std::make_unique<TransferRoot>(argv[1]);transfer->memory=m->memory;
+   for(unsigned i=0;i<4;i++)transfer->memory[0xffb20040+i*0x800]=0;
+   for(unsigned i=0;i<32;i++)transfer->memory[0xffb20240+i*4]=0;
+   for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})transfer->memory[0xffb20000+a]=0;
+   assert(RunBuildWithTransfer(*transfer,builds[0],packetSeal,d,offset,table));
+   for(unsigned w=0;w<2;w++)for(unsigned f=0;f<4;f++){
+    const unsigned expected=f==0?0x10000000+w*174080:f==1?2:f==2?w*32:1;
+    assert(transfer->memory.at(0x16ebc0+w*16+f*4)==expected);
+   }
+  }
+  assert(RunBuildWithStub(*m,builds[0],reads[0],d,offset,table));
+  for(unsigned w=0;w<119;w++)for(unsigned f=0;f<4;f++){
+   const unsigned expected=w>=2?0:f==0?0x10000000+w*174080:f==1?2:f==2?w*32:1;
+   assert(m->memory.at(0x16ebc0+w*16+f*4)==expected);
+   assert(m->memory.at(0x16f330+w*16+f*4)==expected);
+  }
+  for(unsigned w=0;w<2;w++){
+   uint32_t boot[64]={};boot[0]=Q::Magic;boot[1]=1;boot[2]=64;boot[3]=w+1;boot[4]=Q::Peer(w+1);
+   boot[5]=boot[16]=0x14000;boot[6]=8192;boot[7]=64;
+   for(unsigned i=0;i<4;i++)boot[8+i*2]=i+1;
+   for(unsigned i=0;i<3;i++)for(unsigned lane=0;lane<6;lane++)boot[17+i]|=(i*6+lane)<<(lane*5);
+   for(unsigned i=0;i<2;i++)for(unsigned lane=0;lane<6;lane++)boot[23+i]|=(i*6+lane)<<(lane*5);
+   for(unsigned i=40;i<=50;i++)boot[i]=Q::BootWord(i);assert(Q::BootShape(boot));
+   for(unsigned i=0;i<64;i++)m->memory[0x170000+w*256+i*4]=boot[i];
+   assert(Call(*m,descriptor[0],d,w,0,out,false));assert(Call(*m,producer[0],d,w,7,out,true));
+   assert(m->Run(m->job[0],d,w,7));
+   uint32_t frame[64],expected[64],tuple[]={0x10000000+w*174080,2,w*32,1};
+   for(unsigned i=0;i<64;i++)frame[i]=m->memory.at(out+i*4);
+   assert(PioneerQ38DenseQ8MatrixRootFrame::Build(tuple,boot,layer,role,0,2025,6,expected));
+   assert(!std::memcmp(frame,expected,sizeof(frame)));
+  }
+  for(unsigned row=0;row<64;row++)m->memory[0x80000+row*4]=0x7fc00001;
+  for(unsigned w=0;w<2;w++){
+   const unsigned valid=w?16:32;
+   for(unsigned i=0;i<32;i++)m->memory[0x78000+(64+i)*4]=i<valid?0x3f000000U+i:0;
+   assert(m->Run(stores[0],d,w));
+   for(unsigned i=0;i<valid;i++)assert(m->memory.at(0x80000+(w*32+i)*4)==0x3f000000U+i);
+  }
+  for(unsigned i=48;i<64;i++)assert(m->memory.at(0x80000+i*4)==0x7fc00001);
+  m->memory[0x78000+(64+16)*4]=1;assert(!m->Run(stores[0],d,1));
+  table[7]=1;assert(!RunBuildWithStub(*m,builds[0],reads[0],d,offset,table));
+ }
+ puts("PASS linked RV32 small alpha/beta schedule and padded-result guard; SYNTHETIC NO DEVICE");
+#else
+ assert(!small);
+#endif
  for(unsigned layer=0;layer<64;layer++)if(layer%4!=3)for(unsigned role:{5U,6U,13U}){
   m->memory[d+4*42]=layer;m->memory[d+4*43]=role;assert(m->Run(record,d));
   assert(m->regs[10]==0x3000200U+((layer-layer/4)*3+(role==5?0:role==6?1:2))*128);

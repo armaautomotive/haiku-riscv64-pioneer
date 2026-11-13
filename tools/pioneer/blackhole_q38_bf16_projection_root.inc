@@ -9,6 +9,13 @@ using BFR=PioneerQ38Bf16RootPairs;
 static bool BfQ4(const uint32_t* d){return d[15]==12 && d[43]>=2 && d[43]<=4;}
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+#include "PioneerQ38RecurrentSmallRootJobs.h"
+static bool BfSmallQ8(const uint32_t* d){return d[15]==8 && d[42]<64 && (d[42]&3)!=3 && (d[43]==10 || d[43]==11);}
+static __attribute__((noinline,section(".bf16.root"))) unsigned BfSmallRecord(const uint32_t* d){
+ return 0x3004a00U+((d[42]-d[42]/4)*2+d[43]-10)*128;
+}
+#endif
 static bool BfRecurrentQ8(const uint32_t* d){return d[15]==8 && d[42]<64 && (d[42]&3)!=3 && (d[43]==5 || d[43]==6 || d[43]==13);}
 static __attribute__((noinline,section(".bf16.root"))) unsigned BfRecurrentRecord(const uint32_t* d){
  const unsigned layer=d[42]-d[42]/4,role=d[43]==5?0:d[43]==6?1:2;
@@ -19,6 +26,9 @@ static void BfBankRead(const uint32_t*,uint32_t*,unsigned,unsigned);
 static bool BfDenseQ8(const uint32_t* d){return (d[15]==8 && d[42]<64 && (d[42]&3)==3 && d[43]>=5 && d[43]<=7)
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
  || BfRecurrentQ8(d)
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+ || BfSmallQ8(d)
+#endif
 #endif
  ;}
 // Experimental ROOT-local metadata only. The native owner must still
@@ -55,7 +65,11 @@ static BF_ROOT_FN void BfDenseSeal(const uint32_t* d){
  // once, and recheck the descriptor before leaving the scan.
  const volatile uint32_t* descriptor=d;
  const unsigned layer=descriptor[42],role=descriptor[43],format=descriptor[15];
- const bool recurrent=format==8 && layer<64 && (layer&3)!=3 && (role==5 || role==6 || role==13);
+ const bool recurrent=format==8 && layer<64 && (layer&3)!=3 && (role==5 || role==6 || role==13
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  || role==10 || role==11
+#endif
+ );
  const bool dense=format==8 && layer<64 && (layer&3)==3 && role>=5 && role<=7;
  if(!recurrent && !dense)scalar_fault_park();
  const unsigned index=((layer/4)*3+role-5)*21;
@@ -111,9 +125,17 @@ static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d
  if(!BfDenseQ8(d))scalar_fault_park();
  BfDenseScheduleIO io;io.index=((d[42]/4)*3+d[43]-5)*21;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
- io.recurrent=BfRecurrentQ8(d);
+ io.recurrent=BfRecurrentQ8(d)
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  || BfSmallQ8(d)
+#endif
+ ;
  if(io.recurrent){
-  BfBankRead(d,tracked,BfRecurrentRecord(d),128);
+  BfBankRead(d,tracked,
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   BfSmallQ8(d)?BfSmallRecord(d):
+#endif
+   BfRecurrentRecord(d),128);
   for(unsigned i=0;i<32;i++)Words(BfDenseScheduleIO::RecurrentRecord)[i]=Words(L::Scratch)[i];
   for(unsigned i=21;i<32;i++)if(Words(BfDenseScheduleIO::RecurrentRecord)[i])scalar_fault_park();
  }
@@ -126,7 +148,12 @@ static BF_ROOT_FN void BfBuildDenseSchedule(const uint32_t* d
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<4;i++)io.Output(w,i,0);
  Fence();if(
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
-  io.recurrent?!PioneerQ38RecurrentQ8MatrixRootJobs::Build(io,d[42],d[43]):
+  io.recurrent?
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   (BfSmallQ8(d)?!PioneerQ38RecurrentSmallRootJobs::Build(io,d[42],d[43]):!PioneerQ38RecurrentQ8MatrixRootJobs::Build(io,d[42],d[43])):
+#else
+   !PioneerQ38RecurrentQ8MatrixRootJobs::Build(io,d[42],d[43]):
+#endif
 #endif
   !PioneerQ38DenseQ8MatrixRootJobs::Build(io,d[42],d[43]))scalar_fault_park();
  Fence();BfDenseSeal(d);
@@ -263,7 +290,11 @@ static BF_ROOT_FN void BfBankRead(const uint32_t* d,uint32_t* tracked,unsigned o
  const bool native=offset>=unsigned(BFP::NativeOffset) && offset<=BFP::NativeOffset+wire && bytes<=BFP::NativeOffset+wire-offset;
  const bool trailer=offset>=unsigned(BFP::LinesOffset) && offset<=BFP::LinesOffset+lines && bytes<=BFP::LinesOffset+lines-offset;
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
- const bool record=BfRecurrentQ8(d) && bytes==128 && offset==BfRecurrentRecord(d);
+ const bool record=bytes==128 && ((BfRecurrentQ8(d) && offset==BfRecurrentRecord(d))
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  || (BfSmallQ8(d) && offset==BfSmallRecord(d))
+#endif
+ );
  if(!BfProducerRole(d) || (!native && !trailer && !record) || !bytes || bytes>16384 || ((offset|bytes)&63))scalar_fault_park();
 #else
  if(!BfProducerRole(d) || (!native && !trailer) || !bytes || bytes>16384 || ((offset|bytes)&63))scalar_fault_park();
@@ -381,7 +412,11 @@ static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
  if(BfDenseQ8(d)){
   if(w>=
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
-   (BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))
+   (
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+    BfSmallQ8(d)?2U:
+#endif
+    BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))
 #else
    PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])
 #endif
@@ -442,7 +477,11 @@ static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsig
 static BF_ROOT_FN void BfStoreDenseMatrix(const uint32_t* d,unsigned w){
  if(!BfDenseQ8(d) || w>=
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
-  (BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))
+  (
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   BfSmallQ8(d)?2U:
+#endif
+   BfRecurrentQ8(d)?119U:PioneerQ38DenseQ8MatrixRootJobs::Active(d[43]))
 #else
   PioneerQ38DenseQ8MatrixRootJobs::Active(d[43])
 #endif

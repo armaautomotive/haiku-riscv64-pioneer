@@ -57,3 +57,19 @@ existing linked RV32 recurrent scheduler/producer/mutation-seal simulations;
 those tests exercise large recurrent jobs, not the new small-result branch.
 The ordinary QRB1 controller was rebuilt separately and matched its pinned
 binary byte for byte. No native driver or device changed.
+
+Scheduler follow-up: the separate small-worker inspection controller now
+selects two 32-row BFP8 jobs for each 48-row alpha/beta projection, reads a
+distinct proposed workspace record, constructs actual worker/producer frames,
+and applies the padded-result guard. The RV32 component linked into the
+existing QGWF ROOT; simulated instruction tests covered both roles in three
+layers, the ROOT's record transfer, two job frames, result publication and
+nonzero-padding refusal. The 144 large recurrent workspace records and
+existing producer/seal regressions also passed. The first link exceeded the
+fixed ROOT text range by 216 bytes; inlining the new bounded schedule in the
+matrix-controller section fixed that link. A regression attempt using an
+older saved object failed a mutation-injection check; rebuilding the current
+non-small component and rerunning the same tests passed. These are synthetic
+ROOT memory/instruction tests, not a full ROOT/worker/NoC lifecycle or device
+run. Workspace records, upload ownership, native integration and real-model
+quality/speed remain unproven; the installed driver is unchanged.
