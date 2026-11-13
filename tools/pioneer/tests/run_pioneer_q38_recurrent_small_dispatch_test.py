@@ -8,9 +8,9 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and len(sys.argv)==10
+assert __debug__ and len(sys.argv)==11
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-sdk,worker,leaf,private,alpha,beta,plan,learned,qkv=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
+sdk,worker,leaf,private,alpha,beta,plan,learned,qkv,gate=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
 assert sdk.is_absolute() and sdk.is_dir() and not sdk.is_symlink()
 pins=((worker/'program.elf','67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d'),
       (leaf/'program.elf','e8a04408d0c1a2d0ffa90d1d92ca77f3bb56f849c1d714723dfae9f3110ba72f'),
@@ -20,11 +20,12 @@ pins=((worker/'program.elf','67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3
       (beta,'f6615b16825dbe365aad7d01729b2b6cbd19c2f0d51545890d1fe74933bcb753'),
       (plan/'program.elf','f94918bc953fbd34d6a33cfc20fad71dd9d281ece6fb93b6a4ffebbfe32027eb'),
       (learned,'e850e588b4ea985d75895f4f188d22ef777a095fd5ca49b9d3a797702a46a311'),
-      (qkv,'6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a'))
+      (qkv,'6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a'),
+      (gate,'e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755fb1f02b'))
 for path,digest in pins:
     assert path.is_absolute() and path.is_file() and not path.is_symlink()
     assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
-for path in (pins[2][0],pins[3][0],alpha,beta,learned,qkv):
+for path in (pins[2][0],pins[3][0],alpha,beta,learned,qkv,gate):
     info=path.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
 roles=('PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION','PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION',
  'PIONEER_Q38_QGWF_BATCH4_WORKER','PIONEER_Q38_QGWE_BATCH_DENSE_WORKER','PIONEER_Q38_QGW8_BFP8_BATCH_WORKER',
@@ -53,6 +54,7 @@ with tempfile.TemporaryDirectory(prefix='q38-small-dispatch-',dir='/private/tmp'
                         '-fsanitize=address,undefined',*['-D'+r+'=1' for r in roles],'-I'+str(private),
                         str(here/name),'-o',str(binary)],check=True)
         extra=[str(plan)] if name=='pioneer_q38_recurrent_small_schedule_test.cpp' else [str(learned),str(qkv)]
+        if name=='pioneer_q38_bfp_conv_gdn_transition_test.cpp':extra.append(str(gate))
         subprocess.run([str(binary),str(worker),str(leaf),str(alpha),str(beta),*extra],check=True,
                        env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
 for path,digest in pins:

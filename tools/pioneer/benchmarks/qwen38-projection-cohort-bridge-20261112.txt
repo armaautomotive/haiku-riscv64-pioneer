@@ -134,6 +134,20 @@ The simulator's expanded 512-row logical Dst view is test-only and does not
 establish the P100A's physical Dst mapping or timing. This is not an all-core
 ROOT lifecycle, card execution, end-to-end model or speed result.
 
+Partial model-data continuity follow-up: each of the two retained QGWF
+workers additionally runs its own 32-row gate and QKV BFP8 bands before
+alpha/beta and Conv, and checks them against the independently verified
+model-derived exports. Each runs both full alpha/beta matrices. Their actual
+simulated alpha/beta results feed GDN; 32 of 128 first-head Q inputs are
+actual Conv outputs from the two workers, and norm/A/dt come from the
+authenticated original model. The gate input is taken from the full export,
+with its first 64 values independently replaced by the identical results
+from those workers. The fixture assembles and passes these values through
+its modeled memory endpoint; remaining Q values and all K/V are synthetic,
+and most QKV/Conv outputs come from previously verified fixtures. This is
+not a complete layer, on-card NoC handoff, 119-worker schedule, token
+generation, physical-card result or inference-speed claim.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.

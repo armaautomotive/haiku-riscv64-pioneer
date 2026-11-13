@@ -127,9 +127,11 @@ struct PioneerQ38BfpGdnWorker:PioneerQ38BfpConvWorker {
   auto& c=transfer.counters;c[4]++;c[14]++;
   if(write){c[1]++;c[8]+=(bytes+63)/64;c[10]++;}else{c[2]++;c[3]+=(bytes+63)/64;c[5]++;}
  }
- void StageGdn(unsigned sequence,unsigned position=0,unsigned slot=0,bool retained=false){
+ void StageGdn(unsigned sequence,unsigned position=0,unsigned slot=0,bool retained=false,const uint32_t* alphaBeta=nullptr,
+  const std::vector<uint32_t>* model=nullptr,const std::vector<uint32_t>* gateValues=nullptr,const uint32_t* partialQ=nullptr,const uint8_t* qMask=nullptr){
   assert(boot[3]<=96 && pc==waitPC && native.Clean() && !gdn && !conv && transfer.pending.empty());
   assert(position<8192 && slot<2 && !waiting && !pendingWords && !latency && drained);
+  assert(bool(partialQ)==bool(qMask) && (!model || model->size()==41184) && (!gateValues || gateValues->size()==6144));
   if(clockReads)clockBase+=UINT64_C(1)<<36; // simulated hardware clock never moves backward across jobs
   if(retained)prior=next;else prior.fill(0);
   next.fill(0);gated.fill(0);gdnPackets=phase=polls=imports=csrReads=nextWrites=outputWrites=gatedWrites=clockReads=0;
@@ -155,11 +157,15 @@ struct PioneerQ38BfpGdnWorker:PioneerQ38BfpConvWorker {
   unsigned h=half/2,kh=h%16;
   for(unsigned i=0;i<128;i++){
    raw[i]=PioneerAttentionBits(float(std::sin(kh*.117+i*.071+.03)*2.7));raw[128+i]=PioneerAttentionBits(float(std::cos(kh*.213+i*.091-.02)*1.9));
-   norm[i]=PioneerAttentionBits(float(.5+std::sin(i*.07)*.3));z[i]=PioneerAttentionBits(float(std::cos((h*128+i)*.017+.11)*5));
+   if(partialQ && qMask && qMask[i])raw[i]=partialQ[i];
+   norm[i]=model?model->at(41056+i):PioneerAttentionBits(float(.5+std::sin(i*.07)*.3));
+   z[i]=gateValues?gateValues->at(h*128+i):PioneerAttentionBits(float(std::cos((h*128+i)*.017+.11)*5));
   }
   for(unsigned i=0;i<64;i++)raw[256+i]=PioneerAttentionBits(float(std::sin((h*128+(half&1)*64+i)*.035+.13)));
   raw[320]=PioneerAttentionBits(float(h)*.13f-2);raw[321]=PioneerAttentionBits(float(h)*.07f-2);
   raw[322]=PioneerAttentionBits(-float(h+1)*.25f);raw[323]=PioneerAttentionBits(-3.5f);
+  if(alphaBeta){raw[320]=alphaBeta[h];raw[321]=alphaBeta[48+h];}
+  if(model){raw[322]=model->at(40960+h);raw[323]=model->at(41008+h);}
   for(unsigned p=0;p<4;p++)for(unsigned i=0;i<16;i++)learned[p][i]=PioneerAttentionBits(p==2?-float(i+1)*.25f:float(i+1)*.01f);
   for(unsigned p=0;p<4;p++)learned[p][inputDesc[47]]=raw[320+p];
   for(unsigned i=0;i<16;i++){WordWrite(TT_Q38_GDN_GATED_READY+i*4,0);WordWrite(TT_Q38_GDN_GATED_PEER_READY+i*4,0);WordWrite(TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4,0);}
