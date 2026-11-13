@@ -1,0 +1,24 @@
+Linked recurrent ROOT job to matrix worker, offline simulation
+
+The actual RV32 recurrent ROOT scheduler and job builder emitted a role-13,
+6144-input job using a canonical layer-0 output-projection workspace record
+and a boot record from the separately built worker simulator. The job's 256
+bytes were passed unchanged to the worker endpoint. Actual simulated
+producer instructions packed 24 input chunks; the compiled worker and BFP8
+leaf then processed a real blk.0.ssm_out.weight sample, matching all 32
+independently prepared golden values for each assigned output band. A bad
+boot record and a job with the wrong role were rejected.
+
+The host pipes represent transport, not a simulated ROOT NoC transaction.
+ROOT record loading was stubbed with canonical bytes, worker endpoints and
+matrix fabric were simulated, and the same 32-row sample was reused across
+the assigned bands. Only one worker and one projection were connected. The
+runner pins all executable images and real-sample headers, checks extracted
+ELF sections and symbol tables, and runs with ASan/UBSan. No learned model
+data was added to the repository.
+
+This connects two previously separately tested emitted-instruction paths; it
+does not execute ROOT's complete prepare/dispatch/gather/scatter lifecycle,
+the other 118 workers as a retained cohort, the complete recurrent layer,
+native ownership, hardware, full-model quality or speed. The 20 tok/s goal
+remains unmet.

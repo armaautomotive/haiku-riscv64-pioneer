@@ -312,4 +312,5 @@ int main(int argc,char** argv){
   m->memory[0x16dc00+i*4]^=1;assert(!m->Run(seals[0],d));m->memory[0x16dc00+i*4]^=1;
  }
  puts("PASS linked RV32 recurrent descriptors, producer jobs, matrix jobs and recurrent/dense mutation seals; SYNTHETIC ROOT MEMORY NO DEVICE");
+ return 0;
 }

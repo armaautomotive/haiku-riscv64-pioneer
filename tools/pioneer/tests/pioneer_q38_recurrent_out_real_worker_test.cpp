@@ -104,4 +104,5 @@ int main(int argc,char** argv){
   }
   std::printf("PASS real recurrent tensor%u sample%u role%u K%u actual producer and 119 matrix-worker simulation with interleaved three-band weights; NO DEVICE\n",tensor,sample,role,width);
  }
+ return 0;
 }
