@@ -5,9 +5,9 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-if len(sys.argv) not in (3,4,6) or (len(sys.argv)>=4 and sys.argv[3] not in ('--baseline','--scoped-seal')) or (len(sys.argv)==6 and (sys.argv[3]!='--baseline' or sys.argv[4]!='--source-root')) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: ABS_BUILD NEW_ABS_OBJECT [--scoped-seal | --baseline [--source-root ABS_ROOT]]')
-build,out=map(Path,sys.argv[1:3]);baseline=len(sys.argv)>=4 and sys.argv[3]=='--baseline';scoped=len(sys.argv)==4 and sys.argv[3]=='--scoped-seal';here=Path(__file__).resolve().parent
+if len(sys.argv) not in (3,4,6) or (len(sys.argv)>=4 and sys.argv[3] not in ('--baseline','--scoped-seal','--small-result')) or (len(sys.argv)==6 and (sys.argv[3]!='--baseline' or sys.argv[4]!='--source-root')) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: ABS_BUILD NEW_ABS_OBJECT [--scoped-seal | --small-result | --baseline [--source-root ABS_ROOT]]')
+build,out=map(Path,sys.argv[1:3]);baseline=len(sys.argv)>=4 and sys.argv[3]=='--baseline';scoped=len(sys.argv)==4 and sys.argv[3]=='--scoped-seal';small=len(sys.argv)==4 and sys.argv[3]=='--small-result';here=Path(__file__).resolve().parent
 source=Path(sys.argv[5])/'tools/pioneer' if len(sys.argv)==6 else here.parent
 if not source.is_absolute() or not source.is_dir():raise SystemExit('invalid source root')
 if not build.is_absolute() or not build.is_dir() or not out.is_absolute() or out.exists() or out.is_symlink():
@@ -31,6 +31,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 subprocess.run([str(tool)+'g++',*flags,*['-D'+r+'=1' for r in (roles[:-1] if baseline else roles)],
                 *(['-DPIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT=1'] if scoped else []),'-c',
+                *(['-DPIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION=1'] if small else []),
                 str(source/'blackhole_qwen38_return_recurrent_layer.cpp'),'-o',str(out)],check=True)
 undefined=subprocess.check_output([str(tool)+'nm','-u',str(out)],text=True)
 assert {line.split()[-1] for line in undefined.splitlines()}=={
@@ -43,5 +44,5 @@ frames=out.with_suffix('.su').read_text().splitlines()
 schedule=[row.split('\t') for row in frames if 'PioneerQ38RecurrentQ8MatrixRootJobs::Build' in row]
 assert not baseline or not schedule
 assert baseline or (len(schedule)==1 and schedule[0][-1]=='static' and int(schedule[0][-2])<=2048),schedule
-print('PASS recurrent controller component cross-build; scheduler frame',schedule[0][-2] if schedule else 'baseline',
+print('PASS recurrent controller component cross-build; scheduler frame',schedule[0][-2] if schedule else 'baseline', 'small-result',int(small),
       '; NO LINK, DEVICE, OWNERSHIP, MODEL OR SPEED CLAIM')
