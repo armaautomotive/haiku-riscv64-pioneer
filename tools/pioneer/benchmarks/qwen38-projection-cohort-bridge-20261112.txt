@@ -182,3 +182,15 @@ worker ownership: the host pipe transfers the values, the controller and
 recurrent simulations have separate worker instances, Conv's six ROOT groups
 remain separate, and the input/state are synthetic. There is no full layer,
 device run, model-quality result or tokens-per-second claim.
+
+Worker-history alignment follow-up: the 119-worker recurrent lifecycle now
+uses the same 20 producer workers and the same two matrix workers for both
+alpha and beta, matching the linked ROOT's fan-out instead of assigning four
+different peers. All 20 producer jobs execute between the large projections
+and each small matrix; their generated BF16 bytes feed the two matrix workers.
+Those workers then retain their real simulated histories into Conv, GDN and
+output projection, and all existing independent checks pass. The ROOT's
+separate output values still match and feed GDN. Jobs in this lifecycle are
+fixture-generated, the ROOT is a separate replay with different prior worker
+histories, and the NoC is modeled. This does not establish a single integrated
+ROOT/worker run, physical execution, quality or inference speed.

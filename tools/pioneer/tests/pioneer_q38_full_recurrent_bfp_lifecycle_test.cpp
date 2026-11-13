@@ -69,15 +69,21 @@ int main(int argc,char** argv){
  }
  for(auto v:gateSeen)assert(v==1);for(auto v:qkvSeen)assert(v==1);
  std::puts("FULL_RECURRENT_PROGRESS all6144 gate and10240 QKV rows from119 retained workers");std::fflush(stdout);
- uint32_t boots[4][64]={},previous[4],bases[]={0x10000000,0x11000000},banks[]={0,1};
- for(unsigned w=0;w<4;w++){for(unsigned i=0;i<64;i++)boots[w][i]=workers[w]->boot[i];previous[w]=sequence[w];}
- PioneerQ38RecurrentSmallMatrixSchedule::Part parts[4];assert(PioneerQ38RecurrentSmallMatrixSchedule::Build(0,0,2025,bases,banks,boots,previous,parts));
  std::array<std::vector<uint32_t>,2> smallRows={std::vector<uint32_t>(64),std::vector<uint32_t>(64)};
  std::array<std::vector<uint8_t>,2> smallSeen={std::vector<uint8_t>(64),std::vector<uint8_t>(64)};uint32_t alphaBeta[96]={};
- for(unsigned w=0;w<4;w++){
-  std::array<uint32_t,64> j;std::memcpy(j.data(),parts[w].frame,sizeof(parts[w].frame));assert(j[1]==++sequence[w]);
-  Matrix(*workers[w],j,small[w/2],input,smallRows[w/2],smallSeen[w/2],nullptr);
-  assert(PioneerQ38RecurrentSmallMatrixSchedule::CopyRealRows(parts[w],smallRows[w/2].data()+parts[w].first,32,alphaBeta+(w/2)*48,48));
+ for(unsigned kind=0;kind<2;kind++){
+  // Match the ROOT's real fan-out: all 20 input chunks are produced before
+  // the same first two peers execute each padded small matrix.
+  for(unsigned w=0;w<20;w++){
+   auto& image=*workers[w];image.StageProducer(10+kind,++sequence[w],false,0);image.Check(sequence[w]);
+   for(unsigned i=0;i<128;i++){const uint32_t actual=image.bank.at(image.descriptor[4]+image.descriptor[12]+i*4);
+    assert(!std::memcmp(input.data()+w*512+i*4,&actual,4));std::memcpy(input.data()+w*512+i*4,&actual,4);}
+  }
+  for(unsigned w=0;w<2;w++){
+   auto& image=*workers[w];auto j=Job(image,++sequence[w],10+kind,w*32,1,64,5120);
+   Matrix(image,j,small[kind],input,smallRows[kind],smallSeen[kind],nullptr);
+  }
+  for(unsigned i=0;i<48;i++)alphaBeta[kind*48+i]=smallRows[kind][i];
  }
  for(unsigned k=0;k<2;k++)for(unsigned i=0;i<64;i++){assert(smallSeen[k][i]==1);if(i>=48)assert(!smallRows[k][i]);}
  if(argc==11){
