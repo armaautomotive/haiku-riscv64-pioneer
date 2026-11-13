@@ -8,12 +8,12 @@ flags='-std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined'
 ${CXX:-c++} $flags "$directory/assistant_qwen27_fake_worker.cpp" -o "$temporary/worker"
 ${CXX:-c++} $flags "-DASSISTANT_QWEN27_WORKER=\"$temporary/worker\"" \
  "$directory/pioneer_assistant_qwen27_cache_inference_smoke.cpp" "$directory/../../../src/apps/assistant/P100AQwen27.cpp" -o "$temporary/test"
-for mode in pass fast rounded converted missing nobanner fatal reject badstats nan badrate validation trailer empty badclose;do
+for mode in pass fast rounded profile converted missing nobanner fatal reject badstats nan badrate validation trailer empty badclose;do
  touch "$temporary/$mode.events"
  if ASSISTANT27_TEST_LOG="$temporary/$mode.events" ASSISTANT27_TEST_MODE=cacheinfer-$mode UBSAN_OPTIONS=halt_on_error=1 \
   "$temporary/test" --cached-generate-four-only > "$temporary/$mode.stdout" 2> "$temporary/$mode.stderr";then result=0;else result=$?;fi
  case "$mode" in
-  pass|fast|rounded) [ "$result" = 0 ] && [ ! -s "$temporary/$mode.stderr" ]
+  pass|fast|rounded|profile) [ "$result" = 0 ] && [ ! -s "$temporary/$mode.stderr" ]
    [ "$(tail -n 1 "$temporary/$mode.stdout")" = 'PASS_ACTUAL_ASSISTANT_CACHED_FOUR_TOKEN_WORK_KNOWN_CLEAN;NOT_FULL_NATIVE_NOT_20TOKENS_SEC_OR_COMPARATIVE_SPEEDUP_PROOF' ];;
   fatal|reject) [ "$result" = 70 ] && [ -s "$temporary/$mode.stderr" ];;
   *) [ "$result" = 1 ] && [ -s "$temporary/$mode.stderr" ];;
@@ -33,6 +33,7 @@ for mode in pass fast rounded converted missing nobanner fatal reject badstats n
  NR==3 && want=="unknown" && $0=="close-only"{next}
  {exit 1} END{if(NR<2 || NR>3 || (want=="host" && NR!=2) || (want=="complete" && NR!=3))exit 1}' "$temporary/$mode.events"
 done
+grep -q '^WORK_WARM_PROFILE samples=3 calls=1491 ' "$temporary/profile.stdout"
 ${CXX:-c++} $flags -DPIONEER_BATCHED_LOAD_TIMING=1 "-DASSISTANT_QWEN27_WORKER=\"$temporary/worker\"" \
  "$directory/pioneer_assistant_qwen27_cache_inference_smoke.cpp" "$directory/../../../src/apps/assistant/P100AQwen27.cpp" -o "$temporary/timing-test"
 touch "$temporary/timing.events"

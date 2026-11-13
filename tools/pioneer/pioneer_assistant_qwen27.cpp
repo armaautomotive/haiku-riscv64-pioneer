@@ -10,6 +10,12 @@
 #include <poll.h>
 #include <memory>
 #include <atomic>
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+#if PIONEER_Q38_WORK_PHASE_PROFILE != 1 || !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
+#error Work phase timing is an explicit no-CPU-reference diagnostic only
+#endif
+#include "PioneerQ38WorkTiming.h"
+#endif
 #ifdef PIONEER_Q38_LOSSLESS_WEIGHT_CACHE
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_CPU_VALIDATION) || !defined(PIONEER_Q38_LOSSLESS_CONVERSION_SHA256)
 #error Lossless disk-cache Assistant is an explicit existing-byte-layout Work build only
@@ -132,11 +138,17 @@ struct Runtime {
   } computeScope(generating);
   llama_memory_clear(llama_get_memory(context),true); // CPU recurrent/KV reset,NOT weights/re-upload
   unsigned generated=0,warmSamples=0; double warm=0,began=Now(); llama_token token=0;
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+  PioneerQ38WorkTiming profile;
+#endif
   for (int position=0;generated<f.value;position++) {
    if (!PollCancel()) return false;
    if (cancelled) return Emit(A::Done,A::Cancelled,"Stopped at a complete token boundary; resident weights retained. No CPU fallback.");
    if (position<count) token=tokens[position];
    auto before=PioneerQ38GgmlSnapshot(); double start=Now();
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+   const uint64_t callsBefore=session.calls,nanosBefore=session.runNanos;
+#endif
    char phase[192];
    if (position<count) snprintf(phase,sizeof(phase),"Evaluating Qwen27B prompt token %d of %d on P100A (slow Work mode).",position+1,count);
    else snprintf(phase,sizeof(phase),"Generating Qwen27B token %u of at most %u; CPU attention/state; no CPU reference.",generated+1,f.value);
@@ -147,7 +159,11 @@ struct Runtime {
    if (!source.Ready() || after.failed || after.projections-before.projections!=497 || !opened) return false;
    if (pools.NeedsRetirement()) llama_synchronize(context);
    pools.AfterSuccessfulDecode(); // CPU backend has safely rebound its pool
-   if (position>=count) { warm+=Now()-start; warmSamples++; }
+   if (position>=count) { warm+=Now()-start; warmSamples++;
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+    if(!profile.Add(callsBefore,session.calls,nanosBefore,session.runNanos))return false;
+#endif
+   }
    if (!PollCancel()) return false;
    if (cancelled) return Emit(A::Done,A::Cancelled,"Stopped at a complete token boundary; resident weights retained. No CPU fallback.");
    const float* logits=llama_get_logits_ith(context,-1); int best=-1,size=llama_vocab_n_tokens(vocab);
@@ -160,6 +176,11 @@ struct Runtime {
    answer.append(piece,n); token=best; generated++;
    if (!Emit(A::Text,0,answer)) return false;
   }
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+  if(profile.samples!=warmSamples)return false;
+  char timing[256];snprintf(timing,sizeof(timing),"WORK_WARM_PROFILE samples=%u calls=%llu ioctl_seconds=%.6f decode_seconds=%.6f; HOST WALL TIME NOT CARD-ONLY.",profile.samples,(unsigned long long)profile.calls,double(profile.nanos)*1e-9,warm);
+  if(!Emit(A::Progress,UINT32_MAX,timing))return false;
+#endif
   char status[320]; snprintf(status,sizeof(status),"P100A Qwen27B Work:%u output tokens,%.1fs; warm generation%u samples/%.3fs (%.3f tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.",generated,Now()-began,warmSamples,warm,warm>0?warmSamples/warm:0);
   return Emit(A::Done,A::Complete,status);
  }

@@ -1,0 +1,18 @@
+Qwen27B Work phase timing candidate, 2026-11-13
+
+The last full Work request produced about 0.201 tok/s, but did not report
+how much warm-token time was spent inside the device ioctl calls. This
+separate opt-in Assistant worker sums existing host-monotonic ioctl timing
+and call counts over warm decode samples and emits one framed progress line.
+The ioctl total includes kernel and host overhead; it is not isolated card
+execution time. It does not add a CPU learned-product reference or modify
+the device operation, and is not enabled in the ordinary Assistant build.
+
+Offline accounting/overflow, compute-gate, progress and fake Assistant
+protocol tests passed under ASan/UBSan. The RISC-V candidate worker built
+against the pinned runtime, SHA-256
+4f95aa00140dda67b8d62e74f90b750f1373a07200650ea45beec0f9e46e0b0a.
+The separate fixed-path host and card probes built with hashes
+94dd11eeb0348a24337948de2e8590be5a750868a9a3cb1aaf5b76420cff9226 and
+b1811688617b93e3e6f553d2ff9b0c4ed130aea5cc840c17799dc4d7cc53132f.
+Build/test only so far: no physical result or speedup is implied.

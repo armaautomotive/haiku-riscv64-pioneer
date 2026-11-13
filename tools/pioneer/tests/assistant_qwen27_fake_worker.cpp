@@ -85,6 +85,7 @@ int main(int argc,char** argv) {
    }
    if(!strcmp(mode,"cacheinfer-warm-fatal") && generationCount==2){Emit(A::Error,f.id,A::Fatal,"fake warm failure");return 70;}
    Emit(A::Text,f.id,0,!strcmp(mode,"cacheinfer-empty")?"":"four test tokens");
+   if(!strcmp(mode,"cacheinfer-profile"))Emit(A::Progress,f.id,UINT32_MAX,"WORK_WARM_PROFILE samples=3 calls=1491 ioctl_seconds=9.000000 decode_seconds=18.293000; HOST WALL TIME NOT CARD-ONLY.");
    Emit(A::Done,f.id,A::Complete,!strcmp(mode,"cacheinfer-badstats")?
     "P100A Qwen27B Work:3 output tokens,30.0s; warm generation2 samples/18.293s (0.109 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
     !strcmp(mode,"cacheinfer-nan")?

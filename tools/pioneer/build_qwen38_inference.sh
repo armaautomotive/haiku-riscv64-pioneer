@@ -279,6 +279,12 @@ case "${PIONEER_Q38_ASSISTANT_WORKER:-0}" in
     worker_libraries=-lnetwork;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_PHASE_PROFILE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_CPU_POOL_PROBE:-0}" = 1:work:0 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_PHASE_PROFILE=1";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_LOSSLESS_WEIGHT_CACHE:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1:work:0 ] || exit 2
