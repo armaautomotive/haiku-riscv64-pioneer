@@ -17,6 +17,7 @@ static void SnapshotStage(DenseProducerImage& image,PioneerRecurrentWorkerStage&
  for(unsigned i=0;i<32;i++)stage.line[i]=image.bank.at(image.descriptor[4]+image.descriptor[13]+i*4);
  for(unsigned i=0;i<128;i++)stage.native[i]=image.bank.at(image.descriptor[4]+image.descriptor[12]+i*4);
 }
+#ifndef PIONEER_Q38_RECURRENT_WORKER_BRIDGE_HELPER_ONLY
 int main(int argc,char** argv){
  assert((argc==4 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")))
   || (argc==5 && !std::strcmp(argv[3],"--run-full")));
@@ -118,3 +119,4 @@ int main(int argc,char** argv){
  assert(fwrite(actualRows.data(),sizeof(uint32_t),rows,stdout)==rows);
  assert(fwrite(snapshots.data(),sizeof(PioneerRecurrentWorkerSnapshot),119,stdout)==119 && !fflush(stdout));
 }
+#endif

@@ -165,3 +165,21 @@ virgin layer-0 gate projection, not its following recurrent state, a complete
 layer or model. QKV and output runs still stub BfPrepare. It does not establish
 full-model quality, P100A performance, an inference-speed improvement or a
 production driver.
+
+Gate-to-QKV history follow-up: all 119 separately simulated worker instances
+now execute the full layer-0 gate and then QKV matrix jobs without resetting
+their simulated registers, L1, NoC counters or worker protocol history. ROOT
+jobs use the corresponding next sequence numbers; each of the 6,144 gate and
+10,240 QKV rows is visited once and matches its independently prepared BFP8
+integer reference for the same synthetic input. The actual QKV ROOT Run also
+executes its recipe validation, prior-gate receipt admission, producer
+preparation, matrix dispatch, gather and scatter against those retained
+snapshots. Corrupting a prior gate receipt is refused before any new producer
+descriptor, matrix release or scatter. ASan/UBSan were enabled.
+
+This is not yet one continuously running ROOT or a concurrent card cohort:
+the QKV controller is a separately seeded simulation, the NoC and memory are
+synthetic, and worker snapshots bridge the execution. Both projections use
+the same synthetic input, as expected for this gate/QKV portion, but the
+subsequent recurrent state and output projection are not chained. Full-model
+quality, hardware behavior and inference speed remain unproven.

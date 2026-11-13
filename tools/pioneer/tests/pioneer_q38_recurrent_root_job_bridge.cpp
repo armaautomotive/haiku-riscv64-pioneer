@@ -93,8 +93,8 @@ struct GatherRoot:ActualRoot {
    else Step();
    assert(regs[2]>=0x6e000 && regs[2]<=0x70000);
   }
-  if(pc==0x60000){unsigned matrix=0;for(bool value:released)matrix+=unsigned(value);
-   std::fprintf(stderr,"RUN_PARK last=%x ra=%x packets=%u writes=%u matrix=%u\n",last,regs[1],packets,writes,matrix);}
+  if(pc==0x60000){unsigned matrix=0,desc=0;for(bool value:released)matrix+=unsigned(value);for(bool value:descriptors)desc+=unsigned(value);
+   std::fprintf(stderr,"RUN_PARK last=%x ra=%x packets=%u writes=%u matrix=%u descriptors=%u\n",last,regs[1],packets,writes,matrix,desc);}
   return pc==0x60004 && captures==1 && prepares==1 && regs[10]==memory.at(descriptor+11*4);
  }
  bool RunScatter(unsigned function,unsigned descriptor,unsigned tracked){
@@ -114,15 +114,18 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
  const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
- const bool fullPrepare=argc==4 && !std::strcmp(argv[3],"--full-prepare");
+ const bool afterGatePrepare=argc==4 && !std::strcmp(argv[3],"--after-gate-prepare");
+ const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || afterGatePrepare);
+ const bool afterGate=argc==4 && !std::strcmp(argv[3],"--after-gate");
  const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe || fullPrepare);
  const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
- if(fullPrepare)assert(role==5); // virgin first recurrent projection only
+ if(fullPrepare)assert(role==(afterGatePrepare?6U:5U));
+ if(afterGate)assert(role==6); // second recurrent projection after gate
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
  std::array<std::array<uint32_t,64>,119> boots;
  assert(fread(boots.data(),sizeof(uint32_t),119*64,stdin)==119*64);
@@ -174,9 +177,10 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<8;i++)endpoint->memory[0x6d000+i*4]=0;
   endpoint->memory[0x74800+6*4]=endpoint->memory[0x74800+7*4]=0;
   for(unsigned w=0;w<119;w++){
-   const auto& s=(*snapshots)[w];assert(s.doorbell);endpoint->memory[0x123000+w*4]=fullPrepare?0:s.doorbell-unsigned(controller);
-   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=fullPrepare?0:s.before[i];
-   if(fullPrepare)for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=0;
+   const auto& s=(*snapshots)[w];assert(s.doorbell);
+   endpoint->memory[0x123000+w*4]=afterGatePrepare?s.initial.doorbell:fullPrepare?0:s.doorbell-unsigned(controller);
+   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=afterGatePrepare?s.initial.counters[i]:fullPrepare?0:s.before[i];
+   if(fullPrepare)for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=afterGatePrepare?s.initial.job[i]:0;
   }
   const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix(");const auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
   std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
@@ -269,12 +273,13 @@ int main(int argc,char** argv){
   uint32_t descriptor[64],producer[64];
   assert(Call(*m,descriptors[0],d,w,0,0x78000,false));
   for(unsigned i=0;i<64;i++)descriptor[i]=m->memory.at(0x78000+i*4);
-  assert(Call(*m,producers[0],d,w,1,0x78000,true));
+  assert(Call(*m,producers[0],d,w,afterGate?3:1,0x78000,true));
   for(unsigned i=0;i<64;i++)producer[i]=m->memory.at(0x78000+i*4);
   assert(fwrite(descriptor,sizeof(uint32_t),64,stdout)==64 && fwrite(producer,sizeof(uint32_t),64,stdout)==64);
  }
  for(unsigned w=0;w<119;w++){
-  const unsigned previous=w<width/256?1:0;assert(m->Run(m->job[0],d,w,previous+1));uint32_t job[64];
+  const unsigned previous=afterGate?(w<20?3:1):(w<width/256?1:0);
+  assert(m->Run(m->job[0],d,w,previous+1));uint32_t job[64];
   for(unsigned i=0;i<64;i++)job[i]=m->memory.at(0x78000+i*4);
   assert(Q::JobShape(job,boots[w].data(),previous,0));assert(fwrite(job,sizeof(uint32_t),64,stdout)==64);
  }

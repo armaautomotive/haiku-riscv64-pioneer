@@ -4,21 +4,28 @@ import hashlib
 import os
 from pathlib import Path
 import stat
+import struct
 import subprocess
 import sys
 import tempfile
 
-assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv'))
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv)==12 and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
-mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)==9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)==9 and sys.argv[6]=='--full-qkv' else '--out'
+mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)>=9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)>=9 and sys.argv[6]=='--full-qkv' else '--out'
 geometry={'--gate':(6144,5120),'--qkv':(10240,5120),'--out':(5120,6144)}
-full=Path(sys.argv[7]) if len(sys.argv)==9 else None
+full=Path(sys.argv[7]) if len(sys.argv)>=9 else None
+chain=Path(sys.argv[10]) if len(sys.argv)==12 else None
 if full:
     assert full.is_absolute() and full.is_file() and not full.is_symlink() and len(sys.argv[8])==64
     info=full.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
     rows,width=geometry[mode];assert info.st_size==32+(rows//32)*((width//32)*1088+128)
     assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
+if chain:
+    assert chain.is_absolute() and chain.is_file() and not chain.is_symlink() and len(sys.argv[11])==64
+    info=chain.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
+    assert info.st_size==32+(6144//32)*((5120//32)*1088+128)
+    assert hashlib.sha256(chain.read_bytes()).hexdigest()==sys.argv[11]
 roles={'--gate':5,'--qkv':6,'--out':13}
 sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1','7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'),
              '--gate':('c4781e0c6c3963ff1e1b3ac36c1d21fbb1dd74e2785826489cf67cbb139c9f36','a5fadca5d6baeaa921472989cf038dd4aa2a90a666f4c7b3262c8ee141841ff2'),
@@ -66,9 +73,43 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     for binary,source,selected_roles in ((rootbin,'pioneer_q38_recurrent_root_job_bridge.cpp',root_roles),
                                 (workerbin,'pioneer_q38_recurrent_worker_job_bridge.cpp',worker_roles)):
         subprocess.run([compiler,*common,*['-D'+r+'=1' for r in selected_roles],'-I'+str(private),str(here/source),'-o',str(binary)],check=True)
+    if chain:
+        chainbin=Path(tmp)/'chain'
+        subprocess.run([compiler,*common,*['-D'+r+'=1' for r in worker_roles],'-I'+str(private),
+                        str(here/'pioneer_q38_recurrent_gate_qkv_worker_bridge.cpp'),'-o',str(chainbin)],check=True)
     boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==119*256
     job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
     chunks=geometry[mode][1]//256;assert len(job)==chunks*512+119*256
+    if mode=='--qkv':
+        warm=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--after-gate'],input=boot,
+                            stdout=subprocess.PIPE,check=True,env=env).stdout
+        assert len(warm)==len(job)
+        for w in range(chunks):
+            at=w*512;assert warm[at:at+256]==job[at:at+256]
+            coldProducer=list(struct.unpack('<64I',job[at+256:at+512]))
+            warmProducer=list(struct.unpack('<64I',warm[at+256:at+512]))
+            assert coldProducer[1]==1 and warmProducer[1]==3
+            warmProducer[1]=coldProducer[1];assert warmProducer==coldProducer
+        for w in range(119):
+            at=chunks*512+w*256
+            coldJob=list(struct.unpack('<64I',job[at:at+256]));warmJob=list(struct.unpack('<64I',warm[at:at+256]))
+            assert coldJob[1]==(2 if w<20 else 1) and warmJob[1]==(4 if w<20 else 2)
+            assert coldJob[27]==coldJob[1] and warmJob[27]==warmJob[1]
+            warmJob[1],warmJob[27]=coldJob[1],coldJob[27];assert warmJob==coldJob
+        if chain:
+            gatejob=subprocess.run([str(rootbin),str(root),'5'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
+            retained=subprocess.run([str(chainbin),str(worker),str(leaf),str(chain),str(full)],input=gatejob+warm,
+                                    stdout=subprocess.PIPE,check=True,env=env).stdout
+            assert len(retained)==(6144+10240)*4+119*((2+8+8+16+64+64+256)+2*(2+8+16+64+64+64+16+32+128))*4
+            chainSnapshots=retained[(6144+10240)*4:]
+            warmed=subprocess.run([str(rootbin),str(root),'6','--after-gate-prepare'],input=boot+chainSnapshots,
+                                  stdout=subprocess.PIPE,check=True,env=env).stdout
+            assert warmed==retained[6144*4:(6144+10240)*4]
+            badprior=bytearray(chainSnapshots)
+            badprior[((2+8+8+16+64+64+256)+(2+8+16+64))*4]^=1
+            rejected=subprocess.run([str(rootbin),str(root),'6','--after-gate-prepare'],input=boot+badprior,
+                                    stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+            assert rejected.returncode and not rejected.stdout and b'writes=0 matrix=0 descriptors=0' in rejected.stderr
     runargs=[str(workerbin),str(worker),str(leaf),'--run-full',str(full)] if full else [str(workerbin),str(worker),str(leaf),'--run']
     captured=subprocess.run(runargs,input=job,stdout=subprocess.PIPE,check=True,env=env).stdout
     resultBytes=geometry[mode][0]*4
@@ -76,6 +117,7 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     snapshotBytes=119*((2+8+8+16+64+64+256)+2*stageWords)*4
     assert len(captured)==resultBytes+snapshotBytes
     result,snapshots=captured[:resultBytes],captured[resultBytes:]
+    if chain:assert retained[6144*4:(6144+10240)*4]==result
     stored=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--store'],input=boot+result,
                           stdout=subprocess.PIPE,check=True,env=env).stdout
     assert stored==result
@@ -129,7 +171,9 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     assert rejected.returncode and not rejected.stdout
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
+if chain:assert hashlib.sha256(chain.read_bytes()).hexdigest()==sys.argv[11]
 print('PASS ROOT jobs -> 119 simulated workers -> actual ROOT packet seals, gather, full seal and scatter via simulated NoC; NO DEVICE')
 print('PASS actual ROOT recipe -> dispatch -> gather -> scatter; BfPrepare stubbed; sequential snapshots, NO DEVICE')
 if mode=='--gate':print('PASS ROOT actual gate preparation, producer receipts and matrix dispatch; corrupted producer refused before scatter; NO DEVICE')
+if chain:print('PASS 119 retained gate -> QKV worker histories and actual QKV ROOT preparation; bad prior receipt refused before producer release; NO DEVICE')
 print('PASS invalid boot/recipe, wrong-role jobs, corrupt source/receipt, blocked scatter and nonfinite result rejected; NO DEVICE')
