@@ -13,7 +13,7 @@ assert __debug__ and len(sys.argv) in (4,9,14) and not any(k.startswith(('PIONEE
 sdk,root,recurrent=map(Path,sys.argv[1:4]);here=Path(__file__).resolve().parent
 assert all(p.is_absolute() for p in (sdk,root,recurrent)) and sdk.is_dir() and root.is_dir() and recurrent.is_file()
 componentHash=hashlib.sha256(recurrent.read_bytes()).hexdigest()
-assert componentHash in ('535301c90398af3dd4ad2ad9e7b9333d93bfae54fa6f54980bf49894b19fb3a1',
+assert componentHash in ('535301c90398af3dd4ad2ad9e7b9333f93bfae54fa6f54980bf49894b19fb3a1',
                          '2b0638d38044bd627bf40621bcfddef77e1bb4c7a851e1fac13da171819dafb2',
                          'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627')
 allReuse=componentHash=='e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627'

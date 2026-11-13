@@ -26,14 +26,24 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<5120;i++)m->memory[input+i*4]=m->memory[0xe0000+i*4]=0x3f000000U+i;
   for(unsigned i=0;i<2560;i++)m->memory[0xa0000+i*4]=m->memory[0xf2000+i*4]=i*31;
   assert(m->Run(function,d) && m->regs[10]==1);
+  for(unsigned layer=0;layer<64;layer++)if(layer%4!=3){
+   m->memory[d+42*4]=layer;
+   for(unsigned w=0;w<119;w++)m->memory[0x178000+w*256+5*4]=layer;
+   assert(m->Run(function,d) && m->regs[10]==1);
+  }
+  m->memory[d+42*4]=0;for(unsigned w=0;w<119;w++)m->memory[0x178000+w*256+5*4]=0;
   for(unsigned w=0;w<119;w++){
    const unsigned at=0x178000+w*256+34*4;m->memory[at]=6;
    assert(m->Run(function,d) && m->regs[10]==0);m->memory[at]=5;
+  }
+  for(unsigned w:{0U,59U,118U})for(unsigned field:{1U,5U,6U,7U,8U,15U,18U,33U,35U}){
+   const unsigned at=0x178000+w*256+field*4;m->memory[at]^=1;
+   assert(m->Run(function,d) && m->regs[10]==0);m->memory[at]^=1;
   }
   for(unsigned index:{0U,2559U,5119U}){
    m->memory[input+index*4]^=1;assert(!m->Run(function,d));m->memory[input+index*4]^=1;
   }
   m->memory[0xa0000+2559*4]^=1;assert(!m->Run(function,d));
  }
- puts("PASS actual RV32 gate-to-QKV reuse predicate and mismatch refusals; NO DEVICE OR SPEED");
+ puts("PASS actual RV32 gate-to-QKV reuse predicate on 48 recurrent layers and worker/identity mismatches; NO DEVICE OR SPEED");
 }

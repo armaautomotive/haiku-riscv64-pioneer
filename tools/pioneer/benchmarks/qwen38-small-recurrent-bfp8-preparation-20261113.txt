@@ -217,7 +217,7 @@ The linked RV32 predicate passed an ASan/UBSan synthetic-memory check for a
 matching history, changed role on each of 119 workers, altered current input
 and altered native shadow. The normal non-reuse component rebuilt byte-for-
 byte to SHA 7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c.
-Candidate object SHA 535301c90398af3dd4ad2ad9e7b9333d93bfae54fa6f54980bf49894b19fb3a1.
+Candidate object SHA 535301c90398af3dd4ad2ad9e7b9333f93bfae54fa6f54980bf49894b19fb3a1.
 This directly tests only the decision predicate. A complete gate-to-QKV
 controller/worker history, admission/fault behavior, native ownership,
 physical execution, answer quality and token speed remain unproven.
@@ -292,3 +292,11 @@ byte unchanged (7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c
 and bed9ed4c8598a50b8448d08fa8e5499580d1b350f2a9c7dc39e307058f04d22a).
 All-reuse inspection component SHA-256:
 e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627.
+
+Predicate coverage follow-up: the actual linked gate-to-QKV reuse predicate
+also accepted matching synthetic histories for all 48 recurrent layer
+numbers, rejected a changed role at each of 119 workers, and rejected
+changed nonce, layer, position, invocation, identity, width, rows and format
+at three representative workers. The same direct checks passed for the
+gate-only, two-reuse and all-reuse controller builds. This is geometry and
+identity coverage, not real-model accuracy, NoC concurrency or hardware.
