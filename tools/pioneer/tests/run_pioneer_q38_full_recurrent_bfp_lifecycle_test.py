@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and (len(sys.argv) == 12 or (len(sys.argv) == 13 and sys.argv[12] in ('--controller-input','--capture-controller')))
+assert __debug__ and (len(sys.argv) == 12 or (len(sys.argv) == 13 and sys.argv[12] in ('--controller-input','--capture-controller','--capture-controller-reuse')))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, worker, leaf, private, gate, qkv, alpha, beta, learned, output, conv = map(Path, sys.argv[1:12])
 mode = sys.argv[12] if len(sys.argv) == 13 else None

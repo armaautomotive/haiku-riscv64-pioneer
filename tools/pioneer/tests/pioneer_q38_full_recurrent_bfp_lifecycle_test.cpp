@@ -42,8 +42,9 @@ static std::vector<uint32_t> IndependentOutput(const std::vector<uint8_t>& proje
  }return result;
 }
 int main(int argc,char** argv){
- assert(argc==10 || (argc==11 && (!std::strcmp(argv[10],"--controller-input") || !std::strcmp(argv[10],"--capture-controller"))));
- const bool capture=argc==11 && !std::strcmp(argv[10],"--capture-controller");
+ assert(argc==10 || (argc==11 && (!std::strcmp(argv[10],"--controller-input") || !std::strcmp(argv[10],"--capture-controller") || !std::strcmp(argv[10],"--capture-controller-reuse"))));
+ const bool captureReuse=argc==11 && !std::strcmp(argv[10],"--capture-controller-reuse");
+ const bool capture=argc==11 && (!std::strcmp(argv[10],"--capture-controller") || captureReuse);
  auto frames=std::make_unique<std::array<std::array<std::array<uint32_t,64>,42>,2>>();
  auto captured=std::make_unique<std::array<std::array<PioneerRecurrentWorkerSnapshot,119>,2>>();
  if(capture)assert(fread(frames->data(),sizeof(*frames),1,stdin)==1 && fgetc(stdin)==EOF);
@@ -83,6 +84,7 @@ int main(int argc,char** argv){
   // Match the ROOT's real fan-out: all 20 input chunks are produced before
   // the same first two peers execute each padded small matrix.
   for(unsigned w=0;w<20;w++){
+   if(captureReuse && kind){for(unsigned i=0;i<64;i++)assert(!(*frames)[kind][w*2][i] && !(*frames)[kind][w*2+1][i]);continue;}
    auto& image=*workers[w];image.StageProducer(10+kind,++sequence[w],false,0);image.Check(sequence[w]);
    if(capture){
     for(unsigned i=0;i<64;i++)assert((*frames)[kind][w*2][i]==image.descriptor[i] && (*frames)[kind][w*2+1][i]==image.Get(HW::Job+i*4));

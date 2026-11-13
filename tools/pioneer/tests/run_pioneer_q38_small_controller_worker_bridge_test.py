@@ -9,9 +9,9 @@ import subprocess
 import sys
 import tempfile
 
-assert __debug__ and (len(sys.argv) in (9,14) or (len(sys.argv)==10 and sys.argv[9]=='--reuse')) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert __debug__ and (len(sys.argv) in (9,14) or (len(sys.argv) in (10,15) and sys.argv[9]=='--reuse')) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,recurrent,worker,leaf,private,alpha,beta=map(Path,sys.argv[1:9]);here=Path(__file__).resolve().parent
-reuse=len(sys.argv)==10;followup=tuple(map(Path,sys.argv[9:])) if len(sys.argv)==14 else ()
+reuse=len(sys.argv) in (10,15);followup=tuple(map(Path,sys.argv[10:] if reuse else sys.argv[9:])) if len(sys.argv) in (14,15) else ()
 assert all(path.is_absolute() for path in (sdk,root,recurrent,worker,leaf,private,alpha,beta))
 assert all(path.is_dir() and not path.is_symlink() for path in (sdk,root,worker,leaf,private))
 pins=((worker/'program.elf','67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d'),
@@ -80,18 +80,19 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
    subprocess.run([str(rootBinary),str(tmp),mode],input=boots+results,check=True,env=env)
  if followup:
   gate,qkv,learned,output,conv=followup
-  controllerValues=subprocess.run([str(rootBinary),str(tmp),'--chain-export'],input=boots+results,
+  if not reuse:
+   controllerValues=subprocess.run([str(rootBinary),str(tmp),'--chain-export'],input=boots+results,
                                   stdout=subprocess.PIPE,check=True,env=env).stdout
-  assert len(controllerValues)==96*4
-  subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
+   assert len(controllerValues)==96*4
+   subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
                   *map(str,(sdk,worker,leaf,private,gate,qkv,alpha,beta,learned,output,conv)),
                   '--controller-input'],input=controllerValues,check=True,env=env)
-  warmJobs=subprocess.run([str(rootBinary),str(tmp),'--warm-jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
+  warmJobs=subprocess.run([str(rootBinary),str(tmp),'--warm-reuse-jobs' if reuse else '--warm-jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
   assert len(warmJobs)==2*42*64*4
   warmSnapshots=subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
                   *map(str,(sdk,worker,leaf,private,gate,qkv,alpha,beta,learned,output,conv)),
-                  '--capture-controller'],input=warmJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
+                  '--capture-controller-reuse' if reuse else '--capture-controller'],input=warmJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
   assert len(warmSnapshots)==2*119*4824
-  subprocess.run([str(rootBinary),str(tmp),'--chain'],input=boots+warmSnapshots,check=True,env=env)
-  subprocess.run([str(rootBinary),str(tmp),'--chain-corrupt-prior'],input=boots+warmSnapshots,check=True,env=env)
+  for mode in (('--reuse-chain','--reuse-bad-input','--reuse-bad-native','--reuse-bad-prior') if reuse else ('--chain','--chain-corrupt-prior')):
+   subprocess.run([str(rootBinary),str(tmp),mode],input=boots+warmSnapshots,check=True,env=env)
 for path,digest in pins+rootPins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
