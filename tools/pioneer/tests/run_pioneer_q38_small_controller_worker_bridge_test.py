@@ -76,4 +76,6 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
  subprocess.run([str(rootBinary),str(tmp),'--corrupt-producer'],input=boots+results,check=True,env=env)
  subprocess.run([str(rootBinary),str(tmp),'--full'],input=boots+results,check=True,env=env)
  subprocess.run([str(rootBinary),str(tmp),'--full-corrupt-prior'],input=boots+results,check=True,env=env)
+ subprocess.run([str(rootBinary),str(tmp),'--chain'],input=boots+results,check=True,env=env)
+ subprocess.run([str(rootBinary),str(tmp),'--chain-corrupt-prior'],input=boots+results,check=True,env=env)
 for path,digest in pins+rootPins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path

@@ -156,3 +156,14 @@ The non-small baseline object remains byte-identical. The new small object
 SHA-256 is 7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c;
 its producer-admission frame is 1216 bytes. ASan/UBSan bridge and scheduler
 regressions passed. No installed driver or measured inference rate changed.
+
+Controller-history follow-up: a second simulation carries the actual ROOT
+memory map from the alpha Run to the beta Run instead of reseeding the 119
+worker nonces, closed jobs and counter frontiers. Before the second Run it
+checks those retained values against the independently simulated workers;
+the ROOT's modeled NoC counters are retained as well. The fixture supplies
+the next request/recipe and replays worker events, and both Runs scatter
+their 48 valid results correctly. Corrupting a retained producer receipt
+still stops beta before any dispatch or scatter. ASan/UBSan passed. This is
+two returning controller calls with a host-copied memory image and sequential
+worker snapshots, not a continuously running physical cohort or model result.
