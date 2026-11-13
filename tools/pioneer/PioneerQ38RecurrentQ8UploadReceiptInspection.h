@@ -157,6 +157,34 @@ public:
   if(!W::Build(original,proposal,staged.data(),staged.size()) || !Revalidate(c,fd,h,initialized,owner,gen))return false;
   for(unsigned i=0;i<W::Words;i++)output[i]=staged[i];return true;
  }
+ enum : unsigned {DenseManifestWords=16*3*7*3};
+ // Dense matrices remain in the same physical locations in the recurrent
+ // layout. Derive their table from this receipt, not from a dense-only one.
+ bool DenseManifest(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t bytes=DenseManifestWords*sizeof(uint32_t),hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(!output || words!=DenseManifestWords || (out&3) || out>limit-bytes || self>limit-sizeof(*this)
+   || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  std::array<uint32_t,DenseManifestWords> staged={};unsigned count=0;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* p=original.Part(i);const auto* q=layout.At(i);const auto* d=parent.At(i);if(!p || !q || !d)return Fail();
+   if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4!=3 || p->role<5 || p->role>7)continue;
+   if(p->bank>=7 || q->bank!=p->bank || q->offset!=d->offset || q->bytes!=d->bytes || q->allocated!=d->allocated
+    || q->encoding!=L::Parent::DenseQ8Bfp8 || q->offset>UINT32_MAX-C::Base || !p->rows)return Fail();
+   const unsigned at=(((p->layer/4)*3+p->role-5)*7+p->bank)*3;
+   if(at>=DenseManifestWords || staged[at])return Fail();
+   staged[at]=C::Base+q->offset;staged[at+1]=p->firstRow;staged[at+2]=p->rows;count++;
+  }
+  if(count!=16*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<DenseManifestWords;i++)output[i]=staged[i];return true;
+ }
  uint64_t PageDigest()const{return Sealed()?digest:0;}
 };
 static_assert(sizeof(PioneerQ38RecurrentQ8UploadReceiptInspection)>524288,"recurrent receipt is heap-only");

@@ -16,6 +16,7 @@
 #include "../PioneerQ38RecurrentQ8WorkspaceTransferInspection.h"
 #include "../PioneerQ38RecurrentQ8RuntimePlanInspection.h"
 #include "../PioneerQ38RecurrentQ8NativeBindingInspection.h"
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 #include "pioneer_resident_banks_test.cpp"
 #include "../PioneerQ38RecurrentQ8UploadReceiptInspection.h"
@@ -123,6 +124,13 @@ int main(int argc,char** argv){
  assert(!receipt->Workspace(reinterpret_cast<uint32_t*>(&context),W::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(W::Build(*canonical,host,expected.data(),expected.size()));
  assert(receipt->Workspace(actual.data(),actual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && actual==expected);
+ using DM=PioneerQ38DenseQ8MatrixManifest;
+ PioneerQ38HybridDenseQ8MatrixPlan::Proposal densePlan;assert(PioneerQ38HybridDenseQ8MatrixPlan::Build(*canonical,densePlan));
+ std::array<uint32_t,DM::Words> denseExpected={},denseActual={};denseActual.fill(0xa5a5a5a5);const auto denseUntouched=denseActual;
+ assert(DM::Build(*canonical,densePlan,denseExpected.data(),denseExpected.size()));
+ assert(!receipt->DenseManifest(denseActual.data(),denseActual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && denseActual==denseUntouched);
+ assert(!receipt->DenseManifest(hashes.data(),DM::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->DenseManifest(denseActual.data(),denseActual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && denseActual==denseExpected);
  using Transfer=PioneerQ38RecurrentQ8WorkspaceTransferInspection;
  Transfer wrongBank;assert(!wrongBank.Bind(*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42,7,0x04000000));
  Transfer overflow;assert(!overflow.Bind(*receipt,&context,&cookie,hashes.data(),ledger.data(),17,42,2,0xffffffe0));
