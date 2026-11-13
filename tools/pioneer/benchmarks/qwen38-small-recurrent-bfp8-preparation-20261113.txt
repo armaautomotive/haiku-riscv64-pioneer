@@ -541,3 +541,12 @@ jobs. The first staged role-10 matrix job passed its outer and leaf shape
 checks, and the first and final tile addresses of its band were readable
 from the independently built relocated source. The matrix doorbell remained
 pending; no matrix instruction, real model or P100A execution was measured.
+
+Synthetic recurrent matrix arithmetic: separate pinned worker instruction
+simulators executed both role-10 BFP8 matrix bands on the synthetic weight
+source. All 64 rows, including the 16 padded rows, matched an independent
+exact reference for unit-valued synthetic input. Each worker first executed
+its own input producer for one 256-value chunk; the remaining test inputs
+were explicitly supplied unit values. These worker histories were not the
+shared ROOT/peer histories above. This proves neither continuous model
+execution nor numerical behavior on silicon, and reports no token speed.
