@@ -18,16 +18,19 @@ struct SchedulerIO {
  void Output(unsigned w,unsigned f,unsigned v){tuple[w][f]=v;fields++;}
 };
 static void SetPrivateWeights(DenseProducerImage& image,unsigned sample){
- const unsigned tiles=image.native.tiles;assert(tiles==192 && PioneerNativeBfpModelBandMetadata::Width==6144);
+ const unsigned tiles=image.native.tiles;assert(tiles==PioneerNativeBfpModelBandMetadata::Width/32);
  const unsigned bands=unsigned(image.transfer.weights.size()/(tiles*1088));assert(bands && bands*tiles*1088==image.transfer.weights.size());
  for(unsigned band=0;band<bands;band++)for(unsigned tile=0;tile<tiles;tile++)for(unsigned byte=0;byte<1088;byte+=4){
-  const uint32_t word=PioneerNativeBfpModelBandData::Word(sample,6144,0x8fff0+tile*1104+16+byte);
+  const uint32_t word=PioneerNativeBfpModelBandData::Word(sample,PioneerNativeBfpModelBandMetadata::Width,0x8fff0+tile*1104+16+byte);
   for(unsigned j=0;j<4;j++)image.transfer.weights[(band*tiles+tile)*1088+byte+j]=uint8_t(word>>(8*j));
  }
 }
 int main(int argc,char** argv){
  assert(argc==4);const unsigned sample=unsigned(std::atoi(argv[3]));assert(sample<3);
- for(unsigned role:{13U}){
+ const unsigned tensor=PioneerNativeBfpModelBandMetadata::Tensor;
+ assert((tensor==16 && PioneerNativeBfpModelBandMetadata::Width==6144)
+  || ((tensor==3 || tensor==5) && PioneerNativeBfpModelBandMetadata::Width==5120));
+ for(unsigned role:{tensor==16?13U:tensor==3?5U:6U}){
   const unsigned width=role==13?6144:5120,units=role==5?192:role==6?320:160;
   SchedulerIO scheduler;unsigned first=0;
   for(unsigned b=0;b<7;b++){
@@ -95,6 +98,6 @@ int main(int argc,char** argv){
    for(unsigned band=0;band<assigned[3];band++)for(unsigned row=0;row<32;row++)
     assert(peer->Get(W::Output+(band*32+row)*4)==expected[row]);
   }
-  std::printf("PASS real recurrent-out sample%u role%u K%u actual producer and 119 matrix-worker simulation; NO DEVICE\n",sample,role,width);
+  std::printf("PASS real recurrent tensor%u sample%u role%u K%u actual producer and 119 matrix-worker simulation; NO DEVICE\n",tensor,sample,role,width);
  }
 }

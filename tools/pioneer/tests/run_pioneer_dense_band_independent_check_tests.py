@@ -34,6 +34,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-dense-integer-check-',dir='/pri
     assert result.returncode==0 and result.stdout.count('RECURRENT_OUT_INTEGER_REFERENCE ')==96 and 'sample2 first5088 row31 word00000000' in result.stdout
     assert subprocess.run([str(binary),str(samples),'--recurrent-reference'],capture_output=True,env=env).returncode==1
     header.write_text(data)
+    qkv_meta='Width=5120,Rows=10240,Tensor=5,Samples=3\nconst unsigned rows[3]={0,5120,10208}\n'
+    metadata.write_text(qkv_meta+''.join(array('g'+str(i),32) for i in range(3)))
+    result=subprocess.run([str(binary),str(samples),'--recurrent-qkv-reference'],capture_output=True,text=True,env=env)
+    assert result.returncode==0 and result.stdout.count('RECURRENT_QKV_INTEGER_REFERENCE ')==96 and 'sample2 first10208 row31 word00000000' in result.stdout
+    assert subprocess.run([str(binary),str(samples),'--recurrent-reference'],capture_output=True,env=env).returncode==1
     metadata.write_text(array('g0',32)+array('g1',32,1)+array('g2',32))
     result=subprocess.run([str(binary),str(samples)],capture_output=True,text=True,env=env)
     assert result.returncode==1 and 'mismatch sample=1 row=0' in result.stderr

@@ -14,10 +14,17 @@
 namespace {
 using Cache=PioneerModelWeightCache;
 using Packet=PioneerQ38NativeBfpBandData::Packet;
-#if (defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT)) > 1
+#if (defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT)) > 1
 #error Dense and recurrent private exporters are distinct roles
 #endif
-#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT
+#ifdef PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT
+#if PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
+#error Recurrent QKV Q8 band export is private CPU-only preparation
+#endif
+constexpr unsigned First[3]={0,5120,10208},SelectedRows=10240,SelectedTensor=5,SelectedType=8,SelectedWidth=5120;
+constexpr const char* SelectedName="blk.0.attn_qkv.weight";
+#elif defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT)
 #if PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
 #error Recurrent output Q8 band export is private CPU-only preparation
@@ -95,7 +102,7 @@ int Run(int argc,char** argv) {
 	Require(!lstat(argv[2],&directory) && S_ISDIR(directory.st_mode) && directory.st_uid==geteuid()
 		&& (directory.st_mode&07777)==0700,"Existing private native cache required.");
 	Cache cache;
-#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT)
+#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT)
 	Require(cache.OpenExistingDirectory(argv[2],error),error);
 #else
 	Require(cache.Open(argv[2],error),error);

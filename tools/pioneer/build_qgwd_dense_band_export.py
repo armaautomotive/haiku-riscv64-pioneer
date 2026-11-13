@@ -6,8 +6,8 @@ from pathlib import Path
 import subprocess
 import sys
 
-if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] not in ('--recurrent','--recurrent-out')) or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: absolute-writer-build-dir absolute-new-output-dir [--recurrent|--recurrent-out]')
+if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] not in ('--recurrent','--recurrent-out','--recurrent-qkv')) or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: absolute-writer-build-dir absolute-new-output-dir [--recurrent|--recurrent-out|--recurrent-qkv]')
 writer, output = map(Path, sys.argv[1:3])
 mode = sys.argv[3] if len(sys.argv)==4 else ''
 if not writer.is_absolute() or not output.is_absolute() or not writer.is_dir() or output.exists() or output.is_symlink():
@@ -26,11 +26,13 @@ filtered = [arg for arg in args[:-2] if arg not in sources and not arg.startswit
     '-DPIONEER_Q38_HYBRID_BFP8_PREPARER=', '-DPIONEER_Q38_DENSE_Q8_BFP8_PREPARER='))]
 library_index = filtered.index('-lbe')-1
 role = {'--recurrent':'PIONEER_NATIVE_RECURRENT_BAND_EXPORT','--recurrent-out':'PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT',
+        '--recurrent-qkv':'PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT',
         '':'PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT'}[mode]
 filtered[library_index:library_index] = ['-D' + role + '=1',
     str(here/'pioneer_native_model_band_export.cpp'), str(here/'PioneerModelWeightCache.cpp')]
 output.mkdir(mode=0o700)
 binary = output/({'--recurrent':'pioneer-recurrent-band-export','--recurrent-out':'pioneer-recurrent-out-band-export',
+                  '--recurrent-qkv':'pioneer-recurrent-qkv-band-export',
                   '':'pioneer-qgwd-dense-band-export'}[mode])
 subprocess.run([*filtered,'-o',str(binary)],check=True,cwd=writer)
 print('EXPORTER_SHA256',hashlib.sha256(binary.read_bytes()).hexdigest(),flush=True)

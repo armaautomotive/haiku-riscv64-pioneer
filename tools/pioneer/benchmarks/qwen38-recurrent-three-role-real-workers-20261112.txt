@@ -1,0 +1,21 @@
+Three recurrent projection roles with real-weight worker simulation
+
+The private QKV exporter authenticated the pinned full model and prepared
+three 32-row bands of blk.0.attn_qkv.weight (tensor 5; rows 0, 5120, 10208).
+All 480 cache tiles matched fresh conversion, and an independent integer
+decoder/arithmetic checker matched all 96 expected outputs. Synthetic
+invalid-input and role-exclusion tests passed.
+
+The compiled producer and matrix-worker/leaf images were then simulated for
+three real-weight samples each of attention gate (role 5, K5120), QKV
+(role 6, K5120), and recurrent output (role 13, K6144). For every sample,
+the producer generated the full input and all 119 scheduled matrix-worker
+identities matched the independently checked 32-word reference. Each worker
+and each band received the same sample, not its own distinct model rows.
+The worker/leaf ELF identities and private sample files were pinned and
+section extraction verified; see qwen38-recurrent-out-real-worker-simulation.
+
+These are simulated worker instructions, FPU and NoC only. No full recurrent
+layer/ROOT lifecycle, complete 27B inference, hardware speed, or output
+quality is established. The independent width-6144 hardware diagnostic was
+running separately when this report was recorded.
