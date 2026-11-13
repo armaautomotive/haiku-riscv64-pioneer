@@ -1,0 +1,22 @@
+Qwen3.8-27B recurrent Q8_0 to BFP8_B conversion, sampled offline
+
+Source authenticated against SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+For each tensor role, sampled 3 row bands x 3 K tiles in layers 0, 16,
+and 32: 27 tiles / 27,648 values per role. Compared decoded proposed
+BFP8_B weights with the original decoded Q8_0 weights.
+
+Role              relative RMS error     maximum absolute error
+attn_qkv.weight    0.00724523682          0.000487804413
+attn_gate.weight   0.0073584528           0.00048494339
+ssm_out.weight     0.00723102564          0.000961303711
+
+Reproduce from repository root:
+c++ -std=c++17 -O2 -Wall -Wextra -Werror -ffp-contract=off tools/pioneer/tests/pioneer_q38_recurrent_bfp8_quality.cpp tools/pioneer/PioneerModelWeightCache.cpp -o /private/tmp/pioneer-recurrent-bfp8-quality-20261112
+/private/tmp/pioneer-recurrent-bfp8-quality-20261112 "$PWD/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf"
+
+The metric is sqrt(sum((converted-original)^2)/sum(original^2)); maximum
+is in weight units. This is a small deterministic sample, and unpacking uses
+the project's codec. It does not verify real silicon arithmetic, numerical
+accuracy of a whole projection or model, generated text, or speed. It does
+not qualify the experimental conversion for deployment.
