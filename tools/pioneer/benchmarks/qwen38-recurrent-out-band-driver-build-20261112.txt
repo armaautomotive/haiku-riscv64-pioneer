@@ -1,0 +1,22 @@
+Fixed 6144-input recurrent output-band diagnostic148: build-only checkpoint
+
+The distinct diagnostic tag 2026111200010148 selects a fixed 6144-input
+matrix image and the expanded 59,972-word heap-owned snapshot. Its CPU-only
+source authenticates the complete original and rederives the three private
+tensor-16 samples. A real-original source test passed on the Mac. An
+ASan/UBSan fake client exercised 492 normal/failure cases; SDK compilation
+with synthetic data and seven forbidden role/tag cases passed. No runtime
+weights, addresses, CPU validation in Work, or generic Work mode is added.
+
+Two RISC-V builds produced identical SHA-256:
+ driver dbe18706ff5c40bf5c85cb9bd7f83b731e8d33fb913beaee9cee64e704e3f186
+ client 753a57f3bd40fbfb5f88ba4630fbbae44d3c4b856ef62e35db61a5fdc5900340
+ control 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+The separate CPU source-preflight build SHA-256 is
+94a457ee6391f2eff5ff6bfc9dcfc36624b4dccb5cf6ac95386782cbebbe7fde.
+Generated learned-weight files remain private build artifacts.
+
+No driver was installed and no card operation performed. The physical owner,
+mapping bounds, one-shot recovery parent, Pioneer source preflight and stable
+driver restoration still need qualification for this wider image. This is not
+a full model, quality or throughput result.

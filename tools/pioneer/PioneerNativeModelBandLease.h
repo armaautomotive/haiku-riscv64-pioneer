@@ -21,9 +21,17 @@
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010147ULL)
 #error Recurrent-band owner requires its separate fixed kernel diagnostic role
 #endif
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC) && (PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC != 1 \
+ || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION) || defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) \
+ || defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) || !defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) \
+ || !defined(_KERNEL_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010148ULL)
+#error Recurrent output band owner requires its separate fixed kernel diagnostic role
+#endif
 #if defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
  || (PIONEER_DRIVER_BUILD_TAG != 0x2026110400010080ULL && (!defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026111000010140ULL) \
- && (!defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010147ULL)))
+ && (!defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010147ULL) \
+ && (!defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010148ULL)))
 #error Full-K kernel owner requires its explicit distinct diagnostic80 role
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
@@ -37,7 +45,7 @@
 // No destructor IO. UNKNOWN retains every saved span/TLB and never retries.
 class PioneerNativeModelBandLease {
 	using B=PioneerNativeBfpBandLayout;
-#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION) || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC)
 	enum {FixedWidth=6144,FixedSavedWords=59972};
 #else
 	enum {FixedWidth=5120,FixedSavedWords=50500};
@@ -152,7 +160,7 @@ public:
 		result.tlb_restored=1;result.state=PIONEER_NATIVE_BFP_CLOSED;owned=false;return true;
 	}
 };
-#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_OWNER_INSPECTION) || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC)
 static_assert(PioneerNativeModelBandLease::SavedWords(6144)==PioneerNativeModelBandLease::MaxSavedWords,"exact bounded heap snapshot");
 #else
 static_assert(PioneerNativeModelBandLease::SavedWords(5120)==PioneerNativeModelBandLease::MaxSavedWords,"exact bounded heap snapshot");

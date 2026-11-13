@@ -7,14 +7,15 @@ import re
 import subprocess
 import sys
 import tempfile
-if not __debug__ or len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2] not in ('--qgwd-synthetic','--recurrent-synthetic')):
-    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY [--qgwd-synthetic|--recurrent-synthetic]')
+if not __debug__ or len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2] not in ('--qgwd-synthetic','--recurrent-synthetic','--recurrent-out-synthetic')):
+    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY [--qgwd-synthetic|--recurrent-synthetic|--recurrent-out-synthetic]')
 here = pathlib.Path(__file__).resolve().parent
 private = pathlib.Path(sys.argv[1])
 synthetic=len(sys.argv)==3
 recurrent=synthetic and sys.argv[2]=='--recurrent-synthetic'
+recurrent_out=synthetic and sys.argv[2]=='--recurrent-out-synthetic'
 if synthetic:
-    assert private.resolve()==(here/'fixtures/qgwd-dense-source').resolve(), 'only explicit synthetic metadata'
+    assert private.resolve()==(here/('fixtures/recurrent-out-source' if recurrent_out else 'fixtures/qgwd-dense-source')).resolve(), 'only explicit synthetic metadata'
 else:
     assert hashlib.sha256((private / 'PioneerNativeBfpModelBandMetadata.h').read_bytes()).hexdigest() == 'a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c'
 driver = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
@@ -95,7 +96,7 @@ static void Fill(PioneerNativeModelBandRequest& r,bool end){
  const unsigned sample=opened-1;assert(PioneerNativeModelBandRequestValid(r) && r.sample==sample && r.expected_generation==19);
  assert(end?(r.nonce==1 && r.accept==1):(!r.nonce && !r.accept));
  r.nonce=1;auto& v=r.result;v.state=end?PIONEER_NATIVE_BFP_CLOSED:PIONEER_NATIVE_BFP_RESULT;
- v.started=v.completed=1;v.polls=1;v.pc[0]=0x70038;v.pc[1]=0x7003c;v.phase=0x7000c;v.count=0x04001400;v.marker=0x3342464e;
+ v.started=v.completed=1;v.polls=1;v.pc[0]=0x70038;v.pc[1]=0x7003c;v.phase=0x7000c;v.count=0x04000000U|PioneerNativeBfpModelBandMetadata::Width;v.marker=0x3342464e;
  v.held=v.l1_restored=v.tlb_restored=end;
  for(unsigned word=0;word<64;word++)v.output[word]=PioneerNativeBfpModelBandMetadata::Golden(sample)[word%32];
 }
@@ -155,7 +156,8 @@ int main(int argc,char** argv){
 '''.replace('CLIENT_SOURCE', str(here.parent / 'pioneer_native_model_band_diagnostic.cpp')).replace('ACTUAL_RELOAD_CONTROL', control)
 (folder / 'test.cpp').write_text(program)
 compiler = os.environ.get('CXX', 'c++')
-roles = (['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_BAND_SOURCE=1'] if recurrent else
+roles = (['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE=1'] if recurrent_out else
+         ['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_BAND_SOURCE=1'] if recurrent else
          ['-DPIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE=1'] if synthetic else [])
 subprocess.run([compiler, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
                 *roles,

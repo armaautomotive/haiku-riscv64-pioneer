@@ -9,10 +9,15 @@
 #if defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#if defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) && defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC)
+#if (defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC)) > 1
 #error Recurrent and dense band diagnostics require distinct identities
 #endif
-#if defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC)
+#if PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010148ULL
+#error Distinct recurrent-output-band diagnostic identity required
+#endif
+#elif defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC)
 #if PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111200010147ULL
 #error Distinct recurrent-band diagnostic identity required
@@ -35,13 +40,20 @@
 #include "PioneerNativeBfpBandGeneratedImage.h"
 
 namespace {
+#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC
+constexpr unsigned NativeBandWidth=6144;
+#else
+constexpr unsigned NativeBandWidth=5120;
+#endif
+static_assert(PioneerNativeBfpBandLayout::WeightEnd(NativeBandWidth)<=0x131000
+ && PioneerNativeBfpBandLayout::InputEnd(NativeBandWidth)<=0x131000,"fixed mapped L1 view must contain all tiles");
 struct NativeCookie { PioneerProbeCookie* base=NULL;bool used=false; };
 struct NativeIO: PioneerComputeNocIO {
 	area_id views[7]={-1,-1,-1,-1,-1,-1,-1};void* pages[7]={};bool invalid=false;unsigned width;
 	NativeIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,tt_arc_telemetry_result& t,
 		tt_tensix_reset_result& c,tt_dram_samples_result& d,tt_compute_noc_result& n,unsigned k):PioneerComputeNocIO(p,a,t,c,d,n),width(k) {}
 	bool Map() {
-		if(width!=5120 || !PioneerComputeNocIO::Map())return false;
+		if(width!=NativeBandWidth || !PioneerComputeNocIO::Map())return false;
 		const uint32_t offsets[]={0x19006000,0x19070000,0x1906e000,0x1908f000,0x1917f000,0x19312000,0x19313000};
 		const unsigned sizes[]={4096,4096,8192,0xa2000,4096,4096,4096};
 		for(unsigned i=0;i<7;i++) {
@@ -64,7 +76,7 @@ struct NativeIO: PioneerComputeNocIO {
 	static bool Within(uint32_t a,uint32_t first,unsigned bytes) { return !(a&3) && a>=first && a-first<bytes; }
 	volatile uint32* Pointer(uint32_t address) {
 		unsigned view=0,offset=0;
-		if(width!=5120) {invalid=true;return NULL;}
+		if(width!=NativeBandWidth) {invalid=true;return NULL;}
 		if(address==0x6000) {view=0;offset=0;}
 		else if(Within(address,0x70000,4096)) {view=1;offset=address-0x70000;}
 		else if(Within(address,0x6e000,8192)) {view=2;offset=address-0x6e000;}
@@ -108,7 +120,7 @@ struct NativeOwner {
 	NativeIO io;PioneerNativeModelBandLease lease;
 	tt_pioneer_mmio_result mmio={};tt_pioneer_mmio_transaction transaction={};
 	bool reserved=false;
-	NativeOwner(NativeCookie* c,unsigned b,const tt_pioneer_profile& p):cookie(c),sample(b),profile(p),io(profile,arc,telemetry,tensix,dram,noc,5120) {}
+	NativeOwner(NativeCookie* c,unsigned b,const tt_pioneer_profile& p):cookie(c),sample(b),profile(p),io(profile,arc,telemetry,tensix,dram,noc,NativeBandWidth) {}
 };
 static NativeOwner* owner=NULL; // under sLock; retained intact on UNKNOWN
 static void Fault(NativeOwner& o) { o.lease.Abandon();sColdRecoveryRequired=true; }
@@ -208,7 +220,7 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 					o->reserved=true;owner=o;sRuntimeOwner=n->base;
 					bool mapped=BlackholePioneerMmioBegin(o->io,o->mmio,o->transaction);
 					bool baseline=mapped && o->io.PioneerComputeNocIO::AfterNodeId(o->mmio.node_id[0]);
-					if(baseline)o->lease.Run<NativeIO,PioneerNativeBfpBandGeneratedImage<5120>>(o->io,o->dram,r.sample);
+					if(baseline)o->lease.Run<NativeIO,PioneerNativeBfpBandGeneratedImage<NativeBandWidth>>(o->io,o->dram,r.sample);
 					if(!o->io.BaselineClean() || o->lease.Result().state==PIONEER_NATIVE_BFP_UNKNOWN)Fault(*o);
 					else if(!baseline || o->lease.Result().state!=PIONEER_NATIVE_BFP_RESULT) {
 						if(!o->transaction.config_attempted || FinishMmio(*o)) {

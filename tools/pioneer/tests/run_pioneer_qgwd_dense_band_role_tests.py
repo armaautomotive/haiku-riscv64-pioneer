@@ -20,16 +20,26 @@ oldtag='-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010080ULL'
 newtag='-DPIONEER_DRIVER_BUILD_TAG=0x2026111000010140ULL'
 recurrent='-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1'
 recurrenttag='-DPIONEER_DRIVER_BUILD_TAG=0x2026111200010147ULL'
+out='-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1'
+outtag='-DPIONEER_DRIVER_BUILD_TAG=0x2026111200010148ULL'
 check(protocol,[],True,'static_assert(PioneerNativeModelBandTag==0x2026110400010080ULL);\n')
 check(protocol,[new],True,'static_assert(PioneerNativeModelBandTag==0x2026111000010140ULL);\n')
 check(protocol,[recurrent],True,'static_assert(PioneerNativeModelBandTag==0x2026111200010147ULL);\n')
+check(protocol,[out],True,'static_assert(PioneerNativeModelBandTag==0x2026111200010148ULL);\n')
 check(lease,[*native,oldtag],True)
 check(lease,[*native,new,newtag],True)
 check(lease,[*native,recurrent,recurrenttag],True)
+check(lease,[*native,out,outtag],True)
 for flags in ([*native,new,oldtag],[*native,newtag],[*native,'-DPIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC=0',newtag],
               [*native,new,newtag,'-DTT_PIONEER_Q38_WORK_MODE=1'],
               [*native,new,newtag,'-DPIONEER_Q38_FULL_MODEL_CPU_REFERENCE=1'],
               [*native,new,newtag,'-D__FAST_MATH__=1']):
+    check(lease,flags,False)
+for flags in ([*native,out,oldtag],[*native,out,newtag],[*native,out,recurrenttag],[*native,outtag],
+              [*native,out,recurrent,outtag],[*native,out,new,outtag],
+              [*native,out,outtag,'-DTT_PIONEER_Q38_WORK_MODE=1'],
+              [*native,out,outtag,'-DPIONEER_Q38_FULL_MODEL_CPU_REFERENCE=1'],
+              [*native,out,outtag,'-D__FAST_MATH__=1']):
     check(lease,flags,False)
 for flags in ([*native,recurrent,oldtag],[*native,recurrent,newtag],[*native,recurrenttag],
               [*native,recurrent,new,recurrenttag], [*native,recurrent,recurrenttag,'-DTT_PIONEER_Q38_WORK_MODE=1'],
@@ -39,5 +49,8 @@ for flags in ([*native,recurrent,oldtag],[*native,recurrent,newtag],[*native,rec
 for forbidden in ('TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_WORK_INFERENCE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
     check(protocol,[new,'-D'+forbidden+'=1'],False)
     check(protocol,[recurrent,'-D'+forbidden+'=1'],False)
+    check(protocol,[out,'-D'+forbidden+'=1'],False)
 check(protocol,[new,recurrent],False)
+check(protocol,[new,out],False)
+check(protocol,[recurrent,out],False)
 print('PASS distinct dense-band diagnostic tag/old-tag isolation and forbidden-role checks; no driver/device')

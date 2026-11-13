@@ -14,6 +14,12 @@
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
 #error Recurrent Q8 learned-band source is a private diagnostic only
 #endif
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE) && (PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE != 1 \
+ || defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE) || defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error Recurrent output Q8 learned-band source is a private diagnostic only
+#endif
 #include "PioneerModelWeightCache.h"
 #include "PioneerQ38NativeWeightTiles.h"
 #include "PioneerBlackholeBf16Arithmetic.h"
@@ -49,29 +55,33 @@ public:
 		Cache::Digest digest={};
 		if(!Cache::HashFile(fd,PioneerQwen38Gguf::FullBytes,digest,error) || !Stable()
 			|| Cache::Hex(digest)!="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747")return Fail(error,"Original full SHA/stability refused.");
-#ifdef PIONEER_NATIVE_RECURRENT_BAND_SOURCE
+#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE
+		constexpr const char* name="blk.0.ssm_out.weight";
+		constexpr unsigned matrixWidth=6144,matrixRows=5120,tensorIndex=16,tensorType=8;
+		const unsigned rows[3]={0,2560,5088};
+#elif defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE)
 		constexpr const char* name="blk.0.attn_gate.weight";
-		constexpr unsigned matrixRows=6144,tensorIndex=3,tensorType=8;
+		constexpr unsigned matrixWidth=5120,matrixRows=6144,tensorIndex=3,tensorType=8;
 		const unsigned rows[3]={0,3072,6112};
 #elif defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)
 		constexpr const char* name="blk.3.attn_k.weight";
-		constexpr unsigned matrixRows=1024,tensorIndex=45,tensorType=8;
+		constexpr unsigned matrixWidth=5120,matrixRows=1024,tensorIndex=45,tensorType=8;
 		const unsigned rows[3]={0,512,992};
 #else
 		constexpr const char* name="blk.0.ffn_gate.weight";
-		constexpr unsigned matrixRows=17408,tensorIndex=7,tensorType=12;
+		constexpr unsigned matrixWidth=5120,matrixRows=17408,tensorIndex=7,tensorType=12;
 		const unsigned rows[3]={0,8704,17376};
 #endif
 		const auto* tensor=model.Find(name);
-		if(!tensor || tensor->inputs!=5120 || tensor->outputs!=matrixRows || tensor->type!=tensorType || unsigned(tensor-model.Tensors().data())!=tensorIndex
-			|| Meta::Samples!=3 || Meta::Width!=5120 || Meta::Rows!=matrixRows || Meta::Tensor!=tensorIndex)return Fail(error,"Pinned learned matrix identity changed.");
+		if(!tensor || tensor->inputs!=matrixWidth || tensor->outputs!=matrixRows || tensor->type!=tensorType || unsigned(tensor-model.Tensors().data())!=tensorIndex
+			|| Meta::Samples!=3 || Meta::Width!=matrixWidth || Meta::Rows!=matrixRows || Meta::Tensor!=tensorIndex)return Fail(error,"Pinned learned matrix identity changed.");
 		using Codec=PioneerBlackholeBlockFloat;
 		for(unsigned sample=0;sample<3;sample++) {
 			if(Meta::First(sample)!=rows[sample])return Fail(error,"Compiled sample changed.");
-			std::vector<uint8_t> weights(176640,0),inputs(12800,0);std::array<uint32_t,32> expected{};
-			for(unsigned tile=0;tile<160;tile++) {
+			std::vector<uint8_t> weights(matrixWidth/32*1104,0),inputs(matrixWidth/32*80,0);std::array<uint32_t,32> expected{};
+			for(unsigned tile=0;tile<matrixWidth/32;tile++) {
 				std::array<float,1024> original{},decoded{};uint8_t* packed=weights.data()+tile*1104+16;
-				if(!Stable() || !PioneerQ38NativeWeightTiles::ReadFloatTile(model,tensorIndex,uint64_t(rows[sample]/32)*160+tile,original.data(),1024)
+				if(!Stable() || !PioneerQ38NativeWeightTiles::ReadFloatTile(model,tensorIndex,uint64_t(rows[sample]/32)*(matrixWidth/32)+tile,original.data(),1024)
 					|| !Codec::PackTile(Codec::Format::Bfp8B,original.data(),1024,packed,1088)
 					|| !Codec::UnpackTile(Codec::Format::Bfp8B,packed,1088,decoded.data(),1024) || !Stable())return Fail(error,"Fresh learned tile/source refused.");
 				uint16_t input[32];

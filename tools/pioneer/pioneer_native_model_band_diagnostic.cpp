@@ -6,6 +6,9 @@
 #if defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE)
 #error Recurrent diagnostic protocol and authenticated source must be selected together
 #endif
+#if defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE)
+#error Recurrent output diagnostic protocol and authenticated source must be selected together
+#endif
 #include <Drivers.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeModelBandProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
@@ -23,7 +26,7 @@ bool Result(const PioneerNativeModelBandRequest& r,unsigned sample,uint64_t gene
 		|| r.nonce!=1 || r.reserved || r.accept!=unsigned(state==PIONEER_NATIVE_BFP_CLOSED)
 		|| r.result.state!=state || r.result.cold || r.result.started!=1 || r.result.completed!=1
 		|| !r.result.polls || r.result.polls>20000 || r.result.phase!=0x7000c
-		|| r.result.count!=0x04001400 || r.result.marker!=0x3342464e)return false;
+		|| r.result.count!=(0x04000000U|Meta::Width) || r.result.marker!=0x3342464e)return false;
 	for(unsigned pc:r.result.pc)if(pc!=0x70038 && pc!=0x7003c)return false;
 	const unsigned restored=unsigned(state==PIONEER_NATIVE_BFP_CLOSED);
 	return r.result.held==restored && r.result.l1_restored==restored && r.result.tlb_restored==restored;
@@ -41,7 +44,7 @@ int main(int argc,char** argv) {
 	PioneerNativeModelBandSource source;std::string error;
 	puts("AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET");if(!Delivered())return 1;
 	if(!source.Prepare(Original,error) || !source.Ready()){fprintf(stderr,"NATIVE_LEARNED_SOURCE_REFUSED: %s;NO_DEVICE_OPEN\n",error.c_str());return 1;}
-	printf("AUTHENTICATED_FIXED_MODEL c600de03 tensor%u width5120 rows%u samples3 payload_and_reference_exact;DEBUG_NOT_WORK\n",Meta::Tensor,Meta::Rows);if(!Delivered())return 1;
+	printf("AUTHENTICATED_FIXED_MODEL c600de03 tensor%u width%u rows%u samples3 payload_and_reference_exact;DEBUG_NOT_WORK\n",Meta::Tensor,Meta::Width,Meta::Rows);if(!Delivered())return 1;
 	for(unsigned sample=0;sample<3;sample++) {
 		if(!source.Ready())return 1;
 		int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)return 1;
@@ -76,7 +79,7 @@ int main(int argc,char** argv) {
 		}
 		if(close(fd))return 1;
 		Dump(stdout,r,sample);
-		printf("PASS_NATIVE_LEARNED_BAND sample%u tensor%u first%u width5120 phases4 dual_jobs2 exact_words64 polls%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM\n",sample,Meta::Tensor,Meta::First(sample),r.result.polls,(unsigned long long)metadata.generation);
+		printf("PASS_NATIVE_LEARNED_BAND sample%u tensor%u first%u width%u phases4 dual_jobs2 exact_words64 polls%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM\n",sample,Meta::Tensor,Meta::First(sample),Meta::Width,r.result.polls,(unsigned long long)metadata.generation);
 		if(!Delivered())return 1; // never start next sample on a failed channel
 	}
 	puts("PASS_NATIVE_LEARNED_BANDS samples3 exact_words192 clean_ends3;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM");
