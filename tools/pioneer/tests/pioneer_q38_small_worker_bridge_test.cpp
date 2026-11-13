@@ -35,8 +35,9 @@ int main(int argc,char** argv){
   }
   for(unsigned w=0;w<2;w++){
    std::array<uint32_t,64> job;assert(fread(job.data(),4,64,stdin)==64);
-   Matrix(*workers[w],job,weights,input,rows,seen,nullptr);
-   assert(fwrite(rows.data()+w*32,4,32,stdout)==32);
+   PioneerRecurrentWorkerSnapshot snapshot{};
+   Matrix(*workers[w],job,weights,input,rows,seen,&snapshot);
+   assert(fwrite(&snapshot,sizeof(snapshot),1,stdout)==1);
   }
   for(unsigned i=0;i<64;i++){assert(seen[i]==1);if(i>=48)assert(!rows[i]);}
  }

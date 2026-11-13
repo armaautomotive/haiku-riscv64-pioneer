@@ -70,6 +70,7 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
  jobs=subprocess.run([str(rootBinary),str(tmp),'--jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
  assert len(jobs)==2*(20*2+2)*64*4
  results=subprocess.run([*workerArgs,'--run',str(alpha),str(beta)],input=jobs,stdout=subprocess.PIPE,check=True,env=env).stdout
- assert len(results)==2*2*32*4
+ assert len(results)==2*2*4824
  subprocess.run([str(rootBinary),str(tmp),'--publish'],input=boots+results,check=True,env=env)
+ subprocess.run([str(rootBinary),str(tmp),'--corrupt'],input=boots+results,check=True,env=env)
 for path,digest in pins+rootPins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path

@@ -116,3 +116,14 @@ passes. ASan/UBSan are enabled. ROOT admission, receipt gathering and NoC
 handoff are still not exercised by this bridge: the host transports frames
 and producer bytes and the workers execute sequentially. No physical-card or
 throughput claim follows.
+
+ROOT gather follow-up: both alpha/beta matrix workers now export their actual
+simulated completion status, closed job, receipt, counters and output. The
+linked ROOT's BfGatherMatrix executes against those records through a modeled
+NoC and runs the real packet-source seal and receipt checks before publishing
+the valid rows. Corrupting the first receipt parks the ROOT before publishing
+any row. Both roles and the 20-producer bridge pass under ASan/UBSan; the
+separate original recurrent ROOT bridge also passes a syntax regression.
+The host still stages modeled records, executes workers sequentially and
+invokes gather directly; ROOT admission, full Run, real NoC/ownership and
+hardware behavior are not proven. No device or inference speed was tested.

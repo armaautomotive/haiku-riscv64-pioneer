@@ -2,9 +2,8 @@
 // Inspection-only ROOT job emitter. stdin: 119 simulated worker boot records;
 // stdout: linked ROOT producer descriptors/jobs, then 119 matrix jobs.
 // The host pipe is inspection transport, not a simulated ROOT NoC.
-#define main recurrent_root_helper_main
+#define PIONEER_Q38_RECURRENT_ACTUAL_ROOT_HELPER_ONLY 1
 #include "pioneer_q38_recurrent_actual_root_test.cpp"
-#undef main
 #include <cstdlib>
 #include "PioneerRecurrentWorkerSnapshot.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedRecurrentRecipe.h"
@@ -114,6 +113,7 @@ struct GatherRoot:ActualRoot {
  }
 };
 
+#ifndef PIONEER_Q38_RECURRENT_ROOT_JOB_BRIDGE_HELPER_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
@@ -292,3 +292,4 @@ int main(int argc,char** argv){
  }
  assert(!fflush(stdout));
 }
+#endif
