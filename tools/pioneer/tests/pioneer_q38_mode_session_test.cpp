@@ -5,7 +5,7 @@
 struct WorkSessionIO:DispatchSessionIO {
 	unsigned workRuns=0,workSupports=0;
 	bool oldOnly=false;
-	WorkSessionIO(FakeSource& s,unsigned t):DispatchSessionIO(s,t) {}
+	WorkSessionIO(FakeSource& s,unsigned t,unsigned workers=1):DispatchSessionIO(s,t,workers) {}
 	bool Call(int fd,uint32_t op,void* data,size_t bytes) {
 		if (op==TT_PCI_PROBE_Q38_WORK_SUPPORT) {
 			workSupports++; if (oldOnly) return false;
@@ -45,6 +45,14 @@ int main()
 	assert(!session.Multiply(index,input.data(),5120,output.data(),1024,1) && calls==io.uploads+io.runs);
 	puts("PASS CPU-validated SESSION:independently rejects wrong numeric output BEFORE caller publication,CLOSE ONLY without END/retry/CPU substitution;NO DEVICE IO");
 #else
+	{
+		WorkSessionIO io(source,index,119); PioneerQ38WorkSession<WorkSessionIO,FakeSource> session(io,source);
+		assert(session.Open() && session.Multiply(index,input.data(),5120,output.data(),1024));
+		unsigned uploads=io.uploads,runs=io.runs;
+		assert(session.Multiply(index,input.data(),5120,output.data(),1024) && io.uploads==uploads && io.runs==2*runs);
+		for (unsigned r=0;r<1024;r++) assert(output[r]==float(r+1));
+		assert(session.Finish() && io.ends==1);
+	}
 	for (unsigned fault:{0U,4U,7U,10U}) {
 		WorkSessionIO io(source,index); io.fault=fault; io.failWave=2; source.valid=true;
 		PioneerQ38WorkSession<WorkSessionIO,FakeSource> session(io,source); output=before;

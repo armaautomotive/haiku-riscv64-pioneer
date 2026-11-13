@@ -1,0 +1,16 @@
+Qwen27 Work fleet-plan reuse, offline checkpoint
+
+The existing session rebuilt a deterministic per-tensor fleet plan for every
+matrix invocation. Cache the normal full-fleet plan for the lifetime of the
+session, retaining its model/epoch/layout identity and stability checks. Other
+worker counts still build a temporary plan. Wave construction and result
+handling continue to revalidate the plan; failure remains fail-closed. This
+does not change weights, quantization, device commands, CPU validation policy,
+or enable the experimental resident decoder.
+
+Host ASan/UBSan tests: repeated 120-worker cohort and 119-worker Work requests
+produce the expected synthetic outputs without a second upload; a subsequent
+invalid source stops before another request and leaves output untouched. The
+separate CPU-validation failure regression also passes. Synthetic transport,
+not physical device inference. No wall-clock or tokens/sec speedup established;
+the installed Assistant worker and driver are unchanged.

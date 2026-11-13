@@ -77,6 +77,9 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	Mode mode;
 	PioneerQwen38PackedPlan layout;
 	std::vector<uint8_t> uploaded;
+	// Plans are tied to this session's immutable layout and model epoch. Reuse
+	// only the normal full-fleet plan; uncommon worker counts remain uncached.
+	std::vector<std::unique_ptr<PioneerQwen38FleetPlan>> fleetPlans;
 	int fd=-1;
 	bool attempted=false,active=false,failed=false,finished=false,clean=false;
 	bool (*observe)(void*,uint64_t,uint64_t)=nullptr;
@@ -260,6 +263,7 @@ public:
 		if (!source.Ready() || !layout.Build(source.Model(),8192,true)) return Stop(); // BEFORE accelerator FD
 #endif
 		uploaded.assign(layout.Parts().size(),0);
+		fleetPlans.resize(source.Model().Tensors().size());
 		fd=io.Open(); if (fd<0) return Stop();
 		tt_q38_bank_support storage={};
 		if (!mode.Support(io,fd)) return Stop();
@@ -380,15 +384,26 @@ public:
 		if (!source.Ready() || tensor>=source.Model().Tensors().size()) return Stop();
 		const auto& t=source.Model().Tensors()[tensor];
 		if (inputs!=t.inputs || outputs!=t.outputs || !PioneerQ38Disjoint(input,inputs,output,outputs)) return Stop();
-		PioneerQwen38FleetPlan schedule;
-		if (!workers || workers>Mode::Workers || !schedule.Build(source.Model(),layout,tensor,workers)) return Stop();
+		if (!workers || workers>Mode::Workers || tensor>=fleetPlans.size()) return Stop();
+		PioneerQwen38FleetPlan temporary; PioneerQwen38FleetPlan* schedule=&temporary;
+		if (workers==Mode::Workers) {
+			auto& cached=fleetPlans[tensor];
+			if (!cached) {
+				auto candidate=std::unique_ptr<PioneerQwen38FleetPlan>(new(std::nothrow) PioneerQwen38FleetPlan());
+				if (!candidate || !candidate->Build(source.Model(),layout,tensor,workers)) return Stop();
+				cached=std::move(candidate);
+			}
+			schedule=cached.get();
+			if (!schedule->MatchesSource(source.Model(),layout) || schedule->Tensor()!=tensor || schedule->Workers()!=workers) return Stop();
+		} else if (!schedule->Build(source.Model(),layout,tensor,workers)) return Stop();
 		PioneerQ38CohortInput quantized;
 		if (!PioneerQ38CohortQuantize(t.type,inputs,input,quantized) || !UploadTensor(tensor)) return Stop();
 		std::vector<float> scratch(outputs,0); // NEVER caller output until EVERY wave succeeds
-		unsigned count=schedule.Jobs().back().wave+1;
+		const auto& jobs=schedule->Jobs(); if (jobs.empty()) return Stop();
+		unsigned count=jobs.back().wave+1;
 		for (unsigned waveNumber=0;waveNumber<count;waveNumber++) {
 			PioneerQ38CohortWave wave;
-			if (!source.Ready() || !wave.Build(source.Model(),layout,schedule,waveNumber)) return Stop();
+			if (!source.Ready() || !wave.Build(source.Model(),layout,*schedule,waveNumber)) return Stop();
 			auto request=mode.Request(wave,quantized);
 			if (!request) return Stop();
 			uint64_t runStart=PioneerQ38SessionNow(io,0);

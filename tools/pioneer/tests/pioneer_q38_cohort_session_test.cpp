@@ -20,7 +20,7 @@ struct SessionIO {
 	FakeSource& source; unsigned tensor,opens=0,closes=0,begins=0,ends=0,uploads=0,runs=0,fault=0,failWave=0;
 	bool stopped=false; unsigned cursor=0;
 	PioneerQwen38PackedPlan layout; PioneerQwen38FleetPlan schedule;
-	SessionIO(FakeSource& s,unsigned t):source(s),tensor(t) { assert(layout.Build(s.Model(),8192,true) && schedule.Build(s.Model(),layout,t,1)); }
+	SessionIO(FakeSource& s,unsigned t,unsigned workers=1):source(s),tensor(t) { assert(layout.Build(s.Model(),8192,true) && schedule.Build(s.Model(),layout,t,workers)); }
 	int Open() { assert(!stopped); opens++; return 73; }
 	int Close(int fd) { assert(fd==73); closes++; return 0; }
 	bool Call(int fd,uint32_t op,void* data,size_t bytes) {
@@ -86,6 +86,16 @@ int main()
 		assert(session.pagesUploaded && session.bytesRetained && session.calls==runs*2 && session.peakWorkers==1);
 		assert(session.sourceReadNanos>0 && session.bulkUploadNanos>0 && session.runNanos==uint64_t(runs)*200);
 		assert(session.Finish() && session.Finish() && io.ends==1 && io.closes==1);
+	}
+	{
+		SessionIO io(source,index,120); PioneerQ38CohortSession<SessionIO,FakeSource> session(io,source);
+		assert(session.Open() && session.Multiply(index,input.data(),5120,output.data(),1024));
+		const unsigned uploads=io.uploads,runs=io.runs;
+		assert(session.Multiply(index,input.data(),5120,output.data(),1024) && io.uploads==uploads && io.runs==2*runs);
+		for (unsigned row=0;row<output.size();row++) assert(output[row]==float(row+1));
+		output=before; source.valid=false;
+		assert(!session.Multiply(index,input.data(),5120,output.data(),1024) && output==before && io.runs==2*runs);
+		assert(session.Failed() && !session.Finish() && io.closes==1 && !io.ends); source.valid=true;
 	}
 	for (unsigned fault=1;fault<=9;fault++) {
 		source.valid=true; SessionIO io(source,index); io.fault=fault; io.failWave=2;

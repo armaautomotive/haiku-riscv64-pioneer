@@ -32,7 +32,7 @@ static void CompleteDispatch(const PioneerQ38CohortWave& wave,tt_q38_dispatch_pr
 }
 struct DispatchSessionIO:SessionIO {
 	uint32_t peer[119]={};
-	DispatchSessionIO(FakeSource& source,unsigned tensor):SessionIO(source,tensor) {}
+	DispatchSessionIO(FakeSource& source,unsigned tensor,unsigned workers=1):SessionIO(source,tensor,workers) {}
 	bool Call(int fd,uint32_t op,void* data,size_t bytes) {
 		assert(fd==73 && !stopped);
 #ifdef PIONEER_Q38_CPU_VALIDATION
