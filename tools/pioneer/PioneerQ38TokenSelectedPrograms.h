@@ -27,7 +27,10 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
-#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146)
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY)
+static_assert(PioneerQ38TokenPrograms::Family==0x4d505451 && PioneerQ38TokenL1::Family==0x42505451,
+ "Recurrent programs require their distinct QTPM identity and expanded dense-Q8 journal");
+#elif defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146)
 static_assert(PioneerQ38TokenPrograms::Family==0x4c505451 && PioneerQ38TokenL1::Family==0x42505451,
  "Resident QGWD programs require their distinct QTPL identity and expanded dense-Q8 journal");
 #elif defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_145) || defined(PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION)

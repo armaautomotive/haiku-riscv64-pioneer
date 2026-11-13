@@ -1,0 +1,22 @@
+"""Exact all-reuse recurrent ROOT/worker pair; fake-tag inspection only."""
+ROOT_PINS = (
+ ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',130768,'046fe13b703739fc2d8b62e028cd6fc3884ce75b405822c1d0b48f911bccd51d'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',19664,'5d035623158ddfa221a05648da93a7502ea0838e2cdfb8265ab2c42312b634c4'),
+ ('bf16.bin',56560,'37c06ae13466d8616dcc7f8ba2c4a0699a94b6ae9cb2cbb33bcb8865bc166a6e'),
+ ('program.elf',238144,'fa7b41f9d6e90ae4753fabc2c3476e347edbfce06bbdd59cf5a98016a79af6e0'),
+)
+WORKER_PINS = (
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',13428,'a069790784d916ec08bdf028ae4d079a8dba5839acdbb7f7259bab43cd5ed603'),
+ ('bf16producer.bin',7748,'0e6e7c0f0b5b36857936f7c8d4532d09793eb53691c338d5e612b4ad38597688'),
+ ('cachedfpu.bin',14752,'ffb62a063c9e076b2d28b6e8a6d7e771117e8b526b358e170e177a046850b9a4'),
+ ('dense.bin',14468,'6b4482634ddc74cfdb5d9d37ba2bbed383b3f970b0cd5355a0588393ea6a36d2'),
+ ('text.bin',5984,'6f5a9c4b6bfed78ed331ecd81cc116a4a9258ab7bf1f80de2552ba1cfd572ae0'),
+ ('affine.bin',5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
+ ('ffn.bin',16456,'b787b25d4d8961e7922a6fb6f4cd73a5891ce94d4728b434f9212aa2be202488'),
+ ('service.bin',9888,'e591ba24fe245772377f58836f4770ff1ee2cf27ec9f2656bb541c73eddf07a0'),
+ ('gdn.bin',35564,'3891cd154b449fe9caf33d9c0eabde8fa6740d189fc01e61ccc9ebab18fd06b0'),
+ ('program.elf',162116,'67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d'),
+)

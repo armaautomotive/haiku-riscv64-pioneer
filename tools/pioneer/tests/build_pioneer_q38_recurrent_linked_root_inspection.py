@@ -15,7 +15,8 @@ assert not output.exists() and not output.is_symlink()
 here = Path(__file__).resolve().parent
 components = parent / 'qualified-components'
 inputs = ((parent / 'start.o', '20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6dcf271c535383b46'),
-          (parent / 'program.o', '5eebafe66f69dbee63e6d48d476d933ba71eaab9ee2f1a58d2e156b987832f87'),
+          (parent / 'program.o', ('5eebafe66f69dbee63e6d48d476d933ba71eaab9ee2f1a58d2e156b987832f87',
+                                 'c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037')),
           (components / 'dense.o', 'b1960b90ba1b01b2e43b5889aeaab8a69f5db2f48cd103a340f6480941dfb9f2'),
           (components / 'unchanged-feedback/root_conv_sections.o', 'e770a9bde85baadaf9239b7e40985af6415b99650866fad745fe4691a3196395'),
           (components / 'unchanged-feedback/feedback.o', '8c2626d34501e53dc25368cb8f67c48c9de778fec5d880e21901034795c083f2'),
@@ -23,10 +24,13 @@ inputs = ((parent / 'start.o', '20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6
                        'a240f91c29ab537cb3d8abadb6a05ca09928c11113ce9905f5d612e74365b61c',
                        'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f',
                        'b283c169543b5293ae21df8d368bbeebdbf96d8b8b9d6c7ebfe96595d8ebdcb5',
-                       '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc')))
+                       '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc',
+                       'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627')))
 for path, expected in inputs:
     allowed = (expected,) if isinstance(expected, str) else expected
     assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest() in allowed, path
+new_recurrent = hashlib.sha256(recurrent.read_bytes()).hexdigest() == 'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627'
+assert (hashlib.sha256((parent/'program.o').read_bytes()).hexdigest() == 'c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037') == new_recurrent
 output.mkdir(mode=0o700)
 tool = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
 raw, combined, image = output / 'raw.o', output / 'combined.o', output / 'program.elf'
@@ -41,11 +45,16 @@ run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'pioneer
     parent/'start.o',parent/'program.o',combined,components/'unchanged-feedback/feedback.o','-o',image)
 assert not subprocess.check_output([tool+'nm','-u',str(image)]).strip()
 symbols=subprocess.check_output([tool+'nm','-nC',str(image)],text=True)
-assert symbols.count('Projection::BfDenseScopedSeal(')==1
+if new_recurrent:
+    assert symbols.count('Projection::BfDenseSeal(')==2
+    assert symbols.count('PioneerQ38RecurrentQ8MatrixRootJobs::Build<')==1
+else:
+    assert symbols.count('Projection::BfDenseScopedSeal(')==1
 if hashlib.sha256(recurrent.read_bytes()).hexdigest() in ('a240f91c29ab537cb3d8abadb6a05ca09928c11113ce9905f5d612e74365b61c',
                                                          'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f',
                                                          'b283c169543b5293ae21df8d368bbeebdbf96d8b8b9d6c7ebfe96595d8ebdcb5',
-                                                         '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc'):
+                                                         '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc',
+                                                         'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627'):
     assert symbols.count('PioneerQ38HybridMatrixReceipt::Matrix(') == 1
     assert symbols.count('PioneerQ38RecurrentHybridMatrixReceipt::Matrix(') == 1
 (output/'program.demangled').write_text(symbols)
