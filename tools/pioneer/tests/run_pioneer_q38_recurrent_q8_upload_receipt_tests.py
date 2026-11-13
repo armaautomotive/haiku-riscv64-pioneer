@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix='q38-recurrent-receipt-', dir='/private/
     subprocess.run([compiler, '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                     '-Wno-misleading-indentation', '-Wno-unused-function', '-fsanitize=address,undefined',
                     str(source), '-o', binary], check=True)
-    for args in ([], ['--abort'], ['--bad-record'], ['--hole']):
+    for args in ([], ['--abort'], ['--bad-record'], ['--invalidate'], ['--hole']):
         subprocess.run([binary, *args], check=True, env=dict(os.environ, UBSAN_OPTIONS='halt_on_error=1'))
     for forbidden in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                       'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',

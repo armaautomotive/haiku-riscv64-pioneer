@@ -32,13 +32,17 @@ struct FakeContext {
 };
 struct FakeCookie {uint32_t magic=0x50313030;FakeContext* context=nullptr;int64_t team=17;};
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--bad-record"))));
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--hole") || !strcmp(argv[1],"--abort") || !strcmp(argv[1],"--bad-record") || !strcmp(argv[1],"--invalidate"))));
  BanksMock io;auto proof=BankProof(io);PioneerResidentBanks banks;assert(banks.Bind(proof));
  std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0);std::vector<uint32_t> hashes(PioneerResidentBanks::Pages,0);
  auto receipt=std::make_unique<PioneerQ38RecurrentQ8UploadReceiptInspection>();FakeContext context;FakeCookie cookie;int foreign=0;
  cookie.context=&context;
  assert(receipt->Begin(&context,&cookie,hashes.data(),ledger.data(),17,42,banks,proof,ledger.size()));
  PioneerQ38SpanLease span;assert(!receipt->Seal(span));
+ if(argc==2 && !strcmp(argv[1],"--invalidate")){
+  receipt->Invalidate();assert(banks.Quarantined() && !receipt->Sealed());
+  puts("PASS lost control response quarantines fake owner");return 0;
+ }
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  PioneerQ38HybridRecurrentQ8MatrixPlan::Proposal host;assert(PioneerQ38HybridRecurrentQ8MatrixPlan::Build(*canonical,host));
  unsigned bank=0,length=0,spans=0,part=0,page=0,hole=UINT32_MAX;uint64_t offset=0,total=0;

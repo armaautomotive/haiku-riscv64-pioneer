@@ -70,6 +70,9 @@ public:
   if(page==q->allocated/4096){page=0;part++;parts++;Advance();}return true;
  }
  void Abort(){if(pending)Fail();}
+ // Lost userspace copyout leaves ownership ambiguous even after a successful
+ // operation; the synthetic owner must retain and quarantine the resources.
+ void Invalidate(){Fail();}
  bool Seal(const PioneerQ38SpanLease& span){
   if(!Current() || pending || sealed || &span!=lease || part!=original.Count() || page || parts!=3551 || spans!=21475
    || pages!=5065477 || bytes!=UINT64_C(20748193792) || !span.closed || !span.saved || span.nonce!=spans
@@ -191,6 +194,7 @@ public:
   for(unsigned i=0;i<DenseManifestWords;i++)output[i]=denseManifestScratch[i];return true;
  }
  uint64_t PageDigest()const{return Sealed()?digest:0;}
+ unsigned Spans()const{return spans;}
 };
 static_assert(sizeof(PioneerQ38RecurrentQ8UploadReceiptInspection)>524288,"recurrent receipt is heap-only");
 #endif
