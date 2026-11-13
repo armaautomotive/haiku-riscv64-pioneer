@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdKernelCompileRole.h"
 #include "PioneerQ38QgwdNativeInspectionRole.h"
+#include "PioneerQ38RecurrentSmallBfp8WorkerRole.h"
 #if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && (PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION != 1 \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -39,7 +40,11 @@ static inline bool DenseQ8Role(const uint32_t* d){
 }
 static inline bool RecurrentQ8Role(const uint32_t* d){
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
- return d && d[42]<64 && (d[42]&3)!=3 && (d[43]==5 || d[43]==6 || d[43]==13);
+ return d && d[42]<64 && (d[42]&3)!=3 && (d[43]==5 || d[43]==6 || d[43]==13
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  || d[43]==10 || d[43]==11
+#endif
+ );
 #else
  (void)d;return false;
 #endif

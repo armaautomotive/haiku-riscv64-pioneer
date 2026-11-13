@@ -2,6 +2,7 @@
 #include "PioneerQ38QgwdKernelCompileRole.h"
 #include "PioneerQ38QgwdNativeInspectionRole.h"
 #include "PioneerQ38Qgw8Bfp8BatchRole.h" // Recheck combined-role prerequisites on every include.
+#include "PioneerQ38RecurrentSmallBfp8WorkerRole.h"
 #if !defined(PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION) || PIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION != 1 \
  || (!defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) \
   && !(defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) && defined(PIONEER_Q38_QGWD_ROOT_IMAGE))) \
@@ -40,12 +41,18 @@ static inline bool DenseJob(const uint32_t* j){
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
   || j[34]==13
 #endif
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  || j[34]==10 || j[34]==11
+#endif
   );
 }
 static inline bool DenseProducerJob(const uint32_t* j){
  return j && j[2]==5 && ((j[28]>=5 && j[28]<=7)
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
   || j[28]==13
+#endif
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+  || j[28]==10 || j[28]==11
 #endif
   );
 }
@@ -58,7 +65,11 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
  if(DenseProducerJob(j)){
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
   unsigned width=5120;
-  const bool recurrent=j[5]<64 && (j[5]&3)!=3 && (j[28]==5 || j[28]==6 || j[28]==13);
+  const bool recurrent=j[5]<64 && (j[5]&3)!=3 && (j[28]==5 || j[28]==6 || j[28]==13
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   || j[28]==10 || j[28]==11
+#endif
+  );
   if(recurrent && j[28]==13)width=6144;
   if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
    || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || (!recurrent && ((j[5]&3)!=3 || j[28]>7)) || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff
@@ -78,8 +89,19 @@ static __attribute__((noinline,unused)) bool JobShape(const uint32_t* j,const ui
  if(DenseJob(j)){
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
   unsigned rows=j[34]==5?12288:1024,width=5120;
-  const bool recurrent=j[5]<64 && (j[5]&3)!=3 && (j[34]==5 || j[34]==6 || j[34]==13);
-  if(recurrent){rows=j[34]==5?6144:j[34]==6?10240:5120;width=j[34]==13?6144:5120;}
+  const bool recurrent=j[5]<64 && (j[5]&3)!=3 && (j[34]==5 || j[34]==6 || j[34]==13
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   || j[34]==10 || j[34]==11
+#endif
+  );
+  if(recurrent){
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   rows=j[34]==5?6144:j[34]==6?10240:j[34]==13?5120:64;
+#else
+   rows=j[34]==5?6144:j[34]==6?10240:5120;
+#endif
+   width=j[34]==13?6144:5120;
+  }
   if(densePhase || previous>=0x7ffffffe || !j[1] || j[1]!=previous+1 || j[1]>=0x7fffffff
    || j[3]!=b[3] || j[4]!=b[4] || j[5]>=64 || (!recurrent && (j[5]%4!=3 || j[34]>7)) || j[6]>=8192 || !j[7] || j[7]>=0x7fffffff)return false;
 #else

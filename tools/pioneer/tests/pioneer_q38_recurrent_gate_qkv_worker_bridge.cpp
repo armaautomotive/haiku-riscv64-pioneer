@@ -62,6 +62,7 @@ static void Matrix(DenseProducerImage& image,const std::array<uint32_t,64>& job,
   for(unsigned i=0;i<64;i++){snapshot->job[i]=closed[i];snapshot->proof[i]=proof[i];}
  }
 }
+#ifndef PIONEER_Q38_RECURRENT_GATE_QKV_HELPER_ONLY
 int main(int argc,char** argv){
  assert(argc==5 || argc==6 || (argc==7 && !std::strcmp(argv[6],"--dynamic")));const bool third=argc>=6,dynamic=argc==7;
  auto gate=Projection(argv[3],3,5120,6144),qkv=Projection(argv[4],5,5120,10240);
@@ -111,4 +112,6 @@ int main(int argc,char** argv){
  if(third){assert(fwrite(outputs.data(),4,outputs.size(),stdout)==outputs.size());
   assert(fwrite(outSnapshots.data(),sizeof(outSnapshots[0]),outSnapshots.size(),stdout)==outSnapshots.size());}
  assert(!fflush(stdout));
+ return 0;
 }
+#endif

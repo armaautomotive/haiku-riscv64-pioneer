@@ -40,6 +40,9 @@ struct DenseProducerImage:TransitionImage {
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
    || (layer%4!=3 && (role==5 || role==6 || role==13))
 #endif
+#ifdef PIONEER_Q38_RECURRENT_SMALL_BFP8_WORKER_INSPECTION
+   || (layer%4!=3 && (role==10 || role==11))
+#endif
   ));producing=true;packets=0;bank.clear();
   const unsigned width=layer%4!=3 && role==13?6144:5120;
   const unsigned indices[]={2,3,4,5,1,8,4,10};for(unsigned i=0;i<8;i++)before[i]=transfer.counters[indices[i]];

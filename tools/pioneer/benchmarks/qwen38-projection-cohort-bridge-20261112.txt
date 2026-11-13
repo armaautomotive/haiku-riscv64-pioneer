@@ -64,6 +64,23 @@ The small matrix leaves are still separate simulations, not the shared
 119-worker schedule, and there is no native cache/driver/Work selection or
 hardware result. The installed 144-tensor cache recipe remains unchanged.
 
+Shared-dispatch follow-up: an isolated QGWF inspection image admits padded
+64-row alpha/beta jobs (48 live model rows), with K=5120 and the existing
+BFP8 leaf. Its ELF SHA-256 is
+67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d.
+One actual simulated RV32 worker now boots once, executes its real BF16
+producer and then alpha and beta matrix dispatches in the same retained
+context, and matches all 96 model rows and zero padded rows to the integer
+reference. An invalid role faults before any data transfer; bad layer and
+out-of-range row shapes are also refused. This is one worker in an offline
+simulation, not a ROOT schedule or hardware test. A future scheduler must
+write only 48 real results and never publish the 16 padded rows.
+
+The unmodified inspection role rebuilt byte-identically to the prior
+recurrent-width worker ELF e83749ca5a7dc9d66983b9a80e0d6868079b12d8defdf31e40708235fb80366d.
+The new role refuses kernel, Work, native and CPU-validation compilation,
+including explicitly defined-zero values. Nothing was installed.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
