@@ -3497,6 +3497,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 	PioneerQ38DenseQ8UploadReceiptInspection* q38QgwdReceipt=NULL; // gapped format; same retained FD/bank owner
 #endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+	PioneerQ38SmallRecurrentUploadReceiptInspection* q38SmallRecurrentReceipt=NULL; // fake-tag compile profile only
+#endif
 #endif
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
@@ -3628,6 +3631,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 		delete q38QgwdReceipt; // before its borrowed span/banks/ledger owners
+#endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+		delete q38SmallRecurrentReceipt; // before borrowed span/banks/ledger owners
 #endif
 		delete q38HybridReceipt; // before its borrowed span/banks/ledger owners
 #endif
@@ -6955,7 +6961,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		auto* c=cookie->context;
 		if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || !c->q38Span
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+			|| c->q38HybridReceipt || c->q38Qgw8Receipt || c->q38QgwdReceipt || !c->q38SmallRecurrentReceipt
+#elif defined(PIONEER_Q38_QGWD_CONTROL_INSPECTION)
 			|| c->q38HybridReceipt || c->q38Qgw8Receipt || !c->q38QgwdReceipt
 #elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
 			|| c->q38HybridReceipt || !c->q38Qgw8Receipt
@@ -6975,6 +6983,10 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 			status=user_memcpy(data,&request,sizeof(request));
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 			if (status!=B_OK && request.closed) {
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+				if(c->q38SmallRecurrentReceipt)c->q38SmallRecurrentReceipt->Invalidate();
+				else
+#endif
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 				if(c->q38QgwdReceipt)c->q38QgwdReceipt->Invalidate();
 				else
@@ -7006,7 +7018,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+		|| c->q38HybridReceipt || c->q38Qgw8Receipt || c->q38QgwdReceipt || !c->q38SmallRecurrentReceipt
+#elif defined(PIONEER_Q38_QGWD_CONTROL_INSPECTION)
 		|| c->q38HybridReceipt || c->q38Qgw8Receipt || !c->q38QgwdReceipt
 #elif defined(PIONEER_Q38_QGW8_CANDIDATE_NATIVE_128)
 		|| c->q38HybridReceipt || !c->q38Qgw8Receipt
@@ -7026,6 +7040,16 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 			if (!c->q38Span) status=B_NO_MEMORY;
 			else {
 				bool passed;
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+				if(c->q38SmallRecurrentReceipt){
+#ifdef PIONEER_Q38_SPAN_FAST
+					if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD)
+						passed=PioneerQ38SmallRecurrentSpanUploadFastInspection(*c,*request,c->q38SmallRecurrentReceipt);
+					else
+#endif
+						passed=PioneerQ38SmallRecurrentSpanUploadInspection(*c,*request,c->q38SmallRecurrentReceipt);
+				}else
+#endif
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 				if(c->q38QgwdReceipt){
 #ifdef PIONEER_Q38_SPAN_FAST
@@ -7070,6 +7094,10 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 				status=user_memcpy(data,request,sizeof(*request));
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 				if (status!=B_OK && passed) {
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+					if(c->q38SmallRecurrentReceipt)c->q38SmallRecurrentReceipt->Invalidate();
+					else
+#endif
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 					if(c->q38QgwdReceipt)c->q38QgwdReceipt->Invalidate();
 					else
@@ -7098,6 +7126,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 #endif
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 #include "PioneerQ38QgwdUploadControlInspection.inc"
+#endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+#include "PioneerQ38SmallRecurrentUploadControl.inc"
 #endif
 #endif
 

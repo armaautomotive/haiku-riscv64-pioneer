@@ -352,3 +352,13 @@ owners, and checks retained/quarantined ownership after lost begin and seal
 replies. The separate normal/fast span test still passes. This function is
 not registered in the driver and no real ioctl or card run has occurred;
 native binding, execution, quality and speed remain unproven.
+
+Full-source compile boundary: the fake-tag-only driver profile now owns the
+small receipt and routes the existing span upload/end operations to it. The
+actual full QGWF driver source cross-compiles with the renamed ABI, and its
+selected control stack frame is at most 2048 bytes; the prior QGWF fake
+profile also still compiles. A separate simulated OS/device test exercises
+the actual extracted driver span-control route, including lost upload, begin
+and seal replies and ownership quarantine. The small begin/seal control is
+compiled but not registered as an ioctl. No loadable candidate, real card
+test, numerical quality or inference speed is established.

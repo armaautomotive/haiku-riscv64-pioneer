@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 // Actual control and span core with fake OS/device; never a physical test.
+#define PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE 1
 #define main small_span_unused_main
 #include "pioneer_q38_small_recurrent_span_test.cpp"
 #undef main
@@ -38,9 +39,11 @@ int main(int argc,char** argv){
   Packet duplicate;duplicate.operation=H::Begin;assert(Q38SmallRecurrentUploadControl(&cookie,&duplicate,sizeof(duplicate))==B_NOT_ALLOWED);
   c.q38Span=new PioneerQ38SpanLease;unsigned bank=0,length=0;uint64_t offset=0;
   assert(c.q38SmallRecurrentReceipt->Next(bank,offset,length));auto request=Request(length,bank,offset);
-  assert(PioneerQ38SmallRecurrentSpanUploadFastInspection(c,*request,c.q38SmallRecurrentReceipt));
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
+   && request->result.state==TT_RUNTIME_PASSED && c.q38SmallRecurrentReceipt->Spans()==1);
   Packet seal;seal.operation=H::Seal;assert(Q38SmallRecurrentUploadControl(&cookie,&seal,sizeof(seal))==B_NOT_ALLOWED);
-  FillRemaining(c);assert(PioneerQ38SpanEndService(c) && c.q38Span->closed);
+  FillRemaining(c);tt_q38_span_end end={1,0,0,0};
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed);
   if(lost){
    failCopy=copyCalls+2;
    assert(Q38SmallRecurrentUploadControl(&cookie,&seal,sizeof(seal))==-99 && c.banks.Quarantined()
@@ -57,6 +60,16 @@ int main(int argc,char** argv){
    && c.banks.Quarantined() && c.Unsafe() && c.dispatchOwnerRetained && sColdRecoveryRequired);
   const unsigned touches=c.io.touches;failCopy=0;Packet retry;retry.operation=H::Begin;
   assert(Q38SmallRecurrentUploadControl(&cookie,&retry,sizeof(retry))==B_DEV_NOT_READY && c.io.touches==touches);Unbind();
+ }
+ {
+  NativeSpanContext c(argv[1]);Bind(cookie,c);Packet p;p.operation=H::Begin;
+  assert(Q38SmallRecurrentUploadControl(&cookie,&p,sizeof(p))==B_OK);
+  c.q38Span=new PioneerQ38SpanLease;unsigned bank=0,length=0;uint64_t offset=0;
+  assert(c.q38SmallRecurrentReceipt->Next(bank,offset,length));auto request=Request(length,bank,offset);
+  failCopy=copyCalls+2;
+  assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==-99
+   && c.banks.Quarantined() && c.Unsafe() && c.dispatchOwnerRetained && sColdRecoveryRequired);
+  failCopy=0;Unbind();
  }
  puts("PASS small recurrent upload control, span core and lost-reply quarantine; SIMULATED NO DEVICE");
 }

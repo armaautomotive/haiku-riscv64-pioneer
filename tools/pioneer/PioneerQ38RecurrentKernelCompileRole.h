@@ -15,3 +15,11 @@
 #error Recurrent kernel compile requires the fake-tag non-loadable driver profile
 #endif
 #endif
+#ifdef PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE
+#if PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE != 1 || !defined(PIONEER_BANKS_MOCK_ONLY) \
+ || !defined(PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION) || PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error Small recurrent mock route is simulated hardware only
+#endif
+#endif

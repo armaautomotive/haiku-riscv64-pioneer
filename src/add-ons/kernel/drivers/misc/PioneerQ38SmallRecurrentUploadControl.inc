@@ -9,7 +9,7 @@
 #include "../../../../../tools/pioneer/PioneerQ38SmallRecurrentUploadProtocol.h"
 // No ioctl registration or device authority: caller and context must be
 // supplied by an isolated compile/fixture profile with the global lock.
-static __attribute__((noinline)) status_t Q38SmallRecurrentUploadControl(PioneerProbeCookie* cookie,void* data,size_t length){
+static __attribute__((noinline,used)) status_t Q38SmallRecurrentUploadControl(PioneerProbeCookie* cookie,void* data,size_t length){
  namespace H=PioneerQ38SmallRecurrentUpload;
  if(geteuid()!=0)return B_NOT_ALLOWED;
  if(!cookie || cookie->magic!=0x50313030 || !data || length!=sizeof(H::Packet))return B_BAD_VALUE;
