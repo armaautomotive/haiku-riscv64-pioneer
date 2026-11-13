@@ -84,6 +84,11 @@ check('pioneer_q38_token_native_execution_checks.inc',cohort,True,True)
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**cohort,'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE':value},False,True)
 check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE':1},False,True)
+matrix={**cohort,'PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',matrix,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**matrix,'PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE':value},False,True)
+check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE':1},False,True)
 stack_header='PioneerQ38InstructionStackObserver.h'
 stack_role='PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST'
 check(stack_header,{stack_role:1},True)

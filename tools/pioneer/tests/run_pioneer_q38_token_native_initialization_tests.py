@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+synthetic_recurrent_matrix='--synthetic-recurrent-matrix' in sys.argv
+if synthetic_recurrent_matrix:
+    assert sys.argv.count('--synthetic-recurrent-matrix')==1
+    sys.argv.remove('--synthetic-recurrent-matrix')
 trace_init='--qgw8-trace-init' in sys.argv
 if trace_init:
     assert sys.argv.count('--qgw8-trace-init')==1
@@ -20,6 +24,7 @@ if synthetic_embedding:
     sys.argv.remove('--synthetic-embedding')
 recurrent_producers='--execution-recurrent-producers' in sys.argv and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
+assert not synthetic_recurrent_matrix or recurrent_producers and synthetic_embedding, 'synthetic recurrent matrix data requires its isolated producer cohort'
 recurrent_layer_peer=('--execution-recurrent-layer-peer' in sys.argv or recurrent_producer) and '--recurrent-native-header' in sys.argv
 synthetic_layer=synthetic_embedding and ('--execution-layer-dispatch' in sys.argv or recurrent_layer_peer)
 recurrent_peer=('--bootstrap-peer-engines' in sys.argv or recurrent_layer_peer) and '--recurrent-native-header' in sys.argv
@@ -424,6 +429,7 @@ if qgwd_inspection:
     if recurrent_peer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE']='1'
     if recurrent_producer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE']='1'
     if recurrent_producers:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE']='1'
+    if synthetic_recurrent_matrix:defines['PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
@@ -775,6 +781,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', *(['-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1'] if synthetic_embedding else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST=1'] if synthetic_layer else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST=1'] if synthetic_recurrent_matrix else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:
             fixture_test=base/'synthetic-layer-test'

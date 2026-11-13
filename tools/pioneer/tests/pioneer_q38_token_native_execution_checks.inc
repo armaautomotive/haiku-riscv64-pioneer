@@ -9,6 +9,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE))
 #error Recurrent producer cohort requires the isolated recurrent producer fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE))
+#error Synthetic recurrent matrix address check requires the isolated producer cohort
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -277,6 +281,20 @@ static void CheckNativeExecution(Fixture& f){
    cpu.pc,cpu.steps,cpu.recurrentProducerDoorbells,cpu.submitted,cpu.completed);
   assert(cpu.layerHeld && cpu.recurrentProducerDoorbells==20 && cpu.dispatchWorker && io.Core(0).pending
    && io.Raw(cpu.dispatchWorker,W::Job+8)==1 && !state->Unsafe());
+#ifdef PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE
+  {
+   const unsigned worker=cpu.dispatchWorker;assert(worker==1 && cpu.original && cpu.original->Ready());
+   std::array<uint32_t,64> job;for(unsigned i=0;i<64;i++)job[i]=io.Raw(worker,W::Job+i*4);
+   PioneerQ38Bfp8WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=job[16+i];
+   assert(job[0]==W::Magic && job[1]==2 && job[2]==1 && job[3]==worker && !job[5] && !job[6]
+    && job[32]==0 && job[33]==64 && job[34]==10 && job[35]==8 && PioneerQ38Bfp8WorkerJob::Shape(leaf)
+    && leaf.words[2]==5120 && leaf.words[4]==1 && leaf.words[6]==worker && leaf.words[11]==job[1]);
+   std::array<uint8_t,1088> tile;assert(cpu.original->Read(leaf.words[5],leaf.words[3],tile.data(),tile.size()));
+   unsigned nonzero=0;for(auto value:tile)nonzero+=value!=0;assert(nonzero);
+   assert(cpu.original->Read(leaf.words[5],leaf.words[3]+159*1088,tile.data(),tile.size()));
+   printf("PASS staged role-10 matrix job shape and first/last synthetic BFP8 tile address/worker%u/band%u;NO worker execution or model/TPS\n",worker,leaf.words[4]);
+  }
+#endif
   for(unsigned w=0;w<20;w++){
    const auto s=io.bootstrapPeer[w]->cpu->Stats();assert(io.bootstrapPeer[w]->Idle() && s.sequence==1 && !s.active && !s.pending && !s.matrixInstructions);
   }

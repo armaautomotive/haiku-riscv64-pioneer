@@ -534,3 +534,10 @@ were independently unpacked and checked, including wrong-route, out-of-range
 and revoked-source refusals; the existing synthetic embedding regression also
 passed. These bytes have not yet been consumed by the shared peer matrix
 engine and are not real model weights, a hardware run or a speed result.
+
+Matrix address handoff: the combined QTPM controller/peer simulation now
+selects that isolated synthetic recurrent source after the 20 producer
+jobs. The first staged role-10 matrix job passed its outer and leaf shape
+checks, and the first and final tile addresses of its band were readable
+from the independently built relocated source. The matrix doorbell remained
+pending; no matrix instruction, real model or P100A execution was measured.
