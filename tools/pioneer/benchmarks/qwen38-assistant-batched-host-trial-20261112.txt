@@ -41,9 +41,30 @@ driver 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
 tag 2026102100010012 generation 40, no active owner or cold recovery;
 64 CPUs and 137034936320 bytes maximum physical memory.
 
-The separate card parent passed its read-only preflight and has now actually
-started (parent 17178, probe 17216, worker 17217). State is
-RUNNING_FIXED_FOUR_TOKEN_WORK_REQUEST; the worker is authenticating the
-original source, stderr empty. The parent has not exited. Do not repeat,
-reset, reload, open the device or infer success from progress. This run is
-the first physical use of the batched reader and has no result yet.
+The separate card parent passed its read-only preflight and ran once (parent
+17178, probe 17216, worker 17217). It exited 0 on its original SSH handle;
+state CARD_CLOSED_WORK_REQUEST_VERIFIED, card.exit 0, stderr empty, and no
+remaining parent/probe/worker. It verified all 851 cache entries and generated
+the four-token answer "Hello! How can" using P100A projections, CPU attention
+and state, and no CPU reference validation. General output quality is not
+established by this one answer.
+
+Host-ready time, including source authentication and cache verification, was
+1261.877158 seconds. During the first request, the first observed 0.000
+fraction was at 52.661909 seconds and the observed 1.000 fraction was at
+2014.720504 seconds, relative to request start. The roughly 1962.06-second
+interval between those events is not a precise pure-upload or PCIe-bandwidth
+measurement. Full request time was 2128.078100 seconds including upload,
+prompt and generation. The worker reported 3 warm-generation samples in
+15.119 seconds, 0.198 tokens/sec; this is a very short hybrid-mode sample,
+not an all-card result, a speedup proof, or the 20 tokens/sec target. The
+previous installed-worker run reported 0.204 tokens/sec over three samples;
+these single short runs do not establish a performance difference.
+
+Independent postflight confirmed stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag 2026102100010012 generation 40, no active owner or cold recovery,
+64 CPUs and 137034936320 bytes maximum RAM. The original stdout remains at
+/boot/home/pioneer-batched-cache-20261112-a/card.stdout (524423 bytes,
+SHA-256 7a18754d26de6b54e87535dadbefd0857993044f770d860c018a6efa9ba124d4).
+The installed Assistant and driver were not replaced for this trial.

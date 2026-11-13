@@ -121,12 +121,19 @@ template<class C,bool Work=false
 #endif
 		return false;
 	}
-	for (unsigned p=0;p<extent.pages;p++) {
-		c.hashes[extent.index+p]=PioneerResidentPageHash(request.data+p*1024);
-		c.initialized[extent.index+p]=1; c.uploadedPages++;
+	for (unsigned p=0;p<extent.pages;) {
+		const unsigned count=extent.pages-p>=4?4:1;
+		uint32_t hashes[4];
+		if (count==4) PioneerResidentPageHashFour(request.data+p*1024,hashes);
+		else hashes[0]=PioneerResidentPageHash(request.data+p*1024);
+		for (unsigned i=0;i<count;i++) {
+			c.hashes[extent.index+p+i]=hashes[i];
+			c.initialized[extent.index+p+i]=1; c.uploadedPages++;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-		if (receipt && !receipt->RecordPage(extent.index+p,c.hashes[extent.index+p])) return false;
+			if (receipt && !receipt->RecordPage(extent.index+p+i,c.hashes[extent.index+p+i])) return false;
 #endif
+		}
+		p+=count;
 	}
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 	if (receipt && !receipt->After()) return false;

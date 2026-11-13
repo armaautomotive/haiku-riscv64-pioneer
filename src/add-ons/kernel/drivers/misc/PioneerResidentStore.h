@@ -21,6 +21,20 @@ static inline uint32_t PioneerResidentPageHash(const uint32_t* data)
 	for (unsigned w=0;w<1024;w++) for (unsigned byte=0;byte<4;byte++) hash=(hash^((data[w]>>(8*byte))&255))*16777619U;
 	return hash; // integrity bookkeeping, not a cryptographic authenticity claim
 }
+// Four independent FNV streams, preserving exactly the byte order and values
+// of PioneerResidentPageHash. The input consists of four adjacent 4 KiB pages.
+static inline void PioneerResidentPageHashFour(const uint32_t* data,uint32_t* out)
+{
+	uint32_t a=2166136261U,b=a,c=a,d=a;
+	for (unsigned w=0;w<1024;w++) for (unsigned byte=0;byte<4;byte++) {
+		const unsigned shift=byte*8;
+		a=(a^((data[w]>>shift)&255))*16777619U;
+		b=(b^((data[1024+w]>>shift)&255))*16777619U;
+		c=(c^((data[2048+w]>>shift)&255))*16777619U;
+		d=(d^((data[3072+w]>>shift)&255))*16777619U;
+	}
+	out[0]=a;out[1]=b;out[2]=c;out[3]=d;
+}
 template<class IO>
 bool PioneerResidentLeaseBegin(IO& io,const tt_compute_noc_result& noc,PioneerResidentLease& lease,unsigned y=2)
 {

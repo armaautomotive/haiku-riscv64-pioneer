@@ -1,0 +1,31 @@
+Resident page-hash batch experiment, 2026-11-12
+
+The span-upload service records the existing non-cryptographic per-page FNV
+hash after a successful transfer. Its hash definition, per-page publication
+order, ownership checks, upload proof and Work/strict distinction are not
+changed. The candidate interleaves four independent 4 KiB page hashes, with
+the existing scalar hash for trailing pages. This is a loading-path change,
+not an inference-kernel or quality change.
+
+After the protected P100A benchmark had closed, the standalone CPU-only
+candidate was copied to the Pioneer and SHA-256 checked:
+a7852d232cd6153e092878a82ab94e2e9bc9eae8c97019f55389f2fdf57f9797.
+It produced the original exact hashes for 512 synthetic pages. Three
+64 MiB cache-hot synthetic runs, scalar first each time, measured respectively
+226734000/90458000, 168410000/90476000 and 168418000/90494000 ns
+for scalar/four-page hashing. These are CPU microbenchmarks with a 16 KiB
+working set, not a model upload, accelerator bandwidth or tokens/sec result;
+order and caching effects are not controlled. No device was accessed.
+
+The integrated implementation was then checked against the original hash
+under ASan/UBSan; strict and separate Work-mode actual span-service mocks
+passed, including 1, 2, 3, 4, 5, 6, 7 and 256-page requests, exact hash
+publication, refusal and cleanup paths. The resident-store tests passed.
+The separate QGWD tracked-receipt span simulation also passed in strict and
+fast modes, including ordering and quarantine checks.
+The distinct hot-reload driver cross-built offline with tag 2026111200010001,
+SHA-256 9b8bd31319e69643db8c2a6ec742e737884ec1fe9a83791b2d59c21d6d98d164.
+This build includes the current working source tree and is not qualified for
+installation. The installed stable driver was not changed. No complete model
+load comparison or physical verification of this driver has been performed;
+no end-to-end speedup or 20 tokens/sec claim is made.

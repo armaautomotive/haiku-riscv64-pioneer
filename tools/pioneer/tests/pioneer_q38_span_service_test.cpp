@@ -149,6 +149,22 @@ int main(int argc,char** argv)
 		auto request=Request(); assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_UPLOAD,request.get(),sizeof(*request))==B_NOT_ALLOWED && touches==c.io.touches);
 		assert(!c.Unsafe() && !c.dispatchOwnerRetained); Unbind();
 	}
+	{
+		// Exercise all four-page batch tails with the actual service: each
+		// published hash must equal the original per-page implementation.
+		NativeSpanContext c(argv[1]); Bind(cookie,c);
+		for (unsigned pages=2;pages<=7;pages++) {
+			auto request=Request(pages*4096,0,uint64_t(pages-2)*8*4096);
+			assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_UPLOAD,request.get(),sizeof(*request))==B_OK);
+			uint32_t address=0,route=0,index=0;
+			assert(c.banks.Page(c.fixture.owner.dram,0,request->offset,address,route,index));
+			for (unsigned p=0;p<pages;p++)assert(c.initialized[index+p]==1
+				&& c.hashes[index+p]==PioneerResidentPageHash(request->data+p*1024));
+		}
+		tt_q38_span_end end={1,0,0,0};
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed && !end.recovery_required);
+		assert(!c.Unsafe()); Unbind();
+	}
 	for (unsigned fault=0;fault<4;fault++) {
 		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
 		if (fault==0) c.io.packetFault=1;
