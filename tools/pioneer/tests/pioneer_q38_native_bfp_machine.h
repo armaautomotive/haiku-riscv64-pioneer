@@ -10,6 +10,11 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
+#if defined(PIONEER_Q38_BFP_GDN_TRANSITION_TEST) && (PIONEER_Q38_BFP_GDN_TRANSITION_TEST != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION))
+#error Expanded simulator Dst view is isolated offline test only
+#endif
 
 // Independent OFFBOARD ISA observer,not a physical timing model. Decode
 // descriptors/exponent addressing/transpose/fidelity/bank operations,NOT a
@@ -25,7 +30,13 @@ struct NativeBfpMachine {
 	unsigned delay[2]={},dropProducer=0,dropPhase=99;bool omitFlip=false,mathPending=false;
 	unsigned expectedWeight=0x90000,expectedInput=0x91000,alternateWeight=0,alternateInput=0,thirdInput=0;
 	struct Source { float values[64][16];bool owner=false,pending=false;unsigned due=0; } source[2][2];
+#ifdef PIONEER_Q38_BFP_GDN_TRANSITION_TEST
+	// Test-only extended view of the same logical Dst rows. The BFP matrix
+	// path still uses its original first 64; GDN imports can address 512.
+	float destination[512][16]={};bool valid[512]={};
+#else
 	float destination[64][16]={};bool valid[64]={};
+#endif
 	std::vector<uint8_t> l1;
 	NativeBfpMachine():l1(0x180000,0xa7) {
 		for(auto& operand:source)for(auto& bank:operand)for(auto& row:bank.values)for(auto& v:row)v=NAN;

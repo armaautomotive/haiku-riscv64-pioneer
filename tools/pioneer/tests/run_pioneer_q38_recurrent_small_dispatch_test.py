@@ -46,7 +46,8 @@ with tempfile.TemporaryDirectory(prefix='q38-small-dispatch-',dir='/private/tmp'
     extracted=Path(tmp)/'plan.bin'
     subprocess.run([tool+'objcopy','-O','binary','-j','.text','-j','.rodata',str(plan/'program.elf'),str(extracted)],check=True)
     assert extracted.read_bytes()==(plan/'text.bin').read_bytes()
-    for name in ('pioneer_q38_recurrent_small_bfp8_dispatch_test.cpp','pioneer_q38_recurrent_small_schedule_test.cpp'):
+    for name in ('pioneer_q38_recurrent_small_bfp8_dispatch_test.cpp','pioneer_q38_recurrent_small_schedule_test.cpp',
+                 'pioneer_q38_bfp_conv_gdn_transition_test.cpp'):
         subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                         '-Wno-unused-function','-Wno-unused-variable','-Wno-misleading-indentation','-ffp-contract=off',
                         '-fsanitize=address,undefined',*['-D'+r+'=1' for r in roles],'-I'+str(private),

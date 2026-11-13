@@ -119,6 +119,21 @@ QKV is supplied as an offline fixture rather than produced in that worker
 lifetime. GDN, a joint ROOT/NoC lifecycle and real hardware remain unproven.
 No installed image, Work path or speed measurement was changed.
 
+Paired GDN transition follow-up: two QGWF instruction simulations each
+keep one worker lifecycle and one logical Dst/config/thread/counter model
+through BF16 production, BFP8 alpha/beta, Conv, paired GDN, another BFP8
+job, and a second GDN using the first GDN's nonzero NEXT state. They do not
+reset worker code, private sequence, tensor model or physical counters.
+GDN numeric inputs and learned values remain synthetic; Conv used original
+learned weights and the previously verified QKV fixture. Each paired GDN
+checked its service proof, independent normalization/state/gated arithmetic
+and a corrupted descriptor refusal before packets. The second GDN is a
+same-position diagnostic, NOT a second token: the actual worker correctly
+rejected advancing position without completing the intervening 64 layers.
+The simulator's expanded 512-row logical Dst view is test-only and does not
+establish the P100A's physical Dst mapping or timing. This is not an all-core
+ROOT lifecycle, card execution, end-to-end model or speed result.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
