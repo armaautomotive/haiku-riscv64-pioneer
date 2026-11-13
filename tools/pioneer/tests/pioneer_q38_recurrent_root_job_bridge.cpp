@@ -13,7 +13,7 @@
 // simulators. Packet sealing runs against a synthetic owner and MMIO state.
 struct GatherRoot:ActualRoot {
  const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0,writes=0;
- bool controller=false,fullPrepare=false;bool jobs[119]={},released[119]={},descriptors[119]={};unsigned phase[119]={};
+ bool controller=false,fullPrepare=false;bool jobs[119]={},released[119]={},descriptors[119]={};unsigned phase[119]={},producerChunks=0;
  GatherRoot(const char* path,const std::array<PioneerRecurrentWorkerSnapshot,119>& s):ActualRoot(path),snapshots(s){}
  unsigned StepLimit()const override{return controller?200000000U:4000000U;}
  void Store(unsigned address,unsigned value)override{
@@ -25,7 +25,7 @@ struct GatherRoot:ActualRoot {
    const unsigned destination=memory.at(0xffb20014);unsigned peer=0;
    while(peer<119 && Q::Peer(peer+1)!=destination)peer++;
    if(controller && peer<119){
-    const bool producer=fullPrepare && peer<20 && phase[peer]==0;
+    const bool producer=fullPrepare && peer<producerChunks && phase[peer]==0;
     if(local==P::Descriptor){assert(producer && bytes==256 && !descriptors[peer]);
      for(unsigned i=0;i<64;i++)assert(memory.at(remote+i*4)==snapshots[peer].producer.descriptor[i]);descriptors[peer]=true;
     }else if(local==Q::Job){assert(bytes==256 && !jobs[peer] && !released[peer]);
@@ -86,7 +86,8 @@ struct GatherRoot:ActualRoot {
  }
  bool RunController(unsigned function,unsigned capture,unsigned prepare,unsigned descriptor,bool prepareReal=false){
   std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
-  regs[10]=descriptor;pc=function;steps=0;controller=true;fullPrepare=prepareReal;unsigned captures=0,prepares=0,last=0;
+  regs[10]=descriptor;pc=function;steps=0;controller=true;fullPrepare=prepareReal;
+  producerChunks=memory.at(descriptor+14*4)/256;unsigned captures=0,prepares=0,last=0;
   while(pc!=0x60004 && pc!=0x60000){last=pc;
    if(pc==capture){captures++;Step();}
    else if(pc==prepare){prepares++;if(fullPrepare)Step();else pc=regs[1];}
@@ -114,18 +115,21 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
  const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
  const bool afterGatePrepare=argc==4 && !std::strcmp(argv[3],"--after-gate-prepare");
- const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || afterGatePrepare);
+ const bool afterQkvPrepare=argc==4 && !std::strcmp(argv[3],"--after-qkv-prepare");
+ const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || afterGatePrepare || afterQkvPrepare);
  const bool afterGate=argc==4 && !std::strcmp(argv[3],"--after-gate");
+ const bool afterQkv=argc==4 && !std::strcmp(argv[3],"--after-qkv");
  const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe || fullPrepare);
  const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
- if(fullPrepare)assert(role==(afterGatePrepare?6U:5U));
+ if(fullPrepare)assert(role==(afterQkvPrepare?13U:afterGatePrepare?6U:5U));
  if(afterGate)assert(role==6); // second recurrent projection after gate
+ if(afterQkv)assert(role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
  std::array<std::array<uint32_t,64>,119> boots;
  assert(fread(boots.data(),sizeof(uint32_t),119*64,stdin)==119*64);
@@ -178,9 +182,9 @@ int main(int argc,char** argv){
   endpoint->memory[0x74800+6*4]=endpoint->memory[0x74800+7*4]=0;
   for(unsigned w=0;w<119;w++){
    const auto& s=(*snapshots)[w];assert(s.doorbell);
-   endpoint->memory[0x123000+w*4]=afterGatePrepare?s.initial.doorbell:fullPrepare?0:s.doorbell-unsigned(controller);
-   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=afterGatePrepare?s.initial.counters[i]:fullPrepare?0:s.before[i];
-   if(fullPrepare)for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=afterGatePrepare?s.initial.job[i]:0;
+   endpoint->memory[0x123000+w*4]=(afterGatePrepare || afterQkvPrepare)?s.initial.doorbell:fullPrepare?0:s.doorbell-unsigned(controller);
+   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=(afterGatePrepare || afterQkvPrepare)?s.initial.counters[i]:fullPrepare?0:s.before[i];
+   if(fullPrepare)for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=(afterGatePrepare || afterQkvPrepare)?s.initial.job[i]:0;
   }
   const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix(");const auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
   std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
@@ -242,8 +246,8 @@ int main(int argc,char** argv){
    assert(endpoint->RunController(run,capture,prepare,frame,fullPrepare));
    for(unsigned w=0;w<119;w++)assert(endpoint->jobs[w] && endpoint->released[w]);
    if(fullPrepare){
-    for(unsigned w=0;w<119;w++)assert(endpoint->phase[w]==(w<20?2U:1U) && endpoint->descriptors[w]==(w<20));
-    for(unsigned w=0;w<20;w++)for(unsigned i=0;i<128;i++)
+    for(unsigned w=0;w<119;w++)assert(endpoint->phase[w]==(w<width/256?2U:1U) && endpoint->descriptors[w]==(w<width/256));
+    for(unsigned w=0;w<width/256;w++)for(unsigned i=0;i<128;i++)
      assert(endpoint->memory.at(0xa0000+w*512+i*4)==(*snapshots)[w].producer.native[i]);
    }
   }else assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000));
@@ -273,12 +277,12 @@ int main(int argc,char** argv){
   uint32_t descriptor[64],producer[64];
   assert(Call(*m,descriptors[0],d,w,0,0x78000,false));
   for(unsigned i=0;i<64;i++)descriptor[i]=m->memory.at(0x78000+i*4);
-  assert(Call(*m,producers[0],d,w,afterGate?3:1,0x78000,true));
+  assert(Call(*m,producers[0],d,w,afterQkv?(w<20?5:3):afterGate?3:1,0x78000,true));
   for(unsigned i=0;i<64;i++)producer[i]=m->memory.at(0x78000+i*4);
   assert(fwrite(descriptor,sizeof(uint32_t),64,stdout)==64 && fwrite(producer,sizeof(uint32_t),64,stdout)==64);
  }
  for(unsigned w=0;w<119;w++){
-  const unsigned previous=afterGate?(w<20?3:1):(w<width/256?1:0);
+  const unsigned previous=afterQkv?(w<20?5:w<24?3:2):afterGate?(w<20?3:1):(w<width/256?1:0);
   assert(m->Run(m->job[0],d,w,previous+1));uint32_t job[64];
   for(unsigned i=0;i<64;i++)job[i]=m->memory.at(0x78000+i*4);
   assert(Q::JobShape(job,boots[w].data(),previous,0));assert(fwrite(job,sizeof(uint32_t),64,stdout)==64);

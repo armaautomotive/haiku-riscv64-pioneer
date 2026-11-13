@@ -183,3 +183,20 @@ synthetic, and worker snapshots bridge the execution. Both projections use
 the same synthetic input, as expected for this gate/QKV portion, but the
 subsequent recurrent state and output projection are not chained. Full-model
 quality, hardware behavior and inference speed remain unproven.
+
+Output-history follow-up: the same 119 simulated workers now retain their
+register/L1/NoC and protocol history through gate, QKV and output matrix
+jobs, with ROOT-generated sequence numbers. The output stage runs all 24
+producer chunks and all 119 workers with the full 5,120-row output matrix;
+each result matches its independent BFP8 integer reference exactly once.
+A separately seeded actual ROOT Run admits the captured QKV receipts, performs
+its output-projection preparation, dispatches, gathers and scatters the
+captured results. A damaged prior QKV receipt is refused before any new
+producer descriptor, matrix release or scatter. Gate-only regression also
+passed. ASan/UBSan were enabled.
+
+Critically, the output projection's 6,144-element input is synthetic; the
+intervening recurrent state update is NOT connected. The ROOT Runs are
+separately seeded, the workers are sequential simulations and the fabric is
+synthetic. This is not a complete recurrent layer, physical-card execution,
+model-quality evidence or an inference-speed measurement.
