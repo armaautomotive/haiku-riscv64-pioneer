@@ -1,0 +1,21 @@
+Recurrent output-projection real-weight worker integration, offline simulation
+
+The compiled BF16 producer, BFP8 matrix-worker and leaf instruction images
+were exercised with three private 6144-input blk.0.ssm_out.weight samples.
+For each sample, the test generated the full 6144-value BF16 input through
+24 simulated producer chunks, then ran the compiled matrix path for all 119
+scheduled worker identities. Every produced row matched the previously
+independently checked 32-word reference. Each worker/band was deliberately
+given the same sampled 32-row weights; this does not test 119 distinct model
+bands or establish full-layer arithmetic.
+
+The runner pins the private inputs and ELF identities and checks extracted
+sections against the linked images. Worker ELF SHA-256:
+e83749ca5a7dc9d66983b9a80e0d6868079b12d8defdf31e40708235fb80366d
+Leaf ELF SHA-256:
+e8a04408d0c1a2d0ffa90d1d92ca77f3bb56f849c1d714723dfae9f3110ba72f
+
+This is simulated FPU/NoC and isolated worker execution, not a full ROOT
+lifecycle, native ownership, physical P100A arithmetic, generated-answer
+quality, or tokens-per-second measurement. Private model-derived bytes are
+not in the repository.
