@@ -34,7 +34,8 @@ struct PioneerQ38RecurrentSmallMatrixSchedule {
    p.first=band*32;p.valid=band?16:32;p.offset=PioneerQ38ProjectionResultOffset(role)+p.first*4;
    if(!W::JobShape(j,boot[k],previous[k],0))return false;
   }
-  for(unsigned k=0;k<Count;k++)output[k]=staged[k];return true;
+  for(unsigned k=0;k<Count;k++)output[k]=staged[k];
+  return true;
  }
  // Only authenticated output from the appropriate completed worker may be
  // passed by the caller. This helper itself neither authenticates nor does IO.
@@ -45,7 +46,8 @@ struct PioneerQ38RecurrentSmallMatrixSchedule {
    || p.offset!=PioneerQ38ProjectionResultOffset(p.frame[34])+p.first*4
    || (p.frame[34]!=10 && p.frame[34]!=11))return false;
   uint32_t stage[32];for(unsigned i=0;i<p.valid;i++)stage[i]=source[i];
-  for(unsigned i=0;i<p.valid;i++)out[p.first+i]=stage[i];return true;
+  for(unsigned i=0;i<p.valid;i++)out[p.first+i]=stage[i];
+  return true;
  }
 };
 #endif

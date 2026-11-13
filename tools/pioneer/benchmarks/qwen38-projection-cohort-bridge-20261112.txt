@@ -93,6 +93,20 @@ ran its actual producer; remaining root BF16 input bytes were fixture-provided.
 There is still no ROOT scheduler, device IO, continuous full worker history,
 parallel execution proof, native ownership, model inference or speed result.
 
+Standalone RV32 data-controller follow-up: the small plan and bounded-copy
+helpers were cross-compiled with no undefined symbols, writable globals,
+CSR instructions, byte stores or unsupported audited instructions. A clean
+rebuild produced the same 8940-byte text-plus-rodata image SHA-256
+2d5d6b0944e0f3cd241ea01425e20ffc4bc7bf9aa097c0dc7326496bebb1b887.
+The actual emitted RV32 instructions produced four frames subsequently run
+by four simulated matrix workers; actual RV32 copy instructions published
+exactly 48 outputs per tensor and left guards untouched. Invalid layer,
+overlapping bank ranges, corrupted boot, invalid nonce, null plan pointer
+and corrupted output offset were refused without publication. The observed
+test stack was 3696 bytes. This standalone data experiment does not execute
+the parent ROOT admission, NoC transfers, live device ownership or parallel
+worker execution; it is not yet an integrated hardware scheduler.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
