@@ -82,6 +82,25 @@ public:
 	bool ReadStripePage(unsigned tensor,unsigned first,unsigned rows,unsigned page,uint8_t* output,unsigned capacity,std::string& error){
 		return ReadStripePages(tensor,first,rows,page,1,output,capacity,error);
 	}
+	// A complete alpha/beta allocation contains 48 real rows followed by
+	// 16 zero rows in its second tile band. This is a separate geometry from
+	// ordinary stripes, which never authorize rows beyond the source tensor.
+	bool ReadPaddedSmallPages(unsigned tensor,unsigned page,unsigned pages,uint8_t* output,unsigned capacity,std::string& error){
+		Cache::Key key;if(!KeyFor(tensor,key)){error="Small recurrent cache tensor/source unavailable.";return false;}
+		const auto& t=model->Tensors()[tensor];bool selected=false;
+		for(unsigned layer=0;layer<64;layer++)if(layer%4!=3)for(unsigned role:{10U,11U}){
+			PioneerQ38Tensor expected;if(!PioneerQ38Expected(layer,role,expected))return false;
+			if(t.name==expected.name && t.type==expected.type && t.rank==expected.rank && t.inputs==expected.inputs
+				&& t.outputs==expected.outputs && t.bytes==expected.bytes)selected=true;
+		}
+		if(!selected || t.type!=8 || t.inputs!=5120 || t.outputs!=48 || key.bytes!=348160
+			|| !pages || pages>16 || !output || capacity<pages*4096 || page>=85 || pages>85-page){
+			error="Invalid padded small recurrent geometry or output.";return false;
+		}
+		if(!OpenTensor(tensor,key,error))return false;
+		return PioneerQ38NativeBfpBandData::ReadStripePages(*active,5120,64,0,64,page,pages,
+			[this]{return Ready();},output,capacity,error);
+	}
 	bool Stage(unsigned tensor,unsigned first,const uint16_t* input,unsigned count,unsigned phases,
 		PioneerQ38NativeBfpBandData::Packet& output,std::string& error) {
 		Cache::Key key;if(!KeyFor(tensor,key)){error="Native band tensor/source is unavailable or unsupported.";return false;}

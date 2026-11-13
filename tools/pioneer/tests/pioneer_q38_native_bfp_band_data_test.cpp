@@ -165,6 +165,20 @@ int main(int argc,char** argv) {
 		const auto saved=page;assert(!source.ReadStripePage(tensor,0,32,last+1,page.data(),page.size(),error) && page==saved);
 		assert(conversions==before);cases++;
 	}
+	{
+		std::vector<uint8_t> bytes(16*4096,0xa5);
+		for(unsigned page=0;page<85;){
+			const unsigned count=std::min(16U,85-page);
+			assert(source.ReadPaddedSmallPages(tensor,page,count,bytes.data(),bytes.size(),error));
+			assert(!memcmp(bytes.data(),data.raw.data()+page*4096,count*4096));page+=count;
+		}
+		const auto saved=bytes;
+		assert(!source.ReadPaddedSmallPages(tensor,84,2,bytes.data(),bytes.size(),error) && bytes==saved);
+		assert(!source.ReadPaddedSmallPages(tensor,0,0,bytes.data(),bytes.size(),error) && bytes==saved);
+		const unsigned notSmall=unsigned(model.Find("blk.0.attn_gate.weight")-model.Tensors().data());
+		assert(!source.ReadPaddedSmallPages(notSmall,0,1,bytes.data(),bytes.size(),error) && bytes==saved);
+		assert(conversions==before);cases++;
+	}
 	for(unsigned first:{0U,32U})for(unsigned phases:{1U,4U}) {
 		assert(source.Stage(tensor,first,input.data(),5120,phases,packet,error) && packet.key.entry==tensor && packet.key.bytes==key.bytes && packet.key.sourceSHA256==Source::OriginalPin() && packet.key.conversionSHA256==Source::ConversionPin() && packet.sourceEpoch==model.Epoch() && conversions==before);cases++;
 	}

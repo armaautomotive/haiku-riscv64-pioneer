@@ -18,3 +18,13 @@ The temporary cache is /private/tmp/pioneer-small-recurrent-bfp8-cache-20261113-
 This is lossy BFP8 preparation, not a model quality qualification. These
 entries are not yet uploaded or bound to the on-card scheduler. No live
 driver, Work mode, accelerator execution or inference speed changed.
+
+Follow-up: the bound, read-only native BFP source now explicitly supports
+all 85 pages of a padded 48-row alpha/beta tensor, without relaxing the
+32-row alignment checks on ordinary stripes. It requires exact model tensor
+identity and the existing authenticated model/cache binding, with atomic
+failure and no conversion or repair on read. Synthetic tests cover complete
+page routing and invalid geometry. A real-model checker independently
+reconverted and compared all 8,160 pages (33,423,360 bytes) against the
+prepared cache and passed. This is still host-side data preparation only;
+the relocated allocation is not yet wired to an upload or card scheduler.
