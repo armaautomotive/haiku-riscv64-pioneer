@@ -61,6 +61,7 @@ int main(int argc,char** argv) {
  }
  Emit(A::Progress,f.id,500,"host metadata"); Emit(A::Ready,f.id,0,"QWEN27_WORK_HOST_READY_497");
  }
+ unsigned generationCount=0;
  while(Next(r,f)) {
   if(f.kind==A::Threads) {
    Record("threads\n"); assert(f.text.empty());
@@ -74,13 +75,15 @@ int main(int argc,char** argv) {
   }
   assert(f.kind==A::Generate && A::Question(f.text) && f.value>=1 && f.value<=32); Record("generate\n");
   if(!strncmp(mode,"cacheinfer-",11)) {
+   generationCount++;
    assert(f.text=="Hello." && f.value==4);
    if(!strcmp(mode,"cacheinfer-fatal")){Emit(A::Error,f.id,A::Fatal,"fake unproven execution");return 70;}
    if(!strcmp(mode,"cacheinfer-reject")){Emit(A::Done,f.id,A::Rejected,"fake rejected request");continue;}
-   if(!strcmp(mode,"cacheinfer-timing")){
+   if(!strcmp(mode,"cacheinfer-timing") || (!strncmp(mode,"cacheinfer-warm",15) && (generationCount==1 || !strcmp(mode,"cacheinfer-warm-reupload")))){
     Emit(A::Progress,f.id,500,"Qwen27B P100A upload:1.0/2.0 MiB.");
     Emit(A::Progress,f.id,1000,"Qwen27B P100A upload:2.0/2.0 MiB.");
    }
+   if(!strcmp(mode,"cacheinfer-warm-fatal") && generationCount==2){Emit(A::Error,f.id,A::Fatal,"fake warm failure");return 70;}
    Emit(A::Text,f.id,0,!strcmp(mode,"cacheinfer-empty")?"":"four test tokens");
    Emit(A::Done,f.id,A::Complete,!strcmp(mode,"cacheinfer-badstats")?
     "P100A Qwen27B Work:3 output tokens,30.0s; warm generation2 samples/18.293s (0.109 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":

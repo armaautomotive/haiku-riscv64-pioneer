@@ -33,7 +33,8 @@ static bool Statistics(const std::string& text) {
 	return total+.050001>=lowWarm && highRate*highWarm>=samples && lowRate*lowWarm<=samples;
 }
 int main(int argc,char** argv) {
-	if(argc!=2 || strcmp(argv[1],"--cached-generate-four-only"))return 2;
+	if(argc!=2 || (strcmp(argv[1],"--cached-generate-four-only") && strcmp(argv[1],"--cached-generate-four-twice")))return 2;
+	const bool warm=!strcmp(argv[1],"--cached-generate-four-twice");
 	AssistantP100AQwen27 client;std::string error;
 	std::array<bool,851> verified{};bool cacheBanner=false,converted=false;
 	auto loadProgress=[&](float,const char* text) {
@@ -85,7 +86,22 @@ int main(int argc,char** argv) {
 	const double requestEnded=Clock();
 	if(requestEnded>=requestBegan)printf("BATCHED_COMPLETE_SECONDS %.6f;INCLUDES_UPLOAD_PROMPT_AND_GENERATION\n",requestEnded-requestBegan);
 #endif
-	const bool observed=!client.Faulted() && !answer.empty() && Statistics(statistics);
+	bool observed=!client.Faulted() && !answer.empty() && Statistics(statistics);
+	if(warm && observed) {
+		std::string secondAnswer,secondStatistics;bool uploadReported=false;
+		const double warmBegan=Clock();if(warmBegan<0)_exit(70);
+		auto warmProgress=[&](const std::string&,const char* status){
+			if(status){secondStatistics=status;puts(status);fflush(stdout);}
+		};
+		if(!client.Complete("Hello.",4,secondAnswer,error,[]{return false;},warmProgress,
+			[&](float,const char* status){if(status && strstr(status,"Qwen27B P100A upload:"))uploadReported=true;})) {
+			fprintf(stderr,"CACHE_INFERENCE_WARM_EXECUTION_UNPROVEN faulted%u: %s\n",unsigned(client.Faulted()),error.c_str());fflush(stderr);_exit(70);
+		}
+		const double warmEnded=Clock();
+		observed=!client.Faulted() && !secondAnswer.empty() && Statistics(secondStatistics)
+			&& !uploadReported && warmEnded>=warmBegan;
+		if(observed)printf("CACHED_ASSISTANT_SECOND_REQUEST_SECONDS %.6f;NO_UPLOAD_PROGRESS_REPORTED;NOT_PROOF_OF_ZERO_TRANSFER\n",warmEnded-warmBegan);
+	}
 	// Successful Complete is a known token boundary, even if its diagnostic
 	// statistics are unsuitable. One ordinary known-clean Unload is owed.
 	const bool clean=client.Unload(error);
@@ -94,5 +110,6 @@ int main(int argc,char** argv) {
 	}
 	printf("CACHED_ASSISTANT_FOUR_TOKEN_ANSWER_BYTES %zu\n",answer.size());
 	printf("CACHED_ASSISTANT_FOUR_TOKEN_ANSWER %s\n",answer.c_str());
-	puts("PASS_ACTUAL_ASSISTANT_CACHED_FOUR_TOKEN_WORK_KNOWN_CLEAN;NOT_FULL_NATIVE_NOT_20TOKENS_SEC_OR_COMPARATIVE_SPEEDUP_PROOF");return 0;
+	puts(warm?"PASS_ACTUAL_ASSISTANT_TWO_FOUR_TOKEN_WORK_REQUESTS_KNOWN_CLEAN;NO_REUPLOAD_PROGRESS_REPORTED;NOT_FULL_NATIVE_OR_SPEEDUP_PROOF":
+		"PASS_ACTUAL_ASSISTANT_CACHED_FOUR_TOKEN_WORK_KNOWN_CLEAN;NOT_FULL_NATIVE_NOT_20TOKENS_SEC_OR_COMPARATIVE_SPEEDUP_PROOF");return 0;
 }

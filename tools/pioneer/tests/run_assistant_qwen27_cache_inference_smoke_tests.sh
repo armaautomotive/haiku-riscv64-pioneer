@@ -41,4 +41,22 @@ ASSISTANT27_TEST_LOG="$temporary/timing.events" ASSISTANT27_TEST_MODE=cacheinfer
 [ ! -s "$temporary/timing.stderr" ]
 [ "$(grep -c '^BATCHED_UPLOAD_PROGRESS seconds=' "$temporary/timing.stdout")" = 2 ]
 grep -q '^BATCHED_COMPLETE_SECONDS .*;INCLUDES_UPLOAD_PROMPT_AND_GENERATION$' "$temporary/timing.stdout"
-printf 'PASS actual cached Assistant inference client:15 fake-peer cases;all851 cache hits before ONE fixed4-token Generate;conversion/missing banner/entry cannot Generate;unknown execution NO Unload/retry/reset/fallback;finite rounding-consistent Work-only statistics and known-clean exit required;NO model/device/hardware/throughput proof\nEvidence: %s\n' "$temporary"
+for mode in warm warm-reupload warm-fatal;do
+ touch "$temporary/$mode.events"
+ if ASSISTANT27_TEST_LOG="$temporary/$mode.events" ASSISTANT27_TEST_MODE="cacheinfer-$mode" UBSAN_OPTIONS=halt_on_error=1 \
+  "$temporary/timing-test" --cached-generate-four-twice > "$temporary/$mode.stdout" 2> "$temporary/$mode.stderr";then result=0;else result=$?;fi
+ case "$mode" in
+  warm) [ "$result" = 0 ] && [ ! -s "$temporary/$mode.stderr" ]
+   grep -q '^CACHED_ASSISTANT_SECOND_REQUEST_SECONDS .*;NO_UPLOAD_PROGRESS_REPORTED;NOT_PROOF_OF_ZERO_TRANSFER$' "$temporary/$mode.stdout"
+   grep -q '^PASS_ACTUAL_ASSISTANT_TWO_FOUR_TOKEN_WORK_REQUESTS_KNOWN_CLEAN' "$temporary/$mode.stdout";;
+  warm-reupload) [ "$result" = 1 ] && [ -s "$temporary/$mode.stderr" ];
+   ! grep -q '^PASS_ACTUAL_ASSISTANT_TWO' "$temporary/$mode.stdout";;
+  warm-fatal) [ "$result" = 70 ] && [ -s "$temporary/$mode.stderr" ];
+   ! grep -q '^PASS_ACTUAL_ASSISTANT_TWO' "$temporary/$mode.stdout";;
+ esac
+ awk -v mode="$mode" 'NR==1 && $0=="load"{next} NR==2 && $0=="generate"{next}
+  NR==3 && $0=="generate"{next} NR==4 && mode!="warm-fatal" && $0=="unload"{next}
+  NR==4 && mode=="warm-fatal" && $0=="close-only"{next} {exit 1}
+  END{if(NR!=4 && !(mode=="warm-fatal" && NR==3))exit 1}' "$temporary/$mode.events"
+done
+printf 'PASS actual cached Assistant inference client:15 single-request and 3 two-request fake-peer cases;all851 cache hits before Generate;reject repeated upload progress;unknown execution NO Unload/retry/reset/fallback;finite Work-only statistics and known-clean exit required;absence of upload progress is NOT proof of zero transfers;NO model/device/hardware/throughput proof\nEvidence: %s\n' "$temporary"
