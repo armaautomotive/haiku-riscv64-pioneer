@@ -31,6 +31,7 @@ flags += ['-D' + name + '=q38_private_' + name for name in
           ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')]
 source = '''#include "PioneerQ38SmallRecurrentUploadReceiptInspection.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanService.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SmallRecurrentNativeBinding.h"
 using R=PioneerQ38SmallRecurrentUploadReceiptInspection;
 static_assert(PioneerQ38SpanReceiptKind<R>::Value==5,"small recurrent span service not selected");
 int size(){return sizeof(R);}

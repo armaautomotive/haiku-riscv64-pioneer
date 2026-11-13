@@ -95,6 +95,37 @@ public:
   if(!Sealed() || context!=c || cookie!=fd || hashes!=h || ledger!=initialized || team!=owner || generation!=gen)return false;
   return PioneerQ38SmallRecurrentLedgerInspection::Verify(original,layout,ledger,hashes,PioneerResidentBanks::Pages,digest) || Fail();
  }
+ bool MatchesBanks(const PioneerResidentBanks* bound,const tt_dram_samples_result* dram)const{
+  return Sealed() && bound==banks && dram==proof;
+ }
+ bool MatchesLease(const PioneerQ38SpanLease* span)const{return Sealed() && span==lease;}
+ // The startup view remains the QGW8 logical ancestor. It describes model
+ // shapes and original reservations, not the actual relocated small weights.
+ bool MatchesLogical(const C& logical,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  if(!logical.Qgw8InspectionLayout() || logical.Count()!=original.Count()
+   || logical.RecurrentCount()!=original.RecurrentCount() || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned b=0;b<7;b++)if(logical.Used(b)!=ancestor.Used(b))return false;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* src=original.Part(i);const auto* dst=logical.Part(i);const auto* q=ancestor.At(i);
+   if(!src || !dst || !q || src->kind!=dst->kind || src->layer!=dst->layer || src->role!=dst->role
+    || src->type!=dst->type || src->firstRow!=dst->firstRow || src->rows!=dst->rows || src->rowBytes!=dst->rowBytes
+    || q->bank!=dst->bank || q->offset!=dst->offset || q->bytes!=dst->bytes || q->allocated!=dst->allocated)return false;
+  }
+  return Revalidate(c,fd,h,initialized,owner,gen);
+ }
+ bool DeriveLogical(C& output,const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(&output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t bytes=sizeof(output),hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(!h || !initialized || out>limit-bytes || self>limit-sizeof(*this) || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  return output.BuildDenseQ8LogicalParentInspection(ancestor) && MatchesLogical(output,c,fd,h,initialized,owner,gen);
+ }
  // Derive records from the receipt's own fixed layout, without trusting a
  // host proposal. Inspection only: it neither authenticates nor writes DRAM.
  bool BuildWorkspace(const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,

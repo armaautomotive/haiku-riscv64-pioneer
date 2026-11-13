@@ -7,6 +7,7 @@
 static int small_geteuid(){return 0;}
 #define geteuid small_geteuid
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SmallRecurrentUploadControl.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SmallRecurrentNativeBinding.h"
 #undef geteuid
 namespace H=PioneerQ38SmallRecurrentUpload;
 using Packet=H::Packet;
@@ -55,6 +56,12 @@ int main(int argc,char** argv){
   }else{
    assert(Q38SmallRecurrentUploadControl(&cookie,&seal,sizeof(seal))==B_OK && seal.accepted && seal.sealed && seal.spans==21475);
    assert(c.q38SmallRecurrentReceipt->Revalidate(&c,&cookie,c.hashes,c.initialized,17,sReloadGeneration));
+   using Binding=PioneerQ38SmallRecurrentNativeBinding;
+   assert(Binding::Matches(c,&cookie,sReloadGeneration));
+   assert(!Binding::Matches(c,&foreign,sReloadGeneration) && !Binding::Matches(c,&cookie,sReloadGeneration+1));
+   auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+   assert(Binding::DeriveLogical(c,&cookie,sReloadGeneration,*logical) && logical->Qgw8InspectionLayout());
+   c.q38QgwdReceipt=&c;assert(!Binding::Matches(c,&cookie,sReloadGeneration));c.q38QgwdReceipt=nullptr;
   }
   Unbind();
  }

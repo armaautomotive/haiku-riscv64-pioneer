@@ -37,6 +37,12 @@ int main(){
  assert(spans==21475 && pages==5067109);span.closed=true;span.ready=span.dirty=false;
  assert(receipt->Seal(span) && receipt->Sealed() && receipt->Revalidate(&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(!receipt->Revalidate(&foreign,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->MatchesBanks(&banks,&proof) && receipt->MatchesLease(&span));
+ assert(!receipt->MatchesBanks(nullptr,&proof) && !receipt->MatchesLease(nullptr));
+ auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(receipt->DeriveLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(logical->Qgw8InspectionLayout() && receipt->MatchesLogical(*logical,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(!receipt->MatchesLogical(*logical,&foreign,&cookie,hashes.data(),ledger.data(),17,42));
  using Workspace=PioneerQ38SmallRecurrentWorkspace;using Bridge=PioneerQ38SmallRecurrentWorkspaceReceipt;
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();Workspace::Plan::Proposal proposal;
  assert(canonical->Build() && Workspace::Plan::Build(*canonical,proposal));

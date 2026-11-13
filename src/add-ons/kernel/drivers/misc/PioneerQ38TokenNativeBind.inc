@@ -8,10 +8,17 @@
 #endif
 #include "PioneerQ38QgwdNativeBinding.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+#include "PioneerQ38SmallRecurrentNativeBinding.h"
+#endif
 // The QGWD logical plan contains intentional holes. Its sealed physical
 // upload receipt, not logical-page coverage, is the authority at boundaries.
 static bool Q38TokenNativeLearnedPresent(PioneerStoreContext& c,const PioneerQ38CanonicalModelPlan& plan){
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ auto* fd=sRuntimeOwner;
+ return PioneerQ38SmallRecurrentNativeBinding::Matches(c,fd,sReloadGeneration)
+  && c.q38SmallRecurrentReceipt->MatchesLogical(plan,&c,fd,c.hashes,c.initialized,fd->team,sReloadGeneration);
+#elif defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
  auto* fd=sRuntimeOwner;
  return PioneerQ38QgwdNativeBinding::Matches(c,fd,sReloadGeneration)
   && c.q38QgwdReceipt->MatchesLogical(plan,&c,fd,c.hashes,c.initialized,fd->team,sReloadGeneration,
@@ -103,7 +110,9 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::MemoryClosed
   || (!audit && state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ if(state && !PioneerQ38SmallRecurrentNativeBinding::Matches(*c,fd,sReloadGeneration))return false;
+#elif defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
  if(state && !PioneerQ38QgwdNativeBinding::Matches(*c,fd,sReloadGeneration))return false;
 #elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  if(state && (c->q38HybridReceipt || !c->q38Qgw8Receipt
@@ -161,7 +170,9 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext& c,unsigned bank){
  if(bank>=7 || sQ38TokenModelEpoch==UINT64_MAX || !c.io.TokenModelSourceScope(true))return false;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ if(!PioneerQ38SmallRecurrentNativeBinding::Matches(c,sRuntimeOwner,sReloadGeneration))return false;
+#elif defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
  if(!PioneerQ38QgwdNativeBinding::Matches(c,sRuntimeOwner,sReloadGeneration))return false;
 #elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  if(c.q38HybridReceipt || !c.q38Qgw8Receipt
@@ -183,7 +194,9 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
  // inventing120 NoC source identities to build a startup template early.
  if(
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+  !PioneerQ38SmallRecurrentNativeBinding::DeriveLogical(c,sRuntimeOwner,sReloadGeneration,state->canonical)
+#elif defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
   !PioneerQ38QgwdNativeBinding::DeriveLogical(c,sRuntimeOwner,sReloadGeneration,state->canonical)
 #elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
   !c.q38Qgw8Receipt->DeriveBoundCanonical(state->canonical,&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration)

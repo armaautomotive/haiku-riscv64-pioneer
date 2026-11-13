@@ -371,3 +371,14 @@ object compiles; simulated extracted dispatch and cookie-close tests pass,
 along with the original QGWD/QGW8 control regressions. This does not register
 the control in any loadable driver, bind the matrix program to the receipt,
 or constitute hardware, model-quality or inference-speed evidence.
+
+Startup logical-view binding: the sealed small-recurrent receipt can now
+independently derive and revalidate the original QGW8 logical startup view,
+while retaining its distinct physical converted layout and relocated small
+workspace records. The non-loadable driver profile selects this binding at
+its native token-binding and learned-presence checks. Tests cover the sealed
+receipt, original logical geometry, wrong cookie/generation, competing
+receipt and bank/lease identity; fake-tag RISC-V driver and unchanged QGWF
+profile cross-builds pass. This does not bind the native journal, transfer
+workspace records, initialize workers or authorize execution. It is not a
+hardware, model-quality or inference-speed result.
