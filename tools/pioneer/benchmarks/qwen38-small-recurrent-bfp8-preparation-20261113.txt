@@ -258,3 +258,17 @@ dispatch or output because its existing layer state machine requires a gate
 first. This is an expected order refusal, not evidence of successful cold
 fallback through the complete ROOT. Full cold fallback therefore must not be
 claimed from the decision-predicate check alone.
+
+Combined projection handoff: an inspection-only image enables both gate/QKV
+and alpha/beta input reuse. The fixture carries the actual ROOT memory map
+from gate through QKV, then transports that map to the alpha/beta simulator;
+it checks the retained nonces, jobs and counters against the same 119
+simulated worker histories before continuing. The worker fixture consumes
+the ROOT-emitted gate/QKV/alpha/beta frames, checks model-derived outputs,
+then separately exercises Conv, paired GDN and output projection. A damaged
+prior producer proof is rejected before beta dispatch; the unchanged small
+controller regression also passed. ROOT memory is host-transported between
+processes and workers are simulated sequentially: this is not a continuous
+physical cohort, native execution, answer quality or a speed measurement.
+Combined inspection object SHA-256:
+2b0638d38044bd627bf40621bcfddef77e1bb4c7a851e1fac13da171819dafb2.

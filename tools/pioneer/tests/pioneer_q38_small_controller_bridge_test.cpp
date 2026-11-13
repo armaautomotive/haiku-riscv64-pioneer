@@ -5,8 +5,10 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--warm-reuse-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export") || !std::strcmp(argv[2],"--reuse-jobs") || !std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior") || !std::strcmp(argv[2],"--cold-beta-jobs") || !std::strcmp(argv[2],"--cold-beta")));
- const bool coldBeta=!std::strcmp(argv[2],"--cold-beta") || !std::strcmp(argv[2],"--cold-beta-jobs"),warmReuse=!std::strcmp(argv[2],"--warm-reuse-jobs"),reuseJobs=!std::strcmp(argv[2],"--reuse-jobs") || warmReuse,reuseChain=!std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior"),badInput=!std::strcmp(argv[2],"--reuse-bad-input"),badNative=!std::strcmp(argv[2],"--reuse-bad-native"),warmJobs=!std::strcmp(argv[2],"--warm-jobs") || warmReuse,jobs=!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--cold-beta-jobs") || warmJobs || reuseJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--reuse-bad-prior"),exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows || reuseChain,full=!std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--cold-beta") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--warm-reuse-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export") || !std::strcmp(argv[2],"--reuse-jobs") || !std::strcmp(argv[2],"--reuse-chain") || !std::strcmp(argv[2],"--reuse-chain-import") || !std::strcmp(argv[2],"--reuse-chain-import-bad-prior") || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior") || !std::strcmp(argv[2],"--cold-beta-jobs") || !std::strcmp(argv[2],"--cold-beta")));
+ const bool importBad=!std::strcmp(argv[2],"--reuse-chain-import-bad-prior");
+ const bool importRoot=!std::strcmp(argv[2],"--reuse-chain-import") || importBad;
+ const bool coldBeta=!std::strcmp(argv[2],"--cold-beta") || !std::strcmp(argv[2],"--cold-beta-jobs"),warmReuse=!std::strcmp(argv[2],"--warm-reuse-jobs"),reuseJobs=!std::strcmp(argv[2],"--reuse-jobs") || warmReuse,reuseChain=!std::strcmp(argv[2],"--reuse-chain") || importRoot || !std::strcmp(argv[2],"--reuse-bad-input") || !std::strcmp(argv[2],"--reuse-bad-native") || !std::strcmp(argv[2],"--reuse-bad-prior"),badInput=!std::strcmp(argv[2],"--reuse-bad-input"),badNative=!std::strcmp(argv[2],"--reuse-bad-native"),warmJobs=!std::strcmp(argv[2],"--warm-jobs") || warmReuse,jobs=!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--cold-beta-jobs") || warmJobs || reuseJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--reuse-bad-prior") || importBad,exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows || reuseChain,full=!std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--cold-beta") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
  const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
@@ -23,6 +25,10 @@ int main(int argc,char** argv){
  for(unsigned i=0;i<4;i++)root->memory[d+(32+i*2)*4]=i+1;
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)root->memory[0x170000+w*256+i*4]=boots[w][i];
  std::map<unsigned,unsigned> retainedRoot;
+ if(importRoot){
+  uint32_t count=0;assert(fread(&count,sizeof(count),1,stdin)==1 && count && count<=1000000);
+  for(unsigned i=0;i<count;i++){uint32_t pair[2];assert(fread(pair,sizeof(pair),1,stdin)==1);assert(retainedRoot.emplace(pair[0],pair[1]).second);}
+ }
  for(unsigned kind=0;kind<(coldBeta?1U:2U);kind++){
   const unsigned role=coldBeta?11:10+kind,record=role-10;
   root->memory[d+4*42]=0;root->memory[d+4*43]=role;
@@ -52,7 +58,7 @@ int main(int argc,char** argv){
    if(corrupt)(*snapshots)[0].proof[19]^=1;
    if(badProducer)(*snapshots)[0].producer.proof[19]^=1;
    if(badPrior && kind==1)(*snapshots)[2].initial.proof[19]^=1;
-   auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=chain && kind?retainedRoot:root->memory;
+   auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=(chain && kind) || importRoot?retainedRoot:root->memory;
    const unsigned owner=0x6e000,frame=owner+768;
    for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=root->memory.at(d+i*4);
    endpoint->memory[frame+9*4]=129;endpoint->memory[frame+12*4]=48*4;endpoint->memory[frame+53*4]=0xe0000;
@@ -66,7 +72,7 @@ int main(int argc,char** argv){
    endpoint->memory[owner+256+48*4]=1;endpoint->memory[owner+1024]=2;endpoint->memory[0x75400]=1;
    for(unsigned i=0;i<4;i++)endpoint->memory[0xffb20040+i*0x800]=0;
    for(unsigned i=0;i<32;i++)endpoint->memory[0xffb20240+i*4]=0;
-   if(!chain || !kind)for(unsigned at:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})endpoint->memory[0xffb20000+at]=0;
+   if((!chain || !kind) && !importRoot)for(unsigned at:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})endpoint->memory[0xffb20000+at]=0;
    for(unsigned i=0;i<8;i++)endpoint->memory[0x6d000+i*4]=0;
    endpoint->memory[0x74800+6*4]=endpoint->memory[0x74800+7*4]=0;
    std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
@@ -81,7 +87,7 @@ int main(int argc,char** argv){
     endpoint->memory[frame+53*4]=0x140000;endpoint->memory[frame+54*4]=0x80000;
     endpoint->memory[frame+55*4]=0x178000;endpoint->memory[frame+56*4]=0x123000;endpoint->memory[frame+57*4]=0x170000;
     for(unsigned i=0;i<64;i++){endpoint->memory[0x75300+i*4]=endpoint->memory.at(owner+i*4);endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);}
-    if(!reuseChain || !kind){
+    if((!reuseChain || !kind) && !importRoot){
      for(unsigned i=0;i<5120;i++)endpoint->memory[0xe0000+i*4]=0;
      for(unsigned i=0;i<5120/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
     }
@@ -94,7 +100,7 @@ int main(int argc,char** argv){
     if(kind && badNative)endpoint->memory[0xa0000]^=1;
     for(unsigned w=0;w<119;w++){
      const auto& s=(*snapshots)[w];
-     if(chain && kind){
+     if((chain && kind) || importRoot){
       assert(endpoint->memory.at(0x123000+w*4)==s.initial.doorbell);
       for(unsigned i=0;i<8;i++)assert(endpoint->memory.at(0x122000+(w*8+i)*4)==s.initial.counters[i]);
       for(unsigned i=0;i<64;i++)assert(endpoint->memory.at(0x178000+w*256+i*4)==s.initial.job[i]);

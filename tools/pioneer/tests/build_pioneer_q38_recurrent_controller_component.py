@@ -5,9 +5,9 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-if len(sys.argv) not in (3,4,6) or (len(sys.argv)>=4 and sys.argv[3] not in ('--baseline','--scoped-seal','--small-result','--small-reuse','--gate-reuse')) or (len(sys.argv)==6 and (sys.argv[3]!='--baseline' or sys.argv[4]!='--source-root')) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: ABS_BUILD NEW_ABS_OBJECT [--scoped-seal | --small-result | --small-reuse | --gate-reuse | --baseline [--source-root ABS_ROOT]]')
-build,out=map(Path,sys.argv[1:3]);baseline=len(sys.argv)>=4 and sys.argv[3]=='--baseline';scoped=len(sys.argv)==4 and sys.argv[3]=='--scoped-seal';reuse=len(sys.argv)==4 and sys.argv[3]=='--small-reuse';gateReuse=len(sys.argv)==4 and sys.argv[3]=='--gate-reuse';small=len(sys.argv)==4 and (sys.argv[3]=='--small-result' or reuse or gateReuse);here=Path(__file__).resolve().parent
+if len(sys.argv) not in (3,4,6) or (len(sys.argv)>=4 and sys.argv[3] not in ('--baseline','--scoped-seal','--small-result','--small-reuse','--gate-reuse','--both-reuse')) or (len(sys.argv)==6 and (sys.argv[3]!='--baseline' or sys.argv[4]!='--source-root')) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: ABS_BUILD NEW_ABS_OBJECT [--scoped-seal | --small-result | --small-reuse | --gate-reuse | --both-reuse | --baseline [--source-root ABS_ROOT]]')
+build,out=map(Path,sys.argv[1:3]);baseline=len(sys.argv)>=4 and sys.argv[3]=='--baseline';scoped=len(sys.argv)==4 and sys.argv[3]=='--scoped-seal';reuse=len(sys.argv)==4 and sys.argv[3] in ('--small-reuse','--both-reuse');gateReuse=len(sys.argv)==4 and sys.argv[3] in ('--gate-reuse','--both-reuse');small=len(sys.argv)==4 and (sys.argv[3]=='--small-result' or reuse or gateReuse);here=Path(__file__).resolve().parent
 source=Path(sys.argv[5])/'tools/pioneer' if len(sys.argv)==6 else here.parent
 if not source.is_absolute() or not source.is_dir():raise SystemExit('invalid source root')
 if not build.is_absolute() or not build.is_dir() or not out.is_absolute() or out.exists() or out.is_symlink():

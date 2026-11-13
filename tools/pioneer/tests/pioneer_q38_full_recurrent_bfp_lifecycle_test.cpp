@@ -42,11 +42,13 @@ static std::vector<uint32_t> IndependentOutput(const std::vector<uint8_t>& proje
  }return result;
 }
 int main(int argc,char** argv){
- assert(argc==10 || (argc==11 && (!std::strcmp(argv[10],"--controller-input") || !std::strcmp(argv[10],"--capture-controller") || !std::strcmp(argv[10],"--capture-controller-reuse"))));
- const bool captureReuse=argc==11 && !std::strcmp(argv[10],"--capture-controller-reuse");
+ assert(argc==10 || (argc==11 && (!std::strcmp(argv[10],"--controller-input") || !std::strcmp(argv[10],"--capture-controller") || !std::strcmp(argv[10],"--capture-controller-reuse") || !std::strcmp(argv[10],"--capture-controller-reuse-prefixed"))));
+ const bool prefixed=argc==11 && !std::strcmp(argv[10],"--capture-controller-reuse-prefixed");
+ const bool captureReuse=argc==11 && (!std::strcmp(argv[10],"--capture-controller-reuse") || prefixed);
  const bool capture=argc==11 && (!std::strcmp(argv[10],"--capture-controller") || captureReuse);
  auto frames=std::make_unique<std::array<std::array<std::array<uint32_t,64>,42>,2>>();
  auto captured=std::make_unique<std::array<std::array<PioneerRecurrentWorkerSnapshot,119>,2>>();
+ EmittedJobs gateJobs,qkvJobs;if(prefixed){gateJobs.Read(20);qkvJobs.Read(20);}
  if(capture)assert(fread(frames->data(),sizeof(*frames),1,stdin)==1 && fgetc(stdin)==EOF);
  auto gate=LoadProjection(argv[3],3,5120,6144),qkvWeights=LoadProjection(argv[4],5,5120,10240);
  std::array<std::vector<uint8_t>,2> small;
@@ -62,14 +64,15 @@ int main(int argc,char** argv){
  for(unsigned w=0;w<119;w++){
   auto image=std::make_unique<PioneerQ38BfpGdnWorker>(argv[1],argv[2],5120,3,w+1);image->Boot();
   if(w<20){for(unsigned i=0;i<256;i++){unsigned at=w*256+i;image->input[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
-   image->StageProducer(5,1,false,0);image->Check(1);sequence[w]=1;}
+   if(prefixed)Producer(*image,w,5,1,gateJobs);else {image->StageProducer(5,1,false,0);image->Check(1);}sequence[w]=1;}
   workers.push_back(std::move(image));
  }
  std::vector<uint32_t> gates(6144),qkv(10240);std::vector<uint8_t> gateSeen(6144),qkvSeen(10240);
  for(unsigned phase=0;phase<2;phase++)for(unsigned w=0;w<119;w++){
   const unsigned groups=phase?320:192,base=groups/119,extra=groups%119;
   unsigned bands=base+unsigned(w<extra),first=(w*base+std::min(w,extra))*32,role=phase?6:5,rows=phase?10240:6144;
-  auto& image=*workers[w];auto j=Job(image,++sequence[w],role,first,bands,rows,5120);
+  auto& image=*workers[w];auto j=prefixed?(phase?qkvJobs.matrix[w]:gateJobs.matrix[w]):Job(image,sequence[w]+1,role,first,bands,rows,5120);++sequence[w];
+  assert(j[1]==sequence[w]);
   Matrix(image,j,phase?qkvWeights:gate,input,phase?qkv:gates,phase?qkvSeen:gateSeen,nullptr);
  }
  for(auto v:gateSeen)assert(v==1);for(auto v:qkvSeen)assert(v==1);

@@ -297,7 +297,7 @@ static int RunOne(int argc,char** argv){
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);
   const unsigned target=0x04000000+(controller?PioneerQ38MixedRecurrentOffset(role):0);
   for(unsigned row=0;row<rows;row++)assert(endpoint->memory.at(target+row*4)==results[row]);
-  if(chainFirst)retainedGate=endpoint->memory;
+  if(chainFirst || chainSecond)retainedGate=endpoint->memory;
   assert(fwrite(results.data(),sizeof(uint32_t),rows,stdout)==rows && !fflush(stdout));return 0;
  }
  if(store){
@@ -333,7 +333,7 @@ static int RunOne(int argc,char** argv){
  assert(!fflush(stdout));return 0;
 }
 int main(int argc,char** argv){
- if(argc==3 && (!std::strcmp(argv[2],"--gate-reuse-chain") || !std::strcmp(argv[2],"--gate-chain-bad-input")
+ if(argc==3 && (!std::strcmp(argv[2],"--gate-reuse-chain") || !std::strcmp(argv[2],"--gate-reuse-chain-export") || !std::strcmp(argv[2],"--gate-chain-bad-input")
   || !std::strcmp(argv[2],"--gate-chain-bad-history"))){
   char gateRole[]="5",qkvRole[]="6",gateMode[]="--full-prepare",qkvMode[]="--gate-reuse-prepare";
   char badInputMode[]="--gate-reuse-bad-input",badHistoryMode[]="--gate-reuse-bad-history";
@@ -342,7 +342,14 @@ int main(int argc,char** argv){
   char* gateArgv[]={argv[0],argv[1],gateRole,gateMode,nullptr};
   char* qkvArgv[]={argv[0],argv[1],qkvRole,selected,nullptr};
   chainFirst=true;const int first=RunOne(4,gateArgv);chainFirst=false;if(first)return first;
-  chainSecond=true;const int second=RunOne(4,qkvArgv);chainSecond=false;return second;
+  chainSecond=true;const int second=RunOne(4,qkvArgv);chainSecond=false;
+  if(!second && !std::strcmp(argv[2],"--gate-reuse-chain-export")){
+   assert(retainedGate.size()<=1000000);const uint32_t count=uint32_t(retainedGate.size());
+   assert(fwrite(&count,sizeof(count),1,stdout)==1);
+   for(const auto& item:retainedGate){const uint32_t pair[]={item.first,item.second};assert(fwrite(pair,sizeof(pair),1,stdout)==1);}
+   assert(!fflush(stdout));
+  }
+  return second;
  }
  return RunOne(argc,argv);
 }

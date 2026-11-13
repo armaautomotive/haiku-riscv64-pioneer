@@ -9,7 +9,7 @@ import struct
 import sys
 import tempfile
 
-assert __debug__ and len(sys.argv) in (4,9) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert __debug__ and len(sys.argv) in (4,9,14) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,recurrent=map(Path,sys.argv[1:4]);here=Path(__file__).resolve().parent
 assert all(p.is_absolute() for p in (sdk,root,recurrent)) and sdk.is_dir() and root.is_dir() and recurrent.is_file()
 old=root/'qualified-components';tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -43,8 +43,8 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
   str(here/'pioneer_q38_recurrent_gate_reuse_predicate_test.cpp'),'-o',str(test)],check=True)
  env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
  subprocess.run([str(test),str(tmp)],check=True,env=env)
- if len(sys.argv)==9:
-  worker,leaf,private,gate,qkv=map(Path,sys.argv[4:]);assert all(p.is_absolute() for p in (worker,leaf,private,gate,qkv))
+ if len(sys.argv)>=9:
+  worker,leaf,private,gate,qkv=map(Path,sys.argv[4:9]);assert all(p.is_absolute() for p in (worker,leaf,private,gate,qkv))
   for path,digest in ((worker/'program.elf','67a9bf22e0f9713b699bb058db3cc5702f4940fb786845e66a3e89a3bfe2175d'),
    (leaf/'program.elf','e8a04408d0c1a2d0ffa90d1d92ca77f3bb56f849c1d714723dfae9f3110ba72f'),
    (private/'PioneerNativeBfpModelBandData.h','396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a'),
@@ -98,4 +98,27 @@ with tempfile.TemporaryDirectory(prefix='q38-gate-reuse-',dir='/private/tmp') as
    rejected=subprocess.run([str(rootbin),str(tmp),'6',failure],input=boot+retained[prefix:prefix+snapshotSize],
     stdout=subprocess.PIPE,check=True,env=env).stdout
    assert rejected==b'PASS damaged gate history or input refused before dispatch; NO DEVICE\n'
+  if len(sys.argv)==14:
+   alpha,beta,learned,output,conv=map(Path,sys.argv[9:14]);smallbin=tmp/'small'
+   subprocess.run([os.environ.get('CXX','c++'),*flags,*['-D'+r+'=1' for r in roles],
+    str(here/'pioneer_q38_small_controller_bridge_test.cpp'),'-o',str(smallbin)],check=True)
+   exported=subprocess.run([str(rootbin),str(tmp),'--gate-reuse-chain-export'],
+    input=boot+retained[prefix+snapshotSize:]+boot+retained[prefix:prefix+snapshotSize],
+    stdout=subprocess.PIPE,check=True,env=env).stdout
+   assert exported[:prefix]==retained[:prefix] and len(exported)>=prefix+4
+   rootState=exported[prefix:];count=struct.unpack_from('<I',rootState)[0];assert len(rootState)==4+count*8
+   smallJobs=subprocess.run([str(smallbin),str(tmp),'--warm-reuse-jobs'],input=boot,
+    stdout=subprocess.PIPE,check=True,env=env).stdout
+   snapshots=subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
+    *map(str,(sdk,worker,leaf,private,gate,qkv,alpha,beta,learned,output,conv)),
+    '--capture-controller-reuse-prefixed'],input=gateJobs+qkvJobs+smallJobs,
+    stdout=subprocess.PIPE,check=True,env=env).stdout
+   assert len(snapshots)==2*snapshotSize
+   continued=subprocess.run([str(smallbin),str(tmp),'--reuse-chain-import'],input=boot+rootState+snapshots,
+    stdout=subprocess.PIPE,check=True,env=env).stdout
+   assert continued==b'PASS ROOT alpha/beta Runs preserve actual controller histories; SIMULATED NO DEVICE\n'
+   damaged=subprocess.run([str(smallbin),str(tmp),'--reuse-chain-import-bad-prior'],input=boot+rootState+snapshots,
+    stdout=subprocess.PIPE,check=True,env=env).stdout
+   assert damaged==b'PASS damaged input or prior receipt refused before new dispatch; NO DEVICE\n'
+   print('PASS gate/QKV/alpha/beta ROOT state carried through retained simulated workers; NO DEVICE OR SPEED')
   print('PASS ROOT gate and QKV Runs with retained ROOT and simulated worker histories; NO DEVICE OR SPEED')
