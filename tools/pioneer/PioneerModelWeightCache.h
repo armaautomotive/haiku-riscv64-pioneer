@@ -40,6 +40,16 @@ public:
 		// before atomic publication;changes/corruption never expose partial data.
 		bool Read(uint64_t offset,unsigned bytes,void* output,unsigned capacity,std::string& error);
 	};
+	// In-memory receipt of a fully verified open entry, bound to this cache
+	// instance. It grants no model/device authority and survives no process.
+	class VerifiedEntry {
+		friend class PioneerModelWeightCache;
+		struct Data;
+		std::unique_ptr<Data> data;
+	public:
+		VerifiedEntry();~VerifiedEntry();
+		VerifiedEntry(const VerifiedEntry&)=delete;VerifiedEntry& operator=(const VerifiedEntry&)=delete;
+	};
 	PioneerModelWeightCache();~PioneerModelWeightCache();
 	PioneerModelWeightCache(const PioneerModelWeightCache&)=delete;
 	PioneerModelWeightCache& operator=(const PioneerModelWeightCache&)=delete;
@@ -59,6 +69,11 @@ public:
 	// fail; this method never converts, creates, repairs or publishes files.
 	bool OpenExisting(const Key&,const Ready&,Reader&,std::string& error,
 		const Progress& progress=Progress());
+	// Snapshot only after full verification. Reopen checks the original file
+	// identity, header and chunk index; Reader::Read still hashes every chunk.
+	// Replacement or mutation fails closed; never repair during upload.
+	bool RememberVerified(const Reader&,VerifiedEntry&,std::string& error);
+	bool OpenRemembered(const VerifiedEntry&,const Ready&,Reader&,std::string& error);
 	static Digest Hash(const void*,size_t);
 	// SAME open regular file;pread does not disturb the converter's FILE
 	// position. Caller checks this digest against its trusted model identity.

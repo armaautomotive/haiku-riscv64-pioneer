@@ -89,11 +89,18 @@ struct Temporary {
 };
 }
 struct PioneerModelWeightCache::Reader::Data {
-	int fd=-1;Key key;struct stat identity{};Digest payload;
+	int fd=-1;const PioneerModelWeightCache* owner=nullptr;Key key;struct stat identity{};Digest payload;
 	std::vector<uint8_t> chunks;
 	~Data() { if(fd>=0)close(fd); }
 	bool Stable() const { struct stat s{};return fd>=0 && !fstat(fd,&s) && SafeFile(s) && Same(identity,s); }
 };
+struct PioneerModelWeightCache::VerifiedEntry::Data {
+	const PioneerModelWeightCache* owner=nullptr;
+	Key key;struct stat identity{};Digest payload{};
+	std::vector<uint8_t> chunks;
+};
+PioneerModelWeightCache::VerifiedEntry::VerifiedEntry()=default;
+PioneerModelWeightCache::VerifiedEntry::~VerifiedEntry()=default;
 PioneerModelWeightCache::Reader::Reader()=default;
 PioneerModelWeightCache::Reader::~Reader()=default;
 bool PioneerModelWeightCache::Reader::IsOpen() const { return data && data->Stable(); }
@@ -173,7 +180,7 @@ bool PioneerModelWeightCache::OpenDirectory(const char* path,std::string& error,
 }
 bool PioneerModelWeightCache::Load(const Key& key,Reader& reader,std::string& error,const Progress& progress,bool& missing,bool& unsafe) {
 	missing=false;unsafe=false;
-	const auto name=EntryName(key);auto next=std::make_unique<Reader::Data>();next->key=key;
+	const auto name=EntryName(key);auto next=std::make_unique<Reader::Data>();next->owner=this;next->key=key;
 	next->fd=openat(directoryFD,name.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK);
 	if(next->fd<0) { missing=errno==ENOENT;unsafe=!missing;return Fail(error,missing?"Converted-weight cache miss.":"Cannot safely open converted-weight cache entry."); }
 	if(fstat(next->fd,&next->identity) || !SafeFile(next->identity)) { unsafe=true;return Fail(error,"Cache entry is not a private read-only single-link regular file."); }
@@ -258,4 +265,27 @@ bool PioneerModelWeightCache::OpenExisting(const Key& key,const Ready& ready,Rea
 	if(!Load(key,reader,error,progress,missing,unsafe))return false;
 	if(!ready()) { reader.data.reset();return Fail(error,"Model source changed during read-only cache verification."); }
 	error.clear();return true;
+}
+bool PioneerModelWeightCache::RememberVerified(const Reader& reader,VerifiedEntry& receipt,std::string& error) {
+	if(directoryFD<0 || receipt.data || !reader.data || reader.data->owner!=this || !reader.data->Stable())
+		return Fail(error,"Cannot remember an unavailable verified cache entry.");
+	auto saved=std::make_unique<VerifiedEntry::Data>();saved->owner=this;saved->key=reader.data->key;
+	saved->identity=reader.data->identity;saved->payload=reader.data->payload;saved->chunks=reader.data->chunks;
+	if(!reader.data->Stable())return Fail(error,"Cache entry changed while capturing verification.");
+	receipt.data=std::move(saved);error.clear();return true;
+}
+bool PioneerModelWeightCache::OpenRemembered(const VerifiedEntry& receipt,const Ready& ready,Reader& reader,std::string& error) {
+	if(directoryFD<0 || !receipt.data || receipt.data->owner!=this || !ready || !ready() || reader.data)
+		return Fail(error,"Remembered cache open requires its verified owner and ready original.");
+	const auto& saved=*receipt.data;auto next=std::make_unique<Reader::Data>();next->owner=this;next->key=saved.key;
+	const auto name=EntryName(saved.key);
+	next->fd=openat(directoryFD,name.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK);
+	if(next->fd<0 || fstat(next->fd,&next->identity) || !SafeFile(next->identity) || !Same(saved.identity,next->identity))
+		return Fail(error,"Verified cache entry was replaced or changed.");
+	std::array<uint8_t,HeaderBytes> raw{};std::vector<uint8_t> chunks(saved.chunks.size());
+	const auto expected=Header(saved.key,saved.payload,Hash(saved.chunks.data(),saved.chunks.size()));
+	if(!IO(next->fd,raw.data(),raw.size(),0,false) || raw!=expected
+		|| !IO(next->fd,chunks.data(),chunks.size(),HeaderBytes,false) || chunks!=saved.chunks
+		|| !next->Stable() || !ready())return Fail(error,"Verified cache header or chunk index changed.");
+	next->payload=saved.payload;next->chunks=std::move(chunks);reader.data=std::move(next);error.clear();return true;
 }

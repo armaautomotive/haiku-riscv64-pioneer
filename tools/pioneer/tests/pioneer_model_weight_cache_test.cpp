@@ -172,6 +172,23 @@ int main(int argc,char** argv) {
 		ready=false;Cache::Reader revoked;assert(!cache.OpenExisting(key,sourceReady,revoked,error));ready=true;cases++;
 	}
 	{
+		Cache::Reader fullyVerified;Cache::VerifiedEntry receipt;
+		assert(cache.OpenExisting(key,sourceReady,fullyVerified,error));
+		assert(cache.RememberVerified(fullyVerified,receipt,error));
+		assert(!cache.RememberVerified(fullyVerified,receipt,error));
+		Cache other;assert(other.OpenExistingDirectory(directory.c_str(),error));
+		Cache::VerifiedEntry foreignReceipt;assert(!other.RememberVerified(fullyVerified,foreignReceipt,error));
+		Cache::Reader foreign;assert(!other.OpenRemembered(receipt,sourceReady,foreign,error));
+		Cache::Reader reopened;assert(cache.OpenRemembered(receipt,sourceReady,reopened,error));Exact(reopened,original);
+		ready=false;Cache::Reader revoked;assert(!cache.OpenRemembered(receipt,sourceReady,revoked,error));ready=true;
+		Alter(path,256+128+Cache::ChunkBytes+5,1);
+		Cache::Reader changed;assert(!cache.OpenRemembered(receipt,sourceReady,changed,error) && !changed.IsOpen());
+		std::vector<uint8_t> result(32,0x6d);const auto prior=result;
+		assert(!reopened.Read(Cache::ChunkBytes,32,result.data(),result.size(),error) && result==prior);
+		Cache::Reader rebuilt;assert(cache.GetOrCreate(key,sourceReady,produce,rebuilt,hit,error) && !hit);
+		Cache::Reader replaced;assert(!cache.OpenRemembered(receipt,sourceReady,replaced,error));cases++;
+	}
+	{
 		const std::string originalPath=base+"/original-fixture";
 		int fd=open(originalPath.c_str(),O_RDWR|O_CREAT|O_EXCL,0600);assert(fd>=0);
 		assert(write(fd,original.data(),original.size())==ssize_t(original.size()) && lseek(fd,123,SEEK_SET)==123);

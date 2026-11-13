@@ -1,0 +1,25 @@
+Qwen27B lossless cache re-open optimization, 2026-11-13
+
+The installed loader fully authenticates the original model and verifies
+each derived cache entry during preparation. The old upload path reopened
+each entry with OpenExisting, which performed another full payload and chunk
+hash scan, then rehashed each 64 KiB chunk as it was consumed. This is an
+identified duplicate scan, not a measurement of the Pioneer bottleneck.
+
+The candidate remembers an in-process receipt only after complete entry
+verification. Upload reopens the same identity, compares the header and the
+complete chunk index to that receipt, and continues to hash each consumed
+chunk before exposing bytes. Changes, replacement, missing files, source
+revocation and cross-cache receipt use fail closed; upload does not repair.
+The receipt retains a chunk hash index in memory, not 851 open file handles.
+The original full-model authentication and initial full cache verification
+are unchanged. This does not remove disk reads for actual upload or change
+the device transfer and inference paths.
+
+ASan/UBSan host cache and lossless-adapter tests passed, including 27,247
+exact fixture upload pages and mutation/replacement/refusal cases. The
+changed cache implementation also cross-compiled for Haiku RISC-V. The
+existing lossless cache recipe remains the same only for the precisely
+pinned, reviewed source set; the recipe compatibility test passed all
+source-change refusals. No Pioneer run, installed worker, loading-time
+measurement, token-rate result or speedup claim yet.

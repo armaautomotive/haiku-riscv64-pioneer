@@ -11,7 +11,7 @@
 // that authenticated identity for this object's ENTIRE lifetime.
 class PioneerQ38LosslessWeightCache {
 	using Cache=PioneerModelWeightCache;
-	struct Entry { Cache::Key key;unsigned rowBytes=0;bool prepared=false; };
+	struct Entry { Cache::Key key;unsigned rowBytes=0;bool prepared=false;std::unique_ptr<Cache::VerifiedEntry> verified; };
 	Cache cache;
 	PioneerQwen38Gguf* model=nullptr;
 	uint64_t epoch=0;
@@ -86,6 +86,9 @@ public:
 		Cache::Reader prepared;bool hit=false;
 		if(!cache.GetOrCreate(entry.key,[this]{return Ready();},produce,prepared,hit,error,progress)
 			|| !Ready() || !prepared.IsOpen() || prepared.Size()!=entry.key.bytes || (hit && pages))return false;
+		auto verified=std::make_unique<Cache::VerifiedEntry>();
+		if(!cache.RememberVerified(prepared,*verified,error) || !Ready())return false;
+		entry.verified=std::move(verified);
 		entry.prepared=true;preparedEntries++;stats.entries++;stats.hits+=hit;stats.bytes+=entry.key.bytes;stats.convertedPages+=pages;return true;
 	}
 	bool AllPrepared() const {
@@ -110,13 +113,13 @@ public:
 			|| page>=part.allocated/4096 || pages>part.allocated/4096-page)return Fail(error,"Invalid cached weight page.");
 		const auto& entry=entries[part.tensor];const auto& tensor=model->Tensors()[part.tensor];
 		const uint64_t relative=uint64_t(page)*4096;
-		if(!entry.prepared || part.rowBytes!=entry.rowBytes || !part.rows || part.firstRow>tensor.outputs
+		if(!entry.prepared || !entry.verified || part.rowBytes!=entry.rowBytes || !part.rows || part.firstRow>tensor.outputs
 			|| part.rows>tensor.outputs-part.firstRow || uint64_t(part.rows)*part.rowBytes!=part.bytes || relative>=part.bytes)
 			return Fail(error,"Cached tensor was not prepared or does not match this fragment.");
 		if(active!=part.tensor) {
 			reader.reset();active=UINT32_MAX;windowBytes=0;
 			auto next=std::make_unique<Cache::Reader>();
-			if(!cache.OpenExisting(entry.key,[this]{return Ready();},*next,error))return false;
+			if(!cache.OpenRemembered(*entry.verified,[this]{return Ready();},*next,error))return false;
 			reader=std::move(next);active=part.tensor;
 		}
 		std::vector<uint8_t> stage(pages*4096,0);unsigned copied=0;
