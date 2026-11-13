@@ -92,6 +92,26 @@ CARD_CLOSED_PARALLEL_CACHE_VERIFIED, card exit 0 and empty stderr. Postflight
 showed driver55/tag2026102100010012/generation42, no active owner/cold0,
 64 CPUs and 137034936320 bytes RAM. Card stdout SHA-256:
 237b014412a0eac34ae94c4558d59293fe489d8467f17b6d03b5385e69fd189d.
-The installed Assistant and driver were unchanged. Multiple real requests
-in one loaded session and broader answer quality remain untested for this
-candidate.
+The installed Assistant and driver were unchanged. At that checkpoint,
+multiple requests and broader answer quality remained untested.
+
+Two-request isolated Work trial, November 13: the same verified worker and
+actual Assistant client loaded the model once and made two four-token requests
+in the same session. Host-ready took 834.666413 s; the first request took
+1204.359078 s including upload and generation. The second took 85.576555 s
+including its 14-token prompt and four-token answer, with no upload progress
+reported. This confirms the tested client did not report a second model upload;
+it does not prove no PCIe transfers or validate other prompts. First and second
+warm-decode samples each reported 0.199 tok/s (three samples in 15.076 and
+15.051 seconds respectively). P100A handled projections; CPU handled
+attention/state; CPU reference validation was off. There is no inference-speed
+improvement or full-card claim. The first answer was "Hello! How can"; the
+second was checked nonempty but not recorded, so answer equivalence and broad
+quality are not established.
+
+The one-shot parent exited cleanly with TWO_CLOSED_PARALLEL_CACHE_VERIFIED;
+the client exit was 0, stderr empty, and the stable driver postflight remained
+driver55/tag2026102100010012/generation42, active_owner0/cold0. Independent
+sysinfo showed 64 CPUs and 137034936320 bytes maximum RAM. The installed
+Assistant and driver were not changed. Trial stdout SHA-256:
+57a12672e6c92bb9057e4cedbf30d894e086e86aadeb77aadd5212508c68db7e.
