@@ -110,7 +110,11 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
  if(!memory || !startup || !participants){
   delete participants;delete startup;delete memory;return false;
  } // unpublished CPU children ONLY;NEVER delete/detach the existing sticky full-model owner
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ if(!PioneerQ38SmallRecurrentNativeBinding::BindJournal(c,sRuntimeOwner,sReloadGeneration,participants,*memory)){
+  delete participants;delete startup;delete memory;return false;
+ }
+#elif defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
  if(!PioneerQ38QgwdNativeBinding::BindJournal(c,sRuntimeOwner,sReloadGeneration,participants,*memory)){
   delete participants;delete startup;delete memory;return false;
  }

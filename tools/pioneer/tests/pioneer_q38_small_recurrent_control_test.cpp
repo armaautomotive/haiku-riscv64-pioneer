@@ -11,6 +11,14 @@ static int small_geteuid(){return 0;}
 #undef geteuid
 namespace H=PioneerQ38SmallRecurrentUpload;
 using Packet=H::Packet;
+struct FakeJournal {
+ bool bound=false;
+ bool BindDenseReceiptInspection(PioneerQ38SmallRecurrentUploadReceiptInspection& receipt,const void* context,
+  const PioneerQ38DispatchLease* participants,const void* cookie,const uint32_t* hashes,int64_t owner,uint64_t generation){
+  if(bound || !receipt.Sealed() || !context || !participants || !cookie || !hashes || owner!=17 || !generation)return false;
+  bound=true;return true;
+ }
+};
 static status_t Dispatch(PioneerProbeCookie* instance,uint32_t operation,void* data,size_t length){
 #include "pioneer_small_recurrent_dispatch.inc"
  return B_BAD_VALUE;
@@ -61,6 +69,10 @@ int main(int argc,char** argv){
    assert(!Binding::Matches(c,&foreign,sReloadGeneration) && !Binding::Matches(c,&cookie,sReloadGeneration+1));
    auto logical=std::make_unique<PioneerQ38CanonicalModelPlan>();
    assert(Binding::DeriveLogical(c,&cookie,sReloadGeneration,*logical) && logical->Qgw8InspectionLayout());
+   PioneerQ38DispatchLease participants;FakeJournal journal;
+   assert(!Binding::BindJournal(c,&foreign,sReloadGeneration,&participants,journal) && !journal.bound);
+   assert(!Binding::BindJournal(c,&cookie,sReloadGeneration,static_cast<PioneerQ38DispatchLease*>(nullptr),journal) && !journal.bound);
+   assert(Binding::BindJournal(c,&cookie,sReloadGeneration,&participants,journal) && journal.bound);
    c.q38QgwdReceipt=&c;assert(!Binding::Matches(c,&cookie,sReloadGeneration));c.q38QgwdReceipt=nullptr;
   }
   Unbind();

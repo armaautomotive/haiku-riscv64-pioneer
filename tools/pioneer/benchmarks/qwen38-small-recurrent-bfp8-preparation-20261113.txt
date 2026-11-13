@@ -382,3 +382,14 @@ receipt and bank/lease identity; fake-tag RISC-V driver and unchanged QGWF
 profile cross-builds pass. This does not bind the native journal, transfer
 workspace records, initialize workers or authorize execution. It is not a
 hardware, model-quality or inference-speed result.
+
+Journal boundary: the small receipt now derives the dense-attention manifest
+from its own sealed physical layout and implements the logical-view/bank
+checks expected by the native journal. The fake-tag full driver source now
+selects this receipt for its held journal instead of the incompatible QGWD
+receipt. The dense manifest matched the independent host plan in the complete
+synthetic receipt test; owner and journal-binding checks passed with a fake
+journal. Both isolated and unchanged QGWF RISC-V driver-source profiles
+compile. The actual held journal has not been exercised with this receipt;
+recurrent workspace transfer, model execution, quality and speed remain
+unproven, and no loadable driver was installed.

@@ -23,6 +23,7 @@ class PioneerQ38SmallRecurrentUploadReceiptInspection {
  int64_t team=-1;uint64_t generation=0,digest=UINT64_C(14695981039346656037);
  // This receipt is heap-only: keep the staging buffer off the caller's stack.
  uint32_t workspaceScratch[96*32]={};
+ uint32_t denseManifestScratch[16*3*7*3]={};
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof && team>=0 && generation
   && original.OriginalFormatLayout() && layout.Ready() && banks->Matches(*proof);}
@@ -114,6 +115,10 @@ public:
   }
   return Revalidate(c,fd,h,initialized,owner,gen);
  }
+ bool MatchesLogical(const C& logical,const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,
+  int64_t owner,uint64_t gen,const PioneerResidentBanks& b,const tt_dram_samples_result& p){
+  return MatchesBanks(&b,&p) && MatchesLogical(logical,c,fd,h,initialized,owner,gen);
+ }
  bool DeriveLogical(C& output,const void* c,const void* fd,const uint32_t* h,const uint8_t* initialized,int64_t owner,uint64_t gen){
   const uintptr_t out=reinterpret_cast<uintptr_t>(&output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
   const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
@@ -125,6 +130,32 @@ public:
    || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
    || !Revalidate(c,fd,h,initialized,owner,gen))return false;
   return output.BuildDenseQ8LogicalParentInspection(ancestor) && MatchesLogical(output,c,fd,h,initialized,owner,gen);
+ }
+ enum : unsigned {DenseManifestWords=16*3*7*3};
+ bool DenseManifest(uint32_t* output,unsigned words,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),limit=~uintptr_t(0);
+  const uintptr_t hp=reinterpret_cast<uintptr_t>(h),lp=reinterpret_cast<uintptr_t>(initialized);
+  const uintptr_t cp=reinterpret_cast<uintptr_t>(c),fp=reinterpret_cast<uintptr_t>(fd);
+  const size_t bytes=DenseManifestWords*sizeof(uint32_t),hashBytes=size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t);
+  if(!output || !h || !initialized || words!=DenseManifestWords || (out&3) || out>limit-bytes || self>limit-sizeof(*this)
+   || hp>limit-hashBytes || lp>limit-PioneerResidentBanks::Pages
+   || (out<self+sizeof(*this) && self<out+bytes) || (out<hp+hashBytes && hp<out+bytes)
+   || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
+   || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
+   || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<DenseManifestWords;i++)denseManifestScratch[i]=0;unsigned count=0;
+  for(unsigned i=0;i<original.Count();i++){
+   const auto* p=original.Part(i);const auto* q=layout.At(i);const auto* d=dense.At(i);if(!p || !q || !d)return Fail();
+   if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4!=3 || p->role<5 || p->role>7)continue;
+   if(p->bank>=7 || q->bank!=p->bank || q->offset!=d->offset || q->bytes!=d->bytes || q->allocated!=d->allocated
+    || q->encoding!=L::Parent::Parent::DenseQ8Bfp8 || q->offset>UINT32_MAX-C::Base || !p->rows)return Fail();
+   const unsigned at=(((p->layer/4)*3+p->role-5)*7+p->bank)*3;
+   if(at>=DenseManifestWords || denseManifestScratch[at])return Fail();
+   denseManifestScratch[at]=C::Base+q->offset;denseManifestScratch[at+1]=p->firstRow;denseManifestScratch[at+2]=p->rows;count++;
+  }
+  if(count!=16*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
+  for(unsigned i=0;i<DenseManifestWords;i++)output[i]=denseManifestScratch[i];return true;
  }
  // Derive records from the receipt's own fixed layout, without trusting a
  // host proposal. Inspection only: it neither authenticates nor writes DRAM.

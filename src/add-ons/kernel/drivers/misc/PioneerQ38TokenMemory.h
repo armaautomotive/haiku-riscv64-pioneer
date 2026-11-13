@@ -12,7 +12,11 @@
 #ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
 #error Receipt journal selection is internal to this header
 #endif
-#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY)
+#include "../../../../../tools/pioneer/PioneerQ38SmallRecurrentUploadReceiptInspection.h"
+using PioneerQ38JournalReceipt=PioneerQ38SmallRecurrentUploadReceiptInspection;
+#define PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE 1
+#elif defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
 #if PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION != 1 || defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) \
  || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \

@@ -26,5 +26,10 @@ struct PioneerQ38SmallRecurrentNativeBinding {
    && Matches(c,fd,generation)
    && c.q38SmallRecurrentReceipt->MatchesLogical(logical,&c,fd,c.hashes,c.initialized,fd->team,generation);
  }
+ template<class Context,class Cookie,class Cohort,class Journal>
+ static bool BindJournal(Context& c,const Cookie* fd,uint64_t generation,Cohort* cohort,Journal& journal){
+  return cohort && Matches(c,fd,generation)
+   && journal.BindDenseReceiptInspection(*c.q38SmallRecurrentReceipt,&c,cohort,fd,c.hashes,fd->team,generation);
+ }
 };
 #endif

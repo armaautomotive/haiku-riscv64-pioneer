@@ -14,6 +14,7 @@
 #define PIONEER_BANKS_MOCK_ONLY 1
 #include "../PioneerQ38SmallRecurrentUploadReceiptInspection.h" // receipt must not require the host proposal header
 #include "../PioneerQ38SmallRecurrentWorkspaceReceipt.h"
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
 #include "pioneer_q38_dense_q8_kernel_layout_test.cpp"
 
 int main(){
@@ -46,6 +47,13 @@ int main(){
  using Workspace=PioneerQ38SmallRecurrentWorkspace;using Bridge=PioneerQ38SmallRecurrentWorkspaceReceipt;
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();Workspace::Plan::Proposal proposal;
  assert(canonical->Build() && Workspace::Plan::Build(*canonical,proposal));
+ using DM=PioneerQ38DenseQ8MatrixManifest;DM::Plan::Proposal densePlan;
+ assert(DM::Plan::Build(*canonical,densePlan));
+ std::array<uint32_t,DM::Words> denseExpected{},denseActual{};denseActual.fill(0xa5a5a5a5);
+ const auto denseUntouched=denseActual;assert(DM::Build(*canonical,densePlan,denseExpected.data(),denseExpected.size()));
+ assert(!receipt->DenseManifest(denseActual.data(),denseActual.size(),&context,&foreign,hashes.data(),ledger.data(),17,42) && denseActual==denseUntouched);
+ assert(!receipt->DenseManifest(hashes.data(),DM::Words,&context,&cookie,hashes.data(),ledger.data(),17,42));
+ assert(receipt->DenseManifest(denseActual.data(),denseActual.size(),&context,&cookie,hashes.data(),ledger.data(),17,42) && denseActual==denseExpected);
  std::array<uint32_t,Workspace::Words> actual{},expected{};actual.fill(0xa5a5a5a5);
  assert(Workspace::Build(*canonical,proposal,expected.data(),expected.size()));
  assert(!receipt->BuildWorkspace(&foreign,&cookie,hashes.data(),ledger.data(),17,42,actual.data(),actual.size()));
