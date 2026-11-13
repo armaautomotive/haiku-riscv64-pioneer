@@ -19,3 +19,11 @@ SDK. It has NOT run on the Pioneer, and there is no timing, loading speed,
 inference speed, numerical-quality or 20-token/s claim. The helper's per-entry
 thread startup and synchronization may outweigh any hashing benefit; compare
 matched real loads before considering installation.
+
+Local synthetic timing follow-up: on the Mac, the committed benchmark used
+one 128 MiB cache entry, four warm serial, four parallel, then four serial and
+four parallel checks. Serial samples ranged 0.118831-0.121874 s; parallel
+samples ranged 0.109227-0.128676 s. Most parallel samples were slower and
+the fastest was an outlier. This is not an improvement demonstrated even on
+the Mac; its SHA implementation and storage are not the Pioneer's. The
+fixture measures full verification only, not upload or token generation.
