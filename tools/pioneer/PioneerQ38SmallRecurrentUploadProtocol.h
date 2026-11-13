@@ -9,6 +9,8 @@
 #ifndef PIONEER_Q38_SMALL_RECURRENT_UPLOAD_PROTOCOL_H
 #define PIONEER_Q38_SMALL_RECURRENT_UPLOAD_PROTOCOL_H
 #include <stdint.h>
+// Private to the non-loadable compile profile; not an installed driver ABI.
+#define TT_PCI_PROBE_Q38_SMALL_RECURRENT_UPLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8835)
 namespace PioneerQ38SmallRecurrentUpload {
 enum : uint32_t {Version=1,Begin=1,Seal=2,Magic=0x53554851};
 struct Packet {

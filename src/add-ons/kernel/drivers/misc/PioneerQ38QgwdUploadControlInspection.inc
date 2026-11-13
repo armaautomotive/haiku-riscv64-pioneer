@@ -24,6 +24,9 @@ static __attribute__((noinline)) status_t Q38QgwdUploadControlInspection(Pioneer
  auto* c=cookie->context;bool okay=false;
  if(c && sRuntimeOwner==cookie && sBankStorageOnly && !sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration
   && PioneerQ38SpanOwner(*c) && !c->q38TokenNative && !c->q38HybridReceipt && !c->q38Qgw8Receipt
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+  && !c->q38SmallRecurrentReceipt
+#endif
   && !c->Unsafe() && c->io.SpanBeforeCohort()){
   if(packet.operation==H::Begin && !c->q38QgwdReceipt && !c->q38Span && !c->uploadedPages){
    auto* receipt=new(std::nothrow) PioneerQ38DenseQ8UploadReceiptInspection;

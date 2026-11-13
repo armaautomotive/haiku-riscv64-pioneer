@@ -3,13 +3,14 @@
 #define PIONEER_Q38_HYBRID_TRACKED_UPLOAD 1
 #define PIONEER_Q38_QGW8_SPAN_INSPECTION 1
 #define PIONEER_Q38_QGWD_CONTROL_INSPECTION 1
+#define PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE 1
 #define TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH 1
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
 using status_t=int;constexpr int B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2;
 struct tt_resident_session_result {};
-struct PioneerStoreContext {void* q38HybridReceipt=nullptr;void* q38Qgw8Receipt=nullptr;void* q38QgwdReceipt=nullptr;
+struct PioneerStoreContext {void* q38HybridReceipt=nullptr;void* q38Qgw8Receipt=nullptr;void* q38QgwdReceipt=nullptr;void* q38SmallRecurrentReceipt=nullptr;
  bool dispatchOwnerRetained=false;};
 struct PioneerProbeCookie {uint32_t magic=0x50313030;PioneerStoreContext* context=nullptr;};
 static int sLock=1,held=0,retains=0,ends=0;static bool sColdRecoveryRequired=false,failLock=false;
@@ -23,7 +24,11 @@ int main(){
  auto* cookie=new PioneerProbeCookie;cookie->context=&context;
  assert(ReleaseResidentCookie(cookie)==B_OK && !held && retains==1 && !ends && context.dispatchOwnerRetained && cookie->context==&context);
  delete cookie;
+ context.q38QgwdReceipt=nullptr;context.q38SmallRecurrentReceipt=&marker;context.dispatchOwnerRetained=false;
+ auto* small=new PioneerProbeCookie;small->context=&context;
+ assert(ReleaseResidentCookie(small)==B_OK && !held && retains==2 && !ends && context.dispatchOwnerRetained && small->context==&context);
+ delete small;
  auto* unavailable=new PioneerProbeCookie;unavailable->context=&context;failLock=true;
- assert(ReleaseResidentCookie(unavailable)==B_BUSY && !held && retains==1 && !ends && unavailable->context==&context);
+ assert(ReleaseResidentCookie(unavailable)==B_BUSY && !held && retains==2 && !ends && unavailable->context==&context);
  delete unavailable;puts("PASS QGWD cookie close retains its owner without END or IO; simulated OS only");
 }

@@ -21,7 +21,8 @@ common = [os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-We
 with tempfile.TemporaryDirectory(prefix='small-recurrent-span-', dir='/private/tmp') as directory:
     out = Path(directory)
     for marker, name in (('PROBE_LOCK', 'pioneer_lock'), ('Q38_RETAIN_MEMORY', 'pioneer_retain_memory'),
-                         ('Q38_SPAN_CONTROL', 'pioneer_span_control')):
+                         ('Q38_SPAN_CONTROL', 'pioneer_span_control'),
+                         ('SMALL_RECURRENT_CONTROL_DISPATCH', 'pioneer_small_recurrent_dispatch')):
         begin, end = '// PIONEER_' + marker + '_BEGIN', '// PIONEER_' + marker + '_END'
         assert source.count(begin) == source.count(end) == 1
         (out / (name + '.inc')).write_text(source.split(begin, 1)[1].split(end, 1)[0])

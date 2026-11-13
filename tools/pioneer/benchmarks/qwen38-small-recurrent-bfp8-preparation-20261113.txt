@@ -362,3 +362,12 @@ the actual extracted driver span-control route, including lost upload, begin
 and seal replies and ownership quarantine. The small begin/seal control is
 compiled but not registered as an ioctl. No loadable candidate, real card
 test, numerical quality or inference speed is established.
+
+Control-dispatch and close boundary: the non-loadable fake-tag profile now
+routes its distinct small-recurrent control operation, excludes a simultaneous
+QGWD receipt, and retains the small receipt's owner on client close rather
+than performing implicit device cleanup. The full RISC-V fake-tag driver
+object compiles; simulated extracted dispatch and cookie-close tests pass,
+along with the original QGWD/QGW8 control regressions. This does not register
+the control in any loadable driver, bind the matrix program to the receipt,
+or constitute hardware, model-quality or inference-speed evidence.

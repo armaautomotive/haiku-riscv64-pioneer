@@ -6576,6 +6576,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 #ifdef PIONEER_Q38_QGWD_CONTROL_INSPECTION
 			|| cookie->context->q38QgwdReceipt
 #endif
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+			|| cookie->context->q38SmallRecurrentReceipt
+#endif
 			) {
 			RetainQ38DispatchOwner(*cookie->context,result);release_sem(sLock);return B_OK;
 		}
@@ -8822,6 +8825,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
   return Q38QgwdUploadControlInspection(instance,data,length);
 #endif
 // PIONEER_QGWD_CONTROL_DISPATCH_END
+// PIONEER_SMALL_RECURRENT_CONTROL_DISPATCH_BEGIN
+#if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
+ if(operation==TT_PCI_PROBE_Q38_SMALL_RECURRENT_UPLOAD_CONTROL)
+  return Q38SmallRecurrentUploadControl(instance,data,length);
+#endif
+// PIONEER_SMALL_RECURRENT_CONTROL_DISPATCH_END
  if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)
   return Q38SpanControl(instance,operation,data,length);
  return B_NOT_ALLOWED;

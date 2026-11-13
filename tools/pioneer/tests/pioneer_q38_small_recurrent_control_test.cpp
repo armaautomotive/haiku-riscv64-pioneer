@@ -10,6 +10,10 @@ static int small_geteuid(){return 0;}
 #undef geteuid
 namespace H=PioneerQ38SmallRecurrentUpload;
 using Packet=H::Packet;
+static status_t Dispatch(PioneerProbeCookie* instance,uint32_t operation,void* data,size_t length){
+#include "pioneer_small_recurrent_dispatch.inc"
+ return B_BAD_VALUE;
+}
 static void FillRemaining(NativeSpanContext& c){
  unsigned bank=0,length=0;uint64_t offset=0;
  while(c.q38SmallRecurrentReceipt->Next(bank,offset,length)){
@@ -35,7 +39,7 @@ int main(int argc,char** argv){
   c.q38QgwdReceipt=&c;assert(Q38SmallRecurrentUploadControl(&cookie,&p,sizeof(p))==B_NOT_ALLOWED);c.q38QgwdReceipt=nullptr;
   c.q38RecurrentReceipt=reinterpret_cast<PioneerQ38RecurrentQ8UploadReceiptInspection*>(&c);
   assert(Q38SmallRecurrentUploadControl(&cookie,&p,sizeof(p))==B_NOT_ALLOWED);c.q38RecurrentReceipt=nullptr;
-  assert(Q38SmallRecurrentUploadControl(&cookie,&p,sizeof(p))==B_OK && p.accepted && !p.sealed && !p.spans);
+  assert(Dispatch(&cookie,TT_PCI_PROBE_Q38_SMALL_RECURRENT_UPLOAD_CONTROL,&p,sizeof(p))==B_OK && p.accepted && !p.sealed && !p.spans);
   Packet duplicate;duplicate.operation=H::Begin;assert(Q38SmallRecurrentUploadControl(&cookie,&duplicate,sizeof(duplicate))==B_NOT_ALLOWED);
   c.q38Span=new PioneerQ38SpanLease;unsigned bank=0,length=0;uint64_t offset=0;
   assert(c.q38SmallRecurrentReceipt->Next(bank,offset,length));auto request=Request(length,bank,offset);
