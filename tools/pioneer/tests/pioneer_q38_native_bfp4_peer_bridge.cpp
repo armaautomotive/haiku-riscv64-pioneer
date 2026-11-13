@@ -2,6 +2,7 @@
 // Host-only BFP4 tensor and queued-read endpoints, never a device owner.
 #define PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE 1
 #include "pioneer_q38_native_bfp4_peer_bridge.h"
+#define PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT 1
 #define PIONEER_BFP4_WORKER_LOADER_TEST_ONLY 1
 // BFP8 includes the same test source with a different IO layout. Give this
 // helper a distinct C++ type so linking both bridges cannot merge methods.
@@ -41,7 +42,8 @@ struct Q38NativeBfp4PeerBridge::Impl {
   for(unsigned i=0;i<8;i++)initial[i]=published[i]=io.counters[Index(i)]=bytes.noc(bytes.context,worker,Offset(i));
   for(unsigned i=0;i<10;i++)commands[i]=io.command[i]=bytes.noc(bytes.context,worker,i*4);
  }
- bool Loaded()const{const unsigned perBand=2*L::Tiles(job.words[2]);return io.completions>=perBand && !(io.completions%perBand) && io.pending.empty();}
+ bool Loaded()const{const unsigned perBand=L::Tiles(job.words[2])+(job.words[2]*2+16383)/16384;
+  return io.completions>=perBand && !(io.completions%perBand) && io.pending.empty();}
  void Publish(const std::vector<W::Read>& before,unsigned oldCompletions){
   if(io.completions!=oldCompletions){assert(io.completions==oldCompletions+before.size() && io.pending.empty());
    for(const auto& p:before)for(unsigned at=0;at<p.bytes;at+=4){const unsigned a=p.destination+at;uint32_t word=0;

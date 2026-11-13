@@ -802,3 +802,8 @@ with different layouts. Giving the BFP4 helper a distinct type made the
 combined endpoint test pass, without relaxing the worker check. This proves
 the test collision and its local fix, not successful FFN execution; the full
 continuous run must pass before any integration claim or hardware testing.
+After that correction, the continuous run reached the first BFP4 read and
+refused its packet: the pinned worker uses batched BF16 input reads whereas
+the initial BFP4 endpoint expected per-tile reads. The endpoint now models
+the batched format, and its combined BFP4/BFP8 eight-band component test
+passes. A new continuous run is required; this remains synthetic-only.

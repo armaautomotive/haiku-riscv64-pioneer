@@ -11,7 +11,7 @@ assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 with tempfile.TemporaryDirectory(prefix='q38-native-bfp4-peer-',dir='/private/tmp') as tmp:
     binary=str(Path(tmp)/'test')
     bfp8_object=str(Path(tmp)/'bfp8.o')
-    flags=['-DPIONEER_Q38_NATIVE_BFP4_PEER_TEST=1']
+    flags=['-DPIONEER_Q38_NATIVE_BFP4_PEER_TEST=1','-DPIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT=1']
     subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
                     '-Wno-unused-function','-ffp-contract=off','-fsanitize=address,undefined',
                     '-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1',
