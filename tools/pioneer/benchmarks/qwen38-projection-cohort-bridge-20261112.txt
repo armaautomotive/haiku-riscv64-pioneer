@@ -48,6 +48,22 @@ checks also passed. Alpha/beta are CPU-produced test inputs, NOT device
 execution, and this is still not an original-token, continuous-worker,
 end-to-end inference, throughput or Work-mode result.
 
+Alpha/beta matrix-leaf follow-up: a separate preparation-only selector packs
+the original Q8 alpha and beta tensors into 32-row BFP8 tiles, padding the
+last 16 rows with zero. Full-original GGUF SHA authentication preceded the
+export. Private alpha and beta exports hash respectively to
+92f7287e9626c4dae6ff4c1118d6d2c64f194cf1c239ac3f7b1b60e477ed4fbb and
+f6615b16825dbe365aad7d01729b2b6cbd19c2f0d51545890d1fe74933bcb753.
+For one synthetic BF16 input, BFP8 leaf integer-reference relative L2 versus
+the original floating weight dot is 0.00596683488 for alpha and
+0.00609456018 for beta. This is not an end-to-end quality measurement.
+The actual RV32 BFP8 leaf simulation matches every one of the 48 real and
+16 padded rows for each tensor, and those leaf outputs feed the separately
+seeded Conv/GDN cohort and retained projection/output simulation successfully.
+The small matrix leaves are still separate simulations, not the shared
+119-worker schedule, and there is no native cache/driver/Work selection or
+hardware result. The installed 144-tensor cache recipe remains unchanged.
+
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.

@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15,19,22,25) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')) and (len(sys.argv)<19 or sys.argv[12]=='--cohort' and sys.argv[15]=='--dynamic-output') and (len(sys.argv)<22 or sys.argv[19]=='--learned') and (len(sys.argv)!=25 or sys.argv[22]=='--alpha-beta'))
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15,19,22,25,27) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')) and (len(sys.argv)<19 or sys.argv[12]=='--cohort' and sys.argv[15]=='--dynamic-output') and (len(sys.argv)<22 or sys.argv[19]=='--learned') and (len(sys.argv)!=25 or sys.argv[22]=='--alpha-beta') and (len(sys.argv)!=27 or sys.argv[22]=='--alpha-leaf'))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
 mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)>=9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)>=9 and sys.argv[6]=='--full-qkv' else '--out'
@@ -23,6 +23,7 @@ cohort=(Path(sys.argv[13]),Path(sys.argv[14])) if len(sys.argv)>=15 and sys.argv
 dynamicOutput=(Path(sys.argv[16]),sys.argv[17],Path(sys.argv[18])) if len(sys.argv)>=19 else None
 learned=(Path(sys.argv[20]),sys.argv[21]) if len(sys.argv)>=22 else None
 alphaBeta=(Path(sys.argv[23]),sys.argv[24]) if len(sys.argv)==25 else None
+alphaLeaf=((Path(sys.argv[23]),sys.argv[24]),(Path(sys.argv[25]),sys.argv[26])) if len(sys.argv)==27 else None
 learnedBytes=b''
 if learned:
     path,digest=learned;assert path.is_absolute() and path.is_file() and not path.is_symlink() and len(digest)==64
@@ -33,6 +34,11 @@ if alphaBeta:
     path,digest=alphaBeta;assert path.is_absolute() and path.is_file() and not path.is_symlink() and len(digest)==64
     info=path.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600 and info.st_size==384
     alphaBytes=path.read_bytes();assert hashlib.sha256(alphaBytes).hexdigest()==digest
+if alphaLeaf:
+    for path,digest in alphaLeaf:
+        assert path.is_absolute() and path.is_file() and not path.is_symlink() and len(digest)==64
+        info=path.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
+        assert info.st_size==32+2*(160*1088+128) and hashlib.sha256(path.read_bytes()).hexdigest()==digest
 if cohort:
     for directory in cohort:
         assert directory.is_absolute() and directory.is_dir() and not directory.is_symlink()
@@ -157,7 +163,13 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                 cohortbin=Path(tmp)/'cohort'
                 flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
                 subprocess.run([compiler,*common,*flags,str(here/'pioneer_q38_recurrent_projection_cohort_bridge.cpp'),'-o',str(cohortbin)],check=True)
-                cohortArgs=[str(cohortbin),*map(str,cohort)]+(['--learned-alpha' if alphaBeta else '--learned'] if learned else [])
+                if alphaLeaf:
+                    alphaBin=Path(tmp)/'alpha-leaf'
+                    subprocess.run([compiler,*common,str(here/'pioneer_q38_recurrent_small_bfp8_leaf_test.cpp'),'-o',str(alphaBin)],check=True)
+                    alphaBytes=subprocess.run([str(alphaBin),str(leaf),str(alphaLeaf[0][0]),str(alphaLeaf[1][0]),'--capture'],
+                                              stdout=subprocess.PIPE,check=True,env=env).stdout
+                    assert len(alphaBytes)==384
+                cohortArgs=[str(cohortbin),*map(str,cohort)]+(['--learned-alpha' if alphaBeta or alphaLeaf else '--learned'] if learned else [])
                 gated=subprocess.run(cohortArgs,input=retained[:prefix]+learnedBytes+alphaBytes,stdout=subprocess.PIPE,check=True,
                                      env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'}).stdout
                 assert len(gated)==6144*4
@@ -166,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                     refused=subprocess.run(cohortArgs,input=invalid+learnedBytes+alphaBytes,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                                            env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'})
                     assert refused.returncode and not refused.stdout
-                detail=('model parameters, zero state, CPU Q8 alpha/beta reference' if alphaBeta else 'model Conv/A/dt/norm and zero state, synthetic alpha/beta' if learned else 'synthetic state/parameters')
+                detail=('model parameters, zero state, simulated BFP8 alpha/beta leaves' if alphaLeaf else 'model parameters, zero state, CPU Q8 alpha/beta reference' if alphaBeta else 'model Conv/A/dt/norm and zero state, synthetic alpha/beta' if learned else 'synthetic state/parameters')
                 print('PASS actual gate/QKV projection outputs -> separately seeded actual Conv/GDN cohort, all6144 outputs checked; '+detail+'; NOT continuous workers/device/full-model/TPS',flush=True)
                 if dynamicOutput:
                     output,digest,privateOut=dynamicOutput
