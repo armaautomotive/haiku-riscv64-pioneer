@@ -33,3 +33,12 @@ its own producer before its matrix job. Bad boot and wrong-role job tests
 still failed as intended. This remains host-piped, sequential worker
 simulation: it does not establish concurrent NoC transport, retained cohort
 history, ROOT gather/scatter, native ownership, card execution or speed.
+
+Second follow-up: the same emitted-job bridge passed all 119 workers for the
+three layer-0 recurrent roles: gate/tensor 3 (6,144 output rows), QKV/tensor
+5 (10,240) and output/tensor 16 (5,120). All rows were covered exactly once
+and matched their assigned, repeated independently checked sample. Bad boot
+and wrong-role jobs were rejected in each run. Source-specific model bytes,
+ROOT/worker ELFs and extracted sections were pinned. The same simulation and
+single-layer limitations above continue to apply; this is not full-model
+arithmetic or a hardware timing result.

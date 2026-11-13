@@ -8,8 +8,14 @@ import subprocess
 import sys
 import tempfile
 
-assert len(sys.argv)==6 and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-sdk,root,worker,leaf,private=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
+assert len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))
+assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
+mode=sys.argv[6] if len(sys.argv)==7 else '--out'
+roles={'--gate':5,'--qkv':6,'--out':13}
+sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1','7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'),
+             '--gate':('c4781e0c6c3963ff1e1b3ac36c1d21fbb1dd74e2785826489cf67cbb139c9f36','a5fadca5d6baeaa921472989cf038dd4aa2a90a666f4c7b3262c8ee141841ff2'),
+             '--qkv':('396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a','a81f5268d942344b4c4cfd4d0d02853dc82f36bfe8ab099a5bfa5d47d94de86d')}
 assert all(p.is_absolute() and p.is_dir() and not p.is_symlink() for p in (sdk,root,worker,leaf,private))
 assert private.stat().st_uid==os.geteuid() and stat.S_IMODE(private.stat().st_mode)==0o700
 pins=((root/'program.elf','c69b1aa610725fabfe37e28499082eb6b0abae04c556510bad376dfccf414d24'),
@@ -19,8 +25,8 @@ pins=((root/'program.elf','c69b1aa610725fabfe37e28499082eb6b0abae04c556510bad376
       (root/'conv.bin','8feb9b7f7f5cdb81a4eb0802e0bb6ad99b1fb43feaee6d9db1895394f1cd2fd3'),
       (worker/'program.elf','e83749ca5a7dc9d66983b9a80e0d6868079b12d8defdf31e40708235fb80366d'),
       (leaf/'program.elf','e8a04408d0c1a2d0ffa90d1d92ca77f3bb56f849c1d714723dfae9f3110ba72f'),
-      (private/'PioneerNativeBfpModelBandData.h','1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1'),
-      (private/'PioneerNativeBfpModelBandMetadata.h','7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'))
+      (private/'PioneerNativeBfpModelBandData.h',sample_pins[mode][0]),
+      (private/'PioneerNativeBfpModelBandMetadata.h',sample_pins[mode][1]))
 for path,digest in pins:
     assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest()==digest,path
 for path,_ in pins[-2:]:
@@ -50,16 +56,16 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
             output=Path(tmp)/'section.bin'
             subprocess.run([tool+'objcopy','-O','binary','-j','.'+section,str(image/'program.elf'),str(output)],check=True)
             assert output.read_bytes()==(image/(section+'.bin')).read_bytes(),(image,section)
-    for binary,source,roles in ((rootbin,'pioneer_q38_recurrent_root_job_bridge.cpp',root_roles),
+    for binary,source,selected_roles in ((rootbin,'pioneer_q38_recurrent_root_job_bridge.cpp',root_roles),
                                 (workerbin,'pioneer_q38_recurrent_worker_job_bridge.cpp',worker_roles)):
-        subprocess.run([compiler,*common,*['-D'+r+'=1' for r in roles],'-I'+str(private),str(here/source),'-o',str(binary)],check=True)
+        subprocess.run([compiler,*common,*['-D'+r+'=1' for r in selected_roles],'-I'+str(private),str(here/source),'-o',str(binary)],check=True)
     boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==119*256
-    job=subprocess.run([str(rootbin),str(root)],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout;assert len(job)==119*256
+    job=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout;assert len(job)==119*256
     subprocess.run([str(workerbin),str(worker),str(leaf),'--run'],input=job,check=True,env=env)
     badboot=bytearray(boot);badboot[0]^=1
-    rejected=subprocess.run([str(rootbin),str(root)],input=badboot,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+    rejected=subprocess.run([str(rootbin),str(root),str(roles[mode])],input=badboot,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
-    badjob=bytearray(job);badjob[34*4]=5
+    badjob=bytearray(job);badjob[34*4]=7
     rejected=subprocess.run([str(workerbin),str(worker),str(leaf),'--run'],input=badjob,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
     assert rejected.returncode and not rejected.stdout
 for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
