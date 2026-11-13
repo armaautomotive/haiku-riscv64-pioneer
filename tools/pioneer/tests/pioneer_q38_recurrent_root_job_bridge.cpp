@@ -6,6 +6,7 @@
 #include "pioneer_q38_recurrent_actual_root_test.cpp"
 #include <cstdlib>
 #include "PioneerRecurrentWorkerSnapshot.h"
+#include "../PioneerQ38Bf16Input.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedRecurrentRecipe.h"
 
 // ROOT NoC endpoint backed only by bytes captured from completed worker
@@ -115,11 +116,14 @@ struct GatherRoot:ActualRoot {
 
 #ifndef PIONEER_Q38_RECURRENT_ROOT_JOB_BRIDGE_HELPER_ONLY
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--gate-reuse-prepare") || !std::strcmp(argv[3],"--gate-reuse-bad-history") || !std::strcmp(argv[3],"--gate-reuse-bad-input") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
  const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
- const bool afterGatePrepare=argc==4 && !std::strcmp(argv[3],"--after-gate-prepare");
+ const bool badHistory=argc==4 && !std::strcmp(argv[3],"--gate-reuse-bad-history");
+ const bool badInput=argc==4 && !std::strcmp(argv[3],"--gate-reuse-bad-input");
+ const bool gateReuse=argc==4 && (!std::strcmp(argv[3],"--gate-reuse-prepare") || badHistory || badInput);
+ const bool afterGatePrepare=argc==4 && (!std::strcmp(argv[3],"--after-gate-prepare") || gateReuse);
  const bool dynamicInput=argc==4 && !std::strcmp(argv[3],"--after-qkv-prepare-input");
  const bool afterQkvPrepare=argc==4 && (!std::strcmp(argv[3],"--after-qkv-prepare") || dynamicInput);
  const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || dynamicInput || afterGatePrepare || afterQkvPrepare);
@@ -137,6 +141,7 @@ int main(int argc,char** argv){
  std::vector<uint32_t> results;if(store){results.resize(rows);assert(fread(results.data(),sizeof(uint32_t),rows,stdin)==rows);}
  auto snapshots=std::make_unique<std::array<PioneerRecurrentWorkerSnapshot,119>>();
  if(gather)assert(fread(snapshots->data(),sizeof(PioneerRecurrentWorkerSnapshot),119,stdin)==119);
+ if(badHistory)(*snapshots)[0].initial.proof[19]^=1;
  std::vector<uint32_t> input(dynamicInput?width:0);
  if(dynamicInput)assert(fread(input.data(),sizeof(uint32_t),width,stdin)==width);
  assert(fgetc(stdin)==EOF);
@@ -155,7 +160,7 @@ int main(int argc,char** argv){
  assert(RunBuildWithStub(*m,builds[0],reads[0],d,0x3000200+slot*128,workspace->data()+slot*32));
  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<64;i++)m->memory[0x170000+w*256+i*4]=boots[w][i];
  if(gather){
-  auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=m->memory;
+  auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=m->memory;endpoint->skipProducer=gateReuse;
   const unsigned owner=0x6e000,frame=owner+768;
   for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
   endpoint->memory[frame+9*4]=129;endpoint->memory[frame+11*4]=rows;endpoint->memory[frame+12*4]=rows*4;
@@ -206,6 +211,18 @@ int main(int argc,char** argv){
   if(controller)for(unsigned i=0;i<width;i++)endpoint->memory[endpoint->memory.at(frame+53*4)+i*4]=
    dynamicInput?input[i]:fullPrepare?uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16:0;
   for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
+  if(gateReuse){
+   uint32_t inputWords[256],packed[128];
+   for(unsigned chunk=0;chunk<20;chunk++){
+    for(unsigned i=0;i<256;i++){const unsigned at=chunk*256+i;
+     inputWords[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;
+     endpoint->memory[0xe0000+at*4]=inputWords[i];
+    }
+    assert(PioneerQ38Bf16Input::Pack(inputWords,256,packed,128));
+    for(unsigned i=0;i<128;i++)endpoint->memory[0xa0000+chunk*512+i*4]=endpoint->memory[0xf2000+chunk*512+i*4]=packed[i];
+   }
+   if(badInput)endpoint->memory[0x140000]^=1;
+  }
   for(unsigned i=0;i<119*8;i++)endpoint->memory[0x75800+i*4]=endpoint->memory[0x77000+i*4]=0;
   for(unsigned i=0;i<119;i++)endpoint->memory[0x76800+i*4]=endpoint->memory[0x76e00+i*4]=0;
   for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=endpoint->memory[0x76d00+i*4]=0;
@@ -241,16 +258,22 @@ int main(int argc,char** argv){
     if(line.find("Projection::CaptureRecipe(")!=std::string::npos)capture=address;
     if(!prepare && line.find("Projection::BfPrepare(")!=std::string::npos)prepare=address;
    }
-   assert(run && capture && prepare);
+   assert(run && prepare);
    if(badRecipe){endpoint->memory[0x75800+8]=0;
     assert(!endpoint->RunController(run,capture,prepare,frame) && !endpoint->packets && !endpoint->writes);
     for(unsigned w=0;w<119;w++)assert(!endpoint->jobs[w] && !endpoint->released[w]);return 0;
    }
-   assert(endpoint->RunController(run,capture,prepare,frame,fullPrepare));
+   const bool accepted=endpoint->RunController(run,capture,prepare,frame,fullPrepare);
+   if(badHistory || badInput){
+    assert(!accepted && !endpoint->writes);
+    for(unsigned w=0;w<119;w++)assert(!endpoint->jobs[w] && !endpoint->released[w] && !endpoint->descriptors[w]);
+    puts("PASS damaged gate history or input refused before dispatch; NO DEVICE");return 0;
+   }
+   assert(accepted);
    for(unsigned w=0;w<119;w++)assert(endpoint->jobs[w] && endpoint->released[w]);
    if(fullPrepare){
-    for(unsigned w=0;w<119;w++)assert(endpoint->phase[w]==(w<width/256?2U:1U) && endpoint->descriptors[w]==(w<width/256));
-    for(unsigned w=0;w<width/256;w++)for(unsigned i=0;i<128;i++)
+    for(unsigned w=0;w<119;w++)assert(endpoint->phase[w]==(gateReuse?1U:w<width/256?2U:1U) && endpoint->descriptors[w]==(!gateReuse && w<width/256));
+    if(!gateReuse)for(unsigned w=0;w<width/256;w++)for(unsigned i=0;i<128;i++)
      assert(endpoint->memory.at(0xa0000+w*512+i*4)==(*snapshots)[w].producer.native[i]);
    }
   }else assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000));

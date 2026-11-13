@@ -64,7 +64,8 @@ static void Matrix(DenseProducerImage& image,const std::array<uint32_t,64>& job,
 }
 #ifndef PIONEER_Q38_RECURRENT_GATE_QKV_HELPER_ONLY
 int main(int argc,char** argv){
- assert(argc==5 || argc==6 || (argc==7 && !std::strcmp(argv[6],"--dynamic")));const bool third=argc>=6,dynamic=argc==7;
+ assert(argc==5 || argc==6 || (argc==7 && !std::strcmp(argv[6],"--dynamic")));
+ const bool reuseGate=argc==6 && !std::strcmp(argv[5],"--reuse-gate"),third=argc>=6 && !reuseGate,dynamic=argc==7;
  auto gate=Projection(argv[3],3,5120,6144),qkv=Projection(argv[4],5,5120,10240);
  std::vector<uint8_t> out;if(third)out=Projection(argv[5],16,6144,5120);
  EmittedJobs first,second,last;first.Read(20);second.Read(20);if(third)last.Read(24);
@@ -92,9 +93,9 @@ int main(int argc,char** argv){
   Matrix(image,first.matrix[w],gate,gateInput,gates,gateSeen,nullptr);
   auto& s=snapshots[w];SnapshotStage(image,s.initial,false);
   for(unsigned i=0;i<64;i++)s.initial.proof[i]=image.Get(0x83f00+i*4);
-  if(w<20){Producer(image,w,6,3,second);SnapshotStage(image,s.producer,true);}
+  if(w<20 && !reuseGate){Producer(image,w,6,3,second);SnapshotStage(image,s.producer,true);}
   Matrix(image,second.matrix[w],qkv,gateInput,qkvs,qkvSeen,&s);
-  assert(s.initial.doorbell==(w<20?2U:1U) && s.doorbell==(w<20?4U:2U));
+  assert(s.initial.doorbell==(w<20?2U:1U) && s.doorbell==(w<20?(reuseGate?3U:4U):2U));
   if(third){
    auto& o=outSnapshots[w];SnapshotStage(image,o.initial,false);
    for(unsigned i=0;i<64;i++)o.initial.proof[i]=image.Get(0x83f00+i*4);

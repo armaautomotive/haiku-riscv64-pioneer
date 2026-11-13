@@ -221,3 +221,14 @@ Candidate object SHA 535301c90398af3dd4ad2ad9e7b9333d93bfae54fa6f54980bf49894b19
 This directly tests only the decision predicate. A complete gate-to-QKV
 controller/worker history, admission/fault behavior, native ownership,
 physical execution, answer quality and token speed remain unproven.
+
+Gate-to-QKV controller follow-up: the linked ROOT now executes the complete
+QKV Run using 119 retained worker histories from simulated gate execution,
+with model-derived gate and QKV matrices. It admits the prior receipts, skips
+all 20 QKV producer jobs, dispatches and gathers all 119 QKV jobs, and its
+full QKV output matches the independent worker-simulator result. Corrupting
+the prior receipt or the input parks the ROOT before dispatch or publication.
+The unchanged alpha/beta controller bridge also passed its regressions.
+Workers execute sequentially and the host transports their records into a
+modeled NoC; the preceding gate ROOT Run, real concurrency, native ownership,
+physical execution, model quality and speed are not established.
