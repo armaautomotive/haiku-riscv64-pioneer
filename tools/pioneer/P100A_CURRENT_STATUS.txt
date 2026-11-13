@@ -1,5 +1,24 @@
 P100A / Qwen 27B: current status
 ================================
+Update, November 13, 2026 (supersedes the November 7 snapshot below)
+------------------------------------------------------------------
+The most recent completed isolated Assistant Work trial used the full
+27B model with P100A projections, but CPU attention and recurrent state.
+CPU reference validation was OFF. Its four-token reply produced three warm
+generation samples in 14.939 s, or 0.201 tok/s. A previous short trial
+reported 0.198 tok/s; these separate runs do NOT prove a speedup or model
+quality. The candidate worker was not installed in Assistant.
+
+The older 0.17290 tok/s result below is a different, experimental all-card
+path, not the installed Assistant Work path. It generated a short response
+without CPU inference, but has not been qualified as a usable fast service.
+The current Assistant can retain its uploaded Work weights between requests;
+the all-card path has not been qualified for that integration. Neither path
+has met the 20 tok/s target. See benchmarks/qwen38-fleet-plan-reuse-20261113.txt
+and benchmarks/qwen38-fast-decode-profile-physical-20261106.txt for scope.
+
+Historical November 7 snapshot (not current live machine state)
+---------------------------------------------------------------
 Updated November 7, 2026. Model: Qwen3.8-27B Q4_K_M.
 
 The target is fast self-hosted inference, ideally 20 tokens/sec. It has NOT
