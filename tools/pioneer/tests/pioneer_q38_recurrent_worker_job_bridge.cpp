@@ -6,6 +6,17 @@
 #include <fstream>
 #include "PioneerRecurrentWorkerSnapshot.h"
 
+static void SnapshotStage(DenseProducerImage& image,PioneerRecurrentWorkerStage& stage,bool producer){
+ const unsigned indices[]={2,3,4,5,1,8,4,10};stage.pc=image.pc;stage.doorbell=image.Get(HW::Doorbell);
+ for(unsigned i=0;i<8;i++)stage.counters[i]=image.transfer.counters[indices[i]];
+ for(unsigned i=0;i<16;i++)stage.status[i]=image.Get(HW::Status+i*4);
+ for(unsigned i=0;i<64;i++)stage.job[i]=image.Get(HW::Job+i*4);
+ if(!producer)return;
+ for(unsigned i=0;i<64;i++){stage.proof[i]=image.Get(0x83f00+i*4);stage.descriptor[i]=image.descriptor[i];}
+ for(unsigned i=0;i<16;i++)stage.inner[i]=image.Get(0x74000+i*4);
+ for(unsigned i=0;i<32;i++)stage.line[i]=image.bank.at(image.descriptor[4]+image.descriptor[13]+i*4);
+ for(unsigned i=0;i<128;i++)stage.native[i]=image.bank.at(image.descriptor[4]+image.descriptor[12]+i*4);
+}
 int main(int argc,char** argv){
  assert((argc==4 && (!std::strcmp(argv[3],"--boot") || !std::strcmp(argv[3],"--run")))
   || (argc==5 && !std::strcmp(argv[3],"--run-full")));
@@ -37,9 +48,11 @@ int main(int argc,char** argv){
  assert(fread(jobs.data(),sizeof(uint32_t),119*64,stdin)==119*64 && fgetc(stdin)==EOF);
  std::vector<uint8_t> input(width*2);
  std::array<std::unique_ptr<DenseProducerImage>,24> producers;
+ std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{};
  for(unsigned chunk=0;chunk<width/256;chunk++){
   const unsigned bands=jobs[chunk][20];assert(bands && bands<=8);
   auto producer=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,chunk+1);producer->Boot();
+  SnapshotStage(*producer,snapshots[chunk].initial,false);
   for(unsigned i=0;i<256;i++){const unsigned at=chunk*256+i;
    producer->input[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
   producer->StageProducer(role,1,false,0);
@@ -48,18 +61,18 @@ int main(int argc,char** argv){
    producer->WordWrite(BP::Descriptor+i*4,descriptors[chunk][i]);producer->Put(HW::Job+i*4,producerJobs[chunk][i]);
   }
   producer->Check(1);
+  SnapshotStage(*producer,snapshots[chunk].producer,true);
   for(unsigned at=0;at<512;at+=4){const unsigned word=producer->bank.at(producer->descriptor[4]+producer->descriptor[12]+at);
    for(unsigned b=0;b<4;b++)input[chunk*512+at+b]=uint8_t(word>>(8*b));}
   producers[chunk]=std::move(producer);
  }
  std::vector<uint8_t> seen(rows,0);std::vector<uint32_t> actualRows(rows,0);
- std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{};
  for(unsigned w=0;w<119;w++){
   const auto& job=jobs[w];const unsigned bands=job[20],first=job[32],previous=w<width/256?1:0;
   assert(bands && bands<=8 && job[2]==1 && job[3]==w+1 && job[18]==width && job[34]==role
    && first<rows && bands*32<=rows-first);
   auto image=previous?std::move(producers[w]):std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,w+1);
-  assert(image);if(!previous)image->Boot();
+  assert(image);if(!previous){image->Boot();SnapshotStage(*image,snapshots[w].initial,false);}
   if(full){
    for(unsigned band=0;band<bands;band++){
     const size_t weightBytes=size_t(width/32)*1088;
@@ -82,6 +95,14 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<8;i++){snapshot.before[i]=before[i];snapshot.after[i]=after[i];}
   for(unsigned i=0;i<16;i++)snapshot.status[i]=image->Get(HW::Status+i*4);
   for(unsigned i=0;i<64;i++){snapshot.job[i]=closed[i];snapshot.proof[i]=proof[i];}
+  assert(snapshot.initial.doorbell==0 && snapshot.initial.status[0]==0 && snapshot.initial.status[1]==0
+   && snapshot.initial.status[3]==HW::Magic);
+  for(unsigned i=0;i<64;i++)assert(!snapshot.initial.job[i]);
+  if(previous){
+   assert(snapshot.producer.doorbell==1 && snapshot.producer.status[0]==1 && snapshot.producer.status[1]==1
+    && snapshot.producer.status[3]==HW::Magic && snapshot.producer.job[1]==1);
+   for(unsigned i=0;i<8;i++)assert(snapshot.before[i]==snapshot.producer.counters[i]);
+  }else for(unsigned i=0;i<8;i++)assert(snapshot.before[i]==snapshot.initial.counters[i]);
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const unsigned dest=first+band*32+row;assert(!seen[dest]++);
    uint32_t expected;

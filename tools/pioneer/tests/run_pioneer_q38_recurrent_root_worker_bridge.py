@@ -71,7 +71,9 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     chunks=geometry[mode][1]//256;assert len(job)==chunks*512+119*256
     runargs=[str(workerbin),str(worker),str(leaf),'--run-full',str(full)] if full else [str(workerbin),str(worker),str(leaf),'--run']
     captured=subprocess.run(runargs,input=job,stdout=subprocess.PIPE,check=True,env=env).stdout
-    resultBytes=geometry[mode][0]*4;snapshotBytes=119*(2+8+8+16+64+64+256)*4
+    resultBytes=geometry[mode][0]*4
+    stageWords=2+8+16+64+64+64+16+32+128
+    snapshotBytes=119*((2+8+8+16+64+64+256)+2*stageWords)*4
     assert len(captured)==resultBytes+snapshotBytes
     result,snapshots=captured[:resultBytes],captured[resultBytes:]
     stored=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--store'],input=boot+result,
@@ -83,6 +85,15 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     controlled=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--controller'],input=boot+snapshots,
                               stdout=subprocess.PIPE,check=True,env=env).stdout
     assert controlled==result
+    if mode=='--gate':
+        prepared=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--full-prepare'],input=boot+snapshots,
+                                stdout=subprocess.PIPE,check=True,env=env).stdout
+        assert prepared==result
+        badproducer=bytearray(snapshots)
+        badproducer[((2+8+8+16+64+64+256)+stageWords+(2+8+16+64))*4]^=1
+        refused=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--full-prepare'],input=boot+badproducer,
+                               stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+        assert refused.returncode and not refused.stdout and b'writes=0 matrix=0' in refused.stderr
     rejectedRecipe=subprocess.run([str(rootbin),str(root),str(roles[mode]),'--bad-recipe'],input=boot+snapshots,
                                   stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,env=env)
     assert not rejectedRecipe.stdout and b'packets=0 writes=0' in rejectedRecipe.stderr
@@ -120,4 +131,5 @@ for path,digest in pins:assert hashlib.sha256(path.read_bytes()).hexdigest()==di
 if full:assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 print('PASS ROOT jobs -> 119 simulated workers -> actual ROOT packet seals, gather, full seal and scatter via simulated NoC; NO DEVICE')
 print('PASS actual ROOT recipe -> dispatch -> gather -> scatter; BfPrepare stubbed; sequential snapshots, NO DEVICE')
+if mode=='--gate':print('PASS ROOT actual gate preparation, producer receipts and matrix dispatch; corrupted producer refused before scatter; NO DEVICE')
 print('PASS invalid boot/recipe, wrong-role jobs, corrupt source/receipt, blocked scatter and nonfinite result rejected; NO DEVICE')

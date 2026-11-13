@@ -13,7 +13,7 @@
 // simulators. Packet sealing runs against a synthetic owner and MMIO state.
 struct GatherRoot:ActualRoot {
  const std::array<PioneerRecurrentWorkerSnapshot,119>& snapshots;unsigned packets=0,seals=0,writes=0;
- bool controller=false;bool jobs[119]={},released[119]={};
+ bool controller=false,fullPrepare=false;bool jobs[119]={},released[119]={},descriptors[119]={};unsigned phase[119]={};
  GatherRoot(const char* path,const std::array<PioneerRecurrentWorkerSnapshot,119>& s):ActualRoot(path),snapshots(s){}
  unsigned StepLimit()const override{return controller?200000000U:4000000U;}
  void Store(unsigned address,unsigned value)override{
@@ -25,10 +25,19 @@ struct GatherRoot:ActualRoot {
    const unsigned destination=memory.at(0xffb20014);unsigned peer=0;
    while(peer<119 && Q::Peer(peer+1)!=destination)peer++;
    if(controller && peer<119){
-    if(local==Q::Job){assert(bytes==256 && !jobs[peer] && !released[peer]);
-     for(unsigned i=0;i<64;i++)assert(memory.at(remote+i*4)==snapshots[peer].job[i]);jobs[peer]=true;
+    const bool producer=fullPrepare && peer<20 && phase[peer]==0;
+    if(local==P::Descriptor){assert(producer && bytes==256 && !descriptors[peer]);
+     for(unsigned i=0;i<64;i++)assert(memory.at(remote+i*4)==snapshots[peer].producer.descriptor[i]);descriptors[peer]=true;
+    }else if(local==Q::Job){assert(bytes==256 && !jobs[peer] && !released[peer]);
+     if(producer)assert(descriptors[peer]);
+     for(unsigned i=0;i<64;i++)assert(memory.at(remote+i*4)==(producer?snapshots[peer].producer.job[i]:snapshots[peer].job[i]));jobs[peer]=true;
     }else if(local==Q::Doorbell){assert(bytes==4 && jobs[peer] && !released[peer]);
-     assert(memory.at(remote)==snapshots[peer].doorbell);released[peer]=true;
+     assert(memory.at(remote)==(producer?snapshots[peer].producer.doorbell:snapshots[peer].doorbell));
+     phase[peer]++;if(producer){jobs[peer]=false;
+      const auto& s=snapshots[peer].producer;
+      for(unsigned i=0;i<128;i++)memory[s.descriptor[4]+s.descriptor[12]+i*4]=s.native[i];
+      for(unsigned i=0;i<32;i++)memory[s.descriptor[4]+s.descriptor[13]+i*4]=s.line[i];
+     }else released[peer]=true;
     }else assert(false);
    }else{
     assert(remote==0x78000 && !(bytes&63));
@@ -38,21 +47,36 @@ struct GatherRoot:ActualRoot {
    memory[address]=0;return;
   }
   assert(!command && bytes && !(bytes&3) && local==0x78000+(remote&31));
-  unsigned w=0;while(w<119 && Q::Peer(w+1)!=route)w++;assert(w<119);const auto& s=snapshots[w];
-  if(controller)assert(released[w]);
+  unsigned w=0;while(w<119 && Q::Peer(w+1)!=route)w++;
+  if(fullPrepare && w==119){
+   assert(route==PioneerQ38ProjectionRoute(0));
+   for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=memory.at(remote+i*4);
+   memory[0xffb20208]++;memory[0xffb2020c]+=(bytes+63)/64;memory[0xffb20210]++;memory[0xffb20214]++;
+   memory[address]=0;packets++;return;
+  }
+  assert(w<119);const auto& s=snapshots[w];
+  const PioneerRecurrentWorkerStage* prior=fullPrepare && !released[w]?(phase[w]?&s.producer:&s.initial):nullptr;
+  if(controller && !fullPrepare)assert(released[w]);
   for(unsigned i=0;i<bytes/4;i++){
    const unsigned at=remote+i*4;uint32_t word=0;
    if(at==0xffb121b0)word=0x46800;
-   else if(at==0xffb13140)word=s.pc;
-   else if(at==Q::Doorbell)word=s.doorbell;
+   else if(at==0xffb13140)word=prior?prior->pc:s.pc;
+   else if(at==Q::Doorbell)word=prior?prior->doorbell:s.doorbell;
    else if(at>=Q::Boot && at<Q::Boot+256)word=memory.at(0x170000+w*256+at-Q::Boot);
-   else if(at>=Q::Status && at<Q::Status+64)word=s.status[(at-Q::Status)/4];
-   else if(at>=Q::Job && at<Q::Job+256)word=s.job[(at-Q::Job)/4];
-   else if(at>=0x83f00 && at<0x84000)word=s.proof[(at-0x83f00)/4];
+   else if(at>=Q::Status && at<Q::Status+64)word=prior?prior->status[(at-Q::Status)/4]:s.status[(at-Q::Status)/4];
+   else if(at>=Q::Job && at<Q::Job+256)word=prior?prior->job[(at-Q::Job)/4]:s.job[(at-Q::Job)/4];
+   else if(at>=P::Descriptor && at<P::Descriptor+256 && prior)word=prior->descriptor[(at-P::Descriptor)/4];
+   else if(at>=0x74000 && at<0x74040 && prior)word=prior->inner[(at-0x74000)/4];
+   else if(at>=0x83f00 && at<0x84000)word=prior?prior->proof[(at-0x83f00)/4]:s.proof[(at-0x83f00)/4];
    else if(at>=0x84000 && at<0x84400)word=s.output[(at-0x84000)/4];
+   else if(at==0xffb21040 || at==0xffb21840)word=0;
    else if(at>=0xffb20000 && at<0xffb21000){
     const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};bool found=false;
-    for(unsigned c=0;c<8;c++)if(at==0xffb20000+offsets[c]){word=s.after[c];found=true;break;}
+    for(unsigned c=0;c<8;c++)if(at==0xffb20000+offsets[c]){word=prior?prior->counters[c]:s.after[c];found=true;break;}
+    if(!found && (at==0xffb20040 || at==0xffb20840 || at==0xffb21040 || at==0xffb21840
+      || (at>=0xffb20240 && at<0xffb202c0))){word=0;found=true;}
+    const unsigned sourceOffsets[]={0x100,0x118,0x11c,0x120,0x124,0x128,0x12c,0x130,0x134,0x138,0x13c,0x140,0x144,0x150,0x154,0x16c};
+    for(unsigned i=0;i<16 && !found;i++)if(at==0xffb20000+sourceOffsets[i]){word=memory.at(0x170000+w*256+(16+i)*4);found=true;}
     assert(found);
    }else{std::fprintf(stderr,"UNMAPPED_WORKER_READ %x bytes%u\n",at,bytes);assert(false);}
    memory[local+i*4]=word;
@@ -60,16 +84,17 @@ struct GatherRoot:ActualRoot {
   memory[0xffb20208]++;memory[0xffb2020c]+=(bytes+63)/64;memory[0xffb20210]++;memory[0xffb20214]++;
   memory[address]=0;packets++;
  }
- bool RunController(unsigned function,unsigned capture,unsigned prepare,unsigned descriptor){
+ bool RunController(unsigned function,unsigned capture,unsigned prepare,unsigned descriptor,bool prepareReal=false){
   std::fill(std::begin(regs),std::end(regs),0);regs[1]=0x60004;regs[2]=0x70000;regs[27]=descriptor-768;
-  regs[10]=descriptor;pc=function;steps=0;controller=true;unsigned captures=0,prepares=0,last=0;
+  regs[10]=descriptor;pc=function;steps=0;controller=true;fullPrepare=prepareReal;unsigned captures=0,prepares=0,last=0;
   while(pc!=0x60004 && pc!=0x60000){last=pc;
    if(pc==capture){captures++;Step();}
-   else if(pc==prepare){prepares++;pc=regs[1];}
+   else if(pc==prepare){prepares++;if(fullPrepare)Step();else pc=regs[1];}
    else Step();
    assert(regs[2]>=0x6e000 && regs[2]<=0x70000);
   }
-  if(pc==0x60000)std::fprintf(stderr,"RUN_PARK last=%x ra=%x packets=%u writes=%u\n",last,regs[1],packets,writes);
+  if(pc==0x60000){unsigned matrix=0;for(bool value:released)matrix+=unsigned(value);
+   std::fprintf(stderr,"RUN_PARK last=%x ra=%x packets=%u writes=%u matrix=%u\n",last,regs[1],packets,writes,matrix);}
   return pc==0x60004 && captures==1 && prepares==1 && regs[10]==memory.at(descriptor+11*4);
  }
  bool RunScatter(unsigned function,unsigned descriptor,unsigned tracked){
@@ -89,13 +114,15 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
  const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
- const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe);
+ const bool fullPrepare=argc==4 && !std::strcmp(argv[3],"--full-prepare");
+ const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe || fullPrepare);
  const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
+ if(fullPrepare)assert(role==5); // virgin first recurrent projection only
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
  std::array<std::array<uint32_t,64>,119> boots;
  assert(fread(boots.data(),sizeof(uint32_t),119*64,stdin)==119*64);
@@ -147,8 +174,9 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<8;i++)endpoint->memory[0x6d000+i*4]=0;
   endpoint->memory[0x74800+6*4]=endpoint->memory[0x74800+7*4]=0;
   for(unsigned w=0;w<119;w++){
-   const auto& s=(*snapshots)[w];assert(s.doorbell);endpoint->memory[0x123000+w*4]=s.doorbell-unsigned(controller);
-   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=s.before[i];
+   const auto& s=(*snapshots)[w];assert(s.doorbell);endpoint->memory[0x123000+w*4]=fullPrepare?0:s.doorbell-unsigned(controller);
+   for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=fullPrepare?0:s.before[i];
+   if(fullPrepare)for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=0;
   }
   const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix(");const auto seals=Symbols(argv[1],"Projection::BfDenseSeal(");
   std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
@@ -164,7 +192,8 @@ int main(int argc,char** argv){
    endpoint->memory[0x74600+i*4]=endpoint->memory.at(frame+i*4);
   }
   for(unsigned i=0;i<width;i++)endpoint->memory[0xe0000+i*4]=0;
-  if(controller)for(unsigned i=0;i<width;i++)endpoint->memory[endpoint->memory.at(frame+53*4)+i*4]=0;
+  if(controller)for(unsigned i=0;i<width;i++)endpoint->memory[endpoint->memory.at(frame+53*4)+i*4]=
+   fullPrepare?uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16:0;
   for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
   for(unsigned i=0;i<119*8;i++)endpoint->memory[0x75800+i*4]=endpoint->memory[0x77000+i*4]=0;
   for(unsigned i=0;i<119;i++)endpoint->memory[0x76800+i*4]=endpoint->memory[0x76e00+i*4]=0;
@@ -180,7 +209,7 @@ int main(int argc,char** argv){
    unsigned next=0;const unsigned groups=rows/16;
    for(unsigned w=0;w<119;w++){
     parts[w][0]=0x10000000+w*0x100000;parts[w][1]=w%7;parts[w][2]=groups/119+unsigned(w<groups%119);
-    parts[w][4]=banks[w%7];parts[w][5]=1;first[w]=next;next+=parts[w][2]*16;
+    parts[w][4]=banks[w%7];parts[w][5]=fullPrepare?boots[w][16]:1;first[w]=next;next+=parts[w][2]*16;
     for(unsigned i=0;i<8;i++)endpoint->memory[0x75800+(w*8+i)*4]=parts[w][i];
     endpoint->memory[0x76800+w*4]=first[w];
    }
@@ -188,6 +217,7 @@ int main(int argc,char** argv){
    for(unsigned i=0;i<16;i++)endpoint->memory[0x76b00+i*4]=header[i];
    for(unsigned i=0;i<8;i++)endpoint->memory[0x76a00+i*4]=banks[i];
   }
+  if(fullPrepare)for(unsigned i=0;i<32;i++)endpoint->memory[0x04000000+0x3000200+slot*128+i*4]=(*workspace)[slot*32+i];
   endpoint->memory[0x75000+48*4]=1;
   std::ifstream scatterSymbols(std::string(argv[1])+"/program.demangled");unsigned scatter=0;
   while(std::getline(scatterSymbols,line))if(line.find("Projection::Scatter(")!=std::string::npos)scatter=unsigned(std::stoul(line.substr(0,8),nullptr,16));
@@ -205,8 +235,13 @@ int main(int argc,char** argv){
     assert(!endpoint->RunController(run,capture,prepare,frame) && !endpoint->packets && !endpoint->writes);
     for(unsigned w=0;w<119;w++)assert(!endpoint->jobs[w] && !endpoint->released[w]);return 0;
    }
-   assert(endpoint->RunController(run,capture,prepare,frame));
+   assert(endpoint->RunController(run,capture,prepare,frame,fullPrepare));
    for(unsigned w=0;w<119;w++)assert(endpoint->jobs[w] && endpoint->released[w]);
+   if(fullPrepare){
+    for(unsigned w=0;w<119;w++)assert(endpoint->phase[w]==(w<20?2U:1U) && endpoint->descriptors[w]==(w<20));
+    for(unsigned w=0;w<20;w++)for(unsigned i=0;i<128;i++)
+     assert(endpoint->memory.at(0xa0000+w*512+i*4)==(*snapshots)[w].producer.native[i]);
+   }
   }else assert(scatter && endpoint->RunScatter(scatter,frame,0x6d000));
   assert(endpoint->writes==(rows*4+16383)/16384);
   results.resize(rows);for(unsigned row=0;row<rows;row++)results[row]=endpoint->memory.at(0x80000+row*4);

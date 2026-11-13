@@ -146,3 +146,22 @@ corrupted receipt still stops before scatter. BfPrepare remains stubbed and its
 postconditions seeded. The recipe addresses and input are synthetic, workers
 are separately simulated snapshots, and no hardware, model quality or speed
 is proven. This supersedes only the CaptureRecipe-stub limitation above.
+
+Virgin gate preparation follow-up: for layer 0 role 5 only, the controller's
+actual BfPrepare now runs rather than being stubbed. The fixture supplies
+separately captured initial and producer-completion worker states, canonical
+synthetic schedule bytes and synthetic bank/NoC responses. The ROOT performs
+119 virgin admissions, issues and checks 20 producer jobs and their actual
+simulated worker receipts, reads their packed input, then issues 119 matrix
+jobs and gathers/scatters all 6,144 rows. The prepared ROOT input matches the
+captured producer bytes and the projection output matches the independently
+checked full real-weight worker results. A corrupted producer receipt is
+refused before any matrix worker release or scatter. ASan/UBSan were enabled.
+
+This is still a sequential, host-bridged instruction simulation: producer and
+matrix snapshots were computed beforehand, the NoC and bank are synthetic,
+and no real ownership or concurrent card execution is shown. It covers one
+virgin layer-0 gate projection, not its following recurrent state, a complete
+layer or model. QKV and output runs still stub BfPrepare. It does not establish
+full-model quality, P100A performance, an inference-speed improvement or a
+production driver.
