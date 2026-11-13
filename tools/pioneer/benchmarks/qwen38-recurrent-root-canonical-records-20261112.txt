@@ -1,0 +1,23 @@
+Recurrent controller and canonical workspace integration, offline simulation
+
+The linked RV32 recurrent scheduler consumed all 144 recurrent metadata
+records generated from the actual canonical 27B model geometry: three roles
+for each of 48 recurrent layers. For each, all 119 generated worker tuples
+matched the independently built host scheduler. The exercised read uses a
+simulated ROOT transport and stubs the packet-seal function; other cases in
+the same suite exercise actual seal helpers and mutation refusals. The prior
+receipt test separately compares receipt-derived records with this host-plan
+workspace; this is not a native receipt or lifetime grant.
+
+Recurrent component cross-build SHA-256:
+6ef96edc56d54060edb00302f31599d95374aa8780f5c7b127d7a034c6a2cf88
+Parent start/program/dense/conv/feedback component SHA-256, respectively:
+20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6dcf271c535383b46
+5eebafe66f69dbee63e6d48d476d933ba71eaab9ee2f1a58d2e156b987832f87
+b1960b90ba1b01b2e43b5889aeaab8a69f5db2f48cd103a340f6480941dfb9f2
+e770a9bde85baadaf9239b7e40985af6415b99650866fad745fe4691a3196395
+8c2626d34501e53dc25368cb8f67c48c9de778fec5d880e21901034795c083f2
+
+Only controller helper instructions and synthetic ROOT memory were exercised.
+No full controller lifecycle, real card, model arithmetic, quality, or
+tokens-per-second claim follows from this result.

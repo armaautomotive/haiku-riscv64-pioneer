@@ -3,10 +3,13 @@
 #define PIONEER_Q38_HYBRID_ACTUAL_ROOT_MACHINE_ONLY 1
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
 #define PIONEER_Q38_RECURRENT_Q8_MATRIX_ROOT_INSPECTION 1
+#define PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION 1
+#define PIONEER_Q38_DENSE_Q8_MATRIX_PLAN_INSPECTION 1
 #include "pioneer_q38_hybrid_actual_root_test.cpp"
 #include "../PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #include "../PioneerQ38DenseQ8MatrixRootFrame.h"
 #include "../PioneerQ38RecurrentQ8MatrixRootJobs.h"
+#include "../PioneerQ38RecurrentQ8MatrixWorkspace.h"
 #include <fstream>
 namespace Q=PioneerQ38DenseQ8MatrixWorkerLayout;
 namespace P=PioneerQ38Bf16ProducerLayout;
@@ -117,6 +120,32 @@ int main(int argc,char** argv){
   m->memory[d+4*42]=layer;m->memory[d+4*43]=role;assert(m->Run(record,d));
   assert(m->regs[10]==0x3000200U+((layer-layer/4)*3+(role==5?0:role==6?1:2))*128);
  }
+ // Feed every real canonical workspace record into the linked RV32 scheduler,
+ // not merely balanced hand-constructed tables. The receipt path separately
+ // proves equality with this independent host-plan geometry.
+ auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ PioneerQ38HybridRecurrentQ8MatrixPlan::Proposal proposal;
+ auto workspace=std::make_unique<std::array<uint32_t,PioneerQ38RecurrentQ8MatrixWorkspace::Words>>();
+ assert(canonical->Build() && PioneerQ38HybridRecurrentQ8MatrixPlan::Build(*canonical,proposal)
+  && PioneerQ38RecurrentQ8MatrixWorkspace::Build(*canonical,proposal,workspace->data(),workspace->size()));
+ unsigned actualRecords=0;
+ for(unsigned layer=0;layer<64;layer++)if(layer%4!=3)for(unsigned role:{5U,6U,13U}){
+  const unsigned slot=(layer-layer/4)*3+(role==5?0:role==6?1:2),offset=0x3000200U+slot*128;
+  m->memory[d+4*14]=role==13?6144:5120;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;
+  const uint32_t* data=workspace->data()+slot*32;Schedule expected;
+  for(unsigned b=0;b<7;b++)for(unsigned f=0;f<3;f++)expected.table[b][f]=data[b*3+f];
+  assert(PioneerQ38RecurrentQ8MatrixRootJobs::Build(expected,layer,role));
+  auto real=std::make_unique<TransferRoot>(argv[1]);real->memory=m->memory;
+  for(unsigned i=0;i<4;i++)real->memory[0xffb20040+i*0x800]=0;
+  for(unsigned i=0;i<32;i++)real->memory[0xffb20240+i*4]=0;
+  for(unsigned a:{0x204U,0x208U,0x20cU,0x210U,0x214U,0x220U,0x228U})real->memory[0xffb20000+a]=0;
+  assert(RunBuildWithTransfer(*real,builds[0],packetSeal,d,offset,data));
+  for(unsigned w=0;w<119;w++)for(unsigned f=0;f<4;f++)
+   assert(real->memory.at(0x16ebc0+w*16+f*4)==expected.parts[w][f]);
+  actualRecords++;
+ }
+ assert(actualRecords==144);
+ puts("PASS all144 actual canonical workspace records -> linked RV32 scheduler/119 worker tuples; SIMULATED NO DEVICE");
  for(unsigned layer:{0U,1U,2U,4U,62U})for(unsigned role:{5U,6U,13U}){
   const unsigned width=role==13?6144:5120,units=role==5?192:role==6?320:160;
   m->memory[d+4*14]=width;m->memory[d+4*42]=layer;m->memory[d+4*43]=role;
