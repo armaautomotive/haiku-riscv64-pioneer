@@ -9,6 +9,11 @@
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
 #error Dense Q8 learned-band source is a private diagnostic only
 #endif
+#if defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE) && (PIONEER_NATIVE_RECURRENT_BAND_SOURCE != 1 \
+ || defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error Recurrent Q8 learned-band source is a private diagnostic only
+#endif
 #include "PioneerModelWeightCache.h"
 #include "PioneerQ38NativeWeightTiles.h"
 #include "PioneerBlackholeBf16Arithmetic.h"
@@ -44,7 +49,11 @@ public:
 		Cache::Digest digest={};
 		if(!Cache::HashFile(fd,PioneerQwen38Gguf::FullBytes,digest,error) || !Stable()
 			|| Cache::Hex(digest)!="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747")return Fail(error,"Original full SHA/stability refused.");
-#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE
+#ifdef PIONEER_NATIVE_RECURRENT_BAND_SOURCE
+		constexpr const char* name="blk.0.attn_gate.weight";
+		constexpr unsigned matrixRows=6144,tensorIndex=3,tensorType=8;
+		const unsigned rows[3]={0,3072,6112};
+#elif defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)
 		constexpr const char* name="blk.3.attn_k.weight";
 		constexpr unsigned matrixRows=1024,tensorIndex=45,tensorType=8;
 		const unsigned rows[3]={0,512,992};

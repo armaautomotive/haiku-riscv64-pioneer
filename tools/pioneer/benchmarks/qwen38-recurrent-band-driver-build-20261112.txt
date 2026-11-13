@@ -1,0 +1,26 @@
+Fixed recurrent BFP8 band diagnostic147: build and offline checks
+
+This private, fixed-sample diagnostic uses a distinct tag
+2026111200010147 and actual blk.0.attn_gate.weight bands prepared in
+qwen38-recurrent-real-band-preparation-20261112.txt. Its CPU source
+reauthenticates the complete original and freshly rederives all three
+payloads and expected outputs before opening a device. The isolated source
+passed that real-original preflight on the Mac. The actual client passed
+492 ASan/UBSan fake-source/device scenarios, including all output-word
+mutations, uncertainty and no-retry cases. The existing QGWD client passed
+the same regression suite. Role/SDK tests rejected wrong tags, dense role,
+Work, CPU reference and fast-math selections.
+
+Two independent RISC-V build directories yielded identical SHA-256:
+  driver 4303afa8c22582185071a8b7111ca0d6014953a151c904e88eab8bf2c16b82da
+  client afff31530bd9ce684b78d2c9ac8b3f5b22f052e98a84f318ee1e8cf316470e40
+  control 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+The separate CPU-only RISC-V preflight SHA-256 is
+1c7d24da70f995f82d44da0c388ee6e93299f1e0f15d8cebcd8f94e361ac0f82.
+All embedded learned samples are private build artifacts, not repository data.
+
+BUILD/TEST ONLY. No driver installed, no card command issued, no cleanup or
+failure recovery established for this new build, and no performance result.
+A safe physical parent must pin exact artifacts, current runtime generation,
+actual source preflight and independent reference, enforce exclusive ownership,
+and restore the stable driver only after independently verified clean END.

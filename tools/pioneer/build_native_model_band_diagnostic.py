@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('private_export', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
+parser.add_argument('--recurrent', action='store_true', help='build distinct fixed recurrent diagnostic147')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -31,6 +32,9 @@ assert stat.S_ISDIR(identity.st_mode) and identity.st_uid==os.geteuid() and stat
 private_pins={
  'PioneerNativeBfpModelBandData.h':'cf8e2ca4d8489b1e2c9dbf3d23486a5b2b53a678f042629cbb4385e68daaa4f5',
  'PioneerNativeBfpModelBandMetadata.h':'a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c'}
+if args.recurrent:
+ private_pins={'PioneerNativeBfpModelBandData.h':'c4781e0c6c3963ff1e1b3ac36c1d21fbb1dd74e2785826489cf67cbb139c9f36',
+               'PioneerNativeBfpModelBandMetadata.h':'a5fadca5d6baeaa921472989cf038dd4aa2a90a666f4c7b3262c8ee141841ff2'}
 for name,digest in private_pins.items():
  info=(private/name).lstat()
  assert stat.S_ISREG(info.st_mode) and info.st_nlink==1 and info.st_uid==os.geteuid() and stat.S_IMODE(info.st_mode)==0o600
@@ -85,7 +89,8 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010080ULL', '-DPIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC=1']
+native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111200010147ULL' if args.recurrent else '0x2026110400010080ULL'), '-DPIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC=1']
+if args.recurrent:native += ['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1']
 commands = []
 def run(command):
     commands.append(command)
@@ -97,17 +102,19 @@ run(common + native + includes + ['-c', str(driver / 'pioneer_native_model_band_
 run(common + includes + ['-c', str(driver / 'tenstorrent_pci_probe.cpp'), '-o', str(output / 'control.o')])
 def compiler_path(name):
     return subprocess.check_output([cxx, '-print-file-name=' + name], text=True).strip()
-for obj, name in [('native.o', 'tenstorrent_pci_probe-native-model-band80'), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
+driver_name='tenstorrent_pci_probe-recurrent-band147' if args.recurrent else 'tenstorrent_pci_probe-native-model-band80'
+client_name='pioneer-recurrent-band-diagnostic147' if args.recurrent else 'pioneer-native-model-band-diagnostic'
+for obj, name in [('native.o', driver_name), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
     run([cxx, '-shared', '-nostdlib', '-Wl,--no-undefined,-soname=tenstorrent_pci_probe', compiler_path('crtbeginS.o'),
          str(release / 'system/glue/haiku_version_glue.o'), str(output / obj), str(output / 'profile.o'),
          str(release / 'system/kernel/kernel.so'), compiler_path('libgcc.a'), compiler_path('crtendS.o'), '-o', str(output / name)])
 tool_prefix = str(build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
-exports = subprocess.check_output([tool_prefix + 'nm', '-D', str(output / 'tenstorrent_pci_probe-native-model-band80')], text=True)
+exports = subprocess.check_output([tool_prefix + 'nm', '-D', str(output / driver_name)], text=True)
 (output / 'native-exports.txt').write_text(exports)
 names = {line.split()[-1] for line in exports.splitlines() if line.split()}
 assert {'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device'} <= names
 legacy = subprocess.check_output([tool_prefix + 'objdump', '-d', '--disassemble=_Z38PioneerNativeModelBandLegacyFindDevicePKc',
-                                  str(output / 'tenstorrent_pci_probe-native-model-band80')], text=True)
+                                  str(output / driver_name)], text=True)
 (output / 'native-legacy-entry.disassembly').write_text(legacy)
 instructions = []
 for line in legacy.splitlines():
@@ -120,13 +127,14 @@ libs=[]
 for path in sorted((build/'build_packages').glob('gcc_syslibs-*/lib')):
  libs+=['-L'+str(path)]
 run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(private),
+     *(['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_BAND_SOURCE=1'] if args.recurrent else []),
      '-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot'),
      '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),*libs,
      str(here/'pioneer_native_model_band_diagnostic.cpp'),str(here/'PioneerModelWeightCache.cpp'),
-     str(release/'kits/shared/libshared.a'),'-lbe','-o',str(output/'pioneer-native-model-band-diagnostic')])
+     str(release/'kits/shared/libshared.a'),'-lbe','-o',str(output/client_name)])
 for name,digest in private_pins.items():
  assert hashlib.sha256((private/name).read_bytes()).hexdigest()==digest
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
-for name in ('tenstorrent_pci_probe-native-model-band80','tenstorrent_pci_probe-default43-control','pioneer-native-model-band-diagnostic'):
+for name in (driver_name,'tenstorrent_pci_probe-default43-control',client_name):
  print(hashlib.sha256((output/name).read_bytes()).hexdigest(),name)
 print('BUILD_ONLY learned-band driver/client;PRIVATE WEIGHT HEADERS NOT COPIED_OR_PUBLISHED;NO install/device/model-quality/speed authority')

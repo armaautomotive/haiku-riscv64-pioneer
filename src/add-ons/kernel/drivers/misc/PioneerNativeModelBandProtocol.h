@@ -4,7 +4,16 @@
 #include "PioneerNativeBfpProtocol.h"
 // Distinct fixed learned-weight diagnostic80. Three COMPILED samples only;
 // no runtime weights/code/addresses/route,model inference or Work endpoint.
-#ifdef PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) && defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC)
+#error Recurrent and dense band diagnostics require distinct identities
+#endif
+#ifdef PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC
+#if PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC != 1 || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Recurrent band protocol is a separate fixed diagnostic only
+#endif
+constexpr uint64_t PioneerNativeModelBandTag=UINT64_C(0x2026111200010147);
+#elif defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC)
 #if PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC != 1 || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error QGWD dense-band protocol is a separate fixed diagnostic only

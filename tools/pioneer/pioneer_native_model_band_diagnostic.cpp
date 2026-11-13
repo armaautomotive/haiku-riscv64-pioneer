@@ -3,6 +3,9 @@
 #if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)
 #error Dense diagnostic protocol and authenticated source must be selected together
 #endif
+#if defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE)
+#error Recurrent diagnostic protocol and authenticated source must be selected together
+#endif
 #include <Drivers.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeModelBandProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
