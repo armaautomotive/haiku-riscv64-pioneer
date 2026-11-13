@@ -16,10 +16,12 @@ int main(int argc,char** argv){
  for(unsigned kind=0;kind<2;kind++){
   std::ifstream file(argv[4+kind],std::ios::binary);std::vector<uint8_t> weights{std::istreambuf_iterator<char>(file),{}};
   assert(weights.size()==32+2*(160*1088+128));std::vector<uint32_t> rows(64);std::vector<uint8_t> seen(64);
+  std::array<PioneerRecurrentWorkerSnapshot,20> snapshots{};
   for(unsigned w=0;w<20;w++){
    std::array<uint32_t,64> descriptor,producer;
    assert(fread(descriptor.data(),4,64,stdin)==64 && fread(producer.data(),4,64,stdin)==64);
-   const unsigned sequence=1+kind*(w<2?2:1);workers[w]->StageProducer(10+kind,sequence,false,0);
+   const unsigned sequence=1+kind*(w<2?2:1);SnapshotStage(*workers[w],snapshots[w].initial,false);
+   workers[w]->StageProducer(10+kind,sequence,false,0);
    for(unsigned i=0;i<64;i++){
     if(descriptor[i]!=workers[w]->descriptor[i] || producer[i]!=workers[w]->Get(HW::Job+i*4))
      std::fprintf(stderr,"frame mismatch role%u worker%u word%u desc%08x/%08x job%08x/%08x\n",
@@ -27,6 +29,7 @@ int main(int argc,char** argv){
     assert(descriptor[i]==workers[w]->descriptor[i] && producer[i]==workers[w]->Get(HW::Job+i*4));
    }
    workers[w]->Check(sequence);
+   SnapshotStage(*workers[w],snapshots[w].producer,true);
    for(unsigned i=0;i<128;i++){
     const uint32_t actual=workers[w]->bank.at(workers[w]->descriptor[4]+workers[w]->descriptor[12]+i*4);
     assert(!std::memcmp(input.data()+w*512+i*4,&actual,4));
@@ -35,11 +38,10 @@ int main(int argc,char** argv){
   }
   for(unsigned w=0;w<2;w++){
    std::array<uint32_t,64> job;assert(fread(job.data(),4,64,stdin)==64);
-   PioneerRecurrentWorkerSnapshot snapshot{};
-   Matrix(*workers[w],job,weights,input,rows,seen,&snapshot);
-   assert(fwrite(&snapshot,sizeof(snapshot),1,stdout)==1);
+   Matrix(*workers[w],job,weights,input,rows,seen,&snapshots[w]);
   }
   for(unsigned i=0;i<64;i++){assert(seen[i]==1);if(i>=48)assert(!rows[i]);}
+  assert(fwrite(snapshots.data(),sizeof(snapshots[0]),snapshots.size(),stdout)==snapshots.size());
  }
  assert(fgetc(stdin)==EOF);return fflush(stdout)?1:0;
 }

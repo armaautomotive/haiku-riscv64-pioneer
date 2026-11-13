@@ -127,3 +127,12 @@ separate original recurrent ROOT bridge also passes a syntax regression.
 The host still stages modeled records, executes workers sequentially and
 invokes gather directly; ROOT admission, full Run, real NoC/ownership and
 hardware behavior are not proven. No device or inference speed was tested.
+
+Producer-receipt follow-up: before each pair of matrix gathers, the linked
+ROOT now runs BfGatherProducer for all 20 retained simulated producer states.
+The modeled NoC supplies each actual completion receipt, descriptor, closed
+job, counters, and producer-written bank bytes. Corrupt producer and matrix
+receipts are separately rejected before matrix result publication. Both
+roles pass ASan/UBSan. The host still invokes the gathers individually and
+seeds/replays modeled memory; admission, dispatch, concurrency and on-card
+ROOT/NoC operation remain unverified. This is not a hardware or speed result.

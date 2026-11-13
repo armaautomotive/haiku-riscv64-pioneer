@@ -5,11 +5,11 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt")));
- const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt");auto root=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer")));
+ const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer");auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
- const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix(");
+ const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
  uint32_t boots[20][64];assert(fread(boots,sizeof(boots),1,stdin)==1);
  const unsigned d=0x74e00,out=0x78000;for(unsigned i=0;i<64;i++)root->memory[d+i*4]=0;
  root->memory[d+4*4]=0x04000000;root->memory[d+4*6]=2025;root->memory[d+4*8]=PioneerQ38ProjectionRoute(0);
@@ -46,8 +46,9 @@ int main(int argc,char** argv){
    }
   }else{
    auto snapshots=std::make_unique<std::array<PioneerRecurrentWorkerSnapshot,119>>();
-   for(unsigned w=0;w<2;w++)assert(fread(&(*snapshots)[w],sizeof((*snapshots)[w]),1,stdin)==1);
+   for(unsigned w=0;w<20;w++)assert(fread(&(*snapshots)[w],sizeof((*snapshots)[w]),1,stdin)==1);
    if(corrupt)(*snapshots)[0].proof[19]^=1;
+   if(badProducer)(*snapshots)[0].producer.proof[19]^=1;
    auto endpoint=std::make_unique<GatherRoot>(argv[1],*snapshots);endpoint->memory=root->memory;
    const unsigned owner=0x6e000,frame=owner+768;
    for(unsigned i=0;i<64;i++)endpoint->memory[frame+i*4]=endpoint->memory.at(d+i*4);
@@ -68,6 +69,19 @@ int main(int argc,char** argv){
    std::ifstream syms(std::string(argv[1])+"/program.demangled");std::string line;unsigned packetSeal=0;
    while(std::getline(syms,line))if(line.find(" T q38_layer_return_recurrent_packet_seal")!=std::string::npos)packetSeal=unsigned(std::stoul(line.substr(0,8),nullptr,16));
    assert(packetSeal);
+   endpoint->fullPrepare=true;
+   for(unsigned w=0;w<20;w++){
+    const auto& s=(*snapshots)[w];endpoint->phase[w]=1;endpoint->memory[0x123000+w*4]=s.producer.doorbell;
+    for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=s.initial.counters[i];
+    for(unsigned i=0;i<64;i++)endpoint->memory[0x178000+w*256+i*4]=s.producer.job[i];
+    for(unsigned i=0;i<128;i++)endpoint->memory[s.producer.descriptor[4]+s.producer.descriptor[12]+i*4]=s.producer.native[i];
+    for(unsigned i=0;i<32;i++)endpoint->memory[s.producer.descriptor[4]+s.producer.descriptor[13]+i*4]=s.producer.line[i];
+    const bool accepted=endpoint->RunGather(producerGathers[0],packetSeal,frame,0x6d000,w);
+    if(badProducer){assert(!accepted && !w);for(unsigned i=0;i<64;i++)assert(endpoint->memory.at(0x80000+i*4)==0x7fc00001);
+     puts("PASS corrupted producer receipt rejected before matrix publication; NO DEVICE");return 0;}
+    assert(accepted);
+   }
+   endpoint->fullPrepare=false;
    for(unsigned w=0;w<2;w++){
     const auto& s=(*snapshots)[w];endpoint->memory[0x123000+w*4]=s.doorbell;
     for(unsigned i=0;i<8;i++)endpoint->memory[0x122000+(w*8+i)*4]=s.before[i];
