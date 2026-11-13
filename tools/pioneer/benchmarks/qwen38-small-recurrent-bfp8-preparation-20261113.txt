@@ -731,3 +731,13 @@ next-state halves, 786432 values total, matched the reference at the existing
 one-hot test and kernel/Work role refusals passed. This validates synthetic
 position-zero recurrent state only, not gated output, the whole layer, real
 model quality, P100A execution or throughput.
+
+Gated-output comparison: the separate host-only observer now also uses the
+existing rendezvous reference with synthetic unit ssm_norm weights and a
+snapshot of the computed gate projection. In the same continuous run all
+6144 gated outputs matched at the 3e-6 absolute-plus-relative tolerance and
+were nonzero; all 786432 state values also still passed. A closed-form
+one-hot observer test and kernel/Work refusal checks passed. The observer
+never supplies device inputs or results. This ends before output projection,
+and does not establish a complete layer, real-model quality, card execution,
+or throughput.

@@ -60,6 +60,7 @@ extern "C" bool Q38ModelRecurrentExpected(const char*,const float*,double*);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 extern "C" bool Q38SyntheticGdnExpected(const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
+extern "C" bool Q38SyntheticGdnGatedExpected(const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
@@ -577,9 +578,10 @@ static void CheckNativeExecution(Fixture& f){
   assert(nonzeroInputs && nonzeroOutputs);
   printf("PASS full recurrent Conv/120 simulated cores/%u groups/10240 outputs and state rows vs independent observer/%u nonzero inputs/%u nonzero outputs;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",groups,nonzeroInputs,nonzeroOutputs);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
-  std::vector<uint32_t> observerConv(40960),observerExpected(823488);
+  std::vector<uint32_t> observerConv(40960),observerGate(6144),observerExpected(829632);
   uint32_t observerAlpha[48],observerBeta[48],stateRoute[96],stateAddress[96];
   for(unsigned i=0;i<10240;i++)observerConv[i]=io.runtimeDram.at(TT_Q38_CONV_OUTPUT/4+i);
+  for(unsigned i=0;i<6144;i++)observerGate[i]=io.runtimeDram.at(PioneerQ38ProjectionResultOffset(5)/4+i);
   for(unsigned i=0;i<48;i++){
    observerAlpha[i]=io.runtimeDram.at(PioneerQ38ProjectionResultOffset(10)/4+i);
    observerBeta[i]=io.runtimeDram.at(PioneerQ38ProjectionResultOffset(11)/4+i);
@@ -589,7 +591,7 @@ static void CheckNativeExecution(Fixture& f){
    stateAddress[w-1]=io.Raw(w,0x74200+7*4);stateRoute[w-1]=io.Raw(w,0x74200+13*4);
    assert(io.MutableSpan(stateRoute[w-1],stateAddress[w-1],32768));
   }
-  assert(Q38SyntheticGdnExpected(observerConv.data(),observerAlpha,observerBeta,observerExpected.data()));
+  assert(Q38SyntheticGdnGatedExpected(observerConv.data(),observerAlpha,observerBeta,observerGate.data(),observerExpected.data()));
   cpu.recurrentGdnRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
   for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
   if(!cpu.layerHeld)fprintf(stderr,"GDN_COHORT_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u read=%llu write=%llu\n",
@@ -603,7 +605,7 @@ static void CheckNativeExecution(Fixture& f){
    auto* span=io.MutableSpan(stateRoute[half],stateAddress[half],32768);assert(span && span->kind==0);
    const auto* actual=span->words+(stateAddress[half]-span->address)/4;
    for(unsigned i=0;i<8192;i++){
-    const float got=Float(actual[i]),expected=Float(observerExpected[half*8578+322+i]);
+    const float got=Float(actual[i]),expected=Float(observerExpected[half*8642+322+i]);
     if(!std::isfinite(got) || std::fabs(double(got)-expected)>3e-6*(1+std::fabs(double(expected))))
      fprintf(stderr,"GDN_STATE_MISMATCH half=%u index=%u actual=%g expected=%g\n",half,i,double(got),double(expected));
     assert(std::isfinite(got) && std::fabs(double(got)-expected)<=3e-6*(1+std::fabs(double(expected))));
@@ -611,6 +613,16 @@ static void CheckNativeExecution(Fixture& f){
    }
   }
   assert(nonzero);printf("PASS 786432 synthetic GDN next-state values against separate reference/%u nonzero;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",nonzero);
+  unsigned nonzeroGated=0;
+  for(unsigned half=0;half<96;half++)for(unsigned i=0;i<64;i++){
+   const float got=Float(io.runtimeDram.at(TT_Q38_GDN_GATED_OUTPUT/4+half*64+i));
+   const float expected=Float(observerExpected[half*8642+8578+i]);
+   if(!std::isfinite(got) || std::fabs(double(got)-expected)>3e-6*(1+std::fabs(double(expected))))
+    fprintf(stderr,"GDN_GATED_MISMATCH half=%u index=%u actual=%g expected=%g\n",half,i,double(got),double(expected));
+   assert(std::isfinite(got) && std::fabs(double(got)-expected)<=3e-6*(1+std::fabs(double(expected))));
+   if(got!=0)nonzeroGated++;
+  }
+  assert(nonzeroGated);printf("PASS 6144 synthetic GDN gated outputs against separate reference/%u nonzero;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",nonzeroGated);
 #endif
 #endif
 #endif
