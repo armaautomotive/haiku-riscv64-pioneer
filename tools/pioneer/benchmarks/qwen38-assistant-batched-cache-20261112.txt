@@ -14,10 +14,18 @@ ranges/capacities and a changed cache entry left caller output untouched. An
 instrumented fixture confirmed fewer source-ready checks for a 16-page batch.
 Mock Work span tests exercised bulk dispatch, byte-for-byte upload contents,
 read failures, and the fallback path. No real device was accessed by tests.
-The Assistant Work worker cross-built against pinned runtime libraries, SHA256
-a12782523769c9629cb4c7dd43de01fca5036b0abe10fbb7c3c92add6d71572d.
+The first cross-build changed the conversion fingerprint and would therefore
+rebuild the existing cache; it must not be installed or benchmarked. A later
+compatibility rule recognizes only the exact reviewed source set whose
+converter is unchanged from the installed worker and whose differences are
+reader-only. The rule retains the installed worker's fingerprint
+bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a.
+Its own script and all ten other source inputs are pinned; changing any one
+produces a new fingerprint. Eleven change-refusal tests passed. The revised
+Assistant Work worker cross-built against pinned runtime libraries, SHA256
+dd3b41e09451f34569129915b4b476a6ab4a4b34a212c1d34a6f5676a29e35b7.
 
-The new worker has not been installed or timed on the Pioneer. Faster loading
+The revised worker has not been installed or timed on the Pioneer. Faster loading
 is a hypothesis until a controlled measurement; this does not change inference
 arithmetic or establish any tokens-per-second improvement. Batch-level identity
 observation is not proof against an external mutation reverted between checks.
