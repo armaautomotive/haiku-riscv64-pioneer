@@ -1,22 +1,40 @@
 #!/usr/bin/env python3
 """Connect actual RV32 ROOT job bytes to a separate worker simulator; no card."""
+import ast
 import hashlib
 import os
 from pathlib import Path
+import re
 import stat
 import struct
 import subprocess
 import sys
 import tempfile
 
-assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12]=='--chain-output'))
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv')) or (len(sys.argv) in (12,15) and sys.argv[6]=='--full-qkv' and sys.argv[9]=='--chain-gate' and (len(sys.argv)==12 or sys.argv[12] in ('--chain-output','--cohort')))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
 mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)>=9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)>=9 and sys.argv[6]=='--full-qkv' else '--out'
 geometry={'--gate':(6144,5120),'--qkv':(10240,5120),'--out':(5120,6144)}
 full=Path(sys.argv[7]) if len(sys.argv)>=9 else None
 chain=Path(sys.argv[10]) if len(sys.argv)>=12 else None
-chainOutput=Path(sys.argv[13]) if len(sys.argv)==15 else None
+chainOutput=Path(sys.argv[13]) if len(sys.argv)==15 and sys.argv[12]=='--chain-output' else None
+cohort=(Path(sys.argv[13]),Path(sys.argv[14])) if len(sys.argv)==15 and sys.argv[12]=='--cohort' else None
+if cohort:
+    for directory in cohort:
+        assert directory.is_absolute() and directory.is_dir() and not directory.is_symlink()
+    names=('run_pioneer_q38_mixed_recurrent_cohort_tests.py','run_pioneer_q38_mixed_worker_tests.py')
+    # Reuse the established pinned ROOT tuple and worker tuple; never accept
+    # a similarly named but different executable as the simulated device.
+    cohort_pins=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+                 ('text.bin',23448,'6e31ae597aa9b3491e34daa389d6b19eb724a9db18efc37ee00f43699f36b8ef'),
+                 ('conv.bin',7500,'9674113d7c69cf7290b03e4bef133a8aa30cb1e6193dc7411b7941bae603cc78'),
+                 ('program.elf',43876,'b177dfbee14d830a56d286e1eb0eb9c22143d63d542d08e0ca7b869c9a13777e'))
+    tree=ast.parse((here/names[1]).read_text())
+    worker_pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
+    for directory,pinset in zip(cohort,(cohort_pins,worker_pins)):
+        for name,size,digest in pinset:
+            data=(directory/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,(directory,name)
 if full:
     assert full.is_absolute() and full.is_file() and not full.is_symlink() and len(sys.argv[8])==64
     info=full.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
@@ -111,6 +129,19 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
             snapshotSize=119*((2+8+8+16+64+64+256)+2*(2+8+16+64+64+64+16+32+128))*4
             prefix=(6144+10240)*4
             assert len(retained)==prefix+snapshotSize+(5120*4+snapshotSize if chainOutput else 0)
+            if cohort:
+                cohortbin=Path(tmp)/'cohort'
+                flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+                subprocess.run([compiler,*common,*flags,str(here/'pioneer_q38_recurrent_projection_cohort_bridge.cpp'),'-o',str(cohortbin)],check=True)
+                gated=subprocess.run([str(cohortbin),*map(str,cohort)],input=retained[:prefix],stdout=subprocess.PIPE,check=True,
+                                     env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'}).stdout
+                assert len(gated)==6144*4
+                for offset in (0,6144*4):
+                    invalid=bytearray(retained[:prefix]);struct.pack_into('<I',invalid,offset,0x7fc00000)
+                    refused=subprocess.run([str(cohortbin),*map(str,cohort)],input=invalid,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                                           env={**env,'ASAN_OPTIONS':'quarantine_size_mb=32'})
+                    assert refused.returncode and not refused.stdout
+                print('PASS actual gate/QKV model-weight projection outputs -> separately seeded actual Conv/GDN cohort, all6144 outputs checked; synthetic state/parameters; NOT continuous workers/device/full-model/TPS',flush=True)
             chainSnapshots=retained[prefix:prefix+snapshotSize]
             warmed=subprocess.run([str(rootbin),str(root),'6','--after-gate-prepare'],input=boot+chainSnapshots,
                                   stdout=subprocess.PIPE,check=True,env=env).stdout

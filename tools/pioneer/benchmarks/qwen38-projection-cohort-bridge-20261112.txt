@@ -1,0 +1,24 @@
+Qwen3.8 layer-0 projection -> Conv/GDN simulation, 2026-11-12
+
+The emitted recurrent matrix ROOT and retained simulated matrix workers
+compute all 6144 gate and 10240 QKV outputs from model-derived BFP8 weights
+and one synthetic BF16 input. Each output is independently checked against
+the precomputed integer matrix reference in the authenticated exports.
+The test now feeds those computed outputs, rather than synthetic projection
+values, into a separately seeded simulation of the actual QRC1 Conv/GDN
+ROOT and its 119 mixed-worker programs. The existing verifier checks all
+Conv groups, recurrent operations and 6144 gated outputs. The exported
+projection hashes are e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755fb1f02b
+(gate) and 6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a
+(QKV).
+
+The Conv weights, history, GDN parameters, state and other projection inputs
+remain synthetic. The QRC1 worker machines are freshly seeded with separate
+prior histories: this does not demonstrate continuous retained workers or
+on-card handoff. The 6144 gated results are not yet fed through the output
+matrix in the same test. The numeric reference checks are offline validation,
+not part of Assistant's no-CPU-reference Work mode.
+
+The ASan/UBSan instruction simulator passed the full bridge and existing
+ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
+27B quality result, a throughput measurement, or evidence of a speedup.
