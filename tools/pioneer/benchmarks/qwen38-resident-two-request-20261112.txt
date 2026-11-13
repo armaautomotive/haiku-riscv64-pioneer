@@ -1,0 +1,34 @@
+Pioneer Qwen27B two-request resident Work trial, 2026-11-12
+
+The isolated candidate worker and two-request probe ran once under the
+guarded warm-trial parent, without replacing the installed Assistant or
+driver. The original SSH handle returned exit 0, and the parent recorded
+WARM_CLOSED_TWO_WORK_REQUESTS_VERIFIED. The two nonempty four-token replies
+both passed the Work-statistics check; the reported first reply was
+"Hello! How can". No general quality assessment is implied.
+
+Model authentication plus verification of all 851 cache entries took
+1261.806417 s. The first request took 2100.556648 s, including the P100A
+weight upload, prompt evaluation and four-token generation. The second,
+identical request in the same session took 85.711035 s and did not report
+another upload. This is strong practical evidence that keeping the session
+open avoids repeating the long initial upload, but absence of a progress
+event is not proof that zero bytes crossed PCIe. The two end-to-end request
+times are not a controlled measurement of PCIe bandwidth.
+
+The worker reported 3 warm-generation samples in 15.061 s on the first
+request and 3 in 15.044 s on the second, both rounded to 0.199 tokens/s.
+These tiny samples use P100A projections with CPU attention/state and no
+CPU reference validation. They do not demonstrate all-card inference, a
+per-token speedup, response quality beyond the short output, or the target
+20 tokens/s. Model reuse saves repeated load time; it does not itself fix
+slow inference.
+
+Postflight: stderr was empty, both worker and probe were gone, and the
+known-good driver SHA-256 remained
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+tag 2026102100010012, generation 42, no active owner or cold recovery.
+The board reported 64 CPUs and 137034936320 bytes maximum RAM. The original
+test stdout remains on the Pioneer at
+/boot/home/pioneer-batched-cache-20261112-a/warm.stdout; SHA-256
+2c92e494045743ff53f23f360a5c0a62c17b9006df75001be69cde90e83807a4.
