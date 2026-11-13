@@ -5,6 +5,10 @@
   || defined(PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
 #error Recurrent producer execution requires the isolated synthetic shared-peer fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE))
+#error Recurrent producer cohort requires the isolated recurrent producer fixture
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -266,6 +270,24 @@ static void CheckNativeExecution(Fixture& f){
   auto& cpu=*io.executionCpu;auto& peer=*io.bootstrapPeer[0];
   assert(cpu.layerHeld && cpu.dispatchWorker==1 && io.Core(0).pending && peer.Idle() && peer.steps>0);
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
+  cpu.recurrentProducersRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<3000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"RECURRENT_PRODUCERS_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u;NO result supplied\n",
+   cpu.pc,cpu.steps,cpu.recurrentProducerDoorbells,cpu.submitted,cpu.completed);
+  assert(cpu.layerHeld && cpu.recurrentProducerDoorbells==20 && cpu.dispatchWorker && io.Core(0).pending
+   && io.Raw(cpu.dispatchWorker,W::Job+8)==1 && !state->Unsafe());
+  for(unsigned w=0;w<20;w++){
+   const auto s=io.bootstrapPeer[w]->cpu->Stats();assert(io.bootstrapPeer[w]->Idle() && s.sequence==1 && !s.active && !s.pending && !s.matrixInstructions);
+  }
+  for(unsigned i=0;i<2560;i++){
+   uint32_t lanes[2];for(unsigned j=0;j<2;j++){
+    const uint32_t value=io.Raw(0,R::Input+(i*2+j)*4);lanes[j]=(value+0x7fff+((value>>16)&1))>>16;
+   }
+   assert(io.runtimeDram.at((0x20000/4)+i)==(lanes[0]|(lanes[1]<<16)));
+  }
+  printf("PASS 20 actual recurrent input producers on same booted peers/5120 synthetic BF16 values match independent observer/first matrix doorbell pending/ROOT steps%u;SIMULATED ONLY,NOT matrix/layer/token/physical/TPS\n",cpu.steps);
+#else
   cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver the already-issued packet; never seed state
   assert(io.Raw(1,W::Doorbell)==1 && !io.Core(0).pending);
   for(unsigned n=0;n<1000000;n++){
@@ -281,6 +303,7 @@ static void CheckNativeExecution(Fixture& f){
    assert(io.runtimeDram.at((0x20000/4)+i)==(lanes[0]|(lanes[1]<<16)));
   }
   printf("PASS actual first recurrent input producer on booted shared peer/256 synthetic values matched independent BF16 observer/%u worker steps;SIMULATED ONLY,NOT matrix/layer/token/physical/TPS\n",s.steps);
+#endif
   return;
  }
 #endif

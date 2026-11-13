@@ -339,6 +339,12 @@ struct PioneerSessionIO:TokenNativeEndpoints {
    // makes this exact CPU runnable again. No wall-clock timing is modeled.
    if(executionMode && executionCpu->layerActive && bootstrapPeer[w-1]->Idle()
     && !Raw(w,PioneerQ38GlobalWorkerLayout::Doorbell))continue;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
+   if(executionMode && executionCpu->layerActive && bootstrapPeer[w-1]->Idle()){
+    const auto observed=bootstrapPeer[w-1]->cpu->Stats();
+    if(Raw(w,PioneerQ38GlobalWorkerLayout::Doorbell)==observed.sequence)continue;
+   } // freeze only a genuinely idle peer without a newer delivered doorbell
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
    if(executionMode && executionCpu->layerActive && bootstrapPeer[w-1]->Idle()){
     const unsigned doorbell=Raw(w,PioneerQ38GlobalWorkerLayout::Doorbell),job=Raw(w,PioneerQ38GlobalWorkerLayout::Job+4);

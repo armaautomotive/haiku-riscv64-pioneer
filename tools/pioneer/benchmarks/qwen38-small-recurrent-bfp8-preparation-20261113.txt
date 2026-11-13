@@ -518,3 +518,11 @@ synthetic input values were packed to BF16 and matched an independent observer.
 The ROOT was held after its already-issued doorbell was delivered; no worker
 state or result was supplied by the host. This is not matrix execution, an
 entire layer or token, physical card qualification or a speed measurement.
+
+Producer cohort: continuing the same simulated controller and booted peer
+histories, all 20 input producers completed and all 5,120 BF16 values matched
+an independent post-hoc observer. The ROOT then staged the first matrix job
+and stopped with its doorbell pending after 20,613,140 ROOT instructions.
+Both ordinary and idle-aware schedulers passed; neither copied worker state
+nor supplied the producers' output. The matrix job was not delivered or
+executed, so this remains synthetic simulation, not a card performance result.

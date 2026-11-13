@@ -4,6 +4,9 @@
 #endif
 // Members of the SAME virgin ROOT,not another CPU or a completed cohort.
 bool layerActive=false,layerHeld=false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
+bool recurrentProducersRunning=false;unsigned recurrentProducerDoorbells=0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
 bool firstMatrixRunning=false;unsigned firstMatrixDoorbells=0;
 void ResumeFirstMatrix(){assert(layerHeld && dispatchWorker==1 && io.Core(0).pending);firstMatrixRunning=true;layerHeld=false;dispatchWorker=0;}
@@ -68,7 +71,13 @@ void SubmitLayer(){
 #endif
   {
 #ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
+  assert(io.Raw(worker,W::Job+8)==(recurrentProducersRunning && recurrentProducerDoorbells==20?1U:5U));
+  if(recurrentProducersRunning && recurrentProducerDoorbells<20){layerHeld=false;}
+  else
+#else
   assert(io.Raw(worker,W::Job+8)==5); // QTPM stages the input-reuse producer first.
+#endif
 #else
   assert(io.Raw(worker,W::Job+8)==1);
 #endif
@@ -132,7 +141,14 @@ void RespondLayer(){
      {assert(firstMatrixRunning && io.Raw(worker,W::Job+7*4)==1001 && io.Raw(0,local+i*4)==1);firstMatrixDoorbells++;}
     }
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE)
-    if(at==W::Doorbell)assert(worker==1 && io.Raw(0,local+i*4)==1 && io.Raw(worker,W::Job+8)==5);
+    if(at==W::Doorbell){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
+     assert(recurrentProducersRunning && worker==recurrentProducerDoorbells+1 && worker<=20
+      && io.Raw(0,local+i*4)==1 && io.Raw(worker,W::Job+8)==5);recurrentProducerDoorbells++;
+#else
+     assert(worker==1 && io.Raw(0,local+i*4)==1 && io.Raw(worker,W::Job+8)==5);
+#endif
+    }
 #else
     assert(at!=W::Doorbell);
 #endif

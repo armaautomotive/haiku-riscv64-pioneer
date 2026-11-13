@@ -18,7 +18,8 @@ synthetic_embedding='--synthetic-embedding' in sys.argv
 if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
-recurrent_producer='--execution-recurrent-producer' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_producers='--execution-recurrent-producers' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
 recurrent_layer_peer=('--execution-recurrent-layer-peer' in sys.argv or recurrent_producer) and '--recurrent-native-header' in sys.argv
 synthetic_layer=synthetic_embedding and ('--execution-layer-dispatch' in sys.argv or recurrent_layer_peer)
 recurrent_peer=('--bootstrap-peer-engines' in sys.argv or recurrent_layer_peer) and '--recurrent-native-header' in sys.argv
@@ -422,6 +423,7 @@ if qgwd_inspection:
     if recurrent_inspection:defines.update(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY='1',PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION='1',PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION='1',PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION='1')
     if recurrent_peer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE']='1'
     if recurrent_producer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE']='1'
+    if recurrent_producers:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
