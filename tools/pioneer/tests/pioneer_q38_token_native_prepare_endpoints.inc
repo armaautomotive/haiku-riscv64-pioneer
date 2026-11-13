@@ -8,7 +8,7 @@ void PioneerSessionIO::BackendResetEndpoints(uint32 value){
  if(value!=0x87ffff || !q38MutableContext || !q38MutableContext->q38TokenNative)return;
  const auto phase=q38MutableContext->q38TokenNative->phase;
  if(phase==PioneerQ38TokenNativeState::WorkersBootstrapping){
-  assert(runtimeCore && runtimePackets==4616 && rootStarts==1010);bootstrapMode=true;
+  assert(runtimeCore && runtimePackets==2*PioneerQ38SelectedTokenRuntimePlan::Chunks && rootStarts==1010);bootstrapMode=true;
  }
  if(phase==PioneerQ38TokenNativeState::RootStarting){
   assert(!runtimeCore && bootstrapArms==119 && bootstrapStarts==119);executionMode=true;

@@ -421,3 +421,19 @@ and worker instruction simulation passed the layer-0 gate/QKV/alpha/beta,
 Conv/GDN/output sequence and checked 48-layer reuse predicates. Simulators
 transport state sequentially; this is not a complete concurrent cohort,
 native lifecycle, physical execution, answer-quality or speed qualification.
+
+Native startup simulation: the QTPM bundle and a synthetic sealed small-
+recurrent receipt were exercised through the actual native initialization,
+held journal and runtime startup code using simulated endpoints. All 2,311
+startup chunks (4,622 write/read packets) were checked, then 119 actual
+worker instruction images were booted in the simulator. The same simulated
+owner armed and released the ROOT, which reached its initial startup marker
+after 5,137 instructions; cancellation request handling was checked at that
+boundary. A further simulation continued the actual ROOT for 178,525
+instructions through three verified metadata NoC reads and tested a fresh
+cancel request while the next learned-data read was outstanding. A separate
+synthetic upload-plan regression checked all staged spans against receipt
+order and uncertain-transfer refusal. These are not a concurrent complete
+layer, real model upload, physical P100A run, generated answer or inference-
+speed measurement. The upload client and loadable driver remain to be
+integrated and validated.

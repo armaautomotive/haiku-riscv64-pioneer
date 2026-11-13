@@ -58,7 +58,9 @@ static bool CheckNativeRuntime(Fixture& f){
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.HostReadMock::quarantined && !io.wideQuarantined);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
  const uint32 prompt[]={248319,17};const PioneerQ38GdnIdentity id={sQ38TokenModelEpoch,1,1,sReloadGeneration};
-#ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ assert(PioneerQ38SmallRecurrentNativeBinding::DeriveLogical(c,&f.cookie,sReloadGeneration,*canonical));
+#elif defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)
  assert(PioneerQ38QgwdNativeBinding::DeriveLogical(c,&f.cookie,sReloadGeneration,*canonical));
 #elif defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)
  assert(c.q38Qgw8Receipt && c.q38Qgw8Receipt->DeriveBoundCanonical(*canonical,&c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
@@ -68,7 +70,13 @@ static bool CheckNativeRuntime(Fixture& f){
  assert(canonical->Build());
 #endif
  assert(startup->Build(*canonical,0,id,&c.q38Dispatch->authority.source[0][0],prompt,2,tokenNativePositions,false,248318,248317));
- auto plan=std::make_unique<PioneerQ38SelectedTokenRuntimePlan>();assert(plan->Bind(*canonical,*startup,id,&c.q38Dispatch->authority.source[0][0]));
+ auto plan=std::make_unique<PioneerQ38SelectedTokenRuntimePlan>();
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ assert(plan->Bind(*canonical,*startup,id,&c.q38Dispatch->authority.source[0][0],*c.q38SmallRecurrentReceipt,
+  &c,&f.cookie,c.hashes,c.initialized,f.cookie.team,sReloadGeneration));
+#else
+ assert(plan->Bind(*canonical,*startup,id,&c.q38Dispatch->authority.source[0][0]));
+#endif
  std::vector<uint32> expected(67108864/4,0x13579bdf);std::array<uint8,16384> bytes;
  std::fill(expected.begin(),expected.begin()+512*1024,0); // independent expected initialization,NEVER supplied to device fabric
  for(unsigned n=0;n<PioneerQ38SelectedTokenRuntimePlan::Chunks;n++){

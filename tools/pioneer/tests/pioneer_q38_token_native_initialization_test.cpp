@@ -31,6 +31,9 @@
 #ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+#include "../PioneerQ38DenseQ8UploadReceiptInspection.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
 #include "pioneer_q38_token_native_manual_ttsync_role.h"
 #endif
@@ -584,6 +587,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
  PioneerQ38DenseQ8UploadReceiptInspection* q38QgwdReceipt=nullptr;
 #endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+ PioneerQ38SmallRecurrentUploadReceiptInspection* q38SmallRecurrentReceipt=nullptr;
+#endif
 #else
  MockLease span;
 #endif
@@ -616,6 +622,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_Q38_QGWD_NATIVE_INSPECTION
   delete q38QgwdReceipt;
+#endif
+#ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
+  delete q38SmallRecurrentReceipt;
 #endif
  } // CPU-only fixture disposal;no physical resources exist
 };

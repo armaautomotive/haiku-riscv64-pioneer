@@ -61,7 +61,7 @@ static void CheckNativeBackendFirstMatrix(Fixture& f,uint64 epoch){
   && state && !state->Unsafe() && state->InitializationsClosed(c.banks,f.proof) && sQ38TokenModelEpoch==epoch+1
   && io.rootStarts==1010 && io.rootStops==1010 && io.rootHolds==1010
   && io.observedGdnPages==73728 && io.observedHistoryPages==1680 && io.observedProjectionPages==512
-  && io.runtimePackets==4616 && io.bootstrapArms==119 && io.bootstrapStarts==119
+  && io.runtimePackets==2*PioneerQ38SelectedTokenRuntimePlan::Chunks && io.bootstrapArms==119 && io.bootstrapStarts==119
   && io.executionArms==1 && io.executionStarts==1 && io.executionCpu->markerWrites==1
   && !io.executionCpu->submitted && !io.executionCpu->matrixInstructions && !io.executionCpu->floatOps
   && !state->TerminalObserved() && !state->TerminalHeld() && !state->Closed() && f.learned==learned);
