@@ -156,7 +156,7 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                 print('PASS actual gate/QKV model-weight projection outputs -> separately seeded actual Conv/GDN cohort, all6144 outputs checked; synthetic state/parameters; NOT continuous workers/device/full-model/TPS',flush=True)
                 if dynamicOutput:
                     output,digest,privateOut=dynamicOutput
-                    refbin=Path(tmp)/'output-reference';outbin=Path(tmp)/'output-worker'
+                    refbin=Path(tmp)/'output-reference'
                     subprocess.run([compiler,*common,str(here/'pioneer_q38_output_dynamic_reference.cpp'),'-o',str(refbin)],check=True)
                     synthetic=subprocess.run([str(refbin),str(output),'--synthetic'],stdout=subprocess.PIPE,check=True,env=env).stdout
                     assert len(synthetic)==5120*4
@@ -164,16 +164,24 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
                         invalid=bytearray(gated);struct.pack_into('<I',invalid,0,invalidBits)
                         refused=subprocess.run([str(refbin),str(output),'--input'],input=invalid,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
                         assert refused.returncode and not refused.stdout
-                    subprocess.run([compiler,*common,*['-D'+r+'=1' for r in worker_roles],'-I'+str(privateOut),
-                                    str(here/'pioneer_q38_recurrent_worker_job_bridge.cpp'),'-o',str(outbin)],check=True)
                     reference=subprocess.run([str(refbin),str(output),'--input'],input=gated,stdout=subprocess.PIPE,check=True,env=env).stdout
                     assert len(reference)==5120*4
-                    outputJob=subprocess.run([str(rootbin),str(root),'13'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
-                    actual=subprocess.run([str(outbin),str(worker),str(leaf),'--run-full-input',str(output)],input=outputJob+gated+reference,
-                                          stdout=subprocess.PIPE,check=True,env=env).stdout
-                    assert len(actual)==5120*4+snapshotSize and actual[:5120*4]==reference
+                    outputJob=subprocess.run([str(rootbin),str(root),'13','--after-qkv'],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout
+                    combined=subprocess.run([str(chainbin),str(worker),str(leaf),str(chain),str(full),str(output),'--dynamic'],
+                                            input=gatejob+warm+outputJob+gated+reference,stdout=subprocess.PIPE,check=True,env=env).stdout
+                    assert len(combined)==prefix+snapshotSize+5120*4+snapshotSize and combined[:prefix]==retained[:prefix]
+                    actual=combined[prefix+snapshotSize:];assert actual[:5120*4]==reference
+                    rootOutput=subprocess.run([str(rootbin),str(root),'13','--after-qkv-prepare-input'],input=boot+actual[5120*4:]+gated,
+                                              stdout=subprocess.PIPE,check=True,env=env).stdout
+                    assert rootOutput==reference
+                    badProducer=bytearray(actual[5120*4:])
+                    wordsPerStage=2+8+16+64+64+64+16+32+128
+                    badProducer[((2+8+8+16+64+64+256)+wordsPerStage+(2+8+16+64))*4]^=1
+                    refused=subprocess.run([str(rootbin),str(root),'13','--after-qkv-prepare-input'],input=boot+badProducer+gated,
+                                           stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+                    assert refused.returncode and not refused.stdout and b'writes=0 matrix=0' in refused.stderr
                     assert hashlib.sha256(output.read_bytes()).hexdigest()==digest
-                    print('PASS actual recurrent gated outputs -> separately booted actual output producers/matrix workers, all5120 rows match independent integer reference; synthetic state/parameters; NO continuous device/full-model/TPS',flush=True)
+                    print('PASS actual gated outputs -> retained gate/QKV workers -> output producer/matrix -> actual ROOT prepare/gather/scatter; all5120 match independent reference; cohort separate, snapshot replay, synthetic state; NO continuous device/full-model/TPS',flush=True)
             chainSnapshots=retained[prefix:prefix+snapshotSize]
             warmed=subprocess.run([str(rootbin),str(root),'6','--after-gate-prepare'],input=boot+chainSnapshots,
                                   stdout=subprocess.PIPE,check=True,env=env).stdout

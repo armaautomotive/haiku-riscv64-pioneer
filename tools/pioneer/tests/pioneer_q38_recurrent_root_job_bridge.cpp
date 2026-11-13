@@ -115,19 +115,20 @@ struct GatherRoot:ActualRoot {
 };
 
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
+ assert(argc==3 || (argc==4 && (!std::strcmp(argv[3],"--store") || !std::strcmp(argv[3],"--gather") || !std::strcmp(argv[3],"--bad-source") || !std::strcmp(argv[3],"--bad-scatter") || !std::strcmp(argv[3],"--controller") || !std::strcmp(argv[3],"--bad-recipe") || !std::strcmp(argv[3],"--full-prepare") || !std::strcmp(argv[3],"--after-qkv-prepare-input") || !std::strcmp(argv[3],"--after-gate") || !std::strcmp(argv[3],"--after-gate-prepare") || !std::strcmp(argv[3],"--after-qkv") || !std::strcmp(argv[3],"--after-qkv-prepare"))));
  const bool store=argc==4 && !std::strcmp(argv[3],"--store"),badSource=argc==4 && !std::strcmp(argv[3],"--bad-source");
  const bool badScatter=argc==4 && !std::strcmp(argv[3],"--bad-scatter");
  const bool badRecipe=argc==4 && !std::strcmp(argv[3],"--bad-recipe");
  const bool afterGatePrepare=argc==4 && !std::strcmp(argv[3],"--after-gate-prepare");
- const bool afterQkvPrepare=argc==4 && !std::strcmp(argv[3],"--after-qkv-prepare");
- const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || afterGatePrepare || afterQkvPrepare);
+ const bool dynamicInput=argc==4 && !std::strcmp(argv[3],"--after-qkv-prepare-input");
+ const bool afterQkvPrepare=argc==4 && (!std::strcmp(argv[3],"--after-qkv-prepare") || dynamicInput);
+ const bool fullPrepare=argc==4 && (!std::strcmp(argv[3],"--full-prepare") || dynamicInput || afterGatePrepare || afterQkvPrepare);
  const bool afterGate=argc==4 && !std::strcmp(argv[3],"--after-gate");
  const bool afterQkv=argc==4 && !std::strcmp(argv[3],"--after-qkv");
  const bool controller=argc==4 && (!std::strcmp(argv[3],"--controller") || badRecipe || fullPrepare);
  const bool gather=argc==4 && (!std::strcmp(argv[3],"--gather") || badSource || badScatter || controller);
  const unsigned role=unsigned(std::atoi(argv[2]));assert(role==5 || role==6 || role==13);
- if(fullPrepare)assert(role==(afterQkvPrepare?13U:afterGatePrepare?6U:5U));
+ if(fullPrepare)assert(role==((afterQkvPrepare || dynamicInput)?13U:afterGatePrepare?6U:5U));
  if(afterGate)assert(role==6); // second recurrent projection after gate
  if(afterQkv)assert(role==13);
  const unsigned width=role==13?6144:5120,rows=role==5?6144:role==6?10240:5120,slot=role==5?0:role==6?1:2;
@@ -136,6 +137,8 @@ int main(int argc,char** argv){
  std::vector<uint32_t> results;if(store){results.resize(rows);assert(fread(results.data(),sizeof(uint32_t),rows,stdin)==rows);}
  auto snapshots=std::make_unique<std::array<PioneerRecurrentWorkerSnapshot,119>>();
  if(gather)assert(fread(snapshots->data(),sizeof(PioneerRecurrentWorkerSnapshot),119,stdin)==119);
+ std::vector<uint32_t> input(dynamicInput?width:0);
+ if(dynamicInput)assert(fread(input.data(),sizeof(uint32_t),width,stdin)==width);
  assert(fgetc(stdin)==EOF);
  for(unsigned w=0;w<119;w++)assert(Q::BootShape(boots[w].data()) && boots[w][3]==w+1);
  auto m=std::make_unique<ActualRoot>(argv[1]);const unsigned d=0x74e00;
@@ -201,7 +204,7 @@ int main(int argc,char** argv){
   }
   for(unsigned i=0;i<width;i++)endpoint->memory[0xe0000+i*4]=0;
   if(controller)for(unsigned i=0;i<width;i++)endpoint->memory[endpoint->memory.at(frame+53*4)+i*4]=
-   fullPrepare?uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16:0;
+   dynamicInput?input[i]:fullPrepare?uint32_t(uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0)))<<16:0;
   for(unsigned i=0;i<width/2;i++)endpoint->memory[0xa0000+i*4]=endpoint->memory[0xf2000+i*4]=0;
   for(unsigned i=0;i<119*8;i++)endpoint->memory[0x75800+i*4]=endpoint->memory[0x77000+i*4]=0;
   for(unsigned i=0;i<119;i++)endpoint->memory[0x76800+i*4]=endpoint->memory[0x76e00+i*4]=0;

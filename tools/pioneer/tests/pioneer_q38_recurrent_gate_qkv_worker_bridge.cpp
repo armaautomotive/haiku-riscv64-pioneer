@@ -20,17 +20,17 @@ static std::vector<uint8_t> Projection(const char* path,unsigned tensor,unsigned
  assert(data.size()==32+size_t(rows/32)*((width/32)*1088+128));assert(!std::memcmp(data.data(),head,sizeof(head)));
  return data;
 }
-static void Producer(DenseProducerImage& image,unsigned w,unsigned role,unsigned seq,const EmittedJobs& jobs){
+static void Producer(DenseProducerImage& image,unsigned w,unsigned role,unsigned seq,const EmittedJobs& jobs,const std::vector<uint32_t>* dynamic=nullptr){
  image.steps=0;
  for(unsigned i=0;i<256;i++){const unsigned at=w*256+i;
-  image.input[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
+  image.input[i]=dynamic?dynamic->at(at):uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
  image.StageProducer(role,seq,false,0);
  for(unsigned i=0;i<64;i++)assert(image.descriptor[i]==jobs.descriptor[w][i]
   && image.Get(HW::Job+i*4)==jobs.producer[w][i]);
  image.Check(seq);
 }
 static void Matrix(DenseProducerImage& image,const std::array<uint32_t,64>& job,const std::vector<uint8_t>& projection,
- const std::vector<uint8_t>& input,std::vector<uint32_t>& rows,std::vector<uint8_t>& seen,PioneerRecurrentWorkerSnapshot* snapshot){
+ const std::vector<uint8_t>& input,std::vector<uint32_t>& rows,std::vector<uint8_t>& seen,PioneerRecurrentWorkerSnapshot* snapshot,const std::vector<uint32_t>* dynamicExpected=nullptr){
  const unsigned width=job[18],bands=job[20],first=job[32],sequence=job[1];assert(width==5120 || width==6144);
  assert(bands && bands<=image.native.maxBands && first+bands*32<=rows.size());
  image.RearmTestAccounting();image.steps=0;image.native.tiles=width/32;image.transfer.job.words[4]=bands;
@@ -51,7 +51,7 @@ static void Matrix(DenseProducerImage& image,const std::array<uint32_t,64>& job,
  assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,closed,image.boot.data(),before,after));
  for(unsigned band=0;band<bands;band++)for(unsigned r=0;r<32;r++){
   const size_t bytes=size_t(width/32)*1088,at=32+size_t(first/32+band)*(bytes+128)+bytes+r*4;
-  uint32_t expected;std::memcpy(&expected,projection.data()+at,4);
+  uint32_t expected;if(dynamicExpected)expected=dynamicExpected->at(first+band*32+r);else std::memcpy(&expected,projection.data()+at,4);
   const unsigned value=image.Get(W::Output+(band*32+r)*4);assert(value==expected && !seen[first+band*32+r]++);rows[first+band*32+r]=value;
   if(snapshot)snapshot->output[band*32+r]=value;
  }
@@ -63,16 +63,24 @@ static void Matrix(DenseProducerImage& image,const std::array<uint32_t,64>& job,
  }
 }
 int main(int argc,char** argv){
- assert(argc==5 || argc==6);const bool third=argc==6;
+ assert(argc==5 || argc==6 || (argc==7 && !std::strcmp(argv[6],"--dynamic")));const bool third=argc>=6,dynamic=argc==7;
  auto gate=Projection(argv[3],3,5120,6144),qkv=Projection(argv[4],5,5120,10240);
  std::vector<uint8_t> out;if(third)out=Projection(argv[5],16,6144,5120);
- EmittedJobs first,second,last;first.Read(20);second.Read(20);if(third)last.Read(24);assert(fgetc(stdin)==EOF);
+ EmittedJobs first,second,last;first.Read(20);second.Read(20);if(third)last.Read(24);
+ std::vector<uint32_t> dynamicInput(dynamic?6144:0),dynamicExpected(dynamic?5120:0);
+ if(dynamic){assert(fread(dynamicInput.data(),4,dynamicInput.size(),stdin)==dynamicInput.size());
+  assert(fread(dynamicExpected.data(),4,dynamicExpected.size(),stdin)==dynamicExpected.size());}
+ assert(fgetc(stdin)==EOF);
  std::vector<uint8_t> input(6144*2);uint32_t in[256],packed[128];
  for(unsigned chunk=0;chunk<24;chunk++){
   for(unsigned i=0;i<256;i++){unsigned at=chunk*256+i;in[i]=uint32_t(uint16_t(0x3f00+(at*13)%256+((at&3)==2?0x8000:0)))<<16;}
   assert(PioneerQ38Bf16Input::Pack(in,256,packed,128));std::memcpy(input.data()+chunk*512,packed,512);
  }
  const std::vector<uint8_t> gateInput(input.begin(),input.begin()+5120*2);
+ if(dynamic)for(unsigned chunk=0;chunk<24;chunk++){
+  assert(PioneerQ38Bf16Input::Pack(dynamicInput.data()+chunk*256,256,packed,128));
+  std::memcpy(input.data()+chunk*512,packed,512);
+ }
  std::vector<uint32_t> gates(6144),qkvs(10240),outputs(third?5120:0);
  std::vector<uint8_t> gateSeen(gates.size()),qkvSeen(qkvs.size()),outSeen(outputs.size());
  std::array<PioneerRecurrentWorkerSnapshot,119> snapshots{},outSnapshots{};
@@ -90,8 +98,8 @@ int main(int argc,char** argv){
    auto& o=outSnapshots[w];SnapshotStage(image,o.initial,false);
    for(unsigned i=0;i<64;i++)o.initial.proof[i]=image.Get(0x83f00+i*4);
    image.native.tiles=6144/32;
-   if(w<24){Producer(image,w,13,w<20?5:3,last);SnapshotStage(image,o.producer,true);}
-   Matrix(image,last.matrix[w],out,input,outputs,outSeen,&o);
+   if(w<24){Producer(image,w,13,w<20?5:3,last,dynamic?&dynamicInput:nullptr);SnapshotStage(image,o.producer,true);}
+   Matrix(image,last.matrix[w],out,input,outputs,outSeen,&o,dynamic?&dynamicExpected:nullptr);
    assert(o.initial.doorbell==(w<20?4U:2U) && o.doorbell==(w<20?6U:w<24?4U:3U));
   }
  }
