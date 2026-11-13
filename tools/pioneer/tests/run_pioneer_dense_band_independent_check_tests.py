@@ -27,6 +27,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-dense-integer-check-',dir='/pri
     result=subprocess.run([str(binary),str(samples),'--recurrent-reference'],capture_output=True,text=True,env=env)
     assert result.returncode==0 and result.stdout.count('RECURRENT_INTEGER_REFERENCE ')==96 and 'sample2 first6112 row31 word00000000' in result.stdout
     assert subprocess.run([str(binary),str(samples),'--qgwd-reference'],capture_output=True,env=env).returncode==1
+    output_data=''.join(array('w'+str(i),52992) for i in range(3))+array('input',3840)
+    out_meta='Width=6144,Rows=5120,Tensor=16,Samples=3\nconst unsigned rows[3]={0,2560,5088}\n'
+    header.write_text(output_data);metadata.write_text(out_meta+''.join(array('g'+str(i),32) for i in range(3)))
+    result=subprocess.run([str(binary),str(samples),'--recurrent-out-reference'],capture_output=True,text=True,env=env)
+    assert result.returncode==0 and result.stdout.count('RECURRENT_OUT_INTEGER_REFERENCE ')==96 and 'sample2 first5088 row31 word00000000' in result.stdout
+    assert subprocess.run([str(binary),str(samples),'--recurrent-reference'],capture_output=True,env=env).returncode==1
+    header.write_text(data)
     metadata.write_text(array('g0',32)+array('g1',32,1)+array('g2',32))
     result=subprocess.run([str(binary),str(samples)],capture_output=True,text=True,env=env)
     assert result.returncode==1 and 'mismatch sample=1 row=0' in result.stderr

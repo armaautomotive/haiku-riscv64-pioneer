@@ -83,37 +83,41 @@ static uint32_t Instruction(const uint16_t* a,const uint16_t* b,unsigned phase,u
 }
 int main(int argc,char** argv){
  if((argc!=2 && argc!=3) || argv[1][0]!='/' || (argc==3 && std::string(argv[2])!="--qgwd-reference"
-  && std::string(argv[2])!="--recurrent-reference"))return 2;
+  && std::string(argv[2])!="--recurrent-reference" && std::string(argv[2])!="--recurrent-out-reference"))return 2;
  const std::string path=argv[1],data=Read(path+"/PioneerNativeBfpModelBandData.h"),meta=Read(path+"/PioneerNativeBfpModelBandMetadata.h");
  if(data.empty() || meta.empty())return 1;
  const bool reference=argc==3,recurrent=reference && std::string(argv[2])=="--recurrent-reference";
- if(reference && !recurrent && (meta.find("Width=5120,Rows=1024,Tensor=45,Samples=3")==std::string::npos
+ const bool recurrentOut=reference && std::string(argv[2])=="--recurrent-out-reference";
+ if(reference && !recurrent && !recurrentOut && (meta.find("Width=5120,Rows=1024,Tensor=45,Samples=3")==std::string::npos
   || meta.find("const unsigned rows[3]={0,512,992}")==std::string::npos))return 1;
  if(recurrent && (meta.find("Width=5120,Rows=6144,Tensor=3,Samples=3")==std::string::npos
   || meta.find("const unsigned rows[3]={0,3072,6112}")==std::string::npos))return 1;
- std::vector<uint32_t> inputs;if(!Array(data,"input",3200,inputs))return 1;
+ if(recurrentOut && (meta.find("Width=6144,Rows=5120,Tensor=16,Samples=3")==std::string::npos
+  || meta.find("const unsigned rows[3]={0,2560,5088}")==std::string::npos))return 1;
+ const unsigned tiles=recurrentOut?192:160;
+ std::vector<uint32_t> inputs;if(!Array(data,"input",tiles*20,inputs))return 1;
  unsigned checked=0;
  for(unsigned sample=0;sample<3;sample++){
   std::vector<uint32_t> weights,golden;
-  if(!Array(data,"w"+std::to_string(sample),44160,weights) || !Array(meta,"g"+std::to_string(sample),32,golden))return 1;
-  for(unsigned tile=0;tile<160;tile++){
+  if(!Array(data,"w"+std::to_string(sample),tiles*276,weights) || !Array(meta,"g"+std::to_string(sample),32,golden))return 1;
+  for(unsigned tile=0;tile<tiles;tile++){
    for(unsigned i=0;i<16;i++)if(Byte(weights,tile*1104+i) || Byte(inputs,tile*80+i))return 1;
   }
   for(unsigned row=0;row<32;row++){
    uint32_t value=0;
-   for(unsigned tile=0;tile<160;tile++)for(unsigned half=0;half<2;half++){
+   for(unsigned tile=0;tile<tiles;tile++)for(unsigned half=0;half<2;half++){
     uint16_t a[16],b[16];for(unsigned c=0;c<16;c++){
      a[c]=Weight(weights,tile,row,half*16+c);b[c]=Half(inputs,tile*80+16+(half*16+c)*2);
     }
     for(unsigned phase=0;phase<4;phase++)value=Instruction(a,b,phase,value);
    }
    if(value!=golden[row]){std::fprintf(stderr,"mismatch sample=%u row=%u got=%08x expected=%08x\n",sample,row,value,golden[row]);return 1;}
-   if(reference){const unsigned dense[]={0,512,992},rec[]={0,3072,6112};
-    std::printf("%s_INTEGER_REFERENCE sample%u first%u row%u word%08x\n",recurrent?"RECURRENT":"DENSE",sample,(recurrent?rec:dense)[sample],row,value);}
+   if(reference){const unsigned dense[]={0,512,992},rec[]={0,3072,6112},out[]={0,2560,5088};
+    std::printf("%s_INTEGER_REFERENCE sample%u first%u row%u word%08x\n",recurrentOut?"RECURRENT_OUT":recurrent?"RECURRENT":"DENSE",sample,(recurrentOut?out:recurrent?rec:dense)[sample],row,value);}
    checked++;
   }
   std::printf("INDEPENDENT_DENSE_BAND sample=%u rows=32 match; NO DEVICE\n",sample);std::fflush(stdout);
  }
- std::printf("PASS_INDEPENDENT_DENSE_BAND samples=3 rows=%u phase_instructions=122880; NO DEVICE OR SPEED\n",checked);
+ std::printf("PASS_INDEPENDENT_DENSE_BAND samples=3 rows=%u phase_instructions=%u; NO DEVICE OR SPEED\n",checked,checked*tiles*2*4);
  return std::fflush(stdout)?1:0;
 }
