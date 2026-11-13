@@ -166,7 +166,7 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 #endif
 	}
 public:
-	uint64_t pagesUploaded=0,bytesRetained=0,calls=0;
+	uint64_t pagesUploaded=0,bytesRetained=0,calls=0,fleetPlanBuilds=0;
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 	PioneerQ38ModelRootProfile modelRootProfile;
 #endif
@@ -391,11 +391,15 @@ public:
 			if (!cached) {
 				auto candidate=std::unique_ptr<PioneerQwen38FleetPlan>(new(std::nothrow) PioneerQwen38FleetPlan());
 				if (!candidate || !candidate->Build(source.Model(),layout,tensor,workers)) return Stop();
+				fleetPlanBuilds++;
 				cached=std::move(candidate);
 			}
 			schedule=cached.get();
 			if (!schedule->MatchesSource(source.Model(),layout) || schedule->Tensor()!=tensor || schedule->Workers()!=workers) return Stop();
-		} else if (!schedule->Build(source.Model(),layout,tensor,workers)) return Stop();
+		} else {
+			if (!schedule->Build(source.Model(),layout,tensor,workers)) return Stop();
+			fleetPlanBuilds++;
+		}
 		PioneerQ38CohortInput quantized;
 		if (!PioneerQ38CohortQuantize(t.type,inputs,input,quantized) || !UploadTensor(tensor)) return Stop();
 		std::vector<float> scratch(outputs,0); // NEVER caller output until EVERY wave succeeds

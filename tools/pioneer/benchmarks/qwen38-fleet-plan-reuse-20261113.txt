@@ -23,3 +23,8 @@ bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a.
 The local binary was not deployed or run: the verified Pioneer SSH host
 rejected the available root keys. This provides build evidence only, not
 hardware correctness or throughput evidence.
+
+The session now also exposes a plan-build count for diagnostics. Offline
+tests assert that two normal full-fleet matrices build exactly one plan,
+while two non-default-worker matrices build twice. The already-running
+physical trial predates this counter; its worker bytes remain unchanged.

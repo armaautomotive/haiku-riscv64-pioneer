@@ -83,6 +83,7 @@ int main()
 		for (unsigned row=0;row<output.size();row++) assert(output[row]==float(row+1));
 		unsigned uploads=io.uploads,runs=io.runs; assert(uploads && runs>1);
 		assert(session.Multiply(index,input.data(),5120,output.data(),1024,1) && io.uploads==uploads && io.runs==runs*2);
+		assert(session.fleetPlanBuilds==2); // non-default fleet remains uncached
 		assert(session.pagesUploaded && session.bytesRetained && session.calls==runs*2 && session.peakWorkers==1);
 		assert(session.sourceReadNanos>0 && session.bulkUploadNanos>0 && session.runNanos==uint64_t(runs)*200);
 		assert(session.Finish() && session.Finish() && io.ends==1 && io.closes==1);
@@ -92,6 +93,7 @@ int main()
 		assert(session.Open() && session.Multiply(index,input.data(),5120,output.data(),1024));
 		const unsigned uploads=io.uploads,runs=io.runs;
 		assert(session.Multiply(index,input.data(),5120,output.data(),1024) && io.uploads==uploads && io.runs==2*runs);
+		assert(session.fleetPlanBuilds==1); // second full-fleet call reused its plan
 		for (unsigned row=0;row<output.size();row++) assert(output[row]==float(row+1));
 		output=before; source.valid=false;
 		assert(!session.Multiply(index,input.data(),5120,output.data(),1024) && output==before && io.runs==2*runs);

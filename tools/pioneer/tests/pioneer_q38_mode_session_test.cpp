@@ -50,6 +50,7 @@ int main()
 		assert(session.Open() && session.Multiply(index,input.data(),5120,output.data(),1024));
 		unsigned uploads=io.uploads,runs=io.runs;
 		assert(session.Multiply(index,input.data(),5120,output.data(),1024) && io.uploads==uploads && io.runs==2*runs);
+		assert(session.fleetPlanBuilds==1);
 		for (unsigned r=0;r<1024;r++) assert(output[r]==float(r+1));
 		assert(session.Finish() && io.ends==1);
 	}
