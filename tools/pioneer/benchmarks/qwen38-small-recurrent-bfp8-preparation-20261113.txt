@@ -699,3 +699,14 @@ were model-derived; embedding, gate, QKV
 and Conv data were synthetic. This run stopped before the first GDN operation;
 it is not a complete layer, physical-card execution, model-quality validation
 or tokens-per-second measurement. No driver was installed or hardware touched.
+
+GDN fixture preparation: extending the same simulation beyond Conv exposed
+an unsupported byte-store instruction, followed by a read outside the
+synthetic source. The missing address was mapped to layer 0's ssm_a weight,
+not to recurrent state. Test-only bounded synthetic ssm_a, ssm_dt.bias and
+ssm_norm.weight regions now have their own source and refusal tests. A focused
+RV32 byte-store decoder test also passed. With those fixtures, the run got
+past that read but subsequently stopped on unsupported floating-point
+instructions; the 96-worker GDN cohort and its numerical output are NOT yet
+validated. These changes do not alter production model data or the driver and
+do not establish hardware execution, model quality or throughput.

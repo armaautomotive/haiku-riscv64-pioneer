@@ -81,6 +81,20 @@ int main(int argc,char** argv){
   }
  }
  assert(states==7 && weights==7);puts("PASS synthetic Conv weights and bounded mutable state across seven banks; NO MODEL OR DEVICE");
+#ifdef PIONEER_Q38_SYNTHETIC_GDN_WEIGHT_TEST
+ unsigned gdnWeights=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);const auto& q=proposal.parts[i];
+  if(p->kind!=original->WeightKind || p->layer || p->role<7 || p->role>9)continue;
+  const unsigned r=PioneerQ38ProjectionRoute(q.bank),a=original->Base+q.offset;
+  const uint32_t expected=p->role==7?0xbf800000U:p->role==9?0x3f800000U:0U;
+  for(unsigned at=0;at<q.bytes;at+=4){uint8_t raw[4];assert(source.Read(r,a+at,raw,4));
+   const uint32_t word=uint32_t(raw[0])|uint32_t(raw[1])<<8|uint32_t(raw[2])<<16|uint32_t(raw[3])<<24;assert(word==expected);}
+  uint8_t outside[4]={1,2,3,4};assert(!source.Read(r,a+q.bytes-2,outside,4));
+  assert(!source.PutSyntheticConv(r,a,0));gdnWeights++;
+ }
+ assert(gdnWeights==3);puts("PASS synthetic GDN a, dt bias and norm weight bounds; NO MODEL OR DEVICE");
+#endif
 #endif
 #endif
 #endif

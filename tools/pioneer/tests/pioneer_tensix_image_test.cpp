@@ -253,6 +253,7 @@ struct Machine {
 		l1[Index(address)] = value;
 	}
 	virtual void Store16(uint32_t,uint16_t) { assert(false && "half store not allowed in this image"); }
+	virtual void Store8(uint32_t,uint8_t) { assert(false && "byte store not allowed in this image"); }
 	virtual uint32_t Load(uint32_t address) {
 		assert((address & 3) == 0);
 		if (address == 0xffe80004) { assert(pendingDrainStore); pendingDrainStore = false; drained = true; drains++; return 0xdeadbeef; }
@@ -343,8 +344,9 @@ struct Machine {
 					}
 				} write=true;
 			} else if (op == 0x23) {
-				assert(f3 == 1 || f3 == 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
-				if (f3==1) Store16(regs[rs1]+imm,uint16_t(regs[rs2])); else Store(regs[rs1]+imm,regs[rs2]);
+				assert(f3 <= 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
+				if (f3==0) Store8(regs[rs1]+imm,uint8_t(regs[rs2]));
+				else if (f3==1) Store16(regs[rs1]+imm,uint16_t(regs[rs2])); else Store(regs[rs1]+imm,regs[rs2]);
 			} else if (op == 3) {
 				assert(f3==2 || f3==4 || f3==5); uint32_t address=regs[rs1]+imm;
 				if (f3==2) result=Load(address);
