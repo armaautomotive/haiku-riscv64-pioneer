@@ -17,6 +17,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE))
 #error Recurrent matrix execution requires the isolated synthetic matrix fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE))
+#error Recurrent matrix cohort requires the isolated matrix fixture
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -311,6 +315,50 @@ static void CheckNativeExecution(Fixture& f){
   printf("PASS 20 actual recurrent input producers on same booted peers/5120 synthetic BF16 values match independent observer/first matrix doorbell pending/ROOT steps%u;SIMULATED ONLY,NOT matrix/layer/token/physical/TPS\n",cpu.steps);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
   assert(cpu.dispatchWorker==1 && peer.Idle() && peer.cpu->Stats().sequence==1);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+  cpu.recurrentMatrixRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<6000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld){
+   fprintf(stderr,"RECURRENT_MATRIX_COHORT_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u root-status=%x,%x,%x,%x,%x,%x;NO result supplied\n",
+    cpu.pc,cpu.steps,cpu.recurrentMatrixDoorbells,cpu.submitted,cpu.completed,
+    io.Raw(0,R::Status),io.Raw(0,R::Status+4),io.Raw(0,R::Status+8),io.Raw(0,R::Status+12),io.Raw(0,R::Status+16),io.Raw(0,R::Status+20));
+   fprintf(stderr,"ROOT_RECENT_PC");for(unsigned i=0;i<64 && i<cpu.cohortRecentCount;i++)fprintf(stderr," %x",cpu.cohortRecentPC[(cpu.cohortRecentCount+i)%64]);fprintf(stderr,"\n");
+   for(unsigned worker=1;worker<=2;worker++){
+    auto& p=*io.bootstrapPeer[worker-1];const auto s=p.cpu->Stats();
+    fprintf(stderr,"WORKER%u pc=%x sequence=%u active=%u pending=%u matrices=%u idle=%u fault=%u status=%x,%x,%x,%x\n",
+     worker,s.pc,s.sequence,s.active,s.pending,s.matrixInstructions,unsigned(p.Idle()),unsigned(p.cpu->ObserveFaulted()),
+     io.Raw(worker,W::Status),io.Raw(worker,W::Status+4),io.Raw(worker,W::Status+8),io.Raw(worker,W::Status+12));
+   }
+   for(unsigned row=0;row<64;row++){
+    double expected=0;
+    if(row<48)for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+     const uint32_t value=io.Raw(0,R::Input+(tile*32+col)*4);
+     const uint32_t bits=((value+0x7fff+((value>>16)&1))>>16)<<16;
+     expected+=double(Float(bits))*double(int((row*7+tile*3+col*5)%17)-8)*0.0625;
+    }
+    const uint32_t raw=io.Raw(row/32+1,PioneerQ38Bfp8WorkerJob::Output+(row%32)*4);
+    const float actual=Float(raw);
+    if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
+     fprintf(stderr,"MATRIX_ROW_MISMATCH row=%u raw=%08x actual=%g expected=%g\n",row,raw,double(actual),expected);
+   }
+  }
+  assert(cpu.layerHeld && cpu.recurrentMatrixDoorbells==2 && io.Core(0).pending && !state->Unsafe());
+  for(unsigned worker=1;worker<=2;worker++){
+   auto& matrixPeer=*io.bootstrapPeer[worker-1];const auto matrix=matrixPeer.cpu->Stats();
+   assert(matrixPeer.Idle() && matrix.sequence==2 && !matrix.active && !matrix.pending && matrix.matrixInstructions==2560);
+  }
+  for(unsigned row=0;row<64;row++){
+   double expected=0;
+   if(row<48)for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+    const uint32_t value=io.Raw(0,R::Input+(tile*32+col)*4);
+    const uint32_t bits=((value+0x7fff+((value>>16)&1))>>16)<<16;
+    expected+=double(Float(bits))*double(int((row*7+tile*3+col*5)%17)-8)*0.0625;
+   }
+   const float actual=Float(io.Raw(row/32+1,PioneerQ38Bfp8WorkerJob::Output+(row%32)*4));
+   assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+  }
+  printf("PASS recurrent BFP8 two-band cohort/64 outputs including 16 padded/5120 modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n");
+#else
   cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver only the already-issued matrix doorbell
   assert(io.Raw(1,W::Doorbell)==2 && !io.Core(0).pending);
   for(unsigned n=0;n<1000000;n++){
@@ -336,6 +384,7 @@ static void CheckNativeExecution(Fixture& f){
    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
   }
   printf("PASS first BFP8 matrix band on same simulated booted peer/32 outputs vs post-hoc observer/%u matrix instructions;NO full layer/token/physical/TPS\n",matrix.matrixInstructions);
+#endif
 #endif
 #else
   cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver the already-issued packet; never seed state

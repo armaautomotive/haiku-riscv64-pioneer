@@ -53,7 +53,13 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
  unsigned floatOps=0;
  Q38InstructionStackObserver instructionStack;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+ uint32_t cohortRecentPC[64]={};unsigned cohortRecentCount=0;
+#endif
  void StepScalar(){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+  cohortRecentPC[cohortRecentCount++%64]=pc;
+#endif
 #ifdef PIONEER_Q38_NATIVE_ROOT_PROFILE_FIXTURE
   const unsigned retiredPC=pc;
 #endif

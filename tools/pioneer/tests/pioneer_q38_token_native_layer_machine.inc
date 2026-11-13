@@ -7,6 +7,9 @@ bool layerActive=false,layerHeld=false;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
 bool recurrentProducersRunning=false;unsigned recurrentProducerDoorbells=0;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+bool recurrentMatrixRunning=false;unsigned recurrentMatrixDoorbells=0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
 bool firstMatrixRunning=false;unsigned firstMatrixDoorbells=0;
 void ResumeFirstMatrix(){assert(layerHeld && dispatchWorker==1 && io.Core(0).pending);firstMatrixRunning=true;layerHeld=false;dispatchWorker=0;}
@@ -72,8 +75,14 @@ void SubmitLayer(){
   {
 #ifdef PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+  if(!recurrentMatrixRunning || recurrentMatrixDoorbells<2)
+#endif
   assert(io.Raw(worker,W::Job+8)==(recurrentProducersRunning && recurrentProducerDoorbells==20?1U:5U));
   if(recurrentProducersRunning && recurrentProducerDoorbells<20){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+  else if(recurrentMatrixRunning && recurrentMatrixDoorbells<2){layerHeld=false;}
+#endif
   else
 #else
   assert(io.Raw(worker,W::Job+8)==5); // QTPM stages the input-reuse producer first.
@@ -147,8 +156,13 @@ void RespondLayer(){
       assert(recurrentProducersRunning && worker==recurrentProducerDoorbells+1 && worker<=20 && io.Raw(0,local+i*4)==1);recurrentProducerDoorbells++;
      }
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
+     else {assert(recurrentMatrixRunning && recurrentProducerDoorbells==20 && recurrentMatrixDoorbells<2
+      && worker==recurrentMatrixDoorbells+1 && io.Raw(0,local+i*4)==2 && io.Raw(worker,W::Job+8)==1);recurrentMatrixDoorbells++;}
+#else
      else assert(recurrentProducersRunning && recurrentProducerDoorbells==20 && worker==1
       && io.Raw(0,local+i*4)==2 && io.Raw(worker,W::Job+8)==1);
+#endif
 #else
      else assert(false && "matrix doorbell must remain pending");
 #endif

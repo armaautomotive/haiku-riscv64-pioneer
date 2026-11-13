@@ -22,7 +22,8 @@ synthetic_embedding='--synthetic-embedding' in sys.argv
 if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
-recurrent_matrix_peer='--execution-recurrent-matrix' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_matrix_cohort='--execution-recurrent-matrix-cohort' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
 assert not synthetic_recurrent_matrix or recurrent_producers and synthetic_embedding, 'synthetic recurrent matrix data requires its isolated producer cohort'
@@ -57,7 +58,7 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
                 or recurrent_layer_peer and synthetic_embedding and len(sys.argv)==6
                 or recurrent_peer and len(sys.argv)==5 and sys.argv[2]=='--bootstrap-peer-engines'), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
-    expected='ead7d7cfc06efec27f2480ab96f350e2828c95eaebc1a5b601406cffdd55b3be' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    expected='db5090924965ba92bb53f33435154330bee3a5c5ff15efee42ab625c128ac1d7' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 if trace_init:
     assert qgw8_inspection and len(sys.argv)==3 and sys.argv[2] in ('--runtime','--runtime-faults')
@@ -433,6 +434,7 @@ if qgwd_inspection:
     if recurrent_producers:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE']='1'
     if synthetic_recurrent_matrix:defines['PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE']='1'
     if recurrent_matrix_peer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE']='1'
+    if recurrent_matrix_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')

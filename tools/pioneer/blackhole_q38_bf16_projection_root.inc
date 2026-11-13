@@ -538,10 +538,13 @@ static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsig
  // matrix. Rebuild the descriptor from the closed job's own historical
  // layer/position/token/role; the current projection may be different.
  if(previous[2]==5 && previous[16]==BFP::Magic && (previous[28]==10 || previous[28]==11)){
-  if(previous[7]!=d[6] || previous[29]!=5120 || w>=20)scalar_fault_park();
+  // The next projection has its own increasing invocation. Workers not
+  // used by the small matrix still hold a producer from the prior one;
+  // authenticate that producer against its own historical descriptor.
+  if(!previous[7] || previous[7]>d[6] || previous[29]!=5120 || w>=20)scalar_fault_park();
   uint32_t old[64],desc[64],job[16],proof[64],after[8];
   for(unsigned i=0;i<64;i++)old[i]=d[i];
-  old[40]=previous[6];old[41]=previous[27];old[42]=previous[5];old[43]=previous[28];old[14]=previous[29];
+  old[6]=previous[7];old[40]=previous[6];old[41]=previous[27];old[42]=previous[5];old[43]=previous[28];old[14]=previous[29];
   BfDescriptor(old,w,desc);
   Transfer(d,tracked,w,BFP::Descriptor,256,false);
   for(unsigned i=0;i<64;i++)if(Words(L::Scratch)[i]!=desc[i])scalar_fault_park();

@@ -25,11 +25,13 @@ inputs = ((parent / 'start.o', '20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6
                        'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f',
                        'b283c169543b5293ae21df8d368bbeebdbf96d8b8b9d6c7ebfe96595d8ebdcb5',
                        '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc',
-                       'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627')))
+                       'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
+                       '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e')))
 for path, expected in inputs:
     allowed = (expected,) if isinstance(expected, str) else expected
     assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest() in allowed, path
-new_recurrent = hashlib.sha256(recurrent.read_bytes()).hexdigest() == 'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627'
+new_recurrent = hashlib.sha256(recurrent.read_bytes()).hexdigest() in ('e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
+    '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e')
 assert (hashlib.sha256((parent/'program.o').read_bytes()).hexdigest() == 'c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037') == new_recurrent
 output.mkdir(mode=0o700)
 tool = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -54,7 +56,8 @@ if hashlib.sha256(recurrent.read_bytes()).hexdigest() in ('a240f91c29ab537cb3d8a
                                                          'de452c986ea3702e6652e1289eeb0a6e4f4baf2c0b8918a45735a8874b9acc9f',
                                                          'b283c169543b5293ae21df8d368bbeebdbf96d8b8b9d6c7ebfe96595d8ebdcb5',
                                                          '27ca02a95bcd776173b1679a7d8cbd3f0c48b352a45628185f06bdf87e65ebbc',
-                                                         'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627'):
+                                                         'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
+                                                         '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e'):
     assert symbols.count('PioneerQ38HybridMatrixReceipt::Matrix(') == 1
     assert symbols.count('PioneerQ38RecurrentHybridMatrixReceipt::Matrix(') == 1
 (output/'program.demangled').write_text(symbols)

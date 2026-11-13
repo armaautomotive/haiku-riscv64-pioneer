@@ -49,7 +49,7 @@ int main(int argc,char** argv){
   || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch")))
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE
   || (argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines"))
-  || (argc==6 && (!strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix")))
+  || (argc==6 && (!strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix") || !strcmp(argv[2],"--execution-recurrent-matrix-cohort")))
 #endif
   );
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
@@ -73,13 +73,13 @@ int main(int argc,char** argv){
 #endif
 #ifdef PIONEER_Q38_SYNTHETIC_EMBEDDING_TEST
  assert((argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch")))
-  || (argc==6 && (!strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix"))));
+  || (argc==6 && (!strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix") || !strcmp(argv[2],"--execution-recurrent-matrix-cohort"))));
  Q38EmbeddingRawTestBridge original;assert(original.Open(argv[3]) && original.Ready());
 #else
  assert(argc!=4);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE
- assert((argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines")) || (argc==6 && (!strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix"))));
+ assert((argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines")) || (argc==6 && (!strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix") || !strcmp(argv[2],"--execution-recurrent-matrix-cohort"))));
  tokenPeerOriginalImage=argv[argc==5?3:4];tokenPeerGlobalImage=argv[argc==5?4:5];
 #endif
  std::vector<uint32> hashes(PioneerResidentBanks::Pages);
@@ -172,6 +172,6 @@ int main(int argc,char** argv){
  if(argc>=3)CheckNativeHeld(f,0);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
- if(argc>=3 && (!strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch") || !strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix")))CheckNativeExecution(f);
+ if(argc>=3 && (!strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-layer-dispatch") || !strcmp(argv[2],"--execution-recurrent-layer-peer") || !strcmp(argv[2],"--execution-recurrent-producer") || !strcmp(argv[2],"--execution-recurrent-producers") || !strcmp(argv[2],"--execution-recurrent-matrix") || !strcmp(argv[2],"--execution-recurrent-matrix-cohort")))CheckNativeExecution(f);
 #endif
 }

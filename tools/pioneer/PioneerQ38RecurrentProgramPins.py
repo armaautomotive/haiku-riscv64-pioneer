@@ -1,11 +1,11 @@
 """Exact all-reuse recurrent ROOT/worker pair; fake-tag inspection only."""
 ROOT_PINS = (
  ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
- ('text.bin',130768,'046fe13b703739fc2d8b62e028cd6fc3884ce75b405822c1d0b48f911bccd51d'),
+ ('text.bin',130768,'e324a9196916c38f1fc1f9dc4c2d447e589260a3c4f6c70cf5b91da858f8792f'),
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',19664,'5d035623158ddfa221a05648da93a7502ea0838e2cdfb8265ab2c42312b634c4'),
- ('bf16.bin',56560,'37c06ae13466d8616dcc7f8ba2c4a0699a94b6ae9cb2cbb33bcb8865bc166a6e'),
- ('program.elf',238144,'fa7b41f9d6e90ae4753fabc2c3476e347edbfce06bbdd59cf5a98016a79af6e0'),
+ ('bf16.bin',56568,'8144a2f633ca1408bb5083b39bbcc2b8296d2c78fa9799f239002e5a34373d27'),
+ ('program.elf',238144,'989db6633fb975b99b2963a4dd81442946fae0c09d70ca8dbcd1c598269ae9c4'),
 )
 WORKER_PINS = (
  ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),

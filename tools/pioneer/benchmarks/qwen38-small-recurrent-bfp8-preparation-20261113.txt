@@ -571,3 +571,31 @@ ROOT was held while the already-issued matrix doorbell was delivered, and the
 host BFP backend snapshots its synthetic input/weight bytes at construction.
 This is not the complete 64-row operation, full layer, token, real-model
 quality, physical-card qualification or speed measurement.
+
+Continuous two-band diagnostic: extending that same simulated ROOT and peer
+history let the controller dispatch both role-10 matrix bands. Both workers
+reported sequence 2 complete and 2,560 modeled matrix instructions each. A
+failure-time post-hoc comparison found no mismatches among 64 synthetic rows,
+including the 16 zero-padded rows, at the existing tolerance. The controller
+then reached its fault park rather than the next operation: its final observed
+instruction path entered BfAdmitPrevious. The precise rejected condition is
+not yet identified, so the combined test fails and must not be promoted or
+used as hardware qualification. This result is simulator evidence only, not
+a complete layer, real-model inference, or a speed measurement.
+
+Historical producer admission fix: an instruction-level trace identified the
+rejection as the old producer invocation 1001 being compared for equality
+with the new projection's invocation 1002. The controller now rejects zero or
+future producer invocations and reconstructs the producer descriptor using
+its own historical invocation before validating its closed job and proof.
+The rebuilt candidate passed the existing 48-layer reuse-predicate tests and
+reproducible pinned bundle test. In the continuous synthetic simulation it
+passed both matrix bands (2,560 modeled matrix instructions each), matched
+all 64 outputs including 16 padded rows, and reached the next actual pending
+doorbell without the previous fault. The shared BFP backend snapshots synthetic
+inputs on construction. This is not a complete layer, native-card run, real
+model accuracy qualification, full-offload claim, or speed measurement; the
+candidate has not been installed on the Pioneer.
+Two independent controller cross-builds were byte-identical, the fake-tag
+native source cross-compiled with the new pinned bundle, and isolated role
+guards passed; these are build/test evidence, not permission to load a driver.
