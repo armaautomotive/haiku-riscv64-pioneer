@@ -1,0 +1,19 @@
+Experimental parallel cache verification, November 13
+
+The unchanged cache format records a SHA-256 for every 64 KiB chunk and a
+second SHA-256 for the complete tensor. The opt-in
+PIONEER_CACHE_PARALLEL_VERIFY=1 build computes the ordered whole-tensor hash
+on one helper while the caller checks the same immutable chunk. Both checks,
+file-identity checks, progress ordering and clean failure remain required.
+The caller waits before reusing the buffer. If thread creation fails, it uses
+the original serial hashing. Ordinary builds do not enable this candidate.
+
+Serial and parallel builds passed the same 48-case host disk-cache fixture
+under ASan/UBSan, including corruption and source/recipe checks. The exact
+reviewed-reader cache recipe compatibility test passed and retains the
+existing cache key; changed source inputs outside the pin are refused.
+The opt-in cache source also cross-compiled for Haiku RISC-V with the pinned
+SDK. It has NOT run on the Pioneer, and there is no timing, loading speed,
+inference speed, numerical-quality or 20-token/s claim. The helper's per-entry
+thread startup and synchronization may outweigh any hashing benefit; compare
+matched real loads before considering installation.

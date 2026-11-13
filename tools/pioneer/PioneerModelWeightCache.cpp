@@ -11,6 +11,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <vector>
+#if defined(PIONEER_CACHE_PARALLEL_VERIFY)
+#if PIONEER_CACHE_PARALLEL_VERIFY != 1
+#error Parallel cache verification is an explicit experimental build only
+#endif
+#include <pthread.h>
+#endif
 #if defined(__HAIKU__)
 #include <SHA256.h>
 namespace { struct HashState {
@@ -43,6 +49,43 @@ namespace { struct HashState {
 namespace {
 using Cache=PioneerModelWeightCache;
 using Digest=Cache::Digest;
+#ifdef PIONEER_CACHE_PARALLEL_VERIFY
+// One private helper hashes the ordered whole payload while the caller hashes
+// the same immutable chunk. The caller joins each chunk before reusing it.
+// Thread creation failure falls back to the ordinary serial checks.
+class ParallelWholeHash {
+ pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER;
+ pthread_cond_t changed=PTHREAD_COND_INITIALIZER;
+ pthread_t thread{};bool running=false,stop=false,pending=false;
+ const void* data=nullptr;size_t bytes=0;HashState whole;
+ static void* Entry(void* opaque){static_cast<ParallelWholeHash*>(opaque)->Run();return nullptr;}
+ void Run(){
+  pthread_mutex_lock(&lock);
+  for(;;){
+   while(!pending && !stop)pthread_cond_wait(&changed,&lock);
+   if(stop)break;
+   const void* current=data;size_t count=bytes;
+   pthread_mutex_unlock(&lock);whole.Update(current,count);pthread_mutex_lock(&lock);
+   pending=false;pthread_cond_signal(&changed);
+  }
+  pthread_mutex_unlock(&lock);
+ }
+public:
+ ParallelWholeHash(){running=pthread_create(&thread,nullptr,Entry,this)==0;}
+ ParallelWholeHash(const ParallelWholeHash&)=delete;
+ ParallelWholeHash& operator=(const ParallelWholeHash&)=delete;
+ ~ParallelWholeHash(){
+  if(running){pthread_mutex_lock(&lock);stop=true;pthread_cond_signal(&changed);pthread_mutex_unlock(&lock);pthread_join(thread,nullptr);}
+  pthread_cond_destroy(&changed);pthread_mutex_destroy(&lock);
+ }
+ void Begin(const void* input,size_t count){
+  if(!running){whole.Update(input,count);return;}
+  pthread_mutex_lock(&lock);data=input;bytes=count;pending=true;pthread_cond_signal(&changed);pthread_mutex_unlock(&lock);
+ }
+ void Wait(){if(running){pthread_mutex_lock(&lock);while(pending)pthread_cond_wait(&changed,&lock);pthread_mutex_unlock(&lock);}}
+ Digest Final(){Wait();return whole.Final();}
+};
+#endif
 constexpr char Marker[]="Pioneer derived model weights cache v1\n";
 bool Fail(std::string& error,const char* text) { error=text;return false; }
 bool Nonzero(const Digest& d) { return std::any_of(d.begin(),d.end(),[](uint8_t v){return v!=0;}); }
@@ -192,13 +235,29 @@ bool PioneerModelWeightCache::Load(const Key& key,Reader& reader,std::string& er
 	next->payload=payload;next->chunks.resize(size_t(Chunks(key)*32));
 	if(!IO(next->fd,next->chunks.data(),next->chunks.size(),HeaderBytes,false) || Hash(next->chunks.data(),next->chunks.size())!=table)
 		return Fail(error,"Converted-weight cache chunk index checksum mismatch.");
-	std::vector<uint8_t> buffer(ChunkBytes);HashState whole;
+	std::vector<uint8_t> buffer(ChunkBytes);
+#ifdef PIONEER_CACHE_PARALLEL_VERIFY
+	ParallelWholeHash whole;
+#else
+	HashState whole;
+#endif
 	for(uint64_t offset=0,index=0;offset<key.bytes;index++) {
 		const unsigned count=unsigned(std::min(uint64_t(ChunkBytes),key.bytes-offset));Digest expected;
 		std::memcpy(expected.data(),next->chunks.data()+index*32,32);
-		if(!IO(next->fd,buffer.data(),count,PayloadOffset(key)+offset,false) || Hash(buffer.data(),count)!=expected || !next->Stable())
+		if(!IO(next->fd,buffer.data(),count,PayloadOffset(key)+offset,false))return Fail(error,"Converted-weight cache payload checksum mismatch.");
+#ifdef PIONEER_CACHE_PARALLEL_VERIFY
+		whole.Begin(buffer.data(),count);
+		const Digest actual=Hash(buffer.data(),count);
+		whole.Wait();
+#else
+		const Digest actual=Hash(buffer.data(),count);
+#endif
+		if(actual!=expected || !next->Stable())
 			return Fail(error,"Converted-weight cache payload checksum mismatch.");
-		whole.Update(buffer.data(),count);offset+=count;if(progress)progress(offset,key.bytes,true);
+#ifndef PIONEER_CACHE_PARALLEL_VERIFY
+		whole.Update(buffer.data(),count);
+#endif
+		offset+=count;if(progress)progress(offset,key.bytes,true);
 	}
 	if(whole.Final()!=payload || !next->Stable())return Fail(error,"Converted-weight cache whole checksum mismatch.");
 	reader.data=std::move(next);return true;
