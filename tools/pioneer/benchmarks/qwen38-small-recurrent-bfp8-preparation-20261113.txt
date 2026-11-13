@@ -448,3 +448,14 @@ malformed replies and pre-transfer read failure.
 The adapter does not authenticate or open a driver session, is not selected by
 Assistant or a loadable driver, and has not uploaded a real model to hardware.
 It establishes no inference-speed result.
+
+Inspection session: a fake-identity userspace owner now checks the driver
+status and bank/span capabilities, opens the distinct recurrent receipt,
+uploads the prepared spans, closes the span and seals the receipt. It retains
+the descriptor and banks while weights are held; explicit finish ends the
+bank session. Simulated tests exercise all 21,475 spans, retained ownership,
+explicit finish, wrong identity, lost BEGIN and upload replies, and a lost
+SEAL reply after a complete second upload. Uncertain cases close once without
+bank END or retry. This is a mock transport with a non-loadable identity, not
+authentication of a physical driver, a model execution, a speed result, or
+an Assistant integration. Actual native execution and reuse remain unproven.

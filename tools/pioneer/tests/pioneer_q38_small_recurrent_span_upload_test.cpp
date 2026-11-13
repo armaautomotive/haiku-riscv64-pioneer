@@ -36,6 +36,7 @@ struct UploadIO {
   return true;
  }
 };
+#ifndef PIONEER_Q38_SMALL_RECURRENT_SPAN_UPLOAD_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakePrepared prepared;assert(FakePrepared::Plan::Build(*canonical,prepared.proposal));
@@ -71,3 +72,4 @@ int main(){
  }
  puts("PASS prepared recurrent spans through Work wire protocol and matching receipt; uncertain calls and replies stop; SIMULATED NO DEVICE/SPEED");
 }
+#endif
