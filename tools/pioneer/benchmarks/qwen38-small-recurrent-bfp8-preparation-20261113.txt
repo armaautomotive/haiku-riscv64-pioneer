@@ -658,3 +658,21 @@ gate tiles and seven bank extents. Inputs remain synthetic, the host BFP
 backend snapshots each job's bytes, and the subsequent role-6 matrix was held
 before delivery. This is not an entire layer, full model, physical-card run,
 answer-quality qualification or throughput measurement.
+
+QKV-to-Conv matrix receipt: after the synthetic gate, all 119 simulated
+workers ran the 10,240-row QKV projection with synthetic BFP8 weights and
+reused synthetic input. The original controller faulted because Conv
+admission expected the legacy Q8 scalar receipt. The inspection-only BFP8
+path now validates the actual preceding matrix job and receipt, including
+the immediately preceding invocation, against the retained worker boot,
+job, nonce and counter records and the observed physical-counter fixture.
+The legacy scalar branch is unchanged. A subsequent full simulation reached
+the first pending Conv doorbell with all 10,240 QKV outputs matching an
+independent observer; Conv had not been delivered or executed. An initial
+observer mismatch was caused by reading the input after Conv metadata reused
+its memory; the observer now snapshots that input before QKV without feeding
+it back into the simulated device. Small matrices used pinned model-derived
+weights, while gate/QKV weights and input were synthetic. Bundle generation,
+reuse-predicate regressions and fake-tag native source compilation passed.
+This does not establish a complete layer, real-model inference, P100A
+execution, negative-fault coverage for this new admission branch, or TPS.

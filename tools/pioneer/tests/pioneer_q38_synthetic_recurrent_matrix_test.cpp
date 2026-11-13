@@ -44,6 +44,25 @@ int main(int argc,char** argv){
  }
  assert(fragments==7 && gateRows==6144);
  puts("PASS synthetic role5 BFP8 source 6144 rows across seven banks; NO MODEL OR DEVICE");
+#ifdef PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST
+ fragments=0;unsigned qkvRows=0;
+ for(unsigned i=0;i<original->Count();i++){
+  const auto* p=original->Part(i);const auto& q=proposal.parts[i];
+  if(p->kind!=original->WeightKind || p->layer || p->role!=6)continue;
+  assert(q.encoding==PioneerQ38HybridRecurrentQ8MatrixPlan::RecurrentQ8Bfp8 && p->firstRow==qkvRows);
+  for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<160;tile++){
+   assert(source.Read(PioneerQ38ProjectionRoute(q.bank),original->Base+q.offset+(band*160+tile)*1088,bytes.data(),bytes.size()));
+   assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,bytes.data(),bytes.size(),values.data(),values.size()));
+   for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
+    const unsigned global=p->firstRow+band*32+row;const float expected=float(int((global*3+tile*7+col*5+3)%17)-8)*0.0625f;
+    assert(values[row*32+col]==expected);
+   }
+  }
+  qkvRows+=p->rows;fragments++;
+ }
+ assert(fragments==7 && qkvRows==10240);
+ puts("PASS synthetic role6 BFP8 source 10240 rows across seven banks; NO MODEL OR DEVICE");
+#endif
 #endif
  for(unsigned role=0;role<2;role++)for(unsigned band=0;band<2;band++)for(unsigned tile=0;tile<160;tile++){
   assert(source.Read(route[role],address[role]+(band*160+tile)*1088,bytes.data(),bytes.size()));

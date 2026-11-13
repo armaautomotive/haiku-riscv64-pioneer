@@ -28,14 +28,18 @@ inputs = ((parent / 'start.o', '20ec8f9bb5690b079ad0dbb99dc18a9c89b15d940eef09a6
                        'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
                        '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e',
                        'eb8908e9f8630e544f59fb94ce190c2896fc638f76f7e56db8e21bd49d38c0f4',
-                       '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d')))
+                       '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d',
+                       'abf2e71dcde462462061831c8f2f08fc3c2321ba50c721a2e6c78783bd0a0e48',
+                       '966bd778c80f118e27e8bd26e7dbf54aa6183d94ae1aabcdc3f2501030ec1e79')))
 for path, expected in inputs:
     allowed = (expected,) if isinstance(expected, str) else expected
     assert path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest() in allowed, path
 new_recurrent = hashlib.sha256(recurrent.read_bytes()).hexdigest() in ('e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
     '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e',
     'eb8908e9f8630e544f59fb94ce190c2896fc638f76f7e56db8e21bd49d38c0f4',
-    '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d')
+    '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d',
+    'abf2e71dcde462462061831c8f2f08fc3c2321ba50c721a2e6c78783bd0a0e48',
+    '966bd778c80f118e27e8bd26e7dbf54aa6183d94ae1aabcdc3f2501030ec1e79')
 assert (hashlib.sha256((parent/'program.o').read_bytes()).hexdigest() == 'c9bc9bfd38ccc7000bbb2f7482dd25148dd3013b6db8d435b5da7e0718242037') == new_recurrent
 output.mkdir(mode=0o700)
 tool = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -63,7 +67,9 @@ if hashlib.sha256(recurrent.read_bytes()).hexdigest() in ('a240f91c29ab537cb3d8a
                                                          'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
                                                          '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e',
                                                          'eb8908e9f8630e544f59fb94ce190c2896fc638f76f7e56db8e21bd49d38c0f4',
-                                                         '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d'):
+                                                         '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d',
+                                                         'abf2e71dcde462462061831c8f2f08fc3c2321ba50c721a2e6c78783bd0a0e48',
+                                                         '966bd778c80f118e27e8bd26e7dbf54aa6183d94ae1aabcdc3f2501030ec1e79'):
     assert symbols.count('PioneerQ38HybridMatrixReceipt::Matrix(') == 1
     assert symbols.count('PioneerQ38RecurrentHybridMatrixReceipt::Matrix(') == 1
 (output/'program.demangled').write_text(symbols)

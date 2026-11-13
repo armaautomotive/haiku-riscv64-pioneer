@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+qkv_cohort='--recurrent-qkv-cohort' in sys.argv
+if qkv_cohort:
+    assert sys.argv.count('--recurrent-qkv-cohort')==1
+    sys.argv.remove('--recurrent-qkv-cohort')
 gate_cohort='--recurrent-gate-cohort' in sys.argv
 if gate_cohort:
     assert sys.argv.count('--recurrent-gate-cohort')==1
@@ -45,6 +49,7 @@ assert not recurrent_matrix_reuse or recurrent_matrix_cohort, 'reuse test requir
 assert not model_recurrent or recurrent_matrix_reuse, 'model-weight fixtures require the isolated recurrent reuse test'
 assert not small_to_gate or recurrent_matrix_reuse, 'small-to-gate check requires the isolated recurrent reuse test'
 assert not gate_cohort or small_to_gate, 'gate cohort requires the isolated small-to-gate test'
+assert not qkv_cohort or gate_cohort, 'QKV cohort requires the isolated gate cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
@@ -80,7 +85,7 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
                 or recurrent_layer_peer and synthetic_embedding and len(sys.argv)==6
                 or recurrent_peer and len(sys.argv)==5 and sys.argv[2]=='--bootstrap-peer-engines'), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
-    expected='7466e798ddbe8ce17f81c02a00749d613c595bb022bddb14d49489e533afb760' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    expected='8380e513a2af99644130f293b8a3239109ec42654daa950db482e2a3b20c5b82' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 if trace_init:
     assert qgw8_inspection and len(sys.argv)==3 and sys.argv[2] in ('--runtime','--runtime-faults')
@@ -460,6 +465,7 @@ if qgwd_inspection:
     if recurrent_matrix_reuse:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_REUSE_FIXTURE']='1'
     if small_to_gate:defines['PIONEER_Q38_TOKEN_NATIVE_SMALL_TO_GATE_FIXTURE']='1'
     if gate_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE']='1'
+    if qkv_cohort:defines['PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE']='1'
     if model_recurrent:defines['PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
@@ -822,6 +828,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         *(['-DPIONEER_Q38_SYNTHETIC_QGW8_LAYER_TEST=1'] if synthetic_layer else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST=1'] if synthetic_recurrent_matrix else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST=1'] if gate_cohort else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST=1'] if qkv_cohort else []),
                         *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:

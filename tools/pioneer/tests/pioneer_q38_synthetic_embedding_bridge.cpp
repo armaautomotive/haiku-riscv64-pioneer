@@ -17,6 +17,10 @@
  (PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_RECURRENT_MATRIX_TEST))
 #error Synthetic gate weights require the isolated recurrent matrix fixture
 #endif
+#if defined(PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST) && \
+ (PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST))
+#error Synthetic QKV weights require the isolated gate fixture
+#endif
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
@@ -115,20 +119,30 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
 #ifdef PIONEER_Q38_SYNTHETIC_GATE_MATRIX_TEST
   for(unsigned i=0;i<canonical->Count();i++){
    const auto* p=canonical->Part(i);const auto& q=physical.parts[i];
-   if(p->kind!=canonical->WeightKind || p->layer!=0 || p->role!=5)continue;
+   if(p->kind!=canonical->WeightKind || p->layer!=0 || (p->role!=5
+#ifdef PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST
+    && p->role!=6
+#endif
+   ))continue;
    if(q.bank>=7 || q.encoding!=PioneerQ38HybridRecurrentQ8MatrixPlan::RecurrentQ8Bfp8
     || !p->rows || (p->rows&31) || q.bytes!=p->rows*5440 || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
    Source::Gate part{PioneerQ38ProjectionRoute(q.bank),canonical->Base+q.offset,{}};part.bytes.resize(q.bytes);
    for(unsigned band=0;band<p->rows/32;band++)for(unsigned t=0;t<160;t++){
     float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
-     const unsigned global=p->firstRow+band*32+row;values[row*32+col]=float(int((global*3+t*7+col*5)%17)-8)*0.0625f;
+     const unsigned global=p->firstRow+band*32+row;values[row*32+col]=float(int((global*3+t*7+col*5+(p->role-5)*3)%17)-8)*0.0625f;
     }
     if(!PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,values,1024,
       part.bytes.data()+(band*160+t)*1088,1088))return source->ready=false;
    }
    source->gate.push_back(std::move(part));
   }
-  if(source->gate.size()!=7)return source->ready=false;
+  if(source->gate.size()!=
+#ifdef PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST
+   14
+#else
+   7
+#endif
+  )return source->ready=false;
 #endif
 #ifdef PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST
   const char* names[]={"Q38_TEST_MODEL_ALPHA","Q38_TEST_MODEL_BETA"};

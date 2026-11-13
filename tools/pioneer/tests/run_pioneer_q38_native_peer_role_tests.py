@@ -129,6 +129,11 @@ check('pioneer_q38_token_native_execution_checks.inc',gate_cohort,True,True)
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**gate_cohort,'PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE':value},False,True)
 check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE':1},False,True)
+qkv_cohort={**gate_cohort,'PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',qkv_cohort,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**qkv_cohort,'PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE':value},False,True)
+check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE':1},False,True)
 model_observer={**matrix_reuse,'PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST':1}
 check('pioneer_q38_token_native_execution_checks.inc',model_observer,True,True)
 for value in (0,2):

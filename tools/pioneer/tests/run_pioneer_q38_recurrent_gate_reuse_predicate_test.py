@@ -18,12 +18,16 @@ assert componentHash in ('535301c90398af3dd4ad2ad9e7b9333f93bfae54fa6f54980bf498
                          'e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
                          '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e',
                          'eb8908e9f8630e544f59fb94ce190c2896fc638f76f7e56db8e21bd49d38c0f4',
-                         '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d')
+                         '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d',
+                         'abf2e71dcde462462061831c8f2f08fc3c2321ba50c721a2e6c78783bd0a0e48',
+                         '966bd778c80f118e27e8bd26e7dbf54aa6183d94ae1aabcdc3f2501030ec1e79')
 allReuse=componentHash in ('e5216114d14a8757fd12221229561978b1ef4ca87859cc36397c778187179627',
                            '491f8c30b291ca8c7ca9ac1f5fea71e985a166f8bb420b85ca843353520db72e',
                            'eb8908e9f8630e544f59fb94ce190c2896fc638f76f7e56db8e21bd49d38c0f4',
-                           '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d')
-if componentHash=='7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d':
+                           '7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d',
+                           'abf2e71dcde462462061831c8f2f08fc3c2321ba50c721a2e6c78783bd0a0e48',
+                           '966bd778c80f118e27e8bd26e7dbf54aa6183d94ae1aabcdc3f2501030ec1e79')
+if componentHash in ('7a2f1f4d4b15d1caf888e2b23c1090aaef1ae8d19bef2ca9f3851421ec70b54d','abf2e71dcde462462061831c8f2f08fc3c2321ba50c721a2e6c78783bd0a0e48','966bd778c80f118e27e8bd26e7dbf54aa6183d94ae1aabcdc3f2501030ec1e79'):
     symbols=subprocess.check_output([str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'),'-C',str(recurrent)],text=True)
     assert 'Projection::BfRecurrentSmallToGateReuseCandidate(' in symbols
 old=root/'qualified-components';tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')

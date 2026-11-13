@@ -200,11 +200,22 @@ void CounterSeal(uint32_t* t,unsigned w,const uint32_t* after){
  for(unsigned i=0;i<8;i++)Words(L::Counters+w*32)[i]=after[i];
 }
 static void Admit(uint32_t* t,unsigned w){
- const auto* d=Frame();unsigned n=Wait(t,w,0,0,true);Words(L::Nonces)[w]=n;
+ const auto* d=Frame();unsigned n=Wait(t,w,0,0,true);
+#if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP)
+ if(n!=Words(L::Nonces)[w])scalar_fault_park();
+#else
+ Words(L::Nonces)[w]=n;
+#endif
  if(n>=d[5] || n>0x7ffffffb)scalar_fault_park(); // Conv,GDN,subsequent matrix and STOP remain representable
  uint32_t b[64],j[64],p[64];Read(t,w,M::Boot,b,64);
  if(!M::BootShape(b) || b[3]!=w+1 || b[4]!=M::Peer(w+1) || !Dispatch::Binding(b,Conv(w+1)))scalar_fault_park();
- for(unsigned i=0;i<64;i++)Words(L::PeerBoots+w*256)[i]=b[i];
+ for(unsigned i=0;i<64;i++){
+#if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP)
+  if(Words(L::PeerBoots+w*256)[i]!=b[i])scalar_fault_park();
+#else
+  Words(L::PeerBoots+w*256)[i]=b[i];
+#endif
+ }
 #ifndef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
  Sources(t,w);
 #endif
@@ -216,8 +227,20 @@ static void Admit(uint32_t* t,unsigned w){
  // worker request,not this duplicate remote audit. No ready flag,source
  // recapture,counter rebase,MMIO burst or completion shortcut is introduced.
  Read(t,w,M::Job,j,64);
- if(!M::JobShape(j,b,n-1,0) || j[1]!=n || j[2]!=1 || j[5]!=d[3] || j[6]!=d[4]
-  || j[16]!=0x31483851 || j[17]!=8 || j[18]!=576 || j[19] || j[20] || j[21]!=5120
+ if(!M::JobShape(j,b,n-1,0) || j[1]!=n || j[2]!=1 || j[5]!=d[3] || j[6]!=d[4])scalar_fault_park();
+#if defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) && defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP)
+ // QTPM's preceding QKV matrix is a BFP8 worker job, not the legacy Q8
+ // scalar capsule. Bind the immediately preceding invocation and authenticate
+ // its original receipt and the physical counters before staging Conv.
+ if(d[5]<=1 || j[7]!=d[5]-1 || j[16]!=PioneerQ38Bfp8WorkerJob::Magic
+  || j[18]!=5120 || j[33]!=10240 || j[34]!=6 || j[35]!=8)scalar_fault_park();
+ for(unsigned i=0;i<64;i++)if(Words(L::PeerJobs+w*256)[i]!=j[i])scalar_fault_park();
+ Closed(t,w);Read(t,w,0x83f00,p,64);
+ if(!PioneerQ38HybridMatrixReceipt::Matrix(p,j,b,p,p+8))scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(Words(L::Counters+w*32)[i]!=p[8+i])scalar_fault_park();
+ CounterSeal(t,w,p+8);BootSeal(t,w);
+#else
+ if(j[16]!=0x31483851 || j[17]!=8 || j[18]!=576 || j[19] || j[20] || j[21]!=5120
   || !j[23] || j[23]>16 || j[25]!=1 || j[26]!=1)scalar_fault_park();
  for(unsigned i=0;i<64;i++)Words(L::PeerJobs+w*256)[i]=j[i];
  Closed(t,w);
@@ -248,6 +271,7 @@ static void Admit(uint32_t* t,unsigned w){
  for(unsigned i=0;i<8;i++)p[8+i]+=i==5?5U:i==2 || i==4 || i==6 || i==7?2U:0U;
 #endif
  CounterSeal(t,w,p+8);BootSeal(t,w);
+#endif
 }
 static void Capture(){
  const auto* d=Frame();if(!L::Shape(d))scalar_fault_park();

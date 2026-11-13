@@ -13,6 +13,9 @@ bool recurrentMatrixRunning=false;unsigned recurrentMatrixDoorbells=0;
 bool recurrentMatrixReuseRunning=false;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
 bool recurrentGateRunning=false;unsigned recurrentGateDoorbells=0,recurrentGateFirst[119]={},recurrentGateBands[119]={};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
+bool recurrentQkvRunning=false;unsigned recurrentQkvDoorbells=0,recurrentQkvFirst[119]={},recurrentQkvBands[119]={};
+#endif
 #endif
 #endif
 #endif
@@ -87,6 +90,9 @@ void SubmitLayer(){
    || (recurrentMatrixReuseRunning && recurrentMatrixDoorbells<4)
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
    || (recurrentGateRunning && recurrentGateDoorbells<119)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
+   || (recurrentQkvRunning && recurrentQkvDoorbells<119)
+#endif
 #endif
 #endif
   )
@@ -99,6 +105,9 @@ void SubmitLayer(){
   else if(recurrentMatrixReuseRunning && recurrentMatrixDoorbells<4){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
   else if(recurrentGateRunning && recurrentGateDoorbells<119){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
+  else if(recurrentQkvRunning && recurrentQkvDoorbells<119){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -177,6 +186,16 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_COHORT_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
+     else if(recurrentQkvRunning && recurrentQkvDoorbells<119){
+      const unsigned w=recurrentQkvDoorbells,seq=w<2?5:w<20?3:2;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
+       && io.Raw(worker,W::Job+34*4)==6 && io.Raw(worker,W::Job+33*4)==10240);
+      recurrentQkvFirst[w]=io.Raw(worker,W::Job+32*4);recurrentQkvBands[w]=io.Raw(worker,W::Job+20*4);
+      assert(recurrentQkvBands[w] && recurrentQkvBands[w]<=8 && recurrentQkvFirst[w]<10240
+       && recurrentQkvBands[w]*32<=10240-recurrentQkvFirst[w]);recurrentQkvDoorbells++;
+     }
+#endif
      else if(recurrentGateRunning && recurrentGateDoorbells<119){
       const unsigned w=recurrentGateDoorbells,seq=w<2?4:w<20?2:1;
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
