@@ -203,3 +203,21 @@ their 48 valid results correctly. Corrupting a retained producer receipt
 still stops beta before any dispatch or scatter. ASan/UBSan passed. This is
 two returning controller calls with a host-copied memory image and sequential
 worker snapshots, not a continuously running physical cohort or model result.
+
+Gate-to-QKV input reuse candidate: an isolated ROOT build can reuse the
+prepared 5120-value gate input for the immediately following recurrent QKV
+projection. It first requires all 119 previous jobs to match the gate role,
+layer, position, invocation and owner identity, checks the current input and
+both native-input copies, and retains the ordinary complete worker-admission
+step before reusing anything. On a cold or different history it follows the
+ordinary preparation path. This avoids 20 producer jobs in the candidate;
+it is not enabled in the installed driver or Work mode.
+
+The linked RV32 predicate passed an ASan/UBSan synthetic-memory check for a
+matching history, changed role on each of 119 workers, altered current input
+and altered native shadow. The normal non-reuse component rebuilt byte-for-
+byte to SHA 7a93aebd77d49a8e2eb51a75ffb75f2c25bca67d5036b3fdb4dcfd2ae332049c.
+Candidate object SHA 535301c90398af3dd4ad2ad9e7b9333d93bfae54fa6f54980bf49894b19fb3a1.
+This directly tests only the decision predicate. A complete gate-to-QKV
+controller/worker history, admission/fault behavior, native ownership,
+physical execution, answer quality and token speed remain unproven.
