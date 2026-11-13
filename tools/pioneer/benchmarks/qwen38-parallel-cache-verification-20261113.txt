@@ -71,4 +71,27 @@ upload or inference. Host stdout SHA-256:
 50a3e14ecc4754ecc22aace867828dff84844afd606c40e6e1f951e3d4660212.
 Afterward driver55/tag2026102100010012/generation42 was idle/cold0 with 64
 CPUs and 137034936320 bytes RAM. The installed Assistant was not replaced;
-actual card upload and warm inference using this candidate are untested.
+At the end of that host-only test, card upload and inference were untested.
+
+Isolated card trial completed: the same parallel-cache worker passed one
+four-token Work request through the actual Assistant client. Host ready was
+833.689833 s after Load began; upload progress ran from 0.861787 to
+1091.971874 s of the request, and complete request time was 1204.597373 s.
+Three warm decode samples took 15.016 s, reported as 0.200 tok/s; the answer
+was "Hello! How can". P100A handled projections, CPU handled attention/state,
+and CPU reference validation was OFF. This is not fully card-resident
+inference, broad quality coverage or evidence of a token-speed improvement.
+
+The earlier instrumented serial worker reported host-ready 1262.893378 s,
+and the earlier fleet worker 1255.314736 s. Those are different individual
+runs and not a controlled comparison; the parallel run's shorter observed
+host-ready interval is encouraging but not a causal or guaranteed speedup.
+Upload still reported 487.1 s weight reads and 603.3 s in upload calls, not
+pure PCIe bandwidth. The parent actually exited 0, recorded
+CARD_CLOSED_PARALLEL_CACHE_VERIFIED, card exit 0 and empty stderr. Postflight
+showed driver55/tag2026102100010012/generation42, no active owner/cold0,
+64 CPUs and 137034936320 bytes RAM. Card stdout SHA-256:
+237b014412a0eac34ae94c4558d59293fe489d8467f17b6d03b5385e69fd189d.
+The installed Assistant and driver were unchanged. Multiple real requests
+in one loaded session and broader answer quality remain untested for this
+candidate.
