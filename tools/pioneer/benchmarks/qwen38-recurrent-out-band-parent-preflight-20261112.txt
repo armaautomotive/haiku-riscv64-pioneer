@@ -1,0 +1,16 @@
+Fixed 6144-input recurrent output-band148 parent preparation
+
+The one-shot parent pins the stable and experimental driver, client,
+CPU-only preflight, private samples, independent 6144-input reference,
+verified full recurrent cache, 64 CPUs/128 GiB and current generation 38.
+It checks all 192 returned words and three clean ENDs before attempting
+stable-driver restoration at generation 40. Any uncertain result retains
+ownership and refuses automatic reset, retry or restore.
+
+The real parent flow/output gate passed 595 synthetic success and failure
+cases, plus incomplete/error/symlink cache evidence refusals. Staged files
+matched all pinned hashes on the Pioneer. The separate CPU-only source
+preflight is running; its completion is required by the parent. No new
+driver was installed and no card operation was performed in this checkpoint.
+This test is fixed-sample diagnostic arithmetic, not full-model inference,
+model quality, or tokens per second.
