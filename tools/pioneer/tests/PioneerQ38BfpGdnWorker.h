@@ -128,10 +128,12 @@ struct PioneerQ38BfpGdnWorker:PioneerQ38BfpConvWorker {
   if(write){c[1]++;c[8]+=(bytes+63)/64;c[10]++;}else{c[2]++;c[3]+=(bytes+63)/64;c[5]++;}
  }
  void StageGdn(unsigned sequence,unsigned position=0,unsigned slot=0,bool retained=false,const uint32_t* alphaBeta=nullptr,
-  const std::vector<uint32_t>* model=nullptr,const std::vector<uint32_t>* gateValues=nullptr,const uint32_t* partialQ=nullptr,const uint8_t* qMask=nullptr){
+  const std::vector<uint32_t>* model=nullptr,const std::vector<uint32_t>* gateValues=nullptr,const uint32_t* partialQ=nullptr,const uint8_t* qMask=nullptr,
+  const std::vector<uint32_t>* convResults=nullptr){
   assert(boot[3]<=96 && pc==waitPC && native.Clean() && !gdn && !conv && transfer.pending.empty());
   assert(position<8192 && slot<2 && !waiting && !pendingWords && !latency && drained);
-  assert(bool(partialQ)==bool(qMask) && (!model || model->size()==41184) && (!gateValues || gateValues->size()==6144));
+  assert(bool(partialQ)==bool(qMask) && (!model || model->size()==41184) && (!gateValues || gateValues->size()==6144)
+   && (!convResults || (convResults->size()==10240 && !partialQ)));
   if(clockReads)clockBase+=UINT64_C(1)<<36; // simulated hardware clock never moves backward across jobs
   if(retained)prior=next;else prior.fill(0);
   next.fill(0);gated.fill(0);gdnPackets=phase=polls=imports=csrReads=nextWrites=outputWrites=gatedWrites=clockReads=0;
@@ -157,11 +159,13 @@ struct PioneerQ38BfpGdnWorker:PioneerQ38BfpConvWorker {
   unsigned h=half/2,kh=h%16;
   for(unsigned i=0;i<128;i++){
    raw[i]=PioneerAttentionBits(float(std::sin(kh*.117+i*.071+.03)*2.7));raw[128+i]=PioneerAttentionBits(float(std::cos(kh*.213+i*.091-.02)*1.9));
+   if(convResults){raw[i]=convResults->at(kh*128+i);raw[128+i]=convResults->at(2048+kh*128+i);}
    if(partialQ && qMask && qMask[i])raw[i]=partialQ[i];
    norm[i]=model?model->at(41056+i):PioneerAttentionBits(float(.5+std::sin(i*.07)*.3));
    z[i]=gateValues?gateValues->at(h*128+i):PioneerAttentionBits(float(std::cos((h*128+i)*.017+.11)*5));
   }
   for(unsigned i=0;i<64;i++)raw[256+i]=PioneerAttentionBits(float(std::sin((h*128+(half&1)*64+i)*.035+.13)));
+  if(convResults)for(unsigned i=0;i<64;i++)raw[256+i]=convResults->at(4096+h*128+(half&1)*64+i);
   raw[320]=PioneerAttentionBits(float(h)*.13f-2);raw[321]=PioneerAttentionBits(float(h)*.07f-2);
   raw[322]=PioneerAttentionBits(-float(h+1)*.25f);raw[323]=PioneerAttentionBits(-3.5f);
   if(alphaBeta){raw[320]=alphaBeta[h];raw[321]=alphaBeta[48+h];}

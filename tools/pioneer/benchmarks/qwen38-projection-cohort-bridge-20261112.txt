@@ -151,3 +151,22 @@ generation, physical-card result or inference-speed claim.
 The ASan/UBSan instruction simulator passed the full bridge and existing
 ROOT/worker/receipt refusals. This is not a physical card run, an end-to-end
 27B quality result, a throughput measurement, or evidence of a speedup.
+
+Full recurrent-attention sublayer offline follow-up (layer 0): the fixture
+retains 119 simulated QGWF worker contexts through all 6,144 gate and
+10,240 QKV projection rows, the 96 unpadded alpha/beta values, convolution,
+48 paired GDN updates producing 6,144 gated values, and all 5,120 output
+projection rows. Model-derived converted weights and learned convolution,
+decay and normalization parameters are used with one synthetic normalized
+input and zero initial recurrent state. Independent arithmetic checks cover
+the projection results and GDN updates; convolution is tolerance-checked.
+The fixture schedules workers sequentially and assembles their data on the
+host: it is not the physical ROOT/NoC scheduling and handoff. Six ROOT Conv
+groups run in a separate standalone QCV1 instruction simulation, not the
+integrated precision ROOT capsule. The 512-row logical Dst model remains
+unverified against physical hardware. BFP8 conversion is lossy; this is not
+a model-quality test. There is no residual or FFN, full layer, generated
+token, hardware run, Work-mode change, timing or inference-speed result.
+The pinned ASan/UBSan runner is
+tools/pioneer/tests/run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py;
+private model-derived artifacts remain outside the repository.
