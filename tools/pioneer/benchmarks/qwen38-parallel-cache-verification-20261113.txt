@@ -9,7 +9,9 @@ The caller waits before reusing the buffer. If thread creation fails, it uses
 the original serial hashing. Ordinary builds do not enable this candidate.
 
 Serial and parallel builds passed the same 48-case host disk-cache fixture
-under ASan/UBSan, including corruption and source/recipe checks. The exact
+under ASan/UBSan, including corruption and source/recipe checks. The parallel
+fixture also passed the host ThreadSanitizer run; this is not a proof against
+all possible races or a Haiku runtime test. The exact
 reviewed-reader cache recipe compatibility test passed and retains the
 existing cache key; changed source inputs outside the pin are refused.
 The opt-in cache source also cross-compiled for Haiku RISC-V with the pinned
