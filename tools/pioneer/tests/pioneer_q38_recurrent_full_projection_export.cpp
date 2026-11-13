@@ -15,7 +15,11 @@
 static void Need(bool value,const char* message){if(!value){std::fprintf(stderr,"EXPORT_REFUSED %s\n",message);std::exit(1);}}
 static void Write(FILE* f,const void* data,size_t bytes){Need(std::fwrite(data,1,bytes,f)==bytes,"private output write");}
 int main(int argc,char** argv){
- if(argc!=4)return 2;const uint32_t endian=1;Need(*reinterpret_cast<const uint8_t*>(&endian)==1,"little-endian fixture");struct stat dir{};
+ if(argc!=5 || (std::strcmp(argv[4],"--gate") && std::strcmp(argv[4],"--qkv") && std::strcmp(argv[4],"--out")))return 2;
+ const bool gate=!std::strcmp(argv[4],"--gate"),qkv=!std::strcmp(argv[4],"--qkv");
+ const unsigned index=gate?3:qkv?5:16,width=gate||qkv?5120:6144,rows=gate?6144:qkv?10240:5120;
+ const unsigned bands=rows/32,tiles=width/32;const char* name=gate?"blk.0.attn_gate.weight":qkv?"blk.0.attn_qkv.weight":"blk.0.ssm_out.weight";
+ const uint32_t endian=1;Need(*reinterpret_cast<const uint8_t*>(&endian)==1,"little-endian fixture");struct stat dir{};
  Need(!lstat(argv[3],&dir) && S_ISDIR(dir.st_mode) && dir.st_uid==geteuid() && (dir.st_mode&07777)==0700,"private output directory");
  std::unique_ptr<FILE,decltype(&fclose)> file(std::fopen(argv[1],"rb"),&fclose);Need(bool(file),"original open");
  PioneerQwen38Gguf model;Need(model.Open(file.get()),"original layout");const uint64_t epoch=model.Epoch();
@@ -26,22 +30,22 @@ int main(int argc,char** argv){
  Need(!lstat(argv[2],&dir) && S_ISDIR(dir.st_mode) && dir.st_uid==geteuid() && (dir.st_mode&07777)==0700,"cache directory");
  PioneerModelWeightCache cache;Need(cache.OpenExistingDirectory(argv[2],error),"existing cache");
  PioneerQ38NativeBfpBandSource source(cache);Need(source.Bind(model,digest,[&]{return model.Stable() && model.Epoch()==epoch;},error),"source bind");
- const auto* tensor=model.Find("blk.0.ssm_out.weight");
- Need(tensor && unsigned(tensor-model.Tensors().data())==16 && tensor->inputs==6144 && tensor->outputs==5120 && tensor->type==8,"tensor identity");
+ const auto* tensor=model.Find(name);
+ Need(tensor && unsigned(tensor-model.Tensors().data())==index && tensor->inputs==width && tensor->outputs==rows && tensor->type==8,"tensor identity");
  const std::string path=std::string(argv[3])+"/projection.bin";
  int fd=open(path.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC|O_NOFOLLOW,0600);Need(fd>=0,"exclusive output");
  FILE* output=fdopen(fd,"wb");Need(output,"output stream");
- const uint32_t header[]={0x31525051,1,16,6144,5120,160,192,1088};Write(output,header,sizeof(header));
- std::vector<uint16_t> input(6144);for(unsigned i=0;i<input.size();i++)input[i]=uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0));
- for(unsigned band=0;band<160;band++){
+ const uint32_t header[]={0x31525051,1,index,width,rows,bands,tiles,1088};Write(output,header,sizeof(header));
+ std::vector<uint16_t> input(width);for(unsigned i=0;i<input.size();i++)input[i]=uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0));
+ for(unsigned band=0;band<bands;band++){
   PioneerQ38NativeBfpBandData::Packet packet;
-  Need(source.Stage(16,band*32,input.data(),input.size(),4,packet,error) && packet.width==6144
-   && packet.firstRow==band*32 && packet.weights.size()==192*1104,"cached band");
+  Need(source.Stage(index,band*32,input.data(),input.size(),4,packet,error) && packet.width==width
+   && packet.firstRow==band*32 && packet.weights.size()==tiles*1104,"cached band");
   std::vector<uint32_t> words(packet.weights.size()/4);std::memcpy(words.data(),packet.weights.data(),packet.weights.size());
   uint32_t result[32]={};
-  for(unsigned tile=0;tile<192;tile++){
+  for(unsigned tile=0;tile<tiles;tile++){
    std::array<float,1024> original{};std::array<uint8_t,1088> fresh{};
-   Need(PioneerQ38NativeWeightTiles::ReadFloatTile(model,16,uint64_t(band)*192+tile,original.data(),original.size())
+   Need(PioneerQ38NativeWeightTiles::ReadFloatTile(model,index,uint64_t(band)*tiles+tile,original.data(),original.size())
     && PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,original.data(),original.size(),fresh.data(),fresh.size())
     && !std::memcmp(fresh.data(),packet.weights.data()+tile*1104+16,1088),"fresh original conversion mismatch");
    Write(output,fresh.data(),fresh.size());
@@ -53,9 +57,9 @@ int main(int argc,char** argv){
    }
   }
   Write(output,result,sizeof(result));
-  if((band+1)%16==0){std::printf("VERIFIED_FULL_PROJECTION_BANDS %u/160\n",band+1);std::fflush(stdout);}
+  if((band+1)%16==0){std::printf("VERIFIED_FULL_PROJECTION tensor%u bands%u/%u\n",index,band+1,bands);std::fflush(stdout);}
  }
  Need(source.Ready() && model.Stable() && model.Epoch()==epoch,"source changed");
  Need(!std::ferror(output) && !std::fflush(output) && !fsync(fd),"output flush");Need(!std::fclose(output),"output close");
- std::puts("PASS_PRIVATE_FULL_PROJECTION 160 bands 5120 rows;FRESH_CONVERSION_AND_INDEPENDENT_INTEGER_REFERENCE;NO DEVICE OR SPEED");
+ std::printf("PASS_PRIVATE_FULL_PROJECTION tensor%u bands%u rows%u;FRESH_CONVERSION_AND_INDEPENDENT_INTEGER_REFERENCE;NO DEVICE OR SPEED\n",index,bands,rows);
 }

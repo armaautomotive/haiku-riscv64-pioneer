@@ -14,10 +14,10 @@ int main(int argc,char** argv){
  assert(width==PioneerNativeBfpModelBandMetadata::Width);
  const bool full=argc==5;std::vector<uint8_t> projection;
  if(full){
-  assert(tensor==16);std::ifstream f(argv[4],std::ios::binary);
+  std::ifstream f(argv[4],std::ios::binary);
   projection.assign(std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>());
-  assert(projection.size()==32+160*(192*1088+128));
-  const uint32_t expected[]={0x31525051,1,16,6144,5120,160,192,1088};
+  assert(projection.size()==32+size_t(rows/32)*((width/32)*1088+128));
+  const uint32_t expected[]={0x31525051,1,tensor,width,rows,rows/32,width/32,1088};
   assert(!std::memcmp(projection.data(),expected,sizeof(expected)));
  }
  if(!std::strcmp(argv[3],"--boot")){
@@ -46,9 +46,10 @@ int main(int argc,char** argv){
   auto image=std::make_unique<DenseProducerImage>(argv[1],argv[2],width,bands,w+1);image->Boot();
   if(full){
    for(unsigned band=0;band<bands;band++){
-    const unsigned sourceBand=first/32+band;const size_t source=32+size_t(sourceBand)*(192*1088+128);
-    assert(source+192*1088+128<=projection.size());
-    std::memcpy(image->transfer.weights.data()+size_t(band)*192*1088,projection.data()+source,192*1088);
+    const size_t weightBytes=size_t(width/32)*1088;
+    const unsigned sourceBand=first/32+band;const size_t source=32+size_t(sourceBand)*(weightBytes+128);
+    assert(source+weightBytes+128<=projection.size());
+    std::memcpy(image->transfer.weights.data()+size_t(band)*weightBytes,projection.data()+source,weightBytes);
    }
   }else SetPrivateWeights(*image,w%3,true);
   image->transfer.root=input;
@@ -64,7 +65,8 @@ int main(int argc,char** argv){
   for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++){
    const unsigned dest=first+band*32+row;assert(!seen[dest]++);
    uint32_t expected;
-   if(full){const size_t source=32+size_t(first/32+band)*(192*1088+128)+192*1088+row*4;
+   if(full){const size_t weightBytes=size_t(width/32)*1088;
+    const size_t source=32+size_t(first/32+band)*(weightBytes+128)+weightBytes+row*4;
     std::memcpy(&expected,projection.data()+source,4);}
    else expected=PioneerNativeBfpModelBandMetadata::Golden((w+band)%3)[row];
    assert(image->Get(W::Output+(band*32+row)*4)==expected);

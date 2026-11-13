@@ -24,3 +24,18 @@ were simulated sequentially, with no real NoC, retained 119-worker cohort,
 full ROOT gather/scatter, native ownership or device execution. Conversion
 to BFP8 can change model arithmetic: general quality remains unvalidated.
 There is no hardware timing or tokens-per-second result.
+
+Follow-up: the same full-source authentication, fresh tile comparison and
+independent integer reference were applied to the other layer-0 recurrent
+matrices. The 119-worker linked-job simulation passed with every distinct
+weight band for gate/tensor 3 (192 bands, 6,144 rows) and QKV/tensor 5
+(320 bands, 10,240 rows), as well as the previous output/tensor 16 case.
+Each projected every row exactly once for the same deterministic synthetic
+input; invalid boot and wrong-role jobs were rejected. The private exports
+are not committed. SHA-256:
+
+  gate: e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755fb1f02b
+  QKV:  6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a
+
+These are three independent projection simulations, not a chained recurrent
+layer or evidence of full-model quality, native ownership, hardware or speed.

@@ -8,15 +8,17 @@ import subprocess
 import sys
 import tempfile
 
-assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6]=='--full')
+assert (len(sys.argv) in (6,7) and (len(sys.argv)==6 or sys.argv[6] in ('--gate','--qkv'))) or (len(sys.argv)==9 and sys.argv[6] in ('--full','--full-gate','--full-qkv'))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root,worker,leaf,private=map(Path,sys.argv[1:6]);here=Path(__file__).resolve().parent
-mode=sys.argv[6] if len(sys.argv)==7 else '--out'
+mode=sys.argv[6] if len(sys.argv)==7 else '--gate' if len(sys.argv)==9 and sys.argv[6]=='--full-gate' else '--qkv' if len(sys.argv)==9 and sys.argv[6]=='--full-qkv' else '--out'
 full=Path(sys.argv[7]) if len(sys.argv)==9 else None
 if full:
     assert full.is_absolute() and full.is_file() and not full.is_symlink() and len(sys.argv[8])==64
     info=full.lstat();assert info.st_uid==os.geteuid() and info.st_nlink==1 and stat.S_IMODE(info.st_mode)==0o600
-    assert info.st_size==33443872 and hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
+    geometry={'--gate':(6144,5120),'--qkv':(10240,5120),'--out':(5120,6144)}
+    rows,width=geometry[mode];assert info.st_size==32+(rows//32)*((width//32)*1088+128)
+    assert hashlib.sha256(full.read_bytes()).hexdigest()==sys.argv[8]
 roles={'--gate':5,'--qkv':6,'--out':13}
 sample_pins={'--out':('1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1','7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'),
              '--gate':('c4781e0c6c3963ff1e1b3ac36c1d21fbb1dd74e2785826489cf67cbb139c9f36','a5fadca5d6baeaa921472989cf038dd4aa2a90a666f4c7b3262c8ee141841ff2'),
