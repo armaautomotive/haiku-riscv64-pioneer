@@ -1,0 +1,15 @@
+Recurrent-receipt held journal, synthetic inspection, 2026-11-12
+
+The existing held L1 journal can select the recurrent receipt under a
+separate offline-only role. A simulated 120-worker QGWD fixture used its
+5,065,477-page synthetic ledger to stage and verify the existing hybrid and
+dense tables, restore the held journal, and quarantine a corrupted dense-table
+readback. Role-exclusion checks rejected kernel/native, Work and CPU-reference
+builds; the host manifest methods had static frames no larger than 2048 bytes.
+
+The existing dense receipt's full held runtime/2308 packet readbacks and the
+default held-journal simulation also passed after the selection refactor.
+These are synthetic endpoints, not device writes, card execution, model
+correctness or a performance result. Recurrent workspace DRAM packets have not
+been integrated into the native runtime; the current recurrent workspace
+builder also requires further stack/lifetime work before a kernel role.

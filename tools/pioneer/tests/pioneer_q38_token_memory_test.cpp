@@ -21,6 +21,9 @@
 #include "../PioneerQ38TokenRuntimePlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeOwner.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+#include "../PioneerQ38DenseQ8MatrixManifest.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
 #include "../PioneerQ38HybridJobBinding.h"
 #endif
@@ -137,7 +140,7 @@ struct TokenMemoryIO:CodeIO {
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (badKind==13 && AtMemory() && address==0x16c400+badOrdinal*4)
 #endif
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
    || (badKind==14 && AtMemory() && address==0x16dc00+badOrdinal*4)
 #endif
    ){output^=1;observed=touches;}return true;
@@ -153,7 +156,7 @@ struct TokenMemoryIO:CodeIO {
 #if defined(PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC) || defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE)
    || (memoryState->phase==8 && worker==0 && address>=0x16c400 && address<0x16c400+64*3*7*4)
 #endif
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
    || (memoryState->phase==10 && worker==0 && address>=0x16dc00 && address<0x16dc00+16*3*7*3*4)
 #endif
    ) && TOKL::SnapshotContains(worker,address));
@@ -208,9 +211,9 @@ struct TokenMemoryFixture {
  std::vector<std::unique_ptr<PanelOwners>> owners;
  tt_dram_samples_result dram;PioneerResidentBanks banks;
  std::vector<uint8_t> ledger=std::vector<uint8_t>(PioneerResidentBanks::Pages);
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
  std::vector<uint32_t> hashes=std::vector<uint32_t>(PioneerResidentBanks::Pages);
- std::unique_ptr<PioneerQ38DenseQ8UploadReceiptInspection> receipt=std::make_unique<PioneerQ38DenseQ8UploadReceiptInspection>();
+ std::unique_ptr<PioneerQ38JournalReceipt> receipt=std::make_unique<PioneerQ38JournalReceipt>();
  PioneerQ38SpanLease span;int receiptContext=0,cookie=0;
 #endif
  PioneerQ38GdnIdentity id={1,2,3,4};PioneerQ38TokenMemoryResult result;
@@ -222,7 +225,7 @@ struct TokenMemoryFixture {
    assert(PioneerQ38DispatchPrepareRole(io,dram,banks,*cohort,worker));
   }
   auto& data=Geometry();data.Bind(*cohort,banks,dram);
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#if defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) || defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
   assert(receipt->Begin(&receiptContext,&cookie,hashes.data(),ledger.data(),1,4,banks,dram,ledger.size()));
   unsigned bank=0,length=0,spans=0;uint64_t offset=0;
   while(receipt->Next(bank,offset,length)){
@@ -234,7 +237,11 @@ struct TokenMemoryFixture {
    span.saved=span.ready=span.dirty=true;span.nonce=++spans;assert(receipt->After());
   }
   span.closed=true;span.ready=span.dirty=false;
+#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+  assert(spans==21475 && receipt->Seal(span));
+#else
   assert(spans==21907 && receipt->Seal(span));
+#endif
   assert(!data.startup->LearnedPagesPresent(ledger.data(),ledger.size())); // old logical extent has deliberate holes
   assert(&receiptContext!=reinterpret_cast<void*>(cohort.get()));
   assert(receipt->MatchesLogical(*data.canonical,&receiptContext,&cookie,hashes.data(),ledger.data(),1,4,banks,dram));
@@ -362,6 +369,15 @@ int main(int argc,char** argv){
    assert(f.memory->InstallHybridManifestHeld(f.io,f.result));
    for(unsigned i=0;i<expected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16c400+i*4)]==expected[i]);
    assert(f.memory->VerifyHybridManifestHeld(f.io,f.result));
+#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+   PioneerQ38HybridDenseQ8MatrixPlan::Proposal recurrentDenseHost;
+   std::array<uint32_t,PioneerQ38JournalReceipt::DenseManifestWords> recurrentDenseExpected={};
+   assert(PioneerQ38HybridDenseQ8MatrixPlan::Build(*original,recurrentDenseHost)
+    && PioneerQ38DenseQ8MatrixManifest::Build(*original,recurrentDenseHost,recurrentDenseExpected.data(),recurrentDenseExpected.size()));
+   assert(f.memory->InstallDenseManifestHeld(f.io,f.result));
+   for(unsigned i=0;i<recurrentDenseExpected.size();i++)assert(f.io.data[TokenMemoryIO::Index(0,0x16dc00+i*4)]==recurrentDenseExpected[i]);
+   assert(f.memory->VerifyDenseManifestHeld(f.io,f.result));
+#endif
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
    PioneerQ38HybridDenseQ8MatrixPlan::Proposal denseHost;
    std::array<uint32_t,PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords> denseExpected={};
@@ -426,6 +442,14 @@ int main(int argc,char** argv){
    // begin the no-further-I/O check at the returned failure boundary.
    f.io.observed=f.io.touches;f.Unknown();
   }
+#ifdef PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION
+  {
+   TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)
+    && f.memory->VerifyHybridManifestHeld(f.io,f.result));
+   f.io.badKind=14;f.io.badPhase=10;f.io.badWorker=0;f.io.badOrdinal=0;
+   assert(!f.memory->InstallDenseManifestHeld(f.io,f.result));f.Unknown();
+  }
+#endif
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
   {
    TokenMemoryFixture f;assert(f.PrepareMemory() && f.memory->InstallHybridManifestHeld(f.io,f.result)

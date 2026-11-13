@@ -20,6 +20,7 @@ class PioneerQ38RecurrentQ8UploadReceiptInspection {
  PioneerResidentBanks* banks=nullptr;const tt_dram_samples_result* proof=nullptr;const PioneerQ38SpanLease* lease=nullptr;
  int64_t team=-1;uint64_t generation=0,bytes=0,digest=UINT64_C(14695981039346656037);
  unsigned part=0,page=0,parts=0,spans=0,pages=0,pendingIndex=0,pendingPages=0,recorded=0;
+ uint32_t denseManifestScratch[16*3*7*3]={}; // receipt is heap-only
  bool attempted=false,ready=false,pending=false,failed=false,sealed=false;
  bool Current()const{return ready && !failed && context && cookie && hashes && ledger && banks && proof
   && original.OriginalFormatLayout() && ancestor.Ready() && parent.Ready() && layout.Ready()
@@ -104,6 +105,10 @@ public:
   }
   return Revalidate(c,fd,h,initialized,owner,gen);
  }
+ bool MatchesLogical(const C& logical,const void* c,const void* fd,const uint32_t* h,
+  const uint8_t* initialized,int64_t owner,uint64_t gen,const PioneerResidentBanks& b,const tt_dram_samples_result& p){
+  return MatchesBanks(&b,&p) && MatchesLogical(logical,c,fd,h,initialized,owner,gen);
+ }
 #ifdef PIONEER_Q38_RECURRENT_Q8_CANONICAL_INSPECTION
  // Construct one of the two distinct views only from this same sealed
  // ledger. This does not authenticate card bytes or grant execution.
@@ -172,18 +177,18 @@ public:
    || (out<lp+PioneerResidentBanks::Pages && lp<out+bytes)
    || (cp>=out && cp<out+bytes) || (fp>=out && fp<out+bytes)
    || !Revalidate(c,fd,h,initialized,owner,gen))return false;
-  std::array<uint32_t,DenseManifestWords> staged={};unsigned count=0;
+  for(unsigned i=0;i<DenseManifestWords;i++)denseManifestScratch[i]=0;unsigned count=0;
   for(unsigned i=0;i<original.Count();i++){
    const auto* p=original.Part(i);const auto* q=layout.At(i);const auto* d=parent.At(i);if(!p || !q || !d)return Fail();
    if(p->kind!=C::WeightKind || p->layer>=64 || p->layer%4!=3 || p->role<5 || p->role>7)continue;
    if(p->bank>=7 || q->bank!=p->bank || q->offset!=d->offset || q->bytes!=d->bytes || q->allocated!=d->allocated
     || q->encoding!=L::Parent::DenseQ8Bfp8 || q->offset>UINT32_MAX-C::Base || !p->rows)return Fail();
    const unsigned at=(((p->layer/4)*3+p->role-5)*7+p->bank)*3;
-   if(at>=DenseManifestWords || staged[at])return Fail();
-   staged[at]=C::Base+q->offset;staged[at+1]=p->firstRow;staged[at+2]=p->rows;count++;
+   if(at>=DenseManifestWords || denseManifestScratch[at])return Fail();
+   denseManifestScratch[at]=C::Base+q->offset;denseManifestScratch[at+1]=p->firstRow;denseManifestScratch[at+2]=p->rows;count++;
   }
   if(count!=16*3*7 || !Revalidate(c,fd,h,initialized,owner,gen))return false;
-  for(unsigned i=0;i<DenseManifestWords;i++)output[i]=staged[i];return true;
+  for(unsigned i=0;i<DenseManifestWords;i++)output[i]=denseManifestScratch[i];return true;
  }
  uint64_t PageDigest()const{return Sealed()?digest:0;}
 };

@@ -9,11 +9,27 @@
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
 #include "PioneerQ38HybridManifest.h"
 #endif
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
+#error Receipt journal selection is internal to this header
+#endif
+#if defined(PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION)
+#if PIONEER_Q38_RECURRENT_Q8_JOURNAL_INSPECTION != 1 || defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION) \
+ || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || !defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Recurrent receipt journal is offline inspection only
+#endif
+#include "../../../../../tools/pioneer/PioneerQ38RecurrentQ8UploadReceiptInspection.h"
+using PioneerQ38JournalReceipt=PioneerQ38RecurrentQ8UploadReceiptInspection;
+#define PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE 1
+#elif defined(PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION)
 #if PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_QGW8_JOURNAL_FIXTURE) || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_QGWD_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION)) || ((defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)) && !defined(PIONEER_Q38_QGWD_NATIVE_INSPECTION))
 #error QGWD receipt journal is simulated inspection only
 #endif
 #include "../../../../../tools/pioneer/PioneerQ38DenseQ8UploadReceiptInspection.h"
+using PioneerQ38JournalReceipt=PioneerQ38DenseQ8UploadReceiptInspection;
+#define PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE 1
 #endif
 // DISTINCT full-token held L1 journal. Not the three-layer prefix journal,
 // an embedding producer,initialized state,model-source/clock/host permission,
@@ -43,9 +59,9 @@ class PioneerQ38TokenMemory {
  uint32_t hybridManifestScratch[HybridManifestWords]={};
  bool hybridManifestInstalled=false;
 #endif
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
- enum {DenseManifestAddress=0x16dc00,DenseManifestWords=PioneerQ38DenseQ8UploadReceiptInspection::DenseManifestWords};
- PioneerQ38DenseQ8UploadReceiptInspection* denseReceipt=nullptr;const void* denseContext=nullptr;const void* denseCookie=nullptr;
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
+ enum {DenseManifestAddress=0x16dc00,DenseManifestWords=PioneerQ38JournalReceipt::DenseManifestWords};
+ PioneerQ38JournalReceipt* denseReceipt=nullptr;const void* denseContext=nullptr;const void* denseCookie=nullptr;
  const PioneerQ38DispatchLease* denseParticipants=nullptr;
  const uint32_t* denseHashes=nullptr;int64_t denseTeam=-1;uint64_t denseGeneration=0;
  static_assert(unsigned(DenseManifestWords)<=unsigned(HybridManifestWords),"shared manifest workspace must fit dense table");
@@ -101,7 +117,7 @@ class PioneerQ38TokenMemory {
  bool BuildHybridManifest(uint32_t* staged)const{
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   if(!staged || !canonical || !startup || !ledger || canonical->Count()!=4678)return false;
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
   if(!denseReceipt || !cohort || !banks || !proof || !DenseBinding(*canonical,*cohort,ledger,*banks,*proof,identity.driverGeneration))return false;
 #else
   if(!startup->LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return false;
@@ -122,10 +138,10 @@ public:
  bool Installed()const{return installed && !unsafe && !closed && !launched;}
  bool Closed()const{return closed && !unsafe && !launched;}
  bool LaunchedJournalClosed()const{return closed && launchClosed && launched && !installed && !unsafe;}
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
  // Bind the same synthetic receipt/ledger/owner before the first L1 touch.
  // This role is forbidden in native builds and is not a launch capability.
- bool BindDenseReceiptInspection(PioneerQ38DenseQ8UploadReceiptInspection& receipt,const void* context,
+ bool BindDenseReceiptInspection(PioneerQ38JournalReceipt& receipt,const void* context,
   const PioneerQ38DispatchLease* participants,const void* cookie,
   const uint32_t* hashes,int64_t team,uint64_t generation){
   if(started || denseReceipt || !context || !participants || !cookie || !hashes || team<0 || !generation || !receipt.Sealed())return false;
@@ -166,7 +182,7 @@ public:
     || store.recovery_required || node.noc.recovery_required)return false;
   }
   if(!data.MatchesBinding(plan,data.Bank(),id,&participants.authority.source[0][0]))return false;
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
   if(!DenseBinding(plan,participants,initialized,owner,dram,id.driverGeneration))return false;
 #else
   if(!data.LearnedPagesPresent(initialized,pages))return false;
@@ -226,7 +242,7 @@ public:
    || result.verifiedOriginalWords!=L::SavedWords || result.installedWords!=P::CodeWords(0)+119*P::CodeWords(1))return false;
   uint32_t* const staged=hybridManifestScratch;
   if(!BuildHybridManifest(staged)){
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
    return Fail(io,result);
 #else
    return false;
@@ -260,7 +276,7 @@ public:
   return true;
  }
 #endif
-#ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
+#ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE
  // Derive and stage QGWD's matrix address table from the same sealed receipt
  // as the held journal. This is simulated held memory only, not execution.
  template<class IO> bool InstallDenseManifestHeld(IO& io,PioneerQ38TokenMemoryResult& result){
