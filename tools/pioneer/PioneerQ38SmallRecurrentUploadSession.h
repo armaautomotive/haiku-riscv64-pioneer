@@ -13,11 +13,14 @@
 #include "PioneerQ38SmallRecurrentSpanUpload.h"
 #include "PioneerQ38SmallRecurrentUploadProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#include <functional>
 
 // Exact fake compile-profile identity; this tag does not qualify hardware.
 // A live descriptor holds the session after successful upload. Uncertainty
 // closes once and never retries, ends or resets the potentially owned device.
+template<class Pages,class IO> class PioneerQ38HybridFullSession;
 template<class Pages,class IO> class PioneerQ38SmallRecurrentUploadSession {
+ friend class PioneerQ38HybridFullSession<Pages,IO>;
  using C=PioneerQ38CanonicalModelPlan;
  enum State{Virgin,Open,Owned,Held,Done,Failed};
  Pages& pages;IO& io;PioneerQ38SmallRecurrentSpanUpload<Pages,IO> upload;
@@ -26,16 +29,17 @@ template<class Pages,class IO> class PioneerQ38SmallRecurrentUploadSession {
   if(fd>=0){const int old=fd;fd=-1;io.Close(old);}return false;}
  template<class T>bool Call(unsigned op,T& packet){return fd>=0 && state!=Failed && pages.AllVerified()
   && io.Call(fd,op,&packet,sizeof(packet)) && pages.AllVerified();}
- bool Identity(){tt_pioneer_driver_reload q={};q.version=1;
+ bool Identity(unsigned owner=0){tt_pioneer_driver_reload q={};q.version=1;
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,q) || !PioneerDriverReloadRequest(q) || q.expected_tag || q.expected_generation
    || q.driver!=55 || q.guard_version!=1 || q.build_tag!=UINT64_C(0x51544b4e4f445256) || !q.generation
-   || (generation && generation!=q.generation) || q.quiesced || q.cold || q.active_owner || q.open_count!=1)return false;
+   || (generation && generation!=q.generation) || q.quiesced || q.cold || q.active_owner!=owner || q.open_count!=1)return false;
   generation=q.generation;return true;}
  bool Receipt(unsigned op,unsigned expected,bool sealed){namespace Q=PioneerQ38SmallRecurrentUpload;Q::Packet p;p.operation=op;
   return Q::Request(p) && Call(TT_PCI_PROBE_Q38_SMALL_RECURRENT_UPLOAD_CONTROL,p)
    && p.magic==Q::Magic && p.version==Q::Version && p.operation==op && !p.reserved && p.accepted==1
    && p.sealed==unsigned(sealed) && p.spans==expected && !p.recoveryRequired;}
 public:
+ static constexpr uint64_t InspectionTag=UINT64_C(0x51544b4e4f445256);
  PioneerQ38SmallRecurrentUploadSession(Pages& p,IO& i):pages(p),io(i){}
  PioneerQ38SmallRecurrentUploadSession(const PioneerQ38SmallRecurrentUploadSession&)=delete;
  PioneerQ38SmallRecurrentUploadSession& operator=(const PioneerQ38SmallRecurrentUploadSession&)=delete;
@@ -43,7 +47,7 @@ public:
  bool WeightsHeld()const{return state==Held && fd>=0 && canonical && canonical->OriginalFormatLayout()
   && pages.AllVerified() && upload.CompleteHeld();}
  bool FailedState()const{return state==Failed;}
- bool Begin(const C& source,std::string& error){
+ bool Begin(const C& source,std::string& error,const std::function<void(uint64_t,uint64_t)>& progress={}){
   if(attempted){error="Small recurrent session is one-shot.";return false;}attempted=true;error.clear();
   if(!source.OriginalFormatLayout() || !pages.AllVerified())return Stop(error,"Preverified source required before opening.");
   fd=io.Open();if(fd<0)return Stop(error,"Cannot open inspection transport.");state=Open;
@@ -61,7 +65,7 @@ public:
    return Stop(error,"Bank BEGIN uncertain; close only.");
   state=Owned;namespace Q=PioneerQ38SmallRecurrentUpload;
   if(!Receipt(Q::Begin,0,false))return Stop(error,"Receipt BEGIN uncertain; close only.");
-  if(!upload.Run(pages,source,io,fd,error) || !upload.CompleteHeld())return Stop(error,"Upload uncertain; close only.");
+  if(!upload.Run(pages,source,io,fd,error,progress) || !upload.CompleteHeld())return Stop(error,"Upload uncertain; close only.");
   tt_q38_span_end end={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,end) || end.version!=1 || end.reserved || end.closed!=1 || end.recovery_required)
    return Stop(error,"Span END uncertain; close only.");

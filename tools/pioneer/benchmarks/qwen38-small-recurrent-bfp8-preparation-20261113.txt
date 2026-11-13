@@ -459,3 +459,13 @@ SEAL reply after a complete second upload. Uncertain cases close once without
 bank END or retry. This is a mock transport with a non-loadable identity, not
 authentication of a physical driver, a model execution, a speed result, or
 an Assistant integration. Actual native execution and reuse remain unproven.
+
+Token-controller handoff: the existing full-session client can now select
+the isolated recurrent upload session. In a simulated driver test, all
+21,475 prepared spans were uploaded and sealed, then the full-session client
+checked the owned fake-tag identity and issued START through the same open
+descriptor. A failed OBSERVE closed once without bank END or retry. The
+upload progress callback reported monotonically through the exact total.
+The test provides synthetic controller replies and does not execute ROOT,
+generate a token, establish physical-driver authority or measure speed.
+This one-shot controller does not yet establish reuse across requests.

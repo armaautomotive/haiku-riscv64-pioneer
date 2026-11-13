@@ -11,6 +11,7 @@
 #endif
 #include "PioneerQ38SmallRecurrentUploadPlan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
+#include <functional>
 #include <memory>
 
 // The caller owns and authenticates the bank, receipt and transport session.
@@ -28,7 +29,8 @@ public:
  bool Failed()const{return failed;}
  uint64_t UploadedBytes()const{return bytes;}
  unsigned UploadedSpans()const{return spans;}
- bool Run(Pages& pages,const C& canonical,IO& io,int fd,std::string& error){
+ bool Run(Pages& pages,const C& canonical,IO& io,int fd,std::string& error,
+  const std::function<void(uint64_t,uint64_t)>& progress={}){
   if(attempted)return Fail(error,"Small recurrent upload is one-shot.");
   attempted=true;error.clear();
   if(fd<0 || !pages.AllVerified() || !plan.Bind(canonical,pages,error))return Fail(error,"Verified prepared pages and an owned transport are required.");
@@ -52,7 +54,7 @@ public:
     plan.Acknowledge(false);return Fail(error,"Uncertain span reply or source; retain owner.");
    }
    if(!plan.Acknowledge(true))return Fail(error,"Upload acknowledgement failed; retain owner.");
-   bytes+=length;spans++;
+   bytes+=length;spans++;if(progress)progress(bytes,UINT64_C(20754878464));
   }
   if(!plan.Finished() || spans!=21475 || bytes!=UINT64_C(20754878464))return Fail(error,"Incomplete small recurrent upload; retain owner.");
   complete=true;error.clear();return true;

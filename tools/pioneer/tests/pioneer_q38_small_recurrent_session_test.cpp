@@ -12,7 +12,7 @@ struct SessionIO {
  bool Call(int fd,unsigned op,void* data,size_t size){
   assert(fd==7);
   if(op==TT_PCI_PROBE_RELOAD_STATUS){auto& p=*static_cast<tt_pioneer_driver_reload*>(data);assert(size==sizeof(p) && p.version==1);
-   p.driver=55;p.guard_version=1;p.build_tag=mode==1?1:UINT64_C(0x51544b4e4f445256);p.generation=9;p.open_count=1;return true;}
+   p.driver=55;p.guard_version=1;p.build_tag=mode==1?1:UINT64_C(0x51544b4e4f445256);p.generation=9;p.open_count=1;p.active_owner=owned?1:0;return true;}
   if(op==TT_PCI_PROBE_Q38_BANK_SUPPORT){auto& p=*static_cast<tt_q38_bank_support*>(data);assert(size==sizeof(p));
    p.driver=45;p.version=1;p.banks=7;p.page_bytes=4096;p.max_pages=4;p.storage_only=1;p.bytes_per_bank=PioneerResidentBanks::Capacity;return true;}
   if(op==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT){auto& p=*static_cast<tt_q38_span_support*>(data);assert(size==sizeof(p));
@@ -33,6 +33,7 @@ struct SessionIO {
   assert(false);return false;
  }
 };
+#ifndef PIONEER_Q38_SMALL_RECURRENT_SESSION_FIXTURE_ONLY
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakePrepared prepared;assert(FakePrepared::Plan::Build(*canonical,prepared.proposal));
@@ -57,3 +58,4 @@ int main(){
  }
  puts("PASS fake-identity prepared upload session, sealed receipt and held owner; uncertain operations close once without bank END; SIMULATED ONLY");
 }
+#endif

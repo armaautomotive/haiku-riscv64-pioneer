@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdClientRole.h"
 #include "PioneerQ38Qgw8TraceClientRole.h"
+#if defined(PIONEER_Q38_SMALL_RECURRENT_SESSION_INSPECTION) \
+ && (!defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1)
+#error Small recurrent token handoff requires the isolated full-session profile
+#endif
 #if defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
 #if PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_QGW8_USER_SESSION_INSPECTION) || PIONEER_Q38_QGW8_USER_SESSION_INSPECTION != 1 \
@@ -48,7 +52,9 @@ static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role 
 #endif
 #ifndef PIONEER_Q38_HYBRID_FULL_SESSION_H
 #define PIONEER_Q38_HYBRID_FULL_SESSION_H
-#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SESSION_INSPECTION
+#include "PioneerQ38SmallRecurrentUploadSession.h"
+#elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
 #include "PioneerQ38Qgw8UploadSessionInspection.h"
 #else
 #include "PioneerQ38HybridUploadSession.h"
@@ -75,7 +81,10 @@ static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role 
 // receipt/FD. Any uncertain operation closes only; no retry, BANK_END or
 // implicit device cleanup follows. This is not an Assistant integration.
 template<class Pages,class IO> class PioneerQ38HybridFullSession {
-#ifdef PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION
+#ifdef PIONEER_Q38_SMALL_RECURRENT_SESSION_INSPECTION
+ using Upload=PioneerQ38SmallRecurrentUploadSession<Pages,IO>;
+ static_assert(PioneerQ38FullOffload::BuildTag==Upload::InspectionTag,"recurrent full/upload inspection identity mismatch");
+#elif defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION)
  using Upload=PioneerQ38Qgw8UploadSessionInspection<Pages,IO>;
  static_assert(PioneerQ38FullOffload::BuildTag==Upload::InspectionTag,"QGW8 full/upload inspection identity mismatch");
 #else
