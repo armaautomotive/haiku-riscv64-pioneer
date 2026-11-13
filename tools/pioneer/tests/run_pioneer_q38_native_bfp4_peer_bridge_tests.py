@@ -10,10 +10,15 @@ compiler=os.environ.get('CXX','c++')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 with tempfile.TemporaryDirectory(prefix='q38-native-bfp4-peer-',dir='/private/tmp') as tmp:
     binary=str(Path(tmp)/'test')
+    bfp8_object=str(Path(tmp)/'bfp8.o')
     flags=['-DPIONEER_Q38_NATIVE_BFP4_PEER_TEST=1']
     subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+                    '-Wno-unused-function','-ffp-contract=off','-fsanitize=address,undefined',
+                    '-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1',
+                    '-c',str(here/'pioneer_q38_native_bfp_peer_bridge.cpp'),'-o',bfp8_object],check=True)
+    subprocess.run([compiler,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
                     '-Wno-unused-function','-ffp-contract=off','-fsanitize=address,undefined',*flags,
-                    str(here/'pioneer_q38_native_bfp4_peer_bridge.cpp'),str(here/'pioneer_q38_native_bfp4_peer_bridge_test.cpp'),'-o',binary],check=True)
+                    bfp8_object,str(here/'pioneer_q38_native_bfp4_peer_bridge.cpp'),str(here/'pioneer_q38_native_bfp4_peer_bridge_test.cpp'),'-o',binary],check=True)
     subprocess.run([binary],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
     for forbidden in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE',
                       'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT',

@@ -3,7 +3,11 @@
 #define PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE 1
 #include "pioneer_q38_native_bfp4_peer_bridge.h"
 #define PIONEER_BFP4_WORKER_LOADER_TEST_ONLY 1
+// BFP8 includes the same test source with a different IO layout. Give this
+// helper a distinct C++ type so linking both bridges cannot merge methods.
+#define IO Q38IsolatedBfp4LoaderIO
 #include "pioneer_q38_bfp4_worker_loader_test.cpp"
+#undef IO
 #define PIONEER_NATIVE_BFP4_MACHINE_ONLY 1
 #include "pioneer_q38_native_bfp4_band_numeric_test.cpp"
 #include <algorithm>
@@ -20,7 +24,7 @@ struct Bfp4PeerMachine:Band4Machine {
  }
 };
 struct Q38NativeBfp4PeerBridge::Impl {
- Q38NativePeerTestBytes bytes;unsigned worker;W::Job job;Bfp4PeerMachine native;IO io;
+ Q38NativePeerTestBytes bytes;unsigned worker;W::Job job;Bfp4PeerMachine native;Q38IsolatedBfp4LoaderIO io;
  uint32_t published[8]={},initial[8]={},commands[10]={};bool pending=false,awaiting=false;unsigned ack=0;
  static unsigned Index(unsigned i){const unsigned indices[]={2,3,4,5,1,8,4,10};return indices[i];}
  static unsigned Offset(unsigned i){const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};return offsets[i];}

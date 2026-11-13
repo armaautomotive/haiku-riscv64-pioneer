@@ -37,7 +37,8 @@ int main(){
  using W=PioneerQ38Bfp4WorkerJob;W::Job job={{W::Magic,W::Version,5120,0x04000000,TestBands,786,1,W::Existing::Peer(1),
   PioneerQ38Bf16Wire::Magic,W::RootInput,W::RootRoute,2,W::Output,0,0,0}};assert(W::Shape(job));
  Endpoints endpoint;const unsigned counters[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};uint32_t initial[8];
- for(unsigned i=0;i<8;i++)initial[i]=endpoint.csr[counters[i]/4]=UINT32_MAX-80;
+ for(unsigned i=0;i<8;i++)if(i!=6)endpoint.csr[counters[i]/4]=UINT32_MAX-80-i*13;
+ for(unsigned i=0;i<8;i++)initial[i]=endpoint.csr[counters[i]/4];
  for(unsigned i=0;i<2560;i++)endpoint.root[W::RootInput/4+i]=0x3f803f80;
  for(unsigned tile=0;tile<160;tile++){
   for(unsigned band=0;band<TestBands;band++){
@@ -47,6 +48,7 @@ int main(){
   }
  }
  const auto bytes=endpoint.Bytes();Q38NativeBfp4PeerBridge bridge(job.words,1,bytes);LoaderIO io{bridge};
+ for(unsigned i=0;i<8;i++)assert(bridge.Read(0xffb20000+counters[i])==initial[i]);
  TensorIO tensor{bridge};
  for(unsigned band=0;band<TestBands;band++){
   PioneerQ38Bfp4WorkerLoader loader;

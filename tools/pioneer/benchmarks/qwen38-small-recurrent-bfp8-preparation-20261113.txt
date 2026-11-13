@@ -787,3 +787,18 @@ queued-read/tensor bridge passed eight alternating synthetic bands, checking
 refusals passed. This is a component test only: the retained worker has not
 yet been connected to this bridge, and no FFN matrix, complete layer, real
 model, physical-card inference, or TPS result is established by it.
+
+FFN worker integration, first attempt: after the same earlier passing
+synthetic stages, 119 role-2 BFP4 jobs were dispatched, but the simulated
+workers reported faults and the root parked before the next stage. No FFN
+numerical result or full-layer result was admitted. Host-only isolation and
+BFP4 component/source tests passed; they do not establish that the worker
+integration works. The cause remains under investigation, and no candidate
+from this integration has been installed or tested on the P100A.
+An instruction trace localized the first worker fault to its pre-job NoC
+counter continuity check. A separate combined-link regression reproduced
+the mismatch: the BFP4 and BFP8 test endpoints used the same C++ helper name
+with different layouts. Giving the BFP4 helper a distinct type made the
+combined endpoint test pass, without relaxing the worker check. This proves
+the test collision and its local fix, not successful FFN execution; the full
+continuous run must pass before any integration claim or hardware testing.
