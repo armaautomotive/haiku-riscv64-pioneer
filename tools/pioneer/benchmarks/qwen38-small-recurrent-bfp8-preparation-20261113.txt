@@ -437,3 +437,14 @@ order and uncertain-transfer refusal. These are not a concurrent complete
 layer, real model upload, physical P100A run, generated answer or inference-
 speed measurement. The upload client and loadable driver remain to be
 integrated and validated.
+
+Prepared-span transport: an inspection-only userspace adapter now connects
+the prepared physical-order staging plan to the existing Work span wire
+format. It checks each response and permanently stops on a failed call,
+malformed response or changed source, without ending or resetting the caller's
+owner. A synthetic receipt test covers all 21,475 spans, checks a data byte
+from every staged page and seals the receipt; it also checks failed calls,
+malformed replies and pre-transfer read failure.
+The adapter does not authenticate or open a driver session, is not selected by
+Assistant or a loadable driver, and has not uploaded a real model to hardware.
+It establishes no inference-speed result.
