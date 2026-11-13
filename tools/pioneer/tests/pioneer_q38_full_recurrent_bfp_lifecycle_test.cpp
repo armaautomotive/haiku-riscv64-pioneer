@@ -42,7 +42,11 @@ static std::vector<uint32_t> IndependentOutput(const std::vector<uint8_t>& proje
  }return result;
 }
 int main(int argc,char** argv){
- assert(argc==10 || (argc==11 && !std::strcmp(argv[10],"--controller-input")));
+ assert(argc==10 || (argc==11 && (!std::strcmp(argv[10],"--controller-input") || !std::strcmp(argv[10],"--capture-controller"))));
+ const bool capture=argc==11 && !std::strcmp(argv[10],"--capture-controller");
+ auto frames=std::make_unique<std::array<std::array<std::array<uint32_t,64>,42>,2>>();
+ auto captured=std::make_unique<std::array<std::array<PioneerRecurrentWorkerSnapshot,119>,2>>();
+ if(capture)assert(fread(frames->data(),sizeof(*frames),1,stdin)==1 && fgetc(stdin)==EOF);
  auto gate=LoadProjection(argv[3],3,5120,6144),qkvWeights=LoadProjection(argv[4],5,5120,10240);
  std::array<std::vector<uint8_t>,2> small;
  for(unsigned k=0;k<2;k++){std::ifstream f(argv[5+k],std::ios::binary);small[k].assign(std::istreambuf_iterator<char>(f),{});assert(small[k].size()==32+2*(160*1088+128));}
@@ -68,25 +72,33 @@ int main(int argc,char** argv){
   Matrix(image,j,phase?qkvWeights:gate,input,phase?qkv:gates,phase?qkvSeen:gateSeen,nullptr);
  }
  for(auto v:gateSeen)assert(v==1);for(auto v:qkvSeen)assert(v==1);
- std::puts("FULL_RECURRENT_PROGRESS all6144 gate and10240 QKV rows from119 retained workers");std::fflush(stdout);
+ std::fprintf(capture?stderr:stdout,"FULL_RECURRENT_PROGRESS all6144 gate and10240 QKV rows from119 retained workers\n");std::fflush(capture?stderr:stdout);
  std::array<std::vector<uint32_t>,2> smallRows={std::vector<uint32_t>(64),std::vector<uint32_t>(64)};
  std::array<std::vector<uint8_t>,2> smallSeen={std::vector<uint8_t>(64),std::vector<uint8_t>(64)};uint32_t alphaBeta[96]={};
  for(unsigned kind=0;kind<2;kind++){
+  if(capture)for(unsigned w=0;w<119;w++){
+   SnapshotStage(*workers[w],(*captured)[kind][w].initial,kind && w>=2 && w<20);
+   for(unsigned i=0;i<64;i++)(*captured)[kind][w].initial.proof[i]=workers[w]->Get(0x83f00+i*4);
+  }
   // Match the ROOT's real fan-out: all 20 input chunks are produced before
   // the same first two peers execute each padded small matrix.
   for(unsigned w=0;w<20;w++){
    auto& image=*workers[w];image.StageProducer(10+kind,++sequence[w],false,0);image.Check(sequence[w]);
+   if(capture){
+    for(unsigned i=0;i<64;i++)assert((*frames)[kind][w*2][i]==image.descriptor[i] && (*frames)[kind][w*2+1][i]==image.Get(HW::Job+i*4));
+    SnapshotStage(image,(*captured)[kind][w].producer,true);
+   }
    for(unsigned i=0;i<128;i++){const uint32_t actual=image.bank.at(image.descriptor[4]+image.descriptor[12]+i*4);
     assert(!std::memcmp(input.data()+w*512+i*4,&actual,4));std::memcpy(input.data()+w*512+i*4,&actual,4);}
   }
   for(unsigned w=0;w<2;w++){
-   auto& image=*workers[w];auto j=Job(image,++sequence[w],10+kind,w*32,1,64,5120);
-   Matrix(image,j,small[kind],input,smallRows[kind],smallSeen[kind],nullptr);
+   auto& image=*workers[w];auto j=capture?(*frames)[kind][40+w]:Job(image,sequence[w]+1,10+kind,w*32,1,64,5120);++sequence[w];
+   assert(j[1]==sequence[w]);Matrix(image,j,small[kind],input,smallRows[kind],smallSeen[kind],capture?&(*captured)[kind][w]:nullptr);
   }
   for(unsigned i=0;i<48;i++)alphaBeta[kind*48+i]=smallRows[kind][i];
  }
  for(unsigned k=0;k<2;k++)for(unsigned i=0;i<64;i++){assert(smallSeen[k][i]==1);if(i>=48)assert(!smallRows[k][i]);}
- if(argc==11){
+ if(argc==11 && !capture){
   uint32_t fromController[96];assert(fread(fromController,sizeof(fromController),1,stdin)==1 && fgetc(stdin)==EOF);
   for(unsigned i=0;i<96;i++)assert(fromController[i]==alphaBeta[i]);
   std::memcpy(alphaBeta,fromController,sizeof(alphaBeta));
@@ -107,7 +119,7 @@ int main(int argc,char** argv){
   assert(root.Run());root.Verify();for(unsigned c=0;c<16;c++){assert(!convSeen[first+c]++);conv[first+c]=root.output[c];}
  }
  for(auto v:convSeen)assert(v==1);
- std::puts("FULL_RECURRENT_PROGRESS all10240 Conv rows; ROOT groups separate QCV1 simulation");std::fflush(stdout);
+ std::fprintf(capture?stderr:stdout,"FULL_RECURRENT_PROGRESS all10240 Conv rows; ROOT groups separate QCV1 simulation\n");std::fflush(capture?stderr:stdout);
  for(unsigned w=0;w<96;w++){
   auto& image=*workers[w];image.peer=workers[w^1].get();image.StageGdn(++sequence[w],0,0,false,alphaBeta,&learned,&gates,nullptr,nullptr,&conv);
  }
@@ -121,7 +133,7 @@ int main(int argc,char** argv){
   assert(a->pc!=a->faultPC && b->pc!=b->faultPC);a->VerifyGdn(sequence[pair*2]);b->VerifyGdn(sequence[pair*2+1]);
   for(unsigned side=0;side<2;side++){auto* image=side?b:a;for(unsigned i=0;i<64;i++)gated[(pair*2+side)*64+i]=image->gated[i];image->gdn=false;}
  }
- std::puts("FULL_RECURRENT_PROGRESS all6144 gated values from48 retained worker pairs");std::fflush(stdout);
+ std::fprintf(capture?stderr:stdout,"FULL_RECURRENT_PROGRESS all6144 gated values from48 retained worker pairs\n");std::fflush(capture?stderr:stdout);
  std::vector<uint8_t> packedGated(6144*2);
  for(unsigned chunk=0;chunk<24;chunk++){
   assert(PioneerQ38Bf16Input::Pack(gated.data()+chunk*256,256,packed,128));std::memcpy(packedGated.data()+chunk*512,packed,512);
@@ -135,5 +147,6 @@ int main(int argc,char** argv){
   Matrix(image,j,outputWeights,packedGated,output,outputSeen,nullptr,&reference);
  }
  for(auto v:outputSeen)assert(v==1);
- std::puts("PASS layer0 recurrent attention gate/QKV/alpha/beta/Conv/paired GDN/output across119 retained simulated workers, all outputs checked; synthetic normalized input; separate ROOT Conv; NO DEVICE/FULL LAYER/FULL MODEL/WORK/TPS");
+ if(capture){assert(fwrite(captured->data(),sizeof(*captured),1,stdout)==1 && !fflush(stdout));}
+ std::fprintf(capture?stderr:stdout,"PASS layer0 recurrent attention gate/QKV/alpha/beta/Conv/paired GDN/output across119 retained simulated workers, all outputs checked; synthetic normalized input; separate ROOT Conv; NO DEVICE/FULL LAYER/FULL MODEL/WORK/TPS\n");
 }

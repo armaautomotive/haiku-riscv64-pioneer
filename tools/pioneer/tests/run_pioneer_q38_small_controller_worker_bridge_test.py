@@ -87,4 +87,12 @@ with tempfile.TemporaryDirectory(prefix='q38-small-root-worker-',dir='/private/t
   subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
                   *map(str,(sdk,worker,leaf,private,gate,qkv,alpha,beta,learned,output,conv)),
                   '--controller-input'],input=controllerValues,check=True,env=env)
+  warmJobs=subprocess.run([str(rootBinary),str(tmp),'--warm-jobs'],input=boots,stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert len(warmJobs)==2*42*64*4
+  warmSnapshots=subprocess.run([sys.executable,str(here/'run_pioneer_q38_full_recurrent_bfp_lifecycle_test.py'),
+                  *map(str,(sdk,worker,leaf,private,gate,qkv,alpha,beta,learned,output,conv)),
+                  '--capture-controller'],input=warmJobs,stdout=subprocess.PIPE,check=True,env=env).stdout
+  assert len(warmSnapshots)==2*119*4824
+  subprocess.run([str(rootBinary),str(tmp),'--chain'],input=boots+warmSnapshots,check=True,env=env)
+  subprocess.run([str(rootBinary),str(tmp),'--chain-corrupt-prior'],input=boots+warmSnapshots,check=True,env=env)
 for path,digest in pins+rootPins:assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,path

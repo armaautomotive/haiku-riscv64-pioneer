@@ -194,3 +194,16 @@ separate output values still match and feed GDN. Jobs in this lifecycle are
 fixture-generated, the ROOT is a separate replay with different prior worker
 histories, and the NoC is modeled. This does not establish a single integrated
 ROOT/worker run, physical execution, quality or inference speed.
+
+Warm-controller history follow-up: the linked ROOT emits alpha/beta producer
+and matrix jobs with sequence numbers following the 119 simulated workers'
+actual gate/QKV histories. Those workers execute the emitted jobs, retain
+their state into Conv/GDN/output, and export their actual before/after records.
+A ROOT replay then admits those warm histories, executes both full projection
+Runs with retained controller state, and scatters outputs matching the same
+worker records. A corrupted prior producer receipt is refused before beta
+dispatch. The existing value-handoff and independent output checks also pass
+under ASan/UBSan. This is still sequential snapshot replay through a modeled
+NoC, not concurrent physical execution: the ROOT does not directly drive live
+workers, six Conv ROOT groups are separate, and residual/FFN and whole-model
+generation are absent. No device speed or quality claim follows.

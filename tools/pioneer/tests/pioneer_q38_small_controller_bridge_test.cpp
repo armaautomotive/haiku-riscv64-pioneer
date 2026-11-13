@@ -5,8 +5,8 @@
 #include "pioneer_q38_recurrent_root_job_bridge.cpp"
 
 int main(int argc,char** argv){
- assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export")));
- const bool jobs=!std::strcmp(argv[2],"--jobs"),corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior"),exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows,full=!std::strcmp(argv[2],"--full") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
+ assert(argc==3 && (!std::strcmp(argv[2],"--jobs") || !std::strcmp(argv[2],"--warm-jobs") || !std::strcmp(argv[2],"--publish") || !std::strcmp(argv[2],"--corrupt") || !std::strcmp(argv[2],"--corrupt-producer") || !std::strcmp(argv[2],"--full") || !std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || !std::strcmp(argv[2],"--chain-export")));
+ const bool warmJobs=!std::strcmp(argv[2],"--warm-jobs"),jobs=!std::strcmp(argv[2],"--jobs") || warmJobs,corrupt=!std::strcmp(argv[2],"--corrupt"),badProducer=!std::strcmp(argv[2],"--corrupt-producer"),badPrior=!std::strcmp(argv[2],"--full-corrupt-prior") || !std::strcmp(argv[2],"--chain-corrupt-prior"),exportRows=!std::strcmp(argv[2],"--chain-export"),chain=!std::strcmp(argv[2],"--chain") || !std::strcmp(argv[2],"--chain-corrupt-prior") || exportRows,full=!std::strcmp(argv[2],"--full") || badPrior || chain;auto root=std::make_unique<ActualRoot>(argv[1]);
  const auto builds=Symbols(argv[1],"Projection::BfBuildDenseSchedule("),reads=Symbols(argv[1],"Projection::BfBankRead(");
  const auto descriptor=Symbols(argv[1],"Projection::BfDescriptor("),producer=Symbols(argv[1],"Projection::BfProducerJob(");
  const auto gathers=Symbols(argv[1],"Projection::BfGatherMatrix("),producerGathers=Symbols(argv[1],"Projection::BfGatherProducer(");
@@ -31,14 +31,14 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++)root->memory[0x80000+i*4]=0x7fc00001;
   if(jobs){
    for(unsigned w=0;w<20;w++){
-    const unsigned producerSequence=1+kind*(w<2?2:1);
+    const unsigned producerSequence=1+(warmJobs?3:0)+kind*(w<2?2:1);
     uint32_t data[64];assert(Call(*root,descriptor[0],d,w,0,out,false));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
     assert(Call(*root,producer[0],d,w,producerSequence,out,true));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
    }
    for(unsigned w=0;w<2;w++){
-    uint32_t data[64];const unsigned matrixSequence=2+kind*2;
+    uint32_t data[64];const unsigned matrixSequence=2+(warmJobs?3:0)+kind*2;
     assert(root->Run(root->job[0],d,w,matrixSequence));
     for(unsigned i=0;i<64;i++)data[i]=root->memory.at(out+i*4);assert(fwrite(data,sizeof(data),1,stdout)==1);
     unsigned bank=0;while(bank<7 && !(*workspace)[kind*32+bank*3])bank++;
