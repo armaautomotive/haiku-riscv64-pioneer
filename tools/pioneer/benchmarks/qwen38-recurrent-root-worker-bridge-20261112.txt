@@ -22,3 +22,14 @@ does not execute ROOT's complete prepare/dispatch/gather/scatter lifecycle,
 the other 118 workers as a retained cohort, the complete recurrent layer,
 native ownership, hardware, full-model quality or speed. The 20 tok/s goal
 remains unmet.
+
+Follow-up: the bridge now transfers 119 actual linked ROOT jobs to 119
+separately simulated worker histories. All 5,120 output rows were covered
+exactly once and matched their assigned golden results. The three independently
+checked real 32-row samples were interleaved across workers and local bands;
+they are repeated, not 5,120 distinct learned rows. The 24 producer chunks
+were executed once to prepare the shared synthetic input; worker 1 also ran
+its own producer before its matrix job. Bad boot and wrong-role job tests
+still failed as intended. This remains host-piped, sequential worker
+simulation: it does not establish concurrent NoC transport, retained cohort
+history, ROOT gather/scatter, native ownership, card execution or speed.

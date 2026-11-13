@@ -53,8 +53,8 @@ with tempfile.TemporaryDirectory(prefix='q38-root-worker-bridge-',dir='/private/
     for binary,source,roles in ((rootbin,'pioneer_q38_recurrent_root_job_bridge.cpp',root_roles),
                                 (workerbin,'pioneer_q38_recurrent_worker_job_bridge.cpp',worker_roles)):
         subprocess.run([compiler,*common,*['-D'+r+'=1' for r in roles],'-I'+str(private),str(here/source),'-o',str(binary)],check=True)
-    boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==256
-    job=subprocess.run([str(rootbin),str(root)],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout;assert len(job)==256
+    boot=subprocess.check_output([str(workerbin),str(worker),str(leaf),'--boot'],env=env);assert len(boot)==119*256
+    job=subprocess.run([str(rootbin),str(root)],input=boot,stdout=subprocess.PIPE,check=True,env=env).stdout;assert len(job)==119*256
     subprocess.run([str(workerbin),str(worker),str(leaf),'--run'],input=job,check=True,env=env)
     badboot=bytearray(boot);badboot[0]^=1
     rejected=subprocess.run([str(rootbin),str(root)],input=badboot,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
