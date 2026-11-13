@@ -33,4 +33,12 @@ for mode in pass fast rounded converted missing nobanner fatal reject badstats n
  NR==3 && want=="unknown" && $0=="close-only"{next}
  {exit 1} END{if(NR<2 || NR>3 || (want=="host" && NR!=2) || (want=="complete" && NR!=3))exit 1}' "$temporary/$mode.events"
 done
+${CXX:-c++} $flags -DPIONEER_BATCHED_LOAD_TIMING=1 "-DASSISTANT_QWEN27_WORKER=\"$temporary/worker\"" \
+ "$directory/pioneer_assistant_qwen27_cache_inference_smoke.cpp" "$directory/../../../src/apps/assistant/P100AQwen27.cpp" -o "$temporary/timing-test"
+touch "$temporary/timing.events"
+ASSISTANT27_TEST_LOG="$temporary/timing.events" ASSISTANT27_TEST_MODE=cacheinfer-timing UBSAN_OPTIONS=halt_on_error=1 \
+ "$temporary/timing-test" --cached-generate-four-only > "$temporary/timing.stdout" 2> "$temporary/timing.stderr"
+[ ! -s "$temporary/timing.stderr" ]
+[ "$(grep -c '^BATCHED_UPLOAD_PROGRESS seconds=' "$temporary/timing.stdout")" = 2 ]
+grep -q '^BATCHED_COMPLETE_SECONDS .*;INCLUDES_UPLOAD_PROMPT_AND_GENERATION$' "$temporary/timing.stdout"
 printf 'PASS actual cached Assistant inference client:15 fake-peer cases;all851 cache hits before ONE fixed4-token Generate;conversion/missing banner/entry cannot Generate;unknown execution NO Unload/retry/reset/fallback;finite rounding-consistent Work-only statistics and known-clean exit required;NO model/device/hardware/throughput proof\nEvidence: %s\n' "$temporary"

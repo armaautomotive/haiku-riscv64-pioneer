@@ -20,3 +20,14 @@ log or restart this one-shot while the parent is alive.
 
 This host-only check does not execute the new batched upload, run the card or
 measure tokens per second. A later separately admitted card test is needed.
+
+The later fixed four-token Work probe is staged, NOT launched. It records
+monotonic elapsed time at observed upload progress events and separately
+prints complete-request elapsed time (which includes upload and prompt).
+Fake-peer regressions passed, including two synthetic progress events; they
+do not establish a hardware result. The candidate probe and one-shot parent
+were independently rehashed on Pioneer:
+2aa5e771f000d57730683e2a445a241b4e271c26408d2343ff460c960fc9dcc3
+e90667171ef9cc512c20df7dbf565e0ac1d49fbfe0f8c118e649550671c6d806
+Admission requires actual successful host exit/state, empty host stderr,
+all 851 verified entries, idle driver generation 40 and CPU/RAM checks.

@@ -58,15 +58,33 @@ int main(int argc,char** argv) {
 	}
 	printf("CACHED_ASSISTANT_HOST_READY_SECONDS %.6f verified_tensors%u;GPU_UPLOAD_STILL_DEFERRED\n",ready-began,count);fflush(stdout);
 	std::string answer,statistics;
+#ifdef PIONEER_BATCHED_LOAD_TIMING
+	const double requestBegan=Clock();if(requestBegan<0)return 1;
+#endif
 	auto progress=[&](const std::string&,const char* status) {
 		if(status){statistics=status;puts(status);fflush(stdout);}
 	};
-	if(!client.Complete("Hello.",4,answer,error,[]{return false;},progress,[](float,const char*){})) {
+	if(!client.Complete("Hello.",4,answer,error,[]{return false;},progress,
+#ifdef PIONEER_BATCHED_LOAD_TIMING
+		[&](float fraction,const char* status){
+			if(status && strstr(status,"Qwen27B P100A upload:")){
+				const double now=Clock();if(now>=requestBegan)printf("BATCHED_UPLOAD_PROGRESS seconds=%.6f fraction=%.6f\n",now-requestBegan,double(fraction));
+				fflush(stdout);
+			}
+		}
+#else
+		[](float,const char*){}
+#endif
+		)) {
 		// Do NOT let the client's RAII destructor send Unload after an
 		// unproven execution. Closing this process's channel is the ONLY
 		// action, including Rejected/Cancelled replies not requested here.
 		fprintf(stderr,"CACHE_INFERENCE_EXECUTION_UNPROVEN faulted%u: %s\n",unsigned(client.Faulted()),error.c_str());fflush(stderr);_exit(70);
 	}
+#ifdef PIONEER_BATCHED_LOAD_TIMING
+	const double requestEnded=Clock();
+	if(requestEnded>=requestBegan)printf("BATCHED_COMPLETE_SECONDS %.6f;INCLUDES_UPLOAD_PROMPT_AND_GENERATION\n",requestEnded-requestBegan);
+#endif
 	const bool observed=!client.Faulted() && !answer.empty() && Statistics(statistics);
 	// Successful Complete is a known token boundary, even if its diagnostic
 	// statistics are unsuitable. One ordinary known-clean Unload is owed.

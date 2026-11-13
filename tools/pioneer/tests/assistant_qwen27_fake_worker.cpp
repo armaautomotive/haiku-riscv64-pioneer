@@ -77,6 +77,10 @@ int main(int argc,char** argv) {
    assert(f.text=="Hello." && f.value==4);
    if(!strcmp(mode,"cacheinfer-fatal")){Emit(A::Error,f.id,A::Fatal,"fake unproven execution");return 70;}
    if(!strcmp(mode,"cacheinfer-reject")){Emit(A::Done,f.id,A::Rejected,"fake rejected request");continue;}
+   if(!strcmp(mode,"cacheinfer-timing")){
+    Emit(A::Progress,f.id,500,"Qwen27B P100A upload:1.0/2.0 MiB.");
+    Emit(A::Progress,f.id,1000,"Qwen27B P100A upload:2.0/2.0 MiB.");
+   }
    Emit(A::Text,f.id,0,!strcmp(mode,"cacheinfer-empty")?"":"four test tokens");
    Emit(A::Done,f.id,A::Complete,!strcmp(mode,"cacheinfer-badstats")?
     "P100A Qwen27B Work:3 output tokens,30.0s; warm generation2 samples/18.293s (0.109 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
