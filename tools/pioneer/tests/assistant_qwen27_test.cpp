@@ -63,7 +63,7 @@ static std::string Events(const char* path) {
 }
 int main() {
  Protocol(); Pools(); assert(AssistantP100AQwen27::Available());
- for(const char* mode:{"normal","cancel","reject","badready","eof","fatal","wrongid","malformed","badclose","threadfault"}) {
+ for(const char* mode:{"normal","cancel","cancel-reuse","reject","badready","eof","fatal","wrongid","malformed","badclose","threadfault"}) {
   char log[]="/tmp/assistant27-test-XXXXXX"; int fd=mkstemp(log); assert(fd>=0); close(fd);
   assert(!setenv("ASSISTANT27_TEST_LOG",log,1) && !setenv("ASSISTANT27_TEST_MODE",mode,1));
   {
@@ -90,13 +90,20 @@ int main() {
     }
     assert(!backend.Complete(std::string(257,'x'),1,answer,error,[] {return false;},progress,memoryProgress));
     assert(!backend.Complete("public",33,answer,error,[] {return false;},progress,memoryProgress)); error.clear();
-    bool cancel=!strcmp(mode,"cancel");
+    bool cancel=!strcmp(mode,"cancel") || !strcmp(mode,"cancel-reuse");
     bool success=backend.Complete("Public test",2,answer,error,[&] {return cancel;},progress,memoryProgress);
     if(!strcmp(mode,"normal") || !strcmp(mode,"badclose")) {
      assert(success && answer=="public answer" && !backend.Faulted());
      assert(backend.Complete("Second public test",2,answer,error,[] {return false;},progress,memoryProgress));
      assert(memory==2 && updates>=4);
-    } else if(cancel) { assert(!success && !backend.Faulted() && error=="complete token boundary"); }
+    } else if(cancel) {
+     assert(!success && !backend.Faulted() && error=="complete token boundary");
+     if(!strcmp(mode,"cancel-reuse")) {
+      error.clear();answer.clear();
+      assert(backend.Complete("After cancellation",2,answer,error,[] {return false;},progress,memoryProgress));
+      assert(answer=="public answer" && !backend.Faulted() && error.empty());
+     }
+    }
     else {
      assert(!success && backend.Faulted());
      assert(!backend.Complete("No retry",1,answer,error,[] {return false;},progress,memoryProgress));
@@ -110,6 +117,7 @@ int main() {
   if(!strcmp(mode,"normal"))assert(events=="load\nthreads\nthreads\ngenerate\ngenerate\nunload\n");
   else if(!strcmp(mode,"badclose"))assert(events=="load\ngenerate\ngenerate\nunload\n");
   else if(!strcmp(mode,"cancel"))assert(events=="load\ngenerate\ncancel\nunload\n");
+  else if(!strcmp(mode,"cancel-reuse"))assert(events=="load\ngenerate\ncancel\ngenerate\nunload\n");
   else assert(events.find("unload")==std::string::npos);
   unlink(log);
  }

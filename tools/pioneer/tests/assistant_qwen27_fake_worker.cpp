@@ -74,8 +74,8 @@ int main(int argc,char** argv) {
    Record("unload\n"); Emit(A::Closed,f.id,0,(!strcmp(mode,"badclose") || !strcmp(mode,"cacheinfer-badclose"))?"wrong close":"QWEN27_KNOWN_CLEAN_END"); return 0;
   }
   assert(f.kind==A::Generate && A::Question(f.text) && f.value>=1 && f.value<=32); Record("generate\n");
+  generationCount++;
   if(!strncmp(mode,"cacheinfer-",11)) {
-   generationCount++;
    assert(f.text=="Hello." && f.value==4);
    if(!strcmp(mode,"cacheinfer-fatal")){Emit(A::Error,f.id,A::Fatal,"fake unproven execution");return 70;}
    if(!strcmp(mode,"cacheinfer-reject")){Emit(A::Done,f.id,A::Rejected,"fake rejected request");continue;}
@@ -107,7 +107,7 @@ int main(int argc,char** argv) {
   if(!strcmp(mode,"fatal")) { Emit(A::Error,f.id,A::Fatal,"unknown execution"); return 70; }
   if(!strcmp(mode,"wrongid")) { Emit(A::Text,f.id+1,0,"wrong request"); return 70; }
   if(!strcmp(mode,"malformed")) { uint8_t header[24]={}; assert(write(1,header,sizeof(header))==24); return 70; }
-  if(!strcmp(mode,"cancel")) {
+  if(!strcmp(mode,"cancel") || (!strcmp(mode,"cancel-reuse") && generationCount==1)) {
    unsigned id=f.id; assert(Next(r,f) && f.kind==A::Cancel && f.id==id && !f.value && f.text.empty());
    Record("cancel\n"); Emit(A::Done,id,A::Cancelled,"complete token boundary"); continue;
   }

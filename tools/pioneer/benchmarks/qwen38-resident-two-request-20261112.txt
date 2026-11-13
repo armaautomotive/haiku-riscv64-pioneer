@@ -24,6 +24,13 @@ per-token speedup, response quality beyond the short output, or the target
 20 tokens/s. Model reuse saves repeated load time; it does not itself fix
 slow inference.
 
+Follow-up offline protocol regression: the Assistant client now has a fake
+worker case that cancels a request at a token boundary, sends a second request
+through the same worker, and then performs a clean unload. Its recorded event
+order contains one load and two generate commands. This exercises the client
+protocol only; it does not demonstrate a real device cancellation, measure
+weights transferred, or establish the installed Assistant's version.
+
 Postflight: stderr was empty, both worker and probe were gone, and the
 known-good driver SHA-256 remained
 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
