@@ -13,6 +13,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE))
 #error Synthetic recurrent matrix address check requires the isolated producer cohort
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE))
+#error Recurrent matrix execution requires the isolated synthetic matrix fixture
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
@@ -305,6 +309,34 @@ static void CheckNativeExecution(Fixture& f){
    assert(io.runtimeDram.at((0x20000/4)+i)==(lanes[0]|(lanes[1]<<16)));
   }
   printf("PASS 20 actual recurrent input producers on same booted peers/5120 synthetic BF16 values match independent observer/first matrix doorbell pending/ROOT steps%u;SIMULATED ONLY,NOT matrix/layer/token/physical/TPS\n",cpu.steps);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
+  assert(cpu.dispatchWorker==1 && peer.Idle() && peer.cpu->Stats().sequence==1);
+  cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver only the already-issued matrix doorbell
+  assert(io.Raw(1,W::Doorbell)==2 && !io.Core(0).pending);
+  for(unsigned n=0;n<1000000;n++){
+   peer.Advance(256);const auto s=peer.cpu->Stats();
+   if(peer.cpu->ObserveFaulted() || (peer.Idle() && s.sequence==2 && !s.active && !s.pending))break;
+  }
+  const auto matrix=peer.cpu->Stats();
+  if(!peer.Idle() || matrix.sequence!=2 || matrix.active || matrix.pending || !matrix.matrixInstructions){
+   fprintf(stderr,"RECURRENT_MATRIX_DIAGNOSTIC pc=%x steps=%u sequence=%u active=%u pending=%u matrices=%u faulted=%u status0=%x status1=%x status2=%x status3=%x;NO result supplied\n",
+    matrix.pc,matrix.steps,matrix.sequence,matrix.active,matrix.pending,matrix.matrixInstructions,unsigned(peer.cpu->ObserveFaulted()),
+    io.Raw(1,W::Status),io.Raw(1,W::Status+4),io.Raw(1,W::Status+8),io.Raw(1,W::Status+12));
+   peer.cpu->ReportRecentInstructions();
+  }
+  assert(peer.Idle() && matrix.sequence==2 && !matrix.active && !matrix.pending && matrix.matrixInstructions>0);
+  for(unsigned row=0;row<32;row++){
+   double expected=0;
+   for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+    const uint32_t value=io.Raw(0,R::Input+(tile*32+col)*4);
+    const uint32_t bits=((value+0x7fff+((value>>16)&1))>>16)<<16;
+    expected+=double(Float(bits))*double(int((row*7+tile*3+col*5)%17)-8)*0.0625;
+   }
+   const float actual=Float(io.Raw(1,PioneerQ38Bfp8WorkerJob::Output+row*4));
+   assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+  }
+  printf("PASS first BFP8 matrix band on same simulated booted peer/32 outputs vs post-hoc observer/%u matrix instructions;NO full layer/token/physical/TPS\n",matrix.matrixInstructions);
+#endif
 #else
   cpu.layerHeld=false;cpu.RespondLayer();cpu.layerHeld=true; // deliver the already-issued packet; never seed state
   assert(io.Raw(1,W::Doorbell)==1 && !io.Core(0).pending);

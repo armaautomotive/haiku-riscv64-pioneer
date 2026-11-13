@@ -49,6 +49,13 @@
 #include <unistd.h>
 #define PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST 1
 #include "PioneerQ38InstructionStackObserver.h"
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+#if PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST != 1 || !defined(PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST) \
+ || !defined(PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE)
+#error Recurrent matrix peer requires its isolated recurrent producer simulator
+#endif
+#include "pioneer_q38_native_bfp_peer_bridge.h"
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST
 #if PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST != 1
 #error Exact separate HOST native-peer beta TEST required
@@ -134,6 +141,19 @@ struct NativePeer:NativePeerBase,CohortBytes {
  }
 #endif
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
+ uint32_t recentPC[32]={};unsigned recentCount=0;
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+ std::unique_ptr<Q38NativeBfpPeerBridge> bfp;
+ void Receive(){
+  if(memory.at(G::Job+8)==1 && memory.at(G::Job+16*4)==0x314a3842){
+   assert(!active && !bfp && (pc==waitPC || pc==waitPC+4) && memory.at(G::Job+4)==sequence+1);
+   uint32_t job[16];for(unsigned i=0;i<16;i++)job[i]=memory.at(G::Job+(16+i)*4);
+   ClearTensorState();bf16Producing=false;activation=denseActive=gdnActive=convActive=outputActive=false;
+   sequence=memory.at(G::Job+4);bfp=std::make_unique<Q38NativeBfpPeerBridge>(job,logicalWorker,binding.bytes);active=true;return;
+  }
+  NativePeerBase::Receive();
+ }
+#endif
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
  bool endpointInputsObserved=false;
  Q38InstructionStackObserver instructionStack;
@@ -186,6 +206,13 @@ struct NativePeer:NativePeerBase,CohortBytes {
  } // actual event DELTAS/explicit writes ONLY;NEVER overwrite an unrelated physical CSR fault
  uint32_t Load(uint32_t address)override{
   deviceReads++;
+  // The worker's sealed source identity always comes from the shared
+  // physical-CSR fixture, including while the BFP8 endpoint is active.
+  if(Range(address,0xffb20000,0x2000))for(unsigned i=0;i<16;i++)if(address-0xffb20000==BlackholeDramSourceOffset(i))
+   return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+  if(bfp && bfp->Handles(address))return bfp->Read(address);
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
   if(address==0xffe80004){
    assert(pc==0x7200c && manualOrdered && manualStores==manualLoads+1);
@@ -193,13 +220,17 @@ struct NativePeer:NativePeerBase,CohortBytes {
   }
 #endif
   if(CodeAddress(address))return binding.Word(address);
-  if(Range(address,0xffb20000,0x2000))for(unsigned i=0;i<16;i++)if(address-0xffb20000==BlackholeDramSourceOffset(i))
-   return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
   const uint32_t value=NativePeerBase::Load(address);
   if(Range(address,0xffb20000,0x2000))Publish();
   return Range(address,0xffb20000,0x2000)?binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000):value;
  }
  void Store(uint32_t address,uint32_t value)override{
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+  if(bfp && bfp->Handles(address)){bfp->Write(address,value);matrixInstructions=bfp->MatrixInstructions();deviceWrites++;return;}
+  if(bfp && Range(address,0x84000,32*4)){
+   assert(!(address&3) && bfp->Clean());binding.Word(address)=value;deviceWrites++;return;
+  } // actual worker result store after the BFP backend's real drain
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
   if(address==0xffe80004){
    assert(pc==0x72008 && !value && !manualOrdered && manualStores==manualLoads);
@@ -232,6 +263,7 @@ struct NativePeer:NativePeerBase,CohortBytes {
  }
  void StepBlock()override{
   uint32_t expected;assert(ExpectedWord(pc,expected) && binding.Word(pc)==expected);
+  recentPC[recentCount++%32]=pc;
 #ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
 #ifndef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
 #error Completion-loss endpoint requires the actual manual-wait worker
@@ -339,6 +371,10 @@ void Q38NativePeerTestCpu::AdvanceStopped(unsigned count){
 bool Q38NativePeerTestCpu::ObserveFaulted()const{
  namespace G=NativeQ38PeerInstructionModel::G;const auto& p=*impl->cpu;
  return p.pc==p.faultPC && p.memory.at(G::Status+8)==G::Fault;
+}
+void Q38NativePeerTestCpu::ReportRecentInstructions()const{
+ const auto& p=*impl->cpu;fprintf(stderr,"RECENT_PEER_PC");const unsigned count=std::min(p.recentCount,32U),start=p.recentCount-count;
+ for(unsigned i=0;i<count;i++)fprintf(stderr," %x",p.recentPC[(start+i)%32]);fprintf(stderr,"\n");
 }
 void Q38NativePeerTestCpu::AdvanceFaulted(unsigned count){
  assert(count && count<=2048 && ObserveFaulted());auto& p=*impl->cpu;

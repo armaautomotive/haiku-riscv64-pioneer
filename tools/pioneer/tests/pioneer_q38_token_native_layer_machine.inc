@@ -143,8 +143,15 @@ void RespondLayer(){
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE)
     if(at==W::Doorbell){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE
-     assert(recurrentProducersRunning && worker==recurrentProducerDoorbells+1 && worker<=20
-      && io.Raw(0,local+i*4)==1 && io.Raw(worker,W::Job+8)==5);recurrentProducerDoorbells++;
+     if(io.Raw(worker,W::Job+8)==5){
+      assert(recurrentProducersRunning && worker==recurrentProducerDoorbells+1 && worker<=20 && io.Raw(0,local+i*4)==1);recurrentProducerDoorbells++;
+     }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE
+     else assert(recurrentProducersRunning && recurrentProducerDoorbells==20 && worker==1
+      && io.Raw(0,local+i*4)==2 && io.Raw(worker,W::Job+8)==1);
+#else
+     else assert(false && "matrix doorbell must remain pending");
+#endif
 #else
      assert(worker==1 && io.Raw(0,local+i*4)==1 && io.Raw(worker,W::Job+8)==5);
 #endif

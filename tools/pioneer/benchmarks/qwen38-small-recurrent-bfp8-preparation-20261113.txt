@@ -559,3 +559,15 @@ operations, and checked all 32 outputs against an independent exact result.
 The current bridge snapshots the source bytes on construction and is not yet
 attached to a running worker CPU; its test does not establish continuous
 controller/worker execution, real-model correctness, hardware or throughput.
+
+Continuous first matrix band: initial integration attempts exposed two host
+simulator errors: a hard-coded source CSR at the worker's seal check and an
+output store checked against the older matrix backend. After correcting those
+test endpoints, the same QTPM peer booted, produced its BF16 input, and ran
+the first role-10 BFP8 band after the controller's 20-producer sequence. The
+worker executed 2,560 modeled matrix instructions and all 32 synthetic outputs
+matched a post-hoc independent observer within the specified tolerance. The
+ROOT was held while the already-issued matrix doorbell was delivered, and the
+host BFP backend snapshots its synthetic input/weight bytes at construction.
+This is not the complete 64-row operation, full layer, token, real-model
+quality, physical-card qualification or speed measurement.

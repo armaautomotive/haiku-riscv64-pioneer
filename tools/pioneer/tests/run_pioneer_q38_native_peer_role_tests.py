@@ -58,6 +58,21 @@ for value in (0,2):
     check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':value}, False, True)
 for macro in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE'):
     check('pioneer_q38_native_peer_test_bridge.cpp', {'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':1,macro:1}, False, True)
+matrix_host={'PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST':1,'PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST':1,
+             'PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE':1,'PIONEER_Q38_TOKEN_BF16_PROGRAMS':1}
+check('pioneer_q38_native_peer_test_bridge.cpp',matrix_host,True,True)
+for parent in matrix_host:
+    invalid=dict(matrix_host);del invalid[parent]
+    check('pioneer_q38_native_peer_test_bridge.cpp',invalid,parent=='PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST',True)
+for macro in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_WORK_INFERENCE'):
+    check('pioneer_q38_native_peer_test_bridge.cpp',{**matrix_host,macro:1},False,True)
+bfp_header='pioneer_q38_native_bfp_peer_bridge.h'
+check(bfp_header,{role:1,**matrix_host,'TT_PIONEER_Q38_WORK_MODE':1},True)
+for parent in ('PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST','PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST','PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE'):
+    invalid={role:1,**matrix_host,'TT_PIONEER_Q38_WORK_MODE':1};invalid[parent]=0
+    check(bfp_header,invalid,False)
+for macro in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','PIONEER_Q38_FULL_OFFLOAD_NATIVE'):
+    check(bfp_header,{role:1,**matrix_host,'TT_PIONEER_Q38_WORK_MODE':1,macro:1},False)
 recurrent_bytes={'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PEER_FIXTURE':1,
                  'PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY':1,fixture:1}
 check('pioneer_q38_token_native_peer_bytes.inc',recurrent_bytes,True,True)
@@ -89,6 +104,11 @@ check('pioneer_q38_token_native_execution_checks.inc',matrix,True,True)
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**matrix,'PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE':value},False,True)
 check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE':1},False,True)
+matrix_execution={**matrix,'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',matrix_execution,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**matrix_execution,'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE':value},False,True)
+check('pioneer_q38_token_native_execution_checks.inc',{'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE':1},False,True)
 stack_header='PioneerQ38InstructionStackObserver.h'
 stack_role='PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST'
 check(stack_header,{stack_role:1},True)

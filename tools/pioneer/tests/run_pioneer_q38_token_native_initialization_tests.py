@@ -22,9 +22,11 @@ synthetic_embedding='--synthetic-embedding' in sys.argv
 if synthetic_embedding:
     assert sys.argv.count('--synthetic-embedding')==1
     sys.argv.remove('--synthetic-embedding')
-recurrent_producers='--execution-recurrent-producers' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_matrix_peer='--execution-recurrent-matrix' in sys.argv and '--recurrent-native-header' in sys.argv
+recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
 recurrent_producer=('--execution-recurrent-producer' in sys.argv or recurrent_producers) and '--recurrent-native-header' in sys.argv
 assert not synthetic_recurrent_matrix or recurrent_producers and synthetic_embedding, 'synthetic recurrent matrix data requires its isolated producer cohort'
+assert not recurrent_matrix_peer or synthetic_recurrent_matrix, 'recurrent matrix peer requires synthetic test weights'
 recurrent_layer_peer=('--execution-recurrent-layer-peer' in sys.argv or recurrent_producer) and '--recurrent-native-header' in sys.argv
 synthetic_layer=synthetic_embedding and ('--execution-layer-dispatch' in sys.argv or recurrent_layer_peer)
 recurrent_peer=('--bootstrap-peer-engines' in sys.argv or recurrent_layer_peer) and '--recurrent-native-header' in sys.argv
@@ -430,6 +432,7 @@ if qgwd_inspection:
     if recurrent_producer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCER_FIXTURE']='1'
     if recurrent_producers:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_PRODUCERS_FIXTURE']='1'
     if synthetic_recurrent_matrix:defines['PIONEER_Q38_TOKEN_NATIVE_SYNTHETIC_RECURRENT_MATRIX_FIXTURE']='1'
+    if recurrent_matrix_peer:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_MATRIX_FIXTURE']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
@@ -740,6 +743,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         peer_object = base/'native-peer-engine.o'
         peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
         if recurrent_peer:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_TEST=1']
+        if recurrent_matrix_peer:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST=1']
         if recurrent_producer:
             peer_flags += ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1','-DPIONEER_Q38_TEST_BF16_CONNECTED_PREPARE=1']
         if precise_context:
@@ -768,6 +772,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', *peer_flags, '-c', str(here/'pioneer_q38_native_peer_test_bridge.cpp'), '-o', str(peer_object)], check=True)
         extra += [str(peer_object)]  # HOST-only TU;never native/kernel-role flags
+        if recurrent_matrix_peer:
+            bfp_object=base/'native-bfp-peer.o'
+            subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                            '-Wno-misleading-indentation','-Wno-unused-function','-ffp-contract=off','-fsanitize=address,undefined',
+                            '-DPIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT=1','-c',str(here/'pioneer_q38_native_bfp_peer_bridge.cpp'),'-o',str(bfp_object)],check=True)
+            extra += [str(bfp_object)] # host tensor/queued-read endpoint;no kernel or Work capability
     if embedding or full_end_contract:
         # RAW byte transport is a separate TEST-only TU,without native-role
         # defines. Never promote its CPU-validation preprocessor role into

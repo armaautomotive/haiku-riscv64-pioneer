@@ -58,6 +58,7 @@ public:
  bool ObserveStopped()const;
  void AdvanceStopped(unsigned); // execute the actual immutable STOP loop for an inertness observation
  bool ObserveFaulted()const;
+ void ReportRecentInstructions()const; // diagnostics only;no worker-state mutation
  void AdvanceFaulted(unsigned); // actual immutable fault loop,never a supplied fault/ready marker
  bool ObserveLayerBoundary(); // rebase HOST watchdog only AFTER actual down-job arithmetic/DONE/WAIT
 #ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
