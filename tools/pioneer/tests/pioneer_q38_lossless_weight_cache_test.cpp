@@ -27,7 +27,7 @@ int main(int argc,char** argv) {
 	assert(plan.Build(source,128,true,true) && untiled.Build(source,128,false,true));
 	const auto original=Cache::Hash("FIXTURE-not-authenticated-public-model",38);
 	const std::string recipe=Lossless::Recipe("test-source-fingerprint");const auto conversion=Cache::Hash(recipe.data(),recipe.size());
-	bool ready=true;auto sourceReady=[&]{return ready && source.Stable();};std::string error;
+	bool ready=true;unsigned readyChecks=0;auto sourceReady=[&]{readyChecks++;return ready && source.Stable();};std::string error;
 	Lossless first;assert(first.Bind(directory.c_str(),source,original,conversion,sourceReady,error));
 	assert(!first.Bind(directory.c_str(),source,original,conversion,sourceReady,error));cases++;
 	Lossless::Statistics stats;
@@ -53,10 +53,29 @@ int main(int argc,char** argv) {
 				for(unsigned i=p.bytes%4096;i<4096;i++)assert(!actual[i]);partial++;
 			}
 		}
+		for(unsigned page=0;page<p.allocated/4096;){
+			const unsigned count=std::min(16U,unsigned(p.allocated/4096)-page);
+			std::vector<uint8_t> batch(count*4096,0xa9),expected(count*4096);
+			for(unsigned i=0;i<count;i++)assert(plan.ReadWeightPage(source,part,page+i,expected.data()+i*4096,4096));
+			assert(reopened.ReadWeightPages(plan,part,page,count,batch.data(),batch.size(),error) && batch==expected);
+			page+=count;
+		}
+		std::array<uint8_t,8192> invalid;invalid.fill(0xa9);const auto untouched=invalid;
+		assert(!reopened.ReadWeightPages(plan,part,p.allocated/4096-1,2,invalid.data(),invalid.size(),error) && invalid==untouched);
+		assert(!reopened.ReadWeightPages(plan,part,0,0,invalid.data(),invalid.size(),error) && invalid==untouched);
+		assert(!reopened.ReadWeightPages(plan,part,0,17,invalid.data(),invalid.size(),error) && invalid==untouched);
+		assert(!reopened.ReadWeightPages(plan,part,0,2,invalid.data(),invalid.size()-1,error) && invalid==untouched);
 		UnchangedFailure(reopened,plan,part,p.allocated/4096);cases++;
 	}
 	assert(tested==stats.convertedPages+partial /* separately rounded fragment tails */ || tested>stats.convertedPages);
 	assert(partial>0);cases++;
+	unsigned batchedPart=0;while(plan.Parts()[batchedPart].kind!=PIONEER_Q38_WEIGHT
+		|| plan.Parts()[batchedPart].tensor!=selected[1] || plan.Parts()[batchedPart].allocated<16*4096)batchedPart++;
+	std::vector<uint8_t> single(16*4096),batch(16*4096);
+	readyChecks=0;for(unsigned i=0;i<16;i++)assert(reopened.ReadWeightPage(plan,batchedPart,i,single.data()+i*4096,4096,error));
+	const unsigned singleChecks=readyChecks;readyChecks=0;
+	assert(reopened.ReadWeightPages(plan,batchedPart,0,16,batch.data(),batch.size(),error) && batch==single);
+	assert(readyChecks<singleChecks);cases++;
 	UnchangedFailure(reopened,untiled,0,0);UnchangedFailure(reopened,plan,UINT32_MAX,0);
 	unsigned absent=0;while(plan.Parts().at(absent).kind!=PIONEER_Q38_WEIGHT
 		|| std::find(selected.begin(),selected.end(),plan.Parts()[absent].tensor)!=selected.end())absent++;
@@ -73,6 +92,8 @@ int main(int argc,char** argv) {
 	int corrupt=open(damagedPath.c_str(),O_RDWR|O_NOFOLLOW);assert(corrupt>=0);uint8_t byte=0x57;
 	assert(pwrite(corrupt,&byte,1,before.st_size-1)==1 && !fsync(corrupt) && !close(corrupt) && !chmod(damagedPath.c_str(),0400));
 	UnchangedFailure(reopened,plan,damaged,0);assert(!stat(damagedPath.c_str(),&after) && before.st_ino==after.st_ino);cases++;
+	std::vector<uint8_t> rejected(16*4096,0xa9);const auto unchanged=rejected;
+	assert(!reopened.ReadWeightPages(plan,damaged,0,16,rejected.data(),rejected.size(),error) && rejected==unchanged);
 	// A read-only upload never repairs or recreates a missing prepared entry.
 	Cache::Key key;assert(reopened.KeyFor(selected[1],key));const std::string path=directory+"/"+Cache::EntryName(key);
 	assert(!unlink(path.c_str()));

@@ -12,6 +12,15 @@ struct SpanSource:FakeSource {
 		return Ready();
 	}
 };
+struct BulkSpanSource:SpanSource {
+	unsigned batches=0;
+	explicit BulkSpanSource(FILE* f):SpanSource(f) {}
+	bool ReadWeightPages(const PioneerQwen38PackedPlan& plan,unsigned f,unsigned page,unsigned count,uint8_t* data,unsigned bytes) {
+		assert(count && count<=16 && bytes==count*4096);batches++;
+		for(unsigned i=0;i<count;i++)if(!ReadWeightPage(plan,f,page+i,data+i*4096,4096))return false;
+		return true;
+	}
+};
 struct SpanIO:WorkSessionIO {
 	SpanSource& spanSource;
 	unsigned spanFault=0,spans=0,spanEnds=0;
@@ -94,6 +103,16 @@ int main()
 	Fixture fixture; SpanSource source(fixture.file);
 	const auto* t=source.Model().Find("blk.3.attn_k.weight"); assert(t); unsigned tensor=unsigned(t-source.Model().Tensors().data());
 	std::vector<float> x(5120,.125f),y(1024,-99),before=y;
+	{
+		BulkSpanSource bulk(fixture.file);SpanIO io(bulk,tensor);PioneerQ38WorkSession<SpanIO,BulkSpanSource> session(io,bulk);
+		assert(session.Open() && session.PrimeSpan(tensor) && bulk.batches && bulk.batches<bulk.reads);
+		assert(session.Finish() && io.spanEnds==1 && !io.runs);
+	}
+	{
+		BulkSpanSource bulk(fixture.file);bulk.failRead=2;SpanIO io(bulk,tensor);
+		PioneerQ38WorkSession<SpanIO,BulkSpanSource> session(io,bulk);
+		assert(session.Open() && !session.PrimeSpan(tensor) && bulk.batches==1 && !io.spans && !io.spanEnds && !io.ends && io.closes==1);
+	}
 	{
 		SpanIO io(source,tensor); PioneerQ38WorkSession<SpanIO,SpanSource> session(io,source);
 		SpanObserver observer(io); session.Observe(SpanObserver::Progress,&observer);

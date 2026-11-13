@@ -47,5 +47,12 @@ public:
 		if(!weights.ReadWeightPage(plan,fragment,page,stage,sizeof(stage),error) || !Ready())return false;
 		memcpy(output,stage,sizeof(stage));return true;
 	}
+	bool ReadWeightPages(const PioneerQwen38PackedPlan& plan,unsigned fragment,unsigned page,unsigned pages,
+		uint8_t* output,unsigned capacity) {
+		if(!output || !pages || pages>16 || capacity<pages*4096 || !Ready())return false;
+		std::vector<uint8_t> stage(pages*4096);std::string error;
+		if(!weights.ReadWeightPages(plan,fragment,page,pages,stage.data(),stage.size(),error) || !Ready())return false;
+		memcpy(output,stage.data(),stage.size());return true;
+	}
 };
 #endif

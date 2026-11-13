@@ -1,0 +1,23 @@
+Assistant Work weight-cache read batching, offline build and tests
+
+The existing cached-model source can read up to 16 adjacent 4 KiB pages in
+one operation. The span uploader selects that method for sources providing it
+and retains the original per-page path for other source types. Each batch is
+staged before publication, keeps chunk SHA verification and before/after
+source identity checks, and zero-fills the last partial page. Identity is now
+checked at batch boundaries rather than every page for this source. No change
+was made to the model encoding, driver, inference mode or CPU validation.
+
+ASan/UBSan cache tests compared batches against the original page reader over
+27,247 fixture pages, four formats and four partial fragment tails. Invalid
+ranges/capacities and a changed cache entry left caller output untouched. An
+instrumented fixture confirmed fewer source-ready checks for a 16-page batch.
+Mock Work span tests exercised bulk dispatch, byte-for-byte upload contents,
+read failures, and the fallback path. No real device was accessed by tests.
+The Assistant Work worker cross-built against pinned runtime libraries, SHA256
+a12782523769c9629cb4c7dd43de01fca5036b0abe10fbb7c3c92add6d71572d.
+
+The new worker has not been installed or timed on the Pioneer. Faster loading
+is a hypothesis until a controlled measurement; this does not change inference
+arithmetic or establish any tokens-per-second improvement. Batch-level identity
+observation is not proof against an external mutation reverted between checks.

@@ -100,14 +100,14 @@ public:
 	// entry fails closed; NO repair/conversion after the accelerator is opened.
 	// One reader/64KiB snapshot bounds FDs/RAM. Actual page bytes and every
 	// fragment's tail are identical to PackedPlan::ReadWeightPage.
-	bool ReadWeightPage(const PioneerQwen38PackedPlan& plan,unsigned fragment,unsigned page,
+	bool ReadWeightPages(const PioneerQwen38PackedPlan& plan,unsigned fragment,unsigned page,unsigned pages,
 		uint8_t* output,unsigned capacity,std::string& error) {
-		if(!Ready() || !output || capacity<4096 || !plan.MatchesSource(*model) || !plan.Tiled())
+		if(!Ready() || !output || !pages || pages>16 || capacity<pages*4096 || !plan.MatchesSource(*model) || !plan.Tiled())
 			return Fail(error,"Lossless cache reader needs the bound tiled plan and stable original.");
 		const auto& parts=plan.Parts();if(fragment>=parts.size())return Fail(error,"Invalid weight fragment.");
 		const auto& part=parts[fragment];
 		if(part.kind!=PIONEER_Q38_WEIGHT || part.tensor>=entries.size() || !part.allocated || part.allocated%4096
-			|| page>=part.allocated/4096)return Fail(error,"Invalid cached weight page.");
+			|| page>=part.allocated/4096 || pages>part.allocated/4096-page)return Fail(error,"Invalid cached weight page.");
 		const auto& entry=entries[part.tensor];const auto& tensor=model->Tensors()[part.tensor];
 		const uint64_t relative=uint64_t(page)*4096;
 		if(!entry.prepared || part.rowBytes!=entry.rowBytes || !part.rows || part.firstRow>tensor.outputs
@@ -119,8 +119,8 @@ public:
 			if(!cache.OpenExisting(entry.key,[this]{return Ready();},*next,error))return false;
 			reader=std::move(next);active=part.tensor;
 		}
-		uint8_t stage[4096]={};unsigned copied=0;
-		const unsigned count=unsigned(std::min(UINT64_C(4096),uint64_t(part.bytes)-relative));
+		std::vector<uint8_t> stage(pages*4096,0);unsigned copied=0;
+		const unsigned count=unsigned(std::min(uint64_t(pages)*4096,uint64_t(part.bytes)-relative));
 		const uint64_t start=uint64_t(part.firstRow)*part.rowBytes+relative;
 		while(copied<count) {
 			const uint64_t position=start+copied,first=position/Cache::ChunkBytes*Cache::ChunkBytes;
@@ -130,10 +130,14 @@ public:
 				windowOffset=first;windowBytes=bytes;
 			}
 			const unsigned within=unsigned(position-windowOffset),take=std::min(count-copied,windowBytes-within);
-			memcpy(stage+copied,window.data()+within,take);copied+=take;
+			memcpy(stage.data()+copied,window.data()+within,take);copied+=take;
 		}
 		if(!Ready() || !reader->IsOpen())return Fail(error,"Original or cached file changed during weight-page read.");
-		memcpy(output,stage,sizeof(stage));return true;
+		memcpy(output,stage.data(),stage.size());return true;
+	}
+	bool ReadWeightPage(const PioneerQwen38PackedPlan& plan,unsigned fragment,unsigned page,
+		uint8_t* output,unsigned capacity,std::string& error) {
+		return ReadWeightPages(plan,fragment,page,1,output,capacity,error);
 	}
 };
 #endif

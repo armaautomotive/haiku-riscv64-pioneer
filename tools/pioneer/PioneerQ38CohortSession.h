@@ -44,6 +44,18 @@
 #endif
 template<class IO> auto PioneerQ38SessionNow(IO& io,int) -> decltype(io.NowNanos()) { return io.NowNanos(); }
 template<class IO> uint64_t PioneerQ38SessionNow(IO&,long) { return 0; } // offline transport without clock
+// Sources with an authenticated bulk reader may avoid repeating file-identity
+// checks for every 4 KiB page. Other source types retain the old page path.
+template<class Source> auto PioneerQ38ReadSpanPages(Source& source,const PioneerQwen38PackedPlan& plan,
+ unsigned fragment,unsigned page,unsigned count,uint8_t* output,int)
+ -> decltype(source.ReadWeightPages(plan,fragment,page,count,output,count*4096),bool()) {
+ return source.ReadWeightPages(plan,fragment,page,count,output,count*4096);
+}
+template<class Source> bool PioneerQ38ReadSpanPages(Source& source,const PioneerQwen38PackedPlan& plan,
+ unsigned fragment,unsigned page,unsigned count,uint8_t* output,long) {
+ for(unsigned i=0;i<count;i++)if(!source.ReadWeightPage(plan,fragment,page+i,output+i*4096,4096))return false;
+ return true;
+}
 struct PioneerQ38CohortSessionMode {
 	static constexpr unsigned Workers=120,Operation=TT_PCI_PROBE_Q38_COHORT_RUN;
 	template<class IO> bool Support(IO& io,int fd) {
@@ -309,8 +321,12 @@ public:
 				request->version=1; request->bank=p.bank; request->bytes=pages*4096; request->reserved=0;
 				request->offset=uint64_t(p.proposedAddress)-layout.Base+uint64_t(page)*4096; request->result={};
 				uint64_t start=PioneerQ38SessionNow(io,0);
-				for (unsigned at=0;at<pages;at++) if (!source.ReadWeightPage(layout,f,page+at,
-					reinterpret_cast<uint8_t*>(request->data+at*1024),4096)) return Stop();
+				for (unsigned at=0;at<pages;) {
+					const unsigned count=std::min(16U,pages-at);
+					if (!PioneerQ38ReadSpanPages(source,layout,f,page+at,count,
+						reinterpret_cast<uint8_t*>(request->data+at*1024),0)) return Stop();
+					at+=count;
+				}
 				Elapsed(start,sourceReadNanos);
 				if (!source.Ready()) return Stop();
 #ifdef PIONEER_Q38_FFN_PRIME
