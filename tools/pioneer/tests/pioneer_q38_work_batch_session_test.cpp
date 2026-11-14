@@ -3,6 +3,7 @@
 #define PIONEER_Q38_MODE_SESSION_MOCK_ONLY
 #define PIONEER_Q38_WORK_INFERENCE 1
 #define PIONEER_Q38_WORK_BATCH_CLIENT 1
+#define PIONEER_Q38_WORK_PHASE_PROFILE 1
 #include "pioneer_q38_mode_session_test.cpp"
 
 struct BatchSessionIO:WorkSessionIO {

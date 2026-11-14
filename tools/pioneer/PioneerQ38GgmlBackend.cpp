@@ -105,7 +105,7 @@ ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 				|| !Ready()) {
 				Abort();return GGML_STATUS_FAILED;
 			}
-			skipIndex=j;stats.projections+=2;completed=true;break;
+			skipIndex=j;stats.projections+=2;stats.pairedBatches++;completed=true;break;
 		}
 #endif
 		if (!completed && (!dispatch.multiply(dispatch.owner,tensor,static_cast<const float*>(op->src[1]->data),unsigned(op->src[1]->ne[0]),

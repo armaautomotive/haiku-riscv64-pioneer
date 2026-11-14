@@ -76,7 +76,7 @@ int main(int argc,char** argv)
 			assert(PioneerQ38GgmlSnapshot().failed && !PioneerQ38GgmlSnapshot().projections);
 			assert(!PioneerQ38GgmlFinish() && !fake.ends && fake.aborts==1);
 		}else{
-			assert(PioneerQ38GgmlSnapshot().projections==2);
+			assert(PioneerQ38GgmlSnapshot().projections==2 && PioneerQ38GgmlSnapshot().pairedBatches==1);
 			for(unsigned r=0;r<first->outputs;r++)assert(static_cast<float*>(firstY->data)[r]==float(r+1));
 			for(unsigned r=0;r<second->outputs;r++)assert(static_cast<float*>(secondY->data)[r]==float(r+101));
 			assert(PioneerQ38GgmlFinish());assert(fake.ends==1 && !fake.aborts);
@@ -150,7 +150,7 @@ int main(int argc,char** argv)
 		if (fault) break;
 	}
 	unsigned calls=fake.calls;
-	assert(PioneerQ38GgmlSnapshot().recognizedWeights==(fault?1U:3U));
+	assert(PioneerQ38GgmlSnapshot().recognizedWeights==(fault?1U:3U) && !PioneerQ38GgmlSnapshot().pairedBatches);
 	assert(PioneerQ38GgmlFinish()==!fault);
 	auto stats=PioneerQ38GgmlSnapshot(); assert(stats.finished && stats.failed==bool(fault) && stats.clean==!fault);
 	assert(fake.ends==unsigned(!fault) && fake.aborts==unsigned(bool(fault)));
