@@ -46,6 +46,13 @@ The current Assistant Work-batch build-gate and driver-role tests were also
 rerun and both exited 0: the no-reference Work Assistant role is admitted,
 while CPU-validated, non-Assistant, missing/wrong-tag, and mixed diagnostic
 roles are refused before device access.
+An independent second driver build into a fresh temporary output directory
+reproduced all three hashes byte-for-byte: native candidate
+`d820813f1da8cb4eb9ce0ee6e78c6e08cecc94afef04b6cda49c16f5f80c49d8`,
+reload guard `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`,
+and default control `2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc`.
+This establishes deterministic builds with this local SDK/source snapshot,
+not clean-source reproducibility or runtime correctness.
 
 The ELF symbol table contains both the Q38 GGML backend and the concrete
 PioneerQ38CohortSession::MultiplyPair implementation. This verifies the
