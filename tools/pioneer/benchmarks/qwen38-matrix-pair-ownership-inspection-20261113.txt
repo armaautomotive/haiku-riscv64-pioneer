@@ -36,10 +36,18 @@ Diagnostic bridge, build-only: a separate pair protocol and adapter with tag
 The separate CPU-reference debug client authenticates the original model and
 requires both 64-word outputs to match before it sends explicit END. Work and
 validation role guards remain disjoint. The original single-core diagnostic
-also cross-compiles. Adapter fault injection, a clean-source reproducible
-build, a one-shot parent/recovery wrapper and actual overlap proof remain
-required. The builder currently sees unrelated local driver WIP, so its
-candidate hash is not a clean-source deployment identity.
+also cross-compiles. The committed source was exported with git archive and
+independently built twice: both pair drivers have SHA-256
+1ce9094e63f8b396bde385323e5e9b73da767aa496347375f620ae8e8825b3d1 and both
+debug clients 81ffae39112c10e910be51aee6b63bdd139e143543e1da0fdb4d77b540845eaa.
+This pins build inputs but does not authorize installation.
+
+The actual pair debug client was compiled under ASan/UBSan against fake source
+and ioctl endpoints. It refused invalid metadata, source readiness failures,
+run and END failures, corrupted state and restoration flags for both peers,
+and all 128 individually corrupted output positions without sending END after
+a failed run. No real device was opened. Kernel adapter fault injection, a
+one-shot parent/recovery wrapper and actual overlap proof remain required.
 
 This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
