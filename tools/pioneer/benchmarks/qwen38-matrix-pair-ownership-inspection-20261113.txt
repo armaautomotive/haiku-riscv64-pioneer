@@ -195,3 +195,13 @@ handling conflates ioctl failure, invalid/timeout result, and source change.
 The P100A post-cycle state has not been re-read on Haiku. This prototype does
 not yet move any Qwen layer to the P100A and establishes no tokens/sec
 improvement; 20 tokens/sec remains unmet.
+
+Offline follow-up rebuilt the same candidate driver unchanged at hash
+f87028a47a48e3f82f592f9430d24439ad185af1920de9e28a64b991b5abd286 and a new
+client at hash a8fc1ed3a02c31b4ece284d7e12d7bad1240ac05bdedf4f09b7582592053b871.
+The client now distinguishes ioctl errno, invalid returned state (including
+both core result summaries and four raw PCs), and post-run source change. The
+client fault-injection suite, 399-case parent protocol test, pair ownership
+and role-refusal tests, and actual RV32/matrix instruction simulator all pass.
+The new client has NOT been deployed physically; no hardware result or speed
+claim follows from these offline tests.

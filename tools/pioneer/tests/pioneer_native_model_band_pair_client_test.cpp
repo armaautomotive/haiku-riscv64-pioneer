@@ -90,7 +90,7 @@ int main(){
   assert(supports==1);
   if(scenario==3 || scenario==11 || scenario==12){assert(!runs && !ends);continue;}
   assert(runs==1);
-  if(scenario==4 || scenario==13 || (scenario>=20 && scenario<40)){assert(!ends);continue;}
+  if(scenario==4 || scenario==13 || (scenario>=20 && scenario<40) || (scenario>=50 && scenario<55)){assert(!ends);continue;}
   assert(ends==1);
  }
  for(unsigned target=0;target<2;target++)for(failedWord=0;failedWord<64;failedWord++){

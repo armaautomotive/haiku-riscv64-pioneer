@@ -10,6 +10,7 @@
 #include "PioneerNativeModelBandSource.h"
 #include <cstdio>
 #include <cstring>
+#include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -54,8 +55,18 @@ int main(int argc,char** argv){
   || r.sample!=UINT32_MAX || r.nonce || r.accept || r.expected_generation!=m.generation || !source.Ready()){
   fputs("PAIR_SUPPORT_SOURCE_REFUSED;NO_RUN\n",stderr);close(fd);return 1;}
  r={};r.version=2;r.expected_tag=PioneerNativeModelBandPairTag;r.expected_generation=m.generation;
- if(ioctl(fd,PIONEER_NATIVE_MODEL_BAND_PAIR_RUN,&r,sizeof(r)) || !Result(r,m.generation,PIONEER_NATIVE_BFP_RESULT) || !source.Ready()){
-  fputs("PAIR_RUN_UNPROVEN;CLOSE_ONLY_NO_END_OR_RETRY\n",stderr);close(fd);return 1;}
+	const int runStatus=ioctl(fd,PIONEER_NATIVE_MODEL_BAND_PAIR_RUN,&r,sizeof(r));
+	if(runStatus){fprintf(stderr,"PAIR_RUN_IOCTL_FAILED errno=%d;CLOSE_ONLY_NO_END_OR_RETRY\n",errno);close(fd);return 1;}
+	if(!Result(r,m.generation,PIONEER_NATIVE_BFP_RESULT)){
+	 fprintf(stderr,"PAIR_RUN_RESULT_INVALID overlap=%u pcs=%08x-%08x-%08x-%08x",r.overlap_verified,r.overlap_pc[0],r.overlap_pc[1],r.overlap_pc[2],r.overlap_pc[3]);
+	 for(unsigned i=0;i<2;i++){
+	  const auto& v=r.result[i];
+	  fprintf(stderr," core%u={state%u cold%u started%u completed%u polls%u phase%08x count%08x marker%08x pc%08x-%08x held%u l1%u tlb%u}",
+	   i,v.state,v.cold,v.started,v.completed,v.polls,v.phase,v.count,v.marker,v.pc[0],v.pc[1],v.held,v.l1_restored,v.tlb_restored);
+	 }
+	 fputs(";CLOSE_ONLY_NO_END_OR_RETRY\n",stderr);close(fd);return 1;
+	}
+	if(!source.Ready()){fputs("PAIR_RUN_SOURCE_CHANGED;CLOSE_ONLY_NO_END_OR_RETRY\n",stderr);close(fd);return 1;}
  for(unsigned i=0;i<2;i++){
   const auto* golden=Meta::Golden(i);if(!golden){close(fd);return 1;}
   for(unsigned n=0;n<64;n++)if(r.result[i].output[n]!=golden[n%32]){
