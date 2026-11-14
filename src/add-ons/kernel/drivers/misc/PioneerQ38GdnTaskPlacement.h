@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_GDN_TASK_PLACEMENT_H
 #define PIONEER_Q38_GDN_TASK_PLACEMENT_H
+#ifndef PIONEER_ATTENTION_FREESTANDING
 #include <stdint.h>
+#endif
 
 // Pure routing metadata for a possible layer-dependent GDN task layout.
 // This does not select the layout, launch workers, or grant L1/device access.
@@ -33,11 +35,11 @@ static inline bool LayerOrdinal(uint32_t actualLayer,uint32_t& ordinal)
 
 static inline uint32_t Peer(uint32_t physicalWorker)
 {
-	if(!physicalWorker || physicalWorker>PhysicalWorkers)return UINT32_MAX;
+	if(!physicalWorker || physicalWorker>PhysicalWorkers)return ~uint32_t(0);
 	const uint32_t x[]={1,2,3,4,5,6,7,10,11,12,13,14};
 	uint32_t column=0,row=physicalWorker;
 	while(row>=10){row-=10;column++;}
-	if(column>=12)return UINT32_MAX;
+	if(column>=12)return ~uint32_t(0);
 	return x[column]|((row+2)<<6);
 }
 
@@ -47,7 +49,7 @@ static inline bool Map(uint32_t layerOrdinal,uint32_t logicalWorker,Route& out)
 	const uint32_t ordinal=layerOrdinal*LogicalWorkers+logicalWorker;
 	const uint32_t physicalWorker=ordinal%PhysicalWorkers+1;
 	const uint32_t peer=Peer(physicalWorker);
-	if(peer==UINT32_MAX)return false;
+	if(peer==~uint32_t(0))return false;
 	out={layerOrdinal,ActualLayer(layerOrdinal),logicalWorker,physicalWorker,peer,
 		ordinal/PhysicalWorkers};
 	return true;
