@@ -1,0 +1,31 @@
+Qwen 27B GDN in-place state aliasing check, November 14, 2026
+============================================================
+
+The offline two-buffer GDN scalar reference and a column-at-a-time in-place
+formulation produced bit-identical FP32 recurrent state and projected output
+for 128 deterministic randomized full 128x128 states, plus decay/beta boundary
+cases. Reproduce with:
+
+  `bash tools/pioneer/tests/run_pioneer_q38_gdn_inplace_state_test.sh`
+
+The transformation computes the prediction for a complete state column,
+derives that column's delta, updates each state element in place, and accumulates
+the projected output from each newly updated element. This ordering means a
+column's old values are consumed before they are overwritten; other columns'
+prediction and update loops do not read them. It removes the separate 64 KiB
+next-state buffer from this scalar ordering and may create room for tile-local
+recurrent-state residency.
+
+This is only an arithmetic/aliasing proof for the scalar formula. It does not
+show equivalence of the actual Tenstorrent vector worker's scheduling,
+SFPU/FPU rounding, paired-task protocol, image stack/footprint, multi-token
+state persistence, cancellation/recovery behavior, or physical performance.
+The production path and P100A driver remain unchanged. The authenticated
+Pioneer SSH host-key mismatch still blocks physical testing until verified
+out of band.
+
+Next gate: implement an isolated emitted-image candidate that performs the
+same per-column ordering in the actual returning wide-GDN worker; compare its
+complete state/output against the existing two-buffer emitted worker over
+multi-token and fault/abort fixtures; then measure the combined L1 live ranges
+before considering a persistent state map. No speedup is claimed.
