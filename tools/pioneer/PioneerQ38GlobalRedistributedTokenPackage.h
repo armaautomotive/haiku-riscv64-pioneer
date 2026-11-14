@@ -56,14 +56,17 @@ public:
 		if(selected>=64 || selected%4==3 || selectedBank>=7 || stateSlot>=2 || !source
 			|| !base.Build(c,selected,selectedBank,id,source,initialBank,initialAddress))return false;
 		canonical=&c;layer=selected;bank=selectedBank;slot=stateSlot;identity=id;
-		phase=1001+selected*16;request=selected+1;
+		// TokenMetadata::Gdn consumes the same initial GDN phase as the
+		// canonical recurrent package: outer phase + 5. Record() adds one
+		// while building each input descriptor, so the table plan phase is +4.
+		phase=1005+selected*16;request=selected+1;
 		for(unsigned i=0;i<1920;i++)sources[i]=source[i];
 		if(!gdn.Build(c,selected,0,selectedBank,stateSlot,phase,request,id,source))return false;
 		ready=true;return Matches(c);
 	}
 	bool Matches(const PioneerQ38CanonicalModelPlan& c)const{
 		return ready && canonical==&c && c.Ready() && layer<64 && layer%4!=3
-			&& bank<7 && slot<2 && phase==1001+layer*16 && request==layer+1
+			&& bank<7 && slot<2 && phase==1005+layer*16 && request==layer+1
 			&& base.Matches(c) && gdn.Matches(c,layer,0,bank,slot,phase,request,identity,sources);
 	}
 	unsigned Bytes()const{return ready?PioneerQ38GlobalChainLayout::Stride:0;}
@@ -71,8 +74,6 @@ public:
 	const uint32_t* GdnHeader()const{return ready?gdn.Header():nullptr;}
 	const uint32_t* GdnWorker(unsigned physicalWorker)const{return ready?gdn.Worker(physicalWorker):nullptr;}
 	bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadBound<true>(offset,output,bytes);}
-	bool ReadPublished(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadBound<false>(offset,output,bytes);}
-	const uint32_t* Outer()const{return ready?base.Outer():nullptr;}
 };
 static_assert(sizeof(PioneerQ38GlobalRedistributedTokenPackage)>1600000
 	&& sizeof(PioneerQ38GlobalRedistributedTokenPackage)<2000000,

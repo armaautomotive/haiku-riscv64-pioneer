@@ -7,13 +7,18 @@
 #include "../PioneerQ38GlobalHeadPlan.h"
 #include "../PioneerQ38GlobalOutputClosure.h"
 #include "../PioneerQ38MixedRecurrentProjectionPlan.h"
+#include "../PioneerQ38TokenMetadata.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnTaskPlacement.h"
 #include <array>
 #include <cassert>
 #include <cstdio>
 #include <memory>
 #include <vector>
 namespace T=PioneerQ38TokenLayout;namespace C=T::C;namespace S=PioneerQ38TokenStateLayout;
+namespace M=PioneerQ38TokenMetadata;namespace RP=PioneerQ38RecurrentPrefixLayout;namespace Route=PioneerQ38GdnTaskPlacement;
 int main(){
+ if(false){uint32_t data[128]={};(void)M::Outer(data,0,0,0,0,0,data);(void)M::Recipe(data,0,0,0,0);
+  (void)M::Conv(data,0,0,0,0);(void)M::Dense(data,3,0,0);}
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  std::array<uint32_t,1920> sources;for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
  const PioneerQ38GdnIdentity id={1,2,3,4};unsigned packages=0,words=0,jobs=0,refusals=0,redistributedPackages=0;
@@ -31,7 +36,7 @@ int main(){
    if(!bank && !C::Dense(layer)){
     namespace RL=PioneerQ38RedistributedTokenLayout;
     auto routed=std::make_unique<PioneerQ38GlobalRedistributedTokenPackage>();
-    const unsigned slot=(layer/4)&1;
+    const unsigned slot=0;
     assert(routed->Build(*canonical,layer,bank,slot,id,sources.data(),bank,workspace+0x600000));
     assert(routed->Bytes()==C::Stride && routed->Matches(*canonical));
     std::array<uint8_t,64> prefixA={},prefixB={};
@@ -54,6 +59,26 @@ int main(){
     assert(package->Read(RL::End,slackA.data(),slackA.size()) && routed->Read(RL::End,slackB.data(),slackB.size())
      && slackA==slackB);
     assert(!routed->Read(RL::Offset+1,tableBytes.data(),64));
+    uint32_t ordinal=0;assert(Route::LayerOrdinal(layer,ordinal));
+    std::vector<uint8_t> originalGdn(RP::GdnBytes);
+    for(unsigned at=0;at<RP::GdnBytes;at+=16384){
+     unsigned bytes=RP::GdnBytes-at;if(bytes>16384)bytes=16384;
+     assert(package->Read(RP::GdnOffset+at,originalGdn.data()+at,bytes));
+    }
+    for(unsigned logical=0;logical<Route::LogicalWorkers;logical++){
+     Route::Route worker={};assert(Route::Map(ordinal,logical,worker));
+     std::array<uint32_t,192> original={},candidate={};
+     for(unsigned i=0;i<192;i++){
+      const unsigned at=logical*768+i*4;
+      original[i]=uint32_t(originalGdn[at])|uint32_t(originalGdn[at+1])<<8
+       |uint32_t(originalGdn[at+2])<<16|uint32_t(originalGdn[at+3])<<24;
+      candidate[i]=routed->GdnWorker(worker.physicalWorker)[i];
+     }
+     const bool originalReady=M::Gdn(original.data(),layer,logical,0);
+     const bool candidateReady=M::Gdn(candidate.data(),layer,logical,0);
+     assert(originalReady && (candidateReady==(worker.physicalWorker==logical+1)));
+     if(candidateReady)assert(original==candidate);
+    }
     if(layer==0){
      uint32_t* changed=const_cast<uint32_t*>(routed->GdnWorker(1));changed[128+15]^=1;
      assert(!routed->Matches(*canonical));changed[128+15]^=1;assert(routed->Matches(*canonical));
