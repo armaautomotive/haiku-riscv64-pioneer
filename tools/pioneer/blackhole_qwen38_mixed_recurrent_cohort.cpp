@@ -280,6 +280,7 @@ static void Capture(){
   if(!L::ConvShape(d,Conv(w),w))scalar_fault_park();
   if(w && w<=96 && !L::GdnShape(d,Gdn(w),Conv(w),w))scalar_fault_park();
  }
+ for(unsigned w=97;w<=119;w++)if(!L::GdnEmpty(Gdn(w)))scalar_fault_park();
  Audit(); // complete geometry BEFORE the first peer packet
 }
 static void Job(unsigned w,unsigned operation,uint32_t* j){

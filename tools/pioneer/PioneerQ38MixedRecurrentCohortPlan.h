@@ -24,7 +24,7 @@ public:
    request,L::Nonces,L::Counters,1};
   for(unsigned i=0;i<12;i++)header[40+i]=fields[i];
   for(unsigned i=0;i<L::ConvWords;i++)conv[i]=m[TT_Q38_COHORT_CONV_WORD+i];
-  for(unsigned i=0;i<L::GdnWords;i++)gdn[i]=m[TT_Q38_COHORT_GDN_WORD+i];
+  for(unsigned i=0;i<L::LegacyGdnWords;i++)gdn[i]=m[TT_Q38_COHORT_GDN_WORD+i];
   ready=true;if(Matches(c))return true;
   ready=false;return false;
  }
@@ -38,7 +38,8 @@ public:
   if(!numeric.Matches(c,header[3],header[4],header[7],header[14],header[15],header[5],id,m+TT_Q38_COHORT_SOURCE_WORD,zero))return false;
   for(unsigned i=1;i<40;i++)if(i!=2 && i!=15 && header[i]!=m[i])return false;
   for(unsigned i=0;i<L::ConvWords;i++)if(conv[i]!=m[TT_Q38_COHORT_CONV_WORD+i])return false;
-  for(unsigned i=0;i<L::GdnWords;i++)if(gdn[i]!=m[TT_Q38_COHORT_GDN_WORD+i])return false;
+  for(unsigned i=0;i<L::LegacyGdnWords;i++)if(gdn[i]!=m[TT_Q38_COHORT_GDN_WORD+i])return false;
+  for(unsigned i=L::LegacyGdnWords;i<L::GdnWords;i++)if(gdn[i])return false;
   for(unsigned w=0;w<120;w++){
    if(!L::ConvShape(header,conv+w*384,w))return false;
    if(w && w<=96 && !L::GdnShape(header,gdn+(w-1)*192,conv+w*384,w))return false;

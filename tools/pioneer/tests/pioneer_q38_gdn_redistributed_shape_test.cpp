@@ -6,6 +6,7 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
 #include "../PioneerQ38MixedRecurrentDispatch.h"
+#include "../PioneerQ38MixedRecurrentCohortLayout.h"
 #undef PIONEER_ATTENTION_FREESTANDING
 #include "../PioneerQ38GlobalRecurrentDispatch.h"
 #define PIONEER_ATTENTION_FREESTANDING
@@ -168,6 +169,18 @@ int main()
 			job[13]=TT_Q38_RESIDENT_GDN_SERVICE_OPERATION;
 			assert(PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
 				source,route.physicalWorker,route.peer));
+			uint32_t cohort[64]={},record[192],conv[384]={};
+			cohort[3]=route.actualLayer;cohort[4]=0;cohort[6]=gated[6];
+			cohort[11]=PioneerQ38GdnTaskPlacement::PhysicalWorkers;
+			cohort[12]=PioneerQ38GdnTaskPlacement::LogicalWorkers;
+			cohort[45]=PioneerQ38MixedRecurrentCohortLayout::GdnWords;
+			for(unsigned i=0;i<8;i++)cohort[32+i]=input[32+i];
+			for(unsigned i=0;i<64;i++){record[i]=input[i];record[64+i]=state[i];record[128+i]=gated[i];}
+			for(unsigned i=0;i<16;i++)conv[16+i]=source[i];
+			assert(PioneerQ38MixedRecurrentCohortLayout::GdnRedistributedShape(cohort,record,conv,
+				route.physicalWorker));
+			assert(!PioneerQ38MixedRecurrentCohortLayout::GdnRedistributedShape(cohort,record,conv,
+				route.physicalWorker==119?118:route.physicalWorker+1));
 			assert(!PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
 				source,route.physicalWorker,route.peer+0x10000));
 			uint32_t boot[64]={},dispatch[64]={};

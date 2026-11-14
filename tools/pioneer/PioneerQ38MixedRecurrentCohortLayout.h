@@ -9,7 +9,7 @@ namespace PioneerQ38MixedRecurrentCohortLayout {
 enum {Magic=0x31435251,Fault=0x46435251,Code=0x40000,ConvCode=0x64000,
  Header=0x74600,Boot=0x75300,Doorbell=0x75400,Status=0x75440,Summary=0x75500,Scratch=0x78000,
  Conv=0xc8000,ConvShadow=0x128000,ConvWords=120*384,
- Gdn=0x100000,GdnShadow=0x155000,GdnWords=96*192,
+	 Gdn=0x100000,GdnShadow=0x155000,LegacyGdnWords=96*192,GdnWords=119*192,
  Counters=0x122000,Nonces=0x123000,PeerBoots=0x170000,PeerJobs=0x178000,End=0x17f700};
 struct PrivateSeal {uint32_t boot[64],frame[64];};
 static inline bool BootShape(const uint32_t* b){
@@ -46,6 +46,36 @@ static inline bool GdnShape(const uint32_t* d,const uint32_t* record,const uint3
   || record[64+11]!=d[14])return false;
  for(unsigned i=0;i<8;i++)if(record[32+i]!=d[32+i])return false;
  return true;
+}
+// Candidate 119-slot physical GDN record validator. `record` is the
+// transformed per-position DATA row at its physical-worker index; this does
+// not dispatch it or grant device/state ownership.
+static inline bool GdnRedistributedShape(const uint32_t* d,const uint32_t* record,
+ const uint32_t* conv,unsigned physicalWorker){
+	if(!d || !record || !conv || !physicalWorker
+		|| physicalWorker>PioneerQ38GdnTaskPlacement::PhysicalWorkers
+		|| d[45]!=GdnWords || d[11]!=PioneerQ38GdnTaskPlacement::PhysicalWorkers
+		|| d[12]!=PioneerQ38GdnTaskPlacement::LogicalWorkers)return false;
+	const auto* input=record;const auto* state=record+64;const auto* gated=record+128;
+	uint32_t ordinal=0;PioneerQ38GdnTaskPlacement::Route route={};
+	if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(d[3],ordinal)
+		|| !PioneerQ38GdnTaskPlacement::Map(ordinal,state[9],route)
+		|| route.physicalWorker!=physicalWorker || route.actualLayer!=d[3]
+		|| input[5]!=d[3] || state[10]!=d[3] || input[40]!=d[4]
+		|| state[40]!=d[4] || gated[40]!=d[4] || input[6]!=d[6]
+		|| state[8]!=d[6] || gated[6]!=d[6]
+		|| !PioneerQ38GdnRedistributedRendezvousShape(gated,input,state))return false;
+	for(unsigned i=0;i<8;i++)if(input[32+i]!=d[32+i]
+		|| state[32+i]!=d[32+i] || gated[32+i]!=d[32+i])return false;
+	for(unsigned i=0;i<16;i++)if(conv[16+i]!=input[16+i])return false;
+	uint32_t job[16];PioneerQ38MixedRecurrentDispatch::Internal(8,d[6],physicalWorker,1,job);
+	return PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
+		conv+16,physicalWorker,route.peer);
+}
+static inline bool GdnEmpty(const uint32_t* record){
+	if(!record)return false;
+	for(unsigned i=0;i<192;i++)if(record[i])return false;
+	return true;
 }
 static_assert(Conv+ConvWords*4<=Gdn && Gdn+GdnWords*4<=Counters && Counters+119*32<=Nonces
  && Nonces+119*4<=ConvShadow && ConvShadow+ConvWords*4==GdnShadow
