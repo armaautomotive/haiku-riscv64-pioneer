@@ -12,6 +12,11 @@
 static unsigned selectedFault=0,events=0,retainedCount=0,deletedCount=0;
 static bool hit=false,fakeWritableDram=false;
 static bool Step(unsigned n){assert(!hit && n==++events);if(n==selectedFault){hit=true;return false;}return true;}
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+static constexpr unsigned expectedPages=5067109;
+#else
+static constexpr unsigned expectedPages=5149957;
+#endif
 enum { B_OK=0 };
 namespace PioneerQ38QgwdResident {struct Reply {unsigned version=1,operation=0;int status=0;
  unsigned started=0,ready=0,unsafe=0,stage=0,reservationRetained=0,hostsReleased=0,oldContextRetired=0,modelEnded=0,reserved[5]={};};}
@@ -52,14 +57,14 @@ struct Nest2 {Nest3 baseline;};
 struct Nest1 {Nest2 baseline;};
 struct PioneerStoreContext {
  uint8_t* initialized;uint32_t* hashes;FakeState* q38TokenNative=nullptr;
- PioneerQ38SpanLease* q38Span=nullptr;FakeReceipt* q38QgwdReceipt=nullptr;
+ PioneerQ38SpanLease* q38Span=nullptr;FakeReceipt* q38QgwdReceipt=nullptr;FakeReceipt* q38SmallRecurrentReceipt=nullptr;
  unsigned uploadedPages=0;bool bankStorageOnly=false,qgwdResidentRequestClosed=false;
  uint64_t qgwdResidentSerial=0;int q38GdnCallThread=-1;void* q38Dispatch=nullptr;
  FakeProfile profile;FakePci pci;FakeIO io;PioneerResidentBanks banks;Nest1 baseline;
  int transaction=0,idle=0,host=0;bool quarantined=false;
  explicit PioneerStoreContext(uint64_t):initialized(new uint8_t[PioneerResidentBanks::Pages]()),
   hashes(new uint32_t[PioneerResidentBanks::Pages]()){io.q38MutableContext=this;}
- ~PioneerStoreContext(){deletedCount++;delete[] initialized;delete[] hashes;delete q38TokenNative;delete q38Span;delete q38QgwdReceipt;}
+ ~PioneerStoreContext(){deletedCount++;delete[] initialized;delete[] hashes;delete q38TokenNative;delete q38Span;delete q38QgwdReceipt;delete q38SmallRecurrentReceipt;}
  FakePci& Pci(){return pci;}bool Unsafe()const{return false;}
 };
 struct PioneerProbeCookie {unsigned magic=0x50313030;PioneerStoreContext* context=nullptr;
@@ -82,6 +87,14 @@ static bool PioneerPrepareHostPage(FakeIO&,int&){
 static bool PioneerQ38SpanPrepareService(PioneerStoreContext& c){assert(c.q38Span && !c.q38Span->closed);return Step(8);}
 static bool PioneerQ38SpanEndService(PioneerStoreContext& c){if(!Step(9))return false;c.q38Span->closed=true;return true;}
 struct PioneerQ38QgwdNativeBinding {static bool Matches(PioneerStoreContext&,PioneerProbeCookie*,uint64_t){return Step(10);}};
+struct PioneerQ38SmallRecurrentNativeBinding {
+ static bool TransferInspection(PioneerStoreContext& old,PioneerStoreContext& next,PioneerProbeCookie* cookie,uint64_t){
+  if(!Step(10) || !cookie || cookie->context!=&old || !old.q38Span || !old.q38SmallRecurrentReceipt
+   || next.q38Span || next.q38SmallRecurrentReceipt || !Step(11))return false;
+  next.q38Span=old.q38Span;old.q38Span=nullptr;
+  next.q38SmallRecurrentReceipt=old.q38SmallRecurrentReceipt;old.q38SmallRecurrentReceipt=nullptr;return true;
+ }
+};
 static void RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result&){c.quarantined=true;retainedCount++;}
 class PioneerQ38TokenCallScope {
 public:
@@ -96,10 +109,15 @@ int main(){
  for(unsigned fault=0;fault<=15;fault++){
   selectedFault=fault;events=retainedCount=deletedCount=0;hit=false;fakeWritableDram=false;sReloadGeneration=4;
   auto* old=new PioneerStoreContext(PioneerResidentBanks::Total);
-  std::memset(old->initialized,1,PioneerResidentBanks::Pages);
-  old->uploadedPages=PioneerResidentBanks::Pages;old->bankStorageOnly=true;old->qgwdResidentRequestClosed=true;
+  std::memset(old->initialized,1,expectedPages);
+  old->uploadedPages=expectedPages;old->bankStorageOnly=true;old->qgwdResidentRequestClosed=true;
   old->q38GdnCallThread=7;old->q38TokenNative=new FakeState;old->q38Span=new PioneerQ38SpanLease;
-  old->q38Span->closed=true;old->q38QgwdReceipt=new FakeReceipt;
+  old->q38Span->closed=true;
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+  old->q38SmallRecurrentReceipt=new FakeReceipt;
+#else
+  old->q38QgwdReceipt=new FakeReceipt;
+#endif
   PioneerProbeCookie cookie;cookie.context=old;sRuntimeOwner=&cookie;
   PioneerQ38TokenCallScope scope{&cookie,old};PioneerQ38QgwdResident::Reply result;
   if(fault==14)fakeWritableDram=true; // only the fresh mock context has writable DRAM samples
@@ -108,7 +126,12 @@ int main(){
    assert(okay && events==12 && !hit && !retainedCount && deletedCount==1 && result.ready && !result.unsafe);
    assert(result.stage==11 && result.oldContextRetired && result.reservationRetained && result.hostsReleased==3);
    assert(cookie.context==scope.context && cookie.context!=old && !cookie.qgwdResidentPending);
-   assert(cookie.context->q38Span && cookie.context->q38Span->closed && cookie.context->q38QgwdReceipt);
+   assert(cookie.context->q38Span && cookie.context->q38Span->closed);
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+   assert(cookie.context->q38SmallRecurrentReceipt && !cookie.context->q38QgwdReceipt);
+#else
+   assert(cookie.context->q38QgwdReceipt && !cookie.context->q38SmallRecurrentReceipt);
+#endif
    delete cookie.context;
   }else{
    assert(!okay && (hit || fault==14 || fault==15) && events==(fault==15?3:fault==14?1:fault==13?7:fault)
@@ -116,16 +139,26 @@ int main(){
    auto* first=cookie.context;auto* second=cookie.qgwdResidentPending;
    assert(first && second && first!=second && first->quarantined && second->quarantined);
    assert(first->q38Span || second->q38Span);
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+   assert(bool(first->q38SmallRecurrentReceipt)!=bool(second->q38SmallRecurrentReceipt));
+   auto* receiptOwner=first->q38SmallRecurrentReceipt?first:second;
+   assert(receiptOwner->q38Span && receiptOwner->q38Span->closed);
+#endif
    delete first;delete second; // mock cleanup ONLY after all assertions; real code retains both
   }
  }
  for(unsigned invalid=0;invalid<6;invalid++){
   selectedFault=events=retainedCount=deletedCount=0;hit=false;fakeWritableDram=false;
   auto* old=new PioneerStoreContext(PioneerResidentBanks::Total);
-  std::memset(old->initialized,1,PioneerResidentBanks::Pages);
-  old->uploadedPages=PioneerResidentBanks::Pages;old->bankStorageOnly=true;old->qgwdResidentRequestClosed=true;
+  std::memset(old->initialized,1,expectedPages);
+  old->uploadedPages=expectedPages;old->bankStorageOnly=true;old->qgwdResidentRequestClosed=true;
   old->q38GdnCallThread=7;old->q38TokenNative=new FakeState;old->q38Span=new PioneerQ38SpanLease;
-  old->q38Span->closed=true;old->q38QgwdReceipt=new FakeReceipt;
+  old->q38Span->closed=true;
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+  old->q38SmallRecurrentReceipt=new FakeReceipt;
+#else
+  old->q38QgwdReceipt=new FakeReceipt;
+#endif
   PioneerProbeCookie cookie;cookie.context=old;sRuntimeOwner=&cookie;
   PioneerQ38TokenCallScope scope{&cookie,old};PioneerQ38QgwdResident::Reply result;
   if(invalid==0)result.ready=1;

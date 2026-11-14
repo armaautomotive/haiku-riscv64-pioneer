@@ -883,3 +883,14 @@ logical-view derivation then passes. The real control/span mock and fake-tag
 freestanding instantiation pass. This only moves CPU bookkeeping: it does not
 transfer a live cookie, lock or hardware reservation, implement a request
 handoff, authorize a driver load, or establish a performance result.
+
+Request-handoff inspection: the existing resident handoff body now has an
+explicit extracted-body-only small-recurrent branch using the receipt bridge
+and the converted layout's 5,067,109-page count. A simulated endpoint test
+executes that body and the unchanged QGWD branch, injecting failures at each
+handoff stage, a generation change and writable-DRAM refusals. It checks
+that uncertain transfers retain both contexts and that exactly one still
+holds the closed span and receipt. The transfer itself is mocked in this
+particular test; the real receipt bridge was tested separately above. Kernel,
+driver-tag and Work roles reject this branch. No actual reservation, running
+driver, full model inference or speed improvement has been demonstrated.

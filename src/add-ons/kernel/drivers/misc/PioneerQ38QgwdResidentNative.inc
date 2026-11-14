@@ -5,6 +5,19 @@
 
 #include "PioneerQ38QgwdResidentClose.inc"
 
+// The small-recurrent branch is an extracted-body mock only. It must not be
+// combined with a kernel, a loadable driver or the existing native profile.
+#if defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION) && \
+ (PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION != 1 || defined(_KERNEL_MODE) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) \
+ || !defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION) \
+ || PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION != 1 \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE))
+#error Small recurrent resident handoff is extracted-body inspection only
+#endif
+
 __attribute__((noinline)) bool
 PioneerQ38TokenCallScope::NextQgwdResidentRequest(PioneerQ38QgwdResident::Reply& out)
 {
@@ -16,7 +29,11 @@ PioneerQ38TokenCallScope::NextQgwdResidentRequest(PioneerQ38QgwdResident::Reply&
   || sRuntimeOwner!=cookie || old->q38GdnCallThread!=thread || find_thread(NULL)!=thread
   || !old->qgwdResidentRequestClosed || old->qgwdResidentSerial==UINT64_MAX
   || !state->HostBuffersReleased() || state->Closed() || !old->io.TokenHostReleaseScope()
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+  || old->uploadedPages!=5067109 || !state->canonical.Ready()
+#else
   || old->uploadedPages!=5149957 || !state->canonical.Ready()
+#endif
   || !Q38TokenNativeLearnedPresent(*old,state->canonical)
   || !sDeviceManager || !PioneerMinimumBarLayoutMatches(old->profile))return false;
  const uint64_t generation=sReloadGeneration;
@@ -86,12 +103,21 @@ PioneerQ38TokenCallScope::NextQgwdResidentRequest(PioneerQ38QgwdResident::Reply&
  // ledger alone. The temporary next-context span has been actually closed.
  // Rebinding validates both full ledgers, route identity and the SAME
  // FD/team/generation; physical reservation continuity is held by this scope.
- auto* retained=old->q38QgwdReceipt;auto* oldSpan=old->q38Span;auto* temporarySpan=next->q38Span;
+ auto* temporarySpan=next->q38Span;
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+ if(!temporarySpan)return fail();
+ next->q38Span=NULL; // keep closed temporary bookkeeping until transfer commits
+ if(!PioneerQ38SmallRecurrentNativeBinding::TransferInspection(*old,*next,cookie,generation)){
+  next->q38Span=temporarySpan;return fail();
+ }
+#else
+ auto* retained=old->q38QgwdReceipt;auto* oldSpan=old->q38Span;
  if(!retained || !oldSpan || !temporarySpan || next->q38QgwdReceipt
   || !PioneerQ38QgwdNativeBinding::Matches(*old,cookie,generation)
   || !retained->RebindResident(old,cookie,old->hashes,old->initialized,cookie->team,generation,oldSpan,
    next,next->hashes,next->initialized,next->banks,next->baseline.baseline.baseline.baseline.dram,PioneerResidentBanks::Pages))return fail();
  next->q38Span=oldSpan;old->q38Span=NULL;next->q38QgwdReceipt=retained;old->q38QgwdReceipt=NULL;
+#endif
  delete temporarySpan; // closed host-only lease bookkeeping; never new IO
  // One atomic private ownership transfer under the actual FD call lock.
  // The OS reservation has NEVER been unreserved or re-acquired. Old mutable
