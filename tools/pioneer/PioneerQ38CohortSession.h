@@ -4,6 +4,9 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38RootCycleData.h"
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH_CLIENT
 #if PIONEER_Q38_WORK_BATCH_CLIENT != 1 || !defined(PIONEER_Q38_WORK_INFERENCE) || PIONEER_Q38_WORK_INFERENCE != 1 \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
@@ -96,6 +99,19 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	bool attempted=false,active=false,failed=false,finished=false,clean=false;
 	bool (*observe)(void*,uint64_t,uint64_t)=nullptr;
 	void* observer=nullptr;
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+	void ObserveWorkRoot(const uint32_t* stats) {
+		if(!workRootCycleDataValid)return;
+		if(!PioneerQ38RootCycleDataValid(stats) || workRootCycleSamples==UINT64_MAX){workRootCycleDataValid=false;return;}
+		uint64_t delta[3];
+		for(unsigned i=0;i<3;i++){
+			delta[i]=PioneerQ38RootCyclePhase(stats,i);
+			if(delta[i]>UINT64_MAX-workRootCycles[i]){workRootCycleDataValid=false;return;}
+		}
+		for(unsigned i=0;i<3;i++)workRootCycles[i]+=delta[i];
+		workRootCycleSamples++;
+	}
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	bool spanPrimed=false,spanAttempted=false;
 #endif
@@ -179,6 +195,9 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	}
 public:
 	uint64_t pagesUploaded=0,bytesRetained=0,calls=0,runIoctlCalls=0,fleetPlanBuilds=0;
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+	uint64_t workRootCycleSamples=0,workRootCycles[3]={};bool workRootCycleDataValid=true;
+#endif
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 	PioneerQ38ModelRootProfile modelRootProfile;
 #endif
@@ -507,6 +526,9 @@ public:
 			Elapsed(runStart,runNanos);
 			if (!executed) return Stop();
 			if (!source.Ready() || !mode.Collect(wave,quantized,*request,scratch.data(),outputs)) return Stop();
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+			ObserveWorkRoot(request->result.stats); // optional counters only;never gates Work completion
+#endif
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 			modelRootProfile.Add(wave.type,wave.inputs,wave.workers,request->result.stats); // data ONLY,never gates Stop/END
 #endif

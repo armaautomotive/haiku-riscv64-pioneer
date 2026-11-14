@@ -166,6 +166,9 @@ struct Runtime {
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
    const uint64_t callsBefore=session.runIoctlCalls,nanosBefore=session.runNanos;
    const uint64_t pairsBefore=before.pairedBatches;
+  const uint64_t rootSamplesBefore=session.workRootCycleSamples;
+  const uint64_t rootCyclesBefore[3]={session.workRootCycles[0],session.workRootCycles[1],session.workRootCycles[2]};
+  const bool rootDataValidBefore=session.workRootCycleDataValid;
 #endif
    char phase[192];
    if (position<count) snprintf(phase,sizeof(phase),"Evaluating Qwen27B prompt token %d of %d on P100A (slow Work mode).",position+1,count);
@@ -181,6 +184,9 @@ struct Runtime {
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
     const uint64_t pairsAfter=after.pairedBatches;
     if(!profile.Add(callsBefore,session.runIoctlCalls,nanosBefore,session.runNanos,pairsBefore,pairsAfter))return false;
+    const uint64_t rootCyclesAfter[3]={session.workRootCycles[0],session.workRootCycles[1],session.workRootCycles[2]};
+    profile.ObserveRoot(rootSamplesBefore,session.workRootCycleSamples,rootCyclesBefore,rootCyclesAfter,
+     rootDataValidBefore,session.workRootCycleDataValid);
 #endif
    }
    if (!PollCancel()) return false;
@@ -197,7 +203,13 @@ struct Runtime {
   }
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
   if(profile.samples!=warmSamples)return false;
-  char timing[256];snprintf(timing,sizeof(timing),"WORK_WARM_PROFILE samples=%u calls=%llu paired_batches=%llu ioctl_seconds=%.6f decode_seconds=%.6f; HOST WALL TIME NOT CARD-ONLY.",profile.samples,(unsigned long long)profile.calls,(unsigned long long)profile.pairedBatches,double(profile.nanos)*1e-9,warm);
+  char timing[384];
+  if(profile.rootCycleDataValid && profile.rootSamples)snprintf(timing,sizeof(timing),
+   "WORK_WARM_PROFILE samples=%u calls=%llu paired_batches=%llu ioctl_seconds=%.6f decode_seconds=%.6f root_samples=%llu root_prepare_cycles=%llu root_wait_audit_cycles=%llu root_gather_dma_cycles=%llu; RAW ROOT CYCLES, NOT TENSIX COMPUTE OR CARD-ONLY TIME.",
+   profile.samples,(unsigned long long)profile.calls,(unsigned long long)profile.pairedBatches,double(profile.nanos)*1e-9,warm,
+   (unsigned long long)profile.rootSamples,(unsigned long long)profile.rootCycles[0],(unsigned long long)profile.rootCycles[1],(unsigned long long)profile.rootCycles[2]);
+  else snprintf(timing,sizeof(timing),"WORK_WARM_PROFILE samples=%u calls=%llu paired_batches=%llu ioctl_seconds=%.6f decode_seconds=%.6f root_cycle_profile=unavailable; HOST WALL TIME NOT CARD-ONLY.",
+   profile.samples,(unsigned long long)profile.calls,(unsigned long long)profile.pairedBatches,double(profile.nanos)*1e-9,warm);
   if(!Emit(A::Progress,UINT32_MAX,timing))return false;
 #endif
   char status[320]; snprintf(status,sizeof(status),"P100A Qwen27B Work:%u output tokens,%.1fs; warm generation%u samples/%.3fs (%.3f tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.",generated,Now()-began,warmSamples,warm,warm>0?warmSamples/warm:0);
