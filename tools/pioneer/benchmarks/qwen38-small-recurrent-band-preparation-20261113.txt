@@ -53,3 +53,14 @@ also refused. The private drivers embed learned weights and must not be
 published. No driver was installed or run; physical card behavior and
 performance remain unproven. A separately guarded one-shot physical wrapper,
 fresh source verification and stable-driver recovery are still required.
+
+Guarded trial preparation: separate small-matrix source-preflight programs
+cross-linked, and an independent integer checker wrote each 96-word reference
+to a new private, exclusive-create file. The one-shot parent and actual
+output gate passed simulated alpha/beta success, word loss/duplication,
+mismatch, padding, source-preflight, owner and driver-generation failures.
+On uncertainty the wrapper stops without retry or automatic restore; only a
+known-clean result permits restoring the pinned stable driver. These tests
+are not a card result. The alpha trial was started separately after a
+read-only Pioneer preflight; consult the later physical result record rather
+than assuming that a started trial completed.

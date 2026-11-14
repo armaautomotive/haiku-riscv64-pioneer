@@ -44,6 +44,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-dense-integer-check-',dir='/pri
         metadata.write_text(small_meta+''.join(array('g'+str(i),32) for i in range(3)))
         result=subprocess.run([str(binary),str(samples),role],capture_output=True,text=True,env=env)
         assert result.returncode==0 and 'samples=3 rows=96' in result.stdout,(role,result.stderr)
+        output=samples/('alpha-reference' if ordinal==11 else 'beta-reference')
+        result=subprocess.run([str(binary),str(samples),role+'-reference',str(output)],capture_output=True,text=True,env=env)
+        assert result.returncode==0 and output.stat().st_mode & 0o777==0o600 and len(output.read_text().splitlines())==96
+        assert 'SMALL_INTEGER_REFERENCE' not in result.stdout
+        assert subprocess.run([str(binary),str(samples),role+'-reference',str(output)],capture_output=True,env=env).returncode==1
         wrong='--small-beta' if role=='--small-alpha' else '--small-alpha'
         assert subprocess.run([str(binary),str(samples),wrong],capture_output=True,env=env).returncode==1
         bad_tail='const uint32_t g1[32]={'+','.join(['0x00000000']*16+['0x00000001']+['0x00000000']*15)+'};\n'

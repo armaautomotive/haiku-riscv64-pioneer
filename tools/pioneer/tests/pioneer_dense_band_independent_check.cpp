@@ -9,6 +9,8 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <fcntl.h>
+#include <unistd.h>
 
 static std::string Read(const std::string& path){
  std::ifstream f(path,std::ios::binary);if(!f)return {};
@@ -82,14 +84,15 @@ static uint32_t Instruction(const uint16_t* a,const uint16_t* b,unsigned phase,u
  return (sign<<31)|(unsigned(exp)<<23)|(uint32_t(mantissa)&0x7fffffU);
 }
 int main(int argc,char** argv){
- if((argc!=2 && argc!=3) || argv[1][0]!='/' || (argc==3 && std::string(argv[2])!="--qgwd-reference"
+ const bool smallRef=argc==4 && (std::string(argv[2])=="--small-alpha-reference" || std::string(argv[2])=="--small-beta-reference");
+ if((argc!=2 && argc!=3 && !smallRef) || argv[1][0]!='/' || (smallRef && argv[3][0]!='/') || (argc==3 && std::string(argv[2])!="--qgwd-reference"
   && std::string(argv[2])!="--recurrent-reference" && std::string(argv[2])!="--recurrent-out-reference"
   && std::string(argv[2])!="--recurrent-qkv-reference" && std::string(argv[2])!="--small-alpha"
   && std::string(argv[2])!="--small-beta"))return 2;
  const std::string path=argv[1],data=Read(path+"/PioneerNativeBfpModelBandData.h"),meta=Read(path+"/PioneerNativeBfpModelBandMetadata.h");
  if(data.empty() || meta.empty())return 1;
- const bool smallAlpha=argc==3 && std::string(argv[2])=="--small-alpha";
- const bool smallBeta=argc==3 && std::string(argv[2])=="--small-beta";
+ const bool smallAlpha=(argc==3 && std::string(argv[2])=="--small-alpha") || (smallRef && std::string(argv[2])=="--small-alpha-reference");
+ const bool smallBeta=(argc==3 && std::string(argv[2])=="--small-beta") || (smallRef && std::string(argv[2])=="--small-beta-reference");
  const bool small=smallAlpha || smallBeta,reference=argc==3 && !small,recurrent=reference && std::string(argv[2])=="--recurrent-reference";
  const bool recurrentOut=reference && std::string(argv[2])=="--recurrent-out-reference";
  const bool recurrentQkv=reference && std::string(argv[2])=="--recurrent-qkv-reference";
@@ -105,7 +108,7 @@ int main(int argc,char** argv){
   || meta.find("const unsigned rows[3]={0,32,0}")==std::string::npos))return 1;
  const unsigned tiles=recurrentOut?192:160;
  std::vector<uint32_t> inputs;if(!Array(data,"input",tiles*20,inputs))return 1;
- unsigned checked=0;
+ unsigned checked=0;std::string privateReference;
  for(unsigned sample=0;sample<3;sample++){
   std::vector<uint32_t> weights,golden;
   if(!Array(data,"w"+std::to_string(sample),tiles*276,weights) || !Array(meta,"g"+std::to_string(sample),32,golden))return 1;
@@ -122,11 +125,20 @@ int main(int argc,char** argv){
    }
    if(value!=golden[row]){std::fprintf(stderr,"mismatch sample=%u row=%u got=%08x expected=%08x\n",sample,row,value,golden[row]);return 1;}
    if(small && sample==1 && row>=16 && value)return 1;
+   if(smallRef){char line[96];const int n=std::snprintf(line,sizeof(line),"SMALL_INTEGER_REFERENCE sample%u first%u row%u word%08x\n",sample,sample==1?32:0,row,value);
+    if(n<0 || unsigned(n)>=sizeof(line))return 1;privateReference.append(line,unsigned(n));}
    if(reference){const unsigned dense[]={0,512,992},rec[]={0,3072,6112},out[]={0,2560,5088},qkv[]={0,5120,10208};
     std::printf("%s_INTEGER_REFERENCE sample%u first%u row%u word%08x\n",recurrentQkv?"RECURRENT_QKV":recurrentOut?"RECURRENT_OUT":recurrent?"RECURRENT":"DENSE",sample,(recurrentQkv?qkv:recurrentOut?out:recurrent?rec:dense)[sample],row,value);}
    checked++;
   }
   std::printf("INDEPENDENT_DENSE_BAND sample=%u rows=32 match; NO DEVICE\n",sample);std::fflush(stdout);
+ }
+ if(smallRef){
+  const int fd=open(argv[3],O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC|O_NOFOLLOW,0600);if(fd<0)return 1;
+  size_t sent=0;while(sent<privateReference.size()){
+   const ssize_t n=write(fd,privateReference.data()+sent,privateReference.size()-sent);if(n<=0){close(fd);return 1;}sent+=size_t(n);
+  }
+  if(fsync(fd)){close(fd);return 1;}if(close(fd))return 1;
  }
  std::printf("PASS_INDEPENDENT_DENSE_BAND samples=3 rows=%u phase_instructions=%u; NO DEVICE OR SPEED\n",checked,checked*tiles*2*4);
  return std::fflush(stdout)?1:0;
