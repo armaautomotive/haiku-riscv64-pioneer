@@ -61,6 +61,8 @@ int main(int argc,char** argv){
   || memcmp(end.result[1].output,r.result[1].output,sizeof(r.result[1].output)) || !source.Ready()){
   fputs("PAIR_END_SOURCE_UNPROVEN;CLOSE_ONLY_NO_RETRY\n",stderr);close(fd);return 1;}
  if(close(fd))return 1;
+ for(unsigned i=0;i<2;i++)for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)
+  printf("PAIR_QKV_WORD sample%u first%u pass%u row%u got%08x\n",i,Meta::First(i),pass,row,r.result[i].output[pass*32+row]);
  printf("PASS_NATIVE_QKV_PAIR samples2 exact_words128 generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_OVERLAP_OR_INFERENCE_SPEED_CLAIM\n",(unsigned long long)m.generation);
  return Delivered()?0:1;
 }
