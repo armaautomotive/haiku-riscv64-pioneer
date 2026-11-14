@@ -44,6 +44,11 @@ int main(int argc,char** argv)
   if(!scenario){
    assert(status==B_OK && packet->jobs[0].result.nonce==1 && packet->jobs[1].result.nonce==2
     && c->q38Dispatch && c->q38Dispatch->rootNonce==2 && !c->Unsafe());
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+   // Prove the real Work dispatch controller reuses the staged activation
+   // across the two jobs in one batch (the simulated root reports mode 2).
+   assert(c->io.inputMode==2);
+#endif
    End(cookie,true);
   }else if(scenario==1 || scenario==2 || scenario==5 || scenario==7){
    assert(status==(scenario==2?-99:B_NOT_ALLOWED) && !c->q38Dispatch && !c->Unsafe());
