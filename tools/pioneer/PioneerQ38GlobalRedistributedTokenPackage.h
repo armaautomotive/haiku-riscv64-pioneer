@@ -29,8 +29,8 @@ class PioneerQ38GlobalRedistributedTokenPackage {
 			|| (o<c+sizeof(*canonical) && c<o+bytes)
 			|| (Strict && !Matches(*canonical)))return false;
 		if(!base.Read(offset,output,bytes))return false;
-		const unsigned begin=offset>L::Offset?offset:L::Offset;
-		const unsigned finish=offset+bytes<L::End?offset+bytes:L::End;
+		const unsigned begin=offset>unsigned(L::Offset)?offset:unsigned(L::Offset);
+		const unsigned finish=offset+bytes<unsigned(L::End)?offset+bytes:unsigned(L::End);
 		for(unsigned at=begin;at<finish;at++){
 			const unsigned relative=at-L::Offset,word=relative/4,byte=relative&3;
 			uint32_t value;
@@ -71,6 +71,8 @@ public:
 	const uint32_t* GdnHeader()const{return ready?gdn.Header():nullptr;}
 	const uint32_t* GdnWorker(unsigned physicalWorker)const{return ready?gdn.Worker(physicalWorker):nullptr;}
 	bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadBound<true>(offset,output,bytes);}
+	bool ReadPublished(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadBound<false>(offset,output,bytes);}
+	const uint32_t* Outer()const{return ready?base.Outer():nullptr;}
 };
 static_assert(sizeof(PioneerQ38GlobalRedistributedTokenPackage)>1600000
 	&& sizeof(PioneerQ38GlobalRedistributedTokenPackage)<2000000,

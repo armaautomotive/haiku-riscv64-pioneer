@@ -54,8 +54,8 @@ class PioneerQ38RedistributedGdnPlan {
 		PioneerQ38GdnInputPlan inputPlan;
 		if(!inputPlan.Build(plan,layer,logical,position,bank,identity,
 			sources+route.physicalWorker*16,phase+1))return false;
-		uint32_t input[64],state[64],gated[64];
-		for(unsigned i=0;i<64;i++)input[i]=inputPlan.Descriptor()[i];
+		for(unsigned i=0;i<64;i++)output[i]=inputPlan.Descriptor()[i];
+		uint32_t* input=output;uint32_t* state=output+64;uint32_t* gated=output+128;
 		if(!State(plan,input,slot,state))return false;
 		PioneerQ38GdnGatedPlan gatedPlan;
 		if(!gatedPlan.Build(plan,input,state))return false;
@@ -67,9 +67,6 @@ class PioneerQ38RedistributedGdnPlan {
 		gated[54]=4;gated[55]=TT_Q38_GDN_RENDEZVOUS_CLOCK;
 		if(!PioneerQ38GdnRedistributedPairing(input,state)
 			|| !PioneerQ38GdnRedistributedRendezvousShape(gated,input,state))return false;
-		for(unsigned i=0;i<64;i++){
-			output[i]=input[i];output[64+i]=state[i];output[128+i]=gated[i];
-		}
 		physical=route.physicalWorker;
 		return true;
 	}

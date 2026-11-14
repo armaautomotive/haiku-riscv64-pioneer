@@ -10,14 +10,16 @@
 namespace T=PioneerQ38TokenLayout;namespace C=T::C;
 static uint32_t Word(const uint8_t* p){return uint32_t(p[0])|uint32_t(p[1])<<8|uint32_t(p[2])<<16|uint32_t(p[3])<<24;}
 int main(int argc,char** argv){
- assert(argc==1 || (argc==2 && !strcmp(argv[1],"--bindings-only")));const bool bindingsOnly=argc==2;
+	assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--bindings-only") || !strcmp(argv[1],"--redistributed-only"))));
+	const bool bindingsOnly=argc==2 && !strcmp(argv[1],"--bindings-only");
+	const bool redistributedOnly=argc==2 && !strcmp(argv[1],"--redistributed-only");
  setvbuf(stdout,nullptr,_IOLBF,0);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  auto other=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(other->Build());
  std::array<uint32_t,1920> sources;for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
  const PioneerQ38GdnIdentity id={UINT64_C(1)<<40|1,UINT64_C(2)<<40|2,UINT64_C(3)<<40|3,UINT64_C(4)<<40|4};
  const uint32_t prompt[]={248319,17};unsigned packages=0,refusals=0;
- for(unsigned bank=0;bank<7;bank++){
+	if(!redistributedOnly)for(unsigned bank=0;bank<7;bank++){
   printf("START startup DATA bank%u/all120 boots/fullPackageCopies%d/no execution\n",bank,int(!bindingsOnly));
   auto plan=std::make_unique<PioneerQ38TokenStartupPlan>();
   assert(!plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()));
@@ -111,7 +113,39 @@ int main(int argc,char** argv){
   }
   printf("PASS startup DATA bank%u/all120 boots/root+head+session+prompt exact/fullPackageCopies%d/no execution\n",bank,int(!bindingsOnly));
  }
- for(unsigned prompts:{2U,8192U}){
+ {
+  namespace R=PioneerQ38RedistributedTokenLayout;namespace S=PioneerQ38TokenStateLayout;
+  auto plan=std::make_unique<PioneerQ38TokenStartupPlan>();
+  assert(plan->Build(*canonical,0,id,sources.data(),prompt,2,8192,true,248318,248317,true)
+   && plan->Matches(*canonical) && plan->MatchesPublishedBinding(*canonical,0,id,sources.data()));
+  std::array<uint8_t,64> actual,expected;
+  for(unsigned layer=0;layer<64;layer++){
+   auto base=std::make_unique<PioneerQ38TokenPackage>();
+   assert(base->Build(*canonical,layer,0,id,sources.data(),0,plan->Workspace()+0x600000));
+   uint32_t address;assert(plan->PackageAddress(layer,address)
+    && address==plan->Workspace()+C::Offset+layer*C::Stride);
+   for(unsigned at:{0U,unsigned(R::Offset),unsigned(S::Offset),unsigned(R::End)}){
+    assert(plan->ReadPublishedPackage(layer,at,actual.data(),actual.size()));
+    if(layer%4==3 || at<R::Offset || at>=R::End || at==S::Offset){
+     assert(base->Read(at,expected.data(),expected.size()) && actual==expected);
+    }else if(at==R::Offset){
+     assert(Word(actual.data())==0x31444752U && Word(actual.data()+4)==1
+      && Word(actual.data()+8)==R::Workers*R::RecordWords && Word(actual.data()+12)==layer
+      && Word(actual.data()+16)==0 && Word(actual.data()+20)==0
+      && Word(actual.data()+24)==((layer/4)&1)
+      && Word(actual.data()+28)==1001+layer*16 && Word(actual.data()+32)==layer+1
+      && Word(actual.data()+36)==96 && Word(actual.data()+40)==119 && Word(actual.data()+44)==48);
+    }
+   }
+   if(layer%4==3)assert(Word(actual.data())==0);
+  }
+  actual.fill(0x5a);const auto untouched=actual;
+  assert(!plan->ReadPublishedPackage(0,R::Offset+1,actual.data(),64) && actual==untouched
+   && !plan->ReadPublishedPackage(0,R::Offset,reinterpret_cast<uint8_t*>(plan.get()),64)
+   && !plan->ReadPublishedPackage(0,R::Offset,reinterpret_cast<uint8_t*>(canonical.get()),64));
+  puts("PASS opt-in redistributed startup DATA/48 recurrent-layer tables embedded in unchanged package upload spans;prefix/state/trailing slack unchanged;16 dense layers legacy;NO worker consumption or native Work grant");
+ }
+	if(!redistributedOnly)for(unsigned prompts:{2U,8192U}){
   std::vector<uint32_t> input(prompts);for(unsigned i=0;i<prompts;i++)input[i]=(i*29+17)%248320;
   input[0]=248319;auto plan=std::make_unique<PioneerQ38TokenStartupPlan>();
   assert(plan->Build(*canonical,0,id,sources.data(),input.data(),prompts,prompts==2?3:8192,false,248318,248317));
@@ -120,7 +154,7 @@ int main(int argc,char** argv){
   assert(plan->ReadPrompt(32768-64,raw.data(),64));
   for(unsigned i=0;i<16;i++)assert(Word(raw.data()+i*4)==(prompts==8192?input[8176+i]:0U));
  }
- puts("PASS startup session EOS-disabled3-position prompt2 and maximum8192-token raw prompt/full last64B serialization;not a qualified context size or model execution");
+	if(!redistributedOnly)puts("PASS startup session EOS-disabled3-position prompt2 and maximum8192-token raw prompt/full last64B serialization;not a qualified context size or model execution");
  for(unsigned bad=0;bad<9;bad++){
   auto rejected=std::make_unique<PioneerQ38TokenStartupPlan>();uint32_t invalid[]={248320,17};
   auto identity=id;if(bad==7)identity.session=0;

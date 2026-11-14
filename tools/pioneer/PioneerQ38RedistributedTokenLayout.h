@@ -12,7 +12,7 @@ enum {Magic=0x31525451,Version=1,HeaderWords=32,RecordWords=192,
 	TableWords=Workers*RecordWords,Words=HeaderWords+TableWords,Bytes=Words*4,
 	End=Offset+Bytes};
 static_assert(!(Offset&63) && !(Bytes&63) && Offset>=P::GdnOffset+P::GdnBytes
-	&& End<=S::Offset,"redistributed GDN table fits existing package slack before current-state spans");
+	&& unsigned(End)<=unsigned(S::Offset),"redistributed GDN table fits existing package slack before current-state spans");
 static_assert(S::Offset+S::Bytes<=S::C::Stride,"candidate table does not move the immutable token state record");
 }
 #endif

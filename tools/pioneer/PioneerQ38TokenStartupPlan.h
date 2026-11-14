@@ -3,6 +3,7 @@
 #define PIONEER_Q38_TOKEN_STARTUP_PLAN_H
 #include "PioneerQ38TokenPackage.h"
 #include "PioneerQ38TokenLayout.h"
+#include "PioneerQ38GlobalRedistributedTokenPackage.h"
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
 #include "PioneerQ38Qgw8HeadPlanInspection.h"
 #else
@@ -23,6 +24,7 @@ class PioneerQ38TokenStartupPlan {
  const PioneerQ38PreparedNativeSource* preparedSource=nullptr;
 #endif
  PioneerQ38TokenPackage* layers[64]={};
+	PioneerQ38GlobalRedistributedTokenPackage* redistributedLayers[64]={};
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
  PioneerQ38Qgw8HeadPlanInspection head;
 #else
@@ -30,7 +32,7 @@ class PioneerQ38TokenStartupPlan {
 #endif
  PioneerQ38GdnIdentity identity={};
  uint32_t sources[1920]={},boot[64]={},session[128]={},prompt[8192]={};
- unsigned bank=7,workspace=0;bool attempted=false,ready=false,published=false;
+	unsigned bank=7,workspace=0;bool attempted=false,ready=false,published=false,redistributed=false;
  bool Binding(const PioneerQ38CanonicalModelPlan& c)const{
   return ready && canonical==&c && c.Ready() && bank<7 && identity.Valid()
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
@@ -47,8 +49,10 @@ class PioneerQ38TokenStartupPlan {
   if(!preparedSource || !preparedSource->Output(output,bytes))return false;
 #endif
   // Reject cross-layer aliases too, not only the selected package's object.
-  for(const auto* layer:layers)if(layer){const uintptr_t p=reinterpret_cast<uintptr_t>(layer);
+	for(const auto* layer:layers)if(layer){const uintptr_t p=reinterpret_cast<uintptr_t>(layer);
    if(o<p+sizeof(*layer) && p<o+bytes)return false;}
+	for(const auto* layer:redistributedLayers)if(layer){const uintptr_t p=reinterpret_cast<uintptr_t>(layer);
+	 if(o<p+sizeof(*layer) && p<o+bytes)return false;}
   return true;
  }
  bool ReadWords(const uint32_t* data,unsigned length,unsigned offset,uint8_t* output,unsigned bytes)const{
@@ -61,7 +65,7 @@ public:
  PioneerQ38TokenStartupPlan()=default;
  PioneerQ38TokenStartupPlan(const PioneerQ38TokenStartupPlan&)=delete;
  PioneerQ38TokenStartupPlan& operator=(const PioneerQ38TokenStartupPlan&)=delete;
- ~PioneerQ38TokenStartupPlan(){for(auto* layer:layers)delete layer;}
+	~PioneerQ38TokenStartupPlan(){for(auto* layer:layers)delete layer;for(auto* layer:redistributedLayers)delete layer;}
  // Pair fixed geometry with the compiled worker grammar before any native
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
@@ -99,7 +103,7 @@ public:
  }
 #endif
  bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,const PioneerQ38GdnIdentity& id,const uint32_t* source,
-  const uint32_t* input,unsigned prompts,unsigned limit,bool stopEos,unsigned eos0,unsigned eos1){
+	 const uint32_t* input,unsigned prompts,unsigned limit,bool stopEos,unsigned eos0,unsigned eos1,bool useRedistributed=false){
   namespace T=PioneerQ38TokenLayout;namespace C=T::C;
   if(attempted)return false;
   attempted=true;
@@ -116,11 +120,19 @@ public:
   // The position-zero numeric template keeps its established initial raw
   // address. The REAL parent bootstrap later produces its own embedding and
   // TokenMetadata::Outer redirects layer0 to the provisional feedback slot.
-  for(unsigned layer=0;layer<64;layer++){
-   layers[layer]=new(std::nothrow) PioneerQ38TokenPackage;
-   if(!layers[layer] || !layers[layer]->Build(c,layer,bank,id,sources,bank,workspace+0x600000))return false;
+	 redistributed=useRedistributed;
+	 for(unsigned layer=0;layer<64;layer++){
+	  if(useRedistributed && layer%4!=3){
+	   redistributedLayers[layer]=new(std::nothrow) PioneerQ38GlobalRedistributedTokenPackage;
+	   if(!redistributedLayers[layer] || !redistributedLayers[layer]->Build(c,layer,bank,(layer/4)&1,id,sources,bank,workspace+0x600000))return false;
+	  }else{
+	   layers[layer]=new(std::nothrow) PioneerQ38TokenPackage;
+	   if(!layers[layer] || !layers[layer]->Build(c,layer,bank,id,sources,bank,workspace+0x600000))return false;
+	  }
   }
-  for(unsigned i=0;i<64;i++)boot[i]=layers[0]->Boot()[i];
+	 const uint32_t* rootBoot=redistributed?redistributedLayers[0]->Boot():layers[0]->Boot();
+	 if(!rootBoot)return false;
+	 for(unsigned i=0;i<64;i++)boot[i]=rootBoot[i];
   if(!head.Build(c,bank,boot))return false;
   const unsigned initial[]={T::Magic,1,128,bank,workspace,limit,prompts,prompt[0]};
   for(unsigned i=0;i<8;i++){session[i]=initial[i];session[24+i]=boot[8+i];}
@@ -135,8 +147,15 @@ public:
   const uint64_t ids[]={identity.session,identity.sequence,identity.modelEpoch,identity.driverGeneration};
   for(unsigned i=0;i<4;i++)if(boot[8+i*2]!=uint32_t(ids[i]) || boot[9+i*2]!=uint32_t(ids[i]>>32))return false;
   for(unsigned i=0;i<16;i++)if(boot[16+i]!=sources[i])return false;
-  for(unsigned layer=0;layer<64;layer++)if(!layers[layer] || !layers[layer]->Matches(c)
-   || !C::LayerFrame(layers[layer]->Outer(),layer,bank,workspace,boot))return false;
+	 for(unsigned layer=0;layer<64;layer++){
+	  const uint32_t* outer=nullptr;
+	  if(redistributed){
+	   if(layer%4!=3){if(layers[layer] || !redistributedLayers[layer] || !redistributedLayers[layer]->Matches(c))return false;
+	    outer=redistributedLayers[layer]->Outer();}
+	   else{if(!layers[layer] || redistributedLayers[layer] || !layers[layer]->Matches(c))return false;outer=layers[layer]->Outer();}
+	  }else{if(!layers[layer] || redistributedLayers[layer] || !layers[layer]->Matches(c))return false;outer=layers[layer]->Outer();}
+	  if(!C::LayerFrame(outer,layer,bank,workspace,boot))return false;
+	 }
   for(unsigned i=0;i<8192;i++)if(i<session[6]?prompt[i]>=248320:prompt[i]!=0)return false;
   return prompt[0]==session[7];
  }
@@ -183,8 +202,9 @@ public:
   output=address;return true;
  }
  bool ReadPackage(unsigned layer,unsigned offset,uint8_t* output,unsigned bytes)const{
-  return canonical && Binding(*canonical) && layer<64 && layers[layer] && Output(output,bytes)
-   && layers[layer]->Read(offset,output,bytes)
+	 return canonical && Binding(*canonical) && layer<64 && Output(output,bytes)
+	  && (redistributed && redistributedLayers[layer]?redistributedLayers[layer]->Read(offset,output,bytes):
+	      (!redistributedLayers[layer] && layers[layer] && layers[layer]->Read(offset,output,bytes)))
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
    && preparedSource->Overlay(layer,offset,output,bytes)
 #endif
@@ -195,8 +215,9 @@ public:
   // caller-supplied ready hint. The byte serializer and all bounds/alias
   // checks are shared with strict ReadPackage. No periodic corruption
   // revalidation or native IO/ownership/initialization permission is added.
-  return published && canonical && Binding(*canonical) && layer<64 && layers[layer] && Output(output,bytes)
-   && layers[layer]->ReadBound<false>(offset,output,bytes)
+	 return published && canonical && Binding(*canonical) && layer<64 && Output(output,bytes)
+	  && (redistributed && redistributedLayers[layer]?redistributedLayers[layer]->ReadPublished(offset,output,bytes):
+	      (!redistributedLayers[layer] && layers[layer] && layers[layer]->ReadBound<false>(offset,output,bytes)))
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
    && preparedSource->Overlay(layer,offset,output,bytes)
 #endif
