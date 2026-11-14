@@ -835,3 +835,6 @@ Down-projection source preparation: a distinct opt-in host-only role-4 BFP4
 fixture now covers all 5120 rows across seven banks with 17408 inputs per
 row. Every packed tile was unpacked and checked, and role isolation passed.
 No down-projection worker or physical execution is implied by this fixture.
+The combined BFP4/BFP8 host endpoint test additionally passed a 17408-input
+synthetic BFP4 band with counter wrap and exact independent results for all
+32 rows; this is component coverage, not a retained worker or device run.
