@@ -24,7 +24,10 @@ static void Check(PioneerQwen38Gguf& model,FILE* file)
 	for (unsigned t=0;t<model.Tensors().size();t++) {
 		const auto& tensor=model.Tensors()[t]; if (!tensor.type) continue;
 		std::vector<float> x(size_t(tensor.inputs)); for (unsigned k=0;k<x.size();k++) x[k]=float(int((k*29)%255)-127)*.00390625f;
-		PioneerQ38CohortInput input; assert(PioneerQ38CohortQuantize(tensor.type,unsigned(tensor.inputs),x.data(),input));
+		PioneerQ38CohortInput input,workInput;
+		assert(PioneerQ38CohortQuantize(tensor.type,unsigned(tensor.inputs),x.data(),input));
+		assert(PioneerQ38CohortQuantizeWork(tensor.type,unsigned(tensor.inputs),x.data(),workInput));
+		assert(!memcmp(&input,&workInput,sizeof(input))); // Work fast path is byte-identical
 		for (unsigned workers:{1U,7U,120U}) {
 			PioneerQwen38FleetPlan plan; assert(plan.Build(model,packed,t,workers));
 			std::vector<float> output(size_t(tensor.outputs),-1); std::vector<unsigned> rows(output.size(),0);
@@ -80,9 +83,11 @@ static void Check(PioneerQwen38Gguf& model,FILE* file)
 	PioneerQwen38Gguf other; assert(other.Open(file)); PioneerQwen38PackedPlan another; assert(another.Build(other,8192,true));
 	PioneerQ38CohortWave wrong; assert(!wrong.Build(other,another,plan,0));
 	for (unsigned type:{8U,12U,14U}) {
-		x.assign(17408,.125f); auto unchanged=input;
+		x.assign(17408,.125f); auto unchanged=input; PioneerQ38CohortInput workInput;
 		for (uint32_t bits:{0x7f800000U,0x7fc00000U,1U,0x7f000000U}) {
-			x[17407]=PioneerAttentionFloat(bits); assert(!PioneerQ38CohortQuantize(type,17408,x.data(),input) && !memcmp(&input,&unchanged,sizeof(input)));
+			x[17407]=PioneerAttentionFloat(bits);
+			assert(!PioneerQ38CohortQuantize(type,17408,x.data(),input) && !memcmp(&input,&unchanged,sizeof(input)));
+			assert(!PioneerQ38CohortQuantizeWork(type,17408,x.data(),workInput));
 		}
 	}
 	assert(model.Open(file) && !wave.Ready() && !PioneerQ38CohortRequest(wave,input));

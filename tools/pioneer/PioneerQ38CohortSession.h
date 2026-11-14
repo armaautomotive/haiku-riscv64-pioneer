@@ -141,6 +141,13 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 		uint64_t end=PioneerQ38SessionNow(io,0);
 		if (start && end>=start) total+=end-start; // diagnostic ONLY,not a completion/timeout authority
 	}
+	static bool QuantizeInput(unsigned type,unsigned inputs,const float* source,PioneerQ38CohortInput& output) {
+#ifdef PIONEER_Q38_WORK_INFERENCE
+		return PioneerQ38CohortQuantizeWork(type,inputs,source,output);
+#else
+		return PioneerQ38CohortQuantize(type,inputs,source,output);
+#endif
+	}
 	bool Stop() {
 		failed=true; active=false; finished=true;
 		if (fd>=0) { io.Close(fd); fd=-1; } // CLOSE ONLY:kernel retains UNKNOWN owners
@@ -434,7 +441,7 @@ public:
 		auto* firstPlan=planFor(firstTensor);auto* secondPlan=planFor(secondTensor);
 		if (!firstPlan || !secondPlan || !source.Ready()) return Stop();
 		PioneerQ38CohortInput quantized;
-		if (!PioneerQ38CohortQuantize(first.type,inputs,input,quantized)
+		if (!QuantizeInput(first.type,inputs,input,quantized)
 			|| !UploadTensor(firstTensor) || !UploadTensor(secondTensor)) return Stop();
 		PioneerQ38CohortWave firstWave,secondWave;
 		if (!source.Ready() || !firstWave.Build(source.Model(),layout,*firstPlan,0)
@@ -486,7 +493,7 @@ public:
 			fleetPlanBuilds++;
 		}
 		PioneerQ38CohortInput quantized;
-		if (!PioneerQ38CohortQuantize(t.type,inputs,input,quantized) || !UploadTensor(tensor)) return Stop();
+		if (!QuantizeInput(t.type,inputs,input,quantized) || !UploadTensor(tensor)) return Stop();
 		std::vector<float> scratch(outputs,0); // NEVER caller output until EVERY wave succeeds
 		const auto& jobs=schedule->Jobs(); if (jobs.empty()) return Stop();
 		unsigned count=jobs.back().wave+1;

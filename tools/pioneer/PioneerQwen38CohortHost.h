@@ -13,10 +13,13 @@ struct PioneerQ38CohortInput {
 	unsigned type=0,inputs=0;
 	uint32_t activation[TT_Q38_COHORT_INPUT_WORDS]={},scales[TT_Q38_COHORT_SCALE_WORDS]={};
 };
-static inline bool PioneerQ38CohortQuantize(unsigned type,unsigned inputs,const float* source,PioneerQ38CohortInput& output)
+static inline bool PioneerQ38CohortQuantizeInto(unsigned type,unsigned inputs,const float* source,PioneerQ38CohortInput& stage)
 {
 	if (!source || !PioneerQ38PanelProbeBytes(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)) return false;
-	PioneerQ38CohortInput stage; stage.type=type; stage.inputs=inputs;
+	// Callers pass a freshly value-initialized packet. This helper is internal
+	// to the two wrappers below so its partially-written result cannot escape
+	// on a failed Work conversion.
+	stage.type=type; stage.inputs=inputs;
 	unsigned count=PioneerQ38CohortBlockInputs(type);
 	for (unsigned block=0;block<inputs/count;block++) {
 		PioneerQ38Activation0 zero; PioneerQ38ActivationK k;
@@ -37,7 +40,20 @@ static inline bool PioneerQ38CohortQuantize(unsigned type,unsigned inputs,const 
 			stage.activation[at/2]|=uint32_t(PioneerInt8Operand(value))<<((at%2)*16);
 		}
 	}
-	output=stage; return true;
+	return true;
+}
+static inline bool PioneerQ38CohortQuantize(unsigned type,unsigned inputs,const float* source,PioneerQ38CohortInput& output)
+{
+	PioneerQ38CohortInput stage;
+	if (!PioneerQ38CohortQuantizeInto(type,inputs,source,stage)) return false;
+	output=stage; return true; // checked/public adapter remains failure-atomic
+}
+// Work-only adapter: output is a private, freshly initialized stack packet;
+// on failure the caller aborts the session and never dispatches or publishes
+// it. Avoid constructing/copying a second maximum-size activation packet.
+static inline bool PioneerQ38CohortQuantizeWork(unsigned type,unsigned inputs,const float* source,PioneerQ38CohortInput& output)
+{
+	return PioneerQ38CohortQuantizeInto(type,inputs,source,output);
 }
 class PioneerQ38CohortWave {
 	const PioneerQwen38Gguf* source=nullptr;
