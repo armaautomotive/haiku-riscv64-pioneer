@@ -35,6 +35,17 @@ separate hybrid Work path, so they do not change the all-card benchmark.
 The hybrid Work baseline near 0.200 tokens/sec must not be described as
 full-card inference.
 
+A faster representation is not automatically a viable optimization. In the
+real-weight BFP4 GDDR-to-compute diagnostic, the three 32-row bands took
+about 227k card cycles per job versus about 643k for an earlier original-Q4
+band test (roughly 2.8x fewer cycles in those non-equivalent microtests).
+However, the same report measured 8.6-15.8% relative output error against
+original Q4 for the BFP4 samples. The cycles cannot be extrapolated to
+tokens/sec, and the observed error rules out treating BFP4 as a drop-in
+full-model speed fix. Any mixed-precision route needs layer-wide quality
+checks and a real closed full-model rate comparison. See
+`qwen38-bfp4-dram-real-band-physical-20261106.txt`.
+
 Next performance work should prioritize a complete recurrent-layer
 execution path, then compare the same authenticated full-model request
 with the prior full-card baseline and inspect the same phase profile. The
