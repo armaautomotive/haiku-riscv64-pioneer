@@ -1,0 +1,19 @@
+Qwen3.8 27B recurrent FFN input reuse — offline candidate, 2026-11-13
+
+The current recurrent role-2 and role-3 FFN projections prepare the same
+5120-value input separately. An explicitly gated offline controller candidate
+can skip the second set of 20 BF16 producer jobs only after checking all 119
+retained role-2 job identities, layer, position, invocation, routes and
+formats, and verifying the input and native shadows remain unchanged. The
+existing 119-worker admission and receipt checks still run before reuse.
+
+The candidate cross-builds for RV32. Its actual RV32 predicate passed an
+offline interpreter test covering all 119 worker-role mismatches, selected
+identity and descriptor corruption, and input/native shadow corruption.
+Preprocessor role-isolation checks reject native, kernel and Work roles.
+The existing small and gate reuse predicates also passed in the same linked
+controller test.
+
+This is an offline candidate only. Its full production lifecycle, actual
+hardware correctness, model quality and performance have not been tested.
+It has not been installed and does not establish any tokens-per-second gain.

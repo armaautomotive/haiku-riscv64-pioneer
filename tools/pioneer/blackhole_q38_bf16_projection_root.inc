@@ -6,6 +6,16 @@ namespace BFP=PioneerQ38Bf16ProducerLayout;
 using BFC=PioneerQ38Q4FpuCachedLayout;
 using BFR=PioneerQ38Bf16RootPairs;
 #define BF_ROOT_FN __attribute__((noinline,section(".bf16.root")))
+#if defined(PIONEER_Q38_FFN_INPUT_REUSE_INSPECTION) && \
+ (PIONEER_Q38_FFN_INPUT_REUSE_INSPECTION != 1 || !defined(PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION) \
+ || PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION != 1 || !defined(PIONEER_Q38_QGWD_ROOT_IMAGE) || PIONEER_Q38_QGWD_ROOT_IMAGE != 1 \
+ || !defined(PIONEER_Q38_LAYER_COMPONENT_RECURRENT) || PIONEER_Q38_LAYER_COMPONENT_RECURRENT != 1 \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE))
+#error FFN input reuse is a separate offline recurrent-root inspection only
+#endif
 static bool BfQ4(const uint32_t* d){return d[15]==12 && d[43]>=2 && d[43]<=4;}
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
 #ifdef PIONEER_Q38_RECURRENT_BFP8_WIDTH_INSPECTION
@@ -422,6 +432,24 @@ static BF_ROOT_FN bool BfRecurrentSmallToGateReuseCandidate(const uint32_t* d){
 }
 #endif
 #endif
+#ifdef PIONEER_Q38_FFN_INPUT_REUSE_INSPECTION
+// Reuse is allowed only after every role-2 worker's retained job belongs to
+// the immediately preceding invocation. Admit below must still validate the
+// actual receipts, and the input and native shadows must remain unchanged.
+static BF_ROOT_FN bool BfFfnInputReuseCandidate(const uint32_t* d){
+ if(!BfQ4(d) || d[43]!=3 || d[14]!=5120 || d[42]>=64 || (d[42]&3)==3 || d[6]<=1)return false;
+ for(unsigned w=0;w<119;w++){
+  const auto* p=Words(L::PeerJobs+w*256);const unsigned nonce=Words(L::Nonces)[w];
+  if(!nonce || p[0]!=M::Magic || p[1]!=nonce || p[2]!=1 || p[3]!=w+1 || p[4]!=M::Peer(w+1)
+   || p[5]!=d[42] || p[6]!=d[40] || p[7]!=d[6]-1 || p[16]!=PioneerQ38Bfp4WorkerJob::Magic
+   || p[18]!=5120 || p[33]!=17408 || p[34]!=2 || p[35]!=4)return false;
+  for(unsigned i=0;i<8;i++)if(p[8+i]!=d[32+i])return false;
+ }
+ for(unsigned i=0;i<5120;i++)if(Words(d[53])[i]!=Words(L::InputShadow)[i])scalar_fault_park();
+ for(unsigned i=0;i<2560;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
+ return true;
+}
+#endif
 static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  ,PioneerQ38Bf16DeferredAudit& audit
@@ -435,6 +463,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #else
  BfBuildPairs(d);uint32_t tracked[8],desc[64],job[64];
 #endif
+#ifdef PIONEER_Q38_FFN_INPUT_REUSE_INSPECTION
+ const bool reuseFfnInput=BfFfnInputReuseCandidate(d);
+#endif
 #ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
  const bool reuseSmallInput=BfSmallReuseCandidate(d);
 #endif
@@ -446,6 +477,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
 #endif
  static_assert(unsigned(L::InputShadow)==unsigned(BFP::ProjectionInput) && unsigned(L::Native)==0xa0000,"actual QGW4 ROOT buffers");
  if(d[43]!=4
+#ifdef PIONEER_Q38_FFN_INPUT_REUSE_INSPECTION
+  && !reuseFfnInput
+#endif
 #ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
   && !reuseSmallInput
 #endif
@@ -468,6 +502,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d
  for(unsigned i=0;i<8;i++){tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
 #endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
+#ifdef PIONEER_Q38_FFN_INPUT_REUSE_INSPECTION
+ if(reuseFfnInput){Seal(d);return;}
+#endif
 #ifdef PIONEER_Q38_SMALL_INPUT_REUSE_INSPECTION
  if(reuseSmallInput){Seal(d);return;}
 #endif
