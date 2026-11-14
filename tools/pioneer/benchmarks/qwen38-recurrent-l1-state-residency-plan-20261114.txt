@@ -7,6 +7,12 @@ speed claim. The current qualified full-card path remains tag92 vector-Q4 at
 attributes 59.078% of its aggregate timed cycles to recurrent layers, but
 includes control/NoC waits and is not a breakdown of state-copy time.
 
+Correction to the first 119-tile estimates in commits c28b5a5105 and
+929e5e320f: those estimates used a hypothetical redistribution across 119
+tiles, but the existing GDN state API and descriptor reject workers >= 96.
+The 119-tile counts are superseded and must not be treated as current-runtime
+capacity. The calculations below use the actual 96-worker mapping.
+
 Geometry derived from the current source:
 
 * `PioneerQ38CanonicalModelPlan` has 48 recurrent transformer layers
@@ -16,65 +22,62 @@ Geometry derived from the current source:
 * One selected current-state slot for the whole model is therefore
   48 layers x 48 heads x 64 KiB = 144 MiB, or 4,608 half-state buffers.
   A second complete state slot would double that to 288 MiB.
-* The local scratch probe documents 1.5 MiB L1 per tile. The current layout
-  uses 119 non-root workers/tiles. Aggregate peer L1 is 178.5 MiB.
-* A static round-robin assignment of `layerOrdinal*96 + halfOrdinal` modulo
-  119 gives every layer 96 distinct worker owners, while balancing all 4,608
-  state halves as 86 workers x 39 plus 33 workers x 38. A worker's state
-  storage is at most 1,277,952 bytes, leaving 294,912 bytes (288 KiB) for
-  executable image, live activations, scratch, and margin. Whole-device
-  unassigned L1 after one cached state slot is 34.5 MiB.
+* The local scratch probe documents 1.5 MiB L1 per tile. The current GDN
+  state API accepts exactly 96 workers (`PioneerQ38GdnState::Slice` rejects
+  worker >= 96 and the resident descriptor routes workers 0..95). A static
+  round-robin assignment of `layerOrdinal*96 + halfOrdinal` modulo 96 gives
+  each recurrent layer 96 distinct owners and assigns exactly 48 state halves
+  to each worker. Those 48 x 32 KiB states consume all 1.5 MiB, leaving no L1
+  for executable image, stack, activations, or scratch.
 
-The plan is promising but only a necessary capacity check. The GDN arithmetic
+This is a static capacity check, not a fitting cache design. The GDN arithmetic
 uses a separate Dst and currently has explicit local addresses for input,
-prior and next buffers; the current code/data and other worker phases have not
-been jointly relocated into the remaining 288 KiB per busiest tile. In-place
-state updates, token-abort behavior, reset/zeroing, barriers, all 119-worker
-ownership, and interaction with matrix/FFN scratch are also not implemented
-or proven. If these constraints cannot coexist, the state still must use
-GDDR; no lossy BF16 state cache is assumed.
+prior and next buffers; persistent state, code/data and other worker phases
+have not been jointly relocated. Full residency is impossible in the current
+mapping unless other L1 live data is relocated/streamed or worker topology is
+redesigned. In-place state updates, token-abort behavior, reset/zeroing,
+barriers, all 96-worker ownership, and interaction with matrix/FFN scratch are
+not implemented or proven. If these constraints cannot coexist, state must
+remain in GDDR; no lossy BF16 state cache is assumed.
 
 Reproducer:
 
   `sh tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`
 
 The ASan/UBSan test exhaustively maps all 4,608 state halves, checks
-per-layer owner uniqueness, slot alignment/non-overlap, L1 bounds, balanced
-38/39-slot occupancy, recurrent-layer ordering, and the exact residual
-scratch. It passed. The helper has an inspection-only role guard and has no
-native/Work selection or device access.
+per-layer owner uniqueness, slot alignment/non-overlap, L1 bounds, exact
+48-slot occupancy, recurrent-layer ordering, and that no L1 scratch remains
+when all state is assigned. The helper has an inspection-only role guard and
+has no native/Work selection or device access.
 
 Follow-up capacity bound using the exact current QTP3 pushed-image L1 snapshot
-spans: with 64-byte alignment, only 31 complete 32-KiB state slots per peer
-tile fit in regions the current image never touches. Across 119 peers that is
-3,689 slots / 120,881,152 bytes (about 80.1% of the required state). The
-remaining 919 slots / 30,113,792 bytes cannot be placed without relocating or
-shrinking at least that much existing saved L1 footprint. The separate GDN
-input-buffer-reuse image now frees 32 KiB within its GDN phase, but it is not
-in the selected QTP3 image and other phases may reuse those addresses; it does
-not by itself close this 919-slot gap. This conservative free-range check is
-not a full temporal live-range proof; it identifies the next exact footprint
-reduction gate rather than claiming that the proposed complete state cache
-already fits.
+spans and the actual 96-worker GDN API: with 64-byte alignment, only 31
+complete 32-KiB state slots per peer tile fit in regions the snapshot never
+touches. Across 96 peers that is 2,976 slots / 97,517,568 bytes (93 MiB) of
+4,608 halves. The remaining 1,632 slots / 53,477,376 bytes cannot be placed
+without relocating or shrinking existing saved L1 footprint. The separate
+GDN input-buffer-reuse image frees 32 KiB within its phase, but other phases
+may reuse those addresses; it does not close this static deficit. This
+conservative free-range check is not a full temporal live-range proof.
 
 A second offline packing check used the GDN worker's existing 4-KiB chunk
 granularity instead of requiring each 32-KiB state to occupy one contiguous
-range. The same exact snapshot spans leave 274 intact 4-KiB pages per peer.
-Grouping those pages into eight-page state halves yields 34 state buffers per
-peer, or 4,046 of 4,608 halves (132,579,328 bytes / 126.4 MiB), leaving two
-unpaired pages per peer. This gains three state buffers per peer over the
-contiguous-placement bound, but still misses every worker's demand of 38 or
-39 by four or five buffers (562 halves / 18,415,616 bytes total). Reaching
-that demand from the current packing would require at least 30 or 38
-additional 4-KiB pages per peer after using the two residual pages.
+range. The same exact snapshot spans leave 274 intact 4-KiB pages per current
+GDN peer. Grouping those pages into eight-page state halves yields 34 state
+buffers per peer, or 3,264 of 4,608 halves (106,954,752 bytes / 102 MiB),
+leaving two unpaired pages per peer. This gains three state buffers per peer
+over contiguous placement, but misses the actual 48-state demand by 14 buffers
+(1,344 halves / 44,040,192 bytes total). Reaching that demand from the current
+packing requires 110 additional 4-KiB pages per peer after using the two
+residual pages.
 
 Reproducer remains
 `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`.
 The ASan/UBSan test verifies 4-KiB alignment, that every packed page is within
-the exact untouched ranges, no page is assigned twice, all 119 worker totals,
+the exact untouched ranges, no page is assigned twice, all 96 worker totals,
 and a bijection from the model's 4,608 logical layer/head/half-state entries
-to per-worker slots. The first 4,046 mapped entries are assigned to L1; the
-remaining 562 are explicitly the GDDR-spill set. This is only a capacity and
+to the current per-worker slots. Of these, 3,264 are assigned to the
+QTP3-untouched L1 ranges and 1,344 spill to GDDR. This is only a capacity and
 static mapping result. The current GDN image consumes contiguous local-buffer
 addresses; no scattered-page import table or address-indirect chunk loader
 has been implemented, and the 4-KiB packing cannot be used until that path is

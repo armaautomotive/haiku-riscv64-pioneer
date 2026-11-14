@@ -15,12 +15,12 @@
 // assertion that live kernels can coexist with this proposed reservation.
 struct PioneerQ38GdnL1CachePlanInspection {
 	enum : uint32_t {
-		L1Bytes=0x180000, Workers=119, RecurrentLayers=48, HeadsPerLayer=48,
+		L1Bytes=0x180000, Workers=96, RecurrentLayers=48, HeadsPerLayer=48,
 		HalvesPerLayer=HeadsPerLayer*2, HalfStateBytes=32768,
 		TotalHalves=RecurrentLayers*HalvesPerLayer,
 		TotalStateBytes=TotalHalves*HalfStateBytes,
 		BaseSlots=TotalHalves/Workers, ExtraSlots=TotalHalves%Workers,
-		MaxSlots=BaseSlots+1, MaxStateBytes=MaxSlots*HalfStateBytes,
+		MaxSlots=BaseSlots+(ExtraSlots!=0), MaxStateBytes=MaxSlots*HalfStateBytes,
 		MinimumScratch=L1Bytes-MaxStateBytes
 	};
 	struct Slot { uint32_t worker,ordinal,index,offset,bytes; };

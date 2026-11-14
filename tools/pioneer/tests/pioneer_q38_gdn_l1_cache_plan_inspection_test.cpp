@@ -3,6 +3,7 @@
 #define PIONEER_Q38_GDN_L1_CACHE_CAPACITY_INSPECTION 1
 #include "../PioneerQ38GdnL1CachePlanInspection.h"
 #include "../PioneerQ38GdnL1CacheCapacityInspection.h"
+#include "../PioneerQ38GdnState.h"
 #include <cassert>
 #include <cstdio>
 
@@ -11,7 +12,7 @@ int main()
 	using P=PioneerQ38GdnL1CachePlanInspection;
 	static_assert(P::TotalHalves==4608,"48 recurrent layers x 48 heads x two FP32 half-states");
 	static_assert(P::TotalStateBytes==144U*1024*1024,"one selected current state slot per model state");
-	static_assert(P::MinimumScratch==294912,"39 half-states leave 288 KiB per fullest worker");
+	static_assert(P::MinimumScratch==0,"48 current GDN workers each need 48 half-states,leaving no L1 scratch");
 	unsigned counts[P::Workers]={};
 	bool occupied[P::Workers][P::MaxSlots]={};
 	for(unsigned l=0;l<P::RecurrentLayers;l++){
@@ -31,8 +32,8 @@ int main()
 	for(unsigned worker=0;worker<P::Workers;worker++){
 		assert(counts[worker]==P::SlotsForWorker(worker));
 		assert(P::ScratchBytes(worker)==P::L1Bytes-counts[worker]*P::HalfStateBytes);
-		assert(P::ScratchBytes(worker)>=P::MinimumScratch-P::HalfStateBytes);
-		if(counts[worker]==P::MaxSlots)high++;else low++;
+		assert(P::ScratchBytes(worker)>=P::MinimumScratch);
+		if(worker<P::ExtraSlots)high++;else low++;
 		total+=counts[worker];
 	}
 	assert(total==P::TotalHalves && high==P::ExtraSlots && low==P::Workers-P::ExtraSlots);
@@ -53,7 +54,7 @@ int main()
 		}
 		availableSlots+=count;deficit+=P::SlotsForWorker(worker)-count;
 	}
-	assert(availableSlots==3689 && deficit==919);
+	assert(availableSlots==2976 && deficit==1632);
 	unsigned fragmentedSlots=0,fragmentedPages=0,fragmentedMisses=0;
 	C::FragmentedSlot fragmentedPlacement[P::Workers][C::MaxSlots]={};
 	unsigned fragmentedCount[P::Workers]={};
@@ -68,7 +69,7 @@ int main()
 		}
 		fragmentedCount[worker]=count;fragmentedSlots+=count;fragmentedPages+=pages;fragmentedMisses+=P::SlotsForWorker(worker)-count;
 	}
-	assert(fragmentedSlots==4046 && fragmentedPages==32606 && fragmentedMisses==562);
+	assert(fragmentedSlots==3264 && fragmentedPages==26304 && fragmentedMisses==1344);
 	bool mapped[P::Workers][P::MaxSlots]={};unsigned residentStates=0,spilledStates=0;
 	for(unsigned layer=0;layer<P::RecurrentLayers;layer++)for(unsigned head=0;head<P::HeadsPerLayer;head++)for(unsigned half=0;half<2;half++){
 		P::Slot state={};assert(P::Map(layer,head,half,state));assert(!mapped[state.worker][state.index]);mapped[state.worker][state.index]=true;
@@ -81,10 +82,34 @@ int main()
 	assert(residentStates==fragmentedSlots && spilledStates==fragmentedMisses);
 	for(unsigned worker=0;worker<P::Workers;worker++)for(unsigned index=0;index<P::MaxSlots;index++)
 		assert(mapped[worker][index]==(index<P::SlotsForWorker(worker)));
-	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u workers, minimum scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
+	PioneerQ38GdnState runtimeState;const PioneerQ38GdnIdentity identity={1,1,1,1};
+	assert(runtimeState.Bind(identity) && runtimeState.BeginToken(identity,0));
+	unsigned runtimeResident=0,runtimeSpilled=0;
+	for(unsigned layer=0;layer<P::RecurrentLayers;layer++){
+		const unsigned actualLayer=P::ActualLayer(layer);assert(P::IsRecurrentLayer(actualLayer));
+		PioneerQ38GdnTicket ticket={};assert(runtimeState.BeginLayer(actualLayer,ticket));
+		for(unsigned worker=0;worker<P::Workers;worker++){
+			PioneerQ38GdnStateSlice prior={},next={};
+			assert(runtimeState.Slice(ticket,worker,false,prior) && runtimeState.Slice(ticket,worker,true,next));
+			assert(prior.head==worker/2 && prior.half==worker%2 && prior.firstWord==worker*8192 && prior.words==8192);
+			assert(next.head==prior.head && next.half==prior.half && next.slot==(prior.slot^1));
+			P::Slot placement={};assert(P::Map(layer,prior.head,prior.half,placement));
+			assert(placement.worker==worker && placement.index==layer);
+			if(placement.index<fragmentedCount[worker]){
+				for(unsigned page=0;page<C::PagesPerState;page++)
+					assert(C::Free(worker+1,fragmentedPlacement[worker][placement.index].pages[page],C::PageBytes));
+				runtimeResident++;
+			}else runtimeSpilled++;
+			assert(runtimeState.CompletedHalf(ticket,worker));
+		}
+		assert(runtimeState.CompleteLayer(ticket));
+	}
+	assert(runtimeResident==fragmentedSlots && runtimeSpilled==fragmentedMisses);
+	assert(runtimeState.CommitToken(identity,0));
+	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u current GDN workers, required scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
-	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u peer L1s (%u bytes); %u slots (%u bytes) need scratch relocation; each peer has 31 safe slots vs %u/%u required; NO all-phase live map or performance proof\n",
-		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots,P::MaxSlots);
-	std::printf("PASS 4KiB-scattered placement: %u pages yielded %u bijectively mapped resident states (%u bytes); %u states explicitly spill to GDDR; every peer has 34 from 274 pages (2 residual); 4/5 more states need 30/38 additional pages; GDN chunk-import address indirection NOT implemented or measured\n",
-		fragmentedPages,residentStates,residentStates*P::HalfStateBytes,spilledStates);
+	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u current GDN peer L1s (%u bytes); %u slots (%u bytes) need relocation; each peer has 31 safe slots vs %u required; NO all-phase live map or performance proof\n",
+		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots);
+	std::printf("PASS 4KiB-scattered placement: %u pages mapped %u current-runtime state halves (%u bytes) across one 48-layer token; %u spill to GDDR; each GDN worker keeps 34 layers (2 page fragments) and spills 14; 110 new pages per worker needed for full capacity; GDN chunk-import address indirection NOT implemented or measured\n",
+		fragmentedPages,runtimeResident,runtimeResident*P::HalfStateBytes,runtimeSpilled);
 }
