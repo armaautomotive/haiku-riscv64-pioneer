@@ -8,8 +8,10 @@ next state, the experiment writes that result over the now-dead local Prior
 buffer and uses that address as the source for the separate GDDR next slot.
 The transactional GDDR prior and next state slots remain different addresses;
 the full-token publication/commit boundary is unchanged. This reuses the
-32 KiB L1 output staging range at 0xa0000 rather than writing it, freeing that
-buffer range for later state-residency layout work.
+32 KiB L1 output staging range at 0xa0000 rather than writing it, reducing the
+GDN phase's live data footprint by 32 KiB. Other model phases may alias that
+range, so this is not yet proof that 0xa0000 can hold persistent state across
+the complete model schedule.
 
 Reproduce the separate candidate image:
 
