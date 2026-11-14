@@ -7618,6 +7618,9 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 	release_sem(sLock); free(request); return status;
 }
 // PIONEER_Q38_DISPATCH_CONTROL_END
+#ifdef PIONEER_Q38_WORK_BATCH_NATIVE_152
+#include "PioneerQ38WorkBatchControl.inc"
+#endif
 #endif
 
 static status_t
@@ -9051,6 +9054,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	// PIONEER_Q38_FFN_CODE_NATIVE_ROUTING_BEGIN
+#ifdef PIONEER_Q38_WORK_BATCH_NATIVE_152
+	if (operation==TT_PCI_PROBE_Q38_WORK_BATCH_SUPPORT)
+		return Q38WorkBatchSupport(instance,data,length);
+	if (operation==TT_PCI_PROBE_Q38_WORK_BATCH_RUN)
+		return Q38WorkBatchControlInspection(instance,data,length);
+#endif
 #ifdef TT_PIONEER_Q38_WORK_MODE
 	if (operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN)
 		return Q38DispatchControl(instance,operation,data,length);

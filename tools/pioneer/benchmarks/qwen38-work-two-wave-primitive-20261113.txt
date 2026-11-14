@@ -32,5 +32,25 @@ failure, lost output reply and an uncertain first dispatch. Both requests
 are authorized before any dispatch. Lost replies and uncertain execution
 quarantine the session. A real failed user-copy could partially modify user
 memory; clients must discard the complete response when the call fails.
-The control is host-inspection-only: no ioctl is registered and no kernel
+At that checkpoint the control was host-inspection-only: no ioctl was registered and no kernel
 driver, Assistant, physical hardware, or inference performance changed.
+
+Candidate build follow-up: the same handler is now registered only in the
+explicit tag2026111300010152 driver under a distinct batch operation and
+support query. It requires the exact compact/reuse Work role and excludes
+CPU-reference, alternate source layouts and Work output DMA. The real Haiku
+RISC-V driver cross-build completed twice with identical SHA-256
+5c32a4da16a97c64ddf85d060f907724742efa8320ca3fe0240dc0380da8a8c5;
+its default43 control SHA-256 was
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+The actual extracted routing passed both ordinary and candidate cases;
+tag/role refusals and an intentionally partial failed user-copy passed
+offline. A failed user-copy can modify caller memory: callers must discard
+the entire packet and the candidate quarantines ownership. The installed
+driver is unchanged. No candidate client, physical test or throughput result
+exists yet; this does not establish faster inference.
+The cross-compiler reported a 352-byte static frame for the candidate batch
+control function; this is not a bound on its full nested kernel call stack.
+An independent clean HEAD archive with only the staged batch changes also
+built the identical candidate and default43 binaries and passed the role,
+control and routing tests. Unrelated in-progress driver edits were excluded.

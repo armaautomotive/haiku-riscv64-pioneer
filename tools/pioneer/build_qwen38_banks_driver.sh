@@ -445,6 +445,12 @@ case "${PIONEER_Q38_WORK_MODE:-0}" in
     extra="$extra -DTT_PIONEER_Q38_WORK_MODE";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_BATCH_NATIVE:-0}" in
+ 0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026111300010152 ] || exit 2;;
+ 1) [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_Q38_WORK_MODE:-0}" = 55:1:2026111300010152:1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_BATCH_NATIVE_152=1";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_WORK_POSTED_STAGE:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] || exit 2

@@ -1,16 +1,41 @@
 /* SPDX-License-Identifier: MIT */
-// Isolated control-path inspection. It is not a registered driver operation.
-#if !defined(PIONEER_Q38_WORK_BATCH_CONTROL_INSPECTION) || PIONEER_Q38_WORK_BATCH_CONTROL_INSPECTION != 1 \
- || !defined(TT_PIONEER_Q38_WORK_MODE) || TT_PIONEER_Q38_WORK_MODE != 1 \
- || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+// Exact candidate driver role OR isolated host inspection; never both.
+#if !defined(TT_PIONEER_Q38_WORK_MODE) || TT_PIONEER_Q38_WORK_MODE != 1 \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
-#error Work batch control is isolated host inspection only
+#error Work batch control requires Work and excludes CPU validation
+#endif
+#if defined(PIONEER_Q38_WORK_BATCH_NATIVE_152)
+#if PIONEER_Q38_WORK_BATCH_NATIVE_152 != 1 || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
+ || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111300010152ULL \
+ || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || defined(PIONEER_Q38_WORK_BATCH_CONTROL_INSPECTION)
+#error Work batch candidate requires its exact tag152 kernel role
+#endif
+#elif !defined(PIONEER_Q38_WORK_BATCH_CONTROL_INSPECTION) || PIONEER_Q38_WORK_BATCH_CONTROL_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG)
+#error Work batch control requires isolated host inspection or exact tag152
 #endif
 #include "PioneerQ38WorkBatch.h"
-struct PioneerQ38WorkBatchPacket {
- uint32_t version,count,reserved[2];
- tt_q38_dispatch_probe jobs[PioneerQ38WorkBatch::Count];
-};
+#include "PioneerQ38WorkBatchProtocol.h"
+static_assert(unsigned(PioneerQ38WorkBatch::Count)==unsigned(PIONEER_Q38_WORK_BATCH_COUNT),"same bounded batch size");
+#ifdef PIONEER_Q38_WORK_BATCH_NATIVE_152
+static status_t
+Q38WorkBatchSupport(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+ if(!cookie || !data || length!=sizeof(PioneerQ38WorkBatchSupport))return B_BAD_VALUE;
+ thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+ if(status!=B_OK || thread.team!=cookie->team)return status!=B_OK?status:B_NOT_ALLOWED;
+ status=AcquireProbeLock(cookie,true
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+  ,true
+#endif
+ );
+ if(status!=B_OK)return status;
+ const PioneerQ38WorkBatchSupport support={PIONEER_Q38_WORK_BATCH_VERSION,PIONEER_Q38_WORK_BATCH_COUNT,
+  TT_Q38_DISPATCH_DRIVER,0,PIONEER_DRIVER_BUILD_TAG};
+ status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+}
+#endif
 static status_t
 Q38WorkBatchControlInspection(PioneerProbeCookie* cookie,void* data,size_t length)
 {

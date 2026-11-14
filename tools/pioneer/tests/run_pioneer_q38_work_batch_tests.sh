@@ -24,4 +24,17 @@ ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -Wno-unuse
  -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_Q38_WORK_MODE -I"$temporary" \
  "$directory/pioneer_q38_work_batch_control_test.cpp" -o "$temporary/control"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/control" "$1"
+awk '
+ /PIONEER_Q38_FFN_CODE_NATIVE_ROUTING_BEGIN/ {copying=1;next}
+ /PIONEER_Q38_FFN_CODE_NATIVE_ROUTING_END/ {found=1;exit}
+ copying {print} END {if(!found)exit 1}
+' "$source" > "$temporary/routing.inc"
+for mode in ordinary candidate; do
+ extra=
+ [ "$mode" = ordinary ] || extra=-DPIONEER_Q38_WORK_BATCH_NATIVE_152=1
+ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined $extra \
+  "-DPIONEER_WORK_BATCH_ROUTING_INCLUDE=\"$temporary/routing.inc\"" \
+  "$directory/pioneer_q38_work_batch_routing_test.cpp" -o "$temporary/routing-$mode"
+ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/routing-$mode"
+done
 printf 'Offline batch evidence retained at %s\n' "$temporary"

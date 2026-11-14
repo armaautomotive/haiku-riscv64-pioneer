@@ -1,18 +1,25 @@
 /* SPDX-License-Identifier: MIT */
 // Extracted real dispatch preparation/locking with simulated device IO only.
 #define PIONEER_Q38_DISPATCH_CONTROL_MOCK_ONLY
+#define user_memcpy batch_original_user_memcpy
 #include "pioneer_q38_dispatch_control_test.cpp"
+#undef user_memcpy
+static bool batchPartialCopy=false;
+static status_t user_memcpy(void* to,const void* from,size_t bytes){
+ if(batchPartialCopy && copyCalls+1==failCopy){copyCalls++;memcpy(to,from,bytes/2);return -99;}
+ return batch_original_user_memcpy(to,from,bytes);
+}
 #define PIONEER_Q38_WORK_BATCH_CONTROL_INSPECTION 1
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkBatchControl.inc"
 
 int main(int argc,char** argv)
 {
  assert(argc==2);(void)&Q38DispatchControl;
- for(unsigned scenario=0;scenario<6;scenario++){
+ for(unsigned scenario=0;scenario<7;scenario++){
   PioneerProbeCookie cookie;Begin(cookie,argv[1]);auto* c=cookie.context;
   auto packet=std::make_unique<PioneerQ38WorkBatchPacket>();
   packet->version=1;packet->count=2;packet->jobs[0]=*Request();packet->jobs[1]=*Request();
-  copyCalls=failCopy=0;
+  copyCalls=failCopy=0;batchPartialCopy=false;
   if(scenario==1)packet->jobs[1].reserved[0]=1;
   if(scenario==2)failCopy=1; // input copy must not touch the owner
   if(scenario==3)failCopy=2; // successful device execution, lost reply
@@ -23,6 +30,7 @@ int main(int argc,char** argv)
    assert(c->banks.Page(c->dram,0,0x08000000,address,route,index));
    c->initialized[index]=0;
   }
+  if(scenario==6){failCopy=2;batchPartialCopy=true;}
   const status_t status=Q38WorkBatchControlInspection(&cookie,packet.get(),sizeof(*packet));
   if(!scenario){
    assert(status==B_OK && packet->jobs[0].result.nonce==1 && packet->jobs[1].result.nonce==2
@@ -32,10 +40,9 @@ int main(int argc,char** argv)
    assert(status==(scenario==2?-99:B_NOT_ALLOWED) && !c->q38Dispatch && !c->Unsafe());
    End(cookie,true);
   }else{
-   assert(status==(scenario==3?-99:B_DEV_NOT_READY) && c->Unsafe());
-   // This mock fails before copying. A real partial copy must be discarded
-   // by the caller on error; the driver quarantines either way.
-   assert(packet->jobs[0].result.version==0 && packet->jobs[1].result.version==0);
+   assert(status==((scenario==3 || scenario==6)?-99:B_DEV_NOT_READY) && c->Unsafe());
+   if(scenario==6)assert(packet->jobs[0].result.version==1 && packet->jobs[1].result.version==0);
+   else assert(packet->jobs[0].result.version==0 && packet->jobs[1].result.version==0);
    End(cookie,false);sColdRecoveryRequired=false;
   }
   failCopy=0;
