@@ -7,15 +7,20 @@ import re
 import subprocess
 import sys
 import tempfile
-if not __debug__ or len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2] not in ('--qgwd-synthetic','--recurrent-synthetic','--recurrent-out-synthetic')):
-    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY [--qgwd-synthetic|--recurrent-synthetic|--recurrent-out-synthetic]')
+if not __debug__ or len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2] not in ('--qgwd-synthetic','--recurrent-synthetic','--recurrent-out-synthetic','--small-alpha','--small-beta')):
+    raise SystemExit('Use non-optimized Python PRIVATE_EXPORT_DIRECTORY [--qgwd-synthetic|--recurrent-synthetic|--recurrent-out-synthetic|--small-alpha|--small-beta]')
 here = pathlib.Path(__file__).resolve().parent
 private = pathlib.Path(sys.argv[1])
-synthetic=len(sys.argv)==3
+small_alpha=len(sys.argv)==3 and sys.argv[2]=='--small-alpha'
+small_beta=len(sys.argv)==3 and sys.argv[2]=='--small-beta'
+synthetic=len(sys.argv)==3 and not (small_alpha or small_beta)
 recurrent=synthetic and sys.argv[2]=='--recurrent-synthetic'
 recurrent_out=synthetic and sys.argv[2]=='--recurrent-out-synthetic'
 if synthetic:
     assert private.resolve()==(here/('fixtures/recurrent-out-source' if recurrent_out else 'fixtures/qgwd-dense-source')).resolve(), 'only explicit synthetic metadata'
+elif small_alpha or small_beta:
+    expected='630caa504d3b3fc96b2aa38ec090954c1cbb470b2baa59d84957af4e7d4915e1' if small_alpha else '70940f99172a098a48ab18b978e9183a6ade1e1543f16fb06f42fa6d993421e4'
+    assert hashlib.sha256((private / 'PioneerNativeBfpModelBandMetadata.h').read_bytes()).hexdigest() == expected
 else:
     assert hashlib.sha256((private / 'PioneerNativeBfpModelBandMetadata.h').read_bytes()).hexdigest() == 'a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c'
 driver = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
@@ -156,7 +161,9 @@ int main(int argc,char** argv){
 '''.replace('CLIENT_SOURCE', str(here.parent / 'pioneer_native_model_band_diagnostic.cpp')).replace('ACTUAL_RELOAD_CONTROL', control)
 (folder / 'test.cpp').write_text(program)
 compiler = os.environ.get('CXX', 'c++')
-roles = (['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE=1'] if recurrent_out else
+roles = (['-DPIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE=1'] if small_alpha else
+         ['-DPIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_SMALL_BETA_BAND_SOURCE=1'] if small_beta else
+         ['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE=1'] if recurrent_out else
          ['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_BAND_SOURCE=1'] if recurrent else
          ['-DPIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE=1'] if synthetic else [])
 subprocess.run([compiler, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
@@ -184,5 +191,13 @@ for selection in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU
                              '-I' + str(folder), '-I' + str(private),
                              '-c', str(here.parent / 'pioneer_native_model_band_diagnostic.cpp'), '-o', str(folder / (selection + '.o'))], text=True, capture_output=True)
     assert result.returncode and 'Learned-band CPU reference is a separate diagnostic' in result.stderr
+if small_alpha or small_beta:
+    wrong = 'PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC' if small_alpha else 'PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC'
+    result = subprocess.run([compiler, '-std=c++17', *roles, '-D'+wrong+'=1', '-I'+str(folder), '-I'+str(private),
+                             '-E', str(here.parent/'pioneer_native_model_band_diagnostic.cpp')],capture_output=True,text=True)
+    assert result.returncode and 'distinct identities' in result.stderr
+    result = subprocess.run([compiler, '-std=c++17', roles[0], '-I'+str(folder), '-I'+str(private),
+                             '-E', str(here.parent/'pioneer_native_model_band_diagnostic.cpp')],capture_output=True,text=True)
+    assert result.returncode and 'authenticated source must be selected together' in result.stderr
 print(f'PASS ACTUAL learned-band client:{len(cases)} ASan/UBSan cases;ACTUAL driver metadata,all64 RUN/END word mutations in ALL3 samples,source mutation at boundaries,strict protocol/owner/close/channel failures,NO next sample/END/query/retry after uncertainty;3 runtime-role guards;NO device proof')
 print('CPU-only actual learned client evidence:', folder)

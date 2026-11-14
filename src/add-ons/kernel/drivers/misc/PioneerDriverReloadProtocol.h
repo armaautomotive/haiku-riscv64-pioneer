@@ -1,6 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../../../tools/pioneer/PioneerQ38QgwdTwoTokenRole.h"
 #if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
+ && PIONEER_DRIVER_BUILD_TAG == 0x2026111300010149ULL \
+ && (!defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) || PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC != 1)
+#error Tag149 is reserved for the small alpha-band diagnostic
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
+ && PIONEER_DRIVER_BUILD_TAG == 0x2026111300010150ULL \
+ && (!defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC) || PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC != 1)
+#error Tag150 is reserved for the small beta-band diagnostic
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
  && PIONEER_DRIVER_BUILD_TAG == 0x2026111100010146ULL \
  && (!defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || PIONEER_Q38_QGWD_RESIDENT_NATIVE_146 != 1)
 #error Tag146 is reserved for the QGWD resident diagnostic candidate

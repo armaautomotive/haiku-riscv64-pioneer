@@ -4,10 +4,22 @@
 #include "PioneerNativeBfpProtocol.h"
 // Distinct fixed learned-weight diagnostic80. Three COMPILED samples only;
 // no runtime weights/code/addresses/route,model inference or Work endpoint.
-#if (defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC)) > 1
+#if (defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC)) > 1
 #error Recurrent and dense band diagnostics require distinct identities
 #endif
-#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC)
+#if (defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) && PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC != 1) \
+ || (defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC) && PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC != 1) \
+ || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
+#error Small recurrent band protocol is a separate fixed diagnostic only
+#endif
+#ifdef PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC
+constexpr uint64_t PioneerNativeModelBandTag=UINT64_C(0x2026111300010149);
+#else
+constexpr uint64_t PioneerNativeModelBandTag=UINT64_C(0x2026111300010150);
+#endif
+#elif defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC)
 #if PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC != 1 || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error Recurrent output band protocol is a separate fixed diagnostic only

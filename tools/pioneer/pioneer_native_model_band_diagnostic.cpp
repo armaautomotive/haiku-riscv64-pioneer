@@ -1,5 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // Three fixed learned-weight diagnostic samples. NOT model/Work inference.
+#if defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE)
+#error Small alpha diagnostic protocol and authenticated source must be selected together
+#endif
+#if defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE)
+#error Small beta diagnostic protocol and authenticated source must be selected together
+#endif
 #if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)
 #error Dense diagnostic protocol and authenticated source must be selected together
 #endif

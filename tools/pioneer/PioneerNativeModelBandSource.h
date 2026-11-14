@@ -4,6 +4,18 @@
 #if defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
 #error Learned-band CPU reference is a separate diagnostic,never driver/Work/validation
 #endif
+#if (defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) + defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE) \
+ + defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE) \
+ + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)) > 1
+#error Learned-band source roles are mutually exclusive
+#endif
+#if (defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) && PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE != 1) \
+ || (defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE) && PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE != 1) \
+ || ((defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE)) \
+ && (defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)))
+#error Small recurrent learned-band source is a private diagnostic only
+#endif
 #if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE) && (PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE != 1 \
  || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
@@ -55,7 +67,15 @@ public:
 		Cache::Digest digest={};
 		if(!Cache::HashFile(fd,PioneerQwen38Gguf::FullBytes,digest,error) || !Stable()
 			|| Cache::Hex(digest)!="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747")return Fail(error,"Original full SHA/stability refused.");
-#ifdef PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE
+#if defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE)
+#ifdef PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE
+		constexpr const char* name="blk.0.ssm_alpha.weight";constexpr unsigned tensorIndex=11;
+#else
+		constexpr const char* name="blk.0.ssm_beta.weight";constexpr unsigned tensorIndex=12;
+#endif
+		constexpr unsigned matrixWidth=5120,matrixRows=48,tensorType=8;
+		const unsigned rows[3]={0,32,0};
+#elif defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE)
 		constexpr const char* name="blk.0.ssm_out.weight";
 		constexpr unsigned matrixWidth=6144,matrixRows=5120,tensorIndex=16,tensorType=8;
 		const unsigned rows[3]={0,2560,5088};
@@ -102,6 +122,7 @@ public:
 			weights.insert(weights.end(),inputs.begin(),inputs.end());const auto payload=Cache::Hex(Cache::Hash(weights.data(),weights.size()));
 			const auto* golden=Meta::Golden(sample);const char* pin=Meta::PayloadSHA(sample);
 			if(!golden || !pin || payload!=pin || memcmp(expected.data(),golden,128) || !Stable())return Fail(error,"Compiled payload/reference does not match fresh authenticated original.");
+			for(unsigned row=0;row<32;row++)if(rows[sample]+row>=matrixRows && expected[row])return Fail(error,"Padded learned output is nonzero.");
 		}
 		if(!Stable())return Fail(error,"Original changed before learned reference publication.");
 		prepared=true;error.clear();return true;

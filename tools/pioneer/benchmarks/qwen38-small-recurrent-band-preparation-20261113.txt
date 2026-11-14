@@ -23,3 +23,17 @@ client has been adapted, installed or run on the P100A for these bands.
 This is not complete-model quality, real inference or tokens-per-second
 evidence. A separate guarded physical lifecycle, output comparison, safe
 cleanup and stable-driver restoration are still required before a card test.
+
+Client preparation: separate alpha and beta diagnostic protocol identities
+and CPU-only authenticated sources now rederive their three compiled
+samples from the original model, including a padded-zero check. Each real
+source preflight passed on the Mac. Each actual client passed 492 simulated
+fault/ownership/word-mutation cases with its own metadata and exact tag;
+paired-source, distinct-role and Work/validation refusals were checked.
+Both Haiku RISC-V clients cross-linked. Alpha client SHA-256 is
+09b912af473745e599f7e7a4b4bbcea81ff52c3e5ad97ce8d564fc6fda707eb6;
+beta is de1c4f64d9a11d84c39b671b6e8046c373d2de8cc1ef8ec2c627d47a90ba8a17.
+Their binaries embed private model-derived metadata and must not be
+published. The corresponding native diagnostic drivers do not yet exist;
+no client or P100A device was opened and no speed or model-quality claim
+is established.
