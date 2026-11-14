@@ -1,0 +1,23 @@
+Work batch applicability audit, 2026-11-13
+
+The actual 119-worker fleet planner was run on the local Qwen3.8-27B GGUF
+metadata using the same tiled 8192-context layout as the Work session. It
+found 497 quantized matrix tensors after excluding the embedding lookup.
+Of these, 496 need one wave; only output.weight needs nine waves. If each
+matrix is invoked once, there are 505 Work calls without batching and 501
+with the two-wave client: four fewer calls, or about 0.8% by call count.
+
+The earlier physical Work profile recorded 1515 Work ioctls over three warm
+decode samples, i.e. 505 per sample. The static count is consistent with
+that short profile, but does not prove runtime frequency for all prompts.
+The batch driver still executes its two waves sequentially; this change does
+not put attention/state on the card, remove internal card dispatches, or
+guarantee a speedup. Different wave costs and syscall overhead mean the call
+count cannot be converted directly into a token-rate prediction.
+
+The parser verifies expected shape and file stability but this audit does not
+independently authenticate the full model bytes. No card or inference was
+run. Given the small scope of saved host calls and the substantially larger
+full-card offload goal, a 27B reload solely to benchmark this candidate is
+deferred; keep the tested candidate available while prioritizing actual
+matrix-engine recurrent/dense execution and a full-model measurement.
