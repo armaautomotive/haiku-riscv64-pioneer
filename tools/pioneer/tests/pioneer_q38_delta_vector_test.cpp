@@ -111,6 +111,40 @@ int main()
 		for (unsigned r=4;r<6;r++) for (unsigned lane=0;lane<32;lane++) roundingDifferences+=raw.lr[r][lane]!=prescaled.lr[r][lane];
 	}
 	assert(roundingDifferences>0); // negative control:pre-scaling is NOT interchangeable in F32
+#ifdef PIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_EXPERIMENT
+	unsigned factoredTrials=0,changedState=0,changedOutput=0;double maxRelative=0;
+	for (unsigned sample=0;sample<6;sample++) for (float decay:{0.f,.83f,1.f}) for (float beta:{0.f,.37f,1.f}) {
+		DeltaVectorMachine baseline,candidate; for (unsigned row=0;row<512;row++) baseline.defined[row]=candidate.defined[row]=true;
+		for (unsigned i=0;i<128;i++) {
+			baseline.q[i]=candidate.q[i]=Bits(sample?float(sin(i*.123+sample*.317)*.01):0);
+			baseline.k[i]=candidate.k[i]=Bits(sample?float(cos(i*.153+sample*.217)*.03):0);
+		}
+		for (unsigned at=0;at<8192;at++) baseline.state[at]=candidate.state[at]=Bits(sample?float(sin(at*.031+sample*.17)*.003):0);
+		for (unsigned j=0;j<64;j++) {
+			uint32_t value=Bits(sample?float(sin(j*.013+sample*.117)*2.1):0);
+			unsigned row=j/16,col=j%16,parity=col&1,lane=row*8+col/2;
+			baseline.lr[6+parity][lane]=candidate.lr[6+parity][lane]=value;
+		}
+		assert(PioneerQ38DeltaVectorHalf<true>(baseline,Bits(decay),Bits(beta)));
+		assert(PioneerQ38DeltaVectorHalfFactoredDecay<true>(candidate,Bits(decay),Bits(beta)));
+		assert(baseline.drained && candidate.drained && baseline.drains==1 && candidate.drains==1);
+		assert(candidate.ops+508==baseline.ops); // two encoded instructions per SFPU op; 256 multiplies removed, two scales added
+		for (unsigned at=0;at<8192;at++) {
+			float a=Float(baseline.state[at]),b=Float(candidate.state[at]);
+			double relative=std::fabs(double(a)-b)/(1e-12+std::fabs(double(a)));if(relative>maxRelative)maxRelative=relative;
+			if (baseline.state[at]!=candidate.state[at]) changedState++;
+			assert(std::isfinite(b) && std::fabs(double(a)-b)<=2e-6*(1+std::fabs(double(a))));
+		}
+		for (unsigned j=0;j<64;j++) {
+			unsigned row=j/16,col=j%16,parity=col&1,lane=row*8+col/2;
+			float a=Float(baseline.lr[4+parity][lane]),b=Float(candidate.lr[4+parity][lane]);
+			double relative=std::fabs(double(a)-b)/(1e-12+std::fabs(double(a)));if(relative>maxRelative)maxRelative=relative;
+			if (baseline.lr[4+parity][lane]!=candidate.lr[4+parity][lane]) changedOutput++;
+			assert(std::isfinite(b) && std::fabs(double(a)-b)<=2e-6*(1+std::fabs(double(a))));
+		}
+		factoredTrials++;
+	}
+#endif
 	for (uint32_t bad:{1U,0x007fffffU,0x80000000U,0x3f800001U,0x7f800000U,0x7fc00001U,0xffffffffU}) for (bool beta:{false,true}) {
 		DeltaVectorMachine m; auto before=m.state;
 		assert(!PioneerQ38DeltaVectorHalf(m,beta?0x3f800000:bad,beta?bad:0x3f800000) && !m.ops && m.state==before);
@@ -129,6 +163,10 @@ int main()
 		DeltaVectorMachine m; for (bool& defined:m.defined) defined=true; m.dropFinalDrain=true;
 		assert(PioneerQ38DeltaVectorHalf(m,0x3f800000,0x3f800000) && !m.drained && !m.drains); // owner MUST refuse publication
 	}
+#ifdef PIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_EXPERIMENT
+	printf("PASS OFFLINE vector GDN half-head:%u pre/post-scale exact trials plus %u factored-decay tolerance trials;factored ops -254/half-head, changed state/output %u/%u,max relative error %.3g;pre/post-rounding negative control%u differences with identical state,32 lanes/parities,full-row ownership/latency/drain;NO residency/registered GGML/TPS claim\n",trials,factoredTrials,changedState,changedOutput,maxRelative,roundingDifferences);
+#else
 	printf("PASS OFFLINE vector GDN half-head:%u pre/post-scale trials,ALL8192 next-state+64 output bits exact,pre/post-rounding negative control%u differences with identical state,32 lanes/parities,full-row ownership/latency/drain;NO residency/registered GGML/speed claim\n",trials,roundingDifferences);
+#endif
 }
 #endif

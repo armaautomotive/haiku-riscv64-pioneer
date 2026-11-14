@@ -1,0 +1,43 @@
+Qwen 27B P100A GDN factored-decay offline candidate, November 14, 2026
+=====================================================================
+
+This is an isolated experimental arithmetic image. It is not registered,
+installed, driver-selected, Work-enabled, or measured on the Pioneer.
+
+The original local GDN half-head computes each prediction contribution as
+((state * decay) * key) before accumulation. The candidate computes the
+state-key dot first, then multiplies each completed parity accumulator by the
+same scalar decay. This saves 254 modeled SFPU vector operations per 64-column
+half-head (256 per-key multiplies removed, two accumulator multiplies added).
+It changes floating-point operation order, so the original Q4/native path is
+untouched and remains the only qualified implementation.
+
+Evidence:
+
+* `bash tools/pioneer/tests/run_pioneer_q38_delta_vector_tests.sh` passed 108
+  exact original-path tests and 54 paired factored-decay tolerance tests. For
+  these synthetic inputs the emulator observed zero changed state/output bits
+  and zero relative error; this does not establish all-real-activation quality.
+* The separate RISC-V candidate was built with
+  `build_qwen38_delta_vector_factored_image.sh` against the local Haiku RISC-V
+  cross-toolchain. Code SHA-256:
+  `bc36ef3e2c32c0b75d723ab624d1eb748f510747398ff383b810f82996dd1340`.
+  Its boot image is unchanged from the baseline:
+  `d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6`.
+* `run_pioneer_q38_delta_vector_image_tests.sh IMAGE --factored` passed the
+  emitted-instruction simulator, including all four exact state/output
+  fixtures and its descriptor, input, import-completion, and drain fault
+  checks. Across the three nonzero samples, instruction steps fell from
+  146,223 to 145,717, and from 146,212 to 145,706 (506 steps, about 0.35%).
+  The simulator's SFPU-op count fell from 5,914 to 5,406 and from 5,913 to
+  5,405 (508 counted instructions). This is simulated instruction-count
+  evidence, not card-cycle or tokens/sec evidence.
+
+Interpretation: the candidate removes some local arithmetic, but the emitted
+instruction-step reduction is small and says nothing about the measured
+GDDR/NoC wait component. It is not a likely route by itself from the qualified
+full-card rate of about 0.173 tokens/sec to the 20 tokens/sec target. The
+candidate should remain experimental unless real-weight, layer-wide numerical
+checks and an authenticated full-model card comparison establish both quality
+and a worthwhile gain. Existing Pioneer SSH host-key mismatch still blocks
+physical exchange/benchmarking until independently verified on its screen.

@@ -63,6 +63,15 @@ extern "C" unsigned scalar_main()
 	for (unsigned chunk=0;chunk<8;chunk++) Import(L::Prior+chunk*4096,chunk*64,1024);
 	Emit(0xb2050004); Drain();
 	DeltaEmitter emitter;
+#ifdef PIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_IMAGE
+	if (!PioneerQ38DeltaVectorHalfFactoredDecay<
+#ifdef PIONEER_Q38_DELTA_VECTOR_POST_SCALE
+		true
+#else
+		false
+#endif
+		>(emitter,decay,beta)) scalar_fault_park();
+#else
 	if (!PioneerQ38DeltaVectorHalf<
 #ifdef PIONEER_Q38_DELTA_VECTOR_POST_SCALE
 		true
@@ -70,6 +79,7 @@ extern "C" unsigned scalar_main()
 		false
 #endif
 		>(emitter,decay,beta)) scalar_fault_park();
+#endif
 	// Dst is only a shadow. Publish next state into LOCAL scratch only;
 	// a future resident owner must not commit it until independent completion.
 	for (unsigned i=0;i<8192;i++) {

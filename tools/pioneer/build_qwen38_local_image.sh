@@ -67,7 +67,7 @@ set -eu
 [ "${PIONEER_Q38_PROJECTION_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "$#" = 3 ] || exit 2
-case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|resident_gdn|resident_gdn_root|packed|activation|activation0|ffn_activation|ffn_native_activation|ffn_resident_activation|ffn_resident_gather|ffn_resident_gather2|ffn_resident_output|projection_input|projection_gather|gdn_output_gather) kind=$1;; *) exit 2;; esac
+case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|delta_vector_factored|resident_gdn|resident_gdn_root|packed|activation|activation0|ffn_activation|ffn_native_activation|ffn_resident_activation|ffn_resident_gather|ffn_resident_gather2|ffn_resident_output|projection_input|projection_gather|gdn_output_gather) kind=$1;; *) exit 2;; esac
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$2/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$3
@@ -75,11 +75,19 @@ case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 2
 umask 077
 mkdir -m 700 "$output"
+source_kind=$kind
+start_kind=$kind
+extra_flags=
+if [ "$kind" = delta_vector_factored ]; then
+	source_kind=delta_vector
+	start_kind=delta_vector
+	extra_flags='-DPIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_EXPERIMENT=1 -DPIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_IMAGE=1'
+fi
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
  -fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
- -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
- -march=rv32imf -mabi=ilp32 -fstack-usage -c "$directory/blackhole_qwen38_$kind.cpp" -o "$output/program.o"
-"$cross-as" -I"$directory" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_qwen38_${kind}_start.S" -o "$output/start.o"
+ -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax $extra_flags \
+ -march=rv32imf -mabi=ilp32 -fstack-usage -c "$directory/blackhole_qwen38_$source_kind.cpp" -o "$output/program.o"
+"$cross-as" -I"$directory" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_qwen38_${start_kind}_start.S" -o "$output/start.o"
 linker=$directory/blackhole_scalar.ld
 case "$kind" in delta_vector_probe|delta_vector_ggml) linker=$directory/blackhole_qwen38_delta_vector_probe.ld;; esac
 case "$kind" in resident_gdn|resident_gdn_root) linker=$directory/blackhole_qwen38_resident_gdn.ld;; esac

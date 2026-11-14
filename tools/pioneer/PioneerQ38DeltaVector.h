@@ -72,4 +72,60 @@ template<bool PostScale=false,class E> static bool PioneerQ38DeltaVectorHalf(E& 
 	}
 	e.Drain(); return true;
 }
+
+// Experimental reassociation for offline measurement only.  The recurrence
+// uses a single decay value for every state element, so decay may be applied
+// once to each completed key dot instead of once per state element.  This
+// removes one vector multiply from each key/parity step (256 fewer vector
+// operations per half-head, plus two accumulator scales).  It changes FP32
+// rounding relative to PioneerQ38DeltaVectorHalf and MUST NOT be selected by
+// a native/Work path without layer-wide numerical and full-model qualification.
+#ifdef PIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_EXPERIMENT
+#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
+ || defined(PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE)
+#error Factored-decay candidate is isolated from Work,CPU-validation,registered native,and existing device-image roles
+#endif
+template<bool PostScale=false,class E> static bool PioneerQ38DeltaVectorHalfFactoredDecay(E& e,uint32_t decay,uint32_t beta)
+{
+	if (!PioneerQ38DeltaVectorGate(decay) || !PioneerQ38DeltaVectorGate(beta)) return false;
+	e.Op(0x8a000002);
+	PioneerSfpuLoad32(e,2,decay);
+	PioneerSfpuLoad32(e,4,0); PioneerSfpuLoad32(e,5,0);
+	for (unsigned key=0;key<128;key++) {
+		PioneerSfpuLoad32(e,3,e.KeyBits(key));
+		for (unsigned parity=0;parity<4;parity+=2) {
+			e.Op(0x70030000|(key*4)|parity);
+			PioneerQ38VectorAffineMul(e,0,3,0);
+			PioneerQ38VectorAffineAdd(e,parity?5:4,0,parity?5:4);
+		}
+	}
+	PioneerQ38VectorAffineMul(e,4,2,4);
+	PioneerQ38VectorAffineMul(e,5,2,5);
+	PioneerSfpuLoad32(e,3,beta); PioneerSfpuLoad32(e,1,0x80000000);
+	PioneerSfpuXor(e,4,1); PioneerSfpuXor(e,5,1);
+	PioneerQ38VectorAffineAdd(e,6,4,6); PioneerQ38VectorAffineAdd(e,7,5,7);
+	PioneerQ38VectorAffineMul(e,6,3,6); PioneerQ38VectorAffineMul(e,7,3,7);
+	PioneerSfpuLoad32(e,4,0); PioneerSfpuLoad32(e,5,0);
+	for (unsigned key=0;key<128;key++) {
+		PioneerSfpuLoad32(e,3,e.KeyBits(key)); uint32_t q=e.QueryBits(key);
+		for (unsigned parity=0;parity<4;parity+=2) {
+			e.Op(0x70030000|(key*4)|parity);
+			PioneerQ38VectorAffineMul(e,0,2,0);
+			PioneerQ38VectorAffineMul(e,3,parity?7:6,1);
+			PioneerQ38VectorAffineAdd(e,0,1,0);
+			e.Op(0x72030000|(key*4)|parity);
+			PioneerSfpuLoad32(e,1,q);
+			PioneerQ38VectorAffineMul(e,0,1,0);
+			PioneerQ38VectorAffineAdd(e,parity?5:4,0,parity?5:4);
+		}
+	}
+	if (PostScale) {
+		PioneerSfpuLoad32(e,1,0x3db504f3);
+		PioneerQ38VectorAffineMul(e,4,1,4);
+		PioneerQ38VectorAffineMul(e,5,1,5);
+	}
+	e.Drain(); return true;
+}
+#endif
 #endif

@@ -10,9 +10,11 @@ if [ "$#" = 2 ]; then
    code_hash=1c0766bedd173f0fcf383629dec7a333a17889ad25e8833b9a57002b6f6ae771;;
   --ggml) flags='-DPIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE -DPIONEER_Q38_DELTA_VECTOR_POST_SCALE'
    code_hash=0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe;;
+  --factored) flags='-DPIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_EXPERIMENT=1 -DPIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_IMAGE=1'
+   code_hash=bc36ef3e2c32c0b75d723ab624d1eb748f510747398ff383b810f82996dd1340;;
   *) exit 2;;
  esac
- boot_hash=e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ [ "$2" = --factored ] || boot_hash=e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
 fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-delta-vector-image.XXXXXXXX")
