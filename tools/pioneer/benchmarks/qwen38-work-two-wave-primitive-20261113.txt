@@ -1,0 +1,24 @@
+Two-wave Work batch primitive, offline checkpoint
+
+The new bounded primitive accepts exactly two kernel-private Work requests.
+It validates both shapes and calls the caller's read-only extent/owner
+authorization on both before the first dispatch. It clears result buffers,
+uses consecutive live-owner nonces and checks each completion. Any failure
+after a dispatch quarantines the owner and clears both partial results.
+The future locked driver caller must provide the actual owner checks,
+quarantine, and all-or-nothing user copy. The helper registers no ioctl,
+does not acquire device ownership and is not yet wired into the Assistant.
+
+An ASan/UBSan host test exercised the actual Work dispatch implementation
+and compiled ROOT instructions with synthetic device I/O. Two sequential
+dispatches completed with nonce 1 and 2. Invalid shape, failed authorization
+and invalid batch size/nonce were refused before execution; first/second
+dispatch failure, nonce corruption, recovery status, marker corruption and
+peer-count mutation triggered quarantine and cleared both outputs. Stale
+result buffers were cleared before dispatch. CPU validation/reference role
+combination was separately refused at compile time.
+
+No physical card, driver swap, full-model inference or timing was performed.
+This primitive alone does not reduce any real ioctl count or demonstrate a
+speedup. Work and CPU-validation modes remain separate. The 20 tok/s target
+remains unmet.
