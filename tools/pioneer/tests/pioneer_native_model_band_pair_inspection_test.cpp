@@ -33,7 +33,7 @@ struct IO {
  uint32_t BfpControlRead(unsigned i){assert(Window()>=0 && i<3);return 0;}
  uint32_t BfpPcRead(){
   int core=Window();assert(core>=0);
-  if(pcReads<4){static const unsigned order[]={0,1,1,0};assert(unsigned(core)==order[pcReads]);
+  if(pcReads<4){static const unsigned order[]={1,0,0,1};assert(unsigned(core)==order[pcReads]);
    pcReads++;if(proveOverlap)return 0x70010;}
   else pcReads++;
   return pauses&1?0x70038:0x7003c;

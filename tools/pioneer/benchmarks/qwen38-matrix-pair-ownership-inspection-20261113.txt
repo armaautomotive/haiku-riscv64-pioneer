@@ -124,15 +124,36 @@ generation 56, 64 CPUs, and maximum RAM 137034936320 bytes. Back-to-back
 release was therefore not enough to produce a verified active-interval
 overlap.
 
-Next, expose the four sampled PCs in the diagnostic result so the `overlap0`
-outcome identifies which peer reached terminal park and when; then tune the
-owner's sample schedule or diagnostic workload from measured state rather than
-guessing. This remains diagnostic-only and does not count as Qwen layer
+The raw-PC run below answers which peers had reached terminal park during the
+sample bracket. This remains diagnostic-only and does not count as Qwen layer
 offload.
 
+Raw-PC physical follow-up, fresh stage f: protocol v2 retained four bounded
+PC observations alongside the overlap bit. The source-preflight passed, exact
+128-word output comparison passed, explicit END succeeded, and the stable
+driver was restored at generation 58 with 64 CPUs and maximum RAM
+137034936320 bytes. The raw observations were `0007003c-00070038-00070038-
+0007003c`; all four were terminal park PCs, so this run did not observe active
+overlap. Stable driver SHA-256 remains
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403; trial.exit
+was 0 and stderr empty. This is diagnostic evidence only, not Qwen inference or
+a speed result.
+
+The next candidate removes full PCIe health/TLB scopes between release and
+the first PC observation: it samples core 1 (already selected), core 0 twice,
+then core 1 again, and performs the full bounded scopes on both routes
+immediately afterward. This change is only offline-tested and cross-compiled
+so far; it is not deployed. Its candidate hash is
+acd738ea8358ab340db37e068ed9694a53772ba042f637b9ae5f868bbc42ec36 and client
+hash 6013e186123ae5d94f02b816b3f9f256bae57362d0387d0382a34b2f394f13aa.
+The next physical run must determine whether faster observation yields any
+live PCs; if it still sees terminals, a deliberately longer diagnostic
+workload or an explicit start barrier is needed before claiming overlap.
+
 This is a physical two-core paired-QKV diagnostic, but NOT a 119-core cohort,
-full-model inference, full numerical qualification or speed measurement. Two
-hardware runs validated the outputs and restoration, but neither observed
-active-interval overlap. No Assistant or persistent driver change remains; the
-stable driver is restored. This prototype does not yet move any Qwen layer to
-the P100A and does not establish improvement in tokens/second.
+full-model inference, full numerical qualification or speed measurement. Three
+hardware runs validated the outputs and restoration, but none observed
+active-interval overlap; the third captured all four terminal PCs. No
+Assistant or persistent driver change remains; the stable driver is restored.
+This prototype does not yet move any Qwen layer to the P100A and does not
+establish improvement in tokens/second.

@@ -104,22 +104,25 @@ public:
    if(!Select(io,i) || !Scope(io,baseline,i,0x87ffff))return Fail();
    result[i].started=1;io.BfpResetWrite(0x46800);
   }
-  // Bracket peer 1's running interval with two live observations of peer 0.
-  // Order is core0, core1, core1, core0: each image has one-way completion
-  // into its terminal park, so a live core1 at both middle observations
-  // lies inside core0's live interval when both outer observations are live.
-  // These same bounded scopes also verify both release writes. If either
-  // peer already reached its verified park, simply report no overlap;
-  // numerical execution and explicit END remain independently gated.
+  // Sample the just-released core1 first, then core0 twice, then core1 again.
+  // Do not interpose PCIe-heavy full scopes between the launches and samples:
+  // the earlier bracket observed only terminal PCs because both short images
+  // finished while those scopes ran. Select only when changing routes, then
+  // audit BOTH scopes immediately after the bracket before trusting PCs.
+  // Each image has one-way completion into its terminal park, so four live
+  // observations prove the intervals overlap. Numerical execution and END
+  // remain independently gated.
   uint32_t bracket[2][2]={};
-  static const unsigned bracketOrder[4]={0,1,1,0};
+  static const unsigned bracketOrder[4]={1,0,0,1};
+  unsigned selected=1; // the release loop left the route on core1
   for(unsigned observation=0;observation<4;observation++){
    unsigned sample=bracketOrder[observation];
-   if(!Select(io,sample) || !Scope(io,baseline,sample,0x46800))return Fail();
+   if(sample!=selected){if(!Select(io,sample))return Fail();selected=sample;}
    io.Pause();const uint32_t pc=io.BfpPcRead();overlapPc[observation]=pc;
    bracket[sample][observation&1]=pc;
    if(pc!=0x70038 && pc!=0x7003c && (pc<0x70000 || pc>=0x70038 || (pc&3)))return Fail();
   }
+  for(unsigned i=0;i<2;i++)if(!Select(io,i) || !Scope(io,baseline,i,0x46800))return Fail();
   auto live=[](uint32_t pc){return pc!=0x70038 && pc!=0x7003c;};
   overlapVerified=live(bracket[0][0]) && live(bracket[0][1])
    && live(bracket[1][0]) && live(bracket[1][1]);
