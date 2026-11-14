@@ -1,0 +1,54 @@
+Qwen3.8 recurrent L1 state-residency feasibility plan, November 14, 2026
+=======================================================================
+
+This is a static placement experiment, not an implementation, device run, or
+speed claim. The current qualified full-card path remains tag92 vector-Q4 at
+0.172813448..0.172816755 tokens/sec. The independently checked tag99 profile
+attributes 59.078% of its aggregate timed cycles to recurrent layers, but
+includes control/NoC waits and is not a breakdown of state-copy time.
+
+Geometry derived from the current source:
+
+* `PioneerQ38CanonicalModelPlan` has 48 recurrent transformer layers
+  (the 64-layer stack excludes every layer where `layer % 4 == 3`). Each
+  recurrent layer has 48 heads. One FP32 head state is 128x128 = 64 KiB;
+  the existing GDN worker processes each head as two 32 KiB halves.
+* One selected current-state slot for the whole model is therefore
+  48 layers x 48 heads x 64 KiB = 144 MiB, or 4,608 half-state buffers.
+  A second complete state slot would double that to 288 MiB.
+* The local scratch probe documents 1.5 MiB L1 per tile. The current layout
+  uses 119 non-root workers/tiles. Aggregate peer L1 is 178.5 MiB.
+* A static round-robin assignment of `layerOrdinal*96 + halfOrdinal` modulo
+  119 gives every layer 96 distinct worker owners, while balancing all 4,608
+  state halves as 86 workers x 39 plus 33 workers x 38. A worker's state
+  storage is at most 1,277,952 bytes, leaving 294,912 bytes (288 KiB) for
+  executable image, live activations, scratch, and margin. Whole-device
+  unassigned L1 after one cached state slot is 34.5 MiB.
+
+The plan is promising but only a necessary capacity check. The GDN arithmetic
+uses a separate Dst and currently has explicit local addresses for input,
+prior and next buffers; the current code/data and other worker phases have not
+been jointly relocated into the remaining 288 KiB per busiest tile. In-place
+state updates, token-abort behavior, reset/zeroing, barriers, all 119-worker
+ownership, and interaction with matrix/FFN scratch are also not implemented
+or proven. If these constraints cannot coexist, the state still must use
+GDDR; no lossy BF16 state cache is assumed.
+
+Reproducer:
+
+  `sh tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`
+
+The ASan/UBSan test exhaustively maps all 4,608 state halves, checks
+per-layer owner uniqueness, slot alignment/non-overlap, L1 bounds, balanced
+38/39-slot occupancy, recurrent-layer ordering, and the exact residual
+scratch. It passed. The helper has an inspection-only role guard and has no
+native/Work selection or device access.
+
+Recommended next engineering gate: build a non-loadable image-layout
+prototype that puts the persistent selected state cache and a complete GDN
+worker image/scratch footprint together on shared L1, then run multi-token,
+all-layer state-transition and fault/abort tests. Do not change the qualified
+driver until the existing live image peaks, all-task lifecycle, and numerical
+results are covered. Only after that should a separate physical trial measure
+recurrent cycles and whole-model tokens/sec. Physical access remains gated on
+independent out-of-band verification of the Pioneer SSH host key.
