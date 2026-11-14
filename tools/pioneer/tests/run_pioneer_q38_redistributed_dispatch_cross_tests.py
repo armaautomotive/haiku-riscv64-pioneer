@@ -28,9 +28,16 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-redispatch-cross-', dir='/p
         if name.endswith('PioneerQ38GdnRedistributedRendezvousShape(const uint32_t*, const uint32_t*, const uint32_t*)')), None)
     dispatch = next((size for name, size in frames.items()
         if name.endswith('q38_recurrent_gdn_redistributed_command(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, unsigned int, uint32_t*)')), None)
+    global_dispatch = next((size for name, size in frames.items()
+        if name.endswith('q38_global_recurrent_gdn_redistributed_command(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, unsigned int, uint32_t*)')), None)
+    proof = next((size for name, size in frames.items()
+        if name.endswith('PioneerQ38ResidentGdnRedistributedServiceJob(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, unsigned int, unsigned int)')), None)
     assert new_shape is not None and new_shape <= 2048, frames
     assert dispatch is not None and dispatch <= 1024, frames
-    assert new_shape + dispatch <= 8192, (new_shape, dispatch)
+    assert global_dispatch is not None and global_dispatch <= 2048, frames
+    assert proof is not None and proof <= 1024, frames
+    nested = max(dispatch, global_dispatch) + proof + new_shape
+    assert nested <= 8192, (dispatch, global_dispatch, proof, new_shape)
     for name, size in frames.items():
         if 'Redistributed' not in name and 'redistributed' not in name:
             assert size <= 1024, (name, size)
@@ -42,4 +49,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-redispatch-cross-', dir='/p
         if match:
             assert int(match[1], 16) & 127 != 0x73, line
     digest = hashlib.sha256(obj.read_bytes()).hexdigest()
-    print(f'PASS redistributed GDN mixed dispatch RV32IMF object {digest}; dispatchFrame={dispatch}, shapeFrame={new_shape}, nestedUpperBound={dispatch + new_shape}/8192; no undefined symbols, M-extension or CSR; no card/native/speed qualification')
+    print(f'PASS redistributed GDN mixed/global dispatch RV32IMF object {digest}; mixedFrame={dispatch}, globalFrame={global_dispatch}, proofFrame={proof}, shapeFrame={new_shape}, nestedUpperBound={nested}/8192; no undefined symbols, M-extension or CSR; no card/native/speed qualification')

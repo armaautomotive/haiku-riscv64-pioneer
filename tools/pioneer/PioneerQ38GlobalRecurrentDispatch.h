@@ -34,5 +34,28 @@ static inline bool Gdn(const uint32_t* b,const uint32_t* input,const uint32_t* s
  uint32_t internal[16];Internal(8,gated[6],b[3],previous+1,internal);
  return PioneerQ38ResidentGdnServiceJob(internal,gated,input,state,b+16,b[3],b[4]) && Envelope(b,gated,internal,previous,output);
 }
+// Opt-in DATA path for layer-dependent physical GDN routing. This is not
+// wired into QGC1 native ownership or image selection; legacy Gdn stays fixed.
+static inline bool GdnRedistributed(const uint32_t* b,const uint32_t* input,
+ const uint32_t* state,const uint32_t* gated,unsigned previous,uint32_t* output){
+ if(!Binding(b,gated) || previous>=0x7ffffffe || !DisjointOutput(output,b,64)
+  || !DisjointOutput(output,input,64) || !DisjointOutput(output,state,64)
+  || !DisjointOutput(output,gated,64))return false;
+ uint32_t ordinal=0;
+ if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(state[10],ordinal))return false;
+ PioneerQ38GdnTaskPlacement::Route route={};
+ if(!PioneerQ38GdnTaskPlacement::Map(ordinal,state[9],route)
+  || b[3]!=route.physicalWorker || b[4]!=route.peer)return false;
+ uint32_t internal[16];Internal(8,gated[6],b[3],previous+1,internal);
+ if(!PioneerQ38ResidentGdnRedistributedServiceJob(internal,gated,input,state,
+  b+16,b[3],b[4]))return false;
+ uint32_t stage[64]={};
+ const unsigned head[]={M::Magic,internal[12],internal[13],b[3],b[4],gated[5],gated[40],gated[6]};
+ for(unsigned i=0;i<8;i++){stage[i]=head[i];stage[8+i]=b[8+i];}
+ for(unsigned i=0;i<10;i++)stage[16+i]=internal[i];
+ if(!M::JobShape(stage,b,previous,0))return false;
+ for(unsigned i=0;i<64;i++)output[i]=stage[i];
+ return true;
+}
 }
 #endif
