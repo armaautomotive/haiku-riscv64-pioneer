@@ -61,6 +61,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE))
 #error FFN up fixture requires its isolated first FFN matrix fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE))
+#error FFN reuse fixture requires its isolated FFN up matrix fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE))
 #error FFN activation fixture requires its isolated FFN up matrix fixture
@@ -68,6 +72,10 @@
 #if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE))
 #error FFN down fixture requires its isolated FFN activation fixture
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE))
+#error Recurrent final fixture requires its isolated FFN down fixture
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
@@ -777,6 +785,7 @@ static void CheckNativeExecution(Fixture& f){
   for(bool seen:ffnRows)assert(seen);
   printf("PASS FFN matrix/119 workers/17408 synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",ffnOps);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE
+#ifndef PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==5 && io.Raw(1,W::Job+28*4)==3);
   cpu.recurrentFfnUpProducerRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
   for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
@@ -785,6 +794,9 @@ static void CheckNativeExecution(Fixture& f){
    const uint32_t packed=io.runtimeDram.at(TT_Q38_PROJECTION_NATIVE_OFFSET/4+i/2);
    assert(uint16_t(packed>>((i&1)*16))==expectedFfnInput[i]);
   }
+#else
+  assert(!cpu.recurrentFfnUpProducerDoorbells);
+#endif
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+34*4)==3);
   cpu.recurrentFfnUpRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
   for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
@@ -860,6 +872,9 @@ static void CheckNativeExecution(Fixture& f){
    cpu.pc,cpu.steps,cpu.recurrentFfnDownDoorbells,cpu.submitted,cpu.completed);
   assert(downWorkersFinished && cpu.recurrentFfnDownDoorbells==119 && !state->Unsafe());
   bool downRows[5120]={};unsigned downOps=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE
+  float downObserved[5120];
+#endif
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentFfnDownBands[w],first=cpu.recurrentFfnDownFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*4352);downOps+=s.matrixInstructions;
@@ -871,10 +886,30 @@ static void CheckNativeExecution(Fixture& f){
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"FFN_DOWN_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
     assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE
+    downObserved[global]=actual;
+#endif
    }
   }
   for(bool seen:downRows)assert(seen);
   printf("PASS FFN down matrix/119 workers/5120 synthetic rows/%u modeled matrix instructions;ROOT MAY STILL BE GATHERING;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",downOps);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE
+  for(unsigned n=0;n<30000000 && !cpu.recurrentFinalObserved && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.recurrentFinalObserved)fprintf(stderr,"RECURRENT_FINAL_DIAGNOSTIC pc=%x steps=%u held=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,unsigned(cpu.layerHeld),cpu.submitted,cpu.completed);
+  assert(cpu.recurrentFinalObserved && !cpu.layerHeld && !io.Core(0).pending && !state->Unsafe());
+  unsigned finalNonzero=0;
+  for(unsigned i=0;i<5120;i++){
+   const float projected=Float(io.Raw(0,B::Projected+i*4));
+   const float residual=Float(io.Raw(0,B::PostResidual+i*4));
+   const float final=Float(io.Raw(0,B::Final+i*4));
+   const float published=Float(io.runtimeDram.at(B::FinalOffset/4+i));
+   assert(projected==downObserved[i] && std::isfinite(residual) && std::isfinite(final));
+   assert(final==float(residual+projected) && published==final);
+   if(final!=0)finalNonzero++;
+  }
+  assert(finalNonzero);printf("PASS synthetic recurrent layer final gather/residual/publication/5120 values/%u nonzero;SIMULATED ONLY,NOT real model/physical/TPS\n",finalNonzero);
+#endif
 #endif
 #endif
 #endif

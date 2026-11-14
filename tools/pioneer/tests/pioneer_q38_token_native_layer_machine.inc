@@ -34,6 +34,9 @@ unsigned recurrentFfnUpProducerDoorbells=0,recurrentFfnUpDoorbells=0,recurrentFf
 bool recurrentFfnActivationRunning=false;unsigned recurrentFfnActivationDoorbells=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE
 bool recurrentFfnDownRunning=false;unsigned recurrentFfnDownDoorbells=0,recurrentFfnDownFirst[119]={},recurrentFfnDownBands[119]={};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE
+bool recurrentFinalObserved=false;
+#endif
 #endif
 #endif
 #endif
@@ -322,7 +325,11 @@ void RespondLayer(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE
      else if(recurrentFfnDownRunning && recurrentFfnDownDoorbells<119){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE
+      const unsigned w=recurrentFfnDownDoorbells,seq=w<2?14:w<20?12:w<24?10:w<68?9:w<96?8:7;
+#else
       const unsigned w=recurrentFfnDownDoorbells,seq=w<2?15:w<20?13:w<24?10:w<68?9:w<96?8:7;
+#endif
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
        && io.Raw(worker,W::Job+16*4)==0x314a3442 && io.Raw(worker,W::Job+34*4)==4 && io.Raw(worker,W::Job+33*4)==5120);
       recurrentFfnDownFirst[w]=io.Raw(worker,W::Job+32*4);recurrentFfnDownBands[w]=io.Raw(worker,W::Job+20*4);
@@ -331,7 +338,11 @@ void RespondLayer(){
      }
 #endif
      else if(recurrentFfnActivationRunning && recurrentFfnActivationDoorbells<68){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE
+      const unsigned w=recurrentFfnActivationDoorbells,seq=w<2?13:w<20?11:w<24?9:8;
+#else
       const unsigned w=recurrentFfnActivationDoorbells,seq=w<2?14:w<20?12:w<24?9:8;
+#endif
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==3
        && io.Raw(worker,W::Job+28*4)==4);recurrentFfnActivationDoorbells++;
      }
@@ -342,7 +353,11 @@ void RespondLayer(){
        && io.Raw(worker,W::Job+28*4)==3);recurrentFfnUpProducerDoorbells++;
      }
      else if(recurrentFfnUpRunning && recurrentFfnUpDoorbells<119){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE
+      const unsigned w=recurrentFfnUpDoorbells,seq=w<2?12:w<20?10:w<24?8:w<96?7:6;
+#else
       const unsigned w=recurrentFfnUpDoorbells,seq=w<2?13:w<20?11:w<24?8:w<96?7:6;
+#endif
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
        && io.Raw(worker,W::Job+16*4)==0x314a3442 && io.Raw(worker,W::Job+34*4)==3 && io.Raw(worker,W::Job+33*4)==17408);
       recurrentFfnUpFirst[w]=io.Raw(worker,W::Job+32*4);recurrentFfnUpBands[w]=io.Raw(worker,W::Job+20*4);

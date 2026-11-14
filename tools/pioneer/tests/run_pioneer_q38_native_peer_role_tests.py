@@ -191,6 +191,12 @@ for value in (0,2):
 invalid=dict(ffn_up_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE']
 check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
 ffn_activation_execution={**ffn_up_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE':1}
+ffn_reuse_execution={**ffn_up_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',ffn_reuse_execution,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**ffn_reuse_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE':value},False,True)
+invalid=dict(ffn_reuse_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE']
+check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
 check('pioneer_q38_token_native_execution_checks.inc',ffn_activation_execution,True,True)
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**ffn_activation_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE':value},False,True)
@@ -201,6 +207,12 @@ check('pioneer_q38_token_native_execution_checks.inc',ffn_down_execution,True,Tr
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**ffn_down_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE':value},False,True)
 invalid=dict(ffn_down_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE']
+check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
+final_execution={**ffn_down_execution,'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',final_execution,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**final_execution,'PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE':value},False,True)
+invalid=dict(final_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE']
 check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
 qkv_fault={**qkv_cohort,'PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE':1,'PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND':1}
 check('pioneer_q38_token_native_execution_checks.inc',qkv_fault,True,True)

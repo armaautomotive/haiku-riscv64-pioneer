@@ -10,6 +10,14 @@ import sys
 import tempfile
 
 root_profile=None
+ffn_reuse_header='--recurrent-ffn-reuse-header' in sys.argv
+if ffn_reuse_header:
+    assert sys.argv.count('--recurrent-ffn-reuse-header')==1 and '--recurrent-native-header' not in sys.argv
+    sys.argv[sys.argv.index('--recurrent-ffn-reuse-header')]='--recurrent-native-header'
+recurrent_final='--recurrent-final' in sys.argv
+if recurrent_final:
+    assert sys.argv.count('--recurrent-final')==1
+    sys.argv.remove('--recurrent-final')
 ffn_down='--recurrent-ffn-down' in sys.argv
 if ffn_down:
     assert sys.argv.count('--recurrent-ffn-down')==1
@@ -102,6 +110,8 @@ assert not ffn_matrix or ffn_producers, 'FFN matrix requires the isolated FFN pr
 assert not ffn_up or ffn_matrix, 'FFN up matrix requires the isolated first FFN matrix'
 assert not ffn_activation or ffn_up, 'FFN activation requires the isolated FFN up matrix'
 assert not ffn_down or ffn_activation, 'FFN down matrix requires the isolated FFN activation'
+assert not recurrent_final or ffn_down, 'recurrent final requires the isolated FFN down matrix'
+assert not ffn_reuse_header or ffn_up, 'FFN reuse inspection requires the isolated FFN up matrix'
 assert not qkv_conv_fault or qkv_cohort, 'receipt fault requires the isolated QKV cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
@@ -138,7 +148,7 @@ if '--hybrid-qgw5-header' in sys.argv or matrix_inspection:
                 or recurrent_layer_peer and synthetic_embedding and len(sys.argv)==6
                 or recurrent_peer and len(sys.argv)==5 and sys.argv[2]=='--bootstrap-peer-engines'), \
             'QGW8 profile is limited to early execution and explicit synthetic embedding inspection'
-    expected='8380e513a2af99644130f293b8a3239109ec42654daa950db482e2a3b20c5b82' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+    expected='0c3c8a420ae424cbda4137a41cbf684e45557c9663bfa78f11d1affb6756fcc8' if ffn_reuse_header else '8380e513a2af99644130f293b8a3239109ec42654daa950db482e2a3b20c5b82' if recurrent_inspection else '6455f12643172c1fa70df9271025f1b634011f5ea9c12612ec2e7fcbf3f9edd8' if qgwf_unroll_inspection else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier_inspection else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf_inspection else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe_inspection else '8888219277aefb5a5c2a1cd1e60f3240c661bc839f7485d8965c8aa767843742' if qgwd_seal_inspection else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd_inspection else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8_inspection else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7' if matrix_inspection else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
     assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest()==expected
 if trace_init:
     assert qgw8_inspection and len(sys.argv)==3 and sys.argv[2] in ('--runtime','--runtime-faults')
@@ -528,8 +538,10 @@ if qgwd_inspection:
     if ffn_producers:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE']='1'
     if ffn_matrix:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE']='1'
     if ffn_up:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE']='1'
+    if ffn_reuse_header:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_REUSE_FIXTURE']='1'
     if ffn_activation:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE']='1'
     if ffn_down:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE']='1'
+    if recurrent_final:defines['PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE']='1'
     if qkv_conv_fault:
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE']='1'
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)

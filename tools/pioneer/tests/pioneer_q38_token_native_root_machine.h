@@ -242,6 +242,12 @@ struct TokenStartupRoot:TokenNativeRootISA {
    if(pushedIncoming.Contains(address))pushedIncoming.Store(address,value);else
 #endif
    io.Raw(0,address)=value;deviceWrites++;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE
+   if(recurrentFfnDownRunning && recurrentFfnDownDoorbells==119
+    && address==C::Progress+8 && value==1){
+    assert(!recurrentFinalObserved && !io.Core(0).pending);recurrentFinalObserved=true;
+   } // actual parent progress store after the returning component;never supply a completion
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
    if(fullLayerRunning && address==C::Progress+8){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
@@ -309,6 +315,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
    if(markerWrites)break;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
    if(layerHeld)break;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RECURRENT_FINAL_FIXTURE
+   if(recurrentFinalObserved)break;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
    if(fullLayerComplete)break;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE

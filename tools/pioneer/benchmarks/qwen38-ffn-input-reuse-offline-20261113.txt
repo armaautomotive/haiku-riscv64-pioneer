@@ -23,6 +23,14 @@ a separate explicit FFN-reuse inspection selector. Two generated bundles
 were byte-identical, and a mismatched old ROOT and an ambiguous selector
 were refused. The existing default recurrent bundle remains byte-identical.
 
+In a continuous synthetic recurrent layer, the separately pinned reuse
+candidate reached the role-3 matrix directly after role 2, without issuing
+the second set of 20 producer jobs. Both FFN matrices, all 17408 BF16
+activation values, the 5120 down rows, final gather, residual and published
+5120-value layer output passed their independent offline checks. The test
+uses synthetic data and ideal tensor endpoints. It does not establish
+real-model accuracy, physical-card behavior, or tokens per second.
+
 This is an offline candidate only. Its full production lifecycle, actual
 hardware correctness, model quality and performance have not been tested.
 It has not been installed and does not establish any tokens-per-second gain.
