@@ -41,6 +41,10 @@
  (PIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST))
 #error Synthetic FFN up matrix requires the isolated FFN matrix fixture
 #endif
+#if defined(PIONEER_Q38_SYNTHETIC_FFN_DOWN_MATRIX_TEST) && \
+ (PIONEER_Q38_SYNTHETIC_FFN_DOWN_MATRIX_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST))
+#error Synthetic FFN down matrix requires the isolated FFN up fixture
+#endif
 #define PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE 1
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #include "../PioneerQ38GlobalFeedbackLayout.h"
@@ -212,23 +216,31 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
    if(p->kind!=canonical->WeightKind || p->layer || (p->role!=2
 #ifdef PIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST
     && p->role!=3
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_DOWN_MATRIX_TEST
+    && p->role!=4
+#endif
 #endif
    ))continue;
+   const unsigned tiles=p->role==4?544U:160U;
    if(q.bank>=7 || q.encoding!=PioneerQ38HybridModelPlan::Bfp4 || !p->rows || (p->rows&31)
-    || q.bytes!=p->rows*2880U || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
+    || q.bytes!=p->rows*(tiles*18U) || q.offset>UINT32_MAX-canonical->Base)return source->ready=false;
    Source::Gate part{PioneerQ38ProjectionRoute(q.bank),canonical->Base+q.offset,{}};part.bytes.resize(q.bytes);
-   for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<160;tile++){
+   for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<tiles;tile++){
     float values[1024];for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
      const unsigned global=p->firstRow+band*32+row;values[row*32+col]=float(int((global*3+tile*7+col*5+(p->role-2)*2)%7)-3)*0.125f;
     }
     if(!PioneerBlackholeBlockFloat::PackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,values,1024,
-       part.bytes.data()+(band*160+tile)*576,576))return source->ready=false;
+       part.bytes.data()+(band*tiles+tile)*576,576))return source->ready=false;
    }
    source->ffnWeight.push_back(std::move(part));
   }
   if(source->ffnWeight.size()!=
 #ifdef PIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_DOWN_MATRIX_TEST
+   21
+#else
    14
+#endif
 #else
    7
 #endif
