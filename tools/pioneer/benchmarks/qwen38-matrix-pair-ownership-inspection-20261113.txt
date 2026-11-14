@@ -77,6 +77,15 @@ stable-driver restore still proceed after both outputs validate. This
 instrumentation is cross-compiled from a clean archive and its offline
 controller/parent tests pass, but it has not yet been run physically.
 
+The first updated physical attempt was admitted but terminated during the
+full-model source preflight: the remote runner and child disappeared before
+source.exit was written, while the state remained VERIFYING_SOURCE_BEFORE_SWAP.
+Post-checks confirmed no diagnostic process, unchanged stable-driver SHA/tag/
+generation 52, all 64 CPUs, and 137034936320-byte maximum RAM. No swap or GPU
+execution occurred. The consumed one-shot directory is not reused; the next
+attempt uses a fresh stage and a detached runner so a slow SSH session cannot
+be confused with trial progress.
+
 This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
 real overlap and completion behavior must be established on hardware after
