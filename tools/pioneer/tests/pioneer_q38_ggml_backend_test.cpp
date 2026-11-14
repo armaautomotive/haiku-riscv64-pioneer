@@ -4,8 +4,9 @@
 #include "../PioneerQ38GgmlBackend.h"
 #include "../PioneerQ38GgmlGdnContract.h"
 #include "ggml-backend-impl.h"
+#include <vector>
 struct Fake {
-	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,pairCalls=0,ends=0,aborts=0;
+	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,pairCalls=0,gdnCalls=0,gdnCopies=0,ends=0,aborts=0;
 	static bool Ready(void* p) { return static_cast<Fake*>(p)->valid; }
 	static bool Multiply(void* p,unsigned tensor,const float* input,unsigned k,float* out,unsigned n) {
 		auto& f=*static_cast<Fake*>(p); f.calls++;
@@ -27,10 +28,57 @@ struct Fake {
 	}
 	static bool Finish(void* p) { static_cast<Fake*>(p)->ends++; return true; }
 	static void Abort(void* p) { static_cast<Fake*>(p)->aborts++; }
+	static bool Gdn(void* p,const ggml_tensor* op) {
+		auto& f=*static_cast<Fake*>(p); f.gdnCalls++;
+		PioneerQ38GgmlGdnContract c; assert(PioneerQ38GgmlGdnContract::Describe(op,c));
+		if(f.fail)return false;
+		static_cast<float*>(op->data)[0]=123.0f; // synthetic marker,NOT GDN math
+		return true;
+	}
+	static bool GdnStateCopy(void* p,const ggml_tensor* copy) {
+		auto& f=*static_cast<Fake*>(p); f.gdnCopies++;
+		PioneerQ38GgmlGdnContract c; assert(PioneerQ38GgmlGdnContract::Describe(copy->src[0]->view_src,c) && c.StateCopy(copy));
+		return !f.fail; // deliberately no host memcpy: provider owns resident state
+	}
 };
 int main(int argc,char** argv)
 {
 	assert(argc==2);
+	if(strcmp(argv[1],"gdn")==0 || strcmp(argv[1],"gdn-fault")==0) {
+		Fixture fixture; Fake fake; assert(fake.model.Open(fixture.file)); fake.fail=strcmp(argv[1],"gdn-fault")==0;
+		PioneerQ38GgmlDispatch d={&fake,&fake.model,Fake::Ready,Fake::Multiply,Fake::Finish,Fake::Abort};
+		d.gdn=Fake::Gdn; d.gdn_state_copy=Fake::GdnStateCopy;
+		auto reg=PioneerQ38GgmlReg(); auto dev=ggml_backend_reg_dev_get(reg,0); assert(dev);
+		assert(PioneerQ38GgmlConfigure(d)); auto backend=ggml_backend_dev_init(dev,nullptr); assert(backend);
+		ggml_init_params params={16*1024*1024,nullptr,true}; auto ctx=ggml_init(params); assert(ctx);
+		auto q=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,16,1,1);
+		auto k=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,16,1,1);
+		auto qkv=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,10240);
+		auto v=ggml_view_4d(ctx,qkv,128,48,1,1,512,40960,40960,16384);
+		auto g=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
+		auto beta=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
+		auto pool=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,2*128*128*48);
+		auto state=ggml_view_4d(ctx,pool,128,128,48,1,512,65536,3145728,3145728);
+		auto op=ggml_gated_delta_net(ctx,q,k,v,g,beta,state,1);
+		auto next=ggml_view_4d(ctx,op,128,128,48,1,512,65536,3145728,24576);
+		auto copy=ggml_cpy(ctx,next,state);
+		std::vector<float> qData(128*16),kData(128*16),qkvData(10240),gData(48),betaData(48),poolData(2*128*128*48);
+		std::vector<float> outputData(128*48+128*128*48),copyData(128*128*48);
+		q->data=qData.data(); k->data=kData.data(); qkv->data=qkvData.data(); v->data=qkvData.data()+4096;
+		g->data=gData.data(); beta->data=betaData.data(); pool->data=poolData.data(); state->data=poolData.data()+state->view_offs/sizeof(float);
+		op->data=outputData.data(); copy->data=copyData.data();
+		op->flags|=GGML_TENSOR_FLAG_COMPUTE; copy->flags|=GGML_TENSOR_FLAG_COMPUTE;
+		auto graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,copy);
+		const bool okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
+		assert(okay==!fake.fail && fake.gdnCalls==1 && fake.gdnCopies==unsigned(!fake.fail));
+		assert(PioneerQ38GgmlSnapshot().gdnOps==unsigned(!fake.fail)
+			&& PioneerQ38GgmlSnapshot().gdnStateCopies==unsigned(!fake.fail));
+		if(fake.fail) assert(PioneerQ38GgmlSnapshot().failed && fake.aborts==1 && !PioneerQ38GgmlFinish());
+		else { assert(outputData[0]==123.0f && PioneerQ38GgmlFinish() && fake.ends==1); }
+		ggml_backend_free(backend); ggml_free(ctx);
+		puts(fake.fail?"PASS optional GDN provider failure aborts backend session;SYNTHETIC DISPATCH,NO DEVICE":"PASS optional GDN+resident-state-CPY provider owns dispatch;SYNTHETIC MARKER ONLY,NO GDN MATH/DEVICE/RESIDENCY CLAIM");
+		return 0;
+	}
 	if(strcmp(argv[1],"pair")==0 || strcmp(argv[1],"pair-fault")==0 || strcmp(argv[1],"pair-qkv")==0
 		|| strcmp(argv[1],"pair-delta")==0 || strcmp(argv[1],"pair-attention")==0) {
 #ifndef PIONEER_Q38_WORK_BATCH_CLIENT

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38GgmlBackend.h"
+#include "PioneerQ38GgmlGdnContract.h"
 #include "ggml-backend-impl.h"
 #include "ggml-cpu.h"
 #include <new>
@@ -24,6 +25,16 @@ bool View(ggml_op op) {
 bool Contract(const ggml_tensor* op,unsigned* index=nullptr) {
 	if (!op || !Ready()) return false;
 	if (View(op->op)) return true;
+	if (op->op==GGML_OP_GATED_DELTA_NET) {
+		PioneerQ38GgmlGdnContract gdn;
+		return dispatch.gdn && dispatch.gdn_state_copy && PioneerQ38GgmlGdnContract::Describe(op,gdn);
+	}
+	if (op->op==GGML_OP_CPY) {
+		PioneerQ38GgmlGdnContract gdn;
+		return dispatch.gdn && dispatch.gdn_state_copy
+			&& PioneerQ38GgmlGdnContract::Describe(op->src[0] ? op->src[0]->view_src : nullptr,gdn)
+			&& gdn.StateCopy(op);
+	}
 	if (op->op!=GGML_OP_MUL_MAT || !op->src[0] || !op->src[1]) return false;
 	const auto* w=op->src[0]; const auto* x=op->src[1];
 	// Only exact named learned tensors from the SAME loaded public source.
@@ -87,9 +98,23 @@ ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (i==skipIndex) continue;
 		auto* op=ggml_graph_node(graph,i); unsigned tensor=0;
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
-		if (!Contract(op,&tensor) || !op->data || !op->src[0]->data || !op->src[1]->data) {
+		if (!Contract(op,&tensor) || !op->data) {
 			Abort(); return GGML_STATUS_FAILED; // NEVER return success/substitute CPU values
 		}
+		if (op->op==GGML_OP_GATED_DELTA_NET) {
+			bool inputsReady=true;
+			for(unsigned src=0;src<6;src++) inputsReady=inputsReady && op->src[src] && op->src[src]->data;
+			if(!inputsReady) { Abort(); return GGML_STATUS_FAILED; }
+			if (!dispatch.gdn(dispatch.owner,op) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
+			stats.gdnOps++;
+			continue;
+		}
+		if (op->op==GGML_OP_CPY) {
+			if (!dispatch.gdn_state_copy(dispatch.owner,op) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
+			stats.gdnStateCopies++;
+			continue;
+		}
+		if (!op->src[0]->data || !op->src[1]->data) { Abort(); return GGML_STATUS_FAILED; }
 		bool completed=false;
 #ifdef PIONEER_Q38_WORK_BATCH_CLIENT
 		if (dispatch.multiply_pair) for (int j=i+1;j<ggml_graph_n_nodes(graph);j++) {

@@ -16,10 +16,15 @@ struct PioneerQ38GgmlDispatch {
 	// Optional, isolated no-reference Work capability. Both matrices must
 	// consume the identical live activation and complete atomically.
 	bool (*multiply_pair)(void*,unsigned,unsigned,const float*,unsigned,float*,unsigned,float*,unsigned)=nullptr;
+	// Optional GDN path. A provider may offer these ONLY when it owns and
+	// executes recurrent state on-device; gdn_state_copy must consume the
+	// exact output-state CPY without silently falling back to host memcpy.
+	bool (*gdn)(void*,const ggml_tensor*)=nullptr;
+	bool (*gdn_state_copy)(void*,const ggml_tensor*)=nullptr;
 };
 bool PioneerQ38GgmlConfigure(const PioneerQ38GgmlDispatch& dispatch);
 ggml_backend_reg_t PioneerQ38GgmlReg();
 bool PioneerQ38GgmlFinish();
-struct PioneerQ38GgmlStats { uint64_t projections=0,pairedBatches=0; unsigned recognizedWeights=0; bool failed=false,finished=false,clean=false; };
+struct PioneerQ38GgmlStats { uint64_t projections=0,pairedBatches=0,gdnOps=0,gdnStateCopies=0; unsigned recognizedWeights=0; bool failed=false,finished=false,clean=false; };
 PioneerQ38GgmlStats PioneerQ38GgmlSnapshot();
 #endif
