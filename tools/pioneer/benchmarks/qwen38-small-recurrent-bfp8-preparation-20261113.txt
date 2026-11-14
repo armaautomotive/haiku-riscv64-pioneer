@@ -817,3 +817,8 @@ left pending. The synthetic fixture and ideal tensor endpoint are not real
 model weights or physical hardware, and the second FFN matrix, activation,
 down projection, full layer, model output quality and throughput remain
 unverified.
+
+Second FFN matrix preparation: an opt-in host-only synthetic role-3 BFP4
+source now supplies 17408 rows across seven banks with a pattern distinct
+from role 2. Every packed tile was unpacked and checked, with role-isolation
+refusals. This source check is not worker execution or a speed result.

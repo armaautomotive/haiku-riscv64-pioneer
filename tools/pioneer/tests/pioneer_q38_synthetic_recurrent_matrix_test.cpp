@@ -120,22 +120,29 @@ int main(int argc,char** argv){
  }
  assert(postNorm==1);
 #ifdef PIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST
- unsigned ffnRows=0,ffnParts=0;std::array<uint8_t,576> ffnBytes;
+ unsigned ffnRows[2]={},ffnParts[2]={};std::array<uint8_t,576> ffnBytes;
  for(unsigned i=0;i<original->Count();i++){
   const auto* p=original->Part(i);const auto& q=proposal.parts[i];
-  if(p->kind!=original->WeightKind || p->layer || p->role!=2)continue;
-  assert(p->firstRow==ffnRows && q.bytes==p->rows*2880U);
+  if(p->kind!=original->WeightKind || p->layer || (p->role!=2
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST
+   && p->role!=3
+#endif
+  ))continue;
+  const unsigned slot=p->role-2;assert(p->firstRow==ffnRows[slot] && q.bytes==p->rows*2880U);
   for(unsigned band=0;band<p->rows/32;band++)for(unsigned tile=0;tile<160;tile++){
    assert(source.Read(PioneerQ38ProjectionRoute(q.bank),original->Base+q.offset+(band*160+tile)*576,ffnBytes.data(),ffnBytes.size()));
    assert(PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp4B,ffnBytes.data(),ffnBytes.size(),values.data(),values.size()));
    for(unsigned row=0;row<32;row++)for(unsigned col=0;col<32;col++){
-    const unsigned global=p->firstRow+band*32+row;const float expected=float(int((global*3+tile*7+col*5)%7)-3)*0.125f;
+    const unsigned global=p->firstRow+band*32+row;const float expected=float(int((global*3+tile*7+col*5+slot*2)%7)-3)*0.125f;
     assert(values[row*32+col]==expected);
    }
   }
-  ffnRows+=p->rows;ffnParts++;
+  ffnRows[slot]+=p->rows;ffnParts[slot]++;
  }
- assert(ffnRows==17408 && ffnParts==7);puts("PASS synthetic FFN role2 BFP4 source 17408 rows across seven banks; NO MODEL OR DEVICE");
+ assert(ffnRows[0]==17408 && ffnParts[0]==7);puts("PASS synthetic FFN role2 BFP4 source 17408 rows across seven banks; NO MODEL OR DEVICE");
+#ifdef PIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST
+ assert(ffnRows[1]==17408 && ffnParts[1]==7);puts("PASS synthetic FFN role3 BFP4 source 17408 rows across seven banks; NO MODEL OR DEVICE");
+#endif
 #endif
 #endif
 #endif
