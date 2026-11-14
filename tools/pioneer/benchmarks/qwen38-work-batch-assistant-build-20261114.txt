@@ -47,6 +47,26 @@ still 0.200 tok/s from three warm samples (1515 calls across those samples).
 No full-model batch candidate run, quality check, physical TPS result or
 speedup has been measured; the 20 tok/s objective remains unmet.
 
+Offline rerun, November 14, 2026
+--------------------------------
+The batch suite was rerun against the pinned primary and cohort image pairs,
+then the pristine pinned GGML bridge suite was rerun. Both commands exited 0.
+The batch suite again passed primitive/control/routing/session/DEBUG-fault
+coverage, explicitly synthetic or simulated IO only. The GGML suite passed
+matrix contracts, GDN/state transaction tests, and same-input graph-pair
+contracts; all remain synthetic dispatch, not a model or device benchmark.
+
+Source audit of the current batch handler: it prepares one Q38 dispatch
+lease and then invokes the ordinary `PioneerQ38DispatchRun` twice in
+sequence. The second call can reuse the first call's exactly-matching
+activation/scales via the kernel-private cache and omit their staging writes;
+the descriptor/image setup, root start, compute, proof, and root stop still
+occur twice. Therefore this is a host ioctl consolidation plus a possible
+small input-staging saving, NOT one fused root launch or an all-card graph.
+Its actual reuse-hit rate and elapsed-time effect require a full real-model
+Pioneer run and remain unknown. The previous 0.200 tok/s baseline is not
+updated by these offline tests.
+
 Next: independently authenticate the Pioneer SSH host key before any remote
 driver/device operation. Once authenticated and the recovered driver/device
 state is independently checked, run one controlled real-model Work trial
