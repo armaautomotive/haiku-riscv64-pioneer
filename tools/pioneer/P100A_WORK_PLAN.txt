@@ -133,6 +133,17 @@ does not authorize retry or cleanup. Remaining: establish why START failed,
 prove worker/image/weight ownership and cross-core lifetimes, then obtain
 multi-token full-model numerical and measured speed evidence. No approximate
 route is integrated into Work/Assistant.
+
+Fresh offline checkpoint, November 14: the full-session suite passed its
+ASan/UBSan synthetic success, uncertain-control and close-only cases. Separate
+tag126 fixed and tag127 matrix-attention candidate drivers and full clients
+cross-built against the local pinned Haiku SDK. Full-client SHA-256 values:
+tag126 dec77170692c0bff8ac3059a0c198733c49bef6e3260538019793ed350ebdee4;
+tag127 8843f5d0fdfaf286acf257badd8183ee8d953407b3c840c478d1063c05a14676.
+These are fresh build evidence only, not installed, started on-card, or
+qualified for numerical behavior or speed. They provide distinct candidate
+artifacts for a future controlled trial after the startup failure is
+diagnosable and the Pioneer connection is authenticated.
 Do not allow the original Q4 worker to interpret converted bytes, or expose
 the approximation in Work/Assistant before explicit qualification.
 
