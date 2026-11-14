@@ -126,8 +126,9 @@ struct RootOutputIO {
 };
 static __attribute__((noinline,section(".q38_output"))) bool OutputHeaderValid(const uint32_t* header)
 {
-	for (unsigned i=13;i<16;i++) if (header[i]) return false;
-	if (!header[8]) { for (unsigned i=9;i<13;i++) if (header[i]) return false; return true; }
+	if (!header[8]) { for (unsigned i=9;i<14;i++) if (header[i]) return false; return true; }
+	if ((header[13]&4095) || header[13]>PIONEER_Q38_OUTPUT_OWNER) return false;
+	for (unsigned i=14;i<16;i++) if (header[i]) return false;
 	return header[9]==PIONEER_Q38_OUTPUT_MAGIC && !(header[10]&0xfffff)
 		&& header[11] && header[11]<=0xffff && header[12]==PIONEER_Q38_OUTPUT_OWNER;
 }
@@ -140,6 +141,7 @@ static __attribute__((noinline,section(".q38_output"))) bool ReturnHostOutput(co
 	uint32_t d[32]; for (unsigned i=0;i<32;i++) d[i]=0;
 	d[0]=PIONEER_Q38_OUTPUT_MAGIC; d[1]=1; d[2]=header[5]; d[3]=header[6];
 	d[4]=header[10]; d[5]=header[11]; d[6]=header[12];
+	d[8]=header[13];
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 	d[7]=PioneerQ38CompactOutputBytes(header[5],words);
 #else

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include <cassert>
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <vector>
@@ -27,7 +28,7 @@ struct Fabric {
 		for (unsigned i=0;i<16;i++) d[16+i]=0xa5000000+i*0x13579;
 		for (auto& n:counters) n=0xfffffff8;
 		command.fill(0xdeadbeef);
-		source.resize(d[7]/4); host.assign(source.size(),0xdeadbeef); scratch.assign(1024,0xdeadbeef);
+		source.resize(d[7]/4); host.assign((d[8]+d[7])/4,0xdeadbeef); scratch.assign(1024,0xdeadbeef);
 		for (unsigned i=0;i<source.size();i++) source[i]=i*0x9e3779b9+0x7fc00000; // ALL raw bits,not only finite floats
 	}
 	void Fence() { io++; }
@@ -52,7 +53,7 @@ struct Fabric {
 		assert(a==0x40 && value==1); packets++;
 		if (packets==fail) { pending=true; return; }
 		bool write=command[7]==0x212; unsigned remote=write?command[3]:command[0];
-		unsigned at=remote-hostLow,bytes=command[8],words=bytes/4;
+		unsigned at=remote-hostLow-d[8],bytes=command[8],words=bytes/4;
 		assert(bytes && bytes<=4096 && !(at&4095) && !(bytes&
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 			63
@@ -63,16 +64,16 @@ struct Fabric {
 		assert(!command[6] && !command[9] && (write?command[1]:command[4])==0);
 		assert((write?command[4]:command[1])==hostHigh && command[2]==(write?129U:1555U) && command[5]==(write?1555U:129U));
 		if (write) {
-			assert(!posted.size() && command[0]==0x80000+at && (packets&1));
-			if (packets!=dropWrite) { first=at/4; length=words; posted.assign(source.begin()+first,source.begin()+first+words); }
+			assert(!posted.size() && command[0]==0x80000+at && command[3]==hostLow+d[8]+at && (packets&1));
+			if (packets!=dropWrite) { first=(d[8]+at)/4; length=words; posted.assign(source.begin()+at/4,source.begin()+at/4+words); }
 			// ACK deliberately precedes host visibility. CPU must NOT publish.
 		} else {
-			assert(command[7]==0 && command[3]==0x75000 && !(packets&1));
+			assert(command[7]==0 && command[3]==0x75000 && command[0]==hostLow+d[8]+at && !(packets&1));
 			// Ordered PCIe read completion drains prior posted writes. The
 			// helper additionally compares ALL readback bits,not only ACK.
 			for (unsigned i=0;i<posted.size();i++) host[first+i]=posted[i];
 			posted.clear();
-			for (unsigned i=0;i<words;i++) scratch[i]=host[at/4+i]^(packets==corruptRead && !i?1:0);
+			for (unsigned i=0;i<words;i++) scratch[i]=host[(d[8]+at)/4+i]^(packets==corruptRead && !i?1:0);
 		}
 		unsigned c=write?4:0; counters[c]++; counters[c+1]+=bytes/64; counters[2]++; counters[6]=counters[2]; counters[c+3]++;
 		if (packets==badCounter) counters[c+3]++;
@@ -89,13 +90,26 @@ int main()
 		unsigned old=f.io; assert(!transfer.Run(f.d.data()) && f.io==old);
 	}
 	for (unsigned field=0;field<16;field++) {
-		Fabric f(7); if (field==3) f.d[field]=0; else f.d[field]^=1;
+		Fabric f(7); if (field==3) f.d[field]=0; else if (field==8) f.d[field]=1; else f.d[field]^=1;
 		PioneerQ38OutputTransfer<Fabric> transfer(f);
+		assert(!transfer.Run(f.d.data()) && !f.io && !f.packets);
+	}
+	for (uint32_t offset:{0x4000U,0xfe000U}) {
+		Fabric f(7);f.d[8]=offset;f.host.assign((f.d[8]+f.d[7])/4,0xdeadbeef);
+		PioneerQ38OutputTransfer<Fabric> transfer(f);
+		assert(transfer.Run(f.d.data()) && transfer.Complete() && !transfer.Unsafe());
+		assert(std::equal(f.source.begin(),f.source.end(),f.host.begin()+f.d[8]/4));
+		assert(std::all_of(f.host.begin(),f.host.begin()+f.d[8]/4,[](uint32_t v){return v==0xdeadbeef;}));
+		assert(std::all_of(f.host.begin()+(f.d[8]+f.d[7])/4,f.host.end(),[](uint32_t v){return v==0xdeadbeef;}));
+	}
+	for (uint32_t offset:{1U,4095U,0xff000U,0x100000U,0xfff000U}) {
+		Fabric f(7);f.d[8]=offset;PioneerQ38OutputTransfer<Fabric> transfer(f);
 		assert(!transfer.Run(f.d.data()) && !f.io && !f.packets);
 	}
 	for (unsigned packet=1;packet<=60;packet++) for (unsigned fault=0;fault<5;fault++) {
 		if ((fault==2 && !(packet&1)) || (fault==3 && (packet&1))) continue;
-		Fabric f(119); if (!fault) f.fail=packet; else if (fault==1) f.badCounter=packet;
+		Fabric f(119);f.d[8]=0x4000;f.host.assign((f.d[8]+f.d[7])/4,0xdeadbeef);
+		if (!fault) f.fail=packet; else if (fault==1) f.badCounter=packet;
 		else if (fault==2) f.dropWrite=packet; else if (fault==3) f.corruptRead=packet; else f.sourceChange=packet;
 		PioneerQ38OutputTransfer<Fabric> transfer(f); assert(!transfer.Run(f.d.data()) && transfer.Unsafe() && !transfer.Complete());
 		assert(f.packets==(fault==2?packet+1:packet));

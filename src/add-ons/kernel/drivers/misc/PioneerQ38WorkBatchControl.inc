@@ -18,6 +18,12 @@
 #include "PioneerQ38WorkBatch.h"
 #include "PioneerQ38WorkBatchProtocol.h"
 static_assert(unsigned(PioneerQ38WorkBatch::Count)==unsigned(PIONEER_Q38_WORK_BATCH_COUNT),"same bounded batch size");
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+enum { PIONEER_Q38_WORK_BATCH_OUTPUT_SLOT_BYTES=0x20000 };
+static_assert(119*1024<=PIONEER_Q38_WORK_BATCH_OUTPUT_SLOT_BYTES
+	&& PIONEER_Q38_WORK_BATCH_OUTPUT_SLOT_BYTES+119*1024<=TT_WIDE_OUTPUT_BYTES,
+ "two maximum dense Qwen projection outputs fit in the private wide-output owner");
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH_NATIVE_152
 static status_t
 Q38WorkBatchSupport(PioneerProbeCookie* cookie,void* data,size_t length)
@@ -62,7 +68,7 @@ Q38WorkBatchControlInspection(PioneerProbeCookie* cookie,void* data,size_t lengt
  ){release_sem(sLock);free(packet);return B_NOT_ALLOWED;}
  auto& dram=c->baseline.baseline.baseline.baseline.dram;
  const uint32_t prior=c->q38Dispatch?c->q38Dispatch->rootNonce:0;
- bool prepared=false;
+ bool prepared=false;unsigned outputSlot=0;
  auto authorize=[&](const tt_q38_dispatch_probe& request){
   for(unsigned w=0;w<request.peers;w++){
    PioneerQ38CohortExtent extent;
@@ -82,9 +88,13 @@ Q38WorkBatchControlInspection(PioneerProbeCookie* cookie,void* data,size_t lengt
   const bool okay=PioneerQ38DispatchRun<decltype(c->io),true>(c->io,dram,c->banks,*c->q38Dispatch,
    c->initialized,uint32(c->bytes/4096),request
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
-   ,&c->host,&c->bulkHost,&c->wideHost
+   // Keep each sequential job's host result in its own bounded slot. This
+   // is storage groundwork for a future single-root fused run; jobs remain
+   // separate root launches and this does not claim a speedup.
+   ,&c->host,&c->bulkHost,&c->wideHost,outputSlot?PIONEER_Q38_WORK_BATCH_OUTPUT_SLOT_BYTES:0U
 #endif
   );
+  if(okay)++outputSlot;
   return okay && !c->Unsafe() && !request.result.recovery_required;
  };
  auto quarantine=[&](){

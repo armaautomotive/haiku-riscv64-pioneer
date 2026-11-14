@@ -6,8 +6,10 @@
 struct OutputMachine:BlockMachine {
 	Fabric fabric;
 	bool changeLiveDescriptor=false;
-	OutputMachine(const char* image,unsigned peers,bool edge=false)
+	OutputMachine(const char* image,unsigned peers,bool edge=false,unsigned outputOffset=0)
 		:BlockMachine(image,8,0,.01f,nullptr,true),fabric(peers,edge) {
+		fabric.d[8]=outputOffset;
+		fabric.host.assign((fabric.d[8]+fabric.d[7])/4,0xdeadbeef);
 		for (unsigned i=0;i<32;i++) memory[0x74000+i*4]=fabric.d[i];
 		memory[0x17ffc0]=memory[0x17ffc4]=memory[0x17ffc8]=0;
 	}
@@ -45,7 +47,13 @@ int main(int argc,char** argv)
 	assert(argc==2);
 	for (unsigned peers:{1U,2U,4U,7U,119U}) for (bool edge:{false,true}) {
 		OutputMachine m(argv[1],peers,edge); assert(m.Run());
-		assert(m.fabric.host==m.fabric.source && m.fabric.posted.empty());
+		assert(std::equal(m.fabric.source.begin(),m.fabric.source.end(),m.fabric.host.begin()+m.fabric.d[8]/4)
+			&& m.fabric.posted.empty());
+	}
+	for (unsigned offset:{0x4000U,0xfe000U}) {
+		OutputMachine m(argv[1],7,false,offset);assert(m.Run());
+		assert(std::equal(m.fabric.source.begin(),m.fabric.source.end(),m.fabric.host.begin()+offset/4)
+			&& m.fabric.posted.empty());
 	}
 	for (unsigned packet:{1U,30U,60U}) for (unsigned fault=0;fault<4;fault++) {
 		if ((fault==2 && !(packet&1)) || (fault==3 && (packet&1))) continue;

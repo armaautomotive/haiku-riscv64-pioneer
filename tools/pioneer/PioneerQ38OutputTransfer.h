@@ -21,20 +21,23 @@ static inline bool PioneerQ38OutputTransferShape(const uint32_t* d)
 {
 	if (!d || d[0]!=PIONEER_Q38_OUTPUT_MAGIC || d[1]!=1 || !d[2] || d[2]>119
 		|| !d[3] || d[3]>=0x7fffffff || (d[4]&0xfffff) || !d[5] || d[5]>0xffff
-		|| d[6]!=PIONEER_Q38_OUTPUT_OWNER
+		|| d[6]!=PIONEER_Q38_OUTPUT_OWNER || (d[8]&4095) || d[8]>PIONEER_Q38_OUTPUT_OWNER
+		|| d[7]>PIONEER_Q38_OUTPUT_OWNER-d[8]
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 		|| !d[7] || (d[7]&63) || PioneerQ38CompactOutputBytes(d[2],d[7]/4)!=d[7]
 #else
 		|| d[7]!=d[2]*1024
 #endif
 		) return false;
-	for (unsigned i=8;i<16;i++) if (d[i]) return false;
+	for (unsigned i=9;i<16;i++) if (d[i]) return false;
 	return true;
 }
 // IO supplies fixed root MMIO/L1 accesses and a fence, not allocation,
 // reset/restore/END/release capabilities. A failure is sticky: NO later IO.
 // NoC ACK alone is NOT host visibility. Each write is followed by an
 // ordered host read AND an on-card bitwise comparison to the original.
+// d[8] is an optional 4KiB-aligned slot within the same owned 1MiB buffer;
+// it permits independent fused-run outputs without borrowing a second map.
 // This is transport integrity, not CPU learned-matrix/result validation.
 template<class IO> class PioneerQ38OutputTransfer {
 	IO& io;
@@ -63,8 +66,8 @@ template<class IO> class PioneerQ38OutputTransfer {
 		const unsigned offsets[]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
 		uint32_t expected[4];
 		for (unsigned i=0;i<4;i++) expected[i]=io.ReadReg(offsets[i])+(i==1?bytes/64:1);
-		const uint32_t command[]={write?0x80000+at:d[4]+at,write?0U:d[5],write?129U:1555U,
-			write?d[4]+at:0x75000,write?d[5]:0U,write?1555U:129U,0,write?0x212U:0,bytes,0};
+		const uint32_t command[]={write?0x80000+at:d[4]+d[8]+at,write?0U:d[5],write?129U:1555U,
+			write?d[4]+d[8]+at:0x75000,write?d[5]:0U,write?1555U:129U,0,write?0x212U:0,bytes,0};
 		for (unsigned i=0;i<10;i++) io.WriteReg(i*4,command[i]);
 		for (unsigned i=0;i<10;i++) if (io.ReadReg(i*4)!=command[i]) return false;
 		io.Fence(); io.WriteReg(0x40,1); (void)io.ReadReg(0x40); io.Fence();

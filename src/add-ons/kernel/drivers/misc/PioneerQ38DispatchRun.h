@@ -107,15 +107,31 @@ template<class IO
 	PioneerQ38DispatchLease& lease,const uint8_t* initialized,uint32_t initializedPages,tt_q38_dispatch_probe& job
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 	,const tt_host_page_result* outputInput=nullptr,const PioneerOutputBufferLease* outputBulk=nullptr,PioneerWideOutputLease* outputWide=nullptr
+	,unsigned outputOffset=0
 #endif
 )
 {
 	if (lease.unsafe || !lease.booted || lease.closed || lease.rootRunning || !PioneerQ38DispatchValid(job)
 		|| lease.rootNonce>=0x7ffffffe) return false;
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+	uint32_t compactWords=0;
+	if constexpr (Work) for (unsigned w=0;w<job.peers;w++)
+		if (!PioneerQ38CompactOutputAppend(job.part[w].groups,compactWords)) return false;
+#endif
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 	(void)outputInput; (void)outputBulk; (void)outputWide;
-	if constexpr (Work) if (!outputInput || !outputBulk || !outputWide
-		|| !PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,false)) return false;
+	if constexpr (Work) {
+		if (!outputInput || !outputBulk || !outputWide) return false;
+		const unsigned outputBytes=
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+			PioneerQ38CompactOutputBytes(job.peers,compactWords);
+#else
+			job.peers*1024;
+#endif
+		if ((outputOffset&4095) || outputOffset>TT_WIDE_OUTPUT_BYTES
+			|| outputBytes>TT_WIDE_OUTPUT_BYTES-outputOffset) return false;
+		if (!PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,false)) return false;
+	}
 	uint32_t livePci=0x402;
 	auto outputFail=[&]() {
 		if constexpr (Work) if (outputWide) PioneerQuarantineWideOutput(io,*outputWide);
@@ -129,16 +145,10 @@ template<class IO
 #endif
 	PioneerQ38DispatchProfile<IO> profile(io);
 	auto& a=lease.authority; auto& root=lease.worker[0]; auto& r=job.result;
-#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
-	uint32_t compactWords=0;
-#endif
 	// Complete ALL private initialized extents BEFORE any IO/nonce advance.
 	for (unsigned w=0;w<job.peers;w++) {
 		if (lease.peerNonce[w]>=0x7ffffffe
 			|| !PioneerQ38CohortAuthorizePart(banks,dram,initialized,initializedPages,job.type,job.inputs,job.part[w],w+1,a.extent[w])) return false;
-#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
-		if constexpr (Work) if (!PioneerQ38CompactOutputAppend(job.part[w].groups,compactWords)) return false;
-#endif
 	}
 	a.nextRoot=lease.rootNonce+1;
 	for (unsigned w=0;w<job.peers;w++) a.nextPeer[w]=lease.peerNonce[w]+1;
@@ -199,7 +209,8 @@ template<class IO
 		0x314f3851U
 #endif
 		:0U,Work?uint32_t(outputWide->physical):0U,
-		Work?uint32_t(outputWide->physical>>32):0U,Work?uint32_t(TT_WIDE_OUTPUT_BYTES):0U,0,0,0};
+		Work?uint32_t(outputWide->physical>>32):0U,Work?uint32_t(TT_WIDE_OUTPUT_BYTES):0U,
+		Work?outputOffset:0U,0,0};
 #else
 		Work?1U:0U,0,0,0,0,0,0,0};
 #endif
@@ -281,7 +292,7 @@ template<class IO
 			job.peers*1024,
 #endif
 			last=(bytes-1)&~4095U;
-		const uint32_t command[]={uint32_t(outputWide->physical)+last,uint32_t(outputWide->physical>>32),1555,0x75000,0,129,0,0,bytes-last,0};
+		const uint32_t command[]={uint32_t(outputWide->physical)+outputOffset+last,uint32_t(outputWide->physical>>32),1555,0x75000,0,129,0,0,bytes-last,0};
 		for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PIONEER_Q38_RUN_FAILURE;
 		if (!PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,true)
 			|| !PioneerQ38OutputDmaDisableKnownComplete(io)) return PIONEER_Q38_RUN_FAILURE;
@@ -304,12 +315,12 @@ template<class IO
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 		unsigned offset=0;
 		for (unsigned w=0;w<job.peers;w++) {
-			for (unsigned row=0;row<job.part[w].groups*16;row++) job.output[w][row]=io.WideHostLoad(offset+row);
+			for (unsigned row=0;row<job.part[w].groups*16;row++) job.output[w][row]=io.WideHostLoad(outputOffset/4+offset+row);
 			offset+=job.part[w].groups*16;
 		}
 #else
 		for (unsigned w=0;w<job.peers;w++) for (unsigned row=0;row<job.part[w].groups*16;row++)
-			job.output[w][row]=io.WideHostLoad(w*256+row);
+			job.output[w][row]=io.WideHostLoad(outputOffset/4+w*256+row);
 #endif
 		io.WideHostFence();
 	} else
