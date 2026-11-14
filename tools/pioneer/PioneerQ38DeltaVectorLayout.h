@@ -5,6 +5,12 @@
 #error Relocated GDN local mailbox requires exact separate returning service IMAGE
 #endif
 #endif
+#ifdef PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT
+#include "PioneerQ38GdnInplaceStateExperimentRole.h"
+#endif
+#if defined(PIONEER_Q38_DELTA_VECTOR_LAYOUT_H) && (defined(PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT) != defined(PIONEER_Q38_GDN_INPLACE_STATE_LAYOUT_BOUND))
+#error In-place GDN local-buffer selection cannot change after layout binding
+#endif
 #if defined(PIONEER_Q38_DELTA_VECTOR_LAYOUT_H) && (defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE) != defined(PIONEER_Q38_RESIDENT_GDN_LAYOUT_BOUND))
 #error GDN local mailbox variant cannot change after layout binding
 #endif
@@ -26,7 +32,15 @@ enum { Descriptor=0x74700 };
 #else
 enum { Descriptor=0x74000 };
 #endif
+#ifdef PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT
+#define PIONEER_Q38_GDN_INPLACE_STATE_LAYOUT_BOUND 1
+// The imported prior buffer is dead after the completed vector recurrence.
+// Reuse it as the staged next-state source while GDDR keeps both transactional
+// state slots distinct.
+enum { Prior=0x90000,Next=Prior,
+#else
 enum { Prior=0x90000,Next=0xa0000,
+#endif
        Done=Code+0xc,Park=Code+0x38,
 #ifdef PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
        FaultPark=Code+0x7c,

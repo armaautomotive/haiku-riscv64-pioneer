@@ -8,8 +8,10 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) not in (3, 4) or len(sys.argv) == 4 and sys.argv[3] != '--smoke':
+if len(sys.argv) not in (3, 4) or len(sys.argv) == 4 and sys.argv[3] not in ('--smoke', '--inplace-state-experiment'):
     raise SystemExit(2)
+smoke = len(sys.argv) == 4 and sys.argv[3] == '--smoke'
+inplace_state_experiment = len(sys.argv) == 4 and sys.argv[3] == '--inplace-state-experiment'
 here = pathlib.Path(__file__).resolve().parent
 image, old = map(pathlib.Path, sys.argv[1:3])
 for section, size, digest in (
@@ -18,7 +20,8 @@ for section, size, digest in (
     ('affine', 5360, 'd8734c6a6e1cea65e8abac370292033f8be1406fa063c0f84501646aaaedca5c'),
     ('ffn', 16352, 'f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9'),
     ('service', 10300, '3498f0507019f44b4c76101ca8df2df84dc4d57e3a288703c437fb441fa0eb43'),
-    ('gdn', 29860, '67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648'),
+    ('gdn', 29852 if inplace_state_experiment else 29860,
+     'e4a5c68779478c05a68260e71dab38da9cb9855e1a148c9526fb18ecca49436c' if inplace_state_experiment else '67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648'),
 ):
     data = (image/(section+'.bin')).read_bytes()
     assert len(data) == size and hashlib.sha256(data).hexdigest() == digest
@@ -32,8 +35,11 @@ for section, digest in (
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
 with tempfile.TemporaryDirectory(prefix='pioneer-resident-gdn-service-test-', dir='/private/tmp') as temporary:
     binary = pathlib.Path(temporary)/'test'
+    candidate_flags = (['-DPIONEER_Q38_GDN_INPLACE_STATE_TEST=1']
+                       if inplace_state_experiment else [])
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off',
-                    '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', *flags,
+                    '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', *flags, *candidate_flags,
                     str(here/'pioneer_q38_resident_gdn_operator_service_image_test.cpp'), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+    binary_args = [*sys.argv[1:3], *(('--smoke',) if smoke else ())]
+    subprocess.run([str(binary), *binary_args], check=True,
                    env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})

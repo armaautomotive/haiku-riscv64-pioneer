@@ -6,6 +6,9 @@
 #error Separate shared-array returning-wide worker TEST only,not IMAGE/native/CPU oracle/Work
 #endif
 #endif
+#if defined(PIONEER_Q38_GDN_INPLACE_STATE_TEST) && (PIONEER_Q38_GDN_INPLACE_STATE_TEST != 1 || defined(_KERNEL_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE))
+#error In-place GDN image observer is a separate offline TEST,not Work or CPU validation
+#endif
 #define PIONEER_Q38_RESIDENT_OPERATOR_SERVICE_MACHINE_ONLY
 #include "pioneer_q38_resident_operator_service_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputPlan.h"
@@ -67,7 +70,9 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
    unsigned sourceAt=(config[76]+1)*16,row=(config[84]&65535)/16-4,words=gdnX1+1;
    assert((config[84]&0xffff0000)==0x400000 && row<512 && !(words%16) && words<=8192-row*16);
 #ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
-   if(gdnImports<8)assert(sourceAt==0x90000+gdnImports*4096 && row==gdnImports*64 && words==1024);
+   if(gdnImports<8 && !(sourceAt==0x90000+gdnImports*4096 && row==gdnImports*64 && words==1024)){
+    fprintf(stderr,"GDN_IMPORT_LAYOUT_REFUSAL imports%u source%x row%u words%u\n",gdnImports,sourceAt,row,words);assert(false);
+   }
    else if(gdnImports==8 || gdnImports==10)assert(sourceAt==0x8e400 && !row && words==64);
    else if(gdnImports==9 || gdnImports==12)assert(sourceAt==0x90000 && !row && words==64);
    else assert(gdnImports==11 && sourceAt==0x8e600 && !row && words==64 && gdnDeltaWrites==64);
@@ -187,7 +192,12 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
    const unsigned r[]={input[4]+input[42],input[4]+input[43],input[4]+input[44],input[4]+input[45],input[4]+input[46],input[12],input[15]};
    const unsigned xy[]={input[8],input[8],input[8],input[8],input[8],input[13],input[41]};local=l[p];remote=r[p];route=xy[p];bytes=n[p];
   }else if(p<11){
-   write=p>=9;unsigned piece=(p-7)%2;local=(write?0xa0000:0x90000)+piece*16384;
+   write=p>=9;unsigned piece=(p-7)%2;
+#ifdef PIONEER_Q38_GDN_INPLACE_STATE_TEST
+   local=0x90000+piece*16384;
+#else
+   local=(write?0xa0000:0x90000)+piece*16384;
+#endif
    remote=state[write?7:5]+piece*16384;route=state[write?13:12];bytes=16384;
   }else {
    assert(peer && gdnPhase<5 && gdnImports==ExpectedGdnImports && gdnNextWrites==8192 && gdnOutputWrites==64 && drained);
@@ -234,7 +244,9 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
     const unsigned allowed[]={0,1,2,3,6,7,220,20,24,28,49,50,56,59,64,65,72,73,76,84,86,112,113,120,121,124};
     bool found=false;for(unsigned i:allowed)found|=index==i;assert(found);config[index]=value;configWrites++;return;
    }
-#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+#ifdef PIONEER_Q38_GDN_INPLACE_STATE_TEST
+   if(Range(at,0x90000,32768)){assert(drained && gdnCsrReads==gdnNextWrites+1);gdnNextWrites++;memory[at]=value;return;}
+#elif defined(PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST)
    if(Range(at,0x8e600,256)){
     assert(drained && !pending && gdnDeltaReads==gdnDeltaWrites+1 && at==0x8e600+((gdnDeltaWrites%32)*2+(gdnDeltaWrites>=32))*4);
     gdnDeltaWrites++;memory[at]=value;return;
@@ -332,6 +344,9 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
   assert(gdnDeltaWrites==64 && gdnDeltaReads==64 && gdnSfpuStores==8320);
 #endif
   assert(memory.at(0x74700)==0x56383351 && memory.at(0x74000)==TT_Q38_RESIDENT_GDN_SERVICE_JOB);
+#ifdef PIONEER_Q38_GDN_INPLACE_STATE_TEST
+  for(unsigned i=0;i<8192;i++)assert(memory.at(0xa0000+i*4)==0x7fc00000);
+#endif
   float qs=0,ks=0;for(unsigned i=0;i<128;i++){float q=Float(raw[i]),k=Float(raw[128+i]);qs+=q*q;ks+=k*k;}
   float qi=1.f/sqrtf(qs+1e-6f),ki=1.f/sqrtf(ks+1e-6f);
   auto close=[](uint32_t bits,float expected){return isfinite(Float(bits)) && fabs(double(Float(bits))-expected)<=3e-6*(1+fabs(double(expected)));};
@@ -351,7 +366,12 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
 #endif
    for(unsigned k=0;k<128;k++){
     float expected=Float(prior[k*64+c])*decay+Float(memory.at(0x8e200+k*4))*delta;
-    assert(next[k*64+c]==Bits(expected) && memory.at(0x90000+(k*64+c)*4)==prior[k*64+c]);
+    assert(next[k*64+c]==Bits(expected));
+#ifdef PIONEER_Q38_GDN_INPLACE_STATE_TEST
+    assert(memory.at(0x90000+(k*64+c)*4)==Bits(expected));
+#else
+    assert(memory.at(0x90000+(k*64+c)*4)==prior[k*64+c]);
+#endif
 #ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
     out+=double(expected)*double(Float(memory.at(0x8e000+k*4)));
 #else

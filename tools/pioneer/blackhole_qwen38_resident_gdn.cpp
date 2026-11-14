@@ -51,9 +51,9 @@ static void Packet(bool write,unsigned at,const uint32_t* d) {
 #endif
  if ((at!=0 && at!=16384) || !Sealed(d) || !Idle()) scalar_fault_park();
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
- unsigned remote=d[operation?7:5]+at,local=(write?0xa0000:operation==2?0x98000:0x90000)+at,route=d[operation?13:12];
+ unsigned remote=d[operation?7:5]+at,local=(write?L::Next:operation==2?0x98000:L::Prior)+at,route=d[operation?13:12];
 #else
- unsigned remote=d[write?7:5]+at,local=(write?0xa0000:0x90000)+at,route=d[write?13:12];
+ unsigned remote=d[write?7:5]+at,local=(write?L::Next:L::Prior)+at,route=d[write?13:12];
 #endif
  const unsigned delta[]={write?0U:1U,write?0U:256U,1,write?0U:1U,write?1U:0U,write?256U:0U,1,write?1U:0U};
  uint32_t expected[8]; for (unsigned i=0;i<8;i++) expected[i]=*Words(0xffb20000+CounterOffset(i))+delta[i];

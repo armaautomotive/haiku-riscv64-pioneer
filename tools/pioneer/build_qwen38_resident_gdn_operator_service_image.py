@@ -9,9 +9,10 @@ import struct
 import subprocess
 import sys
 
-if len(sys.argv) != 3 or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
+if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--inplace-state-experiment') or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
     raise SystemExit(2)
-sdk, output = map(pathlib.Path, sys.argv[1:])
+inplace_state_experiment = len(sys.argv) == 4
+sdk, output = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and output.is_absolute() and not output.exists() and not output.is_symlink()
 here = pathlib.Path(__file__).resolve().parent
 clean = {k: v for k, v in os.environ.items() if not k.startswith('PIONEER_')}
@@ -49,6 +50,9 @@ units = [
     ('blackhole_qwen38_gdn_recurrent.cpp', 'gdn_recurrent', [*roles, *forced, '-Dscalar_main=q38_resident_gdn_recurrent_stage', '-Dscalar_fault_park=block_fault_park'], '-Os'),
     ('blackhole_qwen38_gdn_gated_resident.cpp', 'gdn_gated', [*roles, *forced, '-DPIONEER_Q38_GDN_GATED_RESIDENT_IMAGE=1', '-DPIONEER_Q38_GDN_RENDEZVOUS_IMAGE=1', '-Dscalar_main=q38_resident_gdn_once', '-Dscalar_fault_park=block_fault_park'], '-Os'),
 ]
+if inplace_state_experiment:
+    units = [(source, name, [*extra, '-DPIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT=1'] if name == 'gdn_state' else extra, optimize)
+             for source, name, extra, optimize in units]
 for source, name, extra, optimize in units:
     current = [arg for arg in flags if arg != '-O2']
     subprocess.run([str(cross)+'-g++', *current, optimize, *extra, '-c', str(here/source), '-o', str(output/(name+'.o'))], check=True, env=clean)
@@ -84,4 +88,7 @@ for section in ('boot', 'text', 'affine', 'ffn', 'service', 'gdn'):
     data = (output/(section+'.bin')).read_bytes()
     print(hashlib.sha256(data).hexdigest()+' '+section+' bytes'+str(len(data)))
 print('PASS OFFLINE returning GDN/matrix/Conv IMAGE compile/maxNewFrame'+str(maximum)+'/prior service+QFP3+standaloneQGT1 ALL EXACT;NEW GDN local mailbox74700 preserves persistent command74000')
-print('Proposed GDN ROM b8000..c8000 and service68000..6e000 need NEW joint native footprint;NO native/device/ROOT/fullmodel or speed grant')
+if inplace_state_experiment:
+    print('PRIVATE INPLACE-STATE EXPERIMENT: only GDN stage reuses consumed Prior L1 buffer as Next source; transactional GDDR prior/next slots remain separate;NOT native/device/Work/fullmodel or speed grant')
+else:
+    print('Proposed GDN ROM b8000..c8000 and service68000..6e000 need NEW joint native footprint;NO native/device/ROOT/fullmodel or speed grant')

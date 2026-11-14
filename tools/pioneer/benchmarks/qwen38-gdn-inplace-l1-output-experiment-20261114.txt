@@ -1,0 +1,45 @@
+Qwen3.8-27B GDN input-buffer reuse experiment, November 14, 2026
+=================================================================
+
+This is an isolated returning-GDN image build, not a selected native driver,
+registered Work backend, full-model run, or performance result. After vector
+math has imported the current state into Tensix Dst and produced the complete
+next state, the experiment writes that result over the now-dead local Prior
+buffer and uses that address as the source for the separate GDDR next slot.
+The transactional GDDR prior and next state slots remain different addresses;
+the full-token publication/commit boundary is unchanged. This reuses the
+32 KiB L1 output staging range at 0xa0000 rather than writing it, freeing that
+buffer range for later state-residency layout work.
+
+Reproduce the separate candidate image:
+
+  `python3 tools/pioneer/build_qwen38_resident_gdn_operator_service_image.py /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/q38-gdn-inplace --inplace-state-experiment`
+
+The private candidate GDN section SHA-256 is
+`e4a5c68779478c05a68260e71dab38da9cb9855e1a148c9526fb18ecca49436c` (29,852
+bytes). Its untouched baseline image sections retain their exact hashes; the
+default build still emits the original pinned GDN section
+`67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648` (29,860
+bytes). Thus the experiment changes the GDN section only, by eight code bytes;
+the potential 32 KiB saving is the unused L1 data staging range, not a 32 KiB
+smaller code image.
+
+The full offline emitted-program suite passed on the candidate: 176 positive
+cases and 261 fault cases, covering the 48 recurrent layers, paired state
+updates, two pairs of 16 successive GDN commands, persistent next-state flow,
+and inert terminal faults. It specifically checks the candidate next state
+against the prior state plus emitted result, and verifies that the old 0xa0000
+buffer remains untouched. ASan/UBSan were enabled. The default image was
+rebuilt to its exact pinned hashes and passed the same 176/261 suite. The
+separate compile-gate test confirms that the alias is accepted only for the
+returning GDN image and is rejected for Work, CPU validation, native, kernel,
+and late role-removal contexts.
+
+This proves correctness of a synthetic-endpoint emitted-image variant, not
+silicon behavior, persistence across tokens on the card, an all-layer L1
+residency map, safe model-token commit/recovery in the native driver, or faster
+tokens/sec. Production code, working Assistant/boot/CPU/RAM, and the qualified
+driver remain unchanged. Physical testing is still blocked by the unverified
+Pioneer SSH host-key change. Next: carry this reduced GDN L1 live set into an
+all-119-tile residency layout, then prove commit/recovery and measure on the
+P100A after host identity is verified.
