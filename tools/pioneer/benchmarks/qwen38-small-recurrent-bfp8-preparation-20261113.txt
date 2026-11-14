@@ -822,3 +822,11 @@ Second FFN matrix preparation: an opt-in host-only synthetic role-3 BFP4
 source now supplies 17408 rows across seven banks with a pattern distinct
 from role 2. Every packed tile was unpacked and checked, with role-isolation
 refusals. This source check is not worker execution or a speed result.
+
+Second FFN matrix, continuous simulation: after the first FFN projection,
+20 simulated producer jobs regenerated the same 5120 BF16 values, then all
+119 workers executed the role-3 BFP4 up matrix. All 17408 synthetic rows
+matched a separate double dot-product observer; 696320 matrix instructions
+were modeled. The next dispatch remained pending. Activation values, down
+projection, complete layer/model correctness and physical performance are
+not established by this result.

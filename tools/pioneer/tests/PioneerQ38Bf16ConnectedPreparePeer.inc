@@ -55,7 +55,11 @@ void ReceiveBf16Producer(){
  const bool output=false;const unsigned width=5120,chunks=20;
 #endif
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST
- const bool ffn=d[43]==2;
+ const bool ffn=d[43]==2
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_UP_TEST
+  || d[43]==3
+#endif
+  ;
 #else
  const bool ffn=false;
 #endif
