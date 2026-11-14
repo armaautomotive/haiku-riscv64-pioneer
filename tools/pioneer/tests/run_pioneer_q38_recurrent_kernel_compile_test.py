@@ -60,10 +60,19 @@ if result.returncode:
     raise SystemExit(result.stderr)
 with tempfile.TemporaryDirectory(prefix='q38-recurrent-kernel-', dir='/private/tmp') as tmp:
     object_cmd = [arg for arg in cmd if arg != '-fsyntax-only']
-    result = subprocess.run(object_cmd + flags + ['-O2', '-c', '-o', str(Path(tmp) / 'receipt.o')],
-                            input=source, text=True, capture_output=True)
-    if result.returncode:
-        raise SystemExit(result.stderr)
+    rebind = '''
+bool rebind(R& r,const void* old,const void* fd,const uint32_t* oh,const uint8_t* ol,
+ const PioneerQ38SpanLease* lease,const void* next,const uint32_t* nh,const uint8_t* nl,
+ PioneerResidentBanks& banks,const tt_dram_samples_result& proof){
+ return r.RebindInspection(old,fd,oh,ol,17,42,lease,next,nh,nl,banks,proof,PioneerResidentBanks::Pages);
+}
+'''
+    for name, extra, body in (('receipt', [], source),
+                              ('rebind', ['-DPIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION=1'], source + rebind)):
+        result = subprocess.run(object_cmd + flags + extra + ['-O2', '-c', '-o', str(Path(tmp) / (name + '.o'))],
+                                input=body, text=True, capture_output=True)
+        if result.returncode:
+            raise SystemExit(result.stderr)
 for bad in ('PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',
             'PIONEER_Q38_FULL_OFFLOAD_NATIVE', 'PIONEER_Q38_CPU_VALIDATION'):
     check = subprocess.run(cmd + flags + ['-D' + bad + '=1'], input=source, text=True, capture_output=True)

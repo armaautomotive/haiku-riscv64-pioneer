@@ -862,3 +862,13 @@ all gathered values matched the workers, all residual sums and published
 values matched, and all outputs were nonzero. This is an end-to-end synthetic
 recurrent layer using ideal tensor endpoints, not a real-weight model-quality
 test, physical-card run, complete token, or throughput result.
+
+Resident receipt groundwork: an explicitly inspection-only rebind checks
+the same closed span, FD/team/generation, physical bank proof and complete
+5,067,109-page ledger before moving bookkeeping to a fresh context. The
+synthetic test rejects changed ownership, overlapping arrays, corrupted
+destination data and changed proof, then completes two rebinds after freeing
+old bookkeeping; address/undefined-behavior sanitizers and fake-tag
+freestanding compilation pass. This does not prove continuous hardware
+reservation or implement request close, driver handoff, model reuse, device
+execution or speed; the installed driver and Work mode are unchanged.

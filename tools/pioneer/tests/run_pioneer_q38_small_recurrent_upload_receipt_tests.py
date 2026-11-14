@@ -13,7 +13,8 @@ with tempfile.TemporaryDirectory(prefix='q38-small-receipt-', dir='/private/tmp'
     binary = str(Path(tmp) / 'test')
     subprocess.run([compiler, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function',
                     '-Wno-misleading-indentation', '-fsanitize=address,undefined', str(source), '-o', binary], check=True)
-    subprocess.run([binary], check=True, env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})
+    for args in ([], ['--rebind']):
+        subprocess.run([binary, *args], check=True, env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})
     for name in ('_KERNEL_MODE', 'PIONEER_DRIVER_BUILD_TAG', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
                  'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE',
                  'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
