@@ -40,10 +40,15 @@ int main(){
  std::vector<float> input(5120,.125f),output(1024,-99),before=output;
  bool sawSingle=false,sawBatch=false;
  for(unsigned workers:{1U,2U,3U,4U,5U,6U,7U,8U,9U,10U}){
-  BatchSessionIO io(source,index,workers);PioneerQ38WorkSession<BatchSessionIO,FakeSource> session(io,source);
+  BatchSessionIO io(source,index,workers);io.rootProfile=true;PioneerQ38WorkSession<BatchSessionIO,FakeSource> session(io,source);
   assert(session.Open() && session.Multiply(index,input.data(),5120,output.data(),1024,workers));
   assert(io.workRuns==2*io.batches+io.singles && session.calls==io.workRuns
    && session.runIoctlCalls==io.batches+io.singles);
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+  assert(session.workRootCycleDataValid && session.workRootCycleSamples==io.workRuns
+   && session.workRootCycles[0]==2ULL*io.workRuns && session.workRootCycles[1]==3ULL*io.workRuns
+   && session.workRootCycles[2]==4ULL*io.workRuns);
+#endif
   if(io.batches)sawBatch=true;
   if(io.singles){assert(io.singles==1);if(io.batches)sawSingle=true;}
   for(unsigned row=0;row<output.size();row++)assert(output[row]==float(row+1));
@@ -57,10 +62,14 @@ int main(){
 		const unsigned keyIndex=unsigned(key-pairSource.Model().Tensors().data());
 		const unsigned valueIndex=unsigned(value-pairSource.Model().Tensors().data());
 		std::vector<float> shared(5120,.25f),keyOutput(1024,-7),valueOutput(1024,-9);
-		BatchSessionIO io(pairSource,keyIndex,119);io.allowPairTensor=true;
+  BatchSessionIO io(pairSource,keyIndex,119);io.allowPairTensor=true;io.rootProfile=true;
 		PioneerQ38WorkSession<BatchSessionIO,FakeSource> session(io,pairSource);
 		assert(session.Open() && session.MultiplyPair(keyIndex,valueIndex,shared.data(),5120,keyOutput.data(),1024,valueOutput.data(),1024));
 		assert(io.batches==1 && io.workRuns==2 && io.singles==0 && session.calls==2 && session.runIoctlCalls==1);
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+  assert(session.workRootCycleDataValid && session.workRootCycleSamples==2
+   && session.workRootCycles[0]==4 && session.workRootCycles[1]==6 && session.workRootCycles[2]==8);
+#endif
 		for(unsigned row=0;row<1024;row++)assert(keyOutput[row]==float(row+1) && valueOutput[row]==float(row+1));
 		assert(session.Finish() && io.ends==1);
 	}

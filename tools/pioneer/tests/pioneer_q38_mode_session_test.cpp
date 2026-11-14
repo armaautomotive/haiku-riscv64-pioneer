@@ -4,7 +4,7 @@
 #include "../PioneerQ38WorkSession.h"
 struct WorkSessionIO:DispatchSessionIO {
 	unsigned workRuns=0,workSupports=0;
-	bool oldOnly=false;
+	bool oldOnly=false,rootProfile=false;
 	WorkSessionIO(FakeSource& s,unsigned t,unsigned workers=1):DispatchSessionIO(s,t,workers) {}
 	bool Call(int fd,uint32_t op,void* data,size_t bytes) {
 		if (op==TT_PCI_PROBE_Q38_WORK_SUPPORT) {
@@ -17,6 +17,10 @@ struct WorkSessionIO:DispatchSessionIO {
 			auto& r=*static_cast<tt_q38_dispatch_probe*>(data);
 			// Work host must NOT require checked-only peer/input/stats data.
 			memset(r.result.peer,0,sizeof(r.result.peer)); memset(r.result.stats,0,sizeof(r.result.stats));
+			if(rootProfile) {
+				r.result.stats[57]=0x31435951;
+				r.result.stats[58]=2;r.result.stats[60]=3;r.result.stats[62]=4;
+			}
 			r.activation[0]^=1;
 			return okay;
 		}

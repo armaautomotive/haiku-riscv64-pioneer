@@ -1,0 +1,34 @@
+Qwen Work batch root-cycle profile accounting fix, 2026-11-14
+
+The opt-in WORK_PHASE_PROFILE accumulator observed per-root counters after
+ordinary single Work ioctls, but skipped the two per-job result records
+returned by both WorkBatch paths: same-activation projection pairs and
+multi-wave tensor batches. This could leave diagnostic root-cycle totals
+incomplete while the host ioctl wall-time totals still counted the call.
+
+The session now observes both root records after accepting the complete
+batch reply header. These counters remain optional DATA only: they do not
+gate result collection, source validation, publication, END, retries, or
+device control. A bad/missing signature marks the profile unavailable as
+before.
+
+The batch-session test now builds with WORK_PHASE_PROFILE and supplies a
+synthetic valid signature/counter tuple. It verifies that a successful
+paired-projection ioctl contributes two root samples and that a successful
+multi-wave batch contributes one sample per root dispatch, including an odd
+final single wave. Existing lost/partial replies, wrong nonces, malformed
+headers and candidate identity checks remain covered.
+
+Verification: run_pioneer_q38_work_batch_tests.sh passed under ASan/UBSan,
+including the primitive, isolated handler/routing, paired session, simulated
+reference and refusal/fault cases. No device was accessed. No driver or
+Assistant was built/installed, and no new physical profile or tokens/sec
+measurement was made. This instrumentation fix does not claim a speedup.
+
+The last physical baseline remains the 2026-11-13 Work sample at 0.200
+tokens/sec (three warm samples), with 1,515 ioctls over those samples and
+85.9% of decode time inside host-monotonic ioctl intervals. Those intervals
+include host/kernel overhead and device waits; they are not card-only time.
+The 20 tokens/sec target remains unmet. Before the next physical profile, the
+Pioneer Linux SSH host key must be independently verified; strict host-key
+checking must not be bypassed.

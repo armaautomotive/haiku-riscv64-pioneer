@@ -458,6 +458,12 @@ public:
 		Elapsed(runStart,runNanos);
 		if (!executed || !source.Ready() || packet->version!=PIONEER_Q38_WORK_BATCH_VERSION
 			|| packet->count!=PIONEER_Q38_WORK_BATCH_COUNT || packet->reserved[0] || packet->reserved[1]) return Stop();
+		// Profiling is DATA only. Each batched root run has its own counters;
+		// accumulate both after the whole reply header is accepted, just as
+		// the ordinary single-request path does.
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+		for (unsigned i=0;i<PIONEER_Q38_WORK_BATCH_COUNT;i++) ObserveWorkRoot(packet->jobs[i].result.stats);
+#endif
 		if (!mode.Collect(firstWave,quantized,packet->jobs[0],firstScratch.data(),firstOutputs)
 			|| !mode.Collect(secondWave,quantized,packet->jobs[1],secondScratch.data(),secondOutputs)
 			|| !source.Ready()) return Stop();
@@ -517,6 +523,11 @@ public:
 				if (!executed || !source.Ready() || packet->version!=PIONEER_Q38_WORK_BATCH_VERSION
 					|| packet->count!=PIONEER_Q38_WORK_BATCH_COUNT || packet->reserved[0] || packet->reserved[1]) return Stop();
 				for (unsigned i=0;i<2;i++) {
+					// The ioctl contains two sequential device roots. Preserve both
+					// samples; omitting them makes the optional profile incomplete.
+#ifdef PIONEER_Q38_WORK_PHASE_PROFILE
+					ObserveWorkRoot(packet->jobs[i].result.stats);
+#endif
 					if (!source.Ready() || !mode.Collect(waves[i],quantized,packet->jobs[i],scratch.data(),outputs)) return Stop();
 					calls++;if (peakWorkers<waves[i].workers) peakWorkers=waves[i].workers;
 				}
