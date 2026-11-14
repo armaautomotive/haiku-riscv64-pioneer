@@ -18,8 +18,8 @@ admin=/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
 guard=/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
 flush=/boot/home/pioneer-qgw8-flush-tool-20261107-a/checked-flush
 stable_hash=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
-candidate_hash=1ce9094e63f8b396bde385323e5e9b73da767aa496347375f620ae8e8825b3d1
-client_hash=0b02eae16f47fe626085a686b7eb86816e55961ff9779e5637cfd18ac5a4351a
+candidate_hash=9cd22f54e5b84903d13744b4d76dee5a2395b1d9fd06b81b08073005e1670164
+client_hash=ffd07d7983d94e6a02e9de0aeda90196faa75ea3e4f4cabd4dc96ffb0ce1d40f
 candidate=$stage/candidate;client=$stage/client;preflight=$prior/source-preflight;reference=$prior/independent-reference.log
 exact(){
  test -f "$1" && test ! -L "$1" || return 1
