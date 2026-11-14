@@ -1,0 +1,23 @@
+Two-core learned-band ownership inspection, 2026-11-13
+
+The single-core real-QKV band diagnostic cannot run concurrently: its lease
+requires all cores held even during its cleanup. This separate offline-only
+prototype snapshots two disjoint core images, stages both before releasing
+either, rechecks the held fleet, starts both, and observes both before holding
+either. It restores both L1 images and the original shared host TLBs only
+after both terminal proofs and a fresh all-cores-held check. Once an I/O or
+proof fails, it retains ownership and attempts no retry or cleanup.
+
+The ASan/UBSan mock test requires both starts before publishing either fake
+completion. It injects precomputed output words to check routing (not matrix
+arithmetic), verifies both complete L1 snapshots and TLB restoration, and
+checks ten timeout, status, reset, write, mapping and source-failure cases.
+Explicit role tests reject kernel, real driver, Work and validation builds.
+The learned QKV export identity is checked without publishing its bytes.
+
+This is NOT a loadable driver, physical two-core test, 119-core cohort,
+model inference, numerical qualification or speed measurement. In particular,
+real overlap and completion behavior must be established on hardware after
+an independently reviewed diagnostic adapter and containment tests. No
+Assistant or installed driver changed. This prototype does not yet move any
+Qwen layer to the P100A and does not establish improvement in tokens/second.
