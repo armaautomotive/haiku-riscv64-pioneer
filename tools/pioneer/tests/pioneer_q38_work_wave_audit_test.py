@@ -21,6 +21,7 @@ with tempfile.TemporaryDirectory(prefix='work-wave-audit-',dir='/private/tmp') a
         'MULTIWAVE name=output.weight inputs=5120 outputs=248320 type=14 waves=9',
         'HISTOGRAM waves=1 matrices=496',
         'HISTOGRAM waves=9 matrices=1',
-        'TOTAL quantized_matrices=497 multiwave=1 unbatched_calls=505 paired_calls=501 saved_calls=4;STATIC_SHAPES_NOT_RUNTIME_FREQUENCY_OR_SPEED']
+        'TOTAL quantized_matrices=497 multiwave=1 unbatched_calls=505 paired_calls=501 saved_calls=4;STATIC_SHAPES_NOT_RUNTIME_FREQUENCY_OR_SPEED',
+        'SHARED_INPUT_ONE_WAVE_CANDIDATES ffn_gate_up_pairs=64 delta_projection_pairs=96 attention_qkv_triples=16 pair_calls_saved_upper_bound=176 residual_calls_upper_bound=329;SHAPES_ONLY_GRAPH_ORDER_AND_DEVICE_UNPROVEN']
     assert not good.stderr
 print('PASS actual Qwen metadata/Work scheduler wave-count audit and malformed-file refusal; NO DEVICE')
