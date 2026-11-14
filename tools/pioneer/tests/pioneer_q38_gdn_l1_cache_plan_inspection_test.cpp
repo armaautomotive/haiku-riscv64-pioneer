@@ -55,22 +55,36 @@ int main()
 	}
 	assert(availableSlots==3689 && deficit==919);
 	unsigned fragmentedSlots=0,fragmentedPages=0,fragmentedMisses=0;
+	C::FragmentedSlot fragmentedPlacement[P::Workers][C::MaxSlots]={};
+	unsigned fragmentedCount[P::Workers]={};
 	for(unsigned worker=0;worker<P::Workers;worker++){
-		C::FragmentedSlot slots[C::MaxSlots]={};unsigned count=0,pages=0;
-		assert(C::BuildFragmented(worker+1,slots,C::MaxSlots,count,pages));
+		unsigned count=0,pages=0;
+		assert(C::BuildFragmented(worker+1,fragmentedPlacement[worker],C::MaxSlots,count,pages));
 		assert(count==34 && pages==274 && count<P::SlotsForWorker(worker));
 		bool pageUsed[C::MaxPages]={};
 		for(unsigned i=0;i<count;i++)for(unsigned j=0;j<C::PagesPerState;j++){
-			const auto address=slots[i].pages[j];assert(!(address&(C::PageBytes-1)) && C::Free(worker+1,address,C::PageBytes));
+			const auto address=fragmentedPlacement[worker][i].pages[j];assert(!(address&(C::PageBytes-1)) && C::Free(worker+1,address,C::PageBytes));
 			const unsigned page=address/C::PageBytes;assert(page<C::MaxPages && !pageUsed[page]);pageUsed[page]=true;
 		}
-		fragmentedSlots+=count;fragmentedPages+=pages;fragmentedMisses+=P::SlotsForWorker(worker)-count;
+		fragmentedCount[worker]=count;fragmentedSlots+=count;fragmentedPages+=pages;fragmentedMisses+=P::SlotsForWorker(worker)-count;
 	}
 	assert(fragmentedSlots==4046 && fragmentedPages==32606 && fragmentedMisses==562);
+	bool mapped[P::Workers][P::MaxSlots]={};unsigned residentStates=0,spilledStates=0;
+	for(unsigned layer=0;layer<P::RecurrentLayers;layer++)for(unsigned head=0;head<P::HeadsPerLayer;head++)for(unsigned half=0;half<2;half++){
+		P::Slot state={};assert(P::Map(layer,head,half,state));assert(!mapped[state.worker][state.index]);mapped[state.worker][state.index]=true;
+		if(state.index<fragmentedCount[state.worker]){
+			for(unsigned page=0;page<C::PagesPerState;page++)
+				assert(C::Free(state.worker+1,fragmentedPlacement[state.worker][state.index].pages[page],C::PageBytes));
+			residentStates++;
+		}else spilledStates++;
+	}
+	assert(residentStates==fragmentedSlots && spilledStates==fragmentedMisses);
+	for(unsigned worker=0;worker<P::Workers;worker++)for(unsigned index=0;index<P::MaxSlots;index++)
+		assert(mapped[worker][index]==(index<P::SlotsForWorker(worker)));
 	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u workers, minimum scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
 	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u peer L1s (%u bytes); %u slots (%u bytes) need scratch relocation; each peer has 31 safe slots vs %u/%u required; NO all-phase live map or performance proof\n",
 		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots,P::MaxSlots);
-	std::printf("PASS 4KiB-scattered state-page packing: %u intact pages yielded %u complete 8-page states across %u peers (%u bytes; %u missing state halves); every peer has 34 states from 274 pages, leaving 2 residual pages; 4/5 more states need 30/38 additional pages; requires GDN chunk-import address indirection, NOT implemented or measured\n",
-		fragmentedPages,fragmentedSlots,P::Workers,fragmentedSlots*P::HalfStateBytes,fragmentedMisses);
+	std::printf("PASS 4KiB-scattered placement: %u pages yielded %u bijectively mapped resident states (%u bytes); %u states explicitly spill to GDDR; every peer has 34 from 274 pages (2 residual); 4/5 more states need 30/38 additional pages; GDN chunk-import address indirection NOT implemented or measured\n",
+		fragmentedPages,residentStates,residentStates*P::HalfStateBytes,spilledStates);
 }

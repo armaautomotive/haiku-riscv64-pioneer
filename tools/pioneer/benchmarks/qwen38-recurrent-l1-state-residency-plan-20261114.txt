@@ -72,12 +72,14 @@ Reproducer remains
 `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`.
 The ASan/UBSan test verifies 4-KiB alignment, that every packed page is within
 the exact untouched ranges, no page is assigned twice, all 119 worker totals,
-and the stated aggregate. This is only a capacity result. The current GDN
-image consumes contiguous local-buffer addresses; no scattered-page import
-table or address-indirect chunk loader has been implemented, and the 4-KiB
-packing cannot be used until that path is built and its cost/live buffers are
-included in a complete multi-phase L1 map. No model run or performance claim
-follows from this result.
+and a bijection from the model's 4,608 logical layer/head/half-state entries
+to per-worker slots. The first 4,046 mapped entries are assigned to L1; the
+remaining 562 are explicitly the GDDR-spill set. This is only a capacity and
+static mapping result. The current GDN image consumes contiguous local-buffer
+addresses; no scattered-page import table or address-indirect chunk loader
+has been implemented, and the 4-KiB packing cannot be used until that path is
+built and its cost/live buffers are included in a complete multi-phase L1
+map. No model run or performance claim follows from this result.
 
 Reproduce both checks with:
 
