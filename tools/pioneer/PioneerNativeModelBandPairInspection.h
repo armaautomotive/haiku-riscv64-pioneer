@@ -44,7 +44,7 @@ public:
  const PioneerNativeBfpResult& Result(unsigned i)const{return result[i];} // i must be 0 or 1
  template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned first,unsigned second){
   static_assert(Image::Width==5120 && Image::Phases==4,"fixed real-band image only");
-  if(attempted || first>=3 || second>=3)return false;
+  if(attempted || first>=3 || second>=3 || first==second)return false;
   attempted=true;for(auto& r:result)r.state=PIONEER_NATIVE_BFP_REFUSED;
   if(baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK || baseline.routes_verified!=7
    || !baseline.tlb_restored || !baseline.data_restored || baseline.recovery_required || !BlackholeDramBuildRoutes(baseline))return false;
@@ -64,6 +64,15 @@ public:
    if(!Scope(io,baseline,i,0x47800))return Fail();
    io.BfpWrite(0x6000,Band::StagedWord<Image>(samples[i],5120,0));
    for(unsigned n=0;n<words;n++)if(io.BfpRead(Band::Address(5120,n))!=Band::StagedWord<Image>(samples[i],5120,n))return Fail();
+   if(!Scope(io,baseline,i,0x47800))return Fail();
+  }
+  // A successful per-core write/read does not exclude aliasing between
+  // routes. Re-read BOTH staged images only after both have been written.
+  // Different pinned samples make an accidental cross-core alias visible.
+  for(unsigned i=0;i<2;i++){
+   if(!Select(io,i) || !Scope(io,baseline,i,0x47800))return Fail();
+   for(unsigned n=0;n<words;n++)
+    if(io.BfpRead(Band::Address(5120,n))!=Band::StagedWord<Image>(samples[i],5120,n))return Fail();
    if(!Scope(io,baseline,i,0x47800))return Fail();
   }
   // Recheck the entire fleet after staging, before releasing either core.

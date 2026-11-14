@@ -23,6 +23,14 @@ returned words match the existing expected results, and both L1 images and
 shared TLBs are restored. ASan/UBSan passed. This does not emulate hardware
 timing, overlapping device execution, PCIe windows or reset races.
 
+Cross-route alias hardening: per-core verification alone would not detect a
+second staged image overwriting an aliased first core. The owner now rejects
+identical sample selections and rereads both complete images after staging
+both, before any reset/release. A fake-MMIO test forces the two routes to the
+same L1 and confirms refusal, no processor release and retained quarantine for
+all three distinct pairs of pinned QKV samples. It does not prove real
+hardware routing or detect every conceivable partial alias of equal bytes.
+
 This is NOT a loadable driver, physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
 real overlap and completion behavior must be established on hardware after

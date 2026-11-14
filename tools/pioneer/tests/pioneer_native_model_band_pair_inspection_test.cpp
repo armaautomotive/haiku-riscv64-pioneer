@@ -17,12 +17,12 @@ struct IO {
  uint32_t source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
   0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0};
  unsigned starts=0,resetWrites=0,writes=0,tlbWrites=0,reads=0,pauses=0;
- unsigned dropReset=0,dropWrite=0,dropTlb=0;bool timeout=false,badMarker=false,sourceBad=false;
+ unsigned dropReset=0,dropWrite=0,dropTlb=0;bool timeout=false,badMarker=false,sourceBad=false,alias=false;
  uint64_t now=1000000;
  IO(){for(unsigned i=0;i<2;i++){mem[i].resize(0x180000/4);for(unsigned j=0;j<mem[i].size();j++)mem[i][j]=0x9e370000U^(j*71+i);original[i]=mem[i];}}
  bool Match(unsigned s,unsigned x,unsigned y,bool ro){for(unsigned w=0;w<3;w++)if(tlb[s][w]!=BlackholeDramFixedTlbWord(s?0xffa00000:0,x,y,ro,w))return false;return true;}
  int Core(unsigned slot,bool ro){for(unsigned i=0;i<2;i++)if(Match(slot,1,2+i,ro))return int(i);return -1;}
- int Window(){int a=Core(0,false),b=Core(1,false);assert(a>=0 && a==b);return a;}
+ int Window(){int a=Core(0,false),b=Core(1,false);assert(a>=0 && a==b);return alias?0:a;}
  uint32_t SourceRead(unsigned i){reads++;assert(i<16);return source[i]^((sourceBad && starts)?1U:0U);}
  uint32_t DramTlbRead(unsigned s,unsigned w){reads++;assert(s<2 && w<3);return tlb[s][w];}
  void DramTlbWrite(unsigned s,unsigned w,uint32_t v){assert(s<2 && w<3);if(++tlbWrites!=dropTlb)tlb[s][w]=v;}
@@ -57,6 +57,17 @@ int main(){
   assert(!io.reads && !io.writes && !io.resetWrites && !io.tlbWrites);
  }
  {IO io;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
+  assert((!owner->Run<IO,Image>(io,baseline,0,0)));
+  assert(!io.reads && !io.writes && !io.resetWrites && !io.tlbWrites);}
+ for(unsigned first=0;first<3;first++)for(unsigned second=first+1;second<3;second++){
+  IO io;io.alias=true;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
+  assert((!owner->Run<IO,Image>(io,baseline,first,second)));
+  assert(!io.starts && !io.resetWrites);
+  assert(owner->Result(0).state==PIONEER_NATIVE_BFP_UNKNOWN && owner->Result(1).cold);
+  auto reads=io.reads,writes=io.writes,resets=io.resetWrites,tlbs=io.tlbWrites;
+  assert(!owner->End(io,baseline));assert((!owner->Run<IO,Image>(io,baseline,first,second)));
+  assert(reads==io.reads && writes==io.writes && resets==io.resetWrites && tlbs==io.tlbWrites);}
+ {IO io;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
   assert((owner->Run<IO,Image>(io,baseline,0,1)));assert(io.starts==3 && io.resetWrites==4);
   for(unsigned i=0;i<2;i++){auto& r=owner->Result(i);assert(r.completed && r.state==PIONEER_NATIVE_BFP_RESULT);
    const auto* expected=PioneerNativeBfpModelBandMetadata::Golden(i);for(unsigned j=0;j<64;j++)assert(r.output[j]==expected[j%32]);}
@@ -80,5 +91,5 @@ int main(){
   assert(!owner->End(io,baseline));assert((!owner->Run<IO,Image>(io,baseline,0,1)));
   assert(reads==io.reads && writes==io.writes && resets==io.resetWrites && tlbs==io.tlbWrites);
  }
- puts("PASS_OFFLINE_PAIR_OWNERSHIP concurrent_start injected_outputs exact_restore ten_faults; NO_DEVICE_OR_INFERENCE_SPEED_PROOF");
+ puts("PASS_OFFLINE_PAIR_OWNERSHIP concurrent_start injected_outputs exact_restore alias_and_ten_faults; NO_DEVICE_OR_INFERENCE_SPEED_PROOF");
 }
