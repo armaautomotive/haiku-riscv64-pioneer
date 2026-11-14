@@ -1,0 +1,56 @@
+Qwen27B Work batching Assistant candidate build, November 14, 2026
+==================================================================
+
+Purpose: produce the complete Haiku/RISC-V Assistant worker candidate for
+same-activation projection batching, plus the corrected Work root-phase
+profile. This is a cross-build checkpoint only, not an installed Assistant,
+driver, model run, speed result or authorization to touch the P100A.
+
+Build
+-----
+Builder: tools/pioneer/build_qwen38_inference.sh
+SDK: /Volumes/HaikuBuildLocal/generated.riscv64
+Pinned runtime libraries: /private/tmp/pioneer-q38-assistant-libs.LU1esRrr
+  libllama.so.0.2.0       0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af
+  libggml.so.0.21.0       a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16
+  libggml-base.so.0.21.0  9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389
+  libggml-cpu.so.0.21.0   69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2
+
+Enabled roles: DISPATCH_INFERENCE, VECTOR_INFERENCE, EXECUTION_MODE=work,
+SPAN_PRELOAD, SPAN_FAST, ORDERED_EXTENT_FAST, ASSISTANT_WORKER,
+WORK_PHASE_PROFILE, WORK_BATCH_CLIENT. CPU validation/reference flags were
+not enabled. The full Assistant ELF is RISC-V 64-bit Haiku, SHA-256
+9b5ea77b1aa9afc355c1403f54a4f75651ae0c1fbd49df31726d529b33b7cb18; the
+build artifact is /private/tmp/pioneer-q38-workbatch-assistant-candidate and
+can be reproduced by the listed builder and flags.
+
+The ELF symbol table contains both the Q38 GGML backend and the concrete
+PioneerQ38CohortSession::MultiplyPair implementation. This verifies the
+candidate option is present in the complete Assistant binary, not just the
+unit-test executable. It does NOT prove that real Qwen graph nodes pair,
+that the board-side batch opcode is available, or that the result is faster.
+
+Role and hardware constraints
+-----------------------------
+PioneerQ38WorkSession::Support requires driver 55, exact build tag
+0x2026111300010152, and the driver's Work-batch capability reply. Thus this
+candidate will refuse the currently documented stable-driver identity; it
+must not be pointed at the stable driver or have that guard weakened. The
+tag-152 driver has only been exercised by the fixed synthetic batch test, not
+by this full Assistant/model path.
+
+Offline Work-batch primitive/session/routing tests and the pristine-pinned
+GGML backend tests passed in the immediately preceding continuation turn.
+They cover synthetic graphs, loss/partial-reply refusals, and candidate role
+gates; none accessed the device. The most recent measured Work baseline is
+still 0.200 tok/s from three warm samples (1515 calls across those samples).
+No full-model batch candidate run, quality check, physical TPS result or
+speedup has been measured; the 20 tok/s objective remains unmet.
+
+Next: independently authenticate the Pioneer SSH host key before any remote
+driver/device operation. Once authenticated and the recovered driver/device
+state is independently checked, run one controlled real-model Work trial
+with the exact tag-152 driver and this Assistant; record actual paired batch
+count, root samples, ioctl wall time, answer correctness, clean END and
+restoration. Do not convert the structural upper bound (176 projection
+pairs plus four output-wave ioctl savings) into an expected speedup.
