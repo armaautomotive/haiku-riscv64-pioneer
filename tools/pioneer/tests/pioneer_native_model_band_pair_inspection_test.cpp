@@ -16,7 +16,7 @@ struct IO {
  uint32_t tlb[2][3]={{1,2,3},{4,5,6}},reset[2]={0x47800,0x47800};
  uint32_t source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
   0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0};
- unsigned starts=0,resetWrites=0,writes=0,tlbWrites=0,reads=0,pauses=0;
+ unsigned starts=0,resetWrites=0,writes=0,tlbWrites=0,reads=0,pauses=0,releaseCount=0,releaseOrder[2]={};
  unsigned dropReset=0,dropWrite=0,dropTlb=0,pcReads=0;bool timeout=false,badMarker=false,sourceBad=false,alias=false,proveOverlap=false;
  uint64_t now=1000000;
  IO(){for(unsigned i=0;i<2;i++){mem[i].resize(0x180000/4);for(unsigned j=0;j<mem[i].size();j++)mem[i][j]=0x9e370000U^(j*71+i);original[i]=mem[i];}}
@@ -39,7 +39,7 @@ struct IO {
   return pauses&1?0x70038:0x7003c;
  }
  void BfpResetWrite(uint32_t v){int c=Window();if(++resetWrites==dropReset)return;
-  if(v==0x46800){assert(reset[c]==0x87ffff);reset[c]=v;starts|=1U<<c;
+  if(v==0x46800){assert(reset[c]==0x87ffff);reset[c]=v;if(releaseCount<2)releaseOrder[releaseCount]=unsigned(c);releaseCount++;starts|=1U<<c;
    if(starts==3 && !timeout)for(unsigned i=0;i<2;i++){
     mem[i][0x17ffc0/4]=0x7000c;mem[i][0x17ffc4/4]=0x04000000|5120;
     mem[i][0x17ffc8/4]=(badMarker && i==1)?0x4542464e:0x3342464e;
@@ -75,6 +75,7 @@ int main(){
   assert(reads==io.reads && writes==io.writes && resets==io.resetWrites && tlbs==io.tlbWrites);}
  {IO io;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
   assert((owner->Run<IO,Image>(io,baseline,0,1)));assert(io.starts==3 && io.resetWrites==4);
+  assert(io.releaseCount==2 && io.releaseOrder[0]==0 && io.releaseOrder[1]==1);
   assert(!owner->OverlapVerified());
   for(unsigned i=0;i<2;i++){auto& r=owner->Result(i);assert(r.completed && r.state==PIONEER_NATIVE_BFP_RESULT);
    const auto* expected=PioneerNativeBfpModelBandMetadata::Golden(i);for(unsigned j=0;j<64;j++)assert(r.output[j]==expected[j%32]);}

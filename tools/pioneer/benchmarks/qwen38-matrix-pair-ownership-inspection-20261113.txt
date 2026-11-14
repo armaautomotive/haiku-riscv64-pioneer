@@ -59,12 +59,12 @@ all 128 returned words against that separate reference before restoring the
 stable driver. Its actual flow passed 398 fake-endpoint cases, including
 missing, duplicated and wrong individual words and failures before/after the
 swap. The client prints returned words only after its explicit successful END.
-This wrapper has NOT been run on hardware. The revised pair driver and client
-were just rebuilt from the committed clean archive: SHA-256
+The revised pair driver and client were just rebuilt from the committed clean
+archive: SHA-256
 9cd22f54e5b84903d13744b4d76dee5a2395b1d9fd06b81b08073005e1670164 and
 ffd07d7983d94e6a02e9de0aeda90196faa75ea3e4f4cabd4dc96ffb0ce1d40f. The
-wrapper pins these exact artifacts; fresh live check-only admission and
-physical overlap evidence remain outstanding.
+wrapper pins these exact artifacts; live check-only admission and the physical
+result are recorded below.
 
 Overlap evidence is now a field in the pair-specific protocol only (the
 shared result ABI is unchanged). After both resets are released, the owner
@@ -75,16 +75,16 @@ intervals overlap. Terminal park means correct-but-not-overlapped, not a
 hardware fault; the explicit END and
 stable-driver restore still proceed after both outputs validate. This
 instrumentation is cross-compiled from a clean archive and its offline
-controller/parent tests pass, but it has not yet been run physically.
+controller/parent tests pass. The physical run below returned overlap0, so it
+did not establish concurrent active intervals.
 
-The first updated physical attempt was admitted but terminated during the
-full-model source preflight: the remote runner and child disappeared before
-source.exit was written, while the state remained VERIFYING_SOURCE_BEFORE_SWAP.
-Post-checks confirmed no diagnostic process, unchanged stable-driver SHA/tag/
-generation 52, all 64 CPUs, and 137034936320-byte maximum RAM. No swap or GPU
-execution occurred. The consumed one-shot directory is not reused; the next
-attempt uses a fresh stage and a detached runner so a slow SSH session cannot
-be confused with trial progress.
+The first updated physical attempt entered full-model source preflight in stage
+b. Its state remained VERIFYING_SOURCE_BEFORE_SWAP and source.exit was absent.
+An over-specific process grep missed Haiku's truncated executable name; I then
+interrupted the foreground SSH session. The attempt's precise remote process
+state at that instant is unproven, but the recorded driver remained the stable
+SHA/tag/generation 52, with all 64 CPUs and maximum RAM intact; no swap or GPU
+execution was recorded. Stage b is not reused.
 
 The first detached launch in stage c also stopped before creating its
 one-shot marker. The subsequent check-only trace showed the idle gate rejecting
@@ -93,12 +93,31 @@ path. No swap or device call occurred; driver and system health remained
 unchanged. Stage c is retained. The idle gate now excludes only the bash/sh
 launcher whose truncated command line contains this unique pair-stage prefix
 (and the wrapper's own PID), while still rejecting an actual pair client/owner;
-offline regression tests cover both. Stage d remains fresh and will use the
-exec handoff.
+offline regression tests cover both.
 
-This is NOT a physical two-core test, 119-core cohort,
-model inference, numerical qualification or speed measurement. In particular,
-real overlap and completion behavior must be established on hardware after
-an independently reviewed diagnostic adapter and containment tests. No
-Assistant or installed driver changed. This prototype does not yet move any
-Qwen layer to the P100A and does not establish improvement in tokens/second.
+The clean rebuilt pair diagnostic then completed on hardware from stage d.
+Fresh full-model source preflight passed (source.exit=0); the diagnostic
+returned all 128 QKV output words matching the independent source reference,
+reported overlap0, completed explicit END, and restored the stable driver.
+Final evidence: trial.exit=0, no stderr, final wrapper state
+STABLE_RESTORED_EXACT128_OVERLAP0, stable SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403 at
+generation 54, 64 CPUs, and maximum RAM 137034936320 bytes. This proves
+correct two-sample execution and restoration, but no verified concurrent
+execution, model inference, or speed increase.
+
+Follow-up: to reduce release-to-release latency, both processors are now reset
+and verified first, then released back-to-back; the four-PC bracket immediately
+after release also verifies both reset transitions, replacing two extra
+post-release full scopes. Offline tests pin the release order and overlap
+bracket. The updated driver cross-compiled as SHA-256
+5873c3f962e4c80ecd90c9ea1ce15ef7ef70851b69203c7d9654427eb9fbb660; the
+debug client hash remains ffd07d7983d94e6a02e9de0aeda90196faa75ea3e4f4cabd4dc96ffb0ce1d40f.
+Clean-archive reproducibility and physical testing are pending.
+
+This is a physical two-core paired-QKV diagnostic, but NOT a 119-core cohort,
+full-model inference, full numerical qualification or speed measurement. The
+measured overlap result is zero; the follow-up release change must be rebuilt
+and tested on hardware. No Assistant or persistent driver change remains; the
+stable driver is restored. This prototype does not yet move any Qwen layer to
+the P100A and does not establish improvement in tokens/second.

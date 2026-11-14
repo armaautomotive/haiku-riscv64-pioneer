@@ -90,17 +90,25 @@ public:
   }
   // Recheck the entire fleet after staging, before releasing either core.
   if(!BlackholeDramAllCoresHeld(io,baseline) || !BlackholeDramSourceStable(io,baseline))return Fail();
+  // First reset and verify both processors while neither can run. Then
+  // release them back-to-back; defer post-release checks to the immediate
+  // PC bracket so an avoidable full Scope() on core 0 cannot consume the
+  // entire short diagnostic before core 1 starts.
   for(unsigned i=0;i<2;i++){
    if(!Select(io,i) || !Scope(io,baseline,i,0x47800))return Fail();
    io.BfpResetWrite(0x87ffff);io.Pause();if(!Scope(io,baseline,i,0x87ffff))return Fail();
-   result[i].started=1;io.BfpResetWrite(0x46800);if(!Scope(io,baseline,i,0x46800))return Fail();
+  }
+  for(unsigned i=0;i<2;i++){
+   if(!Select(io,i) || !Scope(io,baseline,i,0x87ffff))return Fail();
+   result[i].started=1;io.BfpResetWrite(0x46800);
   }
   // Bracket peer 1's running interval with two live observations of peer 0.
   // Order is core0, core1, core1, core0: each image has one-way completion
   // into its terminal park, so a live core1 at both middle observations
   // lies inside core0's live interval when both outer observations are live.
-  // If either peer already reached its verified park, simply report no
-  // overlap; numerical execution and explicit END remain independently gated.
+  // These same bounded scopes also verify both release writes. If either
+  // peer already reached its verified park, simply report no overlap;
+  // numerical execution and explicit END remain independently gated.
   uint32_t bracket[2][2]={};
   static const unsigned bracketOrder[4]={0,1,1,0};
   for(unsigned observation=0;observation<4;observation++){
