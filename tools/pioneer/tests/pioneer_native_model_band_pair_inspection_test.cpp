@@ -88,6 +88,7 @@ int main(){
  }
  {IO io;io.proveOverlap=true;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
   assert((owner->Run<IO,Image>(io,baseline,0,1)));assert(owner->OverlapVerified());
+  for(unsigned i=0;i<4;i++)assert(owner->OverlapPc(i)==0x70010);
   assert(owner->End(io,baseline));}
  for(unsigned fault=0;fault<10;fault++){
   IO io;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();

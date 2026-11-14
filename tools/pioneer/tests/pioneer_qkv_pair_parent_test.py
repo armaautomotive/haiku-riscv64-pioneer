@@ -59,13 +59,13 @@ health(){ echo health >> "$events"; }
         for job in range(2):
             for row in range(32):
                 normal.append(f'PAIR_QKV_WORD sample{sample} first{first[sample]} pass{job} row{row} got{(sample*32+row+1):08x}')
-    normal.append('PASS_NATIVE_QKV_PAIR samples2 exact_words128 overlap1 generation51;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM')
+    normal.append('PASS_NATIVE_QKV_PAIR samples2 exact_words128 overlap1 pcs00070010-00070010-00070010-00070010 generation51;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM')
     cases = [('pass', normal), ('runfail', []), ('dirty', normal), ('false-pass', normal), ('swapfail', normal),
              ('busy', normal), ('preflight-fail', normal), ('missing-auth', normal[1:]),
              ('duplicate-auth', normal[:1]+normal), ('missing-final', normal[:-1]),
              ('duplicate-final', normal+[normal[-1]]), ('extra-line', normal+['BAD']),
              ('wrong-generation', normal[:-1]+[normal[-1].replace('generation51','generation50')]),
-             ('no-overlap', normal[:-1]+[normal[-1].replace('overlap1','overlap0')]),
+             ('no-overlap', normal[:-1]+[normal[-1].replace('overlap1','overlap0').replace('pcs00070010-00070010-00070010-00070010','pcs00070038-00070010-00070010-00070010')]),
              ('short-reference', normal)]
     for pos in range(1,129):
         wrong = normal.copy();wrong[pos] = wrong[pos][:-8] + 'ffffffff'

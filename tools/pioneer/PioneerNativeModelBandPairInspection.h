@@ -28,6 +28,7 @@
 class PioneerNativeModelBandPairInspection {
  using Band=PioneerNativeModelBandLease;
  uint32_t saved[2][Band::MaxSavedWords]={},tlb[2][3]={};
+ uint32_t overlapPc[4]={};
  PioneerNativeBfpResult result[2]={};
  bool attempted=false,owned=false,unknown=false,closed=false,overlapVerified=false;
  static unsigned Y(unsigned i){return 2+i;}
@@ -54,6 +55,7 @@ class PioneerNativeModelBandPairInspection {
 public:
  const PioneerNativeBfpResult& Result(unsigned i)const{return result[i];} // i must be 0 or 1
  bool OverlapVerified()const{return overlapVerified;}
+ uint32_t OverlapPc(unsigned i)const{return i<4?overlapPc[i]:0;}
  void Abandon(){if(owned)Fail();} // bookkeeping only, never accesses the device
  template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned first,unsigned second){
   static_assert(Image::Width==5120 && Image::Phases==4,"fixed real-band image only");
@@ -114,8 +116,9 @@ public:
   for(unsigned observation=0;observation<4;observation++){
    unsigned sample=bracketOrder[observation];
    if(!Select(io,sample) || !Scope(io,baseline,sample,0x46800))return Fail();
-   io.Pause();bracket[sample][observation&1]=io.BfpPcRead();
-   if(bracket[sample][observation&1]==0x70040)return Fail();
+   io.Pause();const uint32_t pc=io.BfpPcRead();overlapPc[observation]=pc;
+   bracket[sample][observation&1]=pc;
+   if(pc!=0x70038 && pc!=0x7003c && (pc<0x70000 || pc>=0x70038 || (pc&3)))return Fail();
   }
   auto live=[](uint32_t pc){return pc!=0x70038 && pc!=0x7003c;};
   overlapVerified=live(bracket[0][0]) && live(bracket[0][1])

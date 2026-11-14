@@ -231,10 +231,12 @@ constexpr uint32_t PioneerNativeModelBandNone=UINT32_MAX;''')
   owned=false;for(auto& x:r)x.state=2;return true;}
  void Abandon(){if(owned)for(auto& x:r){x.state=4;x.cold=1;}}
  bool OverlapVerified()const{return true;}
+ uint32_t OverlapPc(unsigned i)const{return i<4?0x70010:0;}
  const auto& Result(unsigned i)const{assert(i<2);return r[i];}
 };
 ''' + prefix[end:]
     tests = tests.replace('PioneerNativeModelBandTag', 'PioneerNativeModelBandPairTag')
+    tests = tests.replace('r.version=1;', 'r.version=2;')
     tests = tests.replace('r.reserved=1', 'r.overlap_verified=1').replace('r.result.', 'r.result[0].').replace('end.result.', 'end.result[0].')
     tests = tests.replace('for(unsigned sample:{0U,1U,2U})', 'for(unsigned sample:{0U})')
     tests = tests.replace('PASS ACTUAL fixed learned-model native BFP', 'PASS ACTUAL fixed pair diagnostic')

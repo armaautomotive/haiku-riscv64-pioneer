@@ -16,9 +16,15 @@
 namespace {
 using Meta=PioneerNativeBfpModelBandMetadata;
 bool Result(const PioneerNativeModelBandPairRequest& r,uint64_t generation,unsigned state){
- if(r.version!=1 || r.sample || r.expected_tag!=PioneerNativeModelBandPairTag
+ if(r.version!=2 || r.sample || r.expected_tag!=PioneerNativeModelBandPairTag
   || r.expected_generation!=generation || r.nonce!=1 || r.accept!=unsigned(state==PIONEER_NATIVE_BFP_CLOSED)
   || r.overlap_verified>1)return false;
+ bool overlap=true;
+ for(unsigned pc:r.overlap_pc){
+  if(pc==0x70038 || pc==0x7003c)overlap=false;
+  else if(pc<0x70000 || pc>=0x70038 || (pc&3))return false;
+ }
+ if(r.overlap_verified!=unsigned(overlap))return false;
  for(const auto& v:r.result){
   if(v.state!=state || v.cold || v.started!=1 || v.completed!=1 || !v.polls || v.polls>20000
    || v.phase!=0x7000c || v.count!=(0x04000000U|Meta::Width) || v.marker!=0x3342464e)return false;
@@ -43,11 +49,11 @@ int main(int argc,char** argv){
   || m.reserved[0] || m.reserved[1] || m.reserved[2] || m.driver!=55 || m.build_tag!=PioneerNativeModelBandPairTag
   || !m.generation || m.quiesced || m.cold || m.active_owner || m.open_count!=1 || m.guard_version!=1){
   fputs("PAIR_METADATA_REFUSED;NO_SUPPORT_OR_RUN\n",stderr);close(fd);return 1;}
- PioneerNativeModelBandPairRequest r={};r.version=1;r.sample=UINT32_MAX;r.expected_tag=PioneerNativeModelBandPairTag;r.expected_generation=m.generation;
+ PioneerNativeModelBandPairRequest r={};r.version=2;r.sample=UINT32_MAX;r.expected_tag=PioneerNativeModelBandPairTag;r.expected_generation=m.generation;
  if(ioctl(fd,PIONEER_NATIVE_MODEL_BAND_PAIR_SUPPORT,&r,sizeof(r)) || !PioneerNativeModelBandPairRequestValid(r)
   || r.sample!=UINT32_MAX || r.nonce || r.accept || r.expected_generation!=m.generation || !source.Ready()){
   fputs("PAIR_SUPPORT_SOURCE_REFUSED;NO_RUN\n",stderr);close(fd);return 1;}
- r={};r.version=1;r.expected_tag=PioneerNativeModelBandPairTag;r.expected_generation=m.generation;
+ r={};r.version=2;r.expected_tag=PioneerNativeModelBandPairTag;r.expected_generation=m.generation;
  if(ioctl(fd,PIONEER_NATIVE_MODEL_BAND_PAIR_RUN,&r,sizeof(r)) || !Result(r,m.generation,PIONEER_NATIVE_BFP_RESULT) || !source.Ready()){
   fputs("PAIR_RUN_UNPROVEN;CLOSE_ONLY_NO_END_OR_RETRY\n",stderr);close(fd);return 1;}
  for(unsigned i=0;i<2;i++){
@@ -56,15 +62,16 @@ int main(int argc,char** argv){
    fprintf(stderr,"PAIR_NUMERICAL_MISMATCH sample%u word%u;CLOSE_ONLY_NO_END_OR_RETRY\n",i,n);close(fd);return 1;}
  }
  if(!source.Ready()){fputs("PAIR_SOURCE_CHANGED;CLOSE_ONLY_NO_END\n",stderr);close(fd);return 1;}
- PioneerNativeModelBandPairRequest end={};end.version=1;end.expected_tag=PioneerNativeModelBandPairTag;end.expected_generation=m.generation;end.nonce=1;end.accept=1;
+ PioneerNativeModelBandPairRequest end={};end.version=2;end.expected_tag=PioneerNativeModelBandPairTag;end.expected_generation=m.generation;end.nonce=1;end.accept=1;
  if(ioctl(fd,PIONEER_NATIVE_MODEL_BAND_PAIR_END,&end,sizeof(end)) || !Result(end,m.generation,PIONEER_NATIVE_BFP_CLOSED)
   || memcmp(end.result[0].output,r.result[0].output,sizeof(r.result[0].output))
   || end.overlap_verified!=r.overlap_verified
+  || memcmp(end.overlap_pc,r.overlap_pc,sizeof(r.overlap_pc))
   || memcmp(end.result[1].output,r.result[1].output,sizeof(r.result[1].output)) || !source.Ready()){
   fputs("PAIR_END_SOURCE_UNPROVEN;CLOSE_ONLY_NO_RETRY\n",stderr);close(fd);return 1;}
  if(close(fd))return 1;
  for(unsigned i=0;i<2;i++)for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)
   printf("PAIR_QKV_WORD sample%u first%u pass%u row%u got%08x\n",i,Meta::First(i),pass,row,r.result[i].output[pass*32+row]);
- printf("PASS_NATIVE_QKV_PAIR samples2 exact_words128 overlap%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM\n",r.overlap_verified,(unsigned long long)m.generation);
+ printf("PASS_NATIVE_QKV_PAIR samples2 exact_words128 overlap%u pcs%08x-%08x-%08x-%08x generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM\n",r.overlap_verified,r.overlap_pc[0],r.overlap_pc[1],r.overlap_pc[2],r.overlap_pc[3],(unsigned long long)m.generation);
  return Delivered()?0:1;
 }

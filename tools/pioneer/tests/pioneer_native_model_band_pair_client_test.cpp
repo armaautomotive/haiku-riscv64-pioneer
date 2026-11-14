@@ -37,7 +37,8 @@ static int FakeOpen(const char* path,int flags){assert(!opened++ && !strcmp(path
 static int FakeClose(int fd){assert(fd==123 && !closed++);return scenario==7?-1:0;}
 static void Fill(PioneerNativeModelBandPairRequest& r,bool end){
  assert(PioneerNativeModelBandPairRequestValid(r) && !r.sample && r.expected_generation==19);
- assert(end?(r.nonce==1 && r.accept==1):(!r.nonce && !r.accept));r.nonce=1;r.overlap_verified=1;
+ assert(r.version==2 && (end?(r.nonce==1 && r.accept==1):(!r.nonce && !r.accept)));r.nonce=1;r.overlap_verified=1;
+ for(unsigned i=0;i<4;i++)r.overlap_pc[i]=0x70010;
  for(unsigned i=0;i<2;i++){auto& v=r.result[i];v.state=end?PIONEER_NATIVE_BFP_CLOSED:PIONEER_NATIVE_BFP_RESULT;
   v.started=v.completed=1;v.polls=1;v.pc[0]=0x70038;v.pc[1]=0x7003c;v.phase=0x7000c;
   v.count=0x04000000U|PioneerNativeBfpModelBandMetadata::Width;v.marker=0x3342464e;
@@ -65,6 +66,10 @@ static int FakeIoctl(int fd,unsigned long op,void* data,size_t bytes){
    if(kind==4)v.started=0;if(kind==5)v.completed=0;if(kind==6)v.marker^=1;if(kind==7)v.pc[0]=0;
    if(kind==8)v.polls=0;if(kind==9)v.count^=1;
   }
+  if(scenario>=50 && scenario<55){unsigned kind=scenario-50;
+   if(kind<4)r.overlap_pc[kind]=kind==0?0x70038:kind==1?0x70040:kind==2?0x70011:0x7003c;
+   else r.overlap_verified=0;
+  }
   return scenario==13?-1:0;
  }
  assert(op==PIONEER_NATIVE_MODEL_BAND_PAIR_END && runs==1 && !ends++);Fill(r,true);
@@ -75,7 +80,7 @@ static int FakeIoctl(int fd,unsigned long op,void* data,size_t bytes){
 }
 int main(){
  char name[]="pair",option[]="--fixed-qkv-pair";char* args[]={name,option,nullptr};
- for(scenario=0;scenario<50;scenario++){
+ for(scenario=0;scenario<55;scenario++){
   if((scenario>14 && scenario<20))continue;
   opened=closed=queries=supports=runs=ends=prepared=ready=0;
   int code=CapturedPairMain(2,args);assert(code==(scenario==0?0:1));
