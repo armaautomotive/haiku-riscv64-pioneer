@@ -1,0 +1,51 @@
+Qwen 27B P100A performance direction, November 14, 2026
+========================================================
+
+This note reconciles the latest qualified full-card measurement with newer
+diagnostics. It is not a new device run or a speed claim.
+
+Best qualified full-card generation remains tag92 vector-Q4: one real
+32-token counting answer, 0.172813448..0.172816755 tokens/sec, or about
+5.79 seconds per committed token. The answer matched the expected counting
+text, but this is only one narrow quality sample. The 20 tokens/sec target
+is about 115.7x higher and remains unmet. See
+`qwen38-vector-q4-full-card-20261104.txt`.
+
+The later tag99 on-card phase-profile run is not a speed improvement: its
+same-form counting request measured 0.161777026..0.161780396 tokens/sec.
+Its valid on-card counter profile aggregated all 62 prompt+generation
+positions and attributed 59.078289% to recurrent layers, 24.537901% to
+dense layers, and 11.119006% to the output matrix. These buckets include
+on-card control and NoC waits; they do not isolate arithmetic or establish
+that the matrix unit alone is the bottleneck. No device clock frequency is
+assumed. See `qwen38-full-prepared-profile-physical-20261105.txt`.
+
+Newer QGWF experiments are not evidence of a usable speedup. The tag144 and
+tag145 one-prompt diagnostics measured about 0.0733 tokens/sec over their
+bounded output windows and emitted repeated token ID 70253. A later
+CPU-only autoregressive trace agreed for only the first three tested
+positions; the remaining output and natural-language quality are
+unverified. Those candidate rates are neither full assistant benchmarks
+nor comparable gains over tag92. See `qwen38-qgwf-rate-physical-20261112.txt`
+and `qwen38-qgwf-unroll-physical-20261112.txt`.
+
+The tag152 Work-batch driver and Assistant candidate are reproducible
+cross-builds only. They have not run together on the Pioneer and are a
+separate hybrid Work path, so they do not change the all-card benchmark.
+The hybrid Work baseline near 0.200 tokens/sec must not be described as
+full-card inference.
+
+Next performance work should prioritize a complete recurrent-layer
+execution path, then compare the same authenticated full-model request
+with the prior full-card baseline and inspect the same phase profile. The
+recent recurrent QKV evidence covers only three 32-row samples, and the
+multi-token QGWF path is not sufficiently correct or fast to promote. Do
+not claim the recurrent layer, its attention, or an optimization is proven
+by those partial tests.
+
+Physical device operations remain gated: strict SSH reports a host-key
+fingerprint different from the saved key. Independently verify the key on
+the Pioneer screen before any remote driver exchange or model run; do not
+remove the saved key or bypass strict host-key checking. Offline work may
+continue, but neither a local build nor a simulated route substitutes for
+the required real-card benchmark.
