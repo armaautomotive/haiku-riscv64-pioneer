@@ -24,6 +24,25 @@ not enabled. The full Assistant ELF is RISC-V 64-bit Haiku, SHA-256
 build artifact is /private/tmp/pioneer-q38-workbatch-assistant-candidate and
 can be reproduced by the listed builder and flags.
 
+Exact tag-152 kernel cross-build, November 14, 2026
+--------------------------------------------------
+The bank-driver builder was rerun with the exact Work-batch role selectors
+against `/Volumes/HaikuBuildLocal/generated.riscv64`. An initial invocation
+was correctly refused because it omitted COMPACT_ACTIVATIONS,
+REUSE_ACTIVATIONS and REUSE_CROSS_QUANT; the retry supplied those required
+selectors along with tag 152, Work, batch, posted staging, cohort cache,
+two-phase Q4 and fast-span flags, and exited 0. Output hashes:
+
+* Native batch candidate: `d820813f1da8cb4eb9ce0ee6e78c6e08cecc94afef04b6cda49c16f5f80c49d8`
+* Reload guard: `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`
+* Default-driver control: `2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc`
+
+The build is compile/link evidence only. None of these binaries was installed,
+exchanged, or run on the Pioneer. The tag-152 driver has not run the full
+Assistant/model path; no real-model batch speed, output quality or speedup is
+established. The SSH host key still requires independent out-of-band
+verification before any device operation.
+
 The ELF symbol table contains both the Q38 GGML backend and the concrete
 PioneerQ38CohortSession::MultiplyPair implementation. This verifies the
 candidate option is present in the complete Assistant binary, not just the
