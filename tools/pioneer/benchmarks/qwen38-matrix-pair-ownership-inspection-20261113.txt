@@ -86,6 +86,13 @@ execution occurred. The consumed one-shot directory is not reused; the next
 attempt uses a fresh stage and a detached runner so a slow SSH session cannot
 be confused with trial progress.
 
+The first detached launch in stage c also stopped before creating its
+one-shot marker. The subsequent check-only trace showed the idle gate rejecting
+its own parent shell because that shell's command line contained the diagnostic
+path. No swap or device call occurred; driver and system health remained
+unchanged. Stage c is retained. Stage d will `exec` the wrapper after detaching
+so no matching launcher remains visible to the idle gate.
+
 This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
 real overlap and completion behavior must be established on hardware after
