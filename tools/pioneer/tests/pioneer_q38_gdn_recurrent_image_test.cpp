@@ -16,10 +16,22 @@ struct GdnRecurrentMachine:ResidentGdnImage {
  uint32_t initialCounts[8]={};unsigned prepareWrites=0,prepareHeaderWrites=0,prepareDescriptorWrites=0;
  unsigned poisonFault=0,summaryFault=0,returnWrites=0,boundaryFault=0,boundaryReads=0;
  GdnRecurrentMachine(const char* path,const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned half,unsigned bank,unsigned trial=1)
-  :ResidentGdnImage(path,trial,0,6,half){
+  :ResidentGdnImage(path,trial,0,6,half,false,
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+   true,layer
+#else
+   false,layer
+#endif
+  ){
   PioneerQ38GdnIdentity id={1,2,3,4};PioneerQ38GdnInputPlan plan;
   assert(plan.Build(canonical,layer,half,0,bank,id,seals,17));
   for(unsigned i=0;i<64;i++)inputDescriptor[i]=plan.Descriptor()[i];
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+  unsigned ordinal=0;assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal));
+  PioneerQ38GdnTaskPlacement::Route route={};assert(PioneerQ38GdnTaskPlacement::Map(ordinal,half,route));
+  inputDescriptor[9]=route.peer;
+  descriptor[9]=half;descriptor[10]=layer;descriptor[15]=route.peer;
+#endif
   descriptor[8]=17;descriptor[9]=half;descriptor[10]=layer;descriptor[11]=trial&1;
   for(unsigned i=16;i<40;i++)descriptor[i]=inputDescriptor[i];
   descriptor[40]=inputDescriptor[40];descriptor[41]=0;
@@ -33,7 +45,14 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    }
    assert(found);
   }
-  assert(PioneerQ38GdnRecurrentShape(inputDescriptor.data(),descriptor.data()));SetDescriptors();
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+  assert(PioneerQ38GdnRedistributedInputShape(inputDescriptor.data())
+   && PioneerQ38ResidentGdnRedistributedShape(descriptor.data())
+   && PioneerQ38GdnRedistributedPairing(inputDescriptor.data(),descriptor.data()));
+#else
+  assert(PioneerQ38GdnRecurrentShape(inputDescriptor.data(),descriptor.data()));
+#endif
+  SetDescriptors();
   for(unsigned i=0;i<8;i++)initialCounts[i]=counts[i];
   unsigned h=half/2,kh=h%16;
   for(unsigned i=0;i<128;i++){
@@ -191,8 +210,19 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    assert(memory.at(uint32_t(L::Output)+value*4)==Bits(output*(1.f/sqrtf(128.f))));
   }
   uint32_t prep[32],step[32];for(unsigned i=0;i<32;i++){prep[i]=memory.at(TT_Q38_GDN_INPUT_SUMMARY+i*4);step[i]=memory.at(TT_Q38_RGDN_SUMMARY+i*4);}
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+  uint32_t legacyInput[64],legacyState[64];
+  for(unsigned i=0;i<64;i++){legacyInput[i]=inputDescriptor[i];legacyState[i]=descriptor[i];}
+  legacyInput[9]=PioneerQ38ConvPeer(legacyInput[10]);
+  legacyState[15]=PioneerQ38ResidentGdnPeer(legacyState[9]);
+  uint32_t legacyStep[32];for(unsigned i=0;i<32;i++)legacyStep[i]=step[i];
+  assert(step[28]==descriptor[15]);legacyStep[28]=legacyState[15];
+  assert(PioneerQ38GdnInputSummary(prep,legacyInput,initialCounts,step+8)
+   && PioneerQ38ResidentGdnSummary(legacyStep,legacyState,step+8,counts));
+#else
   assert(PioneerQ38GdnInputSummary(prep,inputDescriptor.data(),initialCounts,step+8)
    && PioneerQ38ResidentGdnSummary(step,descriptor.data(),step+8,counts));
+#endif
   const unsigned delta[]={9,536,11,9,2,512,11,2};
   for(unsigned i=0;i<8;i++)assert(prep[16+i]==step[8+i] && uint32_t(counts[i]-initialCounts[i])==delta[i]);
   for(unsigned i=0;i<64;i++)assert(memory.at(TT_Q38_GDN_INPUT_DESCRIPTOR+i*4)==inputDescriptor[i] && memory.at(TT_Q38_RGDN_DESCRIPTOR+i*4)==descriptor[i]);
@@ -236,7 +266,13 @@ int main(int argc,char** argv){
  }
  for(unsigned side=0;side<2;side++)for(unsigned field=0;field<64;field++)for(unsigned bit=0;bit<32;bit++){
   GdnRecurrentMachine m(argv[1],*canonical,0,95,6);(side?m.descriptor:m.inputDescriptor)[field]^=1U<<bit;
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+  if(PioneerQ38GdnRedistributedInputShape(m.inputDescriptor.data())
+   && PioneerQ38ResidentGdnRedistributedShape(m.descriptor.data())
+   && PioneerQ38GdnRedistributedPairing(m.inputDescriptor.data(),m.descriptor.data()))continue;
+#else
   if(PioneerQ38GdnRecurrentShape(m.inputDescriptor.data(),m.descriptor.data()))continue;
+#endif
   m.SetDescriptors();assert(!m.Run() && !m.packets && !m.nocReads && !m.unit.ops && !m.nextWrites);negative++;
  }
  for(unsigned word=1;word<=110;word++){

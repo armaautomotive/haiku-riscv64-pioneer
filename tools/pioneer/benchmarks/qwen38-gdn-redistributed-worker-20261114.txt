@@ -1,0 +1,66 @@
+Pioneer Qwen3.8-27B GDN redistributed QRJ1 worker candidate -- offline only
+2026-11-14 UTC. NO physical-card timing or full-model qualification.
+
+PURPOSE
+The previous worker binds each recurrent layer's 96 logical head-half tasks
+to peers 1..96. Recurrent state then needs 48 x 32 KiB slots per peer, but
+the measured untouched QTP3 L1 region has only 31 contiguous safe slots (34
+with 4 KiB scatter). This candidate maps the same 96 logical tasks/layer over
+119 peers using the existing task-placement helper. All 4,608 assignments
+are one-to-one within each layer, and the state load is balanced at 38/39
+slots per physical peer. This is descriptor/task-route work only: it does NOT
+implement the dispatcher, state cache/page loader, or native owner.
+
+EMITTED CANDIDATE
+The separately built QRJ1 candidate validates the mapped peer for both the
+raw-input and recurrent-state descriptors, verifies that the pair agrees,
+then uses the existing one-worker Q/K/gate and GDN recurrence instructions.
+The GDN state packets already use the authenticated descriptor peer as the
+destination. The default Work/legacy build role remains unchanged; the
+redistributed role has a separate builder and explicit compile define.
+
+Offline cross-build, read-only SDK:
+ /Volumes/HaikuBuildLocal/generated.riscv64
+ Reproduce build+ASan/UBSan emitted-worker suite:
+  bash tools/pioneer/tests/run_pioneer_q38_gdn_recurrent_redistributed_image_tests.sh \
+   /Volumes/HaikuBuildLocal/generated.riscv64
+ candidate code 16020 bytes, SHA256
+ ea630d7c14401981b34ea0f2b607635aac17c634eb381baa3c39301a536d1437
+ boot 4 bytes, SHA256
+ d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ The image stays under the existing 16 KiB prefix cap by 364 bytes. The
+ freestanding cross-build rejects division/remainder and unsupported math
+ instructions, and caps individual frames at 1024 bytes. Candidate maximum
+ observed simulated stack is 1380 bytes including the saved-prefix frame.
+
+SIMULATION
+Actual emitted QRJ1 RV32 instructions;only NoC/GDDR endpoints are simulated.
+ASan/UBSan runner passed:
+ - 160 positive cases: all 96 logical half-heads, all 7 banks, both slots,
+   and four 16-step non-resetting state-carry chains.
+ - All 8,256 next-state/output words exact against independent FP32 checks;
+   transposed checkpoint observation also passed.
+ - 4,170 fault/refusal cases: packet timeout/counter/source/descriptor,
+   input poison, every paired descriptor bit, command readback, state seam,
+   and nonfinite state. Faults issue no later NoC/SFPU/publication work.
+ Candidate execution count: 224156 simulated instruction steps for the
+ representative recurrent case. This is NOT a physical clock or throughput
+ number and cannot be compared with real tokens/second.
+
+UNCHANGED CONTROLS
+Default combined QRJ1 image remains EXACT code SHA256
+96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410 and boot
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6. Its full
+160-positive/4170-fault suite passed. The returning persistent matrix/Conv/
+GDN service image also rebuilt with all pinned sections exact and passed its
+176-positive/261-fault emitted-program regression.
+
+LIMITATIONS / NEXT
+The 119-peer map is NOT selected by the native runtime. Existing input,
+gated/rendezvous/service cohort and native dispatch plans still encode the
+legacy 96-peer topology. No redistributed L1 state slots are allocated or
+initialized; no chunks are imported/scattered, and no GDDR spill/cache
+indirection exists. No model token/full Qwen run or TPS improvement has been
+measured. No Pioneer device, power, boot, driver, Assistant or hardware state
+was changed. The last qualified whole-model result remains ~0.1728 tokens/s;
+20 tokens/s remains unmet.

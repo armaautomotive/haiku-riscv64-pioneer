@@ -46,11 +46,19 @@ static inline bool PioneerQ38GdnRedistributedPairing(const uint32_t* input,const
 #else
 	if(!PioneerQ38GdnRedistributedInputShape(input)
 		|| !PioneerQ38ResidentGdnRedistributedShape(state))return false;
-	uint32_t legacyInput[64],legacyState[64];
-	for(unsigned i=0;i<64;i++){legacyInput[i]=input[i];legacyState[i]=state[i];}
-	legacyInput[9]=PioneerQ38ConvPeer(legacyInput[10]);
-	legacyState[15]=PioneerQ38ResidentGdnPeer(legacyState[9]);
-	return PioneerQ38GdnRecurrentPairing(legacyInput,legacyState);
+	if(input[5]!=state[10] || input[6]!=state[8] || input[7]!=state[9]
+		|| input[9]!=state[15] || input[40]!=state[40] || state[41])return false;
+	for(unsigned i=16;i<40;i++)if(input[i]!=state[i])return false;
+	for(unsigned side=0;side<2;side++){
+		unsigned bank=state[4+side*2],at=state[5+side*2];
+		if(!PioneerQ38GdnRecurrentSeparate(bank,at,TT_Q38_RGDN_STATE_BYTES,
+			input[3],input[4],67108864)
+			|| !PioneerQ38GdnRecurrentSeparate(bank,at,TT_Q38_RGDN_STATE_BYTES,
+				input[11],input[12],64)
+			|| !PioneerQ38GdnRecurrentSeparate(bank,at,TT_Q38_RGDN_STATE_BYTES,
+				input[14],input[15],64))return false;
+	}
+	return true;
 #endif
 }
 

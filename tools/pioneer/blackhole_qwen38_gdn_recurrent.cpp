@@ -7,6 +7,12 @@
 #include "PioneerQ38MixedCapsuleHook.h"
 typedef __UINT32_TYPE__ uint32_t;
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRecurrentShape.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedShape.h"
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+#if PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE != 1
+#error Exact offline redistributed GDN image role required
+#endif
+#endif
 // Size-optimized descriptor checks may copy constant route tables. Fixed
 // freestanding byte copy,not host DMA. Volatile prevents a recursive libcall.
 extern "C" void* memcpy(void* target,const void* source,__SIZE_TYPE__ bytes){
@@ -15,12 +21,31 @@ extern "C" void* memcpy(void* target,const void* source,__SIZE_TYPE__ bytes){
  for(__SIZE_TYPE__ i=0;i<bytes;i++)out[i]=in[i];
  return target;
 }
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
+ volatile unsigned char* out=static_cast<volatile unsigned char*>(target);
+ for(__SIZE_TYPE__ i=0;i<bytes;i++)out[i]=static_cast<unsigned char>(value);
+ return target;
+}
+#endif
 extern "C" unsigned q38_resident_gdn_input_stage();
 extern "C" unsigned q38_resident_gdn_state_stage();
 // Shared exact shape checks avoid embedding two copies in the16KiB saved
 // code prefix. BOTH stages still independently call their complete check.
-extern "C" __attribute__((noinline)) bool q38_resident_gdn_input_shape(const uint32_t* d){return PioneerQ38GdnInputShape(d);}
-extern "C" __attribute__((noinline)) bool q38_resident_gdn_state_shape(const uint32_t* d){return PioneerQ38ResidentGdnShape(d);}
+extern "C" __attribute__((noinline)) bool q38_resident_gdn_input_shape(const uint32_t* d){
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+	return PioneerQ38GdnRedistributedInputShape(d);
+#else
+	return PioneerQ38GdnInputShape(d);
+#endif
+}
+extern "C" __attribute__((noinline)) bool q38_resident_gdn_state_shape(const uint32_t* d){
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+	return PioneerQ38ResidentGdnRedistributedShape(d);
+#else
+	return PioneerQ38ResidentGdnShape(d);
+#endif
+}
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 static volatile uint32_t* Words(unsigned at){return reinterpret_cast<volatile uint32_t*>(at);}
 static bool Descriptors(const uint32_t* input,const uint32_t* state){
@@ -39,8 +64,13 @@ extern "C" unsigned scalar_main(){
  for(unsigned i=0;i<64;i++){
   input[i]=Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i];state[i]=Words(TT_Q38_RGDN_DESCRIPTOR)[i];
  }
- if(!q38_resident_gdn_input_shape(input) || !q38_resident_gdn_state_shape(state)
-  || !PioneerQ38GdnRecurrentPairing(input,state))return 0; // NO MMIO before complete paired shape
+	if(!q38_resident_gdn_input_shape(input) || !q38_resident_gdn_state_shape(state)
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+	 || !PioneerQ38GdnRedistributedPairing(input,state))return 0;
+#else
+	 || !PioneerQ38GdnRecurrentPairing(input,state))return 0;
+#endif
+	// NO MMIO before complete paired shape
  if(q38_resident_gdn_input_stage()!=64 || !Descriptors(input,state) || !BoundaryCounters())scalar_fault_park();
  // The input stage's terminal is a function return INSIDE this worker.
  // Raw q/k/gates never leave card-local memory between these operations.

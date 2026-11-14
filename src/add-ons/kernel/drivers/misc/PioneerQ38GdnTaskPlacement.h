@@ -23,7 +23,10 @@ struct Route {
 
 static inline uint32_t ActualLayer(uint32_t ordinal)
 {
-	return ordinal<RecurrentLayers ? ordinal+ordinal/3 : 64;
+	if(ordinal>=RecurrentLayers)return 64;
+	uint32_t groups=0,remainder=ordinal;
+	while(remainder>=3){remainder-=3;groups++;}
+	return ordinal+groups;
 }
 
 static inline bool LayerOrdinal(uint32_t actualLayer,uint32_t& ordinal)
@@ -47,11 +50,12 @@ static inline bool Map(uint32_t layerOrdinal,uint32_t logicalWorker,Route& out)
 {
 	if(layerOrdinal>=RecurrentLayers || logicalWorker>=LogicalWorkers)return false;
 	const uint32_t ordinal=layerOrdinal*LogicalWorkers+logicalWorker;
-	const uint32_t physicalWorker=ordinal%PhysicalWorkers+1;
+	uint32_t physicalWorker=ordinal+1,stateIndex=0;
+	while(physicalWorker>PhysicalWorkers){physicalWorker-=PhysicalWorkers;stateIndex++;}
 	const uint32_t peer=Peer(physicalWorker);
 	if(peer==~uint32_t(0))return false;
 	out={layerOrdinal,ActualLayer(layerOrdinal),logicalWorker,physicalWorker,peer,
-		ordinal/PhysicalWorkers};
+		stateIndex};
 	return true;
 }
 

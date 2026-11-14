@@ -6,6 +6,7 @@
 #define PIONEER_Q38_DELTA_VECTOR_IMAGE_MACHINE_ONLY
 #include "pioneer_q38_delta_vector_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnShape.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedShape.h"
 static unsigned TestWorker(unsigned worker) {
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  (void)worker; return 0;
@@ -25,7 +26,8 @@ struct ResidentGdnImage:DeltaVectorImage {
  static unsigned SourceOffset(unsigned i) {
   const unsigned offsets[]={0x100,0x118,0x11c,0x120,0x124,0x128,0x12c,0x130,0x134,0x138,0x13c,0x140,0x144,0x150,0x154,0x16c}; return offsets[i];
  }
- ResidentGdnImage(const char* image,unsigned trial=1,unsigned readBank=0,unsigned writeBank=6,unsigned worker=0,bool edge=false)
+ ResidentGdnImage(const char* image,unsigned trial=1,unsigned readBank=0,unsigned writeBank=6,unsigned worker=0,
+  bool edge=false,bool redistributed=false,unsigned actualLayer=0)
   :DeltaVectorImage(image,trial) {
   for (unsigned i=0;i<8192;i++) { prior[i]=memory.at(0x90000+i*4); memory[0x90000+i*4]=0x7fc00000; next[i]=0x7fc00000; }
   for (auto& word:command) word=0xdeadbeef; // never confuse last command word5 with physical identity
@@ -34,9 +36,14 @@ struct ResidentGdnImage:DeltaVectorImage {
   descriptor[0]=TT_Q38_RGDN_MARKER; descriptor[1]=1; descriptor[2]=128; descriptor[3]=64;
   descriptor[4]=readBank; descriptor[5]=edge?0xc4000000-32768:0x04000000;
   descriptor[6]=writeBank; descriptor[7]=edge?0x04000000:0xc4000000-32768;
-  descriptor[8]=17; descriptor[9]=worker; descriptor[10]=worker%3; descriptor[11]=worker%2;
+  descriptor[8]=17; descriptor[9]=worker; descriptor[10]=redistributed?actualLayer:worker%3; descriptor[11]=worker%2;
   descriptor[12]=PioneerQ38SpanRoute(readBank); descriptor[13]=PioneerQ38SpanRoute(writeBank);
   descriptor[14]=32768; descriptor[15]=PioneerQ38ResidentGdnPeer(worker);
+  if(redistributed){
+   unsigned ordinal=0;assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(actualLayer,ordinal));
+   PioneerQ38GdnTaskPlacement::Route route={};
+   assert(PioneerQ38GdnTaskPlacement::Map(ordinal,worker,route));descriptor[15]=route.peer;
+  }
   for (unsigned i=0;i<16;i++) descriptor[16+i]=seals[i];
   for (unsigned i=32;i<40;i++) descriptor[i]=0x13570000+i;
   descriptor[40]=123; descriptor[41]=7;
@@ -45,7 +52,8 @@ struct ResidentGdnImage:DeltaVectorImage {
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
   for (unsigned i=0;i<8192;i++) memory[0x98000+i*4]=0xdeadbeef;
 #endif
-  assert(PioneerQ38ResidentGdnShape(descriptor.data()));
+  assert(redistributed?PioneerQ38ResidentGdnRedistributedShape(descriptor.data())
+   :PioneerQ38ResidentGdnShape(descriptor.data()));
  }
  uint32_t Load(uint32_t at) override {
   if (Range(at,0xffb20000,0x2000)) {
