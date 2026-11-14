@@ -10,6 +10,14 @@ import sys
 import tempfile
 
 root_profile=None
+ffn_down='--recurrent-ffn-down' in sys.argv
+if ffn_down:
+    assert sys.argv.count('--recurrent-ffn-down')==1
+    sys.argv.remove('--recurrent-ffn-down')
+ffn_activation='--recurrent-ffn-activation' in sys.argv
+if ffn_activation:
+    assert sys.argv.count('--recurrent-ffn-activation')==1
+    sys.argv.remove('--recurrent-ffn-activation')
 ffn_up='--recurrent-ffn-up' in sys.argv
 if ffn_up:
     assert sys.argv.count('--recurrent-ffn-up')==1
@@ -92,6 +100,8 @@ assert not output_matrix or output_producers, 'output matrix requires isolated o
 assert not ffn_producers or output_matrix, 'FFN producers require the isolated output matrix'
 assert not ffn_matrix or ffn_producers, 'FFN matrix requires the isolated FFN producers'
 assert not ffn_up or ffn_matrix, 'FFN up matrix requires the isolated first FFN matrix'
+assert not ffn_activation or ffn_up, 'FFN activation requires the isolated FFN up matrix'
+assert not ffn_down or ffn_activation, 'FFN down matrix requires the isolated FFN activation'
 assert not qkv_conv_fault or qkv_cohort, 'receipt fault requires the isolated QKV cohort test'
 recurrent_matrix_peer=('--execution-recurrent-matrix' in sys.argv or recurrent_matrix_cohort) and '--recurrent-native-header' in sys.argv
 recurrent_producers=('--execution-recurrent-producers' in sys.argv or recurrent_matrix_peer) and '--recurrent-native-header' in sys.argv
@@ -518,6 +528,8 @@ if qgwd_inspection:
     if ffn_producers:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE']='1'
     if ffn_matrix:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE']='1'
     if ffn_up:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE']='1'
+    if ffn_activation:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE']='1'
+    if ffn_down:defines['PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE']='1'
     if qkv_conv_fault:
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE']='1'
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)
@@ -838,6 +850,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         if ffn_producers:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST=1']
         if ffn_matrix:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST=1','-DPIONEER_Q38_NATIVE_BFP4_PEER_TEST=1']
         if ffn_up:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_UP_TEST=1']
+        if ffn_activation:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_ACTIVATION_TEST=1']
         if recurrent_producer:
             peer_flags += ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1','-DPIONEER_Q38_TEST_BF16_CONNECTED_PREPARE=1']
         if precise_context:
@@ -902,6 +915,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         *(['-DPIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST=1'] if output_matrix else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_FFN_MATRIX_TEST=1'] if ffn_matrix else []),
                         *(['-DPIONEER_Q38_SYNTHETIC_FFN_UP_MATRIX_TEST=1'] if ffn_up else []),
+                        *(['-DPIONEER_Q38_SYNTHETIC_FFN_DOWN_MATRIX_TEST=1'] if ffn_down else []),
                         *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:

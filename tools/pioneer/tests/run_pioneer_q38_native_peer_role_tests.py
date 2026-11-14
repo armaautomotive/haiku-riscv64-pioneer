@@ -82,6 +82,12 @@ for value in (0,2):
     check('pioneer_q38_native_peer_test_bridge.cpp',{**ffn_matrix_host,'PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_UP_TEST':value},False,True)
 invalid=dict(ffn_up_host);del invalid['PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST']
 check('pioneer_q38_native_peer_test_bridge.cpp',invalid,False,True)
+ffn_activation_host={**ffn_up_host,'PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_ACTIVATION_TEST':1}
+check('pioneer_q38_native_peer_test_bridge.cpp',ffn_activation_host,True,True)
+for value in (0,2):
+    check('pioneer_q38_native_peer_test_bridge.cpp',{**ffn_up_host,'PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_ACTIVATION_TEST':value},False,True)
+invalid=dict(ffn_activation_host);del invalid['PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_UP_TEST']
+check('pioneer_q38_native_peer_test_bridge.cpp',invalid,False,True)
 for parent in ('PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST','PIONEER_Q38_NATIVE_PEER_RECURRENT_OUTPUT_TEST',
                'PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST','PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST',
                'PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE','PIONEER_Q38_NATIVE_BFP4_PEER_TEST'):
@@ -183,6 +189,18 @@ check('pioneer_q38_token_native_execution_checks.inc',ffn_up_execution,True,True
 for value in (0,2):
     check('pioneer_q38_token_native_execution_checks.inc',{**ffn_up_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE':value},False,True)
 invalid=dict(ffn_up_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE']
+check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
+ffn_activation_execution={**ffn_up_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',ffn_activation_execution,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**ffn_activation_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE':value},False,True)
+invalid=dict(ffn_activation_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE']
+check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
+ffn_down_execution={**ffn_activation_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE':1}
+check('pioneer_q38_token_native_execution_checks.inc',ffn_down_execution,True,True)
+for value in (0,2):
+    check('pioneer_q38_token_native_execution_checks.inc',{**ffn_down_execution,'PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE':value},False,True)
+invalid=dict(ffn_down_execution);del invalid['PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE']
 check('pioneer_q38_token_native_execution_checks.inc',invalid,False,True)
 qkv_fault={**qkv_cohort,'PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE':1,'PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND':1}
 check('pioneer_q38_token_native_execution_checks.inc',qkv_fault,True,True)

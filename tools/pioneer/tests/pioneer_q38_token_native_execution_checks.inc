@@ -61,6 +61,14 @@
  (PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE))
 #error FFN up fixture requires its isolated first FFN matrix fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_UP_FIXTURE))
+#error FFN activation fixture requires its isolated FFN up matrix fixture
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE))
+#error FFN down fixture requires its isolated FFN activation fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
 #error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
@@ -747,6 +755,9 @@ static void CheckNativeExecution(Fixture& f){
   }
   assert(cpu.layerHeld && cpu.recurrentFfnMatrixDoorbells==119 && io.Core(0).pending && !state->Unsafe());
   bool ffnRows[17408]={};unsigned ffnOps=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE
+  float gateObserved[17408];
+#endif
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentFfnBands[w],first=cpu.recurrentFfnFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*1280);ffnOps+=s.matrixInstructions;
@@ -758,6 +769,9 @@ static void CheckNativeExecution(Fixture& f){
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"FFN_MATRIX_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
     assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE
+    gateObserved[global]=actual;
+#endif
    }
   }
   for(bool seen:ffnRows)assert(seen);
@@ -778,6 +792,9 @@ static void CheckNativeExecution(Fixture& f){
    cpu.pc,cpu.steps,cpu.recurrentFfnUpDoorbells,cpu.submitted,cpu.completed);
   assert(cpu.layerHeld && cpu.recurrentFfnUpDoorbells==119 && io.Core(0).pending && !state->Unsafe());
   bool upRows[17408]={};unsigned upOps=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE
+  float upObserved[17408];
+#endif
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentFfnUpBands[w],first=cpu.recurrentFfnUpFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*1280);upOps+=s.matrixInstructions;
@@ -789,10 +806,77 @@ static void CheckNativeExecution(Fixture& f){
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"FFN_UP_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
     assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE
+    upObserved[global]=actual;
+#endif
    }
   }
   for(bool seen:upRows)assert(seen);
   printf("PASS FFN up matrix/119 workers/17408 synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",upOps);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_ACTIVATION_FIXTURE
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==3 && io.Raw(1,W::Job+28*4)==4);
+  for(unsigned i=0;i<17408;i++){
+   const float gate=Float(io.runtimeDram.at(PioneerQ38MixedRecurrentOffset(2)/4+i));
+   const float up=Float(io.runtimeDram.at(PioneerQ38MixedRecurrentOffset(3)/4+i));
+   assert(gate==gateObserved[i] && up==upObserved[i]);
+  }
+  cpu.recurrentFfnActivationRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"FFN_ACTIVATION_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,cpu.recurrentFfnActivationDoorbells,cpu.submitted,cpu.completed);
+  assert(cpu.layerHeld && cpu.recurrentFfnActivationDoorbells==68 && io.Core(0).pending && !state->Unsafe());
+  unsigned activationNonzero=0;
+  for(unsigned i=0;i<17408;i++){
+   const float gate=gateObserved[i],up=upObserved[i];
+   const uint32_t packed=io.runtimeDram.at(TT_Q38_PROJECTION_NATIVE_OFFSET/4+i/2);
+   const float actual=Float(uint32_t(uint16_t(packed>>((i&1)*16)))<<16);
+   const double expected=(double(gate)/(1+std::exp(-double(gate))))*double(up);
+   if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.005*(1+std::fabs(expected)))
+    fprintf(stderr,"FFN_ACTIVATION_MISMATCH row=%u gate=%g up=%g actual=%g expected=%g\n",i,double(gate),double(up),double(actual),expected);
+   assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.005*(1+std::fabs(expected)));
+   if(actual!=0)activationNonzero++;
+  }
+  assert(activationNonzero);printf("PASS FFN gate/up scatters and 68 simulated producer jobs/17408 BF16 activation values/%u nonzero;SIMULATED ONLY,NOT down/layer/model/physical/TPS\n",activationNonzero);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_DOWN_FIXTURE
+  float downInput[17408];for(unsigned i=0;i<17408;i++){
+   const uint32_t packed=io.runtimeDram.at(TT_Q38_PROJECTION_NATIVE_OFFSET/4+i/2);
+   downInput[i]=Float(uint32_t(uint16_t(packed>>((i&1)*16)))<<16);
+  }
+  assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==1 && io.Raw(1,W::Job+34*4)==4);
+  cpu.recurrentFfnDownRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  bool downWorkersFinished=false;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++){
+   io.Pause();
+   if(cpu.recurrentFfnDownDoorbells==119){
+    downWorkersFinished=true;
+    for(unsigned w=0;w<119;w++){
+     const auto s=io.bootstrapPeer[w]->cpu->Stats();
+     if(!io.bootstrapPeer[w]->Idle() || s.active || s.pending){downWorkersFinished=false;break;}
+    }
+    if(downWorkersFinished)break; // observe real WAITs;do not invent a root completion
+   }
+  }
+  if(!downWorkersFinished)fprintf(stderr,"FFN_DOWN_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,cpu.recurrentFfnDownDoorbells,cpu.submitted,cpu.completed);
+  assert(downWorkersFinished && cpu.recurrentFfnDownDoorbells==119 && !state->Unsafe());
+  bool downRows[5120]={};unsigned downOps=0;
+  for(unsigned w=0;w<119;w++){
+   auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentFfnDownBands[w],first=cpu.recurrentFfnDownFirst[w];
+   assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*4352);downOps+=s.matrixInstructions;
+   for(unsigned row=0;row<bands*32;row++){
+    const unsigned global=first+row;assert(global<5120 && !downRows[global]);downRows[global]=true;
+    double expected=0;for(unsigned tile=0;tile<544;tile++)for(unsigned col=0;col<32;col++)
+     expected+=double(downInput[tile*32+col])*double(int((global*3+tile*7+col*5+4)%7)-3)*0.125;
+    const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
+    if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
+     fprintf(stderr,"FFN_DOWN_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
+    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+   }
+  }
+  for(bool seen:downRows)assert(seen);
+  printf("PASS FFN down matrix/119 workers/5120 synthetic rows/%u modeled matrix instructions;ROOT MAY STILL BE GATHERING;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",downOps);
+#endif
+#endif
 #endif
 #endif
 #endif

@@ -50,10 +50,16 @@ void ReceiveBf16Producer(){
  // rejects it; do not enable its mutually exclusive offline build roles here.
  const auto& d=descriptor;
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_OUTPUT_TEST
- const bool output=d[43]==13;const unsigned width=output?6144U:5120U,chunks=output?24U:20U;
+ const bool output=d[43]==13;
 #else
- const bool output=false;const unsigned width=5120,chunks=20;
+ const bool output=false;
 #endif
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_ACTIVATION_TEST
+ const bool gated=d[43]==4;
+#else
+ const bool gated=false;
+#endif
+ const unsigned width=gated?17408U:output?6144U:5120U,chunks=width/256;
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST
  const bool ffn=d[43]==2
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_UP_TEST
@@ -64,10 +70,11 @@ void ReceiveBf16Producer(){
  const bool ffn=false;
 #endif
  assert(d[0]==BP::Magic && d[1]==1 && d[2]==67108864 && d[3]<7 && !(d[4]&4095)
-  && d[4]>=0x04000000 && d[4]<=0xc0000000 && d[42]<64 && (d[42]&3)!=3 && (d[43]==10 || output || ffn)
+  && d[4]>=0x04000000 && d[4]<=0xc0000000 && d[42]<64 && (d[42]&3)!=3 && (d[43]==10 || output || ffn || gated)
   && d[40]<8192 && d[41]<248320 && d[5]<chunks && d[6] && d[6]<0x7fffffff && d[7]==d[5]+1
   && d[7]==logicalWorker && d[8]==PioneerQ38ProjectionRoute(d[3]) && d[9]==PioneerQ38GlobalWorkerLayout::Peer(d[7])
-  && d[10]==BP::ProjectionInput+d[5]*1024 && d[11]==width && d[12]==BP::NativeOffset+d[5]*512
+  && d[10]==(gated?unsigned(BP::GateOffset):unsigned(BP::ProjectionInput))+d[5]*1024
+  && d[11]==(gated?unsigned(BP::UpOffset)+d[5]*1024:width) && d[12]==BP::NativeOffset+d[5]*512
   && d[13]==BP::LinesOffset+d[5]*128 && d[14]==BP::Format && d[15]==chunks && d[16]);
  for(unsigned i=32;i<40;i+=2)assert(d[i] || d[i+1]);
  for(unsigned i=44;i<64;i++)assert(!d[i]);
