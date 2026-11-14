@@ -14,6 +14,11 @@ Preprocessor role-isolation checks reject native, kernel and Work roles.
 The existing small and gate reuse predicates also passed in the same linked
 controller test.
 
+The same pinned candidate also linked into a complete offline recurrent ROOT
+inspection ELF with no undefined symbols; its immutable section hashes were
+reported by the inspection builder. This was a link check, not execution of
+the complete candidate or a device-qualification result.
+
 This is an offline candidate only. Its full production lifecycle, actual
 hardware correctness, model quality and performance have not been tested.
 It has not been installed and does not establish any tokens-per-second gain.
