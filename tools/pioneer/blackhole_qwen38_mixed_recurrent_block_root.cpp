@@ -119,15 +119,18 @@ static void Matrix(R::PrivateSeal* p,unsigned slot,unsigned count,unsigned phase
 #endif
 }
 static void Cohort(R::PrivateSeal* p){
- const auto* o=p->outer;auto* d=p->frame;for(unsigned i=0;i<64;i++)d[i]=0;
+ const auto* o=p->outer;namespace RT=PioneerQ38RedistributedTokenLayout;
+ // Read while the prior matrix frame is still mirrored in ROOT::Header;
+ // Transfer seals that relationship and would reject a partially replaced
+ // private frame. Only then construct and install the cohort header.
+ Read(o[59]+C::GdnWords*4,o[8],R::Scratch,RT::ControlBytes);
+ uint32_t control[RT::ControlWords];for(unsigned i=0;i<RT::ControlWords;i++)control[i]=Words(R::Scratch)[i];
+ if(!PioneerQ38RedistributedTokenControl::Shape(control,o))scalar_fault_park();
+ auto* d=p->frame;for(unsigned i=0;i<64;i++)d[i]=0;
  const unsigned head[]={C::Magic,1,64,o[3],o[4],o[6]+4,o[6]+5,o[7],o[9],o[8],129,119,96,640,o[12],o[13]};
  for(unsigned i=0;i<16;i++){d[i]=head[i];d[16+i]=o[16+i];}for(unsigned i=0;i<8;i++)d[32+i]=o[32+i];
  const unsigned tail[]={C::Conv,C::ConvShadow,C::Gdn,C::GdnShadow,C::ConvWords,C::GdnWords,C::PeerBoots,C::PeerJobs,o[48],C::Nonces,C::Counters,1};
  for(unsigned i=0;i<12;i++)d[40+i]=tail[i];
- namespace RT=PioneerQ38RedistributedTokenLayout;
- Read(o[59]+C::GdnWords*4,o[8],R::Scratch,RT::ControlBytes);
- uint32_t control[RT::ControlWords];for(unsigned i=0;i<RT::ControlWords;i++)control[i]=Words(R::Scratch)[i];
- if(!PioneerQ38RedistributedTokenControl::Shape(control,o))scalar_fault_park();
  d[52]=control[2];
  if(!C::Shape(d))scalar_fault_park();
  for(unsigned i=0;i<64;i++)Words(R::Header)[i]=d[i];

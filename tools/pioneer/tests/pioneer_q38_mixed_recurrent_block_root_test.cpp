@@ -6,17 +6,22 @@
 #include "pioneer_q38_mixed_recurrent_cohort_test.cpp"
 #include "../PioneerQ38MixedRecurrentBlockPlan.h"
 #include "../PioneerQ38MixedRecurrentBlockCounters.h"
+#include "../PioneerQ38RedistributedTokenControl.h"
+#include "../PioneerQ38RedistributedGdnPlan.h"
 #include "pioneer_q38_projection_input_reference.h"
 namespace RB=PioneerQ38MixedRecurrentBlockRootLayout;
+namespace RC=PioneerQ38MixedRecurrentCohortLayout;
 struct RecurrentBlockMachine:NewCohortMachine {
  struct Weight {unsigned route,base,bytes,type,k,first;};
  std::map<uint64_t,Weight> weights;
  std::unique_ptr<PioneerQ38MixedRecurrentBlockPlan> block=std::make_unique<PioneerQ38MixedRecurrentBlockPlan>();
+ std::unique_ptr<PioneerQ38RedistributedGdnPlan> routedGdn;
+ bool redistributed=false;
  std::array<uint32_t,128> outer={};unsigned matrixStarts=0,matrixChecks=0,observed=0,finalWords=0;
  unsigned initialNorm=0,postNorm=0,activationChecks=0,gatedChecks=0,numericCohortChecks=0;
  unsigned outerFaultPacket=0,rootBootFaultPacket=0,stopJobs=0,stopStarts=0;
  uint32_t peerCounterBaseline[119][8]={}; // observed physical registers,never private completion state
- RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false,bool zeroCurrent=false):NewCohortMachine(image,worker,false,virgin){
+ RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false,bool zeroCurrent=false,bool useRedistributed=false):NewCohortMachine(image,worker,false,virgin),redistributed(useRedistributed){
   std::array<uint32_t,1920> sources;for(unsigned i=0;i<16;i++)sources[i]=source[i];
   for(unsigned w=0;w<119;w++){
    for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->source[i];
@@ -24,6 +29,16 @@ struct RecurrentBlockMachine:NewCohortMachine {
   }
   const auto* workspace=canonical->Workspace(0);unsigned input=canonical->Base+workspace->offset+0x600000;
   assert(block->Build(*canonical,0,0,0,0,0,1001,1,{1,2,3,4},sources.data(),0,input) && block->Matches(*canonical));
+  if(redistributed){
+   routedGdn=std::make_unique<PioneerQ38RedistributedGdnPlan>();
+   assert(routedGdn->Build(*canonical,0,0,0,0,1005,1,{1,2,3,4},sources.data()));
+   for(unsigned logical=0;logical<96;logical++){
+    PioneerQ38GdnTaskPlacement::Route route={},sibling={};
+    assert(PioneerQ38GdnTaskPlacement::Map(0,logical,route)
+     && PioneerQ38GdnTaskPlacement::Map(0,logical^1,sibling));
+    child[route.physicalWorker-1]->peer=child[sibling.physicalWorker-1].get();
+   }
+  }
   for(unsigned i=0;i<128;i++){outer[i]=block->Outer()[i];memory[RB::Outer+i*4]=outer[i];}
   for(unsigned i=0;i<64;i++){boot[i]=block->Boot(0)[i];memory[RB::Boot+i*4]=boot[i];memory[RB::Header+i*4]=0;}
   for(auto r:std::array<std::pair<unsigned,unsigned>,22>{{{RB::Recipes,4*5120},{RB::RecipeCopies,4*5120},
@@ -45,7 +60,8 @@ struct RecurrentBlockMachine:NewCohortMachine {
    for(unsigned i=0;i<r[11];i++)Put(outer[8],outer[9]+r[10]+i*4,0x7fc00000);
   }
   for(unsigned i=0;i<RC::ConvWords;i++)Put(outer[8],outer[58]+i*4,block->Conv()[i]);
-  for(unsigned i=0;i<RC::GdnWords;i++)Put(outer[8],outer[59]+i*4,block->Gdn()[i]);
+  for(unsigned i=0;i<RC::GdnWords;i++)Put(outer[8],outer[59]+i*4,
+   redistributed?routedGdn->Worker(i/192+1)[i%192]:block->Gdn()[i]);
   SeedRaw(true,zeroCurrent);
  }
  uint32_t Get(unsigned route,unsigned address)const override{
@@ -76,13 +92,24 @@ struct RecurrentBlockMachine:NewCohortMachine {
     Put(d[8],d[4]+d[43]+c*4,0x7fc00000);
    }
   }
-  for(unsigned w=0;w<96;w++){
-   const auto* in=block->Gdn()+w*192;const auto* st=in+64;const auto* ga=in+128;
+  for(unsigned w=0;w<(redistributed?119U:96U);w++){
+   const auto* in=redistributed?routedGdn->Worker(w+1):block->Gdn()+w*192;
+   if(redistributed && !routedGdn->Active(w+1))continue;
+   const auto* st=in+64;const auto* ga=in+128;
    for(unsigned i=0;i<16;i++){Put(in[13],in[12]+i*4,Bits(-float(i+1)*.25f));Put(in[41],in[15]+i*4,Bits(float(i+1)*.01f));}
    for(unsigned i=0;i<128;i++)Put(ga[13],ga[12]+i*4,Bits(float(.5+sin(i*.07)*.3)));
    for(unsigned i=0;i<8192;i++){Put(st[12],st[5]+i*4,zeroCurrent?0U:Bits(float(sin((i+w*8192)*.003))*0.0001f));Put(st[13],st[7]+i*4,0x7fc00000);}
    for(unsigned i=0;i<16;i++)child[w]->memory[TT_Q38_GDN_GATED_READY+i*4]=0xfeed0000+w*16+i;
   }
+  // Candidate root requires an explicit, frame-bound mode record even for
+  // legacy 96-row metadata. Keep this regression on the default legacy path.
+  uint32_t control[16]={};control[0]=PioneerQ38RedistributedTokenControl::Magic;
+  control[1]=1;control[2]=redistributed?1:0;control[3]=outer[3];control[4]=outer[4];
+  control[5]=outer[7];control[6]=outer[6]+5;control[7]=outer[48];
+  for(unsigned i=0;i<8;i++)control[8+i]=outer[32+i];
+  assert(PioneerQ38RedistributedTokenControl::Shape(control,outer.data()));
+  for(unsigned i=0;i<16;i++)Put(outer[8],outer[59]+RC::GdnWords*4+i*4,control[i]);
+  for(unsigned i=0;i<16;i++)assert(Get(outer[8],outer[59]+RC::GdnWords*4+i*4)==control[i]);
  }
  unsigned Phase()const{return memory.at(RB::Status+20);}
  void Store(uint32_t a,uint32_t value)override{
@@ -305,9 +332,10 @@ static unsigned LateRefusals(RecurrentBlockMachine& m){
 }
 #ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_MACHINE_ONLY
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--faults") || !strcmp(argv[3],"--full") || !strcmp(argv[3],"--late"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
+	assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--faults") || !strcmp(argv[3],"--full") || !strcmp(argv[3],"--late") || !strcmp(argv[3],"--redistributed"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  puts("START QRB1 actual whole recurrent chain/SAME119/NO supplied intermediate products;synthetic raw learned/hidden/prior-state bytes,NOT hardware");
- auto m=std::make_unique<RecurrentBlockMachine>(argv[1],argv[2]);assert(m->WaitBlock(0));
+	const bool routed=argc==4 && !strcmp(argv[3],"--redistributed");
+	auto m=std::make_unique<RecurrentBlockMachine>(argv[1],argv[2],false,false,routed);assert(m->WaitBlock(0));
  unsigned faults=argc==4 && strcmp(argv[3],"--late")?Refusals(*m):0;
  if(argc==4 && !strcmp(argv[3],"--faults")){printf("PASS QRB1 initial fault cases%u;positive whole chain deliberately NOT run\n",faults);return 0;}
  m->memory[RB::Doorbell]=1;
