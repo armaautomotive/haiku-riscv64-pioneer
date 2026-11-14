@@ -30,3 +30,20 @@ not silicon arithmetic, and synthetic input rather than real activations.
 The sample does not establish the numerical accuracy of a whole projection
 or model, generated text, or speed. It does not qualify the experimental
 conversion for deployment.
+
+Small recurrent follow-up, November 13: the same authenticated Q8_0 model
+and codec were checked for ssm_alpha and ssm_beta at layers 0, 16 and 32.
+For each role, the sampled weight comparison covers both row bands and three
+K tiles per band (18 tiles, 13,824 valid values); padded rows were checked
+as zero. Full-width synthetic-input dots cover all 48 valid rows per layer
+(144 dots per role). Results:
+
+Role          sampled weight relative RMS / max abs    dot relative RMS / max abs
+ssm_alpha     0.00725197786 / 0.00048828125            0.00837428533 / 0.0183244534
+ssm_beta      0.00786680919 / 0.000486850739           0.00974490156 / 0.0137297465
+
+The command used the --small option of the same quality checker. Its original
+large-matrix mode was rerun and reproduced all previously recorded values.
+These are conversion measurements from three layers and a synthetic input,
+not an acceptance threshold, real activations, whole-model quality,
+hardware arithmetic, or inference-speed evidence.
