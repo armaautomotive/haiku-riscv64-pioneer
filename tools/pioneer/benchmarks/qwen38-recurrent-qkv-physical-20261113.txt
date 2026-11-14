@@ -1,0 +1,26 @@
+Recurrent QKV BFP8 bands on P100A, 2026-11-13
+
+The guarded tag151 diagnostic ran three fixed 32-row samples of the
+authenticated Qwen3.8-27B layer-0 attn_qkv.weight: rows 0-31, 5120-5151,
+and 10208-10239. It used synthetic inputs and a separately prepared integer
+reference; this is a diagnostic, not the no-validation Work mode.
+
+All three sessions completed explicit clean END. Two card executions per
+sample matched the independently prepared reference: 192 returned words in
+total. The parent exited 0, its private state was STABLE_RESTORED_EXACT192,
+the client exited 0 and stderr was empty. Diagnostic stdout SHA-256:
+b85650cf27adfc1388b0c74f8dbac218d67dcec68124d76253947d6ec0d7d433;
+source preflight stdout SHA-256:
+45219e65ffb260d9e054baa7da22b002737134c2027a918ab9b40c989c197bfe.
+Raw logs and learned data remain private on the Pioneer.
+
+An independent postflight confirmed original stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012 generation48, quiesced0, cold0 and active_owner0.
+Haiku reported 64 CPUs and 137034936320 bytes maximum RAM.
+
+Offline qualification included actual client fault injection under
+ASan/UBSan, simulated owner/worker execution, compiler role refusal and
+one-shot parent gate tests. These checks and the physical samples do not
+establish a complete recurrent layer, full-model generation, acceptable
+model quality, or inference speed. The 20-token/sec goal remains unmet.
