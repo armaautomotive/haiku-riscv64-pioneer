@@ -1,0 +1,20 @@
+Real recurrent projections through simulated layer, 2026-11-13
+
+The isolated ROOT and retained 119-worker instruction simulation ran one
+layer with pinned model-derived alpha/beta bands and complete layer-0 gate,
+QKV and output BFP8 projection exports. The output export, tensor 16, SHA-256:
+8158c4fbaa3569ae7f3453d367b7d988a6d67d0107817c7af524308f1814d886.
+All private exports were authenticated before and after the run.
+
+Independent double dot-product observers checked all 6144 gate, 10240 QKV
+and 5120 output rows against the simulated workers. The ROOT continued through
+convolution, GDN state, residual and RMS, the synthetic FFN projections and
+activation, and published 5120 final layer outputs, all checked by separate
+observers. This run used the offline FFN input-reuse controller candidate.
+
+Activation, convolution, GDN state and weights, and FFN weights were
+synthetic. The tensor endpoints, NoC, device ownership and workers were
+simulated on the host; no physical P100A or installed driver was used. This
+is not a complete real-weight layer, generated model response, quantization
+quality qualification, inference benchmark or speedup. The 20 tok/s target
+remains unmet. Reference arithmetic is restricted to the offline fixture.

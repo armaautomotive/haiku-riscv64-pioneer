@@ -30,6 +30,11 @@
  (PIONEER_Q38_MODEL_GATE_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_MODEL_QKV_OBSERVER_TEST))
 #error Model gate bytes require the isolated model QKV fixture
 #endif
+#if defined(PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST) && \
+ (PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_MODEL_GATE_OBSERVER_TEST) \
+ || !defined(PIONEER_Q38_SYNTHETIC_OUTPUT_MATRIX_TEST))
+#error Model output bytes require the isolated model gate and output fixture
+#endif
 #if defined(PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST) && \
  (PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST))
 #error Synthetic Conv state requires the isolated QKV fixture
@@ -197,13 +202,17 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
 #ifdef PIONEER_Q38_MODEL_GATE_OBSERVER_TEST
     || p->role==5
 #endif
+#ifdef PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST
+    || p->role==13
+#endif
    ){
     const bool gate=p->role==5;
-    const char* path=std::getenv(gate?"Q38_TEST_MODEL_GATE":"Q38_TEST_MODEL_QKV");if(!path || path[0]!='/')return source->ready=false;
+    const bool out=p->role==13;
+    const char* path=std::getenv(out?"Q38_TEST_MODEL_OUTPUT":gate?"Q38_TEST_MODEL_GATE":"Q38_TEST_MODEL_QKV");if(!path || path[0]!='/')return source->ready=false;
     FILE* file=std::fopen(path,"rb");if(!file)return source->ready=false;
-    uint32_t h[8];const uint32_t expected[]={0x31525051,1,gate?3U:5U,5120,gate?6144U:10240U,gate?192U:320U,160,1088};
+    uint32_t h[8];const uint32_t expected[]={0x31525051,1,out?16U:gate?3U:5U,out?6144U:5120U,out?5120U:gate?6144U:10240U,out?160U:gate?192U:320U,out?192U:160U,1088};
     bool valid=std::fread(h,4,8,file)==8 && !std::memcmp(h,expected,sizeof(h)) && !(p->firstRow&31);
-    const size_t bandBytes=160*1088,recordBytes=bandBytes+32*4;
+    const size_t bandBytes=size_t(tiles)*1088,recordBytes=bandBytes+32*4;
     for(unsigned band=0;band<p->rows/32 && valid;band++){
      const size_t offset=32+size_t(p->firstRow/32+band)*recordBytes;
      valid=std::fseek(file,long(offset),SEEK_SET)==0

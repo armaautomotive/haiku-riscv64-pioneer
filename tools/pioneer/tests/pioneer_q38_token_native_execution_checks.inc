@@ -106,6 +106,12 @@ extern "C" bool Q38ModelQkvExpected(const char*,const float*,double*);
 #endif
 extern "C" bool Q38ModelGateExpected(const char*,const float*,double*);
 #endif
+#ifdef PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST
+#if PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_MODEL_GATE_OBSERVER_TEST) || !defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE)
+#error Model output observer requires the isolated real gate and output cohort fixture
+#endif
+extern "C" bool Q38ModelOutputExpected(const char*,const float*,double*);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 extern "C" bool Q38SyntheticGdnExpected(const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
 extern "C" bool Q38SyntheticGdnGatedExpected(const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
@@ -725,13 +731,22 @@ static void CheckNativeExecution(Fixture& f){
    cpu.pc,cpu.steps,cpu.recurrentOutputMatrixDoorbells,cpu.submitted,cpu.completed);
   assert(cpu.layerHeld && cpu.recurrentOutputMatrixDoorbells==119 && io.Core(0).pending && !state->Unsafe());
   bool rows[5120]={};float observedProjected[5120]={};unsigned matrixOps=0;
+#ifdef PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST
+  double outputExpected[5120];
+  assert(Q38ModelOutputExpected(std::getenv("Q38_TEST_MODEL_OUTPUT"),outputMatrixInput,outputExpected));
+#endif
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentOutputBands[w],first=cpu.recurrentOutputFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*3072);matrixOps+=s.matrixInstructions;
    for(unsigned row=0;row<bands*32;row++){
     const unsigned global=first+row;assert(global<5120 && !rows[global]);rows[global]=true;
-    double expected=0;for(unsigned tile=0;tile<192;tile++)for(unsigned col=0;col<32;col++)
+    double expected=0;
+#ifdef PIONEER_Q38_MODEL_OUTPUT_OBSERVER_TEST
+    expected=outputExpected[global];
+#else
+    for(unsigned tile=0;tile<192;tile++)for(unsigned col=0;col<32;col++)
      expected+=double(outputMatrixInput[tile*32+col])*double(int((global*3+tile*7+col*5+24)%17)-8)*0.0625;
+#endif
     const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"OUTPUT_MATRIX_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
@@ -740,7 +755,7 @@ static void CheckNativeExecution(Fixture& f){
    }
   }
   for(bool seen:rows)assert(seen);
-  printf("PASS recurrent output matrix/119 workers/5120 synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",matrixOps);
+  printf("PASS recurrent output matrix/119 workers/5120 independently checked rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",matrixOps);
   // The root has passed residual + RMS and staged, but not delivered, the
   // first FFN producer. Observe only its own stored bytes, never supply them.
   namespace B=PioneerQ38MixedRecurrentBlockRootLayout;
