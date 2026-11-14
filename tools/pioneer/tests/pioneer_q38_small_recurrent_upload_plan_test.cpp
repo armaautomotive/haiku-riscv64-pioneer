@@ -8,7 +8,7 @@
 
 struct FakePrepared {
  using Plan=PioneerQ38HybridSmallRecurrentBfp8Plan;
- Plan::Proposal proposal;bool live=true;unsigned calls=0,failAt=0;
+ Plan::Proposal proposal;bool live=true;unsigned calls=0,failAt=0;uint8_t* firstStaging=nullptr;
  bool Ready()const{return live;}bool AllVerified()const{return live;}
  const PioneerQ38HybridModelPlan::Part* Part(unsigned i)const{return live && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
  bool OutputSafe(const void* out,size_t n)const{
@@ -18,6 +18,7 @@ struct FakePrepared {
  bool ReadPages(unsigned fragment,unsigned page,unsigned count,uint8_t* out,unsigned capacity,std::string&){
   if(!live || fragment>=proposal.parts.size() || !count || count>16 || capacity<count*4096
    || page>=proposal.parts[fragment].allocated/4096 || count>proposal.parts[fragment].allocated/4096-page || ++calls==failAt)return false;
+  if(calls==1)firstStaging=out;
   for(unsigned i=0;i<count;i++)std::memset(out+i*4096,unsigned((fragment+page+i)%251),4096);
   return true;
  }
@@ -47,6 +48,8 @@ int main(){
   const unsigned first=unsigned(uint64_t(receiptBank)*(PioneerResidentBanks::Capacity/4096)+receiptOffset/4096);
   for(unsigned i=0;i<count;i++){const uint32_t h=(first+i)*2654435761U;ledger[first+i]=1;hashes[first+i]=h;assert(receipt->RecordPage(first+i,h));}
   span.saved=span.ready=span.dirty=true;span.nonce=++spans;assert(receipt->After() && upload.Acknowledge(true));
+  if(spans==1){assert(prepared.firstStaging);
+   assert(!upload.Stage(prepared.firstStaging,256*4096,fragment,bank,offset,length,error) && upload.Ready());}
  }
  span.closed=true;span.ready=span.dirty=false;
  assert(spans==21475 && upload.Finished() && receipt->Seal(span));

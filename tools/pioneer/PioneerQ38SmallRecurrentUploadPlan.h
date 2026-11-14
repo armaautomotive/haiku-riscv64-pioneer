@@ -18,6 +18,7 @@
 template<class PreparedPages>class PioneerQ38SmallRecurrentUploadPlan {
  using C=PioneerQ38CanonicalModelPlan;using Plan=PioneerQ38HybridSmallRecurrentBfp8Plan;using Part=PioneerQ38HybridModelPlan::Part;
  const C* source=nullptr;PreparedPages* pages=nullptr;Plan::Proposal proposal;std::vector<unsigned> order;
+ std::vector<uint8_t> staging; // one reusable, private 1 MiB atomic staging buffer
  unsigned position=0,page=0,pendingPages=0;bool attempted=false,ready=false,pending=false,failed=false;
  static bool Fail(std::string& error,const char* why){error=why;return false;}
  bool Lose(std::string& error,const char* why){failed=true;return Fail(error,why);}
@@ -28,13 +29,14 @@ template<class PreparedPages>class PioneerQ38SmallRecurrentUploadPlan {
   return (n && x>UINTPTR_MAX-n) || (m && y>UINTPTR_MAX-m) || (n && m && x<y+m && y<x+n);
  }
  bool Current()const{return ready && !failed && source && pages && source->OriginalFormatLayout() && pages->Ready()
-  && proposal.parts.size()==source->Count() && order.size()==3551;}
+  && proposal.parts.size()==source->Count() && order.size()==3551 && staging.size()==256*4096;}
  bool MetadataSafe(unsigned& fragment,unsigned& bank,uint64_t& offset,unsigned& length)const{
   const void* dest[]={&fragment,&bank,&offset,&length};const size_t sizes[]={sizeof(fragment),sizeof(bank),sizeof(offset),sizeof(length)};
   for(unsigned i=0;i<4;i++){
    if(!pages->OutputSafe(dest[i],sizes[i]) || Overlap(dest[i],sizes[i],this,sizeof(*this))
     || Overlap(dest[i],sizes[i],proposal.parts.data(),proposal.parts.size()*sizeof(Part))
-    || Overlap(dest[i],sizes[i],order.data(),order.size()*sizeof(unsigned)))return false;
+    || Overlap(dest[i],sizes[i],order.data(),order.size()*sizeof(unsigned))
+    || Overlap(dest[i],sizes[i],staging.data(),staging.size()))return false;
    for(unsigned j=0;j<i;j++)if(Overlap(dest[i],sizes[i],dest[j],sizes[j]))return false;
   }
   return true;
@@ -60,6 +62,7 @@ public:
    const auto& a=staged.parts[indices[i-1]];const auto& b=staged.parts[indices[i]];
    if(a.bank>b.bank || (a.bank==b.bank && uint64_t(a.offset)+a.allocated>b.offset))return Fail(error,"Overlapping upload allocations.");
   }
+  staging.resize(256*4096);
   source=&c;pages=&prepared;proposal=std::move(staged);order=std::move(indices);ready=true;
   if(!Current() || !pages->AllVerified())return Lose(error,"Prepared source changed during binding.");error.clear();return true;
  }
@@ -77,21 +80,22 @@ public:
   if(!Next(f,b,off,bytes) || !MetadataSafe(fragment,bank,offset,length) || !output || capacity<bytes || !pages->OutputSafe(output,bytes)
    || Overlap(output,bytes,this,sizeof(*this)) || Overlap(output,bytes,proposal.parts.data(),proposal.parts.size()*sizeof(Part))
    || Overlap(output,bytes,order.data(),order.size()*sizeof(unsigned))
+   || Overlap(output,bytes,staging.data(),staging.size())
    || Overlap(output,bytes,&fragment,sizeof(fragment)) || Overlap(output,bytes,&bank,sizeof(bank))
    || Overlap(output,bytes,&offset,sizeof(offset)) || Overlap(output,bytes,&length,sizeof(length))
    || Overlap(&fragment,sizeof(fragment),&bank,sizeof(bank)) || Overlap(&fragment,sizeof(fragment),&offset,sizeof(offset))
    || Overlap(&fragment,sizeof(fragment),&length,sizeof(length)) || Overlap(&bank,sizeof(bank),&offset,sizeof(offset))
    || Overlap(&bank,sizeof(bank),&length,sizeof(length)) || Overlap(&offset,sizeof(offset),&length,sizeof(length)))
    return Fail(error,"Invalid or overlapping small recurrent upload staging request.");
-  std::vector<uint8_t> stage(bytes);const unsigned count=bytes/4096;
+  std::fill_n(staging.data(),bytes,uint8_t(0));const unsigned count=bytes/4096;
   for(unsigned at=0;at<count;){
    const unsigned n=std::min(16U,count-at);
-   if(!pages->ReadPages(f,page+at,n,stage.data()+at*4096,n*4096,error))return Lose(error,"Prepared weight page failed; no upload staged.");
+   if(!pages->ReadPages(f,page+at,n,staging.data()+at*4096,n*4096,error))return Lose(error,"Prepared weight page failed; no upload staged.");
    at+=n;
   }
   const auto* live=pages->Part(f);
   if(!Current() || !live || !Same(*live,proposal.parts[f]))return Lose(error,"Prepared source changed during staging.");
-  std::memcpy(output,stage.data(),bytes);fragment=f;bank=b;offset=off;length=bytes;pendingPages=count;pending=true;error.clear();return true;
+  std::memcpy(output,staging.data(),bytes);fragment=f;bank=b;offset=off;length=bytes;pendingPages=count;pending=true;error.clear();return true;
  }
  // Acknowledgement means ONLY that the caller decided this staged span is
  // complete. Any false/uncertain result permanently stops this plan.

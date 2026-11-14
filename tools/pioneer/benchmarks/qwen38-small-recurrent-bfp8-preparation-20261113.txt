@@ -903,3 +903,16 @@ close, next-request and model-end replies close the client once without a
 bank END or retry. The prior QGWD fixed-input client remains a distinct
 profile. These are simulated device replies, not a real resident driver,
 complete model inference, answer-quality result or loading-speed measure.
+
+Upload staging buffer: the inspection upload plan now retains one private
+1 MiB staging allocation instead of allocating a new buffer for each of
+21,475 spans. It clears the used portion, retains atomic publication, and
+rejects output or metadata aliases into the private buffer. The full
+synthetic staging/receipt test passed under ASan/UBSan, including an
+explicit scratch-alias refusal, partial-read failure and uncertain-transfer
+refusal; prepared-page and span-transport regressions also passed. One
+before-change end-to-end test-runner timing was 47.4 seconds and two after
+were 28.3 and 28.6 seconds on this Mac, including compilation and using
+synthetic data and sanitizers. These single-machine timings are not real
+model-load, PCIe or inference benchmarks, and this inspection path is not
+yet a loadable driver or the installed Assistant.
