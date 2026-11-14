@@ -90,3 +90,20 @@ upload, full inference or performance.
 An independent clean HEAD archive containing only these staged changes
 reproduced the corrected driver and opt-in worker hashes exactly, and passed
 the candidate-role, span-control, routing and batch-session regressions.
+
+Physical debug preparation: the separately built tag152 synthetic debug
+probe authenticates candidate driver/support metadata before BEGIN, uploads
+fixed synthetic Q8 rows, submits two waves in one operation, independently
+checks every returned row on the CPU, and requires explicit clean END. This
+CPU reference is DEBUG only and is absent from the Work inference worker.
+Its Haiku RISC-V SHA-256 is
+2432963fa571d94f527c4bcc260824731d6bc74b947ef330ace8b781af41d70a.
+ASan/UBSan fake-transport tests passed the success path and wrong identity,
+BEGIN/upload/operation failure, wrong numeric output, wrong nonce, altered
+request and END failure. The actual one-shot parent was tested with fake
+endpoints for failed swaps, busy owner, metadata failure, failed client,
+dirty/duplicate/missing output and false-success refusal. The parent refuses
+to restore after an uncertain result. This preparation did not run on the
+card and provides no model or throughput evidence.
+The debug probe and the one-shot parent tests were reproduced from a clean
+HEAD archive with only the staged debug changes; the probe hash was identical.
