@@ -88,14 +88,15 @@ STRUCTURAL change affecting a substantial fraction of on-card time. State
 the evidence and expected scope before implementing; avoid further tiny
 descriptor-only experiments. Preserve full model, safety and Work separation.
 
-Candidate under development: native BFP4 FFN matrix tiles. Three real-weight
-K5120 bands completed on the P100A including GDDR loading, taking about
-227k card cycles per band; a prior Q4 diagnostic took about 643k cycles, but
-the representations differ. One complete layer-0 FFN CPU approximation for
-one prompt token showed 1.81% relative L2 error at the residual output and
-10.72% at the intermediate activation. These are NOT model tokens/sec or
-full-model quality results; see qwen38-bfp4-dram-real-band-physical-20261106
-and qwen38-bfp4-first-ffn-quality-20261106 in benchmarks/.
+Experimental BFP4/BFP8 FFN route: conversion and capacity work exists, but
+the route is NOT a qualified inference engine. Three real-weight K5120 BFP4
+bands completed on the P100A including GDDR loading, taking about 227k card
+cycles per band; a prior Q4 diagnostic took about 643k cycles, but the
+representations differ. One complete layer-0 FFN CPU approximation for one
+prompt token showed 1.81% relative L2 error at the residual output and 10.72%
+at the intermediate activation. These are NOT model tokens/sec or full-model
+quality results; see qwen38-bfp4-dram-real-band-physical-20261106 and
+qwen38-bfp4-first-ffn-quality-20261106 in benchmarks/.
 
 Current quality gate: a CPU-only one-token comparison completed all 64 layers
 with BFP4 substituted into all 192 FFN projections. Its original Q4 trace
@@ -119,12 +120,19 @@ reports; these results do not establish answer quality or card throughput.
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves
 the original fragment byte footprint. A separate versioned disk cache passes
 synthetic cold/warm and corruption tests. CPU-only real-model checks passed
-all 1344 FFN fragment layouts and one cold/warm cache entry. A distinct
-returning BFP4 leaf now passes actual RV32 simulation for K5120/K17408,
-including root-L1 inputs and three real-weight samples. Remaining: native
-ownership and cross-core producer/worker lifetimes, physical qualification,
-and integration into the actual root dispatcher, followed by full-model
-quality and speed measurements.
+all 1,344 FFN fragment layouts and one cold/warm cache entry. A distinct
+returning BFP4 leaf passes actual RV32 simulation for K5120/K17408, including
+root-L1 inputs and three real-weight samples. Hybrid BFP4/BFP8 preparation
+covered all 1,344 fragments and a full candidate upload completed 21.137 GB,
+but the tag125 candidate failed at START before producing a token. That
+one-shot stage is spent; it gave no inference, quality or speed result and
+must not be replayed. The failure report did not contain enough control
+details to localize the internal stage. The current client source has a
+read-only control-reply snapshot for a future distinct diagnostic run; it
+does not authorize retry or cleanup. Remaining: establish why START failed,
+prove worker/image/weight ownership and cross-core lifetimes, then obtain
+multi-token full-model numerical and measured speed evidence. No approximate
+route is integrated into Work/Assistant.
 Do not allow the original Q4 worker to interpret converted bytes, or expose
 the approximation in Work/Assistant before explicit qualification.
 
