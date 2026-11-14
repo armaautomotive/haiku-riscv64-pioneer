@@ -8,7 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-recurrent=len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-native-inspection'
+resident_recurrent=len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-resident-inspection'
+recurrent=resident_recurrent or len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-native-inspection'
 qgwf_frontier=len(sys.argv)==4 and sys.argv[1]=='--qgwf-frontier-native-inspection'
 qgwf=recurrent or qgwf_frontier or len(sys.argv)==4 and sys.argv[1]=='--qgwf-native-inspection'
 qgwe=qgwf or len(sys.argv)==4 and sys.argv[1]=='--qgwe-native-inspection'
@@ -41,6 +42,8 @@ if qgwf:names.update(('PIONEER_Q38_QGWF_NATIVE_INSPECTION','PIONEER_Q38_QGWF_PRO
 if qgwf_frontier:names.update(('PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION','PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION'))
 if recurrent:names.update(('PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY','PIONEER_Q38_RECURRENT_Q8_MATRIX_PLAN_INSPECTION',
                            'PIONEER_Q38_SMALL_RECURRENT_BFP8_PLAN_INSPECTION','PIONEER_Q38_SMALL_RECURRENT_SPAN_INSPECTION'))
+if resident_recurrent:names.update(('PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION',
+                                    'PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION'))
 if candidate:
     names-={'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY','PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY'}
     names.update(('PIONEER_Q38_QGWD_NATIVE_141','PIONEER_Q38_HYBRID_FULL_NATIVE',
@@ -159,6 +162,7 @@ with tempfile.TemporaryDirectory(prefix='qgwd-native-source-',dir='/private/tmp'
     checked_names = ('Q38QgwdUploadControlInspection(', 'BindQ38TokenNative(', 'PrepareQ38TokenNativeHeld(',
                      'PrepareQ38TokenNativeRuntime(', 'BootstrapQ38TokenNativeWorkers(')
     if recurrent:checked_names += ('Q38SmallRecurrentUploadControl(',)
+    if resident_recurrent:checked_names += ('NextQgwdResidentRequest(', 'Q38QgwdResidentControl(', 'Q38QgwdResidentSupport(')
     for name in checked_names:
         fallback={'PrepareQ38TokenNativeHeld(':'PioneerQ38TokenNativeHeld.inc:89:',
                   'PrepareQ38TokenNativeRuntime(':'PioneerQ38TokenNativeRuntime.inc:26:',

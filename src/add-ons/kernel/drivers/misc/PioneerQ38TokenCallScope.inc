@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
-#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
 #include "PioneerQ38QgwdResidentProtocol.h"
 #endif
 // One real nonreentrant FD/team/thread/global-lock scope for this distinct
@@ -43,7 +43,7 @@ public:
  PioneerStoreContext* Context()const{return status==B_OK && held?context:NULL;}
  status_t Status()const{return status;}
  bool Finish(PioneerQ38TokenEndResult&);
-#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  bool NextQgwdResidentRequest(PioneerQ38QgwdResident::Reply&);
 #endif
 };

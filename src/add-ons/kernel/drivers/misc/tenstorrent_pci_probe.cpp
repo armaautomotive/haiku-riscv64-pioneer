@@ -983,7 +983,7 @@ struct PioneerProbeCookie {
 	uint32 magic=0x50313030;
 	team_id team=-1;
 	PioneerStoreContext* context=NULL;
-#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  PioneerStoreContext* qgwdResidentPending=NULL; // retained on any uncertain transfer
 #endif
 };
@@ -3434,7 +3434,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
-#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  bool qgwdResidentRequestClosed=false;
  uint64_t qgwdResidentSerial=0;
 #endif
@@ -5210,7 +5210,7 @@ public:
 #include "PioneerQ38TokenCallScope.inc"
 #include "PioneerQ38TokenNativeEnd.inc"
 #include "PioneerQ38TokenNativeBackend.inc"
-#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
 #include "PioneerQ38QgwdResidentNative.inc"
 #endif
 #include "PioneerQ38TokenNativeControl.inc"
@@ -6545,7 +6545,7 @@ static status_t
 ReleaseResidentCookie(PioneerProbeCookie* cookie)
 {
 	if (cookie==NULL || cookie->magic!=0x50313030) return B_BAD_VALUE;
-#ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  if(cookie->context || cookie->qgwdResidentPending){
   const status_t locked=acquire_sem(sLock);if(locked!=B_OK)return locked;
   tt_resident_session_result retained={};
@@ -8733,6 +8733,13 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+ // Renamed-ABI fake-tag compile profile only; it cannot be loaded.
+ if(operation==TT_PCI_PROBE_Q38_QGWD_RESIDENT_SUPPORT)
+  return Q38QgwdResidentSupport(data,length);
+ if(operation==TT_PCI_PROBE_Q38_QGWD_RESIDENT_CONTROL)
+  return Q38QgwdResidentControl(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
 #ifdef PIONEER_Q38_QGWD_RESIDENT_NATIVE_146
  if(operation==TT_PCI_PROBE_Q38_QGWD_RESIDENT_SUPPORT)

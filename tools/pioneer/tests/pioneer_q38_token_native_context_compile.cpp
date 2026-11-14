@@ -146,6 +146,14 @@ extern "C" PioneerQ38TokenBackendResult pioneer_token_context_backend_finish(Pio
 extern "C" status_t pioneer_token_context_backend_control(PioneerProbeCookie* cookie,void* data,size_t length){
  return Q38TokenNativeControl(cookie,data,length);
 } // private copy/transaction adapter witness ONLY;never linked or installed
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION
+extern "C" status_t pioneer_token_context_recurrent_resident_support(void* data,size_t length){
+ return Q38QgwdResidentSupport(data,length);
+}
+extern "C" status_t pioneer_token_context_recurrent_resident_control(PioneerProbeCookie* cookie,void* data,size_t length){
+ return Q38QgwdResidentControl(cookie,data,length);
+} // fake-tag compile witnesses only; no driver or device authority
+#endif
 
 // Compile the actual clock-map dependency explicitly, not via an accidentally
 // reachable conventional driver entry. This witness is NEVER linked/invoked.

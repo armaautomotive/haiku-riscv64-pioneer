@@ -13,9 +13,8 @@ end = '\nstatic __attribute__((noinline)) status_t Q38QgwdResidentSupport'
 assert native.count(start) == 1 and native.count(end) == 1
 body = start + native.split(start, 1)[1].split(end, 1)[0]
 guard_start = '#if defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)'
-guard_end = '\n#endif'
-assert native.count(guard_start) == 1
-guard = guard_start + native.split(guard_start, 1)[1].split(guard_end, 1)[0] + guard_end + '\n'
+assert native.count(guard_start) == 3
+guard = guard_start + native.split(guard_start, 1)[1].split('\n__attribute__((noinline)) bool', 1)[0]
 fixture = (here / 'pioneer_q38_qgwd_resident_handoff_mock.cpp').read_text()
 assert fixture.count('// HANDOFF_BODY') == 1
 source = fixture.replace('// HANDOFF_BODY', body)
@@ -37,7 +36,13 @@ with tempfile.TemporaryDirectory(prefix='qgwd-resident-handoff-', dir='/private/
                       'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION',
                       'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE'):
         result = subprocess.run(compiler + base + ['-D' + forbidden + '=1'], input=guard, text=True, capture_output=True)
-        assert result.returncode and 'extracted-body inspection only' in result.stderr, forbidden
+        assert result.returncode and 'Small recurrent resident handoff' in result.stderr, forbidden
     result = subprocess.run(compiler + base[:1], input=guard, text=True, capture_output=True)
-    assert result.returncode and 'extracted-body inspection only' in result.stderr
+    assert result.returncode and 'Small recurrent resident handoff' in result.stderr
+    fake_kernel = ['-D_KERNEL_MODE=1', '-DPIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY=1',
+                   '-DPIONEER_DRIVER_BUILD_TAG=0x51544b4e4f445256ULL']
+    assert subprocess.run(compiler + base + fake_kernel, input=guard, text=True, capture_output=True).returncode == 0
+    result = subprocess.run(compiler + base + fake_kernel[:-1] + ['-DPIONEER_DRIVER_BUILD_TAG=0x2026111100010146ULL'],
+                            input=guard, text=True, capture_output=True)
+    assert result.returncode and 'requires the fake-tag kernel profile' in result.stderr
     print('PASS small recurrent handoff role refusals; NO DEVICE')

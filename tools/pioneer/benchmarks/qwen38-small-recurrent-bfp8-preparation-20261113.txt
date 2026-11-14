@@ -925,3 +925,14 @@ separate run detects a source-plan mutation during the second reply before
 acknowledging that span; neither failure permits retry. This is bounded
 simulated transport using fake source bytes and fake replies, not a complete
 upload, real-model authentication, physical-card execution or speed result.
+
+Fake-tag kernel boundary: the small-recurrent request-handoff branch is now
+compiled within the actual RISC-V driver source, under the distinct renamed
+ABI and fake tag only. Explicit compile witnesses force emission of the
+support and control paths; the handoff, support and control stack frames are
+checked at or below 2048 bytes. The earlier recurrent fake-tag source profile
+and the extracted-body fault-injection and role-refusal tests also pass.
+The fake branch is rejected for real driver tags, Work and CPU-reference
+roles. This is a non-loadable compilation, not a linked driver, hardware
+reservation or card test. The actual user client and driver have not been
+connected on hardware; no model-quality or inference-speed claim follows.

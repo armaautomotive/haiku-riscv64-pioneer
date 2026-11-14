@@ -5,17 +5,26 @@
 
 #include "PioneerQ38QgwdResidentClose.inc"
 
-// The small-recurrent branch is an extracted-body mock only. It must not be
-// combined with a kernel, a loadable driver or the existing native profile.
+// The small-recurrent branch is either an extracted-body mock or the
+// non-loadable fake-tag kernel inspection. It must never become a live role.
 #if defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION) && \
- (PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION != 1 || defined(_KERNEL_MODE) \
- || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) \
+ (PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) \
  || !defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION) \
  || PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION != 1 \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE))
-#error Small recurrent resident handoff is extracted-body inspection only
+#error Small recurrent resident handoff is isolated inspection only
+#endif
+#if defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION) && defined(_KERNEL_MODE) \
+ && (!defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY != 1 \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x51544b4e4f445256ULL)
+#error Small recurrent resident handoff requires the fake-tag kernel profile
+#endif
+#if defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION) && !defined(_KERNEL_MODE) \
+ && defined(PIONEER_DRIVER_BUILD_TAG)
+#error Small recurrent resident handoff is isolated inspection only
 #endif
 
 __attribute__((noinline)) bool
