@@ -31,5 +31,22 @@ struct PioneerQ38SmallRecurrentNativeBinding {
   return cohort && Matches(c,fd,generation)
    && journal.BindDenseReceiptInspection(*c.q38SmallRecurrentReceipt,&c,cohort,fd,c.hashes,fd->team,generation);
  }
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION
+ // Called only under an independently established exclusive owner. This
+ // transfers host bookkeeping, not the cookie, hardware reservation or any
+ // cleanup authority. The caller must retain both contexts on uncertainty.
+ template<class Context,class Cookie>
+ static bool TransferInspection(Context& old,Context& next,const Cookie* fd,uint64_t generation){
+  if(&old==&next || !Matches(old,fd,generation) || next.q38Span || next.q38SmallRecurrentReceipt
+   || next.q38HybridReceipt || next.q38Qgw8Receipt || next.q38QgwdReceipt)return false;
+  auto* receipt=old.q38SmallRecurrentReceipt;auto* span=old.q38Span;
+  if(!receipt->RebindInspection(&old,fd,old.hashes,old.initialized,fd->team,generation,span,
+    &next,next.hashes,next.initialized,next.banks,next.baseline.baseline.baseline.baseline.dram,
+    PioneerResidentBanks::Pages))return false;
+  next.q38Span=span;old.q38Span=nullptr;
+  next.q38SmallRecurrentReceipt=receipt;old.q38SmallRecurrentReceipt=nullptr;
+  return true;
+ }
+#endif
 };
 #endif

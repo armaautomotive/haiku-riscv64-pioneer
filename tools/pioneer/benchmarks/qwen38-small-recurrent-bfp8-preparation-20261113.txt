@@ -872,3 +872,14 @@ old bookkeeping; address/undefined-behavior sanitizers and fake-tag
 freestanding compilation pass. This does not prove continuous hardware
 reservation or implement request close, driver handoff, model reuse, device
 execution or speed; the installed driver and Work mode are unchanged.
+
+Inspection owner bridge: the actual small-recurrent binding can now move the
+same receipt and closed span between two simulated contexts after verifying
+the old cookie/owner and the new context's empty receipt slots and identical
+ledger/bank proof. Failed foreign-owner, changed-generation, competing
+receipt and corrupted-ledger cases retain the old binding. The destination
+does not match the cookie until the test explicitly changes its context;
+logical-view derivation then passes. The real control/span mock and fake-tag
+freestanding instantiation pass. This only moves CPU bookkeeping: it does not
+transfer a live cookie, lock or hardware reservation, implement a request
+handoff, authorize a driver load, or establish a performance result.

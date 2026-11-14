@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Actual control and span core with fake OS/device; never a physical test.
 #define PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE 1
+#define PIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION 1
 #define main small_span_unused_main
 #include "pioneer_q38_small_recurrent_span_test.cpp"
 #undef main
@@ -74,6 +75,23 @@ int main(int argc,char** argv){
    assert(!Binding::BindJournal(c,&cookie,sReloadGeneration,static_cast<PioneerQ38DispatchLease*>(nullptr),journal) && !journal.bound);
    assert(Binding::BindJournal(c,&cookie,sReloadGeneration,&participants,journal) && journal.bound);
    c.q38QgwdReceipt=&c;assert(!Binding::Matches(c,&cookie,sReloadGeneration));c.q38QgwdReceipt=nullptr;
+   NativeSpanContext next(argv[1]);
+   std::copy(c.initialized,c.initialized+PioneerResidentBanks::Pages,next.initialized);
+   std::copy(c.hashes,c.hashes+PioneerResidentBanks::Pages,next.hashes);
+   auto* retainedReceipt=c.q38SmallRecurrentReceipt;auto* retainedSpan=c.q38Span;
+   assert(!Binding::TransferInspection(c,next,&foreign,sReloadGeneration));
+   assert(!Binding::TransferInspection(c,next,&cookie,sReloadGeneration+1));
+   next.q38QgwdReceipt=&next;assert(!Binding::TransferInspection(c,next,&cookie,sReloadGeneration));next.q38QgwdReceipt=nullptr;
+   next.hashes[0]^=1;assert(!Binding::TransferInspection(c,next,&cookie,sReloadGeneration));next.hashes[0]^=1;
+   assert(Binding::Matches(c,&cookie,sReloadGeneration) && c.q38SmallRecurrentReceipt==retainedReceipt && c.q38Span==retainedSpan);
+   assert(Binding::TransferInspection(c,next,&cookie,sReloadGeneration));
+   assert(!c.q38SmallRecurrentReceipt && !c.q38Span && next.q38SmallRecurrentReceipt==retainedReceipt && next.q38Span==retainedSpan);
+   assert(!Binding::Matches(next,&cookie,sReloadGeneration)); // cookie has NOT been transferred
+   cookie.context=&next;
+   assert(Binding::Matches(next,&cookie,sReloadGeneration));
+   auto nextLogical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+   assert(Binding::DeriveLogical(next,&cookie,sReloadGeneration,*nextLogical));
+   cookie.context=&c; // mock fixture lifetime only; no device ownership claim
   }
   Unbind();
  }

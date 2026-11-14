@@ -66,6 +66,17 @@ bool rebind(R& r,const void* old,const void* fd,const uint32_t* oh,const uint8_t
  PioneerResidentBanks& banks,const tt_dram_samples_result& proof){
  return r.RebindInspection(old,fd,oh,ol,17,42,lease,next,nh,nl,banks,proof,PioneerResidentBanks::Pages);
 }
+struct Proof4 {tt_dram_samples_result dram;};
+struct Proof3 {Proof4 baseline;};struct Proof2 {Proof3 baseline;};struct Proof1 {Proof2 baseline;};
+struct FakeContext {
+ void* q38HybridReceipt;void* q38Qgw8Receipt;void* q38QgwdReceipt;
+ R* q38SmallRecurrentReceipt;PioneerQ38SpanLease* q38Span;
+ uint32_t* hashes;uint8_t* initialized;PioneerResidentBanks banks;Proof1 baseline;
+};
+struct FakeCookie {unsigned magic;FakeContext* context;int64_t team;};
+bool transfer(FakeContext& a,FakeContext& b,FakeCookie* f){
+ return PioneerQ38SmallRecurrentNativeBinding::TransferInspection(a,b,f,42);
+}
 '''
     for name, extra, body in (('receipt', [], source),
                               ('rebind', ['-DPIONEER_Q38_SMALL_RECURRENT_RESIDENT_REBIND_INSPECTION=1'], source + rebind)):
