@@ -6,6 +6,32 @@ Work has no CPU inference, CPU-reference validation or fallback; validation
 is separate. Preserve Haiku boot,64 CPUs,full RAM and Assistant, and push
 tested checkpoints. 20tok/s is unmet and unproven.
 
+November 14 checkpoint: the isolated Q4 FFN shared-input-reuse candidate is
+committed and pushed as 7b68ed11a117134b085fa9a95627100ea38cdd16. Its exact
+offline tests and pinned-runtime inspect builds pass, but it has no physical
+runtime, numerical, quality or speed qualification and is not selected by
+Work/Assistant. Static traffic accounting bounds its potential: one gate/up
+pair saves about 1.18 MiB of input traffic per layer across 119 workers; even
+if applied to all 64 layers, that is about 75 MiB against roughly 18.68 GB
+(17.40 GiB) of ideal per-token weight reads (about 0.4%). Keep it as a
+controlled candidate, not the next mainline performance bet. This is not
+measured saved bandwidth or a speedup.
+
+The measured vector92 full-card profile remains 0.17287 tok/s (~5.79 s per
+committed step), so 20 tok/s is about 116x faster. A 448 GB/s peak divided by
+18.68 GB of ideal weight traffic gives only ~24 tok/s at perfect weight-only
+bandwidth utilization. The separate direct GDDR diagnostic measured 259–298
+GB/s at depth 16; if representative, that corresponds to only ~13.9–16.0
+weight-only tok/s before any compute or control overhead. This single
+diagnostic is not an absolute hardware limit, but it makes another tiny
+descriptor/activation-read optimization a poor route to 20 tok/s. A serious
+next candidate must either materially reduce bytes per decode pass without
+damaging full-model quality, or demonstrate a higher sustained device-memory
+bandwidth; then it must improve the entire real-model path, not just an
+isolated matrix primitive. Physical comparison is currently gated on
+out-of-band verification of the Pioneer SSH host key; do not bypass the
+saved-key mismatch.
+
 Baseline
 --------
 The full model runs on card, including attention/state. One short counting
