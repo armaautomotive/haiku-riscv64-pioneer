@@ -8,7 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-resident_recurrent=len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-resident-inspection'
+ffn_reuse_resident=len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-ffn-reuse-resident-inspection'
+resident_recurrent=ffn_reuse_resident or len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-resident-inspection'
 recurrent=resident_recurrent or len(sys.argv)==4 and sys.argv[1]=='--qgwf-recurrent-native-inspection'
 qgwf_frontier=len(sys.argv)==4 and sys.argv[1]=='--qgwf-frontier-native-inspection'
 qgwf=recurrent or qgwf_frontier or len(sys.argv)==4 and sys.argv[1]=='--qgwf-native-inspection'
@@ -16,10 +17,10 @@ qgwe=qgwf or len(sys.argv)==4 and sys.argv[1]=='--qgwe-native-inspection'
 two=len(sys.argv)==4 and sys.argv[1]=='--two-candidate'
 candidate=two or len(sys.argv)==4 and sys.argv[1]=='--candidate'
 if len(sys.argv)!=(4 if candidate or qgwe else 3) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: run_pioneer_q38_qgwd_native_source_compile.py [--candidate|--two-candidate] ABS_SDK ABS_PROGRAM_HEADER')
+    raise SystemExit('usage: run_pioneer_q38_qgwd_native_source_compile.py [--candidate|--two-candidate|--qgwe-native-inspection|--qgwf-native-inspection|--qgwf-frontier-native-inspection|--qgwf-recurrent-native-inspection|--qgwf-recurrent-resident-inspection|--qgwf-recurrent-ffn-reuse-resident-inspection] ABS_SDK ABS_PROGRAM_HEADER')
 sdk,header=map(Path,sys.argv[2:] if candidate or qgwe else sys.argv[1:])
 assert sdk.is_absolute() and sdk.is_dir() and header.is_absolute() and header.is_file()
-assert hashlib.sha256(header.read_bytes()).hexdigest()==('8380e513a2af99644130f293b8a3239109ec42654daa950db482e2a3b20c5b82' if recurrent else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else 'f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
+assert hashlib.sha256(header.read_bytes()).hexdigest()==('0c3c8a420ae424cbda4137a41cbf684e45557c9663bfa78f11d1affb6756fcc8' if ffn_reuse_resident else '8380e513a2af99644130f293b8a3239109ec42654daa950db482e2a3b20c5b82' if recurrent else '7064d728017fe418f66d97f8e369fee772d730ef208a4a127d72c39e4222aa80' if qgwf_frontier else 'b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else 'f4bc8d499b2c12d381fb24ba3423af1fed6792fa94e52882eb627697d721a687' if two else '84b7bda4b16924be3da350499a0376e2acb0ce1b47a73ee49fcc914829041c72' if candidate else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff')
 here=Path(__file__).resolve().parent;root=here.parents[2];pioneer=here.parent
 role=(root/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRole.h').read_text()
 parents=set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role))

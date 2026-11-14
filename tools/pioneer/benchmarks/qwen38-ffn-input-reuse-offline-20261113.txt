@@ -31,6 +31,13 @@ activation values, the 5120 down rows, final gather, residual and published
 uses synthetic data and ideal tensor endpoints. It does not establish
 real-model accuracy, physical-card behavior, or tokens per second.
 
+The exact FFN-reuse program bundle has now also cross-compiled with the
+small-recurrent resident handoff in the actual driver source, using the
+renamed-ABI fake-tag profile. Its handoff, support and control stack frames
+pass the existing 2048-byte bound, and an older program bundle is rejected
+by the distinct selector. This is a compile check only; no driver was linked
+or installed, no request handoff ran on a card, and no speed is established.
+
 A further continuous run used pinned model-derived layer-0 alpha and beta
 BFP8 exports with synthetic inputs; the other layer weights and inputs were
 synthetic. Both small projections matched an independent double-precision
