@@ -10,7 +10,7 @@ case "$generation" in ''|0*|*[!0-9]*) exit 2;; esac
 [ "$generation" -gt 0 ] && [ "$generation" -le 999999 ] || exit 2
 candidate_generation=$((generation+1));restored_generation=$((generation+2))
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
-stage=/boot/home/pioneer-recurrent-qkv-pair-20261113-g
+stage=/boot/home/pioneer-recurrent-qkv-pair-20261113-h
 prior=/boot/home/pioneer-recurrent-qkv-band-20261113-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
@@ -18,7 +18,7 @@ admin=/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
 guard=/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
 flush=/boot/home/pioneer-qgw8-flush-tool-20261107-a/checked-flush
 stable_hash=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
-candidate_hash=acd738ea8358ab340db37e068ed9694a53772ba042f637b9ae5f868bbc42ec36
+candidate_hash=f41511b483830b39c79d7007a8e9429ca3e868dc68e5fa973149ce2e584aa844
 client_hash=6013e186123ae5d94f02b816b3f9f256bae57362d0387d0382a34b2f394f13aa
 candidate=$stage/candidate;client=$stage/client;preflight=$prior/source-preflight;reference=$prior/independent-reference.log
 exact(){

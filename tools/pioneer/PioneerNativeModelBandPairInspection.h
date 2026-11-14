@@ -92,16 +92,19 @@ public:
   }
   // Recheck the entire fleet after staging, before releasing either core.
   if(!BlackholeDramAllCoresHeld(io,baseline) || !BlackholeDramSourceStable(io,baseline))return Fail();
-  // First reset and verify both processors while neither can run. Then
-  // release them back-to-back; defer post-release checks to the immediate
-  // PC bracket so an avoidable full Scope() on core 0 cannot consume the
-  // entire short diagnostic before core 1 starts.
+  // First reset and scope both processors while neither can run. Then release
+  // them with only a route selection and two direct reset reads between the
+  // writes; the full post-release scopes happen after the immediate PC bracket.
   for(unsigned i=0;i<2;i++){
    if(!Select(io,i) || !Scope(io,baseline,i,0x47800))return Fail();
    io.BfpResetWrite(0x87ffff);io.Pause();if(!Scope(io,baseline,i,0x87ffff))return Fail();
   }
+  // Revalidate both held processors and source once, before starting either.
+  // Do not repeat the full PCIe/TLB/source audit between release writes: it
+  // previously gave core0 enough time to finish before core1 was launched.
+  if(!BlackholeDramSourceStable(io,baseline))return Fail();
   for(unsigned i=0;i<2;i++){
-   if(!Select(io,i) || !Scope(io,baseline,i,0x87ffff))return Fail();
+   if(!Select(io,i) || io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff)return Fail();
    result[i].started=1;io.BfpResetWrite(0x46800);
   }
   // Sample the just-released core1 first, then core0 twice, then core1 again.
