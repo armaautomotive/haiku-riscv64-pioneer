@@ -7,11 +7,13 @@ import stat
 import subprocess
 import sys
 import tempfile
-if not __debug__ or len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3]!='--recurrent-out'):
-    raise SystemExit('Use non-optimized Python SDK PRIVATE_EXPORT_DIRECTORY [--recurrent-out]')
+if not __debug__ or len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--recurrent-out','--small-alpha','--small-beta')):
+    raise SystemExit('Use non-optimized Python SDK PRIVATE_EXPORT_DIRECTORY [--recurrent-out|--small-alpha|--small-beta]')
 here = pathlib.Path(__file__).resolve().parent
 sdk, private = map(pathlib.Path, sys.argv[1:3])
-recurrent_out=len(sys.argv)==4
+recurrent_out=len(sys.argv)==4 and sys.argv[3]=='--recurrent-out'
+small_alpha=len(sys.argv)==4 and sys.argv[3]=='--small-alpha'
+small_beta=len(sys.argv)==4 and sys.argv[3]=='--small-beta'
 assert sdk.is_absolute() and private.is_absolute() and not private.is_symlink()
 identity = private.stat()
 assert stat.S_ISDIR(identity.st_mode) and identity.st_uid == os.geteuid() and stat.S_IMODE(identity.st_mode) == 0o700
@@ -25,6 +27,12 @@ folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-learned-band-owner.'))
 if recurrent_out:
     assert digests=={'PioneerNativeBfpModelBandData.h':'1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1',
                      'PioneerNativeBfpModelBandMetadata.h':'7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'}
+if small_alpha:
+    assert digests=={'PioneerNativeBfpModelBandData.h':'248b6b21dea17e9b1bcacc91a9f77f0dfcb1b6133d6dc56561f01829e4f021c7',
+                     'PioneerNativeBfpModelBandMetadata.h':'630caa504d3b3fc96b2aa38ec090954c1cbb470b2baa59d84957af4e7d4915e1'}
+if small_beta:
+    assert digests=={'PioneerNativeBfpModelBandData.h':'4a3c35da6459bda26f6ac888e8fa4fe4fe0430d015edd7ace6e579ac6484d284',
+                     'PioneerNativeBfpModelBandMetadata.h':'70940f99172a098a48ab18b978e9183a6ade1e1543f16fb06f42fa6d993421e4'}
 subprocess.run([sys.executable, str(here.parent / 'build_native_bfp_band.py'), str(sdk), str(folder / 'image'), '6144' if recurrent_out else '5120', '4'], check=True)
 assert hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() == ('a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e' if recurrent_out else 'f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5')
 old = (here / 'pioneer_native_bfp_band_owner_test.cpp').read_text()
@@ -74,6 +82,9 @@ int main(int argc,char** argv){
   const auto& result=lease->Result();assert(result.state==PIONEER_NATIVE_BFP_RESULT && result.completed && !result.cold);
   const auto* expected=PioneerNativeBfpModelBandMetadata::Golden(sample);assert(expected);
   for(unsigned word=0;word<64;word++)assert(result.output[word]==expected[word%32]);
+#ifdef PIONEER_TEST_SMALL_RECURRENT
+  if(sample==1)for(unsigned pass=0;pass<2;pass++)for(unsigned row=16;row<32;row++)assert(!result.output[pass*32+row]);
+#endif
   assert(lease->End(io,baseline) && lease->Result().state==PIONEER_NATIVE_BFP_CLOSED && io.memory==io.original && io.resets==4);
   for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++)assert(io.tlb[s][w]==s*3+w+1);
   NoMoreIO(*lease,io,baseline,sample);
@@ -104,6 +115,7 @@ if recurrent_out:
     tests=tests.replace('SavedWords(5120)==50500 && !Lease::SavedWords(6144)',
                         'SavedWords(6144)==59972 && !Lease::SavedWords(5120)')
     tests=tests.replace('IO io(5120,','IO io(6144,').replace('complete202000B','complete239888B')
+if small_alpha or small_beta:prefix='#define PIONEER_TEST_SMALL_RECURRENT 1\n'+prefix
 (folder / 'test.cpp').write_text(prefix + io + tests)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off',
                 '-fsanitize=address,undefined', '-I' + str(here), '-I' + str(here.parent), '-I' + str(private),

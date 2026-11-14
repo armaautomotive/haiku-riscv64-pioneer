@@ -37,3 +37,19 @@ Their binaries embed private model-derived metadata and must not be
 published. The corresponding native diagnostic drivers do not yet exist;
 no client or P100A device was opened and no speed or model-quality claim
 is established.
+
+Driver build and offboard owner qualification: separate fixed-payload
+diagnostic drivers and matching clients cross-linked for tags 149 and 150.
+Their driver SHA-256 values are
+1e850ea71a7a361d3d1a259626f6ad51c1270db9ee664cd47fbe445b6b7b01ea and
+0b1c07c4a22ec54d71848a9e3b36aa2140d10b76b83063a1c49b83430db44f1e.
+The actual owner and RV32 worker were exercised with the private bands in
+simulated MMIO: all three samples per tensor produced the expected 64 words
+across two executions, padded outputs were zero, restoration succeeded,
+and 17 injected owner failures/refusals retained state without retry.
+SDK synthetic driver builds refused wrong tags, Work, CPU validation,
+fast-math and conflicting diagnostic roles; mismatched private payload was
+also refused. The private drivers embed learned weights and must not be
+published. No driver was installed or run; physical card behavior and
+performance remain unproven. A separately guarded one-shot physical wrapper,
+fresh source verification and stable-driver recovery are still required.

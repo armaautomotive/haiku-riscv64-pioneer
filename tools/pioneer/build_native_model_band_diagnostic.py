@@ -19,6 +19,8 @@ parser.add_argument('output', type=pathlib.Path)
 mode=parser.add_mutually_exclusive_group()
 mode.add_argument('--recurrent', action='store_true', help='build distinct fixed recurrent diagnostic147')
 mode.add_argument('--recurrent-out', action='store_true', help='build distinct fixed recurrent output diagnostic148')
+mode.add_argument('--small-alpha', action='store_true', help='build distinct fixed alpha diagnostic149')
+mode.add_argument('--small-beta', action='store_true', help='build distinct fixed beta diagnostic150')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -40,6 +42,12 @@ if args.recurrent:
 if args.recurrent_out:
  private_pins={'PioneerNativeBfpModelBandData.h':'1facbbadaef22f9b1fadaa33a4b19f2168bc9b1a244e9df9d7880ddd97b10cb1',
                'PioneerNativeBfpModelBandMetadata.h':'7cef223c05f1e78b0a4c7c45cd24327b569a7d7e9cd3196895151ab67a18d65d'}
+if args.small_alpha:
+ private_pins={'PioneerNativeBfpModelBandData.h':'248b6b21dea17e9b1bcacc91a9f77f0dfcb1b6133d6dc56561f01829e4f021c7',
+               'PioneerNativeBfpModelBandMetadata.h':'630caa504d3b3fc96b2aa38ec090954c1cbb470b2baa59d84957af4e7d4915e1'}
+if args.small_beta:
+ private_pins={'PioneerNativeBfpModelBandData.h':'4a3c35da6459bda26f6ac888e8fa4fe4fe0430d015edd7ace6e579ac6484d284',
+               'PioneerNativeBfpModelBandMetadata.h':'70940f99172a098a48ab18b978e9183a6ade1e1543f16fb06f42fa6d993421e4'}
 for name,digest in private_pins.items():
  info=(private/name).lstat()
  assert stat.S_ISREG(info.st_mode) and info.st_nlink==1 and info.st_uid==os.geteuid() and stat.S_IMODE(info.st_mode)==0o600
@@ -95,9 +103,11 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111200010148ULL' if args.recurrent_out else '0x2026111200010147ULL' if args.recurrent else '0x2026110400010080ULL'), '-DPIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC=1']
+native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111300010149ULL' if args.small_alpha else '0x2026111300010150ULL' if args.small_beta else '0x2026111200010148ULL' if args.recurrent_out else '0x2026111200010147ULL' if args.recurrent else '0x2026110400010080ULL'), '-DPIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC=1']
 if args.recurrent:native += ['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1']
 if args.recurrent_out:native += ['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1']
+if args.small_alpha:native += ['-DPIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1']
+if args.small_beta:native += ['-DPIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1']
 commands = []
 def run(command):
     commands.append(command)
@@ -109,8 +119,8 @@ run(common + native + includes + ['-c', str(driver / 'pioneer_native_model_band_
 run(common + includes + ['-c', str(driver / 'tenstorrent_pci_probe.cpp'), '-o', str(output / 'control.o')])
 def compiler_path(name):
     return subprocess.check_output([cxx, '-print-file-name=' + name], text=True).strip()
-driver_name='tenstorrent_pci_probe-recurrent-out-band148' if args.recurrent_out else 'tenstorrent_pci_probe-recurrent-band147' if args.recurrent else 'tenstorrent_pci_probe-native-model-band80'
-client_name='pioneer-recurrent-out-band-diagnostic148' if args.recurrent_out else 'pioneer-recurrent-band-diagnostic147' if args.recurrent else 'pioneer-native-model-band-diagnostic'
+driver_name='tenstorrent_pci_probe-small-alpha149' if args.small_alpha else 'tenstorrent_pci_probe-small-beta150' if args.small_beta else 'tenstorrent_pci_probe-recurrent-out-band148' if args.recurrent_out else 'tenstorrent_pci_probe-recurrent-band147' if args.recurrent else 'tenstorrent_pci_probe-native-model-band80'
+client_name='pioneer-small-alpha-diagnostic149' if args.small_alpha else 'pioneer-small-beta-diagnostic150' if args.small_beta else 'pioneer-recurrent-out-band-diagnostic148' if args.recurrent_out else 'pioneer-recurrent-band-diagnostic147' if args.recurrent else 'pioneer-native-model-band-diagnostic'
 for obj, name in [('native.o', driver_name), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
     run([cxx, '-shared', '-nostdlib', '-Wl,--no-undefined,-soname=tenstorrent_pci_probe', compiler_path('crtbeginS.o'),
          str(release / 'system/glue/haiku_version_glue.o'), str(output / obj), str(output / 'profile.o'),
@@ -134,7 +144,9 @@ libs=[]
 for path in sorted((build/'build_packages').glob('gcc_syslibs-*/lib')):
  libs+=['-L'+str(path)]
 run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(private),
-     *(['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE=1'] if args.recurrent_out else
+     *(['-DPIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE=1'] if args.small_alpha else
+       ['-DPIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_SMALL_BETA_BAND_SOURCE=1'] if args.small_beta else
+       ['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE=1'] if args.recurrent_out else
        ['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_BAND_SOURCE=1'] if args.recurrent else []),
      '-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot'),
      '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),*libs,
