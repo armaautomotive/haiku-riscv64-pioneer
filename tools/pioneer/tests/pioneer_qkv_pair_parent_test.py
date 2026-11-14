@@ -10,7 +10,7 @@ source = (here.parent / 'pioneer_qkv_pair_physical_20261113.sh').read_text()
 flow = source.split('# PAIR_QKV_FLOW_BEGIN\n', 1)[1].split('# PAIR_QKV_FLOW_END', 1)[0]
 idle_body = source.split('idle(){\n', 1)[1].split('\n}\nhealth()', 1)[0]
 idle_shell = '''ps(){
- printf 'Id Team\\n%s /bin/bash -c /boot/home/pioneer-recurrent-qkv-pair-20261113-d/pioneer_qkv_pair_physical_20261113.sh 52 --run\\n' "$$"
+ printf 'Id Team\\n%s /bin/bash -c cd /boot/home/pioneer-recurrent-qkv-pair-20261113-\\n' "$$"
  if [ "$include_owner" = yes ]; then printf '321 /boot/home/pioneer-recurrent-qkv-pair-diagnostic153 --fixed-qkv-pair\\n'; fi
  return 0
 }
