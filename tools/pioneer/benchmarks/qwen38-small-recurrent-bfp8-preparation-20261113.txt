@@ -894,3 +894,12 @@ holds the closed span and receipt. The transfer itself is mocked in this
 particular test; the real receipt bridge was tested separately above. Kernel,
 driver-tag and Work roles reject this branch. No actual reservation, running
 driver, full model inference or speed improvement has been demonstrated.
+
+Inspection resident client: the small-recurrent session now supports a
+second bounded prompt through the existing resident control protocol while
+holding one fake-identity descriptor and one sealed synthetic upload.
+Invalid prompts are refused before the next-request control; malformed
+close, next-request and model-end replies close the client once without a
+bank END or retry. The prior QGWD fixed-input client remains a distinct
+profile. These are simulated device replies, not a real resident driver,
+complete model inference, answer-quality result or loading-speed measure.

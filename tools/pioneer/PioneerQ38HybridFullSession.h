@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38QgwdClientRole.h"
 #include "PioneerQ38Qgw8TraceClientRole.h"
+#if defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION) && \
+ (PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_SMALL_RECURRENT_SESSION_INSPECTION) || PIONEER_Q38_SMALL_RECURRENT_SESSION_INSPECTION != 1 \
+ || defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_QGWF_RATE_CLIENT_144))
+#error Small recurrent resident client requires its separate fake-identity inspection session
+#endif
 #if defined(PIONEER_Q38_SMALL_RECURRENT_SESSION_INSPECTION) \
  && (!defined(PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION) || PIONEER_Q38_QGW8_FULL_SESSION_INSPECTION != 1)
 #error Small recurrent token handoff requires the isolated full-session profile
@@ -60,7 +66,7 @@ static_assert(PioneerQ38HybridFullSessionRole==1,"late legacy full-session role 
 #include "PioneerQ38HybridUploadSession.h"
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridFullProtocol.h"
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38QgwdResidentProtocol.h"
 #endif
 #ifdef PIONEER_Q38_QGW8_HIDDEN_CLIENT_129
@@ -98,7 +104,7 @@ public:
  }; // untrusted diagnostic data only;never grants retry,cleanup or device authority
 private:
  enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
   ,ResidentReady
 #endif
  };
@@ -133,7 +139,7 @@ private:
  template<class T> bool Call(unsigned op,T& value){
   return state!=Failed && upload.WeightsHeld() && upload.Call(op,value) && upload.WeightsHeld();
  }
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
  bool ResidentControl(unsigned operation){
   namespace R=PioneerQ38QgwdResident;R::Packet p;p.request.operation=operation;
   if(!R::RequestShape(p))return false;const auto request=p.request;
@@ -239,7 +245,7 @@ public:
   std::string error;if(!upload.Begin(plan,error,progress)){failure=error;state=Failed;return false;}
   F::Support support={};
   if(!upload.Identity(1) || !Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) || !F::Supported(support))return Stop("support");
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
   PioneerQ38QgwdResident::Support residentSupport={};
   if(!Call(TT_PCI_PROBE_Q38_QGWD_RESIDENT_SUPPORT,residentSupport)
    || !PioneerQ38QgwdResident::Supported(residentSupport))return Stop("resident_support");
@@ -332,7 +338,7 @@ public:
   }
   traceCaptured=true;
 #endif
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
   if(!ResidentControl(PioneerQ38QgwdResident::RequestClose))return Stop("resident_close");
   state=ResidentReady;return true;
 #else
@@ -345,19 +351,42 @@ public:
   upload.state=Upload::Done;state=Complete;return true;
 #endif
  }
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
- // Fixed-input diagnostic only. Reuses the original FD and retained weight
- // reservation, but asks the driver for a genuinely fresh request context.
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION
+ // The fake-identity inspection may supply a different bounded prompt for
+ // each request. No request or owner state changes on invalid input.
+ bool NextResidentRequest(const uint32_t* ids,unsigned count,unsigned outputs){
+  namespace F=PioneerQ38FullOffload;
+  if(state!=ResidentReady || !ids || !count || count>F::MaxPrompt || !outputs || outputs>F::MaxOutput
+   || count+outputs-1>F::MaxPositions)return false;
+  for(unsigned i=0;i<count;i++)if(ids[i]>=F::Vocabulary)return false;
+  std::array<uint32_t,F::MaxPrompt> nextPrompt={};std::copy(ids,ids+count,nextPrompt.begin());
+  if(!ResidentControl(PioneerQ38QgwdResident::NextRequest))return Stop("resident_next");
+  prompt=nextPrompt;prompts=count;limit=count+outputs-1;
+  return StartResidentRequest();
+ }
+ bool NextResidentRequest(){return NextResidentRequest(prompt.data(),prompts,limit-prompts+1);}
+private:
+ bool StartResidentRequest(){
+#else
+ // Fixed-input diagnostic only. The old QGWD profile remains unchanged.
  bool NextResidentRequest(){
   if(state!=ResidentReady)return false;
   if(!ResidentControl(PioneerQ38QgwdResident::NextRequest))return Stop("resident_next");
+#endif
   records.fill(0);committed=position=layers=terminalStage=0;
-  cancelAttempted=cancelled=false;observedFrontier=0;haveFrontier=false;
+  cancelAttempted=cancelled=false;
+#ifdef PIONEER_Q38_QGWF_RATE_CLIENT_144
+  observedFrontier=0;haveFrontier=false;
+#endif
   if(!Control(PioneerQ38TokenControl::Start))return Stop("resident_start");
   const auto& r=packet->reply;const auto* d=r.detail;
   if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("resident_start_reply");
   state=Running;return true;
  }
+#ifdef PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION
+public:
+#endif
  bool EndResident(){
   if(state!=ResidentReady)return false;
   if(!ResidentControl(PioneerQ38QgwdResident::ModelEnd))return Stop("resident_end");
@@ -368,7 +397,7 @@ public:
 #endif
  bool CopyGeneratedTokens(uint32_t* output,unsigned capacity,unsigned& count)const{
   if((state!=Complete
-#ifdef PIONEER_Q38_QGWD_RESIDENT_CLIENT_146
+#if defined(PIONEER_Q38_QGWD_RESIDENT_CLIENT_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_CLIENT_INSPECTION)
    && state!=ResidentReady
 #endif
    ) || !failure.empty()
