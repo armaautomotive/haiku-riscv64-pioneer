@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_Q38_GDN_L1_CACHE_PLAN_INSPECTION 1
+#define PIONEER_Q38_GDN_L1_CACHE_CAPACITY_INSPECTION 1
 #include "../PioneerQ38GdnL1CachePlanInspection.h"
+#include "../PioneerQ38GdnL1CacheCapacityInspection.h"
 #include <cassert>
 #include <cstdio>
 
@@ -38,6 +40,22 @@ int main()
 	assert(!P::Map(0,P::HeadsPerLayer,0,invalid));assert(!P::Map(0,0,2,invalid));
 	assert(!P::LayerWorkersUnique(P::RecurrentLayers));assert(P::SlotsForWorker(P::Workers)==0);
 	assert(P::ActualLayer(47)==62 && P::ActualLayer(48)==64 && !P::IsRecurrentLayer(63));
+	namespace C=PioneerQ38GdnL1CacheCapacityInspection;
+	unsigned availableSlots=0,deficit=0;
+	for(unsigned worker=0;worker<P::Workers;worker++){
+		C::Slot freeSlots[C::MaxSlots]={};unsigned count=0;
+		assert(C::Build(worker+1,freeSlots,C::MaxSlots,count));
+		assert(count==31 && count<P::SlotsForWorker(worker));
+		for(unsigned i=0;i<count;i++){
+			assert(freeSlots[i].bytes==P::HalfStateBytes && C::Free(worker+1,freeSlots[i].address,freeSlots[i].bytes));
+			for(unsigned j=0;j<i;j++)assert(freeSlots[i].address>=freeSlots[j].address+freeSlots[j].bytes
+				|| freeSlots[j].address>=freeSlots[i].address+freeSlots[i].bytes);
+		}
+		availableSlots+=count;deficit+=P::SlotsForWorker(worker)-count;
+	}
+	assert(availableSlots==3689 && deficit==919);
 	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u workers, minimum scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
+	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u peer L1s (%u bytes); %u slots (%u bytes) need scratch relocation; each peer has 31 safe slots vs %u/%u required; NO all-phase live map or performance proof\n",
+		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots,P::MaxSlots);
 }
