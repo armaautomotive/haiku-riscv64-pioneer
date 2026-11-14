@@ -30,7 +30,7 @@ public:
  }
  bool Matches(const PioneerQ38CanonicalModelPlan& c)const{
   namespace L=PioneerQ38MixedRecurrentCohortLayout;
-  if(!ready || canonical!=&c || !L::Shape(header) || header[48]!=requestNumber)return false;
+  if(!ready || canonical!=&c || !L::Shape(header) || header[48]!=requestNumber || header[52])return false;
   const auto* m=numeric.Manifest();if(!m)return false;
   const PioneerQ38GdnIdentity id={uint64_t(header[32])|(uint64_t(header[33])<<32),uint64_t(header[34])|(uint64_t(header[35])<<32),
    uint64_t(header[36])|(uint64_t(header[37])<<32),uint64_t(header[38])|(uint64_t(header[39])<<32)};

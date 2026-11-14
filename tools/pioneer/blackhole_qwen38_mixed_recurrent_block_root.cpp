@@ -2,6 +2,7 @@
 // NEW complete recurrent hidden producer; only returning arithmetic is
 // reused. No old image role, native owner, token or state-slot commit.
 #include "PioneerQ38PacketIdentityBoundaryRole.h"
+#include "PioneerQ38RedistributedTokenLayout.h"
 #include "blackhole_qwen38_mixed_projection_root.cpp"
 #include "blackhole_qwen38_mixed_recurrent_cohort.cpp"
 #include "PioneerQ38StateMath.h"
@@ -123,11 +124,20 @@ static void Cohort(R::PrivateSeal* p){
  for(unsigned i=0;i<16;i++){d[i]=head[i];d[16+i]=o[16+i];}for(unsigned i=0;i<8;i++)d[32+i]=o[32+i];
  const unsigned tail[]={C::Conv,C::ConvShadow,C::Gdn,C::GdnShadow,C::ConvWords,C::GdnWords,C::PeerBoots,C::PeerJobs,o[48],C::Nonces,C::Counters,1};
  for(unsigned i=0;i<12;i++)d[40+i]=tail[i];
+ namespace RT=PioneerQ38RedistributedTokenLayout;
+ Read(o[59]+C::GdnWords*4,o[8],R::Scratch,RT::ControlBytes);
+ uint32_t control[RT::ControlWords];for(unsigned i=0;i<RT::ControlWords;i++)control[i]=Words(R::Scratch)[i];
+ if(!PioneerQ38RedistributedTokenControl::Shape(control,o))scalar_fault_park();
+ d[52]=control[2];
  if(!C::Shape(d))scalar_fault_park();
  for(unsigned i=0;i<64;i++)Words(R::Header)[i]=d[i];
  Phase(p,6);
- Read(o[58],o[8],C::Conv,C::ConvWords*4);Read(o[59],o[8],C::Gdn,C::LegacyGdnWords*4);
- for(unsigned i=C::LegacyGdnWords;i<C::GdnWords;i++)Words(C::Gdn)[i]=0;
+ Read(o[58],o[8],C::Conv,C::ConvWords*4);
+ if(d[52])Read(o[59],o[8],C::Gdn,C::GdnWords*4);
+ else{
+  Read(o[59],o[8],C::Gdn,C::LegacyGdnWords*4);
+  for(unsigned i=C::LegacyGdnWords;i<C::GdnWords;i++)Words(C::Gdn)[i]=0;
+ }
  if(q38_mixed_recurrent_cohort()!=6144)scalar_fault_park();
  OriginalSeal();q38_mixed_root_seal();
  // ALL cohort table/proof consumers have returned. Retire that phase

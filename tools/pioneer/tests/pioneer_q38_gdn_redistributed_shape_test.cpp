@@ -7,6 +7,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
 #include "../PioneerQ38MixedRecurrentDispatch.h"
 #include "../PioneerQ38MixedRecurrentCohortLayout.h"
+#include "../PioneerQ38RedistributedTokenControl.h"
 #undef PIONEER_ATTENTION_FREESTANDING
 #include "../PioneerQ38GlobalRecurrentDispatch.h"
 #define PIONEER_ATTENTION_FREESTANDING
@@ -109,6 +110,29 @@ static void FillServiceEvidence(const uint32_t* d, const uint32_t* input,
 
 int main()
 {
+	// The on-card routed/legacy selector is bound to the exact recurrent
+	// frame, not just a mode bit. Reject stale layer/position/bank/request or
+	// token identity before the cohort can interpret the 119-slot table.
+	{
+		uint32_t outer[64] = {}, control[PioneerQ38RedistributedTokenControl::Words] = {};
+		outer[3] = 4; outer[4] = 17; outer[7] = 2; outer[6] = 2021;
+		outer[48] = 5;
+		for (unsigned i = 0; i < 8; ++i) outer[32 + i] = i + 101;
+		control[0] = PioneerQ38RedistributedTokenControl::Magic;
+		control[1] = 1; control[2] = 1; control[3] = outer[3];
+		control[4] = outer[4]; control[5] = outer[7]; control[6] = outer[6] + 5;
+		control[7] = outer[48];
+		for (unsigned i = 0; i < 8; ++i) control[8 + i] = outer[32 + i];
+		assert(PioneerQ38RedistributedTokenControl::Shape(control, outer));
+		control[2] = 0;
+		assert(PioneerQ38RedistributedTokenControl::Shape(control, outer));
+		control[4]++;
+		assert(!PioneerQ38RedistributedTokenControl::Shape(control, outer));
+		control[4] = outer[4]; control[10]++;
+		assert(!PioneerQ38RedistributedTokenControl::Shape(control, outer));
+		control[10] = outer[34]; control[2] = 2;
+		assert(!PioneerQ38RedistributedTokenControl::Shape(control, outer));
+	}
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
 	uint32_t rootDescriptor[64] = {};
 	assert(!PioneerQ38ResidentGdnRedistributedShape(rootDescriptor));

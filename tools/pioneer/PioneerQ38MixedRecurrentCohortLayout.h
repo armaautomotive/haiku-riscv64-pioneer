@@ -28,7 +28,7 @@ static inline bool Shape(const uint32_t* d){
   || d[44]!=ConvWords || d[45]!=GdnWords || d[46]!=PeerBoots || d[47]!=PeerJobs
   || !d[48] || d[48]>=0x7fffffff || d[49]!=Nonces || d[50]!=Counters || d[51]!=1)return false;
  for(unsigned i=32;i<40;i+=2)if(!(d[i]|d[i+1]))return false;
- for(unsigned i=52;i<64;i++)if(d[i])return false;
+ if(d[52]>1)return false;for(unsigned i=53;i<64;i++)if(d[i])return false;
  return true;
 }
 static inline bool ConvShape(const uint32_t* d,const uint32_t* table,unsigned w){

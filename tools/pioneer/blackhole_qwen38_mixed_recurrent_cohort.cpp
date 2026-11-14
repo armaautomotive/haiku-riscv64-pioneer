@@ -14,6 +14,7 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38MixedRecurrentCohortLayout.h"
+#include "PioneerQ38RedistributedTokenControl.h"
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 extern "C" unsigned mixed_recurrent_cohort_wait(unsigned);
 extern "C" unsigned q38_mixed_recurrent_root_conv();
@@ -47,6 +48,7 @@ static const uint32_t* Data(unsigned a){return reinterpret_cast<const uint32_t*>
 static const uint32_t* Frame(){return q38_mixed_recurrent_frame();}
 static const uint32_t* Conv(unsigned w){return Data(L::ConvShadow+w*1536);}
 static const uint32_t* Gdn(unsigned w){return Data(L::GdnShadow+(w-1)*768);}
+static bool GdnActive(unsigned w){return w<119 && (Frame()[52]?!L::GdnEmpty(Gdn(w+1)):w<96);}
 static const uint32_t* Boot(unsigned w){return Data(L::PeerBoots+w*256);}
 static void Fence(){asm volatile("fence" ::: "memory");}
 static unsigned Counter(unsigned i){return i==0?0x208:i==1?0x20c:(i==2 || i==6)?0x210:i==3?0x214:i==4?0x204:i==5?0x220:0x228;}
@@ -278,14 +280,18 @@ static void Capture(){
  Copy(L::ConvShadow,L::Conv,L::ConvWords);Copy(L::GdnShadow,L::Gdn,L::GdnWords);
  for(unsigned w=0;w<120;w++){
   if(!L::ConvShape(d,Conv(w),w))scalar_fault_park();
-  if(w && w<=96 && !L::GdnShape(d,Gdn(w),Conv(w),w))scalar_fault_park();
+  if(w && d[52]){
+   if(!L::GdnEmpty(Gdn(w)) && !L::GdnRedistributedShape(d,Gdn(w),Conv(w),w))scalar_fault_park();
+  }else if(w && w<=96 && !L::GdnShape(d,Gdn(w),Conv(w),w))scalar_fault_park();
  }
- for(unsigned w=97;w<=119;w++)if(!L::GdnEmpty(Gdn(w)))scalar_fault_park();
+ if(d[52]){unsigned active=0;for(unsigned w=1;w<=119;w++)active+=!L::GdnEmpty(Gdn(w));if(active!=96)scalar_fault_park();}
+ else for(unsigned w=97;w<=119;w++)if(!L::GdnEmpty(Gdn(w)))scalar_fault_park();
  Audit(); // complete geometry BEFORE the first peer packet
 }
 static void Job(unsigned w,unsigned operation,uint32_t* j){
  unsigned n=Words(L::Nonces)[w];bool okay=operation==7?Dispatch::Conv(Boot(w),Conv(w+1),n,j):
-  Dispatch::Gdn(Boot(w),Gdn(w+1),Gdn(w+1)+64,Gdn(w+1)+128,n,j);
+  (Frame()[52]?Dispatch::GdnRedistributed(Boot(w),Gdn(w+1),Gdn(w+1)+64,Gdn(w+1)+128,n,j):
+   Dispatch::Gdn(Boot(w),Gdn(w+1),Gdn(w+1)+64,Gdn(w+1)+128,n,j));
  if(!okay)scalar_fault_park();
 }
 static void Finish(uint32_t* t,unsigned w,unsigned operation){
@@ -301,7 +307,9 @@ static void Finish(uint32_t* t,unsigned w,unsigned operation){
   Read(t,w,TT_Q38_GDN_INPUT_SUMMARY,first,32);Read(t,w,TT_Q38_RGDN_SUMMARY,state,32);
   Read(t,w,TT_Q38_GDN_GATED_SUMMARY,gated,32);Read(t,w,TT_Q38_GDN_RENDEZVOUS_CLOCK,clock,16);
   const auto* in=Gdn(w+1);
-  okay=PioneerQ38ResidentGdnServiceProof(p,j,in+128,in,in+64,Boot(w)+16,w+1,M::Peer(w+1),before,p+8,first,state,gated,clock);
+  okay=Frame()[52]?PioneerQ38ResidentGdnRedistributedServiceProof(p,j,in+128,in,in+64,
+   Boot(w)+16,w+1,M::Peer(w+1),before,p+8,first,state,gated,clock):
+   PioneerQ38ResidentGdnServiceProof(p,j,in+128,in,in+64,Boot(w)+16,w+1,M::Peer(w+1),before,p+8,first,state,gated,clock);
  }
  if(!okay)scalar_fault_park();
  for(unsigned i=0;i<8;i++)actual[i]=p[8+i];
@@ -309,6 +317,10 @@ static void Finish(uint32_t* t,unsigned w,unsigned operation){
 }
 static void Release(uint32_t* t,unsigned count){
  for(unsigned w=0;w<count;w++){unsigned next=Words(L::Nonces)[w]+1;Write(t,w,M::Doorbell,&next,1);Words(L::Nonces)[w]=next;}
+}
+static void ReleaseGdn(uint32_t* t){
+ for(unsigned w=0;w<119;w++)if(GdnActive(w)){unsigned next=Words(L::Nonces)[w]+1;
+  Write(t,w,M::Doorbell,&next,1);Words(L::Nonces)[w]=next;}
 }
 static void StageConv(uint32_t* t){
  for(unsigned w=0;w<119;w++)Admit(t,w);
@@ -336,7 +348,7 @@ static void StageGdnAfterClosedConv(uint32_t* t){
 #else
 static void StageGdn(uint32_t* t){
 #endif
- for(unsigned w=0;w<96;w++){
+ for(unsigned w=0;w<119;w++)if(GdnActive(w)){
 #ifndef PIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE
   Wait(t,w,Words(L::Nonces)[w],0,true);BootSeal(t,w);Closed(t,w);
   CounterSeal(t,w,Data(L::Counters+w*32));
@@ -354,12 +366,12 @@ static void StageGdn(uint32_t* t){
   for(unsigned i=0;i<64;i++)Words(L::PeerJobs+w*256)[i]=j[i];
   Write(t,w,TT_Q38_GDN_GATED_READY,zero,16);
  }
- for(unsigned w=0;w<96;w++){
+ for(unsigned w=0;w<119;w++)if(GdnActive(w)){
   uint32_t ready[16];Read(t,w,TT_Q38_GDN_GATED_READY,ready,16);
   for(unsigned i=0;i<16;i++)if(ready[i])scalar_fault_park();
  }
- Audit();Release(t,96);
- for(unsigned w=0;w<96;w++)Finish(t,w,8);
+ Audit();ReleaseGdn(t);
+ for(unsigned w=0;w<119;w++)if(GdnActive(w))Finish(t,w,8);
  Audit();Words(L::Summary)[6]=96;
 }
 }
