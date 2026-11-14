@@ -57,6 +57,28 @@ not a full temporal live-range proof; it identifies the next exact footprint
 reduction gate rather than claiming that the proposed complete state cache
 already fits.
 
+A second offline packing check used the GDN worker's existing 4-KiB chunk
+granularity instead of requiring each 32-KiB state to occupy one contiguous
+range. The same exact snapshot spans leave 274 intact 4-KiB pages per peer.
+Grouping those pages into eight-page state halves yields 34 state buffers per
+peer, or 4,046 of 4,608 halves (132,579,328 bytes / 126.4 MiB), leaving two
+unpaired pages per peer. This gains three state buffers per peer over the
+contiguous-placement bound, but still misses every worker's demand of 38 or
+39 by four or five buffers (562 halves / 18,415,616 bytes total). Reaching
+that demand from the current packing would require at least 30 or 38
+additional 4-KiB pages per peer after using the two residual pages.
+
+Reproducer remains
+`bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`.
+The ASan/UBSan test verifies 4-KiB alignment, that every packed page is within
+the exact untouched ranges, no page is assigned twice, all 119 worker totals,
+and the stated aggregate. This is only a capacity result. The current GDN
+image consumes contiguous local-buffer addresses; no scattered-page import
+table or address-indirect chunk loader has been implemented, and the 4-KiB
+packing cannot be used until that path is built and its cost/live buffers are
+included in a complete multi-phase L1 map. No model run or performance claim
+follows from this result.
+
 Reproduce both checks with:
 
   `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`

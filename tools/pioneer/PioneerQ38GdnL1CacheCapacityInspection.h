@@ -10,8 +10,11 @@
 #include <stdint.h>
 namespace PioneerQ38GdnL1CacheCapacityInspection {
 enum {L1Bytes=0x180000,BlockBytes=64,Blocks=L1Bytes/BlockBytes,
- StateBytes=32768,BlocksPerState=StateBytes/BlockBytes,MaxSlots=64};
+ StateBytes=32768,BlocksPerState=StateBytes/BlockBytes,MaxSlots=64,
+ PageBytes=4096,BlocksPerPage=PageBytes/BlockBytes,PagesPerState=StateBytes/PageBytes,
+ MaxPages=L1Bytes/PageBytes};
 struct Slot {uint32_t address,bytes;};
+struct FragmentedSlot {uint32_t pages[PagesPerState];};
 static inline bool Free(unsigned worker,uint32_t address,uint32_t bytes)
 {
  if(worker==0 || worker>=PioneerQ38TokenPushedL1::Workers || !bytes || (address&63)
@@ -46,6 +49,40 @@ static inline bool Build(unsigned worker,Slot* out,unsigned capacity,unsigned& c
   }
   first=end;
  }
+ return true;
+}
+static inline bool BuildPages(unsigned worker,uint32_t* out,unsigned capacity,unsigned& count)
+{
+ count=0;if(!out || capacity>MaxPages || worker==0 || worker>=PioneerQ38TokenPushedL1::Workers)return false;
+ bool reserved[Blocks]={};
+ for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
+  const auto s=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
+  const uint32_t first=s.address/BlockBytes,end=(s.address+s.words*4+BlockBytes-1)/BlockBytes;
+  if(end>Blocks)return false;
+  for(uint32_t b=first;b<end;b++)reserved[b]=true;
+ }
+ for(unsigned first=0;first<Blocks;){
+  while(first<Blocks && reserved[first])first++;
+  unsigned end=first;while(end<Blocks && !reserved[end])end++;
+  unsigned page=(first+BlocksPerPage-1)&~(BlocksPerPage-1);
+  while(page+BlocksPerPage<=end){
+   if(count>=capacity)return false;
+   out[count]=page*BlockBytes;
+   if(!Free(worker,out[count],PageBytes))return false;
+   count++;page+=BlocksPerPage;
+  }
+  first=end;
+ }
+ return true;
+}
+static inline bool BuildFragmented(unsigned worker,FragmentedSlot* out,unsigned capacity,
+ unsigned& count,unsigned& pageCount)
+{
+ uint32_t pages[MaxPages];pageCount=0;count=0;
+ if(!out || capacity>MaxSlots || !BuildPages(worker,pages,MaxPages,pageCount))return false;
+ count=pageCount/PagesPerState;if(count>capacity)return false;
+ for(unsigned i=0;i<count;i++)for(unsigned j=0;j<PagesPerState;j++)
+  out[i].pages[j]=pages[i*PagesPerState+j];
  return true;
 }
 }

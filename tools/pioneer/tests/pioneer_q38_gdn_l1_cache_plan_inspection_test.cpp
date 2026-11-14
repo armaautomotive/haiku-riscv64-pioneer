@@ -54,8 +54,23 @@ int main()
 		availableSlots+=count;deficit+=P::SlotsForWorker(worker)-count;
 	}
 	assert(availableSlots==3689 && deficit==919);
+	unsigned fragmentedSlots=0,fragmentedPages=0,fragmentedMisses=0;
+	for(unsigned worker=0;worker<P::Workers;worker++){
+		C::FragmentedSlot slots[C::MaxSlots]={};unsigned count=0,pages=0;
+		assert(C::BuildFragmented(worker+1,slots,C::MaxSlots,count,pages));
+		assert(count==34 && pages==274 && count<P::SlotsForWorker(worker));
+		bool pageUsed[C::MaxPages]={};
+		for(unsigned i=0;i<count;i++)for(unsigned j=0;j<C::PagesPerState;j++){
+			const auto address=slots[i].pages[j];assert(!(address&(C::PageBytes-1)) && C::Free(worker+1,address,C::PageBytes));
+			const unsigned page=address/C::PageBytes;assert(page<C::MaxPages && !pageUsed[page]);pageUsed[page]=true;
+		}
+		fragmentedSlots+=count;fragmentedPages+=pages;fragmentedMisses+=P::SlotsForWorker(worker)-count;
+	}
+	assert(fragmentedSlots==4046 && fragmentedPages==32606 && fragmentedMisses==562);
 	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u workers, minimum scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
 	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u peer L1s (%u bytes); %u slots (%u bytes) need scratch relocation; each peer has 31 safe slots vs %u/%u required; NO all-phase live map or performance proof\n",
 		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots,P::MaxSlots);
+	std::printf("PASS 4KiB-scattered state-page packing: %u intact pages yielded %u complete 8-page states across %u peers (%u bytes; %u missing state halves); every peer has 34 states from 274 pages, leaving 2 residual pages; 4/5 more states need 30/38 additional pages; requires GDN chunk-import address indirection, NOT implemented or measured\n",
+		fragmentedPages,fragmentedSlots,P::Workers,fragmentedSlots*P::HalfStateBytes,fragmentedMisses);
 }
