@@ -4,6 +4,7 @@
 #include "PioneerQ38GlobalFeedbackLayout.h"
 #include "PioneerQ38DensePartitionLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRendezvousShape.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedShape.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BlockFfnRecipe.h"
 // DATA transforms from the immutable position-zero canonical templates.
 // No initialization, producer, native lease, state commit or launch grant.
@@ -67,6 +68,36 @@ static __attribute__((noinline)) bool Gdn(uint32_t* d,unsigned layer,unsigned wo
   unsigned swap=s[12];s[12]=s[13];s[13]=swap;
  }
  if(!PioneerQ38GdnRecurrentShape(stage,s) || !PioneerQ38GdnRendezvousShape(g,stage,s))return false;
+ for(unsigned i=0;i<192;i++)d[i]=stage[i];
+ return true;
+}
+// Candidate transform for a GDN record stored at its routed physical-worker
+// index. The legacy Gdn() transform above remains unchanged. This consumes
+// DATA only; it does not authorize a cohort upload or worker release.
+static __attribute__((noinline,unused)) bool GdnRedistributed(uint32_t* d,unsigned layer,
+ unsigned physicalWorker,unsigned position){
+ namespace Route=PioneerQ38GdnTaskPlacement;
+ if(!d || layer>=64 || layer%4==3 || physicalWorker>Route::PhysicalWorkers
+  || !physicalWorker || position>=8192)return false;
+ unsigned ordinal=0,logical=0;
+ if(!Route::LayerOrdinal(layer,ordinal)
+  || !Route::LogicalWorker(layer,physicalWorker,logical))return false;
+ auto* state=d+64;auto* gated=d+128;
+ if(d[5]!=layer || d[7]!=logical || d[40] || d[6]!=Phase(0,layer)+5
+  || state[11] || state[40] || gated[41] || gated[40]
+  || !PioneerQ38GdnRedistributedPairing(d,state)
+  || !PioneerQ38GdnRedistributedRendezvousShape(gated,d,state))return false;
+ uint32_t stage[192];for(unsigned i=0;i<192;i++)stage[i]=d[i];
+ auto* nextState=stage+64;auto* nextGated=stage+128;
+ stage[6]=nextState[8]=nextGated[6]=Phase(position,layer)+5;
+ stage[40]=nextState[40]=nextGated[40]=position;
+ nextState[11]=nextGated[41]=position&1;
+ if(position&1){
+  for(unsigned i=4;i<6;i++){unsigned swap=nextState[i];nextState[i]=nextState[i+2];nextState[i+2]=swap;}
+  unsigned swap=nextState[12];nextState[12]=nextState[13];nextState[13]=swap;
+ }
+ if(!PioneerQ38GdnRedistributedPairing(stage,nextState)
+  || !PioneerQ38GdnRedistributedRendezvousShape(nextGated,stage,nextState))return false;
  for(unsigned i=0;i<192;i++)d[i]=stage[i];
  return true;
 }

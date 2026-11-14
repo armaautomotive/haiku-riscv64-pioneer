@@ -53,7 +53,7 @@ public:
 		unsigned stateSlot,const PioneerQ38GdnIdentity& id,const uint32_t* source,
 		unsigned initialBank,unsigned initialAddress){
 		if(attempted)return false;attempted=true;
-		if(selected>=64 || selected%4==3 || selectedBank>=7 || stateSlot>=2 || !source
+		if(selected>=64 || selected%4==3 || selectedBank>=7 || stateSlot!=0 || !source
 			|| !base.Build(c,selected,selectedBank,id,source,initialBank,initialAddress))return false;
 		canonical=&c;layer=selected;bank=selectedBank;slot=stateSlot;identity=id;
 		// TokenMetadata::Gdn consumes the same initial GDN phase as the

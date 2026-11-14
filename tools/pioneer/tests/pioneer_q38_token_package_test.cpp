@@ -21,7 +21,7 @@ int main(){
   (void)M::Conv(data,0,0,0,0);(void)M::Dense(data,3,0,0);}
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  std::array<uint32_t,1920> sources;for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
- const PioneerQ38GdnIdentity id={1,2,3,4};unsigned packages=0,words=0,jobs=0,refusals=0,redistributedPackages=0;
+ const PioneerQ38GdnIdentity id={1,2,3,4};unsigned packages=0,words=0,jobs=0,refusals=0,redistributedPackages=0,routedTransforms=0;
  for(unsigned bank=0;bank<7;bank++){
   unsigned workspace=canonical->Base+canonical->Workspace(bank)->offset;
   for(unsigned layer=0;layer<64;layer++){
@@ -37,6 +37,10 @@ int main(){
     namespace RL=PioneerQ38RedistributedTokenLayout;
     auto routed=std::make_unique<PioneerQ38GlobalRedistributedTokenPackage>();
     const unsigned slot=0;
+    if(layer==0){
+     auto nonzeroSlot=std::make_unique<PioneerQ38GlobalRedistributedTokenPackage>();
+     assert(!nonzeroSlot->Build(*canonical,layer,bank,1,id,sources.data(),bank,workspace+0x600000));
+    }
     assert(routed->Build(*canonical,layer,bank,slot,id,sources.data(),bank,workspace+0x600000));
     assert(routed->Bytes()==C::Stride && routed->Matches(*canonical));
     std::array<uint8_t,64> prefixA={},prefixB={};
@@ -78,6 +82,23 @@ int main(){
      const bool candidateReady=M::Gdn(candidate.data(),layer,logical,0);
      assert(originalReady && (candidateReady==(worker.physicalWorker==logical+1)));
      if(candidateReady)assert(original==candidate);
+     const unsigned positions[]={0,1,32,8191};
+     for(unsigned position:positions){
+      auto routedRecord=candidate;
+      assert(M::GdnRedistributed(routedRecord.data(),layer,worker.physicalWorker,position));
+      if(!position)assert(routedRecord==candidate);
+      assert(routedRecord[6]==M::Phase(position,layer)+5 && routedRecord[40]==position
+       && routedRecord[64+8]==M::Phase(position,layer)+5 && routedRecord[64+40]==position
+       && routedRecord[64+11]==(position&1) && routedRecord[128+6]==M::Phase(position,layer)+5
+       && routedRecord[128+40]==position && routedRecord[128+41]==(position&1));
+      routedTransforms++;
+      Route::Route inverse={};unsigned mapped=~0U;
+      assert(Route::LogicalWorker(layer,worker.physicalWorker,mapped) && mapped==logical
+       && Route::Map(ordinal,mapped,inverse) && inverse.physicalWorker==worker.physicalWorker);
+     }
+     auto untouched=candidate;
+     assert(!M::GdnRedistributed(untouched.data(),layer,worker.physicalWorker+1,0)
+      && untouched==candidate);
     }
     if(layer==0){
      uint32_t* changed=const_cast<uint32_t*>(routed->GdnWorker(1));changed[128+15]^=1;
@@ -131,5 +152,6 @@ int main(){
    }
   }
  }
- printf("PASS persistent token DATA %u complete512KiB packages/%u words exact including canonical spans+zero slack/self+canonical-alias refusals;redistributed GDN token packages%u/slot-aware tables in prior slack/preserved state spans;7banks/%u position-aware vocab jobs EXACT vs independently rebuilt output plans/%u refusals;NO instructions/state commit/source/native/physical/Work/TPS grant\n",packages,words,redistributedPackages,jobs,refusals);
+ assert(routedTransforms==Route::RecurrentLayers*Route::LogicalWorkers*4);
+ printf("PASS persistent token DATA %u complete512KiB packages/%u words exact including canonical spans+zero slack/self+canonical-alias refusals;redistributed GDN token packages%u/slot-aware tables in prior slack/preserved state spans/%u physical-indexed transforms validated at four positions;7banks/%u position-aware vocab jobs EXACT vs independently rebuilt output plans/%u refusals;NO instructions/state commit/source/native/physical/Work/TPS grant\n",packages,words,redistributedPackages,routedTransforms,jobs,refusals);
 }
