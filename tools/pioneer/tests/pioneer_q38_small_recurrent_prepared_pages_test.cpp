@@ -4,6 +4,8 @@
 #include "pioneer_q38_recurrent_q8_prepared_pages_test.cpp"
 #include "../PioneerQ38HybridSmallRecurrentPreparedPages.h"
 #include "../PioneerQ38SmallRecurrentUploadPlan.h"
+#define B_DEVICE_OP_CODES_END 10000
+#include "../PioneerQ38SmallRecurrentSpanUpload.h"
 
 struct FakeSmallBfp8:FakeBfp8 {
  unsigned failPage=UINT32_MAX;
@@ -15,6 +17,23 @@ struct FakeSmallBfp8:FakeBfp8 {
 };
 using SmallPages=PioneerQ38HybridSmallRecurrentPreparedPages<FakeSource,FakePlan,FakeSmallBfp8,RecurrentPages>;
 using SmallPlan=PioneerQ38HybridSmallRecurrentBfp8Plan;
+// The actual prepared-page chain feeds the actual span transport. This sink
+// returns synthetic replies and stops before any physical device is opened.
+struct PreparedSink {
+ FakePlan& packed;unsigned mutatePart,mode,calls=0,nonzero=0;
+ bool Call(int fd,unsigned op,void* data,size_t size){
+  assert(fd==7 && op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD && size==sizeof(tt_q38_span_upload));
+  auto& p=*static_cast<tt_q38_span_upload*>(data);
+  assert(PioneerQ38SpanPublicShape(p.version,p.bank,p.offset,p.bytes,p.reserved));calls++;
+  const auto* bytes=reinterpret_cast<const uint8_t*>(p.data);
+  for(unsigned i=0;i<p.bytes;i++)if(bytes[i]){nonzero++;break;}
+  if(mode==0 && calls==3)return false;
+  auto& r=p.result;r.version=1;r.state=TT_RUNTIME_PASSED;r.bytes=p.bytes;r.pages=p.bytes/4096;
+  r.nonce=calls;r.started=r.completed=r.held=1;
+  if(mode==1 && calls==2)packed.parts[mutatePart].tensor++;
+  return true;
+ }
+};
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  FakeSource source;FakePlan packed;packed.source=&source;std::map<std::pair<unsigned,unsigned>,unsigned> ids;
@@ -59,6 +78,19 @@ int main(){
  std::vector<uint8_t> uploadBytes(256*4096,0);unsigned f=0,b=0,n=0;uint64_t address=0;
  assert(staged.Stage(uploadBytes.data(),uploadBytes.size(),f,b,address,n,error) && n && !(n&4095));
  assert(staged.Acknowledge(true));
+ {
+  PreparedSink sink{packed,raw,0};PioneerQ38SmallRecurrentSpanUpload<SmallPages,PreparedSink> upload;
+  assert(!upload.Run(pages,*canonical,sink,7,error) && upload.Failed() && upload.DeviceTouched()
+   && !upload.CompleteHeld() && upload.UploadedSpans()==2 && sink.calls==3 && sink.nonzero==3);
+  assert(!upload.Run(pages,*canonical,sink,7,error) && sink.calls==3);
+ }
+ {
+  PreparedSink sink{packed,raw,1};PioneerQ38SmallRecurrentSpanUpload<SmallPages,PreparedSink> upload;
+  assert(!upload.Run(pages,*canonical,sink,7,error) && upload.Failed() && upload.DeviceTouched()
+   && !upload.CompleteHeld() && upload.UploadedSpans()==1 && sink.calls==2);
+  packed.parts[raw].tensor--;assert(pages.AllVerified());
+  assert(!upload.Run(pages,*canonical,sink,7,error) && sink.calls==2);
+ }
  packed.parts[raw].tensor++;assert(!pages.AllVerified());packed.parts[raw].tensor--;assert(pages.AllVerified());
  SmallPages failed;assert(failed.Bind(source,packed,*canonical,smallEight,recurrent,sha,error));
  smallEight.failPage=1;out.fill(0x71);const auto untouched=out;
@@ -67,5 +99,5 @@ int main(){
  SmallPages revoked;assert(revoked.Bind(source,packed,*canonical,smallEight,recurrent,sha,error));
  permit=false;assert(!revoked.ReadPage(small,0,out.data(),out.size(),error) && out==untouched && !revoked.Ready());
  permit=true;assert(!revoked.Ready());
- puts("PASS 96 padded recurrent cache routes, parent forwarding and fail-closed coverage; SYNTHETIC NO UPLOAD/DEVICE/SPEED");
+ puts("PASS prepared-page chain and span transport with source-mutation and lost-call refusals; SYNTHETIC NO DEVICE/MODEL/SPEED");
 }

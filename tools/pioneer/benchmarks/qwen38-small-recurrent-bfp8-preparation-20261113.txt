@@ -916,3 +916,12 @@ were 28.3 and 28.6 seconds on this Mac, including compilation and using
 synthetic data and sanitizers. These single-machine timings are not real
 model-load, PCIe or inference benchmarks, and this inspection path is not
 yet a loadable driver or the installed Assistant.
+
+Prepared-source transport integration: the actual chained prepared-page
+types now instantiate the actual recurrent span-upload transport in a
+synthetic-source test, rather than substituting the transport's page
+provider. The test admits two spans and refuses a lost third call, and in a
+separate run detects a source-plan mutation during the second reply before
+acknowledging that span; neither failure permits retry. This is bounded
+simulated transport using fake source bytes and fake replies, not a complete
+upload, real-model authentication, physical-card execution or speed result.
