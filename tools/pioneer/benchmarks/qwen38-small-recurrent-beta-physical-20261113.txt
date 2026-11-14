@@ -1,0 +1,24 @@
+Small recurrent beta BFP8 band on P100A, 2026-11-13
+
+The guarded tag150 diagnostic ran three fixed samples of the authenticated
+Qwen3.8-27B layer-0 ssm_beta.weight: rows 0-31, rows 32-47 with 16 padded
+zeros, and a repeat of rows 0-31. It used synthetic inputs and CPU-side
+reference validation; this is a diagnostic, not the no-validation Work mode.
+
+All three sessions completed explicit clean END. Both runs of each band
+matched the independently prepared integer reference: 192 returned words,
+including zero padded outputs. The parent exited 0 and its private state was
+STABLE_RESTORED_EXACT192; client exit was 0 and stderr empty. The diagnostic
+log SHA-256 is 8a0a2d3cfcd1ec99af35c8095ce5f26bf98b20e5455b29249d03017a70c23264;
+the preflight log SHA-256 is ba4abd0f4ce80f819d6d226710fa4b11e6391607669c26e77be6abf09d3a2aea.
+The raw logs and learned data remain private on the Pioneer.
+
+An independent postflight confirmed the original stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012 generation46, quiesced0, cold0 and active_owner0.
+Haiku reported 64 CPUs and 137034936320 bytes maximum RAM.
+
+This establishes only sampled layer-0 beta-band arithmetic and clean
+diagnostic closure. It is not a full recurrent layer, generated answer,
+whole-model quality qualification or inference-speed measurement. The
+20-token/sec goal remains unmet.
