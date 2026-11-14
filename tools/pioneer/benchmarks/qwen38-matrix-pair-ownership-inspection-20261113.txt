@@ -15,6 +15,14 @@ checks ten timeout, status, reset, write, mapping and source-failure cases.
 Explicit role tests reject kernel, real driver, Work and validation builds.
 The learned QKV export identity is checked without publishing its bytes.
 
+Follow-up: the same two-core owner has also run the pinned real-QKV band
+instruction image twice in the host RV32/matrix instruction simulator, with
+two distinct learned-weight samples and separate L1 images. The simulated
+device waits until both are released before serial host execution; all 128
+returned words match the existing expected results, and both L1 images and
+shared TLBs are restored. ASan/UBSan passed. This does not emulate hardware
+timing, overlapping device execution, PCIe windows or reset races.
+
 This is NOT a loadable driver, physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
 real overlap and completion behavior must be established on hardware after
