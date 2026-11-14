@@ -1,0 +1,20 @@
+Real QKV in the combined recurrent-layer instruction simulation
+
+The isolated host fixture consumed the pinned, authenticated Qwen3.8-27B
+layer-0 QKV BFP8 export (tensor 5, 5120 inputs, 10240 rows). Its SHA-256:
+6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a.
+The export was checked before and after the run and remains private.
+
+The actual simulated ROOT progressed through the real-weight alpha and beta
+bands, synthetic gate, and QKV on the same 119 simulated worker histories.
+All 10240 QKV rows matched an isolated double-precision observer for the
+actual synthetic activation input; the test modeled 819200 QKV matrix
+instructions and reached the pending first Conv doorbell. The observer
+unpacks the same BFP8 representation but independently computes the dot
+products. The fixture and observer are excluded from production Work mode.
+
+This is a host instruction simulation with synthetic activation and other
+synthetic weights. It does not execute the physical card or a complete layer,
+generate model output, establish quantization quality, or measure throughput.
+The real-card QKV band test is recorded separately; 20 tokens/sec remains
+unmet. No Assistant, installed driver, or hardware state was changed.

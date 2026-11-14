@@ -94,6 +94,12 @@
 #endif
 extern "C" bool Q38ModelRecurrentExpected(const char*,const float*,double*);
 #endif
+#ifdef PIONEER_Q38_MODEL_QKV_OBSERVER_TEST
+#if PIONEER_Q38_MODEL_QKV_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST) || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE)
+#error Model QKV observer requires the isolated recurrent QKV cohort fixture
+#endif
+extern "C" bool Q38ModelQkvExpected(const char*,const float*,double*);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 extern "C" bool Q38SyntheticGdnExpected(const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
 extern "C" bool Q38SyntheticGdnGatedExpected(const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
@@ -548,6 +554,10 @@ static void CheckNativeExecution(Fixture& f){
   assert(cpu.layerHeld && cpu.recurrentQkvDoorbells==119 && io.Core(0).pending && !state->Unsafe());
 #endif
   bool qkvRows[10240]={};unsigned qkvMatrices=0;
+#ifdef PIONEER_Q38_MODEL_QKV_OBSERVER_TEST
+  double qkvExpected[10240];
+  assert(Q38ModelQkvExpected(std::getenv("Q38_TEST_MODEL_QKV"),qkvObservedInput,qkvExpected));
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONV_COHORT_FIXTURE
   float qkvObservedOutput[10240]={};
 #endif
@@ -556,9 +566,14 @@ static void CheckNativeExecution(Fixture& f){
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*2560);qkvMatrices+=s.matrixInstructions;
    for(unsigned row=0;row<bands*32;row++){
     const unsigned global=first+row;assert(global<10240 && !qkvRows[global]);qkvRows[global]=true;
-    double expected=0;for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+    double expected=0;
+#ifdef PIONEER_Q38_MODEL_QKV_OBSERVER_TEST
+    expected=qkvExpected[global];
+#else
+    for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
      expected+=double(qkvObservedInput[tile*32+col])*double(int((global*3+tile*7+col*5+3)%17)-8)*0.0625;
     }
+#endif
     const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
     if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
      fprintf(stderr,"QKV_MISMATCH worker=%u row=%u global=%u first=%u bands=%u actual=%g expected=%g\n",w+1,row,global,first,bands,double(actual),expected);
@@ -569,7 +584,7 @@ static void CheckNativeExecution(Fixture& f){
    }
   }
   for(bool seen:qkvRows)assert(seen);
-  printf("PASS full recurrent role6 QKV matrix/119 workers/10240 independent synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",qkvMatrices);
+  printf("PASS full recurrent role6 QKV matrix/119 workers/10240 independently checked rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",qkvMatrices);
 #ifndef PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE
   assert(cpu.dispatchWorker==1 && io.Raw(1,W::Job+8)==7 && io.Raw(1,W::Job+4)==6
    && cpu.recurrentProducerDoorbells==20);
