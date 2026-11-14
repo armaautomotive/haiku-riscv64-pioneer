@@ -154,7 +154,7 @@ struct Runtime {
    GenerateScope& operator=(const GenerateScope&)=delete;
   } computeScope(generating);
   llama_memory_clear(llama_get_memory(context),true); // CPU recurrent/KV reset,NOT weights/re-upload
-  unsigned generated=0,warmSamples=0; uint64_t warmPairs=0; double warm=0,began=Now(); llama_token token=0;
+  unsigned generated=0,warmSamples=0; double warm=0,began=Now(); llama_token token=0;
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
   PioneerQ38WorkTiming profile;
 #endif
@@ -180,9 +180,7 @@ struct Runtime {
    if (position>=count) { warm+=Now()-start; warmSamples++;
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
     const uint64_t pairsAfter=after.pairedBatches;
-    if(pairsAfter<pairsBefore || warmPairs>UINT64_MAX-(pairsAfter-pairsBefore)
-     || !profile.Add(callsBefore,session.runIoctlCalls,nanosBefore,session.runNanos))return false;
-    warmPairs+=pairsAfter-pairsBefore;
+    if(!profile.Add(callsBefore,session.runIoctlCalls,nanosBefore,session.runNanos,pairsBefore,pairsAfter))return false;
 #endif
    }
    if (!PollCancel()) return false;
@@ -199,7 +197,7 @@ struct Runtime {
   }
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
   if(profile.samples!=warmSamples)return false;
-  char timing[256];snprintf(timing,sizeof(timing),"WORK_WARM_PROFILE samples=%u calls=%llu paired_batches=%llu ioctl_seconds=%.6f decode_seconds=%.6f; HOST WALL TIME NOT CARD-ONLY.",profile.samples,(unsigned long long)profile.calls,(unsigned long long)warmPairs,double(profile.nanos)*1e-9,warm);
+  char timing[256];snprintf(timing,sizeof(timing),"WORK_WARM_PROFILE samples=%u calls=%llu paired_batches=%llu ioctl_seconds=%.6f decode_seconds=%.6f; HOST WALL TIME NOT CARD-ONLY.",profile.samples,(unsigned long long)profile.calls,(unsigned long long)profile.pairedBatches,double(profile.nanos)*1e-9,warm);
   if(!Emit(A::Progress,UINT32_MAX,timing))return false;
 #endif
   char status[320]; snprintf(status,sizeof(status),"P100A Qwen27B Work:%u output tokens,%.1fs; warm generation%u samples/%.3fs (%.3f tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.",generated,Now()-began,warmSamples,warm,warm>0?warmSamples/warm:0);
