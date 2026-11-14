@@ -11,11 +11,15 @@ uint64_t epoch=0;
 bool configured=false,claimed=false;
 bool recognized[851]={};
 ggml_backend_t active=nullptr;
+bool gdnTokenActive=false;
+unsigned gdnTokenOps=0,gdnTokenCopies=0;
 bool Ready() {
 	return configured && !stats.failed && !stats.finished && dispatch.model->Epoch()==epoch
 		&& dispatch.model->Stable() && dispatch.ready(dispatch.owner);
 }
 void Abort() {
+	if (gdnTokenActive && configured && dispatch.gdn_abort_token) dispatch.gdn_abort_token(dispatch.owner);
+	gdnTokenActive=false;gdnTokenOps=gdnTokenCopies=0;
 	if (!stats.failed && configured) dispatch.abort(dispatch.owner);
 	stats.failed=true; stats.finished=true; stats.clean=false;
 }
@@ -27,11 +31,14 @@ bool Contract(const ggml_tensor* op,unsigned* index=nullptr) {
 	if (View(op->op)) return true;
 	if (op->op==GGML_OP_GATED_DELTA_NET) {
 		PioneerQ38GgmlGdnContract gdn;
-		return dispatch.gdn && dispatch.gdn_state_copy && PioneerQ38GgmlGdnContract::Describe(op,gdn);
+		return dispatch.gdn && dispatch.gdn_state_copy && dispatch.gdn_begin_token
+			&& dispatch.gdn_commit_token && dispatch.gdn_abort_token
+			&& PioneerQ38GgmlGdnContract::Describe(op,gdn);
 	}
 	if (op->op==GGML_OP_CPY) {
 		PioneerQ38GgmlGdnContract gdn;
-		return dispatch.gdn && dispatch.gdn_state_copy
+		return dispatch.gdn && dispatch.gdn_state_copy && dispatch.gdn_begin_token
+			&& dispatch.gdn_commit_token && dispatch.gdn_abort_token
 			&& PioneerQ38GgmlGdnContract::Describe(op->src[0] ? op->src[0]->view_src : nullptr,gdn)
 			&& gdn.StateCopy(op);
 	}
@@ -104,14 +111,22 @@ ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (op->op==GGML_OP_GATED_DELTA_NET) {
 			bool inputsReady=true;
 			for(unsigned src=0;src<6;src++) inputsReady=inputsReady && op->src[src] && op->src[src]->data;
-			if(!inputsReady) { Abort(); return GGML_STATUS_FAILED; }
+			if(!inputsReady || gdnTokenOps>=PioneerQ38GgmlGdnContract::GdnLayers
+				|| (!gdnTokenActive && !dispatch.gdn_begin_token(dispatch.owner))) { Abort(); return GGML_STATUS_FAILED; }
+			gdnTokenActive=true;
 			if (!dispatch.gdn(dispatch.owner,op) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
-			stats.gdnOps++;
+			gdnTokenOps++;stats.gdnOps++;
 			continue;
 		}
 		if (op->op==GGML_OP_CPY) {
+			if (!gdnTokenActive || gdnTokenCopies>=gdnTokenOps) { Abort(); return GGML_STATUS_FAILED; }
 			if (!dispatch.gdn_state_copy(dispatch.owner,op) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
-			stats.gdnStateCopies++;
+			gdnTokenCopies++;stats.gdnStateCopies++;
+			if(gdnTokenOps==PioneerQ38GgmlGdnContract::GdnLayers
+				&& gdnTokenCopies==PioneerQ38GgmlGdnContract::GdnLayers) {
+				if(!dispatch.gdn_commit_token(dispatch.owner) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
+				gdnTokenActive=false;gdnTokenOps=gdnTokenCopies=0;stats.gdnTokensCommitted++;
+			}
 			continue;
 		}
 		if (!op->src[0]->data || !op->src[1]->data) { Abort(); return GGML_STATUS_FAILED; }
@@ -185,6 +200,7 @@ ggml_backend_reg_t PioneerQ38GgmlReg() {
 bool PioneerQ38GgmlFinish() {
 	if (stats.finished) return stats.clean && !stats.failed;
 	if (!configured) return false;
+	if(gdnTokenActive || gdnTokenOps || gdnTokenCopies) { Abort(); return false; }
 	if (!Ready() || !dispatch.finish(dispatch.owner)) { Abort(); return false; }
 	stats.finished=true; stats.clean=true; return true;
 }

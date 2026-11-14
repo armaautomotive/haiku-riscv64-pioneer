@@ -25,6 +25,7 @@ ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror "$@" \
 for fault in 0 1 2 3 4; do ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$fault"; done
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" gdn
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" gdn-fault
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" gdn-partial
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror "$@" -DPIONEER_Q38_WORK_BATCH_CLIENT=1 \
  "$directory/../PioneerQ38GgmlBackend.cpp" "$directory/pioneer_q38_ggml_backend_test.cpp" \
  "$temporary"/*.o -o "$temporary/pair-test"

@@ -6,7 +6,7 @@
 #include "ggml-backend-impl.h"
 #include <vector>
 struct Fake {
-	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,pairCalls=0,gdnCalls=0,gdnCopies=0,ends=0,aborts=0;
+	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,pairCalls=0,gdnCalls=0,gdnCopies=0,gdnBegins=0,gdnCommits=0,gdnAborts=0,ends=0,aborts=0;
 	static bool Ready(void* p) { return static_cast<Fake*>(p)->valid; }
 	static bool Multiply(void* p,unsigned tensor,const float* input,unsigned k,float* out,unsigned n) {
 		auto& f=*static_cast<Fake*>(p); f.calls++;
@@ -40,14 +40,18 @@ struct Fake {
 		PioneerQ38GgmlGdnContract c; assert(PioneerQ38GgmlGdnContract::Describe(copy->src[0]->view_src,c) && c.StateCopy(copy));
 		return !f.fail; // deliberately no host memcpy: provider owns resident state
 	}
+	static bool GdnBegin(void* p) { static_cast<Fake*>(p)->gdnBegins++; return true; }
+	static bool GdnCommit(void* p) { static_cast<Fake*>(p)->gdnCommits++; return true; }
+	static void GdnAbort(void* p) { static_cast<Fake*>(p)->gdnAborts++; }
 };
 int main(int argc,char** argv)
 {
 	assert(argc==2);
-	if(strcmp(argv[1],"gdn")==0 || strcmp(argv[1],"gdn-fault")==0) {
+	if(strcmp(argv[1],"gdn")==0 || strcmp(argv[1],"gdn-fault")==0 || strcmp(argv[1],"gdn-partial")==0) {
 		Fixture fixture; Fake fake; assert(fake.model.Open(fixture.file)); fake.fail=strcmp(argv[1],"gdn-fault")==0;
 		PioneerQ38GgmlDispatch d={&fake,&fake.model,Fake::Ready,Fake::Multiply,Fake::Finish,Fake::Abort};
-		d.gdn=Fake::Gdn; d.gdn_state_copy=Fake::GdnStateCopy;
+		d.gdn=Fake::Gdn; d.gdn_state_copy=Fake::GdnStateCopy; d.gdn_begin_token=Fake::GdnBegin;
+		d.gdn_commit_token=Fake::GdnCommit; d.gdn_abort_token=Fake::GdnAbort;
 		auto reg=PioneerQ38GgmlReg(); auto dev=ggml_backend_reg_dev_get(reg,0); assert(dev);
 		assert(PioneerQ38GgmlConfigure(d)); auto backend=ggml_backend_dev_init(dev,nullptr); assert(backend);
 		ggml_init_params params={16*1024*1024,nullptr,true}; auto ctx=ggml_init(params); assert(ctx);
@@ -57,26 +61,36 @@ int main(int argc,char** argv)
 		auto v=ggml_view_4d(ctx,qkv,128,48,1,1,512,40960,40960,16384);
 		auto g=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
 		auto beta=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
-		auto pool=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,2*128*128*48);
-		auto state=ggml_view_4d(ctx,pool,128,128,48,1,512,65536,3145728,3145728);
-		auto op=ggml_gated_delta_net(ctx,q,k,v,g,beta,state,1);
-		auto next=ggml_view_4d(ctx,op,128,128,48,1,512,65536,3145728,24576);
-		auto copy=ggml_cpy(ctx,next,state);
-		std::vector<float> qData(128*16),kData(128*16),qkvData(10240),gData(48),betaData(48),poolData(2*128*128*48);
+		auto state=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1);
+		std::vector<float> qData(128*16),kData(128*16),qkvData(10240),gData(48),betaData(48),stateData(128*128*48);
 		std::vector<float> outputData(128*48+128*128*48),copyData(128*128*48);
 		q->data=qData.data(); k->data=kData.data(); qkv->data=qkvData.data(); v->data=qkvData.data()+4096;
-		g->data=gData.data(); beta->data=betaData.data(); pool->data=poolData.data(); state->data=poolData.data()+state->view_offs/sizeof(float);
-		op->data=outputData.data(); copy->data=copyData.data();
-		op->flags|=GGML_TENSOR_FLAG_COMPUTE; copy->flags|=GGML_TENSOR_FLAG_COMPUTE;
-		auto graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,copy);
+		g->data=gData.data(); beta->data=betaData.data(); state->data=stateData.data();
+		const unsigned layers=strcmp(argv[1],"gdn-partial")==0?1:PioneerQ38GgmlGdnContract::GdnLayers;
+		auto* currentState=state;
+		for(unsigned layer=0;layer<layers;layer++) {
+			auto* op=ggml_gated_delta_net(ctx,q,k,v,g,beta,currentState,1);
+			auto* next=ggml_view_4d(ctx,op,128,128,48,1,512,65536,3145728,24576);
+			auto* destination=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1); destination->data=stateData.data();
+			auto* copy=ggml_cpy(ctx,next,destination);
+			op->data=outputData.data(); copy->data=copyData.data();
+			op->flags|=GGML_TENSOR_FLAG_COMPUTE; copy->flags|=GGML_TENSOR_FLAG_COMPUTE; currentState=copy;
+		}
+		auto graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,currentState);
 		const bool okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
-		assert(okay==!fake.fail && fake.gdnCalls==1 && fake.gdnCopies==unsigned(!fake.fail));
-		assert(PioneerQ38GgmlSnapshot().gdnOps==unsigned(!fake.fail)
-			&& PioneerQ38GgmlSnapshot().gdnStateCopies==unsigned(!fake.fail));
-		if(fake.fail) assert(PioneerQ38GgmlSnapshot().failed && fake.aborts==1 && !PioneerQ38GgmlFinish());
-		else { assert(outputData[0]==123.0f && PioneerQ38GgmlFinish() && fake.ends==1); }
+		assert(okay==!fake.fail && fake.gdnCalls==(fake.fail?1:layers) && fake.gdnCopies==(fake.fail?0:layers));
+		const bool complete=!fake.fail && layers==PioneerQ38GgmlGdnContract::GdnLayers;
+		assert(fake.gdnBegins==1 && fake.gdnCommits==unsigned(complete));
+		assert(PioneerQ38GgmlSnapshot().gdnOps==(fake.fail?0:layers)
+			&& PioneerQ38GgmlSnapshot().gdnStateCopies==(fake.fail?0:layers)
+			&& PioneerQ38GgmlSnapshot().gdnTokensCommitted==fake.gdnCommits);
+		if(fake.fail) assert(PioneerQ38GgmlSnapshot().failed && fake.aborts==1 && fake.gdnAborts==1 && !PioneerQ38GgmlFinish());
+		else if(!complete) assert(!PioneerQ38GgmlFinish() && fake.gdnAborts==1 && fake.aborts==1);
+		else { assert(outputData[0]==123.0f && PioneerQ38GgmlFinish() && fake.ends==1 && !fake.gdnAborts); }
 		ggml_backend_free(backend); ggml_free(ctx);
-		puts(fake.fail?"PASS optional GDN provider failure aborts backend session;SYNTHETIC DISPATCH,NO DEVICE":"PASS optional GDN+resident-state-CPY provider owns dispatch;SYNTHETIC MARKER ONLY,NO GDN MATH/DEVICE/RESIDENCY CLAIM");
+		puts(fake.fail?"PASS GDN provider failure aborts token and backend session;SYNTHETIC DISPATCH,NO DEVICE":
+			!complete?"PASS partial GDN graph cannot commit recurrent token;SYNTHETIC DISPATCH,NO DEVICE":
+			"PASS 48 GDN+resident-state-CPY pairs commit once;SYNTHETIC MARKER ONLY,NO GDN MATH/DEVICE/RESIDENCY CLAIM");
 		return 0;
 	}
 	if(strcmp(argv[1],"pair")==0 || strcmp(argv[1],"pair-fault")==0 || strcmp(argv[1],"pair-qkv")==0

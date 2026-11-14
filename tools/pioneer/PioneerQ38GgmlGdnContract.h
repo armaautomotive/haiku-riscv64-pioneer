@@ -7,7 +7,7 @@
 // matrix backend must NOT claim GDN until native resident ownership AND
 // device-buffer/view/CPY routing are implemented. No tensor data reads.
 struct PioneerQ38GgmlGdnContract {
- enum { Keys=128,KeyHeads=16,ValueHeads=48,OutputWords=128*48,StateWords=128*128*48,
+	 enum { Keys=128,KeyHeads=16,ValueHeads=48,GdnLayers=48,OutputWords=128*48,StateWords=128*128*48,
         OutputBytes=OutputWords*4,StateBytes=StateWords*4 };
  const ggml_tensor* node=nullptr;
  static bool Shape(const ggml_tensor* t,int64_t a,int64_t b,int64_t c,int64_t d) {

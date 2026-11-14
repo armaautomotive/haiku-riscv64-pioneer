@@ -21,10 +21,13 @@ struct PioneerQ38GgmlDispatch {
 	// exact output-state CPY without silently falling back to host memcpy.
 	bool (*gdn)(void*,const ggml_tensor*)=nullptr;
 	bool (*gdn_state_copy)(void*,const ggml_tensor*)=nullptr;
+	bool (*gdn_begin_token)(void*)=nullptr;
+	bool (*gdn_commit_token)(void*)=nullptr;
+	void (*gdn_abort_token)(void*)=nullptr;
 };
 bool PioneerQ38GgmlConfigure(const PioneerQ38GgmlDispatch& dispatch);
 ggml_backend_reg_t PioneerQ38GgmlReg();
 bool PioneerQ38GgmlFinish();
-struct PioneerQ38GgmlStats { uint64_t projections=0,pairedBatches=0,gdnOps=0,gdnStateCopies=0; unsigned recognizedWeights=0; bool failed=false,finished=false,clean=false; };
+struct PioneerQ38GgmlStats { uint64_t projections=0,pairedBatches=0,gdnOps=0,gdnStateCopies=0,gdnTokensCommitted=0; unsigned recognizedWeights=0; bool failed=false,finished=false,clean=false; };
 PioneerQ38GgmlStats PioneerQ38GgmlSnapshot();
 #endif
