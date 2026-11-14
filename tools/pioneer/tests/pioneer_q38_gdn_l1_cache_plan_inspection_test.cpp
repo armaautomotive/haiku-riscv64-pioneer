@@ -106,10 +106,45 @@ int main()
 	}
 	assert(runtimeResident==fragmentedSlots && runtimeSpilled==fragmentedMisses);
 	assert(runtimeState.CommitToken(identity,0));
+	using R=PioneerQ38GdnL1RedistributedPlanInspection;
+	C::FragmentedSlot redistributedPlacement[R::Workers][C::MaxSlots]={};
+	unsigned redistributedCount[R::Workers]={},redistributedPages=0;
+	bool peerSeen[1024]={};
+	for(unsigned worker=0;worker<R::Workers;worker++){
+		unsigned pages=0;assert(C::BuildFragmented(worker+1,redistributedPlacement[worker],C::MaxSlots,redistributedCount[worker],pages));
+		assert(redistributedCount[worker]==34 && pages==274);redistributedPages+=pages;
+		unsigned peer=PioneerQ38MixedWorkerLayout::Peer(worker+1);assert(peer<1024 && !peerSeen[peer]);peerSeen[peer]=true;
+	}
+	unsigned redistributedLoads[R::Workers]={};bool redistributedSlots[R::Workers][C::MaxSlots]={};
+	unsigned redistributedResident=0,redistributedSpill=0;
+	for(unsigned layer=0;layer<R::RecurrentLayers;layer++){
+		bool activePeer[R::Workers]={};
+		for(unsigned head=0;head<R::HeadsPerLayer;head++)for(unsigned half=0;half<2;half++){
+			R::Slot slot={};assert(R::Map(layer,head,half,slot));
+			const unsigned worker=slot.physicalWorker-1;assert(worker<R::Workers && !activePeer[worker]);activePeer[worker]=true;
+			assert(slot.logicalWorker==head*2+half && slot.bytes==P::HalfStateBytes);
+			assert(slot.peer==PioneerQ38MixedWorkerLayout::Peer(slot.physicalWorker));
+			assert(slot.index==redistributedLoads[worker]++ && slot.index<R::SlotsForPhysical(slot.physicalWorker));
+			assert(!redistributedSlots[worker][slot.index]);redistributedSlots[worker][slot.index]=true;
+			if(slot.index<redistributedCount[worker]){
+				for(unsigned page=0;page<C::PagesPerState;page++)
+					assert(C::Free(slot.physicalWorker,redistributedPlacement[worker][slot.index].pages[page],C::PageBytes));
+				redistributedResident++;
+			}else redistributedSpill++;
+		}
+	}
+	for(unsigned worker=0;worker<R::Workers;worker++){
+		assert(redistributedLoads[worker]==R::SlotsForPhysical(worker+1));
+		assert(redistributedLoads[worker]==38 || redistributedLoads[worker]==39);
+		for(unsigned i=0;i<redistributedLoads[worker];i++)assert(redistributedSlots[worker][i]);
+	}
+	assert(redistributedResident==4046 && redistributedSpill==562 && redistributedPages==32606);
 	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u current GDN workers, required scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
 	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u current GDN peer L1s (%u bytes); %u slots (%u bytes) need relocation; each peer has 31 safe slots vs %u required; NO all-phase live map or performance proof\n",
 		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots);
 	std::printf("PASS 4KiB-scattered placement: %u pages mapped %u current-runtime state halves (%u bytes) across one 48-layer token; %u spill to GDDR; each GDN worker keeps 34 layers (2 page fragments) and spills 14; 110 new pages per worker needed for full capacity; GDN chunk-import address indirection NOT implemented or measured\n",
 		fragmentedPages,runtimeResident,runtimeResident*P::HalfStateBytes,runtimeSpilled);
+	std::printf("PASS experimental 119-peer redistribution map: %u logical tasks/layer use unique peer routes; state loads balance 38/39 per peer, with %u resident and %u GDDR-spill halves; existing GDN runtime rejects this remap and no address-indirect cache loader exists\n",
+		R::LogicalWorkers,redistributedResident,redistributedSpill);
 }

@@ -10,6 +10,7 @@
 #ifndef PIONEER_Q38_GDN_L1_CACHE_PLAN_INSPECTION_H
 #define PIONEER_Q38_GDN_L1_CACHE_PLAN_INSPECTION_H
 #include <cstdint>
+#include "PioneerQ38MixedWorkerLayout.h"
 
 // Static layout investigation only: no IO, model allocation, launch, or
 // assertion that live kernels can coexist with this proposed reservation.
@@ -61,6 +62,31 @@ struct PioneerQ38GdnL1CachePlanInspection {
 			seen[slot.worker]=true;
 		}
 		return true;
+	}
+};
+
+// Experimental owner redistribution: retain the 96 logical head-half tasks,
+// but select a different physical peer as recurrent layer changes. This is
+// metadata only; existing GDN descriptors still bind logical task N to its
+// legacy peer and cannot execute this mapping.
+struct PioneerQ38GdnL1RedistributedPlanInspection {
+	enum : uint32_t { Workers=119, LogicalWorkers=96, RecurrentLayers=48,
+		HeadsPerLayer=48, HalvesPerLayer=96, TotalHalves=RecurrentLayers*HalvesPerLayer };
+	struct Slot { uint32_t physicalWorker,peer,logicalWorker,ordinal,index,bytes; };
+	static bool Map(unsigned layerOrdinal,unsigned head,unsigned half,Slot& out)
+	{
+		if(layerOrdinal>=RecurrentLayers || head>=HeadsPerLayer || half>=2)return false;
+		const uint32_t logicalWorker=head*2+half;
+		const uint32_t ordinal=layerOrdinal*LogicalWorkers+logicalWorker;
+		const uint32_t physicalWorker=ordinal%Workers+1;
+		out={physicalWorker,PioneerQ38MixedWorkerLayout::Peer(physicalWorker),logicalWorker,ordinal,
+			ordinal/Workers,32768};return true;
+	}
+	static unsigned SlotsForPhysical(unsigned physicalWorker)
+	{
+		if(!physicalWorker || physicalWorker>Workers)return 0;
+		unsigned count=0;for(unsigned ordinal=physicalWorker-1;ordinal<TotalHalves;ordinal+=Workers)count++;
+		return count;
 	}
 };
 #endif

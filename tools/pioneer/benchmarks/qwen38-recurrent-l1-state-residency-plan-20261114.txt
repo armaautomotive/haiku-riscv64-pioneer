@@ -10,8 +10,9 @@ includes control/NoC waits and is not a breakdown of state-copy time.
 Correction to the first 119-tile estimates in commits c28b5a5105 and
 929e5e320f: those estimates used a hypothetical redistribution across 119
 tiles, but the existing GDN state API and descriptor reject workers >= 96.
-The 119-tile counts are superseded and must not be treated as current-runtime
-capacity. The calculations below use the actual 96-worker mapping.
+Those counts must not be treated as current-runtime capacity. The calculations
+below first use the actual 96-worker mapping, then separately re-evaluate
+redistribution as an explicit alternate-topology experiment.
 
 Geometry derived from the current source:
 
@@ -83,6 +84,20 @@ addresses; no scattered-page import table or address-indirect chunk loader
 has been implemented, and the 4-KiB packing cannot be used until that path is
 built and its cost/live buffers are included in a complete multi-phase L1
 map. No model run or performance claim follows from this result.
+
+Separate alternate-topology experiment: retain the 96 logical head-half tasks
+per recurrent layer, but rotate their physical owners across all 119 peer IDs
+using `physicalWorker = (layerOrdinal*96 + logicalWorker) % 119 + 1`, and the
+existing `PioneerQ38MixedWorkerLayout::Peer` coordinate mapping. The offline
+test proves 96 unique peer routes per layer, uniqueness across all 119
+physical peers, and a bijection of every recurrent-state half. The loads
+balance at 86 peers with 39 state halves and 33 peers with 38. Given 34
+untouched-range state slots per peer, 4,046 halves could be resident and 562
+would still spill to GDDR. This is a plausible way to reduce pressure versus
+the current fixed 96-worker mapping, but it is not wired into the runtime:
+current descriptors bind each logical task to its fixed peer, and no
+layer-dependent task dispatch or scattered-page import exists. The 119-peer
+result is a redesign target, not a capacity or speed claim for current Work.
 
 Reproduce both checks with:
 
