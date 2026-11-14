@@ -3,6 +3,7 @@
 #define PIONEER_Q38_GDN_STATE_H
 #include <stdint.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnIdentity.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnTaskPlacement.h"
 // CPU METADATA policy for ONE model/sequence/session. No allocation,address,
 // NoC/DMA,hardware proof,initialization,reset or model capability lives here.
 // A native coordinator must independently own/initialize BOTH state buffers
@@ -17,6 +18,10 @@ struct PioneerQ38GdnStateSlice {
  PioneerQ38GdnIdentity owner;
  uint64_t position,nonce;
  unsigned layer,slot,head,half,keyHead,firstWord,words;
+};
+struct PioneerQ38GdnRedistributedStateSlice {
+ PioneerQ38GdnStateSlice state;
+ PioneerQ38GdnTaskPlacement::Route route;
 };
 class PioneerQ38GdnState {
  enum Phase { Empty,Ready,Token,Layer,Poisoned,Closed } phase=Empty;
@@ -59,6 +64,21 @@ public:
   if (phase!=Layer || !Matches(t) || worker>=96) return false;
   Describe(t,worker,next,output);
   return true;
+ }
+ // Experimental metadata query for the layer-dependent 119-peer remap.
+ // Existing Slice() and all current 96-peer callers remain unchanged; this
+ // adds neither launch authority nor state allocation/device access.
+ bool RedistributedSlice(const PioneerQ38GdnTicket& t,unsigned logicalWorker,bool next,
+  PioneerQ38GdnRedistributedStateSlice& output) const {
+  if(phase!=Layer || !Matches(t) || logicalWorker>=96)return false;
+  unsigned ordinal=0;
+  if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(t.layer,ordinal))return false;
+  PioneerQ38GdnRedistributedStateSlice candidate={};
+  Describe(t,logicalWorker,next,candidate.state);
+  if(!PioneerQ38GdnTaskPlacement::Map(ordinal,logicalWorker,candidate.route)
+   || candidate.route.actualLayer!=candidate.state.layer
+   || candidate.route.logicalWorker!=logicalWorker)return false;
+  output=candidate;return true;
  }
  bool CompletedStateView(const PioneerQ38GdnTicket& t,unsigned worker,PioneerQ38GdnStateSlice& output) const {
   if ((phase!=Token && phase!=Layer) || !Header(t) || Ordinal(t.layer)>=completedLayers || worker>=96) return false;

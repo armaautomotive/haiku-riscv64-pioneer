@@ -4,6 +4,7 @@
 #include "../PioneerQ38GdnL1CachePlanInspection.h"
 #include "../PioneerQ38GdnL1CacheCapacityInspection.h"
 #include "../PioneerQ38GdnState.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnShape.h"
 #include <cassert>
 #include <cstdio>
 
@@ -115,14 +116,26 @@ int main()
 		assert(redistributedCount[worker]==34 && pages==274);redistributedPages+=pages;
 		unsigned peer=PioneerQ38MixedWorkerLayout::Peer(worker+1);assert(peer<1024 && !peerSeen[peer]);peerSeen[peer]=true;
 	}
+	for(unsigned worker=0;worker<P::Workers;worker++)
+		assert(PioneerQ38ResidentGdnPeer(worker)==PioneerQ38GdnTaskPlacement::Peer(worker+1));
 	unsigned redistributedLoads[R::Workers]={};bool redistributedSlots[R::Workers][C::MaxSlots]={};
 	unsigned redistributedResident=0,redistributedSpill=0;
+	PioneerQ38GdnState remappedState;
+	assert(remappedState.Bind(identity) && remappedState.BeginToken(identity,0));
 	for(unsigned layer=0;layer<R::RecurrentLayers;layer++){
+		const unsigned actualLayer=P::ActualLayer(layer);
+		PioneerQ38GdnTicket ticket={};assert(remappedState.BeginLayer(actualLayer,ticket));
 		bool activePeer[R::Workers]={};
 		for(unsigned head=0;head<R::HeadsPerLayer;head++)for(unsigned half=0;half<2;half++){
+			const unsigned logical=head*2+half;
+			PioneerQ38GdnRedistributedStateSlice view={};
+			assert(remappedState.RedistributedSlice(ticket,logical,false,view));
 			R::Slot slot={};assert(R::Map(layer,head,half,slot));
+			assert(view.state.layer==actualLayer && view.state.head==head && view.state.half==half);
+			assert(view.route.physicalWorker==slot.physicalWorker && view.route.peer==slot.peer
+				&& view.route.stateIndex==slot.index && view.route.logicalWorker==logical);
 			const unsigned worker=slot.physicalWorker-1;assert(worker<R::Workers && !activePeer[worker]);activePeer[worker]=true;
-			assert(slot.logicalWorker==head*2+half && slot.bytes==P::HalfStateBytes);
+			assert(slot.logicalWorker==logical && slot.bytes==P::HalfStateBytes);
 			assert(slot.peer==PioneerQ38MixedWorkerLayout::Peer(slot.physicalWorker));
 			assert(slot.index==redistributedLoads[worker]++ && slot.index<R::SlotsForPhysical(slot.physicalWorker));
 			assert(!redistributedSlots[worker][slot.index]);redistributedSlots[worker][slot.index]=true;
@@ -131,6 +144,14 @@ int main()
 					assert(C::Free(slot.physicalWorker,redistributedPlacement[worker][slot.index].pages[page],C::PageBytes));
 				redistributedResident++;
 			}else redistributedSpill++;
+			assert(remappedState.CompletedHalf(ticket,logical));
+		}
+		assert(remappedState.CompleteLayer(ticket));
+		for(unsigned physical=1;physical<=R::Workers;physical++){
+			unsigned logical=UINT32_MAX;
+			const bool active=PioneerQ38GdnTaskPlacement::LogicalWorker(PioneerQ38GdnTaskPlacement::ActualLayer(layer),physical,logical);
+			assert(active==activePeer[physical-1]);
+			if(active){R::Slot slot={};assert(R::Map(layer,logical/2,logical%2,slot) && slot.physicalWorker==physical);}
 		}
 	}
 	for(unsigned worker=0;worker<R::Workers;worker++){
@@ -139,6 +160,12 @@ int main()
 		for(unsigned i=0;i<redistributedLoads[worker];i++)assert(redistributedSlots[worker][i]);
 	}
 	assert(redistributedResident==4046 && redistributedSpill==562 && redistributedPages==32606);
+	assert(remappedState.CommitToken(identity,0));
+	unsigned invalidOrdinal=0,invalidLogical=0;
+	assert(!PioneerQ38GdnTaskPlacement::LayerOrdinal(63,invalidOrdinal));
+	assert(!PioneerQ38GdnTaskPlacement::LogicalWorker(63,1,invalidLogical));
+	assert(!PioneerQ38GdnTaskPlacement::LogicalWorker(0,0,invalidLogical));
+	assert(!PioneerQ38GdnTaskPlacement::LogicalWorker(0,120,invalidLogical));
 	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u current GDN workers, required scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
 	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u current GDN peer L1s (%u bytes); %u slots (%u bytes) need relocation; each peer has 31 safe slots vs %u required; NO all-phase live map or performance proof\n",

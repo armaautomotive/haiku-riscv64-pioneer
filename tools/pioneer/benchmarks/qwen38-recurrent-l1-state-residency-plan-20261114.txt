@@ -88,16 +88,22 @@ map. No model run or performance claim follows from this result.
 Separate alternate-topology experiment: retain the 96 logical head-half tasks
 per recurrent layer, but rotate their physical owners across all 119 peer IDs
 using `physicalWorker = (layerOrdinal*96 + logicalWorker) % 119 + 1`, and the
-existing `PioneerQ38MixedWorkerLayout::Peer` coordinate mapping. The offline
-test proves 96 unique peer routes per layer, uniqueness across all 119
-physical peers, and a bijection of every recurrent-state half. The loads
-balance at 86 peers with 39 state halves and 33 peers with 38. Given 34
-untouched-range state slots per peer, 4,046 halves could be resident and 562
-would still spill to GDDR. This is a plausible way to reduce pressure versus
-the current fixed 96-worker mapping, but it is not wired into the runtime:
-current descriptors bind each logical task to its fixed peer, and no
-layer-dependent task dispatch or scattered-page import exists. The 119-peer
-result is a redesign target, not a capacity or speed claim for current Work.
+existing peer coordinate mapping. The route calculation now lives in the
+shared pure-metadata helper `PioneerQ38GdnTaskPlacement.h`, including the
+inverse route for rejecting inactive peers. The offline test compares all 119
+peer coordinates against `PioneerQ38MixedWorkerLayout::Peer`, confirms the
+old 96-peer GDN map is unchanged, and proves 96 unique peer routes per layer,
+uniqueness across all 119 physical peers, and a bijection of every recurrent
+state half. The loads balance at 86 peers with 39 state halves and 33 peers
+with 38. Given 34 untouched-range state slots per peer, 4,046 halves could
+be resident and 562 would still spill to GDDR. `PioneerQ38GdnState::RedistributedSlice`
+now exposes this candidate route alongside the existing logical state slice;
+the same-token test exercises all 48 ticketed layers, all 96 logical tasks per
+layer, completion, and final slot flip. Existing `Slice()` behavior remains
+unchanged. This is still not wired into hardware dispatch: current descriptors
+bind each logical task to its fixed peer, and no layer-dependent task launch
+or scattered-page import exists. The 119-peer result is a redesign target,
+not a capacity or speed claim for current Work.
 
 Reproduce both checks with:
 

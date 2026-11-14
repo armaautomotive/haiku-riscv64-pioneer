@@ -11,6 +11,7 @@
 #define PIONEER_Q38_GDN_L1_CACHE_PLAN_INSPECTION_H
 #include <cstdint>
 #include "PioneerQ38MixedWorkerLayout.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnTaskPlacement.h"
 
 // Static layout investigation only: no IO, model allocation, launch, or
 // assertion that live kernels can coexist with this proposed reservation.
@@ -70,23 +71,26 @@ struct PioneerQ38GdnL1CachePlanInspection {
 // metadata only; existing GDN descriptors still bind logical task N to its
 // legacy peer and cannot execute this mapping.
 struct PioneerQ38GdnL1RedistributedPlanInspection {
-	enum : uint32_t { Workers=119, LogicalWorkers=96, RecurrentLayers=48,
-		HeadsPerLayer=48, HalvesPerLayer=96, TotalHalves=RecurrentLayers*HalvesPerLayer };
+	enum : uint32_t { Workers=PioneerQ38GdnTaskPlacement::PhysicalWorkers,
+		LogicalWorkers=PioneerQ38GdnTaskPlacement::LogicalWorkers,
+		RecurrentLayers=PioneerQ38GdnTaskPlacement::RecurrentLayers,
+		HeadsPerLayer=PioneerQ38GdnTaskPlacement::HeadsPerLayer,
+		HalvesPerLayer=PioneerQ38GdnTaskPlacement::TasksPerLayer,
+		TotalHalves=PioneerQ38GdnTaskPlacement::TotalTasks };
 	struct Slot { uint32_t physicalWorker,peer,logicalWorker,ordinal,index,bytes; };
 	static bool Map(unsigned layerOrdinal,unsigned head,unsigned half,Slot& out)
 	{
 		if(layerOrdinal>=RecurrentLayers || head>=HeadsPerLayer || half>=2)return false;
 		const uint32_t logicalWorker=head*2+half;
 		const uint32_t ordinal=layerOrdinal*LogicalWorkers+logicalWorker;
-		const uint32_t physicalWorker=ordinal%Workers+1;
-		out={physicalWorker,PioneerQ38MixedWorkerLayout::Peer(physicalWorker),logicalWorker,ordinal,
-			ordinal/Workers,32768};return true;
+		PioneerQ38GdnTaskPlacement::Route route={};
+		if(!PioneerQ38GdnTaskPlacement::Map(layerOrdinal,logicalWorker,route))return false;
+		out={route.physicalWorker,route.peer,logicalWorker,ordinal,route.stateIndex,
+			PioneerQ38GdnTaskPlacement::StateHalfBytes};return true;
 	}
 	static unsigned SlotsForPhysical(unsigned physicalWorker)
 	{
-		if(!physicalWorker || physicalWorker>Workers)return 0;
-		unsigned count=0;for(unsigned ordinal=physicalWorker-1;ordinal<TotalHalves;ordinal+=Workers)count++;
-		return count;
+		return PioneerQ38GdnTaskPlacement::StateSlots(physicalWorker);
 	}
 };
 #endif
