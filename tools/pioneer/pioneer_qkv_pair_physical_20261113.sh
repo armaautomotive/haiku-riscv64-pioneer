@@ -38,7 +38,7 @@ idle(){
  listing=$(ps -o Id -o Team) || return 1
  printf '%s\n' "$listing" | awk -v self="$$" '
  $1=="Id" && $2=="Team" && NF==2 {header++;next}
- $1 ~ /^[0-9]+$/ && NF>=2 {teams++;if($1==self)next
+ $1 ~ /^[0-9]+$/ && NF>=2 {teams++;if($1==self || $0 ~ /\/bin\/(bash|sh) -c .*pioneer_qkv_pair_physical_20261113\.sh/)next
   if($0 ~ /(^|[\/[:space:]])(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-|pioneer-recurrent-band|pioneer-recurrent-qkv|pioneer-small-alpha|pioneer-small-beta|pioneer-dram|graph-csr-debug|source-check)/ ||
    $0 ~ /pioneer-p100a-(dram|batched-output|wide-gdn|token)/)owners++
   next}

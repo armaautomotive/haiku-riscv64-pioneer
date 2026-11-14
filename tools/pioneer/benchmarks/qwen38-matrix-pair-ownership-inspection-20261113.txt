@@ -90,8 +90,10 @@ The first detached launch in stage c also stopped before creating its
 one-shot marker. The subsequent check-only trace showed the idle gate rejecting
 its own parent shell because that shell's command line contained the diagnostic
 path. No swap or device call occurred; driver and system health remained
-unchanged. Stage c is retained. Stage d will `exec` the wrapper after detaching
-so no matching launcher remains visible to the idle gate.
+unchanged. Stage c is retained. The idle gate now excludes only a bash/sh
+launcher invoking this exact wrapper (and the wrapper's own PID), while still
+rejecting an actual pair client/owner; offline regression tests cover both.
+Stage d remains fresh and will use the exec handoff.
 
 This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercise the real pair wrapper flow with fake commands, never hardware."""
+import os
 import pathlib
 import subprocess
 import tempfile
@@ -7,6 +8,20 @@ import tempfile
 here = pathlib.Path(__file__).resolve().parent
 source = (here.parent / 'pioneer_qkv_pair_physical_20261113.sh').read_text()
 flow = source.split('# PAIR_QKV_FLOW_BEGIN\n', 1)[1].split('# PAIR_QKV_FLOW_END', 1)[0]
+idle_body = source.split('idle(){\n', 1)[1].split('\n}\nhealth()', 1)[0]
+idle_shell = '''ps(){
+ printf 'Id Team\\n%s /bin/bash -c /boot/home/pioneer-recurrent-qkv-pair-20261113-d/pioneer_qkv_pair_physical_20261113.sh 52 --run\\n' "$$"
+ if [ "$include_owner" = yes ]; then printf '321 /boot/home/pioneer-recurrent-qkv-pair-diagnostic153 --fixed-qkv-pair\\n'; fi
+ return 0
+}
+idle(){''' + idle_body + '''
+}
+idle
+'''
+for owner, expected in [('no', 0), ('yes', 1)]:
+    result = subprocess.run(['sh', '-c', idle_shell], env=dict(os.environ, include_owner=owner), capture_output=True)
+    assert result.returncode == expected, (owner, result.returncode, result.stderr)
+print('PASS_PAIR_IDLE_GATE parent-shell-self-exclusion; real owner still blocks')
 with tempfile.TemporaryDirectory(prefix='pioneer-pair-parent-') as tmp:
     root = pathlib.Path(tmp)
     preflight = root / 'preflight'
