@@ -27,6 +27,8 @@ here = pathlib.Path(__file__).resolve().parent
 old = (here / 'pioneer_native_bfp_band_owner_test.cpp').read_text()
 core = old[old.index('struct IO {'):old.index('template<unsigned K>static void NoMoreIO')]
 core = core.replace('struct IO {', 'struct CoreIO {', 1).replace('IO(unsigned k,const char* path)', 'CoreIO(unsigned k,const char* path)', 1)
+core = core.replace('RoundedImage image(directory.c_str(),width,4,false);',
+    'RoundedImage image(directory.c_str(),width,4,false,128);')
 prefix = r'''
 #define B_DEVICE_OP_CODES_END 10000
 #define PIONEER_NATIVE_BFP_BAND_IMAGE_ONLY
@@ -97,8 +99,8 @@ int main(int argc,char** argv){
 '''
 with tempfile.TemporaryDirectory(prefix='pioneer-pair-emulated-') as tmp:
     folder = pathlib.Path(tmp)
-    subprocess.run([sys.executable, str(here.parent / 'build_native_bfp_band.py'), str(sdk), str(folder / 'image'), '5120', '4'], check=True)
-    if hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() != 'f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5':
+    subprocess.run([sys.executable, str(here.parent / 'build_native_bfp_band.py'), str(sdk), str(folder / 'image'), '5120', '4', '--pair-overlap-work'], check=True)
+    if hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() != '2b1527ba98e0a4c276bb9271daf48867c821ecaa83166f8b1399185aa9aaf3ef':
         raise SystemExit('generated image identity mismatch')
     (folder / 'test.cpp').write_text(prefix + core + test)
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',

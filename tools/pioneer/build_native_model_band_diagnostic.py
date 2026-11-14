@@ -63,11 +63,14 @@ expected = {5120:'f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9a
 images = {}
 for bits in (6144 if args.recurrent_out else 5120,):
     folder = output / ('k' + str(bits))
-    subprocess.run(['python3', str(here / 'build_native_bfp_band.py'), str(build), str(folder), str(bits), '4'], check=True)
+    image_command=['python3', str(here / 'build_native_bfp_band.py'), str(build), str(folder), str(bits), '4']
+    if args.recurrent_qkv_pair:image_command += ['--pair-overlap-work']
+    subprocess.run(image_command, check=True)
     boot = (folder / 'boot.bin').read_bytes()
     text = (folder / 'text.bin').read_bytes()
     assert hashlib.sha256(boot).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
-    assert hashlib.sha256(text).hexdigest() == expected[bits]
+    text_expected = '2b1527ba98e0a4c276bb9271daf48867c821ecaa83166f8b1399185aa9aaf3ef' if args.recurrent_qkv_pair else expected[bits]
+    assert hashlib.sha256(text).hexdigest() == text_expected
     symbols = {}
     for line in (folder / 'program.symbols').read_text().splitlines():
         value, _, name = line.split()

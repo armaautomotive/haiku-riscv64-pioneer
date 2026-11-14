@@ -13,7 +13,7 @@ struct NativeBfpBandMachine:NativeBfpMachine {
 		unsigned ws=1104,unsigned bs=80,unsigned h=16,unsigned limit=0x130000,unsigned bands=2)
 		:tiles(k/32),phases(fidelity),maxBands(bands),weightBase(w),inputBase(b),weightStride(ws),inputStride(bs),headerBytes(h),operandLimit(limit) {
 		assert((k==5120 || k==6144 || k==17408) && (phases==1 || phases==4));
-		assert(bands>=1 && bands<=8);
+		assert(bands>=1 && bands<=256);
 		assert(h>=16 && !(h&15) && ws==1088+h && bs==64+h && w>=h && b>=h);
 		assert(w-h+tiles*ws<=b-h && b-h+tiles*bs<=limit && limit<=l1.size());
 	}

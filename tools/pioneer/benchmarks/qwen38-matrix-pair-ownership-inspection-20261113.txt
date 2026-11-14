@@ -156,14 +156,30 @@ twice, core1 again, followed by full bounded scopes on both routes. This is
 only offline-tested and cross-compiled so far; it is not deployed. Candidate
 hash is f41511b483830b39c79d7007a8e9429ca3e868dc68e5fa973149ce2e584aa844;
 client hash 6013e186123ae5d94f02b816b3f9f256bae57362d0387d0382a34b2f394f13aa.
-The fresh stage-H physical run will determine whether removing the inter-release
-scopes exposes overlapping work; if not, add an explicit wait/barrier or longer
-matrix workload before claiming overlap.
+Fresh stage h tested this version: source authentication passed, the 128 output
+words matched, explicit END completed, and the stable driver was restored at
+generation 62 with 64 CPUs and maximum RAM 137034936320 bytes. The PCs were
+`00070038-00070038-00070038-00070038`, all terminal; removing the inter-release
+scopes alone still did not reveal overlap. Trial exit was 0, stderr empty, and
+the stable driver hash was unchanged.
+
+The next candidate extends actual Tensix matrix work, not a wait loop: each of
+the two full-fidelity passes executes the same K5120 QKV band 64 times before
+publishing the same final output. The pair therefore performs 128 full band
+computations per core; the model-authenticated expected outputs remain the
+same. The exact repeated image passed the strict RV32/matrix instruction
+simulator with 128 exact output words. The pair candidate cross-build hash is
+f87028a47a48e3f82f592f9430d24439ad185af1920de9e28a64b991b5abd286 and client
+hash 6013e186123ae5d94f02b816b3f9f256bae57362d0387d0382a34b2f394f13aa.
+This is intentionally a diagnostic workload only, not an inference speed
+result. A fresh stage-I run will sample PCs while this repeated matrix work is
+in flight; any observed overlap must still be followed by exact output, END,
+and stable-driver restoration.
 
 This is a physical two-core paired-QKV diagnostic, but NOT a 119-core cohort,
-full-model inference, full numerical qualification or speed measurement. Four
+full-model inference, full numerical qualification or speed measurement. Five
 hardware runs validated the outputs and restoration, but none observed
-active-interval overlap; the third and fourth captured all four terminal PCs.
+active-interval overlap; the third through fifth captured all four terminal PCs.
 No Assistant or persistent driver change remains; the stable driver is restored.
 This prototype does not yet move any Qwen layer to the P100A and does not
 establish improvement in tokens/second.

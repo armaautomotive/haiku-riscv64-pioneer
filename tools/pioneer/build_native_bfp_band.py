@@ -13,9 +13,13 @@ parser.add_argument('output', type=pathlib.Path)
 parser.add_argument('width', type=int, choices=(5120, 6144, 17408))
 parser.add_argument('phases', type=int, choices=(1, 4))
 parser.add_argument('--direct', action='store_true', help='Separate direct-issue code-generation variant')
+parser.add_argument('--pair-overlap-work', action='store_true',
+    help='Fixed 64-repeat QKV pair diagnostic workload; never an inference image')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
+if args.pair_overlap_work and (args.width != 5120 or args.phases != 4):
+    raise SystemExit('pair-overlap workload is fixed to K5120/full four-phase fidelity')
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 tool = str(args.haiku_build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -33,6 +37,8 @@ commands = [
 ]
 if args.direct:
     commands[0].insert(1, '-DPIONEER_NATIVE_BFP_BAND_DIRECT=1')
+if args.pair_overlap_work:
+    commands[0].insert(1, '-DPIONEER_NATIVE_BFP_BAND_REPEATS=64')
 for section in ('boot', 'text'):
     commands.append([tool + 'objcopy', '-O', 'binary', '-j', '.' + section, str(args.output / 'program.elf'), str(args.output / (section + '.bin'))])
 for command in commands:
@@ -46,4 +52,5 @@ for name in ('boot.bin', 'text.bin'):
     assert len(data) == 4 if name == 'boot.bin' else 0 < len(data) <= 4096 and len(data) % 4 == 0
     print(hashlib.sha256(data).hexdigest(), len(data), name)
 print('OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K', args.width, 'PHASES', args.phases,
-      'DIRECT', int(args.direct), ';NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission')
+      'DIRECT', int(args.direct), 'PAIR_OVERLAP_WORK', int(args.pair_overlap_work),
+      ';NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission')

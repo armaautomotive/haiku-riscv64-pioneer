@@ -7,7 +7,8 @@ struct BandRV32:Machine {
 	NativeBfpBandMachine native;std::vector<uint8_t> code;bool direct;
 	unsigned minSP=0x70000,minStore=0x70000,stores=0,acks=0,dropAckAt=0,configWrites=0,portWrites=0,directIssues=0;
 	unsigned dropConfig=~0U;bool awaiting=false,stackSeen=false;
-	BandRV32(const char* folder,unsigned width,unsigned phases,bool inlineMode):native(width,phases),direct(inlineMode) {
+	BandRV32(const char* folder,unsigned width,unsigned phases,bool inlineMode,unsigned bands=2)
+		:native(width,phases,0x90000,0x124000,1104,80,16,0x130000,bands),direct(inlineMode) {
 		const std::string root=folder;code=Read((root+"/text.bin").c_str());const auto boot=Read((root+"/boot.bin").c_str());
 		assert(boot.size()==4 && !code.empty() && code.size()<=4096 && !(code.size()&3));
 		std::fill(std::begin(l1),std::end(l1),0xdeadbeef);l1[0]=Word(boot,0);
@@ -55,9 +56,10 @@ struct BandRV32:Machine {
 		assert(l1[Index(pc)]==0x0000006f && minStore>=0x6e000);
 		if(pc==0x70058){assert(l1[Index(0x17ffc8)]==0x4542464e && !stores && !native.outputReads);return false;}
 		assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==((native.phases<<24)|(native.tiles*32)) && l1[Index(0x17ffc8)]==0x3342464e);
-		assert(native.Clean() && stores==64 && native.outputReads==64 && native.clears==2);
-		assert(native.unpacks[0]==2*native.tiles && native.unpacks[1]==native.unpacks[0] && native.matrixOps==2*native.tiles*4*native.phases);
-		for(unsigned p=0;p<4;p++)assert(native.visits[p]==(native.phases==4 || !p?8*native.tiles:0));return true;
+		assert(native.Clean() && stores==64 && native.outputReads==64 && native.clears==native.maxBands);
+		assert(native.unpacks[0]==native.maxBands*native.tiles && native.unpacks[1]==native.unpacks[0]
+			&& native.matrixOps==native.maxBands*native.tiles*4*native.phases);
+		for(unsigned p=0;p<4;p++)assert(native.visits[p]==(native.phases==4 || !p?4*native.maxBands*native.tiles:0));return true;
 	}
 	void Exact(const std::array<float,32>& expected) {
 		for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)assert(l1[Index(0x130000+pass*128+row*4)]==Bits(expected[row]));

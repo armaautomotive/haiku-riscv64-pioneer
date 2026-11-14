@@ -4,6 +4,12 @@
 #if !defined(__riscv) || __riscv_xlen != 32 || !defined(PIONEER_NATIVE_BFP_BAND_K) || !defined(PIONEER_NATIVE_BFP_BAND_PHASES)
 #error Select a fixed RV32I full-K/fidelity native prototype
 #endif
+#ifndef PIONEER_NATIVE_BFP_BAND_REPEATS
+#define PIONEER_NATIVE_BFP_BAND_REPEATS 1
+#endif
+#if PIONEER_NATIVE_BFP_BAND_REPEATS != 1 && PIONEER_NATIVE_BFP_BAND_REPEATS != 64
+#error Select only the standard image or the fixed 64-repeat pair-overlap diagnostic
+#endif
 static_assert(PioneerQ38NativeBfpBand::Width(PIONEER_NATIVE_BFP_BAND_K),"exact Qwen width only");
 extern "C" void native_bfp_band_fault() __attribute__((noreturn));
 namespace {
@@ -32,7 +38,8 @@ struct Emitter {
 extern "C" unsigned native_bfp_band_main() {
 	Emitter emitter;
 	for(unsigned pass=0;pass<2;pass++) {
-		if(!PioneerQ38NativeBfpBand::Run<PIONEER_NATIVE_BFP_BAND_PHASES>(emitter,PIONEER_NATIVE_BFP_BAND_K))native_bfp_band_fault();
+		for(unsigned repeat=0;repeat<PIONEER_NATIVE_BFP_BAND_REPEATS;repeat++)
+			if(!PioneerQ38NativeBfpBand::Run<PIONEER_NATIVE_BFP_BAND_PHASES>(emitter,PIONEER_NATIVE_BFP_BAND_K))native_bfp_band_fault();
 		for(unsigned row=0;row<2;row++)for(unsigned column=0;column<16;column++)
 			Words(PioneerQ38NativeBfpBand::Output+pass*128)[row*16+column]=Words(0xffbd8000+(row?40:32)*64)[column];
 		asm volatile("fence":::"memory");
