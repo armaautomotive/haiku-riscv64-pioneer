@@ -107,3 +107,18 @@ to restore after an uncertain result. This preparation did not run on the
 card and provides no model or throughput evidence.
 The debug probe and the one-shot parent tests were reproduced from a clean
 HEAD archive with only the staged debug changes; the probe hash was identical.
+
+Physical synthetic debug result: tag152 generation49 ran the fixed Q8
+two-wave operation on the P100A with two peers per wave. All returned
+256-row peer buffers for both waves matched the separately computed CPU
+DEBUG reference exactly, including zero padding. Explicit BANK_END and close
+passed; the one-shot parent exited 0 with STABLE_RESTORED_EXACT and empty
+stderr. Trial stdout SHA-256:
+6c8222a41b17a29d84401aa922bb599c434063a2eb2a8f44b72565811bd80031.
+Independent postflight verified the original stable driver SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012 generation50, quiesced0/cold0/active_owner0, 64 CPUs
+and 137034936320 bytes maximum RAM. No Assistant was replaced.
+
+This validates one synthetic batch, not Qwen inference, broader numerical
+quality or throughput. The DEBUG reference is not part of Work inference.
