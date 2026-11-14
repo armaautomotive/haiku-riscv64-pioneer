@@ -91,6 +91,24 @@ int main(int argc,char** argv){
    assert(Binding::Matches(next,&cookie,sReloadGeneration));
    auto nextLogical=std::make_unique<PioneerQ38CanonicalModelPlan>();
    assert(Binding::DeriveLogical(next,&cookie,sReloadGeneration,*nextLogical));
+   // Exercise another request handoff with the same closed upload receipt.
+   // A failure here must leave ownership on the second context, not silently
+   // lose the model or transfer it to an unverified third context.
+   NativeSpanContext third(argv[1]);
+   std::copy(next.initialized,next.initialized+PioneerResidentBanks::Pages,third.initialized);
+   std::copy(next.hashes,next.hashes+PioneerResidentBanks::Pages,third.hashes);
+   third.initialized[0]^=1;
+   assert(!Binding::TransferInspection(next,third,&cookie,sReloadGeneration));
+   assert(Binding::Matches(next,&cookie,sReloadGeneration) && next.q38SmallRecurrentReceipt==retainedReceipt
+    && next.q38Span==retainedSpan && !third.q38SmallRecurrentReceipt && !third.q38Span);
+   third.initialized[0]^=1;
+   assert(Binding::TransferInspection(next,third,&cookie,sReloadGeneration));
+   assert(!next.q38SmallRecurrentReceipt && !next.q38Span && third.q38SmallRecurrentReceipt==retainedReceipt
+    && third.q38Span==retainedSpan && !Binding::Matches(third,&cookie,sReloadGeneration));
+   cookie.context=&third;
+   assert(Binding::Matches(third,&cookie,sReloadGeneration));
+   auto thirdLogical=std::make_unique<PioneerQ38CanonicalModelPlan>();
+   assert(Binding::DeriveLogical(third,&cookie,sReloadGeneration,*thirdLogical));
    cookie.context=&c; // mock fixture lifetime only; no device ownership claim
   }
   Unbind();
