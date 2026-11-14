@@ -42,11 +42,12 @@ def require_complete_sections(units, sources):
                 'section coverage: every authenticated code section exactly once')
 
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll', '--flat-matrix-grammar', '--tile-prefetch', '--batched-prefetch', '--twin-batch-prefetch', '--batched-output-closure', '--wide-gdn', '--token-phase-profile', '--constant-q4-issue', '--token-matrix-phase', '--manual-ttsync'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll', '--flat-matrix-grammar', '--tile-prefetch', '--batched-prefetch', '--twin-batch-prefetch', '--batched-output-closure', '--wide-gdn', '--token-phase-profile', '--constant-q4-issue', '--token-matrix-phase', '--manual-ttsync', '--ffn-shared-input-reuse'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
+    ffn_shared_reuse = sys.argv[4] == '--ffn-shared-input-reuse'
     matrix_phase = sys.argv[4] == '--token-matrix-phase'
     manual_ttsync = sys.argv[4] == '--manual-ttsync'
     constant_q4 = manual_ttsync or matrix_phase or sys.argv[4] == '--constant-q4-issue'
@@ -68,11 +69,17 @@ def main():
     job_boot_fold = frontier or sys.argv[4] == '--job-boot-fold'
     precise_beta = job_boot_fold or sys.argv[4] == '--precise-beta'
     fault = precise_beta or sys.argv[4] == '--fault-marker'
-    pushed = fault or sys.argv[4] == '--pushed-completion'
+    pushed = ffn_shared_reuse or fault or sys.argv[4] == '--pushed-completion'
     precise = pushed or sys.argv[4] == '--precise-activation'
     cancel = precise or sys.argv[4] == '--cancel-boundary'
-    r = authenticated(root, pins(here/'build_qwen38_token_phase_profile_root.py', 'PINS') if phase_profile else pins(here/'build_qwen38_batched_output_closure_root.py', 'PINS') if output_closure else pins(here/'build_qwen38_batched_prefetch_root.py', 'PINS') if batched_prefetch else pins(here/'build_qwen38_flat_matrix_grammar_root.py', 'PINS') if flat_grammar else pins(here/'build_qwen38_empty_receipt_poll_root.py', 'PINS') if empty_receipt else pins(here/'build_qwen38_counter_gather_root.py', 'PINS') if counter_gather else pins(here/'build_qwen38_tid_boundary_root.py', 'PINS') if tid_boundary else pins(here/'build_qwen38_packet_identity_boundary_root.py', 'PINS') if packet_identity else pins(here/'build_qwen38_cohort_local_sources_root.py', 'PINS') if local_sources else pins(here/'build_qwen38_commit_boundary_root.py', 'PINS') if commit_boundary else pins(here/'build_qwen38_retained_cohort_root.py', 'PINS') if retained_cohort else pins(here/'build_qwen38_token_fault_marker_image.py', 'FRONTIER_PINS' if frontier else 'JOB_FOLD_PINS' if job_boot_fold else 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
-    w = authenticated(worker, pins(here/'build_qwen38_manual_ttsync_worker.py' if manual_ttsync else here/'build_qwen38_token_matrix_phase_worker.py' if matrix_phase else here/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here/'build_qwen38_token_prefetch_worker.py' if prefetch else here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
+    if ffn_shared_reuse:
+        root_pins = pins(here/'build_qwen38_full_offload_root.py', 'PINS_FFN_SHARED_INPUT_REUSE')
+        worker_pins = pins(here/'build_qwen38_pushed_worker_image.py', 'PINS_FFN_SHARED_INPUT_REUSE')
+    else:
+        root_pins = pins(here/'build_qwen38_token_phase_profile_root.py', 'PINS') if phase_profile else pins(here/'build_qwen38_batched_output_closure_root.py', 'PINS') if output_closure else pins(here/'build_qwen38_batched_prefetch_root.py', 'PINS') if batched_prefetch else pins(here/'build_qwen38_flat_matrix_grammar_root.py', 'PINS') if flat_grammar else pins(here/'build_qwen38_empty_receipt_poll_root.py', 'PINS') if empty_receipt else pins(here/'build_qwen38_counter_gather_root.py', 'PINS') if counter_gather else pins(here/'build_qwen38_tid_boundary_root.py', 'PINS') if tid_boundary else pins(here/'build_qwen38_packet_identity_boundary_root.py', 'PINS') if packet_identity else pins(here/'build_qwen38_cohort_local_sources_root.py', 'PINS') if local_sources else pins(here/'build_qwen38_commit_boundary_root.py', 'PINS') if commit_boundary else pins(here/'build_qwen38_retained_cohort_root.py', 'PINS') if retained_cohort else pins(here/'build_qwen38_token_fault_marker_image.py', 'FRONTIER_PINS' if frontier else 'JOB_FOLD_PINS' if job_boot_fold else 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32')
+        worker_pins = pins(here/'build_qwen38_manual_ttsync_worker.py' if manual_ttsync else here/'build_qwen38_token_matrix_phase_worker.py' if matrix_phase else here/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here/'build_qwen38_token_prefetch_worker.py' if prefetch else here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS')
+    r = authenticated(root, root_pins)
+    w = authenticated(worker, worker_pins)
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
     units += [(w, name, label, address) for name, label, address in (
@@ -96,6 +103,13 @@ def main():
                  '// Mechanically generated from fixed experimental warm-admission ROOT/QGW3 artifacts.',
                  '// IMMUTABLE DATA ONLY in a DISTINCT namespace, never selected by an old native owner.',
                  '// Full-model/native journal/restore/Work/physical/TPS qualification remains separate.']
+        if ffn_shared_reuse:
+            lines[1] = '// Mechanically generated from hash-pinned FFN shared-input-reuse ROOT and matching QGW3 worker artifacts.'
+            lines[2] = '// Isolated immutable QTP3 DATA only; no native, validation, CPU-reference or Work selector exists.'
+            selector = 'PIONEER_Q38_TOKEN_FFN_SHARED_INPUT_REUSE_PROGRAMS'
+            lines += ['#include "PioneerQ38TokenFfnSharedInputReuseProgramsRole.h"',
+                      '#if !defined('+selector+') || '+selector+' != 1',
+                      '#error Exact FFN shared-input-reuse DATA selection required', '#endif']
         if fault:
             lines[1] = '// Mechanically generated from fixed fault-reporting ROOT and unchanged QGW3 artifacts.'
             lines[2] = '// Separate immutable DATA namespace; the native selector is COMPILE-ONLY.'
@@ -166,6 +180,8 @@ def main():
         program_namespace = 'PioneerQ38TokenMatrixPhasePrograms'
     elif constant_q4:
         program_namespace = 'PioneerQ38TokenConstantQ4Programs'
+    if ffn_shared_reuse:
+        program_namespace = 'PioneerQ38TokenFfnSharedInputReusePrograms'
     guard = 'PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS_H' if retained_cohort else 'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H' if frontier else 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H' if job_boot_fold else 'PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H' if precise_beta else 'PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H' if fault else 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H' if pushed else 'PIONEER_Q38_TOKEN_PROGRAMS_H'
     if commit_boundary:
         guard = 'PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS_H'
@@ -199,6 +215,8 @@ def main():
         guard = 'PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS_H'
     elif constant_q4:
         guard = 'PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H'
+    if ffn_shared_reuse:
+        guard = 'PIONEER_Q38_TOKEN_FFN_SHARED_INPUT_REUSE_PROGRAMS_H'
     lines += [
              '#ifndef '+guard, '#define '+guard,
              '#include "PioneerQ38TokenPushedFootprint.h"' if pushed else '#include "PioneerQ38TokenFootprint.h"',
@@ -206,6 +224,8 @@ def main():
              f'enum {{Family=0x{0x33505451 if pushed else 0x32505451 if precise else 0x31505451:x},Version=1,CancelBoundary={int(cancel)}}};']
     if fault:
         lines += ['enum {FaultMarker=0x51465431,FaultSavedLinkOffset=32}; // LINK DATA,not a retired PC or STOP receipt']
+    if ffn_shared_reuse:
+        lines += ['enum {FfnSharedInputReuse=1}; // distinct candidate DATA; no runtime/Work qualification']
     if precise_beta:
         lines += ['enum {PreciseBeta=1}; // distinct immutable math revision,not an old owner or Work alias']
     if job_boot_fold:

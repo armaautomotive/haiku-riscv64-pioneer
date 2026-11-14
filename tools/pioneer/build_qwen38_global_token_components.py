@@ -35,7 +35,7 @@ assert not (input_trace and value_trace),'distinct capture roles cannot be combi
 if input_trace or value_trace:
  assert '--qgw8-dense-stage-trace' not in options,'distinct capture roles cannot be combined'
  options=['--qgw8-dense-stage-trace' if x in ('--qgw8-dense-input-trace','--qgw8-dense-value-trace') else x for x in options]
-assert 3<=len(sys.argv)<=25 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace'}
+assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace','--ffn-shared-input-reuse'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -59,6 +59,9 @@ fast_rms='--fast-rms' in options
 assert not fast_rms or (inspect and hybrid and f32),'approximate RMS requires the separate hybrid FP32 inspection build'
 reuse_input='--hybrid-reuse-input' in options
 assert not reuse_input or (inspect and hybrid and not fast_rms),'input reuse requires its distinct hybrid inspection image'
+ffn_shared_reuse='--ffn-shared-input-reuse' in options
+assert not ffn_shared_reuse or (inspect and precise and worker_admission and pushed and not bf16 and not hybrid), \
+ 'Q4 FFN shared-input reuse requires the distinct inspected precise/QGW3 all-device component profile'
 bf16_profile='--bf16-profile' in options
 assert not bf16_profile or bf16,'BF16 timing requires the explicit BF16 inspect profile'
 deferred_audit='--deferred-prepare-audit' in options
@@ -95,11 +98,13 @@ out.mkdir(mode=0o700)
 def run(*args):subprocess.run([str(a) for a in args],check=True)
 # FIRST preserve a whole current global image and all three old returning
 # object pins. No old default image gets the new admission flag.
-run(sys.executable,here/'build_qwen38_global_chain_root.py',sdk,out/'unchanged-feedback','--feedback')
+run(sys.executable,here/'build_qwen38_global_chain_root.py',sdk,out/'unchanged-feedback',
+ '--inspect-feedback-candidate' if inspect else '--feedback')
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1'] if ffn_shared_reuse else []),
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1'] if qgwd_root else []),
@@ -249,4 +254,5 @@ PINS_PUSHED_F32=(
 expected=PINS_PUSHED_F32 if pushed else PINS_WORKER_ADMISSION_F32 if worker_admission else PINS_SINGLE_AUDIT_F32 if single_audit else PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+
+ (';UNQUALIFIED FFN-shared-input reuse candidate;paired worker image and complete token program generation still required' if ffn_shared_reuse else '')+
  ';NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL')

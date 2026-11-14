@@ -54,6 +54,9 @@
 #include "PioneerQ38BatchedPrefetchPlan.h"
 #endif
 #include "PioneerQ38GlobalWorkerLayout.h"
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#include "PioneerQ38FfnSharedInputReuse.h"
+#endif
 #ifdef PIONEER_Q38_BF16_WORKER_IMAGE
 #include "PioneerQ38Bf16WorkerLayout.h"
 extern "C" void q38_bf16_persistent_producer(const uint32_t*,const uint32_t*,unsigned,unsigned);
@@ -141,9 +144,16 @@ static bool Quiet(){
 #include "blackhole_qwen38_pushed_completion.inc"
 #endif
 static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsigned self){
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+ if(j[9]>1)block_fault_park();
+ if(j[0]!=0x31483851 || j[3] || j[4] || !PioneerQ38PanelTileBytes(j[1])
+  || j[2]!=PioneerQ38PanelTileBytes(j[1]) || (j[5]!=5120 && j[5]!=6144 && j[5]!=17408)
+  || !j[7] || j[7]>16)block_fault_park();
+#else
  if(j[0]!=0x31483851 || j[3] || j[4] || j[9]!=1 || !PioneerQ38PanelTileBytes(j[1])
   || j[2]!=PioneerQ38PanelTileBytes(j[1]) || (j[5]!=5120 && j[5]!=6144 && j[5]!=17408)
   || !j[7] || j[7]>16)block_fault_park();
+#endif
  q38_ffn_persistent_matrix_begin(source,self);
  uint32_t before[8];for(unsigned i=0;i<8;i++)before[i]=*Words(0xffb20000+Counter(i));
  unsigned count=q38_compute_once(),blocks=j[5]>>(j[1]==8?5:8);
@@ -153,8 +163,17 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
 #else
   blocks
 #endif
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+  +PioneerQ38FfnSharedInputReuse::InputReads(j[9]==0,j[5]);
+#else
   +(j[5]*2+16383)/16384+1;
- unsigned flits=j[7]*blocks*j[2]/64+(j[5]*2+((blocks*4+63)&~63U))/64;
+#endif
+ unsigned flits=j[7]*blocks*j[2]/64+
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+  PioneerQ38FfnSharedInputReuse::InputFlits(j[9]==0,j[5],blocks);
+#else
+  (j[5]*2+((blocks*4+63)&~63U))/64;
+#endif
 #ifdef PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE
  if(j[1]==12 && j[14]==1){
   unsigned extraReads=0,extraFlits=0;

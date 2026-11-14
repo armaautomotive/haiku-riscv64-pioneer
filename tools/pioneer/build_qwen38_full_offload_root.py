@@ -8,16 +8,32 @@ import runpy
 import subprocess
 import sys
 
-assert __debug__ and len(sys.argv)==3
+args=sys.argv[1:]
+inspect_candidate='--inspect-candidate' in args
+if inspect_candidate:
+    if args.count('--inspect-candidate')!=1:raise SystemExit(2)
+    args.remove('--inspect-candidate')
+PINS_FFN_SHARED_INPUT_REUSE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+  ('text.bin',131040,'641babd1746c1f89aef05b30057808b9887f235a3c757006472c33c8f69ed9f0'),
+  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+  ('conv.bin',32708,'54d2b80ea35c20d37e523764024307e609b11160c4b5499655ce64fd266964bf'),
+  ('program.elf',190500,'ed959881d2d85d2f135a5236a6abf075dcc6e5871d73d7233e7684aac7125110'))
+ffn_shared_reuse='--ffn-shared-input-reuse' in args
+if ffn_shared_reuse:
+    if args.count('--ffn-shared-input-reuse')!=1:raise SystemExit(2)
+    args.remove('--ffn-shared-input-reuse')
+assert __debug__ and len(args)==2
+assert not inspect_candidate or ffn_shared_reuse
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-build,out=map(pathlib.Path,sys.argv[1:])
+build,out=map(pathlib.Path,args)
 assert build.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700);here=pathlib.Path(__file__).resolve().parent
 saved=sys.argv[:]
 try:
     sys.argv=[str(here/'build_qwen38_token_root.py'),str(build),str(out/'unchanged-pushed'),
               '--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet',
-              '--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion']
+              '--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion',
+              *(('--inspect-candidate','--ffn-shared-input-reuse') if ffn_shared_reuse else ())]
     old=runpy.run_path(sys.argv[0],run_name='__main__')
 finally:sys.argv=saved
 tool,components=old['tool'],old['components'];commands=[]
@@ -52,4 +68,12 @@ subprocess.run([sys.executable,str(here/'tests/pioneer_q38_full_offload_eog_isa_
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 for name in ('boot','text','terminal','conv'):
     data=(out/(name+'.bin')).read_bytes();print(name,len(data),hashlib.sha256(data).hexdigest(),flush=True)
-print('PASS BUILD_ONLY unchanged complete G3 ROOT control FIRST;new on-card all5-EOG predicate;whole4-section image fits original journal/boot+STOP exact/static frames<=2048;no runtime or physical/numerical grant',flush=True)
+if ffn_shared_reuse:
+    if not inspect_candidate:
+        for name,size,digest in PINS_FFN_SHARED_INPUT_REUSE:
+            data=(out/name).read_bytes()
+            assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
+if inspect_candidate:
+    print('UNQUALIFIED INSPECT candidate only; hashes not pinned; no runtime, install or physical/numerical grant',flush=True)
+else:
+    print('PASS BUILD_ONLY unchanged complete G3 ROOT control FIRST;new on-card all5-EOG predicate;whole4-section image fits original journal/boot+STOP exact/static frames<=2048;no runtime or physical/numerical grant',flush=True)

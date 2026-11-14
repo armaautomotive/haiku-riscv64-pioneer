@@ -18,7 +18,8 @@ out.mkdir(mode=0o700)
 def run(*args):subprocess.run([str(a) for a in args],check=True)
 # FIRST reproduce the unchanged old components and literal pins. A new
 # component flag is never permission to change or relabel an old image.
-run(sys.executable,here/'build_qwen38_layer_return_components.py',sdk,out/'unchanged-components')
+run(sys.executable,here/'build_qwen38_layer_return_components.py',sdk,out/'unchanged-components',
+ *(['--inspect-candidate'] if mode in ('--inspect-candidate','--inspect-unrolled-candidate','--inspect-feedback-candidate') else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']

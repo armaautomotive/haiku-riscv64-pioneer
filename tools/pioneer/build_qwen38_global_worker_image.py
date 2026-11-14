@@ -8,8 +8,22 @@ import re
 import runpy
 import subprocess
 import sys
-if len(sys.argv)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
-sdk,out=map(pathlib.Path,sys.argv[1:]);here=pathlib.Path(__file__).resolve().parent
+args=sys.argv[1:]
+PINS_FFN_SHARED_INPUT_REUSE=(('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',6276,'6c5eaad2e211331a2bb1386d020e0acea1e37eb5bceb87743595ccb059101dc4'),
+ ('dense.bin',10332,'cfb3b570f61baf7010e14a4072fbe496014ef2ad792d53145ef1b794ff73233a'),
+ ('text.bin',5984,'e9b643d504dc6b1e2e8d744de9c425603fa9b785ef8dab14a9e47b4249f94553'),
+ ('affine.bin',5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
+ ('ffn.bin',16456,'102283280e44bb8e614ff84447825fe5126f9fcd7da032f1fa8da20fc619a6d4'),
+ ('service.bin',9888,'ee3f68158d9609cc3667ef9812dbe3da11666dc01baa9b4fe1baf5bfd317d2c0'),
+ ('gdn.bin',35564,'a56acbed91ca3728a6e2cef4cf8566be39ae8c710fe0ad62a80b8c2032573762'),
+ ('program.elf',121836,'6c08ac30478f5cacfd3900cbc791929f048681c29dced1d157f1c01adc317a59'))
+ffn_shared_reuse='--ffn-shared-input-reuse' in args
+if ffn_shared_reuse:
+ if args.count('--ffn-shared-input-reuse')!=1:raise SystemExit(2)
+ args.remove('--ffn-shared-input-reuse')
+if len(args)!=2 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
+sdk,out=map(pathlib.Path,args);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700);saved=list(sys.argv)
 try:
@@ -23,6 +37,7 @@ for name,size,digest in pins:
 cross=old['cross'];flags=old['flags']
 def run(*args):subprocess.run([str(a) for a in args],check=True)
 run(str(cross)+'-g++',*flags,'-Os','-ffixed-s11','-DPIONEER_Q38_GLOBAL_WORKER_IMAGE=1',
+ *(['-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1'] if ffn_shared_reuse else []),
  '-c',here/'blackhole_qwen38_global_worker.cpp','-o',out/'global.o')
 run(str(cross)+'-as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_worker_start.S','-o',out/'start.o')
 # Internal math capsules retain their actual compiled private seal hooks.
@@ -66,7 +81,12 @@ PINS=(('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c68517
  ('gdn.bin',35564,'a56acbed91ca3728a6e2cef4cf8566be39ae8c710fe0ad62a80b8c2032573762'),
  ('program.elf',121836,'fc8ade5bdbc69a6be95846d40ee26025d43e559ef53c7beedd52071f75e83c4f'))
 for name,size,digest in PINS:
- data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest();assert len(data)==size and actual==digest,name
+ data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest()
+ if not ffn_shared_reuse:assert len(data)==size and actual==digest,name
  print(actual+' '+name+' bytes'+str(len(data)))
-print('BUILD ONLY distinct QGW1/own boot+job+STOP/global layer64/type14/actual private down-job+wave progression/local ALL finite-row greedy partial/maxFrontFrame'+str(max(frames))+
+if ffn_shared_reuse:
+ for name,size,digest in PINS_FFN_SHARED_INPUT_REUSE:
+  data=(out/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
+print(('UNQUALIFIED FFN-shared-input reuse candidate; paired recurrent ROOT required; ' if ffn_shared_reuse else '')+
+ 'BUILD ONLY distinct QGW1/own boot+job+STOP/global layer64/type14/actual private down-job+wave progression/local ALL finite-row greedy partial/maxFrontFrame'+str(max(frames))+
  ';NO connected64/output ROOT/canonical input or wave coverage/native/physical/Work/token/TPS qualification. DO NOT INSTALL')

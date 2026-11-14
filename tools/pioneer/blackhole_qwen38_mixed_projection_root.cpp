@@ -9,6 +9,9 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#include "PioneerQ38FfnSharedInputReuse.h"
+#endif
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
 #include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
@@ -138,9 +141,17 @@ static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
  const uint32_t head[]={M::Magic,sequence,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};
  for(unsigned i=0;i<8;i++){Words(L::Scratch)[i]=head[i];Words(L::Scratch)[8+i]=d[32+i];}
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+ const unsigned job[]={0x31483851,d[15],L::Tile(d[15]),0,0,d[14],p[0],p[2],p[4],d[43]==PioneerQ38FfnSharedInputReuse::UpRole?0U:1U};
+#else
  const unsigned job[]={0x31483851,d[15],L::Tile(d[15]),0,0,d[14],p[0],p[2],p[4],1};
+#endif
+#else
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+ const unsigned job[]={0x31483851,d[15],d[15]==8?576U:3392U,0,0,d[14],p[0],p[2],p[4],d[43]==PioneerQ38FfnSharedInputReuse::UpRole?0U:1U};
 #else
  const unsigned job[]={0x31483851,d[15],d[15]==8?576U:3392U,0,0,d[14],p[0],p[2],p[4],1};
+#endif
 #endif
  for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];
  Words(L::Scratch)[26]=1;
@@ -174,8 +185,7 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  if(Q38_MATRIX_ROLE(d)){BfGatherMatrix(d,tracked,w);return;}
 #endif
 #ifndef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
- MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
- MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
+ MatrixWait(d,tracked,w);BootSeal(d,tracked,w);MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
 #else
 #ifndef PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);
@@ -193,10 +203,21 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  // changes. Sender AND all ROOT TUs need this distinct counter grammar.
  weightReadBlocks=blocks>>(type==8?2:1);
 #endif
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
+ unsigned reads=groups*weightReadBlocks,flits=groups*blocks*L::Tile(type)/64;
+#else
+ unsigned reads=groups*weightReadBlocks,flits=groups*blocks*(type==8?576:3392)/64;
+#endif
+ if(d[43]!=PioneerQ38FfnSharedInputReuse::UpRole){
+  reads+=(k*2+16383)/16384+1;flits+=(k*2+((blocks*4+63)&~63U))/64;
+ }
+#else
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  unsigned reads=groups*weightReadBlocks+(k*2+16383)/16384+1,flits=groups*blocks*L::Tile(type)/64+(k*2+((blocks*4+63)&~63U))/64;
 #else
  unsigned reads=groups*weightReadBlocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
+#endif
 #endif
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
  if(type==12){
@@ -270,9 +291,11 @@ static void Scatter(const uint32_t* d,uint32_t* tracked){
  }
 }
 #ifdef PIONEER_Q38_RECURRENT_SCOPED_SEAL_EXPERIMENT
-static __attribute__((noinline)) unsigned Run(const uint32_t* d){
+static __attribute__((noinline)) unsigned Run(const uint32_t* d
+ ){
 #else
-static unsigned Run(const uint32_t* d){
+static unsigned Run(const uint32_t* d
+ ){
 #endif
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  PioneerQ38Bf16DeferredAudit audit;

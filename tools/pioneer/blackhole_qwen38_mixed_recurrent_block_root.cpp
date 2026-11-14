@@ -5,6 +5,9 @@
 #include "blackhole_qwen38_mixed_projection_root.cpp"
 #include "blackhole_qwen38_mixed_recurrent_cohort.cpp"
 #include "PioneerQ38StateMath.h"
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#include "PioneerQ38FfnSharedInputReuse.h"
+#endif
 #ifdef PIONEER_Q38_RECURRENT_HISTORY_STAGING_IMAGE
 #include "PioneerQ38RecurrentHistoryImageRole.h"
 #include "PioneerQ38RecurrentHistoryLayout.h"
@@ -100,7 +103,19 @@ static void Matrix(R::PrivateSeal* p,unsigned slot,unsigned count,unsigned phase
  Copy(R::MatrixHeader,from+256,16);Copy(R::Parts,from+320,119*8);Copy(R::Rows,from+4128,119);Copy(R::Banks,from+4604,8);
  for(unsigned i=0;i<64;i++)Words(R::Header)[i]=d[i];
  Phase(p,phase);
+#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+ bool reuseSharedInput=false;
+ if(slot==1){
+  // Matrix() entry has already RecipeSeal()ed every recipe against this same
+  // private outer frame; Pair checks only the Q4 gate/up/input relation.
+  const auto* previous=Words(R::RecipeCopies+(slot-1)*R::RecipeStride);
+  reuseSharedInput=PioneerQ38FfnSharedInputReuse::Pair(previous,d);
+  if(!reuseSharedInput)scalar_fault_park();
+ }
  unsigned n=d[11];if(Projection::Run(d)!=n)scalar_fault_park();RecipeSeal(count);
+#else
+ unsigned n=d[11];if(Projection::Run(d)!=n)scalar_fault_park();RecipeSeal(count);
+#endif
 }
 static void Cohort(R::PrivateSeal* p){
  const auto* o=p->outer;auto* d=p->frame;for(unsigned i=0;i<64;i++)d[i]=0;

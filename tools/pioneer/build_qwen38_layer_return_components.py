@@ -6,9 +6,14 @@ import pathlib
 import re
 import subprocess
 import sys
-if len(sys.argv) not in (3,4) or len(sys.argv)==4 and sys.argv[3] not in ('--chain-stop','--chain-stop-prefix4') or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
-chain=len(sys.argv)==4;layers=4 if chain and sys.argv[3]=='--chain-stop-prefix4' else 64
-sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
+args=sys.argv[1:]
+modes=args[2:]
+chain_modes=[mode for mode in modes if mode in ('--chain-stop','--chain-stop-prefix4')]
+inspect='--inspect-candidate' in modes
+if len(args)<2 or len(args)>4 or len(set(modes))!=len(modes) or any(mode not in ('--chain-stop','--chain-stop-prefix4','--inspect-candidate') for mode in modes) or len(chain_modes)>1 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
+chain_mode=chain_modes[0] if chain_modes else None
+chain=chain_mode is not None;layers=4 if chain_mode=='--chain-stop-prefix4' else 64
+sdk,out=map(pathlib.Path,args[:2]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 cross=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku');assert pathlib.Path(cross+'-g++').is_file()
 out.mkdir(mode=0o700)
@@ -71,10 +76,14 @@ CHAIN64_PINS=(PINS[0],('dense.o',118364,'decc0a8fbd2508c20fd6190d706b1a5d91c3ec6
  ('layer-components-NOBOOT.o',235704,'2e21be2ca0fe1b0b002b88ca74a4428a18aaa409a12f164e6a204fa83ae975b6'))
 CHAIN4_PINS=(PINS[0],('dense.o',118360,'a168e2b7f00ecb957709e729bae1029adfed7774d4c81eb747567a87d53bfd5e'),
  ('layer-components-NOBOOT.o',235700,'e29b67b6af82723344dbaa13955447ba974ce49fb5e55471f2b37d334178d917'))
-for name,size,digest in (CHAIN4_PINS if chain and layers==4 else CHAIN64_PINS if chain else PINS):
- data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest()
- assert len(data)==size and actual==digest,name
- print(actual+' '+name+' bytes'+str(len(data)))
+if not inspect:
+ for name,size,digest in (CHAIN4_PINS if chain and layers==4 else CHAIN64_PINS if chain else PINS):
+  data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest()
+  assert len(data)==size and actual==digest,name
+  print(actual+' '+name+' bytes'+str(len(data)))
+else:
+ for name in ('recurrent.o','dense.o','layer-components-NOBOOT.o'):
+  data=(out/name).read_bytes();print(hashlib.sha256(data).hexdigest()+' '+name+' bytes'+str(len(data))+' UNPINNED INSPECT CANDIDATE')
 print('PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes'+str(text)+'/131072 Convbytes'+str(conv)+'/32768 maxFrame'+str(max(frames)))
 if chain:print('PINNED BUILD ONLY chain'+str(layers)+' actual FINAL dense ->ALL119 STOP body retained;NO boot/host wait/old main/native ABI. Unresolved own terminal+fault only. NOT connected/runtime/native/physical/Work/TPS qualified. DO NOT INSTALL')
 else:print('RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL')
