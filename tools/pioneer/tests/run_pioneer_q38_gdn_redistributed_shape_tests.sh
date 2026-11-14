@@ -11,4 +11,4 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-DPIONEER_Q38_RGDN_ROOT_QUALIFICATION \
 	"$directory/pioneer_q38_gdn_redistributed_shape_test.cpp" -o "$temporary/root-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/root-test"
-printf 'PASS offline redistributed GDN mapping/descriptor shape;NO dispatch/native/device/speed qualification\n'
+printf 'PASS offline redistributed GDN mapping/service proof/mixed dispatch routes;NO native/device/speed qualification\n'

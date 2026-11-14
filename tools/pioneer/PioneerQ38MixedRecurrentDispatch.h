@@ -4,6 +4,7 @@
 #include "PioneerQ38MixedWorkerLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentConvServiceShape.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnServiceShape.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
 // DATA-only bridge for the future mixed recurrent coordinator. The outer
 // mailbox is QMW1, NOT the old QFP2 external job/doorbell/status ABI. The
 // same old numeric capsules are constructed privately by the QMW1 worker.
@@ -53,6 +54,25 @@ static inline bool Gdn(const uint32_t* boot,const uint32_t* input,const uint32_t
   || !DisjointOutput(output,input,64) || !DisjointOutput(output,state,64) || !DisjointOutput(output,gated,64))return false;
  uint32_t internal[16];Internal(8,gated[6],boot[3],observedPrevious+1,internal);
  if(!PioneerQ38ResidentGdnServiceJob(internal,gated,input,state,boot+16,boot[3],boot[4]))return false;
+ return Envelope(boot,gated,internal,observedPrevious,output);
+}
+// Separate candidate path for layer-dependent physical GDN placement.
+// Legacy Gdn() remains fixed-worker and unchanged; this only emits DATA after
+// validating the selected physical worker and candidate descriptors.
+static inline bool GdnRedistributed(const uint32_t* boot,const uint32_t* input,
+ const uint32_t* state,const uint32_t* gated,unsigned observedPrevious,
+ uint32_t* output){
+ if(!Binding(boot,gated) || observedPrevious>=0x7ffffffe
+  || !DisjointOutput(output,boot,64) || !DisjointOutput(output,input,64)
+  || !DisjointOutput(output,state,64) || !DisjointOutput(output,gated,64))return false;
+ uint32_t ordinal=0;
+ if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(state[10],ordinal))return false;
+ PioneerQ38GdnTaskPlacement::Route route={};
+ if(!PioneerQ38GdnTaskPlacement::Map(ordinal,state[9],route)
+  || boot[3]!=route.physicalWorker || boot[4]!=route.peer)return false;
+ uint32_t internal[16];Internal(8,gated[6],boot[3],observedPrevious+1,internal);
+ if(!PioneerQ38ResidentGdnRedistributedServiceJob(internal,gated,input,state,
+  boot+16,boot[3],boot[4]))return false;
  return Envelope(boot,gated,internal,observedPrevious,output);
 }
 }

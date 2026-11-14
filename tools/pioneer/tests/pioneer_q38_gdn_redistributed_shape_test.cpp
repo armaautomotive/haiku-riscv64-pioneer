@@ -5,6 +5,7 @@
 #include <stdint.h>
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
+#include "../PioneerQ38MixedRecurrentDispatch.h"
 
 #ifndef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
 static void FillInput(uint32_t* d, uint32_t layer, uint32_t logical, uint32_t peer)
@@ -166,6 +167,22 @@ int main()
 				source,route.physicalWorker,route.peer));
 			assert(!PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
 				source,route.physicalWorker,route.peer+0x10000));
+			uint32_t boot[64]={},dispatch[64]={};
+			boot[0]=PioneerQ38MixedWorkerLayout::Magic;boot[1]=1;boot[2]=64;
+			boot[3]=route.physicalWorker;boot[4]=route.peer;boot[5]=input[16];
+			boot[6]=8192;boot[7]=64;
+			for(unsigned i=8;i<16;i++)boot[i]=input[24+i];
+			boot[16]=input[16];
+			for(unsigned i=17;i<32;i++)boot[i]=input[i];
+			assert(PioneerQ38MixedRecurrentDispatch::GdnRedistributed(boot,input,state,
+				gated,0,dispatch));
+			assert(dispatch[0]==PioneerQ38MixedWorkerLayout::Magic
+				&& dispatch[3]==route.physicalWorker && dispatch[4]==route.peer
+				&& dispatch[5]==route.actualLayer);
+			boot[3]=route.physicalWorker==119?118:route.physicalWorker+1;
+			boot[4]=PioneerQ38MixedWorkerLayout::Peer(boot[3]);
+			assert(!PioneerQ38MixedRecurrentDispatch::GdnRedistributed(boot,input,state,
+				gated,0,dispatch));
 			uint32_t legacyJob[16];for(unsigned i=0;i<16;i++)legacyJob[i]=job[i];
 			legacyJob[11]=logical+1;
 			assert(PioneerQ38ResidentGdnServiceJob(legacyJob,gated,input,state,source,
