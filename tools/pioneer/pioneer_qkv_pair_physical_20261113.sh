@@ -10,7 +10,7 @@ case "$generation" in ''|0*|*[!0-9]*) exit 2;; esac
 [ "$generation" -gt 0 ] && [ "$generation" -le 999999 ] || exit 2
 candidate_generation=$((generation+1));restored_generation=$((generation+2))
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
-stage=/boot/home/pioneer-recurrent-qkv-pair-20261113-a
+stage=/boot/home/pioneer-recurrent-qkv-pair-20261113-b
 prior=/boot/home/pioneer-recurrent-qkv-band-20261113-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
