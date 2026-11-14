@@ -16,8 +16,9 @@
 namespace {
 using Meta=PioneerNativeBfpModelBandMetadata;
 bool Result(const PioneerNativeModelBandPairRequest& r,uint64_t generation,unsigned state){
- if(r.version!=1 || r.sample || r.reserved2 || r.expected_tag!=PioneerNativeModelBandPairTag
-  || r.expected_generation!=generation || r.nonce!=1 || r.accept!=unsigned(state==PIONEER_NATIVE_BFP_CLOSED))return false;
+ if(r.version!=1 || r.sample || r.expected_tag!=PioneerNativeModelBandPairTag
+  || r.expected_generation!=generation || r.nonce!=1 || r.accept!=unsigned(state==PIONEER_NATIVE_BFP_CLOSED)
+  || r.overlap_verified>1)return false;
  for(const auto& v:r.result){
   if(v.state!=state || v.cold || v.started!=1 || v.completed!=1 || !v.polls || v.polls>20000
    || v.phase!=0x7000c || v.count!=(0x04000000U|Meta::Width) || v.marker!=0x3342464e)return false;
@@ -58,11 +59,12 @@ int main(int argc,char** argv){
  PioneerNativeModelBandPairRequest end={};end.version=1;end.expected_tag=PioneerNativeModelBandPairTag;end.expected_generation=m.generation;end.nonce=1;end.accept=1;
  if(ioctl(fd,PIONEER_NATIVE_MODEL_BAND_PAIR_END,&end,sizeof(end)) || !Result(end,m.generation,PIONEER_NATIVE_BFP_CLOSED)
   || memcmp(end.result[0].output,r.result[0].output,sizeof(r.result[0].output))
+  || end.overlap_verified!=r.overlap_verified
   || memcmp(end.result[1].output,r.result[1].output,sizeof(r.result[1].output)) || !source.Ready()){
   fputs("PAIR_END_SOURCE_UNPROVEN;CLOSE_ONLY_NO_RETRY\n",stderr);close(fd);return 1;}
  if(close(fd))return 1;
  for(unsigned i=0;i<2;i++)for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)
   printf("PAIR_QKV_WORD sample%u first%u pass%u row%u got%08x\n",i,Meta::First(i),pass,row,r.result[i].output[pass*32+row]);
- printf("PASS_NATIVE_QKV_PAIR samples2 exact_words128 generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_OVERLAP_OR_INFERENCE_SPEED_CLAIM\n",(unsigned long long)m.generation);
+ printf("PASS_NATIVE_QKV_PAIR samples2 exact_words128 overlap%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM\n",r.overlap_verified,(unsigned long long)m.generation);
  return Delivered()?0:1;
 }

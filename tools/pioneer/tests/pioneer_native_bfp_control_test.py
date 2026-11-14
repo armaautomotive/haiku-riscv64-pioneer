@@ -230,11 +230,12 @@ constexpr uint32_t PioneerNativeModelBandNone=UINT32_MAX;''')
  bool End(NativeIO&,int&){ends++;if(!endOK){for(auto& x:r){x.state=4;x.cold=1;}return false;}
   owned=false;for(auto& x:r)x.state=2;return true;}
  void Abandon(){if(owned)for(auto& x:r){x.state=4;x.cold=1;}}
+ bool OverlapVerified()const{return true;}
  const auto& Result(unsigned i)const{assert(i<2);return r[i];}
 };
 ''' + prefix[end:]
     tests = tests.replace('PioneerNativeModelBandTag', 'PioneerNativeModelBandPairTag')
-    tests = tests.replace('r.reserved=1', 'r.reserved2=1').replace('r.result.', 'r.result[0].').replace('end.result.', 'end.result[0].')
+    tests = tests.replace('r.reserved=1', 'r.overlap_verified=1').replace('r.result.', 'r.result[0].').replace('end.result.', 'end.result[0].')
     tests = tests.replace('for(unsigned sample:{0U,1U,2U})', 'for(unsigned sample:{0U})')
     tests = tests.replace('PASS ACTUAL fixed learned-model native BFP', 'PASS ACTUAL fixed pair diagnostic')
     tests = tests.replace('printf("PASS ACTUAL fixed pair diagnostic', '''for(unsigned failure=0;failure<4;failure++){

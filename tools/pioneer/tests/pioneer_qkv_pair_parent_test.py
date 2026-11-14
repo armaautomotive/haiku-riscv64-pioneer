@@ -44,12 +44,13 @@ health(){ echo health >> "$events"; }
         for job in range(2):
             for row in range(32):
                 normal.append(f'PAIR_QKV_WORD sample{sample} first{first[sample]} pass{job} row{row} got{(sample*32+row+1):08x}')
-    normal.append('PASS_NATIVE_QKV_PAIR samples2 exact_words128 generation51;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_OVERLAP_OR_INFERENCE_SPEED_CLAIM')
+    normal.append('PASS_NATIVE_QKV_PAIR samples2 exact_words128 overlap1 generation51;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM')
     cases = [('pass', normal), ('runfail', []), ('dirty', normal), ('false-pass', normal), ('swapfail', normal),
              ('busy', normal), ('preflight-fail', normal), ('missing-auth', normal[1:]),
              ('duplicate-auth', normal[:1]+normal), ('missing-final', normal[:-1]),
              ('duplicate-final', normal+[normal[-1]]), ('extra-line', normal+['BAD']),
              ('wrong-generation', normal[:-1]+[normal[-1].replace('generation51','generation50')]),
+             ('no-overlap', normal[:-1]+[normal[-1].replace('overlap1','overlap0')]),
              ('short-reference', normal)]
     for pos in range(1,129):
         wrong = normal.copy();wrong[pos] = wrong[pos][:-8] + 'ffffffff'
@@ -63,10 +64,11 @@ health(){ echo health >> "$events"; }
         (stage / 'output').write_text('\n'.join(output)+'\n')
         result = subprocess.run(['sh', str(program), str(stage), label, str(client), str(preflight), str(stable)], capture_output=True, text=True)
         events = (stage / 'events').read_text().splitlines() if (stage / 'events').exists() else []
-        if label == 'pass':
+        if label in ('pass','no-overlap'):
             assert result.returncode == 0 and events.count('run') == 1, (result.stdout,result.stderr,events)
             assert events.count('exchange:2026111300010153:2026102100010012') == 1
-            assert (stage / 'trial.state').read_text().strip() == 'STABLE_RESTORED_EXACT128'
+            suffix='1' if label=='pass' else '0'
+            assert (stage / 'trial.state').read_text().strip() == 'STABLE_RESTORED_EXACT128_OVERLAP'+suffix
         else:
             assert result.returncode != 0 and 'exchange:2026111300010153:2026102100010012' not in events, (label,events,result.stderr)
             if 'run' in events:

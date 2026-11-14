@@ -62,6 +62,17 @@ swap. The client prints returned words only after its explicit successful END.
 This wrapper has NOT been run on hardware; build provenance for the updated
 client, live check-only admission, and actual overlap proof remain required.
 
+Overlap evidence is now a field in the pair-specific protocol only (the
+shared result ABI is unchanged). After both resets are released, the owner
+samples core 0, core 1, core 1, then core 0. Each core's image moves only
+forward from execution to terminal park; observing core 1 active at both
+middle samples and core 0 active at both outer samples proves their active
+intervals overlap. Terminal park means correct-but-not-overlapped, not a
+hardware fault; the explicit END and
+stable-driver restore still proceed after both outputs validate. This
+instrumentation is cross-compiled and its offline controller/parent tests
+pass, but has not yet been run physically.
+
 This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
 real overlap and completion behavior must be established on hardware after

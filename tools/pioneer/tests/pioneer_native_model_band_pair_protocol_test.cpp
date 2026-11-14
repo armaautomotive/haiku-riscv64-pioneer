@@ -10,7 +10,7 @@ int main(){
  auto bad=r;bad.version=2;assert(!PioneerNativeModelBandPairRequestValid(bad));
  bad=r;bad.expected_tag^=1;assert(!PioneerNativeModelBandPairRequestValid(bad));
  bad=r;bad.expected_generation=0;assert(!PioneerNativeModelBandPairRequestValid(bad));
- bad=r;bad.reserved2=1;assert(!PioneerNativeModelBandPairRequestValid(bad));
+ bad=r;bad.overlap_verified=1;assert(!PioneerNativeModelBandPairRequestValid(bad));
  for(unsigned i=0;i<2;i++){
   bad=r;bad.result[i].state=1;assert(!PioneerNativeModelBandPairRequestValid(bad));
   bad=r;bad.result[i].output[0]=1;assert(!PioneerNativeModelBandPairRequestValid(bad));

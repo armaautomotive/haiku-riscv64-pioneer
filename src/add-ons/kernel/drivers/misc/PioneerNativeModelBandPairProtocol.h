@@ -17,12 +17,12 @@ enum { PIONEER_NATIVE_MODEL_BAND_PAIR_SUPPORT=B_DEVICE_OP_CODES_END+0x7d00,
 struct PioneerNativeModelBandPairRequest {
  uint32_t version,sample;
  uint64_t expected_tag,expected_generation,nonce;
- uint32_t accept,reserved2;
+ uint32_t accept,overlap_verified;
  PioneerNativeBfpResult result[2];
 };
 static_assert(sizeof(PioneerNativeModelBandPairRequest)==680,"fixed pointer-free pair protocol");
 static inline bool PioneerNativeModelBandPairRequestValid(const PioneerNativeModelBandPairRequest& r){
- return r.version==1 && !r.reserved2 && r.expected_tag==PioneerNativeModelBandPairTag
+ return r.version==1 && !r.overlap_verified && r.expected_tag==PioneerNativeModelBandPairTag
   && r.expected_generation && PioneerNativeBfpEmptyResult(r.result[0]) && PioneerNativeBfpEmptyResult(r.result[1]);
 }
 #endif

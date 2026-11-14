@@ -37,7 +37,7 @@ static int FakeOpen(const char* path,int flags){assert(!opened++ && !strcmp(path
 static int FakeClose(int fd){assert(fd==123 && !closed++);return scenario==7?-1:0;}
 static void Fill(PioneerNativeModelBandPairRequest& r,bool end){
  assert(PioneerNativeModelBandPairRequestValid(r) && !r.sample && r.expected_generation==19);
- assert(end?(r.nonce==1 && r.accept==1):(!r.nonce && !r.accept));r.nonce=1;
+ assert(end?(r.nonce==1 && r.accept==1):(!r.nonce && !r.accept));r.nonce=1;r.overlap_verified=1;
  for(unsigned i=0;i<2;i++){auto& v=r.result[i];v.state=end?PIONEER_NATIVE_BFP_CLOSED:PIONEER_NATIVE_BFP_RESULT;
   v.started=v.completed=1;v.polls=1;v.pc[0]=0x70038;v.pc[1]=0x7003c;v.phase=0x7000c;
   v.count=0x04000000U|PioneerNativeBfpModelBandMetadata::Width;v.marker=0x3342464e;

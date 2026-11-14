@@ -17,7 +17,7 @@ struct IO {
  uint32_t source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
   0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0};
  unsigned starts=0,resetWrites=0,writes=0,tlbWrites=0,reads=0,pauses=0;
- unsigned dropReset=0,dropWrite=0,dropTlb=0;bool timeout=false,badMarker=false,sourceBad=false,alias=false;
+ unsigned dropReset=0,dropWrite=0,dropTlb=0,pcReads=0;bool timeout=false,badMarker=false,sourceBad=false,alias=false,proveOverlap=false;
  uint64_t now=1000000;
  IO(){for(unsigned i=0;i<2;i++){mem[i].resize(0x180000/4);for(unsigned j=0;j<mem[i].size();j++)mem[i][j]=0x9e370000U^(j*71+i);original[i]=mem[i];}}
  bool Match(unsigned s,unsigned x,unsigned y,bool ro){for(unsigned w=0;w<3;w++)if(tlb[s][w]!=BlackholeDramFixedTlbWord(s?0xffa00000:0,x,y,ro,w))return false;return true;}
@@ -31,7 +31,13 @@ struct IO {
  uint32_t BfpRead(uint32_t a){int c=Window();assert(!(a&3) && a<0x180000);reads++;return mem[c][a/4];}
  void BfpWrite(uint32_t a,uint32_t v){int c=Window();assert(reset[c]==0x47800 && !(a&3) && a<0x180000);if(++writes!=dropWrite)mem[c][a/4]=v;}
  uint32_t BfpControlRead(unsigned i){assert(Window()>=0 && i<3);return 0;}
- uint32_t BfpPcRead(){assert(Window()>=0);return pauses&1?0x70038:0x7003c;}
+ uint32_t BfpPcRead(){
+  int core=Window();assert(core>=0);
+  if(pcReads<4){static const unsigned order[]={0,1,1,0};assert(unsigned(core)==order[pcReads]);
+   pcReads++;if(proveOverlap)return 0x70010;}
+  else pcReads++;
+  return pauses&1?0x70038:0x7003c;
+ }
  void BfpResetWrite(uint32_t v){int c=Window();if(++resetWrites==dropReset)return;
   if(v==0x46800){assert(reset[c]==0x87ffff);reset[c]=v;starts|=1U<<c;
    if(starts==3 && !timeout)for(unsigned i=0;i<2;i++){
@@ -69,6 +75,7 @@ int main(){
   assert(reads==io.reads && writes==io.writes && resets==io.resetWrites && tlbs==io.tlbWrites);}
  {IO io;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
   assert((owner->Run<IO,Image>(io,baseline,0,1)));assert(io.starts==3 && io.resetWrites==4);
+  assert(!owner->OverlapVerified());
   for(unsigned i=0;i<2;i++){auto& r=owner->Result(i);assert(r.completed && r.state==PIONEER_NATIVE_BFP_RESULT);
    const auto* expected=PioneerNativeBfpModelBandMetadata::Golden(i);for(unsigned j=0;j<64;j++)assert(r.output[j]==expected[j%32]);}
   assert(owner->End(io,baseline));assert(io.resetWrites==8);
@@ -78,6 +85,9 @@ int main(){
   assert(!owner->End(io,baseline));assert((!owner->Run<IO,Image>(io,baseline,0,1)));
   assert(reads==io.reads && writes==io.writes && resets==io.resetWrites && tlbs==io.tlbWrites);
  }
+ {IO io;io.proveOverlap=true;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
+  assert((owner->Run<IO,Image>(io,baseline,0,1)));assert(owner->OverlapVerified());
+  assert(owner->End(io,baseline));}
  for(unsigned fault=0;fault<10;fault++){
   IO io;auto baseline=io.Baseline();auto owner=std::make_unique<Owner>();
   if(fault==0)io.timeout=true;if(fault==1)io.badMarker=true;if(fault==2)io.dropWrite=100;

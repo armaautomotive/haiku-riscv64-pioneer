@@ -29,7 +29,7 @@ class PioneerNativeModelBandPairInspection {
  using Band=PioneerNativeModelBandLease;
  uint32_t saved[2][Band::MaxSavedWords]={},tlb[2][3]={};
  PioneerNativeBfpResult result[2]={};
- bool attempted=false,owned=false,unknown=false,closed=false;
+ bool attempted=false,owned=false,unknown=false,closed=false,overlapVerified=false;
  static unsigned Y(unsigned i){return 2+i;}
  bool Fail(){unknown=true;for(auto& r:result){r.state=PIONEER_NATIVE_BFP_UNKNOWN;r.cold=1;}return false;}
  template<class IO> bool Select(IO& io,unsigned i){
@@ -53,6 +53,7 @@ class PioneerNativeModelBandPairInspection {
  }
 public:
  const PioneerNativeBfpResult& Result(unsigned i)const{return result[i];} // i must be 0 or 1
+ bool OverlapVerified()const{return overlapVerified;}
  void Abandon(){if(owned)Fail();} // bookkeeping only, never accesses the device
  template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned first,unsigned second){
   static_assert(Image::Width==5120 && Image::Phases==4,"fixed real-band image only");
@@ -94,6 +95,23 @@ public:
    io.BfpResetWrite(0x87ffff);io.Pause();if(!Scope(io,baseline,i,0x87ffff))return Fail();
    result[i].started=1;io.BfpResetWrite(0x46800);if(!Scope(io,baseline,i,0x46800))return Fail();
   }
+  // Bracket peer 1's running interval with two live observations of peer 0.
+  // Order is core0, core1, core1, core0: each image has one-way completion
+  // into its terminal park, so a live core1 at both middle observations
+  // lies inside core0's live interval when both outer observations are live.
+  // If either peer already reached its verified park, simply report no
+  // overlap; numerical execution and explicit END remain independently gated.
+  uint32_t bracket[2][2]={};
+  static const unsigned bracketOrder[4]={0,1,1,0};
+  for(unsigned observation=0;observation<4;observation++){
+   unsigned sample=bracketOrder[observation];
+   if(!Select(io,sample) || !Scope(io,baseline,sample,0x46800))return Fail();
+   io.Pause();bracket[sample][observation&1]=io.BfpPcRead();
+   if(bracket[sample][observation&1]==0x70040)return Fail();
+  }
+  auto live=[](uint32_t pc){return pc!=0x70038 && pc!=0x7003c;};
+  overlapVerified=live(bracket[0][0]) && live(bracket[0][1])
+   && live(bracket[1][0]) && live(bracket[1][1]);
   const uint64_t began=io.BfpNow();bool done[2]={};
   for(unsigned poll=0;poll<20000 && !(done[0] && done[1]);poll++)for(unsigned i=0;i<2;i++)if(!done[i]){
    if(!Select(io,i) || !Scope(io,baseline,i,0x46800))return Fail();

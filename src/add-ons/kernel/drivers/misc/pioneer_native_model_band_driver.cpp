@@ -164,6 +164,7 @@ static const PioneerNativeBfpResult& Primary(const NativeOwner& o) {
 #endif
 static void Reply(PioneerNativeModelBandRequest& r,const NativeOwner& o) {
 	#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+	r.overlap_verified=o.lease.OverlapVerified();
 	for(unsigned i=0;i<2;i++) {r.result[i]=o.lease.Result(i);if(sColdRecoveryRequired){r.result[i].state=PIONEER_NATIVE_BFP_UNKNOWN;r.result[i].cold=1;}}
 	#else
 	r.result=o.lease.Result();

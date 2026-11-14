@@ -100,7 +100,7 @@ if [ "$result" != 0 ] || test -s "$stage/trial.stderr";then
  echo PAIR_STOP_RETAIN_OWNER_NO_RETRY;exit 70
 fi
 # PAIR_QKV_OUTPUT_GATE_BEGIN
-awk -v generation="$candidate_generation" '
+overlap=$(awk -v generation="$candidate_generation" '
  BEGIN{first[0]=0;first[1]=5120;first[2]=10208}
  NR==FNR {if($1=="QKV_INTEGER_REFERENCE"){
   s=substr($2,7)+0;r=substr($4,4)+0
@@ -111,13 +111,13 @@ awk -v generation="$candidate_generation" '
   s=substr($2,7)+0;r=substr($5,4)+0
   if($3!="first"first[s] || seen[$2 SUBSEP $4 SUBSEP $5]++ || substr($6,4)!=prior[s SUBSEP r])bad++
   words++;next}
- $0=="PASS_NATIVE_QKV_PAIR samples2 exact_words128 generation"generation";EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_OVERLAP_OR_INFERENCE_SPEED_CLAIM" && auth==1 && words==128 && !good {good++;next}
- NF{bad++} END{if(oldwords!=96 || words!=128 || auth!=1 || good!=1 || bad)exit 1}' "$reference" "$stage/trial.stdout" || exit 1
+ $1=="PASS_NATIVE_QKV_PAIR" && $2=="samples2" && $3=="exact_words128" && $4~/^overlap[01]$/ && $5=="generation"generation";EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_INFERENCE_SPEED_CLAIM" && auth==1 && words==128 && !good {good++;overlap=substr($4,8);next}
+ NF{bad++} END{if(oldwords!=96 || words!=128 || auth!=1 || good!=1 || bad)exit 1;print overlap}' "$reference" "$stage/trial.stdout") || exit 1
 # PAIR_QKV_OUTPUT_GATE_END
 metadata 2026111300010153 "$candidate_generation" || exit 1
 printf '%s\n' KNOWN_CLOSED_EXACT128 > "$stage/trial.state"
 exchange "$candidate_hash" "$stable_hash" 2026111300010153 2026102100010012 "$candidate_generation" "$restored_generation" "$stable" || exit 1
 exact "$installed" "$stable_hash" && metadata 2026102100010012 "$restored_generation" && idle && health || exit 1
-printf '%s\n' STABLE_RESTORED_EXACT128 > "$stage/trial.state"
-echo PAIR_KNOWN_CLEAN_NO_OVERLAP_OR_INFERENCE_SPEED_CLAIM
+printf '%s\n' "STABLE_RESTORED_EXACT128_OVERLAP$overlap" > "$stage/trial.state"
+if [ "$overlap" = 1 ];then echo PAIR_OVERLAP_VERIFIED_NO_INFERENCE_SPEED_CLAIM;else echo PAIR_OUTPUTS_VALID_NO_OVERLAP_NO_SPEED_CLAIM;fi
 # PAIR_QKV_FLOW_END
