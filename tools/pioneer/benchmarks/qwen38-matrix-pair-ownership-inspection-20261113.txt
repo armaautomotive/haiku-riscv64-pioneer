@@ -46,8 +46,13 @@ The actual pair debug client was compiled under ASan/UBSan against fake source
 and ioctl endpoints. It refused invalid metadata, source readiness failures,
 run and END failures, corrupted state and restoration flags for both peers,
 and all 128 individually corrupted output positions without sending END after
-a failed run. No real device was opened. Kernel adapter fault injection, a
-one-shot parent/recovery wrapper and actual overlap proof remain required.
+a failed run. No real device was opened. The extracted actual kernel pair
+Control/Reply/Fault/Dispose/Free code also passed 35 ASan/UBSan scenarios
+with fake device and lease endpoints. These cover rejected requests, both
+result buffers on quarantine, lost run reply, explicit END, failed END and
+no cleanup after uncertain ownership. The original single-core extracted
+controller passed 32 cases. This is not a physical MMIO fault test. A one-shot
+parent/recovery wrapper and actual overlap proof remain required.
 
 This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,

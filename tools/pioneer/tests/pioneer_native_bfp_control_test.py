@@ -8,12 +8,13 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'], ['--exact-q4'], ['--exact-q4-affine'], ['--srca'])
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'], ['--pair'], ['--exact-q4'], ['--exact-q4-affine'], ['--srca'])
 affine=sys.argv[1:]==['--exact-q4-affine']
 srca=sys.argv[1:]==['--srca']
 exact = sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'],['--srca'])
-band = sys.argv[1:] in (['--band'], ['--model'])
-model = sys.argv[1:]==['--model']
+pair = sys.argv[1:]==['--pair']
+band = sys.argv[1:] in (['--band'], ['--model'], ['--pair'])
+model = sys.argv[1:] in (['--model'], ['--pair'])
 name = 'pioneer_native_model_band_driver.cpp' if model else 'pioneer_native_bfp_band_driver.cpp' if band else 'pioneer_native_bfp_driver.cpp'
 native = here.parents[2] / 'src/add-ons/kernel/drivers/misc' / name
 source = native.read_text()
@@ -210,6 +211,47 @@ if model:
     for old, new in (('PIONEER_NATIVE_BFP_BAND_RUN', 'PIONEER_NATIVE_MODEL_BAND_RUN'), ('PIONEER_NATIVE_BFP_BAND_END', 'PIONEER_NATIVE_MODEL_BAND_END')):
         tests = tests.replace(old, new)
     tests = tests.replace('PASS ACTUAL full-K native BFP', 'PASS ACTUAL fixed learned-model native BFP')
+    prefix += '\nconstexpr unsigned NativeBandWidth=5120;\n'
+if pair:
+    prefix = prefix.replace('#include "PioneerNativeModelBandProtocol.h"', '''#define PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC 1
+#include "PioneerNativeModelBandPairProtocol.h"
+#define PioneerNativeModelBandRequest PioneerNativeModelBandPairRequest
+#define PioneerNativeModelBandRequestValid PioneerNativeModelBandPairRequestValid
+#define PIONEER_NATIVE_MODEL_BAND_SUPPORT PIONEER_NATIVE_MODEL_BAND_PAIR_SUPPORT
+#define PIONEER_NATIVE_MODEL_BAND_RUN PIONEER_NATIVE_MODEL_BAND_PAIR_RUN
+#define PIONEER_NATIVE_MODEL_BAND_END PIONEER_NATIVE_MODEL_BAND_PAIR_END
+constexpr uint32_t PioneerNativeModelBandNone=UINT32_MAX;''')
+    start = prefix.index('struct FakeLease{')
+    end = prefix.index('struct NativeOwner{', start)
+    prefix = prefix[:start] + r'''struct FakeLease{
+ PioneerNativeBfpResult r[2]={};bool owned=false;
+ template<class A,class B>bool Run(A&,int&,unsigned a,unsigned b){assert(B::Width==5120 && a==0 && b==1);runs++;owned=true;
+  for(auto& x:r){x.state=runState;x.started=1;x.completed=runState==1;}return runState==1;}
+ bool End(NativeIO&,int&){ends++;if(!endOK){for(auto& x:r){x.state=4;x.cold=1;}return false;}
+  owned=false;for(auto& x:r)x.state=2;return true;}
+ void Abandon(){if(owned)for(auto& x:r){x.state=4;x.cold=1;}}
+ const auto& Result(unsigned i)const{assert(i<2);return r[i];}
+};
+''' + prefix[end:]
+    tests = tests.replace('PioneerNativeModelBandTag', 'PioneerNativeModelBandPairTag')
+    tests = tests.replace('r.reserved=1', 'r.reserved2=1').replace('r.result.', 'r.result[0].').replace('end.result.', 'end.result[0].')
+    tests = tests.replace('for(unsigned sample:{0U,1U,2U})', 'for(unsigned sample:{0U})')
+    tests = tests.replace('PASS ACTUAL fixed learned-model native BFP', 'PASS ACTUAL fixed pair diagnostic')
+    tests = tests.replace('printf("PASS ACTUAL fixed pair diagnostic', '''for(unsigned failure=0;failure<4;failure++){
+  Reset();auto* c=Cookie();auto r=Request();
+  if(failure==0)r.sample=1;else if(failure==1)r.sample=2;
+  else if(failure==2)r.result[1].state=1;else r.result[1].output[63]=1;
+  assert(Control(c,PIONEER_NATIVE_MODEL_BAND_RUN,&r,sizeof(r))!=0 && !owner && !reserves && !runs && !finishes && !locked);
+  FinishFixture(c);cases++;
+ }
+ {Reset();auto* c=Cookie();auto r=Request();runState=PIONEER_NATIVE_BFP_UNKNOWN;
+  assert(!Control(c,PIONEER_NATIVE_MODEL_BAND_RUN,&r,sizeof(r)) && owner && sColdRecoveryRequired);
+  for(auto& result:r.result)assert(result.state==PIONEER_NATIVE_BFP_UNKNOWN && result.cold==1);
+  const auto f=finishes,e=ends,u=unreserves;
+  assert(!Free(c) && owner && finishes==f && ends==e && unreserves==u);
+  FinishFixture(c);cases++;
+ }
+ printf("PASS ACTUAL fixed pair diagnostic''')
 (folder / 'test.cpp').write_text(prefix + code + tests)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                 '-fsanitize=address,undefined', '-I' + str(native.parent), '-I' + str(here.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
