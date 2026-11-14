@@ -74,6 +74,12 @@ if small_to_gate:
     assert sys.argv.count('--recurrent-small-to-gate')==1
     sys.argv.remove('--recurrent-small-to-gate')
 model_recurrent=None
+model_gate=None
+if '--model-gate-fixture' in sys.argv:
+    i=sys.argv.index('--model-gate-fixture');assert sys.argv.count('--model-gate-fixture')==1 and i+1<len(sys.argv)
+    model_gate=pathlib.Path(sys.argv[i+1]);del sys.argv[i:i+2]
+    assert model_gate.is_absolute() and model_gate.is_file() and not model_gate.is_symlink()
+    assert hashlib.sha256(model_gate.read_bytes()).hexdigest()=='e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755fb1f02b'
 model_qkv=None
 if '--model-qkv-fixture' in sys.argv:
     i=sys.argv.index('--model-qkv-fixture');assert sys.argv.count('--model-qkv-fixture')==1 and i+1<len(sys.argv)
@@ -108,6 +114,7 @@ assert not small_to_gate or recurrent_matrix_reuse, 'small-to-gate check require
 assert not gate_cohort or small_to_gate, 'gate cohort requires the isolated small-to-gate test'
 assert not qkv_cohort or gate_cohort, 'QKV cohort requires the isolated gate cohort test'
 assert not model_qkv or (model_recurrent and qkv_cohort), 'real QKV requires the isolated model recurrent QKV cohort'
+assert not model_gate or (model_qkv and gate_cohort), 'real gate requires the isolated real QKV and gate cohort'
 assert not conv_cohort or qkv_cohort, 'Conv cohort requires the isolated QKV cohort test'
 assert not gdn_cohort or conv_cohort, 'GDN test requires the isolated Conv cohort test'
 assert not output_producers or gdn_cohort, 'output producers require the isolated GDN cohort test'
@@ -554,6 +561,7 @@ if qgwd_inspection:
         defines['PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_FAULT_KIND']=str(qkv_conv_fault)
     if model_recurrent:defines['PIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST']='1'
     if model_qkv:defines['PIONEER_Q38_MODEL_QKV_OBSERVER_TEST']='1'
+    if model_gate:defines['PIONEER_Q38_MODEL_GATE_OBSERVER_TEST']='1'
     if qgwf_frontier_inspection:defines.update(PIONEER_Q38_QGWF_FRONTIER_NATIVE_INSPECTION='1',PIONEER_Q38_QGWF_FRONTIER_PROGRAMS_INSPECTION='1')
     if qgwf_unroll_inspection:defines['PIONEER_Q38_QGWF_UNROLL_NATIVE_INSPECTION']='1'
 if trace_init:defines.update(PIONEER_Q38_QGW8_TRACE_READ_INSPECTION='1',PIONEER_Q38_QGW8_TRACE_INIT_INSPECTION='1')
@@ -815,6 +823,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
     profile_environment={}
     if model_recurrent:profile_environment.update(Q38_TEST_MODEL_ALPHA=str(model_recurrent[0]),Q38_TEST_MODEL_BETA=str(model_recurrent[1]))
     if model_qkv:profile_environment['Q38_TEST_MODEL_QKV']=str(model_qkv)
+    if model_gate:profile_environment['Q38_TEST_MODEL_GATE']=str(model_gate)
     if counter_gather:
         # Authenticate ALL frozen artifacts before classifying any TEST
         # request. nm consumes the SAME already authenticated ELF snapshot,
@@ -939,6 +948,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                         *(['-DPIONEER_Q38_SYNTHETIC_FFN_DOWN_MATRIX_TEST=1'] if ffn_down else []),
                         *(['-DPIONEER_Q38_MODEL_RECURRENT_OBSERVER_TEST=1'] if model_recurrent else []),
                         *(['-DPIONEER_Q38_MODEL_QKV_OBSERVER_TEST=1'] if model_qkv else []),
+                        *(['-DPIONEER_Q38_MODEL_GATE_OBSERVER_TEST=1'] if model_gate else []),
                         '-c', str(here/('pioneer_q38_synthetic_embedding_bridge.cpp' if synthetic_embedding else 'pioneer_q38_embedding_raw_test_bridge.cpp')), '-o', str(bridge_object)], check=True)
         if synthetic_layer:
             fixture_test=base/'synthetic-layer-test'
@@ -958,6 +968,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                     '-DPIONEER_Q38_MODEL_QKV_OBSERVER_TEST=1','-fsyntax-only',
                     str(here/'pioneer_q38_synthetic_embedding_bridge.cpp')],capture_output=True,text=True)
                 assert result.returncode and 'Model QKV bytes require the isolated model recurrent QKV fixture' in result.stderr
+            if model_gate:
+                result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-DPIONEER_Q38_SYNTHETIC_EMBEDDING_TEST=1',
+                    '-DPIONEER_Q38_MODEL_GATE_OBSERVER_TEST=1','-fsyntax-only',
+                    str(here/'pioneer_q38_synthetic_embedding_bridge.cpp')],capture_output=True,text=True)
+                assert result.returncode and 'Model gate bytes require the isolated model QKV fixture' in result.stderr
         extra += [str(bridge_object)]
     if model_recurrent:
         observer=base/'model-recurrent-observer.o'
@@ -989,3 +1004,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             for p,digest in zip(model_recurrent,('92f7287e9626c4dae6ff4c1118d6d2c64f194cf1c239ac3f7b1b60e477ed4fbb','f6615b16825dbe365aad7d01729b2b6cbd19c2f0d51545890d1fe74933bcb753')):
                 assert hashlib.sha256(p.read_bytes()).hexdigest()==digest
         if model_qkv:assert hashlib.sha256(model_qkv.read_bytes()).hexdigest()=='6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a'
+        if model_gate:assert hashlib.sha256(model_gate.read_bytes()).hexdigest()=='e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755fb1f02b'

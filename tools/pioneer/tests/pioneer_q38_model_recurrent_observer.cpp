@@ -31,15 +31,15 @@ extern "C" bool Q38ModelRecurrentExpected(const char* path,const float* input,do
 
 // Independent scalar observer for the full QKV export. Never used to supply
 // an input or result to the simulated device or any production Work mode.
-extern "C" bool Q38ModelQkvExpected(const char* path,const float* input,double* output){
+static bool ModelProjectionExpected(const char* path,const float* input,double* output,unsigned tensor,unsigned rows){
  if(!path || !input || !output)return false;
  FILE* file=std::fopen(path,"rb");if(!file)return false;
- const uint32_t expected[]={0x31525051,1,5,5120,10240,320,160,1088};uint32_t h[8];
+ const uint32_t expected[]={0x31525051,1,tensor,5120,rows,rows/32,160,1088};uint32_t h[8];
  bool ok=std::fread(h,4,8,file)==8;
  for(unsigned i=0;i<8 && ok;i++)ok=h[i]==expected[i];
  std::array<uint8_t,1088> packed;std::array<float,1024> tile;
- for(unsigned row=0;row<10240;row++)output[row]=0;
- for(unsigned band=0;band<320 && ok;band++){
+ for(unsigned row=0;row<rows;row++)output[row]=0;
+ for(unsigned band=0;band<rows/32 && ok;band++){
   for(unsigned t=0;t<160 && ok;t++){
    ok=std::fread(packed.data(),1,packed.size(),file)==packed.size()
     && PioneerBlackholeBlockFloat::UnpackTile(PioneerBlackholeBlockFloat::Format::Bfp8B,packed.data(),packed.size(),tile.data(),tile.size());
@@ -50,4 +50,10 @@ extern "C" bool Q38ModelQkvExpected(const char* path,const float* input,double* 
  }
  if(ok)ok=std::fgetc(file)==EOF && !std::ferror(file);
  if(std::fclose(file))ok=false;return ok;
+}
+extern "C" bool Q38ModelQkvExpected(const char* path,const float* input,double* output){
+ return ModelProjectionExpected(path,input,output,5,10240);
+}
+extern "C" bool Q38ModelGateExpected(const char* path,const float* input,double* output){
+ return ModelProjectionExpected(path,input,output,3,6144);
 }

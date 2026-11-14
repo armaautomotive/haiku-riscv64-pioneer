@@ -100,6 +100,12 @@ extern "C" bool Q38ModelRecurrentExpected(const char*,const float*,double*);
 #endif
 extern "C" bool Q38ModelQkvExpected(const char*,const float*,double*);
 #endif
+#ifdef PIONEER_Q38_MODEL_GATE_OBSERVER_TEST
+#if PIONEER_Q38_MODEL_GATE_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_MODEL_QKV_OBSERVER_TEST) || !defined(PIONEER_Q38_TOKEN_NATIVE_GATE_COHORT_FIXTURE)
+#error Model gate observer requires the isolated real-QKV gate cohort fixture
+#endif
+extern "C" bool Q38ModelGateExpected(const char*,const float*,double*);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_GDN_COHORT_FIXTURE
 extern "C" bool Q38SyntheticGdnExpected(const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
 extern "C" bool Q38SyntheticGdnGatedExpected(const uint32_t*,const uint32_t*,const uint32_t*,const uint32_t*,uint32_t*);
@@ -506,22 +512,32 @@ static void CheckNativeExecution(Fixture& f){
   }
   assert(cpu.layerHeld && cpu.recurrentGateDoorbells==119 && io.Core(0).pending && !state->Unsafe());
   bool gateRows[6144]={};unsigned matrices=0;
+#ifdef PIONEER_Q38_MODEL_GATE_OBSERVER_TEST
+  float gateInput[5120];double gateExpected[6144];
+  for(unsigned i=0;i<5120;i++){const uint32_t v=io.Raw(0,R::Input+i*4);gateInput[i]=Float(((v+0x7fff+((v>>16)&1))>>16)<<16);}
+  assert(Q38ModelGateExpected(std::getenv("Q38_TEST_MODEL_GATE"),gateInput,gateExpected));
+#endif
   for(unsigned w=0;w<119;w++){
    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentGateBands[w],first=cpu.recurrentGateFirst[w];
    assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*2560);matrices+=s.matrixInstructions;
    for(unsigned row=0;row<bands*32;row++){
     const unsigned global=first+row;assert(global<6144 && !gateRows[global]);gateRows[global]=true;
-    double expected=0;for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
+    double expected=0;
+#ifdef PIONEER_Q38_MODEL_GATE_OBSERVER_TEST
+    expected=gateExpected[global];
+#else
+    for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++){
      const uint32_t v=io.Raw(0,R::Input+(tile*32+col)*4);
      const uint32_t bits=((v+0x7fff+((v>>16)&1))>>16)<<16;
      expected+=double(Float(bits))*double(int((global*3+tile*7+col*5)%17)-8)*0.0625;
     }
+#endif
     const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
     assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
    }
   }
   for(bool seen:gateRows)assert(seen);
-  printf("PASS full recurrent role5 matrix/119 workers/6144 independent synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",matrices);
+  printf("PASS full recurrent role5 matrix/119 workers/6144 independently checked rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/token/physical/TPS\n",matrices);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE
   fprintf(stderr,"NEXT_QKV_DIAGNOSTIC worker=%u operation=%u sequence=%u role=%u invocation=%u\n",cpu.dispatchWorker,
    io.Raw(cpu.dispatchWorker,W::Job+8),io.Raw(cpu.dispatchWorker,W::Job+4),io.Raw(cpu.dispatchWorker,W::Job+34*4),io.Raw(cpu.dispatchWorker,W::Job+7*4));

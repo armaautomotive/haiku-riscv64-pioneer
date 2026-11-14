@@ -26,6 +26,10 @@
  || !defined(PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST))
 #error Model QKV bytes require the isolated model recurrent QKV fixture
 #endif
+#if defined(PIONEER_Q38_MODEL_GATE_OBSERVER_TEST) && \
+ (PIONEER_Q38_MODEL_GATE_OBSERVER_TEST != 1 || !defined(PIONEER_Q38_MODEL_QKV_OBSERVER_TEST))
+#error Model gate bytes require the isolated model QKV fixture
+#endif
 #if defined(PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST) && \
  (PIONEER_Q38_SYNTHETIC_CONV_STATE_TEST != 1 || !defined(PIONEER_Q38_SYNTHETIC_QKV_MATRIX_TEST))
 #error Synthetic Conv state requires the isolated QKV fixture
@@ -189,10 +193,15 @@ bool Q38EmbeddingRawTestBridge::Open(const char* path){
       part.bytes.data()+(band*tiles+t)*1088,1088))return source->ready=false;
    }
 #ifdef PIONEER_Q38_MODEL_QKV_OBSERVER_TEST
-   if(p->role==6){
-    const char* path=std::getenv("Q38_TEST_MODEL_QKV");if(!path || path[0]!='/')return source->ready=false;
+   if(p->role==6
+#ifdef PIONEER_Q38_MODEL_GATE_OBSERVER_TEST
+    || p->role==5
+#endif
+   ){
+    const bool gate=p->role==5;
+    const char* path=std::getenv(gate?"Q38_TEST_MODEL_GATE":"Q38_TEST_MODEL_QKV");if(!path || path[0]!='/')return source->ready=false;
     FILE* file=std::fopen(path,"rb");if(!file)return source->ready=false;
-    uint32_t h[8];const uint32_t expected[]={0x31525051,1,5,5120,10240,320,160,1088};
+    uint32_t h[8];const uint32_t expected[]={0x31525051,1,gate?3U:5U,5120,gate?6144U:10240U,gate?192U:320U,160,1088};
     bool valid=std::fread(h,4,8,file)==8 && !std::memcmp(h,expected,sizeof(h)) && !(p->firstRow&31);
     const size_t bandBytes=160*1088,recordBytes=bandBytes+32*4;
     for(unsigned band=0;band<p->rows/32 && valid;band++){

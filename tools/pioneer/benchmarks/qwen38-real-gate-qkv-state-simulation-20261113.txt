@@ -1,0 +1,23 @@
+Real gate and QKV through simulated recurrent state, 2026-11-13
+
+The combined ROOT and retained 119-worker instruction simulation consumed
+the pinned model-derived layer-0 alpha/beta bands and complete gate and QKV
+BFP8 exports. Gate tensor 3 SHA-256:
+e3c1189211445020054aeb42ccd89e0d968fb39acd35d0be99ff64755fb1f02b.
+QKV tensor 5 SHA-256:
+6146121bb87b7a684d544b73e06a62f0a6b05513866715bfdbff3dfc840d514a.
+The private exports were authenticated before and after the test.
+
+All 6144 gate rows and 10240 QKV rows matched separately calculated double
+dot products on the same activation. The ROOT then advanced through the
+simulated convolution and GDN operations: all 10240 convolution outputs and
+state rows, 786432 recurrent next-state values and 6144 gated outputs matched
+their independent observers. The gate and QKV simulations modeled 491520 and
+819200 matrix instructions respectively. The reference observers are test-only.
+
+Input activations, convolution weights, GDN weights and initial state were
+synthetic. Tensor instruction endpoints, NoC, ownership and worker execution
+were simulated on the host. This is not a physical-card run, whole layer,
+full-model output, quantization-quality test or throughput result. No driver,
+Assistant, boot state, CPU or RAM settings changed. The 20 tok/s goal remains
+unmet.
