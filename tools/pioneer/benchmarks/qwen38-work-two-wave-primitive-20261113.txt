@@ -22,3 +22,15 @@ No physical card, driver swap, full-model inference or timing was performed.
 This primitive alone does not reduce any real ioctl count or demonstrate a
 speedup. Work and CPU-validation modes remain separate. The 20 tok/s target
 remains unmet.
+
+Control-path inspection follow-up: an isolated, unregistered host build of
+the batch handler now exercises the actual extracted session lock, owner
+checks, initialized-extent checks, dispatch preparation and Work dispatch
+against simulated I/O. ASan/UBSan tests passed for two successful waves,
+malformed second wave, an uninitialized second-wave extent, input-copy
+failure, lost output reply and an uncertain first dispatch. Both requests
+are authorized before any dispatch. Lost replies and uncertain execution
+quarantine the session. A real failed user-copy could partially modify user
+memory; clients must discard the complete response when the call fails.
+The control is host-inspection-only: no ioctl is registered and no kernel
+driver, Assistant, physical hardware, or inference performance changed.
