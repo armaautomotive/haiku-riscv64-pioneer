@@ -11,3 +11,7 @@ extern "C" bool q38_recurrent_gdn_command(const uint32_t* boot,const uint32_t* i
  const uint32_t* gated,unsigned previous,uint32_t* output){
  return PioneerQ38MixedRecurrentDispatch::Gdn(boot,input,state,gated,previous,output);
 }
+extern "C" bool q38_recurrent_gdn_redistributed_command(const uint32_t* boot,const uint32_t* input,
+ const uint32_t* state,const uint32_t* gated,unsigned previous,uint32_t* output){
+ return PioneerQ38MixedRecurrentDispatch::GdnRedistributed(boot,input,state,gated,previous,output);
+}
