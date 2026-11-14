@@ -13,13 +13,14 @@ bool recognized[851]={};
 ggml_backend_t active=nullptr;
 bool gdnTokenActive=false;
 unsigned gdnTokenOps=0,gdnTokenCopies=0;
+unsigned gdnCurrentLayer=64;
 bool Ready() {
 	return configured && !stats.failed && !stats.finished && dispatch.model->Epoch()==epoch
 		&& dispatch.model->Stable() && dispatch.ready(dispatch.owner);
 }
 void Abort() {
 	if (gdnTokenActive && configured && dispatch.gdn_abort_token) dispatch.gdn_abort_token(dispatch.owner);
-	gdnTokenActive=false;gdnTokenOps=gdnTokenCopies=0;
+	gdnTokenActive=false;gdnTokenOps=gdnTokenCopies=0;gdnCurrentLayer=64;
 	if (!stats.failed && configured) dispatch.abort(dispatch.owner);
 	stats.failed=true; stats.finished=true; stats.clean=false;
 }
@@ -31,16 +32,22 @@ bool Contract(const ggml_tensor* op,unsigned* index=nullptr) {
 	if (View(op->op)) return true;
 	if (op->op==GGML_OP_GATED_DELTA_NET) {
 		PioneerQ38GgmlGdnContract gdn;
+		unsigned layer=0;
 		return dispatch.gdn && dispatch.gdn_state_copy && dispatch.gdn_begin_token
 			&& dispatch.gdn_commit_token && dispatch.gdn_abort_token
-			&& PioneerQ38GgmlGdnContract::Describe(op,gdn);
+			&& PioneerQ38GgmlGdnContract::Describe(op,gdn)
+			&& PioneerQ38GgmlGdnContract::StateLayer(op->src[5],layer);
 	}
 	if (op->op==GGML_OP_CPY) {
 		PioneerQ38GgmlGdnContract gdn;
+		unsigned sourceLayer=0,destinationLayer=0;
 		return dispatch.gdn && dispatch.gdn_state_copy && dispatch.gdn_begin_token
 			&& dispatch.gdn_commit_token && dispatch.gdn_abort_token
 			&& PioneerQ38GgmlGdnContract::Describe(op->src[0] ? op->src[0]->view_src : nullptr,gdn)
-			&& gdn.StateCopy(op);
+			&& gdn.StateCopy(op)
+			&& PioneerQ38GgmlGdnContract::StateLayer(gdn.node->src[5],sourceLayer)
+			&& PioneerQ38GgmlGdnContract::StateLayer(op->src[1],destinationLayer)
+			&& sourceLayer==destinationLayer;
 	}
 	if (op->op!=GGML_OP_MUL_MAT || !op->src[0] || !op->src[1]) return false;
 	const auto* w=op->src[0]; const auto* x=op->src[1];
@@ -109,23 +116,33 @@ ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 			Abort(); return GGML_STATUS_FAILED; // NEVER return success/substitute CPU values
 		}
 		if (op->op==GGML_OP_GATED_DELTA_NET) {
+			unsigned layer=0;
 			bool inputsReady=true;
 			for(unsigned src=0;src<6;src++) inputsReady=inputsReady && op->src[src] && op->src[src]->data;
-			if(!inputsReady || gdnTokenOps>=PioneerQ38GgmlGdnContract::GdnLayers
+			if(!inputsReady || !PioneerQ38GgmlGdnContract::StateLayer(op->src[5],layer)
+				|| gdnTokenOps>=PioneerQ38GgmlGdnContract::GdnLayers
+				|| layer!=PioneerQ38GgmlGdnContract::ExpectedLayer(gdnTokenOps)
+				|| (gdnTokenActive && gdnTokenCopies!=gdnTokenOps)
 				|| (!gdnTokenActive && !dispatch.gdn_begin_token(dispatch.owner))) { Abort(); return GGML_STATUS_FAILED; }
-			gdnTokenActive=true;
+			gdnTokenActive=true;gdnCurrentLayer=layer;
 			if (!dispatch.gdn(dispatch.owner,op) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
 			gdnTokenOps++;stats.gdnOps++;
 			continue;
 		}
 		if (op->op==GGML_OP_CPY) {
-			if (!gdnTokenActive || gdnTokenCopies>=gdnTokenOps) { Abort(); return GGML_STATUS_FAILED; }
+			unsigned sourceLayer=0,destinationLayer=0;
+			PioneerQ38GgmlGdnContract gdn;
+			if (!gdnTokenActive || gdnTokenCopies>=gdnTokenOps
+				|| !PioneerQ38GgmlGdnContract::Describe(op->src[0] ? op->src[0]->view_src : nullptr,gdn)
+				|| !PioneerQ38GgmlGdnContract::StateLayer(gdn.node->src[5],sourceLayer)
+				|| !PioneerQ38GgmlGdnContract::StateLayer(op->src[1],destinationLayer)
+				|| sourceLayer!=gdnCurrentLayer || destinationLayer!=gdnCurrentLayer) { Abort(); return GGML_STATUS_FAILED; }
 			if (!dispatch.gdn_state_copy(dispatch.owner,op) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
 			gdnTokenCopies++;stats.gdnStateCopies++;
 			if(gdnTokenOps==PioneerQ38GgmlGdnContract::GdnLayers
 				&& gdnTokenCopies==PioneerQ38GgmlGdnContract::GdnLayers) {
 				if(!dispatch.gdn_commit_token(dispatch.owner) || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
-				gdnTokenActive=false;gdnTokenOps=gdnTokenCopies=0;stats.gdnTokensCommitted++;
+				gdnTokenActive=false;gdnTokenOps=gdnTokenCopies=0;gdnCurrentLayer=64;stats.gdnTokensCommitted++;
 			}
 			continue;
 		}

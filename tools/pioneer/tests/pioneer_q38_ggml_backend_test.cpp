@@ -4,6 +4,7 @@
 #include "../PioneerQ38GgmlBackend.h"
 #include "../PioneerQ38GgmlGdnContract.h"
 #include "ggml-backend-impl.h"
+#include <cstdio>
 #include <vector>
 struct Fake {
 	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,pairCalls=0,gdnCalls=0,gdnCopies=0,gdnBegins=0,gdnCommits=0,gdnAborts=0,ends=0,aborts=0;
@@ -47,8 +48,9 @@ struct Fake {
 int main(int argc,char** argv)
 {
 	assert(argc==2);
-	if(strcmp(argv[1],"gdn")==0 || strcmp(argv[1],"gdn-fault")==0 || strcmp(argv[1],"gdn-partial")==0) {
+	if(strcmp(argv[1],"gdn")==0 || strcmp(argv[1],"gdn-split")==0 || strcmp(argv[1],"gdn-fault")==0 || strcmp(argv[1],"gdn-partial")==0 || strcmp(argv[1],"gdn-order-fault")==0) {
 		Fixture fixture; Fake fake; assert(fake.model.Open(fixture.file)); fake.fail=strcmp(argv[1],"gdn-fault")==0;
+		const bool orderFault=strcmp(argv[1],"gdn-order-fault")==0;
 		PioneerQ38GgmlDispatch d={&fake,&fake.model,Fake::Ready,Fake::Multiply,Fake::Finish,Fake::Abort};
 		d.gdn=Fake::Gdn; d.gdn_state_copy=Fake::GdnStateCopy; d.gdn_begin_token=Fake::GdnBegin;
 		d.gdn_commit_token=Fake::GdnCommit; d.gdn_abort_token=Fake::GdnAbort;
@@ -61,35 +63,46 @@ int main(int argc,char** argv)
 		auto v=ggml_view_4d(ctx,qkv,128,48,1,1,512,40960,40960,16384);
 		auto g=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
 		auto beta=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
-		auto state=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1);
 		std::vector<float> qData(128*16),kData(128*16),qkvData(10240),gData(48),betaData(48),stateData(128*128*48);
 		std::vector<float> outputData(128*48+128*128*48),copyData(128*128*48);
 		q->data=qData.data(); k->data=kData.data(); qkv->data=qkvData.data(); v->data=qkvData.data()+4096;
-		g->data=gData.data(); beta->data=betaData.data(); state->data=stateData.data();
+		g->data=gData.data(); beta->data=betaData.data();
 		const unsigned layers=strcmp(argv[1],"gdn-partial")==0?1:PioneerQ38GgmlGdnContract::GdnLayers;
-		auto* currentState=state;
+		std::vector<ggml_tensor*> copies;
 		for(unsigned layer=0;layer<layers;layer++) {
-			auto* op=ggml_gated_delta_net(ctx,q,k,v,g,beta,currentState,1);
+			auto* state=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1); char stateName[GGML_MAX_NAME];
+			const unsigned expectedLayer=PioneerQ38GgmlGdnContract::ExpectedLayer(layer);
+			const unsigned stateLayer=orderFault && layer==1?0:expectedLayer;
+			std::snprintf(stateName,sizeof(stateName),"cache_s_l%u",stateLayer); ggml_set_name(state,stateName); state->data=stateData.data();
+			auto* op=ggml_gated_delta_net(ctx,q,k,v,g,beta,state,1);
 			auto* next=ggml_view_4d(ctx,op,128,128,48,1,512,65536,3145728,24576);
-			auto* destination=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1); destination->data=stateData.data();
+			auto* destination=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1);
+			ggml_set_name(destination,stateName); destination->data=stateData.data();
 			auto* copy=ggml_cpy(ctx,next,destination);
 			op->data=outputData.data(); copy->data=copyData.data();
-			op->flags|=GGML_TENSOR_FLAG_COMPUTE; copy->flags|=GGML_TENSOR_FLAG_COMPUTE; currentState=copy;
+			op->flags|=GGML_TENSOR_FLAG_COMPUTE; copy->flags|=GGML_TENSOR_FLAG_COMPUTE; copies.push_back(copy);
 		}
-		auto graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,currentState);
-		const bool okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
-		assert(okay==!fake.fail && fake.gdnCalls==(fake.fail?1:layers) && fake.gdnCopies==(fake.fail?0:layers));
-		const bool complete=!fake.fail && layers==PioneerQ38GgmlGdnContract::GdnLayers;
+		auto graph=ggml_new_graph(ctx); for(auto* copy:copies) ggml_build_forward_expand(graph,copy);
+		bool okay=true;
+		if(strcmp(argv[1],"gdn-split")==0) {
+			for(auto* copy:copies) { auto* split=ggml_new_graph(ctx); ggml_build_forward_expand(split,copy);
+				if(ggml_backend_graph_compute(backend,split)!=GGML_STATUS_SUCCESS) { okay=false; break; } }
+		} else okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
+		const bool complete=!fake.fail && !orderFault && layers==PioneerQ38GgmlGdnContract::GdnLayers;
+		assert(okay==(!fake.fail && !orderFault) && fake.gdnCalls==((fake.fail||orderFault)?1:layers)
+			&& fake.gdnCopies==(fake.fail?0:((orderFault||layers==1)?1:layers)));
 		assert(fake.gdnBegins==1 && fake.gdnCommits==unsigned(complete));
-		assert(PioneerQ38GgmlSnapshot().gdnOps==(fake.fail?0:layers)
-			&& PioneerQ38GgmlSnapshot().gdnStateCopies==(fake.fail?0:layers)
+		assert(PioneerQ38GgmlSnapshot().gdnOps==(fake.fail?0:(orderFault?1:layers))
+			&& PioneerQ38GgmlSnapshot().gdnStateCopies==(fake.fail?0:((orderFault||layers==1)?1:layers))
 			&& PioneerQ38GgmlSnapshot().gdnTokensCommitted==fake.gdnCommits);
 		if(fake.fail) assert(PioneerQ38GgmlSnapshot().failed && fake.aborts==1 && fake.gdnAborts==1 && !PioneerQ38GgmlFinish());
 		else if(!complete) assert(!PioneerQ38GgmlFinish() && fake.gdnAborts==1 && fake.aborts==1);
 		else { assert(outputData[0]==123.0f && PioneerQ38GgmlFinish() && fake.ends==1 && !fake.gdnAborts); }
 		ggml_backend_free(backend); ggml_free(ctx);
 		puts(fake.fail?"PASS GDN provider failure aborts token and backend session;SYNTHETIC DISPATCH,NO DEVICE":
-			!complete?"PASS partial GDN graph cannot commit recurrent token;SYNTHETIC DISPATCH,NO DEVICE":
+			orderFault?"PASS out-of-order GDN layers abort before dispatch;SYNTHETIC DISPATCH,NO DEVICE":
+			!complete?"PASS incomplete GDN token remains uncommitted and Finish aborts it;SYNTHETIC DISPATCH,NO DEVICE":
+			strcmp(argv[1],"gdn-split")==0?"PASS 48 GDN layer transactions span backend graph splits and commit once;SYNTHETIC DISPATCH,NO DEVICE":
 			"PASS 48 GDN+resident-state-CPY pairs commit once;SYNTHETIC MARKER ONLY,NO GDN MATH/DEVICE/RESIDENCY CLAIM");
 		return 0;
 	}

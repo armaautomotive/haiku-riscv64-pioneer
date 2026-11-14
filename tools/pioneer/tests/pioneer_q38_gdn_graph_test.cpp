@@ -13,6 +13,7 @@ int main()
  auto* g=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
  auto* beta=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
  auto* pool=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,2*128*128*48);
+ ggml_set_name(pool,"cache_s_l17");
  auto* state=ggml_view_4d(ctx,pool,128,128,48,1,512,65536,3145728,3145728);
  auto* op=ggml_gated_delta_net(ctx,q,k,v,g,beta,state,1);
  auto* attention=ggml_view_4d(ctx,op,128,48,1,1,512,24576,24576,0);
@@ -20,6 +21,10 @@ int main()
  auto* copy=ggml_cpy(ctx,next,state);
  PioneerQ38GgmlGdnContract c;
  assert(PioneerQ38GgmlGdnContract::Describe(op,c) && c.AttentionView(attention) && c.StateView(next) && c.StateCopy(copy));
+ unsigned sourceLayer=0,destinationLayer=0;
+ assert(PioneerQ38GgmlGdnContract::StateLayer(state,sourceLayer) && sourceLayer==17);
+ assert(PioneerQ38GgmlGdnContract::StateLayer(op->src[5],sourceLayer) && sourceLayer==17);
+ assert(PioneerQ38GgmlGdnContract::StateLayer(copy->src[1],destinationLayer) && destinationLayer==17);
  assert(!c.StateView(attention) && !c.AttentionView(next) && !q->data && !state->data && !op->data);
  auto unchanged=c;
  for (unsigned src=0;src<6;src++) {
@@ -41,6 +46,11 @@ int main()
  auto ne=pool->ne[0]; pool->ne[0]=INT64_MAX; assert(!c.StateCopy(copy)); pool->ne[0]=ne;
  previous=state->view_offs; state->view_offs=SIZE_MAX-3; copy->view_offs=state->view_offs; assert(!c.StateCopy(copy)); state->view_offs=previous; copy->view_offs=previous;
  assert(c.StateCopy(copy));
+ char savedName[GGML_MAX_NAME]; memcpy(savedName,pool->name,sizeof(savedName)); ggml_set_name(pool,"cache_s_l64");
+ assert(!PioneerQ38GgmlGdnContract::StateLayer(state,sourceLayer));
+ ggml_set_name(pool,"cache_s_l17-extra");
+ assert(!PioneerQ38GgmlGdnContract::StateLayer(state,sourceLayer));
+ ggml_set_name(pool,savedName);
  // Larger prompt chunks,snapshots and multiple sequences are deliberately
  // not inferred from the valid one-token/one-sequence contract.
  for (unsigned kind=0;kind<3;kind++) {
@@ -51,5 +61,5 @@ int main()
   assert(!PioneerQ38GgmlGdnContract::Describe(&changed,c));
  }
  ggml_free(ctx);
- puts("PASS REAL pinned GGML graph:GDN128/16/48 single-token shape,packed-QKV V view,output/state split,flattened nonzero-offset state CPY,ALL source dimensions/strides/types/op-param bytes and alias-bound faults;NO tensor data access/backend claim/native transport");
+ puts("PASS REAL pinned GGML graph:GDN128/16/48 single-token shape,packed-QKV V view,output/state split,flattened nonzero-offset state CPY,cache_s_lN identity extraction/bounds,ALL source dimensions/strides/types/op-param bytes and alias-bound faults;NO tensor data access/backend claim/native transport");
 }

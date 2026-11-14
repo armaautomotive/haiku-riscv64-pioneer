@@ -10,6 +10,35 @@ struct PioneerQ38GgmlGdnContract {
 	 enum { Keys=128,KeyHeads=16,ValueHeads=48,GdnLayers=48,OutputWords=128*48,StateWords=128*128*48,
         OutputBytes=OutputWords*4,StateBytes=StateWords*4 };
  const ggml_tensor* node=nullptr;
+ static unsigned ExpectedLayer(unsigned recurrentIndex) {
+  return (recurrentIndex/3)*4+(recurrentIndex%3);
+ }
+ static const ggml_tensor* StateRoot(const ggml_tensor* tensor) {
+  // Recurrent state inputs can be a get_rows(reshape(cache_s_lN)) result;
+  // destinations can be views. Follow only the single-source/view chain and
+  // reject cycles or unexpectedly deep wrappers rather than guessing.
+  for (unsigned depth=0;tensor && depth<16;depth++) {
+   if (tensor->view_src && tensor->view_src!=tensor) { tensor=tensor->view_src; continue; }
+   if (tensor->op!=GGML_OP_NONE && tensor->src[0] && tensor->src[0]!=tensor) { tensor=tensor->src[0]; continue; }
+   return tensor;
+  }
+  return nullptr;
+ }
+ static bool StateLayer(const ggml_tensor* tensor,unsigned& layer) {
+  const ggml_tensor* root=StateRoot(tensor);
+  static const char prefix[]="cache_s_l";
+  if (!root || !root->name[0] || strncmp(root->name,prefix,sizeof(prefix)-1)) return false;
+  const char* p=root->name+sizeof(prefix)-1;
+  if (*p<'0' || *p>'9') return false;
+  unsigned value=0;
+  do {
+   unsigned digit=unsigned(*p-'0');
+   if (value>(63-digit)/10) return false;
+   value=value*10+digit; p++;
+  } while (*p>='0' && *p<='9');
+  if (*p || value>=64) return false;
+  layer=value; return true;
+ }
  static bool Shape(const ggml_tensor* t,int64_t a,int64_t b,int64_t c,int64_t d) {
   return t && t->type==GGML_TYPE_F32 && t->ne[0]==a && t->ne[1]==b && t->ne[2]==c && t->ne[3]==d;
  }
