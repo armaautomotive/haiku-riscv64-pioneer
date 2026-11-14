@@ -172,14 +172,26 @@ simulator with 128 exact output words. The pair candidate cross-build hash is
 f87028a47a48e3f82f592f9430d24439ad185af1920de9e28a64b991b5abd286 and client
 hash 6013e186123ae5d94f02b816b3f9f256bae57362d0387d0382a34b2f394f13aa.
 This is intentionally a diagnostic workload only, not an inference speed
-result. A fresh stage-I run will sample PCs while this repeated matrix work is
-in flight; any observed overlap must still be followed by exact output, END,
-and stable-driver restoration.
+result. A fresh stage-I run sampled PCs while this repeated matrix work was
+in flight. Its full-model source preflight passed, but the client exited 1 with
+only `PAIR_RUN_UNPROVEN;CLOSE_ONLY_NO_END_OR_RETRY`; no output, END, or overlap
+claim was produced. At failure, candidate-driver metadata was generation 63,
+`cold1 active_owner1 open_count1`; the wrapper correctly retained ownership and
+refused reset, retry, or file restoration. The on-disk Haiku driver was left as
+candidate hash f87028a47a48e3f82f592f9430d24439ad185af1920de9e28a64b991b5abd286,
+not the stable driver. No further Haiku boot should be attempted until a
+verified recovery path restores the stable image.
 
 This is a physical two-core paired-QKV diagnostic, but NOT a 119-core cohort,
 full-model inference, full numerical qualification or speed measurement. Five
 hardware runs validated the outputs and restoration, but none observed
-active-interval overlap; the third through fifth captured all four terminal PCs.
-No Assistant or persistent driver change remains; the stable driver is restored.
-This prototype does not yet move any Qwen layer to the P100A and does not
-establish improvement in tokens/second.
+active-interval overlap; stage I did not validate output or restoration. One
+authorized seven-second relay OFF and one ON were used for recovery. The serial
+console now shows Linux 6.1.31 with 64 CPUs and ~128 GiB available. A new SSH
+ED25519 key (SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8) matches neither
+saved Haiku/Linux key, so SSH host-key verification was not bypassed. The
+client's precise internal failure point remains unknown because current error
+handling conflates ioctl failure, invalid/timeout result, and source change.
+The P100A post-cycle state has not been re-read on Haiku. This prototype does
+not yet move any Qwen layer to the P100A and establishes no tokens/sec
+improvement; 20 tokens/sec remains unmet.
