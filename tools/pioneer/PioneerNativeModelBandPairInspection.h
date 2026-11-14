@@ -1,16 +1,27 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION_H
 #define PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION_H
-#if !defined(PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION) || PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION != 1 \
- || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) \
+#if defined(PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION) && (PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC))
+#error Two-core learned-band owner is offline inspection only
+#endif
+#if !defined(PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION) && !defined(PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC)
+#error Two-core learned-band owner is offline inspection only
+#endif
+#if defined(PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC) && (PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC != 1 \
+ || !defined(_KERNEL_MODE) || !defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) \
+ || PIONEER_DRIVER_BUILD_TAG != 0x2026111300010153ULL)
+#error Two-core learned-band owner requires its distinct fixed diagnostic role
+#endif
+#if (defined(PIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION) && defined(PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC)) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
-#error Two-core learned-band owner is offline inspection only
+#error Two-core learned-band owner requires a distinct diagnostic or offline inspection role
 #endif
 #include "PioneerNativeModelBandLease.h"
 
-// Two distinct cores, one shared pair of host windows. This inspection-only
+// Two distinct cores, one shared pair of host windows. This fixed diagnostic
 // owner is intentionally independent of the single-core lease: that lease's
 // all-cores-held condition cannot be used while another core is running.
 // Heap allocation required. No destructor I/O; uncertainty retains ownership.
@@ -42,6 +53,7 @@ class PioneerNativeModelBandPairInspection {
  }
 public:
  const PioneerNativeBfpResult& Result(unsigned i)const{return result[i];} // i must be 0 or 1
+ void Abandon(){if(owned)Fail();} // bookkeeping only, never accesses the device
  template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned first,unsigned second){
   static_assert(Image::Width==5120 && Image::Phases==4,"fixed real-band image only");
   if(attempted || first>=3 || second>=3 || first==second)return false;
@@ -91,11 +103,13 @@ public:
    if(marker==0x3342464e){
     if(!Terminal(io,baseline,i))return Fail();
     for(unsigned n=0;n<64;n++)result[i].output[n]=io.BfpRead(PioneerNativeBfpBandLayout::Output+n*4);
-    if(!Terminal(io,baseline,i))return Fail();done[i]=true;result[i].completed=1;
+    if(!Terminal(io,baseline,i))return Fail();
+    done[i]=true;result[i].completed=1;
    }else io.Pause();
   }
   if(!done[0] || !done[1])return Fail();
-  for(auto& r:result)r.state=PIONEER_NATIVE_BFP_RESULT;return true;
+  for(auto& r:result)r.state=PIONEER_NATIVE_BFP_RESULT;
+  return true;
  }
  template<class IO> bool End(IO& io,tt_dram_samples_result& baseline){
   if(!owned || unknown || closed || !result[0].completed || !result[1].completed)return false;
@@ -115,7 +129,8 @@ public:
    if(!Scope(io,baseline,i,0x47800))return Fail();
    io.BfpWrite(0x6000,saved[i][0]);
    for(unsigned n=0;n<words;n++)if(io.BfpRead(Band::Address(5120,n))!=saved[i][n])return Fail();
-   if(!Scope(io,baseline,i,0x47800))return Fail();result[i].l1_restored=1;
+   if(!Scope(io,baseline,i,0x47800))return Fail();
+   result[i].l1_restored=1;
   }
   for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++)io.DramTlbWrite(s,w,tlb[s][w]);
   for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++)if(io.DramTlbRead(s,w)!=tlb[s][w])return Fail();

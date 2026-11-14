@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-band-pair-test-') as tmp:
                       'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', '__FAST_MATH__'):
         result = subprocess.run(common + ['-DPIONEER_NATIVE_MODEL_BAND_PAIR_INSPECTION=1', '-D' + forbidden + '=1',
             '-fsyntax-only', '-x', 'c++', '-'], input=header, text=True, capture_output=True)
-        if result.returncode == 0 or 'Two-core learned-band owner is offline inspection only' not in result.stderr:
+        if result.returncode == 0 or 'Two-core learned-band owner' not in result.stderr:
             raise SystemExit('missing role refusal: ' + forbidden)
     result = subprocess.run(common + ['-fsyntax-only', '-x', 'c++', '-'], input=header, text=True, capture_output=True)
     if result.returncode == 0 or 'Two-core learned-band owner is offline inspection only' not in result.stderr:

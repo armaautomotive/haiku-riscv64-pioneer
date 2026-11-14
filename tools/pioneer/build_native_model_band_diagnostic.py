@@ -22,6 +22,7 @@ mode.add_argument('--recurrent-out', action='store_true', help='build distinct f
 mode.add_argument('--small-alpha', action='store_true', help='build distinct fixed alpha diagnostic149')
 mode.add_argument('--small-beta', action='store_true', help='build distinct fixed beta diagnostic150')
 mode.add_argument('--recurrent-qkv', action='store_true', help='build distinct fixed recurrent QKV diagnostic151')
+mode.add_argument('--recurrent-qkv-pair', action='store_true', help='build distinct fixed two-core QKV diagnostic153 and debug client')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -49,7 +50,7 @@ if args.small_alpha:
 if args.small_beta:
  private_pins={'PioneerNativeBfpModelBandData.h':'4a3c35da6459bda26f6ac888e8fa4fe4fe0430d015edd7ace6e579ac6484d284',
                'PioneerNativeBfpModelBandMetadata.h':'70940f99172a098a48ab18b978e9183a6ade1e1543f16fb06f42fa6d993421e4'}
-if args.recurrent_qkv:
+if args.recurrent_qkv or args.recurrent_qkv_pair:
  private_pins={'PioneerNativeBfpModelBandData.h':'396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a',
                'PioneerNativeBfpModelBandMetadata.h':'a81f5268d942344b4c4cfd4d0d02853dc82f36bfe8ab099a5bfa5d47d94de86d'}
 for name,digest in private_pins.items():
@@ -107,12 +108,13 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111300010151ULL' if args.recurrent_qkv else '0x2026111300010149ULL' if args.small_alpha else '0x2026111300010150ULL' if args.small_beta else '0x2026111200010148ULL' if args.recurrent_out else '0x2026111200010147ULL' if args.recurrent else '0x2026110400010080ULL'), '-DPIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC=1']
+native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111300010153ULL' if args.recurrent_qkv_pair else '0x2026111300010151ULL' if args.recurrent_qkv else '0x2026111300010149ULL' if args.small_alpha else '0x2026111300010150ULL' if args.small_beta else '0x2026111200010148ULL' if args.recurrent_out else '0x2026111200010147ULL' if args.recurrent else '0x2026110400010080ULL'), '-DPIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC=1']
 if args.recurrent:native += ['-DPIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1']
 if args.recurrent_out:native += ['-DPIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1']
 if args.small_alpha:native += ['-DPIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1']
 if args.small_beta:native += ['-DPIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1']
 if args.recurrent_qkv:native += ['-DPIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC=1']
+if args.recurrent_qkv_pair:native += ['-DPIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC=1']
 commands = []
 def run(command):
     commands.append(command)
@@ -124,7 +126,7 @@ run(common + native + includes + ['-c', str(driver / 'pioneer_native_model_band_
 run(common + includes + ['-c', str(driver / 'tenstorrent_pci_probe.cpp'), '-o', str(output / 'control.o')])
 def compiler_path(name):
     return subprocess.check_output([cxx, '-print-file-name=' + name], text=True).strip()
-driver_name='tenstorrent_pci_probe-recurrent-qkv151' if args.recurrent_qkv else 'tenstorrent_pci_probe-small-alpha149' if args.small_alpha else 'tenstorrent_pci_probe-small-beta150' if args.small_beta else 'tenstorrent_pci_probe-recurrent-out-band148' if args.recurrent_out else 'tenstorrent_pci_probe-recurrent-band147' if args.recurrent else 'tenstorrent_pci_probe-native-model-band80'
+driver_name='tenstorrent_pci_probe-recurrent-qkv-pair153' if args.recurrent_qkv_pair else 'tenstorrent_pci_probe-recurrent-qkv151' if args.recurrent_qkv else 'tenstorrent_pci_probe-small-alpha149' if args.small_alpha else 'tenstorrent_pci_probe-small-beta150' if args.small_beta else 'tenstorrent_pci_probe-recurrent-out-band148' if args.recurrent_out else 'tenstorrent_pci_probe-recurrent-band147' if args.recurrent else 'tenstorrent_pci_probe-native-model-band80'
 client_name='pioneer-recurrent-qkv-diagnostic151' if args.recurrent_qkv else 'pioneer-small-alpha-diagnostic149' if args.small_alpha else 'pioneer-small-beta-diagnostic150' if args.small_beta else 'pioneer-recurrent-out-band-diagnostic148' if args.recurrent_out else 'pioneer-recurrent-band-diagnostic147' if args.recurrent else 'pioneer-native-model-band-diagnostic'
 for obj, name in [('native.o', driver_name), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
     run([cxx, '-shared', '-nostdlib', '-Wl,--no-undefined,-soname=tenstorrent_pci_probe', compiler_path('crtbeginS.o'),
@@ -148,7 +150,7 @@ assert instructions == [('add', 'sp,sp,-16'), ('sd', 's0,8(sp)'), ('add', 's0,sp
 libs=[]
 for path in sorted((build/'build_packages').glob('gcc_syslibs-*/lib')):
  libs+=['-L'+str(path)]
-run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(private),
+if not args.recurrent_qkv_pair:run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(private),
      *(['-DPIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE=1'] if args.recurrent_qkv else
        ['-DPIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE=1'] if args.small_alpha else
        ['-DPIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1','-DPIONEER_NATIVE_SMALL_BETA_BAND_SOURCE=1'] if args.small_beta else
@@ -158,6 +160,14 @@ run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*use
      '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),*libs,
      str(here/'pioneer_native_model_band_diagnostic.cpp'),str(here/'PioneerModelWeightCache.cpp'),
      str(release/'kits/shared/libshared.a'),'-lbe','-o',str(output/client_name)])
+if args.recurrent_qkv_pair:
+ client_name='pioneer-recurrent-qkv-pair-diagnostic153'
+ run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(private),
+      '-DPIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC=1','-DPIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE=1',
+      '-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot'),
+      '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),*libs,
+      str(here/'pioneer_native_model_band_pair_diagnostic.cpp'),str(here/'PioneerModelWeightCache.cpp'),
+      str(release/'kits/shared/libshared.a'),'-lbe','-o',str(output/client_name)])
 for name,digest in private_pins.items():
  assert hashlib.sha256((private/name).read_bytes()).hexdigest()==digest
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')

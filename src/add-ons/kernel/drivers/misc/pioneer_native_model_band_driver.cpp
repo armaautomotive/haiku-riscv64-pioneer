@@ -9,10 +9,15 @@
 #if defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#if (defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC)) > 1
+#if (defined(PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC) + defined(PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC)) > 1
 #error Recurrent and dense band diagnostics require distinct identities
 #endif
-#if defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC)
+#if PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111300010153ULL
+#error Distinct two-core recurrent QKV diagnostic identity required
+#endif
+#elif defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC)
 #if PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__) || PIONEER_DRIVER_BUILD_TAG != 0x2026111300010151ULL
 #error Distinct recurrent QKV-band diagnostic identity required
@@ -51,7 +56,20 @@
 #undef find_device
 #undef PIONEER_NATIVE_BFP_DIAGNOSTIC
 #include "../../../../../tools/pioneer/PioneerNativeModelBandLease.h"
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+#include "../../../../../tools/pioneer/PioneerNativeModelBandPairInspection.h"
+#include "PioneerNativeModelBandPairProtocol.h"
+#define PioneerNativeModelBandRequest PioneerNativeModelBandPairRequest
+#define PioneerNativeModelBandRequestValid PioneerNativeModelBandPairRequestValid
+#define PIONEER_NATIVE_MODEL_BAND_SUPPORT PIONEER_NATIVE_MODEL_BAND_PAIR_SUPPORT
+#define PIONEER_NATIVE_MODEL_BAND_RUN PIONEER_NATIVE_MODEL_BAND_PAIR_RUN
+#define PIONEER_NATIVE_MODEL_BAND_END PIONEER_NATIVE_MODEL_BAND_PAIR_END
+constexpr uint32_t PioneerNativeModelBandNone=UINT32_MAX;
+using NativeLease=PioneerNativeModelBandPairInspection;
+#else
 #include "PioneerNativeModelBandProtocol.h"
+using NativeLease=PioneerNativeModelBandLease;
+#endif
 #include "PioneerNativeBfpBandGeneratedImage.h"
 
 namespace {
@@ -132,16 +150,26 @@ struct NativeOwner {
 	tt_pioneer_profile profile;
 	tt_arc_scratch_result arc={};tt_arc_telemetry_result telemetry={};tt_tensix_reset_result tensix={};tt_dram_samples_result dram={};
 	tt_compute_noc_result noc={};
-	NativeIO io;PioneerNativeModelBandLease lease;
+	NativeIO io;NativeLease lease;
 	tt_pioneer_mmio_result mmio={};tt_pioneer_mmio_transaction transaction={};
 	bool reserved=false;
 	NativeOwner(NativeCookie* c,unsigned b,const tt_pioneer_profile& p):cookie(c),sample(b),profile(p),io(profile,arc,telemetry,tensix,dram,noc,NativeBandWidth) {}
 };
 static NativeOwner* owner=NULL; // under sLock; retained intact on UNKNOWN
 static void Fault(NativeOwner& o) { o.lease.Abandon();sColdRecoveryRequired=true; }
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+static const PioneerNativeBfpResult& Primary(const NativeOwner& o) {
+	return o.lease.Result(0);
+}
+#endif
 static void Reply(PioneerNativeModelBandRequest& r,const NativeOwner& o) {
-	r.result=o.lease.Result();r.nonce=1;
+	#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+	for(unsigned i=0;i<2;i++) {r.result[i]=o.lease.Result(i);if(sColdRecoveryRequired){r.result[i].state=PIONEER_NATIVE_BFP_UNKNOWN;r.result[i].cold=1;}}
+	#else
+	r.result=o.lease.Result();
 	if(sColdRecoveryRequired) {r.result.state=PIONEER_NATIVE_BFP_UNKNOWN;r.result.cold=1;}
+	#endif
+	r.nonce=1;
 }
 static bool FinishMmio(NativeOwner& o) {
 	// Do NOT inherit generic End's best-effort continuation after a VM or
@@ -213,10 +241,19 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 		if(r.sample!=PioneerNativeModelBandNone || r.nonce || r.accept)return B_BAD_VALUE;
 		status=acquire_sem(sLock);if(status!=B_OK)return status;
 		if(r.expected_generation!=sReloadGeneration)status=B_BAD_VALUE;
-		else {r.result.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;r.result.cold=sColdRecoveryRequired;status=user_memcpy(data,&r,sizeof(r));}
+		else {
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+			for(auto& result:r.result){result.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;result.cold=sColdRecoveryRequired;}
+#else
+			r.result.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;r.result.cold=sColdRecoveryRequired;
+#endif
+			status=user_memcpy(data,&r,sizeof(r));}
 		release_sem(sLock);return status;
 	}
 	if(r.sample>=3 || (operation==PIONEER_NATIVE_MODEL_BAND_RUN?(r.nonce || r.accept):r.nonce!=1 || r.accept!=1))return B_BAD_VALUE;
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+	if(r.sample!=0)return B_BAD_VALUE; // fixed distinct pinned bands 0 and 1
+#endif
 	status=AcquireProbeLock(n->base);if(status!=B_OK)return status;
 	if(r.expected_generation!=sReloadGeneration || !sReloadGuard || sReloadGuard->version!=1 || sOpenCookies!=1)status=B_BUSY;
 	else if(operation==PIONEER_NATIVE_MODEL_BAND_RUN) {
@@ -235,11 +272,27 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 					o->reserved=true;owner=o;sRuntimeOwner=n->base;
 					bool mapped=BlackholePioneerMmioBegin(o->io,o->mmio,o->transaction);
 					bool baseline=mapped && o->io.PioneerComputeNocIO::AfterNodeId(o->mmio.node_id[0]);
-					if(baseline)o->lease.Run<NativeIO,PioneerNativeBfpBandGeneratedImage<NativeBandWidth>>(o->io,o->dram,r.sample);
+					if(baseline) {
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+						o->lease.Run<NativeIO,PioneerNativeBfpBandGeneratedImage<NativeBandWidth>>(o->io,o->dram,0,1);
+#else
+						o->lease.Run<NativeIO,PioneerNativeBfpBandGeneratedImage<NativeBandWidth>>(o->io,o->dram,r.sample);
+#endif
+					}
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+					if(!o->io.BaselineClean() || Primary(*o).state==PIONEER_NATIVE_BFP_UNKNOWN)Fault(*o);
+					else if(!baseline || Primary(*o).state!=PIONEER_NATIVE_BFP_RESULT) {
+#else
 					if(!o->io.BaselineClean() || o->lease.Result().state==PIONEER_NATIVE_BFP_UNKNOWN)Fault(*o);
 					else if(!baseline || o->lease.Result().state!=PIONEER_NATIVE_BFP_RESULT) {
+#endif
 						if(!o->transaction.config_attempted || FinishMmio(*o)) {
-							r.result.state=PIONEER_NATIVE_BFP_REFUSED;DisposeKnown(o);o=NULL;
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+							for(auto& result:r.result)result.state=PIONEER_NATIVE_BFP_REFUSED;
+#else
+							r.result.state=PIONEER_NATIVE_BFP_REFUSED;
+#endif
+							DisposeKnown(o);o=NULL;
 						} else Fault(*o);
 					}
 					if(o)Reply(r,*o);
@@ -248,11 +301,20 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 			}
 		}
 	} else {
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+		if(!owner || owner->cookie!=n || owner->sample!=r.sample || Primary(*owner).state!=PIONEER_NATIVE_BFP_RESULT)status=B_BAD_VALUE;
+#else
 		if(!owner || owner->cookie!=n || owner->sample!=r.sample || owner->lease.Result().state!=PIONEER_NATIVE_BFP_RESULT)status=B_BAD_VALUE;
+#endif
 		else {
 			auto* o=owner;
 			if(!o->lease.End(o->io,o->dram) || !FinishMmio(*o))Fault(*o);
-			Reply(r,*o);if(!r.result.cold)DisposeKnown(o);
+			Reply(r,*o);
+#ifdef PIONEER_NATIVE_MODEL_BAND_PAIR_DIAGNOSTIC
+			if(!sColdRecoveryRequired)DisposeKnown(o);
+#else
+			if(!r.result.cold)DisposeKnown(o);
+#endif
 			status=user_memcpy(data,&r,sizeof(r));
 		}
 	}

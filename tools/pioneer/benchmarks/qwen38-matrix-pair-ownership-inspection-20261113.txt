@@ -1,7 +1,7 @@
 Two-core learned-band ownership inspection, 2026-11-13
 
 The single-core real-QKV band diagnostic cannot run concurrently: its lease
-requires all cores held even during its cleanup. This separate offline-only
+requires all cores held even during its cleanup. This separate initially offline
 prototype snapshots two disjoint core images, stages both before releasing
 either, rechecks the held fleet, starts both, and observes both before holding
 either. It restores both L1 images and the original shared host TLBs only
@@ -12,7 +12,7 @@ The ASan/UBSan mock test requires both starts before publishing either fake
 completion. It injects precomputed output words to check routing (not matrix
 arithmetic), verifies both complete L1 snapshots and TLB restoration, and
 checks ten timeout, status, reset, write, mapping and source-failure cases.
-Explicit role tests reject kernel, real driver, Work and validation builds.
+Explicit inspection-role tests reject kernel, driver, Work and validation builds.
 The learned QKV export identity is checked without publishing its bytes.
 
 Follow-up: the same two-core owner has also run the pinned real-QKV band
@@ -31,7 +31,17 @@ same L1 and confirms refusal, no processor release and retained quarantine for
 all three distinct pairs of pinned QKV samples. It does not prove real
 hardware routing or detect every conceivable partial alias of equal bytes.
 
-This is NOT a loadable driver, physical two-core test, 119-core cohort,
+Diagnostic bridge, build-only: a separate pair protocol and adapter with tag
+2026111300010153 and fixed samples 0 and 1 now cross-compile for Haiku RISC-V.
+The separate CPU-reference debug client authenticates the original model and
+requires both 64-word outputs to match before it sends explicit END. Work and
+validation role guards remain disjoint. The original single-core diagnostic
+also cross-compiles. Adapter fault injection, a clean-source reproducible
+build, a one-shot parent/recovery wrapper and actual overlap proof remain
+required. The builder currently sees unrelated local driver WIP, so its
+candidate hash is not a clean-source deployment identity.
+
+This is NOT a physical two-core test, 119-core cohort,
 model inference, numerical qualification or speed measurement. In particular,
 real overlap and completion behavior must be established on hardware after
 an independently reviewed diagnostic adapter and containment tests. No
