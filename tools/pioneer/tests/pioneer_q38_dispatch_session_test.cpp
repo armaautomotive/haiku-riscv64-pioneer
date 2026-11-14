@@ -32,6 +32,7 @@ static void CompleteDispatch(const PioneerQ38CohortWave& wave,tt_q38_dispatch_pr
 }
 struct DispatchSessionIO:SessionIO {
 	uint32_t peer[119]={};
+	bool allowPairTensor=false;
 	DispatchSessionIO(FakeSource& source,unsigned tensor,unsigned workers=1):SessionIO(source,tensor,workers) {}
 	bool Call(int fd,uint32_t op,void* data,size_t bytes) {
 		assert(fd==73 && !stopped);
@@ -49,9 +50,18 @@ struct DispatchSessionIO:SessionIO {
 		}
 		if (op!=TT_PCI_PROBE_Q38_DISPATCH_RUN) return SessionIO::Call(fd,op,data,bytes);
 		assert(bytes==sizeof(tt_q38_dispatch_probe)); runs++;
-		auto& r=*static_cast<tt_q38_dispatch_probe*>(data); unsigned waves=schedule.Jobs().back().wave+1;
-		PioneerQ38CohortWave wave; assert(wave.Build(source.Model(),layout,schedule,cursor%waves));
-		assert(!memcmp(r.part,wave.part,sizeof(r.part))); CompleteDispatch(wave,r,runs,peer); cursor++;
+		auto& r=*static_cast<tt_q38_dispatch_probe*>(data);PioneerQ38CohortWave wave;bool matched=false;
+		if(!allowPairTensor){unsigned waves=schedule.Jobs().back().wave+1;
+			assert(wave.Build(source.Model(),layout,schedule,cursor%waves));
+			assert(r.type==wave.type&&r.inputs==wave.inputs&&!memcmp(r.part,wave.part,sizeof(r.part)));
+			matched=true;
+		}else for(unsigned tensor=0;tensor<source.Model().Tensors().size()&&!matched;tensor++){
+			PioneerQwen38FleetPlan candidate;if(!candidate.Build(source.Model(),layout,tensor,119))continue;
+			unsigned waves=candidate.Jobs().back().wave+1;
+			for(unsigned selected=0;selected<waves;selected++)if(wave.Build(source.Model(),layout,candidate,selected)
+				&& r.type==wave.type && r.inputs==wave.inputs && !memcmp(r.part,wave.part,sizeof(r.part))){matched=true;break;}
+		}
+		assert(matched);CompleteDispatch(wave,r,runs,peer);cursor++;
 		if (runs==failWave) switch(fault) {
 			case 4:stopped=true;return false;
 			case 5:r.result.peer[r.peers-1][15]++;stopped=true;break;

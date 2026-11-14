@@ -41,13 +41,41 @@ int main(){
  for(unsigned workers:{1U,2U,3U,4U,5U,6U,7U,8U,9U,10U}){
   BatchSessionIO io(source,index,workers);PioneerQ38WorkSession<BatchSessionIO,FakeSource> session(io,source);
   assert(session.Open() && session.Multiply(index,input.data(),5120,output.data(),1024,workers));
-  assert(io.workRuns==2*io.batches+io.singles && session.calls==io.workRuns);
+  assert(io.workRuns==2*io.batches+io.singles && session.calls==io.workRuns
+   && session.runIoctlCalls==io.batches+io.singles);
   if(io.batches)sawBatch=true;
   if(io.singles){assert(io.singles==1);if(io.batches)sawSingle=true;}
   for(unsigned row=0;row<output.size();row++)assert(output[row]==float(row+1));
   assert(session.Finish() && io.ends==1);
  }
  assert(sawBatch && sawSingle); // an odd wave count retains a final single Work call
+	{
+		Fixture pairFixture;FakeSource pairSource(pairFixture.file);
+		const auto* key=pairSource.Model().Find("blk.3.attn_k.weight");
+		const auto* value=pairSource.Model().Find("blk.3.attn_v.weight");assert(key&&value);
+		const unsigned keyIndex=unsigned(key-pairSource.Model().Tensors().data());
+		const unsigned valueIndex=unsigned(value-pairSource.Model().Tensors().data());
+		std::vector<float> shared(5120,.25f),keyOutput(1024,-7),valueOutput(1024,-9);
+		BatchSessionIO io(pairSource,keyIndex,119);io.allowPairTensor=true;
+		PioneerQ38WorkSession<BatchSessionIO,FakeSource> session(io,pairSource);
+		assert(session.Open() && session.MultiplyPair(keyIndex,valueIndex,shared.data(),5120,keyOutput.data(),1024,valueOutput.data(),1024));
+		assert(io.batches==1 && io.workRuns==2 && io.singles==0 && session.calls==2 && session.runIoctlCalls==1);
+		for(unsigned row=0;row<1024;row++)assert(keyOutput[row]==float(row+1) && valueOutput[row]==float(row+1));
+		assert(session.Finish() && io.ends==1);
+	}
+	for(unsigned fault=0;fault<2;fault++){
+		Fixture pairFixture;FakeSource pairSource(pairFixture.file);
+		const auto* key=pairSource.Model().Find("blk.3.attn_k.weight");
+		const auto* value=pairSource.Model().Find("blk.3.attn_v.weight");assert(key&&value);
+		const unsigned keyIndex=unsigned(key-pairSource.Model().Tensors().data());
+		const unsigned valueIndex=unsigned(value-pairSource.Model().Tensors().data());
+		std::vector<float> shared(5120,.25f),keyOutput(1024,-7),valueOutput(1024,-9);
+		BatchSessionIO io(pairSource,keyIndex,119);io.allowPairTensor=true;io.partial=fault==0;io.badNonce=fault==1;
+		PioneerQ38WorkSession<BatchSessionIO,FakeSource> session(io,pairSource);
+		assert(session.Open() && !session.MultiplyPair(keyIndex,valueIndex,shared.data(),5120,keyOutput.data(),1024,valueOutput.data(),1024));
+		assert(io.batches==1 && session.runIoctlCalls==1 && keyOutput[0]==-7 && valueOutput[0]==-9
+			&& session.Failed() && !io.ends && !session.Finish());
+	}
  for(unsigned fault=0;fault<5;fault++){
   BatchSessionIO io(source,index,1);io.oldDriver=fault==0;io.partial=fault==1;io.badNonce=fault==2;
   io.badPacket=fault==3;io.badSupport=fault==4;

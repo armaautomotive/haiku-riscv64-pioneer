@@ -85,6 +85,20 @@ struct Runtime {
   }
   return r.session.Multiply(tensor,x,k,y,n);
  }
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+ static bool MultiplyPair(void* p,unsigned first,unsigned second,const float* x,unsigned k,
+  float* firstOutput,unsigned firstCount,float* secondOutput,unsigned secondCount) {
+  auto& r=*static_cast<Runtime*>(p);
+  if (!r.generating.load(std::memory_order_acquire) || !r.PollCancel()) return false;
+  if (!r.opened) {
+   if (!r.session.Open()) return false;
+   r.opened=true;r.session.Observe(UploadProgress,&r);
+   if (!r.session.PrimeSpan()) return false;
+   if (!r.Emit(A::Progress,UINT32_MAX,"P100A weights resident; evaluating prompt. CPU attention/state; validation OFF.")) { r.session.Abort();return false; }
+  }
+  return r.session.MultiplyPair(first,second,x,k,firstOutput,firstCount,secondOutput,secondCount);
+ }
+#endif
  bool Load(unsigned threads) {
   if (!threads || threads>64 || !Emit(A::Progress,UINT32_MAX,"Authenticating pinned19GB Qwen27B file (same file descriptor; no accelerator session yet).") || !source.Open()) return false;
 #ifdef PIONEER_Q38_LOSSLESS_WEIGHT_CACHE
@@ -111,6 +125,9 @@ struct Runtime {
   if (!Emit(A::Progress,UINT32_MAX,"Loading Qwen27B host mmap/context; P100A upload occurs on first reply.")) return false;
   model=llama_model_load_from_file_ptr(file,mp); if (!model || !source.Ready()) return false;
   PioneerQ38GgmlDispatch d={this,&source.Model(),Ready,Multiply,Finish,Abort};
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+  d.multiply_pair=MultiplyPair;
+#endif
   if (!PioneerQ38GgmlConfigure(d)) return false;
   configured=true; ggml_backend_register(PioneerQ38GgmlReg());
   auto cp=llama_context_default_params(); cp.n_ctx=128; cp.n_batch=cp.n_ubatch=1;
@@ -147,7 +164,7 @@ struct Runtime {
    if (position<count) token=tokens[position];
    auto before=PioneerQ38GgmlSnapshot(); double start=Now();
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
-   const uint64_t callsBefore=session.calls,nanosBefore=session.runNanos;
+   const uint64_t callsBefore=session.runIoctlCalls,nanosBefore=session.runNanos;
 #endif
    char phase[192];
    if (position<count) snprintf(phase,sizeof(phase),"Evaluating Qwen27B prompt token %d of %d on P100A (slow Work mode).",position+1,count);
@@ -161,7 +178,7 @@ struct Runtime {
    pools.AfterSuccessfulDecode(); // CPU backend has safely rebound its pool
    if (position>=count) { warm+=Now()-start; warmSamples++;
 #ifdef PIONEER_Q38_WORK_PHASE_PROFILE
-    if(!profile.Add(callsBefore,session.calls,nanosBefore,session.runNanos))return false;
+    if(!profile.Add(callsBefore,session.runIoctlCalls,nanosBefore,session.runNanos))return false;
 #endif
    }
    if (!PollCancel()) return false;

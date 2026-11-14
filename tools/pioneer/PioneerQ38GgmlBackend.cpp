@@ -42,21 +42,77 @@ bool Contract(const ggml_tensor* op,unsigned* index=nullptr) {
 	if (index) *index=selected;
 	return true;
 }
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+bool SameInputProjectionFamily(const ggml_tensor* first,const ggml_tensor* second) {
+	if (!dispatch.multiply_pair || !first || !second || first==second
+		|| first->op!=GGML_OP_MUL_MAT || second->op!=GGML_OP_MUL_MAT
+		|| !first->src[0] || !second->src[0] || !first->src[1] || !second->src[1]
+		|| first->src[1]!=second->src[1] || first->src[1]->type!=GGML_TYPE_F32
+		|| first->src[1]->ne[0]!=second->src[1]->ne[0] || first->src[1]->ne[1]!=1
+		|| second->src[1]->ne[1]!=1 || first->src[0]->type!=second->src[0]->type
+		|| first->src[0]->ne[0]!=second->src[0]->ne[0]
+		|| first->type!=GGML_TYPE_F32 || second->type!=GGML_TYPE_F32
+		|| !ggml_is_contiguous(first) || !ggml_is_contiguous(second)) return false;
+	struct Name { const char* layerEnd;const char* role;size_t length; };
+	auto parse=[](const char* name,Name& out)->bool {
+		if (!name) return false;
+		const char* weight=strrchr(name,'.');
+		if (!weight || strcmp(weight,".weight")) return false;
+		const char* role=weight;
+		while (role>name && role[-1]!='.') role--;
+		if (role==name || role[-1]!='.' || role==weight) return false;
+		out={role-1,role,size_t(weight-role)};return true;
+	};
+	Name x{},y{};
+	if (!parse(first->src[0]->name,x) || !parse(second->src[0]->name,y)
+		|| size_t(x.layerEnd-(first->src[0]->name))!=size_t(y.layerEnd-(second->src[0]->name))
+		|| strncmp(first->src[0]->name,second->src[0]->name,size_t(x.layerEnd-first->src[0]->name))) return false;
+	auto is=[](const Name& name,const char* expected) { return strlen(expected)==name.length && !strncmp(name.role,expected,name.length); };
+	return (is(x,"ffn_up") && is(y,"ffn_gate")) || (is(x,"ffn_gate") && is(y,"ffn_up"))
+		|| (is(x,"attn_qkv") && is(y,"attn_gate")) || (is(x,"attn_gate") && is(y,"attn_qkv"))
+		|| (is(x,"ssm_alpha") && is(y,"ssm_beta")) || (is(x,"ssm_beta") && is(y,"ssm_alpha"))
+		|| ((is(x,"attn_q") || is(x,"attn_k") || is(x,"attn_v"))
+			&& (is(y,"attn_q") || is(y,"attn_k") || is(y,"attn_v"))
+			&& strncmp(x.role,y.role,x.length<y.length?x.length:y.length));
+}
+#endif
 bool Supports(ggml_backend_dev_t,const ggml_tensor* t) { return Contract(t); }
 const char* Name(ggml_backend_t) { return "P100A-public27B-cohort52-experimental"; }
 const char* DeviceName(ggml_backend_dev_t) { return "P100A-public27B-cohort52"; }
 const char* Description(ggml_backend_dev_t) { return "Experimental authenticated mixed-quant matrices;CPU non-matrix ops;not a speed qualification"; }
 ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	if (backend!=active || !Ready()) { Abort(); return GGML_STATUS_FAILED; }
+	int skipIndex=-1;
 	for (int i=0;i<ggml_graph_n_nodes(graph);i++) {
+		if (i==skipIndex) continue;
 		auto* op=ggml_graph_node(graph,i); unsigned tensor=0;
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
-		if (!Contract(op,&tensor) || !op->data || !op->src[0]->data || !op->src[1]->data
-			|| !dispatch.multiply(dispatch.owner,tensor,static_cast<const float*>(op->src[1]->data),unsigned(op->src[1]->ne[0]),
-				static_cast<float*>(op->data),unsigned(op->ne[0])) || !Ready()) {
+		if (!Contract(op,&tensor) || !op->data || !op->src[0]->data || !op->src[1]->data) {
 			Abort(); return GGML_STATUS_FAILED; // NEVER return success/substitute CPU values
 		}
-		stats.projections++;
+		bool completed=false;
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+		if (dispatch.multiply_pair) for (int j=i+1;j<ggml_graph_n_nodes(graph);j++) {
+			auto* partner=ggml_graph_node(graph,j);
+			if (!(partner->flags&GGML_TENSOR_FLAG_COMPUTE) || View(partner->op)) continue;
+			if (!SameInputProjectionFamily(op,partner)) continue;
+			unsigned partnerTensor=0;
+			if (!Contract(partner,&partnerTensor)) { Abort();return GGML_STATUS_FAILED; }
+			if (!partner->data || !partner->src[0] || !partner->src[0]->data || !partner->src[1]->data
+				|| !dispatch.multiply_pair(dispatch.owner,tensor,partnerTensor,
+					static_cast<const float*>(op->src[1]->data),unsigned(op->src[1]->ne[0]),
+					static_cast<float*>(op->data),unsigned(op->ne[0]),static_cast<float*>(partner->data),unsigned(partner->ne[0]))
+				|| !Ready()) {
+				Abort();return GGML_STATUS_FAILED;
+			}
+			skipIndex=j;stats.projections+=2;completed=true;break;
+		}
+#endif
+		if (!completed && (!dispatch.multiply(dispatch.owner,tensor,static_cast<const float*>(op->src[1]->data),unsigned(op->src[1]->ne[0]),
+			static_cast<float*>(op->data),unsigned(op->ne[0])) || !Ready())) {
+			Abort(); return GGML_STATUS_FAILED;
+		}
+		if (!completed) stats.projections++;
 	}
 	return GGML_STATUS_SUCCESS;
 }

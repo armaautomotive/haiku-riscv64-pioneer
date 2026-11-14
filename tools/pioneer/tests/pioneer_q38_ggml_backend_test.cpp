@@ -5,7 +5,7 @@
 #include "../PioneerQ38GgmlGdnContract.h"
 #include "ggml-backend-impl.h"
 struct Fake {
-	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,ends=0,aborts=0;
+	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,pairCalls=0,ends=0,aborts=0;
 	static bool Ready(void* p) { return static_cast<Fake*>(p)->valid; }
 	static bool Multiply(void* p,unsigned tensor,const float* input,unsigned k,float* out,unsigned n) {
 		auto& f=*static_cast<Fake*>(p); f.calls++;
@@ -14,12 +14,81 @@ struct Fake {
 		for (unsigned r=0;r<n;r++) out[r]=float(r+1); // SYNTHETIC marker,NOT arithmetic reference
 		return true;
 	}
+	static bool MultiplyPair(void* p,unsigned first,unsigned second,const float* input,unsigned k,
+		float* firstOut,unsigned firstN,float* secondOut,unsigned secondN) {
+		auto& f=*static_cast<Fake*>(p);f.pairCalls++;
+		assert(first<f.model.Tensors().size() && second<f.model.Tensors().size() && first!=second && input);
+		assert(k==f.model.Tensors()[first].inputs && k==f.model.Tensors()[second].inputs);
+		assert(firstN==f.model.Tensors()[first].outputs && secondN==f.model.Tensors()[second].outputs);
+		if(f.fail)return false;
+		for(unsigned r=0;r<firstN;r++)firstOut[r]=float(r+1);
+		for(unsigned r=0;r<secondN;r++)secondOut[r]=float(r+101);
+		return true;
+	}
 	static bool Finish(void* p) { static_cast<Fake*>(p)->ends++; return true; }
 	static void Abort(void* p) { static_cast<Fake*>(p)->aborts++; }
 };
 int main(int argc,char** argv)
 {
-	assert(argc==2); unsigned fault=unsigned(atoi(argv[1])); assert(fault<=4);
+	assert(argc==2);
+	if(strcmp(argv[1],"pair")==0 || strcmp(argv[1],"pair-fault")==0 || strcmp(argv[1],"pair-qkv")==0
+		|| strcmp(argv[1],"pair-delta")==0 || strcmp(argv[1],"pair-attention")==0) {
+#ifndef PIONEER_Q38_WORK_BATCH_CLIENT
+		assert(false && "pair test requires opt-in Work batch client build");
+#else
+		const bool pairFault=strcmp(argv[1],"pair-fault")==0;
+		Fixture fixture;Fake fake;assert(fake.model.Open(fixture.file));
+		fake.fail=pairFault;
+		PioneerQ38GgmlDispatch d={&fake,&fake.model,Fake::Ready,Fake::Multiply,Fake::Finish,Fake::Abort};
+		d.multiply_pair=Fake::MultiplyPair;
+		auto reg=PioneerQ38GgmlReg();auto dev=ggml_backend_reg_dev_get(reg,0);assert(dev);
+		assert(PioneerQ38GgmlConfigure(d));auto backend=ggml_backend_dev_init(dev,nullptr);assert(backend);
+		ggml_init_params params={1024*1024,nullptr,true};auto ctx=ggml_init(params);assert(ctx);
+		const char* firstName="blk.0.ffn_up.weight";const char* secondName="blk.0.ffn_gate.weight";
+		if(strcmp(argv[1],"pair-qkv")==0){firstName="blk.0.attn_qkv.weight";secondName="blk.0.attn_gate.weight";}
+		if(strcmp(argv[1],"pair-delta")==0){firstName="blk.0.ssm_alpha.weight";secondName="blk.0.ssm_beta.weight";}
+		if(strcmp(argv[1],"pair-attention")==0){firstName="blk.3.attn_q.weight";secondName="blk.3.attn_k.weight";}
+		const auto* first=fake.model.Find(firstName);const auto* second=fake.model.Find(secondName);assert(first&&second);
+		ggml_backend_buffer_t upWB=nullptr,gateWB=nullptr,upYB=nullptr,gateYB=nullptr,xB=nullptr;
+		auto make=[&](const PioneerQ38Tensor* t,ggml_tensor*& weight,ggml_tensor*& output,ggml_backend_buffer_t& wb,ggml_backend_buffer_t& xb) {
+			weight=ggml_new_tensor_2d(ctx,ggml_type(t->type),int64_t(t->inputs),int64_t(t->outputs));ggml_set_name(weight,t->name.c_str());
+			auto x=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,int64_t(t->inputs));
+			output=ggml_mul_mat(ctx,weight,x);wb=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(weight));assert(wb);
+			weight->buffer=wb;weight->data=ggml_backend_buffer_get_base(wb);ggml_backend_buffer_set_usage(wb,GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+			xb=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(x));assert(xb);x->buffer=xb;x->data=ggml_backend_buffer_get_base(xb);memset(x->data,0,ggml_nbytes(x));
+			return x;
+		};
+		ggml_tensor *firstW=nullptr,*secondW=nullptr,*firstY=nullptr,*secondY=nullptr;
+		auto* input=make(first,firstW,firstY,upWB,xB);
+		secondW=ggml_new_tensor_2d(ctx,ggml_type(second->type),int64_t(second->inputs),int64_t(second->outputs));ggml_set_name(secondW,second->name.c_str());
+		secondY=ggml_mul_mat(ctx,secondW,input);gateWB=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(secondW));assert(gateWB);
+		secondW->buffer=gateWB;secondW->data=ggml_backend_buffer_get_base(gateWB);ggml_backend_buffer_set_usage(gateWB,GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+		gateYB=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(secondY));assert(gateYB);secondY->buffer=gateYB;secondY->data=ggml_backend_buffer_get_base(gateYB);
+		upYB=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(firstY));assert(upYB);firstY->buffer=upYB;firstY->data=ggml_backend_buffer_get_base(upYB);
+		memset(firstY->data,0xff,ggml_nbytes(firstY));memset(secondY->data,0xff,ggml_nbytes(secondY));
+		firstY->flags|=GGML_TENSOR_FLAG_COMPUTE;secondY->flags|=GGML_TENSOR_FLAG_COMPUTE;
+		auto graph=ggml_new_graph(ctx);ggml_build_forward_expand(graph,firstY);ggml_build_forward_expand(graph,secondY);
+		const bool graphOkay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
+		assert(graphOkay==!pairFault && fake.pairCalls==1 && !fake.calls);
+		if(pairFault){
+			for(size_t i=0;i<ggml_nbytes(firstY)/4;i++)assert(static_cast<uint32_t*>(firstY->data)[i]==UINT32_MAX);
+			for(size_t i=0;i<ggml_nbytes(secondY)/4;i++)assert(static_cast<uint32_t*>(secondY->data)[i]==UINT32_MAX);
+			assert(PioneerQ38GgmlSnapshot().failed && !PioneerQ38GgmlSnapshot().projections);
+			assert(!PioneerQ38GgmlFinish() && !fake.ends && fake.aborts==1);
+		}else{
+			assert(PioneerQ38GgmlSnapshot().projections==2);
+			for(unsigned r=0;r<first->outputs;r++)assert(static_cast<float*>(firstY->data)[r]==float(r+1));
+			for(unsigned r=0;r<second->outputs;r++)assert(static_cast<float*>(secondY->data)[r]==float(r+101));
+			assert(PioneerQ38GgmlFinish());assert(fake.ends==1 && !fake.aborts);
+		}
+		ggml_backend_buffer_free(gateYB);ggml_backend_buffer_free(upYB);ggml_backend_buffer_free(gateWB);ggml_backend_buffer_free(upWB);
+		ggml_backend_buffer_free(xB);ggml_backend_free(backend);ggml_free(ctx);
+		puts(pairFault?"PASS opt-in same-input FFN pair failure: both caller outputs untouched, graph fails and owner aborts;SYNTHETIC DISPATCH,NO DEVICE"
+			:"PASS opt-in same-input FFN pair dispatch: exact two weights, same activation, both outputs, atomic graph completion;SYNTHETIC DISPATCH,NO DEVICE");
+#endif
+		return 0;
+	}
+	unsigned fault=unsigned(atoi(argv[1])); assert(fault<=4);
 	Fixture fixture; Fake fake; assert(fake.model.Open(fixture.file));
 	PioneerQ38GgmlDispatch d={&fake,&fake.model,Fake::Ready,Fake::Multiply,Fake::Finish,Fake::Abort};
 	auto reg=PioneerQ38GgmlReg(); auto dev=ggml_backend_reg_dev_get(reg,0); assert(dev);

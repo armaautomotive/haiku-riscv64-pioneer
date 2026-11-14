@@ -178,7 +178,7 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 #endif
 	}
 public:
-	uint64_t pagesUploaded=0,bytesRetained=0,calls=0,fleetPlanBuilds=0;
+	uint64_t pagesUploaded=0,bytesRetained=0,calls=0,runIoctlCalls=0,fleetPlanBuilds=0;
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 	PioneerQ38ModelRootProfile modelRootProfile;
 #endif
@@ -387,6 +387,60 @@ public:
 		spanPrimed=true; return true;
 	}
 #endif
+	// Distinct, opt-in no-reference Work path for two independent matrices
+	// consuming the same activation. Limited to one wave per matrix: no partial
+	// output is exposed if either dispatch is uncertain.
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+	bool MultiplyPair(unsigned firstTensor,unsigned secondTensor,const float* input,unsigned inputs,
+		float* firstOutput,unsigned firstOutputs,float* secondOutput,unsigned secondOutputs,unsigned workers=Mode::Workers) {
+		if (!active || failed || finished || !source.Ready() || firstTensor==secondTensor
+			|| firstTensor>=source.Model().Tensors().size() || secondTensor>=source.Model().Tensors().size()) return Stop();
+		const auto& first=source.Model().Tensors()[firstTensor];const auto& second=source.Model().Tensors()[secondTensor];
+		if (!input || !firstOutput || !secondOutput || first.type!=second.type || first.inputs!=second.inputs
+			|| inputs!=first.inputs || firstOutputs!=first.outputs || secondOutputs!=second.outputs
+			|| workers!=Mode::Workers || !PioneerQ38Disjoint(input,inputs,firstOutput,firstOutputs)
+			|| !PioneerQ38Disjoint(input,inputs,secondOutput,secondOutputs)
+			|| !PioneerQ38Disjoint(firstOutput,firstOutputs,secondOutput,secondOutputs)) return Stop();
+		auto planFor=[&](unsigned tensor)->PioneerQwen38FleetPlan* {
+			auto& cached=fleetPlans[tensor];
+			if (!cached) {
+				auto candidate=std::unique_ptr<PioneerQwen38FleetPlan>(new(std::nothrow) PioneerQwen38FleetPlan());
+				if (!candidate || !candidate->Build(source.Model(),layout,tensor,workers)) return nullptr;
+				fleetPlanBuilds++;cached=std::move(candidate);
+			}
+			return cached->MatchesSource(source.Model(),layout) && cached->Tensor()==tensor
+				&& cached->Workers()==workers && !cached->Jobs().empty() && cached->Jobs().back().wave==0?cached.get():nullptr;
+		};
+		if (firstTensor>=fleetPlans.size() || secondTensor>=fleetPlans.size()) return Stop();
+		auto* firstPlan=planFor(firstTensor);auto* secondPlan=planFor(secondTensor);
+		if (!firstPlan || !secondPlan || !source.Ready()) return Stop();
+		PioneerQ38CohortInput quantized;
+		if (!PioneerQ38CohortQuantize(first.type,inputs,input,quantized)
+			|| !UploadTensor(firstTensor) || !UploadTensor(secondTensor)) return Stop();
+		PioneerQ38CohortWave firstWave,secondWave;
+		if (!source.Ready() || !firstWave.Build(source.Model(),layout,*firstPlan,0)
+			|| !secondWave.Build(source.Model(),layout,*secondPlan,0)) return Stop();
+		auto firstRequest=mode.Request(firstWave,quantized);auto secondRequest=mode.Request(secondWave,quantized);
+		auto packet=std::unique_ptr<PioneerQ38WorkBatchPacket>(new(std::nothrow) PioneerQ38WorkBatchPacket{});
+		if (!firstRequest || !secondRequest || !packet) return Stop();
+		packet->version=PIONEER_Q38_WORK_BATCH_VERSION;packet->count=PIONEER_Q38_WORK_BATCH_COUNT;
+		packet->jobs[0]=*firstRequest;packet->jobs[1]=*secondRequest;
+		std::vector<float> firstScratch(firstOutputs,0),secondScratch(secondOutputs,0);
+		uint64_t runStart=PioneerQ38SessionNow(io,0);
+		bool executed=io.Call(fd,TT_PCI_PROBE_Q38_WORK_BATCH_RUN,packet.get(),sizeof(*packet));
+		runIoctlCalls++;
+		Elapsed(runStart,runNanos);
+		if (!executed || !source.Ready() || packet->version!=PIONEER_Q38_WORK_BATCH_VERSION
+			|| packet->count!=PIONEER_Q38_WORK_BATCH_COUNT || packet->reserved[0] || packet->reserved[1]) return Stop();
+		if (!mode.Collect(firstWave,quantized,packet->jobs[0],firstScratch.data(),firstOutputs)
+			|| !mode.Collect(secondWave,quantized,packet->jobs[1],secondScratch.data(),secondOutputs)
+			|| !source.Ready()) return Stop();
+		memcpy(firstOutput,firstScratch.data(),firstOutputs*4);memcpy(secondOutput,secondScratch.data(),secondOutputs*4);
+		calls+=2;if (peakWorkers<firstWave.workers) peakWorkers=firstWave.workers;
+		if (peakWorkers<secondWave.workers) peakWorkers=secondWave.workers;
+		return true;
+	}
+#endif
 	bool Multiply(unsigned tensor,const float* input,unsigned inputs,float* output,unsigned outputs,unsigned workers=Mode::Workers) {
 #ifdef PIONEER_Q38_FFN_PRIME
 		(void)tensor;(void)input;(void)inputs;(void)output;(void)outputs;(void)workers;
@@ -430,6 +484,7 @@ public:
 				packet->jobs[0]=*first;packet->jobs[1]=*second;first.reset();second.reset();
 				uint64_t runStart=PioneerQ38SessionNow(io,0);
 				bool executed=io.Call(fd,TT_PCI_PROBE_Q38_WORK_BATCH_RUN,packet.get(),sizeof(*packet));
+				runIoctlCalls++;
 				Elapsed(runStart,runNanos);
 				// A failed user-copy can partially alter packet: never inspect or
 				// publish any batch output after failure, and never retry.
@@ -448,6 +503,7 @@ public:
 			if (!request) return Stop();
 			uint64_t runStart=PioneerQ38SessionNow(io,0);
 			bool executed=io.Call(fd,Mode::Operation,request.get(),sizeof(*request));
+			runIoctlCalls++;
 			Elapsed(runStart,runNanos);
 			if (!executed) return Stop();
 			if (!source.Ready() || !mode.Collect(wave,quantized,*request,scratch.data(),outputs)) return Stop();

@@ -13,6 +13,9 @@ struct PioneerQ38GgmlDispatch {
 	bool (*multiply)(void*,unsigned,const float*,unsigned,float*,unsigned)=nullptr;
 	bool (*finish)(void*)=nullptr;
 	void (*abort)(void*)=nullptr;
+	// Optional, isolated no-reference Work capability. Both matrices must
+	// consume the identical live activation and complete atomically.
+	bool (*multiply_pair)(void*,unsigned,unsigned,const float*,unsigned,float*,unsigned,float*,unsigned)=nullptr;
 };
 bool PioneerQ38GgmlConfigure(const PioneerQ38GgmlDispatch& dispatch);
 ggml_backend_reg_t PioneerQ38GgmlReg();
