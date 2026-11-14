@@ -84,10 +84,13 @@ static uint32_t Instruction(const uint16_t* a,const uint16_t* b,unsigned phase,u
 int main(int argc,char** argv){
  if((argc!=2 && argc!=3) || argv[1][0]!='/' || (argc==3 && std::string(argv[2])!="--qgwd-reference"
   && std::string(argv[2])!="--recurrent-reference" && std::string(argv[2])!="--recurrent-out-reference"
-  && std::string(argv[2])!="--recurrent-qkv-reference"))return 2;
+  && std::string(argv[2])!="--recurrent-qkv-reference" && std::string(argv[2])!="--small-alpha"
+  && std::string(argv[2])!="--small-beta"))return 2;
  const std::string path=argv[1],data=Read(path+"/PioneerNativeBfpModelBandData.h"),meta=Read(path+"/PioneerNativeBfpModelBandMetadata.h");
  if(data.empty() || meta.empty())return 1;
- const bool reference=argc==3,recurrent=reference && std::string(argv[2])=="--recurrent-reference";
+ const bool smallAlpha=argc==3 && std::string(argv[2])=="--small-alpha";
+ const bool smallBeta=argc==3 && std::string(argv[2])=="--small-beta";
+ const bool small=smallAlpha || smallBeta,reference=argc==3 && !small,recurrent=reference && std::string(argv[2])=="--recurrent-reference";
  const bool recurrentOut=reference && std::string(argv[2])=="--recurrent-out-reference";
  const bool recurrentQkv=reference && std::string(argv[2])=="--recurrent-qkv-reference";
  if(reference && !recurrent && !recurrentOut && !recurrentQkv && (meta.find("Width=5120,Rows=1024,Tensor=45,Samples=3")==std::string::npos
@@ -98,6 +101,8 @@ int main(int argc,char** argv){
   || meta.find("const unsigned rows[3]={0,2560,5088}")==std::string::npos))return 1;
  if(recurrentQkv && (meta.find("Width=5120,Rows=10240,Tensor=5,Samples=3")==std::string::npos
   || meta.find("const unsigned rows[3]={0,5120,10208}")==std::string::npos))return 1;
+ if(small && (meta.find(smallAlpha?"Width=5120,Rows=48,Tensor=11,Samples=3":"Width=5120,Rows=48,Tensor=12,Samples=3")==std::string::npos
+  || meta.find("const unsigned rows[3]={0,32,0}")==std::string::npos))return 1;
  const unsigned tiles=recurrentOut?192:160;
  std::vector<uint32_t> inputs;if(!Array(data,"input",tiles*20,inputs))return 1;
  unsigned checked=0;
@@ -116,6 +121,7 @@ int main(int argc,char** argv){
     for(unsigned phase=0;phase<4;phase++)value=Instruction(a,b,phase,value);
    }
    if(value!=golden[row]){std::fprintf(stderr,"mismatch sample=%u row=%u got=%08x expected=%08x\n",sample,row,value,golden[row]);return 1;}
+   if(small && sample==1 && row>=16 && value)return 1;
    if(reference){const unsigned dense[]={0,512,992},rec[]={0,3072,6112},out[]={0,2560,5088},qkv[]={0,5120,10208};
     std::printf("%s_INTEGER_REFERENCE sample%u first%u row%u word%08x\n",recurrentQkv?"RECURRENT_QKV":recurrentOut?"RECURRENT_OUT":recurrent?"RECURRENT":"DENSE",sample,(recurrentQkv?qkv:recurrentOut?out:recurrent?rec:dense)[sample],row,value);}
    checked++;

@@ -1,0 +1,25 @@
+Small recurrent BFP8 physical-band preparation, 2026-11-13
+
+The existing physical BFP8 band diagnostic covers 32-row full bands of
+large recurrent matrices, not the alpha/beta matrices' 16-row tail. Separate
+CPU-only exporters now select the pinned layer-0 alpha (tensor 11) or beta
+(tensor 12), prepare row bands 0 and 32, and repeat row band 0 as a third
+sample. They verify the source model on the same open descriptor, accept
+only the existing verified BFP8 cache, compare every cached tile with a fresh
+conversion and require the 16 padded tail predictions to be zero.
+
+Both exporters completed against the authenticated 27B model and existing
+small-recurrent cache. A separate integer decoder/arithmetic checker matched
+all 96 words per export, including the padded zeros; repeated first-band
+payload hashes matched. These are synthetic inputs and CPU-side references,
+not real activations or card results. The synthetic checker tests include
+wrong tensor and corrupted tail refusals; exporter role exclusions and
+invalid-source tests pass. Separate alpha and beta Haiku RISC-V exporters
+cross-linked, with SHA-256 9af4974d3a4c3ebe9529de5039b39eb35ae3057e447b24f378f2fcb73c08253a
+and bea2f813673c32ded4f56315060a5512ff62f0629b7cbda666730b6e3ff1d7e8.
+
+Private generated payloads remain outside Git. No diagnostic driver or
+client has been adapted, installed or run on the P100A for these bands.
+This is not complete-model quality, real inference or tokens-per-second
+evidence. A separate guarded physical lifecycle, output comparison, safe
+cleanup and stable-driver restoration are still required before a card test.

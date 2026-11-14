@@ -14,10 +14,24 @@
 namespace {
 using Cache=PioneerModelWeightCache;
 using Packet=PioneerQ38NativeBfpBandData::Packet;
-#if (defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT)) > 1
+#if (defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT) + defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT) + defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_EXPORT) + defined(PIONEER_NATIVE_SMALL_BETA_BAND_EXPORT)) > 1
 #error Dense and recurrent private exporters are distinct roles
 #endif
-#ifdef PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT
+#if defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_EXPORT) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_EXPORT)
+#if (defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_EXPORT) && PIONEER_NATIVE_SMALL_ALPHA_BAND_EXPORT != 1) \
+ || (defined(PIONEER_NATIVE_SMALL_BETA_BAND_EXPORT) && PIONEER_NATIVE_SMALL_BETA_BAND_EXPORT != 1) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
+#error Small recurrent Q8 band export is private CPU-only preparation
+#endif
+constexpr unsigned First[3]={0,32,0},SelectedRows=48,SelectedType=8,SelectedWidth=5120;
+#ifdef PIONEER_NATIVE_SMALL_ALPHA_BAND_EXPORT
+constexpr unsigned SelectedTensor=11;constexpr const char* SelectedName="blk.0.ssm_alpha.weight";
+#else
+constexpr unsigned SelectedTensor=12;constexpr const char* SelectedName="blk.0.ssm_beta.weight";
+#endif
+#elif defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT)
 #if PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
 #error Recurrent QKV Q8 band export is private CPU-only preparation
@@ -102,7 +116,7 @@ int Run(int argc,char** argv) {
 	Require(!lstat(argv[2],&directory) && S_ISDIR(directory.st_mode) && directory.st_uid==geteuid()
 		&& (directory.st_mode&07777)==0700,"Existing private native cache required.");
 	Cache cache;
-#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT)
+#if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_EXPORT) || defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_EXPORT) || defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_EXPORT) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_EXPORT)
 	Require(cache.OpenExistingDirectory(argv[2],error),error);
 #else
 	Require(cache.Open(argv[2],error),error);
@@ -115,10 +129,12 @@ int Run(int argc,char** argv) {
 	std::array<Packet,3> packets;std::array<std::array<uint32_t,32>,3> golden{};std::array<std::string,3> digest;
 	for(unsigned sample=0;sample<3;sample++) {
 		Require(source.Stage(index,First[sample],input.data(),input.size(),4,packets[sample],error),error);const auto& p=packets[sample];
-		Require(p.width==SelectedWidth && p.matrixRows==SelectedRows && p.firstRow==First[sample] && p.validRows==32 && p.phases==4
+		const unsigned validRows=std::min(32U,SelectedRows-First[sample]);
+		Require(p.width==SelectedWidth && p.matrixRows==SelectedRows && p.firstRow==First[sample] && p.validRows==validRows && p.phases==4
 			&& p.key.entry==SelectedTensor && p.key.sourceSHA256==original && p.key.conversionSHA256==source.ConversionPin()
 			&& p.weights.size()==size_t(SelectedWidth/32)*1104 && p.inputs.size()==size_t(SelectedWidth/32)*80 && p.sourceEpoch==epoch,"Bound packet identity/size refused.");
 		golden[sample]=FreshReference(model,index,First[sample],input,p);
+		for(unsigned row=validRows;row<32;row++)Require(!golden[sample][row],"Padded reference is not zero.");
 		std::vector<uint8_t> joined=p.weights;joined.insert(joined.end(),p.inputs.begin(),p.inputs.end());digest[sample]=Cache::Hex(Cache::Hash(joined.data(),joined.size()));
 		printf("VERIFIED_REAL_MODEL_BAND sample%u tensor%u first_row%u width%u cached_bytes%u headers_zero full_reference_words32 payload_sha256%s;CPU_ONLY\n",sample,SelectedTensor,First[sample],SelectedWidth,SelectedWidth/32*1088,digest[sample].c_str());fflush(stdout);
 	}
