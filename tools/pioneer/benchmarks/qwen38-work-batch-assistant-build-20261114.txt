@@ -42,6 +42,10 @@ exchanged, or run on the Pioneer. The tag-152 driver has not run the full
 Assistant/model path; no real-model batch speed, output quality or speedup is
 established. The SSH host key still requires independent out-of-band
 verification before any device operation.
+The current Assistant Work-batch build-gate and driver-role tests were also
+rerun and both exited 0: the no-reference Work Assistant role is admitted,
+while CPU-validated, non-Assistant, missing/wrong-tag, and mixed diagnostic
+roles are refused before device access.
 
 The ELF symbol table contains both the Q38 GGML backend and the concrete
 PioneerQ38CohortSession::MultiplyPair implementation. This verifies the
