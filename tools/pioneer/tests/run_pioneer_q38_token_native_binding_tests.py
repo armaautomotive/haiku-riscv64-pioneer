@@ -26,7 +26,7 @@ matrix = bool(args and args[0] == '--hybrid-matrix-inspection') or qgw8
 hybrid = pathlib.Path(args[1]) if args else None
 if hybrid:
     assert hybrid.is_absolute() and hybrid.is_file()
-    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()==('b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8 else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7')
+    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()==('b0c3d213676ded8ec484cee54908fc6443d4f2f50e199084a782230111fc1ac6' if qgwf else '4377811ebdc782bb67251beb120e32fdef18aab29ece5e8d77ba07bbcb0846b2' if qgwe else '90dd22aada31d665a42fda9fa158afd888d13e04c45365203ae5f42c0fb6daff' if qgwd else '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8 else 'bf6e0c535879f2bcf336a23188fa8cd19e612d450d86e59a85211f604928b52a')
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2]/'src/add-ons/kernel/drivers/misc'
 role = (kernel/'PioneerQ38TokenNativeRole.h').read_text()

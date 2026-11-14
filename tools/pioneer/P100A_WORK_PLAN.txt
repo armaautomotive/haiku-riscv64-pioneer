@@ -144,6 +144,23 @@ These are fresh build evidence only, not installed, started on-card, or
 qualified for numerical behavior or speed. They provide distinct candidate
 artifacts for a future controlled trial after the startup failure is
 diagnosable and the Pioneer connection is authenticated.
+
+Current-source QGW7 refresh, November 14: the November 7 ROOT pins had become
+stale as the experimental coordinator evolved, and the existing test stopped
+at that mismatch. I rebuilt the QGW5 and QGW7 ROOT profiles independently
+twice; each profile reproduced byte-for-byte. After refreshing only their
+text/ELF pins, the full QGW7 ROOT-to-worker simulation passed: 72 projection
+jobs, synthetic three-phase matrix attention, transfer/snapshot/receipt and
+counter checks, and malformed-input refusal. The separately authenticated
+QGW7 package hashes to
+bf6e0c535879f2bcf336a23188fa8cd19e612d450d86e59a85211f604928b52a (inspection)
+and 3fde38e18865b1343aef03b1f41fc06da4fa74f5dd98053855f2d0d57479864b
+(native-candidate DATA). Refreshed tag126 and tag127 driver builds passed
+their 15-section/CPU-reference-exclusion checks, with binary hashes
+07b2714f970c8a871f00951c3e534bb2ff6ae179b23f825840fd2cfd6fa3d7f9 and
+24856b7c6fe26f84a73652af0b184d6d37d10299a5658af504fb3e1786019332,
+respectively. All evidence is offline/synthetic; neither image is installed
+or hardware-tested, and no model quality or speed claim follows.
 Do not allow the original Q4 worker to interpret converted bytes, or expose
 the approximation in Work/Assistant before explicit qualification.
 

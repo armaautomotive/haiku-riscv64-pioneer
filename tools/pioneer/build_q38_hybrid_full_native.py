@@ -21,7 +21,7 @@ tag='0x2026110700010127ULL' if matrix else '0x2026110700010126ULL'
 if not all(p.is_absolute() for p in (sdk,header,out)) or not sdk.is_dir() or not header.is_file() or out.exists() or out.is_symlink():
  raise SystemExit('invalid SDK, header or output')
 headerDigest=hashlib.sha256(header.read_bytes()).hexdigest()
-expected='03c7673557c60f37c9773c323de7857158f79ceb452ce2b18f4d7cbdae1ed3dc' if matrix else '2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+expected='3fde38e18865b1343aef03b1f41fc06da4fa74f5dd98053855f2d0d57479864b' if matrix else 'bf62131de0c2264cee33c28d0f8bb2f490cc9db03b7308181b18b1417b21e28f'
 if headerDigest!=expected:
  raise SystemExit('header does not match the selected independently pinned program package')
 out.mkdir(mode=0o700);tool=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku';cxx=str(tool)+'-g++'

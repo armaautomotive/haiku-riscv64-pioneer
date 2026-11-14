@@ -1,11 +1,11 @@
 """Two independently rebuilt experimental images; not native authority."""
 ROOT_PINS = (
  ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
- ('text.bin',130320,'39710561a061f208d094914702ad8a49673c3bb859c050fed0e4583442a9d1fd'),
+ ('text.bin',130320,'61210c72dce63e9844b634140901ad74d65f71a117d4f28317d17ca727e29bbf'),
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',21328,'c021988e65544ec4e7791e5e9444e3da264452070d204f8fe3d38e7b8c9a009f'),
  ('bf16.bin',33768,'0de1a41f86205865dace5929bc1abba2bd86f0afe486f4b9d0e1200559d50ebf'),
- ('program.elf',216944,'2d8ded7c5ba8b48ba9628df840d37034d13c64b0eae62ce92428c407ced168d8'),
+ ('program.elf',216944,'df2f742b40de9bffdf381fd6773e8ea5031496bc0c44616e46d6b15328b0a1f4'),
 )
 WORKER_PINS = (
  ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),

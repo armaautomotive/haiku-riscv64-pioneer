@@ -14,7 +14,7 @@ assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,root_image,worker,old_header=map(Path,sys.argv[1:])
 assert all(p.is_absolute() for p in (sdk,root_image,worker,old_header))
 assert sdk.is_dir() and root_image.is_dir() and worker.is_dir() and old_header.is_file()
-assert hashlib.sha256(old_header.read_bytes()).hexdigest()=='2598f7a469ddd843ab1bbe732d0960dacaed819b4710b507430274b46c874f49'
+assert hashlib.sha256(old_header.read_bytes()).hexdigest()=='bf62131de0c2264cee33c28d0f8bb2f490cc9db03b7308181b18b1417b21e28f'
 here=Path(__file__).resolve().parent;tools=here.parent;sys.path.insert(0,str(tools))
 from PioneerQ38HybridMatrixProgramPins import ROOT_PINS, WORKER_PINS
 compiler=os.environ.get('CXX','c++')
@@ -25,8 +25,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw7-native-',dir='/private/tmp
  for target in (header,again):run(sys.executable,gen,'--matrix-attention-inspection',root_image,worker,target)
  run(sys.executable,gen,'--matrix-native-candidate',root_image,worker,candidate)
  data=header.read_bytes();assert data==again.read_bytes()
- assert hashlib.sha256(data).hexdigest()=='5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7'
- assert hashlib.sha256(candidate.read_bytes()).hexdigest()=='03c7673557c60f37c9773c323de7857158f79ceb452ce2b18f4d7cbdae1ed3dc'
+ assert hashlib.sha256(data).hexdigest()=='bf6e0c535879f2bcf336a23188fa8cd19e612d450d86e59a85211f604928b52a'
+ assert hashlib.sha256(candidate.read_bytes()).hexdigest()=='3fde38e18865b1343aef03b1f41fc06da4fa74f5dd98053855f2d0d57479864b'
  refused=subprocess.run([sys.executable,str(gen),'--matrix-attention-inspection',str(root_image),str(worker),str(header)],capture_output=True)
  assert refused.returncode and header.read_bytes()==data
  objcopy=sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-objcopy'
