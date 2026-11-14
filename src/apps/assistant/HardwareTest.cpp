@@ -61,7 +61,8 @@ static BMessage WaitIdle(BMessenger& service)
 		BMessage state = Query(service);
 		const char* selected=""; const char* pending="";
 		state.FindString("backend_id",&selected); state.FindString("loading_backend_id",&pending);
-		if (AssistantHardwareIsP100AQwen27(selected) || AssistantHardwareIsP100AQwen27(pending)) limit=18000;
+		if (AssistantHardwareIsP100AQwen27(selected) || AssistantHardwareIsP100AQwen27(pending)
+			|| AssistantHardwareIsP100AQwen27Full(selected) || AssistantHardwareIsP100AQwen27Full(pending)) limit=18000;
 		bool loading = true, unloading = true;
 		assert(state.FindBool("loading", &loading) == B_OK);
 		assert(state.FindBool("unloading", &unloading) == B_OK);
@@ -98,6 +99,13 @@ int main(int argc, char** argv)
 	assert(AssistantHardwareIsP100AThroughput("p100a-qwen-throughput") && !AssistantHardwareIsP100AThroughput(NULL) && !AssistantHardwareIsP100AThroughput("p100a-qwen-attention"));
 	assert(AssistantHardwareSkipsValidation("p100a-qwen-throughput"));
 	assert(AssistantHardwareIndex("p100a-qwen27-work")==6 && AssistantHardwareCanChat("p100a-qwen27-work"));
+	assert(AssistantHardwareIndex("p100a-qwen27-full-resident")==7 && AssistantHardwareCanChat("p100a-qwen27-full-resident"));
+	assert(AssistantHardwareIsP100AQwen27Full("p100a-qwen27-full-resident"));
+	assert(AssistantHardwareSkipsValidation("p100a-qwen27-full-resident"));
+	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen27-full-resident"),"qwen27-p100a-full-resident"));
+	assert(AssistantModelSupportsBackend(kAssistantQwen27Model,"p100a-qwen27-full-resident"));
+	for (size_t i=0;i<kAssistantModelCount;i++)
+		assert(AssistantModelSupportsBackend(i,"p100a-qwen27-full-resident")== (i==kAssistantQwen27Model));
 	assert(AssistantHardwareIsP100AQwen27("p100a-qwen27-work"));
 	assert(!AssistantHardwareIsP100AQwen27(NULL) && !AssistantHardwareIsP100AQwen27("p100a-qwen-fast"));
 	assert(!AssistantHardwareIsP100AQwen("p100a-qwen27-work")); // separate process/lifecycle
@@ -203,7 +211,7 @@ int main(int argc, char** argv)
 		request.AddMessenger("target", BMessenger(receiver)); request.AddInt64("id", system_time());
 		request.AddString("backend_id", backend); request.AddString("model_path", model);
 		request.AddString("prompt", "This unloaded-model test must never execute.");
-		request.AddString("prompt_format", (AssistantHardwareIsP100AQwen(backend.String()) || AssistantHardwareIsP100AQwen27(backend.String()))
+		request.AddString("prompt_format", (AssistantHardwareIsP100AQwen(backend.String()) || AssistantHardwareIsP100AQwen27(backend.String()) || AssistantHardwareIsP100AQwen27Full(backend.String()))
 			? AssistantHardwareQwenFormat(backend.String()) : "story");
 		request.AddInt32("max_tokens",8);
 		assert(service.SendMessage(&request) == B_OK);

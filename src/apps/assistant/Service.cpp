@@ -5,6 +5,7 @@
 #include "P100ABackend.h"
 #include "P100AQwen.h"
 #include "P100AQwen27.h"
+#include "P100AQwen27FullOffload.h"
 #include "../../../tools/pioneer/PioneerGgmlBackend.h"
 
 #include <Application.h>
@@ -55,7 +56,7 @@ public:
 			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL),
 			fLoading(true), fPersistModel(false), fUnloading(false), fPendingUnload(false),
 			fResidentModels(0), fProgressActive(true), fProgressValue(-1),
-			fProgressPhase("Starting model service"), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false), fP100AAttentionSupported(false), fP100AFleetSupported(false), fQwen27(NULL), fP100AQwen27Supported(false)
+			fProgressPhase("Starting model service"), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false), fP100AAttentionSupported(false), fP100AFleetSupported(false), fQwen27(NULL), fP100AQwen27Supported(false), fQwen27Full(NULL), fP100AQwen27FullSupported(false)
 	{
 		fHardware = LoadAssistantHardware();
 		const char* overridePath = getenv("LLAMA_MODEL");
@@ -147,7 +148,7 @@ public:
 				if (fLoading || fUnloading || fRequest != NULL) {
 					status = B_BUSY; explanation = "Finish/stop the current reply or wait for model loading, then try again.";
 				} else if (threadStatus == B_OK || threadStatus == B_NAME_NOT_FOUND) {
-					BString path = AssistantHardwareIsP100AQwen27(id) ? AssistantModelPath(kAssistantQwen27Model)
+					BString path = (AssistantHardwareIsP100AQwen27(id) || AssistantHardwareIsP100AQwen27Full(id)) ? AssistantModelPath(kAssistantQwen27Model)
 						: AssistantHardwareIsP100AQwen(id) ? AssistantModelPath(0)
 						: strcmp(id, "p100a") == 0 ? AssistantModelPath(kAssistantTinyModel)
 						: (fHardware == "cpu" && !fModelPath.IsEmpty() ? fModelPath : fStartupPath);
@@ -169,9 +170,12 @@ public:
 			status_t status = B_BAD_VALUE;
 			if (message->FindInt32("cpu_threads", &threads) == B_OK
 				&& threads >= 1 && threads <= AssistantMaxThreads()) {
-				if (AssistantHardwareIsP100AQwen27(fHardware.String()))
-					// The isolated worker owns its pool: never change only
-					// the saved/displayed count while leaving it at old threads.
+				if (AssistantHardwareIsP100AQwen27Full(fHardware.String())) {
+					status = fLoading || fUnloading ? B_BUSY : SaveAssistantThreads(threads);
+					if (status == B_OK) fThreads.store(threads); // ignored by the full-card worker
+				} else if (AssistantHardwareIsP100AQwen27(fHardware.String()))
+					// The isolated Work worker owns its CPU pool; synchronize it
+					// with the saved/displayed count rather than changing it alone.
 					status = QueueSelection(fModelPath, fHardware.String(), threads);
 				else {
 					status = fLoading || fUnloading ? B_BUSY : SaveAssistantThreads(threads);
@@ -212,7 +216,8 @@ public:
 			reply.AddString("loading_backend_id", fLoading ? fLoadingHardware.String() : "");
 			reply.AddString("model_path", fModelPath);
 			reply.AddString("model_error", fModelError);
-			reply.AddString("backend", AssistantHardwareIsP100AQwen27(fHardware.String()) ? "P100A Work Qwen3.8-27B (experimental, slow; CPU attention/state; validation OFF)"
+			reply.AddString("backend", AssistantHardwareIsP100AQwen27Full(fHardware.String()) ? "P100A full-card resident Qwen3.8-27B (unqualified candidate; no CPU inference)"
+				: AssistantHardwareIsP100AQwen27(fHardware.String()) ? "P100A Work Qwen3.8-27B (experimental, slow; CPU attention/state; validation OFF)"
 				: AssistantHardwareIsP100AThroughput(fHardware.String()) ? "P100A Throughput Qwen3-0.6B (up to120 cores; resident KV/attention; CPU validation OFF)"
 				: AssistantHardwareIsP100AAttention(fHardware.String()) ? "P100A Attention Qwen3-0.6B (card attention; CPU validation OFF; experimental)"
 				: AssistantHardwareIsP100AFast(fHardware.String()) ? "P100A Fast Qwen3-0.6B (CPU reference validation OFF; experimental)"
@@ -228,6 +233,7 @@ public:
 				const char* id=kAssistantHardware[i].id;
 				hardware.AddBool("available", i == 0 || (i==1 && fP100ASupported.load() && AssistantModelPresent(kAssistantTinyModel))
 					|| (AssistantHardwareIsP100AQwen27(id) && fP100AQwen27Supported.load() && AssistantModelPresent(kAssistantQwen27Model))
+					|| (AssistantHardwareIsP100AQwen27Full(id) && fP100AQwen27FullSupported.load() && AssistantModelPresent(kAssistantQwen27Model))
 					|| (AssistantHardwareIsP100AQwen(id) && fP100AQwenSupported.load() && AssistantModelPresent(0)
 						&& (!AssistantHardwareIsP100AAttention(id) || fP100AAttentionSupported.load())
 						&& (!AssistantHardwareIsP100AThroughput(id) || fP100AFleetSupported.load())));
@@ -311,6 +317,17 @@ public:
 				delete request; return;
 			}
 		}
+		if (AssistantHardwareIsP100AQwen27Full(fHardware.String())) {
+			const char* format=NULL; const char* pinnedModel=NULL;
+			status_t tokensStatus=message->FindInt32("max_tokens",&request->tokens);
+			if (backendStatus!=B_OK || message->FindString("model_path",&pinnedModel)!=B_OK || fModelPath!=pinnedModel
+				|| message->FindString("prompt_format",&format)!=B_OK || strcmp(format,AssistantHardwareQwenFormat(fHardware.String()))
+				|| tokensStatus!=B_OK || request->tokens<1 || request->tokens>32 || request->prompt.empty() || request->prompt.size()>256
+				|| !fP100AQwen27FullSupported.load()) {
+				Reply(request,kDone,"","Full-card Qwen27B requires its explicit resident mode,256-byte question and1-32 tokens. No CPU fallback.");
+				delete request; return;
+			}
+		}
 		if (!fReady.load() || fLoading || fUnloading || fRequest != NULL || request->prompt.size() > 12000) {
 			Reply(request, kDone, "", (fLoading || fUnloading || fRequest != NULL)
 				? "Service is loading, unloading or busy. Try again shortly."
@@ -340,6 +357,7 @@ private:
 		if (AssistantHardwareIsP100AAttention(backend) && !fP100AAttentionSupported.load()) return B_NOT_SUPPORTED;
 		if (AssistantHardwareIsP100AThroughput(backend) && !fP100AFleetSupported.load()) return B_NOT_SUPPORTED;
 		if (AssistantHardwareIsP100AQwen27(backend) && !fP100AQwen27Supported.load()) return B_NOT_SUPPORTED;
+		if (AssistantHardwareIsP100AQwen27Full(backend) && !fP100AQwen27FullSupported.load()) return B_NOT_SUPPORTED;
 		if (!AssistantModelPresent(index)) return B_ENTRY_NOT_FOUND;
 		if (fReady.load() && fHardware == backend && fModelPath == path
 			&& (!AssistantHardwareIsP100AQwen27(backend) || threads==fThreads.load())) {
@@ -381,7 +399,9 @@ private:
 		std::string error;
 		bool clean = !fQwen || fQwen->Unload(error);
 		bool clean27 = !fQwen27 || fQwen27->Unload(error); clean=clean && clean27;
+		bool clean27Full = !fQwen27Full || fQwen27Full->Unload(error); clean=clean && clean27Full;
 		delete fQwen27; fQwen27=NULL;
+		delete fQwen27Full; fQwen27Full=NULL;
 		delete fQwen; fQwen = NULL;
 		delete fTiny; fTiny = NULL;
 		if (fContext) llama_free(fContext);
@@ -391,7 +411,7 @@ private:
 		fReady.store(false); fActiveThreads.store(0); fResidentModels = 0;
 		fUnloading = false; fProgressActive = false;
 		fModelError = error.c_str();
-		if (!clean) { fP100ASupported.store(false); fP100AQwenSupported.store(false); fP100AQwen27Supported.store(false); }
+		if (!clean) { fP100ASupported.store(false); fP100AQwenSupported.store(false); fP100AQwen27Supported.store(false); fP100AQwen27FullSupported.store(false); }
 		fprintf(stderr, "Assistant service: unloaded all resident models; clean=%d\n", clean);
 		return clean;
 	}
@@ -414,6 +434,7 @@ private:
 		fP100AAttentionSupported.store(AssistantP100AQwen::Available(true));
 		fP100AFleetSupported.store(AssistantP100AQwen::Available(true,true));
 		fP100AQwen27Supported.store(AssistantP100AQwen27::Available());
+		fP100AQwen27FullSupported.store(AssistantP100AQwen27FullOffloadSession::Available());
 		while (!fQuit.load()) {
 			if (acquire_sem(fWake) != B_OK || fQuit.load()) break;
 			BString path, backend;
@@ -464,6 +485,17 @@ private:
 						BAutolock lock(&fLock); fP100AQwenSupported.store(false); fReady.store(false); fModelError=error.c_str();
 						fP100ASupported.store(false);
 						fP100AQwen27Supported.store(false);
+					}
+				} else if (AssistantHardwareIsP100AQwen27Full(fHardware.String())) {
+					fActiveThreads.store(0);
+					auto result=fQwen27Full ? fQwen27Full->Complete(request->prompt,request->tokens,
+						[&]() { return fQuit.load() || request->cancelled.load(); },
+						[&](float value,const char* phase) { Progress(value,phase); })
+						: AssistantP100AQwen27FullOffloadSession::Reply();
+					success=result.outcome==AssistantP100AQwen27FullOffload::Completed;
+					answer=result.answer; error=result.error; request->summary=result.status;
+					if (fQwen27Full && fQwen27Full->Faulted()) {
+						BAutolock lock(&fLock); fP100AQwen27FullSupported.store(false); fReady.store(false); fModelError=error.c_str();
 					}
 				} else if (AssistantHardwareIsP100AQwen27(fHardware.String())) {
 					fActiveThreads.store(fThreads.load());
@@ -519,6 +551,7 @@ private:
 		const bool previousAttention=AssistantHardwareIsP100AAttention(fHardware.String());
 		const bool previousThroughput=AssistantHardwareIsP100AThroughput(fHardware.String());
 		const bool reuseQwen27=fQwen27 && fReady.load() && path==fModelPath && backend==fHardware;
+		const bool reuseQwen27Full=fQwen27Full && fReady.load() && path==fModelPath && backend==fHardware;
 		const int32 previousThreads=fThreads.load();
 		status_t status = B_NOT_SUPPORTED;
 		if (index >= 0 && kAssistantModels[index].compatible
@@ -527,7 +560,7 @@ private:
 			// the SAME open description passed to llama, before any BEGIN.
 			// A duplicate parent pathname hash adds minutes but cannot bind
 			// that file description. Never bypass the worker's authentication.
-			status = reuseQwen || AssistantHardwareIsP100AQwen27(backend.String()) ? B_OK : VerifyAssistantModel(index, path.String(), fQuit, error, BMessenger(),
+			status = reuseQwen || AssistantHardwareIsP100AQwen27(backend.String()) || AssistantHardwareIsP100AQwen27Full(backend.String()) ? B_OK : VerifyAssistantModel(index, path.String(), fQuit, error, BMessenger(),
 				[&](float value) { Progress(value, "Verifying model SHA-256"); });
 		else error = "Model is outside the supported catalog. Open Models to choose a supported Qwen3 model.";
 		llama_model* model = NULL;
@@ -535,6 +568,19 @@ private:
 		AssistantP100A* tiny = NULL;
 		AssistantP100AQwen* qwen=NULL;
 		AssistantP100AQwen27* qwen27=NULL;
+		AssistantP100AQwen27FullOffloadSession* qwen27Full=NULL;
+		if (status==B_OK && AssistantHardwareIsP100AQwen27Full(backend.String())) {
+			if (!fP100AQwen27FullSupported.load()) error="Resident full-card Qwen27B worker unavailable or faulted; no CPU fallback.";
+			else if (reuseQwen27Full) qwen27Full=fQwen27Full;
+			else {
+				qwen27Full=new AssistantP100AQwen27FullOffloadSession; std::string reason;
+				if (!qwen27Full->Load([&](float value,const char* phase) { Progress(value,phase); },reason)) {
+					error=reason.c_str();
+					fP100AQwen27FullSupported.store(false);
+					delete qwen27Full; qwen27Full=NULL;
+				}
+			}
+		}
 		if (status==B_OK && AssistantHardwareIsP100AQwen27(backend.String())) {
 			if (!fP100AQwen27Supported.load()) error="Qwen27B worker unavailable or faulted; no CPU fallback.";
 			else if (reuseQwen27) {
@@ -610,14 +656,19 @@ private:
 		// intact until its replacement is ready. NEVER permit two live card
 		// sessions:explicit clean unload BEFORE committing the new pair.
 		bool previousReleased=false;
-		bool loaded = context != NULL || tiny != NULL || qwen != NULL || qwen27 != NULL;
-		if (loaded && error.IsEmpty() && ((qwen27 && fQwen) || (fQwen27 && !reuseQwen27))) {
+		bool loaded = context != NULL || tiny != NULL || qwen != NULL || qwen27 != NULL || qwen27Full != NULL;
+		if (loaded && error.IsEmpty() && ((qwen27 && fQwen) || (fQwen27 && !reuseQwen27)
+			|| (qwen27Full && fQwen) || (fQwen27Full && !reuseQwen27Full)
+			|| (qwen27Full && fQwen27) || (qwen27 && fQwen27Full)
+			|| (qwen27Full && fTiny))) {
 			std::string reason; bool clean=true;
 			if (fQwen27) { clean=fQwen27->Unload(reason); delete fQwen27; fQwen27=NULL; previousReleased=true; }
+			if (fQwen27Full) { bool oldClean=fQwen27Full->Unload(reason); clean=clean && oldClean; delete fQwen27Full; fQwen27Full=NULL; previousReleased=true; }
 			if (qwen27 && fQwen) { bool oldClean=fQwen->Unload(reason); clean=clean && oldClean; delete fQwen; fQwen=NULL; previousReleased=true; }
+			if (qwen27Full && fTiny) { delete fTiny; fTiny=NULL; previousReleased=true; }
 			if (!clean) {
 				error="Previous P100A session could not close safely; all card modes disabled. "; error<<reason.c_str();
-				fP100ASupported.store(false); fP100AQwenSupported.store(false); fP100AQwen27Supported.store(false);
+				fP100ASupported.store(false); fP100AQwenSupported.store(false); fP100AQwen27Supported.store(false); fP100AQwen27FullSupported.store(false);
 			}
 		}
 		BAutolock lock(&fLock);
@@ -632,6 +683,7 @@ private:
 		}
 		if (loaded && error.IsEmpty()) {
 			fQwen27=qwen27;
+			fQwen27Full=qwen27Full;
 			if (!reuseQwen) { delete fQwen; fQwen=qwen; }
 			if (backend == "cpu") {
 				if (fContext != NULL) llama_free(fContext);
@@ -648,6 +700,7 @@ private:
 					error="Qwen27B thread restoration failed; backend disabled. "; error<<restoreError.c_str();
 				}
 			}
+			if (!reuseQwen27Full) delete qwen27Full;
 			if (previousReleased) fReady.store(false); // previous selection saved,but resident card context was released
 			if (reuseQwen) {
 				std::string restoreError;
@@ -663,7 +716,7 @@ private:
 			if (error.IsEmpty()) error = "Model/context load failed. Previous model kept; choose another or retry.";
 		}
 		fModelError = error; fLoading = false; fPersistModel = false;
-		fResidentModels = (fModel != NULL) + (fTiny != NULL) + (fQwen != NULL) + (fQwen27 != NULL);
+		fResidentModels = (fModel != NULL) + (fTiny != NULL) + (fQwen != NULL) + (fQwen27 != NULL) + (fQwen27Full != NULL);
 		fProgressActive = false;
 		fprintf(stderr, "Assistant service: model_loads=%d ready=%d model=%s error=%s\n",
 			fLoads.load(), fReady.load(), fModelPath.String(), error.String());
@@ -770,6 +823,8 @@ private:
 	std::atomic<bool> fP100AFleetSupported;
 	AssistantP100AQwen27* fQwen27;
 	std::atomic<bool> fP100AQwen27Supported;
+	AssistantP100AQwen27FullOffloadSession* fQwen27Full;
+	std::atomic<bool> fP100AQwen27FullSupported;
 };
 
 int main()

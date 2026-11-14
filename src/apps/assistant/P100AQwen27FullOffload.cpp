@@ -129,17 +129,144 @@ bool Progress(const A::Frame& frame, const std::function<void(float, const char*
 	return true;
 }
 
-bool Summary(const std::string& text, unsigned requested, unsigned& tokens)
+bool Summary(const std::string& text, unsigned requested, unsigned& tokens, bool requireResident)
 {
 	double compute = 0, total = 0;
 	int end = -1;
-	return std::sscanf(text.c_str(),
-		"P100A full-offload candidate: %u output tokens; prompt+generation %lfs,total %lfs. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.%n",
+	const bool resident = text.compare(0, sizeof("P100A full-offload resident candidate:") - 1,
+		"P100A full-offload resident candidate:") == 0;
+	const char* format = resident
+		? "P100A full-offload resident candidate: %u output tokens; prompt+generation %lfs,total %lfs. All inference on card; CPU vocabulary/text only. Request closed cleanly; weights retained until explicit model END. Not a warm-token speed measurement.%n"
+		: "P100A full-offload candidate: %u output tokens; prompt+generation %lfs,total %lfs. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.%n";
+	return resident == requireResident && std::sscanf(text.c_str(), format,
 		&tokens, &compute, &total, &end) == 3 && end >= 0 && size_t(end) == text.size()
 		&& tokens <= requested && std::isfinite(compute) && std::isfinite(total)
 		&& compute > 0 && total >= compute;
 } // returned DATA shape only;not proof of physical device END or ownership
 }
+
+struct AssistantP100AQwen27FullOffloadSession::Data {
+	Channel channel;
+	bool loaded = false;
+	bool faulted = false;
+	bool rejected = false;
+	bool requireResident = true;
+};
+
+AssistantP100AQwen27FullOffloadSession::AssistantP100AQwen27FullOffloadSession(bool requireResidentWorker)
+	:fData(new Data)
+{
+	fData->requireResident = requireResidentWorker;
+}
+
+bool AssistantP100AQwen27FullOffloadSession::Available()
+{
+	return access(Worker, X_OK) == 0;
+}
+
+AssistantP100AQwen27FullOffloadSession::~AssistantP100AQwen27FullOffloadSession()
+{
+	// Normal destruction is an explicit bounded END/exit attempt. Faulted
+	// sessions are never retried or reset; their state remains unknown.
+	if (fData->loaded && !fData->faulted) {
+		std::string ignored;
+		Unload(ignored);
+	}
+	delete fData;
+}
+
+bool AssistantP100AQwen27FullOffloadSession::Load(
+	const std::function<void(float, const char*)>& progress, std::string& error)
+{
+	if (fData->loaded || fData->faulted || !progress) {
+		error = "Full-card session is already loaded, faulted, or has no progress callback.";
+		return false;
+	}
+	error = "Full-card worker/channel failed; explicit close only,no retry/reset or CPU fallback.";
+	const double began = Now();
+	if (began < 0 || !fData->channel.Open() || !fData->channel.Send(A::Load, 1)) {
+		fData->faulted = true; return false;
+	}
+	A::Frame frame;
+	bool ready = false;
+	while (fData->channel.Next(frame, began + 1800)) {
+		if (Progress(frame, progress)) continue;
+		if (frame.kind == A::Error && frame.value == A::Rejected) {
+			if (!fData->channel.Exit(1)) { fData->faulted = true; return false; }
+			fData->rejected = true; error = frame.text; return false;
+		}
+		ready = frame.kind == A::Ready && !frame.value
+			&& frame.text == (fData->requireResident ? "QWEN27_FULL_OFFLOAD_RESIDENT_VOCAB_READY"
+				: "QWEN27_FULL_OFFLOAD_VOCAB_READY");
+		break;
+	}
+	if (!ready) { fData->faulted = true; return false; } // hybrid readiness is NEVER accepted
+	fData->loaded = true; error.clear(); return true;
+}
+
+AssistantP100AQwen27FullOffloadSession::Reply
+AssistantP100AQwen27FullOffloadSession::Complete(const std::string& question, unsigned tokens,
+	const std::function<bool()>& cancelled, const std::function<void(float, const char*)>& progress)
+{
+	Reply reply;
+	if (!fData->loaded || fData->faulted || !Assistant27::Question(question) || !tokens
+		|| tokens > Assistant27::MaxTokens || !cancelled || !progress) {
+		reply.outcome = AssistantP100AQwen27FullOffload::Rejected;
+		reply.error = "Full-card session requires a loaded worker,1-256 question bytes and1-32 tokens; no request executed.";
+		return reply;
+	}
+	if (cancelled()) { reply.outcome = AssistantP100AQwen27FullOffload::Cancelled; reply.error = "Stopped before accelerator BEGIN."; return reply; }
+	reply.error = "Full-card worker/channel failed; explicit close only,no retry/reset or CPU fallback.";
+	const double generate = Now();
+	if (generate < 0 || !fData->channel.Send(A::Generate, tokens, question)) {
+		fData->faulted = true; return reply;
+	}
+	bool sent = false, text = false, done = false;
+	std::string answer, status;
+	AssistantP100AQwen27FullOffload::Outcome outcome = AssistantP100AQwen27FullOffload::Unknown;
+	unsigned generated = 0;
+	A::Frame frame;
+	while (fData->channel.Next(frame, generate + 7200, &cancelled, &sent)) {
+		if (frame.kind == A::Progress) {
+			if (text || !Progress(frame, progress)) { fData->faulted = true; return reply; }
+			continue;
+		}
+		if (frame.kind == A::Text && !frame.value && !text) { answer = frame.text; text = true; continue; }
+		if (frame.kind != A::Done || frame.value > A::Rejected) { fData->faulted = true; return reply; }
+		if (frame.value == A::Complete) {
+			if (!text || !Summary(frame.text, tokens, generated, fData->requireResident)) { fData->faulted = true; return reply; }
+			outcome = AssistantP100AQwen27FullOffload::Completed;
+		} else {
+			if (text) { fData->faulted = true; return reply; }
+			outcome = frame.value == A::Cancelled ? AssistantP100AQwen27FullOffload::Cancelled
+				: AssistantP100AQwen27FullOffload::Rejected;
+		}
+		status = frame.text; done = true; break;
+	}
+	if (!done) { fData->faulted = true; return reply; }
+	reply.outcome = outcome; reply.cleanWorkerExit = false; reply.status = status;
+	if (outcome == AssistantP100AQwen27FullOffload::Completed && !sent) {
+		reply.answer = answer; reply.outputTokens = generated; reply.error.clear();
+	} else if (outcome == AssistantP100AQwen27FullOffload::Completed) {
+		// A cancellation that races a clean completed reply still suppresses text.
+		reply.outcome = AssistantP100AQwen27FullOffload::Cancelled; reply.error = "Stopped; completed text suppressed after clean worker exit.";
+	} else reply.error = status;
+	return reply;
+}
+
+bool AssistantP100AQwen27FullOffloadSession::Unload(std::string& error)
+{
+	if (fData->faulted || !fData->loaded || !fData->channel.Unload()) {
+		fData->faulted = true;
+		error = "Full-card model END/worker exit was not verified; no retry/reset or CPU fallback.";
+		return false;
+	}
+	fData->loaded = false; error.clear(); return true;
+}
+
+bool AssistantP100AQwen27FullOffloadSession::Loaded() const { return fData->loaded; }
+bool AssistantP100AQwen27FullOffloadSession::Faulted() const { return fData->faulted; }
+bool AssistantP100AQwen27FullOffloadSession::RejectedByWorker() const { return fData->rejected; }
 
 AssistantP100AQwen27FullOffload::Reply
 AssistantP100AQwen27FullOffload::Run(const std::string& question, unsigned tokens,
@@ -153,57 +280,22 @@ AssistantP100AQwen27FullOffload::Run(const std::string& question, unsigned token
 		return reply;
 	}
 	if (cancelled()) { reply.outcome = Cancelled; reply.error = "Stopped before worker launch."; return reply; }
-	Channel channel;
-	reply.error = "Full-card worker/channel failed; close only,no END/retry/reset or CPU fallback.";
-	const double began = Now();
-	if (began < 0 || !channel.Open() || !channel.Send(A::Load, 1)) return reply;
-	A::Frame frame;
-	bool ready = false;
-	while (channel.Next(frame, began + 1800)) {
-		if (Progress(frame, progress)) continue;
-		if (frame.kind == A::Error && frame.value == A::Rejected) {
-			if (!channel.Exit(1)) return reply;
-			reply.outcome = Rejected; reply.error = frame.text; return reply;
-		}
-		ready = frame.kind == A::Ready && !frame.value
-			&& frame.text == "QWEN27_FULL_OFFLOAD_VOCAB_READY";
-		break;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_CLIENT
+	AssistantP100AQwen27FullOffloadSession session(true);
+#else
+	AssistantP100AQwen27FullOffloadSession session(false);
+#endif
+	if (!session.Load(progress, reply.error)) {
+		reply.outcome = session.RejectedByWorker() ? Rejected : Unknown;
+		return reply;
 	}
-	if (!ready) return reply; // hybrid readiness is NEVER accepted
-	if (cancelled()) {
-		if (!channel.Unload()) return reply;
-		reply.outcome = Cancelled; reply.cleanWorkerExit = true;
-		reply.error = "Stopped before accelerator BEGIN."; return reply;
+	reply = session.Complete(question, tokens, cancelled, progress);
+	std::string unloadError;
+	if (!session.Unload(unloadError)) {
+		if (reply.outcome == Completed) { reply.answer.clear(); reply.outputTokens = 0; }
+		reply.outcome = Unknown; reply.cleanWorkerExit = false; reply.error = unloadError;
+		return reply;
 	}
-	const double generate = Now();
-	if (generate < 0 || !channel.Send(A::Generate, tokens, question)) return reply;
-	bool sent = false, text = false, done = false;
-	std::string answer, status;
-	Outcome outcome = Unknown;
-	unsigned generated = 0;
-	while (channel.Next(frame, generate + 7200, &cancelled, &sent)) {
-		if (frame.kind == A::Progress) {
-			if (text || !Progress(frame, progress)) return reply;
-			continue;
-		}
-		if (frame.kind == A::Text && !frame.value && !text) { answer = frame.text; text = true; continue; }
-		if (frame.kind != A::Done || frame.value > A::Rejected) return reply;
-		if (frame.value == A::Complete) {
-			if (!text || !Summary(frame.text, tokens, generated)) return reply;
-			outcome = Completed;
-		} else {
-			if (text) return reply;
-			outcome = frame.value == A::Cancelled ? Cancelled : Rejected;
-		}
-		status = frame.text; done = true; break;
-	}
-	if (!done || !channel.Unload()) return reply;
-	reply.outcome = outcome; reply.cleanWorkerExit = true; reply.status = status;
-	if (outcome == Completed && !sent) {
-		reply.answer = answer; reply.outputTokens = generated; reply.error.clear();
-	} else if (outcome == Completed) {
-		// A cancellation that races a clean completed reply still suppresses text.
-		reply.outcome = Cancelled; reply.error = "Stopped; completed text suppressed after clean worker exit.";
-	} else reply.error = status;
+	reply.cleanWorkerExit = true;
 	return reply;
 }

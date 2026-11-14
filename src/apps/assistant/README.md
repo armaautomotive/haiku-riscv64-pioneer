@@ -41,6 +41,23 @@ Offline ASan/UBSan and native Haiku fake-worker tests cover fragmented and
 malformed messages, wrong IDs, EOF, rejection, warm reuse, cancellation,
 known-clean unload and fail-closed/no-retry behavior without device I/O.
 
+### Separate full-card resident candidate (November 14)
+
+Hardware now has a distinct **P100A Full-card — Qwen3.8 27B** option backed by
+the tag91 resident worker. Unlike Work, it is designed to keep the model's
+inference state on the P100A and retain weights across requests; CPU handles
+the pinned model/tokenizer file, framing and returned text only. A new
+resident-specific `READY` marker prevents this Assistant mode from accepting
+the hybrid Work or older one-shot worker. The UI exposes it when a worker
+executable and pinned model are present; Load validates that handshake and
+rejects mismatched builds. It never falls back to Work or CPU.
+
+This is an unqualified candidate, not a claimed speedup: the two-request
+reuse test uses a fake peer, and no tag91 physical/numerical model run or
+tokens/sec result has been recorded. The prior whole-model result remains
+about0.17 tokens/sec; 20 tokens/sec is still unmet. Do not confuse this
+build-level integration with proof that Qwen27B has run wholly on the card.
+
 ### Persistent converted-weight cache (November 3)
 
 The installed Qwen27B Work worker now automatically reuses a disk cache in

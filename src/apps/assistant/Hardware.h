@@ -61,7 +61,13 @@ static const AssistantHardware kAssistantHardware[] = {
 		"One short question:256 bytes /96 prompt tokens, up to32 output tokens.\n"
 		"No tools/history/CPU fallback. Stop waits for a COMPLETE token, including upload.\n"
 		"Separate worker; explicit clean unload before other card modes.\n"
-		"The new mutable-state/GDN candidates are NOT enabled by this option."}
+		"The new mutable-state/GDN candidates are NOT enabled by this option."},
+	{"p100a-qwen27-full-resident", "P100A Full-card — Qwen3.8 27B (experimental candidate)",
+		"Separate resident-worker path: inference and model state are intended to stay on card.\n"
+		"Host handles pinned file/tokenizer, request framing and returned text only.\n"
+		"Keeps weights resident across turns; explicit unload ends the device session.\n"
+		"No CPU inference/reference fallback. Not yet hardware-qualified or a speed claim.\n"
+		"Use only with the matching tag91 resident native driver and worker."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 
@@ -87,6 +93,11 @@ static inline bool AssistantHardwareIsP100AQwen27(const char* id)
 	return id != NULL && !strcmp(id,"p100a-qwen27-work");
 }
 
+static inline bool AssistantHardwareIsP100AQwen27Full(const char* id)
+{
+	return id != NULL && !strcmp(id,"p100a-qwen27-full-resident");
+}
+
 static inline bool AssistantHardwareIsP100AAttention(const char* id)
 {
 	return id != NULL && (!strcmp(id,"p100a-qwen-attention") || !strcmp(id,"p100a-qwen-throughput"));
@@ -99,12 +110,14 @@ static inline bool AssistantHardwareIsP100AThroughput(const char* id)
 
 static inline bool AssistantHardwareSkipsValidation(const char* id)
 {
-	return AssistantHardwareIsP100AFast(id) || AssistantHardwareIsP100AAttention(id) || AssistantHardwareIsP100AQwen27(id);
+	return AssistantHardwareIsP100AFast(id) || AssistantHardwareIsP100AAttention(id)
+		|| AssistantHardwareIsP100AQwen27(id) || AssistantHardwareIsP100AQwen27Full(id);
 }
 
 static inline const char* AssistantHardwareQwenFormat(const char* id)
 {
-	return AssistantHardwareIsP100AQwen27(id)?"qwen27-p100a-work"
+	return AssistantHardwareIsP100AQwen27Full(id)?"qwen27-p100a-full-resident"
+		:AssistantHardwareIsP100AQwen27(id)?"qwen27-p100a-work"
 		:AssistantHardwareIsP100AThroughput(id)?"qwen-p100a-throughput"
 		:AssistantHardwareIsP100AAttention(id)?"qwen-p100a-attention"
 		:AssistantHardwareIsP100AFast(id)?"qwen-p100a-fast"

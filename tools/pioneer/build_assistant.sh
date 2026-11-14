@@ -77,6 +77,7 @@ if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
 	assistant_headers=$(mktemp -d /private/tmp/assistant-pinned-headers.XXXXXXXX)
 	git -C "$assistant_root/src/libs/llama.cpp" archive c060ca974c773c7c3d17fd1b66dc9d312bc292c0 include/llama.h ggml/include ggml/src/ggml-backend-impl.h ggml/src/ggml-impl.h | tar -x -C "$assistant_headers"
 	"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar -fno-exceptions -fno-rtti \
+		-DPIONEER_Q38_FULL_OFFLOAD_PROMPT_CLIENT=1 \
 		"$@" -I"$assistant_headers/include" \
 		-I"$assistant_headers/ggml/include" \
 		-I"$assistant_headers/ggml/src" \
@@ -88,6 +89,7 @@ if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
 		"$assistant_root/src/apps/assistant/P100ABackend.cpp" \
 		"$assistant_root/src/apps/assistant/P100AQwen.cpp" \
 		"$assistant_root/src/apps/assistant/P100AQwen27.cpp" \
+		"$assistant_root/src/apps/assistant/P100AQwen27FullOffload.cpp" \
 		"$assistant_root/tools/pioneer/PioneerGgmlBackend.cpp" \
 		"$assistant_root/src/apps/assistant/ModelStore.cpp" \
 		-lbe -lnetwork -l:libllama.so.0.2.0 -l:libggml.so.0.21.0 -l:libggml-base.so.0.21.0 -l:libggml-cpu.so.0.21.0 \

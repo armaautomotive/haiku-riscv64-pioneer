@@ -53,10 +53,28 @@ model-END lifecycle operations. Its synthetic USER test completes two
 requests on the same FD after one upload, reinitializing request state and
 ending the model explicitly on unload. The tag91 native build and both
 resident/legacy worker syntax-only cross-compiles pass. This is still
-BUILD/FAKE-TRANSPORT evidence: no frozen-library worker link, Assistant
-service integration, physical tag91 install, numerical model run, or warm
-throughput result has been qualified. The public Assistant continues to use
-the existing separately implemented Work adapter.
+BUILD/FAKE-TRANSPORT evidence: no physical tag91 install, numerical model run,
+or warm throughput result has been qualified. The public Assistant keeps its
+existing Work adapter and now has a separate unqualified full-card candidate.
+
+Nov14 client-residency increment: `P100AQwen27FullOffloadSession` now keeps
+the full-card worker channel alive across multiple Generate requests and
+performs one explicit model END on Unload. Its FAKE IPC test proves one Load,
+two request IDs on the same worker, then one clean Unload; it does not prove
+model residency on physical hardware. Existing one-shot Run remains compatible.
+The tag91 resident worker, libraries and standalone prompt client cross-link
+successfully against the frozen ABI (worker SHA-256
+`39de9e25981c5f218610bdcef537525f7367003935e52847ef9dd14f281f85de`, prompt
+client SHA-256 `e67627af622dd1c3165c3d8ab96bc32e1221c37e155c8d26a32d95aca80962d6`).
+A separate “P100A Full-card resident” Assistant backend is now wired to this
+session API; it requires the resident-specific READY marker and never falls
+back to the hybrid Work or CPU path. The full Assistant/service cross-build
+passes (service SHA-256
+`759db98039f7c7d788423013c4c71548bf59f01668415a541e05e244dd2f3310`). It is
+still not installed or physically/numerically/speed qualified. Tests:
+`c++ -std=c++11 -O2 -Wall -Wextra -Werror tools/pioneer/tests/pioneer_assistant_full_card_mode_test.cpp -o /private/tmp/pioneer-assistant-full-card-mode-test && /private/tmp/pioneer-assistant-full-card-mode-test`,
+`python3 tools/pioneer/tests/run_pioneer_q38_full_offload_resident_client_tests.py`
+and `python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py --batched --metrics --resident`.
 
 The resident candidate is selected only by the exact pair below; the existing
 one-shot tags and protocol remain separate:

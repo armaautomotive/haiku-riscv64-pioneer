@@ -38,8 +38,19 @@ int main(int argc, char** argv)
 	if (mode == 7) { Reply(A::Progress, 1, 1001, "bad value"); Read(frame); return 0; }
 	if (mode == 34 && !Reply(A::Progress, 1, UINT32_MAX, "ASK_TEST_PRE_BEGIN")) return 0;
 	if (!Reply(A::Ready, mode == 6 ? 2 : 1, mode == 26 ? 1 : 0,
-		mode == 5 ? "QWEN27_WORK_HOST_READY_497" : "QWEN27_FULL_OFFLOAD_VOCAB_READY")) return 0;
+		mode == 5 ? "QWEN27_WORK_HOST_READY_497" : mode == 35 ? "QWEN27_FULL_OFFLOAD_RESIDENT_VOCAB_READY" : "QWEN27_FULL_OFFLOAD_VOCAB_READY")) return 0;
 	if (mode == 5 || mode == 6 || mode == 26) { Read(frame); return 0; }
+	if (mode == 35) {
+		for (unsigned request = 0; request < 2; request++) {
+			if (!Read(frame) || frame.kind != A::Generate || frame.id != request + 2
+				|| frame.value != 2 || frame.text != (request ? "second" : "first")) return 2;
+			if (!Reply(A::Text, frame.id, 0, request ? "two" : "one")) return 0;
+			const char* summary = "P100A full-offload resident candidate: 1 output tokens; prompt+generation 1.000s,total 1.500s. All inference on card; CPU vocabulary/text only. Request closed cleanly; weights retained until explicit model END. Not a warm-token speed measurement.";
+			if (!Reply(A::Done, frame.id, A::Complete, summary)) return 0;
+		}
+		if (!Read(frame) || frame.kind != A::Unload || frame.id != 4 || frame.value || !frame.text.empty()) return 2;
+		Reply(A::Closed, 4, 0, "QWEN27_FULL_OFFLOAD_KNOWN_CLEAN_END"); return 0;
+	}
 	if (!Read(frame)) return 0;
 	if (mode == 34) {
 		if (frame.kind != A::Unload || frame.id != 2 || frame.value || !frame.text.empty()) return 2;

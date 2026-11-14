@@ -143,11 +143,12 @@ public:
 						}
 						bool story = strcmp(backend, "p100a") == 0;
 						bool qwen27=AssistantHardwareIsP100AQwen27(backend);
-						bool cardQwen=AssistantHardwareIsP100AQwen(backend) || qwen27;
+						bool qwen27Full=AssistantHardwareIsP100AQwen27Full(backend);
+						bool cardQwen=AssistantHardwareIsP100AQwen(backend) || qwen27 || qwen27Full;
 						bool fast=AssistantHardwareIsP100AFast(backend);
 						bool attention=AssistantHardwareIsP100AAttention(backend);
 						bool throughput=AssistantHardwareIsP100AThroughput(backend);
-						BString label(qwen27?"P100A27B Work (experimental, slow; validation OFF): ":throughput?"P100A Throughput (multicore; validation OFF): ":attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
+						BString label(qwen27Full?"P100A27B Full-card resident candidate (unqualified): ":qwen27?"P100A27B Work (experimental, slow; validation OFF): ":throughput?"P100A Throughput (multicore; validation OFF): ":attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model selected");
 						if (!ready && !changing) label << " (unloaded)";
@@ -258,13 +259,17 @@ private:
 		fDisplay += "You: " + fPending + "\n\nQwen: ";
 		bool story = strcmp(backend, "p100a") == 0;
 		bool qwen27=AssistantHardwareIsP100AQwen27(backend);
-		bool cardQwen=AssistantHardwareIsP100AQwen(backend) || qwen27;
+		bool qwen27Full=AssistantHardwareIsP100AQwen27Full(backend);
+		bool cardQwen=AssistantHardwareIsP100AQwen(backend) || qwen27 || qwen27Full;
 		bool fast=AssistantHardwareIsP100AFast(backend);
 		bool attention=AssistantHardwareIsP100AAttention(backend);
 		bool throughput=AssistantHardwareIsP100AThroughput(backend);
 		if (cardQwen) {
 			prompt=fPending;
-			fDisplay=qwen27?"P100A Qwen3.8-27B Work — experimental, currently about0.13 tok/sec.\n"
+			fDisplay=qwen27Full?"P100A Qwen3.8-27B full-card resident candidate — experimental, not hardware-qualified.\n"
+				"This path retains full-card model weights between requests; inference stays on P100A.\n"
+				"No CPU inference/reference validation or fallback. First physical run and speed remain unverified.\n"
+				:qwen27?"P100A Qwen3.8-27B Work — experimental, currently about0.13 tok/sec.\n"
 				"CPU attention/state remain; CPU validation OFF. First upload roughly12 minutes.\n"
 				"Single short question; no history/tools. Stop waits for a complete token/upload.\n"
 				:throughput?"P100A Throughput Qwen3-0.6B — up to120 row workers; CPU validation OFF.\n"
@@ -295,7 +300,7 @@ private:
 		request.AddString("model_path", fModelPath.c_str());
 		request.AddString("backend_id", backend);
 		if (story) { request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8); }
-		if (cardQwen) { request.AddString("prompt_format",AssistantHardwareQwenFormat(backend)); request.AddInt32("max_tokens",8); }
+		if (cardQwen) { request.AddString("prompt_format",AssistantHardwareQwenFormat(backend)); request.AddInt32("max_tokens",qwen27Full?16:8); }
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;

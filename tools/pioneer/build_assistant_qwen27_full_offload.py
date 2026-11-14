@@ -183,6 +183,11 @@ if prompt_client:
                  '-L'+str(release/'system/libnetwork'),*libflags,
                  str(here/'pioneer_q38_full_offload_ask.cpp'),
                  str(root/'src/apps/assistant/P100AQwen27FullOffload.cpp'),'-lnetwork','-o',str(ask)]
+    if resident:
+        ask_command.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT_CLIENT=1')
+        old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"'
+        assert ask_command.count(old)==1
+        ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/config/non-packaged/servers/HaikuAssistantQwen27FullOffload"'
     if vector_q4:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"'
         assert ask_command.count(old)==1

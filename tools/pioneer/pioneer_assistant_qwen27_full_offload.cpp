@@ -121,7 +121,13 @@ struct Runtime {
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   startup.LoadReady(system_time());
 #endif
-  return Emit(A::Ready,0,"QWEN27_FULL_OFFLOAD_VOCAB_READY");
+  return Emit(A::Ready,0,
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
+   "QWEN27_FULL_OFFLOAD_RESIDENT_VOCAB_READY"
+#else
+   "QWEN27_FULL_OFFLOAD_VOCAB_READY"
+#endif
+  );
  }
  bool Generate(const A::Frame& frame){
 #if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
