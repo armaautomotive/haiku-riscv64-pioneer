@@ -113,7 +113,8 @@ post-release full scopes. Offline tests pin the release order and overlap
 bracket. The updated driver cross-compiled as SHA-256
 5873c3f962e4c80ecd90c9ea1ce15ef7ef70851b69203c7d9654427eb9fbb660; the
 debug client hash remains ffd07d7983d94e6a02e9de0aeda90196faa75ea3e4f4cabd4dc96ffb0ce1d40f.
-Clean-archive reproducibility and physical testing are pending.
+The clean archive rebuild reproduced both exact hashes above. The next fresh
+physical run is pending.
 
 This is a physical two-core paired-QKV diagnostic, but NOT a 119-core cohort,
 full-model inference, full numerical qualification or speed measurement. The
