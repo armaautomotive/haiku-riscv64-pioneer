@@ -30,6 +30,9 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exa
 #else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentProtocol.h"
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
@@ -53,7 +56,11 @@ template<class IO,class Source=PioneerQ38PublicModelSource
  >
 class PioneerQ38FullOffloadSession {
  using Packet=PioneerQ38TokenControl::Packet;
- enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed};
+ enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  ,Resident
+#endif
+ };
  IO& io;Source& source;PioneerQwen38PackedPlan layout;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  std::unique_ptr<Prepared> preparedData=std::make_unique<Prepared>();
@@ -94,6 +101,20 @@ class PioneerQ38FullOffloadSession {
   PioneerQ38FullOffload::Support support={};
   return Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) && PioneerQ38FullOffload::Supported(support);
  }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ bool ResidentControl(unsigned operation){
+  namespace R=PioneerQ38FullResident;R::Packet p;p.request.operation=operation;
+  const auto request=p.request;
+  return R::RequestShape(p) && Call(TT_PCI_PROBE_Q38_FULL_RESIDENT_CONTROL,p)
+   && std::memcmp(&p.request,&request,sizeof(request))==0
+   && R::SuccessfulReply(p.reply,operation);
+ }
+ bool ResidentSupport(){
+  namespace R=PioneerQ38FullResident;R::Support support{};
+  return R::SupportRequest(support) && Call(TT_PCI_PROBE_Q38_FULL_RESIDENT_SUPPORT,support)
+   && R::Supported(support);
+ }
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  bool PublishPreparedSource(){
   namespace P=PioneerQ38PreparedSource;
@@ -155,7 +176,11 @@ public:
  bool TerminalReady()const{return state==Terminal;}
  bool Completed()const{return state==Complete;}
  bool KnownClean()const{return state==Complete || (state==Virgin && !attempted && fd<0);}
- bool WasCancelled()const{return state==Complete && cancelled;}
+ bool WasCancelled()const{return state==Complete
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  || state==Resident
+#endif
+  ? cancelled:false;}
  bool CancelRequested()const{return cancelAttempted;}
  bool FailedState()const{return state==Failed;}
  bool Preflight(){
@@ -179,15 +204,37 @@ public:
   if(probed || attempted || state!=Virgin || (!prepared && !Preflight()))return false;
   probed=true;fd=io.Open();if(fd<0)return Stop("open");
   if(!Identity(0) || !Support())return Stop("full_offload_unavailable");
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  if(!ResidentSupport())return Stop("resident_unavailable");
+#endif
   const int owned=fd;fd=-1;if(io.Close(owned))return Stop("close");
   return Current()?true:Stop("source_changed");
  } // metadata ONLY;Load cannot execute BEGIN or inference
  bool Begin(const uint32_t* ids,unsigned count,unsigned outputs,unsigned firstEos,unsigned secondEos){
   namespace F=PioneerQ38FullOffload;
-  if(attempted || state!=Virgin || !ids || !count || count>F::MaxPrompt || !outputs || outputs>F::MaxOutput
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  const bool reuse=state==Resident;
+#else
+  const bool reuse=false;
+#endif
+  if((attempted && !reuse) || (!reuse && state!=Virgin) || !ids || !count || count>F::MaxPrompt || !outputs || outputs>F::MaxOutput
    || count+outputs-1>F::MaxPositions || firstEos!=PioneerQ38FullOffloadEog::Eos0 || secondEos!=PioneerQ38FullOffloadEog::Eos1)return false;
   for(unsigned i=0;i<count;i++)if(ids[i]>=F::Vocabulary)return false;
   if(!prepared && !Preflight())return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  if(reuse){
+   prompts=count;limit=count+outputs-1;eos0=firstEos;eos1=secondEos;
+   std::copy(ids,ids+count,prompt.begin());records.fill(0);cancelAttempted=cancelled=false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+   observedCount=0;
+#endif
+   if(!Current() || !ResidentControl(PioneerQ38FullResident::NextRequest))return Stop("resident_next");
+   if(!Control(PioneerQ38TokenControl::Start))return Stop("resident_start");
+   const auto& r=packet->reply;const auto* d=r.detail;
+   if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("resident_start_reply");
+   state=Running;return true;
+  }
+#endif
   attempted=true;prompts=count;limit=count+outputs-1;eos0=firstEos;eos1=secondEos;
   std::copy(ids,ids+count,prompt.begin());
   if(!Current())return Stop("source_changed");
@@ -336,6 +383,38 @@ public:
    if(r.ready!=1 || r.stage!=11 || d[3]!=1 || d[4] || d[5]!=1 || d[6] || d[7])return Stop("finish_reply");}
   const int owned=fd;fd=-1;if(io.Close(owned))return Stop("close");state=Complete;return true;
  } // full STOP/HOLD/drain/restore/END before any answer is published
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ bool FinishResident(){
+  namespace P=PioneerQ38TokenControl;
+  if(state!=Terminal)return false;
+  if(!Control(P::Hold))return Stop("resident_hold");
+  {const auto& r=packet->reply;const auto* d=r.detail;
+   if(r.ready!=1 || r.stage!=4 || d[5] || d[6]!=1 || d[7]!=120)return Stop("resident_hold_reply");
+   for(unsigned i=10;i<16;i++)if(d[i])return Stop("resident_hold_reserved");}
+  state=Held;unsigned cursor=0;
+  do{
+   const unsigned count=std::min(64U,committed-cursor);
+   if(!Control(P::Read,count))return Stop("resident_read");
+   const auto& r=packet->reply;const auto* d=r.detail;
+   if(r.ready!=1 || r.stage!=4 || d[5] || d[6]!=1 || d[7]!=cursor || d[8]!=count
+    || d[9]!=unsigned(count!=0) || d[10]!=count*256 || d[11]!=unsigned(cursor+count==committed)
+    || d[14] || d[15] || !RecordData(cursor,count))return Stop("resident_read_reply");
+   std::copy(packet->records,packet->records+count*64,records.begin()+cursor*64);cursor+=count;
+  }while(cursor<committed);
+  state=Drained;
+  if(!ResidentControl(PioneerQ38FullResident::RequestClose))return Stop("resident_close_request");
+  state=Resident;return true;
+ } // complete output readback + request restore,while retaining model reservation on the same FD
+ bool EndResident(){
+  if(state==Virgin && !attempted)return true;
+  if(state==Complete)return true;
+  if(state!=Resident)return false;
+  if(!ResidentControl(PioneerQ38FullResident::ModelEnd))return Stop("resident_model_end");
+  const int owned=fd;fd=-1;
+  if(owned<0 || io.Close(owned))return Stop("resident_model_close");
+  state=Complete;return true;
+ } // explicit final model END only;unknown resident state remains close-only
+#endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  bool CopyPhaseProfile(PioneerQ38TokenPhaseProfileControl::Packet& output)const{
@@ -349,7 +428,11 @@ public:
  } // observation only,AFTER actual END+Close;bad timing still requires normal cleanup
 #endif
  bool CopyGeneratedTokens(uint32_t* output,unsigned capacity,unsigned& count)const{
-  if(state!=Complete || failure || !Current() || !output || capacity<PioneerQ38FullOffload::MaxOutput)return false;
+  if((state!=Complete
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+   && state!=Resident
+#endif
+   ) || failure || !Current() || !output || capacity<PioneerQ38FullOffload::MaxOutput)return false;
   if(!cancelled && (layers!=64 || terminalStage || committed!=position+1))return false;
   std::array<uint32_t,PioneerQ38FullOffload::MaxOutput> ids={};unsigned used=0;
   for(unsigned pos=prompts-1;pos<committed;pos++){

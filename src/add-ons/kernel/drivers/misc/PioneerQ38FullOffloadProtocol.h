@@ -70,7 +70,10 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010093);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010092);
 #else
-#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+#include "PioneerQ38FullOffloadResidentRole.h"
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010091);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #if PIONEER_Q38_FULL_OFFLOAD_METRICS != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) || PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1
 #error Full offload metrics requires exact batched selection
 #endif

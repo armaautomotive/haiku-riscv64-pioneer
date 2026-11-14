@@ -78,6 +78,7 @@ struct IO {
  Source& source;Sweep& sweep;
  unsigned opens=0,closes=0,calls=0,begins=0,uploads=0,spanEnds=0,starts=0,polls=0,cancels=0,holds=0,reads=0,ends=0;
  unsigned prompts=0,limit=0,eos0=0,eos1=0,fragment=0,page=0,cursor=0;
+ unsigned requestHolds=0,requestReads=0;
  unsigned stopRecords=0,stopStage=1,stopLayers=1,earlyEosToken=248044;bool earlyEos=false;
  uint32_t ids[96]={};uint64_t uploaded=0;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
@@ -107,6 +108,18 @@ struct IO {
    namespace F=PioneerQ38FullOffload;auto& r=*static_cast<F::Support*>(data);assert(size==sizeof(r) && F::SupportRequest(r));
    r={55,1,96,32,128,248320,F::AllCompute,0};
    for(unsigned word=0;word<8;word++)if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&r)[word]^=1;}))return true;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  }else if(op==TT_PCI_PROBE_Q38_FULL_RESIDENT_SUPPORT){
+   namespace R=PioneerQ38FullResident;auto& r=*static_cast<R::Support*>(data);
+   assert(size==sizeof(r) && R::SupportRequest(r));r={55,1,1,1,1,1,{0,0}};
+  }else if(op==TT_PCI_PROBE_Q38_FULL_RESIDENT_CONTROL){
+   namespace R=PioneerQ38FullResident;auto& p=*static_cast<R::Packet*>(data);
+   assert(size==sizeof(p) && R::RequestShape(p));auto& r=p.reply;
+   r.version=R::Version;r.operation=p.request.operation;r.started=r.ready=1;r.hostsReleased=3;
+   if(r.operation==R::RequestClose){assert(starts==holds && !ends);r.stage=10;r.reservationRetained=1;}
+   else if(r.operation==R::NextRequest){assert(starts==holds && !ends);r.stage=11;r.reservationRetained=1;r.oldContextRetired=1;}
+   else {assert(r.operation==R::ModelEnd && starts==holds && !ends++);r.stage=12;r.modelEnded=1;}
+#endif
   }else if(op==TT_PCI_PROBE_Q38_BANK_SUPPORT){
    *static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,4,1,UINT64_C(3)*1024*1024*1024};
   }else if(op==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT){
@@ -154,10 +167,10 @@ struct IO {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
   }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER){
    namespace F=PioneerQ38FullOffload;auto& m=*static_cast<F::CounterPacket*>(data);
-   assert(size==sizeof(m) && F::CounterRequest(m) && starts==1 && !holds && !ends);
+   assert(size==sizeof(m) && F::CounterRequest(m) && starts>=1 && !requestHolds && !ends);
    auto& r=m.reply;r.version=r.operation=r.started=r.ready=1;
    auto* d=r.detail;d[0]=d[1]=d[6]=1;d[2]=12;d[4]=63;
-   d[7]=polls==2?Records():polls==1?std::min(Records(),prompts+1):0;d[8]=limit;d[9]=prompts;
+   d[7]=polls==2?Records():polls==1?std::min(Records(),prompts+1):cancels?Records():prompts;d[8]=limit;d[9]=prompts;
    for(unsigned word:{0U,1U,2U,3U,4U,5U,6U,7U})
     if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&r)[word]^=1;}))return true;
    for(unsigned word=0;word<16;word++)if(sweep.Clone([&]{d[word]^=word==7?256U:1U;}))return true;
@@ -189,10 +202,15 @@ struct IO {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
     assert(publications==194);
 #endif
-    assert(!starts++);prompts=p.request.prompts;limit=p.request.limit;eos0=p.request.eos0;eos1=p.request.eos1;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+    assert(starts<2);starts++;polls=cursor=requestHolds=requestReads=0;
+#else
+    assert(!starts++);
+#endif
+    prompts=p.request.prompts;limit=p.request.limit;eos0=p.request.eos0;eos1=p.request.eos1;
     std::copy(p.prompt,p.prompt+prompts,ids);r.stage=d[2]=8;d[3]=1;
    }else if(action==P::Observe){
-    assert(starts==1 && !holds);polls++;
+    assert(starts>=1 && !requestHolds);polls++;
     if(polls==1){r.ready=0;r.stage=d[2]=9;}
     else{r.stage=d[2]=11;d[6]=1;d[7]=cancels!=0;d[8]=Records();
      d[9]=cancels?stopRecords-unsigned(stopStage==3):Records()-1;d[10]=cancels?stopLayers:64;d[11]=cancels?stopStage:0;
@@ -203,10 +221,10 @@ struct IO {
       if(sweep.Clone([&]{d[word]^=word==8?256U:word==9?256U:1U;}))return true;
     }
    }else if(action==P::Cancel){assert(!cancels++ && !holds);r.stage=d[2]=7;d[9]=1;}
-   else if(action==P::Hold){assert(polls==2 && !holds++ && !reads);r.stage=d[2]=4;d[6]=1;d[7]=120;}
+   else if(action==P::Hold){assert(polls==2 && !requestHolds++ && !requestReads);holds++;r.stage=d[2]=4;d[6]=1;d[7]=120;}
    else if(action==P::Read){
-    const unsigned count=std::min(64U,Records()-cursor);assert(holds==1 && p.request.records==count && !ends);
-    reads++;r.stage=d[2]=4;r.records=count;d[6]=1;d[7]=cursor;d[8]=count;d[9]=count!=0;d[10]=count*256;d[11]=cursor+count==Records();
+    const unsigned count=std::min(64U,Records()-cursor);assert(requestHolds==1 && p.request.records==count && !ends);
+    reads++;requestReads++;r.stage=d[2]=4;r.records=count;d[6]=1;d[7]=cursor;d[8]=count;d[9]=count!=0;d[10]=count*256;d[11]=cursor+count==Records();
     for(unsigned n=0;n<count;n++){
      const unsigned pos=cursor+n;auto* v=p.records+n*64;v[0]=0x31435451;v[1]=1;v[2]=pos;
      v[3]=pos<prompts?ids[pos]:Token(pos-1);v[4]=Token(pos);v[5]=0x3f800000;v[6]=pos+1;v[7]=(pos+1)&1;
@@ -257,6 +275,26 @@ int main(){
 #endif
  uint32_t prompt[96];for(unsigned i=0;i<96;i++)prompt[i]=i+17;
  uint32_t answer[32];std::fill(answer,answer+32,0xaaaaaaaaU);unsigned count=123;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ sweep.enabled=false;
+ assert(session->Probe() && session->Begin(prompt,96,32,248044,248046));
+ const unsigned uploads=io.uploads;const uint64_t sourceReads=source.reads;
+ for(unsigned request=0;request<2;request++){
+  PioneerQ38FullOffload::CounterPacket metric;
+  assert(session->ObserveCount(metric));
+  assert(session->Poll());metric={};assert(session->ObserveCount(metric));
+  assert(session->Poll() && session->TerminalReady());metric={};assert(session->ObserveCount(metric));
+  assert(session->FinishResident() && session->CopyGeneratedTokens(answer,32,count) && count==32);
+  assert(answer[0]==1095 && answer[31]==1126);
+  if(request==0){assert(io.uploads==uploads && source.reads==sourceReads);
+   assert(session->Begin(prompt,96,32,248044,248046));}
+ }
+ assert(session->EndResident() && session->Completed() && session->KnownClean());
+ assert(io.begins==1 && io.starts==2 && io.holds==2 && io.reads==4 && io.ends==1);
+ assert(io.opens==2 && io.closes==2 && io.uploads==uploads && source.reads==sourceReads);
+ puts("PASS resident USER two complete requests reuse one model upload and FD;fresh request state,explicit model END;synthetic ONLY,no physical/model/numerical/speed result");
+ return 0;
+#endif
  assert(session->KnownClean());
  assert(!session->Poll() && !session->Finish() && !session->Cancel() && !session->CopyGeneratedTokens(answer,32,count));
  assert(!session->Begin(nullptr,1,1,2,3) && !session->Begin(prompt,97,1,2,3) && !session->Begin(prompt,1,33,2,3) && !io.opens);

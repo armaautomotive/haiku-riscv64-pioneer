@@ -14,6 +14,10 @@ if batched:
 metrics='--metrics' in args
 if metrics:
     assert batched and args.count('--metrics')==1;args.remove('--metrics')
+resident='--resident' in args
+if resident:
+    assert metrics and not any(k in args for k in ('--vector-q4','--macro-q4','--prepared-q4'))
+    assert args.count('--resident')==1;args.remove('--resident')
 vector_q4='--vector-q4' in args
 if vector_q4:
     assert metrics and args.count('--vector-q4')==1;args.remove('--vector-q4')
@@ -66,6 +70,7 @@ compile=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-W
          '-fstack-usage','-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1',*includes,'-c',str(source),'-o',str(obj)]
 if batched:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1')
 if metrics:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1')
+if resident:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1','-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER=1']
 if vector_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1')
 if macro_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1')
 if counter_unroll:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1')
@@ -108,6 +113,9 @@ for macro in ('_KERNEL_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODE
     refusals.append((macro+'-defined0',['-D'+macro+'=0']))
 refusals.append(('zero-batched',['-UPIONEER_Q38_FULL_OFFLOAD_BATCHED','-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=0']))
 if metrics:refusals.append(('zero-metrics',['-UPIONEER_Q38_FULL_OFFLOAD_METRICS','-DPIONEER_Q38_FULL_OFFLOAD_METRICS=0']))
+if resident:
+    refusals += [('missing-resident',['-UPIONEER_Q38_FULL_OFFLOAD_RESIDENT']),
+                 ('zero-resident',['-UPIONEER_Q38_FULL_OFFLOAD_RESIDENT','-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0'])]
 if vector_q4:
     refusals += [('missing-vector-q4',['-UPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4']),
                  ('zero-vector-q4',['-UPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4','-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=0']),
@@ -134,7 +142,7 @@ if phase_profile:
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -223,4 +231,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)

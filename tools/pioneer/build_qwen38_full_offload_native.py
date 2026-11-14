@@ -14,15 +14,18 @@ if batched:
 metrics='--metrics' in args
 if metrics:
     assert batched and args.count('--metrics')==1;args.remove('--metrics')
+resident='--resident' in args
+if resident:
+    assert metrics and args.count('--resident')==1;args.remove('--resident')
 vector_q4='--vector-q4' in args
 if vector_q4:
-    assert metrics and args.count('--vector-q4')==1;args.remove('--vector-q4')
+    assert metrics and not resident and args.count('--vector-q4')==1;args.remove('--vector-q4')
 macro_q4='--macro-q4' in args
 if macro_q4:
-    assert metrics and not vector_q4 and args.count('--macro-q4')==1;args.remove('--macro-q4')
+    assert metrics and not resident and not vector_q4 and args.count('--macro-q4')==1;args.remove('--macro-q4')
 prepared_q4='--prepared-q4' in args
 if prepared_q4:
-    assert metrics and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
+    assert metrics and not resident and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
 counter_unroll='--counter-unroll' in args
 if counter_unroll:
     assert prepared_q4 and args.count('--counter-unroll')==1;args.remove('--counter-unroll')
@@ -53,9 +56,10 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
 native=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
         ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
 native+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+
-         ('0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
+         ('0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010091ULL' if resident else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
 if batched:native+=['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1']
 if metrics:native+=['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1']
+if resident:native+=['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1']
 if vector_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1']
 if macro_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1']
 if prepared_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1']
@@ -85,6 +89,12 @@ if metrics:
                  ('old-batched-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010089ULL'])]
 else:
     refusals += [('metrics-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1'])]
+if resident:
+    refusals += [('missing-resident',['-UPIONEER_Q38_FULL_OFFLOAD_RESIDENT']),
+                 ('zero-resident',['-UPIONEER_Q38_FULL_OFFLOAD_RESIDENT','-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0']),
+                 ('old-metrics-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010090ULL'])]
+else:
+    refusals += [('resident-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1'])]
 if vector_q4:
     refusals += [('missing-vector-q4',['-UPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4']),
                  ('zero-vector-q4',['-UPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4','-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=0']),
@@ -133,7 +143,7 @@ for label,extra in refusals:
     result=subprocess.run([*common,*native,*extra,*includes,'-E',str(driver/'pioneer_q38_full_offload_driver.cpp')],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
     assert result.returncode and any(t in result.stderr for t in
-        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card phase profile requires','Tag97 requires','Tag98 requires','Tag99 requires')),label
+        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card phase profile requires','Tag97 requires','Tag98 requires','Tag99 requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 def compiler_path(name):
     return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
@@ -147,7 +157,7 @@ if not batched:
     assert sha(out/'tenstorrent_pci_probe-native')=='3c5769d2af54798c8fdbe672f3ed25f785cde0b3752253fe591fa06e66169a76'
 elif not metrics:
     assert sha(out/'tenstorrent_pci_probe-native')=='de688dc5e682fa7714ac53450657c92052b139831eed7dce91b2300f82449eb6'
-elif not vector_q4 and not macro_q4 and not prepared_q4:
+elif not resident and not vector_q4 and not macro_q4 and not prepared_q4:
     assert sha(out/'tenstorrent_pci_probe-native')=='2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7'
 table=subprocess.check_output([tool+'nm','-C','--defined-only',str(out/'tenstorrent_pci_probe-native')],text=True)
 undefined=subprocess.check_output([tool+'nm','-u',str(out/'tenstorrent_pci_probe-native')],text=True)
@@ -159,6 +169,9 @@ if metrics:
         assert name in table,name
 if phase_profile:
     for name in ('Q38TokenPhaseProfileControl(','ReadQ38TokenNativePhaseProfile(','ReadPhaseProfile<'):
+        assert name in table,name
+if resident:
+    for name in ('CloseQ38FullResidentRequest(','NextResidentRequest(','Q38FullResidentControl(','Q38FullResidentSupport('):
         assert name in table,name
 for name in ('llama_','ggml_','Q38WorkControl','ReferenceProducts','OriginalSource','SyntheticIO','NativeQ38PeerInstructionModel'):
     assert name not in table and name not in undefined,name
@@ -192,6 +205,6 @@ assert token_frames and max(token_frames)<=2048
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 for name in ('native','default'):
     print(sha(out/('tenstorrent_pci_probe-'+name)),'tenstorrent_pci_probe-'+name,flush=True)
-print('PASS BUILD_ONLY distinct full-card '+('prepared profile Q4 tag99/all15 arrays exact/held-read after drain before END' if phase_profile else 'prepared counter Q4 tag98/all15 arrays exact/same journal and source publication/ordered counter checks' if counter_unroll else 'prepared Q4 tag97/all15 arrays exact/extended ROOT journal/source publication required' if prepared_q4 else 'macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
+print('PASS BUILD_ONLY distinct full-card '+('prepared profile Q4 tag99/all15 arrays exact/held-read after drain before END' if phase_profile else 'prepared counter Q4 tag98/all15 arrays exact/same journal and source publication/ordered counter checks' if counter_unroll else 'prepared Q4 tag97/all15 arrays exact/extended ROOT journal/source publication required' if prepared_q4 else 'macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'resident tag91/fresh-context lifecycle/all14 arrays exact/ten wide peers unchanged' if resident else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
       ',full5-EOG firmware/default43 BYTE-UNCHANGED,'+str(len(refusals))+' role refusals,no CPU model/reference/ggml Work imports;maxIndividualTokenFrame'+str(max(token_frames)),flush=True)
 print('NOT installed,physical/numerical/Assistant qualified or a speed result;whole-kernel stack not certified',flush=True)

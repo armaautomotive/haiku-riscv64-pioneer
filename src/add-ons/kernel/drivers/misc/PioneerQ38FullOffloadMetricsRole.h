@@ -18,6 +18,8 @@
 #include "PioneerQ38FullOffloadMacroQ4Role.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 #include "PioneerQ38FullOffloadVectorQ4Role.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT)
+#include "PioneerQ38FullOffloadResidentRole.h"
 #else
 #if _KERNEL_MODE != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
  || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010090ULL \

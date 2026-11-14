@@ -128,6 +128,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010092ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 #error Reserved full-offload tag92 requires its distinct vector Q4 compute revision
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Full-card resident lifecycle requires its actual full native parent
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010091ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT)
+#error Reserved full-offload tag91 requires its separate model-resident lifecycle
+#endif
 #if (defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error Token physical validation cannot substitute an old driver role
 #endif
@@ -985,6 +991,9 @@ struct PioneerProbeCookie {
 	PioneerStoreContext* context=NULL;
 #if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  PioneerStoreContext* qgwdResidentPending=NULL; // retained on any uncertain transfer
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ PioneerStoreContext* residentPending=NULL; // retained on ANY uncertain handoff;not a second independent device owner
 #endif
 };
 static PioneerProbeCookie* sRuntimeOwner=NULL;
@@ -3441,6 +3450,10 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  PioneerQ38PreparedNativeSource* q38PreparedSource=NULL; // context-owned immutable side-page/table binding
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ bool fullResidentRequestClosed=false;
+ uint64_t fullResidentRequestSerial=0; // actual fresh context per request;never reset old native leases
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  PioneerQ38TokenNativeState* q38TokenNative=NULL; // DISTINCT full851 retained model,never old prefix readiness
 #endif
@@ -5213,6 +5226,9 @@ public:
 #if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
 #include "PioneerQ38QgwdResidentNative.inc"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+#include "PioneerQ38FullOffloadResidentNative.inc"
+#endif
 #include "PioneerQ38TokenNativeControl.inc"
 #include "PioneerQ38Qgw8HiddenControl.inc"
 #include "PioneerQ38TokenHiddenValidationControl.inc"
@@ -6552,6 +6568,17 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
   if(cookie->context)RetainQ38DispatchOwner(*cookie->context,retained);
   if(cookie->qgwdResidentPending)RetainQ38DispatchOwner(*cookie->qgwdResidentPending,retained);
   release_sem(sLock);return B_OK;
+ }
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ // CLOSE is never model END,even after a request's complete restoration
+ // or during fresh-context preparation before its native owner is bound.
+ if(cookie->context || cookie->residentPending){
+  const status_t locked=acquire_sem(sLock);if(locked!=B_OK)return locked;
+  tt_resident_session_result retained={};
+  if(cookie->context)RetainQ38DispatchOwner(*cookie->context,retained);
+  if(cookie->residentPending)RetainQ38DispatchOwner(*cookie->residentPending,retained);
+  release_sem(sLock);return B_OK; // retain cookie/OS reservation/ALL pending ownership too
  }
 #endif
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
@@ -8753,6 +8780,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  if(operation==TT_PCI_PROBE_Q38_PREPARED_SOURCE)
   return Q38PreparedSourceControl(instance,data,length);
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ if(operation==TT_PCI_PROBE_Q38_FULL_RESIDENT_SUPPORT)
+  return Q38FullResidentSupport(data,length);
+ if(operation==TT_PCI_PROBE_Q38_FULL_RESIDENT_CONTROL)
+  return Q38FullResidentControl(instance,data,length);
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER)

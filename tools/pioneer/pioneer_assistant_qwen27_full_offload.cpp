@@ -20,6 +20,10 @@
 #endif
 #include "../../src/apps/assistant/Qwen27Protocol.h"
 #include "llama.h"
+#if defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER) \
+ && (!defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) || PIONEER_Q38_FULL_OFFLOAD_RESIDENT != 1)
+#error Resident worker requires the exact separate native/client tag91 resident lifecycle
+#endif
 namespace A=Assistant27;
 namespace F=PioneerQ38FullOffload;
 static double Now(){timespec t={};return clock_gettime(CLOCK_MONOTONIC,&t)?-1:double(t.tv_sec)+double(t.tv_nsec)*1e-9;}
@@ -189,7 +193,12 @@ struct Runtime {
   if(!observeCount())return false; // final SAME-FD count AFTER genuine terminal,BEFORE HOLD
 #endif
   const double computeFinished=Now();
-  if(computeFinished<previous || !session->Finish())return false;
+  if(computeFinished<previous)return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
+  if(!session->FinishResident())return false;
+#else
+  if(!session->Finish())return false;
+#endif
   uint32_t output[F::MaxOutput]={};unsigned generated=0;
   if(!session->CopyGeneratedTokens(output,F::MaxOutput,generated))return false;
   std::string answer;
@@ -200,17 +209,29 @@ struct Runtime {
    answer.append(piece,bytes);
   }
   if(!PollCancel() || !source.Ready())return false;
-  if(cancelled || session->WasCancelled())return Emit(A::Done,A::Cancelled,"Card stopped safely; all resources restored. No CPU fallback.");
+  if(cancelled || session->WasCancelled())return Emit(A::Done,A::Cancelled,
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
+   "Card stopped safely; request resources restored, model reservation retained until explicit unload. No CPU fallback.");
+#else
+   "Card stopped safely; all resources restored. No CPU fallback.");
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
-  // Only after genuine full END+Close,record/token checks and final source
-  // stability. Counter DATA alone never grants successful publication.
+  // Only after genuine request cleanup (or full END in one-shot mode),record/
+  // token checks and final source stability. Counter DATA is never cleanup.
+  #ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
+  const char* boundary="AFTER_CLEAN_REQUEST_CLOSE,model reservation retained;not isolated latency or broad quality.";
+  const char* unavailable="AFTER_CLEAN_REQUEST_CLOSE,no model END or extrapolation.";
+  #else
+  const char* boundary="AFTER_CLEAN_END,post-prompt count window,not isolated latency or broad quality.";
+  const char* unavailable="AFTER_CLEAN_END,no extrapolation.";
+  #endif
   PioneerQ38TokenRateSamples::Bounds bounds;PioneerQ38TokenRateSamples::Window window;char metric[768];
   if(timingValid && samples.ObservedBounds(bounds) && samples.ObservedWindow(window) && bounds.sampledTokens>=16)
-   snprintf(metric,sizeof(metric),"Full-card observed count rate sampled%u first%u last%u elapsed_min_us%lld elapsed_max_us%lld lower_tps%.9f upper_tps%.9f observations%u first_begin_us%lld first_end_us%lld last_begin_us%lld last_end_us%lld;AFTER_CLEAN_END,post-prompt count window,not isolated latency or broad quality.",
+   snprintf(metric,sizeof(metric),"Full-card observed count rate sampled%u first%u last%u elapsed_min_us%lld elapsed_max_us%lld lower_tps%.9f upper_tps%.9f observations%u first_begin_us%lld first_end_us%lld last_begin_us%lld last_end_us%lld;%s",
     bounds.sampledTokens,bounds.firstCommitted,bounds.lastCommitted,(long long)bounds.minElapsedUs,(long long)bounds.maxElapsedUs,
     bounds.lowerTokensPerSecond,bounds.upperTokensPerSecond,measured,(long long)window.firstBegin,(long long)window.firstEnd,
-    (long long)window.lastBegin,(long long)window.lastEnd);
-  else snprintf(metric,sizeof(metric),"Full-card rate unavailable: insufficient post-prompt window or invalid timing;AFTER_CLEAN_END,no extrapolation.");
+    (long long)window.lastBegin,(long long)window.lastEnd,boundary);
+  else snprintf(metric,sizeof(metric),"Full-card rate unavailable: insufficient post-prompt window or invalid timing;%s",unavailable);
   if(!Emit(A::Progress,UINT32_MAX,metric))return false;
 #endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
@@ -253,13 +274,21 @@ struct Runtime {
    || !Emit(A::Progress,UINT32_MAX,startupMetric))return false;
 #endif
   if(!Emit(A::Text,0,answer))return false;
-  char status[320];snprintf(status,sizeof(status),
+  char status[384];snprintf(status,sizeof(status),
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
+   "P100A full-offload resident candidate: %u output tokens; prompt+generation %.3fs,total %.3fs. All inference on card; CPU vocabulary/text only. Request closed cleanly; weights retained until explicit model END. Not a warm-token speed measurement.",
+#else
    "P100A full-offload candidate: %u output tokens; prompt+generation %.3fs,total %.3fs. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.",
+#endif
    generated,computeFinished-computeStarted,Now()-began);
   return Emit(A::Done,A::Complete,status);
  }
  bool Close(){
-  const bool clean=!failed && !lost && (!session || session->KnownClean());
+  bool residentEnd=true;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+  if(session)residentEnd=session->EndResident();
+#endif
+  const bool clean=residentEnd && !failed && !lost && (!session || session->KnownClean());
   if(!clean && session)session->Abort();
   session.reset();
   if(vocabularyModel){llama_model_free(vocabularyModel);vocabularyModel=nullptr;}

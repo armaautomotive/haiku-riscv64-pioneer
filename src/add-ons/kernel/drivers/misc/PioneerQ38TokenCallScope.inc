@@ -4,6 +4,9 @@
 #if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
 #include "PioneerQ38QgwdResidentProtocol.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+#include "PioneerQ38FullOffloadResidentProtocol.h"
+#endif
 // One real nonreentrant FD/team/thread/global-lock scope for this distinct
 // model family. Unlike the old scope,it can re-enter its OWN retained model;
 // it does not suppress unrelated zero/graph/native unsafe state.
@@ -45,6 +48,9 @@ public:
  bool Finish(PioneerQ38TokenEndResult&);
 #if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  bool NextQgwdResidentRequest(PioneerQ38QgwdResident::Reply&);
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ bool NextResidentRequest(PioneerQ38FullResident::Reply&);
 #endif
 };
 #endif

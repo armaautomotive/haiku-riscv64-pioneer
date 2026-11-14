@@ -36,6 +36,9 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
 #include "PioneerQ38FullOffloadVectorQ4Role.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+#include "PioneerQ38FullOffloadResidentRole.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "PioneerQ38FullOffloadMetricsRole.h"
@@ -48,6 +51,19 @@
 #if PIONEER_DRIVER_BUILD_TAG != 0x2026110400010088ULL || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #error Full offload requires exact tag88 for its original firmware
 #endif
+#endif
+#ifndef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_BINDING_H
+#define PIONEER_Q38_FULL_OFFLOAD_RESIDENT_BINDING_H
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+enum {PioneerQ38FullOffloadResidentSelection=1};
+#else
+enum {PioneerQ38FullOffloadResidentSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+static_assert(PioneerQ38FullOffloadResidentSelection==1,"late full-card resident selection");
+#else
+static_assert(PioneerQ38FullOffloadResidentSelection==0,"late full-card resident removal");
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_METRICS_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_METRICS_BINDING_H

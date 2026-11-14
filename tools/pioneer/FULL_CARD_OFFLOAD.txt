@@ -47,8 +47,23 @@ Lifecycle:one FD/team/thread/generation-bound owner;monotonic cancellation;
 real terminal,120 HOLDs,bounded64-record read batches,complete restoration,
 explicit END and successful Close before any answer is published. Unknown
 results close only;no implicit END,retry,reset,forced release or fallback.
-The first candidate releases weights after each request. Persistent
-cross-request weight reuse and streaming output are NOT implemented yet.
+One-shot tags still release weights after each request. A separate
+tag91 resident candidate now adds request-close / fresh-request / explicit
+model-END lifecycle operations. Its synthetic USER test completes two
+requests on the same FD after one upload, reinitializing request state and
+ending the model explicitly on unload. The tag91 native build and both
+resident/legacy worker syntax-only cross-compiles pass. This is still
+BUILD/FAKE-TRANSPORT evidence: no frozen-library worker link, Assistant
+service integration, physical tag91 install, numerical model run, or warm
+throughput result has been qualified. The public Assistant continues to use
+the existing separately implemented Work adapter.
+
+The resident candidate is selected only by the exact pair below; the existing
+one-shot tags and protocol remain separate:
+
+ python3 tools/pioneer/build_qwen38_full_offload_native.py HAIKU_BUILD NEW_NATIVE --batched --metrics --resident
+ python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER --batched --metrics --resident
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py --batched --metrics --resident
 Full offload alone is NOT a speed guarantee;the existing resident diagnostic
 has been slow too. No new token-rate improvement is claimed by a build.
 

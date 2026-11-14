@@ -8,6 +8,10 @@ import sys
 import tempfile
 
 args=sys.argv[1:]
+resident='--resident' in args
+if resident:
+    assert args.count('--resident')==1 and '--batched' in args and '--metrics' in args
+    args.remove('--resident')
 fixed_config='--fixed-config' in args
 if fixed_config:
     assert args[-1]=='--fixed-config' and args[:-1]==['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block']
@@ -41,13 +45,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4 1' if queued_block else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4 1' if fixed_config else '')
         + '\n#define PIONEER_DRIVER_BUILD_TAG '+('0x2026110500010103ULL' if fixed_config else '0x2026110500010102ULL' if queued_block else '0x2026110500010101ULL' if instruction_prefetch else '0x2026110500010100ULL' if two_product_replay else '0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')+'\n')
-    for name in ('protocol','session','control'):
+    for name in (('protocol','session') if resident else ('protocol','session','control')):
         source=here/('pioneer_q38_full_offload_'+name+'_test.cpp')
         binary=pathlib.Path(temporary)/name
         subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                         '-Wno-misleading-indentation','-ffp-contract=off','-fsanitize=address,undefined',
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1'] if batched else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1'] if metrics else []),
+                        *(['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1'] if resident else []),
+                        *(['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1'] if resident else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1'] if vector_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1'] if prepared_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1'] if counter_unroll else []),
