@@ -33,7 +33,7 @@ ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror "$@" -DPIONEER_Q38_WORK_BATCH_CLIEN
  "$temporary"/*.o -o "$temporary/pair-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pair-test" pair
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pair-test" pair-fault
-for pair in pair-qkv pair-delta pair-attention; do
+for pair in pair-qkv pair-delta pair-attention pair-attention-fault; do
  ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pair-test" "$pair"
 done
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror "$@" \
