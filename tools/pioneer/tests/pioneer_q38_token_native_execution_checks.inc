@@ -53,6 +53,10 @@
  (PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_OUTPUT_MATRIX_FIXTURE))
 #error FFN producers require the isolated output matrix fixture
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE) && \
+ (PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE))
+#error FFN matrix fixture requires its isolated FFN producer fixture
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE) && \
  (PIONEER_Q38_TOKEN_NATIVE_QKV_CONV_RECEIPT_FAULT_FIXTURE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_QKV_COHORT_FIXTURE))
 #error QKV-to-Conv receipt fault requires the isolated QKV cohort fixture
@@ -720,6 +724,41 @@ static void CheckNativeExecution(Fixture& f){
    const uint16_t actual=uint16_t(packed>>((i&1)*16));assert(actual==expectedFfnInput[i]);if(actual&0x7fff)nonzeroFfnInput++;
   }
   assert(nonzeroFfnInput);printf("PASS 20 simulated FFN input producers/5120 exact BF16 values/%u nonzero;first FFN matrix pending;NOT full layer/model/physical/TPS\n",nonzeroFfnInput);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE
+  cpu.recurrentFfnMatrixRunning=true;cpu.layerHeld=false;cpu.dispatchWorker=0;
+  for(unsigned n=0;n<30000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;n++)io.Pause();
+  if(!cpu.layerHeld)fprintf(stderr,"FFN_MATRIX_DIAGNOSTIC pc=%x steps=%u doors=%u submitted=%u completed=%u\n",
+   cpu.pc,cpu.steps,cpu.recurrentFfnMatrixDoorbells,cpu.submitted,cpu.completed);
+  if(!cpu.layerHeld){
+   fprintf(stderr,"FFN_ROOT_RETURN a0=%x a1=%x ra=%x status=%x,%x,%x,%x,%x,%x,%x,%x unsafe=%u\n",
+    cpu.regs[10],cpu.regs[11],cpu.regs[1],io.Raw(0,R::Status),io.Raw(0,R::Status+4),io.Raw(0,R::Status+8),
+    io.Raw(0,R::Status+12),io.Raw(0,R::Status+16),io.Raw(0,R::Status+20),io.Raw(0,R::Status+24),io.Raw(0,R::Status+28),unsigned(state->Unsafe()));
+   for(unsigned w=0;w<3;w++){
+    auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();
+    if(!p.Idle() || s.active || s.pending || s.matrixInstructions!=cpu.recurrentFfnBands[w]*1280)
+     fprintf(stderr,"FFN_PEER_DIAGNOSTIC worker=%u idle=%u active=%u pending=%u ops=%u bands=%u status=%x,%x,%x,%x\n",
+      w+1,unsigned(p.Idle()),s.active,s.pending,s.matrixInstructions,cpu.recurrentFfnBands[w],
+      io.Raw(w+1,W::Status),io.Raw(w+1,W::Status+4),io.Raw(w+1,W::Status+8),io.Raw(w+1,W::Status+12));
+   }
+  }
+  assert(cpu.layerHeld && cpu.recurrentFfnMatrixDoorbells==119 && io.Core(0).pending && !state->Unsafe());
+  bool ffnRows[17408]={};unsigned ffnOps=0;
+  for(unsigned w=0;w<119;w++){
+   auto& p=*io.bootstrapPeer[w];const auto s=p.cpu->Stats();const unsigned bands=cpu.recurrentFfnBands[w],first=cpu.recurrentFfnFirst[w];
+   assert(p.Idle() && !s.active && !s.pending && s.matrixInstructions==bands*1280);ffnOps+=s.matrixInstructions;
+   for(unsigned row=0;row<bands*32;row++){
+    const unsigned global=first+row;assert(global<17408 && !ffnRows[global]);ffnRows[global]=true;
+    double expected=0;for(unsigned tile=0;tile<160;tile++)for(unsigned col=0;col<32;col++)
+     expected+=double(Float(uint32_t(expectedFfnInput[tile*32+col])<<16))*double(int((global*3+tile*7+col*5)%7)-3)*0.125;
+    const float actual=Float(io.Raw(w+1,PioneerQ38Bfp8WorkerJob::Output+row*4));
+    if(!std::isfinite(actual) || std::fabs(double(actual)-expected)>0.001+std::fabs(expected)*0.0001)
+     fprintf(stderr,"FFN_MATRIX_MISMATCH worker=%u row=%u actual=%g expected=%g\n",w+1,global,double(actual),expected);
+    assert(std::isfinite(actual) && std::fabs(double(actual)-expected)<=0.001+std::fabs(expected)*0.0001);
+   }
+  }
+  for(bool seen:ffnRows)assert(seen);
+  printf("PASS FFN matrix/119 workers/17408 synthetic rows/%u modeled matrix instructions;SIMULATED ONLY,NOT full layer/model/physical/TPS\n",ffnOps);
+#endif
 #endif
 #endif
 #endif

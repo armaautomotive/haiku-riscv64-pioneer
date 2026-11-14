@@ -807,3 +807,13 @@ refused its packet: the pinned worker uses batched BF16 input reads whereas
 the initial BFP4 endpoint expected per-tile reads. The endpoint now models
 the batched format, and its combined BFP4/BFP8 eight-band component test
 passes. A new continuous run is required; this remains synthetic-only.
+
+First FFN matrix, continuous simulation: after the preceding checked GDN,
+output projection, residual/RMS and FFN-input producer stages, the pinned
+root dispatched all 119 retained workers using batched BFP4 inputs. All
+17408 role-2 synthetic output rows matched a separate double dot-product
+observer; 696320 matrix instructions were modeled. The next dispatch was
+left pending. The synthetic fixture and ideal tensor endpoint are not real
+model weights or physical hardware, and the second FFN matrix, activation,
+down projection, full layer, model output quality and throughput remain
+unverified.

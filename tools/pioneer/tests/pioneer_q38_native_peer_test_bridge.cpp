@@ -59,6 +59,13 @@
  || PIONEER_Q38_NATIVE_PEER_RECURRENT_OUTPUT_TEST != 1)
 #error Recurrent FFN peer requires the isolated recurrent output simulator
 #endif
+#if defined(PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST)
+#if PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST != 1 || !defined(PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST) \
+ || PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_TEST != 1
+#error Recurrent FFN matrix peer requires its isolated FFN producer simulator
+#endif
+#include "pioneer_q38_native_bfp4_peer_bridge.h"
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
 #if PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST != 1 || !defined(PIONEER_Q38_NATIVE_PEER_RECURRENT_TEST) \
  || !defined(PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE)
@@ -155,6 +162,21 @@ struct NativePeer:NativePeerBase,CohortBytes {
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
  std::unique_ptr<Q38NativeBfpPeerBridge> bfp;
  unsigned bfpOutputWords=0;
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST
+ std::unique_ptr<Q38NativeBfp4PeerBridge> bfp4;
+ void RetireBfp4(){
+  if(!bfp4)return;assert(!active && bfp4->Clean() && !pending && !publishedPending);
+  for(unsigned i=0;i<8;i++){
+   const uint32_t delta=bfp4->CounterDelta(i);countBase[i]+=delta;publishedCounts[i]+=delta;
+   assert(Count(i)==publishedCounts[i] && publishedCounts[i]==binding.bytes.noc(binding.bytes.context,logicalWorker,CounterOffset(i)));
+  }
+  for(unsigned i=0;i<10;i++){
+   command[i]=publishedCommands[i]=bfp4->LastCommand(i);
+   assert(command[i]==binding.bytes.noc(binding.bytes.context,logicalWorker,i*4));
+  }
+  bfp4.reset();bfpOutputWords=0;
+ }
+#endif
  void RetireBfp(){
   if(!bfp)return;assert(!active && bfp->Clean() && !pending && !publishedPending);
   // Transfer only deltas from actual modeled BFP NoC events into the other
@@ -170,6 +192,17 @@ struct NativePeer:NativePeerBase,CohortBytes {
   bfp.reset();bfpOutputWords=0;
  }
  void Receive(){
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST
+  if(memory.at(G::Job+8)==1 && memory.at(G::Job+16*4)==0x314a3442){
+   assert(!active && (!bfp4 || bfp4->Clean()) && (pc==waitPC || pc==waitPC+4) && memory.at(G::Job+4)==sequence+1);
+   RetireBfp4();RetireBfp();
+   uint32_t job[16];for(unsigned i=0;i<16;i++)job[i]=memory.at(G::Job+(16+i)*4);
+   ClearTensorState();bf16Producing=false;activation=denseActive=gdnActive=convActive=outputActive=false;
+   sequence=memory.at(G::Job+4);bfpOutputWords=job[4]*32;assert(bfpOutputWords && bfpOutputWords<=256);
+   bfp4=std::make_unique<Q38NativeBfp4PeerBridge>(job,logicalWorker,binding.bytes);active=true;return;
+  }
+  RetireBfp4();
+#endif
   if(memory.at(G::Job+8)==1 && memory.at(G::Job+16*4)==0x314a3842){
    assert(!active && (!bfp || bfp->Clean()) && (pc==waitPC || pc==waitPC+4) && memory.at(G::Job+4)==sequence+1);
    RetireBfp();
@@ -241,6 +274,11 @@ struct NativePeer:NativePeerBase,CohortBytes {
   if(Range(address,0xffb20000,0x2000))for(unsigned i=0;i<16;i++)if(address-0xffb20000==BlackholeDramSourceOffset(i))
    return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST
+  if(bfp4 && (address==0xffb20044 || address==0xffb20048 || address==0xffb20148))
+   return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
+  if(bfp4 && bfp4->Handles(address))return bfp4->Read(address);
+#endif
   if(bfp && (address==0xffb20044 || address==0xffb20048 || address==0xffb20148))
    return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
   if(bfp && bfp->Handles(address))return bfp->Read(address);
@@ -268,7 +306,20 @@ struct NativePeer:NativePeerBase,CohortBytes {
   assert(false && "unqualified peer byte store");
  }
  void Store(uint32_t address,uint32_t value)override{
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST
+  if(logicalWorker==1 && address==G::Status+8 && value==0x46574754){
+   fprintf(stderr,"FFN_WORKER_FAULT pc=%x ra=%x sequence=%u job=%x ops=%u recent=",pc,regs[1],sequence,memory.at(G::Job+16*4),matrixInstructions);
+   for(unsigned i=0;i<32 && i<recentCount;i++)fprintf(stderr,"%x,",recentPC[(recentCount-std::min(recentCount,32U)+i)%32]);
+   fputc('\n',stderr);
+  }
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_MATRIX_TEST
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST
+  if(bfp4 && bfp4->Handles(address)){bfp4->Write(address,value);matrixInstructions=bfp4->MatrixInstructions();deviceWrites++;return;}
+  if(bfp4 && Range(address,0x84000,bfpOutputWords*4)){
+   assert(!(address&3) && bfp4->Clean());binding.Word(address)=value;deviceWrites++;return;
+  }
+#endif
   if(bfp && bfp->Handles(address)){bfp->Write(address,value);matrixInstructions=bfp->MatrixInstructions();deviceWrites++;return;}
   if(bfp && Range(address,0x84000,bfpOutputWords*4)){
    assert(!(address&3) && bfp->Clean());binding.Word(address)=value;deviceWrites++;return;
@@ -306,6 +357,11 @@ struct NativePeer:NativePeerBase,CohortBytes {
  }
  void StepBlock()override{
   uint32_t expected;assert(ExpectedWord(pc,expected) && binding.Word(pc)==expected);
+#ifdef PIONEER_Q38_NATIVE_PEER_RECURRENT_FFN_MATRIX_TEST
+  if(logicalWorker==1 && bfp4 && pc==0x22264 && regs[14]!=regs[15])
+   fprintf(stderr,"FFN_COUNTER_MISMATCH index=%u observed=%x saved=%x endpoint=%x\n",
+    regs[9],regs[14],regs[15],binding.bytes.noc(binding.bytes.context,logicalWorker,CounterOffset(regs[9])));
+#endif
   recentPC[recentCount++%32]=pc;
 #ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
 #ifndef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST

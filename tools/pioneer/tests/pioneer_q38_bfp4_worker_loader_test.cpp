@@ -138,6 +138,10 @@ struct IO {
    assert(value==1 && pending.size()<16);W::Read expected={};
    assert(W::Packet(job,band,operand,tile,expected));
 #endif
+   if(!(command[0]==expected.source && command[2]==expected.route && command[3]==expected.destination && command[5]==job.words[7] && command[8]==expected.bytes))
+    fprintf(stderr,"BFP_LOADER_PACKET_MISMATCH issues=%u band=%u got=%x,%x,%x,%x,%u expected=%x,%x,%x,%x,%u\n",
+     issues,band,command[0],command[2],command[3],command[5],command[8],
+     expected.source,expected.route,expected.destination,job.words[7],expected.bytes);
    assert(command[0]==expected.source && command[2]==expected.route && command[3]==expected.destination && command[5]==job.words[7] && command[8]==expected.bytes);
    assert(!command[1] && !command[4] && !command[6] && !command[7] && !command[9]);
 #if (defined(PIONEER_TEST_BFP8) && defined(PIONEER_Q38_BFP8_BATCH_INPUT_EXPERIMENT)) || defined(PIONEER_Q38_BFP4_BATCH_INPUT_EXPERIMENT)

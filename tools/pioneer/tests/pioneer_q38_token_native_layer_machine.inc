@@ -25,6 +25,9 @@ bool recurrentOutputRunning=false;unsigned recurrentOutputDoorbells=0;
 bool recurrentOutputMatrixRunning=false;unsigned recurrentOutputMatrixDoorbells=0,recurrentOutputFirst[119]={},recurrentOutputBands[119]={};
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
 bool recurrentFfnProducersRunning=false;unsigned recurrentFfnProducerDoorbells=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE
+bool recurrentFfnMatrixRunning=false;unsigned recurrentFfnMatrixDoorbells=0,recurrentFfnFirst[119]={},recurrentFfnBands[119]={};
+#endif
 #endif
 #endif
 #endif
@@ -130,6 +133,9 @@ void SubmitLayer(){
   if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119)assert(io.Raw(worker,W::Job+8)==1);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
   if(recurrentFfnProducersRunning && recurrentFfnProducerDoorbells<20)assert(io.Raw(worker,W::Job+8)==5);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE
+  if(recurrentFfnMatrixRunning && recurrentFfnMatrixDoorbells<119)assert(io.Raw(worker,W::Job+8)==1);
+#endif
 #endif
 #endif
 #endif
@@ -154,6 +160,9 @@ void SubmitLayer(){
   else if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119){layerHeld=false;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_PRODUCERS_FIXTURE
   else if(recurrentFfnProducersRunning && recurrentFfnProducerDoorbells<20){layerHeld=false;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE
+  else if(recurrentFfnMatrixRunning && recurrentFfnMatrixDoorbells<119){layerHeld=false;}
+#endif
 #endif
 #endif
 #endif
@@ -270,6 +279,16 @@ void RespondLayer(){
       assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==5
        && io.Raw(worker,W::Job+28*4)==2);recurrentFfnProducerDoorbells++;
      }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FFN_MATRIX_FIXTURE
+     else if(recurrentFfnMatrixRunning && recurrentFfnMatrixDoorbells<119){
+      const unsigned w=recurrentFfnMatrixDoorbells,seq=w<2?11:w<20?9:w<24?7:w<96?6:5;
+      assert(worker==w+1 && io.Raw(0,local+i*4)==seq && io.Raw(worker,W::Job+8)==1
+       && io.Raw(worker,W::Job+16*4)==0x314a3442 && io.Raw(worker,W::Job+34*4)==2 && io.Raw(worker,W::Job+33*4)==17408);
+      recurrentFfnFirst[w]=io.Raw(worker,W::Job+32*4);recurrentFfnBands[w]=io.Raw(worker,W::Job+20*4);
+      assert(recurrentFfnBands[w] && recurrentFfnBands[w]<=8 && recurrentFfnFirst[w]<17408
+       && recurrentFfnBands[w]*32<=17408-recurrentFfnFirst[w]);recurrentFfnMatrixDoorbells++;
+     }
+#endif
 #endif
      else if(recurrentOutputMatrixRunning && recurrentOutputMatrixDoorbells<119){
       const unsigned w=recurrentOutputMatrixDoorbells,seq=w<2?9:w<20?7:w<24?6:w<96?5:4;
