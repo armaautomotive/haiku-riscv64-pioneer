@@ -4,6 +4,15 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+#if PIONEER_Q38_WORK_BATCH_CLIENT != 1 || !defined(PIONEER_Q38_WORK_INFERENCE) || PIONEER_Q38_WORK_INFERENCE != 1 \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
+ || defined(PIONEER_Q38_FFN_PRIME) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_WORK_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_MODEL_ROOT_PROFILE) || defined(PIONEER_Q38_ROOT_STATS_BENCH)
+#error Batch client is a distinct no-reference Work role
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkBatchProtocol.h"
+#endif
 #ifdef PIONEER_Q38_FFN_PRIME
 #if PIONEER_Q38_FFN_PRIME != 1 || !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
 #error FFN source priming requires separate original-TC fast-span Work source,never CPU validation/new encoding
@@ -73,6 +82,9 @@ struct PioneerQ38CohortSessionMode {
 // No retry,substituted output or physical-coordinate capability. CPU learned
 // products exist ONLY in the separately compiled CPU_VALIDATION diagnostic.
 template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38CohortSessionMode> class PioneerQ38CohortSession {
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+	static_assert(Mode::SupportsWorkBatch==1,"batch client must use the distinct Work session mode");
+#endif
 	IO& io; Source& source;
 	Mode mode;
 	PioneerQwen38PackedPlan layout;
@@ -406,6 +418,30 @@ public:
 		const auto& jobs=schedule->Jobs(); if (jobs.empty()) return Stop();
 		unsigned count=jobs.back().wave+1;
 		for (unsigned waveNumber=0;waveNumber<count;waveNumber++) {
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+			if (waveNumber+1<count) {
+				PioneerQ38CohortWave waves[2];
+				if (!source.Ready() || !waves[0].Build(source.Model(),layout,*schedule,waveNumber)
+					|| !waves[1].Build(source.Model(),layout,*schedule,waveNumber+1)) return Stop();
+				auto first=mode.Request(waves[0],quantized);auto second=mode.Request(waves[1],quantized);
+				auto packet=std::unique_ptr<PioneerQ38WorkBatchPacket>(new(std::nothrow) PioneerQ38WorkBatchPacket{});
+				if (!first || !second || !packet) return Stop();
+				packet->version=PIONEER_Q38_WORK_BATCH_VERSION;packet->count=PIONEER_Q38_WORK_BATCH_COUNT;
+				packet->jobs[0]=*first;packet->jobs[1]=*second;first.reset();second.reset();
+				uint64_t runStart=PioneerQ38SessionNow(io,0);
+				bool executed=io.Call(fd,TT_PCI_PROBE_Q38_WORK_BATCH_RUN,packet.get(),sizeof(*packet));
+				Elapsed(runStart,runNanos);
+				// A failed user-copy can partially alter packet: never inspect or
+				// publish any batch output after failure, and never retry.
+				if (!executed || !source.Ready() || packet->version!=PIONEER_Q38_WORK_BATCH_VERSION
+					|| packet->count!=PIONEER_Q38_WORK_BATCH_COUNT || packet->reserved[0] || packet->reserved[1]) return Stop();
+				for (unsigned i=0;i<2;i++) {
+					if (!source.Ready() || !mode.Collect(waves[i],quantized,packet->jobs[i],scratch.data(),outputs)) return Stop();
+					calls++;if (peakWorkers<waves[i].workers) peakWorkers=waves[i].workers;
+				}
+				waveNumber++;continue;
+			}
+#endif
 			PioneerQ38CohortWave wave;
 			if (!source.Ready() || !wave.Build(source.Model(),layout,*schedule,waveNumber)) return Stop();
 			auto request=mode.Request(wave,quantized);

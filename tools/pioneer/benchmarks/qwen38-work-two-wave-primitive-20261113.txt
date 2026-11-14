@@ -54,3 +54,39 @@ control function; this is not a bound on its full nested kernel call stack.
 An independent clean HEAD archive with only the staged batch changes also
 built the identical candidate and default43 binaries and passed the role,
 control and routing tests. Unrelated in-progress driver edits were excluded.
+
+Opt-in client follow-up: a distinct no-CPU-reference Work client now checks
+the exact tag152/guard and batch-support response before opening the model
+session. It submits paired matrix waves in one batch operation, retains the
+existing single Work operation for an odd last wave, and publishes caller
+output only after all waves succeed. Any failed or partial reply closes the
+session without END or retry. Existing Work and validation builds remain
+unchanged unless the new client selector is explicitly enabled.
+
+The actual session with synthetic transport passed ASan/UBSan for paired and
+odd-wave schedules, old-driver and malformed-support refusals, partial-copy,
+malformed-header and wrong-nonce failures. The separate CPU-validation role
+was refused at compile time. The isolated Haiku RISC-V Assistant worker was
+cross-linked twice with identical SHA-256
+bf4d4c0c7f1288c80e97ecb88842e1f6239abd7efd1443f94591a9aecd2d672a;
+the lossless cache recipe remains
+bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a.
+Neither worker nor tag152 driver was installed or run on the Pioneer. No
+inference quality, physical performance, or speedup claim follows.
+The ordinary flag-off Work and separate CPU-validated session regression
+suite also passed with simulated transport after the client change.
+
+Candidate compatibility correction: the first tag152 driver listed above
+(SHA 5c32...) did not include the fast span-upload operations required by
+the Assistant worker and must NOT be installed for this trial. The tag152
+build role now requires posted staging, cohort-cache, Q4 two-phase and both
+span-preload/fast options. The corrected candidate SHA-256 is
+b115cab685c461cbb1f152833f227c4a134fe114e89e0df9a51cc1d5ecba890f.
+Its Work, span and batch control symbols were verified in the linked RISC-V
+driver. A second ASan/UBSan control run with the candidate's span/root flags
+passed, including refusal of an unclosed span. The old installed driver is
+unchanged. Cross-build and synthetic tests do not establish correct physical
+upload, full inference or performance.
+An independent clean HEAD archive containing only these staged changes
+reproduced the corrected driver and opt-in worker hashes exactly, and passed
+the candidate-role, span-control, routing and batch-session regressions.

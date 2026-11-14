@@ -3,6 +3,9 @@
 #define PIONEER_Q38_WORK_SESSION_H
 #include "PioneerQ38DispatchSession.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkProtocol.h"
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#endif
 #ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
 #include "PioneerQ38ModelThreadSweep.h"
 #endif
@@ -29,9 +32,22 @@ public:
 };
 struct PioneerQ38WorkSessionMode {
 	static constexpr unsigned Workers=119,Operation=TT_PCI_PROBE_Q38_WORK_RUN;
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+	static constexpr unsigned SupportsWorkBatch=1;
+#endif
 	PioneerQ38WorkHistory history;
 	// PIONEER_NATIVE_Q8_WORK_SUPPORT_BEGIN
 	template<class IO> bool Support(IO& io,int fd) {
+#ifdef PIONEER_Q38_WORK_BATCH_CLIENT
+		tt_pioneer_driver_reload identity={};identity.version=1;
+		PioneerQ38WorkBatchSupport batch={};
+		if (!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&identity,sizeof(identity)) || identity.version!=1
+			|| identity.driver!=55 || identity.build_tag!=0x2026111300010152ULL || !identity.generation
+			|| identity.quiesced || identity.cold || identity.active_owner || identity.guard_version!=1
+			|| !io.Call(fd,TT_PCI_PROBE_Q38_WORK_BATCH_SUPPORT,&batch,sizeof(batch))
+			|| batch.version!=PIONEER_Q38_WORK_BATCH_VERSION || batch.count!=PIONEER_Q38_WORK_BATCH_COUNT
+			|| batch.driver!=55 || batch.reserved || batch.tag!=identity.build_tag) return false;
+#endif
 #ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
 		tt_pioneer_driver_reload threadTag={};threadTag.version=1;
 		if(!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&threadTag,sizeof(threadTag)) || !PioneerQ38ModelThreadSweepTag(threadTag))return false;

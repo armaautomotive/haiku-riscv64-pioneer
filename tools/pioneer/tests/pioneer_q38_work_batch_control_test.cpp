@@ -15,7 +15,13 @@ static status_t user_memcpy(void* to,const void* from,size_t bytes){
 int main(int argc,char** argv)
 {
  assert(argc==2);(void)&Q38DispatchControl;
- for(unsigned scenario=0;scenario<7;scenario++){
+ for(unsigned scenario=0;scenario<
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+  8
+#else
+  7
+#endif
+  ;scenario++){
   PioneerProbeCookie cookie;Begin(cookie,argv[1]);auto* c=cookie.context;
   auto packet=std::make_unique<PioneerQ38WorkBatchPacket>();
   packet->version=1;packet->count=2;packet->jobs[0]=*Request();packet->jobs[1]=*Request();
@@ -31,12 +37,15 @@ int main(int argc,char** argv)
    c->initialized[index]=0;
   }
   if(scenario==6){failCopy=2;batchPartialCopy=true;}
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+  if(scenario==7)c->q38Span=new PioneerQ38SpanLease; // an unclosed upload cannot run
+#endif
   const status_t status=Q38WorkBatchControlInspection(&cookie,packet.get(),sizeof(*packet));
   if(!scenario){
    assert(status==B_OK && packet->jobs[0].result.nonce==1 && packet->jobs[1].result.nonce==2
     && c->q38Dispatch && c->q38Dispatch->rootNonce==2 && !c->Unsafe());
    End(cookie,true);
-  }else if(scenario==1 || scenario==2 || scenario==5){
+  }else if(scenario==1 || scenario==2 || scenario==5 || scenario==7){
    assert(status==(scenario==2?-99:B_NOT_ALLOWED) && !c->q38Dispatch && !c->Unsafe());
    End(cookie,true);
   }else{
