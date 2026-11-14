@@ -27,8 +27,18 @@ case "$kind" in
   preflight_hash=7ef135bb6b4672a56c6c69af63f919e2a5945c03eb808c51ad7f4a84c1787c20
   reference_hash=0b858fccc098aae4a9f2eb19891c33dd98347c95226de10e83732eea39ca8fdb
   source_pass='PASS_SMALL_BETA_SOURCE tensor12 samples3 fresh_payload_and_reference_exact; NO DEVICE OR SPEED';;
+ qkv)
+  stage=/boot/home/pioneer-recurrent-qkv-band-20261113-a
+  candidate_tag=2026111300010151;tensor=5
+  candidate_hash=d0fb7b1e5e9021a4974aa58ae7a120294f445b8aa7af7557815c648ca533ea73
+  client_hash=e547a342e88b650b74277fc38e3a5c1ae9ec5a6538bd363a6aca3f5bb55778bd
+  preflight_hash=41980f3c88a35ade0f596df0623405170a393bfa445dd43c5b74a6b11fbf5207
+  reference_hash=c500fa4fc094e944a54204d8cb96f2275db1357b8d8646576abc97720283a4c0
+  source_pass='PASS_RECURRENT_QKV_SOURCE tensor5 samples3 fresh_payload_and_reference_exact; NO DEVICE OR SPEED';;
  *) exit 2;;
 esac
+if [ "$kind" = qkv ];then matrix_rows=10240;first1=5120;first2=10208;reference_kind=QKV_INTEGER_REFERENCE;tail_padding=0
+else matrix_rows=48;first1=32;first2=0;reference_kind=SMALL_INTEGER_REFERENCE;tail_padding=1;fi
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
@@ -55,7 +65,7 @@ idle(){
  printf '%s\n' "$listing" | awk -v self="$$" '
  $1=="Id" && $2=="Team" && NF==2 {header++;next}
  $1 ~ /^[0-9]+$/ && NF>=2 {teams++;if($1==self)next
-  if($0 ~ /(^|[\/[:space:]])(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-|pioneer-recurrent-band|pioneer-small-alpha|pioneer-small-beta|pioneer-dram|graph-csr-debug|source-check)/ ||
+  if($0 ~ /(^|[\/[:space:]])(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-|pioneer-recurrent-band|pioneer-recurrent-qkv|pioneer-small-alpha|pioneer-small-beta|pioneer-dram|graph-csr-debug|source-check)/ ||
    $0 ~ /pioneer-p100a-(dram|batched-output|wide-gdn|token)/)owners++
   next}
  NF{bad++} END{if(header!=1 || !teams || bad || owners)exit 1}'
@@ -114,14 +124,14 @@ if [ "$result" != 0 ] || test -s "$stage/trial.stderr";then
  echo SMALL_BAND_STOP_RETAIN_OWNER_NO_RETRY;exit 70
 fi
 # SMALL_RECURRENT_OUTPUT_GATE_BEGIN
-awk -v tensor="$tensor" -v generation="$candidate_generation" '
- BEGIN{samples=0;first[0]=0;first[1]=32;first[2]=0}
- NR==FNR {if($1=="SMALL_INTEGER_REFERENCE"){
+awk -v tensor="$tensor" -v generation="$candidate_generation" -v matrix_rows="$matrix_rows" -v first1="$first1" -v first2="$first2" -v reference_kind="$reference_kind" -v tail_padding="$tail_padding" '
+ BEGIN{samples=0;first[0]=0;first[1]=first1;first[2]=first2}
+ NR==FNR {if($1==reference_kind){
   s=substr($2,7)+0;r=substr($4,4)+0
   if(NF!=5 || $2!="sample"s || s>2 || $3!="first"first[s] || $4!="row"r || r>31 || length($5)!=12 || $5!~/^word[0-9a-f]+$/ || seenref[s SUBSEP r]++)bad++
-  prior[s SUBSEP r]=substr($5,5);if(s==1 && r>=16 && prior[s SUBSEP r]!="00000000")bad++;oldwords++}else if(NF)bad++;next}
+  prior[s SUBSEP r]=substr($5,5);if(tail_padding && s==1 && r>=16 && prior[s SUBSEP r]!="00000000")bad++;oldwords++}else if(NF)bad++;next}
  $0=="AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET" && !auth && !verified && !total {auth++;next}
- $0=="AUTHENTICATED_FIXED_MODEL c600de03 tensor"tensor" width5120 rows48 samples3 payload_and_reference_exact;DEBUG_NOT_WORK" && auth==1 && !verified && !total {verified++;next}
+ $0=="AUTHENTICATED_FIXED_MODEL c600de03 tensor"tensor" width5120 rows"matrix_rows" samples3 payload_and_reference_exact;DEBUG_NOT_WORK" && auth==1 && !verified && !total {verified++;next}
  $1=="NATIVE_LEARNED_BAND_RETURNED_WORD" && auth==1 && verified==1 && !good && samples<3 && NF==7 &&
  $2=="sample"samples && $3=="first"first[samples] && $4~/^pass[01]$/ && $5~/^row([0-9]|[12][0-9]|3[01])$/ &&
  length($6)==11 && $6~/^got[0-9a-f]+$/ && length($7)==16 && $7~/^expected[0-9a-f]+$/ {

@@ -29,6 +29,8 @@ stage=$1;preflight=$2;client=$3;mode=$4;tensor=$5;events=$stage/events;reference
 export stage events mode source_pass
 source_pass=SOURCE_PASS;generation=42;candidate_generation=43;restored_generation=44
 stable_hash=STABLE;candidate_hash=NATIVE;client_hash=CLIENT;installed=installed;candidate=candidate;stable=stable;candidate_tag=2026111300010149
+if [ "$tensor" = 5 ];then matrix_rows=10240;first1=5120;first2=10208;reference_kind=QKV_INTEGER_REFERENCE;tail_padding=0;candidate_tag=2026111300010151
+else matrix_rows=48;first1=32;first2=0;reference_kind=SMALL_INTEGER_REFERENCE;tail_padding=1;fi
 cp(){ :; }
 exchange(){ echo "exchange:$3:$4" >> "$events";[ "$mode" != swapfail ]; }
 exact(){ :; }
@@ -37,12 +39,14 @@ metadata(){ echo "metadata:$1:$2" >> "$events"; }
 health(){ echo health >> "$events"; }
 '''
  program=folder/'flow.sh';program.write_text(prefix+flow)
- for tensor in (11,12):
-  first=(0,32,0);reference=[];normal=['AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET',
-   f'AUTHENTICATED_FIXED_MODEL c600de03 tensor{tensor} width5120 rows48 samples3 payload_and_reference_exact;DEBUG_NOT_WORK']
+ for tensor in (11,12,5):
+  first=(0,5120,10208) if tensor==5 else (0,32,0);matrix_rows=10240 if tensor==5 else 48
+  kind='QKV_INTEGER_REFERENCE' if tensor==5 else 'SMALL_INTEGER_REFERENCE'
+  reference=[];normal=['AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET',
+   f'AUTHENTICATED_FIXED_MODEL c600de03 tensor{tensor} width5120 rows{matrix_rows} samples3 payload_and_reference_exact;DEBUG_NOT_WORK']
   positions=[]
   for s in range(3):
-   for r in range(32):reference.append(f'SMALL_INTEGER_REFERENCE sample{s} first{first[s]} row{r} word00000000')
+   for r in range(32):reference.append(f'{kind} sample{s} first{first[s]} row{r} word00000000')
    for p in range(2):
     for r in range(32):
      positions.append(len(normal));normal.append(f'NATIVE_LEARNED_BAND_RETURNED_WORD sample{s} first{first[s]} pass{p} row{r} got00000000 expected00000000')
@@ -58,7 +62,7 @@ health(){ echo health >> "$events"; }
    stage=folder/(str(tensor)+'-'+mode);stage.mkdir();(stage/'reference').write_text('' if mode=='bad-ref' else '\n'.join(reference)+'\n')
    (stage/'output').write_text('\n'.join(output)+'\n')
    result=subprocess.run(['sh',str(program),str(stage),str(preflight),str(client),mode,str(tensor)],text=True,capture_output=True)
-   events=(stage/'events').read_text().splitlines();restore='exchange:2026111300010149:2026102100010012'
+   events=(stage/'events').read_text().splitlines();restore=f'exchange:{"2026111300010151" if tensor==5 else "2026111300010149"}:2026102100010012'
    if mode=='pass':
     assert result.returncode==0 and events.count('preflight')==events.count('run')==events.count(restore)==1,(result.stderr,events)
     assert (stage/'trial.state').read_text().strip()=='STABLE_RESTORED_EXACT192'
@@ -66,4 +70,4 @@ health(){ echo health >> "$events"; }
     assert result.returncode!=0 and restore not in events,(mode,events,result.stderr)
     if mode in ('sourcefail','sourcedirty','sourcemissing'):assert not any(e.startswith('exchange:') for e in events)
     if 'run' in events:assert events[-1]=='run',(mode,events)
-print('PASS alpha/beta actual one-shot flow and exhaustive word loss/duplication/mismatch, source and owner failures; NO DEVICE')
+print('PASS alpha/beta/QKV actual one-shot flow and exhaustive word loss/duplication/mismatch, source and owner failures; NO DEVICE')

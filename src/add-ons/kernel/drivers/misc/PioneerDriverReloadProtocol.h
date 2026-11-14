@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../../../tools/pioneer/PioneerQ38QgwdTwoTokenRole.h"
 #if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
+ && PIONEER_DRIVER_BUILD_TAG == 0x2026111300010151ULL \
+ && (!defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC) || PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC != 1)
+#error Tag151 is reserved for the recurrent QKV-band diagnostic
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && defined(PIONEER_DRIVER_BUILD_TAG) \
  && PIONEER_DRIVER_BUILD_TAG == 0x2026111300010149ULL \
  && (!defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) || PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC != 1)
 #error Tag149 is reserved for the small alpha-band diagnostic

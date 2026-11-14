@@ -6,7 +6,7 @@
 #endif
 #if (defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) + defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE) \
  + defined(PIONEER_NATIVE_RECURRENT_BAND_SOURCE) + defined(PIONEER_NATIVE_RECURRENT_OUT_BAND_SOURCE) \
- + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)) > 1
+ + defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE) + defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE)) > 1
 #error Learned-band source roles are mutually exclusive
 #endif
 #if (defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) && PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE != 1) \
@@ -15,6 +15,11 @@
  && (defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)))
 #error Small recurrent learned-band source is a private diagnostic only
+#endif
+#if defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE) && (PIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE != 1 \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__))
+#error Recurrent QKV learned-band source is a private diagnostic only
 #endif
 #if defined(PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE) && (PIONEER_NATIVE_QGWD_DENSE_BAND_SOURCE != 1 \
  || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
@@ -67,7 +72,11 @@ public:
 		Cache::Digest digest={};
 		if(!Cache::HashFile(fd,PioneerQwen38Gguf::FullBytes,digest,error) || !Stable()
 			|| Cache::Hex(digest)!="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747")return Fail(error,"Original full SHA/stability refused.");
-#if defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE)
+#if defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE)
+		constexpr const char* name="blk.0.attn_qkv.weight";
+		constexpr unsigned matrixWidth=5120,matrixRows=10240,tensorIndex=5,tensorType=8;
+		const unsigned rows[3]={0,5120,10208};
+#elif defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE) || defined(PIONEER_NATIVE_SMALL_BETA_BAND_SOURCE)
 #ifdef PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE
 		constexpr const char* name="blk.0.ssm_alpha.weight";constexpr unsigned tensorIndex=11;
 #else

@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Three fixed learned-weight diagnostic samples. NOT model/Work inference.
+#if defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_RECURRENT_QKV_BAND_SOURCE)
+#error Recurrent QKV diagnostic protocol and authenticated source must be selected together
+#endif
 #if defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC) != defined(PIONEER_NATIVE_SMALL_ALPHA_BAND_SOURCE)
 #error Small alpha diagnostic protocol and authenticated source must be selected together
 #endif

@@ -38,6 +38,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-dense-integer-check-',dir='/pri
     metadata.write_text(qkv_meta+''.join(array('g'+str(i),32) for i in range(3)))
     result=subprocess.run([str(binary),str(samples),'--recurrent-qkv-reference'],capture_output=True,text=True,env=env)
     assert result.returncode==0 and result.stdout.count('RECURRENT_QKV_INTEGER_REFERENCE ')==96 and 'sample2 first10208 row31 word00000000' in result.stdout
+    qkv_file=samples/'qkv-reference'
+    result=subprocess.run([str(binary),str(samples),'--recurrent-qkv-reference-file',str(qkv_file)],capture_output=True,text=True,env=env)
+    assert result.returncode==0 and qkv_file.stat().st_mode & 0o777==0o600 and len(qkv_file.read_text().splitlines())==96
+    assert 'QKV_INTEGER_REFERENCE' not in result.stdout
+    assert subprocess.run([str(binary),str(samples),'--recurrent-qkv-reference-file',str(qkv_file)],capture_output=True,env=env).returncode==1
     assert subprocess.run([str(binary),str(samples),'--recurrent-reference'],capture_output=True,env=env).returncode==1
     for role, ordinal in (('--small-alpha',11),('--small-beta',12)):
         small_meta='Width=5120,Rows=48,Tensor='+str(ordinal)+',Samples=3\nconst unsigned rows[3]={0,32,0}\n'

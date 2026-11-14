@@ -7,13 +7,14 @@ import stat
 import subprocess
 import sys
 import tempfile
-if not __debug__ or len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--recurrent-out','--small-alpha','--small-beta')):
+if not __debug__ or len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--recurrent-out','--small-alpha','--small-beta','--recurrent-qkv')):
     raise SystemExit('Use non-optimized Python SDK PRIVATE_EXPORT_DIRECTORY [--recurrent-out|--small-alpha|--small-beta]')
 here = pathlib.Path(__file__).resolve().parent
 sdk, private = map(pathlib.Path, sys.argv[1:3])
 recurrent_out=len(sys.argv)==4 and sys.argv[3]=='--recurrent-out'
 small_alpha=len(sys.argv)==4 and sys.argv[3]=='--small-alpha'
 small_beta=len(sys.argv)==4 and sys.argv[3]=='--small-beta'
+qkv=len(sys.argv)==4 and sys.argv[3]=='--recurrent-qkv'
 assert sdk.is_absolute() and private.is_absolute() and not private.is_symlink()
 identity = private.stat()
 assert stat.S_ISDIR(identity.st_mode) and identity.st_uid == os.geteuid() and stat.S_IMODE(identity.st_mode) == 0o700
@@ -33,6 +34,9 @@ if small_alpha:
 if small_beta:
     assert digests=={'PioneerNativeBfpModelBandData.h':'4a3c35da6459bda26f6ac888e8fa4fe4fe0430d015edd7ace6e579ac6484d284',
                      'PioneerNativeBfpModelBandMetadata.h':'70940f99172a098a48ab18b978e9183a6ade1e1543f16fb06f42fa6d993421e4'}
+if qkv:
+    assert digests=={'PioneerNativeBfpModelBandData.h':'396fac17c3a837d7b440fb2982e4748e8c06c6c7fbc8299acdade184ec268a8a',
+                     'PioneerNativeBfpModelBandMetadata.h':'a81f5268d942344b4c4cfd4d0d02853dc82f36bfe8ab099a5bfa5d47d94de86d'}
 subprocess.run([sys.executable, str(here.parent / 'build_native_bfp_band.py'), str(sdk), str(folder / 'image'), '6144' if recurrent_out else '5120', '4'], check=True)
 assert hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() == ('a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e' if recurrent_out else 'f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5')
 old = (here / 'pioneer_native_bfp_band_owner_test.cpp').read_text()

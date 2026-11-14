@@ -6,22 +6,23 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2] not in ('--recurrent-out','--small-alpha','--small-beta')) or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ):
-    raise SystemExit('usage: ABSOLUTE_RECURRENT_BAND_BUILD_DIRECTORY [--recurrent-out|--small-alpha|--small-beta]')
+if len(sys.argv) not in (2,3) or (len(sys.argv)==3 and sys.argv[2] not in ('--recurrent-out','--small-alpha','--small-beta','--recurrent-qkv')) or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ):
+    raise SystemExit('usage: ABSOLUTE_RECURRENT_BAND_BUILD_DIRECTORY [--recurrent-out|--small-alpha|--small-beta|--recurrent-qkv]')
 build = Path(sys.argv[1]); here = Path(__file__).resolve().parent
 out = len(sys.argv)==3 and sys.argv[2]=='--recurrent-out'
 alpha = len(sys.argv)==3 and sys.argv[2]=='--small-alpha'
 beta = len(sys.argv)==3 and sys.argv[2]=='--small-beta'
+qkv = len(sys.argv)==3 and sys.argv[2]=='--recurrent-qkv'
 assert build.is_absolute() and build.is_dir() and not build.is_symlink()
 lines = (build / 'build-argv.txt').read_text().splitlines()
 matches = [line.split('\t') for line in lines if 'pioneer_native_model_band_driver.cpp' in line]
 assert len(matches) == 1
 args = matches[0]
-tag = '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111300010149ULL' if alpha else '0x2026111300010150ULL' if beta else '0x2026111200010148ULL' if out else '0x2026111200010147ULL')
-role = '-D' + ('PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1' if alpha else 'PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1' if beta else 'PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1' if out else 'PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1')
+tag = '-DPIONEER_DRIVER_BUILD_TAG=' + ('0x2026111300010151ULL' if qkv else '0x2026111300010149ULL' if alpha else '0x2026111300010150ULL' if beta else '0x2026111200010148ULL' if out else '0x2026111200010147ULL')
+role = '-D' + ('PIONEER_NATIVE_RECURRENT_QKV_BAND_DIAGNOSTIC=1' if qkv else 'PIONEER_NATIVE_SMALL_ALPHA_BAND_DIAGNOSTIC=1' if alpha else 'PIONEER_NATIVE_SMALL_BETA_BAND_DIAGNOSTIC=1' if beta else 'PIONEER_NATIVE_RECURRENT_OUT_BAND_DIAGNOSTIC=1' if out else 'PIONEER_NATIVE_RECURRENT_BAND_DIAGNOSTIC=1')
 assert args[0].endswith('/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++')
 assert args.count(tag) == args.count(role) == args.count('-o') == 1 and args.index('-o') == len(args)-2
-private_prefix='-I/private/tmp/pioneer-alpha-band.' if alpha else '-I/private/tmp/pioneer-beta-band.' if beta else '-I/private/tmp/pioneer-recurrent-out-band.' if out else '-I/private/tmp/pioneer-recurrent-band.'
+private_prefix='-I/private/tmp/pioneer-recurrent-qkv-band.' if qkv else '-I/private/tmp/pioneer-alpha-band.' if alpha else '-I/private/tmp/pioneer-beta-band.' if beta else '-I/private/tmp/pioneer-recurrent-out-band.' if out else '-I/private/tmp/pioneer-recurrent-band.'
 private = [arg for arg in args if arg.startswith(private_prefix)]
 assert len(private) == 1
 args[args.index(private[0])] = '-I' + str(here/('fixtures/recurrent-out-source' if out else 'fixtures/qgwd-dense-source'))
