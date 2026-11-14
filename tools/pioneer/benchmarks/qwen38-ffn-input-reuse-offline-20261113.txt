@@ -31,6 +31,14 @@ activation values, the 5120 down rows, final gather, residual and published
 uses synthetic data and ideal tensor endpoints. It does not establish
 real-model accuracy, physical-card behavior, or tokens per second.
 
+A further continuous run used pinned model-derived layer-0 alpha and beta
+BFP8 exports with synthetic inputs; the other layer weights and inputs were
+synthetic. Both small projections matched an independent double-precision
+observer, and the run again passed the FFN matrices, activation, down
+projection and 5120-value final layer publication with the reuse candidate.
+The idealized tensor endpoints and limited model-derived weights do not
+establish complete-model accuracy, physical execution or throughput.
+
 This is an offline candidate only. Its full production lifecycle, actual
 hardware correctness, model quality and performance have not been tested.
 It has not been installed and does not establish any tokens-per-second gain.
