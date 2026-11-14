@@ -18,6 +18,10 @@ The same pinned candidate also linked into a complete offline recurrent ROOT
 inspection ELF with no undefined symbols; its immutable section hashes were
 reported by the inspection builder. This was a link check, not execution of
 the complete candidate or a device-qualification result.
+The linked ROOT and the existing pinned worker have also been packaged under
+a separate explicit FFN-reuse inspection selector. Two generated bundles
+were byte-identical, and a mismatched old ROOT and an ambiguous selector
+were refused. The existing default recurrent bundle remains byte-identical.
 
 This is an offline candidate only. Its full production lifecycle, actual
 hardware correctness, model quality and performance have not been tested.
