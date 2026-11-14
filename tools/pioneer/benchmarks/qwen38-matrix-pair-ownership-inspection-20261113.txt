@@ -106,19 +106,33 @@ generation 54, 64 CPUs, and maximum RAM 137034936320 bytes. This proves
 correct two-sample execution and restoration, but no verified concurrent
 execution, model inference, or speed increase.
 
-Follow-up: to reduce release-to-release latency, both processors are now reset
+Follow-up: to reduce release-to-release latency, both processors were reset
 and verified first, then released back-to-back; the four-PC bracket immediately
 after release also verifies both reset transitions, replacing two extra
 post-release full scopes. Offline tests pin the release order and overlap
 bracket. The updated driver cross-compiled as SHA-256
 5873c3f962e4c80ecd90c9ea1ce15ef7ef70851b69203c7d9654427eb9fbb660; the
 debug client hash remains ffd07d7983d94e6a02e9de0aeda90196faa75ea3e4f4cabd4dc96ffb0ce1d40f.
-The clean archive rebuild reproduced both exact hashes above. The next fresh
-physical run is pending.
+The clean archive rebuild reproduced both exact hashes above. A second
+physical run from fresh stage e completed with the changed release ordering.
+Its source preflight and client authentication passed, all 128 output words
+matched, explicit END succeeded, and the stable driver was restored. It again
+reported overlap0: `trial.exit=0`, empty stderr,
+`STABLE_RESTORED_EXACT128_OVERLAP0`, stable SHA-256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403 at
+generation 56, 64 CPUs, and maximum RAM 137034936320 bytes. Back-to-back
+release was therefore not enough to produce a verified active-interval
+overlap.
+
+Next, expose the four sampled PCs in the diagnostic result so the `overlap0`
+outcome identifies which peer reached terminal park and when; then tune the
+owner's sample schedule or diagnostic workload from measured state rather than
+guessing. This remains diagnostic-only and does not count as Qwen layer
+offload.
 
 This is a physical two-core paired-QKV diagnostic, but NOT a 119-core cohort,
-full-model inference, full numerical qualification or speed measurement. The
-measured overlap result is zero; the follow-up release change must be rebuilt
-and tested on hardware. No Assistant or persistent driver change remains; the
+full-model inference, full numerical qualification or speed measurement. Two
+hardware runs validated the outputs and restoration, but neither observed
+active-interval overlap. No Assistant or persistent driver change remains; the
 stable driver is restored. This prototype does not yet move any Qwen layer to
 the P100A and does not establish improvement in tokens/second.
