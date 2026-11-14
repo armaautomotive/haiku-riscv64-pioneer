@@ -2,6 +2,7 @@
 // Immutable package/session/job DATA only; no execution or native authority.
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #include "../PioneerQ38TokenPackage.h"
+#include "../PioneerQ38GlobalRedistributedTokenPackage.h"
 #include "../PioneerQ38TokenLayout.h"
 #include "../PioneerQ38GlobalHeadPlan.h"
 #include "../PioneerQ38GlobalOutputClosure.h"
@@ -15,7 +16,7 @@ namespace T=PioneerQ38TokenLayout;namespace C=T::C;namespace S=PioneerQ38TokenSt
 int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  std::array<uint32_t,1920> sources;for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
- const PioneerQ38GdnIdentity id={1,2,3,4};unsigned packages=0,words=0,jobs=0,refusals=0;
+ const PioneerQ38GdnIdentity id={1,2,3,4};unsigned packages=0,words=0,jobs=0,refusals=0,redistributedPackages=0;
  for(unsigned bank=0;bank<7;bank++){
   unsigned workspace=canonical->Base+canonical->Workspace(bank)->offset;
   for(unsigned layer=0;layer<64;layer++){
@@ -27,6 +28,38 @@ int main(){
    assert(old->Build(*canonical,layer,bank,id,sources.data(),bank,workspace+0x600000));
    if(!C::Dense(layer))assert(state->Build(*canonical,layer,bank));
    assert(package->Bytes()==C::Stride && !package->Build(*canonical,layer,bank,id,sources.data(),bank,workspace+0x600000));
+   if(!bank && !C::Dense(layer)){
+    namespace RL=PioneerQ38RedistributedTokenLayout;
+    auto routed=std::make_unique<PioneerQ38GlobalRedistributedTokenPackage>();
+    const unsigned slot=(layer/4)&1;
+    assert(routed->Build(*canonical,layer,bank,slot,id,sources.data(),bank,workspace+0x600000));
+    assert(routed->Bytes()==C::Stride && routed->Matches(*canonical));
+    std::array<uint8_t,64> prefixA={},prefixB={};
+    assert(package->Read(0,prefixA.data(),prefixA.size()) && routed->Read(0,prefixB.data(),prefixB.size()) && prefixA==prefixB);
+    std::array<uint8_t,16384> tableBytes={};assert(routed->Read(RL::Offset,tableBytes.data(),tableBytes.size()));
+    for(unsigned i=0;i<tableBytes.size()/4;i++){
+     const unsigned word=i;
+     uint32_t expectedWord;
+     if(word<RL::HeaderWords)expectedWord=routed->GdnHeader()[word];
+     else{unsigned recordWord=word-RL::HeaderWords,worker=recordWord/RL::RecordWords+1,index=recordWord%RL::RecordWords;
+      expectedWord=routed->GdnWorker(worker)[index];}
+     uint32_t observed=uint32_t(tableBytes[i*4])|(uint32_t(tableBytes[i*4+1])<<8)
+      |(uint32_t(tableBytes[i*4+2])<<16)|(uint32_t(tableBytes[i*4+3])<<24);
+     assert(observed==expectedWord);
+    }
+    std::array<uint8_t,64> stateA={},stateB={};
+    assert(package->Read(S::Offset,stateA.data(),stateA.size()) && routed->Read(S::Offset,stateB.data(),stateB.size())
+     && stateA==stateB);
+    std::array<uint8_t,64> slackA={},slackB={};
+    assert(package->Read(RL::End,slackA.data(),slackA.size()) && routed->Read(RL::End,slackB.data(),slackB.size())
+     && slackA==slackB);
+    assert(!routed->Read(RL::Offset+1,tableBytes.data(),64));
+    if(layer==0){
+     uint32_t* changed=const_cast<uint32_t*>(routed->GdnWorker(1));changed[128+15]^=1;
+     assert(!routed->Matches(*canonical));changed[128+15]^=1;assert(routed->Matches(*canonical));
+    }
+    redistributedPackages++;
+   }
    std::array<uint8_t,16384> data,expected;
    for(unsigned at=0;at<package->Bytes();at+=data.size()){
     assert(package->Read(at,data.data(),data.size()));
@@ -73,5 +106,5 @@ int main(){
    }
   }
  }
- printf("PASS persistent token DATA %u complete512KiB packages/%u words exact including canonical spans+zero slack/self+canonical-alias refusals;7banks/%u position-aware vocab jobs EXACT vs independently rebuilt output plans/%u refusals;NO instructions/state commit/source/native/physical/Work/TPS grant\n",packages,words,jobs,refusals);
+ printf("PASS persistent token DATA %u complete512KiB packages/%u words exact including canonical spans+zero slack/self+canonical-alias refusals;redistributed GDN token packages%u/slot-aware tables in prior slack/preserved state spans;7banks/%u position-aware vocab jobs EXACT vs independently rebuilt output plans/%u refusals;NO instructions/state commit/source/native/physical/Work/TPS grant\n",packages,words,redistributedPackages,jobs,refusals);
 }
