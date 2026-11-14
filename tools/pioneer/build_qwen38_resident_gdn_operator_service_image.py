@@ -9,9 +9,12 @@ import struct
 import subprocess
 import sys
 
-if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--inplace-state-experiment') or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
+if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] not in ('--inplace-state-experiment', '--redistributed-gdn')) or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
     raise SystemExit(2)
-inplace_state_experiment = len(sys.argv) == 4
+inplace_state_experiment = len(sys.argv) == 4 and sys.argv[3] == '--inplace-state-experiment'
+redistributed_gdn = len(sys.argv) == 4 and sys.argv[3] == '--redistributed-gdn'
+if inplace_state_experiment and redistributed_gdn:
+    raise SystemExit(2)
 sdk, output = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and output.is_absolute() and not output.exists() and not output.is_symlink()
 here = pathlib.Path(__file__).resolve().parent
@@ -40,15 +43,16 @@ assert (qgt/'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
 cross, flags, peer = base['cross'], list(base['flags']), list(base['peer'])
 roles = [*base['roles'], '-DPIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE=1']
 forced = ['-include', str(here/'PioneerQ38ResidentGdnOperatorImageRole.h')]
+redistributed_role = ['-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1'] if redistributed_gdn else []
 units = [
     ('blackhole_qwen38_resident_operator_service.cpp', 'program', [*peer, *roles], '-O2'),
     ('blackhole_qwen38_ffn_persistent_activation.cpp', 'activation', ['-DPIONEER_Q38_PROJECTION_PERSISTENT=1'], '-O2'),
     ('blackhole_qwen38_resident_conv_service.cpp', 'conv', list(base['roles']), '-O2'),
-    ('blackhole_qwen38_resident_gdn_service.cpp', 'gdn_service', [*roles, *forced], '-Os'),
+    ('blackhole_qwen38_resident_gdn_service.cpp', 'gdn_service', [*roles, *forced, *redistributed_role], '-Os'),
     ('blackhole_qwen38_gdn_input.cpp', 'gdn_input', [*roles, *forced, '-DPIONEER_Q38_GDN_INPUT_COMBINED_STAGE=1', '-Dscalar_fault_park=block_fault_park'], '-O2'),
     ('blackhole_qwen38_resident_gdn.cpp', 'gdn_state', [*roles, *forced, '-DPIONEER_Q38_RGDN_COMBINED_STAGE=1', '-Dscalar_fault_park=block_fault_park'], '-O2'),
-    ('blackhole_qwen38_gdn_recurrent.cpp', 'gdn_recurrent', [*roles, *forced, '-Dscalar_main=q38_resident_gdn_recurrent_stage', '-Dscalar_fault_park=block_fault_park'], '-Os'),
-    ('blackhole_qwen38_gdn_gated_resident.cpp', 'gdn_gated', [*roles, *forced, '-DPIONEER_Q38_GDN_GATED_RESIDENT_IMAGE=1', '-DPIONEER_Q38_GDN_RENDEZVOUS_IMAGE=1', '-Dscalar_main=q38_resident_gdn_once', '-Dscalar_fault_park=block_fault_park'], '-Os'),
+    ('blackhole_qwen38_gdn_recurrent.cpp', 'gdn_recurrent', [*roles, *forced, *redistributed_role, '-Dscalar_main=q38_resident_gdn_recurrent_stage', '-Dscalar_fault_park=block_fault_park'], '-Os'),
+    ('blackhole_qwen38_gdn_gated_resident.cpp', 'gdn_gated', [*roles, *forced, *redistributed_role, '-DPIONEER_Q38_GDN_GATED_RESIDENT_IMAGE=1', '-DPIONEER_Q38_GDN_RENDEZVOUS_IMAGE=1', '-Dscalar_main=q38_resident_gdn_once', '-Dscalar_fault_park=block_fault_park'], '-Os'),
 ]
 if inplace_state_experiment:
     units = [(source, name, [*extra, '-DPIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT=1'] if name == 'gdn_state' else extra, optimize)
@@ -88,7 +92,9 @@ for section in ('boot', 'text', 'affine', 'ffn', 'service', 'gdn'):
     data = (output/(section+'.bin')).read_bytes()
     print(hashlib.sha256(data).hexdigest()+' '+section+' bytes'+str(len(data)))
 print('PASS OFFLINE returning GDN/matrix/Conv IMAGE compile/maxNewFrame'+str(maximum)+'/prior service+QFP3+standaloneQGT1 ALL EXACT;NEW GDN local mailbox74700 preserves persistent command74000')
-if inplace_state_experiment:
+if redistributed_gdn:
+    print('PRIVATE REDISTRIBUTED GDN IMAGE:descriptor/peer routing candidate only;native dispatch,service snapshots,physical state/cache loader and full-model remain unqualified')
+elif inplace_state_experiment:
     print('PRIVATE INPLACE-STATE EXPERIMENT: only GDN stage reuses consumed Prior L1 buffer as Next source; transactional GDDR prior/next slots remain separate;NOT native/device/Work/fullmodel or speed grant')
 else:
     print('Proposed GDN ROM b8000..c8000 and service68000..6e000 need NEW joint native footprint;NO native/device/ROOT/fullmodel or speed grant')

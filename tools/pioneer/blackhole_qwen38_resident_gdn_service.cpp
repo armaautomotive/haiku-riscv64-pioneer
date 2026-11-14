@@ -3,6 +3,12 @@
 #include "PioneerQ38ResidentGdnOperatorImageRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnServiceShape.h"
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+#if PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE != 1
+#error Exact offline redistributed GDN image role required
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
+#endif
 extern "C" unsigned q38_resident_gdn_once();
 extern "C" void block_fault_park() __attribute__((noreturn));
 namespace GdnService {
@@ -31,7 +37,11 @@ extern "C" void q38_resident_persistent_gdn(const uint32_t* job,const uint32_t* 
  for(unsigned i=0;i<64;i++){
   d[i]=Words(TT_Q38_GDN_GATED_DESCRIPTOR)[i];input[i]=Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i];state[i]=Words(TT_Q38_RGDN_DESCRIPTOR)[i];
  }
- if(!PioneerQ38ResidentGdnServiceJob(job,d,input,state,source,worker,self))block_fault_park();
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+	if(!PioneerQ38ResidentGdnRedistributedServiceJob(job,d,input,state,source,worker,self))block_fault_park();
+#else
+	if(!PioneerQ38ResidentGdnServiceJob(job,d,input,state,source,worker,self))block_fault_park();
+#endif
  // The future ROOT must clear ALL96 cells BEFORE issuing ANY peer op8.
  // Never clear an old seal here or turn stale metadata into readiness.
  for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_READY)[i])block_fault_park();
@@ -44,7 +54,11 @@ extern "C" void q38_resident_persistent_gdn(const uint32_t* job,const uint32_t* 
   first[i]=Words(TT_Q38_GDN_INPUT_SUMMARY)[i];recurrent[i]=Words(TT_Q38_RGDN_SUMMARY)[i];gated[i]=Words(TT_Q38_GDN_GATED_SUMMARY)[i];
  }
  for(unsigned i=0;i<16;i++)clock[i]=Words(TT_Q38_GDN_RENDEZVOUS_CLOCK)[i];
- if(!PioneerQ38ResidentGdnServiceSummaries(d,input,state,first,recurrent,gated,clock,before,after))block_fault_park();
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+	if(!PioneerQ38ResidentGdnRedistributedServiceSummaries(d,input,state,first,recurrent,gated,clock,before,after))block_fault_park();
+#else
+	if(!PioneerQ38ResidentGdnServiceSummaries(d,input,state,first,recurrent,gated,clock,before,after))block_fault_park();
+#endif
  for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_READY)[i]!=PioneerQ38GdnRendezvousReadyWord(d,i,false))block_fault_park();
  const uint32_t command[]={0x8ea00,0,self,d[4]+d[43],0,d[8],0,0x212,256,0};
  for(unsigned i=0;i<10;i++)if(*Words(0xffb20000+i*4)!=command[i])block_fault_park();

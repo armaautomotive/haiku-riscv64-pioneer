@@ -21,7 +21,7 @@ extern "C" void* memcpy(void* target,const void* source,__SIZE_TYPE__ bytes){
  for(__SIZE_TYPE__ i=0;i<bytes;i++)out[i]=in[i];
  return target;
 }
-#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+#if defined(PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE) && defined(PIONEER_Q38_GDN_REDISTRIBUTED_STANDALONE)
 extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
  volatile unsigned char* out=static_cast<volatile unsigned char*>(target);
  for(__SIZE_TYPE__ i=0;i<bytes;i++)out[i]=static_cast<unsigned char>(value);

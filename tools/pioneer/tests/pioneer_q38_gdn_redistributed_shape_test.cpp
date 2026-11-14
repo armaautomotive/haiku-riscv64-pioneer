@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdint.h>
 #define PIONEER_ATTENTION_FREESTANDING
-#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedShape.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
 
 #ifndef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
 static void FillInput(uint32_t* d, uint32_t layer, uint32_t logical, uint32_t peer)
@@ -54,6 +54,52 @@ static void FillGated(uint32_t* d, const uint32_t* input, const uint32_t* state,
 	d[50] = 256; d[51] = TT_Q38_GDN_GATED_POLLS;
 	for (unsigned i = 16; i < 40; ++i) d[i] = input[i];
 }
+
+static void FillServiceEvidence(const uint32_t* d, const uint32_t* input,
+	const uint32_t* state,const uint32_t* source,unsigned worker,unsigned self,
+	uint32_t* before,uint32_t* after,uint32_t* first,uint32_t* recurrent,
+	uint32_t* gated,uint32_t* clock,uint32_t* proof)
+{
+	for(unsigned i=0;i<8;i++)before[i]=0;
+	const unsigned inputDelta[8]={7,24,7,7,0,0,7,0};
+	const unsigned stateDelta[8]={2,512,4,2,2,512,4,2};
+	const unsigned gatedDelta[8]={4,21,5,4,1,4,5,1};
+	uint32_t afterInput[8],afterState[8];
+	for(unsigned i=0;i<8;i++)afterInput[i]=inputDelta[i];
+	for(unsigned i=0;i<8;i++)afterState[i]=afterInput[i]+stateDelta[i];
+	for(unsigned i=0;i<8;i++)after[i]=afterState[i]+gatedDelta[i];
+	for(unsigned i=0;i<32;i++)first[i]=recurrent[i]=gated[i]=0;
+	first[0]=7;first[1]=24;first[2]=0;first[3]=0;first[4]=322;first[5]=1536;
+	first[6]=input[6];first[7]=TT_Q38_GDN_INPUT_MARKER;
+	for(unsigned i=0;i<8;i++){first[8+i]=before[i];first[16+i]=afterInput[i];}
+	const unsigned inputTail[]={input[7],input[5],input[40],input[10],input[11],input[14],input[42],input[44]};
+	for(unsigned i=0;i<8;i++)first[24+i]=inputTail[i];
+	recurrent[0]=2;recurrent[1]=512;recurrent[2]=2;recurrent[3]=512;
+	recurrent[4]=64;recurrent[5]=32768;recurrent[6]=state[8];recurrent[7]=TT_Q38_RGDN_MARKER;
+	for(unsigned i=0;i<8;i++){recurrent[8+i]=afterInput[i];recurrent[16+i]=afterState[i];}
+	const unsigned stateTail[]={state[9],state[10],state[11],state[11]^1,state[15],1,state[5],state[7]};
+	for(unsigned i=0;i<8;i++)recurrent[24+i]=stateTail[i];
+	gated[0]=4;gated[1]=21;gated[2]=1;gated[3]=4;gated[4]=64;gated[5]=1;
+	gated[6]=d[6];gated[7]=TT_Q38_GDN_RENDEZVOUS_MARKER;
+	for(unsigned i=0;i<8;i++){gated[8+i]=afterState[i];gated[16+i]=after[i];}
+	const unsigned gatedTail[]={d[7],d[5],d[40],d[15],d[4]+d[43],d[3],d[11],d[12]};
+	for(unsigned i=0;i<8;i++)gated[24+i]=gatedTail[i];
+	for(unsigned i=0;i<16;i++)clock[i]=0;
+	clock[0]=TT_Q38_GDN_RENDEZVOUS_MARKER;clock[1]=1;clock[3]=2;
+	clock[5]=gated[5];clock[6]=d[6];clock[7]=d[7];
+	for(unsigned i=0;i<8;i++)clock[8+i]=d[32+i];
+	for(unsigned i=0;i<64;i++)proof[i]=0;
+	for(unsigned i=0;i<8;i++){proof[i]=before[i];proof[8+i]=after[i];}
+	proof[16]=64;proof[17]=1;proof[18]=worker;proof[19]=TT_Q38_FFN_PERSISTENT_MARKER;
+	const unsigned command[]={0x8ea00,0,self,d[4]+d[43],0,d[8],0,0x212,256,0};
+	for(unsigned i=0;i<10;i++)proof[20+i]=command[i];
+	proof[30]=source[0];proof[31]=self;
+	for(unsigned i=0;i<16;i++)proof[32+i]=source[i];
+	proof[48]=TT_Q38_RESIDENT_GDN_SERVICE_OPERATION;proof[49]=d[6];
+	proof[50]=d[5];proof[51]=d[7];proof[52]=d[40];proof[53]=state[11];
+	for(unsigned i=0;i<8;i++)proof[54+i]=d[32+i];
+	proof[62]=TT_Q38_GDN_RENDEZVOUS_MARKER;proof[63]=gated[5];
+}
 #endif
 
 int main()
@@ -65,6 +111,14 @@ int main()
 	assert(!PioneerQ38GdnRedistributedPairing(rootDescriptor, rootDescriptor));
 	assert(!PioneerQ38GdnRedistributedGatedShape(rootDescriptor, rootDescriptor, rootDescriptor));
 	assert(!PioneerQ38GdnRedistributedRendezvousShape(rootDescriptor, rootDescriptor, rootDescriptor));
+	assert(!PioneerQ38ResidentGdnRedistributedServiceJob(rootDescriptor, rootDescriptor,
+		rootDescriptor, rootDescriptor, rootDescriptor, 1, 1));
+	assert(!PioneerQ38ResidentGdnRedistributedServiceSummaries(rootDescriptor,rootDescriptor,
+		rootDescriptor,rootDescriptor,rootDescriptor,rootDescriptor,rootDescriptor,
+		rootDescriptor,rootDescriptor));
+	assert(!PioneerQ38ResidentGdnRedistributedServiceProof(rootDescriptor,rootDescriptor,
+		rootDescriptor,rootDescriptor,rootDescriptor,rootDescriptor,1,1,rootDescriptor,
+		rootDescriptor,rootDescriptor,rootDescriptor,rootDescriptor,rootDescriptor));
 	return 0;
 #else
 	unsigned stateUse[PioneerQ38GdnTaskPlacement::PhysicalWorkers] = {};
@@ -103,6 +157,52 @@ int main()
 			gated[53] = uint32_t(PioneerQ38GdnRendezvousBudget() >> 32);
 			gated[54] = 4; gated[55] = TT_Q38_GDN_RENDEZVOUS_CLOCK;
 			assert(PioneerQ38GdnRedistributedRendezvousShape(gated, input, state));
+			uint32_t source[16], job[16] = {};
+			for(unsigned i=0;i<16;i++)source[i]=input[16+i];
+			job[0]=TT_Q38_RESIDENT_GDN_SERVICE_JOB;job[1]=64;job[2]=768;job[3]=gated[6];
+			job[10]=TT_Q38_FFN_PERSISTENT_MARKER;job[11]=route.physicalWorker;job[12]=1;
+			job[13]=TT_Q38_RESIDENT_GDN_SERVICE_OPERATION;
+			assert(PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
+				source,route.physicalWorker,route.peer));
+			assert(!PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
+				source,route.physicalWorker,route.peer+0x10000));
+			uint32_t legacyJob[16];for(unsigned i=0;i<16;i++)legacyJob[i]=job[i];
+			legacyJob[11]=logical+1;
+			assert(PioneerQ38ResidentGdnServiceJob(legacyJob,gated,input,state,source,
+				logical+1,route.peer)==(route.physicalWorker==logical+1));
+			uint32_t before[8],after[8],first[32],recurrent[32],gatedSummary[32],clock[16],proof[64];
+			FillServiceEvidence(gated,input,state,source,route.physicalWorker,route.peer,
+				before,after,first,recurrent,gatedSummary,clock,proof);
+			uint32_t legacyD[64],legacyInput[64],legacyState[64],legacyRecurrent[32],legacyGated[32];
+			for(unsigned i=0;i<64;i++){legacyD[i]=gated[i];legacyInput[i]=input[i];legacyState[i]=state[i];}
+			legacyD[9]=PioneerQ38ConvPeer(legacyD[10]);
+			legacyD[15]=PioneerQ38ConvPeer(legacyD[14]);
+			legacyInput[9]=PioneerQ38ConvPeer(legacyInput[10]);
+			legacyState[15]=PioneerQ38ResidentGdnPeer(legacyState[9]);
+			for(unsigned i=0;i<32;i++){legacyRecurrent[i]=recurrent[i];legacyGated[i]=gatedSummary[i];}
+			legacyRecurrent[28]=legacyState[15];legacyGated[27]=legacyD[15];
+			assert(PioneerQ38GdnInputSummary(first,legacyInput,before,first+16));
+			assert(PioneerQ38ResidentGdnSummary(legacyRecurrent,legacyState,first+16,recurrent+16));
+			assert(PioneerQ38GdnRendezvousSummary(legacyGated,legacyD,legacyInput,legacyState,recurrent+16,after));
+			assert(PioneerQ38GdnRendezvousClockReceipt(clock,legacyD,gatedSummary[5]));
+			assert(PioneerQ38ResidentGdnRedistributedServiceSummaries(gated,input,state,
+				first,recurrent,gatedSummary,clock,before,after));
+			assert(PioneerQ38ResidentGdnRedistributedServiceProof(proof,job,gated,input,state,
+				source,route.physicalWorker,route.peer,before,after,first,recurrent,gatedSummary,clock));
+			job[11]^=1;
+			assert(!PioneerQ38ResidentGdnRedistributedServiceJob(job,gated,input,state,
+				source,route.physicalWorker,route.peer));
+			job[11]^=1;
+			recurrent[28]^=1;
+			assert(!PioneerQ38ResidentGdnRedistributedServiceSummaries(gated,input,state,
+				first,recurrent,gatedSummary,clock,before,after));
+			recurrent[28]^=1;gatedSummary[27]^=1;
+			assert(!PioneerQ38ResidentGdnRedistributedServiceSummaries(gated,input,state,
+				first,recurrent,gatedSummary,clock,before,after));
+			gatedSummary[27]^=1;proof[22]^=1;
+			assert(!PioneerQ38ResidentGdnRedistributedServiceProof(proof,job,gated,input,state,
+				source,route.physicalWorker,route.peer,before,after,first,recurrent,gatedSummary,clock));
+			proof[22]^=1;
 			gated[15] ^= 1;
 			assert(!PioneerQ38GdnRedistributedGatedShape(gated, input, state));
 			gated[15] ^= 1;

@@ -16,7 +16,7 @@ for unit in gdn_input resident_gdn gdn_recurrent; do
 	case "$unit" in
 		gdn_input) role=-DPIONEER_Q38_GDN_INPUT_COMBINED_STAGE=1;;
 		resident_gdn) role=-DPIONEER_Q38_RGDN_COMBINED_STAGE=1;;
-		gdn_recurrent) role='-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1'; optimize=-Os;;
+		gdn_recurrent) role='-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1 -DPIONEER_Q38_GDN_REDISTRIBUTED_STANDALONE=1'; optimize=-Os;;
 	esac
 	"$cross-g++" -std=c++11 "$optimize" -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
 		-fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \

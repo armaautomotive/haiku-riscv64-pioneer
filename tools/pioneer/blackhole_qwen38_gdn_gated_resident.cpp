@@ -10,12 +10,24 @@
 #define PIONEER_Q38_GDN_PREPARE_IMAGE 1
 #include "PioneerQ38GdnGatedNorm.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnGatedShape.h"
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+#if PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE != 1
+#error Exact offline redistributed GDN image role required
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedShape.h"
+#endif
 extern "C" unsigned q38_resident_gdn_recurrent_stage();
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRendezvousShape.h"
 #include "PioneerQ38GdnRendezvousClock.h"
-extern "C" __attribute__((noinline)) bool q38_gdn_rendezvous_shape(const uint32_t* d,const uint32_t* input,const uint32_t* state){return PioneerQ38GdnRendezvousShape(d,input,state);}
+extern "C" __attribute__((noinline)) bool q38_gdn_rendezvous_shape(const uint32_t* d,const uint32_t* input,const uint32_t* state){
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+	return PioneerQ38GdnRedistributedRendezvousShape(d,input,state);
+#else
+	return PioneerQ38GdnRendezvousShape(d,input,state);
+#endif
+}
 #define Q38_GATED_SHAPE q38_gdn_rendezvous_shape
 #define Q38_GATED_READY_WORD PioneerQ38GdnRendezvousReadyWord
 #define Q38_GATED_STAGE_MARKER TT_Q38_GDN_RENDEZVOUS_MARKER
