@@ -5,6 +5,7 @@
 #ifndef PIONEER_Q38_TOKEN_RATE_SAMPLES_H
 #define PIONEER_Q38_TOKEN_RATE_SAMPLES_H
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFrontierPacket.h"
+#include "PioneerQ38FullOffloadCounterCadence.h"
 // Host DATA arithmetic only. The caller MUST separately prove SAME source/FD,
 // genuine terminal/HOLD/drain/END+Close and record/count consistency BEFORE
 // publishing a benchmark. This object cannot authorize any of those events.

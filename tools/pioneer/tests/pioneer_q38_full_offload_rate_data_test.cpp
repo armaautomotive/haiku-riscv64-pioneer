@@ -13,6 +13,11 @@ static std::string Rate(){char text[768];snprintf(text,sizeof(text),
 static R Counts(){R r;assert(r.Observe(Count(0))==1 && r.Observe(Count(20))==1 && r.Observe(Count(51))==1);return r;}
 int main(){
  unsigned refused=0;
+ {PioneerQ38FullOffloadCounterCadence cadence;
+  assert(cadence.Due(0) && !cadence.Due(-1) && cadence.Record(10));
+  assert(!cadence.Due(250009) && cadence.Due(250010));
+  assert(cadence.Record(260000) && !cadence.Due(509999) && cadence.Due(510000));
+  assert(!cadence.Record(-1) && !cadence.Record(INT64_MAX));}
  {auto r=Counts();assert(!r.Complete(32) && r.Observe(Rate())==1 && r.Complete(32) && r.Complete(31)
    && !r.Complete(30) && r.available && r.sampled==31 && r.firstBegin==1000 && r.lastEnd==1001010);
   assert(r.Observe(Count(51))==-1 && r.Observe(Rate())==-1 && r.Observe(R::Unavailable)==-1);}

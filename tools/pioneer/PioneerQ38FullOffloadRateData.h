@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include "PioneerQ38FullOffloadCounterCadence.h"
 #ifdef PIONEER_FULL_OFFLOAD_STARTUP_TIMING
 #if PIONEER_FULL_OFFLOAD_STARTUP_TIMING != 1
 #error Exact startup timing DATA selection required

@@ -1,0 +1,47 @@
+Full-card counter sampling cadence — offline candidate
+======================================================
+
+This is a narrow host-side traffic reduction for the measured full-card
+candidate. It is not a model, accelerator, or tokens/sec result.
+
+Finding
+-------
+The full-offload client sampled the read-only frontier counter on every
+100 ms terminal poll. Each native frontier observation calls
+`ObserveCommittedFrontier`, which reads ROOT status/count data and runs
+`RootBootSeal`; that seal rereads 64 ROOT boot words from the accelerator.
+Thus the diagnostic path could issue up to ten redundant 64-word image checks
+per second solely to timestamp progress, in addition to the independent
+terminal/cleanup poll. This is avoidable telemetry traffic; it does not alter
+model work.
+
+Change
+------
+Added a bounded cadence object that schedules frontier-count sampling at
+250 ms while leaving the existing 100 ms terminal poll, cancellation checks,
+final post-terminal count sample, clean-END gates, and rate timestamp bounds
+unchanged. At the prior count-poll frequency this caps periodic counter calls
+at four per second (up to 60% fewer); the first and final samples remain
+immediate/mandatory. The object rejects negative and overflowing timestamps.
+
+Tests
+-----
+`python3 tools/pioneer/tests/run_pioneer_q38_full_offload_rate_tests.py`
+passed: counter cadence boundary/overflow cases, rate DATA parsing, sampled
+count bounds, and the fake-worker client lifecycle suite. The separately
+guarded tag101 physical-parent flow test passed, and `git diff --check` was
+clean. The changed Assistant client also compiled as a RISC-V/Haiku object
+against the pinned SDK and frozen llama headers (`-Werror`, `-fstack-usage`);
+object SHA-256 `be370e02952c39e941348869bf162702e0ac19f4bbb03a9e5981b7417a9fc846`,
+`Runtime::Generate` frame 2,784 bytes. This was compile-only, not a full link.
+The tests/build do not execute the Haiku worker, driver, card, or model.
+
+Status / next gate
+-----------------
+This change is not yet fully linked, deployed, or measured on the Pioneer;
+no speedup is claimed. It does not address the tag101
+first-token hang. Next: complete a reproducible target build, then after the
+Pioneer is again reachable with independently verified SSH identity, use a
+fresh one-shot candidate stage and compare full-model output and measured
+generation rate against the retained 0.172813448..0.172816755 tok/s baseline.
+The 20 tok/s target remains unmet.

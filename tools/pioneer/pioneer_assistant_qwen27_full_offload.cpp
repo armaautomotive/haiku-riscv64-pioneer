@@ -164,6 +164,7 @@ struct Runtime {
    "Qwen27B running entirely on P100A: embeddings,matrices,attention,KV,recurrent state,norms and greedy selection. CPU inference OFF."))return false;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
   PioneerQ38TokenRateSamples samples(unsigned(count),unsigned(count)+frame.value-1);
+  PioneerQ38FullOffloadCounterCadence counterCadence;
   bool timingValid=true;unsigned measured=0,previousCount=UINT32_MAX;
   auto observeCount=[&](){
    const auto before=system_time();F::CounterPacket metric;
@@ -181,7 +182,7 @@ struct Runtime {
      metric.reply.detail[7],metric.reply.detail[9],metric.reply.detail[8]);
     if(!Emit(A::Progress,UINT32_MAX,status))return false;
    }
-   return true;
+   return counterCadence.Record(after);
   };
 #endif
   for(unsigned observations=0;!session->TerminalReady();observations++){
@@ -190,7 +191,7 @@ struct Runtime {
    previous=now;
    if(cancelled && !session->CancelRequested() && !session->Cancel())return false;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
-   if(!observeCount())return false;
+   if(counterCadence.Due(system_time()) && !observeCount())return false;
 #endif
    if(!session->Poll())return false;
    if(!session->TerminalReady() && snooze(100000)!=B_OK)return false;
