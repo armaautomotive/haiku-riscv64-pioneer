@@ -54,6 +54,10 @@ def execute(value):
             assert rd==0 and funct==0 and rs1==1 and immediate==0
             assert a==0xdeadbeec and registers[2]==0x20000 and registers[8]==0x128769ab
             return registers[10]
+        elif op==0x6f:
+            offset=((word>>31)&1)<<20|((word>>21)&0x3ff)<<1|((word>>20)&1)<<11|((word>>12)&0xff)<<12
+            if rd:registers[rd]=(pc+4)&mask
+            next_pc=(pc+signed(offset,21))&mask
         else:raise AssertionError(('unexpected opcode',hex(word)))
         registers[0]=0;pc=next_pc
     raise AssertionError('predicate did not return')
