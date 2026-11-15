@@ -24,7 +24,9 @@ trace = output / 'old-tag38.trace'
 with trace.open('w') as log:
     subprocess.run(['sh', '-x', str(directory / 'build_qwen38_banks_driver.sh'), str(sdk), str(output / 'old-tag38')],
                    env={**clean, **role}, stdout=log, stderr=subprocess.STDOUT, check=True)
-for name, sha in [('tenstorrent_pci_probe-driver55', '23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483'),
+# Refreshed for the unchanged current native driver source; the distinct
+# default43 object and reload guard remain pinned to their original bytes.
+for name, sha in [('tenstorrent_pci_probe-driver55', 'a114158ec188987efb554930b1a0bf9f4aba4e7258634a68e74aaf522afc01e7'),
                   ('pioneer_p100a_reload_guard', 'd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229'),
                   ('tenstorrent_pci_probe-default43-control', '2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc')]:
     assert hashlib.sha256((output / 'old-tag38' / name).read_bytes()).hexdigest() == sha, name

@@ -1,0 +1,45 @@
+Pioneer Qwen 3.8 native GDN compile chain — 2026-11-14
+
+Status: the current-source native compile-only chain passes with the route-
+aware GDN input-plan factory present. No driver was linked for installation,
+selected, or run on the P100A; this is not inference or throughput evidence.
+
+The chain initially stopped at immutable object fingerprints created on
+2026-10-22. Since then, the committed driver source had accumulated additional
+native roles. I regenerated the exact same SDK/compiler/profile baselines and
+updated only the stale fingerprints. The reload guard and separate default43
+control retained their original hashes. The historical October reports were
+not altered.
+
+Current fingerprints
+--------------------
+* old tag38 driver55: a114158ec188987efb554930b1a0bf9f4aba4e7258634a68e74aaf522afc01e7
+* macro-OFF execution control: f5d9541d5965b06c5e9443f8f985994a45c63f4aa6797c6530a30cae13f13038
+* projection result-stash compile object: 2062a800ea0873679b8d390f6af8eebabec1b1e057db3bf9f891e1316b2b0c53
+* projection tag42 driver: 1c8e95da5c5fa5bf814b40256121ccc5700cdfdba3e83686e38ccb5d9613f566
+* bare tag43 control: f5bdc759312864639fd11aa157ac635d6286d327d6b9bcdfc9e09731a6618d7f
+* DEBUG44 driver: 6ef6033d52dd0257f0607e2cb74c0a4040061115300446d642c1efee9e7d1fae
+* GDN input tag45 object: f3539d2e4bf6e2a773f757cac27521dd66bf27e455d7ba170c29d95041706cd0
+* GDN state-init tag47 object: fc5e6cb1b1dd4e63085009c909d9dd11126839499d3a272a1eff13945a31f8a5
+* recurrent GDN tag48 object: 0fd24f790f0d9b3640229cfa6c1ce1ed9b2de94a0eb4734cc19989a8ad3e174d
+
+Compile evidence
+----------------
+The full tag38-based preparation chain compiled actual RISC-V driver source
+for projection memory, projection result stashes, resident decoder tag43 and
+DEBUG44, GDN input tag45, GDN state-init tag47, and recurrent GDN tag48.
+Reported maximum new frame sizes: 240, 688 (projection execution), 1,440
+(tag42; readback 304), 1,696 (resident decoder), 1,936 (DEBUG44), 304 (GDN
+input), 672 (state init), and 688 bytes (recurrent GDN). The separate tag43,
+DEBUG44, and older role pins are checked by the chain.
+
+The GDN input-plan host test separately covers all 4,608 redistributed
+layer/task assignments. The compile chain confirms the real native driver
+still accepts the modified plan header; it does NOT prove that redistributed
+peers are staged/launched or that cache pages are owned at runtime.
+
+Remaining work: carry physical-peer/logical-task identity through native
+stage, launch, receipt, and whole-token publication; allocate/pin L1 pages;
+integrate cold/warm/spill mode into Work without CPU-reference; hardware test
+only after independently verifying the Pioneer SSH host key; measure full
+Qwen inference. No tok/s improvement is claimed.

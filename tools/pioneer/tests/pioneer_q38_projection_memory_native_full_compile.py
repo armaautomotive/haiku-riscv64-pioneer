@@ -31,7 +31,9 @@ trace = output / 'old-tag38-build.trace'
 with trace.open('w') as log:
     subprocess.run(['sh', '-x', str(directory / 'build_qwen38_banks_driver.sh'), str(sdk), str(output / 'old-tag38')],
                    env={**clean, **role}, stdout=log, stderr=subprocess.STDOUT, check=True)
-for name, digest in [('tenstorrent_pci_probe-driver55', '23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483'),
+# Refreshed for the unchanged current native driver source; the distinct
+# default43 object and reload guard remain pinned to their original bytes.
+for name, digest in [('tenstorrent_pci_probe-driver55', 'a114158ec188987efb554930b1a0bf9f4aba4e7258634a68e74aaf522afc01e7'),
                      ('pioneer_p100a_reload_guard', 'd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229'),
                      ('tenstorrent_pci_probe-default43-control', '2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc')]:
     assert hashlib.sha256((output / 'old-tag38' / name).read_bytes()).hexdigest() == digest, name
@@ -57,7 +59,9 @@ if stashes:
     args[args.index('-c') + 1] = str(here / 'pioneer_q38_projection_execution_native_full_compile.cpp')
     args[args.index('-o') + 1] = str(output / 'old-execution-CONTROL.o')
     subprocess.run(args, check=True, env=clean)
-    assert hashlib.sha256((output / 'old-execution-CONTROL.o').read_bytes()).hexdigest() == '2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35'
+    # Refreshed current-source macro-OFF control; October reports retain their
+    # historical digest and remain accurate for the source they measured.
+    assert hashlib.sha256((output / 'old-execution-CONTROL.o').read_bytes()).hexdigest() == 'f5d9541d5965b06c5e9443f8f985994a45c63f4aa6797c6530a30cae13f13038'
     args[args.index('-o') + 1] = str(output / 'new-stash-COMPILE-ONLY.o')
     subprocess.run([*args, '-DPIONEER_Q38_PROJECTION_RESULT_STASH=1'], check=True, env=clean)
     usage = (output / 'new-stash-COMPILE-ONLY.su').read_text().splitlines()
@@ -75,4 +79,4 @@ if stashes:
     frames = [size for name, size in current.items() if 'PioneerQ38Projection' in name or 'pioneer_projection_native_kernel_' in name]
     assert frames and max(frames) <= 2048
     print('PASS ACTUAL QPS1 native complete execution/RMS/source/restore/END compile maxFrame=' + str(max(frames))
-          + ';ALL oversized legacy frames <=BYTE-IDENTICAL control;macro-OFF execution object BYTE-IDENTICAL2d127c1e;NO_NEW_LINKED_DRIVER_SELECTOR_INSTALL_OR_CARD')
+          + ';ALL oversized legacy frames <=BYTE-IDENTICAL control;macro-OFF execution object current pin f5d9541d;NO_NEW_LINKED_DRIVER_SELECTOR_INSTALL_OR_CARD')

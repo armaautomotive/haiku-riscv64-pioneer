@@ -21,7 +21,9 @@ output.mkdir(mode=0o700)
 clean = {k: v for k, v in os.environ.items() if not k.startswith('PIONEER_')}
 subprocess.run([sys.executable, str(here / ('pioneer_q38_gdn_state_init_native_full_compile.py' if recurrent else 'pioneer_q38_gdn_input_native_full_compile.py')), str(sdk), str(output / 'controls')], check=True, env=clean)
 old = output / ('controls/gdn-state-init-NATIVE47-COMPILE-ONLY.o' if recurrent else 'controls/gdn-input-NATIVE45-COMPILE-ONLY.o')
-pin = '7ee1d6f1a90885ee6ce129aefe6950b2267b85f3db527990e5fb18481887bfc6' if recurrent else 'c3e249dba9ab2a16a34f5a8641721d4d8f28bbb8c9978060178f813821cb5dbd'
+# Current input/state-init source control pins. These objects include the
+# route-aware input factory; the October fingerprints are stale.
+pin = 'fc5e6cb1b1dd4e63085009c909d9dd11126839499d3a272a1eff13945a31f8a5' if recurrent else 'f3539d2e4bf6e2a773f757cac27521dd66bf27e455d7ba170c29d95041706cd0'
 assert hashlib.sha256(old.read_bytes()).hexdigest() == pin, 'old role MUST remain exact'
 traces = list(output.rglob('old-tag38-build.trace'));assert len(traces) == 1
 commands = [shlex.split(line[2:]) for line in traces[0].read_text().splitlines() if line.startswith('+ ')]

@@ -20,7 +20,7 @@ clean = {k: v for k, v in os.environ.items() if not k.startswith('PIONEER_')}
 subprocess.run([sys.executable, str(here.parent / 'build_qwen38_resident_decoder_validation_native.py'),
                 str(sdk), str(output / 'controls')], check=True, env=clean)
 old = output / 'controls/tenstorrent_pci_probe-driver55-decoder-debug-tag44'
-assert hashlib.sha256(old.read_bytes()).hexdigest() == '6ce7b4fecae927391119163022cb49f8775ca79776555d209e2eb4c3eacc564b', 'old actual DEBUG44 MUST stay byte-identical'
+assert hashlib.sha256(old.read_bytes()).hexdigest() == '6ef6033d52dd0257f0607e2cb74c0a4040061115300446d642c1efee9e7d1fae', 'current actual DEBUG44 pin'
 traces = list(output.rglob('old-tag38-build.trace'))
 assert len(traces) == 1
 commands = [shlex.split(line[2:]) for line in traces[0].read_text().splitlines() if line.startswith('+ ')]

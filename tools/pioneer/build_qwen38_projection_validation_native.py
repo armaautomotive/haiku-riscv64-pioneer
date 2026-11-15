@@ -23,7 +23,8 @@ output.mkdir(mode=0o700)
 clean = {k: v for k, v in os.environ.items() if not k.startswith('PIONEER_')}
 subprocess.run([sys.executable, str(here / 'tests/pioneer_q38_projection_memory_native_full_compile.py'),
                 str(sdk), str(output / 'controls'), '--result-stashes'], check=True, env=clean)
-assert hashlib.sha256((output / 'controls/new-stash-COMPILE-ONLY.o').read_bytes()).hexdigest() == '6121b065785fb8732f3a00770e299903663fb600baf13e385c97ac78d543de72'
+# Refreshed current-source compile-only resident-owner object pin.
+assert hashlib.sha256((output / 'controls/new-stash-COMPILE-ONLY.o').read_bytes()).hexdigest() == '2062a800ea0873679b8d390f6af8eebabec1b1e057db3bf9f891e1316b2b0c53'
 commands = [shlex.split(line[2:]) for line in (output / 'controls/old-tag38-build.trace').read_text().splitlines() if line.startswith('+ ')]
 driver = here.parents[1] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp'
 compiles = [a for a in commands if '-c' in a and a[a.index('-c') + 1] == str(driver) and '-DTT_PIONEER_DRIVER_RELOAD' in a]

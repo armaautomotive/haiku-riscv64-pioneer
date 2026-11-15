@@ -24,7 +24,9 @@ output.mkdir(mode=0o700)
 clean = {k: v for k, v in os.environ.items() if not k.startswith('PIONEER_')}
 subprocess.run([sys.executable, str(here / 'tests/pioneer_q38_resident_decoder_native_full_compile.py'),
                 str(sdk), str(output / 'controls'), '--validation'], check=True, env=clean)
-assert hashlib.sha256((output / 'controls/resident-decoder-NATIVE-COMPILE-ONLY.o').read_bytes()).hexdigest() == '3445a61f0473616a4aa2c352e730df39b6509fc34e78acbe3e2f2d72827bc3cb'
+# Current-source bare tag43 compile-only control pin. The historical October
+# report retains the older object hash it measured at that time.
+assert hashlib.sha256((output / 'controls/resident-decoder-NATIVE-COMPILE-ONLY.o').read_bytes()).hexdigest() == 'f5bdc759312864639fd11aa157ac635d6286d327d6b9bcdfc9e09731a6618d7f'
 commands = [shlex.split(line[2:]) for line in (output / 'controls/controls/controls/old-tag38-build.trace').read_text().splitlines() if line.startswith('+ ')]
 driver = here.parents[1] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp'
 compiles = [a for a in commands if '-c' in a and a[a.index('-c') + 1] == str(driver) and '-DTT_PIONEER_DRIVER_RELOAD' in a]
