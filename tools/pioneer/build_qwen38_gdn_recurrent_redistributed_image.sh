@@ -2,7 +2,12 @@
 # Candidate redistributed QRJ1 image;offline compile only,no native/device grant.
 set -eu
 python3 -c 'import os,sys; sys.exit(0 if all(not k.startswith("PIONEER_") or v=="0" for k,v in os.environ.items()) else 2)' || exit 2
-[ "$#" = 2 ] || exit 2
+[ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
+scattered=
+if [ "$#" = 3 ]; then
+	[ "$3" = --scattered-cache ] || exit 2
+	scattered=-DPIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT=1
+fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
@@ -12,16 +17,17 @@ umask 077
 mkdir -m 700 "$output"
 for unit in gdn_input resident_gdn gdn_recurrent; do
 	role=
+	unit_scattered=
 	optimize=-O2
 	case "$unit" in
 		gdn_input) role=-DPIONEER_Q38_GDN_INPUT_COMBINED_STAGE=1;;
-		resident_gdn) role=-DPIONEER_Q38_RGDN_COMBINED_STAGE=1;;
-		gdn_recurrent) role='-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1 -DPIONEER_Q38_GDN_REDISTRIBUTED_STANDALONE=1'; optimize=-Os;;
+		resident_gdn) role=-DPIONEER_Q38_RGDN_COMBINED_STAGE=1; unit_scattered=$scattered;;
+		gdn_recurrent) role='-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1 -DPIONEER_Q38_GDN_REDISTRIBUTED_STANDALONE=1'; unit_scattered=$scattered; optimize=-Os;;
 	esac
 	"$cross-g++" -std=c++11 "$optimize" -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
 		-fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
 		-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
-		-march=rv32imf -mabi=ilp32 -fstack-usage $role -c "$directory/blackhole_qwen38_$unit.cpp" -o "$output/$unit.o"
+		-march=rv32imf -mabi=ilp32 -fstack-usage $role $unit_scattered -c "$directory/blackhole_qwen38_$unit.cpp" -o "$output/$unit.o"
 done
 "$cross-as" -I"$directory" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_qwen38_gdn_recurrent_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_scalar.ld" \

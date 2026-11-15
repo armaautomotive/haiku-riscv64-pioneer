@@ -1,0 +1,52 @@
+Qwen3.8 redistributed/scattered GDN L1-map integration gate — 2026-11-14
+=======================================================================
+
+Status: offline emitted-worker integration only. No Pioneer installation or
+execution, no native dispatch, no model token, and no tokens/sec measurement.
+This candidate remains separate from Work, CPU-reference, native, and kernel
+roles.
+
+What is now connected
+--------------------
+The exact emitted redistributed+scattered QRJ1 worker was built with the
+page-table addresses returned by `PioneerQ38GdnL1PageAllocator`, rather than
+only the simulator's convenient fixed test pages. The worker accepted those
+addresses, exercised cold fill and warm reuse for resident routes, and used
+its existing GDDR current-state transfer for allocator spill routes. The
+allocator's lower bound matches the worker's `0x90000` address check.
+
+Candidate image identity:
+
+  code SHA-256 73ec1c0504edd7aaff3e488f9ab9ebd51998c83c1cac83d65676b7f113c4d9f9
+  boot SHA-256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+
+Validation
+----------
+Reproduce with:
+
+  `sh tools/pioneer/tests/run_pioneer_q38_gdn_recurrent_redistributed_scattered_image_tests.sh /Volumes/HaikuBuildLocal/generated.riscv64`
+
+The ASan/UBSan emitted-worker test passed 161 exact-output positive executions:
+126 resident-map executions and 35 GDDR-spill-map executions. It checked all
+8,256 state/output words per execution, 16-step non-resetting state chains,
+both GDDR slots, and the explicit spill path. It also passed 4,175 injected
+fault cases with no subsequent NoC/SFPU/publication after the fault. The
+scatter role gate passed. The legacy non-scattered redistributed worker also
+still passes its separate gate (160 positives, 4,170 injected faults).
+
+Capacity evidence remains static: on the alternate 119-peer route, the map
+fits at most 2,975 of 4,608 half-states in safe L1 pages; 1,633 spill to GDDR.
+The 126/35 figure above is only the number of executions exercised by this
+test, not total-model residency.
+
+What is still missing
+---------------------
+The native prepared-Q4 dispatcher does not yet allocate/pin these pages,
+populate the worker-local page table, redistribute layer tasks across 119
+peers, perform cache warm/cold epoch management, or atomically couple cache
+validity to the whole-token GDDR slot commit. Therefore this passing simulator
+gate does not make the candidate usable by Assistant/Work and does not prove
+that keeping GDN state in L1 improves full-model throughput. The native Qwen
+path, other Qwen operations, full-model numerical/lifecycle tests, and a real
+Pioneer benchmark remain required. Physical testing is still gated on
+out-of-band verification of the Pioneer SSH host key.

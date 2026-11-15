@@ -8,7 +8,6 @@
 namespace L=PioneerQ38DeltaVectorLayout;
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 static uint32_t TestStatePage(unsigned page){return 0x120000+page*4096;}
-static bool IsTestStatePage(uint32_t at){for(unsigned page=0;page<L::StatePages;page++){uint32_t base=TestStatePage(page);if(at>=base && at-base<L::StatePageBytes)return true;}return false;}
 #endif
 struct DeltaVectorImage:ScalarMachine {
 	DeltaVectorMachine unit;
@@ -18,6 +17,15 @@ struct DeltaVectorImage:ScalarMachine {
 	std::vector<uint32_t> initialState;
 	unsigned failImport=0,configWrites=0;
 	bool wait=false,dropMathDrain=false,dropOutputDrain=false;
+	#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	bool IsTestStatePage(uint32_t at)const{
+		for(unsigned page=0;page<L::StatePages;page++){
+			const uint32_t base=memory.at(uint32_t(L::StatePageTable)+page*4);
+			if(at>=base && at-base<L::StatePageBytes)return true;
+		}
+		return false;
+	}
+	#endif
 	struct UnsafeRead {};
 	DeltaVectorImage(const char* path,unsigned trial):ScalarMachine(path,64,0) {
 		unit.localImage=true; memory.clear();
@@ -76,7 +84,7 @@ struct DeltaVectorImage:ScalarMachine {
 			assert((!imports && source==uint32_t(L::Value) && !row && words==64)
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 				|| (imports && imports<9 && source==(memory.at(uint32_t(L::StatePageMode))==2
-					?uint32_t(L::Prior)+(imports-1)*4096:TestStatePage(imports-1))
+					?uint32_t(L::Prior)+(imports-1)*4096:memory.at(uint32_t(L::StatePageTable)+(imports-1)*4))
 					&& row==(imports-1)*64 && words==1024));
 #else
 				|| (imports && imports<9 && source==0x90000+(imports-1)*4096 && row==(imports-1)*64 && words==1024));

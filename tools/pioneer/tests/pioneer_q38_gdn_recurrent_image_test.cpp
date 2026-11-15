@@ -10,6 +10,25 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRecurrentShape.h"
 #include "../PioneerQ38DeltaStateLayout.h"
 #include <memory>
+#ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
+#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4 1
+#define PIONEER_Q38_FULL_OFFLOAD_BATCHED 1
+#define PIONEER_Q38_FULL_OFFLOAD_METRICS 1
+#define PIONEER_Q38_FULL_OFFLOAD_CLIENT 1
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnL1PageAllocator.h"
+#if !defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) \
+	|| !defined(PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE)
+#error L1 allocator integration requires redistributed scattered-worker simulation
+#endif
+static PioneerQ38GdnL1PageAllocator& CandidateL1PageAllocator()
+{
+	static PioneerQ38GdnL1PageAllocator allocator;
+	static const bool built=allocator.Build();
+	assert(built);
+	return allocator;
+}
+static unsigned sAllocatorResidentRoutes=0,sAllocatorSpillRoutes=0;
+#endif
 struct GdnRecurrentMachine:ResidentGdnImage {
  std::array<uint32_t,64> inputDescriptor={};
  std::array<uint32_t,324> raw={};std::array<std::array<uint32_t,16>,4> blocks={};
@@ -53,6 +72,25 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   assert(PioneerQ38GdnRecurrentShape(inputDescriptor.data(),descriptor.data()));
 #endif
   SetDescriptors();
+#ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
+  unsigned allocatorOrdinal=0;PioneerQ38GdnTaskPlacement::Route allocatorRoute={};
+  assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,allocatorOrdinal)
+   && PioneerQ38GdnTaskPlacement::Map(allocatorOrdinal,half,allocatorRoute));
+  PioneerQ38GdnL1PageAllocator::PageTable table={};
+  assert(CandidateL1PageAllocator().Resolve(allocatorRoute,table));
+  if(table.resident){
+   sAllocatorResidentRoutes++;
+   for(unsigned page=0;page<8;page++){
+    memory[uint32_t(L::StatePageTable)+page*4]=table.pages[page];
+    for(unsigned word=0;word<1024;word++)
+     memory[table.pages[page]+word*4]=initialState[page*1024+word];
+   }
+   memory[uint32_t(L::StatePageMode)]=0;
+  }else{
+   sAllocatorSpillRoutes++;
+   memory[uint32_t(L::StatePageMode)]=2;
+  }
+#endif
   for(unsigned i=0;i<8;i++)initialCounts[i]=counts[i];
   unsigned h=half/2,kh=h%16;
   for(unsigned i=0;i<128;i++){
@@ -269,6 +307,9 @@ struct GdnRecurrentMachine:ResidentGdnImage {
 int main(int argc,char** argv){
  (void)&TestWorker;assert(argc==2 || (argc==3 && !strcmp(argv[2],"--double-scale-negative")));setvbuf(stdout,nullptr,_IOLBF,0);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
+#ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
+ sAllocatorResidentRoutes=sAllocatorSpillRoutes=0;
+#endif
  if(argc==3){
   GdnRecurrentMachine m(argv[1],*canonical,0,95,6);assert(m.Run());
   float sum=0;for(unsigned i=0;i<128;i++){float q=Float(m.raw[i]);sum+=q*q;}
@@ -290,24 +331,29 @@ int main(int argc,char** argv){
    GdnRecurrentMachine m(argv[1],*canonical,0,half,token%7,1+token);
    m.prior=carry;m.initialState.assign(carry.begin(),carry.end());
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-   for(unsigned i=0;i<carry.size();i++){
-    const unsigned page=i/1024,word=i%1024;
-    const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
-    m.memory[address]=carry[i];
+   if(m.memory.at(uint32_t(L::StatePageMode))!=2){
+    for(unsigned i=0;i<carry.size();i++){
+     const unsigned page=i/1024,word=i%1024;
+     const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
+     m.memory[address]=carry[i];
+    }
+    m.memory[uint32_t(L::StatePageMode)]=token?1:0;
    }
-   m.memory[uint32_t(L::StatePageMode)]=token?1:0;
 #endif
    assert(m.Run());m.Verify();carry=m.next;positive++;
   }
  }
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
- {GdnRecurrentMachine m(argv[1],*canonical,0,95,6,23);
-  m.memory[uint32_t(L::StatePageMode)]=2;
+ {GdnRecurrentMachine m(argv[1],*canonical,62,95,6,23);
   for(unsigned i=0;i<8192;i++)m.memory[uint32_t(L::Prior)+i*4]=m.prior[i];
   assert(m.Run());m.Verify();positive++;}
 #endif
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
  const unsigned totalPackets=11;
+#ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
+ assert(sAllocatorResidentRoutes>0 && sAllocatorSpillRoutes>0);
+ printf("PASS ACTUAL allocator page-table integration: resident routes%u spill routes%u; exact emitted worker consumed real mapped L1 page addresses and GDDR fallback metadata; ",sAllocatorResidentRoutes,sAllocatorSpillRoutes);
+#endif
  printf("PASS ACTUAL OFFLINE QRJ1 scattered-state cold+warm+GDDR-spill combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains+isolatedspill/ALL8256bits exact;COLD11packets9reads2writes,WARM9packets7reads2writes,SPILL11packets9reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
 #else
  const unsigned totalPackets=11;
