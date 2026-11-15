@@ -1,0 +1,49 @@
+Pioneer Qwen 3.8 GDN scattered-L1 state experiment — 2026-11-14
+
+Status: offline candidate only. Nothing was installed, selected, or run on the
+Pioneer. The board's current SSH host-key mismatch remains unresolved, so no
+physical validation was attempted.
+
+Candidate
+---------
+The combined emitted RV32 GDN worker has an explicitly gated
+PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT build. In this experiment it skips
+the two 16 KiB NoC reads that normally import the 32 KiB recurrent current
+state from GDDR, consumes the eight 4 KiB pages named by a local page table,
+and still writes the 32 KiB next-state slot transactionally to GDDR. The
+default build path is unchanged. The role header rejects Work, CPU-reference,
+native, kernel, and root-qualification roles.
+
+Evidence
+--------
+Default combined image, rebuilt after the test-fixture correction:
+  code SHA-256 96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410
+  boot SHA-256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+
+Scattered candidate image:
+  code SHA-256 f6e37662c421b9744900afc687467e4828482e745ad158961a79be0e44fd7f49
+  boot SHA-256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+
+The offline emitted-worker simulator passed 160 positive cases across all 96
+halves, seven banks, both slots, and four 16-step non-resetting chains, with
+exact comparison of all 8,256 state/output words. It passed 4,144 injected
+fault cases, including invalid page-table entries and command/descriptor/
+counter/state faults. Malformed metadata stops before the first combined
+worker NoC/SFPU action. AddressSanitizer and UndefinedBehaviorSanitizer were
+enabled. A role-guard syntax test passed.
+
+This is not a hardware benchmark: the NoC/GDDR endpoint and accelerator fabric
+are simulated; the test does not execute a full Qwen token, measure latency,
+validate long-context model quality, or prove initialized L1 residency.
+Tokens/sec improvement is therefore unknown; no speedup is claimed.
+
+Still required before hardware use
+-----------------------------------
+* A native allocator that reserves and pins all eight L1 pages for the correct
+  layer/head/slot and proves address bounds, ownership, and cache lifetime.
+* Token/slot epoch integration so current-state pages become authoritative
+  only after the whole model token commits, with rollback on any worker fault.
+* A complete native Qwen path and measured full-token benchmark. This worker
+  still does not establish all-matrix-engine execution or full P100A offload.
+* Re-resolve and verify the Pioneer SSH host key before remote diagnostics or
+  any physical test; retain the default image as the known-good selection.

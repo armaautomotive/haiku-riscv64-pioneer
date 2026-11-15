@@ -2,7 +2,9 @@
 # ONE offline worker image. No native/Work selection,installation or card access.
 set -eu
 python3 -c 'import os,sys; sys.exit(0 if all(not k.startswith("PIONEER_") or v=="0" for k,v in os.environ.items()) else 2)' || exit 2
-[ "$#" = 2 ] || exit 2
+[ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
+scattered=
+if [ "$#" = 3 ]; then [ "$3" = --scattered-cache ] || exit 2; scattered=-DPIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT=1; fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
@@ -21,7 +23,7 @@ for unit in gdn_input resident_gdn gdn_recurrent; do
  "$cross-g++" -std=c++11 "$optimize" -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
   -fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
   -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
-  -march=rv32imf -mabi=ilp32 -fstack-usage $role -c "$directory/blackhole_qwen38_$unit.cpp" -o "$output/$unit.o"
+  -march=rv32imf -mabi=ilp32 -fstack-usage $role $scattered -c "$directory/blackhole_qwen38_$unit.cpp" -o "$output/$unit.o"
 done
 "$cross-as" -I"$directory" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_qwen38_gdn_recurrent_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_scalar.ld" \
@@ -34,4 +36,8 @@ done
 awk '$3 ~ /^(div|divu|rem|remu|mulh|mulhu|mulhsu|fdiv[.]s|fsqrt[.]s|fmadd[.]s|fmsub[.]s|fnmadd[.]s|fnmsub[.]s|fcvt[.]w[.]s|fcvt[.]wu[.]s)$/ {bad=1;print} END {exit bad}' "$output/program.disassembly"
 awk -F '\t' 'NF==3 && $2 ~ /^[0-9]+$/ {seen++;if($2>1024)bad=1} END {if(!seen || bad)exit 1}' "$output/"*.su
 shasum -a 256 "$output/code.bin" "$output/boot.bin"
-printf 'OFFLINE QRJ1 combined raw-input-preparation+resident-state recurrence;NOT native selected/installed:%s\n' "$output"
+if [ -n "$scattered" ]; then
+ printf 'OFFLINE QRJ1 scattered-L1 resident-state experiment;NOT native selected/installed:%s\n' "$output"
+else
+ printf 'OFFLINE QRJ1 combined raw-input-preparation+resident-state recurrence;NOT native selected/installed:%s\n' "$output"
+fi

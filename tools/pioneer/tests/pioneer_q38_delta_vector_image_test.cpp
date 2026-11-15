@@ -90,6 +90,9 @@ struct DeltaVectorImage:ScalarMachine {
 	}
 	uint32_t Load(uint32_t at) override {
 		assert(!(at&3));
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		if (Range(at,uint32_t(L::StatePageTable),L::StatePages*4)) return memory.at(at);
+#endif
 		if (Range(at,uint32_t(L::Code),unsigned(code.size()))) return l1[Index(at)];
 		if (at==0xffe000fc) return ack;
 		if (Range(at,0xffef0000,224*4)) return cfg[(at-0xffef0000)/4];
@@ -119,7 +122,13 @@ struct DeltaVectorImage:ScalarMachine {
 #endif
 		);
 		if (Range(at,0x6e000,8192)) minStack=std::min(minStack,unsigned(at));
-		if (Range(at,0xa0000,32768)) { assert(unit.drained && imports==9 && csrReads==nextWrites+1); nextWrites++; }
+		if (Range(at,0xa0000,32768)) { assert(unit.drained && imports==9 &&
+#if defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) && defined(PIONEER_Q38_GDN_SCATTERED_RESIDENT_IMAGE_TEST)
+			scatterWrites==8192
+#else
+			csrReads==nextWrites+1
+#endif
+			); nextWrites++; }
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 		if (IsTestStatePage(at)) { assert(unit.drained && imports==9 && csrReads==scatterWrites+1); scatterWrites++; }
 #endif
@@ -154,7 +163,12 @@ struct DeltaVectorImage:ScalarMachine {
 				assert(false);
 			}
 #else
-			assert(memory.at(0xa0000+(i*64+j)*4)==Bits(next[i*64+j]));
+			if(memory.at(0xa0000+(i*64+j)*4)!=Bits(next[i*64+j])){
+				fprintf(stderr,"contiguous mismatch i=%u j=%u got=%08x expected=%08x initial=%08x key=%08x value=%08x decay=%08x beta=%08x\n",
+					i,j,memory.at(0xa0000+(i*64+j)*4),Bits(next[i*64+j]),initialState[i*64+j],
+					memory.at(uint32_t(L::Key)+i*4),memory.at(uint32_t(L::Value)+j*4),memory.at(uint32_t(L::Decay)),memory.at(uint32_t(L::Beta)));
+				assert(false);
+			}
 #endif
 		}
 		for (unsigned j=0;j<64;j++) {
@@ -166,7 +180,11 @@ struct DeltaVectorImage:ScalarMachine {
 		}
 		assert(resultWrites==64 && imports==9 && csrReads==8192+64 && unit.drained);
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#ifdef PIONEER_Q38_GDN_SCATTERED_RESIDENT_IMAGE_TEST
+		assert(nextWrites==8192 && scatterWrites==8192);
+#else
 		assert(!nextWrites && scatterWrites==8192);
+#endif
 #else
 		assert(nextWrites==8192 && !scatterWrites);
 #endif

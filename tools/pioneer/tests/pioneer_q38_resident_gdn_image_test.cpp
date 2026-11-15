@@ -4,6 +4,9 @@
 #define PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
 #define PIONEER_Q38_DELTA_VECTOR_POST_SCALE
 #define PIONEER_Q38_DELTA_VECTOR_IMAGE_MACHINE_ONLY
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#define PIONEER_Q38_GDN_SCATTERED_RESIDENT_IMAGE_TEST
+#endif
 #include "pioneer_q38_delta_vector_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedShape.h"
@@ -29,7 +32,14 @@ struct ResidentGdnImage:DeltaVectorImage {
  ResidentGdnImage(const char* image,unsigned trial=1,unsigned readBank=0,unsigned writeBank=6,unsigned worker=0,
   bool edge=false,bool redistributed=false,unsigned actualLayer=0)
   :DeltaVectorImage(image,trial) {
-  for (unsigned i=0;i<8192;i++) { prior[i]=memory.at(0x90000+i*4); memory[0x90000+i*4]=0x7fc00000; next[i]=0x7fc00000; }
+  for (unsigned i=0;i<8192;i++) {
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   prior[i]=initialState[i];
+#else
+   prior[i]=memory.at(0x90000+i*4); memory[0x90000+i*4]=0x7fc00000;
+#endif
+   next[i]=0x7fc00000;
+  }
   for (auto& word:command) word=0xdeadbeef; // never confuse last command word5 with physical identity
   for (auto& word:counts) word=0xfffffff8;
   for (unsigned i=0;i<16;i++) seals[i]=0xa5000000+i*0x13579; seals[0]=0x16005;
@@ -78,13 +88,30 @@ struct ResidentGdnImage:DeltaVectorImage {
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
   readback=packets>4; assert(packets<=6);
 #else
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+  assert(packets<=2);
+#else
   assert(packets<=4);
 #endif
-  bool write=packets>2 && !readback; unsigned half=(packets-1)%2,remote=descriptor[write || readback?7:5]+half*16384;
+#endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+  const unsigned readPackets=0;
+#else
+#ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+  const unsigned readPackets=4;
+#else
+  const unsigned readPackets=2;
+#endif
+#endif
+  bool write=packets>readPackets && !readback; unsigned half=(packets-readPackets-1)%2,remote=descriptor[write || readback?7:5]+half*16384;
   unsigned local=(write?0xa0000:readback?0x98000:0x90000)+half*16384;
   const uint32_t expected[]={write?local:remote,0,write?descriptor[15]:descriptor[readback?13:12],write?remote:local,0,write?descriptor[13]:descriptor[15],0,write?0x212U:0,16384,0};
   for (unsigned i=0;i<10;i++) assert(command[i]==expected[i]);
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+  if (write) assert(scatterWrites==8192 && resultWrites==64 && unit.drained);
+#else
   if (write) assert(nextWrites==8192 && resultWrites==64 && unit.drained);
+#endif
   else if (!readback) assert(!nextWrites && !resultWrites && !unit.ops);
   for (unsigned i=0;i<4096;i++) {
    if (write) next[half*4096+i]=memory.at(local+i*4);
@@ -120,13 +147,25 @@ struct ResidentGdnImage:DeltaVectorImage {
  }
  void VerifyResident() {
   assert(packets==
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   2
+#else
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
    6
 #else
    4
 #endif
+#endif
    && !pending); DeltaVectorImage::Verify();
-  for (unsigned i=0;i<8192;i++) assert(memory.at(0x90000+i*4)==prior[i] && next[i]==memory.at(0xa0000+i*4));
+  for (unsigned i=0;i<8192;i++) {
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   const unsigned page=i/1024,word=i%1024;const uint32_t address=memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
+   assert(memory.at(address)==next[i]);
+#else
+   assert(memory.at(0x90000+i*4)==prior[i]);
+#endif
+   assert(next[i]==memory.at(0xa0000+i*4));
+  }
   uint32_t summary[32],before[8],after[8]; for (unsigned i=0;i<32;i++) summary[i]=memory.at(TT_Q38_RGDN_SUMMARY+i*4);
   for (unsigned i=0;i<8;i++) { before[i]=summary[8+i]; after[i]=summary[16+i]; }
   assert(PioneerQ38ResidentGdnSummary(summary,descriptor.data(),before,after));
@@ -159,13 +198,24 @@ int main(int argc,char** argv) {
   std::array<uint32_t,8192> carry={};
   for (unsigned token=0;token<16;token++) {
    ResidentGdnImage m(argv[1],4+head*16+token,head,(head+1)%7,TestWorker(head*2+(token%2)));
-   m.prior=carry; assert(m.RunResident()); m.VerifyResident(); carry=m.next;
+   m.prior=carry;m.initialState.assign(carry.begin(),carry.end());
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   for (unsigned i=0;i<carry.size();i++) {
+    const unsigned page=i/1024,word=i%1024;
+    const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
+    m.memory[address]=carry[i];
+   }
+#endif
+   assert(m.RunResident()); m.VerifyResident(); carry=m.next;
   }
  }
  puts("PASS ACTUAL OFFLINE resident GDN:ALL7 bank pairs/both3GiB edges/four numeric domains,32KiB read->post-dot vector->DIFFERENT32KiB next slot,ALL8256 words exact,ALL8 wrapped counters+32 summary fields;NOT native/coordinator/model speed");
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  puts("PASS ACTUAL OFFLINE ROOT0-ONLY resident GDN:ALL49 bank pairs,four half-head data chains x16 NONRESETTING updates,FULL poisoned GDDR writeback read/compare BEFORE completion;NOT peer/coordinator/native/GGML/quality qualification");
  const unsigned maxPackets=6;
+#elif defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT)
+ puts("PASS ACTUAL OFFLINE resident GDN scattered-state:zero GDDR state reads,local cached state to transactional next GDDR slot;NOT native coordinator or model speed");
+ const unsigned maxPackets=2;
 #else
  puts("PASS ACTUAL OFFLINE resident GDN:ALL49 read/write bank pairs,ALL96 non-root peer route metadata,four half-heads x16 successive NONRESETTING decayed-state updates with varied Q/K/V;NO native/coordinator/GGML-FP64/long-context quality claim");
  const unsigned maxPackets=4;
@@ -194,7 +244,11 @@ int main(int argc,char** argv) {
  for (unsigned at:{uint32_t(L::Query),uint32_t(L::Key),uint32_t(L::Value),uint32_t(L::Decay),uint32_t(L::Beta)}) {
   ResidentGdnImage m(argv[1]); m.memory[at]=0x7fc00000; assert(!m.RunResident() && !m.packets && !m.nocReads && !m.unit.ops);
  }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ { ResidentGdnImage m(argv[1]);const uint32_t page=m.memory.at(uint32_t(L::StatePageTable)+7*4);m.memory[page+4095*4]=0x7fc00000;assert(!m.RunResident() && !m.packets && !m.nocReads && !m.unit.ops); }
+#else
  { ResidentGdnImage m(argv[1]); m.prior[8191]=0x7fc00000; assert(!m.RunResident() && m.packets==2 && !m.unit.ops); }
+#endif
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  for (unsigned word:{0U,4095U,8191U}) for (unsigned kind=0;kind<2;kind++) {
   ResidentGdnImage m(argv[1]); if (!kind) m.corruptWriteAt=word; else m.corruptReadbackAt=word;

@@ -95,15 +95,29 @@ extern "C" unsigned scalar_main() {
  volatile uint32_t* s=Words(TT_Q38_RGDN_SUMMARY); for (unsigned i=0;i<32;i++) s[i]=0;
  s[5]=32768; s[6]=d[8]; s[7]=TT_Q38_RGDN_MARKER; s[24]=d[9]; s[25]=d[10]; s[26]=d[11];
  s[27]=d[11]^1; s[28]=d[15]; s[29]=
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ 3;
+#else
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  2;
 #else
  1;
 #endif
+#endif
  s[30]=d[5]; s[31]=d[7];
  for (unsigned i=0;i<8;i++) s[8+i]=*Words(0xffb20000+RGdn::CounterOffset(i));
+#ifndef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
  RGdn::Packet(0,0,d); RGdn::Packet(0,16384,d);
+#endif
  if (q38_local_recurrent_step()!=64 || !RGdn::Sealed(d) || !RGdn::Idle()) scalar_fault_park();
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ // L1 cache pages are the current recurrent state. The GDDR current slot
+ // remains the rollback authority; only a fully completed model token may
+ // publish the separately written next GDDR slot.
+ for (unsigned page=0;page<L::StatePages;page++)
+  for (unsigned word=0;word<L::StatePageBytes/4;word++)
+   Words(L::Next)[page*(L::StatePageBytes/4)+word]=Words(Words(L::StatePageTable)[page])[word];
+#endif
  // Only the private next slot is written,never the input/current state.
  // Completion is DATA ONLY;the coordinator must independently prove ALL
  // participants and its token/slot epoch BEFORE publishing a slot flip.

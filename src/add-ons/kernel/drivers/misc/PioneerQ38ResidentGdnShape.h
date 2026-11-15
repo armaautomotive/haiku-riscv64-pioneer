@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_RESIDENT_GDN_SHAPE_H
 #define PIONEER_Q38_RESIDENT_GDN_SHAPE_H
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#include "../../../../../tools/pioneer/PioneerQ38GdnL1ScatterExperimentRole.h"
+#endif
 #include "PioneerQ38SpanShape.h"
 // OFFLINE private descriptor only,NOT an ioctl,allocation,ownership or
 // initialized/read/compute capability. A future coordinator MUST bind BOTH
@@ -38,11 +41,15 @@ static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {
  return true;
 }
 static inline bool PioneerQ38ResidentGdnSummary(const uint32_t* s,const uint32_t* d,const uint32_t* before,const uint32_t* after) {
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ const unsigned reads=0,mode=3;
+#else
  const unsigned reads=
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  4,mode=2;
 #else
  2,mode=1;
+#endif
 #endif
  if (!s || !before || !after || !PioneerQ38ResidentGdnShape(d)
   || s[0]!=reads || s[1]!=reads*256 || s[2]!=2 || s[3]!=512 || s[4]!=64 || s[5]!=32768 || s[6]!=d[8] || s[7]!=TT_Q38_RGDN_MARKER

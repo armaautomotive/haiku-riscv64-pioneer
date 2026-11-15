@@ -69,7 +69,12 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   for(unsigned i=0;i<32;i++)memory[TT_Q38_GDN_INPUT_SUMMARY+i*4]=0xdeadbeef;
   for(unsigned i=0;i<32;i++)memory[0x74600+i*4]=0xdeadbeef;
   for(unsigned a:{0x63ffcU,0x68000U,0x73ffcU,0x74010U,0x741fcU,0x74380U,0x745fcU,0x74680U,
-   0x747fcU,0x74980U,0x7fffcU,0x80510U,0x807fcU,0x80900U,0x8dffcU,0x8e508U,0x8e7fcU,0x8e900U,0x8fffcU,0x98000U,0x9fffcU,0xa8000U})memory[a]=0xdecafbad;
+   0x747fcU,0x74980U,0x7fffcU,0x80510U,0x807fcU,0x80900U,0x8dffcU,0x8e508U,0x8e7fcU,0x8e900U,0x8fffcU,0x98000U,0x9fffcU,0xa8000U}) {
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   if(a==0x98000U)continue;
+#endif
+   memory[a]=0xdecafbad;
+  }
  }
  void SetDescriptors(){
   for(unsigned i=0;i<64;i++){
@@ -105,6 +110,11 @@ struct GdnRecurrentMachine:ResidentGdnImage {
  }
  void SubmitCombined(){
   unsigned p=packets++;assert(p<11);
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+  const unsigned stateReadPackets=0;
+#else
+  const unsigned stateReadPackets=2;
+#endif
   if(p<7){
    const unsigned local[]={0x80000,0x80200,0x80400,0x80800,0x80840,0x80880,0x808c0},size[]={512,512,256,64,64,64,64};
    const auto& d=inputDescriptor;
@@ -120,7 +130,8 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    counts[0]++;counts[1]+=size[p]/64;counts[2]++;counts[3]++;counts[6]++;
   }else{
    assert(prepareWrites==322 && prepareDescriptorWrites==5 && prepareHeaderWrites==32 && !returnWrites);
-   bool write=p>=9;unsigned piece=(p-7)%2,local=(write?0xa0000:0x90000)+piece*16384;
+   bool write=p>=7+stateReadPackets;unsigned piece=write?(p-7-stateReadPackets)%2:(p-7)%2;
+   unsigned local=(write?0xa0000:0x90000)+piece*16384;
    unsigned remote=descriptor[write?7:5]+piece*16384;
    const uint32_t expected[]={write?local:remote,0,write?descriptor[15]:descriptor[12],write?remote:local,0,
     write?descriptor[13]:descriptor[15],0,write?0x212U:0,16384,0};
@@ -131,11 +142,11 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    if(!StateTransfer(write,piece,local)){pending=true;return;}
    unsigned base=write?4:0;counts[base]++;counts[base+1]+=256;counts[2]++;counts[6]=counts[2];counts[base+3]++;
   }
-  if(packets==badCounter)counts[p<9?3:7]++;
-  if(packets==foreignCounter)counts[p<9?4:0]++;
+  if(packets==badCounter)counts[p<7+stateReadPackets?3:7]++;
+  if(packets==foreignCounter)counts[p<7+stateReadPackets?4:0]++;
   if(packets==sourceFault)seals[11]^=1;
   if(packets==descriptorFault)memory[(p<7?TT_Q38_GDN_INPUT_DESCRIPTOR:TT_Q38_RGDN_DESCRIPTOR)+40*4]^=1;
-  if(packets==11 && summaryFault==11)memory[TT_Q38_GDN_INPUT_SUMMARY+16*4]^=1;
+  if(packets==9+stateReadPackets && summaryFault==packets)memory[TT_Q38_GDN_INPUT_SUMMARY+16*4]^=1;
  }
  void Store(uint32_t at,uint32_t value)override{
   if(Range(at,0xffb20000,40)){
@@ -165,7 +176,12 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   while(pc!=0x64038 && pc!=0x64058)StepCombined();
   assert(minStack>=0x6e000 && l1[Index(pc)]==0x0000006f);
   for(unsigned a:{0x63ffcU,0x68000U,0x73ffcU,0x74010U,0x741fcU,0x74380U,0x745fcU,0x74680U,
-   0x747fcU,0x74980U,0x7fffcU,0x80510U,0x807fcU,0x80900U,0x8dffcU,0x8e508U,0x8e7fcU,0x8e900U,0x8fffcU,0x98000U,0x9fffcU,0xa8000U})assert(memory.at(a)==0xdecafbad);
+   0x747fcU,0x74980U,0x7fffcU,0x80510U,0x807fcU,0x80900U,0x8dffcU,0x8e508U,0x8e7fcU,0x8e900U,0x8fffcU,0x98000U,0x9fffcU,0xa8000U}) {
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   if(a==0x98000U)continue;
+#endif
+   assert(memory.at(a)==0xdecafbad);
+  }
   unsigned p=packets,reads=nocReads,w=commandWrites,ops=unit.ops,n=nextWrites,results=resultWrites,prep=prepareWrites;
   for(unsigned i=0;i<32;i++)StepCombined();
   assert(p==packets && reads==nocReads && w==commandWrites && ops==unit.ops && n==nextWrites && results==resultWrites && prep==prepareWrites);
@@ -174,7 +190,13 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   return memory.at(0x17ffc4)==64;
  }
  void Verify(){
-  assert(packets==11 && !pending && prepareWrites==322 && prepareDescriptorWrites==5 && prepareHeaderWrites==32 && returnWrites==3);
+  assert(packets==
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   9
+#else
+   11
+#endif
+   && !pending && prepareWrites==322 && prepareDescriptorWrites==5 && prepareHeaderWrites==32 && returnWrites==3);
   float qs=0,ks=0;for(unsigned i=0;i<128;i++){float q=Float(raw[i]),k=Float(raw[128+i]);qs+=q*q;ks+=k*k;}
   float qi=1.f/sqrtf(qs+1e-6f),ki=1.f/sqrtf(ks+1e-6f); // no pre-scaling:exact post-dot primitive
   for(unsigned i=0;i<128;i++)for(unsigned kind=0;kind<2;kind++){
@@ -189,7 +211,15 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    if(expected[i]>=double(Float(0x00800000)))assert(actual>0 && fabs(actual-expected[i])<=3e-6*expected[i]);else assert(actual==0);
   }
   DeltaVectorImage::Verify(); // independent scalar FP32 checks ALL8192next+64output bits
-  for(unsigned i=0;i<8192;i++)assert(prior[i]==memory.at(0x90000+i*4) && next[i]==memory.at(0xa0000+i*4));
+  for(unsigned i=0;i<8192;i++){
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   const unsigned page=i/1024,word=i%1024;const uint32_t address=memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
+   assert(next[i]==memory.at(address));
+#else
+   assert(prior[i]==memory.at(0x90000+i*4));
+#endif
+   assert(next[i]==memory.at(0xa0000+i*4));
+  }
   // Independently observe the checkpoint's TRANSPOSED [head][value][key]
   // layout,not a second key-major primitive. No checkpoint/reference bytes
   // were supplied to the image;this happens strictly AFTER its terminal.
@@ -223,7 +253,11 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   assert(PioneerQ38GdnInputSummary(prep,inputDescriptor.data(),initialCounts,step+8)
    && PioneerQ38ResidentGdnSummary(step,descriptor.data(),step+8,counts));
 #endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+  const unsigned delta[]={7,24,9,7,2,512,9,2};
+#else
   const unsigned delta[]={9,536,11,9,2,512,11,2};
+#endif
   for(unsigned i=0;i<8;i++)assert(prep[16+i]==step[8+i] && uint32_t(counts[i]-initialCounts[i])==delta[i]);
   for(unsigned i=0;i<64;i++)assert(memory.at(TT_Q38_GDN_INPUT_DESCRIPTOR+i*4)==inputDescriptor[i] && memory.at(TT_Q38_RGDN_DESCRIPTOR+i*4)==descriptor[i]);
  }
@@ -251,11 +285,25 @@ int main(int argc,char** argv){
   std::array<uint32_t,8192> carry={};
   for(unsigned token=0;token<16;token++){
    GdnRecurrentMachine m(argv[1],*canonical,0,half,token%7,1+token);
-   m.prior=carry;assert(m.Run());m.Verify();carry=m.next;positive++;
+   m.prior=carry;m.initialState.assign(carry.begin(),carry.end());
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+   for(unsigned i=0;i<carry.size();i++){
+    const unsigned page=i/1024,word=i%1024;
+    const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
+    m.memory[address]=carry[i];
+   }
+#endif
+   assert(m.Run());m.Verify();carry=m.next;positive++;
   }
  }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ const unsigned totalPackets=9;
+ printf("PASS ACTUAL OFFLINE QRJ1 scattered-state combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains/ALL8256bits exact+transposed-checkpoint-observer;rawQKV+originalA-dt->QK/gates->L1-cache state->SFPU->transactional NEXT,9packets7reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
+#else
+ const unsigned totalPackets=11;
  printf("PASS ACTUAL OFFLINE QRJ1 combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains/ALL8256bits exact+transposed-checkpoint-observer;rawQKV+originalA-dt->QK/gates->CURRENTstate->SFPU->NEXT,11packets9reads2writes/NO host stage boundary;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
- for(unsigned kind=0;kind<5;kind++)for(unsigned packet=1;packet<=11;packet++){
+#endif
+ for(unsigned kind=0;kind<5;kind++)for(unsigned packet=1;packet<=totalPackets;packet++){
   GdnRecurrentMachine m(argv[1],*canonical,0,95,6);
   if(!kind)m.failPacket=packet;if(kind==1)m.badCounter=packet;if(kind==2)m.foreignCounter=packet;
   if(kind==3)m.sourceFault=packet;if(kind==4)m.descriptorFault=packet;
@@ -275,10 +323,10 @@ int main(int argc,char** argv){
 #endif
   m.SetDescriptors();assert(!m.Run() && !m.packets && !m.nocReads && !m.unit.ops && !m.nextWrites);negative++;
  }
- for(unsigned word=1;word<=110;word++){
+ for(unsigned word=1;word<=totalPackets*10;word++){
   GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.dropCommand=word;assert(!m.Run() && m.packets==(word-1)/10);negative++;
  }
- for(unsigned packet:{7U,11U}){
+ for(unsigned packet:{7U,totalPackets}){
   GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.summaryFault=packet;assert(!m.Run() && m.packets==packet);negative++;
  }
  for(unsigned field=1;field<=8;field++){
@@ -286,9 +334,23 @@ int main(int argc,char** argv){
   assert(!m.Run() && m.packets==7 && !m.unit.ops && !m.nextWrites);negative++;
  }
  for(unsigned at:{0U,8191U}){
-  GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.prior[at]=0x7fc00000;
-  assert(!m.Run() && m.packets==9 && !m.unit.ops && !m.nextWrites);negative++;
+  GdnRecurrentMachine m(argv[1],*canonical,0,95,6);
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+  {const unsigned page=at/1024,word=at%1024;const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;m.memory[address]=0x7fc00000;}
+  const unsigned stateReads=0;
+#else
+  m.prior[at]=0x7fc00000;const unsigned stateReads=2;
+#endif
+  assert(!m.Run() && m.packets==7+stateReads && !m.unit.ops && !m.nextWrites);negative++;
  }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ for(unsigned bad=0;bad<4;bad++){
+  GdnRecurrentMachine m(argv[1],*canonical,0,95,6);const unsigned table=uint32_t(L::StatePageTable);
+  const uint32_t valid=m.memory.at(table);
+  m.memory[table+(bad==0?0:bad==1?4:bad==2?8:12)]=bad==0?m.memory.at(table+4):bad==1?valid+1:bad==2?0x180000:0x80000;
+  assert(!m.Run() && m.packets==7 && !m.unit.ops && !m.nextWrites);negative++;
+ }
+#endif
  printf("PASS ACTUAL OFFLINE QRJ1 faults%u:all11timeouts/counters/sources/descriptors,7rawpoison,ALLpaired-descriptorbits,110command-readback-corruptions,8boundary-counter-faultsBEFOREstateread,seam-summary+nonfinite-state;inertfaultNO laterNoC/SFPU/publication;NO initialized/native/current-stateauthority\n",negative);
 }
 #endif
