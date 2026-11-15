@@ -66,3 +66,44 @@ Focused arithmetic regression rerun (2026-11-15)
 exact byte/panel cases and four invalid-schedule refusals. This independently
 rechecks macro-Q4 arithmetic only; it does not validate SFPNOP timing, a full
 model answer, device behavior or throughput.
+
+Launch-path fix and bounded physical attempt (2026-11-15)
+---------------------------------------------------------
+
+The first staged attempt exited before trial admission because the detached
+launcher created `direct-launcher.pid` with mode 0644, while the reviewed
+parent requires a private 0600 PID file. No driver exchange occurred on that
+attempt. Added `umask 077` before the launcher creates any marker/output, and
+added a regression assertion that the umask precedes PID-file creation. The
+tag101 parent test passed again, including the existing 54-case and 120-case
+fake-endpoint suites; shell syntax checks also passed.
+
+A fresh isolated stage passed the read-only admission gate: stable tag20261021
+generation2, no quarantine or owner, 64 CPUs, 137034936320-byte RAM maximum,
+and all candidate/runtime/model hashes matched. The guarded one-shot then
+exchanged to candidate tag20261115 generation3. Its live output showed the
+whole 18500.4 MiB model transfer complete and explicitly entered P100A-only
+inference (`CPU inference OFF`). The first read-only count observation was
+`committed0 prompts31 limit62`; it did not advance for over 30 minutes while
+the Haiku host remained SSH-responsive. A driver-status query blocked behind
+the active request. No generated answer, completed request, or valid tokens/s
+measurement was obtained. This is a failed/hung full-model prompt execution,
+not a performance result; the 20 tok/s target remains unmet.
+
+The run was stopped with one authorized seven-second relay OFF hold, followed
+by one ON pulse after three minutes offline. Linux cold-booted successfully
+and was verified with the pre-pinned Linux SSH host key. It reports 64 CPUs,
+131976904 kB MemTotal, ext4 root on NVMe, and P100A PCI ID 1e52:b140. Linux's
+read-only `journalctl --verify` passed the stored journal files; the current
+boot did log an rsyslog `sd_journal_next(): Bad message` and journald rotated
+an old system journal, so the journal warning is recorded rather than hidden.
+
+For log recovery, the Haiku Samsung BeFS partition was mounted read-only only.
+Linux's BeFS driver emitted `ag_shift disagrees with blocks_per_ag` and a
+failed B-tree lookup; recently written stage contents read back as unrelated
+binary data. Those disk-readback logs are therefore not used as evidence, and
+the volume was not mounted writable. The live SSH observations above remain
+the trustworthy record. No candidate driver was left running after the cold
+power cycle; Linux is currently the active OS. Further tag101 hardware work
+requires returning to Haiku through a boot path whose pinned identity and
+current device layout pass their guards. Do not bypass SSH host-key checking.
