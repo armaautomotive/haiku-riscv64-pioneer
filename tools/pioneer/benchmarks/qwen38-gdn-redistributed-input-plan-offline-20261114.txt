@@ -1,0 +1,36 @@
+Pioneer Qwen 3.8 redistributed GDN input-plan evidence — 2026-11-14
+
+Status: offline DATA-plan and emitted-image evidence only. No hardware was
+accessed, and no native/Work mode or performance result is claimed.
+
+PioneerQ38GdnInputPlan now has an opt-in BuildRedistributed/MatchesRedistributed
+pair. It retains the current logical task, tensor geometry, source/bank fields,
+and legacy descriptor convention while placing the authenticated destination
+peer from PioneerQ38GdnTaskPlacement into the descriptor. Learned-page checks
+accept either descriptor shape. Existing Build/Matches semantics are intact;
+the selected route equals the legacy peer where the placement map naturally
+overlaps (notably the first recurrent layer).
+
+Evidence
+--------
+* Host ASan/UBSan data-plan test: 4,608 assignments passed across 48
+  recurrent layers and 96 logical half-heads, including route-map shape,
+  unchanged non-route fields, learned-page checks, and all 64 legacy-field
+  mutations.
+* Built QGI1 emitted input image: code SHA-256
+  bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1;
+  boot SHA-256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
+* Emitted-image simulation passed 96 positive cases and 1,261 injected
+  faults. This tests the existing QGI1 image, not 119-peer device execution.
+
+The full native driver compile-only gate did not reach the modified plan: its
+preflight failed first because the pinned historical baseline digest for
+tenstorrent_pci_probe-driver55 does not match the generated baseline. The
+redistributed plan has therefore not been validated in a full native-driver
+build or selected at runtime.
+
+Remaining integration work includes route-aware recurrent-state descriptors,
+the physical-peer-to-logical-task mapping through stage/launch/receipt,
+per-peer L1 page ownership, 119-peer participation, whole-token cache
+commit/rollback, and hardware correctness/performance measurement. The
+default 96-peer path remains unchanged.

@@ -113,12 +113,25 @@ static void GdnInputPlans(){
   unsigned b=d[14]*unsigned(canonical->Capacity/4096)+(d[15]-canonical->Base)/4096;
   pages[a]=pages[b]=1;assert(p.LearnedPagesPresent(pages.data(),unsigned(pages.size())));
   pages[b]=2;assert(!p.LearnedPagesPresent(pages.data(),unsigned(pages.size())));pages[a]=pages[b]=0;total++;
+  PioneerQ38GdnInputPlan redistributed;
+  assert(redistributed.BuildRedistributed(*canonical,layer,half,8191,bank,id,source,17)
+   && redistributed.MatchesRedistributed(*canonical,layer,half,8191,bank,id,source,17));
+  const auto* rd=redistributed.Descriptor();uint32_t ordinal=0;PioneerQ38GdnTaskPlacement::Route route={};
+  assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal)
+   && PioneerQ38GdnTaskPlacement::Map(ordinal,half,route)
+   && rd[9]==route.peer && rd[10]==half+1 && PioneerQ38GdnRedistributedInputShape(rd));
+  assert(redistributed.Matches(*canonical,layer,half,8191,bank,id,source,17)
+   ==(route.peer==p.Descriptor()[9]));
+  for(unsigned i=0;i<64;i++)if(i!=9)assert(rd[i]==p.Descriptor()[i]);
+  assert(redistributed.LearnedPagesPresent(pages.data(),unsigned(pages.size()))==false);
+  pages[a]=pages[b]=1;assert(redistributed.LearnedPagesPresent(pages.data(),unsigned(pages.size())));
+  pages[a]=pages[b]=0;
  }
  for(unsigned i=0;i<64;i++){
   PioneerQ38GdnInputPlan p;assert(p.Build(*canonical,0,0,0,0,id,source,17));const_cast<uint32_t*>(p.Descriptor())[i]^=1;
   assert(!p.Matches(*canonical,0,0,0,0,id,source,17));
  }
- printf("PASS QGI1 canonical DATA plans%u/all48layers/96halves/7banks/A-dtpage-ledger/64fieldmutations;NOT native or producer authority\n",total);
+ printf("PASS QGI1 canonical+119-peer redistributed DATA plans%u/all48layers/96halves/7banks/route-matched peers/A-dtpage-ledger/64fieldmutations;NOT native or producer authority\n",total);
 }
 #ifndef PIONEER_Q38_GDN_INPUT_MACHINE_ONLY
 int main(int argc,char** argv){

@@ -4,6 +4,7 @@
 #include "PioneerQ38CanonicalModelPlan.h"
 #include "PioneerQ38GdnIdentity.h"
 #include "PioneerQ38GdnInputShape.h"
+#include "PioneerQ38ResidentGdnRedistributedShape.h"
 // Canonical DATA factory only. Future SAME native owner must bind actual
 // retained QCB1/QPS1 producers,bank/source/upload/clock/initialization owners.
 class PioneerQ38GdnInputPlan {
@@ -46,6 +47,19 @@ public:
   attempted=true;plan=&canonical;
   ready=Describe(canonical,layer,half,position,bank,id,source,phase,descriptor);return ready;
  }
+ // Route-aware DATA factory for the experimental 119-peer GDN placement.
+ // It changes only the authenticated destination peer; task/input geometry
+ // and the legacy Build() contract remain unchanged. This grants no launch,
+ // state allocation, or hardware-access authority.
+ bool BuildRedistributed(const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned half,
+  unsigned position,unsigned bank,const PioneerQ38GdnIdentity& id,const uint32_t* source,unsigned phase){
+  if(!Build(canonical,layer,half,position,bank,id,source,phase))return false;
+  uint32_t ordinal=0;PioneerQ38GdnTaskPlacement::Route route={};
+  if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal)
+   || !PioneerQ38GdnTaskPlacement::Map(ordinal,half,route))return ready=false;
+  descriptor[9]=route.peer;
+  ready=PioneerQ38GdnRedistributedInputShape(descriptor);return ready;
+ }
  bool Matches(const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned half,unsigned position,unsigned bank,
   const PioneerQ38GdnIdentity& id,const uint32_t* source,unsigned phase)const{
   if(!ready || plan!=&canonical)return false;
@@ -53,8 +67,21 @@ public:
   for(unsigned i=0;i<64;i++)if(current[i]!=descriptor[i])return false;
   return true;
  }
+ bool MatchesRedistributed(const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned half,
+  unsigned position,unsigned bank,const PioneerQ38GdnIdentity& id,const uint32_t* source,unsigned phase)const{
+  if(!ready || plan!=&canonical)return false;
+  uint32_t current[64],ordinal=0;PioneerQ38GdnTaskPlacement::Route route={};
+  if(!Describe(canonical,layer,half,position,bank,id,source,phase,current)
+   || !PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal)
+   || !PioneerQ38GdnTaskPlacement::Map(ordinal,half,route))return false;
+  current[9]=route.peer;
+  if(!PioneerQ38GdnRedistributedInputShape(current))return false;
+  for(unsigned i=0;i<64;i++)if(current[i]!=descriptor[i])return false;
+  return true;
+ }
  bool LearnedPagesPresent(const uint8_t* pages,unsigned count)const{
-  if(!ready || !pages || count!=PioneerResidentBanks::Pages || !PioneerQ38GdnInputShape(descriptor))return false;
+  if(!ready || !pages || count!=PioneerResidentBanks::Pages
+   || (!PioneerQ38GdnInputShape(descriptor) && !PioneerQ38GdnRedistributedInputShape(descriptor)))return false;
   for(unsigned i=0;i<2;i++){
    unsigned at=descriptor[i?14:11]*unsigned(plan->Capacity/4096)+(descriptor[i?15:12]-plan->Base)/4096;
    if(pages[at]!=1)return false;
