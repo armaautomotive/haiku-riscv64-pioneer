@@ -7,6 +7,7 @@
 #ifndef PIONEER_Q38_GDN_L1_CACHE_CAPACITY_INSPECTION_H
 #define PIONEER_Q38_GDN_L1_CACHE_CAPACITY_INSPECTION_H
 #include "PioneerQ38TokenPushedFootprint.h"
+#include "PioneerQ38GdnL1WorkerFootprint.h"
 #include <stdint.h>
 namespace PioneerQ38GdnL1CacheCapacityInspection {
 enum {L1Bytes=0x180000,BlockBytes=64,Blocks=L1Bytes/BlockBytes,
@@ -26,6 +27,7 @@ static inline bool Free(unsigned worker,uint32_t address,uint32_t bytes)
   const uint32_t spanBytes=s.words*4;
   if(address<s.address+spanBytes && s.address<address+bytes)return false;
  }
+ if(PioneerQ38GdnL1WorkerFootprint::Overlaps(address,bytes))return false;
  return true;
 }
 static inline bool Build(unsigned worker,Slot* out,unsigned capacity,unsigned& count)
@@ -37,6 +39,13 @@ static inline bool Build(unsigned worker,Slot* out,unsigned capacity,unsigned& c
   const auto s=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
   const uint32_t first=s.address/BlockBytes;
   const uint32_t end=(s.address+s.words*4+BlockBytes-1)/BlockBytes;
+  if(end>Blocks)return false;
+  for(uint32_t b=first;b<end;b++)reserved[b]=true;
+ }
+ for(unsigned i=0;i<PioneerQ38GdnL1WorkerFootprint::RangeCount();i++){
+  const auto range=PioneerQ38GdnL1WorkerFootprint::GetRange(i);
+  const uint32_t first=range.begin/BlockBytes;
+  const uint32_t end=(range.begin+range.bytes+BlockBytes-1)/BlockBytes;
   if(end>Blocks)return false;
   for(uint32_t b=first;b<end;b++)reserved[b]=true;
  }
@@ -62,6 +71,13 @@ static inline bool BuildPages(unsigned worker,uint32_t* out,unsigned capacity,un
  for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
   const auto s=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
   const uint32_t first=s.address/BlockBytes,end=(s.address+s.words*4+BlockBytes-1)/BlockBytes;
+  if(end>Blocks)return false;
+  for(uint32_t b=first;b<end;b++)reserved[b]=true;
+ }
+ for(unsigned i=0;i<PioneerQ38GdnL1WorkerFootprint::RangeCount();i++){
+  const auto range=PioneerQ38GdnL1WorkerFootprint::GetRange(i);
+  const uint32_t first=range.begin/BlockBytes;
+  const uint32_t end=(range.begin+range.bytes+BlockBytes-1)/BlockBytes;
   if(end>Blocks)return false;
   for(uint32_t b=first;b<end;b++)reserved[b]=true;
  }

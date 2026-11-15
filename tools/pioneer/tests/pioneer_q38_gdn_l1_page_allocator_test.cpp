@@ -36,7 +36,7 @@ int main()
 				assert(PioneerQ38GdnL1CacheCapacityInspection::BuildPages(
 					route.physicalWorker,canonicalPages,
 					PioneerQ38GdnL1CacheCapacityInspection::MaxPages,canonicalCount));
-				assert(canonicalCount>=25*8);
+				assert(canonicalCount==201);
 				resident++;
 				// The worker's warm path skips the two 16-KiB GDDR reads
 				// for this 32-KiB recurrent state. This is transfer accounting,
@@ -58,6 +58,7 @@ int main()
 						assert(table.pages[page]+4096<=s.address
 							|| s.address+s.words*4<=table.pages[page]);
 					}
+					assert(!PioneerQ38GdnL1WorkerFootprint::Overlaps(table.pages[page],4096));
 				}
 			}else{
 				spill++;
@@ -87,17 +88,19 @@ int main()
 				assert(PioneerQ38GdnL1CacheCapacityInspection::BuildPages(
 					logicalWorker+1,canonicalPages,
 					PioneerQ38GdnL1CacheCapacityInspection::MaxPages,canonicalCount));
-				assert(canonicalCount>=25*8);currentResident++;
+				assert(canonicalCount==201);currentResident++;
 				for(unsigned page=0;page<8;page++){
 					assert(table.pages[page]==canonicalPages[layerOrdinal*8+page]);
 					assert(table.pages[page]>=PioneerQ38GdnL1PageAllocator::WorkerStateMinimum
 						&& (table.pages[page]&4095)==0 && table.pages[page]<=0x17f000);
+					assert(!PioneerQ38GdnL1WorkerFootprint::Overlaps(table.pages[page],4096));
 				}
 			}else{
 				currentSpill++;
 				for(unsigned page=0;page<8;page++)assert(!table.pages[page]);
 			}
 		}
+	assert(PioneerQ38GdnL1WorkerFootprint::Overlaps(0xb0000,4096));
 	assert(currentResident==2400 && currentSpill==2208);
 	PioneerQ38GdnL1PageAllocator::PageTable out={};
 	assert(!allocator.Resolve(0,0,out) && !allocator.Resolve(120,0,out)

@@ -1,0 +1,68 @@
+Qwen3.8 GDN L1 cache: joint worker-footprint correction
+=======================================================
+2026-11-15. Offline-only memory-layout and emitted-worker tests. Nothing was
+staged, installed, or run on the Pioneer. The best qualified complete-model
+rate remains about 0.1728 tokens/sec; the 20 tokens/sec target is unmet.
+
+Bug found
+---------
+The prepared-Q4 QTP3 snapshot leaves an address gap at `0xac000..0xb8000`.
+Snapshot-only page enumeration therefore included page `0xb0000`. The
+scattered GDN worker's fixed Query/Key/Value/Decay/Beta/Output scratch lives
+on that same page. The worker already rejects overlapping page tables, so
+some allocator-produced resident mappings would be refused before their
+first NoC/SFPU operation. The prior page-capacity test only checked the saved
+snapshot spans and did not model this complete active worker footprint.
+
+Correction
+----------
+Added `PioneerQ38GdnL1WorkerFootprint` as shared layout metadata. It reserves
+the worker's 32-KiB code window, bounded stack, descriptor/page table, prior
+and next state buffers, and all Q/K/V/gate/output scratch ranges. Both the
+native page allocator and offline capacity inspector use that same exclusion
+predicate. The allocator now skips the conflicting page; it still has 201
+usable 4-KiB pages per peer, enough for 25 eight-page state halves with one
+page left over. Resident/spill geometry is unchanged: current 96-worker
+mapping 2,400/2,208, alternate 119-peer map 2,975/1,633.
+
+Validation
+----------
+1. `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_page_allocator_tests.sh
+   /Volumes/HaikuBuildLocal/generated.riscv64`
+   passed under ASan/UBSan, including exact 201-page count, all allocated
+   pages disjoint from the full fixed worker footprint, current and alternate
+   route maps, descriptor cases, and native-role cross-compile. Maximum frame
+   was 1,648 bytes (<=2,048).
+2. `sh tools/pioneer/tests/run_pioneer_q38_gdn_recurrent_redistributed_scattered_image_tests.sh
+   /Volumes/HaikuBuildLocal/generated.riscv64 --no-gddr-writeback`
+   passed with the actual allocator tables consumed by the emitted worker:
+   318 resident/37 spill routes in the exercised cohort; 161 positive image
+   cases and 4,137 injected fault cases; all 8,256 state/output words exact
+   across the checked chains. Image code SHA-256
+   `19323a59e2e339d9f37a91153427722f3f3f6b44a43248347dc7221da22dfc06`,
+   boot SHA-256
+   `d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6`.
+3. `python3 tools/pioneer/tests/run_pioneer_q38_token_startup_native_compile.py
+   --scattered-cache /Volumes/HaikuBuildLocal/generated.riscv64
+   /private/tmp/pioneer-q38-startup-scattered-scratch-audit-20261115`
+   passed the RISC-V C++11 scattered-cache startup DATA compile. This is
+   compile-only, not a selected native driver or device run.
+
+The worker emulator also reports write-through vs L1-authoritative state
+operation counts of 25,001,329 vs 19,061,359 (23.76% fewer simulated RV32
+instructions) and 866 vs 676 packets in the tested layer-40/96-half cohort.
+These counts demonstrate only the fixture's reduced software/packet work;
+they are not silicon cycles, elapsed time, model tokens/sec, or proof that the
+L1-authoritative mode is safe to select in the model runtime.
+
+Remaining correctness/performance gates
+---------------------------------------
+* Integrate page-cache authority with the outer model token/slot epoch. A
+  failed/incomplete token must not expose partially updated L1 state; accepted
+  state must survive later token failure and defined restart/replay behavior.
+* Prove full model-phase L1 live ranges and concurrent ownership with the
+  actual selected driver image; the current exact source mapping is still a
+  candidate layout, not a native allocation proof.
+* Run one distinct, authenticated physical recurrent trial, then a matched
+  full-model request and phase profile. The SSH host-key mismatch remains an
+  independent gate. No throughput improvement is claimed.

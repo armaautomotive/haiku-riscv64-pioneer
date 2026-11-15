@@ -1,6 +1,21 @@
 Qwen3.8 recurrent L1 state-residency feasibility plan, November 14, 2026
 =======================================================================
 
+Update, 2026-11-15: the complete current GDN-worker live-range audit found
+that snapshot-only page selection admitted page `0xb0000`, which aliases the
+worker's Q/K/V/output scratch. The worker's descriptor-side `StatePages`
+guard rejects that page, so that map was not actually usable as built. The
+shared `PioneerQ38GdnL1WorkerFootprint` now excludes the code, stack,
+descriptor, prior/next state buffers, and Q/K/V/decay/beta/output ranges in
+both the allocator and its independent capacity inspector. This reserves one
+extra page: 201 available pages remain, still enough for 25 complete 32-KiB
+state halves per peer. Current 96-worker capacity remains 2,400 resident and
+2,208 spill halves; alternate 119-peer capacity remains 2,975/1,633.
+Address-sanitized allocator tests and the emitted scattered-worker integration
+suite pass with the corrected map. These remain offline tests; they do not
+prove real L1 residency, token-commit safety, or a speedup. Current details:
+`qwen38-gdn-l1-joint-footprint-offline-20261115.txt`.
+
 This is a static placement experiment, not an implementation, device run, or
 speed claim. The current qualified full-card path remains tag92 vector-Q4 at
 0.172813448..0.172816755 tokens/sec. The independently checked tag99 profile

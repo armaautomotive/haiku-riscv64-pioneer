@@ -9,6 +9,7 @@
 
 #include "PioneerQ38GdnTaskPlacement.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenPushedFootprint.h"
+#include "../../../../../tools/pioneer/PioneerQ38GdnL1WorkerFootprint.h"
 
 // Deterministic page map for the prepared-Q4 QTP3 image. This is heap-only
 // native metadata: it derives addresses outside the complete per-tile saved
@@ -49,6 +50,7 @@ private:
 			|| address<WorkerStateMinimum
 			|| (address&(PageBytes-1)) || address>L1Bytes-PageBytes)
 			return false;
+		if(PioneerQ38GdnL1WorkerFootprint::Overlaps(address,PageBytes))return false;
 		for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
 			const auto span=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
 			const uint32_t bytes=span.words*4;
