@@ -17,25 +17,29 @@ struct RecurrentBlockMachine:NewCohortMachine {
  std::unique_ptr<PioneerQ38MixedRecurrentBlockPlan> block=std::make_unique<PioneerQ38MixedRecurrentBlockPlan>();
  std::unique_ptr<PioneerQ38RedistributedGdnPlan> routedGdn;
  bool redistributed=false;
+ unsigned layer=0;
  std::array<uint32_t,128> outer={};unsigned matrixStarts=0,matrixChecks=0,observed=0,finalWords=0;
  unsigned initialNorm=0,postNorm=0,activationChecks=0,gatedChecks=0,numericCohortChecks=0;
  unsigned outerFaultPacket=0,rootBootFaultPacket=0,stopJobs=0,stopStarts=0;
  uint32_t peerCounterBaseline[119][8]={}; // observed physical registers,never private completion state
- RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false,bool zeroCurrent=false,bool useRedistributed=false):NewCohortMachine(image,worker,false,virgin),redistributed(useRedistributed){
+ bool ExpectedGdnWorker(unsigned workerZero)const override{
+  return redistributed?(routedGdn && routedGdn->Active(workerZero+1)):workerZero<96;
+ }
+ RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false,bool zeroCurrent=false,bool useRedistributed=false):NewCohortMachine(image,worker,false,virgin),redistributed(useRedistributed),layer(useRedistributed?1U:0U){
   std::array<uint32_t,1920> sources;for(unsigned i=0;i<16;i++)sources[i]=source[i];
   for(unsigned w=0;w<119;w++){
    for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->source[i];
    for(unsigned i=0;i<8;i++)peerCounterBaseline[w][i]=child[w]->Count(i);
   }
   const auto* workspace=canonical->Workspace(0);unsigned input=canonical->Base+workspace->offset+0x600000;
-  assert(block->Build(*canonical,0,0,0,0,0,1001,1,{1,2,3,4},sources.data(),0,input) && block->Matches(*canonical));
+  assert(block->Build(*canonical,layer,0,0,0,0,1001,1,{1,2,3,4},sources.data(),0,input) && block->Matches(*canonical));
   if(redistributed){
    routedGdn=std::make_unique<PioneerQ38RedistributedGdnPlan>();
-   assert(routedGdn->Build(*canonical,0,0,0,0,1005,1,{1,2,3,4},sources.data()));
+   assert(routedGdn->Build(*canonical,layer,0,0,0,1005,1,{1,2,3,4},sources.data()));
    for(unsigned logical=0;logical<96;logical++){
     PioneerQ38GdnTaskPlacement::Route route={},sibling={};
-    assert(PioneerQ38GdnTaskPlacement::Map(0,logical,route)
-     && PioneerQ38GdnTaskPlacement::Map(0,logical^1,sibling));
+    assert(PioneerQ38GdnTaskPlacement::Map(layer,logical,route)
+     && PioneerQ38GdnTaskPlacement::Map(layer,logical^1,sibling));
     child[route.physicalWorker-1]->peer=child[sibling.physicalWorker-1].get();
    }
   }
@@ -178,8 +182,13 @@ struct RecurrentBlockMachine:NewCohortMachine {
    double expected=double(sum)/(1+exp(-double(sum))),actual=Float(Get(d[8],d[4]+d[43]+c*4));assert(isfinite(actual) && fabs(actual-expected)<=3e-6*(1+fabs(expected)));
    for(unsigned t=0;t<3;t++)assert(Get(d[8],d[4]+d[42]+(c*3+t)*4)==(t==2?Get(d[8],d[4]+d[45]+c*4):Get(d[41],d[15]+(c*3+t+1)*4)));
   }
-  for(unsigned w=0;w<96;w++){auto& p=*child[w];assert(!p.active);p.VerifyGdn(p.sequence);
-   for(unsigned i=0;i<64;i++)assert(Get(p.gated[8],p.gated[4]+p.gated[43]+i*4)==p.gatedOutput[i]);}
+  unsigned activeGdn=0;
+  for(unsigned w=0;w<119;w++){
+   if(redistributed?!routedGdn->Active(w+1):w>=96)continue;
+   auto& p=*child[w];assert(!p.active);p.VerifyGdn(p.sequence,redistributed);activeGdn++;
+   for(unsigned i=0;i<64;i++)assert(Get(p.gated[8],p.gated[4]+p.gated[43]+i*4)==p.gatedOutput[i]);
+  }
+  assert(activeGdn==96);
   numericCohortChecks++;puts("PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic");
  }
  void Submit()override{
@@ -229,7 +238,15 @@ struct RecurrentBlockMachine:NewCohortMachine {
  }
  bool WaitBlock(unsigned n){
   while(pc!=0x4009c && !(pc==0x4004c && memory.at(RB::Status+4)==n))Step();
-  if(pc==0x4009c){fprintf(stderr,"QRB1_FAULT phase%u matrices%u Conv%u GDN%u packets%u SP%x\n",Phase(),matrixStarts,convStarts,gdnStarts,packets,regs[2]);return false;}
+  if(pc==0x4009c){fprintf(stderr,"QRB1_FAULT phase%u matrices%u Conv%u GDN%u packets%u SP%x\n",Phase(),matrixStarts,convStarts,gdnStarts,packets,regs[2]);
+   if(redistributed){unsigned shown=0;for(unsigned w=0;w<119 && shown<6;w++)if(routedGdn->Active(w+1)
+    && (child[w]->GdnFaulted() || !child[w]->GdnFinished(child[w]->sequence))){
+    fprintf(stderr,"QRB1_ROUTED_WORKER%u pc%x ra%x seq%u active%d fault%d status%x gdnPhase%u packets%u polls%u input(layer%u logical%u peer%x) state(layer%u logical%u peer%x) job(op%u worker%u)\n",
+     w+1,child[w]->pc,child[w]->regs[1],child[w]->sequence,child[w]->active,child[w]->GdnFaulted(),
+     child[w]->memory.at(M::Status+8),child[w]->gdnPhase,child[w]->gdnPackets,child[w]->gdnPolls,
+     child[w]->input[5],child[w]->input[7],child[w]->input[9],child[w]->state[10],child[w]->state[9],child[w]->state[15],
+     child[w]->memory.at(M::Job+8),child[w]->memory.at(M::Job+11*4));shown++;}}
+   return false;}
   return true;
  }
  void BeforeSubmit(unsigned phase,unsigned remote,bool write){
@@ -252,22 +269,31 @@ struct RecurrentBlockMachine:NewCohortMachine {
    && memory.at(RB::Original+i*4)==memory.at(RB::OriginalCopy+i*4));
   unsigned counterRefusals=0;
   for(unsigned w=0;w<119;w++){
-   auto& p=*child[w];assert(!p.active && p.sequence==initial[w]+PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w));
+   auto& p=*child[w];const bool gdnActive=redistributed?routedGdn->Active(w+1):w<96;
+   int runDelta=int(PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w));
+   if(redistributed)runDelta+=gdnActive?(w<96?0:1):(w<96?-1:0);
+   assert(!p.active && p.sequence==initial[w]+unsigned(runDelta));
    uint32_t actual[8],beforeDown[8];for(unsigned i=0;i<8;i++){
     actual[i]=p.Count(i);beforeDown[i]=p.memory.at(0x83f00+i*4);
     assert(p.memory.at(0x83f00+(8+i)*4)==actual[i]);
    }
    unsigned polls=UINT32_MAX,priorPolls=UINT32_MAX;
-   assert(PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],actual,false,polls)
-    && PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],beforeDown,true,priorPolls)
-    && polls==priorPolls && polls==(w<96?p.gdnPolls:0));
+   const bool proved=redistributed
+    ?PioneerQ38RecurrentBlockRoutedCounterProof(*block,*canonical,w+1,gdnActive,peerCounterBaseline[w],actual,false,polls)
+      && PioneerQ38RecurrentBlockRoutedCounterProof(*block,*canonical,w+1,gdnActive,peerCounterBaseline[w],beforeDown,true,priorPolls)
+    :PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],actual,false,polls)
+      && PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],beforeDown,true,priorPolls);
+   assert(proved
+    && polls==priorPolls && polls==(gdnActive?p.gdnPolls:0));
    // Correlate the production DATA helper with ALL actual emitted matrix,
    // Conv and GDN packets and the real final-job receipt. The helper is
    // never a substitute for current source/status/STOP/lifetime checks.
    for(unsigned i=0;i<8;i++){
     actual[i]++;unsigned unchanged=0xa55aa55a;
-    assert(!PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],actual,false,unchanged)
-     && unchanged==0xa55aa55a);actual[i]--;counterRefusals++;
+   const bool refused=redistributed
+    ?!PioneerQ38RecurrentBlockRoutedCounterProof(*block,*canonical,w+1,gdnActive,peerCounterBaseline[w],actual,false,unchanged)
+    :!PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],actual,false,unchanged);
+   assert(refused && unchanged==0xa55aa55a);actual[i]--;counterRefusals++;
    }
   }
   printf("PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/%u channel refusals;NOT native STOP/cleanup authority\n",counterRefusals);
@@ -332,13 +358,20 @@ static unsigned LateRefusals(RecurrentBlockMachine& m){
 }
 #ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_MACHINE_ONLY
 int main(int argc,char** argv){
-	assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--faults") || !strcmp(argv[3],"--full") || !strcmp(argv[3],"--late") || !strcmp(argv[3],"--redistributed"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
+	assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--faults") || !strcmp(argv[3],"--full") || !strcmp(argv[3],"--late") || !strcmp(argv[3],"--redistributed") || !strcmp(argv[3],"--redistributed-cohort"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  puts("START QRB1 actual whole recurrent chain/SAME119/NO supplied intermediate products;synthetic raw learned/hidden/prior-state bytes,NOT hardware");
-	const bool routed=argc==4 && !strcmp(argv[3],"--redistributed");
+	const bool routed=argc==4 && (!strcmp(argv[3],"--redistributed") || !strcmp(argv[3],"--redistributed-cohort"));
 	auto m=std::make_unique<RecurrentBlockMachine>(argv[1],argv[2],false,false,routed);assert(m->WaitBlock(0));
- unsigned faults=argc==4 && strcmp(argv[3],"--late")?Refusals(*m):0;
+	unsigned faults=argc==4 && strcmp(argv[3],"--late") && strcmp(argv[3],"--redistributed-cohort")?Refusals(*m):0;
  if(argc==4 && !strcmp(argv[3],"--faults")){printf("PASS QRB1 initial fault cases%u;positive whole chain deliberately NOT run\n",faults);return 0;}
  m->memory[RB::Doorbell]=1;
+	if(argc==4 && !strcmp(argv[3],"--redistributed-cohort")){
+	 while(m->pc!=0x4009c && m->Phase()!=7)m->Step();
+	 if(m->pc==0x4009c){m->WaitBlock(1);return 1;}
+	 m->VerifyCohort();
+	 printf("PASS QRB1 routed recurrent layer%u wraps 96 tasks across physical workers1..73+97..119;NOT full root/model/TPS\n",m->layer);
+	 return 0;
+	}
  if(argc==4 && !strcmp(argv[3],"--late"))printf("PASS QRB1 exact reached-phase late faults%u;NOT native recovery/ownership\n",LateRefusals(*m));
  assert(m->WaitBlock(1));m->VerifyBlock();
  printf("PASS QRB1 whole recurrent8matrices/720 actual matrix jobs+120Conv+96GDN/direct6144/initial+postRMS/residual+FFN+final5120/ROOTstack%u/packets%u;NOT ORIGINAL/native/fullmodel/TPS\n",0x70000-m->minStack,m->packets);

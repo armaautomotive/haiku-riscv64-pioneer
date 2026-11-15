@@ -8,28 +8,30 @@ import runpy
 import subprocess
 import sys
 
-if len(sys.argv) != 3 or any(k.startswith('PIONEER_') for k in os.environ):
+if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--redistributed-gdn') or any(k.startswith('PIONEER_') for k in os.environ):
     raise SystemExit(2)
-sdk, out = map(pathlib.Path, sys.argv[1:])
+redistributed_gdn = len(sys.argv) == 4
+sdk, out = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 here = pathlib.Path(__file__).resolve().parent
 out.mkdir(mode=0o700)
 saved = list(sys.argv)
 try:
-    sys.argv = [str(here/'build_qwen38_resident_gdn_output_operator_service_image.py'), str(sdk), str(out/'unchanged-worker')]
+    sys.argv = [str(here/'build_qwen38_resident_gdn_output_operator_service_image.py'), str(sdk), str(out/'unchanged-worker'), *(('--redistributed-gdn',) if redistributed_gdn else ())]
     old = runpy.run_path(sys.argv[0], run_name='__main__')
 finally:
     sys.argv = saved
 # The ancestor builder authenticates its entire chain. Independently pin
 # its final SIX sections before deriving flags, NEVER select its native role.
-for name, size, digest in (
+pins = (
     ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'),
-    ('text', 7940, 'd726337fe94d7d94812aaf5e67f3d4e328a21873cb27aa982dc5315bb6294b07'),
+    ('text', 7940, 'db754904364469dded1853741289e0622906de8da8420b858377157ba8971fe1' if redistributed_gdn else 'd726337fe94d7d94812aaf5e67f3d4e328a21873cb27aa982dc5315bb6294b07'),
     ('affine', 5360, 'fcdf8ec5b607550db93fda5a86830951e2518d5580b11f4538fb6eead0eb3b7b'),
     ('ffn', 16352, 'f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9'),
     ('service', 10300, 'd00147de57e51e096760da0e6d25476692646807bcb0dc52d5a02b1263657254'),
-    ('gdn', 35396, '36458af185c3500d1cd1b1170672c2138910aff836bd8a6a407b07c68a80b93d'),
-):
+    ('gdn', 40084 if redistributed_gdn else 35396, '252886c288ed9c835f403949ae644857b900e6b1b95d82bc1f778344e196c75f' if redistributed_gdn else '36458af185c3500d1cd1b1170672c2138910aff836bd8a6a407b07c68a80b93d'),
+)
+for name, size, digest in pins:
     data = (out/'unchanged-worker'/(name+'.bin')).read_bytes()
     assert len(data) == size and hashlib.sha256(data).hexdigest() == digest, name
 base = old['base']

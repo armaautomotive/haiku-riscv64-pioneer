@@ -14,6 +14,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputPlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRendezvousPlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnServiceShape.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnRedistributedServiceShape.h"
 struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
  std::vector<uint8_t> gdnCode;
  ResidentGdnOperatorPeer* peer=nullptr;
@@ -337,7 +338,7 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
  }
  virtual bool GdnFinished(unsigned sequence)const{return pc==TT_Q38_PEER_WAIT_LOAD && memory.at(0x74144)==sequence;}
  virtual bool GdnFaulted()const{return pc==TT_Q38_PEER_FAULT_PARK;}
- void VerifyGdn(unsigned sequence){
+ void VerifyGdn(unsigned sequence,bool redistributed=false){
   assert(GdnFinished(sequence) && !pending && gdnPhase==5 && gdnPolls && gdnImports==ExpectedGdnImports && gdnNextWrites==8192
    && gdnOutputWrites==64 && gdnGatedWrites==64 && gdnCsrReads==ExpectedGdnCsrReads && drained && !gdnLatency && !gdnPendingWords && peer);
 #ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
@@ -392,8 +393,11 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
   uint32_t proof[64],job[16],after[8],first[32],recurrent[32],summary[32],clock[16];
   for(unsigned i=0;i<64;i++)proof[i]=memory.at(0x83f00+i*4);for(unsigned i=0;i<16;i++){job[i]=memory.at(0x74000+i*4);clock[i]=memory.at(TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4);}
   for(unsigned i=0;i<8;i++)after[i]=Count(i);for(unsigned i=0;i<32;i++){first[i]=memory.at(TT_Q38_GDN_INPUT_SUMMARY+i*4);recurrent[i]=memory.at(TT_Q38_RGDN_SUMMARY+i*4);summary[i]=memory.at(TT_Q38_GDN_GATED_SUMMARY+i*4);}
-  assert(PioneerQ38ResidentGdnServiceProof(proof,job,gated.data(),input.data(),state.data(),source,logicalWorker,selfRoute,gdnBefore,after,first,recurrent,summary,clock));
-  for(unsigned i=0;i<64;i++){proof[i]^=1;assert(!PioneerQ38ResidentGdnServiceProof(proof,job,gated.data(),input.data(),state.data(),source,logicalWorker,selfRoute,gdnBefore,after,first,recurrent,summary,clock));proof[i]^=1;}
+  auto valid=[&](){return redistributed
+   ?PioneerQ38ResidentGdnRedistributedServiceProof(proof,job,gated.data(),input.data(),state.data(),source,logicalWorker,selfRoute,gdnBefore,after,first,recurrent,summary,clock)
+   :PioneerQ38ResidentGdnServiceProof(proof,job,gated.data(),input.data(),state.data(),source,logicalWorker,selfRoute,gdnBefore,after,first,recurrent,summary,clock);};
+  assert(valid());
+  for(unsigned i=0;i<64;i++){proof[i]^=1;assert(!valid());proof[i]^=1;}
  }
  bool MatrixAfterGdn(unsigned sequence){gdnActive=false;return MatrixAfterConv(sequence);}
  void GdnInert(){unsigned reads=nocReads,packets=gdnPackets,ops=gdnOps,writes=gdnNextWrites,math=matrixInstructions;

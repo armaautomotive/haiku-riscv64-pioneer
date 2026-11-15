@@ -9,9 +9,10 @@ import struct
 import subprocess
 import sys
 
-if len(sys.argv) != 3 or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
+if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--redistributed-gdn') or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
     raise SystemExit(2)
-sdk, output = map(pathlib.Path, sys.argv[1:])
+redistributed_gdn = len(sys.argv) == 4
+sdk, output = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and output.is_absolute() and not output.exists() and not output.is_symlink()
 here = pathlib.Path(__file__).resolve().parent
 clean = {k: v for k, v in os.environ.items() if not k.startswith('PIONEER_')}
@@ -19,18 +20,19 @@ output.mkdir(mode=0o700)
 old = output/'unchanged-worker'
 saved = list(sys.argv)
 try:
-    sys.argv = [str(here/'build_qwen38_resident_gdn_operator_service_image.py'), str(sdk), str(old)]
+    sys.argv = [str(here/'build_qwen38_resident_gdn_operator_service_image.py'), str(sdk), str(old), *(('--redistributed-gdn',) if redistributed_gdn else ())]
     base = runpy.run_path(sys.argv[0], run_name='__main__')
 finally:
     sys.argv = saved
-for section, size, digest in (
+pins = (
     ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'),
-    ('text', 7912, '47ff39e8f9709f9e87469e44919b374ccfbea3edd3f1f1f1b3020ecfd545c30b'),
+    ('text', 7912, '47aa191780e9d33700c3d5c4bf028bb4fe36ef8584c212fd4e778c5c68a18eae' if redistributed_gdn else '47ff39e8f9709f9e87469e44919b374ccfbea3edd3f1f1f1b3020ecfd545c30b'),
     ('affine', 5360, 'd8734c6a6e1cea65e8abac370292033f8be1406fa063c0f84501646aaaedca5c'),
     ('ffn', 16352, 'f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9'),
     ('service', 10300, '3498f0507019f44b4c76101ca8df2df84dc4d57e3a288703c437fb441fa0eb43'),
-    ('gdn', 29860, '67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648'),
-):
+    ('gdn', 34548 if redistributed_gdn else 29860, '57e7a372dbce780144d4ddc5d2761f2da00c3c7e001f6ca9dbe987101327ff57' if redistributed_gdn else '67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648'),
+)
+for section, size, digest in pins:
     data = (old/(section+'.bin')).read_bytes()
     assert len(data) == size and hashlib.sha256(data).hexdigest() == digest
 cross, flags = base['cross'], list(base['flags'])

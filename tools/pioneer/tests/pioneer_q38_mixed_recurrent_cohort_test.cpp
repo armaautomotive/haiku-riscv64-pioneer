@@ -116,7 +116,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
  std::unique_ptr<PioneerQ38CanonicalModelPlan> canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();
  std::unique_ptr<PioneerQ38MixedRecurrentCohortPlan> plan=std::make_unique<PioneerQ38MixedRecurrentCohortPlan>();
  std::array<uint32_t,64> boot={},header={};std::array<uint32_t,16> source={};std::array<uint32_t,10> command={};
- std::array<uint32_t,8> counts={};std::array<unsigned,119> initial={};std::array<bool,96> cleared={},verified={};
+ std::array<uint32_t,8> counts={};std::array<unsigned,119> initial={};std::array<bool,119> cleared={},verified={};
  std::map<uint64_t,uint32_t> dram;uint64_t cycles=UINT64_C(1)<<40;
  unsigned packets=0,rootConvPackets=0,convStarts=0,gdnStarts=0,failPacket=0,counterFaultPacket=0,sourceFaultPacket=0;
  unsigned commandFaultPacket=0,badResetWorker=0,badProofWorker=0,badProofWord=0,badProofStage=0,dropClearWorker=0,heldPcReads=0;
@@ -127,6 +127,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
  void Put(unsigned route,unsigned address,uint32_t v)override{dram[Key(route,address)]=v;}
  uint64_t Clock()const override{return cycles;}
  uint32_t RootWord(unsigned address)const override{return memory.at(address);}
+ virtual bool ExpectedGdnWorker(unsigned workerZero)const{return workerZero<96;}
  NewCohortMachine(const char* image,const char* worker,bool seedPrimitiveOutputs=true,bool virgin=false):ScalarMachine(0,0){
   assert(canonical->Build());bootRom=Read((std::string(image)+"/boot.bin").c_str());text=Read((std::string(image)+"/text.bin").c_str());
   convRom=Read((std::string(image)+"/conv.bin").c_str());l1[0]=Word(bootRom,0);counts.fill(0xfffffff8);
@@ -232,7 +233,9 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
     if(remote!=TT_Q38_GDN_GATED_READY || dropClearWorker!=w+1)for(unsigned i=0;i<bytes/4;i++)p.memory[remote+i*4]=memory.at(local+i*4);
     if(remote==M::Doorbell){
      unsigned op=p.memory.at(M::Job+8);
-     if(op==8){assert(convStarts==119 && rootConvPackets==30);for(unsigned i=0;i<96;i++)assert(cleared[i] && verified[i]);gdnStarts++;}else {assert(op==7 && !gdnStarts);convStarts++;}
+     if(op==8){assert(convStarts==119 && rootConvPackets==30);for(unsigned i=0;i<119;i++){
+      if(ExpectedGdnWorker(i))assert(cleared[i] && verified[i]);else assert(!cleared[i] && !verified[i]);
+     }gdnStarts++;}else {assert(op==7 && !gdnStarts);convStarts++;}
      p.Received();
     }
    }else{
