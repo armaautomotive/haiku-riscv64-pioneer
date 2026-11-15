@@ -18,6 +18,14 @@ enum : uint32_t {
 	SlotsPerPhysical=(TotalTasks+PhysicalWorkers-1)/PhysicalWorkers,
 	StateHalfBytes=32768
 };
+// first physical worker for each layer's cyclic 96-task window. Keeping the
+// small route table explicit avoids repeated modulo-by-119 operations on the
+// on-card ROOT while preserving the exact Map() permutation.
+static const unsigned char FirstPhysical[RecurrentLayers]={
+	0,96,73,50,27,4,100,77,54,31,8,104,81,58,35,12,
+	108,85,62,39,16,112,89,66,43,20,116,93,70,47,24,1,
+	97,74,51,28,5,101,78,55,32,9,105,82,59,36,13,109
+};
 struct Route {
 	uint32_t layerOrdinal,actualLayer,logicalWorker,physicalWorker,peer,stateIndex;
 };
@@ -64,10 +72,10 @@ static inline bool LogicalWorker(uint32_t actualLayer,uint32_t physicalWorker,ui
 {
 	uint32_t layer=0;
 	if(!LayerOrdinal(actualLayer,layer) || !physicalWorker || physicalWorker>PhysicalWorkers)return false;
-	const uint32_t first=(layer*LogicalWorkers)%PhysicalWorkers;
-	const uint32_t candidate=(physicalWorker-1+PhysicalWorkers-first)%PhysicalWorkers;
+	const uint32_t first=FirstPhysical[layer];
+	const uint32_t physical=physicalWorker-1;
+	const uint32_t candidate=physical>=first?physical-first:physical+PhysicalWorkers-first;
 	if(candidate>=LogicalWorkers)return false;
-	Route route={};if(!Map(layer,candidate,route) || route.physicalWorker!=physicalWorker)return false;
 	logicalWorker=candidate;return true;
 }
 

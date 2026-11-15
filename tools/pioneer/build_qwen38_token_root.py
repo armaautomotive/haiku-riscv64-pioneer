@@ -40,7 +40,7 @@ assert not (input_trace and value_trace),'distinct capture roles cannot be combi
 if input_trace or value_trace:
  assert '--qgw8-dense-stage-trace' not in options,'distinct capture roles cannot be combined'
  options=['--qgw8-dense-stage-trace' if x in ('--qgw8-dense-input-trace','--qgw8-dense-value-trace') else x for x in options]
-assert 3<=len(sys.argv)<=29 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-commit-boundary','--qgw8-coarse-profile','--qgw8-layer-trace','--qgw8-dense-stage-trace','--ffn-shared-input-reuse'}
+assert 3<=len(sys.argv)<=29 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-commit-boundary','--qgw8-coarse-profile','--qgw8-layer-trace','--qgw8-dense-stage-trace','--ffn-shared-input-reuse','--dense-return-split'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -60,6 +60,10 @@ bf16='--bf16-fpu' in options
 assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires separate inspect/precise/admission and no old pushed receipts'
 hybrid='--hybrid-bfp' in options
 assert not hybrid or (inspect and bf16),'hybrid ROOT is an explicit BF16 inspection build only'
+dense_return_split='--dense-return-split' in options
+assert not dense_return_split or (inspect and hybrid and bf16 and '--hybrid-matrix-attention' not in options
+ and not any(x in options for x in ('--qgw8-commit-boundary','--qgw8-coarse-profile','--qgw8-layer-trace','--qgw8-dense-stage-trace'))), \
+ 'dense-return split is a separate unprofiled hybrid ROOT inspection image'
 fast_rms='--fast-rms' in options
 assert not fast_rms or (inspect and hybrid and f32),'approximate RMS requires the separate hybrid FP32 inspection build'
 reuse_input='--hybrid-reuse-input' in options
@@ -170,6 +174,14 @@ if bf16:
  # snapshotted 64 KiB BF16 coordinator region; no extent is enlarged.
  if qgwf_root:
   scheduler+=' *(.text._ZN28PioneerQ38HybridWorkerLayoutL9LeafShapeI23PioneerQ38Bfp4WorkerJobEEbPKjS3_*)'
+ # QGC1's full dense-return path otherwise grows the fixed ROOT text 10,016
+ # bytes into the STOP page. Move the same emitted functions into the already
+ # reserved BF16 code region. This changes only code placement, not arithmetic,
+ # input bytes, worker protocol, or the fixed STOP/Conv ranges.
+ if dense_return_split:
+  scheduler+=' *(.text.q38_joined_dense_frame) *(.text._ZN9LiveBlockL7ComputeE*)'
+  scheduler+=' *(.text._ZN6JoinedL4ReadEjjjjPj*) *(.text._ZN6JoinedL14BindProjectionE*)'
+  scheduler+=' *(.text._ZN5BlockL7BindFfnE*)'
  text=text.replace('SECTIONS {','SECTIONS {\n .bf16 0x20000 : { *(.bf16*)'+scheduler+' . = ALIGN(4); }\n ASSERT(SIZEOF(.bf16)>0 && SIZEOF(.bf16)<=0x10000,"NEW BF16 coordinator code extent,not old native ownership")')
  link=out/'program.ld';link.write_text(text)
 run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',link,
