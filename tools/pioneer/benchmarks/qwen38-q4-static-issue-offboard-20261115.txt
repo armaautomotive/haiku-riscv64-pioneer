@@ -19,15 +19,21 @@ In the largest case (K=17,408, 256 rows, worker 119), paired issue used
 path only: the Tensix stream and operation count are unchanged. These
 instruction counts are not retired card cycles or a measured acceleration.
 
-Why this is the next candidate
------------------------------
+Potential and implementation constraint
+----------------------------------------
 The separate physical paired-issue diagnostic reported 6.55–6.81% fewer
 card cycles than its compact baseline for the two tested Q4 bands, while
 leaving the Tensix stream unchanged. That makes a static-issue diagnostic
-worth measuring on-card, but does not imply a 17.29% cycle improvement or
-any full-model gain. It should get a new build identity and once-only
-physical trial, then the same authenticated full-model benchmark before
-promotion into Work. Work must remain free of CPU-reference math.
+interesting, but it does not imply a 17.29% cycle improvement or any
+full-model gain. A first compact-stream static build attempt failed the
+existing linker ASSERT: the fully unrolled `q4_fpu_compact_stream_main`
+alone occupied 0x1c38 (7,224) bytes, before the rest of the service, while
+the fixed code window is 8 KiB. No ROM limit was increased and no static
+image was staged. The candidate needs code-size reduction or a separately
+designed bounded overlay scheme before it can get a distinct native identity
+and once-only physical trial. Any future promotion still requires the same
+authenticated full-model benchmark; Work must remain free of CPU-reference
+math.
 
 Current status and gate
 ----------------------
