@@ -7,7 +7,7 @@
 // only scalar RV32 loop/address work may change. No native/Work selection.
 struct PioneerQ38Q4FpuStaticIssueCompute:PioneerQ38Q4FpuCompactStreamCompute {
  using B=PioneerQ38Q4FpuBlock;using M=PioneerQ38Q4FpuCompactMetadata;
-private:
+protected:
  template<bool Upper,class E> static __attribute__((always_inline)) inline void Nibble(E& e){
   if(Upper)PioneerSfpuShift(e,0,-4);else PioneerSfpuAnd(e,0,0,4);
   e.Op(0x90000000);e.Op(0x84010200);e.Op(0x8f000000);

@@ -31,6 +31,7 @@ variants = {
     'reference': (),
     'paired': ('-DPIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE=1', '-fomit-frame-pointer'),
     'static': ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-fomit-frame-pointer'),
+    'half_static': ('-DPIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE=1', '-fomit-frame-pointer'),
 }
 matrix_source = here.parent/'blackhole_q38_cached_fpu_matrix.cpp'
 
@@ -88,12 +89,21 @@ with tempfile.TemporaryDirectory(prefix='q38-static-issue-', dir='/private/tmp')
         assert result.returncode and 'error:' in result.stderr, flags
         refused += 1
 
+    half_static_conflict = subprocess.run(
+        [tools['g++'], '-march=rv32i', '-mabi=ilp32',
+         '-DPIONEER_Q38_CACHED_FPU_MATRIX_IMAGE=1',
+         '-DPIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE=1',
+         '-DPIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE=1', '-E', matrix_source],
+        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    assert half_static_conflict.returncode and 'error:' in half_static_conflict.stderr
+    refused += 1
+
     test = base/'issue-variant-test'
     run([host_cxx, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
          '-ffp-contract=off', '-fsanitize=address,undefined',
          here/'pioneer_q38_cached_fpu_pair_issue_test.cpp', '-o', test])
     results = {}
-    for reference, candidate in (('reference', 'paired'), ('paired', 'static')):
+    for reference, candidate in (('reference', 'paired'), ('paired', 'static'), ('paired', 'half_static')):
         result = subprocess.run([test, producer, images[reference], images[candidate]],
                                 check=True, text=True, stdout=subprocess.PIPE)
         lines = result.stdout.splitlines()
@@ -109,9 +119,17 @@ with tempfile.TemporaryDirectory(prefix='q38-static-issue-', dir='/private/tmp')
         print(result.stdout, end='')
 
     pair_to_static = results[('paired', 'static')]
+    pair_to_half_static = results[('paired', 'half_static')]
     largest = next(row for row in pair_to_static if row[:3] == (17408, 256, 119))
+    half_largest = next(row for row in pair_to_half_static if row[:3] == (17408, 256, 119))
     reduction = (largest[3]-largest[4])*100/largest[3]
+    half_reduction = (half_largest[3]-half_largest[4])*100/half_largest[3]
     assert reduction > 10.0, reduction
+    full_static_bytes = (images['static']/'text.bin').stat().st_size
+    half_static_bytes = (images['half_static']/'text.bin').stat().st_size
+    assert half_static_bytes < full_static_bytes, (half_static_bytes, full_static_bytes)
     print(f'PASS STATIC_ISSUE_RV32_SIM largestCaseInstructionReduction={reduction:.2f}% '
+          f'halfStaticReduction={half_reduction:.2f}% '
+          f'halfStaticTextBytes={half_static_bytes} fullStaticTextBytes={full_static_bytes} '
           f'TensixStreamExact=1 outputs704Exact=1 roleRefusals={refused} text<=16384 stack<=4096;'
           'NO CARD/TPS/WORK/HARDWARE GRANT')

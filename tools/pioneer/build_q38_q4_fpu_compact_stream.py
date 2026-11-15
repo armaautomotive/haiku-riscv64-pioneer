@@ -17,7 +17,8 @@ INSPECT_PINS = {
 
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
     raise SystemExit('Checks required')
-assert len(sys.argv) == 5 and sys.argv[4] == '--inspect-candidate'
+mode = sys.argv[4] if len(sys.argv) == 5 else ''
+assert mode in ('--inspect-candidate', '--inspect-half-static')
 build, out = map(Path, sys.argv[1:3]);width = int(sys.argv[3])
 assert width in (5120, 17408) and build.is_absolute() and build.is_dir()
 assert out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -32,9 +33,11 @@ assert len((control / 'text.bin').read_bytes()) == 7824 and hashlib.sha256((cont
 commands = [[arg.replace(str(control), str(out)).replace('blackhole_q38_q4_fpu_stream', 'blackhole_q38_q4_fpu_compact_stream')
              .replace('PIONEER_Q4_FPU_STREAM_K=', 'PIONEER_Q4_FPU_COMPACT_STREAM_K=') for arg in row] for row in old['commands']]
 commands[0].insert(1, '-DPIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE=1')
+if mode == '--inspect-half-static':
+    commands[0].insert(2, '-DPIONEER_Q38_Q4_HALF_STATIC_ISSUE_IMAGE=1')
 for command in commands:
     subprocess.run(command, check=True, cwd=out)
-for name, size, digest in INSPECT_PINS[width]:
+for name, size, digest in INSPECT_PINS[width] if mode == '--inspect-candidate' else ():
     data = (out / name).read_bytes()
     assert len(data) == size and hashlib.sha256(data).hexdigest() == digest
 tool = str(build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -53,4 +56,4 @@ for name in ('boot.bin', 'text.bin', 'program.elf'):
     elif name == 'text.bin':
         assert 0 < len(data) <= 8192 and not len(data) % 4
     print('COMPACT_STREAM_INSPECT', width, name, len(data), hashlib.sha256(data).hexdigest(), flush=True)
-print('BUILD_ONLY_COMPACT_FULL_K_ORIGINAL8KiB_BOUND;NOT_EXECUTION_NATIVE_QUALITY_OR_SPEED', flush=True)
+print(f'BUILD_ONLY_COMPACT_FULL_K_ORIGINAL8KiB_BOUND mode={mode};NOT_EXECUTION_NATIVE_QUALITY_OR_SPEED', flush=True)

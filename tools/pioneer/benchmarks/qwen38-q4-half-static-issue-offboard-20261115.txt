@@ -1,0 +1,40 @@
+Q4 half-static issue schedule — offline size/semantic evidence only
+====================================================================
+2026-11-15. This candidate follows the full-static Q4 RV32 scheduling probe.
+It shares decode-pass code between halves and keeps a small bounded loop for
+the parity/half selection. It does not alter emitted Tensix words, configs,
+weights, math, memory ownership, or completion behavior.
+
+Evidence
+--------
+`RV32_PREFIX=riscv64-elf- python3
+tools/pioneer/tests/run_pioneer_q38_cached_fpu_static_issue_tests.py` passed.
+Across six actual-linked RV32 input cases, the half-static image retained the
+exact paired-issue Tensix/config stream and all 704 compared output values.
+It used 3.86% fewer simulated RV32 instructions than paired issue in the
+largest case (K=17,408, 256 rows, worker 119). The fully static schedule was
+17.29% lower in that simulation but exceeded the fixed ROM window. These are
+simulator counts, not card cycles or tokens/sec.
+
+The compact full-K image was built at both supported widths using:
+
+* `python3 tools/pioneer/build_q38_q4_fpu_compact_stream.py
+  /Volumes/HaikuBuildLocal/generated.riscv64
+  /private/tmp/pioneer-q38-half-static-check-20261115-5120 5120
+  --inspect-half-static`
+* Same command with output directory `...-17408` and width `17408`.
+
+Both link under the unchanged 8-KiB ROM ASSERT: text is 7,948 bytes for
+K=5,120 and 7,940 bytes for K=17,408. This leaves only 244/252 bytes of ROM
+headroom. It is a build-only offboard image, not staged or executed on the
+P100A. It has no native diagnostic identity and no full-model integration.
+
+Status / next gate
+------------------
+This may be small enough for a once-only physical Q4 timing diagnostic, but
+the projected 3.86% software-instruction reduction does not establish a card
+speedup. Before physical use, add a distinct diagnostic identity, verify the
+image/stream against the actual diagnostic protocol, and require independent
+verification of the Pioneer SSH host key. No CPU-reference work is added to
+Work mode. The best qualified full-model rate remains about 0.1728 tokens/sec;
+the 20 tokens/sec target is unmet.
