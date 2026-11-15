@@ -1,0 +1,78 @@
+Qwen3.8-27B performance ceiling and recurrent-L1 integration audit
+==================================================================
+Offline analysis of retained complete-model evidence. No new inference run,
+hardware access, speedup, or Work qualification is claimed.
+
+Full-model measurements used
+----------------------------
+The current best retained real 27B counting request is exact-Q4 tag92 at
+0.172813448..0.172816755 tokens/s (31 prompt / 32 generated tokens, same
+answer as later comparison records). The latest retained full-model BF16 run
+tag110 measured 0.082246701..0.082247442 tokens/s on the same request shape.
+These are distinct implementations, not a controlled A/B comparison. The
+BF16 profile must not be applied as though it were a Q4 phase profile.
+
+For tag110, the exclusive ROOT cycle shares were:
+  matrix preparation                 27.275755%
+  recurrent work outside matrix      23.268372%
+  matrix gathering/waiting           22.773305%
+  dense work outside matrix           6.551687%
+  head matrix                         5.844092%
+  matrix finish                       4.796431%
+  matrix dispatch                     4.322443%
+  recurrent state commit              2.973148%
+  metadata                            2.159174%
+
+These are root elapsed phases, not aggregate worker time or isolated tensor
+compute. Gathering includes NoC, receipt checks, and computation. Precision
+and implementation differ from best Q4, so this profile is useful for
+choosing investigation targets, not predicting Q4 speed.
+
+Simple Amdahl bounds (inference, not benchmark)
+-----------------------------------------------
+At tag110's observed rate, eliminating the ENTIRE 23.268372% recurrent-work
+bucket while holding everything else fixed gives at most 1/(1-.23268372) =
+1.303x, or approximately 0.1072 tokens/s. A real L1-state cache only removes
+some state transfers within that bucket; it cannot remove the bucket's
+recurrent arithmetic, scheduling, or all NoC and receipt costs.
+
+Even hypothetically eliminating preparation, recurrent work, and gathering
+in their entirety gives at most 1/(1-.73317432) = 3.747x, or approximately
+0.308 tokens/s on tag110. This is an intentionally generous upper bound,
+not an achievable estimate. At 0.082247 tokens/s, 20 tokens/s is about 243x;
+at best-Q4 tag92, it is about 116x. Neither result establishes feasibility
+or impossibility; it demonstrates that a single phase cleanup cannot meet
+the target.
+
+What the GDN L1 work still needs
+-------------------------------
+The allocator reserves 201 safe 4-KiB pages per peer and maps 25 complete
+32-KiB recurrent state halves. The current 96-worker topology therefore
+has 2,400 resident of 4,608 state halves (2,208 spill); the 119-peer
+redistributed topology has 2,975 resident of 4,608 (1,633 spill). Offline
+emitted-worker numerical/fault tests validate the address-indirect worker
+and maps. They do not make this a native path.
+
+The native token journal currently saves only its fixed 51.4-MiB QTP3
+snapshot spans. The selected free L1 pages intentionally lie outside those
+spans, so enabling the cache without extending the same-owner journal would
+overwrite unsaved arbitrary SRAM and violate close/restore guarantees. A
+full save/restore journal for all resident state pages would add about
+75.0 MiB (78.6 MB) for the 96-worker topology or 93.0 MiB (97.5 MB) for the
+119-peer topology, before metadata. That is a one-time model-session cost,
+but current checked memory methods are word-oriented; a burst-safe
+save/restore transport and
+fault retention protocol are required before that extra traffic is viable.
+The L1 cache lease metadata remains inspection-only, and no native worker
+uses it.
+
+Next optimization direction
+---------------------------
+Do not treat recurrent residency as the path to 20 tokens/s by itself.
+Continue profiling/optimizing the larger Q4 matrix preparation and gather
+path with same-request complete-model comparisons. In parallel, only
+advance L1 residency after implementing a bounded page journal and batched
+transport in the existing native owner, including invalidation, rollback,
+and exact page restoration on every close/fault path. Hardware tests remain
+gated on independent verification of the Pioneer SSH host key and the
+offboard numerical/lifecycle gates.
