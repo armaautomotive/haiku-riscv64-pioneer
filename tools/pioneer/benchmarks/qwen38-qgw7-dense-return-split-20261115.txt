@@ -31,6 +31,14 @@ Verification
 The runner also checks refusal of an incomplete split selector and a profiled
 QGW8 combination. The QGW7/QDM2 root projection simulator passed 72 jobs.
 Both QGW7 handoff variants passed the ASan/UBSan instruction simulator.
+The same root images then passed actual linked ROOT NoC transfer instructions
+against the emitted workers through a checked one-peer synthetic fabric: frame,
+query/current K/V and parameters were transferred, three phase jobs were
+doorbelled, status/receipt/summary/local-output/partial-output reads completed,
+and all three actual Snapshot routines accepted the worker's counters and
+receipts. Injected receipt, counter and command-readback corruption stopped
+before any later packet. This is one peer, not physical NoC timing or a 119-peer
+ROOT Launch/global-reduction run.
 The three-product worker emitted a 14,460-byte dense section with SHA-256
 `8719756bbe7c3b3b99d67889235a2031c40c36a539e09d70469facb1598f543b`; the
 four-product control remains 14,468 bytes with SHA-256

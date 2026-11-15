@@ -99,9 +99,22 @@ with tempfile.TemporaryDirectory(prefix="pioneer-qgc1-split-", dir="/private/tmp
                        check=True, env={**host_env,
                            "ASAN_OPTIONS": "quarantine_size_mb=32",
                            "UBSAN_OPTIONS": "halt_on_error=1"})
+        noc = tmp / (name + "-root-noc")
+        subprocess.run([os.environ.get("CXX", "c++"), "-std=c++17", "-O1", "-g",
+                        "-Wall", "-Wextra", "-Werror", "-ffp-contract=off",
+                        "-fsanitize=address,undefined",
+                        "-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1",
+                        "-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1",
+                        str(here / "pioneer_q38_hybrid_matrix_noc_test.cpp"),
+                        "-o", str(noc)], check=True, env=host_env)
+        subprocess.run([str(noc), str(image), str(worker), str(leaf)],
+                       check=True, env={**host_env,
+                           "ASAN_OPTIONS": "quarantine_size_mb=32",
+                           "UBSAN_OPTIONS": "halt_on_error=1"})
 
 print("PASS QGC1 split selector isolation, no ROOT/STOP overlap, relocated live "
       "dense-return routines, linked QGW7 root-to-attention-worker handoff and "
-      "next projection with both four- and three-product PV worker variants; "
+      "next projection and real ROOT transfer/receipt/snapshot instructions "
+      "with both four- and three-product PV worker variants; "
       "QGW5-identity control root rebuilt with the same bounds "
       "fix; offline only, no full model/device/TPS qualification")
