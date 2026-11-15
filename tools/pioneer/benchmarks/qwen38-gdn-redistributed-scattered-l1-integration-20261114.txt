@@ -39,6 +39,13 @@ fits at most 2,975 of 4,608 half-states in safe L1 pages; 1,633 spill to GDDR.
 The 126/35 figure above is only the number of executions exercised by this
 test, not total-model residency.
 
+The allocator test now also asserts the possible warm-read reduction for one
+complete recurrent-state sweep: 2,975 resident tasks times two 16-KiB reads
+is 5,950 packet reads / 97,484,800 bytes (92.95 MiB) that later warm tokens
+could avoid. This is on-card GDDR traffic accounting derived from the worker
+packet sizes, not elapsed time or a tokens/sec estimate; it applies only when
+the preceding token committed and the cache remained valid.
+
 What is still missing
 ---------------------
 The native prepared-Q4 dispatcher does not yet allocate/pin these pages,

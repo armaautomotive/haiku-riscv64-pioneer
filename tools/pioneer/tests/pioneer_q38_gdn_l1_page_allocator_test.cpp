@@ -18,6 +18,7 @@ int main()
 		&& !allocator.Build());
 	uint32_t canonicalPages[PioneerQ38GdnL1CacheCapacityInspection::MaxPages];
 	unsigned resident=0,spill=0;
+	uint64_t potentialWarmReadPackets=0,potentialWarmReadBytes=0;
 	for(unsigned layer=0;layer<PioneerQ38GdnTaskPlacement::RecurrentLayers;layer++){
 		bool seen[PioneerQ38GdnTaskPlacement::PhysicalWorkers]={};
 		for(unsigned logical=0;logical<PioneerQ38GdnTaskPlacement::LogicalWorkers;logical++){
@@ -36,6 +37,11 @@ int main()
 					PioneerQ38GdnL1CacheCapacityInspection::MaxPages,canonicalCount));
 				assert(canonicalCount>=25*8);
 				resident++;
+				// The worker's warm path skips the two 16-KiB GDDR reads
+				// for this 32-KiB recurrent state. This is transfer accounting,
+				// not measured time or an inference-speed prediction.
+				potentialWarmReadPackets+=2;
+				potentialWarmReadBytes+=2*16384;
 				for(unsigned page=0;page<8;page++){
 					assert(table.pages[page]
 						==canonicalPages[route.stateIndex*8+page]);
@@ -61,7 +67,9 @@ int main()
 				&& untouched.physicalWorker==0);
 		}
 	}
-	assert(resident==2975 && spill==1633);
+	assert(resident==2975 && spill==1633
+		&& potentialWarmReadPackets==5950
+		&& potentialWarmReadBytes==UINT64_C(97484800));
 	unsigned currentResident=0,currentSpill=0;
 	for(unsigned layerOrdinal=0;layerOrdinal<PioneerQ38GdnL1PageAllocator::CurrentLayers;layerOrdinal++)
 		for(unsigned logicalWorker=0;logicalWorker<PioneerQ38GdnL1PageAllocator::CurrentLogicalWorkers;logicalWorker++){
@@ -91,6 +99,7 @@ int main()
 		&& !allocator.Resolve(1,39,out)
 		&& !allocator.ResolveCurrentRoute(48,0,out)
 		&& !allocator.ResolveCurrentRoute(0,96,out));
-	std::printf("PASS prepared-Q4 QTP3 page allocator: redistributed resident=%u spill=%u; current-96 resident=%u spill=%u; routes verified; metadata only, no L1 allocation/I/O/token authority\n",
-		resident,spill,currentResident,currentSpill);
+	std::printf("PASS prepared-Q4 QTP3 page allocator: redistributed resident=%u spill=%u; potential warm-read avoidance=%llu packets/%llu bytes per complete state sweep; current-96 resident=%u spill=%u; routes verified; metadata only, no measured latency/TPS/L1 allocation/I/O/token authority\n",
+		resident,spill,(unsigned long long)potentialWarmReadPackets,
+		(unsigned long long)potentialWarmReadBytes,currentResident,currentSpill);
 }
