@@ -98,7 +98,14 @@ sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().pa
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-');assert pathlib.Path(tool+'g++').is_file()
 out.mkdir(mode=0o700)
-def run(*args):subprocess.run([str(a) for a in args],check=True)
+def run(*args):
+ command=list(map(str,args))
+ if command[0]==tool+'g++' and command.count('-c')==command.count('-o')==1:
+  source=pathlib.Path(command[command.index('-c')+1]).name
+  if source in ('blackhole_qwen38_return_recurrent_layer.cpp','blackhole_qwen38_return_dense_layer.cpp'):
+   kind='recurrent' if 'recurrent' in source else 'dense'
+   (out/('compile-'+kind+'-argv.txt')).write_text('\n'.join(command)+'\n')
+ subprocess.run(command,check=True)
 # FIRST preserve a whole current global image and all three old returning
 # object pins. No old default image gets the new admission flag.
 run(sys.executable,here/'build_qwen38_global_chain_root.py',sdk,out/'unchanged-feedback',

@@ -123,6 +123,13 @@ def run(*args):
  command=list(map(str,args))
  if compact_global_inspection and pathlib.Path(command[1]).name=='build_qwen38_global_token_components.py':
   command.append('--compact-inspection')
+ if command[0]==tool+'g++' and command.count('-c')==command.count('-o')==1 \
+   and pathlib.Path(command[command.index('-c')+1]).name=='blackhole_qwen38_token_root.cpp':
+  (out/'compile-token-argv.txt').write_text('\n'.join(command)+'\n')
+ if command[0]==tool+'ld' and command.count('-T')==1 \
+   and pathlib.Path(command[command.index('-o')+1])==out/'program.elf':
+  compile=(out/'compile-token-argv.txt').read_text().splitlines()
+  (out/'build-argv.txt').write_text('\t'.join(compile)+'\n'+'\t'.join(command)+'\n')
  subprocess.run(command,check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.

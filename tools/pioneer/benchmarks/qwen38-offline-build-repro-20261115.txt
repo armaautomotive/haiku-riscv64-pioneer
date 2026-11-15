@@ -82,3 +82,36 @@ The CLI regression suite now rejects compact mode before SDK/input/output I/O
 unless the explicit folded-QGW3 inspection parents are selected. The new
 image remains an inspect-only build: no production package, native role,
 model execution, or performance conclusion follows from fitting the ranges.
+
+Prepared-Q4 compact frontier profile follow-up:
+
+The first compact prepared-Q4 attempt exposed a role mismatch: phase profiling
+requires the explicit token-frontier ROOT role, which was absent from the
+earlier compact ROOT control. No role guard was weakened. Added a separate
+`--compact-frontier-control` selector, authenticated against the independently
+built frontier ROOT ELF and `.text` hashes, while retaining the prior
+`--compact-q3-control` path and its exact hashes. The selector is inspection
+only and continues to require an explicit control directory, counter-unroll,
+and phase-profile build.
+
+Two independent clean folded-QGW3/token-frontier ROOT builds, both using
+`--compact-global-inspection`, matched byte-for-byte:
+
+* whole ROOT ELF SHA-256 `4ac42a531a7501f9c5add23fee9db881d68d3c234e2d0cccb64605ed1f7a3eba`
+* `.text` 124,844/131,072 bytes; `.conv` 31,620/32,768 bytes
+
+Two independent prepared-Q4 ROOT phase-profile builds from those ROOT
+controls also matched byte-for-byte:
+
+* whole ELF SHA-256 `20aed249cf0b44decfe246e6ecfc18bccaafb81fd01541a7ccd15961ba0ee404`
+* `.text` 123,072/131,072 bytes; `.conv` 31,596/32,768 bytes
+* distinct `.prepared` code 5,596/8,192 bytes; boot 4 bytes; terminal 8 bytes
+
+Both builds passed the builder's linker, fixed-address, section, symbol,
+relocation, instruction, and stack-frame checks. Added
+`pioneer_q38_prepared_q4_root_cli_test.py` for selector/control-hash refusal
+cases. These are reproducible inspection artifacts only: no worker/data
+pairing, prepared-Q4 payload qualification, full-device execution, native
+install, or throughput result has been established. The physical rate remains
+the previously measured 0.172813448..0.172816755 tok/s; the 20 tok/s target
+remains unmet.

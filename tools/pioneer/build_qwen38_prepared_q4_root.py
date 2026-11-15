@@ -9,10 +9,18 @@ if counter_unroll:
 phase_profile='--phase-profile' in args
 if phase_profile:
  assert counter_unroll and args.count('--phase-profile')==1;args.remove('--phase-profile')
+compact_q3='--compact-q3-control' in args
+compact_frontier='--compact-frontier-control' in args
+if compact_q3 or compact_frontier:
+ assert args.count('--compact-q3-control') + args.count('--compact-frontier-control')==1
+ if compact_q3:args.remove('--compact-q3-control')
+ else:args.remove('--compact-frontier-control')
 reuse=None
 if '--control' in args:
  assert args.count('--control')==1;at=args.index('--control');reuse=pathlib.Path(args[at+1]);del args[at:at+2]
  assert reuse.is_absolute() and reuse.is_dir() and not reuse.is_symlink()
+assert not (compact_q3 or compact_frontier) or reuse is not None,'compact QGW3 requires an explicit authenticated control directory'
+compact_control=compact_q3 or compact_frontier
 assert len(args)==2
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,args);here=pathlib.Path(__file__).resolve().parent
@@ -24,22 +32,34 @@ if reuse is None:
   runpy.run_path(sys.argv[0],run_name='__main__')
  finally:sys.argv=saved
 control=reuse if reuse is not None else out/'unchanged-full'
-assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66'
+if compact_frontier:
+ assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='4ac42a531a7501f9c5add23fee9db881d68d3c234e2d0cccb64605ed1f7a3eba'
+ assert hashlib.sha256((control/'text.bin').read_bytes()).hexdigest()=='e0e13dfb9d99f3762fb694ec606e7516f7d3fbd8ccef135b88f417ed25226368'
+elif compact_q3:
+ assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='b7093902b630116c7dabb086550be12cd097fd36b5e555cfce406d56c20522c7'
+ assert hashlib.sha256((control/'text.bin').read_bytes()).hexdigest()=='135298d19ce80ae29901dbe362c2fabffc07de2a6f16ffb7a5cd187036d4639b'
+else:
+ assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66'
 tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-');commands=[]
 def run(*values):
  command=list(map(str,values));commands.append(command);subprocess.run(command,check=True)
-base=control/'unchanged-output-closure'
-link=(control/'build-argv.txt').read_text().splitlines()[1].split('\t')
+base=control/'qualified-components' if compact_control else control/'unchanged-output-closure'
+build_argv=(control/'build-argv.txt').read_text().splitlines()
+link=build_argv[1].split('\t')
 assert link[0]==tool+'ld' and link.count('-T')==1
 entry=pathlib.Path(link[link.index('-T')+2]);feedback=next(pathlib.Path(p) for p in link if pathlib.Path(p).name=='feedback.o')
-conv=feedback.with_name('root_conv_sections.o');old_capsule=base/'components-NOBOOT.o'
+token_object=control/'program.o' if compact_control else control/'token.o'
+conv=feedback.with_name('root_conv_sections.o')
+old_capsule=base/'token-components-NOBOOT.o' if compact_control else base/'components-NOBOOT.o'
 # Reused controls are not a presence/lock-file shortcut:relink their ENTIRE
 # old ROOT with the current unchanged LD and check its whole accepted hash.
-run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackhole_qwen38_global_chain.ld',entry,control/'token.o',old_capsule,feedback,'-o',out/'entire-old-root.elf')
+run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackhole_qwen38_global_chain.ld',entry,token_object,old_capsule,feedback,'-o',out/'entire-old-root.elf')
 assert (out/'entire-old-root.elf').read_bytes()==(control/'program.elf').read_bytes()
 objects=[]
-for kind,original in zip(('recurrent','dense','token'),(base/'output-closure-recurrent.o',base/'output-closure-dense.o',control/'token.o')):
- if kind=='token':command=(control/'build-argv.txt').read_text().splitlines()[0].split('\t')
+originals=(base/'recurrent.o',base/'dense.o',token_object) if compact_control else (base/'output-closure-recurrent.o',base/'output-closure-dense.o',token_object)
+for kind,original in zip(('recurrent','dense','token'),originals):
+ if kind=='token':command=build_argv[0].split('\t')
+ elif compact_control:command=(base/('compile-'+kind+'-argv.txt')).read_text().splitlines()
  else:command=(control/'unchanged-output-closure'/('compile-'+kind+'-argv.txt')).read_text().splitlines()
  assert command[0]==tool+'g++' and command.count('-c')==command.count('-o')==1
  command[command.index('-c')+1]=str(here/pathlib.Path(command[command.index('-c')+1]).name)
@@ -47,6 +67,8 @@ for kind,original in zip(('recurrent','dense','token'),(base/'output-closure-rec
  assert old.read_bytes()==original.read_bytes(),'ENTIRE old ROOT TU FIRST'
  target=out/('prepared-'+kind+'.o');command[command.index('-o')+1]=str(target)
  command=[command[0],'-DPIONEER_Q38_PREPARED_Q4_ROOT_IMAGE=1','-include',str(here/'PioneerQ38PreparedQ4RootRole.h'),*command[1:]]
+ if compact_q3 or compact_frontier:command[1:1]=['-DPIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE=1',
+  '-DPIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE=1','-DPIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE=1']
  if counter_unroll:command[1:1]=['-DPIONEER_Q38_ROOT_COUNTER_UNROLL_IMAGE=1','-include',str(here/'PioneerQ38RootCounterUnrollRole.h')]
  run(*command);objects.append(target);(out/('compile-'+kind+'-argv.txt')).write_text('\n'.join(command)+'\n')
  frames=[row.split('\t') for row in target.with_suffix('.su').read_text().splitlines()]
@@ -76,7 +98,11 @@ if phase_profile:
  unchanged=out/'entire-unprofiled-prepared-root.elf'
  run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',out/'program.ld',entry,objects[2],capsule,
   feedback,'-o',unchanged)
- assert hashlib.sha256(unchanged.read_bytes()).hexdigest()=='38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039'
+ unprofiled_hash=hashlib.sha256(unchanged.read_bytes()).hexdigest()
+ if compact_control:
+  (out/'unprofiled-prepared-root.sha256').write_text(unprofiled_hash+'\n')
+ else:
+  assert unprofiled_hash=='38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039'
  command=(out/'compile-token-argv.txt').read_text().splitlines()
  command[1:1]=['-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1']
  token=out/'phase-token.o';command[command.index('-o')+1]=str(token);run(*command);objects[2]=token
