@@ -117,8 +117,8 @@ int main(){
 			const uint32_t* source=tokenPackage->GdnWorker(route.physicalWorker);assert(source);
 			std::array<uint32_t,192> coldRecord={},nextRecord={};
 			for(unsigned i=0;i<192;i++)coldRecord[i]=nextRecord[i]=source[i];
-			assert(PioneerQ38TokenMetadata::GdnRedistributed(coldRecord.data(),layer,route.physicalWorker,0));
-			assert(PioneerQ38TokenMetadata::GdnRedistributed(nextRecord.data(),layer,route.physicalWorker,1));
+			assert(PioneerQ38TokenMetadata::GdnRedistributed(coldRecord.data(),layer,route.physicalWorker,0,0));
+			assert(PioneerQ38TokenMetadata::GdnRedistributed(nextRecord.data(),layer,route.physicalWorker,1,1));
 			const unsigned mode=pageMap[(route.physicalWorker-1)*9];
 			assert(coldRecord[64+50]==mode && nextRecord[64+50]==(mode==0?1:2));
 			if(mode==0)residentChecks++;else spillChecks++;

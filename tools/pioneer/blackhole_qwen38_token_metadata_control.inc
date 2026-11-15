@@ -51,7 +51,7 @@ static __attribute__((noinline,section(".conv.token"))) void Metadata(unsigned l
     for(unsigned i=0;i<count;i++){
      auto* record=reinterpret_cast<uint32_t*>(R::Scratch+i*RT::RecordWords);
      bool empty=true;for(unsigned w=0;w<RT::RecordWords;w++)empty&=record[w]==0;
-     if(!empty && !M::GdnRedistributed(record,layer,first+i+1,position))scalar_fault_park();
+     if(!empty && !M::GdnRedistributed(record,layer,first+i+1,position,p->state[Committed]))scalar_fault_park();
     }
    }else for(unsigned i=0;i<count;i++)
     if(!M::Gdn(reinterpret_cast<uint32_t*>(R::Scratch+i*RT::RecordWords),layer,first+i,position))scalar_fault_park();

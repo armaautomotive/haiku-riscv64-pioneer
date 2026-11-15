@@ -16,7 +16,7 @@ extern "C" bool pioneer_token_startup_read(PioneerQ38TokenStartupPlan& p,const P
 } // compile-only instantiation;not a transport transaction or owner proof
 extern "C" void pioneer_token_startup_destroy(PioneerQ38TokenStartupPlan* p){delete p;}
 extern "C" bool pioneer_token_startup_gdn_routed(uint32_t* record,unsigned layer,
- unsigned physicalWorker,unsigned position){
+ unsigned physicalWorker,unsigned position,unsigned committed){
  if(false){uint32_t data[128]={};
   (void)PioneerQ38TokenMetadata::Outer(data,0,0,0,0,0,data);
   (void)PioneerQ38TokenMetadata::Recipe(data,0,0,0,0);
@@ -24,5 +24,5 @@ extern "C" bool pioneer_token_startup_gdn_routed(uint32_t* record,unsigned layer
   (void)PioneerQ38TokenMetadata::Gdn(data,0,0,0);
   (void)PioneerQ38TokenMetadata::Dense(data,3,0,0);
  }
- return PioneerQ38TokenMetadata::GdnRedistributed(record,layer,physicalWorker,position);
+ return PioneerQ38TokenMetadata::GdnRedistributed(record,layer,physicalWorker,position,committed);
 }

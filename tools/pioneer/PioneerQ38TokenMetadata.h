@@ -75,10 +75,10 @@ static __attribute__((noinline)) bool Gdn(uint32_t* d,unsigned layer,unsigned wo
 // index. The legacy Gdn() transform above remains unchanged. This consumes
 // DATA only; it does not authorize a cohort upload or worker release.
 static __attribute__((noinline,unused)) bool GdnRedistributed(uint32_t* d,unsigned layer,
- unsigned physicalWorker,unsigned position){
+ unsigned physicalWorker,unsigned position,unsigned committed){
  namespace Route=PioneerQ38GdnTaskPlacement;
  if(!d || layer>=64 || layer%4==3 || physicalWorker>Route::PhysicalWorkers
-  || !physicalWorker || position>=8192)return false;
+  || !physicalWorker || position>=8192 || committed!=position)return false;
  unsigned ordinal=0,logical=0;
  if(!Route::LayerOrdinal(layer,ordinal)
   || !Route::LogicalWorker(layer,physicalWorker,logical))return false;
@@ -101,7 +101,7 @@ static __attribute__((noinline,unused)) bool GdnRedistributed(uint32_t* d,unsign
 	// GDDR current slot. Later positions may reuse those pages; spill rows
 	// remain explicitly mode 2. Whole-token commit/recovery ownership is
 	// still required before this experiment can be selected for live Work.
-	if(position && PioneerQ38ResidentGdnCacheMode(nextState)==0)nextState[50]=1;
+	if(committed && PioneerQ38ResidentGdnCacheMode(nextState)==0)nextState[50]=1;
 #endif
  if(!PioneerQ38GdnRedistributedPairing(stage,nextState)
   || !PioneerQ38GdnRedistributedRendezvousShape(nextGated,stage,nextState))return false;

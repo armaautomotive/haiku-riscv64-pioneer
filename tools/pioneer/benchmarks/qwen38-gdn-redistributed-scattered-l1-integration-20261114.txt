@@ -73,8 +73,13 @@ The missing package/startup-data seam is now implemented and pushed in
   each recurrent-layer package. Dense layers keep their legacy packages. The
   allocator metadata is retained on the heap, its lifetime is checked, and
   output aliases into it are rejected.
-* `PioneerQ38TokenMetadata::GdnRedistributed` emits cold mode at position zero,
-  warm mode for later resident positions, and keeps spill routes in GDDR mode.
+* `PioneerQ38TokenMetadata::GdnRedistributed` now receives both the requested
+  position and the package's committed-token frontier, and rejects the
+  transform unless they match. It emits cold mode at position zero, warm mode
+  only for later committed resident positions, and keeps spill routes in GDDR
+  mode. This prevents a stale or partially committed position from selecting
+  cached state; it does not itself prove the L1 pages survived a reset or
+  authorize enabling the experiment in live Work.
   The worker consumes the page map from its already-validated descriptor,
   avoiding a separate peer-table write.
 

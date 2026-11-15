@@ -85,7 +85,7 @@ int main(){
      const unsigned positions[]={0,1,32,8191};
      for(unsigned position:positions){
       auto routedRecord=candidate;
-      assert(M::GdnRedistributed(routedRecord.data(),layer,worker.physicalWorker,position));
+      assert(M::GdnRedistributed(routedRecord.data(),layer,worker.physicalWorker,position,position));
       if(!position)assert(routedRecord==candidate);
       assert(routedRecord[6]==M::Phase(position,layer)+5 && routedRecord[40]==position
        && routedRecord[64+8]==M::Phase(position,layer)+5 && routedRecord[64+40]==position
@@ -97,7 +97,9 @@ int main(){
        && Route::Map(ordinal,mapped,inverse) && inverse.physicalWorker==worker.physicalWorker);
      }
      auto untouched=candidate;
-     assert(!M::GdnRedistributed(untouched.data(),layer,worker.physicalWorker+1,0)
+     assert(!M::GdnRedistributed(untouched.data(),layer,worker.physicalWorker+1,0,0)
+      && untouched==candidate);
+     assert(!M::GdnRedistributed(untouched.data(),layer,worker.physicalWorker,1,0)
       && untouched==candidate);
     }
     if(layer==0){
