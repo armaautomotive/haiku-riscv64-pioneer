@@ -29,6 +29,14 @@ K=5,120 and 7,940 bytes for K=17,408. This leaves only 244/252 bytes of ROM
 headroom. It is a build-only offboard image, not staged or executed on the
 P100A. It has no native diagnostic identity and no full-model integration.
 
+Follow-up negative probe: changing the fully static `Pass` helper from
+always-inline to noinline kept the six RV32 outputs/streams exact, but
+reduced the simulated largest-case instruction gain from 17.29% to 15.68%
+and increased the linked 16-KiB cached-matrix test image from 11,676 to
+12,064 bytes. This is not the compact 8-KiB ROM image, and it did not solve
+the ROM fit; the change was reverted. Avoid repeating that simple noinline
+variant without a different code-sharing approach.
+
 Status / next gate
 ------------------
 This may be small enough for a once-only physical Q4 timing diagnostic, but
