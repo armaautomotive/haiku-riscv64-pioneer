@@ -12,16 +12,27 @@ inspect_candidate='--inspect-candidate' in args
 if inspect_candidate:
     if args.count('--inspect-candidate')!=1:raise SystemExit(2)
     args.remove('--inspect-candidate')
+compact_inspection='--compact-inspection' in args
+if compact_inspection:
+    if args.count('--compact-inspection')!=1:raise SystemExit(2)
+    args.remove('--compact-inspection')
 PINS_FFN_SHARED_INPUT_REUSE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
   ('text.bin',131040,'641babd1746c1f89aef05b30057808b9887f235a3c757006472c33c8f69ed9f0'),
   ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
   ('conv.bin',32708,'54d2b80ea35c20d37e523764024307e609b11160c4b5499655ce64fd266964bf'),
   ('program.elf',190500,'ed959881d2d85d2f135a5236a6abf075dcc6e5871d73d7233e7684aac7125110'))
+PINS_COMPACT_INSPECTION=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+  ('text.bin',120320,'b44ed20a498394ffcf0c30e29ae9db4d19985f687be537c896f76d73e33180d4'),
+  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+  ('conv.bin',29500,'3516ece88ba1e926c158fdd02865e18b8c62b1e52835e94384aa35730fdc68b0'),
+  ('program.elf',184348,'c7037c9d2a52db5e4a0d6a7b3234b0d2ee100ddf31e3757e00610f848c9a12a9'))
 ffn_shared_reuse='--ffn-shared-input-reuse' in args
 if ffn_shared_reuse:
     if args.count('--ffn-shared-input-reuse')!=1:raise SystemExit(2)
     args.remove('--ffn-shared-input-reuse')
 assert __debug__ and len(args)==2
+assert not compact_inspection or inspect_candidate,'compact controller/components are inspection-only'
+assert not (compact_inspection and ffn_shared_reuse),'compact inspection profile cannot combine with FFN reuse'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
 assert build.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -47,9 +58,12 @@ run([sys.executable,str(here/'build_qwen38_global_token_components.py'),str(buil
      '--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards',
      '--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion',
      *(('--inspect-candidate',) if inspect_candidate else ()),
+     *(('--compact-inspection',) if compact_inspection else ()),
      *(('--ffn-shared-input-reuse',) if ffn_shared_reuse else ())])
 run([tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',str(here/'blackhole_qwen38_global_chain_start.S'),'-o',str(base/'start.o')])
-run([tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+root_flags=[('-Os' if compact_inspection and flag=='-O2' else flag) for flag in flags]
+run([tool+'g++',*root_flags,*(['-include',str(here/'PioneerQ38FreestandingMemcpy.h')] if compact_inspection else []),
+     '-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
      '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1','-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1',
      '-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1','-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1',
      '-c',str(here/'blackhole_qwen38_token_root.cpp'),'-o',str(out/'program.o')])
@@ -80,7 +94,12 @@ if ffn_shared_reuse:
         for name,size,digest in PINS_FFN_SHARED_INPUT_REUSE:
             data=(out/name).read_bytes()
             assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
+if compact_inspection:
+    for name,size,digest in PINS_COMPACT_INSPECTION:
+        data=(out/name).read_bytes()
+        assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
+    print('PASS reproducible compact inspection image; fixed regions fit; still UNQUALIFIED for runtime/install/physical inference',flush=True)
 if inspect_candidate:
-    print('UNQUALIFIED INSPECT candidate only; hashes not pinned; no runtime, install or physical/numerical grant',flush=True)
+    print('UNQUALIFIED INSPECT candidate only; compact-profile hashes pinned where selected; no runtime, install or physical/numerical grant',flush=True)
 else:
     print('PASS BUILD_ONLY unchanged complete G3 ROOT control FIRST;new on-card all5-EOG predicate;whole4-section image fits original journal/boot+STOP exact/static frames<=2048;no runtime or physical/numerical grant',flush=True)

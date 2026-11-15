@@ -7,6 +7,9 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+compact_inspection='--compact-inspection' in options
+if compact_inspection:
+ options.remove('--compact-inspection')
 qgwf_root='--qgwf-dual-batch-root' in options
 if qgwf_root:
  assert options.count('--qgwf-dual-batch-root')==1,'duplicate QGWF root selector'
@@ -35,7 +38,7 @@ assert not (input_trace and value_trace),'distinct capture roles cannot be combi
 if input_trace or value_trace:
  assert '--qgw8-dense-stage-trace' not in options,'distinct capture roles cannot be combined'
  options=['--qgw8-dense-stage-trace' if x in ('--qgw8-dense-input-trace','--qgw8-dense-value-trace') else x for x in options]
-assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace','--ffn-shared-input-reuse'}
+assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace','--ffn-shared-input-reuse'} and (not compact_inspection or '--inspect-candidate' in options)
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -100,10 +103,11 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # object pins. No old default image gets the new admission flag.
 run(sys.executable,here/'build_qwen38_global_chain_root.py',sdk,out/'unchanged-feedback',
  '--inspect-feedback-candidate' if inspect else '--feedback')
-flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
+flags=['-std=c++11','-Os' if compact_inspection else '-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
-run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+compact_flags=['-include',here/'PioneerQ38FreestandingMemcpy.h'] if compact_inspection else []
+run(tool+'g++',*flags,*compact_flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1'] if ffn_shared_reuse else []),
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
@@ -133,7 +137,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_RECURRENT=1',
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
-run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+run(tool+'g++',*flags,*compact_flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1'] if qgwd_root else []),

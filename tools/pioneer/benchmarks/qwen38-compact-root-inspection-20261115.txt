@@ -1,0 +1,56 @@
+Qwen3.8-27B full-offload compact ROOT inspection — 2026-11-15
+=============================================================
+
+Purpose
+-------
+Record a reproducible, size-fitting inspection build for the compact
+full-offload controller profile. This is not a runtime or P100A performance
+result. The controller and component translation units use -Os, and the
+profile force-includes a weak freestanding memcpy implementation. The profile
+is restricted to --inspect-candidate and cannot be combined with the FFN
+shared-input-reuse candidate.
+
+Reproduction
+------------
+  env -u CPATH python3 tools/pioneer/build_qwen38_full_offload_root.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 \
+    /private/tmp/q38-root-compact-inspection-20261115-d \
+    --inspect-candidate --compact-inspection
+
+The immediately preceding independent build was written to
+`/private/tmp/q38-root-compact-inspection-20261115-c`. Both builds produced
+identical hashes, and the builder now pins these compact-profile outputs:
+
+* boot.bin: 4 bytes, SHA-256
+  `32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca`
+* text.bin: 120,320 bytes (10,752 bytes below the 128 KiB limit), SHA-256
+  `b44ed20a498394ffcf0c30e29ae9db4d19985f687be537c896f76d73e33180d4`
+* terminal.bin: 8 bytes, SHA-256
+  `6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5`
+* conv.bin: 29,500 bytes (3,268 bytes below the 32 KiB limit), SHA-256
+  `3516ece88ba1e926c158fdd02865e18b8c62b1e52835e94384aa35730fdc68b0`
+* program.elf: 184,348 bytes, SHA-256
+  `c7037c9d2a52db5e4a0d6a7b3234b0d2ee100ddf31e3757e00610f848c9a12a9`
+
+Checks
+------
+* Full build/link/static layout checks passed; all final ROOT frames are at
+  most 2,048 bytes, no undefined symbols remain, and fixed entry/STOP symbols
+  are at their expected addresses.
+* Actual emitted RV32 EOG predicate interpreter passed 248,320 vocabulary IDs
+  plus five out-of-range IDs. This checks the EOG predicate only, not matrix
+  execution or inference.
+* Previous independent offline checks passed: mixed live-reference tests,
+  full-offload pointer-free grammar tests (3,072 accepted / 12,338 refused),
+  and token package tests. Those tests do not qualify this compact profile for
+  runtime.
+
+Not established / next gates
+----------------------------
+No numerical equivalence test of the compact -Os controller/components,
+combined-stack proof, live runtime, loaded original Qwen model, physical P100A
+generation, or tokens/second measurement has been completed. The build is
+UNQUALIFIED for install, Work mode, and performance; do not install it. Next,
+prove semantic/numerical parity against the validated controller path, then
+exercise an isolated runtime gate before any model run. The 20 tokens/sec
+target remains unmet; no speedup is claimed.
