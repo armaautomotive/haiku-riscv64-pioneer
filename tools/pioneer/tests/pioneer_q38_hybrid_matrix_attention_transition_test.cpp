@@ -154,8 +154,8 @@ int main(int argc,char** argv){
   }
  }
 #ifdef PIONEER_Q38_TEST_SFPU_EXP
- assert(image.sfpuMathOps>0);
- printf("SFPU exponential instructions executed in linked QGW7/QDM2 worker: %u; synthetic transition only\n",image.sfpuMathOps);
+ assert(image.sfpuMathOps==0); // one-token fixture stays on exact scalar exp
+ printf("SFPU exponential instructions in one-token linked QGW7/QDM2 fixture: %u (short-window scalar fallback); synthetic transition only\n",image.sfpuMathOps);
 #endif
 #ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
  assert(image.native.matrixOps-image.matrixBefore==6*(128+3*8*16) && image.native.Clean());

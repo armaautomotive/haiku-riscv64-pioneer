@@ -262,6 +262,11 @@ static void LocalExp(const uint32_t* d,const uint32_t* p,const float* local,floa
  }
  if(p[6] || p[7] || p[14] || p[15])scalar_fault_park();
 #ifdef PIONEER_Q38_DENSE_SFPU_EXP_INSPECTION
+ // A partial vector batch cannot amortize the SFPU context switch. Keep the
+ // exact scalar exp path for short windows; only activate the approximation
+ // when at least one full 32-lane batch is available.
+ const bool useSfpu=d[49]>=32;
+ if(useSfpu){
  // This switches from the completed BF16 matrix score phase to the
  // existing FP32 SFPU path. The following ValuesCached call reinitializes
  // the matrix configuration before its first product. This remains an
@@ -275,6 +280,7 @@ static void LocalExp(const uint32_t* d,const uint32_t* p,const float* local,floa
   if(Words(0xffef0000+index[i]*4)[0]!=config[i])scalar_fault_park();
  }
  Fence();
+ }
 #endif
  for(unsigned h=0;h<6;h++){
   PioneerQ38RmsSum sum;
@@ -285,17 +291,25 @@ static void LocalExp(const uint32_t* d,const uint32_t* p,const float* local,floa
    for(unsigned lane=0;lane<32;lane++){
     const unsigned token=first+lane;
     const float value=token<d[49]?Floats(L::Scores)[h*L::Stride+token]-global[h]:0.0f;
-    common[lane]=token<d[49] && PioneerSfpuExpRange(value,reduced[lane],factor[lane]);
-    if(token>=d[49]){reduced[lane]=0.0f;factor[lane]=1.0f;}
-    fallback[lane]=common[lane]?0.0f:PioneerAttentionExp(value);
-    const unsigned at=(lane>>3)*16+(lane&7)*2;
-    input[at]=PioneerAttentionBits(reduced[lane]);
-    input[64+at]=PioneerAttentionBits(factor[lane]);
+    if(token>=d[49]){
+     common[lane]=0;reduced[lane]=0.0f;factor[lane]=1.0f;fallback[lane]=0.0f;
+    }else{
+     common[lane]=useSfpu && PioneerSfpuExpRange(value,reduced[lane],factor[lane]);
+     fallback[lane]=common[lane]?0.0f:PioneerAttentionExp(value);
+    }
+    if(useSfpu){
+     const unsigned at=(lane>>3)*16+(lane&7)*2;
+     input[at]=PioneerAttentionBits(reduced[lane]);
+     input[64+at]=PioneerAttentionBits(factor[lane]);
+    }
    }
-   (void)input[64+((31>>3)*16+(31&7)*2)];Fence();
-   struct ExpEmitter {void Op(uint32_t op){Emit(op);}} expEmitter;
-   Emit(0x70030000);Emit(0x70130004);PioneerSfpuExp32(expEmitter);Drain();
-   volatile uint32_t* output=Words(0xffbd8200);
+   volatile uint32_t* output=nullptr;
+   if(useSfpu){
+    (void)input[64+((31>>3)*16+(31&7)*2)];Fence();
+    struct ExpEmitter {void Op(uint32_t op){Emit(op);}} expEmitter;
+    Emit(0x70030000);Emit(0x70130004);PioneerSfpuExp32(expEmitter);Drain();
+    output=Words(0xffbd8200);
+   }
    for(unsigned lane=0;lane<32 && first+lane<d[49];lane++){
     const unsigned at=(lane>>3)*16+(lane&7)*2;
     const float e=common[lane]?PioneerAttentionFloat(output[at]):fallback[lane];

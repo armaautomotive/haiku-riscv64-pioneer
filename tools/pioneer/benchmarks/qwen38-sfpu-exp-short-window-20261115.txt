@@ -1,0 +1,27 @@
+Qwen3.8 SFPU exponential short-window fallback inspection — 2026-11-15
+======================================================================
+
+Offline QGW7/QDM2 emitted-worker test only. The change bounds exact fallback
+work to valid lanes in a partial 32-lane block. It also leaves a one-token
+window on scalar `PioneerAttentionExp` and skips the SFPU context switch. It
+does not alter Work, validation, native dispatch, or the default image.
+
+Validation:
+
+  `sh tools/pioneer/tests/run_pioneer_q38_sfpu_exp_worker_tests.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64`
+
+Passed the linked QGW7 BFP4→QDM2→BFP4 transition, output checks, image-size
+limit, and SFPU exponential numerical suite (1,047,840 common lanes + 736
+exact fallbacks; max 1 ULP; 64 synthetic softmax frames). In the linked
+one-token fixture, the new candidate executes zero SFPU exponential
+instructions and produces the expected output.
+
+For that same synthetic fixture, the emulator counted 3,733,976 RISC steps
+before the padded-lane fix and 3,631,113 after it (2.75% fewer). The current
+no-SFPU control counted 3,626,030 steps, so the candidate still costs 5,083
+more steps (0.14%) than control in this one-token case. These are emulator
+instruction counts, not silicon cycles or tokens/sec; no full-model quality,
+card, or throughput test was performed. This result does not establish a
+speedup. The candidate remains offline-only and must be measured on-card at
+representative context lengths before any promotion.
