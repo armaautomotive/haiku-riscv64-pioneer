@@ -416,6 +416,45 @@ int main(int argc,char** argv){
 		std::printf("MATCHED warm resident worker:write-through instructions%u/9 packets -> L1-authoritative instructions%u/7 packets; delta%+d instructions, exact same 8,256 state/output words; emulator only, NOT silicon time/TPS\n",
 			writeThroughSteps,authoritative.steps,int(authoritative.steps)-int(writeThroughSteps));
 	}
+	#ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
+	// Aggregate a complete 96-half recurrent layer at a later layer ordinal,
+	// which exercises both resident slots and deterministic GDDR spills. The
+	// mode is selected from the real allocator map for each route; only resident
+	// halves change from warm write-through to L1-authoritative.
+	{
+		uint64_t writeThroughSteps=0,authoritativeSteps=0;
+		unsigned writeThroughPackets=0,authoritativePackets=0,resident=0,spill=0;
+		for(unsigned logical=0;logical<PioneerQ38GdnTaskPlacement::LogicalWorkers;logical++){
+			PioneerQ38GdnTaskPlacement::Route route={};
+			PioneerQ38GdnL1PageAllocator::PageTable table={};unsigned ordinal=0;
+			assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(40,ordinal)
+				&& PioneerQ38GdnTaskPlacement::Map(ordinal,logical,route)
+				&& CandidateL1PageAllocator().Resolve(route,table));
+			GdnRecurrentMachine writeThrough(argv[1],*canonical,40,logical,6,131);
+			const unsigned mode=table.resident?1:2;
+			writeThrough.descriptor[50]=mode;writeThrough.SetDescriptors();
+			writeThrough.memory[uint32_t(L::StatePageMode)]=mode;
+			assert(writeThrough.Run());writeThrough.Verify();
+			GdnRecurrentMachine authoritative(argv[1],*canonical,40,logical,6,131);
+			const unsigned candidateMode=table.resident?3:2;
+			authoritative.descriptor[50]=candidateMode;authoritative.SetDescriptors();
+			authoritative.memory[uint32_t(L::StatePageMode)]=candidateMode;
+			assert(authoritative.Run());authoritative.Verify();
+			assert(writeThrough.next==authoritative.next);
+			for(unsigned i=0;i<64;i++)assert(writeThrough.memory.at(uint32_t(L::Output)+i*4)
+				==authoritative.memory.at(uint32_t(L::Output)+i*4));
+			writeThroughSteps+=writeThrough.steps;authoritativeSteps+=authoritative.steps;
+			writeThroughPackets+=writeThrough.packets;authoritativePackets+=authoritative.packets;
+			if(table.resident)resident++;else spill++;
+		}
+		assert(resident+spill==PioneerQ38GdnTaskPlacement::LogicalWorkers
+			&& resident && spill && authoritativeSteps<writeThroughSteps
+			&& authoritativePackets<writeThroughPackets);
+		std::printf("MATCHED layer40/96 GDN halves:resident%u/spill%u; write-through instructions%llu/packets%u -> L1-authoritative instructions%llu/packets%u; exact state/output each half; emulator only, NOT silicon time/TPS\n",
+			resident,spill,(unsigned long long)writeThroughSteps,writeThroughPackets,
+			(unsigned long long)authoritativeSteps,authoritativePackets);
+	}
+	#endif
 	#endif
 #ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
  assert(sAllocatorResidentRoutes>0 && sAllocatorSpillRoutes>0);

@@ -149,3 +149,14 @@ mode-3 control/data path does not erase its transfer-count advantage through
 extra emulated RISC work in this fixture. It is not Blackhole cycle timing,
 GDDR latency, aggregate model timing, or a tokens/sec prediction; native owner
 integration and a matched physical Qwen benchmark are still required.
+
+The same test also runs a complete 96-task layer-40 cohort using the actual
+allocator map. It resolves 95 resident routes and one spill route. All 96
+write-through/L1-authoritative pairs produced bit-identical state and output.
+The simulator counted 25,001,329 RV32 instructions and 866 packets for
+write-through, versus 19,061,359 instructions and 676 packets for
+L1-authoritative mode (5,939,970 fewer instructions, 23.76%). The spill
+worker remained in GDDR mode in both runs. This is a stronger worker/cohort
+comparison than the single-half sample, but still excludes layer scheduling,
+other Qwen operations, native allocation/ownership, silicon timing and full
+model throughput.
