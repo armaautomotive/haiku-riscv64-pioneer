@@ -148,7 +148,11 @@ struct DeltaVectorImage:ScalarMachine {
 			next[i*64+j]=Float(initialState[i*64+j])*decay+Float(memory.at(uint32_t(L::Key)+i*4))*delta[j];
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 			uint32_t page=memory.at(uint32_t(L::StatePageTable)+(i*64+j)/1024*4);
-			assert(memory.at(page+((i*64+j)%1024)*4)==Bits(next[i*64+j]));
+			if (memory.at(page+((i*64+j)%1024)*4)!=Bits(next[i*64+j])) {
+				fprintf(stderr,"state mismatch i=%u j=%u got=%08x expected=%08x initial=%08x\n",
+					i,j,memory.at(page+((i*64+j)%1024)*4),Bits(next[i*64+j]),Bits(initialState[i*64+j]));
+				assert(false);
+			}
 #else
 			assert(memory.at(0xa0000+(i*64+j)*4)==Bits(next[i*64+j]));
 #endif
@@ -234,6 +238,23 @@ int main(int argc,char** argv)
 		);
 	}
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	std::array<uint32_t,8192> scatteredPrior{};
+	for (unsigned token=0;token<16;token++) {
+		DeltaVectorImage m(argv[1],1+token%3);
+		if (token) {
+			for (unsigned i=0;i<m.initialState.size();i++) {
+				const uint32_t page=m.memory.at(uint32_t(L::StatePageTable)+(i/1024)*4);
+				m.initialState[i]=scatteredPrior[i];
+				m.memory[page+(i%1024)*4]=scatteredPrior[i];
+			}
+		}
+		assert(m.RunVector());m.Verify();
+		for (unsigned i=0;i<scatteredPrior.size();i++) {
+			const uint32_t page=m.memory.at(uint32_t(L::StatePageTable)+(i/1024)*4);
+			scatteredPrior[i]=m.memory.at(page+(i%1024)*4);
+		}
+	}
+	puts("PASS scattered-state resident sequence: 16 consecutive exact recurrent updates through one stable eight-page mapping;NOT model-level quality or native inference");
 	for (unsigned bad=0;bad<4;bad++) {
 		DeltaVectorImage m(argv[1],1);const uint32_t at=uint32_t(L::StatePageTable)+(bad==0?0:bad==1?4:bad==2?8:12);
 		m.memory[at]=bad==0?TestStatePage(1):bad==1?TestStatePage(1)+1:bad==2?0x180000:0x80000;

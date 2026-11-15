@@ -30,7 +30,11 @@ for the contiguous control (about 5.2% fewer steps in this simulator). This is
 an instruction-count result only; it does not establish a card-cycle reduction
 or inference speedup. The change from the first prototype (212,069 steps) came
 from page-at-a-time writeback rather than recalculating page/offset for every
-word.
+word. A new sequence test also performed 16 consecutive recurrent transitions
+through one stable eight-page state mapping, with exact state and output bits
+at every step. This is still one half-head in an offline image simulator; it
+does not exercise cross-layer state ownership, token abort/commit, or a native
+dispatcher.
 
 The next substantial work remains outside this prototype: a native owner must
 derive the actual free-page map, reserve state pages against the full image
