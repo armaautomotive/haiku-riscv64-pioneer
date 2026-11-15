@@ -9,15 +9,15 @@ if len(sys.argv) != 2:
     raise SystemExit('expected exact qualified QGT1 image directory')
 root = pathlib.Path(sys.argv[1])
 code, boot = (root / 'code.bin').read_bytes(), (root / 'boot.bin').read_bytes()
-if (len(code) != 23792 or hashlib.sha256(code).hexdigest() != '3a99ac89d98236b7e3dac5e1cf433223961fdb1b7f0f6f80dd81d541a47b0284'
+if (len(code) != 23752 or hashlib.sha256(code).hexdigest() != '81b9a0952876a5111e18e6444b3aba05d177e249f19c1a65680ad320bbef659f'
         or boot != struct.pack('<I', 0x0005e06f)):
     raise SystemExit('exact qualified QGT1 code/boot mismatch')
 lines = ['/* SPDX-License-Identifier: MIT */', '#ifndef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE_H', '#define PIONEER_Q38_GDN_RENDEZVOUS_IMAGE_H',
          '#include <stdint.h>', '// Frozen QGT1 ROM DATA,NOT source/initialized-state/native authority.',
-         '// Code23792B SHA256 3a99ac89d98236b7e3dac5e1cf433223961fdb1b7f0f6f80dd81d541a47b0284',
-         'enum {TT_Q38_GDN_RENDEZVOUS_TEXT_BYTES=23792,TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS=5949};',
-         'static inline uint32_t PioneerQ38GdnRendezvousImageWord(unsigned i){', ' static const uint32_t code[5948]={']
-words = struct.unpack('<5948I', code)
+         '// Code23752B SHA256 81b9a0952876a5111e18e6444b3aba05d177e249f19c1a65680ad320bbef659f',
+         'enum {TT_Q38_GDN_RENDEZVOUS_TEXT_BYTES=23752,TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS=5939};',
+         'static inline uint32_t PioneerQ38GdnRendezvousImageWord(unsigned i){', ' static const uint32_t code[5938]={']
+words = struct.unpack('<5938I', code)
 for at in range(0, len(words), 8):
     lines.append('  ' + ','.join('0x%08xU' % word for word in words[at:at + 8]) + ',')
 lines += [' };', ' return i>=TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS?UINT32_MAX:!i?0x0005e06f:code[i-1];', '}',

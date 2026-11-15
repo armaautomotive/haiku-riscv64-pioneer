@@ -38,7 +38,8 @@ for section, digest in (
     assert hashlib.sha256((output/'unchanged-matrix-conv'/(section+'.bin')).read_bytes()).hexdigest() == digest
 qgt = output/'unchanged-qgt1'
 subprocess.run(['sh', str(here/'build_qwen38_gdn_rendezvous_image.sh'), str(sdk), str(qgt)], check=True, env=clean)
-assert hashlib.sha256((qgt/'code.bin').read_bytes()).hexdigest() == '3a99ac89d98236b7e3dac5e1cf433223961fdb1b7f0f6f80dd81d541a47b0284'
+assert len((qgt/'code.bin').read_bytes()) == 23752
+assert hashlib.sha256((qgt/'code.bin').read_bytes()).hexdigest() == '81b9a0952876a5111e18e6444b3aba05d177e249f19c1a65680ad320bbef659f'
 assert (qgt/'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
 cross, flags, peer = base['cross'], list(base['flags']), list(base['peer'])
 roles = [*base['roles'], '-DPIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE=1']

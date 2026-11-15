@@ -102,14 +102,14 @@ int main(int argc,char** argv){
  assert(code==TT_Q38_PROJECTION_GRAPH_CODE_WORDS && snapshot==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS);
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
  const auto timed=Read(std::string(argv[3])+"/code.bin"),boot=Read(std::string(argv[3])+"/boot.bin");
- assert(timed.size()==23792 && boot.size()==4 && PioneerQ38GdnRendezvousImageWord(0)==Word(boot,0));
+ assert(timed.size()==23752 && boot.size()==4 && PioneerQ38GdnRendezvousImageWord(0)==Word(boot,0));
  for(unsigned i=1;i<TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS;i++){
   assert(PioneerQ38GdnRendezvousImageWord(i)==Word(timed,(i-1)*4));
   for(unsigned w=1;w<=96;w++)assert(PioneerQ38ProjectionGraphSnapshotContains(w,PioneerQ38GdnRendezvousImageAddress(i)));
  }
  for(unsigned w=1;w<=96;w++)for(unsigned i=0;i<16;i++)assert(PioneerQ38ProjectionGraphSnapshotContains(w,0x74d00+i*4));
- assert(code==1185912 && snapshot==8330680 && PioneerQ38GdnRendezvousImageWord(5949)==UINT32_MAX);
- puts("PASS QGT1 exact23792B ROM/ALL5949frozen words/ALL96 full24KiB saves+clock64B/root+97..119oldspans unchanged;DATA ONLY");
+ assert(code==1185912 && snapshot==8330680 && PioneerQ38GdnRendezvousImageWord(5939)==UINT32_MAX);
+ puts("PASS QGT1 exact23752B ROM/ALL5939frozen words/ALL96 full24KiB saves+clock64B/root+97..119oldspans unchanged;DATA ONLY");
 #elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
  const auto gated=Read(std::string(argv[3])+"/code.bin"),boot=Read(std::string(argv[3])+"/boot.bin");
  assert(gated.size()==23020 && boot.size()==4 && PioneerQ38GdnGatedImageWord(0)==Word(boot,0));

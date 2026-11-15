@@ -5,6 +5,7 @@
 #include "pioneer_q38_hybrid_worker_image_test.cpp"
 #include "../PioneerAttentionMath.h"
 #include "../PioneerQ38DensePartitionLayout.h"
+#include <cmath>
 namespace Dense=PioneerQ38DensePartitionLayout;
 
 struct TransitionImage:HybridImage {
@@ -125,18 +126,40 @@ int main(int argc,char** argv){
    assert(PioneerAttentionFloat(image.WordRead(Dense::Scores+h*Dense::Stride*4))==expected);
   }
  }
+#ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
+ assert(image.native.matrixOps-image.matrixBefore==6*(128+3*8*16) && image.native.Clean());
+#else
  assert(image.native.matrixOps-image.matrixBefore==6*(128+4*8*16) && image.native.Clean());
+#endif
+#ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
+ double pvErrorSquares=0.0,pvExpectedSquares=0.0;float pvMaxAbsoluteError=0.0f;
+#endif
  for(unsigned h=0;h<6;h++)for(unsigned d=0;d<256;d++){
   const float expected=float(int(d%17)-8)*.0625f;
   const float high=PioneerAttentionFloat(image.WordRead(Dense::Partial+(h*512+d*2)*4));
   const float low=PioneerAttentionFloat(image.WordRead(Dense::Partial+(h*512+d*2+1)*4));
+#ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
+  // The candidate drops only low(V)*low(P); this synthetic observer checks
+  // bounded approximation, not Qwen-model numerical quality.
+  const float observed=high+low,error=std::fabs(observed-expected);
+  pvErrorSquares+=double(error)*error;pvExpectedSquares+=double(expected)*expected;
+  if(error>pvMaxAbsoluteError)pvMaxAbsoluteError=error;
+  const float magnitude=std::fabs(expected)>1.0f?std::fabs(expected):1.0f;
+  assert(error<=0.01f*magnitude);
+#else
   assert(high+low==expected);
+#endif
  }
  image.denseMode=false;image.RearmTestAccounting();
  image.Stage(3,7,4);assert(image.FinishCombined(7) && image.native.Clean());
  const auto* golden=PioneerNativeBfp4BandGolden(17408);assert(golden);
  for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++)
   assert(image.Get(W::Output+(band*32+row)*4)==golden[row]);
+#ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
+ assert(pvExpectedSquares>0.0 && pvErrorSquares<=pvExpectedSquares*0.0001);
+ printf("QDM2 hybrid synthetic PV relativeL2=%.9g maxAbs=%.9g matrixOps=3072 controlOps=3840 reduction=20%%;NOT model accuracy or hardware TPS\n",
+  std::sqrt(pvErrorSquares/pvExpectedSquares),double(pvMaxAbsoluteError));
+#endif
 #ifdef PIONEER_Q38_QGWD_SRCA_DENSE_Q8_WORKER
  puts("PASS actual QGWD BFP4 -> QDM2 attention -> BFP4; alternative SrcA-base model, synthetic data/controller; NO HARDWARE OR SPEED");
 #elif defined(PIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE)

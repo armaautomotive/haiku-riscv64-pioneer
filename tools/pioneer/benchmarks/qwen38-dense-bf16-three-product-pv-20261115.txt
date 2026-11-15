@@ -18,6 +18,8 @@ Build and test:
   `python3 tools/pioneer/build_qwen38_dense_attention_image.py SDK QDA`
   `python3 tools/pioneer/tests/run_pioneer_q38_dense_matrix_three_product_tests.py OUT QDA`
   `python3 tools/pioneer/tests/run_pioneer_q38_dense_matrix_three_product_roles.py`
+  `python3 tools/pioneer/build_q38_hybrid_matrix_attention_worker.py SDK OUT --three-product-pv-inspection`
+  `python3 tools/pioneer/tests/run_pioneer_q38_hybrid_three_product_pv_tests.py QGW7 OUT_BFP4_LEAF`
 
 The RISC-V image built with boot SHA-256
 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca and code
@@ -41,6 +43,27 @@ At 65 tokens, total simulated matrix operations fell from 84,480 to 67,584
 card cycles, latency, throughput, or a whole-model speedup. Dense attention is
 only one part of the existing measured profile; this cannot be extrapolated to
 full Qwen performance.
+
+The candidate was also compiled through the linked QGW7 hybrid worker and
+tested in the same simulated register/bank/L1/NoC state transition as its
+four-product control: BFP4 down-projections, QDM2 attention phases 1/2/3, then
+the next BFP4 down-projection. Candidate `dense.bin` is 14,460 bytes
+(SHA-256 `8719756bbe7c3b3b99d67889235a2031c40c36a539e09d70469facb1598f543b`);
+the control is 14,468 bytes (SHA-256
+`d40bb04efbd330252fb679691f7cc65d3a9fd2e15ed051ce21e557e9d3e93c0d`). Both
+transition tests passed. In this fixture the candidate and control outputs
+were identical (relative L2 0), and simulated QDM2 matrix operations fell
+3,840 to 3,072 (20%). The fixture's values make the omitted low*low term zero;
+this exact match therefore does not test realistic model accuracy. The
+standalone synthetic partition tests above exercise nonzero numerical error.
+No accelerator cycles, PCIe traffic, full Qwen output, tokens/sec, or silicon
+behavior were measured by either hybrid build.
+
+The current four-product QGW7 control plus QGW8 BFP8 layer-zero regression
+suite also passed its existing emitted-dispatch, receipt, malformed-job, and
+QGW7-to-QDM2-to-BFP4 transition observers after refreshing hashes affected by
+the November 14 routed-shape source refactor. These remain synthetic/offline
+tests and do not make either QGW7 image native-selectable.
 
 The candidate remains unqualified on silicon: BF16 unpack/MVMUL operation,
 full-model attention inputs, real-model quality, layout coexistence, physical

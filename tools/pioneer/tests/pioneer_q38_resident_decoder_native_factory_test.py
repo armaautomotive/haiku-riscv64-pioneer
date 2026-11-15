@@ -61,7 +61,7 @@ validation = mode.startswith('--validation')
 actual = gdn or mode in ('--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc')
 control = mode in ('--validation-control', '--validation-control-faults', '--validation-close-only') or actual
 if gdn:
-    assert hashlib.sha256((pathlib.Path(sys.argv[8]) / 'code.bin').read_bytes()).hexdigest() == ('3a99ac89d98236b7e3dac5e1cf433223961fdb1b7f0f6f80dd81d541a47b0284' if gdn_rendezvous else '22e3001215d67c9b9f8861098db5e5fda76fb241076c0ece8adb3ba224dfe297' if gdn_gated_native else '96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410' if gdn_recurrent else 'bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1')
+    assert hashlib.sha256((pathlib.Path(sys.argv[8]) / 'code.bin').read_bytes()).hexdigest() == ('81b9a0952876a5111e18e6444b3aba05d177e249f19c1a65680ad320bbef659f' if gdn_rendezvous else '22e3001215d67c9b9f8861098db5e5fda76fb241076c0ece8adb3ba224dfe297' if gdn_gated_native else '96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410' if gdn_recurrent else 'bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1')
     assert (pathlib.Path(sys.argv[8]) / 'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
 pins = runpy.run_path(str(here.parent / 'generate_qwen38_projection_stash_images.py'))['PINS']
 for name, (section, size, sha, _) in pins.items():

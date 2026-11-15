@@ -72,14 +72,14 @@ for i,row in enumerate(rows):
  m=re.match(r'\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+',row)
  if m and 'ALLOC' in rows[i+1]:assert m[1][1:] in sections,row
 PINS=(('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
- ('globalworker.bin',6264,'bdbd801a4482188efed0dea19d3a31f8c383208ea33447c842fd8312674872ba'),
+ ('globalworker.bin',6264,'0cd6bc2a9fd54dd6e303cba9e990962e17f1cc9b893832f945857bfca00f842b'),
  ('dense.bin',10332,'cfb3b570f61baf7010e14a4072fbe496014ef2ad792d53145ef1b794ff73233a'),
  ('text.bin',5984,'e9b643d504dc6b1e2e8d744de9c425603fa9b785ef8dab14a9e47b4249f94553'),
  ('affine.bin',5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
  ('ffn.bin',16456,'102283280e44bb8e614ff84447825fe5126f9fcd7da032f1fa8da20fc619a6d4'),
  ('service.bin',9888,'ee3f68158d9609cc3667ef9812dbe3da11666dc01baa9b4fe1baf5bfd317d2c0'),
- ('gdn.bin',35564,'a56acbed91ca3728a6e2cef4cf8566be39ae8c710fe0ad62a80b8c2032573762'),
- ('program.elf',121836,'fc8ade5bdbc69a6be95846d40ee26025d43e559ef53c7beedd52071f75e83c4f'))
+ ('gdn.bin',35468,'fc0f2118c9869fc6d65d4f723ba6c1cefddbef84169983bd26e96be7db13fd08'),
+ ('program.elf',121740,'9d57b752bae6cd206fb0d00ce3387d4591c9c3eaa054666c4e77e9a3bbb1be18'))
 for name,size,digest in PINS:
  data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest()
  if not ffn_shared_reuse:assert len(data)==size and actual==digest,name

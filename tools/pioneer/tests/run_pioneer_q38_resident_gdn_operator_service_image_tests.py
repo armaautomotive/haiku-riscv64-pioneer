@@ -16,12 +16,12 @@ here = pathlib.Path(__file__).resolve().parent
 image, old = map(pathlib.Path, sys.argv[1:3])
 for section, size, digest in (
     ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'),
-    ('text', 7912, '47ff39e8f9709f9e87469e44919b374ccfbea3edd3f1f1f1b3020ecfd545c30b'),
+    ('text', 7912, 'e3ff92bed9e2ecfeae120edb2f8c8698749f1ca060cf59b625bc9c248f48a02e'),
     ('affine', 5360, 'd8734c6a6e1cea65e8abac370292033f8be1406fa063c0f84501646aaaedca5c'),
     ('ffn', 16352, 'f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9'),
     ('service', 10300, '3498f0507019f44b4c76101ca8df2df84dc4d57e3a288703c437fb441fa0eb43'),
-    ('gdn', 29852 if inplace_state_experiment else 29860,
-     'e4a5c68779478c05a68260e71dab38da9cb9855e1a148c9526fb18ecca49436c' if inplace_state_experiment else '67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648'),
+    ('gdn', 29852 if inplace_state_experiment else 29756,
+     'e4a5c68779478c05a68260e71dab38da9cb9855e1a148c9526fb18ecca49436c' if inplace_state_experiment else 'c03ca41812aaad9abd2e1e1606d36a1679506c70bd68cf5b131d6b25e8760b24'),
 ):
     data = (image/(section+'.bin')).read_bytes()
     assert len(data) == size and hashlib.sha256(data).hexdigest() == digest
