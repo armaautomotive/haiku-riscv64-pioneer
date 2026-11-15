@@ -6,11 +6,13 @@
 // Seven read-only resident inputs -> existing LOCAL half-head GDN layout.
 enum {TT_Q38_GDN_INPUT_MARKER=0x31494751,TT_Q38_GDN_INPUT_FAULT=0x46494751,
  TT_Q38_GDN_INPUT_DESCRIPTOR=0x74800,TT_Q38_GDN_INPUT_SUMMARY=0x74900};
-static inline bool PioneerQ38GdnInputShape(const uint32_t* d){
+// Peer-parameterized canonical validator is shared by fixed and redistributed
+// layouts; callers still authenticate the selected peer before using it.
+static inline bool PioneerQ38GdnInputShapePeer(const uint32_t* d,uint32_t peer){
  if(!d || d[0]!=TT_Q38_GDN_INPUT_MARKER || d[1]!=1 || d[2]!=67108864 || d[3]>=7
   || (d[4]&4095) || d[4]<0x04000000 || d[4]>0xc0000000 || d[5]>=64 || d[5]%4==3
   || !d[6] || d[6]>=0x7fffffff || d[7]>=96 || d[8]!=PioneerQ38ProjectionRoute(d[3])
-  || d[10]!=d[7]+1 || d[9]!=PioneerQ38ConvPeer(d[10]) || d[11]>=7 || d[14]>=7
+  || d[10]!=d[7]+1 || d[9]!=peer || d[11]>=7 || d[14]>=7
   || (d[12]&63) || d[12]<0x04000000 || d[12]>0xc3ffffc0 || d[13]!=PioneerQ38ProjectionRoute(d[11])
   || (d[15]&63) || d[15]<0x04000000 || d[15]>0xc3ffffc0 || d[41]!=PioneerQ38ProjectionRoute(d[14])
   || !d[16] || d[40]>=8192)return false;
@@ -25,6 +27,9 @@ static inline bool PioneerQ38GdnInputShape(const uint32_t* d){
  for(unsigned i=32;i<40;i+=2)if(!(d[i]|d[i+1]))return false;
  for(unsigned i=56;i<64;i++)if(d[i])return false;
  return true;
+}
+static inline bool PioneerQ38GdnInputShape(const uint32_t* d){
+ return d && PioneerQ38GdnInputShapePeer(d,PioneerQ38ConvPeer(d[10]));
 }
 static inline bool PioneerQ38GdnInputSummary(const uint32_t* s,const uint32_t* d,const uint32_t* before,const uint32_t* after){
  if(!s || !before || !after || !PioneerQ38GdnInputShape(d) || before[2]!=before[6] || after[2]!=after[6])return false;

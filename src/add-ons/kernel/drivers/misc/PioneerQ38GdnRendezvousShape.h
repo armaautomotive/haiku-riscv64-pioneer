@@ -14,9 +14,12 @@ static inline bool PioneerQ38GdnRendezvousShape(const uint32_t* d,const uint32_t
  if(!d || d[0]!=TT_Q38_GDN_RENDEZVOUS_MARKER || d[51]!=TT_Q38_GDN_RENDEZVOUS_POLLS
   || d[52]!=uint32_t(PioneerQ38GdnRendezvousBudget()) || d[53]!=uint32_t(PioneerQ38GdnRendezvousBudget()>>32)
   || d[54]!=4 || d[55]!=TT_Q38_GDN_RENDEZVOUS_CLOCK)return false;
- uint32_t old[64];for(unsigned i=0;i<64;i++)old[i]=d[i];
- old[0]=TT_Q38_GDN_GATED_MARKER;old[51]=TT_Q38_GDN_GATED_POLLS;for(unsigned i=52;i<56;i++)old[i]=0;
- return PioneerQ38GdnGatedShape(old,input,state); // identical canonical routing/epochs/extents
+ for(unsigned i=56;i<64;i++)if(d[i])return false;
+ return PioneerQ38GdnGatedBaseShape(d,input,state,
+  input?PioneerQ38ConvPeer(input[10]):~uint32_t(0),
+  state?PioneerQ38ResidentGdnPeer(state[9]):~uint32_t(0),
+  d?PioneerQ38ConvPeer(d[10]):~uint32_t(0),
+  d?PioneerQ38ConvPeer(d[14]):~uint32_t(0));
 }
 static inline uint32_t PioneerQ38GdnRendezvousReadyWord(const uint32_t* d,unsigned i,bool peer){
  return i?PioneerQ38GdnGatedReadyWord(d,i,peer):uint32_t(TT_Q38_GDN_RENDEZVOUS_MARKER);

@@ -29,4 +29,10 @@ static inline bool PioneerQ38GdnRecurrentPairing(const uint32_t* input,const uin
 static inline bool PioneerQ38GdnRecurrentShape(const uint32_t* input,const uint32_t* state){
  return PioneerQ38GdnInputShape(input) && PioneerQ38ResidentGdnShape(state) && PioneerQ38GdnRecurrentPairing(input,state);
 }
+static inline bool PioneerQ38GdnRecurrentShapePeers(const uint32_t* input,const uint32_t* state,
+ unsigned inputPeer,unsigned statePeer){
+ return PioneerQ38GdnInputShapePeer(input,inputPeer)
+  && PioneerQ38ResidentGdnShapePeer(state,statePeer)
+  && PioneerQ38GdnRecurrentPairing(input,state);
+}
 #endif

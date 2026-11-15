@@ -25,12 +25,14 @@ static inline uint32_t PioneerQ38ResidentGdnPeer(unsigned worker) {
 static inline bool PioneerQ38ResidentGdnAddress(uint32_t address) {
  return !(address&4095) && address>=0x04000000 && address<=0xc4000000-TT_Q38_RGDN_STATE_BYTES;
 }
-static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {
+// Peer-parameterized validator lets the redistributed route check reuse the
+// canonical field/extent rules without copying and retagging a 64-word table.
+static inline bool PioneerQ38ResidentGdnShapePeer(const uint32_t* d,uint32_t peer) {
  if (!d || d[0]!=TT_Q38_RGDN_MARKER || d[1]!=1 || d[2]!=128 || d[3]!=64
   || d[4]>=7 || !PioneerQ38ResidentGdnAddress(d[5]) || d[6]>=7 || !PioneerQ38ResidentGdnAddress(d[7])
   || !d[8] || d[8]>=0x7fffffff || d[9]>=96 || d[10]>=64 || d[10]%4==3 || d[11]>=2
   || d[12]!=PioneerQ38SpanRoute(d[4]) || d[13]!=PioneerQ38SpanRoute(d[6])
-  || d[14]!=TT_Q38_RGDN_STATE_BYTES || d[15]!=PioneerQ38ResidentGdnPeer(d[9]) || !d[16]) return false;
+  || d[14]!=TT_Q38_RGDN_STATE_BYTES || d[15]!=peer || !d[16]) return false;
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  if (d[9]) return false; // ONLY logical half0/physical ROOT0 in this separate diagnostic
 #endif
@@ -39,6 +41,9 @@ static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {
  for (unsigned i=32;i<40;i+=2) if (!(d[i]|d[i+1])) return false; // four nonzero64-bit owner epochs
  for (unsigned i=42;i<64;i++) if (d[i]) return false;
  return true;
+}
+static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {
+ return d && PioneerQ38ResidentGdnShapePeer(d,PioneerQ38ResidentGdnPeer(d[9]));
 }
 static inline bool PioneerQ38ResidentGdnSummary(const uint32_t* s,const uint32_t* d,const uint32_t* before,const uint32_t* after) {
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT

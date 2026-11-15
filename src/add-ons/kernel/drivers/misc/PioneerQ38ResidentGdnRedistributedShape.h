@@ -16,10 +16,8 @@ static inline bool PioneerQ38ResidentGdnRedistributedShape(const uint32_t* d)
 	uint32_t ordinal=0;
 	if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(d[10],ordinal))return false;
 	PioneerQ38GdnTaskPlacement::Route route={};
-	if(!PioneerQ38GdnTaskPlacement::Map(ordinal,d[9],route) || d[15]!=route.peer)return false;
-	uint32_t legacy[64];for(unsigned i=0;i<64;i++)legacy[i]=d[i];
-	legacy[15]=PioneerQ38ResidentGdnPeer(d[9]);
-	return PioneerQ38ResidentGdnShape(legacy);
+	return PioneerQ38GdnTaskPlacement::Map(ordinal,d[9],route)
+		&& PioneerQ38ResidentGdnShapePeer(d,route.peer);
 #endif
 }
 
@@ -32,10 +30,8 @@ static inline bool PioneerQ38GdnRedistributedInputShape(const uint32_t* d)
 	uint32_t ordinal=0;
 	if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(d[5],ordinal))return false;
 	PioneerQ38GdnTaskPlacement::Route route={};
-	if(!PioneerQ38GdnTaskPlacement::Map(ordinal,d[7],route) || d[9]!=route.peer)return false;
-	uint32_t legacy[64];for(unsigned i=0;i<64;i++)legacy[i]=d[i];
-	legacy[9]=PioneerQ38ConvPeer(d[10]);
-	return PioneerQ38GdnInputShape(legacy);
+	return PioneerQ38GdnTaskPlacement::Map(ordinal,d[7],route)
+		&& PioneerQ38GdnInputShapePeer(d,route.peer);
 #endif
 }
 
@@ -62,27 +58,33 @@ static inline bool PioneerQ38GdnRedistributedPairing(const uint32_t* input,const
 #endif
 }
 
+static inline bool PioneerQ38GdnRedistributedGatedBaseShape(const uint32_t* d,
+	const uint32_t* input,const uint32_t* state)
+{
+#ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+	(void)d;(void)input;(void)state;return false;
+#else
+	if(!d || d[7]>=PioneerQ38GdnTaskPlacement::LogicalWorkers)return false;
+	uint32_t ordinal=0;
+	PioneerQ38GdnTaskPlacement::Route local={},sibling={};
+	if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(d[5],ordinal)
+		|| !PioneerQ38GdnTaskPlacement::Map(ordinal,d[7],local)
+		|| !PioneerQ38GdnTaskPlacement::Map(ordinal,d[7]^1,sibling)
+		|| d[9]!=local.peer || d[15]!=sibling.peer)return false;
+	return PioneerQ38GdnGatedBaseShape(d,input,state,local.peer,local.peer,
+		local.peer,sibling.peer);
+#endif
+}
+
 static inline bool PioneerQ38GdnRedistributedGatedShape(const uint32_t* d,const uint32_t* input,const uint32_t* state)
 {
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
 	(void)d;(void)input;(void)state;return false;
 #else
-	if(!d || !PioneerQ38GdnRedistributedPairing(input,state)
-		|| d[7]>=PioneerQ38GdnTaskPlacement::LogicalWorkers || !d[14]
-		|| d[14]>PioneerQ38GdnTaskPlacement::LogicalWorkers)return false;
-	uint32_t ordinal=0;
-	if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(d[5],ordinal))return false;
-	PioneerQ38GdnTaskPlacement::Route local={},sibling={};
-	if(!PioneerQ38GdnTaskPlacement::Map(ordinal,d[7],local)
-		|| !PioneerQ38GdnTaskPlacement::Map(ordinal,d[14]-1,sibling)
-		|| d[9]!=local.peer || d[15]!=sibling.peer)return false;
-	uint32_t legacyD[64],legacyInput[64],legacyState[64];
-	for(unsigned i=0;i<64;i++){legacyD[i]=d[i];legacyInput[i]=input[i];legacyState[i]=state[i];}
-	legacyD[9]=PioneerQ38ConvPeer(legacyD[10]);
-	legacyD[15]=PioneerQ38ConvPeer(legacyD[14]);
-	legacyInput[9]=PioneerQ38ConvPeer(legacyInput[10]);
-	legacyState[15]=PioneerQ38ResidentGdnPeer(legacyState[9]);
-	return PioneerQ38GdnGatedShape(legacyD,legacyInput,legacyState);
+	return d && d[0]==TT_Q38_GDN_GATED_MARKER
+		&& d[51]==TT_Q38_GDN_GATED_POLLS
+		&& PioneerQ38GdnRedistributedGatedBaseShape(d,input,state)
+		&& [&]() { for(unsigned i=52;i<64;i++)if(d[i])return false;return true; }();
 #endif
 }
 
@@ -91,18 +93,13 @@ static inline bool PioneerQ38GdnRedistributedRendezvousShape(const uint32_t* d,c
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
 	(void)d;(void)input;(void)state;return false;
 #else
-	if(!d)return false;
-	uint32_t gated[64];for(unsigned i=0;i<64;i++)gated[i]=d[i];
-	gated[0]=TT_Q38_GDN_GATED_MARKER;gated[51]=TT_Q38_GDN_GATED_POLLS;
-	for(unsigned i=52;i<56;i++)gated[i]=0;
-	if(!PioneerQ38GdnRedistributedGatedShape(gated,input,state))return false;
-	uint32_t legacyD[64],legacyInput[64],legacyState[64];
-	for(unsigned i=0;i<64;i++){legacyD[i]=d[i];legacyInput[i]=input[i];legacyState[i]=state[i];}
-	legacyD[9]=PioneerQ38ConvPeer(legacyD[10]);
-	legacyD[15]=PioneerQ38ConvPeer(legacyD[14]);
-	legacyInput[9]=PioneerQ38ConvPeer(legacyInput[10]);
-	legacyState[15]=PioneerQ38ResidentGdnPeer(legacyState[9]);
-	return PioneerQ38GdnRendezvousShape(legacyD,legacyInput,legacyState);
+	if(!d || d[0]!=TT_Q38_GDN_RENDEZVOUS_MARKER
+		|| d[51]!=TT_Q38_GDN_RENDEZVOUS_POLLS
+		|| d[52]!=uint32_t(PioneerQ38GdnRendezvousBudget())
+		|| d[53]!=uint32_t(PioneerQ38GdnRendezvousBudget()>>32)
+		|| d[54]!=4 || d[55]!=TT_Q38_GDN_RENDEZVOUS_CLOCK)return false;
+	for(unsigned i=56;i<64;i++)if(d[i])return false;
+	return PioneerQ38GdnRedistributedGatedBaseShape(d,input,state);
 #endif
 }
 #endif

@@ -8,21 +8,34 @@ enum {TT_Q38_GDN_GATED_MARKER=0x31484751,TT_Q38_GDN_GATED_FAULT=0x46484751,
  TT_Q38_GDN_GATED_DESCRIPTOR=0x74a00,TT_Q38_GDN_GATED_SUMMARY=0x74b00,
  TT_Q38_GDN_GATED_READY=0x74c00,TT_Q38_GDN_GATED_PEER_READY=0x74c40,
  TT_Q38_GDN_GATED_OUTPUT=0x150000,TT_Q38_GDN_GATED_POLLS=256};
-static inline bool PioneerQ38GdnGatedShape(const uint32_t* d,const uint32_t* input,const uint32_t* state){
- if(!d || !PioneerQ38GdnRecurrentShape(input,state) || d[0]!=TT_Q38_GDN_GATED_MARKER || d[1]!=1
+// Common structural validator. The four explicit peers allow a redistributed
+// task to use the same full geometry checks without copying descriptors into
+// legacy-route scratch arrays.
+static inline bool PioneerQ38GdnGatedBaseShape(const uint32_t* d,const uint32_t* input,const uint32_t* state,
+ unsigned inputPeer,unsigned statePeer,unsigned localPeer,unsigned siblingPeer){
+ if(!d || !PioneerQ38GdnRecurrentShapePeers(input,state,inputPeer,statePeer) || d[1]!=1
   || d[2]!=input[2] || d[3]!=input[3] || d[4]!=input[4] || d[5]!=input[5] || d[6]!=input[6]
-  || d[7]!=input[7] || d[8]!=input[8] || d[9]!=input[9] || d[10]!=input[10]
+  || d[7]!=input[7] || d[8]!=input[8] || d[9]!=localPeer || d[10]!=input[10]
   || d[11]>=7 || (d[12]&4095) || d[12]<0x04000000 || d[12]>0xc3fff000
-  || d[13]!=PioneerQ38ProjectionRoute(d[11]) || d[14]!=((d[7]^1)+1) || d[15]!=PioneerQ38ConvPeer(d[14])
+  || d[13]!=PioneerQ38ProjectionRoute(d[11]) || d[14]!=((d[7]^1)+1) || d[15]!=siblingPeer
   || d[40]!=input[40] || d[41]!=state[11]
   || d[42]!=PioneerQ38ProjectionResultOffset(5)+(d[7]>>1)*512
   || d[43]!=TT_Q38_GDN_GATED_OUTPUT+d[7]*256 || d[44]!=TT_Q38_GDN_GATED_READY || d[45]!=0x8e800
-  || d[46]!=128 || d[47]!=64 || d[48]!=512 || d[49]!=512 || d[50]!=256 || d[51]!=TT_Q38_GDN_GATED_POLLS)return false;
+  || d[46]!=128 || d[47]!=64 || d[48]!=512 || d[49]!=512 || d[50]!=256)return false;
  for(unsigned i=16;i<40;i++)if(d[i]!=input[i])return false;
- for(unsigned i=52;i<64;i++)if(d[i])return false;
  // The shared learned page must not alias workspace,CURRENT or NEXT.
  if(!PioneerQ38GdnRecurrentSeparate(d[11],d[12],4096,input[3],input[4],67108864))return false;
  for(unsigned side=0;side<2;side++)if(!PioneerQ38GdnRecurrentSeparate(d[11],d[12],4096,state[4+side*2],state[5+side*2],32768))return false;
+ return true;
+}
+static inline bool PioneerQ38GdnGatedShape(const uint32_t* d,const uint32_t* input,const uint32_t* state){
+ if(!d || d[0]!=TT_Q38_GDN_GATED_MARKER || d[51]!=TT_Q38_GDN_GATED_POLLS
+  || !PioneerQ38GdnGatedBaseShape(d,input,state,
+   input?PioneerQ38ConvPeer(input[10]):~uint32_t(0),
+   state?PioneerQ38ResidentGdnPeer(state[9]):~uint32_t(0),
+   d?PioneerQ38ConvPeer(d[10]):~uint32_t(0),
+   d?PioneerQ38ConvPeer(d[14]):~uint32_t(0)))return false;
+ for(unsigned i=52;i<64;i++)if(d[i])return false;
  return true;
 }
 static inline uint32_t PioneerQ38GdnGatedReadyWord(const uint32_t* d,unsigned i,bool peer){
