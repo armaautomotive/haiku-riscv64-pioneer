@@ -22,19 +22,27 @@
 struct PioneerQ38GdnL1CacheSlice {
 	PioneerQ38GdnRedistributedStateSlice state;
 	uint32_t cacheIndex;
+	unsigned cacheMode;
 	bool resident;
 	bool cacheHit;
 };
 
 class PioneerQ38GdnL1CacheLeaseInspection {
-	enum Phase { Empty, Ready, Token, Layer, Poisoned, Closed } phase=Empty;
+	public:
+	enum CachePolicy { WriteThroughPolicy, L1AuthoritativePolicy };
+	enum CacheMode { ColdFillMode=0, WarmWriteThroughMode=1, GddrSpillMode=2,
+		WarmL1AuthoritativeMode=3 };
+	private:
+	enum Phase { Empty, Ready, Token, Layer, PendingModelPublication, Poisoned, Closed } phase=Empty;
 	enum : unsigned { Workers=119, SlotsPerWorker=PioneerQ38GdnTaskPlacement::SlotsPerPhysical,
 		ResidentSlotsPerWorker=25,
 		CacheEntries=Workers*SlotsPerWorker, CacheWords=(CacheEntries+63)/64 };
 	PioneerQ38GdnState state;
 	PioneerQ38GdnIdentity identity={};
+	CachePolicy policy=WriteThroughPolicy;
 	uint64_t cacheValid[CacheWords]={};
 	uint64_t cachePosition=0;
+	uint64_t pendingPosition=0;
 	unsigned cacheSlot=0;
 	bool cacheBound=false;
 
@@ -57,6 +65,8 @@ class PioneerQ38GdnL1CacheLeaseInspection {
 	}
 public:
 	PioneerQ38GdnL1CacheLeaseInspection()=default;
+	explicit PioneerQ38GdnL1CacheLeaseInspection(CachePolicy selectedPolicy)
+		:policy(selectedPolicy){}
 	PioneerQ38GdnL1CacheLeaseInspection(const PioneerQ38GdnL1CacheLeaseInspection&)=delete;
 	PioneerQ38GdnL1CacheLeaseInspection& operator=(const PioneerQ38GdnL1CacheLeaseInspection&)=delete;
 
@@ -90,15 +100,20 @@ public:
 		candidate.cacheHit=candidate.resident && cacheBound
 			&& cachePosition==ticket.position && cacheSlot==ticket.readSlot
 			&& Valid(candidate.cacheIndex);
+		candidate.cacheMode=candidate.resident
+			?(candidate.cacheHit && policy==L1AuthoritativePolicy
+				?WarmL1AuthoritativeMode:candidate.cacheHit?WarmWriteThroughMode:ColdFillMode)
+			:GddrSpillMode;
 		output=candidate;return true;
 	}
-	// l1WritebackProved is a receipt from the caller, NOT independently
-	// checked here. Resident entries must update their L1 page before a token
-	// can commit; spill entries must use the ordinary GDDR state path.
-	bool CompleteHalf(const PioneerQ38GdnTicket& ticket,unsigned logicalWorker,bool l1WritebackProved)
+	// stateUpdateProved is a receipt from the caller, NOT independently
+	// checked here. It proves that a resident page was updated in L1 (regardless
+	// of whether GDDR write-through was also requested). Spill entries must use
+	// the ordinary GDDR state path. This metadata policy authorizes no I/O.
+	bool CompleteHalf(const PioneerQ38GdnTicket& ticket,unsigned logicalWorker,bool stateUpdateProved)
 	{
 		PioneerQ38GdnL1CacheSlice slice={};
-		if(!Slice(ticket,logicalWorker,true,slice) || slice.resident!=l1WritebackProved)return false;
+		if(!Slice(ticket,logicalWorker,true,slice) || slice.resident!=stateUpdateProved)return false;
 		if(!state.CompletedHalf(ticket,logicalWorker))return false;
 		if(slice.resident)Invalidate(slice.cacheIndex);
 		return true;
@@ -108,23 +123,32 @@ public:
 		if(phase!=Layer || !state.CompleteLayer(ticket))return false;
 		phase=Token;return true;
 	}
-	// Publish cache validity only after all 48 layers and the GDDR slot flip.
-	// On any fault, partially modified L1 pages are invalidated and must be
-	// reloaded from the still-authoritative current GDDR slot.
+	// Commit the recurrent-state subtransaction after all 48 layers, but do
+	// NOT publish cache validity yet: the enclosing model token may still fail
+	// in a different stage. The caller must call PublishModelToken only after
+	// the whole-model transaction has succeeded. Any intervening fault poisons
+	// the session; mode 3 cannot roll its in-place L1 writes back.
 	bool CommitToken(const PioneerQ38GdnIdentity& id,uint64_t position)
 	{
 		if(phase!=Token || !(id==identity) || !state.CommitToken(id,position))return false;
+		pendingPosition=position;phase=PendingModelPublication;return true;
+	}
+	bool PublishModelToken(const PioneerQ38GdnIdentity& id,uint64_t position)
+	{
+		if(phase!=PendingModelPublication || !(id==identity) || position!=pendingPosition)return false;
 		for(unsigned worker=0;worker<Workers;worker++)for(unsigned slot=0;slot<ResidentSlotsPerWorker;slot++){
 			const unsigned index=worker*SlotsPerWorker+slot;
 			cacheValid[index/64]|=UINT64_C(1)<<(index%64);
 		}
-		cachePosition=position+1;cacheSlot^=1;cacheBound=true;phase=Ready;return true;
+		cachePosition=position+1;cacheSlot^=1;cacheBound=true;
+		phase=Ready;return true;
 	}
 	void Fault()
 	{
 		if(phase!=Closed){Invalidate();state.Fault();phase=Poisoned;}
 	}
-	bool Unsafe() const{return phase==Poisoned || phase==Token || phase==Layer || state.Unsafe();}
+	bool Unsafe() const{return phase==Poisoned || phase==Token || phase==Layer
+		|| phase==PendingModelPublication || state.Unsafe();}
 	bool Close()
 	{
 		if(phase!=Ready || !state.Close())return false;
