@@ -6,17 +6,32 @@
 #include "pioneer_q38_delta_vector_test.cpp"
 #include "../PioneerQ38DeltaVectorLayout.h"
 namespace L=PioneerQ38DeltaVectorLayout;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+static uint32_t TestStatePage(unsigned page){return 0x90000+page*8192;}
+static bool IsTestStatePage(uint32_t at){for(unsigned page=0;page<L::StatePages;page++){uint32_t base=TestStatePage(page);if(at>=base && at-base<L::StatePageBytes)return true;}return false;}
+#endif
 struct DeltaVectorImage:ScalarMachine {
 	DeltaVectorMachine unit;
 	uint32_t cfg[224]={},threads[68]={},ack=0,x0=0,x1=0;
-	unsigned imports=0,pendingWords=0,pendingSource=0,pendingRow=0,nextWrites=0,resultWrites=0,csrReads=0;
+	unsigned imports=0,pendingWords=0,pendingSource=0,pendingRow=0,nextWrites=0,scatterWrites=0,resultWrites=0,csrReads=0;
+	std::vector<uint32_t> initialState;
 	unsigned failImport=0,configWrites=0;
 	bool wait=false,dropMathDrain=false,dropOutputDrain=false;
 	struct UnsafeRead {};
 	DeltaVectorImage(const char* path,unsigned trial):ScalarMachine(path,64,0) {
 		unit.localImage=true; memory.clear();
 		memory[0x74000]=0x56383351; memory[0x74004]=128; memory[0x74008]=64; memory[0x7400c]=0;
-		for (unsigned i=0;i<8192;i++) { memory[0x90000+i*4]=Bits(trial?float(sin(i*.031+trial*.17)*.003):0); memory[0xa0000+i*4]=0xdeadbeef; }
+		initialState.reserve(8192);
+		for (unsigned i=0;i<8192;i++) {
+			uint32_t value=Bits(trial?float(sin(i*.031+trial*.17)*.003):0);initialState.push_back(value);
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			unsigned page=i/1024,word=i%1024;uint32_t address=TestStatePage(page);
+			memory[uint32_t(L::StatePageTable)+page*4]=address;memory[address+word*4]=value;
+#else
+			memory[0x90000+i*4]=value;
+#endif
+			memory[0xa0000+i*4]=0xdeadbeef;
+		}
 		for (unsigned i=0;i<128;i++) {
 			memory[uint32_t(L::Query)+i*4]=Bits(trial?float(sin(i*.123+trial*.317)*.01):0);
 			memory[uint32_t(L::Key)+i*4]=Bits(trial?float(cos(i*.153+trial*.217)*.03):0);
@@ -55,12 +70,22 @@ struct DeltaVectorImage:ScalarMachine {
 			unsigned source=(cfg[76]+1)*16,row=(cfg[84]&65535)/16-4,words=x1+1;
 			assert((cfg[84]&0xffff0000)==0x400000 && row<512 && !((words)%16) && words<=8192-row*16);
 			assert((!imports && source==uint32_t(L::Value) && !row && words==64)
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+				|| (imports && imports<9 && source==TestStatePage(imports-1) && row==(imports-1)*64 && words==1024));
+#else
 				|| (imports && imports<9 && source==0x90000+(imports-1)*4096 && row==(imports-1)*64 && words==1024));
+#endif
 			imports++; pendingSource=source; pendingRow=row; pendingWords=words; unit.drained=false; return;
 		}
 		assert(!pendingWords && threads[2]==1 && threads[3]==1 && threads[5]==4 && cfg[0]==0x4231 && cfg[1]==0xa0200000);
 		if (code==0x70 && ((op>>20)&15)) assert(imports==1 && (((op>>20)&15)==6 || ((op>>20)&15)==7) && !(op&0x3fc));
-		if (code==0x72 && ((op>>20)&15)) assert(nextWrites==8192 && (((op>>20)&15)==4 || ((op>>20)&15)==5) && !(op&0x3fc));
+		if (code==0x72 && ((op>>20)&15)) assert(
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			scatterWrites==8192
+#else
+			nextWrites==8192
+#endif
+			&& (((op>>20)&15)==4 || ((op>>20)&15)==5) && !(op&0x3fc));
 		unit.Op(op);
 	}
 	uint32_t Load(uint32_t at) override {
@@ -73,6 +98,9 @@ struct DeltaVectorImage:ScalarMachine {
 			assert(!cfg[3] && imports==9); csrReads++; return unit.state[(at-0xffbd8000)/4];
 		}
 		assert(Range(at,0x74000,16) || Range(at,0x6e000,8192) || Range(at,0x90000,32768)
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			|| Range(at,uint32_t(L::StatePageTable),32) || Range(at,0x90000,L::L1Bytes-0x90000)
+#endif
 			|| Range(at,uint32_t(L::Query),1288) || Range(at,0x17ffc0,12));
 		return memory.at(at);
 	}
@@ -85,10 +113,23 @@ struct DeltaVectorImage:ScalarMachine {
 			const unsigned allowed[]={0,1,2,3,6,7,220,20,24,28,49,50,56,59,64,65,72,73,76,84,86,112,113,120,121,124};
 			bool found=false; for (auto a:allowed) found|=i==a; assert(found); cfg[i]=value; configWrites++; return;
 		}
-		assert(Range(at,0x6e000,8192) || Range(at,0xa0000,32768) || Range(at,uint32_t(L::Output),256) || Range(at,0x17ffc0,12));
+		assert(Range(at,0x6e000,8192) || Range(at,0xa0000,32768) || Range(at,uint32_t(L::Output),256) || Range(at,0x17ffc0,12)
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			|| Range(at,0x90000,L::L1Bytes-0x90000)
+#endif
+		);
 		if (Range(at,0x6e000,8192)) minStack=std::min(minStack,unsigned(at));
 		if (Range(at,0xa0000,32768)) { assert(unit.drained && imports==9 && csrReads==nextWrites+1); nextWrites++; }
-		if (Range(at,uint32_t(L::Output),256)) { assert(unit.drained && nextWrites==8192); resultWrites++; }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		if (IsTestStatePage(at)) { assert(unit.drained && imports==9 && csrReads==scatterWrites+1); scatterWrites++; }
+#endif
+		if (Range(at,uint32_t(L::Output),256)) { assert(unit.drained &&
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			scatterWrites==8192
+#else
+			nextWrites==8192
+#endif
+		); resultWrites++; }
 		memory[at]=value;
 	}
 	bool RunVector() {
@@ -100,12 +141,17 @@ struct DeltaVectorImage:ScalarMachine {
 		float next[8192],delta[64],out[64]={};
 		float decay=Float(memory.at(uint32_t(L::Decay))),beta=Float(memory.at(uint32_t(L::Beta)));
 		for (unsigned j=0;j<64;j++) {
-			float predicted=0; for (unsigned i=0;i<128;i++) predicted+=(Float(memory.at(0x90000+(i*64+j)*4))*decay)*Float(memory.at(uint32_t(L::Key)+i*4));
+			float predicted=0; for (unsigned i=0;i<128;i++) predicted+=(Float(initialState[i*64+j])*decay)*Float(memory.at(uint32_t(L::Key)+i*4));
 			delta[j]=(Float(memory.at(uint32_t(L::Value)+j*4))-predicted)*beta;
 		}
 		for (unsigned i=0;i<128;i++) for (unsigned j=0;j<64;j++) {
-			next[i*64+j]=Float(memory.at(0x90000+(i*64+j)*4))*decay+Float(memory.at(uint32_t(L::Key)+i*4))*delta[j];
+			next[i*64+j]=Float(initialState[i*64+j])*decay+Float(memory.at(uint32_t(L::Key)+i*4))*delta[j];
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			uint32_t page=memory.at(uint32_t(L::StatePageTable)+(i*64+j)/1024*4);
+			assert(memory.at(page+((i*64+j)%1024)*4)==Bits(next[i*64+j]));
+#else
 			assert(memory.at(0xa0000+(i*64+j)*4)==Bits(next[i*64+j]));
+#endif
 		}
 		for (unsigned j=0;j<64;j++) {
 			for (unsigned i=0;i<128;i++) out[j]+=next[i*64+j]*Float(memory.at(uint32_t(L::Query)+i*4));
@@ -114,7 +160,12 @@ struct DeltaVectorImage:ScalarMachine {
 #endif
 			assert(memory.at(uint32_t(L::Output)+j*4)==Bits(out[j]));
 		}
-		assert(nextWrites==8192 && resultWrites==64 && imports==9 && csrReads==8192+64 && unit.drained);
+		assert(resultWrites==64 && imports==9 && csrReads==8192+64 && unit.drained);
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		assert(!nextWrites && scatterWrites==8192);
+#else
+		assert(nextWrites==8192 && !scatterWrites);
+#endif
 	}
 };
 #ifndef PIONEER_Q38_DELTA_VECTOR_IMAGE_MACHINE_ONLY
@@ -129,7 +180,13 @@ int main(int argc,char** argv)
 #endif
 	for (unsigned trial=0;trial<4;trial++) {
 		DeltaVectorImage m(argv[1],trial); auto before=m.memory; assert(m.RunVector()); m.Verify();
-		for (const auto& word:before) if (DeltaVectorImage::Range(word.first,0x90000,32768) || DeltaVectorImage::Range(word.first,uint32_t(L::Query),1288)) assert(m.memory.at(word.first)==word.second);
+		for (const auto& word:before) if (
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			DeltaVectorImage::Range(word.first,uint32_t(L::Query),1288)
+#else
+			DeltaVectorImage::Range(word.first,0x90000,32768) || DeltaVectorImage::Range(word.first,uint32_t(L::Query),1288)
+#endif
+		) assert(m.memory.at(word.first)==word.second);
 		printf("PASS ACTUAL local vector GDN trial%u steps%u SFPUops%u ALL state/output bits exact;NO native speed claim\n",trial,m.steps,m.unit.ops);
 	}
 #ifdef PIONEER_Q38_DELTA_VECTOR_POST_SCALE
@@ -148,7 +205,13 @@ int main(int argc,char** argv)
 		DeltaVectorImage m(argv[1],1); m.memory[0x74000+field*4]^=1U<<bit;
 		assert(!m.RunVector() && !m.configWrites && !m.unit.ops && !m.nextWrites && !m.resultWrites);
 	}
-	for (uint32_t at:{0x90000U,0x97ffcU,uint32_t(L::Query),uint32_t(L::Query+0x1fc),uint32_t(L::Key),uint32_t(L::Key+0x1fc),uint32_t(L::Value),uint32_t(L::Value+0xfc),uint32_t(L::Decay),uint32_t(L::Beta)}) {
+	for (uint32_t at:{
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		TestStatePage(0),TestStatePage(7)+L::StatePageBytes-4,
+#else
+		0x90000U,0x97ffcU,
+#endif
+		uint32_t(L::Query),uint32_t(L::Query+0x1fc),uint32_t(L::Key),uint32_t(L::Key+0x1fc),uint32_t(L::Value),uint32_t(L::Value+0xfc),uint32_t(L::Decay),uint32_t(L::Beta)}) {
 		for (uint32_t bad:{1U,0x80000001U,0x7f800000U,0x7fc00001U}) {
 			DeltaVectorImage m(argv[1],1); m.memory[at]=bad;
 			assert(!m.RunVector() && !m.configWrites && !m.unit.ops && !m.nextWrites && !m.resultWrites);
@@ -162,8 +225,22 @@ int main(int argc,char** argv)
 	for (bool output:{false,true}) {
 		DeltaVectorImage m(argv[1],1); m.dropMathDrain=!output; m.dropOutputDrain=output; bool caught=false;
 		try { (void)m.RunVector(); } catch (const DeltaVectorImage::UnsafeRead&) { caught=true; }
-		assert(caught && !m.resultWrites && m.nextWrites==(output?8192U:0U));
+		assert(caught && !m.resultWrites &&
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			m.scatterWrites==(output?8192U:0U)
+#else
+			m.nextWrites==(output?8192U:0U)
+#endif
+		);
 	}
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	for (unsigned bad=0;bad<4;bad++) {
+		DeltaVectorImage m(argv[1],1);const uint32_t at=uint32_t(L::StatePageTable)+(bad==0?0:bad==1?4:bad==2?8:12);
+		m.memory[at]=bad==0?TestStatePage(1):bad==1?TestStatePage(1)+1:bad==2?0x180000:0x80000;
+		assert(!m.RunVector() && !m.configWrites && !m.unit.ops && !m.scatterWrites && !m.resultWrites);
+	}
+	puts("PASS scattered L1 state experiment: eight noncontiguous owned-page inputs, in-place Tensix Dst update and exact page writeback; malformed/duplicate/unaligned/out-of-range/reserved pages inert; OFFLINE ONLY,NO runtime owner or token commit");
+#endif
 	puts("PASS OFFLINE ACTUAL emitted vector GDN:fixed L1/CSR whitelist,eight10-bit-counter state imports,ALL512 rows defined,ALL descriptor bits+nonfinite inputs inert,first/middle/last missing imports and false final drains reject without publication;NO NoC/DRAM/DMA/PCI/native image selection/GGML residency");
 }
 #endif

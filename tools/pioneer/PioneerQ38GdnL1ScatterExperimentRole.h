@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: MIT */
+#if !defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) \
+	|| PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT != 1 \
+	|| defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+	|| defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+	|| defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_NATIVE) \
+	|| defined(PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT) || defined(_KERNEL_MODE)
+#error Scattered GDN L1 state is an isolated offline worker experiment only
+#endif

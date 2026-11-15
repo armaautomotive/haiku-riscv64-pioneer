@@ -1,0 +1,42 @@
+Qwen3.8 GDN scattered L1 state worker experiment, November 14, 2026
+===================================================================
+
+This is a one-half-head emitted worker prototype, not a runtime owner, full
+layer, whole-model path, P100A run, or tokens/sec measurement. It targets the
+next missing link in the recurrent-state plan: the current capacity inspection
+finds only fragmented 4-KiB L1 pages for the proposed 119-peer map, while the
+existing GDN worker accepts one contiguous prior-state address.
+
+The isolated worker now validates an eight-entry local page table, imports the
+eight noncontiguous 4-KiB pages into the actual emitted Tensix Dst in the
+existing 1,024-word chunks, performs the existing vector recurrence, and writes
+the resulting 32-KiB state back in place a page at a time. The transactional
+GDDR state slots, native dispatcher, token commit/abort policy, and Work
+Assistant are untouched. The image has a hard offline-only role guard; it
+cannot select Work, CPU validation, native, recurrent-native, or kernel paths.
+
+The pinned candidate image is 2,912 bytes, code SHA-256
+`4a71216023dc18374415d544b2dc5ae8ac3b49156e00a6999aefca2123716315`, with the
+unchanged boot SHA-256
+`d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6`.
+The default contiguous control rebuilt byte-identically at 05bef319…4a52.
+
+ASan/UBSan emitted-program tests passed for the candidate and default control.
+The candidate produced bit-exact recurrent state/output for all four existing
+fixtures and refused duplicate, unaligned, out-of-range, and reserved pages
+before configuration or arithmetic. Simulated instruction steps for the
+nonzero fixtures were 138,545 and 138,534, compared with 146,223 and 146,212
+for the contiguous control (about 5.2% fewer steps in this simulator). This is
+an instruction-count result only; it does not establish a card-cycle reduction
+or inference speedup. The change from the first prototype (212,069 steps) came
+from page-at-a-time writeback rather than recalculating page/offset for every
+word.
+
+The next substantial work remains outside this prototype: a native owner must
+derive the actual free-page map, reserve state pages against the full image
+footprint, route each logical recurrent task to its physical peer, initialize
+the cache, and define safe token commit/abort/restart behavior. It must then be
+qualified on hardware and in the full model before any performance claim. The
+Pioneer SSH host-key mismatch still prevents those physical operations until
+the fingerprint is verified out of band. The best qualified full-model rate
+remains about 0.173 tokens/sec; 20 tokens/sec is unmet.

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // OFFLINE local64-column GDN prerequisite. NOT selected by any driver.
-// Fixed L1 input/next/output and owned Dst/CSR only. NO NoC/DRAM/PCI/DMA.
+// Default: fixed L1 input/next/output and owned Dst/CSR only. NO NoC/DRAM/PCI/DMA.
+// Scattered-state selector is an isolated fixture; it adds no runtime owner.
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DeltaVector.h"
@@ -8,6 +9,27 @@ typedef __UINT32_TYPE__ uint32_t;
 namespace L=PioneerQ38DeltaVectorLayout;
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 static volatile uint32_t* Words(uint32_t at) { return reinterpret_cast<volatile uint32_t*>(at); }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+static bool StatePages(uint32_t (&pages)[L::StatePages])
+{
+	for (unsigned i=0;i<L::StatePages;i++) {
+		pages[i]=Words(L::StatePageTable)[i];
+		// Keep this worker fixture's page table and fixed arithmetic buffers
+		// outside the candidate state map. The native owner must independently
+		// derive its actual free-page map; this is only an image-side bound.
+		if ((pages[i]&(L::StatePageBytes-1)) || pages[i]<0x90000
+			|| pages[i]>L::L1Bytes-L::StatePageBytes
+			|| (pages[i]<uint32_t(L::StatePageTable)+L::StatePages*4
+				&& uint32_t(L::StatePageTable)<pages[i]+L::StatePageBytes)
+			|| (pages[i]<uint32_t(L::Query)+1280 && uint32_t(L::Query)<pages[i]+L::StatePageBytes)
+			|| (pages[i]<uint32_t(L::Key)+512 && uint32_t(L::Key)<pages[i]+L::StatePageBytes)
+			|| (pages[i]<uint32_t(L::Value)+256 && uint32_t(L::Value)<pages[i]+L::StatePageBytes)
+			|| (pages[i]<uint32_t(L::Output)+256 && uint32_t(L::Output)<pages[i]+L::StatePageBytes)) return false;
+		for (unsigned j=0;j<i;j++) if (pages[i]==pages[j]) return false;
+	}
+	return true;
+}
+#endif
 static inline void Fence() { asm volatile("fence" ::: "memory"); }
 static inline void Emit(uint32_t op) { *Words(0xffe40000)=op; }
 static void Drain()
@@ -51,16 +73,32 @@ extern "C" unsigned scalar_main()
 {
 	const volatile uint32_t* header=Words(L::Descriptor);
 	if (header[0]!=0x56383351 || header[1]!=128 || header[2]!=64 || header[3]) return 0;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	uint32_t statePages[L::StatePages];
+	if (!StatePages(statePages)) return 0;
+#endif
 	uint32_t decay=*Words(L::Decay),beta=*Words(L::Beta);
 	if (!PioneerQ38DeltaVectorGate(decay) || !PioneerQ38DeltaVectorGate(beta)) return 0;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	for (unsigned page=0;page<L::StatePages;page++)
+		for (unsigned i=0;i<L::StatePageBytes/4;i++)
+			if (!InputNormalOrZero(Words(statePages[page])[i])) return 0;
+#else
 	for (unsigned i=0;i<8192;i++) if (!InputNormalOrZero(Words(L::Prior)[i])) return 0;
+#endif
 	for (unsigned i=0;i<320;i++) if (!InputNormalOrZero(Words(L::Query)[i])) return 0;
 	Setup(); Import(L::Value,0,64);
 	Emit(0xb2050004); Drain(); Emit(0x8a000002);
 	Emit(0x70630000); Emit(0x70730002); Drain(); // preserve ALL64 V values in LRegs
 	// SETADCXX's X1 field is TEN bits. Eight1024-datum imports,not a
 	// wrapped2048-datum counter,define ALL512 logical FP32 rows.
-	for (unsigned chunk=0;chunk<8;chunk++) Import(L::Prior+chunk*4096,chunk*64,1024);
+	for (unsigned chunk=0;chunk<8;chunk++) Import(
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		statePages[chunk],
+#else
+		L::Prior+chunk*4096,
+#endif
+		chunk*64,1024);
 	Emit(0xb2050004); Drain();
 	DeltaEmitter emitter;
 #ifdef PIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_IMAGE
@@ -82,10 +120,21 @@ extern "C" unsigned scalar_main()
 #endif
 	// Dst is only a shadow. Publish next state into LOCAL scratch only;
 	// a future resident owner must not commit it until independent completion.
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	for (unsigned page=0;page<L::StatePages;page++) {
+		volatile uint32_t* destination=Words(statePages[page]);
+		const unsigned first=page*(L::StatePageBytes/4);
+		for (unsigned word=0;word<L::StatePageBytes/4;word++) {
+			uint32_t bits=Words(0xffbd8000)[first+word]; if (!Finite(bits)) scalar_fault_park();
+		destination[word]=bits;
+		}
+	}
+#else
 	for (unsigned i=0;i<8192;i++) {
 		uint32_t bits=Words(0xffbd8000)[i]; if (!Finite(bits)) scalar_fault_park();
 		Words(L::Next)[i]=bits;
 	}
+#endif
 	Emit(0x72430000); Emit(0x72530002); Drain(); // state already exported,rows0..3 now output64
 	for (unsigned i=0;i<64;i++) {
 		uint32_t bits=Words(0xffbd8000)[i]; if (!Finite(bits)) scalar_fault_park(); Words(L::Output)[i]=bits;

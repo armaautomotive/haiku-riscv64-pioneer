@@ -8,11 +8,17 @@
 #ifdef PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT
 #include "PioneerQ38GdnInplaceStateExperimentRole.h"
 #endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#include "PioneerQ38GdnL1ScatterExperimentRole.h"
+#endif
 #if defined(PIONEER_Q38_DELTA_VECTOR_LAYOUT_H) && (defined(PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT) != defined(PIONEER_Q38_GDN_INPLACE_STATE_LAYOUT_BOUND))
 #error In-place GDN local-buffer selection cannot change after layout binding
 #endif
 #if defined(PIONEER_Q38_DELTA_VECTOR_LAYOUT_H) && (defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE) != defined(PIONEER_Q38_RESIDENT_GDN_LAYOUT_BOUND))
 #error GDN local mailbox variant cannot change after layout binding
+#endif
+#if defined(PIONEER_Q38_DELTA_VECTOR_LAYOUT_H) && (defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) != defined(PIONEER_Q38_GDN_SCATTERED_STATE_LAYOUT_BOUND))
+#error Scattered GDN state selection cannot change after layout binding
 #endif
 #ifndef PIONEER_Q38_DELTA_VECTOR_LAYOUT_H
 #define PIONEER_Q38_DELTA_VECTOR_LAYOUT_H
@@ -31,6 +37,11 @@ enum { Code=0x64000,Query=0xb0000,Key=0xb0200,Value=0xb0400,
 enum { Descriptor=0x74700 };
 #else
 enum { Descriptor=0x74000 };
+#endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#define PIONEER_Q38_GDN_SCATTERED_STATE_LAYOUT_BOUND 1
+enum { StatePageTable=Descriptor+0x100, StatePages=8, StatePageBytes=4096,
+	StateBytes=StatePages*StatePageBytes, L1Bytes=0x180000 };
 #endif
 #ifdef PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT
 #define PIONEER_Q38_GDN_INPLACE_STATE_LAYOUT_BOUND 1

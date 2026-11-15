@@ -67,7 +67,7 @@ set -eu
 [ "${PIONEER_Q38_PROJECTION_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "$#" = 3 ] || exit 2
-case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|delta_vector_factored|resident_gdn|resident_gdn_root|packed|activation|activation0|ffn_activation|ffn_native_activation|ffn_resident_activation|ffn_resident_gather|ffn_resident_gather2|ffn_resident_output|projection_input|projection_gather|gdn_output_gather) kind=$1;; *) exit 2;; esac
+case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|delta_vector_factored|delta_vector_scattered|resident_gdn|resident_gdn_root|packed|activation|activation0|ffn_activation|ffn_native_activation|ffn_resident_activation|ffn_resident_gather|ffn_resident_gather2|ffn_resident_output|projection_input|projection_gather|gdn_output_gather) kind=$1;; *) exit 2;; esac
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$2/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$3
@@ -82,6 +82,11 @@ if [ "$kind" = delta_vector_factored ]; then
 	source_kind=delta_vector
 	start_kind=delta_vector
 	extra_flags='-DPIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_EXPERIMENT=1 -DPIONEER_Q38_DELTA_VECTOR_FACTORED_DECAY_IMAGE=1'
+fi
+if [ "$kind" = delta_vector_scattered ]; then
+	source_kind=delta_vector
+	start_kind=delta_vector
+	extra_flags='-DPIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT=1'
 fi
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
  -fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
