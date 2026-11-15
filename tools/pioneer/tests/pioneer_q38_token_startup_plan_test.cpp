@@ -10,22 +10,25 @@
 namespace T=PioneerQ38TokenLayout;namespace C=T::C;
 static uint32_t Word(const uint8_t* p){return uint32_t(p[0])|uint32_t(p[1])<<8|uint32_t(p[2])<<16|uint32_t(p[3])<<24;}
 int main(int argc,char** argv){
-	assert(argc==1 || (argc==2 && !strcmp(argv[1],"--bindings-only")));const bool bindingsOnly=argc==2;
+	assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--bindings-only")
+		|| !strcmp(argv[1],"--redistributed"))));
+	const bool bindingsOnly=argc==2 && !strcmp(argv[1],"--bindings-only");
+	const bool redistributed=argc==2 && !strcmp(argv[1],"--redistributed");
  setvbuf(stdout,nullptr,_IOLBF,0);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
  auto other=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(other->Build());
  std::array<uint32_t,1920> sources;for(unsigned i=0;i<sources.size();i++)sources[i]=0x76540001+i;
  const PioneerQ38GdnIdentity id={UINT64_C(1)<<40|1,UINT64_C(2)<<40|2,UINT64_C(3)<<40|3,UINT64_C(4)<<40|4};
  const uint32_t prompt[]={248319,17};unsigned packages=0,refusals=0;
-	for(unsigned bank=0;bank<7;bank++){
+	for(unsigned bank=0;bank<(redistributed?1U:7U);bank++){
   printf("START startup DATA bank%u/all120 boots/fullPackageCopies%d/no execution\n",bank,int(!bindingsOnly));
   auto plan=std::make_unique<PioneerQ38TokenStartupPlan>();
   assert(!plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()));
-  assert(plan->Build(*canonical,bank,id,sources.data(),prompt,2,8192,true,248318,248317));
+	  assert(plan->Build(*canonical,bank,id,sources.data(),prompt,2,8192,true,248318,248317,redistributed));
   assert(plan->Matches(*canonical) && plan->MatchesBinding(*canonical,bank,id,sources.data()) && !plan->Matches(*other)
    && plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()) && !plan->MatchesPublishedBinding(*other,bank,id,sources.data())
    && !plan->MatchesPublishedBinding(*canonical,(bank+1)%7,id,sources.data()) && !plan->MatchesPublishedBinding(*canonical,bank,id,nullptr));
-  assert(!plan->Build(*canonical,bank,id,sources.data(),prompt,2,8192,true,248318,248317) && plan->Matches(*canonical));
+	  assert(!plan->Build(*canonical,bank,id,sources.data(),prompt,2,8192,true,248318,248317,redistributed) && plan->Matches(*canonical));
   assert(plan->Bank()==bank && plan->Workspace()==canonical->Base+canonical->Workspace(bank)->offset);
   auto root=std::make_unique<PioneerQ38GlobalChainPackage>();
   assert(root->Build(*canonical,0,bank,id,sources.data(),bank,plan->Workspace()+0x600000));
@@ -48,13 +51,13 @@ int main(int argc,char** argv){
    }
   }
   if(!bindingsOnly)for(unsigned layer=0;layer<64;layer++){
-   auto independent=std::make_unique<PioneerQ38TokenPackage>();
-   assert(independent->Build(*canonical,layer,bank,id,sources.data(),bank,plan->Workspace()+0x600000));
+	   auto independent=std::make_unique<PioneerQ38TokenLayerPackage>();
+	   assert(independent->Build(*canonical,layer,bank,id,sources.data(),bank,plan->Workspace()+0x600000,redistributed));
    uint32_t address=0;assert(plan->PackageAddress(layer,address) && address==plan->Workspace()+C::Offset+layer*C::Stride);
    std::array<uint8_t,16384> actual,expected,published;
    for(unsigned at=0;at<C::Stride;at+=actual.size()){
     assert(plan->ReadPackage(layer,at,actual.data(),actual.size()) && independent->Read(at,expected.data(),expected.size()));
-    assert(actual==expected && plan->ReadPublishedPackage(layer,at,published.data(),published.size()) && actual==published);
+	    assert(actual==expected && plan->ReadPublishedPackage(layer,at,published.data(),published.size()) && actual==published);
    }
    actual.fill(0x5a);const auto before=actual;
    assert(!plan->ReadPackage(layer,1,actual.data(),64) && actual==before);
@@ -109,7 +112,7 @@ int main(int argc,char** argv){
    assert(plan->LearnedPagesPresent(ledger.data(),ledger.size()));
    puts("PASS full851 learned-page PRESENCE/all3551 parts including embedding+vocab+norm/all65 layer/global missing-or-non1 endpoints refuse;NOT upload authentication or state initialization");
   }
-  printf("PASS startup DATA bank%u/all120 boots/root+head+session+prompt exact/fullPackageCopies%d/no execution\n",bank,int(!bindingsOnly));
+	  printf("PASS startup DATA bank%u/all120 boots/root+head+session+prompt exact/fullPackageCopies%d/routedGdn%d/no execution\n",bank,int(!bindingsOnly),redistributed);
  }
 	for(unsigned prompts:{2U,8192U}){
   std::vector<uint32_t> input(prompts);for(unsigned i=0;i<prompts;i++)input[i]=(i*29+17)%248320;

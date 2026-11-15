@@ -71,9 +71,13 @@ public:
 	}
 	unsigned Bytes()const{return ready?PioneerQ38GlobalChainLayout::Stride:0;}
 	const uint32_t* Boot()const{return ready?base.Boot():nullptr;}
+	const uint32_t* Outer()const{return ready?base.Outer():nullptr;}
 	const uint32_t* GdnHeader()const{return ready?gdn.Header():nullptr;}
 	const uint32_t* GdnWorker(unsigned physicalWorker)const{return ready?gdn.Worker(physicalWorker):nullptr;}
 	bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadBound<true>(offset,output,bytes);}
+	template<bool Strict> bool ReadPackageBound(unsigned offset,uint8_t* output,unsigned bytes)const{
+		return ReadBound<Strict>(offset,output,bytes);
+	}
 };
 static_assert(sizeof(PioneerQ38GlobalRedistributedTokenPackage)>1600000
 	&& sizeof(PioneerQ38GlobalRedistributedTokenPackage)<2000000,

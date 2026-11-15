@@ -47,5 +47,8 @@ public:
  bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{
   return ReadBound<true>(offset,output,bytes);
  }
+ template<bool Strict> bool ReadPackageBound(unsigned offset,uint8_t* output,unsigned bytes)const{
+  return ReadBound<Strict>(offset,output,bytes);
+ }
 };
 #endif

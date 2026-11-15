@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_TOKEN_STARTUP_PLAN_H
 #define PIONEER_Q38_TOKEN_STARTUP_PLAN_H
-#include "PioneerQ38TokenPackage.h"
+#include "PioneerQ38TokenLayerPackage.h"
 #include "PioneerQ38TokenLayout.h"
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
 #include "PioneerQ38Qgw8HeadPlanInspection.h"
@@ -22,7 +22,7 @@ class PioneerQ38TokenStartupPlan {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  const PioneerQ38PreparedNativeSource* preparedSource=nullptr;
 #endif
- PioneerQ38TokenPackage* layers[64]={};
+	PioneerQ38TokenLayerPackage* layers[64]={};
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
  PioneerQ38Qgw8HeadPlanInspection head;
 #else
@@ -99,7 +99,8 @@ public:
  }
 #endif
  bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,const PioneerQ38GdnIdentity& id,const uint32_t* source,
-	 const uint32_t* input,unsigned prompts,unsigned limit,bool stopEos,unsigned eos0,unsigned eos1){
+	 const uint32_t* input,unsigned prompts,unsigned limit,bool stopEos,unsigned eos0,unsigned eos1,
+	 bool redistributedGdn=false){
   namespace T=PioneerQ38TokenLayout;namespace C=T::C;
   if(attempted)return false;
   attempted=true;
@@ -117,8 +118,8 @@ public:
   // address. The REAL parent bootstrap later produces its own embedding and
   // TokenMetadata::Outer redirects layer0 to the provisional feedback slot.
 	 for(unsigned layer=0;layer<64;layer++){
-	  layers[layer]=new(std::nothrow) PioneerQ38TokenPackage;
-	  if(!layers[layer] || !layers[layer]->Build(c,layer,bank,id,sources,bank,workspace+0x600000))return false;
+	  layers[layer]=new(std::nothrow) PioneerQ38TokenLayerPackage;
+	  if(!layers[layer] || !layers[layer]->Build(c,layer,bank,id,sources,bank,workspace+0x600000,redistributedGdn))return false;
   }
 	 for(unsigned i=0;i<64;i++)boot[i]=layers[0]->Boot()[i];
   if(!head.Build(c,bank,boot))return false;
