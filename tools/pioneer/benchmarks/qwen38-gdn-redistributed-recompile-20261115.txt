@@ -1,0 +1,38 @@
+Pioneer Qwen GDN redistributed recurrent compile refresh — 2026-11-15
+=====================================================================
+
+The full current-source tag48 RISC-V compile-only chain now passes again after
+the previously recorded generated.riscv64 object fingerprints stopped
+reproducing. This refresh does not install, select, or execute a driver and
+does not demonstrate device behavior or inference throughput.
+
+Refreshed compile-only fingerprints
+-----------------------------------
+* GDN input tag45 control: 4e1dd2512385fe421789d0661e584fc67e376bd0050cc52626816be8b24dc774
+* GDN state-init tag47 control: 85e43624bf1e63cc4643e43c54e71fc4765ea04979b5ffc78140cd4d60a31498
+* recurrent GDN tag48 candidate: 62489c68ac4aa0624271b5269499f1ca55d36528412e0aa8dbf9ca6a0afb1846
+
+The tag45 and tag47 controls matched these refreshed pins on two full compile
+chains. The separate tag45 check also reproduced the hash independently. The
+older tag38, macro-OFF, tag42, tag43, and DEBUG44 control gates passed without
+pin changes. The actual tag48 source compiled with a maximum new stack frame
+of 688 bytes; the tag47 state-init source compiled with a maximum new frame
+of 672 bytes.
+
+The independent offline simulations also passed: the redistributed emitted
+worker accepted 160 positives across all 96 logical half-heads and four
+non-resetting 16-step chains, with all 8,256 compared output/state words exact;
+its 4,170 injected faults were rejected before forbidden downstream work.
+The current-scattered-L1 allocator/worker integration passed 161 positives,
+all 8,256 exact words, and 4,175 injected-fault rejections, including its
+GDDR-spill case. These are host-emitted-image simulations, not live initialized
+owner execution or physical-card evidence.
+
+This is compile evidence only. The redistributed owner-bound planner still
+is not wired through live peer staging, launch, receipt aggregation, state
+publication, or Work-mode selection. The scattered L1 cache is likewise not
+allocated/consumed by the inference runtime. No model request ran and no
+tokens/sec result changed. The best qualified full-card measurement remains
+the prior 0.172813448..0.172816755 tokens/sec; 20 tokens/sec remains unmet.
+Physical testing is still prohibited until the Pioneer SSH host-key
+fingerprint is independently verified.
