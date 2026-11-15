@@ -84,7 +84,7 @@ int main()
 	for(unsigned worker=0;worker<P::Workers;worker++){
 		unsigned pagesForWorker=0;
 		assert(C::BuildFragmented(worker+1,pages[worker],C::MaxSlots,pageCounts[worker],pagesForWorker));
-		assert(pageCounts[worker]==25 && pagesForWorker==202);
+		assert(pageCounts[worker]==25 && pagesForWorker==201);
 	}
 	const PioneerQ38GdnIdentity id={0x11,0x22,0x33,0x44};
 	const PioneerQ38GdnIdentity wrong={0x11,0x22,0x33,0x45};

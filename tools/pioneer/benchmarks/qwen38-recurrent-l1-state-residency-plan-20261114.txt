@@ -79,9 +79,10 @@ conservative free-range check is not a full temporal live-range proof.
 A second offline packing check used the GDN worker's existing 4-KiB chunk
 granularity instead of requiring each 32-KiB state to occupy one contiguous
 range. The first pass counted pages below `0x90000`, although the emitted
-worker refuses them. After applying the worker's actual bound, the snapshot
-spans leave 202 usable pages per current GDN peer. Grouping those pages into
-eight-page state halves yields 25 state buffers per peer, or 2,400 of 4,608
+worker refuses them. Snapshot-only accounting left 202 pages; the joint
+worker-footprint correction reserves the active scratch page and leaves 201.
+Grouping those pages into eight-page state halves still yields 25 state
+buffers per peer, or 2,400 of 4,608
 halves (78,643,200 bytes / 75 MiB) on the actual 96-worker mapping; 2,208
 halves (72,351,744 bytes / 69 MiB) spill. This capacity figure is diagnostic
 only.
@@ -108,8 +109,9 @@ old 96-peer GDN map is unchanged, and proves 96 unique peer routes per layer,
 uniqueness across all 119 physical peers, and a bijection of every recurrent
 state half. The loads balance at 86 peers with 39 state halves and 33 peers
 with 38. The scattered worker rejects page addresses below `0x90000`; after
-enforcing that bound, 202 usable pages provide 25 complete state slots per
-peer. Therefore 2,975 halves can be resident and 1,633 must spill to GDDR.
+also excluding its fixed live scratch page, 201 usable pages provide 25
+complete state slots per peer. Therefore 2,975 halves can be resident and
+1,633 must spill to GDDR.
 The earlier 34-slot estimate included pages the worker itself refuses and is
 superseded. `PioneerQ38GdnState::RedistributedSlice` now exposes this candidate
 route alongside the existing logical state slice;

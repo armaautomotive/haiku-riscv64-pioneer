@@ -24,6 +24,10 @@ predicate. The allocator now skips the conflicting page; it still has 201
 usable 4-KiB pages per peer, enough for 25 eight-page state halves with one
 page left over. Resident/spill geometry is unchanged: current 96-worker
 mapping 2,400/2,208, alternate 119-peer map 2,975/1,633.
+The scratch reservation also splits one former 32-KiB contiguous free range:
+corrected contiguous-capacity inspection is 23 states per peer (2,208 of
+4,608 total), down from 24. Scattered 4-KiB packing retains 25 states because
+the 201 pages still provide 200 pages for 25 complete states.
 
 Validation
 ----------
@@ -47,6 +51,9 @@ Validation
    /private/tmp/pioneer-q38-startup-scattered-scratch-audit-20261115`
    passed the RISC-V C++11 scattered-cache startup DATA compile. This is
    compile-only, not a selected native driver or device run.
+4. The recurrent-state lease and placement regressions also pass:
+   `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_lease_tests.sh` and
+   `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`.
 
 The worker emulator also reports write-through vs L1-authoritative state
 operation counts of 25,001,329 vs 19,061,359 (23.76% fewer simulated RV32
