@@ -6,6 +6,9 @@
 #if defined(_KERNEL_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_BF16_PRODUCER_IMAGE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) || defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC) || defined(PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE) || defined(PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING) || defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(__FAST_MATH__)
 #error Cached FPU matrix is not old104/native/Work/CPU-reference authority
 #endif
+#if defined(PIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE) && (PIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE != 1 || defined(PIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE))
+#error Static-issue DATA requires its distinct offline-only image role
+#endif
 #define PIONEER_DRAM_SWEEP_FREESTANDING 1
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38Q4FpuCachedLoader.h"
@@ -15,6 +18,9 @@
 #error Exact paired cached FPU BUILD required
 #endif
 #include "PioneerQ38Q4FpuPairIssueCompute.h"
+#endif
+#ifdef PIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE
+#include "PioneerQ38Q4FpuStaticIssueCompute.h"
 #endif
 extern "C" void cached_fpu_fault() __attribute__((noreturn));
 #ifndef PIONEER_Q38_CACHED_FPU_RETURN_ONLY
@@ -26,7 +32,9 @@ extern "C" __attribute__((noinline)) void* memset(void* destination,int value,un
 #endif
 namespace CachedMatrix {
 using L=PioneerQ38Q4FpuCachedLayout;
-#ifdef PIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE
+#ifdef PIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE
+using C=PioneerQ38Q4FpuStaticIssueCompute;
+#elif defined(PIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE)
 using C=PioneerQ38Q4FpuPairIssueCompute;
 #else
 using C=PioneerQ38Q4FpuCompactStreamCompute;

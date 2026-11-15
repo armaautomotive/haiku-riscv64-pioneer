@@ -35,10 +35,10 @@ int main(int argc,char** argv){
   assert(old->stream==next->stream && next->steps<old->steps);
   assert(old->bus.issues==next->bus.issues && old->bus.completed==next->bus.completed);
   assert(oldEngine->Clean() && newEngine->Clean());
-  printf("PASS_PAIRED_CACHED_ROOT_L1 width%u rows%u worker%u sameIssuedConfigStream%zu oldRV32%u pairedRV32%u all%uOutputsExact oldStack%u pairedStack%u;COUNTS_NOT_CARD_TIME_OR_MODEL_TPS\n",
+  printf("PASS_CACHED_ROOT_L1_ISSUE_VARIANT width%u rows%u worker%u sameIssuedConfigStream%zu referenceRV32%u candidateRV32%u all%uOutputsExact referenceStack%u candidateStack%u;COUNTS_NOT_CARD_TIME_OR_MODEL_TPS\n",
    width,groups*16,job.words[6],next->stream.size(),old->steps,next->steps,groups*16,0x70000-old->minSP,0x70000-next->minSP);
   cases++;words+=groups*16;
  }
  assert(cases==6 && words==704);
- puts("PASS_PAIRED_CACHED_ROOT_L1 sixActualLinkedCases outputs704 exactTensixConfigStream unchangedPackets_noScalarWeights;NOT_NATIVE_HARDWARE_OR_MODEL_TPS");
+ puts("PASS_CACHED_ROOT_L1_ISSUE_VARIANT sixActualLinkedCases outputs704 exactTensixConfigStream unchangedPackets_noScalarWeights;NOT_NATIVE_HARDWARE_OR_MODEL_TPS");
 }
