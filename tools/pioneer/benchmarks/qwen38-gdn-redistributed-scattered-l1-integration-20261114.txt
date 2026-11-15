@@ -50,3 +50,46 @@ that keeping GDN state in L1 improves full-model throughput. The native Qwen
 path, other Qwen operations, full-model numerical/lifecycle tests, and a real
 Pioneer benchmark remain required. Physical testing is still gated on
 out-of-band verification of the Pioneer SSH host key.
+
+2026-11-15 serialized-startup continuation
+------------------------------------------
+The missing package/startup-data seam is now implemented and pushed in
+`1aa55399be` and `cce74ecef3`:
+
+* `PioneerQ38RedistributedGdnPlan` accepts an optional copied 119x9 worker map
+  and serializes its eight page addresses plus cold/warm/spill mode into the
+  existing redistributed state descriptor. Default descriptors remain
+  unchanged; the extension is accepted only under the isolated scattered
+  experiment role.
+* With that role enabled and redistributed startup explicitly requested,
+  `PioneerQ38TokenStartupPlan` builds the deterministic map and passes it into
+  each recurrent-layer package. Dense layers keep their legacy packages. The
+  allocator metadata is retained on the heap, its lifetime is checked, and
+  output aliases into it are rejected.
+* `PioneerQ38TokenMetadata::GdnRedistributed` emits cold mode at position zero,
+  warm mode for later resident positions, and keeps spill routes in GDDR mode.
+  The worker consumes the page map from its already-validated descriptor,
+  avoiding a separate peer-table write.
+
+Additional validation passed:
+
+* Default and scattered-cache global-chain serialization tests passed under
+  ASan/UBSan. The actual token-package transform test verified cold-to-warm
+  resident transitions and unchanged spill mode.
+* Prepared-source startup tests passed for both baseline and scattered-cache
+  variants. The latter read back allocator-exact resident and spill maps from
+  serialized startup packages (resident worker 1; spill worker 1 at layer 40).
+* RISC-V C++11 DATA-only startup compile passed in both variants. Scattered
+  variant maximum static frame was 1,648 bytes; object SHA-256 was
+  `35d5dfdc5980510dd210920a1bdac072af8ce3d983e330f95a58899b8b10d5dd`.
+* The emitted scattered worker remains code SHA-256
+  `3fe153ef74a9e3dbd65e328f48c7be7c3ba6d205d6f0d16d528f1afaafb05bad`; its
+  fault-injection suite passed 4,138 cases. The legacy non-scattered image
+  passed 160 positives and 4,170 fault cases.
+
+This closes only the immutable package/startup serialization seam. It does
+not change the status above: the experiment is not selected by the native
+kernel or Work role, the deterministic addresses have not been backed by a
+live allocation/pinning owner, no whole-token cache epoch/rollback protocol
+is wired, and no full-model hardware performance number exists. Do not
+interpret the compile or simulator results as P100A inference or a speedup.
