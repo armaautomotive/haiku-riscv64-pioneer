@@ -3,6 +3,7 @@
 // Synthetic frame/data and direct harness delivery: not real NoC or model.
 #define PIONEER_Q38_HYBRID_MATRIX_TRANSITION_MACHINE_ONLY
 #include "pioneer_q38_hybrid_matrix_attention_transition_test.cpp"
+#define PIONEER_Q38_HYBRID_ACTUAL_ROOT_ALLOW_SINGLE_JOB
 #define PIONEER_Q38_HYBRID_ACTUAL_ROOT_MACHINE_ONLY
 #include "pioneer_q38_hybrid_actual_root_test.cpp"
 #include "../PioneerQ38DensePartitionRootLayout.h"
@@ -41,7 +42,11 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<64;i++)frame[i]=image->WordRead(Dense::Header+i*4);
   assert(Dense::JobShape(internal,frame,sequence,phase));
  }
+#ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
+ assert(image->native.matrixOps-image->matrixBefore==6*(128+3*8*16) && image->native.Clean());
+#else
  assert(image->native.matrixOps-image->matrixBefore==6*(128+4*8*16) && image->native.Clean());
+#endif
  for(unsigned h=0;h<6;h++)for(unsigned d=0;d<256;d++){
   const float expected=float(int(d%17)-8)*.0625f;
   const float high=PioneerAttentionFloat(image->WordRead(Dense::Partial+(h*512+d*2)*4));

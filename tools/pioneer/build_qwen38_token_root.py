@@ -61,9 +61,9 @@ assert not bf16 or (inspect and precise and worker_admission and not pushed),'QG
 hybrid='--hybrid-bfp' in options
 assert not hybrid or (inspect and bf16),'hybrid ROOT is an explicit BF16 inspection build only'
 dense_return_split='--dense-return-split' in options
-assert not dense_return_split or (inspect and hybrid and bf16 and '--hybrid-matrix-attention' not in options
+assert not dense_return_split or (inspect and hybrid and bf16
  and not any(x in options for x in ('--qgw8-commit-boundary','--qgw8-coarse-profile','--qgw8-layer-trace','--qgw8-dense-stage-trace'))), \
- 'dense-return split is a separate unprofiled hybrid ROOT inspection image'
+ 'dense-return split is a separate unprofiled hybrid ROOT inspection image; matrix-attention is allowed only under its explicit inspection selector'
 fast_rms='--fast-rms' in options
 assert not fast_rms or (inspect and hybrid and f32),'approximate RMS requires the separate hybrid FP32 inspection build'
 reuse_input='--hybrid-reuse-input' in options
@@ -98,7 +98,7 @@ assert not head_matrix or (matrix_attention and not queued_counters),'QGW8 head 
 if matrix_attention:
  assert set(options)=={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals',
   '--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit',
-  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()) | ({'--qgw8-coarse-profile'} if qgw8_profile else set()) | ({'--qgw8-layer-trace'} if qgw8_trace else set()) | ({'--qgw8-dense-stage-trace'} if dense_trace or input_trace or value_trace else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
+  '--worker-sealed-admission','--bf16-fpu','--hybrid-bfp','--hybrid-matrix-attention'} | ({'--hybrid-queued-counters'} if queued_counters else set()) | ({'--head-matrix-inspection'} if head_matrix else set()) | ({'--qgw8-commit-boundary'} if qgw8_commit else set()) | ({'--qgw8-coarse-profile'} if qgw8_profile else set()) | ({'--qgw8-layer-trace'} if qgw8_trace else set()) | ({'--qgw8-dense-stage-trace'} if dense_trace or input_trace or value_trace else set()) | ({'--dense-return-split'} if dense_return_split else set()),'QGW7/QGW8 requires the exact offline ROOT profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options

@@ -1,0 +1,62 @@
+QGC1 dense-return split + QGW7/QDM2 matrix-attention handoff
+===========================================================
+2026-11-15. Offline build and instruction-simulator qualification only.
+No device, native driver, Work mode, full model, quality result or TPS claim.
+
+Change
+------
+The inspected persistent ROOT text had overflowed the fixed STOP page by
+10,016 bytes when dense-return routines were linked. The earlier
+`--dense-return-split` option moved five emitted routines into the existing
+64 KiB BF16 code window. This checkpoint removes the artificial ban on
+combining that placement with the explicit `--hybrid-matrix-attention`
+inspection role. It changes placement and selector accounting only; it does
+not change arithmetic or authorize installation.
+
+The new regression builds the matrix-attention ROOT with the split enabled,
+checks that the moved routines land at 0x20000..0x30000 and that code remains
+within the fixed text/STOP boundary, then simulates the linked ROOT. It also
+builds a separate QGW5-identity control ROOT with the same safe placement,
+the default QGW7 worker, an isolated BFP4 leaf, and the explicit three-product
+PV QGW7 inspection variant. The test executes actual linked ROOT dense-job
+instructions into actual emitted QGW7/QDM2 worker instructions, runs the
+three attention phases, checks the expected output, rejects the legacy job
+identity at the QGW7 worker, and continues to the next BFP4 projection.
+
+Verification
+------------
+`python3 tools/pioneer/tests/run_pioneer_q38_dense_return_split_tests.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64` exited 0.
+
+The runner also checks refusal of an incomplete split selector and a profiled
+QGW8 combination. The QGW7/QDM2 root projection simulator passed 72 jobs.
+Both QGW7 handoff variants passed the ASan/UBSan instruction simulator.
+The three-product worker emitted a 14,460-byte dense section with SHA-256
+`8719756bbe7c3b3b99d67889235a2031c40c36a539e09d70469facb1598f543b`; the
+four-product control remains 14,468 bytes with SHA-256
+`d40bb04efbd330252fb679691f7cc65d3a9fd2e15ed051ce21e557e9d3e93c0d`.
+The standalone synthetic multi-partition test already reports 20% fewer
+matrix operations and about 1.1% fewer simulator instruction steps for
+three-product PV, but those counts are not card cycles or full-model speed.
+
+The combined ROOT image inspected in this checkpoint has text.bin 130,168
+bytes (SHA-256 `f70b6a9eeabd8262e80aec3b8ed55c6e27b5f6fd5cd876188892d4761dd86baa`),
+bf16.bin 44,184 bytes (SHA-256
+`8470bff071771558054454156b7970534f28ad847d9431fa802b506ca1dc5376`), and
+program.elf 226,400 bytes (SHA-256
+`62c659931c86685a2b0fa654f47bd499f3e068b5b4fcc2a01b92bf474313714d`).
+
+Limits and next gate
+-------------------
+This does not execute the entire ROOT lifecycle, all peers, global reduction,
+real prior-token KV traffic, original model weights, or physical Tensix silicon.
+The three-product fixture's exact handoff result is not a model-quality test;
+the independent synthetic partition fixture has nonzero approximation error.
+No P100A speedup is measured or implied. The previous short Work sample was
+about 0.200 tok/s and the last accepted full-card sample about 0.173 tok/s;
+20 tok/s remains unmet. Physical work remains gated on out-of-band Pioneer
+SSH host-key verification. Do not bypass strict host-key checking.
+
+Reproduce the combined ROOT+worker simulation with the command above. The
+runner creates its candidate images in a private temporary directory and
+does not install or open a device.

@@ -31,7 +31,7 @@ def run(*args, quiet=False):
 with tempfile.TemporaryDirectory(prefix="pioneer-qgc1-split-", dir="/private/tmp") as tmp:
     tmp = Path(tmp)
     # The selector must remain isolated to the exact unprofiled inspection role.
-    for profile in (flags[:-1], [*flags, "--hybrid-matrix-attention"]):
+    for profile in (flags[:-1], [*flags, "--qgw8-coarse-profile"]):
         result = subprocess.run([sys.executable, str(builder), str(build),
                                  str(tmp / "refused"), *profile,
                                  "--dense-return-split"],
@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory(prefix="pioneer-qgc1-split-", dir="/private/tmp
 
     image = tmp / "image"
     run(sys.executable, builder, build, image, *flags,
-        "--dense-return-split", quiet=True)
+        "--hybrid-matrix-attention", "--dense-return-split", quiet=True)
     symbols = subprocess.check_output([str(tool) + "nm", "-nC",
                                        str(image / "program.elf")],
                                       text=True, env=env)
@@ -63,10 +63,45 @@ with tempfile.TemporaryDirectory(prefix="pioneer-qgc1-split-", dir="/private/tmp
     subprocess.run([os.environ.get("CXX", "c++"), "-std=c++17", "-O1", "-g",
                     "-Wall", "-Wextra", "-Werror", "-ffp-contract=off",
                     "-fsanitize=address,undefined",
+                    "-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1",
+                    "-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1",
                     str(here / "pioneer_q38_hybrid_actual_root_test.cpp"),
                     "-o", str(test)], check=True, env=host_env)
     subprocess.run([str(test), str(image)], check=True, env=host_env)
 
+    old = tmp / "old-qgw5"
+    leaf = tmp / "bfp4-leaf"
+    run(sys.executable, builder, build, old, *flags, "--dense-return-split",
+        quiet=True)
+    (old / "program.demangled").write_bytes(subprocess.check_output(
+        [str(tool) + "nm", "-nC", str(old / "program.elf")], env=env))
+    run(sys.executable, root / "build_bfp4_worker_leaf.py", build, leaf)
+    for name, option in (("qgw7-control", None),
+                         ("qgw7-three-product-pv", "--three-product-pv-inspection")):
+        worker = tmp / name
+        args = [sys.executable, root / "build_q38_hybrid_matrix_attention_worker.py",
+                build, worker]
+        if option:
+            args.append(option)
+        run(*args)
+        handoff = tmp / (name + "-root-worker-handoff")
+        compile_args = [os.environ.get("CXX", "c++"), "-std=c++17", "-O1", "-g",
+                        "-Wall", "-Wextra", "-Werror", "-ffp-contract=off",
+                        "-fsanitize=address,undefined",
+                        "-DPIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION=1",
+                        "-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1"]
+        if option:
+            compile_args.append("-DPIONEER_Q38_TEST_THREE_PRODUCT_PV=1")
+        compile_args += [str(here / "pioneer_q38_hybrid_matrix_root_worker_test.cpp"),
+                         "-o", str(handoff)]
+        subprocess.run(compile_args, check=True, env=host_env)
+        subprocess.run([str(handoff), str(image), str(old), str(worker), str(leaf)],
+                       check=True, env={**host_env,
+                           "ASAN_OPTIONS": "quarantine_size_mb=32",
+                           "UBSAN_OPTIONS": "halt_on_error=1"})
+
 print("PASS QGC1 split selector isolation, no ROOT/STOP overlap, relocated live "
-      "dense-return routines, linked ROOT simulation; offline only, no full "
-      "model/device/TPS qualification")
+      "dense-return routines, linked QGW7 root-to-attention-worker handoff and "
+      "next projection with both four- and three-product PV worker variants; "
+      "QGW5-identity control root rebuilt with the same bounds "
+      "fix; offline only, no full model/device/TPS qualification")

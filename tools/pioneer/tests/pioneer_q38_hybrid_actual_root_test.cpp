@@ -22,7 +22,11 @@ struct ActualRoot:Machine {
    if(line.find("DensePartitionRoot::Transfer(")!=std::string::npos)transfers.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
    if(line.find("DensePartitionRoot::Snapshot(")!=std::string::npos)snapshots.push_back(unsigned(std::stoul(line.substr(0,8),nullptr,16)));
   }
+#ifdef PIONEER_Q38_HYBRID_ACTUAL_ROOT_ALLOW_SINGLE_JOB
+  assert((build.size()==1 || build.size()==2) && (job.size()==1 || job.size()==2));
+#else
   assert(build.size()==2 && job.size()==2);
+#endif
  }
  static bool Range(unsigned a,unsigned start,unsigned bytes){return a>=start && a-start<bytes;}
  const std::vector<uint8_t>* Rom(unsigned a,unsigned& base)const{
