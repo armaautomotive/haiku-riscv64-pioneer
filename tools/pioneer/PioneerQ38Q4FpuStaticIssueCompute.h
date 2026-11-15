@@ -35,16 +35,26 @@ private:
   Chunk<Half*2,0,Parity,Upper>(e);Chunk<Half*2,8,Parity,Upper>(e);
   Chunk<Half*2+1,0,Parity,Upper>(e);Chunk<Half*2+1,8,Parity,Upper>(e);
  }
+ template<unsigned Face,class E>
+ static __attribute__((always_inline)) inline void LoadFace(E& e,unsigned offset,unsigned group){
+  e.Config(76,(B::Raw+offset+((group/2)*4+Face)*B::RawStride)/16-1);
+  e.Config(84,0x00400000+(Face*16+4)*16);
+  e.Op(Face==3?0x420000c1:0x42000081);e.Drain();
+ }
+ template<unsigned Row,class E>
+ static __attribute__((always_inline)) inline void TransposeRow(E& e){
+  static_assert(Row<16,"fixed transpose row");
+  constexpr unsigned at=Row*4;
+  e.Op(0x08002000|(at<<17)|(64+at));
+ }
 public:
  template<class E> static bool Group(E& e,unsigned buffer,unsigned group){
   if(buffer>=2 || group>=8)return false;
   const unsigned offset=buffer*0x10000;
   e.Op(0x3700000f);B::FloatUnpack(e,16);
   e.Config(1,0x203c8000);e.Config(64,0x10001e);e.Config(65,16);e.Config(72,14);e.Op(0x5e23fc00);e.Drain();
-  for(unsigned face=0;face<4;face++){
-   e.Config(76,(B::Raw+offset+((group/2)*4+face)*B::RawStride)/16-1);
-   e.Config(84,0x00400000+(face*16+4)*16);e.Op(face==3?0x420000c1:0x42000081);e.Drain();
-  }
+  LoadFace<0>(e,offset,group);LoadFace<1>(e,offset,group);
+  LoadFace<2>(e,offset,group);LoadFace<3>(e,offset,group);
   e.Op(0xb2050004);e.Drain();e.Config(1,0x60aa0000);e.Config(124,(B::Input+offset+group*B::InputStride)/16-1);
   e.Op(0x5e407c00);e.Op(0x5160000b);e.Op(0x5460000f);e.Op(0x428000c1);e.Drain();e.Op(0x3700000f);e.Op(0x8a000002);
   if(group&1){
@@ -52,7 +62,10 @@ public:
   }else{
    Pass<0,0,false>(e,group);Pass<0,2,false>(e,group);Pass<1,0,false>(e,group);Pass<1,2,false>(e,group);
   }
-  for(unsigned row=0;row<64;row+=4)e.Op(0x08002000|(row<<17)|(64+row));
+  TransposeRow<0>(e);TransposeRow<1>(e);TransposeRow<2>(e);TransposeRow<3>(e);
+  TransposeRow<4>(e);TransposeRow<5>(e);TransposeRow<6>(e);TransposeRow<7>(e);
+  TransposeRow<8>(e);TransposeRow<9>(e);TransposeRow<10>(e);TransposeRow<11>(e);
+  TransposeRow<12>(e);TransposeRow<13>(e);TransposeRow<14>(e);TransposeRow<15>(e);
   e.Drain();B::MatrixFace<0>(e);B::MatrixFace<1>(e);B::MatrixFace<2>(e);B::MatrixFace<3>(e);e.Drain();return true;
  }
 };
