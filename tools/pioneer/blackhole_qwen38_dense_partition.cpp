@@ -37,6 +37,10 @@
  || defined(_KERNEL_MODE) || defined(__FAST_MATH__)
 #error SFPU attention exponentials require the isolated QGW7/QDM2 inspection capsule only
 #endif
+#if defined(PIONEER_Q38_DENSE_SFPU_EXP_FORCE_TEST) \
+ && (PIONEER_Q38_DENSE_SFPU_EXP_FORCE_TEST != 1 || !defined(PIONEER_Q38_DENSE_SFPU_EXP_INSPECTION))
+#error Forced SFPU path is a test-only variant of the offline inspection capsule
+#endif
 #include "PioneerSfpuExp.h"
 #endif
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
@@ -265,7 +269,11 @@ static void LocalExp(const uint32_t* d,const uint32_t* p,const float* local,floa
  // A partial vector batch cannot amortize the SFPU context switch. Keep the
  // exact scalar exp path for short windows; only activate the approximation
  // when at least one full 32-lane batch is available.
+#ifdef PIONEER_Q38_DENSE_SFPU_EXP_FORCE_TEST
+ const bool useSfpu=d[49]>0;
+#else
  const bool useSfpu=d[49]>=32;
+#endif
  if(useSfpu){
  // This switches from the completed BF16 matrix score phase to the
  // existing FP32 SFPU path. The following ValuesCached call reinitializes

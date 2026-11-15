@@ -25,3 +25,14 @@ instruction counts, not silicon cycles or tokens/sec; no full-model quality,
 card, or throughput test was performed. This result does not establish a
 speedup. The candidate remains offline-only and must be measured on-card at
 representative context lengths before any promotion.
+
+The runner now also builds a distinct, guarded `--sfpu-exp-force-test` worker
+variant that forces the vector branch on the same one-live-lane fixture. The
+linked worker executed 102 SFPU exponential arithmetic instructions and
+passed the same synthetic output checks. It counted 3,630,474 RISC steps,
+639 fewer than the current short-window fallback but 4,444 more than control
+(0.12%). The forced selector is build/test-only and is not accepted by Work,
+validation, native, or driver roles. This proves the emitted SFPU sequence is
+reachable in the linked offline worker for one valid lane; it does not test a
+full 32-live-lane batch, long-context model quality, silicon performance, or
+tokens/sec. Reproduce with the same command above.

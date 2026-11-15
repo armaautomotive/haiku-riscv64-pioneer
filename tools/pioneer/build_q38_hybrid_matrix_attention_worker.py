@@ -14,7 +14,8 @@ reuse_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-reuse-inspection
 unroll_seal = len(sys.argv) == 4 and sys.argv[3] == '--dual-batch-unroll-seal-inspection'
 small_recurrent = len(sys.argv) == 4 and sys.argv[3] == '--recurrent-small-inspection'
 three_product_pv = len(sys.argv) == 4 and sys.argv[3] == '--three-product-pv-inspection'
-sfpu_exp = len(sys.argv) == 4 and sys.argv[3] == '--sfpu-exp-inspection'
+sfpu_exp_force_test = len(sys.argv) == 4 and sys.argv[3] == '--sfpu-exp-force-test'
+sfpu_exp = len(sys.argv) == 4 and sys.argv[3] in ('--sfpu-exp-inspection', '--sfpu-exp-force-test')
 recurrent_width = small_recurrent or (len(sys.argv) == 4 and sys.argv[3] == '--recurrent-width-inspection')
 batch_four = recurrent_width or unroll_seal or (len(sys.argv) == 4 and sys.argv[3] == '--dual-batch-dense-inspection')
 batch_dense = batch_four or (len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-srca-batch-inspection')
@@ -92,6 +93,8 @@ if three_product_pv:
     dense_role.append('-DPIONEER_Q38_DENSE_BF16_PV_3_PRODUCT_INSPECTION=1')
 if sfpu_exp:
     dense_role.append('-DPIONEER_Q38_DENSE_SFPU_EXP_INSPECTION=1')
+if sfpu_exp_force_test:
+    dense_role.append('-DPIONEER_Q38_DENSE_SFPU_EXP_FORCE_TEST=1')
 if srca_base:
     dense_role += ['-DPIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE=1','-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1']
 run(tool+'g++', *flags, '-O2', '-ffixed-s11', *dense_role, *inspection, '-c',

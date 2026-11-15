@@ -11,6 +11,7 @@ namespace PioneerSfpuOracle {
 }
 #undef PIONEER_NATIVE_F32_Q8_MACHINE_ONLY
 #include <cmath>
+#include <cstring>
 namespace Dense=PioneerQ38DensePartitionLayout;
 
 struct TransitionImage:HybridImage {
@@ -137,7 +138,9 @@ struct TransitionImage:HybridImage {
 };
 #ifndef PIONEER_Q38_HYBRID_MATRIX_TRANSITION_MACHINE_ONLY
 int main(int argc,char** argv){
- assert(argc==3);TransitionImage image(argv[1],argv[2]);image.Boot();
+ assert(argc==3 || argc==4);const bool forceSfpu=argc==4;
+ if(forceSfpu)assert(std::strcmp(argv[3],"--force-sfpu")==0);
+ TransitionImage image(argv[1],argv[2]);image.Boot();
  for(unsigned layer=0;layer<3;layer++){
   if(layer)image.RearmTestAccounting();
   image.Stage(layer,layer+1,4);assert(image.FinishCombined(layer+1));
@@ -154,8 +157,10 @@ int main(int argc,char** argv){
   }
  }
 #ifdef PIONEER_Q38_TEST_SFPU_EXP
- assert(image.sfpuMathOps==0); // one-token fixture stays on exact scalar exp
- printf("SFPU exponential instructions in one-token linked QGW7/QDM2 fixture: %u (short-window scalar fallback); synthetic transition only\n",image.sfpuMathOps);
+ if(forceSfpu)assert(image.sfpuMathOps>0);
+ else assert(image.sfpuMathOps==0); // normal one-token fixture stays on exact scalar exp
+ printf("SFPU exponential instructions in one-token linked QGW7/QDM2 fixture: %u (%s); synthetic transition only\n",
+  image.sfpuMathOps,forceSfpu?"forced vector test":"short-window scalar fallback");
 #endif
 #ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
  assert(image.native.matrixOps-image.matrixBefore==6*(128+3*8*16) && image.native.Clean());
