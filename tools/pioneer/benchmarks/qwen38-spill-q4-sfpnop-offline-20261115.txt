@@ -107,3 +107,19 @@ the trustworthy record. No candidate driver was left running after the cold
 power cycle; Linux is currently the active OS. Further tag101 hardware work
 requires returning to Haiku through a boot path whose pinned identity and
 current device layout pass their guards. Do not bypass SSH host-key checking.
+
+Post-restart recovery check (2026-11-15)
+---------------------------------------
+
+After Linux was reported still stuck in journal repair, the Pioneer relay
+status query was denied by macOS for `/dev/cu.usbserial-1`. The last observed
+screen state was Linux journal repair with the board on, so one seven-second
+OFF hold was sent. After a three-minute shutdown interval, exactly one ON pulse
+was sent. After 60 seconds, TCP/SSH responded at `10.0.0.247`, but strict
+OpenSSH verification refused the connection because the presented ED25519
+fingerprint was `SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8`, differing
+from the saved key at `known_hosts:4`. No SSH command ran and no pin was
+changed. This proves only that an SSH endpoint answered; Linux boot completion,
+root filesystem health, Haiku recovery, and P100A state remain unverified.
+Physical work remains stopped until that fingerprint is checked locally or a
+trusted Linux console observation confirms the expected host identity.
