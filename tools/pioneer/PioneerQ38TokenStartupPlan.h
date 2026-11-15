@@ -3,6 +3,9 @@
 #define PIONEER_Q38_TOKEN_STARTUP_PLAN_H
 #include "PioneerQ38TokenLayerPackage.h"
 #include "PioneerQ38TokenLayout.h"
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnL1PageAllocator.h"
+#endif
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
 #include "PioneerQ38Qgw8HeadPlanInspection.h"
 #else
@@ -23,6 +26,27 @@ class PioneerQ38TokenStartupPlan {
  const PioneerQ38PreparedNativeSource* preparedSource=nullptr;
 #endif
 	PioneerQ38TokenLayerPackage* layers[64]={};
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	PioneerQ38GdnL1PageAllocator* gdnL1Allocator=nullptr;
+	uint32_t gdnStatePageMap[PioneerQ38GdnL1PageAllocator::Workers*9]={};
+	bool gdnScattered=false;
+	bool BuildGdnStatePageMap(unsigned layer){
+		for(unsigned i=0;i<PioneerQ38GdnL1PageAllocator::Workers*9;i++)gdnStatePageMap[i]=0;
+		unsigned ordinal=0;
+		if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal))return false;
+		for(unsigned logical=0;logical<PioneerQ38GdnTaskPlacement::LogicalWorkers;logical++){
+			PioneerQ38GdnTaskPlacement::Route route={};
+			PioneerQ38GdnL1PageAllocator::PageTable table={};
+			if(!PioneerQ38GdnTaskPlacement::Map(ordinal,logical,route)
+				|| !gdnL1Allocator || !gdnL1Allocator->Resolve(route,table))return false;
+			uint32_t* row=gdnStatePageMap+(route.physicalWorker-1)*9;
+			row[0]=table.resident?0:2;
+			if(table.resident)for(unsigned page=0;page<PioneerQ38GdnL1PageAllocator::PagesPerSlot;page++)
+				row[page+1]=table.pages[page];
+		}
+		return true;
+	}
+#endif
 #ifdef PIONEER_Q38_QGW8_LAYOUT_INSPECTION
  PioneerQ38Qgw8HeadPlanInspection head;
 #else
@@ -36,6 +60,9 @@ class PioneerQ38TokenStartupPlan {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
    && preparedSource && preparedSource->MatchesPlan(c)
 #endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	   && (!gdnScattered || (gdnL1Allocator && gdnL1Allocator->Ready()))
+#endif
    && c.Workspace(bank) && workspace==c.Base+c.Workspace(bank)->offset
    && PioneerQ38TokenLayout::Session(session,boot,bank,workspace);
  }
@@ -45,6 +72,10 @@ class PioneerQ38TokenStartupPlan {
    || (canonical && o<c+sizeof(*canonical) && c<o+bytes))return false;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   if(!preparedSource || !preparedSource->Output(output,bytes))return false;
+#endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	if(gdnL1Allocator){const uintptr_t p=reinterpret_cast<uintptr_t>(gdnL1Allocator);
+		if(o<p+sizeof(*gdnL1Allocator) && p<o+bytes)return false;}
 #endif
   // Reject cross-layer aliases too, not only the selected package's object.
 	for(const auto* layer:layers)if(layer){const uintptr_t p=reinterpret_cast<uintptr_t>(layer);
@@ -61,7 +92,11 @@ public:
  PioneerQ38TokenStartupPlan()=default;
  PioneerQ38TokenStartupPlan(const PioneerQ38TokenStartupPlan&)=delete;
  PioneerQ38TokenStartupPlan& operator=(const PioneerQ38TokenStartupPlan&)=delete;
-	~PioneerQ38TokenStartupPlan(){for(auto* layer:layers)delete layer;}
+	~PioneerQ38TokenStartupPlan(){for(auto* layer:layers)delete layer;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		delete gdnL1Allocator;
+#endif
+	}
  // Pair fixed geometry with the compiled worker grammar before any native
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
@@ -112,14 +147,25 @@ public:
   if(!region || region->kind!=c.WorkspaceKind || region->bank!=selected || region->bytes!=C::WorkspaceBytes
    || region->allocated!=C::WorkspaceBytes)return false;
   canonical=&c;identity=id;bank=selected;workspace=c.Base+region->offset;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	  if(redistributedGdn){
+		gdnL1Allocator=new(std::nothrow) PioneerQ38GdnL1PageAllocator;
+		if(!gdnL1Allocator || !gdnL1Allocator->Build())return false;
+		gdnScattered=true;
+	  }
+#endif
   for(unsigned i=0;i<1920;i++)sources[i]=source[i];
   for(unsigned i=0;i<prompts;i++)prompt[i]=input[i];
   // The position-zero numeric template keeps its established initial raw
   // address. The REAL parent bootstrap later produces its own embedding and
   // TokenMetadata::Outer redirects layer0 to the provisional feedback slot.
 	 for(unsigned layer=0;layer<64;layer++){
+	  const uint32_t* statePageMap=nullptr;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	  if(redistributedGdn && layer%4!=3){if(!BuildGdnStatePageMap(layer))return false;statePageMap=gdnStatePageMap;}
+#endif
 	  layers[layer]=new(std::nothrow) PioneerQ38TokenLayerPackage;
-	  if(!layers[layer] || !layers[layer]->Build(c,layer,bank,id,sources,bank,workspace+0x600000,redistributedGdn))return false;
+	  if(!layers[layer] || !layers[layer]->Build(c,layer,bank,id,sources,bank,workspace+0x600000,redistributedGdn,statePageMap))return false;
   }
 	 for(unsigned i=0;i<64;i++)boot[i]=layers[0]->Boot()[i];
   if(!head.Build(c,bank,boot))return false;

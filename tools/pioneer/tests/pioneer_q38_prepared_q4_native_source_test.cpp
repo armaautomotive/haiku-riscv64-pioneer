@@ -9,6 +9,10 @@
 #define PIONEER_Q38_PREPARED_UPLOAD_FIXTURE_ONLY
 #include "pioneer_q38_prepared_q4_upload_plan_test.cpp"
 #include "../PioneerQ38TokenStartupPlan.h"
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#include "../PioneerQ38RedistributedTokenLayout.h"
+namespace RT=PioneerQ38RedistributedTokenLayout;
+#endif
 #include <sys/wait.h>
 #include <unistd.h>
 template<class F>static void Refusal(F check){
@@ -82,6 +86,42 @@ int main(){
    if(at==0x70000)assert(startup->ReadPackage(layer,at,published.data(),published.size()) && published==actual);
   }
  }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	// The isolated experiment startup path must serialize the same deterministic
+	// allocator pages used by the worker descriptor, with resident and spill rows.
+	auto scatteredStartup=std::make_unique<PioneerQ38TokenStartupPlan>();
+	assert(scatteredStartup->BindPreparedSource(*source)
+		&& scatteredStartup->Build(*canonical,0,id,boots.data(),prompt,2,128,true,248318,248317,true));
+	PioneerQ38GdnL1PageAllocator expectedAllocator;assert(expectedAllocator.Build());
+	uint32_t firstOrdinal=0;assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(0,firstOrdinal));
+	PioneerQ38GdnTaskPlacement::Route residentRoute={};PioneerQ38GdnL1PageAllocator::PageTable residentTable={};
+	assert(PioneerQ38GdnTaskPlacement::Map(firstOrdinal,0,residentRoute)
+		&& expectedAllocator.Resolve(residentRoute,residentTable) && residentTable.resident);
+	unsigned spillLayer=64;PioneerQ38GdnTaskPlacement::Route spillRoute={};
+	PioneerQ38GdnL1PageAllocator::PageTable spillTable={};
+	for(unsigned layer=0;layer<64 && spillLayer==64;layer++)if(layer%4!=3){
+		unsigned ordinal=0;assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal));
+		for(unsigned logical=0;logical<PioneerQ38GdnTaskPlacement::LogicalWorkers;logical++){
+			PioneerQ38GdnTaskPlacement::Route route={};PioneerQ38GdnL1PageAllocator::PageTable table={};
+			assert(PioneerQ38GdnTaskPlacement::Map(ordinal,logical,route) && expectedAllocator.Resolve(route,table));
+			if(!table.resident){spillLayer=layer;spillRoute=route;spillTable=table;break;}
+		}
+	}
+	assert(spillLayer<64);
+	auto verifyMap=[&](unsigned layer,const PioneerQ38GdnTaskPlacement::Route& route,
+		const PioneerQ38GdnL1PageAllocator::PageTable& table){
+		const unsigned offset=RT::Offset+(RT::HeaderWords+(route.physicalWorker-1)*RT::RecordWords+64)*4;
+		std::array<uint8_t,256> bytes={};assert(scatteredStartup->ReadPublishedPackage(layer,offset,bytes.data(),bytes.size()));
+		auto word=[&](unsigned index){const unsigned at=index*4;return uint32_t(bytes[at])|uint32_t(bytes[at+1])<<8
+			|uint32_t(bytes[at+2])<<16|uint32_t(bytes[at+3])<<24;};
+		assert(word(50)==(table.resident?0:2));
+		for(unsigned page=0;page<PioneerQ38GdnL1PageAllocator::PagesPerSlot;page++)
+			assert(word(42+page)==(table.resident?table.pages[page]:0));
+	};
+	verifyMap(0,residentRoute,residentTable);verifyMap(spillLayer,spillRoute,spillTable);
+	printf("PASS scattered startup DATA exact L1 maps residentWorker%u spillWorker%u spillLayer%u;NO runtime selection/token commit/card/TPS\n",
+		residentRoute.physicalWorker,spillRoute.physicalWorker,spillLayer);
+#endif
  actual.fill(0x5a);const auto untouched=actual;
  assert(!source->Overlay(64,0,actual.data(),64) && actual==untouched
   && !source->Overlay(0,1,actual.data(),64) && actual==untouched
