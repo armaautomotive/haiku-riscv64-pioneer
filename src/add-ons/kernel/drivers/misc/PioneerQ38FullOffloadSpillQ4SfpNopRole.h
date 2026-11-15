@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: MIT */
+#if !defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4) \
+ || PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4 != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP) \
+ || PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP != 1 \
+ || PIONEER_DRIVER_BUILD_TAG != 0x2026111500010101ULL
+#error SFPNOP-ordered spill Q4 requires its distinct tag101 role
+#endif

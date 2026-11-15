@@ -236,6 +236,8 @@ static_assert(PioneerQ38TokenPrograms::Version==2,"late BF16 timing program sele
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 #include "PioneerQ38FullOffloadFastDecodePrograms.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
+#include "PioneerQ38FullOffloadSpillQ4SfpNopPrograms.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
 #include "PioneerQ38FullOffloadSpillQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
@@ -318,6 +320,13 @@ static_assert(PioneerQ38TokenPrograms::FastDecodeProfile==1 && PioneerQ38TokenPr
  && PioneerQ38TokenPrograms::PhaseProfileVersion==3 && PioneerQ38TokenPrograms::RootSections==5
  && PioneerQ38TokenPrograms::VectorQ4Metadata==1 && PioneerQ38TokenPrograms::WideGdn==1
  && PioneerQ38TokenPrograms::EogCount==5,"exact fast decode ROOT and unchanged vector92 workers required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadSpillQ4SfpNopPrograms;
+static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::SpillRoot==1
+ && PioneerQ38TokenPrograms::RootSections==5 && PioneerQ38TokenPrograms::MacroQ4Decode==1
+ && PioneerQ38TokenPrograms::MacroQ4PrivateJobConfig==1 && PioneerQ38TokenPrograms::WideGdn==1
+ && PioneerQ38TokenPrograms::SfpConfigNop==1,
+ "exact tag101 SFPNOP ROOT plus macro-Q4 peer package required");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadSpillQ4Programs;
 static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::SpillRoot==1

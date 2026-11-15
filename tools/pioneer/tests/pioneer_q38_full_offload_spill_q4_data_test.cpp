@@ -36,7 +36,13 @@ static void CheckWorker(unsigned worker,const char* directory,const SpanFile* fi
  const auto invalid=P::CodeSpan(worker,count);assert(invalid.address==UINT32_MAX && !invalid.words);
 }
 int main(int argc,char** argv){
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP
+ constexpr unsigned peerWords=26120;
+ assert(argc==3 && PioneerQ38FullOffloadFirmwareSelection==14 && P::SfpConfigNop==1);
+#else
+ constexpr unsigned peerWords=26118;
  assert(argc==3 && PioneerQ38FullOffloadFirmwareSelection==13);
+#endif
  assert(P::Family==L::Family && P::EogCount==5 && P::SpillRoot==1 && P::RootSections==5);
  assert(P::MacroQ4Decode==1 && P::MacroQ4PrivateJobConfig==1 && P::MacroQ4InertReturn==1);
  assert(P::WideGdn==1 && P::WideGdnImports==13 && P::WideGdnDeltaAddress==0x8e600 && P::WideGdnDeltaWords==64);
@@ -47,13 +53,13 @@ int main(int argc,char** argv){
   {"dense.bin",0x40000},{"ffn.bin",0x60000},{"service.bin",0x68000},{"fetch.bin",0x70000},
   {"affine.bin",0x70b00},{"text.bin",0x72000},{"gdn.bin",0xb8000}};
  CheckWorker(0,argv[1],root,5);assert(P::CodeWords(0)==43760);
- CheckWorker(1,argv[2],peer,10);assert(P::CodeWords(1)==26118);
+ CheckWorker(1,argv[2],peer,10);assert(P::CodeWords(1)==peerWords);
  uint32_t word=0xdeadbeef;
  assert(L::SnapshotContains(0,0x60008) && L::SnapshotContains(0,0x63ffc)
   && !P::ProgramWord(0,0x63ffc,word) && word==0xdeadbeef);
  for(unsigned address:{0x6004U,0x63ffcU,0x6bd4cU,0x6e000U,0x74000U,0x17ffc0U,0xffb20000U,UINT32_MAX})
   if(address!=0x6004U){word=0xdeadbeef;if(P::ProgramWord(0,address,word)){std::fprintf(stderr,"unexpected ROOT code address %x\n",address);assert(false);}}
- for(unsigned worker=2;worker<120;worker++)assert(P::CodeSpans(worker)==10 && P::CodeWords(worker)==26118);
+ for(unsigned worker=2;worker<120;worker++)assert(P::CodeSpans(worker)==10 && P::CodeWords(worker)==peerWords);
  for(unsigned worker:{120U,121U,UINT32_MAX})
   assert(!P::CodeSpans(worker)&&!P::CodeWords(worker)&&P::CodeAddress(worker,0)==UINT32_MAX);
  assert(L::SnapshotBase(1)==L::RootSavedWords && L::SnapshotWords(120)==0);

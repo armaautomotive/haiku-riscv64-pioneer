@@ -21,8 +21,14 @@
 #error Full-card macro Q4 requires the actual tag93 exclusive full native parent
 #endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
+#if defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
+#if PIONEER_DRIVER_BUILD_TAG != 0x2026111500010101ULL
+#error Full-card SFPNOP spill macro Q4 requires exact tag101
+#endif
+#else
 #if PIONEER_DRIVER_BUILD_TAG != 0x2026111500010100ULL
 #error Full-card spill macro Q4 requires exact tag100
+#endif
 #endif
 #else
 #if PIONEER_DRIVER_BUILD_TAG != 0x2026110400010093ULL

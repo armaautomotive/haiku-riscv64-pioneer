@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
-"""Emit tag100 full-card Q4 DATA with the complete, journaled ROOT spill."""
+"""Emit immutable full-card Q4 DATA candidates with the complete ROOT spill."""
 import hashlib
 import os
 import pathlib
 import re
 import sys
 from generate_qwen38_token_programs import authenticated,pins
-from PioneerQ38SpillQ4ArtifactPins import ROOT_PINS,WORKER_PINS
+from PioneerQ38SpillQ4ArtifactPins import ROOT_PINS,WORKER_PINS,SFPNOP_WORKER_PINS
 
-assert __debug__ and len(sys.argv)==4
+args=sys.argv[1:];sfpnop='--sfpnop' in args
+if sfpnop:
+ assert args.count('--sfpnop')==1;args.remove('--sfpnop')
+assert __debug__ and len(args)==3
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-root,worker,output=map(pathlib.Path,sys.argv[1:])
+root,worker,output=map(pathlib.Path,args)
 assert all(p.is_absolute() for p in (root,worker,output)) and not output.exists() and not output.is_symlink()
 here=pathlib.Path(__file__).resolve().parent
 roots=authenticated(root,ROOT_PINS)
-peers=authenticated(worker,WORKER_PINS)
+worker_pins=SFPNOP_WORKER_PINS if sfpnop else WORKER_PINS
+peers=authenticated(worker,worker_pins)
 source=(here/'PioneerQ38FullOffloadMacroQ4Programs.h').read_bytes()
 assert hashlib.sha256(source).hexdigest()=='da41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767'
 text=source.decode('ascii')
@@ -38,6 +42,14 @@ text=text.replace('PioneerQ38FullOffloadMacroQ4ProgramsRole.h','PioneerQ38FullOf
 text=text.replace('PioneerQ38FullOffloadMacroQ4Programs','PioneerQ38FullOffloadSpillQ4Programs')
 text=text.replace('MacroQ4Decode=1,MacroQ4Sequences=2,MacroQ4PrivateJobConfig=1,MacroQ4InertReturn=1};',
  'MacroQ4Decode=1,MacroQ4Sequences=2,MacroQ4PrivateJobConfig=1,MacroQ4InertReturn=1,SpillRoot=1,RootSections=5};')
+if sfpnop:
+ text=text.replace('PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_PROGRAMS_H',
+                    'PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_PROGRAMS_H')
+ text=text.replace('PioneerQ38FullOffloadSpillQ4ProgramsRole.h',
+                    'PioneerQ38FullOffloadSpillQ4SfpNopProgramsRole.h')
+ text=text.replace('PioneerQ38FullOffloadSpillQ4Programs',
+                    'PioneerQ38FullOffloadSpillQ4SfpNopPrograms')
+ text=text.replace('SpillRoot=1,RootSections=5};','SpillRoot=1,RootSections=5,SfpConfigNop=1};')
 marker='using PioneerQ38TokenPushedL1::Span;'
 assert text.count(marker)==1
 text=text.replace(marker,array('RootSpill',roots['rootspill.bin'])+'\n'+marker)
@@ -63,4 +75,5 @@ for label,name in (('PeerBoot','boot.bin'),('PeerFront','globalworker.bin'),('Pe
  assert match and match.group(1)==digest,label
 with output.open('x',encoding='ascii') as stream:stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(),output.name,flush=True)
-print('DATA_ONLY full Q4 peers plus five-segment ROOT;boot/text/STOP/spill/conv pinned;no install/run/performance result',flush=True)
+print('DATA_ONLY '+('tag101 SFPNOP-ordered candidate' if sfpnop else 'tag100 macro-Q4 candidate')+
+ ' full Q4 peers plus five-segment ROOT;no install/run/performance result',flush=True)

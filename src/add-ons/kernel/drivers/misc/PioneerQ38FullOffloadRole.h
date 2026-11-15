@@ -86,6 +86,9 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 #include "PioneerQ38FullOffloadFastDecodeRole.h"
 enum {PioneerQ38FullOffloadFirmwareSelection=12};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
+#include "PioneerQ38FullOffloadSpillQ4SfpNopRole.h"
+enum {PioneerQ38FullOffloadFirmwareSelection=14};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
 enum {PioneerQ38FullOffloadFirmwareSelection=13};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
@@ -120,6 +123,8 @@ enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 #include "PioneerQ38FullOffloadFastDecodeRole.h"
 static_assert(PioneerQ38FullOffloadFirmwareSelection==12,"late fast decode profile selection");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
+static_assert(PioneerQ38FullOffloadFirmwareSelection==14,"late tag101 SFPNOP spill-Q4 selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
 static_assert(PioneerQ38FullOffloadFirmwareSelection==13,"late spill Q4 full-card selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)

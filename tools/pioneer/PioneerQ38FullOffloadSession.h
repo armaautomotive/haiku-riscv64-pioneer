@@ -8,6 +8,14 @@
  || (defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) && PIONEER_Q38_FULL_OFFLOAD_METRICS != 1)
 #error Full-offload client is separate from hybrid Work,CPU validation and diagnostics
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT
+#if PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4) || PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4 != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP) \
+ || PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP != 1
+#error Tag101 Assistant requires the explicit SFPNOP spill-Q4 client role
+#endif
+#endif
 #ifdef PIONEER_Q38_BF16_FULL_CLIENT
 #include "PioneerQ38Bf16FullClientRole.h"
 #elif defined(PIONEER_Q38_BF16_FULL_PROTOCOL_H)
@@ -29,6 +37,10 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exa
 #endif
 #else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
+ "Assistant client must target the distinct tag101 SFPNOP native role");
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentProtocol.h"

@@ -1,0 +1,43 @@
+Tag101 SFPNOP-ordered full-card Q4 candidate -- OFFLINE ONLY
+===========================================================
+
+This continues the investigation of the rejected tag93 Macro-Q4 answer from
+qwen38-macro-q4-full-card-rejected-20261104.txt. That physical answer was
+wrong ("tera" repeated); its raw rate is invalid. The precise cause remains
+unproven. This candidate tests one narrow hypothesis: Blackhole SFPCONFIG's
+Sequence/Misc settings may not be visible to an immediately following
+SFPLOADMACRO without an intervening SFPU instruction. Setup and teardown now
+insert SFPNOP after their last SFPCONFIG.
+
+The generated immutable package is tag101, firmware selection14, not tag100:
+ - program header SHA256 dadcb5038bc3b783bd276b5322160499d49f69f68b371c98ec9cff00dfe5c18b
+ - regenerated independently from the same pinned ROOT and peer ROMs; hash
+   matched byte-for-byte
+ - peer ELF 325c8de743273353d9a1ec7a7ab83d0af9ccb800fc1442284d35af758c3696c2
+ - native driver 95b62dfaaa75c3c8f4856c081c1e8fb700e444b99a7a0402b3056efbfcc304a9
+ - Assistant client 26db652e6fd7e77b63f5008f8fcbeb8d0213e19d1231b6947e0f8ad99ee1e156
+ - protocol smoke 8d05d5143284babb39c000818fa1c299c3b8e35ccb49b4058da783d4e0fbe83c
+ - rate-observer smoke 48a6e32f76ae339b2007693c6ee871e70c4ec6fafcb1344d35ca6d428e3be1c9
+
+Validation completed locally:
+ - macro-Q4 full emitted-worker emulator passed 27 shapes (type 8/12/14 x
+   K 5120/6144/17408 x 1/3/16 groups), exact against the vector-Q4 control;
+   fixed ROM fixtures and actual emitted machine code, not GPU execution.
+ - macro-Q4 SFPNOP ordering sanitizer test passed 4096 exact byte/panel cases;
+   the emitted worker test observed both macro-specific NOPs and retained
+   unchanged results across two jobs.
+ - tag101 ROOT/peer DATA test passed exact word/address/span/STOP checks for
+   five ROOT spans, ten peers, all120 worker slots and the 120-worker bounds.
+ - native build passed 40 role refusals, pinned default43 unchanged, no CPU
+   inference/reference or ggml Work imports; maximum token frame1232 bytes.
+ - Assistant build passed 22 role refusals, imports only the eleven expected
+   vocabulary/model-container APIs; no context/decode/logits/threadpool.
+ - generated DATA, native driver and Assistant are build artifacts only.
+
+No Pioneer execution, model answer, installed driver, Assistant deployment,
+performance sample or speedup claim was made. Linux has not recovered from
+its journal repair, so physical qualification is pending. Do not install or
+run tag101 until the Pioneer is available and the safe recovery/driver-load
+path is verified. A full-model run is required to establish numerical
+correctness; only then is its rate meaningful. The 20 tok/s target remains
+unmet.

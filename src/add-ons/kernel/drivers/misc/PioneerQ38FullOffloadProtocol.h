@@ -52,6 +52,8 @@
 namespace PioneerQ38FullOffload {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110600010116);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026111500010101);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026111500010100);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
