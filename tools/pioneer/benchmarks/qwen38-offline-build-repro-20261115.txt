@@ -42,3 +42,43 @@ Two gates remain closed:
 These block a fresh paired tag-99 ROOT+worker package from this environment.
 The host-key mismatch remains unverified, so no SSH/hardware test was
 attempted. Existing unrelated user work was left untouched.
+
+Follow-up compact folded-QGW3 ROOT inspection, same date:
+
+The full ROOT size failure was traced to its returned global-token components.
+An explicit `--compact-global-inspection` build selector now applies the
+existing `--compact-inspection` (-Os) option only to those components, and is
+accepted only together with inspect mode, pushed QGW3, and the eight-way
+job-fold parent. Existing default/native/Work selectors are unchanged. The
+QGW3 CLI test now includes a pre-IO rejection for using this selector without
+its required parent.
+
+Two independent clean invocations of `build_qwen38_token_root.py` with the
+folded-QGW3 profile plus `--compact-global-inspection` produced byte-identical
+ROOT artifacts:
+
+* program.elf SHA-256 `b7093902b630116c7dabb086550be12cd097fd36b5e555cfce406d56c20522c7`
+* ROOT text 124,808/131,072 bytes; convolution data 31,652/32,768 bytes
+* boot, text, terminal, convolution and whole-ELF hashes matched between the
+  two builds; the builder's symbol/ISA/stack/range checks passed.
+
+This shows the current folded-QGW3 ROOT can fit without relaxing its memory
+layout, but is still an inspection candidate. No candidate-specific QTP data
+package, full prepared-Q4 role pairing, worker simulation, native install,
+physical test, or tokens/sec result has been qualified. The last physical
+Q4 rate is unchanged.
+
+The compact folded-QGW3 candidate was then rebuilt end-to-end twice through
+the token ROOT builder. Both whole ROOT ELF and all emitted code-section
+hashes matched. The builder's actual symbol, ISA, frame, and fixed-range gates
+passed. Its candidate outputs are:
+
+* whole program.elf 189,780 bytes, SHA-256
+  `b7093902b630116c7dabb086550be12cd097fd36b5e555cfce406d56c20522c7`
+* `.text` 124,808 bytes of 131,072; `.conv` 31,652 bytes of 32,768
+* `.boot` 4 bytes and `.terminal` 8 bytes, both identical between builds
+
+The CLI regression suite now rejects compact mode before SDK/input/output I/O
+unless the explicit folded-QGW3 inspection parents are selected. The new
+image remains an inspect-only build: no production package, native role,
+model execution, or performance conclusion follows from fitting the ranges.

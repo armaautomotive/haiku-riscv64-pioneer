@@ -7,6 +7,10 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
+compact_global_inspection='--compact-global-inspection' in options
+if compact_global_inspection:
+ assert options.count('--compact-global-inspection')==1
+ options.remove('--compact-global-inspection')
 qgwf_root='--qgwf-dual-batch-root' in options
 if qgwf_root:
  assert options.count('--qgwf-dual-batch-root')==1,'duplicate QGWF root selector'
@@ -105,6 +109,8 @@ packet_eight='--unroll-packet-seals-eight' in options
 assert not packet_eight or (packet_unroll and pushed and inspect),'eight-way packet-seal BUILD requires explicit packet unroll/QGW3/inspect parents;NO runtime permission'
 fold_job_boot='--fold-job-boot' in options
 assert not fold_job_boot or (packet_eight and inspect),'job boot fold BUILD requires the explicit eight-way QGW3 inspect profile;NO native/Work permission'
+assert not compact_global_inspection or (fold_job_boot and inspect and pushed), \
+ 'compact global components are a distinct QGW3 build/inspection candidate only'
 frontier='--token-frontier' in options
 assert not frontier or (fold_job_boot and inspect),'token frontier BUILD requires the complete job-fold ROOT profile;NO native/readout/Work permission'
 frontier=frontier or bf16_profile or qgwd_frontier
@@ -113,7 +119,11 @@ sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().pa
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-');assert pathlib.Path(tool+'g++').is_file()
 out.mkdir(mode=0o700)
-def run(*args):subprocess.run([str(a) for a in args],check=True)
+def run(*args):
+ command=list(map(str,args))
+ if compact_global_inspection and pathlib.Path(command[1]).name=='build_qwen38_global_token_components.py':
+  command.append('--compact-inspection')
+ subprocess.run(command,check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'

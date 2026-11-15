@@ -28,6 +28,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw3-cli-',dir='/private/tmp') 
             if flag!='--pushed-completion':reject(here.parent/script,['sdk','output'],[f for f in selected if f!=flag])
         for flag in ('--pushed-completion','--pushed-completion=0','--unknown-qgw3'):
             reject(here.parent/script,['sdk','output'],[*selected,flag])
+        reject(here.parent/script,['sdk','output'],[*selected,'--compact-global-inspection'])
     runner=here/'run_pioneer_q38_token_original_flow_tests.py'
     modes=(mode,'--pushed-cohort-faults','--pushed-admission-faults','--pushed-dense-faults')
     for selected_mode in modes:
