@@ -35,14 +35,21 @@ public:
 		return true;
 	}
 };
+static inline bool PioneerQ38DispatchFillRequest(const PioneerQ38CohortWave& wave,
+	const PioneerQ38CohortInput& input,tt_q38_dispatch_probe& request)
+{
+	request={};
+	if (!wave.Ready() || wave.workers>119 || wave.type!=input.type || wave.inputs!=input.inputs) return false;
+	request.version=1; request.type=wave.type; request.inputs=wave.inputs; request.peers=wave.workers;
+	memcpy(request.part,wave.part,sizeof(request.part));
+	memcpy(request.activation,input.activation,sizeof(input.activation)); memcpy(request.scales,input.scales,sizeof(input.scales));
+	if (!PioneerQ38DispatchValid(request) || !wave.Ready()) { request={}; return false; }
+	return true;
+}
 static inline std::unique_ptr<tt_q38_dispatch_probe> PioneerQ38DispatchRequest(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input)
 {
-	if (!wave.Ready() || wave.workers>119 || wave.type!=input.type || wave.inputs!=input.inputs) return nullptr;
-	auto request=std::unique_ptr<tt_q38_dispatch_probe>(new(std::nothrow) tt_q38_dispatch_probe{}); if (!request) return nullptr;
-	request->version=1; request->type=wave.type; request->inputs=wave.inputs; request->peers=wave.workers;
-	memcpy(request->part,wave.part,sizeof(request->part));
-	memcpy(request->activation,input.activation,sizeof(input.activation)); memcpy(request->scales,input.scales,sizeof(input.scales));
-	if (!PioneerQ38DispatchValid(*request) || !wave.Ready()) return nullptr;
+	auto request=std::unique_ptr<tt_q38_dispatch_probe>(new(std::nothrow) tt_q38_dispatch_probe); if (!request) return nullptr;
+	if (!PioneerQ38DispatchFillRequest(wave,input,*request)) return nullptr;
 	return request;
 }
 static inline bool PioneerQ38DispatchCollect(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input,

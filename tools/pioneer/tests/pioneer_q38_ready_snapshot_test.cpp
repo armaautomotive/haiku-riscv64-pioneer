@@ -31,8 +31,11 @@ int main()
 	statCalls=0; assert(wave.Ready()); const unsigned readyStats=statCalls;
 	std::vector<float> x(17408,.125f),output(5120,-1),before=output;
 	PioneerQ38CohortInput input; assert(PioneerQ38CohortQuantize(12,17408,x.data(),input));
+	tt_q38_dispatch_probe filled={};statCalls=0;
+	assert(PioneerQ38DispatchFillRequest(wave,input,filled));const unsigned fillStats=statCalls;
 	statCalls=0; auto request=PioneerQ38DispatchRequest(wave,input); assert(request);
 	const unsigned requestStats=statCalls;
+	assert(fillStats==requestStats && memcmp(&filled,request.get(),sizeof(filled))==0);
 	auto& r=request->result; r.version=1; r.state=TT_RUNTIME_PASSED; r.nonce=1; r.peers=wave.workers;
 	r.root_started=r.root_completed=r.root_held=1; r.root_marker=0x314d3851; r.root_count=wave.workers;
 	for (unsigned w=0;w<wave.workers;w++) for (unsigned row=0;row<wave.part[w].groups*16;row++)
@@ -53,6 +56,9 @@ int main()
 	}
 	for (unsigned at=1;at<=requestStats;at++) {
 		statCalls=0; failStat=at; assert(!PioneerQ38DispatchRequest(wave,input)); failStat=0;
+		statCalls=0; failStat=at; assert(!PioneerQ38DispatchFillRequest(wave,input,filled)); failStat=0;
+		const uint8_t* bytes=reinterpret_cast<const uint8_t*>(&filled);
+		for(size_t i=0;i<sizeof(filled);i++)assert(bytes[i]==0);
 	}
 	for (unsigned at=1;at<=collectStats;at++) {
 		PioneerQ38WorkSessionMode fresh; output=before; statCalls=0; failStat=at;

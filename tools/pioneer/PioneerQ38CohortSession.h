@@ -15,6 +15,7 @@
 #error Batch client is a distinct no-reference Work role
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkBatchProtocol.h"
+#include "PioneerQ38DispatchHost.h"
 #endif
 #ifdef PIONEER_Q38_FFN_PRIME
 #if PIONEER_Q38_FFN_PRIME != 1 || !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
@@ -446,11 +447,12 @@ public:
 		PioneerQ38CohortWave firstWave,secondWave;
 		if (!source.Ready() || !firstWave.Build(source.Model(),layout,*firstPlan,0)
 			|| !secondWave.Build(source.Model(),layout,*secondPlan,0)) return Stop();
-		auto firstRequest=mode.Request(firstWave,quantized);auto secondRequest=mode.Request(secondWave,quantized);
-		auto packet=std::unique_ptr<PioneerQ38WorkBatchPacket>(new(std::nothrow) PioneerQ38WorkBatchPacket{});
-		if (!firstRequest || !secondRequest || !packet) return Stop();
+		auto packet=std::unique_ptr<PioneerQ38WorkBatchPacket>(new(std::nothrow) PioneerQ38WorkBatchPacket);
+		if (!packet) return Stop();
 		packet->version=PIONEER_Q38_WORK_BATCH_VERSION;packet->count=PIONEER_Q38_WORK_BATCH_COUNT;
-		packet->jobs[0]=*firstRequest;packet->jobs[1]=*secondRequest;
+		packet->reserved[0]=packet->reserved[1]=0;
+		if (!PioneerQ38DispatchFillRequest(firstWave,quantized,packet->jobs[0])
+			|| !PioneerQ38DispatchFillRequest(secondWave,quantized,packet->jobs[1])) return Stop();
 		std::vector<float> firstScratch(firstOutputs,0),secondScratch(secondOutputs,0);
 		uint64_t runStart=PioneerQ38SessionNow(io,0);
 		bool executed=io.Call(fd,TT_PCI_PROBE_Q38_WORK_BATCH_RUN,packet.get(),sizeof(*packet));
@@ -509,11 +511,12 @@ public:
 				PioneerQ38CohortWave waves[2];
 				if (!source.Ready() || !waves[0].Build(source.Model(),layout,*schedule,waveNumber)
 					|| !waves[1].Build(source.Model(),layout,*schedule,waveNumber+1)) return Stop();
-				auto first=mode.Request(waves[0],quantized);auto second=mode.Request(waves[1],quantized);
-				auto packet=std::unique_ptr<PioneerQ38WorkBatchPacket>(new(std::nothrow) PioneerQ38WorkBatchPacket{});
-				if (!first || !second || !packet) return Stop();
+				auto packet=std::unique_ptr<PioneerQ38WorkBatchPacket>(new(std::nothrow) PioneerQ38WorkBatchPacket);
+				if (!packet) return Stop();
 				packet->version=PIONEER_Q38_WORK_BATCH_VERSION;packet->count=PIONEER_Q38_WORK_BATCH_COUNT;
-				packet->jobs[0]=*first;packet->jobs[1]=*second;first.reset();second.reset();
+				packet->reserved[0]=packet->reserved[1]=0;
+				if (!PioneerQ38DispatchFillRequest(waves[0],quantized,packet->jobs[0])
+					|| !PioneerQ38DispatchFillRequest(waves[1],quantized,packet->jobs[1])) return Stop();
 				uint64_t runStart=PioneerQ38SessionNow(io,0);
 				bool executed=io.Call(fd,TT_PCI_PROBE_Q38_WORK_BATCH_RUN,packet.get(),sizeof(*packet));
 				runIoctlCalls++;
