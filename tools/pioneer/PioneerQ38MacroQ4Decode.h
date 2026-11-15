@@ -29,6 +29,9 @@ struct PioneerQ38MacroQ4Decode {
   e.Op(0x91000441);e.Op(0x91000551); // sequences0/1:ONLY simple,delay0,template0/1
   e.Op(0x91000061);e.Op(0x91000071); // sequences2/3 inert
   e.Op(0x91000081); // misc:elapsed CYCLES,not instruction-count waits
+  // Blackhole SFPCONFIG -> first SFPLOADMACRO needs an SFPU instruction
+  // boundary; otherwise Sequence/Misc may still be observed old or new.
+  e.Op(0x8f000000); // SFPNOP immediately after the final SFPCONFIG
   e.Drain();
  }
  template<unsigned Block,bool Upper,class E> static inline void Pair(E& e) {
@@ -53,7 +56,7 @@ struct PioneerQ38MacroQ4Decode {
  template<class E> static __attribute__((noinline)) void Finish(E& e) {
   e.Drain();
   e.Op(0x91000041);e.Op(0x91000051);e.Op(0x91000061);e.Op(0x91000071);
-  e.Op(0x91000081);e.Drain(); // schedules inert;NOT a claim to restore unknown original templates
+  e.Op(0x91000081);e.Op(0x8f000000);e.Drain(); // inert after SFPNOP;does NOT restore unknown original templates
  }
 };
 #endif

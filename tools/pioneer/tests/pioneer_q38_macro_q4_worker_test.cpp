@@ -9,7 +9,8 @@
 struct MacroQ4Peer:VectorMetadataPeer {
  unsigned setupPC=0,decodePC=0,finishPC=0,macroReturn=0,extent=0;
  unsigned clock=0,ready[8]={},templates[4]={},sequence[4]={},misc=0;
- unsigned macroLoads=0,macroStores=0,macroPanels=0,macroSetups=0,macroFinishes=0;
+ unsigned macroLoads=0,macroStores=0,macroPanels=0,macroSetups=0,macroFinishes=0,macroNops=0;
+ bool sfpConfigDirty=false;
  unsigned firstLoad=0,firstStore=0;
  struct Pending {unsigned at,reg;uint32_t op;};std::vector<Pending> pendingSimple;
  MacroQ4Peer(const char* fixture,const char* image,unsigned type,unsigned k,unsigned groups)
@@ -31,7 +32,7 @@ struct MacroQ4Peer:VectorMetadataPeer {
   }
   VectorMetadataPeer::StepBlock();
   if(extent && pc==macroReturn) {
-   assert(pendingSimple.empty());
+   assert(pendingSimple.empty() && !sfpConfigDirty);
    if(extent==1){assert(sequence[0]==4 && sequence[1]==5 && !sequence[2] && !sequence[3] && !misc);macroSetups++;}
    else if(extent==2){assert(macroLoads-firstLoad==8 && macroStores-firstStore==8);macroPanels++;}
    else {for(unsigned s:sequence)assert(!s);assert(!misc);macroFinishes++;}
@@ -40,7 +41,12 @@ struct MacroQ4Peer:VectorMetadataPeer {
  }
  void Instruction(uint32_t op)override {
   const unsigned code=op>>24;
-  if(extent==1 && (op==0x8a000002 || code==0x71)) {
+  if(op==0x8f000000) {
+   if(extent==1 || extent==3) {
+    assert(enabled && sfpConfigDirty && !active && pendingSimple.empty() && phaseQueue.empty());
+    sfpConfigDirty=false;macroNops++;vectorOps++;drained=false;issued.push_back(op);
+   } else VectorMetadataPeer::Instruction(op);
+  } else if(extent==1 && (op==0x8a000002 || code==0x71)) {
    assert(!active && !ownerA && !sources[0] && !sources[1] && !rawPending
     && phaseQueue.empty() && pendingAccumulator.empty() && pendingSimple.empty() && thread[5]==4);
    if(op==0x8a000002)enabled=true;
@@ -53,6 +59,7 @@ struct MacroQ4Peer:VectorMetadataPeer {
    vectorOps++;drained=false;issued.push_back(op);
   } else if(code==0x91) {
    assert((extent==1 || extent==3) && enabled && pendingSimple.empty() && !active && thread[5]==4);
+   sfpConfigDirty=true;
    unsigned vd=(op>>4)&15,mod=op&15,value=(op>>8)&65535;
    assert(vd<=8 && (mod==0 || mod==1));
    if(!mod){assert(ready[0]<=clock);value=lr[0][0];for(unsigned l=0;l<32;l++)assert(lr[0][l]==value);}
@@ -61,6 +68,7 @@ struct MacroQ4Peer:VectorMetadataPeer {
    else {assert(!value);misc=value;}
    vectorOps++;drained=false;issued.push_back(op);
   } else if(code==0x93) {
+   assert(!sfpConfigDirty);
    assert(extent==2 && !active && enabled && ownerA && sources[mathBank] && thread[5]==4
     && !rawPending && phaseQueue.empty() && pendingAccumulator.empty() && config[220]==0
     && config[1]==0xa03c8000 && (!pending || DisjointPrefetchCompute()));
@@ -123,7 +131,8 @@ int main(int argc,char** argv) {
     && old->rawReads==next->rawReads && old->rawUnpacks==next->rawUnpacks && old->metadataBlocks==next->metadataBlocks
     && !next->extent && !next->active && !next->dotProbeReads && !next->blockImports);
    assert(next->macroPanels==(type==12?job*groups*(k/256)*16:0));
-   assert(next->macroSetups==(type==12?job:0) && next->macroFinishes==next->macroSetups);
+   assert(next->macroSetups==(type==12?job:0) && next->macroFinishes==next->macroSetups
+    && next->macroNops==next->macroSetups+next->macroFinishes);
    for(unsigned r=0;r<groups*16;r++)assert(old->buffers[4096+r]==next->buffers[4096+r]);
    for(unsigned i=0;i<64;i++)assert(old->mailbox[i]==next->mailbox[i]);
    if(job==2)break;

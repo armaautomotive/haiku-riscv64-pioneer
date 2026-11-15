@@ -18,16 +18,16 @@ from pioneer_q38_vector_q4_relocations import audit
 
 PINS=(
  ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
- ('globalworker.bin',9232,'e4dd94af8e3f828bff6482fa255266356de46b28bf5a419816d76e32de98f2b3'),
+ ('globalworker.bin',9232,'91c971ccd7b5748b4859d227f4cefb2cab3e3406fa51e87931878051b9632d3d'),
  ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
  ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
  ('fetch.bin',1292,'22b6fa8a631dd9b952adb8d624888bce309bf24392f004eecd93f9becf991df8'),
- ('text.bin',8148,'a69573017671d2bb86798b392fd38e13b5f8d1a4ac37a9aa7daaeddfc15757cd'),
- ('affine.bin',4880,'eb4b1bc4bc8d766b83083b3cda183fd9d8ad97c9e5eee6d27d93da451dc45b06'),
- ('ffn.bin',16456,'051499d768f11fc58757529ae1e639a0cda66c584378021b1b4a03dab5c44c2c'),
- ('service.bin',9888,'6e0219d9e66e25df248b1547f0fb642138434e13a5d043bfe3b815e773ec8f3a'),
- ('gdn.bin',35944,'e699263135d4815d9fcf9d41cfdca164d1935862949239f83f89cd4d5e78c77a'),
- ('program.elf',145148,'89f71fc9d6e8006d5267ed566c7a288f2406787fae10f91752c2874187c1c5f3'),
+ ('text.bin',8148,'75aae1b0bcf730d54ba4f48d9a1349d93c367760e4d277c3783d2e5067869bbc'),
+ ('affine.bin',4888,'2f1af72a779f1eef138ca5f93804feffaedbda46aabab33b435e83dee4af25bd'),
+ ('ffn.bin',16456,'0a018ef93f4c6fcd70d19d8f2ae065852ee5ec4b5523c86bd28defa4fe539bd1'),
+ ('service.bin',9888,'a876050861990fcddcdf7da9b59a956ff158e3e5bc32cd8cd25a88960a1cdc0f'),
+ ('gdn.bin',35848,'7847ddbf30bed068e1cfc5a9b3644e5c9e0518fb0c999d016e90b7dc67866e92'),
+ ('program.elf',145052,'325c8de743273353d9a1ec7a7ab83d0af9ccb800fc1442284d35af758c3696c2'),
 ) # Independently reproduced shader bytes,NOT native or hardware authority.
 args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:

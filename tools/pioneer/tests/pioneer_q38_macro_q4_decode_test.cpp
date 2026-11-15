@@ -11,8 +11,9 @@
 // Reject unsupported config,format,unit,delay,register or address choices.
 struct MacroMachine {
  uint32_t lr[8][32]={},templates[4]={},sequence[4]={},misc=0;
- unsigned cycle=0,raw[256]={},result[256]={},written[256]={},moves=0,macros=0;
+ unsigned cycle=0,raw[256]={},result[256]={},written[256]={},moves=0,macros=0,nops=0;
  unsigned ready[8]={};bool enabled=false,finished=false;
+ bool configDirty=false;
  struct Pending {unsigned at,reg;uint32_t op;};
  std::vector<Pending> pending;
  std::vector<uint32_t> issued;
@@ -21,6 +22,7 @@ struct MacroMachine {
  void Op(uint32_t op) {
   issued.push_back(op);const unsigned code=op>>24;
   if(code==0x71) {
+   configDirty=false;
    unsigned reg=(op>>20)&15,mode=(op>>16)&15;Need(reg<8);
    for(unsigned l=0;l<32;l++) {
     if(mode==0)lr[reg][l]=(op&65535)<<16;
@@ -35,7 +37,11 @@ struct MacroMachine {
    if(reg<4)templates[reg]=value;
    else if(reg<8)sequence[reg-4]=value;
    else {Need(value==0);misc=value;}
+   configDirty=true;
+  } else if(code==0x8f) {
+   Need(op==0x8f000000 && enabled);configDirty=false;nops++;
   } else if(code==0x93) {
+   Need(!configDirty);configDirty=false;
    unsigned index=(op>>22)&3,reg=(op>>20)&3,addr=op&1023;
    Need(enabled && !misc && ((op>>16)&15)==13 && !(op&0xfc01) && addr<16);
    unsigned s=sequence[index];Need(s==4 || s==5);
@@ -45,6 +51,7 @@ struct MacroMachine {
    for(unsigned l=0;l<32;l++)lr[reg][l]=raw[((addr&~3U)+l/8)*16+(l%8)*2+bool(addr&2)];
    ready[reg]=cycle+2;pending.push_back({cycle+1,reg,arithmetic});macros++;
   } else if(code==0x72) {
+   configDirty=false;
    unsigned reg=(op>>20)&15,addr=op&1023;
    Need(enabled && reg<2 && ready[reg]<=cycle && ((op>>16)&15)==5 && !(op&0xfc01));
    for(unsigned l=0;l<32;l++) {
@@ -78,6 +85,7 @@ int main() {
   assert(m.macros==8 && m.moves==4 && m.issued.size()-before==20+unsigned(!(panel&2)));
   for(unsigned i=0;i<256;i++)assert(m.written[i]==1 && m.result[i]==((m.raw[i]>>(panel&2?4:0))&15));
   PioneerQ38MacroQ4Decode::Finish(m);
+  assert(m.nops==2 && !m.configDirty);
   for(unsigned v:m.sequence)assert(!v);
   auto issued=m.issued;assert(!PioneerQ38MacroQ4Decode::Decode(m,16) && issued==m.issued);cases++;
  }
