@@ -62,8 +62,35 @@ int main()
 		}
 	}
 	assert(resident==2975 && spill==1633);
+	unsigned currentResident=0,currentSpill=0;
+	for(unsigned layerOrdinal=0;layerOrdinal<PioneerQ38GdnL1PageAllocator::CurrentLayers;layerOrdinal++)
+		for(unsigned logicalWorker=0;logicalWorker<PioneerQ38GdnL1PageAllocator::CurrentLogicalWorkers;logicalWorker++){
+			PioneerQ38GdnL1PageAllocator::PageTable table={};
+			assert(allocator.ResolveCurrentRoute(layerOrdinal,logicalWorker,table));
+			assert(table.physicalWorker==logicalWorker+1 && table.stateIndex==layerOrdinal
+				&& table.cacheIndex==logicalWorker*48+layerOrdinal);
+			if(layerOrdinal<25){
+				unsigned canonicalCount=0;
+				assert(PioneerQ38GdnL1CacheCapacityInspection::BuildPages(
+					logicalWorker+1,canonicalPages,
+					PioneerQ38GdnL1CacheCapacityInspection::MaxPages,canonicalCount));
+				assert(canonicalCount>=25*8);currentResident++;
+				for(unsigned page=0;page<8;page++){
+					assert(table.pages[page]==canonicalPages[layerOrdinal*8+page]);
+					assert(table.pages[page]>=PioneerQ38GdnL1PageAllocator::WorkerStateMinimum
+						&& (table.pages[page]&4095)==0 && table.pages[page]<=0x17f000);
+				}
+			}else{
+				currentSpill++;
+				for(unsigned page=0;page<8;page++)assert(!table.pages[page]);
+			}
+		}
+	assert(currentResident==2400 && currentSpill==2208);
 	PioneerQ38GdnL1PageAllocator::PageTable out={};
 	assert(!allocator.Resolve(0,0,out) && !allocator.Resolve(120,0,out)
-		&& !allocator.Resolve(1,39,out));
-	std::printf("PASS prepared-Q4 QTP3 page allocator: resident=%u spill=%u 119-peer routes verified; metadata only, no L1 allocation/I/O/token authority\n",resident,spill);
+		&& !allocator.Resolve(1,39,out)
+		&& !allocator.ResolveCurrentRoute(48,0,out)
+		&& !allocator.ResolveCurrentRoute(0,96,out));
+	std::printf("PASS prepared-Q4 QTP3 page allocator: redistributed resident=%u spill=%u; current-96 resident=%u spill=%u; routes verified; metadata only, no L1 allocation/I/O/token authority\n",
+		resident,spill,currentResident,currentSpill);
 }

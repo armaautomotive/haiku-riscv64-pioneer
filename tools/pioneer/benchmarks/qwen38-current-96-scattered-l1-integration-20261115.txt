@@ -1,0 +1,51 @@
+Qwen3.8 current 96-worker scattered GDN L1-map integration — 2026-11-15
+=======================================================================
+
+Status: offline emitted-worker integration only. No Pioneer installation or
+execution, no native dispatch, no full-model token, and no tokens/sec result.
+This remains separate from Work, CPU-reference, native, and kernel roles.
+
+Current-topology map
+--------------------
+The native decoder owner currently dispatches one GDN task to each of 96
+workers. For that topology, each physical worker is the logical half-head
+worker plus one, and the stable recurrent-state index is the recurrent-layer
+ordinal (0..47). The existing allocator now exposes `ResolveCurrentRoute()`
+for this mapping. Using the worker's actual `0x90000` minimum and the prepared
+QTP3 snapshot, the map has 25 scattered L1 states per worker: 2,400 of 4,608
+half-states resident and 2,208 spilled to GDDR. This is a static placement
+bound; it does not mean all model states are live in L1 simultaneously.
+
+The exact scattered emitted worker was then run in the host simulator with
+page-table addresses from that allocator, not its fixed fixture addresses.
+The pinned candidate image is unchanged:
+
+  code SHA-256 5f968b21ad1da7830edf7c1fee2ac309d0edcbd39f89a5e54a8218d19cb4b558
+  boot SHA-256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+
+Validation
+----------
+Reproduce with:
+
+  `sh tools/pioneer/tests/run_pioneer_q38_gdn_l1_page_allocator_tests.sh /Volumes/HaikuBuildLocal/generated.riscv64`
+  `sh tools/pioneer/tests/run_pioneer_q38_gdn_recurrent_current_scattered_image_tests.sh /Volumes/HaikuBuildLocal/generated.riscv64`
+
+The allocator test covers all 4,608 current-topology routes and confirms the
+2,400/2,208 split, page uniqueness, bounds, and worker snapshot exclusions.
+The ASan/UBSan emitted-worker test passed 161 exact-output executions: 114
+resident-map and 47 spill-map executions, including warm/cold transitions,
+both GDDR slots, and a real state-index-47 spill. It checked all 8,256 state
+and output words and passed 4,175 injected faults. The scatter role gate also
+passed. Execution counts are test coverage, not total-model residency.
+
+What remains
+------------
+The actual `PioneerQ38ResidentDecoderOwner` still does not build this map or
+write the worker-local page table; it currently uses ordinary descriptors and
+the GDDR state path. It also lacks a persistent cache epoch/identity tied to
+successful GDN state publication and fault/reset invalidation. Thus cold-fill
+mode alone is not a speed optimization, and this work does not yet improve
+native inference. The next implementation gate is to add those operations
+under a separate candidate native role, then compile and test lifecycle/error
+paths before any hardware selection. Physical tests remain gated on
+out-of-band verification of the Pioneer SSH host key.

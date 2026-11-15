@@ -24,7 +24,12 @@ public:
 		L1Bytes=0x180000,WorkerStateMinimum=0x90000,
 		PageBytes=4096,
 		ResidentSlots=Workers*ResidentSlotsPerWorker,
-		SpillSlots=LogicalTasks-ResidentSlots
+		SpillSlots=LogicalTasks-ResidentSlots,
+		CurrentLogicalWorkers=96,CurrentLayers=PioneerQ38GdnTaskPlacement::RecurrentLayers,
+		CurrentSlotsPerWorker=CurrentLayers,
+		CurrentTotalSlots=CurrentLogicalWorkers*CurrentLayers,
+		CurrentResidentSlots=CurrentLogicalWorkers*ResidentSlotsPerWorker,
+		CurrentSpillSlots=CurrentTotalSlots-CurrentResidentSlots
 	};
 	struct PageTable {
 		unsigned physicalWorker;
@@ -125,6 +130,27 @@ public:
 			return false;
 		return Resolve(route.physicalWorker,route.stateIndex,output);
 	}
+
+	// Current native GDN mapping: one physical worker per logical head-half,
+	// with recurrent-layer ordinal as that worker's stable state index. This
+	// does not enable the alternate 119-peer remap or grant launch authority.
+	bool ResolveCurrentRoute(unsigned layerOrdinal,unsigned logicalWorker,
+		PageTable& output)const
+	{
+		if(layerOrdinal>=CurrentLayers || logicalWorker>=CurrentLogicalWorkers)
+			return false;
+		PageTable candidate={logicalWorker+1,layerOrdinal,
+			logicalWorker*CurrentSlotsPerWorker+layerOrdinal,
+			layerOrdinal<ResidentSlotsPerWorker,{}};
+		if(candidate.resident){
+			PageTable allocated={};
+			if(!Resolve(logicalWorker+1,layerOrdinal,allocated))return false;
+			for(unsigned page=0;page<PagesPerSlot;page++)
+				candidate.pages[page]=allocated.pages[page];
+		}
+		output=candidate;
+		return true;
+	}
 };
 
 static_assert(sizeof(PioneerQ38GdnL1PageAllocator)>95000
@@ -133,5 +159,8 @@ static_assert(sizeof(PioneerQ38GdnL1PageAllocator)>95000
 static_assert(PioneerQ38GdnL1PageAllocator::ResidentSlots==2975
 	&& PioneerQ38GdnL1PageAllocator::SpillSlots==1633,
 	"exact 119-peer cache/spill geometry");
+static_assert(PioneerQ38GdnL1PageAllocator::CurrentResidentSlots==2400
+	&& PioneerQ38GdnL1PageAllocator::CurrentSpillSlots==2208,
+	"exact current 96-worker cache/spill geometry");
 
 #endif

@@ -17,8 +17,9 @@
 #define PIONEER_Q38_FULL_OFFLOAD_CLIENT 1
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnL1PageAllocator.h"
 #if !defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) \
-	|| !defined(PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE)
-#error L1 allocator integration requires redistributed scattered-worker simulation
+	|| (defined(PIONEER_Q38_GDN_L1_CURRENT_TOPOLOGY) \
+		== defined(PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE))
+#error Select exactly one scattered-worker allocator topology
 #endif
 static PioneerQ38GdnL1PageAllocator& CandidateL1PageAllocator()
 {
@@ -73,11 +74,17 @@ struct GdnRecurrentMachine:ResidentGdnImage {
 #endif
   SetDescriptors();
 #ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
+  PioneerQ38GdnL1PageAllocator::PageTable table={};
+#ifdef PIONEER_Q38_GDN_L1_CURRENT_TOPOLOGY
+  unsigned allocatorOrdinal=0;
+  assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,allocatorOrdinal)
+   && CandidateL1PageAllocator().ResolveCurrentRoute(allocatorOrdinal,half,table));
+#else
   unsigned allocatorOrdinal=0;PioneerQ38GdnTaskPlacement::Route allocatorRoute={};
   assert(PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,allocatorOrdinal)
-   && PioneerQ38GdnTaskPlacement::Map(allocatorOrdinal,half,allocatorRoute));
-  PioneerQ38GdnL1PageAllocator::PageTable table={};
-  assert(CandidateL1PageAllocator().Resolve(allocatorRoute,table));
+   && PioneerQ38GdnTaskPlacement::Map(allocatorOrdinal,half,allocatorRoute)
+   && CandidateL1PageAllocator().Resolve(allocatorRoute,table));
+#endif
   if(table.resident){
    sAllocatorResidentRoutes++;
    for(unsigned page=0;page<8;page++){
