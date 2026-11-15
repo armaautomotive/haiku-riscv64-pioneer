@@ -37,6 +37,16 @@ are simulated; the test does not execute a full Qwen token, measure latency,
 validate long-context model quality, or prove initialized L1 residency.
 Tokens/sec improvement is therefore unknown; no speedup is claimed.
 
+Related cache-capacity evidence
+------------------------------
+The existing inspection-only 119-peer redistribution/capacity test also
+passes. It maps the 4,608 recurrent half-states (144 MiB total) over 119
+physical workers and finds 4,046 states (about 126.4 MiB) fit in currently
+identified safe fragmented L1 pages; 562 states (about 17.6 MiB) spill.
+This is a useful target for an address-indirect loader, but the existing GDN
+runtime rejects this redistribution and the inspection does not establish
+that these pages can remain reserved alongside every model phase.
+
 Still required before hardware use
 -----------------------------------
 * A native allocator that reserves and pins all eight L1 pages for the correct
