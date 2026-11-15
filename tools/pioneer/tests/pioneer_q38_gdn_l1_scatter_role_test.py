@@ -18,7 +18,8 @@ candidate = {'PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT':'1'}
 check(candidate, True, 'static_assert(PioneerQ38DeltaVectorLayout::StateBytes == 32768);')
 for forbidden in ('PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION',
                   'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE',
-                  'PIONEER_Q38_HYBRID_FULL_NATIVE', 'PIONEER_Q38_GDN_RECURRENT_NATIVE', '_KERNEL_MODE'):
+                  'PIONEER_Q38_HYBRID_FULL_NATIVE', 'PIONEER_Q38_GDN_RECURRENT_NATIVE',
+                  'PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE', '_KERNEL_MODE'):
     check({**candidate, forbidden:'1'}, False)
 check({}, False, '#define PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT 1\n#include "' + str(layout) + '"')
 check({**candidate, 'PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT':'1'}, False)
