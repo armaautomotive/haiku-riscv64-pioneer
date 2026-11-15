@@ -51,7 +51,7 @@ public:
 	PioneerQ38GlobalRedistributedTokenPackage& operator=(const PioneerQ38GlobalRedistributedTokenPackage&)=delete;
 	bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,unsigned selectedBank,
 		unsigned stateSlot,const PioneerQ38GdnIdentity& id,const uint32_t* source,
-		unsigned initialBank,unsigned initialAddress){
+		unsigned initialBank,unsigned initialAddress,const uint32_t* statePageMap=nullptr){
 		if(attempted)return false;attempted=true;
 		if(selected>=64 || selected%4==3 || selectedBank>=7 || stateSlot!=0 || !source
 			|| !base.Build(c,selected,selectedBank,id,source,initialBank,initialAddress))return false;
@@ -61,7 +61,7 @@ public:
 		// while building each input descriptor, so the table plan phase is +4.
 		phase=1005+selected*16;request=selected+1;
 		for(unsigned i=0;i<1920;i++)sources[i]=source[i];
-		if(!gdn.Build(c,selected,0,selectedBank,stateSlot,phase,request,id,source))return false;
+		if(!gdn.Build(c,selected,0,selectedBank,stateSlot,phase,request,id,source,statePageMap))return false;
 		ready=true;return Matches(c);
 	}
 	bool Matches(const PioneerQ38CanonicalModelPlan& c)const{

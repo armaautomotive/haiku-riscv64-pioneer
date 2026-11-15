@@ -97,6 +97,15 @@ extern "C" unsigned scalar_main() {
 #endif
  // malformed shape:NO MMIO/packets/SFPU
  if (Words(L::Descriptor)[0]!=L::Magic || Words(L::Descriptor)[1]!=128 || Words(L::Descriptor)[2]!=64 || Words(L::Descriptor)[3]) return 0;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	// Page addresses and cold/warm/spill mode travel inside the already
+	// admitted state descriptor, avoiding a separate peer write per task.
+	// The descriptor shape has checked alignment/range/uniqueness before any
+	// local table update. Zero-tail legacy DATA is deliberately cold GDDR spill.
+	for (unsigned page = 0; page < L::StatePages; ++page)
+		Words(L::StatePageTable)[page] = d[42 + page];
+	Words(L::StatePageMode)[0] = PioneerQ38ResidentGdnCacheMode(d);
+#endif
  if (!PioneerQ38DeltaVectorGate(*Words(L::Decay)) || !PioneerQ38DeltaVectorGate(*Words(L::Beta))) return 0;
  for (unsigned i=0;i<320;i++) if (!InputNormalOrZero(Words(L::Query)[i])) return 0;
  if (!RGdn::Sealed(d) || !RGdn::Idle()) scalar_fault_park();

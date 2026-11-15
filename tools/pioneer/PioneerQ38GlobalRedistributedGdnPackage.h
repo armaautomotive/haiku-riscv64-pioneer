@@ -50,14 +50,14 @@ public:
 	PioneerQ38GlobalRedistributedGdnPackage& operator=(const PioneerQ38GlobalRedistributedGdnPackage&)=delete;
 	bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selectedLayer,unsigned selectedBank,
 		const PioneerQ38GdnIdentity& id,const uint32_t* sources,unsigned initialBank,
-		uint32_t initialAddress){
+		uint32_t initialAddress,const uint32_t* statePageMap=nullptr){
 		if(attempted)return false;attempted=true;
 		if(selectedLayer>=64 || selectedLayer%4==3 || !sources
 			|| !base.Build(c,selectedLayer,selectedBank,id,sources,initialBank,initialAddress))return false;
 		canonical=&c;layer=selectedLayer;bank=selectedBank;identity=id;
 		phase=1001+selectedLayer*16;request=selectedLayer+1;
 		for(unsigned i=0;i<1920;i++)this->sources[i]=sources[i];
-		if(!gdn.Build(c,selectedLayer,0,selectedBank,0,phase,request,id,sources))return false;
+		if(!gdn.Build(c,selectedLayer,0,selectedBank,0,phase,request,id,sources,statePageMap))return false;
 		ready=true;return Matches(c);
 	}
 	bool Matches(const PioneerQ38CanonicalModelPlan& c)const{

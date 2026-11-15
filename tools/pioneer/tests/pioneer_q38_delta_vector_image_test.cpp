@@ -132,6 +132,7 @@ struct DeltaVectorImage:ScalarMachine {
 		}
 		assert(Range(at,0x6e000,8192) || Range(at,0xa0000,32768) || Range(at,uint32_t(L::Output),256) || Range(at,0x17ffc0,12)
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			|| Range(at,uint32_t(L::StatePageTable),L::StatePages*4+4)
 			|| Range(at,0x90000,L::L1Bytes-0x90000)
 #endif
 		);

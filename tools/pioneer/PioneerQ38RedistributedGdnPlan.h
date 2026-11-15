@@ -12,9 +12,12 @@
 class PioneerQ38RedistributedGdnPlan {
 	static constexpr unsigned RecordWords=192;
 	static constexpr unsigned PhysicalWords=PioneerQ38GdnTaskPlacement::PhysicalWorkers*RecordWords;
+	static constexpr unsigned CacheMapWords=PioneerQ38GdnTaskPlacement::PhysicalWorkers*9;
 	const PioneerQ38CanonicalModelPlan* canonical=nullptr;
 	uint32_t header[32]={};
 	uint32_t records[PhysicalWords]={};
+	uint32_t cacheMap[CacheMapWords]={};
+	bool cacheMapReady=false;
 	bool attempted=false,ready=false;
 	static bool State(const PioneerQ38CanonicalModelPlan& plan,const uint32_t* input,
 		unsigned slot,uint32_t* d)
@@ -44,7 +47,7 @@ class PioneerQ38RedistributedGdnPlan {
 	static bool Record(const PioneerQ38CanonicalModelPlan& plan,unsigned layer,
 		unsigned position,unsigned bank,unsigned slot,unsigned phase,
 		const PioneerQ38GdnIdentity& identity,const uint32_t* sources,
-		unsigned logical,uint32_t* output,unsigned& physical)
+		unsigned logical,uint32_t* output,unsigned& physical,const uint32_t* statePageMap)
 	{
 		uint32_t ordinal=0;
 		if(!PioneerQ38GdnTaskPlacement::LayerOrdinal(layer,ordinal))return false;
@@ -57,6 +60,16 @@ class PioneerQ38RedistributedGdnPlan {
 		for(unsigned i=0;i<64;i++)output[i]=inputPlan.Descriptor()[i];
 		uint32_t* input=output;uint32_t* state=output+64;uint32_t* gated=output+128;
 		if(!State(plan,input,slot,state))return false;
+		if(statePageMap){
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			const uint32_t* row=statePageMap+(route.physicalWorker-1)*9;
+			for(unsigned i=0;i<8;i++)state[42+i]=row[i+1];
+			state[50]=row[0];
+			if(!PioneerQ38ResidentGdnCacheDescriptor(state))return false;
+#else
+			return false; // cache maps require the separate exact experiment image
+#endif
+		}
 		PioneerQ38GdnGatedPlan gatedPlan;
 		if(!gatedPlan.Build(plan,input,state))return false;
 		for(unsigned i=0;i<64;i++)gated[i]=gatedPlan.Descriptor()[i];
@@ -72,12 +85,12 @@ class PioneerQ38RedistributedGdnPlan {
 	}
 	bool Inputs(const PioneerQ38CanonicalModelPlan& plan,unsigned layer,unsigned position,
 		unsigned bank,unsigned slot,unsigned phase,const PioneerQ38GdnIdentity& identity,
-		const uint32_t* sources,uint32_t* destination,bool compare)const
+		const uint32_t* sources,uint32_t* destination,bool compare,const uint32_t* statePageMap)const
 	{
 		bool active[PioneerQ38GdnTaskPlacement::PhysicalWorkers]={};unsigned count=0;
 		for(unsigned logical=0;logical<PioneerQ38GdnTaskPlacement::LogicalWorkers;logical++){
 			uint32_t record[RecordWords];unsigned physical=0;
-			if(!Record(plan,layer,position,bank,slot,phase,identity,sources,logical,record,physical)
+			if(!Record(plan,layer,position,bank,slot,phase,identity,sources,logical,record,physical,statePageMap)
 				|| !physical || physical>PioneerQ38GdnTaskPlacement::PhysicalWorkers || active[physical-1])return false;
 			active[physical-1]=true;count++;
 			const unsigned offset=(physical-1)*RecordWords;
@@ -88,6 +101,7 @@ class PioneerQ38RedistributedGdnPlan {
 		for(unsigned physical=1;physical<=PioneerQ38GdnTaskPlacement::PhysicalWorkers;physical++){
 			if(active[physical-1])continue;
 			const unsigned offset=(physical-1)*RecordWords;
+			if(statePageMap)for(unsigned i=0;i<9;i++)if(statePageMap[(physical-1)*9+i])return false;
 			for(unsigned i=0;i<RecordWords;i++){
 				if(compare){if(records[offset+i])return false;}
 				else destination[offset+i]=0;
@@ -101,13 +115,22 @@ public:
 	PioneerQ38RedistributedGdnPlan& operator=(const PioneerQ38RedistributedGdnPlan&)=delete;
 	bool Build(const PioneerQ38CanonicalModelPlan& plan,unsigned layer,unsigned position,
 		unsigned bank,unsigned slot,unsigned phase,unsigned request,
-		const PioneerQ38GdnIdentity& identity,const uint32_t* sources)
+		const PioneerQ38GdnIdentity& identity,const uint32_t* sources,
+		const uint32_t* statePageMap=nullptr)
 	{
 		if(attempted)return false;attempted=true;
 		if(!plan.Ready() || layer>=64 || layer%4==3 || position>=8192 || bank>=7
 			|| slot>=2 || !phase || phase>=0x7ffffffa || !request || request>=0x7fffffff
 			|| !identity.Valid() || !sources)return false;
 		for(unsigned w=0;w<120;w++)if(!sources[w*16])return false;
+		if(statePageMap){
+#ifndef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+			return false;
+#else
+			for(unsigned i=0;i<CacheMapWords;i++)cacheMap[i]=statePageMap[i];
+			cacheMapReady=true;
+#endif
+		}
 		canonical=&plan;
 		const unsigned fields[]={0x31444752,1,PhysicalWords,layer,position,bank,slot,phase,request,
 			PioneerQ38GdnTaskPlacement::LogicalWorkers,PioneerQ38GdnTaskPlacement::PhysicalWorkers,
@@ -115,7 +138,8 @@ public:
 		for(unsigned i=0;i<12;i++)header[i]=fields[i];
 		const uint64_t values[]={identity.session,identity.sequence,identity.modelEpoch,identity.driverGeneration};
 		for(unsigned i=0;i<4;i++){header[16+i*2]=uint32_t(values[i]);header[17+i*2]=uint32_t(values[i]>>32);}
-		if(!Inputs(plan,layer,position,bank,slot,phase,identity,sources,records,false))return false;
+		if(!Inputs(plan,layer,position,bank,slot,phase,identity,sources,records,false,
+			cacheMapReady?cacheMap:nullptr))return false;
 		ready=true;return Matches(plan,layer,position,bank,slot,phase,request,identity,sources);
 	}
 	bool Matches(const PioneerQ38CanonicalModelPlan& plan,unsigned layer,unsigned position,
@@ -135,7 +159,7 @@ public:
 		for(unsigned i=24;i<32;i++)if(header[i])return false;
 		for(unsigned w=0;w<120;w++)if(!sources[w*16])return false;
 		return Inputs(plan,layer,position,bank,slot,phase,identity,sources,
-		nullptr,true);
+		nullptr,true,cacheMapReady?cacheMap:nullptr);
 	}
 	const uint32_t* Header()const{return ready?header:nullptr;}
 	const uint32_t* Worker(unsigned physicalWorker)const{

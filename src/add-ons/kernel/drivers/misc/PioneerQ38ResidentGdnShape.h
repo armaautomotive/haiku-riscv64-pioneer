@@ -25,6 +25,37 @@ static inline uint32_t PioneerQ38ResidentGdnPeer(unsigned worker) {
 static inline bool PioneerQ38ResidentGdnAddress(uint32_t address) {
  return !(address&4095) && address>=0x04000000 && address<=0xc4000000-TT_Q38_RGDN_STATE_BYTES;
 }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+// Optional worker-local state-cache descriptor carried in the otherwise
+// reserved tail of the private GDN state record. This is still an offline
+// experiment: the page allocator/owner must supply the addresses, and a
+// whole-token owner must decide when cache mode 1 is safe.
+static inline bool PioneerQ38ResidentGdnCacheDescriptor(const uint32_t* d)
+{
+	if (!d || d[50] > 2) return false;
+	bool empty = d[50] == 0;
+	for (unsigned i = 0; i < 8; ++i) empty &= d[42 + i] == 0;
+	if (empty) return true; // legacy descriptor: force GDDR spill in the worker
+	if (d[50] == 2) {
+		for (unsigned i = 0; i < 8; ++i) if (d[42 + i]) return false;
+		return true;
+	}
+	for (unsigned i = 0; i < 8; ++i) {
+		const uint32_t page = d[42 + i];
+		if ((page & 4095) || page < 0x90000 || page > 0x180000 - 4096)
+			return false;
+		for (unsigned j = 0; j < i; ++j) if (d[42 + j] == page) return false;
+	}
+	return true;
+}
+static inline unsigned PioneerQ38ResidentGdnCacheMode(const uint32_t* d)
+{
+	if (!d) return 3;
+	bool empty = d[50] == 0;
+	for (unsigned i = 0; i < 8; ++i) empty &= d[42 + i] == 0;
+	return empty ? 2 : d[50];
+}
+#endif
 // Peer-parameterized validator lets the redistributed route check reuse the
 // canonical field/extent rules without copying and retagging a 64-word table.
 static inline bool PioneerQ38ResidentGdnShapePeer(const uint32_t* d,uint32_t peer) {
@@ -39,7 +70,12 @@ static inline bool PioneerQ38ResidentGdnShapePeer(const uint32_t* d,uint32_t pee
  // A next slot may NEVER overlap this invocation's read slot,even partly.
  if (d[4]==d[6] && d[5]<d[7]+TT_Q38_RGDN_STATE_BYTES && d[7]<d[5]+TT_Q38_RGDN_STATE_BYTES) return false;
  for (unsigned i=32;i<40;i+=2) if (!(d[i]|d[i+1])) return false; // four nonzero64-bit owner epochs
- for (unsigned i=42;i<64;i++) if (d[i]) return false;
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	if (!PioneerQ38ResidentGdnCacheDescriptor(d)) return false;
+	for (unsigned i=51;i<64;i++) if (d[i]) return false;
+#else
+	for (unsigned i=42;i<64;i++) if (d[i]) return false;
+#endif
  return true;
 }
 static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {

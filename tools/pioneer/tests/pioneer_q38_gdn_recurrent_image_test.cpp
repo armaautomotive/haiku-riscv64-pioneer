@@ -72,7 +72,6 @@ struct GdnRecurrentMachine:ResidentGdnImage {
 #else
   assert(PioneerQ38GdnRecurrentShape(inputDescriptor.data(),descriptor.data()));
 #endif
-  SetDescriptors();
 #ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
   PioneerQ38GdnL1PageAllocator::PageTable table={};
 #ifdef PIONEER_Q38_GDN_L1_CURRENT_TOPOLOGY
@@ -89,15 +88,24 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    sAllocatorResidentRoutes++;
    for(unsigned page=0;page<8;page++){
     memory[uint32_t(L::StatePageTable)+page*4]=table.pages[page];
+    descriptor[42+page]=table.pages[page];
     for(unsigned word=0;word<1024;word++)
      memory[table.pages[page]+word*4]=initialState[page*1024+word];
    }
+   descriptor[50]=0;
    memory[uint32_t(L::StatePageMode)]=0;
   }else{
    sAllocatorSpillRoutes++;
+   descriptor[50]=2;
    memory[uint32_t(L::StatePageMode)]=2;
   }
+#ifdef PIONEER_Q38_GDN_REDISTRIBUTED_IMAGE
+  assert(PioneerQ38ResidentGdnRedistributedShape(descriptor.data()));
+#else
+  assert(PioneerQ38ResidentGdnShape(descriptor.data()));
 #endif
+#endif
+  SetDescriptors();
   for(unsigned i=0;i<8;i++)initialCounts[i]=counts[i];
   unsigned h=half/2,kh=h%16;
   for(unsigned i=0;i<128;i++){
@@ -344,7 +352,8 @@ int main(int argc,char** argv){
      const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
      m.memory[address]=carry[i];
     }
-    m.memory[uint32_t(L::StatePageMode)]=token?1:0;
+    m.descriptor[50]=token?1:0;
+    m.SetDescriptors();
    }
 #endif
    assert(m.Run());m.Verify();carry=m.next;positive++;

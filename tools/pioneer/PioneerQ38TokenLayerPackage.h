@@ -27,14 +27,14 @@ public:
 	}
 	bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned layer,unsigned bank,
 		const PioneerQ38GdnIdentity& id,const uint32_t* sources,unsigned initialBank,
-		uint32_t initialAddress,bool redistributedGdn=false){
+		uint32_t initialAddress,bool redistributedGdn=false,const uint32_t* statePageMap=nullptr){
 		if(attempted)return false;
 		attempted=true;
 		if(redistributedGdn && layer<64 && layer%4!=3){
 			useRouted=true;
 			new (&storage.routed) PioneerQ38GlobalRedistributedTokenPackage;
 			constructed=true;
-			ready=storage.routed.Build(c,layer,bank,0,id,sources,initialBank,initialAddress);
+			ready=storage.routed.Build(c,layer,bank,0,id,sources,initialBank,initialAddress,statePageMap);
 			return ready;
 		}
 		new (&storage.legacy) PioneerQ38TokenPackage;

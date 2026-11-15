@@ -7,6 +7,9 @@ temporary=$(mktemp -d /private/tmp/pioneer-q38-gdn-l1-page-allocator.XXXXXXXX)
 "${CXX:-c++}" -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_q38_gdn_l1_page_allocator_test.cpp" -o "$temporary/test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"
+"${CXX:-c++}" -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_q38_gdn_l1_descriptor_experiment_test.cpp" -o "$temporary/descriptor-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/descriptor-test"
 if [ "$#" = 1 ]; then
 	sdk=$1
 	compiler=$sdk/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
