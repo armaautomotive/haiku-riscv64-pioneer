@@ -52,7 +52,8 @@ public:
 	bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,unsigned selectedBank,
 		unsigned stateSlot,const PioneerQ38GdnIdentity& id,const uint32_t* source,
 		unsigned initialBank,unsigned initialAddress,const uint32_t* statePageMap=nullptr){
-		if(attempted)return false;attempted=true;
+		if(attempted)return false;
+		attempted=true;
 		if(selected>=64 || selected%4==3 || selectedBank>=7 || stateSlot!=0 || !source
 			|| !base.Build(c,selected,selectedBank,id,source,initialBank,initialAddress))return false;
 		canonical=&c;layer=selected;bank=selectedBank;slot=stateSlot;identity=id;

@@ -118,7 +118,8 @@ public:
 		const PioneerQ38GdnIdentity& identity,const uint32_t* sources,
 		const uint32_t* statePageMap=nullptr)
 	{
-		if(attempted)return false;attempted=true;
+		if(attempted)return false;
+		attempted=true;
 		if(!plan.Ready() || layer>=64 || layer%4==3 || position>=8192 || bank>=7
 			|| slot>=2 || !phase || phase>=0x7ffffffa || !request || request>=0x7fffffff
 			|| !identity.Valid() || !sources)return false;

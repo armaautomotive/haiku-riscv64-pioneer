@@ -106,6 +106,8 @@ run(sys.executable,here/'build_qwen38_global_chain_root.py',sdk,out/'unchanged-f
 flags=['-std=c++11','-Os' if compact_inspection else '-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
+haiku_headers=sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
+flags+=['-isystem',haiku_headers,'-isystem',haiku_headers/'posix']
 compact_flags=['-include',here/'PioneerQ38FreestandingMemcpy.h'] if compact_inspection else []
 run(tool+'g++',*flags,*compact_flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1'] if ffn_shared_reuse else []),

@@ -21,6 +21,8 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
+haiku_headers=sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
+flags+=['-isystem',haiku_headers,'-isystem',haiku_headers/'posix']
 for kind,parent in (('recurrent','PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE'),('dense','PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE')):
  run(cross+'-g++',*flags,'-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_'+kind.upper()+'=1',
   '-D'+parent+'=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',

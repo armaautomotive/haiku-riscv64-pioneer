@@ -1,0 +1,44 @@
+Qwen3.8-27B offline build/reproduction checkpoint -- 2026-11-15
+===============================================================
+
+No Pioneer, model, or card was accessed. No throughput measurement was made.
+The last accepted physical Q4 result remains 0.172813448..0.172816755 tok/s;
+20 tok/s is unmet.
+
+The current Haiku SDK checkout could not reproduce every nested ROOT build
+from source because several builders omitted the SDK header roots. Added the
+SDK's `headers` and `headers/posix` include paths to the affected returning-
+layer, global-chain, global-token, and token ROOT builders. This lets clean
+component builds advance without compiler environment overrides. Also split
+two misleading one-line `if` statements that failed the native build's
+`-Werror` configuration.
+
+Evidence collected locally:
+
+* Native full-card prepared-Q4 phase-profile tag 99 rebuilt successfully via
+  `build_qwen38_full_offload_native.py` with the current local SDK. Driver
+  SHA-256: `5439a0f6ccbc9483ce70a24b681a6fce0af23e5b97936e491b7166c7f5b75a6e`.
+  Its role gate passed 38 refusal combinations. This is a build artifact only,
+  not installed, run on hardware, or qualified as a speedup.
+* The existing tag-99 fake-endpoint physical-flow parent test passed. It tests
+  lifecycle/error handling only; no device exchange or throughput claim.
+* Clean QGC1 returning-layer and all-64 global-chain inspection builds passed
+  with the corrected include paths. They remain uninitialized inspection
+  artifacts, not an integrated token pipeline or Work-mode release.
+* Offline vector-GDN tests passed. The factored-decay candidate used 254 fewer
+  vector operations per half-head in the tested synthetic cases, with exact
+  state/output for those cases. This is not evidence of native registration,
+  residency, or measured silicon latency.
+
+Two gates remain closed:
+
+1. The full prepared-ROOT rebuild stops at the linker range guard: generated
+   ROOT `.text` overlaps the reserved terminal section. The guard was not
+   relaxed. A complete model/ROOT image therefore was not rebuilt.
+2. The standalone prepared exact-Q4 worker builder refuses its inherited
+   QGW2 baseline because generated `globalworker.bin` differs from the
+   immutable expected hash. That identity gate was not bypassed.
+
+These block a fresh paired tag-99 ROOT+worker package from this environment.
+The host-key mismatch remains unverified, so no SSH/hardware test was
+attempted. Existing unrelated user work was left untouched.

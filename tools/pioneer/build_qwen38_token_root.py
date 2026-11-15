@@ -121,6 +121,8 @@ run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
+haiku_headers=sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
+flags+=['-isystem',haiku_headers,'-isystem',haiku_headers/'posix']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),

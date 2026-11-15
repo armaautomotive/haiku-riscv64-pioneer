@@ -23,6 +23,8 @@ run(sys.executable,here/'build_qwen38_layer_return_components.py',sdk,out/'uncha
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
+haiku_headers=sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
+flags+=['-isystem',haiku_headers,'-isystem',haiku_headers/'posix']
 component=['-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1']
 for kind,parent in (('recurrent','PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE'),('dense','PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE')):
  run(tool+'g++',*flags,*component,*(['-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1'] if unrolled else []),'-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_'+kind.upper()+'=1',
