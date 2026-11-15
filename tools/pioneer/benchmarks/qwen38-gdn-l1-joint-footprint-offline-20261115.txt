@@ -46,12 +46,21 @@ Validation
    `19323a59e2e339d9f37a91153427722f3f3f6b44a43248347dc7221da22dfc06`,
    boot SHA-256
    `d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6`.
-3. `python3 tools/pioneer/tests/run_pioneer_q38_token_startup_native_compile.py
+3. Current 96-worker topology also passes:
+   `sh tools/pioneer/tests/run_pioneer_q38_gdn_recurrent_current_scattered_image_tests.sh
+   /Volumes/HaikuBuildLocal/generated.riscv64`
+   with 114 resident/47 spill routes in its exercised cohort, 161 positive
+   cases and 4,138 injected faults; all checked state/output words exact.
+   Image code SHA-256
+   `11e57d162ee37d705d569824bb62af3840b1245be77f57c4442ad7773891c669`,
+   boot SHA-256
+   `d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6`.
+4. `python3 tools/pioneer/tests/run_pioneer_q38_token_startup_native_compile.py
    --scattered-cache /Volumes/HaikuBuildLocal/generated.riscv64
    /private/tmp/pioneer-q38-startup-scattered-scratch-audit-20261115`
    passed the RISC-V C++11 scattered-cache startup DATA compile. This is
    compile-only, not a selected native driver or device run.
-4. The recurrent-state lease and placement regressions also pass:
+5. The recurrent-state lease and placement regressions also pass:
    `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_lease_tests.sh` and
    `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`.
 
