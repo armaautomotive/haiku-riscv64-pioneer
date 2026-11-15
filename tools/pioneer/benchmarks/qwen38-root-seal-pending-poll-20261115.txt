@@ -1,0 +1,45 @@
+Avoid repeated ROOT image seals during pending terminal polling
+===============================================================
+
+Offline implementation/build checkpoint. No card, model, runtime output,
+or throughput was measured.
+
+Change
+------
+`PioneerQ38TokenNativeOwner::InspectTerminal` now reads the root terminal
+marker before rechecking the immutable ROOT boot image. If the marker is
+still zero, the function returns only a nonterminal observation after its
+existing source/status/PC checks. It does not set terminal state, authorize
+HOLD/END, expose generated records, or release ownership. A nonzero terminal
+marker still requires the full 64-word ROOT seal, full terminal and session
+checks, all 119 peer checks, and the existing closed/STOP verification.
+`HoldGuard` and `RootStopSeal` are unchanged. Thus a normal 100 ms pending poll
+avoids exactly one 64-word ROOT boot reread without weakening terminal or
+cleanup acceptance.
+
+Verification
+------------
+`python3 tools/pioneer/tests/run_pioneer_q38_root_frontend_method_tests.py`
+passed 139 mock positives and 958 refusals. The updated actual-method test
+counts ROOT boot reads: pending observations do zero; accepted terminal
+observations still perform at least 64. The full-offload rate/client suite
+and the tag101 fake-endpoint parent suite passed. `git diff --check` passed.
+
+The full-offload native driver builder also passed in BUILD ONLY mode for
+tag101 SFPNOP spill-Q4: native object SHA-256
+`5103741346b4ef3ee59ac15e4fc604023c7712a9092aed483c6d4802664b07a4`, default
+object `2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc`,
+40 role refusals, and unchanged default driver image. The build explicitly
+does not certify whole-kernel stack usage.
+
+Limits / next gate
+------------------
+This is an exact reduction in pending-poll reads, not an inference speedup.
+The matching 250 ms counter cadence is separately recorded in
+`qwen38-full-offload-counter-cadence-20261115.txt`; under the prior 100 ms
+loop it reduces periodic root-seal counter calls from ten to at most four per
+second. Together these changes reduce pending-phase ROOT boot-word reads from
+up to 1,280/s to at most 256/s, excluding the one terminal seal; no timing
+gain is inferred. Neither change has been fully linked/deployed/run on the
+Pioneer. Physical qualification still needs a recovered Pioneer and verified
+SSH identity. The 20 tok/s target remains unmet.

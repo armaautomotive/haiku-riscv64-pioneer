@@ -941,10 +941,13 @@ private:
   r.firstPC=io.RuntimePcRead();
   if(!Sources(io,0))return Fail(io,r);
   r.secondPC=io.RuntimePcRead();
-  if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);
   if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return Fail(io,r);
   if(!terminal[0])return recheck ? Fail(io,r) : Sources(io,0) ? true : Fail(io,r); // a published marker cannot regress
   if(terminal[0]!=T::TerminalMagic)return Fail(io,r);
+  // Pending polling is observation-only and grants no completion/cleanup
+  // authority. Defer the expensive immutable 64-word ROOT seal until a real
+  // terminal marker exists; the terminal path and HOLD recheck still require it.
+  if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);
   for(unsigned i=1;i<64;i++){r.word=i;if(!io.TokenMemoryReadChecked(0,T::TerminalLocal+i*4,terminal[i]))return Fail(io,r);}
   if(recheck && !PioneerQ38TokenTerminalRecheckData(terminal,observedTerminal,r.word))return Fail(io,r);
   if(!PioneerQ38GraphCsrIdle(io) || !startup->ReadBoot(0,boot))return Fail(io,r);

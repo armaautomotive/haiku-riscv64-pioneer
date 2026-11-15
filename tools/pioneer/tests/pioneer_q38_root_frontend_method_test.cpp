@@ -34,7 +34,7 @@ static bool PioneerQ38TokenTerminalRecheckData(const uint32_t* a,const uint32_t*
 static unsigned PioneerQ38PanelCounter(unsigned i){assert(i<8);return i;}
 struct MethodMock;
 struct MockIO {
- MethodMock* owner=nullptr;unsigned selected=0,calls=0,reads=0,failRead=0,pcReads=0;
+ MethodMock* owner=nullptr;unsigned selected=0,calls=0,reads=0,failRead=0,pcReads=0,rootBootReads=0;
  unsigned peerSources=0,imageChecks=0,mutateAfterImage=0;
  bool failed=false,source=true,idle=true,fifo=true,image=true;
  std::array<uint32_t,4> rootPC={0x60004,0x60004,0x60008,0x60008};
@@ -125,6 +125,8 @@ void MockIO::Touch(){assert(owner && !owner->unsafe && !failed);calls++;}
 bool MockIO::TokenMemoryReadChecked(unsigned w,uint32_t address,uint32_t& out){
  Touch();reads++;assert(w==selected);
  if(reads==failRead){failed=true;return false;}
+ if(!w && address>=PioneerQ38GlobalChainLayout::R::Boot && address<PioneerQ38GlobalChainLayout::R::Boot+64*4)
+  rootBootReads++;
  out=owner->Word(w,address);return true;
 }
 uint32_t MockIO::RuntimePcRead(){Touch();if(selected)return peerPC;return rootPC[pcReads++%4];}
@@ -132,7 +134,8 @@ uint32_t MockIO::ResidentNocRead(unsigned index){Touch();assert(index<8);return 
 struct Fixture {std::unique_ptr<MethodMock> owner=std::make_unique<MethodMock>();MockIO io;Fixture(){io.owner=owner.get();mockSession=mockTerminalShape=mockJobShape=true;}};
 static void Accepted(Fixture& f){
  PioneerQ38TokenTerminalResult r;assert(f.owner->InspectTerminal(f.io,r,false));
- assert(r.ready && !r.unsafe && f.owner->terminalObserved && !f.owner->unsafe && f.io.imageChecks==1 && f.io.peerSources==238);
+ assert(r.ready && !r.unsafe && f.owner->terminalObserved && !f.owner->unsafe && f.io.imageChecks==1
+  && f.io.peerSources==238 && f.io.rootBootReads>=64);
  assert(r.firstPC==f.io.rootPC[2] && r.secondPC==f.io.rootPC[3]);
 }
 int main(){
@@ -144,18 +147,21 @@ int main(){
  for(auto raw:samples){
   Fixture f;f.io.rootPC.fill(raw);f.owner->terminal[0]=0;PioneerQ38TokenTerminalResult r;
   assert(f.owner->InspectTerminal(f.io,r,false) && !r.ready && !r.unsafe && !f.owner->terminalObserved
-   && !f.io.peerSources && !f.io.imageChecks);pending++;
+   && !f.io.peerSources && !f.io.imageChecks && !f.io.rootBootReads);pending++;
   PioneerQ38TokenExecutionResult observed;assert(f.owner->ObserveRoot(f.io,observed) && observed.acknowledged
    && !observed.unsafe && observed.firstPC==raw && observed.secondPC==raw && !f.owner->terminalObserved);positives++;
  }
- // Even before a terminal marker,actual boot corruption cannot be hidden
- // by either a terminal-looking or a fault-looking RAW frontend sample.
- for(unsigned word=0;word<64;word++)for(unsigned method=0;method<2;method++){
+ // Pending terminal polls are non-authoritative: they avoid a repeated full
+ // image seal, while the separate ROOT observer still detects every tested
+ // boot-word corruption and terminal acceptance performs the complete seal.
+ for(unsigned word=0;word<64;word++){
   Fixture f;f.owner->terminal[0]=0;f.owner->cores[0].boot[word]^=1;
-  PioneerQ38TokenTerminalResult terminal;PioneerQ38TokenExecutionResult observed;
-  const bool okay=method?f.owner->ObserveRoot(f.io,observed):f.owner->InspectTerminal(f.io,terminal,false);
-  assert(!okay && f.owner->unsafe && f.owner->failureCalls==1 && !f.owner->terminalObserved);
-  assert((method?observed.word:terminal.word)==word);refusals++;
+  PioneerQ38TokenTerminalResult pendingResult;
+  assert(f.owner->InspectTerminal(f.io,pendingResult,false) && !pendingResult.ready
+   && !pendingResult.unsafe && !f.owner->unsafe && !f.io.rootBootReads && !f.owner->terminalObserved);positives++;
+  Fixture g;g.owner->cores[0].boot[word]^=1;PioneerQ38TokenExecutionResult observed;
+  assert(!g.owner->ObserveRoot(g.io,observed) && g.owner->unsafe && g.owner->failureCalls==1);
+  assert(observed.word==word);refusals++;
  }
  for(unsigned kind=0;kind<11;kind++){
   Fixture f;
