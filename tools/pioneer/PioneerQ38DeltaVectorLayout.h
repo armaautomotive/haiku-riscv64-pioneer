@@ -41,7 +41,8 @@ enum { Descriptor=0x74000 };
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 #define PIONEER_Q38_GDN_SCATTERED_STATE_LAYOUT_BOUND 1
 enum { StatePageTable=Descriptor+0x100, StatePages=8, StatePageBytes=4096,
-	StateBytes=StatePages*StatePageBytes, L1Bytes=0x180000 };
+	StateBytes=StatePages*StatePageBytes, StatePageMode=StatePageTable+StatePages*4,
+	L1Bytes=0x180000 };
 #endif
 #ifdef PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT
 #define PIONEER_Q38_GDN_INPLACE_STATE_LAYOUT_BOUND 1

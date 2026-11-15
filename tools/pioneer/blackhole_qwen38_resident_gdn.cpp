@@ -72,6 +72,13 @@ static void Packet(bool write,unsigned at,const uint32_t* d) {
  scalar_fault_park(); // UNKNOWN:inert fault terminal,NO later packet/retry
 }
 }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+extern "C" bool q38_resident_gdn_scattered_pages_valid()
+{
+ uint32_t pages[L::StatePages];
+ return StatePages(pages) && Words(L::StatePageMode)[0]<=1;
+}
+#endif
 #ifdef PIONEER_Q38_RGDN_COMBINED_STAGE
 #if PIONEER_Q38_RGDN_COMBINED_STAGE != 1 || defined(PIONEER_Q38_RGDN_ROOT_QUALIFICATION)
 #error Exact offline combined-state stage role,not root readback validation
@@ -96,7 +103,7 @@ extern "C" unsigned scalar_main() {
  s[5]=32768; s[6]=d[8]; s[7]=TT_Q38_RGDN_MARKER; s[24]=d[9]; s[25]=d[10]; s[26]=d[11];
  s[27]=d[11]^1; s[28]=d[15]; s[29]=
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
- 3;
+ Words(L::StatePageMode)[0]?3:4;
 #else
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  2;
@@ -106,7 +113,15 @@ extern "C" unsigned scalar_main() {
 #endif
  s[30]=d[5]; s[31]=d[7];
  for (unsigned i=0;i<8;i++) s[8+i]=*Words(0xffb20000+RGdn::CounterOffset(i));
-#ifndef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ const unsigned cacheMode=Words(L::StatePageMode)[0];
+ if(cacheMode>1 || !q38_resident_gdn_scattered_pages_valid())return 0;
+ if(!cacheMode){RGdn::Packet(0,0,d);RGdn::Packet(0,16384,d);
+  for(unsigned page=0;page<L::StatePages;page++)
+   for(unsigned word=0;word<L::StatePageBytes/4;word++)
+    Words(Words(L::StatePageTable)[page])[word]=Words(L::Prior)[page*(L::StatePageBytes/4)+word];
+ }
+#else
  RGdn::Packet(0,0,d); RGdn::Packet(0,16384,d);
 #endif
  if (q38_local_recurrent_step()!=64 || !RGdn::Sealed(d) || !RGdn::Idle()) scalar_fault_park();

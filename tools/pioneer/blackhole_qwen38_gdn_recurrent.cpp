@@ -30,6 +30,9 @@ extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
 #endif
 extern "C" unsigned q38_resident_gdn_input_stage();
 extern "C" unsigned q38_resident_gdn_state_stage();
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+extern "C" bool q38_resident_gdn_scattered_pages_valid();
+#endif
 // Shared exact shape checks avoid embedding two copies in the16KiB saved
 // code prefix. BOTH stages still independently call their complete check.
 extern "C" __attribute__((noinline)) bool q38_resident_gdn_input_shape(const uint32_t* d){
@@ -71,6 +74,9 @@ extern "C" unsigned scalar_main(){
 	 || !PioneerQ38GdnRecurrentPairing(input,state))return 0;
 #endif
 	// NO MMIO before complete paired shape
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	if(!q38_resident_gdn_scattered_pages_valid())return 0;
+#endif
  if(q38_resident_gdn_input_stage()!=64 || !Descriptors(input,state) || !BoundaryCounters())scalar_fault_park();
  // The input stage's terminal is a function return INSIDE this worker.
  // Raw q/k/gates never leave card-local memory between these operations.

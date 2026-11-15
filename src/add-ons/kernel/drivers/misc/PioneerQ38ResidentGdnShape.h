@@ -42,7 +42,8 @@ static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {
 }
 static inline bool PioneerQ38ResidentGdnSummary(const uint32_t* s,const uint32_t* d,const uint32_t* before,const uint32_t* after) {
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
- const unsigned reads=0,mode=3;
+	const unsigned mode=s?s[29]:0;
+	const unsigned reads=mode==3?0:mode==4?2:~0U;
 #else
  const unsigned reads=
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
@@ -51,7 +52,10 @@ static inline bool PioneerQ38ResidentGdnSummary(const uint32_t* s,const uint32_t
  2,mode=1;
 #endif
 #endif
- if (!s || !before || !after || !PioneerQ38ResidentGdnShape(d)
+	if (!s || !before || !after || !PioneerQ38ResidentGdnShape(d)
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	  || (mode!=3 && mode!=4)
+#endif
   || s[0]!=reads || s[1]!=reads*256 || s[2]!=2 || s[3]!=512 || s[4]!=64 || s[5]!=32768 || s[6]!=d[8] || s[7]!=TT_Q38_RGDN_MARKER
   || s[24]!=d[9] || s[25]!=d[10] || s[26]!=d[11] || s[27]!=(d[11]^1) || s[28]!=d[15] || s[29]!=mode
   || s[30]!=d[5] || s[31]!=d[7] || before[2]!=before[6] || after[2]!=after[6]) return false;

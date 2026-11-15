@@ -19,8 +19,10 @@ static bool StatePages(uint32_t (&pages)[L::StatePages])
 		// derive its actual free-page map; this is only an image-side bound.
 		if ((pages[i]&(L::StatePageBytes-1)) || pages[i]<0x90000
 			|| pages[i]>L::L1Bytes-L::StatePageBytes
-			|| (pages[i]<uint32_t(L::StatePageTable)+L::StatePages*4
+			|| (pages[i]<uint32_t(L::StatePageTable)+L::StatePages*4+4
 				&& uint32_t(L::StatePageTable)<pages[i]+L::StatePageBytes)
+			|| (pages[i]<uint32_t(L::Prior)+L::StateBytes && uint32_t(L::Prior)<pages[i]+L::StatePageBytes)
+			|| (pages[i]<uint32_t(L::Next)+L::StateBytes && uint32_t(L::Next)<pages[i]+L::StatePageBytes)
 			|| (pages[i]<uint32_t(L::Query)+1280 && uint32_t(L::Query)<pages[i]+L::StatePageBytes)
 			|| (pages[i]<uint32_t(L::Key)+512 && uint32_t(L::Key)<pages[i]+L::StatePageBytes)
 			|| (pages[i]<uint32_t(L::Value)+256 && uint32_t(L::Value)<pages[i]+L::StatePageBytes)
