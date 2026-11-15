@@ -14,6 +14,16 @@
 #endif
 #include "PioneerQ38NativeBfpMatvec.h"
 
+#ifdef PIONEER_Q38_DENSE_BF16_PV_3_PRODUCT_INSPECTION
+#if PIONEER_Q38_DENSE_BF16_PV_3_PRODUCT_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
+#error Three-product PV is an isolated offline inspection candidate only
+#endif
+#endif
+
 // Matrix-vector product for 32 output rows and either 32 or 256 BF16 inputs.
 // The caller supplies one or eight K32 tiles via stage.Tile(i), filling the
 // caller-selected matrix and vector operands and their headers, then fence.
@@ -93,7 +103,14 @@ public:
  // those immutable L1 buffers and the same destination accumulator.
  template<class E,class Stage> static bool ValuesCached(E& e,Stage& stage){
   if(!Begin(e,Stage::Matrix(0),Stage::Vector(0),1) || !stage.Prepare())return false;
-  for(unsigned part=0;part<4;part++){
+  // Omit only low(V)*low(probability), the second-order residual term. This
+  // inspection image is distinct; the default QDM2 control retains all four.
+#ifdef PIONEER_Q38_DENSE_BF16_PV_3_PRODUCT_INSPECTION
+  constexpr unsigned Products=3;
+#else
+  constexpr unsigned Products=4;
+#endif
+  for(unsigned part=0;part<Products;part++){
    if(part){e.Config(76,Stage::Matrix(part)/16-1);e.Config(124,Stage::Vector(part)/16-1);}
    AccumulateTile(e);
   }

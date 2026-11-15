@@ -1,0 +1,51 @@
+Qwen3.8-27B dense-attention three-product BF16 PV experiment
+===========================================================
+
+Offline-only QDM2 candidate. This is not selected by Work, validation,
+native dispatch, a driver, or the Assistant. It has not run on the P100A.
+
+The existing matrix PV path represents each FP16 value and probability as
+high+low BF16 and computes four products. This candidate retains the three
+first-order products (high*high, low*high, high*low) and omits only
+low*low. Its build is explicit with `--three-product-pv`; the default
+four-product QDM2 build remains unchanged. The candidate has a distinct
+code-image SHA and its role guard rejects Work, CPU-validation, native,
+driver-tagged, and kernel builds.
+
+Build and test:
+
+  `python3 tools/pioneer/build_qwen38_dense_matrix_image.py SDK OUT --three-product-pv`
+  `python3 tools/pioneer/build_qwen38_dense_attention_image.py SDK QDA`
+  `python3 tools/pioneer/tests/run_pioneer_q38_dense_matrix_three_product_tests.py OUT QDA`
+  `python3 tools/pioneer/tests/run_pioneer_q38_dense_matrix_three_product_roles.py`
+
+The RISC-V image built with boot SHA-256
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca and code
+SHA-256 1baa453f6f2028ca37d3fa0e587dd189628d799d884d5945fad35e2f9c640b83
+(14,976 bytes). The independent four-product control rebuilt unchanged at
+code SHA-256 7442c2f01ad720ff21d62277e0b885ad3b73ff386b8883e0576c55ca2e58e95b
+(14,988 bytes).
+
+The actual emitted QDM2 worker instructions passed the synthetic RV32/Blackhole
+matrix simulator for six heads, all three phases, STOP, one/multi-chunk local
+partitions (1, 33, 65, and 769 tokens), and 24-partition synthetic reductions
+(1, 33, and 65 tokens). Merged output relative-L2 was 0, 0.00109327545, and
+0.00168832704, respectively, below the observer's 0.01 ceiling. At 65 tokens,
+the four-product control produced 0.00168827224. The candidate's tiny numerical
+difference is visible in the simulator, not a real-model quality result.
+
+At 65 tokens, total simulated matrix operations fell from 84,480 to 67,584
+(20% fewer); RV32 instruction steps fell from 17,860,732 to 17,667,132
+(1.08%). At 33 tokens, matrix operations fell 65,280 to 52,224 and steps fell
+13,732,789 to 13,583,189 (1.09%). These are instruction-model counts, not
+card cycles, latency, throughput, or a whole-model speedup. Dense attention is
+only one part of the existing measured profile; this cannot be extrapolated to
+full Qwen performance.
+
+The candidate remains unqualified on silicon: BF16 unpack/MVMUL operation,
+full-model attention inputs, real-model quality, layout coexistence, physical
+timing, and end-to-end inference remain untested. The current best accepted
+full-card rate is still the existing ~0.173 tok/s tag92 result; the separate
+Work-path ~0.200 tok/s sample is not full-card inference. The 20 tok/s target
+remains unmet. Physical work is currently gated on out-of-band verification of
+the Pioneer SSH host key; strict key checking must not be bypassed.

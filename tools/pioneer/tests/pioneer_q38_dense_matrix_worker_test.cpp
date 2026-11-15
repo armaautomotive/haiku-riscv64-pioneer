@@ -45,7 +45,7 @@ struct MatrixPartitionMachine:PartitionMachine {
 static uint16_t HalfFixture(unsigned n){
  return uint16_t((n%5==0?0x8000:0) | (0x2c00+(n*37%0x1000)));
 }
-static void RunCase(const char* image,const char* reference,unsigned tokens,bool synthetic=false){
+static void RunCase(const char* image,const char* reference,unsigned tokens,bool synthetic=false,bool threeProduct=false){
  std::unique_ptr<ProducedGroup> source(synthetic?new ProducedGroup(0,tokens):new ProducedGroup(reference,0,tokens));
  ProducedGroup& input=*source;
  if(synthetic){
@@ -110,7 +110,7 @@ static void RunCase(const char* image,const char* reference,unsigned tokens,bool
   error+=(actual-expected)*(actual-expected);norm+=expected*expected;
  }
  assert(std::sqrt(error/norm)<0.01 && std::sqrt(scoreError/scoreNorm)<0.01);
- assert(worker.fpu.matrixOps==6*chunks*(128+4*8*16) && worker.fpu.Clean());
+ assert(worker.fpu.matrixOps==6*chunks*(128+(threeProduct?3:4)*8*16) && worker.fpu.Clean());
  worker.Stop();
  printf("PASS simulated ACTUAL QDM2 phases 1/2/3/STOP, six heads, tokens=%u partition=%u; score_relative_l2=%.9g PV_relative_l2=%.9g matrix_ops=%u rv32_steps=%u; synthetic local controller/NoC, NOT hardware or speed\n",
   tokens,count,std::sqrt(scoreError/scoreNorm),std::sqrt(error/norm),worker.fpu.matrixOps,worker.steps);
@@ -218,9 +218,10 @@ static void ComparePrevious(const char* image,const char* previous,const char* r
  printf("PASS old/new QDM2 bit-identical scores, probabilities and partials, tokens=%u; rv32_steps=%u -> %u; simulated only\n",tokens,before.steps,after.steps);
 }
 int main(int argc,char** argv){
- assert(argc==3 || argc==4);(void)&D::Run;(void)&Group;(void)&Geometry;(void)&Faults;
- for(unsigned tokens: {1U,33U,65U})RunCase(argv[1],argv[2],tokens);
- RunCase(argv[1],argv[2],769,true); // 33-token partition spans two chunks
+ assert(argc==3 || argc==4);(void)&D::Run;(void)&Group;(void)&Geometry;(void)&Faults;(void)&ComparePrevious;
+ const bool threeProduct=argc==4 && std::strcmp(argv[3],"--three-product-pv")==0;
+ for(unsigned tokens: {1U,33U,65U})RunCase(argv[1],argv[2],tokens,false,threeProduct);
+ RunCase(argv[1],argv[2],769,true,threeProduct); // 33-token partition spans two chunks
  for(unsigned tokens: {1U,33U,65U})RunFullGroup(argv[1],argv[2],tokens);
- if(argc==4)for(unsigned tokens: {1U,33U,65U})ComparePrevious(argv[1],argv[3],argv[2],tokens);
+ if(argc==4 && !threeProduct)for(unsigned tokens: {1U,33U,65U})ComparePrevious(argv[1],argv[3],argv[2],tokens);
 }

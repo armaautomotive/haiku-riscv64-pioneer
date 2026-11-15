@@ -7,9 +7,12 @@ import re
 import subprocess
 import sys
 
-if len(sys.argv) != 3 or any(k.startswith('PIONEER_') for k in os.environ):
+if len(sys.argv) not in (3, 4) or any(k.startswith('PIONEER_') for k in os.environ):
     raise SystemExit(2)
-sdk, out = map(pathlib.Path, sys.argv[1:])
+three_product = len(sys.argv) == 4 and sys.argv[3] == '--three-product-pv'
+if len(sys.argv) == 4 and not three_product:
+    raise SystemExit(2)
+sdk, out = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 here = pathlib.Path(__file__).resolve().parent
 cross = sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku'
@@ -24,7 +27,8 @@ run(str(cross)+'-g++', '-std=c++11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffr
     '-ffp-contract=off', '-ffunction-sections', '-fdata-sections', '-fno-unwind-tables',
     '-fno-asynchronous-unwind-tables', '-msmall-data-limit=0', '-mno-relax', '-march=rv32imf',
     '-mabi=ilp32', '-fstack-usage', '-DPIONEER_Q38_DENSE_PARTITION_IMAGE=1',
-    '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1', '-c',
+    '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1',
+    *(['-DPIONEER_Q38_DENSE_BF16_PV_3_PRODUCT_INSPECTION=1'] if three_product else []), '-c',
     here/'blackhole_qwen38_dense_partition.cpp', '-o', out/'program.o')
 run(str(cross)+'-as', '-march=rv32imf', '-mabi=ilp32', '-mno-relax',
     here/'blackhole_qwen38_dense_matrix_start.S', '-o', out/'start.o')
@@ -55,4 +59,4 @@ assert frames and max(frames) <= 2048
 for name in ('boot.bin', 'code.bin', 'program.elf'):
     data = (out/name).read_bytes()
     print(hashlib.sha256(data).hexdigest(), name, 'bytes'+str(len(data)))
-print('PASS QDM2 isolated matrix-attention image; NOT hardware/Work/native/inference')
+print('PASS QDM2 isolated '+('three-product PV inspection candidate' if three_product else 'four-product control')+'; NOT hardware/Work/native/inference')
