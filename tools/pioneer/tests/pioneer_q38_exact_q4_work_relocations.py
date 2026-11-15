@@ -21,7 +21,7 @@ TAIL = {
 def audit(control, image, tool):
     directories = tuple(map(pathlib.Path, (control, image)))
     assert hashlib.sha256((directories[0]/'program.elf').read_bytes()).hexdigest() == \
-        '4b3dc0c96d3888b9c43af683f58678cc91cade7c67e955413bad8c5e16d52870'
+        'ff5eeeafc5aa2a833054365a36e5075a4b752729d9e069a117af783126e67325'
     raw = [{s:(d/(s+'.bin')).read_bytes() for s in BASES} for d in directories]
     maps = []
     for directory in directories:

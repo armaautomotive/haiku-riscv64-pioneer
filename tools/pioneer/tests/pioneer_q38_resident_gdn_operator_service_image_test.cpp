@@ -71,12 +71,18 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
    unsigned sourceAt=(config[76]+1)*16,row=(config[84]&65535)/16-4,words=gdnX1+1;
    assert((config[84]&0xffff0000)==0x400000 && row<512 && !(words%16) && words<=8192-row*16);
 #ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
-   if(gdnImports<8 && !(sourceAt==0x90000+gdnImports*4096 && row==gdnImports*64 && words==1024)){
-    fprintf(stderr,"GDN_IMPORT_LAYOUT_REFUSAL imports%u source%x row%u words%u\n",gdnImports,sourceAt,row,words);assert(false);
+   if(gdnImports<8){
+    bool valid=sourceAt==0x90000+gdnImports*4096 && row==gdnImports*64 && words==1024;
+    if(!valid)fprintf(stderr,"GDN_IMPORT_LAYOUT_REFUSAL imports%u source%x row%u words%u\n",gdnImports,sourceAt,row,words);
+    assert(valid);
    }
    else if(gdnImports==8 || gdnImports==10)assert(sourceAt==0x8e400 && !row && words==64);
    else if(gdnImports==9 || gdnImports==12)assert(sourceAt==0x90000 && !row && words==64);
-   else assert(gdnImports==11 && sourceAt==0x8e600 && !row && words==64 && gdnDeltaWrites==64);
+   else {
+    if(!(gdnImports==11 && sourceAt==0x8e600 && !row && words==64 && gdnDeltaWrites==64))
+     fprintf(stderr,"WIDE_GDN_IMPORT_REFUSAL imports%u source%x row%u words%u deltaWrites%u\n",gdnImports,sourceAt,row,words,gdnDeltaWrites);
+    assert(gdnImports==11 && sourceAt==0x8e600 && !row && words==64 && gdnDeltaWrites==64);
+   }
 #else
    assert((!gdnImports && sourceAt==0x8e400 && !row && words==64)
     || (gdnImports && gdnImports<9 && sourceAt==0x90000+(gdnImports-1)*4096 && row==(gdnImports-1)*64 && words==1024));

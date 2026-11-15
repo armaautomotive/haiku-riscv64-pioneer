@@ -11,7 +11,8 @@ import sys
 
 PINS = (
     ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
-    ('globalworker.bin',9128,'ede241b1a22fe541acd6a89470b8a93ad9d5e576127965745a3a932371befac1'),
+    # Reproduced twice after refreshing the audited precise-beta parent.
+    ('globalworker.bin',9128,'4f296d540f99f7b26da920810da6661b25e3b40e3b0e3369f69c889388a49688'),
     ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
     ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
     ('fetch.bin',856,'9529379ea2277127520adf49fe6b17b7c37b701ed3108b1fed1ac08a7ddef561'),
@@ -19,8 +20,8 @@ PINS = (
     ('affine.bin',5360,'ec3428e6f946b113e7e39575df8c768dc2f6e9a56b79c47dad16c283c12ee159'),
     ('ffn.bin',16456,'23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f'),
     ('service.bin',9888,'7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187'),
-    ('gdn.bin',35408,'cbe3faf60ef0b3a0544b27b29f99d62eb36c7d0ac5b835e337c5501661ed589c'),
-    ('program.elf',143756,'cf02c9777314443510894903a74637277be1ccc9b0db8ae80e7fd900baea7120'),
+    ('gdn.bin',35312,'0bbae3150300e682da88305eb8ae6e24a57bd3839213d1176d69da8755aa2308'),
+    ('program.elf',143660,'00e21099a50dda4607136eedd8dcb942a69d533399cebfae886ea1ff68e78e42'),
 )  # Independent main/clean BUILD identity ONLY;NO runtime/native permission.
 args = sys.argv[1:]
 inspect = '--inspect-candidate' in args
@@ -40,7 +41,7 @@ try:
 finally:
     sys.argv = saved
 control = out / 'unchanged-beta'
-assert hashlib.sha256((control / 'program.elf').read_bytes()).hexdigest() == '1f49e9740d8d9045de6c8835f0f8f1738210ba0413d87f607f97cf98da74539e'
+assert hashlib.sha256((control / 'program.elf').read_bytes()).hexdigest() == '18cee6348bf2213ae63c589b0c00b3cd56911d62516f2e622312a2d85ffb3de7'
 ancestor = old['ancestor']
 mixed = ancestor['old']['parent']['old']
 unit = next(item for item in mixed['units'] if item[1] == 'program')

@@ -8,7 +8,7 @@ args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
 PINS=(
  ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
- ('globalworker.bin',9504,'35bb8e77470d792b6a040b4aed99b2c966f2a7fb8e1a16a16deb3f9fc4bd5496'),
+ ('globalworker.bin',9504,'fca4c809dced791be1aa18d77d2bc3fc7f66fc6fd06d3d2ce8db95fc2ea284bc'),
  ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
  ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
  ('fetch.bin',1292,'a74f8f6303787360f35b588e22746074adc9bcc780ae5a274be25331f765f4c6'),
@@ -16,8 +16,8 @@ PINS=(
  ('affine.bin',4680,'a8f650e58052aba96187bcbee08c25a24de4b8aa8d92c5bb7c34ccfeeca4682d'),
  ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
  ('service.bin',17624,'9630de58660a69d227357d447bb230329ed2e39f32cbb59b855756f08b3b698c'),
- ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
- ('program.elf',154308,'b283d788a682681f8994058ab51b19b2b1e79f72945d7e839c9cdd81737ff9c3'),
+ ('gdn.bin',35848,'62def5b500f81d4230d22d82a16cfed3d63fbe08b2aceac1a63ac99ca29304a3'),
+ ('program.elf',154212,'f9a12714de5f2ec8a778a0df5c9a151765037a574242daf6dd83753bca7a686e'),
 ) # Main+independent clean BUILD identity,NOT a native/source/ROOT grant.
 assert len(args)==2 and (inspect or PINS)
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
@@ -29,7 +29,7 @@ try:
  old=runpy.run_path(sys.argv[0],run_name='__main__')
 finally:sys.argv=saved
 control=out/'unchanged-original';tool=old['tool']
-assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='8a7c6543e59a4067cee72d67843ca2d33119c307a8277bd14a70cb80f2f41e2f'
+assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='3713841454485367efb433b0d5315a4bb2671984541d11e818808d29526d2073'
 def run(*values):subprocess.run(list(map(str,values)),check=True)
 commands={
  'math':(control/'compile-math-argv.txt','blackhole_qwen38_prepared_exact_q4_math.cpp','PIONEER_Q38_PREPARED_EXACT_Q4_IMAGE'),

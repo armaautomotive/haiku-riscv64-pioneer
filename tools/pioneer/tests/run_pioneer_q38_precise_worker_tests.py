@@ -14,15 +14,18 @@ old, image = map(pathlib.Path, sys.argv[1:])
 here = pathlib.Path(__file__).resolve().parent
 PINS = (
     ('boot.bin', 4, 'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
-    ('globalworker.bin', 7124, '6ada60f91c5eded1ba051d4f8a3952117ee469f23824de468582c45919f4f098'),
+    # Rebuilt from the current L1-authoritative GDN shape sources; both
+    # independent builds matched and this suite's ASan/UBSan semantic test
+    # passed against the refreshed identity.
+    ('globalworker.bin', 7124, 'ab8b9b27ff78bb9dbacbaaa15bab9677356f3bd8e9464d527ada46ea58976fa7'),
     ('precise.bin', 8392, '56c0c5296df33710019c5e6dde95ee26e95247e174a5a3b16a5ed8292bcf1d4e'),
     ('dense.bin', 10332, '2d137fa2c8fb2df3e13b348607f3216c5831744b369dcafcd9643cabe16dafe1'),
     ('text.bin', 5984, '2a5c8191751598c114215bd2d176eb444b65193f524bf4cfc5082e97fd8d188b'),
     ('affine.bin', 5360, '47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
     ('ffn.bin', 16456, '0b48b4691f560d822a626c63a060473d28e9518be1ebdb13d6e304dadff8bfba'),
     ('service.bin', 9888, '3cf0bb2475eb1fce610202b75599a16b4b4697df52b95f2b64b952f0675ef982'),
-    ('gdn.bin', 35564, '346e783dffdda3cfce4d30bca024e619bd941daad3717ce69e63205bd3b53196'),
-    ('program.elf', 135052, '3d51b34fc7c8b99ffadc287b1668548e810e19252b46163eb83ebdb30f68351d'))
+    ('gdn.bin', 35468, '4f828d91a912c28331b27de21074aa014a2de36dc8e7ce058b94cfaaf24bdf24'),
+    ('program.elf', 134956, '0cb406fbf85e36f7a4e952530f0e5ec097abc39dad438039e31b2d417c73e1f9'))
 tree = ast.parse((here/'run_pioneer_q38_mixed_worker_tests.py').read_text())
 old_pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign)
                 and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))

@@ -28,7 +28,7 @@ def audit(control, image, tool, *, two_product=False):
     assert type(two_product) is bool
     directories = tuple(map(pathlib.Path, (control, image)))
     assert hashlib.sha256((directories[0]/'program.elf').read_bytes()).hexdigest() == \
-        '8a7c6543e59a4067cee72d67843ca2d33119c307a8277bd14a70cb80f2f41e2f'
+        '3713841454485367efb433b0d5315a4bb2671984541d11e818808d29526d2073'
     raw = [{s:(d/(s+'.bin')).read_bytes() for s in BASES} for d in directories]
     maps = []
     for directory in directories:

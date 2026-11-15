@@ -92,17 +92,20 @@ for name in (*(s+'.bin' for s in sections), 'program.elf'):
     row = (name, len(data), hashlib.sha256(data).hexdigest())
     observed.append(row)
     print(row)
+# Current default QGW3 identity after the L1-authoritative GDN shape source
+# update. Independent builds matched; the pushed-worker semantic suite
+# validates this image separately in the test runner.
 PINS = (
     ('boot.bin', 4, 'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
-    ('globalworker.bin', 9128, '818e2c1cf3b99d0ee438c988bd28c96dc97bcaf63887b17cbf79912dbe7b7598'),
+    ('globalworker.bin', 9128, '22cc47a9aaaa0cb8bc037eb7b8cb0cddc73475432f19e93b9a1834cbfa4ab5d4'),
     ('precise.bin', 8392, '32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
     ('dense.bin', 10332, 'd1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
     ('text.bin', 5984, 'e1bd0788b82ff4f3ad58e1d527199ba4bc23ecd55936f7940d3f669c617aa419'),
     ('affine.bin', 5360, '47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
     ('ffn.bin', 16456, '23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f'),
     ('service.bin', 9888, '7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187'),
-    ('gdn.bin', 35564, '741e1a7eda2a8d6a7f01c587b2ead2bbf41402ce0cbf96cb7a9616f36c293001'),
-    ('program.elf', 139684, 'ca6e8131fc9bde4a1276903bfc0d2595b3f51a8569d320ee732007de96313451'),
+    ('gdn.bin', 35468, '501a893c738e31022d6856c0af6e8c1202faba217c46216b32ff50fab8b90e6b'),
+    ('program.elf', 139588, '8cb712108df0c7d48af7bb4ec19740fe58374bb30d7a91419fa69b554fd23101'),
 )  # matched independent BUILD artifacts ONLY;not runtime/native/Work/physical/TPS.
 expected=PINS_FFN_SHARED_INPUT_REUSE if ffn_shared_reuse else PINS
 if not inspect:

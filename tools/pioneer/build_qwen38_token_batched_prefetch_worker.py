@@ -10,7 +10,8 @@ import sys
 
 PINS = (
     ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
-    ('globalworker.bin',9232,'b583b806f676b4a1bdfcf988e900d71b63336a950cab5dc3a51e18c7171ee94c'),
+    # Rebuilt independently twice on the refreshed prefetch parent.
+    ('globalworker.bin',9232,'a68d9d1d886527f6e9202477d3957b573d8480b735727627e5ce0d2e3dadedb4'),
     ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
     ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
     ('fetch.bin',1260,'d8ed95db94cdc9b969f450892f2023e9aab1b1f11993c593cbdbb62abc0c5310'),
@@ -18,8 +19,8 @@ PINS = (
     ('affine.bin',5360,'0074182efb372d30e38807d26f701901c3995a5d3a549110b4ac35e5800ae51f'),
     ('ffn.bin',16456,'23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f'),
     ('service.bin',9888,'7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187'),
-    ('gdn.bin',35408,'cbe3faf60ef0b3a0544b27b29f99d62eb36c7d0ac5b835e337c5501661ed589c'),
-    ('program.elf',143888,'b73a8278ed2bf6f7c9e8713072b01ecf2a6e28206003026f4d1fbd5ff3c41c8e'),
+    ('gdn.bin',35312,'0bbae3150300e682da88305eb8ae6e24a57bd3839213d1176d69da8755aa2308'),
+    ('program.elf',143792,'5553c75ee79e71a2ed8a20672402fa4df7686ac7b58836cde08d80c52b8cbbde'),
 )  # Independent main/clean BUILD identity ONLY,not execution authority.
 args = sys.argv[1:]
 inspect = '--inspect-candidate' in args
@@ -39,7 +40,7 @@ try:
 finally:
     sys.argv = saved
 control = out/'unchanged-prefetch'
-assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest() == 'cf02c9777314443510894903a74637277be1ccc9b0db8ae80e7fd900baea7120'
+assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest() == '00e21099a50dda4607136eedd8dcb942a69d533399cebfae886ea1ff68e78e42'
 tool = parent['tool']
 def run(*values):
     subprocess.run(list(map(str, values)), check=True)

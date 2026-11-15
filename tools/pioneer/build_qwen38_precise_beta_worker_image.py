@@ -95,15 +95,18 @@ for name in (*(s+'.bin' for s in sections),'program.elf'):
     observed.append((name,len(data),hashlib.sha256(data).hexdigest()));print(observed[-1])
 PINS=(
     ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
-    ('globalworker.bin',9128,'e8627b672291439f1b6985e000e91dab8c7a68dfa56d004d223b1e9667a6c6fc'),
+    # Rebuilt twice from the current SDK after the upstream L1-authoritative
+    # GDN shape/cache changes. The three audited JALR relocations still target
+    # byte-identical memcpy/memset helpers; no worker semantics were relaxed.
+    ('globalworker.bin',9128,'9e170f83820d1a91af7a0d8ad14e214e42abb2c580f8ce7150a3d16b37d1567a'),
     ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
     ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
     ('text.bin',5984,'e1bd0788b82ff4f3ad58e1d527199ba4bc23ecd55936f7940d3f669c617aa419'),
     ('affine.bin',5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
     ('ffn.bin',16456,'23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f'),
     ('service.bin',9888,'7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187'),
-    ('gdn.bin',35408,'cbe3faf60ef0b3a0544b27b29f99d62eb36c7d0ac5b835e337c5501661ed589c'),
-    ('program.elf',139528,'1f49e9740d8d9045de6c8835f0f8f1738210ba0413d87f607f97cf98da74539e'),
+    ('gdn.bin',35312,'0bbae3150300e682da88305eb8ae6e24a57bd3839213d1176d69da8755aa2308'),
+    ('program.elf',139432,'18cee6348bf2213ae63c589b0c00b3cd56911d62516f2e622312a2d85ffb3de7'),
 ) # Independent main/clean emitted artifacts; NOT runtime/physical/Work proof.
 if not inspect:assert PINS and tuple(observed)==PINS,'Unqualified candidate: inspect/reproduce/freeze first'
 print('BUILD_ONLY precise beta/old literals independently rebuilt/non-GDN bytes identical except3 audited SAME-helper call relocations/max input frame'+str(max(frames))+

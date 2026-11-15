@@ -11,7 +11,8 @@ import sys
 
 PINS=(
  ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
- ('globalworker.bin',9232,'d820f6178c053c27e7380b774ab15733aff2a029d5e7d8de4e55f4549fbad955'),
+ # Rebuilt twice with the refreshed twin-batch parent and same audited call targets.
+ ('globalworker.bin',9232,'086c2f4c29ddd469245e326209b527b730db1493906c9ff4490370b5156a16c9'),
  ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
  ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
  ('fetch.bin',1292,'8422f5a12befcf4bba1500919006a79c00accbe29ffa99c1750dff66dc871f77'),
@@ -19,8 +20,8 @@ PINS=(
  ('affine.bin',5360,'0074182efb372d30e38807d26f701901c3995a5d3a549110b4ac35e5800ae51f'),
  ('ffn.bin',16456,'23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f'),
  ('service.bin',9888,'7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187'),
- ('gdn.bin',35944,'c2824d4822c69867879b09fac67f9f9849cf5f7202c1beca668584976eaf4e9c'),
- ('program.elf',144608,'70fdf96d8edbc38d30391a5f180d5839e97581c9fb8e03f724c74be014e3e028'),
+ ('gdn.bin',35848,'3b561b8a9ed9d1b9d2ab316751131c9b3a77cc94ff73f5db9be0a4be1887ae59'),
+ ('program.elf',144512,'1caed83a5841f9393c6e6a5aa33c52a65f1ca96fdb53938854a6d1eae7de184d'),
 ) # Independent main/clean BUILD identity ONLY,not execution/native authority.
 args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:
@@ -35,7 +36,7 @@ try:
  parent=runpy.run_path(sys.argv[0],run_name='__main__')
 finally:sys.argv=saved
 control=out/'unchanged-twin';tool=parent['tool']
-assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='56b470ae508655a070f17294c0a0fe242335214faed7101abaa05fb385ce6e38'
+assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest()=='64769cc8f6aba04ebf2d702e9c21d99c020ce2a7f556b17cb6ea5d88b793fdf2'
 precise=parent['parent']['parent']['old'];mixed=precise['mixed']
 unit=next(u for u in mixed['units'] if u[1]=='gdn_state')
 assert unit[0]=='blackhole_qwen38_resident_gdn.cpp' and unit[3]=='-O2'

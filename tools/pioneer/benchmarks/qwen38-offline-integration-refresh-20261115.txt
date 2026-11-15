@@ -1,0 +1,43 @@
+Pioneer Qwen3.8-27B offline integration checkpoint — 2026-11-15
+
+Scope
+-----
+Offline only. The Pioneer SSH host key remains unverified; no board, driver,
+GPU, model, or physical performance test was run in this checkpoint.
+
+Reproducibility and tests
+------------------------
+- Refreshed stale whole-image SHA-256 pins in the QGW2/QGW3, precise-beta,
+  token-prefetch, batched-prefetch, twin-batched-prefetch, wide-GDN,
+  vector-Q4-metadata, exact-Q4-work, constant-Q4-issue, and prepared-exact-Q4
+  build chain. Candidate images were independently rebuilt twice before
+  accepting their updated image identities.
+- Fixed a wide-GDN test conditional: valid early GDN imports had been allowed
+  to fall through to the late-import assertion. The wide-GDN worker test now
+  accepts the correct early-import path and still checks its expected source,
+  row, and word count.
+- ASan/UBSan and synthetic-endpoint suites passed for the vector-Q4 metadata
+  worker (27 shapes), exact-Q4 work worker (27 shapes), constant-Q4 issue
+  worker (27 shapes), and prepared-exact-Q4 worker (27 shapes plus fragment
+  mask, recurrent-history, and STOP controls). Existing matrix and original
+  quantized bytes are checked by these suites.
+- `git diff --check` passed.
+
+Interpretation
+--------------
+These are software/emulator validations, not P100A execution. Printed RV
+instruction/cycle counters are emulator counters, not device time. They do
+not establish full-model correctness, native driver compatibility, or a
+tokens-per-second improvement. The latest historical physical/model result
+available to this work remains approximately 0.1728 tokens/s; it was not
+remeasured here. The 20 tokens/s objective is unmet.
+
+Remaining gates
+---------------
+1. Verify the Pioneer SSH host-key fingerprint through a trusted local view;
+   do not bypass host-key checking.
+2. Finish native driver image/slot and ownership integration for the selected
+   Q4 worker chain; source/build pins alone do not authorize loading it.
+3. After native review, install only through the established safe recovery
+   path, verify actual P100A execution and numerical output, then benchmark
+   full Qwen generation and compare against the current baseline.

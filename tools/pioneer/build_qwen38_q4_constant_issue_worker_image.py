@@ -12,7 +12,7 @@ from pioneer_q38_q4_constant_relocations import audit
 
 PINS = (
     ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
-    ('globalworker.bin',9232,'6d565f73e3f9856a252632ef278165fb78b477102c03a72f44f07320474e23bd'),
+    ('globalworker.bin',9232,'71f9cfcdc4d86c78a3c8ce95c909d3cf86bcbc17a4b7b8ac1b7e0104afe41fd2'),
     ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
     ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
     ('fetch.bin',1292,'63102a2e454bc149c11e44af086ce3ca0fc8853b06ab3fe092169753c076c6d5'),
@@ -20,8 +20,8 @@ PINS = (
     ('affine.bin',5360,'472b4a921fa0df587eebce11b2706c6e5d128d67e1a3e2b6bd5a37509e7155d1'),
     ('ffn.bin',16456,'23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f'),
     ('service.bin',9888,'7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187'),
-    ('gdn.bin',35944,'c2824d4822c69867879b09fac67f9f9849cf5f7202c1beca668584976eaf4e9c'),
-    ('program.elf',144844,'e9ef5c53dbb3f8a924920c5dac261a884bbe33c3168d90cfd168e02fa96d8397'),
+    ('gdn.bin',35848,'3b561b8a9ed9d1b9d2ab316751131c9b3a77cc94ff73f5db9be0a4be1887ae59'),
+    ('program.elf',144748,'f3c9528fe0590ba37f0360c428315987497a5b5da642e5dc27274ed730ed4d02'),
 )  # Independent main/clean BUILD identity only, not execution authority.
 args = sys.argv[1:]
 inspect = '--inspect-candidate' in args
@@ -42,7 +42,7 @@ finally:
     sys.argv = saved
 control = out/'unchanged-wide'
 tool = parent['tool']
-assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest() == '70fdf96d8edbc38d30391a5f180d5839e97581c9fb8e03f724c74be014e3e028'
+assert hashlib.sha256((control/'program.elf').read_bytes()).hexdigest() == '1caed83a5841f9393c6e6a5aa33c52a65f1ca96fdb53938854a6d1eae7de184d'
 command = (control/'unchanged-twin'/'compile-math-argv.txt').read_text().splitlines()
 original = pathlib.Path(command[command.index('-o')+1])
 
