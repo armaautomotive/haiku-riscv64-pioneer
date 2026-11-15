@@ -189,6 +189,7 @@ int main(int argc,char** argv){
  const auto* golden=PioneerNativeBfp4BandGolden(17408);assert(golden);
  for(unsigned band=0;band<2;band++)for(unsigned row=0;row<32;row++)
   assert(image.Get(W::Output+(band*32+row)*4)==golden[row]);
+ printf("QGW7 linked synthetic transition RISC steps=%u; instruction-emulator count only, NOT silicon cycles or TPS\n",image.steps);
 #ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
  assert(pvExpectedSquares>0.0 && pvErrorSquares<=pvExpectedSquares*0.0001);
  printf("QDM2 hybrid synthetic PV relativeL2=%.9g maxAbs=%.9g matrixOps=3072 controlOps=3840 reduction=20%%;NOT model accuracy or hardware TPS\n",
