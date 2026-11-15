@@ -1,0 +1,39 @@
+Q4 static issue scheduling candidate — offline RV32 evidence only
+=================================================================
+2026-11-15. Fresh run of
+`RV32_PREFIX=riscv64-elf- python3 tools/pioneer/tests/run_pioneer_q38_cached_fpu_static_issue_tests.py`.
+No device was opened or staged. This is neither card timing nor Qwen tokens/sec.
+
+Result
+------
+The test compared the reference, paired-issue and fully static-issue
+schedules over six actual-linked RV32 cases (K=5,120 and K=17,408; 32, 64
+and 256 rows). Every case retained an identical emitted Tensix/config stream
+and exact outputs. Stack usage was 464 bytes for reference/paired and 480
+bytes for static, below the test's 4-KiB bound. All eight compile-time refusals
+for Work, CPU-reference, kernel, fast-math and late-selector misuse passed.
+
+In the largest case (K=17,408, 256 rows, worker 119), paired issue used
+10,413,966 simulated RV32 instructions and static issue used 8,613,630,
+1,800,336 fewer (17.29%). The smaller schedule changes the software issue
+path only: the Tensix stream and operation count are unchanged. These
+instruction counts are not retired card cycles or a measured acceleration.
+
+Why this is the next candidate
+-----------------------------
+The separate physical paired-issue diagnostic reported 6.55–6.81% fewer
+card cycles than its compact baseline for the two tested Q4 bands, while
+leaving the Tensix stream unchanged. That makes a static-issue diagnostic
+worth measuring on-card, but does not imply a 17.29% cycle improvement or
+any full-model gain. It should get a new build identity and once-only
+physical trial, then the same authenticated full-model benchmark before
+promotion into Work. Work must remain free of CPU-reference math.
+
+Current status and gate
+----------------------
+No static-issue native diagnostic identity or full-model integration was
+added in this checkpoint. The P100A's saved SSH host key still differs from
+the presented key; do not disable strict checking or replace the saved key.
+Physical testing waits for independent fingerprint verification. The best
+qualified complete-model rate remains about 0.1728 tokens/sec; the 20
+tokens/sec target is unmet.
