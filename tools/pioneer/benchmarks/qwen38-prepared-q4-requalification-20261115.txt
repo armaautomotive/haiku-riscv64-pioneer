@@ -1,0 +1,60 @@
+Prepared exact-Q4 worker requalification — 2026-11-15
+====================================================
+
+Offline source/build/worker qualification only. No Pioneer access, native
+driver exchange, model inference, Assistant change, or tokens/sec measurement
+occurred. The best accepted real full-model rate remains approximately
+0.1728 tokens/sec; the 20 tokens/sec target remains unmet.
+
+Reproduction and test repair
+---------------------------
+The current prepared exact-Q4 worker and its recursive original worker image
+were independently rebuilt twice from the pinned Haiku SDK. All generated
+sections were byte-identical across the two builds. The old resident-GDN
+fixture pins in `run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py`
+and its hard-coded ELF pin in `run_pioneer_q38_prepared_exact_q4_worker_tests.py`
+were stale: the current deterministic images are text.bin SHA-256
+`4347da7540fab8c0f4ad06289b148e40cdecdf1b24ad9179cf6e3d4827c134cd`, gdn.bin
+SHA-256 `11b66775097b1c41deaa65717fa6fe674e5f5cbbd529ac38956ee1a8a6507dca`,
+and program.elf SHA-256
+`31cab4485e0219abbd4c708f106cffd7a57daf53155d6b21afc88351ce1cfe38` (96,056
+bytes). Only those expected fixture identities were refreshed after the
+independent duplicate build matched. No production or Work-mode code changed.
+
+`python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py
+ABS_PREPARED_Q4_CANDIDATE_DIR` then passed the complete closed suite against
+the freshly built candidate:
+all 27 Q4/Q8/Q6 shapes, 54 changing-input jobs, five prepared-fragment mask
+controls, 16 NoC-loss inert parks, 16 descriptor refusals, exact source/FP32
+output checks, commit/STOP ordering, and recurrent-history tests. Whole ROM
+and role checks passed. The executable candidate's complete program.elf SHA-256
+is `f9a12714de5f2ec8a778a0df5c9a151765037a574242daf6dd83753bca7a686e`.
+
+Worker-issue evidence
+--------------------
+In the test's actual emitted-RV32 instruction simulator for Q4_K, original
+versus prepared exact-Q4 worker steps were:
+
+* K=5,120, one group: 3,010,979 -> 1,471,733 (51.1% fewer).
+* K=5,120, three groups: 8,489,909 -> 3,057,983 (64.0% fewer).
+* K=6,144, sixteen groups: 52,877,021 -> 15,947,031 (69.9% fewer).
+* K=17,408, sixteen groups: 149,547,997 -> 44,721,831 (70.1% fewer).
+
+These are simulated controller instruction counts for one worker, not retired
+P100A cycles, aggregate-card instructions, physical bandwidth, end-to-end
+latency, or a speedup estimate. The candidate also performs additional sparse
+correction-source reads; the whole-model owner/ROOT accounting and storage
+integration are still required.
+
+Next gates
+----------
+1. Integrate the prepared-source allocator, cache upload, correction-source
+   accounting, worker map, native owner, and ROOT receipts as one distinct
+   candidate without changing installed Work or validation behavior.
+2. Rebuild and qualify the whole native/ROOT/worker/client chain, including
+   source identity, fault rollback, saved-memory restoration, and exact Qwen
+   numerics.
+3. Verify the Pioneer SSH host-key change through a trusted local source
+   before any physical trial. Strict SSH checking must remain enabled.
+4. Only after those gates, run a protected full-model request and compare
+   real generation rate and answer against the accepted vector-Q4 baseline.

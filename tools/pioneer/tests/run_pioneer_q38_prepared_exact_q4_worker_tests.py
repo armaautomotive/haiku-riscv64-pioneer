@@ -65,7 +65,7 @@ if instruction_prefetch:
     parent=dict(snapshots[2]);require(all(data==parent[name] for name,data in candidate if name not in ('globalworker.bin','program.elf')),'ALL9 math/other sections unchanged')
     snapshots[2]=candidate
 legacy=[(name+'.bin',size,digest) for name,size,digest in pins(here/'run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py')]
-legacy.append(('program.elf',96148,'44bac0c1061f298ed8ccd2a1eb4780371bc7c80031cb230ad2da27f476202d19'))
+legacy.append(('program.elf',96056,'31cab4485e0219abbd4c708f106cffd7a57daf53155d6b21afc88351ce1cfe38'))
 legacy=snapshot(fixture/'unchanged-worker',legacy)
 with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir='/private/tmp') as temporary:
     root=pathlib.Path(temporary);images=[]

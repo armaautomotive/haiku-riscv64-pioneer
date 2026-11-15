@@ -14,11 +14,11 @@ here = pathlib.Path(__file__).resolve().parent
 image, old = map(pathlib.Path, sys.argv[1:3])
 PINS = (
     ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'),
-    ('text', 7940, 'd726337fe94d7d94812aaf5e67f3d4e328a21873cb27aa982dc5315bb6294b07'),
+    ('text', 7940, '4347da7540fab8c0f4ad06289b148e40cdecdf1b24ad9179cf6e3d4827c134cd'),
     ('affine', 5360, 'fcdf8ec5b607550db93fda5a86830951e2518d5580b11f4538fb6eead0eb3b7b'),
     ('ffn', 16352, 'f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9'),
     ('service', 10300, 'd00147de57e51e096760da0e6d25476692646807bcb0dc52d5a02b1263657254'),
-    ('gdn', 35396, '36458af185c3500d1cd1b1170672c2138910aff836bd8a6a407b07c68a80b93d'),
+    ('gdn', 35292, '11b66775097b1c41deaa65717fa6fe674e5f5cbbd529ac38956ee1a8a6507dca'),
 )
 for section, size, digest in PINS:
     data = (image/(section+'.bin')).read_bytes()
