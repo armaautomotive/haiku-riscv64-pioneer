@@ -5,11 +5,14 @@
 #include "../PioneerQ38GdnL1CacheCapacityInspection.h"
 #define PIONEER_Q38_GDN_L1_CACHE_PLAN_INSPECTION 1
 #include "../PioneerQ38GdnL1CachePlanInspection.h"
+#define PIONEER_Q38_GDN_L1_PAGE_TABLE_PLAN_INSPECTION 1
+#include "../PioneerQ38GdnL1PageTablePlanInspection.h"
 #include <cassert>
 #include <cstdio>
 
 namespace C=PioneerQ38GdnL1CacheCapacityInspection;
 using P=PioneerQ38GdnL1RedistributedPlanInspection;
+using T=PioneerQ38GdnL1PageTablePlanInspection;
 static C::FragmentedSlot pages[P::Workers][C::MaxSlots];
 static unsigned pageCounts[P::Workers]={};
 
@@ -29,11 +32,19 @@ static unsigned RunToken(PioneerQ38GdnL1CacheLeaseInspection& lease,
 			const unsigned worker=current.state.route.physicalWorker-1;
 			assert(worker<P::Workers && current.state.route.stateIndex<P::SlotsForPhysical(worker+1));
 			assert(current.resident==(current.state.route.stateIndex<pageCounts[worker]));
+			T::Entry pageTable={};
+			assert(T::Build(ordinal,logical/2,logical%2,pages,pageCounts,pageTable));
+			assert(pageTable.resident==current.resident && pageTable.cacheIndex==current.cacheIndex
+				&& pageTable.route.physicalWorker==current.state.route.physicalWorker
+				&& pageTable.route.peer==current.state.route.peer
+				&& pageTable.route.stateIndex==current.state.route.stateIndex);
 			if(current.resident){
 				for(unsigned page=0;page<C::PagesPerState;page++)
 					assert(C::Free(worker+1,pages[worker][current.state.route.stateIndex].pages[page],C::PageBytes));
+				for(unsigned page=0;page<C::PagesPerState;page++)
+					assert(pageTable.pages[page]==pages[worker][current.state.route.stateIndex].pages[page]);
 				if(current.cacheHit)hits++;else residentMisses++;
-			}else{assert(!current.cacheHit);spills++;}
+			}else{assert(!current.cacheHit);for(unsigned page=0;page<C::PagesPerState;page++)assert(!pageTable.pages[page]);spills++;}
 			// Reject a completion receipt inconsistent with the selected path,
 			// then accept the correctly evidenced metadata transition.
 			assert(!lease.CompleteHalf(ticket,logical,!current.resident));

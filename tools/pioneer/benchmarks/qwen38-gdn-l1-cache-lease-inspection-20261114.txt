@@ -15,6 +15,9 @@ Behavior
   route. Per-worker state indices 0..33 are marked cache-resident; higher
   indices are explicit GDDR spills. The corresponding static capacity test
   validates 34 fragmented 32 KiB slots on each physical peer.
+* A separate inspection-only page-table planner joins that stable cache index
+  to the eight exact, aligned, snapshot-free 4 KiB L1 addresses and rejects
+  duplicate pages within or between cached states on the same peer.
 * Bind starts cold. A resident cache entry is a hit only when its page data
   was published by an earlier complete token and its identity, position, and
   GDDR slot match. The cold token must populate resident pages from the
@@ -37,9 +40,10 @@ Reproduce with:
   `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`
 
 The ASan/UBSan lease test covers a cold token followed by three warm tokens,
-all 4,608 half-states, 4,046 resident entries, 562 deterministic spills,
-48-layer/96-task commit ordering, inconsistent receipts, stale cache reads
-during an incomplete token, and full invalidation after a mid-token fault.
+all 4,608 half-states, exact page-table addresses for 4,046 resident entries,
+562 deterministic spills, 48-layer/96-task commit ordering, inconsistent
+receipts, stale cache reads during an incomplete token, and full invalidation
+after a mid-token fault.
 The compile-role test accepts inspection mode and rejects Work, CPU-reference,
 native, resident-image, and kernel roles. The existing placement test checks
 all fragmented pages against the captured 119-peer L1 snapshot and confirms

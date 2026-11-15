@@ -15,6 +15,7 @@ enum : uint32_t {
 	HeadsPerLayer=48,
 	TasksPerLayer=LogicalWorkers,
 	TotalTasks=RecurrentLayers*TasksPerLayer,
+	SlotsPerPhysical=(TotalTasks+PhysicalWorkers-1)/PhysicalWorkers,
 	StateHalfBytes=32768
 };
 struct Route {
