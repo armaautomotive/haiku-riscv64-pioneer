@@ -394,6 +394,29 @@ int main(int argc,char** argv){
 #endif
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
  const unsigned totalPackets=11;
+	#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+	// Matched one-half warm-path comparison. Both runs start from the same
+	// deterministic inputs/current state and consume the actual emitted worker
+	// image. The difference is RV32 instruction count plus packet accounting,
+	// not a timing model for Blackhole or GDDR.
+	{
+		GdnRecurrentMachine writeThrough(argv[1],*canonical,0,0,6,117);
+		writeThrough.descriptor[50]=1;writeThrough.SetDescriptors();
+		writeThrough.memory[uint32_t(L::StatePageMode)]=1;
+		assert(writeThrough.Run());writeThrough.Verify();
+		const unsigned writeThroughSteps=writeThrough.steps;
+		GdnRecurrentMachine authoritative(argv[1],*canonical,0,0,6,117);
+		authoritative.descriptor[50]=3;authoritative.SetDescriptors();
+		authoritative.memory[uint32_t(L::StatePageMode)]=3;
+		assert(authoritative.Run());authoritative.Verify();
+		assert(writeThrough.next==authoritative.next);
+		for(unsigned i=0;i<64;i++)assert(writeThrough.memory.at(uint32_t(L::Output)+i*4)
+			==authoritative.memory.at(uint32_t(L::Output)+i*4));
+		assert(authoritative.steps<writeThroughSteps);
+		std::printf("MATCHED warm resident worker:write-through instructions%u/9 packets -> L1-authoritative instructions%u/7 packets; delta%+d instructions, exact same 8,256 state/output words; emulator only, NOT silicon time/TPS\n",
+			writeThroughSteps,authoritative.steps,int(authoritative.steps)-int(writeThroughSteps));
+	}
+	#endif
 #ifdef PIONEER_Q38_GDN_L1_ALLOCATOR_INTEGRATION_TEST
  assert(sAllocatorResidentRoutes>0 && sAllocatorSpillRoutes>0);
  printf("PASS ACTUAL allocator page-table integration: resident routes%u spill routes%u; exact emitted worker consumed real mapped L1 page addresses and GDDR fallback metadata; ",sAllocatorResidentRoutes,sAllocatorSpillRoutes);

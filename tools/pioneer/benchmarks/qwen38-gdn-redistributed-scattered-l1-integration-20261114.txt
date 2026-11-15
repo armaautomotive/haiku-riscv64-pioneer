@@ -136,3 +136,16 @@ the worker-level offline behavior. L1 is the sole state authority for resident
 rows in mode 3, so any interruption invalidates that inference session; it
 does not preserve GDDR rollback/resume state. No P100A latency or Qwen token
 rate was measured.
+
+2026-11-15 matched worker-count comparison
+------------------------------------------
+The no-writeback runner now executes the same emitted worker twice with the
+same deterministic half-head, inputs, and initial state: warm write-through
+mode 1 versus warm L1-authoritative mode 3. Both produced identical 8,256
+state/output words. The simulator counted 259,612 RV32 instructions and 9
+packets for mode 1, versus 197,086 instructions and 7 packets for mode 3
+(62,526 fewer instructions, 24.08%). This is evidence that the worker's
+mode-3 control/data path does not erase its transfer-count advantage through
+extra emulated RISC work in this fixture. It is not Blackhole cycle timing,
+GDDR latency, aggregate model timing, or a tokens/sec prediction; native owner
+integration and a matched physical Qwen benchmark are still required.
