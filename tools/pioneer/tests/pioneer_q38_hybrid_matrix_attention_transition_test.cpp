@@ -5,12 +5,18 @@
 #include "pioneer_q38_hybrid_worker_image_test.cpp"
 #include "../PioneerAttentionMath.h"
 #include "../PioneerQ38DensePartitionLayout.h"
+#define PIONEER_NATIVE_F32_Q8_MACHINE_ONLY
+namespace PioneerSfpuOracle {
+#include "pioneer_runtime_q8_native_f32_image_test.cpp"
+}
+#undef PIONEER_NATIVE_F32_Q8_MACHINE_ONLY
 #include <cmath>
 namespace Dense=PioneerQ38DensePartitionLayout;
 
 struct TransitionImage:HybridImage {
- bool denseMode=false;uint32_t fp[32]={};unsigned matrixBefore=0;
- TransitionImage(const char* worker,const char* leaf,unsigned peer=73,unsigned width=17408,unsigned bands=2):HybridImage(worker,leaf,peer,width,bands){
+ PioneerSfpuOracle::NativeF32Q8Machine sfpu;
+ bool denseMode=false;uint32_t fp[32]={};unsigned matrixBefore=0,sfpuMathOps=0;
+ TransitionImage(const char* worker,const char* leaf,unsigned peer=73,unsigned width=17408,unsigned bands=2):HybridImage(worker,leaf,peer,width,bands),sfpu(1024,32,0){
   native.expectedWeight=0xa5000;native.alternateWeight=0xa6000;
   native.expectedInput=0xa6000;native.alternateInput=0xa7000;native.thirdInput=0xa7400;
  }
@@ -21,7 +27,7 @@ struct TransitionImage:HybridImage {
   if(denseMode && DenseL1(a))return WordRead(a);
   if(denseMode && a==0xffe000fc)return gpr63;
   if(denseMode && Range(a,0xffef0000,224*4))return native.config[(a-0xffef0000)/4];
-  if(denseMode && (Range(a,0xffbd8800,64) || Range(a,0xffbd8a00,64))){
+  if(denseMode && Range(a,0xffbd8000,0xc00)){
    const unsigned row=(a-0xffbd8000)/64,col=((a-0xffbd8000)%64)/4;
    assert(native.valid[row] && !native.mathPending);return NativeBfpMachine::Bits(native.destination[row][col]);
   }
@@ -33,11 +39,29 @@ struct TransitionImage:HybridImage {
    WordWrite(a,value);return;
   }
   if(denseMode && a==0xffe000fc){assert(!value);gpr63=0;return;}
+  if(denseMode && Range(a,0xffbd8000,0xc00)){
+   const unsigned row=(a-0xffbd8000)/64,col=((a-0xffbd8000)%64)/4;
+   native.destination[row][col]=NativeBfpMachine::Float(value);native.valid[row]=true;return;
+  }
   if(denseMode && Range(a,0xffef0000,224*4)){native.Config((a-0xffef0000)/4,value);return;}
   if(denseMode && a==0xffe40000){
    if(value==0xa2101816){assert(!gpr63 && !awaiting);awaiting=true;}
-   else if(value==0x4500017e){assert(awaiting && !gpr63);native.Drain();gpr63=1;awaiting=false;}
-   else native.NativeBfpMachine::Op(value);
+   else if(value==0x4500017e){assert(awaiting && !gpr63);native.Drain();sfpu.drained=true;gpr63=1;awaiting=false;}
+   else {
+    const unsigned code=value>>24;
+    if(code==0x70 || code==0x71 || code==0x72 || code==0x7c || code==0x84 || code==0x85 || code==0x8a){
+     if(code==0x84 || code==0x85)sfpuMathOps++;
+     for(unsigned row=0;row<12;row++){
+      sfpu.valid[row]=native.valid[row];
+      for(unsigned col=0;col<16;col++)sfpu.dst[row][col]=native.destination[row][col];
+     }
+     sfpu.Instruction(value);
+     for(unsigned row=8;row<12;row++){
+      native.valid[row]=sfpu.valid[row];
+      for(unsigned col=0;col<16;col++)native.destination[row][col]=sfpu.dst[row][col];
+     }
+    }else native.NativeBfpMachine::Op(value);
+   }
    return;
   }
   HybridImage::Store(a,value);
@@ -97,8 +121,11 @@ struct TransitionImage:HybridImage {
    matrixBefore=native.matrixOps;
   }
   for(unsigned i=0;i<16;i++){
-   const unsigned value=(phase>=2 && i<6)?WordRead(Dense::Local+(4+i)*4):
+   unsigned value=(phase>=2 && i<6)?WordRead(Dense::Local+(4+i)*4):
     (phase==3 && i>=8 && i<14)?PioneerAttentionBits(1.f):0;
+#ifdef PIONEER_Q38_TEST_SFPU_EXP
+   if(phase>=2 && i<6)value=PioneerAttentionBits(PioneerAttentionFloat(value)+1.0f);
+#endif
    WordWrite(Dense::Parameters+i*4,value);
   }
   if(!stageJob)return;
@@ -126,6 +153,10 @@ int main(int argc,char** argv){
    assert(PioneerAttentionFloat(image.WordRead(Dense::Scores+h*Dense::Stride*4))==expected);
   }
  }
+#ifdef PIONEER_Q38_TEST_SFPU_EXP
+ assert(image.sfpuMathOps>0);
+ printf("SFPU exponential instructions executed in linked QGW7/QDM2 worker: %u; synthetic transition only\n",image.sfpuMathOps);
+#endif
 #ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
  assert(image.native.matrixOps-image.matrixBefore==6*(128+3*8*16) && image.native.Clean());
 #else
@@ -135,7 +166,10 @@ int main(int argc,char** argv){
  double pvErrorSquares=0.0,pvExpectedSquares=0.0;float pvMaxAbsoluteError=0.0f;
 #endif
  for(unsigned h=0;h<6;h++)for(unsigned d=0;d<256;d++){
-  const float expected=float(int(d%17)-8)*.0625f;
+  float expected=float(int(d%17)-8)*.0625f;
+#ifdef PIONEER_Q38_TEST_SFPU_EXP
+  expected*=PioneerAttentionHalf(PioneerAttentionToHalf(PioneerAttentionExp(-1.0f)));
+#endif
   const float high=PioneerAttentionFloat(image.WordRead(Dense::Partial+(h*512+d*2)*4));
   const float low=PioneerAttentionFloat(image.WordRead(Dense::Partial+(h*512+d*2+1)*4));
 #ifdef PIONEER_Q38_TEST_THREE_PRODUCT_PV
