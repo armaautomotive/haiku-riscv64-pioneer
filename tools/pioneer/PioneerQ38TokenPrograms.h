@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 // Mechanically generated from COMPLETE fixed FP32 persistent-token/QGW1 artifacts.
 // IMMUTABLE DATA ONLY. No native owner,source/init,journal,RUN/STOP or cleanup grant.
+#ifdef PIONEER_Q38_TOKEN_REDISTRIBUTED_GDN_PROGRAMS
+#if PIONEER_Q38_TOKEN_REDISTRIBUTED_GDN_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
+#error Routed GDN token images are a separate exact QMW1/RGB1 program family
+#endif
+#include "PioneerQ38RoutedTokenPrograms.h"
+static_assert(PioneerQ38TokenPrograms::Family==0x31575251,"routed token image family");
+#else
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 #error Fixed QTP1/QGW1 program DATA cannot select the distinct precise ROOT/worker family
 #endif
@@ -7653,4 +7661,5 @@ static inline bool ProgramWord(unsigned worker,uint32_t address,uint32_t& output
 static_assert(PioneerQ38TokenPrograms::Family==0x32505451,"late QTP2 program DATA selection");
 #else
 static_assert(PioneerQ38TokenPrograms::Family==0x31505451,"late QTP1 program DATA selection");
+#endif
 #endif

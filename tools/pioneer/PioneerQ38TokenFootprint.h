@@ -44,7 +44,14 @@ static_assert(PioneerQ38TokenBf16FootprintSelection==0,"late QTP4 footprint remo
 #endif
 #ifndef PIONEER_Q38_TOKEN_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_FOOTPRINT_H
-#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_REDISTRIBUTED_GDN_PROGRAMS
+#if PIONEER_Q38_TOKEN_REDISTRIBUTED_GDN_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
+#error Routed GDN token geometry cannot alias another token program family
+#endif
+#include "PioneerQ38TokenRedistributedFootprint.h"
+namespace PioneerQ38TokenL1=PioneerQ38TokenRedistributedL1;
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
 #ifdef PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION
 #include "PioneerQ38DenseQ8TokenFootprint.h"
@@ -117,7 +124,9 @@ static_assert(SavedWords==11406906 && SavedBytes==45627624,"ALL120 arbitrary ori
 }
 #endif
 #endif
-#if defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION)
+#if defined(PIONEER_Q38_TOKEN_REDISTRIBUTED_GDN_PROGRAMS)
+static_assert(PioneerQ38TokenL1::Family==0x31575251,"late routed-token footprint selection");
+#elif defined(PIONEER_Q38_DENSE_Q8_MATRIX_FOOTPRINT_INSPECTION)
 static_assert(PioneerQ38TokenL1::Family==0x42505451 && PioneerQ38TokenL1::Bf16==1,"late dense Q8 footprint selection");
 #elif defined(PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC)
 static_assert(PioneerQ38TokenL1::Family==0x35505451 && PioneerQ38TokenL1::Bf16==1,"late diagnostic hybrid footprint selection");

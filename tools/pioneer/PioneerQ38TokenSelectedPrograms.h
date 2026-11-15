@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_REDISTRIBUTED_GDN_PROGRAMS
+#error Routed GDN candidate images are DATA-only; native token selection/launch is not authorized
+#endif
 #include "PioneerQ38HybridKernelCompileOnly.h"
 #if defined(PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC)
 #if PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_HYBRID_PROGRAMS_HEADER) \
