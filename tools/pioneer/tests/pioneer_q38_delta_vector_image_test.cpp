@@ -75,7 +75,9 @@ struct DeltaVectorImage:ScalarMachine {
 			assert((cfg[84]&0xffff0000)==0x400000 && row<512 && !((words)%16) && words<=8192-row*16);
 			assert((!imports && source==uint32_t(L::Value) && !row && words==64)
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-				|| (imports && imports<9 && source==TestStatePage(imports-1) && row==(imports-1)*64 && words==1024));
+				|| (imports && imports<9 && source==(memory.at(uint32_t(L::StatePageMode))==2
+					?uint32_t(L::Prior)+(imports-1)*4096:TestStatePage(imports-1))
+					&& row==(imports-1)*64 && words==1024));
 #else
 				|| (imports && imports<9 && source==0x90000+(imports-1)*4096 && row==(imports-1)*64 && words==1024));
 #endif
@@ -85,7 +87,7 @@ struct DeltaVectorImage:ScalarMachine {
 		if (code==0x70 && ((op>>20)&15)) assert(imports==1 && (((op>>20)&15)==6 || ((op>>20)&15)==7) && !(op&0x3fc));
 		if (code==0x72 && ((op>>20)&15)) assert(
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-			scatterWrites==8192
+			(memory.at(uint32_t(L::StatePageMode))==2?nextWrites==8192:scatterWrites==8192)
 #else
 			nextWrites==8192
 #endif
@@ -128,7 +130,7 @@ struct DeltaVectorImage:ScalarMachine {
 		if (Range(at,0x6e000,8192)) minStack=std::min(minStack,unsigned(at));
 		if (Range(at,0xa0000,32768)) { assert(unit.drained && imports==9 &&
 #if defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) && defined(PIONEER_Q38_GDN_SCATTERED_RESIDENT_IMAGE_TEST)
-			scatterWrites==8192
+			(memory.at(uint32_t(L::StatePageMode))==2?csrReads==nextWrites+1:scatterWrites==8192)
 #else
 			csrReads==nextWrites+1
 #endif
@@ -141,7 +143,7 @@ struct DeltaVectorImage:ScalarMachine {
 #endif
 		if (Range(at,uint32_t(L::Output),256)) { assert(unit.drained &&
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-			scatterWrites==8192
+			(memory.at(uint32_t(L::StatePageMode))==2?nextWrites==8192:scatterWrites==8192)
 #else
 			nextWrites==8192
 #endif
@@ -163,10 +165,13 @@ struct DeltaVectorImage:ScalarMachine {
 		for (unsigned i=0;i<128;i++) for (unsigned j=0;j<64;j++) {
 			next[i*64+j]=Float(initialState[i*64+j])*decay+Float(memory.at(uint32_t(L::Key)+i*4))*delta[j];
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-			uint32_t page=memory.at(uint32_t(L::StatePageTable)+(i*64+j)/1024*4);
-			if (memory.at(page+((i*64+j)%1024)*4)!=Bits(next[i*64+j])) {
+			uint32_t actual;
+			if(memory.at(uint32_t(L::StatePageMode))==2)actual=memory.at(uint32_t(L::Next)+(i*64+j)*4);
+			else {uint32_t page=memory.at(uint32_t(L::StatePageTable)+(i*64+j)/1024*4);
+				actual=memory.at(page+((i*64+j)%1024)*4);}
+			if (actual!=Bits(next[i*64+j])) {
 				fprintf(stderr,"state mismatch i=%u j=%u got=%08x expected=%08x initial=%08x\n",
-					i,j,memory.at(page+((i*64+j)%1024)*4),Bits(next[i*64+j]),Bits(initialState[i*64+j]));
+					 i,j,actual,Bits(next[i*64+j]),Bits(initialState[i*64+j]));
 				assert(false);
 			}
 #else
@@ -188,10 +193,14 @@ struct DeltaVectorImage:ScalarMachine {
 		assert(resultWrites==64 && imports==9 && csrReads==8192+64 && unit.drained);
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 #ifdef PIONEER_Q38_GDN_SCATTERED_RESIDENT_IMAGE_TEST
-		assert(nextWrites==8192 && scatterWrites==8192
+		assert((memory.at(uint32_t(L::StatePageMode))==2
+			?nextWrites==8192 && !scatterWrites
+			:nextWrites==8192 && scatterWrites==8192)
 			&& statePrefillWrites==(memory.at(uint32_t(L::StatePageMode))?0:8192));
 #else
-		assert(!nextWrites && scatterWrites==8192);
+		assert(memory.at(uint32_t(L::StatePageMode))==2
+			?nextWrites==8192 && !scatterWrites
+			:!nextWrites && scatterWrites==8192);
 #endif
 #else
 		assert(nextWrites==8192 && !scatterWrites);

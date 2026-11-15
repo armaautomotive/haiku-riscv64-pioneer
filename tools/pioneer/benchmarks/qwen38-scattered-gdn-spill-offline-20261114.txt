@@ -1,0 +1,50 @@
+Pioneer Qwen 3.8 GDN scattered-L1 GDDR-spill candidate — 2026-11-14
+
+Status: offline emitted-image evidence only. The candidate was not installed,
+selected, or run on the Pioneer. The current SSH host-key mismatch is
+unresolved, so no physical validation was attempted.
+
+The scattered-state worker now models three cases:
+
+* Cold fill (mode 0): read current GDDR state, copy it into eight scattered
+  L1 pages, compute, then publish the next state to a different GDDR slot.
+* Warm resident hit (mode 1): skip the two GDDR current-state reads, compute
+  from the pages, and publish next state to GDDR.
+* Capacity spill (mode 2): read the current GDDR state into the contiguous
+  local prior buffer, compute without using cache pages, and publish next
+  state directly to the distinct GDDR next slot.
+
+The root validates the mode before input NoC; modes 0/1 additionally validate
+the page table. Summary validation distinguishes warm (zero state reads) from
+cold and spill (two state reads). The default, unselected image path is
+unchanged.
+
+Build evidence
+--------------
+Scattered candidate code SHA-256:
+  a0f5d23a669ee8b28a6981a4430acce8b2d55a0559f038414031c50f8313595d
+Boot SHA-256:
+  d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+
+The AddressSanitizer/UndefinedBehaviorSanitizer emitted-worker simulator
+passed 161 positive cases, including all 96 logical halves, seven banks,
+both recurrent slots, four 16-step non-resetting cold/warm chains, and an
+isolated spill execution; all 8,256 state/output words were checked against
+independent FP32 observations. Packet accounting was 11 total packets for
+cold and spill (9 reads, 2 writes), and 9 for warm (7 reads, 2 writes).
+It also passed 4,175 injected fault cases, including invalid cache mode,
+malformed page tables, packet timeouts, counter/source/descriptor corruption,
+and nonfinite state, with inert fault termination and no subsequent
+publication. The role guard is checked by the reproducible runner.
+
+These are simulated endpoint and emitted-instruction results, not P100A
+hardware, native token execution, model-quality, or throughput evidence.
+No tok/s figure or speedup is claimed.
+
+Still required
+--------------
+* A native allocator and token/slot epoch integration to own and pin L1 pages
+  and commit cache state only after full-token success.
+* A complete native Qwen path and real full-token benchmarks.
+* Independently verify the Pioneer SSH host key before remote access or any
+  physical test; preserve the known-good default image meanwhile.

@@ -76,7 +76,8 @@ static void Packet(bool write,unsigned at,const uint32_t* d) {
 extern "C" bool q38_resident_gdn_scattered_pages_valid()
 {
  uint32_t pages[L::StatePages];
- return StatePages(pages) && Words(L::StatePageMode)[0]<=1;
+ const unsigned mode=Words(L::StatePageMode)[0];
+ return mode<=2 && (mode==2 || StatePages(pages));
 }
 #endif
 #ifdef PIONEER_Q38_RGDN_COMBINED_STAGE
@@ -103,7 +104,7 @@ extern "C" unsigned scalar_main() {
  s[5]=32768; s[6]=d[8]; s[7]=TT_Q38_RGDN_MARKER; s[24]=d[9]; s[25]=d[10]; s[26]=d[11];
  s[27]=d[11]^1; s[28]=d[15]; s[29]=
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
- Words(L::StatePageMode)[0]?3:4;
+ Words(L::StatePageMode)[0]==1?3:Words(L::StatePageMode)[0]==2?5:4;
 #else
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
  2;
@@ -115,8 +116,9 @@ extern "C" unsigned scalar_main() {
  for (unsigned i=0;i<8;i++) s[8+i]=*Words(0xffb20000+RGdn::CounterOffset(i));
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
  const unsigned cacheMode=Words(L::StatePageMode)[0];
- if(cacheMode>1 || !q38_resident_gdn_scattered_pages_valid())return 0;
- if(!cacheMode){RGdn::Packet(0,0,d);RGdn::Packet(0,16384,d);
+ if(cacheMode>2 || !q38_resident_gdn_scattered_pages_valid())return 0;
+ if(cacheMode!=1){RGdn::Packet(0,0,d);RGdn::Packet(0,16384,d);}
+ if(cacheMode==0){
   for(unsigned page=0;page<L::StatePages;page++)
    for(unsigned word=0;word<L::StatePageBytes/4;word++)
     Words(Words(L::StatePageTable)[page])[word]=Words(L::Prior)[page*(L::StatePageBytes/4)+word];
@@ -129,7 +131,7 @@ extern "C" unsigned scalar_main() {
  // L1 cache pages are the current recurrent state. The GDDR current slot
  // remains the rollback authority; only a fully completed model token may
  // publish the separately written next GDDR slot.
- for (unsigned page=0;page<L::StatePages;page++)
+ if(cacheMode!=2)for (unsigned page=0;page<L::StatePages;page++)
   for (unsigned word=0;word<L::StatePageBytes/4;word++)
    Words(L::Next)[page*(L::StatePageBytes/4)+word]=Words(Words(L::StatePageTable)[page])[word];
 #endif

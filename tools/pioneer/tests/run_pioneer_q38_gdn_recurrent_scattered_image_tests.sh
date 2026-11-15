@@ -11,7 +11,7 @@ trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 sh "$tools/build_qwen38_gdn_recurrent_image.sh" "$1" "$tmp/image" --scattered-cache
 code_sha=$(shasum -a 256 "$tmp/image/code.bin" | awk '{print $1}')
 boot_sha=$(shasum -a 256 "$tmp/image/boot.bin" | awk '{print $1}')
-[ "$code_sha" = 5511d0d4f4524f019a7889a05d1be72dc5421652c2e9bd9bfedb151392553761 ] || exit 1
+[ "$code_sha" = a0f5d23a669ee8b28a6981a4430acce8b2d55a0559f038414031c50f8313595d ] || exit 1
 [ "$boot_sha" = d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6 ] || exit 1
 "${CXX:-c++}" -std=c++17 -O1 -g -Wall -Wextra -Werror -ffp-contract=off \
  -fsanitize=address,undefined -DPIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT=1 \

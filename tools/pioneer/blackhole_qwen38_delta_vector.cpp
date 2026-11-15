@@ -77,12 +77,15 @@ extern "C" unsigned scalar_main()
 	if (header[0]!=0x56383351 || header[1]!=128 || header[2]!=64 || header[3]) return 0;
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 	uint32_t statePages[L::StatePages];
-	if (!StatePages(statePages)) return 0;
+	const unsigned cacheMode=Words(L::StatePageMode)[0];
+	if(cacheMode>2 || (cacheMode!=2 && !StatePages(statePages)))return 0;
 #endif
 	uint32_t decay=*Words(L::Decay),beta=*Words(L::Beta);
 	if (!PioneerQ38DeltaVectorGate(decay) || !PioneerQ38DeltaVectorGate(beta)) return 0;
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-	for (unsigned page=0;page<L::StatePages;page++)
+	if(cacheMode==2){
+		for(unsigned i=0;i<L::StateBytes/4;i++)if(!InputNormalOrZero(Words(L::Prior)[i]))return 0;
+	}else for (unsigned page=0;page<L::StatePages;page++)
 		for (unsigned i=0;i<L::StatePageBytes/4;i++)
 			if (!InputNormalOrZero(Words(statePages[page])[i])) return 0;
 #else
@@ -96,7 +99,7 @@ extern "C" unsigned scalar_main()
 	// wrapped2048-datum counter,define ALL512 logical FP32 rows.
 	for (unsigned chunk=0;chunk<8;chunk++) Import(
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-		statePages[chunk],
+		cacheMode==2?L::Prior+chunk*4096:statePages[chunk],
 #else
 		L::Prior+chunk*4096,
 #endif
@@ -123,7 +126,12 @@ extern "C" unsigned scalar_main()
 	// Dst is only a shadow. Publish next state into LOCAL scratch only;
 	// a future resident owner must not commit it until independent completion.
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-	for (unsigned page=0;page<L::StatePages;page++) {
+	if(cacheMode==2){
+		for(unsigned i=0;i<L::StateBytes/4;i++){
+			uint32_t bits=Words(0xffbd8000)[i];if(!Finite(bits))scalar_fault_park();
+			Words(L::Next)[i]=bits;
+		}
+	}else for (unsigned page=0;page<L::StatePages;page++) {
 		volatile uint32_t* destination=Words(statePages[page]);
 		const unsigned first=page*(L::StatePageBytes/4);
 		for (unsigned word=0;word<L::StatePageBytes/4;word++) {

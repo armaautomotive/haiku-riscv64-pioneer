@@ -111,7 +111,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
  void SubmitCombined(){
   unsigned p=packets++;assert(p<11);
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-  const unsigned stateReadPackets=memory.at(uint32_t(L::StatePageMode))?0:2;
+  const unsigned stateReadPackets=memory.at(uint32_t(L::StatePageMode))==1?0:2;
 #else
   const unsigned stateReadPackets=2;
 #endif
@@ -192,7 +192,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
  void Verify(){
   assert(packets==
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-   9+(memory.at(uint32_t(L::StatePageMode))?0:2)
+   9+(memory.at(uint32_t(L::StatePageMode))==1?0:2)
 #else
    11
 #endif
@@ -213,8 +213,9 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   DeltaVectorImage::Verify(); // independent scalar FP32 checks ALL8192next+64output bits
   for(unsigned i=0;i<8192;i++){
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-   const unsigned page=i/1024,word=i%1024;const uint32_t address=memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
-   assert(next[i]==memory.at(address));
+   if(memory.at(uint32_t(L::StatePageMode))==2)assert(next[i]==memory.at(uint32_t(L::Next)+i*4));
+   else {const unsigned page=i/1024,word=i%1024;const uint32_t address=memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
+    assert(next[i]==memory.at(address));}
 #else
    assert(prior[i]==memory.at(0x90000+i*4));
 #endif
@@ -254,7 +255,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    && PioneerQ38ResidentGdnSummary(step,descriptor.data(),step+8,counts));
 #endif
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-  const unsigned stateReadPackets=memory.at(uint32_t(L::StatePageMode))?0:2;
+  const unsigned stateReadPackets=memory.at(uint32_t(L::StatePageMode))==1?0:2;
   const unsigned delta[]={7+stateReadPackets,24+stateReadPackets*256,9+stateReadPackets,
    7+stateReadPackets,2,512,9+stateReadPackets,2};
 #else
@@ -300,8 +301,14 @@ int main(int argc,char** argv){
   }
  }
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+ {GdnRecurrentMachine m(argv[1],*canonical,0,95,6,23);
+  m.memory[uint32_t(L::StatePageMode)]=2;
+  for(unsigned i=0;i<8192;i++)m.memory[uint32_t(L::Prior)+i*4]=m.prior[i];
+  assert(m.Run());m.Verify();positive++;}
+#endif
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
  const unsigned totalPackets=11;
- printf("PASS ACTUAL OFFLINE QRJ1 scattered-state cold+warm combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains/ALL8256bits exact;COLD11packets9reads2writes,WARM9packets7reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
+ printf("PASS ACTUAL OFFLINE QRJ1 scattered-state cold+warm+GDDR-spill combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains+isolatedspill/ALL8256bits exact;COLD11packets9reads2writes,WARM9packets7reads2writes,SPILL11packets9reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
 #else
  const unsigned totalPackets=11;
  printf("PASS ACTUAL OFFLINE QRJ1 combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains/ALL8256bits exact+transposed-checkpoint-observer;rawQKV+originalA-dt->QK/gates->CURRENTstate->SFPU->NEXT,11packets9reads2writes/NO host stage boundary;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
@@ -352,7 +359,7 @@ int main(int argc,char** argv){
   m.memory[table+(bad==0?0:bad==1?4:bad==2?8:12)]=bad==0?m.memory.at(table+4):bad==1?valid+1:bad==2?0x180000:0x80000;
   assert(!m.Run() && !m.packets && !m.unit.ops && !m.nextWrites);negative++;
  }
- {GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.memory[uint32_t(L::StatePageMode)]=2;
+ {GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.memory[uint32_t(L::StatePageMode)]=3;
   assert(!m.Run() && !m.packets && !m.unit.ops && !m.nextWrites);negative++;}
 #endif
  printf("PASS ACTUAL OFFLINE QRJ1 faults%u:all11timeouts/counters/sources/descriptors,7rawpoison,ALLpaired-descriptorbits,110command-readback-corruptions,8boundary-counter-faultsBEFOREstateread,seam-summary+nonfinite-state;inertfaultNO laterNoC/SFPU/publication;NO initialized/native/current-stateauthority\n",negative);
