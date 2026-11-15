@@ -22,7 +22,7 @@ if [ "$#" = 1 ]; then
 		-c "$directory/pioneer_q38_gdn_l1_page_allocator_kernel_compile.cpp" \
 		-o "$temporary/kernel-witness.o"
 	test -s "$temporary/kernel-witness.o"
-	awk -F '\t' '$1 ~ /pioneer_q38_gdn_l1_page_allocator_compile_witness/ {if($2+0>2048)exit 1;seen=1}
-	 END {if(!seen)exit 1;print "PASS prepared-Q4 native-role cross-compile; compile-only, no kernel/module/device authority"}' \
+	awk -F '\t' 'NF==3 && $2 ~ /^[0-9]+$/ {if($2+0>2048)bad=1;if($2+0>maximum)maximum=$2+0;if($1 ~ /pioneer_q38_gdn_l1_page_allocator_compile_witness/)seen=1}
+	 END {if(!seen||bad)exit 1;print "PASS prepared-Q4 native-role cross-compile; maxFrame="maximum"B <= 2048B; compile-only, no kernel/module/device authority"}' \
 		"$temporary/kernel-witness.su"
 fi
