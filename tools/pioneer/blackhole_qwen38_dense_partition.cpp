@@ -24,6 +24,21 @@
 #endif
 #include "PioneerQ38DenseBf16Matrix.h"
 #include "PioneerQ38DenseBf16Stage.h"
+#ifdef PIONEER_Q38_DENSE_SFPU_EXP_INSPECTION
+#if PIONEER_Q38_DENSE_SFPU_EXP_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) \
+ || !defined(PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE) \
+ || !defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE) \
+ || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(_KERNEL_MODE) || defined(__FAST_MATH__)
+#error SFPU attention exponentials require the isolated QGW7/QDM2 inspection capsule only
+#endif
+#include "PioneerSfpuExp.h"
+#endif
 #elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
 #error Hybrid matrix attention requires the exact BF16 matrix capsule
 #endif
@@ -246,13 +261,55 @@ static void LocalExp(const uint32_t* d,const uint32_t* p,const float* local,floa
   global[h]=maximum;
  }
  if(p[6] || p[7] || p[14] || p[15])scalar_fault_park();
+#ifdef PIONEER_Q38_DENSE_SFPU_EXP_INSPECTION
+ // This switches from the completed BF16 matrix score phase to the
+ // existing FP32 SFPU path. The following ValuesCached call reinitializes
+ // the matrix configuration before its first product. This remains an
+ // offline-only inspection candidate until measured on the card.
+ Emit(0xb2000000);Drain();for(unsigned i=1;i<68;i++)Emit(0xb2000000|(i<<16));
+ Emit(0x3700000f);Emit(0x8a000002);Drain();
+ const unsigned config[]={0x4231,0x20220000,0,0,0,0,0};
+ const unsigned index[]={0,1,2,3,6,7,220};
+ for(unsigned i=0;i<7;i++){
+  Words(0xffef0000+index[i]*4)[0]=config[i];
+  if(Words(0xffef0000+index[i]*4)[0]!=config[i])scalar_fault_park();
+ }
+ Fence();
+#endif
  for(unsigned h=0;h<6;h++){
   PioneerQ38RmsSum sum;
+#ifdef PIONEER_Q38_DENSE_SFPU_EXP_INSPECTION
+  for(unsigned first=0;first<d[49];first+=32){
+   float fallback[32],reduced[32],factor[32];uint32_t common[32];
+   volatile uint32_t* input=Words(0xffbd8000);
+   for(unsigned lane=0;lane<32;lane++){
+    const unsigned token=first+lane;
+    const float value=token<d[49]?Floats(L::Scores)[h*L::Stride+token]-global[h]:0.0f;
+    common[lane]=token<d[49] && PioneerSfpuExpRange(value,reduced[lane],factor[lane]);
+    if(token>=d[49]){reduced[lane]=0.0f;factor[lane]=1.0f;}
+    fallback[lane]=common[lane]?0.0f:PioneerAttentionExp(value);
+    const unsigned at=(lane>>3)*16+(lane&7)*2;
+    input[at]=PioneerAttentionBits(reduced[lane]);
+    input[64+at]=PioneerAttentionBits(factor[lane]);
+   }
+   (void)input[64+((31>>3)*16+(31&7)*2)];Fence();
+   struct ExpEmitter {void Op(uint32_t op){Emit(op);}} expEmitter;
+   Emit(0x70030000);Emit(0x70130004);PioneerSfpuExp32(expEmitter);Drain();
+   volatile uint32_t* output=Words(0xffbd8200);
+   for(unsigned lane=0;lane<32 && first+lane<d[49];lane++){
+    const unsigned at=(lane>>3)*16+(lane&7)*2;
+    const float e=common[lane]?PioneerAttentionFloat(output[at]):fallback[lane];
+    if(!sum.Add(e))scalar_fault_park();
+    Floats(L::Scores)[h*L::Stride+first+lane]=e;
+   }
+  }
+#else
   for(unsigned t=0;t<d[49];t++){
    float e=PioneerAttentionExp(Floats(L::Scores)[h*L::Stride+t]-global[h]);
    if(!sum.Add(e))scalar_fault_park();
    Floats(L::Scores)[h*L::Stride+t]=e;
   }
+#endif
   Words(L::Local)[16+h*4]=sum.high;Words(L::Local)[17+h*4]=sum.low;
   Words(L::Local)[18+h*4]=uint32_t(sum.exponent);Words(L::Local)[19+h*4]=1;
  }

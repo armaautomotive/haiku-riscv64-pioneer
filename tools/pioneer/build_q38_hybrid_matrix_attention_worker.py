@@ -14,6 +14,7 @@ reuse_head = len(sys.argv) == 4 and sys.argv[3] == '--head-bfp8-reuse-inspection
 unroll_seal = len(sys.argv) == 4 and sys.argv[3] == '--dual-batch-unroll-seal-inspection'
 small_recurrent = len(sys.argv) == 4 and sys.argv[3] == '--recurrent-small-inspection'
 three_product_pv = len(sys.argv) == 4 and sys.argv[3] == '--three-product-pv-inspection'
+sfpu_exp = len(sys.argv) == 4 and sys.argv[3] == '--sfpu-exp-inspection'
 recurrent_width = small_recurrent or (len(sys.argv) == 4 and sys.argv[3] == '--recurrent-width-inspection')
 batch_four = recurrent_width or unroll_seal or (len(sys.argv) == 4 and sys.argv[3] == '--dual-batch-dense-inspection')
 batch_dense = batch_four or (len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-srca-batch-inspection')
@@ -22,7 +23,7 @@ combined = batch_dense or (len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-src
 dense_q8 = combined or (len(sys.argv) == 4 and sys.argv[3] == '--dense-q8-matrix-inspection')
 srca_base = combined or (len(sys.argv) == 4 and sys.argv[3] == '--head-srca-base-inspection')
 head_matrix = len(sys.argv) == 4 and sys.argv[3] in ('--head-matrix-inspection', '--head-bfp8-reuse-inspection', '--head-bfp8-batch-inspection', '--dense-q8-matrix-inspection', '--head-srca-base-inspection', '--dense-q8-srca-inspection', '--dense-q8-srca-batch-inspection', '--dual-batch-dense-inspection', '--dual-batch-unroll-seal-inspection', '--recurrent-width-inspection', '--recurrent-small-inspection')
-assert len(sys.argv) == 3 or test_layer0 or head_matrix or three_product_pv
+assert len(sys.argv) == 3 or test_layer0 or head_matrix or three_product_pv or sfpu_exp
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, out = map(Path, sys.argv[1:3]); here = Path(__file__).resolve().parent
 assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -89,6 +90,8 @@ dense_role = ['-DPIONEER_Q38_MIXED_WORKER_IMAGE=1', '-DPIONEER_Q38_MIXED_DENSE_C
               '-include', here/'PioneerQ38MixedCapsuleHook.h']
 if three_product_pv:
     dense_role.append('-DPIONEER_Q38_DENSE_BF16_PV_3_PRODUCT_INSPECTION=1')
+if sfpu_exp:
+    dense_role.append('-DPIONEER_Q38_DENSE_SFPU_EXP_INSPECTION=1')
 if srca_base:
     dense_role += ['-DPIONEER_Q38_DENSE_BF16_SRCA_BASE_CANDIDATE=1','-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1']
 run(tool+'g++', *flags, '-O2', '-ffixed-s11', *dense_role, *inspection, '-c',
