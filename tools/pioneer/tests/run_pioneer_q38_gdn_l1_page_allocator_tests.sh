@@ -10,6 +10,10 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/tes
 "${CXX:-c++}" -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_q38_gdn_l1_descriptor_experiment_test.cpp" -o "$temporary/descriptor-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/descriptor-test"
+"${CXX:-c++}" -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT=1 \
+	"$directory/pioneer_q38_gdn_l1_descriptor_experiment_test.cpp" -o "$temporary/descriptor-no-gddr-writeback-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/descriptor-no-gddr-writeback-test"
 if [ "$#" = 1 ]; then
 	sdk=$1
 	compiler=$sdk/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++

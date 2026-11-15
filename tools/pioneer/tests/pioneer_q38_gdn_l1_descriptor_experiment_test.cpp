@@ -21,10 +21,18 @@ int main()
 	uint32_t d[64]; Fill(d);
 	assert(PioneerQ38ResidentGdnShapePeer(d, d[15])); // legacy tail safely spills
 	assert(PioneerQ38ResidentGdnCacheMode(d) == 2);
+	assert(PioneerQ38ResidentGdnCacheMode(nullptr) == 4);
 	unsigned cases = 1;
-	for (unsigned mode = 0; mode <= 1; ++mode) {
+	for (unsigned mode = 0; mode <= 3; ++mode) {
+		if (mode == 2) continue; // spill mode requires an empty page map
 		Fill(d); d[50] = mode;
 		for (unsigned i = 0; i < 8; ++i) d[42 + i] = 0x90000 + i * 0x1000;
+#ifndef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+		if (mode == 3) {
+			assert(!PioneerQ38ResidentGdnCacheDescriptor(d)); cases++;
+			continue;
+		}
+#endif
 		assert(PioneerQ38ResidentGdnCacheDescriptor(d));
 		assert(PioneerQ38ResidentGdnShapePeer(d, d[15]));
 		assert(PioneerQ38ResidentGdnCacheMode(d) == mode); cases++;
@@ -35,7 +43,7 @@ int main()
 			else if (bad == 1) candidate[42]++;
 			else if (bad == 2) candidate[42] = 0x8f000;
 			else if (bad == 3) candidate[42] = 0x17f001;
-			else candidate[50] = 3;
+			else candidate[50] = 4;
 			assert(!PioneerQ38ResidentGdnCacheDescriptor(candidate));
 			assert(!PioneerQ38ResidentGdnShapePeer(candidate, candidate[15]));
 		}

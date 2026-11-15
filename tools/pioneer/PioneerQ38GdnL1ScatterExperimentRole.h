@@ -9,3 +9,7 @@
 	|| defined(PIONEER_Q38_GDN_INPLACE_STATE_EXPERIMENT) || defined(_KERNEL_MODE)
 #error Scattered GDN L1 state is an isolated offline worker experiment only
 #endif
+#if defined(PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT) \
+	&& PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT != 1
+#error L1-authoritative state experiment selector must be exactly 1
+#endif

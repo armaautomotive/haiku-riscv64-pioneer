@@ -204,6 +204,10 @@ struct DeltaVectorImage:ScalarMachine {
 #ifdef PIONEER_Q38_GDN_SCATTERED_RESIDENT_IMAGE_TEST
 		assert((memory.at(uint32_t(L::StatePageMode))==2
 			?nextWrites==8192 && !scatterWrites
+#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+			:memory.at(uint32_t(L::StatePageMode))==3
+				?!nextWrites && scatterWrites==8192
+#endif
 			:nextWrites==8192 && scatterWrites==8192)
 			&& statePrefillWrites==(memory.at(uint32_t(L::StatePageMode))?0:8192));
 #else

@@ -97,11 +97,17 @@ static __attribute__((noinline,unused)) bool GdnRedistributed(uint32_t* d,unsign
   unsigned swap=nextState[12];nextState[12]=nextState[13];nextState[13]=swap;
  }
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-	// The first position populates the worker-local pages from the sealed
-	// GDDR current slot. Later positions may reuse those pages; spill rows
-	// remain explicitly mode 2. Whole-token commit/recovery ownership is
-	// still required before this experiment can be selected for live Work.
-	if(committed && PioneerQ38ResidentGdnCacheMode(nextState)==0)nextState[50]=1;
+	// The first position populates worker-local pages from the sealed GDDR
+	// current slot. Later positions may either retain the transactional GDDR
+	// write-through mode or, in the separate offline experiment, make L1 the
+	// sole authoritative state for resident rows. Spill rows remain mode 2.
+	if(committed && PioneerQ38ResidentGdnCacheMode(nextState)==0){
+#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+	 nextState[50]=3;
+#else
+	 nextState[50]=1;
+#endif
+	}
 #endif
  if(!PioneerQ38GdnRedistributedPairing(stage,nextState)
   || !PioneerQ38GdnRedistributedRendezvousShape(nextGated,stage,nextState))return false;

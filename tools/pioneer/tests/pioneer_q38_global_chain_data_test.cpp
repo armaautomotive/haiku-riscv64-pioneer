@@ -120,7 +120,11 @@ int main(){
 			assert(PioneerQ38TokenMetadata::GdnRedistributed(coldRecord.data(),layer,route.physicalWorker,0,0));
 			assert(PioneerQ38TokenMetadata::GdnRedistributed(nextRecord.data(),layer,route.physicalWorker,1,1));
 			const unsigned mode=pageMap[(route.physicalWorker-1)*9];
-			assert(coldRecord[64+50]==mode && nextRecord[64+50]==(mode==0?1:2));
+			unsigned warmMode=1;
+#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+			warmMode=3;
+#endif
+			assert(coldRecord[64+50]==mode && nextRecord[64+50]==(mode==0?warmMode:2));
 			if(mode==0)residentChecks++;else spillChecks++;
 		}
 		assert(residentChecks && (layer==0 || spillChecks));

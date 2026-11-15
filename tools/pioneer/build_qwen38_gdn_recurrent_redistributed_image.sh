@@ -2,11 +2,16 @@
 # Candidate redistributed QRJ1 image;offline compile only,no native/device grant.
 set -eu
 python3 -c 'import os,sys; sys.exit(0 if all(not k.startswith("PIONEER_") or v=="0" for k,v in os.environ.items()) else 2)' || exit 2
-[ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
+[ "$#" = 2 ] || [ "$#" = 3 ] || [ "$#" = 4 ] || exit 2
 scattered=
-if [ "$#" = 3 ]; then
+no_gddr_writeback=
+if [ "$#" -ge 3 ]; then
 	[ "$3" = --scattered-cache ] || exit 2
 	scattered=-DPIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT=1
+fi
+if [ "$#" = 4 ]; then
+	[ "$4" = --no-gddr-writeback ] || exit 2
+	no_gddr_writeback=-DPIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT=1
 fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
@@ -21,8 +26,8 @@ for unit in gdn_input resident_gdn gdn_recurrent; do
 	optimize=-O2
 	case "$unit" in
 		gdn_input) role=-DPIONEER_Q38_GDN_INPUT_COMBINED_STAGE=1;;
-		resident_gdn) role=-DPIONEER_Q38_RGDN_COMBINED_STAGE=1; unit_scattered=$scattered;;
-		gdn_recurrent) role='-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1 -DPIONEER_Q38_GDN_REDISTRIBUTED_STANDALONE=1'; unit_scattered=$scattered; optimize=-Os;;
+		resident_gdn) role=-DPIONEER_Q38_RGDN_COMBINED_STAGE=1; unit_scattered="$scattered $no_gddr_writeback";;
+		gdn_recurrent) role='-DPIONEER_Q38_GDN_REDISTRIBUTED_IMAGE=1 -DPIONEER_Q38_GDN_REDISTRIBUTED_STANDALONE=1'; unit_scattered="$scattered $no_gddr_writeback"; optimize=-Os;;
 	esac
 	"$cross-g++" -std=c++11 "$optimize" -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
 		-fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \

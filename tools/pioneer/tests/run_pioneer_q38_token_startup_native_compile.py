@@ -8,6 +8,9 @@ import sys
 args=sys.argv[1:]
 scattered='--scattered-cache' in args
 if scattered:args.remove('--scattered-cache')
+no_gddr_writeback='--no-gddr-writeback' in args
+if no_gddr_writeback:args.remove('--no-gddr-writeback')
+assert not no_gddr_writeback or scattered
 assert len(args) == 2 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, output = map(pathlib.Path, args)
 here = pathlib.Path(__file__).resolve().parent
@@ -22,6 +25,7 @@ subprocess.run([tool+'g++', '-std=c++11', '-O2', '-Wall', '-Wextra', '-Werror', 
                 *(['-DPIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT=1','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1',
                    '-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1','-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1',
                    '-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1'] if scattered else []),
+                *(['-DPIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT=1'] if no_gddr_writeback else []),
                 *['-I'+str(project/p) for p in ('headers', 'headers/posix', 'headers/config', 'headers/posix/arch/riscv64')],
                 '-c', str(here/'pioneer_q38_token_startup_kernel_compile.cpp'), '-o', str(obj)], check=True)
 frames, new_frames, routed_frames = [], [], []
@@ -49,7 +53,7 @@ undefined = subprocess.check_output([tool+'nm', '-u', str(obj)], text=True)
 for name in ('init_hardware', 'init_driver', 'publish_devices', 'find_device', 'OriginalSource', 'CpuModel',
              'ReferenceProducts', 'ioctl', 'map_physical_memory', 'PioneerQ38RecurrentPrefixOwner'):
     assert name not in symbols+undefined, name
-mode='scattered-cache ' if scattered else ''
+mode=('scattered-cache L1-authoritative ' if no_gddr_writeback else 'scattered-cache ' if scattered else '')
 print(f'PASS RISC-V C++11 {mode}startup DATA+redistributed-GDN transform instantiated/{len(frames)} static frames/startupMax{max(new_frames)}B/routedMax{max(routed_frames)}B/allMax{max(frames)}B/NO conventional driver ABI/device IO/CPU reference/prefix-owner alias')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-startup-DATA-NODRV.o')
 print('COMPILE ONLY: not a complete native context,upload authentication,launch/STOP/physical/Work/TPS qualification')

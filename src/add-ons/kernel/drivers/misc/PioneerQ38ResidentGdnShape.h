@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_RESIDENT_GDN_SHAPE_H
 #define PIONEER_Q38_RESIDENT_GDN_SHAPE_H
+#if defined(PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT) \
+	&& (!defined(PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT) \
+		|| PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT != 1)
+#error L1-authoritative GDN state requires the isolated scattered-cache experiment
+#endif
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 #include "../../../../../tools/pioneer/PioneerQ38GdnL1ScatterExperimentRole.h"
 #endif
@@ -27,12 +32,16 @@ static inline bool PioneerQ38ResidentGdnAddress(uint32_t address) {
 }
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 // Optional worker-local state-cache descriptor carried in the otherwise
-// reserved tail of the private GDN state record. This is still an offline
-// experiment: the page allocator/owner must supply the addresses, and a
-// whole-token owner must decide when cache mode 1 is safe.
+// reserved tail of the private GDN state record. Modes: 0 cold-fill plus
+// write-through, 1 warm write-through, 2 GDDR spill, 3 warm L1-authoritative
+// with no GDDR state writeback. Mode 3 is only valid in the offline experiment
+// role; the owner must discard the whole session after any fault.
 static inline bool PioneerQ38ResidentGdnCacheDescriptor(const uint32_t* d)
 {
-	if (!d || d[50] > 2) return false;
+	if (!d || d[50] > 3) return false;
+	#ifndef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+	if (d[50] == 3) return false;
+	#endif
 	bool empty = d[50] == 0;
 	for (unsigned i = 0; i < 8; ++i) empty &= d[42 + i] == 0;
 	if (empty) return true; // legacy descriptor: force GDDR spill in the worker
@@ -50,7 +59,7 @@ static inline bool PioneerQ38ResidentGdnCacheDescriptor(const uint32_t* d)
 }
 static inline unsigned PioneerQ38ResidentGdnCacheMode(const uint32_t* d)
 {
-	if (!d) return 3;
+	if (!d) return 4;
 	bool empty = d[50] == 0;
 	for (unsigned i = 0; i < 8; ++i) empty &= d[42 + i] == 0;
 	return empty ? 2 : d[50];
@@ -84,23 +93,24 @@ static inline bool PioneerQ38ResidentGdnShape(const uint32_t* d) {
 static inline bool PioneerQ38ResidentGdnSummary(const uint32_t* s,const uint32_t* d,const uint32_t* before,const uint32_t* after) {
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 	const unsigned mode=s?s[29]:0;
-	const unsigned reads=mode==3?0:(mode==4 || mode==5)?2:~0U;
+	const unsigned reads=(mode==3 || mode==6)?0:(mode==4 || mode==5)?2:~0U;
+	const unsigned writes=mode==6?0:(mode==3 || mode==4 || mode==5)?2:~0U;
 #else
  const unsigned reads=
 #ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
- 4,mode=2;
+	 4,mode=2,writes=2;
 #else
- 2,mode=1;
+	 2,mode=1,writes=2;
 #endif
 #endif
 	if (!s || !before || !after || !PioneerQ38ResidentGdnShape(d)
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-	  || (mode!=3 && mode!=4 && mode!=5)
+	  || (mode!=3 && mode!=4 && mode!=5 && mode!=6)
 #endif
-  || s[0]!=reads || s[1]!=reads*256 || s[2]!=2 || s[3]!=512 || s[4]!=64 || s[5]!=32768 || s[6]!=d[8] || s[7]!=TT_Q38_RGDN_MARKER
+	  || s[0]!=reads || s[1]!=reads*256 || s[2]!=writes || s[3]!=writes*256 || s[4]!=64 || s[5]!=32768 || s[6]!=d[8] || s[7]!=TT_Q38_RGDN_MARKER
   || s[24]!=d[9] || s[25]!=d[10] || s[26]!=d[11] || s[27]!=(d[11]^1) || s[28]!=d[15] || s[29]!=mode
   || s[30]!=d[5] || s[31]!=d[7] || before[2]!=before[6] || after[2]!=after[6]) return false;
- const unsigned delta[]={reads,reads*256,reads+2,reads,2,512,reads+2,2};
+	const unsigned delta[]={reads,reads*256,reads+writes,reads,writes,writes*256,reads+writes,writes};
  for (unsigned i=0;i<8;i++) if (s[8+i]!=before[i] || s[16+i]!=after[i] || uint32_t(after[i]-before[i])!=delta[i]) return false;
  return true;
 }

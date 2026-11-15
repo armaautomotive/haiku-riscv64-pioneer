@@ -78,7 +78,7 @@ extern "C" unsigned scalar_main()
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 	uint32_t statePages[L::StatePages];
 	const unsigned cacheMode=Words(L::StatePageMode)[0];
-	if(cacheMode>2 || (cacheMode!=2 && !StatePages(statePages)))return 0;
+	if(cacheMode>3 || (cacheMode!=2 && !StatePages(statePages)))return 0;
 #endif
 	uint32_t decay=*Words(L::Decay),beta=*Words(L::Beta);
 	if (!PioneerQ38DeltaVectorGate(decay) || !PioneerQ38DeltaVectorGate(beta)) return 0;

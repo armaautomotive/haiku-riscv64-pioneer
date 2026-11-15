@@ -164,9 +164,12 @@ struct GdnRecurrentMachine:ResidentGdnImage {
  void SubmitCombined(){
   unsigned p=packets++;assert(p<11);
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-  const unsigned stateReadPackets=memory.at(uint32_t(L::StatePageMode))==1?0:2;
+	const unsigned cacheMode=memory.at(uint32_t(L::StatePageMode));
+	const unsigned stateReadPackets=(cacheMode==1 || cacheMode==3)?0:2;
+	const unsigned stateWritePackets=cacheMode==3?0:2;
 #else
   const unsigned stateReadPackets=2;
+	const unsigned stateWritePackets=2;
 #endif
   if(p<7){
    const unsigned local[]={0x80000,0x80200,0x80400,0x80800,0x80840,0x80880,0x808c0},size[]={512,512,256,64,64,64,64};
@@ -183,7 +186,8 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    counts[0]++;counts[1]+=size[p]/64;counts[2]++;counts[3]++;counts[6]++;
   }else{
    assert(prepareWrites==322 && prepareDescriptorWrites==5 && prepareHeaderWrites==32 && !returnWrites);
-   bool write=p>=7+stateReadPackets;unsigned piece=write?(p-7-stateReadPackets)%2:(p-7)%2;
+		assert(p<7+stateReadPackets+stateWritePackets);
+		bool write=p>=7+stateReadPackets;unsigned piece=write?(p-7-stateReadPackets)%2:(p-7)%2;
    unsigned local=(write?0xa0000:0x90000)+piece*16384;
    unsigned remote=descriptor[write?7:5]+piece*16384;
    const uint32_t expected[]={write?local:remote,0,write?descriptor[15]:descriptor[12],write?remote:local,0,
@@ -199,7 +203,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   if(packets==foreignCounter)counts[p<7+stateReadPackets?4:0]++;
   if(packets==sourceFault)seals[11]^=1;
   if(packets==descriptorFault)memory[(p<7?TT_Q38_GDN_INPUT_DESCRIPTOR:TT_Q38_RGDN_DESCRIPTOR)+40*4]^=1;
-  if(packets==9+stateReadPackets && summaryFault==packets)memory[TT_Q38_GDN_INPUT_SUMMARY+16*4]^=1;
+	if(packets==7+stateReadPackets+stateWritePackets && summaryFault==packets)memory[TT_Q38_GDN_INPUT_SUMMARY+16*4]^=1;
  }
  void Store(uint32_t at,uint32_t value)override{
   if(Range(at,0xffb20000,40)){
@@ -243,9 +247,18 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   return memory.at(0x17ffc4)==64;
  }
  void Verify(){
+	#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+		const unsigned cacheMode=memory.at(uint32_t(L::StatePageMode));
+		if(cacheMode==3)for(unsigned i=0;i<8192;i++){
+			const unsigned page=i/1024,word=i%1024;
+			next[i]=memory.at(memory.at(uint32_t(L::StatePageTable)+page*4)+word*4);
+		}
+		const unsigned stateReadPackets=(cacheMode==1 || cacheMode==3)?0:2;
+		const unsigned stateWritePackets=cacheMode==3?0:2;
+	#endif
   assert(packets==
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-   9+(memory.at(uint32_t(L::StatePageMode))==1?0:2)
+		 7+stateReadPackets+stateWritePackets
 #else
    11
 #endif
@@ -272,7 +285,11 @@ struct GdnRecurrentMachine:ResidentGdnImage {
 #else
    assert(prior[i]==memory.at(0x90000+i*4));
 #endif
-   assert(next[i]==memory.at(0xa0000+i*4));
+		#ifndef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+		 assert(next[i]==memory.at(0xa0000+i*4));
+		#else
+		 if(memory.at(uint32_t(L::StatePageMode))!=3)assert(next[i]==memory.at(0xa0000+i*4));
+		#endif
   }
   // Independently observe the checkpoint's TRANSPOSED [head][value][key]
   // layout,not a second key-major primitive. No checkpoint/reference bytes
@@ -301,16 +318,21 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   legacyState[15]=PioneerQ38ResidentGdnPeer(legacyState[9]);
   uint32_t legacyStep[32];for(unsigned i=0;i<32;i++)legacyStep[i]=step[i];
   assert(step[28]==descriptor[15]);legacyStep[28]=legacyState[15];
-  assert(PioneerQ38GdnInputSummary(prep,legacyInput,initialCounts,step+8)
-   && PioneerQ38ResidentGdnSummary(legacyStep,legacyState,step+8,counts));
+	  const bool inputSummaryOk=PioneerQ38GdnInputSummary(prep,legacyInput,initialCounts,step+8);
+	  const bool residentSummaryOk=PioneerQ38ResidentGdnSummary(legacyStep,legacyState,step+8,counts);
+	  if(!inputSummaryOk || !residentSummaryOk)fprintf(stderr,
+	   "summary mismatch input=%u resident=%u cacheMode=%u workerMode=%u reads=%u/%u writes=%u/%u counters=%u,%u,%u,%u,%u,%u,%u,%u -> %u,%u,%u,%u,%u,%u,%u,%u\\n",
+	   unsigned(inputSummaryOk),unsigned(residentSummaryOk),memory.at(uint32_t(L::StatePageMode)),legacyStep[29],
+	   legacyStep[0],legacyStep[1],legacyStep[2],legacyStep[3],step[8],step[9],step[10],step[11],step[12],step[13],step[14],step[15],
+	   counts[0],counts[1],counts[2],counts[3],counts[4],counts[5],counts[6],counts[7]);
+	  assert(inputSummaryOk && residentSummaryOk);
 #else
   assert(PioneerQ38GdnInputSummary(prep,inputDescriptor.data(),initialCounts,step+8)
    && PioneerQ38ResidentGdnSummary(step,descriptor.data(),step+8,counts));
 #endif
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
-  const unsigned stateReadPackets=memory.at(uint32_t(L::StatePageMode))==1?0:2;
-  const unsigned delta[]={7+stateReadPackets,24+stateReadPackets*256,9+stateReadPackets,
-   7+stateReadPackets,2,512,9+stateReadPackets,2};
+	 const unsigned delta[]={7+stateReadPackets,24+stateReadPackets*256,7+stateReadPackets+stateWritePackets,
+	  7+stateReadPackets,stateWritePackets,stateWritePackets*256,7+stateReadPackets+stateWritePackets,stateWritePackets};
 #else
   const unsigned delta[]={9,536,11,9,2,512,11,2};
 #endif
@@ -352,7 +374,13 @@ int main(int argc,char** argv){
      const uint32_t address=m.memory.at(uint32_t(L::StatePageTable)+page*4)+word*4;
      m.memory[address]=carry[i];
     }
-    m.descriptor[50]=token?1:0;
+			m.descriptor[50]=token?
+#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+				3
+#else
+				1
+#endif
+				:0;
     m.SetDescriptors();
    }
 #endif
@@ -370,7 +398,11 @@ int main(int argc,char** argv){
  assert(sAllocatorResidentRoutes>0 && sAllocatorSpillRoutes>0);
  printf("PASS ACTUAL allocator page-table integration: resident routes%u spill routes%u; exact emitted worker consumed real mapped L1 page addresses and GDDR fallback metadata; ",sAllocatorResidentRoutes,sAllocatorSpillRoutes);
 #endif
- printf("PASS ACTUAL OFFLINE QRJ1 scattered-state cold+warm+GDDR-spill combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains+isolatedspill/ALL8256bits exact;COLD11packets9reads2writes,WARM9packets7reads2writes,SPILL11packets9reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
+	#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+	printf("PASS ACTUAL OFFLINE QRJ1 scattered-state cold+L1-authoritative-warm+GDDR-spill positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains+isolatedspill/ALL8256bits exact;COLD11packets9reads2writes,WARM7packets7reads0writes,SPILL11packets9reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
+	#else
+	printf("PASS ACTUAL OFFLINE QRJ1 scattered-state cold+warm+GDDR-spill combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains+isolatedspill/ALL8256bits exact;COLD11packets9reads2writes,WARM9packets7reads2writes,SPILL11packets9reads2writes;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
+	#endif
 #else
  const unsigned totalPackets=11;
  printf("PASS ACTUAL OFFLINE QRJ1 combined worker positives%u/all96halves/7banks/bothslots/four16stepNONRESETTINGchains/ALL8256bits exact+transposed-checkpoint-observer;rawQKV+originalA-dt->QK/gates->CURRENTstate->SFPU->NEXT,11packets9reads2writes/NO host stage boundary;maxSteps%u/maxStack%u;NOT native/card/tokencommit/speed\n",positive,maxSteps,maxStack);
@@ -421,8 +453,13 @@ int main(int argc,char** argv){
   m.memory[table+(bad==0?0:bad==1?4:bad==2?8:12)]=bad==0?m.memory.at(table+4):bad==1?valid+1:bad==2?0x180000:0x80000;
   assert(!m.Run() && !m.packets && !m.unit.ops && !m.nextWrites);negative++;
  }
- {GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.memory[uint32_t(L::StatePageMode)]=3;
-  assert(!m.Run() && !m.packets && !m.unit.ops && !m.nextWrites);negative++;}
+	{GdnRecurrentMachine m(argv[1],*canonical,0,95,6);m.descriptor[50]=3;m.SetDescriptors();
+#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+	 assert(m.Run());m.Verify();positive++;
+#else
+	 assert(!m.Run() && !m.packets && !m.unit.ops && !m.nextWrites);negative++;
+#endif
+	}
 #endif
  printf("PASS ACTUAL OFFLINE QRJ1 faults%u:all11timeouts/counters/sources/descriptors,7rawpoison,ALLpaired-descriptorbits,110command-readback-corruptions,8boundary-counter-faultsBEFOREstateread,seam-summary+nonfinite-state;inertfaultNO laterNoC/SFPU/publication;NO initialized/native/current-stateauthority\n",negative);
 }

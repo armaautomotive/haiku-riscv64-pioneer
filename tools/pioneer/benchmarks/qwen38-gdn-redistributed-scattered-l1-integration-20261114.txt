@@ -39,12 +39,14 @@ fits at most 2,975 of 4,608 half-states in safe L1 pages; 1,633 spill to GDDR.
 The 126/35 figure above is only the number of executions exercised by this
 test, not total-model residency.
 
-The allocator test now also asserts the possible warm-read reduction for one
-complete recurrent-state sweep: 2,975 resident tasks times two 16-KiB reads
-is 5,950 packet reads / 97,484,800 bytes (92.95 MiB) that later warm tokens
-could avoid. This is on-card GDDR traffic accounting derived from the worker
-packet sizes, not elapsed time or a tokens/sec estimate; it applies only when
-the preceding token committed and the cache remained valid.
+The allocator test asserts traffic bounds for one complete recurrent-state
+sweep. Ordinary warm write-through can avoid 5,950 GDDR read packets /
+97,484,800 bytes (92.95 MiB). The L1-authoritative experiment below can also
+avoid the same number of GDDR write packets, for a theoretical total of 11,900
+avoided transactions / 194,969,600 bytes (185.90 MiB) per sweep. These are
+on-card GDDR traffic counts derived from the worker's 16-KiB packet sizes, not
+elapsed time or a tokens/sec estimate; write avoidance gives up per-token GDDR
+rollback for resident states and requires whole-session discard on fault.
 
 What is still missing
 ---------------------
@@ -77,9 +79,11 @@ The missing package/startup-data seam is now implemented and pushed in
   position and the package's committed-token frontier, and rejects the
   transform unless they match. It emits cold mode at position zero, warm mode
   only for later committed resident positions, and keeps spill routes in GDDR
-  mode. This prevents a stale or partially committed position from selecting
-  cached state; it does not itself prove the L1 pages survived a reset or
-  authorize enabling the experiment in live Work.
+  mode. Under a second explicit offline-only selector, resident warm routes
+  instead use mode 3 (L1-authoritative/no GDDR writeback). This prevents a
+  stale or partially committed position from selecting cached state; it does
+  not itself prove the L1 pages survived a reset or authorize enabling the
+  experiment in live Work.
   The worker consumes the page map from its already-validated descriptor,
   avoiding a separate peer-table write.
 
@@ -105,3 +109,26 @@ kernel or Work role, the deterministic addresses have not been backed by a
 live allocation/pinning owner, no whole-token cache epoch/rollback protocol
 is wired, and no full-model hardware performance number exists. Do not
 interpret the compile or simulator results as P100A inference or a speedup.
+
+2026-11-15 L1-authoritative no-writeback experiment
+-------------------------------------------------
+Added an isolated mode-3 candidate for resident GDN state. Unlike warm
+write-through mode 1, mode 3 reuses the mapped L1 state and suppresses both
+GDDR state reads and the 32-KiB next-slot writeback. Spill rows remain mode 2
+and retain their GDDR read/write path. The candidate is rejected unless the
+explicit `PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT=1` selector is built
+alongside the scattered-state experiment; Work, validation, native and kernel
+roles remain compile-time excluded.
+
+The emitted redistributed worker simulation passed 161 exact-output positive
+cases over all 96 half-heads, both state slots, seven banks, four non-resetting
+16-step state chains, and an isolated spill case. Warm residents used 7 worker
+packets (7 reads, 0 writes), versus 9 packets (7 reads, 2 writes) in warm
+write-through; the spill path remained 11 packets (9 reads, 2 writes). All
+8,256 output/state words matched the independent reference, and 4,137 injected
+fault cases passed without later NoC/SFPU/publication. The separate baseline
+scattered build passed 161 positives and 4,138 fault cases. This proves only
+the worker-level offline behavior. L1 is the sole state authority for resident
+rows in mode 3, so any interruption invalidates that inference session; it
+does not preserve GDDR rollback/resume state. No P100A latency or Qwen token
+rate was measured.
