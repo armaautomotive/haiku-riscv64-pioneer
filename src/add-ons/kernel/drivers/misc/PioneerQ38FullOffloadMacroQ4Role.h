@@ -16,9 +16,18 @@
 #ifdef _KERNEL_MODE
 #if _KERNEL_MODE != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010093ULL \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
 #error Full-card macro Q4 requires the actual tag93 exclusive full native parent
+#endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
+#if PIONEER_DRIVER_BUILD_TAG != 0x2026111500010100ULL
+#error Full-card spill macro Q4 requires exact tag100
+#endif
+#else
+#if PIONEER_DRIVER_BUILD_TAG != 0x2026110400010093ULL
+#error Full-card macro Q4 requires exact tag93
+#endif
 #endif
 #else
 #if !defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || PIONEER_Q38_FULL_OFFLOAD_CLIENT != 1 \

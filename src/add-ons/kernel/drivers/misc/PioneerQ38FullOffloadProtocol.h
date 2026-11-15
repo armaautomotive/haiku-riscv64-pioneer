@@ -40,6 +40,9 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "PioneerQ38FullOffloadPreparedQ4Role.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+#include "PioneerQ38FullOffloadSpillQ4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
 #include "PioneerQ38FullOffloadMacroQ4Role.h"
 #endif
@@ -49,6 +52,8 @@
 namespace PioneerQ38FullOffload {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110600010116);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
+static constexpr uint64_t BuildTag=UINT64_C(0x2026111500010100);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010103);

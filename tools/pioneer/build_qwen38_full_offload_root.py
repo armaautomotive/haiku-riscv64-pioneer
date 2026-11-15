@@ -16,6 +16,10 @@ compact_inspection='--compact-inspection' in args
 if compact_inspection:
     if args.count('--compact-inspection')!=1:raise SystemExit(2)
     args.remove('--compact-inspection')
+spill_root_code='--spill-root-code' in args
+if spill_root_code:
+    if args.count('--spill-root-code')!=1:raise SystemExit(2)
+    args.remove('--spill-root-code')
 PINS_FFN_SHARED_INPUT_REUSE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
   ('text.bin',131040,'641babd1746c1f89aef05b30057808b9887f235a3c757006472c33c8f69ed9f0'),
   ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
@@ -33,6 +37,7 @@ if ffn_shared_reuse:
 assert __debug__ and len(args)==2
 assert not compact_inspection or inspect_candidate,'compact controller/components are inspection-only'
 assert not (compact_inspection and ffn_shared_reuse),'compact inspection profile cannot combine with FFN reuse'
+assert not (compact_inspection and spill_root_code),'spill ROOT code uses the production-size compiler profile'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
 assert build.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -67,14 +72,18 @@ run([tool+'g++',*root_flags,*(['-include',str(here/'PioneerQ38FreestandingMemcpy
      '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1','-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1',
      '-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1','-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1',
      '-c',str(here/'blackhole_qwen38_token_root.cpp'),'-o',str(out/'program.o')])
-run([tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(here/'blackhole_qwen38_global_chain.ld'),
+linker_script=here/('blackhole_qwen38_global_chain_spill_q4.ld' if spill_root_code else 'blackhole_qwen38_global_chain.ld')
+run([tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(linker_script),
      str(base/'start.o'),str(out/'program.o'),str(components/'token-components-NOBOOT.o'),
      str(components/'unchanged-feedback/feedback.o'),'-Map',str(out/'program.map'),'-o',str(out/'program.elf')])
-for section in ('boot','text','terminal','conv'):
+sections=('boot','text','terminal','conv','rootspill') if spill_root_code else ('boot','text','terminal','conv')
+for section in sections:
     run([tool+'objcopy','-O','binary','-j','.'+section,str(out/'program.elf'),str(out/(section+'.bin'))])
 assert hashlib.sha256((out/'boot.bin').read_bytes()).hexdigest()=='32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'
 assert hashlib.sha256((out/'terminal.bin').read_bytes()).hexdigest()=='6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'
 assert 0<len((out/'text.bin').read_bytes())<=0x20000 and 0<len((out/'conv.bin').read_bytes())<=0x8000
+if spill_root_code:
+    assert 0<len((out/'rootspill.bin').read_bytes())<=0x3ff8 and len((out/'rootspill.bin').read_bytes())%4==0
 symbols=subprocess.check_output([tool+'nm','-nC',str(out/'program.elf')],text=True)
 assert not subprocess.check_output([tool+'nm','-u',str(out/'program.elf')],text=True).strip()
 assert 'GlobalChain::FullOffloadEog(unsigned int)' in symbols
@@ -87,7 +96,7 @@ assert frames and all(len(r)==3 and r[2]=='static' and int(r[1])<=2048 for r in 
 (out/'program.disassembly').write_text(subprocess.check_output([tool+'objdump','-d',str(out/'program.elf')],text=True))
 subprocess.run([sys.executable,str(here/'tests/pioneer_q38_full_offload_eog_isa_test.py'),str(build),str(out)],check=True)
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
-for name in ('boot','text','terminal','conv'):
+for name in sections:
     data=(out/(name+'.bin')).read_bytes();print(name,len(data),hashlib.sha256(data).hexdigest(),flush=True)
 if ffn_shared_reuse:
     if not inspect_candidate:

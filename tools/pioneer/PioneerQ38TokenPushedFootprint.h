@@ -5,6 +5,9 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadFastDecodeRole.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadSpillQ4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadPreparedQ4Role.h"
 #endif
@@ -15,26 +18,45 @@
 namespace PioneerQ38TokenPushedL1 {
 struct Span {uint32_t address,words;};
 enum {Family=0x33505451,Precise=1,Pushed=1,Workers=120,FrontBytes=0x3000,
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+ SpillQ4=1,PreparedQ4=0,FastDecode=0,RootAuxWords=8192,RootSpillWords=4094,RootSavedWords=321033,
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
+ SpillQ4=0,
  PreparedQ4=1,FastDecode=0,RootAuxWords=10240,RootSavedWords=318987,
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
+ SpillQ4=0,
  PreparedQ4=0,FastDecode=1,RootAuxWords=8566,RootSavedWords=317313,
 #else
+ SpillQ4=0,
  PreparedQ4=0,FastDecode=0,RootAuxWords=8192,RootSavedWords=316939,
 #endif
  PeerSavedWords=110601,
  SavedWords=RootSavedWords+119*PeerSavedWords,SavedBytes=SavedWords*4};
-static inline unsigned SnapshotSpans(unsigned worker){return worker>=Workers?0:worker?8:7;}
+static inline unsigned SnapshotSpans(unsigned worker){return worker>=Workers?0:worker?8:
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+ 8;
+#else
+ 7;
+#endif
+}
 static inline Span SnapshotSpan(unsigned worker,unsigned span){
  if(worker>=Workers || span>=SnapshotSpans(worker))return {UINT32_MAX,0};
  if(!span)return {0x6000,1};
  if(!worker)switch(span){
   case 1:return {0x40000,32768};
   case 2:return {0x60000,2};
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+  case 3:return {0x60008,RootSpillWords};
+  case 4:return {0x64000,RootAuxWords};
+  case 5:return {0x6e000,2048};
+  case 6:return {0x74000,273920};
+  default:return {0x17ffc0,8};
+#else
   case 3:return {0x64000,RootAuxWords};
   case 4:return {0x6e000,2048};
   case 5:return {0x74000,273920};
   default:return {0x17ffc0,8};
+#endif
  }
  switch(span){
   case 1:return {0x20000,FrontBytes/4};
@@ -62,10 +84,25 @@ static inline bool SnapshotContains(unsigned worker,uint32_t address){
  }
  return false;
 }
-static_assert(1+32768+2+RootAuxWords+2048+273920+8==RootSavedWords,"complete ROOT including receipt slots and terminals");
+static_assert(1+32768+2+
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+ RootSpillWords+
+#endif
+ RootAuxWords+2048+273920+8==RootSavedWords,"complete ROOT including receipt slots and terminals");
 static_assert(1+3072+16384+4096+16384+61440+9216+8==PeerSavedWords,"QGW3 front window including padding");
-static_assert(SavedWords==13478458+PreparedQ4*2048+FastDecode*374
- && SavedBytes==53913832+PreparedQ4*8192+FastDecode*1496,"distinct full120 QTP3 journal;HEAP ONLY");
+static_assert(SavedWords==13478458+PreparedQ4*2048+FastDecode*374+
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+ RootSpillWords
+#else
+ 0
+#endif
+ && SavedBytes==53913832+PreparedQ4*8192+FastDecode*1496+
+#ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
+ RootSpillWords*4
+#else
+ 0
+#endif
+ ,"distinct full120 QTP3 journal;HEAP ONLY");
 }
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
