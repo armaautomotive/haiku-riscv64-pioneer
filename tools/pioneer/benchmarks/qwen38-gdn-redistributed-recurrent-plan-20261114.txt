@@ -1,0 +1,44 @@
+Pioneer Qwen 3.8 redistributed recurrent-state planning — 2026-11-14
+====================================================================
+
+This is a data-planning increment toward the experimental 119-peer GDN
+placement. It does not route native work, allocate L1 cache, launch peers,
+change the selected Work path, run on the P100A, or establish a speedup.
+
+Change
+------
+Added PioneerQ38GdnRedistributedRecurrentPlan. Its owner-bound Build/Matches
+methods derive current and next state extents for any of the 48 recurrent
+layers and 96 logical half-head tasks, then pair them with the matching
+layer-dependent input peer. The public pure descriptor constructor is tested
+with inert synthetic extents and explicitly grants no ownership or access.
+The existing layer-0 fixed-route recurrent owner remains unchanged.
+
+Evidence
+--------
+* ASan/UBSan host test passed all 4,608 layer/task input plans and paired
+  redistributed state descriptors. Every pair was checked for matching
+  logical task, layer, route peer, position, phase and owner epochs; a wrong
+  peer was rejected for each assignment.
+* The unchanged emitted QGI1 image simulation passed 96 positives and 1,261
+  injected faults (maximum 39,106 simulated steps, 788-byte reported stack).
+  Its pinned code hash remains
+  bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1, and its
+  boot hash remains d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
+* The exact native recurrent compile-only source now retains a used probe that
+  calls the candidate Build/Matches methods. The full RISC-V tag48 compile
+  chain passed with maximum new frame 688 bytes; candidate recurrent object
+  SHA-256: 2360201796ea69bbf21a68ce79eeedfba2b89e2141af8ce6d68ff87f40f9f593.
+  Old tag43/debug44 controls, tag45 input object, and tag47 state-init object
+  remained exact.
+
+Not yet demonstrated
+--------------------
+The owner-bound redistributed Build/Matches methods have not been executed
+against a live initialized GDN owner. The native owner still installs and
+launches logical workers 1..96 using the existing fixed-route plans. Nothing
+maps physical-peer receipts back to logical-task state, and the scattered L1
+page cache is not allocated or consumed by this planner. No actual device
+execution, model run, or tokens/sec measurement occurred. The SSH host-key
+identity mismatch continues to prohibit Pioneer access until verified
+out-of-band.

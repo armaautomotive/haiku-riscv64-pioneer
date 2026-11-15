@@ -7,6 +7,7 @@
 #define PIONEER_Q38_GDN_PREPARE_MACHINE_ONLY
 #include "pioneer_q38_gdn_prepare_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRedistributedRecurrentPlan.h"
 #include <memory>
 struct GdnInputMachine:PrepareMachine {
  std::array<uint32_t,64> descriptor={};std::array<std::array<uint32_t,16>,4> blocks={};
@@ -125,13 +126,28 @@ static void GdnInputPlans(){
   for(unsigned i=0;i<64;i++)if(i!=9)assert(rd[i]==p.Descriptor()[i]);
   assert(redistributed.LearnedPagesPresent(pages.data(),unsigned(pages.size()))==false);
   pages[a]=pages[b]=1;assert(redistributed.LearnedPagesPresent(pages.data(),unsigned(pages.size())));
+  uint32_t currentBank=~0U,nextBank=~0U;
+  for(unsigned candidate=0;candidate<7;candidate++)if(candidate!=rd[3] && candidate!=rd[11] && candidate!=rd[14]){
+   if(currentBank==~0U)currentBank=candidate;else if(nextBank==~0U){nextBank=candidate;break;}
+  }
+  assert(currentBank<7 && nextBank<7 && currentBank!=nextBank);
+  PioneerQ38GdnBankExtent current={currentBank,0x90000000,PioneerQ38SpanRoute(currentBank),0,8,32768};
+  PioneerQ38GdnBankExtent next={nextBank,0x91000000,PioneerQ38SpanRoute(nextBank),8,8,32768};
+  uint32_t state[64];
+  assert(PioneerQ38GdnRedistributedRecurrentPlan::BuildDescriptorData(rd,current,next,state));
+  assert(PioneerQ38ResidentGdnRedistributedShape(state));
+  assert(PioneerQ38GdnRedistributedPairing(rd,state));
+  assert(state[9]==half && state[10]==layer && state[15]==route.peer);
+  state[15]=PioneerQ38GdnTaskPlacement::Peer(route.physicalWorker%PioneerQ38GdnTaskPlacement::PhysicalWorkers+1);
+  assert(!PioneerQ38ResidentGdnRedistributedShape(state)
+   && !PioneerQ38GdnRedistributedPairing(rd,state));
   pages[a]=pages[b]=0;
  }
  for(unsigned i=0;i<64;i++){
   PioneerQ38GdnInputPlan p;assert(p.Build(*canonical,0,0,0,0,id,source,17));const_cast<uint32_t*>(p.Descriptor())[i]^=1;
   assert(!p.Matches(*canonical,0,0,0,0,id,source,17));
  }
- printf("PASS QGI1 canonical+119-peer redistributed DATA plans%u/all48layers/96halves/7banks/route-matched peers/A-dtpage-ledger/64fieldmutations;NOT native or producer authority\n",total);
+ printf("PASS QGI1+QRJ1 DATA plans%u/all48layers/96halves/7banks/route-matched input+state peers/A-dtpage-ledger/64fieldmutations;NOT owner/launch authority\n",total);
 }
 #ifndef PIONEER_Q38_GDN_INPUT_MACHINE_ONLY
 int main(int argc,char** argv){
