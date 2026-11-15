@@ -31,6 +31,14 @@ Evidence
   SHA-256: 2360201796ea69bbf21a68ce79eeedfba2b89e2141af8ce6d68ff87f40f9f593.
   Old tag43/debug44 controls, tag45 input object, and tag47 state-init object
   remained exact.
+* Rebuilt the separate 16,020-byte redistributed QRJ1 emitted worker and
+  reran its ASan/UBSan instruction simulation: 160 positives across all 96
+  logical tasks/banks/slots and chained state carry; all 8,256 outputs/state
+  words matched; 4,170 injected faults were rejected before later NoC/SFPU or
+  publication. Candidate code SHA-256 is
+  ea630d7c14401981b34ea0f2b607635aac17c634eb381baa3c39301a536d1437; boot
+  remains d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
+  The 224,156-step simulator count is not a card timing or tokens/sec result.
 
 Not yet demonstrated
 --------------------
