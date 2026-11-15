@@ -11,8 +11,11 @@
 // state mutation, native-owner, or Work-mode authority.
 class PioneerQ38GdnRedistributedRecurrentPlan {
 	PioneerQ38GdnInputPlan input;
+	const PioneerQ38CanonicalModelPlan* plan = nullptr;
 	const PioneerQ38GdnBanks* state = nullptr;
 	uint32_t descriptor[64] = {};
+	uint32_t gatedDescriptor[64] = {};
+	uint32_t rendezvousDescriptor[64] = {};
 	bool attempted = false;
 	bool ready = false;
 
@@ -33,6 +36,26 @@ class PioneerQ38GdnRedistributedRecurrentPlan {
 			|| next.bytes != TT_Q38_RGDN_STATE_BYTES || next.pages != 8)
 			return false;
 		return BuildDescriptorData(inputDescriptor, current, next, output);
+	}
+
+	static const PioneerQ38CanonicalPart* Norm(
+		const PioneerQ38CanonicalModelPlan& canonical, unsigned layer)
+	{
+		if (!canonical.Ready() || layer >= 64 || layer % 4 == 3)
+			return nullptr;
+		const PioneerQ38CanonicalPart* norm = nullptr;
+		for (unsigned i = 0; i < canonical.Count(); ++i) {
+			const auto* part = canonical.Part(i);
+			if (part->kind != canonical.WeightKind || part->layer != layer
+				|| part->role != 9)
+				continue;
+			if (norm || part->type || part->firstRow || part->rows != 1
+				|| part->rowBytes != 512 || part->bytes != 512
+				|| part->allocated != 4096)
+				return nullptr;
+			norm = part;
+		}
+		return norm;
 	}
 
 public:
@@ -78,6 +101,69 @@ public:
 			&& PioneerQ38GdnRedistributedPairing(inputDescriptor, output);
 	}
 
+	static bool BuildGatedDescriptorData(
+		const PioneerQ38CanonicalModelPlan& canonical,
+		const uint32_t* inputDescriptor, const uint32_t* stateDescriptor,
+		uint32_t* output)
+	{
+		if (!output || !PioneerQ38GdnRedistributedPairing(inputDescriptor,
+			stateDescriptor))
+			return false;
+		const auto* workspace = canonical.Workspace(inputDescriptor[3]);
+		const auto* norm = Norm(canonical, inputDescriptor[5]);
+		uint32_t ordinal = 0;
+		PioneerQ38GdnTaskPlacement::Route sibling = {};
+		const unsigned siblingLogical = inputDescriptor[7] ^ 1;
+		if (!workspace || canonical.Base + workspace->offset != inputDescriptor[4]
+			|| !norm
+			|| !PioneerQ38GdnTaskPlacement::LayerOrdinal(inputDescriptor[5], ordinal)
+			|| !PioneerQ38GdnTaskPlacement::Map(ordinal, siblingLogical, sibling))
+			return false;
+
+		for (unsigned i = 0; i < 64; ++i)
+			output[i] = inputDescriptor[i];
+		output[0] = TT_Q38_GDN_GATED_MARKER;
+		output[11] = norm->bank;
+		output[12] = canonical.Base + norm->offset;
+		output[13] = PioneerQ38ProjectionRoute(norm->bank);
+		output[14] = siblingLogical + 1;
+		output[15] = sibling.peer;
+		output[41] = stateDescriptor[11];
+		output[42] = PioneerQ38ProjectionResultOffset(5)
+			+ (inputDescriptor[7] >> 1) * 512;
+		output[43] = TT_Q38_GDN_GATED_OUTPUT + inputDescriptor[7] * 256;
+		output[44] = TT_Q38_GDN_GATED_READY;
+		output[45] = 0x8e800;
+		output[46] = 128;
+		output[47] = 64;
+		output[48] = 512;
+		output[49] = 512;
+		output[50] = 256;
+		output[51] = TT_Q38_GDN_GATED_POLLS;
+		for (unsigned i = 52; i < 64; ++i)
+			output[i] = 0;
+		return PioneerQ38GdnRedistributedGatedShape(output, inputDescriptor,
+			stateDescriptor);
+	}
+
+	static bool BuildRendezvousDescriptorData(const uint32_t* gated,
+		const uint32_t* inputDescriptor, const uint32_t* stateDescriptor,
+		uint32_t* output)
+	{
+		if (!gated || !output)
+			return false;
+		for (unsigned i = 0; i < 64; ++i)
+			output[i] = gated[i];
+		output[0] = TT_Q38_GDN_RENDEZVOUS_MARKER;
+		output[51] = TT_Q38_GDN_RENDEZVOUS_POLLS;
+		output[52] = uint32_t(PioneerQ38GdnRendezvousBudget());
+		output[53] = uint32_t(PioneerQ38GdnRendezvousBudget() >> 32);
+		output[54] = 4;
+		output[55] = TT_Q38_GDN_RENDEZVOUS_CLOCK;
+		return PioneerQ38GdnRedistributedRendezvousShape(output,
+			inputDescriptor, stateDescriptor);
+	}
+
 	PioneerQ38GdnRedistributedRecurrentPlan() = default;
 	PioneerQ38GdnRedistributedRecurrentPlan(
 		const PioneerQ38GdnRedistributedRecurrentPlan&) = delete;
@@ -92,10 +178,15 @@ public:
 		if (attempted)
 			return false;
 		attempted = true;
+		plan = &canonical;
 		state = &owner;
 		ready = input.BuildRedistributed(canonical, layer, logicalWorker, position,
 			bank, id, source, phase)
-			&& Describe(owner, id, input.Descriptor(), descriptor);
+			&& Describe(owner, id, input.Descriptor(), descriptor)
+			&& BuildGatedDescriptorData(canonical, input.Descriptor(),
+				descriptor, gatedDescriptor)
+			&& BuildRendezvousDescriptorData(gatedDescriptor,
+				input.Descriptor(), descriptor, rendezvousDescriptor);
 		return ready;
 	}
 
@@ -115,12 +206,37 @@ public:
 		for (unsigned i = 0; i < 64; ++i)
 			if (current[i] != descriptor[i])
 				return false;
-		return true;
+		uint32_t currentGated[64], currentRendezvous[64];
+		return BuildGatedDescriptorData(canonical, input.Descriptor(), current,
+			currentGated)
+			&& BuildRendezvousDescriptorData(currentGated, input.Descriptor(),
+				current, currentRendezvous)
+			&& [&]() {
+				for (unsigned i = 0; i < 64; ++i)
+					if (currentGated[i] != gatedDescriptor[i]
+						|| currentRendezvous[i] != rendezvousDescriptor[i])
+						return false;
+				return true;
+			}();
 	}
 
 	bool LearnedPagesPresent(const uint8_t* pages, unsigned count) const
 	{
-		return ready && input.LearnedPagesPresent(pages, count);
+		if (!ready || !plan || !pages || count != PioneerResidentBanks::Pages
+			|| !input.LearnedPagesPresent(pages, count))
+			return false;
+		if (plan->Capacity < 4096 || plan->Capacity % 4096 != 0
+			|| gatedDescriptor[11] >= TT_DRAM_BANKS
+			|| gatedDescriptor[12] < plan->Base)
+			return false;
+		const uint64_t offset = uint64_t(gatedDescriptor[12]) - plan->Base;
+		if (offset >= plan->Capacity || offset % 4096 != 0)
+			return false;
+		const uint64_t page = uint64_t(gatedDescriptor[11])
+			* (plan->Capacity / 4096) + offset / 4096;
+		if (page >= count)
+			return false;
+		return pages[page] == 1;
 	}
 
 	const uint32_t* InputDescriptor() const
@@ -131,6 +247,16 @@ public:
 	const uint32_t* StateDescriptor() const
 	{
 		return ready ? descriptor : nullptr;
+	}
+
+	const uint32_t* GatedDescriptor() const
+	{
+		return ready ? gatedDescriptor : nullptr;
+	}
+
+	const uint32_t* RendezvousDescriptor() const
+	{
+		return ready ? rendezvousDescriptor : nullptr;
 	}
 };
 #endif

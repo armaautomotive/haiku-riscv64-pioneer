@@ -138,16 +138,26 @@ static void GdnInputPlans(){
   assert(PioneerQ38ResidentGdnRedistributedShape(state));
   assert(PioneerQ38GdnRedistributedPairing(rd,state));
   assert(state[9]==half && state[10]==layer && state[15]==route.peer);
+  uint32_t gated[64],rendezvous[64];
+  assert(PioneerQ38GdnRedistributedRecurrentPlan::BuildGatedDescriptorData(*canonical,rd,state,gated)
+   && PioneerQ38GdnRedistributedGatedShape(gated,rd,state));
+  assert(PioneerQ38GdnRedistributedRecurrentPlan::BuildRendezvousDescriptorData(gated,rd,state,rendezvous)
+   && PioneerQ38GdnRedistributedRendezvousShape(rendezvous,rd,state)
+   && gated[9]==route.peer && gated[15]!=gated[9]);
+  uint32_t badGated[64];for(unsigned i=0;i<64;i++)badGated[i]=gated[i];
+  badGated[15]=gated[9];assert(!PioneerQ38GdnRedistributedGatedShape(badGated,rd,state));
   state[15]=PioneerQ38GdnTaskPlacement::Peer(route.physicalWorker%PioneerQ38GdnTaskPlacement::PhysicalWorkers+1);
   assert(!PioneerQ38ResidentGdnRedistributedShape(state)
-   && !PioneerQ38GdnRedistributedPairing(rd,state));
+   && !PioneerQ38GdnRedistributedPairing(rd,state)
+   && !PioneerQ38GdnRedistributedGatedShape(gated,rd,state)
+   && !PioneerQ38GdnRedistributedRendezvousShape(rendezvous,rd,state));
   pages[a]=pages[b]=0;
  }
  for(unsigned i=0;i<64;i++){
   PioneerQ38GdnInputPlan p;assert(p.Build(*canonical,0,0,0,0,id,source,17));const_cast<uint32_t*>(p.Descriptor())[i]^=1;
   assert(!p.Matches(*canonical,0,0,0,0,id,source,17));
  }
- printf("PASS QGI1+QRJ1 DATA plans%u/all48layers/96halves/7banks/route-matched input+state peers/A-dtpage-ledger/64fieldmutations;NOT owner/launch authority\n",total);
+ printf("PASS QGI1+QRJ1+QGH1+QGT1 DATA plans%u/all48layers/96halves/route-matched local+sibling peers/A-dtpage-ledger/64fieldmutations;NOT owner/launch authority\n",total);
 }
 #ifndef PIONEER_Q38_GDN_INPUT_MACHINE_ONLY
 int main(int argc,char** argv){
