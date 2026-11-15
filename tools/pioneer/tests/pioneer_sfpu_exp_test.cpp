@@ -84,6 +84,48 @@ int main()
 		}
 		frames++;
 	}
+	// Deterministic stress patterns complement the seeded random frames. They
+	// exercise equal-logit normalization, isolated/tied maxima, and the
+	// polynomial/fallback boundary at very small and very large probabilities.
+	for(unsigned length:{32U,33U,64U,1024U})for(unsigned pattern=0;pattern<6;pattern++){
+		std::vector<float> logits(length),exact(length),candidate(length);
+		for(unsigned i=0;i<length;i++){
+			switch(pattern){
+				case 0: logits[i]=0.0f; break; // all equal
+				case 1: logits[i]=i==0?0.0f:-80.0f; break; // one dominant token
+				case 2: logits[i]=(i%2)==0?0.0f:-80.0f; break; // tied peaks
+				case 3: logits[i]=-float(i%81); break; // integer-spaced tail
+				case 4: logits[i]=-float(i%257)*0.000001f; break; // near-equal
+				default: logits[i]=i%13==0?0.0f:-79.999f; break;
+			}
+		}
+		const float maximum=*std::max_element(logits.begin(),logits.end());
+		double exactSum=0,candidateSum=0;
+		for(unsigned first=0;first<length;first+=32){
+			float reduced[32],factor[32],fallbackValue[32];bool use[32];
+			for(unsigned lane=0;lane<32;lane++){
+				const unsigned index=first+lane;
+				const float value=index<length?logits[index]-maximum:0.0f;
+				use[lane]=index<length?PioneerSfpuExpRange(value,reduced[lane],factor[lane]):false;
+				if(index>=length){reduced[lane]=0.0f;factor[lane]=1.0f;}
+				fallbackValue[lane]=use[lane]?0.0f:PioneerAttentionExp(value);
+				const unsigned row=lane/8,col=(lane&7)*2;
+				machine.dst[row][col]=reduced[lane];machine.dst[4+row][col]=factor[lane];
+			}
+			DivideEmitter emitter={machine};emitter.Op(0x70030000);emitter.Op(0x70130004);PioneerSfpuExp32(emitter);
+			for(unsigned lane=0;lane<32 && first+lane<length;lane++){
+				const float value=use[lane]?machine.dst[8+lane/8][(lane&7)*2]:fallbackValue[lane];
+				exact[first+lane]=PioneerAttentionExp(logits[first+lane]-maximum);
+				candidate[first+lane]=value;exactSum+=exact[first+lane];candidateSum+=value;
+			}
+		}
+		for(unsigned i=0;i<length;i++){
+			const double a=exact[i]/exactSum,b=candidate[i]/candidateSum;
+			maxProbabilityError=std::max(maxProbabilityError,std::abs(a-b));
+			if(PioneerAttentionToHalf(float(a))!=PioneerAttentionToHalf(float(b)))probabilityHalfDifferences++;
+		}
+		frames++;
+	}
 	printf("PASS OFFLINE Dst-load/SFPU-exp/Dst-store:lanes%u/fallback%u/maxULP%u/expHalfDifferences%u; softmaxFrames%u/maxProbabilityAbsError%.9g/probabilityHalfDifferences%u; degree8 vs exact degree10, NOT Qwen quality or hardware speed\n",
 		common,fallback,maxUlp,halfDifferences,frames,maxProbabilityError,probabilityHalfDifferences);
 }

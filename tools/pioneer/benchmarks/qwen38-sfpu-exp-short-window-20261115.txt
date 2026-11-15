@@ -13,7 +13,9 @@ Validation:
 
 Passed the linked QGW7 BFP4→QDM2→BFP4 transition, output checks, image-size
 limit, and SFPU exponential numerical suite (1,047,840 common lanes + 736
-exact fallbacks; max 1 ULP; 64 synthetic softmax frames). In the linked
+exact fallbacks; max 1 ULP; 88 seeded and adversarial synthetic softmax
+frames, including equal logits, tied/isolated maxima and long low-probability
+tails). In the linked
 one-token fixture, the new candidate executes zero SFPU exponential
 instructions and produces the expected output.
 
