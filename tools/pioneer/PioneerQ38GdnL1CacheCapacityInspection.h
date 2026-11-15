@@ -11,13 +11,15 @@
 namespace PioneerQ38GdnL1CacheCapacityInspection {
 enum {L1Bytes=0x180000,BlockBytes=64,Blocks=L1Bytes/BlockBytes,
  StateBytes=32768,BlocksPerState=StateBytes/BlockBytes,MaxSlots=64,
+ WorkerStateMinimum=0x90000,
  PageBytes=4096,BlocksPerPage=PageBytes/BlockBytes,PagesPerState=StateBytes/PageBytes,
  MaxPages=L1Bytes/PageBytes};
 struct Slot {uint32_t address,bytes;};
 struct FragmentedSlot {uint32_t pages[PagesPerState];};
 static inline bool Free(unsigned worker,uint32_t address,uint32_t bytes)
 {
- if(worker==0 || worker>=PioneerQ38TokenPushedL1::Workers || !bytes || (address&63)
+ if(worker==0 || worker>=PioneerQ38TokenPushedL1::Workers || !bytes
+    || address<WorkerStateMinimum || (address&63)
     || address>L1Bytes || bytes>L1Bytes-address)return false;
  for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
   const auto s=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
@@ -30,6 +32,7 @@ static inline bool Build(unsigned worker,Slot* out,unsigned capacity,unsigned& c
 {
  count=0;if(!out || capacity>MaxSlots || worker==0 || worker>=PioneerQ38TokenPushedL1::Workers)return false;
  bool reserved[Blocks]={};
+ for(unsigned b=0;b<WorkerStateMinimum/BlockBytes;b++)reserved[b]=true;
  for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
   const auto s=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
   const uint32_t first=s.address/BlockBytes;
@@ -55,6 +58,7 @@ static inline bool BuildPages(unsigned worker,uint32_t* out,unsigned capacity,un
 {
  count=0;if(!out || capacity>MaxPages || worker==0 || worker>=PioneerQ38TokenPushedL1::Workers)return false;
  bool reserved[Blocks]={};
+ for(unsigned b=0;b<WorkerStateMinimum/BlockBytes;b++)reserved[b]=true;
  for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
   const auto s=PioneerQ38TokenPushedL1::SnapshotSpan(worker,i);
   const uint32_t first=s.address/BlockBytes,end=(s.address+s.words*4+BlockBytes-1)/BlockBytes;

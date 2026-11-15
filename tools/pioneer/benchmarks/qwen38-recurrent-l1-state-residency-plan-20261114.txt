@@ -51,39 +51,36 @@ per-layer owner uniqueness, slot alignment/non-overlap, L1 bounds, exact
 when all state is assigned. The helper has an inspection-only role guard and
 has no native/Work selection or device access.
 
-Follow-up capacity bound using the exact current QTP3 pushed-image L1 snapshot
-spans and the actual 96-worker GDN API: with 64-byte alignment, only 31
-complete 32-KiB state slots per peer tile fit in regions the snapshot never
-touches. Across 96 peers that is 2,976 slots / 97,517,568 bytes (93 MiB) of
-4,608 halves. The remaining 1,632 slots / 53,477,376 bytes cannot be placed
-without relocating or shrinking existing saved L1 footprint. The separate
+Historical contiguous-placement estimate, now superseded by the worker's
+minimum state-page address: the exact QTP3 pushed-image L1 snapshot spans and
+the 96-worker GDN API initially appeared to leave 31 complete 32-KiB state
+slots per peer. The emitted worker rejects addresses below `0x90000`, so only
+24 are usable. The corrected bound is 2,304 slots / 75,497,472 bytes (72 MiB)
+across 96 peers, leaving 2,304 slots / 75,497,472 bytes unplaced. The separate
 GDN input-buffer-reuse image frees 32 KiB within its phase, but other phases
 may reuse those addresses; it does not close this static deficit. This
 conservative free-range check is not a full temporal live-range proof.
 
 A second offline packing check used the GDN worker's existing 4-KiB chunk
 granularity instead of requiring each 32-KiB state to occupy one contiguous
-range. The same exact snapshot spans leave 274 intact 4-KiB pages per current
-GDN peer. Grouping those pages into eight-page state halves yields 34 state
-buffers per peer, or 3,264 of 4,608 halves (106,954,752 bytes / 102 MiB),
-leaving two unpaired pages per peer. This gains three state buffers per peer
-over contiguous placement, but misses the actual 48-state demand by 14 buffers
-(1,344 halves / 44,040,192 bytes total). Reaching that demand from the current
-packing requires 110 additional 4-KiB pages per peer after using the two
-residual pages.
+range. The first pass counted pages below `0x90000`, although the emitted
+worker refuses them. After applying the worker's actual bound, the snapshot
+spans leave 202 usable pages per current GDN peer. Grouping those pages into
+eight-page state halves yields 25 state buffers per peer, or 2,400 of 4,608
+halves (78,643,200 bytes / 75 MiB) on the actual 96-worker mapping; 2,208
+halves (72,351,744 bytes / 69 MiB) spill. This capacity figure is diagnostic
+only.
 
 Reproducer remains
 `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`.
-The ASan/UBSan test verifies 4-KiB alignment, that every packed page is within
-the exact untouched ranges, no page is assigned twice, all 96 worker totals,
-and a bijection from the model's 4,608 logical layer/head/half-state entries
-to the current per-worker slots. Of these, 3,264 are assigned to the
-QTP3-untouched L1 ranges and 1,344 spill to GDDR. This is only a capacity and
-static mapping result. The current GDN image consumes contiguous local-buffer
-addresses; no scattered-page import table or address-indirect chunk loader
-has been implemented, and the 4-KiB packing cannot be used until that path is
-built and its cost/live buffers are included in a complete multi-phase L1
-map. No model run or performance claim follows from this result.
+The ASan/UBSan test verifies 4-KiB alignment, the worker's `0x90000` lower
+bound, exact untouched ranges, no page assigned twice, all 96 worker totals,
+and the logical layer/head/half-state mapping. This is only a corrected
+capacity result; the current GDN image consumes contiguous local-buffer
+addresses. No scattered-page import table or address-indirect chunk loader
+has been implemented, and the pages cannot be used until that path is built
+and its cost/live buffers are included in a complete multi-phase L1 map. No
+model run or performance claim follows from this result.
 
 Separate alternate-topology experiment: retain the 96 logical head-half tasks
 per recurrent layer, but rotate their physical owners across all 119 peer IDs
@@ -95,9 +92,12 @@ peer coordinates against `PioneerQ38MixedWorkerLayout::Peer`, confirms the
 old 96-peer GDN map is unchanged, and proves 96 unique peer routes per layer,
 uniqueness across all 119 physical peers, and a bijection of every recurrent
 state half. The loads balance at 86 peers with 39 state halves and 33 peers
-with 38. Given 34 untouched-range state slots per peer, 4,046 halves could
-be resident and 562 would still spill to GDDR. `PioneerQ38GdnState::RedistributedSlice`
-now exposes this candidate route alongside the existing logical state slice;
+with 38. The scattered worker rejects page addresses below `0x90000`; after
+enforcing that bound, 202 usable pages provide 25 complete state slots per
+peer. Therefore 2,975 halves can be resident and 1,633 must spill to GDDR.
+The earlier 34-slot estimate included pages the worker itself refuses and is
+superseded. `PioneerQ38GdnState::RedistributedSlice` now exposes this candidate
+route alongside the existing logical state slice;
 the same-token test exercises all 48 ticketed layers, all 96 logical tasks per
 layer, completion, and final slot flip. Existing `Slice()` behavior remains
 unchanged. This is still not wired into hardware dispatch: current descriptors

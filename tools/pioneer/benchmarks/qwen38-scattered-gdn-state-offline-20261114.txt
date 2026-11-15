@@ -43,12 +43,14 @@ Tokens/sec improvement is therefore unknown; no speedup is claimed.
 Related cache-capacity evidence
 ------------------------------
 The existing inspection-only 119-peer redistribution/capacity test also
-passes. It maps the 4,608 recurrent half-states (144 MiB total) over 119
-physical workers and finds 4,046 states (about 126.4 MiB) fit in currently
-identified safe fragmented L1 pages; 562 states (about 17.6 MiB) spill.
-This is a useful target for an address-indirect loader, but the existing GDN
-runtime rejects this redistribution and the inspection does not establish
-that these pages can remain reserved alongside every model phase.
+passes. A correction to the page allocator found that the scattered worker
+rejects every page below `0x90000`; the former 4,046-resident/562-spill result
+incorrectly counted some such pages and is superseded. With the actual worker
+bound, the 119-peer candidate map has at most 2,975 resident states (about
+93 MiB) and 1,633 spills (about 51 MiB). This is still only a capacity
+estimate: the existing GDN runtime rejects this redistribution, and the
+inspection does not establish that these pages can remain reserved alongside
+every model phase.
 
 Still required before hardware use
 -----------------------------------

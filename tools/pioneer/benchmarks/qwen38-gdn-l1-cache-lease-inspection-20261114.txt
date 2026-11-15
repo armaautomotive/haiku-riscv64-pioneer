@@ -12,9 +12,10 @@ candidate map.
 Behavior
 --------
 * Maps each logical half-state through the existing layer-dependent 119-peer
-  route. Per-worker state indices 0..33 are marked cache-resident; higher
-  indices are explicit GDDR spills. The corresponding static capacity test
-  validates 34 fragmented 32 KiB slots on each physical peer.
+  route. The worker's page-table validator requires addresses >= `0x90000`,
+  so per-worker state indices 0..24 are cache-resident; higher indices spill
+  to GDDR. The static capacity test finds 202 compatible pages, enough for 25
+  fragmented 32 KiB states per physical peer.
 * A separate inspection-only page-table planner joins that stable cache index
   to the eight exact, aligned, snapshot-free 4 KiB L1 addresses and rejects
   duplicate pages within or between cached states on the same peer.
@@ -40,14 +41,14 @@ Reproduce with:
   `bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_cache_plan_inspection_test.sh`
 
 The ASan/UBSan lease test covers a cold token followed by three warm tokens,
-all 4,608 half-states, exact page-table addresses for 4,046 resident entries,
-562 deterministic spills, 48-layer/96-task commit ordering, inconsistent
+all 4,608 half-states, exact page-table addresses for 2,975 resident entries,
+1,633 deterministic spills, 48-layer/96-task commit ordering, inconsistent
 receipts, stale cache reads during an incomplete token, and full invalidation
 after a mid-token fault.
 The compile-role test accepts inspection mode and rejects Work, CPU-reference,
 native, resident-image, and kernel roles. The existing placement test checks
-all fragmented pages against the captured 119-peer L1 snapshot and confirms
-the same 4,046/562 split.
+all fragmented pages against the captured 119-peer L1 snapshot and the
+worker's 0x90000 minimum-address rule, confirming the 2,975/1,633 split.
 
 Limits / next gate
 ------------------
@@ -56,6 +57,6 @@ It does not allocate or initialize pages, copy GDDR state into L1, program a
 per-worker page table, prove native worker completion, or benchmark tokens.
 The next required implementation is an address-indirect state transfer and
 page-table submission in the native GDN dispatch, with a safe cold-fill path,
-explicit 562-state GDDR fallback, cache invalidation on all fault/reset paths,
+explicit 1,633-state GDDR fallback, cache invalidation on all fault/reset paths,
 and CPU-reference-independent runtime receipts. Only then can hardware tests
 measure whether the saved GDN state reads improve full-token throughput.

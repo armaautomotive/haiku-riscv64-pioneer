@@ -19,9 +19,9 @@ public:
 		Workers=PioneerQ38GdnTaskPlacement::PhysicalWorkers,
 		LogicalTasks=PioneerQ38GdnTaskPlacement::TotalTasks,
 		SlotsPerWorker=PioneerQ38GdnTaskPlacement::SlotsPerPhysical,
-		ResidentSlotsPerWorker=34,
+		ResidentSlotsPerWorker=25,
 		PagesPerSlot=PioneerQ38GdnTaskPlacement::StateHalfBytes/4096,
-		L1Bytes=0x180000,
+		L1Bytes=0x180000,WorkerStateMinimum=0x90000,
 		PageBytes=4096,
 		ResidentSlots=Workers*ResidentSlotsPerWorker,
 		SpillSlots=LogicalTasks-ResidentSlots
@@ -41,6 +41,7 @@ private:
 	static bool Free(unsigned worker,uint32_t address)
 	{
 		if(!worker || worker>PioneerQ38TokenPushedL1::Workers-1
+			|| address<WorkerStateMinimum
 			|| (address&(PageBytes-1)) || address>L1Bytes-PageBytes)
 			return false;
 		for(unsigned i=0;i<PioneerQ38TokenPushedL1::SnapshotSpans(worker);i++){
@@ -126,11 +127,11 @@ public:
 	}
 };
 
-static_assert(sizeof(PioneerQ38GdnL1PageAllocator)>129000
-	&& sizeof(PioneerQ38GdnL1PageAllocator)<130000,
+static_assert(sizeof(PioneerQ38GdnL1PageAllocator)>95000
+	&& sizeof(PioneerQ38GdnL1PageAllocator)<96000,
 	"full QTP3 scattered recurrent-state page map is heap-only");
-static_assert(PioneerQ38GdnL1PageAllocator::ResidentSlots==4046
-	&& PioneerQ38GdnL1PageAllocator::SpillSlots==562,
+static_assert(PioneerQ38GdnL1PageAllocator::ResidentSlots==2975
+	&& PioneerQ38GdnL1PageAllocator::SpillSlots==1633,
 	"exact 119-peer cache/spill geometry");
 
 #endif

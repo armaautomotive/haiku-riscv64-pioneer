@@ -69,7 +69,7 @@ int main()
 	for(unsigned worker=0;worker<P::Workers;worker++){
 		unsigned pagesForWorker=0;
 		assert(C::BuildFragmented(worker+1,pages[worker],C::MaxSlots,pageCounts[worker],pagesForWorker));
-		assert(pageCounts[worker]==34 && pagesForWorker==274);
+		assert(pageCounts[worker]==25 && pagesForWorker==202);
 	}
 	const PioneerQ38GdnIdentity id={0x11,0x22,0x33,0x44};
 	const PioneerQ38GdnIdentity wrong={0x11,0x22,0x33,0x45};
@@ -77,7 +77,7 @@ int main()
 	assert(!lease.BeginToken(wrong,0));
 	assert(RunToken(lease,id,0)==0); // cold L1: every resident entry must be filled
 	for(uint64_t position=1;position<4;position++)
-		assert(RunToken(lease,id,position)==4046); // exact warm hits; 562 spill
+		assert(RunToken(lease,id,position)==2975); // exact warm hits; 1633 spill
 	assert(!lease.Unsafe());
 	// Leave a token incomplete after mutating some cache pages. Fault poisons
 	// the lease and invalidates every entry; no partial token can retain hits.
@@ -88,5 +88,5 @@ int main()
 	}
 	lease.Fault();assert(lease.Unsafe());
 	assert(!lease.BeginToken(id,4) && !lease.Close());
-	std::puts("PASS inspection-only GDN L1 cache lease: cold fill, 4,046 warm resident hits, 562 deterministic GDDR spills, 48-layer/96-task commit gating, failed receipts rejected, partial-token fault invalidates cache; NOT hardware ownership, transfer proof, Work/native path or performance");
+	std::puts("PASS inspection-only GDN L1 cache lease: cold fill, 2,975 warm resident hits, 1,633 deterministic GDDR spills, 48-layer/96-task commit gating, failed receipts rejected, partial-token fault invalidates cache; NOT hardware ownership, transfer proof, Work/native path or performance");
 }

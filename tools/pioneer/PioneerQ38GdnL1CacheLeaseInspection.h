@@ -29,7 +29,7 @@ struct PioneerQ38GdnL1CacheSlice {
 class PioneerQ38GdnL1CacheLeaseInspection {
 	enum Phase { Empty, Ready, Token, Layer, Poisoned, Closed } phase=Empty;
 	enum : unsigned { Workers=119, SlotsPerWorker=PioneerQ38GdnTaskPlacement::SlotsPerPhysical,
-		ResidentSlotsPerWorker=34,
+		ResidentSlotsPerWorker=25,
 		CacheEntries=Workers*SlotsPerWorker, CacheWords=(CacheEntries+63)/64 };
 	PioneerQ38GdnState state;
 	PioneerQ38GdnIdentity identity={};

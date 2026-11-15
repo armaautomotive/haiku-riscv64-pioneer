@@ -47,7 +47,7 @@ int main()
 	for(unsigned worker=0;worker<P::Workers;worker++){
 		C::Slot freeSlots[C::MaxSlots]={};unsigned count=0;
 		assert(C::Build(worker+1,freeSlots,C::MaxSlots,count));
-		assert(count==31 && count<P::SlotsForWorker(worker));
+		assert(count==24 && count<P::SlotsForWorker(worker));
 		for(unsigned i=0;i<count;i++){
 			assert(freeSlots[i].bytes==P::HalfStateBytes && C::Free(worker+1,freeSlots[i].address,freeSlots[i].bytes));
 			for(unsigned j=0;j<i;j++)assert(freeSlots[i].address>=freeSlots[j].address+freeSlots[j].bytes
@@ -55,14 +55,14 @@ int main()
 		}
 		availableSlots+=count;deficit+=P::SlotsForWorker(worker)-count;
 	}
-	assert(availableSlots==2976 && deficit==1632);
+	assert(availableSlots==2304 && deficit==2304);
 	unsigned fragmentedSlots=0,fragmentedPages=0,fragmentedMisses=0;
 	C::FragmentedSlot fragmentedPlacement[P::Workers][C::MaxSlots]={};
 	unsigned fragmentedCount[P::Workers]={};
 	for(unsigned worker=0;worker<P::Workers;worker++){
 		unsigned count=0,pages=0;
 		assert(C::BuildFragmented(worker+1,fragmentedPlacement[worker],C::MaxSlots,count,pages));
-		assert(count==34 && pages==274 && count<P::SlotsForWorker(worker));
+		assert(count==25 && pages==202 && count<P::SlotsForWorker(worker));
 		bool pageUsed[C::MaxPages]={};
 		for(unsigned i=0;i<count;i++)for(unsigned j=0;j<C::PagesPerState;j++){
 			const auto address=fragmentedPlacement[worker][i].pages[j];assert(!(address&(C::PageBytes-1)) && C::Free(worker+1,address,C::PageBytes));
@@ -70,7 +70,7 @@ int main()
 		}
 		fragmentedCount[worker]=count;fragmentedSlots+=count;fragmentedPages+=pages;fragmentedMisses+=P::SlotsForWorker(worker)-count;
 	}
-	assert(fragmentedSlots==3264 && fragmentedPages==26304 && fragmentedMisses==1344);
+	assert(fragmentedSlots==2400 && fragmentedPages==19392 && fragmentedMisses==2208);
 	bool mapped[P::Workers][P::MaxSlots]={};unsigned residentStates=0,spilledStates=0;
 	for(unsigned layer=0;layer<P::RecurrentLayers;layer++)for(unsigned head=0;head<P::HeadsPerLayer;head++)for(unsigned half=0;half<2;half++){
 		P::Slot state={};assert(P::Map(layer,head,half,state));assert(!mapped[state.worker][state.index]);mapped[state.worker][state.index]=true;
@@ -113,7 +113,7 @@ int main()
 	bool peerSeen[1024]={};
 	for(unsigned worker=0;worker<R::Workers;worker++){
 		unsigned pages=0;assert(C::BuildFragmented(worker+1,redistributedPlacement[worker],C::MaxSlots,redistributedCount[worker],pages));
-		assert(redistributedCount[worker]==34 && pages==274);redistributedPages+=pages;
+		assert(redistributedCount[worker]==25 && pages==202);redistributedPages+=pages;
 		unsigned peer=PioneerQ38MixedWorkerLayout::Peer(worker+1);assert(peer<1024 && !peerSeen[peer]);peerSeen[peer]=true;
 	}
 	for(unsigned worker=0;worker<P::Workers;worker++)
@@ -159,7 +159,7 @@ int main()
 		assert(redistributedLoads[worker]==38 || redistributedLoads[worker]==39);
 		for(unsigned i=0;i<redistributedLoads[worker];i++)assert(redistributedSlots[worker][i]);
 	}
-	assert(redistributedResident==4046 && redistributedSpill==562 && redistributedPages==32606);
+	assert(redistributedResident==2975 && redistributedSpill==1633 && redistributedPages==24038);
 	assert(remappedState.CommitToken(identity,0));
 	unsigned invalidOrdinal=0,invalidLogical=0;
 	assert(!PioneerQ38GdnTaskPlacement::LayerOrdinal(63,invalidOrdinal));
@@ -168,10 +168,10 @@ int main()
 	assert(!PioneerQ38GdnTaskPlacement::LogicalWorker(0,120,invalidLogical));
 	std::printf("PASS inspection-only recurrent-state L1 map: %u half-states, %u MiB selected state, %u/%u slots per %u current GDN workers, required scratch %u bytes; layer tasks collision-free; NOT runtime fit or performance proof\n",
 		P::TotalHalves,P::TotalStateBytes/(1024*1024),P::BaseSlots,P::MaxSlots,P::Workers,P::MinimumScratch);
-	std::printf("PASS QTP3 untouched-range capacity check: %u of %u 32KiB recurrent-state slots fit across %u current GDN peer L1s (%u bytes); %u slots (%u bytes) need relocation; each peer has 31 safe slots vs %u required; NO all-phase live map or performance proof\n",
+	std::printf("PASS QTP3 worker-range capacity check: %u of %u contiguous 32KiB recurrent-state slots fit across %u current GDN peer L1s (%u bytes); %u slots (%u bytes) need relocation; each peer has 24 safe slots vs %u required; NO all-phase live map or performance proof\n",
 		availableSlots,P::TotalHalves,P::Workers,availableSlots*P::HalfStateBytes,deficit,deficit*P::HalfStateBytes,P::BaseSlots);
-	std::printf("PASS 4KiB-scattered placement: %u pages mapped %u current-runtime state halves (%u bytes) across one 48-layer token; %u spill to GDDR; each GDN worker keeps 34 layers (2 page fragments) and spills 14; 110 new pages per worker needed for full capacity; GDN chunk-import address indirection NOT implemented or measured\n",
+	std::printf("PASS >=0x90000 4KiB-scattered placement: %u pages mapped %u current-runtime state halves (%u bytes) across one 48-layer token; %u spill to GDDR; each 119-peer worker keeps up to 25 states and spills 13/14; GDN chunk-import address indirection NOT implemented or measured\n",
 		fragmentedPages,runtimeResident,runtimeResident*P::HalfStateBytes,runtimeSpilled);
-	std::printf("PASS experimental 119-peer redistribution map: %u logical tasks/layer use unique peer routes; state loads balance 38/39 per peer, with %u resident and %u GDDR-spill halves; existing GDN runtime rejects this remap and no address-indirect cache loader exists\n",
+	std::printf("PASS experimental 119-peer redistribution map: %u logical tasks/layer use unique peer routes; state loads balance 38/39 per peer, with %u worker-range-resident and %u GDDR-spill halves; existing GDN runtime rejects this remap and no address-indirect cache loader exists\n",
 		R::LogicalWorkers,redistributedResident,redistributedSpill);
 }

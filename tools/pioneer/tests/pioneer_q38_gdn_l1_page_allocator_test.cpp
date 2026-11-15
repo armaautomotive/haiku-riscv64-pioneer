@@ -34,12 +34,13 @@ int main()
 				assert(PioneerQ38GdnL1CacheCapacityInspection::BuildPages(
 					route.physicalWorker,canonicalPages,
 					PioneerQ38GdnL1CacheCapacityInspection::MaxPages,canonicalCount));
-				assert(canonicalCount>=34*8);
+				assert(canonicalCount>=25*8);
 				resident++;
 				for(unsigned page=0;page<8;page++){
 					assert(table.pages[page]
 						==canonicalPages[route.stateIndex*8+page]);
-					assert((table.pages[page]&4095)==0
+					assert(table.pages[page]>=PioneerQ38GdnL1PageAllocator::WorkerStateMinimum
+						&& (table.pages[page]&4095)==0
 						&& table.pages[page]<=0x17f000);
 					for(unsigned prior=0;prior<page;prior++)
 						assert(table.pages[prior]!=table.pages[page]);
@@ -60,7 +61,7 @@ int main()
 				&& untouched.physicalWorker==0);
 		}
 	}
-	assert(resident==4046 && spill==562);
+	assert(resident==2975 && spill==1633);
 	PioneerQ38GdnL1PageAllocator::PageTable out={};
 	assert(!allocator.Resolve(0,0,out) && !allocator.Resolve(120,0,out)
 		&& !allocator.Resolve(1,39,out));
