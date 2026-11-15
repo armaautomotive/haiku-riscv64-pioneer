@@ -1,0 +1,58 @@
+Qwen3.8-27B full-offload ROOT size audit — 2026-11-15
+====================================================
+
+Purpose
+-------
+Record the current reproducible build boundary for the older complete
+full-offload ROOT builder. This is an offline build audit, not a model speed
+result or a claim that Qwen runs on the P100A.
+
+Build command
+------------
+  env -u CPATH python3 tools/pioneer/build_qwen38_full_offload_root.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 \
+    /private/tmp/q38-root-audit-final-20261115 --inspect-candidate
+
+The builder now exposes the SDK's staged public headers to nested compiler
+calls when the cross-toolchain sysroot include directory is empty. It compiles
+the required returning components directly instead of first trying to link an
+intermediate non-full-offload ROOT image. That lets the requested full-offload
+ROOT compile reach its own linker and report its actual size constraint.
+
+Observed component gates
+-----------------------
+* Returning recurrent/dense component inspection passed. The candidate
+  `recurrent.o` was 160,368 bytes (SHA-256
+  `819b077e0e6519b6dad60a6be49853686d28a03458ea3fd92218caaa4813e539`),
+  `dense.o` was 115,164 bytes (SHA-256
+  `29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9`),
+  and the NOBOOT capsule was 243,716 bytes (SHA-256
+  `4c4c80290d466c5b97c92d0ea63a3c795bb7c072dd66432ac529347bd0ea1dc3`).
+* The FP32-hidden token components and global feedback candidate compiled and
+  passed their static range/frame checks. They remain unpinned inspection
+  candidates, not installation authority.
+* The full-offload ROOT TU compiled, but the final link failed the existing
+  fixed layout: `.text` ran from `0x40000` through `0x6299f`, overlapping the
+  fixed terminal section at `0x60000` by 10,656 bytes. No final ELF was
+  produced, so the emitted-EOG ISA test did not run in this build.
+
+Independent offline tests run
+-----------------------------
+* `run_pioneer_q38_token_package_tests.py`: passed the 76-package/9,961,472-
+  word DATA checks, routed GDN transform checks, and exact vocabulary-job
+  output/refusal checks.
+* `run_pioneer_q38_token_startup_native_compile.py` against the staged SDK:
+  passed; 78 static frames, new startup maximum 368 bytes, routed maximum 848
+  bytes, total maximum 1,216 bytes. Compile-only; not a full runtime.
+* `run_pioneer_q38_mixed_recurrent_cohort_plan_tests.py --sdk ...`:
+  passed 384 plans / 3,136 mutation checks and the RISC-V kernel DATA-plan
+  compile; maximum static frame 768 bytes.
+
+Not established
+---------------
+No full Qwen prompt/generation ran, no physical P100A inference or tokens/sec
+was measured, and no hardware/firmware state was changed. The 20 tokens/sec
+goal remains unmet. Do not install or launch this ROOT candidate. Next work is
+to reduce the controller image while preserving its correctness and fixed
+address/stack invariants, then rebuild the complete artifact and rerun the
+exhaustive emitted-EOG check before any device test.

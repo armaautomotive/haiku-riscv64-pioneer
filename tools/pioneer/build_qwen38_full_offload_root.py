@@ -4,7 +4,6 @@ import hashlib
 import os
 import pathlib
 import re
-import runpy
 import subprocess
 import sys
 
@@ -23,37 +22,45 @@ if ffn_shared_reuse:
     if args.count('--ffn-shared-input-reuse')!=1:raise SystemExit(2)
     args.remove('--ffn-shared-input-reuse')
 assert __debug__ and len(args)==2
-assert not inspect_candidate or ffn_shared_reuse
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
 assert build.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
+# Some locally staged Haiku SDKs have the devel package headers but an empty
+# compiler sysroot include directory.  Make the SDK's public headers visible
+# to every nested compiler invocation without overriding an existing CPATH.
+headers=build/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
+if (headers/'posix/stdint.h').is_file() and (headers/'config/types.h').is_file():
+    inherited=os.environ.get('CPATH','')
+    sdk_cpath=os.pathsep.join((str(headers),str(headers/'posix')))
+    os.environ['CPATH']=sdk_cpath+(os.pathsep+inherited if inherited else '')
 out.mkdir(mode=0o700);here=pathlib.Path(__file__).resolve().parent
-saved=sys.argv[:]
-try:
-    sys.argv=[str(here/'build_qwen38_token_root.py'),str(build),str(out/'unchanged-pushed'),
-              '--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet',
-              '--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion',
-              *(('--inspect-candidate','--ffn-shared-input-reuse') if ffn_shared_reuse else ())]
-    old=runpy.run_path(sys.argv[0],run_name='__main__')
-finally:sys.argv=saved
-tool,components=old['tool'],old['components'];commands=[]
+tool=str(build/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
+flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
+ '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
+ '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
+commands=[]
 def run(command):
     commands.append(command);subprocess.run(command,check=True)
-flags=old['flags']
+base=out/'unchanged-pushed';base.mkdir(mode=0o700)
+components=base/'qualified-components'
+run([sys.executable,str(here/'build_qwen38_global_token_components.py'),str(build),str(components),
+     '--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards',
+     '--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion',
+     *(('--inspect-candidate',) if inspect_candidate else ()),
+     *(('--ffn-shared-input-reuse',) if ffn_shared_reuse else ())])
+run([tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',str(here/'blackhole_qwen38_global_chain_start.S'),'-o',str(base/'start.o')])
 run([tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
      '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1','-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1',
      '-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1','-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1',
      '-c',str(here/'blackhole_qwen38_token_root.cpp'),'-o',str(out/'program.o')])
 run([tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(here/'blackhole_qwen38_global_chain.ld'),
-     str(out/'unchanged-pushed/start.o'),str(out/'program.o'),str(components/'token-components-NOBOOT.o'),
+     str(base/'start.o'),str(out/'program.o'),str(components/'token-components-NOBOOT.o'),
      str(components/'unchanged-feedback/feedback.o'),'-Map',str(out/'program.map'),'-o',str(out/'program.elf')])
 for section in ('boot','text','terminal','conv'):
     run([tool+'objcopy','-O','binary','-j','.'+section,str(out/'program.elf'),str(out/(section+'.bin'))])
-assert (out/'boot.bin').read_bytes()==(out/'unchanged-pushed/boot.bin').read_bytes()
-assert (out/'terminal.bin').read_bytes()==(out/'unchanged-pushed/terminal.bin').read_bytes()
+assert hashlib.sha256((out/'boot.bin').read_bytes()).hexdigest()=='32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'
+assert hashlib.sha256((out/'terminal.bin').read_bytes()).hexdigest()=='6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'
 assert 0<len((out/'text.bin').read_bytes())<=0x20000 and 0<len((out/'conv.bin').read_bytes())<=0x8000
-assert (out/'text.bin').read_bytes()!=(out/'unchanged-pushed/text.bin').read_bytes()
-assert (out/'conv.bin').read_bytes()!=(out/'unchanged-pushed/conv.bin').read_bytes()
 symbols=subprocess.check_output([tool+'nm','-nC',str(out/'program.elf')],text=True)
 assert not subprocess.check_output([tool+'nm','-u',str(out/'program.elf')],text=True).strip()
 assert 'GlobalChain::FullOffloadEog(unsigned int)' in symbols
