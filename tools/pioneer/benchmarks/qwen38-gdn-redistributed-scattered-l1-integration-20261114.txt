@@ -160,3 +160,18 @@ worker remained in GDDR mode in both runs. This is a stronger worker/cohort
 comparison than the single-half sample, but still excludes layer scheduling,
 other Qwen operations, native allocation/ownership, silicon timing and full
 model throughput.
+
+2026-11-15 fresh rerun of allocator-integrated gate
+---------------------------------------------------
+Re-ran the command above with the build mirror toolchain and
+`--no-gddr-writeback`. The offline image identities were:
+
+  code SHA-256 19323a59e2e339d9f37a91153427722f3f3f6b44a43248347dc7221da22dfc06
+  boot SHA-256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+
+The fresh ASan/UBSan run reproduced 161 exact-output positives and the
+allocator-integrated layer-40 comparison (95 resident, one spill); all paired
+state/output words matched. It also passed 4,137 fault injections and the
+scattered-state role gate. The test process exited successfully. This is a
+revalidation of the offline candidate only; it neither advances native owner
+integration nor changes the absence of a current hardware/TPS measurement.
