@@ -58,3 +58,11 @@ At the same time, a read-only SSH check to Linux was correctly stopped by strict
 host-key verification: the current key reported SHA256:8eyC1ZQLmJwM6moJpEMuj5CFOcR9B672b8TNsosuFSs,
 which does not match the saved Linux pin. Do not update the pin or attempt a
 Pioneer test until this fingerprint is verified locally.
+
+Focused arithmetic regression rerun (2026-11-15)
+------------------------------------------------
+
+`python3 tools/pioneer/tests/run_pioneer_q38_macro_q4_tests.py` passed 4096
+exact byte/panel cases and four invalid-schedule refusals. This independently
+rechecks macro-Q4 arithmetic only; it does not validate SFPNOP timing, a full
+model answer, device behavior or throughput.
