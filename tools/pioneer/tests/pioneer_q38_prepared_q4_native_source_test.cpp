@@ -9,6 +9,7 @@
 #define PIONEER_Q38_PREPARED_UPLOAD_FIXTURE_ONLY
 #include "pioneer_q38_prepared_q4_upload_plan_test.cpp"
 #include "../PioneerQ38TokenStartupPlan.h"
+#include "../PioneerQ38TokenMetadata.h"
 #ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
 #include "../PioneerQ38RedistributedTokenLayout.h"
 namespace RT=PioneerQ38RedistributedTokenLayout;
@@ -21,6 +22,13 @@ template<class F>static void Refusal(F check){
  int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
 }
 int main(){
+	if(false){uint32_t data[192]={};
+		(void)PioneerQ38TokenMetadata::Outer(data,0,0,0,0,0,data);
+		(void)PioneerQ38TokenMetadata::Recipe(data,0,0,0,0);
+		(void)PioneerQ38TokenMetadata::Conv(data,0,0,0,0);
+		(void)PioneerQ38TokenMetadata::Gdn(data,0,0,0);
+		(void)PioneerQ38TokenMetadata::Dense(data,3,0,0);
+	}
  (void)&PreparedBanksInput;(void)&Prepare;(void)&Upload;(void)&Close;
  setvbuf(stdout,nullptr,_IOLBF,0);
  Fixture fixture;PioneerQwen38Gguf model;PioneerQwen38PackedPlan original;
@@ -117,6 +125,18 @@ int main(){
 		assert(word(50)==(table.resident?0:2));
 		for(unsigned page=0;page<PioneerQ38GdnL1PageAllocator::PagesPerSlot;page++)
 			assert(word(42+page)==(table.resident?table.pages[page]:0));
+		const unsigned recordOffset=RT::Offset+(RT::HeaderWords+(route.physicalWorker-1)*RT::RecordWords)*4;
+		std::array<uint8_t,192*4> recordBytes={};
+		assert(scatteredStartup->ReadPublishedPackage(layer,recordOffset,recordBytes.data(),recordBytes.size()));
+		uint32_t record[192]={};
+		for(unsigned i=0;i<192;i++)record[i]=uint32_t(recordBytes[i*4])|uint32_t(recordBytes[i*4+1])<<8
+			|(uint32_t(recordBytes[i*4+2])<<16)|(uint32_t(recordBytes[i*4+3])<<24);
+		assert(PioneerQ38TokenMetadata::GdnRedistributed(record,layer,route.physicalWorker,1,1));
+		unsigned warmMode=1;
+#ifdef PIONEER_Q38_GDN_L1_NO_GDDR_WRITEBACK_EXPERIMENT
+		warmMode=3;
+#endif
+		assert(record[64+50]==(table.resident?warmMode:2));
 	};
 	verifyMap(0,residentRoute,residentTable);verifyMap(spillLayer,spillRoute,spillTable);
 	printf("PASS scattered startup DATA exact L1 maps residentWorker%u spillWorker%u spillLayer%u;NO runtime selection/token commit/card/TPS\n",

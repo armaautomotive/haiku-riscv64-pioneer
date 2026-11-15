@@ -95,6 +95,10 @@ Additional validation passed:
 * Prepared-source startup tests passed for both baseline and scattered-cache
   variants. The latter read back allocator-exact resident and spill maps from
   serialized startup packages (resident worker 1; spill worker 1 at layer 40).
+  A third prepared-source variant now reads the full serialized worker record,
+  applies the token metadata transform for a committed warm position, and
+  verifies resident mode 3 versus spill mode 2; all three synthetic startup
+  variants pass without bank I/O, runtime selection, token commit, or hardware.
 * RISC-V C++11 DATA-only startup compile passed in both variants. Scattered
   variant maximum static frame was 1,648 bytes; object SHA-256 was
   `35d5dfdc5980510dd210920a1bdac072af8ce3d983e330f95a58899b8b10d5dd`.
