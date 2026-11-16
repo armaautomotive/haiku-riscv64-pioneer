@@ -1,0 +1,55 @@
+Qwen3.8 GDN L1 original-page journal primitive
+==============================================
+Date: 2026-11-15. New standalone inspection component only. It is not called
+by the native owner, not selected by Work/Assistant, and has not run on the
+Pioneer. No inference or speedup is claimed.
+
+Change
+------
+Added `PioneerQ38GdnL1OriginalPageJournal`, a one-shot primitive for preserving
+the original contents of the scattered GDN state pages before inference uses
+them. It:
+
+* resolves and validates the complete page map before any L1 read;
+* allocates the complete snapshot and one-page verification scratch before IO;
+* requires the caller's all-workers-held proof and per-worker stable scope;
+* captures every page, then makes a full second pass to verify the snapshot;
+* restores only after a fresh all-workers-held proof, with one write attempt per
+  page, immediate readback and a second full verification pass;
+* poisons and retains the only original-data copy on any uncertain capture or
+  restore path; retry and destruction do not discard that copy.
+
+The inspection-only role rejects Work, CPU validation/reference, native driver,
+hybrid native, driver-tagged and kernel builds. This class grants no device IO,
+L1 allocation, worker launch, token commit or permission to use mode-3 state.
+The production geometry is 119 workers x 25 resident 32-KiB states x 8 pages
+per state = 23,800 pages and 97,484,800 bytes. Snapshot data is heap allocated;
+the fixed address map is about 95 KiB.
+
+Validation
+----------
+`bash tools/pioneer/tests/run_pioneer_q38_gdn_l1_original_page_journal_tests.sh`
+passed under ASan/UBSan. It checks the actual 119-worker allocator map for
+page uniqueness and exact geometry; synthetic capture, second-pass mismatch,
+held-state retry, bad-map refusal, restore/readback, single-attempt failure,
+and retained-snapshot behavior; and Work-role refusal. The macOS ASan runtime
+does not support leak detection, so the runner disables that subfeature; the
+inspection test explicitly frees retained poisoned fixtures only through a
+test-only method that cannot exist in native/Work roles.
+
+The production template was separately cross-compiled with the pinned Haiku
+RISC-V SDK (`riscv64-unknown-haiku-g++`, C++11, freestanding, exceptions/RTTI
+disabled). It compiled with maximum reported static frame 272 bytes; only the
+adapter methods and `std::nothrow` allocation operators remained undefined.
+This is compile evidence, not a native backend binding or runtime proof.
+
+Next required integration
+-------------------------
+The native L1 memory accessor currently admits only the ordinary snapshot
+spans. A future separate native candidate must add an address-scoped adapter
+for these pages, bind this journal to the same FD/session owner, extend close
+and quarantine lifetimes, connect cache validity to whole-model token commit,
+and keep the existing Work/default image unchanged. Then it must pass native
+fault/lifetime tests before a real matched Qwen run. Physical work still
+requires resolving the Pioneer SSH host-key mismatch. The best recorded exact
+Q4 full-model rate remains about 0.173 tokens/sec; 20 tokens/sec is unmet.
