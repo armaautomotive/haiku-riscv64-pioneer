@@ -37,6 +37,7 @@ if prepared_q4:
 prepared_current='--prepared-q4-current-worker' in args
 if prepared_current:
     assert batched and metrics and not resident and not vector_q4 and not macro_q4 and not prepared_q4 \
+        and '--counter-unroll' not in args and '--phase-profile' not in args \
         and args.count('--prepared-q4-current-worker')==1
     args.remove('--prepared-q4-current-worker');prepared_q4=True
 prompt_client='--prompt-client' in args
