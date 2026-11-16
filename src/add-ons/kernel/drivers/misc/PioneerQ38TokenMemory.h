@@ -66,6 +66,50 @@ class PioneerQ38TokenMemory {
 #ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
  using GdnL1OriginalJournal=PioneerQ38GdnL1OriginalPageJournal<PioneerQ38GdnL1PageAllocator,119,25,8>;
  static_assert(GdnL1OriginalJournal::SavedBytes==97484800,"native candidate journal is exact 119-peer GDN L1 state only");
+ GdnL1OriginalJournal* gdnL1OriginalJournal=nullptr;
+
+ template<class IO> struct GdnL1CaptureIO {
+  PioneerQ38TokenMemory& owner;IO& io;
+  bool AllWorkersHeld(){
+   for(unsigned worker=0;worker<120;worker++)if(!owner.Guard(io,worker))return false;
+   return true;
+  }
+  bool Scope(unsigned worker){
+   const unsigned physicalWorker=worker+1;
+   // The full all-core held proof is performed by AllWorkersHeld. Per-page
+   // authorization is repeated by the checked IO accessors below.
+   return worker<119 && io.SelectRuntimeCore(physicalWorker) && io.TokenMemoryMappingStable(physicalWorker);
+  }
+  bool ReadPage(unsigned worker,uint32_t page,uint32_t* words){
+   const unsigned physicalWorker=worker+1;
+   return worker<119 && Scope(worker) && owner.startup->GdnL1OwnsResidentPage(physicalWorker,page)
+    && io.TokenGdnL1PageReadChecked(physicalWorker,page,words);
+  }
+  bool WritePage(unsigned worker,uint32_t page,const uint32_t* words){
+   const unsigned physicalWorker=worker+1;
+   return worker<119 && Scope(worker) && owner.startup->GdnL1OwnsResidentPage(physicalWorker,page)
+    && io.TokenGdnL1PageWrite(physicalWorker,page,words);
+  }
+ };
+
+ template<class IO> bool CaptureGdnL1OriginalPages(IO& io){
+  if(gdnL1OriginalJournal || !startup)return false;
+  const auto* allocator=startup->GdnL1PageAllocator();
+  if(!allocator)return false;
+  auto* journal=new(std::nothrow) GdnL1OriginalJournal;
+  if(!journal)return false;
+  gdnL1OriginalJournal=journal;
+  GdnL1CaptureIO<IO> access{*this,io};
+  if(journal->Capture(*allocator,access))return true;
+  if(journal->State()==GdnL1OriginalJournal::Empty){delete journal;gdnL1OriginalJournal=nullptr;}
+  return false; // a poisoned journal remains owned by this sticky memory owner
+ }
+
+ template<class IO> bool RestoreGdnL1OriginalPages(IO& access){
+  if(!gdnL1OriginalJournal || gdnL1OriginalJournal->State()!=GdnL1OriginalJournal::Captured
+   || !gdnL1OriginalJournal->Restore(access))return false;
+  delete gdnL1OriginalJournal;gdnL1OriginalJournal=nullptr;return true;
+ }
 #endif
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;
  PioneerQ38DispatchLease* cohort=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -237,6 +281,12 @@ public:
    result.worker=worker;if(!Guard(io,worker) || !VerifyOriginal(io,worker,result) || !Guard(io,worker))return Fail(io,result);
   }
   if(result.verifiedOriginalWords!=L::SavedWords)return Fail(io,result);
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+  // Snapshot scattered GDN pages only after the ordinary journal's complete
+  // readback pass and before the first firmware write. The alternate map and
+  // its originals therefore share this exact held-session lifetime.
+  if(!CaptureGdnL1OriginalPages(io))return Fail(io,result);
+#endif
   result.phase=3;
   for(unsigned worker=0;worker<120;worker++){
    result.worker=worker;if(!Guard(io,worker))return Fail(io,result);
@@ -378,6 +428,10 @@ public:
    result.worker=worker;if(!Guard(io,worker) || !VerifyOriginal(io,worker,result) || !Guard(io,worker))return Fail(io,result);
   }
   if(result.restoredWords!=L::SavedWords || result.verifiedOriginalWords!=2*L::SavedWords || !Guard(io,0))return Fail(io,result);
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+  if(!gdnL1OriginalJournal || !gdnL1OriginalJournal->DiscardCapturedBeforeLaunch())return Fail(io,result);
+  delete gdnL1OriginalJournal;gdnL1OriginalJournal=nullptr;
+#endif
   closed=true;installed=false;result.closed=1;return true;
  }
 };

@@ -76,3 +76,41 @@ The live machine has 64 CPUs and full RAM with stable041 restored. No current
 all-card Qwen request has returned a valid speed result. Last qualified
 full-Q4 result remains approximately 0.1728 tokens/sec; 20 tokens/sec remains
 unmet.
+
+Tag206 lifecycle integration checkpoint, later November 16
+---------------------------------------------------------
+The native candidate now passes `redistributedGdn=true` only under the
+tag206 page-access role. `PioneerQ38TokenMemory::PrepareHeld` captures the
+97,484,800-byte scattered-page original journal after its own complete held
+image readback and before the first firmware write. Its page adapter checks
+all 120 held workers once before capture, then uses the exact allocator-owned
+worker/page accessors for each page. After committed output is drained and
+the root is held, the token owner restores the page journal first, while the
+launched journal still authorizes access; the existing `RestoreOriginalL1`
+step follows unchanged. The separate page restore adapter is fail-closed with
+a 15-second clock budget. Any interrupted capture/restore keeps the snapshot
+and faults/quarantines the native owner. A prepared session closed before
+launch discards its untouched snapshot. The tag206 role still excludes Work
+and CPU-reference modes.
+
+New checks after this integration:
+* GDN journal ASan/UBSan host suite and role refusal passed.
+* Page allocator and descriptor extension suites passed.
+* Redistributed, scattered, no-GDDR-writeback worker image test passed all
+  96 halves, 7 banks, both slots, and four 16-step nonresetting chains; its
+  exact per-layer state/output bits matched. The warm emulator counted
+  19,061,359 instructions / 676 packets versus write-through's 25,001,329 /
+  866. This is not silicon timing.
+* Prepared-Q4 source compatibility suite passed across baseline, scattered
+  write-through and scattered L1-authoritative variants.
+* Fresh tag206 native `-Werror` build passed 43 role refusals; candidate hash
+  `1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475`,
+  unchanged default hash `2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc`.
+
+No candidate image was installed, no card inference or numerical comparison
+was performed, and no hardware restore duration or tokens/sec was measured.
+The only TPS remains the prior qualified ~0.1728 tok/s. Before a physical
+trial, require an independent review of the 15-second worst-case restore
+bound and a fresh generation-bound one-shot stage; then validate full-model
+output and measured speed. The candidate must not be treated as ready for
+Assistant/Work use.

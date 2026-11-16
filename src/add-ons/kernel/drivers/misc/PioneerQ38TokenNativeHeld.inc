@@ -153,7 +153,11 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  if(okay)okay=s->preparedSource && startup->BindPreparedSource(*s->preparedSource);
 #endif
- if(okay)okay=startup->Build(s->canonical,s->bank,s->identity,&d.authority.source[0][0],s->prompt,s->prompts,s->limit,s->stopEos,s->eos[0],s->eos[1])
+ bool redistributedGdn=false;
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+ redistributedGdn=true;
+#endif
+ if(okay)okay=startup->Build(s->canonical,s->bank,s->identity,&d.authority.source[0][0],s->prompt,s->prompts,s->limit,s->stopEos,s->eos[0],s->eos[1],redistributedGdn)
 #ifdef PIONEER_Q38_QGWD_RECEIPT_JOURNAL_INSPECTION
   && startup->MatchesPublishedBinding(s->canonical,s->bank,s->identity,&d.authority.source[0][0])
   && Q38TokenNativeLearnedPresent(c,s->canonical);

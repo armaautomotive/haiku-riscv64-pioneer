@@ -33,7 +33,7 @@ public:
 		SavedWords=Pages*WordsPerPage,
 		SavedBytes=SavedWords*sizeof(uint32_t)
 	};
-	enum Phase { Empty, Capturing, Captured, Restoring, Restored, Poisoned, AbandonedForInspection };
+	enum Phase { Empty, Capturing, Captured, Restoring, Restored, Poisoned, AbandonedForInspection, DiscardedBeforeLaunch };
 	struct Progress {
 		unsigned phase=Empty,worker=0,slot=0,page=0,wordsRead=0,wordsRestored=0,wordsVerified=0;
 	};
@@ -77,7 +77,7 @@ public:
 	{
 		// Never free the only original-data copy after an uncertain snapshot or
 		// restore. Native owners must retain this object on every poisoned path.
-		if(fPhase==Empty || fPhase==Restored || fPhase==AbandonedForInspection)delete[] fSaved;
+		if(fPhase==Empty || fPhase==Restored || fPhase==AbandonedForInspection || fPhase==DiscardedBeforeLaunch)delete[] fSaved;
 	}
 
 	Phase State()const{return fPhase;}
@@ -85,6 +85,16 @@ public:
 	bool RestoredSuccessfully()const{return fPhase==Restored;}
 	bool Unsafe()const{return fPhase==Poisoned || fPhase==Capturing || fPhase==Restoring;}
 	const Progress& LastProgress()const{return fProgress;}
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+	// A prepared-but-never-launched session cannot have mutated these pages.
+	// This is distinct from restoring a launched model or discarding a faulted
+	// snapshot; it only frees the verified originals on explicit no-launch close.
+	bool DiscardCapturedBeforeLaunch()
+	{
+		if(fPhase!=Captured || fRestoreAttempted || !fOriginalsVerified)return false;
+		delete[] fSaved;fSaved=nullptr;fPhase=DiscardedBeforeLaunch;fProgress.phase=fPhase;return true;
+	}
+#endif
 #ifdef PIONEER_Q38_GDN_L1_PAGE_JOURNAL_INSPECTION
 	bool ValidateMapForInspection(const Allocator& allocator)
 	{

@@ -215,7 +215,14 @@
  for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
  if(!s || s->phase!=PioneerQ38TokenNativeState::RootHeld || !s->runtime || !s->TerminalHeld()
   || !s->runtime->CommittedRecordsRead() || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
- s->phase=PioneerQ38TokenNativeState::RootRestoring;bool okay=s->runtime->RestoreOriginalL1(c.io,result);
+ s->phase=PioneerQ38TokenNativeState::RootRestoring;bool okay=true;
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+ // Restore the alternate recurrent-state pages while the launched journal's
+ // page grant is still live; the ordinary L1 restore then closes its own
+ // original-image journal under the existing 300 ms bound.
+ okay=s->runtime->RestoreGdnL1OriginalPagesBeforeL1(c.io);
+#endif
+ if(okay)okay=s->runtime->RestoreOriginalL1(c.io,result);
  if(okay && s->runtime->OriginalL1Restored())s->phase=PioneerQ38TokenNativeState::RootRestored;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
  return okay;

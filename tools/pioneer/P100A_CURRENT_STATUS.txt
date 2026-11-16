@@ -37,25 +37,34 @@ The tag101 image is preserved as a Pioneer-side backup. No new inference was
 started.
 
 Offline checks rerun November 16: the GDN original-page journal host suite,
-page allocator tests, and current-96 scattered-worker image/fault suite all
-passed. A fresh isolated native tag206 build also passed all 43 role refusals
-and emitted driver hash b794cc7089ee4a204e7b1788061f5e747c9add4cf8ad5753ba09897f4b8b2c23; default driver hash remained
-2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc. This
-build-only candidate is NOT installed or physically tested and does NOT yet
-integrate the page journal into inference. It is not a speed or correctness
-result for Qwen.
+page allocator suite, redistributed scattered-worker image suite, and
+prepared-Q4 native-source compatibility suite passed. The image test
+exercised all 96 halves, seven banks, both slots and four nonresetting
+16-step chains. Its warm emulated worker reduced the instruction count from
+25,001,329 to 19,061,359 and packet count from 866 to 676 for one layer; this
+is emulator accounting, NOT hardware time or tokens/sec. The candidate native
+build passes `-Werror`, all 43 role refusals and the CPU/Work import fence; its
+driver hash is
+1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475. The
+default driver hash remains
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
 
-Concrete remaining integration gates: the native startup currently calls
-`Build(...)` without enabling its `redistributedGdn` map; the 97,484,800-byte
-original-page journal still has no native capture/restore lifecycle; and the
-outer token/state epoch must make partial recurrent state unobservable on
-failure. The existing launched restore path has a 300 ms budget, so a full
-97.5 MB journal cannot simply be appended there without a measured/batched
-transport and a revised bounded restore design. Current 96-worker mapping
-has only 2,400 of 4,608 half-states resident (2,208 spill). No live L1-cache
-execution or new tokens/sec sample exists. The last qualified complete-Q4
-rate remains about 0.1728 tok/s; the 20 tok/s goal remains unmet. Detailed
-run record: benchmarks/qwen38-gdn-page-journal-live-audit-20261116.txt.
+The distinct tag206 candidate now selects the redistributed GDN map, captures
+the 97,484,800-byte original-page journal after the complete held-image
+readback and before its first firmware write, then restores it after a
+committed terminal hold and before the existing 300 ms L1 restore. Candidate
+page restoration has a separate 15 s fail-closed bound; an unlaunched session
+discards its untouched snapshot, while any uncertain/partial launched restore
+quarantines and retains the owner. Work and CPU-reference roles remain
+compile-time forbidden. This is source/build/simulation evidence only: tag206
+has NOT been installed or run on the P100A, no full Qwen candidate token was
+generated, and the accepted full-card rate remains about 0.1728 tok/s.
+
+Next gates are a fresh generation-bound tag206 hardware qualification, exact
+restore timing and full-model output comparison, then a complete-model
+tokens/sec sample. Do not install it until the one-shot stage and recovery
+plan are independently qualified. The 20 tok/s goal remains unmet. Detailed
+prior live audit: benchmarks/qwen38-gdn-page-journal-live-audit-20261116.txt.
 
 Live reconnect check, November 16 (later in this session)
 ---------------------------------------------------------
@@ -75,9 +84,11 @@ vector92 rate near 0.1728 tok/s; reject that implementation and do not repeat
 the spent stage. See
 benchmarks/qwen38-queued-block-full-physical-20261105.txt. This reinforces
 that eliminating individual drains does not address the dominant bottleneck.
-The next structurally relevant candidate remains recurrent-state residency,
-but the redistributed map and its original-page journal are not connected to
-token capture/commit/restore, and no speed benefit is established.
+The recurrent-state residency path now has candidate-only map selection and
+original-page capture/restore hooks; its first complete-worker emulator test
+is positive. It remains unqualified: no speed benefit is established, and
+candidate hardware correctness/timing plus the full-model output comparison
+remain open.
 
 Matrix-FPU status clarification, November 16, 2026
 ------------------------------------------------

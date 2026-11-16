@@ -20,12 +20,14 @@ tag2026102100010012/gen2, idle, guard1. No reboot is needed to continue.
 Do not repeat the complete-model queued-Q4 phase-batching experiment: its
 fresh, closed physical record measured 0.162052093..0.162055547 tok/s,
 slower than the accepted vector92 ~0.1728 tok/s, so it is rejected. See
-benchmarks/qwen38-queued-block-full-physical-20261105.txt. The immediate
-structural route is to finish the GDN recurrent L1-residency lifecycle: the
-current native startup does not select the redistributed map, the
-97,484,800-byte page journal is not bound to capture/restore, and cache
-validity is not tied to an all-or-nothing model-token commit. This remains
-offline/incomplete and must not be mistaken for a speedup.
+benchmarks/qwen38-queued-block-full-physical-20261105.txt. The tag206
+candidate now selects the redistributed GDN map and binds the 97,484,800-byte
+original-page journal to held capture and fail-closed terminal restore;
+no-launch sessions discard the untouched snapshot. The candidate build and
+offline worker image tests pass, but it has not run on the card. The next
+gate is a fresh generation-bound hardware qualification followed by full-
+model numerical and speed measurement. The warm emulator's fewer packets and
+instructions are not measured latency or TPS.
 
 November 14 checkpoint: the isolated Q4 FFN shared-input-reuse candidate is
 committed and pushed as 7b68ed11a117134b085fa9a95627100ea38cdd16. Its exact

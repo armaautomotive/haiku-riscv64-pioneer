@@ -143,6 +143,29 @@ struct PioneerQ38TokenHardwareSealResult {
  uint32_t stores=0,journals=0,tlbWords=0,reserved[5]={};
 };
 class PioneerQ38TokenNativeOwner {
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+ template<class IO> struct GdnL1RestorePageIO {
+  PioneerQ38TokenNativeOwner& owner;IO& io;uint64_t began;
+  bool InBudget(){const uint64_t now=io.Q38CohortNow();return now>=began && now-began<UINT64_C(15000000000);}
+  bool AllWorkersHeld(){
+   if(!InBudget() || !owner.HeldAfterTerminal() || !owner.CommittedRecordsRead() || !owner.Scope(io))return false;
+   PioneerQ38TokenRestoreResult check;
+   for(unsigned worker=0;worker<120;worker++)if(!InBudget() || !owner.HoldGuard(io,worker,check))return false;
+   return InBudget() && owner.HeldAfterTerminal() && owner.CommittedRecordsRead();
+  }
+  bool Scope(unsigned worker){
+   const unsigned physicalWorker=worker+1;
+   return worker<119 && InBudget() && owner.HeldAfterTerminal() && owner.CommittedRecordsRead()
+    && io.SelectRuntimeCore(physicalWorker) && io.TokenMemoryMappingStable(physicalWorker);
+  }
+  bool ReadPage(unsigned worker,uint32_t page,uint32_t* words){
+   return worker<119 && InBudget() && io.TokenGdnL1PageReadChecked(worker+1,page,words);
+  }
+  bool WritePage(unsigned worker,uint32_t page,const uint32_t* words){
+   return worker<119 && InBudget() && io.TokenGdnL1PageWrite(worker+1,page,words);
+  }
+ };
+#endif
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const PioneerQ38TokenStartupPlan* startup=nullptr;const uint8_t* ledger=nullptr;PioneerQ38GdnIdentity identity={};
@@ -1200,6 +1223,15 @@ public:
 #include "PioneerQ38Qgw8TraceReadInspection.inc"
 #endif
 public:
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+ template<class IO> bool RestoreGdnL1OriginalPagesBeforeL1(IO& io){
+  if(!memory || !memory->LaunchedJournalActive() || !HeldAfterTerminal() || !CommittedRecordsRead() || !Scope(io))return FailOwner(io);
+  GdnL1RestorePageIO<IO> access{*this,io,io.Q38CohortNow()};
+  if(!memory->RestoreGdnL1OriginalPages(access))return FailOwner(io);
+  if(!HeldAfterTerminal() || !CommittedRecordsRead())return FailOwner(io);
+  return true;
+ }
+#endif
  template<class IO> bool RestoreOriginalL1(IO& io,PioneerQ38TokenRestoreResult& r){
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   const PioneerQ38TokenRestoreResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
