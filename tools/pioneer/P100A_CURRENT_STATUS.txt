@@ -25,12 +25,16 @@ project key. Live Haiku reports 64 CPUs and max memory 137,034,936,320 bytes
 (about 127.6 GiB); `vmstat` reports about 133.9 GB free at the time checked.
 PCI enumeration sees Tenstorrent Blackhole 1e52:b140.
 
-The reload manager is idle (active_owner0, open_count1, guard1), but the
-installed driver is the unqualified tag101 SFPNOP candidate, SHA256
-95b62dfaaa75c3c8f4856c081c1e8fb700e444b99a7a0402b3056efbfcc304a9,
-generation1. Its November 15 physical record says a full 27B CPU-inference-off
-request stopped advancing at committed0 after the 31-token prompt for over
-30 minutes; it is not a valid speed result. No new inference was started.
+The machine initially had the unqualified tag101 SFPNOP candidate at
+generation1 (SHA256 95b62dfaaa75c3c8f4856c081c1e8fb700e444b99a7a0402b3056efbfcc304a9).
+Its November 15 physical record says a full 27B CPU-inference-off request
+stopped advancing at committed0 after the 31-token prompt for over 30 minutes;
+it is not a valid speed result. With no active owner, the guarded reload
+manager restored stable041 without reboot or GPU execution. Current status:
+stable tag2026102100010012, generation2, active_owner0, cold0, guard1; driver
+hash 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+The tag101 image is preserved as a Pioneer-side backup. No new inference was
+started.
 
 Offline checks rerun November 16: the GDN original-page journal host suite,
 page allocator tests, and current-96 scattered-worker image/fault suite all
