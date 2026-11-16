@@ -29,8 +29,11 @@ Observed sequence
   shutdown interval SSH was unreachable; one ON pulse was sent. The next SSH
   attempt received a different ED25519 host fingerprint:
   `SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8`.
-  Strict host-key checking rejected it. OS identity, loaded driver, and
-  successful stable-driver recovery after boot are therefore UNVERIFIED.
+  Strict host-key checking rejected it. The existing serial log shows an
+  early Linux 6.1.31 boot path with `root=/dev/nvme0n1p3`; UART output stops
+  shortly after early boot, so it does not establish whether Haiku was later
+  kexec'd. The current OS, loaded driver, and successful stable-driver
+  recovery after boot are therefore UNVERIFIED.
   Do not bypass host-key checking or claim stable041 was restored.
 
 Interpretation / next action

@@ -32,9 +32,11 @@ refused to exchange a driver while the device was owned/quarantined.
 One controlled power cycle was issued to clear that quarantine. After boot,
 SSH advertised a different key (`SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8`)
 than the pinned key, so strict SSH is refusing access. The post-boot OS,
-loaded driver, and stable-driver restoration are unverified; do not claim the
-rollback succeeded or bypass host-key checking. The user must verify the new
-fingerprint out of band before remote work resumes. A local-only diagnostic
+loaded driver, and stable-driver restoration are unverified; the existing
+serial capture shows early Linux 6.1.31 with root on `/dev/nvme0n1p3`, but no
+later UART output proves a subsequent Haiku kexec. Do not claim rollback
+succeeded or bypass host-key checking. The user must verify the new fingerprint
+out of band before remote work resumes. A local-only diagnostic
 change now reports the worker's session failure stage and operation in the
 fatal IPC message; fake-worker rate tests pass, but this diagnostic change
 has not yet been cross-compiled or exercised on the board. See
