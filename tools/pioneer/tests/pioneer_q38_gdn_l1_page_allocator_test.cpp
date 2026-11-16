@@ -46,6 +46,8 @@ int main()
 				potentialWarmWritePackets+=2;
 				potentialWarmWriteBytes+=2*16384;
 				for(unsigned page=0;page<8;page++){
+					assert(allocator.OwnsResidentPage(route.physicalWorker,
+						table.pages[page]));
 					assert(table.pages[page]
 						==canonicalPages[route.stateIndex*8+page]);
 					assert(table.pages[page]>=PioneerQ38GdnL1PageAllocator::WorkerStateMinimum
@@ -90,6 +92,8 @@ int main()
 					PioneerQ38GdnL1CacheCapacityInspection::MaxPages,canonicalCount));
 				assert(canonicalCount==201);currentResident++;
 				for(unsigned page=0;page<8;page++){
+					assert(allocator.OwnsResidentPage(logicalWorker+1,
+						table.pages[page]));
 					assert(table.pages[page]==canonicalPages[layerOrdinal*8+page]);
 					assert(table.pages[page]>=PioneerQ38GdnL1PageAllocator::WorkerStateMinimum
 						&& (table.pages[page]&4095)==0 && table.pages[page]<=0x17f000);
@@ -102,6 +106,17 @@ int main()
 		}
 	assert(PioneerQ38GdnL1WorkerFootprint::Overlaps(0xb0000,4096));
 	assert(currentResident==2400 && currentSpill==2208);
+	unsigned eligible=0;
+	assert(PioneerQ38GdnL1CacheCapacityInspection::BuildPages(1,
+		canonicalPages,PioneerQ38GdnL1CacheCapacityInspection::MaxPages,eligible)
+		&& eligible==201);
+	assert(allocator.OwnsResidentPage(1,canonicalPages[0])
+		&& allocator.OwnsResidentPage(1,canonicalPages[199])
+		&& !allocator.OwnsResidentPage(1,canonicalPages[200])
+		&& !allocator.OwnsResidentPage(0,canonicalPages[0])
+		&& !allocator.OwnsResidentPage(120,canonicalPages[0])
+		&& !allocator.OwnsResidentPage(1,canonicalPages[0]+1)
+		&& !allocator.OwnsResidentPage(1,0x80000));
 	PioneerQ38GdnL1PageAllocator::PageTable out={};
 	assert(!allocator.Resolve(0,0,out) && !allocator.Resolve(120,0,out)
 		&& !allocator.Resolve(1,39,out)

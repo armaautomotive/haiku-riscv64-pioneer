@@ -99,6 +99,27 @@ public:
 
 	bool Ready()const{return fReady;}
 
+	// Exact read/write allowlist primitive for a future native page adapter.
+	// Local L1 offsets are meaningful only together with physicalWorker; this
+	// method checks the allocator's published resident set, not merely whether
+	// an address is otherwise free in that worker's SRAM map.
+	bool OwnsResidentPage(unsigned physicalWorker,uint32_t address)const
+	{
+		if(!fReady || !physicalWorker || physicalWorker>Workers
+			|| !Free(physicalWorker,address))return false;
+		unsigned low=0,high=ResidentSlotsPerWorker*PagesPerSlot;
+		while(low<high){
+			const unsigned middle=low+(high-low)/2;
+			const uint32_t page=fPages[physicalWorker-1]
+				[middle/PagesPerSlot][middle%PagesPerSlot];
+			if(page<address)low=middle+1;
+			else high=middle;
+		}
+		return low<ResidentSlotsPerWorker*PagesPerSlot
+			&& fPages[physicalWorker-1][low/PagesPerSlot]
+				[low%PagesPerSlot]==address;
+	}
+
 	bool Resolve(unsigned physicalWorker,unsigned stateIndex,PageTable& output)const
 	{
 		if(!fReady || !physicalWorker || physicalWorker>Workers

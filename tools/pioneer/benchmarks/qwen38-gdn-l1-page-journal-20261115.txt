@@ -43,6 +43,19 @@ disabled). It compiled with maximum reported static frame 272 bytes; only the
 adapter methods and `std::nothrow` allocation operators remained undefined.
 This is compile evidence, not a native backend binding or runtime proof.
 
+Native page-access boundary preparation
+---------------------------------------
+Added `PioneerQ38GdnL1PageAllocator::OwnsResidentPage(worker, address)`, an
+exact read/write allowlist predicate for a future native adapter. It uses a
+bounded binary search of the published 200-page resident set for that worker;
+merely-free SRAM pages and spill/unassigned pages do not pass. The host test
+checks every page emitted by both current-96 and redistributed route maps,
+plus the unassigned 201st eligible page, invalid workers, unaligned addresses,
+and out-of-range addresses. The production allocator cross-compiles under the
+prepared-Q4 kernel role with a maximum static frame of 1,648 bytes. This
+provides only a checked-address primitive: it is not wired to native IO,
+workers, or model execution and yields no inference or speed evidence.
+
 Next required integration
 -------------------------
 The native L1 memory accessor currently admits only the ordinary snapshot
