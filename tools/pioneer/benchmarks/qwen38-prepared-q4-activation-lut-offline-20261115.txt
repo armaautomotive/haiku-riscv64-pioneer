@@ -1,0 +1,65 @@
+Pioneer Qwen3.8-27B Q4_K_M — prepared-input exact activation LUT experiment
+Date: 2026-11-15
+
+Purpose
+
+PreparedQ4Inputs maps authenticated signed integer activations into exact
+BF16 bit patterns before the exact Q4 matrix worker consumes them. The old
+path normalizes each value with integer leading-bit logic. This experiment
+uses a 129-entry signed-magnitude lookup table for that exact mapping. It
+does not approximate weights or arithmetic and does not change the default
+worker path. The LUT candidate is experimental and is not the default tag102
+build, a native package, an Assistant selection, or a physical driver update.
+
+Exactness and build
+
+  python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py \
+    /private/tmp/q38-prepared-q4-review.emgxtut8/candidate \
+    --activation-lut-image \
+    /private/tmp/q38-prepared-q4-activation-lut-20261115c
+
+PASS: exhaustive equality for all 65,536 possible 16-bit inputs; all 257
+valid signed-magnitude activations accepted exactly; unchanged quant/mask
+packing, geometries, and refusal checks. The full closed worker suite passed:
+27 type/K/group shapes, 54 changed-input jobs, five fragment-mask controls,
+16 inert NoC-loss cases, 16 descriptor refusals, three GDN history pairs,
+and the bounded-stack check (3,540/8,192 bytes). The endpoint model is
+synthetic and has no device IO.
+
+The candidate was built with the pinned Haiku RISC-V cross-toolchain and
+passes the image/relocation/opcode/stack checks. Its complete program.elf
+SHA-256 is 62a0d3c158d3e407cd3dc9125a8ce130e3601f56403084668d6a01313537efd4;
+its worker/service sections are separately pinned in
+build_qwen38_prepared_exact_q4_worker.py as ACTIVATION_LUT_PINS. The
+non-LUT default builder was rerun independently and passed its existing
+whole-image pins unchanged.
+
+Synthetic instruction profile
+
+  K       groups  current prepared worker  LUT candidate  reduction
+  5120       1       1,471,733               1,319,427       10.35%
+  6144       1       1,739,649               1,557,807       10.45%
+ 17408       1       4,709,895               4,203,157       10.76%
+
+Counts are simulated RV32 instructions for two changed jobs, not card cycles,
+latency, or tokens/sec. For K5120/groups1, PreparedQ4Inputs itself fell from
+365,604 to 213,298 retired instructions in the same synthetic profile. This
+indicates a useful offboard optimization in activation preparation, but does
+not predict end-to-end model speed; matrix execution, memory/NoC stalls,
+attention/state, and device transport remain unmeasured here.
+
+Pioneer reachability and safety
+
+The controlled restart restored ICMP reachability at 10.0.0.247, but strict
+SSH rejected the host's changed ED25519 fingerprint
+SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8. No host-key bypass,
+device login, native build install, hardware test, model run, or physical TPS
+measurement was performed. Verify that fingerprint out-of-band before any
+SSH-based install or benchmark.
+
+Next engineering step
+
+Keep tag102 and the no-CPU-reference Work mode unchanged. If this LUT remains
+beneficial after target-side timing, promote it only as a separately tagged
+experimental native+Assistant build, then compare both variants using a
+matched real model run with the same prompt, state, and device conditions.

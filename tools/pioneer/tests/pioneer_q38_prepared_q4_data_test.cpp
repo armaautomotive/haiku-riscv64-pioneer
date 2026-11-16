@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQ38PreparedQ4Mask.h"
+#include "../PioneerQ38ExactQ4Original.h"
 #include "../PioneerQ38Q4EscapeTiles.h"
 #include <array>
 #include <cassert>
@@ -18,7 +19,17 @@ struct MaskEndpoint {
  void SealData(){fences++;}
 };
 int main(){
- unsigned expansions=0,geometry=0,refusals=0;
+ unsigned expansions=0,geometry=0,refusals=0,activationAccepted=0;
+ for(unsigned value=0;value<=65535;value++){
+  unsigned original=0xdeadbeef,lookup=0xdeadbeef;
+  const bool originalOkay=PioneerQ38ExactQ4Original::Activation(value,original);
+  const bool lookupOkay=PioneerQ38ExactQ4Original::ActivationLookup(value,lookup);
+  if(originalOkay!=lookupOkay || original!=lookup)
+   fprintf(stderr,"activation lookup mismatch value%04x valid%d/%d original%08x lookup%08x\n",
+    value,originalOkay,lookupOkay,original,lookup);
+  assert(originalOkay==lookupOkay && original==lookup);
+  activationAccepted+=originalOkay;
+ }
  for(unsigned count=0;count<=256;count++)for(unsigned shift:{0U,16U,32U,48U}){
   MaskEndpoint e;std::array<uint8_t,512> expected{},packed{};Codec::Mask description;
   for(unsigned row=0;row<count;row++){const unsigned value=(1U<<(row&15))|((row*71+3)&65535);expected[row*2]=uint8_t(value);expected[row*2+1]=uint8_t(value>>8);}
@@ -56,5 +67,5 @@ int main(){
  {MaskEndpoint e;assert(!PioneerQ38PreparedQ4Mask::Expand(e,0xc0000040,{64,1024}) && !e.writes && !e.reads);refusals++;}
  {MaskEndpoint e;assert(!PioneerQ38PreparedQ4Mask::Expand(e,0x80000001,{0,0}) && !e.writes && !e.reads);refusals++;}
  {MaskEndpoint e;e.payload[0]=1;assert(!PioneerQ38PreparedQ4Mask::Expand(e,0x40000040,{64,1024}) && !e.fences);refusals++;}
- printf("PASS_PREPARED_Q4_DATA exactMaskExpansions%u nativeGeometries%u refusals%u all8704InputWordsDisjoint;NO_ROM_NATIVE_MODEL_OR_TPS\n",expansions,geometry,refusals);
+ printf("PASS_PREPARED_Q4_DATA exactActivationLUT all65536Patterns/%u accepted exactMaskExpansions%u nativeGeometries%u refusals%u all8704InputWordsDisjoint;NO_ROM_NATIVE_MODEL_OR_TPS\n",activationAccepted,expansions,geometry,refusals);
 }
