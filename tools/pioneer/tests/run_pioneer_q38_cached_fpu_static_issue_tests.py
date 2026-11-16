@@ -31,6 +31,8 @@ variants = {
     'reference': (),
     'paired': ('-DPIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE=1', '-fomit-frame-pointer'),
     'static': ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-fomit-frame-pointer'),
+    'static_helper': ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1',
+                      '-DPIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE=1', '-fomit-frame-pointer'),
     'half_static': ('-DPIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE=1', '-fomit-frame-pointer'),
 }
 matrix_source = here.parent/'blackhole_q38_cached_fpu_matrix.cpp'
@@ -81,6 +83,12 @@ with tempfile.TemporaryDirectory(prefix='q38-static-issue-', dir='/private/tmp')
         ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-DTT_PIONEER_Q38_WORK_MODE=1'),
         ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-DPIONEER_Q38_CPU_VALIDATION=1'),
         ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-DPIONEER_Q38_FULL_MODEL_CPU_REFERENCE=1'),
+        ('-DPIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE=1',),
+        ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-DPIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE=0'),
+        ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-DPIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE=1',
+         '-DPIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE=1'),
+        ('-DPIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE=1', '-DPIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE=1',
+         '-DPIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE=1'),
     ):
         result = subprocess.run([tools['g++'], '-march=rv32i', '-mabi=ilp32',
                                  '-DPIONEER_Q38_CACHED_FPU_MATRIX_IMAGE=1', *flags,
@@ -103,7 +111,8 @@ with tempfile.TemporaryDirectory(prefix='q38-static-issue-', dir='/private/tmp')
          '-ffp-contract=off', '-fsanitize=address,undefined',
          here/'pioneer_q38_cached_fpu_pair_issue_test.cpp', '-o', test])
     results = {}
-    for reference, candidate in (('reference', 'paired'), ('paired', 'static'), ('paired', 'half_static')):
+    for reference, candidate in (('reference', 'paired'), ('paired', 'static'), ('paired', 'half_static'),
+                                 ('paired', 'static_helper')):
         result = subprocess.run([test, producer, images[reference], images[candidate]],
                                 check=True, text=True, stdout=subprocess.PIPE)
         lines = result.stdout.splitlines()
@@ -120,16 +129,22 @@ with tempfile.TemporaryDirectory(prefix='q38-static-issue-', dir='/private/tmp')
 
     pair_to_static = results[('paired', 'static')]
     pair_to_half_static = results[('paired', 'half_static')]
+    pair_to_static_helper = results[('paired', 'static_helper')]
     largest = next(row for row in pair_to_static if row[:3] == (17408, 256, 119))
     half_largest = next(row for row in pair_to_half_static if row[:3] == (17408, 256, 119))
+    helper_largest = next(row for row in pair_to_static_helper if row[:3] == (17408, 256, 119))
     reduction = (largest[3]-largest[4])*100/largest[3]
     half_reduction = (half_largest[3]-half_largest[4])*100/half_largest[3]
+    helper_reduction = (helper_largest[3]-helper_largest[4])*100/helper_largest[3]
     assert reduction > 10.0, reduction
+    assert helper_reduction > 10.0, helper_reduction
     full_static_bytes = (images['static']/'text.bin').stat().st_size
     half_static_bytes = (images['half_static']/'text.bin').stat().st_size
+    helper_static_bytes = (images['static_helper']/'text.bin').stat().st_size
     assert half_static_bytes < full_static_bytes, (half_static_bytes, full_static_bytes)
     print(f'PASS STATIC_ISSUE_RV32_SIM largestCaseInstructionReduction={reduction:.2f}% '
-          f'halfStaticReduction={half_reduction:.2f}% '
+          f'halfStaticReduction={half_reduction:.2f}% nibbleHelperReduction={helper_reduction:.2f}% '
           f'halfStaticTextBytes={half_static_bytes} fullStaticTextBytes={full_static_bytes} '
+          f'fullStaticNibbleHelperTextBytes={helper_static_bytes} '
           f'TensixStreamExact=1 outputs704Exact=1 roleRefusals={refused} text<=16384 stack<=4096;'
           'NO CARD/TPS/WORK/HARDWARE GRANT')

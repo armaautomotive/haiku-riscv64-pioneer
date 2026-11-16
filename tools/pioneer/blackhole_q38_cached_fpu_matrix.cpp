@@ -12,6 +12,9 @@
 #if defined(PIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE) && (PIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE != 1 || defined(PIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE))
 #error Half-static issue DATA requires its distinct offline-only image role
 #endif
+#if defined(PIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE) && (PIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE != 1 || defined(PIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE) || (defined(PIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE) == defined(PIONEER_Q38_CACHED_FPU_HALF_STATIC_ISSUE_IMAGE)))
+#error Static nibble-helper DATA requires its distinct offline-only image role
+#endif
 #define PIONEER_DRAM_SWEEP_FREESTANDING 1
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38Q4FpuCachedLoader.h"
@@ -21,6 +24,9 @@
 #error Exact paired cached FPU BUILD required
 #endif
 #include "PioneerQ38Q4FpuPairIssueCompute.h"
+#endif
+#ifdef PIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE
+#define PIONEER_Q38_Q4_STATIC_ISSUE_NIBBLE_HELPER 1
 #endif
 #ifdef PIONEER_Q38_CACHED_FPU_STATIC_ISSUE_IMAGE
 #include "PioneerQ38Q4FpuStaticIssueCompute.h"

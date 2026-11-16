@@ -1,14 +1,22 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_Q4_FPU_STATIC_ISSUE_COMPUTE_H
 #define PIONEER_Q38_Q4_FPU_STATIC_ISSUE_COMPUTE_H
+typedef __UINT32_TYPE__ uint32_t;
 #include "PioneerQ38Q4FpuCompactStreamCompute.h"
+#if defined(PIONEER_Q38_Q4_STATIC_ISSUE_NIBBLE_HELPER) && PIONEER_Q38_Q4_STATIC_ISSUE_NIBBLE_HELPER != 1
+#error Exact offline static-issue nibble-helper selector required
+#endif
 // Offline scheduling candidate: fully unroll the repeated per-group Q4
 // decode issue sequence. The emitted Tensix/SFPU stream must be identical;
 // only scalar RV32 loop/address work may change. No native/Work selection.
 struct PioneerQ38Q4FpuStaticIssueCompute:PioneerQ38Q4FpuCompactStreamCompute {
  using B=PioneerQ38Q4FpuBlock;using M=PioneerQ38Q4FpuCompactMetadata;
 protected:
+#if defined(PIONEER_Q38_Q4_STATIC_ISSUE_NIBBLE_HELPER)
+ template<bool Upper,class E> static __attribute__((noinline)) void Nibble(E& e){
+#else
  template<bool Upper,class E> static __attribute__((always_inline)) inline void Nibble(E& e){
+#endif
   if(Upper)PioneerSfpuShift(e,0,-4);else PioneerSfpuAnd(e,0,0,4);
   e.Op(0x90000000);e.Op(0x84010200);e.Op(0x8f000000);
   PioneerSfpuMove(e,3,0);PioneerSfpuShift(e,3,-16);

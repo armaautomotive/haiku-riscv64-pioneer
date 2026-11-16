@@ -1,0 +1,44 @@
+Q4 fully static issue with shared nibble helpers — offline candidate
+===================================================================
+Date: 2026-11-15
+
+Result
+------
+The new `PIONEER_Q38_CACHED_FPU_STATIC_NIBBLE_HELPER_IMAGE` keeps the fully
+specialized Q4 issue schedule but emits the repeated upper/lower nibble
+decoder as two shared RV32 functions. It is a separate BUILD-only image,
+not selected by native, Work, Assistant, CPU-reference, or validation code.
+
+Six actual-linked RV32 comparisons passed for K=5120/17408, output rows
+32/64/256, and workers 1/59/119. All 704 output words were exact against
+the paired schedule; every observed Tensix/config issue stream was identical.
+In the largest synthetic interpreter case (K=17408, rows=256, worker=119),
+retired guest RV32 instructions fell from 10,413,966 (paired) to 9,031,414
+(static shared helper), a 13.28% reduction. This is emulator instruction
+count, not P100A cycles or model tokens/sec. Stack usage was 480 bytes.
+
+The full-static shared-helper text is 9,716 bytes in the unchanged 16-KiB
+cached-matrix test window. It does NOT fit the compact full-K image's fixed
+8-KiB ROM: the separate compact attempt linked to 0x2330 bytes (9,008) and
+failed the existing 0x2000-byte linker assertion. No ROM limit was raised.
+The half-static/shared-helper combination was also rejected: although its
+8,084-byte compact image fit, its exact-output RV32 test reported more
+simulated instructions than paired issue. That experimental branch was
+removed.
+
+Validation and scope
+--------------------
+`RV32_PREFIX=riscv64-elf- python3
+tools/pioneer/tests/run_pioneer_q38_cached_fpu_static_issue_tests.py`
+passed after the rejected branch was removed. The runner checks reference,
+paired, full-static, half-static, and full-static/shared-helper images,
+strict output and issue-stream identity, bounded stack, and selector-role
+refusals. The compact half-static regression builds still pass at both
+supported widths (7,948 bytes for K=5120; 7,940 bytes for K=17408).
+
+This is offline component evidence only. No native owner selected the image;
+no device code was staged or run; numerical model quality and physical cycle
+impact are unproven; no full Qwen run or tokens/sec measurement occurred.
+The P100A's full-model target remains 20 tokens/sec and unmet. Physical
+qualification still requires an isolated native diagnostic and verified
+Pioneer SSH identity.
