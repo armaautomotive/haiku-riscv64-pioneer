@@ -62,6 +62,16 @@ struct PioneerQ38ExactQ4Original {
   output=kPioneerQ38ExactQ4ActivationLookup[magnitude]
 	| (magnitude ? value&0x8000 : 0);return true;
  }
+ static bool ActivationByteLookup(unsigned value,unsigned& output){
+  // Encoded activations have eight magnitude bits: bits10..14 are the fixed
+  // exponent and bit15 is sign. Validate before indexing, preserving the
+  // asymmetric +127/-128 limits without testing unused upper magnitude bits.
+  if(value>65535)return false;
+  const unsigned magnitude=value&255,negative=value&0x8000;
+  if((value&0x7f00)!=0x4000 || magnitude>(negative?128U:127U))return false;
+  output=kPioneerQ38ExactQ4ActivationLookup[magnitude]
+	| (magnitude ? negative : 0);return true;
+ }
  static unsigned PanelByteOffset(unsigned panel){return panel<16?256+(panel/4)*512+(panel%2)*256:~0U;}
  // E supplies ONLY bounded ORIGINAL reads and owned primary/mask stores.
  // ALL input validation occurs before any access for invalid geometry.

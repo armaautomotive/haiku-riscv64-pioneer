@@ -21,13 +21,14 @@ struct MaskEndpoint {
 int main(){
  unsigned expansions=0,geometry=0,refusals=0,activationAccepted=0;
  for(unsigned value=0;value<=65535;value++){
-  unsigned original=0xdeadbeef,lookup=0xdeadbeef;
+  unsigned original=0xdeadbeef,lookup=0xdeadbeef,byteLookup=0xdeadbeef;
   const bool originalOkay=PioneerQ38ExactQ4Original::Activation(value,original);
   const bool lookupOkay=PioneerQ38ExactQ4Original::ActivationLookup(value,lookup);
-  if(originalOkay!=lookupOkay || original!=lookup)
-   fprintf(stderr,"activation lookup mismatch value%04x valid%d/%d original%08x lookup%08x\n",
-    value,originalOkay,lookupOkay,original,lookup);
-  assert(originalOkay==lookupOkay && original==lookup);
+  const bool byteOkay=PioneerQ38ExactQ4Original::ActivationByteLookup(value,byteLookup);
+  if(originalOkay!=lookupOkay || original!=lookup || originalOkay!=byteOkay || original!=byteLookup)
+   fprintf(stderr,"activation lookup mismatch value%04x valid%d/%d/%d original%08x lookup%08x byte%08x\n",
+    value,originalOkay,lookupOkay,byteOkay,original,lookup,byteLookup);
+  assert(originalOkay==lookupOkay && original==lookup && originalOkay==byteOkay && original==byteLookup);
   activationAccepted+=originalOkay;
  }
  for(unsigned count=0;count<=256;count++)for(unsigned shift:{0U,16U,32U,48U}){

@@ -22,6 +22,12 @@ if '--activation-lut-image' in sys.argv:
     require(sys.argv.count('--activation-lut-image')==1,'one explicit activation-LUT image')
     at=sys.argv.index('--activation-lut-image');require(at+1<len(sys.argv),'activation-LUT image required')
     activation_lut=pathlib.Path(sys.argv[at+1]);del sys.argv[at:at+2]
+activation_byte_lut=None
+if '--activation-byte-lut-image' in sys.argv:
+    require(sys.argv.count('--activation-byte-lut-image')==1,'one explicit byte-index activation-LUT image')
+    at=sys.argv.index('--activation-byte-lut-image');require(at+1<len(sys.argv),'byte-index activation-LUT image required')
+    activation_byte_lut=pathlib.Path(sys.argv[at+1]);del sys.argv[at:at+2]
+require(not (activation_lut and activation_byte_lut),'one prepared activation LUT candidate at a time')
 two_product_replay='--two-product-replay' in sys.argv[1:]
 two_product='--two-product' in sys.argv[1:] or two_product_replay
 if two_product_replay:
@@ -36,11 +42,11 @@ instruction_profile=len(sys.argv)==3 and sys.argv[2] in ('--instruction-profile'
 current_profile=len(sys.argv)==3 and sys.argv[2]=='--current-worker-profile'
 require(not instruction_profile or (two_product_replay or current_profile),'profile an explicitly qualified replay13 or current prepared-Q4 worker only')
 require(not instruction_prefetch or (two_product_replay and not instruction_profile),'new prefetch image is an explicit replay13 worker,not a profile/old mode')
-require(not (activation_lut and (two_product or two_product_replay or instruction_prefetch)),
+require(not ((activation_lut or activation_byte_lut) and (two_product or two_product_replay or instruction_prefetch)),
         'activation-LUT worker is an explicit prepared-Q4 current-worker mode')
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
-image=pathlib.Path(sys.argv[1]);worker_image=activation_lut or instruction_prefetch or image
+image=pathlib.Path(sys.argv[1]);worker_image=activation_byte_lut or activation_lut or instruction_prefetch or image
 control=image/('unchanged-prepared/unchanged-original' if two_product else 'unchanged-original')
 fixture=control/'unchanged-vector/unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/unchanged-pushed/unchanged-precise/unchanged-global/qualified-math'
 tool='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
@@ -68,7 +74,7 @@ def snapshot(directory, records):
 snapshots=[snapshot(directory,pins(script,variable)) for directory,script,variable in (
     (fixture,here/'run_pioneer_q38_mixed_worker_tests.py','PINS'),
     (control,here.parent/'build_qwen38_exact_q4_work_worker.py','PINS'),
-    (worker_image,here.parent/('build_qwen38_two_product_q4_worker.py' if two_product else 'build_qwen38_prepared_exact_q4_worker.py'),'REPLAY_PINS' if two_product_replay else 'ACTIVATION_LUT_PINS' if activation_lut else 'PINS'))]
+    (worker_image,here.parent/('build_qwen38_two_product_q4_worker.py' if two_product else 'build_qwen38_prepared_exact_q4_worker.py'),'REPLAY_PINS' if two_product_replay else 'BYTE_LUT_PINS' if activation_byte_lut else 'ACTIVATION_LUT_PINS' if activation_lut else 'PINS'))]
 if instruction_prefetch:
     candidate=snapshot(instruction_prefetch,pins(here.parent/'build_qwen38_instruction_prefetch_worker.py'))
     parent=dict(snapshots[2]);require(all(data==parent[name] for name,data in candidate if name not in ('globalworker.bin','program.elf')),'ALL9 math/other sections unchanged')

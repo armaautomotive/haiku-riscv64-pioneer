@@ -59,7 +59,10 @@ static __attribute__((noinline,noclone,section(".text.pioneer_q38_resident_servi
 void PreparedQ4Inputs(unsigned inputs){
  for(unsigned word=0;word<inputs/2;word++){
   const unsigned value=Words(0xa0000)[word];unsigned lo=0,hi=0;
-#ifdef PIONEER_Q38_PREPARED_ACTIVATION_LUT_IMAGE
+#ifdef PIONEER_Q38_PREPARED_ACTIVATION_BYTE_LUT_IMAGE
+  if(!PioneerQ38ExactQ4Original::ActivationByteLookup(value&65535,lo)
+   || !PioneerQ38ExactQ4Original::ActivationByteLookup(value>>16,hi))block_fault_park();
+#elif defined(PIONEER_Q38_PREPARED_ACTIVATION_LUT_IMAGE)
   if(!PioneerQ38ExactQ4Original::ActivationLookup(value&65535,lo)
    || !PioneerQ38ExactQ4Original::ActivationLookup(value>>16,hi))block_fault_park();
 #else

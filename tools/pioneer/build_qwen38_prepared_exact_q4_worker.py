@@ -8,6 +8,9 @@ args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
 activation_lut='--activation-lut' in args
 if activation_lut:assert args.count('--activation-lut')==1;args.remove('--activation-lut')
+activation_byte_lut='--activation-byte-lut' in args
+if activation_byte_lut:assert args.count('--activation-byte-lut')==1;args.remove('--activation-byte-lut')
+assert not (activation_lut and activation_byte_lut)
 PINS=(
  ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
  ('globalworker.bin',9504,'fca4c809dced791be1aa18d77d2bc3fc7f66fc6fd06d3d2ce8db95fc2ea284bc'),
@@ -30,11 +33,24 @@ ACTIVATION_LUT_PINS=(
 	('text.bin',8104,'63e8251d49a58df274149b23baad3ecba65b2579fd5526c262a9574d50331b0f'),
 	('affine.bin',4680,'82a124a7a11612f1bfe399611badd453c31d0333218db89513bbee65de64b96d'),
  ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
- ('service.bin',17484,'f60fcda4af4fef0db1eb9e75d88029a67b23d4b955ba442f5c38626fa9c3800b'),
+	('service.bin',17484,'f60fcda4af4fef0db1eb9e75d88029a67b23d4b955ba442f5c38626fa9c3800b'),
  ('gdn.bin',35848,'62def5b500f81d4230d22d82a16cfed3d63fbe08b2aceac1a63ac99ca29304a3'),
 	('program.elf',154268,'62a0d3c158d3e407cd3dc9125a8ce130e3601f56403084668d6a01313537efd4'),
 ) # Exact-LUT image is separately pinned; never replaces the default worker.
-assert len(args)==2 and (inspect or (ACTIVATION_LUT_PINS if activation_lut else PINS))
+BYTE_LUT_PINS=(
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',9504,'fca4c809dced791be1aa18d77d2bc3fc7f66fc6fd06d3d2ce8db95fc2ea284bc'),
+ ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
+ ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
+ ('fetch.bin',1292,'a74f8f6303787360f35b588e22746074adc9bcc780ae5a274be25331f765f4c6'),
+ ('text.bin',8104,'96e39be1a02287b7c1da05478f6c1fe40e97eef8c6e0a827893d0b3ee7dab5da'),
+ ('affine.bin',4680,'82a124a7a11612f1bfe399611badd453c31d0333218db89513bbee65de64b96d'),
+ ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
+ ('service.bin',17476,'c5c84e96132051f761a319ab6e4450965dc77ce80d9b674323a3928d7a594987'),
+ ('gdn.bin',35848,'62def5b500f81d4230d22d82a16cfed3d63fbe08b2aceac1a63ac99ca29304a3'),
+ ('program.elf',154268,'83ac34781b2bc43722ba295abe3e4c4a9bdbecf82d945a5183b9ba898e50452b'),
+) # Byte-index image is a separate offline candidate;never replaces tag103.
+assert len(args)==2 and (inspect or (BYTE_LUT_PINS if activation_byte_lut else ACTIVATION_LUT_PINS if activation_lut else PINS))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,args);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -58,6 +74,7 @@ for label,(path,source,flag) in commands.items():
  command[command.index('-o')+1]=str(out/(label+'.o'));command[command.index('-c')+1]=str(here/source)
  command=[command[0],'-D'+flag+'=1',*command[1:]]
  if activation_lut and label=='math':command.insert(1,'-DPIONEER_Q38_PREPARED_ACTIVATION_LUT_IMAGE=1')
+ if activation_byte_lut and label=='math':command.insert(1,'-DPIONEER_Q38_PREPARED_ACTIVATION_BYTE_LUT_IMAGE=1')
  run(*command)
  (out/('compile-'+label+'-argv.txt')).write_text('\n'.join(command)+'\n');replacements[original]=str(out/(label+'.o'))
 layout=(control/'program.ld').read_text();service='*(.text.pioneer_q38_resident_service)'
@@ -95,5 +112,5 @@ observed=[]
 for name in (*(s+'.bin' for s in sections),'program.elf'):
  data=(out/name).read_bytes();assert data and not len(data)%4
  item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(item,flush=True)
-if not inspect:assert tuple(observed)==(ACTIVATION_LUT_PINS if activation_lut else PINS)
-print('BUILD_ONLY complete prepared-Q4 '+('exact-activation-LUT ' if activation_lut else '')+'primary+bounded-group-correction worker;NO execution/native/ROOT/source/physical/model/TPS grant',flush=True)
+if not inspect:assert tuple(observed)==(BYTE_LUT_PINS if activation_byte_lut else ACTIVATION_LUT_PINS if activation_lut else PINS)
+print('BUILD_ONLY complete prepared-Q4 '+('exact-byte-index activation-LUT ' if activation_byte_lut else 'exact-activation-LUT ' if activation_lut else '')+'primary+bounded-group-correction worker;NO execution/native/ROOT/source/physical/model/TPS grant',flush=True)

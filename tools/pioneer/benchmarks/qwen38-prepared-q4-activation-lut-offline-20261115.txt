@@ -85,3 +85,34 @@ tagged offline candidate, not selected or installed. After SSH identity is
 verified, qualify exact target execution and numerical output before matched
 real-model timing. Expose a selectable Assistant option only after that
 target-side check.
+
+Follow-up byte-indexed activation conversion experiment
+
+An additional opt-in byte-indexed variant narrows the validated activation
+index from ten bits to the actual eight-bit signed magnitude domain. It checks
+the fixed exponent/sign encoding first, preserves +127/-128, then uses the
+same exact 129-entry BF16 table. The original tag103 ActivationLookup path is
+unchanged; this is an offline-only candidate, not yet given a native role tag,
+installed, or exposed in Assistant.
+
+Exactness: exhaustive equality/refusal over all 65,536 16-bit inputs, plus
+out-of-range rejection. The whole synthetic worker suite passed 27 shapes,
+54 changed-input jobs, five fragment-mask controls, 16 inert NoC-loss cases,
+16 descriptor refusals, three GDN history pairs, and the bounded-stack check.
+All checks were against immutable, separately pinned byte-index image ROMs;
+no device IO, native execution, model run, or CPU-reference Work was used.
+
+For two changed jobs, actual compiled-worker RV32 instruction profiles were:
+
+  K       groups  tag103 activation LUT  byte-index candidate  reduction
+  5120       1       1,319,427              1,283,645            2.71%
+  6144       1       1,557,807              1,514,865            2.76%
+ 17408       1       4,203,157              4,081,455            2.90%
+
+Within K5120/groups1, PreparedQ4Inputs fell from 213,298 to 177,516 retired
+instructions (16.77%). This is only a synthetic RV instruction-count change;
+it is not a cycle, latency, throughput, or tokens/sec measurement. The prior
+whole-model physical result remains 0.207893161 tok/s; the 20 tok/s target is
+still unmet. SSH remains unavailable for safe remote qualification because
+the live ED25519 host key differs from the locally trusted key and needs
+out-of-band verification.
