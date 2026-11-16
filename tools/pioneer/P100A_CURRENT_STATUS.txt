@@ -57,6 +57,28 @@ execution or new tokens/sec sample exists. The last qualified complete-Q4
 rate remains about 0.1728 tok/s; the 20 tok/s goal remains unmet. Detailed
 run record: benchmarks/qwen38-gdn-page-journal-live-audit-20261116.txt.
 
+Live reconnect check, November 16 (later in this session)
+---------------------------------------------------------
+Strict-key SSH is still working. Haiku is already booted; `uname` identifies
+the running Haiku RISC-V kernel, and `sysinfo` reports 64 CPUs at 1 GHz and
+137,034,936,320 bytes total memory. The reload manager at
+`/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload` reports
+driver55, stable tag2026102100010012, generation2, cold0, quiesced0,
+active_owner0, open_count1, guard1. No reboot or test process is needed merely
+to make Haiku available; the stable driver is idle and the model has not been
+started in this reconnect check.
+
+Performance-candidate correction: matrix-phase queueing was already tested
+end-to-end in the complete-model queued-Q4 trial, not merely in an isolated
+kernel. It returned 0.162052093..0.162055547 tok/s, below the accepted
+vector92 rate near 0.1728 tok/s; reject that implementation and do not repeat
+the spent stage. See
+benchmarks/qwen38-queued-block-full-physical-20261105.txt. This reinforces
+that eliminating individual drains does not address the dominant bottleneck.
+The next structurally relevant candidate remains recurrent-state residency,
+but the redistributed map and its original-page journal are not connected to
+token capture/commit/restore, and no speed benefit is established.
+
 Matrix-FPU status clarification, November 16, 2026
 ------------------------------------------------
 The accepted fastest vector92 model path already uses the Tensix matrix FPU
