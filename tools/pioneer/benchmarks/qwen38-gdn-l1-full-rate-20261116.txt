@@ -21,6 +21,12 @@ Observed sequence
   printed `FAIL_FULL_OFFLOAD_RATE_GENERATION;CLOSE_ONLY_NO_END_RETRY_RESET_OR_CPU_FALLBACK`
   and exited 1. No output-token count, generated text, or tokens/sec was
   produced. This is a failed inference attempt, not a speed measurement.
+* The preserved final stdout tail goes directly from the 1000/1000 upload
+  marker to the client failure marker; it contains no worker progress message
+  saying inference is running on the P100A. That message is emitted only after
+  `Session::Begin` returns successfully, so the failure most likely occurred
+  in the post-upload BEGIN path rather than sustained token decode. This is an
+  inference from event ordering, not the exact failure cause.
 * Worker diagnostics stopped at the last prepared-cache fragment marker.
   Pre-recovery manager status was `cold1 active_owner1`; the guarded script
   correctly left tag206 installed and did not hot-swap while the card was
@@ -44,8 +50,8 @@ protocol, but does not prove that generation arithmetic completed on the
 card. No 20 tok/s progress or speedup can be claimed. The next safe step is
 out-of-band verification of the new SSH fingerprint. Once identity is
 verified, inspect the manager status and logs before doing any new card work;
-recover stable041 through the guarded path if possible, and capture the
-failure stage before attempting another Generate.
+recover stable041 through the guarded path if possible, and capture the exact
+post-upload BEGIN failure stage before attempting another Generate.
 
 Offline diagnostic follow-up
 ----------------------------

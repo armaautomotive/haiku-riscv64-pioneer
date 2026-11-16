@@ -22,9 +22,12 @@ verifies this fingerprint out of band.
 Next sequence: verify host identity; inspect actual OS and driver state; use
 the guarded manager to restore stable041 if its cold/owner state permits;
 cross-compile the new worker error-stage instrumentation; then use a fresh
-one-shot stage to capture whether tag206 fails during upload/START or the
-generation wait. The synthetic protocol/rollback tests pass. No full-model
-output, model-quality result, speedup, or token/s measurement was produced.
+one-shot stage to capture the post-upload BEGIN failure. The preserved
+`rate.stdout` tail contains no post-BEGIN “running entirely on P100A” marker,
+so failure before the generation loop is the leading inference; exact session
+stage remains unknown. The synthetic protocol/rollback tests pass. No
+full-model output, model-quality result, speedup, or token/s measurement was
+produced.
 See `benchmarks/qwen38-gdn-l1-full-rate-20261116.txt`.
 
 Live correction, November 16: strict-key SSH is working. Haiku reports
