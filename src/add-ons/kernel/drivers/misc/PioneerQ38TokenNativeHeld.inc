@@ -36,6 +36,22 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
    || s->phase==PioneerQ38TokenNativeState::MemoryClosing)
   && s->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration);
 }
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+bool PioneerSessionIO::TokenGdnL1PageOwnerScope(unsigned worker,uint32 page){
+	auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+	if(!s || !s->startup || !s->memory || worker==0 || worker>=120
+		|| (page&4095) || !s->startup->GdnL1OwnsResidentPage(worker,page))return false;
+	const bool prepared=s->phase==PioneerQ38TokenNativeState::MemoryPreparing
+		&& !s->runtime && !s->memory->Installed() && s->participants
+		&& !s->participants->unsafe && !s->participants->closed
+		&& !s->participants->rootRunning && s->participants->prepared==120
+		&& !s->participants->bootAttempted && !s->participants->booted;
+	const bool restoring=s->phase==PioneerQ38TokenNativeState::RootRestoring
+		&& s->runtime && s->runtime->HeldAfterTerminal()
+		&& s->runtime->CommittedRecordsRead() && s->memory->Installed();
+	return prepared || restoring;
+}
+#endif
 bool PioneerSessionIO::TokenDispatchImageAccessScope(unsigned worker){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
  return worker<120 && worker==runtimeCore && s && s->phase==PioneerQ38TokenNativeState::DispatchRestoring

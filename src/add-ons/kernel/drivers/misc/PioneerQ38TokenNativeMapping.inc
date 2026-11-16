@@ -2,6 +2,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
 #include "PioneerQ38TokenPreparationAuditMember.inc"
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+#include "PioneerQ38GdnL1NativePageAccessRole.h"
+#endif
 bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 #ifdef PIONEER_Q38_TOKEN_POSTED_CANCEL
 PioneerQ38PostedCancel q38PostedCancel;
@@ -13,6 +16,9 @@ bool PostedCancelWordRead(uint32_t&);bool PostedCancelWordWrite();
 uint64_t PostedCancelNow(){return Q38CohortNow();}
 void PostedCancelPause(){Pause();}
 bool TokenRequestPostedCancellation(){return q38PostedCancel.Request(*this);}
+#endif
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+bool TokenGdnL1PageOwnerScope(unsigned worker,uint32 page);
 #endif
 bool TokenDispatchImageAccessScope(unsigned);
 bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
@@ -87,6 +93,36 @@ bool TokenMemoryWrite(unsigned worker,uint32 address,uint32 value){
  else PioneerWrite32(q38TokenMemoryView[3]+(address-0xac000)/4,value);
  return true;
 }
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+bool TokenGdnL1PageAccessScope(unsigned worker,uint32 page){
+	return worker>0 && worker<120 && !(page&4095)
+		&& TokenGdnL1PageOwnerScope(worker,page)
+		&& TokenMemoryAccessScope() && TokenMemoryMappingStable(worker);
+}
+bool TokenGdnL1PageReadChecked(unsigned worker,uint32 page,uint32_t* words){
+	if(!words || !TokenGdnL1PageAccessScope(worker,page))return false;
+	for(unsigned i=0;i<4096/4;i++){
+		const uint32 address=page+i*4;uint32 value;
+		if(address>=0x17ffc0)value=ResidentL1Read(0x1fc0/4+(address-0x17ffc0)/4);
+		else if(address>=0xac000)value=PioneerRead32(q38TokenMemoryView[3]+(address-0xac000)/4);
+		else if(address>=0x6e000 && address<0xac000)value=Q38PanelRead(address);
+		else return false;
+		words[i]=value;
+	}
+	return TokenGdnL1PageAccessScope(worker,page);
+}
+bool TokenGdnL1PageWrite(unsigned worker,uint32 page,const uint32_t* words){
+	if(!words || !TokenGdnL1PageAccessScope(worker,page))return false;
+	for(unsigned i=0;i<4096/4;i++){
+		const uint32 address=page+i*4;const uint32 value=words[i];
+		if(address>=0x17ffc0)ResidentL1Write(0x1fc0/4+(address-0x17ffc0)/4,value);
+		else if(address>=0xac000)PioneerWrite32(q38TokenMemoryView[3]+(address-0xac000)/4,value);
+		else if(address>=0x6e000 && address<0xac000)Q38PanelWrite(address,value);
+		else return false;
+	}
+	return TokenGdnL1PageAccessScope(worker,page);
+}
+#endif
 __attribute__((noinline)) bool TokenDispatchImageReadChecked(unsigned worker,uint32 address,uint32& output){
  if((address&3) || (address!=0x6000 && (address<TT_Q38_PANEL_VIEW_BASE
   || address-TT_Q38_PANEL_VIEW_BASE>=TT_Q38_PANEL_VIEW_BYTES))
