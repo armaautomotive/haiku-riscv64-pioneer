@@ -25,10 +25,11 @@ if two_product_replay:
 elif two_product:
     require(sys.argv.count('--two-product')==1,'one explicit two-product CPU validation selector')
     sys.argv.remove('--two-product')
-require(len(sys.argv) in (2,3),'IMAGE [--pilot|--group-pilot|--controls-only|--faults-only|--history-only|--instruction-profile]')
-require(len(sys.argv)!=3 or sys.argv[2] in ('--pilot','--group-pilot','--controls-only','--faults-only','--history-only','--instruction-profile'),'explicit test scope')
-instruction_profile=len(sys.argv)==3 and sys.argv[2]=='--instruction-profile'
-require(not instruction_profile or two_product_replay,'profile the explicit qualified replay13 variant only')
+require(len(sys.argv) in (2,3),'IMAGE [--pilot|--group-pilot|--controls-only|--faults-only|--history-only|--instruction-profile|--current-worker-profile]')
+require(len(sys.argv)!=3 or sys.argv[2] in ('--pilot','--group-pilot','--controls-only','--faults-only','--history-only','--instruction-profile','--current-worker-profile'),'explicit test scope')
+instruction_profile=len(sys.argv)==3 and sys.argv[2] in ('--instruction-profile','--current-worker-profile')
+current_profile=len(sys.argv)==3 and sys.argv[2]=='--current-worker-profile'
+require(not instruction_profile or (two_product_replay or current_profile),'profile an explicitly qualified replay13 or current prepared-Q4 worker only')
 require(not instruction_prefetch or (two_product_replay and not instruction_profile),'new prefetch image is an explicit replay13 worker,not a profile/old mode')
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
@@ -99,6 +100,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
     if two_product_replay:
         flags.append('-DPIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST=1')
         print('REPLAY13_SHARED_PHYSICAL_BUFFER_CLOSED_WORKER_VALIDATION_ONLY',flush=True)
+    if current_profile:
+        flags.append('-DPIONEER_Q38_PREPARED_CURRENT_WORKER_PROFILE=1')
+        print('CURRENT_PREPARED_Q4_WORKER_INSTRUCTION_PROFILE_ONLY_NOT_CYCLES',flush=True)
     if instruction_prefetch:
         flags.append('-DPIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_TEST=1')
         print('INSTRUCTION_PREFETCH_COMPILED_FRONTEND_FIXED18_IO_SEQUENCE_MOCK_ONLY_NO_CACHE_TIMING',flush=True)

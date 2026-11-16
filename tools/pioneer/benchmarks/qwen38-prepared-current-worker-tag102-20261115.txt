@@ -58,6 +58,20 @@ instructions at K5120 (51.1% fewer), 3,591,015 -> 1,739,649 at K6144 (51.6%
 fewer), and 9,984,107 -> 4,709,895 at K17408 (52.8% fewer). These counts are
 not hardware cycle counts and cannot be converted into tokens/sec.
 
+Current-worker instruction profile:
+
+  python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py \
+    /private/tmp/q38-prepared-q4-review.emgxtut8/candidate --current-worker-profile
+
+PASS: six type12 geometries with identical observed/control state. At
+K5120/groups1, the current worker retired 1,471,733 simulated RV32
+instructions over two changed jobs. The largest functions were the exact
+worker (454,136), prepared-input conversion (365,604), and exact corrected
+matrix orchestration (275,840). This puts activation-to-BF16 preparation on
+the next offboard optimization shortlist, while preserving exact semantics;
+the profile's endpoint callbacks are synthetic and make no silicon latency
+or tokens/sec claim.
+
 No Qwen model ran, no P100A code was loaded, and there is no physical TPS
 measurement or performance claim. The candidate still requires a verified
 Pioneer SSH identity, target-side numerical/execution qualification, a real

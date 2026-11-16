@@ -4,8 +4,9 @@
 #include "pioneer_q38_prepared_exact_q4_worker_test.cpp"
 #include <algorithm>
 #include <cstdint>
-#if !defined(PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST) || PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST != 1
-#error Explicit replay13 OFFBOARD instruction-count diagnostic only
+#if !((defined(PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST) && PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST == 1) \
+ || (defined(PIONEER_Q38_PREPARED_CURRENT_WORKER_PROFILE) && PIONEER_Q38_PREPARED_CURRENT_WORKER_PROFILE == 1))
+#error Explicit replay13 or current prepared-Q4 OFFBOARD profile only
 #endif
 struct InstructionProfilePeer:PreparedQ4Peer {
  using PreparedQ4Peer::PreparedQ4Peer;
