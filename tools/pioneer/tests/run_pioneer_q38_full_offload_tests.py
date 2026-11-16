@@ -19,14 +19,20 @@ if fixed_config:
 prepared_current='--prepared-q4-current-worker' in args
 if prepared_current:
     assert args==['--batched','--metrics','--prepared-q4-current-worker']
+prepared_lut='--prepared-q4-activation-lut-worker' in args
+if prepared_lut:
+    assert args==['--batched','--metrics','--prepared-q4-activation-lut-worker'] and not prepared_current
 else:
-    assert args in ([], ['--batched'], ['--batched','--metrics'], ['--batched','--metrics','--vector-q4'], ['--batched','--metrics','--prepared-q4'], ['--batched','--metrics','--prepared-q4','--counter-unroll'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block'])
+    if not prepared_current:
+        assert args in ([], ['--batched'], ['--batched','--metrics'], ['--batched','--metrics','--vector-q4'], ['--batched','--metrics','--prepared-q4'], ['--batched','--metrics','--prepared-q4','--counter-unroll'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block'])
 batched = bool(sys.argv[1:])
 metrics = '--metrics' in sys.argv
 vector_q4 = '--vector-q4' in sys.argv
 prepared_q4 = '--prepared-q4' in sys.argv
 prepared_current = '--prepared-q4-current-worker' in sys.argv
 if prepared_current: prepared_q4=True
+prepared_lut = '--prepared-q4-activation-lut-worker' in sys.argv
+if prepared_lut: prepared_q4=True
 counter_unroll = '--counter-unroll' in sys.argv
 phase_profile = '--phase-profile' in sys.argv
 two_product_replay = '--two-product-replay' in sys.argv
@@ -45,13 +51,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4 1' if vector_q4 else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4 1' if prepared_q4 else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER 1' if prepared_current else '')
+        + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER 1' if prepared_lut else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL 1' if counter_unroll else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE 1' if phase_profile else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY 1' if two_product_replay else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH 1' if instruction_prefetch else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4 1' if queued_block else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4 1' if fixed_config else '')
-        + '\n#define PIONEER_DRIVER_BUILD_TAG '+('0x2026111500010102ULL' if prepared_current else '0x2026110500010103ULL' if fixed_config else '0x2026110500010102ULL' if queued_block else '0x2026110500010101ULL' if instruction_prefetch else '0x2026110500010100ULL' if two_product_replay else '0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')+'\n')
+        + '\n#define PIONEER_DRIVER_BUILD_TAG '+('0x2026111500010103ULL' if prepared_lut else '0x2026111500010102ULL' if prepared_current else '0x2026110500010103ULL' if fixed_config else '0x2026110500010102ULL' if queued_block else '0x2026110500010101ULL' if instruction_prefetch else '0x2026110500010100ULL' if two_product_replay else '0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')+'\n')
     for name in (('protocol','session') if resident else ('protocol','session','control')):
         source=here/('pioneer_q38_full_offload_'+name+'_test.cpp')
         binary=pathlib.Path(temporary)/name
@@ -64,6 +71,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1'] if vector_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1'] if prepared_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1'] if prepared_current else []),
+                        *(['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1'] if prepared_lut else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1'] if counter_unroll else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=1'] if phase_profile else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY=1'] if two_product_replay else []),

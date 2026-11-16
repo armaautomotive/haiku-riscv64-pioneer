@@ -8,8 +8,9 @@ BF16 bit patterns before the exact Q4 matrix worker consumes them. The old
 path normalizes each value with integer leading-bit logic. This experiment
 uses a 129-entry signed-magnitude lookup table for that exact mapping. It
 does not approximate weights or arithmetic and does not change the default
-worker path. The LUT candidate is experimental and is not the default tag102
-build, a native package, an Assistant selection, or a physical driver update.
+worker path. The candidate is experimental and remains separate from the
+default tag102 build. It now has an offline-only, distinct tag103 native/client
+role; it is not installed, hardware-qualified, or exposed in Assistant.
 
 Exactness and build
 
@@ -33,6 +34,26 @@ its worker/service sections are separately pinned in
 build_qwen38_prepared_exact_q4_worker.py as ACTIVATION_LUT_PINS. The
 non-LUT default builder was rerun independently and passed its existing
 whole-image pins unchanged.
+
+The distinct tag103 programs header was regenerated and validated against the
+frozen tag97 ROOT and LUT worker: 15 sections, 3,376,307 code words, all 120
+journal ranges, and 10,014 invalid/data-address refusals. The tag103 full-card
+native BUILD_ONLY image hash was
+60b2b786b2816c83d94370cc8f7568d1646ad72e8daa801e3e09d0f81eb7ab21; the
+default comparator remained
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc. It passed
+38 role refusals, retained five-EOG firmware and byte-identical default43,
+imported no CPU model/reference/ggml Work symbols, and had a maximum individual
+native frame of 1,232 bytes. That does not certify whole-kernel stack or
+runtime behavior.
+
+Tag103 synthetic host tests passed: 199,680 bounded metrics observations;
+3,072 valid and 212,150 refused request shapes; model-source publication and
+lifecycle tests; 704 fail-closed COW fixtures; and 13,415 mocked kernel
+control tests. The separate tag103 Assistant client translation unit passed a
+pinned Haiku RISC-V syntax-only compile. A linked Assistant binary was not
+produced because the local build tree lacks the pinned llama shared libraries.
+These checks use synthetic endpoints and confer no device/model authority.
 
 Synthetic instruction profile
 
@@ -59,7 +80,8 @@ SSH-based install or benchmark.
 
 Next engineering step
 
-Keep tag102 and the no-CPU-reference Work mode unchanged. If this LUT remains
-beneficial after target-side timing, promote it only as a separately tagged
-experimental native+Assistant build, then compare both variants using a
-matched real model run with the same prompt, state, and device conditions.
+Keep tag102 and no-CPU-reference Work unchanged. Tag103 is now a separately
+tagged offline candidate, not selected or installed. After SSH identity is
+verified, qualify exact target execution and numerical output before matched
+real-model timing. Expose a selectable Assistant option only after that
+target-side check.

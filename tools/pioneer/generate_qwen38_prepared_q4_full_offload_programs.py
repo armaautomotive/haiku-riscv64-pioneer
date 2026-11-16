@@ -13,6 +13,11 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
     raise SystemExit('Refuse optimized Python; whole paired firmware checks required')
 args=sys.argv[1:];counter_unroll='--counter-unroll' in args
 latest_worker='--latest-worker' in args
+activation_lut_worker='--activation-lut-worker' in args
+if activation_lut_worker:
+    assert args.count('--activation-lut-worker')==1 and not latest_worker and not any(flag in args for flag in
+        ('--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block','--fixed-config'))
+    args.remove('--activation-lut-worker')
 if latest_worker:
     assert args.count('--latest-worker')==1 and not any(flag in args for flag in
         ('--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block','--fixed-config'))
@@ -51,7 +56,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-programs-', dir='/priv
         data = target.read_bytes()
         assert data and not len(data) % 4 and data == (root / target.name).read_bytes()
         sections[name] = data
-peer = authenticated(worker, pins(here / ('build_qwen38_queued_q4_pair_config_worker.py' if fixed_config else 'build_qwen38_queued_q4_block_worker.py' if queued_block else 'build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'FIXED_INSPECT_PINS' if fixed_config else 'INSPECT_PINS' if queued_block else 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'PINS'))
+peer_script=here / ('build_qwen38_queued_q4_pair_config_worker.py' if fixed_config else 'build_qwen38_queued_q4_block_worker.py' if queued_block else 'build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py')
+peer_variable='FIXED_INSPECT_PINS' if fixed_config else 'INSPECT_PINS' if queued_block else 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'ACTIVATION_LUT_PINS' if activation_lut_worker else 'PINS'
+peer = authenticated(worker, pins(peer_script, peer_variable))
 source = (here / 'PioneerQ38FullOffloadBatchedPrograms.h').read_bytes()
 assert hashlib.sha256(source).hexdigest() == '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
 text = source.decode('ascii')
@@ -134,6 +141,13 @@ if latest_worker:
     text=text.replace('enum {PreparedQ4=1,NativeQ4Exact=1,','enum {PreparedCurrentWorker=1,PreparedQ4=1,NativeQ4Exact=1,')
     text=text.replace('Generated executed prepared ROOT and exact prepared Q4 workers:five+ten sections.',
                       'Generated exact tag102 ROOT paired with the current requalified exact-Q4 worker:five+ten sections.')
+if activation_lut_worker:
+    text=text.replace('PioneerQ38FullOffloadPreparedQ4Programs','PioneerQ38FullOffloadPreparedLutQ4Programs')
+    text=text.replace('PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_PREPARED_LUT_Q4_PROGRAMS_H')
+    text=text.replace('PioneerQ38FullOffloadPreparedQ4ProgramsRole.h','PioneerQ38FullOffloadPreparedLutQ4ProgramsRole.h')
+    text=text.replace('enum {PreparedQ4=1,NativeQ4Exact=1,','enum {PreparedActivationLutWorker=1,PreparedQ4=1,NativeQ4Exact=1,')
+    text=text.replace('Generated executed prepared ROOT and exact prepared Q4 workers:five+ten sections.',
+                      'Generated exact prepared-Q4 ROOT+activation-LUT worker candidate:five+ten sections.')
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name, flush=True)

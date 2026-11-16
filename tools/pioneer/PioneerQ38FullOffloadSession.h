@@ -42,6 +42,10 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exa
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010102),
  "Assistant client must target the distinct tag102 current prepared-Q4 worker role");
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010103),
+ "Assistant client must target the distinct tag103 prepared-Q4 activation-LUT worker role");
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
  "Assistant client must target the distinct tag101 SFPNOP native role");
