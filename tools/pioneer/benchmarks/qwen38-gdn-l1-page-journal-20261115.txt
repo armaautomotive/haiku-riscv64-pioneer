@@ -56,6 +56,21 @@ prepared-Q4 kernel role with a maximum static frame of 1,648 bytes. This
 provides only a checked-address primitive: it is not wired to native IO,
 workers, or model execution and yields no inference or speed evidence.
 
+Startup-owner binding
+---------------------
+The immutable scattered-Q4 startup owner now exposes that exact membership
+check through `GdnL1OwnsResidentPage(worker, address)`, but only when its
+startup was built with the scattered-state selector. This ties the check to
+the same retained allocator/package lifetime and rejects calls unless the
+published startup binding still matches. It still grants no IO. The existing
+prepared-Q4 native-source ASan/UBSan test passed in the scattered
+L1-authoritative variant and reported the allocator-exact resident/spill
+routes and all 42 refusal cases. The scattered L1-authoritative startup
+DATA/RISC-V C++11 compile also passed
+(80 frames, 352-byte startup maximum, 848-byte routed maximum, 1,648-byte
+overall maximum). These are serialization/binding tests only, not native
+access, token execution, or P100A speed evidence.
+
 Next required integration
 -------------------------
 The native L1 memory accessor currently admits only the ordinary snapshot

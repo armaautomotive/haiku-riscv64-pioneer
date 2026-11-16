@@ -237,6 +237,15 @@ public:
 #endif
    ;
  }
+#ifdef PIONEER_Q38_GDN_SCATTERED_STATE_EXPERIMENT
+	// Exact page authorization borrowed through this immutable startup owner's
+	// lifetime. This grants no IO itself; a native adapter must still validate
+	// its call scope, selected worker, and the same session/driver binding.
+	bool GdnL1OwnsResidentPage(unsigned physicalWorker,uint32_t address)const{
+		return published && canonical && Binding(*canonical) && gdnScattered && gdnL1Allocator
+			&& gdnL1Allocator->OwnsResidentPage(physicalWorker,address);
+	}
+#endif
  bool ReadPublishedPackage(unsigned layer,unsigned offset,uint8_t* output,unsigned bytes)const{
   // SAME one-shot private publication as MatchesPublishedBinding;never a
   // caller-supplied ready hint. The byte serializer and all bounds/alias

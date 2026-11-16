@@ -105,6 +105,10 @@ int main(){
 	PioneerQ38GdnTaskPlacement::Route residentRoute={};PioneerQ38GdnL1PageAllocator::PageTable residentTable={};
 	assert(PioneerQ38GdnTaskPlacement::Map(firstOrdinal,0,residentRoute)
 		&& expectedAllocator.Resolve(residentRoute,residentTable) && residentTable.resident);
+	assert(scatteredStartup->GdnL1OwnsResidentPage(residentRoute.physicalWorker,
+		residentTable.pages[0])
+		&& !scatteredStartup->GdnL1OwnsResidentPage(residentRoute.physicalWorker,
+			residentTable.pages[0]+1));
 	unsigned spillLayer=64;PioneerQ38GdnTaskPlacement::Route spillRoute={};
 	PioneerQ38GdnL1PageAllocator::PageTable spillTable={};
 	for(unsigned layer=0;layer<64 && spillLayer==64;layer++)if(layer%4!=3){
