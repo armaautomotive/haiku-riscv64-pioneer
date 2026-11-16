@@ -6,6 +6,9 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenStartupPlan.h"
 #include "PioneerQ38GraphCsrProbe.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+#include "PioneerQ38GdnL1OriginalPageJournal.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
 #include "PioneerQ38HybridManifest.h"
 #endif
@@ -60,6 +63,10 @@ class PioneerQ38TokenNativeOwner;
 class PioneerQ38TokenPreparationAudit; // private native definition only;NO caller construction or capability
 class PioneerQ38TokenMemory {
  friend class PioneerQ38TokenNativeOwner; // only this future DISTINCT owner may bind a real launch
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+ using GdnL1OriginalJournal=PioneerQ38GdnL1OriginalPageJournal<PioneerQ38GdnL1PageAllocator,119,25,8>;
+ static_assert(GdnL1OriginalJournal::SavedBytes==97484800,"native candidate journal is exact 119-peer GDN L1 state only");
+#endif
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;
  PioneerQ38DispatchLease* cohort=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const PioneerQ38TokenStartupPlan* startup=nullptr;const uint8_t* ledger=nullptr;

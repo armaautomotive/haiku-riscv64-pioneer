@@ -245,6 +245,10 @@ public:
 		return published && canonical && Binding(*canonical) && gdnScattered && gdnL1Allocator
 			&& gdnL1Allocator->OwnsResidentPage(physicalWorker,address);
 	}
+	const PioneerQ38GdnL1PageAllocator* GdnL1PageAllocator()const{
+		return published && canonical && Binding(*canonical) && gdnScattered && gdnL1Allocator
+			&& gdnL1Allocator->Ready()?gdnL1Allocator:nullptr;
+	}
 #endif
  bool ReadPublishedPackage(unsigned layer,unsigned offset,uint8_t* output,unsigned bytes)const{
   // SAME one-shot private publication as MatchesPublishedBinding;never a

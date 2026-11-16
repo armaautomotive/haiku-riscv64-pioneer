@@ -100,26 +100,37 @@ bool TokenGdnL1PageAccessScope(unsigned worker,uint32 page){
 		&& TokenMemoryAccessScope() && TokenMemoryMappingStable(worker);
 }
 bool TokenGdnL1PageReadChecked(unsigned worker,uint32 page,uint32_t* words){
-	if(!words || !TokenGdnL1PageAccessScope(worker,page))return false;
-	for(unsigned i=0;i<4096/4;i++){
-		const uint32 address=page+i*4;uint32 value;
-		if(address>=0x17ffc0)value=ResidentL1Read(0x1fc0/4+(address-0x17ffc0)/4);
-		else if(address>=0xac000)value=PioneerRead32(q38TokenMemoryView[3]+(address-0xac000)/4);
-		else if(address>=0x6e000 && address<0xac000)value=Q38PanelRead(address);
-		else return false;
-		words[i]=value;
+	if(!words || !TokenGdnL1PageAccessScope(worker,page) || page<0x90000
+		|| page>0x180000-4096 || (page&4095))return false;
+	// Fence once per fixed page batch, not around every 32-bit BAR access.
+	// The IO mapping is volatile+uncached and the allocator authorizes exactly
+	// this contiguous 4-KiB L1 page; the post-fence scope check keeps the same
+	// owner, held worker, and mapping live through the final load.
+	PioneerIoFence();
+	if(page<0xac000){
+		for(unsigned i=0;i<4096/4;i++)
+			words[i]=B_LENDIAN_TO_HOST_INT32(q38PanelView[(page-TT_Q38_PANEL_VIEW_BASE)/4+i]);
+	}else{
+		for(unsigned i=0;i<4096/4;i++)
+			words[i]=B_LENDIAN_TO_HOST_INT32(q38TokenMemoryView[3][(page-0xac000)/4+i]);
 	}
+	PioneerIoFence();
 	return TokenGdnL1PageAccessScope(worker,page);
 }
 bool TokenGdnL1PageWrite(unsigned worker,uint32 page,const uint32_t* words){
-	if(!words || !TokenGdnL1PageAccessScope(worker,page))return false;
-	for(unsigned i=0;i<4096/4;i++){
-		const uint32 address=page+i*4;const uint32 value=words[i];
-		if(address>=0x17ffc0)ResidentL1Write(0x1fc0/4+(address-0x17ffc0)/4,value);
-		else if(address>=0xac000)PioneerWrite32(q38TokenMemoryView[3]+(address-0xac000)/4,value);
-		else if(address>=0x6e000 && address<0xac000)Q38PanelWrite(address,value);
-		else return false;
+	if(!words || !TokenGdnL1PageAccessScope(worker,page) || page<0x90000
+		|| page>0x180000-4096 || (page&4095))return false;
+	// Pair the write fence with the journal's following checked read pass;
+	// this preserves ordered device access without 1024 fence pairs/page.
+	PioneerIoFence();
+	if(page<0xac000){
+		for(unsigned i=0;i<4096/4;i++)
+			q38PanelView[(page-TT_Q38_PANEL_VIEW_BASE)/4+i]=B_HOST_TO_LENDIAN_INT32(words[i]);
+	}else{
+		for(unsigned i=0;i<4096/4;i++)
+			q38TokenMemoryView[3][(page-0xac000)/4+i]=B_HOST_TO_LENDIAN_INT32(words[i]);
 	}
+	PioneerIoFence();
 	return TokenGdnL1PageAccessScope(worker,page);
 }
 #endif

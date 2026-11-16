@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_GDN_L1_ORIGINAL_PAGE_JOURNAL_H
 #define PIONEER_Q38_GDN_L1_ORIGINAL_PAGE_JOURNAL_H
 
+#ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
+#include "PioneerQ38GdnL1NativePageAccessRole.h"
+#else
 #if !defined(PIONEER_Q38_GDN_L1_PAGE_JOURNAL_INSPECTION) \
 	|| PIONEER_Q38_GDN_L1_PAGE_JOURNAL_INSPECTION != 1 \
 	|| defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -9,6 +12,7 @@
 	|| defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \
 	|| defined(PIONEER_DRIVER_BUILD_TAG) || defined(_KERNEL_MODE)
 #error GDN L1 original-page journal is a standalone offline inspection component
+#endif
 #endif
 
 #include <new>
