@@ -57,6 +57,34 @@ execution or new tokens/sec sample exists. The last qualified complete-Q4
 rate remains about 0.1728 tok/s; the 20 tok/s goal remains unmet. Detailed
 run record: benchmarks/qwen38-gdn-page-journal-live-audit-20261116.txt.
 
+Matrix-FPU status clarification, November 16, 2026
+------------------------------------------------
+The ordinary Q4 full-model path is not an all-matrix-engine implementation:
+its quantized projection work uses the Tensix SFPU/vector instruction path.
+A separate Q4 FPU prototype explicitly decodes/streams Q4 blocks and issues
+matrix operations to the Tensix FPU. Its bounded November 4 physical stream
+diagnostic passed 576/576 exact output words across nine full-K samples, with
+complete journal/lifecycle restoration and stable-driver recovery. That was
+one compute tile, 32 output rows per sample, and diagnostic BF16 input vectors
+instead of prompt activations. It proved a numerical primitive and stream
+protocol on-card, not model inference, model quality, full-card utilization,
+or tokens/sec. The report is
+benchmarks/qwen38-native-q4-fpu-stream-physical-20261104.txt.
+
+A newer mixed-format native87 FPU stream client/typed-parent passed its
+offboard SDK, role-refusal, original-weight identity, and independent exact
+reference tests for 17 samples (1,088 expected words); this remains software
+qualification only. Its old one-shot hardware script is tied to stable-driver
+generation 10 and its prior stage is spent. Live state on November 16 is
+stable041 generation 2, idle, with 64 CPUs and full memory. Do not reuse that
+script/stage. The next physical gate is a newly built and independently
+qualified one-shot candidate bound to the current generation and exact source
+identities. Even after that, FPU arithmetic must be integrated with real
+prompt activations, all required model projections/state, checked full-model
+quality, and matched generation timing before it can be called a performance
+improvement. The last qualified full-Q4 rate remains about 0.1728 tok/s; no
+new speed result exists and the 20 tok/s target remains unmet.
+
 Historical November 7 snapshot (not current live machine state)
 ---------------------------------------------------------------
 Updated November 7, 2026. Model: Qwen3.8-27B Q4_K_M.
