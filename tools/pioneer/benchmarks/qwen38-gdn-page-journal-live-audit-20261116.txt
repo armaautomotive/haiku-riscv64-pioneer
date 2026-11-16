@@ -1,0 +1,70 @@
+Qwen3.8-27B / P100A live-system and GDN page-journal audit
+==========================================================
+Date: 2026-11-16. This audit records a Haiku recovery boot, read-only live
+checks, and isolated offline tests/build. No SD, hardware, or mains changes;
+no driver swap; no inference trial; no tokens/sec result.
+
+Live Haiku checks
+-----------------
+* Reached Haiku over strict-key SSH using the project-specific Pioneer key.
+* `sysinfo -cpu`: 64 CPUs at 1 GHz.
+* `vmstat`: maximum memory 137,034,936,320 bytes (~127.6 GiB); free memory
+  133,918,269,440 bytes at first sample and 133,908,566,016 at the second.
+* `listdev`: Tenstorrent Blackhole, PCI ID 1e52:b140.
+* Reload manager: `driver55 tag2026111500010101 generation1 quiesced0
+  cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY`.
+* Installed native driver SHA256:
+  `95b62dfaaa75c3c8f4856c081c1e8fb700e444b99a7a0402b3056efbfcc304a9`.
+  This is tag101 SFPNOP Q4, not the stable041 driver. The matching
+  `qwen38-spill-q4-sfpnop-offline-20261115.txt` records a CPU-inference-off
+  full-model request that did not advance from committed0 after its 31-token
+  prompt for over 30 minutes. This was a stalled request, not a speed sample.
+  I did not restart it or start another request.
+
+Offline verification rerun
+--------------------------
+Commands and outcomes:
+
+* `sh tools/pioneer/tests/run_pioneer_q38_gdn_l1_original_page_journal_tests.sh`
+  passed ASan/UBSan synthetic snapshot, restore, failure-poisoning and role
+  refusal tests. It explicitly reports that it is not native IO, token cache,
+  Work, or speed evidence.
+* `sh tools/pioneer/tests/run_pioneer_q38_gdn_l1_page_allocator_tests.sh
+  /Volumes/HaikuBuildLocal/generated.riscv64` passed. It reports current-96
+  topology 2,400 resident / 2,208 spill state halves; alternate 119-peer
+  topology 2,975 resident / 1,633 spill. The reported 23.76% instruction and
+  packet savings are simulated fixture counts, not measured card performance.
+* `sh tools/pioneer/tests/run_pioneer_q38_gdn_recurrent_current_scattered_image_tests.sh
+  /Volumes/HaikuBuildLocal/generated.riscv64` passed the actual allocator-map
+  emitted-worker test and injected faults (including 8,256 exact state/output
+  words). This is host-emitted-image simulation, not physical-card execution.
+* Fresh isolated native candidate build:
+  `python3 tools/pioneer/build_qwen38_full_offload_native.py --batched --metrics
+  --prepared-q4 --gdn-l1-native-page-access-candidate
+  /Volumes/HaikuBuildLocal/generated.riscv64 <fresh-temp-output>` passed all
+  43 role refusals and exact firmware/driver checks. Native candidate SHA256
+  `b794cc7089ee4a204e7b1788061f5e747c9add4cf8ad5753ba09897f4b8b2c23`;
+  default control SHA256
+  `2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc`.
+  Maximum individual token frame: 1,232 bytes. The build explicitly says
+  “no journal lifecycle or inference yet” and “NOT installed, physical/
+  numerical/Assistant qualified or a speed result.”
+
+Next engineering gate
+---------------------
+The candidate is not ready to install. Under its candidate macro, native
+startup still invokes `PioneerQ38TokenStartupPlan::Build(...)` without the
+`redistributedGdn=true` argument, so the scattered page allocator/map is not
+selected for that token. Even after selecting the map, the
+97,484,800-byte page journal is not instantiated or bound to the native
+session. Correct integration must preserve every page's arbitrary preexisting
+data across launch, commit/replay the cache only at the outer model-token
+boundary, and restore on every successful close without exposing partial
+state after failure. A naive full restore cannot fit the existing 300 ms
+`RestoreOriginalL1` deadline; it needs bounded/batched transport and explicit
+fault-retention semantics before hardware testing.
+
+The live machine has 64 CPUs and full RAM, but still has the known tag101
+experiment installed. No current all-card Qwen request has returned a valid
+speed result. Last qualified full-Q4 result remains approximately 0.1728
+tokens/sec; 20 tokens/sec remains unmet.
