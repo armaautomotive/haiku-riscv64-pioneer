@@ -81,6 +81,17 @@ full-card utilization, or tokens/sec. See
 benchmarks/qwen38-native-q4-fpu-stream-physical-20261104.txt and
 benchmarks/qwen38-fast-decode-profile-root-20261106.txt.
 
+A host-only operation inventory compared the emitted arithmetic templates
+per 32-row x K256 tile. The vector92 Q4 path counts 846 Op calls (metadata335
++ affine-Dst24 + 128 four-phase MVMUL operations); the separate cached-FPU
+stream template counts 4,664 Op calls with the same 128 MVMUL operations.
+This is a 5.51x instruction-issue-count difference in the prototype's support
+work, not a cycle or speed measurement; it argues against promoting that
+prototype without a matched hardware timing comparison. Reproduction source:
+tools/pioneer/pioneer_q38_vector_q4_issue_inventory.cpp; cached-FPU counts are
+recorded in benchmarks/qwen38-performance-budget-20261106.txt. No physical
+test was run for this inventory.
+
 A newer mixed-format native87 FPU stream client/typed-parent passed its
 offboard SDK, role-refusal, original-weight identity, and independent exact
 reference tests for 17 samples (1,088 expected words); this remains software

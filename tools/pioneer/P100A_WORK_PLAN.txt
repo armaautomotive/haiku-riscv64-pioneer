@@ -6,6 +6,14 @@ Work has no CPU inference, CPU-reference validation or fallback; validation
 is separate. Preserve Haiku boot,64 CPUs,full RAM and Assistant, and push
 tested checkpoints. 20tok/s is unmet and unproven.
 
+Live correction, November 16: strict-key SSH is working. Haiku reports
+64 CPUs, max RAM 137034936320 bytes, and the P100A manager is stable041,
+generation2, idle (cold0/active_owner0). The old mixed-FPU physical script
+is tied to generation10 and its stage is spent; it cannot be replayed. The
+current status and exact Q4/FPU operation inventory are in
+tools/pioneer/P100A_CURRENT_STATUS.txt and
+tools/pioneer/pioneer_q38_vector_q4_issue_inventory.cpp.
+
 November 14 checkpoint: the isolated Q4 FFN shared-input-reuse candidate is
 committed and pushed as 7b68ed11a117134b085fa9a95627100ea38cdd16. Its exact
 offline tests and pinned-runtime inspect builds pass, but it has no physical
@@ -28,9 +36,9 @@ descriptor/activation-read optimization a poor route to 20 tok/s. A serious
 next candidate must either materially reduce bytes per decode pass without
 damaging full-model quality, or demonstrate a higher sustained device-memory
 bandwidth; then it must improve the entire real-model path, not just an
-isolated matrix primitive. Physical comparison is currently gated on
-out-of-band verification of the Pioneer SSH host key; do not bypass the
-saved-key mismatch.
+isolated matrix primitive. SSH is now available with the saved key; any new
+physical comparison still requires a fresh generation-bound stage and full
+source/numerical/closure qualification. Do not reuse spent stages.
 
 Baseline
 --------
