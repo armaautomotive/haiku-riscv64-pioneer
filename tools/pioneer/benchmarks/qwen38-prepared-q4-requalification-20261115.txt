@@ -58,3 +58,33 @@ Next gates
    before any physical trial. Strict SSH checking must remain enabled.
 4. Only after those gates, run a protected full-model request and compare
    real generation rate and answer against the accepted vector-Q4 baseline.
+
+Prepared-Q4 native/client recheck — 2026-11-15
+----------------------------------------------
+The tag97 native build was repeated with the local pinned Haiku SDK using
+`build_qwen38_full_offload_native.py --batched --metrics --prepared-q4`.
+It passed the distinct-role and frozen-image checks; the resulting
+`tenstorrent_pci_probe-native` SHA-256 is
+`c1a144f11fa1dba9532253eed66b9ecc48f1cd2b5dddca313db9c0724ae18897` and
+`native.o` is `2f14b377c4ea3c0490e239f191e828a9ee8706ba336dacfe623e012fc000032e`.
+The builder reported 33 role refusals, all 15 exact program arrays, unchanged
+firmware/default package bytes, no CPU-model/reference/ggml Work imports, and
+a maximum individual token frame of 1,232 bytes. It explicitly does not
+certify aggregate kernel stack, numerical execution, installation, or speed.
+
+`run_pioneer_q38_full_offload_tests.py --batched --metrics --prepared-q4`
+passed the grammar, synthetic client upload/publication sequence, cancellation
+boundaries, cache-source lock/revocation behavior, and mocked kernel-control
+admission checks. It exercised 4,895 synthetic upload spans and 194 source
+publications on one mocked FD; no card, original model, device arithmetic,
+or tokens/sec result was involved.
+
+The attempted exact ROOT rebuild did **not** pass. The unmodified parent
+batched ROOT failed to link before the prepared-Q4 overlay was added: its
+`.text` occupied `0x22928` bytes in the `0x20000`-byte `0x40000..0x60000`
+window and overlapped the fixed `.terminal` section at `0x60000`. Therefore
+the current source/SDK cannot produce the expected tag97 ROOT via this build
+path. No linker layout or runtime code was changed to conceal the overlap.
+Resolving and then requalifying this ROOT size/layout failure is now a hard
+integration gate before prepared-Q4 can be considered a loadable full-card
+candidate.
