@@ -46,7 +46,10 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010102),
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010103),
  "Assistant client must target the distinct tag103 prepared-Q4 activation-LUT worker role");
 #endif
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010105),
+ "Assistant client must target the distinct tag105 byte-LUT phase-profile role");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER)
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010104),
  "Assistant client must target the distinct tag104 prepared-Q4 byte-index activation-LUT worker role");
 #endif

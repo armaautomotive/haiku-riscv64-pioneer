@@ -32,8 +32,17 @@ spill_q4_sfpnop='--spill-q4-sfpnop' in args
 if spill_q4_sfpnop:
     assert macro_q4 and batched and metrics and not resident and not spill_q4 and args.count('--spill-q4-sfpnop')==1
     args.remove('--spill-q4-sfpnop');spill_q4=True
-prepared_q4='--prepared-q4' in args
-if prepared_q4:
+prepared_byte_lut_profile='--prepared-q4-activation-byte-lut-phase-profile' in args
+if prepared_byte_lut_profile:
+    assert args.count('--prepared-q4-activation-byte-lut-phase-profile')==1 \
+        and not any(flag in args for flag in ('--batched','--metrics','--resident','--vector-q4','--macro-q4',
+            '--spill-q4','--spill-q4-sfpnop','--prepared-q4','--prepared-q4-current-worker',
+            '--prepared-q4-activation-lut-worker','--prepared-q4-activation-byte-lut-worker',
+            '--counter-unroll','--phase-profile','--prompt-client'))
+    args.remove('--prepared-q4-activation-byte-lut-phase-profile')
+    batched=True;metrics=True
+prepared_q4=prepared_byte_lut_profile or '--prepared-q4' in args
+if prepared_q4 and not prepared_byte_lut_profile:
     assert metrics and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
 prepared_current='--prepared-q4-current-worker' in args
 if prepared_current:
@@ -47,18 +56,18 @@ if prepared_lut:
         and not prepared_current and '--counter-unroll' not in args and '--phase-profile' not in args \
         and args.count('--prepared-q4-activation-lut-worker')==1
     args.remove('--prepared-q4-activation-lut-worker');prepared_q4=True
-prepared_byte_lut='--prepared-q4-activation-byte-lut-worker' in args
-if prepared_byte_lut:
+prepared_byte_lut=prepared_byte_lut_profile or '--prepared-q4-activation-byte-lut-worker' in args
+if prepared_byte_lut and not prepared_byte_lut_profile:
     assert batched and metrics and not resident and not vector_q4 and not macro_q4 and not prepared_q4 \
         and not prepared_current and not prepared_lut and '--counter-unroll' not in args and '--phase-profile' not in args \
         and args.count('--prepared-q4-activation-byte-lut-worker')==1
     args.remove('--prepared-q4-activation-byte-lut-worker');prepared_q4=True
 prompt_client='--prompt-client' in args
-counter_unroll='--counter-unroll' in args
-if counter_unroll:
+counter_unroll=prepared_byte_lut_profile or '--counter-unroll' in args
+if counter_unroll and not prepared_byte_lut_profile:
     assert prepared_q4 and args.count('--counter-unroll')==1;args.remove('--counter-unroll')
-phase_profile='--phase-profile' in args
-if phase_profile:
+phase_profile=prepared_byte_lut_profile or '--phase-profile' in args
+if phase_profile and not prepared_byte_lut_profile:
     assert counter_unroll and args.count('--phase-profile')==1;args.remove('--phase-profile')
 if prompt_client:
     assert metrics and args.count('--prompt-client')==1;args.remove('--prompt-client')
@@ -118,6 +127,7 @@ if prepared_q4:
     if prepared_current:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
 if prepared_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1']
 if prepared_byte_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=1']
+if prepared_byte_lut_profile:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE=1']
 objects=[str(obj)]
 if prepared_q4:
     cache_obj=out/'weight-cache.o'
@@ -174,6 +184,10 @@ if prepared_q4:
                      ('zero-activation-byte-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=0']),
                      ('activation-byte-lut-with-current-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']),
                      ('activation-byte-lut-with-activation-lut-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1'])]
+    if prepared_byte_lut_profile:
+        refusals += [('missing-activation-byte-lut-phase-profile',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE']),
+                     ('zero-activation-byte-lut-phase-profile',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE=0']),
+                     ('activation-byte-lut-phase-profile-old-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026111500010104ULL'])]
 if counter_unroll:
     refusals += [('missing-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL']),
                  ('zero-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL','-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=0'])]
@@ -184,7 +198,7 @@ if phase_profile:
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Prepared-Q4 byte-index activation-LUT Assistant worker requires its separate tag104 role','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card byte-LUT plus phase profile requires the distinct tag105 role marker','Full-card prepared Q4 tag105 requires exact paired byte-LUT, counter and phase-profile roles','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Prepared-Q4 byte-index activation-LUT Assistant worker requires its separate tag104 role','Tag105 requires the exact byte-LUT workers paired only with the phase-profile ROOT','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -200,7 +214,8 @@ smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
-if phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"')
+if prepared_byte_lut_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-profile-byte-lut-q4"')
+elif phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"')
 elif counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
 elif prepared_current:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-current-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-current-q4"')
 elif prepared_lut:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-lut-q4"')
@@ -275,6 +290,10 @@ if prompt_client:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"'
         assert ask_command.count(old)==1
         ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"'
+    if prepared_byte_lut_profile:
+        old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"'
+        assert ask_command.count(old)==1
+        ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-profile-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-profile-byte-lut-q4"'
     subprocess.run(ask_command,check=True)
     ask_imports=subprocess.check_output([tool+'nm','-u',str(ask)],text=True)
     for name in ('llama_','ggml_','ioctl','mmap',' kill',' system',' popen'):
@@ -303,4 +322,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 byte-index activation-LUT worker tag104' if prepared_byte_lut else 'prepared Q4 activation-LUT worker tag103' if prepared_lut else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('prepared phase-profile ROOT plus byte-LUT workers tag105' if prepared_byte_lut_profile else 'SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 byte-index activation-LUT worker tag104' if prepared_byte_lut else 'prepared Q4 activation-LUT worker tag103' if prepared_lut else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)

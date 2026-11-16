@@ -1,0 +1,82 @@
+Pioneer Qwen3.8-27B Q4_K_M — byte-LUT full-model phase profile
+Date: 2026-11-15
+
+Purpose
+
+This diagnostic pairs the exact tag99 five-section phase-profile ROOT with
+the ten exact tag104 byte-index activation-LUT peers. It gives the phase
+profiler the current byte-LUT worker set, so a later controlled full-model
+run can reveal which measured phase dominates. It does not change the
+tag104 compute peer bytes and makes no inference-speed claim.
+
+Package provenance
+
+The generator pins the tag99 profile ROOT package SHA-256
+e8eb2d83ccbadc01f64b142b7d97c300a273c737be1191afc86c0b65c06943e2 and the
+tag104 byte-LUT package SHA-256
+d81ed84163311bc0dd5942dcf6d501048a05e83fbae436d79ea9fc17fd74ab7a. It
+retains the first package's five ROOT arrays, substitutes only its ten peer
+arrays from the second package, and adds a distinct tag105 identity.
+
+Generated header SHA-256:
+b03e1e7b92c09d527bb81d9568f6e5a586fb6960aa9758b97ebf2fe1fa1af30d
+
+Offline validation
+
+The synthetic full-offload tests passed for the tag105 role:
+
+  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py \
+    --prepared-q4-activation-byte-lut-phase-profile
+
+They cover the full-model phase read lifecycle, 96 phase-packet mutations,
+803 fail-closed session fixtures, 13,511 mocked kernel-control cases and
+prepared-source publication. All transport and device-owner behavior is
+synthetic; no card or model was used.
+
+The Haiku RISC-V native BUILD_ONLY audit passed:
+
+  python3 tools/pioneer/build_qwen38_full_offload_native.py \
+    --prepared-q4-activation-byte-lut-phase-profile \
+    /Volumes/HaikuBuildLocal/generated.riscv64 ABS_NEW_OUTPUT
+
+  candidate SHA-256: e3a2a67e9e712eb5a888f9e8da389fd7253dd3080284c45ad78ff9b52b325a63
+  unchanged default comparator SHA-256: 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fefc7d9ccc6ff432df9cc
+  all 15 compiled program arrays matched the pinned package; five-EOG layout
+  49 compile-time role refusals; no CPU model/reference/ggml Work imports
+  largest individual native frame: 1,232 bytes
+
+The Assistant BUILD_ONLY audit passed as well:
+
+  python3 tools/pioneer/build_assistant_qwen27_full_offload.py \
+    --prepared-q4-activation-byte-lut-phase-profile \
+    /Volumes/HaikuBuildLocal/generated.riscv64 ABS_LIBRARIES ABS_NEW_OUTPUT
+
+  Assistant binary SHA-256: b54de95499f32b54dd5495de997355021fa9810c26271b7277f205824fe9d6ad
+  31 role refusals; exact 11 vocabulary/model-container API imports
+  no context, decode, logits, thread-pool, CPU inference/reference or hybrid
+  backend imports
+
+The standalone prepared-code DATA test passed using exact program symbols
+extracted from the native object plus the pinned tag104 worker binaries:
+
+  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_prepared_q4_data_tests.py \
+    --profile-byte-lut /private/tmp/pioneer-tag105-root-exact \
+    /private/tmp/q38-activation-byte-index.hjnwTp/candidate \
+    /private/tmp/pioneer-tag105-data-test-exact
+
+It verified all 15 sections, 3,376,445 actual code words, all 120 worker
+journal ranges and 10,014 invalid-or-DATA address refusals. This validates
+program packaging and immutable address selection only, not execution or
+numerical correctness.
+
+Status and remaining gates
+
+This is a build-only diagnostic candidate. It has not been installed,
+reloaded, run on the P100A, numerically qualified against Qwen, or benchmarked;
+it provides no new tokens/sec result. The known 0.17–0.20 tok/s observations
+remain the last measured full-model rates; the 20 tok/s target remains unmet.
+
+The Pioneer answered at 10.0.0.247 after restart, but SSH presented the
+unverified host key SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8. No
+remote login or device install was attempted. Physical qualification still
+requires out-of-band key verification and then a guarded P100A run.

@@ -248,6 +248,8 @@ static_assert(PioneerQ38TokenPrograms::Version==2,"late BF16 timing program sele
 #include "PioneerQ38FullOffloadInstructionPrefetchQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY)
 #include "PioneerQ38FullOffloadTwoProductReplayQ4Programs.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE)
+#include "PioneerQ38FullOffloadPreparedProfileByteLutQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 #include "PioneerQ38FullOffloadPreparedProfileQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER)
@@ -339,6 +341,13 @@ static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::S
  && PioneerQ38TokenPrograms::RootSections==5 && PioneerQ38TokenPrograms::MacroQ4Decode==1
  && PioneerQ38TokenPrograms::MacroQ4PrivateJobConfig==1 && PioneerQ38TokenPrograms::WideGdn==1,
  "exact tag100 five-span ROOT plus macro-Q4 peer package required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE)
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedProfileByteLutQ4Programs;
+static_assert(PioneerQ38TokenPrograms::PreparedActivationByteLutWorker==1 && PioneerQ38TokenPrograms::PreparedQ4==1
+ && PioneerQ38TokenPrograms::NativeQ4Exact==1 && PioneerQ38TokenPrograms::CounterUnroll==1
+ && PioneerQ38TokenPrograms::TokenPhaseProfile==1 && PioneerQ38TokenPrograms::RootSections==5
+ && PioneerQ38TokenPrograms::EogCount==5,
+ "exact tag105 phase-profile ROOT plus byte-LUT Q4 worker package required");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedCurrentQ4Programs;
 static_assert(PioneerQ38TokenPrograms::PreparedCurrentWorker==1 && PioneerQ38TokenPrograms::PreparedQ4==1
@@ -386,6 +395,13 @@ static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::T
  && PioneerQ38TokenPrograms::AffineReplayWords==13 && PioneerQ38TokenPrograms::TokenPhaseProfile==1
  && PioneerQ38TokenPrograms::CounterUnroll==1 && PioneerQ38TokenPrograms::PreparedQ4==1
  && PioneerQ38TokenPrograms::RootSections==5,"exact replay13 two-product ROOT+worker package required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE)
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedProfileByteLutQ4Programs;
+static_assert(PioneerQ38TokenPrograms::PreparedActivationByteLutWorker==1 && PioneerQ38TokenPrograms::PreparedQ4==1
+ && PioneerQ38TokenPrograms::NativeQ4Exact==1 && PioneerQ38TokenPrograms::CounterUnroll==1
+ && PioneerQ38TokenPrograms::TokenPhaseProfile==1 && PioneerQ38TokenPrograms::RootSections==5
+ && PioneerQ38TokenPrograms::EogCount==5,
+ "exact tag105 phase-profile ROOT plus byte-LUT Q4 worker package required");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedProfileQ4Programs;
 static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::TokenPhaseProfile==1
