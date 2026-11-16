@@ -38,6 +38,10 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exa
 #else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010102),
+ "Assistant client must target the distinct tag102 current prepared-Q4 worker role");
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
  "Assistant client must target the distinct tag101 SFPNOP native role");

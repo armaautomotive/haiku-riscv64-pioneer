@@ -34,6 +34,11 @@ if spill_q4_sfpnop:
 prepared_q4='--prepared-q4' in args
 if prepared_q4:
     assert metrics and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
+prepared_current='--prepared-q4-current-worker' in args
+if prepared_current:
+    assert batched and metrics and not resident and not vector_q4 and not macro_q4 and not prepared_q4 \
+        and args.count('--prepared-q4-current-worker')==1
+    args.remove('--prepared-q4-current-worker');prepared_q4=True
 prompt_client='--prompt-client' in args
 counter_unroll='--counter-unroll' in args
 if counter_unroll:
@@ -70,7 +75,8 @@ libflags=['-L'+str(p) for p in sorted((build/'build_packages').glob('gcc_syslibs
 source=here/'pioneer_assistant_qwen27_full_offload.cpp';obj=out/'worker.o';binary=out/'HaikuAssistantQwen27FullOffload'
 if vector_q4:source=here/'pioneer_assistant_qwen27_vector_q4_full_offload.cpp'
 if macro_q4:source=here/'pioneer_assistant_qwen27_macro_q4_full_offload.cpp'
-if prepared_q4:source=here/'pioneer_assistant_qwen27_prepared_q4_full_offload.cpp'
+if prepared_current:source=here/'pioneer_assistant_qwen27_prepared_current_q4_full_offload.cpp'
+elif prepared_q4:source=here/'pioneer_assistant_qwen27_prepared_q4_full_offload.cpp'
 if counter_unroll:source=here/'pioneer_assistant_qwen27_prepared_counter_q4_full_offload.cpp'
 if phase_profile:source=here/'pioneer_assistant_qwen27_prepared_profile_q4_full_offload.cpp'
 compile=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti',
@@ -106,6 +112,7 @@ if prepared_q4:
     # Keep the original cache writer byte-identical,including its compact
     # statement formatting;do not rekey11GB merely to silence this warning.
     compile[1:1]=['-Wno-misleading-indentation','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1','-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+writer+'"']
+    if prepared_current:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
 objects=[str(obj)]
 if prepared_q4:
     cache_obj=out/'weight-cache.o'
@@ -150,6 +157,9 @@ if prepared_q4:
                  ('prepared-raw-macro',['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=0']),
                  ('prepared-resident',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0']),
                  ('prepared-missing-writer',['-UPIONEER_NATIVE_Q4_PREPARATION_SHA256'])]
+    if prepared_current:
+        refusals += [('missing-current-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER']),
+                     ('zero-current-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=0'])]
 if counter_unroll:
     refusals += [('missing-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL']),
                  ('zero-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL','-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=0'])]
@@ -160,7 +170,7 @@ if phase_profile:
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -178,6 +188,7 @@ smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includ
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
 if phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"')
 elif counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
+elif prepared_current:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-current-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-current-q4"')
 elif prepared_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"')
 elif spill_q4_sfpnop:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-spill-q4-sfpnop-20261115-a/HaikuAssistantQwen27FullOffload-spill-q4-sfpnop"')
 elif spill_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-spill-q4-20261115-a/HaikuAssistantQwen27FullOffload-spill-q4"')
@@ -228,6 +239,10 @@ if prompt_client:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"'
         assert ask_command.count(old)==1
         ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
+    if prepared_current:
+        old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
+        assert ask_command.count(old)==1
+        ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-current-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-current-q4"'
     if counter_unroll:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
         assert ask_command.count(old)==1
@@ -264,4 +279,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)

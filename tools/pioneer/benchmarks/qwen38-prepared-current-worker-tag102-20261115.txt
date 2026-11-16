@@ -1,0 +1,53 @@
+Pioneer Qwen3.8-27B Q4_K_M — prepared current-worker integration
+Date: 2026-11-15
+
+This offline checkpoint packages the requalified current prepared-Q4 worker
+images with the frozen, reproducible tag97 ROOT image as a distinct tag102
+native/client role. It does not change tag97 bytes or reinterpret older
+results. Package generator and exact byte/address test:
+
+  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_prepared_q4_data_tests.py \
+    --latest-worker /private/tmp/q38-tag97-root-rebuild-df48 \
+    /private/tmp/q38-prepared-q4-review.emgxtut8/candidate \
+    /private/tmp/q38-tag102-data-test-20261115b
+
+PASS: generated header SHA256
+  640a316ef7b5636be9e25724c1facef661deae4cc1440f736320c626ace5c39b
+15 sections, 3,372,737 actual code words, all 120 worker journals, and
+10,014 invalid/data-address refusals checked against the independent ROOT
+and current-worker binaries.
+
+Native BUILD_ONLY cross-build:
+
+  python3 tools/pioneer/build_qwen38_full_offload_native.py --batched --metrics \
+    --prepared-q4-current-worker /Volumes/HaikuBuildLocal/generated.riscv64 \
+    /private/tmp/q38-fullnative-tag102-20261115c
+
+PASS: native candidate SHA256
+  b477600ba62738819570335b3127cc24711ec4ef8626f28b60a28f27afa1dfa6
+  default comparator SHA256
+  2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+36 role-refusal cases; full five-EOG firmware and default build remain byte
+unchanged. Native builder confirms no CPU model/reference or ggml Work imports.
+
+Host session tests:
+
+  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py \
+    --batched --metrics --prepared-q4-current-worker
+
+PASS: metrics grammar (3,072 valid/212,150 refused); prepared-source USER
+upload/session and lifecycle fixtures; 704 fail-closed COW fixtures; 13,415
+kernel-control cases; all synthetic transport only.
+
+The distinct Assistant tag102 worker translation unit also passed a Haiku
+RISC-V cross-compiler syntax-only build using the frozen llama headers and the
+original prepared-Q4 writer fingerprint. The pinned llama shared libraries
+needed for a complete linked Assistant package are not present in the local
+build tree, so no linked Assistant binary was produced.
+
+No Qwen model ran, no P100A code was loaded, and there is no physical TPS
+measurement or performance claim. The candidate still requires a verified
+Pioneer SSH identity, target-side numerical/execution qualification, a real
+model run and benchmark. The networked Pioneer answered at 10.0.0.247, but
+its presented SSH host-key fingerprint remained unverified, so no device
+login or install was attempted.

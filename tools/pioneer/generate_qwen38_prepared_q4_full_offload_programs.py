@@ -12,6 +12,11 @@ from generate_qwen38_token_programs import authenticated, pins
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
     raise SystemExit('Refuse optimized Python; whole paired firmware checks required')
 args=sys.argv[1:];counter_unroll='--counter-unroll' in args
+latest_worker='--latest-worker' in args
+if latest_worker:
+    assert args.count('--latest-worker')==1 and not any(flag in args for flag in
+        ('--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block','--fixed-config'))
+    args.remove('--latest-worker')
 if counter_unroll:
     assert args.count('--counter-unroll')==1;args.remove('--counter-unroll')
 phase_profile='--phase-profile' in args
@@ -122,6 +127,13 @@ if fixed_config:
     text=text.replace('PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4_PROGRAMS_H')
     text=text.replace('enum {QueuedQ4Block=1,','enum {FixedConfigQ4=1,FixedConfigFields=6,FixedConfigSeedWords=24,FixedConfigLowBytes=2,FixedConfigFinalReads=6};\nenum {QueuedQ4Block=1,')
     text=text.replace('tested queued-block worker; native qualification SEPARATE','offboard-tested fixed-config queued worker; native qualification SEPARATE')
+if latest_worker:
+    text=text.replace('PioneerQ38FullOffloadPreparedQ4Programs','PioneerQ38FullOffloadPreparedCurrentQ4Programs')
+    text=text.replace('PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_PREPARED_CURRENT_Q4_PROGRAMS_H')
+    text=text.replace('PioneerQ38FullOffloadPreparedQ4ProgramsRole.h','PioneerQ38FullOffloadPreparedCurrentQ4ProgramsRole.h')
+    text=text.replace('enum {PreparedQ4=1,NativeQ4Exact=1,','enum {PreparedCurrentWorker=1,PreparedQ4=1,NativeQ4Exact=1,')
+    text=text.replace('Generated executed prepared ROOT and exact prepared Q4 workers:five+ten sections.',
+                      'Generated exact tag102 ROOT paired with the current requalified exact-Q4 worker:five+ten sections.')
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name, flush=True)

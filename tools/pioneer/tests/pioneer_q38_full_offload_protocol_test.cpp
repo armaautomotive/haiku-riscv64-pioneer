@@ -47,6 +47,8 @@ int main(){
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  static_assert(F::BuildTag==UINT64_C(0x2026110600010116),"exact fast decode USER/native identity");
  static_assert(TT_PCI_PROBE_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE==B_DEVICE_OP_CODES_END+0x8807);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER)
+ static_assert(F::BuildTag==UINT64_C(0x2026111500010102),"exact current prepared-Q4 worker USER/native identity");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
  static_assert(F::BuildTag==UINT64_C(0x2026110500010103),"exact fixed-config Q4 USER/native identity");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
