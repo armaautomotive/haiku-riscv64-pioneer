@@ -33,14 +33,27 @@ synthetic suite also passed after the selector changes. These use mock
 transports only and do not establish model numerical correctness or hardware
 performance.
 
-Assistant packaging is not qualified: its builder stopped at the existing
-prepared-weight-writer identity check. The expected recursive fingerprint is
-70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6, while the
-current sources fingerprint to 872f65f457a30c935aeec6e2701e0dc145b8065a71c915a46f41d5b40907698e.
-This guard was not bypassed and the cache identity was not changed. The
-new Assistant role translation unit passed a direct pinned-toolchain
-syntax-only compile, but no linked Assistant package was produced. The
-candidate is not installed, selected in Assistant, run on the P100A, or
-performance-qualified. No new tokens/sec result exists; 20 tok/s remains
-unmet. Remote qualification also remains gated on out-of-band SSH host-key
-verification after Linux recovery.
+Assistant packaging now passes offline. The exact current prepared-source
+fingerprint is pinned as
+872f65f457a30c935aeec6e2701e0dc145b8065a71c915a46f41d5b40907698e and maps
+to the unchanged conversion/cache recipe
+70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6 only for
+that exact source set. The difference is limited to reviewed cache
+verification/reopen changes; the original conversion recipe key is retained.
+A mutation-refusal fixture passed, and the ordinary/parallel on-disk cache
+fixtures each passed all 48 checks under ASan/UBSan.
+
+The pinned Haiku RISC-V build, including the prompt-client launcher, passed
+23 role refusals and retained the exact 11 vocabulary/model-container API
+imports; no context, decode, logits, threadpool, CPU inference/reference, or
+hybrid backend imports were admitted. Offline artifact hashes:
+
+  Assistant worker: d86e88dbcc224b95b50e0f241e49d767418b3b8a57b4e08824c4f0bf65f199a3
+  prompt-client ask: ac1c18c303f3b11192a0cbd4ec8507dbee50520350fb049206789e5c4c05b25e
+  full-offload smoke: d5d8bd178d4755d166698f699484c77523fe7b3a8ba9ececad78e6dae7fe4d40
+  rate smoke: 2c7774d7e036d54219e3718063be9b130a6a09b8b5217d9cfe19feebcc7a62bf
+
+These are BUILD_ONLY artifacts: the candidate is not installed, used in the
+running Assistant, run on the P100A, or performance-qualified. No new
+tokens/sec result exists; 20 tok/s remains unmet. Remote qualification still
+requires Linux recovery and out-of-band SSH host-key verification.

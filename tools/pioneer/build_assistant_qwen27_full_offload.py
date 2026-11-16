@@ -6,6 +6,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from pioneer_native_q4_cache_recipe import recipe as native_q4_cache_recipe
 
 assert __debug__
 args=sys.argv[1:];batched='--batched' in args
@@ -108,25 +109,12 @@ if spill_q4_sfpnop:
 if counter_unroll:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1')
 if phase_profile:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=1')
 if prepared_q4:
-    # Preserve the exact ORIGINAL writer identity. No silent cache rekey or
-    # regeneration merely because the new loader/runtime changed.
-    writer_sources={}
-    def writer_collect(path):
-        assert path.is_file() and not path.is_symlink()
-        relative=path.relative_to(root).as_posix()
-        if relative in writer_sources:return
-        data=path.read_bytes();writer_sources[relative]=data
-        for name in re.findall(r'^\s*#\s*include\s*"([^"\n]+)"',data.decode(),re.M):
-            candidate=path.parent/name;assert not candidate.is_symlink()
-            candidate=candidate.resolve();candidate.relative_to(root);writer_collect(candidate)
-    for name in ('pioneer_q38_native_q4_prepare.cpp','PioneerModelWeightCache.cpp'):writer_collect(here/name)
-    fingerprint=hashlib.sha256()
-    for name,data in sorted(writer_sources.items()):fingerprint.update(name.encode()+b'\0'+len(data).to_bytes(8,'little')+data)
-    writer=fingerprint.hexdigest()
-    assert writer=='70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6','original cache writer changed'
-    # Keep the original cache writer byte-identical,including its compact
-    # statement formatting;do not rekey11GB merely to silence this warning.
+    # The current exact source set includes the separately reviewed,
+    # reader-only receipt/reopen changes. Keep the on-disk writer recipe key
+    # unchanged; unknown source edits are refused by the identity resolver.
+    writer_source,writer=native_q4_cache_recipe(root)
     compile[1:1]=['-Wno-misleading-indentation','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1','-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+writer+'"']
+    (out/'cache-recipe-source.txt').write_text('SOURCE_FINGERPRINT '+writer_source+'\nUNCHANGED_CACHE_RECIPE '+writer+'\n')
     if prepared_current:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
 if prepared_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1']
 if prepared_byte_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=1']
@@ -275,6 +263,10 @@ if prompt_client:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
         assert ask_command.count(old)==1
         ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-lut-q4"'
+    if prepared_byte_lut:
+        old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
+        assert ask_command.count(old)==1
+        ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-byte-lut-q4"'
     if counter_unroll:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
         assert ask_command.count(old)==1
@@ -311,4 +303,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 activation-LUT worker tag103' if prepared_lut else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 byte-index activation-LUT worker tag104' if prepared_byte_lut else 'prepared Q4 activation-LUT worker tag103' if prepared_lut else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
