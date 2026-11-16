@@ -45,6 +45,19 @@ original prepared-Q4 writer fingerprint. The pinned llama shared libraries
 needed for a complete linked Assistant package are not present in the local
 build tree, so no linked Assistant binary was produced.
 
+Exact worker suite:
+
+  python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py \
+    /private/tmp/q38-prepared-q4-review.emgxtut8/candidate
+
+PASS: all 27 type/K/group shapes, 54 changed-input jobs, 5 fragment-mask
+controls, 16 inert NoC-loss faults, 16 descriptor refusals and 3 GDN-history
+pairs. For the synthetic RV32 interpreter's type12/groups1 cases, unchanged
+exact-Q4 baseline -> current prepared worker retired 3,010,979 -> 1,471,733
+instructions at K5120 (51.1% fewer), 3,591,015 -> 1,739,649 at K6144 (51.6%
+fewer), and 9,984,107 -> 4,709,895 at K17408 (52.8% fewer). These counts are
+not hardware cycle counts and cannot be converted into tokens/sec.
+
 No Qwen model ran, no P100A code was loaded, and there is no physical TPS
 measurement or performance claim. The candidate still requires a verified
 Pioneer SSH identity, target-side numerical/execution qualification, a real
