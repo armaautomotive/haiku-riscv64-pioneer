@@ -83,8 +83,11 @@ The attempted exact ROOT rebuild did **not** pass. The unmodified parent
 batched ROOT failed to link before the prepared-Q4 overlay was added: its
 `.text` occupied `0x22928` bytes in the `0x20000`-byte `0x40000..0x60000`
 window and overlapped the fixed `.terminal` section at `0x60000`. Therefore
-the current source/SDK cannot produce the expected tag97 ROOT via this build
-path. No linker layout or runtime code was changed to conceal the overlap.
-Resolving and then requalifying this ROOT size/layout failure is now a hard
-integration gate before prepared-Q4 can be considered a loadable full-card
-candidate.
+the current shared source/SDK cannot regenerate the expected tag97 ROOT
+through this build path. The checked-in tag97 native package does contain
+hash-pinned ROOT/worker arrays from its earlier build, so this failure alone
+does not invalidate those frozen bytes. It does mean a fresh ROOT cannot be
+qualified from current shared sources until the size/layout drift is resolved
+or the exact older source revision is independently reproduced. No linker
+layout or runtime code was changed to conceal the overlap. This is a hard
+reproducibility gate, separate from the still-missing physical test.
