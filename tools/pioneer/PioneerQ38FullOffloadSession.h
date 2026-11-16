@@ -8,6 +8,11 @@
  || (defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) && PIONEER_Q38_FULL_OFFLOAD_METRICS != 1)
 #error Full-offload client is separate from hybrid Work,CPU validation and diagnostics
 #endif
+#if defined(PIONEER_Q38_EXPECTED_DRIVER_TAG) \
+ && (!defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4) \
+  || PIONEER_Q38_EXPECTED_DRIVER_TAG != 0x2026111500010206ULL)
+#error Explicit manager identity is reserved for the prepared-Q4 GDN-L1 tag206 candidate
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT
 #if PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT != 1 \
  || !defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4) || PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4 != 1 \
@@ -118,8 +123,13 @@ class PioneerQ38FullOffloadSession {
  }
  bool Identity(unsigned owner){
   tt_pioneer_driver_reload r={};r.version=1;
+#ifdef PIONEER_Q38_EXPECTED_DRIVER_TAG
+  const uint64_t expectedDriverTag=PIONEER_Q38_EXPECTED_DRIVER_TAG;
+#else
+  const uint64_t expectedDriverTag=PioneerQ38FullOffload::BuildTag;
+#endif
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,r) || !PioneerDriverReloadRequest(r) || r.expected_tag || r.expected_generation
-   || r.driver!=55 || r.guard_version!=1 || r.build_tag!=PioneerQ38FullOffload::BuildTag
+   || r.driver!=55 || r.guard_version!=1 || r.build_tag!=expectedDriverTag
    || !r.generation || (generation && r.generation!=generation) || r.quiesced || r.cold
    || r.active_owner!=owner || r.open_count!=1)return false;
   generation=r.generation;return true;

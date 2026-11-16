@@ -63,6 +63,7 @@ struct Runtime {
  A::Receiver receiver;uint32_t request=0;
  unsigned eos0=0,eos1=0;bool loaded=false,lost=false,cancelled=false,failed=false;
  const char* vocabularyFailure="not_started";
+ const char* requestStage="idle";
  double lastProgress=0;
 #if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
@@ -130,6 +131,7 @@ struct Runtime {
   );
  }
  bool Generate(const A::Frame& frame){
+  requestStage="request_setup";
 #if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   const auto requestBegin=system_time();
@@ -138,6 +140,7 @@ struct Runtime {
   request=frame.id;cancelled=false;
   if(!A::Question(frame.text) || !frame.value || frame.value>F::MaxOutput)
    return Emit(A::Done,A::Rejected,"Full-card request requires a short question and1-32 output tokens; no fallback.");
+  requestStage="prompt_tokenization";
   const std::string prompt=A::Prompt(frame.text);const auto* vocab=llama_model_get_vocab(vocabularyModel);
   llama_token tokens[F::MaxPrompt];
   const int count=llama_tokenize(vocab,prompt.data(),int(prompt.size()),tokens,F::MaxPrompt,false,true);
@@ -153,6 +156,7 @@ struct Runtime {
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
   startup.Begin(requestBegin,unsigned(count),unsigned(count)+frame.value-1);
 #endif
+  requestStage="accelerator_begin_and_upload";
   if(!session->Begin(ids,unsigned(count),frame.value,eos0,eos1))return false;
 #if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
@@ -185,9 +189,12 @@ struct Runtime {
    return counterCadence.Record(after);
   };
 #endif
+  requestStage="device_generation_wait";
   for(unsigned observations=0;!session->TerminalReady();observations++){
    const double now=Now();
-   if(now<previous || now-computeStarted>=1800 || observations>=18000 || !PollCancel())return false;
+   if(now<previous){requestStage="generation_clock_regression";return false;}
+   if(now-computeStarted>=1800 || observations>=18000){requestStage="device_generation_deadline";return false;}
+   if(!PollCancel()){requestStage="generation_channel_failure";return false;}
    previous=now;
    if(cancelled && !session->CancelRequested() && !session->Cancel())return false;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
@@ -201,6 +208,7 @@ struct Runtime {
 #endif
   const double computeFinished=Now();
   if(computeFinished<previous)return false;
+  requestStage="terminal_cleanup_and_output_readback";
 #ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
   if(!session->FinishResident())return false;
 #else
@@ -280,6 +288,7 @@ struct Runtime {
   if(!startup.Format(system_time(),startupMetric,sizeof(startupMetric))
    || !Emit(A::Progress,UINT32_MAX,startupMetric))return false;
 #endif
+  requestStage="answer_delivery";
   if(!Emit(A::Text,0,answer))return false;
   char status[384];snprintf(status,sizeof(status),
 #ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER
@@ -303,7 +312,34 @@ struct Runtime {
  }
  ~Runtime(){Close();}
 };
+static int ReadinessDiagnostic(){
+ Runtime runtime;double started=Now();
+ puts("READINESS_DIAGNOSTIC_NO_GENERATE;NO_CPU_INFERENCE;start vocabulary authentication");fflush(stdout);
+ if(!runtime.LoadVocabulary()){
+  printf("READINESS_DIAGNOSTIC_FAIL phase=vocabulary reason=%s elapsed=%.3f\n",
+   runtime.vocabularyFailure?runtime.vocabularyFailure:"unknown",Now()-started);fflush(stdout);return 1;
+ }
+ printf("READINESS_DIAGNOSTIC_PASS phase=vocabulary elapsed=%.3f\n",Now()-started);fflush(stdout);
+ runtime.session=std::make_unique<Runtime::Session>(runtime.io,runtime.source);
+ started=Now();puts("READINESS_DIAGNOSTIC_START phase=prepared_q4_preflight");fflush(stdout);
+ if(!runtime.session->Preflight()){
+  printf("READINESS_DIAGNOSTIC_FAIL phase=prepared_q4_preflight reason=%s elapsed=%.3f\n",
+   runtime.session->failure?runtime.session->failure:"unknown",Now()-started);fflush(stdout);return 1;
+ }
+ printf("READINESS_DIAGNOSTIC_PASS phase=prepared_q4_preflight seconds=%.3f bytes=%llu\n",
+  Now()-started,static_cast<unsigned long long>(runtime.session->bytesPlanned));fflush(stdout);
+ started=Now();puts("READINESS_DIAGNOSTIC_START phase=metadata_probe_only");fflush(stdout);
+ if(!runtime.session->Probe()){
+  printf("READINESS_DIAGNOSTIC_FAIL phase=metadata_probe_only reason=%s elapsed=%.3f\n",
+   runtime.session->failure?runtime.session->failure:"unknown",Now()-started);fflush(stdout);return 1;
+ }
+ printf("READINESS_DIAGNOSTIC_PASS phase=metadata_probe_only elapsed=%.3f\n",Now()-started);fflush(stdout);
+ const bool clean=runtime.Close();
+ puts(clean?"READINESS_DIAGNOSTIC_PASS phase=close;NO_GENERATE_SENT":"READINESS_DIAGNOSTIC_FAIL phase=close");fflush(stdout);
+ return clean?0:1;
+}
 int main(int argc,char** argv){
+ if(argc==2 && !strcmp(argv[1],"--readiness-diagnostic"))return ReadinessDiagnostic();
  if(argc==2 && !strcmp(argv[1],"--vocabulary-only")){
   Runtime runtime;
   if(!runtime.LoadVocabulary()){
@@ -353,7 +389,14 @@ int main(int argc,char** argv){
   }
   break;
  }
+ const char* failureStage=runtime.session && runtime.session->failure
+  ? runtime.session->failure:runtime.requestStage;
+ const unsigned failureOperation=runtime.session?runtime.session->operation:0;
+ char failure[256];
+ snprintf(failure,sizeof(failure),
+  "Full-card execution failed stage=%s request_stage=%s operation=%u; close only,retained owners,no END/retry/reset or CPU fallback.",
+  failureStage,runtime.requestStage,failureOperation);
  runtime.failed=true;runtime.lost=true;if(runtime.session)runtime.session->Abort();
- runtime.Emit(A::Error,A::Fatal,"Full-card execution/channel failed: close only,retained owners,no END/retry/reset or CPU fallback.");
+ runtime.Emit(A::Error,A::Fatal,failure);
  runtime.Close();return 70;
 }

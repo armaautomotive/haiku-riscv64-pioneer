@@ -44,6 +44,14 @@ if prepared_byte_lut_profile:
 prepared_q4=prepared_byte_lut_profile or '--prepared-q4' in args
 if prepared_q4 and not prepared_byte_lut_profile:
     assert metrics and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
+readiness_diagnostic='--readiness-diagnostic' in args
+if readiness_diagnostic:
+    assert prepared_q4 and args.count('--readiness-diagnostic')==1
+    args.remove('--readiness-diagnostic')
+gdn_l1_tag206='--gdn-l1-tag206' in args
+if gdn_l1_tag206:
+    assert prepared_q4 and args.count('--gdn-l1-tag206')==1
+    args.remove('--gdn-l1-tag206')
 prepared_current='--prepared-q4-current-worker' in args
 if prepared_current:
     assert batched and metrics and not resident and not vector_q4 and not macro_q4 and not prepared_q4 \
@@ -125,6 +133,8 @@ if prepared_q4:
     compile[1:1]=['-Wno-misleading-indentation','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1','-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+writer+'"']
     (out/'cache-recipe-source.txt').write_text('SOURCE_FINGERPRINT '+writer_source+'\nUNCHANGED_CACHE_RECIPE '+writer+'\n')
     if prepared_current:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
+if readiness_diagnostic:compile.insert(1,'-DPIONEER_Q38_READINESS_DIAGNOSTIC=1')
+if gdn_l1_tag206:compile.insert(1,'-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010206ULL')
 if prepared_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1']
 if prepared_byte_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=1']
 if prepared_byte_lut_profile:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE=1']
@@ -172,6 +182,12 @@ if prepared_q4:
                  ('prepared-raw-macro',['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=0']),
                  ('prepared-resident',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0']),
                  ('prepared-missing-writer',['-UPIONEER_NATIVE_Q4_PREPARATION_SHA256'])]
+    if readiness_diagnostic:
+        refusals += [('missing-readiness-diagnostic',['-UPIONEER_Q38_READINESS_DIAGNOSTIC']),
+                     ('zero-readiness-diagnostic',['-UPIONEER_Q38_READINESS_DIAGNOSTIC','-DPIONEER_Q38_READINESS_DIAGNOSTIC=0'])]
+    if gdn_l1_tag206:
+        refusals += [('gdn-l1-tag206-without-prepared-q4',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4']),
+                     ('wrong-gdn-l1-driver-tag',['-UPIONEER_Q38_EXPECTED_DRIVER_TAG','-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010205ULL'])]
     if prepared_current:
         refusals += [('missing-current-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER']),
                      ('zero-current-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=0'])]
@@ -214,7 +230,8 @@ smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
-if prepared_byte_lut_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-profile-byte-lut-q4"')
+if gdn_l1_tag206:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-readiness-tag206-20261116-b/readiness-diagnostic-tag206"')
+elif prepared_byte_lut_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-profile-byte-lut-q4"')
 elif phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"')
 elif counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
 elif prepared_current:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-current-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-current-q4"')

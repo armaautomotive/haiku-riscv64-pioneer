@@ -5,6 +5,9 @@
 #include "PioneerQ38PreparedQ4RootTables.h"
 #include "PioneerQ38PreparedQ4PlanningPages.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PreparedSourceProtocol.h"
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
+#include <cstdio>
+#endif
 
 // Own the pre-device preparation/readers for ONE public full-card session.
 // The cache is derived weights only;never a CPU inference/reference path.
@@ -34,6 +37,12 @@ public:
   if(!owner.Ready() || !owner.BindPreparedCache(weights,layout,directory,error))return false;
   while(!weights.AllPrepared()){
    const unsigned fragment=weights.NextFragment();
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
+   if((fragment&63U)==0){
+    fprintf(stderr,"READINESS_Q4_CACHE_SOURCE_PART %u/%zu\n",fragment,layout.Parts().size());
+    fflush(stderr);
+   }
+#endif
    if(!weights.PrepareNext(statistics,error) || !pages.Capture(weights,fragment,error))return false;
   }
   if(statistics.fragments!=1351 || !pages.Bind(directory,weights,[&owner]{return owner.Ready();},error)

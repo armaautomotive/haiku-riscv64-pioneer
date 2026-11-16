@@ -1,0 +1,93 @@
+Qwen3.8-27B tag206 readiness timeout and stable restore
+=======================================================
+November 16, 2026. A single fresh one-shot full-card rate attempt was made
+from the live Haiku state after the offline tag206 source and candidate build
+checks passed. This record is a timeout/rollback, NOT a model benchmark.
+
+Admission and candidate
+-----------------------
+Haiku was already running over strict-key SSH: 64 CPUs at 1 GHz and
+137,034,936,320 bytes total RAM. Before exchange, stable driver tag
+2026102100010012 was at generation2, quiesced0/cold0/active_owner0,
+open_count1/guard1. The original model was present at
+`/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf`, 18,973,870,528 bytes,
+owner0/link1/mode600.
+
+The fresh candidate binary was SHA256
+1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475. It was
+admitted by the pinned reload manager as tag2026111500010206, generation3.
+The same previously qualified prepared-Q4 worker and rate client were used;
+they are not a new CPU inference implementation. The worker is fenced from
+CPU/Work inference and CPU reference validation.
+
+Observed outcome
+----------------
+The client sent Load(64) and waited at most 1800 seconds for
+`QWEN27_FULL_OFFLOAD_VOCAB_READY`. The only worker progress line was:
+
+    FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+
+After the readiness deadline, the client exited1 and wrote:
+
+    FAIL_FULL_OFFLOAD_RATE_READY;CLOSE_ONLY_NO_FALLBACK
+
+The client never received READY and therefore never sent Generate. This
+attempt performed ZERO model-token generation and gives NO P100A tokens/sec,
+GPU arithmetic, output-quality or candidate-correctness result. It must not
+be presented as a slow inference measurement or as evidence that tag206
+arithmetic is wrong. The accepted full-card comparison remains the separate
+vector92 result near 0.17287 tok/s.
+
+The Qwen service worker later exited. Read-only process/status checks showed
+no remaining Qwen/card owner, and the reload manager reported
+tag2026111500010206 generation3, quiesced0/cold0/active_owner0. A one-shot
+recovery script admitted the exact timeout logs, exact candidate/stable
+hashes and idle process state; it quiesced tag206, restored the saved stable
+driver and waited for generation4. Its terminal record is
+`RATE_READY_TIMEOUT_NO_GPU_INFERENCE_STABLE041_GEN4_RESTORED`. Independent
+postflight confirmed installed SHA256
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403 and
+manager state stable tag2026102100010012 generation4,
+quiesced0/cold0/active_owner0/open_count1/guard1. Haiku still reported 64
+CPUs and 137,034,936,320 bytes RAM. No reboot, SD, mains, hardware, Assistant
+or model-file changes were made.
+
+Evidence hashes (from the Pioneer)
+----------------------------------
+Candidate: 1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475
+Rate stdout: 8ba8e74bbd7e70ee548747aca481cfff9855af92cc80012c489e1bd15c02769c
+Rate stderr (empty): e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Rate exit file: 4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865
+Recovery state: a74f51ef1c160007b7ffda65520f0cb597a7423172c2a59de6725cd2a226d4db
+Restored driver: 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+
+The stage `/boot/home/pioneer-q38-gdn-l1-tag206-20261116-a` is spent because
+its `.trial-once` marker exists. It is preserved as evidence and must not be
+rerun. The earlier successful worker authenticated the same model in about
+312 seconds; this attempt did not reach readiness in 1800 seconds. Next
+diagnostic: isolate the GGUF read/hash and service-readiness path without
+running CPU inference or issuing a GPU inference request, then create a fresh
+generation-bound one-shot candidate only after the discrepancy is explained.
+
+Readiness diagnostic follow-up, November 16
+-------------------------------------------
+The Pioneer remains reachable over strict-key SSH and reports the restored
+stable041/gen4 record, 64 CPUs, and 137,034,936,320 bytes total RAM. Implemented
+an opt-in worker diagnostic with independently timed vocabulary load,
+prepared-Q4 cache preflight and metadata-only PCI probe. When built with
+`--readiness-diagnostic`, the prepared-cache loop also prints a progress
+marker every 64 original plan-part indices. The mode has no Generate call,
+does not create an inference context, and the only device operation is the
+existing metadata probe after preflight. On Haiku it measured vocabulary
+authentication 311.872 s and read-only prepared-Q4 preflight 572.879 s for
+20,470,759,424 planned bytes. The metadata probe then failed
+`full_offload_unavailable` in 0.003 s against stable041, which does not support
+the tag97 prepared-Q4 profile; no inference occurred. These timings show the
+current worker's CPU readiness path is under 15 minutes. The exact older worker
+used by the timed-out tag206 attempt then ran against stable041 under a
+Load/Unload-only client. It exited with the stable-profile error after 1,399s,
+514s slower than the current worker's measured authentication+preflight
+(884.751s), but below the former 1,800s deadline. Its client had no Generate
+send path. This still does not explain the 1,800s wait under tag206; the
+candidate-specific metadata path remains untested. The candidate stage is
+still spent; no TPS result was produced.

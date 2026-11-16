@@ -30,6 +30,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-rate-tests-',dir='/private
         assert not result.stderr,(mode,result.stderr)
         assert ('PASS_FULL_OFFLOAD_RATE_JOB' in result.stdout)==(mode in passing)
         if mode in passing:assert 'rate_available'+str(int(mode!=1)) in result.stdout
+        if mode==4:assert 'FULL_OFFLOAD_WORKER_ERROR Synthetic unknown' in result.stdout
     for args in ([],['--full-card-hello-four'],['--full-card-rate-32','extra']):
         result=subprocess.run([str(client),*args],capture_output=True)
         assert result.returncode==2 and not result.stdout and not result.stderr

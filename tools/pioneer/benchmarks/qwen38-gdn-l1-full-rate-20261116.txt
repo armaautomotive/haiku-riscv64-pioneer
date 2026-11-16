@@ -1,0 +1,54 @@
+Qwen3.8-27B prepared-Q4 tag206 full-rate attempt
+=================================================
+Date: 2026-11-16
+Model: Qwen3.8-27B Q4_K_M, authenticated original GGUF
+Card: Tenstorrent P100A / Blackhole
+Mode: prepared-Q4 GDN-L1 all-card Work request; no CPU reference or CPU
+      inference context; one guarded 32-token request
+Candidate manager identity: driver55 tag2026111500010206 generation9
+Candidate driver SHA256:
+  1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475
+
+Observed sequence
+-----------------
+* Readiness-only test immediately before this run passed vocabulary
+  authentication, prepared-Q4 read-only cache preflight (20,470,759,424
+  bytes), metadata probe, and clean close. It did not issue Generate.
+* Full-rate run reached the candidate metadata gate and uploaded all
+  19,522.4 MiB of the prepared Q4 payload. The client printed the final
+  upload progress marker at 1000/1000.
+* The client never received a valid completed generation and clean END. It
+  printed `FAIL_FULL_OFFLOAD_RATE_GENERATION;CLOSE_ONLY_NO_END_RETRY_RESET_OR_CPU_FALLBACK`
+  and exited 1. No output-token count, generated text, or tokens/sec was
+  produced. This is a failed inference attempt, not a speed measurement.
+* Worker diagnostics stopped at the last prepared-cache fragment marker.
+  Pre-recovery manager status was `cold1 active_owner1`; the guarded script
+  correctly left tag206 installed and did not hot-swap while the card was
+  still owned/quarantined.
+* One OFF pulse was sent while the board was known on. After a 3-minute
+  shutdown interval SSH was unreachable; one ON pulse was sent. The next SSH
+  attempt received a different ED25519 host fingerprint:
+  `SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8`.
+  Strict host-key checking rejected it. OS identity, loaded driver, and
+  successful stable-driver recovery after boot are therefore UNVERIFIED.
+  Do not bypass host-key checking or claim stable041 was restored.
+
+Interpretation / next action
+-----------------------------
+This is the first recorded physical attempt to upload the complete prepared
+Q4 model through tag206. It confirms complete transfer under the candidate
+protocol, but does not prove that generation arithmetic completed on the
+card. No 20 tok/s progress or speedup can be claimed. The next safe step is
+out-of-band verification of the new SSH fingerprint. Once identity is
+verified, inspect the manager status and logs before doing any new card work;
+recover stable041 through the guarded path if possible, and capture the
+failure stage before attempting another Generate.
+
+Offline diagnostic follow-up
+----------------------------
+The worker's fatal IPC message now includes the session failure stage,
+request stage, and last ioctl operation. The rate client prints a worker
+fatal frame before its generic failure marker. This does not add CPU
+inference/reference behavior or retry/END/reset behavior. The synthetic
+full-rate client/parser tests passed after the change. Cross-compilation and
+physical verification remain pending because host key authentication failed.

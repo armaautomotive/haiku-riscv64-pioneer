@@ -130,7 +130,11 @@ public:
    e.manifestKey={originalSHA,conversionSHA,uint64_t(i)*2,ManifestHeader+e.indexBytes};
    e.bundleKey={originalSHA,conversionSHA,uint64_t(i)*2+1,0};expected++;
   }
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
+  if(!expected || !cache.OpenExistingDirectory(directory,error) || !ready() || !source.Stable())return false;
+#else
   if(!expected || !cache.Open(directory,error) || !ready() || !source.Stable())return false;
+#endif
   model=&source;epoch=source.Epoch();sourceReady=ready;
   for(unsigned bank=0;bank<7;bank++)used[bank]=plan.Used(bank);
   while(next<entries.size() && !entries[next].q4)next++;
@@ -153,12 +157,19 @@ public:
   if(!Ready() || next>=entries.size())return Fail(error,"No next native Q4 fragment.");
   const unsigned fragment=next;auto& e=entries[fragment];const auto p=plan.Parts()[fragment];
   std::vector<uint8_t> layout;Cache::Reader manifest;bool manifestHit=false,bundleHit=false;
+#if !defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
   auto describe=[&](uint64_t offset,unsigned count,uint8_t* output,std::string& why){
    if(layout.empty() && !Manifest(fragment,layout,stats.convertedTiles,why))return false;
    if(offset>layout.size() || count>layout.size()-offset)return Fail(why,"Invalid Q4 manifest conversion range.");
    memcpy(output,layout.data()+offset,count);return Ready();
   };
+#endif
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
+  manifestHit=true;
+  if(!cache.OpenExisting(e.manifestKey,[this]{return Ready();},manifest,error,progress))return false;
+#else
   if(!cache.GetOrCreate(e.manifestKey,[this]{return Ready();},describe,manifest,manifestHit,error,progress))return false;
+#endif
   layout.resize(size_t(e.manifestKey.bytes));
   for(unsigned at=0;at<layout.size();){
    const unsigned count=std::min(Cache::ChunkBytes,unsigned(layout.size())-at);
@@ -170,6 +181,7 @@ public:
   if(used[p.bank]>PioneerQwen38PackedPlan::Capacity || allocated>PioneerQwen38PackedPlan::Capacity-used[p.bank])
    return Fail(error,"Exact Q4 corrections exceed original source-bank cap.");
   e.bundleKey.bytes=uint64_t(p.bytes)+sideBytes;auto bundle=std::make_unique<Cache::Reader>();
+#if !defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
   auto produce=[&](uint64_t offset,unsigned count,uint8_t* output,std::string& why){
    if(!Ready() || offset>=e.bundleKey.bytes || !count || count>e.bundleKey.bytes-offset)return Fail(why,"Invalid Q4 bundle range.");
    memset(output,0,count);unsigned copied=0;
@@ -202,7 +214,13 @@ public:
    }
    return Ready();
   };
+#endif
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC)
+  bundleHit=true;
+  if(!cache.OpenExisting(e.bundleKey,[this]{return Ready();},*bundle,error,progress) || !Ready())return false;
+#else
   if(!cache.GetOrCreate(e.bundleKey,[this]{return Ready();},produce,*bundle,bundleHit,error,progress) || !Ready())return false;
+#endif
   e.sideBytes=sideBytes;e.address=uint32_t(PioneerQwen38PackedPlan::Base+used[p.bank]);e.allocated=unsigned(allocated);
   used[p.bank]+=allocated;e.prepared=true;prepared++;next++;
   while(next<entries.size() && !entries[next].q4)next++;

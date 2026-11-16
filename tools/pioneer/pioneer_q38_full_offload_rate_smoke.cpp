@@ -21,6 +21,9 @@ int main(int argc,char** argv){
  const double generate=Now();bool complete=false,textSeen=false;std::string answer,status;
  PioneerQ38FullOffloadRateData metric;
  while(generate>=0 && channel.Next(frame,generate+7200)){
+  if(frame.kind==A::Error && frame.value==A::Fatal){
+   printf("FULL_OFFLOAD_WORKER_ERROR %s\n",frame.text.c_str());break;
+  }
   if(frame.kind==A::Progress){
    if(textSeen || metric.Observe(frame.text)<0 || !Progress(frame))return 1;
    continue;

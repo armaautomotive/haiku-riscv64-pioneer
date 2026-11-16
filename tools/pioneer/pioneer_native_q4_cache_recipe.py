@@ -5,7 +5,10 @@ import pathlib
 import re
 
 ORIGINAL_RECIPE = '70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6'
-REVIEWED_CURRENT_SOURCE = '872f65f457a30c935aeec6e2701e0dc145b8065a71c915a46f41d5b40907698e'
+# The diagnostic-only prepared-Q4 reader selects OpenExisting for the
+# manifests and bundles. Normal builds still use GetOrCreate, and the
+# conversion recipe identity below intentionally remains unchanged.
+REVIEWED_CURRENT_SOURCE = 'bc4adf382e35955f598e599f189819b0c2f3ede6acfc26ed756ddb1a7ad688c4'
 
 
 def source_files(root=None):

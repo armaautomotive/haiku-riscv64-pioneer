@@ -17,6 +17,29 @@ the all-card path has not been qualified for that integration. Neither path
 has met the 20 tok/s target. See benchmarks/qwen38-fleet-plan-reuse-20261113.txt
 and benchmarks/qwen38-fast-decode-profile-physical-20261106.txt for scope.
 
+Full-model tag206 attempt, November 16, 2026
+------------------------------------------
+After the readiness-only tag206 test passed, a separate guarded full-rate
+attempt authenticated the model, prepared the read-only Q4 cache, passed the
+metadata gate, and uploaded the complete 19,522.4 MiB Qwen3.8-27B Q4_K_M
+payload to the P100A. The worker then returned a fatal generation error
+before publishing tokens or a clean END. The rate client exited 1; there is
+no token/s result and no quality result. This establishes full payload upload,
+not successful on-card inference. The pre-recovery status was tag206,
+generation9, `cold1 active_owner1`; automatic stable-driver rollback correctly
+refused to exchange a driver while the device was owned/quarantined.
+
+One controlled power cycle was issued to clear that quarantine. After boot,
+SSH advertised a different key (`SHA256:rO4GFm7hqDNLDIEDMVFgMgWfFkYsMd4BGhdpr6DLnS8`)
+than the pinned key, so strict SSH is refusing access. The post-boot OS,
+loaded driver, and stable-driver restoration are unverified; do not claim the
+rollback succeeded or bypass host-key checking. The user must verify the new
+fingerprint out of band before remote work resumes. A local-only diagnostic
+change now reports the worker's session failure stage and operation in the
+fatal IPC message; fake-worker rate tests pass, but this diagnostic change
+has not yet been cross-compiled or exercised on the board. See
+`benchmarks/qwen38-gdn-l1-full-rate-20261116.txt`.
+
 Live Haiku recovery and GDN page-journal audit, November 16, 2026
 ----------------------------------------------------------------
 Haiku was booted through the existing Linux-to-Haiku kexec path; no SD,
@@ -56,17 +79,40 @@ committed terminal hold and before the existing 300 ms L1 restore. Candidate
 page restoration has a separate 15 s fail-closed bound; an unlaunched session
 discards its untouched snapshot, while any uncertain/partial launched restore
 quarantines and retains the owner. Work and CPU-reference roles remain
-compile-time forbidden. This is source/build/simulation evidence only: tag206
-has NOT been installed or run on the P100A, no full Qwen candidate token was
-generated, and the accepted full-card rate remains about 0.1728 tok/s.
+compile-time forbidden. A fresh one-shot tag206 trial then loaded the driver
+at generation3. The Qwen service spent the full 1800-second client readiness
+wait at `Authenticating Qwen27B` and never returned its vocabulary-ready
+event. The client exited before sending Generate; therefore no model
+inference or full-model token occurred, and there is no candidate speed
+result. The worker subsequently exited. After verifying no owner/process
+remained, a guarded rollback restored stable041 at generation4, idle,
+active_owner0/cold0/guard1. Logs and rollback evidence are in
+benchmarks/qwen38-gdn-l1-rate-ready-timeout-20261116.txt.
 
-Next gates are a fresh generation-bound tag206 hardware qualification, exact
-restore timing and full-model output comparison, then a complete-model
-tokens/sec sample. Do not install it until the one-shot stage and recovery
-plan are independently qualified. The 20 tok/s goal remains unmet. Detailed
-prior live audit: benchmarks/qwen38-gdn-page-journal-live-audit-20261116.txt.
+The tag206 one-shot stage is spent. Next isolate the unexpectedly slow
+model-ready path (a prior successful worker authenticated this model in about
+312 seconds): measure model-file read/hash behavior and inspect the Qwen
+service readiness path without CPU inference or card execution. Only after
+readiness is bounded and understood should a fresh one-shot candidate compare
+full-model output and tokens/sec. The accepted complete-model rate remains
+about 0.1728 tok/s; the 20 tok/s goal is unmet. Detailed source audit:
+benchmarks/qwen38-gdn-page-journal-live-audit-20261116.txt.
 
-Live reconnect check, November 16 (later in this session)
+Readiness follow-up, November 16: strict-key SSH rechecked successfully; Haiku
+is still up with 64 CPUs and 137,034,936,320 bytes RAM. The recovery record
+still says stable041/gen4 restored. The opt-in `--readiness-diagnostic`
+measured vocabulary authentication at 311.872 s and read-only prepared-Q4
+preflight at 572.879 s for 20,470,759,424 planned bytes. The metadata probe
+failed `full_offload_unavailable` in 0.003 s against stable041, as expected
+for this prepared-Q4 profile; no inference or Generate occurred. The exact
+older worker used by the timeout then exited with the same stable-profile
+error after 1,399 s under a Load/Unload-only client. That is 514 s slower
+than the current worker's measured authentication+preflight (884.751 s), but
+still below the prior 1,800 s deadline. The discrepancy under tag206 remains
+unexplained. No new TPS result exists. See
+`tests/pioneer_q38_readiness_diagnostic_test.py`.
+
+Initial live reconnect check, November 16 (later superseded by the trial below)
 ---------------------------------------------------------
 Strict-key SSH is still working. Haiku is already booted; `uname` identifies
 the running Haiku RISC-V kernel, and `sysinfo` reports 64 CPUs at 1 GHz and
@@ -89,6 +135,19 @@ original-page capture/restore hooks; its first complete-worker emulator test
 is positive. It remains unqualified: no speed benefit is established, and
 candidate hardware correctness/timing plus the full-model output comparison
 remain open.
+
+Latest physical outcome, November 16: the tag206 redistributed-GDN-L1
+candidate loaded successfully into generation3, but the full-Qwen rate
+client timed out after 1800 seconds waiting for
+`QWEN27_FULL_OFFLOAD_VOCAB_READY`. Its only worker output was the initial
+model-authentication progress; the client then returned
+`FAIL_FULL_OFFLOAD_RATE_READY` before Generate. This is not an inference
+failure and provides no TPS number. The worker exited; a guarded exact-log
+rollback restored stable041 at generation4. Independent postflight confirmed
+64 CPUs, 137,034,936,320-byte RAM, idle/cold0/active_owner0/guard1, and the
+original stable hash. The one-shot stage is preserved and must not be
+replayed. Next investigate why model readiness exceeded 1800s versus the
+previous ~312s.
 
 Matrix-FPU status clarification, November 16, 2026
 ------------------------------------------------

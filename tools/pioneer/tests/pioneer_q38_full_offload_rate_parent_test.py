@@ -8,6 +8,11 @@ import sys
 import tempfile
 
 here=pathlib.Path(__file__).resolve().parent
+worker=(here.parent/'pioneer_assistant_qwen27_full_offload.cpp').read_text()
+assert 'Full-card execution failed stage=%s request_stage=%s operation=%u;' in worker
+assert 'runtime.session && runtime.session->failure' in worker
+assert 'requestStage="device_generation_deadline"' in worker
+assert 'no END/retry/reset or CPU fallback.' in worker
 # Complete previous guarded-parent tests FIRST,not just a matching tail.
 saved=sys.argv[:]
 try:
