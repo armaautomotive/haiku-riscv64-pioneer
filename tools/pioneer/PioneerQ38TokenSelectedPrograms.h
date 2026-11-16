@@ -254,6 +254,8 @@ static_assert(PioneerQ38TokenPrograms::Version==2,"late BF16 timing program sele
 #include "PioneerQ38FullOffloadPreparedCurrentQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER)
 #include "PioneerQ38FullOffloadPreparedLutQ4Programs.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER)
+#include "PioneerQ38FullOffloadPreparedByteLutQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL)
 #include "PioneerQ38FullOffloadPreparedCounterQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
@@ -344,9 +346,11 @@ static_assert(PioneerQ38TokenPrograms::PreparedCurrentWorker==1 && PioneerQ38Tok
  && PioneerQ38TokenPrograms::EogCount==5,"exact tag102 current-worker ROOT+Q4 package required");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedLutQ4Programs;
-static_assert(PioneerQ38TokenPrograms::PreparedActivationLutWorker==1 && PioneerQ38TokenPrograms::PreparedQ4==1
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER)
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedByteLutQ4Programs;
+static_assert(PioneerQ38TokenPrograms::PreparedActivationByteLutWorker==1 && PioneerQ38TokenPrograms::PreparedQ4==1
  && PioneerQ38TokenPrograms::NativeQ4Exact==1 && PioneerQ38TokenPrograms::RootSections==5
- && PioneerQ38TokenPrograms::EogCount==5,"exact tag103 activation-LUT ROOT+Q4 package required");
+ && PioneerQ38TokenPrograms::EogCount==5,"exact tag104 byte-index activation-LUT ROOT+Q4 package required");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadFixedConfigQ4Programs;
 static_assert(PioneerQ38TokenPrograms::FixedConfigQ4==1 && PioneerQ38TokenPrograms::FixedConfigFields==6

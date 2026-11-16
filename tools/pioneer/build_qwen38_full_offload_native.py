@@ -45,6 +45,12 @@ if prepared_lut:
         and not prepared_current and '--counter-unroll' not in args and '--phase-profile' not in args \
         and args.count('--prepared-q4-activation-lut-worker')==1
     args.remove('--prepared-q4-activation-lut-worker');prepared_q4=True
+prepared_byte_lut='--prepared-q4-activation-byte-lut-worker' in args
+if prepared_byte_lut:
+    assert metrics and batched and not resident and not vector_q4 and not macro_q4 and not prepared_q4 \
+        and not prepared_current and not prepared_lut and '--counter-unroll' not in args and '--phase-profile' not in args \
+        and args.count('--prepared-q4-activation-byte-lut-worker')==1
+    args.remove('--prepared-q4-activation-byte-lut-worker');prepared_q4=True
 counter_unroll='--counter-unroll' in args
 if counter_unroll:
     assert prepared_q4 and args.count('--counter-unroll')==1;args.remove('--counter-unroll')
@@ -74,7 +80,7 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
         '-fno-strict-aliasing','-fno-delete-null-pointer-checks','-mcmodel=medany','-fpic','-D_KERNEL_MODE']
 native=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
         ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
-tag=('0x2026111500010101ULL' if spill_q4_sfpnop else '0x2026111500010100ULL' if spill_q4 else '0x2026111500010103ULL' if prepared_lut else '0x2026111500010102ULL' if prepared_current else '0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010091ULL' if resident else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')
+tag=('0x2026111500010101ULL' if spill_q4_sfpnop else '0x2026111500010100ULL' if spill_q4 else '0x2026111500010104ULL' if prepared_byte_lut else '0x2026111500010103ULL' if prepared_lut else '0x2026111500010102ULL' if prepared_current else '0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010091ULL' if resident else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')
 native+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+tag]
 if batched:native+=['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1']
 if metrics:native+=['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1']
@@ -87,6 +93,7 @@ if spill_q4_sfpnop:
 if prepared_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1']
 if prepared_current:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
 if prepared_lut:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1']
+if prepared_byte_lut:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=1']
 if counter_unroll:native+=['-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1']
 if phase_profile:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=1']
 driver=root/'src/add-ons/kernel/drivers/misc'
@@ -165,6 +172,14 @@ if prepared_q4:
                      ('activation-lut-with-current-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1'])]
     else:
         refusals += [('activation-lut-worker-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1'])]
+    if prepared_byte_lut:
+        refusals += [('missing-activation-byte-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER']),
+                     ('zero-activation-byte-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=0']),
+                     ('activation-byte-lut-worker-old-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026111500010103ULL']),
+                     ('activation-byte-lut-with-current-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']),
+                     ('activation-byte-lut-with-short-lut-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1'])]
+    else:
+        refusals += [('activation-byte-lut-worker-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=1'])]
 else:
     refusals += [('prepared-q4-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1'])]
 if counter_unroll:
@@ -192,7 +207,7 @@ for label,extra in refusals:
     result=subprocess.run([*common,*native,*extra,*includes,'-E',str(driver/'pioneer_q38_full_offload_driver.cpp')],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
     assert result.returncode and any(t in result.stderr for t in
-        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card spill Q4 requires','SFPNOP-ordered spill Q4 requires','Original spill Q4 requires its exact tag100 candidate','Full-card spill macro Q4 requires exact tag100','Full-card prepared Q4 counter unroll requires','Full-card prepared Q4 requires','Current prepared-Q4 worker package requires its distinct tag102 full-card role','Prepared-Q4 activation-LUT package requires its separate tag103 full-card role','Full-card phase profile requires','Tag97 requires','Tag98 requires','Tag99 requires')),(label,result.returncode,result.stderr)
+        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card spill Q4 requires','SFPNOP-ordered spill Q4 requires','Original spill Q4 requires its exact tag100 candidate','Full-card spill macro Q4 requires exact tag100','Full-card prepared Q4 counter unroll requires','Full-card prepared Q4 requires','Current prepared-Q4 worker package requires its distinct tag102 full-card role','Prepared-Q4 activation-LUT package requires its separate tag103 full-card role','Prepared-Q4 byte-index LUT package requires its separate tag104 full-card role','Full-card phase profile requires','Tag97 requires','Tag98 requires','Tag99 requires')),(label,result.returncode,result.stderr)
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 def compiler_path(name):
     return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
@@ -234,9 +249,9 @@ old_header=(here/('PioneerQ38TokenWideGdnPrograms.h' if batched else 'PioneerQ38
 assert hashlib.sha256(old_header).hexdigest()==('d285c9adb421fc0010d8ad48371eb58ca1480fc0d787f7c147afd4a93457a787'
     if batched else '692a5296c0bc3a19af30ffe920728834328acb05f2122c11c9f95abefd09256f')
 old_arrays={label:digest for digest,label in re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',old_header.decode())}
-namespace='PioneerQ38FullOffloadSpillQ4SfpNopPrograms' if spill_q4_sfpnop else 'PioneerQ38FullOffloadSpillQ4Programs' if spill_q4 else 'PioneerQ38FullOffloadPreparedLutQ4Programs' if prepared_lut else 'PioneerQ38FullOffloadPreparedCurrentQ4Programs' if prepared_current else 'PioneerQ38FullOffloadPreparedProfileQ4Programs' if phase_profile else 'PioneerQ38FullOffloadPreparedCounterQ4Programs' if counter_unroll else 'PioneerQ38FullOffloadPreparedQ4Programs' if prepared_q4 else 'PioneerQ38FullOffloadMacroQ4Programs' if macro_q4 else 'PioneerQ38FullOffloadVectorQ4Programs' if vector_q4 else 'PioneerQ38FullOffloadBatchedPrograms' if batched else 'PioneerQ38FullOffloadPrograms'
+namespace='PioneerQ38FullOffloadSpillQ4SfpNopPrograms' if spill_q4_sfpnop else 'PioneerQ38FullOffloadSpillQ4Programs' if spill_q4 else 'PioneerQ38FullOffloadPreparedByteLutQ4Programs' if prepared_byte_lut else 'PioneerQ38FullOffloadPreparedLutQ4Programs' if prepared_lut else 'PioneerQ38FullOffloadPreparedCurrentQ4Programs' if prepared_current else 'PioneerQ38FullOffloadPreparedProfileQ4Programs' if phase_profile else 'PioneerQ38FullOffloadPreparedCounterQ4Programs' if counter_unroll else 'PioneerQ38FullOffloadPreparedQ4Programs' if prepared_q4 else 'PioneerQ38FullOffloadMacroQ4Programs' if macro_q4 else 'PioneerQ38FullOffloadVectorQ4Programs' if vector_q4 else 'PioneerQ38FullOffloadBatchedPrograms' if batched else 'PioneerQ38FullOffloadPrograms'
 header=(here/(namespace+'.h')).read_bytes()
-assert hashlib.sha256(header).hexdigest()==('dadcb5038bc3b783bd276b5322160499d49f69f68b371c98ec9cff00dfe5c18b' if spill_q4_sfpnop else 'b53bf562c507fde28a7cade431d23a25d913742f0a3da055a2ae19d1598d8ccb' if spill_q4 else '39fbf5204e4301d4fb6df2f89767989f893d57e256e89b56bb24a77e9314dfb7' if prepared_lut else '640a316ef7b5636be9e25724c1facef661deae4cc1440f736320c626ace5c39b' if prepared_current else 'e8eb2d83ccbadc01f64b142b7d97c300a273c737be1191afc86c0b65c06943e2' if phase_profile else 'c3bf57c0dfd9320c87a2f0bcba0b2ec1d6d6e0212688a364c8a46290061b4dad' if counter_unroll else '94368390b71f3ca725d6e791a04dd4b892e0655d7764515b9ce5a35ca9c6e84b' if prepared_q4 else 'da41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767' if macro_q4 else '3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389' if vector_q4 else '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
+assert hashlib.sha256(header).hexdigest()==('dadcb5038bc3b783bd276b5322160499d49f69f68b371c98ec9cff00dfe5c18b' if spill_q4_sfpnop else 'b53bf562c507fde28a7cade431d23a25d913742f0a3da055a2ae19d1598d8ccb' if spill_q4 else 'd81ed84163311bc0dd5942dcf6d501048a05e83fbae436d79ea9fc17fd74ab7a' if prepared_byte_lut else '39fbf5204e4301d4fb6df2f89767989f893d57e256e89b56bb24a77e9314dfb7' if prepared_lut else '640a316ef7b5636be9e25724c1facef661deae4cc1440f736320c626ace5c39b' if prepared_current else 'e8eb2d83ccbadc01f64b142b7d97c300a273c737be1191afc86c0b65c06943e2' if phase_profile else 'c3bf57c0dfd9320c87a2f0bcba0b2ec1d6d6e0212688a364c8a46290061b4dad' if counter_unroll else '94368390b71f3ca725d6e791a04dd4b892e0655d7764515b9ce5a35ca9c6e84b' if prepared_q4 else 'da41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767' if macro_q4 else '3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389' if vector_q4 else '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
     if batched else 'fcff4279355cf5cfa1de048aa6bb9ed5fa4d7dca0f3dc9a7669cbd421be2a1cd')
 arrays=re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',header.decode())
 assert len(arrays)==(15 if spill_q4 or prepared_q4 else 14 if batched else 13)
@@ -254,6 +269,6 @@ assert token_frames and max(token_frames)<=2048
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 for name in ('native','default'):
     print(sha(out/('tenstorrent_pci_probe-'+name)),'tenstorrent_pci_probe-'+name,flush=True)
-print('PASS BUILD_ONLY distinct full-card '+('SFPNOP ROOT-spill macro Q4 tag101/all15 arrays exact/five-span journal and ten pinned Q4 peers' if spill_q4_sfpnop else 'ROOT-spill macro Q4 tag100/all15 arrays exact/five-span journal and ten pinned Q4 peers' if spill_q4 else 'prepared-Q4 activation-LUT worker tag103/all15 arrays exact/tag97-compatible ROOT journal and source publication required' if prepared_lut else 'current requalified prepared-Q4 worker tag102/all15 arrays exact/tag97-compatible ROOT journal and source publication required' if prepared_current else 'prepared profile Q4 tag99/all15 arrays exact/held-read after drain before END' if phase_profile else 'prepared counter Q4 tag98/all15 arrays exact/same journal and source publication/ordered counter checks' if counter_unroll else 'prepared Q4 tag97/all15 arrays exact/extended ROOT journal/source publication required' if prepared_q4 else 'macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'resident tag91/fresh-context lifecycle/all14 arrays exact/ten wide peers unchanged' if resident else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
+print('PASS BUILD_ONLY distinct full-card '+('SFPNOP ROOT-spill macro Q4 tag101/all15 arrays exact/five-span journal and ten pinned Q4 peers' if spill_q4_sfpnop else 'ROOT-spill macro Q4 tag100/all15 arrays exact/five-span journal and ten pinned Q4 peers' if spill_q4 else 'prepared-Q4 byte-index activation-LUT worker tag104/all15 arrays exact/tag97-compatible ROOT journal and source publication required' if prepared_byte_lut else 'prepared-Q4 activation-LUT worker tag103/all15 arrays exact/tag97-compatible ROOT journal and source publication required' if prepared_lut else 'current requalified prepared-Q4 worker tag102/all15 arrays exact/tag97-compatible ROOT journal and source publication required' if prepared_current else 'prepared profile Q4 tag99/all15 arrays exact/held-read after drain before END' if phase_profile else 'prepared counter Q4 tag98/all15 arrays exact/same journal and source publication/ordered counter checks' if counter_unroll else 'prepared Q4 tag97/all15 arrays exact/extended ROOT journal/source publication required' if prepared_q4 else 'macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'resident tag91/fresh-context lifecycle/all14 arrays exact/ten wide peers unchanged' if resident else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
       ',full5-EOG firmware/default43 BYTE-UNCHANGED,'+str(len(refusals))+' role refusals,no CPU model/reference/ggml Work imports;maxIndividualTokenFrame'+str(max(token_frames)),flush=True)
 print('NOT installed,physical/numerical/Assistant qualified or a speed result;whole-kernel stack not certified',flush=True)

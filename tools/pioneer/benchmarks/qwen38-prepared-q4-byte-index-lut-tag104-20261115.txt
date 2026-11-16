@@ -1,0 +1,46 @@
+Pioneer Qwen3.8-27B Q4_K_M — byte-index activation LUT full-card candidate
+Date: 2026-11-15
+
+Purpose
+
+Promote the exact byte-indexed activation conversion experiment into an
+independent full-card program/native role (tag104), without modifying the
+tag103 activation-LUT role or the default tag102 role. The input LUT preserves
+the exact activation mapping and does not use CPU validation or hybrid Work.
+
+Offline qualification
+
+The tag104 program package was regenerated from the pinned tag103 ROOT image
+and the separately pinned byte-index worker ROMs. Only the ten peer program
+arrays are substituted; the five ROOT arrays are inherited unchanged. Header
+SHA-256: d81ed84163311bc0dd5942dcf6d501048a05e83fbae436d79ea9fc17fd74ab7a.
+
+Pinned Haiku RISC-V native build-only checks passed:
+
+  native image: 3a5d55f39bb5ea9398dc3da4416bc53d1997f8cd59377da9e341291b529e623f
+  default comparator: 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+
+The candidate retained all 15 exact program arrays, five-EOG firmware and the
+byte-identical default comparator. Forty role refusal checks passed; there
+were no CPU model/reference or ggml Work imports. The largest individual
+native frame was 1,232 bytes. This does not certify whole-kernel stack or
+runtime behavior.
+
+The tag104 synthetic full-offload tests passed: bounded metrics and malformed
+request coverage, prompt/decode lifecycle, cancellation, prepared-source
+publication, and mocked kernel-control admission/refusal cases. The tag103
+synthetic suite also passed after the selector changes. These use mock
+transports only and do not establish model numerical correctness or hardware
+performance.
+
+Assistant packaging is not qualified: its builder stopped at the existing
+prepared-weight-writer identity check. The expected recursive fingerprint is
+70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6, while the
+current sources fingerprint to 872f65f457a30c935aeec6e2701e0dc145b8065a71c915a46f41d5b40907698e.
+This guard was not bypassed and the cache identity was not changed. The
+new Assistant role translation unit passed a direct pinned-toolchain
+syntax-only compile, but no linked Assistant package was produced. The
+candidate is not installed, selected in Assistant, run on the P100A, or
+performance-qualified. No new tokens/sec result exists; 20 tok/s remains
+unmet. Remote qualification also remains gated on out-of-band SSH host-key
+verification after Linux recovery.

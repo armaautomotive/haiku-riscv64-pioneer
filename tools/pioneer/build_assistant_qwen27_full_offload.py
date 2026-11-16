@@ -46,6 +46,12 @@ if prepared_lut:
         and not prepared_current and '--counter-unroll' not in args and '--phase-profile' not in args \
         and args.count('--prepared-q4-activation-lut-worker')==1
     args.remove('--prepared-q4-activation-lut-worker');prepared_q4=True
+prepared_byte_lut='--prepared-q4-activation-byte-lut-worker' in args
+if prepared_byte_lut:
+    assert batched and metrics and not resident and not vector_q4 and not macro_q4 and not prepared_q4 \
+        and not prepared_current and not prepared_lut and '--counter-unroll' not in args and '--phase-profile' not in args \
+        and args.count('--prepared-q4-activation-byte-lut-worker')==1
+    args.remove('--prepared-q4-activation-byte-lut-worker');prepared_q4=True
 prompt_client='--prompt-client' in args
 counter_unroll='--counter-unroll' in args
 if counter_unroll:
@@ -84,6 +90,7 @@ if vector_q4:source=here/'pioneer_assistant_qwen27_vector_q4_full_offload.cpp'
 if macro_q4:source=here/'pioneer_assistant_qwen27_macro_q4_full_offload.cpp'
 if prepared_current:source=here/'pioneer_assistant_qwen27_prepared_current_q4_full_offload.cpp'
 elif prepared_lut:source=here/'pioneer_assistant_qwen27_prepared_lut_q4_full_offload.cpp'
+elif prepared_byte_lut:source=here/'pioneer_assistant_qwen27_prepared_byte_lut_q4_full_offload.cpp'
 elif prepared_q4:source=here/'pioneer_assistant_qwen27_prepared_q4_full_offload.cpp'
 if counter_unroll:source=here/'pioneer_assistant_qwen27_prepared_counter_q4_full_offload.cpp'
 if phase_profile:source=here/'pioneer_assistant_qwen27_prepared_profile_q4_full_offload.cpp'
@@ -122,6 +129,7 @@ if prepared_q4:
     compile[1:1]=['-Wno-misleading-indentation','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1','-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+writer+'"']
     if prepared_current:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
 if prepared_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1']
+if prepared_byte_lut:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=1']
 objects=[str(obj)]
 if prepared_q4:
     cache_obj=out/'weight-cache.o'
@@ -173,6 +181,11 @@ if prepared_q4:
         refusals += [('missing-activation-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER']),
                      ('zero-activation-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=0']),
                      ('activation-lut-with-current-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1'])]
+    if prepared_byte_lut:
+        refusals += [('missing-activation-byte-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER']),
+                     ('zero-activation-byte-lut-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER=0']),
+                     ('activation-byte-lut-with-current-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']),
+                     ('activation-byte-lut-with-activation-lut-worker',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_LUT_WORKER=1'])]
 if counter_unroll:
     refusals += [('missing-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL']),
                  ('zero-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL','-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=0'])]
@@ -183,7 +196,7 @@ if phase_profile:
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Prepared-Q4 byte-index activation-LUT Assistant worker requires its separate tag104 role','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -203,6 +216,7 @@ if phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/b
 elif counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
 elif prepared_current:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-current-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-current-q4"')
 elif prepared_lut:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-lut-q4"')
+elif prepared_byte_lut:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-byte-lut-q4"')
 elif prepared_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"')
 elif spill_q4_sfpnop:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-spill-q4-sfpnop-20261115-a/HaikuAssistantQwen27FullOffload-spill-q4-sfpnop"')
 elif spill_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-spill-q4-20261115-a/HaikuAssistantQwen27FullOffload-spill-q4"')
