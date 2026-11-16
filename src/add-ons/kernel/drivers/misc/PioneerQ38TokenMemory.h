@@ -158,6 +158,10 @@ public:
  PioneerQ38TokenMemory& operator=(const PioneerQ38TokenMemory&)=delete;
  bool Unsafe()const{return unsafe;}
  bool Installed()const{return installed && !unsafe && !closed && !launched;}
+ // Native GDN page journal is the sole launched-state path allowed to touch
+ // these mapped originals, after terminal HOLD and committed readout. Unlike
+ // Installed(), this predicate intentionally remains true after launch.
+ bool LaunchedJournalActive()const{return installed && !unsafe && !closed && launched;}
  bool Closed()const{return closed && !unsafe && !launched;}
  bool LaunchedJournalClosed()const{return closed && launchClosed && launched && !installed && !unsafe;}
 #ifdef PIONEER_Q38_RECEIPT_JOURNAL_ACTIVE

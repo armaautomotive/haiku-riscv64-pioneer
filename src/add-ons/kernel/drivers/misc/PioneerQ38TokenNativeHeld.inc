@@ -48,7 +48,7 @@ bool PioneerSessionIO::TokenGdnL1PageOwnerScope(unsigned worker,uint32 page){
 		&& !s->participants->bootAttempted && !s->participants->booted;
 	const bool restoring=s->phase==PioneerQ38TokenNativeState::RootRestoring
 		&& s->runtime && s->runtime->HeldAfterTerminal()
-		&& s->runtime->CommittedRecordsRead() && s->memory->Installed();
+		&& s->runtime->CommittedRecordsRead() && s->memory->LaunchedJournalActive();
 	return prepared || restoring;
 }
 #endif
