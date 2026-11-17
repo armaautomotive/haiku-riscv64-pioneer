@@ -169,3 +169,20 @@ No runner was staged or executed on the Pioneer in this checkpoint.
 
   python3 tools/pioneer/build_qwen38_head_csr_trial.py serial OBSERVED_STABLE_GENERATION NEW_SCRIPT
   python3 tools/pioneer/tests/pioneer_q38_head_csr_trial_test.py
+
+Matched generation-only comparison (offline)
+--------------------------------------------
+`compare_qwen38_head_csr_rates.py` accepts two closed raw-Q4 captures
+only with successful parent and worker exit files, the same observed
+commit-window geometry, and the exact reference 31-prompt/32-output
+answer. It refuses duplicate transcripts. The percent-change endpoints
+are computed from the integer elapsed bounds, excluding loading and
+START, and do not establish repeatability or broad model quality. The
+physical variant fingerprints and stable-driver restoration still need
+their own verification; the comparator never opens the card.
+
+The archived vector92 transcript passed the paired overlap/faster/slower
+fixtures and eight refusal cases. The fixtures are not new speed results.
+
+  python3 tools/pioneer/compare_qwen38_head_csr_rates.py CLOSED_SERIAL_CAPTURE CLOSED_BATCHED_CAPTURE
+  python3 tools/pioneer/tests/pioneer_q38_head_csr_rates_test.py
