@@ -13,6 +13,13 @@
   || PIONEER_Q38_EXPECTED_DRIVER_TAG != 0x2026111500010206ULL)
 #error Explicit manager identity is reserved for the prepared-Q4 GDN-L1 tag206 candidate
 #endif
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) \
+ && (PIONEER_Q38_TAG206_PIPELINED_UPLOAD != 1 || !defined(PIONEER_Q38_EXPECTED_DRIVER_TAG) \
+  || !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) || !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) \
+  || !defined(PIONEER_Q38_READINESS_DIAGNOSTIC) || PIONEER_Q38_READINESS_DIAGNOSTIC != 1 \
+  || defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) || defined(PIONEER_Q38_BF16_FULL_CLIENT))
+#error Tag206 pipelined upload requires the exact batched prepared-Q4 diagnostic
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT
 #if PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP_CLIENT != 1 \
  || !defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4) || PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4 != 1 \
@@ -75,6 +82,9 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
 #include <memory>
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "PioneerQ38PreparedQ4SessionSource.h"
+#endif
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+#include "PioneerQ38PrefetchWorker.h"
 #endif
 
 // Host work is authentication,weight-format loading,token IDs and lifecycle
@@ -153,6 +163,61 @@ class PioneerQ38FullOffloadSession {
  }
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+ const char* UploadPreparedPipelined(){
+  const auto& spans=preparedData->Spans();
+  if(spans.empty())return "upload_count";
+  auto active=std::make_unique<tt_q38_span_upload>();
+  auto next=std::make_unique<tt_q38_span_upload>();
+  // The worker joins before either buffer is freed and before Begin can
+  // close the FD or destroy the source. It never receives the FD or IO.
+  PioneerQ38PrefetchWorker worker;
+  if(!worker.Start())return "upload_prefetch_start";
+  auto submit=[&](unsigned part,unsigned at,tt_q38_span_upload* request){
+   const auto& span=spans[part];
+   const unsigned pages=std::min(256U,span.allocated/4096-at);
+   const unsigned bank=span.bank;
+   const uint64_t offset=uint64_t(span.address)-layout.Base+uint64_t(at)*4096;
+   auto* reader=preparedData.get();
+   return worker.Submit([=](std::string&){
+    std::memset(request,0,sizeof(*request));
+    request->version=1;request->bank=bank;request->bytes=pages*4096;request->offset=offset;
+    if(!PioneerQ38SpanPublicShape(request->version,bank,offset,request->bytes,0))return false;
+    for(unsigned page=0;page<pages;page++)if(!reader->ReadPage(part,at+page,
+     reinterpret_cast<uint8_t*>(request->data+page*1024),4096))return false;
+    return true;
+   });
+  };
+  std::string error;
+  if(!submit(0,0,active.get()) || !worker.Wait(error))return "prepared_read";
+  for(unsigned part=0,at=0;part<spans.size();){
+   if(!Current())return "source_changed";
+   const auto& span=spans[part];
+   const unsigned pages=std::min(256U,span.allocated/4096-at);
+   const bool finalBatch=at+pages==span.allocated/4096;
+   const unsigned followingPart=finalBatch?part+1:part,followingAt=finalBatch?0:at+pages;
+   const bool more=followingPart<spans.size();
+   if(more && !submit(followingPart,followingAt,next.get()))return "upload_prefetch_submit";
+   // Only send the completed buffer. Unlike Call, this does not read the
+   // source while the producer is in flight; Current brackets that window.
+   operation=TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD;
+   if(!io.Call(fd,operation,active.get(),sizeof(*active)))return "upload";
+   const auto& r=active->result;
+   if(active->version!=1 || active->bank!=span.bank || active->bytes!=pages*4096 || active->reserved
+    || active->offset!=uint64_t(span.address)-layout.Base+uint64_t(at)*4096
+    || r.version!=1 || r.state!=TT_RUNTIME_PASSED || r.bytes!=pages*4096 || r.pages!=pages || r.nonce!=uploadSpans+1
+    || r.started!=1 || r.completed!=1 || r.held!=1 || r.host_exact || r.matched_words || r.recovery_required || r.reserved)
+    return "upload_reply";
+   if(more && !worker.Wait(error))return "prepared_read";
+   if(!Current())return "source_changed";
+   pagesUploaded+=pages;uploadSpans++;
+   if(finalBatch)partsUploaded++;
+   io.Progress(pagesUploaded*4096,bytesPlanned);
+   active.swap(next);part=followingPart;at=followingAt;
+  }
+  return nullptr;
+ }
+#endif
  bool PublishPreparedSource(){
   namespace P=PioneerQ38PreparedSource;
   auto p=std::make_unique<P::Packet>();
@@ -286,6 +351,9 @@ public:
   if(!Call(TT_PCI_PROBE_Q38_BANK_BEGIN,begin) || begin.result.version!=1 || begin.result.state!=TT_RESIDENT_SESSION_READY
    || begin.result.active!=1 || begin.result.host_ready!=1 || begin.result.cold || begin.result.capabilities
    || begin.result.bytes!=UINT64_C(21)*1024*1024*1024)return Stop("begin");
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+  if(const char* why=UploadPreparedPipelined())return Stop(why);
+#else
   auto upload=std::make_unique<tt_q38_span_upload>();
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   const auto& parts=preparedData->Spans();
@@ -323,6 +391,7 @@ public:
    }
    partsUploaded++;
   }
+#endif
   if(partsUploaded!=
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
    4895

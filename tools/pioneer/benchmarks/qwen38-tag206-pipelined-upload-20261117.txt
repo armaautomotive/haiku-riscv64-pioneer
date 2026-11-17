@@ -1,0 +1,37 @@
+Qwen 27B prepared-Q4 upload overlap, offline candidate
+=====================================================
+
+Tag206 exchanges one span at a time: read and verify weight pages, submit a
+synchronous upload, check the receipt, repeat. The optional new worker does
+file/cache preparation for the next span while the owner thread is inside
+the previous upload. It uses two approximately 1 MiB packets, one bounded
+preparation thread, and the same single accelerator FD. The worker has no
+driver handle; only the owner sends one checked ioctl at a time. This is
+still the same prepared Q4 model, card-resident inference and no CPU model
+context, validation or fallback. The ordinary worker path is unchanged.
+
+The producer uses the existing authenticated source and per-chunk cache
+checks. Both source checks bracketing each transfer run while preparation is
+idle. The owner checks the full upload receipt, joins/abandons the pipeline
+on error, and neither retries nor issues START or END after an uncertain
+upload. All 4895 planned weight spans and the 194 prepared-source publication
+packets are still required before START. The pipeline does not mix into the
+earlier, unrelated QGWF or hybrid Work variants.
+
+Verification:
+* Sanitized synthetic test: the first upload cannot return until the next
+  span's reader has entered, proving simultaneous activity. The full fake
+  session checks in-order payload bytes, addresses, receipts, same-FD source
+  publication, token drain and explicit END. Injected first/next read faults,
+  lost upload, and bad nonce refused further upload or START/END.
+* Haiku RISC-V worker cross-build with the original frozen model-container ABI
+  passed 26 role refusals and exact 11 vocabulary/model-container API imports.
+  Worker SHA-256 6f14f7e5225d72d08df1976a1b7a2c1b160542f175667a76cac8635b186d2ef5.
+  Its smoke/rate binaries bind only a new, not-yet-staged experiment path.
+  No accelerator, boot, Assistant or installed driver was modified.
+
+Follow-up: a physical A/B comparison must use the same known-good driver,
+cache-reopen implementation, model, input, and whole-transcript/cleanup
+verification, varying only the host pipeline. This does not shorten
+authentication/readiness, change raw DMA bandwidth or accelerate token
+decode. No physical load-time or generation-rate improvement is claimed.

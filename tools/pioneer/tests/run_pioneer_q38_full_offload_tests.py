@@ -8,6 +8,10 @@ import sys
 import tempfile
 
 args=sys.argv[1:]
+pipeline='--tag206-pipelined-upload' in args
+if pipeline:
+    assert args==['--batched','--metrics','--prepared-q4','--tag206-pipelined-upload']
+    args=args[:-1]
 prepared_byte_lut_profile='--prepared-q4-activation-byte-lut-phase-profile' in args
 if prepared_byte_lut_profile:
     assert args==['--prepared-q4-activation-byte-lut-phase-profile']
@@ -80,11 +84,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_WORKER 1' if prepared_byte_lut else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_ACTIVATION_BYTE_LUT_PHASE_PROFILE 1' if prepared_byte_lut_profile else '')
         + '\n#define PIONEER_DRIVER_BUILD_TAG '+('0x2026111500010105ULL' if prepared_byte_lut_profile else '0x2026111500010104ULL' if prepared_byte_lut else '0x2026111500010103ULL' if prepared_lut else '0x2026111500010102ULL' if prepared_current else '0x2026110500010103ULL' if fixed_config else '0x2026110500010102ULL' if queued_block else '0x2026110500010101ULL' if instruction_prefetch else '0x2026110500010100ULL' if two_product_replay else '0x2026110500010099ULL' if phase_profile else '0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')+'\n')
-    for name in (('protocol','session') if resident else ('protocol','session','control')):
+    for name in (('session',) if pipeline else ('protocol','session') if resident else ('protocol','session','control')):
         source=here/('pioneer_q38_full_offload_'+name+'_test.cpp')
         binary=pathlib.Path(temporary)/name
         subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                         '-Wno-misleading-indentation','-ffp-contract=off','-fsanitize=address,undefined',
+                        *(['-pthread','-DPIONEER_Q38_TAG206_PIPELINED_UPLOAD=1','-DPIONEER_Q38_READINESS_DIAGNOSTIC=1',
+                           '-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010206ULL'] if pipeline else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1'] if batched else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1'] if metrics else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1'] if resident else []),
@@ -104,5 +110,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
                         *(['-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6"'] if prepared_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1'] if (vector_q4 or prepared_q4) and name!='control' else []),
                         '-I'+temporary,str(source),'-o',str(binary)],check=True)
-        subprocess.run([str(binary)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+        runtime_env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
+        if pipeline:
+            for fault in ('first-read','next-read','lost-upload','bad-reply'):
+                subprocess.run([str(binary),fault],check=True,timeout=30,env=runtime_env)
+        subprocess.run([str(binary)],check=True,timeout=180 if pipeline else None,env=runtime_env)
 print('PASS full-offload host tests;no original model,native engine,device or speed result')

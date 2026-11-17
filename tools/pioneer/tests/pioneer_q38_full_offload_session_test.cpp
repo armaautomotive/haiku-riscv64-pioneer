@@ -26,6 +26,12 @@ struct Source {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  std::vector<PioneerQ38PreparedQ4UploadPlan<>::Span> preparedSpans;
 #endif
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+ enum Fault {None,FirstRead,NextRead,LostUpload,BadReply};
+ Fault fault=None;
+ std::mutex overlapLock;std::condition_variable overlap;
+ bool nextReaderEntered=false,firstCallReleased=false;
+#endif
  explicit Source(Fixture& f):file(f){}
  bool Open(){assert(!opens++);opened=model.Open(file.file) && plan.Build(model,8192,true,true);
   if(opened)for(const auto& p:plan.Parts())if(p.kind==PIONEER_Q38_WEIGHT){pages+=p.allocated/4096;bytes+=p.allocated;}
@@ -62,6 +68,15 @@ struct PreparedFixture {
  uint64_t Bytes()const{return Ready()?source->bytes:0;}
  bool ReadPage(unsigned f,unsigned page,uint8_t* output,unsigned capacity){
   assert(Ready() && capacity==4096 && page<Spans()[f].allocated/4096);
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+  if(!source->reads && source->fault==Source::FirstRead)return false;
+  if(source->reads==std::min(256U,Spans()[0].allocated/4096)){
+   std::unique_lock<std::mutex> lock(source->overlapLock);
+   source->nextReaderEntered=true;source->overlap.notify_all();
+   source->overlap.wait(lock,[&]{return source->firstCallReleased;});
+   if(source->fault==Source::NextRead)return false;
+  }
+#endif
   memset(output,int((f+page)%251+1),4096);source->reads++;return true;
  }
  bool Publication(unsigned op,unsigned index,PioneerQ38PreparedSource::Packet& p)const{
@@ -96,10 +111,20 @@ struct IO {
  int Close(int fd){assert(fd==88 && opens==closes+1);closes++;return 0;}
  void Progress(uint64_t done,uint64_t total){assert(done==uploaded && total==source.bytes);}
  bool Call(int fd,unsigned op,void* data,size_t size){
-  assert(fd==88 && opens==closes+1 && source.Ready());calls++;
+  assert(fd==88 && opens==closes+1);
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+  if(op!=TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD)
+#endif
+  assert(source.Ready());calls++;
   if(op==TT_PCI_PROBE_RELOAD_STATUS){
    auto& r=*static_cast<tt_pioneer_driver_reload*>(data);assert(size==sizeof(r) && r.version==1);
-   r.driver=55;r.guard_version=1;r.build_tag=PioneerQ38FullOffload::BuildTag;r.generation=9;r.open_count=1;r.active_owner=begins;
+   r.driver=55;r.guard_version=1;
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+   r.build_tag=PIONEER_Q38_EXPECTED_DRIVER_TAG;
+#else
+   r.build_tag=PioneerQ38FullOffload::BuildTag;
+#endif
+   r.generation=9;r.open_count=1;r.active_owner=begins;
    if(sweep.Clone([&]{r.build_tag=0x2026103100010075ULL;}))return true;
    if(sweep.Clone([&]{r.build_tag=PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110400010088)
       ?UINT64_C(0x2026110400010089):UINT64_C(0x2026110400010088);} ))return true;
@@ -129,6 +154,12 @@ struct IO {
    r.version=1;r.state=TT_RESIDENT_SESSION_READY;r.active=r.host_ready=1;r.bytes=UINT64_C(21)*1024*1024*1024;
   }else if(op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD){
    assert(begins==1 && !spanEnds && !starts);auto& r=*static_cast<tt_q38_span_upload*>(data);
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+   if(!uploads){
+    std::unique_lock<std::mutex> lock(source.overlapLock);
+    source.overlap.wait(lock,[&]{return source.nextReaderEntered;});
+   }
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
    const auto& parts=source.preparedSpans;
 #else
@@ -147,7 +178,16 @@ struct IO {
     assert(raw[0]==(fragment+page+n)%251+1 && raw[4095]==raw[0]);}
    uploads++;uploaded+=r.bytes;page+=count;if(page==p.allocated/4096){fragment++;page=0;}
    r.result={1,TT_RUNTIME_PASSED,count*4096,count,uploads,1,1,1,0,0,0,0};
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+   if(uploads==1){
+    std::lock_guard<std::mutex> lock(source.overlapLock);
+    source.firstCallReleased=true;source.overlap.notify_all();
+    if(source.fault==Source::LostUpload)return false;
+    if(source.fault==Source::BadReply)r.result.nonce++;
+   }
+#else
    if(uploads==1 && sweep.Clone([&]{r.result.nonce++;}))return true;
+#endif
   }else if(op==TT_PCI_PROBE_Q38_SPAN_END){
    assert(uploaded==source.bytes && source.reads==source.pages && !spanEnds++ && !starts);
    *static_cast<tt_q38_span_end*>(data)={1,0,1,0};
@@ -255,8 +295,20 @@ struct IO {
   return true;
  }
 };
-int main(){
+int main(int argc,char** argv){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Source source(fixture);Sweep sweep;IO io(source,sweep);
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+ sweep.enabled=false; // do not fork from a threaded endpoint
+ if(argc==2){
+  if(!strcmp(argv[1],"first-read"))source.fault=Source::FirstRead;
+  else if(!strcmp(argv[1],"next-read"))source.fault=Source::NextRead;
+  else if(!strcmp(argv[1],"lost-upload"))source.fault=Source::LostUpload;
+  else if(!strcmp(argv[1],"bad-reply"))source.fault=Source::BadReply;
+  else assert(false);
+ }else assert(argc==1);
+#else
+ assert(argc==1);(void)argv;
+#endif
  auto session=std::make_unique<PioneerQ38FullOffloadSession<IO,Source
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   ,PreparedFixture
@@ -300,6 +352,18 @@ int main(){
  assert(!session->Begin(nullptr,1,1,2,3) && !session->Begin(prompt,97,1,2,3) && !session->Begin(prompt,1,33,2,3) && !io.opens);
  bool okay=session->Probe();
  if(okay){assert(io.opens==1 && io.closes==1 && !io.begins && !io.starts);okay=session->Begin(prompt,96,32,248044,248046);}
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+ if(source.fault!=Source::None){
+  assert(!okay && session->FailedState() && io.begins==1 && io.closes==io.opens && io.opens==2);
+  assert(io.uploads==unsigned(source.fault!=Source::FirstRead) && !io.spanEnds && !io.starts && !io.ends);
+  assert(!session->pagesUploaded && !session->CopyGeneratedTokens(answer,32,count) && count==123);
+  const unsigned calls=io.calls;session.reset();assert(io.calls==calls);
+  printf("PASS threaded upload fault %s; producer joined, no further upload/START/END or retry\n",argv[1]);
+  return 0;
+ }
+ assert(source.nextReaderEntered && source.firstCallReleased);
+ puts("PASS threaded preparation and actual session transport overlap on the fake endpoint");
+#endif
  if(okay)assert(!session->KnownClean());
 #if defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
@@ -370,5 +434,9 @@ int main(){
   puts("PASS full-model phase read exactly_ONCE after_HOLD_and_FULL_record_drain before_END;all96_packet_word_mutations;invalid_clock_still_cleans;no_metric_publication_before_END_Close_or_after_source_withdrawal;NO_DEVICE_OR_TPS");
  }
 #endif
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+ puts("PASS pipelined full-offload USER:96prompt/32output/127positions,two64-record drains,explicit clean END;synthetic ONLY,no physical or numerical result");
+#else
  printf("PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,%u fail-closed COW fixtures;synthetic ONLY,no physical or numerical result\n",sweep.cases);
+#endif
 }
