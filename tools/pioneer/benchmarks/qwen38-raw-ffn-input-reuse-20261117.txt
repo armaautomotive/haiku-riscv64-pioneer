@@ -231,15 +231,28 @@ text 130,212/131,072 bytes, conv 32,680/32,768. No native package, deployment,
 model output or throughput claim for this third variant. Tags 211 and 212
 remain the two-way peer-fetch comparison and do not include this change.
 
-Physical refetch control started
---------------------------------
+Physical refetch control completed; reuse started
+-------------------------------------------------
 After the output-head A/B closed and independently verified idle stable041
 generation6, the tagged FFN refetch package and runner were hashed on
 Haiku. The preflight confirmed idle stable041, 64 CPUs and 137034936320
 bytes RAM. The one-shot stage
 /boot/home/pioneer-q38-ffn-retained-refetch-211
 used runner SHA256 dae53021a53dbb7b3eb9c8f7650ed28b365e650e8a41544f4940b646af2694ad.
-It loaded exact tag211 generation7; parent1576, client1643 and worker1644
-were observed at model authentication. Auto-restoration is bound to
-stable041 generation8. Do not start reuse tag212 or touch the card while
-the control owns it. There is no FFN token-rate result yet.
+It loaded exact tag211 generation7. The post-prompt count window of 31
+steps (31 to 62) took 179204198..179207690 us, or
+0.172983648..0.172987019 tok/s. It returned the exact 1-through-14
+answer with all 32 output tokens and zero host inference contexts.
+Both processes exited 0 and both stderr files were empty. Independent
+hash, lock/process and owner checks verified idle stable041 generation8,
+cold0/owner0/guard1 and full 64 CPUs/137034936320 bytes RAM.
+All nine downloaded files matched the independently listed SHA256s.
+Transcript SHA256 dceefe7199a714b9cc4cbe36c241e7e11858624785c2c2b8fbaa04b9c3bb360a;
+the closed Mac capture is /private/tmp/q38-ffn-refetch-211-closed.X4ynua5w.
+
+Only after that closure, the exact reuse package passed preflight and was
+launched at /boot/home/pioneer-q38-ffn-retained-reuse-212, tag212/gen9.
+Runner SHA256 442ce0b55c2cfcc5b6e87380a300a28ebabac991c42f7d9d844c34cb8218456f.
+Parent1993, client2060 and worker2061 were observed authenticating the
+same model. It must restore idle stable041 generation10 before another
+test. No reuse timing, benchmark speedup, or Assistant change is claimed.
