@@ -112,7 +112,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
                         '-I'+temporary,str(source),'-o',str(binary)],check=True)
         runtime_env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
         if pipeline:
-            for fault in ('first-read','next-read','lost-upload','bad-reply'):
+            for fault in ('first-read','next-read','lost-upload','bad-reply',
+                          'native-start','native-state-zero','malformed-start','lost-start','native-finish'):
                 subprocess.run([str(binary),fault],check=True,timeout=30,env=runtime_env)
         subprocess.run([str(binary)],check=True,timeout=180 if pipeline else None,env=runtime_env)
 print('PASS full-offload host tests;no original model,native engine,device or speed result')

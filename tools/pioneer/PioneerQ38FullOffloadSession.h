@@ -98,6 +98,28 @@ template<class IO,class Source=PioneerQ38PublicModelSource
  >
 class PioneerQ38FullOffloadSession {
  using Packet=PioneerQ38TokenControl::Packet;
+#ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
+ struct BackendFailure {unsigned action=0,stage=0,phase=0,unsafe=0;};
+ BackendFailure backendFailure;
+ void ObserveBackendFailure(const PioneerQ38TokenControl::Request& request,unsigned action){
+  namespace P=PioneerQ38TokenControl;
+  const auto& r=packet->reply;const auto* d=r.detail;
+  if(backendFailure.action || (action!=P::Start && action!=P::Finish)
+   || std::memcmp(&packet->request,&request,sizeof(request))
+   || r.version!=P::Version || r.operation!=action || r.status>=0 || r.started!=1
+   || r.ready || r.complete || r.unsafe>1 || r.records || !r.stage || r.stage>(action==P::Start?8U:11U)
+   || d[0]!=1 || d[1]!=r.started || d[2]!=r.stage || d[3] || d[4]!=r.unsafe || d[5] || d[6] || d[7])return;
+  for(auto word:r.reserved)if(word)return;
+  for(unsigned i=0;i<P::Context;i++)if(packet->prompt[i]!=(action==P::Start && i<prompts?prompt[i]:0U))return;
+  for(auto word:packet->records)if(word)return;
+  // Only log fixed integer metadata already returned by this very call.
+  // Only these native result prefixes contain phase in word 2. START's
+  // state-zero stages use that word for bytes; FINISH's late close/end
+  // stages use it for the unsafe bit. Zero means no phase was reported.
+  const bool hasPhase=(action==P::Start?r.stage>=5:r.stage<=7) && d[8]==1 && d[9]<=1 && d[10]<64;
+  backendFailure={action,r.stage,hasPhase?d[10]:0,r.unsafe};
+ }
+#endif
  enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed
 #ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
   ,Resident
@@ -242,7 +264,13 @@ class PioneerQ38FullOffloadSession {
    std::copy(prompt.begin(),prompt.begin()+prompts,packet->prompt);}
   if(!PioneerQ38FullOffload::RequestShape(*packet))return false;
   const auto request=q;
-  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
+  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet)){
+#ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
+   ObserveBackendFailure(request,action); // no second ioctl, cleanup, or recovery permission
+#endif
+   return false;
+  }
+  if(std::memcmp(&q,&request,sizeof(q)))return false;
   for(unsigned i=0;i<P::Context;i++)if(packet->prompt[i]!=(action==P::Start && i<prompts?prompt[i]:0U))return false;
   const auto& r=packet->reply;
   if(r.version!=P::Version || r.operation!=action || r.status || r.started!=1 || r.unsafe || r.ready>1
@@ -270,6 +298,13 @@ class PioneerQ38FullOffloadSession {
  } // consistency of kernel-validated DATA,not a CPU numerical comparison
 public:
  const char* failure=nullptr;unsigned operation=0;
+#ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
+ bool BackendFailureInfo(unsigned& action,unsigned& stage,unsigned& phase,unsigned& unsafe)const{
+  if(state!=Failed || !backendFailure.action)return false;
+  action=backendFailure.action;stage=backendFailure.stage;phase=backendFailure.phase;unsafe=backendFailure.unsafe;
+  return true;
+ }
+#endif
  uint64_t pagesUploaded=0,bytesPlanned=0;unsigned partsUploaded=0,uploadSpans=0;
  PioneerQ38FullOffloadSession(IO& transport,Source& original):io(transport),source(original){}
  ~PioneerQ38FullOffloadSession(){Close();} // never implicit cancellation/END/reset

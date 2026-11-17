@@ -395,10 +395,22 @@ int main(int argc,char** argv){
  const char* failureStage=runtime.session && runtime.session->failure
   ? runtime.session->failure:runtime.requestStage;
  const unsigned failureOperation=runtime.session?runtime.session->operation:0;
+#ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
+ char failure[320];
+#else
  char failure[256];
+#endif
  snprintf(failure,sizeof(failure),
   "Full-card execution failed stage=%s request_stage=%s operation=%u; close only,retained owners,no END/retry/reset or CPU fallback.",
   failureStage,runtime.requestStage,failureOperation);
+#ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
+ unsigned action=0,stage=0,phase=0,unsafe=0;
+ if(runtime.session && runtime.session->BackendFailureInfo(action,stage,phase,unsafe)){
+  const size_t at=strlen(failure);
+  snprintf(failure+at,sizeof(failure)-at," Native %s stage=%u phase=%u unsafe=%u.",
+    action==PioneerQ38TokenControl::Start?"START":"FINISH",stage,phase,unsafe);
+ }
+#endif
  runtime.failed=true;runtime.lost=true;if(runtime.session)runtime.session->Abort();
  runtime.Emit(A::Error,A::Fatal,failure);
  runtime.Close();return 70;

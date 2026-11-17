@@ -123,3 +123,27 @@ invalid transcripts, and restoration/refusal after an invalid postcheck.
 The already-running parent remains the original pinned artifact described
 above. The historical stage is still one-shot; this fix does not permit
 rerunning it or interpreting its parent verdict as the client verdict.
+
+Preserve returned native failure stage
+--------------------------------------
+The diagnostic worker now retains the matched integer START/FINISH failure
+reply from the original failing ioctl. Previously it lost that data when
+the syscall reported an error and could only say `stage=start` or similar.
+START stages identify bind (1), state/history/projection initialization
+(2/3/4), held L1 preparation (5), runtime staging (6), worker bootstrap
+(7), and ROOT startup (8). The optional inner phase is printed only for
+START stages 5-8 and FINISH stages 1-7, where the kernel record actually
+has a phase field; zero means none was reported. Malformed or empty replies
+do not produce a native stage. The phase is data, not recovery authority.
+
+The diagnostic reads no new ioctl, does not expose any raw addresses or
+returned records, and does not change the failure, cancellation, output,
+CPU-reference, or cleanup policy. It does not change the active trial's
+already-loaded worker or retroactively explain a previous failure.
+
+The ASan/UBSan fake-session tests passed matched START and FINISH faults,
+state-zero bytes not mislabeled as a phase, and missing/mismatched replies.
+They verified close-only handling and no output on failure. The pipelined
+Haiku worker cross-build passed 26 refusal tests and the unchanged 11-symbol
+vocabulary/model-container allowlist. New build-only worker SHA-256:
+`fe4fa225302e391b714795255f15af1eec6abebfd7101d34069c19b262907947`.
