@@ -64,8 +64,33 @@ old local and single-token stream pins. Streamed two-row text is 5,576
 bytes with SHA256
 fd6c8b885c84bda45093b28b2fc0cb0a3a8934edc60258852e10700666db280b.
 
-Next integrate two-row accumulation into the optimized vector decoder
-and qualify a physical same-weight, two-activation comparison. Separately the
+Paired vector affine
+--------------------
+The vector path can now decode the original Q4 metadata once and
+populate both activation rows as it transposes the existing coefficient
+and minimum vectors into Dst. The two scales are broadcast into separate
+subrows once per K256 block. Input sums are independently converted to
+FP32 once per panel. The multiply and add sequence remains nonfused and
+ordered as before. Each existing even/odd SFPU pass now accumulates both
+token rows; the other two subvectors stay zero. There are no RISC-V reads
+of intermediate dot or affine values in this arithmetic helper.
+
+The command observer ran 21,696 panels across K256, K5120, K6144 and
+K17408. It verified 694,272 bitwise-identical row/column results against
+separate scalar Q4 calculations, including different scales for the two
+rows, signed zeros and finite half subnormals. It also verified 1,356
+single prefix imports, untouched zero padding and 12 inert refusals.
+The existing linked vector92 worker passed its original binary/ELF pins
+without any change. This is a command-model result: the paired helper is
+not linked into a worker and has not run on silicon.
+
+  c++ -std=c++17 -O2 -g -Wall -Wextra -Werror -ffp-contract=off \
+    -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_two_token_q4_affine_test.cpp \
+    -o /tmp/pioneer-q38-two-token-q4-affine-test
+  UBSAN_OPTIONS=halt_on_error=1 /tmp/pioneer-q38-two-token-q4-affine-test
+
+Next wire the paired helper into a separate vector worker and qualify a
+physical same-weight, two-activation comparison. Separately the
 request scheduler must preserve causal KV, recurrent state, and the
 single-token fallback. Two known inputs can serve prefill or independent
 requests; single-request decode requires a real draft/verification

@@ -8,6 +8,10 @@
 #include "PioneerSfpuDivide.h"
 #include "PioneerQ38VectorAffine.h"
 
+template<class E> struct PioneerQ38VectorQ4MetadataPairRows {
+	static constexpr bool Enabled=false;
+};
+
 // ORIGINAL Q4_K metadata arithmetic in parallel lanes. No BF16 conversion,
 // weight requantization,product upload,scalar metadata reads,IO or fallback.
 // A separately selected worker candidate may use Block below. The arithmetic
@@ -109,21 +113,24 @@ private:
 	// Each product register contains FOUR groups in its four eight-lane
 	// subvectors. Transpose with three explicitly +0 registers compacts each
 	// group into its original first Dst row and defines ALL three padding
-	// rows as +0. Both register groups and every lane are initialized BEFORE
-	// SFPTRANSP (ISA4a73a712). No predication/lane-index trick or new opcode.
-	template<unsigned First,unsigned Parity,class E> static void StoreGroups(E& e)
+	// rows as +0. The isolated pair proof instead duplicates the first row
+	// into row1; it changes no address, weight unpack, or rounding step.
+	// Both register groups and every lane are initialized BEFORE SFPTRANSP.
+	template<unsigned First,unsigned Parity,bool Pair,class E> static void StoreGroups(E& e)
 	{
 		static_assert((First==0 || First==4) && (Parity==0 || Parity==2),"fixed groups/parity");
 		PioneerSfpuMove(e,0,6);PioneerSfpuMove(e,4,7);
-		PioneerSfpuLoad32(e,1,0);PioneerSfpuLoad32(e,2,0);PioneerSfpuLoad32(e,3,0);
-		PioneerSfpuLoad32(e,5,0);PioneerSfpuLoad32(e,6,0);PioneerSfpuLoad32(e,7,0);
+		if (Pair) PioneerSfpuMove(e,1,0); else PioneerSfpuLoad32(e,1,0);
+		PioneerSfpuLoad32(e,2,0);PioneerSfpuLoad32(e,3,0);
+		if (Pair) PioneerSfpuMove(e,5,4); else PioneerSfpuLoad32(e,5,0);
+		PioneerSfpuLoad32(e,6,0);PioneerSfpuLoad32(e,7,0);
 		e.Op(0x8c000000);
 		e.Op(0x72030000|(128+First*8)|Parity);e.Op(0x72430000|(132+First*8)|Parity);
 		e.Op(0x72130000|(136+First*8)|Parity);e.Op(0x72530000|(140+First*8)|Parity);
 		e.Op(0x72230000|(144+First*8)|Parity);e.Op(0x72630000|(148+First*8)|Parity);
 		e.Op(0x72330000|(152+First*8)|Parity);e.Op(0x72730000|(156+First*8)|Parity);
 	}
-	template<unsigned Parity,class E> static void ParityBlock(E& e)
+	template<unsigned Parity,bool Pair,class E> static void ParityBlock(E& e)
 	{
 		static_assert(Parity==0 || Parity==2,"original even/odd output columns");
 		// Raw prefix Dst16 rows0..15 retains byte-major ORIGINAL metadata.
@@ -140,10 +147,10 @@ private:
 		// and the prior live accumulator108..111 is NEVER touched.
 		e.Op(0x72430000|184|Parity);e.Op(0x72530000|188|Parity);
 		e.Op(0x700d0000|4|Parity);e.Op(0x701d0000|8|Parity);
-		Factors<0>(e);Products(e);StoreGroups<0,Parity>(e);
+		Factors<0>(e);Products(e);StoreGroups<0,Parity,Pair>(e);
 		e.Op(0x700d0000|12|Parity);e.Op(0x701d0000|4|Parity);e.Op(0x702d0000|8|Parity);
 		e.Op(0x70430000|184|Parity);e.Op(0x70530000|188|Parity);
-		Factors<4>(e);Products(e);StoreGroups<4,Parity>(e);
+		Factors<4>(e);Products(e);StoreGroups<4,Parity,Pair>(e);
 	}
 public:
 	// Entry:exclusive completed original Q4 tile,FixedSetup source format,
@@ -168,7 +175,8 @@ public:
 		e.Config(84,0x00400040);e.Config(76,(rawBase-16)/16);
 		e.Op(0x42000081);e.Drain(); // ONE original256B prefix,no SrcA flip
 		e.Op(0xb2050004);e.Op(0x3700000f);e.Op(0x8a000002);e.Drain();
-		ParityBlock<0>(e);ParityBlock<2>(e);
+		ParityBlock<0,PioneerQ38VectorQ4MetadataPairRows<E>::Enabled>(e);
+		ParityBlock<2,PioneerQ38VectorQ4MetadataPairRows<E>::Enabled>(e);
 		PioneerSfpuLoad32(e,3,scale);e.Drain();
 		return true;
 	}
