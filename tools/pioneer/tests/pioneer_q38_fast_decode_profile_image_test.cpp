@@ -8,6 +8,11 @@
 #include <memory>
 #include <string>
 namespace Q=PioneerQ38FastDecodeProfileData;
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+static constexpr unsigned MatrixEntry=Q::Matrix, MarksPerPosition=1301;
+#else
+static constexpr unsigned MatrixEntry=Q::MatrixPrepare, MarksPerPosition=2613;
+#endif
 struct FastDecodeMachine:Machine {
  std::vector<uint8_t> text,conv,helper;
  std::map<std::string,unsigned> symbols;
@@ -78,10 +83,24 @@ struct FastDecodeMachine:Machine {
    for(unsigned layer=0;layer<64;layer++){
     Mark(Q::Metadata);const unsigned outer=layer%4==3?Q::Dense:Q::Recurrent;Mark(outer);
     for(unsigned job=0;job<(layer%4==3?7U:8U);job++){
-     Call("q38_fast_decode_profile_enter",Q::MatrixPrepare);
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+     if(job==(layer%4==3?3U:4U)){
+      const unsigned entry=layer%4==3?Q::DenseAttention:Q::ConvStage;
+      Call("q38_fast_decode_profile_enter",entry);
+      if(position<prompts)assert(regs[10]==Q::Phases && clocks.empty());
+      else {assert(regs[10]==outer);marks.push_back(entry);}
+      if(layer%4!=3)Mark(Q::GdnStage);
+      Mark(outer);
+     }
+#endif
+     Call("q38_fast_decode_profile_enter",MatrixEntry);
      if(position<prompts){assert(regs[10]==Q::Phases && clocks.empty());}
-     else {assert(regs[10]==outer);marks.push_back(Q::MatrixPrepare);}
+     else {assert(regs[10]==outer);marks.push_back(MatrixEntry);}
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+     Mark(outer);
+#else
      for(unsigned phase:std::array<unsigned,4>{Q::MatrixDispatch,Q::MatrixGatherWait,Q::MatrixFinish,outer})Mark(phase);
+#endif
     }
    }
    for(unsigned phase:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})Mark(phase);
@@ -95,7 +114,7 @@ struct FastDecodeMachine:Machine {
    assert(clocks[i].first==0xb80 && clocks[i+1].first==0xb00 && clocks[i+2].first==0xb80);
    if(clocks[i].second==clocks[i+2].second)samples.push_back((uint64_t(clocks[i].second)<<32)|clocks[i+1].second);
   }
-  assert(samples.size()==marks.size()+1 && marks.size()==2613*(end-prompts)+2);
+  assert(samples.size()==marks.size()+1 && marks.size()==MarksPerPosition*(end-prompts)+2);
   std::array<uint64_t,Q::Phases> expected={};unsigned current=Q::Bootstrap;
   for(unsigned i=0;i<marks.size();i++){expected[current]+=samples[i+1]-samples[i];current=marks[i];}
   for(unsigned phase=0;phase<Q::Phases;phase++)assert(Q::Get(p.data(),Q::Buckets+phase*3+1)==expected[phase]);
@@ -130,7 +149,7 @@ int main(int argc,char** argv){
   const auto before=m->Record();assert(before[Q::State]==Q::Invalid && !Q::Closed(before.data()));
   const auto clocks=m->clocks.size();const auto writes=m->writes;
   m->Call("q38_token_phase_mark",Q::FinalStop);m->Call("q38_token_phase_complete",62);
-  m->Call("q38_fast_decode_profile_position",2,1);m->Call("q38_fast_decode_profile_enter",Q::MatrixPrepare);
+  m->Call("q38_fast_decode_profile_position",2,1);m->Call("q38_fast_decode_profile_enter",MatrixEntry);
   assert(m->regs[10]==Q::Phases && m->Record()==before && m->clocks.size()==clocks && m->writes==writes);refused++;
  }
  printf("PASS_ACTUAL_FAST_DECODE_RV32 positive%u refused%u rawCSR_exact14buckets_31of62_no_prefillCSR_ABI_progress_bounds_sticky_invalid;HELPERS_ONLY_SYNTHETIC_CLOCKS_NOT_MODEL_NATIVE_OR_SPEED\n",positives,refused);

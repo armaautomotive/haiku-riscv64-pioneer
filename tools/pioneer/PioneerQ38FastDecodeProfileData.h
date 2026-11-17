@@ -7,13 +7,24 @@ typedef __UINT64_TYPE__ uint64_t;
 #else
 #include <stdint.h>
 #endif
-// Observation DATA only. Separate v3 schema: actual committed positions
+// Observation DATA only. Actual committed positions
 // remain total-session counts; bucket counts cover [WindowStart,Committed).
 // No inference predicate, clock frequency, execution or cleanup authority.
 namespace PioneerQ38FastDecodeProfileData {
-enum {Address=0x75710,Words=60,Magic=0x33485051,Version=3,
+enum {Address=0x75710,Words=60,
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ Magic=0x34485051,Version=4,
+#else
+ Magic=0x33485051,Version=3,
+#endif
  Bootstrap=0,Metadata,Recurrent,Dense,HeadNormalize,HeadMatrix,Feedback,
- StateCommit,Publication,FinalStop,MatrixPrepare,MatrixDispatch,MatrixGatherWait,MatrixFinish,Phases,
+ StateCommit,Publication,FinalStop,
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ Matrix,ConvStage,GdnStage,DenseAttention,
+#else
+ MatrixPrepare,MatrixDispatch,MatrixGatherWait,MatrixFinish,
+#endif
+ Phases,
  Waiting=0,Active=1,Complete=2,Invalid=3,
  ClockUnstable=1,ClockBackward=2,Overflow=3,BadHeader=4,BadPhase=5,BadCommit=6,BadWindow=7,NoWindow=8,
  State=3,Current=4,Previous=5,BeginCycle=7,EndCycle=9,Transitions=11,
@@ -63,8 +74,16 @@ static inline void Advance(volatile uint32_t* p,bool valid,uint64_t now,unsigned
  else p[Current]=next;
 }
 static inline unsigned Expected(unsigned phase,unsigned positions){
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ // Each slice is exclusive. The combined Conv/GDN scope adds one return
+ // to Recurrent per layer, and the attention scope adds one return to Dense.
+ return phase==Bootstrap || phase==FinalStop?1:
+  positions*(phase==Metadata?64:phase==Recurrent?48*10:phase==Dense?16*9:
+   phase==Matrix?496:phase==ConvStage || phase==GdnStage?48:phase==DenseAttention?16:1);
+#else
  return phase==Bootstrap || phase==FinalStop?1:
   positions*(phase==Metadata?64:phase==Recurrent?48*9:phase==Dense?16*8:phase>=MatrixPrepare?496:1);
+#endif
 }
 static inline bool Closed(const uint32_t* p){
  if(!p || !Header(p) || p[State]!=Complete || p[Current]!=FinalStop || p[Error]

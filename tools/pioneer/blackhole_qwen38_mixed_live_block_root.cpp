@@ -21,6 +21,10 @@ static void Input(L::PrivateSeal* p){
 static void Compute(L::PrivateSeal* p){
  Block::Norm(p->outer,0);Joined::Capture(p->outer);Copy(L::Input,L::RawCopy,5120);
  for(unsigned slot=0;slot<3;slot++){Joined::BindProjection(p,slot);if(Projection::Run(p->frame)!=(slot?1024U:12288U))scalar_fault_park();}
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ {
+ PioneerQ38FastDecodeProfileScope timing(PioneerQ38FastDecodeProfileData::DenseAttention);
+#endif
  Joined::Prepare(p);Joined::BindDense(p);
 #ifdef PIONEER_Q38_QGW8_DENSE_VALUE_TRACE_IMAGE
  Block::TraceDenseValue(p);
@@ -31,6 +35,9 @@ static void Compute(L::PrivateSeal* p){
  // deliberately does NOT own canonical cache publication. Append/read back
  // here, before the following projection/FFN reuses the prepared-row L1.
  Joined::AppendTokenKv(p);
+#endif
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ }
 #endif
 #ifdef PIONEER_Q38_QGW8_DENSE_INPUT_TRACE_IMAGE
  Block::TraceDenseInput(p);

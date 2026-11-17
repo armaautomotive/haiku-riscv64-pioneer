@@ -306,7 +306,9 @@ static unsigned Run(const uint32_t* d
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  PioneerQ38Bf16DeferredAudit audit;
 #endif
-#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#if defined(PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE)
+ PioneerQ38FastDecodeProfileScope timing(PioneerQ38FastDecodeProfileData::Matrix);
+#elif defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE)
  PioneerQ38FastDecodeProfileScope timing(PioneerQ38FastDecodeProfileData::MatrixPrepare);
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  PioneerQ38Bf16ProfileScope timing(PioneerQ38Bf16ProfileData::MatrixPrepare);
@@ -355,7 +357,7 @@ static unsigned Run(const uint32_t* d
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t incoming[4];PushedBegin(d,tracked,incoming);
 #endif
-#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#if defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE) && !defined(PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE)
  timing.Next(PioneerQ38FastDecodeProfileData::MatrixDispatch);
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixDispatch);
@@ -370,7 +372,7 @@ static unsigned Run(const uint32_t* d
   Transfer(d,tracked,w,M::Job,256,true);
  }
  for(unsigned w=0;w<Q38_ACTIVE;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
-#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#if defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE) && !defined(PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE)
  timing.Next(PioneerQ38FastDecodeProfileData::MatrixGatherWait);
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixGatherWait);
@@ -381,7 +383,7 @@ static unsigned Run(const uint32_t* d
   if(BfQ4(d) && !audit.MatrixClosed(w))scalar_fault_park();
 #endif
  }
-#ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
+#if defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE) && !defined(PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE)
  timing.Next(PioneerQ38FastDecodeProfileData::MatrixFinish);
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixFinish);

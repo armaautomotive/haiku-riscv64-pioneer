@@ -21,9 +21,21 @@ PINS=(
  ('fast_decode.bin',1496,'a37bab87fc21f140236413c673352966bf9452212bf89e7956868c1cea15f9d1'),
  ('program.elf',193672,'882d2e1cf08ad5ccbd69c52a7ecb7daf5e7101527f669431faf962f158b5b425'),
 ) # Whole BUILD identity only; independent main/clean execution still required.
+SPLIT_PINS=(
+ ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',130624,'a41edc9f4ce1866496cca73b1d0b74f6aae3e54213b26a17afba1953921de0e9'),
+ ('terminal.bin',8,'468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2'),
+ ('conv.bin',32216,'87380158695a329102b7d39e9ec89e3f1f65f07af8eada26a0de619843c7138f'),
+ ('fast_decode.bin',1496,'49cff44b420dda8d5b22eb9911b304d9ff8407cc7d4a9cb13cea9c7b883e7bf5'),
+ ('program.elf',193672,'7f2f2d4895c72c3278ce83676be5b9a122e0a074d319b76b86586611630627af'),
+)
 args=sys.argv[1:];inspect='--inspect-candidate' in args
+split='--layer-split-inspection' in args
 if inspect:
  assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
+if split:
+ assert not inspect and args.count('--layer-split-inspection')==1
+ args.remove('--layer-split-inspection')
 assert __debug__ and len(args)==3
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,control,out=map(Path,args);here=Path(__file__).resolve().parent
@@ -56,6 +68,7 @@ for kind,original in (('recurrent',base/'output-closure-recurrent.o'),('dense',b
  run(*command);assert unchanged.read_bytes()==original.read_bytes(),'ENTIRE old '+kind+' TU FIRST'
  target=out/('fast-'+kind+'.o');command[command.index('-o')+1]=str(target)
  command[1:1]=['-DPIONEER_Q38_FAST_DECODE_PROFILE_IMAGE=1']
+ if split:command[1:1]=['-DPIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE=1']
  if kind=='token':command[1:1]=['-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1']
  command[1:1]=['-MMD','-MF',str(out/(kind+'.d'))]
  run(*command);objects.append(target);compile_commands[kind]=command[:]
@@ -95,7 +108,7 @@ for row in map(str.split,subprocess.check_output([tool+'objdump','-t',str(elf)],
   first,size=int(row[0],16),int(row[4],16);assert not (first|size)&3
   assert 0x40000<=first<first+size<=0x60000 or 0x64000<=first<first+size<=0x6e000
   functions.append((first,first+size,row[5]))
-dis=subprocess.check_output([tool+'objdump','-d',str(elf)],text=True);instructions=[];csr=[];calls={}
+dis=subprocess.check_output([tool+'objdump','-d',str(elf)],text=True);instructions=[];csr=[];calls={};phase_args={}
 for match in re.finditer(r'^\s*([0-9a-f]+):\s+([0-9a-f]{8})\s.*$',dis,re.M):
  owners={name for first,last,name in functions if first<=int(match[1],16)<last}
  if not owners:continue
@@ -107,9 +120,13 @@ for match in re.finditer(r'^\s*([0-9a-f]+):\s+([0-9a-f]{8})\s.*$',dis,re.M):
  if call:
   assert len(owners)==1
   key=(next(iter(owners)),call[1]);calls[key]=calls.get(key,0)+1
+  if split and (call[1]=='q38_fast_decode_profile_enter' or
+                key==('q38_mixed_recurrent_cohort','q38_token_phase_mark')):
+   numbers=re.findall(r'\bli\s+a0,([0-9]+)(?=\s|$)','\n'.join(instructions[-4:]))
+   if numbers:phase_args.setdefault(key,[]).append(int(numbers[-1]))
  instructions.append(match[0])
 assert csr==[0xb80,0xb00,0xb80]
-assert calls=={
+expected={
  ('q38_global_chain_main','q38_token_phase_begin'):1,
  ('q38_global_chain_main','q38_fast_decode_profile_position'):1,
  ('q38_global_chain_main','q38_token_phase_mark'):3,
@@ -122,7 +139,21 @@ assert calls=={
  ('q38_token_phase_mark','q38_token_phase_clock'):1,
  ('q38_token_phase_complete','q38_token_phase_clock'):1,
  ('q38_fast_decode_profile_enter','q38_token_phase_mark'):1,
-},calls # Emitted call sites ONLY, not full model/owner qualification.
+}
+if split:
+ dense='_ZN9LiveBlockL7ComputeEPN30PioneerQ38MixedBlockRootLayout11PrivateSealE'
+ expected[('_ZN10ProjectionL3RunEPKj','q38_token_phase_mark')]=2
+ expected[('q38_mixed_recurrent_cohort','q38_fast_decode_profile_enter')]=1
+ expected[('q38_mixed_recurrent_cohort','q38_token_phase_mark')]=2
+ expected[(dense,'q38_fast_decode_profile_enter')]=1
+ expected[(dense,'q38_token_phase_mark')]=1
+ assert phase_args=={
+  ('_ZN10ProjectionL3RunEPKj','q38_fast_decode_profile_enter'):[10,10],
+  ('q38_mixed_recurrent_cohort','q38_fast_decode_profile_enter'):[11],
+  ('q38_mixed_recurrent_cohort','q38_token_phase_mark'):[12],
+  (dense,'q38_fast_decode_profile_enter'):[13],
+ },phase_args
+assert calls==expected,calls # Emitted call sites ONLY, not full model/owner qualification.
 assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|fmsub|fnmadd|fnmsub|fcvt\.wu?\.s|ebreak)\b','\n'.join(instructions))
 for obj in (*objects,helper):
  frames=[row.split('\t') for row in obj.with_suffix('.su').read_text().splitlines()]
@@ -139,9 +170,9 @@ for section,limit in sections.items():
  print(section,len(data),hashlib.sha256(data).hexdigest(),flush=True)
 print('program.elf',elf.stat().st_size,hashlib.sha256(elf.read_bytes()).hexdigest(),flush=True)
 if not inspect:
- for name,size,digest in PINS:
+ for name,size,digest in (SPLIT_PINS if split else PINS):
   data=(out/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
 (out/'program.symbols').write_text(symbols);(out/'program.disassembly').write_text(dis)
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
-print('INSPECT_BUILD_ONLY original full-EOG ROOT FIRST;generation-only v3 timing/new6c000 code view;'
+print(f'INSPECT_BUILD_ONLY original full-EOG ROOT FIRST;generation-only v{4 if split else 3} timing/new6c000 code view;'
  'NO worker arithmetic change,native owner,card execution,Assistant,model quality or speed grant',flush=True)

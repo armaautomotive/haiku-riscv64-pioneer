@@ -7,6 +7,19 @@ enum {PioneerQ38FastDecodeProfileSelection=1};
 #else
 enum {PioneerQ38FastDecodeProfileSelection=0};
 #endif
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+enum {PioneerQ38LayerSplitProfileSelection=1};
+#else
+enum {PioneerQ38LayerSplitProfileSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+#if PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE != 1 || !defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE)
+#error Layer-split timing requires the distinct fast-decode ROOT diagnostic
+#endif
+static_assert(PioneerQ38LayerSplitProfileSelection==1,"late layer-split profile selection");
+#else
+static_assert(PioneerQ38LayerSplitProfileSelection==0,"late layer-split profile removal");
 #endif
 #ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
 #include "PioneerQ38BatchedOutputClosureRootRole.h"

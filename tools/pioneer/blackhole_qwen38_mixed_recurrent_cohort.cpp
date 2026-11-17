@@ -380,11 +380,21 @@ extern "C" unsigned q38_mixed_recurrent_cohort(){
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++)before[i]=tracked[i]=*Words(0xffb20000+Counter(i));
  if(tracked[2]!=tracked[6] || !Quiet())scalar_fault_park();
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ {
+ PioneerQ38FastDecodeProfileScope timing(PioneerQ38FastDecodeProfileData::ConvStage);
+#endif
  StageConv(tracked); // actual complete predecessor,never a caller-supplied receipt
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ timing.Next(PioneerQ38FastDecodeProfileData::GdnStage);
+#endif
 #ifdef PIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE
  StageGdnAfterClosedConv(tracked);
 #else
  StageGdn(tracked);
+#endif
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+ }
 #endif
  Audit();if(!Quiet())scalar_fault_park();
  const auto* d=Frame();auto* s=Words(L::Summary);

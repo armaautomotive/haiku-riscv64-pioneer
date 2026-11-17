@@ -43,7 +43,13 @@ for kind in ('token','recurrent','dense'):
   check([f for f in defines if name(f)!=macro],False)
  for macro in forbidden:check([*defines,'-D'+macro+'=1'],False)
  check(defines,False,header+'#undef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE\n'+header)
- initial=[f for f in defines if name(f)!='PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE']
+ split='PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE'
+ v3=[f for f in defines if name(f)!=split]
+ initial=[f for f in v3 if name(f)!='PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE']
+ for value in ('0','2'):check([*v3,'-D'+split+'='+value],False)
+ check([*initial,'-D'+split+'=1'],False)
+ check(v3,False,header+'#define '+split+' 1\n'+header)
+ check([*v3,'-D'+split+'=1'],False,header+'#undef '+split+'\n'+header)
  check(initial,False,header+'#define PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE 1\n'+header)
  check(initial,True)
 print(f'PASS_FAST_DECODE_BUILD_ROLE positive{positive} refused{refused} actualSDK_root_and_both_components_late_alias_CPU_Work_native_BF16_prepared_refused;NO_DEVICE')

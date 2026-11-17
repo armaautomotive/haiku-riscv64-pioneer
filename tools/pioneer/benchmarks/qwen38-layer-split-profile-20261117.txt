@@ -1,0 +1,43 @@
+Qwen 27B: on-card recurrent and attention timing diagnostic
+=========================================================
+
+The measured vector92 v3 run grouped 21.26% of decode-body cycles into
+recurrent work outside its projections, and 12.41% into dense work outside
+its projections. Neither bucket identifies where the card actually spends
+that time. The separate v4 diagnostic keeps the original model and code
+path and reallocates three timing buckets, without expanding the 60-word
+record, touching peer firmware, or using host inference.
+
+* Matrix: the full prepare/dispatch/gather/finish sequence, 496 intervals
+  per decode position across all 64 layers.
+* Conv stage: actual worker admission, descriptor staging, dispatch, the
+  controller's own convolution and all convolution completions, 48 intervals.
+* GDN stage: actual descriptor staging, rendezvous/dispatch and all recurrent
+  state completions, 48 intervals.
+* Dense attention: the preparation, attention and KV append before the
+  output projection (16 intervals). Dense and recurrent residual buckets
+  still include all other layer work and their respective owner checks.
+
+These are exclusive elapsed-controller-cycle buckets, not isolated engine
+latencies, data-link bandwidth or proof of what the workers do during a
+wait. Conv/GDN includes orchestration; early admission outside both remains
+in the old recurrent bucket. Generation only, not prompt or weight load.
+The v4 schema cannot be read as a v3 record.
+
+  python3 tools/pioneer/build_qwen38_layer_split_profile_root.py SDK NEW_OUTPUT
+
+The builder starts from a frozen vector92 source revision, reproduces the
+original mathematical ROOT and complete v3 profile, then changes only
+the scoped timing calls and schema in the new diagnostic. It checks phase
+arguments at the actual linked call sites and verifies read-only cycle CSR
+access, fixed code limits, boot/STOP identity and each image hash. The CPU
+fixtures check both schemas and in the linked timing-helper test the
+actual RV32 instructions populate the expected record with synthetic clocks.
+Neither fixture runs the model or measures any silicon time.
+
+Pinned v4 whole ELF:
+7f2f2d4895c72c3278ce83676be5b9a122e0a074d319b76b86586611630627af
+Text: 130,624/131,072 bytes; conv: 32,216/32,768 bytes; timing: 1,496 bytes.
+There is no native tag, installed firmware or timing from the P100A yet.
+The next step is a separate guarded native profile package and complete
+physical capture, after the current full-model FFN pair is closed.

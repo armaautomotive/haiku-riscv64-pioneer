@@ -13,7 +13,16 @@ static Record Receipt(unsigned prompts,unsigned end){
   for(unsigned layer=0;layer<64;layer++){
    mark(Q::Metadata);const unsigned outer=layer%4==3?Q::Dense:Q::Recurrent;mark(outer);
    for(unsigned matrix=0;matrix<(layer%4==3?7U:8U);matrix++){
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+    if(matrix==(layer%4==3?3U:4U)){
+     if(layer%4==3)mark(Q::DenseAttention);
+     else {mark(Q::ConvStage);mark(Q::GdnStage);}
+     mark(outer);
+    }
+    mark(Q::Matrix);mark(outer);
+#else
     mark(Q::MatrixPrepare);mark(Q::MatrixDispatch);mark(Q::MatrixGatherWait);mark(Q::MatrixFinish);mark(outer);
+#endif
    }
   }
   for(unsigned phase:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(phase);
@@ -25,7 +34,17 @@ int main(){
  for(auto window:{std::array<unsigned,2>{31,62},{1,2},{1,8192},{8190,8192}}){
   auto p=Receipt(window[0],window[1]);assert(Q::Closed(p.data()));positive++;
   assert(p[Q::WindowStart]==window[0] && p[Q::Committed]==window[1] && p[Q::LastPosition]==window[1]-1);
+#ifdef PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE
+  const unsigned positions=window[1]-window[0];
+  assert(p[Q::Buckets+Q::Matrix*3]==496*positions);
+  assert(p[Q::Buckets+Q::ConvStage*3]==48*positions && p[Q::Buckets+Q::GdnStage*3]==48*positions);
+  assert(p[Q::Buckets+Q::DenseAttention*3]==16*positions);
+  assert(p[Q::Buckets+Q::Recurrent*3]==480*positions && p[Q::Buckets+Q::Dense*3]==144*positions);
+  p[0]=0x33485051;p[1]=3;assert(!Q::Closed(p.data()));refused++;
+#else
   assert(p[Q::Buckets+Q::MatrixPrepare*3]==496*(window[1]-window[0]));
+  p[0]=0x34485051;p[1]=4;assert(!Q::Closed(p.data()));refused++;
+#endif
  }
  const auto good=Receipt(31,62);
  for(unsigned word=0;word<Q::Words;word++){
@@ -61,5 +80,6 @@ int main(){
  std::array<uint32_t,Q::Words+2> guarded{};guarded.front()=0x12345678;guarded.back()=0x87654321;
  Q::Initialize(guarded.data()+1);assert(guarded.front()==0x12345678 && guarded.back()==0x87654321);
  assert(!Q::Closed(nullptr));refused++;
- printf("PASS_FAST_DECODE_PROFILE_DATA positive%u refused%u exact31of62_window_counts_no_prefill_clock_no_model_or_device_authority\n",positive,refused);
+ printf("PASS_FAST_DECODE_PROFILE_DATA v%u positive%u refused%u exact31of62_window_counts_no_prefill_clock_no_model_or_device_authority\n",
+  unsigned(Q::Version),positive,refused);
 }
