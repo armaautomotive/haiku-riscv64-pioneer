@@ -31,10 +31,48 @@ https://milkv.io/pioneer
 https://community.milkv.io/t/updates-and-clarifications-on-milk-v-pioneer-specifications-v1-2/415
 https://milkv.io/docs/pioneer/getting-started/ExpansionCards
 
-Next: identify the physical slot/root and recover PCIe enumeration without
-moving the card. Consider board-specific firmware/config evidence and safe
-link-retraining approaches; do not guess root-port registers, flash firmware,
-or relax Haiku guards. Once Linux sees a unique P100A, use the read-only
-discovery helper to capture its exact root, PCIe capability and BAR ranges,
-then qualify any slot-independent Haiku implementation against that data.
-No model test or speed result was produced.
+Slot mapping and targeted link retrain
+--------------------------------------
+The pre-swap Pioneer UART captures repeatedly identify the Radeon Caicos
+at 0000:01:00.0 and the P100A at 0002:81:00.0 in the same Linux boot. In
+the last complete pre-swap serial PCI trace the 7060000000.pcie controller
+hosts 0000:00, its bridge is 0000:00:00.0, and the Radeon is beneath it.
+Since the same two cards exchanged slots, those records identify the
+current P100A's slot as downstream of 7060000000.pcie / 0000:00:00.0,
+not the other empty 0001:40:00.0 root. The Radeon previously negotiated
+2.5 GT/s x8 there; this is not evidence of the slot's electrical maximum.
+
+In the first post-swap Linux boot, exact root identity, sysfs ancestry,
+bus register, empty child bus, absent P100A, and Radeon on the separate
+root were checked just before requesting standard PCIe Link Control
+Retrain Link once. No target-speed changes or other PCI register writes
+were issued. Link Control returned to 0000; Link Status changed from
+c081 to 4884 and still had the training bit set on the follow-up read.
+Reporting support for Link Active is absent. A single rescan of 0000:01
+found no endpoint. The display remained enumerated and Linux remained
+reachable. This does not establish what failed or an endpoint link rate.
+PCIe register definitions: https://github.com/torvalds/linux/blob/v6.1/include/uapi/linux/pci_regs.h
+
+One clean Linux poweroff and one relay ON then produced a fresh SPI firmware
+start and a different NVMe Linux boot ID. No hardware or SD card moved, and
+no firmware settings were changed. Early SPI Linux enumerated the Radeon
+but not the P100A. The normal Linux boot agreed. The identified root now
+reported Link Status 0101 (x16 at 2.5 GT/s), despite an x8 Link Capabilities
+field and no child device. This is a root status reading, not verification
+of a negotiated P100A link.
+
+On that still-empty root only, a transient target of 2.5 GT/s was verified
+before one standard link retrain. Status was still 0101 one second later
+(training bit clear); the targeted child-bus rescan found no endpoint.
+Restored and read back Link Control 2 = 0004 (original 16 GT/s target)
+without another retrain. Independent SSH check confirmed normal Linux
+6.1.31 on NVMe, Link Control = 0000 and Link Status = 0101, Radeon on
+0002:81:00.0, both onboard RTL8125s visible, and still no 1e52 endpoint.
+The default boot configuration and Haiku files were not touched.
+
+Next: correlate the exact PCB revision and installed boot firmware with the
+identified controller; do not repeat these scans/retrains unchanged, guess
+platform registers, write SPI or weaken the Haiku guards. If firmware or a
+power-path inspection restores enumeration in this slot, capture the
+endpoint's topology and BAR windows with the read-only discovery helper
+before adapting the Haiku driver. No inference or speed result was produced.

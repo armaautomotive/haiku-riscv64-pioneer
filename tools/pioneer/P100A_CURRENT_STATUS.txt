@@ -1,10 +1,14 @@
 P100A / Qwen 27B: current status
 ================================
-The user wants the P100A to remain in the new physical slot. Linux rescanned
-the two verified-empty root buses once each without finding a 1e52 endpoint;
-physical-slot/root mapping and the missing-link cause remain unknown. No link
-reset, firmware change or card movement was attempted. Read-only root data,
-conflicting vendor slot descriptions, and the next safety gates are in
+The user wants the P100A to remain in the new physical slot. Historic
+pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
+Radeon's previous root). The initial scans, one default-target link
+retrain, one clean firmware start, and one temporary Gen1 retrain failed
+to expose a 1e52 endpoint there. The original link target was restored and
+read back; Linux continues to boot from NVMe and SSH works. Nothing was
+moved or flashed. A root status field reported x16 after the clean boot,
+but the same root reports x8 capability and there is no active endpoint to
+verify a P100A link. Full evidence and the next safety gates are in
 benchmarks/p100a-new-slot-discovery-20261117.txt.
 
 After the November 17 card swap Linux enumerated the display GPU at the old
