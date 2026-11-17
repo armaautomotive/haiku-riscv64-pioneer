@@ -50,7 +50,10 @@
 #include "PioneerQ38FullOffloadVectorQ4Role.h"
 #endif
 namespace PioneerQ38FullOffload {
-#ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+#include "PioneerQ38FullOffloadResidentRole.h"
+static constexpr uint64_t BuildTag=UINT64_C(0x2026111700010210);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110600010116);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4_SFPNOP)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026111500010101);

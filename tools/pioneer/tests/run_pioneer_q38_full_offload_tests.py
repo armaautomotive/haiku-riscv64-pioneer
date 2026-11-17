@@ -16,8 +16,12 @@ prepared_byte_lut_profile='--prepared-q4-activation-byte-lut-phase-profile' in a
 if prepared_byte_lut_profile:
     assert args==['--prepared-q4-activation-byte-lut-phase-profile']
     args=['--batched','--metrics','--prepared-q4-activation-byte-lut-phase-profile']
-resident='--resident' in args
-if resident:
+resident_vector='--resident-vector' in args
+if resident_vector:
+    assert args==['--batched','--metrics','--resident-vector']
+    args[-1]='--vector-q4'
+resident=resident_vector or '--resident' in args
+if resident and not resident_vector:
     assert args.count('--resident')==1 and '--batched' in args and '--metrics' in args
     args.remove('--resident')
 fixed_config='--fixed-config' in args
@@ -48,7 +52,7 @@ if not prepared_byte_lut:
         assert args in ([], ['--batched'], ['--batched','--metrics'], ['--batched','--metrics','--vector-q4'], ['--batched','--metrics','--prepared-q4'], ['--batched','--metrics','--prepared-q4','--counter-unroll'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch'], ['--batched','--metrics','--prepared-q4','--counter-unroll','--phase-profile','--two-product-replay','--instruction-prefetch','--queued-block'])
 batched = bool(sys.argv[1:])
 metrics = '--metrics' in sys.argv or prepared_byte_lut_profile
-vector_q4 = '--vector-q4' in sys.argv
+vector_q4 = resident_vector or '--vector-q4' in sys.argv
 prepared_q4 = '--prepared-q4' in sys.argv or prepared_byte_lut_profile
 prepared_current = '--prepared-q4-current-worker' in sys.argv
 if prepared_current: prepared_q4=True
@@ -94,6 +98,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1'] if batched else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1'] if metrics else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1'] if resident else []),
+                        *(['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR=1'] if resident_vector else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1'] if resident else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1'] if vector_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1'] if prepared_q4 else []),

@@ -1,0 +1,50 @@
+Qwen 27B: resident requests with unchanged vector92 compute (tag210)
+==================================================================
+
+Goal: avoid a second 19,399,024,640-byte raw weight upload when testing
+another request. This is separate from output-head batching and does
+not target steady decode rate. Nothing was staged on the Pioneer.
+
+The distinct tag210 pairs vector92's four ROOT and ten peer arrays with
+the existing resident request lifecycle. It does not change the legacy
+tag91 resident or tag92 one-shot selections. Request close still restores
+the L1, code, host, PCI and clock scopes. The same FD can then open a fresh
+mutable request context while retaining the read-only weight reservation.
+Explicit model END still owns final unreserve. CPU vocabulary/text work
+is unchanged; there is no host inference, comparison, or fallback.
+
+Two SDK builds reproduced each candidate byte-for-byte:
+  Driver f696a2141ecdf9b998de5e425b3be065717ad31f70e8ec97a51457fa728d6dd6
+  Worker b1a25b91440ba5076be44ece81344cc30a15486a574ed2c942536552da5ba29b
+  Default driver 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+
+All 14 firmware arrays were re-extracted from each final linked driver,
+not only their intermediate objects. Tag210 and the same-source vector92
+rebuild matched the frozen vector92 program pins exactly. Relative to that
+same-source one-shot rebuild, the resident driver adds only the expected
+memcmp import, used by the existing resident ledger checks. The worker
+still imports only the 11 existing llama vocabulary/container routines.
+The native SDK build used the previously qualified frozen PCI window
+header (BlackholePioneerMmioProbe.h SHA256
+b98544fbc947b437a815791a52a912c5bdb78162a7854f99324ebcdfe295c40f),
+not the current unrelated PCI discovery change. That header was used in
+an isolated build tree only; the workspace/boot/installed driver is intact.
+
+Native/client role checks refused 38/21 alterations respectively. The
+ASan/UBSan session fixtures refused both old driver tags before BEGIN or
+upload. The positive fixture processed two different prompt/token windows
+over one FD-owned model upload: two request-close receipts, one fresh
+request transition, and one model END. It verified no additional source
+page reads or uploads. The legacy resident lifecycle and Assistant IPC
+fixture also passed. None of these tests executes real model arithmetic.
+
+  python3 tools/pioneer/build_qwen38_full_offload_native.py SDK NEW_OUTPUT --batched --metrics --resident-vector
+  python3 tools/pioneer/build_assistant_qwen27_full_offload.py SDK PINNED_LIBS NEW_OUTPUT --batched --metrics --resident-vector
+  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py --batched --metrics --resident-vector
+  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_resident_client_tests.py
+
+The combined build deliberately emits no one-shot smoke/rate binary or
+Assistant install. Next qualify a two-request rate client and run a fresh
+guarded native trial that observes both answers, one upload, explicit END
+and stable-driver restoration. Do not claim warm turnaround, speed or
+model quality based on this build or its simulated transport.

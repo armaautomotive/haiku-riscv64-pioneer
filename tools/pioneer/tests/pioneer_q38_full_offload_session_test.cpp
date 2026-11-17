@@ -96,6 +96,12 @@ struct IO {
  unsigned opens=0,closes=0,calls=0,begins=0,uploads=0,spanEnds=0,starts=0,polls=0,cancels=0,holds=0,reads=0,ends=0;
  unsigned prompts=0,limit=0,eos0=0,eos1=0,fragment=0,page=0,cursor=0;
  unsigned requestHolds=0,requestReads=0;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+ unsigned residentCloses=0,residentAdvances=0;
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+ uint64_t forcedDriverTag=0;
+#endif
  unsigned stopRecords=0,stopStage=1,stopLayers=1,earlyEosToken=248044;bool earlyEos=false;
  uint32_t ids[96]={};uint64_t uploaded=0;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
@@ -131,6 +137,9 @@ struct IO {
 #ifdef PIONEER_Q38_GDN_L1_TAG209_CLIENT
    if(sweep.Clone([&]{r.build_tag=0x2026111500010206ULL;}))return true;
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+   if(forcedDriverTag)r.build_tag=forcedDriverTag;
+#endif
    if(sweep.Clone([&]{r.build_tag=PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110400010088)
       ?UINT64_C(0x2026110400010089):UINT64_C(0x2026110400010088);} ))return true;
    if(begins && sweep.Clone([&]{r.generation++;}))return true;
@@ -146,9 +155,9 @@ struct IO {
    namespace R=PioneerQ38FullResident;auto& p=*static_cast<R::Packet*>(data);
    assert(size==sizeof(p) && R::RequestShape(p));auto& r=p.reply;
    r.version=R::Version;r.operation=p.request.operation;r.started=r.ready=1;r.hostsReleased=3;
-   if(r.operation==R::RequestClose){assert(starts==holds && !ends);r.stage=10;r.reservationRetained=1;}
-   else if(r.operation==R::NextRequest){assert(starts==holds && !ends);r.stage=11;r.reservationRetained=1;r.oldContextRetired=1;}
-   else {assert(r.operation==R::ModelEnd && starts==holds && !ends++);r.stage=12;r.modelEnded=1;}
+   if(r.operation==R::RequestClose){assert(starts==holds && !ends && ++residentCloses==starts);r.stage=10;r.reservationRetained=1;}
+   else if(r.operation==R::NextRequest){assert(starts==holds && residentCloses==starts && !residentAdvances++ && !ends);r.stage=11;r.reservationRetained=1;r.oldContextRetired=1;}
+   else {assert(r.operation==R::ModelEnd && starts==holds && residentCloses==2 && residentAdvances==1 && !ends++);r.stage=12;r.modelEnded=1;}
 #endif
   }else if(op==TT_PCI_PROBE_Q38_BANK_SUPPORT){
    *static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,4,1,UINT64_C(3)*1024*1024*1024};
@@ -359,6 +368,15 @@ int main(int argc,char** argv){
  uint32_t answer[32];std::fill(answer,answer+32,0xaaaaaaaaU);unsigned count=123;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
  sweep.enabled=false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+ for(uint64_t wrongTag:{UINT64_C(0x2026110400010091),UINT64_C(0x2026110400010092)}){
+  Fixture mismatched;Source wrongSource(mismatched);Sweep disabled;disabled.enabled=false;
+  IO wrongIO(wrongSource,disabled);wrongIO.forcedDriverTag=wrongTag;
+  auto wrong=std::make_unique<PioneerQ38FullOffloadSession<IO,Source>>(wrongIO,wrongSource);
+  assert(!wrong->Probe() && wrong->FailedState() && wrongIO.calls==1);
+  assert(wrongIO.opens==1 && wrongIO.closes==1 && !wrongIO.begins && !wrongIO.uploads && !wrongIO.starts);
+ }
+#endif
  assert(session->Probe() && session->Begin(prompt,96,32,248044,248046));
  const unsigned uploads=io.uploads;const uint64_t sourceReads=source.reads;
  for(unsigned request=0;request<2;request++){
@@ -366,13 +384,17 @@ int main(int argc,char** argv){
   assert(session->ObserveCount(metric));
   assert(session->Poll());metric={};assert(session->ObserveCount(metric));
   assert(session->Poll() && session->TerminalReady());metric={};assert(session->ObserveCount(metric));
-  assert(session->FinishResident() && session->CopyGeneratedTokens(answer,32,count) && count==32);
-  assert(answer[0]==1095 && answer[31]==1126);
+  assert(session->FinishResident() && session->CopyGeneratedTokens(answer,32,count));
+  if(request==0)assert(count==32 && answer[0]==1095 && answer[31]==1126);
+  else assert(count==3 && answer[0]==1004 && answer[2]==1006);
   if(request==0){assert(io.uploads==uploads && source.reads==sourceReads);
-   assert(session->Begin(prompt,96,32,248044,248046));}
+   const uint32_t freshPrompt[]={4241,9012,88,43,7};
+   assert(session->Begin(freshPrompt,5,3,248044,248046));
+   assert(io.prompts==5 && io.limit==7 && !memcmp(io.ids,freshPrompt,sizeof(freshPrompt)));}
  }
  assert(session->EndResident() && session->Completed() && session->KnownClean());
- assert(io.begins==1 && io.starts==2 && io.holds==2 && io.reads==4 && io.ends==1);
+ assert(io.begins==1 && io.starts==2 && io.holds==2 && io.reads==3 && io.ends==1);
+ assert(io.residentCloses==2 && io.residentAdvances==1);
  assert(io.opens==2 && io.closes==2 && io.uploads==uploads && source.reads==sourceReads);
  puts("PASS resident USER two complete requests reuse one model upload and FD;fresh request state,explicit model END;synthetic ONLY,no physical/model/numerical/speed result");
  return 0;

@@ -23,7 +23,9 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
  return p;
 }
 int main(){
-#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+ static_assert(F::BuildTag==UINT64_C(0x2026111700010210),"resident-vector lifecycle has a distinct exact identity");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT)
  static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110400010091),"resident lifecycle has a distinct exact tag91 identity");
 #endif
 #ifdef PIONEER_Q38_HYBRID_FULL_PROTOCOL_TEST

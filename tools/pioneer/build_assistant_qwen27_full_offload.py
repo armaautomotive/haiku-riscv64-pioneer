@@ -15,12 +15,17 @@ if batched:
 metrics='--metrics' in args
 if metrics:
     assert batched and args.count('--metrics')==1;args.remove('--metrics')
-resident='--resident' in args
-if resident:
+resident_vector='--resident-vector' in args
+if resident_vector:
+    assert metrics and args.count('--resident-vector')==1 \
+        and not {'--resident','--vector-q4','--prompt-client'}.intersection(args)
+    args.remove('--resident-vector')
+resident=resident_vector or '--resident' in args
+if resident and not resident_vector:
     assert metrics and not any(k in args for k in ('--vector-q4','--macro-q4','--prepared-q4'))
     assert args.count('--resident')==1;args.remove('--resident')
-vector_q4='--vector-q4' in args
-if vector_q4:
+vector_q4=resident_vector or '--vector-q4' in args
+if vector_q4 and not resident_vector:
     assert metrics and args.count('--vector-q4')==1;args.remove('--vector-q4')
 macro_q4='--macro-q4' in args
 if macro_q4:
@@ -132,6 +137,7 @@ if batched:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1')
 if metrics:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1')
 if resident:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=1','-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER=1']
 if vector_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1')
+if resident_vector:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR=1')
 if macro_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1')
 if spill_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_SPILL_Q4=1')
 if spill_q4_sfpnop:
@@ -182,6 +188,10 @@ if vector_q4:
     refusals += [('missing-vector-q4',['-UPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4']),
                  ('zero-vector-q4',['-UPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4','-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=0']),
                  ('resident-vector-q4',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0'])]
+if resident_vector:
+    refusals += [('missing-resident-vector',['-UPIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR']),
+                 ('zero-resident-vector',['-UPIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR','-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR=0']),
+                 ('resident-vector-prepared',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=0'])]
 if macro_q4:
     refusals += [('missing-macro-q4',['-UPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4']),
                  ('zero-macro-q4',['-UPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4','-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=0']),
@@ -245,6 +255,8 @@ if tag206_pipeline:
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
+    if resident_vector and result.returncode and 'Full-card resident-vector requires' in result.stderr:
+        continue
     assert result.returncode and any(t in result.stderr for t in ('Tag209 requires the exact separate prepared-Q4 held-snapshot diagnostic client','Tag206 pipelined upload requires','Readiness diagnostic requires the exact enabled value','Explicit manager identity is reserved for the prepared-Q4 GDN-L1 tag206 candidate','Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card byte-LUT plus phase profile requires the distinct tag105 role marker','Full-card prepared Q4 tag105 requires exact paired byte-LUT, counter and phase-profile roles','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Prepared-Q4 byte-index activation-LUT Assistant worker requires its separate tag104 role','Tag105 requires the exact byte-LUT workers paired only with the phase-profile ROOT','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
@@ -257,6 +269,14 @@ for name in ('llama_decode','llama_init_from_model','llama_get_logits','ggml_bac
     assert name not in undefined,name
 rows=[r.split('\t') for r in obj.with_suffix('.su').read_text().splitlines()]
 assert rows and all(len(r)==3 and r[2]=='static' and int(r[1])<=32768 for r in rows)
+if resident_vector:
+    # The single-request smoke and raw count reader use the one-shot IPC
+    # contract. Never package them with the distinct resident worker.
+    (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in (compile,link))+'\n')
+    (out/'llama-imports.txt').write_text('\n'.join(sorted(llama_imports))+'\n')
+    print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
+    print(f'PASS BUILD_ONLY tag210 resident-vector worker; {len(refusals)} role refusals; no CPU inference or installation',flush=True)
+    sys.exit(0)
 smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),

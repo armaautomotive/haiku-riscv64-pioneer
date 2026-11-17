@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // New model-resident lifecycle,not a flag that skips an old one-shot END.
 // No include guard:late role/tag removal must be detected as well.
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+#include "PioneerQ38FullOffloadResidentVectorRole.h"
+#endif
 #if !defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) || PIONEER_Q38_FULL_OFFLOAD_RESIDENT != 1 \
  || !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) || PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1 \
  || !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || PIONEER_Q38_FULL_OFFLOAD_METRICS != 1 \
@@ -10,7 +13,8 @@
 #endif
 #ifdef _KERNEL_MODE
 #if _KERNEL_MODE != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010091ULL \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) \
+ || (!defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR) && PIONEER_DRIVER_BUILD_TAG != 0x2026110400010091ULL) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
 #error Full-card resident lifecycle requires actual native tag91
 #endif

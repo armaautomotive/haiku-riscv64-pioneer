@@ -4,7 +4,11 @@
 #define PIONEER_Q38_FULL_OFFLOAD_RESIDENT_PROTOCOL_H
 #include <stdint.h>
 #include "PioneerQ38FullOffloadProtocol.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111700010210),"resident-vector lifecycle requires exact tag210");
+#else
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110400010091),"resident metadata cannot promote a previously included one-shot protocol");
+#endif
 #define TT_PCI_PROBE_Q38_FULL_RESIDENT_SUPPORT (B_DEVICE_OP_CODES_END+0x8803)
 #define TT_PCI_PROBE_Q38_FULL_RESIDENT_CONTROL (B_DEVICE_OP_CODES_END+0x8804)
 namespace PioneerQ38FullResident {

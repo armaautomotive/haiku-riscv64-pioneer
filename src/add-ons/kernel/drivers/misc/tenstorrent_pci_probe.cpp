@@ -134,6 +134,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010091ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT)
 #error Reserved full-offload tag91 requires its separate model-resident lifecycle
 #endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026111700010210ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR)
+#error Full-card resident-vector requires its exact pair for reserved tag210
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_RESIDENT_VECTOR
+#include "PioneerQ38FullOffloadResidentVectorRole.h"
+#endif
 #if (defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error Token physical validation cannot substitute an old driver role
 #endif
