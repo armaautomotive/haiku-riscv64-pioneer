@@ -52,3 +52,26 @@ c9c8ec313664ded48d0be125c7b8b6cb928f13c69d6449d5aab962a545816860;
 worker 30a0f35d85a7449a9b8aae93d19f9f0e0edc5047c8a8fa339c5f977f2a5521a4.
 Neither is installed or verified on the card. These diagnostics cannot
 retroactively identify what caused the previous generic failure.
+
+Phase-bounded rate client (host only)
+------------------------------------
+The long Generate previously shared one 7200-second allowance with upload.
+The rate client now allows up to 7200 s for setup/upload, followed by a
+separate 1200 s watchdog for post-upload START and 2100 s for on-card
+generation/cleanup. The latter retains slack over the worker's existing
+1800 s generation limit without changing that limit. Only an exact
+1000/1000 final upload for one of the pinned layouts and the subsequent
+exact running progress message can advance these phases. Neither duplicate
+markers nor arbitrary progress/counter data can extend a phase. The
+generation watchdog is bounded to 10500 s total (plus separate Load/Unload
+limits). A failure identifies the last observed phase; phase markers are not
+device diagnostics or cleanup authority. No successful transcript row was
+added, and the client still closes only on failure, without END/reset/retry
+or CPU fallback.
+
+Both sanitized fake-worker modes, the socket tests and synthetic clock-edge
+tests passed. The Haiku RISC-V cross-build against the prior frozen SDK
+invocation has no llama/ggml imports and binds only the not-yet-deployed
+worker path under /boot/home/pioneer-q38-tag206-phase-rate-20261117-a/.
+Rate client SHA256 27c2d25a6e9d3fb74ff3a375c7a1438e2d7cac3f416a0e70ab3bf416badabcaa.
+No old script or worker was replaced and no device job ran in this check.

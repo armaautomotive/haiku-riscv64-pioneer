@@ -29,6 +29,14 @@ int main(){
  if(mode==19){Reply(A::Progress,3,0,"wrong request");return 0;}
  if(mode==4){Reply(A::Error,2,A::Fatal,"Synthetic unknown");return 0;}
  if(mode==5){Reply(A::Done,2,A::Cancelled,"Synthetic cancelled");return 0;}
+ const char* uploaded="Full-card Qwen27B upload 19522.4/19522.4 MiB. No CPU inference.";
+ const char* running="Qwen27B running entirely on P100A: embeddings,matrices,attention,KV,recurrent state,norms and greedy selection. CPU inference OFF.";
+ if(mode==21){Reply(A::Progress,2,UINT32_MAX,running);return 0;}
+ if(!Reply(A::Progress,2,1000,uploaded))return 0;
+ if(mode==20){Reply(A::Error,2,A::Fatal,"Synthetic post-upload START");return 0;}
+ if(mode==22){Reply(A::Progress,2,1000,uploaded);return 0;}
+ if(!Reply(A::Progress,2,UINT32_MAX,running))return 0;
+ if(mode==23){Reply(A::Error,2,A::Fatal,"Synthetic on-card failure");return 0;}
  if(!Count(0) || !Count(20))return 0;
  if(mode==6){Count(19);return 0;}
  if(!Count(mode==1?28:51))return 0;

@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-rate-tests-',dir='/private
     subprocess.run([*common,*startup_flags,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="'+str(worker)+'"',
                     str(here.parent/'pioneer_q38_full_offload_rate_smoke.cpp'),'-o',str(client)],check=True)
     passing=(0,1,17) if startup else (0,1)
-    for mode in (*range(18 if startup else 13),18,19):
+    for mode in (*range(18 if startup else 13),*range(18,24)):
         result=subprocess.run([str(client),'--full-card-rate-32'],capture_output=True,text=True,timeout=15,
                               env={**os.environ,'FULL_OFFLOAD_RATE_CASE':str(mode),'UBSAN_OPTIONS':'halt_on_error=1'})
         assert result.returncode==(0 if mode in passing else 1),(mode,result.returncode,result.stdout,result.stderr)
@@ -37,7 +37,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-rate-tests-',dir='/private
             assert 'cause=worker_fatal receive=none' in result.stdout
         if mode==18:assert 'cause=receive receive=connection_lost' in result.stdout
         if mode==19:assert 'cause=receive receive=frame_id' in result.stdout
+        if mode==20:assert 'cause=worker_fatal receive=none phase=post_upload_start phase_budget=1200' in result.stdout
+        if mode==21:assert 'cause=unexpected_progress receive=none phase=upload_or_setup phase_budget=7200' in result.stdout
+        if mode==22:assert 'cause=unexpected_progress receive=none phase=post_upload_start phase_budget=1200' in result.stdout
+        if mode==23:assert 'cause=worker_fatal receive=none phase=on_card_or_cleanup phase_budget=2100' in result.stdout
     for args in ([],['--full-card-hello-four'],['--full-card-rate-32','extra']):
         result=subprocess.run([str(client),*args],capture_output=True)
         assert result.returncode==2 and not result.stdout and not result.stderr
-print('PASS actual full-card32 request client:'+('3 valid/17 failing histories,explicit required startup DATA/skip+unavailable accepted/missing+malformed+duplicate+after-text refused' if startup else '2 valid available/unavailable jobs,13 malformed/failing histories')+';3 CLI refusals;raw DATA arithmetic and real process/channel lifecycle;FAKE worker ONLY,no device/model or measured TPS')
+print('PASS actual full-card32 request client:'+('3 valid jobs and checked startup DATA' if startup else '2 valid available/unavailable jobs')+';malformed histories,phase ordering,3 CLI refusals,raw DATA arithmetic and real process/channel lifecycle;FAKE worker ONLY,no device/model or measured TPS')

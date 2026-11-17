@@ -4,6 +4,7 @@
 #define PIONEER_FULL_OFFLOAD_CHANNEL_ONLY 1
 #include "pioneer_q38_full_offload_smoke.cpp"
 #include "PioneerQ38FullOffloadRateData.h"
+#include "PioneerQ38FullOffloadRateDeadline.h"
 static const char Question[]="Count from 1 to 50, one number per line. Do not add explanations.";
 int main(int argc,char** argv){
  if(argc!=2 || strcmp(argv[1],"--full-card-rate-32"))return 2;
@@ -21,12 +22,14 @@ int main(int argc,char** argv){
  const double generate=Now();bool complete=false,textSeen=false;std::string answer,status;
  const char* failure="receive";
  PioneerQ38FullOffloadRateData metric;
- while(generate>=0 && channel.Next(frame,generate+7200)){
+ PioneerQ38FullOffloadRateDeadline deadline(generate);
+ while(deadline.Valid() && channel.Next(frame,deadline.Until())){
   if(frame.kind==A::Error && frame.value==A::Fatal){
    printf("FULL_OFFLOAD_WORKER_ERROR %s\n",frame.text.c_str());failure="worker_fatal";break;
   }
   if(frame.kind==A::Progress){
-   if(textSeen || metric.Observe(frame.text)<0 || !Progress(frame))return 1;
+   if(textSeen || !deadline.Observe(frame.value,frame.text,Now()) || metric.Observe(frame.text)<0
+    || (!deadline.Started() && metric.rows) || !Progress(frame)){failure="unexpected_progress";break;}
    continue;
   }
   if(frame.kind==A::Text && !frame.value && !textSeen && metric.rateSeen){answer=frame.text;textSeen=true;continue;}
@@ -35,8 +38,8 @@ int main(int argc,char** argv){
   break;
  }
  if(!complete){const double end=Now();
-  printf("FULL_OFFLOAD_RATE_FAILURE cause=%s receive=%s elapsed=%.3f deadline=7200;elapsed_includes_upload;NO_DEVICE_DIAGNOSIS\n",
-   failure,channel.nextFailure,generate>=0 && end>=generate?end-generate:-1.0);
+  printf("FULL_OFFLOAD_RATE_FAILURE cause=%s receive=%s phase=%s phase_budget=%u elapsed=%.3f;elapsed_includes_upload;NO_DEVICE_DIAGNOSIS\n",
+   failure,channel.nextFailure,deadline.Name(),deadline.Budget(),generate>=0 && end>=generate?end-generate:-1.0);
   puts("FAIL_FULL_OFFLOAD_RATE_GENERATION;CLOSE_ONLY_NO_END_RETRY_RESET_OR_CPU_FALLBACK");return 1;}
  unsigned tokens=0;double compute=0,total=0;int end=-1;
  if(std::sscanf(status.c_str(),"P100A full-offload candidate: %u output tokens; prompt+generation %lfs,total %lfs. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.%n",
