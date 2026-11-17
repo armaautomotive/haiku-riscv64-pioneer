@@ -47,7 +47,30 @@ recipe or current up frame faulted before a second projection call.
 
   python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_linked_tests.py SDK PINNED_COMPACT_V2_ELF
 
-Not a native package, live execution, speed result or broad model
-quality check. This verifies the logical dispatch boundary. Worker
-retention and consumption of the identical operand/scale bytes still
-need a matched test before packaging for the card.
+Linked worker retention comparison
+----------------------------------
+The existing raw reuse worker was rebuilt as an inspection-only
+QGW3 ELF (SHA256
+25c286eb0bce198e8c8207c4097eca5f54cce91411dc9ec7f0a484685a72549c).
+The ASan/UBSan emulator ran actual worker, matrix and pushed
+receipt code with synthetic raw Q4 weights, matched gate/up inputs
+and different gate/up weights. Each worker kept its guest state
+between jobs. All 10,240 operand bytes and 128 padded scale bytes
+survived gate completion and were unchanged after the up job.
+
+Workers 1/60/119 returned 160/144/144 bit-identical up rows against
+their forced-refetch controls and passed separate FP32/FP64 row checks.
+They executed the same tensor instruction counts and actual payload/
+ACK/commit sequence. Read commands were 200/180/180 with retention
+versus 202/182/182 with refresh, exactly 162 fewer NoC flits per peer.
+Invalid retained representations (operand or scale) faulted before
+any new NoC read, tensor instruction or receipt. This does not claim
+detection of arbitrary valid bit substitutions in retained memory.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_worker_tests.py SDK PINNED_MIXED_ANCESTOR_ELF PINNED_PUSHED_REUSE_ELF
+
+Together these tests cover the controller and worker boundaries.
+They do not run a continuous model layer or start a native device,
+and they do not give a physical speed or broad model-quality result.
+The next gate is a matched package of the measured raw path with
+the proposed retention change and its identical-weight control.
