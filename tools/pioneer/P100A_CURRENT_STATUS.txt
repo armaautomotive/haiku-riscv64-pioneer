@@ -1,5 +1,12 @@
 P100A / Qwen 27B: current status
 ================================
+The user wants the P100A to remain in the new physical slot. Linux rescanned
+the two verified-empty root buses once each without finding a 1e52 endpoint;
+physical-slot/root mapping and the missing-link cause remain unknown. No link
+reset, firmware change or card movement was attempted. Read-only root data,
+conflicting vendor slot descriptions, and the next safety gates are in
+benchmarks/p100a-new-slot-discovery-20261117.txt.
+
 After the November 17 card swap Linux enumerated the display GPU at the old
 P100A BDF 0002:81:00.0, but no device with vendor 1e52 was listed anywhere.
 Linux remained running. The user reports the P100A fully seated; link/power

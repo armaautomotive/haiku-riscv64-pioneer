@@ -1,0 +1,40 @@
+P100A new-slot discovery: Linux only
+===================================
+November 17, 2026. User wants to keep the P100A in the new physical slot.
+User reports the card fully seated and its fan spinning. No hardware was
+removed or moved by these tests.
+
+After the user's swap, Linux 6.1.31 enumerated the Radeon Caicos at
+0002:81:00.0 (the old P100A BDF), and zero vendor 1e52 devices. The two
+empty root buses were 0000:01 and 0001:41, under bridges 0000:00:00.0 and
+0001:40:00.0. Both bridges returned vendor/device 1e30:2042. Their bus
+registers were 00010100 and 00414140 respectively. We did not establish
+which root corresponds to the new physical slot. The root ports' PCIe
+capability fields each reported x8 maximum; a missing endpoint prevents
+measuring the P100A's actual negotiated width or speed. LLActRep was absent
+on these roots, so their DLActive- bits alone do not establish link state.
+
+With both child buses independently checked empty, Linux's PCI bus rescan was
+invoked once on each of /sys/class/pci_bus/0000:01/rescan and 0001:41/rescan.
+Rescan may configure a newly found device; it did not perform a link reset.
+Both completed, and lspci still reported no vendor 1e52 endpoint. Linux and
+the display GPU remain usable. No Haiku driver, BAR, reset or firmware writes
+were attempted. The first 16 bytes read from /dev/mtd0 were zero; this alone
+does not establish whether that device reflects the booted firmware's config.
+
+Milk-V's current product page and its 2023 v1.2 specification announcement
+describe x16 plus x8 electrical slots, while a general expansion-card page
+describes three x16-sized slots at x8 electrical. These references conflict;
+neither establishes the live board revision, physical-slot-to-root mapping,
+or whether this particular card's link has trained. See:
+https://milkv.io/pioneer
+https://community.milkv.io/t/updates-and-clarifications-on-milk-v-pioneer-specifications-v1-2/415
+https://milkv.io/docs/pioneer/getting-started/ExpansionCards
+
+Next: identify the physical slot/root and recover PCIe enumeration without
+moving the card. Consider board-specific firmware/config evidence and safe
+link-retraining approaches; do not guess root-port registers, flash firmware,
+or relax Haiku guards. Once Linux sees a unique P100A, use the read-only
+discovery helper to capture its exact root, PCIe capability and BAR ranges,
+then qualify any slot-independent Haiku implementation against that data.
+No model test or speed result was produced.
