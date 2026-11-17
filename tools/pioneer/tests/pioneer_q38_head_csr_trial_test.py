@@ -48,8 +48,8 @@ def resident(variant, start):
 
 
 def layer_split(variant,start):
-    assert variant == 'candidate'
-    return bind_layer_split(start)
+    assert variant in ('candidate','live')
+    return bind_layer_split(start, variant=='live')
 
 def main():
     for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector'),(layer_split,'candidate')):
@@ -67,7 +67,7 @@ def main():
         # hexadecimal wait boundary. The check also fixes per-variant tags.
         trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
                 (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'),
-                (layer_split,'candidate',10,'213'))
+                (layer_split,'candidate',10,'213'),(layer_split,'live',12,'214'))
         for index, (builder, name, start, suffix) in enumerate(trials):
             source = builder(name, str(start))
             tag = '2026111700010'+suffix
@@ -83,7 +83,7 @@ def main():
                 assert '--full-card-resident-rate-32' in source and 'PASS_FULL_OFFLOAD_RATE_JOB' not in source
                 assert 'one_upload1 model_end1 worker_exit0' in source
             if builder is layer_split:
-                assert 'stage=/boot/home/pioneer-q38-layer-split-candidate-213\n' in source
+                assert f'stage=/boot/home/pioneer-q38-layer-split-{name}-{suffix}\n' in source
                 assert 'missing_closed_v4_timing' in source
             subprocess.run(['bash', '-n'], input=source, text=True, check=True)
             head, body = source.split('\n[ "$#" -eq 1 ]', 1)
@@ -133,7 +133,7 @@ def main():
                 spent = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert spent.returncode == 1
                 assert (mutations.read_bytes() if mutations.exists() else b'') == previous
-    print('PASS: both raw pairs, resident and layer split, 79 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
+    print('PASS: both raw pairs, resident and layer split A/B, 92 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
 
 
 if __name__ == '__main__':

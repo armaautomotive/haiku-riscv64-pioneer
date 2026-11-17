@@ -13,6 +13,15 @@
 #if defined(PIONEER_Q38_SPAN_REUSE_CODE) && !defined(PIONEER_Q38_SPAN_FAST)
 #error Work code-proof reuse requires the separately qualified Work transport
 #endif
+#ifdef PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK
+#if PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK != 1 || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_Q38_SPAN_REUSE_CODE)
+#error Live executable image audit requires the separate fast loader without code-proof reuse
+#endif
+#if defined(_KERNEL_MODE) && (!defined(PIONEER_Q38_FAST_DECODE_SPLIT_PACKAGE) || PIONEER_Q38_FAST_DECODE_SPLIT_PACKAGE != 1 \
+	|| !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010214ULL)
+#error Live executable image audit requires isolated native tag214
+#endif
+#endif
 enum { TT_Q38_SPAN_VIEW_BASE=0x6e000,TT_Q38_SPAN_VIEW_BYTES=0x42000,
 	TT_Q38_SPAN_VIEW_WORDS=TT_Q38_SPAN_VIEW_BYTES/4 };
 struct PioneerQ38SpanLease {
@@ -58,6 +67,19 @@ template<class IO> bool PioneerQ38SpanCodeMatches(IO& io)
 }
 template<class IO,bool Work> bool PioneerQ38SpanLiveCode(IO& io)
 {
+#ifdef PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK
+	// Keep checking the actual entry and every linked instruction/literal
+	// on BOTH sides of each fast span. Only the zero fill OUTSIDE the
+	// complete linked image is deferred to setup/close. Those still
+	// verify all 4096 words before the first release or restoration.
+	static_assert(TT_Q38_SPAN_CODE_BYTES==3320,"exact pinned fast upload code image");
+	if constexpr (Work) {
+		if (!io.Q38PanelMappingStable() || io.RuntimeCodeRead(0)!=TT_Q38_SPAN_BOOT) return false;
+		for (unsigned w=0;w<TT_Q38_SPAN_CODE_BYTES/4;w++)
+			if (io.Q38PanelRead(0x72000+w*4)!=PioneerQ38SpanCodeWord(w)) return false;
+		return true;
+	}
+#endif
 #ifdef PIONEER_Q38_SPAN_REUSE_CODE
 	// Work ONLY: Prepare proves ALL immutable code; Close proves it again
 	// BEFORE any restoration. The exclusive span lease blocks every other

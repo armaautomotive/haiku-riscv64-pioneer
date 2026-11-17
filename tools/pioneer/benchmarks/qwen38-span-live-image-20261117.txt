@@ -1,0 +1,55 @@
+Qwen 27B: retain executable checks, avoid redundant loader padding reads
+======================================================================
+
+The closed vector92 tag116 run sent 20,367 weight-upload calls and spent
+1,045.312 s inside those ioctls (1,211.135 s in the upload window). Before
+and after each successful fast span the full-card driver reads 4,096
+32-bit words across PCIe, including the zero fill outside its loader.
+That adds 166,846,464 panel reads in this workload, excluding the entry
+word and the setup/close audits. It does not isolate what portion of the
+1,045 s was readback. The much earlier small-model Work-loader code-proof
+reuse is a separate result and is not used by this pair.
+
+Tag214 uses the identical v4 inference firmware as tag213. On each side
+of a fast span it rechecks the live mapping and entry plus all 830 words
+of the actual 3,320-byte linked upload image, including embedded data and
+fault/terminal code. For the measured span count, that removes 133,037,244
+padding reads from the per-span checks. Setup and close still audit the
+entire region; the strict upload path still audits the entire region each
+time. The optimization deliberately moves detection of out-of-image pad
+mutations to close. All address, NoC counter, command/receipt, halted-core,
+lease, PCI, DMA, hash publication and failure-retention checks are intact.
+This candidate cannot be combined with the older full code-proof reuse.
+
+The ASan/UBSan transport fixture ran the actual 3,320-byte RV32 loader,
+hash 9b4e950f3d016d229b7f9ed7c5dd9f2e0fc23a2865a5f1a36f6633216f397609,
+over all seven banks. The controller read exactly 1,660 image words per
+subsequent 1 MiB span. All 830 individual executable mutations failed
+validation; a corrupted image refused release, a late corruption refused
+publication, and a zero-padding mutation stopped close before restore.
+Unknown cases retained the owner without additional I/O. Original strict
+and unmodified fast regression runs remain separate; these are simulated
+checks, not silicon performance.
+
+Tag213 rebuilt with the existing identical manifest and binaries. Tag214
+selects the audited span path in the native driver only; worker and client
+are bound to the new manager identity/stage. The final linked driver
+manifests match in all 15 firmware arrays plus the timing schema. No CPU
+inference or reference mode is linked, and no Assistant files changed.
+Both independent tag214 build directories produced the same complete
+manifest. The guarded parent suite passed all 92 fake cases across the
+existing branches, including mixed profile, incomplete timing and occupied
+card refusals. Native loading remains untested.
+
+  driver dacf779941dfdb94abe2ef5391519896b641a5812b43b7d78eb88cd4a274f2fc
+  worker 6ccb9f48445671ba9845a4c4cf5f4c3d58e773c72bf946c9f5be0232e8f78dc1
+  client c334f4e5ea0f3a2f3f02e5acee5a7126e96b401212d022b746a55922a7c5741b
+
+  python3 tools/pioneer/build_qwen38_layer_split_profile_native.py SDK LIBRARIES V4_ROOT NEW_OUTPUT --live-image-check
+  python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py OBSERVED_STABLE_GENERATION NEW_SCRIPT --live-image-check
+
+Do not deploy while the FFN comparison is in flight. Use ordinary tag213
+as the control. Verify both closed complete requests, identical answer,
+total bytes and span count, valid v4 profiles, independent stable restore,
+then compare upload-ioctl time and upload-window time separately from
+decode. No tag214 hardware result or decode-speed claim exists.

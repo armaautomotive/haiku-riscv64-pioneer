@@ -219,6 +219,8 @@ int main(int argc,char** argv)
 			for (unsigned w=0;w<262144;w++) assert(c.io.lastDeviceWords[w]==request->data[w]);
 #ifdef PIONEER_Q38_SPAN_REUSE_CODE
 			if (prepared) assert(c.io.codeLoads==codeLoads); // not even ONE main-code read per Work job
+#elif defined(PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK)
+			if (prepared) assert(c.io.codeLoads==codeLoads+2*(TT_Q38_SPAN_CODE_BYTES/4));
 #else
 			if (prepared) assert(c.io.codeLoads==codeLoads+8192);
 #endif
@@ -226,8 +228,12 @@ int main(int argc,char** argv)
 		tt_q38_span_end end={1,0,0,0}; assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed);
 		Unbind();
 	}
-#ifdef PIONEER_Q38_SPAN_REUSE_CODE
-	for (unsigned fault=0;fault<15;fault++) {
+#if defined(PIONEER_Q38_SPAN_REUSE_CODE) || defined(PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK)
+	unsigned faults=15;
+#ifdef PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK
+	faults++; // an executable-word failure AFTER run but BEFORE page publication
+#endif
+	for (unsigned fault=0;fault<faults;fault++) {
 		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
 		if (!fault) c.io.noCompletion=true;
 		if (fault==1) c.io.corruptCounter=true;
@@ -244,6 +250,7 @@ int main(int argc,char** argv)
 		if (fault==12) c.io.dropReset=1;
 		if (fault==13) c.io.dropPci=1;
 		if (fault==14) c.io.stageLost=true;
+		if (fault==15) c.io.corruptCode=true;
 		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
 			&& request->result.recovery_required && !c.uploadedPages && c.Unsafe()
 			&& c.dispatchOwnerRetained && sColdRecoveryRequired);
@@ -255,8 +262,8 @@ int main(int argc,char** argv)
 		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
 		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
 		// Simulate an out-of-contract bit flip in UNUSED code padding AFTER
-		// setup. Work reuses the immutable proof; strict MUST see it before
-		// its first launch. END MUST detect it before ANY restoration.
+		// setup. The opt-in fast modes defer the padding audit; strict MUST
+		// see it before launch. END detects it before ANY restoration.
 		c.io.view[(0x73ffc-TT_Q38_SPAN_VIEW_BASE)/4]^=1;
 		request->offset=4096;
 		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
@@ -281,7 +288,26 @@ int main(int argc,char** argv)
 			&& c.io.rootStarts==starts && c.Unsafe() && c.uploadedPages==1);
 		Unbind();
 	}
+#ifdef PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK
+	{
+		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
+		for (unsigned w=0;w<TT_Q38_SPAN_CODE_BYTES/4;w++) {
+			auto& word=c.io.view[(0x72000-TT_Q38_SPAN_VIEW_BASE)/4+w]; word^=1;
+			assert((!PioneerQ38SpanLiveCode<SpanControlIO,true>(c.io))); word^=1;
+		}
+		assert((PioneerQ38SpanLiveCode<SpanControlIO,true>(c.io)));
+		// A fresh malformed executable must not cross the next release.
+		c.io.view[(0x72000-TT_Q38_SPAN_VIEW_BASE)/4+TT_Q38_SPAN_CODE_BYTES/4-1]^=1;
+		request->offset=4096; const unsigned starts=c.io.rootStarts;
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
+			&& request->result.recovery_required && c.io.rootStarts==starts && c.uploadedPages==1 && c.Unsafe());
+		Unbind();
+	}
+	puts("PASS live-image audit: boot and all 830 linked words before/after, active faults before release or publication, full padding audit at END; NO DEVICE IO");
+#else
 	puts("PASS Work immutable code proof reuse: ZERO per-job main-code reads, live boot checked, strict code checks unchanged, END ALWAYS full-audits before restoration and retains ALL on corruption; NO DEVICE IO");
+#endif
 #endif
 	{
 		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request(); c.io.deviceCorruptPacket=0;
