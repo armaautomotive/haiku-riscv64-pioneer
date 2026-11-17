@@ -3,10 +3,25 @@ P100A / Qwen 27B: current status
 After the November 17 card swap Linux enumerated the display GPU at the old
 P100A BDF 0002:81:00.0, but no device with vendor 1e52 was listed anywhere.
 Linux remained running. The user reports the P100A fully seated; link/power
-cause is unknown. Do not run the old BDF-pinned P100A boot helper against
+cause is unknown. The user subsequently reported the P100A fan spinning;
+that does not prove a trained PCIe link or correct auxiliary power. Linux's
+PCIe tree still contains no 1e52 endpoint. Do not run the old BDF-pinned P100A boot helper against
 the display GPU. A different physical topology must be independently
 discovered and all FDT, root policy and BAR/translation guards adapted and
 tested before Haiku accelerator work. No new P100A link speed is available.
+
+The slot-independent audit found fixed assumptions in the Linux staging
+helper (0002:81:00.0 and the 7062000000 private FDT root), the Haiku ECAM
+Sg2042RootPolicy (bus range 80-bf, controller 7062000000 and config
+4800000000), PioneerPciProfile (exact root, BAR translations and window
+set), PioneerMinimumBarLayout (the same windows plus Haiku bus numbers),
+and native PCI lease/probe checks. These are safety barriers, not merely a
+device lookup; changing only the BDF is insufficient. Linux's live FDT also
+shows bus ranges 00-3f, 40-7f and 80-bf. The 40-7f node currently has a
+different reg representation from 80-bf, so don't extrapolate its physical
+controller or BAR map. Capture the real endpoint and its complete parent/FDT
+topology once enumerated, then implement and test validated discovery and
+translation before allowing MMIO or DMA. No guard was relaxed.
 
 November 17 follow-up: after stable041 was restored, Haiku entered KDL on a
 USB-stack child-lifetime assertion during device removal. This is a separate
