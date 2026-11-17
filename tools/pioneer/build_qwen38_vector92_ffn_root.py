@@ -23,6 +23,10 @@ MATCHED = {
         (130076,'e4b737e072a22a86bf8d3c6e6dc1b666e0e73fab36e5602e8f73d61f72da9223'),
         (32680,'3b923e247d81e3d221b3e77e9f3a0156053de60ceeaa913996bb88e17b13869c'),
         (191492,'0fcec876160c9a8b08a584d3f60d8eacee39b0fa96bcac1ce7226b03de59493e')),
+    'inspect-retained-root': (
+        (130212,'3335bf9966b323529dc38de5788fba4dcea3bab3c25dbd1928f59060ef0f16c0'),
+        (32680,'ec745c1be22190d0f43171b922c4d6e26ad7a1fb81f6bc97db283ca6cf812b97'),
+        (191492,'ae458db3d6828459a25e9d892f7fd1d737e2e3edfd9f5c4b81141ad23639df05')),
 }
 
 
@@ -36,7 +40,8 @@ def overlay(pioneer,here):
     projection=pioneer/'blackhole_qwen38_mixed_projection_root.cpp'
     text=replace(projection.read_text(),'#include "PioneerQ38ProjectionInput.h"',r'''#include "PioneerQ38ProjectionInput.h"
 #ifdef PIONEER_Q38_VECTOR92_FFN_ROOT
-#if (PIONEER_Q38_VECTOR92_FFN_ROOT != 1 && PIONEER_Q38_VECTOR92_FFN_ROOT != 2) \
+#if (PIONEER_Q38_VECTOR92_FFN_ROOT != 1 && PIONEER_Q38_VECTOR92_FFN_ROOT != 2 \
+ && PIONEER_Q38_VECTOR92_FFN_ROOT != 3) \
  || !defined(PIONEER_Q38_LAYER_COMPONENT_RECURRENT) || !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) \
  || !defined(PIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE) || !defined(PIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE) \
  || !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE) \
@@ -47,11 +52,11 @@ def overlay(pioneer,here):
 #include "PioneerQ38FfnSharedInputReuse.h"
 #endif''')
     text=replace(text,' for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];',r''' for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];
-#if defined(PIONEER_Q38_VECTOR92_FFN_ROOT) && PIONEER_Q38_VECTOR92_FFN_ROOT == 1
+#if defined(PIONEER_Q38_VECTOR92_FFN_ROOT) && PIONEER_Q38_VECTOR92_FFN_ROOT != 2
  if(d[43]==PioneerQ38FfnSharedInputReuse::UpRole)Words(L::Scratch)[25]=0;
 #endif''')
     text=replace(text,'#endif\n#ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE\n if(type==12){',r'''#endif
-#if defined(PIONEER_Q38_VECTOR92_FFN_ROOT) && PIONEER_Q38_VECTOR92_FFN_ROOT == 1
+#if defined(PIONEER_Q38_VECTOR92_FFN_ROOT) && PIONEER_Q38_VECTOR92_FFN_ROOT != 2
  if(d[43]==PioneerQ38FfnSharedInputReuse::UpRole){
   reads-=PioneerQ38FfnSharedInputReuse::InputReads(false,k);
   flits-=PioneerQ38FfnSharedInputReuse::InputFlits(false,k,blocks);
@@ -59,6 +64,14 @@ def overlay(pioneer,here):
 #endif
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
  if(type==12){''')
+    text=replace(text,' Quantize(d);\n Seal(d);uint32_t tracked[8],before[8];',r'''#if defined(PIONEER_Q38_VECTOR92_FFN_ROOT) && PIONEER_Q38_VECTOR92_FFN_ROOT == 3
+ // The recurrent caller has authenticated an adjacent full gate->up pair.
+ // Do not reuse any value unless the new F32 materialization and both
+ // retained packed inputs match the independent shadows from gate.
+ if(d[43]==PioneerQ38FfnSharedInputReuse::UpRole)InputsSeal(d);else
+#endif
+ Quantize(d);
+ Seal(d);uint32_t tracked[8],before[8];''')
     projection.write_text(text)
     recurrent=pioneer/'blackhole_qwen38_mixed_recurrent_block_root.cpp'
     text=replace(recurrent.read_text(),' Phase(p,phase);\n unsigned n=d[11];',r''' Phase(p,phase);
@@ -76,9 +89,10 @@ def overlay(pioneer,here):
 
 def main():
     assert __debug__ and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
-    if len(sys.argv)!=3:
-        raise SystemExit('use SDK NEW_OUTPUT')
-    sdk,out=map(Path,sys.argv[1:])
+    if len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3]!='--inspect-retained-root'):
+        raise SystemExit('use SDK NEW_OUTPUT [--inspect-retained-root]')
+    sdk,out=map(Path,sys.argv[1:3])
+    inspect=len(sys.argv)==4
     assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
     here=Path(__file__).resolve().parent
     tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -160,11 +174,24 @@ def main():
     build_variant('unchanged',0)
     a,b=build_variant('reuse',1),build_variant('refetch',2)
     assert a['text']!=b['text']
+    if inspect:
+        c=build_variant('inspect-retained-root',3)
+        assert c['program.elf']!=a['program.elf']
+        linked=out/'linked-retained-root-test'
+        subprocess.run([os.getenv('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                        '-Wno-unused-function','-Wno-misleading-indentation','-fsanitize=address,undefined',
+                        here/'tests/pioneer_q38_retained_root_input_test.cpp','-o',linked],cwd=out,check=True)
+        subprocess.run([linked,out/'reuse',out/'inspect-retained-root'],cwd=out,check=True,timeout=60,
+                       env=dict(os.environ,UBSAN_OPTIONS='halt_on_error=1'))
+        print('PASS INSPECTION ONLY retained ROOT input; no native package, board, model or hardware timing',flush=True)
     pos=cc.index('-c')
-    for value,extra in ((0,()),(3,()),(1,('-DPIONEER_Q38_WORK_INFERENCE=1',)),
+    for value,extra in ((0,()),(4,()),(1,('-DPIONEER_Q38_WORK_INFERENCE=1',)),
                         (2,('-D_KERNEL_MODE=1',)),(1,('-DPIONEER_Q38_CPU_VALIDATION=1',)),
                         (2,('-UPIONEER_Q38_LAYER_COMPONENT_RECURRENT',)),
-                        (1,('-DPIONEER_Q38_PREPARED_Q4_ROOT_IMAGE=1',))):
+                        (1,('-DPIONEER_Q38_PREPARED_Q4_ROOT_IMAGE=1',)),
+                        (3,('-DPIONEER_Q38_WORK_INFERENCE=1',)),(3,('-D_KERNEL_MODE=1',)),
+                        (3,('-DPIONEER_Q38_CPU_VALIDATION=1',)),
+                        (3,('-UPIONEER_Q38_LAYER_COMPONENT_RECURRENT',))):
         test=subprocess.run([*cc[:pos],'-D'+ROLE+'='+str(value),*extra,'-E',cc[pos+1]],cwd=out,
                             stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
         assert test.returncode and ('vector92 recurrent ROOT role required' in test.stderr or

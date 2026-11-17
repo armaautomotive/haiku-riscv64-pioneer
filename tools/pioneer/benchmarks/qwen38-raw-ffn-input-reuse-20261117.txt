@@ -203,3 +203,30 @@ scripts remain byte-identical. These are offline gates, not a live run.
 Next test the two packages in a guarded same-answer A/B after the
 active output-head test is closed and stable is independently restored.
 No new driver was staged or installed, and no FFN speedup is measured.
+
+Optional controller quantizer inspection
+----------------------------------------
+The vector92 refetch and reuse pair both prepare the same 5,120 F32 post-RMS
+values twice on the card's ROOT controller: once for gate and again for up.
+The inspection-only third ROOT retains the quantized bytes and scales from
+the adjacent gate instead. The linked recurrent phase-11 pair guard still
+authenticates the same layer/request/input and consecutive gate/up recipes.
+Before dispatch, the actual preparation code compares the rematerialized F32
+input, packed operands and padded scales to the gate's independent shadows.
+All original receipt, job, counter and post-projection checks remain in
+place. The original refetch/reuse variants and unselected ELF are unchanged.
+
+The sanitizer-checked emitted RV32 preparation slice reaches the same
+full-frame Seal with identical buffers (61,696 compared words on four
+fixtures); gate and the existing control call the real quantizer 20 times,
+while retained up calls it zero times and makes no non-stack input writes.
+Seventy-two single-word mutations of the live and shadow buffers stop
+before Seal and before dispatch. Recipe capture and the scope before/after
+this slice are not executed by this test; no NoC or card is modeled.
+
+  python3 tools/pioneer/build_qwen38_vector92_ffn_root.py SDK NEW_OUTPUT --inspect-retained-root
+
+Pinned ELF ae458db3d6828459a25e9d892f7fd1d737e2e3edfd9f5c4b81141ad23639df05,
+text 130,212/131,072 bytes, conv 32,680/32,768. No native package, deployment,
+model output or throughput claim for this third variant. Tags 211 and 212
+remain the two-way peer-fetch comparison and do not include this change.
