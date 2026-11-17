@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an isolated no-device Qwen RAW ROOT with batched head CSR waits."""
+"""Build paired RAW Qwen ROOT variants; no native owner or device access."""
 import hashlib
 import os
 from pathlib import Path
@@ -74,32 +74,43 @@ baseline, original = build_variant('control')
 assert original.read_bytes() == old['program.elf'], 'unchanged linked ROOT not reproduced'
 assert baseline.read_bytes() == (control / 'token.o').read_bytes(), 'unchanged token object not reproduced'
 selector = '-DPIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE=1'
-obj, elf = build_variant('candidate', (selector,))
-assert not subprocess.check_output([tool + 'nm', '-u', str(elf)]).strip()
-symbols = subprocess.check_output([tool + 'nm', '-nC', str(elf)], text=True)
-assert 'GlobalChain::HeadRegisterBatch(' in symbols
-assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ', symbols, re.M)
-for name, address in (('_start', 0x6000), ('scalar_entry', 0x40000),
-                      ('scalar_fault_park', 0x60000), ('q38_global_chain_stopped', 0x60004)):
-    assert re.search(f'^{address:08x} T {name}$', symbols, re.M), name
-for section, limit in (('boot', 4), ('text', 0x20000), ('terminal', 8), ('conv', 0x8000)):
-    path = out / (section + '.bin')
-    run([tool + 'objcopy', '-O', 'binary', '-j', '.' + section, elf, path])
-    data = path.read_bytes()
-    assert data and len(data) <= limit and not len(data) % 4
-    if section in ('boot', 'terminal'):
-        assert data == old[path.name]
-    print(section, len(data), hashlib.sha256(data).hexdigest())
-frames = [row.split('\t') for row in obj.with_suffix('.su').read_text().splitlines()]
-assert frames and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 2048 for row in frames)
+serial_selector = '-DPIONEER_Q38_HEAD_CSR_SERIAL_CONTROL_IMAGE=1'
+serial = out / 'serial'
+serial.mkdir(mode=0o700)
+for name, option, directory in (('candidate', selector, out), ('serial', serial_selector, serial)):
+    obj, elf = build_variant(name, (option,))
+    assert not subprocess.check_output([tool + 'nm', '-u', str(elf)]).strip()
+    symbols = subprocess.check_output([tool + 'nm', '-nC', str(elf)], text=True)
+    assert ('GlobalChain::HeadRegisterBatch(' in symbols) == (name == 'candidate')
+    assert ('PioneerQ38HeadCsrBatch::Verify<' in symbols) == (name == 'candidate')
+    assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ', symbols, re.M)
+    for symbol, address in (('_start', 0x6000), ('scalar_entry', 0x40000),
+                            ('scalar_fault_park', 0x60000), ('q38_global_chain_stopped', 0x60004)):
+        assert re.search(f'^{address:08x} T {symbol}$', symbols, re.M), symbol
+    for section, limit in (('boot', 4), ('text', 0x20000), ('terminal', 8), ('conv', 0x8000)):
+        path = directory / (section + '.bin')
+        run([tool + 'objcopy', '-O', 'binary', '-j', '.' + section, elf, path])
+        data = path.read_bytes()
+        assert data and len(data) <= limit and not len(data) % 4
+        if section in ('boot', 'terminal'):
+            assert data == old[path.name]
+        print(name, section, len(data), hashlib.sha256(data).hexdigest())
+    frames = [row.split('\t') for row in obj.with_suffix('.su').read_text().splitlines()]
+    assert frames and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 2048 for row in frames)
+    (directory / 'program.symbols').write_text(symbols)
+    print(elf.name, hashlib.sha256(elf.read_bytes()).hexdigest(), flush=True)
 before_compile = compile_token[:compile_token.index('-c')]
-for forbidden in ('PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE',
-                  'PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE'):
-    trial = subprocess.run([*before_compile, selector, '-D' + forbidden + '=1', '-E',
+refusals = [
+    (option, '-D' + forbidden + '=1') for option in (selector, serial_selector)
+    for forbidden in ('PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE',
+                      'PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE')]
+refusals += [(selector, serial_selector), ('-DPIONEER_Q38_HEAD_CSR_COMPACT_HELPERS=1',)]
+for flags in refusals:
+    trial = subprocess.run([*before_compile, *flags, '-E',
                             str(source / 'blackhole_qwen38_token_root.cpp')],
                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-    assert trial.returncode and 'Queued head CSR check' in trial.stderr, (forbidden, trial.stderr)
-(out / 'program.symbols').write_text(symbols)
+    assert trial.returncode and ('Queued head CSR check' in trial.stderr or
+                                 'Head helper size selection is private' in trial.stderr), (flags, trial.stderr)
 (out / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
-print('candidate.elf', hashlib.sha256(elf.read_bytes()).hexdigest())
-print('PASS BUILD_ONLY original ROOT byte-exact; candidate fits existing sections; no native or device authority')
+print('PASS BUILD_ONLY original ROOT byte-exact, matched serial and queued images fit, '
+      '10 role refusals; no native or device authority')

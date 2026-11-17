@@ -158,12 +158,18 @@ struct HeadMachine:Machine {
 };
 
 int main(int argc,char** argv){
-	assert(argc==3);Image control(argv[1]),candidate(argv[2]);
+	assert(argc==3 || argc==4);Image control(argv[1]),candidate(argv[2]);
+	const auto compact=argc==4?std::make_unique<Image>(argv[3]):nullptr;
 	for(unsigned worker:{0U,59U,118U})for(bool stop:{false,true}){
 		HeadMachine base(control,false,stop,worker,HeadMachine::None),batch(candidate,true,stop,worker,HeadMachine::None);
 		assert(base.Run() && batch.Run());assert(base.stream==batch.stream && batch.stream.size()==(stop?32U:30U));
 		assert(batch.batches==(stop?0U:3U) && batch.maxPending==(stop?0U:8U) && batch.pending.empty());
 		for(unsigned i=0;i<8;i++)assert(base.Frontier(i)==batch.Frontier(i) && batch.Frontier(i)==batch.counters[i]);
+		if(compact){
+			HeadMachine serial(*compact,false,stop,worker,HeadMachine::None);
+			assert(serial.Run() && serial.submitted==base.submitted && !serial.batches && !serial.maxPending);
+			for(unsigned i=0;i<8;i++)assert(serial.Frontier(i)==base.Frontier(i));
+		}
 		for(unsigned g=0;g<batch.batches;g++)for(unsigned i=1;i<8;i++)
 			assert(batch.completedDestinations[g*8+i]<batch.completedDestinations[g*8+i-1]);
 	}
@@ -180,4 +186,5 @@ int main(int argc,char** argv){
 		}
 	}
 	puts("PASS actual RV32 ROOT Closed/Scope: same checked wire operation order, three reordered 8-read batches, serial STOP, four faults stop before frontier update; no device or performance proof");
+	if(compact)puts("PASS same compact helpers with batching disabled: exact original serial command/counter trace for all six Closed and STOP cases");
 }

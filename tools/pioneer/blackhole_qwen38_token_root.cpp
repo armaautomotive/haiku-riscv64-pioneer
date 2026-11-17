@@ -6,8 +6,12 @@
 #include "PioneerQ38Qgw8CoarseProfileRole.h"
 #include "PioneerQ38Qgw8LayerTraceRole.h"
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
+#error Head helper size selection is private to the exact ROOT inspection roles
+#endif
+#if defined(PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE) || defined(PIONEER_Q38_HEAD_CSR_SERIAL_CONTROL_IMAGE)
 #include "PioneerQ38HeadCsrBatch.h"
+#define PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS 1
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
@@ -73,16 +77,16 @@ static bool Quiet(){
  return true;
 }
 static __attribute__((noinline,section(".conv.token")
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
  ,optimize("Os")
 #endif
  )) void Scope(bool counters=true
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
  ,bool headCsrInFlight=false
 #endif
  ){
  const auto* p=Owner();
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
  if(headCsrInFlight && (counters || p->phase!=4))scalar_fault_park();
 #endif
  if(!p->phase || p->phase>
@@ -94,7 +98,7 @@ static __attribute__((noinline,section(".conv.token")
  || p->state[Bank]>=7 || p->state[Profile]!=64 || p->state[Layer]>=64
   || p->state[Completed]>64 || p->state[Position]>=8192 || p->state[Token]>=248320
   || (
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
    !headCsrInFlight &&
 #endif
    !Quiet()))scalar_fault_park();

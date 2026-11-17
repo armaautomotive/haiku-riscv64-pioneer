@@ -91,5 +91,25 @@ Sanitizers passed for both separately rebuilt byte-identical images.
 This proves the linked coordinator slice under the modeled fabric only;
 it does not establish full model accuracy, silicon timing, or safe native
 deployment. The candidate is not in a native driver and cannot replace
-the live tag206. A physical comparison must account for the size-compacted
-helpers separately from batching before attributing any speedup.
+the live tag206.
+
+Matched serial firmware control
+-------------------------------
+The builder now also emits a serial control with the same size-optimized
+HeadSeal, Packet, Wait, Closed and Scope helpers. This role emits no batch
+symbols and cannot be combined with the batch role. The historical control
+and the previously qualified batch ELF remain byte-for-byte unchanged.
+The matched serial ELF uses 129,144 of 131,072 text bytes and 32,072 of
+32,768 conv bytes; boot and terminal are unchanged in all three images.
+Ten combined-role or internal-flag misuse builds were refused.
+
+Serial ELF SHA-256:
+a4cbb1ee3da4f2996c53bb4a1c2b7a98126e46e51a278f91aa67599e917b36b9
+
+The linked ASan/UBSan run included all three ELF files. The matched serial
+control emitted exactly the historical command trace and all eight final
+counters for the three workers in both phase 4 and STOP. The candidate
+still passed queued reply, wrapped counter and failure checks. Use the
+matched serial ELF as the extra last argument to the linked test above.
+This prepares an offline A/B control; there is still no physical speed
+measurement for either new firmware image.

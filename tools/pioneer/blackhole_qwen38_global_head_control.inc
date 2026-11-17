@@ -10,16 +10,16 @@ namespace G=PioneerQ38SelectedGlobalWorker;
 static const uint32_t* PeerBoot(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerBoots+w*256);}
 static const uint32_t* PeerJob(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerJobs+w*256);}
 static
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
 __attribute__((noinline,optimize("Os")))
 #endif
 void HeadSeal(const uint32_t* h,bool counters=true
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
  ,bool headCsrInFlight=false
 #endif
  ){
  Scope(counters
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
   ,headCsrInFlight
 #endif
  );
@@ -36,7 +36,7 @@ void HeadSeal(const uint32_t* h,bool counters=true
  for(unsigned i=0;i<128;i++)if(Words(L::Head)[i]!=h[i])scalar_fault_park();
 }
 static
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
 __attribute__((noinline,optimize("Os")))
 #endif
 void Packet(const uint32_t* h,unsigned route,unsigned remote,unsigned bytes,bool write){
@@ -53,7 +53,7 @@ void Packet(const uint32_t* h,unsigned route,unsigned remote,unsigned bytes,bool
  if(!done)scalar_fault_park();
  HeadSeal(h,false);
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
  volatile uint32_t* retained=p->state+Counts; // freestanding: no out-of-line memcpy
  for(unsigned i=0;i<8;i++)retained[i]=expected[i];
 #else
@@ -118,7 +118,7 @@ static void Normalize(const uint32_t* h){
  Fence();InputSeal();
 }
 static
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
 __attribute__((noinline,optimize("Os")))
 #endif
 void Wait(const uint32_t* h,unsigned w,bool stopped){
@@ -170,7 +170,7 @@ static __attribute__((noinline,optimize("Os"),section(".conv.token"))) void Head
 }
 #endif
 static
-#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#ifdef PIONEER_Q38_HEAD_CSR_COMPACT_HELPERS
 __attribute__((noinline,optimize("Os")))
 #endif
 void Closed(const uint32_t* h,unsigned w,bool stopped=false){

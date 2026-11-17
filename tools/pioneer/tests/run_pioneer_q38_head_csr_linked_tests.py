@@ -8,13 +8,15 @@ import sys
 from tempfile import TemporaryDirectory
 
 
-assert __debug__ and len(sys.argv) == 4
-sdk, original, candidate = map(Path, sys.argv[1:])
-assert all(p.is_absolute() for p in (sdk, original, candidate))
+assert __debug__ and len(sys.argv) in (4, 5)
+sdk, original, candidate, *serial = map(Path, sys.argv[1:])
+assert all(p.is_absolute() for p in (sdk, original, candidate, *serial))
 tool = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
 here = Path(__file__).resolve().parent
 identities = ((original, 'e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66'),
               (candidate, '0c78b9ef5035016ed1fd18d5eadf9f479ab728cdd7e57182c0046060a47ed962'))
+if serial:
+    identities += ((serial[0], 'a4cbb1ee3da4f2996c53bb4a1c2b7a98126e46e51a278f91aa67599e917b36b9'),)
 with TemporaryDirectory(prefix='pioneer-head-csr-linked-', dir='/private/tmp') as temporary:
     stage = Path(temporary)
     folders = []
