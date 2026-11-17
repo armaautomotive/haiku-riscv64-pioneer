@@ -20,6 +20,9 @@
 #endif
 #include "../../src/apps/assistant/Qwen27Protocol.h"
 #include "llama.h"
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC) && PIONEER_Q38_READINESS_DIAGNOSTIC != 1
+#error Readiness diagnostic requires the exact enabled value
+#endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT_WORKER) \
  && (!defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) || PIONEER_Q38_FULL_OFFLOAD_RESIDENT != 1)
 #error Resident worker requires the exact separate native/client tag91 resident lifecycle

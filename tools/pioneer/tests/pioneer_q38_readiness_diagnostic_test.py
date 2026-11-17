@@ -22,6 +22,11 @@ assert 'A::Generate' not in client and 'A::Load' in client and 'A::Unload' in cl
 assert 'PIONEER_Q38_READINESS_DIAGNOSTIC' in prepared
 assert "readiness_diagnostic='--readiness-diagnostic' in args" in builder
 assert "-DPIONEER_Q38_READINESS_DIAGNOSTIC=1" in builder
+assert "missing-readiness-diagnostic" not in builder
+assert 'Readiness diagnostic requires the exact enabled value' in worker
+assert 'zero-readiness-diagnostic' in builder
+assert 'Explicit manager identity is reserved for the prepared-Q4 GDN-L1 tag206 candidate' in builder
+assert 'prepared Q4 GDN-L1 manager identity tag206 (experimental)' in builder
 assert "prepared_q4 and args.count('--readiness-diagnostic')==1" in builder
 assert "gdn_l1_tag206='--gdn-l1-tag206' in args" in builder
 assert "-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010206ULL" in builder

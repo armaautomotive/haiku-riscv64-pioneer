@@ -1,0 +1,40 @@
+Tag206 failure-diagnostic worker: build-only checkpoint
+======================================================
+November 17, 2026. No model or accelerator job was run in this checkpoint.
+
+The earlier tag206 32-token request transferred all 19,522.4 MiB but failed
+before producing tokens or clean END. The exact startup failure was not
+preserved by that older worker. The worker in commit 4f82b86f5c reports
+session failure stage, request stage and last ioctl in its fatal IPC frame.
+
+The first cross-build of that diagnostic found the builder incorrectly
+expected a missing OPTIONAL readiness macro to be rejected. It also failed to
+accept the explicit tag206 identity guard's error as a valid negative test.
+The builder now permits the legitimate no-diagnostic configuration and
+rejects a defined diagnostic macro unless its value is 1; the explicit tag206
+error is recognized. The build report labels the tag206 manager identity
+instead of incorrectly reporting tag97. No Work/CPU-reference separation or
+device-side identity guard was removed.
+
+Cross-build from current sources and frozen, SHA-checked libraries against
+/Volumes/HaikuBuildLocal/generated.riscv64:
+
+  --batched --metrics --prepared-q4 --readiness-diagnostic --gdn-l1-tag206
+  worker SHA256 30a0f35d85a7449a9b8aae93d19f9f0e0edc5047c8a8fa339c5f977f2a5521a4
+  22 role refusals; exact 11 vocabulary/model-container API imports; no
+  context/decode/logits/threadpool/CPU inference/reference or hybrid imports.
+
+The same build without --readiness-diagnostic also passed, with 21 role
+refusals and worker SHA256
+c458b53d32a403d5db4f3bd7258f0ff1815957919cdad16a835648d838024f0f.
+Readiness static tests and synthetic rate/client lifecycle tests passed.
+These are compile/synthetic checks, not on-card correctness or speed results.
+The diagnostic build is staged only under
+/private/tmp/pioneer-tag206-final.U2fB7I/worker on the Mac; it is not installed.
+
+Separately, after the prior stable041 restoration, Haiku stopped in KDL.
+Serial captured a USB removal sequence and a panic at usb/Stack.cpp:168:
+PutUSBID's assertion that no child remains registered, on thread "usb explore".
+This is distinct from the tag206 generation failure. No root cause or fix is
+established. One authorized OFF hold was issued while KDL was visible; power
+recovery must use one ON after the shutdown interval, not another OFF.

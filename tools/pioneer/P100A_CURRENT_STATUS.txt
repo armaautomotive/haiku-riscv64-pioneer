@@ -1,5 +1,12 @@
 P100A / Qwen 27B: current status
 ================================
+November 17 follow-up: after stable041 was restored, Haiku entered KDL on a
+USB-stack child-lifetime assertion during device removal. This is a separate
+failure from P100A inference; see benchmarks/qwen38-tag206-diagnostic-build-20261117.txt.
+The session-failure diagnostic worker now cross-builds with and without its
+optional readiness logging; it is not installed or physically qualified.
+No new tokens/sec or model quality result is claimed.
+
 Post-boot recovery, November 17, 2026
 ------------------------------------
 Linux SSH was restored with the user's ID key. The changed Linux host key
