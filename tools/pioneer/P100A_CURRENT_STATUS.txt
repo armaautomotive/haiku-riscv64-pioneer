@@ -23,6 +23,15 @@ controller or BAR map. Capture the real endpoint and its complete parent/FDT
 topology once enumerated, then implement and test validated discovery and
 translation before allowing MMIO or DMA. No guard was relaxed.
 
+The read-only Linux helper `pioneer_linux_p100a_discover.sh` locates an exact
+single 1e52:b140/1e52:0043 device without assuming a BDF, then reports its
+sysfs ancestry, binding, link attributes, resource windows and lspci data.
+It refuses zero/multiple matches and unexpected subsystem IDs. Synthetic
+relocation, wrong-device and duplicate tests passed; live Linux returned
+`P100A_DISCOVERY_REFUSED matches=0`. This is inventory only, not Haiku driver
+support or permission to map/enable the card. User confirms the P100A is the
+same card and only its PCIe slot changed.
+
 November 17 follow-up: after stable041 was restored, Haiku entered KDL on a
 USB-stack child-lifetime assertion during device removal. This is a separate
 failure from P100A inference; see benchmarks/qwen38-tag206-diagnostic-build-20261117.txt.
