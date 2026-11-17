@@ -66,9 +66,30 @@ Candidate ELF SHA-256:
 
   python3 tools/pioneer/build_qwen38_head_csr_batch_root.py SDK RAW_CONTROL NEW_OUTPUT
 
-This is an actual linked image, not hardware execution. The next gate is
-emitted-code simulation of the full connected Closed path, including
-in-flight mutation, out-of-order replies, and serial STOP preservation.
-The candidate is not in a native driver and cannot replace the live tag206.
-A subsequent physical comparison must account for the size-compacted
+Connected emitted-code check
+----------------------------
+Ran the hash-pinned original and candidate ELF instructions through the real
+Closed, Wait, Packet, Scope and batch bodies with a synthetic already-held
+worker and canonical token/head metadata. Previous model execution and peer
+status are fixture inputs, not simulated full-model inference. Across
+workers 1, 60 and 119 both builds sent the same 30 register/L1 reads and
+ended at the exact same wrapped counter frontier. The candidate had up to
+eight requests pending in each of three groups. The synthetic fabric
+reported the FIFO empty before the replies were complete and returned the
+reply destinations in reverse order. The same actual candidate STOP path
+matched all 32 serial reads of the original, with zero batches.
+
+A ROOT source mutation with a batch outstanding stopped further requests.
+Corrupt peer source/counter replies and a dropped response hit the actual
+fault path without publishing that batch's counter changes. The harness
+permits writes only to the private stack and the legitimate count fields;
+response data comes from the synthetic device at captured L1 addresses.
+Sanitizers passed for both separately rebuilt byte-identical images.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_head_csr_linked_tests.py SDK CONTROL_ELF CANDIDATE_ELF
+
+This proves the linked coordinator slice under the modeled fabric only;
+it does not establish full model accuracy, silicon timing, or safe native
+deployment. The candidate is not in a native driver and cannot replace
+the live tag206. A physical comparison must account for the size-compacted
 helpers separately from batching before attributing any speedup.
