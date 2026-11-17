@@ -38,7 +38,7 @@ assert not (input_trace and value_trace),'distinct capture roles cannot be combi
 if input_trace or value_trace:
  assert '--qgw8-dense-stage-trace' not in options,'distinct capture roles cannot be combined'
  options=['--qgw8-dense-stage-trace' if x in ('--qgw8-dense-input-trace','--qgw8-dense-value-trace') else x for x in options]
-assert 3<=len(sys.argv)<=26 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace','--ffn-shared-input-reuse'} and (not compact_inspection or '--inspect-candidate' in options)
+assert 3<=len(sys.argv)<=27 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms','--hybrid-reuse-input','--hybrid-matrix-attention','--hybrid-queued-counters','--head-matrix-inspection','--qgw8-dense-stage-trace','--ffn-shared-input-reuse','--ffn-recipe-reuse-v2'} and (not compact_inspection or '--inspect-candidate' in options)
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -63,6 +63,8 @@ assert not fast_rms or (inspect and hybrid and f32),'approximate RMS requires th
 reuse_input='--hybrid-reuse-input' in options
 assert not reuse_input or (inspect and hybrid and not fast_rms),'input reuse requires its distinct hybrid inspection image'
 ffn_shared_reuse='--ffn-shared-input-reuse' in options
+ffn_recipe_v2='--ffn-recipe-reuse-v2' in options
+assert not ffn_recipe_v2 or (inspect and ffn_shared_reuse),'FFN recipe V2 is a separate inspection-only correction'
 assert not ffn_shared_reuse or (inspect and precise and worker_admission and pushed and not bf16 and not hybrid), \
  'Q4 FFN shared-input reuse requires the distinct inspected precise/QGW3 all-device component profile'
 bf16_profile='--bf16-profile' in options
@@ -118,6 +120,7 @@ flags+=['-isystem',haiku_headers,'-isystem',haiku_headers/'posix']
 compact_flags=['-include',here/'PioneerQ38FreestandingMemcpy.h'] if compact_inspection else []
 run(tool+'g++',*flags,*compact_flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1'] if ffn_shared_reuse else []),
+ *(['-DPIONEER_Q38_FFN_RECIPE_REUSE_V2=1'] if ffn_recipe_v2 else []),
  *(['-DPIONEER_Q38_QGWA_BATCH_ROOT_IMAGE=1'] if qgwa_root else []),
  *(['-DPIONEER_Q38_QGWC_SRCA_ROOT_IMAGE=1'] if qgwc_root else []),
  *(['-DPIONEER_Q38_QGWD_ROOT_IMAGE=1','-DPIONEER_Q38_DENSE_Q8_MATRIX_WORKER_INSPECTION=1'] if qgwd_root else []),

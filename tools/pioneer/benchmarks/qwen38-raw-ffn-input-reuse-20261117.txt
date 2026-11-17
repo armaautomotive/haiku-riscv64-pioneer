@@ -1,0 +1,38 @@
+Raw-Q4 shared FFN input: repaired ROOT admission (offline)
+=========================================================
+
+The earlier raw gate/up input-reuse candidate checked the previous
+frame's word 53 for a nonzero input address. Its caller actually passed
+the sealed raw recipe from RecipeCopies. The raw FFN recipe requires
+words 46–63 to be zero, so the check rejects the valid gate->up path
+before the second projection. The old fixture set word 53 on both
+frames, which did not model this distinction. This is separate from
+the November 13 BF16 producer-reuse experiment.
+
+The new inspection profile compares the authenticated gate recipe
+with the current private up frame. It requires the same request
+position, source token, layer, banks and source identities, adjacent
+recipe sequence, exact 5120/Q4 gate and up roles, and the fixed
+normalized input alias supplied from the materialized frame. The
+existing caller seals the recipes and runs these two projections in
+immediate sequence. This fixes admission only; the existing worker
+and ROOT audits, weight tiles, result math and receipt accounting are
+unchanged. The preexisting mode can skip two worker input reads (10,368
+bytes) per active role-3 worker. The 48 recurrent layers' theoretical
+source count is up to 11,424 reads / 59,222,016 bytes per token. That is
+on-card activation traffic, not PCIe or a physical timing estimate.
+
+The real-format predicate passed ASan/UBSan and the candidate pairing
+checks. The compact RV32 ROOT built twice, byte-for-byte, for inspection.
+.text is 120,656 of 131,072 bytes and .conv 29,504 of 32,768 bytes;
+boot and terminal keep their established bytes. The emitted EOG test
+passed. Complete ELF SHA256:
+e59cdec3d494e7a264b6904fc6cca62fae49fb82d593ef070c5ff52b383b979d.
+The default and historical pinned build profiles were not repointed.
+
+  python3 tools/pioneer/build_qwen38_full_offload_root.py SDK NEW_OUTPUT --inspect-candidate --compact-inspection --ffn-shared-input-reuse --ffn-recipe-reuse-v2
+
+Not a native package, live execution, speed result or broad model
+quality check. The next proof is a linked matched recurrent-layer
+simulation that observes gate retaining and up consuming the exact
+shared operand and scales against the non-reuse path.

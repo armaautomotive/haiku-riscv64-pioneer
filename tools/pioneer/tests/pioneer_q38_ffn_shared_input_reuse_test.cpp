@@ -26,6 +26,18 @@ int main(){
  up[14]++;assert(Pair(gate,up));up[14]--;
  up[15]++;assert(Pair(gate,up));up[15]--;
  assert(!Pair(nullptr,up));
+ // Previous is an authenticated raw recipe: word 53 must be zero. The
+ // current private frame supplies the normalized input alias separately.
+ const unsigned input=up[53];gate[53]=0;
+ gate[6]=120;up[6]=121;
+ assert(!Pair(gate,up) && PairFromRecipe(gate,up,input));
+ const unsigned checked[]={3,4,6,8,9,14,15,16,21,32,39,40,41,42,43,53};
+ for(unsigned field:checked){
+  gate[field]^=1;assert(!PairFromRecipe(gate,up,input));gate[field]^=1;
+  up[field]^=1;assert(!PairFromRecipe(gate,up,input));up[field]^=1;
+ }
+ assert(!PairFromRecipe(gate,up,input+4));
+ assert(!PairFromRecipe(gate,up,0));
  assert(InputReads(false,5120)==2 && InputFlits(false,5120,20)==162);
  assert(InputReads(true,5120)==0 && InputFlits(true,5120,20)==0);
  assert(InputReads(false,6144)==2 && InputFlits(false,6144,24)==194);

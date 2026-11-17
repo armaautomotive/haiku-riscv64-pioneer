@@ -30,13 +30,24 @@ PINS_COMPACT_INSPECTION=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9
   ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
   ('conv.bin',29500,'3516ece88ba1e926c158fdd02865e18b8c62b1e52835e94384aa35730fdc68b0'),
   ('program.elf',184348,'c7037c9d2a52db5e4a0d6a7b3234b0d2ee100ddf31e3757e00610f848c9a12a9'))
+PINS_FFN_RECIPE_REUSE_V2_INSPECTION=(
+  ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+  ('text.bin',120656,'c74462e265dff9705b98a8628ee30ebe294c130834c072bc674af6bdfaa6861d'),
+  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+  ('conv.bin',29504,'dd181b4bc8075c827d051ba05958010b270f2fcce7580d4cbde15ba8fb5095bd'),
+  ('program.elf',184416,'e59cdec3d494e7a264b6904fc6cca62fae49fb82d593ef070c5ff52b383b979d'))
 ffn_shared_reuse='--ffn-shared-input-reuse' in args
 if ffn_shared_reuse:
     if args.count('--ffn-shared-input-reuse')!=1:raise SystemExit(2)
     args.remove('--ffn-shared-input-reuse')
+ffn_recipe_v2='--ffn-recipe-reuse-v2' in args
+if ffn_recipe_v2:
+    assert args.count('--ffn-recipe-reuse-v2')==1 and ffn_shared_reuse and inspect_candidate and compact_inspection
+    args.remove('--ffn-recipe-reuse-v2')
 assert __debug__ and len(args)==2
 assert not compact_inspection or inspect_candidate,'compact controller/components are inspection-only'
-assert not (compact_inspection and ffn_shared_reuse),'compact inspection profile cannot combine with FFN reuse'
+assert not (compact_inspection and ffn_shared_reuse and not ffn_recipe_v2), \
+    'the historical FFN reuse image cannot combine with compact inspection'
 assert not (compact_inspection and spill_root_code),'spill ROOT code uses the production-size compiler profile'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
@@ -64,7 +75,8 @@ run([sys.executable,str(here/'build_qwen38_global_token_components.py'),str(buil
      '--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion',
      *(('--inspect-candidate',) if inspect_candidate else ()),
      *(('--compact-inspection',) if compact_inspection else ()),
-     *(('--ffn-shared-input-reuse',) if ffn_shared_reuse else ())])
+     *(('--ffn-shared-input-reuse',) if ffn_shared_reuse else ()),
+     *(('--ffn-recipe-reuse-v2',) if ffn_recipe_v2 else ())])
 run([tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',str(here/'blackhole_qwen38_global_chain_start.S'),'-o',str(base/'start.o')])
 root_flags=[('-Os' if compact_inspection and flag=='-O2' else flag) for flag in flags]
 run([tool+'g++',*root_flags,*(['-include',str(here/'PioneerQ38FreestandingMemcpy.h')] if compact_inspection else []),
@@ -104,7 +116,7 @@ if ffn_shared_reuse:
             data=(out/name).read_bytes()
             assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
 if compact_inspection:
-    for name,size,digest in PINS_COMPACT_INSPECTION:
+    for name,size,digest in (PINS_FFN_RECIPE_REUSE_V2_INSPECTION if ffn_recipe_v2 else PINS_COMPACT_INSPECTION):
         data=(out/name).read_bytes()
         assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
     print('PASS reproducible compact inspection image; fixed regions fit; still UNQUALIFIED for runtime/install/physical inference',flush=True)

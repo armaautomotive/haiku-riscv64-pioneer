@@ -9,6 +9,11 @@
 #ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
 #include "PioneerQ38FfnSharedInputReuse.h"
 #endif
+#if defined(PIONEER_Q38_FFN_RECIPE_REUSE_V2) && (PIONEER_Q38_FFN_RECIPE_REUSE_V2 != 1 \
+ || !defined(PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE) || defined(_KERNEL_MODE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE))
+#error FFN recipe reuse V2 is an isolated Q4 ROOT inspection
+#endif
 #ifdef PIONEER_Q38_RECURRENT_HISTORY_STAGING_IMAGE
 #include "PioneerQ38RecurrentHistoryImageRole.h"
 #include "PioneerQ38RecurrentHistoryLayout.h"
@@ -110,7 +115,11 @@ static void Matrix(R::PrivateSeal* p,unsigned slot,unsigned count,unsigned phase
   // Matrix() entry has already RecipeSeal()ed every recipe against this same
   // private outer frame; Pair checks only the Q4 gate/up/input relation.
   const auto* previous=Words(R::RecipeCopies+(slot-1)*R::RecipeStride);
+#ifdef PIONEER_Q38_FFN_RECIPE_REUSE_V2
+  reuseSharedInput=PioneerQ38FfnSharedInputReuse::PairFromRecipe(previous,d,R::Input);
+#else
   reuseSharedInput=PioneerQ38FfnSharedInputReuse::Pair(previous,d);
+#endif
   if(!reuseSharedInput)scalar_fault_park();
  }
  unsigned n=d[11];if(Projection::Run(d)!=n)scalar_fault_park();RecipeSeal(count);

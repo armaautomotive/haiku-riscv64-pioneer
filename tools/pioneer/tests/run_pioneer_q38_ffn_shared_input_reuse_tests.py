@@ -28,6 +28,7 @@ assert 'PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE' in recurrent
 assert 'if(slot==1)' in recurrent
 assert 'slot==5?2:slot==6?3' in recurrent_layout
 assert 'Pair(previous,d)' in recurrent
+assert 'PairFromRecipe(previous,d,R::Input)' in recurrent
 reuse_header=(root/'PioneerQ38FfnSharedInputReuse.h').read_text()
 assert 'same sealed recurrent request' in reuse_header
 assert recurrent.index('RecipeSeal(count);unsigned from') < recurrent.index('Pair(previous,d)')
@@ -43,6 +44,7 @@ assert 'InputFlits(j[9]==0,j[5],blocks)' in worker
 assert 'if (job[9]) SharedInputs(inputs,blocks);' in rows
 assert "'--ffn-shared-input-reuse'" in components
 assert "-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1" in components
+assert "-DPIONEER_Q38_FFN_RECIPE_REUSE_V2=1" in components and "'--ffn-recipe-reuse-v2'" in full_builder
 assert "'--ffn-shared-input-reuse'" in worker_builder
 assert "-DPIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE=1" in worker_builder
 assert "'--ffn-shared-input-reuse'" in token_builder
