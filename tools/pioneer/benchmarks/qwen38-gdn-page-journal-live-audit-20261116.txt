@@ -147,3 +147,31 @@ candidate SHA-256
 This is build-only evidence for the original-slot baseline. The candidate
 is a different binary from the running one even though the tag is the same;
 do not substitute it in an existing one-shot stage.
+
+Ordinary held L1 journal: batched-read inspection
+-------------------------------------------------
+After completing the prepared weight upload, the live tag206 worker's
+Haiku thread continued increasing kernel CPU time at roughly wall time
+with unchanged user CPU time, without the explicit post-START marker.
+This does not identify its exact subphase or prove any device progress.
+
+The ordinary routed-token journal alone saves 11,528,762 words
+(46,115,048 bytes) and rereads each one before installing firmware. This
+is separate from the 97,484,800-byte scattered-state journal. Currently
+each original ordinary-journal word takes the scalar checked IO path.
+`PioneerQ38HeldSnapshotBatch.h` groups the same visitation order only
+within an existing L1 span and one existing uncached aperture, at most
+128 32-bit reads per group. The boot instruction and special tail view
+are preserved as scalar operations. A batch has a scope check before and
+after the reads and does not publish any new saved words on failure.
+
+The exhaustive ASan/UBSan test compared all 120 workers' 11,528,762
+addresses and returned values to the legacy per-word traversal. Per
+pass, it produced 90,061 mapped batches plus 1,080 scalar exceptions;
+both original-data passes and the number/type of 32-bit loads remain
+unchanged. Mixed apertures, an unmapped address, invalid bounds, and
+pre-read, mid-load and late-scope faults were refused. These are source
+and fixture counts, not measured PCIe traffic or time. The helper has
+not been wired into a driver; it cannot change the live experiment.
+
+  clang++ -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_held_snapshot_batch_test.cpp -o NEW_TEST_BINARY
