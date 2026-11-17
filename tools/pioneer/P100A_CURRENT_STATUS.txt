@@ -29,15 +29,14 @@ verified after each run; after tag208, generation6 was idle with all
 64 CPUs and 137034936320 bytes of RAM. See
 benchmarks/qwen38-head-csr-batch-20261117.txt. No Assistant changes.
 
-The FFN refetch control tag211 completed cleanly at
-0.172983648..0.172987019 tok/s over the matched 31 post-prompt steps.
-It produced the expected counting answer with no CPU inference.
-Independent postflight verified stable041 generation8 idle, all64 CPUs
-and 137034936320 bytes RAM. Only then was the guarded reuse tag212
-launched. It is authenticating the same model as generation9 from
-/boot/home/pioneer-q38-ffn-retained-reuse-212, parent1993/client2060/
-worker2061. Do not interfere while the pair lock is held. No reuse rate
-or FFN speedup yet. See benchmarks/qwen38-raw-ffn-input-reuse-20261117.txt.
+The matched FFN comparison is closed. Both variants produced the exact
+counting answer with no CPU inference. Across 31 post-prompt steps,
+tag211 refetch measured 0.172983648..0.172987019 tok/s, and tag212 reuse
+measured 0.172859010..0.172862375 tok/s (0.07% lower in this pair; no
+demonstrated speedup). Independent postflight verified stable041
+generation10 idle, cold0/owner0/guard1, all 64 CPUs and 137034936320 bytes
+RAM. No Assistant changes. See
+benchmarks/qwen38-raw-ffn-input-reuse-20261117.txt.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the

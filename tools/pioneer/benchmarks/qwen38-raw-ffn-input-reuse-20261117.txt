@@ -231,8 +231,8 @@ text 130,212/131,072 bytes, conv 32,680/32,768. No native package, deployment,
 model output or throughput claim for this third variant. Tags 211 and 212
 remain the two-way peer-fetch comparison and do not include this change.
 
-Physical refetch control completed; reuse started
--------------------------------------------------
+Physical refetch/reuse comparison completed
+-------------------------------------------
 After the output-head A/B closed and independently verified idle stable041
 generation6, the tagged FFN refetch package and runner were hashed on
 Haiku. The preflight confirmed idle stable041, 64 CPUs and 137034936320
@@ -253,6 +253,18 @@ the closed Mac capture is /private/tmp/q38-ffn-refetch-211-closed.X4ynua5w.
 Only after that closure, the exact reuse package passed preflight and was
 launched at /boot/home/pioneer-q38-ffn-retained-reuse-212, tag212/gen9.
 Runner SHA256 442ce0b55c2cfcc5b6e87380a300a28ebabac991c42f7d9d844c34cb8218456f.
-Parent1993, client2060 and worker2061 were observed authenticating the
-same model. It must restore idle stable041 generation10 before another
-test. No reuse timing, benchmark speedup, or Assistant change is claimed.
+Tag212 produced the same byte-exact answer with 32 output tokens and
+zero CPU inference contexts. The matched count window (commits 31..62)
+took 179333415..179336906 us, or 0.172859010..0.172862375 tok/s.
+The timing bounds put reuse 0.0701..0.0740% below refetch in this pair.
+This is not evidence of improvement or of a repeatable slowdown;
+neither variant approaches 20 tok/s. Weight upload and START are
+outside the rate window.
+
+The parent and benchmark exited 0; both stderr files were empty. The
+runner, package artifacts, lock/process closure, exact installed stable041
+bytes and generation10 idle/cold0/owner0/guard1 were independently
+verified after END. Haiku retained all 64 CPUs and 137034936320 bytes RAM.
+Transcript SHA256 660941106da856b92d5ebf2e6e7a700a5b580e2b299821ca07d8a35d4d1e4f37;
+nine-file closed Mac capture /private/tmp/q38-ffn-reuse-212-closed.AJ84JRLp.
+No Assistant change. Do not promote FFN reuse based on this comparison.
