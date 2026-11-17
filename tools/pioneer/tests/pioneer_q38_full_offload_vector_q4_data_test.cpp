@@ -85,7 +85,10 @@ int main(int argc,char** argv){
    assert(!P::ProgramWord(worker,last,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
   assert(ordinal==P::CodeWords(worker));total+=ordinal;
-#ifndef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FFN_RETAINED_NATIVE_PAIR
+  const unsigned rootWords=PIONEER_DRIVER_BUILD_TAG==UINT64_C(0x2026111700010212)?40720:40692;
+  assert(ordinal==(worker?26013U:rootWords));
+#elif !defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
   assert(ordinal==(worker?25946U:40610U));
 #endif
   assert(P::CodeAddress(worker,ordinal)==UINT32_MAX && P::CodeAddress(worker,UINT32_MAX)==UINT32_MAX);
@@ -103,7 +106,11 @@ int main(int argc,char** argv){
   }
 #endif
  }
-#ifndef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FFN_RETAINED_NATIVE_PAIR
+ assert(PIONEER_DRIVER_BUILD_TAG==UINT64_C(0x2026111700010211)
+  || PIONEER_DRIVER_BUILD_TAG==UINT64_C(0x2026111700010212));
+ assert(total==(PIONEER_DRIVER_BUILD_TAG==UINT64_C(0x2026111700010212)?3136267U:3136239U));
+#elif !defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
  assert(total==3128184);
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4

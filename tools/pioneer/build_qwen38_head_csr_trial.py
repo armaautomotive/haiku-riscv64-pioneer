@@ -21,9 +21,16 @@ PACKAGES = {
 
 
 def bind(variant, start):
-    if variant not in PACKAGES or not re.fullmatch(r'[1-9][0-9]{0,5}', start):
-        raise ValueError('supply serial/candidate and the observed positive stable generation')
-    tag, driver, worker, client = PACKAGES[variant]
+    return bind_raw_pair(variant, start, PACKAGES, 'head-csr', 'head CSR', 'HEAD_CSR')
+
+
+def bind_raw_pair(variant, start, packages, route, title, marker):
+    assert (route,title,marker) in (('head-csr','head CSR','HEAD_CSR'),
+                                     ('ffn-retained','retained FFN','FFN_RETAINED'))
+    if variant not in packages or not re.fullmatch(r'[1-9][0-9]{0,5}', start):
+        raise ValueError('supply an exact pair variant and the observed positive stable generation')
+    tag, driver, worker, client = packages[variant]
+    assert re.fullmatch(r'[0-9]{16}', tag) and all(re.fullmatch(r'[0-9a-f]{64}', h) for h in (driver,worker,client))
     g0 = int(start)
     g1, g2 = g0+1, g0+2
     raw = TEMPLATE.read_bytes()
@@ -38,9 +45,10 @@ def bind(variant, start):
         text = text.replace(old, new)
 
     change('# One new, exact-generation all-card trial. Never run a spent stage.',
-           f'# One fresh {variant} head CSR raw-Q4 trial. Bound to stable generation {g0}.')
+           f'# One fresh {variant} {title} raw-Q4 trial. Bound to stable generation {g0}.')
     change('stage=/boot/home/pioneer-q38-tag206-phase-rate-20261117-a',
-           f'stage=/boot/home/pioneer-q38-head-csr-{variant}-{tag[-3:]}\n'
+           f'stage=/boot/home/pioneer-q38-{route}-{variant}-{tag[-3:]}\n'
+           # Both experiments share the same lock, including live tag208.
            'pairLock=/boot/home/.pioneer-q38-head-csr-exclusive')
     change('candidate=/boot/home/pioneer-q38-gdn-l1-tag206-20261116-a/tenstorrent_pci_probe-gdn-l1-206',
            'candidate=$stage/tenstorrent_pci_probe-native')
@@ -85,7 +93,7 @@ def bind(variant, start):
            '# report a pass until a fresh, idle generation3 and the stable hash agree.',
            '# A closed client is not a physical pass without stable-driver restoration\n'
            '# and independent validation of the entire token/count transcript.')
-    text = text.replace('TAG206_PHASE_RATE', 'HEAD_CSR_RATE').replace('TAG206', 'HEAD_CSR')
+    text = text.replace('TAG206_PHASE_RATE', marker+'_RATE').replace('TAG206', marker)
     return text
 
 

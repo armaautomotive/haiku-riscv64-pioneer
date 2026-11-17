@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import runpy
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 
 
@@ -11,6 +12,8 @@ HERE = Path(__file__).resolve().parent
 BUILDER = HERE.parent / 'build_qwen38_head_csr_trial.py'
 SEED_TEST = HERE / 'pioneer_q38_tag206_phase_rate_once_test.py'
 bind = runpy.run_path(str(BUILDER))['bind']
+sys.path.insert(0,str(HERE.parent))
+from build_qwen38_vector92_ffn_trial import bind as bind_ffn
 FAKES = runpy.run_path(str(SEED_TEST))['FAKES']
 FAKES = FAKES.replace('installed=$stage/installed', 'pairLock=$stage/shared-lock\ninstalled=$stage/installed')
 FAKES = FAKES.replace('metadata "$stableTag" 1', 'metadata "$stableTag" "$PIONEER_FAKE_GEN"')
@@ -27,22 +30,26 @@ FAKES = FAKES.replace('--quiesce)\n  test', '--quiesce)\n  if [ "$PIONEER_FAKE_C
 
 
 def main():
-    for bad in ('0', '01', ' 3', '2\n', '-1', '1000000', '3;exit'):
-        try:
-            bind('serial', bad)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError(bad)
+    for builder,name in ((bind,'serial'),(bind_ffn,'refetch')):
+        for bad in ('0', '01', ' 3', '2\n', '-1', '1000000', '3;exit'):
+            try:
+                builder(name,bad)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(bad)
     cases = ('preflight', 'stale', 'lock', 'link-lock', 'success', 'fail', 'bad-marker',
              'no-rate', 'stderr', 'owned', 'exchange-unknown')
     with TemporaryDirectory(prefix='pioneer-head-csr-rate-') as tmp:
         # 2 and 3 exercise overlapping old/new generation values, 15 the
         # hexadecimal wait boundary. The check also fixes per-variant tags.
-        for index, (name, start) in enumerate((('serial', 2), ('candidate', 3), ('serial', 15))):
-            source = bind(name, str(start))
-            tag = f'202611170001020{7 if name == "serial" else 8}'
+        trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
+                (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'))
+        for index, (builder, name, start, suffix) in enumerate(trials):
+            source = builder(name, str(start))
+            tag = '2026111700010'+suffix
             assert f'candidateTag={tag}' in source
+            assert 'pairLock=/boot/home/.pioneer-q38-head-csr-exclusive' in source
             assert f'metadata "$stableTag" {start} &&' in source
             assert f'--wait "$candidateTag" {start:016x}' in source
             assert f'--wait "$stableTag" {start+1:016x}' in source
@@ -93,7 +100,7 @@ def main():
                 spent = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert spent.returncode == 1
                 assert (mutations.read_bytes() if mutations.exists() else b'') == previous
-    print('PASS: both variants, 33 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
+    print('PASS: both raw pairs, 55 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
 
 
 if __name__ == '__main__':

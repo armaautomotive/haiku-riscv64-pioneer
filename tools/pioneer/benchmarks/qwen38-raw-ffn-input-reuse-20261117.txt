@@ -163,6 +163,43 @@ closure, model execution, or a physical result.
   python3 tools/pioneer/build_qwen38_vector92_ffn_root.py SDK NEW_OUTPUT
   python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_linked_tests.py SDK REUSE_ELF REFETCH_ELF --vector92
 
-Next package these two exact controllers with the one verified vector92
-reuse sender, check the final linked arrays and native journal, then
-measure inside a guarded same-answer A/B run. Nothing was installed.
+Native A/B pair and guarded runner (offline)
+------------------------------------------
+Rebuilt and authenticated the previously measured vector92 driver,
+vocabulary-only worker and rate client. Both new packages carry one
+common reuse-capable sender, and their firmware differs only in the two
+linked ROOT arrays. Re-extraction from each final Haiku driver checked all fourteen
+arrays: compared with the measured driver only RootText, RootAux, and
+PeerFront were replaced. The two tagged host workers retain the same
+exact symbol imports as the measured build. Correct tag211/tag212 pairs
+build; old, crossed, missing/private-role, CPU and hybrid modes refuse.
+Existing output-head packages rebuilt byte-for-byte after helper reuse.
+Two isolated builds reproduced both FFN manifests, including all six
+driver, worker, and rate-client SHA256 values.
+
+The linked driver's program accessors were also executed as host-side
+DATA under ASan/UBSan. The test compared all 3,136,239/3,136,267 words
+(refetch/reuse) for all 120 journal layouts, using the corresponding
+authenticated ROM images; each rejected 10,013 invalid or DATA-only
+lookups. This guards the enlarged 9,500-byte PeerFront within the same
+12 KiB journal window; no card/restore execution is implied. Four mixed
+or altered pinned ELF/section inputs failed before native packaging.
+
+Driver SHA256:
+  tag211 refetch 36643b63b2cdda95db5b65cbc8ee6fd5304d46a6295ed493e4d20af76d5e4abf
+  tag212 reuse   24242b69f8bb0c792d65f76973249b8b50b0421cc2e35ed2e7a0c96a62e4ee06
+The one-shot builder separately pins all six binaries and exact remote
+worker paths. It shares the output-head benchmark's exclusive lock and
+requires a fresh stage and the *observed* stable generation. Across
+both raw pairs, 55 fake-board cases passed: stale and concurrent stages
+are refused; clean exit restores stable041; unknown ownership retains
+the lock without another device exchange. Existing deployed output-head
+scripts remain byte-identical. These are offline gates, not a live run.
+
+  python3 tools/pioneer/build_qwen38_vector92_ffn_native_pair.py SDK FROZEN_LIBRARIES ROOT_PAIR PEER_REUSE NEW_OUTPUT
+  python3 tools/pioneer/build_qwen38_vector92_ffn_trial.py refetch OBSERVED_STABLE_GENERATION NEW_SCRIPT
+  python3 tools/pioneer/tests/pioneer_q38_head_csr_trial_test.py
+
+Next test the two packages in a guarded same-answer A/B after the
+active output-head test is closed and stable is independently restored.
+No new driver was staged or installed, and no FFN speedup is measured.

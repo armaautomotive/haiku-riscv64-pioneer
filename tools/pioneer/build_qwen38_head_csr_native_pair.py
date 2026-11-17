@@ -44,6 +44,7 @@ VARIANTS = {
 ARRAY = re.compile(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=\{'
                    r'.*?\n\};\nstatic_assert\(sizeof\(\2\)==[0-9]+,"exact complete \2 DATA"\);', re.S)
 MARKER = 'PIONEER_Q38_HEAD_CSR_NATIVE_PAIR'
+ROOT_PAIR = frozenset({'RootText', 'RootAux'})
 
 
 def sha(data):
@@ -57,17 +58,18 @@ def pinned(path, digest):
     return data
 
 
-def load_variant(pair, name, tool):
-    tag, elf_sha, text_pin, conv_pin = VARIANTS[name]
-    image = pinned(pair / (name + '.elf'), elf_sha)
-    folder = pair if name == 'candidate' else pair / 'serial'
-    arrays = {}
-    sections = (
+def root_sections(text_pin, conv_pin):
+    return (
         ('RootBoot', 'boot', (4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')),
         ('RootText', 'text', text_pin),
         ('RootTerminal', 'terminal', (8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')),
         ('RootAux', 'conv', conv_pin))
-    with TemporaryDirectory(prefix='q38-head-csr-sections-', dir='/private/tmp') as stage:
+
+
+def load_sections(tool, image_path, folder, elf_sha, sections):
+    image = pinned(image_path, elf_sha)
+    arrays = {}
+    with TemporaryDirectory(prefix='q38-pair-sections-', dir='/private/tmp') as stage:
         elf = Path(stage) / 'checked.elf'
         elf.write_bytes(image)
         for label, section, (size, digest) in sections:
@@ -75,17 +77,26 @@ def load_variant(pair, name, tool):
             assert len(data) == size and not size % 4
             dest = Path(stage) / (section + '.bin')
             subprocess.run([tool + 'objcopy', '-O', 'binary', '-j', '.' + section, elf, dest], check=True)
-            assert data == dest.read_bytes(), (name, section)
+            assert data == dest.read_bytes(), (image_path, section)
             arrays[label] = data
+    return arrays
+
+
+def load_variant(pair, name, tool):
+    tag, elf_sha, text_pin, conv_pin = VARIANTS[name]
+    folder = pair if name == 'candidate' else pair / 'serial'
+    arrays = load_sections(tool, pair / (name + '.elf'), folder, elf_sha, root_sections(text_pin, conv_pin))
     return tag, arrays
 
 
-def new_programs(original, arrays):
+def new_programs(original, arrays, replacements=ROOT_PAIR):
+    assert replacements in (ROOT_PAIR, ROOT_PAIR | {'PeerFront'})
+    assert replacements <= set(arrays) <= replacements | {'RootBoot', 'RootTerminal'}
     replaced = set()
 
     def replace(match):
         label = match[2]
-        if label not in arrays or label in {'RootBoot', 'RootTerminal'}:
+        if label not in replacements:
             if label in arrays:
                 assert sha(arrays[label]) == match[1], label
             return match[0]
@@ -99,7 +110,7 @@ def new_programs(original, arrays):
 
     assert len(ARRAY.findall(original)) == 14
     result = ARRAY.sub(replace, original)
-    assert replaced == {'RootText', 'RootAux'} and len(ARRAY.findall(result)) == 14
+    assert replaced == replacements and len(ARRAY.findall(result)) == 14
     return result
 
 
@@ -138,8 +149,14 @@ def commands(directory):
     return [line.split('\t') for line in (directory/'build-argv.txt').read_text().splitlines()]
 
 
-def build_variant(name, variant, out, source, native, client, tool, original):
+def build_variant(name, variant, out, source, native, client, tool, original, *,
+                  marker=MARKER, pair_label='head-csr', other_tag=None, replacements=ROOT_PAIR):
     tag, arrays = variant
+    assert pair_label in ('head-csr', 'ffn-retained') and marker in (MARKER, 'PIONEER_Q38_FFN_RETAINED_NATIVE_PAIR')
+    if other_tag is None:
+        other_tag = next(v[0] for n, v in VARIANTS.items() if n != name)
+    refusal = ('Qwen head A/B build role required' if marker == MARKER
+               else 'Qwen retained FFN A/B build role required')
     work = out / name
     work.mkdir(mode=0o700)
     overlay = work / 'source'
@@ -151,10 +168,9 @@ def build_variant(name, variant, out, source, native, client, tool, original):
         assert text.count(OLD_TAG) == 1
         text = text.replace(OLD_TAG, tag)
         if filename.endswith('Role.h'):
-            text = (f'#if !defined({MARKER}) || {MARKER} != 1\n'
-                    '#error Qwen head A/B build role required\n#endif\n' + text)
+            text = f'#if !defined({marker}) || {marker} != 1\n#error {refusal}\n#endif\n' + text
         path.write_text(text)
-    programs = new_programs(original, arrays)
+    programs = new_programs(original, arrays, replacements)
     (overlay / TOOLS / 'PioneerQ38FullOffloadVectorQ4Programs.h').write_text(programs)
     nc = next(c for c in commands(native) if str(native/'native.o') in c and '-c' in c)
     nl = next(c for c in commands(native) if str(native/DRIVER) in c and '-shared' in c)
@@ -162,7 +178,7 @@ def build_variant(name, variant, out, source, native, client, tool, original):
     assert all(c[0] == tool + 'g++' for c in (nc, nl, uc, ul, rate))
     for command in (nc, uc):
         command[:] = [a.replace(str(source), str(overlay)) for a in command]
-        command.insert(1, '-D' + MARKER + '=1')
+        command.insert(1, '-D' + marker + '=1')
     old_tag = '-DPIONEER_DRIVER_BUILD_TAG=' + OLD_TAG + 'ULL'
     nc[nc.index(old_tag)] = '-DPIONEER_DRIVER_BUILD_TAG=' + tag + 'ULL'
     nc[nc.index('-MF')+1] = str(work/'native.d')
@@ -172,7 +188,7 @@ def build_variant(name, variant, out, source, native, client, tool, original):
     nl[nl.index('-o')+1] = str(work/DRIVER)
     ul = [str(work/'worker.o') if a == str(client/'worker.o') else a for a in ul]
     ul[ul.index('-o')+1] = str(work/WORKER)
-    worker_path = f'/boot/home/pioneer-q38-head-csr-{name}-{tag[-3:]}/{WORKER}'
+    worker_path = f'/boot/home/pioneer-q38-{pair_label}-{name}-{tag[-3:]}/{WORKER}'
     i = next(i for i, a in enumerate(rate) if a.startswith('-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER='))
     rate[i] = '-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="' + worker_path + '"'
     rate[rate.index('-o')+1] = str(work/RATE)
@@ -180,18 +196,17 @@ def build_variant(name, variant, out, source, native, client, tool, original):
     for command in argv:
         subprocess.run(command, check=True, cwd=work)
     for command in (nc, uc):
-        refused = [('-U'+MARKER,), ('-U'+MARKER, '-D'+MARKER+'=0'),
+        refused = [('-U'+marker,), ('-U'+marker, '-D'+marker+'=0'),
                    ('-DPIONEER_Q38_CPU_VALIDATION=0',), ('-DPIONEER_Q38_WORK_INFERENCE=0',)]
         if command is nc:
-            peer_tag = next(v[0] for n, v in VARIANTS.items() if n != name)
             refused += [('-UPIONEER_DRIVER_BUILD_TAG', '-DPIONEER_DRIVER_BUILD_TAG='+t+'ULL')
-                        for t in (OLD_TAG, peer_tag)]
+                        for t in (OLD_TAG, other_tag)]
         for flags in refused:
             prefix, source_arg = command[:command.index('-c')], command[command.index('-c')+1]
             result = subprocess.run([*prefix, *flags, '-fsyntax-only', source_arg], cwd=work,
                                     capture_output=True, text=True)
             assert result.returncode and any(s in result.stderr for s in (
-                'Qwen head A/B build role required', 'Full-card vector Q4',
+                refusal, 'Full-card vector Q4',
                 'Full offload cannot alias', 'Full-offload client is separate')), flags
     for binary, baseline in ((DRIVER, native), (WORKER, client), (RATE, client)):
         undefined = lambda p: subprocess.check_output([tool+'nm', '-u', p])
@@ -210,17 +225,11 @@ def build_variant(name, variant, out, source, native, client, tool, original):
     return measured
 
 
-def main():
-    if not __debug__:
-        raise SystemExit('do not disable paired-build identity checks')
-    if len(sys.argv) != 5:
-        raise SystemExit('use SDK FROZEN_LLAMA_LIBRARIES PAIRED_ROOTS NEW_OUTPUT')
+def prepare_control(sdk, libraries, out):
     assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
-    sdk, libraries, pair, out = map(Path, sys.argv[1:])
-    assert all(p.is_absolute() for p in (sdk, libraries, pair, out))
+    assert all(p.is_absolute() for p in (sdk, libraries, out))
     assert not out.exists() and not out.is_symlink()
     tool = str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
-    inputs = {name: load_variant(pair, name, tool) for name in VARIANTS}
     repo = Path(__file__).resolve().parents[2]
     out.mkdir(mode=0o700)
     source, native, client = (out/d for d in ('source', 'native-control', 'client-control'))
@@ -242,6 +251,19 @@ def main():
         pinned(path, CONTROL[path.name])
     path = source/TOOLS/'PioneerQ38FullOffloadVectorQ4Programs.h'
     original = pinned(path, CONTROL[path.name]).decode()
+    return source, native, client, tool, original
+
+
+def main():
+    if not __debug__:
+        raise SystemExit('do not disable paired-build identity checks')
+    if len(sys.argv) != 5:
+        raise SystemExit('use SDK FROZEN_LLAMA_LIBRARIES PAIRED_ROOTS NEW_OUTPUT')
+    sdk, libraries, pair, out = map(Path, sys.argv[1:])
+    assert pair.is_absolute()
+    tool = str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
+    inputs = {name: load_variant(pair, name, tool) for name in VARIANTS}
+    source, native, client, tool, original = prepare_control(sdk, libraries, out)
     verified = {n: build_variant(n, v, out, source, native, client, tool, original) for n, v in inputs.items()}
     assert {label for label in verified['serial'] if verified['serial'][label] != verified['candidate'][label]} == {
         'RootText', 'RootAux'}
