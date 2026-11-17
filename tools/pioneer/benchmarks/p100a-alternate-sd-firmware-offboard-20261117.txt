@@ -74,3 +74,21 @@ banner and terminal result. Do not interpret a fallback Fedora boot or
 missing probe output as absence of the P100A under the alternate firmware.
 If it enumerates, collect the actual topology before rebuilding Haiku's
 guards. No SPI/NVMe write or new inference benchmark occurred.
+
+Diagnostic SD readback
+----------------------
+The first whole-image readback after imaging the separate spare SD
+(serial 0xf891) did not match, so the writer stopped without ejecting.
+A second read-only 268435456-byte capture on the Mac had SHA-256
+0362f73bbf93b5d9e4897d528d2ac8805b0048872b686313bfd19a78bd4c8956.
+The exact MBR, pre-partition space, all eight reserved FAT16 sectors and
+all eight boot payloads were unchanged. The independently verified FAT16
+structure passed `fsck_msdos -n`. A sector audit attributed every changed
+byte to macOS metadata: 48 data sectors in 10 newly allocated clusters
+of .Spotlight-V100 and .fseventsd, both mirrored FAT sectors assigning
+those previously free clusters, and one root directory sector containing
+the two new entries and a volume-label timestamp update. The existing
+boot directory entries, allocations and data sectors are unchanged.
+Reproduce with `audit_pioneer_pcie_sd_readback.py` against the pinned
+reviewed image and raw capture. The exact spare SD was safely ejected
+after verification; neither existing recovery card was used.
