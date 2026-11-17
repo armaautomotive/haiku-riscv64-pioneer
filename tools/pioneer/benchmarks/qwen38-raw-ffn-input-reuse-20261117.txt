@@ -32,7 +32,22 @@ The default and historical pinned build profiles were not repointed.
 
   python3 tools/pioneer/build_qwen38_full_offload_root.py SDK NEW_OUTPUT --inspect-candidate --compact-inspection --ffn-shared-input-reuse --ffn-recipe-reuse-v2
 
+Linked controller test
+----------------------
+The ASan/UBSan harness loads the actual .text/.conv from the exact
+pinned ELF. It builds the two real schema-valid recipes, executes the
+linked Matrix() materialization, copy, Shape and inlined admission,
+and observes the call to Projection::Run. The outer seals, phase
+publisher and projection arithmetic are explicit fixture endpoints.
+Each layer uses the same 5,120 actual input words for gate and up.
+The same image's real job writer emitted both 119-worker streams with
+the expected per-worker identity, weight coordinates and nonce: gate
+fetch=1, up fetch=0. Thirty-two late mutations of either the gate
+recipe or current up frame faulted before a second projection call.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_linked_tests.py SDK PINNED_COMPACT_V2_ELF
+
 Not a native package, live execution, speed result or broad model
-quality check. The next proof is a linked matched recurrent-layer
-simulation that observes gate retaining and up consuming the exact
-shared operand and scales against the non-reuse path.
+quality check. This verifies the logical dispatch boundary. Worker
+retention and consumption of the identical operand/scale bytes still
+need a matched test before packaging for the card.
