@@ -1,7 +1,24 @@
 P100A / Qwen 27B: current status
 ================================
-The user wants the P100A to remain in the new physical slot. Historic
-pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
+November 17: the user restored the original PCIe slot positions to resume
+model development. Fedora again enumerated Blackhole 1e52:b140/1e52:0043
+at 0002:81:00.0, unbound and disabled, with a 2.5 GT/s x8 (Gen1) link
+reported independently by both endpoint and root. No PCI register was
+written during that check. The disk-identity-aware SD-free helper with
+SHA 8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff
+loaded the pinned top-page7 profile; the older device-letter-pinned
+helper safely refused to stage when the two SATA disks were renumbered.
+After DHCP arrived, strict Haiku SSH confirmed Blackhole present, 64 CPUs,
+137034936320 bytes RAM, and exact stable041 driver tag2026102100010012
+generation1, cold0, active_owner0, guard1. No Assistant files changed.
+The fresh tag206 diagnostic worker and phase-bounded rate client are
+SHA-verified in /boot/home/pioneer-q38-tag206-phase-rate-20261117-a only;
+no new driver is installed and no model test has run. A new one-shot
+launch must bind to the fresh live generation and new worker/client
+hashes, not reuse either previous stage.
+
+Historical new-slot investigation (not the current slot):
+Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
 Radeon's previous root). The initial scans, one default-target link
 retrain, one clean firmware start, and one temporary Gen1 retrain failed
 to expose a 1e52 endpoint there. The original link target was restored and
