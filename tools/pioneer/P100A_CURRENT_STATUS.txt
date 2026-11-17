@@ -11,12 +11,14 @@ but the same root reports x8 capability and there is no active endpoint to
 verify a P100A link. Full evidence and the next safety gates are in
 benchmarks/p100a-new-slot-discovery-20261117.txt.
 
-Alternate RevyOS firmware test is prepared as a verified local SD image,
-with a read-only inventory initramfs replacing stock automatic OS boot.
-The init binary passed native isolated testing; the alternate firmware
-has not been booted. The existing Linux boot and recovery media remain
-unchanged. Physical trial needs a separately approved card. See
-benchmarks/p100a-alternate-sd-firmware-offboard-20261117.txt.
+Alternate RevyOS firmware booted from the verified spare SD (ZSBL 2.1.2,
+OpenSBI 1.7, Linux 6.18.2-g4a086bd11b15). The read-only inventory completed:
+the new slot's root 0000:00:00.0 was present, but no downstream card or
+other Blackhole endpoint was found. The Radeon enumerated under domain
+0002. The diagnostic parked without starting an installed OS. The root
+driver's Link up message neither proves a P100A link nor a link rate. This
+rules out a fix from this specific firmware change; it does not isolate
+the failure. See benchmarks/p100a-alternate-sd-firmware-offboard-20261117.txt.
 
 After the November 17 card swap Linux enumerated the display GPU at the old
 P100A BDF 0002:81:00.0, but no device with vendor 1e52 was listed anywhere.

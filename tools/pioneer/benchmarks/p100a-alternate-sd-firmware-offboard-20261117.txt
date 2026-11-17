@@ -1,6 +1,6 @@
-P100A new-slot firmware test: prepared, not booted
-=================================================
-November 17, 2026. Both cards stayed in place; Fedora 6.1.31 remains live.
+P100A new-slot firmware test: booted, no P100A endpoint
+======================================================
+November 17, 2026. Both PCIe cards stayed in place for all tests.
 The old firmware boot trace shows SG2042 ZSBL v0.2 and OpenSBI v1.2
 (2023-08-30 build). The live device tree and both installed Pioneer DTBs
 have identical pcie-id, link-id, linux,pci-domain, bus-range, reg, ranges
@@ -92,3 +92,35 @@ boot directory entries, allocations and data sectors are unchanged.
 Reproduce with `audit_pioneer_pcie_sd_readback.py` against the pinned
 reviewed image and raw capture. The exact spare SD was safely ejected
 after verification; neither existing recovery card was used.
+
+Physical boot (verified alternate SD)
+-------------------------------------
+The first ON pulse occurred before the card was physically inserted; that
+capture identified the old SPI ZSBL and Fedora 6.1.31 on NVMe. Linux was
+shut down cleanly, then the user inserted the verified diagnostic card.
+The next single ON pulse gave the following new UART evidence (separate
+capture, beginning at byte offset 117415454 in the zero-indexed raw log):
+
+  SOPHGO ZSBL v2.1.2 SG2042
+  OpenSBI v1.7
+  Linux version 6.18.2-g4a086bd11b15
+  sg2042-pcie 7060000000.pcie: Link up
+  sg2042-pcie 7060000000.pcie: PCI host bridge to bus 0000:00
+  pci 0000:00:00.0: [1f1c:2042] type 01 class 0x060400 PCIe Root Port
+  pci 0000:00:00.0: PCI bridge to [bus 01]
+  pci 0002:01:00.0: [1002:6779] type 00 class 0x030000 PCIe Legacy Endpoint
+  PIONEER_PCIE_SD_PROBE_BEGIN v1
+  PCIE_DEVICE 0000:00:00.0 0x1f1c:0x2042
+  PCIE_DEVICE 0002:01:00.0 0x1002:0x6779
+  P100A_NOT_ENUMERATED
+  PIONEER_PCIE_SD_PROBE_PARKED; NO_INSTALLED_OS_STARTED
+
+The complete inventory included 19 PCI functions. Domain 0000 contained
+only its root port; no 1e52 vendor or b140 endpoint occurred on any domain.
+`Link up` is the host-controller driver's condition before PCI enumeration,
+not evidence of a responding Blackhole or its negotiated speed. RevyOS's
+alternate firmware/kernel did not restore enumeration. This does not prove
+card failure or identify whether reset, power, lane/link or configuration
+transactions prevented discovery. No installed OS, benchmark, or driver
+ran the P100A. After the probe parked, one seven-second front-panel OFF
+hold completed; do not repeat it to confirm power state.
