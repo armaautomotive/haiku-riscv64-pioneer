@@ -76,3 +76,14 @@ platform registers, write SPI or weaken the Haiku guards. If firmware or a
 power-path inspection restores enumeration in this slot, capture the
 endpoint's topology and BAR windows with the read-only discovery helper
 before adapting the Haiku driver. No inference or speed result was produced.
+
+Offline BAR placement
+---------------------
+The minimal MMIO transaction now computes BAR0/BAR2 and the bridge window
+from validated host/PCI apertures. On the existing approved profile, the
+register values and write order are unchanged. Host tests cover translated
+and unaligned apertures, spans crossing a 4 GiB boundary, malformed or
+ambiguous ranges, and refusal of a new-root profile before any PCI write.
+The live admission profile still permits only the known legacy root; a
+valid calculation is not proof of endpoint enumeration or permission to
+program a different root. No driver was deployed for this change.

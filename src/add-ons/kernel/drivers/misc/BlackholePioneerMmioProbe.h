@@ -2,6 +2,7 @@
 #ifndef BLACKHOLE_PIONEER_MMIO_PROBE_H
 #define BLACKHOLE_PIONEER_MMIO_PROBE_H
 
+#include "PioneerBlackholeBarPlan.h"
 #include "PioneerMinimumBarLayout.h"
 
 enum {
@@ -63,7 +64,8 @@ struct tt_pioneer_mmio_transaction {
 };
 
 // Strict Pioneer mapping transaction. Only memory + INTx-disable (0x402)
-// may be enabled, NEVER bus mastering. All addressing is fixed and audited.
+// may be enabled, NEVER bus mastering. The legacy Pioneer root admission
+// remains pinned; compute the BAR settings only after it passes.
 // IO maps exactly the BAR0 NoC identification page read-only and uncached.
 template<class IO>
 bool
@@ -71,10 +73,18 @@ BlackholePioneerMmioBegin(IO& io, tt_pioneer_mmio_result& r,tt_pioneer_mmio_tran
 {
 	transaction={};
 	r = {};
+	const tt_pioneer_profile& profile = io.Profile();
 	r.version = 1;
-	r.profile_status = io.Profile().status;
-	r.profile_stage = io.Profile().stage;
-	if (!PioneerMinimumBarLayoutMatches(io.Profile()) || !io.Quiet()
+	r.profile_status = profile.status;
+	r.profile_stage = profile.stage;
+	PioneerBlackholeBarPlan plan;
+	if (!PioneerMinimumBarLayoutMatches(profile)
+		|| !PioneerPlanBlackholeBars(profile.ranges, TT_PIONEER_RANGE_COUNT, plan)
+		|| plan.hostStart[0] != profile.bar0_host_start
+		|| plan.hostEnd[0] != profile.bar0_host_end
+		|| plan.hostStart[1] != profile.bar2_host_start
+		|| plan.hostEnd[1] != profile.bar2_host_end
+		|| !io.Quiet()
 		|| !BlackholeCardControlsQuiet(io)
 		|| io.CardRead(0, 4) != 0xb1401e52 || io.CardRead(0x2c, 4) != 0x00431e52
 		|| io.RootRead(0, 4) != 0x20421e30
@@ -100,22 +110,22 @@ BlackholePioneerMmioBegin(IO& io, tt_pioneer_mmio_result& r,tt_pioneer_mmio_tran
 		return false;
 	r.stage = 1;
 	r.state = TT_PIONEER_MMIO_CONFIG_FAILED;
-	const uint32_t trial[] = {0x0c, 0x49, 0x2000000c, 0x49, 0x0c, 0xfffffff8};
 	const unsigned order[] = {5, 4, 1, 0, 3, 2};
 	transaction.config_attempted=true;
 	for (unsigned i : order)
-		io.CardWrite(0x10 + 4 * i, 4, trial[i]);
-	io.RootWrite(0x28, 4, 0x49);
-	io.RootWrite(0x2c, 4, 0x49);
-	io.RootWrite(0x24, 4, 0x20010001);
+		io.CardWrite(0x10 + 4 * i, 4, plan.bars[i]);
+	io.RootWrite(0x28, 4, plan.bridge[1]);
+	io.RootWrite(0x2c, 4, plan.bridge[2]);
+	io.RootWrite(0x24, 4, plan.bridge[0]);
 	do {
 		bool configured = true;
 		for (unsigned i = 0; i < 6; i++) {
 			r.bars_trial[i] = io.CardRead(0x10 + 4 * i, 4);
-			configured &= r.bars_trial[i] == trial[i];
+			configured &= r.bars_trial[i] == plan.bars[i];
 		}
-		configured &= io.RootRead(0x24, 4) == 0x20010001
-			&& io.RootRead(0x28, 4) == 0x49 && io.RootRead(0x2c, 4) == 0x49;
+		configured &= io.RootRead(0x24, 4) == plan.bridge[0]
+			&& io.RootRead(0x28, 4) == plan.bridge[1]
+			&& io.RootRead(0x2c, 4) == plan.bridge[2];
 		if (!configured)
 			break;
 		transaction.map_attempted = true;

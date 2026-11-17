@@ -110,6 +110,57 @@ struct MockIO {
 };
 
 #ifndef PIONEER_MMIO_PROBE_MODEL_ONLY
+static void TestBarPlan()
+{
+	const tt_pioneer_profile legacy = GoodProfile();
+	PioneerBlackholeBarPlan plan;
+	assert(PioneerPlanBlackholeBars(legacy.ranges, TT_PIONEER_RANGE_COUNT, plan));
+	assert(plan.hostStart[0] == legacy.bar0_host_start);
+	assert(plan.hostEnd[0] == legacy.bar0_host_end);
+	assert(plan.hostStart[1] == legacy.bar2_host_start);
+	assert(plan.hostEnd[1] == legacy.bar2_host_end);
+	assert(plan.bars[1] == 0x49 && plan.bridge[0] == 0x20010001);
+
+	// Keep host and PCI addresses distinct. BAR0's natural alignment leaves
+	// a gap at the aperture start, and BAR2 occupies the next upper dword.
+	const tt_pioneer_range alternate = {0x42dff00000, 0x41dff00000, 0x20200000, 1, 12};
+	assert(PioneerPlanBlackholeBars(&alternate, 1, plan));
+	assert(plan.hostStart[0] == 0x42e0000000 && plan.hostEnd[0] == 0x42ffffffff);
+	assert(plan.hostStart[1] == 0x4300000000 && plan.hostEnd[1] == 0x43000fffff);
+	assert(plan.bars[0] == 0xe000000c && plan.bars[1] == 0x41);
+	assert(plan.bars[2] == 12 && plan.bars[3] == 0x42);
+	assert(plan.bars[4] == 12 && plan.bars[5] == 0xfffffff8);
+	assert(plan.bridge[0] == 0x0001e001 && plan.bridge[1] == 0x41 && plan.bridge[2] == 0x42);
+
+	// Reject malformed and ambiguous inputs without publishing a partial plan.
+	const auto baseline = plan;
+	auto rejects = [&](const tt_pioneer_range* ranges, unsigned count) {
+		assert(!PioneerPlanBlackholeBars(ranges, count, plan));
+		assert(memcmp(plan.hostStart, baseline.hostStart, sizeof(plan.hostStart)) == 0);
+		assert(memcmp(plan.hostEnd, baseline.hostEnd, sizeof(plan.hostEnd)) == 0);
+		assert(memcmp(plan.bars, baseline.bars, sizeof(plan.bars)) == 0);
+		assert(memcmp(plan.bridge, baseline.bridge, sizeof(plan.bridge)) == 0);
+	};
+	rejects(nullptr, 1);
+	rejects(&alternate, 0);
+	rejects(legacy.ranges, TT_PIONEER_RANGE_COUNT + 1);
+	auto wrong = alternate;
+	wrong.size--; rejects(&wrong, 1);
+	wrong = alternate; wrong.size = 0; rejects(&wrong, 1);
+	wrong = alternate; wrong.host++; rejects(&wrong, 1);
+	wrong = alternate; wrong.type = 0; rejects(&wrong, 1);
+	wrong = alternate; wrong.flags = 4; rejects(&wrong, 1);
+	wrong = alternate; wrong.host = UINT64_MAX; rejects(&wrong, 1);
+	wrong = alternate; wrong.pci = UINT64_MAX; rejects(&wrong, 1);
+	wrong = alternate; wrong.pci = 0xfffffff7fff00000; rejects(&wrong, 1);
+	tt_pioneer_range windows[] = {alternate, {0x4700000000, 0x4600000000, 0x40000000, 1, 12}};
+	rejects(windows, 2); // Two independently viable prefetch windows.
+	windows[1] = {alternate.host, 0x1000, 0x1000, 2, 0};
+	rejects(windows, 2); // Same host bytes, even in a different PCI space.
+	windows[1] = {0x4700000000, alternate.pci, 0x1000, 1, 0};
+	rejects(windows, 2); // Ambiguous PCI memory address translation.
+}
+
 static void Refused(MockIO io)
 {
 	tt_pioneer_mmio_result r;
@@ -119,6 +170,7 @@ static void Refused(MockIO io)
 
 int main()
 {
+	TestBarPlan();
 	MockIO io;
 	tt_pioneer_mmio_result r;
 	tt_pioneer_mmio_transaction transaction={};
@@ -190,6 +242,14 @@ int main()
 	}
 	io = {}; io.profile.bar0_host_end--; Refused(io);
 	io = {}; io.profile.bar2_host_start++; Refused(io);
+	// Standalone address arithmetic is not authorization for a new root.
+	io = {};
+	io.profile.controller = 0x7060000000;
+	io.profile.config = 0x4000000000;
+	io.profile.ranges[3] = {0x4100000000, 0x4100000000, 0x200000000, 1, 12};
+	io.profile.bar0_host_start = 0x4100000000; io.profile.bar0_host_end = 0x411fffffff;
+	io.profile.bar2_host_start = 0x4120000000; io.profile.bar2_host_end = 0x41200fffff;
+	Refused(io);
 	io = {}; io.profile.controller++; Refused(io);
 	io = {}; io.profile.root_bus++; Refused(io);
 	io = {}; io.profile.card_bus++; Refused(io);
