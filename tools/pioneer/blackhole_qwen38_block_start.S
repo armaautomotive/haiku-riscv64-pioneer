@@ -69,7 +69,11 @@ block_done:
 .ifdef TT_Q38_STREAM
 	li t1,0x31533851 /* Q8S1:OFFLINE fullK stream,not local block48 */
 .else
+.ifdef TT_Q38_TWO_TOKEN_Q4
+	li t1,0x32543851 /* Q8T2:two distinct activation rows, offline only */
+.else
 	li t1,0x31423851 /* Q8B1:distinct from one-panel completion */
+.endif
 .endif
 .endif
 .endif
@@ -134,7 +138,11 @@ block_fault_park:
 .ifdef TT_Q38_STREAM
 	li t1,0x46533851 /* Q8SF:NO retry/reset/restore after uncertain fetch */
 .else
+.ifdef TT_Q38_TWO_TOKEN_Q4
+	li t1,0x46543851 /* Q8TF:no success/stop permission */
+.else
 	li t1,0x46423851 /* Q8BF:NO success/stop permission */
+.endif
 .endif
 .endif
 .endif

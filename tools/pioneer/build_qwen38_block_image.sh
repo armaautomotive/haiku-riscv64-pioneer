@@ -19,6 +19,7 @@ case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  10) source=blackhole_qwen38_vector_resident_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  11) source=blackhole_qwen38_bfloat_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  12) source=blackhole_qwen38_sfpu_accumulator_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
+ 13) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4=1';;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_STREAM_FAST:-0}" in
@@ -31,6 +32,10 @@ case "${PIONEER_Q38_FAST_SCALE:-0}" in
  1) [ "${PIONEER_Q38_STREAM_FAST:-0}" = 1 ] || exit 2; cppflag="$cppflag -DPIONEER_Q38_FAST_SCALE";;
  *) exit 2;;
 esac
+if [ "${PIONEER_Q38_STREAM_IMAGE:-0}" = 13 ]; then
+ [ -z "$cppflag" ] || exit 2
+ cppflag=-DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1
+fi
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"

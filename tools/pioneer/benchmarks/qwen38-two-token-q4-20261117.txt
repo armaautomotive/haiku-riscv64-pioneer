@@ -1,0 +1,46 @@
+Qwen 27B: two activation rows sharing one exact Q4_K weight panel
+==============================================================
+
+The existing raw Q4 projection uses one SrcB row per token; the other
+rows do not contribute useful activation results. The documented
+non-broadcast Tensix MVMUL multiplies eight activation rows by the same
+16x16 SrcA weight panel:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/MVMUL.md
+
+This isolated RV32 image fills rows 0 and 1 with two different
+activations and leaves 2..7 zero. It reads both signed integer dot rows
+after the actual final drain, applies the old Q4 coefficient, minimum
+and signed activation scale independently, and accumulates each output
+in the old FP32 operation order. This covers all sixteen K16 panels
+of one 16-output/K256 GGUF Q4_K block. It does not cover Q8/Q6 or a
+full-width model projection. It uses the original four fidelity phases,
+not a new or approximate numerical format. Each panel still unpacks
+the single weight tile once; the second token does not issue another
+matrix multiply. Publication happens only after both outputs are ready.
+
+The actual emitted RISC-V instructions passed the existing Tensix
+instruction simulator on 24 different blocks with signed/boundary
+scales: 768 bitwise-identical output words compared with two executions
+of the pinned single-token control. The control also passed independent
+dequantized-double comparison. Descriptor/non-finite/operand violations
+and deliberately duplicated activation rows were detected in the 274
+negative fixtures. The test checks disjoint writes, exact input/weight
+preservation, 16 weight unpacks, 64 matrix issues and no NoC/memory
+transport. No timing hardware or silicon behavior is simulated.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_two_token_q4_tests.py SDK NEW_OUTPUT
+
+This rebuilds the original block byte-for-byte, pins the 4,068-byte
+candidate text, and runs both images under ASan/UBSan. The image rejects
+native, kernel, Work, CPU reference and fast-math role combinations.
+Candidate text SHA256:
+c11734ef8e5aa76d4d47d7a2bad84b0c4073005a799b57b6affc2a43b57a1226.
+
+To reduce real weight traffic, the next target is full-width streamed
+two-row projection using the optimized decoder's output accumulation,
+then a physical same-weight, two-activation comparison. Separately the
+request scheduler must preserve causal KV, recurrent state, and the
+single-token fallback. Two known inputs can serve prefill or independent
+requests; single-request decode requires a real draft/verification
+scheme with independently correct state handling. This is not speculative
+decoding, a throughput or latency estimate, or an installed driver.
