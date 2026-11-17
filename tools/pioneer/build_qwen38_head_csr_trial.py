@@ -24,9 +24,10 @@ def bind(variant, start):
     return bind_raw_pair(variant, start, PACKAGES, 'head-csr', 'head CSR', 'HEAD_CSR')
 
 
-def bind_raw_pair(variant, start, packages, route, title, marker):
-    assert (route,title,marker) in (('head-csr','head CSR','HEAD_CSR'),
-                                     ('ffn-retained','retained FFN','FFN_RETAINED'))
+def bind_raw_pair(variant, start, packages, route, title, marker, *, resident=False):
+    assert (route,title,marker,resident) in (('head-csr','head CSR','HEAD_CSR',False),
+                                            ('ffn-retained','retained FFN','FFN_RETAINED',False),
+                                            ('resident','vector resident','VECTOR_RESIDENT',True))
     if variant not in packages or not re.fullmatch(r'[1-9][0-9]{0,5}', start):
         raise ValueError('supply an exact pair variant and the observed positive stable generation')
     tag, driver, worker, client = packages[variant]
@@ -80,7 +81,16 @@ def bind_raw_pair(variant, start, packages, route, title, marker):
     text = text[:start_fn] + text[end_fn:]
     change('readiness_stderr || fail unknown_worker_stderr',
            'test ! -s "$stage/rate.stderr" || fail nonempty_worker_stderr')
-    change('rate_available[01]', 'rate_available1')
+    if resident:
+        change('client=$stage/pioneer-q38-full-offload-rate-smoke',
+               'client=$stage/pioneer-q38-full-offload-resident-rate')
+        change('"$client" --full-card-rate-32', '"$client" --full-card-resident-rate-32')
+        change('^PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available[01] output_tokens32;'
+               'CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY$',
+               '^PASS_RESIDENT_TWO_REQUEST one_upload1 model_end1 worker_exit0 '
+               'CPU_INFERENCE_CONTEXTS0;NOT_BROAD_QUALITY$')
+    else:
+        change('rate_available[01]', 'rate_available1')
     # No device-open metadata probe before the process-clear check on restore.
     change(f'metadata "$candidateTag" {g1} && idle', f'idle && metadata "$candidateTag" {g1}', 2)
     change('mkdir "$stage/.trial-once" || fail lock\nexchange=0',

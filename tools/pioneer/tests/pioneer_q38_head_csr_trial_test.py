@@ -14,6 +14,7 @@ SEED_TEST = HERE / 'pioneer_q38_tag206_phase_rate_once_test.py'
 bind = runpy.run_path(str(BUILDER))['bind']
 sys.path.insert(0,str(HERE.parent))
 from build_qwen38_vector92_ffn_trial import bind as bind_ffn
+from build_qwen38_vector_resident_trial import bind as bind_resident
 FAKES = runpy.run_path(str(SEED_TEST))['FAKES']
 FAKES = FAKES.replace('installed=$stage/installed', 'pairLock=$stage/shared-lock\ninstalled=$stage/installed')
 FAKES = FAKES.replace('metadata "$stableTag" 1', 'metadata "$stableTag" "$PIONEER_FAKE_GEN"')
@@ -27,10 +28,18 @@ FAKES = FAKES.replace('bad-marker) return 0;;', '''bad-marker) return 0;;
   printf '%s\\n' 'PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available0 output_tokens32;CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY'
   return 0;;''')
 FAKES = FAKES.replace('--quiesce)\n  test', '--quiesce)\n  if [ "$PIONEER_FAKE_CASE" = exchange-unknown ]; then return 1; fi\n  test')
+RESIDENT_FAKES = FAKES.replace('--full-card-rate-32', '--full-card-resident-rate-32').replace(
+    'PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available1 output_tokens32;CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY',
+    'PASS_RESIDENT_TWO_REQUEST one_upload1 model_end1 worker_exit0 CPU_INFERENCE_CONTEXTS0;NOT_BROAD_QUALITY')
+
+
+def resident(variant, start):
+    assert variant == 'vector'
+    return bind_resident(start)
 
 
 def main():
-    for builder,name in ((bind,'serial'),(bind_ffn,'refetch')):
+    for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector')):
         for bad in ('0', '01', ' 3', '2\n', '-1', '1000000', '3;exit'):
             try:
                 builder(name,bad)
@@ -44,7 +53,7 @@ def main():
         # 2 and 3 exercise overlapping old/new generation values, 15 the
         # hexadecimal wait boundary. The check also fixes per-variant tags.
         trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
-                (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'))
+                (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'))
         for index, (builder, name, start, suffix) in enumerate(trials):
             source = builder(name, str(start))
             tag = '2026111700010'+suffix
@@ -54,6 +63,11 @@ def main():
             assert f'--wait "$candidateTag" {start:016x}' in source
             assert f'--wait "$stableTag" {start+1:016x}' in source
             assert 'READINESS_Q4' not in source
+            if builder is resident:
+                assert 'stage=/boot/home/pioneer-q38-resident-vector-210\n' in source
+                assert 'client=$stage/pioneer-q38-full-offload-resident-rate\n' in source
+                assert '--full-card-resident-rate-32' in source and 'PASS_FULL_OFFLOAD_RATE_JOB' not in source
+                assert 'one_upload1 model_end1 worker_exit0' in source
             subprocess.run(['bash', '-n'], input=source, text=True, check=True)
             head, body = source.split('\n[ "$#" -eq 1 ]', 1)
             body = '\n[ "$#" -eq 1 ]' + body
@@ -72,7 +86,8 @@ def main():
                 elif case == 'link-lock':
                     lock.symlink_to(stage / 'nonexistent')
                 mode = '--preflight' if case == 'preflight' else '--run'
-                cmd = ['bash', '-c', head + FAKES + body, 'mock-head-csr-parent', mode]
+                fake = RESIDENT_FAKES if builder is resident else FAKES
+                cmd = ['bash', '-c', head + fake + body, 'mock-head-csr-parent', mode]
                 env = {**os.environ, 'PIONEER_FAKE_STAGE': str(stage), 'PIONEER_FAKE_CASE': case,
                        'PIONEER_FAKE_GEN': str(start)}
                 result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
@@ -100,7 +115,7 @@ def main():
                 spent = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert spent.returncode == 1
                 assert (mutations.read_bytes() if mutations.exists() else b'') == previous
-    print('PASS: both raw pairs, 55 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
+    print('PASS: both raw pairs and resident runner, 66 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
 
 
 if __name__ == '__main__':

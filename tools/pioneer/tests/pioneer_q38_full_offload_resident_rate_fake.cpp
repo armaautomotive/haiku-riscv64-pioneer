@@ -27,6 +27,7 @@ int main(){
  const unsigned mode=std::atoi(selected);A::Frame frame;
  const auto refused=[&]{return Read(frame)?3:0;};
  if(!Read(frame) || frame.id!=1 || frame.kind!=A::Load || frame.value!=64 || !frame.text.empty())return 2;
+ if(!Send(A::Progress,1,UINT32_MAX,"Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context."))return 2;
  if(!Send(A::Ready,1,0,mode==2?"QWEN27_FULL_OFFLOAD_VOCAB_READY":"QWEN27_FULL_OFFLOAD_RESIDENT_VOCAB_READY"))return 2;
  if(mode==2)return refused();
  for(unsigned id=2;id<=3;id++){
@@ -42,17 +43,19 @@ int main(){
   if(mode==7){Send(A::Progress,id,UINT32_MAX,running);return refused();}
   if(!Count(id,0) || !Count(id,31) || !Count(id,mode==5?30:62))return 2;
   if(mode==5)return refused();
+  const unsigned base=id==2?0:10000000;
   char rate[768];std::snprintf(rate,sizeof(rate),
-   "Full-card observed count rate sampled31 first31 last62 elapsed_min_us999990 elapsed_max_us1000010 lower_tps%.9f upper_tps%.9f observations100 first_begin_us1000 first_end_us1010 last_begin_us1001000 last_end_us1001010;%s",
-   mode==8?99.0:31000000.0/1000010,31000000.0/999990,mode==6?
+   "Full-card observed count rate sampled31 first31 last62 elapsed_min_us990 elapsed_max_us1010 lower_tps%.9f upper_tps%.9f observations100 first_begin_us%u first_end_us%u last_begin_us%u last_end_us%u;%s",
+   mode==8?99.0:31000000.0/1010,31000000.0/990,base+1000,base+1010,base+2000,base+2010,mode==6?
    "AFTER_CLEAN_END,post-prompt count window,not isolated latency or broad quality.":
    "AFTER_CLEAN_REQUEST_CLOSE,model reservation retained;not isolated latency or broad quality.");
   if(!Send(A::Progress,id,UINT32_MAX,mode==1?
     "Full-card rate unavailable: insufficient post-prompt window or invalid timing;AFTER_CLEAN_REQUEST_CLOSE,no model END or extrapolation.":rate))return 2;
   if(mode==6 || mode==8)return refused();
   if(!Send(A::Text,id,0,id==3 && mode==9?"incorrect":"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14"))return 2;
+  poll(nullptr,0,8); // ensure the outer clock covers the synthetic four-ms request
   if(!Send(A::Done,id,A::Complete,
-   "P100A full-offload resident candidate: 32 output tokens; prompt+generation 2.000s,total 4.000s. All inference on card; CPU vocabulary/text only. Request closed cleanly; weights retained until explicit model END. Not a warm-token speed measurement."))return 2;
+   "P100A full-offload resident candidate: 32 output tokens; prompt+generation 0.002s,total 0.004s. All inference on card; CPU vocabulary/text only. Request closed cleanly; weights retained until explicit model END. Not a warm-token speed measurement."))return 2;
  }
  if(!Read(frame) || frame.id!=4 || frame.kind!=A::Unload || frame.value || !frame.text.empty())return 2;
  if(!Send(A::Closed,4,0,mode==11?"Unverified close":"QWEN27_FULL_OFFLOAD_KNOWN_CLEAN_END"))return 2;

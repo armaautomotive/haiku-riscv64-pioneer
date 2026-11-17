@@ -61,6 +61,33 @@ request count and that unknown failures do not send END. No hardware run.
 
   python3 tools/pioneer/tests/run_pioneer_q38_full_offload_resident_rate_tests.py
 
-Next qualify a fresh guarded native trial that observes both answers,
-one upload, explicit END, and stable-driver restoration. Do not claim
-warm turnaround, speed or model quality based on simulated transport.
+Guarded native runner and independent transcript inspection
+------------------------------------------------------------
+The runner binds the exact resident driver, worker and client above and
+one independently observed stable generation. It uses the same exclusive
+lock as the head and FFN trials and has no one-shot/CPU inference fallback.
+It has a no-driver-change preflight and allows one launch; closure requires
+the resident client's explicit one-upload/two-request/model-END marker and
+zero status. It restores the known-good driver only with verified idle
+ownership; uncertain ownership leaves the shared lock and recovery evidence.
+The original head and FFN runner bindings remain unchanged.
+
+The independent capture reader checks the complete transcript: exact cold
+upload, no upload rows before the warm START, distinct request IDs, both
+31-prompt/32-output windows and answers, timing bounds or explicit timing
+unavailability, the final model-END marker, exit files, and empty stderr.
+It does not give cleanup authority; artifact identity, actual process
+closure and stable-driver restoration must still be verified separately.
+The fake-manager suite now covers 66 cases across the three runner families.
+The sanitizer-checked actual client/fake-peer suite validated measured and
+explicitly unavailable synthetic transcripts; ten corrupted transcripts were
+refused, including a second upload. Historical one-shot comparators passed.
+
+  python3 tools/pioneer/build_qwen38_vector_resident_trial.py OBSERVED_STABLE_GENERATION NEW_SCRIPT
+  python3 tools/pioneer/tests/pioneer_q38_head_csr_trial_test.py
+  python3 tools/pioneer/inspect_qwen38_vector_resident_rate.py CLOSED_CAPTURE
+
+Next run only once a fresh stable, idle generation is independently verified
+and no trial owns the card. The FFN comparison still has priority over this
+test. Tag210 has not been staged or run on the Pioneer; do not claim warm
+turnaround, decode speed or model quality based on simulated transport.

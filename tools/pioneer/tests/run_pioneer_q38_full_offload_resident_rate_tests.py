@@ -3,9 +3,48 @@
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 here = Path(__file__).resolve().parent
+sys.path.insert(0,str(here.parent))
+from inspect_qwen38_vector_resident_rate import InvalidLog, inspect
+
+
+def inspect_fake(text, measured):
+    parsed = inspect(text)
+    first, second = parsed['requests']
+    assert first['uploaded_bytes']==parsed['total_uploaded_bytes']==19399024640
+    assert first['weight_upload_rows']==1 and second['weight_upload_rows']==second['uploaded_bytes']==0
+    assert all((r['observed_post_prompt_count_rate_bounds'] is not None)==measured for r in (first,second))
+    assert parsed['model_end_marker'] and not parsed['execution_or_cleanup_authority_from_log']
+    if not measured:
+        return
+    upload = text.splitlines()[2]
+    changes=(
+        ('FULL_OFFLOAD_PROGRESS id3 value4294967295 Qwen27B',upload.replace('id2','id3')+'\n'
+         'FULL_OFFLOAD_PROGRESS id3 value4294967295 Qwen27B'),
+        ('request2 uploads0','request2 uploads1'),
+        ('request2 uploads0','request1 uploads0'),
+        ('request2 uploads0 tokens32','request2 uploads0 tokens30'),
+        ('id3 value4294967295 Full-card count committed31','id2 value4294967295 Full-card count committed31'),
+        ('first_begin_us10001000','first_begin_us1000'),
+        ('model_end1 worker_exit0','model_end0 worker_exit0'),
+        ('RESIDENT_ANSWER request2 bytes32','RESIDENT_ANSWER request2 bytes31'),
+        ('rate_available1 P100A','rate_available0 P100A'),
+        ('AFTER_CLEAN_REQUEST_CLOSE,model reservation','AFTER_CLEAN_END,model reservation'),
+    )
+    for old,new in changes:
+        assert old in text
+        try:
+            inspect(text.replace(old,new,1))
+        except InvalidLog:
+            pass
+        else:
+            raise AssertionError(old)
+    print('PASS independent resident reader rejected 10 transcript corruptions, including a second upload')
+
+
 with tempfile.TemporaryDirectory(prefix='q38-resident-rate-test-', dir='/private/tmp') as directory:
     work = Path(directory)
     fake, client = work/'fake', work/'client'
@@ -28,6 +67,7 @@ with tempfile.TemporaryDirectory(prefix='q38-resident-rate-test-', dir='/private
             assert 'RESIDENT_REQUEST_CLOSED request1 uploads1 tokens32 ' in result.stdout
             assert 'RESIDENT_REQUEST_CLOSED request2 uploads0 tokens32 ' in result.stdout
             assert result.stdout.count(f'rate_available{int(mode==0)}')==2
+            inspect_fake(result.stdout,mode==0)
         if mode==9:assert 'FAIL_RESIDENT_REFERENCE_ANSWER;MODEL_END_VERIFIED' in result.stdout
         if mode==12:assert 'RESIDENT_WORKER_ERROR Synthetic unknown warm start' in result.stdout
     for args in ([],['--full-card-rate-32'],['--full-card-resident-rate-32','extra']):

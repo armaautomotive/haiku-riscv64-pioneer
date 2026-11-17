@@ -87,33 +87,9 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
     lines=text[:-1].split('\n');require(len(lines)>=9 and lines[:2]==[AUTH,READY],'exact full-card source/ready prefix')
     cursor,uploads=upload_prefix(lines,2,planned)
     require(cursor<len(lines) and lines[cursor]==RUNNING,'exact running marker');cursor+=1
-    counts=[];prompts=limit=first_warm=None
-    while cursor<len(lines):
-        m=COUNT.fullmatch(lines[cursor])
-        if not m:break
-        n,p,l=map(int,m.groups())
-        require(1<=p<=96 and l==p+31 and l<=128 and n<=l,'full-card32 count bounds')
-        require(not counts or (p==prompts and l==limit and n>counts[-1]),'count/geometry regression or duplicate')
-        counts.append(n);require(len(counts)<=129,'count row bound');prompts,limit=p,l
-        if first_warm is None and n>=p:first_warm=n
-        cursor+=1
-    require(counts and first_warm is not None and len(lines)-cursor>=4,'complete counter/rate/done/answer/final suffix')
-    rate=RATE.fullmatch(lines[cursor]);available=rate is not None;bounds=None
-    if rate:
-        g=rate.groups();sampled,first,last,minimum,maximum=map(int,g[:5]);low,high=map(Decimal,g[5:7])
-        observations,fb,fe,lb,le=map(int,g[7:])
-        require(first==first_warm and first>=prompts and last==limit and last==counts[-1] and first<last
-                and sampled==last-first and 16<=sampled<=31,'post-prompt sampled count geometry')
-        require(len(counts)<=observations<=18001 and 0<=fb<=fe<lb<=le<=2**63-1
-                and minimum==lb-fe and maximum==le-fb and 0<minimum<=maximum,'raw timestamp bounds')
-        for value,expected in ((low,Decimal(sampled)*1000000/maximum),(high,Decimal(sampled)*1000000/minimum)):
-            require(value>0 and abs(value-expected)<=Decimal('0.00000000051')+Decimal('0.000000000001')*expected,'rate arithmetic')
-        require(low<=high,'inverted rate')
-        bounds={'sampled_commit_steps':sampled,'first_committed':first,'last_committed':last,
-                'minimum_us':minimum,'maximum_us':maximum,'lower_tps':str(low),'upper_tps':str(high),
-                'observations':observations,'raw_endpoints_us':[fb,fe,lb,le]}
-    else:require(lines[cursor]==UNAVAILABLE,'unavailable is explicit,never an inferred rate')
-    cursor+=1;profile=None
+    cursor,counts,prompts,bounds=count_window(lines,cursor)
+    available=bounds is not None
+    profile=None
     if phase_profile:cursor,profile=phase_profile_suffix(lines,cursor,counts[-1],bf16_profile=bf16_profile)
     fast_profile=None
     if fast_decode_profile:cursor,fast_profile=fast_decode_suffix(lines,cursor,counts[-1],prompts)
@@ -139,6 +115,37 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
     if startup_timing:result['host_startup_observations']=startup
     if prepared_readiness_diagnostic:result['prepared_readiness_markers']=len(READINESS_PARTS)
     return result
+
+
+def count_window(lines,cursor,*,count=COUNT,rate_pattern=RATE,unavailable=UNAVAILABLE):
+    """Check count/time arithmetic only. Does not confer request or cleanup status."""
+    counts=[];prompts=limit=first_warm=None
+    while cursor<len(lines):
+        m=count.fullmatch(lines[cursor])
+        if not m:break
+        n,p,l=map(int,m.groups())
+        require(1<=p<=96 and l==p+31 and l<=128 and n<=l,'full-card32 count bounds')
+        require(not counts or (p==prompts and l==limit and n>counts[-1]),'count/geometry regression or duplicate')
+        counts.append(n);require(len(counts)<=129,'count row bound');prompts,limit=p,l
+        if first_warm is None and n>=p:first_warm=n
+        cursor+=1
+    require(counts and first_warm is not None and cursor<len(lines),'complete counter/rate window')
+    rate=rate_pattern.fullmatch(lines[cursor]);bounds=None
+    if rate:
+        g=rate.groups();sampled,first,last,minimum,maximum=map(int,g[:5]);low,high=map(Decimal,g[5:7])
+        observations,fb,fe,lb,le=map(int,g[7:])
+        require(first==first_warm and first>=prompts and last==limit and last==counts[-1] and first<last
+                and sampled==last-first and 16<=sampled<=31,'post-prompt sampled count geometry')
+        require(len(counts)<=observations<=18001 and 0<=fb<=fe<lb<=le<=2**63-1
+                and minimum==lb-fe and maximum==le-fb and 0<minimum<=maximum,'raw timestamp bounds')
+        for value,expected in ((low,Decimal(sampled)*1000000/maximum),(high,Decimal(sampled)*1000000/minimum)):
+            require(value>0 and abs(value-expected)<=Decimal('0.00000000051')+Decimal('0.000000000001')*expected,'rate arithmetic')
+        require(low<=high,'inverted rate')
+        bounds={'sampled_commit_steps':sampled,'first_committed':first,'last_committed':last,
+                'minimum_us':minimum,'maximum_us':maximum,'lower_tps':str(low),'upper_tps':str(high),
+                'observations':observations,'raw_endpoints_us':[fb,fe,lb,le]}
+    else:require(lines[cursor]==unavailable,'unavailable is explicit,never an inferred rate')
+    return cursor+1,counts,prompts,bounds
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('stdout',type=pathlib.Path);parser.add_argument('stderr',type=pathlib.Path)
     parser.add_argument('--prepared-q4',action='store_true',help='require exact20470759424B prepared FFN layout,never infer mode from a log')
