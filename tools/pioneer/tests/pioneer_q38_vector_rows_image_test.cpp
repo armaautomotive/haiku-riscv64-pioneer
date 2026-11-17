@@ -51,6 +51,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 #endif
 	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
+	using Base::Base;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
 	int corruptDotValue=262145;
 	bool corruptDecodedProbe=false; unsigned decodedProbeReads=0;
@@ -70,6 +71,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	bool InlineTensix() const override { return true; }
 	// Independent current-tile observer;old fixtures retain original90000.
 	virtual uint32_t RawInputBase() const { return 0x90000; }
+	virtual bool AdditionalZeroInitRow(unsigned) const { return false; }
 #ifdef PIONEER_Q38_TEST_PREDECODED_Q4
 	virtual bool DirectQ4Panel() const { return false; }
 #ifdef PIONEER_Q38_TEST_NATIVE_Q8
@@ -225,7 +227,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			if (rawFloat) {
 				assert(config[1]==(BFloat?0x20200000U:0xa0200000U) && config[64]==0x100010);
 				if (rawInitial) {
-					assert(config[65]==16 && adc1==255 && rawAddress==0xa0000 && (rawRow==64 || rawRow==96
+					assert(config[65]==16 && adc1==255 && rawAddress==0xa0000 && (rawRow==64 || rawRow==96 || AdditionalZeroInitRow(rawRow)
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 						|| (BlockAffineActive() && rawRow>=128 && rawRow<=176 && !(rawRow&15))
 #endif

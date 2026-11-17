@@ -1,20 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 // Actual linked ROOT instructions and NoC command generation on a synthetic
 // fabric. Executes two old one-token controls for every positive pair.
-#define PIONEER_Q38_STREAM_MACHINE_ONLY
-#include "pioneer_qwen38_stream_image_test.cpp"
+#define PIONEER_Q38_SHARED_ROWS_MACHINE_ONLY
+#include "pioneer_qwen38_rows_image_test.cpp"
 #include "../PioneerQ38TwoTokenQ4StreamLayout.h"
 #include <memory>
 
 namespace L=PioneerQ38TwoTokenQ4StreamLayout;
-struct TwoStream:StreamMachine {
+struct TwoStream:RowsMachine {
  uint32_t command[10]={};
  uint32_t counts[8]={};
  unsigned aUnpacks=0,bUnpacks=0,published=0,fabricFault=0,when=1;
  bool initialFifo=false;
  std::vector<unsigned> addresses;
  explicit TwoStream(const char* image,const StreamMachine& first,const StreamMachine& second,unsigned bank)
-  :StreamMachine(image,12,first.inputs){
+  :RowsMachine(image,12,first.inputs,1){
   tiles=first.tiles;
   for(unsigned w=0;w<L::Words;w++)memory[L::Descriptor+w*4]=0;
   memory[L::Descriptor]=L::Magic;memory[L::Descriptor+4]=12;memory[L::Descriptor+8]=L::TileBytes;
@@ -66,7 +66,7 @@ struct TwoStream:StreamMachine {
    addresses.push_back(command[0]);requests++;pending=true;doorbellRead=false;waits=0;return;
   }
   if(Range(at,L::Output,0x4000)){
-   assert(Range(at,L::Output,128) && matrixInstructions==4*(inputs/16) && drained
+   assert(Range(at,L::Output,128) && matrixInstructions==MatrixPhasesPerPanel()*(inputs/16) && drained
     && requests==tiles.size() && responses==requests && !pending);
    published++;RuntimeMachine::Store(at,value);return;
   }
@@ -80,11 +80,11 @@ struct TwoStream:StreamMachine {
    for(unsigned row=2;row<8;row++)for(unsigned k=0;k<16;k++)assert(b[row][k]==0);
   }
  }
- bool RunPair(){
+ bool RunPair(unsigned magic=L::Magic,unsigned fault=L::Fault){
   while(pc!=0x72038 && pc!=0x72058)StepBlock();
   assert(minStack>=0x6e000);
-  if(pc==0x72058){assert(l1[Index(0x17ffc8)]==L::Fault);return false;}
-  assert(l1[Index(0x17ffc0)]==0x7200c && l1[Index(0x17ffc8)]==L::Magic);
+  if(pc==0x72058){assert(l1[Index(0x17ffc8)]==fault);return false;}
+  assert(l1[Index(0x17ffc0)]==0x7200c && l1[Index(0x17ffc8)]==magic);
   return l1[Index(0x17ffc4)]==inputs/16;
  }
  void Verify(const StreamMachine& first,const StreamMachine& second)const{
@@ -99,6 +99,7 @@ struct TwoStream:StreamMachine {
  }
 };
 
+#ifndef PIONEER_Q38_TWO_STREAM_MODEL_ONLY
 int main(int argc,char** argv){
  assert(argc==3);unsigned total=0;
  for(unsigned width:{5120U,6144U,17408U}){
@@ -152,3 +153,4 @@ int main(int argc,char** argv){
  printf("PASS %u vs %u actual simulated weight requests; %u refused malformed/uncertain cases, no partial output/retry; no hardware timing\n",
   total,total*2,refused);
 }
+#endif

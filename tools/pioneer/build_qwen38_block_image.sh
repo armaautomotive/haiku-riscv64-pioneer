@@ -21,6 +21,7 @@ case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  12) source=blackhole_qwen38_sfpu_accumulator_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  13) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4=1';;
  14) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4_STREAM=1';;
+ 15) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4_VECTOR=1';;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_STREAM_FAST:-0}" in
@@ -36,6 +37,7 @@ esac
 case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  13) [ -z "$cppflag" ] || exit 2; cppflag=-DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1;;
  14) [ -z "$cppflag" ] || exit 2; cppflag='-DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1 -DPIONEER_Q38_TWO_TOKEN_Q4_STREAM=1';;
+ 15) [ -z "$cppflag" ] || exit 2; cppflag='-Os -DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1 -DPIONEER_Q38_TWO_TOKEN_Q4_STREAM=1 -DPIONEER_Q38_TWO_TOKEN_Q4_VECTOR=1';;
 esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1

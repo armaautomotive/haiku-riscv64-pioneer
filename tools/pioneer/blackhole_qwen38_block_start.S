@@ -75,7 +75,11 @@ block_done:
 .ifdef TT_Q38_TWO_TOKEN_Q4_STREAM
 	li t1,0x33543851 /* Q8T3:two full-K activation rows, offline only */
 .else
+.ifdef TT_Q38_TWO_TOKEN_Q4_VECTOR
+	li t1,0x34543851 /* Q8T4:two full-K vector-accumulated rows, offline only */
+.else
 	li t1,0x31423851 /* Q8B1:distinct from one-panel completion */
+.endif
 .endif
 .endif
 .endif
@@ -148,7 +152,11 @@ block_fault_park:
 .ifdef TT_Q38_TWO_TOKEN_Q4_STREAM
 	li t1,0x46543853 /* shared read failure: no publication/retry */
 .else
+.ifdef TT_Q38_TWO_TOKEN_Q4_VECTOR
+	li t1,0x46543856 /* paired vector UNKNOWN:no publication/retry */
+.else
 	li t1,0x46423851 /* Q8BF:NO success/stop permission */
+.endif
 .endif
 .endif
 .endif

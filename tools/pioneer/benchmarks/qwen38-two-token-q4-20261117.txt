@@ -28,7 +28,7 @@ negative fixtures. The test checks disjoint writes, exact input/weight
 preservation, 16 weight unpacks, 64 matrix issues and no NoC/memory
 transport. No timing hardware or silicon behavior is simulated.
 
-  python3 tools/pioneer/tests/run_pioneer_q38_two_token_q4_tests.py SDK NEW_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_q38_two_token_q4_tests.py SDK NEW_OUTPUT [MODEL_GGUF]
 
 This rebuilds the original block byte-for-byte, pins the 4,068-byte
 candidate text, and runs both images under ASan/UBSan. The image rejects
@@ -59,7 +59,7 @@ fault cases stopped without publishing either row or retrying. These
 included bad ranges, mismatched bank/byte count, nonempty FIFO, and
 first/middle/last dropped replies, counter deltas, command and job changes.
 
-The same test command rebuilds and runs all four images, preserving the
+The same test command rebuilds and runs these images, preserving the
 old local and single-token stream pins. Streamed two-row text is 5,576
 bytes with SHA256
 fd6c8b885c84bda45093b28b2fc0cb0a3a8934edc60258852e10700666db280b.
@@ -89,8 +89,46 @@ not linked into a worker and has not run on silicon.
     -o /tmp/pioneer-q38-two-token-q4-affine-test
   UBSAN_OPTIONS=halt_on_error=1 /tmp/pioneer-q38-two-token-q4-affine-test
 
-Next wire the paired helper into a separate vector worker and qualify a
-physical same-weight, two-activation comparison. Separately the
+Linked full-width vector image
+------------------------------
+The distinct Q8T4 test image now connects the paired helper to the packed
+Q4 vector decoder, not the older scalar unpack and affine loops. It
+initializes both physical halves of the vector scratch before any partial
+store and clears only the matrix dot rows between panels. One native
+integer MVMUL pair (fidelity phases 1 and 3) evaluates both inputs.
+The RISC-V worker still sets up the pipeline and sums the activation
+operands. They do not decode Q4 weights or process per-panel matrix results.
+Only the final, finite two rows are exported. The streamed control keeps
+the original four phases and remains byte-for-byte unchanged.
+
+The linked instruction simulator verified all 32 outputs at each width
+against two runs of the pinned one-token stream. It observed:
+
+  width    reads vs controls    matrix issues vs controls
+  5120     20 vs 40             640 vs 2560
+  6144     24 vs 48             768 vs 3072
+  17408    68 vs 136            2176 vs 8704
+
+Those matrix counts combine sharing and the existing exact two-phase Q4
+optimization; two invocations of an already two-phase path would use
+twice the paired count. No timing or decode-rate gain is implied. Eight
+negative controls covered a wrong role, lost reply, changed descriptor,
+non-finite weights and final values, missing scratch initialization and
+dot clears, and a duplicated input row. The five-image ASan/UBSan suite
+also preserves all four existing image pins and rejects 13 illegal role
+combinations. Q8T4 fits within the original 8192-byte view: 7,784 bytes,
+SHA256 75555b9c80398a7aa760a2d097512ed983c5125cf9c6a4d97a71c68bd2ccbe5d.
+
+With the actual Qwen3.8-27B-Q4_K_M GGUF supplied read-only, the suite
+also matched both results bit-for-bit for four real weight shards:
+token_embd.weight at K5120 (rows 0..15 and 248304..248319) and
+blk.0.ffn_down.weight at K17408 (rows 0..15 and 5104..5119).
+K6144 was tested synthetically; this file had no matching Q4_K tensor
+at that width. Activations and card timing remain synthetic/untested.
+
+Next qualify a physical same-weight, two-activation comparison, with
+exclusive worker ownership and explicit stop/restore. The linked image
+serves one 16-output shard, not a whole-model trial. Separately the
 request scheduler must preserve causal KV, recurrent state, and the
 single-token fallback. Two known inputs can serve prefill or independent
 requests; single-request decode requires a real draft/verification
