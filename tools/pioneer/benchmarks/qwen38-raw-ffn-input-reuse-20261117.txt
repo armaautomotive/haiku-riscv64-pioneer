@@ -124,3 +124,45 @@ guarded A/B run required to establish a benefit.
 
   python3 tools/pioneer/build_qwen38_vector92_ffn_sender.py SDK NEW_OUTPUT
   python3 tools/pioneer/tests/run_pioneer_q38_vector92_ffn_sender_tests.py SDK NEW_OUTPUT
+
+Matched measured-vector92 ROOT port (offline)
+--------------------------------------------
+The older compact fixture only exercised the FFN's three-recipe group.
+Its slot-1 predicate would also match an earlier four-recipe group in
+the full returning layer. Do not deploy the compact V2 images. The
+measured-profile port checks the actual phase 11, its three-recipe group,
+slot 1, and the authenticated gate-to-up shape and identity. Both
+retention and forced-refetch profiles use this same admission.
+
+The full original vector92 ROOT and flag-off recurrent component/combined
+object reproduced byte-for-byte. Both new images reuse the same dense,
+token, boot and STOP inputs; only the recurrent TU is rebuilt. Both fit
+the existing physical ROOT code ranges; actual sizes:
+
+  reuse:   .text 130188, .conv 32680 bytes
+  refetch: .text 130076, .conv 32680 bytes
+
+Two fresh builds matched these complete SHA256 ELF pins:
+  reuse    6258db4e890ec1f1719fad2248ee3994fe6ce4463ce3d938c36d96af125a2010
+  refetch  0fcec876160c9a8b08a584d3f60d8eacee39b0fa96bcac1ce7226b03de59493e
+Seven invalid compile roles were refused; both linked EOG policies passed.
+
+The linked RV32 fixture exercised all four earlier recurrent slots and
+both actual FFN calls for every one of the 48 recurrent layers. Earlier
+slots, including slot 1, still issue full refetches. The entire earlier
+job streams matched on a representative layer, with no operand flag
+change. For gate/up, all 238 paired job frames differed only in the up
+fetch bit. Both images rejected 32 late identity mutations before
+projection. The actual inlined Gather prefix in each variant also
+computed the expected eight counter words (including wrap) at the
+shared receipt call boundary: only the reuse up jobs subtract two reads
+and 162 64-byte flits. Prior seals, the incoming receipt marker, and
+projection endpoints are explicit fixtures; this is not a real receipt
+closure, model execution, or a physical result.
+
+  python3 tools/pioneer/build_qwen38_vector92_ffn_root.py SDK NEW_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_linked_tests.py SDK REUSE_ELF REFETCH_ELF --vector92
+
+Next package these two exact controllers with the one verified vector92
+reuse sender, check the final linked arrays and native journal, then
+measure inside a guarded same-answer A/B run. Nothing was installed.
