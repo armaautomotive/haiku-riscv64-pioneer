@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import sys
+from generate_qwen38_token_programs import pins
 
 PINS = {
     'boot.bin': (4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
@@ -14,12 +15,16 @@ PINS = {
     'fast_decode.bin': (1496, 'a37bab87fc21f140236413c673352966bf9452212bf89e7956868c1cea15f9d1'),
     'program.elf': (193672, '882d2e1cf08ad5ccbd69c52a7ecb7daf5e7101527f669431faf962f158b5b425'),
 }
-assert __debug__ and len(sys.argv) == 3
+split = len(sys.argv) == 4 and sys.argv[3] == '--layer-split'
+assert __debug__ and (len(sys.argv) == 3 or split)
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
-directory, output = map(Path, sys.argv[1:])
+directory, output = map(Path, sys.argv[1:3])
 assert directory.is_absolute() and directory.is_dir()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 here = Path(__file__).resolve().parent
+if split:
+    PINS = {name: (size, digest) for name, size, digest in
+            pins(here/'build_qwen38_fast_decode_profile_root.py', 'SPLIT_PINS')}
 source = (here / 'PioneerQ38FullOffloadVectorQ4Programs.h').read_bytes()
 assert hashlib.sha256(source).hexdigest() == '3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389'
 images = {}
@@ -51,7 +56,9 @@ assert text.count(marker) == 1
 text = text.replace(marker, array('RootFastDecode', images['fast_decode.bin']) + '\n' + marker)
 marker = 'enum {Family=0x33505451,Version=1,CancelBoundary=1,EogCount=5};'
 assert text.count(marker) == 1
-text = text.replace(marker, marker + '\nenum {FastDecodeProfile=1,TokenPhaseProfile=1,PhaseProfileVersion=3,PhaseProfileAddress=0x75710,PhaseProfileWords=60,RootSections=5};')
+version = 4 if split else 3
+binding = 'LayerSplitProfile=1,' if split else ''
+text = text.replace(marker, marker + f'\nenum {{FastDecodeProfile=1,TokenPhaseProfile=1,{binding}PhaseProfileVersion={version},PhaseProfileAddress=0x75710,PhaseProfileWords=60,RootSections=5}};')
 assert text.count('worker?10:4;') == 1
 text = text.replace('worker?10:4;', 'worker?10:5;')
 marker = '  case 3:return {0x64000,unsigned(sizeof(RootAux)/4)};'

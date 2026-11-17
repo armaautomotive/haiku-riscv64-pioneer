@@ -15,6 +15,7 @@ bind = runpy.run_path(str(BUILDER))['bind']
 sys.path.insert(0,str(HERE.parent))
 from build_qwen38_vector92_ffn_trial import bind as bind_ffn
 from build_qwen38_vector_resident_trial import bind as bind_resident
+from build_qwen38_layer_split_profile_trial import bind as bind_layer_split
 FAKES = runpy.run_path(str(SEED_TEST))['FAKES']
 FAKES = FAKES.replace('installed=$stage/installed', 'pairLock=$stage/shared-lock\ninstalled=$stage/installed')
 FAKES = FAKES.replace('metadata "$stableTag" 1', 'metadata "$stableTag" "$PIONEER_FAKE_GEN"')
@@ -31,6 +32,14 @@ FAKES = FAKES.replace('--quiesce)\n  test', '--quiesce)\n  if [ "$PIONEER_FAKE_C
 RESIDENT_FAKES = FAKES.replace('--full-card-rate-32', '--full-card-resident-rate-32').replace(
     'PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available1 output_tokens32;CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY',
     'PASS_RESIDENT_TWO_REQUEST one_upload1 model_end1 worker_exit0 CPU_INFERENCE_CONTEXTS0;NOT_BROAD_QUALITY')
+SPLIT_FAKES = FAKES.replace('/bin/cat "$stage/worker-stderr" >&2', '''/bin/cat "$stage/worker-stderr" >&2
+ local valid=1 buckets=14
+ if [ "$PIONEER_FAKE_CASE" = invalid-v4 ]; then valid=0; fi
+ if [ "$PIONEER_FAKE_CASE" = incomplete-v4 ]; then buckets=13; fi
+ printf 'FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card layer split profile valid%s committed62 window_start31 last_position61 fixture\n' "$valid"
+ for ((i=0;i<buckets;i++)); do
+  printf 'FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card layer split profile bucket%s fixture\n' "$i"
+ done''')
 
 
 def resident(variant, start):
@@ -38,8 +47,12 @@ def resident(variant, start):
     return bind_resident(start)
 
 
+def layer_split(variant,start):
+    assert variant == 'candidate'
+    return bind_layer_split(start)
+
 def main():
-    for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector')):
+    for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector'),(layer_split,'candidate')):
         for bad in ('0', '01', ' 3', '2\n', '-1', '1000000', '3;exit'):
             try:
                 builder(name,bad)
@@ -53,7 +66,8 @@ def main():
         # 2 and 3 exercise overlapping old/new generation values, 15 the
         # hexadecimal wait boundary. The check also fixes per-variant tags.
         trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
-                (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'))
+                (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'),
+                (layer_split,'candidate',10,'213'))
         for index, (builder, name, start, suffix) in enumerate(trials):
             source = builder(name, str(start))
             tag = '2026111700010'+suffix
@@ -68,10 +82,13 @@ def main():
                 assert 'client=$stage/pioneer-q38-full-offload-resident-rate\n' in source
                 assert '--full-card-resident-rate-32' in source and 'PASS_FULL_OFFLOAD_RATE_JOB' not in source
                 assert 'one_upload1 model_end1 worker_exit0' in source
+            if builder is layer_split:
+                assert 'stage=/boot/home/pioneer-q38-layer-split-candidate-213\n' in source
+                assert 'missing_closed_v4_timing' in source
             subprocess.run(['bash', '-n'], input=source, text=True, check=True)
             head, body = source.split('\n[ "$#" -eq 1 ]', 1)
             body = '\n[ "$#" -eq 1 ]' + body
-            for case in cases:
+            for case in cases+(('invalid-v4','incomplete-v4') if builder is layer_split else ()):
                 stage = Path(tmp) / f'{index}-{case}'
                 stage.mkdir()
                 for file, content in {'installed': 'stable', 'test-stable': 'stable',
@@ -86,12 +103,13 @@ def main():
                 elif case == 'link-lock':
                     lock.symlink_to(stage / 'nonexistent')
                 mode = '--preflight' if case == 'preflight' else '--run'
-                fake = RESIDENT_FAKES if builder is resident else FAKES
+                fake = RESIDENT_FAKES if builder is resident else SPLIT_FAKES if builder is layer_split else FAKES
                 cmd = ['bash', '-c', head + fake + body, 'mock-head-csr-parent', mode]
                 env = {**os.environ, 'PIONEER_FAKE_STAGE': str(stage), 'PIONEER_FAKE_CASE': case,
                        'PIONEER_FAKE_GEN': str(start)}
                 result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert result.returncode == (0 if case in ('preflight', 'success') else 1), result
+                if case in ('invalid-v4','incomplete-v4'):assert 'missing_closed_v4_timing' in result.stderr
                 mutations = stage / 'mutations'
                 once = stage / '.trial-once'
                 if case in ('preflight', 'stale', 'lock', 'link-lock'):
@@ -115,7 +133,7 @@ def main():
                 spent = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert spent.returncode == 1
                 assert (mutations.read_bytes() if mutations.exists() else b'') == previous
-    print('PASS: both raw pairs and resident runner, 66 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
+    print('PASS: both raw pairs, resident and layer split, 79 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
 
 
 if __name__ == '__main__':

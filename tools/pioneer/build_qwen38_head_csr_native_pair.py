@@ -114,7 +114,7 @@ def new_programs(original, arrays, replacements=ROOT_PAIR):
     return result
 
 
-def verify_linked_arrays(tool, work, expected):
+def verify_linked_arrays(tool, work, expected, *, namespace='PioneerQ38FullOffloadVectorQ4Programs'):
     # Measure the packaged driver, not just the generated C++ source/object.
     driver = work / DRIVER
     raw = subprocess.check_output([tool + 'nm', '-S', '--defined-only', driver], text=True)
@@ -128,7 +128,7 @@ def verify_linked_arrays(tool, work, expected):
     section_data = {}
     verified = {}
     for label, digest in expected.items():
-        matches = [symbol for symbol in entries if 'PioneerQ38FullOffloadVectorQ4Programs' in symbol
+        matches = [symbol for symbol in entries if namespace in symbol
                    and symbol.endswith(f'{len(label)}{label}E')]
         assert len(matches) == 1, label
         symbol = matches[0]

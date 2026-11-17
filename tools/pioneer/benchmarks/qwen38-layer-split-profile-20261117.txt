@@ -38,6 +38,42 @@ Neither fixture runs the model or measures any silicon time.
 Pinned v4 whole ELF:
 7f2f2d4895c72c3278ce83676be5b9a122e0a074d319b76b86586611630627af
 Text: 130,624/131,072 bytes; conv: 32,216/32,768 bytes; timing: 1,496 bytes.
-There is no native tag, installed firmware or timing from the P100A yet.
-The next step is a separate guarded native profile package and complete
-physical capture, after the current full-model FFN pair is closed.
+
+Native package and guarded trial (offline)
+-------------------------------------------
+Tag213 is built from the closed tag116 source checkpoint 25d1533ee6. The
+private overlay changes the tag, exact held-profile schema, and printed
+v4 prefix only for the diagnostic. The 53,915,328-byte journal and fixed
+held-read packet geometry are unchanged. The builder independently checks
+all fifteen arrays in the linked driver; just ROOT text, auxiliary code
+and the timer differ from tag116, with all ten vector92 peer images
+unchanged. The standard tag92 and fallback driver rebuilt byte-for-byte.
+The worker still imports exactly the eleven vocabulary/container routines
+and cannot fall back to CPU inference. The original v3 program generator
+also matched its existing checked-in header byte-for-byte.
+
+Two independent build directories produced an identical package manifest:
+3e3f76f2b54a22d1ab3fbfda0799680cd554b09f4fa44c2b6023d29383e804b2.
+  driver 4b6f208da0ed2960d7d3e9a6617f3e354737b9ec4b7b7c4cf0c62d25a3fbd9ec
+  worker 5c650f81142f5fc38c8f6ac24cd62ef9c4136b65144a750c47a8c8a01af148f6
+  client ec90ba4575b78457c64d72a43846346b64923dc16e7aee1e1b6a808361a37889
+The extra driver/worker role checks refused the old tag or Work role,
+missing/zero package binding, and the device-ROOT image selector on Haiku.
+
+  python3 tools/pioneer/build_qwen38_layer_split_profile_native.py SDK PINNED_LIBRARIES V4_DIAGNOSTIC NEW_OUTPUT
+  python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py OBSERVED_STABLE_GENERATION NEW_SCRIPT
+  python3 tools/pioneer/tests/parse_pioneer_q38_full_offload_rate_log.py RATE_STDOUT RATE_STDERR --layer-split-profile --startup-timing
+
+The one-shot runner shares the existing lock, binds exact tag213 artifacts
+and stable generation, and checks for a rate result plus a complete v4
+timing suffix. An idle proof is required for restoration; unknown ownership
+stays locked. The independent parser verifies the 14 ordered segment
+counts, generation-only bounds, cycle sum, STOP exclusion and distinction
+from v3. It passed the synthetic whole-log cases and refused 49 corrupted
+or mixed-format v4 logs; v3 and old-rate tests still pass. The runner's
+marker alone is not proof of full completion, model accuracy, or safe
+cleanup; independently verify actual exits and the stable driver.
+
+This package has not been staged or run on the P100A. Do not interfere with
+the active tag211 control or run it before the FFN pair is closed; a new
+profile trial would still require fresh stable-state preflight.

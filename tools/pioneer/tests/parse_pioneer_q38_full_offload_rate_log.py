@@ -70,13 +70,17 @@ def phase_profile_suffix(lines,cursor,committed,*,bf16_profile=False):
     for row in buckets:row['share_percent']=str(Decimal(row['cycles'])*100/Decimal(total))
     result.update(total_cycles=total,buckets=buckets)
     return cursor,result
-def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_profile=False,startup_timing=False,fast_decode_profile=False,prepared_readiness_diagnostic=False):
+def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_profile=False,startup_timing=False,fast_decode_profile=False,layer_split_profile=False,prepared_readiness_diagnostic=False):
     require(type(prepared_q4) is bool,'explicit prepared-layout selector required')
     require(type(bf16_profile) is bool and (not bf16_profile or (phase_profile is True and prepared_q4 is False)),'explicit distinct BF16 timing selector required')
     require(type(phase_profile) is bool and (not phase_profile or prepared_q4 or bf16_profile),'explicit compatible phase-profile selector required')
     require(type(fast_decode_profile) is bool and (not fast_decode_profile or
             (prepared_q4 is False and phase_profile is False and bf16_profile is False)), 'distinct raw fast generation selector required')
-    require(type(startup_timing) is bool and (not startup_timing or bf16_profile is True or fast_decode_profile is True),'startup timing requires explicit timing profile')
+    require(type(layer_split_profile) is bool and (not layer_split_profile or
+            not (prepared_q4 or phase_profile or bf16_profile or fast_decode_profile)),
+            'distinct raw layer-split selector required')
+    require(type(startup_timing) is bool and (not startup_timing or bf16_profile or fast_decode_profile or layer_split_profile),
+            'startup timing requires explicit timing profile')
     planned=PREPARED_TOTAL if prepared_q4 else TOTAL
     require(type(prepared_readiness_diagnostic) is bool and (not prepared_readiness_diagnostic or prepared_q4),
             'readiness diagnostics require the explicit prepared layout')
@@ -93,6 +97,7 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
     if phase_profile:cursor,profile=phase_profile_suffix(lines,cursor,counts[-1],bf16_profile=bf16_profile)
     fast_profile=None
     if fast_decode_profile:cursor,fast_profile=fast_decode_suffix(lines,cursor,counts[-1],prompts)
+    if layer_split_profile:cursor,fast_profile=fast_decode_suffix(lines,cursor,counts[-1],prompts,schema=4)
     startup=None
     if startup_timing:cursor,startup=startup_suffix(lines,cursor,planned)
     require(len(lines)-cursor==3,'exact done/answer/final suffix,no unselected timing rows')
@@ -112,6 +117,7 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
     if phase_profile:result['on_card_phase_profile']=profile
     if bf16_profile:result['bf16_profile']=True
     if fast_decode_profile:result['on_card_fast_decode_profile']=fast_profile
+    if layer_split_profile:result['on_card_layer_split_profile']=fast_profile
     if startup_timing:result['host_startup_observations']=startup
     if prepared_readiness_diagnostic:result['prepared_readiness_markers']=len(READINESS_PARTS)
     return result
@@ -151,11 +157,12 @@ def main():
     parser.add_argument('--prepared-q4',action='store_true',help='require exact20470759424B prepared FFN layout,never infer mode from a log')
     parser.add_argument('--phase-profile',action='store_true',help='require the complete card-clock timing suffix;requires --prepared-q4 or --bf16-profile')
     parser.add_argument('--bf16-profile',action='store_true',help='require separate BF16 fourteen-phase timing and original weight layout;requires --phase-profile')
-    parser.add_argument('--startup-timing',action='store_true',help='require explicit host startup/first-commit DATA;requires --bf16-profile')
+    parser.add_argument('--startup-timing',action='store_true',help='require explicit host startup/first-commit DATA with a selected timing profile')
     parser.add_argument('--fast-decode-profile',action='store_true',help='require distinct v3 generation-only vector92 timing; cannot mix with old/prepared/BF16 phase selectors')
+    parser.add_argument('--layer-split-profile',action='store_true',help='require distinct v4 generation-only timing; cannot mix with other phase selectors')
     parser.add_argument('--prepared-readiness-diagnostic',action='store_true',help='require the exact prepared-source stderr sequence, not empty stderr')
     args=parser.parse_args()
-    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4,phase_profile=args.phase_profile,bf16_profile=args.bf16_profile,startup_timing=args.startup_timing,fast_decode_profile=args.fast_decode_profile,prepared_readiness_diagnostic=args.prepared_readiness_diagnostic)
+    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4,phase_profile=args.phase_profile,bf16_profile=args.bf16_profile,startup_timing=args.startup_timing,fast_decode_profile=args.fast_decode_profile,layer_split_profile=args.layer_split_profile,prepared_readiness_diagnostic=args.prepared_readiness_diagnostic)
     except (OSError,InvalidLog,ValueError) as error:raise SystemExit('REFUSE_FULL_CARD_RATE_LOG '+str(error))
     print(json.dumps(result,sort_keys=True))
     print('PASS_COMPLETE_FULL_CARD_RATE_TRANSCRIPT_DATA_ONLY;NOT_BROAD_QUALITY_ISOLATED_LATENCY_OR_NATIVE_CLEANUP_AUTHORITY')

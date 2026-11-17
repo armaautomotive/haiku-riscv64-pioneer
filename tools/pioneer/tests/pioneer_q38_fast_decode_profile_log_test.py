@@ -68,3 +68,34 @@ for at in range(0, len(good), 23):
     bad(good[:at], **opts)
 assert parse_complete(base)['answer_hex'] == result['answer_hex']
 print(f'PASS_FAST_DECODE_PROFILE_LOG v3/31of51_generation_positions/14exclusive_buckets/final_STOP_excluded_from_body/host_endpoints_distinct/invalid_timing_still_diagnostic/{refused}_mode_window_count_sum_order_truncation_refusals;SYNTHETIC_NO_HARDWARE_OR_SPEED')
+
+v4 = {'layer_split_profile':True, 'startup_timing':True}
+segments4 = [1]+[positions*v for v in (64,480,144,1,1,1,1,1)]+[1]+[positions*v for v in (496,48,48,16)]
+timings4 = [n*19 for n in segments4]
+end4 = begin+sum(timings4)
+header4 = header.replace('fast decode profile','layer split profile').replace(str(end),str(end4))
+buckets4 = [PREFIX+f'Full-card layer split profile bucket{i} segments{n} cycles{c};AFTER_CLEAN_END,clock DATA,no frequency assumption.'
+            for i,(n,c) in enumerate(zip(segments4,timings4))]
+valid4=insert([header4,*buckets4,startup])
+assert 'on_card_fast_decode_profile' not in parse_complete(valid4,**v4)
+profile4=parse_complete(valid4,**v4)['on_card_layer_split_profile']
+assert profile4['valid'] and profile4['schema_version']==4 and profile4['profiled_positions']==positions
+last4=profile4['buckets'][10:]
+assert [r['name'] for r in last4]==['matrix_total','conv_stage','gdn_stage','dense_attention_prepare_attention_kv']
+assert [r['segments'] for r in last4]==segments4[10:] and profile4['generation_body_cycles']==sum(timings4)-timings4[9]
+invalid4=header4.replace('valid1','valid0').replace('state2 error0','state3 error1')
+assert not parse_complete(insert([invalid4,startup]),**v4)['on_card_layer_split_profile']['valid']
+before=refused
+bad(valid4,**opts)
+bad(good,**v4)
+bad(valid4,**{**v4,'fast_decode_profile':True})
+bad(valid4,**{**v4,'prepared_q4':True})
+bad(valid4,**{**v4,'layer_split_profile':1})
+bad(insert([invalid4,*buckets4,startup]),**v4)
+bad(insert([header4.replace(f'end_cycles{end4}',f'end_cycles{end4+1}'),*buckets4,startup]),**v4)
+for phase in range(14):
+    mixed=buckets4[:];del mixed[phase];bad(insert([header4,*mixed,startup]),**v4)
+    mixed=buckets4[:];mixed[phase]=buckets[phase];bad(insert([header4,*mixed,startup]),**v4)
+    mixed=buckets4[:];mixed[phase]=mixed[phase].replace(f'segments{segments4[phase]} ',f'segments{segments4[phase]+1} ')
+    bad(insert([header4,*mixed,startup]),**v4)
+print(f'PASS_LAYER_SPLIT_PROFILE_LOG exact_fourteen_buckets_cycle_conservation_v3_v4_separation {refused-before}_refusals;SYNTHETIC')

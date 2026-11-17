@@ -27,6 +27,7 @@ def bind(variant, start):
 def bind_raw_pair(variant, start, packages, route, title, marker, *, resident=False):
     assert (route,title,marker,resident) in (('head-csr','head CSR','HEAD_CSR',False),
                                             ('ffn-retained','retained FFN','FFN_RETAINED',False),
+                                            ('layer-split','layer split profile','LAYER_SPLIT',False),
                                             ('resident','vector resident','VECTOR_RESIDENT',True))
     if variant not in packages or not re.fullmatch(r'[1-9][0-9]{0,5}', start):
         raise ValueError('supply an exact pair variant and the observed positive stable generation')
@@ -91,6 +92,12 @@ def bind_raw_pair(variant, start, packages, route, title, marker, *, resident=Fa
                'CPU_INFERENCE_CONTEXTS0;NOT_BROAD_QUALITY$')
     else:
         change('rate_available[01]', 'rate_available1')
+    if route=='layer-split':
+        before='test ! -s "$stage/rate.stderr" || fail nonempty_worker_stderr'
+        change(before, before+'\n'
+               'awk \'/^FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card layer split profile valid1 committed62 window_start31 last_position61 /{headers++}\n'
+               ' /^FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card layer split profile bucket[0-9]+ /{buckets++}\n'
+               ' END{if(headers!=1 || buckets!=14)exit 1}\' "$stage/rate.stdout" || fail missing_closed_v4_timing')
     # No device-open metadata probe before the process-clear check on restore.
     change(f'metadata "$candidateTag" {g1} && idle', f'idle && metadata "$candidateTag" {g1}', 2)
     change('mkdir "$stage/.trial-once" || fail lock\nexchange=0',
