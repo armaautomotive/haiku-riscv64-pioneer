@@ -1,5 +1,25 @@
 P100A / Qwen 27B: current status
 ================================
+Post-boot recovery, November 17, 2026
+------------------------------------
+Linux SSH was restored with the user's ID key. The changed Linux host key
+was accepted at the user's request and subsequently pinned; comparison with
+the key reported over that same unverified connection was not independent
+out-of-band identity verification. Haiku booted using the guarded top-page7
+64-CPU/full-RAM kexec profile, with strict SSH using its existing separate
+host pin. Fresh sysinfo reports 64 CPUs and 137034936320 bytes maximum RAM.
+Tag206 initially remained installed after reboot (generation1, cold0,
+active_owner0, guard1). The guarded one-shot recovery restored stable041;
+independent status and hash checks confirmed tag2026102100010012 generation2,
+cold0, active_owner0, guard1, SHA256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+The tag206 image was preserved at
+/boot/home/pioneer-tag206-postboot-restore-20261117-a/candidate.backup,
+SHA256 1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475.
+No card inference was launched during recovery and no new rate was measured.
+Linux reported a negotiated P100A link of 2.5 GT/s x8 before the handoff;
+this is a link-state observation, not a measured transfer bandwidth or proof
+of the inference bottleneck. See pioneer_tag206_postboot_restore_once.sh.
+
 Update, November 13, 2026 (supersedes the November 7 snapshot below)
 ------------------------------------------------------------------
 The most recent completed isolated Assistant Work trial used the full
