@@ -230,3 +230,16 @@ Pinned ELF ae458db3d6828459a25e9d892f7fd1d737e2e3edfd9f5c4b81141ad23639df05,
 text 130,212/131,072 bytes, conv 32,680/32,768. No native package, deployment,
 model output or throughput claim for this third variant. Tags 211 and 212
 remain the two-way peer-fetch comparison and do not include this change.
+
+Physical refetch control started
+--------------------------------
+After the output-head A/B closed and independently verified idle stable041
+generation6, the tagged FFN refetch package and runner were hashed on
+Haiku. The preflight confirmed idle stable041, 64 CPUs and 137034936320
+bytes RAM. The one-shot stage
+/boot/home/pioneer-q38-ffn-retained-refetch-211
+used runner SHA256 dae53021a53dbb7b3eb9c8f7650ed28b365e650e8a41544f4940b646af2694ad.
+It loaded exact tag211 generation7; parent1576, client1643 and worker1644
+were observed at model authentication. Auto-restoration is bound to
+stable041 generation8. Do not start reuse tag212 or touch the card while
+the control owns it. There is no FFN token-rate result yet.

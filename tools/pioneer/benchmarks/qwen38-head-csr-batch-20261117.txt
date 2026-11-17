@@ -187,8 +187,8 @@ fixtures and eight refusal cases. The fixtures are not new speed results.
   python3 tools/pioneer/compare_qwen38_head_csr_rates.py CLOSED_SERIAL_CAPTURE CLOSED_BATCHED_CAPTURE
   python3 tools/pioneer/tests/pioneer_q38_head_csr_rates_test.py
 
-Physical serial control: closed; batched run started
----------------------------------------------------
+Physical serial control and batched comparison
+----------------------------------------------
 The serial variant (tag207, generation3) executed the full raw 27B on
 the P100A. The checked post-prompt window was 31 committed steps, from
 31 through 62, over 180247610..180250942 us: 0.171982458..0.171985637
@@ -212,7 +212,23 @@ exact tag208 artifacts and stable generation4. The single launched
 stage `/boot/home/pioneer-q38-head-csr-candidate-208` bound exact runner
 SHA256 818cbafdf1e7ee90ba74136ea9e8b1544fdf3c1002d82fa29afc491dee874405.
 Tag208 generation5 and PID 1121 (parent), 1188 (client) and 1189 (worker)
-were observed while it began model authentication. Do not interfere
-while it owns the card. Compare only after both complete transcripts,
-the same answer and count geometry, and independent stable restoration.
-No batched inference rate or speedup is known yet.
+were observed while it began model authentication.
+
+Tag208 completed the same 31 committed post-prompt steps (31 through 62)
+over 174398471..174401942 us, or 0.177750314..0.177753852 tok/s. It produced
+the same 1-through-14 answer and all 32 output tokens without CPU inference.
+Prompt+decode took 349.273 s; Generate-to-answer took 2107.977 s, a separate
+interval that includes loading. The parser-verified candidate improvement
+over tag207 was 3.351836529..3.355804077% in this one pair; those bounds
+reflect only the sample windows, not run-to-run variation. This is neither
+broad quality evidence nor a 20 tok/s or Assistant qualification.
+
+Both exit files were 0, both stderr files empty, all three teams absent,
+and the shared lock removed. An independent read-only postflight verified
+tag208 driver, worker, client and runner hashes and the installed stable041
+hash. The driver reported generation6, cold0/owner0/guard1 and Haiku still
+reported 64 CPUs and 137034936320 bytes RAM. All nine fetched files matched
+the independent SHA256 list. The batched transcript SHA256 is
+1253276e2edef587f687b45b492f213ddfae7f5f97cb93ed6d224f9fa1231d79.
+The stage is spent; the Mac capture is
+/private/tmp/q38-head-batched-208-closed.jH1VTNXh.

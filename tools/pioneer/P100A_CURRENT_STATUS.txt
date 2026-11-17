@@ -18,15 +18,23 @@ the same 64-CPU/full-RAM Haiku profile. On the fresh Haiku boot tag206 was
 idle and unquarantined. The guarded exchange backed up tag206 and restored
 stable041 generation2; hashes, idle manager and full CPU/RAM passed.
 
-The one-shot serial control for the Qwen output-head comparison closed
-cleanly at 0.171982458..0.171985637 tok/s in its post-prompt window,
-returning the expected counting answer without CPU inference. The full
-transcript, exit files and stable041 generation4 (idle, full CPU/RAM) were
-independently verified. The matched batched tag208 is now running from
-`/boot/home/pioneer-q38-head-csr-candidate-208`, generation5, parent1121,
-client1188 and worker1189. Do not intervene while it owns the card. No
-batched timing or speedup is known. See
+Both Qwen 27B output-head variants closed cleanly and returned the same
+counting answer with no CPU inference. Post-prompt decode was
+0.171982458..0.171985637 tok/s for serial tag207 and
+0.177750314..0.177753852 tok/s for batched tag208, about 3.35% faster
+in this one matched run, still far short of 20 tok/s. This comparison
+excludes weight loading and START and does not establish repeatability.
+The complete transcripts and stable041 restoration were independently
+verified after each run; after tag208, generation6 was idle with all
+64 CPUs and 137034936320 bytes of RAM. See
 benchmarks/qwen38-head-csr-batch-20261117.txt. No Assistant changes.
+
+After the independent generation6 postflight, FFN refetch tag211
+passed its own preflight and started as generation7. Its private stage
+is /boot/home/pioneer-q38-ffn-retained-refetch-211; parent1576, client1643,
+worker1644 were observed authenticating the model. No FFN rate yet.
+Do not launch reuse tag212 until tag211 closes and stable041 generation8
+is independently verified. See benchmarks/qwen38-raw-ffn-input-reuse-20261117.txt.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
