@@ -21,6 +21,11 @@ Observed sequence
   printed `FAIL_FULL_OFFLOAD_RATE_GENERATION;CLOSE_ONLY_NO_END_RETRY_RESET_OR_CPU_FALLBACK`
   and exited 1. No output-token count, generated text, or tokens/sec was
   produced. This is a failed inference attempt, not a speed measurement.
+  The old client used a single 7200-second deadline beginning at Generate,
+  including the full upload. Its generic failure marker did not distinguish
+  deadline expiry, worker/channel loss, or an unexpected frame. The available
+  record therefore does not establish a worker-reported fatal error or the
+  exact failure cause; deadline expiry remains an unproven possibility.
 * The preserved final stdout tail goes directly from the 1000/1000 upload
   marker to the client failure marker; it contains no worker progress message
   saying inference is running on the P100A. That message is emitted only after

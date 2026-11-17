@@ -38,3 +38,17 @@ PutUSBID's assertion that no child remains registered, on thread "usb explore".
 This is distinct from the tag206 generation failure. No root cause or fix is
 established. One authorized OFF hold was issued while KDL was visible; power
 recovery must use one ON after the shutdown interval, not another OFF.
+
+Rate-client follow-up: the diagnostic client now records whether its receiver
+hit the existing absolute deadline, lost its connection, saw a bad request ID
+or frame, encountered a poll/clock failure, or received a worker fatal; it
+reports elapsed time with the explicit warning that this includes upload.
+It does not extend the deadline, retry, issue END, reset, or use CPU fallback.
+Local-socket deadline/lost/ID tests and fake-worker fatal/lost/ID tests pass
+with and without startup timing under ASan/UBSan. A Haiku cross-build passed
+the 22 refusal checks and its unchanged ordinary smoke hash matched the
+previous build. Rate client SHA256
+c9c8ec313664ded48d0be125c7b8b6cb928f13c69d6449d5aab962a545816860;
+worker 30a0f35d85a7449a9b8aae93d19f9f0e0edc5047c8a8fa339c5f977f2a5521a4.
+Neither is installed or verified on the card. These diagnostics cannot
+retroactively identify what caused the previous generic failure.

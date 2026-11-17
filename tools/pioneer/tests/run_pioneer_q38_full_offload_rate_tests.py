@@ -12,7 +12,7 @@ startup_flags=['-DPIONEER_FULL_OFFLOAD_STARTUP_TIMING=1'] if startup else []
 
 here=pathlib.Path(__file__).resolve().parent
 with tempfile.TemporaryDirectory(prefix='pioneer-full-rate-tests-',dir='/private/tmp') as temporary:
-    out=pathlib.Path(temporary);worker=out/'fake';client=out/'client';data=out/'data';samples=out/'samples'
+    out=pathlib.Path(temporary);worker=out/'fake';client=out/'client';data=out/'data';samples=out/'samples';receive=out/'receive'
     common=[os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined']
     for source,binary in ((here/'pioneer_q38_full_offload_rate_fake.cpp',worker),
                           (here/'pioneer_q38_full_offload_rate_data_test.cpp',data)):
@@ -20,18 +20,24 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-rate-tests-',dir='/private
     subprocess.run([str(data)],check=True)
     subprocess.run([*common,'-DB_DEVICE_OP_CODES_END=1000',str(here/'pioneer_q38_token_rate_samples_test.cpp'),'-o',str(samples)],check=True)
     subprocess.run([str(samples)],check=True)
+    subprocess.run([*common,str(here/'pioneer_q38_full_offload_receive_failure_test.cpp'),'-o',str(receive)],check=True)
+    subprocess.run([str(receive)],check=True)
     subprocess.run([*common,*startup_flags,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="'+str(worker)+'"',
                     str(here.parent/'pioneer_q38_full_offload_rate_smoke.cpp'),'-o',str(client)],check=True)
     passing=(0,1,17) if startup else (0,1)
-    for mode in range(18 if startup else 13):
+    for mode in (*range(18 if startup else 13),18,19):
         result=subprocess.run([str(client),'--full-card-rate-32'],capture_output=True,text=True,timeout=15,
                               env={**os.environ,'FULL_OFFLOAD_RATE_CASE':str(mode),'UBSAN_OPTIONS':'halt_on_error=1'})
         assert result.returncode==(0 if mode in passing else 1),(mode,result.returncode,result.stdout,result.stderr)
         assert not result.stderr,(mode,result.stderr)
         assert ('PASS_FULL_OFFLOAD_RATE_JOB' in result.stdout)==(mode in passing)
         if mode in passing:assert 'rate_available'+str(int(mode!=1)) in result.stdout
-        if mode==4:assert 'FULL_OFFLOAD_WORKER_ERROR Synthetic unknown' in result.stdout
+        if mode==4:
+            assert 'FULL_OFFLOAD_WORKER_ERROR Synthetic unknown' in result.stdout
+            assert 'cause=worker_fatal receive=none' in result.stdout
+        if mode==18:assert 'cause=receive receive=connection_lost' in result.stdout
+        if mode==19:assert 'cause=receive receive=frame_id' in result.stdout
     for args in ([],['--full-card-hello-four'],['--full-card-rate-32','extra']):
         result=subprocess.run([str(client),*args],capture_output=True)
         assert result.returncode==2 and not result.stdout and not result.stderr
-print('PASS actual full-card32 request client:'+('3 valid/15 failing histories,explicit required startup DATA/skip+unavailable accepted/missing+malformed+duplicate+after-text refused' if startup else '2 valid available/unavailable jobs,11 malformed/failing histories')+';3 CLI refusals;raw DATA arithmetic and real process/channel lifecycle;FAKE worker ONLY,no device/model or measured TPS')
+print('PASS actual full-card32 request client:'+('3 valid/17 failing histories,explicit required startup DATA/skip+unavailable accepted/missing+malformed+duplicate+after-text refused' if startup else '2 valid available/unavailable jobs,13 malformed/failing histories')+';3 CLI refusals;raw DATA arithmetic and real process/channel lifecycle;FAKE worker ONLY,no device/model or measured TPS')

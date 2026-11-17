@@ -25,6 +25,8 @@ int main(){
  if(mode==3)return 0;
  if(!Read(f) || f.kind!=A::Generate || f.id!=2 || f.value!=32
   || f.text!="Count from 1 to 50, one number per line. Do not add explanations.")return 2;
+ if(mode==18)return 0;
+ if(mode==19){Reply(A::Progress,3,0,"wrong request");return 0;}
  if(mode==4){Reply(A::Error,2,A::Fatal,"Synthetic unknown");return 0;}
  if(mode==5){Reply(A::Done,2,A::Cancelled,"Synthetic cancelled");return 0;}
  if(!Count(0) || !Count(20))return 0;

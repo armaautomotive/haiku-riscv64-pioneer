@@ -1,5 +1,13 @@
 P100A / Qwen 27B: current status
 ================================
+After the November 17 card swap Linux enumerated the display GPU at the old
+P100A BDF 0002:81:00.0, but no device with vendor 1e52 was listed anywhere.
+Linux remained running. The user reports the P100A fully seated; link/power
+cause is unknown. Do not run the old BDF-pinned P100A boot helper against
+the display GPU. A different physical topology must be independently
+discovered and all FDT, root policy and BAR/translation guards adapted and
+tested before Haiku accelerator work. No new P100A link speed is available.
+
 November 17 follow-up: after stable041 was restored, Haiku entered KDL on a
 USB-stack child-lifetime assertion during device removal. This is a separate
 failure from P100A inference; see benchmarks/qwen38-tag206-diagnostic-build-20261117.txt.
@@ -49,8 +57,11 @@ Full-model tag206 attempt, November 16, 2026
 After the readiness-only tag206 test passed, a separate guarded full-rate
 attempt authenticated the model, prepared the read-only Q4 cache, passed the
 metadata gate, and uploaded the complete 19,522.4 MiB Qwen3.8-27B Q4_K_M
-payload to the P100A. The worker then returned a fatal generation error
-before publishing tokens or a clean END. The rate client exited 1; there is
+payload to the P100A. The rate client then reported a generic generation
+failure before receiving tokens or a clean END; the preserved output does
+not establish whether the worker sent a fatal frame, the channel closed, or
+the 7200-second Generate deadline expired. That deadline includes upload.
+The rate client exited 1; there is
 no token/s result and no quality result. This establishes full payload upload,
 not successful on-card inference. The pre-recovery status was tag206,
 generation9, `cold1 active_owner1`; automatic stable-driver rollback correctly

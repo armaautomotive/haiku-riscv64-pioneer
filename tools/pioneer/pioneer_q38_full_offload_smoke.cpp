@@ -16,16 +16,33 @@ namespace A=Assistant27;
 static double Now(){timespec t={};return clock_gettime(CLOCK_MONOTONIC,&t)?-1:double(t.tv_sec)+double(t.tv_nsec)*1e-9;}
 struct Channel {
  int fd=-1;pid_t child=-1;uint32_t id=0;A::Receiver receiver;
+#ifdef PIONEER_FULL_OFFLOAD_CHANNEL_ONLY
+ const char* nextFailure="none";
+ bool ReceiveFailure(const char* reason){nextFailure=reason;return false;}
+#endif
  bool Send(unsigned kind,unsigned value=0,const std::string& text=""){
   A::Frame frame;frame.kind=kind;frame.id=++id;frame.value=value;frame.text=text;return A::Send(fd,frame);
  }
  bool Next(A::Frame& frame,double deadline){
   for(;;){
+#ifdef PIONEER_FULL_OFFLOAD_CHANNEL_ONLY
+   const double now=Now();if(now<0)return ReceiveFailure("clock");
+   if(now>deadline)return ReceiveFailure("deadline");
+   const auto result=receiver.Read(fd,frame);
+   if(result==A::Receiver::Received){const double received=Now();
+    if(received<0)return ReceiveFailure("clock");
+    if(received>deadline)return ReceiveFailure("deadline");
+    if(frame.id!=id)return ReceiveFailure("frame_id");
+    return true;}
+   if(result!=A::Receiver::Waiting)return ReceiveFailure(result==A::Receiver::Lost?"connection_lost":"invalid_frame");
+   pollfd p={fd,POLLIN,0};if(poll(&p,1,100)<0 && errno!=EINTR)return ReceiveFailure("poll");
+#else
    const double now=Now();if(now<0 || now>deadline)return false;
    const auto result=receiver.Read(fd,frame);
    if(result==A::Receiver::Received){const double received=Now();return frame.id==id && received>=0 && received<=deadline;}
    if(result!=A::Receiver::Waiting)return false;
    pollfd p={fd,POLLIN,0};if(poll(&p,1,100)<0 && errno!=EINTR)return false;
+#endif
   }
  }
  bool Open(){

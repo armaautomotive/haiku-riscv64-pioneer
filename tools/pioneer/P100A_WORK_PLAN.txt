@@ -8,7 +8,9 @@ tested checkpoints. 20tok/s is unmet and unproven.
 
 Latest correction, November 16: the full tag206 request proceeded beyond
 readiness and uploaded the entire 19,522.4 MiB prepared-Q4 model, but it
-returned a fatal worker error before a completed response/clean END. This is
+reported a generic client failure before a completed response/clean END. The
+old client did not distinguish a worker fatal, lost connection, unexpected
+frame or its 7200-second Generate deadline (which includes upload). This is
 not a generation-rate result. Before recovery the reload manager reported
 tag206/gen9, `cold1 active_owner1`, so its guard correctly refused hot rollback.
 One controlled board power cycle was performed. The serial capture then showed
