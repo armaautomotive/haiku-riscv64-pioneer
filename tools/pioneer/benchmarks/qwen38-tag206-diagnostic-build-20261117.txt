@@ -75,3 +75,23 @@ invocation has no llama/ggml imports and binds only the not-yet-deployed
 worker path under /boot/home/pioneer-q38-tag206-phase-rate-20261117-a/.
 Rate client SHA256 27c2d25a6e9d3fb74ff3a375c7a1438e2d7cac3f416a0e70ab3bf416badabcaa.
 No old script or worker was replaced and no device job ran in this check.
+
+Fresh live phase-rate trial
+---------------------------
+After the original slots were restored and the known-good SD-free Haiku
+profile booted, strict SSH confirmed 64 CPUs, full memory and stable041
+generation1 idle. Staged worker/client digests above matched on Haiku.
+The new one-shot `pioneer_q38_tag206_phase_rate_once.sh` (SHA256
+9c1af5c46a8faa233b82e918d419262c9691cc51b0b20512f469a42726f2121f)
+passed fake-manager checks for refusal, normal cleanup and owned/cold
+refusal, and then passed its read-only preflight on Haiku. No earlier
+trial directory or one-shot script was reused.
+
+The confirmed live parent began at PID 549 in the new private stage
+/boot/home/pioneer-q38-tag206-phase-rate-20261117-a. It swapped from
+stable041 generation1 to the exact tag206 candidate generation2 and the
+worker began authenticated vocabulary preparation. The actual benchmark
+results will be in rate.stdout/stderr/exit; parent.exit is written only
+after the guarded restore path finishes or refuses. Do not infer running
+or terminal state from a PID file without matching it to process/log
+evidence. No decoded tokens or rate had been observed at this checkpoint.
