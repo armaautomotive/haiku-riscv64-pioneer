@@ -147,3 +147,25 @@ They verified close-only handling and no output on failure. The pipelined
 Haiku worker cross-build passed 26 refusal tests and the unchanged 11-symbol
 vocabulary/model-container allowlist. New build-only worker SHA-256:
 `fe4fa225302e391b714795255f15af1eec6abebfd7101d34069c19b262907947`.
+
+Terminal result of live phase-rate trial
+---------------------------------------
+The prepared transfer reached exactly 19,522.4 MiB (1000/1000). There
+was no running-generation marker, committed token or answer. The rate
+client reported a worker fatal, not its 1,200-second START watchdog:
+`stage=start request_stage=accelerator_begin_and_upload operation=44816`.
+Its 4,130.641 s elapsed field includes upload and is not a decode time.
+Both rate client and parent returned 1. The native substage was not available
+in this older worker. The serial retain record shows 120 participants
+prepared, zero booted; this does not distinguish which pre-boot check
+or first worker boot failed. No CPU inference, END or retry was done.
+
+All four live teams were gone before the independent read-only check.
+Exact tag206 remained installed; the pinned manager reported generation2,
+`cold1 active_owner1`, so the parent correctly refused hot restoration.
+Haiku still had 64 CPUs and 137,034,936,320 bytes RAM before recovery.
+The complete seven-file capture is kept privately on the Mac;
+`rate.stdout` SHA256 0e1f53996a640dd25d40e775721aee964144625a844f417a3d4ac7aa17f76c86.
+One OFF hold completed, SSH went down, and one ON pulse started Linux
+from SPI/NVMe. No SD, mains, or hardware change. Stable-driver recovery
+is not established until the subsequent independent Haiku postflight.
