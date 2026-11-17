@@ -21,6 +21,8 @@ require(len(args) == 4, 'ABS_ROOT ABS_WORKER ABS_MODEL ABS_EXISTING_CACHE [--pro
 require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'no role override')
 here = pathlib.Path(__file__).resolve().parent
 repo = here.parent.parent.parent
+sys.path.insert(0,str(here.parent))
+from pioneer_native_q4_cache_recipe import recipe
 root_image, worker, model, cache = map(pathlib.Path, args)
 require(all(p.is_absolute() for p in (root_image, worker, model, cache)), 'absolute inputs')
 fixture = worker / 'unchanged-original/unchanged-vector/unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/unchanged-pushed/unchanged-precise/unchanged-global/qualified-math'
@@ -64,8 +66,8 @@ for name in ('pioneer_q38_native_q4_prepare.cpp', 'PioneerModelWeightCache.cpp')
 digest = hashlib.sha256()
 for name, data in sorted(writer_sources.items()):
     digest.update(name.encode() + b'\0' + len(data).to_bytes(8, 'little') + data)
-writer = digest.hexdigest()
-require(writer == '70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6', 'unchanged original cache recipe')
+checked, writer = recipe(repo)
+require(digest.hexdigest() == checked, 'exact reviewed cache source snapshot')
 root_pin=('program.elf',197724,'38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039') if counter_unroll else ('program.elf',194980,'0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1')
 snapshots = [snapshot(root_image, [root_pin]),
              snapshot(fixture, pins(here / 'run_pioneer_q38_mixed_worker_tests.py')),

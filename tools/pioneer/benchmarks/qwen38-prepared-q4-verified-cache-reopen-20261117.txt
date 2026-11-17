@@ -1,0 +1,36 @@
+Prepared Q4: reuse the verification from readiness
+==================================================
+2026-11-17. Host-side load optimization only; no Tensix math, numerical
+recipe, PCIe configuration, inference rate or installed files changed.
+
+Previously readiness fully authenticated every bundle; the upload adapter
+then called OpenExisting on each of the 1344 prepared upload bundles,
+performing another complete bundle hash even before its first page. It
+still verified the actual 64 KiB chunks as it used them. Readiness now
+retains the existing in-memory VerifiedEntry receipt from its exact cache
+instance. Upload performs a read-only reopen of the same file with exact
+identity, header and chunk index checks. Each used chunk is still hashed
+before publication. Changed files, source withdrawal, unprepared entries
+and directory mismatches refuse; upload does not repair or convert.
+
+The original on-disk recipe/key is unchanged:
+70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6
+Independently fingerprinted reviewed sources:
+686b96218fdf18ec22aad266635789c0ad5124b764b507b05e0cc29a8b398049
+The existing cache was opened read-only for the full-model test. The
+real 18,973,870,528-byte GGUF and existing prepared cache passed the
+production session source test under ASan/UBSan: 1351 warm bundles, zero
+conversions, 4895 spans/20,470,759,424 planned bytes, 194 publication
+packets, 9790 first/last span pages, 4992 captured index pages and exactly
+1344 verification-receipt reopens. Source withdrawal refused without
+altering the output. No accelerator was opened. The synthetic cache tests
+also check exact bytes and refusal of both a buffered read and a new
+reopen after file mutation.
+
+Haiku RISC-V tag206 diagnostic worker built against the frozen ABI with
+22 role refusals and only 11 vocabulary/model-container imports. Worker:
+cbe283cabfd6ef64939982e68fd4b6f32834151d4461ee97825e7aa5afb4e775
+Not staged or installed. The independent live phase-rate trial (parent
+549) continues to use the original staged worker. This removes a full
+redundant verification pass per uploaded prepared bundle; it does not
+yet establish a physical time saving or decoded tokens/sec.

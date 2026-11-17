@@ -56,6 +56,7 @@ public:
  uint64_t CapturedIndexPages()const{return pages.CapturedPages();}
  uint64_t PlanningIndexReads()const{return pages.PlanningReads();}
  uint64_t PayloadWindowFills()const{return payload.WindowFills();}
+ uint64_t PayloadVerifiedReopens()const{return payload.VerifiedReopens();}
  bool ReadPage(unsigned span,unsigned page,uint8_t* output,unsigned capacity){
   if(!Ready())return false;
   auto raw=[this](unsigned f,unsigned p,uint8_t* out,unsigned bytes){return source->ReadWeightPage(*original,f,p,out,bytes);};

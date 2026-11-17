@@ -11,11 +11,11 @@
 class PioneerQ38NativeQ4CachedPages {
  using Cache=PioneerModelWeightCache;
  PioneerQ38NativeQ4WeightCache* weights=nullptr;
- Cache cache;Cache::Ready sourceReady;
+ Cache::Ready sourceReady;
  std::unique_ptr<Cache::Reader> reader;
  Cache::Key current{};
  std::array<uint8_t,Cache::ChunkBytes> window{};
- uint64_t windowOffset=0,windowFills=0;
+ uint64_t windowOffset=0,windowFills=0,verifiedReopens=0;
  unsigned active=UINT32_MAX,windowBytes=0;
  bool attempted=false;
  static bool Fail(std::string& error,const char* why){error=why;return false;}
@@ -31,10 +31,11 @@ public:
  }
  bool Bind(const char* directory,PioneerQ38NativeQ4WeightCache& source,const Cache::Ready& ready,std::string& error){
   if(attempted)return Fail(error,"Native Q4 cached-page binding is one-shot.");attempted=true;
-  if(!ready || !ready() || !source.OriginalPlan().Ready() || !cache.Open(directory,error))return false;
+  if(!ready || !ready() || !source.UsesDirectory(directory))return Fail(error,"Payload reader requires the original verified cache owner.");
   weights=&source;sourceReady=ready;return ready();
  }
  uint64_t WindowFills()const{return windowFills;}
+ uint64_t VerifiedReopens()const{return verifiedReopens;}
  bool ReadPage(unsigned fragment,unsigned page,bool correction,uint8_t* output,unsigned capacity,std::string& error){
   Cache::Key key;PioneerQ38NativeQ4WeightCache::CorrectionProposal side{};
   if(!output || capacity<4096 || !weights || !weights->KeyFor(fragment,false,key) || !Ready(fragment,key)
@@ -45,8 +46,8 @@ public:
   if(page>=allocated/4096 || relative>=bytes)return Fail(error,"Invalid Q4 upload page.");
   if(active!=fragment || !Same(current,key)){
    reader.reset();active=UINT32_MAX;windowBytes=0;auto next=std::make_unique<Cache::Reader>();
-   if(!cache.OpenExisting(key,[&]{return Ready(fragment,key);},*next,error))return false;
-   reader=std::move(next);current=key;active=fragment;
+   if(!weights->OpenVerifiedBundle(fragment,*next,error) || !Ready(fragment,key))return false;
+   reader=std::move(next);current=key;active=fragment;verifiedReopens++;
   }
   if(!reader || !reader->IsOpen())return Fail(error,"Native Q4 bundle changed during upload.");
   std::array<uint8_t,4096> stage{};const unsigned count=unsigned(std::min(UINT64_C(4096),uint64_t(bytes)-relative));

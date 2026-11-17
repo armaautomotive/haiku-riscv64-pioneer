@@ -40,8 +40,8 @@ assert 'cache.OpenExisting(e.manifestKey' in cache
 assert 'cache.OpenExisting(e.bundleKey' in cache
 assert 'prepared_q4 and args.count(\'--readiness-diagnostic\')==1' in builder
 sys.path.insert(0, str(root / 'tools/pioneer'))
-from pioneer_native_q4_cache_recipe import recipe
+from pioneer_native_q4_cache_recipe import REVIEWED_CURRENT_SOURCE, recipe
 source_fingerprint, cache_identity = recipe(root)
-assert source_fingerprint == 'bc4adf382e35955f598e599f189819b0c2f3ede6acfc26ed756ddb1a7ad688c4'
+assert source_fingerprint == REVIEWED_CURRENT_SOURCE
 assert cache_identity == '70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6'
 print('PASS readiness diagnostic is ordered vocabulary -> prepared cache -> metadata probe; no Generate/CPU inference')

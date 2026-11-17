@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Snapshot host upload probe,using the ORIGINAL writer's recipe identity."""
 import hashlib,os,pathlib,re,subprocess,sys
+from pioneer_native_q4_cache_recipe import recipe
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Refuse optimized Python;source provenance checks are required')
 assert len(sys.argv)==2 and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 here=pathlib.Path(__file__).resolve().parent;repository=here.parent.parent;out=pathlib.Path(sys.argv[1])
@@ -19,8 +20,8 @@ def digest(records):
     for name,data in sorted(records.items()):result.update(name.encode()+b'\0'+len(data).to_bytes(8,'little')+data)
     return result.hexdigest()
 for name in ('pioneer_q38_native_q4_prepare.cpp','PioneerModelWeightCache.cpp'):collect(here/name)
-writer=digest(sources)
-assert writer=='70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6','original cache recipe changed;do not silently regenerate data'
+checked,writer=recipe(repository)
+assert digest(sources)==checked,'cache source changed during snapshot'
 collect(here/'pioneer_q38_prepared_q4_upload_probe.cpp')
 out.mkdir(mode=0o700);snapshot=out/'source';snapshot.mkdir(mode=0o700)
 for name,data in sources.items():

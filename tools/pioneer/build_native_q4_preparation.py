@@ -6,6 +6,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from pioneer_native_q4_cache_recipe import recipe
 
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
     raise SystemExit('Refuse optimized Python;preparation provenance checks are required')
@@ -40,6 +41,8 @@ digest=hashlib.sha256()
 for name,data in sorted(sources.items()):
     digest.update(name.encode()+b'\0'+len(data).to_bytes(8,'little')+data)
 fingerprint=digest.hexdigest()
+checked, identity=recipe(repository)
+assert fingerprint==checked
 out.mkdir(mode=0o700);snapshot=out/'source';snapshot.mkdir(mode=0o700)
 for name,data in sources.items():
     target=snapshot/name;target.parent.mkdir(parents=True,exist_ok=True)
@@ -58,12 +61,11 @@ if haiku:
 command=[compiler,'-std=c++17','-O3','-ffp-contract=off',
          '-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',
          '-ffile-prefix-map='+str(snapshot)+'=/pioneer-native-q4-preparation-source',
-         '-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+fingerprint+'"',*extra,
+         '-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+identity+'"',*extra,
          str(snapshot/'tools/pioneer/pioneer_q38_native_q4_prepare.cpp'),
          str(snapshot/'tools/pioneer/PioneerModelWeightCache.cpp'),'-o',str(out/'prepare')]
 subprocess.run(command,check=True)
 if haiku:
-    assert fingerprint=='70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6'
     undefined=subprocess.check_output([compiler[:-3]+'nm','-u',str(out/'prepare')],text=True)
     for forbidden in ('llama_','ggml_','ioctl','mmap','pthread_create'):
         assert forbidden not in undefined,forbidden
@@ -73,5 +75,5 @@ for name,data in sources.items():
 (out/'compile-argv.txt').write_text('\n'.join(command)+'\n')
 binary=(out/'prepare').read_bytes()
 (out/'binary-identities.txt').write_text(hashlib.sha256(binary).hexdigest()+'  prepare\n')
-print('BUILD_ONLY_NATIVE_Q4_PREPARATION sourceFiles'+str(len(sources))+' recipeFingerprint'+fingerprint+
+print('BUILD_ONLY_NATIVE_Q4_PREPARATION sourceFiles'+str(len(sources))+' sourceFingerprint'+fingerprint+' recipeFingerprint'+identity+
       ' binarySHA256'+hashlib.sha256(binary).hexdigest()+';NO test/device/native/inference/speed grant',flush=True)

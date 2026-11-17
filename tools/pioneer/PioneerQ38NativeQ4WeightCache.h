@@ -18,8 +18,10 @@ class PioneerQ38NativeQ4WeightCache {
   bool q4=false,prepared=false;
   unsigned tiles=0,indexBytes=0,sideBytes=0,address=0,allocated=0;
   Cache::Key manifestKey,bundleKey;
+  std::unique_ptr<Cache::VerifiedEntry> verifiedBundle;
  };
  Cache cache;
+ std::string cacheDirectory;
  PioneerQwen38Gguf* model=nullptr;
  PioneerQwen38PackedPlan plan;
  Cache::Ready sourceReady;
@@ -102,7 +104,7 @@ class PioneerQ38NativeQ4WeightCache {
  bool OpenBundle(unsigned fragment,std::string& error){
   if(active==fragment)return reader && reader->IsOpen();
   reader.reset();active=UINT32_MAX;auto nextReader=std::make_unique<Cache::Reader>();
-  if(!cache.OpenExisting(entries[fragment].bundleKey,[this]{return Ready();},*nextReader,error))return false;
+  if(!OpenVerifiedBundle(fragment,*nextReader,error))return false;
   reader=std::move(nextReader);active=fragment;return true;
  }
 public:
@@ -135,12 +137,13 @@ public:
 #else
   if(!expected || !cache.Open(directory,error) || !ready() || !source.Stable())return false;
 #endif
-  model=&source;epoch=source.Epoch();sourceReady=ready;
+  cacheDirectory=directory;model=&source;epoch=source.Epoch();sourceReady=ready;
   for(unsigned bank=0;bank<7;bank++)used[bank]=plan.Used(bank);
   while(next<entries.size() && !entries[next].q4)next++;
   return Ready();
  }
  const PioneerQwen38PackedPlan& OriginalPlan()const{return plan;}
+ bool UsesDirectory(const char* directory)const{return directory && cacheDirectory==directory && Ready();}
  unsigned NextFragment()const{return Ready()?next:UINT32_MAX;}
  bool AllPrepared()const{return Ready() && expected && prepared==expected;}
  uint64_t Used(unsigned bank)const{return Ready() && bank<7?used[bank]:0;}
@@ -221,6 +224,9 @@ public:
 #else
   if(!cache.GetOrCreate(e.bundleKey,[this]{return Ready();},produce,*bundle,bundleHit,error,progress) || !Ready())return false;
 #endif
+  auto verified=std::make_unique<Cache::VerifiedEntry>();
+  if(!cache.RememberVerified(*bundle,*verified,error) || !Ready())return false;
+  e.verifiedBundle=std::move(verified);
   e.sideBytes=sideBytes;e.address=uint32_t(PioneerQwen38PackedPlan::Base+used[p.bank]);e.allocated=unsigned(allocated);
   used[p.bank]+=allocated;e.prepared=true;prepared++;next++;
   while(next<entries.size() && !entries[next].q4)next++;
@@ -230,6 +236,13 @@ public:
   reader=std::move(bundle);active=fragment;
   stats.fragments++;stats.manifestHits+=manifestHit;stats.bundleHits+=bundleHit;stats.bytes+=e.bundleKey.bytes;
   return Ready();
+ }
+ // Reopen against the same cache owner and the exact file/header/index
+ // verified in PrepareNext. Reader::Read still hashes every actual chunk.
+ bool OpenVerifiedBundle(unsigned fragment,Cache::Reader& output,std::string& error){
+  if(!Ready() || fragment>=entries.size() || !entries[fragment].prepared || !entries[fragment].verifiedBundle)
+   return Fail(error,"No verified native Q4 bundle for this fragment.");
+  return cache.OpenRemembered(*entries[fragment].verifiedBundle,[this]{return Ready();},output,error);
  }
  // Read EXISTING complete verified bundles only. Missing/corrupt data fails
  // without repair or conversion after a future accelerator session opens.

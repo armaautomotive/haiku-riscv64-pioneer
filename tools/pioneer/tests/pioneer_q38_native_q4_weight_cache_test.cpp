@@ -58,6 +58,9 @@ int main(int argc,char** argv){
  assert(warm.PrepareNext(hits,error) && hits.fragments==1 && hits.manifestHits==1 && hits.bundleHits==1 && !hits.convertedTiles && hits.bytes==stats.bytes);
  assert(warm.NextFragment()>first);
  PioneerQ38NativeQ4CachedPages upload;assert(upload.Bind(directory.c_str(),warm,sourceReady,error));
+ PioneerQ38NativeQ4CachedPages wrongCache;
+ assert(!wrongCache.Bind((directory+"-other").c_str(),warm,sourceReady,error));
+ WC::Reader unprepared;assert(!warm.OpenVerifiedBundle(warm.NextFragment(),unprepared,error) && !unprepared.IsOpen());
  // Preparation cancellation must leave the earlier complete recipe usable.
  bool keepGoing=true;const auto cancelledRecipe=WC::Hash("cancel-native-q4-test",21);
  NC cancelled;const std::string cancelledDirectory=std::string(argv[1])+"/cancelled-native-q4";
@@ -108,7 +111,7 @@ int main(int argc,char** argv){
   memcpy(expectedPage.data(),side.data()+at,take);
   assert(upload.ReadPage(first,page,true,actual.data(),actual.size(),error) && actual==expectedPage);
  }
- assert(upload.WindowFills()==(stats.bytes+65535)/65536);
+ assert(upload.WindowFills()==(stats.bytes+65535)/65536 && upload.VerifiedReopens()==1);
  Refused(upload,first,part.allocated/4096,false);Refused(upload,first,correction.allocated/4096,true);Refused(upload,UINT32_MAX,0,false);
  Refused(warm,first,part.allocated/4096,false);Refused(warm,first,correction.allocated/4096,true);Refused(warm,UINT32_MAX,0,false);
  // Same complete generic cache checksum,but deliberately invalid manifest
@@ -120,11 +123,14 @@ int main(int argc,char** argv){
  assert(!invalid.PrepareNext(refused,error) && !refused.convertedTiles && !refused.fragments);Refused(invalid,first,0,true);
  // Upload cannot repair corruption,even after a valid bundle has been read.
  WC::Key key;assert(warm.KeyFor(first,false,key));const std::string path=directory+"/"+WC::EntryName(key);
+ PioneerQ38NativeQ4CachedPages reopened;assert(reopened.Bind(directory.c_str(),warm,sourceReady,error));
  assert(upload.ReadPage(first,0,false,actual.data(),actual.size(),error)); // buffer the victim's UNCHANGED first chunk
  struct stat before{},after{};assert(!stat(path.c_str(),&before) && !chmod(path.c_str(),0600));
  int fd=open(path.c_str(),O_RDWR|O_NOFOLLOW);assert(fd>=0);uint8_t changed=0x57;
  assert(pwrite(fd,&changed,1,before.st_size-1)==1 && !fsync(fd) && !close(fd) && !chmod(path.c_str(),0400));
- Refused(warm,first,0,false);Refused(upload,first,0,false);assert(!stat(path.c_str(),&after) && before.st_ino==after.st_ino);
+ Refused(warm,first,0,false);Refused(upload,first,0,false);Refused(reopened,first,0,false);
+ WC::Reader rejected;assert(!warm.OpenVerifiedBundle(first,rejected,error) && !rejected.IsOpen());
+ assert(!reopened.VerifiedReopens() && !stat(path.c_str(),&after) && before.st_ino==after.st_ino);
  ready=false;Refused(cold,first,0,false);ready=true;
  // The original caller cannot silently replace our owned full8192/two-slot
  // metadata snapshot by rebuilding its own plan after preparation.
@@ -133,7 +139,7 @@ int main(int argc,char** argv){
  NC unbound;assert(!unbound.Bind((std::string(argv[1])+"/untiled-refused").c_str(),source,plan,original,conversion,sourceReady,error));
  assert(source.Open(fixture.file));Refused(cold,first,0,true);Refused(upload,first,0,true);assert(!cold.AllPrepared());
  printf("PASS_NATIVE_Q4_PREPARED_WEIGHT_CACHE primaryPages%u correctionPages%u masksDense%u sparse%u zero%u nativeBytes%llu;"
-  "EXACT originalQuantCodes separateRecipe ZERO_warm_conversion atomicBundle tailPadding readOnlyUpload sourceRevocation;"
+  "EXACT originalQuantCodes separateRecipe ZERO_warm_conversion atomicBundle tailPadding verifiedReopen readOnlyUpload sourceRevocation;"
   "SYNTHETIC_SOURCE_NO_NATIVE_MODEL_OR_TPS\n",part.allocated/4096,correction.allocated/4096,kinds[0],kinds[1],kinds[2],(unsigned long long)stats.bytes);
  (void)Read32;
 }
