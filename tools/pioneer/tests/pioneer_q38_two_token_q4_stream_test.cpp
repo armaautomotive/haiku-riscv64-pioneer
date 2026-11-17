@@ -11,17 +11,19 @@ struct TwoStream:RowsMachine {
  uint32_t command[10]={};
  uint32_t counts[8]={};
  unsigned aUnpacks=0,bUnpacks=0,published=0,fabricFault=0,when=1;
+ unsigned input1;
  bool initialFifo=false;
  std::vector<unsigned> addresses;
- explicit TwoStream(const char* image,const StreamMachine& first,const StreamMachine& second,unsigned bank)
-  :RowsMachine(image,12,first.inputs,1){
+ explicit TwoStream(const char* image,const StreamMachine& first,const StreamMachine& second,unsigned bank,unsigned secondBase=L::Input1)
+  :RowsMachine(image,12,first.inputs,1),input1(secondBase){
+  assert(input1==L::Input1 || input1==L::VectorInput1);
   tiles=first.tiles;
   for(unsigned w=0;w<L::Words;w++)memory[L::Descriptor+w*4]=0;
   memory[L::Descriptor]=L::Magic;memory[L::Descriptor+4]=12;memory[L::Descriptor+8]=L::TileBytes;
   memory[L::Descriptor+20]=inputs;memory[L::Descriptor+24]=base;memory[L::Descriptor+28]=bank;
   for(unsigned t=0;t<2;t++){
    const auto& source=t?second:first;
-   for(unsigned w=0;w<inputs/2;w++)memory[L::Input(t)+w*4]=source.memory.at(L::Input0+w*4);
+   for(unsigned w=0;w<inputs/2;w++)memory[(t?input1:L::Input0)+w*4]=source.memory.at(L::Input0+w*4);
    for(unsigned b=0;b<tiles.size();b++)memory[L::Scale(t)+b*4]=source.memory.at(L::Scale0+b*4);
   }
   command[0]=base;command[2]=PioneerQ38ProjectionRoute(bank);command[3]=L::Tile;
@@ -51,7 +53,7 @@ struct TwoStream:RowsMachine {
    if(at==0xffb20000)targetRead=true;
    return command[(at-0xffb20000)/4];
   }
-  if(Range(at,L::Descriptor,L::Words*4) || Range(at,L::Input1,inputs*2) ||
+  if(Range(at,L::Descriptor,L::Words*4) || Range(at,input1,inputs*2) ||
    Range(at,L::Scale1,unsigned(tiles.size()*4)))return memory.at(at);
   return StreamMachine::Load(at);
  }

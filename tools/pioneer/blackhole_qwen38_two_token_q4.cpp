@@ -89,6 +89,11 @@ int Value(uint16_t x){return int(x&1023)*((x&0x8000)?-1:1);}
 
 #ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
 namespace Stream=PioneerQ38TwoTokenQ4StreamLayout;
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_VECTOR
+inline unsigned StreamInput(unsigned t){return Stream::VectorInput(t);}
+#else
+inline unsigned StreamInput(unsigned t){return Stream::Input(t);}
+#endif
 bool Idle(){return !*Words(0xffb20040) && !(*Words(0xffb20240)&255);}
 void CheckJob(const uint32_t* sealed){
  for(unsigned i=0;i<Stream::Words;i++)if(Words(Stream::Descriptor)[i]!=sealed[i])block_fault_park();
@@ -153,7 +158,7 @@ extern "C" unsigned block_main(){
  for(unsigned t=0;t<Tokens;t++){
   for(unsigned b=0;b<blocks;b++)if(!ScaleValid(Words(Stream::Scale(t))[b]))return 0;
   for(unsigned w=0;w<inputs/2;w++){
-   const uint32_t word=Words(Stream::Input(t))[w];
+   const uint32_t word=Words(StreamInput(t))[w];
    if(!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16)))return 0;
   }
  }
@@ -197,7 +202,7 @@ extern "C" unsigned block_main(){
   for(unsigned t=0;t<Tokens;t++)for(unsigned w=0;w<8;w++){
    const uint32_t word=
 #ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
-    Words(Stream::Input(t))[block*(Width/2)+p*8+w];
+    Words(StreamInput(t))[block*(Width/2)+p*8+w];
 #else
     Words(Input+t*InputStride)[p*8+w];
 #endif

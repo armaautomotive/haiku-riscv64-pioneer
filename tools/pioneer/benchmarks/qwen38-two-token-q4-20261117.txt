@@ -117,7 +117,7 @@ non-finite weights and final values, missing scratch initialization and
 dot clears, and a duplicated input row. The five-image ASan/UBSan suite
 also preserves all four existing image pins and rejects 13 illegal role
 combinations. Q8T4 fits within the original 8192-byte view: 7,784 bytes,
-SHA256 75555b9c80398a7aa760a2d097512ed983c5125cf9c6a4d97a71c68bd2ccbe5d.
+SHA256 98fd588698cf162634973a7945ff6d3b948c7469e4c09c2612fb3e535ed34a15.
 
 With the actual Qwen3.8-27B-Q4_K_M GGUF supplied read-only, the suite
 also matched both results bit-for-bit for four real weight shards:
@@ -126,9 +126,32 @@ blk.0.ffn_down.weight at K17408 (rows 0..15 and 5104..5119).
 K6144 was tested synthetically; this file had no matching Q4_K tensor
 at that width. Activations and card timing remain synthetic/untested.
 
-Next qualify a physical same-weight, two-activation comparison, with
-exclusive worker ownership and explicit stop/restore. The linked image
-serves one 16-output shard, not a whole-model trial. Separately the
+Diagnostic memory and launch policy
+-----------------------------------
+Q8T4 moves its second activation from 0xb0000 to 0x97000. Both 17,408-wide
+activations now fit in the original 0x6e000..0xb0000 saved L1 window,
+without expanding the native view or overlapping scales, weights or output.
+The old scalar paired image is unchanged and is not a native control.
+The updated firmware passed the same linked real and synthetic tests.
+
+The companion host policy checks the existing resident route and private
+initialized-page bitmap before staging both inputs, including the complete
+immutable GDDR range. It checks two identical snapshots of the original
+worker view, verifies staged code and both inputs, and derives one bounded
+read command. A result needs the right terminal marker, the right parked
+PC twice, all expected read/counter deltas, no unrelated traffic, finite
+values for both rows, and a verified stop. The sample duration includes
+host observation latency; it is not an exact card-cycle count. An uncertain
+result publishes no output/rate and leaves the lease quarantined, with no
+retry or restore attempt.
+
+The ASan/UBSan mock test uses the same byte-pinned code as the linked image
+test. It verified exact view/boot restoration for all 21 width/bank
+combinations, 13 inert prelaunch refusals and 16 sticky failure cases.
+The policy has no device entry point yet. Next bind it to the private
+Haiku diagnostic owner and qualify a physical same-weight comparison.
+The linked image serves one 16-output shard, not a whole-model trial.
+Separately the
 request scheduler must preserve causal KV, recurrent state, and the
 single-token fallback. Two known inputs can serve prefill or independent
 requests; single-request decode requires a real draft/verification

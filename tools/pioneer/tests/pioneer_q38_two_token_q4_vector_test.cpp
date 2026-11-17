@@ -20,7 +20,7 @@ struct TwoVector:VectorStream {
  bool omitScaleInit=false,omitSecondClear=false,duplicateActivation=false,badFinal=false;
 
  TwoVector(const char* image,const StreamMachine& a,const StreamMachine& b,unsigned bank)
-  :VectorStream(image,a,b,bank){
+  :VectorStream(image,a,b,bank,L::VectorInput1){
   memory[L::Descriptor]=L::VectorMagic;
   std::ifstream records(std::string(image)+"/program.symbols");
   std::string address,kind,name;
@@ -181,7 +181,7 @@ int main(int argc,char** argv){
    && pair->exportWords==32 && pair->published==32 && !pair->outputReads);
   for(unsigned n=32;n<4096;n++)assert(pair->buffers[4096+n]==0x7fc00000);
   for(const auto& [at,v]:before)if(TwoVector::Range(at,L::Descriptor,L::Words*4) ||
-    TwoVector::Range(at,L::Input0,width*2) || TwoVector::Range(at,L::Input1,width*2) ||
+    TwoVector::Range(at,L::Input0,width*2) || TwoVector::Range(at,L::VectorInput1,width*2) ||
     TwoVector::Range(at,L::Scale0,unsigned(pair->tiles.size()*4)) ||
     TwoVector::Range(at,L::Scale1,unsigned(pair->tiles.size()*4)))assert(pair->memory.at(at)==v);
   printf("PASS Q8T4 K%u tensor reads%u/%u matrix commands%u/%u export32, 32 exact results\n",
