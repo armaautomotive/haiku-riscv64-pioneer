@@ -13,8 +13,8 @@ struct VectorMetadataPeer:ConstantIssuePeer {
 	bool active=false,storesSeen[64][16]={};
 	MetadataMachine arithmetic;
 	std::array<uint32_t,64> oldAccumulator={};
-	VectorMetadataPeer(const char* fixture,const char* image,unsigned type,unsigned k,unsigned groups)
-	 :ConstantIssuePeer(fixture,image,69,type,k,groups) {
+	VectorMetadataPeer(const char* fixture,const char* image,unsigned type,unsigned k,unsigned groups,unsigned worker=69)
+	 :ConstantIssuePeer(fixture,image,worker,type,k,groups) {
 		std::ifstream symbols(std::string(image)+"/program.symbols");std::string at,kind,name;
 		while(symbols>>at>>kind>>name)if(name.find("PioneerQ38VectorQ4Metadata5Block")!=std::string::npos) {
 			assert(!metadataPC);metadataPC=unsigned(std::stoul(at,nullptr,16));

@@ -89,3 +89,38 @@ late identity faults before a second projection. These were actual
 emitted RV32 binaries with synthetic endpoint data, not native
 driver packages or model runs. The next gate is a matched package
 of the measured raw path with the retention change and its control.
+
+Measured vector92 sender port (offline)
+---------------------------------------
+The fresh build reproduced the complete worker used by the measured
+vector92 release (ELF SHA256
+4b3dc0c96d3888b9c43af683f58678cc91cade7c67e955413bad8c5e16d52870)
+and matched all ten peer arrays in the shipped native program header.
+The port changes only .globalworker (9,232 to 9,500 bytes). The other
+nine sections, including vector-Q4 metadata and Tensix math, are
+byte-identical; the flag-off sender object also matches exactly.
+Two fresh builds reproduced the candidate ELF SHA256:
+aefeb0c7cad0eeb1f13867b2c77e473dca4eeb482ad7c9a97cd00d29b19a3f43.
+
+The sender only skips an input fetch on an ordinary Q4/K5120 job
+when the previous local job filled the retained operands, completed
+its real push receipt, and has matching layer/position and the
+immediately preceding recipe number. ROOT still owns the actual
+gate/up pairing and input identity. Five compile-role refusals and
+the original read-only CSR audit passed. No native image was built.
+
+The ASan/UBSan emulator ran real vector92 matrix and sender bytes on
+workers 1, 69 and 119 with synthetic Q4 weights. The baseline, new
+sender with refetch, and new sender with retention all agreed on the
+same 448 up-projection rows and full Tensix instruction stream. The
+emulator observed 102->100, 92->90 and 92->90 reads respectively,
+exactly 162 fewer 64-byte activation flits per worker. Both jobs used
+actual payload/ACK/commit receipts; the 10,240 operand and 128 scale
+bytes stayed intact. Seven off-contract jobs (old sender, cold skip,
+wrong recipe/layer/position, invalid operand/scale) stopped before new
+NoC reads, tensor work or a receipt. These are not measured clocks or
+tokens/sec. They do not replace the exact vector92 ROOT pair and native
+guarded A/B run required to establish a benefit.
+
+  python3 tools/pioneer/build_qwen38_vector92_ffn_sender.py SDK NEW_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_ffn_sender_tests.py SDK NEW_OUTPUT
