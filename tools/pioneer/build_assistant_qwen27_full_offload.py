@@ -271,10 +271,20 @@ rows=[r.split('\t') for r in obj.with_suffix('.su').read_text().splitlines()]
 assert rows and all(len(r)==3 and r[2]=='static' and int(r[1])<=32768 for r in rows)
 if resident_vector:
     # The single-request smoke and raw count reader use the one-shot IPC
-    # contract. Never package them with the distinct resident worker.
-    (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in (compile,link))+'\n')
+    # contract. Package only the resident-specific two-request client.
+    rate=out/'pioneer-q38-full-offload-resident-rate'
+    resident_rate=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
+                   '-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-resident-vector-210/HaikuAssistantQwen27FullOffload"',
+                   '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
+                   '-L'+str(release/'system/libnetwork'),*libflags,
+                   str(here/'pioneer_q38_full_offload_resident_rate.cpp'),'-lnetwork','-o',str(rate)]
+    subprocess.run(resident_rate,check=True)
+    imports=subprocess.check_output([tool+'nm','-u',str(rate)],text=True)
+    assert all(n not in imports for n in ('llama_', 'ggml_', 'ioctl', 'mmap'))
+    (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in (compile,link,resident_rate))+'\n')
     (out/'llama-imports.txt').write_text('\n'.join(sorted(llama_imports))+'\n')
     print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
+    print(hashlib.sha256(rate.read_bytes()).hexdigest(),rate.name,flush=True)
     print(f'PASS BUILD_ONLY tag210 resident-vector worker; {len(refusals)} role refusals; no CPU inference or installation',flush=True)
     sys.exit(0)
 smoke=out/'pioneer-q38-full-offload-smoke'
