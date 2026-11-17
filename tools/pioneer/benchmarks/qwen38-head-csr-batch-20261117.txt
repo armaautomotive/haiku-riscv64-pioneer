@@ -141,3 +141,31 @@ compare the same counting request and complete committed-token stream,
 and keep upload time separate from the generation window. Require a clean
 closed worker and confirmed stable-driver restoration between trials;
 do not start either while the live prepared-cache trial owns the card.
+
+One-shot hardware runner preparation
+------------------------------------
+`build_qwen38_head_csr_trial.py` binds one packaged variant and one exact
+observed generation of stable041 to a fresh script. It SHA-checks the
+restore template before changing the binding. The script's read-only
+preflight checks the idle generation, driver/runtime/guard hashes, exact
+variant inputs, model identity, original CPU/RAM counts and that the
+stage is on the installation volume. The full same-open model hash and
+851 layout checks still run in the worker before execution.
+
+Both variants share an exclusive lock while a trial is active. A cold,
+owned or otherwise uncertain exchange preserves the lock and refuses
+further exchanges. A spent directory cannot be reused. With an idle
+candidate and a valid backup the parent restores stable041 even if the
+client fails, but the failure still fails the trial. A successful client
+must have 32 output tokens, an available rate, clean exit and empty
+stderr; independent full-log and machine postflight checks are still
+required before using the data. The runner does not reboot, reset, retry,
+remove the installed Assistant, or modify the model.
+
+The generated serial and candidate runners passed syntax checks and 33
+fake-manager cases, including stale generations, competing locks, raw
+stderr, missing rate, ambiguous exchange, ownership and spent stages.
+No runner was staged or executed on the Pioneer in this checkpoint.
+
+  python3 tools/pioneer/build_qwen38_head_csr_trial.py serial OBSERVED_STABLE_GENERATION NEW_SCRIPT
+  python3 tools/pioneer/tests/pioneer_q38_head_csr_trial_test.py
