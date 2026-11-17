@@ -90,7 +90,7 @@ Sanitizers passed for both separately rebuilt byte-identical images.
 
 This proves the linked coordinator slice under the modeled fabric only;
 it does not establish full model accuracy, silicon timing, or safe native
-deployment. The candidate is not in a native driver and cannot replace
+deployment. This ROOT-only result does not give permission to replace
 the live tag206.
 
 Matched serial firmware control
@@ -113,3 +113,31 @@ still passed queued reply, wrapped counter and failure checks. Use the
 matched serial ELF as the extra last argument to the linked test above.
 This prepares an offline A/B control; there is still no physical speed
 measurement for either new firmware image.
+
+Native A/B build packages (offline only)
+---------------------------------------
+The native builder starts from the vector92 checkpoint 113fdbd404 and
+requires a byte-exact rebuild of the previously measured driver, worker
+and rate client against the frozen SDK and llama libraries. It binds the
+serial ROOT and the queued ROOT to separate tags 207 and 208, retaining
+the same ten worker arrays, boot, terminal, vocabulary-only host imports,
+and test request. Both packages include their own tagged worker and rate
+client. It re-extracts all fourteen arrays from each final linked driver
+and checks that only the two ROOT text/conv arrays differ between them.
+The marker, cross-tag, old-tag, CPU and Work-role refusal builds passed.
+Four mixed/corrupted input fixtures (ELF, text, terminal, conv) were refused.
+Two builds in separate output roots reproduced both manifests byte-for-byte,
+including all six native-driver, worker and rate-client hashes.
+
+Serial driver SHA-256:
+e9129fec2fe15ad7158c1712cd4f10d8ef0c61b5ac247ed1c48ca4ad55274439
+Batched driver SHA-256:
+05e2e997791ea3e4d9de50e3efbc4f5ec58b424c657a746d4017f56f52105bdf
+
+  python3 tools/pioneer/build_qwen38_head_csr_native_pair.py SDK FROZEN_LLAMA_LIBRARIES PAIRED_ROOTS NEW_OUTPUT
+
+No driver exchange or card operation is performed. For a hardware A/B,
+compare the same counting request and complete committed-token stream,
+and keep upload time separate from the generation window. Require a clean
+closed worker and confirmed stable-driver restoration between trials;
+do not start either while the live prepared-cache trial owns the card.
