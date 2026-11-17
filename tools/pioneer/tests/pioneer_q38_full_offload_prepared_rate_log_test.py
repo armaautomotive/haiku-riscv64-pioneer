@@ -23,6 +23,20 @@ for old,new in [('value1000','value999'),('19522.4/19522.4','19522.3/19522.4'),
  assert old in good;bad(good.replace(old,new,1),prepared_q4=True)
 for at in range(0,len(good),17):bad(good[:at],prepared_q4=True)
 bad(good,'synthetic stderr',prepared_q4=True)
+marks=READINESS_STDERR.splitlines(keepends=True)
+assert parse_complete(good,READINESS_STDERR,prepared_q4=True,
+                      prepared_readiness_diagnostic=True)['prepared_readiness_markers']==24
+bad(good,READINESS_STDERR,prepared_q4=True)  # old modes still require empty stderr
+bad(legacy.fixture(),READINESS_STDERR,prepared_readiness_diagnostic=True)
+for diagnostic in ('', ''.join(marks[1:]), ''.join(marks[:-1]),
+                   marks[0]+READINESS_STDERR, ''.join([marks[1],marks[0],*marks[2:]]),
+                   READINESS_STDERR.replace('/4678','/4679',1),
+                   READINESS_STDERR.replace('SOURCE_PART','FRAGMENT',1),
+                   READINESS_STDERR+'fatal diagnostic\n', READINESS_STDERR[:-1]):
+ bad(good,diagnostic,prepared_q4=True,prepared_readiness_diagnostic=True)
+bad(good,READINESS_STDERR,prepared_q4=True,prepared_readiness_diagnostic=1)
+bad(good.replace('clean_worker_exit1','clean_worker_exit0'),READINESS_STDERR,
+    prepared_q4=True,prepared_readiness_diagnostic=True)
 positions=list(range(1048576,PREPARED_TOTAL,1048576))+[PREPARED_TOTAL]
 uploads=[f'FULL_OFFLOAD_PROGRESS id2 value{b*1000//PREPARED_TOTAL} Full-card Qwen27B upload {b/MIB:.1f}/19522.4 MiB. No CPU inference.' for b in positions]
 lines=good.splitlines();many='\n'.join(lines[:2]+uploads+lines[3:])+'\n'

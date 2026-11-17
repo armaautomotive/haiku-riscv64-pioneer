@@ -95,3 +95,24 @@ results will be in rate.stdout/stderr/exit; parent.exit is written only
 after the guarded restore path finishes or refuses. Do not infer running
 or terminal state from a PID file without matching it to process/log
 evidence. No decoded tokens or rate had been observed at this checkpoint.
+
+Independent postflight transcript check
+---------------------------------------
+The live, pinned parent checks the older READINESS_Q4_CACHE_FRAGMENT
+stderr format at the end. The staged worker actually emits
+READINESS_Q4_CACHE_SOURCE_PART. Even with a clean rate client, the parent
+can exit 1 with `REFUSED_TAG206_PHASE_RATE unknown_worker_stderr` and
+then run its normal guarded restore. Do not alter or replay that live
+parent. If this exact postcheck fails, keep both logs and exit statuses.
+The independent reader's `--prepared-q4 --prepared-readiness-diagnostic`
+mode requires all 24 ordered readiness lines from the actual 851-tensor
+model/cache traversal, no other stderr, and the existing complete rate
+transcript rules. It is not a blanket stderr filter. Require `rate.exit=0`,
+complete accepted stdout, and separately verify no live trial processes,
+known stable driver hash/guard/manager, idle metadata and system health.
+A valid rate there would still be one trial, not broad quality or cleanup
+authority. For other failures or incomplete transcripts, do not report TPS.
+
+Synthetic malformed/order/unknown-stderr and closed-output cases passed.
+Ordinary prepared-Q4/BF16 tests passed; the previous physical vector92
+transcript still produces its byte-identical independent parser output.
