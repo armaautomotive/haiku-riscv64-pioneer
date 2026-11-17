@@ -116,3 +116,10 @@ authority. For other failures or incomplete transcripts, do not report TPS.
 Synthetic malformed/order/unknown-stderr and closed-output cases passed.
 Ordinary prepared-Q4/BF16 tests passed; the previous physical vector92
 transcript still produces its byte-identical independent parser output.
+
+The checked-in parent now requires the same exact 24-line byte stream for
+future staging. Fake-manager tests cover the real worker grammar, eight
+invalid transcripts, and restoration/refusal after an invalid postcheck.
+The already-running parent remains the original pinned artifact described
+above. The historical stage is still one-shot; this fix does not permit
+rerunning it or interpreting its parent verdict as the client verdict.

@@ -54,6 +54,7 @@ paths(){
 }
 inputs(){
 	paths || fail stage
+	command -v cmp > /dev/null || fail missing_cmp
 	for name in .trial-once stable041.backup candidate.incoming restore.incoming state rate.stdout rate.stderr rate.exit; do
 		test ! -e "$stage/$name" && test ! -L "$stage/$name" || fail "spent_or_dirty:$name"
 	done
@@ -74,6 +75,15 @@ inputs(){
 	idle && metadata "$stableTag" 1 && health || fail idle_generation_or_health
 }
 mark(){ printf '%s\n' "$1" > "$stage/state"; }
+readiness_stderr(){
+	# The pinned prepared-Q4 worker samples these canonical source parts.
+	# Compare bytes, including order and the final newline; do not hide
+	# extra or partial diagnostics. This never grants restore authority.
+	printf 'READINESS_Q4_CACHE_SOURCE_PART %s/4678\n' \
+		0 192 256 576 640 960 1024 1088 1344 1408 1472 1792 \
+		1856 2176 2240 2560 2624 2688 2944 3008 3072 3392 3456 3520 \
+		| cmp -s "$stage/rate.stderr" -
+}
 restore(){
 	# No swap, reset or extra device command after ownership/quarantine doubt.
 	paths && exact "$installed" "$candidateHash" && metadata "$candidateTag" 2 && idle || return 1
@@ -134,7 +144,7 @@ fi
 printf '%s\n' "$result" > "$stage/rate.exit"
 [ "$result" = 0 ] || fail rate_client
 tail -1 "$stage/rate.stdout" | grep -Eq '^PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available[01] output_tokens32;CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY$' || fail closed_rate_marker
-awk '!/^READINESS_Q4_CACHE_FRAGMENT [0-9]+\/[0-9]+$/{bad++} END{if(bad)exit 1}' "$stage/rate.stderr" || fail unknown_worker_stderr
+readiness_stderr || fail unknown_worker_stderr
 # Always restore via cleanup. An apparent client success is insufficient to
 # report a pass until a fresh, idle generation3 and the stable hash agree.
 printf '%s\n' TAG206_PHASE_RATE_CLIENT_CLOSED_CLEANLY
