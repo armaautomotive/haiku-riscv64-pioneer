@@ -190,4 +190,30 @@ An isolated rebuild without the new selector reproduced the prior
 `24a1fef4…` tag206 restore-budget control byte-for-byte. The tag209
 driver is neither installed nor physically qualified.
 
+Tag209 diagnostic worker and rate client (offline)
+--------------------------------------------------
+The new USER build flag `--gdn-l1-tag209` selects the exact tag209
+manager identity on every same-FD check, not tag206 or tag97. It is
+allowed only with base prepared Q4, the batched metrics client and the
+read-only readiness diagnostic. Existing prepared-cache bytes/recipe
+and the ordinary on-card START/FINISH protocol are unchanged. It cannot
+select the tag206 upload-pipeline experiment, hybrid Work or a CPU
+inference/reference context. The rate client binds only the fresh
+tag209 stage name and uses the existing separate phase deadlines.
+
+The real cross-build passed 25 refusal cases and kept exactly the 11
+vocabulary/model-container imports. Worker SHA256:
+`2080456901d32e03fdeb6337095764a142dbac6f8b901e1955539ec4a2d8133a`.
+Rate client SHA256:
+`3de52c88c0f953503eb48c0fc097b29dc935d9bbc63f5e170d7f21447e5924fe`.
+The full ASan/UBSan synthetic session passed all 4,895 upload spans,
+194 source publications, matched START/FINISH failure replies and 707
+fail-closed cases, including refusing the old manager tag. A malformed
+or lost reply emits no inferred native stage. No tag209 file was staged
+or installed on Haiku; the physical tag207 serial control is separate.
+Rebuilding the tag206 pipeline worker still produced the previously pinned
+`fe4fa225…` executable with its original 26 build refusal checks.
+
+  python3 tools/pioneer/build_assistant_qwen27_full_offload.py --batched --metrics --prepared-q4 --readiness-diagnostic --gdn-l1-tag209 SDK FROZEN_LLAMA_LIBRARIES NEW_OUTPUT
+
   clang++ -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_held_snapshot_batch_test.cpp -o NEW_TEST_BINARY

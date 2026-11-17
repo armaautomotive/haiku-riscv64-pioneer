@@ -52,6 +52,13 @@ gdn_l1_tag206='--gdn-l1-tag206' in args
 if gdn_l1_tag206:
     assert prepared_q4 and args.count('--gdn-l1-tag206')==1
     args.remove('--gdn-l1-tag206')
+gdn_l1_tag209='--gdn-l1-tag209' in args
+if gdn_l1_tag209:
+    assert prepared_q4 and readiness_diagnostic and batched and metrics and not resident \
+        and not gdn_l1_tag206 and not prepared_byte_lut_profile \
+        and not any(flag in args for flag in ('--counter-unroll','--phase-profile','--prompt-client','--tag206-pipelined-upload')) \
+        and args.count('--gdn-l1-tag209')==1
+    args.remove('--gdn-l1-tag209')
 tag206_pipeline='--tag206-pipelined-upload' in args
 if tag206_pipeline:
     assert gdn_l1_tag206 and batched and metrics and readiness_diagnostic \
@@ -142,6 +149,8 @@ if prepared_q4:
     if prepared_current:compile[1:1]=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=1']
 if readiness_diagnostic:compile.insert(1,'-DPIONEER_Q38_READINESS_DIAGNOSTIC=1')
 if gdn_l1_tag206:compile.insert(1,'-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010206ULL')
+if gdn_l1_tag209:
+    compile[1:1]=['-DPIONEER_Q38_GDN_L1_TAG209_CLIENT=1','-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111700010209ULL']
 if tag206_pipeline:
     compile[compile.index('-fno-exceptions')]='-fexceptions' # only the file-preparation thread catches failures
     compile.insert(1,'-DPIONEER_Q38_TAG206_PIPELINED_UPLOAD=1')
@@ -199,6 +208,12 @@ if prepared_q4:
     if gdn_l1_tag206:
         refusals += [('gdn-l1-tag206-without-prepared-q4',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4']),
                      ('wrong-gdn-l1-driver-tag',['-UPIONEER_Q38_EXPECTED_DRIVER_TAG','-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010205ULL'])]
+    if gdn_l1_tag209:
+        refusals += [('missing-tag209-client',['-UPIONEER_Q38_GDN_L1_TAG209_CLIENT']),
+                     ('zero-tag209-client',['-UPIONEER_Q38_GDN_L1_TAG209_CLIENT','-DPIONEER_Q38_GDN_L1_TAG209_CLIENT=0']),
+                     ('tag209-with-old-driver',['-UPIONEER_Q38_EXPECTED_DRIVER_TAG','-DPIONEER_Q38_EXPECTED_DRIVER_TAG=0x2026111500010206ULL']),
+                     ('tag209-without-readonly-cache',['-UPIONEER_Q38_READINESS_DIAGNOSTIC']),
+                     ('tag209-with-tag206-pipeline',['-DPIONEER_Q38_TAG206_PIPELINED_UPLOAD=1'])]
     if prepared_current:
         refusals += [('missing-current-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER']),
                      ('zero-current-worker',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER=0'])]
@@ -230,7 +245,7 @@ if tag206_pipeline:
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Tag206 pipelined upload requires','Readiness diagnostic requires the exact enabled value','Explicit manager identity is reserved for the prepared-Q4 GDN-L1 tag206 candidate','Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card byte-LUT plus phase profile requires the distinct tag105 role marker','Full-card prepared Q4 tag105 requires exact paired byte-LUT, counter and phase-profile roles','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Prepared-Q4 byte-index activation-LUT Assistant worker requires its separate tag104 role','Tag105 requires the exact byte-LUT workers paired only with the phase-profile ROOT','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Tag209 requires the exact separate prepared-Q4 held-snapshot diagnostic client','Tag206 pipelined upload requires','Readiness diagnostic requires the exact enabled value','Explicit manager identity is reserved for the prepared-Q4 GDN-L1 tag206 candidate','Full-offload client is separate','Full-card spill Q4 requires','Tag101 Assistant requires','Resident worker requires','Full-card metrics requires','Full-card resident lifecycle requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card byte-LUT plus phase profile requires the distinct tag105 role marker','Full-card prepared Q4 tag105 requires exact paired byte-LUT, counter and phase-profile roles','Current prepared-Q4 Assistant worker requires its explicit tag102 role','Prepared-Q4 activation-LUT Assistant worker requires its separate tag103 role','Prepared-Q4 byte-index activation-LUT Assistant worker requires its separate tag104 role','Tag105 requires the exact byte-LUT workers paired only with the phase-profile ROOT','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -248,6 +263,7 @@ smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includ
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
 if tag206_pipeline:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-tag206-pipelined-20261117-a/HaikuAssistantQwen27FullOffload"')
 elif gdn_l1_tag206:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-readiness-tag206-20261116-b/readiness-diagnostic-tag206"')
+elif gdn_l1_tag209:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-held-snapshot-tag209-20261117-a/HaikuAssistantQwen27FullOffload"')
 elif prepared_byte_lut_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-byte-lut-q4-20261115-a/HaikuAssistantQwen27FullOffload-prepared-profile-byte-lut-q4"')
 elif phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"')
 elif counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
@@ -356,4 +372,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('prepared Q4 GDN-L1 manager identity tag206 (experimental)' if gdn_l1_tag206 else 'prepared phase-profile ROOT plus byte-LUT workers tag105' if prepared_byte_lut_profile else 'SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 byte-index activation-LUT worker tag104' if prepared_byte_lut else 'prepared Q4 activation-LUT worker tag103' if prepared_lut else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('prepared Q4 GDN-L1 manager identity tag206 (experimental)' if gdn_l1_tag206 else 'prepared Q4 held-snapshot diagnostic tag209' if gdn_l1_tag209 else 'prepared phase-profile ROOT plus byte-LUT workers tag105' if prepared_byte_lut_profile else 'SFPNOP spill macro Q4 tag101' if spill_q4_sfpnop else 'spill macro Q4 tag100' if spill_q4 else 'resident lifecycle tag91' if resident else 'prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 byte-index activation-LUT worker tag104' if prepared_byte_lut else 'prepared Q4 activation-LUT worker tag103' if prepared_lut else 'current prepared Q4 worker tag102' if prepared_current else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)

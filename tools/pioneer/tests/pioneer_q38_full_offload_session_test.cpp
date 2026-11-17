@@ -26,9 +26,11 @@ struct Source {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  std::vector<PioneerQ38PreparedQ4UploadPlan<>::Span> preparedSpans;
 #endif
-#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) || defined(PIONEER_Q38_GDN_L1_TAG209_CLIENT)
  enum Fault {None,FirstRead,NextRead,LostUpload,BadReply,NativeStart,NativeStateZero,MalformedStart,LostStart,NativeFinish};
  Fault fault=None;
+#endif
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
  std::mutex overlapLock;std::condition_variable overlap;
  bool nextReaderEntered=false,firstCallReleased=false;
 #endif
@@ -119,13 +121,16 @@ struct IO {
   if(op==TT_PCI_PROBE_RELOAD_STATUS){
    auto& r=*static_cast<tt_pioneer_driver_reload*>(data);assert(size==sizeof(r) && r.version==1);
    r.driver=55;r.guard_version=1;
-#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+#ifdef PIONEER_Q38_EXPECTED_DRIVER_TAG
    r.build_tag=PIONEER_Q38_EXPECTED_DRIVER_TAG;
 #else
    r.build_tag=PioneerQ38FullOffload::BuildTag;
 #endif
    r.generation=9;r.open_count=1;r.active_owner=begins;
    if(sweep.Clone([&]{r.build_tag=0x2026103100010075ULL;}))return true;
+#ifdef PIONEER_Q38_GDN_L1_TAG209_CLIENT
+   if(sweep.Clone([&]{r.build_tag=0x2026111500010206ULL;}))return true;
+#endif
    if(sweep.Clone([&]{r.build_tag=PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110400010088)
       ?UINT64_C(0x2026110400010089):UINT64_C(0x2026110400010088);} ))return true;
    if(begins && sweep.Clone([&]{r.generation++;}))return true;
@@ -247,7 +252,7 @@ struct IO {
 #else
     assert(!starts++);
 #endif
-#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) || defined(PIONEER_Q38_GDN_L1_TAG209_CLIENT)
     if(source.fault==Source::LostStart){r={};return false;}
     if(source.fault==Source::NativeStart || source.fault==Source::NativeStateZero || source.fault==Source::MalformedStart){
      r.ready=0;r.unsafe=1;r.status=-1;r.stage=d[2]=5;d[4]=1;d[8]=d[9]=1;d[10]=2;
@@ -285,7 +290,7 @@ struct IO {
     for(unsigned word:{7U,8U,9U,10U,11U,14U,15U})if(sweep.Clone([&]{d[word]^=1;}))return true;
     cursor+=count;
    }else if(action==P::Finish){assert(cursor==Records() && reads && !ends++);
-#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) || defined(PIONEER_Q38_GDN_L1_TAG209_CLIENT)
     if(source.fault==Source::NativeFinish){
      r.ready=0;r.unsafe=1;r.status=-1;r.stage=d[2]=1;d[4]=1;d[8]=d[9]=1;d[10]=3;return false;
     }
@@ -313,12 +318,18 @@ int main(int argc,char** argv){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Source source(fixture);Sweep sweep;IO io(source,sweep);
 #ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
  sweep.enabled=false; // do not fork from a threaded endpoint
+#endif
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) || defined(PIONEER_Q38_GDN_L1_TAG209_CLIENT)
  if(argc==2){
+  sweep.enabled=false;
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
   if(!strcmp(argv[1],"first-read"))source.fault=Source::FirstRead;
   else if(!strcmp(argv[1],"next-read"))source.fault=Source::NextRead;
   else if(!strcmp(argv[1],"lost-upload"))source.fault=Source::LostUpload;
   else if(!strcmp(argv[1],"bad-reply"))source.fault=Source::BadReply;
-  else if(!strcmp(argv[1],"native-start"))source.fault=Source::NativeStart;
+  else
+#endif
+  if(!strcmp(argv[1],"native-start"))source.fault=Source::NativeStart;
   else if(!strcmp(argv[1],"native-state-zero"))source.fault=Source::NativeStateZero;
   else if(!strcmp(argv[1],"malformed-start"))source.fault=Source::MalformedStart;
   else if(!strcmp(argv[1],"lost-start"))source.fault=Source::LostStart;
@@ -380,6 +391,8 @@ int main(int argc,char** argv){
   printf("PASS threaded upload fault %s; producer joined, no further upload/START/END or retry\n",argv[1]);
   return 0;
  }
+#endif
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) || defined(PIONEER_Q38_GDN_L1_TAG209_CLIENT)
  if(source.fault>=Source::NativeStart && source.fault<=Source::LostStart){
   assert(!okay && session->FailedState() && !strcmp(session->failure,"start"));
   assert(io.spanEnds==1 && io.starts==1 && !io.polls && !io.ends && io.closes==io.opens);
@@ -392,6 +405,8 @@ int main(int argc,char** argv){
   printf("PASS %s; copied native failure metadata only after a matching reply; no retry or END\n",argv[1]);
   return 0;
  }
+#endif
+#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
  assert(source.nextReaderEntered && source.firstCallReleased);
  puts("PASS threaded preparation and actual session transport overlap on the fake endpoint");
 #endif
@@ -447,7 +462,7 @@ int main(int argc,char** argv){
   assert(count==123);for(auto word:answer)assert(word==0xaaaaaaaaU);
   const auto calls=io.calls;session->Abort();session.reset();assert(calls==io.calls);_exit(0);
  }
-#ifdef PIONEER_Q38_TAG206_PIPELINED_UPLOAD
+#if defined(PIONEER_Q38_TAG206_PIPELINED_UPLOAD) || defined(PIONEER_Q38_GDN_L1_TAG209_CLIENT)
  if(source.fault==Source::NativeFinish){
   assert(!okay && session->FailedState() && !session->CopyGeneratedTokens(answer,32,count) && count==123);
   assert(io.starts==1 && io.ends==1 && io.closes==io.opens);
