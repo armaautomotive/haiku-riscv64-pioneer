@@ -16,7 +16,7 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
 #endif
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;auto* fd=sRuntimeOwner;
  if(s && s->runtime && s->runtime->SharedMappingsChanged())return false; // changed route is NEVER an L1/NIU/FIFO grant
- // Per-WORD metadata under the SAME call lock. Full physical/native guards
+ // Metadata under the SAME call lock. Full physical/native guards
  // remain mandatory before+after EVERY participant;no public ready hint.
  return c && &c->io==this && s && fd && fd->magic==0x50313030 && fd->context==c && c->q38GdnCallThread>=0
   && c->q38GdnCallThread==find_thread(NULL) && !c->dispatchOwnerRetained && !sColdRecoveryRequired && !sReloadQuiesced
@@ -36,6 +36,16 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
    || s->phase==PioneerQ38TokenNativeState::MemoryClosing)
   && s->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration);
 }
+#ifdef PIONEER_Q38_HELD_SNAPSHOT_BATCH_NATIVE
+bool PioneerSessionIO::TokenHeldSnapshotScope(unsigned worker){
+ auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+ return s && s->phase==PioneerQ38TokenNativeState::MemoryPreparing && !s->runtime
+  && s->memory && !s->memory->Installed() && s->participants
+  && !s->participants->unsafe && !s->participants->closed && !s->participants->rootRunning
+  && s->participants->prepared==120 && !s->participants->bootAttempted && !s->participants->booted
+  && TokenMemoryAccessScope() && TokenMemoryMappingStable(worker);
+} // only original-data capture/verify under the already-held preparation call
+#endif
 #ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
 bool PioneerSessionIO::TokenGdnL1PageOwnerScope(unsigned worker,uint32 page){
 	auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;

@@ -1,13 +1,12 @@
 /* SPDX-License-Identifier: MIT */
-// Traversal for the exact routed-token held L1 snapshot. This describes
+// Traversal for a caller's exact immutable held L1 snapshot. This describes
 // original-data reads only; it cannot authorize a mapping, write or restore.
 #ifndef PIONEER_Q38_HELD_SNAPSHOT_BATCH_H
 #define PIONEER_Q38_HELD_SNAPSHOT_BATCH_H
 
-#include "PioneerQ38TokenRedistributedFootprint.h"
+#include <stdint.h>
 
 namespace PioneerQ38HeldSnapshotBatch {
-namespace L1 = PioneerQ38TokenRedistributedL1;
 constexpr unsigned MaxWords = 128;
 
 enum class Window { Scalar, Low, Text, Aux, Panel, High };
@@ -30,12 +29,13 @@ inline uint32_t EndOfWindow(uint32_t address, Window& window)
  return 0;
 }
 
-inline bool Next(unsigned worker,unsigned ordinal,Batch& out)
+template<auto SnapshotWords,auto SnapshotSpans,auto SnapshotSpan> struct Traversal {
+static bool Next(unsigned worker,unsigned ordinal,Batch& out)
 {
- if(ordinal>=L1::SnapshotWords(worker))return false;
+ if(ordinal>=SnapshotWords(worker))return false;
  unsigned offset=ordinal;
- for(unsigned index=0;index<L1::SnapshotSpans(worker);index++){
-  const auto span=L1::SnapshotSpan(worker,index);
+ for(unsigned index=0;index<SnapshotSpans(worker);index++){
+  const auto span=SnapshotSpan(worker,index);
   if(offset>=span.words){offset-=span.words;continue;}
   const uint32_t address=span.address+offset*4;
   Window window=Window::Scalar;
@@ -55,7 +55,7 @@ inline bool Next(unsigned worker,unsigned ordinal,Batch& out)
 // bounded operation. Load uses the existing scalar read for the exceptional
 // boot/tail words and only already mapped uncached L1 aliases otherwise.
 // Nothing is published to destination after a failed read or late check.
-template<class IO> bool Read(IO& io,unsigned worker,const Batch& request,uint32_t* destination)
+template<class IO> static bool Read(IO& io,unsigned worker,const Batch& request,uint32_t* destination)
 {
  Batch actual{};
  if(!destination || !Next(worker,request.ordinal,actual) || request.words!=actual.words
@@ -65,5 +65,6 @@ template<class IO> bool Read(IO& io,unsigned worker,const Batch& request,uint32_
  for(unsigned index=0;index<actual.words;index++)destination[index]=words[index];
  return true;
 }
+};
 }
 #endif

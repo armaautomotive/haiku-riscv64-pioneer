@@ -82,6 +82,38 @@ bool TokenMemoryReadChecked(unsigned worker,uint32 address,uint32& output){
  else value=PioneerRead32(q38TokenMemoryView[3]+(address-0xac000)/4);
  output=value;return true; // UINT32_MAX is legitimate original DATA,never an error sentinel
 }
+#ifdef PIONEER_Q38_HELD_SNAPSHOT_BATCH_NATIVE
+bool TokenHeldSnapshotScope(unsigned worker);
+struct TokenHeldSnapshotIO {
+ PioneerSessionIO& io;
+ bool Scope(unsigned worker){return io.TokenHeldSnapshotScope(worker);}
+ bool Load(unsigned worker,const PioneerQ38HeldSnapshotBatch::Batch& batch,uint32_t* words){
+  using PioneerQ38HeldSnapshotBatch::Window;
+  const uint32_t address=batch.address;
+  const volatile uint32* mapped=nullptr;
+  // Read() has already re-derived the complete range from the exact native
+  // journal. Each branch uses the very same uncached alias as the old word
+  // path. Keep the two special mappings on that path verbatim.
+  switch(batch.window){
+   case Window::Scalar:return batch.words==1 && io.TokenMemoryReadChecked(worker,address,*words);
+   case Window::Low:mapped=io.q38TokenMemoryView[0]+(address-0x20000)/4;break;
+   case Window::Text:mapped=io.q38TokenMemoryView[1]+(address-0x40000)/4;break;
+   case Window::Aux:mapped=io.q38TokenMemoryView[2]+(address-0x60000)/4;break;
+   case Window::Panel:mapped=io.q38PanelView+(address-TT_Q38_PANEL_VIEW_BASE)/4;break;
+   case Window::High:mapped=io.q38TokenMemoryView[3]+(address-0xac000)/4;break;
+  }
+  if(!mapped)return false;
+  PioneerIoFence();
+  for(unsigned i=0;i<batch.words;i++)words[i]=B_LENDIAN_TO_HOST_INT32(mapped[i]);
+  PioneerIoFence();
+  return true;
+ }
+};
+bool TokenReadHeldSnapshotBatch(unsigned worker,const PioneerQ38HeldSnapshotBatch::Batch& batch,uint32_t* destination){
+ TokenHeldSnapshotIO access{*this};
+ return PioneerQ38NativeHeldSnapshot::Read(access,worker,batch,destination);
+}
+#endif
 bool TokenMemoryWrite(unsigned worker,uint32 address,uint32 value){
  if(!PioneerQ38TokenL1::SnapshotContains(worker,address) || !TokenMemoryAccessScope() || !TokenMemoryMappingStable(worker))return false;
  if(address==0x6000)RuntimeCodeWrite(0,value);

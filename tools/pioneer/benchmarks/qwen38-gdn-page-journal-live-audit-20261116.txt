@@ -155,23 +155,39 @@ Haiku thread continued increasing kernel CPU time at roughly wall time
 with unchanged user CPU time, without the explicit post-START marker.
 This does not identify its exact subphase or prove any device progress.
 
-The ordinary routed-token journal alone saves 11,528,762 words
-(46,115,048 bytes) and rereads each one before installing firmware. This
-is separate from the 97,484,800-byte scattered-state journal. Currently
-each original ordinary-journal word takes the scalar checked IO path.
+The original routed-token inspection fixture saves 11,528,762 words
+(46,115,048 bytes) and rereads each one before installing firmware. The
+actual prepared-Q4 native driver instead selects the QTP3 footprint
+with 13,480,506 words (53,922,024 bytes). Both are separate from the
+97,484,800-byte scattered-state journal. Each original ordinary-journal
+word in the live tag206 takes the scalar checked IO path.
 `PioneerQ38HeldSnapshotBatch.h` groups the same visitation order only
 within an existing L1 span and one existing uncached aperture, at most
 128 32-bit reads per group. The boot instruction and special tail view
 are preserved as scalar operations. A batch has a scope check before and
 after the reads and does not publish any new saved words on failure.
 
-The exhaustive ASan/UBSan test compared all 120 workers' 11,528,762
-addresses and returned values to the legacy per-word traversal. Per
-pass, it produced 90,061 mapped batches plus 1,080 scalar exceptions;
-both original-data passes and the number/type of 32-bit loads remain
+The exhaustive ASan/UBSan tests compared all 120 workers' addresses
+and returned values to the legacy per-word traversal in both layouts.
+Per pass, the native geometry produced 105,309 mapped batches plus
+1,080 scalar exceptions (the routed fixture produced 90,061+1,080).
+Both original-data passes and the number/type of 32-bit loads remain
 unchanged. Mixed apertures, an unmapped address, invalid bounds, and
 pre-read, mid-load and late-scope faults were refused. These are source
-and fixture counts, not measured PCIe traffic or time. The helper has
-not been wired into a driver; it cannot change the live experiment.
+and fixture counts, not measured PCIe traffic or time.
+
+Native tag209 wires the helper only into the two startup capture passes
+under the already-held preparation call. It independently verifies that
+the exact worker, owner and mapping remain live around each group. It
+uses the legacy path for the boot/tail views, and does not change code
+install, cancellation, rollback, restore, or model execution. This is a
+startup optimization, not a hypothesis about per-token GPU speed or the
+cause of the tag206 fault. The original-slot isolated Haiku build passed
+46 refusal checks, matched all 15 firmware arrays, kept the default
+driver hash unchanged and emitted native driver SHA256
+`350bd33d543b142ab5b0f58e71c8209b7cd57fb8678d9f35b2b04362c4254cf3`.
+An isolated rebuild without the new selector reproduced the prior
+`24a1fef4…` tag206 restore-budget control byte-for-byte. The tag209
+driver is neither installed nor physically qualified.
 
   clang++ -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_held_snapshot_batch_test.cpp -o NEW_TEST_BINARY

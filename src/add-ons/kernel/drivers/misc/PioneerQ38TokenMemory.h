@@ -6,6 +6,14 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenStartupPlan.h"
 #include "PioneerQ38GraphCsrProbe.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
+#ifdef PIONEER_Q38_HELD_SNAPSHOT_BATCH_NATIVE
+#include "../../../../../tools/pioneer/PioneerQ38GdnL1NativeIdentity.h"
+#include "../../../../../tools/pioneer/PioneerQ38HeldSnapshotBatch.h"
+using PioneerQ38NativeHeldSnapshot=PioneerQ38HeldSnapshotBatch::Traversal<
+ PioneerQ38TokenL1::SnapshotWords,PioneerQ38TokenL1::SnapshotSpans,PioneerQ38TokenL1::SnapshotSpan>;
+static_assert(PioneerQ38TokenL1::PreparedQ4==1 && PioneerQ38TokenL1::SavedWords==13480506,
+ "held batching is bound to the actual native prepared-Q4 journal");
+#endif
 #ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
 #include "PioneerQ38GdnL1OriginalPageJournal.h"
 #endif
@@ -171,6 +179,26 @@ class PioneerQ38TokenMemory {
   }
   return true;
  }
+#ifdef PIONEER_Q38_HELD_SNAPSHOT_BATCH_NATIVE
+ template<class IO> bool ReadHeldOriginals(IO& io,unsigned worker,PioneerQ38TokenMemoryResult& result,bool verify){
+  namespace L=PioneerQ38TokenL1;
+  const unsigned count=L::SnapshotWords(worker),base=L::SnapshotBase(worker);
+  uint32_t words[PioneerQ38HeldSnapshotBatch::MaxWords];
+  for(unsigned i=0;i<count;){
+   result.word=i;PioneerQ38HeldSnapshotBatch::Batch batch{};
+   if(!PioneerQ38NativeHeldSnapshot::Next(worker,i,batch)
+    || !io.TokenReadHeldSnapshotBatch(worker,batch,verify?words:saved+base+i))return false;
+   if(verify){
+    for(unsigned j=0;j<batch.words;j++){
+     result.word=i+j;if(words[j]!=saved[base+i+j])return false;
+     result.verifiedOriginalWords++;
+    }
+   }else result.savedWords+=batch.words;
+   i+=batch.words;
+  }
+  return true;
+ }
+#endif
  template<class IO> bool VerifyImage(IO& io,unsigned worker,PioneerQ38TokenMemoryResult& result){
   namespace P=PioneerQ38TokenPrograms;
   for(unsigned i=0;i<P::CodeWords(worker);i++){
@@ -267,18 +295,27 @@ public:
     if(i==6 && counters[worker][2]!=counters[worker][6])return Fail(io,result);
    }
    sampled=worker+1;
+#ifdef PIONEER_Q38_HELD_SNAPSHOT_BATCH_NATIVE
+   if(!ReadHeldOriginals(io,worker,result,false))return Fail(io,result);
+#else
    for(unsigned i=0;i<L::SnapshotWords(worker);i++){
     result.word=i;uint32_t actual;
     if(!io.TokenMemoryReadChecked(worker,L::SnapshotAddress(worker,i),actual))return Fail(io,result);
     saved[L::SnapshotBase(worker)+i]=actual;result.savedWords++;
    }
+#endif
    if(!Guard(io,worker))return Fail(io,result);
   }
   if(result.savedWords!=L::SavedWords || sampled!=120)return Fail(io,result);
   // SECOND complete pass over EVERY participant BEFORE the FIRST write.
   result.phase=2;
   for(unsigned worker=0;worker<120;worker++){
-   result.worker=worker;if(!Guard(io,worker) || !VerifyOriginal(io,worker,result) || !Guard(io,worker))return Fail(io,result);
+   result.worker=worker;
+#ifdef PIONEER_Q38_HELD_SNAPSHOT_BATCH_NATIVE
+   if(!Guard(io,worker) || !ReadHeldOriginals(io,worker,result,true) || !Guard(io,worker))return Fail(io,result);
+#else
+   if(!Guard(io,worker) || !VerifyOriginal(io,worker,result) || !Guard(io,worker))return Fail(io,result);
+#endif
   }
   if(result.verifiedOriginalWords!=L::SavedWords)return Fail(io,result);
 #ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE

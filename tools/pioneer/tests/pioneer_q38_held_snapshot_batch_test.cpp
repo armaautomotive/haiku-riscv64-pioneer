@@ -1,10 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQ38HeldSnapshotBatch.h"
+#include "../PioneerQ38TokenRedistributedFootprint.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "../PioneerQ38TokenPushedFootprint.h"
+#endif
 #include <cassert>
 #include <cstdio>
 
 namespace B = PioneerQ38HeldSnapshotBatch;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+namespace L = PioneerQ38TokenPushedL1;
+static_assert(L::PreparedQ4==1 && L::SavedWords==13480506,"exhaust the actual prepared-Q4 journal");
+#else
 namespace L = PioneerQ38TokenRedistributedL1;
+#endif
+using T=B::Traversal<L::SnapshotWords,L::SnapshotSpans,L::SnapshotSpan>;
 
 static uint32_t Word(unsigned worker,uint32_t address)
 {
@@ -34,14 +44,14 @@ static void CheckGeometry()
   const unsigned prior=io.reads;
   for(unsigned pos=0;pos<L::SnapshotWords(worker);){
    B::Batch batch{};
-   assert(B::Next(worker,pos,batch));
+   assert(T::Next(worker,pos,batch));
    assert(batch.ordinal==pos && batch.words<=B::MaxWords && batch.words>0);
    assert(batch.address==L::SnapshotAddress(worker,pos));
    B::Window window=B::Window::Scalar;
    assert(B::EndOfWindow(batch.address,window)>=batch.address+4*batch.words && window==batch.window);
    if(window==B::Window::Scalar){assert(batch.words==1);scalar++;}
    uint32_t captured[B::MaxWords];
-   assert(B::Read(io,worker,batch,captured));
+   assert(T::Read(io,worker,batch,captured));
    for(unsigned i=0;i<batch.words;i++){
     const uint32_t address=batch.address+4*i;
     assert(L::SnapshotContains(worker,address) && address==L::SnapshotAddress(worker,pos+i));
@@ -61,11 +71,11 @@ static void CheckFaults()
 {
  constexpr unsigned worker=1;
  B::Batch good{};
- assert(B::Next(worker,1,good) && good.words==B::MaxWords && good.window==B::Window::Low);
+ assert(T::Next(worker,1,good) && good.words==B::MaxWords && good.window==B::Window::Low);
  uint32_t destination[B::MaxWords];
  for(auto& word:destination)word=0x86549711;
  auto attempt=[&](unsigned index,const B::Batch& batch,FakeIO& io,unsigned scopes,unsigned loads){
-  assert(!B::Read(io,index,batch,destination));
+  assert(!T::Read(io,index,batch,destination));
   assert(io.scopeCalls==scopes && io.loadCalls==loads);
   for(uint32_t word:destination)assert(word==0x86549711);
  };
@@ -74,10 +84,10 @@ static void CheckFaults()
  attempt(L::Workers,good,noIo,0,0);
  invalid.ordinal=L::SnapshotWords(worker);attempt(worker,invalid,noIo,0,0);
  invalid=good;invalid.address+=4;attempt(worker,invalid,noIo,0,0);
- invalid=good;invalid.address=0x22000;attempt(worker,invalid,noIo,0,0);
+ invalid=good;invalid.address=0x25000;attempt(worker,invalid,noIo,0,0);
  invalid=good;invalid.words++;attempt(worker,invalid,noIo,0,0);
  invalid=good;invalid.window=B::Window::Panel;attempt(worker,invalid,noIo,0,0);
- assert(!B::Read(noIo,worker,good,nullptr) && !noIo.scopeCalls && !noIo.loadCalls);
+ assert(!T::Read(noIo,worker,good,nullptr) && !noIo.scopeCalls && !noIo.loadCalls);
  FakeIO pre;pre.failScope=1;attempt(worker,good,pre,1,0);
  FakeIO load;load.failLoad=true;attempt(worker,good,load,1,1);assert(load.reads==1);
  FakeIO post;post.failScope=2;attempt(worker,good,post,2,1);assert(post.reads==B::MaxWords);
