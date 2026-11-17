@@ -19,6 +19,28 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Same five-minute cap as the ordinary original-L1 restore, measured in
+// system_time() microseconds. The larger page journal must still qualify
+// within this bound on hardware before being promoted. Expiry or a backwards
+// clock is sticky; only the existing owner handles the failure.
+class PioneerQ38GdnL1RestoreBudget {
+public:
+	static constexpr uint64_t LimitUs=UINT64_C(5)*60*1000*1000;
+	explicit PioneerQ38GdnL1RestoreBudget(uint64_t beganUs)
+		:fBeganUs(beganUs),fPreviousUs(beganUs){}
+	bool Observe(uint64_t nowUs)
+	{
+		if(fExpired || nowUs<fPreviousUs || nowUs-fBeganUs>=LimitUs){
+			fExpired=true;return false;
+		}
+		fPreviousUs=nowUs;return true;
+	}
+private:
+	const uint64_t fBeganUs;
+	uint64_t fPreviousUs;
+	bool fExpired=false;
+};
+
 // Transactional snapshot primitive for the scattered recurrent-state pages.
 // The IO adapter must bind these calls to the same native session/FD and must
 // independently prove that the requested worker is held and its L1 mapping is

@@ -109,6 +109,51 @@ static void RestoreFailureIsSingleAttemptAndRetainsSnapshot(){
 	assert(journal.DiscardPoisonedForInspection());
 }
 
+static void RestoreBudgetUsesMicrosecondsAndRejectsClockReversal(){
+	constexpr uint64_t began=UINT64_C(900000);
+	constexpr uint64_t limit=UINT64_C(300000000);
+	static_assert(PioneerQ38GdnL1RestoreBudget::LimitUs==limit,"five minutes in system_time microseconds");
+	PioneerQ38GdnL1RestoreBudget timeout(began);
+	assert(timeout.Observe(began) && timeout.Observe(began+limit-1));
+	assert(!timeout.Observe(began+limit) && !timeout.Observe(began));
+	PioneerQ38GdnL1RestoreBudget reversed(began);
+	assert(reversed.Observe(began+15) && reversed.Observe(began+15));
+	assert(!reversed.Observe(began+14) && !reversed.Observe(began+16));
+	PioneerQ38GdnL1RestoreBudget wrapped(UINT64_MAX-10);
+	assert(wrapped.Observe(UINT64_MAX) && !wrapped.Observe(0));
+}
+
+struct TimedRestoreIO {
+	MockIO& io;
+	PioneerQ38GdnL1RestoreBudget budget{0};
+	uint64_t nowUs=0;
+	const unsigned expireAfterRead;
+	TimedRestoreIO(MockIO& mock,unsigned expire):io(mock),expireAfterRead(expire){}
+	bool AllWorkersHeld(){return budget.Observe(nowUs) && io.AllWorkersHeld();}
+	bool Scope(unsigned worker){return budget.Observe(nowUs) && io.Scope(worker);}
+	bool WritePage(unsigned worker,uint32_t address,const uint32_t* input){
+		return budget.Observe(nowUs) && io.WritePage(worker,address,input) && budget.Observe(nowUs);
+	}
+	bool ReadPage(unsigned worker,uint32_t address,uint32_t* output){
+		if(!budget.Observe(nowUs) || !io.ReadPage(worker,address,output))return false;
+		if(io.reads==expireAfterRead)nowUs=PioneerQ38GdnL1RestoreBudget::LimitUs;
+		return budget.Observe(nowUs);
+	}
+};
+
+static void TimeoutDuringPageRetainsSnapshotEvenOnFinalRead(){
+	for(unsigned expireAfterRead:{25U,48U}){
+		MockAllocator allocator;MockIO io;Journal journal;
+		assert(journal.Capture(allocator,io));io.CorruptAll();
+		TimedRestoreIO access(io,expireAfterRead);
+		assert(!journal.Restore(access) && journal.State()==Journal::Poisoned && journal.HasSnapshot());
+		const unsigned writes=expireAfterRead==25?1:12;
+		assert(io.reads==expireAfterRead && io.writes==writes);
+		assert(!journal.Restore(io) && io.reads==expireAfterRead && io.writes==writes);
+		assert(journal.DiscardPoisonedForInspection());
+	}
+}
+
 static void ValidateProduction119PeerMap(){
 	auto* allocator=new(std::nothrow) PioneerQ38GdnL1PageAllocator;assert(allocator);
 	assert(allocator->Build());auto* journal=new(std::nothrow) ProductionJournal;assert(journal);
@@ -119,5 +164,6 @@ static void ValidateProduction119PeerMap(){
 int main(){
 	SuccessAndHeldRetry();RefuseBadMapBeforeReads();CaptureFailurePoisonsWithoutWrite();
 	RejectChangingSnapshot();RestoreFailureIsSingleAttemptAndRetainsSnapshot();ValidateProduction119PeerMap();
+	RestoreBudgetUsesMicrosecondsAndRejectsClockReversal();TimeoutDuringPageRetainsSnapshotEvenOnFinalRead();
 	std::puts("PASS GDN L1 original-page journal: production 119-peer map/no aliases/97,484,800-byte geometry; synthetic full preflight/capture/verify/held-only single restore/readback/fault retention/role-isolated; NOT native IO, token cache, Work, or speed evidence");
 }

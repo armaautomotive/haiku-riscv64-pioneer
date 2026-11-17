@@ -145,8 +145,8 @@ struct PioneerQ38TokenHardwareSealResult {
 class PioneerQ38TokenNativeOwner {
 #ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
  template<class IO> struct GdnL1RestorePageIO {
-  PioneerQ38TokenNativeOwner& owner;IO& io;uint64_t began;
-  bool InBudget(){const uint64_t now=io.Q38CohortNow();return now>=began && now-began<UINT64_C(15000000000);}
+  PioneerQ38TokenNativeOwner& owner;IO& io;PioneerQ38GdnL1RestoreBudget budget;
+  bool InBudget(){return budget.Observe(io.Q38CohortNow());}
   bool AllWorkersHeld(){
    if(!InBudget() || !owner.HeldAfterTerminal() || !owner.CommittedRecordsRead() || !owner.Scope(io))return false;
    PioneerQ38TokenRestoreResult check;
@@ -159,10 +159,10 @@ class PioneerQ38TokenNativeOwner {
     && io.SelectRuntimeCore(physicalWorker) && io.TokenMemoryMappingStable(physicalWorker);
   }
   bool ReadPage(unsigned worker,uint32_t page,uint32_t* words){
-   return worker<119 && InBudget() && io.TokenGdnL1PageReadChecked(worker+1,page,words);
+   return worker<119 && InBudget() && io.TokenGdnL1PageReadChecked(worker+1,page,words) && InBudget();
   }
   bool WritePage(unsigned worker,uint32_t page,const uint32_t* words){
-   return worker<119 && InBudget() && io.TokenGdnL1PageWrite(worker+1,page,words);
+   return worker<119 && InBudget() && io.TokenGdnL1PageWrite(worker+1,page,words) && InBudget();
   }
  };
 #endif
@@ -1226,7 +1226,7 @@ public:
 #ifdef PIONEER_Q38_GDN_L1_NATIVE_PAGE_ACCESS_CANDIDATE
  template<class IO> bool RestoreGdnL1OriginalPagesBeforeL1(IO& io){
   if(!memory || !memory->LaunchedJournalActive() || !HeldAfterTerminal() || !CommittedRecordsRead() || !Scope(io))return FailOwner(io);
-  GdnL1RestorePageIO<IO> access{*this,io,io.Q38CohortNow()};
+  GdnL1RestorePageIO<IO> access{*this,io,PioneerQ38GdnL1RestoreBudget(io.Q38CohortNow())};
   if(!memory->RestoreGdnL1OriginalPages(access))return FailOwner(io);
   if(!HeldAfterTerminal() || !CommittedRecordsRead())return FailOwner(io);
   return true;

@@ -68,8 +68,9 @@ selected for that token. Even after selecting the map, the
 session. Correct integration must preserve every page's arbitrary preexisting
 data across launch, commit/replay the cache only at the outer model-token
 boundary, and restore on every successful close without exposing partial
-state after failure. A naive full restore cannot fit the existing 300 ms
-`RestoreOriginalL1` deadline; it needs bounded/batched transport and explicit
+state after failure. The ordinary `RestoreOriginalL1` deadline is 300 s
+(`system_time()` counts microseconds); there is no measured bound for this
+larger page journal. It needs bounded/batched transport and explicit
 fault-retention semantics before hardware testing.
 
 The live machine has 64 CPUs and full RAM with stable041 restored. No current
@@ -87,8 +88,9 @@ all 120 held workers once before capture, then uses the exact allocator-owned
 worker/page accessors for each page. After committed output is drained and
 the root is held, the token owner restores the page journal first, while the
 launched journal still authorizes access; the existing `RestoreOriginalL1`
-step follows unchanged. The separate page restore adapter is fail-closed with
-a 15-second clock budget. Any interrupted capture/restore keeps the snapshot
+step follows unchanged. The separate page restore adapter was intended to
+have a 15-second budget, but the literal used the wrong units (see below).
+Any interrupted capture/restore keeps the snapshot
 and faults/quarantines the native owner. A prepared session closed before
 launch discards its untouched snapshot. The tag206 role still excludes Work
 and CPU-reference modes.
@@ -107,10 +109,41 @@ New checks after this integration:
   `1c2ad62853c4617690956e083da8c364d27c5f1399fdc9509f8c6f781684e475`,
   unchanged default hash `2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc`.
 
-No candidate image was installed, no card inference or numerical comparison
-was performed, and no hardware restore duration or tokens/sec was measured.
-The only TPS remains the prior qualified ~0.1728 tok/s. Before a physical
-trial, require an independent review of the 15-second worst-case restore
-bound and a fresh generation-bound one-shot stage; then validate full-model
-output and measured speed. The candidate must not be treated as ready for
-Assistant/Work use.
+No candidate image was installed or exercised during this checkpoint, and no
+hardware restore duration or tokens/sec was measured. The only TPS remains
+the prior qualified ~0.1728 tok/s. The candidate must not be treated as ready
+for Assistant/Work use.
+
+Restore timeout correction, November 17
+---------------------------------------
+The deployed diagnostic tag206 used `15,000,000,000` as a delta from
+`Q38CohortNow()`, which returns Haiku `system_time()` in microseconds. The
+configured limit was 15,000 s, not 15 s. The checked-in candidate now uses
+an explicit 300,000,000 us cap, matching the ordinary L1 restore limit;
+15 s has not been shown adequate for this 97,484,800-byte journal's writes
+and two readback passes. It also refuses a backward clock even when it is
+still above the start, and checks the deadline after each completed page
+I/O, including the final verification read. If a page overruns the limit,
+the existing owner retains the snapshot and quarantines the card; the
+journal does not retry or request more device operations. The guard does
+not preempt an individual in-flight hardware access.
+
+Sanitized journal tests cover the exact microsecond boundary, backward and
+wrapped clocks, a timeout after the first verification read, and a timeout
+during the last verification read. Both restore timeouts kept the snapshot
+and refused any second restore. These are synthetic tests. No new image was
+put on the Pioneer; the running one-shot still uses the original pinned
+binary. A measured restore duration is still required.
+
+The main-tree build refused its pinned default-driver digest. The default
+translation unit does not include either changed timeout header; its
+dependency list changed with the November 17 PCIe BAR probe work. No
+checksum gate was changed. An isolated build from tracked sources restored
+only BlackholePioneerMmioProbe.h to the original-slot version immediately
+before 81be24c0c2 and overlaid the two timeout headers. It reproduced the
+exact default digest listed above, passed all 43 role refusals, and built
+candidate SHA-256
+`24a1fef4e51dfcd901688bd32c0d7d05f5d5553797572286df2baaec1fb23439`.
+This is build-only evidence for the original-slot baseline. The candidate
+is a different binary from the running one even though the tag is the same;
+do not substitute it in an existing one-shot stage.
