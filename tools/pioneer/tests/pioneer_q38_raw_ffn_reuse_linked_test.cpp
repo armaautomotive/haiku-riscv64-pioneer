@@ -33,13 +33,16 @@ static Recipe MakeRecipe(unsigned index,unsigned layer){
 }
 
 struct Linked:Machine {
- // Exact instruction addresses in the SHA-pinned compact V2 ELF.
- enum {Matrix=0x56750,Phase=0x56724,Seal=0x56658,Run=0x5193c,Job=0x4a5c8,
-  Fault=0x60000,Return=0x60004,Private=0x6f800,Sp=0x6f700,Frame=Private+768};
+ // Exact addresses in the two SHA-pinned compact V2 ELFs.
+ enum {Job=0x4a5c8,Fault=0x60000,Return=0x60004,Private=0x6f800,Sp=0x6f700,Frame=Private+768};
+ const bool control;
+ const unsigned matrix,phase,seal,run;
  const std::array<std::vector<uint8_t>,2> rom;
  std::vector<uint32_t> words=std::vector<uint32_t>(0x180000/4);
  unsigned seals=0,projections=0,phases=0;
- Linked(const std::string& dir):rom{Read((dir+"/text.bin").c_str()),Read((dir+"/conv.bin").c_str())}{}
+ Linked(const std::string& dir,bool refetch=false):control(refetch),matrix(refetch?0x5672c:0x56750),
+  phase(refetch?0x56700:0x56724),seal(refetch?0x56634:0x56658),run(refetch?0x51934:0x5193c),
+  rom{Read((dir+"/text.bin").c_str()),Read((dir+"/conv.bin").c_str())}{}
  const std::vector<uint8_t>* Section(unsigned address,unsigned& base)const{
   base=address>=0x64000?0x64000:0x40000;
   const auto& r=rom[base==0x64000];return address>=base && address-base+4<=r.size()?&r:nullptr;
@@ -66,14 +69,14 @@ struct Linked:Machine {
  }
  bool Dispatch(unsigned index,unsigned corrupt=64,bool corruptGate=false){
   regs[1]=Return;regs[2]=Sp;regs[10]=Private;regs[11]=index;
-  regs[12]=3;regs[13]=10+index;pc=Matrix;
+  regs[12]=3;regs[13]=10+index;pc=matrix;
   while(pc!=Return && pc!=Fault){
-   if(pc==Seal){assert(regs[10]==3);seals++;pc=regs[1];}
-   else if(pc==Phase){
+   if(pc==seal){assert(regs[10]==3);seals++;pc=regs[1];}
+   else if(pc==phase){
     assert(regs[10]==Private && regs[11]==10+index);phases++;
     if(corrupt<64)Data((corruptGate?unsigned(R::RecipeCopies):unsigned(Frame))+corrupt*4)^=1;
     pc=regs[1];
-   }else if(pc==Run){
+   }else if(pc==run){
     assert(regs[10]==Frame && Data(Frame+43*4)==R::Role(5+index));
     assert(Data(Frame+53*4)==R::Input);
     for(unsigned i=0;i<5120;i++)assert(Data(R::Input+i*4)==Data(R::PostNormalized+i*4));
@@ -82,7 +85,9 @@ struct Linked:Machine {
   }
   return pc==Return;
  }
- void Jobs(unsigned index){
+ std::vector<uint32_t> Jobs(unsigned index){
+  std::vector<uint32_t> jobs;
+  jobs.reserve(119*64);
   for(unsigned word=0;word<119*8;word++)Data(R::PartsShadow+word*4)=Data(R::Parts+word*4);
   for(unsigned w=0;w<119;w++){
    regs[1]=Return;regs[2]=Sp;regs[10]=Frame;regs[11]=w;regs[12]=110+w;pc=Job;
@@ -90,26 +95,44 @@ struct Linked:Machine {
    const unsigned field=R::Scratch+16*4;
    assert(Data(R::Scratch+4)==110+w && Data(R::Scratch+3*4)==w+1);
    assert(Data(field)==0x31483851 && Data(field+4)==12 && Data(field+5*4)==5120);
-   assert(Data(field+6*4)==Data(R::Parts+w*32) && Data(field+9*4)==unsigned(!index));
+   assert(Data(field+6*4)==Data(R::Parts+w*32) && Data(field+9*4)==unsigned(control || !index));
+   for(unsigned word=0;word<64;word++)jobs.push_back(Data(R::Scratch+word*4));
   }
+  return jobs;
  }
 };
 
 int main(int argc,char** argv){
- assert(argc==2);
+ assert(argc==2 || argc==3);
  unsigned layers=0;
  for(unsigned layer=0;layer<64;layer++)if(layer%4!=3){
   auto m=std::make_unique<Linked>(argv[1]);m->Prepare(layer);
-  assert(m->Dispatch(0));if(!layers)m->Jobs(0);
-  assert(m->Dispatch(1));if(!layers)m->Jobs(1);
+  auto control=argc==3?std::make_unique<Linked>(argv[2],true):nullptr;
+  if(control)control->Prepare(layer);
+  for(unsigned role=0;role<2;role++){
+   assert(m->Dispatch(role));
+   if(control){
+    assert(control->Dispatch(role));
+    for(unsigned word=0;word<64;word++)assert(m->Data(Linked::Frame+4*word)==control->Data(Linked::Frame+4*word));
+   }
+   if(!layers){
+    const auto jobs=m->Jobs(role);
+    if(control){
+     auto expected=control->Jobs(role);assert(jobs.size()==expected.size());
+     if(role)for(unsigned worker=0;worker<119;worker++)expected[worker*64+25]=0;
+     assert(jobs==expected);
+    }
+   }
+  }
   assert(m->projections==2 && m->seals==4 && m->phases==2);layers++;
  }
  assert(layers==48);
  unsigned refused=0;
- for(bool gate:{false,true})for(unsigned field:{3U,4U,6U,8U,9U,14U,15U,16U,21U,32U,39U,40U,41U,42U,43U,53U}){
-  auto m=std::make_unique<Linked>(argv[1]);m->Prepare(0);
+ for(int variant=1;variant<argc;variant++)for(bool gate:{false,true})for(unsigned field:{3U,4U,6U,8U,9U,14U,15U,16U,21U,32U,39U,40U,41U,42U,43U,53U}){
+  auto m=std::make_unique<Linked>(argv[variant],variant==2);m->Prepare(0);
   assert(m->Dispatch(0));const unsigned projections=m->projections;
   assert(!m->Dispatch(1,field,gate) && m->projections==projections);refused++;
  }
- printf("PASS linked FFN Matrix gate/up on %u layers, 238 actual job frames, %u late identity faults before projection; synthetic endpoints, no card or timing\n",layers,refused);
+ printf("PASS linked FFN Matrix gate/up on %u layers, %u actual job frames, %u late identity faults before projection; synthetic endpoints, no card or timing\n",layers,238*unsigned(argc-1),refused);
+ if(argc==3)puts("PASS exact full frames across both builds; only the up fetch bit differs among the 238 paired jobs");
 }

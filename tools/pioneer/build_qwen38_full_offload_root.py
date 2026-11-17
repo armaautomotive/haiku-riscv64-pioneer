@@ -36,6 +36,12 @@ PINS_FFN_RECIPE_REUSE_V2_INSPECTION=(
   ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
   ('conv.bin',29504,'dd181b4bc8075c827d051ba05958010b270f2fcce7580d4cbde15ba8fb5095bd'),
   ('program.elf',184416,'e59cdec3d494e7a264b6904fc6cca62fae49fb82d593ef070c5ff52b383b979d'))
+PINS_FFN_RECIPE_REFETCH_CONTROL=(
+  ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+  ('text.bin',120620,'b4b8e4e1afb771e540effdf78060d3eae2b8185cb0ada222440701e590ce38cc'),
+  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+  ('conv.bin',29504,'8f08c2c8e1ac10d898cc03fca7015f1d89409da135e549402978f61f03854b66'),
+  ('program.elf',184416,'e5adf9c406d471575a2d5f9b4286db80857a96eb49a1bfff9b94ff706cc43789'))
 ffn_shared_reuse='--ffn-shared-input-reuse' in args
 if ffn_shared_reuse:
     if args.count('--ffn-shared-input-reuse')!=1:raise SystemExit(2)
@@ -44,6 +50,10 @@ ffn_recipe_v2='--ffn-recipe-reuse-v2' in args
 if ffn_recipe_v2:
     assert args.count('--ffn-recipe-reuse-v2')==1 and ffn_shared_reuse and inspect_candidate and compact_inspection
     args.remove('--ffn-recipe-reuse-v2')
+ffn_refetch_control='--ffn-recipe-refetch-control' in args
+if ffn_refetch_control:
+    assert args.count('--ffn-recipe-refetch-control')==1 and ffn_recipe_v2
+    args.remove('--ffn-recipe-refetch-control')
 assert __debug__ and len(args)==2
 assert not compact_inspection or inspect_candidate,'compact controller/components are inspection-only'
 assert not (compact_inspection and ffn_shared_reuse and not ffn_recipe_v2), \
@@ -76,7 +86,8 @@ run([sys.executable,str(here/'build_qwen38_global_token_components.py'),str(buil
      *(('--inspect-candidate',) if inspect_candidate else ()),
      *(('--compact-inspection',) if compact_inspection else ()),
      *(('--ffn-shared-input-reuse',) if ffn_shared_reuse else ()),
-     *(('--ffn-recipe-reuse-v2',) if ffn_recipe_v2 else ())])
+     *(('--ffn-recipe-reuse-v2',) if ffn_recipe_v2 else ()),
+     *(('--ffn-recipe-refetch-control',) if ffn_refetch_control else ())])
 run([tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',str(here/'blackhole_qwen38_global_chain_start.S'),'-o',str(base/'start.o')])
 root_flags=[('-Os' if compact_inspection and flag=='-O2' else flag) for flag in flags]
 run([tool+'g++',*root_flags,*(['-include',str(here/'PioneerQ38FreestandingMemcpy.h')] if compact_inspection else []),
@@ -116,7 +127,9 @@ if ffn_shared_reuse:
             data=(out/name).read_bytes()
             assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
 if compact_inspection:
-    for name,size,digest in (PINS_FFN_RECIPE_REUSE_V2_INSPECTION if ffn_recipe_v2 else PINS_COMPACT_INSPECTION):
+    selected = (PINS_FFN_RECIPE_REFETCH_CONTROL if ffn_refetch_control else
+                PINS_FFN_RECIPE_REUSE_V2_INSPECTION if ffn_recipe_v2 else PINS_COMPACT_INSPECTION)
+    for name,size,digest in selected:
         data=(out/name).read_bytes()
         assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
     print('PASS reproducible compact inspection image; fixed regions fit; still UNQUALIFIED for runtime/install/physical inference',flush=True)

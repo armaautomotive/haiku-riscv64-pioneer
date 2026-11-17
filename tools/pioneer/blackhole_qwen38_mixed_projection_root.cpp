@@ -12,6 +12,12 @@
 #ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
 #include "PioneerQ38FfnSharedInputReuse.h"
 #endif
+#if defined(PIONEER_Q38_FFN_RECIPE_REFETCH_CONTROL) && (PIONEER_Q38_FFN_RECIPE_REFETCH_CONTROL != 1 \
+ || !defined(PIONEER_Q38_FFN_RECIPE_REUSE_V2) || PIONEER_Q38_FFN_RECIPE_REUSE_V2 != 1 \
+ || !defined(PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE) || !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_WORK_INFERENCE))
+#error FFN forced-refetch control requires the separate V2 recurrent inspection
+#endif
 #ifdef PIONEER_Q38_QGWD_ROOT_IMAGE
 #include "PioneerQ38DenseQ8MatrixWorkerLayout.h"
 #define PIONEER_Q38_DENSE_Q8_MATRIX_ROOT_INSPECTION 1
@@ -141,13 +147,13 @@ static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
  const uint32_t head[]={M::Magic,sequence,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};
  for(unsigned i=0;i<8;i++){Words(L::Scratch)[i]=head[i];Words(L::Scratch)[8+i]=d[32+i];}
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
-#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#if defined(PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE) && !defined(PIONEER_Q38_FFN_RECIPE_REFETCH_CONTROL)
  const unsigned job[]={0x31483851,d[15],L::Tile(d[15]),0,0,d[14],p[0],p[2],p[4],d[43]==PioneerQ38FfnSharedInputReuse::UpRole?0U:1U};
 #else
  const unsigned job[]={0x31483851,d[15],L::Tile(d[15]),0,0,d[14],p[0],p[2],p[4],1};
 #endif
 #else
-#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#if defined(PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE) && !defined(PIONEER_Q38_FFN_RECIPE_REFETCH_CONTROL)
  const unsigned job[]={0x31483851,d[15],d[15]==8?576U:3392U,0,0,d[14],p[0],p[2],p[4],d[43]==PioneerQ38FfnSharedInputReuse::UpRole?0U:1U};
 #else
  const unsigned job[]={0x31483851,d[15],d[15]==8?576U:3392U,0,0,d[14],p[0],p[2],p[4],1};
@@ -203,7 +209,7 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  // changes. Sender AND all ROOT TUs need this distinct counter grammar.
  weightReadBlocks=blocks>>(type==8?2:1);
 #endif
-#ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
+#if defined(PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE) && !defined(PIONEER_Q38_FFN_RECIPE_REFETCH_CONTROL)
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  unsigned reads=groups*weightReadBlocks,flits=groups*blocks*L::Tile(type)/64;
 #else

@@ -69,8 +69,23 @@ detection of arbitrary valid bit substitutions in retained memory.
 
   python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_worker_tests.py SDK PINNED_MIXED_ANCESTOR_ELF PINNED_PUSHED_REUSE_ELF
 
-Together these tests cover the controller and worker boundaries.
-They do not run a continuous model layer or start a native device,
-and they do not give a physical speed or broad model-quality result.
-The next gate is a matched package of the measured raw path with
-the proposed retention change and its identical-weight control.
+Matched ROOT forced-refetch control
+-----------------------------------
+The compact control runs the same authenticated recipe-pair admission
+and differs only in issuing and accounting for the second normalized
+input read. It uses the same worker ELF. Two independent builds of
+each ROOT matched byte-for-byte. The dense module and standalone
+token object also matched across the two profiles. Control ELF SHA256:
+e5adf9c406d471575a2d5f9b4286db80857a96eb49a1bfff9b94ff706cc43789.
+
+  python3 tools/pioneer/build_qwen38_full_offload_root.py SDK NEW_CONTROL_OUTPUT --inspect-candidate --compact-inspection --ffn-shared-input-reuse --ffn-recipe-reuse-v2 --ffn-recipe-refetch-control
+  python3 tools/pioneer/tests/run_pioneer_q38_raw_ffn_reuse_linked_tests.py SDK PINNED_COMPACT_V2_ELF PINNED_COMPACT_CONTROL_ELF
+
+The linked comparison produced identical materialized controller
+frames on all 48 recurrent layers. Across 238 paired worker frames,
+every gate frame matched and every up frame differed only at word
+25 (fetch=0 versus fetch=1). Both linked builds rejected the same 32
+late identity faults before a second projection. These were actual
+emitted RV32 binaries with synthetic endpoint data, not native
+driver packages or model runs. The next gate is a matched package
+of the measured raw path with the retention change and its control.
