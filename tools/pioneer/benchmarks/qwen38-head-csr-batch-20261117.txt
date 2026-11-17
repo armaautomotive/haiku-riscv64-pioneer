@@ -186,3 +186,33 @@ fixtures and eight refusal cases. The fixtures are not new speed results.
 
   python3 tools/pioneer/compare_qwen38_head_csr_rates.py CLOSED_SERIAL_CAPTURE CLOSED_BATCHED_CAPTURE
   python3 tools/pioneer/tests/pioneer_q38_head_csr_rates_test.py
+
+Physical serial control: closed; batched run started
+---------------------------------------------------
+The serial variant (tag207, generation3) executed the full raw 27B on
+the P100A. The checked post-prompt window was 31 committed steps, from
+31 through 62, over 180247610..180250942 us: 0.171982458..0.171985637
+tokens/sec. It produced the reference answer 1 through 14 under its
+32-output-token cap. Generation did not use host inference. The
+360.971-second prompt+decode and the 2121.297-second Generate-to-answer
+times are different intervals. The rate bounds exclude weight loading
+and START; they are not repeatability or broad model quality.
+
+The parent and rate client exited 0; stderr was empty. The independent
+postflight found stable041 generation4, cold0/owner0/guard1, no trial
+teams or shared lock, and intact 64-CPU, 137034936320-byte RAM Haiku.
+The runner/driver/client/stable/guard hashes matched. All nine fetched
+control records matched the postflight hashes; the complete transcript
+SHA256 is 162e63775b17b36ea5f64ebf44abece67b2eadfbe5d7fa3031ebc2bf87f024ad.
+The serial stage is spent; the Mac capture is
+/private/tmp/q38-head-serial-207-closed.IWDPXluY.
+
+After that verification, the batched variant preflight matched the
+exact tag208 artifacts and stable generation4. The single launched
+stage `/boot/home/pioneer-q38-head-csr-candidate-208` bound exact runner
+SHA256 818cbafdf1e7ee90ba74136ea9e8b1544fdf3c1002d82fa29afc491dee874405.
+Tag208 generation5 and PID 1121 (parent), 1188 (client) and 1189 (worker)
+were observed while it began model authentication. Do not interfere
+while it owns the card. Compare only after both complete transcripts,
+the same answer and count geometry, and independent stable restoration.
+No batched inference rate or speedup is known yet.

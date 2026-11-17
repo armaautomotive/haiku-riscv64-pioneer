@@ -18,16 +18,15 @@ the same 64-CPU/full-RAM Haiku profile. On the fresh Haiku boot tag206 was
 idle and unquarantined. The guarded exchange backed up tag206 and restored
 stable041 generation2; hashes, idle manager and full CPU/RAM passed.
 
-The one-shot serial control for the Qwen output-head comparison has now
-started in `/boot/home/pioneer-q38-head-csr-serial-207`. Its preflight and
-exact hashes passed, and its parent (565), rate client (632) and worker
-(633) were observed alive, with tag207 generation3 and the worker beginning
-model file authentication. The runner SHA256 is
-`b70b6b91962802625a070b580f2a207793f0cdf53bdc4250c85a072d13443f09`.
-Do not intervene while it owns the device. After it closes, require the
-full independent transcript, identical counting answer, and stable041
-restoration before running the batched variant. No performance from
-either A/B variant has been measured yet. No Assistant changes.
+The one-shot serial control for the Qwen output-head comparison closed
+cleanly at 0.171982458..0.171985637 tok/s in its post-prompt window,
+returning the expected counting answer without CPU inference. The full
+transcript, exit files and stable041 generation4 (idle, full CPU/RAM) were
+independently verified. The matched batched tag208 is now running from
+`/boot/home/pioneer-q38-head-csr-candidate-208`, generation5, parent1121,
+client1188 and worker1189. Do not intervene while it owns the card. No
+batched timing or speedup is known. See
+benchmarks/qwen38-head-csr-batch-20261117.txt. No Assistant changes.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
