@@ -1,0 +1,40 @@
+Qwen 27B output-head NoC wait reduction candidate
+=================================================
+
+The existing RAW full-card ROOT dispatches 973 vocabulary jobs in nine
+waves and each worker returns one local maximum. Up to 119 workers run in
+parallel. The host neither computes those logits nor selects the winner.
+The final ROOT reduction compares only the 973 local winners. A prior
+complete physical vector92 profile measured 11.87% of generation-body
+cycles in the entire head-matrix bucket, including on-card coordination.
+
+The current Closed() path performs at least 30 serial NoC operations:
+three in Wait, one boot read, 16 source-register reads, one job read, one
+doorbell read, and eight counter reads. There are 1,211 such audits per
+token: 119 before, 973 in Gather, and 119 after. Add two operations per job
+for dispatch/release and four for Gather's separate Wait/partial read, for
+at least 42,168 serial operations. This is a source count, excluding loops,
+normalization, state, and STOP; not a physical packet or timing capture.
+
+Tenstorrent Blackhole NoC MemoryMap.md specifies only 4 bytes per read
+when either address is MMIO. The inspection component queues the existing
+source/counter reads as three groups of eight individual 4-byte requests.
+It keeps every compared register, uses a distinct low-bit-aligned L1 slot
+per reply, and checks FIFO capacity, overflow, drain, transaction counts,
+live source callbacks, last-command identity and every returned word.
+No tracked frontier advances after a refused or uncertain batch. If this
+can replace all 24 register wait points in each Closed audit with three
+drains, it removes up to 25,431 serial wait points per token in that path,
+not NoC packets or PCIe round trips. No relation to tokens/sec is assumed.
+
+ASan/UBSan tests cover the exact register list, command words and response
+slots across 357 worker/group combinations, counter wrap, blocked queue,
+lost or corrupt response, command readback and authority faults. Eleven role
+refusals keep this component out of ROOT, native, Work and CPU-reference
+builds. It is not yet bound to an actual ROOT or P100A. A root candidate
+must first prove its own exact live-source guard during the batch, FIFO
+mode and scratch lifetime, retain terminal STOP semantics, and fit the
+existing journaled ROM. The prior projection counter-gather result is a
+different experiment and is not evidence for a speedup in this head.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_head_csr_batch_tests.py
