@@ -9,8 +9,20 @@ namespace H=PioneerQ38GlobalHeadLayout;
 namespace G=PioneerQ38SelectedGlobalWorker;
 static const uint32_t* PeerBoot(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerBoots+w*256);}
 static const uint32_t* PeerJob(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerJobs+w*256);}
-static void HeadSeal(const uint32_t* h,bool counters=true){
- Scope(counters);
+static
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+__attribute__((noinline,optimize("Os")))
+#endif
+void HeadSeal(const uint32_t* h,bool counters=true
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ ,bool headCsrInFlight=false
+#endif
+ ){
+ Scope(counters
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+  ,headCsrInFlight
+#endif
+ );
 #ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
 #ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
  if(Owner()->phase==7){if(!Owner()->state[Completed])scalar_fault_park();}
@@ -23,7 +35,11 @@ static void HeadSeal(const uint32_t* h,bool counters=true){
 #endif
  for(unsigned i=0;i<128;i++)if(Words(L::Head)[i]!=h[i])scalar_fault_park();
 }
-static void Packet(const uint32_t* h,unsigned route,unsigned remote,unsigned bytes,bool write){
+static
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+__attribute__((noinline,optimize("Os")))
+#endif
+void Packet(const uint32_t* h,unsigned route,unsigned remote,unsigned bytes,bool write){
  if(!bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
  HeadSeal(h);auto* p=Owner();unsigned local=R::Scratch+(remote&31);uint32_t expected[8];
  for(unsigned i=0;i<8;i++)expected[i]=p->state[Counts+i]+(i==(write?5U:1U)?(bytes+63)>>6:i==2 || i==6 || i==(write?4U:0U) || i==(write?7U:3U)?1U:0U);
@@ -37,7 +53,12 @@ static void Packet(const uint32_t* h,unsigned route,unsigned remote,unsigned byt
  if(!done)scalar_fault_park();
  HeadSeal(h,false);
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ volatile uint32_t* retained=p->state+Counts; // freestanding: no out-of-line memcpy
+ for(unsigned i=0;i<8;i++)retained[i]=expected[i];
+#else
  for(unsigned i=0;i<8;i++)p->state[Counts+i]=expected[i];
+#endif
 }
 static bool Csr(unsigned a){
  if(a==0xffb121b0 || a==0xffb13140)return true;
@@ -96,7 +117,11 @@ static void Normalize(const uint32_t* h){
  for(unsigned i=0;i<32;i++)Words(R::ScaleShadow)[i]=Words(R::Scales)[i];
  Fence();InputSeal();
 }
-static void Wait(const uint32_t* h,unsigned w,bool stopped){
+static
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+__attribute__((noinline,optimize("Os")))
+#endif
+void Wait(const uint32_t* h,unsigned w,bool stopped){
  unsigned n=Words(R::Nonces)[w];const auto* j=PeerJob(w);
  if(!n || !G::JobShape(j,PeerBoot(w),n-1,0) || j[1]!=n)scalar_fault_park();
  for(unsigned poll=0;poll<65536;poll++){
@@ -123,14 +148,47 @@ static void Wait(const uint32_t* h,unsigned w,bool stopped){
  }
  scalar_fault_park();
 }
-static void Closed(const uint32_t* h,unsigned w,bool stopped=false){
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+static_assert(unsigned(R::Scratch)==unsigned(PioneerQ38HeadCsrBatch::Scratch),"same private CPU-independent ROOT scratch");
+struct HeadCsrIO {
+ const uint32_t* h;
+ bool Seal(){HeadSeal(h,false);return true;}
+ // Only during the admitted immutable eight-read transaction. This keeps
+ // the same head/source/owner checks, leaving FIFO and counter checks to
+ // the batch verifier; no new release or completion flag is granted.
+ bool Guard(){HeadSeal(h,false,true);return true;}
+ unsigned PeerRoute(unsigned logical){return G::Peer(logical);}
+ uint32_t Read(unsigned address){return *Words(address);}
+ void Write(unsigned address,uint32_t value){*Words(address)=value;}
+ void Fence(){GlobalChain::Fence();}
+};
+static __attribute__((noinline,optimize("Os"),section(".conv.token"))) void HeadRegisterBatch(const uint32_t* h,unsigned w,unsigned group,
+ const volatile uint32_t* source){
+ uint32_t expected[8];for(unsigned i=0;i<8;i++)expected[i]=source[i];
+ HeadCsrIO io{h};
+ if(!PioneerQ38HeadCsrBatch::Verify(io,w,group,expected,Owner()->state+Counts))scalar_fault_park();
+}
+#endif
+static
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+__attribute__((noinline,optimize("Os")))
+#endif
+void Closed(const uint32_t* h,unsigned w,bool stopped=false){
  Wait(h,w,stopped);const auto* b=PeerBoot(w);
  if(!G::BootShape(b) || b[3]!=w+1 || b[4]!=G::Peer(w+1))scalar_fault_park();
  for(unsigned i=0;i<8;i++)if(b[8+i]!=Owner()->boot[8+i])scalar_fault_park();
  PeerPacket(h,w,G::Boot,256,false);for(unsigned i=0;i<64;i++)if(Words(R::Scratch)[i]!=b[i])scalar_fault_park();
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ if(!stopped && Owner()->phase==4){HeadRegisterBatch(h,w,0,b+16);HeadRegisterBatch(h,w,1,b+24);}
+ else
+#endif
  for(unsigned i=0;i<16;i++)if(Register(h,w,0xffb20000+Source(i))!=b[16+i])scalar_fault_park();
  PeerPacket(h,w,G::Job,256,false);for(unsigned i=0;i<64;i++)if(Words(R::Scratch)[i]!=PeerJob(w)[i])scalar_fault_park();
  if(Register(h,w,G::Doorbell)!=Words(R::Nonces)[w])scalar_fault_park();
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ if(!stopped && Owner()->phase==4)HeadRegisterBatch(h,w,2,reinterpret_cast<const uint32_t*>(R::Counters+w*32));
+ else
+#endif
  for(unsigned i=0;i<8;i++)if(Register(h,w,0xffb20000+Counter(i))!=Words(R::Counters)[w*8+i])scalar_fault_park();
 }
 static void Dispatch(const uint32_t* h,unsigned w){

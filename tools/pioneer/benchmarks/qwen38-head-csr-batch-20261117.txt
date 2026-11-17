@@ -29,12 +29,46 @@ not NoC packets or PCIe round trips. No relation to tokens/sec is assumed.
 
 ASan/UBSan tests cover the exact register list, command words and response
 slots across 357 worker/group combinations, counter wrap, blocked queue,
-lost or corrupt response, command readback and authority faults. Eleven role
-refusals keep this component out of ROOT, native, Work and CPU-reference
-builds. It is not yet bound to an actual ROOT or P100A. A root candidate
-must first prove its own exact live-source guard during the batch, FIFO
-mode and scratch lifetime, retain terminal STOP semantics, and fit the
-existing journaled ROM. The prior projection counter-gather result is a
-different experiment and is not evidence for a speedup in this head.
+lost or corrupt response, command readback and authority faults. Eleven
+role refusals covered the original isolated inspection build. The prior
+projection counter-gather result is a different experiment and is not
+evidence for a speedup in this head.
 
   python3 tools/pioneer/tests/run_pioneer_q38_head_csr_batch_tests.py
+
+Linked RAW ROOT inspection build
+-------------------------------
+The opt-in firmware compiles the batch into the real Closed() path only
+when the owner is in phase 4 (head evaluation) and not checking a STOP.
+Register groups occupy the same order around boot, job, and doorbell
+reads. HeadSeal/Scope keep the genuine device-source, token, owner and head
+checks while these narrowly bounded reads are in flight. The batch proves
+FIFO enable, completion and exact counts separately. All other paths,
+including STOP/cancel, keep the serial checks. The final boot and terminal
+instruction words are unchanged, as are the linked recurrent and dense
+objects. The existing native participant initializer is capable of sealing
+FIFO mode; the new helper only checks it and does not change that mode.
+
+The historical RAW control would not reproduce against current unrelated
+package changes. The builder reads the exact archived df48ea751a source,
+overlays only these coordinator files and their role headers, recompiles
+the unchanged coordinator object, and requires both it and the whole
+original linked control ELF to match before linking the candidate. Moving
+one small wrapper and compiling the affected guards for size kept the new
+code within the fixed regions: text 130,972 of 131,072 bytes; conv 32,320 of
+32,768 bytes. A candidate build refused four native/CPU/Work/other-head
+role mixes. A second build reproduced the candidate ELF byte-for-byte.
+The emitted Closed code calls the new batch wrapper; its
+largest individual batch frame is 160 bytes, not a combined stack proof.
+
+Candidate ELF SHA-256:
+0c78b9ef5035016ed1fd18d5eadf9f479ab728cdd7e57182c0046060a47ed962
+
+  python3 tools/pioneer/build_qwen38_head_csr_batch_root.py SDK RAW_CONTROL NEW_OUTPUT
+
+This is an actual linked image, not hardware execution. The next gate is
+emitted-code simulation of the full connected Closed path, including
+in-flight mutation, out-of-order replies, and serial STOP preservation.
+The candidate is not in a native driver and cannot replace the live tag206.
+A subsequent physical comparison must account for the size-compacted
+helpers separately from batching before attributing any speedup.

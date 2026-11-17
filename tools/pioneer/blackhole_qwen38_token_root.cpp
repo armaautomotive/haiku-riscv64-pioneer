@@ -6,6 +6,9 @@
 #include "PioneerQ38Qgw8CoarseProfileRole.h"
 #include "PioneerQ38Qgw8LayerTraceRole.h"
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#include "PioneerQ38HeadCsrBatch.h"
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38TokenLayout.h"
@@ -69,8 +72,19 @@ static bool Quiet(){
  for(unsigned i=0;i<32;i++)if(*Words(0xffb20240+i*4)&255)return false;
  return true;
 }
-static __attribute__((noinline,section(".conv.token"))) void Scope(bool counters=true){
+static __attribute__((noinline,section(".conv.token")
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ ,optimize("Os")
+#endif
+ )) void Scope(bool counters=true
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ ,bool headCsrInFlight=false
+#endif
+ ){
  const auto* p=Owner();
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+ if(headCsrInFlight && (counters || p->phase!=4))scalar_fault_park();
+#endif
  if(!p->phase || p->phase>
 #ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
  7
@@ -78,7 +92,12 @@ static __attribute__((noinline,section(".conv.token"))) void Scope(bool counters
  6
 #endif
  || p->state[Bank]>=7 || p->state[Profile]!=64 || p->state[Layer]>=64
-  || p->state[Completed]>64 || p->state[Position]>=8192 || p->state[Token]>=248320 || !Quiet())scalar_fault_park();
+  || p->state[Completed]>64 || p->state[Position]>=8192 || p->state[Token]>=248320
+  || (
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+   !headCsrInFlight &&
+#endif
+   !Quiet()))scalar_fault_park();
  if(p->phase==5){
   if(p->state[FrameReady] || p->state[Position] || p->state[Completed] || p->state[Layer] || p->state[Committed] || p->state[Slot]
    || !L::LayerFrame(p->outer,0,p->state[Bank],p->state[Workspace],p->boot))scalar_fault_park();

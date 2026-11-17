@@ -1,13 +1,30 @@
 /* SPDX-License-Identifier: MIT */
-#if !defined(PIONEER_Q38_HEAD_CSR_BATCH_INSPECTION) || PIONEER_Q38_HEAD_CSR_BATCH_INSPECTION != 1 \
- || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
+#if defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) \
- || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE)
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
+#error Queued head CSR check is an isolated inspection component
+#endif
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+#if PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE != 1 || defined(PIONEER_Q38_HEAD_CSR_BATCH_INSPECTION) \
+ || !defined(__riscv) || __riscv_xlen != 32 \
+ || !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE) || PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) || PIONEER_Q38_TOKEN_CANCEL_BOUNDARY != 1 \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION != 1 \
+ || defined(PIONEER_Q38_HEAD_MATRIX_ROOT_INSPECTION) || defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU)
+#error Queued head CSR check requires the distinct RAW pushed ROOT inspection image
+#endif
+#elif !defined(PIONEER_Q38_HEAD_CSR_BATCH_INSPECTION) || PIONEER_Q38_HEAD_CSR_BATCH_INSPECTION != 1 \
+ || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE)
 #error Queued head CSR check is an isolated inspection component
 #endif
 #ifndef PIONEER_Q38_HEAD_CSR_BATCH_H
 #define PIONEER_Q38_HEAD_CSR_BATCH_H
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+typedef __UINT32_TYPE__ uint32_t;
+#else
 #include <stdint.h>
+#endif
 
 // Only the exact registers already checked by Closed() in the output head.
 // Blackhole MMIO transfers are 4 bytes. Batching changes when the independent
@@ -47,10 +64,14 @@ template<class IO> bool TransactionsIdle(IO& io)
 // the whole non-traffic boundary. Guard() proves immutable source, head and
 // descriptor state while only these eight initially absent reads can be in
 // flight. No calls leave an independent result or ready bit for a worker.
-template<class IO> bool Verify(IO& io,unsigned worker,unsigned group,const uint32_t (&wanted)[Words],
-	uint32_t (&tracked)[Words])
+template<class IO>
+#ifdef PIONEER_Q38_HEAD_CSR_BATCH_ROOT_IMAGE
+__attribute__((optimize("Os")))
+#endif
+bool Verify(IO& io,unsigned worker,unsigned group,const uint32_t (&wanted)[Words],
+	uint32_t* tracked)
 {
-	if(worker>=119 || group>=Groups || &wanted==&tracked || !io.Seal() || !(io.Read(Niu+0x100)&0x10000U)
+	if(worker>=119 || group>=Groups || !tracked || wanted==tracked || !io.Seal() || !(io.Read(Niu+0x100)&0x10000U)
 		|| !InitiatorsIdle(io) || io.Read(Niu+Available)!=0x10101010U || io.Read(Niu+Overflow)
 		|| !TransactionsIdle(io))return false;
 	uint32_t expected[Words];
@@ -85,7 +106,8 @@ template<class IO> bool Verify(IO& io,unsigned worker,unsigned group,const uint3
 		if(!io.Seal())return false;
 		for(unsigned word=0;word<10;word++)if(io.Read(Niu+word*4)!=command[word])return false;
 		for(unsigned i=0;i<Words;i++)if(io.Read(Scratch+i*32+(Offset(group,i)&31))!=wanted[i])return false;
-		for(unsigned i=0;i<Words;i++)tracked[i]=expected[i];
+		volatile uint32_t* retained=tracked;
+		for(unsigned i=0;i<Words;i++)retained[i]=expected[i];
 		return true;
 	}
 	return false;
