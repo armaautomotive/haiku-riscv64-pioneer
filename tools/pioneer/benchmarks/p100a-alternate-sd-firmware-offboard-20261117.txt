@@ -1,0 +1,76 @@
+P100A new-slot firmware test: prepared, not booted
+=================================================
+November 17, 2026. Both cards stayed in place; Fedora 6.1.31 remains live.
+The old firmware boot trace shows SG2042 ZSBL v0.2 and OpenSBI v1.2
+(2023-08-30 build). The live device tree and both installed Pioneer DTBs
+have identical pcie-id, link-id, linux,pci-domain, bus-range, reg, ranges
+and dma-ranges on all four roots. The affected 7060000000.pcie root is
+controller 0/link 0/domain 0. Selecting either installed DTB would not
+change those properties. The physical PCB revision is still unverified.
+
+Alternate boot components
+-------------------------
+RevyOS publishes a single-socket Pioneer firmware image for microSD:
+https://docs.revyos.dev/docs/Installation/milkv-pioneer/
+https://mirror.iscas.ac.cn/revyos/extra/images/sg2042/20251226/
+
+The exact 268435456-byte firmware_sg2042-single-revyos_6.18.y-sg204x-v1.7.img
+matched the mirror's SHA-256:
+20b0e2db84a1a52aa37ad3cc155ee55206384c2f81da1a1e0cd88d8c1389adaf
+The package has a different ZSBL from the earlier Fedora rescue SD, a
+different LinuxBoot kernel, and a Milk-V Pioneer DTB that describes the
+affected root as sophgo,sg2042-pcie-host rather than sophgo,cdns-pcie-host.
+Its root 0 register/range/bus values differ. This is a meaningful firmware
+comparison, not a demonstrated P100A fix. Neither that DTB nor any part of
+the package should be used with the current Haiku boot helper by itself.
+
+Diagnostic image and gates
+--------------------------
+The stock initramfs selects another operating system. The diagnostic copy
+has only one init executable, a console node and a sysfs mount point in
+its initramfs. PID 1 mounts sysfs read-only, inventories PCI devices, prints
+the root-port and Blackhole link data if available, and parks. It does not
+run an installer, launch an installed OS, open a block device, load a
+driver, write PCI sysfs, use the network, or issue a MTD write. Vendor
+firmware and the kernel still perform their normal boot and enumeration.
+
+Tools: cross GCC/ld for RISC-V, Python 3 and mtools. Build from the repo:
+
+  CC=/absolute/path/to/riscv64-unknown-haiku-gcc
+  "$CC" -std=c11 -Os -Wall -Wextra -Werror -ffreestanding -fno-builtin \
+    -fno-stack-protector -msmall-data-limit=0 -fno-pic -fno-pie \
+    -c tools/pioneer/pioneer_pcie_sd_probe.c -o probe-init.o
+  "$("$CC" -print-prog-name=ld)" --no-relax -static -e _start \
+    -o probe-init probe-init.o
+  python3 tools/pioneer/make_pioneer_pcie_sd_probe.py \
+    stock-firmware.img probe-init new-diagnostic.img
+
+The builder only creates a new ordinary image file. It pins the vendor
+image, verifies the Linux RV64 ELF shape, and reads back the new initramfs.
+Readback confirmed all seven remaining firmware files, the partition table
+and pre-partition data unchanged. Independent archive inspection found
+only the four intended entries (including dev/console 5:1); the init ELF
+matched byte-for-byte. Existing output, unrelated image and non-ELF
+refusals passed.
+
+The final init ELF was run natively under Fedora in a private mount/PID
+namespace and a minimal temporary root, with a three-second outer bound.
+Outside PID 1 it exited 2 without mounting. As PID 1 its independently
+observed output included 0000:00:00.0, 0002:81:00.0,
+P100A_NOT_ENUMERATED and PIONEER_PCIE_SD_PROBE_PARKED. It finished only
+when the disposable test namespace was killed. No reboot or hardware
+change occurred in that test. This exercises the binary and inventory,
+not the RevyOS kernel or anything booted from actual SD media.
+
+  Local image: /private/tmp/pioneer-revy-firmware.4yD9F0/pioneer-pcie-probe-reviewed.img
+  Image SHA-256: 6cbcf4c526f8c5b5670d5737d26c118ca5ebdb63bf81d7ab9d466f8ae3a102de
+  Init SHA-256: a56f89bbe79668257c1920994c68ed0e429fa0c27013f62c715b7195fd001506
+  Initramfs SHA-256: 49066810afe822dc5a367cc1b980d4f4f552510c3b318762ff14036f3a49b0b1
+
+Physical trial requires a separately approved SD target, no reuse of either
+existing recovery or Haiku card, controlled power-off before insertion,
+and serial proof of the alternate firmware/kernel followed by the probe
+banner and terminal result. Do not interpret a fallback Fedora boot or
+missing probe output as absence of the P100A under the alternate firmware.
+If it enumerates, collect the actual topology before rebuilding Haiku's
+guards. No SPI/NVMe write or new inference benchmark occurred.
