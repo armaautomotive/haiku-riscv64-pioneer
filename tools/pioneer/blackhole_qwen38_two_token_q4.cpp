@@ -10,6 +10,12 @@
 #define block_main unused_single_token_q38_block
 #include "blackhole_qwen38_block.cpp"
 #undef block_main
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+#if PIONEER_Q38_TWO_TOKEN_Q4_STREAM != 1
+#error Exact separate two-token Q4 stream role required
+#endif
+#include "PioneerQ38TwoTokenQ4StreamLayout.h"
+#endif
 
 namespace {
 enum {Magic=0x32543851,Width=256,Outputs=16,Tokens=2,
@@ -23,10 +29,56 @@ bool ScaleValid(uint32_t bits){
  return !m || (m>=0x2f800000 && m<=0x47800000);
 }
 int Value(uint16_t x){return int(x&1023)*((x&0x8000)?-1:1);}
+
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+namespace Stream=PioneerQ38TwoTokenQ4StreamLayout;
+bool Idle(){return !*Words(0xffb20040) && !(*Words(0xffb20240)&255);}
+void CheckJob(const uint32_t* sealed){
+ for(unsigned i=0;i<Stream::Words;i++)if(Words(Stream::Descriptor)[i]!=sealed[i])block_fault_park();
+}
+void Fetch(const uint32_t* sealed,unsigned block,uint32_t* tracked){
+ const unsigned address=sealed[6]+block*Stream::TileBytes;
+ const unsigned command[]={address,0,PioneerQ38ProjectionRoute(sealed[7]),Stream::Tile,0,Stream::Self,0,0,Stream::TileBytes,0};
+ uint32_t expected[8];CheckJob(sealed);
+ if(!Idle())block_fault_park();
+ for(unsigned i=0;i<8;i++){
+  if(*Words(0xffb20000+Stream::Counter(i))!=tracked[i])block_fault_park();
+  expected[i]=tracked[i]+Stream::Delta(i);
+ }
+ // Only change the bounded address; all other fields must already equal
+ // the real parent's immutable NoC setup. A job is not authority to map.
+ for(unsigned i=1;i<10;i++)if(Words(0xffb20000)[i]!=command[i])block_fault_park();
+ *Words(0xffb20000)=address;
+ if(*Words(0xffb20000)!=address)block_fault_park();
+ Fence();*Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();
+ for(unsigned poll=0;poll<65536;poll++){
+  bool done=Idle();
+  for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Stream::Counter(i))==expected[i];
+  if(!done)continue;
+  CheckJob(sealed);
+  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])block_fault_park();
+  for(unsigned i=0;i<8;i++)tracked[i]=expected[i];
+  Fence();return;
+ }
+ block_fault_park(); // uncertain NoC: no another request or output
+}
+#endif
 }
 
 extern "C" unsigned block_main(){
  const auto* job=Words(Descriptor);
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+ uint32_t sealed[Stream::Words];for(unsigned w=0;w<Stream::Words;w++)sealed[w]=job[w];
+ if(!Stream::Shape(sealed))return 0;
+ const unsigned inputs=sealed[5],blocks=inputs/Width;
+ for(unsigned t=0;t<Tokens;t++){
+  for(unsigned b=0;b<blocks;b++)if(!ScaleValid(Words(Stream::Scale(t))[b]))return 0;
+  for(unsigned w=0;w<inputs/2;w++){
+   const uint32_t word=Words(Stream::Input(t))[w];
+   if(!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16)))return 0;
+  }
+ }
+#else
  if(job[0]!=Magic || job[1]!=12 || job[2]!=2304 || job[3]
   || !ScaleValid(job[4]) || !ScaleValid(job[5]))return 0;
  for(unsigned w=6;w<16;w++)if(job[w])return 0;
@@ -35,16 +87,30 @@ extern "C" unsigned block_main(){
   uint32_t word=Words(Input)[w];
   if(!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16)))return 0;
  }
+#endif
  volatile float accum[Tokens][Outputs];
  for(unsigned t=0;t<Tokens;t++)for(unsigned n=0;n<Outputs;n++)accum[t][n]=0;
  Setup(); // initializes all eight SrcB rows, including unused rows 2..7
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+ uint32_t tracked[8];if(!Idle())block_fault_park();
+ for(unsigned w=0;w<8;w++)tracked[w]=*Words(0xffb20000+Stream::Counter(w));
+ if(tracked[2]!=tracked[6])block_fault_park();
+ for(unsigned block=0;block<blocks;block++){
+  Fetch(sealed,block,tracked);
+  const float scale[Tokens]={Float(Words(Stream::Scale(0))[block]),Float(Words(Stream::Scale(1))[block])};
+#endif
  for(unsigned p=0;p<Width/16;p++){
   PioneerQ38Panel* local=reinterpret_cast<PioneerQ38Panel*>(0x91000);
   if(!PioneerQ38UnpackPanel(12,reinterpret_cast<const uint8_t*>(Weight),2304,p,local))block_fault_park();
   for(unsigned w=0;w<128;w++)Words(0x70710)[w]=local->operand[w];
   int sums[Tokens]={};
   for(unsigned t=0;t<Tokens;t++)for(unsigned w=0;w<8;w++){
-   const uint32_t word=Words(Input+t*InputStride)[p*8+w];
+   const uint32_t word=
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+    Words(Stream::Input(t))[block*(Width/2)+p*8+w];
+#else
+    Words(Input+t*InputStride)[p*8+w];
+#endif
    Words(Operand)[t*8+w]=word;
    sums[t]+=Value(uint16_t(word))+Value(uint16_t(word>>16));
   }
@@ -62,6 +128,17 @@ extern "C" unsigned block_main(){
    accum[t][n]=next;
   }
  }
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+ }
+ CheckJob(sealed);
+ if(!Idle())block_fault_park();
+ for(unsigned w=0;w<8;w++)if(*Words(0xffb20000+Stream::Counter(w))!=tracked[w])block_fault_park();
+#endif
  for(unsigned t=0;t<Tokens;t++)for(unsigned n=0;n<Outputs;n++)Words(Output)[t*Outputs+n]=Bits(accum[t][n]);
- Fence();return Width/16;
+ Fence();
+#ifdef PIONEER_Q38_TWO_TOKEN_Q4_STREAM
+ return inputs/16;
+#else
+ return Width/16;
+#endif
 }

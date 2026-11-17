@@ -12,8 +12,8 @@ activations and leaves 2..7 zero. It reads both signed integer dot rows
 after the actual final drain, applies the old Q4 coefficient, minimum
 and signed activation scale independently, and accumulates each output
 in the old FP32 operation order. This covers all sixteen K16 panels
-of one 16-output/K256 GGUF Q4_K block. It does not cover Q8/Q6 or a
-full-width model projection. It uses the original four fidelity phases,
+of one 16-output/K256 GGUF Q4_K block. This first test does not cover
+Q8/Q6 or a full-width model projection. It uses the original four fidelity phases,
 not a new or approximate numerical format. Each panel still unpacks
 the single weight tile once; the second token does not issue another
 matrix multiply. Publication happens only after both outputs are ready.
@@ -36,9 +36,36 @@ native, kernel, Work, CPU reference and fast-math role combinations.
 Candidate text SHA256:
 c11734ef8e5aa76d4d47d7a2bad84b0c4073005a799b57b6affc2a43b57a1226.
 
-To reduce real weight traffic, the next target is full-width streamed
-two-row projection using the optimized decoder's output accumulation,
-then a physical same-weight, two-activation comparison. Separately the
+
+Full-width streamed image
+-------------------------
+A separate Q8T3 image reuses the same two-activation math at all three
+full model widths, for one 16-output Q4_K shard per run. The input and
+scales have separate fixed bounds, and the job seals the exact projection
+shape and bank. The controller confirms the caller's read-command route,
+size, destination and flags without reprogramming them. Every actual
+request observes an idle command/FIFO, verifies its expected address and
+counter deltas, and rereads the command after completion. No output is
+published on a failed or uncertain weight transfer. A future native
+parent still owes real immutable-input, weight extent and NoC ownership.
+
+The linked RV32 instructions, exercised on a simulated fabric with delayed
+responses and counter wrap, matched 32 output words at each width against
+two executions of the original pinned one-token stream. K5120 used 20
+reads instead of 40; K6144 used 24 instead of 48; K17408 used 68 instead
+of 136. These are simulated weight requests for exact same-weight pairs,
+not DDR bandwidth or elapsed time. All 36 malformed and completion
+fault cases stopped without publishing either row or retrying. These
+included bad ranges, mismatched bank/byte count, nonempty FIFO, and
+first/middle/last dropped replies, counter deltas, command and job changes.
+
+The same test command rebuilds and runs all four images, preserving the
+old local and single-token stream pins. Streamed two-row text is 5,576
+bytes with SHA256
+fd6c8b885c84bda45093b28b2fc0cb0a3a8934edc60258852e10700666db280b.
+
+Next integrate two-row accumulation into the optimized vector decoder
+and qualify a physical same-weight, two-activation comparison. Separately the
 request scheduler must preserve causal KV, recurrent state, and the
 single-token fallback. Two known inputs can serve prefill or independent
 requests; single-request decode requires a real draft/verification
