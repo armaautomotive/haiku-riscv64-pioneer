@@ -11,11 +11,23 @@ helper safely refused to stage when the two SATA disks were renumbered.
 After DHCP arrived, strict Haiku SSH confirmed Blackhole present, 64 CPUs,
 137034936320 bytes RAM, and exact stable041 driver tag2026102100010012
 generation1, cold0, active_owner0, guard1. No Assistant files changed.
-The fresh tag206 diagnostic worker and phase-bounded rate client are
-SHA-verified in /boot/home/pioneer-q38-tag206-phase-rate-20261117-a only;
-no new driver is installed and no model test has run. A new one-shot
-launch must bind to the fresh live generation and new worker/client
-hashes, not reuse either previous stage.
+The November 17 tag206 trial uploaded every prepared weight, then failed
+START before any generation, with `cold1 active_owner1`. Only one OFF
+hold and one ON pulse were used. Fedora's verified SD-free helper booted
+the same 64-CPU/full-RAM Haiku profile. On the fresh Haiku boot tag206 was
+idle and unquarantined. The guarded exchange backed up tag206 and restored
+stable041 generation2; hashes, idle manager and full CPU/RAM passed.
+
+The one-shot serial control for the Qwen output-head comparison has now
+started in `/boot/home/pioneer-q38-head-csr-serial-207`. Its preflight and
+exact hashes passed, and its parent (565), rate client (632) and worker
+(633) were observed alive, with tag207 generation3 and the worker beginning
+model file authentication. The runner SHA256 is
+`b70b6b91962802625a070b580f2a207793f0cdf53bdc4250c85a072d13443f09`.
+Do not intervene while it owns the device. After it closes, require the
+full independent transcript, identical counting answer, and stable041
+restoration before running the batched variant. No performance from
+either A/B variant has been measured yet. No Assistant changes.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
