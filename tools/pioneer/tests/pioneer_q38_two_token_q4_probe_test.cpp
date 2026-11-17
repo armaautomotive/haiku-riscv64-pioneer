@@ -76,7 +76,8 @@ static bool Prepare(PairIO& io,PanelOwners& o,Q::Lease& p){
 	return Q::Prepare<PinnedImage>(io,o.dram,o.noc,o.store,o.banks,p);
 }
 static bool Run(PairIO& io,PanelOwners& o,Q::Lease& p,const std::vector<uint8_t>& pages,Q::Job& j){
-	return Q::Run<PinnedImage>(io,o.dram,o.noc,o.store,o.banks,p,pages.data(),unsigned(pages.size()),j);
+	return Q::Run<PinnedImage>(io,o.dram,o.noc,o.store,o.banks,p,pages.data(),unsigned(pages.size()),j,
+		[&](){return io.Q38PairNowUs();});
 }
 static bool Close(PairIO& io,PanelOwners& o,Q::Lease& p){
 	return Q::Close(io,o.dram,o.noc,o.store,o.banks,p);

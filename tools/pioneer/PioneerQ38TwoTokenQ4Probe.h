@@ -18,7 +18,7 @@ namespace PioneerQ38TwoTokenQ4Probe {
 namespace L=PioneerQ38TwoTokenQ4StreamLayout;
 enum : unsigned {Boot=0x0006c06f,Done=0x7200c,Park=0x72038,OutputWords=32,
 	Poison=0x7fc00000,TextBytes=7784};
-static_assert(TT_Q38_PANEL_VIEW_BASE==L::SavedBase &&
+static_assert(unsigned(TT_Q38_PANEL_VIEW_BASE)==unsigned(L::SavedBase) &&
 	TT_Q38_PANEL_VIEW_BASE+TT_Q38_PANEL_VIEW_BYTES==L::SavedEnd,
 	"paired scratch is entirely in the original saved worker view");
 
@@ -102,8 +102,9 @@ template<class IO> static bool CommandMatches(IO& io,const PioneerQ38StreamExten
 	for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=expected[i]) return false;
 	return true;
 }
-template<class Image,class IO> bool Run(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
-	PioneerResidentLease& store,const PioneerResidentBanks& banks,Lease& l,const uint8_t* initialized,unsigned pages,Job& job)
+template<class Image,class IO,class Clock> bool Run(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
+	PioneerResidentLease& store,const PioneerResidentBanks& banks,Lease& l,const uint8_t* initialized,unsigned pages,
+	Job& job,Clock now)
 {
 	auto& p=l.panel;auto& r=job.result;r={};r.version=1;job.elapsed_us=0;
 	PioneerQ38StreamExtent e;
@@ -130,14 +131,14 @@ template<class Image,class IO> bool Run(IO& io,const tt_dram_samples_result& dra
 	if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff
 		|| !PioneerQ38PanelSources(io,dram,noc,store,banks) || !CommandMatches(io,e,false)) return unsafe();
 	for (unsigned i=0;i<8;i++) r.before[i]=io.ResidentNocRead(L::Counter(i));
-	const uint64_t began=io.Q38PairNowUs();
+	const uint64_t began=now();
 	r.started=1;p.running=true;r.state=TT_RUNTIME_COMPLETION_FAILED;io.RuntimeResetWrite(0x46800);
 	uint64_t ended=0;
 	for (unsigned attempt=0;attempt<150000;attempt++) {
 		r.polls++;if (io.ResetRead()!=0x46800) return unsafe();
 		r.marker=io.RuntimeStatusRead(2);
 		if (r.marker) {
-			ended=io.Q38PairNowUs();r.phase=io.RuntimeStatusRead(0);r.panels=io.RuntimeStatusRead(1);
+			ended=now();r.phase=io.RuntimeStatusRead(0);r.panels=io.RuntimeStatusRead(1);
 			if (r.marker!=L::VectorMagic || r.phase!=Done || r.panels!=job.inputs/16) return unsafe();
 			io.Pause();r.pc[0]=io.RuntimePcRead();io.Pause();r.pc[1]=io.RuntimePcRead();
 			if (r.pc[0]!=Park || r.pc[1]!=Park) return unsafe();

@@ -148,9 +148,26 @@ retry or restore attempt.
 The ASan/UBSan mock test uses the same byte-pinned code as the linked image
 test. It verified exact view/boot restoration for all 21 width/bank
 combinations, 13 inert prelaunch refusals and 16 sticky failure cases.
-The policy has no device entry point yet. Next bind it to the private
-Haiku diagnostic owner and qualify a physical same-weight comparison.
-The linked image serves one 16-output shard, not a whole-model trial.
+The policy is now bound to a distinct tag215 Haiku driver, not the Work
+or validation modes of Assistant. The driver verifies two separate
+controls using the same firmware (the second row is zero), then the
+paired image with the two independent inputs. It releases no timing or
+output unless both rows match those controls and the explicit resident
+END verifies restoration. Closing an uncertain FD retains ownership
+and cannot execute the legacy cleanup path. The client uploads only
+39 pages from the first 16 real FFN-down output rows and checks all 32
+values against a separate CPU oracle before printing timings.
+
+  python3 tools/pioneer/build_qwen38_two_token_q4_native.py SDK NEW_OUTPUT
+
+The linked RISC-V driver and client passed the code pin, nine role
+refusals, legacy entry disassembly, and kernel stack checks. Driver and
+client SHA256:
+  d73dbf803bd05087bd4afb554b841032a8a383ac5495bc49193b4e8870670cd2
+  a902f0b5fc5521648127869e0efa48a56a808294d9dbda117792992439149843
+No device
+installation, physical timing, or whole-model speed result yet. The
+linked image serves one 16-output shard, not a whole-model trial.
 Separately the
 request scheduler must preserve causal KV, recurrent state, and the
 single-token fallback. Two known inputs can serve prefill or independent
