@@ -79,3 +79,27 @@ multiple exceptions per block, and refuses short input and non-files.
     tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q8-domain
   UBSAN_OPTIONS=halt_on_error=1 /tmp/q8-domain --self-test
   UBSAN_OPTIONS=halt_on_error=1 /tmp/q8-domain ABSOLUTE_ORIGINAL_GGUF
+
+Twin-buffer native unpack helper (offboard)
+-------------------------------------------
+The original direct native unpack helper assumed a single raw tile at
+0x90000. The fast vector92 worker alternates two disjoint four-tile
+batches. The new helper accepts exactly those eight Q8 tile origins and
+only the two 256-byte operand panels. It changes only source interpretation
+and the address of the existing native unpack instruction; no new byte
+layout, NoC command, worker release or packed-output ownership is granted.
+The host-side command model sees one native unpack, one bounded base write,
+and two drains per panel. It tests 16 panels bit-for-bit against the
+original format's operand builder, both buffers, metadata/padding identity,
+exact setup/restore state, 29 inert cases, all byte origins in the allocation,
+and a late -128 refusal before publishing converted data. ASan/UBSan passed;
+the Work selector was rejected at compile time. No card time was measured.
+
+  c++ -std=c++17 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    tools/pioneer/tests/pioneer_q38_twin_native_q8_test.cpp -o /tmp/q8-twin
+  UBSAN_OPTIONS=halt_on_error=1 /tmp/q8-twin
+
+Next: wire the separate signed-magnitude worker arm and authenticated
+source together. Prove the existing affine coefficient swaps, SrcB direct
+input, exact replay, both prefetched lifetimes, mixed Q8/Q4/Q6 jobs and
+readiness/STOP. No firmware currently consumes this helper.
