@@ -44,6 +44,32 @@ per-recipe calculation, using canonical packages for all 64 layers,
 seven banks, and three token positions. It checks immutable input bytes,
 the exact destinations, the total packet count, and that rejected or
 failed reads/recipes do not publish their group. It is not an execution
-test of the linked ROOT. Actual RV32 transport/role qualification and
-a separate guarded native A/B are required before measuring a gain.
-The tag213 profiler already running uses the original ungrouped sender.
+test of the linked ROOT.
+
+Linked RV32 transport fixture
+-----------------------------
+  python3 tools/pioneer/tests/run_pioneer_q38_recipe_batch_instruction_tests.py \
+    SDK PINNED_V4_ROOT PINNED_RECIPE_BATCH_ROOT
+
+The test pins both complete ELFs and extracts their actual code and entry
+symbols. It builds the canonical fixture from the same frozen vector92
+tree as v4, rather than mixing it with the newer GDN cohort geometry. It
+executes both linked TokenRecipes bodies and the real Owner, Scope,
+Transfer and recipe checks. Only the predecessor and NoC completion are
+synthetic. It compares complete published byte arrays and byte counters,
+checks the ordered ten-word readbacks on each side of every command,
+and confirms an unacknowledged request reaches the real fault path after
+the bounded poll. An input error at any slot may leave earlier complete
+groups published, but never the failed group or any group after it.
+
+The ASan/UBSan run passed 200 matched cases and 90 injected refusals.
+All 64 layers were tested at position 31 on bank 0; both ends of both
+layer families were tested at positions 0, 31 and 8191 on all seven banks.
+Actual emitted commands for the complete 64-layer pass were 928 -> 352.
+Across the 200 cases, retired emulated RV32 instructions were
+251,347,460 -> 211,932,324; nested stack depth was 1024 -> 1040 bytes.
+Swapping the two ELF inputs was refused before execution.
+
+This is still offline evidence: it does not test physical timing, matrix
+throughput, or whole-model execution. The running tag213 profiler uses the
+original sender. A separate guarded native A/B remains necessary.
