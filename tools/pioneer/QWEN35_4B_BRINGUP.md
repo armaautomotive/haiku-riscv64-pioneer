@@ -154,3 +154,45 @@ bands for the ROOT and its workers. Its host test checks complete row
 coverage, nonoverlap and each band's placement inside its packed fragment.
 The bands still need live worker and ROOT integration, including sampler
 and per-request state closure.
+
+## Standalone 4B ROOT
+
+The experimental ROOT compiles independently of the 27B image. Its token
+loop covers the 24 recurrent and eight dense attention layers, learned RMS
+normalization, FFN, tied Q6_K embedding and greedy readout. It invokes the
+tag225 Tensix matrix loop for learned projections, visiting one bank-local
+band at a time on the ROOT. Scalar operations and state updates run on the
+same device. Recurrent state is double-buffered by position, and the dense
+attention cache exposes only the current request's causal prefix. Each
+request starts at position zero with the same immutable weight manifest.
+
+The request receipt records prompt cycles through the final prompt layer.
+Decode cycles begin with the first vocabulary readout and include subsequent
+token evaluation. Model authentication and upload are host-side timings
+outside these intervals.
+
+```sh
+sh tools/pioneer/build_qwen35_work_image.sh HAIKU_BUILD NEW_OUTPUT
+c++ -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -fno-omit-frame-pointer tools/pioneer/tests/pioneer_qwen35_token_core_test.cpp \
+    -o /tmp/pioneer-qwen35-token-core-test
+/tmp/pioneer-qwen35-token-core-test
+```
+
+Two local builds produced the same RV32 images and had no unresolved symbols.
+The test exercises recurrent and dense operators against independent scalar
+references, traverses the exact matrix schedule, and checks fresh state and
+commit behavior across two synthetic requests. The authenticated GGUF test
+checks the serialized manifest against the host placement of every projection.
+The ROOT still needs a Haiku owner with checked upload, boot, request, and
+restore operations before live model generation can be tested.
+
+The separate CPU reference used Haiku llama.cpp `c060ca974c77` with
+`--device none -ngl 0 --temp 0 --seed 1 --no-conversation --no-warmup`.
+It independently rehashed the pinned source and exited 0. The raw prompt
+`The capital of France is` encoded to `[760, 6511, 314, 9338, 369]`.
+Its eight-token continuation began with ` Paris.\nA. True\nB`, where
+`\n` denotes a newline. The Haiku logs are in
+`/boot/home/pioneer-qwen35-4b-225/q35-reference.cafSzCza`. SHA-256 of the
+complete stdout (including echoed prompt and final newlines) is
+`a6657e5aa60fcce061c20560c8dd1a0815c24fbae035324edc50de892bf564a8`.

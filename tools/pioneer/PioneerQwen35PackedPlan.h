@@ -63,7 +63,7 @@ public:
   }
   return false;
  }
- bool Build(const PioneerQwen35Gguf& source,unsigned context,bool doubleDelta=false) {
+ bool Build(const PioneerQwen35Gguf& source,unsigned context,bool doubleState=false) {
   ready=false; bound=nullptr; epoch=0; tiledReader.Reset(); parts.clear();
   for (auto& bytes:used) bytes=0;
   if (!source.Stable() || !context || context>32768) return false;
@@ -89,9 +89,10 @@ public:
    if (layer%4==3) {
     if (!Stripe(PIONEER_Q35_KV_STATE,layer,0,426,8,context*256*2,1)) return false;
    } else {
-    for (unsigned slot=0;slot<(doubleDelta?2U:1U);slot++)
-     if (!Stripe(PIONEER_Q35_DELTA_STATE,layer,slot,426,32,128*128*4,1)) return false;
-    if (!Stripe(PIONEER_Q35_CONV_STATE,layer,0,426,8192,3*4,64)) return false;
+    for (unsigned slot=0;slot<(doubleState?2U:1U);slot++) {
+     if (!Stripe(PIONEER_Q35_DELTA_STATE,layer,slot,426,32,128*128*4,1)
+      || !Stripe(PIONEER_Q35_CONV_STATE,layer,slot,426,8192,3*4,64)) return false;
+    }
    }
   }
   for (unsigned bank=0;bank<7;bank++) {

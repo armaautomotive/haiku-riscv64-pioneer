@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Actual packed reader and role checks, independently authenticated file.
 #include "../PioneerQwen35FleetPlan.h"
+#include "../PioneerQwen35DeviceLayoutBuild.h"
 #include "../PioneerModelWeightCache.h"
 #include "../TenstorrentGgufQuant.h"
 #include <array>
@@ -96,13 +97,19 @@ int main(int argc,char** argv) {
  assert(!plan.Build(model,0) && !plan.Ready() && plan.Parts().empty());
  assert(!plan.Build(model,32769) && !plan.Ready());
  assert(plan.Build(model,128,true) && plan.Ready());
- uint64_t bankEnds[7]={}; unsigned weightRows[426]={},stateRows[32][2]={},convRows[32]={},kvRows[32]={},workspaces=0;
+ namespace D=PioneerQwen35;
+ auto device=std::make_unique<D::DeviceLayout>();
+ assert(!D::BuildDeviceLayout(model,plan,127,*device));
+ assert(D::BuildDeviceLayout(model,plan,128,*device));
+ assert(device->magic==D::LayoutMagic && device->version==D::LayoutVersion && device->context==128);
+ uint64_t bankEnds[7]={}; unsigned weightRows[426]={},stateRows[32][2]={},convRows[32][2]={},kvRows[32]={},workspaces=0;
  for (unsigned partIndex=0;partIndex<plan.Parts().size();partIndex++) {
   const auto& part=plan.Parts()[partIndex];
   assert(part.bank<7 && part.proposedAddress==PioneerQwen35PackedPlan::Base+bankEnds[part.bank]
    && part.bytes && part.allocated%4096==0 && part.bytes<=part.allocated
    && part.allocated-part.bytes<4096);
   bankEnds[part.bank]+=part.allocated;
+  D::Range range{};
   if (part.kind==PIONEER_Q35_WEIGHT) {
    assert(part.tensor<426 && part.firstRow==weightRows[part.tensor]);
    weightRows[part.tensor]+=part.rows;
@@ -122,12 +129,19 @@ int main(int argc,char** argv) {
   } else if (part.kind==PIONEER_Q35_DELTA_STATE) {
    assert(part.layer<32 && part.layer%4!=3 && part.role<2 && part.rowBytes==128*128*4);
    assert(part.firstRow==stateRows[part.layer][part.role]); stateRows[part.layer][part.role]+=part.rows;
+   assert(device->ResolveDelta(part.layer,part.role,part.firstRow,range)
+    && range.bank==part.bank && range.address==part.proposedAddress && range.bytes==part.rowBytes);
   } else if (part.kind==PIONEER_Q35_CONV_STATE) {
-   assert(part.layer<32 && part.layer%4!=3 && part.rowBytes==12 && part.firstRow==convRows[part.layer]);
-   convRows[part.layer]+=part.rows;
+   assert(part.layer<32 && part.layer%4!=3 && part.role<2 && part.rowBytes==12
+    && part.firstRow==convRows[part.layer][part.role]);
+   convRows[part.layer][part.role]+=part.rows;
+   assert(device->ResolveConv(part.layer,part.role,part.firstRow,range)
+    && range.bank==part.bank && range.address==part.proposedAddress && range.bytes==16*part.rowBytes);
   } else if (part.kind==PIONEER_Q35_KV_STATE) {
    assert(part.layer<32 && part.layer%4==3 && part.rowBytes==128*256*2 && part.firstRow==kvRows[part.layer]);
    kvRows[part.layer]+=part.rows;
+   assert(device->ResolveKv(part.layer,part.firstRow%4,127,part.firstRow>=4,range)
+    && range.bank==part.bank && range.address==part.proposedAddress+127*512 && range.bytes==512);
   } else { assert(part.kind==PIONEER_Q35_WORKSPACE && part.bytes==64*1024*1024); workspaces++; }
  }
  for (unsigned i=0;i<426;i++) assert(weightRows[i]==model.Tensors()[i].outputs);
@@ -148,6 +162,9 @@ int main(int argc,char** argv) {
    assert(row+job.groups*16<=part.rows && !(row&15));
    assert(job.address==part.proposedAddress+row*part.rowBytes && !(job.address&63));
    assert(job.bytes==job.groups*16*part.rowBytes);
+   D::Range range{};
+   assert(device->Weight(part.layer,part.role)->ResolveBand(job.firstRow,job.groups,range));
+   assert(range.bank==job.bank && range.address==job.address && range.bytes==job.bytes);
   }
   std::sort(jobs.begin(),jobs.end(),[](const auto& a,const auto& b){return a.firstRow<b.firstRow;});
   unsigned end=0;
@@ -169,6 +186,9 @@ int main(int argc,char** argv) {
    PioneerQ35EmbeddingProposal location{};
    assert(plan.ResolveEmbedding(token,location) && location.bank==part.bank);
    assert(&plan.Parts().at(location.part)==&part && location.lane==token%16);
+   D::Range range{}; unsigned lane=~0U;
+   assert(device->ResolveEmbedding(token,range,lane) && lane==location.lane
+    && range.bank==location.bank && range.address==location.address && range.bytes==E::GroupBytes);
    std::array<uint8_t,E::GroupBytes> data{};
    const unsigned relative=location.address-part.proposedAddress;
    for (unsigned copied=0;copied<data.size();) {
@@ -191,9 +211,14 @@ int main(int argc,char** argv) {
  }
  PioneerQ35EmbeddingProposal bad{};
  assert(embeddings==21 && !plan.ResolveEmbedding(E::Vocabulary,bad));
+ D::Range refused{};
+ assert(!device->ResolveKv(3,0,128,false,refused) && !device->ResolveKv(2,0,0,false,refused));
+ assert(!device->ResolveDelta(3,0,0,refused) && !device->ResolveConv(0,0,1,refused));
  for (unsigned layer=0;layer<32;layer++) {
-  if (layer%4==3) assert(kvRows[layer]==8 && !convRows[layer] && !stateRows[layer][0] && !stateRows[layer][1]);
-  else assert(!kvRows[layer] && convRows[layer]==8192 && stateRows[layer][0]==32 && stateRows[layer][1]==32);
+  if (layer%4==3) assert(kvRows[layer]==8 && !convRows[layer][0] && !convRows[layer][1]
+   && !stateRows[layer][0] && !stateRows[layer][1]);
+  else assert(!kvRows[layer] && convRows[layer][0]==8192 && convRows[layer][1]==8192
+   && stateRows[layer][0]==32 && stateRows[layer][1]==32);
  }
  assert(workspaces==7);
  for (unsigned bank=0;bank<7;bank++) assert(bankEnds[bank]==plan.Used(bank) && bankEnds[bank]<=plan.Capacity);
