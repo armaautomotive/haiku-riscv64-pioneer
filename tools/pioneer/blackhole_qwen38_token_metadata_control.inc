@@ -2,14 +2,39 @@
 // Inside the actual experimental parent. Always start with immutable pos0
 // templates, transform ON CARD, and stage before the real returning call.
 #include "PioneerQ38RedistributedTokenLayout.h"
+#ifdef PIONEER_Q38_TOKEN_RECIPE_BATCH_IMAGE
+#if PIONEER_Q38_TOKEN_RECIPE_BATCH_IMAGE != 1 || !defined(PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE) \
+ || !defined(PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE) || !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE) \
+ || defined(PIONEER_Q38_QGW8_LAYER_TRACE_IMAGE) || defined(PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE)
+#error Exact v4 layer recipe batching inspection role required
+#endif
+#include "PioneerQ38TokenRecipeBatch.h"
+struct BatchRecipeEmitter {
+ const Private* p;
+ bool Read(unsigned address,unsigned bytes){Transfer(address,bytes,false);return true;}
+ bool Transform(unsigned at,unsigned slot){
+  return M::Recipe(reinterpret_cast<uint32_t*>(R::Scratch+at),p->state[Layer],slot,p->state[Position],p->state[Token]);
+ }
+ bool Publish(unsigned address,unsigned bytes,bool gddr){
+  if(gddr)Transfer(address,bytes,true);
+  else for(unsigned w=0;w<bytes/4;w++)Words(address)[w]=Words(R::Scratch)[w];
+  return true;
+ }
+};
+#endif
 static __attribute__((noinline,section(".conv.token"))) void TokenRecipes(unsigned from,unsigned to,unsigned first,unsigned count,bool gddr){
  const auto* p=Owner();
+#ifdef PIONEER_Q38_TOKEN_RECIPE_BATCH_IMAGE
+ BatchRecipeEmitter e={p};
+ if(!PioneerQ38TokenRecipeBatch::Run(e,from,to,first,count,gddr))scalar_fault_park();
+#else
  for(unsigned slot=first;slot<first+count;slot++){
   Transfer(from+(slot-first)*5120,5120,false);
   if(!M::Recipe(reinterpret_cast<uint32_t*>(R::Scratch),p->state[Layer],slot,p->state[Position],p->state[Token]))scalar_fault_park();
   if(gddr)Transfer(to+(slot-first)*5120,5120,true);
   else for(unsigned i=0;i<1280;i++)Words(to+(slot-first)*5120)[i]=Words(R::Scratch)[i];
  }
+#endif
 }
 static __attribute__((noinline,section(".conv.token"))) void Metadata(unsigned layer,unsigned package){
  const auto* p=Owner();const auto* o=p->outer;const unsigned position=p->state[Position];

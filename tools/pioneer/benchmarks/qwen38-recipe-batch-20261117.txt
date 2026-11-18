@@ -1,0 +1,49 @@
+Qwen 27B: fewer on-card recipe transport commands
+================================================
+
+The prior measured v3 profile includes 10,989,310,829 controller cycles
+(4.54% of the decode body) in all metadata work. In that path a layer
+metadata recipe is 5,120 bytes. The controller fetches every recipe
+separately, runs the original token/layer/slot checks and transformations,
+then copies it locally or publishes it to its original GDDR slot.
+
+The isolated v4 inspection arm groups adjacent recipes without changing
+bytes, destinations or per-recipe operations. It uses at most 15,360
+bytes in the existing 16-KiB scratch transfer window. It verifies every
+recipe in the group before publishing the group, and leaves the original
+Transfer/Scope authority, per-packet readback and counter checks intact.
+It neither prefetches across layers nor exposes a new route or map.
+
+  recurrent (48 layers): eight GDDR recipes, 16 -> 6 requests
+  dense (16 layers): four local plus three GDDR recipes, 10 -> 4 requests
+  total per decode position: 928 -> 352, 576 fewer requests
+
+These are recipe requests only, not all NoC traffic or PCIe transfers.
+There is no timing evidence yet. Even magically eliminating the entire
+historic metadata bucket would save only its measured 4.54% of body
+cycles in that workload; the candidate removes only a subset of it.
+
+  python3 tools/pioneer/build_qwen38_recipe_batch_root.py SDK PINNED_V4_ROOT NEW_OUTPUT
+  c++ -std=c++17 -O2 -g -Wall -Wextra -Werror -ffp-contract=off \
+    -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_token_recipe_batch_test.cpp \
+    -o /tmp/q38-token-recipe-batch-test
+  UBSAN_OPTIONS=halt_on_error=1 /tmp/q38-token-recipe-batch-test
+
+The builder splices only TokenRecipes into the frozen v4 source, not
+the newer workspace's GDN redistribution code. With the role disabled,
+it reproduces the original token object and complete v4 ELF byte-for-byte.
+The new link keeps its boot, STOP, and timing image unchanged and uses
+exactly the original other ROOT objects and workers. Three alternate role
+combinations refuse at compile time. Two candidate builds of the pinned
+source reproduced identical ELF bytes. The candidate sender's stack is
+64 bytes; text 130,908/131,072 and conv 32,512/32,768.
+ELF SHA256 ee6e0765744b935bc299e597e1b10859aa944e9114b9bbed915e135cb299be29.
+
+The mock transport test compares every transformed word with the original
+per-recipe calculation, using canonical packages for all 64 layers,
+seven banks, and three token positions. It checks immutable input bytes,
+the exact destinations, the total packet count, and that rejected or
+failed reads/recipes do not publish their group. It is not an execution
+test of the linked ROOT. Actual RV32 transport/role qualification and
+a separate guarded native A/B are required before measuring a gain.
+The tag213 profiler already running uses the original ungrouped sender.
