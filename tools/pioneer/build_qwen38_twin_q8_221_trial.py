@@ -14,6 +14,9 @@ PACKAGES = {
     "222": ("ee6a90e9c87086efc61d006a3d2621288ba5d70379358059cf0db18eb245bc14",
             "aeb25b18c36ef40a60ca0b82076b00c23fbcd51d7541f3e57296e884eba71c1d",
             "20faba0731cddfe7db597a60a6f0b9583bf4c7126871883c1cedda40cf9962bd"),
+    "223": ("fef066d1f178e5184a376c63b56fcadfd963a5be3f5afe5de51b1187bc130d00",
+            "1d939f19c2ec5042a2ada346b8de6f52a815cba4f947ed9f817bce733cc1964a",
+            "d7bc3d0ac937496d37a7fbc8b6d3f0566333cb8a894585499226dff3104761e2"),
 }
 
 
@@ -51,10 +54,10 @@ def bind(stable_generation, tag="221"):
 
 
 def main():
-    newer = len(sys.argv) == 4 and sys.argv[3] == "--tag222"
-    if not __debug__ or not (len(sys.argv) == 3 or newer):
-        raise SystemExit("use OBSERVED_STABLE_GENERATION NEW_LOCAL_SCRIPT [--tag222]")
-    data = bind(sys.argv[1], "222" if newer else "221").encode("ascii")
+    tag = {"--tag222": "222", "--tag223": "223"}.get(sys.argv[3]) if len(sys.argv) == 4 else "221"
+    if not __debug__ or len(sys.argv) not in (3, 4) or tag is None:
+        raise SystemExit("use OBSERVED_STABLE_GENERATION NEW_LOCAL_SCRIPT [--tag222|--tag223]")
+    data = bind(sys.argv[1], tag).encode("ascii")
     with Path(sys.argv[2]).open("xb") as out:
         out.write(data)
     print(sha256(data).hexdigest(), sys.argv[2])

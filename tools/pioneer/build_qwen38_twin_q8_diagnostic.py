@@ -79,7 +79,7 @@ def main():
         ["-UPIONEER_Q38_TWIN_Q8_NATIVE_APERTURE", "-DPIONEER_Q38_TWIN_Q8_NATIVE_APERTURE=0"],
         ["-UTT_PIONEER_DRIVER_RELOAD"],
         ["-UTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH"],
-        ["-UPIONEER_DRIVER_BUILD_TAG", "-DPIONEER_DRIVER_BUILD_TAG=0x2026111700010221ULL"],
+        ["-UPIONEER_DRIVER_BUILD_TAG", "-DPIONEER_DRIVER_BUILD_TAG=0x2026111700010222ULL"],
         ["-ffast-math"],
         *(["-D" + name + "=1"] for name in ("TT_PIONEER_Q38_WORK_MODE", "PIONEER_Q38_WORK_INFERENCE",
           "PIONEER_Q38_CPU_VALIDATION", "PIONEER_Q38_FULL_OFFLOAD_NATIVE", "PIONEER_NATIVE_BFP_DIAGNOSTIC")),
@@ -87,7 +87,7 @@ def main():
     for alternate in refusals:
         result = subprocess.run([*flags, *extra, *alternate, "-E", source], cwd=out,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-        assert result.returncode and ("Exact tag222 comparison driver role required" in result.stderr
+        assert result.returncode and ("Exact tag223 comparison driver role required" in result.stderr
                                       or "Twin Q8 diagnostic cannot share" in result.stderr), alternate
 
     obj = out / "native.o"
@@ -96,7 +96,7 @@ def main():
     run([*flags, "-c", source_dir / "PioneerPciProfile.cpp", "-o", profile])
     release = sdk / "objects/haiku/riscv64/release"
     glue = release / "system/glue"
-    binary = out / "tenstorrent_pci_probe-twin-q8-222"
+    binary = out / "tenstorrent_pci_probe-twin-q8-223"
     run([cxx, "-shared", "-nostdlib", "-Wl,--no-undefined,-soname=tenstorrent_pci_probe",
          toolfile("crtbeginS.o"), glue / "haiku_version_glue.o", obj, profile,
          release / "system/kernel/kernel.so", toolfile("libgcc.a"), toolfile("crtendS.o"),
@@ -131,13 +131,13 @@ def main():
          sha, "-B" + str(glue) + "/", "-L" + str(release / "system/libroot"), *gcc_libs, "-o", client])
     imports = capture([tool + "nm", "-u", client])
     assert "llama_" not in imports and "ggml_" not in imports
-    output = {"build_only": True, "tag": "2026111700010222", "arrays": arrays,
+    output = {"build_only": True, "tag": "2026111700010223", "arrays": arrays,
               "static_new_frame_max": frame_max, "role_refusals": len(refusals),
               **{p.name: sha256(p.read_bytes()).hexdigest() for p in (binary, client)}}
     (out / "manifest.json").write_text(json.dumps(output, sort_keys=True, indent=2) + "\n")
     for p in (binary, client, out / "manifest.json"):
         print(sha256(p.read_bytes()).hexdigest(), p)
-    print(f"PASS tag222 link: 22 verified arrays, {len(refusals)} role refusals; "
+    print(f"PASS tag223 link: 22 verified arrays, {len(refusals)} role refusals; "
           f"new static frame max {frame_max} B; BUILD ONLY")
 
 

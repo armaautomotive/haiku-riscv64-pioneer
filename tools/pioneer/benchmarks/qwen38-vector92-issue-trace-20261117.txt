@@ -506,3 +506,33 @@ Generate a fresh runner only after independently identifying an idle
 stable generation. Tag222 has not run on hardware:
   python3 -B tools/pioneer/build_qwen38_twin_q8_221_trial.py \
     OBSERVED_STABLE_GENERATION NEW_LOCAL_RUNNER --tag222
+
+Tag222 physical result and tag223 receiver frontier
+--------------------------------------------------
+Tag222 candidate gen3 (team 738) uploaded and verified 68 pages,
+reached the actual worker's WAIT PC (0x2004c), and passed worker
+completion and master counters for the raw 48-row projection.
+The receiving NIU now read legitimate data. Offset 0x2f0 read
+0x13c4 (5060) instead of 0x08e4 (2276), with inferred baseline
+0x08e2 (2274). The observed delta 2786 exactly matches the 2560
+activation +160 scale +64 mailbox host stores followed by worker
+payload and commit writes. The full-model ROOT performs local
+stores, whereas this harness uses PCIe; the early host sample
+included setup. The script failed closed, no test timing or
+output and no native arm. Independent postflight verified no live
+teams and a retained lock. All nine copied files matched; stderr:
+  f6d63ee73c257fb2970200eb8c1047a317d198d431871d4b65aee52fa869037a
+
+Tag223 moves the sample after checked PCIe setup and worker job
+staging and requires two identical receiver frontiers before the
+first doorbell. It still requires exact 2/5/2/2 increments and
+all existing packet, output, STOP and journal checks. The real
+linked worker test accounts for all 2784 host writes and a moving
+frontier, completing the four exact arms plus 11 fail-closed cases.
+Fifteen fake-manager cases also passed for the tag223 runner.
+Build-only tag223 manifest and inputs:
+  Driver:   fef066d1f178e5184a376c63b56fcadfd963a5be3f5afe5de51b1187bc130d00
+  Client:   1d939f19c2ec5042a2ada346b8de6f52a815cba4f947ed9f817bce733cc1964a
+  Manifest: d7bc3d0ac937496d37a7fbc8b6d3f0566333cb8a894585499226dff3104761e2
+Neither spent tag222 nor the full-model native-Q8 path may be
+replayed based on this offline correction.

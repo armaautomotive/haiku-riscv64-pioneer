@@ -8,7 +8,7 @@
 namespace PioneerQ38TwinQ8Diagnostic {
 namespace S=PioneerQ38TwinQ8ProjectionSequence;
 enum : unsigned { Version=1, RunOperation=B_DEVICE_OP_CODES_END+0x8281 };
-constexpr uint64_t Tag=UINT64_C(0x2026111700010222);
+constexpr uint64_t Tag=UINT64_C(0x2026111700010223);
 enum class Step : uint32_t { New, Begin, Memory, MapRoot, Upload, FleetHeld, PeerStore, Aperture,
  Journal, Image, Start, Sequence, RootClose, ResidentClose, Complete, SelfRoute };
 struct Request {

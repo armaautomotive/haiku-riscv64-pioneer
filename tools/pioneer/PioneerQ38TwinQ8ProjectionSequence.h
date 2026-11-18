@@ -19,7 +19,7 @@ enum class Arm : unsigned { Raw=W::Raw, Native=W::Native };
 enum class Tile { Root, Worker };
 enum class Stage : unsigned { Empty, Admission, Baseline, MailboxClear, Input,
  MatrixStage, MatrixBell, MatrixWait, MatrixSeal, PushReceipt, MatrixProof,
- Output, StopStage, StopBell, StopWait, StopSeal, Close, Complete };
+ Output, StopStage, StopBell, StopWait, StopSeal, Close, Complete, ReceiverFrontier };
 enum class Error : unsigned { None, State, Binding, Read, Write, DeviceFault,
  Word, Counter, PollLimit, Clock, CleanClose };
 enum : unsigned {
@@ -100,6 +100,7 @@ static inline unsigned Slave(unsigned i){
 }
 static inline unsigned ReadDelta(unsigned i){return i==1?ReadFlits:i==0 || i==2 || i==3 || i==6?ReadCount:0U;}
 static inline unsigned WriteDelta(unsigned i){return i==5?5U:i==2 || i==4 || i==6 || i==7?2U:0U;}
+static inline unsigned SlaveDelta(unsigned i){return i==1?5U:2U;}
 
 // Adapter methods: Begin(arm,binding) proves exact image/fixture/owner and
 // starts no work; Read/Write address are L1 only; Count accepts only named NoC
@@ -172,7 +173,6 @@ template<class IO> bool Run(IO& io,Arm arm,unsigned variant,const Binding& bind,
  if(!seal(0,0))return false;
  for(unsigned i=0;i<8;i++)if(!count(Tile::Worker,Counter(i),begin[i]))return false;
  if(begin[2]!=begin[6])return fail(Error::Counter,Counter(6),begin[6],begin[2]);
- for(unsigned i=0;i<4;i++)if(!count(Tile::Root,Slave(i),slave[i]))return false;
  r.stage=Stage::MailboxClear;
  for(unsigned i=0;i<64;i++)if(!wr(Tile::Root,Mail+i*4,0))return false;
  for(unsigned i=0;i<64;i++)if(!eq(Tile::Root,Mail+i*4,0))return false;
@@ -181,6 +181,14 @@ template<class IO> bool Run(IO& io,Arm arm,unsigned variant,const Binding& bind,
  if(!seal(0,0))return false;
  r.stage=Stage::MatrixStage;
  JobWords(arm,bind,false,job);if(!writeJob(job))return false;
+ // The production ROOT clears its own mailbox with local stores. Here
+ // Haiku writes it and the input/scales through PCIe; those writes can
+ // advance the receiving NIU's counters (tag222 measured +2784).
+ // Bracket precisely the worker traffic, after all host setup/readback.
+ // If the host setup has not drained, do not submit any work.
+ r.stage=Stage::ReceiverFrontier;
+ for(unsigned i=0;i<4;i++)if(!count(Tile::Root,Slave(i),slave[i]))return false;
+ for(unsigned i=0;i<4;i++)if(!verifyCount(Tile::Root,Slave(i),slave[i]))return false;
  r.stage=Stage::MatrixBell;
  const uint64_t started=io.Now();
  if(!wr(Tile::Worker,Bell,1))return false;
@@ -191,8 +199,7 @@ template<class IO> bool Run(IO& io,Arm arm,unsigned variant,const Binding& bind,
  r.stage=Stage::MatrixSeal;
  if(!seal(1,0))return false;
  for(unsigned i=0;i<8;i++)if(!verifyCount(Tile::Worker,Counter(i),begin[i]+ReadDelta(i)+WriteDelta(i)))return false;
- constexpr unsigned pushSlave[]={2,5,2,2};
- for(unsigned i=0;i<4;i++)if(!verifyCount(Tile::Root,Slave(i),slave[i]+pushSlave[i]))return false;
+ for(unsigned i=0;i<4;i++)if(!verifyCount(Tile::Root,Slave(i),slave[i]+SlaveDelta(i)))return false;
  r.stage=Stage::PushReceipt;
  const unsigned header[]={ReceiptMagic,64,Worker,1,0,0,Peer,Root};
  for(unsigned i=0;i<8;i++)if(!eq(Tile::Root,Mail+i*4,header[i]))return false;
@@ -230,7 +237,7 @@ template<class IO> bool Run(IO& io,Arm arm,unsigned variant,const Binding& bind,
  r.stage=Stage::StopSeal;
  if(!seal(2,2))return false;
  for(unsigned i=0;i<8;i++)if(!verifyCount(Tile::Worker,Counter(i),begin[i]+ReadDelta(i)+WriteDelta(i)))return false;
- for(unsigned i=0;i<4;i++)if(!verifyCount(Tile::Root,Slave(i),slave[i]+pushSlave[i]))return false;
+ for(unsigned i=0;i<4;i++)if(!verifyCount(Tile::Root,Slave(i),slave[i]+SlaveDelta(i)))return false;
  r.stage=Stage::Close;
  if(!io.FinishStopped())return fail(Error::CleanClose);
  r.stopped=r.closed=1;

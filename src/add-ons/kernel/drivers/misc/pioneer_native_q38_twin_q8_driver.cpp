@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Private one-shard comparison only. Do not attach to existing Work routes.
 #if !defined(_KERNEL_MODE) || !defined(PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE) \
- || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010222ULL \
+ || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010223ULL \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH)
-#error Exact tag222 comparison driver role required
+#error Exact tag223 comparison driver role required
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) \

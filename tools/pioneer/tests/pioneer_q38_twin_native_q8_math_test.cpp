@@ -262,9 +262,9 @@ namespace F=PioneerQ38TwinQ8ProjectionFixture;
 struct SequenceIO {
  MathUnit& p;
  bool retained=false,closed=false;
- unsigned calls=0,bells=0,outputs=0;
+ unsigned calls=0,bells=0,outputs=0,rootWrites=0,rootFrontierReads=0;
  uint64_t now=100;
- enum class Fault { None, Input, MatrixDevice, Counter, Push, Proof, Output, StopBell, Close, Clock, Timeout };
+ enum class Fault { None, Input, Frontier, MatrixDevice, Counter, Push, Proof, Output, StopBell, Close, Clock, Timeout };
  Fault inject=Fault::None;
  bool Begin(S::Arm a,const S::Binding& b){
   calls++;
@@ -274,7 +274,9 @@ struct SequenceIO {
  bool PrepareInput(unsigned variant){
   assert(!retained && !closed && !bells);F::Activation a={};calls++;
   if(inject==Fault::Input || !F::MakeActivation(variant,a))return false;
-  p.FixtureActivation(a);return true;
+  p.FixtureActivation(a);
+  rootWrites+=unsigned(a.words.size()+a.scales.size());
+  return true;
  }
  bool Read(S::Tile t,unsigned at,uint32_t& v){
   assert(!retained && !closed && !(at&3));calls++;
@@ -295,7 +297,7 @@ struct SequenceIO {
  bool Write(S::Tile t,unsigned at,uint32_t v){
   assert(!retained && !closed && !(at&3));calls++;
   if(t==S::Tile::Root){
-   assert(!bells && !v && at>=S::Mail && at<S::Mail+256);p.mailbox.at((at-S::Mail)/4)=v;
+   assert(!bells && !v && at>=S::Mail && at<S::Mail+256);p.mailbox.at((at-S::Mail)/4)=v;rootWrites++;
   }else if(at==S::Bell){
    assert(v==bells+1 && v<=2);bells++;
    if(v==2 && inject==Fault::StopBell)return false;
@@ -309,7 +311,14 @@ struct SequenceIO {
   assert(!retained && !closed);calls++;
   if(t==S::Tile::Root){
    for(unsigned i=0;i<4;i++)if(off==S::Slave(i)){
-    v=p.rootSlave.at(i)+(bells==1 && i==1 && inject==Fault::Counter?1:0);return true;
+    assert(rootWrites==2784); // the ROOT frontier must follow all checked host setup
+    if(!bells)rootFrontierReads++;
+    // The physical first counter includes these 2784 host words. The
+    // test need not assume anything about the other three host offsets.
+    v=p.rootSlave.at(i)+(i==0?0x8e2U+rootWrites:0U)
+     +(bells==1 && i==1 && inject==Fault::Counter?1:0)
+     +(!bells && rootFrontierReads==5 && inject==Fault::Frontier?1:0);
+    return true;
    }
   }else{
    for(unsigned i=0;i<8;i++)if(off==S::Counter(i)){v=p.Count(i);return true;}
@@ -463,7 +472,7 @@ int main(int argc,char** argv){
        arm,unsigned(r.stage),unsigned(r.error),r.at,r.seen,r.expected);
       assert(false);
      }
-     assert(io.closed && !io.retained && r.closed && r.stopped && !r.unsafe
+     assert(io.closed && !io.retained && io.rootFrontierReads==8 && r.closed && r.stopped && !r.unsafe
       && r.matrixMicros && r.stage==S::Stage::Complete);
     }
     assert(raw->pushes==2 && wire->pushes==2 && wire->requests==raw->requests
@@ -481,7 +490,7 @@ int main(int argc,char** argv){
      F::Inputs,F::Rows,variant,F::Rows,raw->requests,raw->matrixInstructions,resultHash.c_str());
    }
    using Failure=SequenceIO::Fault;
-   for(Failure fail:{Failure::Input,Failure::MatrixDevice,Failure::Counter,Failure::Push,Failure::Proof,
+   for(Failure fail:{Failure::Input,Failure::Frontier,Failure::MatrixDevice,Failure::Counter,Failure::Push,Failure::Proof,
     Failure::Output,Failure::StopBell,Failure::Close,Failure::Clock,Failure::Timeout}){
     auto p=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,F::Inputs,F::Groups,0,&rawTiles,&nativeTiles);
     S::Binding b;PrepareSequence(*p,b);SequenceIO io{*p};io.inject=fail;S::Result r;
@@ -491,6 +500,8 @@ int main(int argc,char** argv){
     unsigned calls=io.calls;
     assert(!S::Run(io,S::Arm::Native,0,b,r) && io.calls==calls);
     if(fail==Failure::Input)assert(r.stage==S::Stage::Input && !io.bells && !io.outputs);
+    if(fail==Failure::Frontier)assert(r.error==S::Error::Counter && r.stage==S::Stage::ReceiverFrontier
+     && r.at==0x2f0 && r.seen==0x13c3 && r.expected==0x13c2 && !io.bells && !p->requests);
     if(fail==Failure::MatrixDevice)assert(r.error==S::Error::DeviceFault && r.seen==Push::Fault
      && p->pc==p->faultPC && !p->pushes && io.bells==1 && !io.outputs);
     if(fail==Failure::Counter)assert(r.error==S::Error::Counter && r.stage==S::Stage::MatrixSeal && !io.outputs);
@@ -511,7 +522,7 @@ int main(int argc,char** argv){
     if(bad==2)a.address=0xc4000000-4096;
     assert(!S::Run(noIO,S::Arm::Native,bad==3?2:0,a,r) && r.error==S::Error::Binding && !noIO.calls && !noIO.retained);
    }
-   puts("PASS bounded Q8 sequence: 4 actual worker closures, 10 inert post-failure paths, 4 pre-I/O refusals; modeled adapter");
+   puts("PASS bounded Q8 sequence: 4 actual worker closures, 2784 modeled host writes bracketed, 11 inert faults, 4 pre-I/O refusals");
    assert(source.Stable());
    using Cache=PioneerModelWeightCache;
    const auto rawHash=Cache::Hex(Cache::Hash(fixture->raw.data(),F::Storage));

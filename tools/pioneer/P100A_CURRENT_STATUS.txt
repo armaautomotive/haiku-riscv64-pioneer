@@ -117,14 +117,18 @@ the trial is spent. After one OFF/ON and the pinned SD-free boot, all
 trial records still matched on disk and the independent restore check
 verified idle stable041 generation2, cleared lock, 64 CPUs and full RAM.
 
-Tag222 corrects the private read-only controller counter path, with
-all receipt checks retained. The reproducible package is staged at
-`/boot/home/pioneer-q38-twin-q8-222`; live read-only preflight passed
-with stable041 gen2, no driver change and no launch. Its run-once SHA256
-is 41c2072ac48f533f53e6119a6551caeb51e2b4be0b71cb2ee26ef27dfb4858c2.
-Use a neutral SSH shell name with the launch script on stdin; including
-the diagnostic name in the SSH command line can trigger the owner gate.
-No Assistant changes. The 27B end-to-end rate has not changed.
+Tag222 read the actual controller counter during a complete raw
+matrix job. The increase at 0x2f0 was 2786: the 2784 checked host
+setup word writes plus the two closed worker writes. The original
+baseline included host setup, so the runner refused the contaminated
+receipt at MatrixSeal (0x13c4 observed, 0x08e4 expected). No output
+was released and the native arm never started. All nine archived
+files match the independent hashes. Tag222 is spent and its owner
+was quarantined. Tag223 takes two consistent receiver snapshots
+after all host setup/readback, with exact worker traffic checks
+unchanged thereafter. The real linked programs reproduce the wire
+comparison and reject a moving baseline offline. Recovery is in
+progress; no change to the 27B end-to-end rate or the Assistant.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the

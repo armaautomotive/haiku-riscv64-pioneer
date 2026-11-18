@@ -182,6 +182,8 @@ def main():
             raise AssertionError(bad)
     assert sha256(bind("2").encode("ascii")).hexdigest() == (
         "d6745833830e195886f60b4b7f90d351f74679bab7497e13db8783ad6bfbb0e9")
+    assert sha256(bind("2", "222").encode("ascii")).hexdigest() == (
+        "41c2072ac48f533f53e6119a6551caeb51e2b4be0b71cb2ee26ef27dfb4858c2")
     try:
         bind("2", "220")
     except ValueError:
@@ -192,6 +194,7 @@ def main():
     exercise(bind("2"), 221, 2)
     exercise(bind("15"), 221, 15)
     exercise(bind("2", "222"), 222, 2)
+    exercise(bind("2", "223"), 223, 2)
 
 
 if __name__ == "__main__":
