@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check the generated pair runner's exchange/cleanup control flow, without PCI I/O."""
+from hashlib import sha256
 import os
 from pathlib import Path
 import runpy
@@ -15,7 +16,7 @@ bind = runpy.run_path(str(BUILDER))['bind']
 sys.path.insert(0,str(HERE.parent))
 from build_qwen38_vector92_ffn_trial import bind as bind_ffn
 from build_qwen38_vector_resident_trial import bind as bind_resident
-from build_qwen38_layer_split_profile_trial import bind as bind_layer_split
+from build_qwen38_layer_split_profile_trial import bind as bind_layer_split, recipe_postflight
 FAKES = runpy.run_path(str(SEED_TEST))['FAKES']
 FAKES = FAKES.replace('installed=$stage/installed', 'pairLock=$stage/shared-lock\ninstalled=$stage/installed')
 FAKES = FAKES.replace('metadata "$stableTag" 1', 'metadata "$stableTag" "$PIONEER_FAKE_GEN"')
@@ -48,8 +49,8 @@ def resident(variant, start):
 
 
 def layer_split(variant,start):
-    assert variant in ('candidate','live')
-    return bind_layer_split(start, variant=='live')
+    assert variant in ('candidate','live','recipe')
+    return bind_layer_split(start, variant=='live', recipe=variant=='recipe')
 
 def main():
     for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector'),(layer_split,'candidate')):
@@ -60,6 +61,22 @@ def main():
                 pass
             else:
                 raise AssertionError(bad)
+    for bad in ('0', '01', ' 3', '2\n', '-1', '3;exit'):
+        try:
+            recipe_postflight('4',bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(bad)
+    source=recipe_postflight('4','735')
+    assert 'stage=/boot/home/pioneer-q38-layer-split-recipe-216\n' in source
+    assert "printf '735\\n' | cmp -s launch.pid -" in source and '$1==735 ||' in source
+    assert 'STABLE041_GEN6_RESTORED' in source and 'generation6 quiesced0 cold0 active_owner0' in source
+    runner=layer_split('recipe','4')
+    assert f'exact {sha256(runner.encode("ascii")).hexdigest()} run-once.sh' in source
+    assert source.index('listing=$(ps -o Id -o Team)')<source.index('status=$("$admin" --status)')
+    assert '--quiesce' not in source and '--wait' not in source
+    subprocess.run(['bash','-n'],input=source,text=True,check=True)
     cases = ('preflight', 'stale', 'lock', 'link-lock', 'success', 'fail', 'bad-marker',
              'no-rate', 'stderr', 'owned', 'exchange-unknown')
     with TemporaryDirectory(prefix='pioneer-head-csr-rate-') as tmp:
@@ -67,7 +84,7 @@ def main():
         # hexadecimal wait boundary. The check also fixes per-variant tags.
         trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
                 (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'),
-                (layer_split,'candidate',10,'213'),(layer_split,'live',12,'214'))
+                (layer_split,'candidate',10,'213'),(layer_split,'live',12,'214'),(layer_split,'recipe',14,'216'))
         for index, (builder, name, start, suffix) in enumerate(trials):
             source = builder(name, str(start))
             tag = '2026111700010'+suffix
@@ -133,7 +150,7 @@ def main():
                 spent = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert spent.returncode == 1
                 assert (mutations.read_bytes() if mutations.exists() else b'') == previous
-    print('PASS: both raw pairs, resident and layer split A/B, 92 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
+    print('PASS: both raw pairs, resident and three layer split variants, 105 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
 
 
 if __name__ == '__main__':

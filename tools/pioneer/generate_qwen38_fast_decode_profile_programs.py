@@ -15,14 +15,18 @@ PINS = {
     'fast_decode.bin': (1496, 'a37bab87fc21f140236413c673352966bf9452212bf89e7956868c1cea15f9d1'),
     'program.elf': (193672, '882d2e1cf08ad5ccbd69c52a7ecb7daf5e7101527f669431faf962f158b5b425'),
 }
-split = len(sys.argv) == 4 and sys.argv[3] == '--layer-split'
+recipe = len(sys.argv) == 4 and sys.argv[3] == '--recipe-batch'
+split = recipe or (len(sys.argv) == 4 and sys.argv[3] == '--layer-split')
 assert __debug__ and (len(sys.argv) == 3 or split)
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 directory, output = map(Path, sys.argv[1:3])
 assert directory.is_absolute() and directory.is_dir()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 here = Path(__file__).resolve().parent
-if split:
+if recipe:
+    PINS = {name: (size, digest) for name, size, digest in
+            pins(here/'build_qwen38_recipe_batch_root.py', 'RECIPE_PINS')}
+elif split:
     PINS = {name: (size, digest) for name, size, digest in
             pins(here/'build_qwen38_fast_decode_profile_root.py', 'SPLIT_PINS')}
 source = (here / 'PioneerQ38FullOffloadVectorQ4Programs.h').read_bytes()
@@ -58,6 +62,8 @@ marker = 'enum {Family=0x33505451,Version=1,CancelBoundary=1,EogCount=5};'
 assert text.count(marker) == 1
 version = 4 if split else 3
 binding = 'LayerSplitProfile=1,' if split else ''
+if recipe:
+    binding += 'RecipeBatchProfile=1,'
 text = text.replace(marker, marker + f'\nenum {{FastDecodeProfile=1,TokenPhaseProfile=1,{binding}PhaseProfileVersion={version},PhaseProfileAddress=0x75710,PhaseProfileWords=60,RootSections=5}};')
 assert text.count('worker?10:4;') == 1
 text = text.replace('worker?10:4;', 'worker?10:5;')

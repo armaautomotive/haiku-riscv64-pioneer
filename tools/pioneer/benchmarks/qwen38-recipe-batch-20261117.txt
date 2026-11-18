@@ -73,3 +73,40 @@ Swapping the two ELF inputs was refused before execution.
 This is still offline evidence: it does not test physical timing, matrix
 throughput, or whole-model execution. The running tag213 profiler uses the
 original sender. A separate guarded native A/B remains necessary.
+
+Native benchmark package (build only)
+-------------------------------------
+  python3 tools/pioneer/build_qwen38_layer_split_profile_native.py \
+    SDK PINNED_LIBRARIES PINNED_RECIPE_BATCH_ROOT NEW_OUTPUT --recipe-batch
+  python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py \
+    OBSERVED_STABLE_GENERATION NEW_RUNNER --recipe-batch
+  python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py \
+    ORIGINAL_STABLE_GENERATION NEW_POSTFLIGHT --recipe-postflight OBSERVED_PARENT
+
+Tag216 is isolated from Work, CPU validation, the executable upload-audit
+experiment and the tag213 control. It retains the exact v4 14-bucket timer,
+all ten vector92 peer images, the 53,915,328-byte journal, and the original
+full executable audit during model upload. The only differing linked card
+arrays compared to tag213 are RootText and RootAux. The worker still links
+only the eleven vocabulary/container routines, not CPU inference. The
+tag213 control rebuilt to its original manifest and artifact hashes, and
+the baseline v4 program header reproduced byte-for-byte. The tag216 build
+rejected fifteen extra incompatible Haiku role combinations, including a
+missing recipe selector, its zero value and use of the on-card role on Haiku.
+
+Two independent tag216 builds matched manifest SHA-256:
+  0293066d8d872861bb3150a736e45e89d51f1ffece9bccb30cfbef40e663952f
+  driver 791a898258f757677e9928f591e9095f24f49c61d19a840e693d1a68ff1af913
+  worker 59711d94ad957ffd792330597d38f45385addf9e6673c86afdb35edfab3ca9e7
+  client ad5d23bc5baf35773f9745290e60659376d56fc9671f1d1a14c15a0742506f94
+
+The one-shot recipe stage is /boot/home/pioneer-q38-layer-split-recipe-216.
+The runner uses the original shared lock and exact hashes, and requires the
+v4 timing suffix and a clean restore. The independent postflight verifies
+the manifest, runner, parent exit, exact stable generation, and idle state
+before hashing the output files for capture. The local
+runner suite passed 105 mock scenarios across nine binds, including stale
+or competing stages, invalid v4 timing, restore and quarantine lock retention.
+Tag216 has not been installed or run on the board. Compare against tag213
+only after both captures pass independent closure; report metadata cycles
+and end-to-end post-prompt tokens/sec separately.

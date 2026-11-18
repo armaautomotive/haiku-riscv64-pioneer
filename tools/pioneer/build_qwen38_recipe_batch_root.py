@@ -9,6 +9,14 @@ import sys
 
 V4='7f2f2d4895c72c3278ce83676be5b9a122e0a074d319b76b86586611630627af'
 ROLE='PIONEER_Q38_TOKEN_RECIPE_BATCH_IMAGE'
+RECIPE_PINS=(
+    ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+    ('text.bin',130908,'89319b056a4c7a6efbba256dbd7ded5aaef89e65c1ba96e1d0c09caa927e1fd9'),
+    ('terminal.bin',8,'468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2'),
+    ('conv.bin',32512,'d3ab9d353cf0e8849f93a4be20b2c1faccae673a8334b401d319e6e5ad674372'),
+    ('fast_decode.bin',1496,'49cff44b420dda8d5b22eb9911b304d9ff8407cc7d4a9cb13cea9c7b883e7bf5'),
+    ('program.elf',193536,'ee6e0765744b935bc299e597e1b10859aa944e9114b9bbed915e135cb299be29'),
+)
 
 def main():
     assert __debug__ and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
