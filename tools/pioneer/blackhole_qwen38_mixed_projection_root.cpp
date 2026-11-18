@@ -9,6 +9,11 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#if defined(PIONEER_Q38_TWIN_NATIVE_Q8_WIRE) && (!defined(PIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE) \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || !defined(PIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE))
+#error Native Q8 dispatch needs the matching full-card batch-prefetch ROOT
+#endif
 #ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
 #include "PioneerQ38FfnSharedInputReuse.h"
 #endif
@@ -160,7 +165,11 @@ static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
 #endif
 #endif
  for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ Words(L::Scratch)[26]=M::TwinNativeWire::ProjectionMode(d[15]);
+#else
  Words(L::Scratch)[26]=1;
+#endif
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
  if(d[15]==12){unsigned reads=0,flits=0;q38_prepared_q4_bind_shared(d,w,sequence,reads,flits);}
 #endif
@@ -242,7 +251,12 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  if(proof[16]!=groups*k/16 || proof[17]!=Words(L::Nonces)[w] || proof[18]!=w+1 || proof[19]!=0x32504651
   || proof[30]!=Boot(w)[16] || proof[31]!=M::Peer(w+1))scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(proof[32+i]!=Boot(w)[16+i])scalar_fault_park();
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(proof[M::TwinNativeWire::ProofIndex]!=M::TwinNativeWire::ProofWord(M::TwinNativeWire::ProjectionMode(type)))scalar_fault_park();
+ for(unsigned i=M::TwinNativeWire::ProofIndex+1;i<64;i++)if(proof[i])scalar_fault_park();
+#else
  for(unsigned i=48;i<64;i++)if(proof[i])scalar_fault_park();
+#endif
  const auto* part=Words(L::PartsShadow+w*32);
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  const unsigned command[]={part[0]+(groups*blocks-1)*L::Tile(type),0,part[4],0x90000,0,M::Peer(w+1),0,0,L::Tile(type),0};

@@ -4,6 +4,18 @@
 #ifndef PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #define PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #include "PioneerQ38PreciseWorkerLayout.h"
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+#if PIONEER_Q38_TWIN_NATIVE_Q8_WIRE != 1 || defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) \
+ || defined(PIONEER_Q38_BF16_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE) || defined(PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE) \
+ || defined(PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE) \
+ || (!defined(PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE) && !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) \
+     && !defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS))
+#error Native Q8 wire requires the separate raw vector92 pushed-completion cohort
+#endif
+#include "PioneerQ38TwinNativeQ8Wire.h"
+#endif
 #ifdef PIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE
 #include "PioneerQ38FlatMatrixGrammar.h"
 #endif
@@ -13,6 +25,9 @@
 namespace PioneerQ38PushedWorkerLayout {
 namespace Base=PioneerQ38PreciseWorkerLayout;
 using namespace Base;
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+namespace TwinNativeWire=PioneerQ38TwinNativeQ8Wire;
+#endif
 enum {Magic=0x33574751,JobWitness=0x334f4751,ReceiptMagic=0x33504d51,
  Root=129,Mailbox=0x118000,Stride=256,ReceiptWords=64,PushBuffer=0x83c00};
 // Bounded polling policy for an already admitted ordinary matrix, NOT a
@@ -27,12 +42,18 @@ static inline unsigned ReceiptPollBudget(unsigned groups,unsigned inputs){
  return (groups*chunks)<<16;
 }
 static inline unsigned BootWord(unsigned i){
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(i==TwinNativeWire::BootIndex)return TwinNativeWire::BootTag;
+#endif
  return i==40?unsigned(JobWitness):i==49?unsigned(ReceiptMagic):i==50?unsigned(Root)
   :i==51?unsigned(Mailbox):i==52?unsigned(Stride):i==53?unsigned(PushBuffer)
   :i==54?unsigned(ReceiptWords):Base::BootWord(i);
 }
 static inline void OldBoot(const uint32_t* b,uint32_t* old){
  for(unsigned i=0;i<64;i++)old[i]=i==0?unsigned(Base::Magic):i==40?unsigned(Base::JobWitness):i>=49 && i<=54?0U:b[i];
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ old[TwinNativeWire::BootIndex]=0;
+#endif
 }
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) && defined(__riscv)
 #define PIONEER_Q38_PUSHED_GRAMMAR_FN(name) inline __attribute__((noinline,section(".conv.q38_pushed_" #name)))
@@ -46,6 +67,9 @@ static inline void OldBoot(const uint32_t* b,uint32_t* old){
 #ifdef PIONEER_Q38_JOB_BOOT_FOLD_IMAGE
 PIONEER_Q38_PUSHED_BOOT_FN bool ExtensionShape(const uint32_t* b){
  if(!b || b[0]!=Magic)return false;
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(b[TwinNativeWire::BootIndex]!=TwinNativeWire::BootTag)return false;
+#endif
  static const uint32_t words[]={JobWitness,1,Hidden,Vocabulary,GlobalMatrix,1,
   ActivationMagic,Chunks,ChunkValues,ReceiptMagic,Root,Mailbox,Stride,PushBuffer,ReceiptWords};
  for(unsigned i=0;i<15;i++)if(b[40+i]!=words[i])return false;
@@ -61,6 +85,9 @@ PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
 #else
  if(!b || b[0]!=Magic)return false;
  for(unsigned i=40;i<=54;i++)if(b[i]!=BootWord(i))return false;
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(b[TwinNativeWire::BootIndex]!=TwinNativeWire::BootTag)return false;
+#endif
 #endif
  uint32_t old[64];OldBoot(b,old);return Base::BootShape(old);
 #endif
@@ -78,6 +105,14 @@ PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsi
 #endif
  uint32_t oldBoot[64],oldJob[64];OldBoot(b,oldBoot);
  for(unsigned i=0;i<64;i++)oldJob[i]=i?j[i]:unsigned(Base::Magic);
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(j[2]==1){
+  if(!TwinNativeWire::ProjectionShape(j))return false;
+  // Normalize only the selected layout byte for the unchanged grammar;
+  // the actual private capsule and echoed completion retain the original.
+  oldJob[26]=TwinNativeWire::Raw;
+ }
+#endif
  if(j[2]==GlobalMatrix){if(j[31]!=JobWitness)return false;oldJob[31]=Base::JobWitness;}
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
 #endif

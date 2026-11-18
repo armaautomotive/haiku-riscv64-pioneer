@@ -15,9 +15,9 @@ FROZEN = '5a95c1c42983751153df493c2540d9b6501520d8'  # tag92 / tag213 worker and
 TARGET = '4b3dc0c96d3888b9c43af683f58678cc91cade7c67e955413bad8c5e16d52870'
 
 
-def pins(script):
+def pins(script, key='PINS'):
     declarations = [ast.literal_eval(node.value) for node in ast.parse(script.read_text()).body
-                    if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'PINS'
+                    if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == key
                                                            for target in node.targets)]
     assert len(declarations) == 1 and declarations[0]
     return declarations[0]
@@ -58,12 +58,14 @@ def issue_rows(output):
 def main():
     pair = len(sys.argv) == 5 and sys.argv[3] == '--ordinary-arm-regression'
     real = len(sys.argv) == 6 and sys.argv[3] == '--native-q8-math-real'
-    math = real or (len(sys.argv) == 5 and sys.argv[3] in ('--native-q8-math', '--native-q8-math-pilot'))
+    wire = len(sys.argv) == 5 and sys.argv[3] == '--native-q8-wire'
+    math = real or wire or (len(sys.argv) == 5 and sys.argv[3] in ('--native-q8-math', '--native-q8-math-pilot'))
     if len(sys.argv) != 3 and not (pair or math):
         raise SystemExit('use SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD '
                          '[--ordinary-arm-regression|--native-q8-math|--native-q8-math-pilot PINNED_NATIVE_Q8_BUILD] '
                          'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-math-real '
-                         'PINNED_NATIVE_Q8_BUILD ABSOLUTE_MODEL_GGUF')
+                         'PINNED_NATIVE_Q8_BUILD ABSOLUTE_MODEL_GGUF '
+                         'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-wire PINNED_WIRE_WORKER')
     assert __debug__ and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
     sdk, worker = map(Path, sys.argv[1:3])
     assert sdk.is_absolute() and worker.is_absolute()
@@ -97,8 +99,9 @@ def main():
         arms = [vec]
         if pair or math:
             native = tmp/'native'
-            snapshot(Path(sys.argv[4]), native,
-                     pins(HERE.parent/'build_qwen38_twin_native_q8_worker.py'))
+            records = (pins(HERE.parent/'build_qwen38_twin_native_q8_wire.py', 'WIRE_WORKER_PINS') if wire
+                       else pins(HERE.parent/'build_qwen38_twin_native_q8_worker.py'))
+            snapshot(Path(sys.argv[4]), native, records)
             arms.append(native)
         for directory in (*arms, prior):
             symbols = subprocess.check_output([tool+'nm', '-n', directory/'program.elf'])
@@ -118,6 +121,9 @@ def main():
         if real:
             flags.extend(('-DPIONEER_Q38_OFFBOARD_REAL_Q8=1', '-Wno-deprecated-declarations'))
             units.append(tests.parent/'PioneerModelWeightCache.cpp')
+        if wire:
+            flags.append('-DPIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE=1')
+            shutil.copyfile(HERE.parent/'PioneerQ38TwinNativeQ8Wire.h',tests.parent/'PioneerQ38TwinNativeQ8Wire.h')
         binary = tmp/'test'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                         '-ffp-contract=off', '-fsanitize=address,undefined', *flags,
@@ -129,7 +135,7 @@ def main():
                 found = re.findall(r'^([0-9a-f]+) T q38_compute_once$', (directory/'program.symbols').read_text(), re.M)
                 assert len(found) == 1
                 entries.extend(found)
-            selection = [model] if real else ['--pilot'] if sys.argv[3] == '--native-q8-math-pilot' else []
+            selection = [model] if real else ['--wire'] if wire else ['--pilot'] if sys.argv[3] == '--native-q8-math-pilot' else []
             subprocess.run([binary, prior, *arms, *entries, *selection], check=True, env=runenv)
             return
         evidence = []

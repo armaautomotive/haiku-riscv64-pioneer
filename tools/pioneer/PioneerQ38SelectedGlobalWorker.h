@@ -117,7 +117,12 @@ enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,Pione
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 #include "PioneerQ38PushedWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PushedWorkerLayout;
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+enum {PioneerQ38SelectedWorkerBootEnd=PioneerQ38TwinNativeQ8Wire::BootEnd,PioneerQ38SelectedWorkerPrecise=1,
+ PioneerQ38SelectedWorkerPushed=1,PioneerQ38SelectedWorkerBf16=0,PioneerQ38SelectedWorkerHybrid=0};
+#else
 enum {PioneerQ38SelectedWorkerBootEnd=55,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=1,PioneerQ38SelectedWorkerBf16=0,PioneerQ38SelectedWorkerHybrid=0};
+#endif
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 #include "PioneerQ38PreciseWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PreciseWorkerLayout;

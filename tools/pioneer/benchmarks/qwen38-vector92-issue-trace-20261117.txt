@@ -168,3 +168,41 @@ on a model of the device, not hardware timings or token rates.
 Next: bind the authenticated upload producer to a new isolated ROOT
 admission and receipt contract; do not let old firmware see the new
 layout. Nothing from this native-Q8 test is installed or timed.
+
+Matched ROOT/worker wire and full worker entry (build only)
+-----------------------------------------------------------
+The new wire cohort requires boot word 55 to be QSM8. Ordinary Q8
+projection jobs carry format 2; ordinary Q4/Q6 jobs retain format 1.
+The global raw Q6 head and non-matrix operations use the existing
+grammar. This is not a new tensor type or a caller option. The worker
+copies the job's real mode into its sealed capsule, runs the tested
+math, keeps the batched read/counter accounting, and publishes a QSP8
+witness only for native Q8. ROOT checks the mode echo and the QSP8
+proof before reading out projected values. Both refuse a mismatched
+boot; the unselected v4 ROOT and worker reproduce byte-for-byte.
+
+  python3 tools/pioneer/build_qwen38_twin_native_q8_wire.py \
+    SDK V4_ROOT VECTOR92_BUILD ISOLATED_NATIVE_Q8_BUILD NEW_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
+    SDK VECTOR92_BUILD --native-q8-wire NEW_OUTPUT/worker
+
+Exact linked ROOT ELF b5e5c5fea22d39e1120c4bb850da4c74f0666bc6e32284ebcab91fb3aebcd734
+text 130,960/131,072; conv 32,216/32,768; v4 timer and boot/STOP unchanged.
+Exact linked worker ELF fdfeeac324418dfd014a8ebe7caa2183d2d26e261f2db315c251049eb30b91ee
+text 8,060/8,192; affine 5,020/5,376; global front 9,532 bytes.
+
+Both emitted ROOT MatrixJob entry points produced the expected envelope
+in 45 cases. The exact linked receipt predicate refused 3,015 corrupted
+receipts and mismatched jobs (including valid-looking echoes with wrong
+mode). The exact worker ran three complete native-Q8 jobs at K=5120,
+6144 and 17408 through real 256-byte payload plus ACK, 4-byte commit
+and STOP instructions. It matched 112 reference FP32 words bit for bit
+and refused three illegal modes and a legacy boot before any reads or
+publication. This time no host-side mode, PC or return-address rewrite
+was needed. The emulator still supplies NoC endpoints and synthetic input
+tiles; neither test is a full board, model, or performance result.
+
+The remaining connection is the authenticated Haiku upload producer and
+separate driver/worker package: bind the SM7 source transformation to
+the same cohort and exact model before it can be staged. A native-boot
+marker identifies matching code, not proof of uploaded bytes by itself.

@@ -6,6 +6,9 @@
 #define PIONEER_Q38_VECTOR_METADATA_WORKER_MACHINE_ONLY
 #include "pioneer_q38_vector_q4_worker_test.cpp"
 #include "../PioneerQ38NativeQ8Data.h"
+#ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+#include "../PioneerQ38TwinNativeQ8Wire.h"
+#endif
 #ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
 #include "../PioneerModelWeightCache.h"
 #include "../PioneerQwen38TiledReader.h"
@@ -70,6 +73,10 @@ struct MathUnit:VectorMetadataPeer {
  unsigned unpackAddress=0,panels=0,retiredPanels=0,setup=0,restores=0,bufferMask=0;
  unsigned fmt73Writes=0,beginSteps=0;
  bool dropUnpack=false;
+#ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+ bool connected=false,returned=false;
+ unsigned actualReturn=0;
+#endif
  struct BadOperand {};
  MathUnit(const char* legacy,const char* image,unsigned method,bool sm,unsigned k,unsigned groups,unsigned trial,
   const Tiles* learned=nullptr)
@@ -97,6 +104,63 @@ struct MathUnit:VectorMetadataPeer {
  bool NativeInt8Unpack()const override{return inUnit && converted && config[0]==0x423e;}
  bool DirectNativeQ8Sfpu()const override{return NativeInt8Unpack();}
  bool DirectQ4Panel()const override{return NativeInt8Unpack();} // this observer name just means zero MOVs
+#ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+ void StepBlock()override{
+  if(connected && pc==entry){
+   assert(!returned && !inUnit && !actualReturn && memory.at(FormatWord)==Sm7);
+   actualReturn=regs[1];inUnit=true;
+  }
+  VectorMetadataPeer::StepBlock();
+  if(connected && inUnit && pc==actualReturn){
+   assert(!returned && !unpackPending && !pending && config[0]==0x4231 && config[1]==0xa03c8000 && config[73]==0x13);
+   assert(regs[10]==groupsIn*inputs/16 && panels==groupsIn*inputs/16 && panels==retiredPanels && setup==1 && restores==1
+    && bufferMask==3 && fmt73Writes==2*groupsIn*Blocks()+1);
+   tiles.swap(original); // ONLY the independent host oracle uses original bytes from now on
+   returned=true;inUnit=false;
+  }
+ }
+ void StageConnected(unsigned mode,bool delayed){
+  namespace W=PioneerQ38TwinNativeQ8Wire;
+  assert(converted && !steps);connected=true;delay=3;
+  boot[W::BootIndex]=W::BootTag;memory[M::Boot+4*W::BootIndex]=W::BootTag;
+  BootPushed();Prepare();asynchronous=delayed;
+  const unsigned header[]={Push::Magic,1,1,logicalWorker,selfRoute,0,0,2025};
+  for(unsigned i=0;i<8;i++){outer[i]=header[i];outer[8+i]=boot[8+i];}
+  for(unsigned i=0;i<10;i++)outer[16+i]=matrixJob[i];
+  outer[26]=mode;
+  for(unsigned i=0;i<64;i++)memory[M::Job+i*4]=outer[i];
+  memory[M::Doorbell]=1;sequence=1;
+ }
+ void FinishConnected(){
+  namespace W=PioneerQ38TwinNativeQ8Wire;
+  AwaitPayload();assert(returned && !inUnit && !mailbox[0]);
+  assert(memory.at(0x83f00+4*W::ProofIndex)==W::ProofTag);
+  for(unsigned i=W::ProofIndex+1;i<64;i++)assert(!memory.at(0x83f00+i*4));
+  for(unsigned i=0;i<64;i++)assert(memory.at(M::Job+i*4)==outer[i]);
+  AckPayload();while(!GdnFinished(1) && pc!=faultPC)StepBlock();
+  assert(pc==waitPC && !memory.at(M::Status+8) && pushes==2 && requests==ExpectedReadPackets());
+  const std::array<uint32_t,8> header{{Push::ReceiptMagic,64,logicalWorker,1,0,0,selfRoute,Push::Root}};
+  const std::array<uint32_t,4> slave{{2,5,2,2}};
+  assert(rootMaster==rootOriginal && rootSlave==slave && minStack>=0x6e000 && !heldPayload);
+  for(unsigned i=0;i<8;i++)assert(mailbox[i]==header[i] && mailbox[56+i]==beforePush[i]);
+  for(unsigned i=0;i<32;i++)assert(mailbox[8+i]==outer[i]);
+  for(unsigned i=0;i<16;i++)assert(mailbox[40+i]==boot[16+i]);
+  CheckEnd();if(asynchronous)assert(retiredDuringMath>0);
+ }
+ void StopConnected(){
+  assert(pc==waitPC && sequence==1 && !pending);
+  std::array<uint32_t,64> stop={};
+  const unsigned header[]={Push::Magic,2,unsigned(Push::Stop),logicalWorker,selfRoute,0,0,9999};
+  for(unsigned i=0;i<8;i++){stop[i]=header[i];stop[8+i]=boot[8+i];}
+  for(unsigned i=0;i<64;i++)memory[M::Job+i*4]=stop[i];
+  memory[M::Doorbell]=2;sequence=2;
+  while(pc!=stopPC && pc!=faultPC)StepBlock();
+  assert(pc==stopPC && memory.at(M::Status+4)==2 && memory.at(M::Status+16)==2 && !pending);
+  auto snap=memory;unsigned reads=requests;
+  for(unsigned i=0;i<2048;i++)StepBlock();
+  assert(pc==stopPC && memory==snap && requests==reads && pushes==2);
+ }
+#endif
  void Store(uint32_t at,uint32_t value)override{
   if(inUnit && converted && at==0xffef0000 && setupConfiguration==25 && config[0] && value!=config[0]
    && (value==0x423e || value==0x4231)){
@@ -179,15 +243,45 @@ struct MathUnit:VectorMetadataPeer {
 
 int main(int argc,char** argv){
  const bool pilot=argc==7 && !strcmp(argv[6],"--pilot");
+#ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+ const bool connected=argc==7 && !strcmp(argv[6],"--wire");
+#else
+ const bool connected=false;
+#endif
 #ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
  const bool learned=argc==7 && argv[6][0]=='/';
 #else
  const bool learned=false;
 #endif
- assert(argc==6 || pilot || learned);setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==6 || pilot || learned || connected);setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&RunPersistentGdnPair;(void)&Compare;(void)&Round;
  unsigned count=0,words=0;
  const unsigned oldEntry=unsigned(std::stoul(argv[4],nullptr,16)),candidate=unsigned(std::stoul(argv[5],nullptr,16));
+#ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+ if(connected){
+  for(unsigned k:{5120U,6144U,17408U}){
+   unsigned groups=k==5120?1U:3U;
+   auto raw=std::make_unique<MathUnit>(argv[1],argv[2],oldEntry,false,k,groups,1);
+   auto wire=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,k,groups,1);
+   raw->Begin(true);assert(raw->Finish());
+   wire->StageConnected(Sm7,true);wire->FinishConnected();wire->StopConnected();
+   assert(wire->requests==raw->requests && wire->matrixInstructions==raw->matrixInstructions);
+   for(unsigned i=0;i<groups*16;i++)assert(wire->buffers[4096+i]==raw->buffers[4096+i]);
+   printf("NATIVE_Q8_WIRE complete worker K%u groups%u exact%u with real push+STOP; modeled NoC\n",k,groups,groups*16);
+  }
+  for(unsigned mode:{0U,1U,3U}){
+   auto bad=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,5120,1,0);
+   bad->StageConnected(mode,false);
+   while(bad->pc!=bad->faultPC)bad->StepBlock();
+   assert(!bad->requests && !bad->inUnit && !bad->matrixInstructions && !bad->pushes && !bad->mailbox[0]);
+  }
+  auto oldBoot=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,5120,1,0);
+  while(oldBoot->pc!=oldBoot->waitPC && oldBoot->pc!=oldBoot->faultPC)oldBoot->StepBlock();
+  assert(oldBoot->pc==oldBoot->faultPC && !oldBoot->requests && !oldBoot->pushes && !oldBoot->matrixInstructions);
+  puts("PASS native Q8 wire worker: 3 actual complete linked projections 112 exact words, native push and STOP; 4 inert mismatches; synthetic driver and NoC");
+  return 0;
+ }
+#endif
  auto match=[&](unsigned k,unsigned groups,unsigned variant,const Tiles* weights){
   auto old=std::make_unique<MathUnit>(argv[1],argv[2],oldEntry,false,k,groups,variant,weights);
   auto next=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,k,groups,variant,weights);

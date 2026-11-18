@@ -31,6 +31,10 @@
 #error Hybrid input-reuse accounting requires its distinct worker inspection image
 #endif
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
+#if defined(PIONEER_Q38_TWIN_NATIVE_Q8_WIRE) && (!defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE) \
+ || !defined(PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE) || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE))
+#error Native Q8 completion needs the matching vector92 batch-prefetch worker
+#endif
 #ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_IMAGE
 #include "PioneerQ38InstructionPrefetchWorkerRole.h"
 #include "PioneerBlackholeInstructionPrefetch.h"
@@ -144,6 +148,9 @@ static bool Quiet(){
 #include "blackhole_qwen38_pushed_completion.inc"
 #endif
 static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsigned self){
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(j[14]!=M::TwinNativeWire::ProjectionMode(j[1]))block_fault_park();
+#endif
 #ifdef PIONEER_Q38_FFN_SHARED_INPUT_REUSE_CANDIDATE
  if(j[9]>1)block_fault_park();
  if(j[0]!=0x31483851 || j[3] || j[4] || !PioneerQ38PanelTileBytes(j[1])
@@ -159,7 +166,11 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
  unsigned count=q38_compute_once(),blocks=j[5]>>(j[1]==8?5:8);
  unsigned reads=j[7]*
 #ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+  PioneerQ38BatchedPrefetchPlan::ReadBlocks(j[1],j[5],true)
+#else
   PioneerQ38BatchedPrefetchPlan::ReadBlocks(j[1],j[5],j[14]==1)
+#endif
 #else
   blocks
 #endif
@@ -191,7 +202,13 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
  p[16]=count;p[17]=j[12];p[18]=worker;p[19]=TT_Q38_FFN_PERSISTENT_MARKER;
  for(unsigned i=0;i<10;i++)p[20+i]=Words(0xffb20000)[i];
  p[30]=source[0];p[31]=self;for(unsigned i=0;i<16;i++)p[32+i]=source[i];
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(*Words(0x74038)!=j[14])block_fault_park();
+ p[M::TwinNativeWire::ProofIndex]=M::TwinNativeWire::ProofWord(j[14]);
+ for(unsigned i=M::TwinNativeWire::ProofIndex+1;i<64;i++)p[i]=0;
+#else
  for(unsigned i=48;i<64;i++)p[i]=0;
+#endif
  Fence();
 }
 #ifdef PIONEER_Q38_BF16_WORKER_IMAGE

@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_FLAT_MATRIX_GRAMMAR_H
 #define PIONEER_Q38_FLAT_MATRIX_GRAMMAR_H
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+#include "PioneerQ38TwinNativeQ8Wire.h"
+#endif
 // Pure QGW3 DATA grammar. UNSELECTED: no production caller,
 // native owner, source/counter/receipt authority or arithmetic implementation.
 // Compose the old QGW3->QGW2->QGW1->QMW1 normalizations without materializing
@@ -24,7 +27,12 @@ static inline bool BootShape(const Word* b){
  static const Word extension[]={JobWitness,1,Hidden,Vocabulary,GlobalMatrix,1,
   ActivationMagic,Chunks,ChunkValues,ReceiptMagic,Root,Mailbox,Stride,PushBuffer,ReceiptWords};
  for(unsigned i=0;i<15;i++)if(b[40+i]!=extension[i])return false;
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+ if(b[PioneerQ38TwinNativeQ8Wire::BootIndex]!=PioneerQ38TwinNativeQ8Wire::BootTag)return false;
+ for(unsigned i=PioneerQ38TwinNativeQ8Wire::BootEnd;i<64;i++)if(b[i])return false;
+#else
  for(unsigned i=55;i<64;i++)if(b[i])return false;
+#endif
  return true; // b[16..31] remain source DATA,not current physical authority.
 }
 static inline bool JobShape(const Word* j,const Word* b,
@@ -61,7 +69,12 @@ static inline bool JobShape(const Word* j,const Word* b,
   if(b[3]>96 || j[5]%4!=3 || j[2]!=9U+densePhase)return false;
   for(unsigned i=16;i<27;i++)if(j[i])return false;
  }else{
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_WIRE
+  if(j[2]==1){if(!PioneerQ38TwinNativeQ8Wire::ProjectionShape(j))return false;}
+  else if(j[26])return false;
+#else
   if(j[26]>1 || (j[26] && j[2]!=1))return false;
+#endif
   if(j[2]==2)for(unsigned i=16;i<27;i++)if(j[i])return false;
   if((j[2]==6 || j[2]==7 || j[2]==8) && j[5]%4==3)return false;
  }

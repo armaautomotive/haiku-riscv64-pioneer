@@ -69,6 +69,7 @@ struct GrammarComparisons {
   return {a->steps,c->steps};
  }
 };
+#ifndef PIONEER_Q38_FLAT_MATRIX_EMITTED_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);GrammarComparisons tests(argv);
  for(unsigned worker=1;worker<=119;worker++){
@@ -104,3 +105,4 @@ int main(int argc,char** argv){
   "NO acquired owner,connected model,native,hardware,timing or Work grant\n",
   (unsigned long long)tests.cases,(unsigned long long)tests.yes,(unsigned long long)tests.no);
 }
+#endif
