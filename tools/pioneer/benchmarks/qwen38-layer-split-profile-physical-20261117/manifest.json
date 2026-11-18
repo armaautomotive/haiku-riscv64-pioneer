@@ -1,0 +1,74 @@
+{
+  "artifacts": {
+    "HaikuAssistantQwen27FullOffload": "5c650f81142f5fc38c8f6ac24cd62ef9c4136b65144a750c47a8c8a01af148f6",
+    "pioneer-q38-full-offload-rate-smoke": "ec90ba4575b78457c64d72a43846346b64923dc16e7aee1e1b6a808361a37889",
+    "tenstorrent_pci_probe-native": "4b6f208da0ed2960d7d3e9a6617f3e354737b9ec4b7b7c4cf0c62d25a3fbd9ec"
+  },
+  "linked_arrays": {
+    "PeerAffine": [
+      4108,
+      "faf446d93d4e289de7870db0eb36b89ed4c59831ef40a46ea5a5a64ae8fe47c1"
+    ],
+    "PeerBoot": [
+      4,
+      "a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c"
+    ],
+    "PeerDense": [
+      10332,
+      "d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad"
+    ],
+    "PeerFetch": [
+      1292,
+      "50a4910cc7d684e20c456f63f87478f520d639ec0ecaacdef06d50611dd81f29"
+    ],
+    "PeerFfn": [
+      16456,
+      "b2a1aec0b0d183975a3bdd361bab37e4834ed161c8757535251fdbcdd386b2a8"
+    ],
+    "PeerFront": [
+      9232,
+      "fda50f122034fde534eb859f387ce3093c6f839a6adfcc43eb0f59617e226bd1"
+    ],
+    "PeerGdn": [
+      35944,
+      "9ac7c07a748d5f5758ced6397053e5808bb94ba514a268d55471bdd7ebe4397f"
+    ],
+    "PeerPrecise": [
+      8392,
+      "32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc"
+    ],
+    "PeerService": [
+      9888,
+      "a01999b8d82275cb9195d51df013bb3563fffc83fab4609785fc30bfbbecf3b0"
+    ],
+    "PeerText": [
+      8136,
+      "68aad877f262785d7aa605d4fe02671011e04d4feab9151752111434c5e1cc91"
+    ],
+    "RootAux": [
+      32216,
+      "87380158695a329102b7d39e9ec89e3f1f65f07af8eada26a0de619843c7138f"
+    ],
+    "RootBoot": [
+      4,
+      "32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca"
+    ],
+    "RootFastDecode": [
+      1496,
+      "49cff44b420dda8d5b22eb9911b304d9ff8407cc7d4a9cb13cea9c7b883e7bf5"
+    ],
+    "RootTerminal": [
+      8,
+      "468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2"
+    ],
+    "RootText": [
+      130624,
+      "a41edc9f4ce1866496cca73b1d0b74f6aae3e54213b26a17afba1953921de0e9"
+    ]
+  },
+  "profile_version": 4,
+  "program_header": "66938ea74e8d08a7cb66b0ecce10b09ec7ea2c80d59a0e7266a41249826fe9b1",
+  "source": "25d1533ee6a43003952828d43a88f42d6dcc3c42",
+  "stage": "/boot/home/pioneer-q38-layer-split-candidate-213",
+  "tag": "0x2026111700010213"
+}

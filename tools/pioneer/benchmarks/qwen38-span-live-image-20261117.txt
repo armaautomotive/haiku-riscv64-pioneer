@@ -48,8 +48,22 @@ card refusals. Native loading remains untested.
   python3 tools/pioneer/build_qwen38_layer_split_profile_native.py SDK LIBRARIES V4_ROOT NEW_OUTPUT --live-image-check
   python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py OBSERVED_STABLE_GENERATION NEW_SCRIPT --live-image-check
 
-Do not deploy while the FFN comparison is in flight. Use ordinary tag213
-as the control. Verify both closed complete requests, identical answer,
-total bytes and span count, valid v4 profiles, independent stable restore,
-then compare upload-ioctl time and upload-window time separately from
-decode. No tag214 hardware result or decode-speed claim exists.
+Physical tag214 trial started after tag213 verified clean closure and
+stable041/generation4. The matched control took 1,078.610 s inside 20,367
+upload ioctls and 1,244.467 s from the start to the end of weight upload.
+Its complete output and independent postflight are in
+qwen38-layer-split-profile-physical-20261117. The new stage is
+/boot/home/pioneer-q38-layer-split-live-214, manifest SHA-256
+d2666936f624f65b6eeaeab9a42776943aef88b62fdfb1f5c8f4414be2ac4d7a,
+one-shot runner SHA-256
+9b1c2434d5e4f057a4f2ef0cba8a7eca7642a12dbd12749a5f25c918b64c3926.
+Exact hashes and idle preflight passed before the one guarded launch.
+Parent1021/client1088/worker1089 were observed live on tag214 generation5
+with source authentication underway. Do not open or swap the driver
+while the experiment owns the lock. Expect stable041 generation6 only
+after independent, verified closure.
+
+Compare completed tag214 with tag213 using exact answer, total bytes and
+span count, valid v4 profiles and independent stable restore. Report
+upload ioctl and upload-window time separately from decode. No tag214
+timing result exists yet.

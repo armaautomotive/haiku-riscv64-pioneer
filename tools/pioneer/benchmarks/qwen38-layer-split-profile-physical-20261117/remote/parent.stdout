@@ -1,0 +1,18 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+64 (Unknown), revision 0000 running at 1000MHz
+133792907264 bytes free      (used/max 3242029056 / 137034936320)
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026111700010213 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026111700010213 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+LAYER_SPLIT_RATE_CLIENT_CLOSED_CLEANLY
+P100A_RELOAD driver55 tag2026111700010213 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026111700010213 generation3 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+64 (Unknown), revision 0000 running at 1000MHz
+133779136512 bytes free      (used/max 3255799808 / 137034936320)

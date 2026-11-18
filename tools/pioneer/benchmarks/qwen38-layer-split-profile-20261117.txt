@@ -100,3 +100,48 @@ host count-rate evidence separate. Its hypothetical per-bucket factor is
 only arithmetic on the measured controller scope, not an estimate of
 device throughput. Tests conserved every cycle using the archived v3 and
 a synthetic v4 split; nine failed/invalid comparison inputs were refused.
+
+Physical tag213 result: closed and restored
+------------------------------------------
+The 31-step generation window measured 179,303,879..179,307,252 us,
+0.172887597..0.172890850 tokens/sec. The matched v3 control was
+0.172871238..0.172874445; these are timing bounds of individual runs,
+not repeatability estimates. There is no meaningful rate change. All
+inference ran on P100A; the CPU handled vocabulary/text and transport.
+The 32-token limit yielded the same truncated count through 14. One
+answer is not broad quality qualification or a warm Assistant result.
+
+The v4 generation body counted 242,057,545,371 controller cycles and
+excluded 81,608,094 terminal STOP cycles. The v3 body was 242,102,575,794
+cycles. Matched scopes conserved every non-STOP cycle in both. Largest
+v4 buckets (including any admission, orchestration, NoC and wait they own):
+
+  projection calls     118,243,687,692 cycles  48.849412%
+  output head matrix     28,742,716,823 cycles  11.874332%
+  dense attention / KV   26,987,890,005 cycles  11.149369%
+  convolution stage      24,470,751,525 cycles  10.109477%
+  recurrent other        14,254,399,527 cycles   5.888847%
+  GDN stage              12,678,982,287 cycles   5.238003%
+  metadata               10,989,173,569 cycles   4.539901%
+
+Projection and head remain the biggest combined cost; attention and
+convolution are bigger scopes than GDN. This rules out expecting a
+GDN-only or metadata-only rewrite to reach 20 tokens/sec. The linked
+worker trace verified the encoding prerequisite for native Q8 unpack;
+it is not yet a measured change to the projection scope.
+
+Cold start: vocabulary/source authentication took 625.328 s before
+Generate. Generate-to-START setup was 1,578.583 s, including the
+1,244.467-s upload window (1,078.610 s in 20,367 upload calls and
+19,399,024,640 bytes). Prompt+generation took 359.083 s; answer-ready
+was 2,149.763 s from Generate. These overlapping intervals are not
+additive. This gives tag214 a same-firmware upload baseline, separate
+from warm generation performance.
+
+Both clients exited 0, stderr was empty and all three benchmark teams
+exited. Independent postflight verified normal041/generation4 idle,
+cold0/owner0/guard1, 64 CPUs and 137,034,936,320 bytes maximum RAM, the
+exact benchmark/stable hashes and the unchanged model file identity.
+All nine fetched records matched the independent remote SHA-256s. The
+closed archive and comparator output are in the sibling directory
+qwen38-layer-split-profile-physical-20261117. The tag213 stage is spent.
