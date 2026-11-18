@@ -127,7 +127,8 @@ def main():
             flags.append('-DPIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE=1')
             shutil.copyfile(HERE.parent/'PioneerQ38TwinNativeQ8Wire.h',tests.parent/'PioneerQ38TwinNativeQ8Wire.h')
         if real_wire:
-            for header in ('PioneerQ38TwinQ8ProjectionFixture.h','PioneerQ38NativeQ8FullSource.h'):
+            for header in ('PioneerQ38TwinQ8ProjectionFixture.h','PioneerQ38NativeQ8FullSource.h',
+                           'PioneerQ38TwinQ8ProjectionSequence.h'):
                 shutil.copyfile(HERE.parent/header,tests.parent/header)
         binary = tmp/'test'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',

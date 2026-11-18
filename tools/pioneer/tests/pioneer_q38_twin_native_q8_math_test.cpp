@@ -14,6 +14,7 @@
 #include "../PioneerQwen38TiledReader.h"
 #ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
 #include "../PioneerQ38TwinQ8ProjectionFixture.h"
+#include "../PioneerQ38TwinQ8ProjectionSequence.h"
 #endif
 #include <fcntl.h>
 #endif
@@ -111,7 +112,7 @@ struct MathUnit:VectorMetadataPeer {
 #ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
 #ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
  void FixtureActivation(const PioneerQ38TwinQ8ProjectionFixture::Activation& a){
-  assert(!steps && a.words.size()*2==inputs && a.scales.size()==scales.size());
+  assert((!steps || (pc==waitPC && !requests)) && a.words.size()*2==inputs && a.scales.size()==scales.size());
   for(unsigned w=0;w<a.words.size();w++){
    vector[w*2]=uint16_t(a.words[w]);vector[w*2+1]=uint16_t(a.words[w]>>16);
    root.at(0xa0000+w*4)=a.words[w];
@@ -253,6 +254,108 @@ struct MathUnit:VectorMetadataPeer {
   return true;
  }
 };
+#if defined(PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE) && defined(PIONEER_Q38_OFFBOARD_REAL_Q8)
+namespace S=PioneerQ38TwinQ8ProjectionSequence;
+namespace F=PioneerQ38TwinQ8ProjectionFixture;
+// Drive the exact linked returning worker through the bounded plan; ONLY
+// the lease and fabric are modeled, not the worker's control/results.
+struct SequenceIO {
+ MathUnit& p;
+ bool retained=false,closed=false;
+ unsigned calls=0,bells=0,outputs=0;
+ uint64_t now=100;
+ enum class Fault { None, Input, MatrixDevice, Counter, Push, Proof, Output, StopBell, Close, Clock, Timeout };
+ Fault inject=Fault::None;
+ bool Begin(S::Arm a,const S::Binding& b){
+  calls++;
+  return !p.sequence && p.pc==p.waitPC && a==(p.converted?S::Arm::Native:S::Arm::Raw)
+   && b.address==p.matrixJob[6] && std::equal(p.boot.begin(),p.boot.end(),b.boot);
+ }
+ bool PrepareInput(unsigned variant){
+  assert(!retained && !closed && !bells);F::Activation a={};calls++;
+  if(inject==Fault::Input || !F::MakeActivation(variant,a))return false;
+  p.FixtureActivation(a);return true;
+ }
+ bool Read(S::Tile t,unsigned at,uint32_t& v){
+  assert(!retained && !closed && !(at&3));calls++;
+  if(t==S::Tile::Root){
+   assert(at>=S::Mail && at<S::Mail+256);v=p.mailbox.at((at-S::Mail)/4);
+   if(bells==1 && at==S::Mail+132 && inject==Fault::Push)v^=1U<<31;
+   return true;
+  }
+  if(at>=S::Output && at<S::Output+S::Rows*4){
+   assert(bells==1 && p.pushes==2);outputs++;v=p.buffers[4096+(at-S::Output)/4];
+   if(inject==Fault::Output)v=0x7fc00000;
+   return true;
+  }
+  v=p.memory.at(at);
+  if(at==S::Proof+48*4 && inject==Fault::Proof)v^=1;
+  return true;
+ }
+ bool Write(S::Tile t,unsigned at,uint32_t v){
+  assert(!retained && !closed && !(at&3));calls++;
+  if(t==S::Tile::Root){
+   assert(!bells && !v && at>=S::Mail && at<S::Mail+256);p.mailbox.at((at-S::Mail)/4)=v;
+  }else if(at==S::Bell){
+   assert(v==bells+1 && v<=2);bells++;
+   if(v==2 && inject==Fault::StopBell)return false;
+   p.sequence=v;p.memory[at]=v;
+  }else{
+   assert(at>=S::Job && at<S::Job+256);p.memory[at]=v;
+  }
+  return true;
+ }
+ bool Count(S::Tile t,unsigned off,uint32_t& v){
+  assert(!retained && !closed);calls++;
+  if(t==S::Tile::Root){
+   for(unsigned i=0;i<4;i++)if(off==S::Slave(i)){
+    v=p.rootSlave.at(i)+(bells==1 && i==1 && inject==Fault::Counter?1:0);return true;
+   }
+  }else{
+   for(unsigned i=0;i<8;i++)if(off==S::Counter(i)){v=p.Count(i);return true;}
+  }
+  return false;
+ }
+ uint64_t Now(){
+  assert(!retained && !closed);calls++;
+  return inject==Fault::Clock && bells==1?0:++now;
+ }
+ void Poll(){
+  assert(!retained && !closed && bells);calls++;
+  if(inject==Fault::Timeout){now+=30000000;return;}
+  for(unsigned i=0;i<256 && p.pc!=p.stopPC && p.pc!=p.faultPC;i++){
+   p.StepBlock();
+   if(p.heldPayload)p.AckPayload(); // physically independent ACK endpoint
+  }
+ }
+ bool FinishStopped(){
+  assert(!retained && !closed && bells==2);calls++;
+  for(unsigned i=0;i<16 && p.pc!=p.stopPC && p.pc!=p.faultPC;i++)p.StepBlock();
+  if(p.pc!=p.stopPC || p.pending || p.heldPayload || inject==Fault::Close)return false;
+  p.CheckEnd();const auto counters=p.rootSlave;
+  for(unsigned i=0;i<2;i++){p.StepBlock();assert(p.pc==p.stopPC && p.rootSlave==counters);}
+  closed=true;return true;
+ }
+ void Retain(){assert(!retained && !closed);retained=true;}
+};
+static void PrepareSequence(MathUnit& p,S::Binding& b)
+{
+ assert(!p.steps);
+ // The generic test fabric uses a made-up DRAM route. Bind only this
+ // fixture's weight endpoint to bank0's real route; leave activation
+ // traffic, the linked instructions and real published proofs alone.
+ assert(p.matrixJob[8]==p.packets.at(p.inputReads).route);
+ for(auto& packet:p.packets)if(packet.tile>=0)packet.route=S::Route;
+ p.matrixJob[8]=S::Route;
+ if(p.converted){
+  p.connected=true;
+  p.boot[S::W::BootIndex]=S::W::BootTag;
+  p.memory[S::Boot+4*S::W::BootIndex]=S::W::BootTag;
+ }
+ p.BootPushed();p.Prepare();p.asynchronous=true;p.delay=3;
+ std::copy(p.boot.begin(),p.boot.end(),b.boot);b.address=p.matrixJob[6];
+}
+#endif
 }
 
 int main(int argc,char** argv){
@@ -324,16 +427,25 @@ int main(int argc,char** argv){
    for(unsigned variant=0;variant<2;variant++){
     auto raw=std::make_unique<MathUnit>(argv[1],argv[2],oldEntry,false,F::Inputs,F::Groups,0,&rawTiles);
     auto wire=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,F::Inputs,F::Groups,0,&rawTiles,&nativeTiles);
-    assert(F::MakeActivation(variant,testInput));raw->FixtureActivation(testInput);wire->FixtureActivation(testInput);
-    raw->delay=3;raw->BootPushed();raw->Prepare();raw->StagePushed();raw->asynchronous=true;
-    raw->AwaitPayload();raw->FinishPushed(true);raw->CheckEnd();raw->StopLocal();
-    wire->StageConnected(Sm7,true);wire->FinishConnected();wire->StopConnected();
+    S::Binding rawBinding,wireBinding;
+    PrepareSequence(*raw,rawBinding);PrepareSequence(*wire,wireBinding);
+    SequenceIO rawIO{*raw},wireIO{*wire};S::Result rawResult,wireResult;
+    for(unsigned arm=0;arm<2;arm++){
+     auto& io=arm?wireIO:rawIO;auto& r=arm?wireResult:rawResult;
+     if(!S::Run(io,arm?S::Arm::Native:S::Arm::Raw,variant,arm?wireBinding:rawBinding,r)){
+      fprintf(stderr,"Q8_SEQUENCE_REFUSAL arm%u stage%u error%u at%x seen%x expected%x\n",
+       arm,unsigned(r.stage),unsigned(r.error),r.at,r.seen,r.expected);
+      assert(false);
+     }
+     assert(io.closed && !io.retained && r.closed && r.stopped && !r.unsafe
+      && r.matrixMicros && r.stage==S::Stage::Complete);
+    }
     assert(raw->pushes==2 && wire->pushes==2 && wire->requests==raw->requests
      && wire->matrixInstructions==raw->matrixInstructions);
     std::array<uint8_t,F::Rows*4> canonical={};
     for(unsigned i=0;i<F::Rows;i++){
-     const uint32_t word=raw->buffers[4096+i];
-     assert(wire->buffers[4096+i]==word && previous[i]!=word);previous[i]=word;
+     const uint32_t word=rawResult.output[i];
+     assert(wireResult.output[i]==word && previous[i]!=word);previous[i]=word;
      for(unsigned b=0;b<4;b++)canonical[i*4+b]=uint8_t(word>>(b*8));
     }
     using Cache=PioneerModelWeightCache;
@@ -342,6 +454,38 @@ int main(int argc,char** argv){
     printf("NATIVE_Q8_WIRE_REAL K%u rows%u variant%u matching_FP32=%u NoCrequests=%u matrix=%u output=%s\n",
      F::Inputs,F::Rows,variant,F::Rows,raw->requests,raw->matrixInstructions,resultHash.c_str());
    }
+   using Failure=SequenceIO::Fault;
+   for(Failure fail:{Failure::Input,Failure::MatrixDevice,Failure::Counter,Failure::Push,Failure::Proof,
+    Failure::Output,Failure::StopBell,Failure::Close,Failure::Clock,Failure::Timeout}){
+    auto p=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,F::Inputs,F::Groups,0,&rawTiles,&nativeTiles);
+    S::Binding b;PrepareSequence(*p,b);SequenceIO io{*p};io.inject=fail;S::Result r;
+    if(fail==Failure::MatrixDevice)p->faultAt=p->inputReads+2; // actual worker parks on missing NoC response
+    assert(!S::Run(io,S::Arm::Native,0,b,r) && io.retained && !io.closed && r.unsafe
+     && !r.stopped && !r.closed && !r.matrixMicros && !r.output[0]);
+    unsigned calls=io.calls;
+    assert(!S::Run(io,S::Arm::Native,0,b,r) && io.calls==calls);
+    if(fail==Failure::Input)assert(r.stage==S::Stage::Input && !io.bells && !io.outputs);
+    if(fail==Failure::MatrixDevice)assert(r.error==S::Error::DeviceFault && r.seen==Push::Fault
+     && p->pc==p->faultPC && !p->pushes && io.bells==1 && !io.outputs);
+    if(fail==Failure::Counter)assert(r.error==S::Error::Counter && r.stage==S::Stage::MatrixSeal && !io.outputs);
+    if(fail==Failure::Push)assert(r.stage==S::Stage::PushReceipt && !io.outputs);
+    if(fail==Failure::Proof)assert(r.stage==S::Stage::MatrixProof && !io.outputs);
+    if(fail==Failure::Output)assert(r.stage==S::Stage::Output && io.outputs==1 && io.bells==1);
+    if(fail==Failure::StopBell)assert(r.stage==S::Stage::StopBell && p->sequence==1);
+    if(fail==Failure::Close)assert(r.error==S::Error::CleanClose && io.bells==2 && io.outputs==F::Rows);
+    if(fail==Failure::Clock)assert(r.error==S::Error::Clock && io.bells==1 && !io.outputs);
+    if(fail==Failure::Timeout)assert(r.error==S::Error::PollLimit && io.bells==1 && !io.outputs && !p->requests);
+   }
+   auto refused=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,F::Inputs,F::Groups,0,&rawTiles,&nativeTiles);
+   S::Binding binding;PrepareSequence(*refused,binding);SequenceIO noIO{*refused};
+   for(unsigned bad=0;bad<4;bad++){
+    auto a=binding;S::Result r;
+    if(bad==0)a.boot[S::W::BootIndex]=0;
+    if(bad==1)a.address++;
+    if(bad==2)a.address=0xc4000000-4096;
+    assert(!S::Run(noIO,S::Arm::Native,bad==3?2:0,a,r) && r.error==S::Error::Binding && !noIO.calls && !noIO.retained);
+   }
+   puts("PASS bounded Q8 sequence: 4 actual worker closures, 10 inert post-failure paths, 4 pre-I/O refusals; modeled adapter");
    assert(source.Stable());
    using Cache=PioneerModelWeightCache;
    const auto rawHash=Cache::Hex(Cache::Hash(fixture->raw.data(),F::Storage));

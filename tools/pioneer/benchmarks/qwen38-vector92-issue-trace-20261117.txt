@@ -327,3 +327,34 @@ physical runner with independent closure and failure receipts.
 
   python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
     SDK PINNED_VECTOR92 --native-q8-wire-real PINNED_WIRE_WORKER /absolute/model.gguf
+
+Bounded execution and failure sequence (offline)
+------------------------------------------------
+The separate sequence is fixed to worker 69 and one 48-row matrix.
+After checking the admitted boot and cleared mailbox, it stages the
+same activation and sends exactly one matrix job. It checks the two
+pushes, all 64 receipt words, all 64 proof words, worker and ROOT slave
+counter deltas (including 122 reads and 4,490 read flits), and 48 finite
+outputs. It then sends a local STOP and requires a separately verified
+stopped-PC and saved-lease close before publishing the output or a
+matrix interval. The interval includes the worker's receipt wait, not
+just Tensix compute. On the first failed check it returns the stage,
+word, actual/expected value where available, and only retains ownership;
+no additional card I/O, reset, retry, fallback, or data publication.
+
+The same sanitizer command now connects this sequence to both actual
+linked worker programs, with modeled controller/NoC. Four cases
+preserved all 96 exact output words and their pinned hashes. Ten
+negative cases withheld input, withheld a NoC reply, corrupted
+counters, receipt, matrix proof or output, failed STOP submission or
+lease close, or regressed/timed out the clock. A withheld NoC reply
+caused the actual linked native worker to publish its fault; the
+sequence neither read an output nor submitted STOP. Four malformed
+bindings were rejected before any adapter I/O. Existing synthetic-wire
+coverage still passes.
+
+The physical adapter is not yet wired: it must verify the actual ROM
+and uploaded byte identities, hold an exclusive ROOT and worker 69
+with the other tiles quiet, expose only the named L1 and counter
+accesses, and prove restored original L1/controls before release.
+No diagnostic was installed and no device timing was measured.
