@@ -395,7 +395,7 @@ int main(int argc,char** argv){
  const char* failureStage=runtime.session && runtime.session->failure
   ? runtime.session->failure:runtime.requestStage;
  const unsigned failureOperation=runtime.session?runtime.session->operation:0;
-#ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
+#if defined(PIONEER_Q38_READINESS_DIAGNOSTIC) || defined(PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC)
  char failure[320];
 #else
  char failure[256];
@@ -409,6 +409,16 @@ int main(int argc,char** argv){
   const size_t at=strlen(failure);
   snprintf(failure+at,sizeof(failure)-at," Native %s stage=%u phase=%u unsafe=%u.",
     action==PioneerQ38TokenControl::Start?"START":"FINISH",stage,phase,unsafe);
+ }
+#endif
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+ if(runtime.session){
+  const auto data=runtime.session->ObservationFailure();
+  if(data.phase){
+   const size_t at=strlen(failure);
+   snprintf(failure+at,sizeof(failure)-at," Native observation phase=%u check=%u word=%u root_error=%08x.",
+    data.phase,data.check,data.word,data.error);
+  }
  }
 #endif
  runtime.failed=true;runtime.lost=true;if(runtime.session)runtime.session->Abort();

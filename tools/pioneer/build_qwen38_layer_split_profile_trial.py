@@ -32,26 +32,33 @@ PACKAGE={
         'b81b275f6a9b564b30ebf2246d87439f8d46427243bf587d962d8f8493e83a17',
         '6970a0cef948abbcb2f6fe5d6def306dfb2073cfd7b7edc60c5186279f50c642',
         'ca317de33c616f79b6a013b69624869be66ad4f4ce495ffc3f693f4e647fb274'),
+    'observation': ('2026111700010224',
+        '76f7448d3d4fe29247c032e84f40ee5393ee3e0203757edd2daeb49d2172d3b2',
+        'fc50b50fa8c34d938e26e93cdb91cfd79fe540e71112844c57601bb517c65815',
+        'bce683e79be35e5b89d5e172df2e2551d197b5eee4738c5e9d4c73108af38ee5'),
 }
 RECIPE_MANIFEST='0293066d8d872861bb3150a736e45e89d51f1ffece9bccb30cfbef40e663952f'
 LIVE_MANIFEST='d2666936f624f65b6eeaeab9a42776943aef88b62fdfb1f5c8f4414be2ac4d7a'
 WIRE_MANIFEST='75603557a948fca8ac7f5efea288930ae0c0e6811a175b9fd9b521616881834a'
+OBSERVATION_MANIFEST='343247c17d5442c21bb7ff088d7a8bf76f2824bac819d56b02c97659f90c845f'
 HEAD_MANIFEST={'raw':'ef960d3ba6126f190efe6d7ffa03c2fe7e15702638d5356ee8c9265d7514f79a',
                'wire':'bbb8c18cff9259b464c961efae83c42b42c78a8619f651341ac62fb29adcb38f'}
 POSTFLIGHT=Path(__file__).with_name('pioneer_q38_layer_split_postflight.sh')
 POSTFLIGHT_SHA='22242231188928d8277e8aa37833d78cbb07673a7c207b8c0d9cc050af06f375'
 
 
-def bind(start,live=False,*,recipe=False,wire=False,head=None):
-    assert all(type(v) is bool for v in (live,recipe,wire)) and head in (None,'raw','wire')
-    assert sum((live,recipe,wire,head is not None))<=1
-    if wire or head:
+def bind(start,live=False,*,recipe=False,wire=False,head=None,observation=False):
+    assert all(type(v) is bool for v in (live,recipe,wire,observation)) and head in (None,'raw','wire')
+    assert sum((live,recipe,wire,observation,head is not None))<=1
+    if wire or head or observation:
         if head:
             text=bind_raw_pair(head,start,{v:PACKAGE['head-'+v] for v in HEAD_MANIFEST},
                                'profile-head','v4 head batch','PROFILE_HEAD')
+        elif observation:
+            text=bind_raw_pair('observation',start,PACKAGE,'native-q8','native Q8','NATIVE_Q8_OBSERVATION')
         else:
             text=bind_raw_pair('wire',start,PACKAGE,'native-q8','native Q8','NATIVE_Q8')
-        manifest=HEAD_MANIFEST[head] if head else WIRE_MANIFEST
+        manifest=HEAD_MANIFEST[head] if head else OBSERVATION_MANIFEST if observation else WIRE_MANIFEST
         old='\texact "$candidate" "$candidateHash" || fail candidate_driver'
         assert text.count(old)==1
         return text.replace(old,old+f'\n\texact "$stage/manifest.json" {manifest} || fail manifest',1)
@@ -61,12 +68,13 @@ def bind(start,live=False,*,recipe=False,wire=False,head=None):
 
 def postflight(start,parent,variant):
     """Read only; use the actual parent identity after its observed exit."""
-    manifests={'recipe':RECIPE_MANIFEST,'live':LIVE_MANIFEST,'wire':WIRE_MANIFEST,
+    manifests={'recipe':RECIPE_MANIFEST,'live':LIVE_MANIFEST,'wire':WIRE_MANIFEST,'observation':OBSERVATION_MANIFEST,
                **{'head-'+v:manifest for v,manifest in HEAD_MANIFEST.items()}}
     if variant not in manifests:
         raise ValueError('unknown postflight role')
     head=variant.removeprefix('head-') if variant.startswith('head-') else None
-    runner=bind(start,live=variant=='live',recipe=variant=='recipe',wire=variant=='wire',head=head)
+    runner=bind(start,live=variant=='live',recipe=variant=='recipe',wire=variant=='wire',head=head,
+                observation=variant=='observation')
     if not re.fullmatch(r'[1-9][0-9]{0,8}',parent):
         raise ValueError('supply the observed positive detached parent team')
     template=POSTFLIGHT.read_bytes()
@@ -76,7 +84,7 @@ def postflight(start,parent,variant):
     generation=int(start)+2
     control,candidate=PACKAGE['candidate'],PACKAGE[variant]
     tag,manifest=candidate[0][-3:],manifests[variant]
-    stage=(f'profile-head-{head}-{tag}' if head else f'native-q8-wire-{tag}' if variant=='wire'
+    stage=(f'profile-head-{head}-{tag}' if head else f'native-q8-{variant}-{tag}' if variant in ('wire','observation')
            else f'layer-split-{variant}-{tag}')
     changes=[
         ('tag213 generation3',f'tag{tag}'),
@@ -106,15 +114,17 @@ def main():
     live=len(sys.argv)==4 and sys.argv[3]=='--live-image-check'
     recipe=len(sys.argv)==4 and sys.argv[3]=='--recipe-batch'
     wire=len(sys.argv)==4 and sys.argv[3]=='--native-q8-wire'
+    observation=len(sys.argv)==4 and sys.argv[3]=='--native-q8-observation'
     head={'--head-batch-v4':'raw','--native-q8-head-batch-v4':'wire'}.get(sys.argv[3]) if len(sys.argv)==4 else None
-    variants={'--'+v+'-postflight':v for v in ('recipe','live','wire','head-raw','head-wire')}
+    variants={'--'+v+'-postflight':v for v in ('recipe','live','wire','head-raw','head-wire','observation')}
     closure=len(sys.argv)==5 and sys.argv[3] in variants
-    if not __debug__ or (len(sys.argv)!=3 and not (live or recipe or wire or closure or head)):
+    if not __debug__ or (len(sys.argv)!=3 and not (live or recipe or wire or observation or closure or head)):
         raise SystemExit('use OBSERVED_STABLE_GENERATION NEW_SCRIPT '
-                         '[--live-image-check|--recipe-batch|--native-q8-wire|--head-batch-v4|--native-q8-head-batch-v4|'
+                         '[--live-image-check|--recipe-batch|--native-q8-wire|--native-q8-observation|--head-batch-v4|--native-q8-head-batch-v4|'
                          +'|'.join(k+' PARENT' for k in variants)+']')
     generation,path=sys.argv[1:3]
-    text=postflight(generation,sys.argv[4],variants[sys.argv[3]]) if closure else bind(generation,live,recipe=recipe,wire=wire,head=head)
+    text=postflight(generation,sys.argv[4],variants[sys.argv[3]]) if closure else bind(
+        generation,live,recipe=recipe,wire=wire,head=head,observation=observation)
     output=text.encode('ascii')
     with Path(path).open('xb') as dest:
         dest.write(output)

@@ -17,7 +17,7 @@ sys.path.insert(0,str(HERE.parent))
 from build_qwen38_vector92_ffn_trial import bind as bind_ffn
 from build_qwen38_vector_resident_trial import bind as bind_resident
 from build_qwen38_layer_split_profile_trial import (bind as bind_layer_split, HEAD_MANIFEST,
-                                                    WIRE_MANIFEST, postflight, recipe_postflight)
+                                                    WIRE_MANIFEST, OBSERVATION_MANIFEST, postflight, recipe_postflight)
 FAKES = runpy.run_path(str(SEED_TEST))['FAKES']
 FAKES = FAKES.replace('installed=$stage/installed', 'pairLock=$stage/shared-lock\ninstalled=$stage/installed')
 FAKES = FAKES.replace('metadata "$stableTag" 1', 'metadata "$stableTag" "$PIONEER_FAKE_GEN"')
@@ -50,9 +50,10 @@ def resident(variant, start):
 
 
 def layer_split(variant,start):
-    assert variant in ('candidate','live','recipe','wire','head-raw','head-wire')
+    assert variant in ('candidate','live','recipe','wire','head-raw','head-wire','observation')
     return bind_layer_split(start, variant=='live', recipe=variant=='recipe', wire=variant=='wire',
-                            head=variant[5:] if variant.startswith('head-') else None)
+                            head=variant[5:] if variant.startswith('head-') else None,
+                            observation=variant=='observation')
 
 def main():
     for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector'),(layer_split,'candidate')):
@@ -87,7 +88,8 @@ def main():
         trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
                 (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'),
                 (layer_split,'candidate',10,'213'),(layer_split,'live',12,'214'),(layer_split,'recipe',14,'216'),
-                (layer_split,'wire',16,'217'),(layer_split,'head-raw',18,'218'),(layer_split,'head-wire',20,'219'))
+                (layer_split,'wire',16,'217'),(layer_split,'head-raw',18,'218'),(layer_split,'head-wire',20,'219'),
+                (layer_split,'observation',4,'224'))
         tested=0
         for index, (builder, name, start, suffix) in enumerate(trials):
             source = builder(name, str(start))
@@ -107,6 +109,7 @@ def main():
             if builder is layer_split:
                 stage_name='layer-split-'+name
                 if name=='wire':stage_name='native-q8-wire';manifest=WIRE_MANIFEST
+                if name=='observation':stage_name='native-q8-observation';manifest=OBSERVATION_MANIFEST
                 if name.startswith('head-'):
                     stage_name='profile-'+name;manifest=HEAD_MANIFEST[name[5:]]
                 written=f'stage=/boot/home/pioneer-q38-{stage_name}-{suffix}\n'

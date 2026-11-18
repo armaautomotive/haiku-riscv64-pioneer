@@ -63,6 +63,11 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exa
 #else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
 #endif
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+#include "PioneerQ38NativeQ8FailureReceipt.h"
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111700010224),
+ "Observation diagnostics requires the distinct tag224 worker");
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_CURRENT_WORKER
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010102),
  "Assistant client must target the distinct tag102 current prepared-Q4 worker role");
@@ -88,7 +93,9 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #ifdef PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE
 static_assert(PioneerQ38FullOffload::BuildTag==
-#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+ UINT64_C(0x2026111700010224) &&
+#elif defined(PIONEER_Q38_HEAD_BATCH_V4_PACKAGE)
  UINT64_C(0x2026111700010219) &&
 #else
  UINT64_C(0x2026111700010217) &&
@@ -126,6 +133,9 @@ template<class IO,class Source=PioneerQ38PublicModelSource
  >
 class PioneerQ38FullOffloadSession {
  using Packet=PioneerQ38TokenControl::Packet;
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+ PioneerQ38NativeQ8FailureReceipt::Receipt observationFailure;
+#endif
 #ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
  struct BackendFailure {unsigned action=0,stage=0,phase=0,unsafe=0;};
  BackendFailure backendFailure;
@@ -293,6 +303,9 @@ class PioneerQ38FullOffloadSession {
   if(!PioneerQ38FullOffload::RequestShape(*packet))return false;
   const auto request=q;
   if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet)){
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+   if(action==P::Observe)PioneerQ38NativeQ8FailureReceipt::Read(*packet,request,observationFailure);
+#endif
 #ifdef PIONEER_Q38_READINESS_DIAGNOSTIC
    ObserveBackendFailure(request,action); // no second ioctl, cleanup, or recovery permission
 #endif
@@ -489,12 +502,20 @@ public:
   namespace F=PioneerQ38FullOffload;
   if((state!=Running && state!=Terminal) || !F::CounterRequest(output))return false;
   F::CounterPacket packet;const auto request=packet.request;
-  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER,packet)
-   || std::memcmp(&packet.request,&request,sizeof(request)) || !F::CounterReply(packet)
+  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER,packet)){
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+   PioneerQ38NativeQ8FailureReceipt::Read(packet,request,observationFailure);
+#endif
+   return Stop("counter");
+  }
+  if(std::memcmp(&packet.request,&request,sizeof(request)) || !F::CounterReply(packet)
    || packet.reply.detail[8]!=limit || packet.reply.detail[9]!=prompts
    || packet.reply.detail[7]<observedCount || (state==Terminal && packet.reply.detail[7]!=committed))return Stop("counter");
   observedCount=packet.reply.detail[7];output=packet;return true;
  } // read-only progress only;does NOT set Terminal,Held,Drained or Complete
+#endif
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+ PioneerQ38NativeQ8FailureReceipt::Receipt ObservationFailure()const{return observationFailure;}
 #endif
  bool Poll(){
   if(state!=Running)return false;

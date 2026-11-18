@@ -20,6 +20,7 @@ RECIPE_TAG='0x2026111700010216'
 WIRE_TAG='0x2026111700010217'
 RAW_HEAD_TAG='0x2026111700010218'
 WIRE_HEAD_TAG='0x2026111700010219'
+WIRE_DIAG_TAG='0x2026111700010224'
 OLD_TAG='0x2026110600010116'
 MARKER='PIONEER_Q38_FAST_DECODE_SPLIT_PACKAGE'
 LIVE_MARKER='PIONEER_Q38_SPAN_LIVE_IMAGE_CHECK'
@@ -28,12 +29,14 @@ RECIPE_ROOT_MARKER='PIONEER_Q38_TOKEN_RECIPE_BATCH_IMAGE'
 WIRE_MARKER='PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE'
 WIRE_IMAGE_MARKER='PIONEER_Q38_TWIN_NATIVE_Q8_WIRE'
 HEAD_MARKER='PIONEER_Q38_HEAD_BATCH_V4_PACKAGE'
+WIRE_DIAG_MARKER='PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC'
 STAGE='/boot/home/pioneer-q38-layer-split-candidate-213'
 LIVE_STAGE='/boot/home/pioneer-q38-layer-split-live-214'
 RECIPE_STAGE='/boot/home/pioneer-q38-layer-split-recipe-216'
 WIRE_STAGE='/boot/home/pioneer-q38-native-q8-wire-217'
 RAW_HEAD_STAGE='/boot/home/pioneer-q38-profile-head-raw-218'
 WIRE_HEAD_STAGE='/boot/home/pioneer-q38-profile-head-wire-219'
+WIRE_DIAG_STAGE='/boot/home/pioneer-q38-native-q8-observation-224'
 PROGRAMS='PioneerQ38FullOffloadFastDecodePrograms'
 V3_PROGRAMS_SHA='3fd94232de0b045e5a74c41d59e0f80b8dba0369e54974a77e62800bf5106f8a'
 V4_PROGRAMS_SHA='66938ea74e8d08a7cb66b0ecce10b09ec7ea2c80d59a0e7266a41249826fe9b1'
@@ -48,6 +51,7 @@ MODES={
     '--native-q8-wire':(WIRE_TAG,WIRE_STAGE,WIRE_PROGRAMS_SHA),
     '--head-batch-v4':(RAW_HEAD_TAG,RAW_HEAD_STAGE,RAW_HEAD_SHA),
     '--native-q8-head-batch-v4':(WIRE_HEAD_TAG,WIRE_HEAD_STAGE,WIRE_HEAD_SHA),
+    '--native-q8-observation':(WIRE_DIAG_TAG,WIRE_DIAG_STAGE,WIRE_PROGRAMS_SHA),
 }
 
 
@@ -61,6 +65,75 @@ def edit(path, changes):
         assert text.count(old)==count,(path,old)
         text=text.replace(old,new)
     path.write_text(text)
+
+
+def diagnostic_overlay(here,pioneer,drivers):
+    """Import only the failure branches onto the frozen tag217 data path."""
+    current=(here.parents[1]/DRIVER_DIR/'PioneerQ38TokenNativeOwner.h').read_text()
+    def snippet(first,last):
+        assert current.count(first)==1,first
+        return first+current.split(first,1)[1].split(last,1)[0]
+    initial=snippet('#ifdef '+WIRE_DIAG_MARKER+'\n  auto unavailable=', '  uint32_t terminal[64]')
+    header=snippet('#elif defined('+WIRE_DIAG_MARKER+')\n  if(!io.TokenMemoryReadChecked',
+                   '#else\n  if(!io.TokenMemoryReadChecked(0,R::Status+12,marker)')
+    owner=drivers/'PioneerQ38TokenNativeOwner.h'
+    guard='#ifdef '+WIRE_DIAG_MARKER+'\n'
+    terminal_reads=('  if(!Sources(io,0))return Fail(io,r);\n  r.secondPC=io.RuntimePcRead();\n'
+                    '  if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);\n'
+                    '  if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return Fail(io,r);')
+    edit(owner,[
+        ('#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE)',
+         '#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE) || defined('+WIRE_DIAG_MARKER+')',1),
+        ('  r.started=1;r.phase=9;\n  if(!Sources(io,0))return Fail(io,r);\n',
+         '  r.started=1;r.phase=9;\n'+initial,1),
+        ('#else\n  if(!io.TokenMemoryReadChecked(0,R::Status+12,marker)',
+         header+'#else\n  if(!io.TokenMemoryReadChecked(0,R::Status+12,marker)',1),
+        # Tag217 already checked its ROOT boot seal before looking for a
+        # terminal. Preserve that order (including on a pending poll).
+        (terminal_reads,
+         guard+'  if(!Sources(io,0))return unavailable(6);\n  r.secondPC=io.RuntimePcRead();\n'
+         '  if(!Sources(io,0) || !RootBootSeal(io,r.word))return unavailable(9);\n'
+         '  if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return unavailable(7);\n'
+         '  if(terminal[0] && terminal[0]!=T::TerminalMagic)return unavailable(8);\n'
+         '#else\n'+terminal_reads+'\n#endif',1)])
+    for file in ('PioneerQ38NativeQ8FailureReceipt.h','PioneerQ38FullOffloadRateDeadline.h'):
+        shutil.copyfile(here/file,pioneer/file)
+    shutil.copyfile(here/'pioneer_q38_full_offload_smoke.cpp',pioneer/'q38-observation-channel.cpp')
+    (pioneer/'q38-observation-rate.cpp').write_text((here/'pioneer_q38_full_offload_rate_smoke.cpp').read_text()
+                                                  .replace('pioneer_q38_full_offload_smoke.cpp','q38-observation-channel.cpp',1))
+    old_control='  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;'
+    old_counter='  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER,packet)\n   || std::memcmp(&packet.request,&request,sizeof(request))'
+    edit(pioneer/'PioneerQ38FullOffloadSession.h',[
+        (' using Packet=PioneerQ38TokenControl::Packet;',
+         ' using Packet=PioneerQ38TokenControl::Packet;\n'+guard+
+         ' PioneerQ38NativeQ8FailureReceipt::Receipt observationFailure;\n#endif',1),
+        ('#include "PioneerQ38PublicModelSource.h"',
+         '#include "PioneerQ38PublicModelSource.h"\n'+guard+'#include "PioneerQ38NativeQ8FailureReceipt.h"\n#endif',1),
+        (old_control,guard+'  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL,*packet)){\n'
+         '   if(action==P::Observe)PioneerQ38NativeQ8FailureReceipt::Read(*packet,request,observationFailure);\n'
+         '   return false;\n  }\n  if(std::memcmp(&q,&request,sizeof(q)))return false;\n'
+         '#else\n'+old_control+'\n#endif',1),
+        (old_counter,guard+'  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER,packet)){\n'
+         '   PioneerQ38NativeQ8FailureReceipt::Read(packet,request,observationFailure);\n'
+         '   return Stop("counter");\n  }\n  if(std::memcmp(&packet.request,&request,sizeof(request))\n'
+         '#else\n'+old_counter+'\n#endif\n',1),
+        (' bool Poll(){',guard+' PioneerQ38NativeQ8FailureReceipt::Receipt ObservationFailure()const{return observationFailure;}\n'
+         '#endif\n bool Poll(){',1)])
+    old_fatal=(' runtime.failed=true;runtime.lost=true;if(runtime.session)runtime.session->Abort();\n'
+               ' runtime.Emit(A::Error,A::Fatal,"Full-card execution/channel failed: close only,retained owners,no END/retry/reset or CPU fallback.");')
+    edit(pioneer/'pioneer_assistant_qwen27_full_offload.cpp',[
+        (old_fatal,guard+''' const char* stage=runtime.session && runtime.session->failure?runtime.session->failure:"channel";
+ char report[224];const auto data=runtime.session?runtime.session->ObservationFailure():PioneerQ38NativeQ8FailureReceipt::Receipt{};
+ snprintf(report,sizeof(report),"Full-card failure stage=%s observation_phase=%u check=%u word=%u root_error=%08x;close only;no END/retry/reset or CPU fallback.",
+          stage,data.phase,data.check,data.word,data.error);
+ runtime.failed=true;runtime.lost=true;if(runtime.session)runtime.session->Abort();
+ runtime.Emit(A::Error,A::Fatal,report);
+#else
+'''+old_fatal+'\n#endif',1)])
+    edit(pioneer/'build_assistant_qwen27_fast_decode_full_offload.py',[
+        ("client_command = old['rate_command'][:]",
+         "client_command = old['rate_command'][:]\n"
+         "client_command[client_command.index(str(here/'pioneer_q38_full_offload_rate_smoke.cpp'))] = str(here/'q38-observation-rate.cpp')",1)])
 
 
 def verify_head_journal(pioneer,drivers,image,out,tag,wire):
@@ -93,7 +166,8 @@ def main():
         raise SystemExit('use SDK FROZEN_LLAMA_LIBRARIES ROOT_DIAGNOSTIC_OR_WIRE_PAIR NEW_OUTPUT ['
                          +'|'.join(MODES)+']')
     recipe=mode=='--recipe-batch'
-    wire=mode in ('--native-q8-wire','--native-q8-head-batch-v4')
+    diagnostic=mode=='--native-q8-observation'
+    wire=diagnostic or mode in ('--native-q8-wire','--native-q8-head-batch-v4')
     head=mode in ('--head-batch-v4','--native-q8-head-batch-v4')
     fast_upload=(mode=='--live-image-check') or wire or head
     sdk,libraries,image,out=map(Path,sys.argv[1:5])
@@ -119,7 +193,7 @@ def main():
     reference=prog.read_text()
     generated=out/'split-programs.h'
     subprocess.run([sys.executable,here/'generate_qwen38_fast_decode_profile_programs.py',image,generated,
-                    '--layer-split' if mode=='--live-image-check' else mode],cwd=out,check=True)
+                    '--layer-split' if mode=='--live-image-check' else '--native-q8-wire' if diagnostic else mode],cwd=out,check=True)
     assert sha(generated)==programs_sha
     replacement=generated.read_text()
     old={label:digest for digest,label in ARRAY.findall(reference)}
@@ -168,6 +242,7 @@ def main():
         insert_wire(pioneer,'PioneerQ38SelectedGlobalWorker.h',
                     'namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PushedWorkerLayout;\n',
                     ',PioneerQ38SelectedWorkerHybrid=0')
+    if diagnostic:diagnostic_overlay(here,pioneer,drivers)
     kernel_check=(f'#if !defined({LIVE_MARKER}) || {LIVE_MARKER} != 1\n'
                   '#error Layer split requires the selected live-image audit\n#endif\n') if fast_upload else (
                   f'#ifdef {LIVE_MARKER}\n#error Layer split requires the original full span audit\n#endif\n')
@@ -180,12 +255,15 @@ def main():
     head_check=(f'#if !defined({HEAD_MARKER}) || {HEAD_MARKER} != 1\n'
                 '#error Layer split requires the exact V4 head batch journal selector\n#endif\n') if head else (
                 f'#ifdef {HEAD_MARKER}\n#error Layer split requires its original journal\n#endif\n')
+    diagnostic_check=(f'#if !defined({WIRE_DIAG_MARKER}) || {WIRE_DIAG_MARKER} != 1\n'
+                      '#error Layer split requires its exact observation diagnostic selector\n#endif\n') if diagnostic else (
+                      f'#ifdef {WIRE_DIAG_MARKER}\n#error Layer split requires its original observation path\n#endif\n')
     edit(drivers/'PioneerQ38FullOffloadFastDecodeRole.h',[
         (OLD_TAG,tag,1),('actual native tag116','actual native '+label,1),
         ('#ifdef _KERNEL_MODE',f'#if !defined({MARKER}) || {MARKER} != 1 \\\n'
           f' || defined(PIONEER_Q38_LAYER_SPLIT_PROFILE_IMAGE) || defined({RECIPE_ROOT_MARKER})\n'
           f'#error Layer split requires exact separate {label} package binding\n#endif\n'
-          +recipe_check+wire_check+head_check+
+          +recipe_check+wire_check+head_check+diagnostic_check+
           '#ifdef _KERNEL_MODE\n'+kernel_check.rstrip(),1)])
     edit(pioneer/'pioneer_assistant_qwen27_full_offload.cpp',[
         ('Full-card fast decode profile ', 'Full-card layer split profile ',2)])
@@ -195,6 +273,7 @@ def main():
     if recipe:user_args+=f", '-D{RECIPE_MARKER}=1'"
     if wire:user_args+=f", '-D{WIRE_MARKER}=1'"
     if head:user_args+=f", '-D{HEAD_MARKER}=1'"
+    if diagnostic:user_args+=f", '-D{WIRE_DIAG_MARKER}=1'"
     native_args=f"'-DPIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE=1', {user_args}"
     if fast_upload:native_args+=f", '-D{LIVE_MARKER}=1'"
     if wire:native_args+=f", '-D{WIRE_IMAGE_MARKER}=1'"
@@ -235,6 +314,8 @@ def main():
             if fast_upload:cases.append(['-DPIONEER_Q38_SPAN_REUSE_CODE=1'])
             if wire:cases.append(['-U'+WIRE_IMAGE_MARKER])
         else:cases.append(['-DPIONEER_Q38_WORK_INFERENCE=1'])
+        if diagnostic:
+            cases.extend((['-U'+WIRE_DIAG_MARKER],['-U'+WIRE_DIAG_MARKER,'-D'+WIRE_DIAG_MARKER+'=0']))
         if wire:
             cases.extend((['-U'+WIRE_MARKER],['-U'+WIRE_MARKER,'-D'+WIRE_MARKER+'=0'],['-DPIONEER_Q38_NATIVE_Q8_LAYOUT=1']))
         if head:
@@ -262,6 +343,7 @@ def main():
         subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                         '-fsanitize=address,undefined',test,'-o',binary],check=True)
         subprocess.run([binary],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
+    if diagnostic:manifest['same_ioctl_fault_receipts']=True
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
     peers='matched native Q8 wire peers' if wire else 'identical ten vector92 peers'
     print(f'PASS BUILD ONLY {label}: 15 final linked arrays, {peers}, v4 held timing, '

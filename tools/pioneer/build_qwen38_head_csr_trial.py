@@ -29,6 +29,7 @@ def bind_raw_pair(variant, start, packages, route, title, marker, *, resident=Fa
                                             ('ffn-retained','retained FFN','FFN_RETAINED',False),
                                             ('layer-split','layer split profile','LAYER_SPLIT',False),
                                             ('native-q8','native Q8','NATIVE_Q8',False),
+                                            ('native-q8','native Q8','NATIVE_Q8_OBSERVATION',False),
                                             ('profile-head','v4 head batch','PROFILE_HEAD',False),
                                             ('resident','vector resident','VECTOR_RESIDENT',True))
     if variant not in packages or not re.fullmatch(r'[1-9][0-9]{0,5}', start):

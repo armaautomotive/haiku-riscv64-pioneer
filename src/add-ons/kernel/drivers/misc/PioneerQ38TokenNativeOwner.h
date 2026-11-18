@@ -851,7 +851,7 @@ public:
   if(count<frontierLast)return failed(9);
   if(count>frontierLimit)return failed(10);
   if(terminalObserved && count!=observedTerminal[3])return failed(11);
-#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE)
+#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE) || defined(PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC)
   // Private,explicitly selected diagnostic ONLY. Same original ordered IO
   // and fail/retain decision. Never read anything after a failed check.
   // Nonzero reserved words exist ONLY on failure:the old v1 ReplyShape
@@ -942,7 +942,16 @@ private:
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
   if(terminalObserved!=recheck || holding || held || !ExecutionStarted() || !Scope(io))return false;
   r.started=1;r.phase=9;
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+  auto unavailable=[&](unsigned check,uint32_t error=0){
+   r.reserved[0]=0x31544e51U+check; // QNT1+check only on the failing reply
+   r.reserved[1]=error;
+   return Fail(io,r);
+  };
+  if(!Sources(io,0))return unavailable(1);
+#else
   if(!Sources(io,0))return Fail(io,r);
+#endif
   uint32_t terminal[64],boot[64],job[64],status[16],counters[8],progress[3],cancel=0;
   uint32_t marker=0,error=0;
 #ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
@@ -957,14 +966,26 @@ private:
    }
    return Fail(io,r); // retain owner;no terminal,HOLD,following IO or implicit END
   }
+#elif defined(PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC)
+  if(!io.TokenMemoryReadChecked(0,R::Status+12,marker))return unavailable(2);
+  if(marker!=T::Magic)return unavailable(3);
+  if(!io.TokenMemoryReadChecked(0,R::Status+8,error))return unavailable(4);
+  if(error)return unavailable(5,error); // no additional read after observing failure
 #else
   if(!io.TokenMemoryReadChecked(0,R::Status+12,marker) || marker!=T::Magic
    || !io.TokenMemoryReadChecked(0,R::Status+8,error) || error)return Fail(io,r);
 #endif
   r.firstPC=io.RuntimePcRead();
+#ifdef PIONEER_Q38_NATIVE_Q8_OBSERVATION_DIAGNOSTIC
+  if(!Sources(io,0))return unavailable(6);
+  r.secondPC=io.RuntimePcRead();
+  if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return unavailable(7);
+  if(terminal[0] && terminal[0]!=T::TerminalMagic)return unavailable(8);
+#else
   if(!Sources(io,0))return Fail(io,r);
   r.secondPC=io.RuntimePcRead();
   if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return Fail(io,r);
+#endif
   if(!terminal[0])return recheck ? Fail(io,r) : Sources(io,0) ? true : Fail(io,r); // a published marker cannot regress
   if(terminal[0]!=T::TerminalMagic)return Fail(io,r);
   // Pending polling is observation-only and grants no completion/cleanup

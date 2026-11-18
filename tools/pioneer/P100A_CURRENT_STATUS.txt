@@ -146,6 +146,17 @@ stable041 gen4, cleared lock, full CPUs/RAM and all nine evidence hashes.
 Tag223 is spent. The earlier full-model native failure is still not
 localized. No Assistant or 27B end-to-end rate change is claimed.
 
+Strict Haiku SSH at 10.0.0.247 confirmed stable041 gen4 before the
+separate tag224 full-model diagnostic. It runs the same 15 on-card
+programs as tag217 and reports a bounded failure phase from the
+existing observation response; it adds no device reads or CPU
+inference. Independent builds matched. The first launcher refused
+before touching the driver. The corrected launcher (team 1180) spent
+the one-shot stage, verified tag224 gen5, and reached real model
+authentication. Trial and stable-driver restoration are pending;
+this is not an inference or speed result. Assistant is unchanged.
+See benchmarks/qwen38-vector92-issue-trace-20261117.txt.
+
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
 Radeon's previous root). The initial scans, one default-target link

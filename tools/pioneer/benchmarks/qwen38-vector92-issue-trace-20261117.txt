@@ -574,3 +574,32 @@ latency improvement on this exact shard. It does not identify the
 earlier tag217 full-model failure or establish a model speedup.
 The next full-model attempt needs a separately pinned phase/fault
 receipt to stop on and identify the first failing cohort phase.
+
+Tag224 full-model failure observation
+------------------------------------
+Tag224 adds a bounded failure receipt to the existing OBSERVE response.
+It distinguishes the existing ROOT terminal checks from the failure-only
+QFD1 snapshot, reports only validated packet fields, and does not sample
+any new MMIO or change failure ownership. It is a separately gated
+diagnostic role, not Work or CPU-reference mode. All 15 on-card ELF
+arrays match tag217 byte for byte. The default43 and vector92 control
+builds remain byte-identical to their pins. Offline coverage includes
+25 new role refusals, 21 valid failure receipts and 23 rejects under
+ASan/UBSan, receive/timeout/frame failure tests, 161 fake runner cases,
+and the startup contract for all 119+973 original raw Q6 jobs.
+
+Two separate SDK builds produced identical package manifests:
+  Driver:   76f7448d3d4fe29247c032e84f40ee5393ee3e0203757edd2daeb49d2172d3b2
+  Worker:   fc50b50fa8c34d938e26e93cdb91cfd79fe540e71112844c57601bb517c65815
+  Client:   bce683e79be35e5b89d5e172df2e2551d197b5eee4738c5e9d4c73108af38ee5
+  Manifest: 343247c17d5442c21bb7ff088d7a8bf76f2824bac819d56b02c97659f90c845f
+  Gen4 runner: 596d6a7de6b67f0e4889337f53a0ce1b70341552eefe0d55bf5b24a4668afd4d
+
+Strict SSH preflight confirmed stable041 generation4 idle and all CPU/RAM.
+The first detached wrapper itself broke `ps` line parsing and was refused
+before the one-shot marker or any driver change. Its exit1 and logs are
+preserved separately. The corrected single-line wrapper (team 1180)
+armed the stage, verified tag224 generation5 and began authentication of
+the 18,973,870,528-byte model. This checkpoint contains no new model
+output, throughput measurement, or stable-driver restoration proof.
+Do not replay the spent stage or operate on the driver while it is live.
