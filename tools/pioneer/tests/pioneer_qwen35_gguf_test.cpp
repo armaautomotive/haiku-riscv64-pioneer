@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Actual packed reader and role checks, independently authenticated file.
 #include "../PioneerQwen35FleetPlan.h"
-#include "../PioneerQwen35DeviceLayoutBuild.h"
+#include "../PioneerQwen35Preload.h"
+#include "../PioneerQwen35ManifestValidation.h"
 #include "../PioneerModelWeightCache.h"
 #include "../TenstorrentGgufQuant.h"
 #include <array>
@@ -18,6 +19,89 @@ static bool SameFile(const struct stat& a,const struct stat& b) {
 #else
  return a.st_mtim.tv_nsec==b.st_mtim.tv_nsec && a.st_ctim.tv_nsec==b.st_ctim.tv_nsec;
 #endif
+}
+
+static void CheckPreload(PioneerQwen35Gguf& model, const PioneerQwen35PackedPlan& plan,
+ const PioneerQwen35::DeviceLayout& manifest) {
+ namespace D=PioneerQwen35;
+ D::Range rope{};
+ assert(D::ResolveRope(manifest,plan,rope) && rope.bank==0 && rope.bytes==128*D::Rotary*4);
+ std::array<uint8_t,D::LoadPageBytes> ropePage{};
+ D::Range partial={0,rope.address,17*D::Rotary*4};
+ assert(D::FillRope(partial,D::LoadPageBytes,ropePage.size(),ropePage.data()));
+ float pair[2];
+ memcpy(pair,ropePage.data(),sizeof(pair));
+ for (unsigned i=D::Rotary*4; i<ropePage.size(); i++) assert(!ropePage[i]);
+ assert(pair[0]==std::cos(16.0f) && pair[1]==std::sin(16.0f));
+ assert(!D::FillRope(rope,1,ropePage.size(),ropePage.data()));
+
+ auto buffer=std::make_unique<uint8_t[]>(D::LoadSpanBytes);
+ const auto& parts=plan.Parts();
+ const unsigned pagesPerBank=unsigned(plan.Capacity/D::LoadPageBytes);
+ std::vector<uint8_t> initialized(D::Banks*pagesPerBank);
+ uint64_t expected=rope.bytes;
+ for (const auto& part:parts)
+  if (part.kind==PIONEER_Q35_WEIGHT) expected+=part.allocated;
+ unsigned fragment=0, at=0, ropeAt=0, calls=0;
+ uint64_t accepted=0, reported=0;
+ auto check=[&](unsigned bank,unsigned offset,unsigned bytes,const uint8_t* data) {
+  assert(bytes && bytes<=D::LoadSpanBytes && !(bytes&(D::LoadPageBytes-1)));
+  while (fragment<parts.size() && parts[fragment].kind!=PIONEER_Q35_WEIGHT) fragment++;
+  if (fragment<parts.size()) {
+   const auto& part=parts[fragment];
+   assert(bank==part.bank && offset==part.proposedAddress-D::BankBase+at && at+bytes<=part.allocated);
+   assert(plan.ReadWeightPage(model,fragment,(at+bytes)/D::LoadPageBytes-1,ropePage.data(),ropePage.size()));
+   assert(!memcmp(data+bytes-ropePage.size(),ropePage.data(),ropePage.size()));
+   at+=bytes;
+   if (at==part.allocated) { fragment++; at=0; }
+  } else {
+   assert(bank==rope.bank && offset==rope.address-D::BankBase+ropeAt && ropeAt+bytes<=rope.bytes);
+   assert(D::FillRope(rope,ropeAt,ropePage.size(),ropePage.data()));
+   assert(!memcmp(data,ropePage.data(),ropePage.size()));
+   ropeAt+=bytes;
+  }
+  for (unsigned i=0; i<bytes/D::LoadPageBytes; i++) {
+   auto& bit=initialized.at(bank*pagesPerBank+offset/D::LoadPageBytes+i);
+   assert(!bit);
+   bit=1;
+  }
+  accepted+=bytes;
+  calls++;
+  return true;
+ };
+ assert(!D::UploadModel(model,plan,manifest,buffer.get(),D::LoadSpanBytes-1,check,reported));
+ assert(!calls && !reported);
+ unsigned rejected=0;
+ auto refuse=[&](unsigned,unsigned,unsigned,const uint8_t*) { return ++rejected<2; };
+ assert(!D::UploadModel(model,plan,manifest,buffer.get(),D::LoadSpanBytes,refuse,reported));
+ assert(rejected==2 && reported==D::LoadSpanBytes);
+ assert(D::UploadModel(model,plan,manifest,buffer.get(),D::LoadSpanBytes,check,reported));
+ assert(ropeAt==rope.bytes && accepted==reported && reported==expected);
+ auto uploaded=[&](unsigned bank,unsigned page) {
+  return initialized.at(bank*pagesPerBank+page)!=0;
+ };
+ const unsigned count=unsigned(reported/D::LoadPageBytes);
+ assert(D::ValidateManifest(manifest,rope,uploaded,count));
+ assert(!D::ValidateManifest(manifest,rope,uploaded,count-1));
+ D::Range shifted=rope;
+ shifted.address+=D::LoadPageBytes;
+ assert(!D::ValidateManifest(manifest,shifted,uploaded,count));
+ const auto& first=parts.front();
+ auto& weightPage=initialized.at(first.bank*pagesPerBank+(first.proposedAddress-D::BankBase)/D::LoadPageBytes);
+ weightPage=0;
+ assert(!D::ValidateManifest(manifest,rope,uploaded,count));
+ weightPage=1;
+ const auto& state=manifest.layers[0].delta[0].parts[0];
+ auto& statePage=initialized.at(state.bank*pagesPerBank+(state.address-D::BankBase)/D::LoadPageBytes);
+ assert(!statePage);
+ statePage=1;
+ assert(!D::ValidateManifest(manifest,rope,uploaded,count));
+ statePage=0;
+ auto aliased=std::make_unique<D::DeviceLayout>(manifest);
+ aliased->layers[0].delta[1].parts[0]=state;
+ assert(!D::ValidateManifest(*aliased,rope,uploaded,count));
+ printf("PASS: complete preload byte stream, %u spans and %llu padded bytes\n",calls,
+  static_cast<unsigned long long>(reported));
 }
 
 int main(int argc,char** argv) {
@@ -223,6 +307,7 @@ int main(int argc,char** argv) {
  assert(workspaces==7);
  for (unsigned bank=0;bank<7;bank++) assert(bankEnds[bank]==plan.Used(bank) && bankEnds[bank]<=plan.Capacity);
  assert(!plan.ReadWeightPage(model,plan.Parts().size(),0,invalid.data(),invalid.size()));
+ CheckPreload(model,plan,*device);
  assert(model.Stable() && !fstat(fd,&after) && SameFile(before,after));
  printf("PASS: 4B GGUF, 426 roles, %u tiled groups, %u pages, %u exact tied Q6_K embedding rows and bounded state plan\n",groups,pages,embeddings);
  printf("PASS: complete packed coverage for %u projections in %u bounded worker bands\n",projectionCount,jobCount);

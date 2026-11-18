@@ -475,7 +475,9 @@ case "${PIONEER_Q38_Q4_TWO_PHASE:-0}" in
 esac
 case "${PIONEER_Q38_SPAN_PRELOAD:-0}" in
  0) ;;
- 1) [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] && [ "${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 1 ] || exit 2
+ 1) if [ -z "${PIONEER_Q35_WORK_INCLUDE:-}" ]; then
+     [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] && [ "${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 1 ] || exit 2
+    fi
     extra="$extra -DPIONEER_Q38_SPAN_PRELOAD";;
  *) exit 2;;
 esac
@@ -646,6 +648,13 @@ if [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ]; then
  test -f "$PIONEER_Q35_PROJECTION_INCLUDE/PioneerQwen35ProjectionImage.h"
  extra="$extra -DTT_PIONEER_Q35_PROJECTION_PROBE"
  set -- "$@" -I"$PIONEER_Q35_PROJECTION_INCLUDE"
+fi
+if [ -n "${PIONEER_Q35_WORK_INCLUDE:-}" ]; then
+ [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 55:1:2026111700010226 ] || exit 2
+ [ "${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_WORK_MODE:-0}" = 1:1:0 ] || exit 2
+ test -f "$PIONEER_Q35_WORK_INCLUDE/PioneerQwen35WorkImage.h"
+ extra="$extra -DTT_PIONEER_Q35_WORK"
+ set -- "$@" -I"$PIONEER_Q35_WORK_INCLUDE"
 fi
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"

@@ -168,8 +168,9 @@ request starts at position zero with the same immutable weight manifest.
 
 The request receipt records prompt cycles through the final prompt layer.
 Decode cycles begin with the first vocabulary readout and include subsequent
-token evaluation. Model authentication and upload are host-side timings
-outside these intervals.
+token evaluation. Haiku also measures these boundaries with its monotonic
+clock and reports decode tokens per second from those observations. Model
+authentication and resident upload have separate host-side timings.
 
 ```sh
 sh tools/pioneer/build_qwen35_work_image.sh HAIKU_BUILD NEW_OUTPUT
@@ -184,8 +185,13 @@ The test exercises recurrent and dense operators against independent scalar
 references, traverses the exact matrix schedule, and checks fresh state and
 commit behavior across two synthetic requests. The authenticated GGUF test
 checks the serialized manifest against the host placement of every projection.
-The ROOT still needs a Haiku owner with checked upload, boot, request, and
-restore operations before live model generation can be tested.
+The Haiku Work driver has a separate tag226 and only exposes the resident
+upload and 4B Work interfaces. It checks the complete manifest against the
+bank upload ledger, snapshots the ROOT, and verifies the installed program
+and request before release. It keeps the weights resident across requests.
+Each completion checks the request ID, token count, terminal PC and quiet
+NoC before holding the ROOT. Explicit STOP restores the snapshot before
+the seven-bank session can release its device and host resources.
 
 The separate CPU reference used Haiku llama.cpp `c060ca974c77` with
 `--device none -ngl 0 --temp 0 --seed 1 --no-conversation --no-warmup`.
@@ -196,3 +202,15 @@ Its eight-token continuation began with ` Paris.\nA. True\nB`, where
 `/boot/home/pioneer-qwen35-4b-225/q35-reference.cafSzCza`. SHA-256 of the
 complete stdout (including echoed prompt and final newlines) is
 `a6657e5aa60fcce061c20560c8dd1a0815c24fbae035324edc50de892bf564a8`.
+
+```sh
+python3 -B tools/pioneer/build_qwen35_work.py HAIKU_BUILD NEW_OUTPUT
+```
+
+The full host preload test covered 3,450 spans and 2,740,498,432 bytes at
+context 128. It also exercised incomplete uploads, missing immutable pages,
+state aliases and a shifted RoPE reservation. The driver owner passed a
+two-request simulation with exact restoration and retained ownership after
+a simulated device fault. The Haiku client's vocabulary-only check matched
+all five reference token IDs. The library reported that it skipped tensors.
+The Work client creates no CPU inference context.

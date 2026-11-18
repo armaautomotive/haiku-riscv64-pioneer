@@ -35,11 +35,12 @@ extern "C" unsigned q35_work_main()
 	const auto& layout=*reinterpret_cast<const DeviceLayout*>(RootLayoutAddress);
 	auto& status=*reinterpret_cast<volatile RequestProgress*>(RootProgressAddress);
 	auto* tokens=reinterpret_cast<volatile uint32_t*>(RootOutputAddress);
-	if (control.magic!=RootBootMagic || control.context!=layout.context) return 0;
+	if (control.magic!=RootBootMagic || control.context!=layout.context || !control.requestId
+		|| control.eos!=EndOfText || control.endTurn!=EndOfTurn) return 0;
 	auto* progressWords=reinterpret_cast<const volatile uint32_t*>(RootProgressAddress);
 	for (unsigned i=0;i<sizeof(RequestProgress)/4;i++)
 		if (progressWords[i]) return 0;
-	for (unsigned i=0;i<7;i++)
+	for (unsigned i=0;i<6;i++)
 		if (control.reserved[i]) return 0;
 	const Request request={reinterpret_cast<const uint32_t*>(RootPromptAddress),
 		control.promptCount,control.outputLimit,control.context,control.eos,control.endTurn};
@@ -47,6 +48,8 @@ extern "C" unsigned q35_work_main()
 	const Range rope={control.rope.bank,control.rope.address,control.rope.bytes};
 	DeviceIO io(layout,rope,status,tokens);
 	if (!io.Ready()) return 0;
+	status.requestId=control.requestId;
+	asm volatile("fence" ::: "memory");
 	status.magic=RootProgressMagic;
 	asm volatile("fence" ::: "memory");
 	return q35_token_core(&io,scratch,&request)?status.generated:0;

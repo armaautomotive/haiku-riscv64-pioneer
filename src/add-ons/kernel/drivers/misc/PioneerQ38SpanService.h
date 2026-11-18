@@ -74,6 +74,9 @@ template<> struct PioneerQ38SpanReceiptKind<PioneerQ38SmallRecurrentUploadReceip
 template<class C> static bool PioneerQ38SpanOwner(const C& c)
 {
 	return c.bankStorageOnly && c.bytes==PioneerResidentBanks::Total && !c.q38Dispatch && !c.q38Cohort
+#ifdef TT_PIONEER_Q35_WORK
+		&& !c.q35Work
+#endif
 		&& !c.panelProbe.saved && !c.streamProbe.saved && !c.fleet && c.runtimeCoreMode==-1;
 }
 template<class C> static bool PioneerQ38SpanPrepareService(C& c)

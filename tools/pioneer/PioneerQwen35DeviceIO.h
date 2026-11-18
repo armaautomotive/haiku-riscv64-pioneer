@@ -3,16 +3,9 @@
 #define PIONEER_QWEN35_DEVICE_IO_H
 
 #include "PioneerQwen35TokenRoot.h"
-#include "PioneerQwen35DeviceLayout.h"
+#include "PioneerQwen35RootImageLayout.h"
 
 namespace PioneerQwen35 {
-struct RequestProgress {
-	uint32_t magic, committed, generated, prefilled;
-	uint32_t promptCyclesLow, promptCyclesHigh, decodeCyclesLow, decodeCyclesHigh;
-	uint32_t terminal, reserved[7];
-};
-static_assert(sizeof(RequestProgress)==64, "card status cache line");
-
 // Only the resident owner may initialize the manifest, RoPE table and
 // arena. This transport performs all reads and projections on the ROOT.
 class DeviceIO {

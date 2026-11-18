@@ -4,6 +4,12 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#if defined(TT_PIONEER_Q35_WORK) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
+ || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010226ULL || !defined(PIONEER_Q38_SPAN_PRELOAD) \
+ || !defined(PIONEER_Q38_SPAN_FAST) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || defined(TT_PIONEER_Q35_PROJECTION_PROBE))
+#error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 #if PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
@@ -3455,10 +3461,15 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	}
 };
 
+#include "PioneerQwen35WorkBinding.inc"
+
 // The session owns the PCI reservation, mappings and high host page until
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef TT_PIONEER_Q35_WORK
+	PioneerQ35WorkBinding* q35Work=NULL;
+#endif
 #if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  bool qgwdResidentRequestClosed=false;
  uint64_t qgwdResidentSerial=0;
@@ -3617,6 +3628,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef TT_PIONEER_Q35_WORK
+		delete q35Work;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
   delete q38TokenNative; // only known-clean context destruction;active/unknown END retains this object
 #endif
@@ -6428,6 +6442,12 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 {
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
+#ifdef TT_PIONEER_Q35_WORK
+	if (context->q35Work && !context->q35Work->owner.Restored()) {
+		RetainQ38DispatchOwner(*context,result);
+		return;
+	}
+#endif
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	if (!context->dispatchOwnerRetained) context->q38EndPhase=10;
@@ -6609,6 +6629,11 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		status_t status=acquire_sem(sLock);
 		if (status!=B_OK) return status; // retain ownership, never silently free a possibly live page
 		tt_resident_session_result result={};
+#ifdef TT_PIONEER_Q35_WORK
+		RetainQ38DispatchOwner(*cookie->context,result);
+		release_sem(sLock);
+		return B_OK;
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 		// A client may close after an uncertain upload or lost control reply.
 		// Only explicit BANK_END may retire the tracked owner; CLOSE never does IO.
@@ -8738,7 +8763,9 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 	else {
 		if (operation==TT_PCI_PROBE_RELOAD_QUIESCE) sReloadQuiesced=true;
 		r={}; r.version=1; r.build_tag=PIONEER_DRIVER_BUILD_TAG;
-#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+#if defined(TT_PIONEER_Q35_WORK)
+		r.driver=PioneerQwen35::WorkDriver;
+#elif defined(TT_PIONEER_Q35_PROJECTION_PROBE)
 		r.driver=TT_Q38_STREAM_DRIVER;
 #else
 		r.driver=TT_Q38_DISPATCH_DRIVER;
@@ -8758,6 +8785,8 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 }
 // PIONEER_DRIVER_RELOAD_CONTROL_END
 #endif
+
+#include "PioneerQwen35WorkControl.inc"
 
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
@@ -8933,6 +8962,17 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef TT_PIONEER_Q35_WORK
+	if (operation>=TT_PCI_PROBE_Q35_WORK_SUPPORT && operation<=TT_PCI_PROBE_Q35_WORK_STOP)
+		return Q35WorkControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN
+		|| operation==TT_PCI_PROBE_Q38_BANK_END)
+		return Q38BankControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD
+		|| operation==TT_PCI_PROBE_Q38_SPAN_END)
+		return Q38SpanControl(instance,operation,data,length);
+	return B_NOT_ALLOWED;
 #endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
  // PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE_ROUTING_BEGIN

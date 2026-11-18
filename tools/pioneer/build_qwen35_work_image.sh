@@ -26,4 +26,31 @@ test ! -s "$output/work.imports"
 awk '$3 ~ /^(div|divu|rem|remu|mulh|mulhu|mulhsu|fdiv[.]s|fsqrt[.]s|fmadd[.]s|fmsub[.]s|fnmadd[.]s|fnmsub[.]s|fcvt[.]w[.]s|fcvt[.]wu[.]s)$/ {
  print; bad=1
 } END {exit bad}' "$output/work.disassembly"
+python3 - "$output" <<'PY'
+from pathlib import Path
+from struct import iter_unpack, unpack
+import sys
+
+out = Path(sys.argv[1])
+boot = (out / 'boot.bin').read_bytes()
+code = (out / 'text.bin').read_bytes()
+symbols = {name: int(value, 16) for value, kind, name in
+           (line.split() for line in (out / 'work.symbols').read_text().splitlines())
+           if kind == 'T'}
+if boot != bytes.fromhex('6fa00300') or not 0 < len(code) <= 0x20000 or len(code) % 4:
+    raise SystemExit('unexpected ROOT image size or boot jump')
+park = symbols['q35_work_park']
+fault = symbols['q35_work_fault_park']
+for address in (park, fault):
+    relative = address - symbols['q35_work_entry']
+    if relative < 0 or relative+8 > len(code) or code[relative:relative+8].hex() != '6f0000006ff0dfff':
+        raise SystemExit('unexpected terminal park instructions')
+words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', code))
+(out / 'PioneerQwen35WorkImage.h').write_text(
+    '#pragma once\nnamespace PioneerQwen35 {\n'
+    f'inline constexpr unsigned WorkBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
+    f'inline constexpr unsigned WorkParkPc=0x{park:08x}U, WorkFaultPc=0x{fault:08x}U;\n'
+    'inline constexpr unsigned WorkTextWords[]={\n' + words + '};\n}\n',
+    encoding='ascii')
+PY
 shasum -a 256 "$output/boot.bin" "$output/text.bin"

@@ -6,7 +6,7 @@
 _start:
 	j q35_work_entry
 .section .text.start,"ax"
-.global q35_work_entry, q35_work_park, block_fault_park
+.global q35_work_entry, q35_work_park, q35_work_fault_park, block_fault_park
 q35_work_entry:
 	li sp,0x70000
 	call q35_work_main
@@ -29,5 +29,6 @@ block_fault_park:
 	sw t1,0(t0)
 	lw t1,0(t0)
 	fence
-1:	j 1b
-	j 1b
+q35_work_fault_park:
+	j q35_work_fault_park
+	j q35_work_fault_park
