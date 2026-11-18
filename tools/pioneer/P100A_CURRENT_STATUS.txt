@@ -127,8 +127,24 @@ files match the independent hashes. Tag222 is spent and its owner
 was quarantined. Tag223 takes two consistent receiver snapshots
 after all host setup/readback, with exact worker traffic checks
 unchanged thereafter. The real linked programs reproduce the wire
-comparison and reject a moving baseline offline. Recovery is in
-progress; no change to the 27B end-to-end rate or the Assistant.
+comparison and reject a moving baseline offline.
+
+After a Fedora read-only mount stalled, one additional controlled
+cycle returned to Fedora. The exact Samsung superblock read cleanly
+and the pinned SD-free profile successfully booted Haiku. Tag222's
+records were intact; an independent check verified idle stable041
+gen2, cleared lock, all 64 CPUs and 137034936320 bytes of RAM.
+
+Tag223 then passed the physical 48-row raw/native comparison on
+worker 69. Both input patterns matched all pinned output bits. The
+host-observed submit-to-completion interval was 2226/2227 us for raw
+and 1903/1902 us for native (14.51%/14.59% lower latency in these two
+pairs). This includes worker completion/host polling and excludes
+upload, setup and STOP; it is not a model token-rate result. All four
+leases closed; no teams stayed live and independent postflight verified
+stable041 gen4, cleared lock, full CPUs/RAM and all nine evidence hashes.
+Tag223 is spent. The earlier full-model native failure is still not
+localized. No Assistant or 27B end-to-end rate change is claimed.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the

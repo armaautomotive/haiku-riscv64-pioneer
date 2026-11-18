@@ -536,3 +536,41 @@ Build-only tag223 manifest and inputs:
   Manifest: d7bc3d0ac937496d37a7fbc8b6d3f0566333cb8a894585499226dff3104761e2
 Neither spent tag222 nor the full-model native-Q8 path may be
 replayed based on this offline correction.
+
+Tag223 physical comparison (not model throughput)
+------------------------------------------------
+The prior Fedora mount was blocked; the confirmed single OFF/ON
+recovery cleared it. Two read-only direct reads of the exact Haiku
+partition confirmed the BFS magic and clean flag. After the pinned
+SD-free handoff, the prior tag222 log digests were intact. Its restore
+and independent postflight verified stable041 generation2.
+
+Tag223 runner SHA 56c8dca0106048aa7c72b3a3423ad7084538d14d902eb0b0e1cd4313ff98a1dc.
+Live parent team 719, candidate generation3. The same matrix used
+K=5120, 48 rows and 68 verified weight pages in all four arms. Each
+pair used the same exact input, with raw or native sign encoding.
+
+  Input 0: raw 2226 us, native 1903 us (-14.5103%); polls 117/100.
+  Input 1: raw 2227 us, native 1902 us (-14.5936%); polls 117/100.
+
+All four output digests match the pinned values above. That means the
+48 FP32 words matched bit-for-bit for each input, not broad numerical
+quality qualification. Each arm passed the exact worker/receiver
+counters, packet/terminal proof, held restore and closed END. The
+host compared digests after closure; it did not perform model inference.
+Timing includes dispatch to observed completion, including ACK and
+host polling; it excludes staging, load, STOP and output validation.
+There is one sample per arm per input, in fixed raw/native order.
+
+Both client and parent returned 0 with empty stderr. Independent
+postflight verified no live teams, no trial lock, original stable041
+generation4 idle/cold0/owner0/guard1, all 64 CPUs, and 137034936320
+bytes RAM. All nine archived files matched the remote hashes.
+Comparison stdout SHA-256:
+  fe3bb3fc6aed96c53805a7b040cc0c2eb90415ce1cb95ce2877290c1caef3250
+
+This demonstrates a physical native-Q8 projection and a local
+latency improvement on this exact shard. It does not identify the
+earlier tag217 full-model failure or establish a model speedup.
+The next full-model attempt needs a separately pinned phase/fault
+receipt to stop on and identify the first failing cohort phase.
