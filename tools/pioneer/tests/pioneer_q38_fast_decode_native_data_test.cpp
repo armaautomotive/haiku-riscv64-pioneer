@@ -14,7 +14,14 @@ namespace S=PioneerQ38TokenL1;
 struct Code {const uint32_t* words;unsigned bytes,address;const char* file;};
 int main(int argc,char** argv){
  assert(argc==2 && PioneerQ38FullOffloadFirmwareSelection==12 && P::RootSections==5 && P::FastDecodeProfile==1);
- assert(S::SavedBytes==53915328 && S::RootSavedWords==317313 && S::RootAuxWords==8566
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+ constexpr unsigned end=0x6ca5c,extraWords=289;
+ assert(P::HeadBatchV4==1 && S::RootFastDecodeWords==663);
+#else
+ constexpr unsigned end=0x6c5d8,extraWords=0;
+#endif
+ static_assert(sizeof(P::RootFastDecode)==end-0x6c000,"the program exactly fills the saved tail");
+ assert(S::SavedBytes==53915328+extraWords*4 && S::RootSavedWords==317313+extraWords && S::RootAuxWords==8566+extraWords
   && S::FastDecode==1 && S::PreparedQ4==0 && S::PeerSavedWords==110601);
  const Code root[]={{P::RootBoot,sizeof(P::RootBoot),0x6000,"boot"},{P::RootText,sizeof(P::RootText),0x40000,"text"},
   {P::RootTerminal,sizeof(P::RootTerminal),0x60000,"terminal"},{P::RootAux,sizeof(P::RootAux),0x64000,"conv"},
@@ -60,8 +67,8 @@ int main(int argc,char** argv){
   assert(ordinal==P::CodeWords(worker) && P::CodeAddress(worker,ordinal)==UINT32_MAX);code+=ordinal;
  }
  assert(saved==S::SavedWords);
- for(unsigned address=0x6c000;address<0x6c5d8;address+=4)assert(S::SnapshotContains(0,address));
- for(unsigned address:{0x6c5d8U,0x6dffcU,0x6c001U})assert(!S::SnapshotContains(0,address));
+ for(unsigned address=0x6c000;address<end;address+=4)assert(S::SnapshotContains(0,address));
+ for(unsigned address:{end,0x6dffcU,0x6c001U})assert(!S::SnapshotContains(0,address));
  for(unsigned address:{0x6e000U,0x6fffcU,0x75710U,0x757fcU}){
   uint32_t unchanged=0xdeadbeef;
   assert(S::SnapshotContains(0,address) && !P::ProgramWord(0,address,unchanged) && unchanged==0xdeadbeef);
@@ -71,5 +78,5 @@ int main(int argc,char** argv){
   assert(!P::CodeSpans(worker) && !P::CodeWords(worker) && !S::SnapshotSpans(worker)
    && !S::SnapshotContains(worker,0x6c000) && !P::ProgramWord(worker,0x6c000,unchanged) && unchanged==0xdeadbeef);
  }
- printf("PASS fast decode native DATA: all120 workers/%u snapshot words/%u code words/%u aliases+endpoints refused/exact374-word extension/no padding or stack code grant;NOT hardware lifecycle or TPS\n",saved,code,refused);
+ printf("PASS fast decode native DATA: all120 workers/%u snapshot words/%u code words/%u aliases+endpoints refused/exact%u-word extension/no padding or stack code grant;NOT hardware lifecycle or TPS\n",saved,code,refused,374+extraWords);
 }

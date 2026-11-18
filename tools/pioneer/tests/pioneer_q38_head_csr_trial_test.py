@@ -16,7 +16,8 @@ bind = runpy.run_path(str(BUILDER))['bind']
 sys.path.insert(0,str(HERE.parent))
 from build_qwen38_vector92_ffn_trial import bind as bind_ffn
 from build_qwen38_vector_resident_trial import bind as bind_resident
-from build_qwen38_layer_split_profile_trial import bind as bind_layer_split, recipe_postflight
+from build_qwen38_layer_split_profile_trial import (bind as bind_layer_split, HEAD_MANIFEST,
+                                                    WIRE_MANIFEST, postflight, recipe_postflight)
 FAKES = runpy.run_path(str(SEED_TEST))['FAKES']
 FAKES = FAKES.replace('installed=$stage/installed', 'pairLock=$stage/shared-lock\ninstalled=$stage/installed')
 FAKES = FAKES.replace('metadata "$stableTag" 1', 'metadata "$stableTag" "$PIONEER_FAKE_GEN"')
@@ -49,8 +50,9 @@ def resident(variant, start):
 
 
 def layer_split(variant,start):
-    assert variant in ('candidate','live','recipe')
-    return bind_layer_split(start, variant=='live', recipe=variant=='recipe')
+    assert variant in ('candidate','live','recipe','wire','head-raw','head-wire')
+    return bind_layer_split(start, variant=='live', recipe=variant=='recipe', wire=variant=='wire',
+                            head=variant[5:] if variant.startswith('head-') else None)
 
 def main():
     for builder,name in ((bind,'serial'),(bind_ffn,'refetch'),(resident,'vector'),(layer_split,'candidate')):
@@ -84,7 +86,9 @@ def main():
         # hexadecimal wait boundary. The check also fixes per-variant tags.
         trials=((bind,'serial',2,'207'),(bind,'candidate',3,'208'),(bind,'serial',15,'207'),
                 (bind_ffn,'refetch',6,'211'),(bind_ffn,'reuse',15,'212'),(resident,'vector',8,'210'),
-                (layer_split,'candidate',10,'213'),(layer_split,'live',12,'214'),(layer_split,'recipe',14,'216'))
+                (layer_split,'candidate',10,'213'),(layer_split,'live',12,'214'),(layer_split,'recipe',14,'216'),
+                (layer_split,'wire',16,'217'),(layer_split,'head-raw',18,'218'),(layer_split,'head-wire',20,'219'))
+        tested=0
         for index, (builder, name, start, suffix) in enumerate(trials):
             source = builder(name, str(start))
             tag = '2026111700010'+suffix
@@ -99,13 +103,29 @@ def main():
                 assert 'client=$stage/pioneer-q38-full-offload-resident-rate\n' in source
                 assert '--full-card-resident-rate-32' in source and 'PASS_FULL_OFFLOAD_RATE_JOB' not in source
                 assert 'one_upload1 model_end1 worker_exit0' in source
+            manifest=None
             if builder is layer_split:
-                assert f'stage=/boot/home/pioneer-q38-layer-split-{name}-{suffix}\n' in source
+                stage_name='layer-split-'+name
+                if name=='wire':stage_name='native-q8-wire';manifest=WIRE_MANIFEST
+                if name.startswith('head-'):
+                    stage_name='profile-'+name;manifest=HEAD_MANIFEST[name[5:]]
+                written=f'stage=/boot/home/pioneer-q38-{stage_name}-{suffix}\n'
+                assert written in source
                 assert 'missing_closed_v4_timing' in source
+                if manifest:
+                    check=f'exact "$stage/manifest.json" {manifest} || fail manifest'
+                    assert source.count(check)==1 and source.index(check)<source.index('mark(){')
+                    closed=postflight(str(start),'731',name)
+                    assert written in closed and f'exact {manifest} manifest.json' in closed
+                    assert f'exact {sha256(source.encode("ascii")).hexdigest()} run-once.sh' in closed
+                    assert f'STABLE041_GEN{start+2}_RESTORED' in closed
+                    subprocess.run(['bash','-n'],input=closed,text=True,check=True)
             subprocess.run(['bash', '-n'], input=source, text=True, check=True)
             head, body = source.split('\n[ "$#" -eq 1 ]', 1)
             body = '\n[ "$#" -eq 1 ]' + body
-            for case in cases+(('invalid-v4','incomplete-v4') if builder is layer_split else ()):
+            for case in cases+(('invalid-v4','incomplete-v4') if builder is layer_split else ())+(
+                    ('wrong-manifest',) if manifest else ()):
+                tested+=1
                 stage = Path(tmp) / f'{index}-{case}'
                 stage.mkdir()
                 for file, content in {'installed': 'stable', 'test-stable': 'stable',
@@ -121,6 +141,13 @@ def main():
                     lock.symlink_to(stage / 'nonexistent')
                 mode = '--preflight' if case == 'preflight' else '--run'
                 fake = RESIDENT_FAKES if builder is resident else SPLIT_FAKES if builder is layer_split else FAKES
+                if manifest:
+                    # Model the exact manifest check extracted from the
+                    # bound preflight; wrong contents must precede exchange.
+                    fake=fake.replace('inputs(){',f'inputs(){{\n {check}')
+                    fake=fake.replace(' *) return 1;;\n esac; }',
+                                      f' "{manifest}") test "$(< "$1")" = manifest;;\n *) return 1;;\n esac; }}')
+                    (stage/'manifest.json').write_text('wrong\n' if case=='wrong-manifest' else 'manifest\n')
                 cmd = ['bash', '-c', head + fake + body, 'mock-head-csr-parent', mode]
                 env = {**os.environ, 'PIONEER_FAKE_STAGE': str(stage), 'PIONEER_FAKE_CASE': case,
                        'PIONEER_FAKE_GEN': str(start)}
@@ -129,7 +156,8 @@ def main():
                 if case in ('invalid-v4','incomplete-v4'):assert 'missing_closed_v4_timing' in result.stderr
                 mutations = stage / 'mutations'
                 once = stage / '.trial-once'
-                if case in ('preflight', 'stale', 'lock', 'link-lock'):
+                if case in ('preflight', 'stale', 'lock', 'link-lock','wrong-manifest'):
+                    if case=='wrong-manifest':assert ' manifest' in result.stderr
                     assert not mutations.exists() and not once.exists(), case
                     continue
                 assert once.is_dir()
@@ -150,7 +178,7 @@ def main():
                 spent = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=10)
                 assert spent.returncode == 1
                 assert (mutations.read_bytes() if mutations.exists() else b'') == previous
-    print('PASS: both raw pairs, resident and three layer split variants, 105 fake cases, stale/exclusive/spent, clean restore or lock retained; no card contact')
+    print(f'PASS: {tested} fake raw/FFN/resident/v4 cases, stale/exclusive/spent, manifest, clean restore or lock retained; no card contact')
 
 
 if __name__ == '__main__':

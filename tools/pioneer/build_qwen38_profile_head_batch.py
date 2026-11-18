@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 
-from build_qwen38_twin_native_q8_wire import WIRE_ROOT_PINS
+from build_qwen38_twin_native_q8_wire import WIRE_ROOT_PINS, WIRE_WORKER_PINS
 from generate_qwen38_token_programs import authenticated, pins
 
 HERE=Path(__file__).resolve().parent
@@ -73,6 +73,7 @@ def main():
     assert all(p.is_absolute() for p in (sdk,base,out)) and not out.exists() and not out.is_symlink()
     table=WIRE_ROOT_PINS if wire else pins(HERE/'build_qwen38_fast_decode_profile_root.py','SPLIT_PINS')
     expected=authenticated(root,table)
+    peers=authenticated(base/'worker',WIRE_WORKER_PINS) if wire else None
     tool=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
     args=[line.split('\t') for line in (base/'build-argv.txt').read_text().splitlines()]
 
@@ -91,6 +92,11 @@ def main():
     driver='src/add-ons/kernel/drivers/misc'
     shutil.copytree(original.parents[1]/driver,out/'source'/driver)
     overlay(source)
+    if wire:
+        # These are the unchanged, SHA-pinned companion images for the new
+        # ROOT. A different worker must never share this package's format.
+        peer_output=out/'worker';peer_output.mkdir(mode=0o700)
+        for name,data in peers.items():(peer_output/name).write_bytes(data)
     commands=[]
     layout=Path(relink[relink.index('-T')+1]).read_text()
     # The original timer stays at the same address and keeps its ABI.

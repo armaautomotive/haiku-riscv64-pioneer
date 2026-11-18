@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38NativeQ8FullRole.h"
+#include "PioneerQ38HeadBatchV4Role.h"
 // Rechecked on every include. Diagnostic timing of the raw vector92 math;
 // neither an old firmware lease nor a production Work/CPU-validation alias.
 #if !defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE) || PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE != 1 \

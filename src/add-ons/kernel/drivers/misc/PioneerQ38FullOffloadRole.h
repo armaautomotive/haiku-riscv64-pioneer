@@ -182,8 +182,13 @@ static_assert(PioneerQ38TokenNativeProfile==3,"full offload requires actual G3 p
 #ifdef PIONEER_Q38_TOKEN_FOOTPRINT_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::FastDecode==1
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+ && PioneerQ38TokenL1::PreparedQ4==0 && PioneerQ38TokenL1::SavedBytes==53916484,
+ "v4 head batch ROOT code must be journaled exactly through6ca5c");
+#else
  && PioneerQ38TokenL1::PreparedQ4==0 && PioneerQ38TokenL1::SavedBytes==53915328,
  "fast decode ROOT code must be journaled exactly through6c5d8");
+#endif
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4)
 static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::SpillQ4==1
  && PioneerQ38TokenL1::RootSpillWords==4094 && PioneerQ38TokenL1::SavedBytes==53930208,

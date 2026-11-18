@@ -87,9 +87,19 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #ifdef PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE
-static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111700010217) &&
+static_assert(PioneerQ38FullOffload::BuildTag==
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+ UINT64_C(0x2026111700010219) &&
+#else
+ UINT64_C(0x2026111700010217) &&
+#endif
  TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD==B_DEVICE_OP_CODES_END+0x60f9,
- "Native Q8 full-card package requires exact tag217 and its private upload opcode");
+ "Native Q8 full-card package requires its exact driver tag and private upload opcode");
+#endif
+#if defined(PIONEER_Q38_HEAD_BATCH_V4_PACKAGE) && !defined(PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE)
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111700010218) &&
+ TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD==B_DEVICE_OP_CODES_END+0x60f8,
+ "V4 head batch requires the exact raw tag218 and its original upload opcode");
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS

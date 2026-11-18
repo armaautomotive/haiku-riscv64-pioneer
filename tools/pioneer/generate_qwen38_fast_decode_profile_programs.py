@@ -7,6 +7,7 @@ import re
 import sys
 from generate_qwen38_token_programs import authenticated, pins
 from build_qwen38_twin_native_q8_wire import WIRE_ROOT_PINS, WIRE_WORKER_PINS
+from build_qwen38_profile_head_batch import RAW_BATCH_PINS, WIRE_BATCH_PINS
 
 PINS = {
     'boot.bin': (4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
@@ -17,8 +18,10 @@ PINS = {
     'program.elf': (193672, '882d2e1cf08ad5ccbd69c52a7ecb7daf5e7101527f669431faf962f158b5b425'),
 }
 recipe = len(sys.argv) == 4 and sys.argv[3] == '--recipe-batch'
-wire = len(sys.argv) == 4 and sys.argv[3] == '--native-q8-wire'
-split = recipe or wire or (len(sys.argv) == 4 and sys.argv[3] == '--layer-split')
+mode = sys.argv[3] if len(sys.argv)==4 else ''
+wire = mode in ('--native-q8-wire','--native-q8-head-batch-v4')
+head = mode in ('--head-batch-v4','--native-q8-head-batch-v4')
+split = recipe or wire or head or mode=='--layer-split'
 assert __debug__ and (len(sys.argv) == 3 or split)
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 directory, output = map(Path, sys.argv[1:3])
@@ -26,8 +29,12 @@ assert directory.is_absolute() and directory.is_dir()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 here = Path(__file__).resolve().parent
 if wire:
-    PINS = {name: (size, digest) for name, size, digest in WIRE_ROOT_PINS}
     peers = authenticated(directory/'worker', WIRE_WORKER_PINS)
+if head:
+    PINS = {name: (size, digest) for name, size, digest in (WIRE_BATCH_PINS if wire else RAW_BATCH_PINS)}
+    directory = directory/'batch'
+elif wire:
+    PINS = {name: (size, digest) for name, size, digest in WIRE_ROOT_PINS}
     directory = directory/'root'
 elif recipe:
     PINS = {name: (size, digest) for name, size, digest in
@@ -66,6 +73,8 @@ for label, name in sections.items():
 text = text.replace('PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4_PROGRAMS_H', 'PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROGRAMS_H')
 text = text.replace('PioneerQ38FullOffloadVectorQ4Programs', 'PioneerQ38FullOffloadFastDecodePrograms')
 text = text.replace('Generated complete five-EOG ROOT and ten exact vector-Q4 returning peer sections.',
+                    ('Generated v4 head batch ROOT with matched native Q8 dispatch and peer wire.' if wire else
+                     'Generated v4 head batch ROOT with unchanged vector92 peers.') if head else
                     'Generated matched native Q8 dispatch and peer wire with the v4 timer.' if wire else
                     'Generated generation-only timer ROOT; all ten vector92 peer sections unchanged.')
 marker = 'using PioneerQ38TokenPushedL1::Span;'
@@ -79,6 +88,8 @@ if recipe:
     binding += 'RecipeBatchProfile=1,'
 if wire:
     binding += 'NativeQ8Wire=1,'
+if head:
+    binding += 'HeadBatchV4=1,'
 text = text.replace(marker, marker + f'\nenum {{FastDecodeProfile=1,TokenPhaseProfile=1,{binding}PhaseProfileVersion={version},PhaseProfileAddress=0x75710,PhaseProfileWords=60,RootSections=5}};')
 assert text.count('worker?10:4;') == 1
 text = text.replace('worker?10:4;', 'worker?10:5;')
@@ -97,5 +108,5 @@ assert len(re.findall(r'// SHA256 [0-9a-f]{64}\nstatic const uint32_t ', text)) 
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name)
-print('DATA_ONLY distinct full-card15 sections; exact1496B code view; '
+print(f'DATA_ONLY distinct full-card15 sections; exact{len(images["fast_decode.bin"])}B code view; '
       + ('matched Q8 wire peers' if wire else 'ten vector92 peers unchanged') + '; NO install/run/speed result')

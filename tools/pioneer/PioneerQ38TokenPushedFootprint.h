@@ -5,6 +5,9 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadFastDecodeRole.h"
 #endif
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38HeadBatchV4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadSpillQ4Role.h"
 #endif
@@ -17,6 +20,11 @@
 // Save its complete proposed 12KiB window, including arbitrary padding.
 namespace PioneerQ38TokenPushedL1 {
 struct Span {uint32_t address,words;};
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+enum {HeadBatchWords=289}; // exact batch verifier immediately after the 374-word timer
+#else
+enum {HeadBatchWords=0};
+#endif
 enum {Family=0x33505451,Precise=1,Pushed=1,Workers=120,FrontBytes=0x3000,
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
  SpillQ4=1,PreparedQ4=0,FastDecode=0,RootAuxWords=8192,RootSpillWords=4094,RootSavedWords=321033,
@@ -25,12 +33,12 @@ enum {Family=0x33505451,Precise=1,Pushed=1,Workers=120,FrontBytes=0x3000,
  PreparedQ4=1,FastDecode=0,RootAuxWords=10240,RootSavedWords=318987,
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROFILE)
  SpillQ4=0,
- PreparedQ4=0,FastDecode=1,RootAuxWords=8566,RootSavedWords=317313,
+ PreparedQ4=0,FastDecode=1,RootAuxWords=8566+HeadBatchWords,RootSavedWords=317313+HeadBatchWords,
 #else
  SpillQ4=0,
  PreparedQ4=0,FastDecode=0,RootAuxWords=8192,RootSavedWords=316939,
 #endif
- PeerSavedWords=110601,
+ PeerSavedWords=110601,RootFastDecodeWords=FastDecode*374+HeadBatchWords,
  SavedWords=RootSavedWords+119*PeerSavedWords,SavedBytes=SavedWords*4};
 static inline unsigned SnapshotSpans(unsigned worker){return worker>=Workers?0:worker?8:
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
@@ -90,20 +98,27 @@ static_assert(1+32768+2+
 #endif
  RootAuxWords+2048+273920+8==RootSavedWords,"complete ROOT including receipt slots and terminals");
 static_assert(1+3072+16384+4096+16384+61440+9216+8==PeerSavedWords,"QGW3 front window including padding");
-static_assert(SavedWords==13478458+PreparedQ4*2048+FastDecode*374+
+static_assert(SavedWords==13478458+PreparedQ4*2048+RootFastDecodeWords+
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
  RootSpillWords
 #else
  0
 #endif
- && SavedBytes==53913832+PreparedQ4*8192+FastDecode*1496+
+ && SavedBytes==53913832+PreparedQ4*8192+RootFastDecodeWords*4+
 #ifdef PIONEER_Q38_FULL_OFFLOAD_SPILL_Q4
  RootSpillWords*4
 #else
  0
 #endif
  ,"distinct full120 QTP3 journal;HEAP ONLY");
+static_assert(0x64000+RootAuxWords*4<=0x6e000,"never overlap the ROOT stack");
 }
+#endif
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+static_assert(PioneerQ38TokenPushedL1::HeadBatchWords==289 && PioneerQ38TokenPushedL1::FastDecode==1,
+ "late or unmatched v4 head batch journal selection");
+#else
+static_assert(PioneerQ38TokenPushedL1::HeadBatchWords==0,"late v4 head batch journal removal");
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 static_assert(PioneerQ38TokenPushedL1::PreparedQ4==1,"late prepared Q4 journal selection");

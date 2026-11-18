@@ -277,3 +277,53 @@ conserves all exclusive body cycles and reports STOP separately. Running
 it on the independently closed tag213/tag214 logs confirmed the near-
 identical decode scopes and lower upload time. A per-run timer interval
 is not a repeatability or device-performance confidence interval.
+
+Native journal and guarded head-batch packages (build only)
+----------------------------------------------------------
+The raw v4 package is private tag218; the native-Q8 wire version is
+private tag219. Both retain the faster tag214-style live-image upload
+check. Tag218 keeps the raw upload opcode; tag219 requires the native-Q8
+opcode, package and compiled worker tag. Neither is a CPU validation or
+Assistant fallback mode. Ordinal, address and byte count are unchanged
+for all peer views, the timer, the terminal, and the ROOT stack. The
+ROOT journal includes exactly 289 more words, through 0x6ca5c exclusive;
+full journal size is 53,916,484 bytes. The stack remains at 0x6e000.
+
+Two isolated builds per tag matched their manifests. The final linked
+driver binaries were re-read for all 15 array hashes. The stable vector92
+and default43 builds remain byte-identical. The host binaries still
+import only the eleven vocabulary/container functions, no llama context,
+decode, or CPU inference. Offline role checks rejected missing/zero or
+cross-tag format/journal selectors, CPU/Work roles and mismatched ROOT
+selectors (21 extra refusals for tag218, 28 for tag219).
+
+The exact linked-package geometry and real journal algorithm passed
+ASan/UBSan against simulated held L1 for all 120 cores. Each run saved,
+verified and restored all 13,479,121 original words, with the new code
+covered and no padding/stack executable permission. 33 injected faults
+per arm covered both ends of the added verifier and the old timer entry:
+lost/corrupt save or verification, install and restore, silent drops, and
+failed final readback. Faults retained ownership and stopped subsequent
+I/O. These are not physical save/restore or boot results.
+
+Exact package manifests (driver, worker, client, and all array digests):
+  tag218 ef960d3ba6126f190efe6d7ffa03c2fe7e15702638d5356ee8c9265d7514f79a
+  tag219 bbb8c18cff9259b464c961efae83c42b42c78a8619f651341ac62fb29adcb38f
+
+  python3 tools/pioneer/build_qwen38_layer_split_profile_native.py \
+    SDK FROZEN_LLAMA_LIBRARIES HEAD_BUILD NEW_OUTPUT --head-batch-v4
+  python3 tools/pioneer/build_qwen38_layer_split_profile_native.py \
+    SDK FROZEN_LLAMA_LIBRARIES Q8_HEAD_BUILD NEW_OUTPUT --native-q8-head-batch-v4
+
+The local one-shot binders accept the same two options. Each checks the
+exact stage manifest before driver mutation, shares the exclusive trial
+lock with tag217, and requires the full v4 timing marker. Read-only
+postflight options are --head-raw-postflight and --head-wire-postflight
+with the separately observed parent team. The extended fake-manager
+suite passed 147 cases across all roles; wrong manifest, stale generation,
+locks, missing timing, ownership uncertainty and spent stages refuse as
+expected. Neither candidate is staged or measured. First close the live
+tag217 trial and verify actual idle stable restore before selecting a
+follow-up. If Q8 fails, tag218 isolates the measured head optimization
+from that failure. If Q8 passes, measure tag219 against tag217 without
+assuming the earlier 3.35% improvement carries over.

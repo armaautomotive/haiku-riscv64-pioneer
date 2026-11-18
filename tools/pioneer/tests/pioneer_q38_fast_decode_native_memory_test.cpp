@@ -6,7 +6,13 @@
 #include "pioneer_q38_token_memory_test.cpp"
 #undef main
 int main(){
+#ifdef PIONEER_Q38_HEAD_BATCH_V4_PACKAGE
+ const unsigned ends[]={0x6c000,0x6c5d8,0x6ca58};
+ assert(TOKL::SavedBytes==53916484 && TOKP::FastDecodeProfile==1 && TOKP::HeadBatchV4==1);
+#else
+ const unsigned ends[]={0x6c000,0x6c5d4};
  assert(TOKL::SavedBytes==53915328 && TOKP::FastDecodeProfile==1);
+#endif
  // The unchanged positive test verifies every arbitrary original, all120
  // code views and the entire journal after install/readback/restore.
  char name[]="test";char* args[]={name,nullptr};assert(FullTokenMemoryOriginalMain(1,args)==0);
@@ -21,7 +27,7 @@ int main(){
   else{assert(f.PrepareMemory());assert(!f.CloseMemory());}
   f.Unknown();cases++;
  };
- for(unsigned address:{0x6c000U,0x6c5d4U}){
+ for(unsigned address:ends){
   fault(1,1,address);fault(2,2,address);
   fault(3,3,address);fault(5,3,address);fault(2,3,address);
   fault(1,4,address);fault(2,4,address);
