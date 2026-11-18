@@ -264,3 +264,28 @@ stable backup, helper and guard hashes were verified and nine evidence
 files were copied with matching SHA256. The rate transcript SHA256 was
 dd95cdb58436a055bcbb3a42caa39f45b2f99d78f5dc277085741bde415e741d.
 No retry, END, device reset or CPU fallback was attempted.
+
+Recovery: one OFF hold and one ON pulse. Fedora identified 1e52:b140
+at 0002:81:00.0 and the verified SD-free helper rebooted the full-RAM
+Haiku profile. Six on-disk log payloads no longer matched their verified
+pre-power hashes; the original archive, candidate and driver backup
+still did. `checkfs --check-only /boot` exited 0 (70,067 nodes, zero
+blocks not allocated or already set); it cannot prove file contents.
+The initial restore refused before writes. The archive-bound restore
+used the original nine verified logs plus the exact observed postboot
+fingerprints, without replacing any experiment records:
+  d8faef7a30e81053d75f2bd6de53990d1deb012d7b2fa4b1c484f0b301abe365
+After verifying tag217 gen1 cold0/owner0, it saved the candidate,
+exchanged stable041 and released the empty retained trial lock.
+Independent postflight verified both binaries and stable041 gen2 idle,
+64 CPUs and 137,034,936,320 bytes usable RAM. No Assistant changes.
+Future controlled recovery should sync the responsive host after log
+capture and before a forced OFF; this is not proof of durability.
+
+The older, separately qualified native-SM7 route did pass a physical
+Q8 matrix comparison, about 3.6% faster for that one matrix, but its full
+model was about 1.6% slower. Neither result covers this twin-buffer
+cohort. Next Q8 silicon check should be a bounded raw-versus-native
+projection using these same linked workers and separately retained
+failure details, not another full upload of tag217. See
+qwen38-native-q8-matrix32-20261021.txt for the older comparison.

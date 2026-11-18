@@ -73,6 +73,21 @@ Do not retry tag217 or run tag219 (which shares the native Q8 path)
 without isolating the physical failure. See
 benchmarks/qwen38-vector92-issue-trace-20261117.txt.
 
+After one OFF/ON, Fedora confirmed the original-slot endpoint and the
+verified SD-free helper returned to Haiku. A read-only BFS check had
+zero allocation errors. The recovery preserved the pre-power archive
+and six changed on-disk logs. Independent postflight verified the
+known-good driver stable041 gen2 idle, retained candidate hash,
+cleared lock, 64 CPUs and 137034936320 bytes RAM.
+
+The independent raw head-batching benchmark (tag218) started after
+that postflight; it does not use the failed native Q8 path. Its
+parent team is 703; candidate generation3 passed admission and model
+authentication has begun. No new speed result. Do not open the
+device or start another trial until this one exits. Expected clean
+restore is stable041 gen4. The separate Q6 re-encoding experiment
+only passed offline data and memory layout tests; it is not installed.
+
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
 Radeon's previous root). The initial scans, one default-target link
