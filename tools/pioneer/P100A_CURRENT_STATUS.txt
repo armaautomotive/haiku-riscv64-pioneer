@@ -113,7 +113,18 @@ completion and master-counter checks. It stopped at the first held
 controller slave-counter read: 0x2f0 returned the host accessor's
 denied-offset sentinel, not a measured hardware counter. No output
 or speed result was released. The nine captured log hashes agree and
-the trial is spent. Recovery of the known-good driver is in progress.
+the trial is spent. After one OFF/ON and the pinned SD-free boot, all
+trial records still matched on disk and the independent restore check
+verified idle stable041 generation2, cleared lock, 64 CPUs and full RAM.
+
+Tag222 corrects the private read-only controller counter path, with
+all receipt checks retained. The reproducible package is staged at
+`/boot/home/pioneer-q38-twin-q8-222`; live read-only preflight passed
+with stable041 gen2, no driver change and no launch. Its run-once SHA256
+is 41c2072ac48f533f53e6119a6551caeb51e2b4be0b71cb2ee26ef27dfb4858c2.
+Use a neutral SSH shell name with the launch script on stdin; including
+the diagnostic name in the SSH command line can trigger the owner gate.
+No Assistant changes. The 27B end-to-end rate has not changed.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
