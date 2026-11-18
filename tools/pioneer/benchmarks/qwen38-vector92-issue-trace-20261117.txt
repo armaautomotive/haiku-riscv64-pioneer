@@ -353,8 +353,53 @@ sequence neither read an output nor submitted STOP. Four malformed
 bindings were rejected before any adapter I/O. Existing synthetic-wire
 coverage still passes.
 
-The physical adapter is not yet wired: it must verify the actual ROM
-and uploaded byte identities, hold an exclusive ROOT and worker 69
-with the other tiles quiet, expose only the named L1 and counter
-accesses, and prove restored original L1/controls before release.
-No diagnostic was installed and no device timing was measured.
+This sequence alone did not bind a physical adapter or prove original
+L1/controls restoration. No diagnostic was installed and no device timing
+was measured.
+
+Haiku L1 adapter and exact payload (compile-only)
+------------------------------------------------
+The independent Q8 comparison now has a native Haiku mapping adapter
+for worker 69 and the held controller. Its lifetime is restricted to
+the separate tag220 role. It uses the existing four L1 apertures and
+the existing runtime/panel views. It verifies both TLB slots when
+selecting a tile and exposes only the fixed diagnostic addresses and
+read-only NoC counters. Live worker writes are limited to the job and
+doorbell; code and result fields cannot be written through that view.
+It contains no reset or NIU write. Aliases are disposed only after a
+proved STOP/held state and a successful verified restoration. Incomplete
+maps or uncertain restoration must be retained by the outer owner.
+
+The journal captures the complete QGW3 worker footprint and just the
+three controller ranges for the activation, scales and mailbox:
+113,385 total words. The boot entry is written last. This is a
+heap-backed two-participant journal, not the all-120 production owner.
+ASan/UBSan checked address boundaries throughout L1, one exact whole
+journal round-trip including original 0xffffffff words, and eight
+read/ROM/write/STOP/restore faults with no access after refusal.
+
+The separate private builder authenticated the original model and both
+complete firmware ELFs. It cross-checked all 20 code sections against
+their actual linked addresses, checked the two STOP self-loop words,
+and rejected swapping the worker arms before output. Two independent
+builds produced byte-identical headers, manifests and 68-page-per-arm
+data. In the Haiku cross-build all 20 code arrays and both padded
+weight arrays were extracted from the resulting object and matched
+byte-for-byte. Four wrong kernel/Work selectors refused; known static
+frames in this adapter object used at most 464 bytes (not a whole-stack
+bound). The object has no driver entry points and deliberately
+unresolved ownership callbacks.
+
+  python3 tools/pioneer/build_qwen38_twin_q8_projection_payload.py \
+    PINNED_VECTOR92 PINNED_WIRE_WORKER /absolute/model.gguf /absolute/new-payload
+  python3 tools/pioneer/tests/build_qwen38_twin_q8_aperture_compile_only.py \
+    SDK /absolute/new-object /absolute/new-payload
+
+Payload header SHA256
+8b29db0d577e2e1929faefa3a1ce5b23c09c241d7a413560abe0722b4f7de32f;
+manifest b2722e2c31c78cb96f481a17864918405462585870e481f8ed538f15619dcc3e.
+The generated payload and model bytes are not checked into Git.
+Remaining before a first card run: bind a dedicated kernel owner and
+one-shot client to the exact device/generation, verified bank upload,
+physical reset/STOP, and complete PCI/NIU/lease closure. Nothing was
+installed, and neither a silicon-correctness nor timing result follows.
