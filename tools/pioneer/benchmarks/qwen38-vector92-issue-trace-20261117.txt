@@ -1,0 +1,81 @@
+Actual linked vector92 worker: submitted work, not silicon time
+==============================================================
+
+The existing hardware generation profile assigns 48.85% of controller
+cycles to projection calls (including prepare, dispatch, wait, and
+finish). It does not identify what the Tensix worker does during those
+calls. This independent offline trace executes the exact vector92 worker
+used by the fast full-card path and the running tag213 profiler. It does
+not generate a new firmware image, install anything, touch the card or
+measure tokens/sec.
+
+The runner uses the frozen v4 source revision and all eleven complete
+worker ROM pins. Target ELF SHA-256:
+  4b3dc0c96d3888b9c43af683f58678cc91cade7c67e955413bad8c5e16d52870
+
+It derives q38_compute_once from the authenticated ELF, records only its
+actual dynamic extent and does not alter retired instructions, register
+state, results or checks. Top-level Tensix submissions are counted once;
+synthetic retirement and replay expansions are not extra submissions.
+Config/NoC/ACK load/store callbacks are separate counts. The real worker
+consumes synthetic packed weights and inputs using the existing strict
+arithmetic and transport model. Both changed-input jobs still have to
+produce the expected rows and prove their receipts. The reused worker
+must execute its real STOP after the second job.
+
+ASan/UBSan: 18 shapes, 36 full retained jobs; Q8_0, Q4_K and Q6_K;
+K=5120/6144/17408 and one or three 16-row groups. Examples, first job:
+
+Type  K      Groups  RV steps  Submitted  Matrix  SFPU outside metadata  ACK reads
+Q8   5120      1      420273      28042    1280        11854              4264
+Q4   5120      1      290914      30661     640        10501              3452
+Q6   5120      1      437998      40215    1280        21527              5804
+Q8  17408      3     3763578     284942   13056       120810             43280
+Q4  17408      3     2068922     311495    6528       106959             34924
+Q6  17408      3     3947739     409157   13056       219525             58988
+
+Matrix counts span 2.087% to 4.582% of top-level submitted commands in
+these fixtures. The Q4 worker uses two nonzero fidelity phases, unlike
+Q8/Q6's four. Do not add the older scalar-affine helper to the vector
+metadata helper, or compare the resulting total to a different 32-row
+cached-FPU kernel. The old template-only comparison is withdrawn; the
+partial tool now reports standalone schedules without a synthetic total.
+
+None of these counts is a device-cycle estimate, idle fraction or proof
+that a given operation dominates elapsed time. A flood of short config,
+decode, affine or synchronization work is a different problem from a
+shortage of matrix units. Do not cut commands solely because they are
+numerous. The next structural option is to use the native unpack format
+for Q8 rather than repeatedly decoding original two's-complement panels
+in SFPU: Q8 covers 288 matrices and about 7.58 GB of the ideal per-token
+weight traffic (see the exact-model budget). The older native SM7
+diagnostic proves numerical handling of its bounded domain, not that the
+raw full-model engine can use it or that it is faster. A separate runtime
+role must still preserve the original path for incompatible inputs and
+must pass exact arithmetic and ownership gates before a hardware test.
+
+Reproduce with the frozen SDK source tree and a clean output directory:
+  python3 FROZEN/tools/pioneer/build_qwen38_vector_q4_metadata_worker.py SDK OUT
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py SDK OUT
+
+Full local stdout SHA-256:
+df82687b1e620aa36230166f92191fc03ca1425bfdb06956641e09c8b50577ca
+
+Original Q8 data-domain audit
+-----------------------------
+The same-open original GGUF was fully authenticated against SHA-256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+then scanned read-only. Across all 288 Q8_0 tensors (7,155,384,320 packed
+bytes, 210,452,480 blocks, and 6,734,479,360 quant values), no quant was
+-128 and no FP16 scale was nonfinite. All source quants therefore fit
+native signed magnitude without losing a value. This statement applies
+only to the pinned file. No data was converted or saved; the file, driver
+and runtime are unchanged. Two sanitized complete runs agree. The test
+also distinguishes a metadata byte 0x80 from a quantized -128, counts
+multiple exceptions per block, and refuses short input and non-files.
+
+  c++ -std=c++17 -O3 -g -Wall -Wextra -Werror -Wno-deprecated-declarations \
+    -fsanitize=address,undefined tools/pioneer/pioneer_q38_q8_native_domain.cpp \
+    tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q8-domain
+  UBSAN_OPTIONS=halt_on_error=1 /tmp/q8-domain --self-test
+  UBSAN_OPTIONS=halt_on_error=1 /tmp/q8-domain ABSOLUTE_ORIGINAL_GGUF

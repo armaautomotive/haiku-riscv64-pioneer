@@ -314,16 +314,17 @@ full-card utilization, or tokens/sec. See
 benchmarks/qwen38-native-q4-fpu-stream-physical-20261104.txt and
 benchmarks/qwen38-fast-decode-profile-root-20261106.txt.
 
-A host-only operation inventory compared the emitted arithmetic templates
-per 32-row x K256 tile. The vector92 Q4 path counts 846 Op calls (metadata335
-+ affine-Dst24 + 128 four-phase MVMUL operations); the separate cached-FPU
-stream template counts 4,664 Op calls with the same 128 MVMUL operations.
-This is a 5.51x instruction-issue-count difference in the prototype's support
-work, not a cycle or speed measurement; it argues against promoting that
-prototype without a matched hardware timing comparison. Reproduction source:
-tools/pioneer/pioneer_q38_vector_q4_issue_inventory.cpp; cached-FPU counts are
-recorded in benchmarks/qwen38-performance-budget-20261106.txt. No physical
-test was run for this inventory.
+The earlier template inventory mixed mutually exclusive affine helpers,
+used four phases where vector92 Q4 uses two, and compared different tile
+sizes. Its 5.51x ratio is withdrawn. The partial helper inventory now
+reports those schedules separately. A replacement trace runs the exact
+linked vector92 worker: for K5120 and one 16-row group, Q8/Q4/Q6 issue
+1,280/640/1,280 matrix commands out of 28,042/30,661/40,215 total
+submissions. Those are command counts under simulated transport, not
+silicon time, utilization or a new throughput result. See
+benchmarks/qwen38-vector92-issue-trace-20261117.txt. The separate cached-FPU
+counts in benchmarks/qwen38-performance-budget-20261106.txt do not
+describe vector92.
 
 A newer mixed-format native87 FPU stream client/typed-parent passed its
 offboard SDK, role-refusal, original-weight identity, and independent exact

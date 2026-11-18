@@ -1,12 +1,11 @@
 /* SPDX-License-Identifier: MIT */
-// Host-only inventory of the vector92 raw-Q4 decode/metadata schedule.
-// Counts requested Tensix operations; it is not retired instructions, cycles,
-// memory traffic, hardware utilization, or a speed measurement.
+// Host-only inventory of two isolated vector92 raw-Q4 helpers. This is
+// deliberately partial: use the linked issue trace for the whole worker.
 #include <cstdint>
 #include <cstdio>
 #include "PioneerQ38VectorQ4Metadata.h"
 #include "PioneerQ38BlockAffineDst.h"
-#include "PioneerQ38MatrixPhases.h"
+#include "PioneerQ38Q4Phases.h"
 
 struct Counts {
 	uint64_t ops = 0, configs = 0, drains = 0, matrix = 0;
@@ -27,23 +26,21 @@ int main() {
 	if (!PioneerQ38BlockAffineDst(affine))
 		return 1;
 	Counts phases;
-	// The accepted Q4_K worker applies the same four-fidelity MVMUL sequence
-	// once for each of the 16 K=16 panels in one K=256 quantization block.
+	// The linked vector92 worker applies the two nonzero Q4 fidelity phases
+	// once per K16 panel. Q8 and Q6 still require four phases.
 	for (unsigned panel = 0; panel < 16; ++panel)
-		PioneerQ38MatrixPhases(phases);
-	Counts tile = metadata;
-	tile.ops += affine.ops + phases.ops;
-	tile.configs += affine.configs + phases.configs;
-	tile.drains += affine.drains + phases.drains;
-	tile.matrix += affine.matrix + phases.matrix;
+		PioneerQ38QueuedPhases(phases, 12);
+	if (phases.matrix != 32 || phases.drains != 16)
+		return 1;
 	const auto print = [](const char* name, const Counts& c) {
 		std::printf("%s ops%llu configs%llu drains%llu matrix%llu\n", name,
 			(unsigned long long)c.ops, (unsigned long long)c.configs,
 			(unsigned long long)c.drains, (unsigned long long)c.matrix);
 	};
 	print("VECTOR92_Q4_METADATA", metadata);
-	print("VECTOR92_Q4_AFFINE_DST", affine);
-	print("VECTOR92_Q4_K256_TILE", tile);
 	print("VECTOR92_Q4_MVMUL_PHASES_PER_TILE", phases);
-	std::puts("HOST_TEMPLATE_OPERATION_COUNTS_ONLY;NO_DEVICE_NO_CYCLE_OR_TPS_MEASUREMENT");
+	// This helper is replaced by Block above in vector92. In particular,
+	// never add these two metadata paths together or call their sum a job.
+	print("OLDER_Q4_AFFINE_DST_NOT_VECTOR92", affine);
+	std::puts("PARTIAL_HOST_TEMPLATE_COUNTS_ONLY;NOT_WHOLE_WORKER_DEVICE_CYCLES_OR_TPS");
 }
