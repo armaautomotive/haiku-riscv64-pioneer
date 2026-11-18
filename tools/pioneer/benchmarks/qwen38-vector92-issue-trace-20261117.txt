@@ -289,3 +289,41 @@ cohort. Next Q8 silicon check should be a bounded raw-versus-native
 projection using these same linked workers and separately retained
 failure details, not another full upload of tag217. See
 qwen38-native-q8-matrix32-20261021.txt for the older comparison.
+
+Bounded real-weight fixture for the paired projection
+-----------------------------------------------------
+The new userspace fixture takes rows 0..47 of the real first-layer
+`blk.0.attn_qkv.weight` (K=5120). The same-open original GGUF was fully
+authenticated before building. It produces 480 tiles, 68 padded pages
+per arm: 276,480 useful bytes instead of the 19.4 GB full upload.
+All 261,120 original packed bytes were independently checked by reading
+the original rows, not by reusing the tiled reader. The original and
+SM7 arms use the full loader's layout classification and per-page
+transformation, including tiles split across pages. The complete slice
+round-tripped exactly, with 121,005 quant bytes re-encoded and every
+scale and pad byte preserved. A simulated loss of source identity
+mid-build refused to publish either arm. Kernel, freestanding card code,
+Work and full-offload compiler roles all refused the fixture.
+
+  raw    a6a28c1abe3d8475b90c2fb6c79b796a19e3f5ecce0f96066cdd41a59f0aa005
+  native a3fa3db0700afe50fc55e60b0b525a84a96343a14a2a11fca8713bf34197a68c
+
+The exact linked raw vector92 worker and the native tag217 wire worker
+ran the same pages with two fixed synthetic activation patterns under ASan and
+UBSan. Both used their normal boot and job entry, actual worker result
+push, existing handoff checks and STOP; neither mode nor return address
+was overwritten by the fixture. All 96 FP32 outputs matched exactly and
+passed the existing numeric reference. Each arm issued 122 modeled reads
+and 3,840 actual matrix instructions per pattern. The older connected
+synthetic-wire tests also passed 112 outputs and four mode/boot refusals.
+The expected SHA256 of the 48 little-endian output words per pattern:
+
+  activation0 0e94ceba949d9266e0383ca43b96c73da4bcaf0785fec9d45b4570f73e021254
+  activation1 42f5a264959edb0b327fc337a227ae2f4bcb55bc74a637cbde09087b057ebfd2
+
+No board activity, physical NoC guarantee or rate result follows. The
+next step is binding both pinned image/fixture identities to a small
+physical runner with independent closure and failure receipts.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
+    SDK PINNED_VECTOR92 --native-q8-wire-real PINNED_WIRE_WORKER /absolute/model.gguf

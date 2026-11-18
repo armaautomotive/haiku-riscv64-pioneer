@@ -12,6 +12,9 @@
 #ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
 #include "../PioneerModelWeightCache.h"
 #include "../PioneerQwen38TiledReader.h"
+#ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+#include "../PioneerQ38TwinQ8ProjectionFixture.h"
+#endif
 #include <fcntl.h>
 #endif
 
@@ -79,7 +82,7 @@ struct MathUnit:VectorMetadataPeer {
 #endif
  struct BadOperand {};
  MathUnit(const char* legacy,const char* image,unsigned method,bool sm,unsigned k,unsigned groups,unsigned trial,
-  const Tiles* learned=nullptr)
+  const Tiles* learned=nullptr,const Tiles* prepared=nullptr)
   :VectorMetadataPeer(legacy,image,8,k,groups),converted(sm),entry(method),groupsIn(groups){
   assert(!steps && type==8);
   if(learned){assert(learned->size()==tiles.size());tiles=*learned;}
@@ -89,13 +92,14 @@ struct MathUnit:VectorMetadataPeer {
   if(trial)FreshInputs(*this);
   if(converted){
    original=tiles;
-   for(auto& bytes:tiles){
+   if(prepared){assert(learned && prepared->size()==tiles.size());tiles=*prepared;}
+   else for(auto& bytes:tiles){
     std::array<uint8_t,Codec::PageBytes> source={},wire={};
     std::copy(bytes.begin(),bytes.end(),source.begin());
     assert(Codec::PreparePage(source.data(),0,Codec::TileBytes,wire.data(),wire.size()));
     std::copy_n(wire.begin(),Codec::TileBytes,bytes.begin());
    }
-  }
+  }else assert(!prepared);
  }
  bool Active()const override{
   const unsigned mode=memory.at(FormatWord);
@@ -105,6 +109,16 @@ struct MathUnit:VectorMetadataPeer {
  bool DirectNativeQ8Sfpu()const override{return NativeInt8Unpack();}
  bool DirectQ4Panel()const override{return NativeInt8Unpack();} // this observer name just means zero MOVs
 #ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
+#ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
+ void FixtureActivation(const PioneerQ38TwinQ8ProjectionFixture::Activation& a){
+  assert(!steps && a.words.size()*2==inputs && a.scales.size()==scales.size());
+  for(unsigned w=0;w<a.words.size();w++){
+   vector[w*2]=uint16_t(a.words[w]);vector[w*2+1]=uint16_t(a.words[w]>>16);
+   root.at(0xa0000+w*4)=a.words[w];
+  }
+  for(unsigned b=0;b<a.scales.size();b++)scales[b]=root.at(0xab000+b*4)=a.scales[b];
+ }
+#endif
  void StepBlock()override{
   if(connected && pc==entry){
    assert(!returned && !inUnit && !actualReturn && memory.at(FormatWord)==Sm7);
@@ -244,7 +258,11 @@ struct MathUnit:VectorMetadataPeer {
 int main(int argc,char** argv){
  const bool pilot=argc==7 && !strcmp(argv[6],"--pilot");
 #ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
- const bool connected=argc==7 && !strcmp(argv[6],"--wire");
+ const bool connected=argc==7 && (!strcmp(argv[6],"--wire")
+#ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
+  || argv[6][0]=='/'
+#endif
+ );
 #else
  const bool connected=false;
 #endif
@@ -259,6 +277,83 @@ int main(int argc,char** argv){
  const unsigned oldEntry=unsigned(std::stoul(argv[4],nullptr,16)),candidate=unsigned(std::stoul(argv[5],nullptr,16));
 #ifdef PIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE
  if(connected){
+#ifdef PIONEER_Q38_OFFBOARD_REAL_Q8
+  if(learned){
+   namespace F=PioneerQ38TwinQ8ProjectionFixture;
+   RealSource source(argv[6]);
+   std::unique_ptr<const F::Fixture> fixture;
+   unsigned calls=0;
+   auto interrupted=[&](){return ++calls<80 && source.Stable();};
+   assert(!F::Build(source.model,interrupted,fixture) && !fixture && calls==80);
+   const auto ready=[&](){return source.Stable();};
+   assert(F::Build(source.model,ready,fixture) && fixture);
+   assert(!F::Build(source.model,ready,fixture));
+   // Independent original-row reader, not the fixture's tiled producer
+   // called a second time. Compare ALL 34 bytes of all 7,680 blocks.
+   const auto* tensor=source.model.Find(F::Tensor);assert(tensor);
+   const unsigned index=unsigned(tensor-source.model.Tensors().data());
+   for(unsigned row=0;row<F::Rows;row++){
+    std::array<uint8_t,F::Blocks*34> packed={};
+    assert(source.model.ReadPacked(index,row*packed.size(),packed.size(),packed.data(),packed.size()));
+    for(unsigned b=0;b<F::Blocks;b++)for(unsigned i=0;i<34;i++){
+     const unsigned tile=(row/16)*F::Blocks+b;
+     assert(fixture->raw[tile*Codec::TileBytes+i*16+row%16]==packed[b*34+i]);
+    }
+   }
+   Tiles rawTiles,nativeTiles;
+   unsigned changed=0;
+   for(unsigned at=0;at<F::Bytes;at+=Codec::TileBytes){
+    rawTiles.emplace_back(fixture->raw.begin()+at,fixture->raw.begin()+at+Codec::TileBytes);
+    nativeTiles.emplace_back(fixture->native.begin()+at,fixture->native.begin()+at+Codec::TileBytes);
+    for(unsigned i=0;i<Codec::TileBytes;i++){
+     const uint8_t raw=fixture->raw[at+i],wire=fixture->native[at+i];
+     if(i<Codec::Header)assert(wire==raw);
+     else if(i>=Codec::QuantEnd)assert(!wire && !raw);
+     else{uint8_t decoded=0;assert(Codec::Decode(wire,decoded) && decoded==raw);changed+=wire!=raw;}
+    }
+   }
+   for(unsigned at=F::Bytes;at<F::Storage;at++)assert(!fixture->raw[at] && !fixture->native[at]);
+   assert(changed);
+   F::Activation testInput={};
+   testInput.words.fill(0xdeadc0de);testInput.scales.fill(0xfeedbeef);const auto before=testInput;
+   assert(!F::MakeActivation(2,testInput) && testInput.words==before.words && testInput.scales==before.scales);
+   std::array<uint32_t,F::Rows> previous={};
+   constexpr const char* expected[]={
+    "0e94ceba949d9266e0383ca43b96c73da4bcaf0785fec9d45b4570f73e021254",
+    "42f5a264959edb0b327fc337a227ae2f4bcb55bc74a637cbde09087b057ebfd2"};
+   for(unsigned variant=0;variant<2;variant++){
+    auto raw=std::make_unique<MathUnit>(argv[1],argv[2],oldEntry,false,F::Inputs,F::Groups,0,&rawTiles);
+    auto wire=std::make_unique<MathUnit>(argv[1],argv[3],candidate,true,F::Inputs,F::Groups,0,&rawTiles,&nativeTiles);
+    assert(F::MakeActivation(variant,testInput));raw->FixtureActivation(testInput);wire->FixtureActivation(testInput);
+    raw->delay=3;raw->BootPushed();raw->Prepare();raw->StagePushed();raw->asynchronous=true;
+    raw->AwaitPayload();raw->FinishPushed(true);raw->CheckEnd();raw->StopLocal();
+    wire->StageConnected(Sm7,true);wire->FinishConnected();wire->StopConnected();
+    assert(raw->pushes==2 && wire->pushes==2 && wire->requests==raw->requests
+     && wire->matrixInstructions==raw->matrixInstructions);
+    std::array<uint8_t,F::Rows*4> canonical={};
+    for(unsigned i=0;i<F::Rows;i++){
+     const uint32_t word=raw->buffers[4096+i];
+     assert(wire->buffers[4096+i]==word && previous[i]!=word);previous[i]=word;
+     for(unsigned b=0;b<4;b++)canonical[i*4+b]=uint8_t(word>>(b*8));
+    }
+    using Cache=PioneerModelWeightCache;
+    const auto resultHash=Cache::Hex(Cache::Hash(canonical.data(),canonical.size()));
+    assert(resultHash==expected[variant]);
+    printf("NATIVE_Q8_WIRE_REAL K%u rows%u variant%u matching_FP32=%u NoCrequests=%u matrix=%u output=%s\n",
+     F::Inputs,F::Rows,variant,F::Rows,raw->requests,raw->matrixInstructions,resultHash.c_str());
+   }
+   assert(source.Stable());
+   using Cache=PioneerModelWeightCache;
+   const auto rawHash=Cache::Hex(Cache::Hash(fixture->raw.data(),F::Storage));
+   const auto nativeHash=Cache::Hex(Cache::Hash(fixture->native.data(),F::Storage));
+   assert(rawHash=="a6a28c1abe3d8475b90c2fb6c79b796a19e3f5ecce0f96066cdd41a59f0aa005"
+    && nativeHash=="a3fa3db0700afe50fc55e60b0b525a84a96343a14a2a11fca8713bf34197a68c");
+   printf("NATIVE_Q8_WIRE_REAL source=%s raw=%s native=%s\n",RealSource::Digest,rawHash.c_str(),nativeHash.c_str());
+   printf("PASS linked raw and native Q8 real fixture: %u pages per arm, %u changed sign bytes, 96 exact outputs, both STOP; modeled hardware\n",
+    F::Pages,changed);
+   return 0;
+  }
+#endif
   for(unsigned k:{5120U,6144U,17408U}){
    unsigned groups=k==5120?1U:3U;
    auto raw=std::make_unique<MathUnit>(argv[1],argv[2],oldEntry,false,k,groups,1);

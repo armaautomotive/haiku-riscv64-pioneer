@@ -57,15 +57,17 @@ def issue_rows(output):
 
 def main():
     pair = len(sys.argv) == 5 and sys.argv[3] == '--ordinary-arm-regression'
-    real = len(sys.argv) == 6 and sys.argv[3] == '--native-q8-math-real'
-    wire = len(sys.argv) == 5 and sys.argv[3] == '--native-q8-wire'
+    real_wire = len(sys.argv) == 6 and sys.argv[3] == '--native-q8-wire-real'
+    real = real_wire or len(sys.argv) == 6 and sys.argv[3] == '--native-q8-math-real'
+    wire = real_wire or len(sys.argv) == 5 and sys.argv[3] == '--native-q8-wire'
     math = real or wire or (len(sys.argv) == 5 and sys.argv[3] in ('--native-q8-math', '--native-q8-math-pilot'))
     if len(sys.argv) != 3 and not (pair or math):
         raise SystemExit('use SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD '
                          '[--ordinary-arm-regression|--native-q8-math|--native-q8-math-pilot PINNED_NATIVE_Q8_BUILD] '
                          'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-math-real '
                          'PINNED_NATIVE_Q8_BUILD ABSOLUTE_MODEL_GGUF '
-                         'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-wire PINNED_WIRE_WORKER')
+                         'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-wire PINNED_WIRE_WORKER '
+                         'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-wire-real PINNED_WIRE_WORKER ABSOLUTE_MODEL_GGUF')
     assert __debug__ and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
     sdk, worker = map(Path, sys.argv[1:3])
     assert sdk.is_absolute() and worker.is_absolute()
@@ -124,6 +126,9 @@ def main():
         if wire:
             flags.append('-DPIONEER_Q38_OFFBOARD_NATIVE_Q8_WIRE=1')
             shutil.copyfile(HERE.parent/'PioneerQ38TwinNativeQ8Wire.h',tests.parent/'PioneerQ38TwinNativeQ8Wire.h')
+        if real_wire:
+            for header in ('PioneerQ38TwinQ8ProjectionFixture.h','PioneerQ38NativeQ8FullSource.h'):
+                shutil.copyfile(HERE.parent/header,tests.parent/header)
         binary = tmp/'test'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                         '-ffp-contract=off', '-fsanitize=address,undefined', *flags,
