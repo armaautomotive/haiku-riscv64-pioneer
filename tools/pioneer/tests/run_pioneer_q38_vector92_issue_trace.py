@@ -34,11 +34,33 @@ def snapshot(source, destination, records):
         (destination / name).write_bytes(data)
 
 
+def issue_rows(output):
+    rows = []
+    bits = []
+    for line in output.splitlines():
+        if line.startswith('VECTOR92_BITS '):
+            fields = line.split()
+            assert len(fields) == 6 and fields[3] in ('groups1', 'groups3')
+            assert re.fullmatch(r'[0-9a-f]{'+str(int(fields[3][-1])*16*8)+r'}', fields[5])
+            bits.append(fields[1:])
+            continue
+        if not line.startswith('VECTOR92_ISSUE '):
+            continue
+        fields = line.split()
+        assert len(fields) == 23 and fields[5].startswith('RV') and fields[6].startswith('metadataRV')
+        # The new C++ branch changes instruction layout. Do not require
+        # exact RV counts; all issue/NoC and affine observations must match.
+        rows.append(fields[:5]+fields[7:])
+    assert len(rows) == len(bits) == 36 and all(row[1:5] == data[:4] for row, data in zip(rows, bits))
+    return rows, bits
+
+
 def main():
-    if len(sys.argv) != 3:
-        raise SystemExit('use SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD')
+    pair = len(sys.argv) == 5 and sys.argv[3] == '--ordinary-arm-regression'
+    if len(sys.argv) != 3 and not pair:
+        raise SystemExit('use SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD [--ordinary-arm-regression PINNED_NATIVE_Q8_BUILD]')
     assert __debug__ and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
-    sdk, worker = map(Path, sys.argv[1:])
+    sdk, worker = map(Path, sys.argv[1:3])
     assert sdk.is_absolute() and worker.is_absolute()
     tool = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
     mixed = worker / ('unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/'
@@ -64,11 +86,15 @@ def main():
         snapshot(worker, vec, vector_pins)
         snapshot(mixed, prior, pins(tests/'run_pioneer_q38_mixed_worker_tests.py'))
         snapshot(mixed/'unchanged-worker', prior/'unchanged-worker', legacy)
-        for directory in (vec, prior):
+        arms = [vec]
+        if pair:
+            native = tmp/'native'
+            snapshot(Path(sys.argv[4]), native,
+                     pins(HERE.parent/'build_qwen38_twin_native_q8_worker.py'))
+            arms.append(native)
+        for directory in (*arms, prior):
             symbols = subprocess.check_output([tool+'nm', '-n', directory/'program.elf'])
             (directory/'program.symbols').write_bytes(symbols)
-        entries = re.findall(r'^([0-9a-f]+) T q38_compute_once$', (vec/'program.symbols').read_text(), re.M)
-        assert len(entries) == 1
         name = 'pioneer_q38_vector92_issue_trace.cpp'
         assert not (tests/name).exists()
         shutil.copyfile(HERE/name, tests/name)
@@ -76,8 +102,22 @@ def main():
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                         '-ffp-contract=off', '-fsanitize=address,undefined', *flags,
                         tests/name, '-o', binary], check=True)
-        subprocess.run([binary, prior, vec, entries[0]], check=True,
-                       env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})
+        runenv = {**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'}
+        evidence = []
+        for directory in arms:
+            entries = re.findall(r'^([0-9a-f]+) T q38_compute_once$', (directory/'program.symbols').read_text(), re.M)
+            assert len(entries) == 1
+            if not pair:
+                subprocess.run([binary, prior, directory, entries[0]], check=True, env=runenv)
+            else:
+                result = subprocess.check_output([binary, prior, directory, entries[0], '--output-bits'], env=runenv, text=True)
+                print(directory.name, flush=True)
+                print(result, end='', flush=True)
+                evidence.append(issue_rows(result))
+        if pair:
+            assert evidence[0] == evidence[1]
+            print('PASS ordinary-arm regression: identical issued work and every output word across both ELFs; '
+                  '36 retained jobs per arm, no native Q8 job admission or device timing', flush=True)
 
 
 if __name__ == '__main__':

@@ -13,10 +13,15 @@
 namespace PioneerQ38TwinNativeQ8 {
 using T=PioneerQ38TwinBatchPrefetchPlan;
 enum : unsigned { Tile=576, Header=32, PanelBytes=256, Q8Type=8 };
+enum : unsigned { Checked=0, RawWork=1, SignedMagnitude=2, NativeAffineType=0x108 };
+static constexpr bool Mode(unsigned type,unsigned mode)
+{
+ return mode<=RawWork || (mode==SignedMagnitude && type==Q8Type);
+}
 static_assert(Header+2*PanelBytes+32==Tile && (Header&31)==0,
  "same byte-major sixteen-row tile, only sign format changes");
 
-static constexpr bool PanelAddress(unsigned rawTile,unsigned panel,unsigned& address)
+static inline bool PanelAddress(unsigned rawTile,unsigned panel,unsigned& address)
 {
  if(panel>=2 || rawTile<T::Buffer0 || rawTile>=T::BufferLimit)return false;
  const unsigned offset=(rawTile-T::Buffer0)&(T::BufferStride-1);

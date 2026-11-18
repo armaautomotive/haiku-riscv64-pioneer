@@ -3,6 +3,9 @@
 #define PIONEER_Q38_SFPU_ACCUMULATOR_H
 #include "PioneerQ38VectorAffine.h"
 #include "PioneerSfpuDivide.h"
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+#include "PioneerQ38TwinNativeQ8.h"
+#endif
 #if defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) && (!defined(PIONEER_Q38_WORK_DEFER_AFFINE) || !defined(PIONEER_Q38_SFPU_INTEGER) || !defined(PIONEER_Q38_WORK_ZERO_MINIMUM) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE))
 #error Work dot-zero elision requires the separately proved exact integer Work accumulator chain
 #endif
@@ -62,6 +65,12 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 {
 	unsigned mag=scale&0x7fffffff;
 	unsigned metadataRow=96;
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+	// The owning worker chooses this private value after the sealed job
+	// authorization. It is not a wire model type or a caller address.
+	const bool directNativeQ8=Integer && ZeroMinimum && type==PioneerQ38TwinNativeQ8::NativeAffineType;
+	if(directNativeQ8)type=PioneerQ38TwinNativeQ8::Q8Type;
+#endif
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 	if (BlockMetadata) {
 		static_assert(!BlockMetadata || (Integer && Defer && !ZeroMinimum),"exact Q4 Work cache only");
@@ -101,7 +110,7 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 #endif
 	) {
 		e.Op(0x5e203c00); e.Op(0x5120000a); e.Op(0x5420000f); e.Op(0xb2050000); e.Drain();
-#ifdef PIONEER_Q38_NATIVE_Q8
+#if defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE)
 		if(directNativeQ8)e.Config(73,0x13); // FP32 metadata UNPACK-to-Dst,not SrcA publication
 #endif
 		e.Config(1,Integer?0xa0200000:0x20200000); e.Config(64,0x100010); e.Config(65,1); e.Config(72,0);
@@ -115,11 +124,11 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 			e.Op(0x42000081); e.Drain(); // no bank publication or flip
 		}
 		e.Config(1,
-#ifdef PIONEER_Q38_NATIVE_Q8
+#if defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE)
 			directNativeQ8?0xa03c0000:
 #endif
 			Integer?0xa03c8000:0x203c8000); e.Config(64,0x10001e); e.Config(65,16); e.Config(72,14); e.Config(84,0x00400040);
-#ifdef PIONEER_Q38_NATIVE_Q8
+#if defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE)
 		if(directNativeQ8)e.Config(73,3);
 #endif
 		e.Op(0xb2050004); e.Op(0x5e23fc00); e.Drain(); e.Op(0x3700000f);

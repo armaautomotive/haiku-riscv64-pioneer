@@ -99,7 +99,41 @@ the Work selector was rejected at compile time. No card time was measured.
     tools/pioneer/tests/pioneer_q38_twin_native_q8_test.cpp -o /tmp/q8-twin
   UBSAN_OPTIONS=halt_on_error=1 /tmp/q8-twin
 
-Next: wire the separate signed-magnitude worker arm and authenticated
-source together. Prove the existing affine coefficient swaps, SrcB direct
-input, exact replay, both prefetched lifetimes, mixed Q8/Q4/Q6 jobs and
-readiness/STOP. No firmware currently consumes this helper.
+Linked signed-magnitude math arm (offboard)
+-------------------------------------------
+The isolated worker now connects the helper to its returning full-K
+math, including the existing direct SrcB path and affine accumulation.
+Private format 2 selects the new path only for Q8. Formats 0/1 retain
+the checked and ordinary packed paths respectively. The native operand
+configuration is restored across affine metadata uploads and at job
+exit. The scalar/metadata format discriminator is not an external model
+type or pointer. Neither the production loader nor the existing parent
+admits format 2. The candidate must not be paired with ordinary packed
+Q8 data; no device image is exposed by this builder.
+
+The disabled build reproduces the complete original object and ELF.
+Four wrong compile roles were refused. Two separate output directories
+produced the same candidate ELF SHA-256:
+  98f144db448e42cee2f1c3dcad043bc65bb6ff94aee691b88b4bcba35883597d
+It fits the original text (8,060/8,192 bytes), affine (5,020/5,376),
+and all other code windows. Boot, precise and dense sections match the
+original. Other section hashes can differ due to relocation; the builder
+uses exactly the original other objects. The emitted setup and unpack
+instructions passed 16 panel launches and 15 inert refusals, with actual
+config readback code and synthetic ACKs. They do not execute a full
+native Q8 job or prove its matrix or affine results.
+
+The separate ordinary Work regression executed both complete linked
+workers under ASan/UBSan for 18 Q8/Q4/Q6 shapes and 36 retained jobs
+each. All 1,152 matched output words and the recorded issued operation,
+NoC and replay counts matched exactly. The model counted different host
+interpreter RV steps due to code layout; this is not a performance result.
+
+  python3 tools/pioneer/build_qwen38_twin_native_q8_worker.py SDK VECTOR92_BUILD NEW_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
+    SDK VECTOR92_BUILD --ordinary-arm-regression NEW_OUTPUT
+
+Next: qualify full native-Q8 arithmetic and transitions along with the
+authenticated source and independently bound ROOT admission/receipt.
+Do not gain coverage by coercing a production job marker or feeding
+native bytes to old firmware. Nothing is installed or timed.

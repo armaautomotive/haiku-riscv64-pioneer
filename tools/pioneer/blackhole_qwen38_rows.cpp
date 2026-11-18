@@ -24,6 +24,17 @@
 #error Vector metadata image must not silently use the old scalar preparation
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+#if PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE != 1 || !defined(PIONEER_Q38_VECTOR_Q4_METADATA_IMAGE) \
+ || !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) || !defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH) \
+ || !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_ZERO_MINIMUM) \
+ || !defined(PIONEER_Q38_WORK_DEFER_AFFINE) || !defined(PIONEER_Q38_SFPU_INTEGER) \
+ || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_CPU_VALIDATION) \
+ || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
+#error Exact separate vector92 twin native Q8 inspection worker required
+#endif
+#include "PioneerQ38TwinNativeQ8.h"
+#endif
 #ifdef PIONEER_Q38_MANUAL_TTSYNC_IMAGE
 #include "PioneerQ38ManualTTSync.h"
 #endif
@@ -606,11 +617,31 @@ static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&b
 	return true;
 }
 #endif
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+namespace TwinNative=PioneerQ38TwinNativeQ8;
+#define Q38_TWIN_FN __attribute__((noinline,noclone,section(".text.pioneer_q38_twin_native")))
+static Q38_TWIN_FN void NativeFormat(bool open){
+	VectorPanelEmitter e;
+	if(open)TwinNative::Enter(e);else TwinNative::Restore(e);
+}
+static Q38_TWIN_FN void NativeWeightPanel(unsigned raw,unsigned panel){
+	VectorPanelEmitter e;
+	if(!TwinNative::Unpack(e,8,raw,panel))block_fault_park();
+}
+#undef Q38_TWIN_FN
+#endif
 extern "C" unsigned block_main()
 {
 	const volatile uint32_t* job=Words(0x74000);
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+	const unsigned format=job[14];
+	if(!TwinNative::Mode(job[1],format))return 0; // before any command or output
+	const bool nativeQ8=format==TwinNative::SignedMagnitude;
+	const bool skipDotCheck=format!=TwinNative::Checked;
+#else
 	const bool skipDotCheck=job[14]==1; // descriptor frozen/validated by persistent caller
+#endif
 #endif
 	unsigned type=job[1],bytes=job[2],count=type==8?32:256;
 #ifdef PIONEER_Q38_STREAM
@@ -740,6 +771,9 @@ extern "C" unsigned block_main()
 	);
 #ifdef PIONEER_Q38_NATIVE_Q8
 	if(skipDotCheck && type==8)PioneerQ38DirectNativeQ8Setup(initEmitter);
+#endif
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+	if(nativeQ8)NativeFormat(true);
 #endif
 #ifdef PIONEER_Q38_MACRO_Q4_DECODE
 	if(skipDotCheck && type==12)PioneerQ38MacroQ4Decode::Setup(initEmitter);
@@ -1004,6 +1038,9 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38BFloatPanel(emitter,type,p)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+		if(nativeQ8)NativeWeightPanel(rawBase,p);else
+#endif
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 		if(skipDotCheck && type==12) {
 			if(!PioneerQ38LocalQ4Unpack(emitter,p))block_fault_park();
@@ -1097,7 +1134,13 @@ extern "C" unsigned block_main()
 #endif
 		}
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
-		if (!accumulate(emitter,type,!block &&
+		if (!accumulate(emitter,
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+			nativeQ8?TwinNative::NativeAffineType:type,
+#else
+			type,
+#endif
+			!block &&
 #ifdef PIONEER_Q38_Q4_GROUP32
 			(pairedQ4?p==1:!p),pairedQ4 ||
 #else
@@ -1202,6 +1245,9 @@ extern "C" unsigned block_main()
 	if(skipDotCheck && type==12) {
 		VectorPanelEmitter end;PioneerQ38MacroQ4Decode::Finish(end);
 	}
+#endif
+#ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
+	if(nativeQ8)NativeFormat(false);
 #endif
 	return groups*blocks*panels;
 }

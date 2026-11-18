@@ -72,7 +72,8 @@ struct TracePeer:VectorMetadataPeer {
 }
 
 int main(int argc,char** argv){
- assert(argc==4);setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==4 || (argc==5 && !strcmp(argv[4],"--output-bits")));setvbuf(stdout,nullptr,_IOLBF,0);
+ const bool exact=argc==5;
  (void)&RunPersistentGdnPair;(void)&Compare;(void)&Round;
  const unsigned entry=unsigned(std::stoul(argv[3],nullptr,16));
  unsigned cases=0;
@@ -81,7 +82,11 @@ int main(int argc,char** argv){
   p->delay=3;p->BootPushed();p->Prepare();p->StagePushed();p->AwaitPayload();p->FinishPushed(true);p->CheckEnd();
   std::array<uint32_t,16> first;
   for(unsigned i=0;i<16;i++)first[i]=p->buffers[4096+i];
+  std::array<std::array<uint32_t,48>,2> output={};
+  assert(groups*16<=output[0].size());
+  if(exact)std::copy_n(p->buffers+4096,groups*16,output[0].begin());
   p->ReceiveQueued();p->AwaitSecond();p->FinishSecond(first);
+  if(exact)std::copy_n(p->buffers+4096,groups*16,output[1].begin());
   assert(p->finished==2 && !p->depth && !p->returning);
   assert(p->metadataBlocks==(format==12?2*groups*(k/256):0));
   for(unsigned job=0;job<2;job++){
@@ -96,6 +101,11 @@ int main(int argc,char** argv){
     "NoCReadRequests%u replayExpansions%u\n",format,k,groups,job+1,r.instructions,r.inside,total,
     r.submitted[Metadata],r.submitted[MatrixIssue],r.submitted[Unpack],r.submitted[Vector],r.submitted[Replay],
     r.submitted[Sync],r.submitted[Other],r.dynamicPort,r.configReads,r.configs,r.ackReads,r.nocReads,r.nocWrites,r.reads,r.expansions);
+   if(exact){
+    printf("VECTOR92_BITS format%u K%u groups%u job%u ",format,k,groups,job+1);
+    for(unsigned row=0;row<groups*16;row++)printf("%08x",output[job][row]);
+    putchar('\n');
+   }
   }
   cases++;
  }
