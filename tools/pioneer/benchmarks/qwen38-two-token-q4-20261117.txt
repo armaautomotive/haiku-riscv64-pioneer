@@ -165,12 +165,43 @@ refusals, legacy entry disassembly, and kernel stack checks. Driver and
 client SHA256:
   d73dbf803bd05087bd4afb554b841032a8a383ac5495bc49193b4e8870670cd2
   a902f0b5fc5521648127869e0efa48a56a808294d9dbda117792992439149843
-No device
-installation, physical timing, or whole-model speed result yet. The
-linked image serves one 16-output shard, not a whole-model trial.
+The linked image serves one 16-output shard, not a whole-model trial.
 Separately the
 request scheduler must preserve causal KV, recurrent state, and the
 single-token fallback. Two known inputs can serve prefill or independent
 requests; single-request decode requires a real draft/verification
 scheme with independently correct state handling. This is not speculative
 decoding, a throughput or latency estimate, or an installed driver.
+
+First physical trial (tag215, November 17)
+-----------------------------------------
+The one-shot runner SHA256
+de652e39c9de1e7b3814eb7aa4820cd7d340c90835a6e72e80516efba0cc1ab4
+verified idle stable041 generation10, candidate/client bytes, the model
+file identity, and 64 CPUs/full RAM. It preserved stable041 and verified
+tag215 generation11 idle before starting the client. The client exited
+1 with empty stdout and stderr. The manager then reported tag215/gen11,
+cold1/owner1; the runner retained the lock and made no further swap,
+reset or launch. There was no timing or result. The available evidence
+does not distinguish BEGIN/upload/firmware/cleanup failure: the separate
+diagnostic retains a live storage session on FD close as well as on an
+uncertain compute failure. Do not infer that any paired arithmetic ran.
+
+The failed stage and stable backup were preserved and five evidence
+files copied with matching SHA256s. The client now prints the existing
+BEGIN/upload/three-arm/cleanup receipts on failure, with no extra device
+operations; it keeps failed-result stdout empty. The rebuilt driver
+and firmware remained byte-identical. New diagnostic client SHA256:
+69052041f5733b6345b753c9eff8172f5f416c487d693112e67dc2d054c58210.
+This is an offline build only, not a retry of the failed stage.
+
+One seven-second OFF hold and one 0.75-second ON pulse recovered the
+Pioneer; no SD or mains changes. Fedora enumerated 1e52:b140 in the
+original slot, and the pinned disk-identity helper booted the same
+top-page7 full-RAM Haiku profile. After boot, tag215 generation1 was
+idle and cold0. The exact postboot restore runner
+26203aff1d70bd539f4e4b7cea2d781a4753dc796df27d57e6de512b92318dde
+preserved the candidate, verified and reloaded stable041 generation2,
+and released the empty retained test lock. Independent postflight
+verified both binary hashes, guard1/cold0/owner0, 64 CPUs and
+137034936320 bytes of RAM. No Assistant files changed.

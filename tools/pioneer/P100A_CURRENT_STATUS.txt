@@ -38,6 +38,16 @@ generation10 idle, cold0/owner0/guard1, all 64 CPUs and 137034936320 bytes
 RAM. No Assistant changes. See
 benchmarks/qwen38-raw-ffn-input-reuse-20261117.txt.
 
+The isolated paired Q4 projection tag215 produced no timing: the client
+exited 1 with empty output and the driver held cold1/owner1. The failure
+stage could not identify the failing phase; no matrix failure is proved.
+One OFF/ON recovery and the pinned SD-free boot restored stable041 at
+generation2 of the new Haiku boot. The binary hash, idle owner, guard1,
+64 CPUs and full RAM were independently checked; the experiment lock
+is gone. The failed candidate and logs are preserved. The revised
+client reports failure receipts offline; do not replay the spent trial.
+See benchmarks/qwen38-two-token-q4-20261117.txt.
+
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
 Radeon's previous root). The initial scans, one default-target link
