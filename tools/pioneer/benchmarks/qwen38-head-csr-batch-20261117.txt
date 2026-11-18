@@ -327,3 +327,30 @@ tag217 trial and verify actual idle stable restore before selecting a
 follow-up. If Q8 fails, tag218 isolates the measured head optimization
 from that failure. If Q8 passes, measure tag219 against tag217 without
 assuming the earlier 3.35% improvement carries over.
+
+Physical tag218 vs tag214, same v4 decode scope
+----------------------------------------------
+Tag217 failed before generating a token and was recovered independently.
+Tag218 instead used the known raw projection path. The driver was
+matched to the local tag218 package before testing. The two raw runs
+returned the exact same 32-token counting answer, with no CPU inference
+and 31 measured post-prompt positions. Both tag218 runner exits were 0,
+both stderr files empty, and independent postflight verified the two
+teams exited, shared lock removed, stable041 generation4
+cold0/owner0/guard1, 64 CPUs, and 137034936320 bytes of RAM.
+
+  tag214: 0.172922754..0.172925982 tokens/sec
+  tag218: 0.177457180..0.177460561 tokens/sec
+  Relative change in this pair: +2.620..2.624%, not repeatability bounds.
+  Output-head cycles: 28743096951 -> 22088526522 (-23.15%).
+  Projection cycles: 118244118699 -> 118349160265 (+0.09%).
+  Upload interval: 859.608 s -> 866.199 s (19399024640 bytes each).
+  Captured stdout SHA-256, control:
+    2506b29fb0dcda062a16fcdccaf6a23a58072b041a409114f77f1e31faa435f1
+  Captured stdout SHA-256, candidate:
+    63c7f4abe52b5abec440562bd020837742db2189b9e6903a4366ac6734f4a938
+
+All nine copied evidence files matched the independent postflight hashes.
+This improves one component and one matched decode pair; it does not
+improve weight loading, validate native Q8, or replace the Assistant.
+Do not replay the spent tag218 stage or use tag219 before isolating Q8.
