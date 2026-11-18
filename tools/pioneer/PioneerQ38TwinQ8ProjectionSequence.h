@@ -7,6 +7,7 @@
 #endif
 #include <stdint.h>
 #include "PioneerQ38TwinNativeQ8Wire.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 
 // Single small A/B projection. No device, MMIO mapping, arbitrary job,
 // software fallback, reset, or release capability. The future adapter must
@@ -41,6 +42,14 @@ struct Result {
  uint32_t output[Rows]={};
 };
 static inline bool Valid(Arm arm){return arm==Arm::Raw || arm==Arm::Native;}
+static inline uint32_t InputWord(unsigned variant,unsigned word){
+ const auto q=[=](unsigned k){return int((k*(variant?67U:29U)+(variant?173U:13U))%255)-127;};
+ return uint32_t(PioneerInt8Operand(q(word*2))) | (uint32_t(PioneerInt8Operand(q(word*2+1)))<<16);
+}
+static inline uint32_t ScaleWord(unsigned variant,unsigned b){
+ constexpr uint32_t exact[]={0x3b800000,0xbc400000,0x3d000000,0x3ce00000,0xbbe00000};
+ return exact[(b*(variant?3:1)+variant)%5];
+}
 static inline bool Shape(Arm arm,const Binding& a)
 {
  const auto* b=a.boot;

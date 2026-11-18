@@ -7,7 +7,7 @@
 #endif
 #include "PioneerQ38NativeQ8FullSource.h"
 #include "PioneerQwen38TiledReader.h"
-#include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
+#include "PioneerQ38TwinQ8ProjectionSequence.h"
 #include <array>
 #include <memory>
 
@@ -37,14 +37,10 @@ struct Activation {
 static inline bool MakeActivation(unsigned variant,Activation& out)
 {
  if(variant>1)return false;
- for(unsigned w=0;w<Inputs/2;w++){
-  const auto quant=[=](unsigned k){return int((k*(variant?67U:29U)+(variant?173U:13U))%255)-127;};
-  out.words[w]=uint32_t(PioneerInt8Operand(quant(w*2)))|(uint32_t(PioneerInt8Operand(quant(w*2+1)))<<16);
- }
- for(unsigned b=0;b<Blocks;b++){
-  constexpr uint32_t exact[]={0x3b800000,0xbc400000,0x3d000000,0x3ce00000,0xbbe00000};
-  out.scales[b]=exact[(b*(variant?3:1)+variant)%5];
- }
+ namespace S=PioneerQ38TwinQ8ProjectionSequence;
+ static_assert(Inputs==unsigned(S::K) && Blocks==unsigned(S::Blocks),"same exact test input");
+ for(unsigned w=0;w<Inputs/2;w++)out.words[w]=S::InputWord(variant,w);
+ for(unsigned b=0;b<Blocks;b++)out.scales[b]=S::ScaleWord(variant,b);
  return true;
 }
 

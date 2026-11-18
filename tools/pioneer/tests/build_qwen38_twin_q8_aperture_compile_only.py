@@ -12,15 +12,7 @@ PAYLOAD_SHA = "8b29db0d577e2e1929faefa3a1ce5b23c09c241d7a413560abe0722b4f7de32f"
 MANIFEST_SHA = "b2722e2c31c78cb96f481a17864918405462585870e481f8ed538f15619dcc3e"
 
 
-def main():
-    if len(sys.argv) not in (3, 4) or not __debug__:
-        raise SystemExit("use ABSOLUTE_HAIKU_SDK_BUILD ABSOLUTE_NEW_OUTPUT [ABSOLUTE_GENERATED_PAYLOAD_DIRECTORY]")
-    sdk, out = map(Path, sys.argv[1:3])
-    payload = Path(sys.argv[3]) if len(sys.argv) == 4 else None
-    assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute()
-    assert not any(k.startswith(("PIONEER_", "TT_PIONEER_")) for k in os.environ)
-    here = Path(__file__).resolve().parent
-    root = here.parents[2]
+def kernel_flags(sdk, root):
     tool = str(sdk / "cross-tools-riscv64/bin/riscv64-unknown-haiku-")
     release = sdk / "objects/haiku/riscv64/release"
     headers = sdk / "objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers"
@@ -42,14 +34,31 @@ def main():
              "-DTT_PIONEER_DRIVER_RELOAD", "-DPIONEER_DRIVER_BUILD_TAG=0x2026111700010220ULL",
              "-DPIONEER_Q38_TWIN_Q8_NATIVE_APERTURE=1", *("-DTT_PIONEER_EXPERIMENTAL_Q38_" + r for r in roles),
              *include]
+    return tool, flags
+
+
+def payload_flags(payload, root):
+    assert payload.is_absolute()
+    record = (payload / "manifest.json").read_bytes()
+    assert hashlib.sha256(record).hexdigest() == MANIFEST_SHA
+    manifest = json.loads(record)
+    assert hashlib.sha256((payload / "PioneerQ38TwinQ8Payload.h").read_bytes()).hexdigest() == manifest["payload_sha256"] == PAYLOAD_SHA
+    return manifest, ["-fdata-sections", "-I" + str(payload), "-I" + str(root / "src/add-ons/kernel/drivers/misc")]
+
+
+def main():
+    if len(sys.argv) not in (3, 4) or not __debug__:
+        raise SystemExit("use ABSOLUTE_HAIKU_SDK_BUILD ABSOLUTE_NEW_OUTPUT [ABSOLUTE_GENERATED_PAYLOAD_DIRECTORY]")
+    sdk, out = map(Path, sys.argv[1:3])
+    payload = Path(sys.argv[3]) if len(sys.argv) == 4 else None
+    assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute()
+    assert not any(k.startswith(("PIONEER_", "TT_PIONEER_")) for k in os.environ)
+    here = Path(__file__).resolve().parent
+    root = here.parents[2]
+    tool, flags = kernel_flags(sdk, root)
     if payload:
-        assert payload.is_absolute()
-        record = (payload / "manifest.json").read_bytes()
-        assert hashlib.sha256(record).hexdigest() == MANIFEST_SHA
-        manifest = json.loads(record)
-        assert hashlib.sha256((payload / "PioneerQ38TwinQ8Payload.h").read_bytes()).hexdigest() == manifest["payload_sha256"] == PAYLOAD_SHA
-        flags.extend(["-DPIONEER_Q38_TWIN_Q8_COMPILE_PAYLOAD=1", "-fdata-sections", "-I" + str(payload),
-                      "-I" + str(root / "src/add-ons/kernel/drivers/misc")])
+        manifest, extra = payload_flags(payload, root)
+        flags.extend(["-DPIONEER_Q38_TWIN_Q8_COMPILE_PAYLOAD=1", *extra])
     out.mkdir(mode=0o700)
     source = here / "pioneer_q38_twin_q8_aperture_kernel_compile.cpp"
     obj = out / "aperture-NODRV.o"

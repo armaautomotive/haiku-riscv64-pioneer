@@ -399,7 +399,37 @@ Payload header SHA256
 8b29db0d577e2e1929faefa3a1ce5b23c09c241d7a413560abe0722b4f7de32f;
 manifest b2722e2c31c78cb96f481a17864918405462585870e481f8ed538f15619dcc3e.
 The generated payload and model bytes are not checked into Git.
-Remaining before a first card run: bind a dedicated kernel owner and
-one-shot client to the exact device/generation, verified bank upload,
-physical reset/STOP, and complete PCI/NIU/lease closure. Nothing was
-installed, and neither a silicon-correctness nor timing result follows.
+Tag220 bounded comparison executable (build only)
+-------------------------------------------------
+The new driver owns a fixed 48-row projection; no arbitrary addresses,
+weights, or Work/legacy operation can be submitted by the client.
+Four independent arms use two fixed activation patterns. Each admits
+the exact reload generation, verifies 68 uploaded bank pages, verifies
+worker boot and STOP, restores both L1 journals and the peer lease, and
+requires a clean resident END before output is returned. The client
+checks each closed arm against its pinned output hash before advancing.
+The host compares outputs; it does not compute a reference projection
+or substitute one if the card disagrees. The logged wait time is a host
+interval around one shard, not a model token rate.
+
+  python3 -B tools/pioneer/build_qwen38_twin_q8_diagnostic.py \
+    /absolute/SDK /absolute/pinned-payload /absolute/new-output
+
+Two complete isolated RISC-V SDK builds produced identical manifests
+and binaries. The link check re-read all 22 final payload arrays,
+verified the Haiku loader's C entry points and the inert legacy hook,
+and refused 11 invalid or mixed roles. Largest new static frame was
+1,072 bytes (not a whole-stack proof). Exact linked-worker replay passed
+four modeled closures, ten fault paths and four pre-I/O refusals; the
+separate sanitizer journal test passed all 113,385 words and eight
+fault cases. The earlier inert aperture build still matches.
+
+  Driver:   8bfd096f35df5b1dd2c96f368e774cd1631b714cff256b7c46e345a8de6bce6a
+  Client:   4140e029a0d21207580cca9ea15a9a01465b26c293f937d79ebe55d5742ccbda
+  Manifest: 6ba3e08c4d88ac2950dd500433828c121b20037bd8f3f103318f4132de947e32
+
+Tag220 has not been installed or run on hardware. Next: bind its
+one-shot runner to these hashes and the idle known-good state, with
+independent postflight for clean restore or retained quarantine.
+Do not retry the full-model tag217 or tag219 native-Q8 path on the basis
+of these offline results.
