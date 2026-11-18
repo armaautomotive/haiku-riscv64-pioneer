@@ -26,6 +26,7 @@ enum : unsigned {
  Worker=69, Peer=(7|(11<<6)), Root=129, Groups=3, Rows=48, K=5120, Blocks=160,
  WeightBytes=Groups*Blocks*W::Tile, WeightPages=(WeightBytes+4095)/4096,
  Route=786, Magic=0x33574751, ReceiptMagic=0x33504d51, MatrixMagic=0x31483851,
+ NiuCommandWords=10, NiuSelfRouteOffset=0x14,
  Boot=0x75000, Job=0x75100, Bell=0x75200, Status=0x75240, Proof=0x83f00, Output=0x84000,
  Mail=0x118000+(Worker-1)*256, ReadCount=122, ReadFlits=4490, Panels=Groups*K/16
 };
@@ -42,6 +43,20 @@ struct Result {
  uint32_t output[Rows]={};
 };
 static inline bool Valid(Arm arm){return arm==Arm::Raw || arm==Arm::Native;}
+// Cold-worker prerequisite shared by the Haiku owner and exact linked
+// worker test. The caller must own a held, quiet, selected worker.
+// There is only one allowed write; no submit or reset doorbell.
+template<class Read,class Write> bool StageSelfRoute(Read read,Write write)
+{
+ for(unsigned off=0;off<NiuCommandWords*4;off+=4){
+  uint32_t v=0;if(!read(off,v) || v)return false;
+ }
+ if(!write(NiuSelfRouteOffset,Peer))return false;
+ for(unsigned off=0;off<NiuCommandWords*4;off+=4){
+  uint32_t v=0;if(!read(off,v) || v!=(off==NiuSelfRouteOffset?unsigned(Peer):0U))return false;
+ }
+ return true;
+}
 static inline uint32_t InputWord(unsigned variant,unsigned word){
  const auto q=[=](unsigned k){return int((k*(variant?67U:29U)+(variant?173U:13U))%255)-127;};
  return uint32_t(PioneerInt8Operand(q(word*2))) | (uint32_t(PioneerInt8Operand(q(word*2+1)))<<16);

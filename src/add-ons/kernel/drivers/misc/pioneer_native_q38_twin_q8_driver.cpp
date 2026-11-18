@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Private one-shard comparison only. Do not attach to existing Work routes.
 #if !defined(_KERNEL_MODE) || !defined(PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE) \
- || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010220ULL \
+ || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010221ULL \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH)
-#error Exact tag220 comparison driver role required
+#error Exact tag221 comparison driver role required
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) \
@@ -97,6 +97,20 @@ class Owner {
  bool Started(){
   if(!Scope() || !Participant(Tile::Worker) || !aperture.Held(Tile::Worker)
    || (io.RuntimeControlRead(0)&1) || io.RuntimeControlRead(1) || io.RuntimeControlRead(2))return false;
+  // QGW3 checks NIU0 command word five before publishing READY.
+  // The peer lease admitted all ten original words as zero and its
+  // verified END restores that baseline. Arm must not ring a doorbell.
+  r.step=Step::SelfRoute;
+  auto read=[&](unsigned offset,uint32_t& value){
+   if(!Scope())return false;
+   value=io.ResidentNocRead(offset);return true;
+  };
+  auto write=[&](unsigned offset,uint32_t value){
+   if(offset!=S::NiuSelfRouteOffset || value!=S::Peer || !aperture.Held(Tile::Worker))return false;
+   io.ResidentNocWrite(offset,value);return true;
+  };
+  if(!S::StageSelfRoute(read,write) || !Participant(Tile::Worker) || !aperture.Held(Tile::Worker))return false;
+  r.step=Step::Start;
   // Bind the attempted lifetime before the very first reset write.
   if(!journal.NoteRelease() || !aperture.NoteRelease() || !Scope())return false;
   io.RuntimeResetWrite(0x87ffff);io.Pause();

@@ -92,6 +92,29 @@ generation4 idle, cold0/owner0/guard1, 64 CPUs, full RAM and the cleared
 lock. The stage is spent. The separate Q6 re-encoding experiment passed
 offline data and memory layout tests only. No Assistant changes.
 
+The small tag220 Q8 comparison stopped before any arithmetic in its
+first raw control. All 68 pages passed write/readback; the worker then
+published boot fault 0x46574752 before readiness. No job was sent, and
+native Q8 was not attempted. The diagnostic exited and retained the
+quarantined owner and shared lock. All nine pre-recovery logs matched
+independent hashes. The raw worker checks NIU0 word 5 for its logical
+self-route; the full-model bootstrap sets this, but tag220 did not.
+Actual linked-worker replay reproduced the same fault on that omission.
+Tag221 adds and verifies the fixed route while the worker is held; all
+four pinned projections then pass in the simulator. No new hardware
+result is claimed. After one OFF/ON and the pinned SD-free boot, an
+independent check verified idle stable041 generation2, cleared lock,
+64 CPUs and full RAM. The pre-power archive and six differing
+post-power files were preserved separately. Tag220 is spent.
+
+The corrected tag221 physical trial verified the same 68 pages and
+worker readiness at 0x20050, then passed the worker-side matrix
+completion and master-counter checks. It stopped at the first held
+controller slave-counter read: 0x2f0 returned the host accessor's
+denied-offset sentinel, not a measured hardware counter. No output
+or speed result was released. The nine captured log hashes agree and
+the trial is spent. Recovery of the known-good driver is in progress.
+
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
 Radeon's previous root). The initial scans, one default-target link

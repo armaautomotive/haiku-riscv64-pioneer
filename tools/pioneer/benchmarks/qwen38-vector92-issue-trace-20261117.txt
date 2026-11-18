@@ -428,8 +428,59 @@ fault cases. The earlier inert aperture build still matches.
   Client:   4140e029a0d21207580cca9ea15a9a01465b26c293f937d79ebe55d5742ccbda
   Manifest: 6ba3e08c4d88ac2950dd500433828c121b20037bd8f3f103318f4132de947e32
 
-Tag220 has not been installed or run on hardware. Next: bind its
-one-shot runner to these hashes and the idle known-good state, with
-independent postflight for clean restore or retained quarantine.
-Do not retry the full-model tag217 or tag219 native-Q8 path on the basis
-of these offline results.
+Physical tag220 and isolated tag221 boot correction
+---------------------------------------------------
+The guarding wrapper passed 15 fake-manager cases covering malformed
+receipts/manifest, stale generation, active teams, clean restoration,
+uncertain ownership and spent stages. One physical run used stable041
+generation4 and candidate generation5. Team 1221 exited 1 before any
+matrix submission. Its first raw control verified all 68 uploaded
+pages and all three final upload receipts, then reported start-phase
+fault 0x46574752 with READY zero. There is no projection timing or
+native-Q8 comparison. Independent no-device-open postflight verified
+the unchanged candidate, retained shared lock, and all nine archived
+file hashes. Compare stderr SHA-256:
+  cadd41bc80290fa0cba91d7daf3a38f19d86b97b643021fea68252a640d59069
+
+Tag220 missed a prerequisite already present in the full-model
+bootstrap: set NIU0 command word 5 (offset 0x14) to the worker's
+logical self-route while held. The unmodified raw linked worker was
+replayed from an all-zero command block, and reached the same fault
+with READY zero, no packets or matrix instruction, and the self-route
+check immediately before parking. The separate regression also
+refuses a non-pristine command block and a dropped write. With the
+same checked staging function as tag221, both unchanged linked
+workers reach READY and return all pinned outputs for two input
+patterns in the simulator. The existing peer END still restores the
+original all-zero command block.
+
+Tag220 recovery used one OFF and one ON and the pinned SD-free
+profile. Fedora re-enumerated the original-slot device. The nine
+verified pre-power files and six changed post-power disk files were
+kept separately. Only after a fresh Haiku boot at idle tag220 gen1
+did the recovery script restore stable041. Independent postflight
+verified stable041 gen2/cold0/owner0/guard1, cleared lock, exact
+retained candidate, 64 CPUs, and 137034936320 bytes RAM.
+
+Tag221 distinct, reproducible package, same 22 authenticated arrays:
+  Driver:   39c234a37d77d369010166996dc56bae173283e91f67d0888994d31d047fea32
+  Client:   12102334568434f495d537bd5a0cd43f770a0a5abd0093fe43b361c30152b7ae
+  Manifest: 00d6611903d73c0cb364cef83acf98b989fef36506dab2c47dde856ce9295a1a
+The tag220 bootstrap defect does not explain the full-model tag217
+failure because that path already stages the self-route.
+
+Physical tag221: the same runner logic passed 30 more fake-manager
+cases, including a different start generation and the hex boundary.
+Live preflight confirmed stable041 gen2; candidate gen3 admitted.
+The raw worker published READY and reached its wait PC (0x20050).
+Its first matrix job returned completion and passed the worker
+master-counter checks. The first controller slave-counter check then
+read 0xffffffff from offset 0x2f0. The inherited host accessor excludes
+that address and the other required slave offsets, so this is not an
+observed hardware count or evidence of a matrix or Q8 mismatch.
+There was no output publication, STOP, native arm or timing.
+Independent postflight verified team 775 and the client exited with
+quarantine retained, and all nine archived files matched their hashes.
+Compare stderr SHA-256:
+  5c8fc7168445982df3ef3579a32d28979ebdaf613d788c06dca850be88909572
+Do not replay tag221 or retry tag217/tag219 on these results alone.

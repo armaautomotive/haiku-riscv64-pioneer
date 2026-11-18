@@ -352,6 +352,14 @@ static void PrepareSequence(MathUnit& p,S::Binding& b)
   p.boot[S::W::BootIndex]=S::W::BootTag;
   p.memory[S::Boot+4*S::W::BootIndex]=S::W::BootTag;
  }
+ // Previous harnesses inherited a synthetic self-route from the parent.
+ // Begin from the same zeroed command buffer that the actual held lease
+ // requires; use the identical setter before releasing these worker bytes.
+ std::fill_n(p.command,S::NiuCommandWords,0);
+ unsigned writes=0;
+ auto read=[&](unsigned off,uint32_t& value){assert(off/4<S::NiuCommandWords);value=p.command[off/4];return true;};
+ auto write=[&](unsigned off,uint32_t value){++writes;assert(off==S::NiuSelfRouteOffset);p.command[off/4]=value;return true;};
+ assert(S::StageSelfRoute(read,write) && writes==1 && p.command[5]==S::Peer);
  p.BootPushed();p.Prepare();p.asynchronous=true;p.delay=3;
  std::copy(p.boot.begin(),p.boot.end(),b.boot);b.address=p.matrixJob[6];
 }
@@ -420,6 +428,24 @@ int main(int argc,char** argv){
    F::Activation testInput={};
    testInput.words.fill(0xdeadc0de);testInput.scales.fill(0xfeedbeef);const auto before=testInput;
    assert(!F::MakeActivation(2,testInput) && testInput.words==before.words && testInput.scales==before.scales);
+   // Reproduce tag220's *actual* first raw-worker boot fault, without
+   // changing the pinned program, boot record, or ringing its job doorbell.
+   {
+    auto cold=std::make_unique<MathUnit>(argv[1],argv[2],oldEntry,false,F::Inputs,F::Groups,0,&rawTiles);
+    std::fill_n(cold->command,S::NiuCommandWords,0);cold->PoisonDst();cold->Poison();
+    for(unsigned i=0;i<16;i++)cold->memory[S::Status+i*4]=0; // same pre-release journal as hardware
+    for(unsigned i=0;i<10000 && cold->pc!=cold->waitPC && cold->pc!=cold->faultPC;i++)cold->StepBlock();
+    assert(cold->pc==cold->faultPC && cold->memory.at(S::Status+8)==0x46574752
+     && !cold->memory.at(S::Status+12) && !cold->requests && !cold->matrixInstructions);
+    // Refuse before writing to a non-pristine command block; a dropped
+    // self-route write is discovered before the physical owner can arm.
+    auto read=[&](unsigned off,uint32_t& value){assert(off/4<S::NiuCommandWords);value=cold->command[off/4];return true;};
+    unsigned writes=0;
+    auto drop=[&](unsigned off,uint32_t value){assert(off==S::NiuSelfRouteOffset && value==S::Peer);++writes;return true;};
+    cold->command[2]=1;assert(!S::StageSelfRoute(read,drop) && !writes);
+    cold->command[2]=0;assert(!S::StageSelfRoute(read,drop) && writes==1);
+    puts("PASS tag220 raw boot fault reproduced exactly: absent NoC self-route, zero matrix work; checked staging refuses dirty or dropped command");
+   }
    std::array<uint32_t,F::Rows> previous={};
    constexpr const char* expected[]={
     "0e94ceba949d9266e0383ca43b96c73da4bcaf0785fec9d45b4570f73e021254",
