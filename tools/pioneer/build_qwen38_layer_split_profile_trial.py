@@ -20,24 +20,34 @@ PACKAGE={
         '791a898258f757677e9928f591e9095f24f49c61d19a840e693d1a68ff1af913',
         '59711d94ad957ffd792330597d38f45385addf9e6673c86afdb35edfab3ca9e7',
         'ad5d23bc5baf35773f9745290e60659376d56fc9671f1d1a14c15a0742506f94'),
+    'wire': ('2026111700010217',
+        '3303735cb89298c7b7b4be70b0133965923375cfce135f456fbc8ff4757ae749',
+        '344be63e6b0214d8cb02a98d77884b0f671cbd81dd335627b9f6958eb102f407',
+        '383d1a3057f458635f899f9a48fe1eb3e255d6b4d530175c69f3080553ea3f9b'),
 }
 RECIPE_MANIFEST='0293066d8d872861bb3150a736e45e89d51f1ffece9bccb30cfbef40e663952f'
 LIVE_MANIFEST='d2666936f624f65b6eeaeab9a42776943aef88b62fdfb1f5c8f4414be2ac4d7a'
+WIRE_MANIFEST='75603557a948fca8ac7f5efea288930ae0c0e6811a175b9fd9b521616881834a'
 POSTFLIGHT=Path(__file__).with_name('pioneer_q38_layer_split_postflight.sh')
 POSTFLIGHT_SHA='22242231188928d8277e8aa37833d78cbb07673a7c207b8c0d9cc050af06f375'
 
 
-def bind(start,live=False,*,recipe=False):
-    assert type(live) is bool and type(recipe) is bool and not (live and recipe)
+def bind(start,live=False,*,recipe=False,wire=False):
+    assert all(type(v) is bool for v in (live,recipe,wire)) and sum((live,recipe,wire))<=1
+    if wire:
+        text=bind_raw_pair('wire',start,PACKAGE,'native-q8','native Q8','NATIVE_Q8')
+        old='\texact "$candidate" "$candidateHash" || fail candidate_driver'
+        assert text.count(old)==1
+        return text.replace(old,old+f'\n\texact "$stage/manifest.json" {WIRE_MANIFEST} || fail manifest',1)
     variant='recipe' if recipe else 'live' if live else 'candidate'
     return bind_raw_pair(variant,start,PACKAGE,'layer-split','layer split profile','LAYER_SPLIT')
 
 
 def postflight(start,parent,variant):
     """Read only; use the actual parent identity after its observed exit."""
-    if variant not in ('recipe','live'):
+    if variant not in ('recipe','live','wire'):
         raise ValueError('unknown postflight role')
-    runner=bind(start,live=variant=='live',recipe=variant=='recipe')
+    runner=bind(start,live=variant=='live',recipe=variant=='recipe',wire=variant=='wire')
     if not re.fullmatch(r'[1-9][0-9]{0,8}',parent):
         raise ValueError('supply the observed positive detached parent team')
     template=POSTFLIGHT.read_bytes()
@@ -46,10 +56,11 @@ def postflight(start,parent,variant):
     text=template.decode('ascii')
     generation=int(start)+2
     control,candidate=PACKAGE['candidate'],PACKAGE[variant]
-    tag,manifest=(216,RECIPE_MANIFEST) if variant=='recipe' else (214,LIVE_MANIFEST)
+    tag,manifest={'recipe':(216,RECIPE_MANIFEST),'live':(214,LIVE_MANIFEST),'wire':(217,WIRE_MANIFEST)}[variant]
+    stage=f'native-q8-wire-{tag}' if variant=='wire' else f'layer-split-{variant}-{tag}'
     changes=[
         ('tag213 generation3',f'tag{tag}'),
-        ('layer-split-candidate-213',f'layer-split-{variant}-{tag}'),
+        ('layer-split-candidate-213',stage),
         ('STABLE041_GEN4_RESTORED',f'STABLE041_GEN{generation}_RESTORED'),
         ("printf '621\\n' | cmp -s launch.pid -",f"printf '{parent}\\n' | cmp -s launch.pid -"),
         ('$1==621 ||',f'$1=={parent} ||'),
@@ -74,12 +85,14 @@ def recipe_postflight(start,parent):
 def main():
     live=len(sys.argv)==4 and sys.argv[3]=='--live-image-check'
     recipe=len(sys.argv)==4 and sys.argv[3]=='--recipe-batch'
-    closure=len(sys.argv)==5 and sys.argv[3] in ('--recipe-postflight','--live-postflight')
-    if not __debug__ or (len(sys.argv)!=3 and not (live or recipe or closure)):
+    wire=len(sys.argv)==4 and sys.argv[3]=='--native-q8-wire'
+    closure=len(sys.argv)==5 and sys.argv[3] in ('--recipe-postflight','--live-postflight','--wire-postflight')
+    if not __debug__ or (len(sys.argv)!=3 and not (live or recipe or wire or closure)):
         raise SystemExit('use OBSERVED_STABLE_GENERATION NEW_SCRIPT '
-                         '[--live-image-check|--recipe-batch|--recipe-postflight PARENT|--live-postflight PARENT]')
+                         '[--live-image-check|--recipe-batch|--native-q8-wire|--recipe-postflight PARENT|'
+                         '--live-postflight PARENT|--wire-postflight PARENT]')
     generation,path=sys.argv[1:3]
-    text=postflight(generation,sys.argv[4],sys.argv[3].split('-')[2]) if closure else bind(generation,live,recipe=recipe)
+    text=postflight(generation,sys.argv[4],sys.argv[3].split('-')[2]) if closure else bind(generation,live,recipe=recipe,wire=wire)
     output=text.encode('ascii')
     with Path(path).open('xb') as dest:
         dest.write(output)

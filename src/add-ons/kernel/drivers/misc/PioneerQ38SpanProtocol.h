@@ -4,6 +4,7 @@
 #include "PioneerQ38BankProtocol.h"
 #include "PioneerResidentBanks.h"
 #include "PioneerRuntimeMatvec.h"
+#include "PioneerQ38NativeQ8FullRole.h"
 // Separate opt-in pre-cohort transport. Logical bank/offset and inline DATA
 // only; no caller address, route, code, nonce or physical host capability.
 // SPAN_END restores its code before cohort handoff. BANK_END still MUST be
@@ -12,7 +13,13 @@
 #define TT_PCI_PROBE_Q38_SPAN_UPLOAD (B_DEVICE_OP_CODES_END + 0x60f5)
 #define TT_PCI_PROBE_Q38_SPAN_END (B_DEVICE_OP_CODES_END + 0x60f6)
 #define TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x60f7)
+#ifdef PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE
+// Exact separate operation: the raw old uploader is not admitted on the
+// converted-layout driver; neither raw driver understands this operation.
+#define TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD (B_DEVICE_OP_CODES_END + 0x60f9)
+#else
 #define TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD (B_DEVICE_OP_CODES_END + 0x60f8)
+#endif
 enum { TT_Q38_SPAN_PUBLIC_VERSION=1,TT_Q38_SPAN_PUBLIC_BYTES=1048576 };
 struct tt_q38_span_support {
 	uint32_t driver,version,banks,page_bytes,max_bytes,before_cohort,explicit_end,reserved;

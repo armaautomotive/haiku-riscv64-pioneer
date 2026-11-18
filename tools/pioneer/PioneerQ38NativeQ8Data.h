@@ -6,7 +6,8 @@
 // The authenticated PUBLIC model inventory proves all its Q8 weights are
 // [-127,127]. Encode ONCE at load time,without clipping/requantization or
 // learned products. A DIFFERENT layout/ABI/source owner is still required.
-// No native image/driver/source selector consumes this format yet.
+// Callers must bind the format to their matching source and worker role;
+// the conversion itself grants no upload or execution authority.
 struct PioneerQ38NativeQ8Data {
 	static constexpr unsigned Version=1,TileBytes=576,Header=32,QuantEnd=544,PageBytes=4096;
 	static bool Encode(uint8_t tc,uint8_t& sm) {

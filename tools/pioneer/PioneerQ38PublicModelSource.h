@@ -5,6 +5,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38NativeQ8FullRole.h"
+#ifdef PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE
+#include "PioneerQ38NativeQ8FullSource.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadPreparedQ4Role.h"
 #include "PioneerQ38NativeQ4WeightCache.h"
@@ -136,6 +140,19 @@ public:
 		if (!Ready() || !output || capacity<4096 || !plan.MatchesSource(model)) return false;
 		uint8_t stage[4096];
 		if (!plan.ReadWeightPage(model,fragment,page,stage,sizeof(stage)) || !Ready()) return false;
+#ifdef PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE
+		namespace Q=PioneerQ38NativeQ8FullSource;
+		const auto& parts=plan.Parts();const auto& tensors=model.Tensors();
+		if(!plan.Tiled() || fragment>=parts.size() || parts[fragment].tensor>=tensors.size())return false;
+		const auto& part=parts[fragment];
+		const auto format=Q::Layout(part,tensors[part.tensor]);
+		if(format==Q::Format::Invalid)return false;
+		if(format==Q::Format::SignedMagnitude){
+			uint8_t encoded[4096];
+			if(!Q::Prepare(part,page,stage,encoded,sizeof(encoded)) || !Ready())return false;
+			memcpy(output,encoded,sizeof(encoded));return true;
+		}
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
 		const auto& parts=plan.Parts();if(fragment>=parts.size())return false;
 		const auto part=parts[fragment];const auto& tensors=model.Tensors();

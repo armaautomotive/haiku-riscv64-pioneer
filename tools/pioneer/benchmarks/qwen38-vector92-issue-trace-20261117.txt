@@ -206,3 +206,49 @@ The remaining connection is the authenticated Haiku upload producer and
 separate driver/worker package: bind the SM7 source transformation to
 the same cohort and exact model before it can be staged. A native-boot
 marker identifies matching code, not proof of uploaded bytes by itself.
+
+Tag217: authenticated upload and first guarded hardware trial
+------------------------------------------------------------
+The private full-card host worker authenticates the unchanged original
+GGUF and binds its tiled plan to the same open file. Only canonical Q8
+projection fragments are sign-reencoded. The embedding, head, raw
+Q4/Q6, F32 and all state geometry are unchanged. Only the isolated
+source/driver tag uses span work upload opcode 0x60f9; old 0x60f8
+cannot select its closed full-card upload dispatcher. The host checks
+tag and generation before opening a bank session and again before
+starting inference. It has no CPU inference/validation fallback.
+
+An independent file test of the actual page producer authenticated the
+original SHA, compared all 4,678 plan fragments to the independent
+kernel geometry, and checked 11,558 exact sampled pages across every
+weight fragment (all pages of one Q8 fragment). It classified 1,440
+Q8 fragments across 288 tensors and 2,111 unchanged-format weight
+fragments. It also refused unstable source, invalid roles/geometry and
+nonrepresentable quants without publishing output. Upload geometry
+remains 19,399,024,640 bytes. The startup test used the exact isolated
+driver sources: all 119 worker boots had QSM8 in word 55; all 973
+actual head descriptors stayed raw Q6 and rejected native mode.
+
+  python3 tools/pioneer/tests/run_pioneer_q38_native_q8_full_source_test.py /absolute/model.gguf
+  python3 tools/pioneer/build_qwen38_layer_split_profile_native.py \
+    SDK FROZEN_LLAMA_LIBRARIES MATCHED_WIRE_BUILD NEW_OUTPUT --native-q8-wire
+  python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py 6 NEW_SCRIPT --native-q8-wire
+
+Two isolated builds independently checked all 15 linked code arrays,
+preserved the vector92 and default43 driver binaries, rejected 21
+extra package/driver role mismatches and matched package manifest
+75603557a948fca8ac7f5efea288930ae0c0e6811a175b9fd9b521616881834a.
+  driver 3303735cb89298c7b7b4be70b0133965923375cfce135f456fbc8ff4757ae749
+  worker 344be63e6b0214d8cb02a98d77884b0f671cbd81dd335627b9f6958eb102f407
+  client 383d1a3057f458635f899f9a48fe1eb3e255d6b4d530175c69f3080553ea3f9b
+
+The stage is /boot/home/pioneer-q38-native-q8-wire-217 and runner SHA
+23333c8b67dec3585daf0ca4fb56c586c7df6f75ec6a608019d3b552cfba6084.
+Independent preflight verified idle stable041 generation6, 64 CPUs,
+137,034,936,320 bytes usable RAM and exact artifacts. The detached
+parent team was 1339; tag217 generation7 was admitted and the same
+32-output counting job began authenticating its source. No second
+trial or metadata device open while the benchmark owns the lock.
+After all handles exit, bind the postflight to observed stable gen6
+and parent team 1339 (--wire-postflight 1339; expects stable gen8).
+No result for native-Q8 silicon correctness or decode rate yet.

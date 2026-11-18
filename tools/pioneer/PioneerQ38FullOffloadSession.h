@@ -86,6 +86,11 @@ static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111500010101),
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentProtocol.h"
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
+#ifdef PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026111700010217) &&
+ TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD==B_DEVICE_OP_CODES_END+0x60f9,
+ "Native Q8 full-card package requires exact tag217 and its private upload opcode");
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SelectedFullMetricsRole.h"

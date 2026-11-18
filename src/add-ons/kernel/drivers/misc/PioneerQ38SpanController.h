@@ -18,8 +18,9 @@
 #error Live executable image audit requires the separate fast loader without code-proof reuse
 #endif
 #if defined(_KERNEL_MODE) && (!defined(PIONEER_Q38_FAST_DECODE_SPLIT_PACKAGE) || PIONEER_Q38_FAST_DECODE_SPLIT_PACKAGE != 1 \
-	|| !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010214ULL)
-#error Live executable image audit requires isolated native tag214
+	|| !defined(PIONEER_DRIVER_BUILD_TAG) || (PIONEER_DRIVER_BUILD_TAG != 0x2026111700010214ULL \
+	&& !(defined(PIONEER_Q38_NATIVE_Q8_FULL_PACKAGE) && PIONEER_DRIVER_BUILD_TAG == 0x2026111700010217ULL)))
+#error Live executable image audit requires isolated native tag214 or its matched native Q8 package
 #endif
 #endif
 enum { TT_Q38_SPAN_VIEW_BASE=0x6e000,TT_Q38_SPAN_VIEW_BYTES=0x42000,

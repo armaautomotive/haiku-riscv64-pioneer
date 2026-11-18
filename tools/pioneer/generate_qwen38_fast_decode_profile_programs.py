@@ -5,7 +5,8 @@ import os
 from pathlib import Path
 import re
 import sys
-from generate_qwen38_token_programs import pins
+from generate_qwen38_token_programs import authenticated, pins
+from build_qwen38_twin_native_q8_wire import WIRE_ROOT_PINS, WIRE_WORKER_PINS
 
 PINS = {
     'boot.bin': (4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
@@ -16,14 +17,19 @@ PINS = {
     'program.elf': (193672, '882d2e1cf08ad5ccbd69c52a7ecb7daf5e7101527f669431faf962f158b5b425'),
 }
 recipe = len(sys.argv) == 4 and sys.argv[3] == '--recipe-batch'
-split = recipe or (len(sys.argv) == 4 and sys.argv[3] == '--layer-split')
+wire = len(sys.argv) == 4 and sys.argv[3] == '--native-q8-wire'
+split = recipe or wire or (len(sys.argv) == 4 and sys.argv[3] == '--layer-split')
 assert __debug__ and (len(sys.argv) == 3 or split)
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 directory, output = map(Path, sys.argv[1:3])
 assert directory.is_absolute() and directory.is_dir()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 here = Path(__file__).resolve().parent
-if recipe:
+if wire:
+    PINS = {name: (size, digest) for name, size, digest in WIRE_ROOT_PINS}
+    peers = authenticated(directory/'worker', WIRE_WORKER_PINS)
+    directory = directory/'root'
+elif recipe:
     PINS = {name: (size, digest) for name, size, digest in
             pins(here/'build_qwen38_recipe_batch_root.py', 'RECIPE_PINS')}
 elif split:
@@ -47,13 +53,20 @@ def array(label, data):
     return result + '\n};\nstatic_assert(sizeof(' + label + ')==' + str(len(data)) + ',"exact complete ' + label + ' DATA");'
 
 text = source.decode('ascii')
-for label, name in {'RootBoot': 'boot.bin', 'RootText': 'text.bin', 'RootTerminal': 'terminal.bin', 'RootAux': 'conv.bin'}.items():
+sections = {'RootBoot': 'boot.bin', 'RootText': 'text.bin', 'RootTerminal': 'terminal.bin', 'RootAux': 'conv.bin'}
+if wire:
+    sections.update({'PeerBoot':'boot.bin','PeerFront':'globalworker.bin','PeerPrecise':'precise.bin',
+                     'PeerDense':'dense.bin','PeerFfn':'ffn.bin','PeerService':'service.bin','PeerFetch':'fetch.bin',
+                     'PeerAffine':'affine.bin','PeerText':'text.bin','PeerGdn':'gdn.bin'})
+for label, name in sections.items():
     pattern = r'// SHA256 [0-9a-f]{64}\nstatic const uint32_t ' + label + r'\[\]=\{.*?\n\};\nstatic_assert\(sizeof\(' + label + r'\)==[0-9]+,"exact complete ' + label + r' DATA"\);'
-    text, count = re.subn(pattern, lambda _: array(label, images[name]), text, flags=re.S)
+    section = peers[name] if wire and label.startswith('Peer') else images[name]
+    text, count = re.subn(pattern, lambda _: array(label, section), text, flags=re.S)
     assert count == 1
 text = text.replace('PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4_PROGRAMS_H', 'PIONEER_Q38_FULL_OFFLOAD_FAST_DECODE_PROGRAMS_H')
 text = text.replace('PioneerQ38FullOffloadVectorQ4Programs', 'PioneerQ38FullOffloadFastDecodePrograms')
 text = text.replace('Generated complete five-EOG ROOT and ten exact vector-Q4 returning peer sections.',
+                    'Generated matched native Q8 dispatch and peer wire with the v4 timer.' if wire else
                     'Generated generation-only timer ROOT; all ten vector92 peer sections unchanged.')
 marker = 'using PioneerQ38TokenPushedL1::Span;'
 assert text.count(marker) == 1
@@ -64,6 +77,8 @@ version = 4 if split else 3
 binding = 'LayerSplitProfile=1,' if split else ''
 if recipe:
     binding += 'RecipeBatchProfile=1,'
+if wire:
+    binding += 'NativeQ8Wire=1,'
 text = text.replace(marker, marker + f'\nenum {{FastDecodeProfile=1,TokenPhaseProfile=1,{binding}PhaseProfileVersion={version},PhaseProfileAddress=0x75710,PhaseProfileWords=60,RootSections=5}};')
 assert text.count('worker?10:4;') == 1
 text = text.replace('worker?10:4;', 'worker?10:5;')
@@ -77,9 +92,10 @@ marker = '   case 3:data=RootAux;break;'
 assert text.count(marker) == 1
 text = text.replace(marker, marker + '\n   case 4:data=RootFastDecode;break;')
 peers = lambda s: re.findall(r'// SHA256 [0-9a-f]{64}\nstatic const uint32_t Peer[A-Za-z]+\[\]=\{.*?\n\};\nstatic_assert\(sizeof\(Peer[A-Za-z]+\)==[0-9]+,"exact complete Peer[A-Za-z]+ DATA"\);', s, re.S)
-assert len(peers(text)) == 10 and peers(text) == peers(source.decode('ascii'))
+assert len(peers(text)) == 10 and (wire or peers(text) == peers(source.decode('ascii')))
 assert len(re.findall(r'// SHA256 [0-9a-f]{64}\nstatic const uint32_t ', text)) == 15
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name)
-print('DATA_ONLY distinct full-card15 sections; exact new1496B code view; ten vector92 peers unchanged; NO install/run/speed result')
+print('DATA_ONLY distinct full-card15 sections; exact1496B code view; '
+      + ('matched Q8 wire peers' if wire else 'ten vector92 peers unchanged') + '; NO install/run/speed result')
