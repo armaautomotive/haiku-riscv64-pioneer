@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 here=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(here))
-from compare_qwen38_layer_profiles import compare, read_profile, InvalidLog
+from compare_qwen38_layer_profiles import compare, compare_v4, read_profile, InvalidLog
 
 old=here/'benchmarks/qwen38-fast-decode-profile-physical-20261106/remote'
 v3_sha,_,p3=read_profile(old,3)
@@ -63,3 +63,40 @@ with TemporaryDirectory(prefix='q38-profile-compare.') as temp:
         log.write_text(broken);reject(old,test)
     assert refused==9
 print('PASS closed profile comparison: archived v3, conserved synthetic v4 groups, STOP excluded, 9 refusals')
+
+control=here/'benchmarks/qwen38-layer-split-profile-physical-20261117/remote'
+raw_hash,_,actual=read_profile(control,4)
+with TemporaryDirectory(prefix='q38-profile-matched-v4.') as temp:
+    candidate=Path(temp)
+    for name in ('rate.exit','rate.stderr','parent.exit','state'):
+        (candidate/name).write_bytes((control/name).read_bytes())
+    base=(control/'rate.stdout').read_text()
+    log=candidate/'rate.stdout'
+    log.write_text(base)
+    def refuse():
+        try:
+            compare_v4(control,candidate)
+        except (InvalidLog,ValueError):
+            return
+        raise AssertionError('accepted duplicate or incomplete v4 benchmark')
+    refuse()
+    shift=10500000
+    fixture=base.replace(f'end_cycles{actual["end_cycles"]} ',f'end_cycles{actual["end_cycles"]-shift} ')
+    matrix=actual['buckets'][10]['cycles']
+    fixture=fixture.replace(f'bucket10 segments15376 cycles{matrix};',f'bucket10 segments15376 cycles{matrix-shift};')
+    log.write_text(fixture)
+    result=compare_v4(control,candidate)
+    assert result['transcript_sha256']['control']==raw_hash
+    assert result['body_cycles']['control']-result['body_cycles']['candidate']==shift
+    assert result['final_stop_cycles']['control']==result['final_stop_cycles']['candidate']
+    assert result['host_observed_tps']['bounds_relation']=='overlapping'
+    assert [b['change_cycles'] for b in result['body_buckets'] if b['change_cycles']]==[-shift]
+    assert next(b for b in result['body_buckets'] if b['change_cycles'])['bucket']=='matrix_total'
+    for broken in (fixture.replace('window_start31','window_start30'),
+                   fixture.replace('segments15376','segments15375'),
+                   fixture.replace('hex=310a','hex=300a'),
+                   fixture.replace(f'end_cycles{actual["end_cycles"]-shift} ',f'end_cycles{actual["end_cycles"]} ')):
+        log.write_text(broken);refuse()
+    log.write_text(fixture)
+    (candidate/'state').write_text('RUNNING_NATIVE_Q8_NO_CPU_INFERENCE\n');refuse()
+print('PASS matched v4 comparison: archived physical control and synthetic cycle delta; rates separate, 6 refusals')

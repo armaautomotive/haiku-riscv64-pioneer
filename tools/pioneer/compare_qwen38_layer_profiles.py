@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare closed v3/v4 profiles as measured cycle shares, not speedups."""
+"""Compare closed v3/v4 or matched v4/v4 captures without mixing clock domains."""
 from decimal import Decimal
 from hashlib import sha256
 import json
@@ -76,11 +76,45 @@ def compare(v3_dir,v4_dir):
             'requires_independent_package_identity_and_machine_postflight':True}
 
 
+def compare_v4(control,candidate):
+    require(control.resolve()!=candidate.resolve(),'control and candidate must be independent captures')
+    (before,raw,left),(after,trial,right)=read_profile(control,4),read_profile(candidate,4)
+    require(before!=after and raw['uploaded_bytes']==trial['uploaded_bytes'],
+            'duplicate transcript or unequal full model upload bytes')
+    require(len(left['buckets'])==len(right['buckets']),'different v4 phase count')
+    rows=[]
+    for a,b in zip(left['buckets'],right['buckets']):
+        require(all(a[k]==b[k] for k in ('name','phase','segments')),'different v4 phase/segment scope')
+        if a['name']=='final_stop':continue
+        delta=b['cycles']-a['cycles']
+        rows.append({'bucket':a['name'],'segments':a['segments'],'control_cycles':a['cycles'],
+                     'candidate_cycles':b['cycles'],'change_cycles':delta,
+                     'change_percent':f'{Decimal(delta)*100/a["cycles"]:.6f}' if a['cycles'] else None})
+    require(sum(r['control_cycles'] for r in rows)==left['generation_body_cycles'] and
+            sum(r['candidate_cycles'] for r in rows)==right['generation_body_cycles'],
+            'phase comparison did not conserve exclusive generation body cycles')
+    a,b=([Decimal(r['observed_post_prompt_count_rate_bounds'][k]) for k in ('lower_tps','upper_tps')]
+         for r in (raw,trial))
+    lower,upper=(b[0]/a[1]-1)*100,(b[1]/a[0]-1)*100
+    relation='higher' if lower>0 else 'lower' if upper<0 else 'overlapping'
+    return {'scope':'same 31 generated positions and exact counting answer, same v4 phase scopes, STOP separate',
+            'transcript_sha256':{'control':before,'candidate':after},'body_buckets':rows,
+            'body_cycles':{'control':left['generation_body_cycles'],'candidate':right['generation_body_cycles']},
+            'final_stop_cycles':{'control':left['final_stop_cycles'],'candidate':right['final_stop_cycles']},
+            'host_observed_tps':{'control':list(map(str,a)),'candidate':list(map(str,b)),
+                                 'candidate_relative_percent_bounds':[f'{lower:.6f}',f'{upper:.6f}'],
+                                 'bounds_relation':relation},
+            'host_startup':{'control':raw['host_startup_observations'],'candidate':trial['host_startup_observations']},
+            'limitation':'single-pair timer bounds, not run-to-run variation, model quality, or individual accelerator cost',
+            'requires_independent_package_identity_and_machine_postflight':True}
+
+
 def main():
-    if len(sys.argv)!=3:
-        raise SystemExit('use CLOSED_V3_CAPTURE CLOSED_V4_CAPTURE')
+    same=len(sys.argv)==4 and sys.argv[1]=='--same-v4'
+    if len(sys.argv)!=3 and not same:
+        raise SystemExit('use CLOSED_V3_CAPTURE CLOSED_V4_CAPTURE or --same-v4 CONTROL_V4_CAPTURE CANDIDATE_V4_CAPTURE')
     try:
-        result=compare(*map(Path,sys.argv[1:]))
+        result=(compare_v4 if same else compare)(*map(Path,sys.argv[-2:]))
     except (OSError,InvalidLog,ValueError) as exc:
         raise SystemExit('REFUSE_LAYER_PROFILE_COMPARISON '+str(exc))
     print(json.dumps(result,sort_keys=True))

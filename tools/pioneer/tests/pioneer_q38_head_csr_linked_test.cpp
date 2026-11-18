@@ -27,6 +27,8 @@ struct Image {
 	explicit Image(const std::string& dir){
 		for(auto p:{std::make_pair("text",0x40000U),{"terminal",0x60000U},{"conv",0x64000U}})
 			rom.push_back({p.second,Read((dir+"/"+p.first+".bin").c_str())});
+		const auto auxiliary=dir+"/fast_decode.bin";
+		if(std::ifstream(auxiliary,std::ios::binary))rom.push_back({0x6c000U,Read(auxiliary.c_str())});
 		std::ifstream f(dir+"/program.symbols");std::string line;
 		while(std::getline(f,line)){
 			if(line.find(" t GlobalChain::Closed(")!=std::string::npos){assert(!closed);closed=std::stoul(line,nullptr,16);}

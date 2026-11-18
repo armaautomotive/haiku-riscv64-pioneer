@@ -232,3 +232,48 @@ the independent SHA256 list. The batched transcript SHA256 is
 1253276e2edef587f687b45b492f213ddfae7f5f97cb93ed6d224f9fa1231d79.
 The stage is spent; the Mac capture is
 /private/tmp/q38-head-batched-208-closed.jH1VTNXh.
+
+Port to the v4 timing ROOT and native Q8 branch (offboard)
+---------------------------------------------------------
+The measured head CSR change can now coexist with the v4 per-layer
+profile on both the raw and the native-Q8 wire ROOT. The builder
+authenticates the complete original for each arm, copies only the
+measured head/owner-scope changes from their pinned source, and
+reproduces the original token object and ROOT ELF byte-for-byte when
+the selector is disabled. It does not replace the dense or recurrent
+link objects, peer worker images, weight format, or STOP process.
+
+The first links overflowed the 131,072-byte text budget by 780 B (raw)
+and 1,116 B (Q8). Both linked inside the existing ranges after placing
+only the already-tested 1,156-byte batch verifier at 0x6c5d8 after the
+timer in the reserved 0x6c000..0x6dfff code window. The original 1,496
+timer bytes and code entry points, boot and STOP remain exact. Final
+text is 130,696 B (raw) and 131,032 B (Q8); conv is 31,852 B in both.
+The measured timer ABI is unchanged. A future native package must save,
+stage, check and restore the full 2,652-byte auxiliary extent; the old
+1,496-byte journal is not valid for these new images.
+
+  python3 tools/pioneer/build_qwen38_profile_head_batch.py SDK V4_ROOT NEW_OUTPUT
+  python3 tools/pioneer/build_qwen38_profile_head_batch.py SDK WIRE_BUILD NEW_OUTPUT --native-q8-wire
+
+Pinned batch ROOT whole-ELF SHA256:
+  raw ce5d724c70084dc3f3e4ce9675f6c362c624d59d5df6d3437f47cc69038cf739
+  Q8  53645a41eeb035afd9805b7aa1c287048d44994eed8be53546e85e5fb624fadd
+
+The linked ASan/UBSan inspection of six Closed/STOP cases per arm
+matched all checked register/traffic commands and retained counters.
+The accepted head can wait on three reordered eight-reply groups;
+STOP stays serial. Four corruption/timeout cases per arm stayed
+fail-closed and did not publish the unproved batch's counters. The
+compact serial control independently matched the unmodified serial
+wire trace. Four combined build-role refusals per arm also passed.
+Neither combined image is installed or measured.
+
+For the live Q8 comparison, `compare_qwen38_layer_profiles.py --same-v4`
+accepts two complete, independently closed v4 captures and compares
+equal-scope generation buckets separately from host count timing and
+cold load. It requires the same exact counting answer and byte count,
+conserves all exclusive body cycles and reports STOP separately. Running
+it on the independently closed tag213/tag214 logs confirmed the near-
+identical decode scopes and lower upload time. A per-run timer interval
+is not a repeatability or device-performance confidence interval.
