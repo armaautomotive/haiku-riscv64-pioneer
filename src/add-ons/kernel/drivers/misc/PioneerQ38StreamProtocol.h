@@ -7,13 +7,22 @@
 #define TT_PCI_PROBE_Q38_STREAM_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ee)
 #define TT_PCI_PROBE_Q38_STREAM_RUN (B_DEVICE_OP_CODES_END + 0x54ef)
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+#include "PioneerQwen35ProjectionShape.h"
+enum { TT_Q38_STREAM_DRIVER=50,TT_Q38_STREAM_ABI=3,TT_Q38_STREAM_OUTPUT_ROWS=256,
+	TT_Q38_STREAM_MAX_INPUTS=PioneerQwen35Projection::MaxInputs };
+#else
 enum { TT_Q38_STREAM_DRIVER=50,TT_Q38_STREAM_ABI=2,TT_Q38_STREAM_OUTPUT_ROWS=256 };
+#endif
 #define PioneerQ38StreamRows(r) ((r).groups*16U)
 #define PioneerQ38StreamGroups(r) ((r).groups)
 #else
 enum { TT_Q38_STREAM_DRIVER=49,TT_Q38_STREAM_ABI=1,TT_Q38_STREAM_OUTPUT_ROWS=16 };
 #define PioneerQ38StreamRows(r) 16U
 #define PioneerQ38StreamGroups(r) 1U
+#endif
+#ifndef TT_PIONEER_Q35_PROJECTION_PROBE
+enum { TT_Q38_STREAM_MAX_INPUTS=17408 };
 #endif
 enum { TT_Q38_STREAM_INPUT_WORDS=8704,
 	TT_Q38_STREAM_SCALE_WORDS=544 };
@@ -31,17 +40,30 @@ struct tt_q38_stream_probe {
 	uint32_t output[TT_Q38_STREAM_OUTPUT_ROWS];
 };
 static inline unsigned PioneerQ38StreamBlockInputs(unsigned type) { return type==8?32:256; }
+static inline unsigned PioneerQ38StreamTileBytes(unsigned type)
+{
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+	return PioneerQwen35Projection::TileBytes(type);
+#else
+	return PioneerQ38PanelProbeBytes(type);
+#endif
+}
 static inline unsigned PioneerQ38StreamBytes(const tt_q38_stream_probe& r)
 {
-	return PioneerQ38StreamGroups(r)*(r.inputs/PioneerQ38StreamBlockInputs(r.type))*PioneerQ38PanelProbeBytes(r.type);
+	return PioneerQ38StreamGroups(r)*(r.inputs/PioneerQ38StreamBlockInputs(r.type))*PioneerQ38StreamTileBytes(r.type);
 }
 static inline bool PioneerQ38StreamValid(const tt_q38_stream_probe& r)
 {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
 	if (!r.groups || r.groups>16 || r.padding) return false;
 #endif
-	if (r.version!=TT_Q38_STREAM_ABI || r.reserved[0] || r.reserved[1] || !PioneerQ38PanelProbeBytes(r.type)
-		|| (r.inputs!=5120 && r.inputs!=6144 && r.inputs!=17408) || r.bank>=7 || (r.offset&4095)
+	if (r.version!=TT_Q38_STREAM_ABI || r.reserved[0] || r.reserved[1]
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+		|| !PioneerQwen35Projection::Supports(r.type,r.inputs)
+#else
+		|| !PioneerQ38PanelProbeBytes(r.type) || (r.inputs!=5120 && r.inputs!=6144 && r.inputs!=17408)
+#endif
+		|| r.bank>=7 || (r.offset&4095)
 		|| r.offset>=PioneerResidentBanks::Capacity || PioneerQ38StreamBytes(r)>PioneerResidentBanks::Capacity-r.offset) return false;
 	unsigned words=r.inputs/2,blocks=r.inputs/PioneerQ38StreamBlockInputs(r.type);
 	for (unsigned w=0;w<words;w++) if (!PioneerInt8OperandValid(uint16_t(r.activation[w]))

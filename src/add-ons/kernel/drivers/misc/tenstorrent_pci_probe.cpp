@@ -958,6 +958,15 @@ extern "C" {
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM)
 #error Q38 batch rows require the guarded fullK/all-bank owner
 #endif
+#if defined(TT_PIONEER_Q35_PROJECTION_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS) \
+	|| defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) || !defined(TT_PIONEER_DRIVER_RELOAD) \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026111700010225ULL)
+#error Qwen3.5-4B projection validation requires the dedicated tag225 driver
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026111700010225ULL \
+	&& !defined(TT_PIONEER_Q35_PROJECTION_PROBE)
+#error Tag225 is reserved for Qwen3.5-4B projection validation
+#endif
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS)
 #error Q38 cohort requires full saved-view/banked row ownership
 #endif
@@ -1009,8 +1018,9 @@ static PioneerDramSweepNativeContext* sDramSweepNativeContext=NULL;
 #endif
 static sem_id sLock = -1;
 #ifdef TT_PIONEER_DRIVER_RELOAD
-#if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_DRIVER_BUILD_TAG)
-#error Reload support requires the guarded persistent driver and an explicit build identity
+#if (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) && !defined(TT_PIONEER_Q35_PROJECTION_PROBE)) \
+	|| !defined(PIONEER_DRIVER_BUILD_TAG)
+#error Reload support requires a guarded driver role and an explicit build identity
 #endif
 static_assert(PIONEER_DRIVER_BUILD_TAG!=0,"reload build identity must be nonzero");
 // PIONEER_DRIVER_RELOAD_STATE_BEGIN
@@ -7304,7 +7314,7 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 #else
 			TT_Q38_STREAM_DRIVER,
 #endif
-			TT_Q38_STREAM_ABI,TT_Q38_STREAM_OUTPUT_ROWS,17408,7,0};
+			TT_Q38_STREAM_ABI,TT_Q38_STREAM_OUTPUT_ROWS,TT_Q38_STREAM_MAX_INPUTS,7,0};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_STREAM_RUN || length!=sizeof(tt_q38_stream_probe)) return B_BAD_VALUE;
@@ -8727,7 +8737,12 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
    )) status=B_BUSY;
 	else {
 		if (operation==TT_PCI_PROBE_RELOAD_QUIESCE) sReloadQuiesced=true;
-		r={}; r.version=1; r.driver=TT_Q38_DISPATCH_DRIVER; r.build_tag=PIONEER_DRIVER_BUILD_TAG;
+		r={}; r.version=1; r.build_tag=PIONEER_DRIVER_BUILD_TAG;
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+		r.driver=TT_Q38_STREAM_DRIVER;
+#else
+		r.driver=TT_Q38_DISPATCH_DRIVER;
+#endif
 		r.generation=sReloadGeneration; r.guard_version=sReloadGuard->version;
 		r.quiesced=sReloadQuiesced; r.cold=sColdRecoveryRequired; r.active_owner=sRuntimeOwner!=NULL
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
@@ -9123,6 +9138,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	if (operation==TT_PCI_PROBE_Q38_STREAM_SUPPORT || operation==TT_PCI_PROBE_Q38_STREAM_RUN)
 		return Q38StreamControl(instance,operation,data,length);
+#endif
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+	if (operation!=TT_PCI_PROBE_Q38_BANK_SUPPORT && operation!=TT_PCI_PROBE_Q38_BANK_BEGIN
+		&& operation!=TT_PCI_PROBE_Q38_BANK_END && operation!=TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD)
+		return B_NOT_ALLOWED;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 	if (operation>=TT_PCI_PROBE_Q38_BANK_SUPPORT && operation<=TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD)

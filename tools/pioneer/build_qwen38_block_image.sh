@@ -22,6 +22,7 @@ case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  13) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4=1';;
  14) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4_STREAM=1';;
  15) source=blackhole_qwen38_two_token_q4.cpp; asmflag='--defsym TT_Q38_TWO_TOKEN_Q4_VECTOR=1';;
+ 16) source=blackhole_qwen38_rows.cpp; asmflag='--defsym TT_Q35_PROJECTION=1';;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_STREAM_FAST:-0}" in
@@ -38,6 +39,7 @@ case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  13) [ -z "$cppflag" ] || exit 2; cppflag=-DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1;;
  14) [ -z "$cppflag" ] || exit 2; cppflag='-DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1 -DPIONEER_Q38_TWO_TOKEN_Q4_STREAM=1';;
  15) [ -z "$cppflag" ] || exit 2; cppflag='-Os -DPIONEER_Q38_TWO_TOKEN_Q4_IMAGE=1 -DPIONEER_Q38_TWO_TOKEN_Q4_STREAM=1 -DPIONEER_Q38_TWO_TOKEN_Q4_VECTOR=1';;
+ 16) [ -z "$cppflag" ] || exit 2; cppflag=-DPIONEER_Q35_PROJECTION_IMAGE=1;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
@@ -53,4 +55,8 @@ for section in boot text; do "$cross-objcopy" -O binary -j ".$section" "$output/
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
 "$cross-objdump" -d "$output/program.elf" > "$output/program.disassembly"
 shasum -a 256 "$output/boot.bin" "$output/text.bin"
-printf 'OFFLINE complete local GGUF block candidate,NOT fullK/resident/model or native: %s\n' "$output"
+if [ "${PIONEER_Q38_STREAM_IMAGE:-0}" = 16 ]; then
+ printf 'Qwen3.5-4B checked full-width projection image for validation: %s\n' "$output"
+else
+ printf 'OFFLINE complete local GGUF block candidate,NOT fullK/resident/model or native: %s\n' "$output"
+fi

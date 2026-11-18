@@ -14,6 +14,9 @@ block_done:
 	sw a0,4(t0)
 	la t1,block_done
 	sw t1,0(t0)
+.ifdef TT_Q35_PROJECTION
+	li t1,0x31503551 /* Q5P1: Qwen3.5-4B checked projection */
+.else
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_PROJECTION_GRAPH_ROOT
 .ifdef TT_Q38_GDN_OUTPUT_GRAPH_ROOT
@@ -87,6 +90,7 @@ block_done:
 .endif
 .endif
 .endif
+.endif
 	sw t1,8(t0)
 	lw t1,8(t0)
 	fence
@@ -99,6 +103,9 @@ block_park: j block_park
 .endif
 block_fault_park:
 	li t0,0x17ffc8
+.ifdef TT_Q35_PROJECTION
+	li t1,0x46503551 /* Q5PF: no result after uncertain completion */
+.else
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_PROJECTION_GRAPH_ROOT
 .ifdef TT_Q38_GDN_OUTPUT_GRAPH_ROOT
@@ -156,6 +163,7 @@ block_fault_park:
 	li t1,0x46543856 /* paired vector UNKNOWN:no publication/retry */
 .else
 	li t1,0x46423851 /* Q8BF:NO success/stop permission */
+.endif
 .endif
 .endif
 .endif

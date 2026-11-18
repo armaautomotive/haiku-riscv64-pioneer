@@ -393,7 +393,11 @@ case "${PIONEER_Q38_PANEL_DRIVER:-0}" in
  *) exit 2;;
 esac
 if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
- case "$variant" in 54|55|56|57|58|59) ;; *) exit 2;; esac
+ case "$variant" in
+  50) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026111700010225 ] && [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ] || exit 2;;
+  54|55|56|57|58|59) ;;
+  *) exit 2;;
+ esac
  case "${PIONEER_DRIVER_BUILD_TAG:-}" in ''|*[!0-9a-f]* ) exit 2;; esac
  [ "${#PIONEER_DRIVER_BUILD_TAG}" = 16 ] && [ "$PIONEER_DRIVER_BUILD_TAG" != 0000000000000000 ] || exit 2
  extra="$extra -DTT_PIONEER_DRIVER_RELOAD -DPIONEER_DRIVER_BUILD_TAG=0x${PIONEER_DRIVER_BUILD_TAG}ULL"
@@ -637,6 +641,12 @@ set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/pri
  -I"$build/objects/haiku/riscv64/release/system/kernel" \
  -I"$build/objects/haiku/riscv64/debug/system/kernel" \
  -I"$sdk/headers" -idirafter "$sdk/headers/posix"
+if [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ]; then
+ [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 50:1:2026111700010225 ] || exit 2
+ test -f "$PIONEER_Q35_PROJECTION_INCLUDE/PioneerQwen35ProjectionImage.h"
+ extra="$extra -DTT_PIONEER_Q35_PROJECTION_PROBE"
+ set -- "$@" -I"$PIONEER_Q35_PROJECTION_INCLUDE"
+fi
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"
 done

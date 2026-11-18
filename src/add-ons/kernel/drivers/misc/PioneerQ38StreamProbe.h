@@ -3,7 +3,15 @@
 #define PIONEER_Q38_STREAM_PROBE_H
 #include "PioneerQ38StreamProtocol.h"
 #include "PioneerQ38StreamProbeImage.h"
-#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+#include <PioneerQwen35ProjectionImage.h>
+#define PioneerQ38ActiveStreamWord PioneerQ35ProjectionWord
+#define TT_Q38_ACTIVE_BOOT TT_Q35_PROJECTION_BOOT
+#define TT_Q38_ACTIVE_DONE 0x7200c
+#define TT_Q38_ACTIVE_PARK 0x72038
+#define TT_Q38_ACTIVE_MARKER PioneerQwen35Projection::Magic
+#define TT_Q38_ACTIVE_FAULT PioneerQwen35Projection::Fault
+#elif defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS)
 #include "PioneerQ38RowsProbeImage.h"
 #define PioneerQ38ActiveStreamWord PioneerQ38RowsWord
 #define TT_Q38_ACTIVE_BOOT TT_Q38_ROWS_BOOT
@@ -47,8 +55,9 @@ template<class IO> bool PioneerQ38StreamPrepare(IO& io,const tt_dram_samples_res
 }
 template<class IO> bool PioneerQ38StreamCommandMatches(IO& io,const PioneerQ38StreamExtent& extent,unsigned type,bool complete)
 {
-	const uint32_t command[]={extent.address+(complete?(extent.blocks-1)*PioneerQ38PanelProbeBytes(type):0),0,extent.route,
-		0x90000,0,1|(2<<6),0,0,PioneerQ38PanelProbeBytes(type),0};
+	const unsigned tileBytes=PioneerQ38StreamTileBytes(type);
+	const uint32_t command[]={extent.address+(complete?(extent.blocks-1)*tileBytes:0),0,extent.route,
+		0x90000,0,1|(2<<6),0,0,tileBytes,0};
 	bool okay=BlackholeResidentIdle(io);
 	for (unsigned w=0;w<10;w++) okay &= io.ResidentNocRead(w*4)==command[w];
 	return okay;
@@ -64,7 +73,7 @@ template<class IO> bool PioneerQ38StreamRun(IO& io,const tt_dram_samples_result&
 	r.state=TT_RUNTIME_CONFIG_FAILED; r.prepared=1;
 	if (!PioneerQ38StreamCodeMatches(io)) return false;
 	{
-		const uint32_t descriptor[]={TT_Q38_ACTIVE_MARKER,job.type,PioneerQ38PanelProbeBytes(job.type),0,0,job.inputs,extent.address
+		const uint32_t descriptor[]={TT_Q38_ACTIVE_MARKER,job.type,PioneerQ38StreamTileBytes(job.type),0,0,job.inputs,extent.address
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
 			,job.groups
 #endif
@@ -79,7 +88,7 @@ template<class IO> bool PioneerQ38StreamRun(IO& io,const tt_dram_samples_result&
 			|| !PioneerQ38PanelStage(io,0xa0000,job.activation,job.inputs/2)) return false;
 		for (unsigned w=0;w<PioneerQ38StreamRows(job);w++) io.Q38PanelWrite(0x84000+w*4,0x7fc00000);
 		for (unsigned w=0;w<PioneerQ38StreamRows(job);w++) if (io.Q38PanelRead(0x84000+w*4)!=0x7fc00000) return false;
-		const uint32_t command[]={extent.address,0,extent.route,0x90000,0,1|(2<<6),0,0,PioneerQ38PanelProbeBytes(job.type),0};
+		const uint32_t command[]={extent.address,0,extent.route,0x90000,0,1|(2<<6),0,0,PioneerQ38StreamTileBytes(job.type),0};
 		if (!BlackholeHostWriteCommand(io,command) || !PioneerQ38StreamCommandMatches(io,extent,job.type,false)) return false;
 	}
 	store.l1_dirty=true; store.l1_restored=false;

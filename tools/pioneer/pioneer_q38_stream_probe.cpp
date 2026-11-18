@@ -14,8 +14,15 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38StreamProtocol.h"
 #include "PioneerQwen38Panel.h"
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+#include "PioneerQwen35Projection.h"
+#include "PioneerQwen35TiledReader.h"
+#include "PioneerModelWeightCache.h"
+#include <memory>
+#else
 #include "PioneerQwen38Gguf.h"
 #include "PioneerQ38RowFixtures.h"
+#endif
 #ifdef PIONEER_Q38_PRIMITIVE_TIMING
 #include <time.h>
 static double PrimitiveSeconds()
@@ -53,9 +60,15 @@ static bool Upload(int fd,unsigned bank,uint64_t offset,const uint8_t* data,unsi
 static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8_t>& packed,unsigned trial,unsigned ordinal)
 {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+	const unsigned groups=2;
+	const unsigned marker=PioneerQwen35Projection::Magic;
+#else
 	unsigned groups=ordinal%3==0?1:ordinal%3==1?3:16;
+	const unsigned marker=0x31523851;
+#endif
 	tt_q38_stream_probe r={}; r.version=TT_Q38_STREAM_ABI; r.type=type; r.inputs=inputs; r.bank=ordinal%7; r.groups=groups;
-	unsigned bytes=PioneerQ38StreamBytes(r),columns=PioneerQ38StreamBlockInputs(type),blocks=inputs/columns,tileBytes=PioneerQ38PanelTileBytes(type),rows=groups*16;
+	unsigned bytes=PioneerQ38StreamBytes(r),columns=PioneerQ38StreamBlockInputs(type),blocks=inputs/columns,tileBytes=PioneerQ38StreamTileBytes(type),rows=groups*16;
 	if (packed.size()!=bytes) return false;
 #ifdef PIONEER_Q38_PRIMITIVE_TIMING
 	double referenceStart=PrimitiveSeconds(); if (referenceStart<0) return false;
@@ -66,7 +79,11 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 	float expected[256]={};
 	for (unsigned group=0;group<groups;group++) for (unsigned b=0;b<blocks;b++) for (unsigned p=0;p<columns/16;p++) {
 		PioneerQ38Panel panel;
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+		if (!PioneerQwen35Projection::Unpack(type,packed.data()+(group*blocks+b)*tileBytes,tileBytes,p,&panel)) return false;
+#else
 		if (!PioneerQ38UnpackPanel(type,packed.data()+(group*blocks+b)*tileBytes,tileBytes,p,&panel)) return false;
+#endif
 		int inputSum=0;
 		for (unsigned k=0;k<16;k++) { unsigned at=b*columns+p*16+k; uint16_t a=uint16_t(r.activation[at/2]>>((at%2)*16)); inputSum+=int(a&1023)*((a&0x8000)?-1:1); }
 		for (unsigned row=0;row<16;row++) {
@@ -93,7 +110,7 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 #endif
 	const auto& v=r.result;
 	bool okay=v.version==1 && v.state==TT_RUNTIME_PASSED && v.prepared && v.started && v.completed && v.stopped && !v.recovery_required
-		&& v.context_reset && v.phase==0x7200c && v.panels==groups*(inputs/16) && v.marker==0x31523851 && v.pc[0]==0x72038 && v.pc[1]==v.pc[0];
+		&& v.context_reset && v.phase==0x7200c && v.panels==groups*(inputs/16) && v.marker==marker && v.pc[0]==0x72038 && v.pc[1]==v.pc[0];
 	for (unsigned i=0;i<8;i++) {
 		unsigned n=i==1?bytes/64:(i==0 || i==2 || i==3 || i==6)?groups*blocks:0;
 		okay &= uint32_t(v.after[i]-v.before[i])==n;
@@ -160,6 +177,96 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 	return okay && !mismatches;
 #endif
 }
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+struct Q35Band {
+	unsigned type, inputs;
+	std::vector<uint8_t> bytes;
+};
+
+static bool ReadQ35Bands(const char* path, std::vector<Q35Band>& bands)
+{
+	int source=open(path,O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC);
+	if (source<0) return false;
+	std::unique_ptr<FILE,decltype(&fclose)> file(fdopen(source,"rb"),&fclose);
+	if (!file) { close(source); return false; }
+	PioneerModelWeightCache::Digest digest{};
+	std::string error;
+	PioneerQwen35Gguf model;
+	if (!PioneerModelWeightCache::HashFile(source,PioneerQwen35Gguf::FullBytes,digest,error)
+		|| PioneerModelWeightCache::Hex(digest)!="00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4"
+		|| !model.Open(file.get())) return false;
+	PioneerQwen35TiledReader reader;
+	if (!reader.Bind(model)) return false;
+	std::set<std::pair<unsigned,unsigned>> covered;
+	for (unsigned i=0;i<model.Tensors().size();i++) {
+		const auto& tensor=model.Tensors()[i];
+		if (!tensor.type) continue;
+		if (!PioneerQwen35Projection::Supports(tensor.type,tensor.inputs)) return false;
+		if (!covered.emplace(tensor.type,tensor.inputs).second) continue;
+		Q35Band band{tensor.type,unsigned(tensor.inputs),{}};
+		unsigned length=32*PioneerQ35TiledRowBytes(tensor.type,tensor.inputs);
+		band.bytes.resize((length+4095)&~4095U);
+		for (unsigned offset=0;offset<length;offset+=4096)
+			if (!reader.ReadPage(model,i,unsigned(tensor.outputs)-32,32,offset/4096,
+				band.bytes.data()+offset,4096)) return false;
+		band.bytes.resize(length);
+		bands.push_back(std::move(band));
+	}
+	return bands.size()==8 && model.Stable();
+}
+
+int main(int argc,char** argv)
+{
+	if (argc!=2) return 2;
+	setvbuf(stdout,nullptr,_IOLBF,0);
+	const bool supportOnly=!strcmp(argv[1],"--support");
+	std::vector<Q35Band> bands;
+	if (!supportOnly && !ReadQ35Bands(argv[1],bands)) {
+		fprintf(stderr,"Q35 model authentication or band preparation failed before opening the device\n");
+		return 1;
+	}
+	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC);
+	if (fd<0) return 1;
+	tt_q38_stream_support support={};
+	bool okay=Call(fd,TT_PCI_PROBE_Q38_STREAM_SUPPORT,&support,sizeof(support))
+		&& support.driver==TT_Q38_STREAM_DRIVER && support.version==TT_Q38_STREAM_ABI
+		&& support.local_rows==TT_Q38_STREAM_OUTPUT_ROWS && support.max_inputs==TT_Q38_STREAM_MAX_INPUTS
+		&& support.banks==7 && !support.model_inference;
+	if (!okay || supportOnly) {
+		return close(fd)==0 && okay ? 0 : 1;
+	}
+	tt_q38_bank_support storage={};
+	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&storage,sizeof(storage))
+		&& storage.driver==45 && storage.version==1 && storage.banks==7
+		&& storage.page_bytes==4096 && storage.max_pages==4 && storage.storage_only==1
+		&& storage.bytes_per_bank==PioneerResidentBanks::Capacity;
+	tt_q38_bank_session session={};
+	session.version=1;
+	okay=okay && Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))
+		&& session.result.version==1 && session.result.state==TT_RESIDENT_SESSION_READY
+		&& session.result.active && session.result.host_ready && !session.result.cold
+		&& !session.result.capabilities && session.result.bytes==PioneerResidentBanks::Total;
+	unsigned cases=0;
+	for (const auto& band:bands) {
+		if (!okay) break;
+		okay=Execute(fd,band.type,band.inputs,band.bytes,1,cases);
+		if (okay) cases++;
+	}
+	if (!okay) {
+		fprintf(stderr,"Q35 projection validation failed. Closing without END, retry or reset.\n");
+		close(fd);
+		return 1;
+	}
+	session={};
+	session.version=1;
+	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
+		&& session.result.state==TT_RESIDENT_SESSION_CLOSED && !session.result.active
+		&& session.result.pci_restored && session.result.host_released && !session.result.cold;
+	okay=close(fd)==0 && okay;
+	printf("Q35_PROJECTION_VALIDATION cases=%u clean_end=%u\n",cases,unsigned(okay));
+	return okay ? 0 : 1;
+}
+#else
 int main(int argc,char** argv)
 {
 	if (argc!=2 || (strcmp(argv[1],"--support") && strcmp(argv[1],"--synthetic") && strcmp(argv[1],"--public-fixtures"))) return 2;
@@ -241,3 +348,4 @@ int main(int argc,char** argv)
 #endif
 	return okay && cases==(real?8U:9U)?0:1;
 }
+#endif

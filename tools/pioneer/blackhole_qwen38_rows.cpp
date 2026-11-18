@@ -42,6 +42,15 @@
 #include "PioneerQ38TokenMatrixPhase.h"
 #endif
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q35_PROJECTION_IMAGE
+#if PIONEER_Q35_PROJECTION_IMAGE != 1 || defined(PIONEER_Q38_SHARED_ROWS) \
+ || defined(PIONEER_Q38_VECTOR_PANEL) || defined(PIONEER_Q38_FAST_PANEL) \
+ || defined(PIONEER_Q38_AFFINE_REUSE) || defined(PIONEER_Q38_PERSISTENT_ROWS) \
+ || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK)
+#error Qwen 4B projection requires the standalone checked rows image
+#endif
+#include "PioneerQwen35Projection.h"
+#endif
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 #if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_BLOCK_AFFINE_DST) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_Q4_NIBBLE) || defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) || defined(PIONEER_Q38_WORK_SIGNED_MAG2) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_NATIVE_Q8)
 #error Local Q4 is a separate OFFLINE original-layout block-affine Work peer ONLY
@@ -645,7 +654,7 @@ extern "C" unsigned block_main()
 #endif
 	unsigned type=job[1],bytes=job[2],count=type==8?32:256;
 #ifdef PIONEER_Q38_STREAM
-#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+#if defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE) || defined(PIONEER_Q35_PROJECTION_IMAGE)
 	// Fixed supported quant blocks:keep division OUT of the RISC hot path.
 	unsigned inputs=job[5],blocks=inputs>>(type==8?5:8),groups=job[7];
 #else
@@ -671,6 +680,12 @@ extern "C" unsigned block_main()
 	static_assert(0x95000+(17408/16)*4==0x96100,"bounded private sum cache");
 #endif
 	uint32_t first=job[6];
+#ifdef PIONEER_Q35_PROJECTION_IMAGE
+	if (job[0]!=PioneerQwen35Projection::Magic || !PioneerQwen35Projection::Supports(type,inputs)
+		|| bytes!=PioneerQwen35Projection::TileBytes(type) || job[3] || job[4]
+		|| !groups || groups>16 || first<0x04000000 || (first&63)
+		|| first>=0xc4000000 || uint32_t(groups*blocks*bytes)>0xc4000000-first) return 0;
+#else
 	if (job[0]!=
 #ifdef PIONEER_Q38_SHARED_ROWS
 		0x31483851
@@ -696,6 +711,7 @@ extern "C" unsigned block_main()
 #endif
 		|| job[3] || job[4] || !groups || groups>16 || (inputs!=5120 && inputs!=6144 && inputs!=17408) || inputs%count
 		|| first<0x04000000 || (first&31) || uint32_t(groups*blocks*bytes)>0xc4000000-first || first>=0xc4000000) return 0;
+#endif
 #ifdef PIONEER_Q38_SHARED_ROWS
 	// Both fields are PRIVATE kernel-derived,not new caller capabilities.
 	// Root uses0,peers1. Destination XY in command remains kernel-owned.
@@ -975,7 +991,11 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_FAST_PANEL
 			PioneerQ38FastPanel
 #else
+#ifdef PIONEER_Q35_PROJECTION_IMAGE
+			PioneerQwen35Projection::Unpack
+#else
 			PioneerQ38UnpackPanel
+#endif
 #endif
 #endif
 			(type,reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();

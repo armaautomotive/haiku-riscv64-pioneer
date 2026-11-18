@@ -13,7 +13,7 @@ struct StreamIO:PanelIO {
 		if (view[(0x74000-TT_Q38_PANEL_VIEW_BASE)/4]!=TT_Q38_ACTIVE_MARKER) return;
 		if (scenario==3) { destination[2034]=TT_Q38_ACTIVE_FAULT; return; }
 		unsigned type=view[(0x74004-TT_Q38_PANEL_VIEW_BASE)/4],inputs=view[(0x74014-TT_Q38_PANEL_VIEW_BASE)/4];
-		unsigned blocks=inputs/PioneerQ38StreamBlockInputs(type),bytes=PioneerQ38PanelProbeBytes(type);
+		unsigned blocks=inputs/PioneerQ38StreamBlockInputs(type),bytes=PioneerQ38StreamTileBytes(type);
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
 		unsigned groups=view[(0x7401c-TT_Q38_PANEL_VIEW_BASE)/4]; blocks*=groups;
 		for (unsigned row=16;row<groups*16;row++) view[(0x84000-TT_Q38_PANEL_VIEW_BASE)/4+row]=row;
@@ -32,7 +32,12 @@ struct StreamIO:PanelIO {
 		if (scenario==15) writeCounters[0]++;
 	}
 };
-static tt_q38_stream_probe StreamJob(unsigned type=12,unsigned inputs=5120,unsigned bank=0,unsigned groups=1)
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+static constexpr unsigned TestInputs=2560;
+#else
+static constexpr unsigned TestInputs=5120;
+#endif
+static tt_q38_stream_probe StreamJob(unsigned type=12,unsigned inputs=TestInputs,unsigned bank=0,unsigned groups=1)
 {
 	tt_q38_stream_probe r={}; r.version=TT_Q38_STREAM_ABI; r.type=type; r.inputs=inputs; r.bank=bank;
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
@@ -58,20 +63,27 @@ int main()
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
 	(void)&PreparePanel; (void)&Run; (void)&Job;
 	std::vector<uint8_t> initialized(PioneerResidentBanks::Pages,1);
+	unsigned cases=0;
 	for (unsigned groups:{1U,3U,16U}) {
 #ifndef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
 		if (groups!=1) continue;
 #endif
+#ifdef TT_PIONEER_Q35_PROJECTION_PROBE
+	for (unsigned type:{8U,12U,13U,14U}) for (unsigned inputs:{2560U,4096U,9216U}) for (unsigned bank=0;bank<7;bank++) {
+		if (!PioneerQwen35Projection::Supports(type,inputs)) continue;
+#else
 	for (unsigned type:{8U,12U,14U}) for (unsigned inputs:{5120U,6144U,17408U}) for (unsigned bank=0;bank<7;bank++) {
+#endif
 		StreamIO io; auto before=io.view; auto entry=io.entry; PanelOwners own(io); auto job=StreamJob(type,inputs,bank,groups);
 		assert(PrepareStream(io,own) && Stream(io,own,initialized,job) && job.result.stopped && !job.result.recovery_required);
 		assert(job.result.panels==PioneerQ38StreamGroups(job)*(inputs/16) && job.result.marker==TT_Q38_ACTIVE_MARKER);
 		assert(PrepareStream(io,own) && Stream(io,own,initialized,job) && io.launches==2);
 		assert(ClosePanel(io,own) && io.view==before && io.entry==entry); Finish(io,own);
+		cases++;
 	}
 	}
 	for (unsigned scenario=1;scenario<=15;scenario++) {
-		StreamIO io; PanelOwners own(io); auto job=StreamJob(12,5120,0,3); assert(PrepareStream(io,own)); io.scenario=scenario;
+		StreamIO io; PanelOwners own(io); auto job=StreamJob(12,TestInputs,0,3); assert(PrepareStream(io,own)); io.scenario=scenario;
 		assert(!Stream(io,own,initialized,job) && io.launches==1);
 		bool knownBad=scenario==7 || scenario==8;
 		if (knownBad) {
@@ -83,11 +95,15 @@ int main()
 			assert(writes==io.panelWrites && resets==io.resets.size() && !io.PageMock::releases);
 		}
 	}
-	for (unsigned missing:{0U,5U,11U}) {
+	const unsigned pages=(PioneerQ38StreamBytes(StreamJob())+4095)/4096;
+	for (unsigned missing:{0U,pages/2,pages-1}) {
 		StreamIO io; PanelOwners own(io); auto job=StreamJob(); assert(PrepareStream(io,own)); auto writes=io.panelWrites;
 		initialized[missing]=0; assert(!Stream(io,own,initialized,job) && !io.launches && io.panelWrites==writes);
 		initialized[missing]=1; assert(ClosePanel(io,own)); Finish(io,own);
 	}
-	printf("PASS OFFLINE driver%u fullK REAL launch policy:ALL%u type/width/rows/private-bank shapes,reuse/exact264KiB+entry restore,exact read/shared-accepted and zero write counts,ALL15 unknown/result/command/flit/write faults and missing extent refusal;NO retry/reset/restore/free after UNKNOWN\n",unsigned(TT_Q38_STREAM_DRIVER),TT_Q38_STREAM_ABI==2?189U:63U);
+	const unsigned expected=TT_Q38_STREAM_ABI==3?168U:TT_Q38_STREAM_ABI==2?189U:63U;
+	assert(cases==expected);
+	printf("PASS OFFLINE driver%u ABI%u fullK launch policy: %u type/width/rows/bank shapes, exact restore and counters, 15 fault cases and missing extent refusals\n",
+		unsigned(TT_Q38_STREAM_DRIVER),unsigned(TT_Q38_STREAM_ABI),cases);
 }
 #endif

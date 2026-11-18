@@ -1,0 +1,17 @@
+PROFILE_PRIMITIVE type=14 K=2560 N=32 cpu_reference_s=0.002221 sample_upload_s=0.078754 checked_kernel_call_s=0.250944 total_s=0.331919;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=14 K=2560 N=32 bank=0 last=0 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=12 K=2560 N=32 cpu_reference_s=0.001675 sample_upload_s=0.019407 checked_kernel_call_s=0.049200 total_s=0.070282;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=12 K=2560 N=32 bank=1 last=1 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=13 K=2560 N=32 cpu_reference_s=0.001871 sample_upload_s=0.024934 checked_kernel_call_s=0.050944 total_s=0.077749;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=13 K=2560 N=32 bank=2 last=0 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=14 K=9216 N=32 cpu_reference_s=0.009566 sample_upload_s=0.096512 checked_kernel_call_s=0.085393 total_s=0.191471;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=14 K=9216 N=32 bank=3 last=1 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=8 K=2560 N=32 cpu_reference_s=0.002170 sample_upload_s=0.038201 checked_kernel_call_s=0.052416 total_s=0.092787;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=8 K=2560 N=32 bank=4 last=0 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=13 K=4096 N=32 cpu_reference_s=0.002974 sample_upload_s=0.037757 checked_kernel_call_s=0.058833 total_s=0.099564;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=13 K=4096 N=32 bank=5 last=1 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=12 K=4096 N=32 cpu_reference_s=0.002731 sample_upload_s=0.031353 checked_kernel_call_s=0.058892 total_s=0.092976;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=12 K=4096 N=32 bank=6 last=0 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+PROFILE_PRIMITIVE type=12 K=9216 N=32 cpu_reference_s=0.006034 sample_upload_s=0.077224 checked_kernel_call_s=0.079606 total_s=0.162864;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE
+BATCH_FULL_K_PRIMITIVE type=12 K=9216 N=32 bank=0 last=1 state=1 start/complete/stop=1/1/1 cold=0 pc=72038/72038 exact_errors=0
+Q35_PROJECTION_VALIDATION cases=8 clean_end=1
