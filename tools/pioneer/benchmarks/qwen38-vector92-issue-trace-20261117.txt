@@ -133,7 +133,38 @@ interpreter RV steps due to code layout; this is not a performance result.
   python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
     SDK VECTOR92_BUILD --ordinary-arm-regression NEW_OUTPUT
 
-Next: qualify full native-Q8 arithmetic and transitions along with the
-authenticated source and independently bound ROOT admission/receipt.
-Do not gain coverage by coercing a production job marker or feeding
-native bytes to old firmware. Nothing is installed or timed.
+Isolated native-Q8 projection comparison (ASan/UBSan, same pinned ELFs):
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
+    SDK VECTOR92_BUILD --native-q8-math NATIVE_Q8_BUILD
+  python3 tools/pioneer/tests/run_pioneer_q38_vector92_issue_trace.py \
+    SDK VECTOR92_BUILD --native-q8-math-real NATIVE_Q8_BUILD /absolute/model.gguf
+
+The reference and candidate run their actual linked q38_compute_once
+instructions. The real front establishes its scope and stops at the
+call entry; only the isolated host fixture passes the private format
+to the candidate. The outer job marker never changes, and the front is
+never resumed to publish a payload or receipt. Simulated NoC transfer,
+ACK and backend retirement enforce source-bank readiness; both buffers,
+affine restore, matrix phases, reads and output are checked. No encoded
+operands are sent to the original worker.
+
+Fifteen comparisons matched all 704 FP32 words bit-for-bit, also
+checked against an independent numerical reference. That covers K=5120,
+6144 and 17408, one and three output groups at two NoC/activation
+fixtures, and K=17408 at the maximum 16 output groups. Two comparisons
+use blk.0.attn_qkv.weight rows 0..15 and 10192..10239 from the original
+GGUF; the already-open file was size/identity checked and full-SHA-256
+verified (c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747).
+Activations were synthetic in every case. Two blocked NoC reply cases
+executed the worker's real park path before output; the simulator also
+refused one missing unpack ACK and one noncanonical encoded operand.
+
+For the 48-row real-weight case the counted vector ops were 120,021
+raw vs 23,062 native (80.8% fewer); drains were 6,376 vs 4,460.
+Matrix phases, reads and bytes were unchanged. At the synthetic maximum
+the vector counts were 2,176,112 vs 417,905. These are executed traces
+on a model of the device, not hardware timings or token rates.
+
+Next: bind the authenticated upload producer to a new isolated ROOT
+admission and receipt contract; do not let old firmware see the new
+layout. Nothing from this native-Q8 test is installed or timed.

@@ -57,11 +57,19 @@ def issue_rows(output):
 
 def main():
     pair = len(sys.argv) == 5 and sys.argv[3] == '--ordinary-arm-regression'
-    if len(sys.argv) != 3 and not pair:
-        raise SystemExit('use SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD [--ordinary-arm-regression PINNED_NATIVE_Q8_BUILD]')
+    real = len(sys.argv) == 6 and sys.argv[3] == '--native-q8-math-real'
+    math = real or (len(sys.argv) == 5 and sys.argv[3] in ('--native-q8-math', '--native-q8-math-pilot'))
+    if len(sys.argv) != 3 and not (pair or math):
+        raise SystemExit('use SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD '
+                         '[--ordinary-arm-regression|--native-q8-math|--native-q8-math-pilot PINNED_NATIVE_Q8_BUILD] '
+                         'or SDK COMPLETE_PINNED_VECTOR92_WORKER_BUILD --native-q8-math-real '
+                         'PINNED_NATIVE_Q8_BUILD ABSOLUTE_MODEL_GGUF')
     assert __debug__ and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
     sdk, worker = map(Path, sys.argv[1:3])
     assert sdk.is_absolute() and worker.is_absolute()
+    if real:
+        model = Path(sys.argv[5])
+        assert model.is_absolute()
     tool = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
     mixed = worker / ('unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/'
                       'unchanged-pushed/unchanged-precise/unchanged-global/qualified-math')
@@ -87,7 +95,7 @@ def main():
         snapshot(mixed, prior, pins(tests/'run_pioneer_q38_mixed_worker_tests.py'))
         snapshot(mixed/'unchanged-worker', prior/'unchanged-worker', legacy)
         arms = [vec]
-        if pair:
+        if pair or math:
             native = tmp/'native'
             snapshot(Path(sys.argv[4]), native,
                      pins(HERE.parent/'build_qwen38_twin_native_q8_worker.py'))
@@ -95,14 +103,35 @@ def main():
         for directory in (*arms, prior):
             symbols = subprocess.check_output([tool+'nm', '-n', directory/'program.elf'])
             (directory/'program.symbols').write_bytes(symbols)
-        name = 'pioneer_q38_vector92_issue_trace.cpp'
+        name = 'pioneer_q38_twin_native_q8_math_test.cpp' if math else 'pioneer_q38_vector92_issue_trace.cpp'
         assert not (tests/name).exists()
         shutil.copyfile(HERE/name, tests/name)
+        units = [tests/name]
+        if math:
+            # Test-only observer override, not a ROM/format/owner change.
+            source = tests/'pioneer_q38_direct_srcb_image_test.cpp'
+            text = source.read_text()
+            signature = 'bool Active()const{return memory.at(0x74038)==1;}'
+            assert text.count(signature) == 1
+            source.write_text(text.replace(signature, 'virtual '+signature))
+            flags.extend(('-DPIONEER_Q38_TEST_PREDECODED_Q4=1', '-DPIONEER_Q38_TEST_NATIVE_Q8=1'))
+        if real:
+            flags.extend(('-DPIONEER_Q38_OFFBOARD_REAL_Q8=1', '-Wno-deprecated-declarations'))
+            units.append(tests.parent/'PioneerModelWeightCache.cpp')
         binary = tmp/'test'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                         '-ffp-contract=off', '-fsanitize=address,undefined', *flags,
-                        tests/name, '-o', binary], check=True)
+                        *units, '-o', binary], check=True)
         runenv = {**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'}
+        if math:
+            entries = []
+            for directory in arms:
+                found = re.findall(r'^([0-9a-f]+) T q38_compute_once$', (directory/'program.symbols').read_text(), re.M)
+                assert len(found) == 1
+                entries.extend(found)
+            selection = [model] if real else ['--pilot'] if sys.argv[3] == '--native-q8-math-pilot' else []
+            subprocess.run([binary, prior, *arms, *entries, *selection], check=True, env=runenv)
+            return
         evidence = []
         for directory in arms:
             entries = re.findall(r'^([0-9a-f]+) T q38_compute_once$', (directory/'program.symbols').read_text(), re.M)
