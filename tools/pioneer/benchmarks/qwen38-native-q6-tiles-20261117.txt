@@ -1,0 +1,42 @@
+Exact native INT8 operands for Qwen 27B Q6_K — offline checkpoint
+===============================================================
+The experiment proposes converting raw Q6_K once, before inference,
+instead of extracting packed six-bit weights in the controller for each
+matrix contraction. It changes neither the weight values nor their
+scale bytes. Each 3,392-byte raw tile becomes one 4,416-byte tile:
+288 unchanged metadata bytes, 32 zero pad bytes, and sixteen 256-byte
+operand panels in signed-magnitude INT8. This supports the complete Q6
+domain [-32,31]. The original format and driver are untouched.
+
+The test authenticated the original 18,973,870,528-byte model before
+sampling on the same read-only handle (SHA256
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747).
+ASan and UBSan checked 64 synthetic tiles and first/middle/last tiles of
+each of 119 Q6 shards: 357 sampled model tiles from 17 tensors (one
+output head and sixteen dense attention outputs). Both L1 buffer
+positions were covered: 13,472 modeled panel launches compared every
+operand and the FP32 coefficient bits to the original panel preparer.
+2,526 malformed panel calls emitted no commands. The round-trip,
+invalid wire values, alias refusals and role bounds were checked.
+This is a sample of the original weight bytes, not a complete scan of
+every Q6 tile or a measurement of the physical INT8 unpacker.
+
+Replacing (not duplicating) these shards would add 443,678,720 bytes
+of card allocations, including alignment, for 21,158,207,488 bytes
+total. Non-weight region sizes are unchanged, but their addresses
+move. The seven 3 GiB bank windows retain at least 195,268,608 bytes
+each. These are proposed addresses, not addresses for the current
+driver. One expanded tile fits each existing 8 KiB NoC fetch; the raw
+path fits two tiles, so the experiment would issue more reads along
+with moving more bytes. Less decode work does not imply faster decode.
+
+Reproduce (from the repo; use an absolute model path):
+  c++ -std=c++17 -O2 -g -Wall -Wextra -Werror -Wno-deprecated-declarations \
+    -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_native_q6_tiles_test.cpp \
+    tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q38-q6-offline-test
+  UBSAN_OPTIONS=halt_on_error=1 /tmp/q38-q6-offline-test /absolute/model.gguf
+
+No integrated Q6 upload, live descriptors, installed firmware or
+throughput result. Any subsequent hardware test should first prove a
+small physical unpack/matrix job against the existing Q6 path before
+changing full-model layout or uploading 19+ GB.
