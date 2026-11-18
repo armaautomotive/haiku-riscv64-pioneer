@@ -1,0 +1,18 @@
+/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload: OK
+/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard: OK
+/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18: OK
+tenstorrent_pci_probe-driver55: OK
+pioneer-q35-work: OK
+64 (Unknown), revision 0000 running at 1000MHz
+133729927168 bytes free      (used/max 3305009152 / 137034936320)
+restore.incoming: OK
+/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe: OK
+P100A_RELOAD driver60 tag2026111700010226 generation5 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver60 tag2026111700010226 generation5 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe: OK
+restore.incoming: OK
+/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe: OK
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

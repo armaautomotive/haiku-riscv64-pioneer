@@ -214,3 +214,41 @@ two-request simulation with exact restoration and retained ownership after
 a simulated device fault. The Haiku client's vocabulary-only check matched
 all five reference token IDs. The library reported that it skipped tensors.
 The Work client creates no CPU inference context.
+
+## Two resident Work runs on Haiku
+
+The November 17–18, 2026 trial used tag226 built from
+`490063a12174666d5e9c4cdd6caf02f2944138f8`. Before the exchange, the prior
+diagnostic had exited and the stable driver reported generation 4,
+`cold0 active_owner0 guard1`. The candidate loaded one copy of the model
+and ran the same five-token prompt twice at context 128. Both runs returned
+` Paris.` as token IDs `11751,13`, matching the two-token prefix of the
+independent CPU reference.
+
+| Warm run | Prompt tokens | Prompt processing (s) | Output tokens | Decode (s) | Decode (tokens/s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 5 | 2024.599319 | 2 | 564.955529 | 0.003540 |
+| 2 | 5 | 2024.595147 | 2 | 564.955576 | 0.003540 |
+
+The single model load took 195.079089 seconds. File authentication took
+68.390657 seconds, and vocabulary preparation and tokenization took
+12.634251 seconds. Decode timing starts at the end of prompt processing
+and includes the first tied-vocabulary projection. This build runs bands
+serially on one Tensix core. The workload is a short functional comparison.
+
+The client exited 0 after explicit STOP and BANK_END and reported
+`unload_clean=1 state=2 active=0 cold=0`. The original trial wrapper stopped
+at its process check after the clean unload. A corrected process check
+examines the executable name. The guarded restore was then performed
+separately from the finished Work run. A new postflight verified the
+original stable driver SHA-256, generation 6, `cold0 active_owner0 guard1`,
+64 CPUs, full RAM and an absent lock. The original 27B model and setup
+were preserved.
+
+The seven captured records were checked against the independent Haiku
+hashes archived in [the postflight log](benchmarks/qwen35-work-tag226-20261118/postflight.stdout).
+Exact timing, IDs, output and closure are in [the Work stdout](benchmarks/qwen35-work-tag226-20261118/work.stdout).
+
+- Driver SHA-256 `7f1fd5267933967d49eeac256cbf6258f1714381401efce3f1b47c4657498d0f`
+- Client SHA-256 `68e84fb427776345e5745c8b46d97e0df0a7cc2df796eca8a3290c80b13e40bb`
+- ROOT text SHA-256 `27fe7bbeb544d8b317d9013ca3646d52ae259be00cc2bcc78fe86082653be247`

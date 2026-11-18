@@ -37,7 +37,7 @@ idle() {
 		$1=="Id" && $2=="Team" && NF==2 {header++; next}
 		$1~/^[0-9]+$/ && NF>=2 {
 			teams++
-			if($1!=self && $0~/(^|[\/[[:space:]])(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-|pioneer-dram)/) bad++
+			if($1!=self && $2~/(^|\/)(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-|pioneer-dram)/) bad++
 			next
 		}
 		NF {bad++}
@@ -59,10 +59,24 @@ validated() {
 		END {exit !(runs["warm_run=1"]==1 && runs["warm_run=2"]==1)}
 	' work.stdout
 }
+restore() {
+	exact restore.incoming "$stableSHA" && exact "$installed" "$candidateSHA" &&
+	idle && metadata 60 "$candidateTag" "$candidateGeneration" || fail before_restore
+	"$admin" --quiesce "$candidateTag" || fail quiesce_candidate
+	exact "$installed" "$candidateSHA" && exact restore.incoming "$stableSHA" || fail restore_changed
+	mv -f restore.incoming "$installed"
+	sync
+	exact "$installed" "$stableSHA" &&
+	"$admin" --wait "$stableTag" "$(printf '%016x' "$candidateGeneration")" &&
+	metadata 55 "$stableTag" "$restoredGeneration" || fail restore_wait
+	printf '%s\n' STABLE041_RESTORED > state
+	rmdir "$lock"
+	sync
+}
 
 [ "$#" = 5 ] && [ "$(uname -s):$(id -u)" = Haiku:0 ] || exit 2
 mode=$1 stage=$2 stableGeneration=$3 candidateSHA=$4 clientSHA=$5
-case "$mode" in --preflight|--run|--postflight) ;; *) exit 2;; esac
+case "$mode" in --preflight|--run|--restore|--postflight) ;; *) exit 2;; esac
 [[ $stage =~ ^/boot/home/pioneer-qwen35-work-226\.[a-zA-Z0-9]+$ &&
    $stableGeneration =~ ^[1-9][0-9]{0,8}$ && $candidateSHA =~ ^[0-9a-f]{64}$ &&
    $clientSHA =~ ^[0-9a-f]{64}$ ]] || exit 2
@@ -74,12 +88,24 @@ cd "$stage"
 test "$(stat -c %d .)" = "$(stat -c %d "$installed")" || fail filesystem
 exact "$admin" b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f &&
 exact "$guard" d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229 &&
-exact "$stable" "$stableSHA" && exact "$installed" "$stableSHA" &&
+exact "$stable" "$stableSHA" &&
 exact "$candidate" "$candidateSHA" && exact "$client" "$clientSHA" || fail hash
 test -f "$model" && test ! -L "$model" && [ "$(stat -c '%u:%h:%a:%s' "$model")" = 0:1:600:2740937888 ] || fail model
 original=/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
 test -f "$original" && test ! -L "$original" && [ "$(stat -c '%u:%h:%a:%s' "$original")" = 0:1:600:18973870528 ] || fail original_model
-absent "$lock" && idle && health || fail busy
+idle && health || fail busy
+
+if [ "$mode" = --restore ]; then
+	test -d "$lock" && test ! -L "$lock" && [ "$(stat -c '%u:%a' "$lock")" = 0:700 ] &&
+	test -d .trial-once && test "$(cat state)" = RECOVERY_REQUIRED_UNTIL_STABLE_RESTORED &&
+	test "$(cat trial.exit)" = 1 &&
+	grep -Fxq 'Q35_WORK_TRIAL_FAILED before_restore' trial-parent.log &&
+	validated || fail restore_admission
+	restore
+	exit 0
+fi
+
+absent "$lock" && exact "$installed" "$stableSHA" || fail stable_or_lock
 
 if [ "$mode" = --postflight ]; then
 	metadata 55 "$stableTag" "$restoredGeneration" || fail postflight_generation
@@ -115,16 +141,5 @@ result=0
 ./"$client" "$model" "$llama" "The capital of France is" 2 128 > work.stdout 2> work.stderr || result=$?
 printf '%s\n' "$result" > work.exit
 
-exact restore.incoming "$stableSHA" && exact "$installed" "$candidateSHA" &&
-idle && metadata 60 "$candidateTag" "$candidateGeneration" || fail before_restore
-"$admin" --quiesce "$candidateTag" || fail quiesce_candidate
-exact "$installed" "$candidateSHA" && exact restore.incoming "$stableSHA" || fail restore_changed
-mv -f restore.incoming "$installed"
-sync
-exact "$installed" "$stableSHA" &&
-"$admin" --wait "$stableTag" "$(printf '%016x' "$candidateGeneration")" &&
-metadata 55 "$stableTag" "$restoredGeneration" || fail restore_wait
-printf '%s\n' STABLE041_RESTORED > state
-rmdir "$lock"
-sync
+restore
 validated || fail work_output
