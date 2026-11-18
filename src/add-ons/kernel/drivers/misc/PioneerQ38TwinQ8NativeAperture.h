@@ -3,7 +3,7 @@
 #define PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE_H
 #if !defined(_KERNEL_MODE) || !defined(PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE) \
  || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010221ULL
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010222ULL
 #error Twin Q8 aperture requires its exact private Haiku diagnostic role
 #endif
 #include "PioneerQ38TwinQ8L1Lease.h"
@@ -125,8 +125,18 @@ public:
   return L::RuntimeWrite(t,at) && Live(t) && RawWrite(at,value);
  }
  bool Count(Tile t,unsigned offset,uint32_t& out){
-  if(!L::CounterRead(t,offset) || !Live(t) || !Scope())return false;
-  out=io.ResidentNocRead(offset);return true;
+  if(!L::CounterRead(t,offset) || !Live(t) || !Scope() || io.nocArea<B_OK || !io.nocRegisters)return false;
+  auto root=[&](unsigned at,uint32_t& v){
+   // Selected held ROOT and its four read-only NIU0 slave counters.
+   // Do not broaden ResidentNocRead for any other driver or caller.
+   if(io.runtimeCore!=0 || !Scope())return false;
+   v=PioneerRead32(io.nocRegisters+at/4);return true;
+  };
+  auto worker=[&](unsigned at,uint32_t& v){
+   if(io.runtimeCore!=S::Worker || !Scope() || !BlackholeHostWriteReadRegister(at))return false;
+   v=io.ResidentNocRead(at);return true;
+  };
+  return L::ReadCounter(t,offset,out,root,worker);
  }
  // Outer owner verified actual STOP and held reset before calling. No
  // access to aliases or power controls is added after an uncertain STOP.

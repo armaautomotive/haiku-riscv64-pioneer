@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TwinQ8L1Lease.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeHostWriteProbe.h"
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -75,8 +76,35 @@ static void Shape(){
  assert(!L::RuntimeRead(Tile::Root,S::Mail+256) && !L::RuntimeRead(Tile::Root,L::RootScale+640));
 }
 
+static void Counters(){
+ unsigned roots=0,workers=0;
+ const auto root=[&](unsigned at,uint32_t& out){
+  assert(at==0x2f0 || at==0x2e0 || at==0x2e8 || at==0x2c4);
+  // Tag221 used this accessor, which returned an error sentinel for
+  // all four addresses. The private ROOT view reads the real register.
+  assert(!BlackholeHostWriteReadRegister(at));roots++;
+  out=at==0x2f0?UINT32_MAX:at;return true;
+ };
+ const auto worker=[&](unsigned at,uint32_t& out){
+  assert(BlackholeHostWriteReadRegister(at));workers++;out=at;return true;
+ };
+ for(unsigned at=0;at<0x1000;at++){
+  const bool needRoot=at==0x2f0 || at==0x2e0 || at==0x2e8 || at==0x2c4;
+  const bool needWorker=at==0x208 || at==0x20c || at==0x210 || at==0x214 || at==0x204 || at==0x220 || at==0x228;
+  for(auto tile:{Tile::Root,Tile::Worker,static_cast<Tile>(3)}){
+   uint32_t v=0xfeedbeef;
+   const bool permitted=tile==Tile::Root?needRoot:tile==Tile::Worker && needWorker;
+   assert(L::ReadCounter(tile,at,v,root,worker)==permitted);
+   assert(v==(!permitted?0xfeedbeefU:at==0x2f0?UINT32_MAX:at));
+  }
+ }
+ assert(roots==4 && workers==7);
+ uint32_t v=0;
+ assert(!L::ReadCounter(Tile::Root,0x2f0,v,[](unsigned,uint32_t&){return false;},worker) && !v && workers==7);
+}
+
 int main(){
- Shape();const auto b=Fixture();ROM rom;
+ Shape();Counters();const auto b=Fixture();ROM rom;
  for(unsigned which=0;which<9;which++){
   Words saved(L::SavedWords);IO io;L::Lease lease(saved.data(),unsigned(saved.size()));
   if(which==1)io.failRead=30;
@@ -117,5 +145,5 @@ int main(){
   const auto calls=io.Calls();
   assert(!lease.Capture(io) && !lease.Restore(io) && calls==io.Calls());
  }
- puts("PASS Q8 two-participant journal: 113385 words round-trip, 8 failures, exact runtime allowlists; no device");
+ puts("PASS Q8 two-participant journal: 113385 words, 8 faults, exact master/slave read policy; no device");
 }

@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Private one-shard comparison only. Do not attach to existing Work routes.
 #if !defined(_KERNEL_MODE) || !defined(PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE) \
- || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010221ULL \
+ || PIONEER_Q38_TWIN_Q8_NATIVE_APERTURE != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026111700010222ULL \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH)
-#error Exact tag221 comparison driver role required
+#error Exact tag222 comparison driver role required
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) \
@@ -167,8 +167,9 @@ public:
  bool FinishStopped(){
   uint32_t fault=0;
   if(!Read(Tile::Worker,S::Status+8,fault) || fault || !Participant(Tile::Worker))return false;
+  auto stop=[](uint32_t pc){return pc==ROM::StopPC || pc==ROM::StopPC+4;};
   r.stopPC=io.RuntimePcRead();io.Pause();
-  if(r.stopPC!=ROM::StopPC || !Scope() || io.RuntimePcRead()!=ROM::StopPC || !Participant(Tile::Worker))return false;
+  if(!stop(r.stopPC) || !Scope() || !stop(io.RuntimePcRead()) || !Participant(Tile::Worker))return false;
   io.RuntimeResetWrite(0x87ffff);io.Pause();
   if(!Scope() || io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff || !Participant(Tile::Worker))return false;
   io.RuntimeResetWrite(0x47800);io.Pause();

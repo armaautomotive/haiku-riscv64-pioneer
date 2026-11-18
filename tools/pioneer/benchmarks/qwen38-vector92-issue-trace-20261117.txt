@@ -484,3 +484,25 @@ quarantine retained, and all nine archived files matched their hashes.
 Compare stderr SHA-256:
   5c8fc7168445982df3ef3579a32d28979ebdaf613d788c06dca850be88909572
 Do not replay tag221 or retry tag217/tag219 on these results alone.
+
+Tag222 keeps the two-worker journal, firmware, bank upload and
+receipt checks unchanged. It routes exactly the four receiving
+slave-counter offsets through the selected, held controller's
+existing read-only NIU view. The worker still uses its existing
+master-counter accessor; the broad legacy allowlist is unchanged.
+At STOP it accepts the two pinned terminal-loop PCs used in the
+known full-model controller, still requiring two observations.
+Tests exhaustively refused invalid and cross-tile offsets, reproduced
+the legacy exclusion of the four slave registers, and distinguished a
+real 0xffffffff value from an unavailable read. The two-party journal
+and inert native aperture tests also passed. The bound generation2
+runner passed 15 fake-manager cases. Two complete SDK builds matched:
+
+  Driver:   ee6a90e9c87086efc61d006a3d2621288ba5d70379358059cf0db18eb245bc14
+  Client:   aeb25b18c36ef40a60ca0b82076b00c23fbcd51d7541f3e57296e884eba71c1d
+  Manifest: 20faba0731cddfe7db597a60a6f0b9583bf4c7126871883c1cedda40cf9962bd
+
+Generate a fresh runner only after independently identifying an idle
+stable generation. Tag222 has not run on hardware:
+  python3 -B tools/pioneer/build_qwen38_twin_q8_221_trial.py \
+    OBSERVED_STABLE_GENERATION NEW_LOCAL_RUNNER --tag222

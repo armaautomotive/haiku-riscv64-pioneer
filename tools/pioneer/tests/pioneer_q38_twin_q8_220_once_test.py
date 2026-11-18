@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the physical runner's actual transition/receipt logic with fake Haiku I/O."""
 import os
+from hashlib import sha256
 from pathlib import Path
 import shutil
 import subprocess
@@ -179,9 +180,18 @@ def main():
             pass
         else:
             raise AssertionError(bad)
+    assert sha256(bind("2").encode("ascii")).hexdigest() == (
+        "d6745833830e195886f60b4b7f90d351f74679bab7497e13db8783ad6bfbb0e9")
+    try:
+        bind("2", "220")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("spent tag220 cannot be rebound")
     exercise(RUNNER.read_text(), 220, 4)
     exercise(bind("2"), 221, 2)
     exercise(bind("15"), 221, 15)
+    exercise(bind("2", "222"), 222, 2)
 
 
 if __name__ == "__main__":

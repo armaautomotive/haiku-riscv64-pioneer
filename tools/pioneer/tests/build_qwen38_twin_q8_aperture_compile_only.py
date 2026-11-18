@@ -31,7 +31,7 @@ def kernel_flags(sdk, root):
              "-fno-rtti", "-fstack-usage", "-ffreestanding", "-finline", "-fno-semantic-interposition",
              "-fno-tree-vectorize", "-fno-use-cxa-atexit", "-fno-strict-aliasing",
              "-fno-delete-null-pointer-checks", "-mcmodel=medany", "-fpic", "-D_KERNEL_MODE",
-             "-DTT_PIONEER_DRIVER_RELOAD", "-DPIONEER_DRIVER_BUILD_TAG=0x2026111700010221ULL",
+             "-DTT_PIONEER_DRIVER_RELOAD", "-DPIONEER_DRIVER_BUILD_TAG=0x2026111700010222ULL",
              "-DPIONEER_Q38_TWIN_Q8_NATIVE_APERTURE=1", *("-DTT_PIONEER_EXPERIMENTAL_Q38_" + r for r in roles),
              *include]
     return tool, flags

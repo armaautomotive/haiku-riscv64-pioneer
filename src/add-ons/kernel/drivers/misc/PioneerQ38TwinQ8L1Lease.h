@@ -53,8 +53,17 @@ static constexpr bool RuntimeWrite(Tile tile,unsigned at)
 static constexpr bool CounterRead(Tile tile,unsigned at)
 {
  if(tile==Tile::Root){for(unsigned i=0;i<4;i++)if(at==S::Slave(i))return true;}
- else for(unsigned i=0;i<8;i++)if(at==S::Counter(i))return true;
+ else if(tile==Tile::Worker)for(unsigned i=0;i<8;i++)if(at==S::Counter(i))return true;
  return false;
+}
+// ROOT's incoming receipts are not part of the inherited resident master
+// register read policy. Wrong offsets must refuse before either callback,
+// and 0xffffffff is valid counter data when a proved read really returns it.
+template<class RootRead,class WorkerRead>
+bool ReadCounter(Tile tile,unsigned at,uint32_t& value,RootRead root,WorkerRead worker)
+{
+ if(!CounterRead(tile,at))return false;
+ return tile==Tile::Root?root(at,value):worker(at,value);
 }
 static_assert(RootWords==2784 && SavedWords==113385,"exact heap journal for two participants");
 static_assert(Owns(Tile::Worker,S::Status) && Owns(Tile::Worker,S::Proof+252)
