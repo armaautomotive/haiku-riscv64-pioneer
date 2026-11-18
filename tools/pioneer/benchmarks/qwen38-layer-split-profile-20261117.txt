@@ -145,3 +145,37 @@ exact benchmark/stable hashes and the unchanged model file identity.
 All nine fetched records matched the independent remote SHA-256s. The
 closed archive and comparator output are in the sibling directory
 qwen38-layer-split-profile-physical-20261117. The tag213 stage is spent.
+
+Physical tag214: faster loading, unchanged decode
+-------------------------------------------------
+The live-image check arm used the same v4 card program and public model
+as tag213. It gave the same count output, with no CPU inference, clean
+END and terminal exit codes 0. Both runs sent 19,399,024,640 bytes in
+20,367 upload calls. The upload window went from 1,244.467 to 859.608 s
+(-30.9%), and the measured time inside those calls went from 1,078.610
+to 695.914 s. This is a full observed software upload window, not a
+measurement of the PCIe link's electrical maximum. The request to first
+commit decreased from 1,757.774..1,757.880 s to 1,373.651..1,373.757 s.
+That commit is not streamed text. Vocab authentication separately took
+312.578 s in this run; do not attribute its variation to the upload fix.
+
+The same 31-post-prompt-step decode window measured
+0.172922754..0.172925982 tokens/sec. The count output was identical to
+tag213. Generation body was 242,058,746,560 card controller cycles,
+compared with 242,057,545,371 in tag213. The projection scope remained
+48.8493% of the body. This leaves the approximately 0.173 tokens/sec
+baseline unchanged for performance purposes; it is not a decode win.
+
+The three benchmark teams exited. The independent live postflight
+verified the exact manifest, run-once program, driver/worker/client,
+stable041/idle generation6, 64 CPUs and 137,034,936,320 bytes of RAM.
+It checked the model's owner/link-count/permissions/size; the benchmark
+authenticated the original model. All nine copied log/state hashes
+matched, and the full v4 rate parser passed. The spent live stage holds
+the original records at /boot/home/pioneer-q38-layer-split-live-214.
+  verified manifest: d2666936f624f65b6eeaeab9a42776943aef88b62fdfb1f5c8f4414be2ac4d7a
+  runner:            9b1c2434d5e4f057a4f2ef0cba8a7eca7642a12dbd12749a5f25c918b64c3926
+  rate.stdout:       2506b29fb0dcda062a16fcdccaf6a23a58072b041a409114f77f1e31faa435f1
+  parent.stdout:     2575ff56b57ce564812ca623a36e820ba39a49ca84526b24177a18027e722389
+
+  python3 tools/pioneer/build_qwen38_layer_split_profile_trial.py 4 NEW_SCRIPT --live-postflight 1021

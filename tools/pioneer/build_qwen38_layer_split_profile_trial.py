@@ -22,6 +22,7 @@ PACKAGE={
         'ad5d23bc5baf35773f9745290e60659376d56fc9671f1d1a14c15a0742506f94'),
 }
 RECIPE_MANIFEST='0293066d8d872861bb3150a736e45e89d51f1ffece9bccb30cfbef40e663952f'
+LIVE_MANIFEST='d2666936f624f65b6eeaeab9a42776943aef88b62fdfb1f5c8f4414be2ac4d7a'
 POSTFLIGHT=Path(__file__).with_name('pioneer_q38_layer_split_postflight.sh')
 POSTFLIGHT_SHA='22242231188928d8277e8aa37833d78cbb07673a7c207b8c0d9cc050af06f375'
 
@@ -32,25 +33,28 @@ def bind(start,live=False,*,recipe=False):
     return bind_raw_pair(variant,start,PACKAGE,'layer-split','layer split profile','LAYER_SPLIT')
 
 
-def recipe_postflight(start,parent):
+def postflight(start,parent,variant):
     """Read only; use the actual parent identity after its observed exit."""
-    runner=bind(start,recipe=True)
+    if variant not in ('recipe','live'):
+        raise ValueError('unknown postflight role')
+    runner=bind(start,live=variant=='live',recipe=variant=='recipe')
     if not re.fullmatch(r'[1-9][0-9]{0,8}',parent):
-        raise ValueError('supply the observed positive detached recipe parent team')
+        raise ValueError('supply the observed positive detached parent team')
     template=POSTFLIGHT.read_bytes()
     if sha256(template).hexdigest()!=POSTFLIGHT_SHA:
         raise ValueError('the original postflight changed; review it before rebinding')
     text=template.decode('ascii')
     generation=int(start)+2
-    control,candidate=PACKAGE['candidate'],PACKAGE['recipe']
+    control,candidate=PACKAGE['candidate'],PACKAGE[variant]
+    tag,manifest=(216,RECIPE_MANIFEST) if variant=='recipe' else (214,LIVE_MANIFEST)
     changes=[
-        ('tag213 generation3','tag216'),
-        ('layer-split-candidate-213','layer-split-recipe-216'),
+        ('tag213 generation3',f'tag{tag}'),
+        ('layer-split-candidate-213',f'layer-split-{variant}-{tag}'),
         ('STABLE041_GEN4_RESTORED',f'STABLE041_GEN{generation}_RESTORED'),
         ("printf '621\\n' | cmp -s launch.pid -",f"printf '{parent}\\n' | cmp -s launch.pid -"),
         ('$1==621 ||',f'$1=={parent} ||'),
         (control[1],candidate[1]),(control[2],candidate[2]),(control[3],candidate[3]),
-        ('3e3f76f2b54a22d1ab3fbfda0799680cd554b09f4fa44c2b6023d29383e804b2',RECIPE_MANIFEST),
+        ('3e3f76f2b54a22d1ab3fbfda0799680cd554b09f4fa44c2b6023d29383e804b2',manifest),
         ('1e7cdd1238593c7b317ea725e722574ed600dea10dc0b4dc9ee19d931f82e01c',
          sha256(runner.encode('ascii')).hexdigest()),
         ("test \"$status\" = 'P100A_RELOAD driver55 tag2026102100010012 generation4 ",
@@ -63,14 +67,19 @@ def recipe_postflight(start,parent):
     return text
 
 
+def recipe_postflight(start,parent):
+    return postflight(start,parent,'recipe')
+
+
 def main():
     live=len(sys.argv)==4 and sys.argv[3]=='--live-image-check'
     recipe=len(sys.argv)==4 and sys.argv[3]=='--recipe-batch'
-    closure=len(sys.argv)==5 and sys.argv[3]=='--recipe-postflight'
+    closure=len(sys.argv)==5 and sys.argv[3] in ('--recipe-postflight','--live-postflight')
     if not __debug__ or (len(sys.argv)!=3 and not (live or recipe or closure)):
-        raise SystemExit('use OBSERVED_STABLE_GENERATION NEW_SCRIPT [--live-image-check|--recipe-batch|--recipe-postflight PARENT]')
+        raise SystemExit('use OBSERVED_STABLE_GENERATION NEW_SCRIPT '
+                         '[--live-image-check|--recipe-batch|--recipe-postflight PARENT|--live-postflight PARENT]')
     generation,path=sys.argv[1:3]
-    text=recipe_postflight(generation,sys.argv[4]) if closure else bind(generation,live,recipe=recipe)
+    text=postflight(generation,sys.argv[4],sys.argv[3].split('-')[2]) if closure else bind(generation,live,recipe=recipe)
     output=text.encode('ascii')
     with Path(path).open('xb') as dest:
         dest.write(output)
