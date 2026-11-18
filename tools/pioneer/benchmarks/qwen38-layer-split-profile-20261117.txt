@@ -74,6 +74,29 @@ or mixed-format v4 logs; v3 and old-rate tests still pass. The runner's
 marker alone is not proof of full completion, model accuracy, or safe
 cleanup; independently verify actual exits and the stable driver.
 
-This package has not been staged or run on the P100A. Do not interfere with
-the active tag211 control or run it before the FFN pair is closed; a new
-profile trial would still require fresh stable-state preflight.
+Physical profile run started after the closed FFN pair and tag215 recovery.
+The generation2 preflight verified exact stable041 idle, the full CPU/RAM
+profile, the manifest and pinned driver/worker/client. The one-shot script
+SHA256 1e7cdd1238593c7b317ea725e722574ed600dea10dc0b4dc9ee19d931f82e01c
+loaded idle tag213 generation3 in
+/boot/home/pioneer-q38-layer-split-candidate-213. The detached parent (621),
+client (688) and worker (689) were observed live while authenticating the
+source. Do not open the device or start a second trial while it owns the
+lock. No profiling data or new speed result has been observed yet.
+
+For independent closure, run pioneer_q38_layer_split_postflight.sh through
+strict Haiku SSH only after the process handles exit. Verify every copied
+file against its independent remote digest; a successful shell, state
+file or rate line by itself does not prove the device is idle. Then:
+
+  python3 tools/pioneer/compare_qwen38_layer_profiles.py CLOSED_V3_CAPTURE CLOSED_V4_CAPTURE
+
+Use the archived real v3 capture from
+benchmarks/qwen38-fast-decode-profile-physical-20261106/remote for comparison.
+The report checks the exact counting answer, raw upload size and 31-position
+window in both transcripts. It sums v4 subphases back into exactly matched
+scope groups, ranks v4 cycle costs excluding STOP, and keeps startup and
+host count-rate evidence separate. Its hypothetical per-bucket factor is
+only arithmetic on the measured controller scope, not an estimate of
+device throughput. Tests conserved every cycle using the archived v3 and
+a synthetic v4 split; nine failed/invalid comparison inputs were refused.

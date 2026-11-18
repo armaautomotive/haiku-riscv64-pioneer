@@ -48,6 +48,15 @@ is gone. The failed candidate and logs are preserved. The revised
 client reports failure receipts offline; do not replay the spent trial.
 See benchmarks/qwen38-two-token-q4-20261117.txt.
 
+The layer-split profile is now running on separate tag213 generation3.
+It uses the existing ten vector92 math workers and the same Qwen counting
+request, with new convolution/GDN/attention timing on the card. The
+live stage is /boot/home/pioneer-q38-layer-split-candidate-213, with
+observed parent621/client688/worker689. No new timing or speed result
+yet. Do not disturb the shared lock; expect exact idle stable041
+generation4 after clean closure, then verify it independently. See
+benchmarks/qwen38-layer-split-profile-20261117.txt.
+
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
 Radeon's previous root). The initial scans, one default-target link
