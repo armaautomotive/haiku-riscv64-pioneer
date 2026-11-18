@@ -249,6 +249,18 @@ Independent preflight verified idle stable041 generation6, 64 CPUs,
 parent team was 1339; tag217 generation7 was admitted and the same
 32-output counting job began authenticating its source. No second
 trial or metadata device open while the benchmark owns the lock.
-After all handles exit, bind the postflight to observed stable gen6
-and parent team 1339 (--wire-postflight 1339; expects stable gen8).
-No result for native-Q8 silicon correctness or decode rate yet.
+Tag217 outcome: the upload reached 18,500.4 MiB and START returned.
+The client observed committed0 with 31 prompt tokens and then reported
+FAIL_FULL_OFFLOAD_RATE_GENERATION. There was no first committed token,
+no closed layer-split timing, and no throughput result. Both the client
+and detached parent exited 1. The shared lock was retained and the
+runner reported RESTORE_NOT_CONFIRMED_DO_NOT_RETRY_OR_RESET.
+The rate client did not preserve a cause code; this record does not
+isolate the offending projection or disprove physical INT8 unpack.
+
+After all three teams exited, the exact approved CPU metadata tool
+confirmed tag217 generation7, cold1/owner1/guard1. The candidate,
+stable backup, helper and guard hashes were verified and nine evidence
+files were copied with matching SHA256. The rate transcript SHA256 was
+dd95cdb58436a055bcbb3a42caa39f45b2f99d78f5dc277085741bde415e741d.
+No retry, END, device reset or CPU fallback was attempted.

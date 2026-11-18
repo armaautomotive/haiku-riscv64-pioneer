@@ -64,13 +64,14 @@ same inference firmware. Weight upload fell from 1,244.467 to 859.608 s
 closure verified idle stable041 generation6, full CPU/RAM, and exact
 captured log hashes. See benchmarks/qwen38-layer-split-profile-20261117.txt.
 
-Tag217 now owns the trial lock at generation7 for the native Q8
-projection comparison. Confirmed live teams: parent1339, client1408,
-worker1409. The model authenticated and weight upload started. Do not
-open the device or start a second trial while those handles are live.
-There is no native-Q8 hardware decode result yet. After all handles
-exit, verify clean END and idle stable041 generation8 independently.
-See benchmarks/qwen38-vector92-issue-trace-20261117.txt.
+Tag217 authenticated and uploaded all 18,500.4 MiB, then failed after
+START with no committed token. There is no native-Q8 decode result.
+After the worker, client and parent exited, CPU metadata verified
+tag217 generation7, cold1/owner1/guard1, full CPU/RAM, and the
+exclusive trial lock remained. All nine evidence hashes matched.
+Do not retry tag217 or run tag219 (which shares the native Q8 path)
+without isolating the physical failure. See
+benchmarks/qwen38-vector92-issue-trace-20261117.txt.
 
 Historical new-slot investigation (not the current slot):
 Pre-swap UART maps that slot to 7060000000.pcie / 0000:00:00.0 (the
