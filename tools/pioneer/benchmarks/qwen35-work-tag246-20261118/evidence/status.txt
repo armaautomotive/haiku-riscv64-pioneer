@@ -1,0 +1,18 @@
+P100A_RELOAD driver60 tag2026111800010046 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+
+P100A_Q35 output:
+P100A_Q35 authentication_seconds=99.030119
+P100A_Q35 vocab_and_tokenize_seconds=12.659907 prompt_ids=7734,279,38175,11592,357,1472,387,11,18101,539,12258,13,38224,1132,440,279,11592,13
+P100A_Q35 resident_spans=3450 resident_bytes=2740498432
+P100A_Q35 model_load_seconds=225.435951
+
+P100A_Q35 failure:
+P100A_Q35 terminal Work fault proof pending reason=17 detail=0x1503851; requesting STOP reproof
+P100A_Q35 unexpected terminal run=1 state=5 commits=0 pc=0x40060 progress_magic=0x31503542 prefilled=0 root_trace=0xd0000102 fault_marker=0x31463551 dispatcher_stage=0x54000102 dispatcher_detail=0x77 dispatcher_context0=0 dispatcher_context1=0 scale_before_clear=0xb7dcbdfb scale_after_clear=0 scale_after_stage_input=0 scale_at_stageband_entry=0 scale_after_initial_validation=0 scale_after_fragments=0 scale_after_state_validation=0 scale_before_batch_object=0 scale_after_batch_object=0 scale_after_batch_build=0 scale_after_batch_fields=0 scale_after_root_job=0 scale_after_worker_table=0 scale_before_dispatch=0 scale_before_validation=0 recovery_proof=17 recovery_detail=0x1503851
+P100A_Q35 STOP recovery failed proof=17 detail=0x1503851
+
+Trial wrapper result:
+Q35_WORK_TRIAL_FAILED before_restore
+
+No Work client/diagnostic process remained. Driver is quarantined; clean
+unload was not proven. No tokens were committed and no output was produced.

@@ -72,6 +72,15 @@ struct Mock {
 
 int main()
 {
+	assert(D::WorkPeerFaultHandlerPc(0x72080));
+	assert(D::WorkPeerFaultHandlerPc(0x720a0));
+	assert(D::WorkPeerFaultHandlerPc(0x720a4));
+	assert(D::WorkPeerFaultHandlerPc(0x720a8));
+	assert(!D::WorkPeerFaultHandlerPc(0x720ac));
+	assert(D::WorkPeerFaultParkPc(0x720a4));
+	assert(D::WorkPeerFaultParkPc(0x720a8));
+	assert(!D::WorkPeerFaultParkPc(0x7209c)); // generic peer park omits Work's RA capture
+	assert(!D::WorkPeerFaultParkPc(0x720ac));
 	assert(D::WorkPeerStatusSafe(10,10,10,9,10));
 	assert(D::WorkPeerStatusSafe(10,11,10,9,10)); // request arrived, peer is still working
 	assert(D::WorkPeerStatusSafe(10,11,11,9,10)); // peer finished before ROOT committed
@@ -91,15 +100,26 @@ int main()
 	peerStatus[7]=18; peerStatus[8]=17;
 	assert(D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
 		0x72000,0x2000,true)); // explicit parked peer error with valid caller/count receipt
+	assert(D::WorkPeerRecoveryStatusFailure(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true)==0);
+	unsigned peerFailureDetail=0;
+	assert(D::WorkPeerRecoveryStatusFailure(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,false,&peerFailureDetail)==9 && peerFailureDetail==0x72084);
 	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
 		0x72000,0x2000,false));
 	peerStatus[5]=0x74000;
+	assert(D::WorkPeerRecoveryStatusFailure(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true,&peerFailureDetail)==11 && peerFailureDetail==0x74000);
 	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
 		0x72000,0x2000,true));
 	peerStatus[5]=0x72084; peerStatus[8]=18;
+	assert(D::WorkPeerRecoveryStatusFailure(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true,&peerFailureDetail)==13);
 	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
 		0x72000,0x2000,true)); // reason 0x50 must retain an unequal panels/count pair
 	peerStatus[8]=17; peerStatus[9]=1;
+	assert(D::WorkPeerRecoveryStatusFailure(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true,&peerFailureDetail)==12);
 	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
 		0x72000,0x2000,true));
 	peerStatus[9]=0;

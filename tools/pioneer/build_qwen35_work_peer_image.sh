@@ -31,12 +31,22 @@ code = (out / 'text.bin').read_bytes()
 symbols = {name: int(value, 16) for value, kind, name in
            (line.split() for line in (out / 'peer.symbols').read_text().splitlines())
            if kind == 'T'}
+disassembly = (out / 'peer.disassembly').read_text().splitlines()
 if boot != pack('<I', 0x0006c06f) or not code or len(code) > 0x2000 or len(code) % 4:
     raise SystemExit('unexpected persistent peer image size or boot jump')
 for name, address in (('block_entry', 0x72000), ('block_peer_wait_load', 0x7204c),
-                      ('block_peer_wait_branch', 0x72050), ('block_fault_park', 0x72080)):
+                      ('block_peer_wait_branch', 0x72050), ('block_fault_park', 0x72080),
+                      ('block_fault_park_fetch', 0x720a8)):
     if symbols.get(name) != address:
         raise SystemExit(f'unexpected persistent peer symbol {name}')
+branches = {}
+for line in disassembly:
+    fields = line.split()
+    if len(fields) >= 4 and fields[0].endswith(':'):
+        branches[fields[0][:-1]] = fields[1:4]
+if branches.get('720a4') != ['0000006f', 'j', '720a4'] \
+        or branches.get('720a8') != ['ffdff06f', 'j', '720a4']:
+    raise SystemExit('Work fault park must contain two exact local branch instructions')
 words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', code))
 (out / 'PioneerQwen35WorkPeerImage.h').write_text(
     '#pragma once\nnamespace PioneerQwen35 {\n'

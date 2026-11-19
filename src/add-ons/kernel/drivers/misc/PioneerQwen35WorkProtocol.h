@@ -18,6 +18,25 @@ enum WorkStatus : unsigned {
 	WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault, WorkRecoveryPending
 };
 
+// The Work peer saves RA and fences before publishing Q8PF. Those two
+// instructions move its terminal self-loop eight bytes past the generic
+// persistent peer's fault park. The Work image places a second local jump at
+// the following word so speculative PC snapshots stay inside the fault park.
+enum : unsigned {
+	WorkPeerFaultEntry=0x72080, WorkPeerFaultPark=0x720a4,
+	WorkPeerFaultParkFetch=0x720a8
+};
+
+inline bool WorkPeerFaultHandlerPc(unsigned pc)
+{
+	return pc>=WorkPeerFaultEntry && pc<=WorkPeerFaultParkFetch && !(pc&3);
+}
+
+inline bool WorkPeerFaultParkPc(unsigned pc)
+{
+	return pc==WorkPeerFaultPark || pc==WorkPeerFaultParkFetch;
+}
+
 struct WorkSupport {
 	unsigned version, driver, maxContext, vocabulary;
 	unsigned tensixProjections, hostInference, explicitEnd, reserved;
@@ -56,26 +75,64 @@ inline bool WorkPeerStatusSafe(unsigned recorded,unsigned requested,unsigned fin
 	return requestKnown && finishKnown;
 }
 
+inline unsigned WorkPeerRecoveryStatusFailure(const unsigned* status,unsigned recorded,
+	unsigned prior,unsigned root,unsigned peerMarker,unsigned faultMarker,
+	unsigned imageBegin,unsigned imageBytes,bool faultHandler,unsigned* detail=NULL)
+{
+	if (detail) *detail=0;
+	if (!status) return 1;
+	if (!WorkPeerStatusSafe(recorded,status[0],status[1],prior,root)) {
+		if (detail) *detail=((status[0]&0xfff)<<12)|(status[1]&0xfff);
+		return 2;
+	}
+	if (status[3]!=peerMarker) { if (detail) *detail=status[3]; return 3; }
+	if (status[4]>1) { if (detail) *detail=status[4]; return 4; }
+	if (status[2]==0) {
+		if (!faultHandler) {
+			for (unsigned i=5;i<16;i++) if (status[i]) {
+				if (detail) *detail=((i&15)<<20)|(status[i]&0xfffff);
+				return 5;
+			}
+			return 0;
+		}
+		if (status[5] && ((status[5]&3) || status[5]<imageBegin
+			|| status[5]>=imageBegin+imageBytes)) {
+			if (detail) *detail=status[5];
+			return 6;
+		}
+		for (unsigned i=9;i<16;i++) if (status[i]) {
+			if (detail) *detail=((i&15)<<20)|(status[i]&0xfffff);
+			return 7;
+		}
+		if (status[6]==0x50 && status[7]==status[8]) {
+			if (detail) *detail=((status[7]&0xfff)<<12)|(status[8]&0xfff);
+			return 8;
+		}
+		return 0;
+	}
+	if (!faultHandler) { if (detail) *detail=status[5]; return 9; }
+	if (status[2]!=faultMarker) { if (detail) *detail=status[2]; return 10; }
+	if ((status[5]&3) || status[5]<imageBegin || status[5]>=imageBegin+imageBytes) {
+		if (detail) *detail=status[5];
+		return 11;
+	}
+	for (unsigned i=9;i<16;i++) if (status[i]) {
+		if (detail) *detail=((i&15)<<20)|(status[i]&0xfffff);
+		return 12;
+	}
+	if (status[6]==0x50 && status[7]==status[8]) {
+		if (detail) *detail=((status[7]&0xfff)<<12)|(status[8]&0xfff);
+		return 13;
+	}
+	return 0;
+}
+
 inline bool WorkPeerRecoveryStatusSafe(const unsigned* status,unsigned recorded,
 	unsigned prior,unsigned root,unsigned peerMarker,unsigned faultMarker,
 	unsigned imageBegin,unsigned imageBytes,bool faultHandler)
 {
-	if (!status || !WorkPeerStatusSafe(recorded,status[0],status[1],prior,root)
-		|| status[3]!=peerMarker || status[4]>1) return false;
-	if (status[2]==0) {
-		if (!faultHandler) {
-			for (unsigned i=5;i<16;i++) if (status[i]) return false;
-			return true;
-		}
-		if (status[5] && ((status[5]&3) || status[5]<imageBegin
-			|| status[5]>=imageBegin+imageBytes)) return false;
-		for (unsigned i=9;i<16;i++) if (status[i]) return false;
-		return status[6]!=0x50 || status[7]!=status[8];
-	}
-	if (!faultHandler || status[2]!=faultMarker || (status[5]&3)
-		|| status[5]<imageBegin || status[5]>=imageBegin+imageBytes) return false;
-	for (unsigned i=9;i<16;i++) if (status[i]) return false;
-	return status[6]!=0x50 || status[7]!=status[8];
+	return WorkPeerRecoveryStatusFailure(status,recorded,prior,root,peerMarker,
+		faultMarker,imageBegin,imageBytes,faultHandler)==0;
 }
 
 inline bool WorkPeerFreshStatus(const unsigned* status,unsigned peerMarker)

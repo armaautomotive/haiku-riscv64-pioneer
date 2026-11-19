@@ -109,7 +109,7 @@ public:
 
 	static bool PeerFaultHandlerPc(uint32 pc)
 	{
-		return pc>=TT_Q38_PEER_FAULT_ENTRY && pc<=TT_Q38_PEER_FAULT_PARK && !(pc&3);
+		return PioneerQwen35::WorkPeerFaultHandlerPc(pc);
 	}
 
 	static bool PeerWaitPc(uint32 pc)
@@ -134,12 +134,13 @@ public:
 		return true;
 	}
 
-	bool PeerRecoveryStatus(unsigned worker,const uint32 status[16],
-		unsigned recorded,unsigned root,bool faultHandler)
+	unsigned PeerRecoveryStatusFailure(unsigned worker,const uint32 status[16],
+		unsigned recorded,unsigned root,bool faultHandler,unsigned* detail)
 	{
-		return worker>0 && worker<120 && PioneerQwen35::WorkPeerRecoveryStatusSafe(status,recorded,
+		if (worker==0 || worker>=120) { if (detail) *detail=worker; return 14; }
+		return PioneerQwen35::WorkPeerRecoveryStatusFailure(status,recorded,
 			fDispatch.peerNonce[worker-1],root,TT_Q38_PEER_MARKER,WorkPeerFaultMarker,
-			0x72000,sizeof(PioneerQwen35::WorkPeerWords),faultHandler);
+			0x72000,sizeof(PioneerQwen35::WorkPeerWords),faultHandler,detail);
 	}
 
 	bool WorkFaultSafe(unsigned reportedPc,unsigned* reason=NULL,unsigned* detail=NULL)
@@ -206,23 +207,26 @@ public:
 					PeerPcSnapshot(peerPc0,peerPc1);
 					const bool handler0=PeerFaultHandlerPc(peerPc0),handler1=PeerFaultHandlerPc(peerPc1);
 					const bool inFaultHandler=handler0 && handler1;
-					if (!PeerRecoveryStatus(worker,second,state[1+worker],state[1],inFaultHandler))
-						return reject(17,(worker<<24)|(second[2]&0xffffff));
+					unsigned statusDetail=0;
+					const unsigned statusFailure=PeerRecoveryStatusFailure(worker,second,
+						state[1+worker],state[1],inFaultHandler,&statusDetail);
+					if (statusFailure)
+						return reject(70+statusFailure,(worker<<24)|(statusDetail&0xffffff));
 					const bool faulted=second[2]==WorkPeerFaultMarker;
 					if (handler0!=handler1)
 						return reject(22,(worker<<24)|(peerPc1&0xffffff));
 					if (faulted || inFaultHandler) {
 						if (!inFaultHandler)
 							return reject(22,(worker<<24)|(peerPc1&0xffffff));
-						if (faulted && peerPc0==TT_Q38_PEER_FAULT_PARK
-							&& peerPc1==TT_Q38_PEER_FAULT_PARK) continue;
+						if (faulted && WorkPeerFaultParkPc(peerPc0)
+							&& WorkPeerFaultParkPc(peerPc1)) continue;
 						allReady=false; pendingWorker=worker;
 						pendingDetail=((second[0]&0xfff)<<12)|(second[1]&0xfff);
 						continue;
 					}
 					auto executable=[](uint32 pc) {
 						return pc>=0x72000 && pc<0x72000+sizeof(PioneerQwen35::WorkPeerWords)
-							&& pc!=TT_Q38_PEER_FAULT_ENTRY && pc!=TT_Q38_PEER_FAULT_PARK
+							&& pc!=WorkPeerFaultEntry && pc!=WorkPeerFaultPark
 							&& !PioneerQ38PeerTerminalPc(pc);
 					};
 					const bool waiting=PeerWaitPc(peerPc0) && PeerWaitPc(peerPc1);
@@ -244,10 +248,13 @@ public:
 						if (!PeerStatusSnapshot(worker,first,second)) return reject(23,worker);
 						PeerPcSnapshot(peerPc0,peerPc1);
 						const bool inFaultHandler=PeerFaultHandlerPc(peerPc0)&&PeerFaultHandlerPc(peerPc1);
-						if (!PeerRecoveryStatus(worker,second,state[1+worker],state[1],inFaultHandler))
-							return reject(23,(worker<<24)|(second[2]&0xffffff));
+						unsigned statusDetail=0;
+						const unsigned statusFailure=PeerRecoveryStatusFailure(worker,second,
+							state[1+worker],state[1],inFaultHandler,&statusDetail);
+						if (statusFailure)
+							return reject(70+statusFailure,(worker<<24)|(statusDetail&0xffffff));
 						if (second[2]==WorkPeerFaultMarker) {
-							if (peerPc0!=TT_Q38_PEER_FAULT_PARK || peerPc1!=TT_Q38_PEER_FAULT_PARK)
+							if (!WorkPeerFaultParkPc(peerPc0) || !WorkPeerFaultParkPc(peerPc1))
 								return reject(23,(worker<<24)|(peerPc1&0xffffff));
 						} else if (!PioneerQ38DispatchPeerStatus(fIO,fDispatch.peerNonce[worker-1],false,&fDispatch))
 							return reject(23,(worker<<24)|(fDispatch.closeDetail[0]&0xffffff));
@@ -309,13 +316,16 @@ public:
 			if (!PeerStatusSnapshot(worker,first,second)) return reject(39,worker);
 			PeerPcSnapshot(peerPc0,peerPc1);
 			const bool inFaultHandler=PeerFaultHandlerPc(peerPc0)&&PeerFaultHandlerPc(peerPc1);
-			if (!PeerRecoveryStatus(worker,second,rootState[1+worker],rootState[1],inFaultHandler))
-				return reject(40,(worker<<24)|(second[2]&0xffffff));
+			unsigned statusDetail=0;
+			const unsigned statusFailure=PeerRecoveryStatusFailure(worker,second,
+				rootState[1+worker],rootState[1],inFaultHandler,&statusDetail);
+			if (statusFailure)
+				return reject(110+statusFailure,(worker<<24)|(statusDetail&0xffffff));
 			if (PeerFaultHandlerPc(peerPc0)!=PeerFaultHandlerPc(peerPc1))
 				return reject(41,(worker<<24)|(peerPc1&0xffffff));
 			if (second[2]==WorkPeerFaultMarker) {
-				if (!inFaultHandler || peerPc0!=TT_Q38_PEER_FAULT_PARK
-					|| peerPc1!=TT_Q38_PEER_FAULT_PARK)
+				if (!inFaultHandler || !WorkPeerFaultParkPc(peerPc0)
+					|| !WorkPeerFaultParkPc(peerPc1))
 					return reject(42,(worker<<24)|(peerPc1&0xffffff));
 			} else if (inFaultHandler || second[0]!=second[1] || second[4]
 				|| !PeerWaitPc(peerPc0) || !PeerWaitPc(peerPc1)) return reject(43,worker);

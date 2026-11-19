@@ -8,6 +8,9 @@ _start: j block_entry
 .section .text.start,"ax"
 .global block_entry,block_peer_wait,block_peer_wait_load,block_peer_wait_branch
 .global block_peer_stopped,block_fault_park
+.ifdef PIONEER_Q35_WORK_PEER_IMAGE
+.global block_fault_park_fetch
+.endif
 block_entry:
 	li sp,0x70000
 	call q38_persistent_main
@@ -50,3 +53,9 @@ block_fault_park:
 	lw t1,0(t0)
 	fence
 1: j 1b
+.ifdef PIONEER_Q35_WORK_PEER_IMAGE
+/* A speculative PC sample may report the instruction after the loop branch.
+ * Keep that address in the same sealed, local, no-NoC park as well. */
+block_fault_park_fetch:
+	j 1b
+.endif

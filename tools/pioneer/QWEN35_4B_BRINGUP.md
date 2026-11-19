@@ -379,16 +379,24 @@ generation3 `cold1 active_owner1`. There was no valid output or decode rate.
 Exact hardware logs and hashes are preserved under
 [`qwen35-work-tag245-20261118/evidence`](benchmarks/qwen35-work-tag245-20261118/evidence).
 
-Tag246 adds a rebootless fleet recovery for this explicit parked peer fault.
-It requires a stable peer-fault marker and exact fault-park PC, verifies every
-peer image/source, the ROOT dispatch ledger and quiet NoC queues, then
-restarts the 119 peers using the same boot contract as normal dispatch. It
-accepts recovery only after all peers return to their fresh WAIT state with
-unchanged NoC counters; normal ROOT restore and dispatcher close must then
-complete. Unknown or active peer states remain quarantined. The offline build
-and owner regression pass, but tag246 has not yet been qualified on the card.
-The 27B model and stable041 setup remain intact. Two valid warm outputs and
-100 decode tokens/s are still unverified.
+Tag246 added rebootless fleet recovery for an explicit parked Q8PF peer fault.
+The hardware run loaded the 4B model in `225.435951` s after `99.030119` s
+authentication and `12.659907` s prompt tokenization, then faulted before
+prefill with zero committed tokens. Its STOP proof rejected the Work peer's
+park at `0x720a4` because it only recognized the generic `0x7209c` park; the
+candidate remained quarantined (`cold1 active_owner1`) with no output or clean
+unload. The logs are preserved in
+[`qwen35-work-tag246-20261118/evidence`](benchmarks/qwen35-work-tag246-20261118/evidence).
+
+Tag247 corrected the first park address, but its hardware run still returned
+generic proof17 for Q8PF peers and remained quarantined. It authenticated in
+`100.777613` s, tokenized in `14.373964` s, and loaded the model in
+`225.068757` s, again faulting before prefill with zero commits. Tag248 now
+adds a second sealed local branch for safe frontend PC samples and detailed
+status refusal codes; its offline build and owner regression pass. Hardware
+validation is pending. The 27B model and stable041 setup remain intact. Two
+valid warm outputs, clean unload, and 100 decode tokens/s are still
+unverified.
 
 ## Haiku llama.cpp platform patch
 

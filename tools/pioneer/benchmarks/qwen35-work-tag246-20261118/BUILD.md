@@ -57,6 +57,12 @@ left the candidate at generation3 `cold1 active_owner1`; no valid output or
 decode rate was produced. The original logs and state snapshot are in
 `evidence/`.
 
-Tag246 has built offline. Its fault-restart path still needs the guarded
-Pioneer hardware run; no rebootless recovery or valid model output is claimed
-until that run passes. The 27B model and stable041 backup remain preserved.
+Tag246 loaded the full 4B model in `225.435951` seconds after `99.030119`
+seconds authentication and `12.659907` seconds prompt tokenization, then
+faulted during prefill with zero committed tokens. Peer1's Q8PF panel-count
+fault reached STOP, but the recovery proof rejected its Work-specific park at
+`0x720a4` because the driver checked the generic `0x7209c` loop. It left the
+candidate quarantined at generation3 `cold1 active_owner1`, with no valid
+output, decode rate, or clean unload. The exact logs and corrected diagnosis
+are recorded in `evidence/` and tag247's build note. The 27B model and
+stable041 backup remain preserved.
