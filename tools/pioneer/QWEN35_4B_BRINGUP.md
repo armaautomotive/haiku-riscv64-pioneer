@@ -451,12 +451,78 @@ tag250 remains the hardware proof of recovery from this ROOT fault without a
 board reboot. Tag52 itself has not been installed on hardware. Build hashes
 are in [`qwen35-work-tag252-20261119/BUILD.md`](benchmarks/qwen35-work-tag252-20261119/BUILD.md).
 
-Tag53 adds a read-only receipt for the ROOT NoC command/counters and
-worker119's stable status/PC after the complete safe-idle proof. The
-warnings-as-errors cross-build and WorkOwner regression passed. It has not
-been installed on hardware; the next guarded run can identify whether the
-doorbell reached worker119. Hashes are in
+Tag53 added a read-only receipt for the ROOT NoC command/counters and
+worker119's stable status/PC after the complete safe-idle proof. On hardware,
+tag53 faulted before prefill with zero commits at the same worker119 4-byte
+doorbell (`stage=0x58778210 detail=0x4`). Worker119 reported reason `0x50`
+(`panels != count`), but its detail words 7/8 both read zero despite the
+validated nonempty job. The valid ROOT/worker snapshots and raw logs are in
+[`qwen35-work-tag253-20261119`](benchmarks/qwen35-work-tag253-20261119).
+
+Tag53 then passed explicit Work STOP, clean unload, and stable041 hot reload
+at generation4 without reboot; the shared lock is absent and both model files
+remain intact. This confirms recovery from the reported error without
+restarting the board. It did not produce valid output or decode performance.
+Tag251's close-callback recovery remains reverted; keep recovery in explicit
+STOP/END while investigating the worker119 peer result and the zero detail
+words. Hashes are in
 [`qwen35-work-tag253-20261119/BUILD.md`](benchmarks/qwen35-work-tag253-20261119/BUILD.md).
+
+## Tags54–57: worker-state evidence and scale transfer
+
+Tag54 reproduced the peer panel-count fault and recovered through explicit
+STOP and hot restore. Tag55 changed the ROOT scale source address but still
+passed the peer-local destination to `FetchBlock`, which replaced that source.
+Tag56 added first-failure receipts and exposed scale word `0x890c2869` at
+block zero. Tag57 then passed `RootScaleAddress` to both `ReadCommand` and
+`FetchBlock`; the ROOT and peer firmware hashes stayed unchanged.
+
+Tag57 loaded all 3,450 spans (`2,740,498,432` bytes) after `68.141455` s of
+authentication, `12.386210` s of vocabulary/tokenization, and
+`223.664090` s of model loading. It faulted before prefill with zero commits.
+The first safe-idle audit then found worker1's peer-status word0 different
+from its cached dispatch nonce (`reason=23 detail=0x1000100`). No core reset
+or cleanup was authorized by that proof. Tag57's STOP path latched the driver
+cold and did not expose a retry; the client exited. The board continued to
+answer Haiku SSH, so it had not stopped responding. Because tag57 could not
+recover its retained owner in place, the authorized power recovery was used
+once. Haiku then booted with tag57 idle, and stable041 was hot-restored before
+the tag58 trial.
+
+## Tag58: retryable no-reboot Work recovery
+
+Tag58 trusts the live peer nonce only after the existing ROOT ledger and
+status proofs accept it, removing the stale cached-nonce comparison from the
+second peer audit. A STOP proof failure before the first core reset now
+returns an explicit retryable result without quarantining the context. The
+client keeps its driver FD open and repeats the read-only proof. A failure
+after restart begins still quarantines the session. The Work protocol is
+version5.
+
+The warnings-as-errors cross-build and WorkOwner retry regression passed.
+Build hashes and the guarded trial wrapper are in
+[`qwen35-work-tag258-20261119/BUILD.md`](benchmarks/qwen35-work-tag258-20261119/BUILD.md).
+Tag58 loaded on hardware from stable041 generation2 at generation3. It
+authenticated in `99.633210` s, tokenized the 18-token prompt in `12.869909`
+s, and loaded all 3,450 resident spans (`2,740,498,432` bytes) in
+`223.299044` s. Before prefill it faulted with zero commits at
+`dispatcher_stage=0x58778210 detail=0x4`, the worker119 pending 4-byte write
+to remote doorbell `0x74100`. No valid output, prompt prefill, or decode rate
+was produced.
+
+Tag58 passed its safe-idle proof, repeated it during explicit STOP, unloaded
+cleanly (`state=2 active=0 cold=0`), and restored stable041 at generation4 by
+hot reload without a reboot. Postflight reported
+`SAFE_FAULT_RECOVERY_VERIFIED`; the stable driver is idle, the shared lock is
+absent, and both model files remain intact. This run verifies recovery from
+the inference error without restarting the board. The retryable safe-proof
+failure branch is covered by the offline regression; the hardware fault's
+proof passed. Run logs and checksums are in
+[`qwen35-work-tag258-20261119`](benchmarks/qwen35-work-tag258-20261119).
+
+Two valid warm outputs and 100 decode tokens/s remain unverified. Continue
+with the worker119 doorbell fault; do not interpret model-load time as decode
+performance.
 
 ## Haiku llama.cpp platform patch
 

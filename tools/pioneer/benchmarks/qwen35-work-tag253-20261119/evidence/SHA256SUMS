@@ -1,0 +1,8 @@
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/work.exit
+f974c877d6ebb64db7460ee67a30386a798d1cd3f8302dfa2c6b2a2115c05cb1  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/work.stdout
+9f9c430872d1c70b2b1a0619671ba35a378873c2d95138938430faef13ae3939  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/work.stderr
+507e1557e8544dfd3bc8ecba2bc12b14d22c681e8123d4faf7f6668b58573a8e  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/state
+ebfef6f5099bb37b0abfd6d4eed231d52e71bd8ba12e27bc52ebe9715d2c08f6  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/status.txt
+a064b06895dd820162bfc208f3a47fa796b09aae019f9db301488579c0b3eaac  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/postflight.txt
+f32c503dad7a329fcdda9a24ce336df2580c5cc701980a1c1d25970a7cfd3281  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/sysinfo.txt
+1a23f88f38d39b6065c876ff647742e42d8bf7f8bcc5f7fb83a89bacf1863dfe  tools/pioneer/benchmarks/qwen35-work-tag253-20261119/evidence/processes.txt

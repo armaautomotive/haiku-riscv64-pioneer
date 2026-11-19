@@ -115,13 +115,13 @@ Q35WorkControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		status=user_memcpy(&stop,data,sizeof(stop));
 		auto& binding=*context->q35Work;
 		if (status==B_OK) {
-			if (stop.version!=WorkVersion || stop.restored || stop.recoveryProofReason
-				|| stop.recoveryProofDetail || stop.reserved[0] || stop.reserved[1])
+			if (stop.version!=WorkVersion || stop.restored || stop.retryable || stop.recoveryProofReason
+				|| stop.recoveryProofDetail || stop.reserved)
 				status=B_BAD_VALUE;
 			else if (binding.owner.Active()) status=B_BUSY;
 			else {
 				bool restored=binding.owner.Restored() || binding.owner.Stop(binding,
-					&stop.recoveryProofReason,&stop.recoveryProofDetail);
+					&stop.recoveryProofReason,&stop.recoveryProofDetail,&stop.retryable);
 				if (restored && context->q38Dispatch) {
 					restored=PioneerQ38DispatchClose(context->io,
 						context->baseline.baseline.baseline.baseline.dram,context->banks,
@@ -132,8 +132,9 @@ Q35WorkControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 					}
 				}
 				stop.restored=restored;
-				if (!stop.restored) Q35RetainWork(*context);
-				else { delete context->q35Work; context->q35Work=NULL; }
+				if (!stop.restored) {
+					if (!stop.retryable) Q35RetainWork(*context);
+				} else { delete context->q35Work; context->q35Work=NULL; }
 				status=user_memcpy(data,&stop,sizeof(stop));
 			}
 		}

@@ -235,6 +235,12 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 				poll->faultPeer119Valid,poll->faultPeer119Pc[0],poll->faultPeer119Pc[1]);
 			for (unsigned i=0;i<16;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultPeer119Status[i]);
 			fprintf(stderr,"\n");
+			fprintf(stderr,"P100A_Q35 root_job_snapshot_valid=%u words=",poll->faultRootJobValid);
+			for (unsigned i=0;i<16;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultRootJob[i]);
+			fprintf(stderr,"\n");
+			fprintf(stderr,"P100A_Q35 worker119_job_snapshot_valid=%u words=",poll->faultPeer119JobValid);
+			for (unsigned i=0;i<16;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultPeer119Job[i]);
+			fprintf(stderr,"\n");
 			return false;
 		}
 		snooze(10000);
@@ -265,6 +271,7 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 static bool End(int fd,bool bankOpen,bool spanMayBeOpen,bool workStopNeeded)
 {
 	bool okay=true;
+	bool workStopped=!workStopNeeded;
 	if (spanMayBeOpen) {
 		tt_q38_span_end span={}; span.version=TT_Q38_SPAN_PUBLIC_VERSION;
 		const bool spanEnded=Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&span,sizeof(span))
@@ -275,13 +282,29 @@ static bool End(int fd,bool bankOpen,bool spanMayBeOpen,bool workStopNeeded)
 	}
 	if (workStopNeeded) {
 		D::WorkStop stop={}; stop.version=D::WorkVersion;
-		const bool stopped=Call(fd,TT_PCI_PROBE_Q35_WORK_STOP,&stop,sizeof(stop)) && stop.restored;
-		if (!stopped) fprintf(stderr,"P100A_Q35 STOP recovery failed proof=%u detail=%#x\n",
-			stop.recoveryProofReason,stop.recoveryProofDetail);
+		bool stopped=false;
+		unsigned retries=0;
+		for (;;) {
+			if (!Call(fd,TT_PCI_PROBE_Q35_WORK_STOP,&stop,sizeof(stop))) break;
+			if (stop.restored) { stopped=true; break; }
+			if (!stop.retryable) break;
+			if (!retries) fprintf(stderr,
+				"P100A_Q35 STOP proof pending reason=%u detail=%#x; retrying read-only proof with the driver session held\n",
+				stop.recoveryProofReason,stop.recoveryProofDetail);
+			else if (retries%20==0) fprintf(stderr,
+				"P100A_Q35 STOP proof still pending retry=%u reason=%u detail=%#x\n",
+				retries,stop.recoveryProofReason,stop.recoveryProofDetail);
+			retries++;
+			snooze(100000);
+			stop={}; stop.version=D::WorkVersion;
+		}
+		if (!stopped) fprintf(stderr,"P100A_Q35 STOP recovery failed proof=%u detail=%#x retryable=%u\n",
+			stop.recoveryProofReason,stop.recoveryProofDetail,stop.retryable);
 		okay=stopped && okay;
+		workStopped=stopped;
 	}
 	tt_q38_bank_session session={}; session.version=TT_Q38_BANK_PROTOCOL;
-	const bool bankEnded=!bankOpen || (Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
+	const bool bankEnded=!bankOpen || (workStopped && Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
 		&& session.result.state==TT_RESIDENT_SESSION_CLOSED && !session.result.active
 		&& session.result.pci_restored && session.result.host_released && !session.result.cold);
 	if (bankOpen) printf("P100A_Q35 unload_clean=%u state=%u active=%u cold=%u\n",

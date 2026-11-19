@@ -210,15 +210,20 @@ public:
 	}
 
 	template<class IO>
-	bool Stop(IO& io,unsigned* recoveryReason=NULL,unsigned* recoveryDetail=NULL)
+	bool Stop(IO& io,unsigned* recoveryReason=NULL,unsigned* recoveryDetail=NULL,
+		unsigned* recoveryRetryable=NULL)
 	{
+		if (recoveryRetryable) *recoveryRetryable=false;
 		bool recovered=false;
 		if (phase==RecoverableFault || phase==RecoveryPending) {
-			unsigned reason=0,detail=0;
-			if (!io.RecoverWorkFault(&reason,&detail)) {
+			unsigned reason=0,detail=0; bool retryable=false;
+			if (!io.RecoverWorkFault(&reason,&detail,&retryable)) {
 				if (recoveryReason) *recoveryReason=reason;
 				if (recoveryDetail) *recoveryDetail=detail;
-				return Fail();
+				if (recoveryRetryable) *recoveryRetryable=retryable?1:0;
+				if (retryable) phase=RecoveryPending;
+				else Fail();
+				return false;
 			}
 			if (recoveryReason) *recoveryReason=0;
 			if (recoveryDetail) *recoveryDetail=0;

@@ -1,0 +1,14 @@
+/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload: OK
+/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard: OK
+/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18: OK
+tenstorrent_pci_probe-driver55: OK
+pioneer-q35-work: OK
+64 (Unknown), revision 0000 running at 1000MHz
+133774794752 bytes free      (used/max 3260141568 / 137034936320)
+/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe: OK
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+SAFE_FAULT_RECOVERY_VERIFIED
+507e1557e8544dfd3bc8ecba2bc12b14d22c681e8123d4faf7f6668b58573a8e  state
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  work.exit
+f974c877d6ebb64db7460ee67a30386a798d1cd3f8302dfa2c6b2a2115c05cb1  work.stdout
+9f9c430872d1c70b2b1a0619671ba35a378873c2d95138938430faef13ae3939  work.stderr

@@ -16,10 +16,18 @@ python3 -B tools/pioneer/build_qwen35_work.py --transfer-diagnostic \
 ```
 
 The standalone WorkOwner regression passed, including checks for the new
-snapshot fields. Tag53 has not been installed on hardware. It should be used
-for the next guarded worker119 fault trial, then the read-only receipt can
-show whether worker119 observed the doorbell and how the ROOT NoC counters
-advanced.
+snapshot fields. Tag53 was installed and run on Haiku from stable041
+generation2. It reproduced the prefill fault with zero committed tokens, then
+the client explicitly repeated Work STOP, unloaded cleanly, and the guarded
+wrapper hot-reloaded stable041 at generation4 without a board reboot. Both
+read-only snapshots were valid. The receipt is in [`evidence`](evidence),
+with interpretation in [`RUN.md`](RUN.md).
+
+Worker119 published reason `0x50` (`panels != count`) at its fault park. Its
+two detail words for actual and expected panel counts both read as zero, which
+does not explain the mismatch for a validated nonempty job. Keep the next
+change diagnostic until those worker-side values or their snapshot addressing
+are understood; no reset/retry or CPU inference fallback was added.
 
 | Artifact | SHA-256 |
 | --- | --- |
@@ -30,3 +38,4 @@ advanced.
 | Peer image boot | `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b` |
 | Peer image text | `25ee4dafbc7979e581951adb7e457aa4bf1a4130d1d850f238534a6bc32b3864` |
 | Work client | `d71a5ed9bc550522e9987fd1d005b0685890a71c5e85014dbf1f4dc03c289d5d` |
+| Guarded tag53 trial wrapper | `62bd88d7c47c66aedb5149a101f0bf42f5ab11cfc3560281418c01fd3c6c3149` |

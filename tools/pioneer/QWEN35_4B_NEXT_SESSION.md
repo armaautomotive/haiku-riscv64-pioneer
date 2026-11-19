@@ -20,17 +20,42 @@ Use strict host-key checking and the profile for the OS currently running.
 
 ## Current verified hardware state
 
-Haiku hrev99999 is reachable at `10.0.0.247` through the pinned Haiku key.
-Stable041 is idle at generation2:
+Haiku hrev99999 remains reachable at `10.0.0.247` through the pinned Haiku
+key. The tag58 client exited and the stable041 driver is idle:
 
 ```text
-P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0
-  active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-The prior client and inference diagnostics have exited, the shared lock is
-absent, all 64 CPUs and full RAM are available, and the 4B/27B files remain
-2,740,937,888 and 18,973,870,528 bytes.
+The latest stage is `/boot/home/pioneer-qwen35-work-258.K9M4`, with state
+`STABLE041_RESTORED`. No inference process or shared trial lock remains. The
+Qwen3.5-4B and Qwen3.8-27B files remain at `2,740,937,888` and
+`18,973,870,528` bytes. Tag58's completed logs and postflight are in
+[`tag258 evidence`](benchmarks/qwen35-work-tag258-20261119/evidence).
+
+## Tag58 hardware recovery and remaining fault
+
+Tag58 fixes the stale cached peer-nonce comparison in the second safe-idle
+audit and returns pre-reset proof failures as retryable without quarantining
+the owner. Its client repeats the read-only STOP proof while the driver FD is
+open. The warnings-as-errors cross-build and WorkOwner retry regression
+passed. See [`tag258 BUILD.md`](benchmarks/qwen35-work-tag258-20261119/BUILD.md).
+
+Tag58 loaded from stable041 generation2 at generation3. Authentication took
+`99.633210` s, vocabulary/tokenization `12.869909` s, and model loading
+`223.299044` s for all 3,450 spans. It faulted before prefill with zero
+commits at `dispatcher_stage=0x58778210 detail=0x4`, the pending worker119
+4-byte write to remote doorbell `0x74100`. No valid output or decode rate was
+produced.
+
+The client then passed safe-idle proof, completed explicit STOP and clean
+unload (`state=2 active=0 cold=0`), and the wrapper hot-reloaded stable041 at
+generation4 without a board reboot. Postflight reported
+`SAFE_FAULT_RECOVERY_VERIFIED`. The retryable proof-failure branch passed its
+offline owner regression but was not triggered by this hardware run. The
+recovery path is verified; the worker119 doorbell fault still blocks prompt
+prefill and throughput measurement. Continue from the stable041 idle state;
+no restart is needed to load another candidate.
 
 ## Verified explicit recovery through tag250
 
@@ -59,16 +84,28 @@ STOP recovery and clean unload without board reboot; tag52 is not yet installed
 on the card. Hashes are in
 [`tag52 build record`](benchmarks/qwen35-work-tag252-20261119/BUILD.md).
 
-## Tag53 fault receipt
+## Tag53 hardware fault receipt and recovery
 
 Tag53 extends the terminal Work poll result with the ROOT's last ten NoC
 command words, eight counter values/deltas, and worker119's stable 16-word
 status plus two PC samples. The driver reads them only after the all-120-core
 safe-idle proof; there are no additional packets, resets, or retries. The
-Work protocol is version 3. Its warnings-as-errors cross-build and
-WorkOwner regression passed, but it is not yet on hardware. Use tag53 for the
-next guarded run and preserve `root_noc_snapshot_valid` and
-`worker119_snapshot_valid` from the client fault receipt.
+Work protocol is version 3. The warnings-as-errors cross-build and WorkOwner
+regression passed. Hardware reproduced the pending 4-byte worker119 doorbell
+fault with zero commits. The ROOT NoC snapshot and worker119 status/PC samples
+were both valid. Worker119 status reason `0x50` is the peer image's
+`panels != count` fault, but detail words 7/8 both read zero; the mismatch
+remains unexplained. Authentication took `99.599927` s, prompt tokenization
+`12.441273` s, and model load `224.169305` s. No decode result or valid output
+exists.
+
+The client completed explicit STOP and clean unload (`state=2 active=0
+cold=0`). Tag53 was quiesced and stable041 hot-reloaded at generation4 without
+reboot. The lock is absent and both model files remain intact. Full logs and
+hashes are in [`tag253 evidence`](benchmarks/qwen35-work-tag253-20261119).
+Continue with a diagnostic that captures the peer's nonzero job/count fields
+and validates the fault snapshot mapping. Do not restore tag251's close-time
+I/O experiment.
 
 ## Tag251: failed automatic close recovery
 
@@ -85,10 +122,10 @@ intact. The raw post-cycle logs are untrusted because their writers were
 interrupted. Details and hashes are in
 [`tag251 RUN.md`](benchmarks/qwen35-work-tag251-20261119/RUN.md).
 
-Tag250 verifies explicit STOP reproof, clean unload, and stable041 hot reload
-without board reboot. Next, deploy tag53 only after strict idle preflight,
-run the guarded trial with explicit STOP/BANK END, then use its receipt to
-trace worker119's doorbell fault before resuming valid-output/decode-rate work.
+Tag250 and tag253 verify explicit STOP reproof, clean unload, and stable041
+hot reload without board reboot. The latest tag253 trial already restored
+stable041 at generation4. The next hardware candidate must pass a new strict
+idle preflight and retain explicit STOP/BANK END on every fault path.
 
 ## GitHub progress
 
@@ -96,9 +133,10 @@ The current branch is `codex/qwen35-4b-p100a` on `origin` in
 `armaautomotive/haiku-riscv64-pioneer`. The user asked to push incremental
 Qwen3.5-4B progress as milestones are verified. Push source/build evidence
 and run records on that branch; do not include local access credentials or
-unrelated workspace changes. Tag250 hardware evidence, tag251 failure
-findings, and tag52 error-cleanup progress are pending the next progress
-commit.
+unrelated workspace changes. Commits through `88cb300ed0` are pushed. Tag258
+hardware recovery and tag257 cold-latch recovery evidence should be pushed as
+the next checkpoint; do not stage local access credentials or unrelated
+workspace changes.
 
 No valid decode-rate measurement exists yet. Per-run evidence is under
 `benchmarks/`.

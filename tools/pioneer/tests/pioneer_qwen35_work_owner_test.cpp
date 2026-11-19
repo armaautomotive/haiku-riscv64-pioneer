@@ -49,11 +49,17 @@ struct Mock {
 		result.faultPeer119Valid=1;
 		result.faultPeer119Pc[0]=result.faultPeer119Pc[1]=0x7204c;
 		result.faultPeer119Status[0]=result.faultPeer119Status[1]=119;
+		result.faultRootJobValid=1;
+		result.faultRootJob[0]=0x31503551;
+		result.faultPeer119JobValid=1;
+		result.faultPeer119Job[11]=119;
 		return true;
 	}
-	bool RecoverWorkFault(unsigned* reason,unsigned* detail)
+	bool RecoverWorkFault(unsigned* reason,unsigned* detail,bool* retryable)
 	{
+		if (retryable) *retryable=true;
 		if (!WorkFaultSafe(Pc(),reason,detail) || reset!=0x46800) return false;
+		if (retryable) *retryable=false;
 		Reset(0x87ffff);
 		Reset(0x47800);
 		return true;
@@ -201,7 +207,9 @@ int main()
 	assert(reply->faultNocValid && reply->faultNocCommand[0]==0
 		&& reply->faultNocCommand[9]==9 && reply->faultNocCounters[7]==0x107
 		&& reply->faultNocCounterDelta[7]==0x207 && reply->faultPeer119Valid
-		&& reply->faultPeer119Pc[1]==0x7204c && reply->faultPeer119Status[0]==119);
+		&& reply->faultPeer119Pc[1]==0x7204c && reply->faultPeer119Status[0]==119
+		&& reply->faultRootJobValid && reply->faultRootJob[0]==0x31503551
+		&& reply->faultPeer119JobValid && reply->faultPeer119Job[11]==119);
 	assert(failed->Stop(io));
 	assert(failed->Restored() && !failed->Unsafe() && io.l1==saved);
 	assert(io.resets==12);
@@ -230,8 +238,10 @@ int main()
 	reply->requestId=1;
 	assert(changedFault->Poll(changedFaultIO,*reply) && changedFault->Recoverable());
 	changedFaultIO.faultSafe=false; // STOP must repeat the fleet-wide safety proof.
-	assert(!changedFault->Stop(changedFaultIO) && changedFault->Unsafe()
+	assert(!changedFault->Stop(changedFaultIO) && changedFault->Recoverable() && !changedFault->Unsafe()
 		&& !changedFault->Restored() && changedFaultIO.reset==0x46800);
+	changedFaultIO.faultSafe=true;
+	assert(changedFault->Stop(changedFaultIO) && changedFault->Restored() && !changedFault->Unsafe());
 
 	Mock fallbackIO;
 	auto failedFallback=std::make_unique<D::WorkOwner>();
