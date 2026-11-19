@@ -113,8 +113,9 @@ static unsigned Parse(const char* text,unsigned maximum)
 	return errno || *end || value>maximum?0:unsigned(value);
 }
 
-static bool Begin(int fd)
+static bool Begin(int fd,bool& bankOpen)
 {
+	bankOpen=false;
 	D::WorkSupport work={};
 	tt_q38_span_support span={};
 	tt_q38_bank_support bank={};
@@ -131,17 +132,20 @@ static bool Begin(int fd)
 		|| span.page_bytes!=D::LoadPageBytes || span.max_bytes!=D::LoadSpanBytes
 		|| !span.before_cohort || !span.explicit_end || span.reserved) return false;
 	tt_q38_bank_session session={}; session.version=TT_Q38_BANK_PROTOCOL;
-	return Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))
-		&& session.result.state==TT_RESIDENT_SESSION_READY && session.result.active
+	if (!Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))) return false;
+	bankOpen=true; // A successful BEGIN reply may still describe a failed active session.
+	return session.result.state==TT_RESIDENT_SESSION_READY && session.result.active
 		&& session.result.host_ready && !session.result.cold && !session.result.uploaded_pages;
 }
 
-static bool Load(int fd,PioneerQwen35Gguf& source,const PioneerQwen35PackedPlan& plan,D::WorkPrepare& prepare)
+static bool Load(int fd,PioneerQwen35Gguf& source,const PioneerQwen35PackedPlan& plan,
+	D::WorkPrepare& prepare,bool& spanMayBeOpen,bool& workPrepareAttempted)
 {
 	auto packet=std::make_unique<tt_q38_span_upload>();
 	unsigned spans=0;
 	uint64_t uploaded=0;
 	auto upload=[&](unsigned bank,unsigned offset,unsigned bytes,const uint8_t*) {
+		spanMayBeOpen=true; // The ioctl may create or advance the span before reporting an error.
 		packet->version=TT_Q38_SPAN_PUBLIC_VERSION;
 		packet->bank=bank;
 		packet->offset=offset;
@@ -166,8 +170,11 @@ static bool Load(int fd,PioneerQwen35Gguf& source,const PioneerQwen35PackedPlan&
 	if (!D::UploadModel(source,plan,prepare.manifest,reinterpret_cast<uint8_t*>(packet->data),
 		sizeof(packet->data),upload,uploaded)) return false;
 	tt_q38_span_end end={}; end.version=TT_Q38_SPAN_PUBLIC_VERSION;
-	if (!Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end)) || !end.closed || end.recovery_required
-		|| !Call(fd,TT_PCI_PROBE_Q35_WORK_PREPARE,&prepare,sizeof(prepare))) return false;
+	if (!Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end)) || !end.closed || end.recovery_required)
+		return false;
+	spanMayBeOpen=false;
+	workPrepareAttempted=true; // PREPARE can bind an owner even when its reply is lost.
+	if (!Call(fd,TT_PCI_PROBE_Q35_WORK_PREPARE,&prepare,sizeof(prepare))) return false;
 	printf("P100A_Q35 resident_spans=%u resident_bytes=%llu\n",spans,
 		static_cast<unsigned long long>(uploaded));
 	return true;
@@ -243,21 +250,31 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 	return true;
 }
 
-static bool End(int fd)
+static bool End(int fd,bool bankOpen,bool spanMayBeOpen,bool workStopNeeded)
 {
-	D::WorkStop stop={}; stop.version=D::WorkVersion;
-	if (!Call(fd,TT_PCI_PROBE_Q35_WORK_STOP,&stop,sizeof(stop))) return false;
-	if (!stop.restored) {
-		fprintf(stderr,"P100A_Q35 STOP recovery failed proof=%u detail=%#x\n",
+	bool okay=true;
+	if (spanMayBeOpen) {
+		tt_q38_span_end span={}; span.version=TT_Q38_SPAN_PUBLIC_VERSION;
+		const bool spanEnded=Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&span,sizeof(span))
+			&& span.closed && !span.recovery_required;
+		if (!spanEnded) fprintf(stderr,"P100A_Q35 span recovery failed closed=%u recovery=%u\n",
+			span.closed,span.recovery_required);
+		okay=spanEnded && okay;
+	}
+	if (workStopNeeded) {
+		D::WorkStop stop={}; stop.version=D::WorkVersion;
+		const bool stopped=Call(fd,TT_PCI_PROBE_Q35_WORK_STOP,&stop,sizeof(stop)) && stop.restored;
+		if (!stopped) fprintf(stderr,"P100A_Q35 STOP recovery failed proof=%u detail=%#x\n",
 			stop.recoveryProofReason,stop.recoveryProofDetail);
-		return false;
+		okay=stopped && okay;
 	}
 	tt_q38_bank_session session={}; session.version=TT_Q38_BANK_PROTOCOL;
-	const bool okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
+	const bool bankEnded=!bankOpen || (Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
 		&& session.result.state==TT_RESIDENT_SESSION_CLOSED && !session.result.active
-		&& session.result.pci_restored && session.result.host_released && !session.result.cold;
-	printf("P100A_Q35 unload_clean=%u state=%u active=%u cold=%u\n",
-		unsigned(okay),session.result.state,session.result.active,session.result.cold);
+		&& session.result.pci_restored && session.result.host_released && !session.result.cold);
+	if (bankOpen) printf("P100A_Q35 unload_clean=%u state=%u active=%u cold=%u\n",
+		unsigned(bankEnded),session.result.state,session.result.active,session.result.cold);
+	okay=bankEnded && okay;
 	return okay;
 }
 
@@ -314,9 +331,12 @@ int main(int argc,char** argv)
 	const int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC);
 	if (fd<0) { perror("Open Pioneer Work driver"); return 1; }
 	const auto loadStart=system_time();
-	if (!Begin(fd) || !Load(fd,packed,plan,*prepare)) {
-		close(fd);
-		fprintf(stderr,"P100A_Q35 model load failed.\n");
+	bool bankOpen=false,spanMayBeOpen=false,workPrepareAttempted=false;
+	if (!Begin(fd,bankOpen) || !Load(fd,packed,plan,*prepare,spanMayBeOpen,workPrepareAttempted)) {
+		const bool cleaned=End(fd,bankOpen,spanMayBeOpen,workPrepareAttempted);
+		const bool closed=close(fd)==0;
+		fprintf(stderr,"P100A_Q35 model load failed; explicit cleanup=%u close=%u\n",
+			unsigned(cleaned),unsigned(closed));
 		return 1;
 	}
 	printf("P100A_Q35 model_load_seconds=%.6f\n",(system_time()-loadStart)*1e-6);
@@ -325,7 +345,7 @@ int main(int argc,char** argv)
 	const bool firstOkay=Generate(fd,vocab,*request,context,first,held);
 	request->requestId=2;
 	const bool secondOkay=firstOkay && Generate(fd,vocab,*request,context,second,held);
-	const bool ended=held && End(fd);
+	const bool ended=End(fd,bankOpen,spanMayBeOpen,workPrepareAttempted || held);
 	const bool closed=close(fd)==0;
 	return firstOkay && secondOkay && first==second && ended && closed?0:1;
 }

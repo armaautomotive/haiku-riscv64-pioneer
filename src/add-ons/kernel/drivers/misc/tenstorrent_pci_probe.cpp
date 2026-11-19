@@ -27,7 +27,9 @@
 	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010047ULL \
 	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010048ULL \
 	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010049ULL \
-	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010050ULL) || !defined(PIONEER_Q38_SPAN_PRELOAD) \
+	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010050ULL \
+	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010051ULL \
+	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010052ULL) || !defined(PIONEER_Q38_SPAN_PRELOAD) \
  || !defined(PIONEER_Q38_SPAN_FAST) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || defined(TT_PIONEER_Q35_PROJECTION_PROBE))
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
@@ -6668,6 +6670,10 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		if (status!=B_OK) return status; // retain ownership, never silently free a possibly live page
 		tt_resident_session_result result={};
 #ifdef TT_PIONEER_Q35_WORK
+		// CLOSE is not Work STOP: device-release callbacks can run while
+		// ROOT/peers are live. Keep card I/O and the repeated fleet proof in
+		// explicit STOP/END, where the client can receive the result. If a
+		// client disappears without STOP/END, retain every owner safely.
 		RetainQ38DispatchOwner(*cookie->context,result);
 		release_sem(sLock);
 		return B_OK;

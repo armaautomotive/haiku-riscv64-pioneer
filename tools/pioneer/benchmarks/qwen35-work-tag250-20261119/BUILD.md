@@ -34,6 +34,15 @@ build is for fault diagnosis only and is not a performance candidate.
 
 ## Hardware status
 
-Tag250 has not yet been run. Tag249 restored stable041 at generation6
-(`cold0 active_owner0`) without reboot; its recovery evidence is preserved in
-the preceding benchmark directory. Both models remain intact.
+Tag250 was run from stable041 generation6. Authentication took `67.576945`
+seconds, prompt tokenization `12.875780` seconds for 18 tokens, and upload/load
+`222.802717` seconds for all 3,450 resident spans (`2,740,498,432` bytes).
+ROOT faulted before prefill with zero commits at
+`dispatcher_stage=0x58778210 detail=0x4`. The receipt identifies worker119's
+4-byte write to remote `0x74100` (the peer doorbell), with the NoC command
+still busy. No valid output or decode rate was produced.
+
+The Work STOP reproof and unload completed cleanly. Stable041 was hot-reloaded
+at generation8 with `cold0 active_owner0 guard1`; the shared lock was absent
+and the board was not rebooted. The Qwen3.5-4B and Qwen3.8-27B model files
+remain intact. Raw logs and postflight status are preserved under `evidence/`.

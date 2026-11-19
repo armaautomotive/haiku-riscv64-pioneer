@@ -417,6 +417,40 @@ build is not for performance measurement. No valid output or decode rate has
 been measured. Tag249 evidence is in
 [`qwen35-work-tag249-20261119/evidence`](benchmarks/qwen35-work-tag249-20261119/evidence).
 
+Tag250 captured the failing transaction: a 4-byte worker119 doorbell write to
+remote `0x74100` remained pending (`dispatcher_stage=0x58778210`, detail 4).
+Authentication took `67.576945` s, prompt tokenization `12.875780` s, and
+model load `222.802717` s. ROOT faulted before prefill with zero commits and
+no decode output. STOP reproof, clean unload, and stable041 hot reload at
+generation8 all passed without reboot. The exact run evidence is in
+[`qwen35-work-tag250-20261119/evidence`](benchmarks/qwen35-work-tag250-20261119/evidence).
+
+Tag251 explored automatic recovery inside the device-close callback after a
+terminal Work fault. The offline warnings-as-errors cross-build and Work
+owner regression passed, but the hardware test showed that closing without
+STOP/END did not return and made Haiku unreachable. No valid output or clean
+candidate unload was produced. After the authorized power recovery and
+pinned SD-free Linux-to-Haiku kexec, the tag251 recovery helper hot-reloaded
+stable041 at generation2 (`cold0 active_owner0 guard1`); both model files
+remain intact. Exact evidence is in
+[`qwen35-work-tag251-20261119`](benchmarks/qwen35-work-tag251-20261119).
+
+The unbounded close-time card I/O was reverted for tag52. Recovery remains
+in explicit Work STOP/BANK END, which tag250 verified without reboot; closing
+a client before those operations retains card ownership. The worker119
+doorbell fault is unresolved, and there is still no valid output or decode
+rate.
+
+Tag52 keeps the short, memory-only close callback and makes the Work client
+track each acquired bank/span/Work owner. After any model-load failure it
+attempts SPAN END when needed, Work STOP if PREPARE may have bound the ROOT,
+and BANK END before closing the device. A failed Work request also continues
+through Work STOP and BANK END, even when START or POLL reports an error. The
+warnings-as-errors Haiku cross-build and existing WorkOwner regression passed;
+tag250 remains the hardware proof of recovery from this ROOT fault without a
+board reboot. Tag52 itself has not been installed on hardware. Build hashes
+are in [`qwen35-work-tag252-20261119/BUILD.md`](benchmarks/qwen35-work-tag252-20261119/BUILD.md).
+
 ## Haiku llama.cpp platform patch
 
 The local `src/libs/llama.cpp` worktree also contains Haiku platform support
