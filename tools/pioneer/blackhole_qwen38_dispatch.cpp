@@ -290,9 +290,18 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 #ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
 	}
 #endif
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	// Preserve the exact pending transaction before posting its doorbell. A
+	// synchronous frontend/NoC fault can bypass the bounded timeout receipt
+	// below, so recovery still has the worker, direction, and remote window.
+	const unsigned diagnosticStage=0x58000000U|(worker<<16)|(write?0x8000U:0U)
+		|(((remote>>4)&1023U)<<5);
+	Checkpoint(diagnosticStage,bytes);
+#endif
 	Fence(); *Words(0xffb20040)=1; (void)*Words(0xffb20040); Fence();
 	Checkpoint(0x54000102,worker);
 #ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	Checkpoint(diagnosticStage|16U,bytes);
 	// Separate diagnostic ONLY. Reuse the ORIGINAL command/counter reads;
 	// do not issue another packet/read/retry after the fixed polling limit.
 	unsigned pending=0,delta=0;

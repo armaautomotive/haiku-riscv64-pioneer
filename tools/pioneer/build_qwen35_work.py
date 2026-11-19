@@ -8,13 +8,13 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026111800010049'
+TAG = '2026111800010050'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--transfer-diagnostic', action='store_true',
-                        help='capture the last fixed NoC transfer on ROOT timeout')
+                        help='capture the pending fixed NoC transfer on ROOT fault')
     parser.add_argument('haiku_build', type=Path)
     parser.add_argument('new_output', type=Path)
     args = parser.parse_args()

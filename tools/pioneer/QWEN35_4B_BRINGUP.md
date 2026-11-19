@@ -410,9 +410,11 @@ Tag249 enabled the bounded-transfer timeout receipt but still faulted at
 `0x58` timeout record was absent. It authenticated in `68.086098` s, tokenized
 in `13.609946` s, and loaded the full model in `222.687418` s. It unloaded
 cleanly and hot-reloaded stable041 at generation6 (`cold0 active_owner0`)
-without reboot. Tag250 will preserve the transfer identity before the
-doorbell so an early fault cannot erase it. No valid output or decode rate
-has been measured. Tag249 evidence is in
+without reboot. Tag250 now preserves the transfer identity before the
+doorbell so an early fault cannot erase it. Its offline cross-build passed
+with warnings as errors; the guarded hardware trial is next. This diagnostic
+build is not for performance measurement. No valid output or decode rate has
+been measured. Tag249 evidence is in
 [`qwen35-work-tag249-20261119/evidence`](benchmarks/qwen35-work-tag249-20261119/evidence).
 
 ## Haiku llama.cpp platform patch
