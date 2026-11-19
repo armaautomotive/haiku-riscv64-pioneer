@@ -62,6 +62,10 @@
 #error Qwen shared rows require the separate Work peer image role
 #endif
 #include "PioneerQwen35Projection.h"
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+#include "PioneerQwen35RootImageLayout.h"
+static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned, unsigned, unsigned);
+#endif
 #endif
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 #if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_BLOCK_AFFINE_DST) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_Q4_NIBBLE) || defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) || defined(PIONEER_Q38_WORK_SIGNED_MAG2) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_NATIVE_Q8)
@@ -251,6 +255,13 @@
 extern "C" void block_fault_park() __attribute__((noreturn));
 static inline volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static inline void Fence() { asm volatile("fence" ::: "memory"); }
+#if defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+static inline void q35_work_matrix_checkpoint(unsigned stage,unsigned detail)
+{
+	Words(0xe7068)[0]=0xd0000000U|(stage&0xffffU);
+	Words(0x17ffb0)[0]=stage; Words(0x17ffb4)[0]=detail; Fence();
+}
+#endif
 #ifdef PIONEER_Q38_VECTOR_INLINE
 // Separate OFFLINE candidate:constant Tensix instructions use the SAME
 // rotate-left-two inline encoding as qualified native F32/Q8 programs.
@@ -495,10 +506,10 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 		FetchBlock(0xa0000+at); at+=bytes;
 	}
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
-	// Qwen35 Work's ROOT scale cache is the checked 0x94000 region. The
-	// original Qwen38 persistent ROOT stores scales at 0xab000 instead.
-	ReadCommand(0x94000,1|(2<<6),0x94000,(blocks*4+63)&~63U);
-	FetchBlock(0x94000);
+	// Qwen35 scales live in the disjoint ROOT scale/result layout. Copy
+	// from that owner into this peer's private arithmetic scale window.
+	ReadCommand(PioneerQwen35::RootScaleAddress,1|(2<<6),0x94000,(blocks*4+63)&~63U);
+	FetchBlock(PioneerQwen35::RootScaleAddress);
 #elif defined(PIONEER_Q38_PERSISTENT_ROWS)
 	// Future root outputs occupy80000..9dc00. Keep ROOT scales outside that
 	// range while preserving this peer's LOCAL94000 arithmetic layout.
@@ -703,11 +714,37 @@ extern "C" unsigned block_main()
 	static_assert(0x95000+(17408/16)*4==0x96100,"bounded private sum cache");
 #endif
 	uint32_t first=job[6];
+#if defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+	q35_work_matrix_checkpoint(0x5f000001,inputs);
+#endif
 #ifdef PIONEER_Q35_PROJECTION_IMAGE
+#if defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+	unsigned shapeFailure=0;
+	if (job[0]!=PioneerQwen35Projection::Magic) shapeFailure|=1U<<0;
+	if (!PioneerQwen35Projection::Supports(type,inputs)) shapeFailure|=1U<<1;
+	if (bytes!=PioneerQwen35Projection::TileBytes(type)) shapeFailure|=1U<<2;
+	if (job[3] || job[4]) shapeFailure|=1U<<3;
+	if (!groups || groups>16) shapeFailure|=1U<<4;
+	if (first<0x04000000 || (first&63)) shapeFailure|=1U<<5;
+	if (first>=0xc4000000) shapeFailure|=1U<<6;
+	if (first<0xc4000000 && uint32_t(groups*blocks*bytes)>0xc4000000-first) shapeFailure|=1U<<7;
+	if (shapeFailure) {
+		q35_work_matrix_checkpoint(0x5f000002,shapeFailure);
+		return 0;
+	}
+	q35_work_matrix_checkpoint(0x5f000010,blocks);
+#else
 	if (job[0]!=PioneerQwen35Projection::Magic || !PioneerQwen35Projection::Supports(type,inputs)
 		|| bytes!=PioneerQwen35Projection::TileBytes(type) || job[3] || job[4]
 		|| !groups || groups>16 || first<0x04000000 || (first&63)
-		|| first>=0xc4000000 || uint32_t(groups*blocks*bytes)>0xc4000000-first) return 0;
+		|| first>=0xc4000000 || uint32_t(groups*blocks*bytes)>0xc4000000-first) {
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+		q35_work_precheck_fault(0x90,job[0],(type<<16)|(inputs&0xffff));
+#else
+		return 0;
+#endif
+	}
+#endif
 #else
 	if (job[0]!=
 #ifdef PIONEER_Q38_SHARED_ROWS
@@ -738,14 +775,32 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_SHARED_ROWS
 	// Both fields are PRIVATE kernel-derived,not new caller capabilities.
 	// Root uses0,peers1. Destination XY in command remains kernel-owned.
-	if (job[9]>1) return 0;
+	if (job[9]>1) {
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+		q35_work_precheck_fault(0x91,job[9],job[6]);
+#else
+		return 0;
+#endif
+	}
 	if (job[9]) SharedInputs(inputs,blocks);
 	ReadCommand(first,job[8],0x90000,bytes);
 #endif
 	for (unsigned b=0;b<blocks;b++) {
-		uint32_t magnitude=Words(0x94000)[b]&0x7fffffff;
-		if (magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return 0;
+		uint32_t scale=Words(0x94000)[b],magnitude=scale&0x7fffffff;
+		if (magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) {
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+			q35_work_precheck_fault(0x92,b,Words(0x94000)[b]);
+#elif defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+			q35_work_matrix_checkpoint(0x5f200000U|b,scale);
+			return 0;
+#else
+			return 0;
+#endif
+		}
 	}
+#if defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+	q35_work_matrix_checkpoint(0x5f000011,blocks);
+#endif
 	const uint32_t inputBase=0xa0000;
 #else
 	unsigned inputs=count,blocks=1;
@@ -764,9 +819,23 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38BFloatActivation(uint16_t(word),lo) || !PioneerQ38BFloatActivation(uint16_t(word>>16),hi)) return 0;
 		Words(0x95000)[w]=uint32_t(lo)|(uint32_t(hi)<<16);
 #else
-		if (!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16))) return 0;
+		if (!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16))) {
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+			const uint16_t low=uint16_t(word),high=uint16_t(word>>16);
+			q35_work_precheck_fault(0x93,w,
+				!PioneerInt8OperandValid(low)?low:high);
+#elif defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+			q35_work_matrix_checkpoint(0x5f100000U|w,word);
+			return 0;
+#else
+			return 0;
+#endif
+		}
 #endif
 	}
+#if defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
+	q35_work_matrix_checkpoint(0x5f000012,inputs);
+#endif
 #ifdef PIONEER_Q38_WORK_DIRECT_SRCB
 	// Separate OFFLINE Work experiment. UNPACK reads eight rows,although
 	// only its first row contributes to the exported projection. The

@@ -18,7 +18,7 @@ esac
 for source in blackhole_qwen35_work blackhole_qwen35_token_core blackhole_qwen35_device_io; do
  "$cross-g++" $flags -c "$directory/$source.cpp" -o "$output/$source.o"
 done
-"$cross-g++" $flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_ROOT_MATRIX=1 \
+"$cross-g++" $flags $diagnostic_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_ROOT_MATRIX=1 \
  -Dblock_main=q35_work_matrix_band \
  -c "$directory/blackhole_qwen38_rows.cpp" -o "$output/matrix.o"
 "$cross-g++" $flags $diagnostic_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \

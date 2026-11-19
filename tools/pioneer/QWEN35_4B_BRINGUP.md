@@ -546,6 +546,15 @@ restored at generation8 without a reboot. Both models remained intact. This
 confirms the driver recovery path for the current ROOT matrix fault; the next
 candidate's internal return cause remains to be identified.
 
+Tag61 added in-image shape, scale, and activation receipts and loaded all
+3,450 spans in `223.297109` s (authentication `67.641308` s; tokenization
+`12.638489` s). It again returned zero matrix bands before prefill. The outer
+dispatcher overwrote the matrix's last internal receipt, so the reason is
+still unknown. STOP/unload and hot restoration passed at stable041 generation10
+without reboot. Tag62 must preserve the inner receipt in the ROOT progress
+context before the outer dispatcher reports the failed band count. See
+[`tag261`](benchmarks/qwen35-work-tag261-20261119).
+
 ## Haiku llama.cpp platform patch
 
 The local `src/libs/llama.cpp` worktree also contains Haiku platform support

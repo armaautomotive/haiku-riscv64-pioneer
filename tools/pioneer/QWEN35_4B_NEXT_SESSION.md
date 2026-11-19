@@ -21,17 +21,33 @@ Use strict host-key checking and the profile for the OS currently running.
 ## Current verified hardware state
 
 Haiku hrev99999 remains reachable at `10.0.0.247` through the pinned Haiku
-key. The tag60 client exited and the stable041 driver is idle:
+key. The tag61 client exited and the stable041 driver is idle:
 
 ```text
-P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-The latest stage is `/boot/home/pioneer-qwen35-work-260.K6P2`, with state
+The latest stage is `/boot/home/pioneer-qwen35-work-261.M8D3`, with state
 `STABLE041_RESTORED`. No inference process or shared trial lock remains. The
 Qwen3.5-4B and Qwen3.8-27B files remain at `2,740,937,888` and
-`18,973,870,528` bytes. Tag60's completed logs and postflight are in
-[`tag260 evidence`](benchmarks/qwen35-work-tag260-20261119/evidence).
+`18,973,870,528` bytes. Tag61's completed logs and postflight are in
+[`tag261 evidence`](benchmarks/qwen35-work-tag261-20261119/evidence).
+
+## Tag61: inner matrix receipt was overwritten
+
+Tag61 passed idle, geometry, and command setup in its prior tag60 checkpoint,
+then the ROOT matrix returned zero. It added shape, scale, and activation
+receipts to the matrix image. The run again showed
+`dispatcher_stage=0x5e000007 detail=0`, but the outer dispatcher overwrote the
+matrix receipt before terminal reporting. Authentication took `67.641308` s,
+tokenization `12.638489` s, and model loading `223.297109` s for all 3,450
+spans. No prompt prefill, valid output, or decode rate was produced.
+
+Recovery passed again: Work STOP proved safe idle, clean unload reported
+`state=2 active=0 cold=0`, and stable041 hot-restored at generation10 without
+reboot. Next copy the inner stage/detail into ROOT progress context before
+the dispatcher writes its outer failure marker. See [`tag261 BUILD`](benchmarks/qwen35-work-tag261-20261119/BUILD.md)
+and [`tag261 RUN`](benchmarks/qwen35-work-tag261-20261119/RUN.md).
 
 ## Tag60: ROOT matrix returned zero bands
 
