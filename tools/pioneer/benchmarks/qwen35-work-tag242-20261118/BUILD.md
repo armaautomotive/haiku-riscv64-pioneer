@@ -33,13 +33,24 @@ client compiled and linked. The owner regression passed with `-Wall -Wextra
 | Trial wrapper | `41ab1913a75d473f4ca421d485e39a0b1149d3855ca92cb05aee0e676f987011` |
 | Power-cycle recovery helper | `02942d93f60bdf5ad42153a62c6e778aa66494405fbd9bbe3c99ab6dba2b6bb6` |
 
-The tag241 hardware fault record showed `RootFault` at `pc=0x40060` before
-prefill. The tag242 trial will check whether STOP can recover this same class
-of parked fault without rebooting. Before the trial, a read-only Haiku check
-confirmed the prior inference/27B diagnostic had exited, the stable driver was
-idle at generation 2 (`cold0 active_owner0`), the exclusive lock was absent,
-and both model files retained their pinned sizes.
+## Tag242 hardware result
 
-The planned Haiku staging directory is
-`/boot/home/pioneer-qwen35-work-242.K7rP7`. Trial results will be appended
-here after the hardware run.
+The 4B model authenticated in 101.441872 seconds, tokenized in 13.291608
+seconds, and loaded 2,740,498,432 bytes in 223.378064 seconds. Before prefill,
+ROOT reported `RootFault` at `pc=0x40064`, with no commits and zero prompt
+processing. The recovery proof returned false, STOP reported `Device not
+ready`, and the wrapper stopped before restoring the stable driver. No decode
+tokens/sec were produced. Read-only status showed tag242 generation 3,
+`cold1 active_owner1`; no client or 27B diagnostic process remained. Evidence
+is preserved in `evidence/`.
+
+Evidence SHA-256: `state` `fbd1473a9abb5073bbd33c4b496a571ea742253449bef0484ab678f9efd1c9c4`,
+`work.exit` `4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865`,
+`work.stdout` `51bceea960f63e16c4059ecc82a318abc76cdc3f73d9ad3e0149d4ccfda9a749`,
+`work.stderr` `c89f5fd64512ea6d428f38575ca8b9d6bb78197fad05e8b150c388510212df96`.
+
+Tag242's implementation could not retry the proof or report its failed check.
+Tag243 adds both behaviors. Its package targets
+`/boot/home/pioneer-qwen35-work-243.S9mQ2`; the next trial requires one
+authorized board restart to clear tag242's retained owner before tag243 can
+be loaded.

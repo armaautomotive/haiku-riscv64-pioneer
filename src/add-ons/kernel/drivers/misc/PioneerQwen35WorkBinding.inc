@@ -92,84 +92,134 @@ public:
 		return true;
 	}
 
-	bool Quiet()
+	bool Quiet(uint32* detail=NULL)
 	{
-		for (unsigned i=0; i<4; i++)
-			if (fIO.ResidentNocRead(0x40+i*0x800)) return false;
-		for (unsigned i=0; i<32; i++)
-			if (fIO.ResidentNocRead(0x240+i*4)&255) return false;
+		for (unsigned i=0; i<4; i++) {
+			const uint32 value=fIO.ResidentNocRead(0x40+i*0x800);
+			if (value) { if (detail) *detail=0x10000000|(i<<20)|(value&0xfffff); return false; }
+		}
+		for (unsigned i=0; i<32; i++) {
+			const uint32 value=fIO.ResidentNocRead(0x240+i*4)&255;
+			if (value) { if (detail) *detail=0x20000000|(i<<8)|value; return false; }
+		}
 		return true;
 	}
 
-	bool WorkFaultSafe(unsigned reportedPc)
+	bool WorkFaultSafe(unsigned reportedPc,unsigned* reason=NULL,unsigned* detail=NULL)
 	{
 		using namespace PioneerQwen35;
+		if (reason) *reason=0;
+		if (detail) *detail=0;
+		auto reject=[&](uint32 why,uint32 value) {
+			if (reason) *reason=why;
+			if (detail) *detail=value;
+			return false;
+		};
 		auto terminalPc=[](uint32 pc) { return pc==WorkFaultPc || pc==WorkFaultPc+4; };
-		if (!terminalPc(reportedPc) || !fDispatch.booted || fDispatch.closed || fDispatch.unsafe
-			|| fDispatch.rootRunning || fDispatch.prepared!=120 || PioneerQ38DispatchUnsafe(fDispatch)
-			|| !fIO.SelectRuntimeCore(0) || !Scope(0x46800) || !Quiet()) return false;
+		if (!terminalPc(reportedPc)) return reject(1,reportedPc);
+		uint32 flags=0;
+		if (!fDispatch.booted) flags|=1;
+		if (fDispatch.closed) flags|=2;
+		if (fDispatch.unsafe) flags|=4;
+		if (fDispatch.rootRunning) flags|=8;
+		if (fDispatch.prepared!=120) flags|=16;
+		if (PioneerQ38DispatchUnsafe(fDispatch)) flags|=32;
+		if (flags) return reject(2,flags);
+		if (!fIO.SelectRuntimeCore(0)) return reject(3,0);
+		if (!Scope(0x46800)) return reject(4,fIO.ResetRead());
+		uint32 quietDetail=0;
+		if (!Quiet(&quietDetail)) return reject(5,quietDetail);
 		fIO.Pause(); const uint32 firstPc=fIO.RuntimePcRead();
 		fIO.Pause(); const uint32 secondPc=fIO.RuntimePcRead();
-		if (!terminalPc(firstPc) || !terminalPc(secondPc) || Read(RootCompletionAddress)!=RootFault)
-			return false;
+		if (!terminalPc(firstPc) || !terminalPc(secondPc)) return reject(6,secondPc);
+		const uint32 marker=Read(RootCompletionAddress);
+		if (marker!=RootFault) return reject(7,marker);
 		uint32 state[121];
 		for (unsigned i=0;i<121;i++) state[i]=Read(RootDispatchStateAddress+i*4);
-		if (state[0]!=RootDispatchStateMagic || state[1]<fDispatch.rootNonce
-			|| state[1]>=0x7ffffffe) return false;
+		if (state[0]!=RootDispatchStateMagic) return reject(8,state[0]);
+		if (state[1]<fDispatch.rootNonce || state[1]>=0x7ffffffe) return reject(9,state[1]);
 		for (unsigned worker=0;worker<119;worker++) {
 			const uint32 recorded=state[2+worker];
 			if (recorded<fDispatch.peerNonce[worker] || recorded>=0x7ffffffe
-				|| recorded>state[1]) return false;
+				|| recorded>state[1]) return reject(10,worker);
 		}
 		for (unsigned worker=1;worker<120;worker++) {
 			auto& node=fDispatch.worker[worker];
-			if (!fIO.SelectRuntimeCore(worker)
-				|| !PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)
-				|| !PioneerQ38DispatchCodeMatches(fIO,worker,&fDispatch) || !Quiet()) return false;
+			if (!fIO.SelectRuntimeCore(worker)) return reject(11,worker);
+			if (!PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)) return reject(12,worker);
+			if (!PioneerQ38DispatchCodeMatches(fIO,worker,&fDispatch)) return reject(13,worker);
+			quietDetail=0;
+			if (!Quiet(&quietDetail)) return reject(14,(worker<<24)|(quietDetail&0xffffff));
 			const uint32 actual=fIO.Q38PanelRead(0x74140);
 			if (fIO.Q38PanelRead(0x74144)!=actual || actual<fDispatch.peerNonce[worker-1]
 				|| actual<state[1+worker] || actual>state[1+worker]+1
-				|| actual>=0x7ffffffe || actual>state[1]+1
-				|| !PioneerQ38DispatchPeerStatus(fIO,actual,false,&fDispatch)) return false;
+				|| actual>=0x7ffffffe || actual>state[1]+1) return reject(15,worker);
+			if (!PioneerQ38DispatchPeerStatus(fIO,actual,false,&fDispatch)) return reject(16,worker);
 		}
-		if (!fIO.SelectRuntimeCore(0) || !Scope(0x46800) || !Quiet()
-			|| !terminalPc(fIO.RuntimePcRead()) || Read(RootCompletionAddress)!=RootFault) return false;
+		if (!fIO.SelectRuntimeCore(0)) return reject(17,0);
+		if (!Scope(0x46800)) return reject(18,fIO.ResetRead());
+		quietDetail=0;
+		if (!Quiet(&quietDetail)) return reject(19,quietDetail);
+		const uint32 finalPc=fIO.RuntimePcRead();
+		if (!terminalPc(finalPc)) return reject(20,finalPc);
+		const uint32 finalMarker=Read(RootCompletionAddress);
+		if (finalMarker!=RootFault) return reject(21,finalMarker);
 		for (unsigned i=0;i<121;i++)
-			if (Read(RootDispatchStateAddress+i*4)!=state[i]) return false;
+			if (Read(RootDispatchStateAddress+i*4)!=state[i]) return reject(22,i);
 		return true;
 	}
 
-	bool RecoverWorkFault()
+	bool RecoverWorkFault(unsigned* reason=NULL,unsigned* detail=NULL)
 	{
 		using namespace PioneerQwen35;
+		if (reason) *reason=0;
+		if (detail) *detail=0;
+		auto reject=[&](uint32 why,uint32 value) {
+			if (reason) *reason=why;
+			if (detail) *detail=value;
+			return false;
+		};
 		auto terminalPc=[](uint32 pc) { return pc==WorkFaultPc || pc==WorkFaultPc+4; };
-		if (!WorkFaultSafe(WorkFaultPc) || !fIO.SelectRuntimeCore(0) || !Scope(0x46800)
-			|| !terminalPc(fIO.RuntimePcRead()) || Read(RootCompletionAddress)!=RootFault || !Quiet()) return false;
+		if (!WorkFaultSafe(WorkFaultPc,reason,detail)) return false;
+		if (!fIO.SelectRuntimeCore(0)) return reject(31,0);
+		if (!Scope(0x46800)) return reject(32,fIO.ResetRead());
+		const uint32 rootPc=fIO.RuntimePcRead();
+		if (!terminalPc(rootPc)) return reject(33,rootPc);
+		const uint32 marker=Read(RootCompletionAddress);
+		if (marker!=RootFault) return reject(34,marker);
+		uint32 quietDetail=0;
+		if (!Quiet(&quietDetail)) return reject(35,quietDetail);
 		uint32 rootNonce=Read(RootDispatchStateAddress+4),peerNonce[119];
 		for (unsigned worker=1;worker<120;worker++) {
-			if (!fIO.SelectRuntimeCore(worker)) return false;
+			if (!fIO.SelectRuntimeCore(worker)) return reject(36,worker);
 			peerNonce[worker-1]=fIO.Q38PanelRead(0x74140);
 		}
-		if (!fIO.SelectRuntimeCore(0) || !Scope(0x46800) || !Quiet()
-			|| Read(RootCompletionAddress)!=RootFault) return false;
+		if (!fIO.SelectRuntimeCore(0)) return reject(37,0);
+		if (!Scope(0x46800)) return reject(38,fIO.ResetRead());
+		if (!Quiet(&quietDetail)) return reject(39,quietDetail);
+		if (Read(RootCompletionAddress)!=RootFault) return reject(40,Read(RootCompletionAddress));
 		fIO.RuntimeResetWrite(0x87ffff);
 		fIO.Pause();
-		if (!Scope(0x87ffff) || !Quiet()) return false;
+		if (!Scope(0x87ffff)) return reject(41,fIO.ResetRead());
+		if (!Quiet(&quietDetail)) return reject(42,quietDetail);
 		fIO.RuntimeResetWrite(0x47800);
 		fIO.Pause();
-		if (!Scope(0x47800) || !Quiet()) return false;
+		if (!Scope(0x47800)) return reject(43,fIO.ResetRead());
+		if (!Quiet(&quietDetail)) return reject(44,quietDetail);
 		for (unsigned worker=1;worker<120;worker++) {
 			auto& node=fDispatch.worker[worker];
-			if (!fIO.SelectRuntimeCore(worker)
-				|| !PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)
-				|| !PioneerQ38DispatchCodeMatches(fIO,worker,&fDispatch)
-				|| !Quiet()
-				|| !PioneerQ38DispatchPeerStatus(fIO,peerNonce[worker-1],false,&fDispatch)) return false;
+			if (!fIO.SelectRuntimeCore(worker)) return reject(45,worker);
+			if (!PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)) return reject(46,worker);
+			if (!PioneerQ38DispatchCodeMatches(fIO,worker,&fDispatch)) return reject(47,worker);
+			if (!Quiet(&quietDetail)) return reject(48,(worker<<24)|(quietDetail&0xffffff));
+			if (!PioneerQ38DispatchPeerStatus(fIO,peerNonce[worker-1],false,&fDispatch)) return reject(49,worker);
 		}
-		if (!fIO.SelectRuntimeCore(0) || !Scope(0x47800)) return false;
+		if (!fIO.SelectRuntimeCore(0)) return reject(50,0);
+		if (!Scope(0x47800)) return reject(51,fIO.ResetRead());
 		fDispatch.rootNonce=rootNonce;
 		for (unsigned worker=0;worker<119;worker++) fDispatch.peerNonce[worker]=peerNonce[worker];
-		return RootHeld();
+		if (!RootHeld()) return reject(52,0);
+		return true;
 	}
 
 	uint32 Read(unsigned address)

@@ -14,7 +14,9 @@
 
 namespace PioneerQwen35 {
 enum : unsigned { WorkVersion=2, WorkDriver=60 };
-enum WorkStatus : unsigned { WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault };
+enum WorkStatus : unsigned {
+	WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault, WorkRecoveryPending
+};
 
 struct WorkSupport {
 	unsigned version, driver, maxContext, vocabulary;
@@ -35,10 +37,11 @@ struct WorkPoll {
 	unsigned pc;
 	RequestProgress progress;
 	unsigned long long startMicros, prefillObservedMicros, completeObservedMicros;
+	unsigned recoveryProofReason, recoveryProofDetail;
 	unsigned generatedIds[MaxPositions];
 };
 struct WorkStop {
-	unsigned version, restored, reserved[2];
+	unsigned version, restored, recoveryProofReason, recoveryProofDetail, reserved[2];
 };
 
 inline bool ValidWorkStart(const WorkStart& start, unsigned context, unsigned nextId)

@@ -194,7 +194,10 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 		if (poll->state==D::WorkComplete) break;
 		if (poll->state!=D::WorkRunning) {
 			if (poll->state==D::WorkRecoverableFault)
-				fprintf(stderr,"P100A_Q35 terminal Work fault passed safe-idle proof; requesting STOP recovery\n");
+				fprintf(stderr,"P100A_Q35 terminal Work fault passed the first safe-idle proof; STOP will repeat it\n");
+			if (poll->state==D::WorkRecoveryPending)
+				fprintf(stderr,"P100A_Q35 terminal Work fault proof pending reason=%u detail=%#x; requesting STOP reproof\n",
+					poll->recoveryProofReason,poll->recoveryProofDetail);
 			fprintf(stderr,"P100A_Q35 unexpected terminal run=%u state=%u commits=%u pc=%#x "
 				"progress_magic=%#x prefilled=%u root_trace=%#x fault_marker=%#x "
 				"dispatcher_stage=%#x dispatcher_detail=%#x dispatcher_context0=%#x "
@@ -205,13 +208,14 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 				"scale_after_batch_object=%#x scale_after_batch_build=%#x "
 				"scale_after_batch_fields=%#x scale_after_root_job=%#x "
 				"scale_after_worker_table=%#x scale_before_dispatch=%#x "
-				"scale_before_validation=%#x\n",
+				"scale_before_validation=%#x recovery_proof=%u recovery_detail=%#x\n",
 				request.requestId,poll->state,committed,poll->pc,p.magic,p.prefilled,
 				p.reserved[0],p.reserved[1],p.reserved[2],p.reserved[3],p.reserved[4],p.reserved[5],
 				poll->generatedIds[0],poll->generatedIds[1],poll->generatedIds[2],poll->generatedIds[3],
 				poll->generatedIds[4],poll->generatedIds[5],poll->generatedIds[6],poll->generatedIds[7],
 				poll->generatedIds[8],poll->generatedIds[9],poll->generatedIds[10],poll->generatedIds[11],
-				poll->generatedIds[12],poll->generatedIds[13],poll->generatedIds[14]);
+				poll->generatedIds[12],poll->generatedIds[13],poll->generatedIds[14],
+				poll->recoveryProofReason,poll->recoveryProofDetail);
 			return false;
 		}
 		snooze(10000);
@@ -242,7 +246,12 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 static bool End(int fd)
 {
 	D::WorkStop stop={}; stop.version=D::WorkVersion;
-	if (!Call(fd,TT_PCI_PROBE_Q35_WORK_STOP,&stop,sizeof(stop)) || !stop.restored) return false;
+	if (!Call(fd,TT_PCI_PROBE_Q35_WORK_STOP,&stop,sizeof(stop))) return false;
+	if (!stop.restored) {
+		fprintf(stderr,"P100A_Q35 STOP recovery failed proof=%u detail=%#x\n",
+			stop.recoveryProofReason,stop.recoveryProofDetail);
+		return false;
+	}
 	tt_q38_bank_session session={}; session.version=TT_Q38_BANK_PROTOCOL;
 	const bool okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
 		&& session.result.state==TT_RESIDENT_SESSION_CLOSED && !session.result.active

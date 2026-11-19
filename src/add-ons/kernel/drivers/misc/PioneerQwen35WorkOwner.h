@@ -10,7 +10,7 @@ namespace PioneerQwen35 {
 // Sole writer for the ROOT while its private seven-bank session is resident.
 // All methods run under the same card lease and driver lock.
 class WorkOwner {
-	enum Phase { Empty, Held, Running, RecoverableFault, Closed, Fault };
+	enum Phase { Empty, Held, Running, RecoverableFault, RecoveryPending, Closed, Fault };
 	static constexpr unsigned HeldReset=0x47800, ArmReset=0x87ffff, RunReset=0x46800;
 	static constexpr unsigned L1Words=(RootEnd-RootTextAddress)/4;
 	static constexpr unsigned CheckpointWords=4;
@@ -55,7 +55,7 @@ public:
 
 	bool Restored() const { return phase==Closed; }
 	bool Unsafe() const { return phase==Fault; }
-	bool Recoverable() const { return phase==RecoverableFault; }
+	bool Recoverable() const { return phase==RecoverableFault || phase==RecoveryPending; }
 	bool Active() const { return phase==Running; }
 	unsigned RequestId() const { return requestId; }
 	bool CanStart(const WorkStart& start) const
@@ -166,10 +166,19 @@ public:
 			result.state=WorkRunning;
 			return true;
 		}
-		if (marker==RootFault && (result.pc==WorkFaultPc || result.pc==WorkFaultPc+4)
-			&& io.WorkFaultSafe(result.pc)) {
-			phase=RecoverableFault;
-			result.state=WorkRecoverableFault;
+		if (marker==RootFault && (result.pc==WorkFaultPc || result.pc==WorkFaultPc+4)) {
+			unsigned reason=0,detail=0;
+			if (io.WorkFaultSafe(result.pc,&reason,&detail)) {
+				phase=RecoverableFault;
+				result.state=WorkRecoverableFault;
+			} else {
+				// Keep an explicit terminal ROOT fault eligible for a fresh full
+				// proof at STOP. No reset or cleanup is authorized by this state.
+				phase=RecoveryPending;
+				result.state=WorkRecoveryPending;
+			}
+			result.recoveryProofReason=reason;
+			result.recoveryProofDetail=detail;
 			return true;
 		}
 		if (marker!=RootDone || !io.Quiet()) return Fail();
@@ -200,11 +209,18 @@ public:
 	}
 
 	template<class IO>
-	bool Stop(IO& io)
+	bool Stop(IO& io,unsigned* recoveryReason=NULL,unsigned* recoveryDetail=NULL)
 	{
 		bool recovered=false;
-		if (phase==RecoverableFault) {
-			if (!io.RecoverWorkFault()) return Fail();
+		if (phase==RecoverableFault || phase==RecoveryPending) {
+			unsigned reason=0,detail=0;
+			if (!io.RecoverWorkFault(&reason,&detail)) {
+				if (recoveryReason) *recoveryReason=reason;
+				if (recoveryDetail) *recoveryDetail=detail;
+				return Fail();
+			}
+			if (recoveryReason) *recoveryReason=0;
+			if (recoveryDetail) *recoveryDetail=0;
 			phase=Held;
 			recovered=true;
 		}

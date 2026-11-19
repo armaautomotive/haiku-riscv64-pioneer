@@ -15,6 +15,8 @@ struct Mock {
 	unsigned long long now=0;
 	bool quiet=true;
 	bool faultSafe=true;
+	bool failFirstFaultProof=false;
+	unsigned faultProofCalls=0;
 
 	bool Scope(unsigned expected) const { return reset==expected; }
 	bool RootHeld() const { return reset==0x47800; }
@@ -27,14 +29,19 @@ struct Mock {
 	void Reset(unsigned value) { reset=value; resets++; }
 	void Pause() {}
 	unsigned long long Now() { return ++now; }
-	bool WorkFaultSafe(unsigned reportedPc) const
+	bool WorkFaultSafe(unsigned reportedPc,unsigned* reason,unsigned* detail)
 	{
-		return faultSafe && quiet && (reportedPc==D::WorkFaultPc || reportedPc==D::WorkFaultPc+4)
+		const bool safe=faultSafe && (!failFirstFaultProof || ++faultProofCalls>1)
+			&& quiet && (reportedPc==D::WorkFaultPc || reportedPc==D::WorkFaultPc+4)
 			&& Read(D::RootCompletionAddress)==D::RootFault;
+		if (reason) *reason=safe?0:7;
+		if (detail) *detail=safe?0:0x77;
+		return safe;
 	}
-	bool RecoverWorkFault()
+	bool RecoverWorkFault(unsigned* reason,unsigned* detail)
 	{
-		if (!WorkFaultSafe(Pc()) || reset!=0x46800) return false;
+		if (!WorkFaultSafe(Pc(),reason,detail) || reset!=0x46800) return false;
+		Reset(0x87ffff);
 		Reset(0x47800);
 		return true;
 	}
@@ -126,7 +133,21 @@ int main()
 		&& reply->progress.reserved[2]==0x54000300 && reply->progress.reserved[3]==119);
 	assert(failed->Stop(io));
 	assert(failed->Restored() && !failed->Unsafe() && io.l1==saved);
-	assert(io.resets==11);
+	assert(io.resets==12);
+
+	Mock pendingIO;
+	pendingIO.failFirstFaultProof=true;
+	auto pending=std::make_unique<D::WorkOwner>();
+	assert(pending->Prepare(pendingIO,*prepare));
+	request->requestId=1;
+	assert(pending->Start(pendingIO,*request));
+	pendingIO.pc=D::WorkFaultPc+4;
+	pendingIO.Write(D::RootCompletionAddress,D::RootFault);
+	reply->requestId=1;
+	assert(pending->Poll(pendingIO,*reply) && pending->Recoverable());
+	assert(reply->state==D::WorkRecoveryPending && reply->recoveryProofReason==7
+		&& reply->recoveryProofDetail==0x77);
+	assert(pending->Stop(pendingIO) && pending->Restored() && !pending->Unsafe());
 
 	Mock changedFaultIO;
 	auto changedFault=std::make_unique<D::WorkOwner>();
@@ -160,6 +181,7 @@ int main()
 	fallbackIO.Write(D::RootCompletionAddress,D::RootFault);
 	fallbackIO.faultSafe=false;
 	reply->requestId=1;
+	fallbackIO.pc=D::WorkFaultPc+8; // an unknown terminal PC must stay quarantined
 	assert(!failedFallback->Poll(fallbackIO,*reply) && failedFallback->Unsafe());
 	assert(reply->progress.reserved[2]==(D::RootDispatchRejectTag|623)
 		&& reply->progress.reserved[3]==17
