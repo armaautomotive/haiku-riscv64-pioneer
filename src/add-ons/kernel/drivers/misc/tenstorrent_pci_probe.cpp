@@ -18,7 +18,8 @@
 	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010038ULL \
 	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010039ULL \
 	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010040ULL \
-	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010041ULL) || !defined(PIONEER_Q38_SPAN_PRELOAD) \
+	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010041ULL \
+	&& PIONEER_DRIVER_BUILD_TAG != 0x2026111800010042ULL) || !defined(PIONEER_Q38_SPAN_PRELOAD) \
  || !defined(PIONEER_Q38_SPAN_FAST) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || defined(TT_PIONEER_Q35_PROJECTION_PROBE))
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
@@ -6456,6 +6457,22 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 #ifdef TT_PIONEER_Q35_WORK
+	if (context->q35Work && !context->q35Work->owner.Restored()) {
+		if (context->q35Work->owner.Recoverable()) {
+			bool recovered=context->q35Work->owner.Stop(*context->q35Work);
+			if (recovered && context->q38Dispatch)
+				recovered=PioneerQ38DispatchClose(context->io,
+					context->baseline.baseline.baseline.baseline.dram,context->banks,
+					*context->q38Dispatch,true);
+			if (recovered) {
+				delete context->q35Work;
+				context->q35Work=NULL;
+			} else {
+				RetainQ38DispatchOwner(*context,result);
+				return;
+			}
+		}
+	}
 	if (context->q35Work && !context->q35Work->owner.Restored()) {
 		RetainQ38DispatchOwner(*context,result);
 		return;

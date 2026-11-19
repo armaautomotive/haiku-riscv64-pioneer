@@ -14,7 +14,7 @@
 
 namespace PioneerQwen35 {
 enum : unsigned { WorkVersion=2, WorkDriver=60 };
-enum WorkStatus : unsigned { WorkRunning=1, WorkComplete, WorkQuarantined };
+enum WorkStatus : unsigned { WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault };
 
 struct WorkSupport {
 	unsigned version, driver, maxContext, vocabulary;

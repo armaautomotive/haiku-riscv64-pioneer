@@ -10,10 +10,11 @@ namespace PioneerQwen35 {
 // Sole writer for the ROOT while its private seven-bank session is resident.
 // All methods run under the same card lease and driver lock.
 class WorkOwner {
-	enum Phase { Empty, Held, Running, Closed, Fault };
+	enum Phase { Empty, Held, Running, RecoverableFault, Closed, Fault };
 	static constexpr unsigned HeldReset=0x47800, ArmReset=0x87ffff, RunReset=0x46800;
 	static constexpr unsigned L1Words=(RootEnd-RootTextAddress)/4;
-	static constexpr unsigned SavedWords=1+L1Words+RootCompletionWords;
+	static constexpr unsigned CheckpointWords=4;
+	static constexpr unsigned SavedWords=1+L1Words+CheckpointWords+RootCompletionWords;
 	static constexpr unsigned TextWords=sizeof(WorkTextWords)/sizeof(*WorkTextWords);
 	static constexpr unsigned ManifestWords=sizeof(DeviceLayout)/4;
 
@@ -29,7 +30,9 @@ class WorkOwner {
 	{
 		if (!word) return RootBootAddress;
 		if (word<=L1Words) return RootTextAddress+(word-1)*4;
-		return RootCompletionAddress+(word-1-L1Words)*4;
+		if (word<=L1Words+CheckpointWords)
+			return RootCheckpointAddress+(word-1-L1Words)*4;
+		return RootCompletionAddress+(word-1-L1Words-CheckpointWords)*4;
 	}
 
 	template<class IO>
@@ -52,6 +55,7 @@ public:
 
 	bool Restored() const { return phase==Closed; }
 	bool Unsafe() const { return phase==Fault; }
+	bool Recoverable() const { return phase==RecoverableFault; }
 	bool Active() const { return phase==Running; }
 	unsigned RequestId() const { return requestId; }
 	bool CanStart(const WorkStart& start) const
@@ -162,6 +166,12 @@ public:
 			result.state=WorkRunning;
 			return true;
 		}
+		if (marker==RootFault && (result.pc==WorkFaultPc || result.pc==WorkFaultPc+4)
+			&& io.WorkFaultSafe(result.pc)) {
+			phase=RecoverableFault;
+			result.state=WorkRecoverableFault;
+			return true;
+		}
 		if (marker!=RootDone || !io.Quiet()) return Fail();
 		result.completeObservedMicros=observed;
 		const unsigned generated=result.progress.generated;
@@ -192,11 +202,18 @@ public:
 	template<class IO>
 	bool Stop(IO& io)
 	{
+		bool recovered=false;
+		if (phase==RecoverableFault) {
+			if (!io.RecoverWorkFault()) return Fail();
+			phase=Held;
+			recovered=true;
+		}
 		if (phase!=Held) return false;
 		if (!io.Scope(HeldReset) || !io.Quiet() || !io.RootHeld()) return Fail();
 		for (unsigned i=0; i<SavedWords; i++) io.Write(Address(i),original[i]);
 		for (unsigned i=0; i<SavedWords; i++)
 			if (io.Read(Address(i))!=original[i]) return Fail();
+		if (recovered) for (unsigned i=0; i<10; i++) io.WriteCommand(i,originalCommand[i]);
 		for (unsigned i=0; i<10; i++)
 			if (io.Command(i)!=originalCommand[i]) return Fail();
 		if (!io.Scope(HeldReset) || !io.Quiet()) return Fail();

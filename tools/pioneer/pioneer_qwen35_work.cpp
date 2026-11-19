@@ -176,8 +176,8 @@ static bool Load(int fd,PioneerQwen35Gguf& source,const PioneerQwen35PackedPlan&
 static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsigned context,
 	std::string& output,bool& held)
 {
-	held=false;
 	if (!Call(fd,TT_PCI_PROBE_Q35_WORK_START,&request,sizeof(request))) return false;
+	held=true; // END must run even when polling reports a recoverable Work fault.
 	auto poll=std::make_unique<D::WorkPoll>();
 	unsigned committed=0, generated=0;
 	for (;;) {
@@ -193,6 +193,8 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 		}
 		if (poll->state==D::WorkComplete) break;
 		if (poll->state!=D::WorkRunning) {
+			if (poll->state==D::WorkRecoverableFault)
+				fprintf(stderr,"P100A_Q35 terminal Work fault passed safe-idle proof; requesting STOP recovery\n");
 			fprintf(stderr,"P100A_Q35 unexpected terminal run=%u state=%u commits=%u pc=%#x "
 				"progress_magic=%#x prefilled=%u root_trace=%#x fault_marker=%#x "
 				"dispatcher_stage=%#x dispatcher_detail=%#x dispatcher_context0=%#x "
@@ -214,7 +216,6 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 		}
 		snooze(10000);
 	}
-	held=true;
 	if (!D::ValidWorkResult(*poll,request.promptCount,request.maxOutput,context,poll->progress.generated)
 		|| poll->prefillObservedMicros<=poll->startMicros
 		|| poll->completeObservedMicros<=poll->prefillObservedMicros

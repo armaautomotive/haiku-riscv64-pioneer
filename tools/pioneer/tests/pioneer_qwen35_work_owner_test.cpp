@@ -14,6 +14,7 @@ struct Mock {
 	unsigned reset=0x47800, resets=0, pc=0;
 	unsigned long long now=0;
 	bool quiet=true;
+	bool faultSafe=true;
 
 	bool Scope(unsigned expected) const { return reset==expected; }
 	bool RootHeld() const { return reset==0x47800; }
@@ -26,6 +27,17 @@ struct Mock {
 	void Reset(unsigned value) { reset=value; resets++; }
 	void Pause() {}
 	unsigned long long Now() { return ++now; }
+	bool WorkFaultSafe(unsigned reportedPc) const
+	{
+		return faultSafe && quiet && (reportedPc==D::WorkFaultPc || reportedPc==D::WorkFaultPc+4)
+			&& Read(D::RootCompletionAddress)==D::RootFault;
+	}
+	bool RecoverWorkFault()
+	{
+		if (!WorkFaultSafe(Pc()) || reset!=0x46800) return false;
+		Reset(0x47800);
+		return true;
+	}
 
 	void Prefill(unsigned id)
 	{
@@ -107,11 +119,27 @@ int main()
 	io.Write(D::RootCheckpointAddress+4,119);
 	io.Write(D::RootCompletionAddress,D::RootFault);
 	reply->requestId=1;
-	assert(!failed->Poll(io,*reply) && failed->Unsafe() && io.resets==10);
+	assert(failed->Poll(io,*reply) && failed->Recoverable() && !failed->Unsafe() && io.resets==10);
+	assert(reply->state==D::WorkRecoverableFault);
 	assert(reply->pc==D::WorkFaultPc && reply->progress.reserved[0]==9
 		&& reply->progress.reserved[1]==D::RootFault
 		&& reply->progress.reserved[2]==0x54000300 && reply->progress.reserved[3]==119);
-	assert(!failed->Stop(io) && !failed->Restored());
+	assert(failed->Stop(io));
+	assert(failed->Restored() && !failed->Unsafe() && io.l1==saved);
+	assert(io.resets==11);
+
+	Mock changedFaultIO;
+	auto changedFault=std::make_unique<D::WorkOwner>();
+	assert(changedFault->Prepare(changedFaultIO,*prepare));
+	request->requestId=1;
+	assert(changedFault->Start(changedFaultIO,*request));
+	changedFaultIO.pc=D::WorkFaultPc;
+	changedFaultIO.Write(D::RootCompletionAddress,D::RootFault);
+	reply->requestId=1;
+	assert(changedFault->Poll(changedFaultIO,*reply) && changedFault->Recoverable());
+	changedFaultIO.faultSafe=false; // STOP must repeat the fleet-wide safety proof.
+	assert(!changedFault->Stop(changedFaultIO) && changedFault->Unsafe()
+		&& !changedFault->Restored() && changedFaultIO.reset==0x46800);
 
 	Mock fallbackIO;
 	auto failedFallback=std::make_unique<D::WorkOwner>();
@@ -130,6 +158,7 @@ int main()
 		fallbackIO.Write(D::RootScaleEvidenceAddress+i*4,scaleEvidence[i]);
 	fallbackIO.Write(D::RootCheckpointAddress,0x54000000); // stale entry receipt must not mask the rejection
 	fallbackIO.Write(D::RootCompletionAddress,D::RootFault);
+	fallbackIO.faultSafe=false;
 	reply->requestId=1;
 	assert(!failedFallback->Poll(fallbackIO,*reply) && failedFallback->Unsafe());
 	assert(reply->progress.reserved[2]==(D::RootDispatchRejectTag|623)
