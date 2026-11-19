@@ -405,11 +405,15 @@ postflight evidence is in
 The 27B model and both model files remain intact. Two valid warm outputs and
 100 decode tokens/s remain the completion criteria.
 
-Tag249 is a diagnosis-only build that captures the worker, direction, remote
-window, and final counters for the bounded ROOT transfer that stalled on
-worker119. Its cross-build passed with warnings as errors; the instrumented
-hardware trial is next. This build is not being used for performance
-measurement.
+Tag249 enabled the bounded-transfer timeout receipt but still faulted at
+`stage=0x54000102 detail=0x77` on worker119 before prefill; the diagnostic
+`0x58` timeout record was absent. It authenticated in `68.086098` s, tokenized
+in `13.609946` s, and loaded the full model in `222.687418` s. It unloaded
+cleanly and hot-reloaded stable041 at generation6 (`cold0 active_owner0`)
+without reboot. Tag250 will preserve the transfer identity before the
+doorbell so an early fault cannot erase it. No valid output or decode rate
+has been measured. Tag249 evidence is in
+[`qwen35-work-tag249-20261119/evidence`](benchmarks/qwen35-work-tag249-20261119/evidence).
 
 ## Haiku llama.cpp platform patch
 

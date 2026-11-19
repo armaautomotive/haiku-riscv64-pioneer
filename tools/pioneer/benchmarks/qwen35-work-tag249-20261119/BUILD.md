@@ -37,9 +37,30 @@ stable041 generation4.
 | Trial wrapper | `964dbf0f974b566a14b27c476f6c61170124bc33c1a72ec853a04943ecc3d068` |
 | Power-cycle recovery helper | `86b4890cb18f81e8e9599412ef5e5ec0b0bba26c77f4393b63b43ba947aa182d` |
 
-## Hardware status
+## Hardware result
 
-Tag249 has not yet been run. Tag248 already verified rebootless recovery and
-restored stable041 at generation4 (`cold0 active_owner0`), with the shared
-lock absent and both models intact. The 4B inference fault remains before
-prefill; no valid output or decode rate has been measured.
+Tag249 passed preflight from stable041 generation4, `cold0`, `active_owner0`,
+with the 27B and 4B files intact. Authentication took `68.086098` seconds,
+prompt tokenization took `13.609946` seconds for 18 tokens, and model
+upload/load took `222.687418` seconds for 3,450 spans (`2,740,498,432`
+bytes`). ROOT again faulted before prefill with zero committed tokens while
+waiting on worker119 (`stage=0x54000102 detail=0x77`). The failure-only
+timeout receipt `0x58` was not present, so the bounded timeout checkpoint did
+not capture this early fault. No valid output or decode rate was produced.
+
+Tag249 passed safe-idle proof and STOP reproof, unloaded Work cleanly, and
+hot-reloaded stable041 at generation6 (`cold0 active_owner0 guard1`) without
+rebooting; the shared lock is absent. Both models remain intact. Tag250 will
+write the fixed transfer identity before issuing its doorbell, so an early
+fault still leaves the worker, direction, and remote window in the checkpoint.
+
+| Evidence file | SHA-256 |
+| --- | --- |
+| `evidence/postflight.txt` | `0f17a2825bcc210918ed0538547be134d937f313ebf7a6d2e0f8e3278e03a074` |
+| `evidence/processes.txt` | `f340b8bac7c1ca747927b360711af1e7e62b979818486355e08bbf19b495b3ca` |
+| `evidence/state` | `507e1557e8544dfd3bc8ecba2bc12b14d22c681e8123d4faf7f6668b58573a8e` |
+| `evidence/status.txt` | `0e82a219a9374cca21e57a44fdc2cf84da766ad26c12c40f5be62fcb6d30b9e0` |
+| `evidence/sysinfo.txt` | `2d691c8e636e11d23380b005c9917a36e61bb356ac2de948e8af8cb6dbefb9c5` |
+| `evidence/work.exit` | `4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865` |
+| `evidence/work.stderr` | `9032ffdba4fd68c57f4dbdbe5ffe322c858e7fa4250b922e297011a0002c3dbb` |
+| `evidence/work.stdout` | `002bf417f4e7b2a5207aa8dbf5a1a317cda0f188a826614faa8c8bd1aa57b676` |
