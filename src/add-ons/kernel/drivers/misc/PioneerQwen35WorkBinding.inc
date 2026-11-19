@@ -151,10 +151,12 @@ public:
 			quietDetail=0;
 			if (!Quiet(&quietDetail)) return reject(14,(worker<<24)|(quietDetail&0xffffff));
 			const uint32 actual=fIO.Q38PanelRead(0x74140);
-			if (fIO.Q38PanelRead(0x74144)!=actual || actual<fDispatch.peerNonce[worker-1]
-				|| actual<state[1+worker] || actual>state[1+worker]+1
-				|| actual>=0x7ffffffe || actual>state[1]+1) return reject(15,worker);
-			if (!PioneerQ38DispatchPeerStatus(fIO,actual,false,&fDispatch)) return reject(16,worker);
+			fIO.Pause();
+			const uint32 mirror=fIO.Q38PanelRead(0x74144);
+			if (mirror!=actual) return reject(15,(worker<<24)|(actual&0xffffff));
+			if (!WorkPeerNonceSafe(state[1+worker],actual,fDispatch.peerNonce[worker-1],state[1]))
+				return reject(16,(worker<<24)|(actual&0xffffff));
+			if (!PioneerQ38DispatchPeerStatus(fIO,actual,false,&fDispatch)) return reject(17,worker);
 		}
 		if (!fIO.SelectRuntimeCore(0)) return reject(17,0);
 		if (!Scope(0x46800)) return reject(18,fIO.ResetRead());

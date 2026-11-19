@@ -54,3 +54,35 @@ restart; no disk, SD, hardware-connection, or mains changes are involved.
 The tag243 trial package targets
 `/boot/home/pioneer-qwen35-work-243.S9mQ2`. It will be re-preflighted against
 the stable driver before installation.
+
+## Tag243 hardware result
+
+Haiku remained reachable and responsive throughout. The model authenticated in
+100.099082 seconds, prompt tokenization took 14.210897 seconds, and loading
+2,740,498,432 bytes took 229.292775 seconds. ROOT faulted at `pc=0x40064`
+before prompt processing, with zero commits. Its first full-fleet recovery
+proof and the repeated STOP proof both rejected peer 1 as reason 15/detail
+`0x1`; tag243 did not yet distinguish a mirror-read mismatch from a peer
+nonce mismatch. It kept the device quarantined at generation 3,
+`cold1 active_owner1`, and produced no decode rate or output.
+
+The host did not stop responding. The reboot was needed because this driver
+version could not prove that every peer was safely parked, so it correctly
+refused to release ownership. The tag244 candidate adds a one-count nonce
+reconciliation while preserving the all-peer quiet and parked checks. Its
+reason 15/16/17 diagnostics separate mirror, nonce, and peer-status failures.
+
+Evidence hashes:
+
+| File | SHA-256 |
+| --- | --- |
+| `evidence/state` | `fbd1473a9abb5073bbd33c4b496a571ea742253449bef0484ab678f9efd1c9c4` |
+| `evidence/work.exit` | `4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865` |
+| `evidence/work.stdout` | `5c856b6b5950ee764caf00a0d13ccc2b51f36fac4a27937b89059b5ac9548047` |
+| `evidence/work.stderr` | `47d527137661ddb4a174e6c3ce9ac492c34baffc490c8e206821f5dd7d03bfcb` |
+
+One project-authorized board cycle cleared the retained tag243 owner. Its
+tag243-specific recovery helper then returned the device to stable041, idle
+and unowned. Tag244 is being staged against that state at
+`/boot/home/pioneer-qwen35-work-244.T6nB4`; all staged files are synced and
+re-hashed before the cycle and trial.
