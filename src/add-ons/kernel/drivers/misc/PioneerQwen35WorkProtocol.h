@@ -56,6 +56,36 @@ inline bool WorkPeerStatusSafe(unsigned recorded,unsigned requested,unsigned fin
 	return requestKnown && finishKnown;
 }
 
+inline bool WorkPeerRecoveryStatusSafe(const unsigned* status,unsigned recorded,
+	unsigned prior,unsigned root,unsigned peerMarker,unsigned faultMarker,
+	unsigned imageBegin,unsigned imageBytes,bool faultHandler)
+{
+	if (!status || !WorkPeerStatusSafe(recorded,status[0],status[1],prior,root)
+		|| status[3]!=peerMarker || status[4]>1) return false;
+	if (status[2]==0) {
+		if (!faultHandler) {
+			for (unsigned i=5;i<16;i++) if (status[i]) return false;
+			return true;
+		}
+		if (status[5] && ((status[5]&3) || status[5]<imageBegin
+			|| status[5]>=imageBegin+imageBytes)) return false;
+		for (unsigned i=9;i<16;i++) if (status[i]) return false;
+		return status[6]!=0x50 || status[7]!=status[8];
+	}
+	if (!faultHandler || status[2]!=faultMarker || (status[5]&3)
+		|| status[5]<imageBegin || status[5]>=imageBegin+imageBytes) return false;
+	for (unsigned i=9;i<16;i++) if (status[i]) return false;
+	return status[6]!=0x50 || status[7]!=status[8];
+}
+
+inline bool WorkPeerFreshStatus(const unsigned* status,unsigned peerMarker)
+{
+	if (!status) return false;
+	for (unsigned i=0;i<16;i++)
+		if (status[i]!=(i==3?peerMarker:0)) return false;
+	return true;
+}
+
 inline bool ValidWorkStart(const WorkStart& start, unsigned context, unsigned nextId)
 {
 	if (start.version!=WorkVersion || !nextId || start.requestId!=nextId

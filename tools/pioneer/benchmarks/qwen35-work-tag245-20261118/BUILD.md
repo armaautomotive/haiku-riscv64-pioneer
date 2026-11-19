@@ -55,3 +55,19 @@ The tag244-specific helper at
 is staged and hash-checked. It will restore stable041 after the authorized
 cycle; tag245 will be staged separately at
 `/boot/home/pioneer-qwen35-work-245.D7mQ5`.
+
+## Tag245 hardware result
+
+Tag245 preflight passed after the tag244 helper restored stable041 at
+generation2. Authentication took `101.414734` seconds, prompt tokenization
+`12.996782` seconds, and upload/load `225.714405` seconds for all 3,450 spans
+(`2,740,498,432` bytes). ROOT faulted before prefill with zero commits at
+`pc=0x40064`, stage `0x54000102`, detail `0x77`. Peer1 reported the Q8PF
+fault marker; tag245 still rejected it as proof reason17/detail `0x1503851`.
+The candidate remained generation3 `cold1 active_owner1`; no output or decode
+rate was produced. Exact stdout, stderr, exit code, state, health, driver
+status, and hashes are under `evidence/`.
+
+This result motivates tag246's parked-peer restart path. The tag245 archive is
+preserved unchanged, and its stage remains available for its power-cycle
+recovery helper.

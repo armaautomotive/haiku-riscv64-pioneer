@@ -368,6 +368,28 @@ the shared lock is absent, 64 CPUs/full RAM are available, and both model
 files remain intact. See the archived build and run in
 `benchmarks/qwen35-work-tag236-20261118` and the next-session handoff.
 
+## November 18 rebootless Work recovery follow-up
+
+Tag245 passed guarded preflight and loaded the verified 4B model (3,450 spans,
+2,740,498,432 bytes). Authentication was 101.414734 s, prompt tokenization
+12.996782 s, and model upload/load 225.714405 s. ROOT faulted before prefill
+with zero commits at stage `0x54000102`, detail `0x77`. Peer1 reported the
+Q8PF fault marker; tag245 correctly refused unsafe cleanup, leaving candidate
+generation3 `cold1 active_owner1`. There was no valid output or decode rate.
+Exact hardware logs and hashes are preserved under
+[`qwen35-work-tag245-20261118/evidence`](benchmarks/qwen35-work-tag245-20261118/evidence).
+
+Tag246 adds a rebootless fleet recovery for this explicit parked peer fault.
+It requires a stable peer-fault marker and exact fault-park PC, verifies every
+peer image/source, the ROOT dispatch ledger and quiet NoC queues, then
+restarts the 119 peers using the same boot contract as normal dispatch. It
+accepts recovery only after all peers return to their fresh WAIT state with
+unchanged NoC counters; normal ROOT restore and dispatcher close must then
+complete. Unknown or active peer states remain quarantined. The offline build
+and owner regression pass, but tag246 has not yet been qualified on the card.
+The 27B model and stable041 setup remain intact. Two valid warm outputs and
+100 decode tokens/s are still unverified.
+
 ## Haiku llama.cpp platform patch
 
 The local `src/libs/llama.cpp` worktree also contains Haiku platform support

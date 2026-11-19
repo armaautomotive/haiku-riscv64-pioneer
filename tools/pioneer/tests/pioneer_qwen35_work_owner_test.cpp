@@ -80,6 +80,32 @@ int main()
 	assert(!D::WorkPeerStatusSafe(10,11,9,9,10-1));
 	assert(!D::WorkPeerStatusSafe(10,10,11,9,10));
 	assert(!D::WorkPeerStatusSafe(0x7ffffffe,0,0,0,0));
+	unsigned peerStatus[16]={};
+	peerStatus[3]=0x32503851;
+	assert(D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,false));
+	peerStatus[0]=1; peerStatus[4]=1;
+	assert(D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,false)); // bounded in-flight request can settle
+	peerStatus[2]=0x46503851; peerStatus[5]=0x72084; peerStatus[6]=0x50;
+	peerStatus[7]=18; peerStatus[8]=17;
+	assert(D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true)); // explicit parked peer error with valid caller/count receipt
+	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,false));
+	peerStatus[5]=0x74000;
+	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true));
+	peerStatus[5]=0x72084; peerStatus[8]=18;
+	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true)); // reason 0x50 must retain an unequal panels/count pair
+	peerStatus[8]=17; peerStatus[9]=1;
+	assert(!D::WorkPeerRecoveryStatusSafe(peerStatus,0,0,0,0x32503851,0x46503851,
+		0x72000,0x2000,true));
+	peerStatus[9]=0;
+	assert(D::WorkPeerFreshStatus(peerStatus,0x32503851)==false);
+	for (unsigned i=0;i<16;i++) peerStatus[i]=i==3?0x32503851:0;
+	assert(D::WorkPeerFreshStatus(peerStatus,0x32503851));
 	auto prepare=std::make_unique<D::WorkPrepare>();
 	prepare->version=D::WorkVersion;
 	prepare->manifest.context=32;
