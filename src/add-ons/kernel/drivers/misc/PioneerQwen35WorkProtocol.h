@@ -44,11 +44,16 @@ struct WorkStop {
 	unsigned version, restored, recoveryProofReason, recoveryProofDetail, reserved[2];
 };
 
-inline bool WorkPeerNonceSafe(unsigned recorded,unsigned actual,unsigned prior,unsigned root)
+inline bool WorkPeerStatusSafe(unsigned recorded,unsigned requested,unsigned finished,
+	unsigned prior,unsigned root)
 {
-	if (recorded>=0x7ffffffe || actual>=0x7ffffffe || root>=0x7ffffffe
-		|| recorded>root || actual<prior || actual>root+1) return false;
-	return actual==recorded || actual+1==recorded || recorded+1==actual;
+	if (recorded>=0x7ffffffe || requested>=0x7ffffffe || finished>=0x7ffffffe
+		|| prior>=0x7ffffffe || root>=0x7ffffffe || recorded>root
+		|| requested<prior || finished<prior || requested>root+1 || finished>root+1
+		|| finished>requested || requested-finished>1) return false;
+	const bool requestKnown=requested==recorded || requested==recorded+1;
+	const bool finishKnown=finished==recorded || finished==recorded+1;
+	return requestKnown && finishKnown;
 }
 
 inline bool ValidWorkStart(const WorkStart& start, unsigned context, unsigned nextId)

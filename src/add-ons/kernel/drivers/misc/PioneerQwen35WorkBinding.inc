@@ -128,7 +128,6 @@ public:
 		if (!fIO.SelectRuntimeCore(0)) return reject(3,0);
 		if (!Scope(0x46800)) return reject(4,fIO.ResetRead());
 		uint32 quietDetail=0;
-		if (!Quiet(&quietDetail)) return reject(5,quietDetail);
 		fIO.Pause(); const uint32 firstPc=fIO.RuntimePcRead();
 		fIO.Pause(); const uint32 secondPc=fIO.RuntimePcRead();
 		if (!terminalPc(firstPc) || !terminalPc(secondPc)) return reject(6,secondPc);
@@ -143,32 +142,83 @@ public:
 			if (recorded<fDispatch.peerNonce[worker] || recorded>=0x7ffffffe
 				|| recorded>state[1]) return reject(10,worker);
 		}
-		for (unsigned worker=1;worker<120;worker++) {
-			auto& node=fDispatch.worker[worker];
-			if (!fIO.SelectRuntimeCore(worker)) return reject(11,worker);
-			if (!PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)) return reject(12,worker);
-			if (!PioneerQ38DispatchCodeMatches(fIO,worker,&fDispatch)) return reject(13,worker);
+		const uint64_t began=fIO.Q38CohortNow();
+		if (began>UINT64_MAX-UINT64_C(30000000)) return reject(11,0);
+		const uint64_t deadline=began+UINT64_C(30000000);
+		unsigned pendingWorker=0,pendingDetail=0;
+		for (;;) {
+			if (!fIO.SelectRuntimeCore(0)) return reject(12,0);
+			if (!Scope(0x46800)) return reject(13,fIO.ResetRead());
+			fIO.Pause(); const uint32 rootPc0=fIO.RuntimePcRead();
+			fIO.Pause(); const uint32 rootPc1=fIO.RuntimePcRead();
+			if (!terminalPc(rootPc0) || !terminalPc(rootPc1)) return reject(14,rootPc1);
+			if (Read(RootCompletionAddress)!=RootFault) return reject(15,Read(RootCompletionAddress));
 			quietDetail=0;
-			if (!Quiet(&quietDetail)) return reject(14,(worker<<24)|(quietDetail&0xffffff));
-			const uint32 actual=fIO.Q38PanelRead(0x74140);
+			if (!Quiet(&quietDetail)) {
+				pendingWorker=0;
+				pendingDetail=quietDetail;
+			} else {
+				bool allReady=true;
+				for (unsigned worker=1;worker<120;worker++) {
+					if (!fIO.SelectRuntimeCore(worker)) return reject(16,worker);
+					uint32 first[16],second[16];
+					for (unsigned i=0;i<16;i++) first[i]=fIO.Q38PanelRead(0x74140+i*4);
+					fIO.Pause();
+					for (unsigned i=0;i<16;i++) second[i]=fIO.Q38PanelRead(0x74140+i*4);
+					unsigned changed=16;
+					for (unsigned i=0;i<16;i++) if (first[i]!=second[i]) { changed=i; break; }
+					if (changed!=16) {
+						allReady=false; pendingWorker=worker; pendingDetail=changed;
+						continue;
+					}
+					if (second[2]) return reject(17,(worker<<24)|(second[2]&0xffffff));
+					if (second[3]!=TT_Q38_PEER_MARKER) return reject(18,(worker<<24)|(second[3]&0xffffff));
+					if (second[4]>1) return reject(19,(worker<<24)|(second[4]&0xffffff));
+					for (unsigned i=5;i<16;i++) if (second[i])
+						return reject(20,(worker<<24)|(i<<16)|(second[i]&0xffff));
+					if (!WorkPeerStatusSafe(state[1+worker],second[0],second[1],
+						fDispatch.peerNonce[worker-1],state[1]))
+						return reject(21,(worker<<24)|((second[0]&0xfff)<<12)|(second[1]&0xfff));
+					fIO.Pause(); const uint32 peerPc0=fIO.RuntimePcRead();
+					fIO.Pause(); const uint32 peerPc1=fIO.RuntimePcRead();
+					const bool waiting=(peerPc0==TT_Q38_PEER_WAIT_LOAD || peerPc0==TT_Q38_PEER_WAIT_BRANCH)
+						&& (peerPc1==TT_Q38_PEER_WAIT_LOAD || peerPc1==TT_Q38_PEER_WAIT_BRANCH);
+					auto executable=[](uint32 pc) {
+						return pc>=0x72000 && pc<0x72000+sizeof(PioneerQwen35::WorkPeerWords)
+							&& pc!=TT_Q38_PEER_FAULT_ENTRY && pc!=TT_Q38_PEER_FAULT_PARK
+							&& !PioneerQ38PeerTerminalPc(pc);
+					};
+					if (!executable(peerPc0) || !executable(peerPc1))
+						return reject(22,(worker<<24)|(peerPc1&0xffffff));
+					if (second[0]!=second[1] || second[4] || !waiting) {
+						allReady=false; pendingWorker=worker;
+						pendingDetail=((second[0]&0xfff)<<12)|(second[1]&0xfff);
+					}
+				}
+				if (allReady) {
+					for (unsigned worker=1;worker<120;worker++) {
+						auto& node=fDispatch.worker[worker];
+						if (!fIO.SelectRuntimeCore(worker)
+							|| !PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)
+							|| !PioneerQ38DispatchCodeMatches(fIO,worker,&fDispatch)
+							|| !PioneerQ38DispatchPeerStatus(fIO,fIO.Q38PanelRead(0x74140),false,&fDispatch))
+							return reject(23,(worker<<24)|(fDispatch.closeDetail[0]&0xffffff));
+					}
+					if (!fIO.SelectRuntimeCore(0) || !Scope(0x46800)) return reject(24,fIO.ResetRead());
+					quietDetail=0;
+					if (!Quiet(&quietDetail)) return reject(25,quietDetail);
+					fIO.Pause(); const uint32 finalPc=fIO.RuntimePcRead();
+					if (!terminalPc(finalPc)) return reject(26,finalPc);
+					if (Read(RootCompletionAddress)!=RootFault) return reject(27,Read(RootCompletionAddress));
+					for (unsigned i=0;i<121;i++)
+						if (Read(RootDispatchStateAddress+i*4)!=state[i]) return reject(28,i);
+					return true;
+				}
+			}
+			if (fIO.Q38CohortNow()>=deadline)
+				return reject(29,(pendingWorker<<24)|(pendingDetail&0xffffff));
 			fIO.Pause();
-			const uint32 mirror=fIO.Q38PanelRead(0x74144);
-			if (mirror!=actual) return reject(15,(worker<<24)|(actual&0xffffff));
-			if (!WorkPeerNonceSafe(state[1+worker],actual,fDispatch.peerNonce[worker-1],state[1]))
-				return reject(16,(worker<<24)|(actual&0xffffff));
-			if (!PioneerQ38DispatchPeerStatus(fIO,actual,false,&fDispatch)) return reject(17,worker);
 		}
-		if (!fIO.SelectRuntimeCore(0)) return reject(17,0);
-		if (!Scope(0x46800)) return reject(18,fIO.ResetRead());
-		quietDetail=0;
-		if (!Quiet(&quietDetail)) return reject(19,quietDetail);
-		const uint32 finalPc=fIO.RuntimePcRead();
-		if (!terminalPc(finalPc)) return reject(20,finalPc);
-		const uint32 finalMarker=Read(RootCompletionAddress);
-		if (finalMarker!=RootFault) return reject(21,finalMarker);
-		for (unsigned i=0;i<121;i++)
-			if (Read(RootDispatchStateAddress+i*4)!=state[i]) return reject(22,i);
-		return true;
 	}
 
 	bool RecoverWorkFault(unsigned* reason=NULL,unsigned* detail=NULL)

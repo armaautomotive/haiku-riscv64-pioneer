@@ -72,14 +72,14 @@ struct Mock {
 
 int main()
 {
-	assert(D::WorkPeerNonceSafe(10,10,9,10));
-	assert(D::WorkPeerNonceSafe(10,9,9,10)); // peer did not consume the failed task
-	assert(D::WorkPeerNonceSafe(10,11,9,10)); // peer completed before ROOT's ledger commit
-	assert(!D::WorkPeerNonceSafe(10,8,8,10));
-	assert(!D::WorkPeerNonceSafe(10,8,9,10));
-	assert(!D::WorkPeerNonceSafe(10,12,9,10));
-	assert(!D::WorkPeerNonceSafe(10,11,9,10-1));
-	assert(!D::WorkPeerNonceSafe(0x7ffffffe,0,0,0));
+	assert(D::WorkPeerStatusSafe(10,10,10,9,10));
+	assert(D::WorkPeerStatusSafe(10,11,10,9,10)); // request arrived, peer is still working
+	assert(D::WorkPeerStatusSafe(10,11,11,9,10)); // peer finished before ROOT committed
+	assert(!D::WorkPeerStatusSafe(10,9,9,9,10)); // a peer cannot lag the ledger
+	assert(!D::WorkPeerStatusSafe(10,12,10,9,10));
+	assert(!D::WorkPeerStatusSafe(10,11,9,9,10-1));
+	assert(!D::WorkPeerStatusSafe(10,10,11,9,10));
+	assert(!D::WorkPeerStatusSafe(0x7ffffffe,0,0,0,0));
 	auto prepare=std::make_unique<D::WorkPrepare>();
 	prepare->version=D::WorkVersion;
 	prepare->manifest.context=32;
