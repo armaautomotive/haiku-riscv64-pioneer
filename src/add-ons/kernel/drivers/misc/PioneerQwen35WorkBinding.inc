@@ -105,6 +105,43 @@ public:
 		return true;
 	}
 
+	bool WorkFaultNocSnapshot(PioneerQwen35::WorkPoll& result)
+	{
+		uint32 command[10],counters[8];
+		if (!fIO.SelectRuntimeCore(0) || !Scope(0x46800) || !Quiet()) return false;
+		for (unsigned i=0;i<10;i++) {
+			command[i]=fIO.ResidentNocRead(i*4);
+			if (command[i]==UINT32_MAX) return false;
+		}
+		for (unsigned i=0;i<8;i++) {
+			counters[i]=fIO.ResidentNocRead(PioneerQ38PanelCounter(i));
+			if (counters[i]==UINT32_MAX) return false;
+		}
+		fIO.Pause();
+		if (!Scope(0x46800) || !Quiet() || Read(PioneerQwen35::RootCompletionAddress)
+			!=PioneerQwen35::RootFault) return false;
+		memcpy(result.faultNocCommand,command,sizeof(command));
+		memcpy(result.faultNocCounters,counters,sizeof(counters));
+		for (unsigned i=0;i<8;i++)
+			result.faultNocCounterDelta[i]=counters[i]-fDispatch.bootCounter[0][i];
+		result.faultNocValid=1;
+
+		uint32 peerStatusFirst[16],peerStatus[16],peerPc0=0,peerPc1=0;
+		auto& node=fDispatch.worker[119];
+		if (!fIO.SelectRuntimeCore(119)
+			|| !PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)
+			|| !PeerStatusSnapshot(119,peerStatusFirst,peerStatus)
+			|| !PeerPcSnapshot(peerPc0,peerPc1)
+			|| !fIO.SelectRuntimeCore(0) || !Scope(0x46800)
+			|| Read(PioneerQwen35::RootCompletionAddress)!=PioneerQwen35::RootFault || !Quiet())
+			return true; // retain the validated ROOT snapshot if the optional peer sample changes
+		memcpy(result.faultPeer119Status,peerStatus,sizeof(peerStatus));
+		result.faultPeer119Pc[0]=peerPc0;
+		result.faultPeer119Pc[1]=peerPc1;
+		result.faultPeer119Valid=1;
+		return true;
+	}
+
 	enum : unsigned { WorkPeerFaultMarker=0x46503851 };
 
 	static bool PeerFaultHandlerPc(uint32 pc)

@@ -171,6 +171,7 @@ public:
 			if (io.WorkFaultSafe(result.pc,&reason,&detail)) {
 				phase=RecoverableFault;
 				result.state=WorkRecoverableFault;
+				io.WorkFaultNocSnapshot(result); // read-only evidence after the all-peer safe-idle proof
 			} else {
 				// Keep an explicit terminal ROOT fault eligible for a fresh full
 				// proof at STOP. No reset or cleanup is authorized by this state.

@@ -168,6 +168,15 @@ template<class IO> bool PioneerQ38DispatchBootstrap(IO& io,const tt_dram_samples
 		io.Pause();
 	}
 	if (!io.SelectRuntimeCore(0) || !PioneerQ38DispatchSources(io,dram,banks,lease.worker[0],0x47800)) return PioneerQ38DispatchQuarantine(lease,banks);
+	// Keep the ROOT's same-counter baseline for a later terminal Work fault
+	// receipt. All peers are booted and ROOT is held before inference starts.
+	for (unsigned c=0;c<8;c++) {
+		const uint32_t first=io.ResidentNocRead(PioneerQ38PanelCounter(c));
+		io.Pause();
+		const uint32_t second=io.ResidentNocRead(PioneerQ38PanelCounter(c));
+		if (first==UINT32_MAX || second!=first) return PioneerQ38DispatchQuarantine(lease,banks);
+		lease.bootCounter[0][c]=second;
+	}
 	uint32_t bankRoutes[8]={};
 	for (unsigned bank=0;bank<7;bank++) { uint32_t address=0,index=0; if (!banks.Page(dram,bank,0,address,bankRoutes[bank],index)) return PioneerQ38DispatchQuarantine(lease,banks); }
 	if (!PioneerQ38PanelStage(io,0x74040,bankRoutes,8)) return PioneerQ38DispatchQuarantine(lease,banks);

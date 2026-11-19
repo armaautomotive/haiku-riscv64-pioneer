@@ -38,6 +38,19 @@ struct Mock {
 		if (detail) *detail=safe?0:0x77;
 		return safe;
 	}
+	bool WorkFaultNocSnapshot(D::WorkPoll& result)
+	{
+		memcpy(result.faultNocCommand,command,sizeof(command));
+		for (unsigned i=0;i<8;i++) {
+			result.faultNocCounters[i]=0x100+i;
+			result.faultNocCounterDelta[i]=0x200+i;
+		}
+		result.faultNocValid=1;
+		result.faultPeer119Valid=1;
+		result.faultPeer119Pc[0]=result.faultPeer119Pc[1]=0x7204c;
+		result.faultPeer119Status[0]=result.faultPeer119Status[1]=119;
+		return true;
+	}
 	bool RecoverWorkFault(unsigned* reason,unsigned* detail)
 	{
 		if (!WorkFaultSafe(Pc(),reason,detail) || reset!=0x46800) return false;
@@ -185,6 +198,10 @@ int main()
 	assert(reply->pc==D::WorkFaultPc && reply->progress.reserved[0]==9
 		&& reply->progress.reserved[1]==D::RootFault
 		&& reply->progress.reserved[2]==0x54000300 && reply->progress.reserved[3]==119);
+	assert(reply->faultNocValid && reply->faultNocCommand[0]==0
+		&& reply->faultNocCommand[9]==9 && reply->faultNocCounters[7]==0x107
+		&& reply->faultNocCounterDelta[7]==0x207 && reply->faultPeer119Valid
+		&& reply->faultPeer119Pc[1]==0x7204c && reply->faultPeer119Status[0]==119);
 	assert(failed->Stop(io));
 	assert(failed->Restored() && !failed->Unsafe() && io.l1==saved);
 	assert(io.resets==12);

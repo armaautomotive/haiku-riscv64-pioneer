@@ -223,6 +223,18 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 				poll->generatedIds[8],poll->generatedIds[9],poll->generatedIds[10],poll->generatedIds[11],
 				poll->generatedIds[12],poll->generatedIds[13],poll->generatedIds[14],
 				poll->recoveryProofReason,poll->recoveryProofDetail);
+			fprintf(stderr,"P100A_Q35 root_noc_snapshot_valid=%u command=",
+				poll->faultNocValid);
+			for (unsigned i=0;i<10;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultNocCommand[i]);
+			fprintf(stderr," counters=");
+			for (unsigned i=0;i<8;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultNocCounters[i]);
+			fprintf(stderr," counter_delta=");
+			for (unsigned i=0;i<8;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultNocCounterDelta[i]);
+			fprintf(stderr,"\n");
+			fprintf(stderr,"P100A_Q35 worker119_snapshot_valid=%u pc=%#x,%#x status=",
+				poll->faultPeer119Valid,poll->faultPeer119Pc[0],poll->faultPeer119Pc[1]);
+			for (unsigned i=0;i<16;i++) fprintf(stderr,"%s%#x",i?",":"",poll->faultPeer119Status[i]);
+			fprintf(stderr,"\n");
 			return false;
 		}
 		snooze(10000);

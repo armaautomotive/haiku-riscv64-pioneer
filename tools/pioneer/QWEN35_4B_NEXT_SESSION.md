@@ -59,6 +59,17 @@ STOP recovery and clean unload without board reboot; tag52 is not yet installed
 on the card. Hashes are in
 [`tag52 build record`](benchmarks/qwen35-work-tag252-20261119/BUILD.md).
 
+## Tag53 fault receipt
+
+Tag53 extends the terminal Work poll result with the ROOT's last ten NoC
+command words, eight counter values/deltas, and worker119's stable 16-word
+status plus two PC samples. The driver reads them only after the all-120-core
+safe-idle proof; there are no additional packets, resets, or retries. The
+Work protocol is version 3. Its warnings-as-errors cross-build and
+WorkOwner regression passed, but it is not yet on hardware. Use tag53 for the
+next guarded run and preserve `root_noc_snapshot_valid` and
+`worker119_snapshot_valid` from the client fault receipt.
+
 ## Tag251: failed automatic close recovery
 
 Tag251 tried to run the full fleet proof and teardown from the device-release
@@ -74,10 +85,10 @@ intact. The raw post-cycle logs are untrusted because their writers were
 interrupted. Details and hashes are in
 [`tag251 RUN.md`](benchmarks/qwen35-work-tag251-20261119/RUN.md).
 
-Next, continue tracing why worker119's 4-byte doorbell transfer stays busy.
 Tag250 verifies explicit STOP reproof, clean unload, and stable041 hot reload
-without board reboot. Next, continue tracing worker119's doorbell fault, then
-retest the guarded client cleanup and resume valid-output/decode-rate work.
+without board reboot. Next, deploy tag53 only after strict idle preflight,
+run the guarded trial with explicit STOP/BANK END, then use its receipt to
+trace worker119's doorbell fault before resuming valid-output/decode-rate work.
 
 ## GitHub progress
 

@@ -451,6 +451,13 @@ tag250 remains the hardware proof of recovery from this ROOT fault without a
 board reboot. Tag52 itself has not been installed on hardware. Build hashes
 are in [`qwen35-work-tag252-20261119/BUILD.md`](benchmarks/qwen35-work-tag252-20261119/BUILD.md).
 
+Tag53 adds a read-only receipt for the ROOT NoC command/counters and
+worker119's stable status/PC after the complete safe-idle proof. The
+warnings-as-errors cross-build and WorkOwner regression passed. It has not
+been installed on hardware; the next guarded run can identify whether the
+doorbell reached worker119. Hashes are in
+[`qwen35-work-tag253-20261119/BUILD.md`](benchmarks/qwen35-work-tag253-20261119/BUILD.md).
+
 ## Haiku llama.cpp platform patch
 
 The local `src/libs/llama.cpp` worktree also contains Haiku platform support
