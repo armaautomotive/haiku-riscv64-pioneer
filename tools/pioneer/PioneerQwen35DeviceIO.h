@@ -21,11 +21,13 @@ class DeviceIO {
 	bool Write(Range range,const void* local);
 	bool TransferWords(Range range,void* local,bool write);
 	bool StageInput(unsigned type,const float* input,unsigned inputs);
-	bool StageBand(const TensorSpace& tensor,unsigned first,unsigned groups,float* output);
+	bool StageBand(const TensorSpace& tensor,float* output,
+		float* best=nullptr,unsigned* chosen=nullptr);
 public:
 	DeviceIO(const DeviceLayout& layout,Range ropeTable,volatile RequestProgress& status,
 		volatile uint32_t* generatedIds);
-	bool Ready() const;
+	void Trace(unsigned stage);
+	bool Ready();
 	bool Embed(unsigned token,float* hidden,unsigned values);
 	bool Project(unsigned layer,unsigned role,const float* input,unsigned inputs,float* output,unsigned outputs);
 	bool TiedArgmax(const float* input,unsigned inputs,unsigned& token);

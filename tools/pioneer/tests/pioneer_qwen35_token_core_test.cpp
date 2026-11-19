@@ -74,6 +74,7 @@ struct Stub {
 	struct KvCell { uint32_t key[Packed], value[Packed]; bool written=false; };
 	KvCell kv[Q::Layers/4][Q::DenseKeyHeads][Positions];
 	std::vector<unsigned> tokens;
+	void Trace(unsigned) {}
 
 	bool Embed(unsigned token,float* hidden,unsigned n)
 	{

@@ -3,16 +3,19 @@
 #include "PioneerQwen35DeviceIO.h"
 #include "PioneerQwen35Embedding.h"
 #include "PioneerQwen35RootImageLayout.h"
+#include "PioneerQwen35WorkSchedule.h"
 #include "PioneerQ38ProjectionInput.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionInputShape.h"
 
-extern "C" unsigned q35_work_matrix_band();
+extern "C" unsigned q35_dispatch_matrix();
 
 namespace PioneerQwen35 {
 namespace {
 enum : unsigned {
 	Niu=0xffb20000, Bounce=RootBounceAddress, BounceBytes=RootBounceBytes,
-	RootRoute=129, Activation=0xa0000, Scales=0x94000, MatrixJob=0x74000, MatrixResult=0x84000
+	RootRoute=129, Activation=0xa0000, Scales=RootScaleAddress, MatrixJob=0x74000,
+	RootMatrixJob=0x74f60, DispatchStateAddress=0x7fc00,
+	MatrixResult=0x84000, RootProjectionResult=0x9e000
 };
 constexpr unsigned CounterOffset[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x228};
 
@@ -72,12 +75,30 @@ DeviceIO::DeviceIO(const DeviceLayout& layout,Range ropeTable,volatile RequestPr
 {
 }
 
-bool DeviceIO::Ready() const
+void DeviceIO::Trace(unsigned stage)
 {
-	return started && tokens && model.magic==LayoutMagic && model.version==LayoutVersion
-		&& model.context && model.context<=MaxPositions && !model.reserved
-		&& InBank(rope) && rope.bytes==model.context*Rotary*4 && Quiet()
-		&& *Words(Niu+0x14)==RootRoute;
+	progress.reserved[ProgressReadyFailureSlot]=stage;
+	Fence();
+}
+
+bool DeviceIO::Ready()
+{
+	const auto reject=[&](unsigned reason) {
+		progress.reserved[ProgressReadyFailureSlot]=reason;
+		Fence();
+		return false;
+	};
+	if (!started) return reject(1);
+	if (!tokens) return reject(2);
+	if (model.magic!=LayoutMagic) return reject(3);
+	if (model.version!=LayoutVersion) return reject(4);
+	if (!model.context || model.context>MaxPositions) return reject(5);
+	if (model.reserved) return reject(6);
+	if (!InBank(rope)) return reject(7);
+	if (rope.bytes!=model.context*Rotary*4) return reject(8);
+	if (!Quiet()) return reject(9);
+	if (*Words(Niu+0x14)!=RootRoute) return reject(10);
+	return true;
 }
 
 bool DeviceIO::TransferWords(Range range,void* local,bool write)
@@ -129,6 +150,7 @@ bool DeviceIO::Write(Range range,const void* local) { return TransferWords(range
 
 bool DeviceIO::Embed(unsigned token,float* hidden,unsigned values)
 {
+	Trace(0xd1000000U|(token&0x00ffffffU));
 	namespace E=PioneerQwen35Embedding;
 	Range range;
 	unsigned lane;
@@ -144,6 +166,7 @@ bool DeviceIO::Embed(unsigned token,float* hidden,unsigned values)
 
 bool DeviceIO::ReadWeight(unsigned layer,unsigned role,unsigned offset,float* output,unsigned values)
 {
+	Trace(0xd2000000U|((layer&0xffU)<<16)|((role&0xffU)<<8)|((offset>>6)&0xffU));
 	const auto* tensor=model.Weight(layer,role);
 	if (!tensor || tensor->type || values>Hidden || offset>ConvChannels*4) return false;
 	unsigned first=0, rows=1, byteOffset=offset*4;
@@ -159,12 +182,14 @@ bool DeviceIO::ReadWeight(unsigned layer,unsigned role,unsigned offset,float* ou
 
 bool DeviceIO::ReadRope(unsigned at,float* output,unsigned values)
 {
+	Trace(0xd3000000U|(at&0x00ffffffU));
 	return at==position && position<model.context && values==Rotary
 		&& Transfer({rope.bank,rope.address+position*Rotary*4,Rotary*4},output);
 }
 
 bool DeviceIO::ReadConv(unsigned layer,unsigned slot,unsigned channel,float* output,unsigned values)
 {
+	Trace(0xd4000000U|((layer&0xffU)<<16)|((slot&1U)<<15)|((channel>>4)&0x7fffU));
 	Range range;
 	return position && slot==(position&1) && values==48 && model.ResolveConv(layer,slot,channel,range)
 		&& Transfer(range,output);
@@ -172,6 +197,7 @@ bool DeviceIO::ReadConv(unsigned layer,unsigned slot,unsigned channel,float* out
 
 bool DeviceIO::WriteConv(unsigned layer,unsigned slot,unsigned channel,const float* input,unsigned values)
 {
+	Trace(0xd5000000U|((layer&0xffU)<<16)|((slot&1U)<<15)|((channel>>4)&0x7fffU));
 	Range range;
 	return slot==((position&1)^1) && values==48 && model.ResolveConv(layer,slot,channel,range)
 		&& Write(range,input);
@@ -179,6 +205,7 @@ bool DeviceIO::WriteConv(unsigned layer,unsigned slot,unsigned channel,const flo
 
 bool DeviceIO::ReadDelta(unsigned layer,unsigned slot,unsigned head,float* output,unsigned values)
 {
+	Trace(0xd6000000U|((layer&0xffU)<<16)|((slot&1U)<<15)|(head&0x7fffU));
 	Range range;
 	return position && slot==(position&1) && values==DeltaStateWords && model.ResolveDelta(layer,slot,head,range)
 		&& Transfer(range,output);
@@ -186,6 +213,7 @@ bool DeviceIO::ReadDelta(unsigned layer,unsigned slot,unsigned head,float* outpu
 
 bool DeviceIO::WriteDelta(unsigned layer,unsigned slot,unsigned head,const float* input,unsigned values)
 {
+	Trace(0xd7000000U|((layer&0xffU)<<16)|((slot&1U)<<15)|(head&0x7fffU));
 	Range range;
 	return slot==((position&1)^1) && values==DeltaStateWords && model.ResolveDelta(layer,slot,head,range)
 		&& Write(range,input);
@@ -193,6 +221,7 @@ bool DeviceIO::WriteDelta(unsigned layer,unsigned slot,unsigned head,const float
 
 bool DeviceIO::ReadKv(unsigned layer,unsigned head,unsigned at,uint32_t* k,uint32_t* v,unsigned words)
 {
+	Trace(0xd8000000U|((layer&0xffU)<<16)|((head&0xffU)<<8)|(at&0xffU));
 	Range key,value;
 	return at<=position && words==DenseHeadWidth/2 && model.ResolveKv(layer,head,at,false,key)
 		&& model.ResolveKv(layer,head,at,true,value) && Transfer(key,k) && Transfer(value,v);
@@ -200,6 +229,7 @@ bool DeviceIO::ReadKv(unsigned layer,unsigned head,unsigned at,uint32_t* k,uint3
 
 bool DeviceIO::WriteKv(unsigned layer,unsigned head,unsigned at,const uint32_t* k,const uint32_t* v,unsigned words)
 {
+	Trace(0xd9000000U|((layer&0xffU)<<16)|((head&0xffU)<<8)|(at&0xffU));
 	Range key,value;
 	return at==position && words==DenseHeadWidth/2 && model.ResolveKv(layer,head,at,false,key)
 		&& model.ResolveKv(layer,head,at,true,value) && Write(key,k) && Write(value,v);
@@ -209,6 +239,10 @@ bool DeviceIO::StageInput(unsigned type,const float* input,unsigned inputs)
 {
 	if (!PioneerQwen35Projection::Supports(type,inputs)) return false;
 	unsigned scalesPerChunk=type==8?8:1;
+	unsigned blocks=inputs>>(type==8?5:8),padded=(blocks+15)&~15U;
+	if (padded>RootScaleMaxWords) return false;
+	volatile uint32_t* evidence=Words(RootScaleEvidenceAddress);
+	for (unsigned i=0;i<RootScaleEvidenceWords;i++) evidence[i]=0;
 	for (unsigned chunk=0;chunk<inputs/256;chunk++) {
 		PioneerQ38ProjectionInput packed;
 		// Q5_K uses the same 256-lane Q8_K activation as Q4_K.
@@ -216,81 +250,188 @@ bool DeviceIO::StageInput(unsigned type,const float* input,unsigned inputs)
 		for (unsigned w=0;w<128;w++) Words(Activation)[chunk*128+w]=packed.operand[w];
 		for (unsigned w=0;w<scalesPerChunk;w++) Words(Scales)[chunk*scalesPerChunk+w]=packed.scale[w];
 	}
+	if (type==13 && blocks<padded) evidence[0]=Words(Scales)[blocks];
+	for (unsigned block=blocks;block<padded;block++) Words(Scales)[block]=0;
 	Fence();
+	if (type==13 && blocks<padded) evidence[1]=Words(Scales)[blocks];
 	return true;
 }
 
-bool DeviceIO::StageBand(const TensorSpace& tensor,unsigned first,unsigned groups,float* output)
+bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,unsigned* chosen)
 {
-	Range range;
-	if (!tensor.ResolveBand(first,groups,range) || !InBank(range)) return false;
-	unsigned tile=PioneerQwen35Projection::TileBytes(tensor.type);
-	const unsigned descriptor[]={PioneerQwen35Projection::Magic,tensor.type,tile,0,0,tensor.inputs,range.address,groups};
-	for (unsigned i=0;i<8;i++) Words(MatrixJob)[i]=descriptor[i];
-	uint32_t command[]={range.address,0,PioneerQ38ProjectionRoute(range.bank),0x90000,0,RootRoute,0,0,tile,0};
-	if (!Program(command)) return false;
-	unsigned before[7];
-	for (unsigned i=0;i<7;i++) before[i]=Counter(i);
-	if (q35_work_matrix_band()!=groups*(tensor.inputs/16)) return false;
-	command[0]=range.address+range.bytes-tile;
-	if (!Matches(command)) return false;
-	unsigned tiles=groups*(tensor.inputs>>(tensor.type==8?5:8));
-	const unsigned increment[]={tiles,range.bytes/64,tiles,tiles,0,0,0};
-	for (unsigned i=0;i<7;i++)
-		if (Counter(i)-before[i]!=increment[i]) return false;
-	for (unsigned i=0;i<8;i++)
-		if (Words(MatrixJob)[i]!=descriptor[i]) return false;
-	for (unsigned row=0;row<groups*16;row++) {
-		float result=PioneerAttentionFloat(Words(MatrixResult)[row]);
-		if (!Finite(result)) return false;
-		output[row]=result;
+	auto fail=[&](unsigned reason) { Trace(0xe5000000U|reason); return false; };
+	if (tensor.type==13) {
+		Words(RootScaleEvidenceAddress)[3]=Words(Scales)[tensor.inputs>>8];
+		Fence();
 	}
-	return true;
+	if (!tensor.place.Valid() || (output==nullptr && (!best || !chosen))) return fail(1);
+	const unsigned tile=PioneerQwen35Projection::TileBytes(tensor.type);
+	if (!tile || !PioneerQwen35Projection::Supports(tensor.type,tensor.inputs)) return fail(2);
+	if (tensor.type==13) {
+		Words(RootScaleEvidenceAddress)[4]=Words(Scales)[tensor.inputs>>8];
+		Fence();
+	}
+	PioneerQ35WorkFragment fragments[Banks]={};
+	unsigned cursor[Banks]={},groups=0;
+	for (unsigned fragment=0;fragment<tensor.place.count;fragment++) {
+		const auto& part=tensor.place.parts[fragment];
+		if ((part.firstRow|part.rows)&15) return fail(3);
+		fragments[fragment]={part.firstRow/16,part.rows/16};
+		groups+=fragments[fragment].groups;
+	}
+	if (tensor.type==13) {
+		Words(RootScaleEvidenceAddress)[5]=Words(Scales)[tensor.inputs>>8];
+		Fence();
+	}
+	if (!groups || groups!=tensor.place.rows/16) return fail(4);
+	volatile uint32_t* state=Words(DispatchStateAddress);
+	if (state[0]!=RootDispatchStateMagic || state[1]>=0x7ffffffe) return fail(5);
+	if (tensor.type==13) {
+		Words(RootScaleEvidenceAddress)[6]=Words(Scales)[tensor.inputs>>8];
+		Fence();
+	}
+	unsigned completed=0;
+	while (completed<groups) {
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[7]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		PioneerQ35WorkBatch batch{};
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[8]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		if (!PioneerQ35BuildWorkBatch(fragments,tensor.place.count,cursor,batch)) return fail(6);
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[9]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		const unsigned rootGroups=batch.rootGroups,workers=batch.workerCount;
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[10]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		if (progress.reserved[ProgressProjectionWavesSlot]==0xffffffffU
+			|| (workers==WorkTensixPeerCount && rootGroups==1
+				&& progress.reserved[ProgressFullCoreWavesSlot]==0xffffffffU)) return fail(7);
+		struct Task { unsigned firstGroup,groups; Range range; unsigned sequence; } tasks[119];
+		for (unsigned worker=0;worker<119;worker++) tasks[worker]={};
+		unsigned processed=rootGroups;
+		for (unsigned worker=0;worker<workers;worker++) {
+			const auto& scheduled=batch.worker[worker];
+			Range range;
+			if (!tensor.ResolveBand(scheduled.firstGroup*16,scheduled.groups,range) || !InBank(range)) return fail(8);
+			unsigned sequence=state[2+worker]+1;
+			if (!sequence || sequence>=0x7ffffffe) return fail(9);
+			tasks[worker]={scheduled.firstGroup,scheduled.groups,range,sequence};
+			processed+=scheduled.groups;
+		}
+		if (!workers || processed!=batch.processedGroups || !processed || completed+processed>groups)
+			return fail(10);
+		const unsigned nonce=state[1]+1;
+		if (!nonce || nonce>=0x7fffffff) return fail(11);
+		volatile uint32_t* rootJob=Words(RootMatrixJob);
+		for (unsigned i=0;i<16;i++) rootJob[i]=0;
+		if (rootGroups) {
+			Range range;
+			if (!tensor.ResolveBand(batch.rootFirstGroup*16,rootGroups,range) || !InBank(range)) return fail(12);
+			rootJob[0]=PioneerQwen35Projection::Magic; rootJob[1]=tensor.type;
+			rootJob[2]=tile; rootJob[5]=tensor.inputs; rootJob[6]=range.address;
+			rootJob[7]=rootGroups; rootJob[8]=PioneerQ38ProjectionRoute(range.bank); rootJob[9]=range.bank;
+		}
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[11]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		volatile uint32_t* table=Words(0x74080);
+		for (unsigned worker=0;worker<119;worker++) for (unsigned word=0;word<8;word++)
+			table[worker*8+word]=0;
+		for (unsigned worker=0;worker<workers;worker++) {
+			const auto& task=tasks[worker];
+			const unsigned values[8]={task.range.address,task.range.bank,task.groups,task.sequence,
+				PioneerQ38ProjectionRoute(task.range.bank),Words(0x7d800)[worker*16],0,0};
+			if (!values[5]) return fail(13);
+			for (unsigned word=0;word<8;word++) table[worker*8+word]=values[word];
+		}
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[12]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		volatile uint32_t* header=Words(MatrixJob);
+		for (unsigned word=0;word<16;word++) header[word]=0;
+		header[0]=0x314d3851; header[1]=1; header[2]=1; header[3]=tensor.type;
+		header[4]=tensor.inputs; header[5]=workers; header[6]=nonce; header[8]=1;
+		Fence();
+		Trace(0xda000000U|workers);
+		if (tensor.type==13) {
+			Words(RootScaleEvidenceAddress)[13]=Words(Scales)[tensor.inputs>>8];
+			Fence();
+		}
+		if (q35_dispatch_matrix()!=workers) return fail(14);
+		if (rootGroups) {
+			for (unsigned row=0;row<rootGroups*16;row++) {
+				float value=PioneerAttentionFloat(Words(RootProjectionResult)[row]);
+				if (!Finite(value)) return fail(15);
+				const unsigned token=batch.rootFirstGroup*16+row;
+				if (output) output[token]=value;
+				else if (*chosen==Vocabulary || value>*best || (value==*best && token<*chosen)) {
+					*best=value; *chosen=token;
+				}
+			}
+		}
+		for (unsigned worker=0;worker<workers;worker++) {
+			const auto& task=tasks[worker];
+			for (unsigned row=0;row<task.groups*16;row++) {
+				float value=PioneerAttentionFloat(Words(RootWorkerResultAddress+worker*256*4)[row]);
+				if (!Finite(value)) return fail(16);
+				const unsigned token=task.firstGroup*16+row;
+				if (output) output[token]=value;
+				else if (*chosen==Vocabulary || value>*best || (value==*best && token<*chosen)) {
+					*best=value; *chosen=token;
+				}
+			}
+			state[2+worker]=task.sequence;
+		}
+		state[1]=nonce; Fence();
+		progress.reserved[ProgressProjectionWavesSlot]++;
+		if (workers==WorkTensixPeerCount && rootGroups==1)
+			progress.reserved[ProgressFullCoreWavesSlot]++;
+		Fence();
+		for (unsigned fragment=0;fragment<tensor.place.count;fragment++) cursor[fragment]=batch.nextGroup[fragment];
+		completed+=processed;
+	}
+	return completed==groups || fail(17);
 }
 
 bool DeviceIO::Project(unsigned layer,unsigned role,const float* input,unsigned inputs,float* output,unsigned outputs)
 {
+	Trace(0xdb000000U|((layer&0xffU)<<16)|((role&0xffU)<<8)|((inputs>>8)&0xffU));
 	const auto* tensor=model.Weight(layer,role);
 	if (!tensor || tensor==&model.tied || tensor->inputs!=inputs || tensor->place.rows!=outputs
 		|| !tensor->place.Valid() || !StageInput(tensor->type,input,inputs)) return false;
-	for (unsigned part=0;part<tensor->place.count;part++) {
-		const auto& fragment=tensor->place.parts[part];
-		for (unsigned row=0;row<fragment.rows;) {
-			unsigned rows=fragment.rows-row;
-			if (rows>256) rows=256;
-			unsigned first=fragment.firstRow+row;
-			if (!StageBand(*tensor,first,rows/16,output+first)) return false;
-			row+=rows;
-		}
+	if (tensor->type==13) {
+		Words(RootScaleEvidenceAddress)[2]=Words(Scales)[inputs>>8];
+		Fence();
 	}
-	return true;
+	return StageBand(*tensor,output);
 }
 
 bool DeviceIO::TiedArgmax(const float* input,unsigned inputs,unsigned& token)
 {
+	Trace(0xdc000000U|(inputs&0x00ffffffU));
 	const auto& tensor=model.tied;
 	if (inputs!=Hidden || tensor.inputs!=Hidden || tensor.type!=14 || tensor.place.rows!=Vocabulary
 		|| !tensor.place.Valid() || !StageInput(tensor.type,input,inputs)) return false;
-	float band[256], best=0;
+	float best=0;
 	unsigned chosen=Vocabulary;
-	for (unsigned part=0;part<tensor.place.count;part++) {
-		const auto& fragment=tensor.place.parts[part];
-		for (unsigned row=0;row<fragment.rows;) {
-			unsigned rows=fragment.rows-row;
-			if (rows>256) rows=256;
-			unsigned first=fragment.firstRow+row;
-			if (!StageBand(tensor,first,rows/16,band)) return false;
-			for (unsigned i=0;i<rows;i++)
-				if (chosen==Vocabulary || band[i]>best) { chosen=first+i; best=band[i]; }
-			row+=rows;
-		}
-	}
+	if (!StageBand(tensor,nullptr,&best,&chosen)) return false;
 	token=chosen;
 	return chosen<Vocabulary;
 }
 
 bool DeviceIO::PrefillDone(unsigned positions)
 {
+	Trace(0xdd000000U|(positions&0x00ffffffU));
 	if (decodeStarted || positions!=position+1) return false;
 	decodeStarted=Cycles();
 	if (decodeStarted<started) return false;
@@ -304,6 +445,7 @@ bool DeviceIO::PrefillDone(unsigned positions)
 
 bool DeviceIO::Commit(unsigned at,unsigned token,bool sampled,unsigned next)
 {
+	Trace(0xde000000U|((at&0xffU)<<16)|((sampled?1U:0U)<<15)|(next&0x7fffU));
 	if (at!=position || at>=model.context || token>=Vocabulary || next>=Vocabulary
 		|| sampled!=(decodeStarted!=0) || !Quiet()) return false;
 	if (sampled) {
@@ -322,7 +464,9 @@ bool DeviceIO::Commit(unsigned at,unsigned token,bool sampled,unsigned next)
 
 bool DeviceIO::FinishRequest(unsigned positions,unsigned outputs)
 {
+	Trace(0xdf000000U|((positions&0xffffU)<<8)|(outputs&0xffU));
 	if (positions!=position || !outputs || outputs!=generated || !Quiet()) return false;
+	progress.reserved[ProgressReadyFailureSlot]=0;
 	Fence();
 	progress.terminal=1;
 	Fence();

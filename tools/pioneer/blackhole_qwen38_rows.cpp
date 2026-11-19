@@ -43,11 +43,23 @@
 #endif
 #include "PioneerQwen38Panel.h"
 #ifdef PIONEER_Q35_PROJECTION_IMAGE
-#if PIONEER_Q35_PROJECTION_IMAGE != 1 || defined(PIONEER_Q38_SHARED_ROWS) \
- || defined(PIONEER_Q38_VECTOR_PANEL) || defined(PIONEER_Q38_FAST_PANEL) \
- || defined(PIONEER_Q38_AFFINE_REUSE) || defined(PIONEER_Q38_PERSISTENT_ROWS) \
+#if PIONEER_Q35_PROJECTION_IMAGE != 1 || defined(PIONEER_Q38_VECTOR_PANEL) \
+ || defined(PIONEER_Q38_FAST_PANEL) || defined(PIONEER_Q38_AFFINE_REUSE) \
  || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK)
-#error Qwen 4B projection requires the standalone checked rows image
+#error Qwen 4B projection requires its exact checked matrix engine
+#endif
+#if defined(PIONEER_Q35_WORK_PEER_IMAGE)
+#if PIONEER_Q35_WORK_PEER_IMAGE != 1 || !defined(PIONEER_Q38_SHARED_ROWS) \
+ || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(_KERNEL_MODE)
+#error Qwen Work peer requires shared-input persistent matrix rows
+#endif
+#elif defined(PIONEER_Q35_WORK_ROOT_MATRIX)
+#if PIONEER_Q35_WORK_ROOT_MATRIX != 1 || defined(PIONEER_Q38_SHARED_ROWS) \
+ || defined(PIONEER_Q38_PERSISTENT_ROWS)
+#error Qwen Work ROOT matrix engine must be the local checked rows role
+#endif
+#elif defined(PIONEER_Q38_SHARED_ROWS) || defined(PIONEER_Q38_PERSISTENT_ROWS)
+#error Qwen shared rows require the separate Work peer image role
 #endif
 #include "PioneerQwen35Projection.h"
 #endif
@@ -466,7 +478,7 @@ static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,uns
 {
 	PIONEER_Q38_MIXED_SEAL();
 	if (*Words(0xffb20040) || (*Words(0xffb20240)&255)) block_fault_park();
-	const unsigned offsets[]={0,8,12,32};
+	static const unsigned offsets[]={0,8,12,32};
 	const uint32_t values[]={address,route,destination,bytes};
 	for (unsigned w=0;w<4;w++) {
 		*Words(0xffb20000+offsets[w])=values[w];
@@ -482,7 +494,12 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 		ReadCommand(0xa0000+at,1|(2<<6),0xa0000+at,bytes);
 		FetchBlock(0xa0000+at); at+=bytes;
 	}
-#ifdef PIONEER_Q38_PERSISTENT_ROWS
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+	// Qwen35 Work's ROOT scale cache is the checked 0x94000 region. The
+	// original Qwen38 persistent ROOT stores scales at 0xab000 instead.
+	ReadCommand(0x94000,1|(2<<6),0x94000,(blocks*4+63)&~63U);
+	FetchBlock(0x94000);
+#elif defined(PIONEER_Q38_PERSISTENT_ROWS)
 	// Future root outputs occupy80000..9dc00. Keep ROOT scales outside that
 	// range while preserving this peer's LOCAL94000 arithmetic layout.
 	ReadCommand(0xab000,1|(2<<6),0x94000,(blocks*4+63)&~63U);
@@ -641,7 +658,13 @@ static Q38_TWIN_FN void NativeWeightPanel(unsigned raw,unsigned panel){
 #endif
 extern "C" unsigned block_main()
 {
-	const volatile uint32_t* job=Words(0x74000);
+	const volatile uint32_t* job=Words(
+#ifdef PIONEER_Q35_WORK_ROOT_MATRIX
+		0x74f60
+#else
+		0x74000
+#endif
+	);
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 #ifdef PIONEER_Q38_TWIN_NATIVE_Q8_IMAGE
 	const unsigned format=job[14];

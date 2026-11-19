@@ -62,7 +62,7 @@ public:
 	template<class IO>
 	bool Prepare(IO& io, const WorkPrepare& prepare)
 	{
-		if (phase!=Empty || !io.Scope(HeldReset) || !io.AllHeld() || !io.Quiet()) return Fail();
+		if (phase!=Empty || !io.Scope(HeldReset) || !io.RootHeld() || !io.Quiet()) return Fail();
 		context=prepare.manifest.context;
 		rope=prepare.rope;
 		memcpy(manifest,&prepare.manifest,sizeof(manifest));
@@ -85,19 +85,22 @@ public:
 	bool Start(IO& io, const WorkStart& start)
 	{
 		if (!CanStart(start)) return false;
-		if (!io.Scope(HeldReset) || !io.Quiet() || !Installed(io)) return Fail();
+		if (!io.Scope(HeldReset) || !io.RootHeld() || !io.Quiet() || !Installed(io)) return Fail();
 		const RootControl control={RootBootMagic,start.promptCount,start.maxOutput,context,
 			EndOfText,EndOfTurn,rope,start.requestId,{}};
 		unsigned words[sizeof(control)/4];
 		memcpy(words,&control,sizeof(control));
 		for (unsigned i=0; i<sizeof(words)/4; i++) io.Write(RootControlAddress+i*4,words[i]);
 		for (unsigned i=0; i<sizeof(RequestProgress)/4; i++) io.Write(RootProgressAddress+i*4,0);
+		for (unsigned i=0; i<RootScaleEvidenceWords; i++) io.Write(RootScaleEvidenceAddress+i*4,0);
 		for (unsigned i=0; i<start.promptCount; i++) io.Write(RootPromptAddress+i*4,start.prompt[i]);
 		for (unsigned i=0; i<RootCompletionWords; i++) io.Write(RootCompletionAddress+i*4,0);
 		for (unsigned i=0; i<sizeof(words)/4; i++)
 			if (io.Read(RootControlAddress+i*4)!=words[i]) return Fail();
 		for (unsigned i=0; i<sizeof(RequestProgress)/4; i++)
 			if (io.Read(RootProgressAddress+i*4)) return Fail();
+		for (unsigned i=0; i<RootScaleEvidenceWords; i++)
+			if (io.Read(RootScaleEvidenceAddress+i*4)) return Fail();
 		for (unsigned i=0; i<start.promptCount; i++)
 			if (io.Read(RootPromptAddress+i*4)!=start.prompt[i]) return Fail();
 		for (unsigned i=0; i<RootCompletionWords; i++)
@@ -130,6 +133,26 @@ public:
 		unsigned progress[statusWords];
 		for (unsigned i=0; i<statusWords; i++) progress[i]=io.Read(RootProgressAddress+i*4);
 		memcpy(&result.progress,progress,sizeof(progress));
+		// Prefer the explicit request-cleared terminal marker: some fault
+		// paths report the parked ROOT PC one instruction past WorkFaultPc.
+		if (marker==RootFault || (result.pc==WorkFaultPc && marker!=RootDone)) {
+			result.progress.reserved[1]=marker;
+			for (unsigned i=0; i<RootScaleEvidenceWords; i++)
+				result.generatedIds[i]=io.Read(RootScaleEvidenceAddress+i*4);
+			const unsigned failureStage=result.progress.reserved[2];
+			const unsigned failureDetail=result.progress.reserved[3];
+			if ((failureStage&RootDispatchRejectMask)!=RootDispatchRejectTag) {
+				const unsigned checkpointStage=io.Read(RootCheckpointAddress);
+				const unsigned checkpointDetail=io.Read(RootCheckpointAddress+4);
+				if (checkpointStage || checkpointDetail) {
+					result.progress.reserved[2]=checkpointStage;
+					result.progress.reserved[3]=checkpointDetail;
+				} else {
+					result.progress.reserved[2]=failureStage;
+					result.progress.reserved[3]=failureDetail;
+				}
+			}
+		}
 		if (!prefillObserved && result.progress.prefilled==promptCount) prefillObserved=observed;
 		result.startMicros=began;
 		result.prefillObservedMicros=prefillObserved;
@@ -170,7 +193,7 @@ public:
 	bool Stop(IO& io)
 	{
 		if (phase!=Held) return false;
-		if (!io.Scope(HeldReset) || !io.Quiet() || !io.AllHeld()) return Fail();
+		if (!io.Scope(HeldReset) || !io.Quiet() || !io.RootHeld()) return Fail();
 		for (unsigned i=0; i<SavedWords; i++) io.Write(Address(i),original[i]);
 		for (unsigned i=0; i<SavedWords; i++)
 			if (io.Read(Address(i))!=original[i]) return Fail();

@@ -10,6 +10,7 @@ class PioneerQ35WorkBinding {
 	const tt_compute_noc_result& fNoc;
 	const PioneerResidentLease& fLease;
 	const PioneerResidentBanks& fBanks;
+	PioneerQ38DispatchLease& fDispatch;
 	area_id fArea=-1;
 	volatile uint32* fL1=NULL;
 	uint32 fTlb[2][3]={};
@@ -19,8 +20,8 @@ public:
 
 	PioneerQ35WorkBinding(PioneerSessionIO& io,const tt_dram_samples_result& dram,
 		const tt_compute_noc_result& noc,const PioneerResidentLease& lease,
-		const PioneerResidentBanks& banks)
-		: fIO(io),fDram(dram),fNoc(noc),fLease(lease),fBanks(banks)
+		const PioneerResidentBanks& banks,PioneerQ38DispatchLease& dispatch)
+		: fIO(io),fDram(dram),fNoc(noc),fLease(lease),fBanks(banks),fDispatch(dispatch)
 	{
 	}
 
@@ -32,7 +33,7 @@ public:
 	bool Map()
 	{
 		using namespace PioneerQwen35;
-		if (fL1 || fArea>=B_OK || !fIO.runtimeMapped || fIO.runtimeCore || fIO.fleetEnabled
+		if (fL1 || fArea>=B_OK || !fIO.runtimeMapped || fIO.runtimeCore
 			|| !fIO.SelectRuntimeCore(0)) return false;
 		for (unsigned tlb=0; tlb<2; tlb++)
 			for (unsigned word=0; word<3; word++)
@@ -48,7 +49,7 @@ public:
 
 	bool Scope(unsigned reset)
 	{
-		if (!fL1 || fArea<B_OK || !fIO.runtimeMapped || fIO.runtimeCore || fIO.fleetEnabled
+		if (!fL1 || fArea<B_OK || !fIO.runtimeMapped || fIO.runtimeCore || !fIO.fleetEnabled
 			|| !fLease.ready || fLease.pending || fLease.recovery_required || !fBanks.Matches(fDram))
 			return false;
 		for (unsigned tlb=0; tlb<2; tlb++)
@@ -58,11 +59,37 @@ public:
 			&& PioneerRuntimeSources(fIO,fDram,fNoc,fLease);
 	}
 
-	bool AllHeld()
+	bool RootHeld()
 	{
-		tt_dram_samples_result samples={};
-		return BlackholeDramAllCoresHeld(fIO,samples) && samples.cores_checked==120
-			&& fIO.SelectRuntimeCore(0) && Scope(0x47800);
+		if (!fDispatch.booted || fDispatch.closed || PioneerQ38DispatchUnsafe(fDispatch)
+			|| !fIO.SelectRuntimeCore(0) || !Scope(0x47800) || !Quiet()) return false;
+		for (unsigned worker=1;worker<120;worker++) {
+			auto& node=fDispatch.worker[worker];
+			if (!fIO.SelectRuntimeCore(worker)
+				|| !PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)
+				|| !PioneerQ38DispatchPeerStatus(fIO,fDispatch.peerNonce[worker-1],false,&fDispatch))
+				return false;
+		}
+		return fIO.SelectRuntimeCore(0) && Scope(0x47800);
+	}
+
+	bool SyncDispatchState()
+	{
+		using namespace PioneerQwen35;
+		if (!fIO.SelectRuntimeCore(0) || !Scope(0x47800)) return false;
+		const unsigned base=(RootDispatchStateAddress-RootTextAddress)/4;
+		if (PioneerRead32(fL1+base)!=RootDispatchStateMagic) return false;
+		const unsigned rootNonce=PioneerRead32(fL1+base+1);
+		if (rootNonce<fDispatch.rootNonce || rootNonce>=0x7ffffffe) return false;
+		for (unsigned worker=0;worker<119;worker++) {
+			const unsigned sequence=PioneerRead32(fL1+base+2+worker);
+			if (sequence<fDispatch.peerNonce[worker] || sequence>rootNonce || sequence>=0x7ffffffe)
+				return false;
+		}
+		fDispatch.rootNonce=rootNonce;
+		for (unsigned worker=0;worker<119;worker++)
+			fDispatch.peerNonce[worker]=PioneerRead32(fL1+base+2+worker);
+		return true;
 	}
 
 	bool Quiet()
@@ -78,6 +105,8 @@ public:
 	{
 		using namespace PioneerQwen35;
 		if (address==RootBootAddress) return fIO.RuntimeCodeRead(0);
+		if (address>=RootCheckpointAddress && address<RootCompletionAddress)
+			return fIO.ResidentL1Read((address-(RootCompletionAddress-0x1fc0))/4);
 		if (address>=RootCompletionAddress) return fIO.RuntimeStatusRead((address-RootCompletionAddress)/4);
 		return PioneerRead32(fL1+(address-RootTextAddress)/4);
 	}

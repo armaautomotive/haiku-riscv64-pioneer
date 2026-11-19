@@ -34,9 +34,20 @@ extern "C" unsigned q35_work_main()
 	const auto& control=*reinterpret_cast<const volatile RootControl*>(RootControlAddress);
 	const auto& layout=*reinterpret_cast<const DeviceLayout*>(RootLayoutAddress);
 	auto& status=*reinterpret_cast<volatile RequestProgress*>(RootProgressAddress);
+	auto& dispatch=*reinterpret_cast<volatile DispatchState*>(RootDispatchStateAddress);
 	auto* tokens=reinterpret_cast<volatile uint32_t*>(RootOutputAddress);
 	if (control.magic!=RootBootMagic || control.context!=layout.context || !control.requestId
 		|| control.eos!=EndOfText || control.endTurn!=EndOfTurn) return 0;
+	if (control.requestId==1) {
+		dispatch.magic=RootDispatchStateMagic; dispatch.rootNonce=0;
+		for (unsigned worker=0;worker<119;worker++) dispatch.peerSequence[worker]=0;
+		asm volatile("fence" ::: "memory");
+	} else {
+		if (dispatch.magic!=RootDispatchStateMagic || dispatch.rootNonce>=0x7ffffffe) return 0;
+		for (unsigned worker=0;worker<119;worker++)
+			if (dispatch.peerSequence[worker]>dispatch.rootNonce
+				|| dispatch.peerSequence[worker]>=0x7ffffffe) return 0;
+	}
 	auto* progressWords=reinterpret_cast<const volatile uint32_t*>(RootProgressAddress);
 	for (unsigned i=0;i<sizeof(RequestProgress)/4;i++)
 		if (progressWords[i]) return 0;

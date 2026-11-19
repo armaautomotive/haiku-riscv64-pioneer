@@ -252,3 +252,134 @@ Exact timing, IDs, output and closure are in [the Work stdout](benchmarks/qwen35
 - Driver SHA-256 `7f1fd5267933967d49eeac256cbf6258f1714381401efce3f1b47c4657498d0f`
 - Client SHA-256 `68e84fb427776345e5745c8b46d97e0df0a7cc2df796eca8a3290c80b13e40bb`
 - ROOT text SHA-256 `27fe7bbeb544d8b317d9013ca3646d52ae259be00cc2bcc78fe86082653be247`
+
+## All-core Work follow-up
+
+The November 18 tag227 trial passed its preflight: the previous diagnostic
+had exited, the stable driver was idle, and the original 27B model was
+preserved. Tag227 authenticated and uploaded all 3,450 spans (2,740,498,432
+bytes); model load took 222.101549 seconds. Its first Work request parked at
+the fixed fault loop (`PC 0x40060`) with zero committed tokens. It produced
+no valid output or decode-rate measurement. The failure log is in
+`benchmarks/qwen35-work-tag227-20261118`.
+
+Tag228 adds failure-stage diagnostics and schedules each projection wave
+across the tensor's bank fragments together. This matters because the packed
+model stripes rows across seven banks; dispatching each bank fragment
+separately left many Tensix cores idle on medium projections. Each worker
+still receives at most 16 contiguous row groups from one bank fragment. The
+ROOT plus all 119 peers receive work whenever at least 120 groups remain;
+the test verifies complete nonoverlapping coverage and seven-bank
+participation for balanced layouts. The schedule tests pass under ASan/UBSan,
+and the RV32 image cross-build rejects integer division/remainder opcodes.
+Work protocol version 2 reports completed full-core waves and total projection
+waves in the request receipt. The client and trial wrapper require at least
+one completed full-core wave in each warm run, in addition to
+`tensixProjections=1` and `hostInference=0` support. The 120-core dispatch is
+internal to the matrix schedule.
+
+Current tag228 offline build hashes:
+
+- Driver SHA-256 `04ddf2e6a69f7d19aa1f2ac0a932031f3b60cbebc44c42856589fc9503aafe0c`
+- Work client SHA-256 `c588a5cafd5a76e09ddf71a00139da783e6b9754850914e9881d9a86694cf513`
+- ROOT text SHA-256 `052f8fc11d760f03ccb5aa0512d18c8f73e0c2b7aa38f1460a40b434a8095b2b`
+
+## November 18 all-core follow-up
+
+Tags228–233 were built and tried under guarded driver swaps. Each run started
+after the previous client exited and stable041 was verified idle; failures
+that left the candidate cold/owned were recovered through one controlled
+power cycle and the pinned SD-free Haiku path. The 27B model remains intact.
+
+- Tag228 stopped before token commit at stage `0x54000201`.
+- Tag229 stopped before token commit at stage `0x54000211`, detail
+  `0x46503851` (`Q8PF`).
+- Tag230 stopped before token commit at stage `0x54000216`, detail
+  `0x01073620` (worker1, peer PC `0x73620`).
+- Tag231 faulted at `pc=0x40064` before the dispatcher and had no dispatcher
+  checkpoint.
+- Tag232 traced to `0xda000077` immediately before the dispatcher call; it
+  failed before dispatcher entry.
+- Tag233 added an entry stub and reached the dispatcher. It failed at stage
+  `0x54000350`, detail `0x010723c4`: peer worker1 reported reason `0x50`,
+  `panels != count` after `q38_compute_once()`. The run authenticated the
+  model in 100.890229 s, tokenized the 18-token prompt in 13.185885 s, and
+  loaded/uploaded 3,450 resident spans (2,740,498,432 bytes) in 224.100909 s.
+  No prefill, decode, token commit, valid output, or rate was produced.
+
+Tag233 logs and recovery evidence are archived in
+`benchmarks/qwen35-work-tag233-20261118`. Its recovery restored stable041 at
+generation2 `cold0 active_owner0 guard1` and removed the shared lock. The last
+observed Haiku preflight had all 64 CPUs and full RAM, both 4B and 27B files
+intact, no inference process, and stable041 idle.
+
+Tag234 fixed the suspected scale-cache address for the Qwen35 peer and added
+actual/expected panel counts on peer refusal. It instead failed earlier at
+`StageBand` reason 14 (`q35_dispatch_matrix()` returned an unexpected worker
+count); the root checkpoint remained empty, so it did not verify the scale
+change or reach the peer count diagnostic. It authenticated in 100.234451 s,
+tokenized the 18-token prompt in 13.322161 s, and loaded/uploaded 3,450 spans
+(2,740,498,432 bytes) in 220.861532 s. No prefill, decode, token, valid output,
+or rate was produced. See `benchmarks/qwen35-work-tag234-20261118`.
+
+Tag234 recovery restored stable041 at generation 2 (`cold0 active_owner0
+guard1`) with the shared lock absent. The 27B setup remains intact. The next
+step is the tag235 receipt follow-up, described below. Do not assume the
+tag233 scale-cache change was exercised. Two valid warm outputs, separate
+load/prompt/decode timing, clean unload, and at least 100 decode tokens per
+second remain the completion criteria.
+
+Tag235 added a failure-only receipt in ROOT progress words and made the Work
+owner prefer it over an empty or stale L1 checkpoint. Its guarded run again
+started from stable041 generation 2 idle, with the old diagnostic exited,
+shared lock absent, 64 CPUs/full RAM, and both model files intact. It
+authenticated in 98.691868 s, tokenized the 18-token prompt in 13.515672 s,
+and uploaded 3,450 spans (2,740,498,432 bytes) in 225.917047 s. The dispatcher
+receipt `stage=0x54f002da detail=0x0000000a` maps to source line 730's padded
+scale check, first rejected block 10. The run failed before prefill/token;
+the dispatcher returned 0, `StageBand()` reported reason 14, and the candidate
+was cold/owned. No output or decode rate was produced. Tag235's logs and the
+recovery are in `benchmarks/qwen35-work-tag235-20261118`.
+
+Recovery completed through the saved single-cycle relay procedure and pinned
+SD-free Linux-to-Haiku path. Stable041 is again idle at generation 2 and the
+shared lock is absent; the 27B setup is intact. Next capture the scale bits,
+tensor type, and input width on that failure-only path, then diagnose the
+scale-cache contents before choosing a behavioral fix. Do not erase the bad
+scale tail in the dispatcher, since that would hide the reason it is wrong.
+
+Tag236 added failure-only scale bits and packed tensor type/input width to
+the receipt. Strict preflight passed from stable041 generation 2 idle, with
+the prior diagnostic exited, shared lock absent, 64 CPUs/full RAM, and both
+model files intact. Authentication took 100.712738 s, prompt tokenization
+took 13.525346 s for 18 tokens, and model load/upload took 227.309557 s for
+3,450 spans (2,740,498,432 bytes). It failed before prefill at
+`stage=0x54f002df detail=0x0000000a context0=0xbf61fd40
+context1=0x0d000a00`: the first padded scale slot (block10) for type13,
+width2560 held a nonzero scale. No output or decode rate was produced.
+
+The compiled StageInput has the expected six-word tail-zero loop; its
+640-byte frame and nested 2,112-byte quantizer frame are far from the scale
+cache at `0x94000` (ROOT stack starts at `0x70000`). This does not prove the
+on-card store or exclude a later writer. Tag236 was recovered through the
+single-cycle relay and pinned SD-free Linux-to-Haiku path after fixing two
+stale tag35 checks in its recovery helper. Stable041 is idle at generation2,
+the shared lock is absent, 64 CPUs/full RAM are available, and both model
+files remain intact. See the archived build and run in
+`benchmarks/qwen35-work-tag236-20261118` and the next-session handoff.
+
+## Haiku llama.cpp platform patch
+
+The local `src/libs/llama.cpp` worktree also contains Haiku platform support
+used by the Pioneer client build: Haiku cache/settings directories and
+thread-affinity handling. The source delta is preserved as
+[`llama-c060ca974c77-haiku-work.patch`](patches/llama-c060ca974c77-haiku-work.patch)
+against the pinned submodule commit `c060ca974c773c7c3d17fd1b66dc9d312bc292c0`.
+To reproduce that source state in a clean checkout, run:
+
+```sh
+git -C src/libs/llama.cpp apply tools/pioneer/patches/llama-c060ca974c77-haiku-work.patch
+```
+
+This patch records the existing platform delta; a clean-room rebuild of the
+full `libllama.so` from it has not been qualified in this bring-up.

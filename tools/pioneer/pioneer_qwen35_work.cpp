@@ -193,8 +193,23 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 		}
 		if (poll->state==D::WorkComplete) break;
 		if (poll->state!=D::WorkRunning) {
-			fprintf(stderr,"P100A_Q35 unexpected terminal run=%u state=%u commits=%u pc=%#x\n",
-				request.requestId,poll->state,committed,poll->pc);
+			fprintf(stderr,"P100A_Q35 unexpected terminal run=%u state=%u commits=%u pc=%#x "
+				"progress_magic=%#x prefilled=%u root_trace=%#x fault_marker=%#x "
+				"dispatcher_stage=%#x dispatcher_detail=%#x dispatcher_context0=%#x "
+				"dispatcher_context1=%#x scale_before_clear=%#x scale_after_clear=%#x "
+				"scale_after_stage_input=%#x scale_at_stageband_entry=%#x "
+				"scale_after_initial_validation=%#x scale_after_fragments=%#x "
+				"scale_after_state_validation=%#x scale_before_batch_object=%#x "
+				"scale_after_batch_object=%#x scale_after_batch_build=%#x "
+				"scale_after_batch_fields=%#x scale_after_root_job=%#x "
+				"scale_after_worker_table=%#x scale_before_dispatch=%#x "
+				"scale_before_validation=%#x\n",
+				request.requestId,poll->state,committed,poll->pc,p.magic,p.prefilled,
+				p.reserved[0],p.reserved[1],p.reserved[2],p.reserved[3],p.reserved[4],p.reserved[5],
+				poll->generatedIds[0],poll->generatedIds[1],poll->generatedIds[2],poll->generatedIds[3],
+				poll->generatedIds[4],poll->generatedIds[5],poll->generatedIds[6],poll->generatedIds[7],
+				poll->generatedIds[8],poll->generatedIds[9],poll->generatedIds[10],poll->generatedIds[11],
+				poll->generatedIds[12],poll->generatedIds[13],poll->generatedIds[14]);
 			return false;
 		}
 		snooze(10000);
@@ -208,10 +223,12 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 	const double promptSec=(poll->prefillObservedMicros-poll->startMicros)*1e-6;
 	const double decodeSec=(poll->completeObservedMicros-poll->prefillObservedMicros)*1e-6;
 	printf("P100A_Q35 warm_run=%u prompt_tokens=%u prompt_seconds=%.6f output_tokens=%u "
-		"decode_seconds=%.6f decode_tokens_per_second=%.6f prompt_cycles=%llu decode_cycles=%llu\n",
+		"decode_seconds=%.6f decode_tokens_per_second=%.6f prompt_cycles=%llu decode_cycles=%llu "
+		"full_core_waves=%u projection_waves=%u\n",
 		request.requestId,p.prefilled,promptSec,p.generated,decodeSec,p.generated/decodeSec,
 		(static_cast<unsigned long long>(p.promptCyclesHigh)<<32)|p.promptCyclesLow,
-		(static_cast<unsigned long long>(p.decodeCyclesHigh)<<32)|p.decodeCyclesLow);
+		(static_cast<unsigned long long>(p.decodeCyclesHigh)<<32)|p.decodeCyclesLow,
+		p.reserved[D::ProgressFullCoreWavesSlot],p.reserved[D::ProgressProjectionWavesSlot]);
 	printf("P100A_Q35 generated_ids=");
 	for (unsigned i=0; i<p.generated; i++) printf("%s%u",i?",":"",poll->generatedIds[i]);
 	printf("\n");

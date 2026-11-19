@@ -11,7 +11,7 @@ installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_
 guard=/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
 stableTag=2026102100010012
-candidateTag=2026111700010226
+candidateTag=2026111800010034
 stableSHA=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
 model=/boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
 llama=/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so
@@ -48,13 +48,37 @@ health() {
 }
 validated() {
 	[ "$(cat work.exit)" = 0 ] &&
-	[ "$(grep -Fxc ' Paris.' work.stdout)" = 2 ] &&
 	grep -Fxq 'P100A_Q35 unload_clean=1 state=2 active=0 cold=0' work.stdout &&
 	awk '
-		$1=="P100A_Q35" && $2~/^warm_run=[12]$/ && $3=="prompt_tokens=5" &&
-		$5=="output_tokens=2" {
+		function normalize(value) {
+			gsub(/[,.]/, " ", value)
+			gsub(/[[:space:]]+/, " ", value)
+		sub(/^ /, "", value)
+		sub(/ $/, "", value)
+			return value
+		}
+		/P100A_Q35 output_begin run=1/ { run=1; begin[1]++; next }
+		/P100A_Q35 output_begin run=2/ { run=2; begin[2]++; next }
+		/P100A_Q35 output_end run=1/ { run=0; end[1]++; next }
+		/P100A_Q35 output_end run=2/ { run=0; end[2]++; next }
+		run==1 || run==2 { output[run]=output[run] " " $0 }
+		END {
+			expected="A B C D E F G H I J K L M N O P"
+			exit !(begin[1]==1 && end[1]==1 && begin[2]==1 && end[2]==1
+				&& normalize(output[1])==expected && normalize(output[2])==expected)
+		}
+	' work.stdout &&
+	awk '
+		$1=="P100A_Q35" && $2~/^warm_run=[12]$/ && $3~/^prompt_tokens=[1-9][0-9]*$/ {
+			split($5, output, "=")
 			split($7, rate, "=")
-			if (rate[1]=="decode_tokens_per_second" && rate[2]+0>0) runs[$2]++
+			if (output[1]=="output_tokens" && output[2]+0>=16
+				&& rate[1]=="decode_tokens_per_second" && rate[2]+0>=100) {
+				split($10, full, "=")
+				split($11, waves, "=")
+				if (full[1]=="full_core_waves" && full[2]+0>0
+					&& waves[1]=="projection_waves" && waves[2]+0>=full[2]+0) runs[$2]++
+			}
 		}
 		END {exit !(runs["warm_run=1"]==1 && runs["warm_run=2"]==1)}
 	' work.stdout
@@ -77,7 +101,7 @@ restore() {
 [ "$#" = 5 ] && [ "$(uname -s):$(id -u)" = Haiku:0 ] || exit 2
 mode=$1 stage=$2 stableGeneration=$3 candidateSHA=$4 clientSHA=$5
 case "$mode" in --preflight|--run|--restore|--postflight) ;; *) exit 2;; esac
-[[ $stage =~ ^/boot/home/pioneer-qwen35-work-226\.[a-zA-Z0-9]+$ &&
+[[ $stage =~ ^/boot/home/pioneer-qwen35-work-234\.[a-zA-Z0-9]+$ &&
    $stableGeneration =~ ^[1-9][0-9]{0,8}$ && $candidateSHA =~ ^[0-9a-f]{64}$ &&
    $clientSHA =~ ^[0-9a-f]{64}$ ]] || exit 2
 candidateGeneration=$((stableGeneration+1))
@@ -138,8 +162,9 @@ exact "$installed" "$candidateSHA" &&
 metadata 60 "$candidateTag" "$candidateGeneration" || fail candidate_wait
 
 result=0
-./"$client" "$model" "$llama" "The capital of France is" 2 128 > work.stdout 2> work.stderr || result=$?
+./"$client" "$model" "$llama" "Write the uppercase letters A through P, separated by spaces. Respond only with the letters." 32 128 > work.stdout 2> work.stderr || result=$?
 printf '%s\n' "$result" > work.exit
+sync
 
 restore
 validated || fail work_output

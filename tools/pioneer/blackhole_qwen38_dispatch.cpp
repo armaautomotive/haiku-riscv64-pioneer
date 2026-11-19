@@ -67,6 +67,18 @@ enum {TT_Q38_FFN_MATRIX_MARKER=TT_Q38_PROJECTION_MATRIX_MARKER,
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+#include "PioneerQwen35Projection.h"
+#include "PioneerQwen35RootImageLayout.h"
+#if !defined(PIONEER_Q38_WORK_COHORT_CACHE) || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) \
+ || defined(PIONEER_Q38_REUSE_ACTIVATIONS) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
+#error Qwen3.5 Work dispatcher requires the checked persistent-cohort path
+#endif
+extern "C" unsigned q35_work_matrix_band();
+enum {Q38DispatchScaleCache=PioneerQwen35::RootScaleAddress,Q35RootProjectionResult=0x9e000,Q35RootProjectionJob=0x74f60};
+#else
+enum {Q38DispatchScaleCache=0xab000};
+#endif
 #ifdef PIONEER_Q38_WORK_SENTINEL_POLL
 #if !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT)
 #error Separate offline sentinel polling requires the complete exact Work/root-counter chain
@@ -100,12 +112,37 @@ enum {Q38DispatchSourceCache=TT_Q38_GDN_OUTPUT_GRAPH_SOURCE_SHADOW};
 enum {Q38DispatchSourceCache=0x7d800};
 #endif
 static void Fence() { asm volatile("fence" ::: "memory"); }
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+enum {Q38DispatchCheckpointAddress=0x17ffb0};
+#else
+enum {Q38DispatchCheckpointAddress=0x17ffc0};
+#endif
 // Diagnostic ONLY in the separately owned/saved runtime-status L1. Normal
 // completion overwrites BOTH words with the exact fixed DONE/count proof.
 // Fault park preserves them;NO extra NoC packet/host DMA/source authority.
 static __attribute__((noinline)) void Checkpoint(unsigned stage,unsigned detail)
 {
-	Words(0x17ffc0)[0]=stage; Words(0x17ffc0)[1]=detail; Fence();
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	Words(0xe7068)[0]=0xd0000000U|(stage&0xffffU);
+#endif
+	Words(Q38DispatchCheckpointAddress)[0]=stage; Words(Q38DispatchCheckpointAddress)[1]=detail; Fence();
+}
+// A Work dispatcher rejection is returned to StageBand as a plain zero, so
+// keep the rejecting source line and its compact context in the ROOT progress
+// record as well as the existing L1 checkpoint. The owner prefers this
+// failure-only receipt if the checkpoint aperture cannot be read back.
+static unsigned DispatcherReject(unsigned sourceLine,unsigned detail,
+	unsigned context0=0,unsigned context1=0)
+{
+	const unsigned stage=0x54f00000U|(sourceLine&0xffffU);
+	Checkpoint(stage,detail);
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	Words(0xe7070)[0]=stage; Words(0xe7074)[0]=detail; Fence();
+	if (context0 || context1) {
+		Words(0xe7078)[0]=context0; Words(0xe707c)[0]=context1; Fence();
+	}
+#endif
+	return 0;
 }
 extern "C" void block_fault_park() __attribute__((noreturn));
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
@@ -359,14 +396,42 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
 #else
 	Checkpoint(0x54000201,worker);
 #endif
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	// Work-only field diagnostics: this is the first gate after the exact peer
+	// status transfer. Preserve the failed field/value in the two owned L1
+	// words so a fault can be localized without adding NoC traffic or retries.
+	if (status[2]) {
+		// Q35 Work's peer fault park stores its reason in status[6] and
+		// call-site PC in status[5]. Pack the worker ID with that PC.
+		if (status[6]==0x50) {
+			// This gate preserves actual/expected panel counts in words7/8.
+			// The stage carries worker and peer reason; detail packs both counts.
+			Checkpoint(0x54000000U|((worker&0xffU)<<16)|((status[6]&0xffU)<<8)|1U,
+				((status[7]&0xffffU)<<16)|(status[8]&0xffffU));
+		} else {
+			Checkpoint(0x54000300U|(status[6]&0xffU),((worker&0xffU)<<24)|(status[5]&0x00ffffffU));
+		}
+		block_fault_park();
+	}
+	if (status[3]!=Q38DispatchPeerMarker) { Checkpoint(0x54000212,status[3]); block_fault_park(); }
+	if (status[0]>sequence) { Checkpoint(0x54000213,status[0]); block_fault_park(); }
+	if (status[1]>sequence) { Checkpoint(0x54000214,status[1]); block_fault_park(); }
+	if (status[4]>2) { Checkpoint(0x54000215,status[4]); block_fault_park(); }
+#else
 	if (status[2] || status[3]!=Q38DispatchPeerMarker || status[0]>sequence || status[1]>sequence || status[4]>2) block_fault_park();
+#endif
 	for (unsigned i=
 #ifdef PIONEER_Q38_PEER_PROGRESS
 		6
 #else
 		5
 #endif
-		;i<16;i++) if (status[i]) block_fault_park();
+		;i<16;i++) if (status[i]) {
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+			Checkpoint(0x54000220U|i,status[i]);
+#endif
+			block_fault_park();
+		}
 #ifdef PIONEER_Q38_PEER_PROGRESS
 	// Isolated diagnostic protocol ONLY. Bounded marker permitted ONLY
 	// while the peer is running;ALL terminal/WAIT/proof fields stay exact.
@@ -378,8 +443,17 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
 	if (previous) {
 		if (status[0]!=sequence || status[1]!=sequence || status[4]) block_fault_park();
 	} else {
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+		if (status[0]+1<sequence) { Checkpoint(0x54000231,status[0]); block_fault_park(); }
+		if (status[1]+1<sequence) { Checkpoint(0x54000232,status[1]); block_fault_park(); }
+		if (status[0]!=sequence || status[1]!=sequence || status[4]!=(stopped?2U:0U)) {
+			Checkpoint(0x54000233,(status[0]&0xffU)|((status[1]&0xffU)<<8)|((status[4]&0xffU)<<16));
+			return false;
+		}
+#else
 		if (status[0]+1<sequence || status[1]+1<sequence) block_fault_park();
 		if (status[0]!=sequence || status[1]!=sequence || status[4]!=(stopped?2U:0U)) return false;
+#endif
 	}
 	Words(0x7f800)[11]++;
 	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); unsigned first=*Words(0x75000);
@@ -441,7 +515,32 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 	return finished==workers;
 }
 #endif
-static unsigned Tile(unsigned type) { return type==8?576:type==12?2304:type==14?3392:0; }
+static unsigned Tile(unsigned type)
+{
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	return PioneerQwen35Projection::TileBytes(type);
+#else
+	return type==8?576:type==12?2304:type==14?3392:0;
+#endif
+}
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+static bool Q35RootMatrix(const volatile uint32_t* job,unsigned type,unsigned inputs)
+{
+	unsigned groups=job[7],blocks=inputs>>(type==8?5:8),tiles=groups*blocks;
+	if (!Idle() || !tiles || groups>16 || job[6]<0x04000000 || job[6]>=0xc4000000
+		|| (job[6]&63) || job[6]>0xc4000000-tiles*Tile(type) || job[8]>0xfff)
+		return false;
+	volatile uint32_t* command=Words(0xffb20000);
+	uint32_t expected[10]={job[6],0,job[8],0x90000,0,129,0,0,Tile(type),0};
+	for (unsigned i=0;i<10;i++) command[i]=expected[i];
+	Fence(); for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) return false;
+	if (q35_work_matrix_band()!=groups*(inputs/16)) return false;
+	expected[0]=job[6]+(tiles-1)*Tile(type);
+	for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) return false;
+	for (unsigned row=0;row<groups*16;row++) Words(Q35RootProjectionResult)[row]=Words(0x84000)[row];
+	Fence(); return true;
+}
+#endif
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
 static __attribute__((noinline,section(".q38_peer_phase"))) bool CapturePeerPhase(const uint32_t (&parts)[119][8],unsigned workers,unsigned type,unsigned inputs,uint32_t (&out)[7]){
 	unsigned selected=0;if(!PioneerQ38SelectPollSentinel(parts,workers,selected))return false;
@@ -530,16 +629,29 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	PioneerQ38RootCycleProfile cycles(work);
 #endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
-	if (!HeaderValid(header)) return 0;
+	if (!HeaderValid(header)) return DispatcherReject(__LINE__,0);
 #else
 	if (header[0]!=0x314d3851 || header[1]!=1 || (operation!=1 && operation!=2) || !workers || workers>119
 		|| !nonce || nonce>=0x7fffffff || (operation==2 && (type || inputs || workers!=119))
-		|| (operation==1 && (!Tile(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)))) return 0;
-#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
-	if (header[7]!=(operation==1?1U:0U)) return 0;
-	for (unsigned i=8;i<16;i++) if (header[i]) return 0;
+		|| (operation==1 && (!Tile(type) ||
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+			!PioneerQwen35Projection::Supports(type,inputs)))) return DispatcherReject(__LINE__,workers);
 #else
-	for (unsigned i=7;i<16;i++) if (header[i]) return 0;
+			(inputs!=5120 && inputs!=6144 && inputs!=17408)))) return DispatcherReject(__LINE__,workers);
+#endif
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	if (header[7]!=(operation==1?1U:0U)) return DispatcherReject(__LINE__,header[7]);
+	for (unsigned i=8;i<16;i++) if (header[i]) return DispatcherReject(__LINE__,i);
+#else
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if (header[7] || (operation==1?header[8]!=1:header[8])) return DispatcherReject(__LINE__,header[7]?header[7]:header[8]);
+	for (unsigned i=9;i<16;i++) if (header[i]) return DispatcherReject(__LINE__,i);
+#elif defined(PIONEER_Q38_WORK_COHORT_CACHE)
+	if (operation==1?header[7]!=0 || header[8]>1:header[7] || header[8]) return DispatcherReject(__LINE__,header[7]?header[7]:header[8]);
+	for (unsigned i=9;i<16;i++) if (header[i]) return DispatcherReject(__LINE__,i);
+#else
+	for (unsigned i=7;i<16;i++) if (header[i]) return DispatcherReject(__LINE__,i);
+#endif
 #endif
 #endif
 	uint32_t parts[119][8],banks[8];
@@ -547,15 +659,16 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	uint32_t ffn[64],firstRows[119];
 #endif
 	unsigned blocks=operation==1?inputs>>(type==8?5:8):0;
+	unsigned q35RootTiles=0,q35RootFlits=0;
 	for (unsigned bank=0;bank<8;bank++) banks[bank]=Words(0x74040)[bank];
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) parts[w][i]=Words(0x74080)[w*8+i];
-	if (!PartsValid(parts,banks,header)) return 0;
+	if (!PartsValid(parts,banks,header)) return DispatcherReject(__LINE__,0);
 #ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
 	if (operation==1) {
 		for(unsigned i=0;i<64;i++)ffn[i]=Words(TT_Q38_FFN_MATRIX_FRAME)[i];
 		for(unsigned i=0;i<119;i++)firstRows[i]=Words(TT_Q38_FFN_MATRIX_ROWS)[i];
-		if(!PioneerQ38FfnMatrixShape(ffn,header,banks,parts,firstRows))return 0;
+			if(!PioneerQ38FfnMatrixShape(ffn,header,banks,parts,firstRows))return DispatcherReject(__LINE__,0);
 #ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
   for(unsigned i=0;i<64;i++)Words(TT_Q38_PROJECTION_MATRIX_SHADOW)[i]=ffn[i];
   for(unsigned i=0;i<119;i++)Words(TT_Q38_PROJECTION_ROWS_SHADOW)[i]=firstRows[i];
@@ -565,41 +678,68 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #endif
 #else
 	for (unsigned bank=0;bank<7;bank++) {
-		if (!banks[bank] || banks[bank]>0xfff) return 0;
-		for (unsigned other=0;other<bank;other++) if (banks[bank]==banks[other]) return 0;
+		if (!banks[bank] || banks[bank]>0xfff) return DispatcherReject(__LINE__,bank);
+		for (unsigned other=0;other<bank;other++) if (banks[bank]==banks[other]) return DispatcherReject(__LINE__,(bank<<16)|other);
 	}
-	if (banks[7]) return 0;
+	if (banks[7]) return DispatcherReject(__LINE__,banks[7]);
 	for (unsigned w=0;w<119;w++) {
 		for (unsigned i=0;i<8;i++) parts[w][i]=Words(0x74080)[w*8+i];
 		const uint32_t* p=parts[w];
-		if (w>=workers) { for (unsigned value:parts[w]) if (value) return 0; continue; }
-		if (!p[3] || p[3]>nonce || !p[5] || p[5]!=Words(Q38DispatchSourceCache)[w*16] || p[6] || p[7]) return 0;
-		if (operation==2) { if (p[0] || p[1] || p[2] || p[4]) return 0; continue; }
+		if (w>=workers) { for (unsigned i=0;i<8;i++) if (parts[w][i]) return DispatcherReject(__LINE__,(w<<8)|i); continue; }
+		if (!p[3] || p[3]>nonce || !p[5] || p[5]!=Words(Q38DispatchSourceCache)[w*16] || p[6] || p[7]) return DispatcherReject(__LINE__,w);
+		if (operation==2) { if (p[0] || p[1] || p[2] || p[4]) return DispatcherReject(__LINE__,w); continue; }
 		unsigned bytes=p[2]*blocks*Tile(type);
 		if (p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63) || !p[2] || p[2]>16 || p[1]>=7
-			|| bytes>0xc4000000-p[0] || p[4]!=banks[p[1]]) return 0;
+			|| bytes>0xc4000000-p[0] || p[4]!=banks[p[1]]) return DispatcherReject(__LINE__,w);
 		for (unsigned other=0;other<w;other++) if (p[1]==parts[other][1]
-			&& p[0]<parts[other][0]+parts[other][2]*blocks*Tile(type) && parts[other][0]<p[0]+bytes) return 0;
+			&& p[0]<parts[other][0]+parts[other][2]*blocks*Tile(type) && parts[other][0]<p[0]+bytes) return DispatcherReject(__LINE__,(w<<16)|other);
+	}
+#endif
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	volatile uint32_t* q35RootJob=Words(Q35RootProjectionJob);
+	if (operation==1 && q35RootJob[0]) {
+		if (q35RootJob[0]!=PioneerQwen35Projection::Magic || q35RootJob[1]!=type
+			|| q35RootJob[2]!=Tile(type) || q35RootJob[3] || q35RootJob[4]
+			|| q35RootJob[5]!=inputs || !q35RootJob[7] || q35RootJob[7]>16
+			|| q35RootJob[9]>=7 || q35RootJob[8]!=banks[q35RootJob[9]]) return DispatcherReject(__LINE__,q35RootJob[9]);
+		unsigned bytes=q35RootJob[7]*blocks*Tile(type);
+		if (q35RootJob[6]<0x04000000 || q35RootJob[6]>=0xc4000000 || (q35RootJob[6]&63)
+			|| bytes>0xc4000000-q35RootJob[6]) return DispatcherReject(__LINE__,q35RootJob[7]);
+		for (unsigned w=0;w<workers;w++) if (parts[w][1]==q35RootJob[9]
+			&& q35RootJob[6]<parts[w][0]+parts[w][2]*blocks*Tile(type)
+			&& parts[w][0]<q35RootJob[6]+bytes) return DispatcherReject(__LINE__,w);
+		for (unsigned i=10;i<16;i++) if (q35RootJob[i]) return DispatcherReject(__LINE__,i);
+		q35RootTiles=q35RootJob[7]*blocks;
+		q35RootFlits=q35RootTiles*Tile(type)/64;
+	} else {
+		for (unsigned i=0;i<16;i++) if (q35RootJob[i]) return DispatcherReject(__LINE__,i);
 	}
 #endif
 	if (operation==1) {
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 #ifndef PIONEER_Q38_FFN_RESIDENT_MATRIX
-		if (!PrepareInputs(header[7],type,inputs)) return 0;
+		if (!PrepareInputs(header[7],type,inputs)) return DispatcherReject(__LINE__,0);
 #endif
 #else
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 		// Expand BACKWARDS inside the exclusively owned original input
 		// region. Read BOTH source words before a destination store. Peers
 		// have not received descriptors/doorbells and cannot read this job.
-		if (!ExpandInputs(inputs)) return 0; // original validation+final host bit checks remain
+		if (!ExpandInputs(inputs)) return DispatcherReject(__LINE__,0); // original validation+final host bit checks remain
 #endif
 		for (unsigned w=0;w<inputs/2;w++) if (!PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w]))
-			|| !PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w]>>16))) return 0;
+			|| !PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w]>>16))) return DispatcherReject(__LINE__,w);
 		unsigned padded=(blocks+15)&~15U;
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+		if (type==13 && blocks<padded) {
+			Words(PioneerQwen35::RootScaleEvidenceAddress)[14]=Words(Q38DispatchScaleCache)[blocks];
+			Fence();
+		}
+#endif
 		for (unsigned b=0;b<padded;b++) {
-			uint32_t bits=Words(0xab000)[b],magnitude=bits&0x7fffffff;
-			if (b>=blocks?bits!=0:magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return 0;
+			uint32_t bits=Words(Q38DispatchScaleCache)[b],magnitude=bits&0x7fffffff;
+			if (b>=blocks?bits!=0:magnitude && (magnitude<0x2f800000 || magnitude>0x47800000))
+				return DispatcherReject(__LINE__,b,bits,(type<<24)|(inputs&0x00ffffffU));
 		}
 #endif
 	}
@@ -641,7 +781,13 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		const uint32_t* p=parts[w]; unsigned worker=w+1;
 		volatile uint32_t descriptor[16];
 		for (unsigned i=0;i<16;i++) descriptor[i]=0; // explicit word stores,NO libc memset/byte writes
-		descriptor[0]=operation==1?0x31483851U:0; descriptor[1]=operation==1?type:0; descriptor[2]=operation==1?Tile(type):0;
+		descriptor[0]=operation==1?
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+			static_cast<uint32_t>(PioneerQwen35Projection::Magic)
+#else
+			0x31483851U
+#endif
+			:0; descriptor[1]=operation==1?type:0; descriptor[2]=operation==1?Tile(type):0;
 		descriptor[5]=operation==1?inputs:0; descriptor[6]=operation==1?p[0]:0; descriptor[7]=operation==1?p[2]:0;
 		descriptor[8]=operation==1?p[4]:0; descriptor[9]=operation==1?1:0;
 		descriptor[10]=Q38DispatchPeerMarker; descriptor[11]=worker; descriptor[12]=p[3]; descriptor[13]=operation;
@@ -663,6 +809,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned w=0;w<workers;w++) {
 		*Words(0x75000)=parts[w][3]; Fence(); Transfer(true,w+1,0x75000,0x74100,4 Q38_COMMAND_WITH(work));
 	}
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if (q35RootTiles && !Q35RootMatrix(q35RootJob,type,inputs)) block_fault_park();
+#endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(0); // validation/staging/descriptor+doorbell transfers
 #endif
@@ -790,6 +939,10 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #else
 	unsigned reads=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers*(operation==1?2:1);
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
+#endif
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	Words(0x7f800)[6]+=q35RootTiles; Words(0x7f800)[8]+=q35RootFlits;
+	reads+=q35RootTiles; flits+=q35RootFlits;
 #endif
 	Checkpoint(0x54000403,reads);
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT

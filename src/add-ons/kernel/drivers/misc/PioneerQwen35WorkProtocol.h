@@ -13,7 +13,7 @@
 #define TT_PCI_PROBE_Q35_WORK_STOP (B_DEVICE_OP_CODES_END + 0x64d4)
 
 namespace PioneerQwen35 {
-enum : unsigned { WorkVersion=1, WorkDriver=60 };
+enum : unsigned { WorkVersion=2, WorkDriver=60 };
 enum WorkStatus : unsigned { WorkRunning=1, WorkComplete, WorkQuarantined };
 
 struct WorkSupport {
@@ -63,10 +63,12 @@ inline bool ValidWorkResult(const WorkPoll& result, unsigned promptCount, unsign
 		|| status.generated-1>context-promptCount
 		|| status.committed!=promptCount+status.generated-1
 		|| !(status.promptCyclesLow|status.promptCyclesHigh)
-		|| !(status.decodeCyclesLow|status.decodeCyclesHigh))
+		|| !(status.decodeCyclesLow|status.decodeCyclesHigh)
+		|| !status.reserved[ProgressFullCoreWavesSlot]
+		|| status.reserved[ProgressProjectionWavesSlot]<status.reserved[ProgressFullCoreWavesSlot])
 		return false;
-	for (unsigned word:status.reserved)
-		if (word) return false;
+	for (unsigned word=0;word<ProgressFullCoreWavesSlot;word++)
+		if (status.reserved[word]) return false;
 	for (unsigned i=0; i<status.generated; i++) {
 		const unsigned token=result.generatedIds[i];
 		const bool stop=token==EndOfTurn || token==EndOfText;

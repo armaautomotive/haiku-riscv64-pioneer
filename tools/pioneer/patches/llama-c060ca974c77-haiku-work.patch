@@ -1,0 +1,116 @@
+diff --git a/common/arg.cpp b/common/arg.cpp
+index 86f8610a5..e25f4ff3b 100644
+--- a/common/arg.cpp
++++ b/common/arg.cpp
+@@ -47,6 +47,8 @@
+ #   endif
+ #elif defined(_AIX)
+ #include <sys/limits.h>
++#elif defined(__HAIKU__)
++#include <limits.h>
+ #else
+ #include <sys/syslimits.h>
+ #endif
+diff --git a/common/common.cpp b/common/common.cpp
+index 3d54bd600..d44515af1 100644
+--- a/common/common.cpp
++++ b/common/common.cpp
+@@ -59,6 +59,10 @@
+ #include <sys/systemcfg.h>
+ #endif
+ 
++#if defined(__HAIKU__)
++#include <FindDirectory.h>
++#endif
++
+ #if defined(_MSC_VER)
+ #pragma warning(disable: 4244 4267) // possible loss of data
+ #endif
+@@ -1048,6 +1052,12 @@ std::string fs_get_cache_directory() {
+             throw std::runtime_error("Failed to find $HOME directory");
+ #endif /* defined(__linux__) */
+         }
++#elif defined(__HAIKU__)
++        char path[PATH_MAX];
++        if (find_directory(B_USER_CACHE_DIRECTORY, -1, false, path, sizeof(path)) != B_OK) {
++            throw std::runtime_error("Failed to find user cache directory");
++        }
++        cache_directory = path;
+ #elif defined(__APPLE__)
+         cache_directory = common_get_env("HOME");
+         if (cache_directory.empty()) {
+@@ -1099,6 +1109,12 @@ std::string fs_get_config_directory() {
+         throw std::runtime_error("Failed to find $HOME directory");
+ #endif
+     }
++#elif defined(__HAIKU__)
++    char path[PATH_MAX];
++    if (find_directory(B_USER_SETTINGS_DIRECTORY, -1, false, path, sizeof(path)) != B_OK) {
++        throw std::runtime_error("Failed to find user settings directory");
++    }
++    config_directory = path;
+ #elif defined(_WIN32)
+     config_directory = common_get_env("APPDATA");
+     if (config_directory.empty()) {
+diff --git a/common/download.cpp b/common/download.cpp
+index 4b28a708c..0056c8d54 100644
+--- a/common/download.cpp
++++ b/common/download.cpp
+@@ -30,6 +30,8 @@
+ #   endif
+ #elif defined(_AIX)
+ #include <sys/limits.h>
++#elif defined(__HAIKU__)
++#include <limits.h>
+ #else
+ #include <sys/syslimits.h>
+ #endif
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index 87ac0a702..b974e9b98 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -2665,6 +2665,44 @@ static bool ggml_thread_apply_priority(int32_t prio) {
+     return true;
+ }
+ 
++#elif defined(__HAIKU__)
++#include <OS.h>
++
++// Haiku exposes CPU affinity through a private libroot syscall.
++extern status_t _kern_set_thread_affinity(thread_id id, const void * mask, size_t size);
++
++static bool ggml_thread_apply_affinity(const bool * mask) {
++    uint32_t cpuset[(GGML_MAX_N_THREADS + 31) / 32] = { 0 };
++    system_info info;
++    status_t err = get_system_info(&info);
++    if (err != B_OK) {
++        fprintf(stderr, "warn: failed to query CPUs: %s (%" PRId32 ")\n", strerror(err), err);
++        return false;
++    }
++
++    for (uint32_t i = 0; i < GGML_MAX_N_THREADS; i++) {
++        if (mask[i]) {
++            if (i >= info.cpu_count) {
++                fprintf(stderr, "warn: affinity CPU %u is unavailable\n", i);
++                return false;
++            }
++            cpuset[i / 32] |= UINT32_C(1) << (i % 32);
++        }
++    }
++
++    err = _kern_set_thread_affinity(0, cpuset, sizeof(cpuset));
++    if (err != B_OK) {
++        fprintf(stderr, "warn: failed to set thread affinity: %s (%" PRId32 ")\n", strerror(err), err);
++        return false;
++    }
++    return true;
++}
++
++static bool ggml_thread_apply_priority(int32_t prio) {
++    UNUSED(prio);
++    return true;
++}
++
+ #else // unsupported platforms
+ 
+ static bool ggml_thread_apply_affinity(const bool * mask) {

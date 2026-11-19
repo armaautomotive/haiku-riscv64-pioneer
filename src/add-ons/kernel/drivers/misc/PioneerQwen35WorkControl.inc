@@ -45,14 +45,21 @@ Q35WorkControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 					else {
 						auto& dram=context->baseline.baseline.baseline.baseline.dram;
 						auto& noc=context->baseline.baseline.baseline.noc;
-						auto* binding=new(std::nothrow) PioneerQ35WorkBinding(context->io,
-							dram,noc,context->lease,context->banks);
-						if (!binding) status=B_NO_MEMORY;
-						else {
-							context->q35Work=binding;
-							if (!binding->Map() || !binding->owner.Prepare(*binding,*request)) {
+						if (!PrepareQ38Dispatch(*context)) {
+							Q35RetainWork(*context);
+							status=B_IO_ERROR;
+						} else {
+							auto* binding=new(std::nothrow) PioneerQ35WorkBinding(context->io,
+								dram,noc,context->lease,context->banks,*context->q38Dispatch);
+							if (!binding) {
 								Q35RetainWork(*context);
-								status=B_IO_ERROR;
+								status=B_NO_MEMORY;
+							} else {
+								context->q35Work=binding;
+								if (!binding->Map() || !binding->owner.Prepare(*binding,*request)) {
+									Q35RetainWork(*context);
+									status=B_IO_ERROR;
+								}
 							}
 						}
 					}
@@ -93,6 +100,9 @@ Q35WorkControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 					if (!binding.owner.Poll(binding,*result)) {
 						Q35RetainWork(*context);
 						result->state=WorkQuarantined;
+					} else if (result->state==WorkComplete && !binding.SyncDispatchState()) {
+						Q35RetainWork(*context);
+						result->state=WorkQuarantined;
 					}
 					status=user_memcpy(data,result,sizeof(*result));
 					if (status!=B_OK) Q35RetainWork(*context);
@@ -109,8 +119,14 @@ Q35WorkControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 				status=B_BAD_VALUE;
 			else if (binding.owner.Active()) status=B_BUSY;
 			else {
-				stop.restored=binding.owner.Restored() || binding.owner.Stop(binding);
+				bool restored=binding.owner.Restored() || binding.owner.Stop(binding);
+				if (restored && context->q38Dispatch)
+					restored=PioneerQ38DispatchClose(context->io,
+						context->baseline.baseline.baseline.baseline.dram,context->banks,
+						*context->q38Dispatch,true);
+				stop.restored=restored;
 				if (!stop.restored) Q35RetainWork(*context);
+				else { delete context->q35Work; context->q35Work=NULL; }
 				status=user_memcpy(data,&stop,sizeof(stop));
 			}
 		}

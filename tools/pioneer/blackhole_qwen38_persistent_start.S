@@ -30,6 +30,11 @@ block_peer_stopped: j block_peer_stopped
 .org 0x80
 block_fault_park:
 	li t0,0x74148
+.ifdef PIONEER_Q35_WORK_PEER_IMAGE
+	/* Work-only first-fault call-site capture in the reserved status word5. */
+	sw ra,12(t0)
+	fence
+.endif
 .ifdef PIONEER_Q38_FAULT_RETURN
 	/* Separate diagnostic ONLY:the existing fault-status transfer also
 	 * carries the fault caller's return PC. No new NoC packet/host read. */

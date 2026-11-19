@@ -16,7 +16,7 @@ struct Mock {
 	bool quiet=true;
 
 	bool Scope(unsigned expected) const { return reset==expected; }
-	bool AllHeld() const { return reset==0x47800; }
+	bool RootHeld() const { return reset==0x47800; }
 	bool Quiet() const { return quiet; }
 	unsigned Read(unsigned address) const { return l1.at(address/4); }
 	void Write(unsigned address,unsigned word) { l1.at(address/4)=word; }
@@ -41,6 +41,8 @@ struct Mock {
 		Write(D::RootProgressAddress+2*4,2);
 		Write(D::RootProgressAddress+6*4,2000000);
 		Write(D::RootProgressAddress+8*4,1);
+		Write(D::RootProgressAddress+(10+D::ProgressFullCoreWavesSlot)*4,7);
+		Write(D::RootProgressAddress+(10+D::ProgressProjectionWavesSlot)*4,28);
 		Write(D::RootOutputAddress,42);
 		Write(D::RootOutputAddress+4,13);
 		Write(D::RootCompletionAddress+4,2);
@@ -71,6 +73,8 @@ int main()
 		assert(!owner->Start(io,*request));
 		request->requestId=run;
 		assert(owner->Start(io,*request) && owner->Active());
+		for (unsigned i=0;i<D::RootScaleEvidenceWords;i++)
+			assert(!io.Read(D::RootScaleEvidenceAddress+i*4));
 		assert(!owner->Stop(io) && io.command[5]==129 && !io.Read(D::RootCompletionAddress));
 		assert(!io.Read(D::RootProgressAddress));
 		reply->version=D::WorkVersion;
@@ -83,6 +87,12 @@ int main()
 		assert(reply->startMicros<reply->prefillObservedMicros
 			&& reply->prefillObservedMicros<reply->completeObservedMicros);
 		assert(reply->generatedIds[0]==42 && reply->generatedIds[1]==13);
+		assert(reply->progress.reserved[D::ProgressFullCoreWavesSlot]==7
+			&& reply->progress.reserved[D::ProgressProjectionWavesSlot]==28);
+		reply->progress.reserved[D::ProgressFullCoreWavesSlot]=0;
+		assert(!D::ValidWorkResult(*reply,5,2,32,2));
+		reply->progress.reserved[D::ProgressFullCoreWavesSlot]=7;
+		assert(D::ValidWorkResult(*reply,5,2,32,2));
 		assert(!owner->Active() && !owner->Restored() && io.command[5]==5);
 	}
 	assert(owner->Stop(io) && owner->Restored() && !owner->Unsafe() && io.l1==saved);
@@ -91,8 +101,41 @@ int main()
 	assert(failed->Prepare(io,*prepare));
 	request->requestId=1;
 	assert(failed->Start(io,*request));
+	io.pc=D::WorkFaultPc;
+	io.Write(D::RootProgressAddress+10*4,9);
+	io.Write(D::RootCheckpointAddress,0x54000300);
+	io.Write(D::RootCheckpointAddress+4,119);
 	io.Write(D::RootCompletionAddress,D::RootFault);
 	reply->requestId=1;
 	assert(!failed->Poll(io,*reply) && failed->Unsafe() && io.resets==10);
+	assert(reply->pc==D::WorkFaultPc && reply->progress.reserved[0]==9
+		&& reply->progress.reserved[1]==D::RootFault
+		&& reply->progress.reserved[2]==0x54000300 && reply->progress.reserved[3]==119);
 	assert(!failed->Stop(io) && !failed->Restored());
+
+	Mock fallbackIO;
+	auto failedFallback=std::make_unique<D::WorkOwner>();
+	assert(failedFallback->Prepare(fallbackIO,*prepare));
+	request->requestId=1;
+	assert(failedFallback->Start(fallbackIO,*request));
+	fallbackIO.pc=D::WorkFaultPc+4;
+	fallbackIO.Write(D::RootProgressAddress+10*4+2*4,D::RootDispatchRejectTag|623);
+	fallbackIO.Write(D::RootProgressAddress+10*4+3*4,17);
+	fallbackIO.Write(D::RootProgressAddress+10*4+4*4,0x3f800000);
+	fallbackIO.Write(D::RootProgressAddress+10*4+5*4,(13U<<24)|2560U);
+	const unsigned scaleEvidence[D::RootScaleEvidenceWords]={
+		0xaaf6efed,0,0,0,0,0,0,0,0,0xbf61fd40,0xbf61fd40,0xbf61fd40,
+		0xbf61fd40,0xbf61fd40,0xbf61fd40};
+	for (unsigned i=0;i<D::RootScaleEvidenceWords;i++)
+		fallbackIO.Write(D::RootScaleEvidenceAddress+i*4,scaleEvidence[i]);
+	fallbackIO.Write(D::RootCheckpointAddress,0x54000000); // stale entry receipt must not mask the rejection
+	fallbackIO.Write(D::RootCompletionAddress,D::RootFault);
+	reply->requestId=1;
+	assert(!failedFallback->Poll(fallbackIO,*reply) && failedFallback->Unsafe());
+	assert(reply->progress.reserved[2]==(D::RootDispatchRejectTag|623)
+		&& reply->progress.reserved[3]==17
+		&& reply->progress.reserved[4]==0x3f800000
+		&& reply->progress.reserved[5]==((13U<<24)|2560U));
+	for (unsigned i=0;i<D::RootScaleEvidenceWords;i++)
+		assert(reply->generatedIds[i]==scaleEvidence[i]);
 }
