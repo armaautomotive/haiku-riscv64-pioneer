@@ -524,6 +524,28 @@ Two valid warm outputs and 100 decode tokens/s remain unverified. Continue
 with the worker119 doorbell fault; do not interpret model-load time as decode
 performance.
 
+## Tags 59–60: ROOT matrix failure localization
+
+Tag59 added ROOT-phase checkpoints after peer doorbells. Its hardware run
+showed all 119 peer doorbell transfers returned and the ten-tile Q5_K ROOT
+projection phase began, then faulted before prompt prefill. Tag60 added
+checkpoints inside the ROOT matrix wrapper. It passed idle, geometry, and
+command-readback checks, but `q35_work_matrix_band()` returned zero instead of
+160 bands (`dispatcher_stage=0x5e000007`, detail0). The valid-looking job is
+type13, `0xb00` bytes/tile, 2,560 inputs, one group, route `0x492`, at
+`0x8e85000`. Next isolate the matrix function's own validation return before
+changing the projection math. Run records and hashes are in
+[`tag259`](benchmarks/qwen35-work-tag259-20261119) and
+[`tag260`](benchmarks/qwen35-work-tag260-20261119).
+
+Tag60 loaded all 3,450 spans in `220.424219` s; authentication took
+`68.115594` s and prompt tokenization `13.258253` s for 18 tokens. It produced
+no prefill, output, or decode rate. STOP passed the safe-idle proof, the
+client unloaded cleanly (`state=2 active=0 cold=0`), and stable041 was hot
+restored at generation8 without a reboot. Both models remained intact. This
+confirms the driver recovery path for the current ROOT matrix fault; the next
+candidate's internal return cause remains to be identified.
+
 ## Haiku llama.cpp platform patch
 
 The local `src/libs/llama.cpp` worktree also contains Haiku platform support

@@ -258,7 +258,21 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 #endif
 		|| (remote==0x83f00 && bytes>=320 && bytes<=1280 && !(bytes&63));
 	if (!permitted || !worker || worker>=120 || local<0x75000 || local>0x75800-bytes
-		|| ((local^remote)&31) || !PacketIdle()) block_fault_park();
+		|| ((local^remote)&31)) block_fault_park();
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	const unsigned diagnosticStage=0x58000000U|(worker<<16)|(write?0x8000U:0U)
+		|(((remote>>4)&1023U)<<5);
+	const unsigned commandBusy=*Words(0xffb20040);
+	const unsigned protocolBusy=*Words(0xffb20240)&255U;
+	if (commandBusy || protocolBusy) {
+		// Distinguish a refused transfer admission from a timeout after issue.
+		Checkpoint(0x5c000000U|(diagnosticStage&0x00ffffffU),
+			(commandBusy?1U:0U)|(protocolBusy<<8));
+		block_fault_park();
+	}
+#else
+	if (!PacketIdle()) block_fault_park();
+#endif
 #ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
  if(!ProjectionRootSealed() || !Idle())block_fault_park();
  uint32_t expected[8];for(unsigned c=0;c<8;c++){
@@ -294,8 +308,6 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 	// Preserve the exact pending transaction before posting its doorbell. A
 	// synchronous frontend/NoC fault can bypass the bounded timeout receipt
 	// below, so recovery still has the worker, direction, and remote window.
-	const unsigned diagnosticStage=0x58000000U|(worker<<16)|(write?0x8000U:0U)
-		|(((remote>>4)&1023U)<<5);
 	Checkpoint(diagnosticStage,bytes);
 #endif
 	Fence(); *Words(0xffb20040)=1; (void)*Words(0xffb20040); Fence();
@@ -336,11 +348,11 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 		}
 	}
 #ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
-	// stage:58|worker[22:16]|write[15]|remote[13:4] at[14:5]|
+	// stage:5b|worker[22:16]|write[15]|remote[13:4] at[14:5]|
 	// cmd-busy[4]|counter-mismatch[3:0]. detail:LAST mismatching counter's
 	// observed-minus-expected,mod2^32 (highest set bit identifies counter).
 	// pending==0 means the original final PacketIdle check rejected.
-	Checkpoint(0x58000000|(worker<<16)|(write?0x8000U:0U)|(((remote>>4)&1023U)<<5)|pending,delta);
+	Checkpoint(0x5b000000|(worker<<16)|(write?0x8000U:0U)|(((remote>>4)&1023U)<<5)|pending,delta);
 #endif
 	block_fault_park(); // UNKNOWN:no later packet/reset/restore/retry
 }
@@ -533,21 +545,75 @@ static unsigned Tile(unsigned type)
 #endif
 }
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+static bool Q35RootMatrixIdleDiagnostic()
+{
+	for (unsigned c=0;c<4;c++) {
+		unsigned value=*Words(0xffb20040+c*0x800);
+		if (value) {
+			Checkpoint(0x5e000010,(c<<24)|(value&0x00ffffff));
+			return false;
+		}
+	}
+	for (unsigned c=0;c<32;c++) {
+		unsigned value=*Words(0xffb20240+c*4)&255U;
+		if (value) {
+			Checkpoint(0x5e000011,(c<<24)|value);
+			return false;
+		}
+	}
+	return true;
+}
+#endif
 static bool Q35RootMatrix(const volatile uint32_t* job,unsigned type,unsigned inputs)
 {
 	unsigned groups=job[7],blocks=inputs>>(type==8?5:8),tiles=groups*blocks;
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	Checkpoint(0x5e000001,tiles);
+	if (!Q35RootMatrixIdleDiagnostic()) return false;
+	if (!tiles || groups>16 || job[6]<0x04000000 || job[6]>=0xc4000000
+		|| (job[6]&63) || job[6]>0xc4000000-tiles*Tile(type) || job[8]>0xfff) {
+		Checkpoint(0x5e000002,(groups<<24)|(blocks<<16)|(type<<8)|((job[6]&63)?1U:0U));
+		return false;
+	}
+#else
 	if (!Idle() || !tiles || groups>16 || job[6]<0x04000000 || job[6]>=0xc4000000
 		|| (job[6]&63) || job[6]>0xc4000000-tiles*Tile(type) || job[8]>0xfff)
 		return false;
+#endif
 	volatile uint32_t* command=Words(0xffb20000);
 	uint32_t expected[10]={job[6],0,job[8],0x90000,0,129,0,0,Tile(type),0};
 	for (unsigned i=0;i<10;i++) command[i]=expected[i];
-	Fence(); for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) return false;
-	if (q35_work_matrix_band()!=groups*(inputs/16)) return false;
-	expected[0]=job[6]+(tiles-1)*Tile(type);
+	Fence();
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) {
+		Checkpoint(0x5e000004,(i<<24)|(command[i]&0x00ffffff));
+		return false;
+	}
+	Checkpoint(0x5e000003,tiles);
+	unsigned matrixBands=q35_work_matrix_band();
+	Checkpoint(0x5e000006,matrixBands);
+	if (matrixBands!=groups*(inputs/16)) {
+		Checkpoint(0x5e000007,matrixBands);
+		return false;
+	}
+#else
 	for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) return false;
+	if (q35_work_matrix_band()!=groups*(inputs/16)) return false;
+#endif
+	expected[0]=job[6]+(tiles-1)*Tile(type);
+	for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) {
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+		Checkpoint(0x5e000008,(i<<24)|(command[i]&0x00ffffff));
+#endif
+		return false;
+	}
 	for (unsigned row=0;row<groups*16;row++) Words(Q35RootProjectionResult)[row]=Words(0x84000)[row];
-	Fence(); return true;
+	Fence();
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	Checkpoint(0x5e000009,groups*16);
+#endif
+	return true;
 }
 #endif
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
@@ -819,7 +885,13 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		*Words(0x75000)=parts[w][3]; Fence(); Transfer(true,w+1,0x75000,0x74100,4 Q38_COMMAND_WITH(work));
 	}
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
-	if (q35RootTiles && !Q35RootMatrix(q35RootJob,type,inputs)) block_fault_park();
+	Checkpoint(0x5d000001,workers); // all peer doorbells returned from Transfer
+	if (q35RootTiles) {
+		Checkpoint(0x5d000002,q35RootTiles);
+		if (!Q35RootMatrix(q35RootJob,type,inputs)) block_fault_park();
+		Checkpoint(0x5d000003,q35RootTiles);
+	}
+	Checkpoint(0x5d000004,workers); // root projection phase complete; peer completion polling follows
 #endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(0); // validation/staging/descriptor+doorbell transfers
@@ -832,6 +904,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned round=0;round<65536 && finished<workers;round++) for (unsigned w=0;w<workers;w++)
 		if (!complete[w] && Peer(w+1,parts[w][3],operation==2,false Q38_COMMAND_WITH(false))) { complete[w]=1; finished++; }
 	if (finished!=workers) block_fault_park();
+#endif
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	Checkpoint(0x5d000005,workers); // all peers reported completion
 #endif
 	Checkpoint(0x54000300,workers);
 	// Completion order is arbitrary. STOP has no ordered output gathers,

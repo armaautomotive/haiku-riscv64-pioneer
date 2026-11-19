@@ -21,17 +21,36 @@ Use strict host-key checking and the profile for the OS currently running.
 ## Current verified hardware state
 
 Haiku hrev99999 remains reachable at `10.0.0.247` through the pinned Haiku
-key. The tag58 client exited and the stable041 driver is idle:
+key. The tag60 client exited and the stable041 driver is idle:
 
 ```text
-P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-The latest stage is `/boot/home/pioneer-qwen35-work-258.K9M4`, with state
+The latest stage is `/boot/home/pioneer-qwen35-work-260.K6P2`, with state
 `STABLE041_RESTORED`. No inference process or shared trial lock remains. The
 Qwen3.5-4B and Qwen3.8-27B files remain at `2,740,937,888` and
-`18,973,870,528` bytes. Tag58's completed logs and postflight are in
-[`tag258 evidence`](benchmarks/qwen35-work-tag258-20261119/evidence).
+`18,973,870,528` bytes. Tag60's completed logs and postflight are in
+[`tag260 evidence`](benchmarks/qwen35-work-tag260-20261119/evidence).
+
+## Tag60: ROOT matrix returned zero bands
+
+Tag60 added checkpoints around the ROOT idle checks, matrix command setup,
+matrix return count, and result copy. It loaded from stable041 generation6 at
+generation7, authenticated in `68.115594` s, tokenized the 18-token prompt in
+`13.258253` s, and loaded all 3,450 spans in `220.424219` s. The Work run
+faulted before prefill with zero commits. Idle, geometry, and command checks
+passed; `q35_work_matrix_band()` returned0 instead of160
+(`dispatcher_stage=0x5e000007`). The ten-tile job is type13/Q5_K, 2,560 inputs,
+one group, and route `0x492`. No valid output or decode rate exists.
+
+STOP passed the safe-idle proof, the client unloaded cleanly
+(`state=2 active=0 cold=0`), and the wrapper hot-restored stable041 at
+generation8 without a reboot. The client and shared lock are gone, both model
+files are intact, and stable041 is idle. See [`tag260 BUILD`](benchmarks/qwen35-work-tag260-20261119/BUILD.md)
+and [`tag260 RUN`](benchmarks/qwen35-work-tag260-20261119/RUN.md). Next add
+failure receipts inside the ROOT matrix routine to separate shape, scale, and
+activation validation returns.
 
 ## Tag58 hardware recovery and remaining fault
 
