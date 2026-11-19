@@ -389,14 +389,21 @@ unload. The logs are preserved in
 [`qwen35-work-tag246-20261118/evidence`](benchmarks/qwen35-work-tag246-20261118/evidence).
 
 Tag247 corrected the first park address, but its hardware run still returned
-generic proof17 for Q8PF peers and remained quarantined. It authenticated in
-`100.777613` s, tokenized in `14.373964` s, and loaded the model in
-`225.068757` s, again faulting before prefill with zero commits. Tag248 now
-adds a second sealed local branch for safe frontend PC samples and detailed
-status refusal codes; its offline build and owner regression pass. Hardware
-validation is pending. The 27B model and stable041 setup remain intact. Two
-valid warm outputs, clean unload, and 100 decode tokens/s are still
-unverified.
+generic proof17 for Q8PF peers and remained quarantined. Tag248 added a second
+sealed local branch for safe frontend PC samples and field-specific peer
+status checks. On hardware, tag248 authenticated in `100.143765` s, tokenized
+in `15.216576` s, and loaded all 3,450 spans (`2,740,498,432` bytes) in
+`224.792770` s. ROOT then faulted before prefill with zero commits while
+waiting on the worker119 NoC transfer (`stage=0x54000102 detail=0x77`).
+
+Tag248 passed both safe-idle proofs, unloaded cleanly, and restored stable041
+by hot reload at generation4 (`cold0 active_owner0 guard1`) without rebooting
+the board; the shared lock is absent. This verifies driver recovery without
+reboot. No valid output or decode rate was produced. The exact trial and
+postflight evidence is in
+[`qwen35-work-tag248-20261118/evidence`](benchmarks/qwen35-work-tag248-20261118/evidence).
+The 27B model and both model files remain intact. Two valid warm outputs and
+100 decode tokens/s remain the completion criteria.
 
 ## Haiku llama.cpp platform patch
 

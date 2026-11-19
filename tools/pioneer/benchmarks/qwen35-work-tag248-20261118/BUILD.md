@@ -44,10 +44,29 @@ Shell syntax and `git diff --check` passed.
 
 ## Hardware status
 
-Tag248 has not yet been run. Tag247 authenticated in `100.777613` seconds,
-tokenized the prompt in `14.373964` seconds, and loaded/uploaded the model in
-`225.068757` seconds before the same prefill failure. Its first STOP proof
-returned reason17/detail `0x1503851`, and the candidate remained quarantined at
-generation3 `cold1 active_owner1`; no output or decode rate was produced.
-Tag247 logs are preserved in the preceding benchmark directory. Stable041
-and the 27B model remain preserved.
+Tag248 passed guarded preflight from stable041 generation2, `cold0`,
+`active_owner0`, with the 27B and 4B files intact and no diagnostic process.
+Authentication took `100.143765` seconds, prompt tokenization took
+`15.216576` seconds for 18 tokens, and model upload/load took `224.792770`
+seconds for 3,450 spans (`2,740,498,432` bytes). ROOT faulted before prefill
+with zero committed tokens while waiting for worker119's NoC transfer
+(`dispatcher_stage=0x54000102`, detail `0x77`). No valid output or decode
+rate was produced.
+
+Tag248 then passed the first safe-idle proof and the STOP reproof. The wrapper
+unloaded Work cleanly (`state=2 active=0 cold=0`), quiesced tag48 without a
+board reboot, and hot-reloaded stable041 at generation4
+(`cold0 active_owner0 guard1`); the shared lock is absent. The 4B setup and
+27B model remain intact. Exact logs and postflight state are preserved in
+`evidence/`.
+
+| Evidence file | SHA-256 |
+| --- | --- |
+| `evidence/postflight.txt` | `630999ae966b4e4f840f78c8cb8baa311341d513ba2700397782e442958d6e8f` |
+| `evidence/processes.txt` | `30376a99de65e44861f949977e6f3e52ab480e0c2c5dd014e4b5b4118286b39a` |
+| `evidence/state` | `507e1557e8544dfd3bc8ecba2bc12b14d22c681e8123d4faf7f6668b58573a8e` |
+| `evidence/status.txt` | `ebfef6f5099bb37b0abfd6d4eed231d52e71bd8ba12e27bc52ebe9715d2c08f6` |
+| `evidence/sysinfo.txt` | `52f846b0d70c6b5f9846ffb2ff6b53a834f1786119721b5214f14ba790cacf4a` |
+| `evidence/work.exit` | `4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865` |
+| `evidence/work.stderr` | `9032ffdba4fd68c57f4dbdbe5ffe322c858e7fa4250b922e297011a0002c3dbb` |
+| `evidence/work.stdout` | `1aa31d8f577ffe224a2f16fc7e1ff1b3ab54053e4e3b521400f44c2084c9d49b` |
