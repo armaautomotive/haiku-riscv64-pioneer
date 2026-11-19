@@ -8,11 +8,13 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026111800010048'
+TAG = '2026111800010049'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--transfer-diagnostic', action='store_true',
+                        help='capture the last fixed NoC transfer on ROOT timeout')
     parser.add_argument('haiku_build', type=Path)
     parser.add_argument('new_output', type=Path)
     args = parser.parse_args()
@@ -21,7 +23,10 @@ def main():
     output.mkdir(mode=0o700)
     env = {key: value for key, value in os.environ.items() if not key.startswith('PIONEER_')}
     image = output / 'image'
-    subprocess.run(['sh', HERE / 'build_qwen35_work_image.sh', build, image], check=True, env=env)
+    image_env = dict(env)
+    if args.transfer_diagnostic:
+        image_env['PIONEER_Q35_TRANSFER_DIAGNOSTIC'] = '1'
+    subprocess.run(['sh', HERE / 'build_qwen35_work_image.sh', build, image], check=True, env=image_env)
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, output / 'driver'], check=True,
                    env=dict(env, PIONEER_Q38_PANEL_DRIVER='10', PIONEER_DRIVER_RELOAD='1',
                             PIONEER_DRIVER_BUILD_TAG=TAG, PIONEER_Q38_SPAN_PRELOAD='1',

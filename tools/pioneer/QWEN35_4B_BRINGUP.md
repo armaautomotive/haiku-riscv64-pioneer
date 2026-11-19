@@ -405,6 +405,12 @@ postflight evidence is in
 The 27B model and both model files remain intact. Two valid warm outputs and
 100 decode tokens/s remain the completion criteria.
 
+Tag249 is a diagnosis-only build that captures the worker, direction, remote
+window, and final counters for the bounded ROOT transfer that stalled on
+worker119. Its cross-build passed with warnings as errors; the instrumented
+hardware trial is next. This build is not being used for performance
+measurement.
+
 ## Haiku llama.cpp platform patch
 
 The local `src/libs/llama.cpp` worktree also contains Haiku platform support
