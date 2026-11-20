@@ -34,7 +34,9 @@ rewrite is implemented.
   activation-packing checks. Its projection tiles use the same Q8_K activation
   packing as Q4_K/Q6_K; Q8_0 remains a separate activation format. This closes
   the Q5 descriptor/activation-plan gap, while its Tensix matrix operation is
-  still an unimplemented backend gate.
+  still an unimplemented backend gate. Expanded the descriptor check across
+  all eight Qwen3.5-4B quantization/width combinations and rebound every shape
+  to all 120 core invocations.
 - 2026-11-20: Added `PioneerQwen35DataflowKernels.h` with separate reader,
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit

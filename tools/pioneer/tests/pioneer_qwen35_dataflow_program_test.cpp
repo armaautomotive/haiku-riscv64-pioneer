@@ -198,6 +198,30 @@ int main()
 	for (unsigned chunk=0;chunk<Hidden/256;chunk++)
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
+	struct ProjectionShape { unsigned type,inputs; };
+	const ProjectionShape modelShapes[]={{8,2560},{12,2560},{13,2560},{14,2560},
+		{12,4096},{13,4096},{12,9216},{14,9216}};
+	for (const auto& shape:modelShapes) {
+		TensorSpace shapeWeight{};
+		shapeWeight.type=shape.type;
+		shapeWeight.inputs=shape.inputs;
+		const unsigned shapeBlocks=shape.inputs/(shape.type==8?32:256);
+		const unsigned shapeRowBytes=shapeBlocks
+			*(PioneerQwen35Projection::TileBytes(shape.type)/16);
+		Rows(shapeWeight.place,Ffn,shapeRowBytes,0x08000000);
+		DataflowProjectionProgram shapeProgram{};
+		assert(DataflowProgramBuilder::Build(shapeWeight,input,shape.inputs,output,
+			shapeProgram));
+		assert(shapeProgram.blocks==shapeBlocks
+			&& shapeProgram.circularBuffer[0].pageBytes
+				==PioneerQwen35Projection::TileBytes(shape.type));
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowCoreInvocation invocation{};
+			assert(DataflowProgramBuilder::BindCore(shapeProgram,core,invocation));
+			assert(invocation.Valid() && invocation.assignment.groups>0);
+		}
+	}
+
 	TensorSpace q8Weight{};
 	q8Weight.type=8;
 	q8Weight.inputs=Hidden;
