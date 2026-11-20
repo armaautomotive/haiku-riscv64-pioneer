@@ -7,11 +7,12 @@
 // CPU metadata ONLY. A likely late worker is a scheduling hint,NEVER proof
 // that ANY other worker completed. Every original status/PC/reset audit is
 // still required. Ties choose the LAST-launched maximum-group worker.
-static inline bool PioneerQ38SelectPollSentinel(const uint32_t (*parts)[8],unsigned workers,unsigned& output) {
- if(!parts || !workers || workers>119)return false;
+static inline bool PioneerQ38SelectPollSentinel(const uint32_t (*parts)[8],unsigned workers,
+	unsigned& output,unsigned maxGroups=16) {
+ if(!parts || !workers || workers>119 || !maxGroups)return false;
  unsigned selected=0;
  for(unsigned w=0;w<workers;w++) {
-  if(!parts[w][2] || parts[w][2]>16)return false;
+  if(!parts[w][2] || parts[w][2]>maxGroups)return false;
   if(parts[w][2]>=parts[selected][2])selected=w;
  }
  output=selected;return true;

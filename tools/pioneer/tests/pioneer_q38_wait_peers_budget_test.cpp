@@ -20,6 +20,8 @@ static void PeerPollBackoff(unsigned count) {
  auto& t=*current;assert(count>=64 && count<=2048 && !(count&(count-1)));
  t.backoffs++;if(count>t.maximumBackoff)t.maximumBackoff=count;
 }
+#define Q38_COMMAND_WITH(value)
+#define Q35_PEER_AUDIT_ARGUMENT(work,stopped)
 #include "wait_peers.inc"
 int main() {
  uint32_t parts[119][8]={};for(unsigned w=0;w<119;w++){parts[w][2]=1+w%3;parts[w][3]=w+18;}

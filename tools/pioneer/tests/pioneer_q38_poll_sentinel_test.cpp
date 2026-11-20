@@ -20,6 +20,12 @@ int main() {
  }
  for(auto& p:parts)p[2]=3;
  assert(PioneerQ38SelectPollSentinel(parts,119,result) && result==118);
+ for(auto& p:parts)p[2]=0;
+ parts[0][2]=1;parts[1][2]=130;parts[2][2]=132;parts[3][2]=131;
+ result=999;
+ assert(!PioneerQ38SelectPollSentinel(parts,4,result) && result==999);
+ assert(!PioneerQ38SelectPollSentinel(parts,4,result,131) && result==999);
+ assert(PioneerQ38SelectPollSentinel(parts,4,result,15520) && result==2);
  unsigned backoff=64;
  for(unsigned i=0;i<100;i++){unsigned next=PioneerQ38PollBackoffNext(backoff);assert(next>=64 && next<=2048 && next>=backoff);backoff=next;}
  assert(backoff==2048);

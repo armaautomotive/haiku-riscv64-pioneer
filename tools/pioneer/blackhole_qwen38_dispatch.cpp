@@ -644,7 +644,11 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 	unsigned finished=0,polls=0,backoff=64;
 	const unsigned budget=workers*65536; // SAME maximum status polls as original
 	if(work) {
-		unsigned sentinel=0;if(!PioneerQ38SelectPollSentinel(parts,workers,sentinel))return false;
+		unsigned sentinel=0,maxGroups=16;
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+		if(Words(0x74000)[7])maxGroups=PioneerQwen35::Vocabulary/16;
+#endif
+		if(!PioneerQ38SelectPollSentinel(parts,workers,sentinel,maxGroups))return false;
 		for(unsigned attempt=0;attempt<65536 && polls<budget;attempt++) {
 			polls++;
 			if(Peer(sentinel+1,parts[sentinel][3],false,false Q38_COMMAND_WITH(work)
