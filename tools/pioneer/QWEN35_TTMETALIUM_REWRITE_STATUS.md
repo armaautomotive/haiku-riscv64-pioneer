@@ -22,11 +22,15 @@ rewrite is implemented.
   helper. Host checks retain compiler atomics for concurrent test coverage.
   The returned queue error uses fixed Reader/Compute/Writer priority when
   multiple roles fail; each role's first error remains preserved in its slot.
-  The concurrent role exercise and Q5 panel check pass under ASan/UBSan, and
-  the RV32 preprocessor branch passes C++ syntax checking. The available
-  `clang++` target list has no RISC-V target; target image compilation is
-  therefore still pending with the Haiku RV32 cross-toolchain and Blackhole
-  device SDK.
+  On RV32, the four failure slots are scanned with one acquire fence after the
+  reads, keeping the normal polling path from issuing four fences per check.
+  The concurrent role exercise and Q5 panel check pass under ASan/UBSan. A
+  compile-only adapter now instantiates the three role templates using the
+  Haiku cross-toolchain with the Work image's `rv32imf_zicsr` flags; the
+  repeatable check is `tests/run_pioneer_qwen35_dataflow_target_compile_test.sh`.
+  The ELF32 object has no unresolved helpers or A-extension instructions, and
+  its acquire/release fences are present in disassembly. This checks the role
+  contracts' target lowering, not a device backend or runnable image.
 - 2026-11-20: User confirmed the work order: finish the Tenstorrent-style code
   rewrite first; only then proceed to hardware benchmarking and assistant
   integration. Keep this file updated as the rewrite's checkpoint log. No
@@ -133,10 +137,12 @@ The latest pushed checkpoint before this rewrite is `1b2b57c561`.
 Rewrite checkpoints are pushed incrementally to `codex/qwen35-4b-p100a`; use
 that branch's current tip for the latest checkpoint.
 
-The local Apple Clang 17 build has no RISC-V target, and no RISC-V Haiku
-cross-compiler is present in the configured workspace or Codex tool paths
-checked here. Current verification is host compilation only. The role
-backends, target image build, and resident program owner remain unimplemented.
+The Haiku RV32 cross-compiler is available at
+`/Volumes/HaikuBuildLocal/generated.riscv64`; use
+`tests/run_pioneer_qwen35_dataflow_target_compile_test.sh` for the checked
+role-contract compile. The local Apple Clang 17 build has no RISC-V target.
+The Blackhole Reader/Compute/Writer device operations, role images, and
+resident program owner remain unimplemented.
 
 The current role functions are still contracts around an `Ops` template. The
 Tenstorrent reference pattern executes reader and writer data movement beside

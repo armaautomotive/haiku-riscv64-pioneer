@@ -92,10 +92,18 @@ inline void DataflowStoreRoleFailure(DataflowQueueControl& control,
 
 inline unsigned DataflowQueueFailure(const DataflowQueueControl& control)
 {
+#if defined(__riscv)
+	const uint32_t reader=control.readerFailure;
+	const uint32_t compute=control.computeFailure;
+	const uint32_t writer=control.writerFailure;
+	const uint32_t queue=control.queueFailure;
+	__asm__ __volatile__("fence r,rw" ::: "memory");
+#else
 	const uint32_t reader=DataflowLoadAcquire(control.readerFailure);
 	const uint32_t compute=DataflowLoadAcquire(control.computeFailure);
 	const uint32_t writer=DataflowLoadAcquire(control.writerFailure);
 	const uint32_t queue=DataflowLoadAcquire(control.queueFailure);
+#endif
 	return reader?reader:compute?compute:writer?writer:queue;
 }
 
