@@ -66,10 +66,20 @@
 #if PIONEER_Q35_PROJECTION_IMAGE != 1 \
  || (!defined(PIONEER_Q35_WORK_PEER_IMAGE) && !defined(PIONEER_Q35_WORK_ROOT_MATRIX)) \
  || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) \
- || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+ || defined(PIONEER_Q38_WORK_TILE_PREFETCH) \
+ || (defined(PIONEER_Q35_WORK_TILE_PREFETCH) && !defined(PIONEER_Q35_WORK_BATCH_PREFETCH))
 #error Qwen35 bounded fetch batching is a separate original-layout Work image candidate
 #endif
 #include "PioneerQwen35BatchFetch.h"
+#endif
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+#if !defined(PIONEER_Q35_WORK_BATCH_FETCH) || !defined(PIONEER_Q35_WORK_PEER_IMAGE) \
+ || defined(PIONEER_Q35_WORK_ROOT_MATRIX) || !defined(PIONEER_Q38_SHARED_ROWS) \
+ || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) \
+ || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
+#error Qwen35 double-buffered batch prefetch is a distinct persistent peer Work role
+#endif
+#include "PioneerQwen35BatchPrefetchPlan.h"
 #endif
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
 #include "PioneerQwen35RootImageLayout.h"
@@ -135,7 +145,7 @@ static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned, unsigned
 #error Direct batch input requires the complete separate bounded-batch peer
 #endif
 #endif
-#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 #define PIONEER_Q38_RAW_BASE rawBase
 #define PIONEER_Q38_RAW_ARGUMENT ,rawBase
 #else
@@ -522,7 +532,7 @@ static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,uns
 // FUTURE PRIVATE kernel descriptor only. This image has NO native handler.
 // Retarget ONLY an idle,read-only command to fixed root L1,self destination
 // unchanged. Never touch upper address/control/doorbell fields after UNKNOWN.
-#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
 static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,unsigned bytes)
@@ -560,7 +570,7 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 	FetchBlock(0x94000);
 #endif
 }
-#if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 uint32_t TilePrefetchStart(uint32_t source,uint32_t route,uint32_t raw,unsigned bytes){
  ReadCommand(source,route,raw,bytes);
@@ -671,6 +681,28 @@ uint32_t Qwen35TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,u
  if(p.next)pending=TilePrefetchStart(p.nextSource,route,p.nextRaw,p.bytes);
  else ReadCommand(p.currentSource,route,0x90000,p.bytes);
  return p.currentRaw;
+}
+#endif
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
+uint32_t Qwen35BatchPrefetchStage(unsigned block,uint32_t groupFirst,unsigned tileBytes,
+	unsigned batch,unsigned blocks,uint32_t route,uint32_t& pending){
+	// q38_compute_once has already checked this exact descriptor, full source
+	// extent, supported type, group count and aligned model address before any
+	// reads. This hot helper only derives the bounded alternating batch slots.
+	const unsigned mask=batch-1,firstBlock=block&~mask;
+	const unsigned ordinal=batch==4?firstBlock>>2:firstBlock>>1;
+	const unsigned batchBytes=batch*tileBytes;
+	const uint32_t current=PioneerQwen35BatchPrefetchBuffer(ordinal);
+	if(!(block&mask)){
+		if(!block)TilePrefetchWait(TilePrefetchStart(groupFirst+firstBlock*tileBytes,
+			route,current,batchBytes));
+		else TilePrefetchWait(pending);
+		if(block+batch<blocks)
+			pending=TilePrefetchStart(groupFirst+(firstBlock+batch)*tileBytes,
+				route,current^0x2000U,batchBytes);
+	}
+	return current+(block-firstBlock)*tileBytes;
 }
 #endif
 #ifdef PIONEER_Q38_EXACT_Q4_WORK_IMAGE
@@ -981,9 +1013,15 @@ extern "C" unsigned block_main()
  PioneerQ38TokenMatrixPhase matrixProfile;
  if(matrixPhaseActive)matrixProfile.Init(job[11],job[12],inputs,groups);
 #endif
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+	const unsigned prefetchBatch=PioneerQwen35FetchBatch(type);
+#endif
 	for (unsigned group=0;group<groups;group++) {
-#if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
+#endif
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+	const uint32_t groupFirst=first+group*blocks*bytes;
 #endif
 	for (unsigned block=0;block<blocks;block++) {
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
@@ -992,10 +1030,14 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
  if(matrixPhaseActive)(void)matrixProfile.Begin(group,block,MatrixPhaseClock(matrixProfile));
 #endif
-#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 	uint32_t rawBase=0x90000;
 #endif
 #ifdef PIONEER_Q38_STREAM
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+		rawBase=Qwen35BatchPrefetchStage(block,groupFirst,bytes,prefetchBatch,
+			blocks,job[8],nextTileExpected);
+#else
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 		PioneerQwen35BatchFetchPlan batchPlan;
 		if (!PioneerQwen35BatchFetch(type,inputs,groups,group,block,first,batchPlan)) block_fault_park();
@@ -1029,6 +1071,7 @@ extern "C" unsigned block_main()
 	Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
 #endif
 	FetchBlock(first+(group*blocks+block)*bytes);
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q35_WORK_ROOT_MATRIX
@@ -1170,7 +1213,7 @@ extern "C" unsigned block_main()
 #endif
 #endif
 			(type,reinterpret_cast<const uint8_t*>(
-#ifdef PIONEER_Q35_WORK_TILE_PREFETCH
+#if defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 				PIONEER_Q38_RAW_BASE
 #else
 				0x90000
