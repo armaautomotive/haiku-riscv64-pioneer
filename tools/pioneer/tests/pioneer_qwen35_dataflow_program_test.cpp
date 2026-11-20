@@ -79,7 +79,8 @@ int main()
 	assert(program.Valid());
 	assert(program.activeCores==120 && program.kernelRoles==DataflowAllRoles);
 	assert(sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes
-		&& DataflowProgramRegionEnd==0xa1000);
+		&& DataflowProgramAddress==0xaa000
+		&& DataflowProgramRegionEnd==0xab000);
 	assert(program.groups==Ffn/16);
 	assert(program.circularBuffer[0].pageBytes==3392
 		&& program.circularBuffer[0].pages==2);

@@ -25,7 +25,9 @@ enum : unsigned {
 	DataflowActivationCacheBytes=9216*sizeof(float),
 	DataflowQueueStateAddress=0x9c000,
 	DataflowQueueStateBytes=3*16,
-	DataflowProgramAddress=0xa0000,
+	// 0xa0000..0xa03ff is the existing Tensix destination-init source window.
+	// Keep the immutable invocation beyond that window and below root scratch.
+	DataflowProgramAddress=0xaa000,
 	DataflowProgramRegionBytes=0x1000,
 	DataflowProgramRegionEnd=DataflowProgramAddress+DataflowProgramRegionBytes,
 	DataflowActivationChunkInputs=256,
@@ -209,9 +211,10 @@ struct DataflowCoreInvocation {
 		return groupsSeen==assignment.groups;
 	}
 };
-static_assert(DataflowLocalBufferEnd==DataflowProgramAddress
+static_assert(DataflowProgramAddress>=DataflowLocalBufferEnd
+	&& DataflowProgramAddress>=0xa0400 && DataflowProgramRegionEnd<=0xb0000
 	&& sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes,
-	"a compact immutable per-core invocation fits outside circular buffers");
+	"the per-core invocation fits outside local queues and reserved Tensix scratch");
 
 class DataflowProgramBuilder {
 	static bool Add(unsigned& total,unsigned value)

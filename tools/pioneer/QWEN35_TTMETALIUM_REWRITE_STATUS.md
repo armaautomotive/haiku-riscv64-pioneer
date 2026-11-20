@@ -13,6 +13,15 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-20: User confirmed the work order: finish the Tenstorrent-style code
+  rewrite first; only then proceed to hardware benchmarking and assistant
+  integration. Keep this file updated as the rewrite's checkpoint log. No
+  benchmark or assistant-integration work belongs in the current phase.
+- 2026-11-20: Moved the immutable per-core invocation from `0xa0000` to
+  `0xaa000`. The prior address overlaps the existing Tensix destination-init
+  source window (`0xa0000..0xa03ff`); the new 4 KiB invocation region ends at
+  `0xab000`, before root scratch at `0xb0000`. The circular-buffer area still
+  ends at `0xa0000`.
 - 2026-11-20: Added `PioneerQwen35DataflowKernels.h` with separate reader,
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit
@@ -62,6 +71,7 @@ The latest pushed checkpoint before this rewrite is `1b2b57c561`.
 Rewrite checkpoints are pushed incrementally to `codex/qwen35-4b-p100a`; use
 that branch's current tip for the latest checkpoint.
 
-The RISC-V Haiku cross-compiler is not present in the configured workspace or
-Codex tool paths checked here, so current verification is host compilation
-only. The role backends, target image build, and owner remain unimplemented.
+The local Apple Clang 17 build has no RISC-V target, and no RISC-V Haiku
+cross-compiler is present in the configured workspace or Codex tool paths
+checked here. Current verification is host compilation only. The role
+backends, target image build, and resident program owner remain unimplemented.
