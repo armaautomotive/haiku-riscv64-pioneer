@@ -33,9 +33,9 @@ failure atomicity.
 | Peer image boot | `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b` |
 | Peer image text | `c718047280329a045a0e89bcd6317884a468807d30b084fe0d9f9ba09575f8f3` |
 | Candidate driver55 | `6d19ccf853e6e2dfcf373edc1fc813b29bf30feb172e53e19ffd970091368aba` |
-| Work client | `09f3f083c53f36cb6201c420090cf28f9e6f6f82f24fd202f822015f7b9d199f` |
+| Work client | `09f3f083c53f36cb6201c420090cf28e9f6e6f82f24fd202f822015f7b9d199f` |
 
-The hardware run is not yet recorded in this checkpoint. Before staging,
-strict Haiku SSH verified that the prior diagnostic had exited, stable
-driver55 was idle at generation42, and the preserved 27B model still had stat
-`0:1:600:18973870528`.
+The guarded hardware attempt and its fault-safe restoration are recorded in
+`RUN.md`. Before staging, strict Haiku SSH verified that the prior diagnostic
+had exited, stable driver55 was idle at generation42, and the preserved 27B
+model still had stat `0:1:600:18973870528`.

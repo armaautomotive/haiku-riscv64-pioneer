@@ -73,6 +73,12 @@ enum {TT_Q38_FFN_MATRIX_MARKER=TT_Q38_PROJECTION_MATRIX_MARKER,
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 #include "PioneerQwen35BatchFetch.h"
 #endif
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+#if !defined(PIONEER_Q35_WORK_BATCH_FETCH) || !defined(PIONEER_Q35_WORK_ROOT_IMAGE)
+#error Double-buffered peer prefetch requires its matching Qwen35 Work ROOT proof
+#endif
+#include "PioneerQwen35BatchPrefetchPlan.h"
+#endif
 #if !defined(PIONEER_Q38_WORK_COHORT_CACHE) || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) \
  || defined(PIONEER_Q38_REUSE_ACTIVATIONS) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
 #error Qwen3.5 Work dispatcher requires the checked persistent-cohort path
@@ -1023,6 +1029,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		command[0]=p[0]+(groups*blocks-1)*Tile(type); command[2]=p[4]; command[3]=0x90000; command[5]=XY(w+1); command[8]=Tile(type);
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 		if(work){unsigned batch=PioneerQwen35FetchBatch(type);command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
+#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
+		if(work)command[3]=PioneerQwen35BatchPrefetchBuffer((blocks>>(type==8?2:1))-1);
+#endif
 #elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 		if(work){unsigned batch=type==8?4:2;command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
 #endif

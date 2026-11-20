@@ -17,6 +17,13 @@ case "${PIONEER_Q35_WORK_BATCH_FETCH:-0}" in
 	1) batch_flags=-DPIONEER_Q35_WORK_BATCH_FETCH=1 ;;
 	*) exit 2 ;;
 esac
+batch_prefetch_flags=
+case "${PIONEER_Q35_WORK_BATCH_PREFETCH:-0}" in
+	0) ;;
+	1) [ "${PIONEER_Q35_WORK_BATCH_FETCH:-0}" = 1 ] || exit 2
+		batch_prefetch_flags=-DPIONEER_Q35_WORK_BATCH_PREFETCH=1 ;;
+	*) exit 2 ;;
+esac
 diagnostic_flags=
 case "${PIONEER_Q35_TRANSFER_DIAGNOSTIC:-0}" in
 	0) ;;
@@ -29,7 +36,8 @@ done
 "$cross-g++" $flags $diagnostic_flags $batch_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_ROOT_MATRIX=1 \
  -Dblock_main=q35_work_matrix_band \
  -c "$directory/blackhole_qwen38_rows.cpp" -o "$output/matrix.o"
-"$cross-g++" $flags $diagnostic_flags $batch_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
+
+"$cross-g++" $flags $diagnostic_flags $batch_flags $batch_prefetch_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
 	-DPIONEER_Q38_WORK_SENTINEL_POLL=1 \
 	-DPIONEER_Q38_WORK_ROOT_COMMAND_REUSE=1 \
 	-Dblock_main=q35_dispatch_body -c "$directory/blackhole_qwen38_dispatch.cpp" -o "$output/dispatcher.o"

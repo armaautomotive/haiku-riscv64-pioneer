@@ -15,6 +15,8 @@ int main()
 		const unsigned batch=PioneerQwen35FetchBatch(type);
 		const unsigned blocks=inputs>>(type==8?5:8);
 		const unsigned tile=PioneerQwen35Projection::TileBytes(type);
+		assert(PioneerQwen35BatchPrefetchBuffer(blocks/batch-1)
+			==(((blocks/batch-1)&1)?0x9a000:0x98000));
 		for (unsigned groups: {1U,7U,16U}) {
 			for (unsigned group=0;group<groups;group++) {
 				for (unsigned block=0;block<blocks;block++) {
