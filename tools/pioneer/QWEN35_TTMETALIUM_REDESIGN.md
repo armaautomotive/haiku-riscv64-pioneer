@@ -96,13 +96,21 @@ before prefill. The peer started the next original-size weight-tile NoC read,
 then fell through to the legacy synchronous `FetchBlock` call. Fault evidence
 places a peer in that fetch path. The wrapper unloaded the client and restored
 stable driver55 at generation32 without reboot. Tag76 produced no valid output
-or decode measurement. Tag77 will correct the fallthrough and repeat the
-guarded hardware validation. The full TT reader/compute/writer program graph
-and sharded activations remain unimplemented.
+or decode measurement.
+
+Tag77 fixes that dispatch fallthrough. The candidate cross-build and plan
+test pass, and disassembly confirms that the Qwen35 prefetch path proceeds
+directly to projection work. It produced two exact warm outputs and cleanly
+restored stable driver55. Decode measured 0.120852 and 0.120861 tok/s across
+the full 120-core layout, only about 0.25% above tag75. The peer completion
+and proof phase still consumes about 96.75 s per request, while issue plus
+ROOT matrix work consumes 55.80 s. The 100 tok/s goal remains about 827 times
+above this result. The full TT reader/compute/writer program graph and
+sharded activations remain unimplemented.
 
 The earlier tag75 timing still identifies a much larger gap: the best
 verified result was about 0.12055 decode tok/s, far below the 100 tok/s goal.
-The corrected tile-read overlap trial will determine whether it helps; the
-next major step remains a resident per-core projection program with
-device-resident sharded activations, followed by fused operations and
-fixed-shape decode.
+The next major step is to turn the 120-core projection schedule into an
+executable resident device program, keep sharded activations between
+projections, and reduce per-wave completion proofs. Only then can fused
+operations and fixed-shape decode approach the requested TT-Metalium pattern.

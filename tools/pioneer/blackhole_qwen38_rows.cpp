@@ -1009,7 +1009,8 @@ extern "C" unsigned block_main()
 #else
 #ifdef PIONEER_Q35_WORK_TILE_PREFETCH
 		rawBase=Qwen35TilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);
-#elif defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+#else
+#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
 #ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
 	if(skipDotCheck)rawBase=TwinBatchTilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
@@ -1028,6 +1029,7 @@ extern "C" unsigned block_main()
 	Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
 #endif
 	FetchBlock(first+(group*blocks+block)*bytes);
+#endif
 #endif
 #ifdef PIONEER_Q35_WORK_ROOT_MATRIX
 	float scale=Float(Words(PioneerQwen35::RootScaleAddress)[block]);
