@@ -77,8 +77,12 @@ public:
 	{
 		const size_t length=strlen(prompt);
 		if (!length || length>INT_MAX) return false;
+		const bool chatml=length>=sizeof("<|im_start|>")-1
+			&& !memcmp(prompt,"<|im_start|>",sizeof("<|im_start|>")-1);
 		std::vector<llama_token> ids(context);
-		const int count=tokenize(vocab,prompt,int(length),ids.data(),ids.size(),true,false);
+		// Structured Qwen prompts carry their own special-token boundaries and
+		// must not receive an extra BOS. Keep plain-prefix diagnostics unchanged.
+		const int count=tokenize(vocab,prompt,int(length),ids.data(),ids.size(),!chatml,chatml);
 		if (count<=0 || unsigned(count)>context) return false;
 		request.promptCount=unsigned(count);
 		for (int i=0; i<count; i++) request.prompt[i]=unsigned(ids[i]);

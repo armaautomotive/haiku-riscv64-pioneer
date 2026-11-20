@@ -10,7 +10,8 @@ namespace PioneerQwen35 {
 // Sole writer for the ROOT while its private seven-bank session is resident.
 // All methods run under the same card lease and driver lock.
 class WorkOwner {
-	enum Phase { Empty, Held, Running, RecoverableFault, RecoveryPending, Closed, Fault };
+	enum Phase { Empty, Held, Running, RecoverableFault, RecoveryPending,
+		CompletionPending, Closed, Fault };
 	static constexpr unsigned HeldReset=0x47800, ArmReset=0x87ffff, RunReset=0x46800;
 	static constexpr unsigned L1Words=(RootEnd-RootTextAddress)/4;
 	static constexpr unsigned CheckpointWords=4;
@@ -55,7 +56,10 @@ public:
 
 	bool Restored() const { return phase==Closed; }
 	bool Unsafe() const { return phase==Fault; }
-	bool Recoverable() const { return phase==RecoverableFault || phase==RecoveryPending; }
+	bool Recoverable() const
+	{
+		return phase==RecoverableFault || phase==RecoveryPending || phase==CompletionPending;
+	}
 	bool Active() const { return phase==Running; }
 	unsigned RequestId() const { return requestId; }
 	bool CanStart(const WorkStart& start) const
@@ -160,6 +164,18 @@ public:
 		if (!prefillObserved && result.progress.prefilled==promptCount) prefillObserved=observed;
 		result.startMicros=began;
 		result.prefillObservedMicros=prefillObserved;
+		auto pendingCompletion=[&](unsigned reason,unsigned detail) {
+			if (!Installed(io)) return Fail();
+			phase=CompletionPending;
+			unsigned proofReason=0,proofDetail=0;
+			const bool safe=io.WorkCompleteSafe(result.pc,&proofReason,&proofDetail);
+			result.state=WorkRecoveryPending;
+			result.recoveryProofReason=safe?reason:proofReason;
+			result.recoveryProofDetail=safe?detail:proofDetail;
+			return true;
+		};
+		if (!marker && (result.pc==WorkParkPc || result.pc==WorkParkPc+4))
+			return pendingCompletion(80,marker);
 		if (!marker) {
 			if (result.progress.magic && (result.progress.magic!=RootProgressMagic
 				|| result.progress.requestId!=requestId)) return Fail();
@@ -182,13 +198,19 @@ public:
 			result.recoveryProofDetail=detail;
 			return true;
 		}
-		if (marker!=RootDone || !io.Quiet()) return Fail();
+		if (result.pc!=WorkParkPc && result.pc!=WorkParkPc+4) return Fail();
+		if (marker!=RootDone) {
+			if (marker==0) return pendingCompletion(80,marker);
+			return Fail();
+		}
+		if (!io.Quiet()) return pendingCompletion(81,0);
 		result.completeObservedMicros=observed;
 		const unsigned generated=result.progress.generated;
-		if (!generated || generated>maxOutput) return Fail();
+		if (!generated || generated>maxOutput) return pendingCompletion(82,generated);
 		for (unsigned i=0; i<generated; i++) result.generatedIds[i]=io.Read(RootOutputAddress+i*4);
-		if (!ValidWorkResult(result,promptCount,maxOutput,context,io.Read(RootCompletionAddress+4))
-			|| !Installed(io)) return Fail();
+		if (!Installed(io)) return Fail();
+		if (!ValidWorkResult(result,promptCount,maxOutput,context,io.Read(RootCompletionAddress+4)))
+			return pendingCompletion(83,generated);
 		for (unsigned i=0; i<2; i++) {
 			io.Pause();
 			result.pc=io.Pc();
@@ -215,13 +237,17 @@ public:
 	{
 		if (recoveryRetryable) *recoveryRetryable=false;
 		bool recovered=false;
-		if (phase==RecoverableFault || phase==RecoveryPending) {
+		if (phase==RecoverableFault || phase==RecoveryPending || phase==CompletionPending) {
+			const bool completed=phase==CompletionPending;
 			unsigned reason=0,detail=0; bool retryable=false;
-			if (!io.RecoverWorkFault(&reason,&detail,&retryable)) {
+			const bool recoveredFleet=completed
+				?io.RecoverWorkComplete(&reason,&detail,&retryable)
+				:io.RecoverWorkFault(&reason,&detail,&retryable);
+			if (!recoveredFleet) {
 				if (recoveryReason) *recoveryReason=reason;
 				if (recoveryDetail) *recoveryDetail=detail;
 				if (recoveryRetryable) *recoveryRetryable=retryable?1:0;
-				if (retryable) phase=RecoveryPending;
+				if (retryable && !completed) phase=RecoveryPending;
 				else Fail();
 				return false;
 			}

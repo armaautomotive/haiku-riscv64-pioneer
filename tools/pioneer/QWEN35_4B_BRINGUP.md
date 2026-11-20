@@ -570,3 +570,30 @@ git -C src/libs/llama.cpp apply tools/pioneer/patches/llama-c060ca974c77-haiku-w
 
 This patch records the existing platform delta; a clean-room rebuild of the
 full `libllama.so` from it has not been qualified in this bring-up.
+
+## Tag64: all-core Work execution and ChatML correction
+
+November 19: tag64 passed guarded preflight from stable041 generation 2
+idle, hot-loaded without reboot, and completed two initial requests using
+the ROOT and all 119 Tensix peers. Work explicitly reported host inference
+disabled. The plain-text prompt produced a truncated `<think>` reasoning
+block and failed output validation at 0.0893 decode tokens/s. The client
+unloaded cleanly and the wrapper restored stable041 at generation 4 without
+a reboot.
+
+The client was updated to parse canonical Qwen ChatML control tokens, and
+the next two runs returned the exact requested `A B C D E F G H I J K L M N O P`
+sequence. Each processed 23 prompt tokens in 243.113 s and decoded 16 tokens
+in 173.317 s, or **0.092316 decode tokens/s**. Each recorded 7,136 full-core
+waves and 14,128 projection waves. Authentication took 67.558536 s,
+tokenization 13.015887 s, and model load 222.119649 s. Thus the model now
+produces valid output using all Tensix cores with no CPU inference, while the
+100 tokens/s target remains unmet by more than three orders of magnitude.
+
+Both runs unloaded cleanly (`state=2 active=0 cold=0`); stable041 was restored
+at generation 6, with no active owner or trial lock and no reboot. Read-only
+postflight accepted both outputs and confirmed the rate miss. Full evidence is
+in [`qwen35-work-tag264-20261119`](benchmarks/qwen35-work-tag264-20261119).
+Tag64's normal completion and hot restore passed; its distinct missing-marker
+completion recovery branch was not forced. The next work is phase profiling
+and reducing per-token projection/control overhead.

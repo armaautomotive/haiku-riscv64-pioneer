@@ -203,7 +203,7 @@ public:
 			0x72000,sizeof(PioneerQwen35::WorkPeerWords),faultHandler,detail);
 	}
 
-	bool WorkFaultSafe(unsigned reportedPc,unsigned* reason=NULL,unsigned* detail=NULL)
+	bool WorkTerminalSafe(unsigned reportedPc,bool fault,unsigned* reason=NULL,unsigned* detail=NULL)
 	{
 		using namespace PioneerQwen35;
 		if (reason) *reason=0;
@@ -213,8 +213,17 @@ public:
 			if (detail) *detail=value;
 			return false;
 		};
-		auto terminalPc=[](uint32 pc) { return pc==WorkFaultPc || pc==WorkFaultPc+4; };
+		auto terminalPc=[fault](uint32 pc) {
+			return fault?(pc==WorkFaultPc || pc==WorkFaultPc+4)
+				:(pc==WorkParkPc || pc==WorkParkPc+4);
+		};
+		auto terminalMarker=[fault](uint32 marker) {
+			return fault?marker==RootFault:(marker==RootDone || marker==0);
+		};
 		if (!terminalPc(reportedPc)) return reject(1,reportedPc);
+		if (Read(RootBootAddress)!=WorkBootWord) return reject(30,Read(RootBootAddress));
+		for (unsigned i=0;i<sizeof(WorkTextWords)/sizeof(*WorkTextWords);i++)
+			if (Read(RootTextAddress+i*4)!=WorkTextWords[i]) return reject(30,i);
 		uint32 flags=0;
 		if (!fDispatch.booted) flags|=1;
 		if (fDispatch.closed) flags|=2;
@@ -230,7 +239,7 @@ public:
 		fIO.Pause(); const uint32 secondPc=fIO.RuntimePcRead();
 		if (!terminalPc(firstPc) || !terminalPc(secondPc)) return reject(6,secondPc);
 		const uint32 marker=Read(RootCompletionAddress);
-		if (marker!=RootFault) return reject(7,marker);
+		if (!terminalMarker(marker)) return reject(7,marker);
 		uint32 state[121];
 		for (unsigned i=0;i<121;i++) state[i]=Read(RootDispatchStateAddress+i*4);
 		if (state[0]!=RootDispatchStateMagic) return reject(8,state[0]);
@@ -250,7 +259,7 @@ public:
 			fIO.Pause(); const uint32 rootPc0=fIO.RuntimePcRead();
 			fIO.Pause(); const uint32 rootPc1=fIO.RuntimePcRead();
 			if (!terminalPc(rootPc0) || !terminalPc(rootPc1)) return reject(14,rootPc1);
-			if (Read(RootCompletionAddress)!=RootFault) return reject(15,Read(RootCompletionAddress));
+			if (!terminalMarker(Read(RootCompletionAddress))) return reject(15,Read(RootCompletionAddress));
 			quietDetail=0;
 			if (!Quiet(&quietDetail)) {
 				pendingWorker=0;
@@ -325,7 +334,7 @@ public:
 					if (!Quiet(&quietDetail)) return reject(25,quietDetail);
 					fIO.Pause(); const uint32 finalPc=fIO.RuntimePcRead();
 					if (!terminalPc(finalPc)) return reject(26,finalPc);
-					if (Read(RootCompletionAddress)!=RootFault) return reject(27,Read(RootCompletionAddress));
+					if (!terminalMarker(Read(RootCompletionAddress))) return reject(27,Read(RootCompletionAddress));
 					for (unsigned i=0;i<121;i++)
 						if (Read(RootDispatchStateAddress+i*4)!=state[i]) return reject(28,i);
 					return true;
@@ -337,7 +346,17 @@ public:
 		}
 	}
 
-	bool RecoverWorkFault(unsigned* reason=NULL,unsigned* detail=NULL,bool* retryable=NULL)
+	bool WorkFaultSafe(unsigned reportedPc,unsigned* reason=NULL,unsigned* detail=NULL)
+	{
+		return WorkTerminalSafe(reportedPc,true,reason,detail);
+	}
+
+	bool WorkCompleteSafe(unsigned reportedPc,unsigned* reason=NULL,unsigned* detail=NULL)
+	{
+		return WorkTerminalSafe(reportedPc,false,reason,detail);
+	}
+
+	bool RecoverWorkTerminal(bool fault,unsigned* reason=NULL,unsigned* detail=NULL,bool* retryable=NULL)
 	{
 		using namespace PioneerQwen35;
 		if (reason) *reason=0;
@@ -350,14 +369,20 @@ public:
 			if (retryable) *retryable=!restartStarted;
 			return false;
 		};
-		auto terminalPc=[](uint32 pc) { return pc==WorkFaultPc || pc==WorkFaultPc+4; };
-		if (!WorkFaultSafe(WorkFaultPc,reason,detail)) return false;
+		auto terminalPc=[fault](uint32 pc) {
+			return fault?(pc==WorkFaultPc || pc==WorkFaultPc+4)
+				:(pc==WorkParkPc || pc==WorkParkPc+4);
+		};
+		auto terminalMarker=[fault](uint32 marker) {
+			return fault?marker==RootFault:(marker==RootDone || marker==0);
+		};
+		if (!WorkTerminalSafe(fault?WorkFaultPc:WorkParkPc,fault,reason,detail)) return false;
 		if (!fIO.SelectRuntimeCore(0)) return reject(31,0);
 		if (!Scope(0x46800)) return reject(32,fIO.ResetRead());
 		fIO.Pause(); const uint32 rootPc0=fIO.RuntimePcRead();
 		fIO.Pause(); const uint32 rootPc1=fIO.RuntimePcRead();
 		if (!terminalPc(rootPc0) || !terminalPc(rootPc1)) return reject(33,rootPc1);
-		if (Read(RootCompletionAddress)!=RootFault) return reject(34,Read(RootCompletionAddress));
+		if (!terminalMarker(Read(RootCompletionAddress))) return reject(34,Read(RootCompletionAddress));
 		uint32 quietDetail=0;
 		if (!Quiet(&quietDetail)) return reject(35,quietDetail);
 		uint32 rootState[121];
@@ -396,7 +421,7 @@ public:
 			if (!Quiet(&quietDetail)) return reject(44,(worker<<24)|(quietDetail&0xffffff));
 		}
 		if (!fIO.SelectRuntimeCore(0) || !Scope(0x46800)
-			|| Read(RootCompletionAddress)!=RootFault || !Quiet(&quietDetail)) return reject(45,quietDetail);
+			|| !terminalMarker(Read(RootCompletionAddress)) || !Quiet(&quietDetail)) return reject(45,quietDetail);
 		for (unsigned i=0;i<121;i++)
 			if (Read(RootDispatchStateAddress+i*4)!=rootState[i]) return reject(46,i);
 		// Root and every peer are now terminal or idle, every role/source is
@@ -498,13 +523,23 @@ public:
 				!=fDispatch.bootCounter[worker][c]) return reject(70,(worker<<24)|c);
 		}
 		if (!fIO.SelectRuntimeCore(0) || !Scope(0x47800)
-			|| Read(RootCompletionAddress)!=RootFault || !Quiet(&quietDetail)) return reject(71,quietDetail);
+			|| !terminalMarker(Read(RootCompletionAddress)) || !Quiet(&quietDetail)) return reject(71,quietDetail);
 		for (unsigned i=0;i<121;i++)
 			if (Read(RootDispatchStateAddress+i*4)!=rootState[i]) return reject(72,i);
 		fDispatch.rootNonce=rootState[1];
 		for (unsigned worker=0;worker<119;worker++) fDispatch.peerNonce[worker]=0;
 		if (!RootHeld()) return reject(73,0);
 		return true;
+	}
+
+	bool RecoverWorkFault(unsigned* reason=NULL,unsigned* detail=NULL,bool* retryable=NULL)
+	{
+		return RecoverWorkTerminal(true,reason,detail,retryable);
+	}
+
+	bool RecoverWorkComplete(unsigned* reason=NULL,unsigned* detail=NULL,bool* retryable=NULL)
+	{
+		return RecoverWorkTerminal(false,reason,detail,retryable);
 	}
 
 	uint32 Read(unsigned address)

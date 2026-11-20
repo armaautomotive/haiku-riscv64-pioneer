@@ -17,6 +17,9 @@ struct Mock {
 	bool faultSafe=true;
 	bool failFirstFaultProof=false;
 	unsigned faultProofCalls=0;
+	bool completeSafe=true;
+	bool failFirstCompleteProof=false;
+	unsigned completeProofCalls=0;
 
 	bool Scope(unsigned expected) const { return reset==expected; }
 	bool RootHeld() const { return reset==0x47800; }
@@ -26,7 +29,7 @@ struct Mock {
 	unsigned Command(unsigned i) const { return command[i]; }
 	void WriteCommand(unsigned i,unsigned value) { command[i]=value; }
 	unsigned Pc() const { return pc; }
-	void Reset(unsigned value) { reset=value; resets++; }
+	void Reset(unsigned value) { reset=value; resets++; if (value==0x46800) pc=0; }
 	void Pause() {}
 	unsigned long long Now() { return ++now; }
 	bool WorkFaultSafe(unsigned reportedPc,unsigned* reason,unsigned* detail)
@@ -36,6 +39,16 @@ struct Mock {
 			&& Read(D::RootCompletionAddress)==D::RootFault;
 		if (reason) *reason=safe?0:7;
 		if (detail) *detail=safe?0:0x77;
+		return safe;
+	}
+	bool WorkCompleteSafe(unsigned reportedPc,unsigned* reason,unsigned* detail)
+	{
+		const bool retryOkay=!failFirstCompleteProof || ++completeProofCalls>1;
+		const bool safe=completeSafe && retryOkay && quiet
+			&& (reportedPc==D::WorkParkPc || reportedPc==D::WorkParkPc+4)
+			&& (Read(D::RootCompletionAddress)==D::RootDone || !Read(D::RootCompletionAddress));
+		if (reason) *reason=safe?0:8;
+		if (detail) *detail=safe?0:0x88;
 		return safe;
 	}
 	bool WorkFaultNocSnapshot(D::WorkPoll& result)
@@ -59,6 +72,15 @@ struct Mock {
 	{
 		if (retryable) *retryable=true;
 		if (!WorkFaultSafe(Pc(),reason,detail) || reset!=0x46800) return false;
+		if (retryable) *retryable=false;
+		Reset(0x87ffff);
+		Reset(0x47800);
+		return true;
+	}
+	bool RecoverWorkComplete(unsigned* reason,unsigned* detail,bool* retryable)
+	{
+		if (retryable) *retryable=true;
+		if (!WorkCompleteSafe(Pc(),reason,detail) || reset!=0x46800) return false;
 		if (retryable) *retryable=false;
 		Reset(0x87ffff);
 		Reset(0x47800);
@@ -213,6 +235,23 @@ int main()
 	assert(failed->Stop(io));
 	assert(failed->Restored() && !failed->Unsafe() && io.l1==saved);
 	assert(io.resets==12);
+
+	Mock missingCompletionIO;
+	missingCompletionIO.failFirstCompleteProof=true;
+	auto missingCompletion=std::make_unique<D::WorkOwner>();
+	assert(missingCompletion->Prepare(missingCompletionIO,*prepare));
+	request->requestId=1;
+	assert(missingCompletion->Start(missingCompletionIO,*request));
+	missingCompletionIO.Prefill(1);
+	missingCompletionIO.Finish();
+	missingCompletionIO.Write(D::RootCompletionAddress,0); // terminal park without the ROOT done marker
+	reply->requestId=1;
+	assert(missingCompletion->Poll(missingCompletionIO,*reply)
+		&& reply->state==D::WorkRecoveryPending && missingCompletion->Recoverable()
+		&& reply->recoveryProofReason==8 && reply->recoveryProofDetail==0x88);
+	assert(missingCompletionIO.reset==0x46800 && missingCompletionIO.resets==2);
+	assert(missingCompletion->Stop(missingCompletionIO) && missingCompletion->Restored()
+		&& !missingCompletion->Unsafe() && missingCompletionIO.resets==4);
 
 	Mock pendingIO;
 	pendingIO.failFirstFaultProof=true;

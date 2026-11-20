@@ -1,0 +1,29 @@
+P100A_Q35 authentication_seconds=98.898154
+P100A_Q35 vocab_and_tokenize_seconds=13.264045 prompt_ids=7734,279,38175,11592,357,1472,387,11,18101,539,12258,13,38224,1132,440,279,11592,13
+P100A_Q35 resident_spans=3450 resident_bytes=2740498432
+P100A_Q35 model_load_seconds=224.602204
+P100A_Q35 warm_run=1 prompt_tokens=18 prompt_seconds=189.631560 output_tokens=32 decode_seconds=358.348401 decode_tokens_per_second=0.089299 prompt_cycles=151697528758 decode_cycles=286683147793 full_core_waves=9304 projection_waves=18320
+P100A_Q35 generated_ids=271,248068,198,90700,8340,25,271,16,13,220,2972,2014,53983,279,5952,64700,198,262,348,256,5261,25,9357,38175,11592,357,1472,387,13,198,262,348
+P100A_Q35 output_begin run=1
+
+
+<think>
+Thinking Process:
+
+1.  **Analyze the Request:**
+    *   Task: Write uppercase letters A through P.
+    *
+P100A_Q35 output_end run=1
+P100A_Q35 warm_run=2 prompt_tokens=18 prompt_seconds=189.627672 output_tokens=32 decode_seconds=358.352056 decode_tokens_per_second=0.089298 prompt_cycles=151697574028 decode_cycles=286683007096 full_core_waves=9304 projection_waves=18320
+P100A_Q35 generated_ids=271,248068,198,90700,8340,25,271,16,13,220,2972,2014,53983,279,5952,64700,198,262,348,256,5261,25,9357,38175,11592,357,1472,387,13,198,262,348
+P100A_Q35 output_begin run=2
+
+
+<think>
+Thinking Process:
+
+1.  **Analyze the Request:**
+    *   Task: Write uppercase letters A through P.
+    *
+P100A_Q35 output_end run=2
+P100A_Q35 unload_clean=1 state=2 active=0 cold=0

@@ -65,6 +65,8 @@
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
 #include "PioneerQwen35RootImageLayout.h"
 static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned, unsigned, unsigned);
+#elif defined(PIONEER_Q35_WORK_ROOT_MATRIX)
+#include "PioneerQwen35RootImageLayout.h"
 #endif
 #endif
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
@@ -258,8 +260,9 @@ static inline void Fence() { asm volatile("fence" ::: "memory"); }
 #if defined(PIONEER_Q35_WORK_ROOT_MATRIX) && defined(PIONEER_Q38_TRANSFER_DIAGNOSTIC)
 static inline void q35_work_matrix_checkpoint(unsigned stage,unsigned detail)
 {
-	Words(0xe7068)[0]=0xd0000000U|(stage&0xffffU);
-	Words(0x17ffb0)[0]=stage; Words(0x17ffb4)[0]=detail; Fence();
+	Words(PioneerQwen35::RootCheckpointAddress)[0]=stage;
+	Words(PioneerQwen35::RootCheckpointAddress+4)[0]=detail;
+	Fence();
 }
 #endif
 #ifdef PIONEER_Q38_VECTOR_INLINE
@@ -786,7 +789,11 @@ extern "C" unsigned block_main()
 	ReadCommand(first,job[8],0x90000,bytes);
 #endif
 	for (unsigned b=0;b<blocks;b++) {
+#ifdef PIONEER_Q35_WORK_ROOT_MATRIX
+		uint32_t scale=Words(PioneerQwen35::RootScaleAddress)[b],magnitude=scale&0x7fffffff;
+#else
 		uint32_t scale=Words(0x94000)[b],magnitude=scale&0x7fffffff;
+#endif
 		if (magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) {
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
 			q35_work_precheck_fault(0x92,b,Words(0x94000)[b]);
@@ -956,7 +963,11 @@ extern "C" unsigned block_main()
 	Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
 #endif
 	FetchBlock(first+(group*blocks+block)*bytes);
+#ifdef PIONEER_Q35_WORK_ROOT_MATRIX
+	float scale=Float(Words(PioneerQwen35::RootScaleAddress)[block]);
+#else
 	float scale=Float(Words(0x94000)[block]);
+#endif
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 	if(skipDotCheck)(void)hotProfile.Fetched(PeerPhaseClock(hotProfile));
 #endif

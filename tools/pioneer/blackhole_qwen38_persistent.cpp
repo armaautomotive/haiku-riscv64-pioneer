@@ -39,6 +39,14 @@ static __attribute__((noreturn)) void q35_work_peer_fault(unsigned reason)
 	Fence();
 	block_fault_park(); // also saves this caller's return PC in status word5
 }
+static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned reason,
+	unsigned detail0,unsigned detail1)
+{
+	Words(0x7415c)[0]=detail0; // private status word7: failing item/index
+	Words(0x74160)[0]=detail1; // private status word8: observed value/context
+	Fence();
+	q35_work_peer_fault(reason);
+}
 #endif
 static unsigned Counter(unsigned c)
 {
