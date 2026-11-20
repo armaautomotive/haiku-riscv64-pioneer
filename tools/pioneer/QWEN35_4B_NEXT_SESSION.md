@@ -5,8 +5,34 @@ Continue the active goal from checkpoint `94117b2279` and
 Work outputs on Haiku, Q4_K_M projections using all 120 Tensix cores, no CPU
 inference or fallback, at least 100 decode tokens/s, separate model-load,
 prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
-setup, and the tested checkpoint pushed to GitHub. No valid token or decode
-rate has been measured yet.
+setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
+0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
+
+## Latest checkpoint: Tag96 safe recovery, no valid output
+
+The latest code and Tag96 hardware package have already been pushed to the
+`codex/qwen35-4b-p100a` GitHub branch. The Tag96 trial loaded all 3,450 model
+spans, began the 23-token prompt, then exhausted the sentinel's bounded peer
+polls on worker119's 130-group vocabulary shard. Its transient status was one
+sequence update behind while still marked active; the post-fault snapshot
+showed the worker completed. Treat this as a poll-budget defect candidate, not
+proof that the peer computation is permanently stuck. No valid output or
+decode rate was measured.
+
+Recovery was verified without reboot: the Work client unloaded cleanly and
+stable driver55 returned idle at generation10. Qwen3.5-4B and Qwen3.8-27B
+identities were preserved. Tag96 timings were authentication `68.035040` s,
+vocabulary/tokenization `12.983022` s, and model load `227.979075` s; prompt
+processing did not finish. Full captured evidence is in
+[`tag296`](benchmarks/qwen35-work-tag296-20261120).
+
+The per-peer wait still uses the old fixed 65,536-poll sentinel limit. The
+next safe iteration should scale that bounded wait for the selected shard's
+group count while retaining exact all-peer completion and physical-state
+proof. This can address the Tag96 fault; it does not address the larger
+throughput gap to 100 tokens/s. The current software-issued microtile path is
+not yet the streaming Tensix dataflow/circular-buffer pattern required for
+that target.
 
 ## Saved Pioneer instructions and access
 
