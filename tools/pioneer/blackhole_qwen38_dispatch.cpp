@@ -296,6 +296,57 @@ struct RootCommandIO {
 	uint32_t Read(unsigned word){return Words(0xffb20000)[word];}
 	void Write(unsigned word,uint32_t value){Words(0xffb20000)[word]=value;}
 };
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+struct RootInitiatorCommandIO {
+	unsigned base;
+	uint32_t Read(unsigned word){return Words(base)[word];}
+	void Write(unsigned word,uint32_t value){Words(base)[word]=value;}
+};
+
+// Read both processor PCs and the reset register concurrently through three
+// independent NIU request initiators. The peer status is still read and
+// validated first; these are the same fixed, read-only physical audits as
+// Transfer(), with exact per-counter completion and all four initiators idle
+// before returning.
+static bool ReadPeerPhysicalTriplet(unsigned worker,uint32_t& first,uint32_t& second,
+	uint32_t& reset)
+{
+	if (!worker || worker>=120 || !Idle()) return false;
+	const unsigned remotes[3]={0xffb13140,0xffb13140,0xffb121b0};
+	const unsigned locals[3]={0x75000,0x75004,0x75008};
+	const unsigned counterOffsets[4]={0x208,0x20c,0x210,0x214};
+	uint32_t expected[4];
+	for (unsigned c=0;c<4;c++) expected[c]=Words(0xffb20000+counterOffsets[c])[0]+3;
+	for (unsigned channel=0;channel<3;channel++) {
+		const unsigned initiator=channel+1;
+		const uint32_t command[]={remotes[channel],0,XY(worker),locals[channel],0,129,0,0,4,0};
+		RootInitiatorCommandIO io={0xffb20000+initiator*0x800};
+		if (!PioneerQ38ProgramRootCommand(io,command,true)) return false;
+	}
+	Fence();
+	for (unsigned channel=0;channel<3;channel++)
+		*Words(0xffb20040+(channel+1)*0x800)=1;
+	Fence();
+	bool done=false;
+	for (unsigned attempt=0;attempt<65536;attempt++) {
+		done=true;
+		for (unsigned channel=0;channel<3;channel++)
+			done &= !*Words(0xffb20040+(channel+1)*0x800);
+		for (unsigned c=0;c<4;c++)
+			done &= Words(0xffb20000+counterOffsets[c])[0]==expected[c];
+		if (done && Idle()) break;
+		done=false;
+	}
+	if (!done) return false;
+	Words(0x7f800)[6]+=3;
+	Words(0x7f800)[8]+=3;
+	Fence();
+	first=Words(locals[0])[0];
+	second=Words(locals[1])[0];
+	reset=Words(locals[2])[0];
+	return true;
+}
+#endif
 #endif
 static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,unsigned bytes Q38_COMMAND_PARAMETER)
 {
@@ -528,9 +579,14 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
 #endif
 	}
 	Words(0x7f800)[11]++;
-	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); unsigned first=*Words(0x75000);
-	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); unsigned second=*Words(0x75000);
-	Transfer(false,worker,0x75010,0xffb121b0,4 Q38_COMMAND_WITH(reuseCommand)); unsigned reset=*Words(0x75010);
+	unsigned first,second,reset;
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if (!ReadPeerPhysicalTriplet(worker,first,second,reset)) block_fault_park();
+#else
+	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); first=*Words(0x75000);
+	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); second=*Words(0x75000);
+	Transfer(false,worker,0x75010,0xffb121b0,4 Q38_COMMAND_WITH(reuseCommand)); reset=*Words(0x75010);
+#endif
 	Checkpoint(0x54000204,(worker<<24)|(first&0xffffff));
 #ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
  // Exact COMPLETE QFP3 image ranges,NOT a role grant from the shared boot
