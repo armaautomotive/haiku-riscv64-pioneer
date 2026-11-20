@@ -8,31 +8,30 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Latest checkpoint: Tag97 build ready; hardware trial pending
+## Latest checkpoint: Tag97 safe recovery, final read proof remains
 
-Tag96 and its raw fault/recovery evidence are pushed to the
-`codex/qwen35-4b-p100a` GitHub branch. Tag96 loaded all 3,450 model spans,
-began the 23-token prompt, then exhausted the sentinel's bounded peer polls
-on worker119's 130-group vocabulary shard. Its transient status was one
-sequence update behind while active; the post-fault snapshot showed the worker
-completed. Recovery unloaded the Work client and restored idle stable driver55
-at generation10 without reboot. Qwen3.5-4B and Qwen3.8-27B identities remained
-intact. Authentication was `68.035040` s, vocabulary/tokenization
-`12.983022` s, and model load `227.979075` s; prompt processing did not finish.
-Full evidence is in [`tag296`](benchmarks/qwen35-work-tag296-20261120).
+Tag96 and Tag97 source, build packages, and raw evidence are pushed to the
+`codex/qwen35-4b-p100a` GitHub branch. Tag97 scales the sentinel's bounded wait
+by shard groups while retaining the shared global poll cap and every peer
+proof. Its targeted tests and default Haiku cross-build passed.
 
-Tag97 scales the sentinel's bounded wait by shard groups while retaining the
-original shared global poll cap and every peer proof. Its sentinel, extracted
-WaitPeers, and persistent Tensix argmax replay checks pass; the default Haiku
-cross-build also passes. Build hashes and the guarded trial script are in
-[`tag297`](benchmarks/qwen35-work-tag297-20261120). The candidate has not yet
-been run on the card. Start from stable driver55 generation10.
+On-card, Tag97 loaded all 3,450 model spans and completed peer work for the
+23-token prompt. It passed Tag96's sentinel timeout, then faulted after peer
+proof gathering at `dispatcher_stage=0x54000403`, detail `0x1127d` (70,269
+expected ROOT read requests), before prompt completion/output publication.
+Worker119's final snapshot showed completed sequence `0xda9` at its wait PC.
+Authentication was `69.006291` s, tokenization `15.215872` s, and model load
+`226.172627` s. No prompt-processing duration or decode rate was produced.
+Tag97's raw files and exact postflight are in
+[`tag297`](benchmarks/qwen35-work-tag297-20261120).
 
-The last valid output measurement remains Tag70 at `0.115` decode tokens/s;
-no run has reached 100 tokens/s. Tag97 addresses the Tag96 completion window,
-not the larger throughput gap. The software-issued microtile path still needs
-to move to a streaming Tensix dataflow/circular-buffer kernel pattern for the
-100 tokens/s target.
+Recovery unloaded Work and restored stable driver55 idle at generation12
+without reboot. The 4B and 27B model identities remain intact. Run the next
+candidate from generation12 after adding failure-only evidence for actual
+versus expected ROOT NoC read/write/flit counters; keep all exact counter
+checks enabled. The last valid output measurement remains Tag70 at `0.115`
+decode tokens/s. No run has reached 100 tokens/s; the streaming Tensix
+dataflow/circular-buffer kernel redesign is still required for that target.
 
 ## Saved Pioneer instructions and access
 
