@@ -122,4 +122,43 @@ int main()
 		compositeDone+=batch.processedGroups;
 	}
 	for (unsigned visitsForGroup:compositeVisits) assert(visitsForGroup==1);
+
+	for (unsigned total:{120U,121U,576U,15520U,15523U}) {
+		for (unsigned fragmentsCount=1;fragmentsCount<=7;fragmentsCount++) {
+			PioneerQ35WorkFragment fragments[7]={};
+			unsigned first=0;
+			for (unsigned fragment=0;fragment<fragmentsCount;fragment++) {
+				const unsigned groups=total/fragmentsCount+unsigned(fragment<total%fragmentsCount);
+				fragments[fragment]={first,groups};
+				first+=groups;
+			}
+			PioneerQ35ArgmaxProgram program{};
+			assert(PioneerQ35BuildArgmaxProgram(fragments,fragmentsCount,program));
+			assert(program.fragmentCount==fragmentsCount && program.workerCount==119
+				&& program.groups==total && program.root.fragment==0
+				&& program.root.firstGroup==0 && program.root.groups==1);
+			std::vector<unsigned> visits(total,0);
+			visits[program.root.firstGroup]++;
+			unsigned minimum=0xffffffffU,maximum=0;
+			for (unsigned worker=0;worker<program.workerCount;worker++) {
+				const auto& task=program.worker[worker];
+				assert(task.fragment<fragmentsCount && task.groups
+					&& task.firstGroup>=fragments[task.fragment].firstGroup
+					&& task.groups<=fragments[task.fragment].firstGroup
+						+fragments[task.fragment].groups-task.firstGroup);
+				minimum=task.groups<minimum?task.groups:minimum;
+				maximum=task.groups>maximum?task.groups:maximum;
+				for (unsigned group=0;group<task.groups;group++)
+					assert(visits[task.firstGroup+group]++==0);
+			}
+			assert(maximum-minimum<=fragmentsCount+2);
+			if (total>=15000 && fragmentsCount==7) assert(maximum-minimum<=1);
+			for (unsigned count:visits) assert(count==1);
+		}
+	}
+	PioneerQ35ArgmaxProgram argmaxProgram{};
+	PioneerQ35WorkFragment tooSmall[1]={{0,119}};
+	assert(!PioneerQ35BuildArgmaxProgram(tooSmall,1,argmaxProgram));
+	PioneerQ35WorkFragment hole[2]={{0,80},{81,80}};
+	assert(!PioneerQ35BuildArgmaxProgram(hole,2,argmaxProgram));
 }

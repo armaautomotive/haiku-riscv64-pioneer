@@ -174,7 +174,11 @@ extern "C" void q38_persistent_main()
 #else
 			|| snapshot[14]
 #endif
-			|| snapshot[15] || !IdleAll() || *Words(0xffb20100)!=source
+			|| snapshot[15]>1
+#ifndef PIONEER_Q35_WORK_PEER_IMAGE
+			|| snapshot[15]
+#endif
+			|| !IdleAll() || *Words(0xffb20100)!=source
 			|| !SourceMatches(sealedSource)
 #ifndef PIONEER_Q38_FFN_PERSISTENT
 			|| *Words(0xffb20014)!=self
@@ -200,10 +204,16 @@ extern "C" void q38_persistent_main()
 		}
 #endif
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
-		if (snapshot[0]!=PioneerQwen35Projection::Magic || snapshot[3] || snapshot[4]
+		const bool argmax=snapshot[15]==1;
+		if (snapshot[0]!=PioneerQwen35Projection::Magic || snapshot[4]
+			|| (argmax?(snapshot[1]!=14 || snapshot[5]!=PioneerQwen35::Hidden
+				|| !snapshot[7] || snapshot[7]>PioneerQwen35::Vocabulary/16
+				|| (snapshot[3]&15) || snapshot[3]>PioneerQwen35::Vocabulary-snapshot[7]*16)
+				:(snapshot[3] || snapshot[15]))
 			|| snapshot[9]!=1 || !PioneerQwen35Projection::Supports(snapshot[1],snapshot[5])
 			|| snapshot[2]!=PioneerQwen35Projection::TileBytes(snapshot[1])
-			|| !snapshot[7] || snapshot[7]>16) q35_work_peer_fault(0x41);
+			|| !snapshot[7] || (argmax?snapshot[7]>PioneerQwen35::Vocabulary/16:snapshot[7]>16))
+			q35_work_peer_fault(0x41);
 #else
 		if (snapshot[0]!=0x31483851 || snapshot[3] || snapshot[4] || snapshot[9]!=1
 #ifdef PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE
@@ -230,13 +240,13 @@ extern "C" void q38_persistent_main()
 #endif
 		uint32_t before[8]; for (unsigned c=0;c<8;c++) before[c]=Counter(c);
 		Words(0x74140)[0]=sequence; Words(0x74140)[4]=1; Fence();
-		uint32_t computeStart=0;
 #ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+		uint32_t computeStart=0;
 		asm volatile("csrr %0,0xb00" : "=r"(computeStart) :: "memory");
 #endif
 		unsigned panels=q38_compute_once();
-		uint32_t computeCycles=0;
 #ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+		uint32_t computeCycles=0;
 		asm volatile("csrr %0,0xb00" : "=r"(computeCycles) :: "memory");
 		computeCycles-=computeStart;
 #endif

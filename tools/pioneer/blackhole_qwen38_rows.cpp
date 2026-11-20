@@ -783,6 +783,11 @@ extern "C" unsigned block_main()
 #if defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE) || defined(PIONEER_Q35_PROJECTION_IMAGE)
 	// Fixed supported quant blocks:keep division OUT of the RISC hot path.
 	unsigned inputs=job[5],blocks=inputs>>(type==8?5:8),groups=job[7];
+#ifdef PIONEER_Q35_WORK_PEER_IMAGE
+	const bool argmax=job[15]==1;
+#else
+	const bool argmax=false;
+#endif
 #else
 	unsigned inputs=job[5],blocks=inputs/count,groups=job[7];
 #endif
@@ -815,8 +820,10 @@ extern "C" unsigned block_main()
 	if (job[0]!=PioneerQwen35Projection::Magic) shapeFailure|=1U<<0;
 	if (!PioneerQwen35Projection::Supports(type,inputs)) shapeFailure|=1U<<1;
 	if (bytes!=PioneerQwen35Projection::TileBytes(type)) shapeFailure|=1U<<2;
-	if (job[3] || job[4]) shapeFailure|=1U<<3;
-	if (!groups || groups>16) shapeFailure|=1U<<4;
+	if (job[4] || (argmax?(type!=14 || inputs!=PioneerQwen35::Hidden || !groups
+		|| groups>PioneerQwen35::Vocabulary/16 || (job[3]&15)
+		|| job[3]>PioneerQwen35::Vocabulary-groups*16):(job[3] || job[15] || !groups || groups>16))
+		shapeFailure|=1U<<3;
 	if (first<0x04000000 || (first&63)) shapeFailure|=1U<<5;
 	if (first>=0xc4000000) shapeFailure|=1U<<6;
 	if (first<0xc4000000 && uint32_t(groups*blocks*bytes)>0xc4000000-first) shapeFailure|=1U<<7;
@@ -827,8 +834,12 @@ extern "C" unsigned block_main()
 	q35_work_matrix_checkpoint(0x5f000010,blocks);
 #else
 	if (job[0]!=PioneerQwen35Projection::Magic || !PioneerQwen35Projection::Supports(type,inputs)
-		|| bytes!=PioneerQwen35Projection::TileBytes(type) || job[3] || job[4]
-		|| !groups || groups>16 || first<0x04000000 || (first&63)
+		|| bytes!=PioneerQwen35Projection::TileBytes(type) || job[4]
+		|| (argmax?(type!=14 || inputs!=PioneerQwen35::Hidden || !groups
+			|| groups>PioneerQwen35::Vocabulary/16 || (job[3]&15)
+			|| job[3]>PioneerQwen35::Vocabulary-groups*16)
+			:(job[3] || job[15] || !groups || groups>16))
+		|| first<0x04000000 || (first&63)
 		|| first>=0xc4000000 || uint32_t(groups*blocks*bytes)>0xc4000000-first) {
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
 		q35_work_precheck_fault(0x90,job[0],(type<<16)|(inputs&0xffff));
@@ -991,8 +1002,10 @@ extern "C" unsigned block_main()
 	PioneerQ38MatrixPhasesSetup(phasesEmitter);
 #endif
 #endif
-	for (unsigned row=0;row<groups*16;row++) Words(0x84000)[row]=0;
+	for (unsigned row=0;row<(argmax?16:groups*16);row++) Words(0x84000)[row]=0;
 	unsigned panels=count/16;
+	float argmaxBest=-3.402823466e+38F;
+	unsigned argmaxToken=PioneerQwen35::Vocabulary;
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 	// Choose between TWO exact,immutable code targets ONCE per job. No
 	// caller address/function pointer or per-panel Work/type branch.
@@ -1019,6 +1032,8 @@ extern "C" unsigned block_main()
  if(matrixPhaseActive)matrixProfile.Init(job[11],job[12],inputs,groups);
 #endif
 	for (unsigned group=0;group<groups;group++) {
+	const unsigned resultGroup=argmax?0:group;
+	if (argmax) for (unsigned row=0;row<16;row++) Words(0x84000)[row]=0;
 #if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
 #endif
@@ -1408,7 +1423,7 @@ extern "C" unsigned block_main()
 		for (unsigned row=0;row<16;row++) {
 			uint32_t value=Words(0xffbd9b00)[row];
 			if ((value&0x7f800000)==0x7f800000) block_fault_park();
-			Words(0x84000)[group*16+row]=value;
+			Words(0x84000)[resultGroup*16+row]=value;
 		}
 		Fence(); Config(3,0x10000);
 #else
@@ -1423,9 +1438,9 @@ extern "C" unsigned block_main()
 #endif
 			float product=(Float(local->coefficient[row])*scale)*float(dot);
 			float correction=(Float(local->minimum[row])*scale)*float(sum);
-			float value=Float(Words(0x84000)[group*16+row])+(product+correction);
+			float value=Float(Words(0x84000)[resultGroup*16+row])+(product+correction);
 			if ((Bits(value)&0x7f800000)==0x7f800000) block_fault_park();
-			Words(0x84000)[group*16+row]=Bits(value);
+			Words(0x84000)[resultGroup*16+row]=Bits(value);
 		}
 #endif
 		Fence();
@@ -1458,13 +1473,29 @@ extern "C" unsigned block_main()
 	for (unsigned row=0;row<16;row++) {
 		uint32_t value=Words(0xffbd9b00)[row];
 		if ((value&0x7f800000)==0x7f800000) block_fault_park();
-		Words(0x84000)[group*16+row]=value;
+		Words(0x84000)[resultGroup*16+row]=value;
 	}
 	Fence();
 #ifdef PIONEER_Q38_SFPU_INTEGER
 	Config(3,0x10000); // next group's checked signed32 dot readback
 #endif
 #endif
+	if (argmax) for (unsigned row=0;row<16;row++) {
+		const uint32_t bits=Words(0x84000)[row];
+		const float value=Float(bits);
+		if ((bits&0x7f800000)==0x7f800000) block_fault_park();
+		const unsigned token=job[3]+group*16+row;
+		if (argmaxToken==PioneerQwen35::Vocabulary || value>argmaxBest
+			|| (value==argmaxBest && token<argmaxToken)) {
+			argmaxBest=value; argmaxToken=token;
+		}
+	}
+	}
+	if (argmax) {
+		if (argmaxToken>=PioneerQwen35::Vocabulary) block_fault_park();
+		Words(0x84000)[0]=Bits(argmaxBest); Words(0x84000)[1]=argmaxToken;
+		for (unsigned row=2;row<16;row++) Words(0x84000)[row]=0;
+		Fence();
 	}
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 	if(skipDotCheck){

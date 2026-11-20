@@ -863,7 +863,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned i=8;i<16;i++) if (header[i]) return DispatcherReject(__LINE__,i);
 #else
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
-	if (header[7] || (operation==1?header[8]!=1:header[8])) return DispatcherReject(__LINE__,header[7]?header[7]:header[8]);
+	if (header[7]>1 || (operation==1?header[8]!=1:header[8])
+		|| (header[7] && (operation!=1 || type!=14 || inputs!=PioneerQwen35::Hidden)))
+		return DispatcherReject(__LINE__,header[7]?header[7]:header[8]);
 	for (unsigned i=9;i<16;i++) if (header[i]) return DispatcherReject(__LINE__,i);
 #elif defined(PIONEER_Q38_WORK_COHORT_CACHE)
 	if (operation==1?header[7]!=0 || header[8]>1:header[7] || header[8]) return DispatcherReject(__LINE__,header[7]?header[7]:header[8]);
@@ -905,10 +907,14 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for (unsigned i=0;i<8;i++) parts[w][i]=Words(0x74080)[w*8+i];
 		const uint32_t* p=parts[w];
 		if (w>=workers) { for (unsigned i=0;i<8;i++) if (parts[w][i]) return DispatcherReject(__LINE__,(w<<8)|i); continue; }
-		if (!p[3] || p[3]>nonce || !p[5] || p[5]!=Words(Q38DispatchSourceCache)[w*16] || p[6] || p[7]) return DispatcherReject(__LINE__,w);
+		if (!p[3] || p[3]>nonce || !p[5] || p[5]!=Words(Q38DispatchSourceCache)[w*16]
+			|| p[7] || (header[7]?(p[6]>=PioneerQwen35::Vocabulary || (p[6]&15)) : p[6]))
+			return DispatcherReject(__LINE__,w);
 		if (operation==2) { if (p[0] || p[1] || p[2] || p[4]) return DispatcherReject(__LINE__,w); continue; }
 		unsigned bytes=p[2]*blocks*Tile(type);
-		if (p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63) || !p[2] || p[2]>16 || p[1]>=7
+		if (p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63) || !p[2]
+			|| (header[7]?(p[2]>(PioneerQwen35::Vocabulary/16) || p[6]+p[2]*16>PioneerQwen35::Vocabulary)
+				:p[2]>16) || p[1]>=7
 			|| bytes>0xc4000000-p[0] || p[4]!=banks[p[1]]) return DispatcherReject(__LINE__,w);
 		for (unsigned other=0;other<w;other++) if (p[1]==parts[other][1]
 			&& p[0]<parts[other][0]+parts[other][2]*blocks*Tile(type) && parts[other][0]<p[0]+bytes) return DispatcherReject(__LINE__,(w<<16)|other);
@@ -1009,10 +1015,12 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 			:0; descriptor[1]=operation==1?type:0; descriptor[2]=operation==1?Tile(type):0;
 		descriptor[5]=operation==1?inputs:0; descriptor[6]=operation==1?p[0]:0; descriptor[7]=operation==1?p[2]:0;
 		descriptor[8]=operation==1?p[4]:0; descriptor[9]=operation==1?1:0;
+		descriptor[3]=operation==1 && header[7]?p[6]:0;
 		descriptor[10]=Q38DispatchPeerMarker; descriptor[11]=worker; descriptor[12]=p[3]; descriptor[13]=operation;
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 		descriptor[14]=work?1U:0U; // PRIVATE numeric-only mode; STOP and checked remain0
 #endif
+		descriptor[15]=operation==1?header[7]:0;
 		for (unsigned i=0;i<16;i++) Words(0x75000)[i]=descriptor[i];
 		Fence();
 		Transfer(true,worker,0x75000,0x74000,64 Q38_COMMAND_WITH(work));
@@ -1105,7 +1113,8 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		const uint32_t* p=parts[w]; unsigned groups=p[2],reads=groups*blocks+(inputs*2+16383)/16384+1;
 #endif
 		unsigned flits=groups*blocks*Tile(type)/64+(inputs*2+((blocks*4+63)&~63U))/64;
-		Transfer(false,w+1,0x75000,0x83f00,256+groups*64 Q38_COMMAND_WITH(work));
+		const unsigned proofBytes=header[7]?320U:256U+groups*64U;
+		Transfer(false,w+1,0x75000,0x83f00,proofBytes Q38_COMMAND_WITH(work));
 		const volatile uint32_t* proof=Words(0x75000);
 #ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
   if(proof[2]!=proof[6] || proof[10]!=proof[14])block_fault_park();
@@ -1137,7 +1146,12 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
 		if (proof[48]>peerComputeCriticalCycles) peerComputeCriticalCycles=proof[48];
 #endif
-		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
+		if (header[7]) {
+			const unsigned logicalRow=proof[65];
+			if ((proof[64]&0x7f800000)==0x7f800000 || logicalRow<p[6]
+				|| logicalRow>=p[6]+groups*16) block_fault_park();
+		} else for (unsigned row=0;row<groups*16;row++)
+			if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
 #if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE) && !defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE) && !defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE)
 		if (!work)
 #endif
@@ -1152,7 +1166,10 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 			for (unsigned row=0;row<groups*16;row++) Words(0x80000)[begin+row]=proof[64+row];
 		} else
 #endif
-		for (unsigned row=0;row<256;row++) Words(0x80000)[w*256+row]=row<groups*16?proof[64+row]:0;
+		if (header[7]) {
+			for (unsigned row=0;row<256;row++) Words(0x80000)[w*256+row]=row<2?proof[64+row]:0;
+		} else for (unsigned row=0;row<256;row++)
+			Words(0x80000)[w*256+row]=row<groups*16?proof[64+row]:0;
 	}
 #ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
 	// Advisory only: record the max peer mcycle delta after every gathered

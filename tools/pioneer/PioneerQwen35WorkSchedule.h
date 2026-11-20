@@ -45,6 +45,82 @@ struct PioneerQ35WorkBatch {
 	PioneerQ35WorkTask worker[119];
 };
 
+enum : unsigned { PioneerQ35ArgmaxPeerCount=119, PioneerQ35ArgmaxMaxFragments=7 };
+
+struct PioneerQ35ArgmaxTask {
+	unsigned fragment, firstGroup, groups;
+};
+
+struct PioneerQ35ArgmaxProgram {
+	unsigned fragmentCount, workerCount, groups;
+	PioneerQ35ArgmaxTask root;
+	PioneerQ35ArgmaxTask worker[PioneerQ35ArgmaxPeerCount];
+};
+
+// Partition a large row-wise reduction into one persistent work item per
+// peer. ROOT owns the first group; peers own balanced contiguous ranges that
+// never cross a physical bank fragment. Unlike WorkBatch this has no
+// per-peer 16-group output-buffer limit because peers reduce locally.
+inline bool PioneerQ35BuildArgmaxProgram(const PioneerQ35WorkFragment* fragments,
+	unsigned fragmentCount,PioneerQ35ArgmaxProgram& program)
+{
+	if (!fragments || !fragmentCount || fragmentCount>PioneerQ35ArgmaxMaxFragments) return false;
+	program={};
+	unsigned total=0;
+	unsigned expectedFirst=0;
+	for (unsigned f=0;f<fragmentCount;f++) {
+		if (!fragments[f].groups || fragments[f].firstGroup!=expectedFirst
+			|| fragments[f].groups>0xffffffffU-expectedFirst) return false;
+		expectedFirst+=fragments[f].groups;
+		total+=fragments[f].groups;
+	}
+	if (total<=PioneerQ35ArgmaxPeerCount || total>0x00ffffffU) return false;
+	program.fragmentCount=fragmentCount;
+	program.workerCount=PioneerQ35ArgmaxPeerCount;
+	program.groups=unsigned(total);
+	program.root={0,fragments[0].firstGroup,1};
+
+	unsigned available[PioneerQ35ArgmaxMaxFragments]={};
+	unsigned cores[PioneerQ35ArgmaxMaxFragments]={};
+	unsigned remainder[PioneerQ35ArgmaxMaxFragments]={};
+	bool awarded[PioneerQ35ArgmaxMaxFragments]={};
+	const unsigned remaining=total-1;
+	unsigned allocated=0;
+	for (unsigned f=0;f<fragmentCount;f++) {
+		available[f]=fragments[f].groups-(f==0?1U:0U);
+		unsigned share=available[f]*PioneerQ35ArgmaxPeerCount;
+		while (share>=remaining) { share-=remaining; cores[f]++; }
+		remainder[f]=share;
+		allocated+=cores[f];
+	}
+	while (allocated<PioneerQ35ArgmaxPeerCount) {
+		unsigned selected=fragmentCount;
+		for (unsigned f=0;f<fragmentCount;f++)
+			if (!awarded[f] && available[f]>cores[f]
+				&& (selected==fragmentCount || remainder[f]>remainder[selected])) selected=f;
+		if (selected==fragmentCount) return false;
+		cores[selected]++;
+		awarded[selected]=true;
+		allocated++;
+	}
+	unsigned worker=0;
+	for (unsigned f=0;f<fragmentCount;f++) {
+		if (!cores[f]) continue;
+		if (cores[f]>available[f]) return false;
+		unsigned base=0,extra=available[f];
+		while (extra>=cores[f]) { extra-=cores[f]; base++; }
+		unsigned first=fragments[f].firstGroup+(f==0?1U:0U);
+		for (unsigned local=0;local<cores[f];local++) {
+			const unsigned count=base+unsigned(local<extra);
+			if (!count || worker>=PioneerQ35ArgmaxPeerCount) return false;
+			program.worker[worker++]={f,first,count};
+			first+=count;
+		}
+		if (first!=fragments[f].firstGroup+fragments[f].groups) return false;
+	}
+	return worker==PioneerQ35ArgmaxPeerCount;
+}
+
 // Translate one tensor's bank-local row groups into a contiguous logical
 // output region so same-shaped projections can share a dispatch wave.
 inline bool PioneerQ35AppendWorkFragments(const PioneerQ35WorkFragment* parts,
