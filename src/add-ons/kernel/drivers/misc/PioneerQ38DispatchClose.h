@@ -26,6 +26,67 @@ template<class IO> bool PioneerQ38DispatchPeerStatus(IO& io,uint32_t nonce,bool 
 	}
 	return okay && pc;
 }
+static inline bool PioneerQ38DispatchRecoverableClosePeerStatus(const uint32_t status[16],
+	uint32_t current,uint32_t next,bool& stopped)
+{
+	if (!status || current>=0x7ffffffe || next!=current+1 || next>=0x7ffffffe
+		|| status[0]!=status[1] || status[2] || status[3]!=TT_Q38_PEER_MARKER) return false;
+	stopped=status[0]==next && status[4]==2;
+	const bool waiting=status[0]==current && status[4]==0;
+	if (!stopped && !waiting) return false;
+	for (unsigned i=5;i<16;i++) if (status[i]) return false;
+	return true;
+}
+template<class IO> bool PioneerQ38DispatchRecoverableCloseSafe(IO& io,
+	const tt_dram_samples_result& dram,const PioneerResidentBanks& banks,
+	PioneerQ38DispatchLease& lease,const PioneerQ38DispatchAuthority& authority)
+{
+	// This is a narrowly scoped abort proof for a failed generic STOP program.
+	// No writes are allowed until two complete all-core snapshots show a parked
+	// faulted ROOT, every peer in its old wait loop or new STOP park, exact code
+	// and physical source state, and idle local NoC queues.
+	for (unsigned pass=0;pass<2;pass++) {
+		auto& root=lease.worker[0];
+		if (!io.SelectRuntimeCore(0)
+			|| !PioneerQ38DispatchSources(io,dram,banks,root,0x46800)
+			|| !PioneerQ38DispatchCodeMatches(io,0,&lease)) return false;
+		uint32_t rootStatus[3];
+		for (unsigned i=0;i<3;i++) rootStatus[i]=io.RuntimeStatusRead(i);
+		io.Pause();
+		uint32_t rootPc[2];
+		rootPc[0]=io.RuntimePcRead(); io.Pause(); rootPc[1]=io.RuntimePcRead();
+		uint32_t rootStatusAgain[3];
+		for (unsigned i=0;i<3;i++) rootStatusAgain[i]=io.RuntimeStatusRead(i);
+		if (rootPc[0]!=TT_Q38_DISPATCH_FAULT_PARK || rootPc[1]!=rootPc[0]
+			|| rootStatus[0]!=rootStatusAgain[0] || rootStatus[1]!=rootStatusAgain[1]
+			|| rootStatus[2]!=TT_Q38_DISPATCH_FAULT) return false;
+		if (pass==0) memcpy(lease.closeStatus,rootStatus,sizeof(rootStatus));
+		for (unsigned worker=1;worker<120;worker++) {
+			auto& node=lease.worker[worker];
+			if (!io.SelectRuntimeCore(worker)
+				|| !PioneerQ38DispatchSources(io,dram,banks,node,0x46800)
+				|| !PioneerQ38DispatchCodeMatches(io,worker,&lease)) return false;
+			uint32_t first[16],second[16];
+			for (unsigned i=0;i<16;i++) first[i]=io.Q38PanelRead(0x74140+i*4);
+			io.Pause();
+			for (unsigned i=0;i<16;i++) second[i]=io.Q38PanelRead(0x74140+i*4);
+			bool stopped=false;
+			if (memcmp(first,second,sizeof(first))
+				|| !PioneerQ38DispatchRecoverableClosePeerStatus(second,
+					lease.peerNonce[worker-1],authority.nextPeer[worker-1],stopped)) return false;
+			io.Pause(); uint32_t pc0=io.RuntimePcRead(); io.Pause(); uint32_t pc1=io.RuntimePcRead();
+			auto waitingPc=[](uint32_t pc) {
+				return pc==TT_Q38_PEER_WAIT_LOAD || pc==TT_Q38_PEER_WAIT_BRANCH;
+			};
+			if (stopped) {
+				if (!PioneerQ38PeerTerminalPc(pc0) || !PioneerQ38PeerTerminalPc(pc1)) return false;
+			} else if (!waitingPc(pc0) || !waitingPc(pc1)) return false;
+		}
+	}
+	return io.SelectRuntimeCore(0)
+		&& PioneerQ38DispatchSources(io,dram,banks,lease.worker[0],0x46800)
+		&& PioneerQ38DispatchCodeMatches(io,0,&lease);
+}
 static inline bool PioneerQ38DispatchStopProof(const uint32_t* stats,const PioneerQ38DispatchAuthority& a)
 {
 	if (!a.nextRoot || a.nextRoot>=0x7fffffff || stats[0]!=TT_Q38_DISPATCH_MARKER || stats[1]!=1
@@ -68,7 +129,8 @@ template<class IO> bool PioneerQ38DispatchPeerLeaseEnd(IO& io,const tt_compute_n
 	store.tlb_restored=true; store.ready=false; return true;
 }
 template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_result& dram,
-	PioneerResidentBanks& banks,PioneerQ38DispatchLease& lease,bool clean)
+	PioneerResidentBanks& banks,PioneerQ38DispatchLease& lease,bool clean,
+	bool recoverFaultedStop=false)
 {
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	lease.inputReuse.valid=false;
@@ -121,26 +183,36 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 			}
 			io.Pause();
 		}
-		if (!complete || !PioneerQ38DispatchSources(io,dram,banks,root,0x46800)) return PioneerQ38DispatchQuarantine(lease,banks);
-		lease.closePhase=40;
-		for (unsigned c=0;c<8;c++) a.after[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c));
-		uint32_t stats[64];
-		if (!PioneerQ38DispatchRead(io,0x7f800,stats,64,0) || !PioneerQ38DispatchStopProof(stats,a)) return PioneerQ38DispatchQuarantine(lease,banks);
-		const uint32_t command[]={0xffb121b0,0,PioneerWorkerX(119)|(PioneerWorkerY(119)<<6),0x75010,0,129,0,0,4,0};
-		for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PioneerQ38DispatchQuarantine(lease,banks);
-		// Independent ALL120 physical audits AFTER STOP and BEFORE ANY hold.
-		for (unsigned w=0;w<120;w++) {
-			lease.closePhase=51; lease.closeWorker=w;
-			if (!io.SelectRuntimeCore(w) || !PioneerQ38DispatchSources(io,dram,banks,lease.worker[w],0x46800)) return PioneerQ38DispatchQuarantine(lease,banks);
-			lease.closePhase=52;
-			if (!PioneerQ38DispatchCodeMatches(io,w,&lease)) return PioneerQ38DispatchQuarantine(lease,banks);
-			lease.closePhase=53;
-			if (w && !PioneerQ38DispatchPeerStatus(io,a.nextPeer[w-1],true,&lease)) return PioneerQ38DispatchQuarantine(lease,banks);
+		bool recoveredStopFailure=false;
+		if (!complete) {
+			if (!recoverFaultedStop || !PioneerQ38DispatchRecoverableCloseSafe(
+				io,dram,banks,lease,a)) return PioneerQ38DispatchQuarantine(lease,banks);
+			recoveredStopFailure=true;
+		} else if (!PioneerQ38DispatchSources(io,dram,banks,root,0x46800))
+			return PioneerQ38DispatchQuarantine(lease,banks);
+		if (!recoveredStopFailure) {
+			lease.closePhase=40;
+			for (unsigned c=0;c<8;c++) a.after[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c));
+			uint32_t stats[64];
+			if (!PioneerQ38DispatchRead(io,0x7f800,stats,64,0) || !PioneerQ38DispatchStopProof(stats,a)) return PioneerQ38DispatchQuarantine(lease,banks);
+			const uint32_t command[]={0xffb121b0,0,PioneerWorkerX(119)|(PioneerWorkerY(119)<<6),0x75010,0,129,0,0,4,0};
+			for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PioneerQ38DispatchQuarantine(lease,banks);
+			// Independent ALL120 physical audits AFTER STOP and BEFORE ANY hold.
+			for (unsigned w=0;w<120;w++) {
+				lease.closePhase=51; lease.closeWorker=w;
+				if (!io.SelectRuntimeCore(w) || !PioneerQ38DispatchSources(io,dram,banks,lease.worker[w],0x46800)) return PioneerQ38DispatchQuarantine(lease,banks);
+				lease.closePhase=52;
+				if (!PioneerQ38DispatchCodeMatches(io,w,&lease)) return PioneerQ38DispatchQuarantine(lease,banks);
+				lease.closePhase=53;
+				if (w && !PioneerQ38DispatchPeerStatus(io,a.nextPeer[w-1],true,&lease)) return PioneerQ38DispatchQuarantine(lease,banks);
+			}
 		}
 		// No reset above. Only after EVERY terminal proof may ANY core hold.
 		for (unsigned w=0;w<120;w++) {
 			lease.closePhase=60; lease.closeWorker=w;
 			if (!io.SelectRuntimeCore(w)) return PioneerQ38DispatchQuarantine(lease,banks);
+			if (recoveredStopFailure && (!PioneerQ38DispatchSources(io,dram,banks,lease.worker[w],0x46800)
+				|| !PioneerQ38DispatchCodeMatches(io,w,&lease))) return PioneerQ38DispatchQuarantine(lease,banks);
 			io.RuntimeResetWrite(0x87ffff); io.Pause();
 			if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) return PioneerQ38DispatchQuarantine(lease,banks);
 			io.RuntimeResetWrite(0x47800); io.Pause();

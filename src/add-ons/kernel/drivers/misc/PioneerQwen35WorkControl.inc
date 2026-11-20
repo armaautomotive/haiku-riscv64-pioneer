@@ -125,7 +125,7 @@ Q35WorkControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 				if (restored && context->q38Dispatch) {
 					restored=PioneerQ38DispatchClose(context->io,
 						context->baseline.baseline.baseline.baseline.dram,context->banks,
-						*context->q38Dispatch,true);
+						*context->q38Dispatch,true,true);
 					if (!restored) {
 						stop.recoveryProofReason=60;
 						stop.recoveryProofDetail=context->q38Dispatch->closePhase;

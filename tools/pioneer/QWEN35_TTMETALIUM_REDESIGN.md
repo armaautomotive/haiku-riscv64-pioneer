@@ -124,14 +124,21 @@ Tag90's fault was followed by a generic dispatch STOP failure at close phase
 cycle was then needed before the guarded stable-driver restore. The exact peer
 or packet that prevented STOP completion is not established. Tag91 restores
 the proven descriptor-then-doorbell path and completed two warm requests with
-clean unload and stable restoration without reboot. General recovery after an
-arbitrary retained-owner or close failure remains unimplemented; the current
-cold latch intentionally denies a new session and there is no root-only
-recovery ioctl yet.
+clean unload and stable restoration without reboot.
 
-The earlier tag75 timing still identifies a much larger gap: the best
-verified result was about 0.12055 decode tok/s, far below the 100 tok/s goal.
-The next major step is to turn the 120-core projection schedule into an
-executable resident device program, keep sharded activations between
-projections, and reduce per-wave completion proofs. Only then can fused
-operations and fixed-shape decode approach the requested TT-Metalium pattern.
+Tag92 adds a Work-only recovery path for the phase30 STOP failure. It requires
+two complete all-core physical audits, a fault-parked ROOT with a stable fault
+marker, each peer at either its prior wait loop or expected STOP park, exact
+code and source proofs, and idle NoC queues before holding any core. Offline
+close tests pass both payload builds, including mixed waiting/stopped peers
+and negative cases that must quarantine without a reset. The Tag92 candidate
+cross-build passes and retains Tag91's ROOT/peer images and client. It has not
+been installed or tested on the card, so this is not yet a physical recovery
+claim. Other retained-owner failures and other close phases still quarantine;
+there is no general root-only recovery ioctl.
+
+Tag91's latest hardware result is 0.123282 decode tok/s. The 100 tok/s goal is
+about 811 times higher. Tag92 changes only the faulted STOP cleanup path and
+does not claim a throughput gain. The next performance step remains an
+executable resident device program with sharded activations between
+projections and fewer ROOT/peer synchronization waves.

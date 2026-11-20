@@ -103,6 +103,13 @@ struct Mock {
 		Write(D::RootProgressAddress+8*4,1);
 		Write(D::RootProgressAddress+(10+D::ProgressFullCoreWavesSlot)*4,7);
 		Write(D::RootProgressAddress+(10+D::ProgressProjectionWavesSlot)*4,28);
+		Write(D::RootProgressAddress+(10+D::ProgressActivationPackTicksSlot)*4,1);
+		Write(D::RootProgressAddress+(10+D::ProgressProjectionSetupTicksSlot)*4,1);
+		Write(D::RootProgressAddress+(10+D::ProgressMatrixDispatchTicksSlot)*4,16);
+		for (unsigned phase=0;phase<3;phase++) {
+			Write(D::RootControlProfileAddress+phase*8,1);
+			Write(D::RootControlProfileAddress+phase*8+4,0);
+		}
 		Write(D::RootOutputAddress,42);
 		Write(D::RootOutputAddress+4,13);
 		Write(D::RootCompletionAddress+4,2);

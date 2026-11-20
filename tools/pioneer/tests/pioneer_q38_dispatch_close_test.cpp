@@ -7,6 +7,7 @@ struct CloseIO:RunIO {
 	bool q38SpanAllowed=true;
 #endif
 	unsigned closeFault=0,target=119,postPc[120]={},endHolds=0,restored=0;
+	unsigned leavePeerWaiting=0;
 	bool failedRestore=false,tlbWritten=false;
 	uint32_t stopStats[64]={};
 #ifdef PIONEER_Q38_INT_SFPU
@@ -14,12 +15,17 @@ struct CloseIO:RunIO {
 #endif
 	explicit CloseIO(const char* path):RunIO(path) {}
 	uint32_t RuntimePcRead() {
+		if (!current && rootFault==1 && !rootExecuted) return 0x72020;
+		if (!current && rootExecuted && C().destination[2034]==TT_Q38_DISPATCH_FAULT)
+			return TT_Q38_DISPATCH_FAULT_PARK;
 		if (stopExecuted) { postPc[current]++; if (current==target && closeFault==3) return 0x7204c; }
 		if (stopExecuted && current==target && closeFault==13) return TT_Q38_PEER_FAULT_ENTRY;
 		if (stopExecuted && current==target && closeFault==14) return TT_Q38_PEER_FAULT_PARK;
 		return RunIO::RuntimePcRead();
 	}
 	uint32_t Q38PanelRead(uint32_t a) {
+		if (stopExecuted && current==target && closeFault==18 && a==0x74140)
+			return RunIO::Q38PanelRead(a)+1;
 #ifdef PIONEER_Q38_INT_SFPU
 		if (current==target && a==helperFaultAddress && closeFault==17 && stopExecuted) return RunIO::Q38PanelRead(a)^1;
 #endif
@@ -47,7 +53,17 @@ struct CloseIO:RunIO {
 	}
 	void RuntimeResetWrite(uint32_t value) {
 		assert(!failedRestore);
-		if (!stopExecuted) { RunIO::RuntimeResetWrite(value); return; }
+		if (!stopExecuted) {
+			RunIO::RuntimeResetWrite(value);
+			if (!current && value==0x46800 && leavePeerWaiting) {
+				peerStopped[leavePeerWaiting-1]=false;
+				auto& peer=*core[leavePeerWaiting];
+				const unsigned at=(0x74140-TT_Q38_PANEL_VIEW_BASE)/4;
+				for (unsigned i=0;i<16;i++) peer.view[at+i]=0;
+				peer.view[at+3]=TT_Q38_PEER_MARKER;
+			}
+			return;
+		}
 		assert(!quarantined && !restored);
 		for (unsigned w=1;w<120;w++) assert(postPc[w]>=2);
 		auto& c=C(); c.resets.push_back(value);
@@ -98,7 +114,9 @@ struct CloseFixture {
 		for (unsigned b=0;b<20;b++) job->scales[b]=0x3c800000;
 		assert(PioneerQ38DispatchRun(io,dram,banks,*lease,initialized.data(),unsigned(initialized.size()),*job));
 	}
-	bool Close() { return PioneerQ38DispatchClose(io,dram,banks,*lease,true); }
+	bool Close(bool recoverFaultedStop=false) {
+		return PioneerQ38DispatchClose(io,dram,banks,*lease,true,recoverFaultedStop);
+	}
 };
 #ifndef PIONEER_Q38_DISPATCH_CLOSE_MOCK_ONLY
 int main(int argc,char** argv)
@@ -197,6 +215,23 @@ int main(int argc,char** argv)
 		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
 		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
 	}
+	{
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.rootFault=2; f.io.leavePeerWaiting=119;
+		assert(f.Close(true) && f.lease->closed && !f.lease->unsafe && f.io.endHolds==120
+			&& f.io.restored==120 && f.lease->closeStatus[2]==TT_Q38_DISPATCH_FAULT);
+		for (unsigned w=0;w<120;w++) assert(f.io.core[w]->coreReset==0x47800);
+	}
+	{
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.rootFault=2; f.io.closeFault=18;
+		assert(!f.Close(true) && f.lease->unsafe && !f.io.endHolds && !f.io.restored);
+		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
+		assert(!f.Close(true) && f.io.Writes()==writes && f.io.selects==selects);
+	}
+	{
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.rootFault=1;
+		assert(!f.Close(true) && f.lease->unsafe && !f.io.endHolds && !f.io.restored);
+	}
+	puts("PASS Work opt-in failed-STOP abort:two all-core audits recover parked ROOT with mixed waiting/stopped peers; unstable peers or nonterminal ROOT quarantine before ANY hold");
 	for (unsigned fault:{10U,11U,12U}) {
 		CloseFixture f(argv[1]); f.io.closing=true; assert(f.Close());
 		f.io.closeFault=fault; f.io.target=0; f.io.tlbWritten=false;

@@ -685,3 +685,22 @@ and no trial lock. The full build, hashes, output, and timings are in
 [`tag270`](benchmarks/qwen35-work-tag270-20261119). The next work should
 target projection compute and per-token scheduling overhead rather than
 another compiler-only comparison.
+
+## Tag91: current verified 4B Work baseline
+
+Tag91 is the latest physical end-to-end result. It returned the exact output
+`A B C D E F G H I J K L M N O P` on two warm runs with Work reporting host
+inference disabled and all 120 Tensix cores participating. Authentication
+took 98.984122 s, tokenization 13.284161 s, and model load 226.936587 s.
+Prompt processing took 178.641664 s and 178.651353 s for 23 tokens. Decode
+took 129.790283 s and 129.777153 s for 16 tokens, or 0.123276 and 0.123288
+decode tokens/s (mean 0.123282). Stable driver55 was restored at generation 4,
+the client unloaded cleanly, and the 27B file was preserved. Full details are
+in [`Tag91`](benchmarks/qwen35-work-tag291-20261120/RUN.md).
+
+Tag92 adds an offline-tested, proof-gated recovery path for a faulted generic
+STOP at close phase 30. Its full Haiku cross-build and sanitizer close tests
+pass. It has not been installed or tested on P100A; Tag91 remains the verified
+card build and rate baseline. See
+[`Tag92 build evidence`](benchmarks/qwen35-work-tag292-20261120/BUILD.md).
+The 100 decode tokens/s goal remains active.
