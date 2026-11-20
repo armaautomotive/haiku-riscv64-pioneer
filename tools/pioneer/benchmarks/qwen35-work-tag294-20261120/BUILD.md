@@ -47,4 +47,12 @@ python3 -B tools/pioneer/build_qwen35_work.py \
 | Default43 control | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` | 934,080 |
 | Work client | `79792acf48caa979628553656390b5d70b67628d0a8cb9f9dd3db74d1f8e3473` | 309,352 |
 
-The physical run and its safe restore are recorded in [`RUN.md`](RUN.md).
+## Physical validation
+
+Tag94 completed two exact warm outputs and a clean unload on the P100A. The
+measured decode rates were 0.122351 and 0.122354 tok/s; model load was
+224.121721 s and prompt processing was 180.166362/180.167662 s for 23 tokens.
+The run did not meet the throughput target and showed no material decode
+improvement over Tag91. The trial restored stable driver55 at generation 6
+without reboot. Raw output and diagnostics are in [`evidence/tag94-card/`](evidence/tag94-card/),
+with the full procedure and phase breakdown in [`RUN.md`](RUN.md).
