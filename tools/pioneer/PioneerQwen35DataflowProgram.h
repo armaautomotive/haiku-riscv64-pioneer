@@ -25,6 +25,9 @@ enum : unsigned {
 	DataflowActivationCacheBytes=9216*sizeof(float),
 	DataflowQueueStateAddress=0x9c000,
 	DataflowQueueStateBytes=3*16,
+	DataflowProgramAddress=0xa0000,
+	DataflowProgramRegionBytes=0x1000,
+	DataflowProgramRegionEnd=DataflowProgramAddress+DataflowProgramRegionBytes,
 	DataflowActivationChunkInputs=256,
 	DataflowInputPageBytes=576,
 	DataflowOutputPageBytes=64,
@@ -142,6 +145,74 @@ struct DataflowProjectionProgram {
 	}
 };
 
+// Compact per-core invocation copied into local L1. The host builder keeps the
+// full 120-core schedule; each device core receives only its own assignment.
+struct DataflowCoreInvocation {
+	unsigned magic,version,core,type,inputs,outputRows,groups,blocks,activeCores,kernelRoles;
+	unsigned inputRows,inputFragmentCount,outputFragmentCount;
+	DataflowCircularBuffer circularBuffer[DataflowCircularBufferCount];
+	RowSpace weights,input,output;
+	DataflowCoreProgram assignment;
+
+	bool Valid() const
+	{
+		if (magic!=DataflowProgramMagic || version!=DataflowProgramVersion
+			|| core>=DataflowCoreCount || !PioneerQwen35Projection::Supports(type,inputs)
+			|| !outputRows || (outputRows&15) || groups!=outputRows/16
+			|| blocks!=(inputs>>(type==8?5:8)) || activeCores!=DataflowCoreCount
+			|| kernelRoles!=DataflowAllRoles || inputRows!=inputs
+			|| !inputFragmentCount || inputFragmentCount>Banks
+			|| !outputFragmentCount || outputFragmentCount>Banks
+			|| !weights.Valid() || weights.rows!=outputRows || weights.unit!=16
+			|| weights.rowBytes*16!=PioneerQwen35Projection::TileBytes(type)*blocks
+			|| !input.Valid() || input.rows<inputRows || input.rowBytes!=sizeof(float)
+			|| input.unit!=16 || !output.Valid() || output.rows<outputRows
+			|| output.rowBytes!=sizeof(float) || output.unit!=16
+			|| inputFragmentCount!=input.count || outputFragmentCount!=output.count
+			|| !assignment.active || !assignment.groups || !assignment.segmentCount
+			|| assignment.segmentCount>DataflowMaxSegments) return false;
+		for (unsigned c=0;c<DataflowCircularBufferCount;c++) {
+			const auto& buffer=circularBuffer[c];
+			const unsigned address=c==0?DataflowWeightBufferAddress
+				:c==1?DataflowInputBufferAddress:DataflowOutputBufferAddress;
+			const unsigned pageBytes=c==0?PioneerQwen35Projection::TileBytes(type)
+				:c==1?DataflowInputPageBytes:DataflowOutputPageBytes;
+			if (buffer.id!=(c==2?16U:c) || buffer.address!=address
+				|| buffer.pageBytes!=pageBytes || buffer.pages!=DataflowCircularBufferPages
+				|| buffer.bytes!=pageBytes*DataflowCircularBufferPages
+				|| buffer.address>=DataflowLocalBufferEnd
+				|| buffer.bytes>DataflowLocalBufferEnd-buffer.address) return false;
+		}
+		unsigned groupsSeen=0,nextGroup=assignment.weight[0].firstGroup;
+		for (unsigned i=0;i<assignment.segmentCount;i++) {
+			const auto& weight=assignment.weight[i];
+			const auto& outputPart=assignment.output[i];
+			if (!weight.groups || weight.firstGroup!=nextGroup || weight.bank>=Banks
+				|| weight.firstGroup>=groups || weight.groups>groups-weight.firstGroup
+				|| weight.bytes!=uint64_t(weight.groups)*16*weights.rowBytes
+				|| weight.address<BankBase || weight.address>=BankLimit
+				|| weight.bytes>BankLimit-weight.address || outputPart.bank>=Banks
+				|| outputPart.firstRow!=weight.firstGroup*16
+				|| outputPart.rows!=weight.groups*16
+				|| outputPart.bytes!=outputPart.rows*sizeof(float)
+				|| outputPart.address<BankBase || outputPart.address>=BankLimit
+				|| outputPart.bytes>BankLimit-outputPart.address) return false;
+			Range expectedWeight{},expectedOutput{};
+			if (!weights.Resolve(outputPart.firstRow,outputPart.rows,0,weight.bytes,expectedWeight)
+				|| expectedWeight.bank!=weight.bank || expectedWeight.address!=weight.address
+				|| !output.Resolve(outputPart.firstRow,outputPart.rows,0,outputPart.bytes,expectedOutput)
+				|| expectedOutput.bank!=outputPart.bank
+				|| expectedOutput.address!=outputPart.address) return false;
+			nextGroup+=weight.groups;
+			groupsSeen+=weight.groups;
+		}
+		return groupsSeen==assignment.groups;
+	}
+};
+static_assert(DataflowLocalBufferEnd==DataflowProgramAddress
+	&& sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes,
+	"a compact immutable per-core invocation fits outside circular buffers");
+
 class DataflowProgramBuilder {
 	static bool Add(unsigned& total,unsigned value)
 	{
@@ -151,6 +222,35 @@ class DataflowProgramBuilder {
 	}
 
 public:
+	static bool BindCore(const DataflowProjectionProgram& program,unsigned core,
+		DataflowCoreInvocation& result)
+	{
+		if (core>=DataflowCoreCount || !program.Valid()) return false;
+		DataflowCoreInvocation candidate{};
+		candidate.magic=program.magic;
+		candidate.version=program.version;
+		candidate.core=core;
+		candidate.type=program.type;
+		candidate.inputs=program.inputs;
+		candidate.outputRows=program.outputRows;
+		candidate.groups=program.groups;
+		candidate.blocks=program.blocks;
+		candidate.activeCores=program.activeCores;
+		candidate.kernelRoles=program.kernelRoles;
+		candidate.inputRows=program.inputRows;
+		candidate.inputFragmentCount=program.inputFragmentCount;
+		candidate.outputFragmentCount=program.outputFragmentCount;
+		for (unsigned i=0;i<DataflowCircularBufferCount;i++)
+			candidate.circularBuffer[i]=program.circularBuffer[i];
+		candidate.weights=program.weights;
+		candidate.input=program.input;
+		candidate.output=program.output;
+		candidate.assignment=program.core[core];
+		if (!candidate.Valid()) return false;
+		result=candidate;
+		return true;
+	}
+
 	static bool Build(const TensorSpace& weight,const RowSpace& input,
 		unsigned inputRows,const RowSpace& output,DataflowProjectionProgram& result)
 	{

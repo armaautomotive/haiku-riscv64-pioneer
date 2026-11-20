@@ -30,14 +30,14 @@ struct PackTestOps {
 
 static void CompileRoleInterfaces()
 {
-	DataflowProjectionProgram program{};
+	DataflowCoreInvocation program{};
 	DataflowQueueView queues[3]{};
 	uint8_t activation[DataflowActivationCacheBytes]{};
 	ContractOps ops{};
 	if (false) {
-		PioneerQwen35DataflowReader(program,0,queues[0],queues[1],activation,ops);
-		PioneerQwen35DataflowCompute(program,0,queues[0],queues[1],queues[2],ops);
-		PioneerQwen35DataflowWriter(program,0,queues[2],ops);
+		PioneerQwen35DataflowReader(program,queues[0],queues[1],activation,ops);
+		PioneerQwen35DataflowCompute(program,queues[0],queues[1],queues[2],ops);
+		PioneerQwen35DataflowWriter(program,queues[2],ops);
 	}
 }
 
@@ -72,6 +72,8 @@ int main()
 	assert(DataflowProgramBuilder::Build(weight,input,Hidden,output,program));
 	assert(program.Valid());
 	assert(program.activeCores==120 && program.kernelRoles==DataflowAllRoles);
+	assert(sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes
+		&& DataflowProgramRegionEnd==0xa1000);
 	assert(program.groups==Hidden/16);
 	assert(program.circularBuffer[0].pageBytes==3392
 		&& program.circularBuffer[0].pages==2);
@@ -79,12 +81,14 @@ int main()
 		&& program.circularBuffer[1].pages==2);
 	assert(program.circularBuffer[2].pageBytes==64
 		&& program.circularBuffer[2].pages==2);
+	DataflowCoreInvocation corePlan{};
+	assert(DataflowProgramBuilder::BindCore(program,0,corePlan));
 	DataflowQueueControl controls[DataflowCircularBufferCount]{};
 	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
 	DataflowQueueView queues[DataflowCircularBufferCount]{};
-	assert(DataflowBindQueues(program,controls,local,queues));
+	assert(DataflowBindQueues(corePlan,controls,local,queues));
 	for (unsigned i=0;i<DataflowCircularBufferCount;i++)
-		assert(queues[i].local==local+(program.circularBuffer[i].address-DataflowWeightBufferAddress));
+		assert(queues[i].local==local+(corePlan.circularBuffer[i].address-DataflowWeightBufferAddress));
 	uint32_t ticket=0;
 	uint8_t* page=nullptr;
 	assert(DataflowQueueReserveBack(queues[0],ticket) && ticket==0);
@@ -102,14 +106,14 @@ int main()
 	assert(DataflowQueueReserveBack(queues[0],ticket) && ticket==UINT32_MAX);
 	assert(DataflowQueuePublishBack(queues[0],ticket));
 	assert(DataflowQueueWaitFront(queues[0],ticket,readPage)
-		&& ticket==UINT32_MAX && readPage==local+program.circularBuffer[0].pageBytes);
+		&& ticket==UINT32_MAX && readPage==local+corePlan.circularBuffer[0].pageBytes);
 	assert(DataflowQueuePopFront(queues[0],ticket));
 	assert(controls[0].produced==0 && controls[0].consumed==0);
 	static uint8_t activationCache[DataflowActivationCacheBytes];
 	float* activation=reinterpret_cast<float*>(activationCache);
 	PackTestOps packOps{};
 	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
-	assert(DataflowPackActivationCache(program,queues[1],activationCache,packOps));
+	assert(DataflowPackActivationCache(corePlan,queues[1],activationCache,packOps));
 	for (unsigned chunk=0;chunk<Hidden/256;chunk++) {
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 		assert(activationCache[(chunk+1)*DataflowInputPageBytes-1]
@@ -120,6 +124,10 @@ int main()
 	unsigned covered=0,splitOutputs=0;
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		assert(program.core[core].active);
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(program,core,invocation));
+		assert(invocation.Valid() && invocation.core==core
+			&& invocation.assignment.groups==program.core[core].groups);
 		for (unsigned segment=0;segment<program.core[core].segmentCount;segment++) {
 			const auto& weightSegment=program.core[core].weight[segment];
 			const auto& outputSegment=program.core[core].output[segment];
@@ -138,7 +146,24 @@ int main()
 	corrupt=program;
 	corrupt.core[119].output[0].bank=(corrupt.core[119].output[0].bank+1)%Banks;
 	assert(!corrupt.Valid());
-	assert(!DataflowCoreHeaderValid(corrupt,119));
+	DataflowCoreInvocation corruptCore{};
+	assert(DataflowProgramBuilder::BindCore(program,119,corruptCore));
+	corruptCore.assignment.output[0].bank=(corruptCore.assignment.output[0].bank+1)%Banks;
+	assert(!DataflowCoreHeaderValid(corruptCore));
+
+	TensorSpace q8Weight{};
+	q8Weight.type=8;
+	q8Weight.inputs=Hidden;
+	Rows(q8Weight.place,Hidden,2880,0x08000000);
+	DataflowProjectionProgram q8Program{};
+	assert(DataflowProgramBuilder::Build(q8Weight,input,Hidden,output,q8Program));
+	assert(q8Program.blocks==Hidden/32);
+	DataflowCoreInvocation q8Core{};
+	assert(DataflowProgramBuilder::BindCore(q8Program,0,q8Core));
+	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
+	assert(DataflowPackActivationCache(q8Core,queues[1],activationCache,packOps));
+	for (unsigned chunk=0;chunk<Hidden/256;chunk++)
+		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
 	TensorSpace tooFew=weight;
 	tooFew.place.rows=Hidden/2;

@@ -118,54 +118,12 @@ inline bool DataflowQueuePopFront(DataflowQueueView& queue,uint32_t ticket)
 	return true;
 }
 
-inline bool DataflowCoreHeaderValid(const DataflowProjectionProgram& program,
-	unsigned core)
+inline bool DataflowCoreHeaderValid(const DataflowCoreInvocation& program)
 {
-	if (program.magic!=DataflowProgramMagic || program.version!=DataflowProgramVersion)
-		return false;
-	if (program.kernelRoles!=DataflowAllRoles || core>=DataflowCoreCount
-		|| !PioneerQwen35Projection::Supports(program.type,program.inputs)
-		|| program.blocks!=(program.inputs>>(program.type==8?5:8))
-		|| program.activeCores!=DataflowCoreCount || !program.core[core].active
-		|| !program.core[core].segmentCount
-		|| program.core[core].segmentCount>DataflowMaxSegments
-		|| !program.weights.Valid() || !program.input.Valid() || !program.output.Valid()
-		|| program.inputRows!=program.inputs || (program.inputs&255)
-		|| program.input.rowBytes!=sizeof(float) || program.input.unit!=16
-		|| program.input.rows<program.inputRows
-		|| program.weights.rows!=program.outputRows || program.weights.unit!=16
-		|| program.weights.rowBytes*16
-			!=PioneerQwen35Projection::TileBytes(program.type)*program.blocks
-		|| program.outputRows!=program.groups*16) return false;
-	const auto& assignment=program.core[core];
-	unsigned groups=0;
-	for (unsigned i=0;i<assignment.segmentCount;i++) {
-		const auto& weight=assignment.weight[i];
-		const auto& output=assignment.output[i];
-		if (!weight.groups || weight.bank>=Banks || !weight.address
-			|| weight.firstGroup>=program.groups || weight.groups>program.groups-weight.firstGroup
-			|| uint64_t(weight.bytes)!=uint64_t(weight.groups)*16*program.weights.rowBytes
-			|| weight.address<BankBase || weight.address>=BankLimit
-			|| weight.bytes>BankLimit-weight.address || !output.rows
-			|| (output.firstRow|output.rows)&15 || output.bank>=Banks
-			|| output.firstRow!=weight.firstGroup*16
-			|| output.rows!=weight.groups*16
-			|| output.bytes!=output.rows*sizeof(float)
-			|| output.address<BankBase || output.address>=BankLimit
-			|| output.bytes>BankLimit-output.address || groups>UINT32_MAX-weight.groups)
-			return false;
-		Range expectedWeight{},expectedOutput{};
-		if (!program.weights.Resolve(output.firstRow,output.rows,0,weight.bytes,expectedWeight)
-			|| expectedWeight.bank!=weight.bank || expectedWeight.address!=weight.address
-			|| !program.output.Resolve(output.firstRow,output.rows,0,output.bytes,expectedOutput)
-			|| expectedOutput.bank!=output.bank || expectedOutput.address!=output.address)
-			return false;
-		groups+=weight.groups;
-	}
-	return groups==assignment.groups;
+	return program.Valid();
 }
 
-inline bool DataflowBindQueues(const DataflowProjectionProgram& program,
+inline bool DataflowBindQueues(const DataflowCoreInvocation& program,
 	DataflowQueueControl* controls,uint8_t* local,DataflowQueueView (&queues)[3])
 {
 	if (!controls || !local) return false;
@@ -184,7 +142,7 @@ inline unsigned DataflowActivationChunk(unsigned type,unsigned block)
 }
 
 template<class Ops>
-bool DataflowPackActivationCache(const DataflowProjectionProgram& program,
+bool DataflowPackActivationCache(const DataflowCoreInvocation& program,
 	DataflowQueueView& inputs,uint8_t* activationCache,Ops& ops)
 {
 	if (!DataflowQueueValid(inputs) || !activationCache
@@ -220,11 +178,11 @@ bool DataflowPackActivationCache(const DataflowProjectionProgram& program,
 // stream each weight/activation tile pair through the two input circular
 // buffers. Ops are device-side NoC and quantization primitives.
 template<class Ops>
-bool PioneerQwen35DataflowReader(const DataflowProjectionProgram& program,
-	unsigned core,DataflowQueueView& weights,DataflowQueueView& inputs,
+bool PioneerQwen35DataflowReader(const DataflowCoreInvocation& program,
+	DataflowQueueView& weights,DataflowQueueView& inputs,
 	uint8_t* activationCache,Ops& ops)
 {
-	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(weights)
+	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(weights)
 		|| !DataflowQueueValid(inputs) || !activationCache) {
 		DataflowQueueFail(weights,DataflowFailureReader);
 		DataflowQueueFail(inputs,DataflowFailureReader);
@@ -246,7 +204,7 @@ bool PioneerQwen35DataflowReader(const DataflowProjectionProgram& program,
 	// subsequent output-row groups reuse the packed chunks.
 	if (!DataflowPackActivationCache(program,inputs,activationCache,ops))
 		return failReader();
-	const auto& assignment=program.core[core];
+	const auto& assignment=program.assignment;
 	const unsigned tileBytes=program.circularBuffer[0].pageBytes;
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
 		const auto& segment=assignment.weight[segmentIndex];
@@ -287,20 +245,20 @@ failed:
 // Tensix matrix-engine primitive. No host or scalar dot-product callback is
 // provided by this interface.
 template<class Ops>
-bool PioneerQwen35DataflowCompute(const DataflowProjectionProgram& program,
-	unsigned core,DataflowQueueView& weights,DataflowQueueView& inputs,
+bool PioneerQwen35DataflowCompute(const DataflowCoreInvocation& program,
+	DataflowQueueView& weights,DataflowQueueView& inputs,
 	DataflowQueueView& outputs,Ops& ops)
 {
 	static_assert(Ops::TensixMatrixEngine,
 		"Qwen35 projection compute requires the Tensix matrix engine");
-	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(weights)
+	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(weights)
 		|| !DataflowQueueValid(inputs) || !DataflowQueueValid(outputs)) {
 		DataflowQueueFail(weights,DataflowFailureCompute);
 		DataflowQueueFail(inputs,DataflowFailureCompute);
 		DataflowQueueFail(outputs,DataflowFailureCompute);
 		return false;
 	}
-	const auto& assignment=program.core[core];
+	const auto& assignment=program.assignment;
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
 		const auto& segment=assignment.weight[segmentIndex];
 		for (unsigned group=0;group<segment.groups;group++) {
@@ -334,14 +292,14 @@ failed:
 // Writer role: stream each completed 16-row output page directly to its
 // sharded device-memory destination. There is no ROOT/host gather step.
 template<class Ops>
-bool PioneerQwen35DataflowWriter(const DataflowProjectionProgram& program,
-	unsigned core,DataflowQueueView& outputs,Ops& ops)
+bool PioneerQwen35DataflowWriter(const DataflowCoreInvocation& program,
+	DataflowQueueView& outputs,Ops& ops)
 {
-	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(outputs)) {
+	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(outputs)) {
 		DataflowQueueFail(outputs,DataflowFailureWriter);
 		return false;
 	}
-	const auto& assignment=program.core[core];
+	const auto& assignment=program.assignment;
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
 		const auto& segment=assignment.output[segmentIndex];
 		for (unsigned group=0;group<segment.rows/16;group++) {

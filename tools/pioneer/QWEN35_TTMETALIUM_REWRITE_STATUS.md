@@ -22,11 +22,15 @@ rewrite is implemented.
 - The reader packs each 256-value activation chunk once in local memory and
   reuses that packed chunk across its assigned output groups. Q8_0 weight
   blocks map eight-at-a-time to the same 256-value activation chunk.
+- Added `DataflowCoreInvocation`: the full 120-core schedule remains host-side,
+  while each core gets only its own immutable shard assignment in the bounded
+  4 KiB local region at `0xa0000`. The per-core object is size-checked and
+  revalidates its local buffers, queue layout, and bank ranges.
 - Expanded the offline program test to compile all three role interfaces and
-  check 120-core shard coverage, queue address binding, queue publish/consume,
-  ticket wraparound, in-place activation packing, Q8 block mapping, and
-  malformed-descriptor rejection. The host test passes with AddressSanitizer
-  and UndefinedBehaviorSanitizer.
+  check all 120 per-core materializations, shard coverage, queue address
+  binding, queue publish/consume, ticket wraparound, in-place activation
+  packing, Q8 block mapping, and malformed-descriptor rejection. The host test
+  passes with AddressSanitizer and UndefinedBehaviorSanitizer.
 - The existing Work dispatcher and ROOT gather path are retained as the
   checkpoint; no changes to that path are part of this rewrite phase.
 - Added `PioneerQwen35DataflowProgram.h`: a 120-core program descriptor and
@@ -48,3 +52,4 @@ rewrite is implemented.
    the hardware benchmark and assistant integration phases.
 
 The latest pushed checkpoint before this rewrite is `1b2b57c561`.
+The latest pushed rewrite checkpoint is `80dd3ad547`.
