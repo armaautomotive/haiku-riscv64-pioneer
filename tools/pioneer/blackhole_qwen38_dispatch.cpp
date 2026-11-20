@@ -148,6 +148,46 @@ static unsigned DispatcherReject(unsigned sourceLine,unsigned detail,
 	return 0;
 }
 extern "C" void block_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+static __UINT64_TYPE__ Q35DispatchCycles()
+{
+	for (unsigned attempt=0;attempt<16;attempt++) {
+		uint32_t high,low,confirm;
+		asm volatile("csrrs %0,0xb80,x0\ncsrrs %1,0xb00,x0\ncsrrs %2,0xb80,x0"
+			: "=r"(high),"=r"(low),"=r"(confirm) :: "memory");
+		if (high==confirm) return (static_cast<__UINT64_TYPE__>(high)<<32)|low;
+	}
+	block_fault_park();
+}
+struct Q35DispatchProfile {
+	bool enabled;
+	__UINT64_TYPE__ previous;
+	volatile uint32_t* slots;
+	explicit Q35DispatchProfile(bool active)
+		: enabled(active),previous(0),slots(Words(PioneerQwen35::RootControlProfileAddress))
+	{
+		if (!enabled) return;
+		previous=Q35DispatchCycles();
+		if (!previous) block_fault_park();
+	}
+	void Mark(unsigned phase)
+	{
+		if (!enabled) return;
+		if (phase>=3) block_fault_park();
+		const __UINT64_TYPE__ now=Q35DispatchCycles();
+		if (now<previous) block_fault_park();
+		const __UINT64_TYPE__ before=(static_cast<__UINT64_TYPE__>(slots[phase*2+1])<<32)
+			|slots[phase*2];
+		const __UINT64_TYPE__ delta=now-previous;
+		const __UINT64_TYPE__ total=before+delta;
+		if (total<before) block_fault_park();
+		slots[phase*2]=uint32_t(total);
+		slots[phase*2+1]=uint32_t(total>>32);
+		Fence();
+		previous=now;
+	}
+};
+#endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 #ifndef PIONEER_Q38_WORK_COMPACT_OUTPUT
 #error Root cycle diagnostic requires the separate complete compact-output root
@@ -706,6 +746,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	const bool work=operation==1 && header[8]==1;
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	Q35DispatchProfile q35Profile(work);
+#endif
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
 	uint32_t peerMetrics[7];
 #endif
@@ -902,6 +945,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		Checkpoint(0x5d000003,q35RootTiles);
 	}
 	Checkpoint(0x5d000004,workers); // root projection phase complete; peer completion polling follows
+	if(work)q35Profile.Mark(0); // command/doorbell issue and ROOT matrix engine
 #endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(0); // validation/staging/descriptor+doorbell transfers
@@ -928,6 +972,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		Checkpoint(0x54000301,workers);
 		if (!terminal) block_fault_park();
 	}
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if(work)q35Profile.Mark(1); // peer completion wait and physical terminal audit
+#endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(1); // worker wait+CURRENT physical terminal audits,not pure arithmetic
 #endif
@@ -1102,5 +1149,8 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
 	if(work)for(unsigned w=0;w<7;w++)Words(0x7f800)[57+w]=peerMetrics[w]; // DISTINCT DATA marker,not root-cycle semantics
 #endif
+	#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if(work)q35Profile.Mark(2); // gathered output, counter/source proofs, and final idle check
+	#endif
 	Fence(); return workers;
 }

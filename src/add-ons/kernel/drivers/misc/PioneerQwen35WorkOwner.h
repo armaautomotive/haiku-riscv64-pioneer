@@ -141,6 +141,11 @@ public:
 		unsigned progress[statusWords];
 		for (unsigned i=0; i<statusWords; i++) progress[i]=io.Read(RootProgressAddress+i*4);
 		memcpy(&result.progress,progress,sizeof(progress));
+		for (unsigned phase=0; phase<3; phase++) {
+			const unsigned low=io.Read(RootControlProfileAddress+phase*8);
+			const unsigned high=io.Read(RootControlProfileAddress+phase*8+4);
+			result.dispatchPhaseCycles[phase]=(static_cast<unsigned long long>(high)<<32)|low;
+		}
 		// Prefer the explicit request-cleared terminal marker: some fault
 		// paths report the parked ROOT PC one instruction past WorkFaultPc.
 		if (marker==RootFault || (result.pc==WorkFaultPc && marker!=RootDone)) {

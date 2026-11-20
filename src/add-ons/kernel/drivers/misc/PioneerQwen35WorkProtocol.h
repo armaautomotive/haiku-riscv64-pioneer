@@ -13,7 +13,7 @@
 #define TT_PCI_PROBE_Q35_WORK_STOP (B_DEVICE_OP_CODES_END + 0x64d4)
 
 namespace PioneerQwen35 {
-enum : unsigned { WorkVersion=6, WorkDriver=64 };
+enum : unsigned { WorkVersion=7, WorkDriver=64 };
 enum WorkStatus : unsigned {
 	WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault, WorkRecoveryPending
 };
@@ -56,6 +56,7 @@ struct WorkPoll {
 	unsigned pc;
 	RequestProgress progress;
 	unsigned long long startMicros, prefillObservedMicros, completeObservedMicros;
+	unsigned long long dispatchPhaseCycles[3];
 	unsigned recoveryProofReason, recoveryProofDetail;
 	unsigned faultNocValid, faultNocCommand[10], faultNocCounters[8], faultNocCounterDelta[8];
 	unsigned faultPeer119Valid, faultPeer119Pc[2], faultPeer119Status[16];
@@ -185,6 +186,13 @@ inline bool ValidWorkResult(const WorkPoll& result, unsigned promptCount, unsign
 		+status.reserved[ProgressProjectionSetupTicksSlot]
 		+status.reserved[ProgressMatrixDispatchTicksSlot];
 	if (phaseTicks>((totalCycles+decodeCycles)>>8)) return false;
+	const unsigned long long dispatchLimit=
+		static_cast<unsigned long long>(status.reserved[ProgressMatrixDispatchTicksSlot])<<8;
+	if (!result.dispatchPhaseCycles[0] || !result.dispatchPhaseCycles[1]
+		|| !result.dispatchPhaseCycles[2] || result.dispatchPhaseCycles[0]>dispatchLimit
+		|| result.dispatchPhaseCycles[1]>dispatchLimit-result.dispatchPhaseCycles[0]
+		|| result.dispatchPhaseCycles[2]>dispatchLimit-result.dispatchPhaseCycles[0]-result.dispatchPhaseCycles[1])
+		return false;
 	if (status.reserved[ProgressReadyFailureSlot]) return false;
 	for (unsigned i=0; i<status.generated; i++) {
 		const unsigned token=result.generatedIds[i];
