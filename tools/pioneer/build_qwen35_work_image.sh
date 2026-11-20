@@ -11,6 +11,12 @@ mkdir -m 700 "$output"
 optimization=${PIONEER_Q35_WORK_OPT_LEVEL:-s}
 case "$optimization" in s|1|2|3) ;; *) exit 2;; esac
 flags="-std=c++17 -O$optimization -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32 -fstack-usage"
+batch_flags=
+case "${PIONEER_Q35_WORK_BATCH_FETCH:-0}" in
+	0) ;;
+	1) batch_flags=-DPIONEER_Q35_WORK_BATCH_FETCH=1 ;;
+	*) exit 2 ;;
+esac
 diagnostic_flags=
 case "${PIONEER_Q35_TRANSFER_DIAGNOSTIC:-0}" in
 	0) ;;
@@ -20,10 +26,10 @@ esac
 for source in blackhole_qwen35_work blackhole_qwen35_token_core blackhole_qwen35_device_io; do
  "$cross-g++" $flags -c "$directory/$source.cpp" -o "$output/$source.o"
 done
-"$cross-g++" $flags $diagnostic_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_ROOT_MATRIX=1 \
+"$cross-g++" $flags $diagnostic_flags $batch_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_ROOT_MATRIX=1 \
  -Dblock_main=q35_work_matrix_band \
  -c "$directory/blackhole_qwen38_rows.cpp" -o "$output/matrix.o"
-"$cross-g++" $flags $diagnostic_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
+"$cross-g++" $flags $diagnostic_flags $batch_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
 	-Dblock_main=q35_dispatch_body -c "$directory/blackhole_qwen38_dispatch.cpp" -o "$output/dispatcher.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax "$directory/blackhole_qwen35_work_start.S" -o "$output/start.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax "$directory/blackhole_qwen35_dispatch_start.S" -o "$output/dispatch-start.o"

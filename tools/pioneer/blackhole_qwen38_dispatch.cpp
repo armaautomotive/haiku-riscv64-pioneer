@@ -70,6 +70,9 @@ enum {TT_Q38_FFN_MATRIX_MARKER=TT_Q38_PROJECTION_MATRIX_MARKER,
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
 #include "PioneerQwen35Projection.h"
 #include "PioneerQwen35RootImageLayout.h"
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+#include "PioneerQwen35BatchFetch.h"
+#endif
 #if !defined(PIONEER_Q38_WORK_COHORT_CACHE) || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) \
  || defined(PIONEER_Q38_REUSE_ACTIVATIONS) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
 #error Qwen3.5 Work dispatcher requires the checked persistent-cohort path
@@ -602,6 +605,13 @@ static bool Q35RootMatrix(const volatile uint32_t* job,unsigned type,unsigned in
 	if (q35_work_matrix_band()!=groups*(inputs/16)) return false;
 #endif
 	expected[0]=job[6]+(tiles-1)*Tile(type);
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+	const unsigned fetchBatch=PioneerQwen35FetchBatch(type);
+	if (!fetchBatch) return false;
+	expected[0]-=(fetchBatch-1)*Tile(type);
+	expected[3]=0x98000;
+	expected[8]*=fetchBatch;
+#endif
 	for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) {
 #ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
 		Checkpoint(0x5e000008,(i<<24)|(command[i]&0x00ffffff));
@@ -942,7 +952,11 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
 #endif
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
-#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
+		if(work)weightReads>>=type==8?2:1; // bounded <=8KiB Qwen35 batches
+		unsigned reads=weightReads+(inputs*2+16383)/16384+1;
+#elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
 		if(work)weightReads>>=type==8?2:1; // bounded <=8KiB DRAM batches
 		unsigned reads=weightReads+(inputs*2+16383)/16384+1;
@@ -958,7 +972,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for (unsigned c=0;c<8;c++) if (uint32_t(proof[c+8]-proof[c])!=(c==1?flits:(c==0 || c==2 || c==3 || c==6)?reads:0)) block_fault_park();
 		volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;
 		command[0]=p[0]+(groups*blocks-1)*Tile(type); command[2]=p[4]; command[3]=0x90000; command[5]=XY(w+1); command[8]=Tile(type);
-#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+		if(work){unsigned batch=PioneerQwen35FetchBatch(type);command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
+#elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 		if(work){unsigned batch=type==8?4:2;command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
 #endif
 		if (proof[16]!=groups*inputs/16 || proof[17]!=p[3] || proof[18]!=w+1 || proof[19]!=Q38DispatchPeerMarker
@@ -1025,8 +1041,13 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
 #endif
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
-	Words(0x7f800)[6]+=q35RootTiles; Words(0x7f800)[8]+=q35RootFlits;
-	reads+=q35RootTiles; flits+=q35RootFlits;
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+	const unsigned q35RootReads=q35RootTiles>>(type==8?2:1); // exact because supported block counts are batch-aligned
+	Words(0x7f800)[6]+=q35RootReads; reads+=q35RootReads;
+#else
+	Words(0x7f800)[6]+=q35RootTiles; reads+=q35RootTiles;
+#endif
+	Words(0x7f800)[8]+=q35RootFlits; flits+=q35RootFlits;
 #endif
 	Checkpoint(0x54000403,reads);
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT

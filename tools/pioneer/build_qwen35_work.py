@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026111800010067'
+TAG = '2026111800010070'
 
 
 def main():
@@ -19,6 +19,8 @@ def main():
                         help='Tensix ROOT C++ optimization level (default: s)')
     parser.add_argument('--peer-opt-level', choices=('s', '1', '2', '3'), default='s',
                         help='Tensix peer C++ optimization level (default: s)')
+    parser.add_argument('--batch-fetch', action='store_true',
+                        help='batch complete original Qwen3.5 weight tiles in an isolated Work candidate')
     parser.add_argument('haiku_build', type=Path)
     parser.add_argument('new_output', type=Path)
     args = parser.parse_args()
@@ -29,6 +31,8 @@ def main():
     image = output / 'image'
     image_env = dict(env, PIONEER_Q35_WORK_OPT_LEVEL=args.device_opt_level,
                      PIONEER_Q35_WORK_PEER_OPT_LEVEL=args.peer_opt_level)
+    if args.batch_fetch:
+        image_env['PIONEER_Q35_WORK_BATCH_FETCH'] = '1'
     if args.transfer_diagnostic:
         image_env['PIONEER_Q35_TRANSFER_DIAGNOSTIC'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen35_work_image.sh', build, image], check=True, env=image_env)

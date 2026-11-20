@@ -649,3 +649,39 @@ or `0.114526` and `0.114529` tokens/s. This is slower than O2 tag66's
 `0.11618` tokens/s, so O2 remains the fastest tested compiler setting. Stable
 driver55 was restored at generation14 without reboot; no owner or trial lock
 remained. See [`qwen35-work-tag267-20261119`](benchmarks/qwen35-work-tag267-20261119).
+
+## Tag68: bounded batch-fetch trial
+
+Tag68 batches two complete weight tiles into bounded reads of at most 8 KiB,
+while retaining the checked ROOT and peer matrix paths. It loaded all 3,450
+model spans in `221.612372` s after authentication (`68.208760` s) and
+tokenization (`13.165097` s). It faulted before prefill at
+`dispatcher_stage=0x54000410`, detail `0x2ce1`, after the ROOT and worker119
+command proofs passed. The client unloaded and recovery restored stable55 at
+generation16 without reboot.
+
+Tag69 corrected the expected ROOT request count to reflect batches. It loaded
+in `223.953868` s, then stopped before prefill at
+`dispatcher_stage=0x54000403`, detail `0x2cb9`; actual ROOT router reads were
+`0x2cc4`. The accumulated ROOT counter still counted original tiles. Tag70
+fixes both sides of that accounting check. The logs, checksums, and guarded
+trial scripts are saved in [`tag268`](benchmarks/qwen35-work-tag268-20261119)
+and [`tag269`](benchmarks/qwen35-work-tag269-20261119).
+
+## Tag70: batch-fetch end-to-end validation
+
+Tag70 passed both warm runs using ROOT and all 119 Tensix peers, with host
+inference disabled. Each run recorded 7,136 full-core waves and 14,128
+projection waves and returned the exact requested output. Authentication took
+`67.643567` s, vocabulary/tokenization took `13.588297` s, and model load took
+`223.903580` s. Prompt processing took `192.732584` and `192.736828` s;
+decode took `138.861988` and `138.856075` s for 16 tokens, or `0.115222` and
+`0.115227` tokens/s. Batch-fetch did not improve on O2 tag66's `0.11618`
+tokens/s; 100 tokens/s remains about 868 times faster than this result.
+
+The client exited successfully and unloaded cleanly. Stable driver55 was
+restored at generation20 without reboot; postflight confirmed no active owner
+and no trial lock. The full build, hashes, output, and timings are in
+[`tag270`](benchmarks/qwen35-work-tag270-20261119). The next work should
+target projection compute and per-token scheduling overhead rather than
+another compiler-only comparison.

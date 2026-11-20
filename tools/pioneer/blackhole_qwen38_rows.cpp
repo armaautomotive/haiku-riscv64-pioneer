@@ -62,6 +62,15 @@
 #error Qwen shared rows require the separate Work peer image role
 #endif
 #include "PioneerQwen35Projection.h"
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+#if PIONEER_Q35_PROJECTION_IMAGE != 1 \
+ || (!defined(PIONEER_Q35_WORK_PEER_IMAGE) && !defined(PIONEER_Q35_WORK_ROOT_MATRIX)) \
+ || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) \
+ || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+#error Qwen35 bounded fetch batching is a separate original-layout Work image candidate
+#endif
+#include "PioneerQwen35BatchFetch.h"
+#endif
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
 #include "PioneerQwen35RootImageLayout.h"
 static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned, unsigned, unsigned);
@@ -481,6 +490,22 @@ static void FetchBlock(uint32_t address)
 	}
 	block_fault_park();
 }
+#if defined(PIONEER_Q35_WORK_BATCH_FETCH) && defined(PIONEER_Q35_WORK_ROOT_MATRIX)
+// The ROOT's normal setup comes from the private dispatcher job. The batched
+// candidate changes only the checked command's address, destination and size
+// before reusing the same response/idle proof in FetchBlock.
+static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,unsigned bytes)
+{
+	PIONEER_Q38_MIXED_SEAL();
+	if (*Words(0xffb20040) || (*Words(0xffb20240)&255)) block_fault_park();
+	static const unsigned offsets[]={0,8,12,32};
+	const uint32_t values[]={address,route,destination,bytes};
+	for (unsigned w=0;w<4;w++) {
+		*Words(0xffb20000+offsets[w])=values[w];
+		if (*Words(0xffb20000+offsets[w])!=values[w]) block_fault_park();
+	}
+}
+#endif
 #ifdef PIONEER_Q38_SHARED_ROWS
 // FUTURE PRIVATE kernel descriptor only. This image has NO native handler.
 // Retarget ONLY an idle,read-only command to fixed root L1,self destination
@@ -944,6 +969,17 @@ extern "C" unsigned block_main()
 	uint32_t rawBase=0x90000;
 #endif
 #ifdef PIONEER_Q38_STREAM
+#ifdef PIONEER_Q35_WORK_BATCH_FETCH
+		PioneerQwen35BatchFetchPlan batchPlan;
+		if (!PioneerQwen35BatchFetch(type,inputs,groups,group,block,first,batchPlan)) block_fault_park();
+		if (batchPlan.issue) {
+			ReadCommand(batchPlan.source,job[8],batchPlan.destination,batchPlan.bytes);
+			FetchBlock(batchPlan.source);
+		}
+		for (unsigned word=0;word<batchPlan.copyWords;word++)
+			Words(0x90000)[word]=Words(batchPlan.copySource)[word];
+		(void)Words(0x90000)[batchPlan.copyWords-1]; Fence();
+#else
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
 #ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
@@ -963,6 +999,7 @@ extern "C" unsigned block_main()
 	Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
 #endif
 	FetchBlock(first+(group*blocks+block)*bytes);
+#endif
 #ifdef PIONEER_Q35_WORK_ROOT_MATRIX
 	float scale=Float(Words(PioneerQwen35::RootScaleAddress)[block]);
 #else
