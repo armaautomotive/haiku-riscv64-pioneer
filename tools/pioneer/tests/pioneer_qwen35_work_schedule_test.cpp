@@ -35,9 +35,9 @@ int main()
 		&& schedule.extraWorkers==0);
 
 	const unsigned totals[]={1,2,31,32,119,120,160,576,15520};
-	for (unsigned total:totals) for (unsigned fragmentsCount=1;fragmentsCount<=14;fragmentsCount++) {
-		PioneerQ35WorkFragment fragments[14]={};
-		unsigned cursor[14]={},first=0;
+	for (unsigned total:totals) for (unsigned fragmentsCount=1;fragmentsCount<=28;fragmentsCount++) {
+		PioneerQ35WorkFragment fragments[28]={};
+		unsigned cursor[28]={},first=0;
 		for (unsigned fragment=0;fragment<fragmentsCount;fragment++) {
 			const unsigned groups=total/fragmentsCount+unsigned(fragment<total%fragmentsCount);
 			if (!groups) break;
@@ -75,8 +75,8 @@ int main()
 				for (unsigned group=0;group<task.groups;group++)
 					assert(visits[task.firstGroup+group]++==0);
 			}
-			if (!completed && remaining>=120 && actualFragments==14)
-				assert(fragmentMask==0x3fff);
+			if (!completed && remaining>=120 && actualFragments==28)
+				assert(fragmentMask==0x0fffffff);
 			for (unsigned fragment=0;fragment<actualFragments;fragment++) {
 				assert(batch.nextGroup[fragment]>=cursor[fragment]
 					&& batch.nextGroup[fragment]<=fragments[fragment].groups);
@@ -88,9 +88,9 @@ int main()
 		for (unsigned visitsForGroup:visits) assert(visitsForGroup==1);
 	}
 
-	PioneerQ35WorkFragment composite[14]={},local[7]={};
-	unsigned compositeTensor[14]={},compositeCount=0,baseGroup=0;
-	for (unsigned tensor=0;tensor<2;tensor++) {
+	PioneerQ35WorkFragment composite[28]={},local[7]={};
+	unsigned compositeTensor[28]={},compositeCount=0,baseGroup=0;
+	for (unsigned tensor=0;tensor<4;tensor++) {
 		unsigned firstGroup=0;
 		for (unsigned part=0;part<7;part++) {
 			const unsigned groups=576/7+unsigned(part<576%7);
@@ -102,14 +102,14 @@ int main()
 			composite,compositeTensor,compositeCount));
 		baseGroup+=576;
 	}
-	assert(compositeCount==14 && baseGroup==1152);
+	assert(compositeCount==28 && baseGroup==2304);
 	for (unsigned i=0;i<compositeCount;i++) {
 		assert(compositeTensor[i]==i/7);
 		assert(composite[i].firstGroup==(i%7==0?(i/7)*576:composite[i-1].firstGroup+composite[i-1].groups));
 	}
-	unsigned compositeCursor[14]={},compositeDone=0;
-	std::vector<unsigned> compositeVisits(1152,0);
-	while (compositeDone<1152) {
+	unsigned compositeCursor[28]={},compositeDone=0;
+	std::vector<unsigned> compositeVisits(2304,0);
+	while (compositeDone<2304) {
 		PioneerQ35WorkBatch batch{};
 		assert(PioneerQ35BuildWorkBatch(composite,compositeCount,compositeCursor,batch));
 		for (unsigned worker=0;worker<batch.workerCount;worker++) {

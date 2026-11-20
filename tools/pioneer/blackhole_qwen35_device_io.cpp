@@ -280,7 +280,7 @@ bool DeviceIO::StageBands(const TensorSpace* const* tensors,unsigned tensorCount
 	auto fail=[&](unsigned reason) { Trace(0xe5000000U|reason); return false; };
 	__UINT64_TYPE__ phaseStart=Cycles();
 	if (!phaseStart) return fail(18);
-	if (!tensors || !tensorCount || tensorCount>2 || !tensors[0] || (!!best!=!!chosen)
+	if (!tensors || !tensorCount || tensorCount>4 || !tensors[0] || (!!best!=!!chosen)
 		|| ((best || chosen) && tensorCount!=1)) return fail(1);
 	const bool argmax=best && chosen;
 	if (!argmax && !outputs) return fail(1);
@@ -291,9 +291,9 @@ bool DeviceIO::StageBands(const TensorSpace* const* tensors,unsigned tensorCount
 		Words(RootScaleEvidenceAddress)[3]=Words(Scales)[inputs>>8];
 		Fence();
 	}
-	PioneerQ35WorkFragment fragments[14]={};
-	unsigned fragmentTensor[14]={},tensorBaseGroup[2]={},tensorBaseRow[2]={};
-	unsigned cursor[14]={},fragmentCount=0,groups=0,totalRows=0;
+	PioneerQ35WorkFragment fragments[PioneerQ35WorkMaxFragments]={};
+	unsigned fragmentTensor[PioneerQ35WorkMaxFragments]={},tensorBaseGroup[4]={},tensorBaseRow[4]={};
+	unsigned cursor[PioneerQ35WorkMaxFragments]={},fragmentCount=0,groups=0,totalRows=0;
 	for (unsigned t=0;t<tensorCount;t++) {
 		if (!tensors[t]) return fail(1);
 		const TensorSpace& tensor=*tensors[t];
@@ -496,27 +496,52 @@ bool DeviceIO::Project(unsigned layer,unsigned role,const float* input,unsigned 
 bool DeviceIO::ProjectPair(unsigned layer,unsigned firstRole,unsigned secondRole,
 	const float* input,unsigned inputs,float* firstOutput,float* secondOutput,unsigned outputs)
 {
-	Trace(0xdb000000U|((layer&0xffU)<<16)|((firstRole&0xffU)<<8)|((inputs>>8)&0xffU));
-	Trace(0xdb000000U|((layer&0xffU)<<16)|((secondRole&0xffU)<<8)|((inputs>>8)&0xffU));
-	const TensorSpace* first=model.Weight(layer,firstRole);
-	const TensorSpace* second=model.Weight(layer,secondRole);
-	if (!first || !second || first==&model.tied || second==&model.tied
-		|| !firstOutput || !secondOutput || first==second
-		|| first->type!=second->type || first->inputs!=inputs || second->inputs!=inputs
-		|| first->place.rows!=outputs || second->place.rows!=outputs
-		|| !first->place.Valid() || !second->place.Valid()) return false;
-	const __UINT64_TYPE__ packStart=Cycles();
-	if (!packStart || !StageInput(first->type,input,inputs)) return false;
-	const __UINT64_TYPE__ packEnd=Cycles();
-	if (packEnd<packStart || !RecordCycleTicks(progress,
-		ProgressActivationPackTicksSlot,packEnd-packStart)) return false;
-	if (first->type==13) {
-		Words(RootScaleEvidenceAddress)[2]=Words(Scales)[inputs>>8];
-		Fence();
+	const unsigned roles[2]={firstRole,secondRole};
+	const unsigned sizes[2]={outputs,outputs};
+	float* destinations[2]={firstOutput,secondOutput};
+	return ProjectGroup(layer,roles,input,inputs,destinations,sizes,2);
+}
+
+bool DeviceIO::ProjectGroup(unsigned layer,const unsigned* roles,const float* input,unsigned inputs,
+	float* const* outputs,const unsigned* outputSizes,unsigned roleCount)
+{
+	if (!roles || !outputs || !outputSizes || !roleCount || roleCount>4) return false;
+	const TensorSpace* tensors[4]={};
+	bool processed[4]={};
+	for (unsigned i=0;i<roleCount;i++) {
+		Trace(0xdb000000U|((layer&0xffU)<<16)|((roles[i]&0xffU)<<8)|((inputs>>8)&0xffU));
+		tensors[i]=model.Weight(layer,roles[i]);
+		if (!tensors[i] || tensors[i]==&model.tied || !outputs[i]
+			|| tensors[i]->inputs!=inputs || tensors[i]->place.rows!=outputSizes[i]
+			|| !tensors[i]->place.Valid()) return false;
+		for (unsigned previous=0;previous<i;previous++) if (tensors[previous]==tensors[i]) return false;
 	}
-	const TensorSpace* tensors[2]={first,second};
-	float* outputsByTensor[2]={firstOutput,secondOutput};
-	return StageBands(tensors,2,outputsByTensor);
+	for (unsigned i=0;i<roleCount;i++) {
+		if (processed[i]) continue;
+		const unsigned type=tensors[i]->type;
+		const __UINT64_TYPE__ packStart=Cycles();
+		if (!packStart || !StageInput(type,input,inputs)) return false;
+		const __UINT64_TYPE__ packEnd=Cycles();
+		if (packEnd<packStart || !RecordCycleTicks(progress,
+			ProgressActivationPackTicksSlot,packEnd-packStart)) return false;
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[2]=Words(Scales)[inputs>>8];
+			Fence();
+		}
+		const TensorSpace* sameType[4]={};
+		float* sameTypeOutputs[4]={};
+		unsigned count=0;
+		for (unsigned candidate=i;candidate<roleCount;candidate++) {
+			if (!processed[candidate] && tensors[candidate]->type==type) {
+				sameType[count]=tensors[candidate];
+				sameTypeOutputs[count]=outputs[candidate];
+				processed[candidate]=true;
+				count++;
+			}
+		}
+		if (!StageBands(sameType,count,sameTypeOutputs)) return false;
+	}
+	return true;
 }
 
 bool DeviceIO::TiedArgmax(const float* input,unsigned inputs,unsigned& token)

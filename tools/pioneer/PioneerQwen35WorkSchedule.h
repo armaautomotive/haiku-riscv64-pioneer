@@ -37,9 +37,11 @@ struct PioneerQ35WorkTask {
 	unsigned fragment, firstGroup, groups;
 };
 
+enum : unsigned { PioneerQ35WorkMaxFragments=28 };
+
 struct PioneerQ35WorkBatch {
 	unsigned rootFragment, rootFirstGroup, rootGroups, workerCount, processedGroups;
-	unsigned nextGroup[14];
+	unsigned nextGroup[PioneerQ35WorkMaxFragments];
 	PioneerQ35WorkTask worker[119];
 };
 
@@ -50,7 +52,8 @@ inline bool PioneerQ35AppendWorkFragments(const PioneerQ35WorkFragment* parts,
 	PioneerQ35WorkFragment* fragments,unsigned* fragmentTensor,unsigned& fragmentCount)
 {
 	if (!parts || !partCount || !fragments || !fragmentTensor
-		|| fragmentCount>14 || partCount>14-fragmentCount) return false;
+		|| fragmentCount>PioneerQ35WorkMaxFragments
+		|| partCount>PioneerQ35WorkMaxFragments-fragmentCount) return false;
 	for (unsigned part=0;part<partCount;part++) {
 		if (!parts[part].groups || parts[part].firstGroup>0xffffffffU-baseGroup
 			|| parts[part].groups>0xffffffffU-(baseGroup+parts[part].firstGroup)) return false;
@@ -66,7 +69,7 @@ inline bool PioneerQ35AppendWorkFragments(const PioneerQ35WorkFragment* parts,
 inline bool PioneerQ35BuildWorkBatch(const PioneerQ35WorkFragment* fragments,
 	unsigned fragmentCount,const unsigned* cursor,PioneerQ35WorkBatch& batch)
 {
-	if (!fragments || !cursor || !fragmentCount || fragmentCount>14) return false;
+	if (!fragments || !cursor || !fragmentCount || fragmentCount>PioneerQ35WorkMaxFragments) return false;
 	batch={};
 	unsigned remaining=0;
 	for (unsigned fragment=0;fragment<fragmentCount;fragment++) {

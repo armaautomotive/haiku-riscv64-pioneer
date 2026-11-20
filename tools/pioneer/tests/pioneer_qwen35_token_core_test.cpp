@@ -105,6 +105,14 @@ struct Stub {
 			&& Project(layer,secondRole,input,inputs,secondOutput,n);
 	}
 
+	bool ProjectGroup(unsigned layer,const unsigned* roles,const float* input,unsigned inputs,
+		float* const* outputs,const unsigned* sizes,unsigned count)
+	{
+		for (unsigned i=0;i<count;i++)
+			if (!Project(layer,roles[i],input,inputs,outputs[i],sizes[i])) return false;
+		return true;
+	}
+
 	bool ReadWeight(unsigned layer,unsigned role,unsigned offset,float* output,unsigned values)
 	{
 		const auto* expected=PioneerQ35Role(layer,role);

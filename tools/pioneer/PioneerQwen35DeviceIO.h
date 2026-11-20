@@ -32,6 +32,8 @@ public:
 	bool Ready();
 	bool Embed(unsigned token,float* hidden,unsigned values);
 	bool Project(unsigned layer,unsigned role,const float* input,unsigned inputs,float* output,unsigned outputs);
+	bool ProjectGroup(unsigned layer,const unsigned* roles,const float* input,unsigned inputs,
+		float* const* outputs,const unsigned* outputSizes,unsigned roleCount);
 	bool ProjectPair(unsigned layer,unsigned firstRole,unsigned secondRole,
 		const float* input,unsigned inputs,float* firstOutput,float* secondOutput,unsigned outputs);
 	bool TiedArgmax(const float* input,unsigned inputs,unsigned& token);

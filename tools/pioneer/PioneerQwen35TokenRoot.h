@@ -24,10 +24,11 @@ bool Recurrent(IO& io, RootScratch& work, unsigned layer, unsigned position)
 {
 	io.Trace(TraceCode(1,layer,position));
 	float alpha[DeltaHeads], beta[DeltaHeads], negativeA[DeltaHeads], bias[DeltaHeads], norm[DeltaWidth];
-	if (!io.Project(layer,RecurrentQkv,work.normalized,Hidden,work.matrixA,ConvChannels)
-		|| !io.Project(layer,RecurrentGate,work.normalized,Hidden,work.matrixB,DeltaInner)
-		|| !io.Project(layer,Alpha,work.normalized,Hidden,alpha,DeltaHeads)
-		|| !io.Project(layer,Beta,work.normalized,Hidden,beta,DeltaHeads)
+	const unsigned projectRoles[4]={RecurrentQkv,RecurrentGate,Alpha,Beta};
+	const unsigned projectSizes[4]={ConvChannels,DeltaInner,DeltaHeads,DeltaHeads};
+	float* projectOutputs[4]={work.matrixA,work.matrixB,alpha,beta};
+	if (!io.ProjectGroup(layer,projectRoles,work.normalized,Hidden,
+		projectOutputs,projectSizes,4)
 		|| !io.ReadWeight(layer,NegativeA,0,negativeA,DeltaHeads)
 		|| !io.ReadWeight(layer,DeltaBias,0,bias,DeltaHeads)
 		|| !io.ReadWeight(layer,DeltaNorm,0,norm,DeltaWidth))
@@ -83,9 +84,11 @@ bool Attention(IO& io, RootScratch& work, unsigned layer, unsigned position)
 	constexpr unsigned packedWords=width/2;
 	float qNorm[width], kNorm[width], rope[Rotary], query[width];
 	uint32_t key[packedWords], val[packedWords];
-	if (!io.Project(layer,QueryAndGate,work.normalized,Hidden,work.matrixA,2*DenseHeads*width)
-		|| !io.Project(layer,Key,work.normalized,Hidden,work.keys,DenseKeyHeads*width)
-		|| !io.Project(layer,Value,work.normalized,Hidden,work.values,DenseKeyHeads*width)
+	const unsigned projectRoles[3]={QueryAndGate,Key,Value};
+	const unsigned projectSizes[3]={2*DenseHeads*width,DenseKeyHeads*width,DenseKeyHeads*width};
+	float* projectOutputs[3]={work.matrixA,work.keys,work.values};
+	if (!io.ProjectGroup(layer,projectRoles,work.normalized,Hidden,
+		projectOutputs,projectSizes,3)
 		|| !io.ReadWeight(layer,QueryNorm,0,qNorm,width)
 		|| !io.ReadWeight(layer,KeyNorm,0,kNorm,width)
 		|| !io.ReadRope(position,rope,Rotary))
