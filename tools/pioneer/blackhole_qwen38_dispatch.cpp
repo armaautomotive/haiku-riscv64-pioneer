@@ -96,6 +96,11 @@ enum {Q38DispatchScaleCache=PioneerQwen35::RootScaleAddress,Q35RootProjectionRes
 #else
 enum {Q38DispatchScaleCache=0xab000};
 #endif
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+#if !defined(PIONEER_Q35_WORK_ROOT_IMAGE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE)
+#error Combined job/doorbell is restricted to the pinned Qwen35 Work cohort
+#endif
+#endif
 #ifdef PIONEER_Q38_WORK_SENTINEL_POLL
 #if (!defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) && !defined(PIONEER_Q35_WORK_ROOT_IMAGE)) \
  || !defined(PIONEER_Q38_WORK_COHORT_CACHE) \
@@ -360,7 +365,12 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 {
 	// ONLY the exact fixed peer data/status/PC/reset windows below. Never
 	// code/boot writes,peer resets,host DMA or a caller-supplied coordinate.
-	bool permitted=write?(remote==0x74000 && bytes==64) || (remote==0x74100 && bytes==4)
+	bool permitted=write?(remote==0x74000 && bytes==64)
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+		|| (remote==PioneerQ35WorkJobAddress && bytes==PioneerQ35WorkJobBytes)
+#else
+		|| (remote==0x74100 && bytes==4)
+#endif
 		:(remote==0x74000 && bytes==64) || (remote==0x74140 && bytes==64)
 		|| (remote==0xffb13140 && bytes==4) || (remote==0xffb121b0 && bytes==4)
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
@@ -1010,12 +1020,25 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		descriptor[5]=operation==1?inputs:0; descriptor[6]=operation==1?p[0]:0; descriptor[7]=operation==1?p[2]:0;
 		descriptor[8]=operation==1?p[4]:0; descriptor[9]=operation==1?1:0;
 		descriptor[10]=Q38DispatchPeerMarker; descriptor[11]=worker; descriptor[12]=p[3]; descriptor[13]=operation;
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+		descriptor[15]=p[3]; // trailing word is the in-packet sequence commit marker
+#endif
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 		descriptor[14]=work?1U:0U; // PRIVATE numeric-only mode; STOP and checked remain0
 #endif
 		for (unsigned i=0;i<16;i++) Words(0x75000)[i]=descriptor[i];
 		Fence();
-		Transfer(true,worker,0x75000,0x74000,64 Q38_COMMAND_WITH(work));
+		Transfer(true,worker,0x75000,
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+			PioneerQ35WorkJobAddress,PioneerQ35WorkJobBytes
+#else
+			0x74000,64
+#endif
+			Q38_COMMAND_WITH(work));
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+		// The aligned job packet's trailing word15 is its sequence commit
+		// signal. The peer polls this last word in the same 64-byte slot.
+#else
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 		// Transfer returns only after exact ACK/counter completion. The peer
 		// independently validates its immutable descriptor and publishes it
@@ -1024,12 +1047,15 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #endif
 		Transfer(false,worker,0x75040,0x74000,64 Q38_COMMAND_WITH(false));
 		for (unsigned i=0;i<16;i++) if (Words(0x75040)[i]!=descriptor[i]) block_fault_park();
+#endif
 	}
+#ifndef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
 	for (unsigned w=0;w<workers;w++) {
 		*Words(0x75000)=parts[w][3]; Fence(); Transfer(true,w+1,0x75000,0x74100,4 Q38_COMMAND_WITH(work));
 	}
+#endif
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
-	Checkpoint(0x5d000001,workers); // all peer doorbells returned from Transfer
+	Checkpoint(0x5d000001,workers); // all peer job/doorbell transfers returned
 	if (q35RootTiles) {
 		Checkpoint(0x5d000002,q35RootTiles);
 		if (!Q35RootMatrix(q35RootJob,type,inputs)) block_fault_park();
@@ -1208,6 +1234,11 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	unsigned reads=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers*(operation==1?2:1);
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
 #endif
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+	// The single job packet removes the redundant descriptor echo for STOP
+	// and any non-Work dispatch. Work result gathers remain unchanged.
+	if (!work) { reads-=workers; flits-=workers; }
+#endif
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 	const unsigned q35Blocks=inputs>>(type==8?5:8);
@@ -1223,7 +1254,11 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	if(work){reads++;flits++;} // exact additional64B read,response+oneflit;NEVER unaccounted
 #endif
 #if defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+	unsigned writes=workers,writeFlits=writes;
+#else
 	unsigned writes=workers*2,writeFlits=writes;
+#endif
 	if (work) {
 #ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
 		unsigned outputPackets=PioneerQ38FfnMatrixOrdered(parts,firstRows,workers)?(ffn[12]+16383)/16384:workers;
@@ -1252,14 +1287,22 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	}
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=writes || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=writeFlits) block_fault_park();
 #else
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=workers || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=workers) block_fault_park();
+#else
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=workers*2 || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=workers*2) block_fault_park();
+#endif
 #endif
 	for (unsigned c=0;c<8;c++) {
 		Checkpoint(0x54000410+c,reads);
 #if defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
 		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+writes:c==5?writeFlits:writes;
 #else
+#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
+		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+workers:workers;
+#else
 		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+workers*2:workers*2;
+#endif
 #endif
 		if (uint32_t(Words(0x7f800)[24+c]-Words(0x7f800)[16+c])!=expected) block_fault_park();
 	}

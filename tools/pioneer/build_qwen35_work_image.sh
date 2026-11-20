@@ -43,7 +43,7 @@ done
  -Dblock_main=q35_work_matrix_band \
  -c "$directory/blackhole_qwen38_rows.cpp" -o "$output/matrix.o"
 
-"$cross-g++" $flags $diagnostic_flags $batch_flags $batch_prefetch_flags $peer_exec_profile_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
+"$cross-g++" $flags $diagnostic_flags $batch_flags $batch_prefetch_flags $peer_exec_profile_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q35_WORK_COMBINED_JOB_DOORBELL=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
 	-DPIONEER_Q38_WORK_SENTINEL_POLL=1 \
 	-DPIONEER_Q38_WORK_ROOT_COMMAND_REUSE=1 \
 	-Dblock_main=q35_dispatch_body -c "$directory/blackhole_qwen38_dispatch.cpp" -o "$output/dispatcher.o"

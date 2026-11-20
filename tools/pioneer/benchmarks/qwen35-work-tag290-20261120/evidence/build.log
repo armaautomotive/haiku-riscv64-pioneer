@@ -1,0 +1,18 @@
+Command: python3 -B tools/pioneer/build_qwen35_work.py --device-opt-level 3 --peer-opt-level s --batch-fetch --batch-prefetch --peer-exec-profile /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/pioneer-qwen35-work-tag290-build
+
+PASS Qwen35 Work combined descriptor/sequence layout and peer audit policy
+
+ROOT boot.bin: 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ROOT text.bin: 4b547ba6365ba47ffe991ac60953fa277011ff6198d17a4cf05877b40ceee524
+Peer boot.bin: e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+Peer text.bin: 68c8fc2b21e0452437b3d1bee30916ac4ad7e389286aaafdc245042587e6297e
+Candidate driver55: 77fbcbf749af2c5c463715c21d7dc92d88593e444dbb091fc7cf9703ed81d6af
+Reload guard: d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+Default43 control: 5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d
+Work client: d8da309cdf9675c3e4e3610d2b6e6b99e0d7a519b091af26dadcf49d227d1c5d
+
+Peer wait-loop disassembly:
+  72040: lui t0,0x74
+  72044: add t0,t0,316 # 7413c
+  7204c: lw a0,0(t0)
+  72050: beq a0,t1,7204c

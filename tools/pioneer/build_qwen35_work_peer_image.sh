@@ -37,10 +37,10 @@ case "${PIONEER_Q35_WORK_PEER_EXEC_PROFILE:-0}" in
 	1) peer_exec_profile_flags=-DPIONEER_Q35_WORK_PEER_EXEC_PROFILE=1 ;;
 	*) exit 2 ;;
 esac
-"$cross-g++" $flags $batch_flags $prefetch_flags $peer_exec_profile_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_PEER_IMAGE=1 \
+"$cross-g++" $flags $batch_flags $prefetch_flags $peer_exec_profile_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_PEER_IMAGE=1 -DPIONEER_Q35_WORK_COMBINED_JOB_DOORBELL=1 \
 	$batch_prefetch_flags \
  -c "$directory/blackhole_qwen38_persistent.cpp" -o "$output/peer.o"
-"$cross-as" --defsym PIONEER_Q35_WORK_PEER_IMAGE=1 -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
+"$cross-as" --defsym PIONEER_Q35_WORK_PEER_IMAGE=1 --defsym PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL=1 -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
  "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_qwen38_block.ld" \
  "$output/start.o" "$output/peer.o" -Map "$output/peer.map" -o "$output/peer.elf"
@@ -75,6 +75,9 @@ for line in disassembly:
 if branches.get('720a4') != ['0000006f', 'j', '720a4'] \
         or branches.get('720a8') != ['ffdff06f', 'j', '720a4']:
     raise SystemExit('Work fault park must contain two exact local branch instructions')
+if not any(line.strip().startswith('72044:') and 'add\tt0,t0,316 # 7413c' in line
+           for line in disassembly):
+    raise SystemExit('Work peer wait must poll the trailing sequence word at 0x7413c')
 words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', code))
 (out / 'PioneerQwen35WorkPeerImage.h').write_text(
     '#pragma once\nnamespace PioneerQwen35 {\n'

@@ -108,6 +108,17 @@ ROOT matrix work consumes 55.80 s. The 100 tok/s goal remains about 827 times
 above this result. The full TT reader/compute/writer program graph and
 sharded activations remain unimplemented.
 
+Tag90 moves the Qwen35 Work runtime descriptor into the existing 64-byte
+doorbell slot. A trailing sequence word wakes the resident peer from that
+same packet, removing one serialized ROOT-to-peer transfer for each active
+worker on every projection. At STOP, it also avoids the former descriptor
+echo read. The sequence and trailing commit word are checked by the peer;
+the all-core cohort, per-wave output/source/counter proofs, and complete
+physical close audit remain. The host test and full cross-build passed, but a
+guarded hardware run is still pending. This narrows per-projection launch
+traffic; it does not yet port TT-Metalium's sharded intermediate tensors or
+overlapped reader/compute/writer circular-buffer graph.
+
 The earlier tag75 timing still identifies a much larger gap: the best
 verified result was about 0.12055 decode tok/s, far below the 100 tok/s goal.
 The next major step is to turn the 120-core projection schedule into an
