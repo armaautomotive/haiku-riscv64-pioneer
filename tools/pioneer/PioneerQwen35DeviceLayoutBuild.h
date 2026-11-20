@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DeviceLayout.h"
 #include "PioneerQwen35PackedPlan.h"
+#include "PioneerQwen35ActivationPlan.h"
 #include <memory>
 
 namespace PioneerQwen35 {
@@ -87,6 +88,23 @@ inline bool BuildDeviceLayout(const PioneerQwen35Gguf& source,
 		} else
 			for (unsigned slot=0; slot<2; slot++)
 				if (!layout.conv[slot].Valid() || !layout.delta[slot].Valid()) return false;
+	}
+	const uint64_t ropeBytes=uint64_t(context)*Rotary*sizeof(float);
+	const uint64_t ropeReservation=(ropeBytes+4095)&~UINT64_C(4095);
+	if (ropeReservation>UINT32_MAX) return false;
+	PioneerQwen35ActivationPlan activations;
+	if (!activations.InitializeFromPacked(plan,uint32_t(ropeReservation))) return false;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++) {
+		PioneerQ35ActivationBuffer buffer{};
+		if (!activations.AllocateRows(Ffn,sizeof(float),buffer)) return false;
+		RowSpace& space=model->activation[slot];
+		space.rows=buffer.rows; space.rowBytes=buffer.rowBytes; space.unit=16;
+		space.count=buffer.fragmentCount;
+		for (unsigned part=0;part<buffer.fragmentCount;part++) {
+			const auto& fragment=buffer.fragments[part];
+			space.parts[part]={fragment.bank,fragment.address,fragment.firstRow,fragment.rows};
+		}
+		if (!space.Valid()) return false;
 	}
 	if (!plan.MatchesSource(source)) return false;
 	output=*model;

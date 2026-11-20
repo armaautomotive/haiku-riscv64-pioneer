@@ -141,14 +141,11 @@ bool RunLayers(IO& io, RootScratch& work, unsigned position, unsigned token)
 		if (!io.ProjectPair(layer,Gate,Up,work.normalized,Hidden,
 			work.matrixA,work.matrixB,Ffn))
 			return false;
-		io.Trace(TraceCode(1,layer,0xff00U));
-		for (unsigned i=0; i<Ffn; i++) {
-			float gate=work.matrixA[i], up=work.matrixB[i];
-			if (!Finite(gate) || !Finite(up)) return false;
-			work.matrixA[i]=(gate*Sigmoid(gate))*up;
-			if (!Finite(work.matrixA[i])) return false;
-		}
-		if (!io.Project(layer,Down,work.matrixA,Ffn,work.projected,Hidden))
+		if (!io.StoreActivation(0,work.matrixA,Ffn)
+			|| !io.StoreActivation(1,work.matrixB,Ffn)
+			|| !io.ActivateFfn(0,1,work.matrixA,work.matrixB,Ffn)
+			|| !io.ProjectFromActivation(layer,Down,0,Ffn,work.projected,Hidden,
+				work.matrixA))
 			return false;
 		io.Trace(TraceCode(2,layer,0xff00U));
 		for (unsigned i=0; i<Hidden; i++) work.hidden[i]+=work.projected[i];

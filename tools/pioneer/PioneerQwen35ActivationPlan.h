@@ -92,7 +92,7 @@ public:
 	static constexpr uint32_t BankLimit=0xc4000000;
 
 	template<class PackedPlan>
-	bool Initialize(const PackedPlan& packed)
+	bool InitializeFromPacked(const PackedPlan& packed,uint32_t reserveBank0Bytes=0)
 	{
 		PioneerQ35ActivationWorkspace workspace[PioneerQ35ActivationBankCount]={};
 		for (unsigned bank=0;bank<PioneerQ35ActivationBankCount;bank++) {
@@ -101,10 +101,11 @@ public:
 				ready=false; return false;
 			}
 		}
-		return Initialize(workspace,PioneerQ35ActivationBankCount);
+		return Initialize(workspace,PioneerQ35ActivationBankCount,reserveBank0Bytes);
 	}
 
-	bool Initialize(const PioneerQ35ActivationWorkspace* workspace,unsigned count)
+	bool Initialize(const PioneerQ35ActivationWorkspace* workspace,unsigned count,
+		uint32_t reserveBank0Bytes=0)
 	{
 		ready=false; allocationCount=0;
 		for (auto& arena:arenas) arena={};
@@ -117,7 +118,10 @@ public:
 				|| region.address<BankBase
 				|| uint64_t(region.address)+region.bytes>BankLimit) return false;
 			if (arenas[region.bank].base) return false;
-			arenas[region.bank]={region.address,region.bytes,region.address};
+			if (region.bank==0 && ((reserveBank0Bytes&4095)
+				|| reserveBank0Bytes>region.bytes)) return false;
+			const uint32_t reserved=region.bank==0?reserveBank0Bytes:0;
+			arenas[region.bank]={region.address,region.bytes,region.address+reserved};
 		}
 		for (const auto& arena:arenas) if (!arena.base) return false;
 		ready=true;

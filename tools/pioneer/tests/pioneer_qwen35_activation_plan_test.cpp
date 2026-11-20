@@ -3,7 +3,12 @@
 #include <stdint.h>
 
 #include "../PioneerQwen35ActivationPlan.h"
+#include "../PioneerQwen35DeviceLayoutBuild.h"
+#include "../PioneerQwen35ManifestValidation.h"
 #include "../PioneerQwen35PackedPlan.h"
+
+static_assert(sizeof(PioneerQwen35::DeviceLayout)==81952,
+	"manifest carries two row-sharded activation buffers");
 
 struct FakePackedPlan {
 	PioneerQ35ActivationWorkspace workspace[PioneerQ35ActivationBankCount];
@@ -24,19 +29,51 @@ static FakePackedPlan Workspaces()
 
 int main()
 {
+	PioneerQwen35::DeviceLayout transferLayout{};
+	auto& transferSpace=transferLayout.activation[0];
+	transferSpace.rows=96; transferSpace.rowBytes=sizeof(float);
+	transferSpace.count=3; transferSpace.unit=16;
+	transferSpace.parts[0]={0,0x04000000,0,32};
+	transferSpace.parts[1]={1,0x04400000,32,32};
+	transferSpace.parts[2]={2,0x04800000,64,32};
+	PioneerQwen35::RowTransfer transfers[PioneerQwen35::Banks]{};
+	unsigned transferCount=0;
+	assert(transferLayout.ResolveActivationTransfers(0,16,64,transfers,transferCount));
+	assert(transferCount==3);
+	assert(transfers[0].range.bank==0 && transfers[0].range.address==0x04000040
+		&& transfers[0].range.bytes==64 && transfers[0].localRow==0 && transfers[0].rows==16);
+	assert(transfers[1].range.bank==1 && transfers[1].range.address==0x04400000
+		&& transfers[1].range.bytes==128 && transfers[1].localRow==16 && transfers[1].rows==32);
+	assert(transfers[2].range.bank==2 && transfers[2].range.address==0x04800000
+		&& transfers[2].range.bytes==64 && transfers[2].localRow==48 && transfers[2].rows==16);
+	assert(!transferLayout.ResolveActivationTransfers(2,0,16,transfers,transferCount));
+	assert(!transferLayout.ResolveActivationTransfers(0,1,16,transfers,transferCount));
+	assert(!transferLayout.ResolveActivationTransfers(0,80,32,transfers,transferCount));
+	PioneerQwen35::DeviceLayout invalidManifest{};
+	PioneerQwen35::Range invalidRope{};
+	assert(!PioneerQwen35::ValidateManifest(invalidManifest,invalidRope,
+		[](unsigned,unsigned) { return false; },0));
 	FakePackedPlan packed=Workspaces();
 	PioneerQwen35ActivationPlan plan;
 	PioneerQwen35PackedPlan unbuiltPackedPlan;
-	assert(!plan.Initialize(unbuiltPackedPlan));
-	assert(plan.Initialize(packed));
-	PioneerQ35ActivationBuffer hidden{},logitsA{},logitsB{};
+	assert(!plan.InitializeFromPacked(unbuiltPackedPlan));
+	assert(plan.InitializeFromPacked(packed,32768)); // bank 0 begins after the reserved RoPE prefix
+	PioneerQ35ActivationBuffer hidden{},ffnA{},ffnB{},logitsA{},logitsB{};
 	assert(plan.AllocateRows(2560,4,hidden));
+	assert(plan.AllocateRows(9216,4,ffnA));
+	assert(plan.AllocateRows(9216,4,ffnB));
 	assert(plan.AllocateRows(248320,4,logitsA));
 	assert(plan.AllocateRows(248320,4,logitsB));
-	assert(plan.Valid(hidden) && plan.Valid(logitsA) && plan.Valid(logitsB));
+	assert(plan.Valid(hidden) && plan.Valid(ffnA) && plan.Valid(ffnB)
+		&& plan.Valid(logitsA) && plan.Valid(logitsB));
 	assert(hidden.fragmentCount==PioneerQ35ActivationBankCount);
+	assert(ffnA.rows==9216 && ffnA.fragmentCount==PioneerQ35ActivationBankCount
+		&& ffnB.slot!=ffnA.slot);
 	assert(logitsA.rows==248320 && logitsA.fragmentCount==PioneerQ35ActivationBankCount);
 	assert(logitsA.slot!=logitsB.slot);
+	assert(hidden.fragments[0].address==packed.workspace[0].address+32768);
+	assert(logitsA.fragments[0].address>=hidden.fragments[0].address
+		+((hidden.fragments[0].bytes+4095)&~4095U));
 
 	unsigned covered=0;
 	for (unsigned i=0;i<logitsA.fragmentCount;i++) {
@@ -83,7 +120,9 @@ int main()
 	assert(!plan.Initialize(bad,PioneerQ35ActivationBankCount));
 	for (unsigned i=0;i<PioneerQ35ActivationBankCount;i++) bad[i]=packed.workspace[i];
 	assert(!plan.Initialize(bad,PioneerQ35ActivationBankCount-1));
-	assert(plan.Initialize(packed));
+	assert(!plan.InitializeFromPacked(packed,1)); // reservation must be page aligned
+	assert(!plan.InitializeFromPacked(packed,64*1024*1024+4096));
+	assert(plan.InitializeFromPacked(packed));
 	assert(!plan.Valid(hidden)); // reinitialization starts a fresh buffer epoch
 	return 0;
 }

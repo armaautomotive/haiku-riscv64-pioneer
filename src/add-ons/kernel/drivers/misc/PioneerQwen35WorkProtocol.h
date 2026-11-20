@@ -13,7 +13,7 @@
 #define TT_PCI_PROBE_Q35_WORK_STOP (B_DEVICE_OP_CODES_END + 0x64d4)
 
 namespace PioneerQwen35 {
-enum : unsigned { WorkVersion=10, WorkDriver=64 };
+enum : unsigned { WorkVersion=12, WorkDriver=64 };
 enum WorkStatus : unsigned {
 	WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault, WorkRecoveryPending
 };

@@ -21,6 +21,8 @@ class DeviceIO {
 	bool Write(Range range,const void* local);
 	bool TransferWords(Range range,void* local,bool write);
 	bool StageInput(unsigned type,const float* input,unsigned inputs);
+	bool TransferActivationRows(unsigned slot,unsigned firstRow,unsigned rows,
+		float* local,bool write);
 	bool StageBand(const TensorSpace& tensor,float* output,
 		float* best=nullptr,unsigned* chosen=nullptr);
 	bool StageBands(const TensorSpace* const* tensors,unsigned tensorCount,
@@ -36,6 +38,10 @@ public:
 		float* const* outputs,const unsigned* outputSizes,unsigned roleCount);
 	bool ProjectPair(unsigned layer,unsigned firstRole,unsigned secondRole,
 		const float* input,unsigned inputs,float* firstOutput,float* secondOutput,unsigned outputs);
+	bool StoreActivation(unsigned slot,const float* input,unsigned rows);
+	bool ActivateFfn(unsigned gateSlot,unsigned upSlot,float* gate,float* up,unsigned rows);
+	bool ProjectFromActivation(unsigned layer,unsigned role,unsigned slot,unsigned inputs,
+		float* output,unsigned outputs,float* inputScratch);
 	bool TiedArgmax(const float* input,unsigned inputs,unsigned& token);
 	bool ReadWeight(unsigned layer,unsigned role,unsigned offset,float* output,unsigned values);
 	bool ReadRope(unsigned position,float* output,unsigned values);

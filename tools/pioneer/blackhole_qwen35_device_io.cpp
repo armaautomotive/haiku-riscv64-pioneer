@@ -111,6 +111,9 @@ bool DeviceIO::Ready()
 	if (rope.bytes!=model.context*Rotary*4) return reject(8);
 	if (!Quiet()) return reject(9);
 	if (*Words(Niu+0x14)!=RootRoute) return reject(10);
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (model.activation[slot].rows!=Ffn || model.activation[slot].rowBytes!=sizeof(float)
+			|| model.activation[slot].unit!=16 || !model.activation[slot].Valid()) return reject(11+slot);
 	return true;
 }
 
@@ -268,6 +271,41 @@ bool DeviceIO::StageInput(unsigned type,const float* input,unsigned inputs)
 	Fence();
 	if (type==13 && blocks<padded) evidence[1]=Words(Scales)[blocks];
 	return true;
+}
+
+bool DeviceIO::TransferActivationRows(unsigned slot,unsigned firstRow,unsigned rows,
+	float* local,bool write)
+{
+	if (!local) return false;
+	RowTransfer transfers[Banks]={}; unsigned count=0;
+	if (!model.ResolveActivationTransfers(slot,firstRow,rows,transfers,count)) return false;
+	for (unsigned i=0;i<count;i++) {
+		const RowTransfer& transfer=transfers[i];
+		if (!(write?Write(transfer.range,local+transfer.localRow)
+			:Transfer(transfer.range,local+transfer.localRow))) return false;
+	}
+	return true;
+}
+
+bool DeviceIO::StoreActivation(unsigned slot,const float* input,unsigned rows)
+{
+	Trace(0xe0000000U|((slot&0xffU)<<16)|(rows&0xffffU));
+	return input && rows && TransferActivationRows(slot,0,rows,
+		const_cast<float*>(input),true);
+}
+
+bool DeviceIO::ActivateFfn(unsigned gateSlot,unsigned upSlot,float* gate,float* up,unsigned rows)
+{
+	Trace(0xe1000000U|((gateSlot&0xffU)<<16)|((upSlot&0xffU)<<8)|(rows&0xffU));
+	if (!gate || !up || !rows || (rows&15)
+		|| !TransferActivationRows(gateSlot,0,rows,gate,false)
+		|| !TransferActivationRows(upSlot,0,rows,up,false)) return false;
+	for (unsigned i=0;i<rows;i++) {
+		if (!Finite(gate[i]) || !Finite(up[i])) return false;
+		gate[i]=(gate[i]*Sigmoid(gate[i]))*up[i];
+		if (!Finite(gate[i])) return false;
+	}
+	return TransferActivationRows(gateSlot,0,rows,gate,true);
 }
 
 bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,unsigned* chosen)
@@ -486,6 +524,26 @@ bool DeviceIO::Project(unsigned layer,unsigned role,const float* input,unsigned 
 		|| !tensor->place.Valid()) return false;
 	const __UINT64_TYPE__ packStart=Cycles();
 	if (!packStart || !StageInput(tensor->type,input,inputs)) return false;
+	const __UINT64_TYPE__ packEnd=Cycles();
+	if (packEnd<packStart || !RecordCycleTicks(progress,
+		ProgressActivationPackTicksSlot,packEnd-packStart)) return false;
+	if (tensor->type==13) {
+		Words(RootScaleEvidenceAddress)[2]=Words(Scales)[inputs>>8];
+		Fence();
+	}
+	return StageBand(*tensor,output);
+}
+
+bool DeviceIO::ProjectFromActivation(unsigned layer,unsigned role,unsigned slot,unsigned inputs,
+	float* output,unsigned outputs,float* inputScratch)
+{
+	Trace(0xe2000000U|((layer&0xffU)<<16)|((role&0xffU)<<8)|((slot&1U)<<7));
+	const auto* tensor=model.Weight(layer,role);
+	if (!tensor || tensor==&model.tied || !output || !inputScratch || slot>=ActivationBuffers
+		|| tensor->inputs!=inputs || tensor->place.rows!=outputs || !tensor->place.Valid()) return false;
+	const __UINT64_TYPE__ packStart=Cycles();
+	if (!packStart || !TransferActivationRows(slot,0,inputs,inputScratch,false)
+		|| !StageInput(tensor->type,inputScratch,inputs)) return false;
 	const __UINT64_TYPE__ packEnd=Cycles();
 	if (packEnd<packStart || !RecordCycleTicks(progress,
 		ProgressActivationPackTicksSlot,packEnd-packStart)) return false;

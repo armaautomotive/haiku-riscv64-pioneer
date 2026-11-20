@@ -8,11 +8,13 @@
 namespace PioneerQwen35 {
 
 enum : unsigned {
-	LayerRoles=14, Banks=7, BankBase=0x04000000, BankLimit=0xc4000000,
-	LayoutMagic=0x314d3542, LayoutVersion=1
+	LayerRoles=14, Banks=7, ActivationBuffers=2, ActivationWorkspaceBytes=64*1024*1024,
+	BankBase=0x04000000, BankLimit=0xc4000000,
+	LayoutMagic=0x314d3542, LayoutVersion=2
 };
 struct Range { unsigned bank, address, bytes; };
 struct Fragment { unsigned bank, address, firstRow, rows; };
+struct RowTransfer { Range range; unsigned localRow, rows; };
 
 struct RowSpace {
 	unsigned rows, rowBytes, count, unit;
@@ -90,6 +92,7 @@ struct LayerSpace {
 struct DeviceLayout {
 	unsigned magic, version, context, reserved;
 	TensorSpace tied, finalNorm;
+	RowSpace activation[ActivationBuffers];
 	LayerSpace layers[Layers];
 
 	const TensorSpace* Weight(unsigned layer, unsigned role) const
@@ -128,8 +131,34 @@ struct DeviceLayout {
 			return false;
 		return layers[layer].kv.Resolve(head+(value?unsigned(DenseKeyHeads):0U),1,position*bytes,bytes,range);
 	}
+
+	bool ResolveActivationTransfers(unsigned slot,unsigned firstRow,unsigned rows,
+		RowTransfer (&transfers)[Banks],unsigned& count) const
+	{
+		count=0;
+		if (slot>=ActivationBuffers || !rows || ((firstRow|rows)&15)
+			|| !activation[slot].Valid() || activation[slot].rowBytes!=sizeof(float)
+			|| activation[slot].unit!=16 || firstRow>=activation[slot].rows
+			|| rows>activation[slot].rows-firstRow) return false;
+		const RowSpace& space=activation[slot];
+		const unsigned requestEnd=firstRow+rows;
+		unsigned covered=0;
+		for (unsigned index=0;index<space.count;index++) {
+			const Fragment& part=space.parts[index];
+			const unsigned begin=firstRow>part.firstRow?firstRow:part.firstRow;
+			const unsigned partEnd=part.firstRow+part.rows;
+			const unsigned end=requestEnd<partEnd?requestEnd:partEnd;
+			if (begin>=end) continue;
+			if (((begin|end)&15) || count>=Banks) return false;
+			transfers[count++]={{part.bank,
+				part.address+(begin-part.firstRow)*space.rowBytes,
+				(end-begin)*space.rowBytes},begin-firstRow,end-begin};
+			covered+=end-begin;
+		}
+		return count && covered==rows;
+	}
 };
 static_assert(sizeof(Fragment)==16 && sizeof(RowSpace)==128, "fixed model transport ABI");
-static_assert(sizeof(DeviceLayout)==81696, "bounded immutable device manifest");
+static_assert(sizeof(DeviceLayout)==81952, "bounded immutable device manifest with two activation shards");
 }
 #endif

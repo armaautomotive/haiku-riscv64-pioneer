@@ -100,6 +100,9 @@ static void CheckPreload(PioneerQwen35Gguf& model, const PioneerQwen35PackedPlan
  auto aliased=std::make_unique<D::DeviceLayout>(manifest);
  aliased->layers[0].delta[1].parts[0]=state;
  assert(!D::ValidateManifest(*aliased,rope,uploaded,count));
+	auto activationAlias=std::make_unique<D::DeviceLayout>(manifest);
+	activationAlias->activation[1]=activationAlias->activation[0];
+	assert(!D::ValidateManifest(*activationAlias,rope,uploaded,count));
  printf("PASS: complete preload byte stream, %u spans and %llu padded bytes\n",calls,
   static_cast<unsigned long long>(reported));
 }
@@ -186,6 +189,27 @@ int main(int argc,char** argv) {
  assert(!D::BuildDeviceLayout(model,plan,127,*device));
  assert(D::BuildDeviceLayout(model,plan,128,*device));
  assert(device->magic==D::LayoutMagic && device->version==D::LayoutVersion && device->context==128);
+	D::Range rope{}; assert(D::ResolveRope(*device,plan,rope));
+	const unsigned ropeReservation=(rope.bytes+4095)&~4095U;
+	for (unsigned slot=0;slot<D::ActivationBuffers;slot++) {
+		const auto& activation=device->activation[slot];
+		assert(activation.rows==D::Ffn && activation.rowBytes==sizeof(float)
+			&& activation.unit==16 && activation.Valid());
+		for (unsigned part=0;part<activation.count;part++) {
+			const auto& fragment=activation.parts[part];
+			uint32_t workspaceAddress=0,workspaceBytes=0;
+			assert(plan.Workspace(fragment.bank,workspaceAddress,workspaceBytes));
+			assert(fragment.address>=workspaceAddress && fragment.rows*activation.rowBytes<=workspaceBytes
+				&& fragment.address-workspaceAddress<=workspaceBytes-fragment.rows*activation.rowBytes);
+			if (!slot && fragment.bank==0)
+				assert(fragment.address==workspaceAddress+ropeReservation);
+			if (slot && fragment.bank==0) {
+				const auto& prior=device->activation[0].parts[0];
+				assert(prior.bank==0 && fragment.address>=prior.address
+					+((prior.rows*device->activation[0].rowBytes+4095)&~4095U));
+			}
+		}
+	}
  uint64_t bankEnds[7]={}; unsigned weightRows[426]={},stateRows[32][2]={},convRows[32][2]={},kvRows[32]={},workspaces=0;
  for (unsigned partIndex=0;partIndex<plan.Parts().size();partIndex++) {
   const auto& part=plan.Parts()[partIndex];

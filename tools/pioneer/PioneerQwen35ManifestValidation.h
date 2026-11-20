@@ -76,8 +76,16 @@ bool ValidateManifest(const DeviceLayout& manifest, Range rope, IsInitialized&& 
 				|| !rows(space.conv[slot],ConvChannels,3*4,1,false))
 				return false;
 	}
-	return rope.bank==0 && rope.bytes==manifest.context*Rotary*4
-		&& extent(rope.bank,rope.address,rope.bytes,true) && uploadedPages==immutablePages;
+	unsigned workspaceStart[Banks];
+	for (unsigned bank=0;bank<Banks;bank++) workspaceStart[bank]=end[bank];
+	if (rope.bank!=0 || rope.bytes!=manifest.context*Rotary*4
+		|| !extent(rope.bank,rope.address,rope.bytes,true)) return false;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (!rows(manifest.activation[slot],Ffn,sizeof(float),16,false)) return false;
+	for (unsigned bank=0;bank<Banks;bank++)
+		if (end[bank]<workspaceStart[bank]
+			|| end[bank]-workspaceStart[bank]>ActivationWorkspaceBytes) return false;
+	return uploadedPages==immutablePages;
 }
 }
 #endif
