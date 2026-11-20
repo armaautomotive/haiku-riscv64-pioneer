@@ -8,13 +8,17 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026111800010064'
+TAG = '2026111800010065'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--transfer-diagnostic', action='store_true',
                         help='capture the pending fixed NoC transfer on ROOT fault')
+    parser.add_argument('--device-opt-level', choices=('s', '1', '2'), default='s',
+                        help='Tensix ROOT C++ optimization level (default: s)')
+    parser.add_argument('--peer-opt-level', choices=('s', '1', '2'), default='s',
+                        help='Tensix peer C++ optimization level (default: s)')
     parser.add_argument('haiku_build', type=Path)
     parser.add_argument('new_output', type=Path)
     args = parser.parse_args()
@@ -23,7 +27,8 @@ def main():
     output.mkdir(mode=0o700)
     env = {key: value for key, value in os.environ.items() if not key.startswith('PIONEER_')}
     image = output / 'image'
-    image_env = dict(env)
+    image_env = dict(env, PIONEER_Q35_WORK_OPT_LEVEL=args.device_opt_level,
+                     PIONEER_Q35_WORK_PEER_OPT_LEVEL=args.peer_opt_level)
     if args.transfer_diagnostic:
         image_env['PIONEER_Q35_TRANSFER_DIAGNOSTIC'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen35_work_image.sh', build, image], check=True, env=image_env)

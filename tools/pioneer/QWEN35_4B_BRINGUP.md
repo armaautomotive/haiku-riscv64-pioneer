@@ -597,3 +597,26 @@ in [`qwen35-work-tag264-20261119`](benchmarks/qwen35-work-tag264-20261119).
 Tag64's normal completion and hot restore passed; its distinct missing-marker
 completion recovery branch was not forced. The next work is phase profiling
 and reducing per-token projection/control overhead.
+
+## Tag65: O1 ROOT optimization
+
+November 19: tag65 keeps the persistent peer image at `-Os` (an O1 peer image
+exceeds its fixed 8 KiB limit) and builds the ROOT image at `-O1`. The first
+staged attempt exposed a wrapper check that confused build tag65 with driver
+ABI version65; the actual ABI remains64. Before inference started, the guarded
+wait-failure recovery quiesced the candidate and hot-restored stable driver55
+at generation8 without reboot, leaving no lock. A fresh stage then passed
+preflight and loaded the candidate at generation9.
+
+The two warm runs returned the exact requested output on ROOT plus all 119
+Tensix peers, with 7,136 full-core waves and 14,128 projection waves each.
+Authentication took `68.154080` s, tokenization `13.022836` s, and model load
+`222.682238` s. Prompt processing took `200.312017` and `200.310020` s; decode
+took `143.765421` and `143.775530` s for 16 tokens, or `0.111292` and
+`0.111285` decode tokens/s. That is about 20.5% faster than tag64 but remains
+roughly 898 times below 100 tokens/s.
+
+The client unloaded cleanly, and stable driver55 was restored at generation10
+without a reboot. Read-only postflight confirmed no active owner and no lock.
+The tag65 run and recovery records are in
+[`qwen35-work-tag265-20261119`](benchmarks/qwen35-work-tag265-20261119).
