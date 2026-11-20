@@ -13,6 +13,16 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-20 status review: the rewrite is at the pushed NoC-role checkpoint
+  `eb6518f8a7`; no Tensix compute backend, runnable role images, or resident
+  all-core owner exists yet, so this rewrite has no valid tokens/sec result.
+  The immediate model blocker is Q5_K: the current rewrite vector unpacker
+  accepts Q8_0/Q4_K/Q6_K, while the only Q5_K panel packers are explicitly
+  scalar/offline references. Since Qwen3.5-4B Q4_K_M uses Q5_K tensors, those
+  helpers cannot be put on the Work path. Next rewrite work must implement and
+  target-check the Q5_K unpack on Tensix before the compute image can be
+  considered complete. No Pioneer access, benchmark, or assistant integration
+  was performed during this review.
 - 2026-11-20: Added version-2 per-core descriptors with separate bank route
   tables for NoC 0 and NoC 1. Each table is checked for valid, unique XY
   routes and copied into the immutable core invocation; the future device
