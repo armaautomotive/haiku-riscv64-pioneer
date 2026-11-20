@@ -68,7 +68,7 @@ int main()
 	TensorSpace weight{};
 	weight.type=14;
 	weight.inputs=Hidden;
-	Rows(weight.place,Hidden,2120,0x08000000);
+	Rows(weight.place,Ffn,2120,0x08000000);
 	RowSpace input{},output{};
 	Rows(input,Ffn,sizeof(float),0x04000000);
 	Rows(output,Ffn,sizeof(float),0x06000000);
@@ -79,7 +79,7 @@ int main()
 	assert(program.activeCores==120 && program.kernelRoles==DataflowAllRoles);
 	assert(sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes
 		&& DataflowProgramRegionEnd==0xa1000);
-	assert(program.groups==Hidden/16);
+	assert(program.groups==Ffn/16);
 	assert(program.circularBuffer[0].pageBytes==3392
 		&& program.circularBuffer[0].pages==2);
 	assert(program.circularBuffer[1].pageBytes==576
@@ -159,7 +159,7 @@ int main()
 	TensorSpace q8Weight{};
 	q8Weight.type=8;
 	q8Weight.inputs=Hidden;
-	Rows(q8Weight.place,Hidden,2880,0x08000000);
+	Rows(q8Weight.place,Ffn,2880,0x08000000);
 	DataflowProjectionProgram q8Program{};
 	assert(DataflowProgramBuilder::Build(q8Weight,input,Hidden,output,q8Program));
 	assert(q8Program.blocks==Hidden/32);
