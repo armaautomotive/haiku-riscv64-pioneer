@@ -620,3 +620,20 @@ The client unloaded cleanly, and stable driver55 was restored at generation10
 without a reboot. Read-only postflight confirmed no active owner and no lock.
 The tag65 run and recovery records are in
 [`qwen35-work-tag265-20261119`](benchmarks/qwen35-work-tag265-20261119).
+
+## Tag66: O2 ROOT optimization
+
+Tag66 builds the ROOT image with `-O2` while retaining the 7,572-byte `-Os`
+peer image. Its ROOT text is 54,108 bytes, within the fixed limit. Two warm
+runs again returned the exact expected output using ROOT plus all 119 Tensix
+peers. Each recorded 7,136 full-core waves and 14,128 projection waves.
+Authentication took `67.572652` s, tokenization `13.482827` s, and model load
+`223.667993` s. Prompt processing took `191.199408` and `191.201768` s; decode
+took `137.718706` and `137.715677` s for 16 tokens, or `0.116179` and
+`0.116181` decode tokens/s. This is a modest improvement over tag65 and about
+25.8% faster than tag64; the 100 tokens/s goal remains about 861 times away.
+
+The client unloaded cleanly, and stable driver55 was restored at generation12
+without a reboot. Postflight verified no active owner and no trial lock. Full
+tag66 build and run evidence is in
+[`qwen35-work-tag266-20261119`](benchmarks/qwen35-work-tag266-20261119).
