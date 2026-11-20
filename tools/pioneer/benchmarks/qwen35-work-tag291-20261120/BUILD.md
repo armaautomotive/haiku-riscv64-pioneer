@@ -11,7 +11,10 @@ baseline, not a performance improvement.
 
 The Tag90 fault and required cold recovery are documented in
 [`../qwen35-work-tag290-20261120/RUN.md`](../qwen35-work-tag290-20261120/RUN.md).
-Tag91 itself has not been installed or run on the P100A.
+Tag91 was installed and completed two warm P100A runs. Both returned the
+expected output and unloaded cleanly. Decode remained at about 0.1233 tok/s,
+far below the 100 tok/s target; see [`RUN.md`](RUN.md) for the measured phases
+and restoration evidence.
 
 ## Offline verification
 
