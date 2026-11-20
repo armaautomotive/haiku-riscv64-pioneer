@@ -26,7 +26,7 @@ enum : unsigned {
 	DataflowActivationCacheAddress=0x80000,
 	DataflowActivationCacheBytes=9216*sizeof(float),
 	DataflowQueueStateAddress=0x89000,
-	DataflowQueueStateBytes=3*16,
+	DataflowQueueStateBytes=3*32,
 	DataflowAffineCoefficientAddress=0x91200,
 	DataflowAffineMinimumAddress=0x91240,
 	DataflowAffineMetadataBytes=16*sizeof(uint32_t),

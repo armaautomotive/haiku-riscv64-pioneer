@@ -7,7 +7,7 @@
 namespace PioneerQwen35 {
 
 enum : unsigned {
-	DataflowQueueControlBytes=16,
+	DataflowQueueControlBytes=32,
 	DataflowQueuePollLimit=0x01000000,
 	DataflowFailureReader=1,
 	DataflowFailureCompute=2,
@@ -16,10 +16,12 @@ enum : unsigned {
 };
 
 struct DataflowQueueControl {
-	volatile uint32_t produced,consumed,failure,reserved;
+	volatile uint32_t produced,consumed;
+	volatile uint32_t readerFailure,computeFailure,writerFailure,queueFailure;
+	volatile uint32_t reserved[2];
 };
 static_assert(sizeof(DataflowQueueControl)==DataflowQueueControlBytes,
-	"each role queue owns one fixed 16-byte control record");
+	"each role queue owns one fixed 32-byte control record");
 
 struct DataflowQueueView {
 	const DataflowCircularBuffer* layout;
@@ -29,29 +31,72 @@ struct DataflowQueueView {
 
 inline void DataflowFence()
 {
+#if defined(__riscv)
+	__asm__ __volatile__("fence rw,rw" ::: "memory");
+#else
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+#endif
 }
 
 inline uint32_t DataflowLoadAcquire(const volatile uint32_t& value)
 {
+#if defined(__riscv)
+	const uint32_t result=value;
+	__asm__ __volatile__("fence r,rw" ::: "memory");
+	return result;
+#else
 	return __atomic_load_n(&value,__ATOMIC_ACQUIRE);
+#endif
 }
 
 inline uint32_t DataflowLoadRelaxed(const volatile uint32_t& value)
 {
+#if defined(__riscv)
+	return value;
+#else
 	return __atomic_load_n(&value,__ATOMIC_RELAXED);
+#endif
 }
 
 inline void DataflowStoreRelease(volatile uint32_t& value,uint32_t next)
 {
+#if defined(__riscv)
+	__asm__ __volatile__("fence rw,w" ::: "memory");
+	value=next;
+#else
 	__atomic_store_n(&value,next,__ATOMIC_RELEASE);
+#endif
 }
 
-inline void DataflowStoreFirstFailure(volatile uint32_t& failure,unsigned reason)
+inline volatile uint32_t* DataflowRoleFailureSlot(DataflowQueueControl& control,
+	unsigned role)
 {
-	uint32_t expected=0;
-	__atomic_compare_exchange_n(&failure,&expected,
-		reason?reason:DataflowFailureQueue,false,__ATOMIC_RELEASE,__ATOMIC_RELAXED);
+	switch (role) {
+	case DataflowFailureReader: return &control.readerFailure;
+	case DataflowFailureCompute: return &control.computeFailure;
+	case DataflowFailureWriter: return &control.writerFailure;
+	default: return &control.queueFailure;
+	}
+}
+
+// Each device role has one writer per core, so it can publish its own first
+// error with an aligned 32-bit store; no RISC-V A extension or libatomic call
+// is required by the RV32 work image.
+inline void DataflowStoreRoleFailure(DataflowQueueControl& control,
+	unsigned reason)
+{
+	const unsigned failure=reason?reason:DataflowFailureQueue;
+	volatile uint32_t* slot=DataflowRoleFailureSlot(control,failure);
+	if (!DataflowLoadRelaxed(*slot)) DataflowStoreRelease(*slot,failure);
+}
+
+inline unsigned DataflowQueueFailure(const DataflowQueueControl& control)
+{
+	const uint32_t reader=DataflowLoadAcquire(control.readerFailure);
+	const uint32_t compute=DataflowLoadAcquire(control.computeFailure);
+	const uint32_t writer=DataflowLoadAcquire(control.writerFailure);
+	const uint32_t queue=DataflowLoadAcquire(control.queueFailure);
+	return reader?reader:compute?compute:writer?writer:queue;
 }
 
 inline bool DataflowQueueValid(const DataflowQueueView& queue)
@@ -71,14 +116,14 @@ inline bool DataflowQueueValid(const DataflowQueueView& queue)
 inline void DataflowQueueFail(DataflowQueueView& queue,unsigned reason)
 {
 	if (!queue.control) return;
-	DataflowStoreFirstFailure(queue.control->failure,reason);
+	DataflowStoreRoleFailure(*queue.control,reason);
 }
 
 inline bool DataflowQueueReserveBack(DataflowQueueView& queue,uint32_t& ticket)
 {
 	if (!DataflowQueueValid(queue)) return false;
 	for (unsigned attempt=0;attempt<DataflowQueuePollLimit;attempt++) {
-		if (DataflowLoadAcquire(queue.control->failure)) return false;
+		if (DataflowQueueFailure(*queue.control)) return false;
 		const uint32_t produced=DataflowLoadRelaxed(queue.control->produced);
 		const uint32_t consumed=DataflowLoadAcquire(queue.control->consumed);
 		const uint32_t used=produced-consumed;
@@ -102,7 +147,7 @@ inline uint8_t* DataflowQueueWritePage(DataflowQueueView& queue,uint32_t ticket)
 
 inline bool DataflowQueuePublishBack(DataflowQueueView& queue,uint32_t ticket)
 {
-	if (!DataflowQueueValid(queue) || DataflowLoadAcquire(queue.control->failure)
+	if (!DataflowQueueValid(queue) || DataflowQueueFailure(*queue.control)
 		|| DataflowLoadRelaxed(queue.control->produced)!=ticket
 		|| ticket-DataflowLoadAcquire(queue.control->consumed)>=queue.layout->pages)
 		return false;
@@ -115,7 +160,7 @@ inline bool DataflowQueueWaitFront(DataflowQueueView& queue,uint32_t& ticket,
 {
 	if (!DataflowQueueValid(queue)) return false;
 	for (unsigned attempt=0;attempt<DataflowQueuePollLimit;attempt++) {
-		if (DataflowLoadAcquire(queue.control->failure)) return false;
+		if (DataflowQueueFailure(*queue.control)) return false;
 		const uint32_t consumed=DataflowLoadRelaxed(queue.control->consumed);
 		const uint32_t produced=DataflowLoadAcquire(queue.control->produced);
 		const uint32_t available=produced-consumed;
@@ -131,7 +176,7 @@ inline bool DataflowQueueWaitFront(DataflowQueueView& queue,uint32_t& ticket,
 
 inline bool DataflowQueuePopFront(DataflowQueueView& queue,uint32_t ticket)
 {
-	if (!DataflowQueueValid(queue) || DataflowLoadAcquire(queue.control->failure)
+	if (!DataflowQueueValid(queue) || DataflowQueueFailure(*queue.control)
 		|| DataflowLoadRelaxed(queue.control->consumed)!=ticket) return false;
 	const uint32_t produced=DataflowLoadAcquire(queue.control->produced);
 	if (produced-ticket==0 || produced-ticket>queue.layout->pages) return false;
@@ -171,7 +216,7 @@ inline void DataflowSignalLocalFailure(unsigned reason)
 	auto* controls=reinterpret_cast<DataflowQueueControl*>(
 		static_cast<uintptr_t>(DataflowQueueStateAddress));
 	for (unsigned i=0;i<DataflowCircularBufferCount;i++)
-		DataflowStoreFirstFailure(controls[i].failure,reason);
+		DataflowStoreRoleFailure(controls[i],reason);
 }
 
 inline bool DataflowBindLocalContext(DataflowDeviceContext& context,unsigned failureReason)
@@ -214,7 +259,9 @@ bool DataflowPackActivationCache(const DataflowCoreInvocation& program,
 	if (!DataflowQueueValid(inputs) || !activationCache
 		|| program.inputs%DataflowActivationChunkInputs
 		|| program.inputs>DataflowActivationCacheBytes/sizeof(float)
-		|| inputs.control->produced || inputs.control->consumed || inputs.control->failure
+		|| DataflowLoadRelaxed(inputs.control->produced)
+		|| DataflowLoadRelaxed(inputs.control->consumed)
+		|| DataflowQueueFailure(*inputs.control)
 		|| inputs.layout->pageBytes!=DataflowInputPageBytes) return false;
 	const unsigned chunks=program.inputs/DataflowActivationChunkInputs;
 	if (!chunks || uint64_t(chunks)*DataflowInputPageBytes>DataflowActivationCacheBytes)

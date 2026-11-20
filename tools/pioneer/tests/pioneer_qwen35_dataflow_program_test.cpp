@@ -215,8 +215,8 @@ static void CheckConcurrentRoles()
 			readerOkay,computeOkay,writerOkay,counters.okay.load(),
 			counters.activationReads.load(),counters.weightReads.load(),
 			counters.packedChunks.load(),counters.matmuls.load(),
-			counters.outputWrites.load(),controls[0].failure,controls[1].failure,
-			controls[2].failure);
+			counters.outputWrites.load(),DataflowQueueFailure(controls[0]),
+			DataflowQueueFailure(controls[1]),DataflowQueueFailure(controls[2]));
 	assert(readerOkay && computeOkay && writerOkay);
 	assert(counters.okay.load(std::memory_order_relaxed));
 	const unsigned groups=invocation.assignment.groups;
@@ -319,8 +319,13 @@ int main()
 	assert(DataflowQueuePopFront(queues[0],ticket));
 	assert(controls[0].produced==0 && controls[0].consumed==0);
 	DataflowQueueFail(queues[0],DataflowFailureCompute);
+	DataflowQueueFail(queues[0],DataflowFailureCompute);
+	DataflowQueueFail(queues[0],DataflowFailureReader);
 	DataflowQueueFail(queues[0],DataflowFailureWriter);
-	assert(DataflowLoadAcquire(controls[0].failure)==DataflowFailureCompute);
+	assert(DataflowLoadAcquire(controls[0].computeFailure)==DataflowFailureCompute);
+	assert(DataflowLoadAcquire(controls[0].readerFailure)==DataflowFailureReader);
+	assert(DataflowLoadAcquire(controls[0].writerFailure)==DataflowFailureWriter);
+	assert(DataflowQueueFailure(controls[0])==DataflowFailureReader);
 	assert(!DataflowQueueReserveBack(queues[0],ticket));
 	static uint8_t activationCache[DataflowActivationCacheBytes];
 	float* activation=reinterpret_cast<float*>(activationCache);

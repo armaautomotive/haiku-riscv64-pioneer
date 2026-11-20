@@ -13,6 +13,20 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-20: Replaced the queue's compare-exchange first-error word with
+  per-role first-error slots. Each Reader, Compute, or Writer image is the
+  sole writer to its role slot, and queue polling checks all slots. The L1
+  queue-state reservation now uses 32-byte aligned records. RV32 builds use
+  explicit `fence` instructions and aligned volatile 32-bit loads/stores, so
+  the queue protocol does not require the RISC-V A extension or a libatomic
+  helper. Host checks retain compiler atomics for concurrent test coverage.
+  The returned queue error uses fixed Reader/Compute/Writer priority when
+  multiple roles fail; each role's first error remains preserved in its slot.
+  The concurrent role exercise and Q5 panel check pass under ASan/UBSan, and
+  the RV32 preprocessor branch passes C++ syntax checking. The available
+  `clang++` target list has no RISC-V target; target image compilation is
+  therefore still pending with the Haiku RV32 cross-toolchain and Blackhole
+  device SDK.
 - 2026-11-20: User confirmed the work order: finish the Tenstorrent-style code
   rewrite first; only then proceed to hardware benchmarking and assistant
   integration. Keep this file updated as the rewrite's checkpoint log. No
