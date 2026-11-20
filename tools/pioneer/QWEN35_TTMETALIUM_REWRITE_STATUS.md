@@ -32,11 +32,12 @@ rewrite is implemented.
 - Added reader, compute, and writer entry wrappers that bind that local
   context and publish a role failure to shared queue state if binding fails.
 - Expanded the offline program test to compile all three role interfaces and
-  check an FFN-sized 9,216-row projection across all 120 per-core
-  materializations, shard coverage, queue address binding, queue
-  publish/consume, ticket wraparound, in-place activation packing, Q8 block
-  mapping, and malformed-descriptor rejection. The host test passes with
-  AddressSanitizer and UndefinedBehaviorSanitizer.
+  check 9,216-row output shards and a 9,216-value Q4_K input across all 120
+  per-core materializations. It also checks Q6_K and Q8_0 plans, shard
+  coverage, queue address binding, queue publish/consume, ticket wraparound,
+  in-place activation packing, Q8 block mapping, and malformed-descriptor
+  rejection. The host test passes with AddressSanitizer and
+  UndefinedBehaviorSanitizer.
 - The existing Work dispatcher and ROOT gather path are retained as the
   checkpoint; no changes to that path are part of this rewrite phase.
 - Added `PioneerQwen35DataflowProgram.h`: a 120-core program descriptor and
@@ -58,7 +59,7 @@ rewrite is implemented.
    the hardware benchmark and assistant integration phases.
 
 The latest pushed checkpoint before this rewrite is `1b2b57c561`.
-The latest pushed rewrite checkpoint is `fad01e9908`.
+The latest pushed rewrite checkpoint is `6a8039dd00`.
 
 The RISC-V Haiku cross-compiler is not present in the configured workspace or
 Codex tool paths checked here, so current verification is host compilation

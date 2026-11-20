@@ -19,8 +19,9 @@ struct PackTestOps {
 	bool PackActivation(unsigned type,unsigned inputs,unsigned chunk,
 		const float* source,uint8_t* output,unsigned bytes)
 	{
-		if ((type!=8 && type!=12 && type!=14) || inputs!=Hidden
-			|| bytes!=DataflowInputPageBytes || source[chunk*256]!=float(chunk*256))
+		if ((type!=8 && type!=12 && type!=14)
+			|| inputs%256 || chunk>=inputs/256 || bytes!=DataflowInputPageBytes
+			|| source[chunk*256]!=float(chunk*256))
 			return false;
 		for (unsigned i=0;i<bytes;i++) output[i]=uint8_t(chunk);
 		output[bytes-1]=uint8_t(chunk^0x5a);
@@ -155,6 +156,21 @@ int main()
 	assert(DataflowProgramBuilder::BindCore(program,119,corruptCore));
 	corruptCore.assignment.output[0].bank=(corruptCore.assignment.output[0].bank+1)%Banks;
 	assert(!DataflowCoreHeaderValid(corruptCore));
+
+	TensorSpace q4Weight{};
+	q4Weight.type=12;
+	q4Weight.inputs=Ffn;
+	Rows(q4Weight.place,Hidden,5184,0x08000000);
+	DataflowProjectionProgram q4Program{};
+	assert(DataflowProgramBuilder::Build(q4Weight,input,Ffn,output,q4Program));
+	assert(q4Program.blocks==Ffn/256
+		&& q4Program.circularBuffer[0].pageBytes==2304);
+	DataflowCoreInvocation q4Core{};
+	assert(DataflowProgramBuilder::BindCore(q4Program,0,q4Core));
+	for (unsigned i=0;i<Ffn;i++) activation[i]=float(i);
+	assert(DataflowPackActivationCache(q4Core,queues[1],activationCache,packOps));
+	for (unsigned chunk=0;chunk<Ffn/256;chunk++)
+		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
 	TensorSpace q8Weight{};
 	q8Weight.type=8;
