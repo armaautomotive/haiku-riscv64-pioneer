@@ -200,6 +200,13 @@ inline unsigned DataflowActivationChunk(unsigned type,unsigned block)
 	return type==8?block/8:block;
 }
 
+// Q5_K weights use the Q8_K activation format, just like Q4_K/Q6_K. Keep
+// the projection weight type out of the Q8_0-vs-Q8_K activation decision.
+inline unsigned DataflowActivationPackingType(unsigned projectionType)
+{
+	return projectionType==13?12:projectionType;
+}
+
 template<class Ops>
 bool DataflowPackActivationCache(const DataflowCoreInvocation& program,
 	DataflowQueueView& inputs,uint8_t* activationCache,Ops& ops)
@@ -221,7 +228,8 @@ bool DataflowPackActivationCache(const DataflowCoreInvocation& program,
 		|| !(cacheStart+DataflowActivationCacheBytes<=scratchStart
 			|| scratchStart+DataflowInputPageBytes<=cacheStart)) return false;
 	for (unsigned chunk=0;chunk<chunks;chunk++) {
-		if (!ops.PackActivation(program.type,program.inputs,chunk,
+		if (!ops.PackActivation(DataflowActivationPackingType(program.type),
+			program.inputs,chunk,
 			reinterpret_cast<const float*>(activationCache),scratch,DataflowInputPageBytes))
 			return false;
 		for (unsigned word=0;word<DataflowInputPageBytes/4;word++)

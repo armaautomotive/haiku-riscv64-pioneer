@@ -30,6 +30,11 @@ rewrite is implemented.
   after failure. A separate ASan/UBSan SPSC stress check exchanged 50,000
   ordered pages between concurrent producer and consumer threads without loss
   or reordering.
+- 2026-11-20: Added Q5_K (`type=13`) to the offline dataflow-program and
+  activation-packing checks. Its projection tiles use the same Q8_K activation
+  packing as Q4_K/Q6_K; Q8_0 remains a separate activation format. This closes
+  the Q5 descriptor/activation-plan gap, while its Tensix matrix operation is
+  still an unimplemented backend gate.
 - 2026-11-20: Added `PioneerQwen35DataflowKernels.h` with separate reader,
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit

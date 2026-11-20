@@ -132,6 +132,11 @@ int main()
 	}
 	assert(DataflowActivationChunk(14,9)==9);
 	assert(DataflowActivationChunk(8,79)==9);
+	assert(DataflowActivationChunk(13,9)==9);
+	assert(DataflowActivationPackingType(8)==8
+		&& DataflowActivationPackingType(12)==12
+		&& DataflowActivationPackingType(13)==12
+		&& DataflowActivationPackingType(14)==14);
 	unsigned covered=0,splitOutputs=0;
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		assert(program.core[core].active);
@@ -175,6 +180,22 @@ int main()
 	for (unsigned i=0;i<Ffn;i++) activation[i]=float(i);
 	assert(DataflowPackActivationCache(q4Core,queues[1],activationCache,packOps));
 	for (unsigned chunk=0;chunk<Ffn/256;chunk++)
+		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
+
+	TensorSpace q5Weight{};
+	q5Weight.type=13;
+	q5Weight.inputs=Hidden;
+	Rows(q5Weight.place,Ffn,Hidden/256*(PioneerQwen35Projection::TileBytes(13)/16),
+		0x08000000);
+	DataflowProjectionProgram q5Program{};
+	assert(DataflowProgramBuilder::Build(q5Weight,input,Hidden,output,q5Program));
+	assert(q5Program.blocks==Hidden/256
+		&& q5Program.circularBuffer[0].pageBytes==2816);
+	DataflowCoreInvocation q5Core{};
+	assert(DataflowProgramBuilder::BindCore(q5Program,0,q5Core));
+	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
+	assert(DataflowPackActivationCache(q5Core,queues[1],activationCache,packOps));
+	for (unsigned chunk=0;chunk<Hidden/256;chunk++)
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
 	TensorSpace q8Weight{};
