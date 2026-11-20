@@ -12,11 +12,13 @@ template<class E> static bool PioneerQwen35DataflowVectorUnpack(E& e,
 	unsigned type,unsigned panel,unsigned rawBase)
 {
 	PioneerQ38VectorPanelSpan span;
-	if (!PioneerQ38VectorPanel(type,panel,span)
-		|| (rawBase&63)
-		|| (rawBase!=PioneerQwen35::DataflowWeightBufferAddress
-			&& rawBase!=PioneerQwen35::DataflowWeightBufferAddress
-				+PioneerQwen35::DataflowWeightBufferPageStride)) return false;
+	const bool weightPage=rawBase==PioneerQwen35::DataflowWeightBufferAddress
+		|| rawBase==PioneerQwen35::DataflowWeightBufferAddress
+			+PioneerQwen35::DataflowWeightBufferPageStride;
+	const bool repackedQ5Panel=type==8 && panel==0
+		&& rawBase==PioneerQwen35::DataflowQ5PanelScratchAddress;
+	if (!PioneerQ38VectorPanel(type,panel,span) || (rawBase&63)
+		|| (!weightPage && !repackedQ5Panel)) return false;
 	const unsigned tileBytes=type==8?576:type==12?2304:3392;
 	if (!PioneerQwen35::DataflowLocalRangeValid(rawBase,tileBytes)) return false;
 	e.Drain();

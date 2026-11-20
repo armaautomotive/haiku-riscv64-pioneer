@@ -30,6 +30,9 @@ enum : unsigned {
 	DataflowAffineCoefficientAddress=0x91200,
 	DataflowAffineMinimumAddress=0x91240,
 	DataflowAffineMetadataBytes=16*sizeof(uint32_t),
+	DataflowQ5PanelScratchAddress=0x90fc0,
+	DataflowQ5PanelTileBytes=576,
+	DataflowQ5PanelScratchBytes=704,
 	// 0xa0000..0xa03ff is the existing Tensix destination-init source window.
 	// Keep the immutable invocation beyond that window and below root scratch.
 	DataflowProgramAddress=0xaa000,
@@ -48,9 +51,13 @@ static_assert(DataflowActivationCacheAddress+DataflowActivationCacheBytes
 	<=DataflowQueueStateAddress
 	&& DataflowQueueStateAddress+DataflowQueueStateBytes<=DataflowWeightBufferAddress
 	&& DataflowWeightBufferAddress+DataflowMaxWeightPageBytes
-		<=DataflowAffineCoefficientAddress
+		<=DataflowQ5PanelScratchAddress
+	&& DataflowQ5PanelScratchAddress+DataflowQ5PanelTileBytes
+		==DataflowAffineCoefficientAddress
 	&& DataflowAffineCoefficientAddress+DataflowAffineMetadataBytes
 		==DataflowAffineMinimumAddress
+	&& DataflowAffineMinimumAddress+DataflowAffineMetadataBytes
+		==DataflowQ5PanelScratchAddress+DataflowQ5PanelScratchBytes
 	&& DataflowAffineMinimumAddress+DataflowAffineMetadataBytes
 		<=DataflowInputBufferAddress
 	&& DataflowInputBufferAddress+DataflowInputPageBytes*DataflowCircularBufferPages
@@ -94,6 +101,8 @@ inline bool DataflowLocalCircularBufferValid(const DataflowCircularBuffer& buffe
 		if (DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
 				DataflowActivationCacheAddress,DataflowActivationCacheBytes)
 			|| DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
+				DataflowQ5PanelScratchAddress,DataflowQ5PanelScratchBytes)
+			|| DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
 				DataflowQueueStateAddress,DataflowQueueStateBytes)
 			|| DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
 				DataflowAffineCoefficientAddress,DataflowAffineMetadataBytes)
@@ -120,6 +129,8 @@ inline bool DataflowLocalCircularBuffersValid(
 			DataflowAffineMetadataBytes)
 		|| !DataflowLocalRangeValid(DataflowAffineMinimumAddress,
 			DataflowAffineMetadataBytes)
+		|| !DataflowLocalRangeValid(DataflowQ5PanelScratchAddress,
+			DataflowQ5PanelScratchBytes)
 		|| DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
 			DataflowActivationCacheBytes,DataflowQueueStateAddress,
 			DataflowQueueStateBytes)
@@ -129,12 +140,18 @@ inline bool DataflowLocalCircularBuffersValid(
 		|| DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
 			DataflowActivationCacheBytes,DataflowAffineMinimumAddress,
 			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
+			DataflowActivationCacheBytes,DataflowQ5PanelScratchAddress,
+			DataflowQ5PanelScratchBytes)
 		|| DataflowLocalRangesOverlap(DataflowQueueStateAddress,
 			DataflowQueueStateBytes,DataflowAffineCoefficientAddress,
 			DataflowAffineMetadataBytes)
 		|| DataflowLocalRangesOverlap(DataflowQueueStateAddress,
 			DataflowQueueStateBytes,DataflowAffineMinimumAddress,
 			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowQueueStateAddress,
+			DataflowQueueStateBytes,DataflowQ5PanelScratchAddress,
+			DataflowQ5PanelScratchBytes)
 		|| DataflowLocalRangesOverlap(DataflowAffineCoefficientAddress,
 			DataflowAffineMetadataBytes,DataflowAffineMinimumAddress,
 			DataflowAffineMetadataBytes)) return false;

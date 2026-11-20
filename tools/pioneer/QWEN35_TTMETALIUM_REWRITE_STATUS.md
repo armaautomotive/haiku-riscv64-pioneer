@@ -37,11 +37,12 @@ rewrite is implemented.
   still an unimplemented backend gate. Expanded the descriptor check across
   all eight Qwen3.5-4B quantization/width combinations and rebound every shape
   to all 120 core invocations.
-- 2026-11-20: Added a rewrite-only Q5_K panel repacker that preserves the
-  exact integer weights and FP32 coefficient/minimum metadata while expressing
-  the integer panel in the existing Tensix Q8 panel-zero byte layout. The Q5
-  offline test decodes that synthetic tile through the Tensix panel decoder
-  and checks every operand plus metadata.
+- 2026-11-20: Added an offline-only Q5_K panel-layout reference that preserves
+  exact integer weights and FP32 coefficient/minimum metadata in the Tensix Q8
+  panel-zero layout. A compile guard keeps this scalar reference out of Work
+  code; the eventual backend must produce the layout with device Tensix
+  operations. The offline test decodes the synthetic tile through the Tensix
+  panel decoder and checks every operand plus metadata.
 - 2026-11-20: Reworked the per-core L1 map after finding that two adjacent
   maximum Q6_K weight pages would overlap the existing affine metadata at
   `0x91200..0x91280`. Weight pages now ping-pong between `0x90000` and
@@ -52,10 +53,15 @@ rewrite is implemented.
   layout that overlaps affine metadata, queue state, activation cache, or
   another buffer. Added a rewrite-only vector-unpack entry that accepts the
   current page address and validates both ping-pong slots; its offline check
-  verifies every Q8/Q4/Q6 panel source address. Q5_K uses this Q8 panel-zero
-  path after repacking. The compute Ops adapter still does not call this helper.
+  verifies every Q8/Q4/Q6 panel source address. Reserved `0x90fc0..0x91280`
+  for the Q5 repacker's Q8 panel-zero tile plus affine metadata; compile-time
+  offset checks bind its coefficient/minimum fields to `0x91200`/`0x91240`,
+  and only Q8 panel zero may unpack from that staging address. The compute Ops
+  adapter still does not call these helpers.
   The dataflow and Q5 panel tests both pass under AddressSanitizer and
-  UndefinedBehaviorSanitizer after the L1 layout change.
+  UndefinedBehaviorSanitizer after the L1 layout change. A negative compile
+  check also confirms the scalar Q5 reference is rejected unless its
+  test-only macro is set.
 - 2026-11-20: Added `PioneerQwen35DataflowKernels.h` with separate reader,
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit

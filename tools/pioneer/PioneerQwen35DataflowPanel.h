@@ -2,11 +2,18 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_PANEL_H
 #define PIONEER_QWEN35_DATAFLOW_PANEL_H
 
+#ifndef PIONEER_QWEN35_DATAFLOW_PANEL_TEST
+#error Q5 scalar panel repacking is an offline reference, not a Work inference operation
+#endif
+
+#include <stddef.h>
+#include "PioneerQwen35DataflowProgram.h"
 #include "PioneerQwen38Panel.h"
 
-// Q5_K's decoded integer operands can use the existing Tensix integer-overlay
-// unpack route by placing one 16x16 panel in Q8_0 panel-zero byte order. The
-// Q5 affine terms remain separate exact FP32 metadata for the SFPU path.
+// Offline reference only: Q5_K operands fit the Tensix integer-overlay route
+// when represented in Q8_0 panel-zero byte order. Work compute must generate
+// this representation with device Tensix operations, not this scalar routine.
+// The Q5 affine terms remain exact FP32 metadata for the SFPU path.
 struct PioneerQwen35DataflowQ5Panel {
 	uint32_t q8Tile[576/4];
 	uint32_t coefficient[16];
@@ -14,6 +21,19 @@ struct PioneerQwen35DataflowQ5Panel {
 };
 static_assert(sizeof(PioneerQwen35DataflowQ5Panel)==704,
 	"one Q5 compute panel has a fixed 576-byte Tensix tile and 128-byte affine tail");
+static_assert(offsetof(PioneerQwen35DataflowQ5Panel,q8Tile)==0
+	&& offsetof(PioneerQwen35DataflowQ5Panel,coefficient)
+		==PioneerQwen35::DataflowQ5PanelTileBytes
+	&& offsetof(PioneerQwen35DataflowQ5Panel,minimum)
+		==PioneerQwen35::DataflowQ5PanelTileBytes
+			+PioneerQwen35::DataflowAffineMetadataBytes
+	&& PioneerQwen35::DataflowQ5PanelScratchAddress
+		+offsetof(PioneerQwen35DataflowQ5Panel,coefficient)
+		==PioneerQwen35::DataflowAffineCoefficientAddress
+	&& PioneerQwen35::DataflowQ5PanelScratchAddress
+		+offsetof(PioneerQwen35DataflowQ5Panel,minimum)
+		==PioneerQwen35::DataflowAffineMinimumAddress,
+	"Q5 panel staging places FP32 affine metadata at the established Tensix addresses");
 
 static inline bool PioneerQwen35PackDataflowQ5Panel(const uint8_t* tile,
 	unsigned bytes,unsigned panel,PioneerQwen35DataflowQ5Panel* output)

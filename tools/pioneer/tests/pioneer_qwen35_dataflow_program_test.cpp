@@ -165,9 +165,18 @@ static void CheckDynamicWeightAddresses()
 			}
 		}
 	}
+	PioneerQ38VectorPanelSpan q5Span{};
+	assert(PioneerQ38VectorPanel(8,0,q5Span));
+	UnpackAddressOps q5Panel{};
+	assert(PioneerQwen35DataflowVectorUnpack(q5Panel,8,0,
+		DataflowQ5PanelScratchAddress));
+	assert(q5Panel.count==1
+		&& q5Panel.addresses[0]==DataflowQ5PanelScratchAddress+q5Span.low);
 	UnpackAddressOps rejected{};
 	assert(!PioneerQwen35DataflowVectorUnpack(rejected,14,0,0x92000));
 	assert(rejected.count==0);
+	assert(!PioneerQwen35DataflowVectorUnpack(rejected,8,1,
+		DataflowQ5PanelScratchAddress));
 }
 
 static void CheckConcurrentRoles()
@@ -276,6 +285,11 @@ int main()
 	assert(!DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
 		DataflowActivationCacheBytes,DataflowQueueStateAddress,
 		DataflowQueueStateBytes));
+	DataflowCircularBuffer collidingScratch={0,DataflowQ5PanelScratchAddress,
+		DataflowQ5PanelTileBytes,DataflowCircularBufferPages,
+		DataflowQ5PanelTileBytes*DataflowCircularBufferPages,
+		DataflowQ5PanelTileBytes};
+	assert(!DataflowLocalCircularBufferValid(collidingScratch));
 	DataflowCoreInvocation corePlan{};
 	assert(DataflowProgramBuilder::BindCore(program,0,corePlan));
 	DataflowQueueControl controls[DataflowCircularBufferCount]{};

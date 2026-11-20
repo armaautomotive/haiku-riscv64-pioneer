@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 // Off-card check against the GGUF Q5_K row layout and scalar reconstruction.
+#define PIONEER_QWEN35_DATAFLOW_PANEL_TEST 1
 #include "../PioneerQwen35Q5Panel.h"
 #include "../PioneerQwen35DataflowPanel.h"
 #include "../PioneerAttentionMath.h"
