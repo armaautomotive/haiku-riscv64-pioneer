@@ -243,7 +243,7 @@ extern "C" void q38_persistent_main()
 		unsigned blocks=snapshot[5]>>(snapshot[1]==8?5:8),count=snapshot[7]*snapshot[5]/16;
 		unsigned reads=snapshot[7]*
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
-			(blocks>>(snapshot[1]==8?2:1))
+			PioneerQwen35FetchCount(snapshot[1],blocks)
 #elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 			(snapshot[14]?blocks>>(snapshot[1]==8?2:1):blocks)
 #else

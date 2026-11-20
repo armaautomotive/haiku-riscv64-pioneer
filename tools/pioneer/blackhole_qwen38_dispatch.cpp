@@ -712,9 +712,11 @@ static bool Q35RootMatrix(const volatile uint32_t* job,unsigned type,unsigned in
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 	const unsigned fetchBatch=PioneerQwen35FetchBatch(type);
 	if (!fetchBatch) return false;
-	expected[0]-=(fetchBatch-1)*Tile(type);
+	const unsigned ordinal=PioneerQwen35FetchOrdinal(type,blocks-1);
+	const unsigned firstBlock=ordinal*fetchBatch,batchBlocks=blocks-firstBlock<fetchBatch?blocks-firstBlock:fetchBatch;
+	expected[0]=job[6]+((groups-1)*blocks+firstBlock)*Tile(type);
 	expected[3]=0x98000;
-	expected[8]*=fetchBatch;
+	expected[8]=batchBlocks*Tile(type);
 #endif
 	for (unsigned i=0;i<10;i++) if (command[i]!=expected[i]) {
 #ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
@@ -1068,7 +1070,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
-		if(work)weightReads>>=type==8?2:1; // bounded <=8KiB Qwen35 batches
+		if(work)weightReads=groups*PioneerQwen35FetchCount(type,blocks); // bounded <=8KiB Qwen35 batches
 		unsigned reads=weightReads+(inputs*2+16383)/16384+1;
 #elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
@@ -1087,9 +1089,11 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;
 		command[0]=p[0]+(groups*blocks-1)*Tile(type); command[2]=p[4]; command[3]=0x90000; command[5]=XY(w+1); command[8]=Tile(type);
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
-		if(work){unsigned batch=PioneerQwen35FetchBatch(type);command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
+		if(work){unsigned batch=PioneerQwen35FetchBatch(type),ordinal=PioneerQwen35FetchOrdinal(type,blocks-1),firstBlock=ordinal*batch;
+			unsigned batchBlocks=blocks-firstBlock<batch?blocks-firstBlock:batch;
+			command[0]=p[0]+((groups-1)*blocks+firstBlock)*Tile(type);command[3]=0x98000;command[8]=batchBlocks*Tile(type);}
 #ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
-		if(work)command[3]=PioneerQwen35BatchPrefetchBuffer((blocks>>(type==8?2:1))-1);
+		if(work)command[3]=PioneerQwen35BatchPrefetchBuffer(PioneerQwen35FetchOrdinal(type,blocks-1));
 #endif
 #elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 		if(work){unsigned batch=type==8?4:2;command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
@@ -1181,7 +1185,8 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #endif
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
-	const unsigned q35RootReads=q35RootTiles>>(type==8?2:1); // exact because supported block counts are batch-aligned
+	const unsigned q35Blocks=inputs>>(type==8?5:8);
+	const unsigned q35RootReads=q35RootJob[7]*PioneerQwen35FetchCount(type,q35Blocks);
 	Words(0x7f800)[6]+=q35RootReads; reads+=q35RootReads;
 #else
 	Words(0x7f800)[6]+=q35RootTiles; reads+=q35RootTiles;

@@ -1,0 +1,7 @@
+Tag86 guarded preflight on Haiku P100A (read-only; exit 0)
+64 (Unknown), revision 0000 running at 1000MHz
+133759438848 bytes free (used/max 3275497472 / 137034936320)
+P100A_RELOAD driver55 tag2026102100010012 generation50 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Qwen3.5-4B: 0:1:600:2740937888
+Qwen3.8-27B: 0:1:600:18973870528
+Process-list idle check passed: no prior diagnostic/inference process.

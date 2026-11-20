@@ -1,0 +1,29 @@
+P100A_RELOAD driver55 tag2026102100010012 generation52 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+0:1:600:2740937888
+0:1:600:18973870528
+TRIAL_LOCK_ABSENT
+   Id Team                                               
+    1 kernel_team                                        
+  100 /boot/system/servers/launch_daemon                 
+  105 /boot/system/servers/registrar                     
+  106 /boot/system/servers/debug_server                  
+  108 /boot/system/servers/mount_server                  
+  109 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  110 /boot/system/servers/net_server                    
+  112 /boot/system/servers/package_daemon                
+  117 /boot/system/servers/launch_daemon baron           
+  120 /boot/system/servers/power_daemon                  
+  123 /boot/system/servers/syslog_daemon                 
+  147 /boot/system/servers/media_server                  
+  183 /boot/system/servers/app_server                    
+  194 /boot/system/Tracker                               
+  196 /boot/system/Deskbar                               
+  215 /boot/system/servers/input_server                  
+  241 /boot/system/servers/media_addon_server            
+  290 /boot/system/servers/notification_server           
+ 4817 /boot/system/bin/screen_blanker                    
+ 8489 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 8491 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 8492 /boot/system/bin/bash -s                           
+ 8497 /boot/system/bin/ps -o Id -o Team                  

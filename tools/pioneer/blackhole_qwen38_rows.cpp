@@ -685,22 +685,27 @@ uint32_t Qwen35TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,u
 #endif
 #ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
 static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
-uint32_t Qwen35BatchPrefetchStage(unsigned block,uint32_t groupFirst,unsigned tileBytes,
-	unsigned batch,unsigned blocks,uint32_t route,uint32_t& pending){
+uint32_t Qwen35BatchPrefetchStage(unsigned type,unsigned block,uint32_t groupFirst,unsigned tileBytes,
+	unsigned blocks,uint32_t route,uint32_t& pending){
 	// q38_compute_once has already checked this exact descriptor, full source
 	// extent, supported type, group count and aligned model address before any
 	// reads. This hot helper only derives the bounded alternating batch slots.
-	const unsigned mask=batch-1,firstBlock=block&~mask;
-	const unsigned ordinal=batch==4?firstBlock>>2:firstBlock>>1;
-	const unsigned batchBytes=batch*tileBytes;
+	const unsigned batch=PioneerQwen35FetchBatch(type);
+	const unsigned ordinal=PioneerQwen35FetchOrdinal(type,block);
+	const unsigned firstBlock=ordinal*batch;
+	const unsigned batchBlocks=blocks-firstBlock<batch?blocks-firstBlock:batch;
+	const unsigned batchBytes=batchBlocks*tileBytes;
 	const uint32_t current=PioneerQwen35BatchPrefetchBuffer(ordinal);
-	if(!(block&mask)){
-		if(!block)TilePrefetchWait(TilePrefetchStart(groupFirst+firstBlock*tileBytes,
+	if(block==firstBlock){
+		if(!firstBlock)TilePrefetchWait(TilePrefetchStart(groupFirst+firstBlock*tileBytes,
 			route,current,batchBytes));
 		else TilePrefetchWait(pending);
-		if(block+batch<blocks)
-			pending=TilePrefetchStart(groupFirst+(firstBlock+batch)*tileBytes,
-				route,current^0x2000U,batchBytes);
+		const unsigned nextBlock=firstBlock+batchBlocks;
+		if(nextBlock<blocks) {
+			const unsigned nextBlocks=blocks-nextBlock<batch?blocks-nextBlock:batch;
+			pending=TilePrefetchStart(groupFirst+nextBlock*tileBytes,
+				route,current^0x2000U,nextBlocks*tileBytes);
+		}
 	}
 	return current+(block-firstBlock)*tileBytes;
 }
@@ -1013,9 +1018,6 @@ extern "C" unsigned block_main()
  PioneerQ38TokenMatrixPhase matrixProfile;
  if(matrixPhaseActive)matrixProfile.Init(job[11],job[12],inputs,groups);
 #endif
-#ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
-	const unsigned prefetchBatch=PioneerQwen35FetchBatch(type);
-#endif
 	for (unsigned group=0;group<groups;group++) {
 #if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_BATCH_PREFETCH)
 	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
@@ -1035,7 +1037,7 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_STREAM
 #ifdef PIONEER_Q35_WORK_BATCH_PREFETCH
-		rawBase=Qwen35BatchPrefetchStage(block,groupFirst,bytes,prefetchBatch,
+		rawBase=Qwen35BatchPrefetchStage(type,block,groupFirst,bytes,
 			blocks,job[8],nextTileExpected);
 #else
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH

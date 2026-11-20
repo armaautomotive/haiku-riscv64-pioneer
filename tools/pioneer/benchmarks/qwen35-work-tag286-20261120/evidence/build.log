@@ -1,0 +1,8 @@
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b  /private/tmp/pioneer-qwen35-work-tag286-build-final/image/peer/boot.bin
+d8f143a312ce44877526a88ae11256a8d493ce218be09ddf034d9f0c3c034a82  /private/tmp/pioneer-qwen35-work-tag286-build-final/image/peer/text.bin
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca  /private/tmp/pioneer-qwen35-work-tag286-build-final/image/boot.bin
+f25ced5aead91b87f8f595116d88748a8e5604b239780a28b2f7bea5db6f81f5  /private/tmp/pioneer-qwen35-work-tag286-build-final/image/text.bin
+a8461592b34ca841ab2d27a6bdc1eef5d1f09ce30727e20259ac3df653036f1d  /private/tmp/pioneer-qwen35-work-tag286-build-final/driver/tenstorrent_pci_probe-driver55
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /private/tmp/pioneer-qwen35-work-tag286-build-final/driver/pioneer_p100a_reload_guard
+5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d  /private/tmp/pioneer-qwen35-work-tag286-build-final/driver/tenstorrent_pci_probe-default43-control
+d8da309cdf9675c3e4e3610d2b6e6b99e0d7a519b091af26dadcf49d227d1c5d /private/tmp/pioneer-qwen35-work-tag286-build-final/pioneer-q35-work

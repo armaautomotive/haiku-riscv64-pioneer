@@ -7,6 +7,8 @@
 
 int main()
 {
+	for (unsigned block=0;block<65536;block++)
+		assert(PioneerQwen35FetchOrdinal(12,block)==block/3);
 	const unsigned shapes[][2]={{8,2560},{12,2560},{13,2560},{14,2560},
 		{12,4096},{13,4096},{12,9216},{14,9216}};
 	unsigned cases=0;
@@ -15,23 +17,26 @@ int main()
 		const unsigned batch=PioneerQwen35FetchBatch(type);
 		const unsigned blocks=inputs>>(type==8?5:8);
 		const unsigned tile=PioneerQwen35Projection::TileBytes(type);
-		assert(PioneerQwen35BatchPrefetchBuffer(blocks/batch-1)
-			==(((blocks/batch-1)&1)?0x9a000:0x98000));
+		const unsigned batches=(blocks+batch-1)/batch;
+		assert(PioneerQwen35FetchCount(type,blocks)==batches);
+		assert(PioneerQwen35BatchPrefetchBuffer(batches-1)
+			==(((batches-1)&1)?0x9a000:0x98000));
 		for (unsigned groups: {1U,7U,16U}) {
 			for (unsigned group=0;group<groups;group++) {
 				for (unsigned block=0;block<blocks;block++) {
 					PioneerQwen35BatchFetchPlan p;
 					assert(PioneerQwen35BatchFetch(type,inputs,groups,group,block,
 						0x08000000,p));
-					const unsigned first=block&~(batch-1),ordinal=first/batch;
+					const unsigned ordinal=PioneerQwen35FetchOrdinal(type,block),first=ordinal*batch;
+					const unsigned batchBlocks=blocks-first<batch?blocks-first:batch;
 					const unsigned buffer=PioneerQwen35BatchPrefetchBuffer(ordinal);
 					assert(p.source==0x08000000+(group*blocks+first)*tile);
 					assert(p.destination==0x98000);
 					assert(buffer+(p.copySource-p.destination)==buffer+(block-first)*tile);
-					assert(p.bytes==batch*tile && p.issue==((block&(batch-1))==0));
+					assert(p.bytes==batchBlocks*tile && p.issue==(block==first));
 					assert(p.bytes<=8192 && buffer+p.bytes<=0x9c000);
-					if (p.issue && first+batch<blocks) {
-						assert(p.source+p.bytes==0x08000000+(group*blocks+first+batch)*tile);
+					if (p.issue && first+batchBlocks<blocks) {
+						assert(p.source+p.bytes==0x08000000+(group*blocks+first+batchBlocks)*tile);
 						assert(PioneerQwen35BatchPrefetchBuffer(ordinal+1)
 							==(buffer==0x98000?0x9a000:0x98000));
 					}
