@@ -230,7 +230,16 @@ extern "C" void q38_persistent_main()
 #endif
 		uint32_t before[8]; for (unsigned c=0;c<8;c++) before[c]=Counter(c);
 		Words(0x74140)[0]=sequence; Words(0x74140)[4]=1; Fence();
+		uint32_t computeStart=0;
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+		asm volatile("csrr %0,0xb00" : "=r"(computeStart) :: "memory");
+#endif
 		unsigned panels=q38_compute_once();
+		uint32_t computeCycles=0;
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+		asm volatile("csrr %0,0xb00" : "=r"(computeCycles) :: "memory");
+		computeCycles-=computeStart;
+#endif
 		unsigned blocks=snapshot[5]>>(snapshot[1]==8?5:8),count=snapshot[7]*snapshot[5]/16;
 		unsigned reads=snapshot[7]*
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
@@ -287,6 +296,9 @@ extern "C" void q38_persistent_main()
 		Words(0x83f00)[30]=source; Words(0x83f00)[31]=self;
 		for (unsigned i=32;i<48;i++) Words(0x83f00)[i]=sealedSource[i-32];
 		for (unsigned i=48;i<64;i++) Words(0x83f00)[i]=0;
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+		Words(0x83f00)[48]=computeCycles; // advisory mcycle delta; ROOT never faults on this value
+#endif
 		Fence(); // proof+ALL outputs precede finished;root never mutates early
 		Words(0x74140)[4]=0; Words(0x74140)[1]=sequence; Fence();
 		previous=sequence;

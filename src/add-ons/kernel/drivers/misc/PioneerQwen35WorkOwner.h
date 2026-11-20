@@ -209,6 +209,10 @@ public:
 			return Fail();
 		}
 		if (!io.Quiet()) return pendingCompletion(81,0);
+		const unsigned profileLow=io.Read(RootPeerExecProfileAddress);
+		const unsigned profileHigh=io.Read(RootPeerExecProfileAddress+4);
+		result.peerComputeCriticalPathCycles=(static_cast<unsigned long long>(profileHigh)<<32)|profileLow;
+		result.peerComputeSamples=io.Read(RootPeerExecProfileAddress+8);
 		result.completeObservedMicros=observed;
 		const unsigned generated=result.progress.generated;
 		if (!generated || generated>maxOutput) return pendingCompletion(82,generated);

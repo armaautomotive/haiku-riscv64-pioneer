@@ -14,7 +14,8 @@ enum : unsigned {
 	RootCheckpointAddress=0x17ffb0,
 	RootProjectionResultAddress=0x9e000, RootControlAddress=0xe7000,
 	RootControlProfileAddress=RootControlAddress+40, RootProgressAddress=0xe7040,
-	RootScaleEvidenceAddress=0xe7080,
+	RootScaleEvidenceAddress=0xe7080, RootPeerExecProfileAddress=0xe70c0,
+	RootPeerExecProfileWords=3,
 	RootDispatchStateMagic=0x31533551,
 	RootScratchAddress=0xb0000, RootScratchEnd=0xe2000,
 	RootBounceAddress=RootScratchEnd, RootBounceBytes=16384,
@@ -62,6 +63,9 @@ static_assert(sizeof(RootScaleEvidence)==60
 	&& RootProgressAddress+sizeof(RequestProgress)==RootScaleEvidenceAddress
 	&& RootScaleEvidenceAddress+sizeof(RootScaleEvidence)<=RootLayoutAddress,
 	"failure-only scale evidence occupies its own reserved ROOT L1 range");
+static_assert(RootScaleEvidenceAddress+sizeof(RootScaleEvidence)<=RootPeerExecProfileAddress
+	&& RootPeerExecProfileAddress+RootPeerExecProfileWords*sizeof(unsigned)<=RootLayoutAddress,
+	"peer execution telemetry occupies a disjoint reserved ROOT L1 range");
 static_assert(RootWorkerResultEnd==0x9dc00 && RootScaleAddress==0x9dc00
 	&& RootScaleAddress+RootScaleMaxWords*sizeof(unsigned)<=RootProjectionResultAddress,
 	"Qwen3.5 scales must be disjoint from all 119 peer output buffers and ROOT results");

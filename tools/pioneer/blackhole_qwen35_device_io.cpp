@@ -83,6 +83,9 @@ DeviceIO::DeviceIO(const DeviceLayout& layout,Range ropeTable,volatile RequestPr
 	volatile uint32_t* generatedIds)
 	: model(layout), rope(ropeTable), progress(status), tokens(generatedIds), started(Cycles())
 {
+	volatile uint32_t* peerProfile=Words(RootPeerExecProfileAddress);
+	for (unsigned i=0;i<RootPeerExecProfileWords;i++) peerProfile[i]=0;
+	Fence();
 }
 
 void DeviceIO::Trace(unsigned stage)

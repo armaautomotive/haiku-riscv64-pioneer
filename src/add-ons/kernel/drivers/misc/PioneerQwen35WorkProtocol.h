@@ -13,7 +13,7 @@
 #define TT_PCI_PROBE_Q35_WORK_STOP (B_DEVICE_OP_CODES_END + 0x64d4)
 
 namespace PioneerQwen35 {
-enum : unsigned { WorkVersion=9, WorkDriver=64 };
+enum : unsigned { WorkVersion=10, WorkDriver=64 };
 enum WorkStatus : unsigned {
 	WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault, WorkRecoveryPending
 };
@@ -57,6 +57,8 @@ struct WorkPoll {
 	RequestProgress progress;
 	unsigned long long startMicros, prefillObservedMicros, completeObservedMicros;
 	unsigned long long dispatchPhaseCycles[3];
+	unsigned long long peerComputeCriticalPathCycles;
+	unsigned peerComputeSamples;
 	unsigned recoveryProofReason, recoveryProofDetail;
 	unsigned faultNocValid, faultNocCommand[10], faultNocCounters[8], faultNocCounterDelta[8];
 	unsigned faultPeer119Valid, faultPeer119Pc[2], faultPeer119Status[16];

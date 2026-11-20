@@ -261,14 +261,15 @@ static bool Generate(int fd,const Vocabulary& vocab,D::WorkStart& request,unsign
 		"full_core_waves=%u projection_waves=%u activation_pack_cycles_256=%u "
 		"projection_setup_cycles_256=%u matrix_dispatch_cycles_256=%u "
 		"dispatch_issue_root_matrix_cycles=%llu dispatch_peer_wait_proof_cycles=%llu "
-		"dispatch_result_proof_cycles=%llu\n",
+		"dispatch_result_proof_cycles=%llu peer_compute_critical_path_cycles=%llu peer_compute_samples=%u\n",
 		request.requestId,p.prefilled,promptSec,p.generated,decodeSec,p.generated/decodeSec,
 		(static_cast<unsigned long long>(p.promptCyclesHigh)<<32)|p.promptCyclesLow,
 		(static_cast<unsigned long long>(p.decodeCyclesHigh)<<32)|p.decodeCyclesLow,
 		p.reserved[D::ProgressFullCoreWavesSlot],p.reserved[D::ProgressProjectionWavesSlot],
 		p.reserved[D::ProgressActivationPackTicksSlot],p.reserved[D::ProgressProjectionSetupTicksSlot],
 		p.reserved[D::ProgressMatrixDispatchTicksSlot],poll->dispatchPhaseCycles[0],
-		poll->dispatchPhaseCycles[1],poll->dispatchPhaseCycles[2]);
+		poll->dispatchPhaseCycles[1],poll->dispatchPhaseCycles[2],
+		poll->peerComputeCriticalPathCycles,poll->peerComputeSamples);
 	printf("P100A_Q35 generated_ids=");
 	for (unsigned i=0; i<p.generated; i++) printf("%s%u",i?",":"",poll->generatedIds[i]);
 	printf("\n");

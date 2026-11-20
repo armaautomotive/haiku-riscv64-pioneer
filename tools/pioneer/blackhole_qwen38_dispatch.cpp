@@ -1062,6 +1062,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
 #endif
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+	unsigned peerComputeCriticalCycles=0;
+#endif
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
@@ -1095,7 +1098,16 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 			|| proof[30]!=p[5] || proof[31]!=XY(w+1)) block_fault_park();
 		for (unsigned i=0;i<10;i++) if (proof[20+i]!=command[i]) block_fault_park();
 		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(Q38DispatchSourceCache)[w*16+i]) block_fault_park();
-		for (unsigned i=48;i<64;i++) if (proof[i]) block_fault_park();
+		for (unsigned i=48;i<64;i++) {
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+			if (i!=48 && proof[i]) block_fault_park();
+#else
+			if (proof[i]) block_fault_park();
+#endif
+		}
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+		if (proof[48]>peerComputeCriticalCycles) peerComputeCriticalCycles=proof[48];
+#endif
 		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
 #if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE) && !defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE) && !defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE)
 		if (!work)
@@ -1113,6 +1125,19 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #endif
 		for (unsigned row=0;row<256;row++) Words(0x80000)[w*256+row]=row<groups*16?proof[64+row]:0;
 	}
+#ifdef PIONEER_Q35_WORK_PEER_EXEC_PROFILE
+	// Advisory only: record the max peer mcycle delta after every gathered
+	// proof passed. Overflow wraps telemetry but never changes Work validity.
+	if (work && Words(PioneerQwen35::RootProgressAddress)[2]
+		&& Words(PioneerQwen35::RootProgressAddress)[3]) {
+		volatile uint32_t* profile=Words(PioneerQwen35::RootPeerExecProfileAddress);
+		const uint32_t prior=profile[0], next=prior+peerComputeCriticalCycles;
+		profile[0]=next;
+		profile[1]+=next<prior;
+		profile[2]++;
+		Fence();
+	}
+#endif
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) if (parts[w][i]!=Words(0x74080)[w*8+i]) block_fault_park();
 	Checkpoint(0x54000401,workers);
 	for (unsigned bank=0;bank<8;bank++) if (banks[bank]!=Words(0x74040)[bank]) block_fault_park();
