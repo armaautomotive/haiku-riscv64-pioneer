@@ -30,9 +30,6 @@ extern "C" void q38_ffn_persistent_matrix_begin(const uint32_t*,unsigned);
 #else
 enum {Q38PersistentMarker=0x32503851};
 #endif
-#if defined(PIONEER_Q35_WORK_PEER_IMAGE) && defined(PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL)
-#include "PioneerQwen35PeerAudit.h"
-#endif
 extern "C" unsigned block_peer_wait(unsigned previous);
 extern "C" void block_peer_stopped() __attribute__((noreturn));
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
@@ -157,23 +154,10 @@ extern "C" void q38_persistent_main()
 	unsigned previous=0;
 	for (;;) {
 		unsigned sequence=block_peer_wait(previous);
-#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
-		const volatile uint32_t* job=Words(PioneerQ35WorkJobAddress);
-#else
 		const volatile uint32_t* job=Words(0x74000);
-#endif
 		uint32_t snapshot[16]; for (unsigned i=0;i<16;i++) snapshot[i]=job[i];
-		if (
-#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
-			!PioneerQ35WorkDescriptorSequenceValid(previous,sequence,snapshot)
-#else
-			!sequence || sequence>=0x7fffffff || sequence!=previous+1
-#endif
-			|| snapshot[10]!=Q38PersistentMarker
-			|| snapshot[11]!=worker ||
-#ifndef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
-			snapshot[12]!=sequence ||
-#endif
+		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=Q38PersistentMarker
+			|| snapshot[11]!=worker || snapshot[12]!=sequence ||
 #ifdef PIONEER_Q38_FFN_PERSISTENT
 #ifdef PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE
             (snapshot[13]!=1 && snapshot[13]!=2 && snapshot[13]!=6)
@@ -190,21 +174,12 @@ extern "C" void q38_persistent_main()
 #else
 			|| snapshot[14]
 #endif
-#ifndef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
-			|| snapshot[15]
-#endif
-			|| !IdleAll() || *Words(0xffb20100)!=source
+			|| snapshot[15] || !IdleAll() || *Words(0xffb20100)!=source
 			|| !SourceMatches(sealedSource)
 #ifndef PIONEER_Q38_FFN_PERSISTENT
 			|| *Words(0xffb20014)!=self
 #endif
-			|| *Words(
-#ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
-				PioneerQ35WorkJobSequenceAddress
-#else
-				0x74100
-#endif
-				)!=sequence) {
+			|| *Words(0x74100)!=sequence) {
 #ifdef PIONEER_Q35_WORK_PEER_IMAGE
 			q35_work_peer_fault(0x40);
 #else

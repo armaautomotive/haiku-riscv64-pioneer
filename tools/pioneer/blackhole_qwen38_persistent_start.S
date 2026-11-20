@@ -17,12 +17,7 @@ block_entry:
 	j block_fault_park
 .org 0x40
 block_peer_wait:
-	.ifdef PIONEER_Q35_WORK_COMBINED_JOB_DOORBELL
-	/* Work job word15 is its trailing in-packet sequence commit marker. */
-	li t0,0x7413c
-	.else
 	li t0,0x74100
-	.endif
 	mv t1,a0
 block_peer_wait_load:
 	lw a0,0(t0)

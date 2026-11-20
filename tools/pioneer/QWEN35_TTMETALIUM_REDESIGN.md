@@ -108,16 +108,23 @@ ROOT matrix work consumes 55.80 s. The 100 tok/s goal remains about 827 times
 above this result. The full TT reader/compute/writer program graph and
 sharded activations remain unimplemented.
 
-Tag90 moves the Qwen35 Work runtime descriptor into the existing 64-byte
-doorbell slot. A trailing sequence word wakes the resident peer from that
-same packet, removing one serialized ROOT-to-peer transfer for each active
-worker on every projection. At STOP, it also avoids the former descriptor
-echo read. The sequence and trailing commit word are checked by the peer;
-the all-core cohort, per-wave output/source/counter proofs, and complete
-physical close audit remain. The host test and full cross-build passed, but a
-guarded hardware run is still pending. This narrows per-projection launch
-traffic; it does not yet port TT-Metalium's sharded intermediate tensors or
-overlapped reader/compute/writer circular-buffer graph.
+Tag90 tried to place the Qwen35 Work runtime descriptor and peer wake sequence
+in the same 64-byte packet. Offline tests and cross-build passed, but hardware
+faulted in the first projection before prefill. The peer reported projection
+precheck reason `0x90`; the saved fault snapshot showed the descriptor was
+eventually complete, which is consistent with the trailing wake sequence
+becoming visible before preceding packet words. This race diagnosis remains
+a hypothesis. The one-packet protocol is rejected and the Tag91 candidate
+restores the previously tested separate descriptor-then-doorbell order. Tag90
+did not produce output or a decode rate; the failure and recovery are recorded
+in `benchmarks/qwen35-work-tag290-20261120/RUN.md`.
+
+The failure also exposed a recovery gap: after the first fleet reset had begun,
+a restarted peer fault made Tag90's STOP path non-retryable. The faulted owner
+had to be cleared by a cold power cycle before the guarded stable-driver
+restore. The driver still needs a separately testable, root-only recovery path
+that can reacquire and recover a retained owner without rebooting. Do not call
+Tag90's existing retained-owner behavior recoverable.
 
 The earlier tag75 timing still identifies a much larger gap: the best
 verified result was about 0.12055 decode tok/s, far below the 100 tok/s goal.

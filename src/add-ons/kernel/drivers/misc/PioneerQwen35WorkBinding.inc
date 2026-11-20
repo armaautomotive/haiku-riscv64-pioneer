@@ -141,7 +141,7 @@ public:
 		if (!fIO.SelectRuntimeCore(119)
 			|| !PioneerQ38DispatchSources(fIO,fDram,fBanks,node,0x46800)
 			|| !PeerStatusSnapshot(119,peerStatusFirst,peerStatus)
-			|| !PeerWindowSnapshot(119,0x74100,peerJobFirst,peerJob)
+			|| !PeerWindowSnapshot(119,0x74000,peerJobFirst,peerJob)
 			|| !PeerPcSnapshot(peerPc0,peerPc1)
 			|| !fIO.SelectRuntimeCore(0) || !Scope(0x46800)
 			|| Read(PioneerQwen35::RootCompletionAddress)!=PioneerQwen35::RootFault || !Quiet())

@@ -53,4 +53,8 @@ python3 -B tools/pioneer/build_qwen35_work.py \
 | Default43 control | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` | 934,080 |
 | Work client | `d8da309cdf9675c3e4e3610d2b6e6b99e0d7a519b091af26dadcf49d227d1c5d` | 304,848 |
 
-No hardware run has been made with Tag90 yet.
+Tag90 was run once on the P100A and faulted before prefill or output. The
+candidate's sequence in the same 64-byte packet did not provide a safe peer
+wake/descriptor publication boundary. The one-packet protocol is rejected;
+do not replay it. Full hardware timing and recovery evidence is in
+[`RUN.md`](RUN.md).
