@@ -18,6 +18,8 @@ enum : unsigned {
 struct DataflowQueueControl {
 	volatile uint32_t produced,consumed,failure,reserved;
 };
+static_assert(sizeof(DataflowQueueControl)==DataflowQueueControlBytes,
+	"each role queue owns one fixed 16-byte control record");
 
 struct DataflowQueueView {
 	const DataflowCircularBuffer* layout;
@@ -28,6 +30,28 @@ struct DataflowQueueView {
 inline void DataflowFence()
 {
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+}
+
+inline uint32_t DataflowLoadAcquire(const volatile uint32_t& value)
+{
+	return __atomic_load_n(&value,__ATOMIC_ACQUIRE);
+}
+
+inline uint32_t DataflowLoadRelaxed(const volatile uint32_t& value)
+{
+	return __atomic_load_n(&value,__ATOMIC_RELAXED);
+}
+
+inline void DataflowStoreRelease(volatile uint32_t& value,uint32_t next)
+{
+	__atomic_store_n(&value,next,__ATOMIC_RELEASE);
+}
+
+inline void DataflowStoreFirstFailure(volatile uint32_t& failure,unsigned reason)
+{
+	uint32_t expected=0;
+	__atomic_compare_exchange_n(&failure,&expected,
+		reason?reason:DataflowFailureQueue,false,__ATOMIC_RELEASE,__ATOMIC_RELAXED);
 }
 
 inline bool DataflowQueueValid(const DataflowQueueView& queue)
@@ -47,17 +71,16 @@ inline bool DataflowQueueValid(const DataflowQueueView& queue)
 inline void DataflowQueueFail(DataflowQueueView& queue,unsigned reason)
 {
 	if (!queue.control) return;
-	if (!queue.control->failure) queue.control->failure=reason?reason:DataflowFailureQueue;
-	DataflowFence();
+	DataflowStoreFirstFailure(queue.control->failure,reason);
 }
 
 inline bool DataflowQueueReserveBack(DataflowQueueView& queue,uint32_t& ticket)
 {
 	if (!DataflowQueueValid(queue)) return false;
 	for (unsigned attempt=0;attempt<DataflowQueuePollLimit;attempt++) {
-		if (queue.control->failure) return false;
-		const uint32_t produced=queue.control->produced;
-		const uint32_t consumed=queue.control->consumed;
+		if (DataflowLoadAcquire(queue.control->failure)) return false;
+		const uint32_t produced=DataflowLoadRelaxed(queue.control->produced);
+		const uint32_t consumed=DataflowLoadAcquire(queue.control->consumed);
 		const uint32_t used=produced-consumed;
 		if (used>queue.layout->pages) return false;
 		if (used<queue.layout->pages) {
@@ -70,19 +93,20 @@ inline bool DataflowQueueReserveBack(DataflowQueueView& queue,uint32_t& ticket)
 
 inline uint8_t* DataflowQueueWritePage(DataflowQueueView& queue,uint32_t ticket)
 {
-	if (!DataflowQueueValid(queue) || ticket!=queue.control->produced
-		|| ticket-queue.control->consumed>=queue.layout->pages) return nullptr;
+	if (!DataflowQueueValid(queue)
+		|| ticket!=DataflowLoadRelaxed(queue.control->produced)
+		|| ticket-DataflowLoadAcquire(queue.control->consumed)>=queue.layout->pages)
+		return nullptr;
 	return queue.local+(ticket%queue.layout->pages)*queue.layout->pageBytes;
 }
 
 inline bool DataflowQueuePublishBack(DataflowQueueView& queue,uint32_t ticket)
 {
-	if (!DataflowQueueValid(queue) || queue.control->failure
-		|| queue.control->produced!=ticket
-		|| ticket-queue.control->consumed>=queue.layout->pages) return false;
-	DataflowFence();
-	queue.control->produced=ticket+1;
-	DataflowFence();
+	if (!DataflowQueueValid(queue) || DataflowLoadAcquire(queue.control->failure)
+		|| DataflowLoadRelaxed(queue.control->produced)!=ticket
+		|| ticket-DataflowLoadAcquire(queue.control->consumed)>=queue.layout->pages)
+		return false;
+	DataflowStoreRelease(queue.control->produced,ticket+1);
 	return true;
 }
 
@@ -91,14 +115,13 @@ inline bool DataflowQueueWaitFront(DataflowQueueView& queue,uint32_t& ticket,
 {
 	if (!DataflowQueueValid(queue)) return false;
 	for (unsigned attempt=0;attempt<DataflowQueuePollLimit;attempt++) {
-		if (queue.control->failure) return false;
-		const uint32_t consumed=queue.control->consumed;
-		const uint32_t produced=queue.control->produced;
+		if (DataflowLoadAcquire(queue.control->failure)) return false;
+		const uint32_t consumed=DataflowLoadRelaxed(queue.control->consumed);
+		const uint32_t produced=DataflowLoadAcquire(queue.control->produced);
 		const uint32_t available=produced-consumed;
 		if (available>queue.layout->pages) return false;
 		if (available) {
 			ticket=consumed;
-			DataflowFence();
 			page=queue.local+(ticket%queue.layout->pages)*queue.layout->pageBytes;
 			return true;
 		}
@@ -108,13 +131,11 @@ inline bool DataflowQueueWaitFront(DataflowQueueView& queue,uint32_t& ticket,
 
 inline bool DataflowQueuePopFront(DataflowQueueView& queue,uint32_t ticket)
 {
-	if (!DataflowQueueValid(queue) || queue.control->failure
-		|| queue.control->consumed!=ticket
-		|| queue.control->produced-ticket==0
-		|| queue.control->produced-ticket>queue.layout->pages) return false;
-	DataflowFence();
-	queue.control->consumed=ticket+1;
-	DataflowFence();
+	if (!DataflowQueueValid(queue) || DataflowLoadAcquire(queue.control->failure)
+		|| DataflowLoadRelaxed(queue.control->consumed)!=ticket) return false;
+	const uint32_t produced=DataflowLoadAcquire(queue.control->produced);
+	if (produced-ticket==0 || produced-ticket>queue.layout->pages) return false;
+	DataflowStoreRelease(queue.control->consumed,ticket+1);
 	return true;
 }
 
@@ -150,8 +171,7 @@ inline void DataflowSignalLocalFailure(unsigned reason)
 	auto* controls=reinterpret_cast<DataflowQueueControl*>(
 		static_cast<uintptr_t>(DataflowQueueStateAddress));
 	for (unsigned i=0;i<DataflowCircularBufferCount;i++)
-		if (!controls[i].failure) controls[i].failure=reason?reason:DataflowFailureQueue;
-	DataflowFence();
+		DataflowStoreFirstFailure(controls[i].failure,reason);
 }
 
 inline bool DataflowBindLocalContext(DataflowDeviceContext& context,unsigned failureReason)

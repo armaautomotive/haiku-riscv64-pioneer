@@ -22,6 +22,14 @@ rewrite is implemented.
   source window (`0xa0000..0xa03ff`); the new 4 KiB invocation region ends at
   `0xab000`, before root scratch at `0xb0000`. The circular-buffer area still
   ends at `0xa0000`.
+- 2026-11-20: Changed queue state publication to acquire/release atomics. A
+  producer publishes page writes before advancing `produced`; a consumer
+  publishes completion before the producer can reuse the page. Failure
+  propagation atomically preserves the first role error. The offline test
+  checks the first-error rule and verifies the queue refuses further work
+  after failure. A separate ASan/UBSan SPSC stress check exchanged 50,000
+  ordered pages between concurrent producer and consumer threads without loss
+  or reordering.
 - 2026-11-20: Added `PioneerQwen35DataflowKernels.h` with separate reader,
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit
@@ -75,3 +83,11 @@ The local Apple Clang 17 build has no RISC-V target, and no RISC-V Haiku
 cross-compiler is present in the configured workspace or Codex tool paths
 checked here. Current verification is host compilation only. The role
 backends, target image build, and resident program owner remain unimplemented.
+
+The current role functions are still contracts around an `Ops` template. The
+Tenstorrent reference pattern executes reader and writer data movement beside
+one compute kernel on each Tensix core; its compute program is split across
+TRISC unpack, math, and pack processors and uses explicit destination-register
+ownership handoffs. This rewrite still needs those device bindings, including
+the required Q5_K Tensix projection path, before it can pass the offline target
+build gate.

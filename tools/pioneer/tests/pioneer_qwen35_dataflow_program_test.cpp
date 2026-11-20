@@ -116,6 +116,10 @@ int main()
 		&& ticket==UINT32_MAX && readPage==local+corePlan.circularBuffer[0].pageBytes);
 	assert(DataflowQueuePopFront(queues[0],ticket));
 	assert(controls[0].produced==0 && controls[0].consumed==0);
+	DataflowQueueFail(queues[0],DataflowFailureCompute);
+	DataflowQueueFail(queues[0],DataflowFailureWriter);
+	assert(DataflowLoadAcquire(controls[0].failure)==DataflowFailureCompute);
+	assert(!DataflowQueueReserveBack(queues[0],ticket));
 	static uint8_t activationCache[DataflowActivationCacheBytes];
 	float* activation=reinterpret_cast<float*>(activationCache);
 	PackTestOps packOps{};
