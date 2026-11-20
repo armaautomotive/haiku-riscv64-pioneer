@@ -61,9 +61,9 @@ inline bool DataflowQueueValid(const DataflowQueueView& queue)
 		|| !queue.layout->pageBytes || (queue.layout->pageBytes&63)
 		|| queue.layout->pageBytes>UINT32_MAX/queue.layout->pages
 		|| queue.layout->bytes!=queue.layout->pageBytes*queue.layout->pages
+		|| !DataflowLocalCircularBufferValid(*queue.layout)
 		|| queue.layout->address<DataflowWeightBufferAddress
-		|| queue.layout->address>=DataflowLocalBufferEnd
-		|| queue.layout->bytes>DataflowLocalBufferEnd-queue.layout->address)
+		|| queue.layout->address>=DataflowLocalBufferEnd)
 		return false;
 	return true;
 }
@@ -97,7 +97,7 @@ inline uint8_t* DataflowQueueWritePage(DataflowQueueView& queue,uint32_t ticket)
 		|| ticket!=DataflowLoadRelaxed(queue.control->produced)
 		|| ticket-DataflowLoadAcquire(queue.control->consumed)>=queue.layout->pages)
 		return nullptr;
-	return queue.local+(ticket%queue.layout->pages)*queue.layout->pageBytes;
+	return queue.local+(ticket%queue.layout->pages)*queue.layout->pageStride;
 }
 
 inline bool DataflowQueuePublishBack(DataflowQueueView& queue,uint32_t ticket)
@@ -122,7 +122,7 @@ inline bool DataflowQueueWaitFront(DataflowQueueView& queue,uint32_t& ticket,
 		if (available>queue.layout->pages) return false;
 		if (available) {
 			ticket=consumed;
-			page=queue.local+(ticket%queue.layout->pages)*queue.layout->pageBytes;
+			page=queue.local+(ticket%queue.layout->pages)*queue.layout->pageStride;
 			return true;
 		}
 	}

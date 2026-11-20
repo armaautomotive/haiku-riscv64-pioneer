@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Off-card check against the GGUF Q5_K row layout and scalar reconstruction.
 #include "../PioneerQwen35Q5Panel.h"
+#include "../PioneerQwen35DataflowPanel.h"
 #include "../PioneerAttentionMath.h"
 #include <array>
 #include <cassert>
@@ -34,22 +35,37 @@ static void Check(const Rows& rows) {
    for (unsigned b=0;b<176;b++) tile[b*16+r]=rows[r*176+b];
   for (unsigned p=0;p<16;p++) {
    PioneerQ38Panel result{}; assert(PioneerQwen35Q5Panel(tile.data(),tile.size(),p,&result));
+   PioneerQwen35DataflowQ5Panel dataflow{};
+   assert(PioneerQwen35PackDataflowQ5Panel(tile.data(),tile.size(),p,&dataflow));
+   PioneerQ38Panel tensixDecode{};
+   assert(PioneerQ38UnpackPanel(8,reinterpret_cast<const uint8_t*>(dataflow.q8Tile),
+    sizeof(dataflow.q8Tile),0,&tensixDecode));
    for (unsigned r=0;r<16;r++) for (unsigned lane=0;lane<16;lane++) {
     int q; float c,m; Reference(rows.data()+r*176,p*16+lane,q,c,m);
     unsigned n=lane*16+r;
     assert(Operand(uint16_t(result.operand[n/2]>>((n&1)*16)))==q);
+    assert(uint16_t(tensixDecode.operand[n/2]>>((n&1)*16))
+     ==uint16_t(result.operand[n/2]>>((n&1)*16)));
+    assert(dataflow.coefficient[r]==result.coefficient[r]
+     && dataflow.minimum[r]==result.minimum[r]);
     assert(Float(result.coefficient[r])==c && Float(result.minimum[r])==m);
     assert(Float(result.coefficient[r])*float(q)+Float(result.minimum[r])==c*float(q)+m);
    }
   }
   PioneerQ38Panel result; memset(&result,0xa5,sizeof(result)); auto before=result;
+  PioneerQwen35DataflowQ5Panel staged; memset(&staged,0xa5,sizeof(staged));
+  auto stagedBefore=staged;
+  assert(!PioneerQwen35PackDataflowQ5Panel(tile.data(),tile.size(),16,&staged));
+  assert(!memcmp(&staged,&stagedBefore,sizeof(staged)));
   assert(!PioneerQwen35Q5Panel(tile.data(),tile.size()-1,0,&result));
   assert(!PioneerQwen35Q5Panel(tile.data(),tile.size(),16,&result));
   assert(!PioneerQwen35Q5Panel(tile.data(),tile.size(),0,reinterpret_cast<PioneerQ38Panel*>(tile.data())));
   // Failure in the final row must leave all output untouched.
   tile[16+15]=0x7c;
   assert(!PioneerQwen35Q5Panel(tile.data(),tile.size(),0,&result));
+  assert(!PioneerQwen35PackDataflowQ5Panel(tile.data(),tile.size(),0,&staged));
   assert(!memcmp(&result,&before,sizeof(result)));
+  assert(!memcmp(&staged,&stagedBefore,sizeof(staged)));
 }
 
 int main(int argc,char** argv) {

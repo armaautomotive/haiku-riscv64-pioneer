@@ -37,6 +37,25 @@ rewrite is implemented.
   still an unimplemented backend gate. Expanded the descriptor check across
   all eight Qwen3.5-4B quantization/width combinations and rebound every shape
   to all 120 core invocations.
+- 2026-11-20: Added a rewrite-only Q5_K panel repacker that preserves the
+  exact integer weights and FP32 coefficient/minimum metadata while expressing
+  the integer panel in the existing Tensix Q8 panel-zero byte layout. The Q5
+  offline test decodes that synthetic tile through the Tensix panel decoder
+  and checks every operand plus metadata.
+- 2026-11-20: Reworked the per-core L1 map after finding that two adjacent
+  maximum Q6_K weight pages would overlap the existing affine metadata at
+  `0x91200..0x91280`. Weight pages now ping-pong between `0x90000` and
+  `0x98000` with a checked `0x8000` stride, matching the Qwen35 tile-prefetch
+  plan; activation cache and queue state occupy `0x80000..0x89030`, and
+  input/output queues start at `0x92000` and `0x92800`. Both the full program
+  and copied core invocation reject any page
+  layout that overlaps affine metadata, queue state, activation cache, or
+  another buffer. Added a rewrite-only vector-unpack entry that accepts the
+  current page address and validates both ping-pong slots; its offline check
+  verifies every Q8/Q4/Q6 panel source address. Q5_K uses this Q8 panel-zero
+  path after repacking. The compute Ops adapter still does not call this helper.
+  The dataflow and Q5 panel tests both pass under AddressSanitizer and
+  UndefinedBehaviorSanitizer after the L1 layout change.
 - 2026-11-20: Added `PioneerQwen35DataflowKernels.h` with separate reader,
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit
@@ -48,7 +67,7 @@ rewrite is implemented.
   blocks map eight-at-a-time to the same 256-value activation chunk.
 - Added `DataflowCoreInvocation`: the full 120-core schedule remains host-side,
   while each core gets only its own immutable shard assignment in the bounded
-  4 KiB local region at `0xa0000`. The per-core object is size-checked and
+  4 KiB local region at `0xaa000`. The per-core object is size-checked and
   revalidates its local buffers, queue layout, and bank ranges.
 - Added a device-side local-L1 binder for the invocation, queue controls,
   circular buffers, and activation cache at their fixed addresses. It is

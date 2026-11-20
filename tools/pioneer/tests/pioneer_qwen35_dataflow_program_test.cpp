@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen35DataflowKernels.h"
+#include "../PioneerQwen35DataflowVectorUnpack.h"
 #include <assert.h>
 
 using namespace PioneerQwen35;
@@ -29,6 +30,19 @@ struct PackTestOps {
 	}
 };
 
+struct UnpackAddressOps {
+	unsigned addresses[2]{},count=0;
+	void Config(unsigned index,uint32_t value)
+	{
+		if (index==76 && value!=0x7070) {
+			assert(count<2);
+			addresses[count++]=(value+1)*16;
+		}
+	}
+	void Op(uint32_t) {}
+	void Drain() {}
+};
+
 static void CompileRoleInterfaces()
 {
 	DataflowCoreInvocation program{};
@@ -45,6 +59,30 @@ static void CompileRoleInterfaces()
 		PioneerQwen35DataflowComputeEntry(ops);
 		PioneerQwen35DataflowWriterEntry(ops);
 	}
+}
+
+static void CheckDynamicWeightAddresses()
+{
+	const unsigned rawBases[]={DataflowWeightBufferAddress,
+		DataflowWeightBufferAddress+DataflowWeightBufferPageStride};
+	const unsigned types[]={8,12,14};
+	for (unsigned rawBase:rawBases) {
+		for (unsigned type:types) {
+			const unsigned panels=type==8?2U:16U;
+			for (unsigned panel=0;panel<panels;panel++) {
+				PioneerQ38VectorPanelSpan span{};
+				assert(PioneerQ38VectorPanel(type,panel,span));
+				UnpackAddressOps ops{};
+				assert(PioneerQwen35DataflowVectorUnpack(ops,type,panel,rawBase));
+				assert(ops.count==(span.second?2U:1U));
+				assert(ops.addresses[0]==rawBase+span.low);
+				if (span.second) assert(ops.addresses[1]==rawBase+span.high);
+			}
+		}
+	}
+	UnpackAddressOps rejected{};
+	assert(!PioneerQwen35DataflowVectorUnpack(rejected,14,0,0x92000));
+	assert(rejected.count==0);
 }
 
 static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
@@ -66,6 +104,7 @@ static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 int main()
 {
 	CompileRoleInterfaces();
+	CheckDynamicWeightAddresses();
 	TensorSpace weight{};
 	weight.type=14;
 	weight.inputs=Hidden;
@@ -83,11 +122,22 @@ int main()
 		&& DataflowProgramRegionEnd==0xab000);
 	assert(program.groups==Ffn/16);
 	assert(program.circularBuffer[0].pageBytes==3392
-		&& program.circularBuffer[0].pages==2);
+		&& program.circularBuffer[0].pages==2
+		&& program.circularBuffer[0].pageStride==DataflowWeightBufferPageStride
+		&& DataflowWeightBufferAddress+DataflowWeightBufferPageStride==0x98000);
 	assert(program.circularBuffer[1].pageBytes==576
 		&& program.circularBuffer[1].pages==2);
 	assert(program.circularBuffer[2].pageBytes==64
 		&& program.circularBuffer[2].pages==2);
+	assert(DataflowLocalCircularBuffersValid(program.circularBuffer));
+	assert(!DataflowLocalRangesOverlap(DataflowWeightBufferAddress,3392,
+		DataflowAffineCoefficientAddress,DataflowAffineMetadataBytes));
+	assert(!DataflowLocalRangesOverlap(DataflowWeightBufferAddress
+		+DataflowWeightBufferPageStride,3392,DataflowAffineMinimumAddress,
+		DataflowAffineMetadataBytes));
+	assert(!DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
+		DataflowActivationCacheBytes,DataflowQueueStateAddress,
+		DataflowQueueStateBytes));
 	DataflowCoreInvocation corePlan{};
 	assert(DataflowProgramBuilder::BindCore(program,0,corePlan));
 	DataflowQueueControl controls[DataflowCircularBufferCount]{};
@@ -113,7 +163,7 @@ int main()
 	assert(DataflowQueueReserveBack(queues[0],ticket) && ticket==UINT32_MAX);
 	assert(DataflowQueuePublishBack(queues[0],ticket));
 	assert(DataflowQueueWaitFront(queues[0],ticket,readPage)
-		&& ticket==UINT32_MAX && readPage==local+corePlan.circularBuffer[0].pageBytes);
+		&& ticket==UINT32_MAX && readPage==local+DataflowWeightBufferPageStride);
 	assert(DataflowQueuePopFront(queues[0],ticket));
 	assert(controls[0].produced==0 && controls[0].consumed==0);
 	DataflowQueueFail(queues[0],DataflowFailureCompute);
@@ -160,11 +210,17 @@ int main()
 	corrupt.core[0].weight[0].firstGroup++;
 	assert(!corrupt.Valid());
 	corrupt=program;
+	corrupt.circularBuffer[0].pageStride=0x1000;
+	assert(!corrupt.Valid());
+	corrupt=program;
 	corrupt.core[119].output[0].bank=(corrupt.core[119].output[0].bank+1)%Banks;
 	assert(!corrupt.Valid());
 	DataflowCoreInvocation corruptCore{};
 	assert(DataflowProgramBuilder::BindCore(program,119,corruptCore));
 	corruptCore.assignment.output[0].bank=(corruptCore.assignment.output[0].bank+1)%Banks;
+	assert(!DataflowCoreHeaderValid(corruptCore));
+	assert(DataflowProgramBuilder::BindCore(program,119,corruptCore));
+	corruptCore.circularBuffer[0].pageStride=0x1000;
 	assert(!DataflowCoreHeaderValid(corruptCore));
 
 	TensorSpace q4Weight{};

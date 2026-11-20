@@ -18,13 +18,18 @@ enum : unsigned {
 	DataflowComputeRole=1U<<1,
 	DataflowWriterRole=1U<<2,
 	DataflowAllRoles=DataflowReaderRole|DataflowComputeRole|DataflowWriterRole,
+	DataflowLocalBufferStart=0x80000,
 	DataflowWeightBufferAddress=0x90000,
+	DataflowWeightBufferPageStride=0x8000,
 	DataflowInputBufferAddress=0x92000,
 	DataflowOutputBufferAddress=0x92800,
-	DataflowActivationCacheAddress=0x93000,
+	DataflowActivationCacheAddress=0x80000,
 	DataflowActivationCacheBytes=9216*sizeof(float),
-	DataflowQueueStateAddress=0x9c000,
+	DataflowQueueStateAddress=0x89000,
 	DataflowQueueStateBytes=3*16,
+	DataflowAffineCoefficientAddress=0x91200,
+	DataflowAffineMinimumAddress=0x91240,
+	DataflowAffineMetadataBytes=16*sizeof(uint32_t),
 	// 0xa0000..0xa03ff is the existing Tensix destination-init source window.
 	// Keep the immutable invocation beyond that window and below root scratch.
 	DataflowProgramAddress=0xaa000,
@@ -33,15 +38,122 @@ enum : unsigned {
 	DataflowActivationChunkInputs=256,
 	DataflowInputPageBytes=576,
 	DataflowOutputPageBytes=64,
+	DataflowMaxWeightPageBytes=3392,
 	DataflowLocalBufferEnd=0xa0000
 };
 static_assert((PioneerQwen35Projection::MaxInputs/DataflowActivationChunkInputs)
 	*DataflowInputPageBytes<=DataflowActivationCacheBytes,
 	"packed projection activations fit in the local activation cache");
+static_assert(DataflowActivationCacheAddress+DataflowActivationCacheBytes
+	<=DataflowQueueStateAddress
+	&& DataflowQueueStateAddress+DataflowQueueStateBytes<=DataflowWeightBufferAddress
+	&& DataflowWeightBufferAddress+DataflowMaxWeightPageBytes
+		<=DataflowAffineCoefficientAddress
+	&& DataflowAffineCoefficientAddress+DataflowAffineMetadataBytes
+		==DataflowAffineMinimumAddress
+	&& DataflowAffineMinimumAddress+DataflowAffineMetadataBytes
+		<=DataflowInputBufferAddress
+	&& DataflowInputBufferAddress+DataflowInputPageBytes*DataflowCircularBufferPages
+		<=DataflowOutputBufferAddress
+	&& DataflowOutputBufferAddress+DataflowOutputPageBytes*DataflowCircularBufferPages
+		<=DataflowWeightBufferAddress+DataflowWeightBufferPageStride
+	&& DataflowWeightBufferAddress+DataflowWeightBufferPageStride
+		+DataflowMaxWeightPageBytes<=DataflowLocalBufferEnd,
+	"all dataflow L1 pages and reserved affine metadata have disjoint ranges");
 
 struct DataflowCircularBuffer {
-	unsigned id,address,pageBytes,pages,bytes;
+	unsigned id,address,pageBytes,pages,bytes,pageStride;
 };
+
+inline bool DataflowLocalRangeValid(unsigned address,unsigned bytes)
+{
+	return address>=DataflowLocalBufferStart && address<DataflowLocalBufferEnd
+		&& bytes<=DataflowLocalBufferEnd-address;
+}
+
+inline bool DataflowLocalRangesOverlap(unsigned first,unsigned firstBytes,
+	unsigned second,unsigned secondBytes)
+{
+	return first<uint64_t(second)+secondBytes
+		&& second<uint64_t(first)+firstBytes;
+}
+
+inline bool DataflowLocalCircularBufferValid(const DataflowCircularBuffer& buffer)
+{
+	if (!buffer.address || (buffer.address&63) || !buffer.pageBytes
+		|| (buffer.pageBytes&63) || buffer.pages!=DataflowCircularBufferPages
+		|| buffer.pageBytes>UINT32_MAX/buffer.pages
+		|| buffer.bytes!=buffer.pageBytes*buffer.pages
+		|| buffer.pageStride<buffer.pageBytes || (buffer.pageStride&63)
+		|| buffer.pageStride>UINT32_MAX/(buffer.pages-1)) return false;
+	for (unsigned page=0;page<buffer.pages;page++) {
+		const uint64_t address=uint64_t(buffer.address)+uint64_t(page)*buffer.pageStride;
+		if (address>UINT32_MAX
+			|| !DataflowLocalRangeValid(unsigned(address),buffer.pageBytes)) return false;
+		const unsigned localAddress=unsigned(address);
+		if (DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
+				DataflowActivationCacheAddress,DataflowActivationCacheBytes)
+			|| DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
+				DataflowQueueStateAddress,DataflowQueueStateBytes)
+			|| DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
+				DataflowAffineCoefficientAddress,DataflowAffineMetadataBytes)
+			|| DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
+				DataflowAffineMinimumAddress,DataflowAffineMetadataBytes))
+			return false;
+		for (unsigned prior=0;prior<page;prior++) {
+			const uint64_t priorAddress=uint64_t(buffer.address)
+				+uint64_t(prior)*buffer.pageStride;
+			if (DataflowLocalRangesOverlap(localAddress,buffer.pageBytes,
+				unsigned(priorAddress),buffer.pageBytes)) return false;
+		}
+	}
+	return true;
+}
+
+inline bool DataflowLocalCircularBuffersValid(
+	const DataflowCircularBuffer (&buffers)[DataflowCircularBufferCount])
+{
+	if (!DataflowLocalRangeValid(DataflowActivationCacheAddress,
+			DataflowActivationCacheBytes)
+		|| !DataflowLocalRangeValid(DataflowQueueStateAddress,DataflowQueueStateBytes)
+		|| !DataflowLocalRangeValid(DataflowAffineCoefficientAddress,
+			DataflowAffineMetadataBytes)
+		|| !DataflowLocalRangeValid(DataflowAffineMinimumAddress,
+			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
+			DataflowActivationCacheBytes,DataflowQueueStateAddress,
+			DataflowQueueStateBytes)
+		|| DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
+			DataflowActivationCacheBytes,DataflowAffineCoefficientAddress,
+			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowActivationCacheAddress,
+			DataflowActivationCacheBytes,DataflowAffineMinimumAddress,
+			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowQueueStateAddress,
+			DataflowQueueStateBytes,DataflowAffineCoefficientAddress,
+			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowQueueStateAddress,
+			DataflowQueueStateBytes,DataflowAffineMinimumAddress,
+			DataflowAffineMetadataBytes)
+		|| DataflowLocalRangesOverlap(DataflowAffineCoefficientAddress,
+			DataflowAffineMetadataBytes,DataflowAffineMinimumAddress,
+			DataflowAffineMetadataBytes)) return false;
+	for (unsigned c=0;c<DataflowCircularBufferCount;c++) {
+		if (!DataflowLocalCircularBufferValid(buffers[c])) return false;
+		for (unsigned other=0;other<c;other++) {
+			for (unsigned page=0;page<buffers[c].pages;page++) {
+				const unsigned address=buffers[c].address+page*buffers[c].pageStride;
+				for (unsigned prior=0;prior<buffers[other].pages;prior++) {
+					const unsigned priorAddress=buffers[other].address
+						+prior*buffers[other].pageStride;
+					if (DataflowLocalRangesOverlap(address,buffers[c].pageBytes,
+							priorAddress,buffers[other].pageBytes)) return false;
+				}
+			}
+		}
+	}
+	return true;
+}
 
 struct DataflowWeightSegment {
 	unsigned bank,address,firstGroup,groups,bytes;
@@ -83,32 +195,18 @@ struct DataflowProjectionProgram {
 			|| !circularBuffer[1].bytes || !circularBuffer[2].bytes) return false;
 		if (!weights.Valid() || weights.rows!=outputRows || weights.unit!=16
 			|| weights.rowBytes*16!=tileBytes*blocks) return false;
-		if (DataflowActivationCacheAddress<DataflowWeightBufferAddress
-			|| DataflowActivationCacheAddress>=DataflowLocalBufferEnd
-			|| DataflowActivationCacheBytes>DataflowLocalBufferEnd-DataflowActivationCacheAddress
-			|| DataflowQueueStateAddress<DataflowWeightBufferAddress
-			|| DataflowQueueStateAddress>=DataflowLocalBufferEnd
-			|| DataflowQueueStateBytes>DataflowLocalBufferEnd-DataflowQueueStateAddress)
-			return false;
+		if (!DataflowLocalCircularBuffersValid(circularBuffer)) return false;
 		for (unsigned c=0;c<DataflowCircularBufferCount;c++) {
 			const auto& buffer=circularBuffer[c];
-			if (buffer.id!=(c==2?16U:c) || !buffer.address || (buffer.address&63)
+			const unsigned address=c==0?DataflowWeightBufferAddress
+				:c==1?DataflowInputBufferAddress:DataflowOutputBufferAddress;
+			if (buffer.id!=(c==2?16U:c) || buffer.address!=address || (buffer.address&63)
 				|| !buffer.pageBytes || buffer.pages!=DataflowCircularBufferPages
 				|| buffer.bytes!=buffer.pageBytes*buffer.pages
+				|| buffer.pageStride!=(c==0?DataflowWeightBufferPageStride:buffer.pageBytes)
+				|| !DataflowLocalCircularBufferValid(buffer)
 				|| buffer.address<DataflowWeightBufferAddress
-				|| buffer.address>=DataflowLocalBufferEnd
-				|| buffer.bytes>DataflowLocalBufferEnd-buffer.address) return false;
-			for (unsigned other=0;other<c;other++) {
-				const auto& prior=circularBuffer[other];
-				if (buffer.address<uint64_t(prior.address)+prior.bytes
-					&& prior.address<uint64_t(buffer.address)+buffer.bytes) return false;
-			}
-			if (buffer.address<DataflowActivationCacheAddress+DataflowActivationCacheBytes
-				&& DataflowActivationCacheAddress<uint64_t(buffer.address)+buffer.bytes)
-				return false;
-			if (buffer.address<DataflowQueueStateAddress+DataflowQueueStateBytes
-				&& DataflowQueueStateAddress<uint64_t(buffer.address)+buffer.bytes)
-				return false;
+				|| buffer.address>=DataflowLocalBufferEnd) return false;
 		}
 		if (circularBuffer[0].pageBytes!=tileBytes
 			|| circularBuffer[1].pageBytes!=DataflowInputPageBytes
@@ -172,7 +270,8 @@ struct DataflowCoreInvocation {
 			|| output.rowBytes!=sizeof(float) || output.unit!=16
 			|| inputFragmentCount!=input.count || outputFragmentCount!=output.count
 			|| !assignment.active || !assignment.groups || !assignment.segmentCount
-			|| assignment.segmentCount>DataflowMaxSegments) return false;
+			|| assignment.segmentCount>DataflowMaxSegments
+			|| !DataflowLocalCircularBuffersValid(circularBuffer)) return false;
 		for (unsigned c=0;c<DataflowCircularBufferCount;c++) {
 			const auto& buffer=circularBuffer[c];
 			const unsigned address=c==0?DataflowWeightBufferAddress
@@ -182,8 +281,8 @@ struct DataflowCoreInvocation {
 			if (buffer.id!=(c==2?16U:c) || buffer.address!=address
 				|| buffer.pageBytes!=pageBytes || buffer.pages!=DataflowCircularBufferPages
 				|| buffer.bytes!=pageBytes*DataflowCircularBufferPages
-				|| buffer.address>=DataflowLocalBufferEnd
-				|| buffer.bytes>DataflowLocalBufferEnd-buffer.address) return false;
+				|| buffer.pageStride!=(c==0?DataflowWeightBufferPageStride:pageBytes)
+				|| !DataflowLocalCircularBufferValid(buffer)) return false;
 		}
 		unsigned groupsSeen=0,nextGroup=assignment.weight[0].firstGroup;
 		for (unsigned i=0;i<assignment.segmentCount;i++) {
@@ -295,11 +394,14 @@ public:
 		candidate.input=input;
 		candidate.output=output;
 		candidate.circularBuffer[0]={0,DataflowWeightBufferAddress,tileBytes,
-			DataflowCircularBufferPages,tileBytes*DataflowCircularBufferPages};
+			DataflowCircularBufferPages,tileBytes*DataflowCircularBufferPages,
+			DataflowWeightBufferPageStride};
 		candidate.circularBuffer[1]={1,DataflowInputBufferAddress,DataflowInputPageBytes,
-			DataflowCircularBufferPages,DataflowInputPageBytes*DataflowCircularBufferPages};
+			DataflowCircularBufferPages,DataflowInputPageBytes*DataflowCircularBufferPages,
+			DataflowInputPageBytes};
 		candidate.circularBuffer[2]={16,DataflowOutputBufferAddress,DataflowOutputPageBytes,
-			DataflowCircularBufferPages,DataflowOutputPageBytes*DataflowCircularBufferPages};
+			DataflowCircularBufferPages,DataflowOutputPageBytes*DataflowCircularBufferPages,
+			DataflowOutputPageBytes};
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			const auto& scheduled=schedule.core[core];
 			auto& assignment=candidate.core[core];
