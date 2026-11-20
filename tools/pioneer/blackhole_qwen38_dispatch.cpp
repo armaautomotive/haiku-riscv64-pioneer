@@ -68,6 +68,14 @@ enum {TT_Q38_FFN_MATRIX_MARKER=TT_Q38_PROJECTION_MATRIX_MARKER,
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+#include "PioneerQwen35PeerAudit.h"
+#define Q35_PEER_AUDIT_PARAMETER ,bool auditPhysical=true
+#define Q35_PEER_AUDIT_ARGUMENT(work,stopped) ,PioneerQ35PeerPhysicalAuditRequired(work,stopped)
+#else
+#define Q35_PEER_AUDIT_PARAMETER
+#define Q35_PEER_AUDIT_ARGUMENT(work,stopped)
+#endif
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
 #include "PioneerQwen35Projection.h"
 #include "PioneerQwen35RootImageLayout.h"
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
@@ -505,7 +513,8 @@ static __attribute__((noinline,optimize("Os"))) bool PrepareInputs(unsigned mode
 }
 #endif
 #endif
-static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q38_COMMAND_PARAMETER)
+static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q38_COMMAND_PARAMETER
+	Q35_PEER_AUDIT_PARAMETER)
 {
 	Transfer(false,worker,0x75000,0x74140,64 Q38_COMMAND_WITH(reuseCommand)); Words(0x7f800)[10]++;
 	const volatile uint32_t* status=Words(0x75000);
@@ -578,6 +587,20 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
 		if (status[0]!=sequence || status[1]!=sequence || status[4]!=(stopped?2U:0U)) return false;
 #endif
 	}
+	// The pinned Qwen35 Work image keeps the peer image and its per-wave
+	// sequence/source/counter proof immutable for the resident session. The
+	// driver already audited every physical PC when admitting that session;
+	// re-reading three physical registers per peer after every projection was
+	// serializing the device-program barrier. Retain the full physical audit
+	// for checked dispatches and, unconditionally, for the closing STOP.
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if (!auditPhysical) {
+		if (stopped) block_fault_park();
+		return true;
+	}
+#endif
+	// Word11 counts the three physical PC/reset reads per audited peer; the
+	// final exact NoC counter proof uses it independently of status reads.
 	Words(0x7f800)[11]++;
 	unsigned first,second,reset;
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
@@ -624,7 +647,8 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 		unsigned sentinel=0;if(!PioneerQ38SelectPollSentinel(parts,workers,sentinel))return false;
 		for(unsigned attempt=0;attempt<65536 && polls<budget;attempt++) {
 			polls++;
-			if(Peer(sentinel+1,parts[sentinel][3],false,false Q38_COMMAND_WITH(work))) {complete[sentinel]=1;finished=1;break;}
+			if(Peer(sentinel+1,parts[sentinel][3],false,false Q38_COMMAND_WITH(work)
+				Q35_PEER_AUDIT_ARGUMENT(work,stopped))) {complete[sentinel]=1;finished=1;break;}
 			PeerPollBackoff(backoff);backoff=PioneerQ38PollBackoffNext(backoff);
 			if(!backoff)return false;
 		}
@@ -636,7 +660,8 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 		for(unsigned w=0;w<workers;w++)if(!complete[w]) {
 			if(polls==budget)return false;
 			polls++;
-			if(Peer(w+1,parts[w][3],stopped,false Q38_COMMAND_WITH(work))){complete[w]=1;finished++;}
+			if(Peer(w+1,parts[w][3],stopped,false Q38_COMMAND_WITH(work)
+				Q35_PEER_AUDIT_ARGUMENT(work,stopped))){complete[w]=1;finished++;}
 		}
 		if(work && finished<workers)PeerPollBackoff(backoff);
 	}
