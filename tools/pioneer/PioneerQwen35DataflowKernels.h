@@ -276,6 +276,8 @@ bool PioneerQwen35DataflowReader(const DataflowCoreInvocation& program,
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
 		const auto& segment=assignment.weight[segmentIndex];
 		for (unsigned group=0;group<segment.groups;group++) {
+			const uint64_t groupBytes=uint64_t(16)*program.weights.rowBytes;
+			const uint64_t groupOffset=uint64_t(group)*groupBytes;
 			for (unsigned block=0;block<program.blocks;block++) {
 				uint32_t weightTicket,inputTicket;
 				if (!DataflowQueueReserveBack(weights,weightTicket)
@@ -284,12 +286,11 @@ bool PioneerQwen35DataflowReader(const DataflowCoreInvocation& program,
 				uint8_t* weightPage=DataflowQueueWritePage(weights,weightTicket);
 				uint8_t* inputPage=DataflowQueueWritePage(inputs,inputTicket);
 				const unsigned activationChunk=DataflowActivationChunk(program.type,block);
-				const uint64_t address=uint64_t(segment.address)
-					+uint64_t(group)*program.weights.rowBytes
-					+uint64_t(block)*tileBytes;
+				const uint64_t blockOffset=uint64_t(block)*tileBytes;
+				const uint64_t address=uint64_t(segment.address)+groupOffset+blockOffset;
 				if (!weightPage || !inputPage || address>UINT32_MAX
-					|| tileBytes>segment.bytes-uint64_t(group)*program.weights.rowBytes
-					|| uint64_t(block)*tileBytes+tileBytes>program.weights.rowBytes
+					|| groupOffset>segment.bytes || groupBytes>segment.bytes-groupOffset
+					|| blockOffset>groupBytes || tileBytes>groupBytes-blockOffset
 					|| activationChunk>=program.inputs/DataflowActivationChunkInputs
 					|| !ops.ReadWeight(segment.bank,uint32_t(address),weightPage,tileBytes))
 					goto failed;

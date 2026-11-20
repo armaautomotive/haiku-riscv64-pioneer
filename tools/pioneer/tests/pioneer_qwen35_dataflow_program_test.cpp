@@ -2,6 +2,10 @@
 #include "../PioneerQwen35DataflowKernels.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 #include <assert.h>
+#include <atomic>
+#include <cstring>
+#include <cstdio>
+#include <thread>
 
 using namespace PioneerQwen35;
 
@@ -43,6 +47,85 @@ struct UnpackAddressOps {
 	void Drain() {}
 };
 
+struct RoleTestCounters {
+	std::atomic<unsigned> activationReads{0},weightReads{0},packedChunks{0};
+	std::atomic<unsigned> outputBegins{0},matmuls{0},outputFinishes{0},outputWrites{0};
+	std::atomic<bool> okay{true};
+	void Fail() { okay.store(false,std::memory_order_relaxed); }
+};
+
+struct RoleTestOps {
+	enum { TensixMatrixEngine=1 };
+	RoleTestCounters& counters;
+	bool ReadActivation(const RowSpace& source,unsigned rows,uint8_t* output,unsigned bytes)
+	{
+		if (!output || rows>source.rows || source.rowBytes!=sizeof(float)
+			|| bytes!=rows*sizeof(float)) { counters.Fail(); return false; }
+		float* values=reinterpret_cast<float*>(output);
+		for (unsigned i=0;i<rows;i++) values[i]=float(i);
+		counters.activationReads.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+	bool ReadWeight(unsigned bank,uint32_t address,uint8_t* output,unsigned bytes)
+	{
+		if (bank>=Banks || address<BankBase || address>=BankLimit || !output
+			|| !bytes || bytes>DataflowMaxWeightPageBytes) {
+			counters.Fail(); return false;
+		}
+		output[0]=uint8_t(bank^(address>>8));
+		for (unsigned i=1;i<bytes;i++) output[i]=uint8_t(i+bank);
+		counters.weightReads.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+	bool PackActivation(unsigned type,unsigned inputs,unsigned chunk,
+		const float* source,uint8_t* output,unsigned bytes)
+	{
+		if (type!=12 || inputs!=Hidden || !source || !output
+			|| chunk>=inputs/DataflowActivationChunkInputs
+			|| bytes!=DataflowInputPageBytes
+			|| source[chunk*DataflowActivationChunkInputs]
+				!=float(chunk*DataflowActivationChunkInputs)) {
+			counters.Fail(); return false;
+		}
+		std::memset(output,int(chunk),bytes);
+		counters.packedChunks.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+	bool TensixBeginOutput(unsigned type)
+	{
+		if (type!=13) { counters.Fail(); return false; }
+		counters.outputBegins.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+	bool TensixMatmul(unsigned type,unsigned block,const uint8_t* weight,
+		const uint8_t* input)
+	{
+		if (type!=13 || !weight || !input || input[0]!=uint8_t(block)) {
+			counters.Fail(); return false;
+		}
+		counters.matmuls.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+	bool TensixFinishOutput(uint8_t* output,unsigned bytes)
+	{
+		if (!output || bytes!=DataflowOutputPageBytes) {
+			counters.Fail(); return false;
+		}
+		std::memset(output,0x5a,bytes);
+		counters.outputFinishes.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+	bool WriteOutput(unsigned bank,uint32_t address,const uint8_t* input,unsigned bytes)
+	{
+		if (bank>=Banks || address<BankBase || address>=BankLimit || !input
+			|| bytes!=DataflowOutputPageBytes || input[0]!=0x5a) {
+			counters.Fail(); return false;
+		}
+		counters.outputWrites.fetch_add(1,std::memory_order_relaxed);
+		return true;
+	}
+};
+
 static void CompileRoleInterfaces()
 {
 	DataflowCoreInvocation program{};
@@ -60,6 +143,8 @@ static void CompileRoleInterfaces()
 		PioneerQwen35DataflowWriterEntry(ops);
 	}
 }
+
+static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base);
 
 static void CheckDynamicWeightAddresses()
 {
@@ -85,6 +170,58 @@ static void CheckDynamicWeightAddresses()
 	assert(rejected.count==0);
 }
 
+static void CheckConcurrentRoles()
+{
+	TensorSpace weight{};
+	weight.type=13;
+	weight.inputs=Hidden;
+	Rows(weight.place,Ffn,Hidden/256
+		*(PioneerQwen35Projection::TileBytes(13)/16),0x08000000);
+	RowSpace input{},output{};
+	Rows(input,Ffn,sizeof(float),0x04000000);
+	Rows(output,Ffn,sizeof(float),0x06000000);
+	DataflowProjectionProgram program{};
+	assert(DataflowProgramBuilder::Build(weight,input,Hidden,output,program));
+	DataflowCoreInvocation invocation{};
+	assert(DataflowProgramBuilder::BindCore(program,0,invocation));
+	DataflowQueueControl controls[DataflowCircularBufferCount]{};
+	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+	DataflowQueueView queues[DataflowCircularBufferCount]{};
+	assert(DataflowBindQueues(invocation,controls,local,queues));
+	alignas(float) uint8_t activation[DataflowActivationCacheBytes]{};
+	RoleTestCounters counters{};
+	RoleTestOps readerOps{counters},computeOps{counters},writerOps{counters};
+	bool readerOkay=false,computeOkay=false,writerOkay=false;
+	std::thread reader([&] { readerOkay=PioneerQwen35DataflowReader(invocation,
+		queues[0],queues[1],activation,readerOps); });
+	std::thread compute([&] { computeOkay=PioneerQwen35DataflowCompute(invocation,
+		queues[0],queues[1],queues[2],computeOps); });
+	std::thread writer([&] { writerOkay=PioneerQwen35DataflowWriter(invocation,
+		queues[2],writerOps); });
+	reader.join(); compute.join(); writer.join();
+	if (!readerOkay || !computeOkay || !writerOkay
+		|| !counters.okay.load(std::memory_order_relaxed))
+		fprintf(stderr,"role test failed reader=%d compute=%d writer=%d okay=%d "
+			"reads=%u/%u packs=%u matmuls=%u writes=%u fails=%u/%u/%u\n",
+			readerOkay,computeOkay,writerOkay,counters.okay.load(),
+			counters.activationReads.load(),counters.weightReads.load(),
+			counters.packedChunks.load(),counters.matmuls.load(),
+			counters.outputWrites.load(),controls[0].failure,controls[1].failure,
+			controls[2].failure);
+	assert(readerOkay && computeOkay && writerOkay);
+	assert(counters.okay.load(std::memory_order_relaxed));
+	const unsigned groups=invocation.assignment.groups;
+	const unsigned tiles=groups*invocation.blocks;
+	assert(counters.activationReads==1
+		&& counters.packedChunks==Hidden/DataflowActivationChunkInputs
+		&& counters.weightReads==tiles && counters.matmuls==tiles
+		&& counters.outputBegins==groups && counters.outputFinishes==groups
+		&& counters.outputWrites==groups);
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++)
+		assert(DataflowLoadAcquire(controls[i].produced)
+			==DataflowLoadAcquire(controls[i].consumed));
+}
+
 static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 {
 	space={};
@@ -105,6 +242,7 @@ int main()
 {
 	CompileRoleInterfaces();
 	CheckDynamicWeightAddresses();
+	CheckConcurrentRoles();
 	TensorSpace weight{};
 	weight.type=14;
 	weight.inputs=Hidden;

@@ -62,6 +62,14 @@ rewrite is implemented.
   Tensix-matrix-engine capability, and each role validates its core's shard
   descriptor before touching device data. Role setup errors publish a queue
   failure so a neighboring role can leave its bounded wait.
+- 2026-11-20: Added a host-only concurrent reader/compute/writer exercise over
+  a complete Q5_K shard using the real queue and role loops. It checks packed
+  activation chunks, weight reads, Tensix-call counts, output-page counts, and
+  queue drain. This exposed a reader address bug: groups of 16 rows must
+  advance by `16 * rowBytes`; the reader now bounds each group and block with
+  that stride. The mock Ops validate choreography only and do not perform
+  inference. The exercise passes with AddressSanitizer and
+  UndefinedBehaviorSanitizer.
 - The reader packs each 256-value activation chunk once in local memory and
   reuses that packed chunk across its assigned output groups. Q8_0 weight
   blocks map eight-at-a-time to the same 256-value activation chunk.
