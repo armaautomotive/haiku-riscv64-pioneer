@@ -33,8 +33,10 @@ static void CompileRoleInterfaces()
 	DataflowCoreInvocation program{};
 	DataflowQueueView queues[3]{};
 	uint8_t activation[DataflowActivationCacheBytes]{};
+	DataflowDeviceContext context{};
 	ContractOps ops{};
 	if (false) {
+		DataflowBindLocalContext(context);
 		PioneerQwen35DataflowReader(program,queues[0],queues[1],activation,ops);
 		PioneerQwen35DataflowCompute(program,queues[0],queues[1],queues[2],ops);
 		PioneerQwen35DataflowWriter(program,queues[2],ops);

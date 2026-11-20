@@ -136,6 +136,30 @@ inline bool DataflowBindQueues(const DataflowCoreInvocation& program,
 	return true;
 }
 
+struct DataflowDeviceContext {
+	const DataflowCoreInvocation* program;
+	DataflowQueueView queues[DataflowCircularBufferCount];
+	uint8_t* activationCache;
+};
+
+inline bool DataflowBindLocalContext(DataflowDeviceContext& context)
+{
+	DataflowDeviceContext candidate{};
+	candidate.program=reinterpret_cast<const DataflowCoreInvocation*>(
+		static_cast<uintptr_t>(DataflowProgramAddress));
+	candidate.activationCache=reinterpret_cast<uint8_t*>(
+		static_cast<uintptr_t>(DataflowActivationCacheAddress));
+	if (!candidate.program || !candidate.activationCache
+		|| !DataflowBindQueues(*candidate.program,
+			reinterpret_cast<DataflowQueueControl*>(
+				static_cast<uintptr_t>(DataflowQueueStateAddress)),
+			reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(DataflowWeightBufferAddress)),
+			candidate.queues)
+		|| !DataflowCoreHeaderValid(*candidate.program)) return false;
+	context=candidate;
+	return true;
+}
+
 inline unsigned DataflowActivationChunk(unsigned type,unsigned block)
 {
 	return type==8?block/8:block;

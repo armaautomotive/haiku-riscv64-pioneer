@@ -26,6 +26,9 @@ rewrite is implemented.
   while each core gets only its own immutable shard assignment in the bounded
   4 KiB local region at `0xa0000`. The per-core object is size-checked and
   revalidates its local buffers, queue layout, and bank ranges.
+- Added a device-side local-L1 binder for the invocation, queue controls,
+  circular buffers, and activation cache at their fixed addresses. It is
+  compile-checked only; no Blackhole role image consumes it yet.
 - Expanded the offline program test to compile all three role interfaces and
   check all 120 per-core materializations, shard coverage, queue address
   binding, queue publish/consume, ticket wraparound, in-place activation
@@ -52,4 +55,4 @@ rewrite is implemented.
    the hardware benchmark and assistant integration phases.
 
 The latest pushed checkpoint before this rewrite is `1b2b57c561`.
-The latest pushed rewrite checkpoint is `80dd3ad547`.
+The latest pushed rewrite checkpoint is `e4a6894511`.
