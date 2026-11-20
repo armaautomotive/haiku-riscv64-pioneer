@@ -34,5 +34,5 @@ expected terminal slot for all supported type/input shapes.
 | Candidate driver55 | `6cdd901d281b4b65904ec43d99b6551aa5e40ed82271fe569d22e8667b318e12` |
 | Work client | `09f3f083c53f36cb6201c420090cf28e9f6e6f82f24fd202f822015f7b9d199f` |
 
-The guarded Tag83 hardware run uses the new private stage path and requires
-stable driver55 to be idle before candidate exchange.
+The guarded Tag83 result and phase timings are recorded in `RUN.md`; raw logs
+and terminal state are in `evidence/`.
