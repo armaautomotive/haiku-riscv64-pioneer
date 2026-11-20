@@ -704,7 +704,7 @@ uint32_t Qwen35BatchPrefetchStage(unsigned type,unsigned block,uint32_t groupFir
 		if(nextBlock<blocks) {
 			const unsigned nextBlocks=blocks-nextBlock<batch?blocks-nextBlock:batch;
 			pending=TilePrefetchStart(groupFirst+nextBlock*tileBytes,
-				route,current^0x4000U,nextBlocks*tileBytes);
+				route,current^0x2000U,nextBlocks*tileBytes);
 		}
 	}
 	return current+(block-firstBlock)*tileBytes;

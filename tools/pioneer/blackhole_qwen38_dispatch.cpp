@@ -1070,7 +1070,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
 #ifdef PIONEER_Q35_WORK_BATCH_FETCH
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
-		if(work)weightReads=groups*PioneerQwen35FetchCount(type,blocks); // bounded <=16KiB Qwen35 batches
+		if(work)weightReads=groups*PioneerQwen35FetchCount(type,blocks); // bounded <=8KiB Qwen35 batches
 		unsigned reads=weightReads+(inputs*2+16383)/16384+1;
 #elif defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;

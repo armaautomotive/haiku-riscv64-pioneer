@@ -19,15 +19,14 @@ struct PioneerQwen35BatchFetchPlan {
 
 static inline unsigned PioneerQwen35FetchBatch(unsigned type)
 {
-	return type==8?28U:type==12?7U:(type==13 || type==14)?4U:0U;
+	return type==8?4U:type==12?3U:(type==13 || type==14)?2U:0U;
 }
 
 static inline unsigned PioneerQwen35FetchOrdinal(unsigned type,unsigned block)
 {
-	// Caller has rejected unsupported types. Projection blocks are <=80; the
-	// count ceiling adds at most batch-1. Bounded reciprocals avoid RV32 divu.
-	return type==8?(block*37U)>>10:type==12?(block*37U)>>8
-		:block>>2;
+	// Caller has rejected unsupported types. The bounded reciprocal is exact
+	// through 65,535 and avoids RV32 divu/mulhu.
+	return type==8?block>>2:type==12?(block*0xaaabU)>>17:block>>1;
 }
 
 static inline unsigned PioneerQwen35FetchCount(unsigned type,unsigned blocks)
@@ -59,10 +58,10 @@ static inline bool PioneerQwen35BatchFetch(unsigned type,unsigned inputs,unsigne
 	p.copyWords=tile/4;
 	p.tileBytes=tile;
 	p.issue=block==firstBlock;
-	// Keep each new NoC read <=16 KiB and inside the fixed 0x98000 scratch
+	// Keep each new NoC read <=8 KiB and inside the fixed 0x98000 scratch
 	// window. The caller copies one completed original tile to 0x90000 before
 	// running the unchanged checked matrix path.
-	if (p.bytes>16384 || p.destination+p.bytes>0x9c000
+	if (p.bytes>8192 || p.destination+p.bytes>0x9a000
 		|| p.copySource+tile>p.destination+p.bytes
 		|| p.source<first || p.source>0xc4000000-p.bytes
 		|| p.source+p.bytes>first+total) return false;
