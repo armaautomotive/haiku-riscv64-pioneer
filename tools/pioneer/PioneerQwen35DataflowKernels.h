@@ -128,9 +128,12 @@ inline bool DataflowBindQueues(const DataflowCoreInvocation& program,
 {
 	if (!controls || !local) return false;
 	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
-		if (program.circularBuffer[i].address<DataflowWeightBufferAddress) return false;
+		const auto& buffer=program.circularBuffer[i];
+		if (buffer.address<DataflowWeightBufferAddress
+			|| buffer.address>=DataflowLocalBufferEnd
+			|| buffer.bytes>DataflowLocalBufferEnd-buffer.address) return false;
 		queues[i]={&program.circularBuffer[i],&controls[i],
-			local+(program.circularBuffer[i].address-DataflowWeightBufferAddress)};
+			local+(buffer.address-DataflowWeightBufferAddress)};
 		if (!DataflowQueueValid(queues[i])) return false;
 	}
 	return true;
@@ -142,7 +145,16 @@ struct DataflowDeviceContext {
 	uint8_t* activationCache;
 };
 
-inline bool DataflowBindLocalContext(DataflowDeviceContext& context)
+inline void DataflowSignalLocalFailure(unsigned reason)
+{
+	auto* controls=reinterpret_cast<DataflowQueueControl*>(
+		static_cast<uintptr_t>(DataflowQueueStateAddress));
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++)
+		if (!controls[i].failure) controls[i].failure=reason?reason:DataflowFailureQueue;
+	DataflowFence();
+}
+
+inline bool DataflowBindLocalContext(DataflowDeviceContext& context,unsigned failureReason)
 {
 	DataflowDeviceContext candidate{};
 	candidate.program=reinterpret_cast<const DataflowCoreInvocation*>(
@@ -155,7 +167,10 @@ inline bool DataflowBindLocalContext(DataflowDeviceContext& context)
 				static_cast<uintptr_t>(DataflowQueueStateAddress)),
 			reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(DataflowWeightBufferAddress)),
 			candidate.queues)
-		|| !DataflowCoreHeaderValid(*candidate.program)) return false;
+		|| !DataflowCoreHeaderValid(*candidate.program)) {
+		DataflowSignalLocalFailure(failureReason);
+		return false;
+	}
 	context=candidate;
 	return true;
 }
@@ -340,6 +355,34 @@ bool PioneerQwen35DataflowWriter(const DataflowCoreInvocation& program,
 		}
 	}
 	return true;
+}
+
+template<class Ops>
+bool PioneerQwen35DataflowReaderEntry(Ops& ops)
+{
+	DataflowDeviceContext context{};
+	return DataflowBindLocalContext(context,DataflowFailureReader)
+		&& PioneerQwen35DataflowReader(*context.program,context.queues[0],
+			context.queues[1],context.activationCache,ops);
+}
+
+template<class Ops>
+bool PioneerQwen35DataflowComputeEntry(Ops& ops)
+{
+	static_assert(Ops::TensixMatrixEngine,
+		"Qwen35 compute image must own the Tensix matrix engine");
+	DataflowDeviceContext context{};
+	return DataflowBindLocalContext(context,DataflowFailureCompute)
+		&& PioneerQwen35DataflowCompute(*context.program,context.queues[0],
+			context.queues[1],context.queues[2],ops);
+}
+
+template<class Ops>
+bool PioneerQwen35DataflowWriterEntry(Ops& ops)
+{
+	DataflowDeviceContext context{};
+	return DataflowBindLocalContext(context,DataflowFailureWriter)
+		&& PioneerQwen35DataflowWriter(*context.program,context.queues[2],ops);
 }
 
 } // namespace PioneerQwen35

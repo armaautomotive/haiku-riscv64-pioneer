@@ -29,6 +29,8 @@ rewrite is implemented.
 - Added a device-side local-L1 binder for the invocation, queue controls,
   circular buffers, and activation cache at their fixed addresses. It is
   compile-checked only; no Blackhole role image consumes it yet.
+- Added reader, compute, and writer entry wrappers that bind that local
+  context and publish a role failure to shared queue state if binding fails.
 - Expanded the offline program test to compile all three role interfaces and
   check all 120 per-core materializations, shard coverage, queue address
   binding, queue publish/consume, ticket wraparound, in-place activation
@@ -55,4 +57,8 @@ rewrite is implemented.
    the hardware benchmark and assistant integration phases.
 
 The latest pushed checkpoint before this rewrite is `1b2b57c561`.
-The latest pushed rewrite checkpoint is `e4a6894511`.
+The latest pushed rewrite checkpoint is `005d063a9f`.
+
+The RISC-V Haiku cross-compiler is not present in the configured workspace or
+Codex tool paths checked here, so current verification is host compilation
+only. The role backends, target image build, and owner remain unimplemented.

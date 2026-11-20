@@ -36,10 +36,13 @@ static void CompileRoleInterfaces()
 	DataflowDeviceContext context{};
 	ContractOps ops{};
 	if (false) {
-		DataflowBindLocalContext(context);
+		DataflowBindLocalContext(context,DataflowFailureQueue);
 		PioneerQwen35DataflowReader(program,queues[0],queues[1],activation,ops);
 		PioneerQwen35DataflowCompute(program,queues[0],queues[1],queues[2],ops);
 		PioneerQwen35DataflowWriter(program,queues[2],ops);
+		PioneerQwen35DataflowReaderEntry(ops);
+		PioneerQwen35DataflowComputeEntry(ops);
+		PioneerQwen35DataflowWriterEntry(ops);
 	}
 }
 
