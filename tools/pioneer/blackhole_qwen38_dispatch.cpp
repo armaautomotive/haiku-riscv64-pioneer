@@ -165,6 +165,17 @@ static unsigned DispatcherReject(unsigned sourceLine,unsigned detail,
 }
 extern "C" void block_fault_park() __attribute__((noreturn));
 #ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+// Preserve exact actual/expected ROOT transfer totals on a Work fault. These
+// are failure-only stores in the existing progress record; they issue no
+// extra NoC command and do not relax the subsequent counter proof.
+static __attribute__((noinline)) void Q35CounterMismatch(unsigned index,unsigned expected,unsigned actual)
+{
+	Words(0xe7078)[0]=expected; Words(0xe707c)[0]=actual; Fence();
+	Checkpoint(0x54000420U|index,actual);
+	block_fault_park();
+}
+#endif
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
 static __UINT64_TYPE__ Q35DispatchCycles()
 {
 	for (unsigned attempt=0;attempt<16;attempt++) {
@@ -1275,7 +1286,14 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	}
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=writes || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=writeFlits) block_fault_park();
 #else
+#ifdef PIONEER_Q35_WORK_ROOT_IMAGE
+	if (Words(0x7f800)[6]!=reads) Q35CounterMismatch(0,reads,Words(0x7f800)[6]);
+	if (Words(0x7f800)[7]!=workers*2) Q35CounterMismatch(1,workers*2,Words(0x7f800)[7]);
+	if (Words(0x7f800)[8]!=flits) Q35CounterMismatch(2,flits,Words(0x7f800)[8]);
+	if (Words(0x7f800)[9]!=workers*2) Q35CounterMismatch(3,workers*2,Words(0x7f800)[9]);
+#else
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=workers*2 || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=workers*2) block_fault_park();
+#endif
 #endif
 	for (unsigned c=0;c<8;c++) {
 		Checkpoint(0x54000410+c,reads);

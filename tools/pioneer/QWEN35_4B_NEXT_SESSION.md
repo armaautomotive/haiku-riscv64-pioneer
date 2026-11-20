@@ -8,7 +8,7 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Latest checkpoint: Tag97 safe recovery, final read proof remains
+## Latest checkpoint: Tag98 diagnostic build; hardware pending
 
 Tag96 and Tag97 source, build packages, and raw evidence are pushed to the
 `codex/qwen35-4b-p100a` GitHub branch. Tag97 scales the sentinel's bounded wait
@@ -27,11 +27,16 @@ Tag97's raw files and exact postflight are in
 
 Recovery unloaded Work and restored stable driver55 idle at generation12
 without reboot. The 4B and 27B model identities remain intact. Run the next
-candidate from generation12 after adding failure-only evidence for actual
-versus expected ROOT NoC read/write/flit counters; keep all exact counter
-checks enabled. The last valid output measurement remains Tag70 at `0.115`
-decode tokens/s. No run has reached 100 tokens/s; the streaming Tensix
-dataflow/circular-buffer kernel redesign is still required for that target.
+candidate from generation12. Tag98 adds failure-only actual-versus-expected
+values and a counter index for the final ROOT software read/write/flit proof;
+it preserves every exact check and issues no extra NoC packet. Its default
+cross-build passed. Hashes and guarded runner are in
+[`tag298`](benchmarks/qwen35-work-tag298-20261120). Tag98 has not run on the
+card yet.
+
+The last valid output measurement remains Tag70 at `0.115` decode tokens/s.
+No run has reached 100 tokens/s; the streaming Tensix dataflow/circular-buffer
+kernel redesign is still required for that target.
 
 ## Saved Pioneer instructions and access
 
