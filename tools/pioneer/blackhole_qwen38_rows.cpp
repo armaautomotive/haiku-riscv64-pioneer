@@ -115,6 +115,18 @@ static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned, unsigned
 #endif
 #endif
 #endif
+#ifdef PIONEER_Q35_WORK_TILE_PREFETCH
+#if !defined(PIONEER_Q35_PROJECTION_IMAGE) || !defined(PIONEER_Q35_WORK_PEER_IMAGE) \
+ || !defined(PIONEER_Q38_SHARED_ROWS) || !defined(PIONEER_Q38_PERSISTENT_ROWS) \
+ || defined(PIONEER_Q35_WORK_ROOT_MATRIX) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) \
+ || defined(PIONEER_Q35_WORK_BATCH_FETCH) || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) \
+ || defined(PIONEER_Q38_WORK_DIRECT_SRCB) || defined(PIONEER_Q38_PREDECODED_Q4) \
+ || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_WORK_Q4_NIBBLE) \
+ || defined(PIONEER_Q38_WORK_BATCH4_FETCH)
+#error Qwen35 checked tile prefetch requires the original persistent peer image and math
+#endif
+#include "PioneerQwen35TilePrefetchPlan.h"
+#endif
 #if defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) && (!defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT))
 #error Frontend barrier is a separate OFFLINE original-layout direct-SrcB peer,not a batch/format mix
 #endif
@@ -123,7 +135,7 @@ static __attribute__((noreturn)) void q35_work_precheck_fault(unsigned, unsigned
 #error Direct batch input requires the complete separate bounded-batch peer
 #endif
 #endif
-#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
 #define PIONEER_Q38_RAW_BASE rawBase
 #define PIONEER_Q38_RAW_ARGUMENT ,rawBase
 #else
@@ -548,7 +560,7 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 	FetchBlock(0x94000);
 #endif
 }
-#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+#if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
 static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 uint32_t TilePrefetchStart(uint32_t source,uint32_t route,uint32_t raw,unsigned bytes){
  ReadCommand(source,route,raw,bytes);
@@ -562,6 +574,7 @@ void TilePrefetchWait(uint32_t expected){
   if(!*Words(0xffb20040)&&*Words(0xffb20208)==expected&&!(*Words(0xffb20240)&255)){Fence();return;}
  block_fault_park(); // UNKNOWN:inert,NO next command/read/reset/retry
 }
+#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
 #ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
 static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
@@ -618,6 +631,7 @@ uint32_t TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigne
 }
 #endif
 #endif
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 // Cold prefix,original saved window. No asynchronous fetch/counter reset.
 // A failed command parks INSIDE FetchBlock;never copy/issue after UNKNOWN.
@@ -645,6 +659,19 @@ Batch4Stage(
 }
 #endif
 #endif
+#endif
+#ifdef PIONEER_Q35_WORK_TILE_PREFETCH
+static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
+uint32_t Qwen35TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,
+ unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
+ PioneerQ35TilePrefetchPlan p;
+ if(!PioneerQ35TilePrefetchPlan::Describe(type,inputs,groups,group,block,first,p))block_fault_park();
+ if(!block)TilePrefetchWait(TilePrefetchStart(p.currentSource,route,p.currentRaw,p.bytes));
+ else TilePrefetchWait(pending);
+ if(p.next)pending=TilePrefetchStart(p.nextSource,route,p.nextRaw,p.bytes);
+ else ReadCommand(p.currentSource,route,0x90000,p.bytes);
+ return p.currentRaw;
+}
 #endif
 #ifdef PIONEER_Q38_EXACT_Q4_WORK_IMAGE
 #include "PioneerQ38ExactQ4Work.inc"
@@ -955,7 +982,7 @@ extern "C" unsigned block_main()
  if(matrixPhaseActive)matrixProfile.Init(job[11],job[12],inputs,groups);
 #endif
 	for (unsigned group=0;group<groups;group++) {
-#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+#if defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
 	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
 #endif
 	for (unsigned block=0;block<blocks;block++) {
@@ -965,7 +992,7 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
  if(matrixPhaseActive)(void)matrixProfile.Begin(group,block,MatrixPhaseClock(matrixProfile));
 #endif
-#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q35_WORK_TILE_PREFETCH)
 	uint32_t rawBase=0x90000;
 #endif
 #ifdef PIONEER_Q38_STREAM
@@ -980,7 +1007,9 @@ extern "C" unsigned block_main()
 			Words(0x90000)[word]=Words(batchPlan.copySource)[word];
 		(void)Words(0x90000)[batchPlan.copyWords-1]; Fence();
 #else
-#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+#ifdef PIONEER_Q35_WORK_TILE_PREFETCH
+		rawBase=Qwen35TilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);
+#elif defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
 #ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
 	if(skipDotCheck)rawBase=TwinBatchTilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
@@ -1138,7 +1167,13 @@ extern "C" unsigned block_main()
 #endif
 #endif
 #endif
-			(type,reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();
+			(type,reinterpret_cast<const uint8_t*>(
+#ifdef PIONEER_Q35_WORK_TILE_PREFETCH
+				PIONEER_Q38_RAW_BASE
+#else
+				0x90000
+#endif
+			),bytes,p,local)) block_fault_park();
 #endif
 #ifndef PIONEER_Q38_VECTOR_PANEL
 		for (unsigned w=0;w<128;w++) Words(0x70710)[w]=local->operand[w];

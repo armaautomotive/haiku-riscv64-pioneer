@@ -1,0 +1,5 @@
+P100A_Q35 authentication_seconds=67.552273
+P100A_Q35 vocab_and_tokenize_seconds=13.395265 prompt_ids=248045,846,1639,4935,11592,357,310,387,18101,539,12258,13,248046,1639,248045,74455,1639,248068,1639,1639,248069,1639,1639
+P100A_Q35 resident_spans=3450 resident_bytes=2740498432
+P100A_Q35 model_load_seconds=221.537886
+P100A_Q35 unload_clean=1 state=2 active=0 cold=0

@@ -18,7 +18,13 @@ case "${PIONEER_Q35_WORK_BATCH_FETCH:-0}" in
 	1) batch_flags=-DPIONEER_Q35_WORK_BATCH_FETCH=1 ;;
 	*) exit 2 ;;
 esac
-"$cross-g++" $flags $batch_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_PEER_IMAGE=1 \
+prefetch_flags=
+case "${PIONEER_Q35_WORK_TILE_PREFETCH:-0}" in
+	0) ;;
+	1) prefetch_flags=-DPIONEER_Q35_WORK_TILE_PREFETCH=1 ;;
+	*) exit 2 ;;
+esac
+"$cross-g++" $flags $batch_flags $prefetch_flags -DPIONEER_Q35_PROJECTION_IMAGE=1 -DPIONEER_Q35_WORK_PEER_IMAGE=1 \
  -c "$directory/blackhole_qwen38_persistent.cpp" -o "$output/peer.o"
 "$cross-as" --defsym PIONEER_Q35_WORK_PEER_IMAGE=1 -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
  "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"

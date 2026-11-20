@@ -85,12 +85,24 @@ not to introduce CPU inference or a host fallback.
 
 ## Prototype status
 
-`PioneerQwen35ProgramSchedule.h` now builds a stable 120-core partition for a
-whole projection. It assigns contiguous logical row ranges, splits a core's
-work only at physical bank-fragment boundaries, and removes the current
-per-wave 16-group limit from the program description. The CPU-only schedule
-test passed exact-coverage, balance, and invalid-range cases. The current
-Work image does not consume this program yet, so this is a scheduler
-prototype and makes no hardware-speed claim. The next implementation step is
-to pass these per-core segments to a resident reader/compute/writer program
-and keep results in the sharded device buffers.
+`PioneerQwen35ProgramSchedule.h` builds a stable 120-core partition for a
+whole projection. It assigns contiguous logical row ranges and splits a
+core's work only at physical bank-fragment boundaries. The schedule is still
+not consumed by the current Work image, so it makes no speed claim.
+
+Tag76 added a checked one-tile lookahead to the active peer. Its plan test
+passed 5,136 cases and the cross-build succeeded, but the hardware run faulted
+before prefill. The peer started the next original-size weight-tile NoC read,
+then fell through to the legacy synchronous `FetchBlock` call. Fault evidence
+places a peer in that fetch path. The wrapper unloaded the client and restored
+stable driver55 at generation32 without reboot. Tag76 produced no valid output
+or decode measurement. Tag77 will correct the fallthrough and repeat the
+guarded hardware validation. The full TT reader/compute/writer program graph
+and sharded activations remain unimplemented.
+
+The earlier tag75 timing still identifies a much larger gap: the best
+verified result was about 0.12055 decode tok/s, far below the 100 tok/s goal.
+The corrected tile-read overlap trial will determine whether it helps; the
+next major step remains a resident per-core projection program with
+device-resident sharded activations, followed by fused operations and
+fixed-shape decode.
