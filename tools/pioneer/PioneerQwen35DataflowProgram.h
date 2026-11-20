@@ -9,7 +9,7 @@ namespace PioneerQwen35 {
 
 enum : unsigned {
 	DataflowProgramMagic=0x31504635,
-	DataflowProgramVersion=1,
+	DataflowProgramVersion=2,
 	DataflowCoreCount=120,
 	DataflowMaxSegments=13,
 	DataflowCircularBufferCount=3,
@@ -44,6 +44,17 @@ enum : unsigned {
 	DataflowMaxWeightPageBytes=3392,
 	DataflowLocalBufferEnd=0xa0000
 };
+
+inline bool DataflowBankRoutesValid(const unsigned (&routes)[2][Banks])
+{
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++) {
+		if (!routes[noc][bank] || routes[noc][bank]>0xfff) return false;
+		for (unsigned prior=0;prior<bank;prior++)
+			if (routes[noc][prior]==routes[noc][bank]) return false;
+	}
+	return true;
+}
+
 static_assert((PioneerQwen35Projection::MaxInputs/DataflowActivationChunkInputs)
 	*DataflowInputPageBytes<=DataflowActivationCacheBytes,
 	"packed projection activations fit in the local activation cache");
@@ -191,6 +202,9 @@ struct DataflowCoreProgram {
 struct DataflowProjectionProgram {
 	unsigned magic,version,type,inputs,outputRows,groups,blocks,activeCores,kernelRoles;
 	unsigned inputRows,inputFragmentCount,outputFragmentCount;
+	// Copied from the validated resident-bank authority; logical bank indices
+	// alone are insufficient to issue a device NoC transfer.
+	unsigned bankRoute[2][Banks];
 	DataflowCircularBuffer circularBuffer[DataflowCircularBufferCount];
 	RowSpace weights,input,output;
 	DataflowCoreProgram core[DataflowCoreCount];
@@ -203,6 +217,7 @@ struct DataflowProjectionProgram {
 			|| activeCores!=DataflowCoreCount || inputRows!=inputs
 			|| !inputFragmentCount || inputFragmentCount>Banks
 			|| !outputFragmentCount || outputFragmentCount>Banks
+			|| !DataflowBankRoutesValid(bankRoute)
 			|| !input.Valid() || !output.Valid() || input.rows<inputRows
 			|| input.rowBytes!=sizeof(float) || input.unit!=16
 			|| output.rows<outputRows || output.rowBytes!=sizeof(float)
@@ -267,6 +282,7 @@ struct DataflowProjectionProgram {
 struct DataflowCoreInvocation {
 	unsigned magic,version,core,type,inputs,outputRows,groups,blocks,activeCores,kernelRoles;
 	unsigned inputRows,inputFragmentCount,outputFragmentCount;
+	unsigned bankRoute[2][Banks];
 	DataflowCircularBuffer circularBuffer[DataflowCircularBufferCount];
 	RowSpace weights,input,output;
 	DataflowCoreProgram assignment;
@@ -280,6 +296,7 @@ struct DataflowCoreInvocation {
 			|| kernelRoles!=DataflowAllRoles || inputRows!=inputs
 			|| !inputFragmentCount || inputFragmentCount>Banks
 			|| !outputFragmentCount || outputFragmentCount>Banks
+			|| !DataflowBankRoutesValid(bankRoute)
 			|| !weights.Valid() || weights.rows!=outputRows || weights.unit!=16
 			|| weights.rowBytes*16!=PioneerQwen35Projection::TileBytes(type)*blocks
 			|| !input.Valid() || input.rows<inputRows || input.rowBytes!=sizeof(float)
@@ -359,6 +376,8 @@ public:
 		candidate.inputRows=program.inputRows;
 		candidate.inputFragmentCount=program.inputFragmentCount;
 		candidate.outputFragmentCount=program.outputFragmentCount;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			candidate.bankRoute[noc][bank]=program.bankRoute[noc][bank];
 		for (unsigned i=0;i<DataflowCircularBufferCount;i++)
 			candidate.circularBuffer[i]=program.circularBuffer[i];
 		candidate.weights=program.weights;
@@ -371,13 +390,15 @@ public:
 	}
 
 	static bool Build(const TensorSpace& weight,const RowSpace& input,
-		unsigned inputRows,const RowSpace& output,DataflowProjectionProgram& result)
+		unsigned inputRows,const RowSpace& output,
+		const unsigned (&bankRoute)[2][Banks],DataflowProjectionProgram& result)
 	{
 		result={};
 		if (!PioneerQwen35Projection::Supports(weight.type,weight.inputs)
 			|| inputRows!=weight.inputs || !input.Valid() || !output.Valid()
 			|| input.rows<inputRows || input.rowBytes!=sizeof(float) || input.unit!=16
 			|| output.rows<weight.place.rows || output.rowBytes!=sizeof(float)
+			|| !DataflowBankRoutesValid(bankRoute)
 			|| output.unit!=16 || !weight.place.Valid() || weight.place.unit!=16
 			|| !weight.place.rows || (weight.place.rows&15)) return false;
 		const unsigned tileBytes=PioneerQwen35Projection::TileBytes(weight.type);
@@ -407,6 +428,8 @@ public:
 		candidate.inputRows=inputRows;
 		candidate.inputFragmentCount=input.count;
 		candidate.outputFragmentCount=output.count;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			candidate.bankRoute[noc][bank]=bankRoute[noc][bank];
 		candidate.weights=weight.place;
 		candidate.input=input;
 		candidate.output=output;

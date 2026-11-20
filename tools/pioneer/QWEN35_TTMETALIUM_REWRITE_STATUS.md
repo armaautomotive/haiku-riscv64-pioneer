@@ -13,6 +13,23 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-20: Added version-2 per-core descriptors with separate bank route
+  tables for NoC 0 and NoC 1. Each table is checked for valid, unique XY
+  routes and copied into the immutable core invocation; the future device
+  owner must provide independently audited routes for both fabrics. Added
+  `PioneerQwen35DataflowBlackholeIO.h`: its reader operations issue bounded,
+  counter-proved NoC 0 reads for the core's activation fragments and assigned
+  weight tiles, and perform exact Q8 activation packing; its writer operations
+  issue bounded, counter-proved NoC 1 writes for only the core's assigned
+  output rows. This follows the Blackhole BRISC/NoC 0 and NCRISC/NoC 1 data
+  movement split described in the [TT-Metalium watcher guide](https://github.com/tenstorrent/tt-metal/blob/main/docs/source/tt-metalium/tools/watcher.rst)
+  and [Blackhole NIU memory map](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md).
+  The host role test passes under ASan/UBSan, and the Haiku target compile
+  check now instantiates these actual NoC transfer paths. Its matching route
+  fixtures are offline geometry only, not measured NoC 1 routes. Reader and
+  writer operations are not yet installed as separate device images; the
+  Tensix compute backend and resident all-core program owner remain to be
+  implemented. No card work or benchmark was performed.
 - 2026-11-20: Replaced the queue's compare-exchange first-error word with
   per-role first-error slots. Each Reader, Compute, or Writer image is the
   sole writer to its role slot, and queue polling checks all slots. The L1

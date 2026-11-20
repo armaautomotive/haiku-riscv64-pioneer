@@ -9,6 +9,20 @@
 
 using namespace PioneerQwen35;
 
+// Offline geometry only; the future owner must supply its independently
+// audited route table for each NoC before these descriptors can run on-card.
+static const unsigned TestBankRoutes[2][Banks]={
+	{786,978,1170,785,977,1169,1361},
+	{786,978,1170,785,977,1169,1361}
+};
+
+static bool BuildProgram(const TensorSpace& weight,const RowSpace& input,
+	unsigned inputRows,const RowSpace& output,DataflowProjectionProgram& result)
+{
+	return DataflowProgramBuilder::Build(weight,input,inputRows,output,
+		TestBankRoutes,result);
+}
+
 struct ContractOps {
 	enum { TensixMatrixEngine=1 };
 	bool ReadActivation(const RowSpace&,unsigned,uint8_t*,unsigned) { return false; }
@@ -190,7 +204,7 @@ static void CheckConcurrentRoles()
 	Rows(input,Ffn,sizeof(float),0x04000000);
 	Rows(output,Ffn,sizeof(float),0x06000000);
 	DataflowProjectionProgram program{};
-	assert(DataflowProgramBuilder::Build(weight,input,Hidden,output,program));
+	assert(BuildProgram(weight,input,Hidden,output,program));
 	DataflowCoreInvocation invocation{};
 	assert(DataflowProgramBuilder::BindCore(program,0,invocation));
 	DataflowQueueControl controls[DataflowCircularBufferCount]{};
@@ -261,7 +275,7 @@ int main()
 	Rows(output,Ffn,sizeof(float),0x06000000);
 
 	DataflowProjectionProgram program{};
-	assert(DataflowProgramBuilder::Build(weight,input,Hidden,output,program));
+	assert(BuildProgram(weight,input,Hidden,output,program));
 	assert(program.Valid());
 	assert(program.activeCores==120 && program.kernelRoles==DataflowAllRoles);
 	assert(sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes
@@ -385,7 +399,7 @@ int main()
 	q4Weight.inputs=Ffn;
 	Rows(q4Weight.place,Hidden,5184,0x08000000);
 	DataflowProjectionProgram q4Program{};
-	assert(DataflowProgramBuilder::Build(q4Weight,input,Ffn,output,q4Program));
+	assert(BuildProgram(q4Weight,input,Ffn,output,q4Program));
 	assert(q4Program.blocks==Ffn/256
 		&& q4Program.circularBuffer[0].pageBytes==2304);
 	DataflowCoreInvocation q4Core{};
@@ -401,7 +415,7 @@ int main()
 	Rows(q5Weight.place,Ffn,Hidden/256*(PioneerQwen35Projection::TileBytes(13)/16),
 		0x08000000);
 	DataflowProjectionProgram q5Program{};
-	assert(DataflowProgramBuilder::Build(q5Weight,input,Hidden,output,q5Program));
+	assert(BuildProgram(q5Weight,input,Hidden,output,q5Program));
 	assert(q5Program.blocks==Hidden/256
 		&& q5Program.circularBuffer[0].pageBytes==2816);
 	DataflowCoreInvocation q5Core{};
@@ -423,8 +437,7 @@ int main()
 			*(PioneerQwen35Projection::TileBytes(shape.type)/16);
 		Rows(shapeWeight.place,Ffn,shapeRowBytes,0x08000000);
 		DataflowProjectionProgram shapeProgram{};
-		assert(DataflowProgramBuilder::Build(shapeWeight,input,shape.inputs,output,
-			shapeProgram));
+		assert(BuildProgram(shapeWeight,input,shape.inputs,output,shapeProgram));
 		assert(shapeProgram.blocks==shapeBlocks
 			&& shapeProgram.circularBuffer[0].pageBytes
 				==PioneerQwen35Projection::TileBytes(shape.type));
@@ -440,7 +453,7 @@ int main()
 	q8Weight.inputs=Hidden;
 	Rows(q8Weight.place,Ffn,2880,0x08000000);
 	DataflowProjectionProgram q8Program{};
-	assert(DataflowProgramBuilder::Build(q8Weight,input,Hidden,output,q8Program));
+	assert(BuildProgram(q8Weight,input,Hidden,output,q8Program));
 	assert(q8Program.blocks==Hidden/32);
 	DataflowCoreInvocation q8Core{};
 	assert(DataflowProgramBuilder::BindCore(q8Program,0,q8Core));
@@ -455,6 +468,11 @@ int main()
 	tooFew.place.parts[0]={0,0x08000000,0,Hidden/2};
 	for (unsigned i=1;i<Banks;i++) tooFew.place.parts[i]={};
 	DataflowProjectionProgram rejected{};
-	assert(!DataflowProgramBuilder::Build(tooFew,input,Hidden,output,rejected));
+	assert(!BuildProgram(tooFew,input,Hidden,output,rejected));
+	unsigned duplicateRoutes[2][Banks];
+	std::memcpy(duplicateRoutes,TestBankRoutes,sizeof(duplicateRoutes));
+	duplicateRoutes[1][1]=duplicateRoutes[1][0];
+	assert(!DataflowProgramBuilder::Build(weight,input,Hidden,output,
+		duplicateRoutes,rejected));
 	return 0;
 }
