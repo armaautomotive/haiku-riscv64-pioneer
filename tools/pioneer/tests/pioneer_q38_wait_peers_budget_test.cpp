@@ -20,6 +20,12 @@ static void PeerPollBackoff(unsigned count) {
  auto& t=*current;assert(count>=64 && count<=2048 && !(count&(count-1)));
  t.backoffs++;if(count>t.maximumBackoff)t.maximumBackoff=count;
 }
+namespace PioneerQwen35 { static constexpr unsigned Vocabulary=248320; }
+static volatile uint32_t workHeader[8]={};
+static volatile uint32_t* Words(unsigned address) {
+ assert(address==0x74000);return workHeader;
+}
+#define PIONEER_Q35_WORK_ROOT_IMAGE 1
 #define Q38_COMMAND_WITH(value)
 #define Q35_PEER_AUDIT_ARGUMENT(work,stopped)
 #include "wait_peers.inc"
@@ -34,6 +40,23 @@ int main() {
   assert(t.calls<=workers*65536 && (work || !t.backoffs));
   if(work){unsigned sentinel=0;assert(PioneerQ38SelectPollSentinel(parts,workers,sentinel));assert(t.firstWorker==sentinel+1);}
  }
+ // Argmax admits larger vocabulary shards. Its sentinel gets a proportional
+ // but bounded window; all other peers still require the original proof.
+ workHeader[7]=1;parts[118][2]=130;
+ {
+  PollTest t;current=&t;t.workers=119;t.ready[118]=70000;
+  assert(WaitPeers(parts,119,true,false));
+  assert(t.firstWorker==119 && t.calls==70000+118);
+  for(unsigned w=0;w<119;w++)assert(t.audits[w]==1);
+ }
+ {
+  PollTest t;current=&t;t.workers=119;t.ready[118]=589825;
+  for(unsigned w=0;w<118;w++)t.ready[w]=UINT32_MAX;
+  assert(!WaitPeers(parts,119,true,false));
+  assert(t.firstWorker==119 && t.calls==589824 && t.audits[118]==0);
+  for(unsigned w=0;w<118;w++)assert(t.audits[w]==0);
+ }
+ workHeader[7]=0;parts[118][2]=3;
  for(bool work:{false,true}) {
   PollTest t;current=&t;t.workers=7;for(unsigned& n:t.ready)n=UINT32_MAX;
   assert(!WaitPeers(parts,7,work,false));
@@ -52,5 +75,5 @@ int main() {
   bool caught=false;try{(void)WaitPeers(parts,119,true,false);}catch(const AuditFault&){caught=true;}
   assert(caught && t.calls==fault && !t.backoffs);
  }
- puts("PASS ACTUAL extracted WaitPeers:all119 audited once,late non-sentinel cannot publish,checked+STOP no backoff,65536 sentinel cap and ORIGINAL shared workers*65536 GLOBAL budget exact,no extra poll on exhaustion,first/mid/last audit fault propagates immediately;NO device/physical-proof substitution");
+ puts("PASS ACTUAL extracted WaitPeers:all119 audited once,late non-sentinel cannot publish,checked+STOP no backoff,scaled bounded argmax sentinel window,ORIGINAL shared workers*65536 GLOBAL budget exact,no extra poll on exhaustion,first/mid/last audit fault propagates immediately;NO device/physical-proof substitution");
 }

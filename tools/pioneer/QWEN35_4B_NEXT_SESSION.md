@@ -8,31 +8,31 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Latest checkpoint: Tag96 safe recovery, no valid output
+## Latest checkpoint: Tag97 build ready; hardware trial pending
 
-The latest code and Tag96 hardware package have already been pushed to the
-`codex/qwen35-4b-p100a` GitHub branch. The Tag96 trial loaded all 3,450 model
-spans, began the 23-token prompt, then exhausted the sentinel's bounded peer
-polls on worker119's 130-group vocabulary shard. Its transient status was one
-sequence update behind while still marked active; the post-fault snapshot
-showed the worker completed. Treat this as a poll-budget defect candidate, not
-proof that the peer computation is permanently stuck. No valid output or
-decode rate was measured.
+Tag96 and its raw fault/recovery evidence are pushed to the
+`codex/qwen35-4b-p100a` GitHub branch. Tag96 loaded all 3,450 model spans,
+began the 23-token prompt, then exhausted the sentinel's bounded peer polls
+on worker119's 130-group vocabulary shard. Its transient status was one
+sequence update behind while active; the post-fault snapshot showed the worker
+completed. Recovery unloaded the Work client and restored idle stable driver55
+at generation10 without reboot. Qwen3.5-4B and Qwen3.8-27B identities remained
+intact. Authentication was `68.035040` s, vocabulary/tokenization
+`12.983022` s, and model load `227.979075` s; prompt processing did not finish.
+Full evidence is in [`tag296`](benchmarks/qwen35-work-tag296-20261120).
 
-Recovery was verified without reboot: the Work client unloaded cleanly and
-stable driver55 returned idle at generation10. Qwen3.5-4B and Qwen3.8-27B
-identities were preserved. Tag96 timings were authentication `68.035040` s,
-vocabulary/tokenization `12.983022` s, and model load `227.979075` s; prompt
-processing did not finish. Full captured evidence is in
-[`tag296`](benchmarks/qwen35-work-tag296-20261120).
+Tag97 scales the sentinel's bounded wait by shard groups while retaining the
+original shared global poll cap and every peer proof. Its sentinel, extracted
+WaitPeers, and persistent Tensix argmax replay checks pass; the default Haiku
+cross-build also passes. Build hashes and the guarded trial script are in
+[`tag297`](benchmarks/qwen35-work-tag297-20261120). The candidate has not yet
+been run on the card. Start from stable driver55 generation10.
 
-The per-peer wait still uses the old fixed 65,536-poll sentinel limit. The
-next safe iteration should scale that bounded wait for the selected shard's
-group count while retaining exact all-peer completion and physical-state
-proof. This can address the Tag96 fault; it does not address the larger
-throughput gap to 100 tokens/s. The current software-issued microtile path is
-not yet the streaming Tensix dataflow/circular-buffer pattern required for
-that target.
+The last valid output measurement remains Tag70 at `0.115` decode tokens/s;
+no run has reached 100 tokens/s. Tag97 addresses the Tag96 completion window,
+not the larger throughput gap. The software-issued microtile path still needs
+to move to a streaming Tensix dataflow/circular-buffer kernel pattern for the
+100 tokens/s target.
 
 ## Saved Pioneer instructions and access
 

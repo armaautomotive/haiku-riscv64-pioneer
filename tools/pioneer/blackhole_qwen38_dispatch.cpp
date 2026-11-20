@@ -649,7 +649,9 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 		if(Words(0x74000)[7])maxGroups=PioneerQwen35::Vocabulary/16;
 #endif
 		if(!PioneerQ38SelectPollSentinel(parts,workers,sentinel,maxGroups))return false;
-		for(unsigned attempt=0;attempt<65536 && polls<budget;attempt++) {
+		const unsigned sentinelBudget=PioneerQ38PollSentinelBudget(parts[sentinel][2]);
+		if(!sentinelBudget)return false;
+		for(unsigned attempt=0;attempt<sentinelBudget && polls<budget;attempt++) {
 			polls++;
 			if(Peer(sentinel+1,parts[sentinel][3],false,false Q38_COMMAND_WITH(work)
 				Q35_PEER_AUDIT_ARGUMENT(work,stopped))) {complete[sentinel]=1;finished=1;break;}

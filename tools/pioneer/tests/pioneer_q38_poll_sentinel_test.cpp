@@ -26,6 +26,14 @@ int main() {
  assert(!PioneerQ38SelectPollSentinel(parts,4,result) && result==999);
  assert(!PioneerQ38SelectPollSentinel(parts,4,result,131) && result==999);
  assert(PioneerQ38SelectPollSentinel(parts,4,result,15520) && result==2);
+ assert(PioneerQ38PollSentinelBudget(1)==65536);
+ assert(PioneerQ38PollSentinelBudget(16)==65536);
+ assert(PioneerQ38PollSentinelBudget(17)==131072);
+ assert(PioneerQ38PollSentinelBudget(130)==589824);
+ assert(PioneerQ38PollSentinelBudget(15520)==63569920);
+ assert(PioneerQ38PollSentinelBudget(0)==0);
+ assert(PioneerQ38PollSentinelBudget(1,0)==0);
+ assert(PioneerQ38PollSentinelBudget(UINT32_MAX,UINT32_MAX)==0);
  unsigned backoff=64;
  for(unsigned i=0;i<100;i++){unsigned next=PioneerQ38PollBackoffNext(backoff);assert(next>=64 && next<=2048 && next>=backoff);backoff=next;}
  assert(backoff==2048);

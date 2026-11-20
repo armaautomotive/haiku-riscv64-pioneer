@@ -17,6 +17,15 @@ static inline bool PioneerQ38SelectPollSentinel(const uint32_t (*parts)[8],unsig
  }
  output=selected;return true;
 }
+// Keep the existing 65,536-attempt window for 1..16-group work. Larger
+// reduction shards need proportionally more time to finish, while remaining
+// bounded by the caller's shared all-worker poll budget.
+static inline unsigned PioneerQ38PollSentinelBudget(unsigned groups,unsigned groupsPerBudget=16) {
+ if(!groups || !groupsPerBudget || groups>0xffffffffU-(groupsPerBudget-1))return 0;
+ unsigned scale=(groups+groupsPerBudget-1)/groupsPerBudget;
+ if(scale>0xffffffffU/65536U)return 0;
+ return scale*65536U;
+}
 static inline unsigned PioneerQ38PollBackoffNext(unsigned value) {
  return value<64 || value>2048 || (value&(value-1))?0:value<2048?value*2:2048;
 }
