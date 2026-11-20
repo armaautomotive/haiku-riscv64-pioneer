@@ -23,6 +23,8 @@ class DeviceIO {
 	bool StageInput(unsigned type,const float* input,unsigned inputs);
 	bool StageBand(const TensorSpace& tensor,float* output,
 		float* best=nullptr,unsigned* chosen=nullptr);
+	bool StageBands(const TensorSpace* const* tensors,unsigned tensorCount,
+		float* const* outputs,float* best=nullptr,unsigned* chosen=nullptr);
 public:
 	DeviceIO(const DeviceLayout& layout,Range ropeTable,volatile RequestProgress& status,
 		volatile uint32_t* generatedIds);
@@ -30,6 +32,8 @@ public:
 	bool Ready();
 	bool Embed(unsigned token,float* hidden,unsigned values);
 	bool Project(unsigned layer,unsigned role,const float* input,unsigned inputs,float* output,unsigned outputs);
+	bool ProjectPair(unsigned layer,unsigned firstRole,unsigned secondRole,
+		const float* input,unsigned inputs,float* firstOutput,float* secondOutput,unsigned outputs);
 	bool TiedArgmax(const float* input,unsigned inputs,unsigned& token);
 	bool ReadWeight(unsigned layer,unsigned role,unsigned offset,float* output,unsigned values);
 	bool ReadRope(unsigned position,float* output,unsigned values);

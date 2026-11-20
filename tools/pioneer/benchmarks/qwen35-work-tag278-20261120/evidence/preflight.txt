@@ -1,0 +1,9 @@
+Tag78 guarded preflight, 2026-11-20:
+
+- The prior diagnostic had exited; no inference client was running.
+- Stable driver55 was idle at generation34 with `quiesced0 cold0 active_owner0 open_count1 guard1`.
+- The exclusive Pioneer trial lock was absent.
+- The preserved 27B model stat was `0:1:600:18973870528`.
+- Candidate driver and client hashes passed, as did the stable driver, admin tool, and reload guard checks.
+- Qwen3.5-4B model metadata, filesystem health, and board health passed.
+- Wrapper `--preflight` exited 0.

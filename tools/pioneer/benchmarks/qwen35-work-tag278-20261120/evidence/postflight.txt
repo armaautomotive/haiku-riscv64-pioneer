@@ -1,0 +1,13 @@
+Tag78 guarded run result captured from the hardware trial on 2026-11-20:
+
+P100A_Q35 terminal Work fault passed the first safe-idle proof; STOP will repeat it
+P100A_Q35 unexpected terminal run=1 state=4 commits=0 pc=0x40060 progress_magic=0x31503542 prefilled=0 root_trace=0xe5000008
+P100A_Q35 unload_clean=1 state=2 active=0 cold=0
+P100A_RELOAD driver55 tag2026102100010012 generation36 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+SAFE_FAULT_RECOVERY_VERIFIED
+27B model stat: 0:1:600:18973870528
+
+The Tag78-specific postflight wrapper expects stable generation36. It was run
+again after Tag79 had already advanced the stable driver to generation38, so
+that later generation comparison correctly failed; this does not change the
+successful generation36 restoration recorded above.

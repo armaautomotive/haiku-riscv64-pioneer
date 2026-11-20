@@ -39,9 +39,26 @@ struct PioneerQ35WorkTask {
 
 struct PioneerQ35WorkBatch {
 	unsigned rootFragment, rootFirstGroup, rootGroups, workerCount, processedGroups;
-	unsigned nextGroup[7];
+	unsigned nextGroup[14];
 	PioneerQ35WorkTask worker[119];
 };
+
+// Translate one tensor's bank-local row groups into a contiguous logical
+// output region so same-shaped projections can share a dispatch wave.
+inline bool PioneerQ35AppendWorkFragments(const PioneerQ35WorkFragment* parts,
+	unsigned partCount,unsigned baseGroup,unsigned tensor,
+	PioneerQ35WorkFragment* fragments,unsigned* fragmentTensor,unsigned& fragmentCount)
+{
+	if (!parts || !partCount || !fragments || !fragmentTensor
+		|| fragmentCount>14 || partCount>14-fragmentCount) return false;
+	for (unsigned part=0;part<partCount;part++) {
+		if (!parts[part].groups || parts[part].firstGroup>0xffffffffU-baseGroup
+			|| parts[part].groups>0xffffffffU-(baseGroup+parts[part].firstGroup)) return false;
+		fragments[fragmentCount]={baseGroup+parts[part].firstGroup,parts[part].groups};
+		fragmentTensor[fragmentCount++]=tensor;
+	}
+	return true;
+}
 
 // Fill one dispatch wave from all tensor fragments. A task never crosses a
 // bank fragment, but the wave balances independent row groups across every
@@ -49,7 +66,7 @@ struct PioneerQ35WorkBatch {
 inline bool PioneerQ35BuildWorkBatch(const PioneerQ35WorkFragment* fragments,
 	unsigned fragmentCount,const unsigned* cursor,PioneerQ35WorkBatch& batch)
 {
-	if (!fragments || !cursor || !fragmentCount || fragmentCount>7) return false;
+	if (!fragments || !cursor || !fragmentCount || fragmentCount>14) return false;
 	batch={};
 	unsigned remaining=0;
 	for (unsigned fragment=0;fragment<fragmentCount;fragment++) {

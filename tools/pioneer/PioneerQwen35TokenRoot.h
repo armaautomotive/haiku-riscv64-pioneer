@@ -135,8 +135,8 @@ bool RunLayers(IO& io, RootScratch& work, unsigned position, unsigned token)
 		if (!io.ReadWeight(layer,PostAttentionNorm,0,work.weight,Hidden)) return false;
 		io.Trace(TraceCode(16,layer,position));
 		if (!Rms<Hidden>(work.hidden,work.weight,work.normalized)) return false;
-		if (!io.Project(layer,Gate,work.normalized,Hidden,work.matrixA,Ffn)
-			|| !io.Project(layer,Up,work.normalized,Hidden,work.matrixB,Ffn))
+		if (!io.ProjectPair(layer,Gate,Up,work.normalized,Hidden,
+			work.matrixA,work.matrixB,Ffn))
 			return false;
 		io.Trace(TraceCode(1,layer,0xff00U));
 		for (unsigned i=0; i<Ffn; i++) {

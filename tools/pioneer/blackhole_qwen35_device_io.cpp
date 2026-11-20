@@ -269,58 +269,88 @@ bool DeviceIO::StageInput(unsigned type,const float* input,unsigned inputs)
 
 bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,unsigned* chosen)
 {
+	const TensorSpace* tensors[1]={&tensor};
+	float* outputs[1]={output};
+	return StageBands(tensors,1,outputs,best,chosen);
+}
+
+bool DeviceIO::StageBands(const TensorSpace* const* tensors,unsigned tensorCount,
+	float* const* outputs,float* best,unsigned* chosen)
+{
 	auto fail=[&](unsigned reason) { Trace(0xe5000000U|reason); return false; };
 	__UINT64_TYPE__ phaseStart=Cycles();
 	if (!phaseStart) return fail(18);
-	if (tensor.type==13) {
-		Words(RootScaleEvidenceAddress)[3]=Words(Scales)[tensor.inputs>>8];
+	if (!tensors || !tensorCount || tensorCount>2 || !tensors[0] || (!!best!=!!chosen)
+		|| ((best || chosen) && tensorCount!=1)) return fail(1);
+	const bool argmax=best && chosen;
+	if (!argmax && !outputs) return fail(1);
+	const unsigned type=tensors[0]->type,inputs=tensors[0]->inputs;
+	const unsigned tile=PioneerQwen35Projection::TileBytes(type);
+	if (!tile || !PioneerQwen35Projection::Supports(type,inputs)) return fail(2);
+	if (type==13) {
+		Words(RootScaleEvidenceAddress)[3]=Words(Scales)[inputs>>8];
 		Fence();
 	}
-	if (!tensor.place.Valid() || (output==nullptr && (!best || !chosen))) return fail(1);
-	const unsigned tile=PioneerQwen35Projection::TileBytes(tensor.type);
-	if (!tile || !PioneerQwen35Projection::Supports(tensor.type,tensor.inputs)) return fail(2);
-	if (tensor.type==13) {
-		Words(RootScaleEvidenceAddress)[4]=Words(Scales)[tensor.inputs>>8];
+	PioneerQ35WorkFragment fragments[14]={};
+	unsigned fragmentTensor[14]={},tensorBaseGroup[2]={},tensorBaseRow[2]={};
+	unsigned cursor[14]={},fragmentCount=0,groups=0,totalRows=0;
+	for (unsigned t=0;t<tensorCount;t++) {
+		if (!tensors[t]) return fail(1);
+		const TensorSpace& tensor=*tensors[t];
+		if (!tensor.place.Valid() || tensor.type!=type || tensor.inputs!=inputs
+			|| tensor.place.unit!=16 || (tensor.place.rows&15)) return fail(1);
+		if (!argmax && !outputs[t]) return fail(1);
+		if (groups>0xffffffffU-tensor.place.rows/16 || totalRows>0xffffffffU-tensor.place.rows)
+			return fail(4);
+		tensorBaseGroup[t]=groups;
+		tensorBaseRow[t]=totalRows;
+		PioneerQ35WorkFragment localParts[Banks]={};
+		for (unsigned partIndex=0;partIndex<tensor.place.count;partIndex++) {
+			const auto& part=tensor.place.parts[partIndex];
+			if ((part.firstRow|part.rows)&15) return fail(3);
+			localParts[partIndex]={part.firstRow/16,part.rows/16};
+		}
+		if (!PioneerQ35AppendWorkFragments(localParts,tensor.place.count,
+			tensorBaseGroup[t],t,fragments,fragmentTensor,fragmentCount)) return fail(3);
+		groups+=tensor.place.rows/16;
+		totalRows+=tensor.place.rows;
+	}
+	if (type==13) {
+		Words(RootScaleEvidenceAddress)[4]=Words(Scales)[inputs>>8];
 		Fence();
 	}
-	PioneerQ35WorkFragment fragments[Banks]={};
-	unsigned cursor[Banks]={},groups=0;
-	for (unsigned fragment=0;fragment<tensor.place.count;fragment++) {
-		const auto& part=tensor.place.parts[fragment];
-		if ((part.firstRow|part.rows)&15) return fail(3);
-		fragments[fragment]={part.firstRow/16,part.rows/16};
-		groups+=fragments[fragment].groups;
-	}
-	if (tensor.type==13) {
-		Words(RootScaleEvidenceAddress)[5]=Words(Scales)[tensor.inputs>>8];
+	if (type==13) {
+		Words(RootScaleEvidenceAddress)[5]=Words(Scales)[inputs>>8];
 		Fence();
 	}
-	if (!groups || groups!=tensor.place.rows/16) return fail(4);
+	unsigned expectedGroups=0;
+	for (unsigned t=0;t<tensorCount;t++) expectedGroups+=tensors[t]->place.rows/16;
+	if (!fragmentCount || !groups || groups!=expectedGroups || !totalRows) return fail(4);
 	volatile uint32_t* state=Words(DispatchStateAddress);
 	if (state[0]!=RootDispatchStateMagic || state[1]>=0x7ffffffe) return fail(5);
-	if (tensor.type==13) {
-		Words(RootScaleEvidenceAddress)[6]=Words(Scales)[tensor.inputs>>8];
+	if (type==13) {
+		Words(RootScaleEvidenceAddress)[6]=Words(Scales)[inputs>>8];
 		Fence();
 	}
 	unsigned completed=0;
 	while (completed<groups) {
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[7]=Words(Scales)[tensor.inputs>>8];
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[7]=Words(Scales)[inputs>>8];
 			Fence();
 		}
 		PioneerQ35WorkBatch batch{};
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[8]=Words(Scales)[tensor.inputs>>8];
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[8]=Words(Scales)[inputs>>8];
 			Fence();
 		}
-		if (!PioneerQ35BuildWorkBatch(fragments,tensor.place.count,cursor,batch)) return fail(6);
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[9]=Words(Scales)[tensor.inputs>>8];
+		if (!PioneerQ35BuildWorkBatch(fragments,fragmentCount,cursor,batch)) return fail(6);
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[9]=Words(Scales)[inputs>>8];
 			Fence();
 		}
 		const unsigned rootGroups=batch.rootGroups,workers=batch.workerCount;
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[10]=Words(Scales)[tensor.inputs>>8];
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[10]=Words(Scales)[inputs>>8];
 			Fence();
 		}
 		if (progress.reserved[ProgressProjectionWavesSlot]==0xffffffffU
@@ -331,8 +361,12 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 		unsigned processed=rootGroups;
 		for (unsigned worker=0;worker<workers;worker++) {
 			const auto& scheduled=batch.worker[worker];
+			if (scheduled.fragment>=fragmentCount) return fail(8);
+			const unsigned tensorIndex=fragmentTensor[scheduled.fragment];
+			if (tensorIndex>=tensorCount || scheduled.firstGroup<tensorBaseGroup[tensorIndex]) return fail(8);
 			Range range;
-			if (!tensor.ResolveBand(scheduled.firstGroup*16,scheduled.groups,range) || !InBank(range)) return fail(8);
+			const unsigned localGroup=scheduled.firstGroup-tensorBaseGroup[tensorIndex];
+			if (!tensors[tensorIndex]->ResolveBand(localGroup*16,scheduled.groups,range) || !InBank(range)) return fail(8);
 			unsigned sequence=state[2+worker]+1;
 			if (!sequence || sequence>=0x7ffffffe) return fail(9);
 			tasks[worker]={scheduled.firstGroup,scheduled.groups,range,sequence};
@@ -345,14 +379,18 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 		volatile uint32_t* rootJob=Words(RootMatrixJob);
 		for (unsigned i=0;i<16;i++) rootJob[i]=0;
 		if (rootGroups) {
+			if (batch.rootFragment>=fragmentCount) return fail(12);
+			const unsigned tensorIndex=fragmentTensor[batch.rootFragment];
+			if (tensorIndex>=tensorCount || batch.rootFirstGroup<tensorBaseGroup[tensorIndex]) return fail(12);
 			Range range;
-			if (!tensor.ResolveBand(batch.rootFirstGroup*16,rootGroups,range) || !InBank(range)) return fail(12);
-			rootJob[0]=PioneerQwen35Projection::Magic; rootJob[1]=tensor.type;
-			rootJob[2]=tile; rootJob[5]=tensor.inputs; rootJob[6]=range.address;
+			const unsigned localGroup=batch.rootFirstGroup-tensorBaseGroup[tensorIndex];
+			if (!tensors[tensorIndex]->ResolveBand(localGroup*16,rootGroups,range) || !InBank(range)) return fail(12);
+			rootJob[0]=PioneerQwen35Projection::Magic; rootJob[1]=type;
+			rootJob[2]=tile; rootJob[5]=inputs; rootJob[6]=range.address;
 			rootJob[7]=rootGroups; rootJob[8]=PioneerQ38ProjectionRoute(range.bank); rootJob[9]=range.bank;
 		}
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[11]=Words(Scales)[tensor.inputs>>8];
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[11]=Words(Scales)[inputs>>8];
 			Fence();
 		}
 		volatile uint32_t* table=Words(0x74080);
@@ -365,18 +403,18 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 			if (!values[5]) return fail(13);
 			for (unsigned word=0;word<8;word++) table[worker*8+word]=values[word];
 		}
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[12]=Words(Scales)[tensor.inputs>>8];
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[12]=Words(Scales)[inputs>>8];
 			Fence();
 		}
 		volatile uint32_t* header=Words(MatrixJob);
 		for (unsigned word=0;word<16;word++) header[word]=0;
-		header[0]=0x314d3851; header[1]=1; header[2]=1; header[3]=tensor.type;
-		header[4]=tensor.inputs; header[5]=workers; header[6]=nonce; header[8]=1;
+		header[0]=0x314d3851; header[1]=1; header[2]=1; header[3]=type;
+		header[4]=inputs; header[5]=workers; header[6]=nonce; header[8]=1;
 		Fence();
 		Trace(0xda000000U|workers);
-		if (tensor.type==13) {
-			Words(RootScaleEvidenceAddress)[13]=Words(Scales)[tensor.inputs>>8];
+		if (type==13) {
+			Words(RootScaleEvidenceAddress)[13]=Words(Scales)[inputs>>8];
 			Fence();
 		}
 		const __UINT64_TYPE__ dispatchStart=Cycles();
@@ -391,10 +429,16 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 			for (unsigned row=0;row<rootGroups*16;row++) {
 				float value=PioneerAttentionFloat(Words(RootProjectionResult)[row]);
 				if (!Finite(value)) return fail(15);
-				const unsigned token=batch.rootFirstGroup*16+row;
-				if (output) output[token]=value;
-				else if (*chosen==Vocabulary || value>*best || (value==*best && token<*chosen)) {
-					*best=value; *chosen=token;
+				const unsigned logicalRow=batch.rootFirstGroup*16+row;
+				if (argmax) {
+					if (*chosen==Vocabulary || value>*best || (value==*best && logicalRow<*chosen)) {
+						*best=value; *chosen=logicalRow;
+					}
+				} else {
+					unsigned t=0;
+					while (t<tensorCount && logicalRow>=tensorBaseRow[t]+tensors[t]->place.rows) t++;
+					if (t==tensorCount || logicalRow<tensorBaseRow[t]) return fail(15);
+					outputs[t][logicalRow-tensorBaseRow[t]]=value;
 				}
 			}
 		}
@@ -403,10 +447,16 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 			for (unsigned row=0;row<task.groups*16;row++) {
 				float value=PioneerAttentionFloat(Words(RootWorkerResultAddress+worker*256*4)[row]);
 				if (!Finite(value)) return fail(16);
-				const unsigned token=task.firstGroup*16+row;
-				if (output) output[token]=value;
-				else if (*chosen==Vocabulary || value>*best || (value==*best && token<*chosen)) {
-					*best=value; *chosen=token;
+				const unsigned logicalRow=task.firstGroup*16+row;
+				if (argmax) {
+					if (*chosen==Vocabulary || value>*best || (value==*best && logicalRow<*chosen)) {
+						*best=value; *chosen=logicalRow;
+					}
+				} else {
+					unsigned t=0;
+					while (t<tensorCount && logicalRow>=tensorBaseRow[t]+tensors[t]->place.rows) t++;
+					if (t==tensorCount || logicalRow<tensorBaseRow[t]) return fail(16);
+					outputs[t][logicalRow-tensorBaseRow[t]]=value;
 				}
 			}
 			state[2+worker]=task.sequence;
@@ -416,7 +466,7 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 		if (workers==WorkTensixPeerCount && rootGroups==1)
 			progress.reserved[ProgressFullCoreWavesSlot]++;
 		Fence();
-		for (unsigned fragment=0;fragment<tensor.place.count;fragment++) cursor[fragment]=batch.nextGroup[fragment];
+		for (unsigned fragment=0;fragment<fragmentCount;fragment++) cursor[fragment]=batch.nextGroup[fragment];
 		completed+=processed;
 	}
 	const __UINT64_TYPE__ phaseEnd=Cycles();
@@ -441,6 +491,32 @@ bool DeviceIO::Project(unsigned layer,unsigned role,const float* input,unsigned 
 		Fence();
 	}
 	return StageBand(*tensor,output);
+}
+
+bool DeviceIO::ProjectPair(unsigned layer,unsigned firstRole,unsigned secondRole,
+	const float* input,unsigned inputs,float* firstOutput,float* secondOutput,unsigned outputs)
+{
+	Trace(0xdb000000U|((layer&0xffU)<<16)|((firstRole&0xffU)<<8)|((inputs>>8)&0xffU));
+	Trace(0xdb000000U|((layer&0xffU)<<16)|((secondRole&0xffU)<<8)|((inputs>>8)&0xffU));
+	const TensorSpace* first=model.Weight(layer,firstRole);
+	const TensorSpace* second=model.Weight(layer,secondRole);
+	if (!first || !second || first==&model.tied || second==&model.tied
+		|| !firstOutput || !secondOutput || first==second
+		|| first->type!=second->type || first->inputs!=inputs || second->inputs!=inputs
+		|| first->place.rows!=outputs || second->place.rows!=outputs
+		|| !first->place.Valid() || !second->place.Valid()) return false;
+	const __UINT64_TYPE__ packStart=Cycles();
+	if (!packStart || !StageInput(first->type,input,inputs)) return false;
+	const __UINT64_TYPE__ packEnd=Cycles();
+	if (packEnd<packStart || !RecordCycleTicks(progress,
+		ProgressActivationPackTicksSlot,packEnd-packStart)) return false;
+	if (first->type==13) {
+		Words(RootScaleEvidenceAddress)[2]=Words(Scales)[inputs>>8];
+		Fence();
+	}
+	const TensorSpace* tensors[2]={first,second};
+	float* outputsByTensor[2]={firstOutput,secondOutput};
+	return StageBands(tensors,2,outputsByTensor);
 }
 
 bool DeviceIO::TiedArgmax(const float* input,unsigned inputs,unsigned& token)

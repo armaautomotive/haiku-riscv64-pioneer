@@ -1,0 +1,10 @@
+Tag79 wrapper postflight exited 0 and reported:
+
+P100A_RELOAD driver55 tag2026102100010012 generation38 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+TWO_WARM_OUTPUTS_VALID_RATE_BELOW_TARGET
+
+The wrapper verified two exact outputs and clean candidate unload, confirmed
+the stable driver checksum, checked the idle process set and board health,
+and recorded the hashes of `state`, `work.exit`, `work.stdout`, and
+`work.stderr`. The preserved 27B model stat remained
+`0:1:600:18973870528`.

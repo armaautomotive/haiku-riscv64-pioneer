@@ -98,6 +98,13 @@ struct Stub {
 		return true;
 	}
 
+	bool ProjectPair(unsigned layer,unsigned firstRole,unsigned secondRole,const float* input,
+		unsigned inputs,float* firstOutput,float* secondOutput,unsigned n)
+	{
+		return Project(layer,firstRole,input,inputs,firstOutput,n)
+			&& Project(layer,secondRole,input,inputs,secondOutput,n);
+	}
+
 	bool ReadWeight(unsigned layer,unsigned role,unsigned offset,float* output,unsigned values)
 	{
 		const auto* expected=PioneerQ35Role(layer,role);
