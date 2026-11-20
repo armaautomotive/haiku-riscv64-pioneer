@@ -82,3 +82,15 @@ images:
 The public TT-Metalium C++ runtime is not currently used by this Haiku driver;
 the implementation work here is to port its device-side programming pattern,
 not to introduce CPU inference or a host fallback.
+
+## Prototype status
+
+`PioneerQwen35ProgramSchedule.h` now builds a stable 120-core partition for a
+whole projection. It assigns contiguous logical row ranges, splits a core's
+work only at physical bank-fragment boundaries, and removes the current
+per-wave 16-group limit from the program description. The CPU-only schedule
+test passed exact-coverage, balance, and invalid-range cases. The current
+Work image does not consume this program yet, so this is a scheduler
+prototype and makes no hardware-speed claim. The next implementation step is
+to pass these per-core segments to a resident reader/compute/writer program
+and keep results in the sharded device buffers.
