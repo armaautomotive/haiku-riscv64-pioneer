@@ -1,0 +1,3 @@
+Command: c++ -std=c++17 -O1 -g -Wall -Wextra -Werror tools/pioneer/tests/pioneer_qwen35_batch_prefetch_plan_test.cpp -o /private/tmp/pioneer-qwen35-batch-prefetch-test && /private/tmp/pioneer-qwen35-batch-prefetch-test
+
+PASS 5136 Qwen35-4B double-buffered batch-prefetch plans; preserved original tile addresses, two-slot ordering, final batch, and refusal atomicity
