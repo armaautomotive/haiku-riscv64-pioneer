@@ -1,0 +1,15 @@
+P100A_Q35 authentication_seconds=67.547995
+P100A_Q35 vocab_and_tokenize_seconds=12.889718 prompt_ids=248045,846,1639,4935,11592,357,310,387,18101,539,12258,13,248046,1639,248045,74455,1639,248068,1639,1639,248069,1639,1639
+P100A_Q35 resident_spans=3450 resident_bytes=2740498432
+P100A_Q35 model_load_seconds=222.551040
+P100A_Q35 warm_run=1 prompt_tokens=23 prompt_seconds=183.843630 output_tokens=16 decode_seconds=132.928275 decode_tokens_per_second=0.120366 prompt_cycles=147067580168 decode_cycles=106340832068 full_core_waves=7136 projection_waves=14128 activation_pack_cycles_256=20909337 projection_setup_cycles_256=5915073 matrix_dispatch_cycles_256=624156848 dispatch_issue_root_matrix_cycles=55899866329 dispatch_peer_wait_proof_cycles=97582418535 dispatch_result_proof_cycles=6295906116
+P100A_Q35 generated_ids=32,417,351,414,458,426,469,462,353,604,710,436,380,443,496,387
+P100A_Q35 output_begin run=1
+A B C D E F G H I J K L M N O P
+P100A_Q35 output_end run=1
+P100A_Q35 warm_run=2 prompt_tokens=23 prompt_seconds=183.844920 output_tokens=16 decode_seconds=132.926940 decode_tokens_per_second=0.120367 prompt_cycles=147067183746 decode_cycles=106340843713 full_core_waves=7136 projection_waves=14128 activation_pack_cycles_256=20909295 projection_setup_cycles_256=5915213 matrix_dispatch_cycles_256=624155289 dispatch_issue_root_matrix_cycles=55899855960 dispatch_peer_wait_proof_cycles=97582027098 dispatch_result_proof_cycles=6295908975
+P100A_Q35 generated_ids=32,417,351,414,458,426,469,462,353,604,710,436,380,443,496,387
+P100A_Q35 output_begin run=2
+A B C D E F G H I J K L M N O P
+P100A_Q35 output_end run=2
+P100A_Q35 unload_clean=1 state=2 active=0 cold=0

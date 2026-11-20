@@ -83,7 +83,9 @@ enum {Q38DispatchScaleCache=PioneerQwen35::RootScaleAddress,Q35RootProjectionRes
 enum {Q38DispatchScaleCache=0xab000};
 #endif
 #ifdef PIONEER_Q38_WORK_SENTINEL_POLL
-#if !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT)
+#if (!defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) && !defined(PIONEER_Q35_WORK_ROOT_IMAGE)) \
+ || !defined(PIONEER_Q38_WORK_COHORT_CACHE) \
+ || (!defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) && !defined(PIONEER_Q35_WORK_ROOT_IMAGE))
 #error Separate offline sentinel polling requires the complete exact Work/root-counter chain
 #endif
 #include "PioneerQ38PollSentinel.h"

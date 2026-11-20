@@ -5,6 +5,7 @@ SECTIONS {
 	.boot 0x6000 : { KEEP(*(.boot)) }
 	.text 0x40000 : {
 		KEEP(*(.text.start))
+		*(.q38_peer_poll)
 		*(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		. = ALIGN(4);
 	}

@@ -30,6 +30,7 @@ done
  -Dblock_main=q35_work_matrix_band \
  -c "$directory/blackhole_qwen38_rows.cpp" -o "$output/matrix.o"
 "$cross-g++" $flags $diagnostic_flags $batch_flags -DPIONEER_Q35_WORK_ROOT_IMAGE=1 -DPIONEER_Q38_WORK_COHORT_CACHE=1 \
+	-DPIONEER_Q38_WORK_SENTINEL_POLL=1 \
 	-Dblock_main=q35_dispatch_body -c "$directory/blackhole_qwen38_dispatch.cpp" -o "$output/dispatcher.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax "$directory/blackhole_qwen35_work_start.S" -o "$output/start.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax "$directory/blackhole_qwen35_dispatch_start.S" -o "$output/dispatch-start.o"
