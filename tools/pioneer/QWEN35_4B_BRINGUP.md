@@ -703,4 +703,9 @@ STOP at close phase 30. Its full Haiku cross-build and sanitizer close tests
 pass. It has not been installed or tested on P100A; Tag91 remains the verified
 card build and rate baseline. See
 [`Tag92 build evidence`](benchmarks/qwen35-work-tag292-20261120/BUILD.md).
-The 100 decode tokens/s goal remains active.
+The new offline bank-sharded activation buffer planner works over the workspace
+already reserved by the Qwen35 packed plan. Its strict bounds/coverage test
+passes, but the Work image does not use the buffers yet. See
+[`Tenstorrent redesign notes`](QWEN35_TTMETALIUM_REDESIGN.md). The 100 decode
+tokens/s goal remains active; the latest physical result remains Tag91's
+0.123282 decode tok/s.

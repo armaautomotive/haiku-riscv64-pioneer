@@ -83,6 +83,36 @@ The public TT-Metalium C++ runtime is not currently used by this Haiku driver;
 the implementation work here is to port its device-side programming pattern,
 not to introduce CPU inference or a host fallback.
 
+## Performance budget and activation storage
+
+P100A is specified for 448 GB/s GDDR6 bandwidth. The pinned 4B artifact has
+2,740,937,888 bytes; reading each weight byte once per generated token would
+require about 274 GB/s to reach 100 tokens/s, before KV/state and other traffic.
+That is about 61% of peak bandwidth. Tag91's measured 0.123282 decode tok/s is
+therefore not explained by the card's raw bandwidth limit alone: a resident,
+parallel reader/compute/writer program and elimination of the per-projection
+ROOT round trips are required. The roofline estimate assumes one full weight
+read per token and is not a measured bandwidth result. See Tenstorrent's
+[P100A specifications](https://docs.tenstorrent.com/aibs/blackhole/installation.html).
+
+The new offline sharded activation allocator works over the seven 64 MiB
+workspace regions already reserved by `PioneerQwen35PackedPlan`. It page-aligns
+each bank fragment, stripes 16-row groups across banks, supports resolving a
+row range only when it stays inside one fragment, and tracks allocated ranges
+to reject overlap. The initial use is a pair of ping-pong row buffers large
+enough for the tied vocabulary projection. Its bounds/coverage test passes.
+This is storage planning only: the Work image does not allocate or use these
+buffers yet, and no hardware performance is claimed. The next implementation
+step is the device-side writer/reader path that lets a projection publish one
+sharded output for the next projection without gathering it through ROOT.
+
+```sh
+c++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined \
+  tools/pioneer/tests/pioneer_qwen35_activation_plan_test.cpp \
+  -o /private/tmp/pioneer-qwen35-activation-plan
+/private/tmp/pioneer-qwen35-activation-plan
+```
+
 ## Prototype status
 
 `PioneerQwen35ProgramSchedule.h` builds a stable 120-core partition for a

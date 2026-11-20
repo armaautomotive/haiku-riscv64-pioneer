@@ -20,6 +20,7 @@ struct PioneerQ35EmbeddingProposal {
 class PioneerQwen35PackedPlan {
  std::vector<PioneerQ35PackedPart> parts,empty;
  uint64_t used[7]={},epoch=0;
+ uint32_t workspaceAddress[7]={},workspaceBytes[7]={};
  bool ready=false;
  const PioneerQwen35Gguf* bound=nullptr;
  mutable PioneerQwen35TiledReader tiledReader;
@@ -47,6 +48,10 @@ public:
  bool MatchesSource(const PioneerQwen35Gguf& source) const { return bound==&source && Ready(); }
  const std::vector<PioneerQ35PackedPart>& Parts() const { return Ready()?parts:empty; }
  uint64_t Used(unsigned bank) const { return Ready() && bank<7?used[bank]:0; }
+ bool Workspace(unsigned bank,uint32_t& address,uint32_t& bytes) const {
+  if (!Ready() || bank>=7 || !workspaceAddress[bank] || !workspaceBytes[bank]) return false;
+  address=workspaceAddress[bank]; bytes=workspaceBytes[bank]; return true;
+ }
  bool ResolveEmbedding(unsigned token,PioneerQ35EmbeddingProposal& output) const {
   namespace E=PioneerQwen35Embedding;
   if (!Ready() || token>=E::Vocabulary) return false;
@@ -65,7 +70,9 @@ public:
  }
  bool Build(const PioneerQwen35Gguf& source,unsigned context,bool doubleState=false) {
   ready=false; bound=nullptr; epoch=0; tiledReader.Reset(); parts.clear();
-  for (auto& bytes:used) bytes=0;
+  for (unsigned bank=0;bank<7;bank++) {
+   used[bank]=0; workspaceAddress[bank]=0; workspaceBytes[bank]=0;
+  }
   if (!source.Stable() || !context || context>32768) return false;
   for (unsigned ordinal=0;ordinal<=32;ordinal++) {
    unsigned layer=ordinal?ordinal-1:32;
@@ -98,7 +105,8 @@ public:
   for (unsigned bank=0;bank<7;bank++) {
    const unsigned bytes=64*1024*1024;
    if (bytes>Capacity-used[bank]) return false;
-   parts.push_back({PIONEER_Q35_WORKSPACE,32,0,426,bank,0,1,bytes,uint32_t(Base+used[bank]),bytes,bytes});
+   workspaceAddress[bank]=uint32_t(Base+used[bank]); workspaceBytes[bank]=bytes;
+   parts.push_back({PIONEER_Q35_WORKSPACE,32,0,426,bank,0,1,bytes,workspaceAddress[bank],bytes,bytes});
    used[bank]+=bytes;
   }
   ready=source.Stable() && tiledReader.Bind(source);
