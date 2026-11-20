@@ -13,7 +13,7 @@
 #define TT_PCI_PROBE_Q35_WORK_STOP (B_DEVICE_OP_CODES_END + 0x64d4)
 
 namespace PioneerQwen35 {
-enum : unsigned { WorkVersion=5, WorkDriver=64 };
+enum : unsigned { WorkVersion=6, WorkDriver=64 };
 enum WorkStatus : unsigned {
 	WorkRunning=1, WorkComplete, WorkQuarantined, WorkRecoverableFault, WorkRecoveryPending
 };
@@ -170,11 +170,22 @@ inline bool ValidWorkResult(const WorkPoll& result, unsigned promptCount, unsign
 		|| status.committed!=promptCount+status.generated-1
 		|| !(status.promptCyclesLow|status.promptCyclesHigh)
 		|| !(status.decodeCyclesLow|status.decodeCyclesHigh)
+		|| !status.reserved[ProgressActivationPackTicksSlot]
+		|| !status.reserved[ProgressProjectionSetupTicksSlot]
+		|| !status.reserved[ProgressMatrixDispatchTicksSlot]
 		|| !status.reserved[ProgressFullCoreWavesSlot]
 		|| status.reserved[ProgressProjectionWavesSlot]<status.reserved[ProgressFullCoreWavesSlot])
 		return false;
-	for (unsigned word=0;word<ProgressFullCoreWavesSlot;word++)
-		if (status.reserved[word]) return false;
+	const unsigned long long totalCycles=
+		(static_cast<unsigned long long>(status.promptCyclesHigh)<<32)|status.promptCyclesLow;
+	const unsigned long long decodeCycles=
+		(static_cast<unsigned long long>(status.decodeCyclesHigh)<<32)|status.decodeCyclesLow;
+	const unsigned long long phaseTicks=
+		static_cast<unsigned long long>(status.reserved[ProgressActivationPackTicksSlot])
+		+status.reserved[ProgressProjectionSetupTicksSlot]
+		+status.reserved[ProgressMatrixDispatchTicksSlot];
+	if (phaseTicks>((totalCycles+decodeCycles)>>8)) return false;
+	if (status.reserved[ProgressReadyFailureSlot]) return false;
 	for (unsigned i=0; i<status.generated; i++) {
 		const unsigned token=result.generatedIds[i];
 		const bool stop=token==EndOfTurn || token==EndOfText;

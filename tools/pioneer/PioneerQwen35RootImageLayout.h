@@ -43,6 +43,8 @@ struct RootScaleEvidence {
 };
 enum : unsigned {
 	ProgressReadyFailureSlot=0, ProgressFullCoreWavesSlot=4, ProgressProjectionWavesSlot=5,
+	ProgressActivationPackTicksSlot=1, ProgressProjectionSetupTicksSlot=2,
+	ProgressMatrixDispatchTicksSlot=3,
 	RootScaleEvidenceWords=15, WorkTensixCoreCount=120, WorkTensixPeerCount=WorkTensixCoreCount-1,
 	RootWorkerResultAddress=0x80000,
 	RootWorkerResultBytes=WorkTensixPeerCount*256*sizeof(unsigned),

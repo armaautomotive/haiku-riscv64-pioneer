@@ -67,6 +67,16 @@ __UINT64_TYPE__ Cycles()
 	}
 	return 0;
 }
+
+bool RecordCycleTicks(volatile RequestProgress& progress,unsigned slot,__UINT64_TYPE__ cycles)
+{
+	if (slot<ProgressActivationPackTicksSlot || slot>ProgressMatrixDispatchTicksSlot)
+		return false;
+	const __UINT64_TYPE__ ticks=cycles>>8;
+	if (ticks>0xffffffffU-progress.reserved[slot]) return false;
+	progress.reserved[slot]+=unsigned(ticks);
+	return true;
+}
 }
 
 DeviceIO::DeviceIO(const DeviceLayout& layout,Range ropeTable,volatile RequestProgress& status,
@@ -260,6 +270,8 @@ bool DeviceIO::StageInput(unsigned type,const float* input,unsigned inputs)
 bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,unsigned* chosen)
 {
 	auto fail=[&](unsigned reason) { Trace(0xe5000000U|reason); return false; };
+	__UINT64_TYPE__ phaseStart=Cycles();
+	if (!phaseStart) return fail(18);
 	if (tensor.type==13) {
 		Words(RootScaleEvidenceAddress)[3]=Words(Scales)[tensor.inputs>>8];
 		Fence();
@@ -367,7 +379,14 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 			Words(RootScaleEvidenceAddress)[13]=Words(Scales)[tensor.inputs>>8];
 			Fence();
 		}
+		const __UINT64_TYPE__ dispatchStart=Cycles();
+		if (dispatchStart<phaseStart || !RecordCycleTicks(progress,
+			ProgressProjectionSetupTicksSlot,dispatchStart-phaseStart)) return fail(19);
 		if (q35_dispatch_matrix()!=workers) return fail(14);
+		const __UINT64_TYPE__ dispatchEnd=Cycles();
+		if (dispatchEnd<dispatchStart || !RecordCycleTicks(progress,
+			ProgressMatrixDispatchTicksSlot,dispatchEnd-dispatchStart)) return fail(20);
+		phaseStart=dispatchEnd;
 		if (rootGroups) {
 			for (unsigned row=0;row<rootGroups*16;row++) {
 				float value=PioneerAttentionFloat(Words(RootProjectionResult)[row]);
@@ -400,6 +419,9 @@ bool DeviceIO::StageBand(const TensorSpace& tensor,float* output,float* best,uns
 		for (unsigned fragment=0;fragment<tensor.place.count;fragment++) cursor[fragment]=batch.nextGroup[fragment];
 		completed+=processed;
 	}
+	const __UINT64_TYPE__ phaseEnd=Cycles();
+	if (phaseEnd<phaseStart || !RecordCycleTicks(progress,
+		ProgressProjectionSetupTicksSlot,phaseEnd-phaseStart)) return fail(21);
 	return completed==groups || fail(17);
 }
 
@@ -408,7 +430,12 @@ bool DeviceIO::Project(unsigned layer,unsigned role,const float* input,unsigned 
 	Trace(0xdb000000U|((layer&0xffU)<<16)|((role&0xffU)<<8)|((inputs>>8)&0xffU));
 	const auto* tensor=model.Weight(layer,role);
 	if (!tensor || tensor==&model.tied || tensor->inputs!=inputs || tensor->place.rows!=outputs
-		|| !tensor->place.Valid() || !StageInput(tensor->type,input,inputs)) return false;
+		|| !tensor->place.Valid()) return false;
+	const __UINT64_TYPE__ packStart=Cycles();
+	if (!packStart || !StageInput(tensor->type,input,inputs)) return false;
+	const __UINT64_TYPE__ packEnd=Cycles();
+	if (packEnd<packStart || !RecordCycleTicks(progress,
+		ProgressActivationPackTicksSlot,packEnd-packStart)) return false;
 	if (tensor->type==13) {
 		Words(RootScaleEvidenceAddress)[2]=Words(Scales)[inputs>>8];
 		Fence();
