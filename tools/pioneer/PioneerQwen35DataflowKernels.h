@@ -130,6 +130,9 @@ inline bool DataflowCoreHeaderValid(const DataflowProjectionProgram& program,
 		|| !program.core[core].segmentCount
 		|| program.core[core].segmentCount>DataflowMaxSegments
 		|| !program.weights.Valid() || !program.input.Valid() || !program.output.Valid()
+		|| program.inputRows!=program.inputs || (program.inputs&255)
+		|| program.input.rowBytes!=sizeof(float) || program.input.unit!=16
+		|| program.input.rows<program.inputRows
 		|| program.weights.rows!=program.outputRows || program.weights.unit!=16
 		|| program.weights.rowBytes*16
 			!=PioneerQwen35Projection::TileBytes(program.type)*program.blocks
@@ -175,6 +178,44 @@ inline bool DataflowBindQueues(const DataflowProjectionProgram& program,
 	return true;
 }
 
+inline unsigned DataflowActivationChunk(unsigned type,unsigned block)
+{
+	return type==8?block/8:block;
+}
+
+template<class Ops>
+bool DataflowPackActivationCache(const DataflowProjectionProgram& program,
+	DataflowQueueView& inputs,uint8_t* activationCache,Ops& ops)
+{
+	if (!DataflowQueueValid(inputs) || !activationCache
+		|| program.inputs%DataflowActivationChunkInputs
+		|| program.inputs>DataflowActivationCacheBytes/sizeof(float)
+		|| inputs.control->produced || inputs.control->consumed || inputs.control->failure
+		|| inputs.layout->pageBytes!=DataflowInputPageBytes) return false;
+	const unsigned chunks=program.inputs/DataflowActivationChunkInputs;
+	if (!chunks || uint64_t(chunks)*DataflowInputPageBytes>DataflowActivationCacheBytes)
+		return false;
+	uint8_t* scratch=DataflowQueueWritePage(inputs,0);
+	if (!scratch) return false;
+	const uintptr_t cacheStart=reinterpret_cast<uintptr_t>(activationCache);
+	const uintptr_t scratchStart=reinterpret_cast<uintptr_t>(scratch);
+	if (cacheStart>UINTPTR_MAX-DataflowActivationCacheBytes
+		|| scratchStart>UINTPTR_MAX-DataflowInputPageBytes
+		|| !(cacheStart+DataflowActivationCacheBytes<=scratchStart
+			|| scratchStart+DataflowInputPageBytes<=cacheStart)) return false;
+	for (unsigned chunk=0;chunk<chunks;chunk++) {
+		if (!ops.PackActivation(program.type,program.inputs,chunk,
+			reinterpret_cast<const float*>(activationCache),scratch,DataflowInputPageBytes))
+			return false;
+		for (unsigned word=0;word<DataflowInputPageBytes/4;word++)
+			reinterpret_cast<uint32_t*>(activationCache)
+				[chunk*(DataflowInputPageBytes/4)+word]
+				=reinterpret_cast<const uint32_t*>(scratch)[word];
+		DataflowFence();
+	}
+	return true;
+}
+
 // Reader role: fetch one shard's activation vector into local SRAM, then
 // stream each weight/activation tile pair through the two input circular
 // buffers. Ops are device-side NoC and quantization primitives.
@@ -184,13 +225,27 @@ bool PioneerQwen35DataflowReader(const DataflowProjectionProgram& program,
 	uint8_t* activationCache,Ops& ops)
 {
 	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(weights)
-		|| !DataflowQueueValid(inputs) || !activationCache) return false;
+		|| !DataflowQueueValid(inputs) || !activationCache) {
+		DataflowQueueFail(weights,DataflowFailureReader);
+		DataflowQueueFail(inputs,DataflowFailureReader);
+		return false;
+	}
 	if (!ops.ReadActivation(program.input,program.inputRows,activationCache,
 		program.inputRows*sizeof(float))) {
 		DataflowQueueFail(weights,DataflowFailureReader);
 		DataflowQueueFail(inputs,DataflowFailureReader);
 		return false;
 	}
+	auto failReader=[&]() {
+		DataflowQueueFail(weights,DataflowFailureReader);
+		DataflowQueueFail(inputs,DataflowFailureReader);
+		return false;
+	};
+	// Quantize each 256-float activation chunk once per core. Its 576-byte
+	// representation compacts the 1024-byte FP32 source in this local cache;
+	// subsequent output-row groups reuse the packed chunks.
+	if (!DataflowPackActivationCache(program,inputs,activationCache,ops))
+		return failReader();
 	const auto& assignment=program.core[core];
 	const unsigned tileBytes=program.circularBuffer[0].pageBytes;
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
@@ -203,16 +258,21 @@ bool PioneerQwen35DataflowReader(const DataflowProjectionProgram& program,
 					|| weightTicket!=inputTicket) goto failed;
 				uint8_t* weightPage=DataflowQueueWritePage(weights,weightTicket);
 				uint8_t* inputPage=DataflowQueueWritePage(inputs,inputTicket);
+				const unsigned activationChunk=DataflowActivationChunk(program.type,block);
 				const uint64_t address=uint64_t(segment.address)
 					+uint64_t(group)*program.weights.rowBytes
 					+uint64_t(block)*tileBytes;
 				if (!weightPage || !inputPage || address>UINT32_MAX
 					|| tileBytes>segment.bytes-uint64_t(group)*program.weights.rowBytes
 					|| uint64_t(block)*tileBytes+tileBytes>program.weights.rowBytes
-					|| !ops.ReadWeight(segment.bank,uint32_t(address),weightPage,tileBytes)
-					|| !ops.PackActivation(program.type,program.inputs,block,
-						reinterpret_cast<const float*>(activationCache),inputPage,
-						program.circularBuffer[1].pageBytes)) goto failed;
+					|| activationChunk>=program.inputs/DataflowActivationChunkInputs
+					|| !ops.ReadWeight(segment.bank,uint32_t(address),weightPage,tileBytes))
+					goto failed;
+				for (unsigned word=0;word<DataflowInputPageBytes/4;word++)
+					reinterpret_cast<uint32_t*>(inputPage)[word]
+						=reinterpret_cast<const uint32_t*>(activationCache)
+							[activationChunk*(DataflowInputPageBytes/4)+word];
+				DataflowFence();
 				if (!DataflowQueuePublishBack(weights,weightTicket)
 					|| !DataflowQueuePublishBack(inputs,inputTicket)) goto failed;
 			}
@@ -220,9 +280,7 @@ bool PioneerQwen35DataflowReader(const DataflowProjectionProgram& program,
 	}
 	return true;
 failed:
-	DataflowQueueFail(weights,DataflowFailureReader);
-	DataflowQueueFail(inputs,DataflowFailureReader);
-	return false;
+	return failReader();
 }
 
 // Compute role: the only numeric projection operation is supplied as the
@@ -236,7 +294,12 @@ bool PioneerQwen35DataflowCompute(const DataflowProjectionProgram& program,
 	static_assert(Ops::TensixMatrixEngine,
 		"Qwen35 projection compute requires the Tensix matrix engine");
 	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(weights)
-		|| !DataflowQueueValid(inputs) || !DataflowQueueValid(outputs)) return false;
+		|| !DataflowQueueValid(inputs) || !DataflowQueueValid(outputs)) {
+		DataflowQueueFail(weights,DataflowFailureCompute);
+		DataflowQueueFail(inputs,DataflowFailureCompute);
+		DataflowQueueFail(outputs,DataflowFailureCompute);
+		return false;
+	}
 	const auto& assignment=program.core[core];
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
 		const auto& segment=assignment.weight[segmentIndex];
@@ -248,7 +311,7 @@ bool PioneerQwen35DataflowCompute(const DataflowProjectionProgram& program,
 				if (!DataflowQueueWaitFront(weights,weightTicket,weightPage)
 					|| !DataflowQueueWaitFront(inputs,inputTicket,inputPage)
 					|| weightTicket!=inputTicket || !weightPage || !inputPage
-					|| !ops.TensixMatmul(program.type,weightPage,inputPage)
+					|| !ops.TensixMatmul(program.type,block,weightPage,inputPage)
 					|| !DataflowQueuePopFront(weights,weightTicket)
 					|| !DataflowQueuePopFront(inputs,inputTicket)) goto failed;
 			}
@@ -274,7 +337,10 @@ template<class Ops>
 bool PioneerQwen35DataflowWriter(const DataflowProjectionProgram& program,
 	unsigned core,DataflowQueueView& outputs,Ops& ops)
 {
-	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(outputs)) return false;
+	if (!DataflowCoreHeaderValid(program,core) || !DataflowQueueValid(outputs)) {
+		DataflowQueueFail(outputs,DataflowFailureWriter);
+		return false;
+	}
 	const auto& assignment=program.core[core];
 	for (unsigned segmentIndex=0;segmentIndex<assignment.segmentCount;segmentIndex++) {
 		const auto& segment=assignment.output[segmentIndex];

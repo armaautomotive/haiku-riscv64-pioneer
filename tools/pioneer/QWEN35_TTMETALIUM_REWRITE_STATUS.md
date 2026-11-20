@@ -17,11 +17,16 @@ rewrite is implemented.
   Tensix-compute, and writer role contracts over two-page single-producer,
   single-consumer local queues. The compute template requires an explicit
   Tensix-matrix-engine capability, and each role validates its core's shard
-  descriptor before touching device data.
+  descriptor before touching device data. Role setup errors publish a queue
+  failure so a neighboring role can leave its bounded wait.
+- The reader packs each 256-value activation chunk once in local memory and
+  reuses that packed chunk across its assigned output groups. Q8_0 weight
+  blocks map eight-at-a-time to the same 256-value activation chunk.
 - Expanded the offline program test to compile all three role interfaces and
   check 120-core shard coverage, queue address binding, queue publish/consume,
-  ticket wraparound, and malformed-descriptor rejection. The host test passes
-  with AddressSanitizer and UndefinedBehaviorSanitizer.
+  ticket wraparound, in-place activation packing, Q8 block mapping, and
+  malformed-descriptor rejection. The host test passes with AddressSanitizer
+  and UndefinedBehaviorSanitizer.
 - The existing Work dispatcher and ROOT gather path are retained as the
   checkpoint; no changes to that path are part of this rewrite phase.
 - Added `PioneerQwen35DataflowProgram.h`: a 120-core program descriptor and

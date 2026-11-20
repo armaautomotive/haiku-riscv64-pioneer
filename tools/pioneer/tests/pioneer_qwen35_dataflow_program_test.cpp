@@ -10,9 +10,22 @@ struct ContractOps {
 	bool ReadWeight(unsigned,uint32_t,uint8_t*,unsigned) { return false; }
 	bool PackActivation(unsigned,unsigned,unsigned,const float*,uint8_t*,unsigned) { return false; }
 	bool TensixBeginOutput(unsigned) { return false; }
-	bool TensixMatmul(unsigned,const uint8_t*,const uint8_t*) { return false; }
+	bool TensixMatmul(unsigned,unsigned,const uint8_t*,const uint8_t*) { return false; }
 	bool TensixFinishOutput(uint8_t*,unsigned) { return false; }
 	bool WriteOutput(unsigned,uint32_t,const uint8_t*,unsigned) { return false; }
+};
+
+struct PackTestOps {
+	bool PackActivation(unsigned type,unsigned inputs,unsigned chunk,
+		const float* source,uint8_t* output,unsigned bytes)
+	{
+		if ((type!=8 && type!=12 && type!=14) || inputs!=Hidden
+			|| bytes!=DataflowInputPageBytes || source[chunk*256]!=float(chunk*256))
+			return false;
+		for (unsigned i=0;i<bytes;i++) output[i]=uint8_t(chunk);
+		output[bytes-1]=uint8_t(chunk^0x5a);
+		return true;
+	}
 };
 
 static void CompileRoleInterfaces()
@@ -92,6 +105,18 @@ int main()
 		&& ticket==UINT32_MAX && readPage==local+program.circularBuffer[0].pageBytes);
 	assert(DataflowQueuePopFront(queues[0],ticket));
 	assert(controls[0].produced==0 && controls[0].consumed==0);
+	static uint8_t activationCache[DataflowActivationCacheBytes];
+	float* activation=reinterpret_cast<float*>(activationCache);
+	PackTestOps packOps{};
+	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
+	assert(DataflowPackActivationCache(program,queues[1],activationCache,packOps));
+	for (unsigned chunk=0;chunk<Hidden/256;chunk++) {
+		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
+		assert(activationCache[(chunk+1)*DataflowInputPageBytes-1]
+			==uint8_t(chunk^0x5a));
+	}
+	assert(DataflowActivationChunk(14,9)==9);
+	assert(DataflowActivationChunk(8,79)==9);
 	unsigned covered=0,splitOutputs=0;
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		assert(program.core[core].active);

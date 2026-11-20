@@ -25,10 +25,14 @@ enum : unsigned {
 	DataflowActivationCacheBytes=9216*sizeof(float),
 	DataflowQueueStateAddress=0x9c000,
 	DataflowQueueStateBytes=3*16,
+	DataflowActivationChunkInputs=256,
 	DataflowInputPageBytes=576,
 	DataflowOutputPageBytes=64,
 	DataflowLocalBufferEnd=0xa0000
 };
+static_assert((PioneerQwen35Projection::MaxInputs/DataflowActivationChunkInputs)
+	*DataflowInputPageBytes<=DataflowActivationCacheBytes,
+	"packed projection activations fit in the local activation cache");
 
 struct DataflowCircularBuffer {
 	unsigned id,address,pageBytes,pages,bytes;
