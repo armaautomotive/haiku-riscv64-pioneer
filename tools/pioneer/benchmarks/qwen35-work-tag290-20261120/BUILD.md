@@ -54,7 +54,9 @@ python3 -B tools/pioneer/build_qwen35_work.py \
 | Work client | `d8da309cdf9675c3e4e3610d2b6e6b99e0d7a519b091af26dadcf49d227d1c5d` | 304,848 |
 
 Tag90 was run once on the P100A and faulted before prefill or output. The
-candidate's sequence in the same 64-byte packet did not provide a safe peer
-wake/descriptor publication boundary. The one-packet protocol is rejected;
-do not replay it. Full hardware timing and recovery evidence is in
-[`RUN.md`](RUN.md).
+combined descriptor/doorbell protocol is rejected. The peer reported reason
+`0x90`, consistent with a wake marker becoming visible before preceding
+descriptor words, although the logs do not prove that ordering. After the Work
+STOP proof, generic dispatch closure failed while waiting for STOP completion
+at close phase 30; the exact peer/packet cause is not established. Full
+hardware timing and recovery evidence is in [`RUN.md`](RUN.md).

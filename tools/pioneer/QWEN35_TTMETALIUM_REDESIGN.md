@@ -119,12 +119,15 @@ restores the previously tested separate descriptor-then-doorbell order. Tag90
 did not produce output or a decode rate; the failure and recovery are recorded
 in `benchmarks/qwen35-work-tag290-20261120/RUN.md`.
 
-The failure also exposed a recovery gap: after the first fleet reset had begun,
-a restarted peer fault made Tag90's STOP path non-retryable. The faulted owner
-had to be cleared by a cold power cycle before the guarded stable-driver
-restore. The driver still needs a separately testable, root-only recovery path
-that can reacquire and recover a retained owner without rebooting. Do not call
-Tag90's existing retained-owner behavior recoverable.
+Tag90's fault was followed by a generic dispatch STOP failure at close phase
+30. The driver retained the owner and set its cold-recovery latch; a cold power
+cycle was then needed before the guarded stable-driver restore. The exact peer
+or packet that prevented STOP completion is not established. Tag91 restores
+the proven descriptor-then-doorbell path and completed two warm requests with
+clean unload and stable restoration without reboot. General recovery after an
+arbitrary retained-owner or close failure remains unimplemented; the current
+cold latch intentionally denies a new session and there is no root-only
+recovery ioctl yet.
 
 The earlier tag75 timing still identifies a much larger gap: the best
 verified result was about 0.12055 decode tok/s, far below the 100 tok/s goal.

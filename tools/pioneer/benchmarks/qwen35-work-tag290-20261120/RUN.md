@@ -39,11 +39,18 @@ words from the same packet had arrived, but the logs do not conclusively prove
 that ordering. The combined descriptor/doorbell protocol is rejected and must
 not be retried.
 
-STOP's initial fleet safety proof passed. Recovery then reset and restarted
-the peers; a restarted peer faulted during the readiness audit and the client
-reported non-retryable proof60. The kernel retained the Work owner and locked
-the driver cold: `driver64/tag90/generation59/cold1/active_owner1`. The model
+The Work client's STOP proof passed far enough to attempt dispatch-lease
+closure. Closure then failed at `closePhase=30`, while the generic dispatcher
+was waiting for its STOP operation to finish; `Q35WorkControl` reports this as
+`proof=60 detail=0x1e`. The driver retained the Work owner and latched the
+candidate cold: `driver64/tag90/generation59/cold1/active_owner1`. The model
 client exited. No other inference or 27B diagnostic process remained.
+
+The logs do not identify the exact peer or packet that prevented generic STOP
+completion. Because Tag90 changed descriptor and wake publication for the
+shared dispatch image, an interaction with generic STOP is plausible, but the
+precise close failure remains unproven. The earlier hypothesis that a peer
+failed during recovery readiness is withdrawn.
 
 ## Recovery
 
@@ -71,5 +78,7 @@ See `evidence/tag90-card/` for raw logs and post-recovery status.
 
 Tag90 did not produce valid output, clean in-place unload, prompt timing, or
 decode timing. The 100 tok/s goal remains unmet. Tag91 restores Tag89's
-separate descriptor-then-doorbell protocol; no claim of a no-reboot recovery
-fix is made yet.
+separate descriptor-then-doorbell protocol and passed two warm runs with clean
+unload and stable-driver restoration without reboot. That verifies the
+reverted path; it does not make the retained-owner cold latch generally
+recoverable after an arbitrary close failure.
