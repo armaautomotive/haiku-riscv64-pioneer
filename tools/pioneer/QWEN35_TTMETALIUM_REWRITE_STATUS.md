@@ -59,7 +59,8 @@ rewrite is implemented.
    the hardware benchmark and assistant integration phases.
 
 The latest pushed checkpoint before this rewrite is `1b2b57c561`.
-The latest pushed rewrite checkpoint is `6a8039dd00`.
+Rewrite checkpoints are pushed incrementally to `codex/qwen35-4b-p100a`; use
+that branch's current tip for the latest checkpoint.
 
 The RISC-V Haiku cross-compiler is not present in the configured workspace or
 Codex tool paths checked here, so current verification is host compilation
