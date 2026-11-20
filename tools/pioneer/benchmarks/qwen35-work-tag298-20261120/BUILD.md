@@ -27,7 +27,7 @@ python3 -B tools/pioneer/build_qwen35_work.py \
 | Candidate driver55 Tag98 | `7c755f518d0c215de4161fa2e736b3cf4eabb0423da5dca2741d7002a47ca99f` | 252,496 |
 | Reload guard | `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229` | 7,176 |
 | Default43 control | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` | 934,080 |
-| Work client | `79792acf48caa9796285536563908e3473` | 309,352 |
+| Work client | `79792acf48caa979628553656390b5d70b67628d0a8cb9f9dd3db74d1f8e3473` | 309,352 |
 
 The guarded hardware trial is pending. Begin from stable driver55 generation12
 after a fresh idle preflight confirms the 27B setup and model identities.
