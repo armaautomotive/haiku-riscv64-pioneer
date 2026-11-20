@@ -637,3 +637,15 @@ The client unloaded cleanly, and stable driver55 was restored at generation12
 without a reboot. Postflight verified no active owner and no trial lock. Full
 tag66 build and run evidence is in
 [`qwen35-work-tag266-20261119`](benchmarks/qwen35-work-tag266-20261119).
+
+## Tag67: O3 ROOT comparison
+
+Tag67 builds the ROOT image at `-O3` and leaves peers at `-Os`. The 73,576-byte
+ROOT image fits the fixed size limit. Two warm runs returned valid output on
+all 120 Tensix cores. Authentication took `69.038742` s, tokenization
+`12.896546` s, model load `226.282604` s, and prompt processing about
+`194.058` s per run. Decode took `139.706` and `139.703` s for 16 tokens,
+or `0.114526` and `0.114529` tokens/s. This is slower than O2 tag66's
+`0.11618` tokens/s, so O2 remains the fastest tested compiler setting. Stable
+driver55 was restored at generation14 without reboot; no owner or trial lock
+remained. See [`qwen35-work-tag267-20261119`](benchmarks/qwen35-work-tag267-20261119).

@@ -9,7 +9,7 @@ case "$output" in /*) ;; *) exit 2;; esac
 umask 077
 mkdir -m 700 "$output"
 optimization=${PIONEER_Q35_WORK_OPT_LEVEL:-s}
-case "$optimization" in s|1|2) ;; *) exit 2;; esac
+case "$optimization" in s|1|2|3) ;; *) exit 2;; esac
 flags="-std=c++17 -O$optimization -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32 -fstack-usage"
 diagnostic_flags=
 case "${PIONEER_Q35_TRANSFER_DIAGNOSTIC:-0}" in

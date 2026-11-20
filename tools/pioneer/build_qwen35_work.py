@@ -8,16 +8,16 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026111800010066'
+TAG = '2026111800010067'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--transfer-diagnostic', action='store_true',
                         help='capture the pending fixed NoC transfer on ROOT fault')
-    parser.add_argument('--device-opt-level', choices=('s', '1', '2'), default='s',
+    parser.add_argument('--device-opt-level', choices=('s', '1', '2', '3'), default='s',
                         help='Tensix ROOT C++ optimization level (default: s)')
-    parser.add_argument('--peer-opt-level', choices=('s', '1', '2'), default='s',
+    parser.add_argument('--peer-opt-level', choices=('s', '1', '2', '3'), default='s',
                         help='Tensix peer C++ optimization level (default: s)')
     parser.add_argument('haiku_build', type=Path)
     parser.add_argument('new_output', type=Path)
