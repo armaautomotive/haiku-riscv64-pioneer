@@ -9,8 +9,35 @@
 #include "../PioneerQwen35DataflowRms.h"
 #include "../PioneerQwen35DataflowRmsProgram.h"
 #include "../PioneerQwen35DataflowBlackholeRmsWorker.h"
+#include "../PioneerQwen35DataflowSilu.h"
+#include "../PioneerQwen35DataflowSiluProgram.h"
+#include "../PioneerQwen35DataflowBlackholeSiluWorker.h"
 
 using namespace PioneerQwen35;
+
+bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,
+	float& output)
+{
+	return DataflowSiluProduct(gate,up,output);
+}
+
+bool PioneerQwen35DataflowSiluProgramTargetCompileProbe(
+	const DataflowSiluProgram& program,unsigned core,
+	DataflowSiluInvocation& invocation)
+{
+	return DataflowSiluProgramBuilder::BindCore(program,core,invocation);
+}
+
+bool PioneerQwen35DataflowBlackholeSiluTargetCompileProbe(
+	const DataflowSiluInvocation& invocation)
+{
+	DataflowBlackholeSiluOps io;
+	return io.Bind(invocation) && PioneerQwen35DataflowSiluWorker(invocation,
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(
+			DataflowInputBufferAddress+DataflowInputPageBytes)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),io);
+}
 
 // Compile-only device adapter. Its methods deliberately contain no inference
 // math; this probe verifies that all role templates lower for the Work image's

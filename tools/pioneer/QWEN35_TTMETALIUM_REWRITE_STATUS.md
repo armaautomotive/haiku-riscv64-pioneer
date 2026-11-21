@@ -270,13 +270,13 @@ and silicon correctness/performance evidence.
 
 ## Current checkpoint: 2026-11-20
 
-The latest pushed rewrite checkpoint is `8007ead08d` (`Integrate hidden RMS
-across resident workers`). The offline rewrite has concrete Tensix matrix
-projection, device-side Q6_K token embedding, and device-side hidden RMS
-normalization across the resident 120-worker service. The root-only support
-surface still exposes primitives, not generation. ASan/UBSan worker, owner,
-program, and math checks pass; the Haiku RV32IMF compile and the driver60,
-reload-guard, and default-control builds pass. These are offline checks only.
+The latest pushed rewrite checkpoint before the current SiLU×Up step is
+`74b03ea215` (`Route Qwen35 Up projection to graph scratch`). The offline
+rewrite has concrete Tensix matrix projection, device-side Q6_K token
+embedding, device-side hidden RMS normalization, and a manifest-bound graph
+Up projection across the resident 120-worker service. The root-only support
+surface still exposes primitives, not generation. No hardware test or decode
+rate is available for the rewrite.
 
 The graph workspace now participates in the projection path. The projection
 request can select the Up-output sidecar, but the authority admits that target
@@ -290,10 +290,32 @@ builds pass. The driver60 SHA-256 is
 complete GGUF fixture test compiles but was not run because no local
 pinned-model path was available. No legacy Work changes are part of this step.
 
-Next implement device-side SiLU multiplication of the gate and Up tensors and
-the residual update. Continue offline rewrite work only. Defer Pioneer runs,
-performance benchmarking, and assistant integration until the rewrite graph
-is complete.
+The device-side SiLU×Up step is now implemented in the working tree. Its
+manifest-bound schedule assigns all 576 sixteen-row panels over the 120
+resident workers (96 workers handle five panels and 24 handle four). Each
+worker reads its gate and graph Up panels over NoC, computes SiLU(gate)×Up on
+the device, and writes the gate activation in place. The authority requires a
+completed exact Up projection and initialized gate activation, invalidates
+both inputs before execution, and commits the gate only after the owner audits
+all worker receipts, invocation readbacks, and queues. A root-only `SILU`
+control opcode exposes this primitive; it does not add generation or a CPU
+fallback.
+
+ASan/UBSan checks pass for the SiLU approximation, 120-core descriptor
+coverage, exactly-once worker simulation, authority state transitions, and
+owner orchestration. The Haiku RV32IMF compile passes with no A atomics or
+runtime helpers. The offline driver60, reload-guard, and default-control
+builds pass; driver60 SHA-256 is
+`d8435142c513f9b94290a706a17d440449fea8b8dd957c27ece2bf128a9873f2`, reload
+guard is `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`,
+and default-control is
+`5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
+These are offline checks only.
+
+Next implement the residual update and continue completing the decoder graph.
+Keep Pioneer runs, performance benchmarking, and assistant integration
+deferred until the rewrite graph is implemented and its offline correctness
+gates pass.
 
 No model has been loaded on the Pioneer through this rewrite, no rewritten
 operation has been validated on silicon, and there is no generated output or

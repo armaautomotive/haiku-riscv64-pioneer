@@ -53,7 +53,8 @@ enum DataflowServiceResult {
 	DataflowServiceClosed=17,
 	DataflowServiceResumeFailed=18,
 	DataflowServiceEmbeddingFailed=19,
-	DataflowServiceRmsFailed=20
+	DataflowServiceRmsFailed=20,
+	DataflowServiceSiluFailed=21
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the
@@ -234,6 +235,17 @@ public:
 		if (fProjectionOwner.RunRms(program,io)!=DataflowOwnerComplete) {
 			fPhase=PhaseFaulted;
 			return DataflowServiceRmsFailed;
+		}
+		return DataflowServiceComplete;
+	}
+
+	template<class IO>
+	DataflowServiceResult RunSilu(const DataflowSiluProgram& program,IO& io)
+	{
+		if (fPhase!=PhaseReady) return DataflowServiceInvalidState;
+		if (fProjectionOwner.RunSilu(program,io)!=DataflowOwnerComplete) {
+			fPhase=PhaseFaulted;
+			return DataflowServiceSiluFailed;
 		}
 		return DataflowServiceComplete;
 	}

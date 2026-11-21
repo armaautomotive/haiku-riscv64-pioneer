@@ -37,9 +37,18 @@ static uint32_t Signature(const DataflowCoreInvocation& invocation)
 	return value;
 }
 
+static uint32_t Signature(const DataflowSiluInvocation& invocation)
+{
+	const auto* bytes=reinterpret_cast<const uint8_t*>(&invocation);
+	uint32_t value=2166136261U;
+	for (unsigned i=0;i<sizeof(invocation);i++) value=(value^bytes[i])*16777619U;
+	return value;
+}
+
 struct MockOwnerIO {
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	uint32_t invocationSignature[DataflowCoreCount]{};
+	uint32_t siluInvocationSignature[DataflowCoreCount]{};
 	unsigned writes=0,publishes=0,waits=0,audits=0,acknowledgements=0;
 	unsigned begins=0,completes=0,aborts=0;
 	unsigned failPublishCore=UINT32_MAX;
@@ -81,6 +90,20 @@ struct MockOwnerIO {
 		completes++;
 		return !failComplete && sequence && program.Valid();
 	}
+	bool AuthorizeSilu(const DataflowSiluProgram& program) const
+	{
+		return programAuthorized && program.Valid();
+	}
+	bool BeginSilu(const DataflowSiluProgram& program)
+	{
+		begins++;
+		return !failBegin && program.Valid();
+	}
+	bool CompleteSilu(const DataflowSiluProgram& program,unsigned sequence)
+	{
+		completes++;
+		return !failComplete && sequence && program.Valid();
+	}
 
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& invocation)
 	{
@@ -95,6 +118,19 @@ struct MockOwnerIO {
 	{
 		return core<DataflowCoreCount && invocation.core==core
 			&& invocationSignature[core]==Signature(invocation);
+	}
+	bool WriteSiluInvocation(unsigned core,const DataflowSiluInvocation& invocation)
+	{
+		if (core>=DataflowCoreCount || invocation.core!=core || !invocation.Valid())
+			return false;
+		siluInvocationSignature[core]=Signature(invocation);
+		writes++;
+		return true;
+	}
+	bool SiluInvocationMatches(unsigned core,const DataflowSiluInvocation& invocation) const
+	{
+		return core<DataflowCoreCount && invocation.core==core
+			&& siluInvocationSignature[core]==Signature(invocation);
 	}
 
 	bool PublishCommand(unsigned core,unsigned sequence)
@@ -124,6 +160,18 @@ struct MockOwnerIO {
 	}
 
 	bool AuditProjection(const DataflowProjectionProgram& program,unsigned sequence,
+		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount])
+	{
+		if (!program.Valid()) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (receipts[core].state!=DataflowWorkerComplete
+				|| receipts[core].commandSequence!=sequence
+				|| receipts[core].completedSequence!=sequence) return false;
+		audits++;
+		return true;
+	}
+
+	bool AuditSilu(const DataflowSiluProgram& program,unsigned sequence,
 		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount])
 	{
 		if (!program.Valid()) return false;
@@ -197,6 +245,38 @@ int main()
 	assert(io.writes==DataflowCoreCount && io.publishes==DataflowCoreCount
 		&& io.waits==DataflowCoreCount && io.audits==1
 		&& io.acknowledgements==DataflowCoreCount);
+
+	DeviceLayout siluManifest{};
+	siluManifest.magic=LayoutMagic;
+	siluManifest.version=LayoutVersion;
+	siluManifest.context=128;
+	Rows(siluManifest.activation[0],Ffn,sizeof(float),0x04000000);
+	Rows(siluManifest.activation[1],Ffn,sizeof(float),0x06000000);
+	DataflowGraphWorkspace siluWorkspace{};
+	Rows(siluWorkspace.space[DataflowGraphResidualWorkspaceIndex],Hidden,
+		sizeof(float),0x20000000);
+	Rows(siluWorkspace.space[DataflowGraphUpWorkspaceIndex],Ffn,
+		sizeof(float),0x30000000);
+	assert(siluWorkspace.Valid(siluManifest));
+	DataflowSiluProgram siluProgram{};
+	assert(DataflowSiluProgramBuilder::Build(siluManifest,siluWorkspace,0,
+		TestRoutes,siluProgram));
+	MockOwnerIO siluIO{};
+	DataflowProjectionOwner siluOwner;
+	assert(siluOwner.Initialize(siluIO)==DataflowOwnerComplete);
+	assert(siluOwner.RunSilu(siluProgram,siluIO)==DataflowOwnerComplete);
+	assert(siluOwner.NextSequence()==1 && !siluOwner.Faulted()
+		&& siluIO.begins==1 && siluIO.completes==1
+		&& siluIO.writes==DataflowCoreCount
+		&& siluIO.publishes==DataflowCoreCount
+		&& siluIO.waits==DataflowCoreCount
+		&& siluIO.audits==1
+		&& siluIO.acknowledgements==DataflowCoreCount);
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowSiluInvocation expected{};
+		assert(DataflowSiluProgramBuilder::BindCore(siluProgram,core,expected)
+			&& siluIO.SiluInvocationMatches(core,expected));
+	}
 	MockOwnerIO beginFailureIO{};
 	DataflowProjectionOwner beginFailureOwner;
 	assert(beginFailureOwner.Initialize(beginFailureIO)==DataflowOwnerComplete);

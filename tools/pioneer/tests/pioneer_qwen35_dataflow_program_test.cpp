@@ -346,6 +346,15 @@ int main()
 		&& authority.PendingProjectionMatches(upProgram));
 	assert(authority.Complete(upProgram));
 	assert(!authority.Pending() && authority.GraphUpReady());
+	DataflowSiluProgram siluProgram{};
+	assert(authority.BuildSilu(1,siluProgram) && siluProgram.Valid());
+	assert(authority.BeginSilu(siluProgram));
+	assert(authority.Pending() && !authority.GraphUpReady()
+		&& !authority.ActivationReady(1)
+		&& authority.PendingSiluMatches(siluProgram));
+	assert(authority.CompleteSilu(siluProgram));
+	assert(!authority.Pending() && authority.ActivationReady(1)
+		&& authority.ActivationRows(1)==Ffn && !authority.GraphUpReady());
 
 	TensorSpace unregisteredWeight=weight;
 	unregisteredWeight.place.parts[0].address+=4096;

@@ -6,6 +6,7 @@
 #include "PioneerQwen35DataflowEmbeddingProgram.h"
 #include "PioneerQwen35DataflowRmsProgram.h"
 #include "PioneerQwen35DataflowGraphWorkspace.h"
+#include "PioneerQwen35DataflowSiluProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -16,7 +17,7 @@ namespace PioneerQwen35 {
 class DataflowProjectionAuthority {
 	enum : unsigned {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
-		PendingGraphProjection=4
+		PendingGraphProjection=4,PendingSilu=5
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -69,6 +70,20 @@ class DataflowProjectionAuthority {
 			|| !DataflowRowSpaceMatches(expected.input,program.input)
 			|| !DataflowRowSpaceMatches(expected.weight,program.weight)
 			|| !DataflowRowSpaceMatches(expected.output,program.output)) return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
+	}
+
+	bool SiluMatches(const DataflowSiluProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowSiluProgram expected{};
+		if (!DataflowSiluProgramBuilder::Build(fManifest,fGraphWorkspace,
+			program.gateSlot,fRoutes,expected)
+			|| !DataflowRowSpaceMatches(expected.gate,program.gate)
+			|| !DataflowRowSpaceMatches(expected.up,program.up)) return false;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
 				return false;
@@ -141,6 +156,50 @@ public:
 	{
 		return fBound && !fPending && program.inputSlot<ActivationBuffers
 			&& fActivationRows[program.inputSlot]>=Hidden && RmsMatches(program);
+	}
+
+	bool BuildSilu(unsigned gateSlot,DataflowSiluProgram& program) const
+	{
+		if (!fBound || fPending || gateSlot>=ActivationBuffers
+			|| !fGraphUpReady || fActivationRows[gateSlot]<Ffn
+			|| !DataflowSiluProgramBuilder::Build(fManifest,fGraphWorkspace,
+				gateSlot,fRoutes,program)) return false;
+		return AuthorizeSilu(program);
+	}
+
+	bool AuthorizeSilu(const DataflowSiluProgram& program) const
+	{
+		return fBound && !fPending && fGraphUpReady
+			&& program.gateSlot<ActivationBuffers
+			&& fActivationRows[program.gateSlot]>=Ffn
+			&& SiluMatches(program);
+	}
+
+	bool BeginSilu(const DataflowSiluProgram& program)
+	{
+		if (!AuthorizeSilu(program)) return false;
+		fActivationRows[program.gateSlot]=0;
+		fGraphUpReady=false;
+		fPending=true;
+		fPendingOutput=program.gateSlot;
+		fPendingKind=PendingSilu;
+		return true;
+	}
+
+	bool PendingSiluMatches(const DataflowSiluProgram& program) const
+	{
+		return fBound && fPending && fPendingKind==PendingSilu
+			&& program.gateSlot==fPendingOutput && SiluMatches(program);
+	}
+
+	bool CompleteSilu(const DataflowSiluProgram& program)
+	{
+		if (!PendingSiluMatches(program)) return false;
+		fActivationRows[program.gateSlot]=Ffn;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		return true;
 	}
 
 	bool BindValidatedModel(const DeviceLayout& manifest,
@@ -329,6 +388,10 @@ public:
 		if (!fBound || !fPending) return false;
 		if (fPendingKind==PendingGraphProjection) {
 			if (fPendingOutput!=DataflowGraphUpOutputSlot) return false;
+			fGraphUpReady=false;
+		} else if (fPendingKind==PendingSilu) {
+			if (fPendingOutput>=ActivationBuffers) return false;
+			fActivationRows[fPendingOutput]=0;
 			fGraphUpReady=false;
 		} else {
 			if (fPendingKind!=PendingProjection || fPendingOutput>=ActivationBuffers)

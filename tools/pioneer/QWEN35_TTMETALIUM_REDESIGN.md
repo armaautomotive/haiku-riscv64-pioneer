@@ -348,9 +348,24 @@ cover this output path, and the driver60, reload-guard, and default-control
 builds pass. The updated driver60 SHA-256 is
 `f7e22d02d4269000aca4ef7750b84db45051b3b0a5f792fda536956ed3b7299d`.
 
-The next rewrite step is the device-side gated activation and residual path.
-The full GGUF manifest test was not run because no local pinned-model path was
-available.
+The device-side SiLU×Up operation is now implemented in the working tree. Its
+manifest-bound program divides all 576 sixteen-row panels among all 120
+resident workers. Each worker reads gate and Up panels over NoC, computes
+SiLU(gate)×Up on the device, and writes the gate activation in place. The
+root-only `SILU` control validates that the exact Up projection and gate
+activation are ready; its all-core owner stages/readbacks descriptors, checks
+terminal receipts, runtime state, and drained queues, then commits the gate
+activation. An error invalidates the gate and Up readiness before recoverable
+service close. No host inference or fallback path was added.
+
+ASan/UBSan math, descriptor coverage, worker simulation (each panel written
+exactly once), authority, and 120-core owner checks pass. The RV32IMF target
+compile passes without A atomics or unresolved runtime helpers. Offline
+driver60, reload-guard, and default-control builds pass; the driver60 SHA-256
+is `d8435142c513f9b94290a706a17d440449fea8b8dd957c27ece2bf128a9873f2`.
+These checks do not include a physical run. The next rewrite step is the
+residual update. The full GGUF manifest test was not run because no local
+pinned-model path was available.
 
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are
