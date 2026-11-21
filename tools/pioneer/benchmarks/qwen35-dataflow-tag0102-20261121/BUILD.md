@@ -42,15 +42,33 @@ resident model load. The client validates each output's known `11751,13`
 prefix and repeatability, then explicitly closes the dataflow service and
 bank session.
 
-## Read-only preflight
+## First hardware attempt
 
-Pinned Haiku SSH to `10.0.0.247` succeeded. `ps` showed no 27B diagnostic or
-Qwen inference process. The metadata-only reload query returned:
+Pinned Haiku SSH to `10.0.0.247` succeeded. Before the exchange, the supported
+Haiku process listing showed no 27B diagnostic or Qwen inference process.
+Driver55 reported generation 14, `quiesced0 cold0 active_owner0 open_count1`.
+The 27B GGUF and the pinned 4B GGUF were present with their expected sizes.
+
+The guarded transaction installed variant60 tag `2026112100010102` at
+generation 15, without reboot. Authentication took 68.232158 s; vocabulary
+preparation took 12.463031 s and produced the known prompt IDs
+`760,6511,314,9338,369`. All 2,740,498,432 model bytes were transferred into
+resident bank storage. The subsequent model-bind ioctl (`0xaf47`,
+`TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND`) returned I/O error before model
+authority was bound or the service installed. No prompt processing, output,
+or decode-rate measurement was produced.
+
+The client explicitly closed the service and bank session with
+`unload_clean=1 state=2 active=0 cold=0 service_closed=1`. The wrapper then
+restored stable driver55 at generation 16 without reboot. Final metadata was:
 
 ```text
-P100A_RELOAD driver55 tag2026102100010012 generation14 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation16 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-No candidate has been installed, no model has been loaded, and no inference
-has run. This file records build and preflight evidence only, not a benchmark
-result.
+Raw state and client logs are archived under `evidence/tag0102-bind-failure/`.
+The driver-bind branch returns I/O error when dispatch preparation, fleet
+route proof, or core selection fails. The next rewrite step is to expose which
+preflight substage/core failed while keeping all route checks strict, then
+rebuild and take another guarded trial. The 100 tokens/s target remains
+unmeasured.

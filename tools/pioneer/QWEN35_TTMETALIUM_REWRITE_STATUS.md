@@ -23,13 +23,16 @@ for tokenization, performs inference through the 120-worker Tensix-backed
 service with no CPU inference fallback, and measures authentication, model
 load, prompt processing, and decode separately.
 
-The latest read-only Haiku check found no Qwen or 27B diagnostic process.
-Stable driver55 remains idle at generation 14 with tag
-`2026102100010012`. The 27B model file is still present and is checked by the
-new guarded trial script. No rewrite inference has run yet, so output validity
-and decode rate are unmeasured; 100 tokens/s has not been demonstrated. The
-next step is the one-shot tag0102 trial in
-`benchmarks/qwen35-dataflow-tag0102-20261121/BUILD.md`.
+The guarded tag0102 hardware attempt reached a full 2,740,498,432-byte model
+upload, then the model-bind ioctl returned I/O error during dispatch/fleet
+preflight. No service was installed, no tokens were generated, and no prompt
+or decode timing was produced. The client explicitly closed its session with
+`unload_clean=1 active=0 cold=0`; the wrapper restored stable driver55 at
+generation 16 without reboot. The 27B model file was checked in place before
+the trial. The failure and hashes are recorded in
+`benchmarks/qwen35-dataflow-tag0102-20261121/evidence/tag0102-bind-failure/`.
+Next, expose which fleet-preflight substage/core failed without relaxing the
+120-core route checks. The 100 tokens/s target remains unmeasured.
 
 ## Progress
 
