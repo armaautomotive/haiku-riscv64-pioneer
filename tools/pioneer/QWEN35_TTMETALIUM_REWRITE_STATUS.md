@@ -31,9 +31,10 @@ ioctl `0xAF56` returned `EINVAL`; the client diagnostic printed the request
 fields, but no prompt processing, valid output, decode timing, or tokens/s was
 produced. Unload again failed at stage9/core0/detail3, the restored-core idle
 proof. The client exited; the guarded wrapper retained the exclusive lock and
-stable-driver backup while the candidate reports generation3 `cold1
-active_owner1`. A cold recovery is pending. The 4B and 27B files retain their
-verified sizes. Run details and raw evidence are in
+stable-driver backup while the candidate reported generation3 `cold1
+active_owner1`. The guarded recovery helper restored stable driver55 at
+generation2; the lock is absent, and postflight confirmed both model sizes,
+64 CPUs, and full RAM. Run details and raw evidence are in
 [`benchmarks/qwen35-dataflow-tag0109-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0109-20261121/RUN.md).
 
 Tag0109's request-rejection diagnostic and bounded restore settle delay did

@@ -58,7 +58,10 @@ model load/upload `334.616263` s. Its first generation ioctl returned
 `EINVAL`; close again failed at stage9/core0/detail3
 (`DataflowServiceResumeIdleProofFailed`). No prompt processing, valid output,
 decode timing, or tokens/s was produced. The wrapper retained the exclusive
-lock and stable backup; fresh-boot recovery is pending. See [`RUN.md`](RUN.md)
-and the raw evidence. Tag0109 has not validated its diagnostic changes on
-hardware. The target remains two valid warm outputs and at least 100 decode
-tokens/s, with phase timings separated and clean unload.
+lock and stable backup. One authorized cold recovery then restored stable
+driver55 generation2 without changing SD media. The stable hash, absent lock,
+idle state, both model sizes, and full Haiku CPU/RAM configuration were
+verified. See [`RUN.md`](RUN.md) and the raw evidence. Tag0109 has not
+validated its diagnostic changes on hardware. The target remains two valid
+warm outputs and at least 100 decode tokens/s, with phase timings separated
+and clean unload.

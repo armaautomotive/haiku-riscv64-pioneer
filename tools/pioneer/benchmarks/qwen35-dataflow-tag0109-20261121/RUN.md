@@ -50,8 +50,15 @@ retaining the exclusive lock and the stable-driver backup.
 After the client and 27B diagnostic exited, a read-only snapshot confirmed no
 inference process, unchanged model file sizes, installed candidate hash
 `b87123aa…`, and stable backup hash
-`041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`. The raw
-client output, error, exit status, state, and pre-recovery snapshot are in
-[`evidence`](evidence/). A fresh boot is required before the guarded recovery
-helper can quiesce this cold candidate and restore stable driver55. The 100
-decode tokens/s goal remains unmet.
+`041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`. After
+one authorized OFF/ON and the saved disk-identity-aware, SD-free
+Linux-to-Haiku handoff, the guarded recovery helper observed fresh candidate
+generation1, quiesced it, and restored stable driver55 generation2. Postflight
+confirmed `cold0 active_owner0`, no exclusive lock, and matching installed
+and saved stable driver hashes
+`041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`. No
+inference or 27B process remained; Haiku reported all 64 CPUs and
+`137,034,936,320` bytes maximum RAM. The 4B and 27B files remain at their
+verified sizes. The post-recovery snapshot is in
+[`evidence/post-recovery.txt`](evidence/post-recovery.txt). The 100 decode
+tokens/s goal remains unmet.
