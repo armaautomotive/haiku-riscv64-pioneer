@@ -670,3 +670,25 @@ The earlier checkpoints below describe implementation history. Hardware
 correctness, warm-run output, measured throughput, and assistant integration
 remain separate milestones. Do not report legacy Work measurements as rewrite
 performance.
+
+## Current rewrite progress (2026-11-21)
+
+The tag0106 silicon trial authenticated, tokenized, uploaded the full 4B model,
+and bound its manifest, then stopped at worker 0 startup with the local-core
+route check failing. It produced no inference output or model-load, prompt, or
+decode timing. The post-cycle recovery helper restored stable driver55 at
+generation2 and removed the recovery lock. A read-only check confirmed the
+Pioneer is idle, with both the 4B and 27B model files intact.
+
+The next rewrite change drains startup results from all 120 workers after the
+first readiness failure, retaining the earliest worker diagnostic. This gives
+later workers time to reach a stable ready or startup-fatal state before the
+existing all-core stop audit runs. The focused owner and PCI-memory tests pass
+with AddressSanitizer and UndefinedBehaviorSanitizer, the RV32IMF role compile
+passes without A atomics or runtime helpers, and the offline driver/package
+build passes. The rebuilt driver SHA-256 is
+`531f419a9c6d213cdf75da0afd0e27e327c6750086cda0375d59e3684d8fd420`; the
+service text is unchanged. These checks do not establish silicon recovery.
+The route mismatch and exact stop-audit failure still need evidence. No warm
+output or decode rate exists; the 100 tokens/s goal remains unmet. Assistant
+integration remains deferred until the rewrite and benchmark are complete.

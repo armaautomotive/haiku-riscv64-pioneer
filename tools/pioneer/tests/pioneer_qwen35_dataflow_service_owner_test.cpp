@@ -46,7 +46,8 @@ struct MockDataflowIO {
 	DataflowEmbeddingInvocation embeddingInvocation[DataflowCoreCount]{};
 	DataflowRmsInvocation rmsInvocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
-	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0,resumeCount=0;
+	unsigned captureCount=0,writeCount=0,startCount=0,waitCount=0,stopCount=0,
+		restoreCount=0,resumeCount=0;
 	unsigned beginCount=0,completeCount=0;
 	unsigned failStartCore=UINT32_MAX,failIdleCore=UINT32_MAX;
 	unsigned failReadyCore=UINT32_MAX,failReadyPhase=1;
@@ -155,6 +156,7 @@ struct MockDataflowIO {
 	}
 	bool WaitWorkerReady(unsigned core,DataflowWorkerSnapshot& result)
 	{
+		waitCount++;
 		if (core>=DataflowCoreCount || !started[core]) return false;
 		if (core==failReadyCore) {
 			mailbox[core].state=DataflowWorkerFatal;
@@ -530,6 +532,8 @@ int main()
 		&& readyDiagnostic.core==29 && readyDiagnostic.state==DataflowWorkerFatal
 		&& readyDiagnostic.failure==DataflowFailureQueue
 		&& readyDiagnostic.phase==1);
+	assert(startupFailure.waitCount==DataflowCoreCount
+		&& startupFailure.startCount==DataflowCoreCount);
 	assert(startupFailureOwner.Close(startupFailure)==DataflowServiceClosed);
 	assert(startupFailure.restoreCount==DataflowCoreCount
 		&& startupFailure.resumeCount==1);

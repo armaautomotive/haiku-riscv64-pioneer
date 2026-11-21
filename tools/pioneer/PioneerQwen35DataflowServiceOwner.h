@@ -226,23 +226,36 @@ public:
 				return DataflowServiceStartFailed;
 			}
 		}
+		// Drain startup state from the whole fleet before returning a failure.
+		// A core can publish an early startup fault while later cores are still
+		// entering the service image. Stopping the owner scan at the first fault
+		// lets cleanup race those workers and can strand a partially started
+		// fleet. Keep the first diagnostic, but let every started core reach a
+		// readable ready/fatal state before Close performs its all-core audit.
+		bool startupReady=true;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
 			if (!io.WaitWorkerReady(core,snapshot)) {
-				SetDiagnostic(DataflowServiceDiagnosticWorkerWait,core,snapshot);
-				fPhase=PhaseFaulted;
-				return DataflowServiceReadyFailed;
+				if (startupReady)
+					SetDiagnostic(DataflowServiceDiagnosticWorkerWait,core,snapshot);
+				startupReady=false;
+				continue;
 			}
 			if (!DataflowWorkerSnapshotReady(snapshot)) {
-				SetDiagnostic(DataflowServiceDiagnosticWorkerSnapshot,core,snapshot);
-				fPhase=PhaseFaulted;
-				return DataflowServiceReadyFailed;
+				if (startupReady)
+					SetDiagnostic(DataflowServiceDiagnosticWorkerSnapshot,core,snapshot);
+				startupReady=false;
+				continue;
 			}
 			if (!io.CoreReady(core,snapshot)) {
-				SetDiagnostic(DataflowServiceDiagnosticWorkerProof,core,snapshot);
-				fPhase=PhaseFaulted;
-				return DataflowServiceReadyFailed;
+				if (startupReady)
+					SetDiagnostic(DataflowServiceDiagnosticWorkerProof,core,snapshot);
+				startupReady=false;
 			}
+		}
+		if (!startupReady) {
+			fPhase=PhaseFaulted;
+			return DataflowServiceReadyFailed;
 		}
 		if (fProjectionOwner.Initialize(io)!=DataflowOwnerComplete) {
 			for (unsigned core=0;core<DataflowCoreCount;core++) {
