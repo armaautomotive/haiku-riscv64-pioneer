@@ -27,6 +27,20 @@ llama inference context or CPU fallback.
 | Resident service text | `2e0e144040f9c29f9679d5300ff923847c75216b3bf0e577366be4e929e5f8c8` |
 | Reload guard | `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229` |
 | Default-control driver | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` |
+| Guarded trial wrapper | `94248a8295d86c115f671d34c5911228300e45581d3c84f41398501f2d20e7a8` |
+
+## Guarded hardware trial
+
+`pioneer_qwen35_dataflow_trial.sh` is the separate one-shot transaction for
+this client and candidate. It checks the pinned stable and candidate hashes,
+model identity and 27B file presence, process idleness, RAM/CPU health, and
+reload metadata before changing the installed driver. It keeps a recovery
+lock until the candidate has released the device and stable driver55 has been
+restored. It makes no power or storage changes. The client uses the
+five-token reference prompt and requests eight new tokens twice from one
+resident model load. The client validates each output's known `11751,13`
+prefix and repeatability, then explicitly closes the dataflow service and
+bank session.
 
 ## Read-only preflight
 

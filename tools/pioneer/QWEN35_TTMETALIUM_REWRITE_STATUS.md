@@ -11,9 +11,25 @@ Tenstorrent's per-worker BRISC programming pattern; it is not a claim that the
 Haiku image runs TT-Metalium or its separate NCRISC/TRISC kernels. Keep the
 checkpoint history on `codex/qwen35-4b-p100a`.
 
-During this phase, work only on rewrite code and its offline code checks.
-Defer Pioneer benchmark runs and assistant integration until the device-program
-rewrite is implemented.
+Complete the device-program rewrite before benchmarking; integrate with the
+assistant only after the hardware generation and throughput gates pass.
+
+## Current status (2026-11-21)
+
+The resident dataflow rewrite is connected to a standalone generation client.
+Checkpoint `09432b370b` is pushed to GitHub. Its offline variant-60 driver and
+Haiku client build successfully. The client uses the vocabulary library only
+for tokenization, performs inference through the 120-worker Tensix-backed
+service with no CPU inference fallback, and measures authentication, model
+load, prompt processing, and decode separately.
+
+The latest read-only Haiku check found no Qwen or 27B diagnostic process.
+Stable driver55 remains idle at generation 14 with tag
+`2026102100010012`. The 27B model file is still present and is checked by the
+new guarded trial script. No rewrite inference has run yet, so output validity
+and decode rate are unmeasured; 100 tokens/s has not been demonstrated. The
+next step is the one-shot tag0102 trial in
+`benchmarks/qwen35-dataflow-tag0102-20261121/BUILD.md`.
 
 ## Progress
 
@@ -607,11 +623,7 @@ default-control SHA-256:
 These are offline checks only. The operation has not run on the Pioneer and
 has no silicon correctness or performance evidence.
 
-Continue completing the recurrent/dense layer operators and decoder graph.
-Keep Pioneer runs, performance benchmarking, and assistant integration
-deferred until the rewrite graph is implemented and its offline correctness
-gates pass.
-
-No model has been loaded on the Pioneer through this rewrite, no rewritten
-operation has been validated on silicon, and there is no generated output or
-decode-rate result. Do not report the legacy Work rate as rewrite performance.
+The earlier checkpoints below describe implementation history. Hardware
+correctness, warm-run output, measured throughput, and assistant integration
+remain separate milestones. Do not report legacy Work measurements as rewrite
+performance.
