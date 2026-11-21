@@ -17,38 +17,38 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
-BRISC/Tensix service, with no CPU inference or fallback. Tag0117 loaded all
-`2740498432` resident model bytes, then failed its first core0 embedding read.
-Authentication took `99.823865` s, vocabulary and prompt tokenization
-`12.747341` s, model load `324.806932` s, and failed prompt processing
-`0.602222` s. Tag0118 added expected-counter capture without changing the
-64-byte mailbox or 36-byte control request. Its guarded one-run diagnostic
-loaded all resident model bytes, then failed the first core0 embedding read:
-observed counter0/index36 `0x00029066`, expected `0x00029067`. Authentication
-took `68.186682` s, tokenization `13.766015` s, model load `334.004328` s, and
-the failed prompt operation `0.615329` s. Neither run produced a token or
-decode rate; the two-warm benchmark has not started. Tag0118 cold-latched at
-generation3; after a fresh Haiku boot, guarded recovery restored stable55
-generation2, cleared the lock, and confirmed the 4B/27B files remain intact.
-Full build, focused ASan/UBSan tests, RV32IMF role compile, and `15712/18432`
-stack check pass. Tag0119 now carries a read-only completion-counter match
-mask plus initiator/queue state through the fixed 64-byte worker mailbox and
-a new query action; the 36-byte control request stays fixed. It also fixes a
-worker cleanup loop that wrote one word past `reserved[]` into `logicalCore`.
-The variant-60 build, focused ASan/UBSan tests, runtime-recovery test, and
-`15712/18432` stack check pass. Stable55 is idle at generation2. The next
-rewrite step is one guarded tag0119 diagnostic, not the throughput benchmark.
-Valid output, two warm runs, clean unload, in-place recovery, and 100 decode
-tokens/s remain open. See
+BRISC/Tensix service, with no CPU inference or fallback. The tag0119 one-run
+diagnostic loaded the full Qwen3.5-4B model, then failed the first core0
+embedding read. Authentication took `100.664302` s, tokenization `13.757776`
+s, model load `333.142334` s, and failed prompt processing `0.615593` s;
+decode was `0` s because no token was produced. No dataflow decode rate exists.
+The response counter at NoC0 `NIU_MST_RD_RESP_RECEIVED` was one behind and
+transaction ID0 remained outstanding. Tag0120 corrects the counter
+interpretation and records the failed read address, route, and size through a
+read-only query. It preserves the 64-byte worker mailbox and 36-byte control
+request. The full variant-60 build, RV32IMF role compile, focused ASan/UBSan
+fixtures, runtime-recovery fixture, and `15712/18432` stack check pass.
+
+The tag0119 candidate cold-latched at generation3 with `active_owner=1`; its
+recovery lock and stable-driver backup were retained. A reboot was requested,
+then the user reported an accidental power reset. After one authorized ON
+pulse, SSH still times out, ARP remains incomplete, and the serial console has
+no fresh boot banner. The relay is released and SD detached, but stable55
+generation2 has not been verified restored and the current board state is
+unknown. The 4B and 27B files were last confirmed intact before that reboot.
+Tag0120 is not installed or hardware-tested. Next: regain a fresh Haiku boot,
+run the guarded tag0119 recovery to stable55 generation2, verify idle state and
+both model files, then run one tag0120 diagnostic to capture the failed read
+identity. Keep the two-warm benchmark gated until the read path succeeds and
+the service unloads cleanly. Valid output, two warm runs, clean unload,
+in-place recovery, and 100 decode tokens/s remain open. See
 [`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
 [`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md),
-[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), and
+[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md),
 [`tag0119 BUILD`](benchmarks/qwen35-dataflow-tag0119-20261121/BUILD.md),
 [`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md), and
-prior outcomes in [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md),
-[`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
-[`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md), and
-[`tag0116 BUILD`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md).
+[`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md) /
+[`RUN`](benchmarks/qwen35-dataflow-tag0120-20261121/RUN.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt

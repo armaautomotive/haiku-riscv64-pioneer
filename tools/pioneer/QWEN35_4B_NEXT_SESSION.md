@@ -8,39 +8,43 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Current checkpoint: tag0119 built; one guarded diagnostic pending
+## Current checkpoint: tag0120 built; hardware recovery pending
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
 that rewrite is complete; benchmark acceptance and assistant integration
 follow afterward. The standalone Haiku client and resident BRISC/Tensix
 service use all 120 Tensix cores and have no CPU inference/fallback path.
 
-Tag0117 loaded all `2740498432` model bytes, then failed the first core0
-embedding read at completion-counter stage7/index36 with observed value
-`0x00029066`. Tag0118 added expected-counter capture in the fixed 64-byte
-worker mailbox and a read-only `QUERY_EXPECTED` action without changing the
-36-byte control request. Its one-run diagnostic loaded the full model, then
-failed the same read: observed `0x00029066`, expected `0x00029067`. Authentication
-took `68.186682` s, tokenization `13.766015` s, model load `334.004328` s,
-and failed prompt processing `0.615329` s. No valid output or decode rate
-exists. Guarded recovery restored stable driver55 generation2, cleared the
-lock, and confirmed the 4B/27B files remain intact.
+Tag0119 loaded the full model, then failed the first core0 embedding read.
+Authentication took `100.664302` s, tokenization `13.757776` s, model load
+`333.142334` s, and failed prompt processing `0.615593` s. It produced no
+token; decode time and dataflow decode rate are unavailable. The expected
+NoC0 read-response counter was one ahead of the observed value, with
+transaction ID0 outstanding. Tag0120 corrects the counter label and preserves
+the failed read's remote address, route, and size in the existing 64-byte
+worker mailbox, with a read-only `QUERY_READ_REQUEST`; the control request is
+still 36 bytes. Full variant-60 build, RV32IMF compile, focused ASan/UBSan,
+runtime-recovery checks, and the `15712/18432` stack check pass. Tag0120 has
+not been installed or run on the Pioneer.
 
-Tag0119 carries an 8-slot counter-match mask and read-only NoC initiator/queue
-state through the fixed mailbox and a new query action. It also fixes receipt
-cleanup that could overwrite the mailbox's `logicalCore`. Full variant-60
-build, service-owner/owner/embedding-worker ASan/UBSan tests, runtime-recovery
-test, and the `15712/18432` stack check pass. Stable55 is idle at generation2.
-The next step is one guarded tag0119 prompt diagnostic; the two-warm benchmark
-remains gated. See
-[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
-[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md),
-[`tag0119 BUILD`](benchmarks/qwen35-dataflow-tag0119-20261121/BUILD.md), and
-[`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md).
+Haiku accepted a reboot after tag0119 cold-latched at generation3 with
+`active_owner=1`; the recovery lock and stable-driver backup were retained.
+Following the reported accidental power reset, one ON pulse was sent. Haiku
+SSH still times out, ARP is incomplete, and serial shows no fresh boot banner.
+Relay status is released/open and SD detached; current board power and
+stable55 generation2 are unverified. The 4B and 27B files were last verified
+intact before reboot. First regain a fresh Haiku boot, then use the guarded
+tag0119 recovery helper to restore stable55 generation2 and verify idle state,
+no inference process/lock, and both model files. Only then stage tag0120 and
+run one diagnostic to capture the failed-read identity. Keep the two-warm
+benchmark gated on a successful diagnostic and clean unload. See
+[`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md),
+[`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md), and
+[`tag0120 RUN`](benchmarks/qwen35-dataflow-tag0120-20261121/RUN.md).
 
 The last valid output measurement remains a legacy Work-path result at
-`0.115` decode tokens/s. No dataflow run has yet generated a valid token or
-reached the 100 tokens/s target.
+`0.115` decode tokens/s. No dataflow run has produced a valid token or reached
+the 100 tokens/s target.
 
 ## Saved Pioneer instructions and access
 
@@ -52,22 +56,23 @@ Pioneer `10.0.0.247` SSH accounts, identity paths, and separate pinned host
 keys are documented locally in [`PIONEER_SSH_ACCESS.md`](PIONEER_SSH_ACCESS.md).
 Use strict host-key checking and the profile for the OS currently running.
 
-## Current verified hardware state
+## Current hardware state
 
-Haiku hrev99999 is reachable at `10.0.0.247` through the pinned Haiku key.
-After tag0118's failed diagnostic and recovery reboot, the guarded recovery
-helper restored stable driver55 generation2 and cleared the lock:
+No post-reboot Haiku state has been verified. The host is unreachable over the
+pinned SSH profile; serial has no fresh boot banner. The last known driver
+status before tag0119 was stable driver55 generation2:
 
 ```text
 P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-No inference process or exclusive trial lock remains. The Qwen3.5-4B and
-Qwen3.8-27B files remain at `2,740,937,888` and `18,973,870,528` bytes. The
-Tag0117 and tag0118 details are in
-[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md) and
-[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), with raw
-tag0118 run and recovery captures in its `evidence/` directory.
+Tag0119 later left the candidate at driver60 generation3, cold-latched with
+`active_owner=1`, and retained its recovery lock and stable-driver backup.
+The current process list, lock, driver status, and board power are unknown.
+Before tag0119, the Qwen3.5-4B and Qwen3.8-27B files were
+`2,740,937,888` and `18,973,870,528` bytes. Do not issue another driver or
+model command until Haiku is reachable and guarded recovery verifies the
+stable driver, idle owner, and both model files.
 
 ## Tag61: inner matrix receipt was overwritten
 
