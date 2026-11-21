@@ -79,6 +79,21 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || defined(TT_PIONEER_Q35_PROJECTION_PROBE))
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
+#if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112000010099ULL \
+	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
+	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
+	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
+	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD) \
+	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) \
+	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) \
+	|| defined(TT_PIONEER_Q35_WORK) || defined(TT_PIONEER_Q38_WORK_MODE))
+#error Qwen35 dataflow rewrite requires its separate all-core build identity and cannot include Work fallback
+#endif
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#include "PioneerQwen35DataflowPciMemory.h"
+#include "PioneerQwen35DataflowServiceImage.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 #if PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(TT_PIONEER_DRIVER_RELOAD) || defined(PIONEER_Q38_BF16_FULL_NATIVE) \
@@ -2766,6 +2781,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	unsigned runtimeCore=0;
 	bool fleetEnabled=false;
 	bool persistentHostStages=false;
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	PioneerStoreContext* qwen35DataflowContext=NULL;
+#endif
 	bool payloadBlocks=false;
 	area_id coordinatorArea=-1;
 	volatile uint32* coordinatorView=NULL;
@@ -3212,6 +3230,29 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (okay) runtimeCore=core;
 		return okay;
 	}
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	bool DataflowPanelMappingStable();
+	bool DataflowCoreServiceImageMatches(unsigned core);
+	bool DataflowCoreIdleForHold(unsigned core);
+	bool DataflowCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes);
+	bool SessionIdle();
+	bool ProveFleetRoutes();
+	bool CoreIdle(unsigned core);
+	bool CaptureCoreState(unsigned core);
+	void ReleaseCoreSnapshot(unsigned core);
+	bool HoldCore(unsigned core);
+	bool CoreHeld(unsigned core);
+	bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes);
+	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes);
+	bool StartCore(unsigned core);
+	bool WaitWorkerReady(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool StopAndAuditAll();
+	bool RestoreCoreState(unsigned core);
+	bool VerifyCoreStateRestored(unsigned core);
+	bool ResumeRestoredFleet();
+#endif
 	bool AllocateFleetWorker(unsigned worker) {
 		if (!fleetEnabled || worker>=120 || !runtimeMapped || runtimeBufferWords!=TT_Q8_BULK_SAVED_BUFFER_WORDS) return false;
 		if (fleetArea<B_OK) {
@@ -3536,6 +3577,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
+	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
+#endif
 #ifdef TT_PIONEER_Q35_WORK
 	PioneerQ35WorkBinding* q35Work=NULL;
 #endif
@@ -3690,6 +3735,9 @@ struct PioneerStoreContext {
 			baseline.baseline.baseline.baseline.control.control.telemetry,q38ClockMappingResult),q38Clock(q38ClockIO)
 #endif
 		{
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+		io.qwen35DataflowContext=this;
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		io.q38MutableContext=this;
 #endif
@@ -3697,6 +3745,10 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+		delete qwen35DataflowService;
+		delete qwen35DataflowMemory;
+#endif
 #ifdef TT_PIONEER_Q35_WORK
 		delete q35Work;
 #endif
@@ -3790,6 +3842,10 @@ struct PioneerStoreContext {
   ,bool controlledToken=false
 #endif
 		) {
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+		if (qwen35DataflowService && qwen35DataflowService->Started()
+			&& !qwen35DataflowService->Closed()) return true;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
   if(q38TokenNative && (q38TokenNative->Unsafe() || (!controlledToken && !q38TokenNative->Closed())))return true;
 #endif
@@ -3919,6 +3975,39 @@ struct PioneerStoreContext {
 			|| Pci().state==TT_PIONEER_MMIO_RESTORE_FAILED;
 #endif
 	}
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	PioneerQwen35::DataflowServiceResult InstallDataflowRewrite() {
+		if (qwen35DataflowMemory || qwen35DataflowService)
+			return PioneerQwen35::DataflowServiceInvalidState;
+		qwen35DataflowMemory=new(std::nothrow) PioneerQwen35DataflowPciMemory<PioneerSessionIO>(io);
+		qwen35DataflowService=new(std::nothrow) PioneerQwen35::DataflowServiceOwner;
+		if (!qwen35DataflowMemory || !qwen35DataflowService) {
+			delete qwen35DataflowService;qwen35DataflowService=NULL;
+			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
+			return PioneerQwen35::DataflowServiceInvalidState;
+		}
+		const PioneerQwen35::DataflowServiceImageView image={
+			PioneerQwen35::DataflowServiceImageBootWord,
+			PioneerQwen35::DataflowServiceTextWords,
+			unsigned(sizeof(PioneerQwen35::DataflowServiceTextWords)
+				/sizeof(PioneerQwen35::DataflowServiceTextWords[0]))};
+		const auto result=qwen35DataflowService->Install(image,io);
+		if (!qwen35DataflowService->Started()) {
+			delete qwen35DataflowService;qwen35DataflowService=NULL;
+			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
+		}
+		return result;
+	}
+	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
+		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
+		const auto result=qwen35DataflowService->Close(io);
+		if (qwen35DataflowService->Closed()) {
+			delete qwen35DataflowService;qwen35DataflowService=NULL;
+			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
+		}
+		return result;
+	}
+#endif
 	void Snapshot(tt_resident_session_result& r) {
 		r={}; r.version=1; r.state=TT_RESIDENT_SESSION_READY; r.active=1; r.bytes=bytes;
 		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
@@ -3931,6 +4020,10 @@ struct PioneerStoreContext {
 		r.cold=sColdRecoveryRequired;
 	}
 };
+
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#include "PioneerQwen35DataflowDriverBinding.inc"
+#endif
 
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 // PIONEER_Q38_CLOCK_SERVICE_BEGIN

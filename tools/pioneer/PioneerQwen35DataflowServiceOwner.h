@@ -105,6 +105,7 @@ public:
 	bool Ready() const { return fPhase==PhaseReady; }
 	bool Faulted() const { return fPhase==PhaseFaulted; }
 	bool Closed() const { return fPhase==PhaseClosed; }
+	bool Started() const { return fPhase!=PhaseEmpty; }
 	unsigned NextSequence() const { return fProjectionOwner.NextSequence(); }
 
 	template<class IO>
@@ -112,11 +113,10 @@ public:
 	{
 		if (fPhase!=PhaseEmpty) return DataflowServiceInvalidState;
 		if (!image.Valid()) return DataflowServiceInvalidImage;
-		fPhase=PhaseInstalling;
 		if (!io.SessionIdle() || !io.ProveFleetRoutes()) {
-			fPhase=PhaseEmpty;
 			return DataflowServicePreflightFailed;
 		}
+		fPhase=PhaseInstalling;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!io.CoreIdle(core)) {
 				fPhase=PhaseEmpty;

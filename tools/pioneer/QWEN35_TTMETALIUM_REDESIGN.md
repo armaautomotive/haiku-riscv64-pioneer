@@ -239,11 +239,25 @@ Its stop path first audits all 120 cores, requests shutdown only from cores
 running the exact resident image, waits for their stopped receipts, then holds
 the fleet before restoration. The fake-PCI test mixes resident workers with
 original dispatcher waiters and held cores, checks clean stop/restore/resume,
-and rejects fleet resume when any snapshot is missing. It is not yet connected
-to `PioneerSessionIO`: stable mapping, per-core original/service image and
-idle/NoC proofs, route audit, and Work-mode lifecycle remain production hooks.
-The four existing owner/service tests and the RV32IMF target compile also still
-pass.
+and rejects fleet resume when any snapshot is missing. It is now connected to
+`PioneerSessionIO` under the separate driver60 build identity
+(`2026112000010099`). The binding verifies the original all-core dispatch
+images and wait receipts before takeover, validates the compiled service image
+and local physical node ID while resident, and gates writes on stable ready
+mailboxes, drained queues, and idle NoCs. It restores all saved L1 panels and
+boot words before resuming the original reset states. The separate build
+rejects both Qwen Work implementations at compile time.
+
+The offline driver60 cross-build, reload-guard build, and default-driver
+control build pass. Candidate SHA-256:
+`160a0b85cbe6f01c9ab6a1f3469da94a44f67c96090a2e6bcad72656844530e8`; service
+text SHA-256 remains
+`10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`. The
+PCI mock passes the all-core capture, stop, restore, and resume audit. The
+binding covers install and clean unload only; model upload, projection
+authorization/auditing, in-flight projection recovery, and token decoding are
+still unimplemented. No image has been loaded on the card and no rewrite speed
+has been measured.
 The standalone service image builder completes with no imports, a 4-byte boot
 stub, and 25,532 bytes of worker text (SHA-256
 `10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`). This

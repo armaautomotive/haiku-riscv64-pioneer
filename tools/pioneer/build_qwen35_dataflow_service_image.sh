@@ -47,7 +47,7 @@ if symbols.get('qwen35_dataflow_entry') != 0x72000:
 words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', code))
 (out / 'PioneerQwen35DataflowServiceImage.h').write_text(
     '#pragma once\nnamespace PioneerQwen35 {\n'
-    f'inline constexpr unsigned DataflowServiceBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
+    f'inline constexpr unsigned DataflowServiceImageBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
     'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words + '};\n}\n',
     encoding='ascii')
 PY

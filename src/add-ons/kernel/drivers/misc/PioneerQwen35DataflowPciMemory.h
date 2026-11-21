@@ -155,6 +155,10 @@ class PioneerQwen35DataflowPciMemory {
 
 public:
 	explicit PioneerQwen35DataflowPciMemory(Raw& raw):fRaw(raw) {}
+	~PioneerQwen35DataflowPciMemory()
+	{
+		for (auto& snapshot:fSnapshots) ReleaseCoreSnapshot(snapshot);
+	}
 	PioneerQwen35DataflowPciMemory(const PioneerQwen35DataflowPciMemory&)=delete;
 	PioneerQwen35DataflowPciMemory& operator=(
 		const PioneerQwen35DataflowPciMemory&)=delete;

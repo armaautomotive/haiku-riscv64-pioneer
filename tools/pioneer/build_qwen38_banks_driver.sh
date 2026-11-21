@@ -390,12 +390,14 @@ case "${PIONEER_Q38_PANEL_DRIVER:-0}" in
   if [ "$PIONEER_Q38_PANEL_DRIVER" -ge 12 ]; then extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN"; variant=57; fi
   if [ "$PIONEER_Q38_PANEL_DRIVER" -ge 13 ]; then extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC"; variant=58; fi
   if [ "$PIONEER_Q38_PANEL_DRIVER" = 14 ]; then extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS"; variant=59; fi;;
+ 15) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK -DTT_PIONEER_EXPERIMENTAL_Q38_STREAM -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DPIONEER_QWEN35_DATAFLOW_REWRITE'; variant=60;;
  *) exit 2;;
 esac
 if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
  case "$variant" in
   50) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026111700010225 ] && [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ] || exit 2;;
   54|55|56|57|58|59) ;;
+  60) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026112000010099 ] || exit 2;;
   *) exit 2;;
  esac
  case "${PIONEER_DRIVER_BUILD_TAG:-}" in ''|*[!0-9a-f]* ) exit 2;; esac
@@ -408,6 +410,10 @@ case "${PIONEER_Q38_DISPATCH_PROFILE:-0}" in
     extra="$extra -DTT_PIONEER_Q38_DISPATCH_PROFILE";;
  *) exit 2;;
 esac
+if [ "$variant" = 60 ]; then
+ [ "${PIONEER_Q38_WORK_MODE:-0}" = 0 ] || exit 2
+ [ -z "${PIONEER_Q35_WORK_INCLUDE:-}" ] || exit 2
+fi
 if [ "${PIONEER_Q38_HOST_PHASE_PROFILE:-0}" = 1 ]; then extra="$extra -DTT_PIONEER_Q38_DISPATCH_PROFILE -DPIONEER_Q38_HOST_PHASE_PROFILE"; fi
 if [ "${PIONEER_Q38_BATCH4_FETCH_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BATCH4_FETCH_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_BATCH_RAW_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BATCH_RAW_QUALIFICATION"; fi
@@ -643,6 +649,12 @@ set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/pri
  -I"$build/objects/haiku/riscv64/release/system/kernel" \
  -I"$build/objects/haiku/riscv64/debug/system/kernel" \
  -I"$sdk/headers" -idirafter "$sdk/headers/posix"
+if [ "$variant" = 60 ]; then
+	mkdir -m 700 "$output"
+	dataflow_image="$output/qwen35-dataflow-service-image"
+	sh "$project/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$dataflow_image"
+	set -- "$@" -I"$dataflow_image"
+fi
 if [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ]; then
  [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 50:1:2026111700010225 ] || exit 2
  test -f "$PIONEER_Q35_PROJECTION_INCLUDE/PioneerQwen35ProjectionImage.h"
@@ -683,7 +695,7 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"
 done
 umask 077
-mkdir -m 700 "$output"
+[ -d "$output" ] || mkdir -m 700 "$output"
 for source in PioneerPciProfile tenstorrent_pci_probe; do
  "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -fstack-usage \
   -ffreestanding -finline -fno-semantic-interposition -fno-tree-vectorize -fno-use-cxa-atexit \
