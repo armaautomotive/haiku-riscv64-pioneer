@@ -37,15 +37,25 @@ bootstrap keeps its dispatch nonce at zero, while route proof rejected zero
 before verifying the exact idle receipt. Tag0104 removes that redundant
 condition while retaining the status-word, marker, and waiting-PC checks.
 Tag0103 unloaded cleanly and restored stable driver55 at generation 18
-without reboot. The tag0104 driver built offline; a new idle preflight is
-required before its hardware trial. Tag0104 then passed model binding and
+without reboot. Tag0104 passed model binding and
 route proof but stopped during service installation; it unloaded cleanly and
 restored stable driver55 at generation 20. Inspection found the same
 zero-nonce rejection in the install-time idle check. Tag0105 removes it and
-prints the service-install result/state. Its offline build is pushed; stable
-driver55 remains idle at generation 20 pending another guarded trial. No
-tokens or decode rate have yet been produced; 100 tokens/s remains
-unmeasured.
+prints the service-install result/state. On-card tag0105 authenticated and
+tokenized the prompt, uploaded all 2,740,498,432 bytes, bound the model, and
+passed fleet route proof. Service install then returned result 11
+(`DataflowServiceReadyFailed`), before prompt processing or token output.
+Cleanup could not release the owner; the wrapper retained the recovery lock
+and stable-driver backup. No model-load duration, valid output, prompt time,
+or decode rate was produced.
+
+The authorized Linux-to-Haiku handoff restored Haiku hrev99999 with 64 CPUs
+and 137,034,936,320 bytes of RAM, without changing SD media. The tag0105
+candidate is now idle at generation 1 with `cold0`; its exact stable041 backup
+and failure logs remain preserved. A guarded post-cycle recovery helper is
+being added to restore stable driver55 before the next candidate. The 4B and
+27B model files retain their verified sizes. The target remains 100 decode
+tokens/s; no decode-rate measurement exists yet.
 
 ## Progress
 
@@ -371,16 +381,18 @@ rejection, argmax authorization and owner barriers, full decoder sequencing,
 prompt generation, EOS, context bounds, and phase timing. The RV32IMF target
 compile and variant-60 driver, resident service image, reload-guard, and
 default-control builds pass. The resident service text is 52,900 bytes and
-fits the 57,344-byte region. The only Pioneer contact so far for this checkpoint
-was read-only preflight; no model was loaded or run. Silicon output, model load
-time, prompt time, decode throughput, and the 100 tokens/sec target remain
-unmeasured.
+fits the 57,344-byte region. Tag0105 was the first hardware install attempt for
+this request-level client. It uploaded and bound the model but failed before
+worker readiness, so no silicon output, prompt time, or decode throughput was
+produced. The verified failure and post-cycle recovery state are recorded in
+`benchmarks/qwen35-dataflow-tag0105-20261121/`.
 
 The offline request/generation loop and standalone benchmark client are
-implemented. The 2026-11-21 read-only preflight verified that the prior 27B
-diagnostic had exited and the stable driver was idle. The next step is the
-guarded variant-60 hardware trial, followed by two valid warm outputs and a
-clean service/session unload.
+implemented. The initial preflight verified that the prior 27B diagnostic
+had exited and stable driver55 was idle. The first tag0105 hardware trial
+reached service startup and reported worker-readiness failure. The immediate
+next step is stable-driver restoration, then an instrumented repair of
+service-startup rollback before another guarded hardware trial.
 
 The dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS
