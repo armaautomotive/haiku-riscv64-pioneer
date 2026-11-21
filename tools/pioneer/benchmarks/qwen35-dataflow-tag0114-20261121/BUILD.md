@@ -38,17 +38,17 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
   object contains no A-extension atomics or unresolved runtime helpers.
 - The runtime audit detail codes are: `1` context, `2` mapping, `3` service
   image, `4` reset, `5` dispatch, `6` local route, `7` NoC metadata, `8` route,
-  `9` runtime source proof, `10` service PC, `11` Tensix idle proof. The detail
-  occupies previously unused bits in the existing diagnostic word.
+  `9` runtime source proof, `10` service PC, `11` resident NoC idle proof.
+  Despite the old label, this checks NoC command/queue status registers; it is
+  not a Tensix matrix-engine idle proof. Detail `11` on the card followed the
+  failed embedding-weight read and showed that NoC quiet had not been proven.
 
 ## Hardware status
 
-Tag0114 has not run on the card. Tag0113's preceding hardware trial loaded the
-full model and failed at core0 embedding with failure7 (`EmbeddingWeightRead`).
-Its all-core recovery audit stopped at runtime-instability stage6/core0 and
-the wrapper retained the candidate, stable backup, and lock. The authorized
-fresh boot and guarded restore have returned the card to stable55 generation2,
-idle, with the lock cleared; both model files remain intact. This did not
-verify in-place recovery. Tag0114 is ready for a fresh guarded trial from that
-stable state. See
-[`tag0113 RUN`](../qwen35-dataflow-tag0113-20261121/RUN.md).
+Tag0114 loaded the full model, then failed on core0's first embedding weight
+read. QUERY/RECOVER identified runtime audit stage6/core0/detail11, the
+resident NoC idle check; CLOSE failed the core0 stop audit. Its wrapper retained
+the cold candidate, exact stable backup, and lock. The attempted user power
+reset did not clear the latch, and an authorized host reboot was required.
+See [`tag0114 RUN`](RUN.md) for timings and recovery state. The stable55 restore
+is pending the SD-free Haiku handoff; the 27B and 4B files are intact.

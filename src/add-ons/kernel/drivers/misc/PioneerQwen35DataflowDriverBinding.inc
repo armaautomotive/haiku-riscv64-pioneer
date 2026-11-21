@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRuntimeRecovery.h"
+
 enum PioneerQwen35RuntimeAuditDetail : unsigned {
 	PioneerDataflowRuntimeDetailContext=1,
 	PioneerDataflowRuntimeDetailMapping=2,
@@ -12,7 +14,7 @@ enum PioneerQwen35RuntimeAuditDetail : unsigned {
 	PioneerDataflowRuntimeDetailRoute=8,
 	PioneerDataflowRuntimeDetailSources=9,
 	PioneerDataflowRuntimeDetailServicePC=10,
-	PioneerDataflowRuntimeDetailTensixIdle=11
+	PioneerDataflowRuntimeDetailNoCIdle=11
 };
 
 static bool
@@ -193,7 +195,7 @@ PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core,
 	if (!PioneerQwen35DataflowServicePc(io))
 		return fail(PioneerDataflowRuntimeDetailServicePC);
 	if (!BlackholeResidentIdle(io))
-		return fail(PioneerDataflowRuntimeDetailTensixIdle);
+		return fail(PioneerDataflowRuntimeDetailNoCIdle);
 	return true;
 }
 
@@ -1520,15 +1522,15 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 	auto inspect=[&](unsigned core,PioneerQwen35::DataflowWorkerSnapshot& observed,
 		bool& terminal) {
 		terminal=false;
-		unsigned runtimeDetail=0;
-		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core,&runtimeDetail))
-			return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core,
-				runtimeDetail);
 		if (!ReadWorkerSnapshot(core,observed))
 			return fail(PioneerQwen35::DataflowRecoveryAuditSnapshotUnreadable,core);
 		if (PioneerQwen35::DataflowWorkerSnapshotReady(observed)) {
 			if (observed.commandSequence>sequence)
 				return fail(PioneerQwen35::DataflowRecoveryAuditSequenceAhead,core);
+			unsigned runtimeDetail=0;
+			if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core,&runtimeDetail))
+				return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core,
+					runtimeDetail);
 			if (!PioneerQwen35DataflowQueuesDrained(*this,core))
 				return fail(PioneerQwen35::DataflowRecoveryAuditReadyQueuesNotDrained,
 					core);
@@ -1545,6 +1547,22 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 			return fail(PioneerQwen35::DataflowRecoveryAuditInvalidReceipt,core);
 		if (!PioneerQwen35DataflowQueuesBalanced(*this,core,true))
 			return fail(PioneerQwen35::DataflowRecoveryAuditQueuesUnbalanced,core);
+		// A failed embedding weight read is read-only and can leave its NoC
+		// completion pending after the worker has published its failure receipt.
+		// Wait only for those read status registers to drain; never clear or reset
+		// hardware state. Other failure classes retain the immediate strict audit.
+		if (observed.state==PioneerQwen35::DataflowWorkerFailed
+			&& observed.failure==PioneerQwen35::DataflowFailureEmbeddingWeightRead) {
+			unsigned idleDetail=0;
+			if (!PioneerQwen35::DataflowRuntimeWaitForNoCIdle(*this,core,
+				PioneerQwen35::DataflowRuntimeRecoveryPollLimit,idleDetail))
+				return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core,
+					idleDetail);
+		}
+		unsigned runtimeDetail=0;
+		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core,&runtimeDetail))
+			return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core,
+				runtimeDetail);
 		terminal=true;
 		return true;
 	};

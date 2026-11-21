@@ -17,23 +17,25 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
-BRISC/Tensix service, with no CPU inference or fallback. Tag0113's full build,
-RV32IMF compile, focused ASan/UBSan tests, and 15456/18432-byte stack check
-passed. Its guarded hardware trial loaded the full model in 330.909273 s, then
-failed core0 embedding with `EmbeddingWeightRead` failure7. QUERY/RECOVER
-reported runtime audit stage6/core0; CLOSE failed its core0 stop audit. The
-wrapper retained tag0113, the stable55 backup, and the exclusive lock because
-the candidate entered `cold1 active_owner1`. A fresh boot and guarded restore
-have since returned the card to stable55 generation2, idle, with the lock
-cleared; this does not meet the recover-without-reboot requirement. Tag0114
-preserves the fixed 64-byte mailbox and adds a runtime-stability subcheck code to the existing owner
-diagnostic. Its offline build and focused sanitizer, owner, service-owner, and
-RV32IMF tests pass. This localizes the next recovery check; it does not yet
-fix or validate in-place recovery. No valid output, completed prompt time,
-decode time, or tokens/s exists. The 100 tokens/s target and clean-unload gate
-remain open. Tag0114 has not run on hardware yet. See
+BRISC/Tensix service, with no CPU inference or fallback. Tag0114's full model
+load completed in `329.758232` s, but the first prompt embedding failed on
+core0 (`EmbeddingWeightRead` failure7); partial prompt processing took
+`0.609034` s. No valid token or decode rate was produced. QUERY/RECOVER failed
+runtime audit stage6/core0/detail11, and CLOSE failed its core0 stop audit.
+The wrapper retained the candidate, exact stable55 backup, and lock. The user's
+accidental power reset did not clear the fault: Haiku still reported candidate
+generation3 `cold1 active_owner1`. An authorized host reboot has reached the
+pinned Linux environment; the next step is the SD-free Haiku handoff and
+guarded stable55 restore. The 27B model remains preserved. Tag0115 changes only
+recovery handling for this failed read: it waits a bounded time for read-only
+NoC status to drain, then applies the same strict audit. It never clears NoC
+commands or resets cores. Offline build, focused ASan/UBSan recovery tests,
+RV32IMF compile, and the `15456/18432`-byte stack check pass. Hardware
+recovery, valid output, two warm runs, clean unload, and the 100 tokens/s target
+remain open. See
 [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md) and
-[`tag0114 BUILD`](benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md).
+[`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
+[`tag0115 BUILD`](benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -104,21 +106,42 @@ reported `cold1 active_owner1`. Its run record has the distinct authentication,
 vocabulary, model-load, and failed-prompt timings; decode was not reached.
 See [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md).
 
-Tag0114 is the current offline rewrite checkpoint. It identifies which of the
-runtime-stability subchecks rejects recovery, propagating that detail through
-unused bits in the existing request diagnostic. The 64-byte mailbox and request
-size are unchanged, and all safety checks remain enabled. The full variant-60
-driver/client/service build, RV32IMF compile, ASan/UBSan owner and service-owner
-tests pass; the stack bound remains 15456/18432 bytes. Driver SHA-256 is
-`ea4fa51d250c143bd5144156aa6aba71f43e11c9f1c89ece41280ba7a08c3964`; client
+Tag0114 is the hardware-tested recovery-diagnostic checkpoint. It preserved
+the fixed 64-byte mailbox and ioctl request size, and added the subcheck
+detail. Its failed card run and timings are in
+[`benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md).
+Tag0115 is the current offline rewrite checkpoint. It adds the bounded
+read-only NoC drain wait for failure7 before repeating the strict audit. The
+full variant-60 build, focused recovery ASan/UBSan test, RV32IMF compile, and
+`15456/18432` stack bound pass. Driver SHA-256 is
+`52a4a16ceb170767089edac960925aac0fa549160f47cfd949ba657f25e21885`; client
 SHA-256 is `80d28f4d75a48612773b07339010308ced09e8c8debf8e7708c35b85f7908da5`.
-Tag0114 has not run on hardware yet. The current card remains cold-latched on
-tag0113 with the guarded lock and stable backup intact. In-place recovery,
-two valid warm outputs, clean unload, and 100 decode tokens/s are all still
-unverified. See
-[`benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md).
+The card still needs the stable55 restore before tag0115 can be installed.
+See [`benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md).
 
 ## Progress
+
+- 2026-11-21 (tag0115, bounded read recovery): Added a wait that reads only
+  the four resident NoC initiator command registers and 32 queue-status
+  registers, and only for worker failure7 (`EmbeddingWeightRead`). A stuck
+  status returns a register-index detail without modifying hardware state; a
+  quiet status still must pass the existing runtime audit. The fixed mailbox
+  and request sizes are unchanged. The recovery ASan/UBSan test, RV32IMF
+  compile, complete build, and `15456/18432` conservative stack audit pass.
+  Driver SHA-256 is
+  `52a4a16ceb170767089edac960925aac0fa549160f47cfd949ba657f25e21885`.
+  Hardware trial is pending stable55 restoration. Details are in
+  `benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`.
+
+- 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
+  vocabulary load and prompt tokenization `13.168584` s, full model load
+  `329.758232` s, and the failed prompt operation `0.609034` s. Core0 failed
+  embedding weight read (failure7, phase5); no valid output or decode rate was
+  produced. QUERY/RECOVER stopped at stage6/detail11 (resident NoC idle), and
+  CLOSE failed the core0 stop audit. The accidental power reset left the
+  Haiku candidate at generation3 `cold1 active_owner1`. The authorized host
+  reboot reached pinned Linux for the SD-free recovery handoff. See
+  `benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md`.
 
 - 2026-11-21 (tag0114, recovery subcheck diagnostic): Split the all-core
   runtime-stability predicate into named failure details and returned the
