@@ -19,6 +19,7 @@
 #include "../PioneerQwen35DataflowDenseLayerSequence.h"
 #include "../PioneerQwen35DataflowDecoderSequence.h"
 #include "../PioneerQwen35DataflowBlackholeArgmaxWorker.h"
+#include "../PioneerQwen35DataflowGenerationSequence.h"
 
 using namespace PioneerQwen35;
 
@@ -111,6 +112,20 @@ bool PioneerQwen35DataflowBlackholeArgmaxTargetCompileProbe(
 	return io.Bind(invocation) && PioneerQwen35DataflowArgmaxWorker(
 		invocation,1,reinterpret_cast<float*>(static_cast<uintptr_t>(
 			DataflowActivationCacheAddress)),mailbox,io);
+}
+
+bool PioneerQwen35DataflowGenerationSequenceTargetCompileProbe(unsigned token)
+{
+	struct Clock { uint64_t NowMicros() { return 0; } } clock;
+	TargetFfnAuthority authority;
+	TargetFfnService service;
+	int io=0;
+	const unsigned prompt[1]={token};
+	unsigned output[1]{},outputCount=0,stage=0;
+	uint64_t promptTime=0,decodeTime=0;
+	return DataflowGenerationSequence::Run(prompt,1,1,Vocabulary,0,
+		authority,service,io,output,outputCount,stage,clock,promptTime,decodeTime)
+		==DataflowGenerationSequenceComplete && outputCount==1;
 }
 
 bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,

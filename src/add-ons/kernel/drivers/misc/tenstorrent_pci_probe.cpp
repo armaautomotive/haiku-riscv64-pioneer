@@ -80,7 +80,7 @@
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010101ULL \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010102ULL \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -97,6 +97,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRecurrentLayerSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowDenseLayerSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowDecoderSequence.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGenerationSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35ManifestValidation.h"
 #include "PioneerQwen35DataflowModelProtocol.h"
 #include "PioneerQwen35DataflowPciMemory.h"
@@ -8940,6 +8941,120 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 }
 
 static status_t
+Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_generate))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_generate*)malloc(
+		sizeof(tt_qwen35_dataflow_generate));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| !request->prompt_count || !request->max_new_tokens
+		|| request->prompt_count>PioneerQwen35::MaxPositions
+		|| request->max_new_tokens>PioneerQwen35::MaxPositions
+			-request->prompt_count+1
+		|| request->input_slot>=PioneerQwen35::ActivationBuffers
+		|| request->eos_token>PioneerQwen35::Vocabulary
+		|| !request->prompt_tokens || !request->output_tokens
+		|| request->output_count || request->result || request->stage
+		|| request->next_sequence || request->state || request->recovery_required
+		|| request->prompt_time_us || request->decode_time_us) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	const unsigned promptBytes=request->prompt_count*sizeof(uint32_t);
+	const unsigned outputBytes=request->max_new_tokens*sizeof(uint32_t);
+	const uintptr_t promptAddress=(uintptr_t)request->prompt_tokens;
+	const uintptr_t outputAddress=(uintptr_t)request->output_tokens;
+	const uintptr_t requestAddress=(uintptr_t)data;
+	if (promptAddress>UINTPTR_MAX-promptBytes
+		|| outputAddress>UINTPTR_MAX-outputBytes
+		|| requestAddress>UINTPTR_MAX-sizeof(*request)
+		|| (outputAddress<requestAddress+sizeof(*request)
+			&& requestAddress<outputAddress+outputBytes)) {
+		free(request);
+		return B_BAD_VALUE;
+	}
+	auto* prompt=(uint32_t*)malloc(promptBytes);
+	auto* output=(uint32_t*)malloc(outputBytes);
+	if (!prompt || !output) {
+		free(prompt);
+		free(output);
+		free(request);
+		return B_NO_MEMORY;
+	}
+	status=user_memcpy(prompt,(const void*)promptAddress,promptBytes);
+	if (status!=B_OK) {
+		free(prompt);
+		free(output);
+		free(request);
+		return status;
+	}
+	for (unsigned i=0;i<request->prompt_count;i++) {
+		if (prompt[i]>=PioneerQwen35::Vocabulary) {
+			free(prompt);
+			free(output);
+			free(request);
+			return B_BAD_VALUE;
+		}
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) {
+		free(prompt);
+		free(output);
+		free(request);
+		return status;
+	}
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()) {
+		status=B_NOT_ALLOWED;
+	} else {
+		unsigned outputCount=0,stage=0;
+		struct Clock {
+			uint64_t NowMicros() const { return uint64_t(system_time()); }
+		} clock;
+		uint64_t promptTime=0,decodeTime=0;
+		const auto generated=PioneerQwen35::DataflowGenerationSequence::Run(
+			prompt,request->prompt_count,request->max_new_tokens,
+			request->eos_token,request->input_slot,
+			*context->qwen35DataflowAuthority,
+			*context->qwen35DataflowService,context->io,output,outputCount,stage,
+			clock,promptTime,decodeTime);
+		request->output_count=outputCount;
+		request->stage=stage;
+		request->prompt_time_us=promptTime;
+		request->decode_time_us=decodeTime;
+		request->result=generated
+			==PioneerQwen35::DataflowGenerationSequenceComplete
+			?PioneerQwen35::DataflowServiceComplete
+			:PioneerQwen35::DataflowServiceGenerationFailed;
+		context->qwen35DataflowLastResult=request->result;
+		request->next_sequence=context->qwen35DataflowService->NextSequence();
+		request->state=context->qwen35DataflowService->Faulted()
+			?TT_QWEN35_DATAFLOW_STATE_FAULTED
+			:TT_QWEN35_DATAFLOW_STATE_READY;
+		request->recovery_required=context->qwen35DataflowService->Faulted();
+		if (outputCount)
+			status=user_memcpy((void*)outputAddress,output,
+				outputCount*sizeof(uint32_t));
+		if (status==B_OK) status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock);
+	free(prompt);
+	free(output);
+	free(request);
+	return status;
+}
+
+static status_t
 Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!data) return B_BAD_VALUE;
@@ -8965,7 +9080,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 				|TT_QWEN35_DATAFLOW_CAP_RECURRENT_LAYER
 				|TT_QWEN35_DATAFLOW_CAP_DENSE_ATTENTION
 				|TT_QWEN35_DATAFLOW_CAP_DENSE_LAYER
-				|TT_QWEN35_DATAFLOW_CAP_DECODER_SEQUENCE,
+				|TT_QWEN35_DATAFLOW_CAP_DECODER_SEQUENCE
+				|TT_QWEN35_DATAFLOW_CAP_GENERATION,
 			TT_QWEN35_DATAFLOW_PROJECTION_MATRIX,
 			TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING};
 		status=user_memcpy(data,&support,sizeof(support));
@@ -9001,6 +9117,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		return Qwen35DataflowDenseLayer(cookie,data,length);
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_DECODER_SEQUENCE)
 		return Qwen35DataflowDecoderSequence(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_GENERATE)
+		return Qwen35DataflowGenerate(cookie,data,length);
 	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
 	tt_qwen35_dataflow_request request={};

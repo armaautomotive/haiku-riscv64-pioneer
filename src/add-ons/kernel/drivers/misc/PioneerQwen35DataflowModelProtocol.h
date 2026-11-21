@@ -22,9 +22,10 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DENSE_ATTENTION (B_DEVICE_OP_CODES_END + 0x8844)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DENSE_LAYER (B_DEVICE_OP_CODES_END + 0x8845)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DECODER_SEQUENCE (B_DEVICE_OP_CODES_END + 0x8846)
+#define TT_PCI_PROBE_QWEN35_DATAFLOW_GENERATE (B_DEVICE_OP_CODES_END + 0x8847)
 
 enum : uint32_t {
-	TT_QWEN35_DATAFLOW_MODEL_ABI=4,
+	TT_QWEN35_DATAFLOW_MODEL_ABI=5,
 	TT_QWEN35_DATAFLOW_RESIDUAL_SAVE=1,
 	TT_QWEN35_DATAFLOW_RESIDUAL_ADD=2,
 	TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE=256U,
@@ -33,7 +34,8 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_CAP_RECURRENT_LAYER=2048U,
 	TT_QWEN35_DATAFLOW_CAP_DENSE_ATTENTION=4096U,
 	TT_QWEN35_DATAFLOW_CAP_DENSE_LAYER=8192U,
-	TT_QWEN35_DATAFLOW_CAP_DECODER_SEQUENCE=16384U
+	TT_QWEN35_DATAFLOW_CAP_DECODER_SEQUENCE=16384U,
+	TT_QWEN35_DATAFLOW_CAP_GENERATION=32768U
 };
 
 struct tt_qwen35_dataflow_model_bind {
@@ -117,6 +119,13 @@ struct tt_qwen35_dataflow_decoder_sequence {
 	uint32_t result,stage,next_sequence,state,recovery_required;
 };
 
+struct tt_qwen35_dataflow_generate {
+	uint32_t version,prompt_count,max_new_tokens,input_slot,eos_token;
+	uint64_t prompt_tokens,output_tokens;
+	uint32_t output_count,result,stage,next_sequence,state,recovery_required;
+	uint64_t prompt_time_us,decode_time_us;
+};
+
 static_assert(sizeof(tt_qwen35_dataflow_activation_seed)==32,
 	"fixed activation seed ABI");
 static_assert(sizeof(tt_qwen35_dataflow_activation_read)==32,
@@ -143,6 +152,8 @@ static_assert(sizeof(tt_qwen35_dataflow_dense_layer)==40,
 	"fixed dense layer sequence ABI");
 static_assert(sizeof(tt_qwen35_dataflow_decoder_sequence)==40,
 	"fixed mixed decoder sequence ABI");
+static_assert(sizeof(tt_qwen35_dataflow_generate)==80,
+	"fixed generation request ABI");
 
 static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82868,
 	"fixed manifest binding ABI");

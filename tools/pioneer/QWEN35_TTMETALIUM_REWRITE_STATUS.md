@@ -17,6 +17,20 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-21: Added the request-level greedy generation ioctl at `0x8847`.
+  It accepts prompt token IDs, skips unused vocabulary projection for prompt
+  positions before the last, returns generated token IDs, stops at an optional
+  EOS token, and enforces the model context bound. The model ABI is now 5. The
+  response separates prompt time (through selection of the first output
+  token) from decode time (subsequent generated tokens), so decode throughput
+  is computed from `output_count - 1` over `decode_time_us`. ASan/UBSan checks
+  cover prompt head skipping, bounded positions, EOS, and timing fields; the
+  RV32IMF target compile and offline variant-60/default-control build pass at
+  tag `2026112100010102`. Driver SHA-256 is
+  `fea103ea9e5290da1742c2efe3585564eddf5dd627a95b54f904a7ab53582b87`; service
+  text remains 52,900 bytes with SHA-256
+  `2e0e144040f9c29f9679d5300ff923847c75216b3bf0e577366be4e929e5f8c8`.
+  This code is not yet validated on the Pioneer.
 - 2026-11-21: Added device-side greedy token selection after the tied Q6_K
   vocabulary projection. The resident BRISC worker scans the on-card FP32
   logits and writes a checked token/score/sequence record to core 0's mailbox;
@@ -36,8 +50,8 @@ rewrite is implemented.
   `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`, and
   default-control SHA-256
   `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
-  This is offline evidence only: the request/generation loop, Pioneer run,
-  correctness on silicon, and decode rate remain open.
+  This was offline evidence only; the subsequent entry adds the request loop.
+  Pioneer correctness and decode rate remain unmeasured.
 - 2026-11-20: Added `PioneerQwen35DataflowTensixOps.h` as the concrete
   compute-role adapter. It binds one immutable core invocation, selects the
   right 16-value activation panel and scale, issues the Q8_0/Q4_K/Q5_K/Q6_K
@@ -286,32 +300,32 @@ the current tile. Tenstorrent's open `tt-lab` worker pattern is the closest fit
 for this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
 [BRISC firmware](https://github.com/tenstorrent/tt-lab/blob/main/src/brisc.cpp)).
 The resident all-120-worker owner, driver command path, offline generated-image
-validation, and full decoder sequence through one greedy token are now
-implemented. Repeated request/generation and silicon correctness/performance
-evidence remain open.
+validation, full decoder sequence, and request-level greedy generation are now
+implemented. Silicon correctness and performance evidence remain open.
 
 ## Current checkpoint: 2026-11-21
 
-The pushed base is `e5d9e10bfc` (tied Q6_K vocabulary projection). The current
-local rewrite extends it through device-side greedy token selection and returns
-one selected token from each full decoder-sequence ioctl. Tied projection work
-uses all 120 Tensix matrix engines; the BRISC argmax worker scans the finished
-logits, while all 120 resident workers take part in the command barrier and
-receipt protocol. The driver uses build tag `2026112100010101` so this binary
-has a distinct build identity from the prior offline checkpoint.
+Checkpoint `55df940409` is pushed with device-side greedy token selection and
+the full decoder sequence. The current local rewrite adds the bounded
+request-level generation ioctl: token IDs go in, generated token IDs come out,
+and prompt and decode time are returned separately. Prompt timing includes the
+first output token; decode timing covers later output tokens, with throughput
+reported as `(output_count - 1) / decode_time`. Tied projections use all 120
+Tensix matrix engines. The BRISC argmax worker scans logits; all 120 resident
+workers take part in each command barrier and receipt protocol. The driver
+uses build tag `2026112100010102`.
 
 Offline ASan/UBSan tests cover deterministic tie selection, non-finite-logit
-rejection, argmax descriptor authorization, all-core invocation/readback and
-acknowledgement, and decoder integration. The RV32IMF target compile and
-variant-60 driver, resident service image, reload-guard, and default-control
-builds pass. The resident service text is 52,900 bytes and fits the 57,344-byte
-region. No Pioneer hardware was accessed. A repeated request/generation loop,
-physical output validation, prompt/load/decode timing, and tokens/sec are not
-available yet; the current decode rate is unmeasured.
+rejection, argmax authorization and owner barriers, full decoder sequencing,
+prompt generation, EOS, context bounds, and phase timing. The RV32IMF target
+compile and variant-60 driver, resident service image, reload-guard, and
+default-control builds pass. The resident service text is 52,900 bytes and
+fits the 57,344-byte region. No Pioneer hardware was accessed. Silicon output,
+model load time, prompt time, decode throughput, and the 100 tokens/sec target
+remain unmeasured.
 
-Continue only the rewrite through its request/generation loop and offline
-correctness gates. Start hardware benchmarking and assistant integration only
-after those rewrite gates pass.
+The offline request/generation loop is implemented. Before hardware work, the
+27B diagnostic exit and stable driver idle state still need to be verified.
 
 The dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS

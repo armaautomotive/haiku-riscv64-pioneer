@@ -1,9 +1,14 @@
 /* SPDX-License-Identifier: MIT */
-#include "../PioneerQwen35DataflowDecoderSequence.h"
+#include "../PioneerQwen35DataflowGenerationSequence.h"
 
 #include <assert.h>
 
 using namespace PioneerQwen35;
+
+struct FakeGenerationClock {
+	uint64_t now=0;
+	uint64_t NowMicros() { return now++; }
+};
 
 struct FakeDecoderAuthority {
 	unsigned resets=0;
@@ -108,10 +113,53 @@ static void TestRejectsInvalidInputBeforeWork()
 	assert(authority.resets==0 && service.embedding==0 && outputToken==Vocabulary);
 }
 
+static void TestPromptAndGreedyGenerationLoop()
+{
+	const unsigned prompt[]={11,12,13};
+	unsigned output[3]{},outputCount=0,stage=0;
+	uint64_t promptTime=0,decodeTime=0;
+	FakeGenerationClock clock;
+	FakeDecoderAuthority authority;
+	FakeDecoderService service;
+	assert(DataflowGenerationSequence::Run(prompt,3,3,Vocabulary,0,
+		authority,service,service.io,output,outputCount,stage,clock,
+		promptTime,decodeTime)
+		==DataflowGenerationSequenceComplete);
+	assert(outputCount==3 && output[0]==42 && output[1]==42 && output[2]==42
+		&& stage==DataflowGenerationSequenceComplete);
+	assert(promptTime>0 && decodeTime>0);
+	assert(authority.resets==1 && authority.tiedOutputBuilds==3
+		&& authority.argmaxBuilds==3 && service.argmax==3
+		&& service.embedding==5 && service.projections==3*249+2*248);
+
+	const unsigned shortPrompt[]={7};
+	unsigned earlyOutput[4]{},earlyCount=0;
+	uint64_t earlyPromptTime=0,earlyDecodeTime=0;
+	FakeGenerationClock earlyClock;
+	FakeDecoderAuthority earlyAuthority;
+	FakeDecoderService earlyService;
+	assert(DataflowGenerationSequence::Run(shortPrompt,1,4,42,0,
+		earlyAuthority,earlyService,earlyService.io,earlyOutput,earlyCount,stage,
+		earlyClock,earlyPromptTime,earlyDecodeTime)
+		==DataflowGenerationSequenceComplete);
+	assert(earlyCount==1 && earlyOutput[0]==42 && earlyService.argmax==1
+		&& earlyPromptTime>0 && !earlyDecodeTime);
+
+	FakeDecoderAuthority invalidAuthority;
+	FakeDecoderService invalidService;
+	FakeGenerationClock invalidClock;
+	assert(DataflowGenerationSequence::Run(shortPrompt,MaxPositions,2,
+		Vocabulary,0,invalidAuthority,invalidService,invalidService.io,
+		earlyOutput,earlyCount,stage,invalidClock,earlyPromptTime,earlyDecodeTime)
+		==DataflowGenerationSequenceInvalidRequest);
+	assert(!invalidAuthority.resets && !invalidService.embedding);
+}
+
 int main()
 {
 	TestWholeMixedStack();
 	TestStopsAtFirstLayerFailure();
 	TestRejectsInvalidInputBeforeWork();
+	TestPromptAndGreedyGenerationLoop();
 	return 0;
 }

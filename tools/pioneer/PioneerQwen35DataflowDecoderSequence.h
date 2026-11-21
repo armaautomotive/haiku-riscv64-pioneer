@@ -31,7 +31,7 @@ public:
 	template<class Authority,class Service,class IO>
 	static DataflowDecoderSequenceResult Run(unsigned position,unsigned token,
 		unsigned inputSlot,Authority& authority,Service& service,IO& io,
-		unsigned& outputToken,unsigned& stage)
+		unsigned& outputToken,unsigned& stage,bool selectNextToken=true)
 	{
 		outputToken=Vocabulary;
 		stage=DataflowDecoderSequenceInvalidRequest;
@@ -74,6 +74,10 @@ public:
 				return DataflowDecoderLayerFailed;
 			}
 			currentSlot=nextSlot;
+		}
+		if (!selectNextToken) {
+			stage=DataflowDecoderSequenceComplete;
+			return DataflowDecoderSequenceComplete;
 		}
 
 		DataflowRmsProgram finalNorm{};

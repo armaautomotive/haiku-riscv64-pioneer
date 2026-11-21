@@ -63,7 +63,8 @@ enum DataflowServiceResult {
 	DataflowServiceDenseAttentionFailed=27,
 	DataflowServiceDenseLayerFailed=28,
 	DataflowServiceDecoderSequenceFailed=29,
-	DataflowServiceArgmaxFailed=30
+	DataflowServiceArgmaxFailed=30,
+	DataflowServiceGenerationFailed=31
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the
