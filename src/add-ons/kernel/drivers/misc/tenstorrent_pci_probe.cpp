@@ -80,7 +80,8 @@
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010105ULL \
+	|| (PIONEER_DRIVER_BUILD_TAG != 0x2026112100010105ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010106ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3243,6 +3244,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool DataflowPanelMappingStable();
 	bool DataflowCoreServiceImageMatches(unsigned core);
 	bool DataflowCoreIdleForHold(unsigned core);
+	bool DataflowCoreStartupFatalIdle(unsigned core);
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes);
 	bool SessionIdle();
 	bool ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore);
@@ -9179,8 +9181,22 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 				:TT_QWEN35_DATAFLOW_STATE_EMPTY;
 			request.next_sequence=service->NextSequence();
 			request.recovery_required=service->Faulted();
+			if (request.action==TT_QWEN35_DATAFLOW_ACTION_INSTALL
+				&& (request.result==PioneerQwen35::DataflowServiceReadyFailed
+					|| request.result==PioneerQwen35::DataflowServiceStartFailed)) {
+				const auto& diagnostic=service->Diagnostic();
+				if (diagnostic.stage) {
+					request.reserved[0]=((diagnostic.stage&0xff)<<24)
+						|(diagnostic.core&0x00ffffff);
+					request.reserved[1]=((diagnostic.state&0xff)<<24)
+						|((diagnostic.failure&0xff)<<16)
+						|((diagnostic.phase&0xff)<<8);
+				}
+			}
 		}
-		request.reserved[0]=request.reserved[1]=0;
+		if (request.action!=TT_QWEN35_DATAFLOW_ACTION_INSTALL
+			|| (!request.reserved[0] && !request.reserved[1]))
+			request.reserved[0]=request.reserved[1]=0;
 		status=user_memcpy(data,&request,sizeof(request));
 	}
 	release_sem(sLock); return status;

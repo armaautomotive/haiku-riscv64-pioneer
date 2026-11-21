@@ -189,6 +189,16 @@ PioneerSessionIO::DataflowCoreIdleForHold(unsigned core)
 }
 
 bool
+PioneerSessionIO::DataflowCoreStartupFatalIdle(unsigned core)
+{
+	if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core)) return false;
+	PioneerQwen35::DataflowWorkerMailbox mailbox{};
+	return PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+		&& DataflowPciMailboxStartupFatal(mailbox)
+		&& PioneerQwen35DataflowQueuesDrained(*this,core);
+}
+
+bool
 PioneerSessionIO::DataflowCoreIdleForWrite(unsigned core,unsigned address,
 	unsigned bytes)
 {
@@ -392,9 +402,7 @@ PioneerSessionIO::WaitWorkerReady(unsigned core,
 	for (unsigned poll=0;poll<65536;poll++) {
 		snapshot={};
 		if (ReadWorkerSnapshot(core,snapshot)
-			&& snapshot.state==PioneerQwen35::DataflowWorkerReady
-			&& PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
-			&& CoreReady(core,snapshot)) return true;
+			&& snapshot.state==PioneerQwen35::DataflowWorkerReady) return true;
 		if (snapshot.state==PioneerQwen35::DataflowWorkerFatal
 			|| snapshot.state==PioneerQwen35::DataflowWorkerFailed) return false;
 		Pause();

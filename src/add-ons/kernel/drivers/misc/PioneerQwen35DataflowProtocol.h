@@ -45,6 +45,9 @@ struct tt_qwen35_dataflow_support {
 
 struct tt_qwen35_dataflow_request {
 	uint32_t version,action,state,result,next_sequence,recovery_required;
+	// Input must be zero. On INSTALL start/readiness failures, output packs
+	// reserved[0] as stage:8 | core:24 and reserved[1] as state:8 | failure:8
+	// | phase:8 | zero:8. Other actions return zeros.
 	uint32_t reserved[2];
 };
 

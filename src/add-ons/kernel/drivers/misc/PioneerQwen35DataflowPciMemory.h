@@ -79,6 +79,22 @@ static inline bool DataflowPciMailboxReadyForStop(
 	return true;
 }
 
+// Only the worker's two pre-command fatal exits may be recovered by holding
+// the core directly. They run before any command or NoC work is published.
+static inline bool DataflowPciMailboxStartupFatal(
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
+{
+	if (mailbox.magic!=PioneerQwen35::DataflowWorkerMailboxMagic
+		|| mailbox.version!=PioneerQwen35::DataflowWorkerMailboxVersion
+		|| mailbox.commandSequence || mailbox.acknowledgedSequence
+		|| mailbox.completedSequence || mailbox.shutdownSequence
+		|| mailbox.state!=PioneerQwen35::DataflowWorkerFatal
+		|| mailbox.failure!=PioneerQwen35::DataflowFailureQueue
+		|| (mailbox.phase!=1 && mailbox.phase!=2)) return false;
+	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	return true;
+}
+
 static inline bool DataflowPciMailboxStopped(
 	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
 {
@@ -190,6 +206,16 @@ public:
 			fRaw.RuntimeResetWrite(0x47800);
 			fRaw.Pause();
 		}
+		return fRaw.ResetRead()==0x47800 && fRaw.ResetRead()==0x47800;
+	}
+
+	bool HoldCoreAfterStartupFatal(unsigned core)
+	{
+		if (!SelectMapped(core) || !fRaw.DataflowCoreStartupFatalIdle(core)
+			|| fRaw.ResetRead()!=0x46800 || fRaw.ResetRead()!=0x46800)
+			return false;
+		fRaw.RuntimeResetWrite(0x47800);
+		fRaw.Pause();
 		return fRaw.ResetRead()==0x47800 && fRaw.ResetRead()==0x47800;
 	}
 
@@ -338,6 +364,7 @@ public:
 	{
 		bool held[PioneerQwen35::DataflowCoreCount]{};
 		bool service[PioneerQwen35::DataflowCoreCount]{};
+		bool startupFatal[PioneerQwen35::DataflowCoreCount]{};
 		bool requestStop[PioneerQwen35::DataflowCoreCount]{};
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (!SelectMapped(core)) return false;
@@ -347,13 +374,24 @@ public:
 				held[core]=true;
 				continue;
 			}
-			if (reset!=0x46800 || !fRaw.DataflowCoreIdleForHold(core)) return false;
+			if (reset!=0x46800) return false;
 			service[core]=fRaw.DataflowCoreServiceImageMatches(core);
+			const bool idle=fRaw.DataflowCoreIdleForHold(core);
+			if (!idle) {
+				if (!service[core]
+					|| !fRaw.DataflowCoreStartupFatalIdle(core)) return false;
+				startupFatal[core]=true;
+			}
 			if (!service[core]) continue;
 			PioneerQwen35::DataflowWorkerMailbox mailbox{};
 			if (!ReadStableMailbox(core,mailbox)) return false;
 			if (DataflowPciMailboxStopped(mailbox)) {
 				if (!QueuesDrained(core)) return false;
+				continue;
+			}
+			if (startupFatal[core]) {
+				if (!DataflowPciMailboxStartupFatal(mailbox)
+					|| !QueuesDrained(core)) return false;
 				continue;
 			}
 			if (!DataflowPciMailboxReadyForStop(mailbox)) return false;
@@ -370,7 +408,7 @@ public:
 		}
 
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-			if (!service[core] || held[core]) continue;
+			if (!service[core] || held[core] || startupFatal[core]) continue;
 			bool stopped=false;
 			for (unsigned poll=0;poll<StopPollLimit;poll++) {
 				uint32_t state=0;
@@ -396,12 +434,17 @@ public:
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (held[core]) continue;
 			if (!SelectMapped(core) || fRaw.ResetRead()!=0x46800
-				|| fRaw.ResetRead()!=0x46800
-				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
+				|| fRaw.ResetRead()!=0x46800) return false;
+			if (startupFatal[core]) {
+				if (!fRaw.DataflowCoreStartupFatalIdle(core)) return false;
+			} else if (!fRaw.DataflowCoreIdleForHold(core)) return false;
 		}
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (held[core]) continue;
-			if (!HoldCore(core) || !CoreHeld(core)) return false;
+			if (startupFatal[core]) {
+				if (!HoldCoreAfterStartupFatal(core)) return false;
+				held[core]=true;
+			} else if (!HoldCore(core) || !CoreHeld(core)) return false;
 		}
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (!CoreHeld(core)) return false;

@@ -49,6 +49,7 @@ struct MockDataflowIO {
 	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0,resumeCount=0;
 	unsigned beginCount=0,completeCount=0;
 	unsigned failStartCore=UINT32_MAX,failIdleCore=UINT32_MAX;
+	unsigned failReadyCore=UINT32_MAX,failReadyPhase=1;
 	bool failStopAudit=false,failResume=false,failBegin=false,failComplete=false;
 	bool authorizeProgram=true;
 
@@ -63,12 +64,18 @@ struct MockDataflowIO {
 	}
 
 	bool SessionIdle() const { return true; }
-	bool ProveFleetRoutes() const
+	bool ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore) const
 	{
+		failedStage=0;
+		failedCore=DataflowCoreCount;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			unsigned mapped=UINT32_MAX;
 			if (!DataflowBlackholeLocalCore(DataflowBlackholeRouteForCore(core),mapped)
-				|| mapped!=core) return false;
+				|| mapped!=core) {
+				failedStage=1;
+				failedCore=core;
+				return false;
+			}
 		}
 		return true;
 	}
@@ -148,13 +155,23 @@ struct MockDataflowIO {
 	}
 	bool WaitWorkerReady(unsigned core,DataflowWorkerSnapshot& result)
 	{
-		if (core>=DataflowCoreCount || !started[core]
-			|| !DataflowWorkerMailboxStartupValid(mailbox[core])) return false;
+		if (core>=DataflowCoreCount || !started[core]) return false;
+		if (core==failReadyCore) {
+			mailbox[core].state=DataflowWorkerFatal;
+			mailbox[core].failure=DataflowFailureQueue;
+			mailbox[core].phase=failReadyPhase;
+			result={mailbox[core].commandSequence,
+				mailbox[core].acknowledgedSequence,
+				mailbox[core].completedSequence,mailbox[core].state,
+				mailbox[core].failure,mailbox[core].phase};
+			snapshot[core]=result;
+			return false;
+		}
 		result={mailbox[core].commandSequence,mailbox[core].acknowledgedSequence,
 			mailbox[core].completedSequence,mailbox[core].state,mailbox[core].failure,
 			mailbox[core].phase};
 		snapshot[core]=result;
-		return true;
+		return result.state==DataflowWorkerReady;
 	}
 	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& result) const
 	{
@@ -334,9 +351,16 @@ struct MockDataflowIO {
 		stopCount++;
 		if (failStopAudit) return false;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
-			if (started[core]
-				&& (mailbox[core].state==DataflowWorkerRunning
-					|| mailbox[core].state==DataflowWorkerFatal)) return false;
+			if (started[core] && mailbox[core].state==DataflowWorkerFatal
+				&& (mailbox[core].commandSequence
+					|| mailbox[core].acknowledgedSequence
+					|| mailbox[core].completedSequence
+					|| mailbox[core].shutdownSequence
+					|| mailbox[core].failure!=DataflowFailureQueue
+					|| (mailbox[core].phase!=1 && mailbox[core].phase!=2)))
+				return false;
+			if (started[core] && mailbox[core].state==DataflowWorkerRunning)
+				return false;
 			held[core]=true;
 			started[core]=false;
 		}
@@ -495,6 +519,31 @@ int main()
 	assert(partial.restoreCount==DataflowCoreCount && partial.resumeCount==1);
 	for (unsigned core=0;core<DataflowCoreCount;core++)
 		assert(partial.started[core]==partial.originalRunning[core]);
+
+	MockDataflowIO startupFailure{};
+	DataflowServiceOwner startupFailureOwner;
+	startupFailure.failReadyCore=29;
+	assert(startupFailureOwner.Install(image,startupFailure)
+		==DataflowServiceReadyFailed);
+	const auto& readyDiagnostic=startupFailureOwner.Diagnostic();
+	assert(readyDiagnostic.stage==DataflowServiceDiagnosticWorkerWait
+		&& readyDiagnostic.core==29 && readyDiagnostic.state==DataflowWorkerFatal
+		&& readyDiagnostic.failure==DataflowFailureQueue
+		&& readyDiagnostic.phase==1);
+	assert(startupFailureOwner.Close(startupFailure)==DataflowServiceClosed);
+	assert(startupFailure.restoreCount==DataflowCoreCount
+		&& startupFailure.resumeCount==1);
+
+	MockDataflowIO unsafeStartupFailure{};
+	DataflowServiceOwner unsafeStartupFailureOwner;
+	unsafeStartupFailure.failReadyCore=29;
+	unsafeStartupFailure.failReadyPhase=3;
+	assert(unsafeStartupFailureOwner.Install(image,unsafeStartupFailure)
+		==DataflowServiceReadyFailed);
+	assert(unsafeStartupFailureOwner.Close(unsafeStartupFailure)
+		==DataflowServiceStopAuditFailed);
+	assert(unsafeStartupFailure.restoreCount==0
+		&& unsafeStartupFailure.resumeCount==0);
 
 	MockDataflowIO unreadable{};
 	DataflowServiceOwner unreadableOwner;

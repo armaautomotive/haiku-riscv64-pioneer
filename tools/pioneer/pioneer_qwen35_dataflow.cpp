@@ -254,9 +254,11 @@ static bool BindAndInstall(int fd,const D::DeviceLayout& manifest,
 		&& !request.recovery_required && !request.reserved[0] && !request.reserved[1])
 		return true;
 	fprintf(stderr,"P100A_Q35_DATAFLOW install_failed result=%u state=%u next_sequence=%u "
-		"recovery=%u reserved=%u,%u\n",request.result,request.state,
-		request.next_sequence,request.recovery_required,request.reserved[0],
-		request.reserved[1]);
+		"recovery=%u diag_stage=%u diag_core=%u worker_state=%u "
+		"worker_failure=%u worker_phase=%u\n",request.result,request.state,
+		request.next_sequence,request.recovery_required,request.reserved[0]>>24,
+		request.reserved[0]&0x00ffffff,request.reserved[1]>>24,
+		(request.reserved[1]>>16)&0xff,(request.reserved[1]>>8)&0xff);
 	return false;
 }
 

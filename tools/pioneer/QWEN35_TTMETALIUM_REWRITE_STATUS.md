@@ -17,7 +17,7 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The resident dataflow rewrite is connected to a standalone generation client.
-Checkpoint `09432b370b` is pushed to GitHub. Its offline variant-60 driver and
+Checkpoint `ae6613a828` is pushed to GitHub. Its offline variant-60 driver and
 Haiku client build successfully. The client uses the vocabulary library only
 for tokenization, performs inference through the 120-worker Tensix-backed
 service with no CPU inference fallback, and measures authentication, model
@@ -37,17 +37,16 @@ bootstrap keeps its dispatch nonce at zero, while route proof rejected zero
 before verifying the exact idle receipt. Tag0104 removes that redundant
 condition while retaining the status-word, marker, and waiting-PC checks.
 Tag0103 unloaded cleanly and restored stable driver55 at generation 18
-without reboot. Tag0104 passed model binding and
-route proof but stopped during service installation; it unloaded cleanly and
-restored stable driver55 at generation 20. Inspection found the same
-zero-nonce rejection in the install-time idle check. Tag0105 removes it and
-prints the service-install result/state. On-card tag0105 authenticated and
-tokenized the prompt, uploaded all 2,740,498,432 bytes, bound the model, and
-passed fleet route proof. Service install then returned result 11
-(`DataflowServiceReadyFailed`), before prompt processing or token output.
-Cleanup could not release the owner; the wrapper retained the recovery lock
-and stable-driver backup. No model-load duration, valid output, prompt time,
-or decode rate was produced.
+without reboot. Tag0104 passed model binding and route proof but stopped during
+service installation; it unloaded cleanly and restored stable driver55 at
+generation 20. Inspection found the same zero-nonce rejection in the
+install-time idle check. Tag0105 removed it and printed the
+service-install result/state. On-card tag0105 authenticated and tokenized the
+prompt, uploaded all 2,740,498,432 bytes, bound the model, and passed fleet
+route proof. Service install returned result 11 (`DataflowServiceReadyFailed`)
+before prompt processing or token output. Cleanup could not release the owner;
+the wrapper retained the recovery lock and stable-driver backup. No model-load
+duration, valid output, prompt time, or decode rate was produced.
 
 The authorized Linux-to-Haiku handoff restored Haiku hrev99999 with 64 CPUs
 and 137,034,936,320 bytes of RAM, without changing SD media. The committed
@@ -56,6 +55,16 @@ generation2 (`cold0 active_owner0`); the recovery lock is absent. The
 candidate binary and raw failure logs remain preserved. The 4B and 27B model
 files retain their verified sizes. The target remains 100 decode tokens/s; no
 decode-rate measurement exists yet.
+
+Tag0106 records the exact worker-ready stage, core, mailbox state, failure,
+and phase. Its close path recognizes only the firmware's exact pre-command
+fatal-loop signature, proves runtime/NoC/queue idleness, holds that core, and
+restores all captured core state. Unsafe or ambiguous failures still retain
+the cold recovery latch. The 120-core owner test, PCI memory rollback test,
+RV32IMF target compile, and offline driver/client build pass. A new strict
+read-only preflight confirms stable driver55 generation2, no inference or 27B
+diagnostic process, 64 CPUs, and 137,034,936,320 bytes of RAM. Tag0106 is not
+yet installed on the card, and no decode rate has been measured.
 
 ## Progress
 

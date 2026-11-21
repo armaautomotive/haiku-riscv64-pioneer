@@ -19,6 +19,8 @@ struct MockPciRaw {
 	bool mapped=true;
 	bool idle=true;
 	bool idleForWrite=true;
+	unsigned notIdleCore=UINT32_MAX;
+	unsigned startupFatalCore=UINT32_MAX;
 
 	MockPciRaw()
 	{
@@ -29,7 +31,10 @@ struct MockPciRaw {
 	}
 	bool SelectRuntimeCore(unsigned core) { selected=core; return core<120; }
 	bool DataflowPanelMappingStable() const { return mapped; }
-	bool DataflowCoreIdleForHold(unsigned core) const { return core<120 && idle; }
+	bool DataflowCoreIdleForHold(unsigned core) const
+		{ return core<120 && idle && core!=notIdleCore; }
+	bool DataflowCoreStartupFatalIdle(unsigned core) const
+		{ return core<120 && core==startupFatalCore; }
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned,unsigned) const
 		{ return core<120 && idleForWrite; }
 	bool DataflowCoreServiceImageMatches(unsigned core) const
@@ -115,6 +120,18 @@ int main()
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence),4));
 	assert(!DataflowPciRunningWriteRange(
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,state),4));
+	DataflowWorkerMailbox startupFatal{};
+	startupFatal.magic=DataflowWorkerMailboxMagic;
+	startupFatal.version=DataflowWorkerMailboxVersion;
+	startupFatal.state=DataflowWorkerFatal;
+	startupFatal.failure=DataflowFailureQueue;
+	startupFatal.phase=1;
+	assert(DataflowPciMailboxStartupFatal(startupFatal));
+	startupFatal.phase=3;
+	assert(!DataflowPciMailboxStartupFatal(startupFatal));
+	startupFatal.phase=1;
+	startupFatal.commandSequence=1;
+	assert(!DataflowPciMailboxStartupFatal(startupFatal));
 
 	MockPciRaw raw;
 	for (unsigned i=0;i<DataflowPciL1ViewWords;i++)
@@ -219,6 +236,40 @@ int main()
 	assert(raw.reset[0]==0x47800);
 	for (unsigned core=1;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(raw.reset[core]==0x46800);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		memory.ReleaseCoreSnapshot(core);
+
+	// A worker that reports only the pre-command fatal phases may be held after
+	// its stable mailbox, queues, image/PC, route and NoC-idle proofs pass.
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		raw.reset[core]=0x46800;
+		raw.serviceImage[core]=false;
+		raw.mailbox[core]={};
+		raw.mailbox[core].magic=DataflowWorkerMailboxMagic;
+		raw.mailbox[core].version=DataflowWorkerMailboxVersion;
+		raw.mailbox[core].state=DataflowWorkerReady;
+		assert(memory.CaptureCoreState(core));
+	}
+	raw.serviceImage[17]=true;
+	raw.mailbox[17].state=DataflowWorkerFatal;
+	raw.mailbox[17].failure=DataflowFailureQueue;
+	raw.mailbox[17].phase=2;
+	raw.notIdleCore=17;
+	raw.startupFatalCore=17;
+	assert(memory.StopAndAuditAll());
+	assert(raw.reset[17]==0x47800);
+	assert(raw.mailbox[17].state==DataflowWorkerFatal);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(raw.reset[core]==0x47800);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.RestoreCoreState(core));
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.VerifyCoreStateRestored(core));
+	raw.serviceImage[17]=false;
+	raw.notIdleCore=UINT32_MAX;
+	raw.startupFatalCore=UINT32_MAX;
+	assert(memory.ResumeRestoredFleet());
+	assert(raw.mailbox[17].state==DataflowWorkerReady);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		memory.ReleaseCoreSnapshot(core);
 	puts("PASS PCI L1 bounds, resident stop, and 120-core clean restore");

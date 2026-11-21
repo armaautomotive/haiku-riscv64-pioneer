@@ -67,6 +67,20 @@ enum DataflowServiceResult {
 	DataflowServiceGenerationFailed=31
 };
 
+enum DataflowServiceDiagnosticStage : unsigned {
+	DataflowServiceDiagnosticNone=0,
+	DataflowServiceDiagnosticWorkerStart=1,
+	DataflowServiceDiagnosticWorkerWait=2,
+	DataflowServiceDiagnosticWorkerSnapshot=3,
+	DataflowServiceDiagnosticWorkerProof=4,
+	DataflowServiceDiagnosticOwnerInitialize=5,
+	DataflowServiceDiagnosticOwnerCore=6
+};
+
+struct DataflowServiceDiagnostic {
+	unsigned stage,core,state,failure,phase;
+};
+
 // Owns the resident image lifecycle and the projection coordinator. IO is the
 // only platform-specific layer: it must prove driver/session idleness, save
 // and restore each core's touched L1/runtime state, perform bounded L1 copies,
@@ -79,7 +93,15 @@ class DataflowServiceOwner {
 	enum Phase { PhaseEmpty, PhaseInstalling, PhaseReady, PhaseFaulted, PhaseClosed };
 	Phase fPhase=PhaseEmpty;
 	bool fSaved[DataflowCoreCount]{};
+	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
+		DataflowCoreCount,0,0,0};
 	DataflowProjectionOwner fProjectionOwner;
+
+	void SetDiagnostic(unsigned stage,unsigned core,
+		const DataflowWorkerSnapshot& snapshot)
+	{
+		fDiagnostic={stage,core,snapshot.state,snapshot.failure,snapshot.phase};
+	}
 
 	template<class IO>
 	static bool WriteAndVerifyImage(unsigned core,const DataflowServiceImageView& image,
@@ -120,11 +142,13 @@ public:
 	bool Closed() const { return fPhase==PhaseClosed; }
 	bool Started() const { return fPhase!=PhaseEmpty; }
 	unsigned NextSequence() const { return fProjectionOwner.NextSequence(); }
+	const DataflowServiceDiagnostic& Diagnostic() const { return fDiagnostic; }
 
 	template<class IO>
 	DataflowServiceResult Install(const DataflowServiceImageView& image,IO& io)
 	{
 		if (fPhase!=PhaseEmpty) return DataflowServiceInvalidState;
+		fDiagnostic={DataflowServiceDiagnosticNone,DataflowCoreCount,0,0,0};
 		if (!image.Valid()) return DataflowServiceInvalidImage;
 		uint32_t failedStage=0,failedCore=0xff;
 		if (!io.SessionIdle() || !io.ProveFleetRoutes(failedStage,failedCore)) {
@@ -196,20 +220,43 @@ public:
 
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!io.StartCore(core)) {
+				DataflowWorkerSnapshot snapshot{};
+				SetDiagnostic(DataflowServiceDiagnosticWorkerStart,core,snapshot);
 				fPhase=PhaseFaulted;
 				return DataflowServiceStartFailed;
 			}
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
-			if (!io.WaitWorkerReady(core,snapshot)
-				|| !DataflowWorkerSnapshotReady(snapshot)
-				|| !io.CoreReady(core,snapshot)) {
+			if (!io.WaitWorkerReady(core,snapshot)) {
+				SetDiagnostic(DataflowServiceDiagnosticWorkerWait,core,snapshot);
+				fPhase=PhaseFaulted;
+				return DataflowServiceReadyFailed;
+			}
+			if (!DataflowWorkerSnapshotReady(snapshot)) {
+				SetDiagnostic(DataflowServiceDiagnosticWorkerSnapshot,core,snapshot);
+				fPhase=PhaseFaulted;
+				return DataflowServiceReadyFailed;
+			}
+			if (!io.CoreReady(core,snapshot)) {
+				SetDiagnostic(DataflowServiceDiagnosticWorkerProof,core,snapshot);
 				fPhase=PhaseFaulted;
 				return DataflowServiceReadyFailed;
 			}
 		}
 		if (fProjectionOwner.Initialize(io)!=DataflowOwnerComplete) {
+			for (unsigned core=0;core<DataflowCoreCount;core++) {
+				DataflowWorkerSnapshot snapshot{};
+				if (!io.ReadWorkerSnapshot(core,snapshot)
+					|| !DataflowWorkerSnapshotReady(snapshot)
+					|| !io.CoreReady(core,snapshot)) {
+					SetDiagnostic(DataflowServiceDiagnosticOwnerCore,core,snapshot);
+					break;
+				}
+			}
+			if (fDiagnostic.stage==DataflowServiceDiagnosticNone)
+				SetDiagnostic(DataflowServiceDiagnosticOwnerInitialize,
+					DataflowCoreCount,DataflowWorkerSnapshot{});
 			fPhase=PhaseFaulted;
 			return DataflowServiceReadyFailed;
 		}
