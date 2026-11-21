@@ -41,7 +41,9 @@ claimed.
 ## Close and recovery state
 
 Close returned result18 (`DataflowServiceResumeFailed`), stage9, core0,
-detail3 (`DataflowServiceResumeIdleProofFailed`), with worker route `0x2`.
+resume phase3, detail2 (`DataflowServiceResumeIdleProofFailed`). In the raw
+client line, `diagnostic_detail=3` is the resume phase and `worker_route=0x2`
+is the resume detail.
 The client reported
 `unload_clean=0 state=0 active=0 cold=0 service_closed=0`. The guarded wrapper
 refused restoration and left tag0109 at generation3 `cold1 active_owner1`,

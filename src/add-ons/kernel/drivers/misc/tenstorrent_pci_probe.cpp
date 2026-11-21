@@ -84,7 +84,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010106ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010107ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010108ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010109ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010109ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010110ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3247,6 +3248,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool DataflowPanelMappingStable();
 	bool DataflowCoreServiceImageMatches(unsigned core);
 	bool DataflowCoreIdleForHold(unsigned core);
+	bool DataflowCoreIdleForHold(unsigned core,unsigned& diagnosticDetail);
 	bool DataflowCoreStartupFatalIdle(unsigned core);
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes);
 	bool SessionIdle();
@@ -10382,16 +10384,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
-	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_SEED
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_EMBED_TOKEN
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_RMS_NORM
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SILU
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_RESIDUAL)
+	// The rewrite's private ioctl numbers are one contiguous range. Routing
+	// the whole range keeps sequence and generation commands on the same
+	// checked handler as the earlier model and activation commands.
+	if (operation>=TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT
+		&& operation<=TT_PCI_PROBE_QWEN35_DATAFLOW_GENERATE)
 		return Qwen35DataflowControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
 		|| operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)

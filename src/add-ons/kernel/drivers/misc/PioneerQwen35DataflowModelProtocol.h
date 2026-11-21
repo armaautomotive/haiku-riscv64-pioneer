@@ -2,6 +2,7 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_MODEL_PROTOCOL_H
 #define PIONEER_QWEN35_DATAFLOW_MODEL_PROTOCOL_H
 
+#include <Drivers.h>
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphWorkspace.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowConvProgram.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowDeltaProgram.h"
@@ -23,6 +24,10 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DENSE_LAYER (B_DEVICE_OP_CODES_END + 0x8845)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DECODER_SEQUENCE (B_DEVICE_OP_CODES_END + 0x8846)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_GENERATE (B_DEVICE_OP_CODES_END + 0x8847)
+
+static_assert(TT_PCI_PROBE_QWEN35_DATAFLOW_GENERATE
+	-TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND==0x0f,
+	"Qwen35 model ioctl range must remain contiguous");
 
 enum : uint32_t {
 	TT_QWEN35_DATAFLOW_MODEL_ABI=5,

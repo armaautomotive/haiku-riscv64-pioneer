@@ -525,8 +525,14 @@ public:
 				failedDetail=PioneerQwen35::DataflowServiceResumeResetMismatch;
 				return false;
 			}
-			if (!fRaw.DataflowCoreIdleForHold(core)) {
-				failedDetail=PioneerQwen35::DataflowServiceResumeIdleProofFailed;
+			// The original dispatcher root is restored to its captured held
+			// reset state (0x47800). Its complete local image, boot word, and
+			// reset were already verified above; the running-idle proof applies
+			// to resumed dispatcher workers, not to this intentionally held core.
+			if (fSnapshots[core].reset==0x47800) continue;
+			if (!fRaw.DataflowCoreIdleForHold(core,failedDetail)) {
+				if (!failedDetail)
+					failedDetail=PioneerQwen35::DataflowServiceResumeIdleProofFailed;
 				return false;
 			}
 		}

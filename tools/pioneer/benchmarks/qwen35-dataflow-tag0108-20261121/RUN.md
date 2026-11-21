@@ -37,7 +37,9 @@ was rejected; no generated text or decode tokens/s are claimed.
 ## Close and recovery
 
 Close returned result18 (`DataflowServiceResumeFailed`), diagnostic stage9,
-core0, substage3. The client reported
+core0, resume phase3, detail2 (`DataflowServiceResumeIdleProofFailed`). The
+raw client label `audit_detail=3` is the resume phase, while its final
+`worker_route=0x0` field is the resume detail. The client reported
 `unload_clean=0 state=0 active=0 cold=0 service_closed=0`. The guarded wrapper
 refused to restore a candidate that reported `cold1 active_owner1`, retaining
 the one-shot lock and stable driver backup.

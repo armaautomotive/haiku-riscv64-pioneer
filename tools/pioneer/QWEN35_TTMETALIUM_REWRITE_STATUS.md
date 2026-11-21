@@ -23,30 +23,48 @@ separately. The target remains two valid warm outputs at 100 decode tokens/s
 or higher, followed by clean unload. No valid output or decode-rate measurement
 has been produced yet.
 
-The latest pushed code checkpoint is `f6d746c23b` (tag0109 rewrite and
-artifact hashes). Tag0109 passed guarded preflight and uploaded all
+Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
 tokenization `13.243073` s, and model load/upload `334.616263` s. Generation
 ioctl `0xAF56` returned `EINVAL`; the client diagnostic printed the request
 fields, but no prompt processing, valid output, decode timing, or tokens/s was
-produced. Unload again failed at stage9/core0/detail3, the restored-core idle
-proof. The client exited; the guarded wrapper retained the exclusive lock and
-stable-driver backup while the candidate reported generation3 `cold1
-active_owner1`. The guarded recovery helper restored stable driver55 at
-generation2; the lock is absent, and postflight confirmed both model sizes,
-64 CPUs, and full RAM. Run details and raw evidence are in
+produced. Offline inspection found the cause: `ProbeControl` routed Qwen35
+operations only through `RESIDUAL`, omitting the FFN-through-generation ioctl
+range. The generation command never reached its validation handler. Unload
+also failed at stage9/core0, resume phase3, with resume detail2
+(`DataflowServiceResumeIdleProofFailed`). The client exited; the guarded
+wrapper retained the exclusive lock and stable-driver backup while the
+candidate reported generation3 `cold1 active_owner1`. The guarded recovery
+helper restored stable driver55 at generation2; the lock is absent, and
+postflight confirmed both model sizes, 64 CPUs, and full RAM. Run details and
+raw evidence are in
 [`benchmarks/qwen35-dataflow-tag0109-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0109-20261121/RUN.md).
 
-Tag0109's request-rejection diagnostic and bounded restore settle delay did
-not resolve either hardware failure. The offline variant-60 build, owner and
-PCI-memory ASan/UBSan fixtures, RV32IMF compile, and guarded-script syntax
-checks pass. After restoring stable driver55, continue the rewrite offline to
-make the request ABI acceptance explicit and make error teardown recoverable
-before another benchmark. Tag0109 build hashes are in
-[`benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md).
+Tag0110 routes the complete ioctl range, adds compile-time range checks,
+reports returned request fields and precise restore subchecks, skips the
+running-idle proof for the fully restored reset-held root, and retries
+recoverable close failures while the owner retains its snapshots. Its full
+offline variant-60 build passes; owner and PCI-memory ASan/UBSan fixtures and
+the RV32IMF compile pass. No tag0110 hardware run has occurred. The latest
+known Pioneer state is stable driver55 generation2 idle on Haiku, both model
+files unchanged. Continue the rewrite offline before another benchmark. Tag0110
+build details are in
+[`benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md).
 
 ## Progress
 
+- 2026-11-21 (tag0110): The tag0109 `EINVAL` was traced to a missing outer
+  ioctl route for operations after `RESIDUAL`. `ProbeControl` now routes the
+  contiguous rewrite range through generation. Added compile-time range
+  assertions, returned request diagnostics, detailed restored-core idle
+  subchecks, held-root restore proof handling, and bounded close retry after a
+  resume failure. The complete offline driver/client build passes; owner and
+  PCI-memory ASan/UBSan tests and the RV32IMF compile pass. Driver SHA-256 is
+  `a9b79420fd351bfb7cbcdda2e70565455973a80a154ca54ba985b1d714f3bd5d`, and
+  client SHA-256 is
+  `b90f94175aa8a847f360b9ac2a118596d1cd092d37e475ea7043f0281a9d43fe`.
+  This is offline-only; no valid output or decode rate exists yet. See
+  `benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md`.
 - 2026-11-21 (tag0109): Added structured generation-ioctl rejection details
   and split fleet-resume diagnostics, plus a bounded 10,000-spin settle window
   before restored-core idle checks. The all-core Tensix rewrite still has no
@@ -741,7 +759,8 @@ client's prefix/repeatability messages are failure checks after the rejected
 request, not generated text.
 
 Cleanup returned `DataflowServiceResumeFailed` (result18), diagnostic
-stage9/core0/substage3; unload was not clean, and the wrapper correctly kept
+stage9/core0, resume phase3, resume detail2 (the final idle-core proof failed);
+unload was not clean, and the wrapper correctly kept
 the lock and stable backup while tag0108 reported `cold1 active_owner1`.
 After verifying the client had exited, one authorized power cycle and the
 pinned SD-free Linux-to-Haiku handoff allowed the tag0108 recovery helper to

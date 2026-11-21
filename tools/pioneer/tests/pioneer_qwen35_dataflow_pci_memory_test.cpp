@@ -34,6 +34,15 @@ struct MockPciRaw {
 	bool DataflowPanelMappingStable() const { return mapped; }
 	bool DataflowCoreIdleForHold(unsigned core) const
 		{ return core<120 && idle && core!=notIdleCore; }
+	bool DataflowCoreIdleForHold(unsigned core,unsigned& detail) const
+	{
+		detail=0;
+		if (core>=120 || !idle || core==notIdleCore) {
+			detail=0x102;
+			return false;
+		}
+		return true;
+	}
 	bool DataflowCoreStartupFatalIdle(unsigned core) const
 		{ return core<120 && core==startupFatalCore; }
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned,unsigned) const
@@ -101,6 +110,7 @@ using namespace PioneerQwen35;
 int main()
 {
 	unsigned resumeStage=UINT32_MAX,resumeCore=UINT32_MAX;
+	unsigned resumeDetail=UINT32_MAX;
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
 		DataflowServiceBootAddress,sizeof(uint32_t)));
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
@@ -209,8 +219,9 @@ int main()
 		assert(memory.RestoreCoreState(core));
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(memory.VerifyCoreStateRestored(core));
+	raw.notIdleCore=0;
 	raw.pauses=0;
-	unsigned resumeDetail=UINT32_MAX;
+	resumeDetail=UINT32_MAX;
 	assert(memory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
 	assert(resumeDetail==0 && raw.pauses>=DataflowPciResumeSettlePauses);
 	assert(raw.reset[0]==0x47800);
@@ -218,6 +229,7 @@ int main()
 		assert(raw.reset[core]==0x46800);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		memory.ReleaseCoreSnapshot(core);
+	raw.notIdleCore=UINT32_MAX;
 
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 		raw.reset[core]=0x46800;
@@ -310,6 +322,24 @@ int main()
 	raw.notIdleCore=UINT32_MAX;
 	for (unsigned core=0;core<DataflowCoreCount;core++)
 		memory.ReleaseCoreSnapshot(core);
+
+	MockPciRaw failingRaw;
+	failingRaw.reset[0]=0x47800;
+	PioneerQwen35DataflowPciMemory<MockPciRaw> failingMemory(failingRaw);
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		assert(failingMemory.CaptureCoreState(core));
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		assert(failingMemory.HoldCore(core));
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		assert(failingMemory.RestoreCoreState(core));
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		assert(failingMemory.VerifyCoreStateRestored(core));
+	failingRaw.notIdleCore=1;
+	resumeDetail=UINT32_MAX;
+	assert(!failingMemory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
+	assert(resumeStage==3 && resumeCore==1 && resumeDetail==0x102);
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		failingMemory.ReleaseCoreSnapshot(core);
 	puts("PASS PCI L1 bounds, resident stop, and 120-core clean restore");
 	return 0;
 }

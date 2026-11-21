@@ -54,7 +54,9 @@ The client's prefix/repeatability failure messages follow the rejected ioctl
 and do not represent generated output.
 
 Close returned `result=18` (`DataflowServiceResumeFailed`), diagnostic stage9
-(fleet resume), core0, substage3. The client reported
+(fleet resume), core0, resume phase3, detail2
+(`DataflowServiceResumeIdleProofFailed`). In the raw client line,
+`audit_detail=3` is the phase and `worker_route=0x0` is the resume detail. The client reported
 `unload_clean=0 state=0 active=0 cold=0 service_closed=0`; the wrapper refused
 driver restoration while tag0108 was generation3 `cold1 active_owner1`, and
 retained its lock and stable backup. Raw output and error logs are in

@@ -165,49 +165,104 @@ PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core)
 		&& PioneerQwen35DataflowServicePc(io) && BlackholeResidentIdle(io);
 }
 
+enum PioneerQwen35DataflowIdleDetail : unsigned {
+	PioneerDataflowIdleDetailContext=0x101,
+	PioneerDataflowIdleDetailMapping=0x102,
+	PioneerDataflowIdleDetailReset=0x103,
+	PioneerDataflowIdleDetailDispatch=0x104,
+	PioneerDataflowIdleDetailNoC=0x105,
+	PioneerDataflowIdleDetailRoute=0x106,
+	PioneerDataflowIdleDetailStore=0x107,
+	PioneerDataflowIdleDetailLocalRoute=0x108,
+	PioneerDataflowIdleDetailServiceMailbox=0x110,
+	PioneerDataflowIdleDetailServiceMailboxState=0x111,
+	PioneerDataflowIdleDetailServiceQueues=0x112,
+	PioneerDataflowIdleDetailServicePC=0x113,
+	PioneerDataflowIdleDetailRuntimeSources=0x114,
+	PioneerDataflowIdleDetailTensixIdle=0x115,
+	PioneerDataflowIdleDetailDispatchSources=0x120,
+	PioneerDataflowIdleDetailDispatchCode=0x121,
+	PioneerDataflowIdleDetailRootState=0x122,
+	PioneerDataflowIdleDetailPeerState=0x123,
+	PioneerDataflowIdleDetailPeerReceipt=0x124
+};
+
 bool
 PioneerSessionIO::DataflowCoreIdleForHold(unsigned core)
 {
+	unsigned ignored=0;
+	return DataflowCoreIdleForHold(core,ignored);
+}
+
+bool
+PioneerSessionIO::DataflowCoreIdleForHold(unsigned core,unsigned& diagnosticDetail)
+{
+	diagnosticDetail=0;
+	auto reject=[&](unsigned detail) {
+		diagnosticDetail=detail;
+		return false;
+	};
 	auto* context=qwen35DataflowContext;
-	if (!context || core>=PioneerQwen35::DataflowCoreCount
-		|| !SelectRuntimeCore(core) || !MapQ38Panel()
-		|| !DataflowPanelMappingStable()) return false;
+	if (!context || core>=PioneerQwen35::DataflowCoreCount)
+		return reject(PioneerDataflowIdleDetailContext);
+	if (!SelectRuntimeCore(core) || !MapQ38Panel()
+		|| !DataflowPanelMappingStable())
+		return reject(PioneerDataflowIdleDetailMapping);
 	const unsigned reset=ResetRead();
-	if (reset!=ResetRead() || (reset!=0x46800 && reset!=0x47800)) return false;
+	if (reset!=ResetRead() || (reset!=0x46800 && reset!=0x47800))
+		return reject(PioneerDataflowIdleDetailReset);
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	if (!context->q38Dispatch || !context->q38DispatchRoutes
 		|| context->q38Dispatch->prepared!=PioneerQwen35::DataflowCoreCount
 		|| context->q38Dispatch->unsafe || context->q38Dispatch->closed)
-		return false;
+		return reject(PioneerDataflowIdleDetailDispatch);
 	auto& lease=*context->q38Dispatch;
 	auto& node=lease.worker[core];
 	if (node.noc.state!=TT_COMPUTE_NOC_PASSED || !node.noc.tlb_restored
 		|| node.noc.recovery_required
-		|| node.noc.version!=(core?PioneerWorkerVersion(core):1)
-		|| !PioneerWorkerRoute(dram,node.noc.source[0],core)
-		|| !node.Store().ready || node.Store().pending
-		|| node.Store().recovery_required) return false;
-	if (!PioneerQwen35DataflowCaptureLocalRoute(*this,core)) return false;
+		|| node.noc.version!=(core?PioneerWorkerVersion(core):1))
+		return reject(PioneerDataflowIdleDetailNoC);
+	if (!PioneerWorkerRoute(dram,node.noc.source[0],core))
+		return reject(PioneerDataflowIdleDetailRoute);
+	if (!node.Store().ready || node.Store().pending
+		|| node.Store().recovery_required)
+		return reject(PioneerDataflowIdleDetailStore);
+	if (!PioneerQwen35DataflowCaptureLocalRoute(*this,core))
+		return reject(PioneerDataflowIdleDetailLocalRoute);
 	if (PioneerSessionIODataflowServiceImageTrusted(*this,core)) {
-		if (reset!=0x46800 && reset!=0x47800) return false;
 		PioneerQwen35::DataflowWorkerMailbox mailbox{};
-		if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
-			|| mailbox.logicalCore!=core
+		if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox))
+			return reject(PioneerDataflowIdleDetailServiceMailbox);
+		if (mailbox.logicalCore!=core
 			|| !(DataflowPciMailboxReadyForStop(mailbox,core)
-				|| DataflowPciMailboxStopped(mailbox,core))
-			|| !PioneerQwen35DataflowQueuesDrained(*this,core)
-			|| !PioneerQwen35DataflowServicePc(*this)
-			|| !PioneerRuntimeSources(*this,dram,node.noc,node.Store())
-			|| !BlackholeResidentIdle(*this)) return false;
+				|| DataflowPciMailboxStopped(mailbox,core)))
+			return reject(PioneerDataflowIdleDetailServiceMailboxState);
+		if (!PioneerQwen35DataflowQueuesDrained(*this,core))
+			return reject(PioneerDataflowIdleDetailServiceQueues);
+		if (!PioneerQwen35DataflowServicePc(*this))
+			return reject(PioneerDataflowIdleDetailServicePC);
+		if (!PioneerRuntimeSources(*this,dram,node.noc,node.Store()))
+			return reject(PioneerDataflowIdleDetailRuntimeSources);
+		if (!BlackholeResidentIdle(*this))
+			return reject(PioneerDataflowIdleDetailTensixIdle);
 		return true;
 	}
 	const unsigned expectedReset=core?0x46800:0x47800;
 	if (reset!=expectedReset
-		|| !PioneerQ38DispatchSources(*this,dram,context->banks,node,expectedReset)
-		|| !PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
-	if (!core) return !lease.rootRunning && !node.image.running;
-	return lease.booted && !lease.rootRunning && node.image.running
-		&& PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,&lease);
+		|| !PioneerQ38DispatchSources(*this,dram,context->banks,node,expectedReset))
+		return reject(PioneerDataflowIdleDetailDispatchSources);
+	if (!PioneerQ38DispatchCodeMatches(*this,core,&lease))
+		return reject(PioneerDataflowIdleDetailDispatchCode);
+	if (!core) {
+		if (lease.rootRunning || node.image.running)
+			return reject(PioneerDataflowIdleDetailRootState);
+		return true;
+	}
+	if (!lease.booted || lease.rootRunning || !node.image.running)
+		return reject(PioneerDataflowIdleDetailPeerState);
+	if (!PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,&lease))
+		return reject(PioneerDataflowIdleDetailPeerReceipt);
+	return true;
 }
 
 bool

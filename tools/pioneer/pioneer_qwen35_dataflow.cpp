@@ -270,10 +270,12 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 {
 	serviceClosed=!installAttempted;
 	if (!installAttempted) return true;
-	tt_qwen35_dataflow_request request{};
-	request.version=TT_QWEN35_DATAFLOW_ABI;
-	request.action=TT_QWEN35_DATAFLOW_ACTION_CLOSE;
-	if (Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request))) {
+	for (unsigned attempt=0;attempt<3;attempt++) {
+		tt_qwen35_dataflow_request request{};
+		request.version=TT_QWEN35_DATAFLOW_ABI;
+		request.action=TT_QWEN35_DATAFLOW_ACTION_CLOSE;
+		if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request)))
+			break;
 		serviceClosed=request.result==TT_QWEN35_DATAFLOW_RESULT_CLOSED
 			&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED
 			&& !request.recovery_required;
@@ -281,14 +283,20 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 		if (request.result || request.recovery_required || request.reserved[0]
 			|| request.reserved[1] || request.reserved[2]) {
 			fprintf(stderr,"P100A_Q35_DATAFLOW close_failed result=%u state=%u "
-				"recovery=%u diag_stage=%u diag_core=%u diagnostic_detail=%u "
-				"worker_route=0x%08x\n",
+				"recovery=%u diag_stage=%u diag_core=%u diagnostic_state=%u "
+				"diagnostic_failure=%u diagnostic_phase=%u resume_detail=0x%08x\n",
 				request.result,request.state,request.recovery_required,
 				request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
-				request.reserved[1]>>24,request.reserved[2]);
+				request.reserved[1]>>24,(request.reserved[1]>>16)&0xff,
+				(request.reserved[1]>>8)&0xff,request.reserved[2]);
 		}
+		if (request.result!=TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED
+			|| !request.recovery_required || attempt==2) break;
+		fprintf(stderr,"P100A_Q35_DATAFLOW close_retry attempt=%u result=%u\n",
+			attempt+1,request.result);
+		snooze(10000);
 	}
-	request={};
+	tt_qwen35_dataflow_request request{};
 	request.version=TT_QWEN35_DATAFLOW_ABI;
 	request.action=TT_QWEN35_DATAFLOW_ACTION_QUERY;
 	if (Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request)))
@@ -316,9 +324,15 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 		sizeof(*request))) {
 		fprintf(stderr,"P100A_Q35_DATAFLOW generate_request bytes=%zu version=%u "
 			"prompt_count=%u max_new_tokens=%u input_slot=%u eos=%u "
+			"result=%u stage=%u state=%u output_count=%u next_sequence=%u "
+			"recovery=%u prompt_us=%llu decode_us=%llu "
 			"prompt_ptr=0x%016llx output_ptr=0x%016llx\n",
 			sizeof(*request),request->version,request->prompt_count,
 			request->max_new_tokens,request->input_slot,request->eos_token,
+			request->result,request->stage,request->state,request->output_count,
+			request->next_sequence,request->recovery_required,
+			static_cast<unsigned long long>(request->prompt_time_us),
+			static_cast<unsigned long long>(request->decode_time_us),
 			static_cast<unsigned long long>(request->prompt_tokens),
 			static_cast<unsigned long long>(request->output_tokens));
 		return false;
