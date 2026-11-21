@@ -1,0 +1,36 @@
+RECOVERY_REQUIRED_UNTIL_STABLE_RESTORED
+P100A_RELOAD driver60 tag2026112100010119 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+drwx------ 1 baron root 2048 Jan  1 00:28 /boot/home/.pioneer-q35-dataflow-exclusive
+51ad25d7a24305eca9e507c239aa779465af3ac704e149ee5a6cb33b0b9e6eb4  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-qwen35-dataflow-0119.countermask/restore.incoming
+51ad25d7a24305eca9e507c239aa779465af3ac704e149ee5a6cb33b0b9e6eb4  /boot/home/pioneer-qwen35-dataflow-0119.countermask/tenstorrent_pci_probe-driver60
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133677457408 bytes free      (used/max 3357478912 / 137034936320)
+                           (cached   2938281984)
+   Id Team                                               
+    1 kernel_team                                        
+  100 /boot/system/servers/launch_daemon                 
+  105 /boot/system/servers/registrar                     
+  106 /boot/system/servers/debug_server                  
+  108 /boot/system/servers/mount_server                  
+  109 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  113 /boot/system/servers/net_server                    
+  114 /boot/system/servers/package_daemon                
+  117 /boot/system/servers/launch_daemon baron           
+  120 /boot/system/servers/power_daemon                  
+  121 /boot/system/servers/syslog_daemon                 
+  148 /boot/system/servers/media_server                  
+  183 /boot/system/servers/app_server                    
+  195 /boot/system/Tracker                               
+  197 /boot/system/Deskbar                               
+  216 /boot/system/servers/input_server                  
+  241 /boot/system/servers/media_addon_server            
+  288 /boot/system/servers/notification_server           
+  524 /boot/system/bin/screen_blanker                    
+  788 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  790 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  791 /boot/system/bin/ps -o Id -o Team                  
