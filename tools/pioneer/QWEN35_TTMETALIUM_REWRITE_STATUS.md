@@ -271,18 +271,18 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The latest pushed rewrite checkpoint is `00b34e48eb` (`Add recurrent output
-projection path`). The offline rewrite includes Tensix matrix projections,
+The latest pushed rewrite checkpoint is `cd6c25e985` (`Compose recurrent
+decoder layer sequence`). The offline rewrite includes Tensix matrix projections,
 device-side Q6_K token embedding and hidden RMS normalization, manifest-bound
 graph projections, SiLU×Up, residual save/add, feed-forward sequencing,
 recurrent convolution, Alpha/Beta projections, delta-state update, and fused
 per-head RMS normalization plus SiLU gating. RecurrentOut now uses the
 existing Tensix projection path with an explicit input offset into the retained
-QKV V channels. The authority admits it only after that layer's delta step
-commits, invalidates its output while pending, and consumes QKV when the
-projection commits. Dense attention/KV, full decoder orchestration, final
-vocabulary readout, and token generation remain incomplete. No hardware test
-or decode rate is available.
+QKV V channels. A recurrent layer sequence now composes attention norm, QKV,
+gate, Alpha/Beta and RecurrentOut projections, convolution, delta state,
+residual adds, and the existing FFN sequence. Dense attention/KV, mixed dense
+and recurrent full-model orchestration, final vocabulary readout, and token
+generation remain incomplete. No hardware test or decode rate is available.
 
 The graph workspace participates in the projection path. The request can
 select the Up, recurrent QKV, or recurrent gate sidecar; the authority maps
@@ -313,6 +313,19 @@ Service text SHA-256 is
 `7eea8370b070336d98ffd28897e2ce44fec519249f533b1e83506f80da58f950`; reload
 guard and default-control builds pass. These remain offline checks; there is no
 Pioneer output or performance measurement.
+
+Checkpoint `cd6c25e985` adds a rewrite-only recurrent layer sequence and ioctl
+at `0x8843`, using new driver build tag `2026112100010100`. It composes the
+attention norm, four exact graph projections, recurrent convolution and delta
+step, V-slice RecurrentOut, attention residual add, and the existing FFN
+sequence. The sequence rejects dense layers and invalid positions, preserves
+the first failing stage, and performs no tensor math itself. ASan/UBSan tests
+cover operation ordering, invalid dense-layer requests, and stopping after a
+delta failure. The Haiku RV32IMF role compile passes without A atomics or
+runtime helpers. The offline driver60 build passes with SHA-256
+`057b487b6543f4103934e8c24bc4f05a0af939b35d2013f4fe74b4e53c0772bc`; reload
+guard and default-control builds pass. This is still offline-only: dense
+attention/KV and final token generation remain before end-to-end model runs.
 
 The device-side SiLU×Up step is implemented and pushed in `8ed176883c`. Its
 manifest-bound schedule assigns all 576 sixteen-row panels over the 120

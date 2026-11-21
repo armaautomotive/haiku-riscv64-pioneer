@@ -534,3 +534,23 @@ text SHA-256 is
 `7eea8370b070336d98ffd28897e2ce44fec519249f533b1e83506f80da58f950`.
 Dense attention/KV, full decoder orchestration, final vocabulary readout, and
 generation remain. No Pioneer run or throughput measurement has been made.
+
+## Recurrent decoder layer sequence `cd6c25e985` (2026-11-21)
+
+The rewrite now exposes one complete recurrent decoder layer sequence through
+a new root ioctl and build tag `2026112100010100`. It performs residual save,
+attention RMS, the QKV/gate/Alpha/Beta Tensix projections, convolution, delta
+state update, V-slice RecurrentOut projection, attention residual add, and the
+existing feed-forward sequence. The root only constructs authorized
+descriptors and submits resident worker commands; it does no tensor math. The
+sequence rejects dense layers and invalid positions, stops on the first failed
+stage, and reports the nested FFN stage.
+
+ASan/UBSan tests cover complete ordering, invalid-layer rejection, and stopping
+after delta failure. The Haiku RV32IMF compile passes without A atomics or
+runtime helpers. The offline driver60 build at tag `2026112100010100` passes
+with SHA-256
+`057b487b6543f4103934e8c24bc4f05a0af939b35d2013f4fe74b4e53c0772bc`; reload
+guard and default-control builds pass. Dense attention/KV, final vocabulary
+readout, and token generation remain. No Pioneer run or throughput result is
+available.
