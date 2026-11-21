@@ -308,3 +308,10 @@ tokenizer client are not integrated with this service. No model was loaded on
 the card, no rewritten projection has run physically, and no rewrite decode
 rate or clean physical unload result exists. Benchmark and assistant
 integration remain after the full rewrite is ready.
+
+The next rewrite step has an isolated device-side Q6_K embedding-panel
+decoder. Its sanitizer test compares every panel and token lane against the
+pinned reference decoder bit-for-bit, and the RV32IMF target compile includes
+the new helper without atomics or runtime helpers. This is only the numeric
+unpack primitive; it is not yet part of the resident worker command, so token
+embedding and valid text output remain unavailable.

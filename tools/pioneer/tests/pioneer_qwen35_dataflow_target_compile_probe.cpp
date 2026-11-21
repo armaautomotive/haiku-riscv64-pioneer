@@ -3,6 +3,7 @@
 #include "../PioneerQwen35DataflowTensixOps.h"
 #include "../PioneerQwen35DataflowBlackholeWorker.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
+#include "../PioneerQwen35DataflowEmbedding.h"
 
 using namespace PioneerQwen35;
 
@@ -33,6 +34,13 @@ bool PioneerQwen35DataflowQ5UnpackTargetCompileProbe(unsigned panel,
 {
 	TargetCompileTensixEmitter emitter;
 	return PioneerQwen35DataflowVectorUnpack(emitter,13,panel,weightPage);
+}
+
+bool PioneerQwen35DataflowEmbeddingTargetCompileProbe(const uint8_t* tile,
+	unsigned lane,unsigned panel,float* output)
+{
+	return DataflowDecodeQ6KEmbeddingPanel(tile,DataflowQ6KEmbeddingTileBytes,
+		lane,panel,output,DataflowQ6KEmbeddingValuesPerPanel);
 }
 
 bool PioneerQwen35DataflowTensixTargetCompileProbe(
