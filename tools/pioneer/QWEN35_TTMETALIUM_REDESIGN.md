@@ -273,16 +273,38 @@ no route back to the old inference path. The offline driver60 cross-build
 passes with this control path; candidate SHA-256:
 `da07aeca4e6c57e146fc87d3c241171461e25a60409fa9e14d66b2c625a78d2a`.
 
-The next rewrite step added a root-only model-bind opcode. It validates the
-entire fixed Qwen3.5-4B manifest against the initialized-page ledger before it
-prepares the all-core dispatch lease, then binds an immutable manifest copy to
-the projection authority only after fleet-route proof. The public capability
-bits now expose model binding while projection and token execution remain
-disabled. The offline driver60 build passes; candidate SHA-256:
-`8caa37c06c9e895f2e4fcd96c37a25db481a662f9b40ad2c1b54e4d75caa45fe`.
-The manifest bind is not connected to activation seeding or the projection
-owner's PCI IO methods yet. No model was loaded on the card, no rewritten
-projection or valid output has run, and no rewrite rate or physical unload
-result exists. Continue with verified activation writes/readbacks and native
-projection authorization/audit; benchmark and assistant integration remain
-after the rewrite is ready.
+The rewrite now has root-only model-bind, activation-seed, projection, and
+recovery controls. Model bind validates the full 4B manifest against the
+initialized-page ledger before preparing the all-core dispatch lease, then
+binds an immutable manifest copy after the route proof. Activation seed moves
+caller-supplied finite float rows into only the declared activation extent,
+page by page, using the checked bank transport and readback; it does not
+perform model arithmetic. The projection request contains only layer, role,
+and activation-slot indices. The driver builds its own 120-core schedule from
+the immutable manifest and route table. The projection owner now audits the
+terminal mailbox/queue/image state before acknowledgement and marks the output
+usable only after every worker returns ready. Activation authority tracks the
+number of initialized rows so a short projection result cannot feed a wider
+projection. Recovery double-audits the whole fleet before acknowledging
+terminal workers; uncertain or non-idle NoC state remains quarantined. A
+root-only activation-read opcode now reads only initialized float rows through
+the checked resident-bank page transport, after an all-120-core idle audit and
+before a second idle audit. The support ABI advertises that readback control,
+the matrix projection prototype, and no token-generation capability.
+
+The offline driver60, reload-guard, and default-control cross-builds pass;
+driver60 candidate SHA-256:
+`6801db7818df7645c0b7399796170eb211097add6524142ba5edcd46ab53fd2e`. The
+service image text SHA-256 remains
+`10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`. Six
+rewrite suites pass under AddressSanitizer and UndefinedBehaviorSanitizer:
+program/authority, projection owner, service owner, worker protocol, PCI L1
+memory, and activation layout. The RV32IMF role compile also passes without A
+atomics or unresolved runtime helpers. These checks cover software contracts
+and mocks; they do not prove numeric output or physical recovery. The first
+activation still must come from a device-side token-embedding path, and the
+recurrent/dense model graph, state updates, tied-vocabulary readout, and
+tokenizer client are not integrated with this service. No model was loaded on
+the card, no rewritten projection has run physically, and no rewrite decode
+rate or clean physical unload result exists. Benchmark and assistant
+integration remain after the full rewrite is ready.

@@ -49,6 +49,30 @@ PioneerQwen35DataflowServicePc(PioneerSessionIO& io)
 		&& second>=PioneerQwen35::DataflowServiceEntryAddress && second<end;
 }
 
+static bool
+PioneerQwen35DataflowQueuesBalanced(PioneerSessionIO& io,unsigned core,
+	bool allowFailures)
+{
+	constexpr unsigned Words=PioneerQwen35::DataflowQueueStateBytes/sizeof(uint32_t);
+	uint32_t first[Words],second[Words];
+	if (!io.SelectRuntimeCore(core) || !io.MapQ38Panel()
+		|| !io.DataflowPanelMappingStable()) return false;
+	for (unsigned i=0;i<Words;i++)
+		first[i]=io.Q38PanelRead(PioneerQwen35::DataflowQueueStateAddress+i*4);
+	io.Pause();
+	for (unsigned i=0;i<Words;i++)
+		second[i]=io.Q38PanelRead(PioneerQwen35::DataflowQueueStateAddress+i*4);
+	if (memcmp(first,second,sizeof(first))!=0) return false;
+	for (unsigned queue=0;queue<PioneerQwen35::DataflowCircularBufferCount;queue++) {
+		const unsigned base=queue*(PioneerQwen35::DataflowQueueControlBytes/4);
+		if (second[base]!=second[base+1] || second[base+6] || second[base+7])
+			return false;
+		if (!allowFailures && (second[base+2] || second[base+3]
+			|| second[base+4] || second[base+5])) return false;
+	}
+	return true;
+}
+
 bool
 PioneerSessionIO::DataflowPanelMappingStable()
 {
@@ -72,7 +96,48 @@ PioneerSessionIO::DataflowCoreServiceImageMatches(unsigned core)
 		if (Q38PanelRead(address)!=PioneerQwen35::DataflowServiceTextWords[i])
 			return false;
 	}
+	qwen35DataflowContext->qwen35DataflowImageVerified[core]=true;
 	return true;
+}
+
+static bool
+PioneerSessionIODataflowServiceImageTrusted(PioneerSessionIO& io,unsigned core)
+{
+	auto* context=io.qwen35DataflowContext;
+	return context && core<PioneerQwen35::DataflowCoreCount
+		&& io.SelectRuntimeCore(core) && io.MapQ38Panel()
+		&& io.DataflowPanelMappingStable()
+		&& io.RuntimeCodeRead(0)==PioneerQwen35::DataflowServiceImageBootWord
+		&& (context->qwen35DataflowImageVerified[core]
+			|| io.DataflowCoreServiceImageMatches(core));
+}
+
+static bool
+PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core)
+{
+	auto* context=io.qwen35DataflowContext;
+	if (!context || core>=PioneerQwen35::DataflowCoreCount
+		|| !io.SelectRuntimeCore(core) || !io.MapQ38Panel()
+		|| !io.DataflowPanelMappingStable()
+		|| !PioneerSessionIODataflowServiceImageTrusted(io,core)) return false;
+	const unsigned reset=io.ResetRead();
+	if (reset!=0x46800 || io.ResetRead()!=reset) return false;
+	auto& dram=context->baseline.baseline.baseline.baseline.dram;
+	if (!context->q38Dispatch || context->q38Dispatch->unsafe
+		|| context->q38Dispatch->closed || context->q38Dispatch->rootRunning)
+		return false;
+	auto& node=context->q38Dispatch->worker[core];
+	const uint32_t expectedNode=PioneerWorkerX(core)|(PioneerWorkerY(core)<<6);
+	const uint32_t nodeFirst=io.ResidentNocRead(0x14);
+	io.Pause();
+	const uint32_t nodeSecond=io.ResidentNocRead(0x14);
+	return nodeFirst==expectedNode && nodeSecond==expectedNode
+		&& node.noc.state==TT_COMPUTE_NOC_PASSED && node.noc.tlb_restored
+		&& !node.noc.recovery_required
+		&& node.noc.version==(core?PioneerWorkerVersion(core):1)
+		&& PioneerWorkerRoute(dram,node.noc.source[0],core)
+		&& PioneerRuntimeSources(io,dram,node.noc,node.Store())
+		&& PioneerQwen35DataflowServicePc(io) && BlackholeResidentIdle(io);
 }
 
 bool
@@ -97,7 +162,7 @@ PioneerSessionIO::DataflowCoreIdleForHold(unsigned core)
 		|| !PioneerWorkerRoute(dram,node.noc.source[0],core)
 		|| !node.Store().ready || node.Store().pending
 		|| node.Store().recovery_required) return false;
-	if (DataflowCoreServiceImageMatches(core)) {
+	if (PioneerSessionIODataflowServiceImageTrusted(*this,core)) {
 		if (reset!=0x46800 && reset!=0x47800) return false;
 		const uint32_t expectedNode=PioneerWorkerX(core)|(PioneerWorkerY(core)<<6);
 		const uint32_t nodeFirst=ResidentNocRead(0x14);
@@ -131,11 +196,29 @@ PioneerSessionIO::DataflowCoreIdleForWrite(unsigned core,unsigned address,
 	if (core>=PioneerQwen35::DataflowCoreCount
 		|| ResetRead()!=0x46800 || ResetRead()!=0x46800
 		|| !DataflowPciRunningWriteRange(address,bytes)
-		|| !DataflowCoreServiceImageMatches(core)
-		|| !DataflowCoreIdleForHold(core)) return false;
+		|| !PioneerSessionIODataflowServiceImageTrusted(*this,core)) return false;
 	PioneerQwen35::DataflowWorkerMailbox mailbox{};
-	return PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+	if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+		|| !PioneerQwen35DataflowServicePc(*this)
+		|| !PioneerQwen35DataflowQueuesBalanced(*this,core,
+			address==PioneerQwen35::DataflowWorkerMailboxAddress
+				+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence)))
+		return false;
+	const unsigned acknowledgement=PioneerQwen35::DataflowWorkerMailboxAddress
+		+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
+	if (address==acknowledgement && bytes==sizeof(uint32_t)) {
+		return mailbox.commandSequence==mailbox.completedSequence
+			&& mailbox.commandSequence>mailbox.acknowledgedSequence
+			&& !mailbox.shutdownSequence
+			&& ((mailbox.state==PioneerQwen35::DataflowWorkerComplete
+				&& !mailbox.failure && mailbox.phase==2)
+				|| (mailbox.state==PioneerQwen35::DataflowWorkerFailed
+					&& mailbox.failure && mailbox.phase==5))
+			&& PioneerQwen35DataflowCoreRuntimeStable(*this,core);
+	}
+	return DataflowCoreIdleForHold(core)
 		&& DataflowPciMailboxReadyForStop(mailbox)
+		&& mailbox.shutdownSequence==0
 		&& PioneerQwen35DataflowQueuesDrained(*this,core)
 		&& BlackholeResidentIdle(*this);
 }
@@ -304,6 +387,250 @@ PioneerSessionIO::CoreReady(unsigned core,
 		&& ReadWorkerSnapshot(core,observed)
 		&& memcmp(&snapshot,&observed,sizeof(snapshot))==0
 		&& PioneerQwen35::DataflowWorkerSnapshotReady(observed);
+}
+
+bool
+PioneerSessionIO::AuthorizeProjection(
+	const PioneerQwen35::DataflowProjectionProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->Authorize(program);
+}
+
+bool
+PioneerSessionIO::BeginProjection(
+	const PioneerQwen35::DataflowProjectionProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->Begin(program);
+}
+
+bool
+PioneerSessionIO::WriteInvocation(unsigned core,
+	const PioneerQwen35::DataflowCoreInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
+	return ReadWorkerSnapshot(core,snapshot)
+		&& PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
+		&& CoreReady(core,snapshot)
+		&& WriteCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation));
+}
+
+bool
+PioneerSessionIO::InvocationMatches(unsigned core,
+	const PioneerQwen35::DataflowCoreInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowCoreInvocation observed{};
+	return ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+		&observed,sizeof(observed))
+		&& memcmp(&invocation,&observed,sizeof(invocation))==0;
+}
+
+bool
+PioneerSessionIO::PublishCommand(unsigned core,unsigned sequence)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !sequence
+		|| sequence>PioneerQwen35::DataflowWorkerSequenceLimit) return false;
+	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
+	PioneerQwen35::DataflowCoreInvocation invocation{};
+	if (!ReadWorkerSnapshot(core,snapshot)
+		|| !PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
+		|| sequence<=snapshot.completedSequence
+		|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation))
+		|| !invocation.Valid() || invocation.core!=core) return false;
+	const uint32_t command=sequence;
+	const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
+		+offsetof(PioneerQwen35::DataflowWorkerMailbox,commandSequence);
+	return WriteCoreMemory(core,address,&command,sizeof(command));
+}
+
+bool
+PioneerSessionIO::WaitForCompletion(unsigned core,unsigned sequence,
+	PioneerQwen35::DataflowWorkerSnapshot& snapshot)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !sequence) return false;
+	for (unsigned poll=0;poll<65536;poll++) {
+		if (ReadWorkerSnapshot(core,snapshot)) {
+			if (snapshot.commandSequence==sequence
+				&& snapshot.completedSequence==sequence
+				&& (snapshot.state==PioneerQwen35::DataflowWorkerComplete
+					|| snapshot.state==PioneerQwen35::DataflowWorkerFailed))
+				return true;
+			if (snapshot.state==PioneerQwen35::DataflowWorkerFatal
+				|| snapshot.state==PioneerQwen35::DataflowWorkerStopped
+				|| snapshot.commandSequence>sequence) return false;
+		}
+		Pause();
+	}
+	return false;
+}
+
+bool
+PioneerSessionIO::AuditProjection(
+	const PioneerQwen35::DataflowProjectionProgram& program,unsigned sequence,
+	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount])
+{
+	auto* context=qwen35DataflowContext;
+	if (!context || !context->qwen35DataflowAuthority
+		|| !program.Valid() || !sequence || !context->qwen35DataflowAuthority->Pending())
+		return false;
+	const auto* manifest=context->qwen35DataflowAuthority->Manifest();
+	if (!manifest || !PioneerQwen35::DataflowProjectionMatchesLayout(*manifest,
+		context->qwen35DataflowRoutes,program)) return false;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		if (receipts[core].commandSequence!=sequence
+			|| receipts[core].completedSequence!=sequence
+			|| receipts[core].state!=PioneerQwen35::DataflowWorkerComplete
+			|| receipts[core].failure || receipts[core].phase!=2
+			|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
+		PioneerQwen35::DataflowWorkerSnapshot observed{};
+		PioneerQwen35::DataflowCoreInvocation invocation{};
+		if (!ReadWorkerSnapshot(core,observed)
+			|| memcmp(&receipts[core],&observed,sizeof(observed))!=0
+			|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+				&invocation,sizeof(invocation))) return false;
+		PioneerQwen35::DataflowCoreInvocation expected{};
+		if (!PioneerQwen35::DataflowProgramBuilder::BindCore(program,core,expected)
+			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
+	}
+	return SelectRuntimeCore(0);
+}
+
+bool
+PioneerSessionIO::Acknowledge(unsigned core,unsigned sequence)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !sequence) return false;
+	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
+	if (!ReadWorkerSnapshot(core,snapshot)
+		|| snapshot.commandSequence!=sequence || snapshot.completedSequence!=sequence
+		|| snapshot.state!=PioneerQwen35::DataflowWorkerComplete || snapshot.failure
+		|| snapshot.phase!=2) return false;
+	const uint32_t acknowledgement=sequence;
+	const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
+		+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
+	return WriteCoreMemory(core,address,&acknowledgement,sizeof(acknowledgement));
+}
+
+bool
+PioneerSessionIO::CompleteProjection(
+	const PioneerQwen35::DataflowProjectionProgram& program,unsigned sequence)
+{
+	auto* context=qwen35DataflowContext;
+	return sequence && context && context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->Complete(program);
+}
+
+bool
+PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
+	PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount])
+{
+	auto* context=qwen35DataflowContext;
+	if (!context || !sequence || !context->qwen35DataflowAuthority
+		|| !context->qwen35DataflowAuthority->Pending()) return false;
+	auto inspect=[&](unsigned core,PioneerQwen35::DataflowWorkerSnapshot& observed,
+		bool& terminal) {
+		terminal=false;
+		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+			|| !ReadWorkerSnapshot(core,observed)) return false;
+		if (PioneerQwen35::DataflowWorkerSnapshotReady(observed)) {
+			if (observed.commandSequence>sequence
+				|| !PioneerQwen35DataflowQueuesDrained(*this,core)) return false;
+			return true;
+		}
+		if (observed.commandSequence!=sequence || observed.completedSequence!=sequence
+			|| observed.acknowledgedSequence>=sequence
+			|| (observed.state!=PioneerQwen35::DataflowWorkerComplete
+				&& observed.state!=PioneerQwen35::DataflowWorkerFailed)
+			|| (observed.state==PioneerQwen35::DataflowWorkerComplete
+				&& (observed.failure || observed.phase!=2))
+			|| (observed.state==PioneerQwen35::DataflowWorkerFailed
+				&& (!observed.failure || observed.phase!=5))
+			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,true)) return false;
+		terminal=true;
+		return true;
+	};
+
+	// A running shard may still own NoC work. Wait for a terminal receipt before
+	// attempting any acknowledgement; a timeout leaves the fleet untouched.
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		bool settled=false;
+		for (unsigned poll=0;poll<65536;poll++) {
+			PioneerQwen35::DataflowWorkerSnapshot current{};
+			if (!ReadWorkerSnapshot(core,current)) { Pause(); continue; }
+			if (current.state==PioneerQwen35::DataflowWorkerFatal
+				|| current.commandSequence>sequence) return false;
+			if (PioneerQwen35::DataflowWorkerSnapshotReady(current)) {
+				settled=true;
+				break;
+			}
+			if (current.commandSequence==sequence
+				&& current.completedSequence==sequence
+				&& (current.state==PioneerQwen35::DataflowWorkerComplete
+					|| current.state==PioneerQwen35::DataflowWorkerFailed)) {
+				if (current.acknowledgedSequence==sequence) {
+					Pause();
+					continue;
+				}
+				settled=true;
+				break;
+			}
+			Pause();
+		}
+		if (!settled) return false;
+	}
+
+	PioneerQwen35::DataflowWorkerSnapshot first[PioneerQwen35::DataflowCoreCount]{};
+	PioneerQwen35::DataflowWorkerSnapshot second[PioneerQwen35::DataflowCoreCount]{};
+	bool terminal[PioneerQwen35::DataflowCoreCount]{};
+	for (unsigned pass=0;pass<2;pass++) {
+		auto& target=pass?second:first;
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			bool isTerminal=false;
+			if (!inspect(core,target[core],isTerminal)) return false;
+			if (pass==0) terminal[core]=isTerminal;
+			else if (terminal[core]!=isTerminal
+				|| memcmp(&first[core],&second[core],sizeof(first[core]))!=0)
+				return false;
+		}
+		if (!pass) Pause();
+	}
+
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		if (!terminal[core]) continue;
+		const uint32_t acknowledgement=sequence;
+		const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
+			+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
+		if (!WriteCoreMemory(core,address,&acknowledgement,sizeof(acknowledgement)))
+			return false;
+	}
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		PioneerQwen35::DataflowWorkerSnapshot ready{};
+		if (!WaitWorkerReady(core,ready)
+			|| ready.completedSequence>sequence) return false;
+		snapshots[core]=ready;
+	}
+	return SelectRuntimeCore(0);
+}
+
+bool
+PioneerSessionIO::AbortPendingProjection()
+{
+	return qwen35DataflowContext
+		&& qwen35DataflowContext->qwen35DataflowAuthority
+		&& qwen35DataflowContext->qwen35DataflowAuthority->AbortPendingProjection();
 }
 
 bool

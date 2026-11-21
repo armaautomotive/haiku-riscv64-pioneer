@@ -103,12 +103,20 @@ public:
 		if (!io.BeginProjection(program))
 			return DataflowOwnerProjectionBeginFailed;
 		const unsigned sequence=fNextSequence+1;
+		// Beginning invalidates the output activation. Any later preparation
+		// failure must pass through the audited recovery path before another
+		// program can reuse this owner.
+		fPendingSequence=sequence;
+		auto preparationFailed=[&](DataflowOwnerResult result) {
+			fFaulted=true;
+			return result;
+		};
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
 			if (!io.ReadWorkerSnapshot(core,snapshot)
 				|| !DataflowWorkerSnapshotReady(snapshot)
 				|| !io.CoreReady(core,snapshot))
-				return DataflowOwnerCoreNotReady;
+				return preparationFailed(DataflowOwnerCoreNotReady);
 			fSnapshot[core]=snapshot;
 		}
 
@@ -117,16 +125,15 @@ public:
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowCoreInvocation invocation;
 			if (!DataflowProgramBuilder::BindCore(program,core,invocation))
-				return DataflowOwnerInvalidProgram;
+				return preparationFailed(DataflowOwnerInvalidProgram);
 			if (!io.WriteInvocation(core,invocation))
-				return DataflowOwnerInvocationWriteFailed;
+				return preparationFailed(DataflowOwnerInvocationWriteFailed);
 			if (!io.InvocationMatches(core,invocation))
-				return DataflowOwnerInvocationReadbackFailed;
+				return preparationFailed(DataflowOwnerInvocationReadbackFailed);
 		}
 
 		// Publish commandSequence last for each worker. A failed write is
 		// ambiguous, so every failure from this point requires all-core audit.
-		fPendingSequence=sequence;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!io.PublishCommand(core,sequence)) {
 				fFaulted=true;
@@ -163,9 +170,16 @@ public:
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
-			if (!io.ReadWorkerSnapshot(core,snapshot)
-				|| !DataflowWorkerSnapshotReady(snapshot)
-				|| snapshot.completedSequence!=sequence) {
+			bool ready=false;
+			for (unsigned poll=0;poll<65536;poll++) {
+				if (io.ReadWorkerSnapshot(core,snapshot)
+					&& DataflowWorkerSnapshotReady(snapshot)
+					&& snapshot.completedSequence==sequence) {
+					ready=true;
+					break;
+				}
+			}
+			if (!ready) {
 				fFaulted=true;
 				return DataflowOwnerAcknowledgementFailed;
 			}
@@ -208,6 +222,7 @@ public:
 			fSnapshot[core]=snapshot;
 		}
 		fNextSequence=newest;
+		if (!io.AbortPendingProjection()) return DataflowOwnerRecoveryPending;
 		fPendingSequence=0;
 		fFaulted=false;
 		return DataflowOwnerRecovered;

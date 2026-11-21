@@ -301,7 +301,8 @@ int main()
 	assert(!authority.Authorize(program));
 	assert(authority.Complete(program));
 	assert(!authority.Pending() && authority.ActivationReady(0)
-		&& authority.ActivationReady(1));
+		&& authority.ActivationReady(1)
+		&& authority.ActivationRows(1)==program.outputRows);
 
 	TensorSpace unregisteredWeight=weight;
 	unregisteredWeight.place.parts[0].address+=4096;

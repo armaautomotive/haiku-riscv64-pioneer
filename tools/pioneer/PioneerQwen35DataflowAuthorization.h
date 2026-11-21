@@ -14,7 +14,7 @@ class DataflowProjectionAuthority {
 	DeviceLayout fManifest{};
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
-	bool fActivationReady[ActivationBuffers]{};
+	unsigned fActivationRows[ActivationBuffers]{};
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
 
@@ -39,9 +39,27 @@ public:
 
 	bool Bound() const { return fBound; }
 	bool Pending() const { return fPending; }
+	const DeviceLayout* Manifest() const { return fBound?&fManifest:nullptr; }
 	bool ActivationReady(unsigned slot) const
 	{
-		return slot<ActivationBuffers && fActivationReady[slot];
+		return slot<ActivationBuffers && fActivationRows[slot]!=0;
+	}
+	unsigned ActivationRows(unsigned slot) const
+	{
+		return slot<ActivationBuffers?fActivationRows[slot]:0;
+	}
+
+	bool BuildProjection(unsigned layer,unsigned role,unsigned inputSlot,
+		unsigned outputSlot,DataflowProjectionProgram& program) const
+	{
+		if (!fBound || inputSlot>=ActivationBuffers
+			|| outputSlot>=ActivationBuffers || inputSlot==outputSlot
+			|| layer>Layers || role>=LayerRoles) return false;
+		const TensorSpace* weight=fManifest.Weight(layer,role);
+		if (!weight || !DataflowProgramBuilder::Build(*weight,
+			fManifest.activation[inputSlot],weight->inputs,
+			fManifest.activation[outputSlot],fRoutes,program)) return false;
+		return Authorize(program);
 	}
 
 	bool BindValidatedModel(const DeviceLayout& manifest,
@@ -61,9 +79,23 @@ public:
 	// written and read back under the model session's physical IO proof.
 	bool MarkActivationInitialized(unsigned slot)
 	{
-		if (!fBound || fPending || slot>=ActivationBuffers
+		return slot<ActivationBuffers && fBound
+			&& MarkActivationInitialized(slot,fManifest.activation[slot].rows);
+	}
+
+	bool MarkActivationInitialized(unsigned slot,unsigned rows)
+	{
+		if (!fBound || fPending || slot>=ActivationBuffers || !rows
+			|| rows>fManifest.activation[slot].rows || (rows&15)
 			|| !fManifest.activation[slot].Valid()) return false;
-		fActivationReady[slot]=true;
+		fActivationRows[slot]=rows;
+		return true;
+	}
+
+	bool InvalidateActivation(unsigned slot)
+	{
+		if (!fBound || fPending || slot>=ActivationBuffers) return false;
+		fActivationRows[slot]=0;
 		return true;
 	}
 
@@ -72,7 +104,8 @@ public:
 		if (!fBound || fPending
 			|| !DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) return false;
 		unsigned input=ActivationBuffers,output=ActivationBuffers;
-		return Slots(program,input,output) && fActivationReady[input];
+		return Slots(program,input,output)
+			&& fActivationRows[input]>=program.inputRows;
 	}
 
 	// Invalidate the destination before descriptors are staged. Any error from
@@ -83,7 +116,7 @@ public:
 		if (!Authorize(program)) return false;
 		unsigned input=ActivationBuffers,output=ActivationBuffers;
 		if (!Slots(program,input,output)) return false;
-		fActivationReady[output]=false;
+		fActivationRows[output]=0;
 		fPending=true;
 		fPendingOutput=output;
 		return true;
@@ -95,8 +128,21 @@ public:
 			|| !DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) return false;
 		unsigned input=ActivationBuffers,output=ActivationBuffers;
 		if (!Slots(program,input,output) || output!=fPendingOutput
-			|| !fActivationReady[input]) return false;
-		fActivationReady[output]=true;
+			|| fActivationRows[input]<program.inputRows
+			|| program.outputRows>fManifest.activation[output].rows) return false;
+		fActivationRows[output]=program.outputRows;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		return true;
+	}
+
+	// Used only after a physical fleet audit has proved every command either
+	// remained unpublished or reached a terminal receipt and was acknowledged.
+	// The destination stays invalid after an aborted projection.
+	bool AbortPendingProjection()
+	{
+		if (!fBound || !fPending || fPendingOutput>=ActivationBuffers) return false;
+		fActivationRows[fPendingOutput]=0;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		return true;

@@ -41,7 +41,7 @@ struct MockOwnerIO {
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	uint32_t invocationSignature[DataflowCoreCount]{};
 	unsigned writes=0,publishes=0,waits=0,audits=0,acknowledgements=0;
-	unsigned begins=0,completes=0;
+	unsigned begins=0,completes=0,aborts=0;
 	unsigned failPublishCore=UINT32_MAX;
 	bool ambiguousPublishFailure=true,recoveryAllowed=true,programAuthorized=true;
 	bool failBegin=false,failComplete=false;
@@ -165,6 +165,7 @@ struct MockOwnerIO {
 		}
 		return true;
 	}
+	bool AbortPendingProjection() { aborts++; return true; }
 };
 
 int main()
@@ -212,7 +213,7 @@ int main()
 	assert(owner.RunProjection(program,io)==DataflowOwnerCommandPublishFailed);
 	assert(owner.Faulted() && owner.NextSequence()==1);
 	assert(owner.Recover(io)==DataflowOwnerRecovered);
-	assert(!owner.Faulted() && owner.NextSequence()==2);
+	assert(!owner.Faulted() && owner.NextSequence()==2 && io.aborts==1);
 	for (unsigned core=0;core<DataflowCoreCount;core++)
 		assert(DataflowWorkerSnapshotReady(io.snapshot[core]));
 

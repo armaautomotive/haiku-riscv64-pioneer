@@ -3251,6 +3251,22 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool WaitWorkerReady(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool AuthorizeProjection(const PioneerQwen35::DataflowProjectionProgram& program);
+	bool BeginProjection(const PioneerQwen35::DataflowProjectionProgram& program);
+	bool WriteInvocation(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
+	bool InvocationMatches(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
+	bool PublishCommand(unsigned core,unsigned sequence);
+	bool WaitForCompletion(unsigned core,unsigned sequence,
+		PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool AuditProjection(const PioneerQwen35::DataflowProjectionProgram& program,
+		unsigned sequence,
+		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]);
+	bool Acknowledge(unsigned core,unsigned sequence);
+	bool CompleteProjection(const PioneerQwen35::DataflowProjectionProgram& program,
+		unsigned sequence);
+	bool AuditAndRecoverAll(unsigned sequence,
+		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount]);
+	bool AbortPendingProjection();
 	bool StopAndAuditAll();
 	bool RestoreCoreState(unsigned core);
 	bool VerifyCoreStateRestored(unsigned core);
@@ -3585,6 +3601,7 @@ struct PioneerStoreContext {
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
 	PioneerQwen35::DataflowProjectionAuthority* qwen35DataflowAuthority=NULL;
 	unsigned qwen35DataflowRoutes[2][PioneerQwen35::Banks]={};
+	bool qwen35DataflowImageVerified[PioneerQwen35::DataflowCoreCount]={};
 	bool qwen35DataflowRoutesAudited=false;
 	unsigned qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
 #endif
@@ -4016,6 +4033,12 @@ struct PioneerStoreContext {
 		if (qwen35DataflowService->Closed()) {
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 		}
+		qwen35DataflowLastResult=result;
+		return result;
+	}
+	PioneerQwen35::DataflowServiceResult RecoverDataflowRewrite() {
+		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
+		const auto result=qwen35DataflowService->RecoverProjection(io);
 		qwen35DataflowLastResult=result;
 		return result;
 	}
@@ -7907,7 +7930,8 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (status!=B_OK) { free(request); return status; }
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
-		|| context->bytes!=PioneerResidentBanks::Total || context->Unsafe()
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| context->Unsafe()
 		|| !context->initialized || context->qwen35DataflowAuthority
 		|| context->qwen35DataflowService) {
 		status=B_NOT_ALLOWED;
@@ -7920,7 +7944,8 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 		if (!PioneerQwen35::ValidateManifest(request->manifest,request->rope,
 			initialized,context->uploadedPages)) {
 			status=B_BAD_VALUE;
-		} else if (!PrepareQ38Dispatch(*context) || !context->io.ProveFleetRoutes()) {
+		} else if (!PrepareQ38Dispatch(*context) || !context->io.ProveFleetRoutes()
+			|| !context->io.SelectRuntimeCore(0)) {
 			context->qwen35DataflowLastResult=PioneerQwen35::DataflowServicePreflightFailed;
 			status=B_IO_ERROR;
 		} else {
@@ -7943,6 +7968,301 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
+Qwen35DataflowSeedActivation(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_activation_seed))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_activation_seed*)malloc(
+		sizeof(tt_qwen35_dataflow_activation_seed));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->slot>=PioneerQwen35::ActivationBuffers
+		|| request->reserved || !request->source || request->result
+		|| request->activation_mask) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| context->Unsafe()
+		|| !context->qwen35DataflowAuthority || context->qwen35DataflowService
+		|| !context->qwen35DataflowRoutesAudited || !context->initialized
+		|| !context->host.memory_type_set || context->host.state!=TT_HOST_PAGE_READY
+		|| context->host.released) {
+		status=B_NOT_ALLOWED;
+	} else {
+		const auto* manifest=context->qwen35DataflowAuthority->Manifest();
+		if (!manifest || request->rows!=manifest->activation[request->slot].rows
+			|| !manifest->activation[request->slot].Valid()
+			|| request->rows>SIZE_MAX/sizeof(float)) {
+			status=B_BAD_VALUE;
+		} else {
+			const size_t bytes=size_t(request->rows)*sizeof(float);
+			auto* values=(float*)malloc(bytes);
+			auto* page=(uint32_t*)malloc(4096);
+			if (!values || !page) {
+				status=B_NO_MEMORY;
+			} else if (user_memcpy(values,
+				(const void*)(uintptr_t)request->source,bytes)!=B_OK) {
+				status=B_BAD_ADDRESS;
+			} else {
+				bool finite=true;
+				for (unsigned i=0;i<request->rows;i++) {
+					uint32_t bits=0;
+					memcpy(&bits,values+i,sizeof(bits));
+					if ((bits&0x7f800000U)==0x7f800000U) { finite=false; break; }
+				}
+				if (!finite) {
+					status=B_BAD_VALUE;
+				} else if (!context->qwen35DataflowAuthority->InvalidateActivation(
+					request->slot)) {
+					status=B_NOT_ALLOWED;
+				} else {
+					auto& dram=context->baseline.baseline.baseline.baseline.dram;
+					auto& noc=context->baseline.baseline.baseline.noc;
+					const bool rootSelected=context->io.SelectRuntimeCore(0);
+					bool ready=rootSelected && context->lease.ready;
+					if (!ready && rootSelected && !context->lease.saved)
+						ready=PioneerResidentLeaseBegin(context->io,noc,context->lease);
+					bool passed=ready;
+					request->result=TT_STORE_CONFIG_FAILED;
+					const auto& space=manifest->activation[request->slot];
+					for (unsigned fragment=0;fragment<space.count && passed;fragment++) {
+						const auto& part=space.parts[fragment];
+						const uint64_t tensorBytes=uint64_t(part.rows)*space.rowBytes;
+						const uint64_t allocated=(tensorBytes+4095)&~uint64_t(4095);
+						if (!tensorBytes || part.bank>=PioneerQwen35::Banks
+							|| part.address<PioneerQwen35::BankBase
+							|| part.address>=PioneerQwen35::BankLimit
+							|| allocated>PioneerResidentBanks::Capacity
+								-(part.address-PioneerQwen35::BankBase)) {
+							passed=false;
+							break;
+						}
+						for (uint64_t offset=0;offset<allocated;offset+=4096) {
+							memset(page,0,4096);
+							const uint64_t rowOffset=offset/sizeof(float);
+							const uint64_t available=tensorBytes>offset
+								?(tensorBytes-offset)/sizeof(float):0;
+							const unsigned copyValues=available>1024?1024:unsigned(available);
+							if (copyValues) memcpy(page,values+part.firstRow+rowOffset,
+								copyValues*sizeof(float));
+							tt_resident_store_result stored{};
+							passed=PioneerResidentStorePage(context->io,dram,noc,
+								context->host,context->lease,
+								PioneerResidentBanks::Capacity,
+								(part.address-PioneerQwen35::BankBase)+offset,
+								true,page,stored,&context->banks,part.bank);
+							request->result=stored.state;
+							if (!passed) break;
+						}
+					}
+					if (passed && context->qwen35DataflowAuthority
+						->MarkActivationInitialized(request->slot,request->rows))
+						request->result=TT_STORE_PASSED;
+					else passed=false;
+					request->activation_mask=
+						(context->qwen35DataflowAuthority->ActivationReady(0)?1U:0U)
+						|(context->qwen35DataflowAuthority->ActivationReady(1)?2U:0U);
+					if (!passed && request->result==TT_STORE_CONFIG_FAILED)
+						request->result=TT_STORE_CHANGED;
+				}
+			}
+			free(page);
+			free(values);
+			if (status==B_OK) status=user_memcpy(data,request,sizeof(*request));
+		}
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
+Qwen35DataflowProject(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_projection)) return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_projection*)malloc(
+		sizeof(tt_qwen35_dataflow_projection));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->layer>PioneerQwen35::Layers
+		|| request->role>=PioneerQwen35::LayerRoles
+		|| request->input_slot>=PioneerQwen35::ActivationBuffers
+		|| request->output_slot>=PioneerQwen35::ActivationBuffers
+		|| request->input_slot==request->output_slot
+		|| request->result || request->next_sequence || request->state
+		|| request->recovery_required) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()) {
+		status=B_NOT_ALLOWED;
+	} else {
+		PioneerQwen35::DataflowProjectionProgram program{};
+		if (!context->qwen35DataflowAuthority->BuildProjection(request->layer,
+			request->role,request->input_slot,request->output_slot,program)) {
+			request->result=PioneerQwen35::DataflowServiceInvalidState;
+		} else {
+			request->result=context->qwen35DataflowService->RunProjection(program,
+				context->io);
+			context->qwen35DataflowLastResult=request->result;
+		}
+		request->next_sequence=context->qwen35DataflowService->NextSequence();
+		request->state=context->qwen35DataflowService->Faulted()
+			?TT_QWEN35_DATAFLOW_STATE_FAULTED
+			:TT_QWEN35_DATAFLOW_STATE_READY;
+		request->recovery_required=context->qwen35DataflowService->Faulted();
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
+Qwen35DataflowReadActivation(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_activation_read))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_activation_read*)malloc(
+		sizeof(tt_qwen35_dataflow_activation_read));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->slot>=PioneerQwen35::ActivationBuffers
+		|| !request->rows || (request->rows&15) || request->reserved
+		|| !request->destination || request->result || request->activation_mask
+		|| request->rows>SIZE_MAX/sizeof(float)) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()
+		|| !context->qwen35DataflowAuthority->Manifest()
+		|| context->qwen35DataflowAuthority->Pending()
+		|| request->rows>context->qwen35DataflowAuthority->ActivationRows(request->slot)
+		|| !context->qwen35DataflowRoutesAudited || !context->initialized
+		|| !context->host.memory_type_set || context->host.state!=TT_HOST_PAGE_READY
+		|| context->host.released) {
+		status=B_NOT_ALLOWED;
+	} else {
+		const auto* manifest=context->qwen35DataflowAuthority->Manifest();
+		const auto& space=manifest->activation[request->slot];
+		if (!space.Valid() || space.rowBytes!=sizeof(float)
+			|| request->rows>space.rows) {
+			status=B_BAD_VALUE;
+		} else {
+			const size_t bytes=size_t(request->rows)*sizeof(float);
+			auto* values=(float*)malloc(bytes);
+			auto* page=(uint32_t*)malloc(4096);
+			if (!values || !page) {
+				status=B_NO_MEMORY;
+			} else {
+				auto& dram=context->baseline.baseline.baseline.baseline.dram;
+			auto& noc=context->baseline.baseline.baseline.noc;
+				bool idle=true;
+				for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+					idle &= context->io.CoreIdle(core);
+				bool ready=idle && context->io.SelectRuntimeCore(0)
+					&& context->lease.ready && !context->lease.pending
+					&& !context->lease.recovery_required;
+				request->result=TT_STORE_CONFIG_FAILED;
+				bool passed=ready;
+				unsigned copiedRows=0;
+				for (unsigned fragment=0;fragment<space.count && passed;fragment++) {
+					const auto& part=space.parts[fragment];
+					if (part.firstRow>=request->rows) break;
+					const unsigned rows=request->rows-part.firstRow<part.rows
+						?request->rows-part.firstRow:part.rows;
+					const uint64_t validBytes=uint64_t(rows)*space.rowBytes;
+					const uint64_t allocated=(validBytes+4095)&~uint64_t(4095);
+					if (!rows || part.bank>=PioneerQwen35::Banks
+						|| part.address<PioneerQwen35::BankBase
+						|| part.address>=PioneerQwen35::BankLimit
+						|| allocated>PioneerResidentBanks::Capacity
+							-(part.address-PioneerQwen35::BankBase)) {
+						passed=false;
+						break;
+					}
+					for (uint64_t offset=0;offset<allocated;offset+=4096) {
+						memset(page,0,4096);
+						tt_resident_store_result stored{};
+						passed=PioneerResidentStorePage(context->io,dram,noc,
+							context->host,context->lease,
+							PioneerResidentBanks::Capacity,
+							(part.address-PioneerQwen35::BankBase)+offset,
+							false,page,stored,&context->banks,part.bank);
+						request->result=stored.state;
+						if (!passed) break;
+						const uint64_t rowOffset=offset/sizeof(float);
+						const unsigned available=rows>rowOffset
+							?rows-unsigned(rowOffset):0;
+						const unsigned copyValues=available>1024?1024:available;
+						if (copyValues) memcpy(values+part.firstRow+rowOffset,
+							page,copyValues*sizeof(float));
+					}
+					if (passed) copiedRows+=rows;
+				}
+				if (context->lease.pending || context->lease.recovery_required) {
+					context->io.QuarantineHostPage();
+					sColdRecoveryRequired=true;
+					passed=false;
+				}
+				for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+					passed &= context->io.CoreIdle(core);
+				passed &= copiedRows==request->rows;
+				if (passed) {
+					request->result=TT_STORE_PASSED;
+					request->activation_mask=
+						(context->qwen35DataflowAuthority->ActivationReady(0)?1U:0U)
+						|(context->qwen35DataflowAuthority->ActivationReady(1)?2U:0U);
+					status=user_memcpy((void*)(uintptr_t)request->destination,
+						values,bytes);
+					if (status!=B_OK) request->result=TT_STORE_CONFIG_FAILED;
+				} else if (request->result==TT_STORE_CONFIG_FAILED) {
+					request->result=TT_STORE_CHANGED;
+				}
+			}
+			free(page);
+			free(values);
+			if (status==B_OK) status=user_memcpy(data,request,sizeof(*request));
+		}
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
 Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!data) return B_BAD_VALUE;
@@ -7954,12 +8274,23 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
 		const tt_qwen35_dataflow_support support={TT_QWEN35_DATAFLOW_ABI,
 			TT_QWEN35_DATAFLOW_DRIVER,TT_QWEN35_DATAFLOW_CORES,
-			TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE|TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND,0,0};
+			TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE
+				|TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND
+				|TT_QWEN35_DATAFLOW_CAP_ACTIVATION_SEED
+				|TT_QWEN35_DATAFLOW_CAP_ACTIVATION_READ,
+			TT_QWEN35_DATAFLOW_PROJECTION_MATRIX,
+			TT_QWEN35_DATAFLOW_TOKEN_NONE};
 		status=user_memcpy(data,&support,sizeof(support));
 		release_sem(sLock); return status;
 	}
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND)
 		return Qwen35DataflowBindModel(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT)
+		return Qwen35DataflowProject(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_SEED)
+		return Qwen35DataflowSeedActivation(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ)
+		return Qwen35DataflowReadActivation(cookie,data,length);
 	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
 	tt_qwen35_dataflow_request request={};
@@ -7982,6 +8313,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		}
 	} else if (request.action==TT_QWEN35_DATAFLOW_ACTION_CLOSE) {
 		request.result=context->CloseDataflowRewrite();
+	} else if (request.action==TT_QWEN35_DATAFLOW_ACTION_RECOVER) {
+		request.result=context->RecoverDataflowRewrite();
 	} else {
 		request.result=context->qwen35DataflowLastResult;
 	}
@@ -9113,7 +9446,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT
 		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND)
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_SEED
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ)
 		return Qwen35DataflowControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
 		|| operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)

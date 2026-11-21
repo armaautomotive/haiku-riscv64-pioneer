@@ -245,6 +245,7 @@ struct MockDataflowIO {
 		}
 		return true;
 	}
+	bool AbortPendingProjection() { return true; }
 	bool StopAndAuditAll()
 	{
 		stopCount++;
