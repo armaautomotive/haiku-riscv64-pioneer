@@ -37,8 +37,38 @@ passes without A-extension atomics or runtime helpers. The offline driver,
 client, service image, reload guard, and default-control package build passes.
 Both guarded scripts pass `bash -n`.
 
-No tag0108 hardware run has started. Tag0107 failed before inference at the
-raw worker-0 route `0x312` and then failed the fleet resume step; its candidate
-currently reports `cold1 active_owner1`. Recover tag0107 to stable driver55
-before staging or running this checkpoint. No valid output, warm-run timing,
-or decode throughput exists yet.
+## Tag0108 silicon run
+
+The guarded tag0108 trial passed its preflight from stable driver55 generation2
+idle. The 4B and 27B files had their pinned exact sizes, no inference or 27B
+diagnostic process was running, and Haiku exposed all 64 CPUs and full RAM.
+The candidate installed as generation3 and accepted the complete 4B model
+upload.
+
+Authentication took `100.027643` s, vocabulary/prompt tokenization took
+`13.277220` s for prompt IDs `760,6511,314,9338,369`, and model load/upload
+took `334.815789` s for `2,740,498,432` bytes. The first generation ioctl
+(`0xAF56`) returned `EINVAL`. No generation completed, so prompt-processing
+time, decode time, valid output, warm-run rate, and tokens/s are unavailable.
+The client's prefix/repeatability failure messages follow the rejected ioctl
+and do not represent generated output.
+
+Close returned `result=18` (`DataflowServiceResumeFailed`), diagnostic stage9
+(fleet resume), core0, substage3. The client reported
+`unload_clean=0 state=0 active=0 cold=0 service_closed=0`; the wrapper refused
+driver restoration while tag0108 was generation3 `cold1 active_owner1`, and
+retained its lock and stable backup. Raw output and error logs are in
+[`evidence`](evidence/).
+
+After verifying the client had exited, one authorized OFF/ON recovery cycle
+and the hash-pinned SD-free Linux-to-Haiku handoff were used. The guarded
+post-cycle helper quiesced tag0108 generation1 and restored stable driver55 at
+generation2. The lock is absent; the installed stable driver and saved stable
+image both hash to `041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`.
+The 4B and 27B files remain at `2,740,937,888` and `18,973,870,528` bytes.
+See [`RUN.md`](RUN.md) and [`evidence/post-recovery.txt`](evidence/post-recovery.txt).
+
+The next rewrite checkpoint must identify why the generation request is
+rejected and why resume phase3 fails for core0. The 100 decode tokens/s goal is
+unmet. No assistant integration or legacy Work-path changes are part of this
+rewrite checkpoint.

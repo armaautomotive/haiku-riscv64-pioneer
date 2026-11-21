@@ -745,10 +745,27 @@ offline package build passes. Tag0108 driver SHA-256 is
 SHA-256 is `cbee1483b73fa8e08754fbd04d1f78376e725ae7dc6e078ad271fdc2a58a256a`.
 The guarded two-warm and post-cycle recovery scripts are prepared.
 
-The Pioneer still has tag0107 installed at generation3 with
-`cold1 active_owner1 open_count1`; stable driver55 is not yet restored. Tag0108
-has not run on hardware. There is still no inference output, warm run, prompt
-timing, or decode rate, so the 100 tokens/s target remains unmet. The 27B model
-passed the exact preflight check before tag0107 and was not accessed by that
-run. Assistant integration remains deferred until hardware rewrite validation
-and benchmarking succeed.
+The guarded tag0108 trial passed preflight from stable driver55 generation2
+idle, installed candidate generation3, and uploaded all 2,740,498,432 model
+bytes. Authentication took 100.027643 s, vocabulary/prompt tokenization
+13.277220 s, and model load/upload 334.815789 s. The first generation ioctl
+returned `EINVAL`; no generation completed, so there is no valid output,
+prompt-processing timing, decode timing, warm-run rate, or tokens/s. The
+client's prefix/repeatability messages are failure checks after the rejected
+request, not generated text.
+
+Cleanup returned `DataflowServiceResumeFailed` (result18), diagnostic
+stage9/core0/substage3; unload was not clean, and the wrapper correctly kept
+the lock and stable backup while tag0108 reported `cold1 active_owner1`.
+After verifying the client had exited, one authorized power cycle and the
+pinned SD-free Linux-to-Haiku handoff allowed the tag0108 recovery helper to
+quiesce the fresh generation1 candidate and restore stable driver55 at
+generation2. A read-only postflight confirmed stable55 idle, the lock absent,
+both model files intact, and 64 CPUs/full RAM. Raw logs and exact post-recovery
+hashes are in
+[`benchmarks/qwen35-dataflow-tag0108-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0108-20261121/RUN.md).
+
+The next code-only rewrite step is to add a precise receipt for the rejected
+generation request and resolve the core0 resume phase3 failure before another
+hardware trial. The 100 decode tokens/s target remains unmet. Assistant
+integration remains deferred until the rewrite and benchmark are complete.
