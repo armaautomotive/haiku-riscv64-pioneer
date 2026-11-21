@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen35DataflowKernels.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
+#include "../PioneerQwen35DataflowAuthorization.h"
 #include <assert.h>
 #include <atomic>
 #include <cstring>
@@ -280,6 +281,69 @@ int main()
 	DataflowProjectionProgram program{};
 	assert(BuildProgram(weight,input,Hidden,output,program));
 	assert(program.Valid());
+	DeviceLayout manifest{};
+	manifest.magic=LayoutMagic;
+	manifest.version=LayoutVersion;
+	manifest.context=128;
+	manifest.tied=weight;
+	manifest.activation[0]=input;
+	manifest.activation[1]=output;
+	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
+	DataflowProjectionAuthority authority;
+	assert(authority.BindValidatedModel(manifest,TestBankRoutes));
+	assert(!authority.Authorize(program));
+	assert(authority.MarkActivationInitialized(0));
+	assert(authority.MarkActivationInitialized(1));
+	assert(authority.Authorize(program));
+	assert(authority.Begin(program));
+	assert(authority.Pending() && authority.ActivationReady(0)
+		&& !authority.ActivationReady(1));
+	assert(!authority.Authorize(program));
+	assert(authority.Complete(program));
+	assert(!authority.Pending() && authority.ActivationReady(0)
+		&& authority.ActivationReady(1));
+
+	TensorSpace unregisteredWeight=weight;
+	unregisteredWeight.place.parts[0].address+=4096;
+	DataflowProjectionProgram unregisteredWeightProgram{};
+	assert(BuildProgram(unregisteredWeight,input,Hidden,output,
+		unregisteredWeightProgram));
+	assert(unregisteredWeightProgram.Valid());
+	assert(!DataflowProjectionMatchesLayout(manifest,TestBankRoutes,
+		unregisteredWeightProgram));
+	assert(!authority.Begin(unregisteredWeightProgram));
+	DataflowProjectionAuthority incompleteAuthority;
+	assert(incompleteAuthority.BindValidatedModel(manifest,TestBankRoutes));
+	assert(incompleteAuthority.MarkActivationInitialized(0));
+	assert(incompleteAuthority.Begin(program));
+	assert(!incompleteAuthority.Complete(unregisteredWeightProgram));
+	assert(incompleteAuthority.Pending()
+		&& !incompleteAuthority.ActivationReady(1));
+
+	RowSpace unregisteredInput=input;
+	unregisteredInput.parts[0].address+=4096;
+	DataflowProjectionProgram unregisteredInputProgram{};
+	assert(BuildProgram(weight,unregisteredInput,Hidden,output,
+		unregisteredInputProgram));
+	assert(unregisteredInputProgram.Valid());
+	assert(!DataflowProjectionMatchesLayout(manifest,TestBankRoutes,
+		unregisteredInputProgram));
+
+	DataflowProjectionProgram aliasedActivations{};
+	assert(BuildProgram(weight,input,Hidden,input,aliasedActivations));
+	assert(aliasedActivations.Valid());
+	assert(!DataflowProjectionMatchesLayout(manifest,TestBankRoutes,
+		aliasedActivations));
+
+	unsigned unverifiedRoutes[2][Banks];
+	memcpy(unverifiedRoutes,TestBankRoutes,sizeof(unverifiedRoutes));
+	unverifiedRoutes[0][0]=787;
+	DataflowProjectionProgram wrongRouteProgram{};
+	assert(DataflowProgramBuilder::Build(weight,input,Hidden,output,
+		unverifiedRoutes,wrongRouteProgram));
+	assert(wrongRouteProgram.Valid());
+	assert(!DataflowProjectionMatchesLayout(manifest,TestBankRoutes,
+		wrongRouteProgram));
 	assert(program.activeCores==120 && program.kernelRoles==DataflowAllRoles);
 	assert(sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes
 		&& DataflowProgramAddress==0xaa000

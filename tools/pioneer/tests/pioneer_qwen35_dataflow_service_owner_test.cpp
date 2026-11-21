@@ -45,8 +45,9 @@ struct MockDataflowIO {
 	DataflowCoreInvocation invocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0,resumeCount=0;
+	unsigned beginCount=0,completeCount=0;
 	unsigned failStartCore=UINT32_MAX,failIdleCore=UINT32_MAX;
-	bool failStopAudit=false,failResume=false;
+	bool failStopAudit=false,failResume=false,failBegin=false,failComplete=false;
 	bool authorizeProgram=true;
 
 	MockDataflowIO()
@@ -169,6 +170,16 @@ struct MockDataflowIO {
 	bool AuthorizeProjection(const DataflowProjectionProgram& program) const
 	{
 		return authorizeProgram && program.Valid();
+	}
+	bool BeginProjection(const DataflowProjectionProgram& program)
+	{
+		beginCount++;
+		return !failBegin && program.Valid();
+	}
+	bool CompleteProjection(const DataflowProjectionProgram& program,unsigned sequence)
+	{
+		completeCount++;
+		return !failComplete && sequence && program.Valid();
 	}
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& value)
 	{
@@ -310,9 +321,11 @@ int main()
 	assert(unauthorizedOwner.RunProjection(program,unauthorized)
 		==DataflowServiceProjectionFailed);
 	assert(unauthorized.writeCount==stagedWrites);
+	assert(!unauthorized.beginCount && !unauthorized.completeCount);
 	assert(unauthorizedOwner.Close(unauthorized)==DataflowServiceClosed);
 	assert(owner.RunProjection(program,io)==DataflowServiceComplete);
 	assert(owner.NextSequence()==1);
+	assert(io.beginCount==1 && io.completeCount==1);
 	assert(owner.Close(io)==DataflowServiceClosed && owner.Closed());
 	assert(io.stopCount==1 && io.restoreCount==DataflowCoreCount
 		&& io.resumeCount==1);

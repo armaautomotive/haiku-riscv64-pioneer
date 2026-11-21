@@ -300,6 +300,64 @@ struct DataflowProjectionProgram {
 	}
 };
 
+inline bool DataflowRowSpaceMatches(const RowSpace& expected,
+	const RowSpace& observed)
+{
+	if (!expected.Valid() || !observed.Valid() || expected.rows!=observed.rows
+		|| expected.rowBytes!=observed.rowBytes || expected.count!=observed.count
+		|| expected.unit!=observed.unit) return false;
+	for (unsigned i=0;i<expected.count;i++) {
+		const auto& a=expected.parts[i];
+		const auto& b=observed.parts[i];
+		if (a.bank!=b.bank || a.address!=b.address || a.firstRow!=b.firstRow
+			|| a.rows!=b.rows) return false;
+	}
+	return true;
+}
+
+// The caller must first validate the complete manifest against the pinned
+// model plan and initialized-page ledger, and must supply routes from a
+// completed physical route audit. This check then restricts a syntactically
+// valid program to one exact model tensor and two distinct declared
+// activation buffers.
+inline bool DataflowProjectionMatchesLayout(const DeviceLayout& manifest,
+	const unsigned (&auditedRoutes)[2][Banks],
+	const DataflowProjectionProgram& program)
+{
+	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
+		|| !manifest.context || !program.Valid()
+		|| !DataflowBankRoutesValid(auditedRoutes)) return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
+
+	bool modelWeight=false;
+	for (unsigned layer=0;layer<=Layers;layer++) {
+		for (unsigned role=0;role<LayerRoles;role++) {
+			const TensorSpace* expected=manifest.Weight(layer,role);
+			if (!expected || expected->type!=program.type
+				|| expected->inputs!=program.inputs
+				|| expected->place.rows!=program.outputRows) continue;
+			if (DataflowRowSpaceMatches(expected->place,program.weights)) {
+				modelWeight=true;
+				break;
+			}
+		}
+		if (modelWeight) break;
+	}
+	if (!modelWeight) return false;
+
+	unsigned inputSlot=ActivationBuffers,outputSlot=ActivationBuffers;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++) {
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.input))
+			inputSlot=slot;
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.output))
+			outputSlot=slot;
+	}
+	return inputSlot<ActivationBuffers && outputSlot<ActivationBuffers
+		&& inputSlot!=outputSlot && program.inputRows==program.inputs
+		&& program.outputRows==program.weights.rows;
+}
+
 // Compact per-core invocation copied into local L1. The host builder keeps the
 // full 120-core schedule; each device core receives only its own assignment.
 struct DataflowCoreInvocation {

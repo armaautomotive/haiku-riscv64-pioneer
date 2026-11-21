@@ -41,8 +41,10 @@ struct MockOwnerIO {
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	uint32_t invocationSignature[DataflowCoreCount]{};
 	unsigned writes=0,publishes=0,waits=0,audits=0,acknowledgements=0;
+	unsigned begins=0,completes=0;
 	unsigned failPublishCore=UINT32_MAX;
 	bool ambiguousPublishFailure=true,recoveryAllowed=true,programAuthorized=true;
+	bool failBegin=false,failComplete=false;
 
 	MockOwnerIO()
 	{
@@ -68,6 +70,16 @@ struct MockOwnerIO {
 	bool AuthorizeProjection(const DataflowProjectionProgram& program) const
 	{
 		return programAuthorized && program.Valid();
+	}
+	bool BeginProjection(const DataflowProjectionProgram& program)
+	{
+		begins++;
+		return !failBegin && program.Valid();
+	}
+	bool CompleteProjection(const DataflowProjectionProgram& program,unsigned sequence)
+	{
+		completes++;
+		return !failComplete && sequence && program.Valid();
 	}
 
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& invocation)
@@ -175,13 +187,23 @@ int main()
 	assert(owner.NextSequence()==0 && owner.Initialized());
 	io.programAuthorized=false;
 	assert(owner.RunProjection(program,io)==DataflowOwnerProgramUnauthorized);
-	assert(io.writes==0 && io.publishes==0 && owner.NextSequence()==0 && !owner.Faulted());
+	assert(io.writes==0 && io.publishes==0 && !io.begins && !io.completes
+		&& owner.NextSequence()==0 && !owner.Faulted());
 	io.programAuthorized=true;
 	assert(owner.RunProjection(program,io)==DataflowOwnerComplete);
-	assert(owner.NextSequence()==1 && !owner.Faulted());
+	assert(owner.NextSequence()==1 && !owner.Faulted()
+		&& io.begins==1 && io.completes==1);
 	assert(io.writes==DataflowCoreCount && io.publishes==DataflowCoreCount
 		&& io.waits==DataflowCoreCount && io.audits==1
 		&& io.acknowledgements==DataflowCoreCount);
+	MockOwnerIO beginFailureIO{};
+	DataflowProjectionOwner beginFailureOwner;
+	assert(beginFailureOwner.Initialize(beginFailureIO)==DataflowOwnerComplete);
+	beginFailureIO.failBegin=true;
+	assert(beginFailureOwner.RunProjection(program,beginFailureIO)
+		==DataflowOwnerProjectionBeginFailed);
+	assert(!beginFailureIO.writes && !beginFailureIO.publishes
+		&& beginFailureOwner.NextSequence()==0 && !beginFailureOwner.Faulted());
 	for (unsigned core=0;core<DataflowCoreCount;core++)
 		assert(DataflowWorkerSnapshotReady(io.snapshot[core])
 			&& io.snapshot[core].completedSequence==1);

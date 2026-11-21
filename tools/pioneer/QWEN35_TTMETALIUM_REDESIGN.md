@@ -200,13 +200,21 @@ stages/verifies the image, waits for all workers, stops them, audits state,
 restores saved L1/reset state, and resumes the prior fleet. The projection
 owner now requires the IO adapter to authorize each program before it writes
 invocations or publishes commands; denial leaves the sequence and device
-untouched. Four offline worker/owner tests pass with AddressSanitizer and
-UndefinedBehaviorSanitizer, and the freestanding RV32IMF target compile passes
-without atomics or unresolved runtime helpers.
+untouched. `DataflowProjectionMatchesLayout` provides the concrete range gate:
+it requires one exact manifest weight, two distinct declared activation
+buffers, and the audited per-bank NoC routes. Its caller must already have
+validated the full model manifest and physical routes. Tests reject forged
+weight/input ranges, activation aliasing, and route mismatches. The
+authorization state machine tracks the two ping-pong buffers: it requires an
+initialized input, invalidates output before staging, and commits output only
+after completion audit and acknowledgement. Four offline worker/owner tests
+pass with AddressSanitizer and UndefinedBehaviorSanitizer, and the freestanding
+RV32IMF target compile passes without atomics or unresolved runtime helpers.
 
-This is still an offline prototype. The physical PCI IO adapter, manifest and
-activation-range authorization, and integration into Work mode have not been
-implemented. No rewritten projection has run on the P100A, so the rewrite has
+This is still an offline prototype. The physical PCI IO adapter that binds the
+validated model and audited routes, proves activation writes/readbacks, and
+invokes this state machine has not been implemented; neither has Work-mode
+integration. No rewritten projection has run on the P100A, so the rewrite has
 no valid-output, warm-run, decode-rate, or physical-unload result. Next is the
 PCI adapter and its route/idle/snapshot/recovery proofs, then a small verified
 projection before model-graph integration or benchmarking.

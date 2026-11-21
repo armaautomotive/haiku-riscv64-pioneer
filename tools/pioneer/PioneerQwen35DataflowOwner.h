@@ -25,7 +25,9 @@ enum DataflowOwnerResult {
 	DataflowOwnerAcknowledgementFailed=10,
 	DataflowOwnerRecoveryPending=11,
 	DataflowOwnerRecovered=12,
-	DataflowOwnerProgramUnauthorized=13
+	DataflowOwnerProgramUnauthorized=13,
+	DataflowOwnerProjectionBeginFailed=14,
+	DataflowOwnerProjectionCommitFailed=15
 };
 
 inline bool DataflowWorkerSnapshotReady(const DataflowWorkerSnapshot& snapshot)
@@ -37,9 +39,12 @@ inline bool DataflowWorkerSnapshotReady(const DataflowWorkerSnapshot& snapshot)
 }
 
 // Host-side orchestration only. IO owns PCI/NoC access and must implement
-// CoreReady, WriteInvocation, InvocationMatches, PublishCommand,
-// WaitForCompletion, AuditProjection, Acknowledge, ReadWorkerSnapshot, and
-// AuditAndRecoverAll. The owner itself performs no numeric work.
+// CoreReady, AuthorizeProjection, BeginProjection, WriteInvocation,
+// InvocationMatches, PublishCommand, WaitForCompletion, AuditProjection,
+// Acknowledge, CompleteProjection, ReadWorkerSnapshot, and AuditAndRecoverAll.
+// BeginProjection invalidates the output activation before staging; only a
+// fully audited and acknowledged result may pass CompleteProjection. The
+// owner itself performs no numeric work.
 class DataflowProjectionOwner {
 	bool fInitialized=false;
 	bool fFaulted=false;
@@ -91,10 +96,12 @@ public:
 	{
 		if (!fInitialized || fFaulted) return DataflowOwnerInvalidState;
 		if (!program.Valid()) return DataflowOwnerInvalidProgram;
-		if (!io.AuthorizeProjection(program))
-			return DataflowOwnerProgramUnauthorized;
 		if (fNextSequence>=DataflowWorkerSequenceLimit)
 			return DataflowOwnerSequenceExhausted;
+		if (!io.AuthorizeProjection(program))
+			return DataflowOwnerProgramUnauthorized;
+		if (!io.BeginProjection(program))
+			return DataflowOwnerProjectionBeginFailed;
 		const unsigned sequence=fNextSequence+1;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
@@ -163,6 +170,10 @@ public:
 				return DataflowOwnerAcknowledgementFailed;
 			}
 			fSnapshot[core]=snapshot;
+		}
+		if (!io.CompleteProjection(program,sequence)) {
+			fFaulted=true;
+			return DataflowOwnerProjectionCommitFailed;
 		}
 		fNextSequence=sequence;
 		fPendingSequence=0;
