@@ -512,3 +512,25 @@ dense attention/KV, final vocabulary readout, and token generation remain open.
 
 Hardware benchmarking and assistant integration remain deferred until the
 rewrite graph is implemented and offline-validated.
+
+## Recurrent output projection `00b34e48eb` (2026-11-21)
+
+RecurrentOut now runs through the existing Tensix projection worker using the
+V channels retained in the recurrent QKV workspace. The invocation carries a
+row offset, and the BRISC reader maps that subrange across the source's
+manifest-bound fragments. The authority requires the same layer's completed
+delta step, invalidates the output before dispatch, then consumes QKV after
+projection commit. It rejects shifted offsets and repeated projection after
+commit. All 120 matrix engines own output panels; all 120 resident workers
+still participate in command and receipt auditing.
+
+The ASan/UBSan recurrent delta-program/authority fixture and existing
+projection/authority fixture pass. The Haiku RV32IMF compile passes without A
+atomics or runtime helpers. The service image is 44,224 bytes, has no unresolved
+imports, and fits its 57,344-byte region. Offline driver60 build tag
+`2026112000010099` passes with SHA-256
+`e39be4fb33c5d614cc8959d7dd8a5c60510fe33c4ce6960d73c759c1c0af378d`; service
+text SHA-256 is
+`7eea8370b070336d98ffd28897e2ce44fec519249f533b1e83506f80da58f950`.
+Dense attention/KV, full decoder orchestration, final vocabulary readout, and
+generation remain. No Pioneer run or throughput measurement has been made.

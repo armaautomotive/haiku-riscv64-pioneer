@@ -271,15 +271,18 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The latest pushed rewrite checkpoint is `061aa5c8ef` (`Fuse Qwen35 delta RMS
-and gate step`). The offline rewrite includes Tensix matrix projections,
+The latest pushed rewrite checkpoint is `00b34e48eb` (`Add recurrent output
+projection path`). The offline rewrite includes Tensix matrix projections,
 device-side Q6_K token embedding and hidden RMS normalization, manifest-bound
 graph projections, SiLU×Up, residual save/add, feed-forward sequencing,
 recurrent convolution, Alpha/Beta projections, delta-state update, and fused
-per-head RMS normalization plus SiLU gating. The resident all-core service
-has an audited delta-state command and driver opcode. Dense attention,
-recurrent output projection, final vocabulary readout, and token generation
-remain incomplete. No hardware test or decode rate is available.
+per-head RMS normalization plus SiLU gating. RecurrentOut now uses the
+existing Tensix projection path with an explicit input offset into the retained
+QKV V channels. The authority admits it only after that layer's delta step
+commits, invalidates its output while pending, and consumes QKV when the
+projection commits. Dense attention/KV, full decoder orchestration, final
+vocabulary readout, and token generation remain incomplete. No hardware test
+or decode rate is available.
 
 The graph workspace participates in the projection path. The request can
 select the Up, recurrent QKV, or recurrent gate sidecar; the authority maps
@@ -292,6 +295,24 @@ default-control builds pass. The driver60 SHA-256 is
 These selectors make QKV and recurrent-gate projections available through
 the existing 120-core Tensix path. No legacy Work changes are part of this
 step.
+
+Checkpoint `00b34e48eb` adds the recurrent output projection. Its descriptor
+keeps the whole manifest-bound QKV RowSpace and selects the 4096-row V slice
+through `inputBase`; the offset is copied to every core invocation and the
+reader maps it across source fragments. Only the exact same-layer RecurrentOut
+tensor and a successfully completed delta step are accepted. The authority
+invalidates the destination before work and consumes QKV after a successful
+commit or audited abort. ASan/UBSan delta-authority tests cover the exact V
+offset, rejection of a shifted offset, all 120 matrix-worker assignments, and
+one-time completion. Existing projection/authority checks pass. The RV32IMF
+role compile passes without A atomics or runtime helpers. The resident service
+image is 44,224 bytes with no unresolved imports and fits the fixed 57,344-byte
+region. The offline driver60 build at tag `2026112000010099` passes; its SHA-256
+is `e39be4fb33c5d614cc8959d7dd8a5c60510fe33c4ce6960d73c759c1c0af378d`.
+Service text SHA-256 is
+`7eea8370b070336d98ffd28897e2ce44fec519249f533b1e83506f80da58f950`; reload
+guard and default-control builds pass. These remain offline checks; there is no
+Pioneer output or performance measurement.
 
 The device-side SiLU×Up step is implemented and pushed in `8ed176883c`. Its
 manifest-bound schedule assigns all 576 sixteen-row panels over the 120
