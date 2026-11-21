@@ -16,8 +16,10 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND=2U,
 	TT_QWEN35_DATAFLOW_CAP_ACTIVATION_SEED=4U,
 	TT_QWEN35_DATAFLOW_CAP_ACTIVATION_READ=8U,
+	TT_QWEN35_DATAFLOW_CAP_TOKEN_EMBEDDING=16U,
 	TT_QWEN35_DATAFLOW_PROJECTION_MATRIX=1U,
 	TT_QWEN35_DATAFLOW_TOKEN_NONE=0U,
+	TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING=1U,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY=0,
 	TT_QWEN35_DATAFLOW_ACTION_INSTALL=1,
 	TT_QWEN35_DATAFLOW_ACTION_CLOSE=2,
@@ -28,9 +30,9 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_STATE_CLOSED=3
 };
 
-// The support ABI separates resident-service controls from the current matrix
-// projection prototype. Token generation remains unavailable until embedding,
-// model-layer, state, and vocabulary programs are integrated.
+// Token embedding is exposed as an input primitive. This is not token
+// generation; the decoder graph, state updates, and vocabulary readout remain
+// future work.
 struct tt_qwen35_dataflow_support {
 	uint32_t version,driver,cores,capabilities;
 	uint32_t projection_capabilities,token_capabilities;

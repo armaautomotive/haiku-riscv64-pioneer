@@ -3253,16 +3253,27 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool AuthorizeProjection(const PioneerQwen35::DataflowProjectionProgram& program);
 	bool BeginProjection(const PioneerQwen35::DataflowProjectionProgram& program);
+	bool AuthorizeEmbedding(const PioneerQwen35::DataflowEmbeddingProgram& program);
+	bool BeginEmbedding(const PioneerQwen35::DataflowEmbeddingProgram& program);
 	bool WriteInvocation(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
 	bool InvocationMatches(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
+	bool WriteEmbeddingInvocation(unsigned core,
+		const PioneerQwen35::DataflowEmbeddingInvocation& invocation);
+	bool EmbeddingInvocationMatches(unsigned core,
+		const PioneerQwen35::DataflowEmbeddingInvocation& invocation);
 	bool PublishCommand(unsigned core,unsigned sequence);
 	bool WaitForCompletion(unsigned core,unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool AuditProjection(const PioneerQwen35::DataflowProjectionProgram& program,
 		unsigned sequence,
 		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]);
+	bool AuditEmbedding(const PioneerQwen35::DataflowEmbeddingProgram& program,
+		unsigned sequence,
+		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]);
 	bool Acknowledge(unsigned core,unsigned sequence);
 	bool CompleteProjection(const PioneerQwen35::DataflowProjectionProgram& program,
+		unsigned sequence);
+	bool CompleteEmbedding(const PioneerQwen35::DataflowEmbeddingProgram& program,
 		unsigned sequence);
 	bool AuditAndRecoverAll(unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount]);
@@ -8140,6 +8151,56 @@ Qwen35DataflowProject(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
+Qwen35DataflowEmbedToken(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_embed_token))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_embed_token*)malloc(
+		sizeof(tt_qwen35_dataflow_embed_token));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->output_slot>=PioneerQwen35::ActivationBuffers
+		|| request->result || request->next_sequence || request->state
+		|| request->recovery_required || request->reserved) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()) {
+		status=B_NOT_ALLOWED;
+	} else {
+		PioneerQwen35::DataflowEmbeddingProgram program{};
+		if (!context->qwen35DataflowAuthority->BuildEmbedding(request->token,
+			request->output_slot,program)) {
+			request->result=PioneerQwen35::DataflowServiceInvalidState;
+		} else {
+			request->result=context->qwen35DataflowService->EmbedToken(program,
+				context->io);
+			context->qwen35DataflowLastResult=request->result;
+		}
+		request->next_sequence=context->qwen35DataflowService->NextSequence();
+		request->state=context->qwen35DataflowService->Faulted()
+			?TT_QWEN35_DATAFLOW_STATE_FAULTED
+			:TT_QWEN35_DATAFLOW_STATE_READY;
+		request->recovery_required=context->qwen35DataflowService->Faulted();
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
 Qwen35DataflowReadActivation(PioneerProbeCookie* cookie,void* data,size_t length)
 {
 	if (!data || length!=sizeof(tt_qwen35_dataflow_activation_read))
@@ -8277,9 +8338,10 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 			TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE
 				|TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND
 				|TT_QWEN35_DATAFLOW_CAP_ACTIVATION_SEED
-				|TT_QWEN35_DATAFLOW_CAP_ACTIVATION_READ,
+				|TT_QWEN35_DATAFLOW_CAP_ACTIVATION_READ
+				|TT_QWEN35_DATAFLOW_CAP_TOKEN_EMBEDDING,
 			TT_QWEN35_DATAFLOW_PROJECTION_MATRIX,
-			TT_QWEN35_DATAFLOW_TOKEN_NONE};
+			TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING};
 		status=user_memcpy(data,&support,sizeof(support));
 		release_sem(sLock); return status;
 	}
@@ -8291,6 +8353,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		return Qwen35DataflowSeedActivation(cookie,data,length);
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ)
 		return Qwen35DataflowReadActivation(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_EMBED_TOKEN)
+		return Qwen35DataflowEmbedToken(cookie,data,length);
 	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
 	tt_qwen35_dataflow_request request={};
@@ -9449,7 +9513,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND
 		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT
 		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_SEED
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ)
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_EMBED_TOKEN)
 		return Qwen35DataflowControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
 		|| operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)

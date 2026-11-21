@@ -290,28 +290,36 @@ terminal workers; uncertain or non-idle NoC state remains quarantined. A
 root-only activation-read opcode now reads only initialized float rows through
 the checked resident-bank page transport, after an all-120-core idle audit and
 before a second idle audit. The support ABI advertises that readback control,
-the matrix projection prototype, and no token-generation capability.
+the matrix projection prototype, and device token embedding as an input
+primitive; it does not advertise token generation.
 
-The offline driver60, reload-guard, and default-control cross-builds pass;
-driver60 candidate SHA-256:
-`6801db7818df7645c0b7399796170eb211097add6524142ba5edcd46ab53fd2e`. The
-service image text SHA-256 remains
-`10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`. Six
-rewrite suites pass under AddressSanitizer and UndefinedBehaviorSanitizer:
-program/authority, projection owner, service owner, worker protocol, PCI L1
-memory, and activation layout. The RV32IMF role compile also passes without A
-atomics or unresolved runtime helpers. These checks cover software contracts
-and mocks; they do not prove numeric output or physical recovery. The first
-activation still must come from a device-side token-embedding path, and the
-recurrent/dense model graph, state updates, tied-vocabulary readout, and
-tokenizer client are not integrated with this service. No model was loaded on
-the card, no rewritten projection has run physically, and no rewrite decode
-rate or clean physical unload result exists. Benchmark and assistant
-integration remain after the full rewrite is ready.
+## Current rewrite progress (2026-11-20)
 
-The next rewrite step has an isolated device-side Q6_K embedding-panel
-decoder. Its sanitizer test compares every panel and token lane against the
-pinned reference decoder bit-for-bit, and the RV32IMF target compile includes
-the new helper without atomics or runtime helpers. This is only the numeric
-unpack primitive; it is not yet part of the resident worker command, so token
-embedding and valid text output remain unavailable.
+The device-side Q6_K embedding-panel decoder and manifest-bound schedule are
+now executed by the resident worker command. A token lookup is split into 160
+output panels across all 120 workers (40 handle two panels, 80 handle one).
+Workers read only the needed Q6_K tiles through NoC 0, unpack their assigned
+panels locally, and write disjoint activation rows through NoC 1. The driver
+now has a root-only `EMBED_TOKEN` operation, verifies the request against the
+bound manifest, stages and reads back each worker invocation, audits all 120
+terminal receipts and queues, and marks the activation ready only after clean
+acknowledgement. Its support response reports token embedding only, not token
+generation. A service-owner test now exercises an embedding command followed
+by a matrix projection on the same resident service.
+
+The Q6_K decoder comparison, 120-core schedule coverage, worker simulation,
+projection-owner tests, and service-owner embedding/projection test pass under
+AddressSanitizer and UndefinedBehaviorSanitizer. The RV32IMF role compile
+passes without A atomics or unresolved runtime helpers. The offline driver60,
+reload-guard, and default-control builds pass; the driver60 binary SHA-256 is
+`b4a2d821b87b9292fdb34d40c3a9663bd62097fe2fd5eb0a9b7ba71baad2f298`, and the
+service-image text SHA-256 is
+`b9ce1c135be20df8170015b9592eccb019a4ebdaa1ef3907c77168dd6002643c`.
+
+This remains a rewrite prototype. The recurrent/dense model graph, state
+updates, tied-vocabulary readout, tokenizer client, and generation loop are
+not integrated. No model has been loaded on the Pioneer, no rewritten
+projection or embedding has run physically, and there is no valid generated
+text, decode rate, or physical unload result yet. The Pioneer remains
+untouched. Work remains focused on completing this rewrite before benchmark
+and assistant integration.

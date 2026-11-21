@@ -43,6 +43,7 @@ struct MockDataflowIO {
 	DataflowQueueControl queue[DataflowCoreCount][DataflowCircularBufferCount]{};
 	DataflowWorkerMailbox mailbox[DataflowCoreCount]{};
 	DataflowCoreInvocation invocation[DataflowCoreCount]{};
+	DataflowEmbeddingInvocation embeddingInvocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0,resumeCount=0;
 	unsigned beginCount=0,completeCount=0;
@@ -181,6 +182,20 @@ struct MockDataflowIO {
 		completeCount++;
 		return !failComplete && sequence && program.Valid();
 	}
+	bool AuthorizeEmbedding(const DataflowEmbeddingProgram& program) const
+	{
+		return authorizeProgram && program.Valid();
+	}
+	bool BeginEmbedding(const DataflowEmbeddingProgram& program)
+	{
+		beginCount++;
+		return !failBegin && program.Valid();
+	}
+	bool CompleteEmbedding(const DataflowEmbeddingProgram& program,unsigned sequence)
+	{
+		completeCount++;
+		return !failComplete && sequence && program.Valid();
+	}
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& value)
 	{
 		if (core>=DataflowCoreCount || value.core!=core || !value.Valid()) return false;
@@ -191,6 +206,18 @@ struct MockDataflowIO {
 	{
 		return core<DataflowCoreCount
 			&& memcmp(&invocation[core],&value,sizeof(value))==0;
+	}
+	bool WriteEmbeddingInvocation(unsigned core,const DataflowEmbeddingInvocation& value)
+	{
+		if (core>=DataflowCoreCount || value.core!=core || !value.Valid()) return false;
+		embeddingInvocation[core]=value;
+		return true;
+	}
+	bool EmbeddingInvocationMatches(unsigned core,
+		const DataflowEmbeddingInvocation& value) const
+	{
+		return core<DataflowCoreCount
+			&& memcmp(&embeddingInvocation[core],&value,sizeof(value))==0;
 	}
 	bool PublishCommand(unsigned core,unsigned sequence)
 	{
@@ -218,6 +245,21 @@ struct MockDataflowIO {
 			if (receipts[core].commandSequence!=sequence
 				|| receipts[core].completedSequence!=sequence
 				|| receipts[core].state!=DataflowWorkerComplete) return false;
+		return true;
+	}
+	bool AuditEmbedding(const DataflowEmbeddingProgram& program,unsigned sequence,
+		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount]) const
+	{
+		if (!program.Valid()) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowEmbeddingInvocation expected{};
+			if (receipts[core].state!=DataflowWorkerComplete
+				|| receipts[core].commandSequence!=sequence
+				|| receipts[core].completedSequence!=sequence
+				|| !DataflowEmbeddingProgramBuilder::BindCore(program,core,expected)
+				|| memcmp(&expected,&embeddingInvocation[core],sizeof(expected))!=0)
+				return false;
+		}
 		return true;
 	}
 	bool Acknowledge(unsigned core,unsigned sequence)
@@ -282,6 +324,37 @@ struct MockDataflowIO {
 	}
 };
 
+static DeviceLayout MakeEmbeddingLayout()
+{
+	DeviceLayout model{};
+	model.magic=LayoutMagic;
+	model.version=LayoutVersion;
+	model.context=64;
+	model.tied.type=14;
+	model.tied.inputs=Hidden;
+	model.tied.place.rows=Vocabulary;
+	model.tied.place.rowBytes=2120;
+	model.tied.place.count=Banks;
+	model.tied.place.unit=16;
+	const unsigned groups=Vocabulary/16;
+	const unsigned base=groups/Banks,extra=groups%Banks;
+	unsigned firstRow=0;
+	for (unsigned bank=0;bank<Banks;bank++) {
+		const unsigned rows=(base+(bank<extra))*16;
+		model.tied.place.parts[bank]={bank,BankBase,firstRow,rows};
+		firstRow+=rows;
+	}
+	for (unsigned slot=0;slot<ActivationBuffers;slot++) {
+		auto& output=model.activation[slot];
+		output.rows=9216;
+		output.rowBytes=sizeof(float);
+		output.count=1;
+		output.unit=16;
+		output.parts[0]={slot?5U:6U,BankBase+0x20000000,0,output.rows};
+	}
+	return model;
+}
+
 int main()
 {
 	uint32_t code[96];
@@ -327,6 +400,12 @@ int main()
 	assert(owner.RunProjection(program,io)==DataflowServiceComplete);
 	assert(owner.NextSequence()==1);
 	assert(io.beginCount==1 && io.completeCount==1);
+	DataflowEmbeddingProgram embedding{};
+	assert(DataflowEmbeddingProgramBuilder::Build(MakeEmbeddingLayout(),15,0,
+		TestRoutes,embedding));
+	assert(owner.EmbedToken(embedding,io)==DataflowServiceComplete);
+	assert(owner.NextSequence()==2);
+	assert(io.beginCount==2 && io.completeCount==2);
 	assert(owner.Close(io)==DataflowServiceClosed && owner.Closed());
 	assert(io.stopCount==1 && io.restoreCount==DataflowCoreCount
 		&& io.resumeCount==1);

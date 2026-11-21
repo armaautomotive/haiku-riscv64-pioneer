@@ -2,6 +2,7 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_EMBEDDING_H
 #define PIONEER_QWEN35_DATAFLOW_EMBEDDING_H
 
+#include "PioneerAttentionMath.h"
 #include "PioneerQwen38Panel.h"
 
 namespace PioneerQwen35 {

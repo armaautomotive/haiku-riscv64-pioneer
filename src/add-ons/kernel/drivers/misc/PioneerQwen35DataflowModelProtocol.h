@@ -8,6 +8,7 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT (B_DEVICE_OP_CODES_END + 0x8839)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_SEED (B_DEVICE_OP_CODES_END + 0x883a)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_ACTIVATION_READ (B_DEVICE_OP_CODES_END + 0x883b)
+#define TT_PCI_PROBE_QWEN35_DATAFLOW_EMBED_TOKEN (B_DEVICE_OP_CODES_END + 0x883c)
 
 enum : uint32_t {
 	TT_QWEN35_DATAFLOW_MODEL_ABI=1
@@ -36,10 +37,17 @@ struct tt_qwen35_dataflow_activation_read {
 	uint32_t result,activation_mask;
 };
 
+struct tt_qwen35_dataflow_embed_token {
+	uint32_t version,token,output_slot,result;
+	uint32_t next_sequence,state,recovery_required,reserved;
+};
+
 static_assert(sizeof(tt_qwen35_dataflow_activation_seed)==32,
 	"fixed activation seed ABI");
 static_assert(sizeof(tt_qwen35_dataflow_activation_read)==32,
 	"fixed activation readback ABI");
+static_assert(sizeof(tt_qwen35_dataflow_embed_token)==32,
+	"fixed token embedding ABI");
 
 static_assert(sizeof(tt_qwen35_dataflow_model_bind)==81972,
 	"fixed manifest binding ABI");

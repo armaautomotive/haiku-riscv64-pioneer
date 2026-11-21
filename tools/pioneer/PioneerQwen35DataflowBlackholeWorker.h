@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowBlackholeIO.h"
 #include "PioneerQwen35DataflowTensixOps.h"
+#include "PioneerQwen35DataflowBlackholeEmbeddingWorker.h"
 
 namespace PioneerQwen35 {
 
@@ -152,6 +153,20 @@ inline bool DataflowBlackholeLocalCore(unsigned route,unsigned& core)
 	return false;
 }
 
+inline bool DataflowWorkerQueuesClean()
+{
+	auto* controls=reinterpret_cast<DataflowQueueControl*>(
+		static_cast<uintptr_t>(DataflowQueueStateAddress));
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+		const auto& control=controls[i];
+		if (DataflowLoadAcquire(control.produced)
+			|| DataflowLoadAcquire(control.consumed)
+			|| DataflowQueueFailure(control)
+			|| control.reserved[0] || control.reserved[1]) return false;
+	}
+	return true;
+}
+
 inline void DataflowWorkerPublish(DataflowWorkerMailbox& mailbox,
 	unsigned sequence,unsigned state,unsigned failure,unsigned phase)
 {
@@ -276,19 +291,41 @@ inline bool DataflowWorkerResetQueues()
 		}
 		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerRunning,0,1);
 		DataflowFence();
-		DataflowDeviceContext context;
-		bool okay=DataflowBindLocalContext(context,DataflowFailureQueue);
-		if (okay && (context.program->core!=core
-			|| DataflowBlackholeRouteForCore(context.program->core)!=localRoute)) {
+		const unsigned invocationMagic=*reinterpret_cast<volatile uint32_t*>(
+			static_cast<uintptr_t>(DataflowProgramAddress));
+		bool okay=false;
+		if (invocationMagic==DataflowProgramMagic) {
+			DataflowDeviceContext context;
+			okay=DataflowBindLocalContext(context,DataflowFailureQueue);
+			if (okay && (context.program->core!=core
+				|| DataflowBlackholeRouteForCore(context.program->core)!=localRoute)) {
+				DataflowSignalLocalFailure(DataflowFailureQueue);
+				okay=false;
+			}
+			if (okay) {
+				DataflowBlackholeReaderOps reader;
+				DataflowBlackholeTensixOps compute;
+				DataflowBlackholeWriterOps writer;
+				okay=PioneerQwen35DataflowBlackholeWorker(*context.program,
+					context.queues,context.activationCache,reader,compute,writer);
+			}
+		} else if (invocationMagic==DataflowEmbeddingMagic) {
+			const auto* embedding=reinterpret_cast<const DataflowEmbeddingInvocation*>(
+				static_cast<uintptr_t>(DataflowProgramAddress));
+			if (DataflowWorkerQueuesClean() && embedding->Valid()
+				&& embedding->core==core
+				&& DataflowBlackholeRouteForCore(embedding->core)==localRoute) {
+				DataflowBlackholeEmbeddingOps io;
+				okay=io.Bind(*embedding)
+					&& PioneerQwen35DataflowEmbedWorker(*embedding,
+						reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(
+							DataflowWeightBufferAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowOutputBufferAddress)),io);
+			}
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+		} else {
 			DataflowSignalLocalFailure(DataflowFailureQueue);
-			okay=false;
-		}
-		if (okay) {
-			DataflowBlackholeReaderOps reader;
-			DataflowBlackholeTensixOps compute;
-			DataflowBlackholeWriterOps writer;
-			okay=PioneerQwen35DataflowBlackholeWorker(*context.program,
-				context.queues,context.activationCache,reader,compute,writer);
 		}
 		unsigned failure=0;
 		auto* controls=reinterpret_cast<DataflowQueueControl*>(

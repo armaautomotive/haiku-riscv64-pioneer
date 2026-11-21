@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_AUTHORIZATION_H
 
 #include "PioneerQwen35DataflowProgram.h"
+#include "PioneerQwen35DataflowEmbeddingProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -30,6 +31,22 @@ class DataflowProjectionAuthority {
 		}
 		return input<ActivationBuffers && output<ActivationBuffers
 			&& input!=output;
+	}
+
+	bool EmbeddingMatches(const DataflowEmbeddingProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowEmbeddingProgram expected{};
+		if (!DataflowEmbeddingProgramBuilder::Build(fManifest,program.token,
+			program.outputSlot,fRoutes,expected)
+			|| program.lane!=expected.lane
+			|| program.weightBank!=expected.weightBank
+			|| program.weightBase!=expected.weightBase
+			|| !DataflowRowSpaceMatches(expected.output,program.output)) return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
 	}
 
 public:
@@ -60,6 +77,20 @@ public:
 			fManifest.activation[inputSlot],weight->inputs,
 			fManifest.activation[outputSlot],fRoutes,program)) return false;
 		return Authorize(program);
+	}
+
+	bool BuildEmbedding(unsigned token,unsigned outputSlot,
+		DataflowEmbeddingProgram& program) const
+	{
+		if (!fBound || fPending
+			|| !DataflowEmbeddingProgramBuilder::Build(fManifest,token,
+				outputSlot,fRoutes,program)) return false;
+		return AuthorizeEmbedding(program);
+	}
+
+	bool AuthorizeEmbedding(const DataflowEmbeddingProgram& program) const
+	{
+		return fBound && !fPending && EmbeddingMatches(program);
 	}
 
 	bool BindValidatedModel(const DeviceLayout& manifest,
@@ -122,6 +153,22 @@ public:
 		return true;
 	}
 
+	bool BeginEmbedding(const DataflowEmbeddingProgram& program)
+	{
+		if (!AuthorizeEmbedding(program)
+			|| program.outputSlot>=ActivationBuffers) return false;
+		fActivationRows[program.outputSlot]=0;
+		fPending=true;
+		fPendingOutput=program.outputSlot;
+		return true;
+	}
+
+	bool PendingEmbeddingMatches(const DataflowEmbeddingProgram& program) const
+	{
+		return fPending && program.outputSlot==fPendingOutput
+			&& EmbeddingMatches(program);
+	}
+
 	bool Complete(const DataflowProjectionProgram& program)
 	{
 		if (!fBound || !fPending
@@ -131,6 +178,18 @@ public:
 			|| fActivationRows[input]<program.inputRows
 			|| program.outputRows>fManifest.activation[output].rows) return false;
 		fActivationRows[output]=program.outputRows;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		return true;
+	}
+
+	bool CompleteEmbedding(const DataflowEmbeddingProgram& program)
+	{
+		if (!fBound || !fPending || !EmbeddingMatches(program)
+			|| program.outputSlot!=fPendingOutput
+			|| !DataflowRowSpaceMatches(fManifest.activation[program.outputSlot],
+				program.output)) return false;
+		fActivationRows[program.outputSlot]=Hidden;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		return true;

@@ -2,8 +2,10 @@
 #include "../PioneerQwen35DataflowBlackholeIO.h"
 #include "../PioneerQwen35DataflowTensixOps.h"
 #include "../PioneerQwen35DataflowBlackholeWorker.h"
+#include "../PioneerQwen35DataflowBlackholeEmbeddingWorker.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 #include "../PioneerQwen35DataflowEmbedding.h"
+#include "../PioneerQwen35DataflowEmbeddingProgram.h"
 
 using namespace PioneerQwen35;
 
@@ -41,6 +43,22 @@ bool PioneerQwen35DataflowEmbeddingTargetCompileProbe(const uint8_t* tile,
 {
 	return DataflowDecodeQ6KEmbeddingPanel(tile,DataflowQ6KEmbeddingTileBytes,
 		lane,panel,output,DataflowQ6KEmbeddingValuesPerPanel);
+}
+
+bool PioneerQwen35DataflowEmbeddingProgramTargetCompileProbe(
+	const DataflowEmbeddingProgram& program,unsigned core,
+	DataflowEmbeddingInvocation& invocation)
+{
+	return DataflowEmbeddingProgramBuilder::BindCore(program,core,invocation);
+}
+
+bool PioneerQwen35DataflowBlackholeEmbeddingTargetCompileProbe(
+	const DataflowEmbeddingInvocation& program)
+{
+	DataflowBlackholeEmbeddingOps io;
+	return io.Bind(program) && PioneerQwen35DataflowEmbedWorker(program,
+		reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(DataflowWeightBufferAddress)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),io);
 }
 
 bool PioneerQwen35DataflowTensixTargetCompileProbe(

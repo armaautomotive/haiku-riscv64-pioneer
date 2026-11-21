@@ -412,6 +412,28 @@ PioneerSessionIO::BeginProjection(
 }
 
 bool
+PioneerSessionIO::AuthorizeEmbedding(
+	const PioneerQwen35::DataflowEmbeddingProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->AuthorizeEmbedding(program);
+}
+
+bool
+PioneerSessionIO::BeginEmbedding(
+	const PioneerQwen35::DataflowEmbeddingProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->BeginEmbedding(program);
+}
+
+bool
 PioneerSessionIO::WriteInvocation(unsigned core,
 	const PioneerQwen35::DataflowCoreInvocation& invocation)
 {
@@ -438,18 +460,54 @@ PioneerSessionIO::InvocationMatches(unsigned core,
 }
 
 bool
+PioneerSessionIO::WriteEmbeddingInvocation(unsigned core,
+	const PioneerQwen35::DataflowEmbeddingInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
+	return ReadWorkerSnapshot(core,snapshot)
+		&& PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
+		&& CoreReady(core,snapshot)
+		&& WriteCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation));
+}
+
+bool
+PioneerSessionIO::EmbeddingInvocationMatches(unsigned core,
+	const PioneerQwen35::DataflowEmbeddingInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowEmbeddingInvocation observed{};
+	return ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+		&observed,sizeof(observed))
+		&& memcmp(&invocation,&observed,sizeof(invocation))==0;
+}
+
+bool
 PioneerSessionIO::PublishCommand(unsigned core,unsigned sequence)
 {
 	if (core>=PioneerQwen35::DataflowCoreCount || !sequence
 		|| sequence>PioneerQwen35::DataflowWorkerSequenceLimit) return false;
 	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
-	PioneerQwen35::DataflowCoreInvocation invocation{};
 	if (!ReadWorkerSnapshot(core,snapshot)
 		|| !PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
-		|| sequence<=snapshot.completedSequence
-		|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+		|| sequence<=snapshot.completedSequence) return false;
+	uint32 magic=0;
+	if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,&magic,
+		sizeof(magic))) return false;
+	if (magic==PioneerQwen35::DataflowProgramMagic) {
+		PioneerQwen35::DataflowCoreInvocation invocation{};
+		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
 			&invocation,sizeof(invocation))
-		|| !invocation.Valid() || invocation.core!=core) return false;
+			|| !invocation.Valid() || invocation.core!=core) return false;
+	} else if (magic==PioneerQwen35::DataflowEmbeddingMagic) {
+		PioneerQwen35::DataflowEmbeddingInvocation invocation{};
+		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation))
+			|| !invocation.Valid() || invocation.core!=core) return false;
+	} else return false;
 	const uint32_t command=sequence;
 	const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
 		+offsetof(PioneerQwen35::DataflowWorkerMailbox,commandSequence);
@@ -510,6 +568,49 @@ PioneerSessionIO::AuditProjection(
 }
 
 bool
+PioneerSessionIO::AuditEmbedding(
+	const PioneerQwen35::DataflowEmbeddingProgram& program,unsigned sequence,
+	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount])
+{
+	auto* context=qwen35DataflowContext;
+	if (!context || !context->qwen35DataflowAuthority || !program.Valid()
+		|| !sequence || !context->qwen35DataflowAuthority->PendingEmbeddingMatches(program))
+		return false;
+	const auto* manifest=context->qwen35DataflowAuthority->Manifest();
+	PioneerQwen35::DataflowEmbeddingProgram expectedProgram{};
+	if (!manifest || !PioneerQwen35::DataflowEmbeddingProgramBuilder::Build(
+		*manifest,program.token,program.outputSlot,context->qwen35DataflowRoutes,
+		expectedProgram)
+		|| expectedProgram.weightBank!=program.weightBank
+		|| expectedProgram.weightBase!=program.weightBase
+		|| expectedProgram.lane!=program.lane
+		|| !PioneerQwen35::DataflowRowSpaceMatches(expectedProgram.output,
+			program.output)) return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++)
+		if (expectedProgram.bankRoute[noc][bank]!=program.bankRoute[noc][bank])
+			return false;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		if (receipts[core].commandSequence!=sequence
+			|| receipts[core].completedSequence!=sequence
+			|| receipts[core].state!=PioneerQwen35::DataflowWorkerComplete
+			|| receipts[core].failure || receipts[core].phase!=2
+			|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
+		PioneerQwen35::DataflowWorkerSnapshot observed{};
+		PioneerQwen35::DataflowEmbeddingInvocation invocation{};
+		PioneerQwen35::DataflowEmbeddingInvocation expected{};
+		if (!ReadWorkerSnapshot(core,observed)
+			|| memcmp(&receipts[core],&observed,sizeof(observed))!=0
+			|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+				&invocation,sizeof(invocation))
+			|| !PioneerQwen35::DataflowEmbeddingProgramBuilder::BindCore(
+				expectedProgram,core,expected)
+			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
+	}
+	return SelectRuntimeCore(0);
+}
+
+bool
 PioneerSessionIO::Acknowledge(unsigned core,unsigned sequence)
 {
 	if (core>=PioneerQwen35::DataflowCoreCount || !sequence) return false;
@@ -531,6 +632,15 @@ PioneerSessionIO::CompleteProjection(
 	auto* context=qwen35DataflowContext;
 	return sequence && context && context->qwen35DataflowAuthority
 		&& context->qwen35DataflowAuthority->Complete(program);
+}
+
+bool
+PioneerSessionIO::CompleteEmbedding(
+	const PioneerQwen35::DataflowEmbeddingProgram& program,unsigned sequence)
+{
+	auto* context=qwen35DataflowContext;
+	return sequence && context && context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->CompleteEmbedding(program);
 }
 
 bool
