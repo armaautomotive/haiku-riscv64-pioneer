@@ -339,14 +339,17 @@ driver60, reload-guard, and default-control builds pass; the updated driver60
 binary SHA-256 is
 `bbaa3cfab9d9a9c5333dc32c091162879619a2fd323980d836cf51a6d26d3fd7`.
 
-The projection control now accepts the graph Up-output selector, but the
-authority admits it only for an exact layer Up tensor, an initialized
-activation input, and the validated sidecar row space. The normal 120-core
-projection invocation and Tensix path are reused; begin, physical audit, and
-commit track Up-scratch readiness separately. ASan/UBSan authority checks
-cover this output path, and the driver60, reload-guard, and default-control
-builds pass. The updated driver60 SHA-256 is
-`f7e22d02d4269000aca4ef7750b84db45051b3b0a5f792fda536956ed3b7299d`.
+The projection control accepts graph output selectors for the exact layer Up,
+recurrent QKV, and recurrent gate tensors. Each selector maps to its matching
+manifest-bound sidecar; recurrent targets are limited to non-dense layers and
+their named roles. Readiness is tracked per sidecar so beginning or recovering
+one projection cannot mark another scratch tensor valid. The normal 120-core
+projection invocation and Tensix path are reused. ASan/UBSan checks cover the
+Up/QKV/gate target mapping, exact role authorization, and readiness transitions.
+The Haiku RV32IMF role compile and offline driver60, reload-guard, and
+default-control builds pass. This enables recurrent QKV/gate projections;
+recurrent convolution, delta-state math, state IO, and the complete attention
+path remain unimplemented.
 
 The device-side SiLU×Up operation is implemented and pushed in `8ed176883c`. Its
 manifest-bound program divides all 576 sixteen-row panels among all 120
@@ -392,12 +395,15 @@ available.
 Checkpoint `ef1279b585` extends the checked graph-workspace sidecar from two
 to six FP32 regions: residual, FFN Up, recurrent QKV, recurrent gate, Alpha,
 and Beta. Manifest validation checks their shapes and ordered placement, and
-the model-bind ABI is version 3. The activation-plan, projection, SiLU,
-residual, and owner ASan/UBSan checks pass; the RV32IMF compile and all three
-offline driver builds pass. This reserves storage for upcoming Gated DeltaNet
-projection and state operations; the recurrent operator itself is still
-missing. The full GGUF fixture test was not run because no local pinned-model
-path is available.
+the model-bind ABI is version 3. Checkpoint `cd35b0db45` adds exact graph
+projection selectors and per-buffer readiness for recurrent QKV and gate
+weights, reusing the resident 120-core Tensix projection path. The projection
+authority/program ASan/UBSan check, RV32IMF role compile, and offline
+driver60/reload-guard/default-control builds pass. Driver60 SHA-256:
+`35c2c1e0f5ae691f5943ec56aa18a21a90e3a5bb69c3c691cb919696bf08b90a`.
+Recurrent convolution, delta-state math, Alpha/Beta projection, dense attention,
+KV/state IO, and token output remain to be implemented. The full GGUF fixture
+test was not run because no local pinned-model path is available.
 
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are

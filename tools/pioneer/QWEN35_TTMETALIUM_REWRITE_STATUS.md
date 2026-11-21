@@ -270,8 +270,8 @@ and silicon correctness/performance evidence.
 
 ## Current checkpoint: 2026-11-20
 
-The latest pushed rewrite checkpoint is `ef1279b585` (`Reserve Qwen35
-recurrent graph scratch`). The offline rewrite has concrete Tensix matrix
+The latest pushed rewrite checkpoint is `cd35b0db45` (`Authorize Qwen35
+recurrent graph projections`). The offline rewrite has concrete Tensix matrix
 projection, device-side Q6_K token embedding, and hidden RMS normalization,
 manifest-bound graph Up projection, device SiLU×Up, and residual save/add
 across the resident 120-worker service, plus a checked seven-step
@@ -279,17 +279,18 @@ feed-forward-sublayer sequence. The root-only support surface still does not
 provide token generation. No hardware test or decode rate is available for
 the rewrite.
 
-The graph workspace now participates in the projection path. The projection
-request can select the Up-output sidecar, but the authority admits that target
-only for an exact layer Up tensor and an initialized activation input. The
-existing resident 120-core Tensix projection schedule is reused, and begin,
-all-core audit, commit, and recovery keep Up-scratch readiness distinct from
-the two ping-pong activation states. ASan/UBSan workspace and authority tests,
-the RV32IMF worker compile, and the driver60, reload-guard, and default-control
-builds pass. The driver60 SHA-256 is
-`f7e22d02d4269000aca4ef7750b84db45051b3b0a5f792fda536956ed3b7299d`. The
-complete GGUF fixture test compiles but was not run because no local
-pinned-model path was available. No legacy Work changes are part of this step.
+The graph workspace participates in the projection path. The request can
+select the Up, recurrent QKV, or recurrent gate sidecar; the authority maps
+each selector to its exact model role and rejects recurrent targets on dense
+layers. It tracks readiness per scratch tensor, independently from activation
+buffers and from other scratch tensors. ASan/UBSan projection and authority
+checks, the Haiku RV32IMF role compile, and driver60, reload-guard, and
+default-control builds pass. The driver60 SHA-256 is
+`35c2c1e0f5ae691f5943ec56aa18a21a90e3a5bb69c3c691cb919696bf08b90a`.
+These selectors make QKV and recurrent-gate projections available through
+the existing 120-core Tensix path; recurrent convolution, delta-state math,
+state IO, and the complete attention path remain unimplemented. No legacy
+Work changes are part of this step.
 
 The device-side SiLU×Up step is implemented and pushed in `8ed176883c`. Its
 manifest-bound schedule assigns all 576 sixteen-row panels over the 120
@@ -351,15 +352,17 @@ Checkpoint `ef1279b585` extends the validated graph-workspace sidecar to six
 FP32 tensors: Hidden residual, FFN Up, recurrent QKV (`ConvChannels`),
 recurrent gate (`DeltaInner`), and 32-row Alpha and Beta vectors. Manifest
 validation requires all six regions in allocator order; the model-bind ABI is
-now version 3. This gives the upcoming recurrent projection and state
-operators reserved, bounded output storage, but does not implement those
-operators yet. ASan/UBSan activation-plan, projection authority/program,
-SiLU, residual-worker, and owner checks pass. The RV32IMF role compile and
-offline driver60, reload-guard, and default-control builds pass; GGUF test
-compilation passes, but the pinned-model fixture test was not run because no
-local model path is available. The driver60 SHA-256 is
-`6d0c5387435f00fa51e39b58cfda965f1c4d60d563f0a54e15d3c410c03b2803`.
-No Pioneer access or benchmark was performed.
+now version 3. This gives the recurrent projection and state operators
+reserved, bounded output storage. Checkpoint `cd35b0db45` adds the first
+recurrent projection targets (QKV and gate); the projection state machine now
+commits or invalidates each target independently. ASan/UBSan projection and
+authority checks pass, as does the RV32IMF role compile. The offline driver60,
+reload-guard, and default-control builds pass. The updated driver60 SHA-256 is
+`35c2c1e0f5ae691f5943ec56aa18a21a90e3a5bb69c3c691cb919696bf08b90a`.
+Recurrent convolution, delta-state math, dense attention, KV/state IO, final
+vocabulary readout, and token generation remain unimplemented. The GGUF
+fixture test was not run because no local pinned-model path is available. No
+Pioneer access or benchmark was performed.
 
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration
