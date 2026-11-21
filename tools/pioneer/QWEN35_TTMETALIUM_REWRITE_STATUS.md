@@ -267,3 +267,27 @@ this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
 It is still missing a resident owner that materializes and launches all 120
 invocations, downstream sharded activation chaining, native image validation,
 and silicon correctness/performance evidence.
+
+## Current checkpoint: 2026-11-20
+
+The latest pushed rewrite checkpoint is `8007ead08d` (`Integrate hidden RMS
+across resident workers`). The offline rewrite has concrete Tensix matrix
+projection, device-side Q6_K token embedding, and device-side hidden RMS
+normalization across the resident 120-worker service. The root-only support
+surface still exposes primitives, not generation. ASan/UBSan worker, owner,
+program, and math checks pass; the Haiku RV32IMF compile and the driver60,
+reload-guard, and default-control builds pass. These are offline checks only.
+
+The next graph-design gate is intermediate storage and authorization for a
+complete FFN subgraph. The existing serialized model layout provides two
+Ffn-sized ping-pong activation spaces. A safe layer schedule also has to keep
+the residual hidden vector while producing both gate and up projections, so
+the rewrite must define additional manifest-bound sharded scratch before
+adding dependent operations. Keep this in rewrite-owned layout/control code;
+do not expand the retained legacy Work dispatcher. Continue offline rewrite
+work only. Defer Pioneer runs, performance benchmarking, and assistant
+integration until the rewrite graph is complete.
+
+No model has been loaded on the Pioneer through this rewrite, no rewritten
+operation has been validated on silicon, and there is no generated output or
+decode-rate result. Do not report the legacy Work rate as rewrite performance.
