@@ -10,6 +10,7 @@
 #include "PioneerQwen35DataflowBlackholeResidualWorker.h"
 #include "PioneerQwen35DataflowBlackholeConvWorker.h"
 #include "PioneerQwen35DataflowBlackholeDeltaWorker.h"
+#include "PioneerQwen35DataflowBlackholeDenseAttentionWorker.h"
 
 namespace PioneerQwen35 {
 
@@ -436,6 +437,28 @@ inline bool DataflowWorkerResetQueues()
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowActivationCacheAddress
 								+(DataflowDeltaScalarCount+2*DeltaWidth)*sizeof(float))),io);
+			}
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+		} else if (invocationMagic==DataflowDenseAttentionMagic) {
+			const auto* dense=reinterpret_cast<const DataflowDenseAttentionInvocation*>(
+				static_cast<uintptr_t>(DataflowProgramAddress));
+			if (DataflowWorkerQueuesClean() && dense->Valid()
+				&& dense->core==core
+				&& DataflowBlackholeRouteForCore(dense->core)==localRoute) {
+				DataflowBlackholeDenseAttentionOps io;
+				float* const norm=reinterpret_cast<float*>(static_cast<uintptr_t>(
+					DataflowDenseNormAddress));
+				okay=PioneerQwen35DataflowDenseAttentionWorker(*dense,
+					reinterpret_cast<float*>(static_cast<uintptr_t>(
+						DataflowDenseKeyTileAddress)),
+					reinterpret_cast<float*>(static_cast<uintptr_t>(
+						DataflowDenseValueTileAddress)),
+					reinterpret_cast<float*>(static_cast<uintptr_t>(
+						DataflowDenseQueryAddress)),
+					reinterpret_cast<float*>(static_cast<uintptr_t>(
+						DataflowDenseGateAddress)),norm,
+					reinterpret_cast<float*>(static_cast<uintptr_t>(
+						DataflowDenseRopeAddress)),norm,io);
 			}
 			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 		} else {

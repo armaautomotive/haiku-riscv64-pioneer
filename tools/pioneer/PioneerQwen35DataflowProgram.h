@@ -489,6 +489,46 @@ inline bool DataflowProjectionMatchesDenseGraphWorkspace(
 	return true;
 }
 
+// AttentionOut is the dense projection that consumes the context written by
+// the attention worker. Its input is the first 4096 rows of graph Up scratch,
+// which keeps the concurrent query workers from overwriting Q/G source panels.
+inline bool DataflowProjectionMatchesDenseAttentionOutput(
+	const DeviceLayout& manifest,const DataflowGraphWorkspace& workspace,
+	const unsigned (&auditedRoutes)[2][Banks],
+	const DataflowProjectionProgram& program,unsigned* outputSlot=nullptr,
+	unsigned* modelLayer=nullptr)
+{
+	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
+		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
+		|| !DataflowBankRoutesValid(auditedRoutes) || program.inputBase!=0
+		|| program.inputs!=DenseHeads*DenseHeadWidth
+		|| program.inputRows!=DenseHeads*DenseHeadWidth
+		|| program.inputRows>program.input.rows
+		|| !DataflowRowSpaceMatches(
+			workspace.space[DataflowGraphUpWorkspaceIndex],program.input))
+		return false;
+	unsigned foundOutput=ActivationBuffers;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.output))
+			foundOutput=slot;
+	if (foundOutput>=ActivationBuffers) return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
+	for (unsigned layer=0;layer<Layers;layer++) {
+		if (!Dense(layer)) continue;
+		const TensorSpace* expected=manifest.Weight(layer,AttentionOut);
+		if (expected && expected->type==program.type
+			&& expected->inputs==program.inputs
+			&& expected->place.rows==program.outputRows
+			&& DataflowRowSpaceMatches(expected->place,program.weights)) {
+			if (outputSlot) *outputSlot=foundOutput;
+			if (modelLayer) *modelLayer=layer;
+			return true;
+		}
+	}
+	return false;
+}
+
 // RecurrentOut consumes only the V channels retained in a recurrent QKV
 // workspace. Keep the complete QKV RowSpace as the source so its fragment map
 // remains valid, and express the V row offset in the projection descriptor.

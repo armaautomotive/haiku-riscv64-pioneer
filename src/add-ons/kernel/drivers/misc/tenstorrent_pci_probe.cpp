@@ -95,6 +95,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowConvProgram.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowFfnSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRecurrentLayerSequence.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowDenseLayerSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35ManifestValidation.h"
 #include "PioneerQwen35DataflowModelProtocol.h"
 #include "PioneerQwen35DataflowPciMemory.h"
@@ -3268,6 +3269,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool BeginConv(const PioneerQwen35::DataflowConvProgram& program);
 	bool AuthorizeDelta(const PioneerQwen35::DataflowDeltaProgram& program);
 	bool BeginDelta(const PioneerQwen35::DataflowDeltaProgram& program);
+	bool AuthorizeDenseAttention(
+		const PioneerQwen35::DataflowDenseAttentionProgram& program);
+	bool BeginDenseAttention(
+		const PioneerQwen35::DataflowDenseAttentionProgram& program);
 	bool WriteInvocation(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
 	bool InvocationMatches(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
 	bool WriteEmbeddingInvocation(unsigned core,
@@ -3294,6 +3299,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		const PioneerQwen35::DataflowDeltaInvocation& invocation);
 	bool DeltaInvocationMatches(unsigned core,
 		const PioneerQwen35::DataflowDeltaInvocation& invocation);
+	bool WriteDenseAttentionInvocation(unsigned core,
+		const PioneerQwen35::DataflowDenseAttentionInvocation& invocation);
+	bool DenseAttentionInvocationMatches(unsigned core,
+		const PioneerQwen35::DataflowDenseAttentionInvocation& invocation);
 	bool PublishCommand(unsigned core,unsigned sequence);
 	bool WaitForCompletion(unsigned core,unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot& snapshot);
@@ -3318,6 +3327,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool AuditDelta(const PioneerQwen35::DataflowDeltaProgram& program,
 		unsigned sequence,
 		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]);
+	bool AuditDenseAttention(
+		const PioneerQwen35::DataflowDenseAttentionProgram& program,
+		unsigned sequence,
+		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]);
 	bool Acknowledge(unsigned core,unsigned sequence);
 	bool CompleteProjection(const PioneerQwen35::DataflowProjectionProgram& program,
 		unsigned sequence);
@@ -3332,6 +3345,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool CompleteConv(const PioneerQwen35::DataflowConvProgram& program,
 		unsigned sequence);
 	bool CompleteDelta(const PioneerQwen35::DataflowDeltaProgram& program,
+		unsigned sequence);
+	bool CompleteDenseAttention(
+		const PioneerQwen35::DataflowDenseAttentionProgram& program,
 		unsigned sequence);
 	bool AuditAndRecoverAll(unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount]);
@@ -8024,7 +8040,8 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 				status=B_NO_MEMORY;
 			} else if (!context->qwen35DataflowRoutesAudited
 				|| !authority->BindValidatedModel(request->manifest,
-					request->graphWorkspace,context->qwen35DataflowRoutes)) {
+					request->graphWorkspace,context->qwen35DataflowRoutes,
+					request->rope)) {
 				delete authority;
 				status=B_BAD_VALUE;
 			} else {
@@ -8743,6 +8760,116 @@ Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length
 }
 
 static status_t
+Qwen35DataflowDenseAttention(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_dense_attention))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_dense_attention*)malloc(
+		sizeof(tt_qwen35_dataflow_dense_attention));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->layer>=PioneerQwen35::Layers
+		|| !PioneerQwen35::Dense(request->layer)
+		|| request->position>=PioneerQwen35::MaxPositions
+		|| (request->mode!=PioneerQwen35::DataflowDenseAttentionPackKey
+			&& request->mode!=PioneerQwen35::DataflowDenseAttentionPackValue
+			&& request->mode!=PioneerQwen35::DataflowDenseAttentionRun)
+		|| request->result || request->next_sequence || request->state
+		|| request->recovery_required) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()) {
+		status=B_NOT_ALLOWED;
+	} else {
+		PioneerQwen35::DataflowDenseAttentionProgram program{};
+		const bool built=context->qwen35DataflowAuthority->BuildDenseAttention(
+			request->layer,request->position,request->mode,program);
+		const auto result=built
+			?context->qwen35DataflowService->RunDenseAttention(program,context->io)
+			:PioneerQwen35::DataflowServiceInvalidState;
+		request->result=result;
+		context->qwen35DataflowLastResult=request->result;
+		request->next_sequence=context->qwen35DataflowService->NextSequence();
+		request->state=context->qwen35DataflowService->Faulted()
+			?TT_QWEN35_DATAFLOW_STATE_FAULTED
+			:TT_QWEN35_DATAFLOW_STATE_READY;
+		request->recovery_required=context->qwen35DataflowService->Faulted();
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
+Qwen35DataflowDenseLayer(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_dense_layer))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_dense_layer*)malloc(
+		sizeof(tt_qwen35_dataflow_dense_layer));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->layer>=PioneerQwen35::Layers
+		|| !PioneerQwen35::Dense(request->layer)
+		|| request->position>=PioneerQwen35::MaxPositions
+		|| request->input_slot>=PioneerQwen35::ActivationBuffers
+		|| request->output_slot || request->result || request->stage
+		|| request->next_sequence || request->state || request->recovery_required) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()) {
+		status=B_NOT_ALLOWED;
+	} else {
+		unsigned outputSlot=PioneerQwen35::ActivationBuffers,stage=0;
+		const auto sequence=PioneerQwen35::DataflowDenseLayerSequence::Run(
+			request->layer,request->position,request->input_slot,
+			*context->qwen35DataflowAuthority,
+			*context->qwen35DataflowService,context->io,outputSlot,stage);
+		request->stage=stage;
+		request->result=sequence==PioneerQwen35::DataflowDenseLayerComplete
+			?PioneerQwen35::DataflowServiceComplete
+			:PioneerQwen35::DataflowServiceDenseLayerFailed;
+		if (sequence==PioneerQwen35::DataflowDenseLayerComplete)
+			request->output_slot=outputSlot;
+		context->qwen35DataflowLastResult=request->result;
+		request->next_sequence=context->qwen35DataflowService->NextSequence();
+		request->state=context->qwen35DataflowService->Faulted()
+			?TT_QWEN35_DATAFLOW_STATE_FAULTED
+			:TT_QWEN35_DATAFLOW_STATE_READY;
+		request->recovery_required=context->qwen35DataflowService->Faulted();
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
 Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!data) return B_BAD_VALUE;
@@ -8765,7 +8892,9 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 				|TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE
 				|TT_QWEN35_DATAFLOW_CAP_RECURRENT_CONV
 				|TT_QWEN35_DATAFLOW_CAP_DELTA_STATE
-				|TT_QWEN35_DATAFLOW_CAP_RECURRENT_LAYER,
+				|TT_QWEN35_DATAFLOW_CAP_RECURRENT_LAYER
+				|TT_QWEN35_DATAFLOW_CAP_DENSE_ATTENTION
+				|TT_QWEN35_DATAFLOW_CAP_DENSE_LAYER,
 			TT_QWEN35_DATAFLOW_PROJECTION_MATRIX,
 			TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING};
 		status=user_memcpy(data,&support,sizeof(support));
@@ -8795,6 +8924,10 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		return Qwen35DataflowDelta(cookie,data,length);
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_RECURRENT_LAYER)
 		return Qwen35DataflowRecurrentLayer(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_DENSE_ATTENTION)
+		return Qwen35DataflowDenseAttention(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_DENSE_LAYER)
+		return Qwen35DataflowDenseLayer(cookie,data,length);
 	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
 	tt_qwen35_dataflow_request request={};

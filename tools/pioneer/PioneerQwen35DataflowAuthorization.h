@@ -10,6 +10,7 @@
 #include "PioneerQwen35DataflowResidualProgram.h"
 #include "PioneerQwen35DataflowConvProgram.h"
 #include "PioneerQwen35DataflowDeltaProgram.h"
+#include "PioneerQwen35DataflowDenseAttentionProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -21,16 +22,21 @@ class DataflowProjectionAuthority {
 	enum : unsigned {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
 		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7,
-		PendingDelta=8,PendingRecurrentOut=9,PendingDenseGraphProjection=10
+		PendingDelta=8,PendingRecurrentOut=9,PendingDenseGraphProjection=10,
+		PendingDenseAttention=11,PendingDenseAttentionOut=12
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
+	Range fRope{};
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
 	bool fGraphWorkspaceReady[DataflowGraphWorkspaceBufferCount]{};
 	unsigned fGraphWorkspaceLayer[DataflowGraphWorkspaceBufferCount]{};
 	unsigned fGraphWorkspaceRole[DataflowGraphWorkspaceBufferCount]{};
+	bool fDenseKeyStored[Layers]{};
+	bool fDenseValueStored[Layers]{};
+	unsigned fDenseNextPosition[Layers]{};
 	unsigned fConvNextPosition[Layers]{};
 	unsigned fDeltaNextPosition[Layers]{};
 	bool fGraphResidualReady=false;
@@ -167,6 +173,38 @@ class DataflowProjectionAuthority {
 		return true;
 	}
 
+	bool DenseAttentionMatches(const DataflowDenseAttentionProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowDenseAttentionProgram expected{};
+		if (!DataflowDenseAttentionProgramBuilder::Build(fManifest,
+			fGraphWorkspace,fRope,program.layer,program.position,program.mode,
+			fRoutes,expected)
+			|| program.context!=expected.context
+			|| program.layer!=expected.layer || program.position!=expected.position
+			|| program.mode!=expected.mode
+			|| program.rope.bank!=expected.rope.bank
+			|| program.rope.address!=expected.rope.address
+			|| program.rope.bytes!=expected.rope.bytes
+			|| !DataflowRowSpaceMatches(expected.qkv,program.qkv)
+			|| !DataflowRowSpaceMatches(expected.gate,program.gate)
+			|| !DataflowRowSpaceMatches(expected.contextOutput,
+				program.contextOutput)
+			|| !DataflowRowSpaceMatches(expected.kv,program.kv)
+			|| program.queryNorm.type!=expected.queryNorm.type
+			|| program.queryNorm.inputs!=expected.queryNorm.inputs
+			|| !DataflowRowSpaceMatches(expected.queryNorm.place,
+				program.queryNorm.place)
+			|| program.keyNorm.type!=expected.keyNorm.type
+			|| program.keyNorm.inputs!=expected.keyNorm.inputs
+			|| !DataflowRowSpaceMatches(expected.keyNorm.place,
+				program.keyNorm.place)) return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
+	}
+
 	bool RecurrentOutputMatches(const DataflowProjectionProgram& program,
 		unsigned* outputSlot=nullptr,unsigned* modelLayer=nullptr) const
 	{
@@ -222,6 +260,11 @@ public:
 		if (!fBound || fPending) return false;
 		for (unsigned layer=0;layer<Layers;layer++)
 			fConvNextPosition[layer]=fDeltaNextPosition[layer]=0;
+		for (unsigned layer=0;layer<Layers;layer++) {
+			fDenseNextPosition[layer]=0;
+			fDenseKeyStored[layer]=false;
+			fDenseValueStored[layer]=false;
+		}
 		for (unsigned i=DataflowGraphRecurrentQkvWorkspaceIndex;
 			i<DataflowGraphWorkspaceBufferCount;i++) {
 			fGraphWorkspaceReady[i]=false;
@@ -432,6 +475,129 @@ public:
 		return Authorize(program);
 	}
 
+	bool BuildDenseAttention(unsigned layer,unsigned position,unsigned mode,
+		DataflowDenseAttentionProgram& program) const
+	{
+		if (!fBound || fPending || layer>=Layers || !Dense(layer)
+			|| position!=fDenseNextPosition[layer]
+			|| !DataflowDenseAttentionProgramBuilder::Build(fManifest,
+				fGraphWorkspace,fRope,layer,position,mode,fRoutes,program)) return false;
+		return AuthorizeDenseAttention(program);
+	}
+
+	bool BuildDenseAttentionOutput(unsigned layer,unsigned outputSlot,
+		DataflowProjectionProgram& program) const
+	{
+		const unsigned context=DataflowGraphUpWorkspaceIndex;
+		if (!fBound || fPending || layer>=Layers || !Dense(layer)
+			|| outputSlot>=ActivationBuffers
+			|| !GraphWorkspaceReady(context) || GraphWorkspaceLayer(context)!=layer
+			|| GraphWorkspaceRole(context)!=AttentionOut) return false;
+		const TensorSpace* weight=fManifest.Weight(layer,AttentionOut);
+		if (!weight || !DataflowProgramBuilder::Build(*weight,
+			fGraphWorkspace.space[context],DenseHeads*DenseHeadWidth,
+			fManifest.activation[outputSlot],fRoutes,program)) return false;
+		return Authorize(program);
+	}
+
+	bool AuthorizeDenseAttention(
+		const DataflowDenseAttentionProgram& program) const
+	{
+		if (!fBound || fPending || !DenseAttentionMatches(program)
+			|| program.position!=fDenseNextPosition[program.layer]) return false;
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		const unsigned gate=DataflowGraphRecurrentGateWorkspaceIndex;
+		if (!GraphWorkspaceReady(qkv)
+			|| GraphWorkspaceLayer(qkv)!=program.layer
+			|| GraphWorkspaceRole(qkv)!=QueryAndGate) return false;
+		if (program.mode==DataflowDenseAttentionPackKey)
+			return GraphWorkspaceReady(gate)
+				&& GraphWorkspaceLayer(gate)==program.layer
+				&& GraphWorkspaceRole(gate)==Key
+				&& !fDenseKeyStored[program.layer];
+		if (program.mode==DataflowDenseAttentionPackValue)
+			return GraphWorkspaceReady(gate)
+				&& GraphWorkspaceLayer(gate)==program.layer
+				&& GraphWorkspaceRole(gate)==Value
+				&& fDenseKeyStored[program.layer]
+				&& !fDenseValueStored[program.layer];
+		return program.mode==DataflowDenseAttentionRun
+			&& GraphWorkspaceReady(gate)
+			&& GraphWorkspaceLayer(gate)==program.layer
+			&& GraphWorkspaceRole(gate)==Value
+			&& fDenseKeyStored[program.layer]
+			&& fDenseValueStored[program.layer];
+	}
+
+	bool BeginDenseAttention(const DataflowDenseAttentionProgram& program)
+	{
+		if (!AuthorizeDenseAttention(program)) return false;
+		fPending=true;
+		fPendingOutput=program.mode==DataflowDenseAttentionRun
+			?DataflowGraphRecurrentQkvOutputSlot
+			:DataflowGraphRecurrentGateOutputSlot;
+		fPendingKind=PendingDenseAttention;
+		fPendingLayer=program.layer;
+		fPendingPosition=program.position;
+		fPendingRole=program.mode;
+		if (program.mode==DataflowDenseAttentionRun) {
+			const unsigned context=DataflowGraphUpWorkspaceIndex;
+			fGraphWorkspaceReady[context]=false;
+			fGraphWorkspaceLayer[context]=~0U;
+			fGraphWorkspaceRole[context]=LayerRoles;
+		} else {
+			const unsigned gate=DataflowGraphRecurrentGateWorkspaceIndex;
+			fGraphWorkspaceReady[gate]=false;
+			fGraphWorkspaceLayer[gate]=~0U;
+			fGraphWorkspaceRole[gate]=LayerRoles;
+		}
+		return true;
+	}
+
+	bool PendingDenseAttentionMatches(
+		const DataflowDenseAttentionProgram& program) const
+	{
+		return fBound && fPending && fPendingKind==PendingDenseAttention
+			&& fPendingLayer==program.layer
+			&& fPendingPosition==program.position && fPendingRole==program.mode
+			&& fPendingOutput==(program.mode==DataflowDenseAttentionRun
+				?DataflowGraphRecurrentQkvOutputSlot
+				:DataflowGraphRecurrentGateOutputSlot)
+			&& DenseAttentionMatches(program);
+	}
+
+	bool CompleteDenseAttention(
+		const DataflowDenseAttentionProgram& program)
+	{
+		if (!PendingDenseAttentionMatches(program)) return false;
+		if (program.mode==DataflowDenseAttentionPackKey) {
+			const unsigned gate=DataflowGraphRecurrentGateWorkspaceIndex;
+			fGraphWorkspaceReady[gate]=true;
+			fGraphWorkspaceLayer[gate]=program.layer;
+			fGraphWorkspaceRole[gate]=Key;
+			fDenseKeyStored[program.layer]=true;
+		} else if (program.mode==DataflowDenseAttentionPackValue) {
+			const unsigned gate=DataflowGraphRecurrentGateWorkspaceIndex;
+			fGraphWorkspaceReady[gate]=true;
+			fGraphWorkspaceLayer[gate]=program.layer;
+			fGraphWorkspaceRole[gate]=Value;
+			fDenseValueStored[program.layer]=true;
+		} else {
+			const unsigned context=DataflowGraphUpWorkspaceIndex;
+			fGraphWorkspaceReady[context]=true;
+			fGraphWorkspaceLayer[context]=program.layer;
+			fGraphWorkspaceRole[context]=AttentionOut;
+			fDenseNextPosition[program.layer]=program.position+1;
+		}
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		fPendingLayer=~0U;
+		fPendingPosition=0;
+		fPendingRole=LayerRoles;
+		return true;
+	}
+
 	bool BuildRecurrentOutput(unsigned layer,unsigned outputSlot,
 		DataflowProjectionProgram& program) const
 	{
@@ -581,7 +747,7 @@ public:
 
 	bool BindValidatedModel(const DeviceLayout& manifest,
 		const DataflowGraphWorkspace& graphWorkspace,
-		const unsigned (&auditedRoutes)[2][Banks])
+		const unsigned (&auditedRoutes)[2][Banks],Range rope={})
 	{
 		if (fBound || manifest.magic!=LayoutMagic
 			|| manifest.version!=LayoutVersion || !manifest.context
@@ -589,6 +755,7 @@ public:
 			|| !graphWorkspace.Valid(manifest)) return false;
 		fManifest=manifest;
 		fGraphWorkspace=graphWorkspace;
+		fRope=rope;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 			fRoutes[noc][bank]=auditedRoutes[noc][bank];
 		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++) {
@@ -628,6 +795,15 @@ public:
 	{
 		if (!fBound || fPending) return false;
 		if (RecurrentOutputMatches(program)) return true;
+		unsigned denseOutput=ActivationBuffers,denseOutputLayer=Layers;
+		if (DataflowProjectionMatchesDenseAttentionOutput(fManifest,
+			fGraphWorkspace,fRoutes,program,&denseOutput,&denseOutputLayer)) {
+			const unsigned context=DataflowGraphUpWorkspaceIndex;
+			return GraphWorkspaceReady(context)
+				&& GraphWorkspaceLayer(context)==denseOutputLayer
+				&& GraphWorkspaceRole(context)==AttentionOut
+				&& program.outputRows<=fManifest.activation[denseOutput].rows;
+		}
 		unsigned denseInput=ActivationBuffers,denseWorkspace=0;
 		unsigned denseLayer=Layers,denseRole=LayerRoles;
 		if (DataflowProjectionMatchesDenseGraphWorkspace(fManifest,fGraphWorkspace,
@@ -639,14 +815,17 @@ public:
 			if (denseRole==Key)
 				return GraphWorkspaceReady(qkv)
 					&& GraphWorkspaceLayer(qkv)==denseLayer
-					&& GraphWorkspaceRole(qkv)==QueryAndGate;
+					&& GraphWorkspaceRole(qkv)==QueryAndGate
+					&& !fDenseKeyStored[denseLayer];
 			if (denseRole==Value)
 				return GraphWorkspaceReady(qkv)
 					&& GraphWorkspaceLayer(qkv)==denseLayer
 					&& GraphWorkspaceRole(qkv)==QueryAndGate
+					&& fDenseKeyStored[denseLayer]
 					&& GraphWorkspaceReady(gate)
 					&& GraphWorkspaceLayer(gate)==denseLayer
-					&& GraphWorkspaceRole(gate)==Key;
+					&& GraphWorkspaceRole(gate)==Key
+					&& !fDenseValueStored[denseLayer];
 			return false;
 		}
 		if (DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) {
@@ -672,6 +851,16 @@ public:
 			fPendingKind=PendingRecurrentOut;
 			fPendingLayer=recurrentLayer;
 			fPendingPosition=fDeltaNextPosition[recurrentLayer]-1;
+		} else if (DataflowProjectionMatchesDenseAttentionOutput(fManifest,
+			fGraphWorkspace,fRoutes,program,&recurrentOutput,&recurrentLayer)) {
+			const unsigned context=DataflowGraphUpWorkspaceIndex;
+			fActivationRows[recurrentOutput]=0;
+			fGraphWorkspaceReady[context]=false;
+			fGraphWorkspaceLayer[context]=~0U;
+			fGraphWorkspaceRole[context]=LayerRoles;
+			fPendingOutput=recurrentOutput;
+			fPendingKind=PendingDenseAttentionOut;
+			fPendingLayer=recurrentLayer;
 		} else {
 			unsigned input=ActivationBuffers,workspaceIndex=0,layer=Layers,role=LayerRoles;
 			if (DataflowProjectionMatchesDenseGraphWorkspace(fManifest,
@@ -712,6 +901,13 @@ public:
 			return RecurrentOutputMatches(program,&output,&layer)
 				&& output==fPendingOutput && layer==fPendingLayer
 				&& fDeltaNextPosition[layer]-1==fPendingPosition;
+		}
+		if (fPendingKind==PendingDenseAttentionOut) {
+			unsigned output=ActivationBuffers,layer=Layers;
+			return DataflowProjectionMatchesDenseAttentionOutput(fManifest,
+				fGraphWorkspace,fRoutes,program,&output,&layer)
+				&& output==fPendingOutput && layer==fPendingLayer
+				&& fActivationRows[output]==0;
 		}
 		if (fPendingKind==PendingProjection) {
 			unsigned input=ActivationBuffers,output=ActivationBuffers;
@@ -783,6 +979,14 @@ public:
 			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
 			fGraphWorkspaceLayer[DataflowGraphRecurrentQkvWorkspaceIndex]=~0U;
 			fGraphWorkspaceRole[DataflowGraphRecurrentQkvWorkspaceIndex]=LayerRoles;
+		} else if (fPendingKind==PendingDenseAttentionOut) {
+			unsigned output=ActivationBuffers,layer=Layers;
+			if (!DataflowProjectionMatchesDenseAttentionOutput(fManifest,
+				fGraphWorkspace,fRoutes,program,&output,&layer)
+				|| output!=fPendingOutput || layer!=fPendingLayer
+				|| program.outputRows>fManifest.activation[output].rows)
+				return false;
+			fActivationRows[output]=program.outputRows;
 		} else if (fPendingKind==PendingDenseGraphProjection) {
 			unsigned input=ActivationBuffers,workspaceIndex=0,layer=Layers;
 			unsigned role=LayerRoles;
@@ -794,6 +998,13 @@ public:
 			fGraphWorkspaceReady[workspaceIndex]=true;
 			fGraphWorkspaceLayer[workspaceIndex]=layer;
 			fGraphWorkspaceRole[workspaceIndex]=role;
+			if (role==QueryAndGate) {
+				fDenseKeyStored[layer]=false;
+				fDenseValueStored[layer]=false;
+			} else if (role==Key)
+				fDenseKeyStored[layer]=false;
+			else if (role==Value)
+				fDenseValueStored[layer]=false;
 		} else if (fPendingKind==PendingGraphProjection) {
 			unsigned input=ActivationBuffers,workspaceIndex=0,modelLayer=0,modelRole=LayerRoles;
 			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
@@ -890,6 +1101,24 @@ public:
 			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
 			fGraphWorkspaceLayer[DataflowGraphRecurrentQkvWorkspaceIndex]=~0U;
 			fGraphWorkspaceRole[DataflowGraphRecurrentQkvWorkspaceIndex]=LayerRoles;
+		} else if (fPendingKind==PendingDenseAttentionOut) {
+			if (fPendingOutput>=ActivationBuffers || fPendingLayer>=Layers)
+				return false;
+			fActivationRows[fPendingOutput]=0;
+			fGraphWorkspaceReady[DataflowGraphUpWorkspaceIndex]=false;
+			fGraphWorkspaceLayer[DataflowGraphUpWorkspaceIndex]=~0U;
+			fGraphWorkspaceRole[DataflowGraphUpWorkspaceIndex]=LayerRoles;
+		} else if (fPendingKind==PendingDenseAttention) {
+			unsigned workspaceIndex=0;
+			if (fPendingLayer>=Layers
+				|| (fPendingRole!=DataflowDenseAttentionRun
+					&& fPendingRole!=DataflowDenseAttentionPackKey
+					&& fPendingRole!=DataflowDenseAttentionPackValue)
+				|| !DataflowGraphProjectionTarget(fPendingOutput,workspaceIndex)
+				|| workspaceIndex>=DataflowGraphWorkspaceBufferCount) return false;
+			fGraphWorkspaceReady[workspaceIndex]=false;
+			fGraphWorkspaceLayer[workspaceIndex]=~0U;
+			fGraphWorkspaceRole[workspaceIndex]=LayerRoles;
 		} else if (fPendingKind==PendingDenseGraphProjection) {
 			unsigned workspaceIndex=0;
 			if (fPendingOutput<DataflowGraphUpOutputSlot
@@ -909,6 +1138,7 @@ public:
 		fPendingResidualMode=0;
 		fPendingLayer=~0U;
 		fPendingPosition=0;
+		fPendingRole=LayerRoles;
 		fPendingRole=LayerRoles;
 		return true;
 	}

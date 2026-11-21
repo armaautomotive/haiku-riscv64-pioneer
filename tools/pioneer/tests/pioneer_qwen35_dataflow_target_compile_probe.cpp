@@ -16,6 +16,7 @@
 #include "../PioneerQwen35DataflowBlackholeResidualWorker.h"
 #include "../PioneerQwen35DataflowFfnSequence.h"
 #include "../PioneerQwen35DataflowRecurrentLayerSequence.h"
+#include "../PioneerQwen35DataflowDenseLayerSequence.h"
 
 using namespace PioneerQwen35;
 
@@ -28,6 +29,12 @@ struct TargetFfnAuthority {
 	bool BuildDelta(unsigned,unsigned,DataflowDeltaProgram&) { return true; }
 	bool BuildRecurrentOutput(unsigned,unsigned,DataflowProjectionProgram&)
 		{ return true; }
+	bool BuildDenseProjection(unsigned,unsigned,unsigned,
+		DataflowProjectionProgram&) { return true; }
+	bool BuildDenseAttention(unsigned,unsigned,unsigned,
+		DataflowDenseAttentionProgram&) { return true; }
+	bool BuildDenseAttentionOutput(unsigned,unsigned,
+		DataflowProjectionProgram&) { return true; }
 	bool BuildSilu(unsigned,DataflowSiluProgram&) { return true; }
 };
 
@@ -37,6 +44,7 @@ struct TargetFfnService {
 	int RunProjection(const DataflowProjectionProgram&,int&) { return 0; }
 	int RunConv(const DataflowConvProgram&,int&) { return 0; }
 	int RunDelta(const DataflowDeltaProgram&,int&) { return 0; }
+	int RunDenseAttention(const DataflowDenseAttentionProgram&,int&) { return 0; }
 	int RunSilu(const DataflowSiluProgram&,int&) { return 0; }
 };
 
@@ -61,6 +69,18 @@ bool PioneerQwen35DataflowRecurrentLayerSequenceTargetCompileProbe(
 	return DataflowRecurrentLayerSequence::Run(layer,position,inputSlot,
 		authority,service,io,outputSlot,stage)
 		==DataflowRecurrentLayerComplete;
+}
+
+bool PioneerQwen35DataflowDenseLayerSequenceTargetCompileProbe(
+	unsigned layer,unsigned position,unsigned inputSlot)
+{
+	TargetFfnAuthority authority;
+	TargetFfnService service;
+	int io=0;
+	unsigned outputSlot=ActivationBuffers,stage=0;
+	return DataflowDenseLayerSequence::Run(layer,position,inputSlot,
+		authority,service,io,outputSlot,stage)
+		==DataflowDenseLayerComplete;
 }
 
 bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,
@@ -103,6 +123,28 @@ bool PioneerQwen35DataflowBlackholeResidualTargetCompileProbe(
 		reinterpret_cast<float*>(static_cast<uintptr_t>(
 			DataflowInputBufferAddress+DataflowInputPageBytes)),
 		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),io);
+}
+
+bool PioneerQwen35DataflowDenseAttentionProgramTargetCompileProbe(
+	const DataflowDenseAttentionProgram& program,unsigned core,
+	DataflowDenseAttentionInvocation& invocation)
+{
+	return DataflowDenseAttentionProgramBuilder::BindCore(program,core,invocation);
+}
+
+bool PioneerQwen35DataflowBlackholeDenseAttentionTargetCompileProbe(
+	const DataflowDenseAttentionInvocation& invocation)
+{
+	DataflowBlackholeDenseAttentionOps io;
+	float* const norm=reinterpret_cast<float*>(static_cast<uintptr_t>(
+		DataflowDenseNormAddress));
+	return PioneerQwen35DataflowDenseAttentionWorker(invocation,
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseKeyTileAddress)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseValueTileAddress)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseQueryAddress)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseGateAddress)),
+		norm,reinterpret_cast<float*>(static_cast<uintptr_t>(
+			DataflowDenseRopeAddress)),norm,io);
 }
 
 // Compile-only device adapter. Its methods deliberately contain no inference

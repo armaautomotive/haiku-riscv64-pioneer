@@ -294,6 +294,35 @@ writes, attention, AttentionOut, mixed-layer sequencing, vocabulary readout,
 and token generation remain open; there is still no model output or decode-rate
 measurement.
 
+The current local rewrite adds the dense-attention path. A manifest-bound
+descriptor reserves the model's rotary table, per-layer KV cache, Q/K norms,
+QKV output, gate input, and attention-output scratch. BRISC workers perform
+Q/K RMS normalization, RoPE, half-precision K/V cache packing, and grouped
+query attention with tiled NoC reads and online softmax; the AttentionOut
+matrix projection remains on the Tensix path. Every command materializes and
+reads back all 120 worker invocations and audits receipts before committing
+authority state. Four workers own the K/V heads and sixteen own query heads;
+the all-core barrier keeps the resident service synchronized.
+
+`DataflowDenseLayerSequence` now composes residual save, attention norm,
+QueryAndGate/Key/Value projections, K/V cache writes, attention, AttentionOut,
+residual add, and the existing FFN sequence. Driver commands `0x8844` and
+`0x8845` expose the dense-attention primitives and full dense-layer sequence.
+ASan/UBSan checks pass for the dense math, worker, program/authority/owner, and
+sequence fixtures. The math fixture matches the pinned operators exactly for
+RMS, RoPE, F16 conversion, and online softmax. The RV32IMF target compile
+passes without A atomics or runtime helpers. Offline resident-service-image,
+driver60, reload-guard, and default-control builds pass; service text SHA-256
+is `1166102743dc8017be249c1d6a83a7a55642bc425ebbfa3b8eda74e4dbc98a59`,
+driver60 SHA-256 is `057b487b6543f4103934e8c24bc4f05a0af939b35d2013f4fe74b4e53c0772bc`,
+reload guard SHA-256 is
+`d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`, and
+default-control SHA-256 is
+`5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
+These are offline checks only. Mixed recurrent/dense model orchestration,
+vocabulary readout and token selection remain before full-model output.
+No Pioneer run or benchmark has been performed.
+
 The graph workspace participates in the projection path. The request can
 select the Up, recurrent QKV, or recurrent gate sidecar; the authority maps
 each selector to its exact model role and rejects recurrent targets on dense
