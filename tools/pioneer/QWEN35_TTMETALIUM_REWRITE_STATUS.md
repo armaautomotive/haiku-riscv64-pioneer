@@ -219,14 +219,15 @@ the expected completion counter (`0x00029067`) beside the observed value
   are in `benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md`.
 
 - 2026-11-21 (tag0119, read-only NoC failure receipt): Captures an 8-slot
-  completion-counter match mask, four-initiator busy mask, and 32-queue busy
-  mask in the fixed 64-byte mailbox; a read-only `QUERY_NOC` returns it through
-  the existing 36-byte ioctl request. Also corrects receipt cleanup to clear
+  completion-counter match mask, four-initiator busy mask, and 32-slot
+  outstanding transaction-ID mask in the fixed 64-byte mailbox; a read-only
+  `QUERY_NOC` returns it through the existing 36-byte ioctl request. Also corrects receipt cleanup to clear
   only the six reserved words, preserving `logicalCore`. Full variant-60
   driver/service/client build passes at `15712/18432` stack bytes. Service
   owner, owner, embedding-worker ASan/UBSan, and runtime-recovery tests pass.
-  The candidate is prepared for one guarded prompt diagnostic; stable55 is
-  idle at generation2. See
+  The one-run diagnostic is recorded in its run file: the response counter
+  timed out and the candidate cold-latched. Guarded recovery remains pending
+  because the Pioneer has not answered SSH since the reboot. See
   `benchmarks/qwen35-dataflow-tag0119-20261121/BUILD.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
@@ -1045,20 +1046,26 @@ integration remains deferred until the rewrite and benchmark are complete.
 
 ### Tag0119 NoC response-counter diagnostics (2026-11-21)
 
-Tag0119 is the current device-program rewrite checkpoint. It adds a read-only
-NoC snapshot to the existing 64-byte worker mailbox: an eight-slot completion
-counter match mask, four-initiator busy mask, and 32-queue busy mask. It also
-fixes worker receipt cleanup to clear exactly the six declared reserved words,
-preserving `logicalCore`. The full variant-60 driver/service/client build and
-focused owner, embedding-worker, and runtime-recovery sanitizer fixtures pass.
-The compiled service uses no A-extension atomics and fits its fixed region.
+Tag0119 added a read-only NoC snapshot to the existing 64-byte worker mailbox:
+an eight-slot completion-counter match mask, four-initiator busy mask, and
+32-slot outstanding transaction-ID mask. It also fixes worker receipt cleanup
+to clear exactly the six declared reserved words, preserving `logicalCore`.
+The full variant-60 driver/service/client build and focused owner,
+embedding-worker, and runtime-recovery sanitizer fixtures pass. The compiled
+service uses no A-extension atomics and fits its fixed region.
 
 The one-run hardware diagnostic authenticated, tokenized, and loaded the full
 4B model, then failed on prompt embedding read stage 7/index 36. The response
 counter observed `0x00029066` where `0x00029067` was expected; the match mask
-was `0xfe`, initiator-busy mask `0x0`, and queue-busy mask `0x00000001`. This is
-a read-only observation; no counter reset, request retry, or Tensix reset was
-issued. Authentication took 100.664302 s, tokenization 13.757776 s, load
+was `0xfe`, initiator-busy mask `0x0`, and outstanding-ID mask `0x00000001`.
+The raw tag0119 client called that last field `failed_read_queue_busy_mask`;
+that label was incorrect. Per the Blackhole counter map, bit 0 is outstanding
+transaction ID 0. Together with the missing read-response counter and the
+advanced command-accepted/request-sent counters, this shows the read request
+was sent but its response was not received by the initiating NIU; it does not
+yet distinguish a target-address/route issue from a missing return response.
+This is a read-only observation; no counter reset, request retry, or Tensix
+reset was issued. Authentication took 100.664302 s, tokenization 13.757776 s, load
 333.142334 s, and the failed prompt 0.615593 s. No output token was produced,
 so decode throughput is unavailable and 100 tokens/s remains unmet.
 
@@ -1073,3 +1080,33 @@ Stable driver55 generation2 must be verified restored before any next
 hardware trial. The two-warm throughput benchmark and assistant integration
 remain deferred. Full evidence is in
 [`benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md).
+
+### Tag0120 request-identity receipt (2026-11-21)
+
+Tag0120 clarifies the tag0119 counters and extends the failed-read receipt.
+The fixed worker mailbox remains 64 bytes and the control request remains 36
+bytes. The six existing reserved words now preserve the failed read's remote
+address, target route, byte count, stage/index, observed and expected
+completion counter, counter/initiator masks, and 32 outstanding transaction-ID
+slots. A new read-only `QUERY_READ_REQUEST` action returns the read address,
+route, and size; it performs no NoC transaction, reset, retry, or counter
+clear. The normal owner and 120-worker command barriers are unchanged.
+
+The full variant-60 driver/service/client build passes with a
+`15712/18432`-byte conservative kernel stack. The RV32IMF role compile has no
+A-extension atomics or unresolved helpers. The embedding-worker and service
+owner ASan/UBSan fixtures verify request identity and receipt propagation; the
+runtime-recovery fixture passes. Driver SHA-256 is
+`754c3aec27cbfc74473c585e7b64d4441aced9f73eb7ec1eb9d955e31a047377`, client
+SHA-256 is `73cd7e9b47711866d67bd50eb8cb0ad358138760d2bb3d5cda54cfdf8802a60b`,
+and service text SHA-256 is
+`2025572629309596d727bbc3aec55b458f643930fbe0f1766633e168c20c4dcd`.
+
+Tag0120 is not installed or run on the card. The prior tag0119 candidate's
+guarded recovery has not been verified because the Pioneer remains
+unreachable after the reboot. No token output, decode rate, warm-run result, or
+clean unload has been established; 100 tokens/s remains unmet. Do not start
+another model run until stable55 recovery is verified and the failed read's
+target/return path is understood. Assistant integration remains deferred.
+Build and next-run handoff are in
+[`benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md).

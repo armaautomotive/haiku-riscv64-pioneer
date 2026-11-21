@@ -17,22 +17,31 @@ bool PioneerQwen35DataflowEmbedWorker(
 	float* outputPage,IO& io,unsigned* failure=nullptr,
 	unsigned* failureDetail=nullptr,uint32_t* failureStatus=nullptr,
 	uint32_t* failureExpected=nullptr,uint32_t* failureNoCState=nullptr,
-	uint32_t* failureNoCQueueMask=nullptr)
+	uint32_t* failureOutstandingIdMask=nullptr,
+	uint32_t* failureAddress=nullptr,uint32_t* failureRoute=nullptr,
+	uint32_t* failureBytes=nullptr)
 {
 	if (failure) *failure=0;
 	if (failureDetail) *failureDetail=0;
 	if (failureStatus) *failureStatus=0;
 	if (failureExpected) *failureExpected=0;
 	if (failureNoCState) *failureNoCState=0;
-	if (failureNoCQueueMask) *failureNoCQueueMask=0;
+	if (failureOutstandingIdMask) *failureOutstandingIdMask=0;
+	if (failureAddress) *failureAddress=0;
+	if (failureRoute) *failureRoute=0;
+	if (failureBytes) *failureBytes=0;
 	auto fail=[&](unsigned reason,unsigned detail=0,uint32_t status=0,
-		uint32_t expected=0,uint32_t noCState=0,uint32_t queueMask=0) {
+		uint32_t expected=0,uint32_t noCState=0,uint32_t outstandingIdMask=0,
+		uint32_t address=0,uint32_t route=0,uint32_t bytes=0) {
 		if (failure) *failure=reason;
 		if (failureDetail) *failureDetail=detail;
 		if (failureStatus) *failureStatus=status;
 		if (failureExpected) *failureExpected=expected;
 		if (failureNoCState) *failureNoCState=noCState;
-		if (failureNoCQueueMask) *failureNoCQueueMask=queueMask;
+		if (failureOutstandingIdMask) *failureOutstandingIdMask=outstandingIdMask;
+		if (failureAddress) *failureAddress=address;
+		if (failureRoute) *failureRoute=route;
+		if (failureBytes) *failureBytes=bytes;
 		return false;
 	};
 	if (!program.Valid() || !weightTile || !outputPage)
@@ -56,7 +65,8 @@ bool PioneerQwen35DataflowEmbedWorker(
 				diagnostic.expected,
 				diagnostic.counterMatchMask
 					|((diagnostic.initiatorBusyMask&0xfU)<<8),
-				diagnostic.queueBusyMask);
+				diagnostic.outstandingIdMask,diagnostic.remoteAddress,
+				diagnostic.route,diagnostic.bytes);
 		}
 		if (!DataflowDecodeQ6KEmbeddingPanel(weightTile,
 			DataflowQ6KEmbeddingTileBytes,program.lane,panel,outputPage,
@@ -98,9 +108,16 @@ public:
 			const unsigned block=fProgram->segment[i].firstRow/256;
 			const uint64_t expected=uint64_t(fProgram->weightBase)
 				+uint64_t(block)*DataflowQ6KEmbeddingTileBytes;
-			if (expected==address)
-				return fReader.Read(address,fProgram->bankRoute[0][bank],
-					output,bytes,detail);
+			if (expected==address) {
+				const unsigned route=fProgram->bankRoute[0][bank];
+				const bool okay=fReader.Read(address,route,output,bytes,detail);
+				if (!okay && detail) {
+					detail->remoteAddress=address;
+					detail->route=route;
+					detail->bytes=bytes;
+				}
+				return okay;
+			}
 		}
 		if (detail) detail->stage=DataflowNocTransferWeightBinding;
 		return false;

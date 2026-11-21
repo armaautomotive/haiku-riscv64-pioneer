@@ -536,7 +536,8 @@ PioneerSessionIO::ReadWorkerSnapshot(unsigned core,
 	if (mailbox.state==PioneerQwen35::DataflowWorkerFailed
 		&& mailbox.failure==PioneerQwen35::DataflowFailureEmbeddingWeightRead
 		&& mailbox.phase==5) {
-		snapshot.failureDetail=mailbox.reserved[1];
+		snapshot.failureDetail=PioneerQwen35::DataflowEmbeddingFailureDetail(
+			mailbox.reserved[1]);
 		snapshot.failureStatus=mailbox.reserved[2];
 	}
 	return true;
@@ -562,9 +563,9 @@ PioneerSessionIO::ReadWorkerFailureExpected(unsigned core,unsigned& expected)
 
 bool
 PioneerSessionIO::ReadWorkerFailureNoC(unsigned core,unsigned& state,
-	unsigned& queueMask)
+	unsigned& outstandingIdMask)
 {
-	state=queueMask=0;
+	state=outstandingIdMask=0;
 	PioneerQwen35::DataflowWorkerMailbox mailbox{};
 	if (core>=PioneerQwen35::DataflowCoreCount
 		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
@@ -575,9 +576,34 @@ PioneerSessionIO::ReadWorkerFailureNoC(unsigned core,unsigned& state,
 			!=PioneerQwen35::DataflowNocTransferCounterTimeout
 		|| (mailbox.reserved[1]&0xffU)<0x80U
 		|| (mailbox.reserved[1]&0xffU)>=0x88U) return false;
-	state=mailbox.reserved[4];
-	queueMask=mailbox.reserved[5];
+	state=PioneerQwen35::DataflowEmbeddingFailureNoCState(
+		mailbox.reserved[4]);
+	outstandingIdMask=mailbox.reserved[5];
 	return true;
+}
+
+bool
+PioneerSessionIO::ReadWorkerFailureRequest(unsigned core,unsigned& address,
+	unsigned& route,unsigned& bytes)
+{
+	address=route=bytes=0;
+	PioneerQwen35::DataflowWorkerMailbox mailbox{};
+	if (core>=PioneerQwen35::DataflowCoreCount
+		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+		|| mailbox.state!=PioneerQwen35::DataflowWorkerFailed
+		|| mailbox.failure!=PioneerQwen35::DataflowFailureEmbeddingWeightRead
+		|| mailbox.phase!=5
+		|| ((mailbox.reserved[1]>>8)&0xffU)
+			!=PioneerQwen35::DataflowNocTransferCounterTimeout
+		|| (mailbox.reserved[1]&0xffU)<0x80U
+		|| (mailbox.reserved[1]&0xffU)>=0x88U) return false;
+	address=mailbox.reserved[0];
+	route=PioneerQwen35::DataflowEmbeddingFailureRoute(mailbox.reserved[1]);
+	bytes=PioneerQwen35::DataflowEmbeddingFailureBytes(mailbox.reserved[4]);
+	return address>=PioneerQwen35::BankBase
+		&& address<PioneerQwen35::BankLimit
+		&& route<=0xfffU && bytes
+		&& bytes<=PioneerQwen35::DataflowNocMaxTransfer;
 }
 
 bool

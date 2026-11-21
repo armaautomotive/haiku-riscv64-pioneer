@@ -33,6 +33,7 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_ACTION_RECOVER=3,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED=4,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_NOC=5,
+	TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST=6,
 	TT_QWEN35_DATAFLOW_STATE_EMPTY=0,
 	TT_QWEN35_DATAFLOW_STATE_READY=1,
 	TT_QWEN35_DATAFLOW_STATE_FAULTED=2,
@@ -73,16 +74,22 @@ struct tt_qwen35_dataflow_request {
 	// completion-counter value in reserved[2] while preserving the other query
 	// diagnostic fields. QUERY_NOC returns the matching counter bitmask and
 	// initiator-busy mask packed into reserved[1] (counter bits 0..7, initiator
-	// bits 8..11), and the 32-entry queue-busy bitmask in reserved[2]. A core value of
-	// 0xffff in reserved[0] means no worker was isolated.
+	// bits 8..11), and the 32-entry outstanding transaction-ID mask in
+	// reserved[2]. Bits 0..15 are response-marked request IDs; bits 16..31 are write
+	// outgoing request IDs. QUERY_READ_REQUEST preserves the diagnostic identity
+	// in reserved[0], returns the target route in reserved[1] bits 0..11, transfer
+	// size in reserved[1] bits 12..31, and remote address in reserved[2]. Core
+	// `0xffff` in reserved[0] bits 8..23 means no worker was isolated.
 	uint32_t reserved[3];
 };
+static_assert(sizeof(tt_qwen35_dataflow_request)==36,
+	"dataflow query actions retain the fixed 36-byte control request");
 
 static inline bool
 PioneerQwen35DataflowRequestValid(const tt_qwen35_dataflow_request& request)
 {
 	return request.version==TT_QWEN35_DATAFLOW_ABI
-		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_NOC
+		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST
 		&& request.reserved[0]==0 && request.reserved[1]==0
 		&& request.reserved[2]==0;
 }

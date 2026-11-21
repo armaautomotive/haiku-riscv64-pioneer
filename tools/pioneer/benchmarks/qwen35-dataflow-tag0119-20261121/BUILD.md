@@ -2,8 +2,9 @@
 
 Tag0119 carries the first prompt-read failure farther through the resident
 BRISC workers. On a NoC counter timeout, the worker records an 8-slot
-completion-counter match mask, four-initiator busy mask, and 32-queue busy mask
-in the existing 64-byte mailbox. A new read-only `QUERY_NOC` control action
+completion-counter match mask, four-initiator busy mask, and 32-entry
+outstanding transaction-ID mask in the existing 64-byte mailbox. A new
+read-only `QUERY_NOC` control action
 reports the snapshot while keeping the 36-byte control request unchanged.
 Dataflow ABI is 5. No extra NoC command, counter clear, core reset, or retry is
 added to the error path.
@@ -38,12 +39,21 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
 - Service-owner, owner, and embedding-worker ASan/UBSan tests pass; the
   runtime-recovery test passes.
 - The service-owner fixture verifies NoC snapshot propagation, and the worker
-  fixture verifies counter/queue fields. Receipt clearing preserves
+  fixture verifies counter and outstanding-ID fields. Receipt clearing preserves
   `logicalCore`.
 - Build and trial-wrapper shell syntax checks pass.
 
 The NoC counter names and read completion events follow the official
 [Blackhole NIU counter documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md).
-Tag0119 is prepared for one guarded, two-token diagnostic. It has not been
-installed on the card; the two-warm throughput benchmark remains gated on a
-valid output and clean unload. See [`RUN.md`](RUN.md).
+Tag0119 was installed for one guarded, two-token diagnostic; it failed before
+output. The two-warm throughput benchmark remains gated on a valid output and
+clean unload. See [`RUN.md`](RUN.md).
+
+Correction after the hardware run: the tag0119 client printed the outstanding
+transaction-ID mask as `failed_read_queue_busy_mask`. These 32 slots are the
+read/atomic and write-outgoing transaction-ID counters at NoC offsets
+`0x240..0x2bc`, not command queues. Bit 0 showed transaction ID 0 still
+outstanding when the expected read-response counter failed to advance. Tag0120
+renames the field and records the failed read address, route, and transfer size
+in the same fixed mailbox; details are in
+[`../qwen35-dataflow-tag0120-20261121/BUILD.md`](../qwen35-dataflow-tag0120-20261121/BUILD.md).

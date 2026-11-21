@@ -49,7 +49,8 @@ struct DataflowOwnerDiagnostic {
 	DataflowWorkerSnapshot worker;
 	unsigned recoveryAuditStage,recoveryAuditCore,recoveryAuditDetail;
 	unsigned failureExpected;
-	unsigned failureNoCState,failureNoCQueueMask;
+	unsigned failureNoCState,failureNoCOutstandingIdMask;
+	unsigned failureAddress,failureRoute,failureBytes;
 };
 
 enum DataflowOwnerResult {
@@ -95,7 +96,7 @@ class DataflowProjectionOwner {
 	DataflowWorkerSnapshot fSnapshot[DataflowCoreCount]{};
 	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
 		DataflowOwnerComplete,DataflowCoreCount,0,{},DataflowRecoveryAuditNone,
-		DataflowCoreCount,0,0,0,0};
+		DataflowCoreCount,0,0,0,0,0,0,0};
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{
@@ -120,14 +121,28 @@ class DataflowProjectionOwner {
 
 	template<class IO>
 	static auto ReadFailureNoC(IO& io,unsigned core,unsigned& state,
-		unsigned& queueMask,int)
-		-> decltype(io.ReadWorkerFailureNoC(core,state,queueMask),bool())
+		unsigned& outstandingIdMask,int)
+		-> decltype(io.ReadWorkerFailureNoC(core,state,outstandingIdMask),bool())
 	{
-		return io.ReadWorkerFailureNoC(core,state,queueMask);
+		return io.ReadWorkerFailureNoC(core,state,outstandingIdMask);
 	}
 
 	template<class IO>
 	static bool ReadFailureNoC(IO&,unsigned,unsigned&,unsigned&,long)
+	{
+		return false;
+	}
+
+	template<class IO>
+	static auto ReadFailureRequest(IO& io,unsigned core,unsigned& address,
+		unsigned& route,unsigned& bytes,int)
+		-> decltype(io.ReadWorkerFailureRequest(core,address,route,bytes),bool())
+	{
+		return io.ReadWorkerFailureRequest(core,address,route,bytes);
+	}
+
+	template<class IO>
+	static bool ReadFailureRequest(IO&,unsigned,unsigned&,unsigned&,unsigned&,long)
 	{
 		return false;
 	}
@@ -370,7 +385,7 @@ public:
 	{
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
 			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,
-			0,0,0,0};
+			0,0,0,0,0,0,0};
 		auto record=[&](DataflowOwnerResult result,unsigned core,
 			const DataflowWorkerSnapshot* worker,bool faulted) {
 			fDiagnostic.result=result;
@@ -394,7 +409,16 @@ public:
 					&& (worker->failureDetail&0xffU)>=0x80U
 					&& (worker->failureDetail&0xffU)<0x88U)
 					ReadFailureNoC(io,core,fDiagnostic.failureNoCState,
-						fDiagnostic.failureNoCQueueMask,0);
+						fDiagnostic.failureNoCOutstandingIdMask,0);
+				if (core<DataflowCoreCount
+					&& worker->failure==DataflowFailureEmbeddingWeightRead
+					&& worker->phase==5
+					&& ((worker->failureDetail>>8)&0xffU)
+						==DataflowNocTransferCounterTimeout
+					&& (worker->failureDetail&0xffU)>=0x80U
+					&& (worker->failureDetail&0xffU)<0x88U)
+					ReadFailureRequest(io,core,fDiagnostic.failureAddress,
+						fDiagnostic.failureRoute,fDiagnostic.failureBytes,0);
 			}
 			if (faulted) fFaulted=true;
 			return result;
@@ -494,7 +518,7 @@ public:
 		fPendingSequence=0;
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
 			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,
-			0,0,0,0};
+			0,0,0,0,0,0,0};
 		return DataflowOwnerComplete;
 	}
 

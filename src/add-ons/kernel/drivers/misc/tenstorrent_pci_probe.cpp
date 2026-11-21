@@ -3273,7 +3273,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool ReadWorkerFailureExpected(unsigned core,unsigned& expected);
-	bool ReadWorkerFailureNoC(unsigned core,unsigned& state,unsigned& queueMask);
+	bool ReadWorkerFailureNoC(unsigned core,unsigned& state,
+		unsigned& outstandingIdMask);
+	bool ReadWorkerFailureRequest(unsigned core,unsigned& address,
+		unsigned& route,unsigned& bytes);
 	bool AuthorizeProjection(const PioneerQwen35::DataflowProjectionProgram& program);
 	bool BeginProjection(const PioneerQwen35::DataflowProjectionProgram& program);
 	bool AuthorizeEmbedding(const PioneerQwen35::DataflowEmbeddingProgram& program);
@@ -9305,7 +9308,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 			if (request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY
 				|| request.action==TT_QWEN35_DATAFLOW_ACTION_RECOVER
 				|| request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED
-				|| request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY_NOC) {
+				|| request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY_NOC
+				|| request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST) {
 				const auto& diagnostic=service->OwnerDiagnostic();
 				if (diagnostic.operation!=PioneerQwen35::DataflowOwnerOperationNone) {
 					const unsigned core=diagnostic.core
@@ -9334,7 +9338,15 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 						request.reserved[1]=embeddingReadDiagnostic
 							?diagnostic.failureNoCState:0;
 						request.reserved[2]=embeddingReadDiagnostic
-							?diagnostic.failureNoCQueueMask:0;
+							?diagnostic.failureNoCOutstandingIdMask:0;
+					}
+					else if (request.action
+						==TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST) {
+						request.reserved[1]=embeddingReadDiagnostic
+							?((diagnostic.failureBytes&0xfffffU)<<12)
+								|(diagnostic.failureRoute&0xfffU):0;
+						request.reserved[2]=embeddingReadDiagnostic
+							?diagnostic.failureAddress:0;
 					}
 					else request.reserved[2]=embeddingReadDiagnostic
 						?diagnostic.worker.failureStatus:diagnostic.pendingSequence;

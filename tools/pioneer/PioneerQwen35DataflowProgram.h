@@ -108,9 +108,10 @@ struct DataflowCircularBuffer {
 // Host and one resident BRISC worker share this fixed 64-byte command/receipt
 // record. The host owns commandSequence and acknowledgedSequence; the worker
 // owns completedSequence, state, failure, and phase. During a failed embedding
-// weight read, reserved[1..5] preserve the NoC stage/index, observed and
-// expected counters, counter-match/initiator masks, and queue-busy mask until
-// the host acknowledges failure.
+// weight read, reserved[0..5] preserve the request address, NoC stage/index and
+// target route, observed and expected counters, counter-match/initiator masks,
+// transfer size, and outstanding transaction-ID slots until the host
+// acknowledges failure. The fixed 64-byte record does not grow.
 struct alignas(32) DataflowWorkerMailbox {
 	uint32_t magic,version;
 	volatile uint32_t commandSequence,acknowledgedSequence,completedSequence;
@@ -121,6 +122,38 @@ struct alignas(32) DataflowWorkerMailbox {
 };
 static_assert(sizeof(DataflowWorkerMailbox)==DataflowWorkerMailboxBytes,
 	"the resident worker mailbox is one fixed pair of 32-byte records");
+
+inline uint32_t DataflowPackEmbeddingFailureDetailRoute(unsigned detail,
+	unsigned route)
+{
+	return ((route&0xfffU)<<20)|(detail&0xffffU);
+}
+
+inline unsigned DataflowEmbeddingFailureRoute(uint32_t packed)
+{
+	return (packed>>20)&0xfffU;
+}
+
+inline unsigned DataflowEmbeddingFailureDetail(uint32_t packed)
+{
+	return packed&0xffffU;
+}
+
+inline uint32_t DataflowPackEmbeddingFailureNoCStateBytes(unsigned state,
+	unsigned bytes)
+{
+	return (state&0xfffU)|((bytes&0xfffffU)<<12);
+}
+
+inline unsigned DataflowEmbeddingFailureNoCState(uint32_t packed)
+{
+	return packed&0xfffU;
+}
+
+inline unsigned DataflowEmbeddingFailureBytes(uint32_t packed)
+{
+	return (packed>>12)&0xfffffU;
+}
 
 inline bool DataflowLocalRangeValid(unsigned address,unsigned bytes)
 {

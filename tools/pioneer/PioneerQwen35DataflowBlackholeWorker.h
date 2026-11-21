@@ -281,7 +281,8 @@ inline bool DataflowWorkerResetQueues()
 		bool okay=false;
 		unsigned embeddingFailure=0,embeddingDetail=0;
 		uint32_t embeddingStatus=0,embeddingExpected=0;
-		uint32_t embeddingNoCState=0,embeddingNoCQueueMask=0;
+		uint32_t embeddingNoCState=0,embeddingNoCOutstandingIdMask=0;
+		uint32_t embeddingAddress=0,embeddingRoute=0,embeddingBytes=0;
 		if (invocationMagic==DataflowProgramMagic) {
 			DataflowDeviceContext context;
 			okay=DataflowBindLocalContext(context,DataflowFailureQueue);
@@ -314,7 +315,8 @@ inline bool DataflowWorkerResetQueues()
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowOutputBufferAddress)),io,&embeddingFailure,
 						&embeddingDetail,&embeddingStatus,&embeddingExpected,
-						&embeddingNoCState,&embeddingNoCQueueMask);
+						&embeddingNoCState,&embeddingNoCOutstandingIdMask,
+						&embeddingAddress,&embeddingRoute,&embeddingBytes);
 				}
 			}
 			if (!okay) DataflowSignalLocalFailure(embeddingFailure
@@ -466,11 +468,17 @@ inline bool DataflowWorkerResetQueues()
 		if (state==DataflowWorkerFailed
 			&& failure==DataflowFailureEmbeddingWeightRead
 			&& embeddingFailure==DataflowFailureEmbeddingWeightRead) {
-			DataflowStoreRelease(mailbox->reserved[1],embeddingDetail);
+			DataflowStoreRelease(mailbox->reserved[0],embeddingAddress);
+			DataflowStoreRelease(mailbox->reserved[1],
+				DataflowPackEmbeddingFailureDetailRoute(
+					embeddingDetail,embeddingRoute));
 			DataflowStoreRelease(mailbox->reserved[2],embeddingStatus);
 			DataflowStoreRelease(mailbox->reserved[3],embeddingExpected);
-			DataflowStoreRelease(mailbox->reserved[4],embeddingNoCState);
-			DataflowStoreRelease(mailbox->reserved[5],embeddingNoCQueueMask);
+			DataflowStoreRelease(mailbox->reserved[4],
+				DataflowPackEmbeddingFailureNoCStateBytes(
+					embeddingNoCState,embeddingBytes));
+			DataflowStoreRelease(mailbox->reserved[5],
+				embeddingNoCOutstandingIdMask);
 		}
 		DataflowWorkerPublish(*mailbox,sequence,state,failure,okay?2:5);
 		DataflowFence();

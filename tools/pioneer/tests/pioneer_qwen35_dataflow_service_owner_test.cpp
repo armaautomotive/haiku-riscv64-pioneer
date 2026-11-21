@@ -55,7 +55,9 @@ struct MockDataflowIO {
 	bool failEmbeddingCounter=false;
 	uint32_t expectedEmbeddingCounter=0;
 	uint32_t failureNoCState=0x00000d03U;
-	uint32_t failureNoCQueueMask=0x80000001U;
+	uint32_t failureNoCOutstandingIdMask=0x80000001U;
+	unsigned failureAddress=BankBase+0x12340,failureRoute=0x456,
+		failureBytes=DataflowQ6KEmbeddingTileBytes;
 	bool failStopAudit=false,failResume=false,failBegin=false,failComplete=false;
 	bool authorizeProgram=true;
 
@@ -192,11 +194,20 @@ struct MockDataflowIO {
 		return true;
 	}
 	bool ReadWorkerFailureNoC(unsigned core,unsigned& state,
-		unsigned& queueMask) const
+		unsigned& outstandingIdMask) const
 	{
 		if (!failEmbeddingCounter || core!=failWorkerCore) return false;
 		state=failureNoCState;
-		queueMask=failureNoCQueueMask;
+		outstandingIdMask=failureNoCOutstandingIdMask;
+		return true;
+	}
+	bool ReadWorkerFailureRequest(unsigned core,unsigned& address,
+		unsigned& route,unsigned& bytes) const
+	{
+		if (!failEmbeddingCounter || core!=failWorkerCore) return false;
+		address=failureAddress;
+		route=failureRoute;
+		bytes=failureBytes;
 		return true;
 	}
 	bool CoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const
@@ -581,7 +592,7 @@ int main()
 	embeddingFailure.failEmbeddingCounter=true;
 	embeddingFailure.expectedEmbeddingCounter=0x00029067U;
 	embeddingFailure.failureNoCState=0x00000d03U;
-	embeddingFailure.failureNoCQueueMask=0x80000001U;
+	embeddingFailure.failureNoCOutstandingIdMask=0x80000001U;
 	assert(embeddingFailureOwner.EmbedToken(embedding,embeddingFailure)
 		==DataflowServiceEmbeddingFailed);
 	const auto& embeddingDiagnostic=embeddingFailureOwner.OwnerDiagnostic();
@@ -595,7 +606,10 @@ int main()
 		&& embeddingDiagnostic.worker.phase==5
 		&& embeddingDiagnostic.failureExpected==0x00029067U
 		&& embeddingDiagnostic.failureNoCState==0x00000d03U
-		&& embeddingDiagnostic.failureNoCQueueMask==0x80000001U);
+		&& embeddingDiagnostic.failureNoCOutstandingIdMask==0x80000001U
+		&& embeddingDiagnostic.failureAddress==embeddingFailure.failureAddress
+		&& embeddingDiagnostic.failureRoute==embeddingFailure.failureRoute
+		&& embeddingDiagnostic.failureBytes==embeddingFailure.failureBytes);
 	assert(embeddingFailureOwner.RecoverProjection(embeddingFailure)
 		==DataflowServiceRecovered);
 	assert(embeddingFailureOwner.Ready()

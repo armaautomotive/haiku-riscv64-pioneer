@@ -61,10 +61,17 @@ struct MockEmbeddingIO {
 	bool ReadWeight(unsigned bank,uint32_t address,uint8_t* output,unsigned bytes,
 		DataflowNocDiagnostic* detail=nullptr)
 	{
-		if (detail) *detail=failRead
-			?DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,1,7,
-				0x03,0x0d,0x80000001}
-			:DataflowNocDiagnostic{};
+		if (detail) {
+			*detail=failRead
+				?DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,1,7,
+					0x03,0x0d,0x80000001}
+				:DataflowNocDiagnostic{};
+			if (failRead) {
+				detail->remoteAddress=address;
+				detail->route=TestBankRoutes[0][bank];
+				detail->bytes=bytes;
+			}
+		}
 		if (failRead || bank!=weightBank || bytes!=DataflowQ6KEmbeddingTileBytes
 			|| address<weightBase) return false;
 		const unsigned offset=address-weightBase;
@@ -148,16 +155,32 @@ int main()
 	io.failRead=true;
 	unsigned failureDetail=0;
 	uint32_t failureStatus=0,failureExpected=0;
-	uint32_t failureNoCState=0,failureNoCQueueMask=0;
+	uint32_t failureNoCState=0,failureNoCOutstandingIdMask=0;
+	uint32_t failureAddress=0,failureRoute=0,failureBytes=0;
 	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,tileScratch,
 		outputScratch,io,&failure,&failureDetail,&failureStatus,&failureExpected,
-		&failureNoCState,&failureNoCQueueMask));
+		&failureNoCState,&failureNoCOutstandingIdMask,&failureAddress,
+		&failureRoute,&failureBytes));
+	const unsigned expectedAddress=program.weightBase
+		+(goodInvocation.segment[0].firstRow/256)*DataflowQ6KEmbeddingTileBytes;
+	const unsigned expectedRoute=program.bankRoute[0][program.weightBank];
 	assert(failure==DataflowFailureEmbeddingWeightRead
 		&& failureDetail==DataflowNocDiagnosticCode(
 			DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,1,7})
 		&& failureStatus==1 && failureExpected==7
 		&& failureNoCState==0x00000d03U
-		&& failureNoCQueueMask==0x80000001U);
+		&& failureNoCOutstandingIdMask==0x80000001U
+		&& failureAddress==expectedAddress
+		&& failureRoute==expectedRoute
+		&& failureBytes==DataflowQ6KEmbeddingTileBytes);
+	const uint32_t packedDetail=DataflowPackEmbeddingFailureDetailRoute(
+		failureDetail, failureRoute);
+	const uint32_t packedNoC=DataflowPackEmbeddingFailureNoCStateBytes(
+		failureNoCState,failureBytes);
+	assert(DataflowEmbeddingFailureDetail(packedDetail)==failureDetail
+		&& DataflowEmbeddingFailureRoute(packedDetail)==failureRoute
+		&& DataflowEmbeddingFailureNoCState(packedNoC)==failureNoCState
+		&& DataflowEmbeddingFailureBytes(packedNoC)==failureBytes);
 	io.failRead=false;
 	io.failWrite=true;
 	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,tileScratch,

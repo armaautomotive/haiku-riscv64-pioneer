@@ -312,10 +312,25 @@ static void PrintOwnerDiagnostic(int fd,const char* action,
 			if (nocRead)
 				fprintf(stderr," failed_read_counter_match_mask=0x%02x "
 					"failed_read_initiator_busy_mask=0x%x "
-					"failed_read_queue_busy_mask=0x%08x\n",
+					"failed_read_outstanding_id_mask=0x%08x",
 					noc.reserved[1]&0xffU,(noc.reserved[1]>>8)&0xfU,
 					noc.reserved[2]);
-			else fputs(" failed_read_noc_snapshot=unavailable\n",stderr);
+			else fputs(" failed_read_noc_snapshot=unavailable",stderr);
+			tt_qwen35_dataflow_request readRequest{};
+			readRequest.version=TT_QWEN35_DATAFLOW_ABI;
+			readRequest.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST;
+			const bool readRequestOkay=Call(fd,
+				TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&readRequest,
+				sizeof(readRequest))
+				&& readRequest.reserved[0]==request.reserved[0]
+				&& readRequest.state==request.state
+				&& readRequest.result==request.result;
+			if (readRequestOkay) {
+				fprintf(stderr," failed_read_address=0x%08x "
+					"failed_read_route=0x%03x failed_read_bytes=%u\n",
+					readRequest.reserved[2],readRequest.reserved[1]&0xfffU,
+					readRequest.reserved[1]>>12);
+			} else fputs(" failed_read_request_identity=unavailable\n",stderr);
 		} else fputc('\n',stderr);
 	} else fprintf(stderr," pending_sequence=%u\n",request.reserved[2]);
 }

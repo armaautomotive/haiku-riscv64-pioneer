@@ -8,7 +8,7 @@ namespace PioneerQwen35 {
 
 enum : unsigned {
 	DataflowRuntimeRecoveryNoCInitiators=4,
-	DataflowRuntimeRecoveryNoCQueues=32,
+	DataflowRuntimeRecoveryNoCOutstandingIds=32,
 	DataflowRuntimeRecoveryNoCStatusCount=36,
 	DataflowRuntimeRecoveryNoCIdleDetailBase=0x100,
 	DataflowRuntimeRecoveryMappingDetail=2,
@@ -52,10 +52,10 @@ bool DataflowRuntimeRecoveryNoCIdleScan(IO& io,unsigned& busyIndex,
 			return false;
 		}
 	}
-	for (unsigned queue=0;queue<DataflowRuntimeRecoveryNoCQueues;queue++) {
-		const uint32_t value=io.ResidentNocRead(0x240+queue*4);
+	for (unsigned id=0;id<DataflowRuntimeRecoveryNoCOutstandingIds;id++) {
+		const uint32_t value=io.ResidentNocRead(0x240+id*4);
 		if (value&0xffU) {
-			busyIndex=DataflowRuntimeRecoveryNoCInitiators+queue;
+			busyIndex=DataflowRuntimeRecoveryNoCInitiators+id;
 			busyValue=value;
 			return false;
 		}
