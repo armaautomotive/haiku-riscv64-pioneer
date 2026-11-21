@@ -30,12 +30,14 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_STATE_EMPTY=0,
 	TT_QWEN35_DATAFLOW_STATE_READY=1,
 	TT_QWEN35_DATAFLOW_STATE_FAULTED=2,
-	TT_QWEN35_DATAFLOW_STATE_CLOSED=3
+	TT_QWEN35_DATAFLOW_STATE_CLOSED=3,
+	TT_QWEN35_DATAFLOW_RESULT_COMPLETE=0,
+	TT_QWEN35_DATAFLOW_RESULT_CLOSED=17
 };
 
-// Token embedding and hidden RMS normalization are exposed as input/layer
-// primitives. These are not token generation; the decoder graph, state
-// updates, and vocabulary readout remain future work.
+// The protocol exposes lower-level input/layer primitives plus complete
+// decoder and generation requests. Generation is available only when the
+// driver advertises the corresponding model-protocol capability.
 struct tt_qwen35_dataflow_support {
 	uint32_t version,driver,cores,capabilities;
 	uint32_t projection_capabilities,token_capabilities;

@@ -17,6 +17,25 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-21: Added the standalone resident-dataflow benchmark client and
+  builder. It authenticates the pinned GGUF, uploads the packed model, binds
+  its manifest and graph workspace, installs the 120-core resident service,
+  requests two repeatable greedy generations, reports model-load, prompt, and
+  decode timings separately, checks the known `11751,13` output prefix, and
+  explicitly closes the service and seven-bank session. Variant 60 now enables
+  the required span uploader under its fixed build tag without enabling the
+  legacy Work path. The Haiku RV64 client and variant-60 driver build offline;
+  driver SHA-256 is
+  `0f9e9b04ebcd66509f05da5053f47bd21c323122fd9e41db9ce5934e532cae7a`, client
+  SHA-256 is
+  `b2f45646e69e4ae7c83bff3f0572ed60c4ea97d822bebfda158f4456f1a49c08`, and
+  service text SHA-256 remains
+  `2e0e144040f9c29f9679d5300ff923847c75216b3bf0e577366be4e929e5f8c8`.
+  Read-only Haiku preflight found no 27B diagnostic process and reported stable
+  driver55 tag `2026102100010012`, generation14, `quiesced0 cold0
+  active_owner0 open_count1 guard1`. No model inference has run yet. Build and
+  preflight evidence is in
+  `benchmarks/qwen35-dataflow-tag0102-20261121/BUILD.md`.
 - 2026-11-21: Added the request-level greedy generation ioctl at `0x8847`.
   It accepts prompt token IDs, skips unused vocabulary projection for prompt
   positions before the last, returns generated token IDs, stops at an optional
@@ -320,12 +339,16 @@ rejection, argmax authorization and owner barriers, full decoder sequencing,
 prompt generation, EOS, context bounds, and phase timing. The RV32IMF target
 compile and variant-60 driver, resident service image, reload-guard, and
 default-control builds pass. The resident service text is 52,900 bytes and
-fits the 57,344-byte region. No Pioneer hardware was accessed. Silicon output,
-model load time, prompt time, decode throughput, and the 100 tokens/sec target
-remain unmeasured.
+fits the 57,344-byte region. The only Pioneer contact so far for this checkpoint
+was read-only preflight; no model was loaded or run. Silicon output, model load
+time, prompt time, decode throughput, and the 100 tokens/sec target remain
+unmeasured.
 
-The offline request/generation loop is implemented. Before hardware work, the
-27B diagnostic exit and stable driver idle state still need to be verified.
+The offline request/generation loop and standalone benchmark client are
+implemented. The 2026-11-21 read-only preflight verified that the prior 27B
+diagnostic had exited and the stable driver was idle. The next step is the
+guarded variant-60 hardware trial, followed by two valid warm outputs and a
+clean service/session unload.
 
 The dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS

@@ -481,7 +481,9 @@ case "${PIONEER_Q38_Q4_TWO_PHASE:-0}" in
 esac
 case "${PIONEER_Q38_SPAN_PRELOAD:-0}" in
  0) ;;
- 1) if [ -z "${PIONEER_Q35_WORK_INCLUDE:-}" ]; then
+ 1) if [ "$variant" = 60 ]; then
+     [ "${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_Q38_WORK_MODE:-0}:${PIONEER_Q35_WORK_INCLUDE:-}" = "15:1:2026112100010102:0:" ] || exit 2
+    elif [ -z "${PIONEER_Q35_WORK_INCLUDE:-}" ]; then
      [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] && [ "${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 1 ] || exit 2
     fi
     extra="$extra -DPIONEER_Q38_SPAN_PRELOAD";;
