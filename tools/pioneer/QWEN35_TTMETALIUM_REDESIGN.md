@@ -127,12 +127,16 @@ tile over NoC 0 while Tensix consumes the current tile, and writes each
 completed 16-row result over NoC 1. Its 64-byte mailbox uses monotonic
 command/completion/acknowledgement sequences; the worker remains resident
 between invocations and permits a new one only after the host acknowledges
-completion or has audited a fault. The standalone image builder produces a
+completion or has audited a fault. After acknowledgement, it verifies each
+queue is drained and rebases equal queue counters so another projection can
+run. A version-2 mailbox shutdown request parks the resident worker after a
+clean drain for verified unload. The standalone image builder produces a
 freestanding image with no unresolved imports. `PioneerQwen35DataflowOwner.h`
 specifies the host-side all-core sequencing and recovery contract, with a
-passing offline mock. Its PCI transport, image loader, physical audit adapter,
-and all-core graph ownership remain to be implemented; the image has not been
-loaded or run on the card.
+passing offline mock. The bounded PCI helper is tested offline, but its
+`PioneerSessionIO` binding, physical route/idle audit, and all-core graph
+ownership remain to be implemented; the image has not been loaded or run on
+the card.
 
 `PioneerQwen35ProgramSchedule.h` builds a stable 120-core partition for a
 whole projection. It assigns contiguous logical row ranges and splits a
@@ -238,7 +242,7 @@ physical per-core idle/NoC proofs are still required production hooks, and it
 does not provide the projection route audit or Work-mode lifecycle. The four
 existing owner/service tests and the RV32IMF target compile also still pass.
 The standalone service image builder completes with no imports, a 4-byte boot
-stub, and 25,024 bytes of worker text (SHA-256
-`f1efef29a3b9b1da329da67ab7b23aa3b1f2b654a5efa709cdca2101075893d7`). This
-confirms the freestanding image artifact only; it has not been loaded on the
-P100A.
+stub, and 25,532 bytes of worker text (SHA-256
+`10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`). This
+confirms the updated shutdown-capable freestanding image only; it has not been
+loaded on the P100A.

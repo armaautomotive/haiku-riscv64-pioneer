@@ -41,14 +41,16 @@ enum : unsigned {
 	DataflowWorkerMailboxAddress=DataflowProgramRegionEnd,
 	DataflowWorkerMailboxBytes=64,
 	DataflowWorkerMailboxMagic=0x314d4435,
-	DataflowWorkerMailboxVersion=1,
+	DataflowWorkerMailboxVersion=2,
+	DataflowWorkerShutdownRequest=0x53544f50,
 	DataflowWorkerSequenceLimit=0x7ffffffe,
 	DataflowWorkerStarting=0,
 	DataflowWorkerReady=1,
 	DataflowWorkerRunning=2,
 	DataflowWorkerComplete=3,
 	DataflowWorkerFailed=4,
-	DataflowWorkerFatal=5,
+	DataflowWorkerStopped=5,
+	DataflowWorkerFatal=6,
 	DataflowActivationChunkInputs=256,
 	DataflowInputPageBytes=576,
 	DataflowOutputPageBytes=64,
@@ -101,7 +103,8 @@ struct alignas(32) DataflowWorkerMailbox {
 	uint32_t magic,version;
 	volatile uint32_t commandSequence,acknowledgedSequence,completedSequence;
 	volatile uint32_t state,failure,phase;
-	uint32_t reserved[8];
+	volatile uint32_t shutdownSequence;
+	uint32_t reserved[7];
 };
 static_assert(sizeof(DataflowWorkerMailbox)==DataflowWorkerMailboxBytes,
 	"the resident worker mailbox is one fixed pair of 32-byte records");

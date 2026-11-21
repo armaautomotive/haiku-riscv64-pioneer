@@ -58,6 +58,40 @@ int main()
 	assert(DataflowLoadAcquire(mailbox.failure)==DataflowFailureCompute);
 	assert(DataflowLoadAcquire(mailbox.phase)==5);
 
-	std::puts("PASS Qwen35 resident mailbox ABI, per-core route bijection, and completion publication");
+	DataflowWorkerMailbox stopMailbox{};
+	stopMailbox.magic=DataflowWorkerMailboxMagic;
+	stopMailbox.version=DataflowWorkerMailboxVersion;
+	stopMailbox.state=DataflowWorkerReady;
+	assert(DataflowWorkerMailboxStartupValid(stopMailbox));
+	stopMailbox.shutdownSequence=DataflowWorkerShutdownRequest;
+	assert(!DataflowWorkerMailboxStartupValid(stopMailbox));
+	assert(DataflowWorkerStopRequestValid(stopMailbox));
+	stopMailbox.state=DataflowWorkerComplete;
+	assert(!DataflowWorkerStopRequestValid(stopMailbox));
+	stopMailbox.state=DataflowWorkerReady;
+	stopMailbox.commandSequence=2;
+	assert(!DataflowWorkerStopRequestValid(stopMailbox));
+
+	DataflowQueueControl queues[DataflowCircularBufferCount]{};
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+		queues[i].produced=17+i;
+		queues[i].consumed=17+i;
+		queues[i].readerFailure=DataflowFailureReader;
+		queues[i].reserved[0]=0xfeed;
+	}
+	assert(DataflowWorkerResetQueueRecords(queues));
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+		assert(!queues[i].produced && !queues[i].consumed);
+		assert(!queues[i].readerFailure && !queues[i].reserved[0]);
+	}
+	queues[1].produced=3;
+	queues[1].consumed=2;
+	queues[0].produced=4;
+	queues[0].consumed=4;
+	assert(!DataflowWorkerResetQueueRecords(queues));
+	assert(queues[0].produced==4 && queues[0].consumed==4);
+	assert(queues[1].produced==3 && queues[1].consumed==2);
+
+	std::puts("PASS Qwen35 resident mailbox, queue reuse, and stop protocol");
 	return 0;
 }

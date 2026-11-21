@@ -178,19 +178,38 @@ inline bool DataflowWorkerMailboxStartupValid(
 		|| DataflowLoadRelaxed(mailbox.completedSequence)
 		|| DataflowLoadRelaxed(mailbox.state)!=DataflowWorkerReady
 		|| DataflowLoadRelaxed(mailbox.failure)
-		|| DataflowLoadRelaxed(mailbox.phase)) return false;
-	for (unsigned i=0;i<8;i++) if (mailbox.reserved[i]) return false;
+		|| DataflowLoadRelaxed(mailbox.phase)
+		|| DataflowLoadRelaxed(mailbox.shutdownSequence)) return false;
+	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
 	return true;
 }
 
-inline bool DataflowWorkerResetQueues()
+inline bool DataflowWorkerStopRequestValid(const DataflowWorkerMailbox& mailbox)
 {
-	auto* controls=reinterpret_cast<DataflowQueueControl*>(
-		static_cast<uintptr_t>(DataflowQueueStateAddress));
+	if (DataflowLoadAcquire(mailbox.shutdownSequence)!=DataflowWorkerShutdownRequest
+		|| DataflowLoadAcquire(mailbox.commandSequence)
+			!=DataflowLoadAcquire(mailbox.completedSequence)
+		|| DataflowLoadAcquire(mailbox.acknowledgedSequence)
+			!=DataflowLoadAcquire(mailbox.completedSequence)
+		|| DataflowLoadAcquire(mailbox.state)!=DataflowWorkerReady
+		|| DataflowLoadAcquire(mailbox.failure)
+		|| DataflowLoadAcquire(mailbox.phase)) return false;
+	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	return true;
+}
+
+template<class QueueArray>
+inline bool DataflowWorkerResetQueueRecords(QueueArray& controls)
+{
 	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
 		auto& control=controls[i];
-		if (DataflowLoadRelaxed(control.produced)
-			|| DataflowLoadRelaxed(control.consumed)) return false;
+		if (DataflowLoadAcquire(control.produced)
+			!=DataflowLoadAcquire(control.consumed)) return false;
+	}
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+		auto& control=controls[i];
+		DataflowStoreRelease(control.produced,0);
+		DataflowStoreRelease(control.consumed,0);
 		DataflowStoreRelease(control.readerFailure,0);
 		DataflowStoreRelease(control.computeFailure,0);
 		DataflowStoreRelease(control.writerFailure,0);
@@ -199,6 +218,13 @@ inline bool DataflowWorkerResetQueues()
 	}
 	DataflowFence();
 	return true;
+}
+
+inline bool DataflowWorkerResetQueues()
+{
+	auto* controls=reinterpret_cast<DataflowQueueControl*>(
+		static_cast<uintptr_t>(DataflowQueueStateAddress));
+	return DataflowWorkerResetQueueRecords(controls);
 }
 
 // Persistent per-core service loop. A new descriptor is visible only after
@@ -225,6 +251,19 @@ inline bool DataflowWorkerResetQueues()
 	}
 	unsigned completed=0;
 	for (;;) {
+		const unsigned shutdown=DataflowLoadAcquire(mailbox->shutdownSequence);
+		if (shutdown) {
+			if (shutdown!=DataflowWorkerShutdownRequest
+				|| !DataflowWorkerStopRequestValid(*mailbox)
+				|| !DataflowWorkerResetQueues()) {
+				DataflowWorkerPublish(*mailbox,completed,DataflowWorkerFatal,
+					DataflowFailureQueue,7);
+				for (;;) asm volatile("" ::: "memory");
+			}
+			DataflowWorkerPublish(*mailbox,completed,DataflowWorkerStopped,0,0);
+			DataflowFence();
+			for (;;) asm volatile("" ::: "memory");
+		}
 		const unsigned sequence=DataflowLoadAcquire(mailbox->commandSequence);
 		if (sequence==completed) continue;
 		if (!DataflowWorkerCommandSequenceValid(completed,

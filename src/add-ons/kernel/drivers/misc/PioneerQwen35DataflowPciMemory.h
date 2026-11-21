@@ -48,11 +48,14 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 		+offsetof(PioneerQwen35::DataflowWorkerMailbox,commandSequence);
 	const unsigned acknowledgement=PioneerQwen35::DataflowWorkerMailboxAddress
 		+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
+	const unsigned shutdown=PioneerQwen35::DataflowWorkerMailboxAddress
+		+offsetof(PioneerQwen35::DataflowWorkerMailbox,shutdownSequence);
 	return (address>=PioneerQwen35::DataflowProgramAddress
 			&& end<=PioneerQwen35::DataflowProgramAddress
 				+sizeof(PioneerQwen35::DataflowCoreInvocation))
 		|| (address==command && bytes==sizeof(uint32_t))
-		|| (address==acknowledgement && bytes==sizeof(uint32_t));
+		|| (address==acknowledgement && bytes==sizeof(uint32_t))
+		|| (address==shutdown && bytes==sizeof(uint32_t));
 }
 
 // Fixed local-memory transport for the dataflow service. Raw must bind a
