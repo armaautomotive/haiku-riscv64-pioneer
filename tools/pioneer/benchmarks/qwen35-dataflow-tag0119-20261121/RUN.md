@@ -25,7 +25,10 @@ the process list showed no inference process.
 
 Haiku accepted a single `shutdown -rs` request for guarded recovery. The SSH
 session then closed as expected, but the pinned Linux profile was not yet
-reachable at the time of this update. No relay power action was sent. The
+reachable. Repeated checks against both pinned Linux and Haiku profiles timed
+out; ARP for `10.0.0.247` remained incomplete. The user reported an accidental
+power reset during recovery. No relay button action was sent, because the
+current board power state could not be confirmed from SSH/ARP alone. The
 post-reboot stable-driver state still needs to be verified and recorded.
 
 Do not start the two-warm benchmark until the read failure is fixed, a

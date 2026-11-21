@@ -1042,3 +1042,34 @@ The next code-only rewrite step is to add a precise receipt for the rejected
 generation request and resolve the core0 resume phase3 failure before another
 hardware trial. The 100 decode tokens/s target remains unmet. Assistant
 integration remains deferred until the rewrite and benchmark are complete.
+
+### Tag0119 NoC response-counter diagnostics (2026-11-21)
+
+Tag0119 is the current device-program rewrite checkpoint. It adds a read-only
+NoC snapshot to the existing 64-byte worker mailbox: an eight-slot completion
+counter match mask, four-initiator busy mask, and 32-queue busy mask. It also
+fixes worker receipt cleanup to clear exactly the six declared reserved words,
+preserving `logicalCore`. The full variant-60 driver/service/client build and
+focused owner, embedding-worker, and runtime-recovery sanitizer fixtures pass.
+The compiled service uses no A-extension atomics and fits its fixed region.
+
+The one-run hardware diagnostic authenticated, tokenized, and loaded the full
+4B model, then failed on prompt embedding read stage 7/index 36. The response
+counter observed `0x00029066` where `0x00029067` was expected; the match mask
+was `0xfe`, initiator-busy mask `0x0`, and queue-busy mask `0x00000001`. This is
+a read-only observation; no counter reset, request retry, or Tensix reset was
+issued. Authentication took 100.664302 s, tokenization 13.757776 s, load
+333.142334 s, and the failed prompt 0.615593 s. No output token was produced,
+so decode throughput is unavailable and 100 tokens/s remains unmet.
+
+The tag0119 candidate cold-latched and clean unload failed; the trial preserved
+the stable-driver backup and recovery lock. The 4B and preserved 27B model
+files were verified intact, and the client process had exited. Haiku accepted
+a reboot request, but both pinned SSH profiles later timed out; the existing
+serial console showed shutdown-device teardown without a new boot banner.
+The user's accidental power reset was reported during this recovery window.
+No relay pulse was sent while the current board power state remained unclear.
+Stable driver55 generation2 must be verified restored before any next
+hardware trial. The two-warm throughput benchmark and assistant integration
+remain deferred. Full evidence is in
+[`benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md).
