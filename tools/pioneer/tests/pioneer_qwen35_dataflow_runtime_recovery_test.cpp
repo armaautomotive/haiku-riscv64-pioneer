@@ -52,10 +52,14 @@ int main()
 	assert(detail==0 && drains.pauses==3 && drains.status[17]==0);
 
 	MockRecoveryIO stuck{};
-	stuck.status[2]=1;
-	assert(!DataflowRuntimeWaitForNoCIdle(stuck,0,5,detail));
+	stuck.status[2]=0x45;
+	uint32_t busyStatus=0;
+	assert(!DataflowRuntimeWaitForNoCIdle(stuck,0,5,detail,&busyStatus));
 	assert(detail==DataflowRuntimeRecoveryNoCIdleDetailBase+2
-		&& stuck.pauses==5 && stuck.status[2]==1);
+		&& stuck.pauses==5 && stuck.status[2]==0x45 && busyStatus==0x45);
+	assert(DataflowRuntimeRecoveryPackEmbeddingFailure(0x0204)==0x484);
+	assert(DataflowRuntimeRecoveryPackEmbeddingFailure(0x0782)==0x5e6);
+	assert(DataflowRuntimeRecoveryPackEmbeddingFailure(0x0403)==0x530);
 
 	MockRecoveryIO remap{};
 	remap.status[DataflowRuntimeRecoveryNoCInitiators+4]=1;

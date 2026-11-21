@@ -107,7 +107,9 @@ struct DataflowCircularBuffer {
 
 // Host and one resident BRISC worker share this fixed 64-byte command/receipt
 // record. The host owns commandSequence and acknowledgedSequence; the worker
-// owns completedSequence, state, failure, and phase.
+// owns completedSequence, state, failure, and phase. During a failed embedding
+// weight read, reserved[1] and reserved[2] preserve the NoC stage/index and the
+// raw register value until the host acknowledges that failure.
 struct alignas(32) DataflowWorkerMailbox {
 	uint32_t magic,version;
 	volatile uint32_t commandSequence,acknowledgedSequence,completedSequence;

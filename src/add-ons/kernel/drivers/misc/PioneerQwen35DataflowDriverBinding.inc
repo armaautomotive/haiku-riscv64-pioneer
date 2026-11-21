@@ -532,7 +532,13 @@ PioneerSessionIO::ReadWorkerSnapshot(unsigned core,
 	if (core>=PioneerQwen35::DataflowCoreCount
 		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)) return false;
 	snapshot={mailbox.commandSequence,mailbox.acknowledgedSequence,
-		mailbox.completedSequence,mailbox.state,mailbox.failure,mailbox.phase};
+		mailbox.completedSequence,mailbox.state,mailbox.failure,mailbox.phase,0,0};
+	if (mailbox.state==PioneerQwen35::DataflowWorkerFailed
+		&& mailbox.failure==PioneerQwen35::DataflowFailureEmbeddingWeightRead
+		&& mailbox.phase==5) {
+		snapshot.failureDetail=mailbox.reserved[1];
+		snapshot.failureStatus=mailbox.reserved[2];
+	}
 	return true;
 }
 
@@ -1555,9 +1561,16 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 			&& observed.failure==PioneerQwen35::DataflowFailureEmbeddingWeightRead) {
 			unsigned idleDetail=0;
 			if (!PioneerQwen35::DataflowRuntimeWaitForNoCIdle(*this,core,
-				PioneerQwen35::DataflowRuntimeRecoveryPollLimit,idleDetail))
+				PioneerQwen35::DataflowRuntimeRecoveryPollLimit,idleDetail)) {
+				if (idleDetail>=PioneerQwen35::DataflowRuntimeRecoveryNoCIdleDetailBase
+					&& idleDetail<PioneerQwen35::DataflowRuntimeRecoveryNoCIdleDetailBase
+						+PioneerQwen35::DataflowRuntimeRecoveryNoCStatusCount
+					&& observed.failureDetail)
+					idleDetail=PioneerQwen35::DataflowRuntimeRecoveryPackEmbeddingFailure(
+						observed.failureDetail);
 				return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core,
 					idleDetail);
+			}
 		}
 		unsigned runtimeDetail=0;
 		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core,&runtimeDetail))

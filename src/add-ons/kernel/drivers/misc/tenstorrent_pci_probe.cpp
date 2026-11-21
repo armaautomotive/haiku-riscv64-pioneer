@@ -89,7 +89,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010111ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010112ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010114ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010115ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010115ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010116ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -9313,7 +9314,13 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 						|((diagnostic.recoveryAuditStage&0xfU)<<18)
 						|((recoveryCore&0x7fU)<<11)
 						|(diagnostic.recoveryAuditDetail&0x7ffU);
-					request.reserved[2]=diagnostic.pendingSequence;
+					request.reserved[2]=(
+						diagnostic.recoveryAuditStage
+							==PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable
+						&& diagnostic.worker.failure
+							==PioneerQwen35::DataflowFailureEmbeddingWeightRead
+						&& (diagnostic.recoveryAuditDetail&0x400U))
+						?diagnostic.worker.failureStatus:diagnostic.pendingSequence;
 				}
 			}
 		}

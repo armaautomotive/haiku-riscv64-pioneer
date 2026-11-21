@@ -14,11 +14,16 @@ namespace PioneerQwen35 {
 template<class IO>
 bool PioneerQwen35DataflowEmbedWorker(
 	const DataflowEmbeddingInvocation& program,uint8_t* weightTile,
-	float* outputPage,IO& io,unsigned* failure=nullptr)
+	float* outputPage,IO& io,unsigned* failure=nullptr,
+	unsigned* failureDetail=nullptr,uint32_t* failureStatus=nullptr)
 {
 	if (failure) *failure=0;
-	auto fail=[&](unsigned reason) {
+	if (failureDetail) *failureDetail=0;
+	if (failureStatus) *failureStatus=0;
+	auto fail=[&](unsigned reason,unsigned detail=0,uint32_t status=0) {
 		if (failure) *failure=reason;
+		if (failureDetail) *failureDetail=detail;
+		if (failureStatus) *failureStatus=status;
 		return false;
 	};
 	if (!program.Valid() || !weightTile || !outputPage)
@@ -33,10 +38,13 @@ bool PioneerQwen35DataflowEmbedWorker(
 			+uint64_t(block)*DataflowQ6KEmbeddingTileBytes;
 		if (weightAddress>UINT32_MAX)
 			return fail(DataflowFailureEmbeddingInvocation);
-		if (block!=previousBlock
-			&& !io.ReadWeight(program.weightBank,uint32_t(weightAddress),
-				weightTile,DataflowQ6KEmbeddingTileBytes))
-			return fail(DataflowFailureEmbeddingWeightRead);
+		if (block!=previousBlock) {
+			DataflowNocDiagnostic diagnostic{};
+			if (!io.ReadWeight(program.weightBank,uint32_t(weightAddress),
+				weightTile,DataflowQ6KEmbeddingTileBytes,&diagnostic))
+				return fail(DataflowFailureEmbeddingWeightRead,
+					DataflowNocDiagnosticCode(diagnostic),diagnostic.value);
+		}
 		if (!DataflowDecodeQ6KEmbeddingPanel(weightTile,
 			DataflowQ6KEmbeddingTileBytes,program.lane,panel,outputPage,
 			DataflowQ6KEmbeddingValuesPerPanel))
@@ -65,18 +73,23 @@ public:
 	}
 
 	bool ReadWeight(unsigned bank,uint32_t address,uint8_t* output,
-		unsigned bytes) const
+		unsigned bytes,DataflowNocDiagnostic* detail=nullptr) const
 	{
+		if (detail) *detail={};
 		if (!fProgram || bank!=fProgram->weightBank
-			|| bytes!=DataflowQ6KEmbeddingTileBytes) return false;
+			|| bytes!=DataflowQ6KEmbeddingTileBytes) {
+			if (detail) detail->stage=DataflowNocTransferWeightBinding;
+			return false;
+		}
 		for (unsigned i=0;i<fProgram->segmentCount;i++) {
 			const unsigned block=fProgram->segment[i].firstRow/256;
 			const uint64_t expected=uint64_t(fProgram->weightBase)
 				+uint64_t(block)*DataflowQ6KEmbeddingTileBytes;
 			if (expected==address)
 				return fReader.Read(address,fProgram->bankRoute[0][bank],
-					output,bytes);
+					output,bytes,detail);
 		}
+		if (detail) detail->stage=DataflowNocTransferWeightBinding;
 		return false;
 	}
 

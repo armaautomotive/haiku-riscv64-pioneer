@@ -18,23 +18,24 @@ assistant only after the hardware generation and throughput gates pass.
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
 BRISC/Tensix service, with no CPU inference or fallback. Tag0114 and tag0115
-both completed full model load, then failed the first core0 embedding read.
-Tag0115's authentication took `99.897654` s, vocabulary/tokenization
-`13.042067` s, model load `330.400460` s, and failed prompt attempt
-`0.611537` s. Its read-only NoC drain wait timed out on NoC0 queue0 after
-`65536` polls (`recovery_audit_detail=260`, index4); no output or decode rate
-was produced. The strict audit kept the driver cold-latched, and the wrapper
-retained the stable55 backup and lock. A guarded post-cycle restore has since
-returned stable55 to generation2, idle, with the lock cleared. Both model
-files remain intact. Tag0116 will add the failed transfer stage and busy
-status value to the diagnostic record; no NoC command clear or core reset is
-authorized by the current safety proof. Offline build, sanitizer test, RV32IMF
-compile, and the `15456/18432`-byte stack check pass. Valid output, two warm
-runs, clean unload, in-place recovery, and the 100 tokens/s target remain open.
-See
+both loaded the model, then failed the first core0 embedding read. Tag0115's
+authentication took `99.897654` s, vocabulary/tokenization `13.042067` s,
+model load `330.400460` s, and failed prompt attempt `0.611537` s. Its
+read-only NoC drain wait timed out on NoC0 queue0 after `65536` polls
+(`recovery_audit_detail=260`, index4); no output or decode rate was produced.
+The guarded post-cycle helper restored stable55 generation2 and cleared the
+lock. A live check after the user's accidental power reset again confirmed
+stable55 generation2, idle, with no Qwen process; both model files remain
+intact. Tag0116 now captures the failed transfer stage, status-register index,
+and raw value in the fixed mailbox and query diagnostic without clearing NoC
+commands, resetting cores, or changing either ABI size. Offline build,
+sanitizer fixtures, RV32IMF compile, and the `15712/18432`-byte stack check
+pass. Tag0116 has not been installed; valid output, two warm runs, clean
+unload, in-place recovery, and the 100 tokens/s target remain open. See
 [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md) and
 [`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
-[`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md).
+[`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md), and
+[`tag0116 BUILD`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -119,6 +120,16 @@ SHA-256 is `80d28f4d75a48612773b07339010308ced09e8c8debf8e7708c35b85f7908da5`.
 The card is currently stable55 generation2 after the guarded post-cycle
 restore. See [`benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md).
 
+Tag0116 records the exact NoC transfer stage, failing index, and raw status
+value for an embedding read failure using two existing mailbox reserved words.
+It keeps mailbox and ioctl sizes unchanged and retains the strict recovery
+audit. The full build, RV32IMF compile, and ASan/UBSan fixtures pass; the
+conservative stack bound is `15712/18432`. Driver SHA-256 is
+`2acf08ecf6578adcd3529c65259489eb92b4ceca5ffdcb78f6e75f1f0034e710` and
+client SHA-256 is `52097a6efb88e89181b96a7476a291fb8afb1d7c828cc9bbf03c1c401c857106`.
+It has not been installed on the card. Details are in
+[`benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md).
+
 ## Progress
 
 - 2026-11-21 (tag0115, bounded read recovery): Added a wait that reads only
@@ -142,6 +153,17 @@ restore. See [`benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`](benchmarks
   candidate, stable backup, and lock. The guarded post-cycle helper restored
   stable55 generation2 and cleared the lock. See
   `benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md`.
+
+- 2026-11-21 (tag0116, failure-detail rewrite): Added exact NoC transfer
+  stages and captured register values to the existing failed-embedding receipt.
+  The host packs stage/index into its existing recovery detail and reports the
+  raw value from the existing request result word. The mailbox remains 64
+  bytes, the ioctl request size is unchanged, and the recovery path still only
+  waits and audits; it does not clear commands or reset cores. Full build,
+  target role compile, and recovery/embedding/owner/service-owner ASan/UBSan
+  fixtures pass. Stack use is `15712/18432`. The candidate remains offline;
+  Haiku is stable55 generation2 and idle. See
+  `benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
   vocabulary load and prompt tokenization `13.168584` s, full model load

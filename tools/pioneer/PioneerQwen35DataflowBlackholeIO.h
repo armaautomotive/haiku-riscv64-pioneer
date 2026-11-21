@@ -16,6 +16,30 @@ enum : unsigned {
 	DataflowNocQueues=32
 };
 
+enum DataflowNocTransferStage : unsigned {
+	DataflowNocTransferNone=0,
+	DataflowNocTransferInvalid=1,
+	DataflowNocTransferNotQuietBefore=2,
+	DataflowNocTransferIdentity=3,
+	DataflowNocTransferCommandReadback=4,
+	DataflowNocTransferNotQuietAfterCommand=5,
+	DataflowNocTransferDoorbellTimeout=6,
+	DataflowNocTransferCounterTimeout=7,
+	DataflowNocTransferCommandChanged=8,
+	DataflowNocTransferNotQuietAfterComplete=9,
+	DataflowNocTransferWeightBinding=10
+};
+
+struct DataflowNocDiagnostic {
+	unsigned stage,index;
+	uint32_t value;
+};
+
+inline unsigned DataflowNocDiagnosticCode(const DataflowNocDiagnostic& detail)
+{
+	return ((detail.stage&0xffU)<<8)|(detail.index&0xffU);
+}
+
 struct DataflowNocReadTicket {
 	uint32_t command[10];
 	uint32_t expected[8];
@@ -54,25 +78,49 @@ class DataflowBlackholeNoc {
 		return *Words(Base+CounterOffset[index]);
 	}
 
-	static bool Quiet()
+	static bool Quiet(DataflowNocDiagnostic* detail=nullptr)
 	{
-		for (unsigned i=0;i<DataflowNocInitiators;i++)
-			if (*Words(Base+0x40+i*0x800)) return false;
-		for (unsigned i=0;i<DataflowNocQueues;i++)
-			if (*Words(Base+0x240+i*4)&255) return false;
+		if (detail) *detail={};
+		for (unsigned i=0;i<DataflowNocInitiators;i++) {
+			const uint32_t value=*Words(Base+0x40+i*0x800);
+			if (value) {
+				if (detail) *detail={0,i,value};
+				return false;
+			}
+		}
+		for (unsigned i=0;i<DataflowNocQueues;i++) {
+			const uint32_t value=*Words(Base+0x240+i*4);
+			if (value&255) {
+				if (detail) *detail={0,DataflowNocInitiators+i,value};
+				return false;
+			}
+		}
 		return true;
 	}
 
 	static bool Transfer(bool write,uint32_t remote,unsigned route,
-		uint8_t* local,unsigned bytes)
+		uint8_t* local,unsigned bytes,DataflowNocDiagnostic* detail=nullptr)
 	{
+		if (detail) *detail={};
 		if (!local || !LocalRange(uint32_t(reinterpret_cast<uintptr_t>(local)),bytes)
 			|| !bytes || bytes>DataflowNocMaxTransfer || (bytes&63)
 			|| remote<BankBase || remote>=BankLimit || bytes>BankLimit-remote
-			|| (remote&63) || route>0xfff || !Quiet()) return false;
+			|| (remote&63) || route>0xfff) {
+			if (detail) detail->stage=DataflowNocTransferInvalid;
+			return false;
+		}
+		DataflowNocDiagnostic quiet{};
+		if (!Quiet(&quiet)) {
+			if (detail) *detail={DataflowNocTransferNotQuietBefore,
+				quiet.index,quiet.value};
+			return false;
+		}
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
 		const uint32_t self=*Words(Base+0x14);
-		if (!self || self>0xfff) return false;
+		if (!self || self>0xfff) {
+			if (detail) *detail={DataflowNocTransferIdentity,0xff,self};
+			return false;
+		}
 		uint32_t expected[8];
 		const unsigned flits=bytes/64;
 		const unsigned delta[8]={write?0U:1U,write?flits:0U,1,
@@ -83,9 +131,17 @@ class DataflowBlackholeNoc {
 			write?route:self,0,write?0x212U:0U,bytes,0};
 		for (unsigned i=0;i<10;i++) {
 			Words(Base)[i]=command[i];
-			if (Words(Base)[i]!=command[i]) return false;
+			const uint32_t observed=Words(Base)[i];
+			if (observed!=command[i]) {
+				if (detail) *detail={DataflowNocTransferCommandReadback,i,observed};
+				return false;
+			}
 		}
-		if (!Quiet()) return false;
+		if (!Quiet(&quiet)) {
+			if (detail) *detail={DataflowNocTransferNotQuietAfterCommand,
+				quiet.index,quiet.value};
+			return false;
+		}
 		Fence();
 		*Words(Base+0x40)=1;
 		(void)*Words(Base+0x40);
@@ -95,12 +151,39 @@ class DataflowBlackholeNoc {
 			for (unsigned i=0;i<8;i++) complete &= Counter(i)==expected[i];
 			if (!complete) continue;
 			Fence();
-			for (unsigned i=0;i<10;i++)
-				if (Words(Base)[i]!=command[i]) return false;
-			return Quiet();
+			for (unsigned i=0;i<10;i++) {
+				const uint32_t observed=Words(Base)[i];
+				if (observed!=command[i]) {
+					if (detail) *detail={DataflowNocTransferCommandChanged,i,observed};
+					return false;
+				}
+			}
+			if (!Quiet(&quiet)) {
+				if (detail) *detail={DataflowNocTransferNotQuietAfterComplete,
+					quiet.index,quiet.value};
+				return false;
+			}
+			return true;
 		}
 		// The request state is unknown. Return failure to the role wrapper;
 		// it publishes the shared failure and issues no further transfer.
+		const uint32_t doorbell=*Words(Base+0x40);
+		if (doorbell) {
+			if (detail) *detail={DataflowNocTransferDoorbellTimeout,0xff,doorbell};
+			return false;
+		}
+		for (unsigned i=0;i<8;i++) {
+			const uint32_t observed=Counter(i);
+			if (observed!=expected[i]) {
+				if (detail) *detail={DataflowNocTransferCounterTimeout,0x80U+i,
+					observed};
+				return false;
+			}
+		}
+		if (!Quiet(&quiet) && detail)
+			*detail={DataflowNocTransferNotQuietAfterComplete,quiet.index,quiet.value};
+		else if (detail)
+			detail->stage=DataflowNocTransferDoorbellTimeout;
 		return false;
 	}
 
@@ -151,9 +234,10 @@ public:
 		return false;
 	}
 
-	bool Read(uint32_t remote,unsigned route,uint8_t* local,unsigned bytes) const
+	bool Read(uint32_t remote,unsigned route,uint8_t* local,unsigned bytes,
+		DataflowNocDiagnostic* detail=nullptr) const
 	{
-		return Transfer(false,remote,route,local,bytes);
+		return Transfer(false,remote,route,local,bytes,detail);
 	}
 
 	bool Write(uint32_t remote,unsigned route,const uint8_t* local,unsigned bytes) const

@@ -64,7 +64,10 @@ struct tt_qwen35_dataflow_request {
 	// owner_result:8 | core:16 | operation:8. In reserved[1], bits31..29 are
 	// worker state, 28..25 worker failure, 24..22 worker phase, 21..18 recovery
 	// audit stage, and 17..11 the recovery core (0x7f means none); bits10..0
-	// are zero. reserved[2] is the pending worker sequence. A core value of
+	// normally contain recovery detail. On a failed embedding-read NoC timeout,
+	// bit10 marks a packed transfer stage/register index and reserved[2] carries
+	// the raw status value captured at the failed read. Otherwise reserved[2] is
+	// the pending worker sequence. A core value of
 	// 0xffff in reserved[0] means no worker was isolated.
 	uint32_t reserved[3];
 };

@@ -16,7 +16,7 @@ namespace PioneerQwen35 {
 
 struct DataflowWorkerSnapshot {
 	unsigned commandSequence,acknowledgedSequence,completedSequence;
-	unsigned state,failure,phase;
+	unsigned state,failure,phase,failureDetail,failureStatus;
 };
 
 enum DataflowRecoveryAuditStage : unsigned {
@@ -73,7 +73,8 @@ inline bool DataflowWorkerSnapshotReady(const DataflowWorkerSnapshot& snapshot)
 	return snapshot.state==DataflowWorkerReady
 		&& snapshot.commandSequence==snapshot.acknowledgedSequence
 		&& snapshot.acknowledgedSequence==snapshot.completedSequence
-		&& !snapshot.failure && !snapshot.phase;
+		&& !snapshot.failure && !snapshot.phase
+		&& !snapshot.failureDetail && !snapshot.failureStatus;
 }
 
 // Host-side orchestration only. IO owns PCI/NoC access and must implement

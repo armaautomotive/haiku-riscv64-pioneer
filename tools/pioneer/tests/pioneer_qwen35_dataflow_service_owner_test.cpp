@@ -165,13 +165,13 @@ struct MockDataflowIO {
 			result={mailbox[core].commandSequence,
 				mailbox[core].acknowledgedSequence,
 				mailbox[core].completedSequence,mailbox[core].state,
-				mailbox[core].failure,mailbox[core].phase};
+				mailbox[core].failure,mailbox[core].phase,0,0};
 			snapshot[core]=result;
 			return false;
 		}
 		result={mailbox[core].commandSequence,mailbox[core].acknowledgedSequence,
 			mailbox[core].completedSequence,mailbox[core].state,mailbox[core].failure,
-			mailbox[core].phase};
+			mailbox[core].phase,0,0};
 		snapshot[core]=result;
 		return result.state==DataflowWorkerReady;
 	}
@@ -280,7 +280,7 @@ struct MockDataflowIO {
 			?DataflowFailureReader:0;
 		mailbox[core].phase=core==failWorkerCore?5:2;
 		snapshot[core]={sequence,mailbox[core].acknowledgedSequence,sequence,
-			mailbox[core].state,mailbox[core].failure,mailbox[core].phase};
+			mailbox[core].state,mailbox[core].failure,mailbox[core].phase,0,0};
 		result=snapshot[core];
 		return true;
 	}
@@ -331,7 +331,7 @@ struct MockDataflowIO {
 		mailbox[core].acknowledgedSequence=sequence;
 		mailbox[core].state=DataflowWorkerReady;
 		mailbox[core].phase=0;
-		snapshot[core]={sequence,sequence,sequence,DataflowWorkerReady,0,0};
+		snapshot[core]={sequence,sequence,sequence,DataflowWorkerReady,0,0,0,0};
 		return true;
 	}
 	bool AuditAndRecoverAll(unsigned sequence,
@@ -358,7 +358,7 @@ struct MockDataflowIO {
 			}
 			snapshot[core]={mailbox[core].commandSequence,
 				mailbox[core].acknowledgedSequence,mailbox[core].completedSequence,
-				mailbox[core].state,mailbox[core].failure,mailbox[core].phase};
+				mailbox[core].state,mailbox[core].failure,mailbox[core].phase,0,0};
 			snapshots[core]=snapshot[core];
 		}
 		return true;
