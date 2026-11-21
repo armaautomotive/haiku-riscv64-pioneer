@@ -14,7 +14,7 @@ static_assert(TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 
 enum : uint32_t {
 	TT_QWEN35_DATAFLOW_DRIVER=60,
-	TT_QWEN35_DATAFLOW_ABI=3,
+	TT_QWEN35_DATAFLOW_ABI=4,
 	TT_QWEN35_DATAFLOW_CORES=120,
 	TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE=1U,
 	TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND=2U,
@@ -31,6 +31,7 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_ACTION_INSTALL=1,
 	TT_QWEN35_DATAFLOW_ACTION_CLOSE=2,
 	TT_QWEN35_DATAFLOW_ACTION_RECOVER=3,
+	TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED=4,
 	TT_QWEN35_DATAFLOW_STATE_EMPTY=0,
 	TT_QWEN35_DATAFLOW_STATE_READY=1,
 	TT_QWEN35_DATAFLOW_STATE_FAULTED=2,
@@ -67,7 +68,9 @@ struct tt_qwen35_dataflow_request {
 	// normally contain recovery detail. On a failed embedding-read NoC timeout,
 	// bit10 marks a packed transfer stage/register index and reserved[2] carries
 	// the raw status value captured at the failed read. Otherwise reserved[2] is
-	// the pending worker sequence. A core value of
+	// the pending worker sequence. QUERY_EXPECTED returns the matching expected
+	// completion-counter value in reserved[2] while preserving the other query
+	// diagnostic fields. A core value of
 	// 0xffff in reserved[0] means no worker was isolated.
 	uint32_t reserved[3];
 };
@@ -76,7 +79,7 @@ static inline bool
 PioneerQwen35DataflowRequestValid(const tt_qwen35_dataflow_request& request)
 {
 	return request.version==TT_QWEN35_DATAFLOW_ABI
-		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_RECOVER
+		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED
 		&& request.reserved[0]==0 && request.reserved[1]==0
 		&& request.reserved[2]==0;
 }

@@ -15,15 +15,19 @@ template<class IO>
 bool PioneerQwen35DataflowEmbedWorker(
 	const DataflowEmbeddingInvocation& program,uint8_t* weightTile,
 	float* outputPage,IO& io,unsigned* failure=nullptr,
-	unsigned* failureDetail=nullptr,uint32_t* failureStatus=nullptr)
+	unsigned* failureDetail=nullptr,uint32_t* failureStatus=nullptr,
+	uint32_t* failureExpected=nullptr)
 {
 	if (failure) *failure=0;
 	if (failureDetail) *failureDetail=0;
 	if (failureStatus) *failureStatus=0;
-	auto fail=[&](unsigned reason,unsigned detail=0,uint32_t status=0) {
+	if (failureExpected) *failureExpected=0;
+	auto fail=[&](unsigned reason,unsigned detail=0,uint32_t status=0,
+		uint32_t expected=0) {
 		if (failure) *failure=reason;
 		if (failureDetail) *failureDetail=detail;
 		if (failureStatus) *failureStatus=status;
+		if (failureExpected) *failureExpected=expected;
 		return false;
 	};
 	if (!program.Valid() || !weightTile || !outputPage)
@@ -43,7 +47,8 @@ bool PioneerQwen35DataflowEmbedWorker(
 			if (!io.ReadWeight(program.weightBank,uint32_t(weightAddress),
 				weightTile,DataflowQ6KEmbeddingTileBytes,&diagnostic))
 				return fail(DataflowFailureEmbeddingWeightRead,
-					DataflowNocDiagnosticCode(diagnostic),diagnostic.value);
+					DataflowNocDiagnosticCode(diagnostic),diagnostic.value,
+					diagnostic.expected);
 		}
 		if (!DataflowDecodeQ6KEmbeddingPanel(weightTile,
 			DataflowQ6KEmbeddingTileBytes,program.lane,panel,outputPage,

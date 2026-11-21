@@ -265,7 +265,7 @@ static bool BindAndInstall(int fd,const D::DeviceLayout& manifest,
 	return false;
 }
 
-static void PrintOwnerDiagnostic(const char* action,
+static void PrintOwnerDiagnostic(int fd,const char* action,
 	const tt_qwen35_dataflow_request& request)
 {
 	const unsigned packed=request.reserved[0];
@@ -287,8 +287,20 @@ static void PrintOwnerDiagnostic(const char* action,
 	if ((recoveryDetail&0x400U) && ((worker>>18)&0xfU)==6
 		&& ((worker>>25)&0xfU)==7) {
 		fprintf(stderr," failed_read_stage=%u failed_read_index=%u "
-			"failed_read_status=0x%08x\n",(recoveryDetail>>6)&0xfU,
+			"failed_read_status=0x%08x",(recoveryDetail>>6)&0xfU,
 			recoveryDetail&0x3fU,request.reserved[2]);
+		if (((recoveryDetail>>6)&0xfU)==7) {
+			tt_qwen35_dataflow_request expected{};
+			expected.version=TT_QWEN35_DATAFLOW_ABI;
+			expected.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED;
+			const bool expectedRead=Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,
+				&expected,sizeof(expected))
+				&& expected.reserved[0]==request.reserved[0]
+				&& expected.reserved[1]==request.reserved[1];
+			if (expectedRead)
+				fprintf(stderr," failed_read_expected=0x%08x\n",expected.reserved[2]);
+			else fputs(" failed_read_expected=unavailable\n",stderr);
+		} else fputc('\n',stderr);
 	} else fprintf(stderr," pending_sequence=%u\n",request.reserved[2]);
 }
 
@@ -304,7 +316,7 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 	}
 	if (query.state!=TT_QWEN35_DATAFLOW_STATE_FAULTED
 		|| !query.recovery_required) return true;
-	PrintOwnerDiagnostic("recover_before_close",query);
+	PrintOwnerDiagnostic(fd,"recover_before_close",query);
 	tt_qwen35_dataflow_request request{};
 	request.version=TT_QWEN35_DATAFLOW_ABI;
 	request.action=TT_QWEN35_DATAFLOW_ACTION_RECOVER;
@@ -312,7 +324,7 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 		fputs("P100A_Q35_DATAFLOW recover_request_failed\n",stderr);
 		return false;
 	}
-	PrintOwnerDiagnostic("recover_result",request);
+	PrintOwnerDiagnostic(fd,"recover_result",request);
 	return request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
 		&& request.state==TT_QWEN35_DATAFLOW_STATE_READY
 		&& !request.recovery_required;

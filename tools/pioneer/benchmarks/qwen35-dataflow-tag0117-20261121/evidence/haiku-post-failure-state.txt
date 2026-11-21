@@ -1,0 +1,21 @@
+STATE
+RECOVERY_REQUIRED_UNTIL_STABLE_RESTORED
+EXIT
+1
+1
+DRIVER
+P100A_RELOAD driver60 tag2026112100010117 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+e5387ede717a52354f64fe8cb41ca73bf9a9cc1bc5ab86de0155dca6ec59283c  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-qwen35-dataflow-0117.diag1/restore.incoming
+e5387ede717a52354f64fe8cb41ca73bf9a9cc1bc5ab86de0155dca6ec59283c  /boot/home/pioneer-qwen35-dataflow-0117.diag1/tenstorrent_pci_probe-driver60
+LOCK
+drwx------ 1 baron root 2048 Nov 21 12:50 /boot/home/.pioneer-q35-dataflow-exclusive
+PROCESS
+   Id Team                                               
+  803 /boot/system/bin/grep -E pioneer-q35-dataflow|llama|Id Team 
+MODELS
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+

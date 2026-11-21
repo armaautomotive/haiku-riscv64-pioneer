@@ -52,6 +52,8 @@ struct MockDataflowIO {
 	unsigned failStartCore=UINT32_MAX,failIdleCore=UINT32_MAX;
 	unsigned failReadyCore=UINT32_MAX,failReadyPhase=1;
 	unsigned failWorkerCore=UINT32_MAX;
+	bool failEmbeddingCounter=false;
+	uint32_t expectedEmbeddingCounter=0;
 	bool failStopAudit=false,failResume=false,failBegin=false,failComplete=false;
 	bool authorizeProgram=true;
 
@@ -181,6 +183,12 @@ struct MockDataflowIO {
 		result=snapshot[core];
 		return true;
 	}
+	bool ReadWorkerFailureExpected(unsigned core,unsigned& expected) const
+	{
+		if (!failEmbeddingCounter || core!=failWorkerCore) return false;
+		expected=expectedEmbeddingCounter;
+		return true;
+	}
 	bool CoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const
 	{
 		return core<DataflowCoreCount && started[core]
@@ -277,10 +285,15 @@ struct MockDataflowIO {
 		mailbox[core].state=core==failWorkerCore
 			?DataflowWorkerFailed:DataflowWorkerComplete;
 		mailbox[core].failure=core==failWorkerCore
-			?DataflowFailureReader:0;
+			?(failEmbeddingCounter?DataflowFailureEmbeddingWeightRead:DataflowFailureReader):0;
 		mailbox[core].phase=core==failWorkerCore?5:2;
 		snapshot[core]={sequence,mailbox[core].acknowledgedSequence,sequence,
 			mailbox[core].state,mailbox[core].failure,mailbox[core].phase,0,0};
+		if (core==failWorkerCore && failEmbeddingCounter) {
+			snapshot[core].failureDetail=DataflowNocDiagnosticCode(
+				DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,0x29066,0x29067});
+			snapshot[core].failureStatus=0x00029066U;
+		}
 		result=snapshot[core];
 		return true;
 	}
@@ -548,6 +561,8 @@ int main()
 	assert(embeddingFailureOwner.Install(image,embeddingFailure)
 		==DataflowServiceComplete);
 	embeddingFailure.failWorkerCore=7;
+	embeddingFailure.failEmbeddingCounter=true;
+	embeddingFailure.expectedEmbeddingCounter=0x00029067U;
 	assert(embeddingFailureOwner.EmbedToken(embedding,embeddingFailure)
 		==DataflowServiceEmbeddingFailed);
 	const auto& embeddingDiagnostic=embeddingFailureOwner.OwnerDiagnostic();
@@ -557,8 +572,9 @@ int main()
 		&& embeddingDiagnostic.core==7
 		&& embeddingDiagnostic.pendingSequence==1
 		&& embeddingDiagnostic.worker.state==DataflowWorkerFailed
-		&& embeddingDiagnostic.worker.failure==DataflowFailureReader
-		&& embeddingDiagnostic.worker.phase==5);
+		&& embeddingDiagnostic.worker.failure==DataflowFailureEmbeddingWeightRead
+		&& embeddingDiagnostic.worker.phase==5
+		&& embeddingDiagnostic.failureExpected==0x00029067U);
 	assert(embeddingFailureOwner.RecoverProjection(embeddingFailure)
 		==DataflowServiceRecovered);
 	assert(embeddingFailureOwner.Ready()

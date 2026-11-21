@@ -543,6 +543,24 @@ PioneerSessionIO::ReadWorkerSnapshot(unsigned core,
 }
 
 bool
+PioneerSessionIO::ReadWorkerFailureExpected(unsigned core,unsigned& expected)
+{
+	expected=0;
+	PioneerQwen35::DataflowWorkerMailbox mailbox{};
+	if (core>=PioneerQwen35::DataflowCoreCount
+		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+		|| mailbox.state!=PioneerQwen35::DataflowWorkerFailed
+		|| mailbox.failure!=PioneerQwen35::DataflowFailureEmbeddingWeightRead
+		|| mailbox.phase!=5
+		|| ((mailbox.reserved[1]>>8)&0xffU)
+			!=PioneerQwen35::DataflowNocTransferCounterTimeout
+		|| (mailbox.reserved[1]&0xffU)<0x80U
+		|| (mailbox.reserved[1]&0xffU)>=0x88U) return false;
+	expected=mailbox.reserved[3];
+	return true;
+}
+
+bool
 PioneerSessionIO::WaitWorkerReady(unsigned core,
 	PioneerQwen35::DataflowWorkerSnapshot& snapshot)
 {

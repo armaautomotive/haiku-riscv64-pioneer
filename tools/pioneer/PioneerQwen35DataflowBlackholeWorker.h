@@ -274,7 +274,7 @@ inline bool DataflowWorkerResetQueues()
 			static_cast<uintptr_t>(DataflowProgramAddress));
 		bool okay=false;
 		unsigned embeddingFailure=0,embeddingDetail=0;
-		uint32_t embeddingStatus=0;
+		uint32_t embeddingStatus=0,embeddingExpected=0;
 		if (invocationMagic==DataflowProgramMagic) {
 			DataflowDeviceContext context;
 			okay=DataflowBindLocalContext(context,DataflowFailureQueue);
@@ -306,7 +306,7 @@ inline bool DataflowWorkerResetQueues()
 							DataflowWeightBufferAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowOutputBufferAddress)),io,&embeddingFailure,
-						&embeddingDetail,&embeddingStatus);
+						&embeddingDetail,&embeddingStatus,&embeddingExpected);
 				}
 			}
 			if (!okay) DataflowSignalLocalFailure(embeddingFailure
@@ -460,6 +460,7 @@ inline bool DataflowWorkerResetQueues()
 			&& embeddingFailure==DataflowFailureEmbeddingWeightRead) {
 			DataflowStoreRelease(mailbox->reserved[1],embeddingDetail);
 			DataflowStoreRelease(mailbox->reserved[2],embeddingStatus);
+			DataflowStoreRelease(mailbox->reserved[3],embeddingExpected);
 		}
 		DataflowWorkerPublish(*mailbox,sequence,state,failure,okay?2:5);
 		DataflowFence();

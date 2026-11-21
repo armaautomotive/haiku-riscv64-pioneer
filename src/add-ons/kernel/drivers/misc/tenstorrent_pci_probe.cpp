@@ -91,7 +91,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010114ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010115ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010116ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010117ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010117ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010118ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3270,6 +3271,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool WaitWorkerReady(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool ReadWorkerFailureExpected(unsigned core,unsigned& expected);
 	bool AuthorizeProjection(const PioneerQwen35::DataflowProjectionProgram& program);
 	bool BeginProjection(const PioneerQwen35::DataflowProjectionProgram& program);
 	bool AuthorizeEmbedding(const PioneerQwen35::DataflowEmbeddingProgram& program);
@@ -9299,7 +9301,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 				}
 			}
 			if (request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY
-				|| request.action==TT_QWEN35_DATAFLOW_ACTION_RECOVER) {
+				|| request.action==TT_QWEN35_DATAFLOW_ACTION_RECOVER
+				|| request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED) {
 				const auto& diagnostic=service->OwnerDiagnostic();
 				if (diagnostic.operation!=PioneerQwen35::DataflowOwnerOperationNone) {
 					const unsigned core=diagnostic.core
@@ -9315,12 +9318,16 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 						|((diagnostic.recoveryAuditStage&0xfU)<<18)
 						|((recoveryCore&0x7fU)<<11)
 						|(diagnostic.recoveryAuditDetail&0x7ffU);
-					request.reserved[2]=(
+					const bool embeddingReadDiagnostic=(
 						diagnostic.recoveryAuditStage
 							==PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable
 						&& diagnostic.worker.failure
 							==PioneerQwen35::DataflowFailureEmbeddingWeightRead
-						&& (diagnostic.recoveryAuditDetail&0x400U))
+						&& (diagnostic.recoveryAuditDetail&0x400U));
+					if (request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED)
+						request.reserved[2]=embeddingReadDiagnostic
+							?diagnostic.failureExpected:0;
+					else request.reserved[2]=embeddingReadDiagnostic
 						?diagnostic.worker.failureStatus:diagnostic.pendingSequence;
 				}
 			}

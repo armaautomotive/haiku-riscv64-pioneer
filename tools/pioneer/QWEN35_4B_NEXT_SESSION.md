@@ -8,35 +8,33 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Latest checkpoint: Tag98 diagnostic build; hardware pending
+## Current checkpoint: dataflow rewrite tag0118 built, card diagnostic pending
 
-Tag96 and Tag97 source, build packages, and raw evidence are pushed to the
-`codex/qwen35-4b-p100a` GitHub branch. Tag97 scales the sentinel's bounded wait
-by shard groups while retaining the shared global poll cap and every peer
-proof. Its targeted tests and default Haiku cross-build passed.
+Only the Tenstorrent-style resident device-program rewrite is in scope until
+that rewrite is complete; benchmark acceptance and assistant integration
+follow afterward. The standalone Haiku client and resident BRISC/Tensix
+service use all 120 Tensix cores and have no CPU inference/fallback path.
 
-On-card, Tag97 loaded all 3,450 model spans and completed peer work for the
-23-token prompt. It passed Tag96's sentinel timeout, then faulted after peer
-proof gathering at `dispatcher_stage=0x54000403`, detail `0x1127d` (70,269
-expected ROOT read requests), before prompt completion/output publication.
-Worker119's final snapshot showed completed sequence `0xda9` at its wait PC.
-Authentication was `69.006291` s, tokenization `15.215872` s, and model load
-`226.172627` s. No prompt-processing duration or decode rate was produced.
-Tag97's raw files and exact postflight are in
-[`tag297`](benchmarks/qwen35-work-tag297-20261120).
+Tag0117 loaded all `2740498432` model bytes, then failed the first core0
+embedding read at completion-counter stage7/index36 with observed value
+`0x00029066`. Authentication took `99.823865` s, tokenization
+`12.747341` s, model load `324.806932` s, and failed prompt processing
+`0.602222` s. It produced no valid token or decode rate. The accidental power
+reset was recovered by restoring stable driver55 generation2; no inference
+process or exclusive lock remains, and the 4B/27B model files remain intact.
 
-Recovery unloaded Work and restored stable driver55 idle at generation12
-without reboot. The 4B and 27B model identities remain intact. Run the next
-candidate from generation12. Tag98 adds failure-only actual-versus-expected
-values and a counter index for the final ROOT software read/write/flit proof;
-it preserves every exact check and issues no extra NoC packet. Its default
-cross-build passed. Hashes and guarded runner are in
-[`tag298`](benchmarks/qwen35-work-tag298-20261120). Tag98 has not run on the
-card yet.
+Tag0118 adds expected-counter capture in the fixed 64-byte worker mailbox and
+a read-only `QUERY_EXPECTED` action without changing the 36-byte control
+request. Full driver/client/service build, focused ASan/UBSan tests, RV32IMF
+role compile, and the `15712/18432` kernel-stack check pass. The focused
+tag0118 card diagnostic is the next rewrite step; the two-warm benchmark is
+still gated. Details are in
+[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md) and
+[`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md).
 
-The last valid output measurement remains Tag70 at `0.115` decode tokens/s.
-No run has reached 100 tokens/s; the streaming Tensix dataflow/circular-buffer
-kernel redesign is still required for that target.
+The last valid output measurement remains a legacy Work-path result at
+`0.115` decode tokens/s. No dataflow run has yet generated a valid token or
+reached the 100 tokens/s target.
 
 ## Saved Pioneer instructions and access
 
@@ -50,18 +48,18 @@ Use strict host-key checking and the profile for the OS currently running.
 
 ## Current verified hardware state
 
-Haiku hrev99999 remains reachable at `10.0.0.247` through the pinned Haiku
-key. The tag61 client exited and the stable041 driver is idle:
+Haiku hrev99999 is reachable at `10.0.0.247` through the pinned Haiku key.
+After tag0117's failed diagnostic and the accidental power reset, the guarded
+recovery helper restored stable driver55 generation2 and cleared the lock:
 
 ```text
-P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-The latest stage is `/boot/home/pioneer-qwen35-work-261.M8D3`, with state
-`STABLE041_RESTORED`. No inference process or shared trial lock remains. The
-Qwen3.5-4B and Qwen3.8-27B files remain at `2,740,937,888` and
-`18,973,870,528` bytes. Tag61's completed logs and postflight are in
-[`tag261 evidence`](benchmarks/qwen35-work-tag261-20261119/evidence).
+No inference process or exclusive trial lock remains. The Qwen3.5-4B and
+Qwen3.8-27B files remain at `2,740,937,888` and `18,973,870,528` bytes. The
+tag0117 run and recovery evidence are in
+[`tag0117 evidence`](benchmarks/qwen35-dataflow-tag0117-20261121/evidence).
 
 ## Tag61: inner matrix receipt was overwritten
 

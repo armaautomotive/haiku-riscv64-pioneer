@@ -32,7 +32,7 @@ enum DataflowNocTransferStage : unsigned {
 
 struct DataflowNocDiagnostic {
 	unsigned stage,index;
-	uint32_t value;
+	uint32_t value,expected;
 };
 
 inline unsigned DataflowNocDiagnosticCode(const DataflowNocDiagnostic& detail)
@@ -84,14 +84,14 @@ class DataflowBlackholeNoc {
 		for (unsigned i=0;i<DataflowNocInitiators;i++) {
 			const uint32_t value=*Words(Base+0x40+i*0x800);
 			if (value) {
-				if (detail) *detail={0,i,value};
+				if (detail) *detail={0,i,value,0};
 				return false;
 			}
 		}
 		for (unsigned i=0;i<DataflowNocQueues;i++) {
 			const uint32_t value=*Words(Base+0x240+i*4);
 			if (value&255) {
-				if (detail) *detail={0,DataflowNocInitiators+i,value};
+				if (detail) *detail={0,DataflowNocInitiators+i,value,0};
 				return false;
 			}
 		}
@@ -112,13 +112,13 @@ class DataflowBlackholeNoc {
 		DataflowNocDiagnostic quiet{};
 		if (!Quiet(&quiet)) {
 			if (detail) *detail={DataflowNocTransferNotQuietBefore,
-				quiet.index,quiet.value};
+				quiet.index,quiet.value,0};
 			return false;
 		}
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
 		const uint32_t self=*Words(Base+0x14);
 		if (!self || self>0xfff) {
-			if (detail) *detail={DataflowNocTransferIdentity,0xff,self};
+			if (detail) *detail={DataflowNocTransferIdentity,0xff,self,0};
 			return false;
 		}
 		uint32_t expected[8];
@@ -133,13 +133,13 @@ class DataflowBlackholeNoc {
 			Words(Base)[i]=command[i];
 			const uint32_t observed=Words(Base)[i];
 			if (observed!=command[i]) {
-				if (detail) *detail={DataflowNocTransferCommandReadback,i,observed};
+				if (detail) *detail={DataflowNocTransferCommandReadback,i,observed,0};
 				return false;
 			}
 		}
 		if (!Quiet(&quiet)) {
 			if (detail) *detail={DataflowNocTransferNotQuietAfterCommand,
-				quiet.index,quiet.value};
+				quiet.index,quiet.value,0};
 			return false;
 		}
 		Fence();
@@ -154,13 +154,13 @@ class DataflowBlackholeNoc {
 			for (unsigned i=0;i<10;i++) {
 				const uint32_t observed=Words(Base)[i];
 				if (observed!=command[i]) {
-					if (detail) *detail={DataflowNocTransferCommandChanged,i,observed};
+					if (detail) *detail={DataflowNocTransferCommandChanged,i,observed,0};
 					return false;
 				}
 			}
 			if (!Quiet(&quiet)) {
 				if (detail) *detail={DataflowNocTransferNotQuietAfterComplete,
-					quiet.index,quiet.value};
+					quiet.index,quiet.value,0};
 				return false;
 			}
 			return true;
@@ -169,19 +169,19 @@ class DataflowBlackholeNoc {
 		// it publishes the shared failure and issues no further transfer.
 		const uint32_t doorbell=*Words(Base+0x40);
 		if (doorbell) {
-			if (detail) *detail={DataflowNocTransferDoorbellTimeout,0xff,doorbell};
+			if (detail) *detail={DataflowNocTransferDoorbellTimeout,0xff,doorbell,0};
 			return false;
 		}
 		for (unsigned i=0;i<8;i++) {
 			const uint32_t observed=Counter(i);
 			if (observed!=expected[i]) {
 				if (detail) *detail={DataflowNocTransferCounterTimeout,0x80U+i,
-					observed};
+					observed,expected[i]};
 				return false;
 			}
 		}
 		if (!Quiet(&quiet) && detail)
-			*detail={DataflowNocTransferNotQuietAfterComplete,quiet.index,quiet.value};
+			*detail={DataflowNocTransferNotQuietAfterComplete,quiet.index,quiet.value,0};
 		else if (detail)
 			detail->stage=DataflowNocTransferDoorbellTimeout;
 		return false;

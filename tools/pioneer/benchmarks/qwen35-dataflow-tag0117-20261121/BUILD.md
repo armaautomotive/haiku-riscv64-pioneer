@@ -38,7 +38,7 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
   without A-extension atomics or unresolved runtime helpers.
 - Both diagnostic and recovery shell wrappers pass `sh -n`.
 
-The tag0117 diagnostic run is pending. Tag0116's failure-detail changes and
-previous hardware outcomes are documented in
+The tag0117 diagnostic result is in [`tag0117 RUN`](RUN.md). Tag0116's
+failure-detail changes and previous hardware outcomes are documented in
 [`tag0116 BUILD`](../qwen35-dataflow-tag0116-20261121/BUILD.md) and
 [`tag0115 RUN`](../qwen35-dataflow-tag0115-20261121/RUN.md).

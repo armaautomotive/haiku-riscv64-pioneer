@@ -17,28 +17,28 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
-BRISC/Tensix service, with no CPU inference or fallback. Tag0114 and tag0115
-both loaded the model, then failed the first core0 embedding read. Tag0115's
-authentication took `99.897654` s, vocabulary/tokenization `13.042067` s,
-model load `330.400460` s, and failed prompt attempt `0.611537` s. Its
-read-only NoC drain wait timed out on NoC0 queue0 after `65536` polls
-(`recovery_audit_detail=260`, index4); no output or decode rate was produced.
-The guarded post-cycle helper restored stable55 generation2 and cleared the
-lock. A live check after the user's accidental power reset again confirmed
-stable55 generation2, idle, with no Qwen process; both model files remain
-intact. Tag0116 now captures the failed transfer stage, status-register index,
-and raw value in the fixed mailbox and query diagnostic without clearing NoC
-commands, resetting cores, or changing either ABI size. Tag0117 adds a
-single-run, two-token client mode so the failed embedding path can be checked
-without starting the two-run throughput benchmark. Offline build, sanitizer
-fixtures, RV32IMF compile, and the `15712/18432`-byte stack check pass. The
-tag0117 diagnostic run is pending; valid output, two warm runs, clean unload,
-in-place recovery, and the 100 tokens/s target remain open. See
-[`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md) and
+BRISC/Tensix service, with no CPU inference or fallback. The tag0117 focused
+diagnostic loaded all `2740498432` resident model bytes, then failed its first
+core0 embedding read. Authentication took `99.823865` s, vocabulary and prompt
+tokenization `12.747341` s, model load `324.806932` s, and the failed prompt
+operation `0.602222` s. The failure was NoC transfer-counter stage7, counter0
+(index36), with observed value `0x00029066`; tag0117 did not preserve the
+expected value. No valid token or decode rate was produced, and the two-warm
+benchmark has not started. The accidental power reset was recovered through
+the guarded helper: stable55 generation2 is idle, the lock is cleared, and the
+4B/27B files remain intact. Tag0118 now captures both observed and expected
+counter values using reserved mailbox word3 and a read-only query action; the
+64-byte mailbox and control-request size remain fixed. Full build, focused
+ASan/UBSan tests, RV32IMF role compile, and `15712/18432` stack check pass.
+Tag0118 is not installed yet. The next card action is a guarded one-run
+diagnostic, not the throughput benchmark. Valid output, two warm runs, clean
+unload, in-place recovery, and 100 decode tokens/s remain open. See
+[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
+[`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md), and
+prior outcomes in [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md),
 [`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
 [`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md), and
-[`tag0116 BUILD`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md), and
-[`tag0117 BUILD`](benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md).
+[`tag0116 BUILD`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -179,10 +179,19 @@ The card diagnostic is pending. See
 
 - 2026-11-21 (tag0117, single-run diagnostic): Added a client mode that
   validates one full prompt and a two-token output, skipping the second run.
-  This is for code diagnosis; throughput acceptance remains deferred. The
-  full build and focused checks pass. The card remains on stable55 pending the
-  tag0117 guarded run. See
-  `benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md`.
+  It loaded the full model and failed the first embedding NoC read at
+  counter0/index36 (`observed=0x00029066`). No token or decode rate was
+  produced. Recovery restored stable55 generation2 after the accidental
+  power reset; the lock was cleared and both model files remain intact. See
+  `benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md`.
+
+- 2026-11-21 (tag0118, expected-counter diagnostic): Captures the expected
+  completion counter beside the observed value, carrying it through mailbox
+  reserved word3 and a read-only `QUERY_EXPECTED` action. Fixed mailbox and
+  ioctl sizes remain unchanged; dataflow ABI is 4. Full build, focused
+  sanitizer tests, RV32IMF role compile, and `15712/18432` stack audit pass.
+  The card remains on stable55 idle at generation2 pending guarded diagnostic.
+  See `benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
   vocabulary load and prompt tokenization `13.168584` s, full model load

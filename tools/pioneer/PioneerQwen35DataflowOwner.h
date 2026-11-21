@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_OWNER_H
 
 #include "PioneerQwen35DataflowProgram.h"
+#include "PioneerQwen35DataflowBlackholeIO.h"
 #include "PioneerQwen35DataflowEmbeddingProgram.h"
 #include "PioneerQwen35DataflowRmsProgram.h"
 #include "PioneerQwen35DataflowSiluProgram.h"
@@ -47,6 +48,7 @@ struct DataflowOwnerDiagnostic {
 	unsigned operation,result,core,pendingSequence;
 	DataflowWorkerSnapshot worker;
 	unsigned recoveryAuditStage,recoveryAuditCore,recoveryAuditDetail;
+	unsigned failureExpected;
 };
 
 enum DataflowOwnerResult {
@@ -92,7 +94,7 @@ class DataflowProjectionOwner {
 	DataflowWorkerSnapshot fSnapshot[DataflowCoreCount]{};
 	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
 		DataflowOwnerComplete,DataflowCoreCount,0,{},DataflowRecoveryAuditNone,
-		DataflowCoreCount,0};
+		DataflowCoreCount,0,0};
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{
@@ -100,6 +102,19 @@ class DataflowProjectionOwner {
 			&& snapshot.completedSequence==sequence
 			&& (snapshot.state==DataflowWorkerComplete
 				|| snapshot.state==DataflowWorkerFailed);
+	}
+
+	template<class IO>
+	static auto ReadFailureExpected(IO& io,unsigned core,unsigned& expected,int)
+		-> decltype(io.ReadWorkerFailureExpected(core,expected),bool())
+	{
+		return io.ReadWorkerFailureExpected(core,expected);
+	}
+
+	template<class IO>
+	static bool ReadFailureExpected(IO&,unsigned,unsigned&,long)
+	{
+		return false;
 	}
 
 public:
@@ -339,13 +354,23 @@ public:
 	DataflowOwnerResult RunEmbedding(const DataflowEmbeddingProgram& program,IO& io)
 	{
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0,0};
 		auto record=[&](DataflowOwnerResult result,unsigned core,
 			const DataflowWorkerSnapshot* worker,bool faulted) {
 			fDiagnostic.result=result;
 			fDiagnostic.core=core;
 			fDiagnostic.pendingSequence=fPendingSequence;
-			if (worker) fDiagnostic.worker=*worker;
+			if (worker) {
+				fDiagnostic.worker=*worker;
+				if (core<DataflowCoreCount
+					&& worker->failure==DataflowFailureEmbeddingWeightRead
+					&& worker->phase==5
+					&& ((worker->failureDetail>>8)&0xffU)
+						==DataflowNocTransferCounterTimeout
+					&& (worker->failureDetail&0xffU)>=0x80U
+					&& (worker->failureDetail&0xffU)<0x88U)
+					ReadFailureExpected(io,core,fDiagnostic.failureExpected,0);
+			}
 			if (faulted) fFaulted=true;
 			return result;
 		};
@@ -443,7 +468,7 @@ public:
 		fNextSequence=sequence;
 		fPendingSequence=0;
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0,0};
 		return DataflowOwnerComplete;
 	}
 
