@@ -84,3 +84,8 @@ bool PioneerQwen35DataflowBlackholeWorkerTargetCompileProbe(
 	return PioneerQwen35DataflowBlackholeWorker(program,queues,
 		activationCache,reader,compute,writer);
 }
+
+[[noreturn]] void PioneerQwen35DataflowBlackholeWorkerServiceTargetCompileProbe()
+{
+	PioneerQwen35DataflowBlackholeWorkerService();
+}

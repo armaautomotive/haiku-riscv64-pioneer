@@ -181,12 +181,13 @@ rewrite is implemented.
 ## Rewrite gates
 
 1. Complete offline descriptor and per-core worker checks.
-2. Cross-compile the concrete worker with its NoC and Tensix operations for the
-   Haiku RV32 image, with no CPU inference or fallback.
-3. Connect each worker invocation to a resident Qwen3.5 program owner and
-   preserve sharded activation outputs across dependent operations.
-4. Complete offline target and correctness gates. Only then begin the hardware
-   benchmark and assistant integration phases.
+2. Build the concrete resident worker image with its NoC and Tensix operations
+   for the Haiku RV32 image, with no CPU inference or fallback.
+3. Implement the owner that loads the image across all 120 cores, materializes
+   per-core descriptors, and safely drives the mailbox; preserve sharded
+   activations across dependent operations.
+4. Complete offline target and full-graph correctness gates. Only then begin
+   the hardware benchmark and assistant integration phases.
 
 ## Latest rewrite work
 
@@ -199,9 +200,22 @@ rewrite is implemented.
   or Writer failure slots before returning. No host dot-product or inference
   fallback exists. The target compile probe now instantiates this worker, and
   the Haiku RV32IMF cross-compile passes without A-extension instructions or
-  runtime helpers. This proves target lowering only; there is still no
-  resident program owner, native device image, or silicon validation. No
-  Pioneer access, benchmark, or assistant integration was performed.
+  runtime helpers. At this initial worker checkpoint, the service loop and
+  standalone image builder had not yet been added. No Pioneer access,
+  benchmark, or assistant integration was performed.
+- 2026-11-20: Added a 64-byte per-core mailbox ABI and a resident BRISC service
+  loop. The service verifies its local XY route against the immutable core
+  assignment, executes one projection invocation, publishes completion or a
+  role failure, then accepts another only after host acknowledgement. On that
+  acknowledgement it verifies the local queues are drained and clears their
+  error slots. Two weight pages now overlap a NoC 0 prefetch with Tensix work.
+  The standalone image builder passes and emits a 25,412-byte RV32 image with no
+  unresolved imports; the target compile probe still passes without A-extension
+  instructions or runtime helpers. The offline mailbox/route check also passes
+  under AddressSanitizer and UndefinedBehaviorSanitizer. This is offline image
+  evidence only: no host launch/acknowledgement owner exists, and the image has
+  not been loaded or run on the card. No benchmark or assistant integration
+  was performed.
 
 The pre-rewrite Work baseline is `1b2b57c561`; the branch tip immediately
 before adding the BRISC worker was `830ec1011e`. Rewrite checkpoints are pushed

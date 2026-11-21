@@ -229,11 +229,13 @@ inline void DataflowSignalLocalFailure(unsigned reason)
 
 inline bool DataflowBindLocalContext(DataflowDeviceContext& context,unsigned failureReason)
 {
-	DataflowDeviceContext candidate{};
+	DataflowDeviceContext candidate;
 	candidate.program=reinterpret_cast<const DataflowCoreInvocation*>(
 		static_cast<uintptr_t>(DataflowProgramAddress));
 	candidate.activationCache=reinterpret_cast<uint8_t*>(
 		static_cast<uintptr_t>(DataflowActivationCacheAddress));
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++)
+		candidate.queues[i]={nullptr,nullptr,nullptr};
 	if (!candidate.program || !candidate.activationCache
 		|| !DataflowBindQueues(*candidate.program,
 			reinterpret_cast<DataflowQueueControl*>(
@@ -445,7 +447,7 @@ bool PioneerQwen35DataflowWriter(const DataflowCoreInvocation& program,
 template<class Ops>
 bool PioneerQwen35DataflowReaderEntry(Ops& ops)
 {
-	DataflowDeviceContext context{};
+	DataflowDeviceContext context;
 	return DataflowBindLocalContext(context,DataflowFailureReader)
 		&& PioneerQwen35DataflowReader(*context.program,context.queues[0],
 			context.queues[1],context.activationCache,ops);
@@ -456,7 +458,7 @@ bool PioneerQwen35DataflowComputeEntry(Ops& ops)
 {
 	static_assert(Ops::TensixMatrixEngine,
 		"Qwen35 compute image must own the Tensix matrix engine");
-	DataflowDeviceContext context{};
+	DataflowDeviceContext context;
 	return DataflowBindLocalContext(context,DataflowFailureCompute)
 		&& PioneerQwen35DataflowCompute(*context.program,context.queues[0],
 			context.queues[1],context.queues[2],ops);
@@ -465,7 +467,7 @@ bool PioneerQwen35DataflowComputeEntry(Ops& ops)
 template<class Ops>
 bool PioneerQwen35DataflowWriterEntry(Ops& ops)
 {
-	DataflowDeviceContext context{};
+	DataflowDeviceContext context;
 	return DataflowBindLocalContext(context,DataflowFailureWriter)
 		&& PioneerQwen35DataflowWriter(*context.program,context.queues[2],ops);
 }

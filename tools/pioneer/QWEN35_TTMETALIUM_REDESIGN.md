@@ -49,9 +49,9 @@ Blackhole images:
    processes its projection tile loop locally.
 2. Each worker reads activations and quantized weights with NoC 0, issues
    projection operations to the Tensix matrix engine, and writes its output
-   shard with NoC 1. Use the two fixed L1 pages for bounded alternating
-   weight/activation staging. The initial worker is synchronous, so transfer
-   and matrix work do not overlap yet.
+   shard with NoC 1. It uses two fixed L1 weight pages to prefetch the next
+   tile while the matrix engine consumes the current one. Activation packing
+   and output writes are still synchronous.
 3. Keep intermediate activations in sharded device buffers. Pass buffer
    addresses and shape/stride metadata to the next program rather than
    collecting every projection into ROOT L1 and redistributing it.
@@ -119,13 +119,17 @@ c++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined \
 
 ## Prototype status
 
-`PioneerQwen35DataflowBlackholeWorker.h` now contains the concrete one-BRISC
-worker body: it binds the per-core invocation, fetches and packs its activation,
-alternates the two local weight/input pages through a complete output shard,
-and writes each completed 16-row result to its assigned output bank. Failures
-are published into that core's role slots and return to the owner. The target
-compile probe instantiates this code with the actual Blackhole NoC and Tensix
-adapters. It is not yet built into a resident image or launched on silicon.
+`PioneerQwen35DataflowBlackholeWorker.h` now contains a resident per-core
+service and concrete worker body. It binds the invocation, fetches and packs
+activation locally, alternates two weight pages, prefetches the next weight
+tile over NoC 0 while Tensix consumes the current tile, and writes each
+completed 16-row result over NoC 1. Its 64-byte mailbox uses monotonic
+command/completion/acknowledgement sequences; the worker remains resident
+between invocations and permits a new one only after the host acknowledges
+completion or has audited a fault. The standalone image builder produces a
+freestanding image with no unresolved imports. The image has not been loaded
+or run on the card; host-side launch, physical audit, and all-core graph
+ownership remain to be implemented.
 
 `PioneerQwen35ProgramSchedule.h` builds a stable 120-core partition for a
 whole projection. It assigns contiguous logical row ranges and splits a

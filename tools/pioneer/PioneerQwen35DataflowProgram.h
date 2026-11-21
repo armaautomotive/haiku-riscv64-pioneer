@@ -38,6 +38,17 @@ enum : unsigned {
 	DataflowProgramAddress=0xaa000,
 	DataflowProgramRegionBytes=0x1000,
 	DataflowProgramRegionEnd=DataflowProgramAddress+DataflowProgramRegionBytes,
+	DataflowWorkerMailboxAddress=DataflowProgramRegionEnd,
+	DataflowWorkerMailboxBytes=64,
+	DataflowWorkerMailboxMagic=0x314d4435,
+	DataflowWorkerMailboxVersion=1,
+	DataflowWorkerSequenceLimit=0x7ffffffe,
+	DataflowWorkerStarting=0,
+	DataflowWorkerReady=1,
+	DataflowWorkerRunning=2,
+	DataflowWorkerComplete=3,
+	DataflowWorkerFailed=4,
+	DataflowWorkerFatal=5,
 	DataflowActivationChunkInputs=256,
 	DataflowInputPageBytes=576,
 	DataflowOutputPageBytes=64,
@@ -82,6 +93,18 @@ static_assert(DataflowActivationCacheAddress+DataflowActivationCacheBytes
 struct DataflowCircularBuffer {
 	unsigned id,address,pageBytes,pages,bytes,pageStride;
 };
+
+// Host and one resident BRISC worker share this fixed 64-byte command/receipt
+// record. The host owns commandSequence and acknowledgedSequence; the worker
+// owns completedSequence, state, failure, and phase.
+struct alignas(32) DataflowWorkerMailbox {
+	uint32_t magic,version;
+	volatile uint32_t commandSequence,acknowledgedSequence,completedSequence;
+	volatile uint32_t state,failure,phase;
+	uint32_t reserved[8];
+};
+static_assert(sizeof(DataflowWorkerMailbox)==DataflowWorkerMailboxBytes,
+	"the resident worker mailbox is one fixed pair of 32-byte records");
 
 inline bool DataflowLocalRangeValid(unsigned address,unsigned bytes)
 {
@@ -346,7 +369,9 @@ struct DataflowCoreInvocation {
 };
 static_assert(DataflowProgramAddress>=DataflowLocalBufferEnd
 	&& DataflowProgramAddress>=0xa0400 && DataflowProgramRegionEnd<=0xb0000
-	&& sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes,
+	&& sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes
+	&& DataflowWorkerMailboxAddress==DataflowProgramRegionEnd
+	&& DataflowWorkerMailboxAddress+DataflowWorkerMailboxBytes<=0xb0000,
 	"the per-core invocation fits outside local queues and reserved Tensix scratch");
 
 class DataflowProgramBuilder {

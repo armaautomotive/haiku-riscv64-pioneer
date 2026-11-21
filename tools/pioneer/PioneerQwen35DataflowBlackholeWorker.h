@@ -59,6 +59,17 @@ bool PioneerQwen35DataflowBlackholeWorker(
 		for (unsigned group=0;group<weight.groups;group++) {
 			if (!compute.TensixBeginOutput(program.type))
 				return fail(DataflowFailureCompute);
+			DataflowNocReadTicket firstRead;
+			firstRead.active=0;
+			const uint64_t firstOffset=uint64_t(group)*16*program.weights.rowBytes;
+			const uint64_t firstAddress=uint64_t(weight.address)+firstOffset;
+			uint8_t* const firstWeightPage=weightBase;
+			if (firstOffset>weight.bytes || tileBytes>weight.bytes-firstOffset
+				|| firstAddress>UINT32_MAX
+				|| !reader.BeginWeightRead(weight.bank,uint32_t(firstAddress),
+					firstWeightPage,tileBytes,firstRead)
+				|| !reader.CompleteWeightRead(firstRead))
+				return fail(DataflowFailureReader);
 			for (unsigned block=0;block<program.blocks;block++) {
 				const unsigned page=block%DataflowCircularBufferPages;
 				uint8_t* const weightPage=weightBase
@@ -71,9 +82,23 @@ bool PioneerQwen35DataflowBlackholeWorker(
 				const uint64_t weightAddress=uint64_t(weight.address)+weightOffset;
 				if (weightOffset>weight.bytes || tileBytes>weight.bytes-weightOffset
 					|| weightAddress>UINT32_MAX
-					|| activationChunk>=program.inputs/DataflowActivationChunkInputs
-					|| !reader.ReadWeight(weight.bank,uint32_t(weightAddress),
-						weightPage,tileBytes)) return fail(DataflowFailureReader);
+					|| activationChunk>=program.inputs/DataflowActivationChunkInputs)
+					return fail(DataflowFailureReader);
+				DataflowNocReadTicket nextRead;
+				nextRead.active=0;
+				const bool hasNext=block+1<program.blocks;
+				if (hasNext) {
+					const uint64_t nextOffset=weightOffset+tileBytes;
+					const uint64_t nextAddress=uint64_t(weight.address)+nextOffset;
+					uint8_t* const nextPage=weightBase
+						+((page+1)%DataflowCircularBufferPages)
+							*program.circularBuffer[0].pageStride;
+					if (nextOffset>weight.bytes || tileBytes>weight.bytes-nextOffset
+						|| nextAddress>UINT32_MAX
+						|| !reader.BeginWeightRead(weight.bank,uint32_t(nextAddress),
+							nextPage,tileBytes,nextRead))
+						return fail(DataflowFailureReader);
+				}
 				const uint8_t* const packed=activationCache
 					+activationChunk*DataflowInputPageBytes;
 				for (unsigned byte=0;byte<DataflowInputPageBytes;byte++)
@@ -81,6 +106,8 @@ bool PioneerQwen35DataflowBlackholeWorker(
 				DataflowFence();
 				if (!compute.TensixMatmul(program.type,block,weightPage,inputPage))
 					return fail(DataflowFailureCompute);
+				if (hasNext && !reader.CompleteWeightRead(nextRead))
+					return fail(DataflowFailureReader);
 			}
 			if (!compute.TensixFinishOutput(outputPage,
 				program.circularBuffer[2].pageBytes))
@@ -98,13 +125,161 @@ bool PioneerQwen35DataflowBlackholeWorker(
 
 inline bool PioneerQwen35DataflowBlackholeWorkerEntry()
 {
-	DataflowDeviceContext context{};
+	DataflowDeviceContext context;
 	if (!DataflowBindLocalContext(context,DataflowFailureQueue)) return false;
 	DataflowBlackholeReaderOps reader;
 	DataflowBlackholeTensixOps compute;
 	DataflowBlackholeWriterOps writer;
 	return PioneerQwen35DataflowBlackholeWorker(*context.program,context.queues,
 		context.activationCache,reader,compute,writer);
+}
+
+inline unsigned DataflowBlackholeRouteForCore(unsigned core)
+{
+	static const unsigned columns[12]={1,2,3,4,5,6,7,10,11,12,13,14};
+	return core<DataflowCoreCount
+		?columns[core/10]|((core%10+2)<<6):0;
+}
+
+inline bool DataflowBlackholeLocalCore(unsigned route,unsigned& core)
+{
+	for (unsigned candidate=0;candidate<DataflowCoreCount;candidate++) {
+		if (DataflowBlackholeRouteForCore(candidate)==route) {
+			core=candidate;
+			return true;
+		}
+	}
+	return false;
+}
+
+inline void DataflowWorkerPublish(DataflowWorkerMailbox& mailbox,
+	unsigned sequence,unsigned state,unsigned failure,unsigned phase)
+{
+	DataflowStoreRelease(mailbox.failure,failure);
+	DataflowStoreRelease(mailbox.phase,phase);
+	DataflowStoreRelease(mailbox.completedSequence,sequence);
+	DataflowStoreRelease(mailbox.state,state);
+}
+
+inline bool DataflowWorkerMailboxStartupValid(
+	const DataflowWorkerMailbox& mailbox)
+{
+	if (mailbox.magic!=DataflowWorkerMailboxMagic
+		|| mailbox.version!=DataflowWorkerMailboxVersion
+		|| DataflowLoadRelaxed(mailbox.commandSequence)
+		|| DataflowLoadRelaxed(mailbox.acknowledgedSequence)
+		|| DataflowLoadRelaxed(mailbox.completedSequence)
+		|| DataflowLoadRelaxed(mailbox.state)!=DataflowWorkerReady
+		|| DataflowLoadRelaxed(mailbox.failure)
+		|| DataflowLoadRelaxed(mailbox.phase)) return false;
+	for (unsigned i=0;i<8;i++) if (mailbox.reserved[i]) return false;
+	return true;
+}
+
+inline bool DataflowWorkerResetQueues()
+{
+	auto* controls=reinterpret_cast<DataflowQueueControl*>(
+		static_cast<uintptr_t>(DataflowQueueStateAddress));
+	for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+		auto& control=controls[i];
+		if (DataflowLoadRelaxed(control.produced)
+			|| DataflowLoadRelaxed(control.consumed)) return false;
+		DataflowStoreRelease(control.readerFailure,0);
+		DataflowStoreRelease(control.computeFailure,0);
+		DataflowStoreRelease(control.writerFailure,0);
+		DataflowStoreRelease(control.queueFailure,0);
+		control.reserved[0]=control.reserved[1]=0;
+	}
+	DataflowFence();
+	return true;
+}
+
+// Persistent per-core service loop. A new descriptor is visible only after
+// the host publishes commandSequence. The host may acknowledge a result only
+// after its physical completion/fault audit; that acknowledgement permits the
+// worker to clear local failure slots and accept the next invocation.
+[[noreturn]] inline void PioneerQwen35DataflowBlackholeWorkerService()
+{
+	auto* mailbox=reinterpret_cast<DataflowWorkerMailbox*>(
+		static_cast<uintptr_t>(DataflowWorkerMailboxAddress));
+	if (!mailbox || !DataflowWorkerMailboxStartupValid(*mailbox)) {
+		if (mailbox) DataflowWorkerPublish(*mailbox,
+			DataflowLoadRelaxed(mailbox->completedSequence),DataflowWorkerFatal,
+			DataflowFailureQueue,1);
+		for (;;) asm volatile("" ::: "memory");
+	}
+	unsigned core=0;
+	const unsigned localRoute=*reinterpret_cast<volatile uint32_t*>(
+		static_cast<uintptr_t>(0xffb20014));
+	if (!DataflowBlackholeLocalCore(localRoute,core)) {
+		DataflowWorkerPublish(*mailbox,0,DataflowWorkerFatal,
+			DataflowFailureQueue,2);
+		for (;;) asm volatile("" ::: "memory");
+	}
+	unsigned completed=0;
+	for (;;) {
+		const unsigned sequence=DataflowLoadAcquire(mailbox->commandSequence);
+		if (sequence==completed) continue;
+		if (sequence>DataflowWorkerSequenceLimit || !sequence
+			|| DataflowLoadAcquire(mailbox->acknowledgedSequence)!=completed
+			|| DataflowLoadAcquire(mailbox->completedSequence)!=completed
+			|| DataflowLoadAcquire(mailbox->state)!=DataflowWorkerReady) {
+			DataflowWorkerPublish(*mailbox,sequence,DataflowWorkerFatal,
+				DataflowFailureQueue,3);
+			for (;;) asm volatile("" ::: "memory");
+		}
+		if (sequence!=completed+1) {
+			DataflowWorkerPublish(*mailbox,sequence,DataflowWorkerFailed,
+				DataflowFailureQueue,4);
+			completed=sequence;
+			while (DataflowLoadAcquire(mailbox->acknowledgedSequence)!=completed)
+				asm volatile("" ::: "memory");
+			if (!DataflowWorkerResetQueues()) {
+				DataflowWorkerPublish(*mailbox,completed,DataflowWorkerFatal,
+					DataflowFailureQueue,6);
+				for (;;) asm volatile("" ::: "memory");
+			}
+			DataflowWorkerPublish(*mailbox,completed,DataflowWorkerReady,0,0);
+			DataflowFence();
+			continue;
+		}
+		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerRunning,0,1);
+		DataflowFence();
+		DataflowDeviceContext context;
+		bool okay=DataflowBindLocalContext(context,DataflowFailureQueue);
+		if (okay && (context.program->core!=core
+			|| DataflowBlackholeRouteForCore(context.program->core)!=localRoute)) {
+			DataflowSignalLocalFailure(DataflowFailureQueue);
+			okay=false;
+		}
+		if (okay) {
+			DataflowBlackholeReaderOps reader;
+			DataflowBlackholeTensixOps compute;
+			DataflowBlackholeWriterOps writer;
+			okay=PioneerQwen35DataflowBlackholeWorker(*context.program,
+				context.queues,context.activationCache,reader,compute,writer);
+		}
+		unsigned failure=0;
+		auto* controls=reinterpret_cast<DataflowQueueControl*>(
+			static_cast<uintptr_t>(DataflowQueueStateAddress));
+		for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+			const unsigned queueFailure=DataflowQueueFailure(controls[i]);
+			if (!failure && queueFailure) failure=queueFailure;
+		}
+		const unsigned state=okay?DataflowWorkerComplete:DataflowWorkerFailed;
+		DataflowWorkerPublish(*mailbox,sequence,state,failure,okay?2:5);
+		DataflowFence();
+		completed=sequence;
+		while (DataflowLoadAcquire(mailbox->acknowledgedSequence)!=completed)
+			asm volatile("" ::: "memory");
+		if (!DataflowWorkerResetQueues()) {
+			DataflowWorkerPublish(*mailbox,completed,DataflowWorkerFatal,
+				DataflowFailureQueue,6);
+			for (;;) asm volatile("" ::: "memory");
+		}
+		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerReady,0,0);
+		DataflowFence();
+	}
 }
 
 } // namespace PioneerQwen35

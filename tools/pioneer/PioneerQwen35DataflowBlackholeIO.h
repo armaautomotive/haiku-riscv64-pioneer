@@ -16,10 +16,16 @@ enum : unsigned {
 	DataflowNocQueues=32
 };
 
-// Blackhole's reader and writer own different data-movement processors and
-// NoCs: BRISC reads on NoC 0; NCRISC writes on NoC 1. Their command registers
-// and transaction counters therefore stay independent while the two-page
-// local queues let transfer and matrix work overlap.
+struct DataflowNocReadTicket {
+	uint32_t command[10];
+	uint32_t expected[8];
+	unsigned active;
+};
+
+// Blackhole exposes separate NoC 0 and NoC 1 command/counter banks. This
+// freestanding worker issues input/weight reads on NoC 0 and output writes on
+// NoC 1 from its resident BRISC service. It can leave one NoC 0 read in flight
+// while the Tensix matrix engine consumes the other local weight page.
 template<unsigned Noc>
 class DataflowBlackholeNoc {
 	static_assert(Noc<2,"Blackhole has NoC 0 and NoC 1");
@@ -99,6 +105,52 @@ class DataflowBlackholeNoc {
 	}
 
 public:
+	bool BeginRead(uint32_t remote,unsigned route,uint8_t* local,unsigned bytes,
+		DataflowNocReadTicket& ticket) const
+	{
+		if (ticket.active || !local
+			|| !LocalRange(uint32_t(reinterpret_cast<uintptr_t>(local)),bytes)
+			|| !bytes || bytes>DataflowNocMaxTransfer || (bytes&63)
+			|| remote<BankBase || remote>=BankLimit || bytes>BankLimit-remote
+			|| (remote&63) || route>0xfff || !Quiet()) return false;
+		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
+		const uint32_t self=*Words(Base+0x14);
+		if (!self || self>0xfff) return false;
+		const unsigned delta[8]={1,0,1,1,0,0,1,0};
+		for (unsigned i=0;i<8;i++) ticket.expected[i]=Counter(i)+delta[i];
+		const uint32_t command[10]={remote,0,route,localAddress,0,self,0,0,bytes,0};
+		for (unsigned i=0;i<10;i++) {
+			ticket.command[i]=command[i];
+			Words(Base)[i]=command[i];
+			if (Words(Base)[i]!=command[i]) return false;
+		}
+		if (!Quiet()) return false;
+		Fence();
+		ticket.active=1;
+		*Words(Base+0x40)=1;
+		(void)*Words(Base+0x40);
+		Fence();
+		return true;
+	}
+
+	bool CompleteRead(DataflowNocReadTicket& ticket) const
+	{
+		if (!ticket.active) return false;
+		for (unsigned attempt=0;attempt<DataflowNocPollLimit;attempt++) {
+			bool complete=!*Words(Base+0x40);
+			for (unsigned i=0;i<8;i++)
+				complete &= Counter(i)==ticket.expected[i];
+			if (!complete) continue;
+			Fence();
+			for (unsigned i=0;i<10;i++)
+				if (Words(Base)[i]!=ticket.command[i]) return false;
+			if (!Quiet()) return false;
+			ticket.active=0;
+			return true;
+		}
+		return false;
+	}
+
 	bool Read(uint32_t remote,unsigned route,uint8_t* local,unsigned bytes) const
 	{
 		return Transfer(false,remote,route,local,bytes);
@@ -176,6 +228,18 @@ public:
 	{
 		return fProgram && bank<Banks && OwnsWeight(bank,address,bytes)
 			&& fNoc.Read(address,fProgram->bankRoute[0][bank],output,bytes);
+	}
+
+	bool BeginWeightRead(unsigned bank,uint32_t address,uint8_t* output,
+		unsigned bytes,DataflowNocReadTicket& ticket) const
+	{
+		return fProgram && bank<Banks && OwnsWeight(bank,address,bytes)
+			&& fNoc.BeginRead(address,fProgram->bankRoute[0][bank],output,bytes,ticket);
+	}
+
+	bool CompleteWeightRead(DataflowNocReadTicket& ticket) const
+	{
+		return fProgram && fNoc.CompleteRead(ticket);
 	}
 
 	bool PackActivation(unsigned type,unsigned inputs,unsigned chunk,
