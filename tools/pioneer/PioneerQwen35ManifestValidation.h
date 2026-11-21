@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_MANIFEST_VALIDATION_H
 
 #include "PioneerQwen35DeviceLayout.h"
+#include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35Roles.h"
 
 namespace PioneerQwen35 {
@@ -83,11 +84,13 @@ bool ValidateManifest(const DeviceLayout& manifest, Range rope, IsInitialized&& 
 		|| !extent(rope.bank,rope.address,rope.bytes,true)) return false;
 	for (unsigned slot=0;slot<ActivationBuffers;slot++)
 		if (!rows(manifest.activation[slot],Ffn,sizeof(float),16,false)) return false;
-	if (dataflowScratchCount && (!dataflowScratch || dataflowScratchCount!=2))
+	if (dataflowScratchCount && (!dataflowScratch
+		|| dataflowScratchCount!=DataflowGraphWorkspaceBufferCount))
 		return false;
-	if (dataflowScratchCount
-		&& (!rows(dataflowScratch[0],Hidden,sizeof(float),16,false)
-			|| !rows(dataflowScratch[1],Ffn,sizeof(float),16,false))) return false;
+	if (dataflowScratchCount)
+		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++)
+			if (!rows(dataflowScratch[i],DataflowGraphWorkspaceRows(i),
+				sizeof(float),16,false)) return false;
 	for (unsigned bank=0;bank<Banks;bank++)
 		if (end[bank]<workspaceStart[bank]
 			|| end[bank]-workspaceStart[bank]>ActivationWorkspaceBytes) return false;

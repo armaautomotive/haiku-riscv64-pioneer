@@ -86,17 +86,17 @@ static void CheckPreload(PioneerQwen35Gguf& model, const PioneerQwen35PackedPlan
 	D::DataflowGraphWorkspace graphWorkspace{};
 	assert(D::DataflowGraphWorkspaceBuilder::Build(plan,manifest,graphWorkspace));
 	assert(D::ValidateManifest(manifest,rope,uploaded,count,
-		graphWorkspace.space,2));
+		graphWorkspace.space,D::DataflowGraphWorkspaceBufferCount));
 	D::DataflowGraphWorkspace forgedGraphWorkspace=graphWorkspace;
 	forgedGraphWorkspace.space[1].parts[0].address+=D::LoadPageBytes;
 	assert(!D::ValidateManifest(manifest,rope,uploaded,count,
-		forgedGraphWorkspace.space,2));
+		forgedGraphWorkspace.space,D::DataflowGraphWorkspaceBufferCount));
 	const auto& graphPage=graphWorkspace.space[0].parts[0];
 	const unsigned graphPageIndex=(graphPage.address-D::BankBase)/D::LoadPageBytes;
 	assert(graphPage.bank<D::Banks && graphPageIndex<pagesPerBank);
 	initialized.at(graphPage.bank*pagesPerBank+graphPageIndex)=1;
 	assert(!D::ValidateManifest(manifest,rope,uploaded,count,
-		graphWorkspace.space,2));
+		graphWorkspace.space,D::DataflowGraphWorkspaceBufferCount));
 	initialized.at(graphPage.bank*pagesPerBank+graphPageIndex)=0;
  assert(!D::ValidateManifest(manifest,rope,uploaded,count-1));
  D::Range shifted=rope;

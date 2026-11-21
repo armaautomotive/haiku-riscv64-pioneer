@@ -72,7 +72,19 @@ int main()
 		graphManifest,graphWorkspace));
 	assert(graphWorkspace.Valid(graphManifest));
 	assert(graphWorkspace.space[0].rows==PioneerQwen35::Hidden
-		&& graphWorkspace.space[1].rows==PioneerQwen35::Ffn);
+		&& graphWorkspace.space[1].rows==PioneerQwen35::Ffn
+		&& graphWorkspace.space[
+			PioneerQwen35::DataflowGraphRecurrentQkvWorkspaceIndex].rows
+			==PioneerQwen35::ConvChannels
+		&& graphWorkspace.space[
+			PioneerQwen35::DataflowGraphRecurrentGateWorkspaceIndex].rows
+			==PioneerQwen35::DeltaInner
+		&& graphWorkspace.space[
+			PioneerQwen35::DataflowGraphRecurrentAlphaWorkspaceIndex].rows
+			==PioneerQwen35::DeltaHeads
+		&& graphWorkspace.space[
+			PioneerQwen35::DataflowGraphRecurrentBetaWorkspaceIndex].rows
+			==PioneerQwen35::DeltaHeads);
 	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
 		const auto& prior=graphManifest.activation[1].parts[bank];
 		const auto& residual=graphWorkspace.space[0].parts[bank];

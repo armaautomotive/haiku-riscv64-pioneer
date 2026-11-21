@@ -10,29 +10,44 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowGraphResidualWorkspaceIndex=0,
 	DataflowGraphUpWorkspaceIndex=1,
+	DataflowGraphRecurrentQkvWorkspaceIndex=2,
+	DataflowGraphRecurrentGateWorkspaceIndex=3,
+	DataflowGraphRecurrentAlphaWorkspaceIndex=4,
+	DataflowGraphRecurrentBetaWorkspaceIndex=5,
+	DataflowGraphWorkspaceBufferCount=6,
 	DataflowGraphUpOutputSlot=ActivationBuffers
 };
 
-// The model manifest keeps its two established Ffn-sized ping-pong buffers.
-// This rewrite sidecar reserves two additional tensors needed to execute one
-// FFN safely: preserve the residual while the ping-pong buffers hold gate and
-// normalized/down values, and retain the up projection while gate is activated.
+inline unsigned DataflowGraphWorkspaceRows(unsigned index)
+{
+	static constexpr unsigned rows[DataflowGraphWorkspaceBufferCount]={
+		Hidden,Ffn,ConvChannels,DeltaInner,DeltaHeads,DeltaHeads};
+	return index<DataflowGraphWorkspaceBufferCount?rows[index]:0;
+}
+
+// The manifest keeps its two established Ffn-sized ping-pong buffers. This
+// sidecar adds residual/Up scratch for the FFN plus retained recurrent QKV,
+// gate, alpha, and beta projection outputs for one Gated DeltaNet layer.
 struct DataflowGraphWorkspace {
-	RowSpace space[2]; // residual[Hidden], up[Ffn]
+	RowSpace space[DataflowGraphWorkspaceBufferCount];
 
 	bool Valid(const DeviceLayout& manifest) const
 	{
 		if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
-			|| !manifest.context || !space[0].Valid() || !space[1].Valid()
-			|| space[0].rows!=Hidden || space[1].rows!=Ffn
-			|| space[0].rowBytes!=sizeof(float) || space[1].rowBytes!=sizeof(float)
-			|| space[0].unit!=16 || space[1].unit!=16) return false;
-		for (unsigned i=0;i<ActivationBuffers;i++) {
-			if (!manifest.activation[i].Valid()
-				|| !Disjoint(space[0],manifest.activation[i])
-				|| !Disjoint(space[1],manifest.activation[i])) return false;
+			|| !manifest.context) return false;
+		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++) {
+			if (!space[i].Valid()
+				|| space[i].rows!=DataflowGraphWorkspaceRows(i)
+				|| space[i].rowBytes!=sizeof(float) || space[i].unit!=16) return false;
+			for (unsigned prior=0;prior<i;prior++)
+				if (!Disjoint(space[prior],space[i])) return false;
 		}
-		return Disjoint(space[0],space[1]);
+		for (unsigned i=0;i<ActivationBuffers;i++) {
+			if (!manifest.activation[i].Valid()) return false;
+			for (unsigned scratch=0;scratch<DataflowGraphWorkspaceBufferCount;scratch++)
+				if (!Disjoint(space[scratch],manifest.activation[i])) return false;
+		}
+		return true;
 	}
 
 	static bool Disjoint(const RowSpace& a,const RowSpace& b)
@@ -103,13 +118,16 @@ public:
 				|| !DataflowRowSpacesEqual(rows,manifest.activation[slot])) return false;
 		}
 
-		PioneerQ35ActivationBuffer residual{},up{};
-		if (!allocator.AllocateRows(Hidden,sizeof(float),residual)
-			|| !allocator.AllocateRows(Ffn,sizeof(float),up)
-			|| !allocator.Valid(residual) || !allocator.Valid(up)
-			|| !DataflowActivationBufferToRows(residual,result.space[0])
-			|| !DataflowActivationBufferToRows(up,result.space[1])
-			|| !result.Valid(manifest)) {
+		PioneerQ35ActivationBuffer scratch[DataflowGraphWorkspaceBufferCount]{};
+		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++) {
+			if (!allocator.AllocateRows(DataflowGraphWorkspaceRows(i),sizeof(float),
+					scratch[i]) || !allocator.Valid(scratch[i])
+				|| !DataflowActivationBufferToRows(scratch[i],result.space[i])) {
+				result={};
+				return false;
+			}
+		}
+		if (!result.Valid(manifest)) {
 			result={};
 			return false;
 		}
@@ -117,8 +135,9 @@ public:
 	}
 };
 
-static_assert(sizeof(DataflowGraphWorkspace)==2*sizeof(RowSpace),
-	"graph scratch is a fixed pair of manifest-bound row spaces");
+static_assert(sizeof(DataflowGraphWorkspace)
+	==DataflowGraphWorkspaceBufferCount*sizeof(RowSpace),
+	"graph scratch is a fixed manifest-bound set of row spaces");
 
 } // namespace PioneerQwen35
 

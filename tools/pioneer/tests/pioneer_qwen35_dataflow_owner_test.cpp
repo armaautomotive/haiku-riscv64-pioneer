@@ -23,8 +23,8 @@ static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 	unsigned first=0;
 	for (unsigned bank=0;bank<Banks;bank++) {
 		const unsigned count=groups/Banks+unsigned(bank<groups%Banks);
-		space.parts[bank]={bank,base+bank*0x01000000,first*16,count*16};
-		space.count++;
+		if (!count) continue;
+		space.parts[space.count++]={bank,base+bank*0x01000000,first*16,count*16};
 		first+=count;
 	}
 }
@@ -306,6 +306,14 @@ int main()
 		sizeof(float),0x20000000);
 	Rows(siluWorkspace.space[DataflowGraphUpWorkspaceIndex],Ffn,
 		sizeof(float),0x30000000);
+	Rows(siluWorkspace.space[DataflowGraphRecurrentQkvWorkspaceIndex],ConvChannels,
+		sizeof(float),0x40000000);
+	Rows(siluWorkspace.space[DataflowGraphRecurrentGateWorkspaceIndex],DeltaInner,
+		sizeof(float),0x50000000);
+	Rows(siluWorkspace.space[DataflowGraphRecurrentAlphaWorkspaceIndex],DeltaHeads,
+		sizeof(float),0x60000000);
+	Rows(siluWorkspace.space[DataflowGraphRecurrentBetaWorkspaceIndex],DeltaHeads,
+		sizeof(float),0x70000000);
 	assert(siluWorkspace.Valid(siluManifest));
 	DataflowSiluProgram siluProgram{};
 	assert(DataflowSiluProgramBuilder::Build(siluManifest,siluWorkspace,0,

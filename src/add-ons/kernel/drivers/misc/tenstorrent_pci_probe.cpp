@@ -7987,7 +7987,8 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 				&& context->initialized[bank*pagesPerBank+page]!=0;
 		};
 		if (!PioneerQwen35::ValidateManifest(request->manifest,request->rope,
-			initialized,context->uploadedPages,request->graphWorkspace.space,2)) {
+			initialized,context->uploadedPages,request->graphWorkspace.space,
+			PioneerQwen35::DataflowGraphWorkspaceBufferCount)) {
 			status=B_BAD_VALUE;
 		} else if (!PrepareQ38Dispatch(*context) || !context->io.ProveFleetRoutes()
 			|| !context->io.SelectRuntimeCore(0)) {

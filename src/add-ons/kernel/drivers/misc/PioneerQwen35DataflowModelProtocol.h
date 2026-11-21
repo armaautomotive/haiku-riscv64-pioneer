@@ -15,7 +15,7 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_FFN_SEQUENCE (B_DEVICE_OP_CODES_END + 0x8840)
 
 enum : uint32_t {
-	TT_QWEN35_DATAFLOW_MODEL_ABI=2,
+	TT_QWEN35_DATAFLOW_MODEL_ABI=3,
 	TT_QWEN35_DATAFLOW_RESIDUAL_SAVE=1,
 	TT_QWEN35_DATAFLOW_RESIDUAL_ADD=2,
 	TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE=256U
@@ -87,7 +87,7 @@ static_assert(sizeof(tt_qwen35_dataflow_residual)==28,
 static_assert(sizeof(tt_qwen35_dataflow_ffn_sequence)==36,
 	"fixed feed-forward sequence ABI");
 
-static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82228,
+static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82740,
 	"fixed manifest binding ABI");
 
 #endif
