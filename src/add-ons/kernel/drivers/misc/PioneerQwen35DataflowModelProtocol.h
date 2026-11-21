@@ -29,8 +29,8 @@ struct tt_qwen35_dataflow_model_bind {
 };
 
 struct tt_qwen35_dataflow_projection {
-	// output_slot 0/1 selects a ping-pong buffer; DataflowGraphUpOutputSlot
-	// selects the validated Ffn-sized graph scratch and admits only Up weights.
+	// output_slot 0/1 selects a ping-pong buffer; graph output slots select
+	// exact FFN Up or recurrent QKV/gate scratch destinations.
 	uint32_t version,layer,role,input_slot,output_slot;
 	uint32_t result,next_sequence,state,recovery_required;
 };

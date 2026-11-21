@@ -25,7 +25,7 @@ class DataflowProjectionAuthority {
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
-	bool fGraphUpReady=false;
+	bool fGraphWorkspaceReady[DataflowGraphWorkspaceBufferCount]{};
 	bool fGraphResidualReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
@@ -125,20 +125,33 @@ public:
 	{
 		return slot<ActivationBuffers?fActivationRows[slot]:0;
 	}
-	bool GraphUpReady() const { return fBound && fGraphUpReady; }
+	bool GraphUpReady() const
+		{ return GraphWorkspaceReady(DataflowGraphUpWorkspaceIndex); }
+	bool GraphWorkspaceReady(unsigned index) const
+		{ return fBound && index<DataflowGraphWorkspaceBufferCount
+			&& fGraphWorkspaceReady[index]; }
 	bool GraphResidualReady() const { return fBound && fGraphResidualReady; }
 
 	bool BuildProjection(unsigned layer,unsigned role,unsigned inputSlot,
 		unsigned outputSlot,DataflowProjectionProgram& program) const
 	{
 		if (!fBound || inputSlot>=ActivationBuffers
-			|| outputSlot>DataflowGraphUpOutputSlot || inputSlot==outputSlot
-			|| layer>Layers || role>=LayerRoles
-			|| (outputSlot==DataflowGraphUpOutputSlot
-				&& (layer>=Layers || role!=Up))) return false;
+			|| outputSlot>DataflowGraphRecurrentGateOutputSlot
+			|| inputSlot==outputSlot || layer>Layers || role>=LayerRoles)
+			return false;
+		if (outputSlot>=DataflowGraphUpOutputSlot) {
+			unsigned targetIndex=0,expectedRole=0;
+			if (!DataflowGraphProjectionTarget(outputSlot,targetIndex)
+				|| !DataflowGraphProjectionRole(layer,targetIndex,expectedRole)
+				|| role!=expectedRole) return false;
+		}
 		const TensorSpace* weight=fManifest.Weight(layer,role);
-		const RowSpace* output=outputSlot==DataflowGraphUpOutputSlot
-			?&fGraphWorkspace.space[DataflowGraphUpWorkspaceIndex]
+		unsigned workspaceIndex=0;
+		const bool graphOutput=outputSlot>=DataflowGraphUpOutputSlot;
+		if (graphOutput
+			&& !DataflowGraphProjectionTarget(outputSlot,workspaceIndex)) return false;
+		const RowSpace* output=graphOutput
+			?&fGraphWorkspace.space[workspaceIndex]
 			:outputSlot<ActivationBuffers?&fManifest.activation[outputSlot]:nullptr;
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fManifest.activation[inputSlot],weight->inputs,
@@ -179,7 +192,7 @@ public:
 	bool BuildSilu(unsigned gateSlot,DataflowSiluProgram& program) const
 	{
 		if (!fBound || fPending || gateSlot>=ActivationBuffers
-			|| !fGraphUpReady || fActivationRows[gateSlot]<Ffn
+			|| !GraphUpReady() || fActivationRows[gateSlot]<Ffn
 			|| !DataflowSiluProgramBuilder::Build(fManifest,fGraphWorkspace,
 				gateSlot,fRoutes,program)) return false;
 		return AuthorizeSilu(program);
@@ -187,7 +200,7 @@ public:
 
 	bool AuthorizeSilu(const DataflowSiluProgram& program) const
 	{
-		return fBound && !fPending && fGraphUpReady
+		return fBound && !fPending && GraphUpReady()
 			&& program.gateSlot<ActivationBuffers
 			&& fActivationRows[program.gateSlot]>=Ffn
 			&& SiluMatches(program);
@@ -197,7 +210,7 @@ public:
 	{
 		if (!AuthorizeSilu(program)) return false;
 		fActivationRows[program.gateSlot]=0;
-		fGraphUpReady=false;
+		fGraphWorkspaceReady[DataflowGraphUpWorkspaceIndex]=false;
 		fPending=true;
 		fPendingOutput=program.gateSlot;
 		fPendingKind=PendingSilu;
@@ -342,10 +355,11 @@ public:
 			fPendingOutput=output;
 			fPendingKind=PendingProjection;
 		} else {
+			unsigned workspaceIndex=0;
 			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
-				fRoutes,program)) return false;
-			fGraphUpReady=false;
-			fPendingOutput=DataflowGraphUpOutputSlot;
+				fRoutes,program,nullptr,&workspaceIndex)) return false;
+			fGraphWorkspaceReady[workspaceIndex]=false;
+			fPendingOutput=DataflowGraphProjectionOutputSlot(workspaceIndex);
 			fPendingKind=PendingGraphProjection;
 		}
 		fPending=true;
@@ -361,11 +375,11 @@ public:
 				&& Slots(program,input,output) && output==fPendingOutput
 				&& fActivationRows[input]>=program.inputRows;
 		}
-		unsigned input=ActivationBuffers;
+		unsigned input=ActivationBuffers,workspaceIndex=0;
 		return fPendingKind==PendingGraphProjection
-			&& fPendingOutput==DataflowGraphUpOutputSlot
 			&& DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
-				fRoutes,program,&input)
+				fRoutes,program,&input,&workspaceIndex)
+			&& fPendingOutput==DataflowGraphProjectionOutputSlot(workspaceIndex)
 			&& fActivationRows[input]>=program.inputRows;
 	}
 
@@ -408,12 +422,12 @@ public:
 	{
 		if (!PendingProjectionMatches(program)) return false;
 		if (fPendingKind==PendingGraphProjection) {
-			unsigned input=ActivationBuffers;
+			unsigned input=ActivationBuffers,workspaceIndex=0;
 			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
-				fRoutes,program,&input)
-				|| fPendingOutput!=DataflowGraphUpOutputSlot
+				fRoutes,program,&input,&workspaceIndex)
+				|| fPendingOutput!=DataflowGraphProjectionOutputSlot(workspaceIndex)
 				|| fActivationRows[input]<program.inputRows) return false;
-			fGraphUpReady=true;
+			fGraphWorkspaceReady[workspaceIndex]=true;
 		} else {
 			unsigned input=ActivationBuffers,output=ActivationBuffers;
 			if (!Slots(program,input,output) || output!=fPendingOutput
@@ -461,12 +475,14 @@ public:
 	{
 		if (!fBound || !fPending) return false;
 		if (fPendingKind==PendingGraphProjection) {
-			if (fPendingOutput!=DataflowGraphUpOutputSlot) return false;
-			fGraphUpReady=false;
+			unsigned workspaceIndex=0;
+			if (!DataflowGraphProjectionTarget(fPendingOutput,workspaceIndex))
+				return false;
+			fGraphWorkspaceReady[workspaceIndex]=false;
 		} else if (fPendingKind==PendingSilu) {
 			if (fPendingOutput>=ActivationBuffers) return false;
 			fActivationRows[fPendingOutput]=0;
-			fGraphUpReady=false;
+			fGraphWorkspaceReady[DataflowGraphUpWorkspaceIndex]=false;
 		} else if (fPendingKind==PendingResidual) {
 			if (fPendingOutput>=ActivationBuffers) return false;
 			if (fPendingResidualMode==DataflowResidualAdd)

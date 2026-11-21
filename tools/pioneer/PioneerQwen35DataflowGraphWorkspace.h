@@ -15,8 +15,48 @@ enum : unsigned {
 	DataflowGraphRecurrentAlphaWorkspaceIndex=4,
 	DataflowGraphRecurrentBetaWorkspaceIndex=5,
 	DataflowGraphWorkspaceBufferCount=6,
-	DataflowGraphUpOutputSlot=ActivationBuffers
+	DataflowGraphUpOutputSlot=ActivationBuffers,
+	DataflowGraphRecurrentQkvOutputSlot=DataflowGraphUpOutputSlot+1,
+	DataflowGraphRecurrentGateOutputSlot=DataflowGraphUpOutputSlot+2
 };
+
+inline bool DataflowGraphProjectionTarget(unsigned outputSlot,
+	unsigned& workspaceIndex)
+{
+	if (outputSlot<DataflowGraphUpOutputSlot
+		|| outputSlot>DataflowGraphRecurrentGateOutputSlot) return false;
+	workspaceIndex=DataflowGraphUpWorkspaceIndex
+		+outputSlot-DataflowGraphUpOutputSlot;
+	return workspaceIndex<DataflowGraphWorkspaceBufferCount;
+}
+
+inline unsigned DataflowGraphProjectionOutputSlot(unsigned workspaceIndex)
+{
+	return workspaceIndex>=DataflowGraphUpWorkspaceIndex
+		&& workspaceIndex<DataflowGraphWorkspaceBufferCount
+		?DataflowGraphUpOutputSlot+workspaceIndex-DataflowGraphUpWorkspaceIndex
+		:~0U;
+}
+
+inline bool DataflowGraphProjectionRole(unsigned layer,unsigned workspaceIndex,
+	unsigned& role)
+{
+	if (layer>=Layers) return false;
+	if (workspaceIndex==DataflowGraphUpWorkspaceIndex) {
+		role=Up;
+		return true;
+	}
+	if (Dense(layer)) return false;
+	if (workspaceIndex==DataflowGraphRecurrentQkvWorkspaceIndex) {
+		role=RecurrentQkv;
+		return true;
+	}
+	if (workspaceIndex==DataflowGraphRecurrentGateWorkspaceIndex) {
+		role=RecurrentGate;
+		return true;
+	}
+	return false;
+}
 
 inline unsigned DataflowGraphWorkspaceRows(unsigned index)
 {

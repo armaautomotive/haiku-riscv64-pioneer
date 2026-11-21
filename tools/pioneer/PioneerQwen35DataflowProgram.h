@@ -362,20 +362,29 @@ inline bool DataflowProjectionMatchesLayout(const DeviceLayout& manifest,
 		&& program.outputRows==program.weights.rows;
 }
 
-// The graph Up projection is the first external intermediate target. It is
-// restricted to one of the model's exact Up tensors, one declared activation
-// input, and the manifest-bound Ffn scratch row space. Other roles and scratch
-// aliases are not admitted by this path.
+// Graph projections target exact model roles and their matching manifest-bound
+// scratch row spaces. Up and recurrent QKV/gate are admitted; unrelated roles,
+// activation aliases, and unreserved output ranges are rejected.
 inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest,
 	const DataflowGraphWorkspace& workspace,
 	const unsigned (&auditedRoutes)[2][Banks],
-	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr)
+	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr,
+	unsigned* workspaceIndex=nullptr)
 {
+	unsigned targetIndex=0;
 	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
 		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
-		|| program.outputRows!=Ffn || !DataflowBankRoutesValid(auditedRoutes)
-		|| !DataflowRowSpaceMatches(workspace.space[DataflowGraphUpWorkspaceIndex],
-			program.output)) return false;
+		|| !DataflowBankRoutesValid(auditedRoutes)) return false;
+	for (unsigned index=DataflowGraphUpWorkspaceIndex;
+		index<=DataflowGraphRecurrentGateWorkspaceIndex;index++) {
+		if (program.outputRows==DataflowGraphWorkspaceRows(index)
+			&& DataflowRowSpaceMatches(workspace.space[index],program.output)) {
+			targetIndex=index;
+			break;
+		}
+	}
+	if (targetIndex<DataflowGraphUpWorkspaceIndex
+		|| program.inputs!=Hidden || program.inputRows!=Hidden) return false;
 	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
 
@@ -383,22 +392,25 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 	for (unsigned slot=0;slot<ActivationBuffers;slot++)
 		if (DataflowRowSpaceMatches(manifest.activation[slot],program.input))
 			foundInput=slot;
-	if (foundInput>=ActivationBuffers || program.inputRows!=Hidden
-		|| program.inputs!=Hidden) return false;
+	if (foundInput>=ActivationBuffers) return false;
 
-	bool modelUp=false;
+	unsigned requiredRole=0;
+	if (!DataflowGraphProjectionRole(0,targetIndex,requiredRole)) return false;
+	bool modelWeight=false;
 	for (unsigned layer=0;layer<Layers;layer++) {
-		const TensorSpace* expected=manifest.Weight(layer,Up);
+		if (!DataflowGraphProjectionRole(layer,targetIndex,requiredRole)) continue;
+		const TensorSpace* expected=manifest.Weight(layer,requiredRole);
 		if (expected && expected->type==program.type
 			&& expected->inputs==program.inputs
 			&& expected->place.rows==program.outputRows
 			&& DataflowRowSpaceMatches(expected->place,program.weights)) {
-			modelUp=true;
+			modelWeight=true;
 			break;
 		}
 	}
-	if (!modelUp) return false;
+	if (!modelWeight) return false;
 	if (inputSlot) *inputSlot=foundInput;
+	if (workspaceIndex) *workspaceIndex=targetIndex;
 	return true;
 }
 

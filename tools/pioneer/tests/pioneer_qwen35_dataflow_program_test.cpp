@@ -304,6 +304,18 @@ int main()
 		PioneerQwen35Projection::TileBytes(upWeight.type)*(Hidden/256)/16,
 		0x10000000);
 	assert(upWeight.place.Valid());
+	TensorSpace& recurrentQkv=manifest.layers[0].weights[RecurrentQkv];
+	recurrentQkv.type=12;
+	recurrentQkv.inputs=Hidden;
+	Rows(recurrentQkv.place,ConvChannels,
+		PioneerQwen35Projection::TileBytes(recurrentQkv.type)*(Hidden/256)/16,
+		0x11000000);
+	TensorSpace& recurrentGate=manifest.layers[0].weights[RecurrentGate];
+	recurrentGate.type=12;
+	recurrentGate.inputs=Hidden;
+	Rows(recurrentGate.place,DeltaInner,
+		PioneerQwen35Projection::TileBytes(recurrentGate.type)*(Hidden/256)/16,
+		0x12000000);
 	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
 	DataflowGraphWorkspace graphWorkspace{};
 	Rows(graphWorkspace.space[0],Hidden,sizeof(float),0x20000000);
@@ -354,6 +366,31 @@ int main()
 		&& authority.PendingProjectionMatches(upProgram));
 	assert(authority.Complete(upProgram));
 	assert(!authority.Pending() && authority.GraphUpReady());
+	DataflowProjectionProgram recurrentQkvProgram{};
+	assert(authority.BuildProjection(0,RecurrentQkv,0,
+		DataflowGraphRecurrentQkvOutputSlot,recurrentQkvProgram));
+	unsigned graphInput=ActivationBuffers,graphIndex=DataflowGraphWorkspaceBufferCount;
+	assert(DataflowProjectionMatchesGraphWorkspace(manifest,graphWorkspace,
+		TestBankRoutes,recurrentQkvProgram,&graphInput,&graphIndex));
+	assert(graphInput==0 && graphIndex==DataflowGraphRecurrentQkvWorkspaceIndex
+		&& recurrentQkvProgram.outputRows==ConvChannels);
+	assert(!authority.BuildProjection(0,RecurrentGate,0,
+		DataflowGraphRecurrentQkvOutputSlot,recurrentQkvProgram));
+	assert(authority.Begin(recurrentQkvProgram));
+	assert(authority.Pending()
+		&& !authority.GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex)
+		&& authority.PendingProjectionMatches(recurrentQkvProgram));
+	assert(authority.Complete(recurrentQkvProgram));
+	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex));
+	DataflowProjectionProgram recurrentGateProgram{};
+	assert(authority.BuildProjection(0,RecurrentGate,0,
+		DataflowGraphRecurrentGateOutputSlot,recurrentGateProgram));
+	assert(recurrentGateProgram.outputRows==DeltaInner);
+	assert(authority.Begin(recurrentGateProgram));
+	assert(authority.Complete(recurrentGateProgram));
+	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentGateWorkspaceIndex));
+	assert(!authority.BuildProjection(3,RecurrentQkv,0,
+		DataflowGraphRecurrentQkvOutputSlot,recurrentQkvProgram));
 	DataflowSiluProgram siluProgram{};
 	assert(authority.BuildSilu(1,siluProgram) && siluProgram.Valid());
 	assert(authority.BeginSilu(siluProgram));
