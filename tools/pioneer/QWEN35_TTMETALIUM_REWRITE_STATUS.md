@@ -1092,12 +1092,13 @@ slots. A new read-only `QUERY_READ_REQUEST` action returns the read address,
 route, and size; it performs no NoC transaction, reset, retry, or counter
 clear. The normal owner and 120-worker command barriers are unchanged.
 
-The full variant-60 driver/service/client build passes with a
-`15712/18432`-byte conservative kernel stack. The RV32IMF role compile has no
-A-extension atomics or unresolved helpers. The embedding-worker and service
-owner ASan/UBSan fixtures verify request identity and receipt propagation; the
-runtime-recovery fixture passes. Driver SHA-256 is
-`754c3aec27cbfc74473c585e7b64d4441aced9f73eb7ec1eb9d955e31a047377`, client
+The correctly tagged variant-60 driver/service/client build passes with
+runtime tag `2026112100010120` and a `15712/18432`-byte conservative kernel
+stack. The RV32IMF role compile has no A-extension atomics or unresolved
+helpers. The embedding-worker and service-owner ASan/UBSan fixtures verify
+request identity and receipt propagation; the runtime-recovery fixture passes.
+Driver SHA-256 is
+`153748972239101302603e71f4ba3a3cd665fb6e63d51a7cb4094df91c538d7c`, client
 SHA-256 is `73cd7e9b47711866d67bd50eb8cb0ad358138760d2bb3d5cda54cfdf8802a60b`,
 and service text SHA-256 is
 `2025572629309596d727bbc3aec55b458f643930fbe0f1766633e168c20c4dcd`.
@@ -1106,7 +1107,8 @@ Tag0120 is not installed or run on the card. The prior tag0119 candidate's
 guarded recovery has not been verified because the Pioneer remains
 unreachable after the reboot. No token output, decode rate, warm-run result, or
 clean unload has been established; 100 tokens/s remains unmet. Do not start
-another model run until stable55 recovery is verified and the failed read's
-target/return path is understood. Assistant integration remains deferred.
+the two-warm benchmark until stable55 recovery is verified, the tag0120
+diagnostic resolves the failed read path and returns valid output, and clean
+unload is proved. Assistant integration remains deferred.
 Build and next-run handoff are in
 [`benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md).
