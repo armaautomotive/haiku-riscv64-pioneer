@@ -80,7 +80,7 @@
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010104ULL \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010105ULL \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \

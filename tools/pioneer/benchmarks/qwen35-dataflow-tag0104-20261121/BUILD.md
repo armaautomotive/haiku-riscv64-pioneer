@@ -28,7 +28,9 @@ remain enabled.
 
 ## Hardware status
 
-Tag0104 has built offline. The last card postflight after tag0103 showed
-stable driver55 idle at generation 18. Tag0104 has not yet been installed or
-run. Recheck that no 27B diagnostic or inference process owns the card and
-that stable driver55 remains idle before using the one-shot trial wrapper.
+Tag0104 completed model binding and route proof, then stopped during service
+installation. The client unloaded cleanly; the wrapper restored stable
+driver55 at generation 20 without reboot. Raw evidence is in
+`evidence/tag0104-install-failure/`. A remaining nonzero peer-nonce guard in
+the service-install idle proof is removed in tag0105. The new client also
+reports the service-install result/state.

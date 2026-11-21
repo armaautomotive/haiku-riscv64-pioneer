@@ -249,9 +249,15 @@ static bool BindAndInstall(int fd,const D::DeviceLayout& manifest,
 	installAttempted=true;
 	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request)))
 		return false;
-	return request.result==TT_QWEN35_DATAFLOW_RESULT_COMPLETE
+	if (request.result==TT_QWEN35_DATAFLOW_RESULT_COMPLETE
 		&& request.state==TT_QWEN35_DATAFLOW_STATE_READY
-		&& !request.recovery_required && !request.reserved[0] && !request.reserved[1];
+		&& !request.recovery_required && !request.reserved[0] && !request.reserved[1])
+		return true;
+	fprintf(stderr,"P100A_Q35_DATAFLOW install_failed result=%u state=%u next_sequence=%u "
+		"recovery=%u reserved=%u,%u\n",request.result,request.state,
+		request.next_sequence,request.recovery_required,request.reserved[0],
+		request.reserved[1]);
+	return false;
 }
 
 static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,

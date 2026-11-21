@@ -38,7 +38,13 @@ before verifying the exact idle receipt. Tag0104 removes that redundant
 condition while retaining the status-word, marker, and waiting-PC checks.
 Tag0103 unloaded cleanly and restored stable driver55 at generation 18
 without reboot. The tag0104 driver built offline; a new idle preflight is
-required before its hardware trial. The 100 tokens/s target is still
+required before its hardware trial. Tag0104 then passed model binding and
+route proof but stopped during service installation; it unloaded cleanly and
+restored stable driver55 at generation 20. Inspection found the same
+zero-nonce rejection in the install-time idle check. Tag0105 removes it and
+prints the service-install result/state. Its offline build is pushed; stable
+driver55 remains idle at generation 20 pending another guarded trial. No
+tokens or decode rate have yet been produced; 100 tokens/s remains
 unmeasured.
 
 ## Progress

@@ -185,7 +185,6 @@ PioneerSessionIO::DataflowCoreIdleForHold(unsigned core)
 		|| !PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
 	if (!core) return !lease.rootRunning && !node.image.running;
 	return lease.booted && !lease.rootRunning && node.image.running
-		&& lease.peerNonce[core-1]
 		&& PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,&lease);
 }
 
