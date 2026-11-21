@@ -7,6 +7,8 @@
 #include "../PioneerQwen35DataflowEmbedding.h"
 #include "../PioneerQwen35DataflowEmbeddingProgram.h"
 #include "../PioneerQwen35DataflowRms.h"
+#include "../PioneerQwen35DataflowRmsProgram.h"
+#include "../PioneerQwen35DataflowBlackholeRmsWorker.h"
 
 using namespace PioneerQwen35;
 
@@ -50,6 +52,29 @@ bool PioneerQwen35DataflowRmsTargetCompileProbe(const float* input,
 	const float* weight,float* output)
 {
 	return DataflowNormalizeHidden(input,weight,output);
+}
+
+bool PioneerQwen35DataflowRmsProgramTargetCompileProbe(
+	const DataflowRmsProgram& program,unsigned core,
+	DataflowRmsInvocation& invocation)
+{
+	return DataflowRmsProgramBuilder::BindCore(program,core,invocation);
+}
+
+bool PioneerQwen35DataflowBlackholeRmsTargetCompileProbe(
+	const DataflowRmsInvocation& invocation,unsigned sequence)
+{
+	DataflowBlackholeRmsOps io;
+	return io.Bind(invocation,sequence)
+		&& PioneerQwen35DataflowRmsWorker(invocation,sequence,
+			reinterpret_cast<float*>(static_cast<uintptr_t>(
+				DataflowActivationCacheAddress)),
+			reinterpret_cast<float*>(static_cast<uintptr_t>(
+				DataflowInputBufferAddress)),
+			reinterpret_cast<float*>(static_cast<uintptr_t>(
+				DataflowWeightBufferAddress)),
+			reinterpret_cast<float*>(static_cast<uintptr_t>(
+				DataflowOutputBufferAddress)),io);
 }
 
 bool PioneerQwen35DataflowEmbeddingProgramTargetCompileProbe(

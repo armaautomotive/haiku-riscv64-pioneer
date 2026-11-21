@@ -107,6 +107,8 @@ int main()
 		DataflowServiceEntryAddress+1,4));
 	assert(DataflowPciRunningWriteRange(DataflowProgramAddress,
 		sizeof(DataflowCoreInvocation)));
+	assert(DataflowPciRunningWriteRange(DataflowProgramAddress,
+		sizeof(DataflowRmsInvocation)));
 	assert(DataflowPciRunningWriteRange(
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,commandSequence),4));
 	assert(DataflowPciRunningWriteRange(

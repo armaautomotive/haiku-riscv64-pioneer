@@ -101,6 +101,27 @@ inline bool DataflowRmsDomain(float value)
 	return magnitude<=0x477fe000U && (!magnitude || magnitude>=0x26800000U);
 }
 
+inline bool DataflowHiddenRmsScale(const float* input,float& scale)
+{
+	if (!input || (reinterpret_cast<uintptr_t>(input)&3)) return false;
+	DataflowRmsSum sum;
+	for (unsigned i=0;i<Hidden;i++) {
+		if (!DataflowRmsDomain(input[i])
+			|| !sum.Add(PioneerQ38PrepareFlush(input[i]*input[i]))) return false;
+	}
+	float mean=0;
+	if (!sum.Mean5120(mean)) return false;
+	mean*=2.0f;
+	const float denominator=PioneerGraphSqrtPositive(mean+1e-6f);
+	if (!(denominator>0)
+		|| (PioneerAttentionBits(denominator)&0x7f800000U)==0x7f800000U)
+		return false;
+	const float result=PioneerGraphDividePositive(1.0f,denominator);
+	if (!(result>0) || !DataflowRmsDomain(result)) return false;
+	scale=result;
+	return true;
+}
+
 // Exact hidden-width RMS arithmetic for the device worker. The reduction
 // follows the pinned operator's rounded-square, software-binary64 sum, sqrt,
 // divide, and two rounded output multiplies. This helper executes in the
@@ -112,20 +133,9 @@ inline bool DataflowNormalizeHidden(const float* input,const float* weight,
 		|| (reinterpret_cast<uintptr_t>(input)&3)
 		|| (reinterpret_cast<uintptr_t>(weight)&3)
 		|| (reinterpret_cast<uintptr_t>(output)&3)) return false;
-	DataflowRmsSum sum;
-	for (unsigned i=0;i<Hidden;i++) {
-		if (!DataflowRmsDomain(input[i]) || !DataflowRmsDomain(weight[i])
-			|| !sum.Add(PioneerQ38PrepareFlush(input[i]*input[i]))) return false;
-	}
-	float mean=0;
-	if (!sum.Mean5120(mean)) return false;
-	mean*=2.0f;
-	const float denominator=PioneerGraphSqrtPositive(mean+1e-6f);
-	if (!(denominator>0)
-		|| (PioneerAttentionBits(denominator)&0x7f800000U)==0x7f800000U)
-		return false;
-	const float scale=PioneerGraphDividePositive(1.0f,denominator);
-	if (!(scale>0) || !DataflowRmsDomain(scale)) return false;
+	for (unsigned i=0;i<Hidden;i++) if (!DataflowRmsDomain(weight[i])) return false;
+	float scale=0;
+	if (!DataflowHiddenRmsScale(input,scale)) return false;
 	for (unsigned i=0;i<Hidden;i++) {
 		const float value=(input[i]*scale)*weight[i];
 		if ((PioneerAttentionBits(value)&0x7f800000U)==0x7f800000U) return false;

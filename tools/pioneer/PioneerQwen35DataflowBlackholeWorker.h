@@ -5,6 +5,7 @@
 #include "PioneerQwen35DataflowBlackholeIO.h"
 #include "PioneerQwen35DataflowTensixOps.h"
 #include "PioneerQwen35DataflowBlackholeEmbeddingWorker.h"
+#include "PioneerQwen35DataflowBlackholeRmsWorker.h"
 
 namespace PioneerQwen35 {
 
@@ -319,6 +320,25 @@ inline bool DataflowWorkerResetQueues()
 				okay=io.Bind(*embedding)
 					&& PioneerQwen35DataflowEmbedWorker(*embedding,
 						reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(
+							DataflowWeightBufferAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowOutputBufferAddress)),io);
+			}
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+		} else if (invocationMagic==DataflowRmsMagic) {
+			const auto* rms=reinterpret_cast<const DataflowRmsInvocation*>(
+				static_cast<uintptr_t>(DataflowProgramAddress));
+			if (DataflowWorkerQueuesClean() && rms->Valid()
+				&& rms->core==core
+				&& DataflowBlackholeRouteForCore(rms->core)==localRoute) {
+				DataflowBlackholeRmsOps io;
+				okay=io.Bind(*rms,sequence)
+					&& PioneerQwen35DataflowRmsWorker(*rms,sequence,
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowActivationCacheAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowInputBufferAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowWeightBufferAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowOutputBufferAddress)),io);

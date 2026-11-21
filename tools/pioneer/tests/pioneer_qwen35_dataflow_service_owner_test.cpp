@@ -44,6 +44,7 @@ struct MockDataflowIO {
 	DataflowWorkerMailbox mailbox[DataflowCoreCount]{};
 	DataflowCoreInvocation invocation[DataflowCoreCount]{};
 	DataflowEmbeddingInvocation embeddingInvocation[DataflowCoreCount]{};
+	DataflowRmsInvocation rmsInvocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0,resumeCount=0;
 	unsigned beginCount=0,completeCount=0;
@@ -196,6 +197,20 @@ struct MockDataflowIO {
 		completeCount++;
 		return !failComplete && sequence && program.Valid();
 	}
+	bool AuthorizeRms(const DataflowRmsProgram& program) const
+	{
+		return authorizeProgram && program.Valid();
+	}
+	bool BeginRms(const DataflowRmsProgram& program)
+	{
+		beginCount++;
+		return !failBegin && program.Valid();
+	}
+	bool CompleteRms(const DataflowRmsProgram& program,unsigned sequence)
+	{
+		completeCount++;
+		return !failComplete && sequence && program.Valid();
+	}
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& value)
 	{
 		if (core>=DataflowCoreCount || value.core!=core || !value.Valid()) return false;
@@ -218,6 +233,17 @@ struct MockDataflowIO {
 	{
 		return core<DataflowCoreCount
 			&& memcmp(&embeddingInvocation[core],&value,sizeof(value))==0;
+	}
+	bool WriteRmsInvocation(unsigned core,const DataflowRmsInvocation& value)
+	{
+		if (core>=DataflowCoreCount || value.core!=core || !value.Valid()) return false;
+		rmsInvocation[core]=value;
+		return true;
+	}
+	bool RmsInvocationMatches(unsigned core,const DataflowRmsInvocation& value) const
+	{
+		return core<DataflowCoreCount
+			&& memcmp(&rmsInvocation[core],&value,sizeof(value))==0;
 	}
 	bool PublishCommand(unsigned core,unsigned sequence)
 	{
@@ -258,6 +284,21 @@ struct MockDataflowIO {
 				|| receipts[core].completedSequence!=sequence
 				|| !DataflowEmbeddingProgramBuilder::BindCore(program,core,expected)
 				|| memcmp(&expected,&embeddingInvocation[core],sizeof(expected))!=0)
+				return false;
+		}
+		return true;
+	}
+	bool AuditRms(const DataflowRmsProgram& program,unsigned sequence,
+		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount]) const
+	{
+		if (!program.Valid()) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowRmsInvocation expected;
+			if (receipts[core].state!=DataflowWorkerComplete
+				|| receipts[core].commandSequence!=sequence
+				|| receipts[core].completedSequence!=sequence
+				|| !DataflowRmsProgramBuilder::BindCore(program,core,expected)
+				|| memcmp(&expected,&rmsInvocation[core],sizeof(expected))!=0)
 				return false;
 		}
 		return true;
@@ -355,6 +396,32 @@ static DeviceLayout MakeEmbeddingLayout()
 	return model;
 }
 
+static DeviceLayout MakeRmsLayout()
+{
+	DeviceLayout model{};
+	model.magic=LayoutMagic;
+	model.version=LayoutVersion;
+	model.context=64;
+	TensorSpace& norm=model.layers[0].weights[AttentionNorm];
+	norm.type=0;
+	norm.inputs=Hidden;
+	norm.place.rows=1;
+	norm.place.rowBytes=Hidden*sizeof(float);
+	norm.place.count=1;
+	norm.place.unit=1;
+	norm.place.parts[0]={1,BankBase+0x10000000,0,1};
+	for (unsigned slot=0;slot<ActivationBuffers;slot++) {
+		auto& output=model.activation[slot];
+		output.rows=Ffn;
+		output.rowBytes=sizeof(float);
+		output.count=1;
+		output.unit=16;
+		output.parts[0]={slot?5U:6U,BankBase+(slot?0x30000000:0x20000000),
+			0,output.rows};
+	}
+	return model;
+}
+
 int main()
 {
 	uint32_t code[96];
@@ -406,6 +473,12 @@ int main()
 	assert(owner.EmbedToken(embedding,io)==DataflowServiceComplete);
 	assert(owner.NextSequence()==2);
 	assert(io.beginCount==2 && io.completeCount==2);
+	DataflowRmsProgram rms{};
+	assert(DataflowRmsProgramBuilder::Build(MakeRmsLayout(),0,AttentionNorm,
+		0,1,TestRoutes,rms));
+	assert(owner.RunRms(rms,io)==DataflowServiceComplete);
+	assert(owner.NextSequence()==3);
+	assert(io.beginCount==3 && io.completeCount==3);
 	assert(owner.Close(io)==DataflowServiceClosed && owner.Closed());
 	assert(io.stopCount==1 && io.restoreCount==DataflowCoreCount
 		&& io.resumeCount==1);

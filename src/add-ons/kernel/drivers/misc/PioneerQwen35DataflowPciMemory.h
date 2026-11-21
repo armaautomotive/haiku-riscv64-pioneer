@@ -50,10 +50,11 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 		+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
 	const unsigned shutdown=PioneerQwen35::DataflowWorkerMailboxAddress
 		+offsetof(PioneerQwen35::DataflowWorkerMailbox,shutdownSequence);
-	const unsigned invocationBytes=sizeof(PioneerQwen35::DataflowCoreInvocation)
-		>sizeof(PioneerQwen35::DataflowEmbeddingInvocation)
-		?sizeof(PioneerQwen35::DataflowCoreInvocation)
-		:sizeof(PioneerQwen35::DataflowEmbeddingInvocation);
+	unsigned invocationBytes=sizeof(PioneerQwen35::DataflowCoreInvocation);
+	if (invocationBytes<sizeof(PioneerQwen35::DataflowEmbeddingInvocation))
+		invocationBytes=sizeof(PioneerQwen35::DataflowEmbeddingInvocation);
+	if (invocationBytes<sizeof(PioneerQwen35::DataflowRmsInvocation))
+		invocationBytes=sizeof(PioneerQwen35::DataflowRmsInvocation);
 	return (address>=PioneerQwen35::DataflowProgramAddress
 			&& end<=PioneerQwen35::DataflowProgramAddress
 				+invocationBytes)

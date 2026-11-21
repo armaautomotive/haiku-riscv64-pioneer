@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowProgram.h"
 #include "PioneerQwen35DataflowEmbeddingProgram.h"
+#include "PioneerQwen35DataflowRmsProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -12,12 +13,14 @@ namespace PioneerQwen35 {
 // tables. The authority keeps an immutable layout copy so later caller-side
 // mutations cannot widen a projection's address space.
 class DataflowProjectionAuthority {
+	enum : unsigned { PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3 };
 	DeviceLayout fManifest{};
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
+	unsigned fPendingKind=PendingNone;
 
 	bool Slots(const DataflowProjectionProgram& program,unsigned& input,
 		unsigned& output) const
@@ -42,6 +45,23 @@ class DataflowProjectionAuthority {
 			|| program.lane!=expected.lane
 			|| program.weightBank!=expected.weightBank
 			|| program.weightBase!=expected.weightBase
+			|| !DataflowRowSpaceMatches(expected.output,program.output)) return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
+	}
+
+	bool RmsMatches(const DataflowRmsProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowRmsProgram expected;
+		DataflowRmsZeroWords(expected);
+		if (!DataflowRmsProgramBuilder::Build(fManifest,program.layer,
+			program.role,program.inputSlot,program.outputSlot,fRoutes,expected)
+			|| program.scratchRow!=expected.scratchRow
+			|| !DataflowRowSpaceMatches(expected.input,program.input)
+			|| !DataflowRowSpaceMatches(expected.weight,program.weight)
 			|| !DataflowRowSpaceMatches(expected.output,program.output)) return false;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
@@ -91,6 +111,22 @@ public:
 	bool AuthorizeEmbedding(const DataflowEmbeddingProgram& program) const
 	{
 		return fBound && !fPending && EmbeddingMatches(program);
+	}
+
+	bool BuildRms(unsigned layer,unsigned role,unsigned inputSlot,
+		unsigned outputSlot,DataflowRmsProgram& program) const
+	{
+		if (!fBound || fPending || inputSlot>=ActivationBuffers
+			|| fActivationRows[inputSlot]<Hidden
+			|| !DataflowRmsProgramBuilder::Build(fManifest,layer,role,inputSlot,
+				outputSlot,fRoutes,program)) return false;
+		return AuthorizeRms(program);
+	}
+
+	bool AuthorizeRms(const DataflowRmsProgram& program) const
+	{
+		return fBound && !fPending && program.inputSlot<ActivationBuffers
+			&& fActivationRows[program.inputSlot]>=Hidden && RmsMatches(program);
 	}
 
 	bool BindValidatedModel(const DeviceLayout& manifest,
@@ -150,6 +186,7 @@ public:
 		fActivationRows[output]=0;
 		fPending=true;
 		fPendingOutput=output;
+		fPendingKind=PendingProjection;
 		return true;
 	}
 
@@ -160,18 +197,37 @@ public:
 		fActivationRows[program.outputSlot]=0;
 		fPending=true;
 		fPendingOutput=program.outputSlot;
+		fPendingKind=PendingEmbedding;
+		return true;
+	}
+
+	bool BeginRms(const DataflowRmsProgram& program)
+	{
+		if (!AuthorizeRms(program)
+			|| program.outputSlot>=ActivationBuffers) return false;
+		fActivationRows[program.outputSlot]=0;
+		fPending=true;
+		fPendingOutput=program.outputSlot;
+		fPendingKind=PendingRms;
 		return true;
 	}
 
 	bool PendingEmbeddingMatches(const DataflowEmbeddingProgram& program) const
 	{
-		return fPending && program.outputSlot==fPendingOutput
+		return fPending && fPendingKind==PendingEmbedding
+			&& program.outputSlot==fPendingOutput
 			&& EmbeddingMatches(program);
+	}
+
+	bool PendingRmsMatches(const DataflowRmsProgram& program) const
+	{
+		return fPending && fPendingKind==PendingRms
+			&& program.outputSlot==fPendingOutput && RmsMatches(program);
 	}
 
 	bool Complete(const DataflowProjectionProgram& program)
 	{
-		if (!fBound || !fPending
+		if (!fBound || !fPending || fPendingKind!=PendingProjection
 			|| !DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) return false;
 		unsigned input=ActivationBuffers,output=ActivationBuffers;
 		if (!Slots(program,input,output) || output!=fPendingOutput
@@ -180,18 +236,34 @@ public:
 		fActivationRows[output]=program.outputRows;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
 		return true;
 	}
 
 	bool CompleteEmbedding(const DataflowEmbeddingProgram& program)
 	{
-		if (!fBound || !fPending || !EmbeddingMatches(program)
+		if (!fBound || !fPending || fPendingKind!=PendingEmbedding
+			|| !EmbeddingMatches(program)
 			|| program.outputSlot!=fPendingOutput
 			|| !DataflowRowSpaceMatches(fManifest.activation[program.outputSlot],
 				program.output)) return false;
 		fActivationRows[program.outputSlot]=Hidden;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		return true;
+	}
+
+	bool CompleteRms(const DataflowRmsProgram& program)
+	{
+		if (!fBound || !fPending || fPendingKind!=PendingRms
+			|| !RmsMatches(program) || program.outputSlot!=fPendingOutput
+			|| program.output.rows>fManifest.activation[program.outputSlot].rows)
+			return false;
+		fActivationRows[program.outputSlot]=Hidden;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
 		return true;
 	}
 
@@ -204,6 +276,7 @@ public:
 		fActivationRows[fPendingOutput]=0;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
 		return true;
 	}
 };

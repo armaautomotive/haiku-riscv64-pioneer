@@ -288,6 +288,15 @@ int main()
 	manifest.tied=weight;
 	manifest.activation[0]=input;
 	manifest.activation[1]=output;
+	TensorSpace& normWeight=manifest.layers[0].weights[AttentionNorm];
+	normWeight.type=0;
+	normWeight.inputs=Hidden;
+	normWeight.place.rows=1;
+	normWeight.place.rowBytes=Hidden*sizeof(float);
+	normWeight.place.count=1;
+	normWeight.place.unit=1;
+	normWeight.place.parts[0]={2,BankBase+0x0a000000,0,1};
+	assert(normWeight.place.Valid());
 	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
 	DataflowProjectionAuthority authority;
 	assert(authority.BindValidatedModel(manifest,TestBankRoutes));
@@ -303,6 +312,16 @@ int main()
 	assert(!authority.Pending() && authority.ActivationReady(0)
 		&& authority.ActivationReady(1)
 		&& authority.ActivationRows(1)==program.outputRows);
+	DataflowRmsProgram rmsProgram{};
+	assert(authority.BuildRms(0,AttentionNorm,1,0,rmsProgram));
+	assert(rmsProgram.Valid() && authority.AuthorizeRms(rmsProgram));
+	assert(authority.BeginRms(rmsProgram));
+	assert(authority.Pending() && !authority.ActivationReady(0)
+		&& authority.PendingRmsMatches(rmsProgram)
+		&& !authority.PendingEmbeddingMatches(DataflowEmbeddingProgram{}));
+	assert(authority.CompleteRms(rmsProgram));
+	assert(!authority.Pending() && authority.ActivationReady(0)
+		&& authority.ActivationRows(0)==Hidden);
 
 	TensorSpace unregisteredWeight=weight;
 	unregisteredWeight.place.parts[0].address+=4096;

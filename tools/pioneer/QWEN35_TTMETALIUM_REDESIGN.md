@@ -289,9 +289,9 @@ projection. Recovery double-audits the whole fleet before acknowledging
 terminal workers; uncertain or non-idle NoC state remains quarantined. A
 root-only activation-read opcode now reads only initialized float rows through
 the checked resident-bank page transport, after an all-120-core idle audit and
-before a second idle audit. The support ABI advertises that readback control,
-the matrix projection prototype, and device token embedding as an input
-primitive; it does not advertise token generation.
+before a second idle audit. The support ABI advertises readback, matrix
+projection, device token embedding, and hidden RMS normalization as
+input/layer primitives; it does not advertise token generation.
 
 ## Current rewrite progress (2026-11-20)
 
@@ -303,27 +303,28 @@ panels locally, and write disjoint activation rows through NoC 1. The driver
 now has a root-only `EMBED_TOKEN` operation, verifies the request against the
 bound manifest, stages and reads back each worker invocation, audits all 120
 terminal receipts and queues, and marks the activation ready only after clean
-acknowledgement. Its support response reports token embedding only, not token
-generation. A service-owner test now exercises an embedding command followed
-by a matrix projection on the same resident service.
+acknowledgement. Its support response advertises token embedding and hidden
+RMS normalization as input/layer primitives; neither is token generation.
 
-The next operation's scalar arithmetic is prototyped in
-`PioneerQwen35DataflowRms.h`. Its hidden-width RMS helper uses the pinned
-software-binary64 reduction and rounded square-root/divide path; an ASan/UBSan
-fixture matches the existing Qwen35 operator bit-for-bit, including in-place
-operation and refusal on non-finite input. It compiles as RV32IMF without A
-atomics or runtime helpers. This arithmetic is not yet bound to a manifest or
-dispatched by the resident worker; the next step is its sharded device program
-and service control.
+The hidden-width RMS path is now manifest-bound and dispatched by the resident
+worker. Core 0 computes the reference-compatible scale and publishes a
+sequence/checksum-validated 64-byte record in an unused activation group.
+Every core waits for that record, reads its own input and learned-weight panel,
+and writes its disjoint output panel. The builder binds only F32 hidden
+normalization weights, distinct activation slots, audited bank routes, and a
+scratch group beyond the 2560 output rows. The root-only `RMS_NORM` control
+uses the same invocation readback, fleet receipts, queue audit, clean
+acknowledgement, and activation commit as embedding and projection.
 
-The Q6_K decoder comparison, 120-core schedule coverage, worker simulation,
-projection-owner tests, and service-owner embedding/projection test pass under
-AddressSanitizer and UndefinedBehaviorSanitizer. The RV32IMF role compile
-passes without A atomics or unresolved runtime helpers. The offline driver60,
-reload-guard, and default-control builds pass; the driver60 binary SHA-256 is
-`b4a2d821b87b9292fdb34d40c3a9663bd62097fe2fd5eb0a9b7ba71baad2f298`, and the
+ASan/UBSan fixtures cover exact hidden RMS math, descriptor validity and
+all-120-core output coverage, worker simulation, authority commit, and a
+resident-service sequence containing projection, embedding, and RMS. The
+RV32IMF role compile passes without A atomics or unresolved runtime helpers.
+The offline driver60, reload-guard, and default-control builds pass; the
+driver60 binary SHA-256 is
+`de0d340564d71168b8909e0f38ee061f5a7ea120374f622d94cd2d7044c0040c`, and the
 service-image text SHA-256 is
-`b9ce1c135be20df8170015b9592eccb019a4ebdaa1ef3907c77168dd6002643c`.
+`025c0012bbc31697ddd181cc802dc796e5ced0cfb2431a699587c3ffec93ce7e`.
 
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are

@@ -434,6 +434,28 @@ PioneerSessionIO::BeginEmbedding(
 }
 
 bool
+PioneerSessionIO::AuthorizeRms(
+	const PioneerQwen35::DataflowRmsProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->AuthorizeRms(program);
+}
+
+bool
+PioneerSessionIO::BeginRms(
+	const PioneerQwen35::DataflowRmsProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->BeginRms(program);
+}
+
+bool
 PioneerSessionIO::WriteInvocation(unsigned core,
 	const PioneerQwen35::DataflowCoreInvocation& invocation)
 {
@@ -486,6 +508,32 @@ PioneerSessionIO::EmbeddingInvocationMatches(unsigned core,
 }
 
 bool
+PioneerSessionIO::WriteRmsInvocation(unsigned core,
+	const PioneerQwen35::DataflowRmsInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
+	return ReadWorkerSnapshot(core,snapshot)
+		&& PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
+		&& CoreReady(core,snapshot)
+		&& WriteCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation));
+}
+
+bool
+PioneerSessionIO::RmsInvocationMatches(unsigned core,
+	const PioneerQwen35::DataflowRmsInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowRmsInvocation observed;
+	return ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+		&observed,sizeof(observed))
+		&& memcmp(&invocation,&observed,sizeof(invocation))==0;
+}
+
+bool
 PioneerSessionIO::PublishCommand(unsigned core,unsigned sequence)
 {
 	if (core>=PioneerQwen35::DataflowCoreCount || !sequence
@@ -504,6 +552,11 @@ PioneerSessionIO::PublishCommand(unsigned core,unsigned sequence)
 			|| !invocation.Valid() || invocation.core!=core) return false;
 	} else if (magic==PioneerQwen35::DataflowEmbeddingMagic) {
 		PioneerQwen35::DataflowEmbeddingInvocation invocation{};
+		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation))
+			|| !invocation.Valid() || invocation.core!=core) return false;
+	} else if (magic==PioneerQwen35::DataflowRmsMagic) {
+		PioneerQwen35::DataflowRmsInvocation invocation;
 		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
 			&invocation,sizeof(invocation))
 			|| !invocation.Valid() || invocation.core!=core) return false;
@@ -611,6 +664,49 @@ PioneerSessionIO::AuditEmbedding(
 }
 
 bool
+PioneerSessionIO::AuditRms(
+	const PioneerQwen35::DataflowRmsProgram& program,unsigned sequence,
+	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount])
+{
+	auto* context=qwen35DataflowContext;
+	if (!context || !context->qwen35DataflowAuthority || !program.Valid()
+		|| !sequence || !context->qwen35DataflowAuthority->PendingRmsMatches(program))
+		return false;
+	const auto* manifest=context->qwen35DataflowAuthority->Manifest();
+	PioneerQwen35::DataflowRmsProgram expectedProgram;
+	if (!manifest || !PioneerQwen35::DataflowRmsProgramBuilder::Build(
+		*manifest,program.layer,program.role,program.inputSlot,program.outputSlot,
+		context->qwen35DataflowRoutes,expectedProgram)
+		|| expectedProgram.scratchRow!=program.scratchRow
+		|| !PioneerQwen35::DataflowRowSpaceMatches(expectedProgram.input,program.input)
+		|| !PioneerQwen35::DataflowRowSpaceMatches(expectedProgram.weight,program.weight)
+		|| !PioneerQwen35::DataflowRowSpaceMatches(expectedProgram.output,program.output))
+		return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++)
+		if (expectedProgram.bankRoute[noc][bank]!=program.bankRoute[noc][bank])
+			return false;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		if (receipts[core].commandSequence!=sequence
+			|| receipts[core].completedSequence!=sequence
+			|| receipts[core].state!=PioneerQwen35::DataflowWorkerComplete
+			|| receipts[core].failure || receipts[core].phase!=2
+			|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
+		PioneerQwen35::DataflowWorkerSnapshot observed{};
+		PioneerQwen35::DataflowRmsInvocation invocation;
+		PioneerQwen35::DataflowRmsInvocation expected;
+		if (!ReadWorkerSnapshot(core,observed)
+			|| memcmp(&receipts[core],&observed,sizeof(observed))!=0
+			|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+				&invocation,sizeof(invocation))
+			|| !PioneerQwen35::DataflowRmsProgramBuilder::BindCore(
+				expectedProgram,core,expected)
+			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
+	}
+	return SelectRuntimeCore(0);
+}
+
+bool
 PioneerSessionIO::Acknowledge(unsigned core,unsigned sequence)
 {
 	if (core>=PioneerQwen35::DataflowCoreCount || !sequence) return false;
@@ -641,6 +737,15 @@ PioneerSessionIO::CompleteEmbedding(
 	auto* context=qwen35DataflowContext;
 	return sequence && context && context->qwen35DataflowAuthority
 		&& context->qwen35DataflowAuthority->CompleteEmbedding(program);
+}
+
+bool
+PioneerSessionIO::CompleteRms(
+	const PioneerQwen35::DataflowRmsProgram& program,unsigned sequence)
+{
+	auto* context=qwen35DataflowContext;
+	return sequence && context && context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->CompleteRms(program);
 }
 
 bool
