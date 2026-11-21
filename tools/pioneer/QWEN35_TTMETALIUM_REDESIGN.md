@@ -263,3 +263,17 @@ stub, and 25,532 bytes of worker text (SHA-256
 `10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`). This
 confirms the updated shutdown-capable freestanding image only; it has not been
 loaded on the P100A.
+
+The driver60 binding now has a public, root-only support/query/install/close
+protocol. INSTALL prepares the all-core dispatch wait lease internally and
+then installs the resident dataflow service; QUERY reports its lifecycle and
+projection sequence; CLOSE audits and restores the previous core state. The
+rewrite driver rejects the generic dispatch RUN opcode, so this interface has
+no route back to the old inference path. Its support reply currently advertises
+resident-service lifecycle only (`projection_capabilities=0`,
+`token_capabilities=0`). The offline driver60 cross-build passes with this
+control path; candidate SHA-256:
+`da07aeca4e6c57e146fc87d3c241171461e25a60409fa9e14d66b2c625a78d2a`. This adds
+no hardware, output, recovery, or performance evidence. The next rewrite work
+is the native projection IO authorization/audit path and then a verified small
+projection; no benchmark or assistant integration has started.

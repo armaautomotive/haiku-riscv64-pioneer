@@ -3580,6 +3580,7 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
+	unsigned qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
 #endif
 #ifdef TT_PIONEER_Q35_WORK
 	PioneerQ35WorkBinding* q35Work=NULL;
@@ -3984,7 +3985,8 @@ struct PioneerStoreContext {
 		if (!qwen35DataflowMemory || !qwen35DataflowService) {
 			delete qwen35DataflowService;qwen35DataflowService=NULL;
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
-			return PioneerQwen35::DataflowServiceInvalidState;
+			qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
+			return (PioneerQwen35::DataflowServiceResult)qwen35DataflowLastResult;
 		}
 		const PioneerQwen35::DataflowServiceImageView image={
 			PioneerQwen35::DataflowServiceImageBootWord,
@@ -3996,15 +3998,17 @@ struct PioneerStoreContext {
 			delete qwen35DataflowService;qwen35DataflowService=NULL;
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 		}
+		qwen35DataflowLastResult=result;
 		return result;
 	}
 	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
 		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
+		if (qwen35DataflowService->Closed()) return PioneerQwen35::DataflowServiceClosed;
 		const auto result=qwen35DataflowService->Close(io);
 		if (qwen35DataflowService->Closed()) {
-			delete qwen35DataflowService;qwen35DataflowService=NULL;
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 		}
+		qwen35DataflowLastResult=result;
 		return result;
 	}
 #endif
@@ -7873,6 +7877,68 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 #endif
 #endif
 
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+static status_t
+Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT) {
+		if (length!=sizeof(tt_qwen35_dataflow_support)) return B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		const tt_qwen35_dataflow_support support={TT_QWEN35_DATAFLOW_ABI,
+			TT_QWEN35_DATAFLOW_DRIVER,TT_QWEN35_DATAFLOW_CORES,
+			TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE,0,0};
+		status=user_memcpy(data,&support,sizeof(support));
+		release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
+		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
+	tt_qwen35_dataflow_request request={};
+	status=user_memcpy(&request,data,sizeof(request));
+	if (status!=B_OK || !PioneerQwen35DataflowRequestValid(request))
+		return status!=B_OK?status:B_BAD_VALUE;
+	status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total) {
+		status=B_NOT_ALLOWED;
+	} else if (request.action==TT_QWEN35_DATAFLOW_ACTION_INSTALL) {
+		if (context->Unsafe() || context->qwen35DataflowService) {
+			request.result=PioneerQwen35::DataflowServiceInvalidState;
+		} else if (!PrepareQ38Dispatch(*context)) {
+			request.result=PioneerQwen35::DataflowServicePreflightFailed;
+			context->qwen35DataflowLastResult=request.result;
+		} else {
+			request.result=context->InstallDataflowRewrite();
+		}
+	} else if (request.action==TT_QWEN35_DATAFLOW_ACTION_CLOSE) {
+		request.result=context->CloseDataflowRewrite();
+	} else {
+		request.result=context->qwen35DataflowLastResult;
+	}
+	if (status==B_OK) {
+		request.state=TT_QWEN35_DATAFLOW_STATE_EMPTY;
+		request.next_sequence=0;
+		request.recovery_required=0;
+		if (context->qwen35DataflowService) {
+			auto* service=context->qwen35DataflowService;
+			request.state=service->Closed()?TT_QWEN35_DATAFLOW_STATE_CLOSED
+				:service->Ready()?TT_QWEN35_DATAFLOW_STATE_READY
+				:service->Faulted()?TT_QWEN35_DATAFLOW_STATE_FAULTED
+				:TT_QWEN35_DATAFLOW_STATE_EMPTY;
+			request.next_sequence=service->NextSequence();
+			request.recovery_required=service->Faulted();
+		}
+		request.reserved[0]=request.reserved[1]=0;
+		status=user_memcpy(data,&request,sizeof(request));
+	}
+	release_sem(sLock); return status;
+}
+#endif
+
 static status_t
 ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 {
@@ -8949,6 +9015,8 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 		r.driver=PioneerQwen35::WorkDriver;
 #elif defined(TT_PIONEER_Q35_PROJECTION_PROBE)
 		r.driver=TT_Q38_STREAM_DRIVER;
+#elif defined(PIONEER_QWEN35_DATAFLOW_REWRITE)
+		r.driver=TT_QWEN35_DATAFLOW_DRIVER;
 #else
 		r.driver=TT_Q38_DISPATCH_DRIVER;
 #endif
@@ -8976,6 +9044,14 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL)
+		return Qwen35DataflowControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
+		|| operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
+		return B_NOT_ALLOWED; // all-core route preparation is private to the dataflow owner
+#endif
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
 #if defined(PIONEER_DRAM_SWEEP_DIAGNOSTIC) || defined(PIONEER_DRAM_COHORT_DIAGNOSTIC)
  if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)

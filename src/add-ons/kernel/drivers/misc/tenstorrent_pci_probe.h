@@ -51,6 +51,7 @@
 #include "PioneerDecoderController.h"
 #include "PioneerDecoderModel.h"
 #include "PioneerDecoderBatchModel.h"
+#include "PioneerQwen35DataflowProtocol.h"
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #include "PioneerQ38BankProtocol.h"
 #ifdef PIONEER_Q38_SPAN_PRELOAD
