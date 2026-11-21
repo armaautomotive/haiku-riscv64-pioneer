@@ -113,6 +113,35 @@ PioneerSessionIODataflowServiceImageTrusted(PioneerSessionIO& io,unsigned core)
 }
 
 static bool
+PioneerQwen35DataflowCaptureLocalRoute(PioneerSessionIO& io,unsigned core)
+{
+	auto* context=io.qwen35DataflowContext;
+	if (!context || core>=PioneerQwen35::DataflowCoreCount
+		|| !io.SelectRuntimeCore(core)) return false;
+	const uint32_t first=io.ResidentNocRead(0x14);
+	io.Pause();
+	const uint32_t second=io.ResidentNocRead(0x14);
+	if (!first || first>0xfff || first!=second) return false;
+	if (context->qwen35DataflowLocalRouteValid[core])
+		return context->qwen35DataflowLocalRoute[core]==first;
+	for (unsigned prior=0;prior<PioneerQwen35::DataflowCoreCount;prior++)
+		if (context->qwen35DataflowLocalRouteValid[prior]
+			&& context->qwen35DataflowLocalRoute[prior]==first) return false;
+	context->qwen35DataflowLocalRoute[core]=first;
+	context->qwen35DataflowLocalRouteValid[core]=true;
+	return true;
+}
+
+static bool
+PioneerQwen35DataflowLocalRouteMatches(PioneerSessionIO& io,unsigned core)
+{
+	auto* context=io.qwen35DataflowContext;
+	return context && core<PioneerQwen35::DataflowCoreCount
+		&& context->qwen35DataflowLocalRouteValid[core]
+		&& PioneerQwen35DataflowCaptureLocalRoute(io,core);
+}
+
+static bool
 PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core)
 {
 	auto* context=io.qwen35DataflowContext;
@@ -127,11 +156,7 @@ PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core)
 		|| context->q38Dispatch->closed || context->q38Dispatch->rootRunning)
 		return false;
 	auto& node=context->q38Dispatch->worker[core];
-	const uint32_t expectedNode=PioneerWorkerX(core)|(PioneerWorkerY(core)<<6);
-	const uint32_t nodeFirst=io.ResidentNocRead(0x14);
-	io.Pause();
-	const uint32_t nodeSecond=io.ResidentNocRead(0x14);
-	return nodeFirst==expectedNode && nodeSecond==expectedNode
+	return PioneerQwen35DataflowLocalRouteMatches(io,core)
 		&& node.noc.state==TT_COMPUTE_NOC_PASSED && node.noc.tlb_restored
 		&& !node.noc.recovery_required
 		&& node.noc.version==(core?PioneerWorkerVersion(core):1)
@@ -162,17 +187,14 @@ PioneerSessionIO::DataflowCoreIdleForHold(unsigned core)
 		|| !PioneerWorkerRoute(dram,node.noc.source[0],core)
 		|| !node.Store().ready || node.Store().pending
 		|| node.Store().recovery_required) return false;
+	if (!PioneerQwen35DataflowCaptureLocalRoute(*this,core)) return false;
 	if (PioneerSessionIODataflowServiceImageTrusted(*this,core)) {
 		if (reset!=0x46800 && reset!=0x47800) return false;
-		const uint32_t expectedNode=PioneerWorkerX(core)|(PioneerWorkerY(core)<<6);
-		const uint32_t nodeFirst=ResidentNocRead(0x14);
-		Pause();
-		const uint32_t nodeSecond=ResidentNocRead(0x14);
 		PioneerQwen35::DataflowWorkerMailbox mailbox{};
-		if (nodeFirst!=expectedNode || nodeSecond!=expectedNode
-			|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
-			|| !(DataflowPciMailboxReadyForStop(mailbox)
-				|| DataflowPciMailboxStopped(mailbox))
+		if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+			|| mailbox.logicalCore!=core
+			|| !(DataflowPciMailboxReadyForStop(mailbox,core)
+				|| DataflowPciMailboxStopped(mailbox,core))
 			|| !PioneerQwen35DataflowQueuesDrained(*this,core)
 			|| !PioneerQwen35DataflowServicePc(*this)
 			|| !PioneerRuntimeSources(*this,dram,node.noc,node.Store())
@@ -195,32 +217,29 @@ PioneerSessionIO::DataflowCoreStartupFatalIdle(unsigned core)
 	PioneerQwen35::DataflowWorkerMailbox mailbox{};
 	if (!context || core>=PioneerQwen35::DataflowCoreCount
 		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
-		|| !DataflowPciMailboxStartupFatal(mailbox)
+		|| !DataflowPciMailboxStartupFatal(mailbox,core)
 		|| !PioneerQwen35DataflowQueuesDrained(*this,core)) return false;
 	if (mailbox.phase==1)
 		return PioneerQwen35DataflowCoreRuntimeStable(*this,core);
 
-	// Phase 2 means the image itself rejected the local NoC route. Preserve the
-	// fatal loop only when the selected core, pinned service image, captured
-	// NoC sources, and raw route remain stable and all traffic is idle. This
-	// permits restoring the snapshot for that same physical selection without
-	// pretending the mismatched route was valid for inference.
+	// Phase 2 means the image rejected its raw local NoC route as invalid.
+	// Preserve that fatal loop only when the selected physical core, pinned
+	// service image, captured core route, NoC sources, and idle traffic agree.
 	if (mailbox.phase!=2 || !context->q38Dispatch
 		|| !SelectRuntimeCore(core) || !MapQ38Panel()
 		|| !DataflowPanelMappingStable()
 		|| !PioneerSessionIODataflowServiceImageTrusted(*this,core)) return false;
 	const unsigned reset=ResetRead();
 	if (reset!=0x46800 || ResetRead()!=reset) return false;
+	if (!PioneerQwen35DataflowLocalRouteMatches(*this,core)) return false;
 	auto& lease=*context->q38Dispatch;
 	if (lease.unsafe || lease.closed || lease.rootRunning
 		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
 	const uint32_t routeFirst=ResidentNocRead(0x14);
 	Pause();
 	const uint32_t routeSecond=ResidentNocRead(0x14);
-	if (routeFirst!=mailbox.reserved[0] || routeSecond!=routeFirst) return false;
-	for (unsigned candidate=0;candidate<PioneerQwen35::DataflowCoreCount;candidate++)
-		if (routeFirst==(PioneerWorkerX(candidate)|(PioneerWorkerY(candidate)<<6)))
-			return false;
+	if (routeFirst!=mailbox.reserved[0] || routeSecond!=routeFirst
+		|| routeFirst!=context->qwen35DataflowLocalRoute[core]) return false;
 	auto& node=lease.worker[core];
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	return node.noc.state==TT_COMPUTE_NOC_PASSED && node.noc.tlb_restored
@@ -259,7 +278,7 @@ PioneerSessionIO::DataflowCoreIdleForWrite(unsigned core,unsigned address,
 			&& PioneerQwen35DataflowCoreRuntimeStable(*this,core);
 	}
 	return DataflowCoreIdleForHold(core)
-		&& DataflowPciMailboxReadyForStop(mailbox)
+		&& DataflowPciMailboxReadyForStop(mailbox,core)
 		&& mailbox.shutdownSequence==0
 		&& PioneerQwen35DataflowQueuesDrained(*this,core)
 		&& BlackholeResidentIdle(*this);
@@ -448,12 +467,16 @@ PioneerSessionIO::CoreReady(unsigned core,
 	const PioneerQwen35::DataflowWorkerSnapshot& snapshot)
 {
 	PioneerQwen35::DataflowWorkerSnapshot observed{};
+	PioneerQwen35::DataflowWorkerMailbox mailbox{};
 	return core<PioneerQwen35::DataflowCoreCount
 		&& DataflowCoreIdleForHold(core)
 		&& ResetRead()==0x46800 && ResetRead()==0x46800
 		&& ReadWorkerSnapshot(core,observed)
 		&& memcmp(&snapshot,&observed,sizeof(snapshot))==0
-		&& PioneerQwen35::DataflowWorkerSnapshotReady(observed);
+		&& PioneerQwen35::DataflowWorkerSnapshotReady(observed)
+		&& PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+		&& mailbox.logicalCore==core
+		&& PioneerQwen35::DataflowWorkerMailboxStartupValid(mailbox);
 }
 
 bool
@@ -1282,7 +1305,8 @@ PioneerSessionIO::AuditArgmax(
 				observedResult)
 				|| memcmp(&result,&observedResult,sizeof(result))!=0) return false;
 		} else {
-			for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+			for (unsigned i=0;i<6;i++) if (mailbox.reserved[i]) return false;
+			if (mailbox.logicalCore!=core) return false;
 		}
 	}
 	return SelectRuntimeCore(0);
@@ -1508,9 +1532,10 @@ PioneerSessionIO::VerifyCoreStateRestored(unsigned core)
 }
 
 bool
-PioneerSessionIO::ResumeRestoredFleet()
+PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore)
 {
 	return qwen35DataflowContext && qwen35DataflowContext->qwen35DataflowMemory
-		&& qwen35DataflowContext->qwen35DataflowMemory->ResumeRestoredFleet();
+		&& qwen35DataflowContext->qwen35DataflowMemory->ResumeRestoredFleet(
+			failedStage,failedCore);
 }
 #endif

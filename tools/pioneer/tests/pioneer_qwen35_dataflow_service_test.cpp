@@ -22,19 +22,6 @@ int main()
 	assert(!DataflowWorkerCommandSequenceValid(1,1,
 		DataflowWorkerSequenceLimit+1));
 
-	for (unsigned core=0;core<DataflowCoreCount;core++) {
-		const unsigned route=DataflowBlackholeRouteForCore(core);
-		unsigned decoded=UINT32_MAX;
-		assert(route && DataflowBlackholeLocalCore(route,decoded));
-		assert(decoded==core);
-		for (unsigned prior=0;prior<core;prior++)
-			assert(DataflowBlackholeRouteForCore(prior)!=route);
-	}
-	unsigned unused=0;
-	assert(!DataflowBlackholeLocalCore(0,unused));
-	assert(!DataflowBlackholeLocalCore(0xfff,unused));
-	assert(DataflowBlackholeRouteForCore(DataflowCoreCount)==0);
-
 	mailbox.commandSequence=1;
 	assert(!DataflowWorkerMailboxStartupValid(mailbox));
 	mailbox.commandSequence=0;
@@ -45,6 +32,9 @@ int main()
 	assert(!DataflowWorkerMailboxStartupValid(mailbox));
 	mailbox.reserved[3]=0;
 	assert(DataflowWorkerMailboxStartupValid(mailbox));
+	mailbox.logicalCore=DataflowCoreCount;
+	assert(!DataflowWorkerMailboxStartupValid(mailbox));
+	mailbox.logicalCore=0;
 
 	DataflowWorkerPublish(mailbox,7,DataflowWorkerComplete,0,2);
 	assert(DataflowLoadAcquire(mailbox.completedSequence)==7);

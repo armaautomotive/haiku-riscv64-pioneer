@@ -82,7 +82,8 @@
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
 	|| (PIONEER_DRIVER_BUILD_TAG != 0x2026112100010105ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010106ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010107ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010107ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010108ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3374,7 +3375,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool StopAndAuditAll(unsigned& failedStage,unsigned& failedCore);
 	bool RestoreCoreState(unsigned core);
 	bool VerifyCoreStateRestored(unsigned core);
-	bool ResumeRestoredFleet();
+	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore);
 #endif
 	bool AllocateFleetWorker(unsigned worker) {
 		if (!fleetEnabled || worker>=120 || !runtimeMapped || runtimeBufferWords!=TT_Q8_BULK_SAVED_BUFFER_WORDS) return false;
@@ -3705,6 +3706,8 @@ struct PioneerStoreContext {
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
 	PioneerQwen35::DataflowProjectionAuthority* qwen35DataflowAuthority=NULL;
 	unsigned qwen35DataflowRoutes[2][PioneerQwen35::Banks]={};
+	unsigned qwen35DataflowLocalRoute[PioneerQwen35::DataflowCoreCount]={};
+	bool qwen35DataflowLocalRouteValid[PioneerQwen35::DataflowCoreCount]={};
 	bool qwen35DataflowImageVerified[PioneerQwen35::DataflowCoreCount]={};
 	bool qwen35DataflowRoutesAudited=false;
 	unsigned qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
@@ -9186,7 +9189,9 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 					&& (request.result==PioneerQwen35::DataflowServiceReadyFailed
 						|| request.result==PioneerQwen35::DataflowServiceStartFailed))
 				|| (request.action==TT_QWEN35_DATAFLOW_ACTION_CLOSE
-					&& request.result==PioneerQwen35::DataflowServiceStopAuditFailed)) {
+					&& (request.result==PioneerQwen35::DataflowServiceStopAuditFailed
+						|| request.result==PioneerQwen35::DataflowServiceRestoreFailed
+						|| request.result==PioneerQwen35::DataflowServiceResumeFailed))) {
 				const auto& diagnostic=service->Diagnostic();
 				if (diagnostic.stage) {
 					request.reserved[0]=((diagnostic.stage&0xff)<<24)

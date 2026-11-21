@@ -64,7 +64,7 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 }
 
 static inline bool DataflowPciMailboxReadyForStop(
-	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox,unsigned expectedCore)
 {
 	if (mailbox.magic!=PioneerQwen35::DataflowWorkerMailboxMagic
 		|| mailbox.version!=PioneerQwen35::DataflowWorkerMailboxVersion
@@ -72,27 +72,29 @@ static inline bool DataflowPciMailboxReadyForStop(
 		|| mailbox.acknowledgedSequence!=mailbox.completedSequence
 		|| mailbox.state!=PioneerQwen35::DataflowWorkerReady || mailbox.failure
 		|| mailbox.phase
+		|| mailbox.logicalCore!=expectedCore
 		|| (mailbox.shutdownSequence
 			&& mailbox.shutdownSequence!=PioneerQwen35::DataflowWorkerShutdownRequest))
 		return false;
-	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	for (unsigned i=0;i<6;i++) if (mailbox.reserved[i]) return false;
 	return true;
 }
 
 // Only the worker's two pre-command fatal exits may be recovered by holding
-// the core directly. Phase 2 stores the raw local route in reserved[0] for
-// diagnostics; all other reserved words remain zero.
+// the selected core directly. The host assigned logicalCore before start;
+// phase 2 may store an invalid raw local route in reserved[0] for diagnostics.
 static inline bool DataflowPciMailboxStartupFatal(
-	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox,unsigned expectedCore)
 {
 	if (mailbox.magic!=PioneerQwen35::DataflowWorkerMailboxMagic
 		|| mailbox.version!=PioneerQwen35::DataflowWorkerMailboxVersion
 		|| mailbox.commandSequence || mailbox.acknowledgedSequence
 		|| mailbox.completedSequence || mailbox.shutdownSequence
 		|| mailbox.state!=PioneerQwen35::DataflowWorkerFatal
+		|| mailbox.logicalCore!=expectedCore
 		|| mailbox.failure!=PioneerQwen35::DataflowFailureQueue
 		|| (mailbox.phase!=1 && mailbox.phase!=2)) return false;
-	for (unsigned i=0;i<7;i++) {
+	for (unsigned i=0;i<6;i++) {
 		if (i==0 && mailbox.phase==2) continue;
 		if (mailbox.reserved[i]) return false;
 	}
@@ -100,7 +102,7 @@ static inline bool DataflowPciMailboxStartupFatal(
 }
 
 static inline bool DataflowPciMailboxStopped(
-	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox,unsigned expectedCore)
 {
 	if (mailbox.magic!=PioneerQwen35::DataflowWorkerMailboxMagic
 		|| mailbox.version!=PioneerQwen35::DataflowWorkerMailboxVersion
@@ -108,8 +110,9 @@ static inline bool DataflowPciMailboxStopped(
 		|| mailbox.commandSequence!=mailbox.acknowledgedSequence
 		|| mailbox.acknowledgedSequence!=mailbox.completedSequence
 		|| mailbox.state!=PioneerQwen35::DataflowWorkerStopped || mailbox.failure
+		|| mailbox.logicalCore!=expectedCore
 		|| mailbox.phase) return false;
-	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	for (unsigned i=0;i<6;i++) if (mailbox.reserved[i]) return false;
 	return true;
 }
 
@@ -397,16 +400,16 @@ public:
 			if (!service[core]) continue;
 			PioneerQwen35::DataflowWorkerMailbox mailbox{};
 			if (!ReadStableMailbox(core,mailbox)) return fail(2,core);
-			if (DataflowPciMailboxStopped(mailbox)) {
+			if (DataflowPciMailboxStopped(mailbox,core)) {
 				if (!QueuesDrained(core)) return fail(2,core);
 				continue;
 			}
 			if (startupFatal[core]) {
-				if (!DataflowPciMailboxStartupFatal(mailbox)
+				if (!DataflowPciMailboxStartupFatal(mailbox,core)
 					|| !QueuesDrained(core)) return fail(2,core);
 				continue;
 			}
-			if (!DataflowPciMailboxReadyForStop(mailbox)) return fail(2,core);
+			if (!DataflowPciMailboxReadyForStop(mailbox,core)) return fail(2,core);
 			requestStop[core]=mailbox.state==PioneerQwen35::DataflowWorkerReady
 				&& mailbox.shutdownSequence==0;
 		}
@@ -444,7 +447,7 @@ public:
 			if (!stopped) return fail(4,core);
 			PioneerQwen35::DataflowWorkerMailbox mailbox{};
 			if (!ReadStableMailbox(core,mailbox)
-				|| !DataflowPciMailboxStopped(mailbox) || !QueuesDrained(core)
+				|| !DataflowPciMailboxStopped(mailbox,core) || !QueuesDrained(core)
 				|| !fRaw.DataflowCoreIdleForHold(core)) return fail(4,core);
 		}
 
@@ -478,7 +481,7 @@ public:
 			if (service[core] && !held[core]) {
 				PioneerQwen35::DataflowWorkerMailbox mailbox{};
 				if (!ReadStableMailbox(core,mailbox)
-					|| !DataflowPciMailboxStopped(mailbox) || !QueuesDrained(core))
+					|| !DataflowPciMailboxStopped(mailbox,core) || !QueuesDrained(core))
 					return fail(7,core);
 			}
 		}
@@ -487,19 +490,29 @@ public:
 		return true;
 	}
 
-	bool ResumeRestoredFleet()
+	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore)
 	{
+		failedStage=0;
+		failedCore=PioneerQwen35::DataflowCoreCount;
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			failedStage=1;
+			failedCore=core;
 			if (!fSnapshots[core].captured
 				|| !VerifyCoreStateRestored(core,fSnapshots[core])) return false;
 		}
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			failedStage=2;
+			failedCore=core;
 			if (fSnapshots[core].reset==0x46800 && !StartCore(core)) return false;
 		}
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			failedStage=3;
+			failedCore=core;
 			if (!CoreResetMatches(core,fSnapshots[core].reset)
 				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
 		}
+		failedStage=0;
+		failedCore=PioneerQwen35::DataflowCoreCount;
 		return true;
 	}
 

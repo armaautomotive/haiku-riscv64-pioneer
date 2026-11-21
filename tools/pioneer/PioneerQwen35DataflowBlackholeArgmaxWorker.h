@@ -62,7 +62,6 @@ bool PioneerQwen35DataflowArgmaxWorker(
 	DataflowStoreRelease(reserved[4],~maximumToken);
 	DataflowStoreRelease(reserved[5],DataflowArgmaxResultChecksum(
 		maximumToken,scoreBits,sequence));
-	DataflowStoreRelease(reserved[6],0);
 	DataflowStoreRelease(reserved[0],maximumToken);
 	return true;
 }

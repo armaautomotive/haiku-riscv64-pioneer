@@ -99,6 +99,7 @@ using namespace PioneerQwen35;
 
 int main()
 {
+	unsigned resumeStage=UINT32_MAX,resumeCore=UINT32_MAX;
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
 		DataflowServiceBootAddress,sizeof(uint32_t)));
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
@@ -123,21 +124,22 @@ int main()
 	DataflowWorkerMailbox startupFatal{};
 	startupFatal.magic=DataflowWorkerMailboxMagic;
 	startupFatal.version=DataflowWorkerMailboxVersion;
+	startupFatal.logicalCore=0;
 	startupFatal.state=DataflowWorkerFatal;
 	startupFatal.failure=DataflowFailureQueue;
 	startupFatal.phase=1;
-	assert(DataflowPciMailboxStartupFatal(startupFatal));
+	assert(DataflowPciMailboxStartupFatal(startupFatal,0));
 	startupFatal.phase=3;
-	assert(!DataflowPciMailboxStartupFatal(startupFatal));
+	assert(!DataflowPciMailboxStartupFatal(startupFatal,0));
 	startupFatal.phase=1;
 	startupFatal.commandSequence=1;
-	assert(!DataflowPciMailboxStartupFatal(startupFatal));
+	assert(!DataflowPciMailboxStartupFatal(startupFatal,0));
 	startupFatal.commandSequence=0;
 	startupFatal.phase=2;
 	startupFatal.reserved[0]=0x12345678;
-	assert(DataflowPciMailboxStartupFatal(startupFatal));
+	assert(DataflowPciMailboxStartupFatal(startupFatal,0));
 	startupFatal.reserved[1]=1;
-	assert(!DataflowPciMailboxStartupFatal(startupFatal));
+	assert(!DataflowPciMailboxStartupFatal(startupFatal,0));
 
 	MockPciRaw raw;
 	for (unsigned i=0;i<DataflowPciL1ViewWords;i++)
@@ -192,7 +194,8 @@ int main()
 	assert(memory.WriteCoreMemory(4,DataflowServiceEntryAddress,&changed,sizeof(changed)));
 	assert(memory.RestoreCoreState(4));
 	assert(memory.VerifyCoreStateRestored(4));
-	assert(!memory.ResumeRestoredFleet()); // incomplete 120-core snapshot set
+	assert(!memory.ResumeRestoredFleet(resumeStage,resumeCore)); // incomplete 120-core snapshot set
+	assert(resumeStage==1 && resumeCore==0);
 	memory.ReleaseCoreSnapshot(4);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		raw.reset[core]=0x46800;
@@ -205,7 +208,7 @@ int main()
 		assert(memory.RestoreCoreState(core));
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(memory.VerifyCoreStateRestored(core));
-	assert(memory.ResumeRestoredFleet());
+	assert(memory.ResumeRestoredFleet(resumeStage,resumeCore));
 	assert(raw.reset[0]==0x47800);
 	for (unsigned core=1;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(raw.reset[core]==0x46800);
@@ -219,6 +222,7 @@ int main()
 		raw.mailbox[core].magic=DataflowWorkerMailboxMagic;
 		raw.mailbox[core].version=DataflowWorkerMailboxVersion;
 		raw.mailbox[core].state=DataflowWorkerReady;
+		raw.mailbox[core].logicalCore=core;
 	}
 	raw.reset[0]=0x47800;
 	raw.serviceImage[1]=true;
@@ -240,7 +244,7 @@ int main()
 		assert(memory.VerifyCoreStateRestored(core));
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		raw.serviceImage[core]=false;
-	assert(memory.ResumeRestoredFleet());
+	assert(memory.ResumeRestoredFleet(resumeStage,resumeCore));
 	assert(raw.reset[0]==0x47800);
 	for (unsigned core=1;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(raw.reset[core]==0x46800);
@@ -256,6 +260,7 @@ int main()
 		raw.mailbox[core].magic=DataflowWorkerMailboxMagic;
 		raw.mailbox[core].version=DataflowWorkerMailboxVersion;
 		raw.mailbox[core].state=DataflowWorkerReady;
+		raw.mailbox[core].logicalCore=core;
 		assert(memory.CaptureCoreState(core));
 	}
 	raw.serviceImage[17]=true;
@@ -277,7 +282,7 @@ int main()
 	raw.serviceImage[17]=false;
 	raw.notIdleCore=UINT32_MAX;
 	raw.startupFatalCore=UINT32_MAX;
-	assert(memory.ResumeRestoredFleet());
+	assert(memory.ResumeRestoredFleet(resumeStage,resumeCore));
 	assert(raw.mailbox[17].state==DataflowWorkerReady);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		memory.ReleaseCoreSnapshot(core);
@@ -290,6 +295,7 @@ int main()
 		raw.mailbox[core].magic=DataflowWorkerMailboxMagic;
 		raw.mailbox[core].version=DataflowWorkerMailboxVersion;
 		raw.mailbox[core].state=DataflowWorkerReady;
+		raw.mailbox[core].logicalCore=core;
 		assert(memory.CaptureCoreState(core));
 	}
 	raw.serviceImage[23]=true;

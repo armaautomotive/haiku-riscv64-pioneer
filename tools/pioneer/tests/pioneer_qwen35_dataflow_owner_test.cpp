@@ -89,10 +89,7 @@ struct MockOwnerIO {
 
 	bool CoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const
 	{
-		unsigned routeCore=UINT32_MAX;
-		return core<DataflowCoreCount && DataflowWorkerSnapshotReady(observed)
-			&& DataflowBlackholeLocalCore(DataflowBlackholeRouteForCore(core),routeCore)
-			&& routeCore==core;
+		return core<DataflowCoreCount && DataflowWorkerSnapshotReady(observed);
 	}
 
 	bool AuthorizeProjection(const DataflowProjectionProgram& program) const

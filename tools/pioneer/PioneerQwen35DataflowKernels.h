@@ -68,6 +68,22 @@ inline void DataflowStoreRelease(volatile uint32_t& value,uint32_t next)
 #endif
 }
 
+inline bool DataflowWorkerMailboxStartupValid(
+	const DataflowWorkerMailbox& mailbox)
+{
+	if (mailbox.magic!=DataflowWorkerMailboxMagic
+		|| mailbox.version!=DataflowWorkerMailboxVersion
+		|| DataflowLoadRelaxed(mailbox.commandSequence)
+		|| DataflowLoadRelaxed(mailbox.acknowledgedSequence)
+		|| DataflowLoadRelaxed(mailbox.completedSequence)
+		|| DataflowLoadRelaxed(mailbox.state)!=DataflowWorkerReady
+		|| DataflowLoadRelaxed(mailbox.failure)
+		|| DataflowLoadRelaxed(mailbox.phase)
+		|| DataflowLoadRelaxed(mailbox.shutdownSequence)) return false;
+	for (unsigned i=0;i<6;i++) if (mailbox.reserved[i]) return false;
+	return mailbox.logicalCore<DataflowCoreCount;
+}
+
 inline volatile uint32_t* DataflowRoleFailureSlot(DataflowQueueControl& control,
 	unsigned role)
 {

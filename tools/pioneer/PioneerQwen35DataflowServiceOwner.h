@@ -76,7 +76,9 @@ enum DataflowServiceDiagnosticStage : unsigned {
 	DataflowServiceDiagnosticWorkerProof=4,
 	DataflowServiceDiagnosticOwnerInitialize=5,
 	DataflowServiceDiagnosticOwnerCore=6,
-	DataflowServiceDiagnosticStopAudit=7
+	DataflowServiceDiagnosticStopAudit=7,
+	DataflowServiceDiagnosticRestore=8,
+	DataflowServiceDiagnosticResume=9
 };
 
 struct DataflowServiceDiagnostic {
@@ -190,6 +192,7 @@ public:
 			mailbox.magic=DataflowWorkerMailboxMagic;
 			mailbox.version=DataflowWorkerMailboxVersion;
 			mailbox.state=DataflowWorkerReady;
+			mailbox.logicalCore=core;
 			if (!io.WriteCoreMemory(core,DataflowQueueStateAddress,queues,sizeof(queues))
 				|| !io.WriteCoreMemory(core,DataflowWorkerMailboxAddress,
 					&mailbox,sizeof(mailbox))) {
@@ -421,11 +424,26 @@ public:
 		for (unsigned end=DataflowCoreCount;end;end--) {
 			const unsigned core=end-1;
 			if (!fSaved[core]) continue;
-			if (!io.RestoreCoreState(core)
-				|| !io.VerifyCoreStateRestored(core))
+			if (!io.RestoreCoreState(core)) {
+				DataflowWorkerSnapshot snapshot{};
+				snapshot.state=1;
+				SetDiagnostic(DataflowServiceDiagnosticRestore,core,snapshot);
 				return DataflowServiceRestoreFailed;
+			}
+			if (!io.VerifyCoreStateRestored(core)) {
+				DataflowWorkerSnapshot snapshot{};
+				snapshot.state=2;
+				SetDiagnostic(DataflowServiceDiagnosticRestore,core,snapshot);
+				return DataflowServiceRestoreFailed;
+			}
 		}
-		if (!io.ResumeRestoredFleet()) return DataflowServiceResumeFailed;
+		unsigned resumeStage=0,resumeCore=DataflowCoreCount;
+		if (!io.ResumeRestoredFleet(resumeStage,resumeCore)) {
+			DataflowWorkerSnapshot snapshot{};
+			snapshot.state=resumeStage;
+			SetDiagnostic(DataflowServiceDiagnosticResume,resumeCore,snapshot);
+			return DataflowServiceResumeFailed;
+		}
 		ReleaseSnapshots(io);
 		fPhase=PhaseClosed;
 		return DataflowServiceClosed;

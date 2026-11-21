@@ -146,24 +146,6 @@ inline bool PioneerQwen35DataflowBlackholeWorkerEntry()
 		context.activationCache,reader,compute,writer);
 }
 
-inline unsigned DataflowBlackholeRouteForCore(unsigned core)
-{
-	static const unsigned columns[12]={1,2,3,4,5,6,7,10,11,12,13,14};
-	return core<DataflowCoreCount
-		?columns[core/10]|((core%10+2)<<6):0;
-}
-
-inline bool DataflowBlackholeLocalCore(unsigned route,unsigned& core)
-{
-	for (unsigned candidate=0;candidate<DataflowCoreCount;candidate++) {
-		if (DataflowBlackholeRouteForCore(candidate)==route) {
-			core=candidate;
-			return true;
-		}
-	}
-	return false;
-}
-
 inline bool DataflowWorkerQueuesClean()
 {
 	auto* controls=reinterpret_cast<DataflowQueueControl*>(
@@ -194,22 +176,6 @@ inline bool DataflowWorkerCommandSequenceValid(unsigned completed,
 		&& acknowledged==completed && command>completed;
 }
 
-inline bool DataflowWorkerMailboxStartupValid(
-	const DataflowWorkerMailbox& mailbox)
-{
-	if (mailbox.magic!=DataflowWorkerMailboxMagic
-		|| mailbox.version!=DataflowWorkerMailboxVersion
-		|| DataflowLoadRelaxed(mailbox.commandSequence)
-		|| DataflowLoadRelaxed(mailbox.acknowledgedSequence)
-		|| DataflowLoadRelaxed(mailbox.completedSequence)
-		|| DataflowLoadRelaxed(mailbox.state)!=DataflowWorkerReady
-		|| DataflowLoadRelaxed(mailbox.failure)
-		|| DataflowLoadRelaxed(mailbox.phase)
-		|| DataflowLoadRelaxed(mailbox.shutdownSequence)) return false;
-	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
-	return true;
-}
-
 inline bool DataflowWorkerStopRequestValid(const DataflowWorkerMailbox& mailbox)
 {
 	if (DataflowLoadAcquire(mailbox.shutdownSequence)!=DataflowWorkerShutdownRequest
@@ -220,8 +186,8 @@ inline bool DataflowWorkerStopRequestValid(const DataflowWorkerMailbox& mailbox)
 		|| DataflowLoadAcquire(mailbox.state)!=DataflowWorkerReady
 		|| DataflowLoadAcquire(mailbox.failure)
 		|| DataflowLoadAcquire(mailbox.phase)) return false;
-	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
-	return true;
+	for (unsigned i=0;i<6;i++) if (mailbox.reserved[i]) return false;
+	return mailbox.logicalCore<DataflowCoreCount;
 }
 
 template<class QueueArray>
@@ -267,10 +233,10 @@ inline bool DataflowWorkerResetQueues()
 			DataflowFailureQueue,1);
 		for (;;) asm volatile("" ::: "memory");
 	}
-	unsigned core=0;
+	const unsigned core=mailbox->logicalCore;
 	const unsigned localRoute=*reinterpret_cast<volatile uint32_t*>(
 		static_cast<uintptr_t>(0xffb20014));
-	if (!DataflowBlackholeLocalCore(localRoute,core)) {
+	if (!localRoute || localRoute>0xfff) {
 		DataflowStoreRelease(mailbox->reserved[0],localRoute);
 		DataflowFence();
 		DataflowWorkerPublish(*mailbox,0,DataflowWorkerFatal,
@@ -310,8 +276,7 @@ inline bool DataflowWorkerResetQueues()
 		if (invocationMagic==DataflowProgramMagic) {
 			DataflowDeviceContext context;
 			okay=DataflowBindLocalContext(context,DataflowFailureQueue);
-			if (okay && (context.program->core!=core
-				|| DataflowBlackholeRouteForCore(context.program->core)!=localRoute)) {
+			if (okay && context.program->core!=core) {
 				DataflowSignalLocalFailure(DataflowFailureQueue);
 				okay=false;
 			}
@@ -326,8 +291,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* embedding=reinterpret_cast<const DataflowEmbeddingInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && embedding->Valid()
-				&& embedding->core==core
-				&& DataflowBlackholeRouteForCore(embedding->core)==localRoute) {
+				&& embedding->core==core) {
 				DataflowBlackholeEmbeddingOps io;
 				okay=io.Bind(*embedding)
 					&& PioneerQwen35DataflowEmbedWorker(*embedding,
@@ -341,8 +305,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* rms=reinterpret_cast<const DataflowRmsInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && rms->Valid()
-				&& rms->core==core
-				&& DataflowBlackholeRouteForCore(rms->core)==localRoute) {
+				&& rms->core==core) {
 				DataflowBlackholeRmsOps io;
 				okay=io.Bind(*rms,sequence)
 					&& PioneerQwen35DataflowRmsWorker(*rms,sequence,
@@ -360,8 +323,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* silu=reinterpret_cast<const DataflowSiluInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && silu->Valid()
-				&& silu->core==core
-				&& DataflowBlackholeRouteForCore(silu->core)==localRoute) {
+				&& silu->core==core) {
 				DataflowBlackholeSiluOps io;
 				okay=io.Bind(*silu)
 					&& PioneerQwen35DataflowSiluWorker(*silu,
@@ -377,8 +339,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* residual=reinterpret_cast<const DataflowResidualInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && residual->Valid()
-				&& residual->core==core
-				&& DataflowBlackholeRouteForCore(residual->core)==localRoute) {
+				&& residual->core==core) {
 				DataflowBlackholeResidualOps io;
 				okay=io.Bind(*residual)
 					&& PioneerQwen35DataflowResidualWorker(*residual,
@@ -394,8 +355,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* conv=reinterpret_cast<const DataflowConvInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && conv->Valid()
-				&& conv->core==core
-				&& DataflowBlackholeRouteForCore(conv->core)==localRoute) {
+				&& conv->core==core) {
 				DataflowBlackholeConvOps io;
 				okay=PioneerQwen35DataflowConvWorker(*conv,
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
@@ -414,8 +374,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* delta=reinterpret_cast<const DataflowDeltaInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && delta->Valid()
-				&& delta->core==core
-				&& DataflowBlackholeRouteForCore(delta->core)==localRoute) {
+				&& delta->core==core) {
 				DataflowBlackholeDeltaOps io;
 				okay=io.Bind(*delta)
 					&& PioneerQwen35DataflowDeltaWorker(*delta,
@@ -446,8 +405,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* dense=reinterpret_cast<const DataflowDenseAttentionInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && dense->Valid()
-				&& dense->core==core
-				&& DataflowBlackholeRouteForCore(dense->core)==localRoute) {
+				&& dense->core==core) {
 				DataflowBlackholeDenseAttentionOps io;
 				float* const norm=reinterpret_cast<float*>(static_cast<uintptr_t>(
 					DataflowDenseNormAddress));
@@ -468,8 +426,7 @@ inline bool DataflowWorkerResetQueues()
 			const auto* argmax=reinterpret_cast<const DataflowArgmaxInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
 			if (DataflowWorkerQueuesClean() && argmax->Valid()
-				&& argmax->core==core
-				&& DataflowBlackholeRouteForCore(argmax->core)==localRoute) {
+				&& argmax->core==core) {
 				DataflowBlackholeArgmaxOps io;
 				okay=io.Bind(*argmax)
 					&& PioneerQwen35DataflowArgmaxWorker(*argmax,sequence,

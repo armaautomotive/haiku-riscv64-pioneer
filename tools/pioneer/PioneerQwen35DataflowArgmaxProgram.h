@@ -132,7 +132,7 @@ inline bool DataflowArgmaxReadResult(const DataflowWorkerMailbox& mailbox,
 	const unsigned tokenComplement=mailbox.reserved[4];
 	const unsigned checksum=mailbox.reserved[5];
 	if (magic!=DataflowArgmaxResultMagic || tokenComplement!=~token
-		|| resultSequence!=sequence || mailbox.reserved[6]) return false;
+		|| resultSequence!=sequence || mailbox.logicalCore!=0) return false;
 	const DataflowArgmaxResult candidate{token,scoreBits,resultSequence,checksum};
 	if (!DataflowArgmaxResultValid(candidate)) return false;
 	result=candidate;

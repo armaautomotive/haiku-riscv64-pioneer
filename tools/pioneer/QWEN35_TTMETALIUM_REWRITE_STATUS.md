@@ -689,9 +689,11 @@ passes without A atomics or runtime helpers, and the offline driver/package
 build passes. The rebuilt driver SHA-256 is
 `531f419a9c6d213cdf75da0afd0e27e327c6750086cda0375d59e3684d8fd420`; the
 service text is unchanged. These checks do not establish silicon recovery.
-The route mismatch and exact stop-audit failure still need evidence. No warm
-output or decode rate exists; the 100 tokens/s goal remains unmet. Assistant
-integration remains deferred until the rewrite and benchmark are complete.
+At that checkpoint the route mismatch and exact cleanup failure still needed
+hardware evidence; tag0107 later captured raw route `0x312` and a resume
+failure, as recorded below. No warm output or decode rate exists; the 100
+tokens/s goal remains unmet. Assistant integration remains deferred until the
+rewrite and benchmark are complete.
 
 ### Tag0107 recovery and route diagnostics
 
@@ -703,8 +705,50 @@ idle NoC are stable; it does not admit the route for inference. The protocol
 is ABI 2. Owner and PCI-memory ASan/UBSan tests pass, the RV32IMF service
 compile passes without A atomics/runtime helpers, and the offline package
 build passes. Driver SHA-256:
-`176aacf58aeb972aabbe05d5dca6f89f5af1a1f3648ba96d7c932abea085668`; client
+`176aacf58aeb972aabbe05d5c3ca6f89f5af1a1f3648ba96d7c932abea085668`; client
 SHA-256: `232a98fd41c77f3e559e5de983a156febb65ff483c16da5181dcc28f268d72cd`.
-The guarded tag0107 trial and post-cycle recovery helper are prepared, but no
-tag0107 card run has started. Hardware recovery, valid output, timing, and
-throughput remain unverified.
+The guarded tag0107 trial and post-cycle recovery helper were run on the card.
+The trial authenticated, tokenized the prompt, uploaded
+the complete 4B model, and bound its manifest. Startup again stopped at worker
+0: phase 2 rejected raw local route `0x312` (786). No prompt execution or model
+load/prompt/decode timing was produced. Cleanup stopped after the client
+reported `close_failed result=18` (resident-service resume failure); the
+client descriptor closed, but the guarded wrapper correctly refused to swap
+drivers while the candidate reported `cold1 active_owner1`. The current card
+state is tag0107 driver60, generation3, `cold1 active_owner1 open_count1`, with
+the recovery lock retained. The stable driver has not yet been restored.
+
+This run confirms the route-fatal branch is reached and the driver does not
+silently fall back to CPU inference, but it does not verify the attempted
+no-reboot cleanup path. The next rewrite checkpoint needs a precise
+restore/resume failure stage and core, then a corrected worker identity/route
+contract before another model run. No valid output, warm run, or decode rate
+exists; the 100 tokens/s goal remains unmet. The 27B setup was verified intact
+at preflight and was not accessed by this 4B run. Assistant integration remains
+deferred until the rewrite and benchmark are complete.
+
+### Tag0108 route and cleanup rewrite (2026-11-21)
+
+Tag0108 no longer derives a logical worker number from the firmware's raw
+local NoC register. The kernel writes the selected core ID into the startup
+mailbox; each worker validates that assignment and checks invocation ownership
+against it. During the all-core preflight the host now captures a stable,
+unique local route for each selected core and requires that route to remain
+unchanged during inference. Projections still have no CPU fallback and use
+the Tensix matrix engine across the 120-core service fleet. Close now reports
+the exact core and substage when restoring or resuming the fleet fails.
+
+The new mailbox/client protocol is ABI 3. Five focused sanitizer tests pass,
+the RV32IMF compile passes without A atomics or runtime helpers, and the full
+offline package build passes. Tag0108 driver SHA-256 is
+`62d64043cf5f3e2110b96446839efdfe2c61a945c8d87cd21d9d9a52072de1dc`; client
+SHA-256 is `cbee1483b73fa8e08754fbd04d1f78376e725ae7dc6e078ad271fdc2a58a256a`.
+The guarded two-warm and post-cycle recovery scripts are prepared.
+
+The Pioneer still has tag0107 installed at generation3 with
+`cold1 active_owner1 open_count1`; stable driver55 is not yet restored. Tag0108
+has not run on hardware. There is still no inference output, warm run, prompt
+timing, or decode rate, so the 100 tokens/s target remains unmet. The 27B model
+passed the exact preflight check before tag0107 and was not accessed by that
+run. Assistant integration remains deferred until hardware rewrite validation
+and benchmarking succeed.

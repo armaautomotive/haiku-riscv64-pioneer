@@ -69,15 +69,6 @@ struct MockDataflowIO {
 	{
 		failedStage=0;
 		failedCore=DataflowCoreCount;
-		for (unsigned core=0;core<DataflowCoreCount;core++) {
-			unsigned mapped=UINT32_MAX;
-			if (!DataflowBlackholeLocalCore(DataflowBlackholeRouteForCore(core),mapped)
-				|| mapped!=core) {
-				failedStage=1;
-				failedCore=core;
-				return false;
-			}
-		}
 		return true;
 	}
 	bool CoreIdle(unsigned core) const
@@ -191,10 +182,9 @@ struct MockDataflowIO {
 	}
 	bool CoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const
 	{
-		unsigned mapped=UINT32_MAX;
 		return core<DataflowCoreCount && started[core]
-			&& DataflowBlackholeLocalCore(DataflowBlackholeRouteForCore(core),mapped)
-			&& mapped==core && DataflowWorkerSnapshotReady(observed);
+			&& mailbox[core].logicalCore==core
+			&& DataflowWorkerSnapshotReady(observed);
 	}
 	bool AuthorizeProjection(const DataflowProjectionProgram& program) const
 	{
@@ -393,10 +383,16 @@ struct MockDataflowIO {
 	{
 		return core<DataflowCoreCount && restored[core];
 	}
-	bool ResumeRestoredFleet()
+	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore)
 	{
+		failedStage=0;
+		failedCore=DataflowCoreCount;
 		resumeCount++;
-		if (failResume) return false;
+		if (failResume) {
+			failedStage=2;
+			failedCore=0;
+			return false;
+		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			started[core]=originalRunning[core];
 			held[core]=!originalRunning[core];
