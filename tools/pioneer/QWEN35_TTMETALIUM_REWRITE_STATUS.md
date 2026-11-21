@@ -31,12 +31,20 @@ decode rate; the two-warm benchmark has not started. Tag0118 cold-latched at
 generation3; after a fresh Haiku boot, guarded recovery restored stable55
 generation2, cleared the lock, and confirmed the 4B/27B files remain intact.
 Full build, focused ASan/UBSan tests, RV32IMF role compile, and `15712/18432`
-stack check pass. The next rewrite step is read-only capture of a completion
-counter match mask and adjacent NoC state. Valid output, two warm runs, clean
-unload, in-place recovery, and 100 decode tokens/s remain open. See
+stack check pass. Tag0119 now carries a read-only completion-counter match
+mask plus initiator/queue state through the fixed 64-byte worker mailbox and
+a new query action; the 36-byte control request stays fixed. It also fixes a
+worker cleanup loop that wrote one word past `reserved[]` into `logicalCore`.
+The variant-60 build, focused ASan/UBSan tests, runtime-recovery test, and
+`15712/18432` stack check pass. Stable55 is idle at generation2. The next
+rewrite step is one guarded tag0119 diagnostic, not the throughput benchmark.
+Valid output, two warm runs, clean unload, in-place recovery, and 100 decode
+tokens/s remain open. See
 [`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
 [`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md),
 [`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), and
+[`tag0119 BUILD`](benchmarks/qwen35-dataflow-tag0119-20261121/BUILD.md),
+[`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md), and
 prior outcomes in [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md),
 [`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
 [`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md), and
@@ -209,6 +217,17 @@ the expected completion counter (`0x00029067`) beside the observed value
   guarded recovery restored stable55 generation2, removed the lock, and
   verified both model files. No valid output exists. Details and raw evidence
   are in `benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md`.
+
+- 2026-11-21 (tag0119, read-only NoC failure receipt): Captures an 8-slot
+  completion-counter match mask, four-initiator busy mask, and 32-queue busy
+  mask in the fixed 64-byte mailbox; a read-only `QUERY_NOC` returns it through
+  the existing 36-byte ioctl request. Also corrects receipt cleanup to clear
+  only the six reserved words, preserving `logicalCore`. Full variant-60
+  driver/service/client build passes at `15712/18432` stack bytes. Service
+  owner, owner, embedding-worker ASan/UBSan, and runtime-recovery tests pass.
+  The candidate is prepared for one guarded prompt diagnostic; stable55 is
+  idle at generation2. See
+  `benchmarks/qwen35-dataflow-tag0119-20261121/BUILD.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
   vocabulary load and prompt tokenization `13.168584` s, full model load

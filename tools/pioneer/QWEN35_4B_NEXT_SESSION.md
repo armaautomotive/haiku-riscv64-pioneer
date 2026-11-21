@@ -8,7 +8,7 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Current checkpoint: tag0118 diagnostic failed; stable recovery verified
+## Current checkpoint: tag0119 built; one guarded diagnostic pending
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
 that rewrite is complete; benchmark acceptance and assistant integration
@@ -23,15 +23,20 @@ worker mailbox and a read-only `QUERY_EXPECTED` action without changing the
 failed the same read: observed `0x00029066`, expected `0x00029067`. Authentication
 took `68.186682` s, tokenization `13.766015` s, model load `334.004328` s,
 and failed prompt processing `0.615329` s. No valid output or decode rate
-exists. The candidate cold-latched; guarded recovery after the accidental
-power reset restored stable driver55 generation2, cleared the lock, and
-confirmed the 4B/27B files remain intact. Offline build, focused sanitizer
-tests, RV32IMF role compile, and the `15712/18432` stack check pass. The next
-rewrite step is a read-only counter-match mask and neighboring NoC-state
-receipt. The two-warm benchmark remains gated. See
+exists. Guarded recovery restored stable driver55 generation2, cleared the
+lock, and confirmed the 4B/27B files remain intact.
+
+Tag0119 carries an 8-slot counter-match mask and read-only NoC initiator/queue
+state through the fixed mailbox and a new query action. It also fixes receipt
+cleanup that could overwrite the mailbox's `logicalCore`. Full variant-60
+build, service-owner/owner/embedding-worker ASan/UBSan tests, runtime-recovery
+test, and the `15712/18432` stack check pass. Stable55 is idle at generation2.
+The next step is one guarded tag0119 prompt diagnostic; the two-warm benchmark
+remains gated. See
 [`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
-[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), and
-[`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md).
+[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md),
+[`tag0119 BUILD`](benchmarks/qwen35-dataflow-tag0119-20261121/BUILD.md), and
+[`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md).
 
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has yet generated a valid token or

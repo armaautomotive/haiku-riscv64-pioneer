@@ -49,6 +49,7 @@ struct DataflowOwnerDiagnostic {
 	DataflowWorkerSnapshot worker;
 	unsigned recoveryAuditStage,recoveryAuditCore,recoveryAuditDetail;
 	unsigned failureExpected;
+	unsigned failureNoCState,failureNoCQueueMask;
 };
 
 enum DataflowOwnerResult {
@@ -94,7 +95,7 @@ class DataflowProjectionOwner {
 	DataflowWorkerSnapshot fSnapshot[DataflowCoreCount]{};
 	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
 		DataflowOwnerComplete,DataflowCoreCount,0,{},DataflowRecoveryAuditNone,
-		DataflowCoreCount,0,0};
+		DataflowCoreCount,0,0,0,0};
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{
@@ -113,6 +114,20 @@ class DataflowProjectionOwner {
 
 	template<class IO>
 	static bool ReadFailureExpected(IO&,unsigned,unsigned&,long)
+	{
+		return false;
+	}
+
+	template<class IO>
+	static auto ReadFailureNoC(IO& io,unsigned core,unsigned& state,
+		unsigned& queueMask,int)
+		-> decltype(io.ReadWorkerFailureNoC(core,state,queueMask),bool())
+	{
+		return io.ReadWorkerFailureNoC(core,state,queueMask);
+	}
+
+	template<class IO>
+	static bool ReadFailureNoC(IO&,unsigned,unsigned&,unsigned&,long)
 	{
 		return false;
 	}
@@ -354,7 +369,8 @@ public:
 	DataflowOwnerResult RunEmbedding(const DataflowEmbeddingProgram& program,IO& io)
 	{
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0,0};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,
+			0,0,0,0};
 		auto record=[&](DataflowOwnerResult result,unsigned core,
 			const DataflowWorkerSnapshot* worker,bool faulted) {
 			fDiagnostic.result=result;
@@ -370,6 +386,15 @@ public:
 					&& (worker->failureDetail&0xffU)>=0x80U
 					&& (worker->failureDetail&0xffU)<0x88U)
 					ReadFailureExpected(io,core,fDiagnostic.failureExpected,0);
+				if (core<DataflowCoreCount
+					&& worker->failure==DataflowFailureEmbeddingWeightRead
+					&& worker->phase==5
+					&& ((worker->failureDetail>>8)&0xffU)
+						==DataflowNocTransferCounterTimeout
+					&& (worker->failureDetail&0xffU)>=0x80U
+					&& (worker->failureDetail&0xffU)<0x88U)
+					ReadFailureNoC(io,core,fDiagnostic.failureNoCState,
+						fDiagnostic.failureNoCQueueMask,0);
 			}
 			if (faulted) fFaulted=true;
 			return result;
@@ -468,7 +493,8 @@ public:
 		fNextSequence=sequence;
 		fPendingSequence=0;
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0,0};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,
+			0,0,0,0};
 		return DataflowOwnerComplete;
 	}
 

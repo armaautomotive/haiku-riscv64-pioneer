@@ -169,6 +169,12 @@ inline void DataflowWorkerPublish(DataflowWorkerMailbox& mailbox,
 	DataflowStoreRelease(mailbox.state,state);
 }
 
+inline void DataflowWorkerClearReceipt(DataflowWorkerMailbox& mailbox)
+{
+	for (unsigned i=0;i<sizeof(mailbox.reserved)/sizeof(mailbox.reserved[0]);i++)
+		DataflowStoreRelease(mailbox.reserved[i],0);
+}
+
 inline bool DataflowWorkerCommandSequenceValid(unsigned completed,
 	unsigned acknowledged,unsigned command)
 {
@@ -275,6 +281,7 @@ inline bool DataflowWorkerResetQueues()
 		bool okay=false;
 		unsigned embeddingFailure=0,embeddingDetail=0;
 		uint32_t embeddingStatus=0,embeddingExpected=0;
+		uint32_t embeddingNoCState=0,embeddingNoCQueueMask=0;
 		if (invocationMagic==DataflowProgramMagic) {
 			DataflowDeviceContext context;
 			okay=DataflowBindLocalContext(context,DataflowFailureQueue);
@@ -306,7 +313,8 @@ inline bool DataflowWorkerResetQueues()
 							DataflowWeightBufferAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowOutputBufferAddress)),io,&embeddingFailure,
-						&embeddingDetail,&embeddingStatus,&embeddingExpected);
+						&embeddingDetail,&embeddingStatus,&embeddingExpected,
+						&embeddingNoCState,&embeddingNoCQueueMask);
 				}
 			}
 			if (!okay) DataflowSignalLocalFailure(embeddingFailure
@@ -461,6 +469,8 @@ inline bool DataflowWorkerResetQueues()
 			DataflowStoreRelease(mailbox->reserved[1],embeddingDetail);
 			DataflowStoreRelease(mailbox->reserved[2],embeddingStatus);
 			DataflowStoreRelease(mailbox->reserved[3],embeddingExpected);
+			DataflowStoreRelease(mailbox->reserved[4],embeddingNoCState);
+			DataflowStoreRelease(mailbox->reserved[5],embeddingNoCQueueMask);
 		}
 		DataflowWorkerPublish(*mailbox,sequence,state,failure,okay?2:5);
 		DataflowFence();
@@ -472,9 +482,7 @@ inline bool DataflowWorkerResetQueues()
 				DataflowFailureQueue,6);
 			for (;;) asm volatile("" ::: "memory");
 		}
-		for (unsigned i=0;i<7;i++)
-			DataflowStoreRelease(reinterpret_cast<volatile uint32_t*>(
-				mailbox->reserved)[i],0);
+		DataflowWorkerClearReceipt(*mailbox);
 		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerReady,0,0);
 		DataflowFence();
 	}

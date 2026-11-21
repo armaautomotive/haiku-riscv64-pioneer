@@ -54,6 +54,8 @@ struct MockDataflowIO {
 	unsigned failWorkerCore=UINT32_MAX;
 	bool failEmbeddingCounter=false;
 	uint32_t expectedEmbeddingCounter=0;
+	uint32_t failureNoCState=0x00000d03U;
+	uint32_t failureNoCQueueMask=0x80000001U;
 	bool failStopAudit=false,failResume=false,failBegin=false,failComplete=false;
 	bool authorizeProgram=true;
 
@@ -187,6 +189,14 @@ struct MockDataflowIO {
 	{
 		if (!failEmbeddingCounter || core!=failWorkerCore) return false;
 		expected=expectedEmbeddingCounter;
+		return true;
+	}
+	bool ReadWorkerFailureNoC(unsigned core,unsigned& state,
+		unsigned& queueMask) const
+	{
+		if (!failEmbeddingCounter || core!=failWorkerCore) return false;
+		state=failureNoCState;
+		queueMask=failureNoCQueueMask;
 		return true;
 	}
 	bool CoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const
@@ -494,6 +504,13 @@ static DeviceLayout MakeRmsLayout()
 
 int main()
 {
+	DataflowWorkerMailbox receipt{};
+	receipt.logicalCore=119;
+	for (unsigned i=0;i<6;i++) receipt.reserved[i]=i+1;
+	DataflowWorkerClearReceipt(receipt);
+	for (unsigned i=0;i<6;i++) assert(receipt.reserved[i]==0);
+	assert(receipt.logicalCore==119);
+
 	uint32_t code[96];
 	for (unsigned i=0;i<96;i++) code[i]=0x10000000+i;
 	DataflowServiceImageView image={DataflowServiceBootWord,code,96};
@@ -563,6 +580,8 @@ int main()
 	embeddingFailure.failWorkerCore=7;
 	embeddingFailure.failEmbeddingCounter=true;
 	embeddingFailure.expectedEmbeddingCounter=0x00029067U;
+	embeddingFailure.failureNoCState=0x00000d03U;
+	embeddingFailure.failureNoCQueueMask=0x80000001U;
 	assert(embeddingFailureOwner.EmbedToken(embedding,embeddingFailure)
 		==DataflowServiceEmbeddingFailed);
 	const auto& embeddingDiagnostic=embeddingFailureOwner.OwnerDiagnostic();
@@ -574,7 +593,9 @@ int main()
 		&& embeddingDiagnostic.worker.state==DataflowWorkerFailed
 		&& embeddingDiagnostic.worker.failure==DataflowFailureEmbeddingWeightRead
 		&& embeddingDiagnostic.worker.phase==5
-		&& embeddingDiagnostic.failureExpected==0x00029067U);
+		&& embeddingDiagnostic.failureExpected==0x00029067U
+		&& embeddingDiagnostic.failureNoCState==0x00000d03U
+		&& embeddingDiagnostic.failureNoCQueueMask==0x80000001U);
 	assert(embeddingFailureOwner.RecoverProjection(embeddingFailure)
 		==DataflowServiceRecovered);
 	assert(embeddingFailureOwner.Ready()

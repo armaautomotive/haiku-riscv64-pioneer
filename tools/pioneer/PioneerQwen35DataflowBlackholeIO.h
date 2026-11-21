@@ -33,6 +33,13 @@ enum DataflowNocTransferStage : unsigned {
 struct DataflowNocDiagnostic {
 	unsigned stage,index;
 	uint32_t value,expected;
+	uint32_t counterMatchMask,initiatorBusyMask,queueBusyMask;
+	constexpr DataflowNocDiagnostic(unsigned stageValue=0,unsigned indexValue=0,
+		uint32_t observed=0,uint32_t expectedValue=0,
+		uint32_t counterMask=0,uint32_t initiatorMask=0,uint32_t queueMask=0)
+		: stage(stageValue),index(indexValue),value(observed),
+		expected(expectedValue),counterMatchMask(counterMask),
+		initiatorBusyMask(initiatorMask),queueBusyMask(queueMask) {}
 };
 
 inline unsigned DataflowNocDiagnosticCode(const DataflowNocDiagnostic& detail)
@@ -172,13 +179,27 @@ class DataflowBlackholeNoc {
 			if (detail) *detail={DataflowNocTransferDoorbellTimeout,0xff,doorbell,0};
 			return false;
 		}
+		uint32_t counterMatchMask=0;
+		unsigned mismatch=8;
+		uint32_t mismatchValue=0;
 		for (unsigned i=0;i<8;i++) {
 			const uint32_t observed=Counter(i);
-			if (observed!=expected[i]) {
-				if (detail) *detail={DataflowNocTransferCounterTimeout,0x80U+i,
-					observed,expected[i]};
-				return false;
+			if (observed==expected[i]) counterMatchMask|=1U<<i;
+			else if (mismatch==8) {
+				mismatch=i;
+				mismatchValue=observed;
 			}
+		}
+		if (mismatch<8) {
+			uint32_t initiatorBusyMask=0,queueBusyMask=0;
+			for (unsigned i=0;i<DataflowNocInitiators;i++)
+				if (*Words(Base+0x40+i*0x800)) initiatorBusyMask|=1U<<i;
+			for (unsigned i=0;i<DataflowNocQueues;i++)
+				if (*Words(Base+0x240+i*4)&255U) queueBusyMask|=1U<<i;
+			if (detail) *detail={DataflowNocTransferCounterTimeout,
+				0x80U+mismatch,mismatchValue,expected[mismatch],counterMatchMask,
+				initiatorBusyMask,queueBusyMask};
+			return false;
 		}
 		if (!Quiet(&quiet) && detail)
 			*detail={DataflowNocTransferNotQuietAfterComplete,quiet.index,quiet.value,0};

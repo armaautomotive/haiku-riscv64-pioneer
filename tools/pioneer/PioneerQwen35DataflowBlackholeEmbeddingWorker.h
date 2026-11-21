@@ -16,18 +16,23 @@ bool PioneerQwen35DataflowEmbedWorker(
 	const DataflowEmbeddingInvocation& program,uint8_t* weightTile,
 	float* outputPage,IO& io,unsigned* failure=nullptr,
 	unsigned* failureDetail=nullptr,uint32_t* failureStatus=nullptr,
-	uint32_t* failureExpected=nullptr)
+	uint32_t* failureExpected=nullptr,uint32_t* failureNoCState=nullptr,
+	uint32_t* failureNoCQueueMask=nullptr)
 {
 	if (failure) *failure=0;
 	if (failureDetail) *failureDetail=0;
 	if (failureStatus) *failureStatus=0;
 	if (failureExpected) *failureExpected=0;
+	if (failureNoCState) *failureNoCState=0;
+	if (failureNoCQueueMask) *failureNoCQueueMask=0;
 	auto fail=[&](unsigned reason,unsigned detail=0,uint32_t status=0,
-		uint32_t expected=0) {
+		uint32_t expected=0,uint32_t noCState=0,uint32_t queueMask=0) {
 		if (failure) *failure=reason;
 		if (failureDetail) *failureDetail=detail;
 		if (failureStatus) *failureStatus=status;
 		if (failureExpected) *failureExpected=expected;
+		if (failureNoCState) *failureNoCState=noCState;
+		if (failureNoCQueueMask) *failureNoCQueueMask=queueMask;
 		return false;
 	};
 	if (!program.Valid() || !weightTile || !outputPage)
@@ -48,7 +53,10 @@ bool PioneerQwen35DataflowEmbedWorker(
 				weightTile,DataflowQ6KEmbeddingTileBytes,&diagnostic))
 				return fail(DataflowFailureEmbeddingWeightRead,
 					DataflowNocDiagnosticCode(diagnostic),diagnostic.value,
-					diagnostic.expected);
+				diagnostic.expected,
+				diagnostic.counterMatchMask
+					|((diagnostic.initiatorBusyMask&0xfU)<<8),
+				diagnostic.queueBusyMask);
 		}
 		if (!DataflowDecodeQ6KEmbeddingPanel(weightTile,
 			DataflowQ6KEmbeddingTileBytes,program.lane,panel,outputPage,

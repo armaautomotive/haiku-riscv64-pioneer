@@ -62,7 +62,8 @@ struct MockEmbeddingIO {
 		DataflowNocDiagnostic* detail=nullptr)
 	{
 		if (detail) *detail=failRead
-			?DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,1,7}
+			?DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,1,7,
+				0x03,0x0d,0x80000001}
 			:DataflowNocDiagnostic{};
 		if (failRead || bank!=weightBank || bytes!=DataflowQ6KEmbeddingTileBytes
 			|| address<weightBase) return false;
@@ -147,12 +148,16 @@ int main()
 	io.failRead=true;
 	unsigned failureDetail=0;
 	uint32_t failureStatus=0,failureExpected=0;
+	uint32_t failureNoCState=0,failureNoCQueueMask=0;
 	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,tileScratch,
-		outputScratch,io,&failure,&failureDetail,&failureStatus,&failureExpected));
+		outputScratch,io,&failure,&failureDetail,&failureStatus,&failureExpected,
+		&failureNoCState,&failureNoCQueueMask));
 	assert(failure==DataflowFailureEmbeddingWeightRead
 		&& failureDetail==DataflowNocDiagnosticCode(
 			DataflowNocDiagnostic{DataflowNocTransferCounterTimeout,0x80,1,7})
-		&& failureStatus==1 && failureExpected==7);
+		&& failureStatus==1 && failureExpected==7
+		&& failureNoCState==0x00000d03U
+		&& failureNoCQueueMask==0x80000001U);
 	io.failRead=false;
 	io.failWrite=true;
 	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,tileScratch,
