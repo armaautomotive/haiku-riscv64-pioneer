@@ -28,6 +28,7 @@ class DataflowProjectionAuthority {
 	unsigned fActivationRows[ActivationBuffers]{};
 	bool fGraphWorkspaceReady[DataflowGraphWorkspaceBufferCount]{};
 	unsigned fGraphWorkspaceLayer[DataflowGraphWorkspaceBufferCount]{};
+	unsigned fConvNextPosition[Layers]{};
 	bool fGraphResidualReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
@@ -157,11 +158,33 @@ public:
 		{ return GraphWorkspaceReady(index)?fGraphWorkspaceLayer[index]:~0U; }
 	bool GraphResidualReady() const { return fBound && fGraphResidualReady; }
 
+	// Starts a new decode request without clearing resident state storage.
+	// Position zero operators are required to ignore the previous request's
+	// ping-pong cells, then successful recurrent steps advance each layer.
+	bool ResetRecurrentState()
+	{
+		if (!fBound || fPending) return false;
+		for (unsigned layer=0;layer<Layers;layer++)
+			fConvNextPosition[layer]=0;
+		for (unsigned i=DataflowGraphRecurrentQkvWorkspaceIndex;
+			i<DataflowGraphWorkspaceBufferCount;i++) {
+			fGraphWorkspaceReady[i]=false;
+			fGraphWorkspaceLayer[i]=~0U;
+		}
+		return true;
+	}
+
+	unsigned ConvNextPosition(unsigned layer) const
+	{
+		return fBound && layer<Layers?fConvNextPosition[layer]:~0U;
+	}
+
 	bool BuildConv(unsigned layer,unsigned position,
 		DataflowConvProgram& program) const
 	{
 		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
 		if (!fBound || fPending || layer>=Layers
+			|| position!=fConvNextPosition[layer]
 			|| !GraphWorkspaceReady(qkv) || GraphWorkspaceLayer(qkv)!=layer
 			|| !DataflowConvProgramBuilder::Build(fManifest,fGraphWorkspace,
 				layer,position,fRoutes,program)) return false;
@@ -172,6 +195,7 @@ public:
 	{
 		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
 		return fBound && !fPending && program.layer<Layers
+			&& program.position==fConvNextPosition[program.layer]
 			&& GraphWorkspaceReady(qkv)
 			&& GraphWorkspaceLayer(qkv)==program.layer
 			&& ConvMatches(program);
@@ -203,6 +227,7 @@ public:
 		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
 		fGraphWorkspaceLayer[qkv]=program.layer;
 		fGraphWorkspaceReady[qkv]=true;
+		fConvNextPosition[program.layer]=program.position+1;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;

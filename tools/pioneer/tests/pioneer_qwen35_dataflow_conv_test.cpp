@@ -268,6 +268,15 @@ int main()
 		&& !authority.BuildConv(0,0,position0));
 	assert(authority.CompleteConv(authorizedPosition0));
 	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex));
+	assert(authority.ConvNextPosition(0)==1
+		&& !authority.BuildConv(0,0,authorizedPosition0)
+		&& authority.BuildConv(0,1,authorizedPosition0));
+	assert(authority.ResetRecurrentState()
+		&& authority.ConvNextPosition(0)==0
+		&& !authority.GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex));
+	assert(authority.BuildProjection(0,RecurrentQkv,0,
+		DataflowGraphRecurrentQkvOutputSlot,qkvProjection));
+	assert(authority.Begin(qkvProjection) && authority.Complete(qkvProjection));
 	DataflowProjectionOwner owner;
 	ConvOwnerMockIO ownerIO(authority);
 	assert(owner.Initialize(ownerIO)==DataflowOwnerComplete);
