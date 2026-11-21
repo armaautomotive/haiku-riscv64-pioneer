@@ -404,6 +404,20 @@ service-image text SHA-256:
 The driver, reload-guard, and default-control package builds pass. These
 remain offline checks; no hardware work or performance result exists.
 
+Checkpoint `307c9d134b` adds per-layer recurrent position tracking to the
+authority. A convolution can run only at that layer's next committed position;
+replay, skipping, and out-of-order requests are rejected. The new
+`ResetRecurrentState()` request boundary resets position tracking and
+invalidates recurrent scratch without writing the large resident state
+regions. This is safe because position-zero convolution substitutes zero
+history instead of reading the old ping-pong slot; the future delta-state
+worker must enforce the same rule. ASan/UBSan tests cover successful advance,
+replay rejection, reset, and reprojection before a new position zero. The
+RV32IMF role compile passes, and offline driver60, reload-guard, and
+default-control builds pass. Driver60 SHA-256:
+`a7cd35960b48c7844910e8f2f0df72b661ce19dd014d8b5ca4c1f96d4a715d15`.
+No hardware validation or throughput evidence was produced.
+
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration
 deferred until the rewrite graph is implemented and its offline correctness

@@ -454,3 +454,19 @@ service-image text SHA-256 is
 No rewritten code has run on the Pioneer. Delta-state math, dense attention,
 state/KV IO, final vocabulary readout, and generation remain before the
 hardware benchmark and assistant integration phases.
+
+## Recurrent position guard `307c9d134b` (2026-11-20)
+
+The rewrite authority now tracks the next recurrent position independently
+for each layer. It admits only position zero at request start and increments
+after an audited convolution commit; a replay, gap, or out-of-order position
+is refused. `ResetRecurrentState()` resets this bookkeeping and invalidates
+recurrent graph scratch at the request boundary. It leaves the resident
+ping-pong memory in place: position zero must ignore the prior request's
+cells, and the convolution worker already substitutes zero history on that
+position. The future delta-state worker must also ignore its previous state
+slot at position zero. ASan/UBSan tests cover position advance, replay
+rejection, reset, and reprojection. The Haiku RV32IMF role compile and
+offline driver60/reload-guard/default-control builds pass. Driver60 SHA-256:
+`a7cd35960b48c7844910e8f2f0df72b661ce19dd014d8b5ca4c1f96d4a715d15`.
+This is offline evidence only.
