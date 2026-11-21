@@ -14,7 +14,9 @@ enum DataflowDecoderSequenceResult {
 	DataflowDecoderEmbeddingRunFailed=4,
 	DataflowDecoderLayerFailed=5,
 	DataflowDecoderFinalNormBuildFailed=6,
-	DataflowDecoderFinalNormRunFailed=7
+	DataflowDecoderFinalNormRunFailed=7,
+	DataflowDecoderOutputBuildFailed=8,
+	DataflowDecoderOutputRunFailed=9
 };
 
 // Execute one token position across the complete mixed Qwen3.5 decoder stack.
@@ -81,7 +83,16 @@ public:
 			return static_cast<DataflowDecoderSequenceResult>(
 				stage=DataflowDecoderFinalNormRunFailed);
 
-		outputSlot=normalizedSlot;
+		DataflowProjectionProgram tiedOutput{};
+		if (!authority.BuildProjection(Layers,TiedOutput,normalizedSlot,
+			DataflowGraphVocabularyOutputSlot,tiedOutput))
+			return static_cast<DataflowDecoderSequenceResult>(
+				stage=DataflowDecoderOutputBuildFailed);
+		if (service.RunProjection(tiedOutput,io)!=0)
+			return static_cast<DataflowDecoderSequenceResult>(
+				stage=DataflowDecoderOutputRunFailed);
+
+		outputSlot=DataflowGraphVocabularyOutputSlot;
 		stage=DataflowDecoderSequenceComplete;
 		return DataflowDecoderSequenceComplete;
 	}

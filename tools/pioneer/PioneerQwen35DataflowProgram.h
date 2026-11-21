@@ -529,6 +529,38 @@ inline bool DataflowProjectionMatchesDenseAttentionOutput(
 	return false;
 }
 
+// The final tied output head consumes the final-normalized hidden activation
+// and writes one FP32 logit per vocabulary row into its reserved graph buffer.
+// Its 15,520 output groups require all 120 Tensix cores.
+inline bool DataflowProjectionMatchesTiedOutput(const DeviceLayout& manifest,
+	const DataflowGraphWorkspace& workspace,
+	const unsigned (&auditedRoutes)[2][Banks],
+	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr)
+{
+	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
+		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
+		|| !DataflowBankRoutesValid(auditedRoutes)
+		|| program.inputs!=Hidden || program.inputRows!=Hidden
+		|| program.inputBase!=0 || program.outputRows!=Vocabulary
+		|| program.activeCores!=DataflowCoreCount
+		|| !DataflowRowSpaceMatches(
+			workspace.space[DataflowGraphVocabularyWorkspaceIndex],program.output))
+		return false;
+	const TensorSpace* expected=manifest.Weight(Layers,TiedOutput);
+	if (!expected || expected->type!=program.type || expected->inputs!=Hidden
+		|| expected->place.rows!=Vocabulary
+		|| !DataflowRowSpaceMatches(expected->place,program.weights)) return false;
+	unsigned foundInput=ActivationBuffers;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.input))
+			foundInput=slot;
+	if (foundInput>=ActivationBuffers) return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
+	if (inputSlot) *inputSlot=foundInput;
+	return true;
+}
+
 // RecurrentOut consumes only the V channels retained in a recurrent QKV
 // workspace. Keep the complete QKV RowSpace as the source so its fragment map
 // remains valid, and express the V row offset in the projection descriptor.

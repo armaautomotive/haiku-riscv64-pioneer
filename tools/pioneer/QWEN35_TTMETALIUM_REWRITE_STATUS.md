@@ -271,15 +271,26 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The last pushed code checkpoint is `e533c033ef` (`Add Qwen35 dense attention
-rewrite path`), following `6e0f12b4ff`. The local rewrite now adds the first
-whole-model one-position coordinator: token embedding, all 32 mixed recurrent
-and dense layer sequences, then final RMS normalization. It dispatches model
-arithmetic to the resident service and keeps no CPU inference path. The
-decoder-sequence host test passes under ASan/UBSan, including mixed-layer
-counts, recurrent-state reset behavior, first-failure reporting, and invalid
-input rejection. The Haiku `rv32imf_zicsr` target compile also passes without
-RISC-V A-extension instructions or unresolved runtime helpers.
+The last dense-attention baseline is `e533c033ef`, following `6e0f12b4ff`.
+Checkpoint `69633b9559` adds the whole-model one-position coordinator: token
+embedding, all 32 mixed recurrent and dense layer sequences, and final RMS
+normalization. Its decoder-sequence host test passes under ASan/UBSan,
+including mixed-layer counts, recurrent-state reset behavior, first-failure
+reporting, and invalid input rejection. The Haiku `rv32imf_zicsr` target
+compile passes without RISC-V A-extension instructions or unresolved runtime
+helpers.
+
+This rewrite increment adds a reserved 248,320-row FP32 vocabulary logits
+buffer and the manifest-bound tied Q6_K output projection. Authorization
+requires a completed final RMS operation on the same activation slot before
+the tied head can run; the descriptor schedules all 120 Tensix cores. The
+decoder coordinator now dispatches this projection through the resident
+service. The model-bind protocol advances to ABI 4 (82,868 bytes). ASan/UBSan
+checks pass for tied-output authorization and 120-core materialization, the
+full mixed decoder sequence, and the workspace allocator. The RV32IMF target
+compile passes. The actual variant-60 rewrite driver builds offline with SHA
+`fb414203f92f59f28053cdd02d0287e8085f9ef9c04b8964868ef3cecefcdbca`; service
+text, reload-guard, and default-control builds also pass.
 
 The actual variant-60 rewrite driver now builds offline through the dedicated
 `tools/pioneer/build_qwen35_dataflow_driver.sh` wrapper, which selects the
@@ -294,14 +305,14 @@ earlier claimed driver60 hash (`057b487...`) came from the variant-55 helper
 and did not include the rewrite; that validation claim is superseded. These
 are offline build checks only; the Pioneer has not been touched.
 
-This sequence returns the final-normalized hidden vector, not a generated
-token. The tied vocabulary projection, device-side token selection, and
-request/generation loop remain open. Full model generation and silicon
-correctness/performance evidence are not available; no tokens/sec result exists.
+This sequence currently produces the tied-head logits, not a generated token.
+Device-side token selection and the request/generation loop remain open. Full
+model generation and silicon correctness/performance evidence are not
+available; no tokens/sec result exists.
 Continue only the rewrite until those offline gates are complete, then move to
 the previously requested benchmark and assistant integration phases.
 
-The pushed dense-attention baseline `e533c033ef` includes
+The dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS
 normalization, manifest-bound graph projections, SiLU×Up, residual save/add,
 feed-forward sequencing, recurrent convolution, Alpha/Beta projections,

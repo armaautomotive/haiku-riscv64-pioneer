@@ -84,7 +84,10 @@ int main()
 			==PioneerQwen35::DeltaHeads
 		&& graphWorkspace.space[
 			PioneerQwen35::DataflowGraphRecurrentBetaWorkspaceIndex].rows
-			==PioneerQwen35::DeltaHeads);
+			==PioneerQwen35::DeltaHeads
+		&& graphWorkspace.space[
+			PioneerQwen35::DataflowGraphVocabularyWorkspaceIndex].rows
+			==PioneerQwen35::Vocabulary);
 	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
 		const auto& prior=graphManifest.activation[1].parts[bank];
 		const auto& residual=graphWorkspace.space[0].parts[bank];

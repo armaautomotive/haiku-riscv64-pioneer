@@ -24,7 +24,7 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DECODER_SEQUENCE (B_DEVICE_OP_CODES_END + 0x8846)
 
 enum : uint32_t {
-	TT_QWEN35_DATAFLOW_MODEL_ABI=3,
+	TT_QWEN35_DATAFLOW_MODEL_ABI=4,
 	TT_QWEN35_DATAFLOW_RESIDUAL_SAVE=1,
 	TT_QWEN35_DATAFLOW_RESIDUAL_ADD=2,
 	TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE=256U,
@@ -45,7 +45,7 @@ struct tt_qwen35_dataflow_model_bind {
 
 struct tt_qwen35_dataflow_projection {
 	// output_slot 0/1 selects a ping-pong buffer; graph output slots select
-	// exact FFN Up or recurrent QKV/gate scratch destinations.
+	// exact model scratch, including the reserved tied-output logits buffer.
 	uint32_t version,layer,role,input_slot,output_slot;
 	uint32_t result,next_sequence,state,recovery_required;
 };
@@ -144,7 +144,7 @@ static_assert(sizeof(tt_qwen35_dataflow_dense_layer)==40,
 static_assert(sizeof(tt_qwen35_dataflow_decoder_sequence)==40,
 	"fixed mixed decoder sequence ABI");
 
-static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82740,
+static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82868,
 	"fixed manifest binding ABI");
 
 #endif

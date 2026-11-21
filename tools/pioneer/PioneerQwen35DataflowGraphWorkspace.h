@@ -14,19 +14,21 @@ enum : unsigned {
 	DataflowGraphRecurrentGateWorkspaceIndex=3,
 	DataflowGraphRecurrentAlphaWorkspaceIndex=4,
 	DataflowGraphRecurrentBetaWorkspaceIndex=5,
-	DataflowGraphWorkspaceBufferCount=6,
+	DataflowGraphVocabularyWorkspaceIndex=6,
+	DataflowGraphWorkspaceBufferCount=7,
 	DataflowGraphUpOutputSlot=ActivationBuffers,
 	DataflowGraphRecurrentQkvOutputSlot=DataflowGraphUpOutputSlot+1,
 	DataflowGraphRecurrentGateOutputSlot=DataflowGraphUpOutputSlot+2,
 	DataflowGraphRecurrentAlphaOutputSlot=DataflowGraphUpOutputSlot+3,
-	DataflowGraphRecurrentBetaOutputSlot=DataflowGraphUpOutputSlot+4
+	DataflowGraphRecurrentBetaOutputSlot=DataflowGraphUpOutputSlot+4,
+	DataflowGraphVocabularyOutputSlot=DataflowGraphUpOutputSlot+5
 };
 
 inline bool DataflowGraphProjectionTarget(unsigned outputSlot,
 	unsigned& workspaceIndex)
 {
 	if (outputSlot<DataflowGraphUpOutputSlot
-		|| outputSlot>DataflowGraphRecurrentBetaOutputSlot) return false;
+		|| outputSlot>DataflowGraphVocabularyOutputSlot) return false;
 	workspaceIndex=DataflowGraphUpWorkspaceIndex
 		+outputSlot-DataflowGraphUpOutputSlot;
 	return workspaceIndex<DataflowGraphWorkspaceBufferCount;
@@ -84,13 +86,14 @@ inline bool DataflowGraphProjectionRole(unsigned layer,unsigned workspaceIndex,
 inline unsigned DataflowGraphWorkspaceRows(unsigned index)
 {
 	static constexpr unsigned rows[DataflowGraphWorkspaceBufferCount]={
-		Hidden,Ffn,ConvChannels,DeltaInner,DeltaHeads,DeltaHeads};
+		Hidden,Ffn,ConvChannels,DeltaInner,DeltaHeads,DeltaHeads,Vocabulary};
 	return index<DataflowGraphWorkspaceBufferCount?rows[index]:0;
 }
 
 // The manifest keeps its two established Ffn-sized ping-pong buffers. This
-// sidecar adds residual/Up scratch for the FFN plus retained recurrent QKV,
-// gate, alpha, and beta projection outputs for one Gated DeltaNet layer.
+// sidecar adds residual/Up scratch for the FFN, retained recurrent QKV, gate,
+// alpha, and beta projections for one Gated DeltaNet layer, and one vocabulary
+// logits row space for the tied output projection.
 struct DataflowGraphWorkspace {
 	RowSpace space[DataflowGraphWorkspaceBufferCount];
 
@@ -99,6 +102,9 @@ struct DataflowGraphWorkspace {
 		if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
 			|| !manifest.context) return false;
 		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++) {
+			if (i==DataflowGraphVocabularyWorkspaceIndex
+				&& !space[i].rows && !space[i].rowBytes && !space[i].count
+				&& !space[i].unit) continue;
 			if (!space[i].Valid()
 				|| space[i].rows!=DataflowGraphWorkspaceRows(i)
 				|| space[i].rowBytes!=sizeof(float) || space[i].unit!=16) return false;
@@ -107,8 +113,12 @@ struct DataflowGraphWorkspace {
 		}
 		for (unsigned i=0;i<ActivationBuffers;i++) {
 			if (!manifest.activation[i].Valid()) return false;
-			for (unsigned scratch=0;scratch<DataflowGraphWorkspaceBufferCount;scratch++)
+			for (unsigned scratch=0;scratch<DataflowGraphWorkspaceBufferCount;scratch++) {
+				if (scratch==DataflowGraphVocabularyWorkspaceIndex
+					&& !space[scratch].rows && !space[scratch].rowBytes
+					&& !space[scratch].count && !space[scratch].unit) continue;
 				if (!Disjoint(space[scratch],manifest.activation[i])) return false;
+			}
 		}
 		return true;
 	}

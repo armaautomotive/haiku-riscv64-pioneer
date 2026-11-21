@@ -265,8 +265,83 @@ static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 	}
 }
 
+static void CheckTiedOutputProjection()
+{
+	DeviceLayout manifest{};
+	manifest.magic=LayoutMagic;
+	manifest.version=LayoutVersion;
+	manifest.context=128;
+	manifest.tied.type=14;
+	manifest.tied.inputs=Hidden;
+	Rows(manifest.tied.place,Vocabulary,2120,0x08000000);
+	manifest.finalNorm.type=0;
+	manifest.finalNorm.inputs=Hidden;
+	manifest.finalNorm.place.rows=1;
+	manifest.finalNorm.place.rowBytes=Hidden*sizeof(float);
+	manifest.finalNorm.place.count=1;
+	manifest.finalNorm.place.unit=1;
+	manifest.finalNorm.place.parts[0]={2,BankBase+0x0a000000,0,1};
+	assert(manifest.tied.place.Valid() && manifest.finalNorm.place.Valid());
+	Rows(manifest.activation[0],Ffn,sizeof(float),0x04000000);
+	Rows(manifest.activation[1],Ffn,sizeof(float),0x06000000);
+	DataflowGraphWorkspace workspace{};
+	Rows(workspace.space[DataflowGraphResidualWorkspaceIndex],Hidden,sizeof(float),
+		0x20000000);
+	Rows(workspace.space[DataflowGraphUpWorkspaceIndex],Ffn,sizeof(float),0x30000000);
+	Rows(workspace.space[DataflowGraphRecurrentQkvWorkspaceIndex],ConvChannels,
+		sizeof(float),0x40000000);
+	Rows(workspace.space[DataflowGraphRecurrentGateWorkspaceIndex],DeltaInner,
+		sizeof(float),0x50000000);
+	Rows(workspace.space[DataflowGraphRecurrentAlphaWorkspaceIndex],DeltaHeads,
+		sizeof(float),0x60000000);
+	Rows(workspace.space[DataflowGraphRecurrentBetaWorkspaceIndex],DeltaHeads,
+		sizeof(float),0x70000000);
+	Rows(workspace.space[DataflowGraphVocabularyWorkspaceIndex],Vocabulary,
+		sizeof(float),0x80000000);
+	assert(workspace.Valid(manifest));
+
+	DataflowProjectionAuthority authority;
+	assert(authority.BindValidatedModel(manifest,workspace,TestBankRoutes));
+	assert(authority.MarkActivationInitialized(0,Hidden));
+	assert(authority.MarkActivationInitialized(1,Hidden));
+	DataflowProjectionProgram tied{};
+	assert(DataflowProgramBuilder::Build(manifest.tied,manifest.activation[1],Hidden,
+		workspace.space[DataflowGraphVocabularyWorkspaceIndex],TestBankRoutes,tied));
+	assert(tied.activeCores==DataflowCoreCount);
+	assert(DataflowProjectionMatchesTiedOutput(manifest,workspace,TestBankRoutes,
+		tied));
+	assert(!authority.Authorize(tied));
+	assert(!authority.BuildProjection(Layers,TiedOutput,1,
+		DataflowGraphVocabularyOutputSlot,tied));
+
+	DataflowRmsProgram finalNorm{};
+	assert(authority.BuildRms(Layers,FinalNorm,0,1,finalNorm));
+	assert(authority.BeginRms(finalNorm) && authority.CompleteRms(finalNorm));
+	assert(authority.Authorize(tied));
+	assert(authority.BuildProjection(Layers,TiedOutput,1,
+		DataflowGraphVocabularyOutputSlot,tied));
+	assert(tied.activeCores==DataflowCoreCount);
+	unsigned active=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(tied,core,invocation));
+		active+=invocation.assignment.active;
+	}
+	assert(active==DataflowCoreCount);
+	assert(authority.Begin(tied) && authority.PendingProjectionMatches(tied));
+	assert(authority.Complete(tied) && authority.VocabularyReady()
+		&& authority.GraphWorkspaceLayer(DataflowGraphVocabularyWorkspaceIndex)==Layers
+		&& authority.GraphWorkspaceRole(DataflowGraphVocabularyWorkspaceIndex)==TiedOutput);
+	assert(!authority.BuildProjection(Layers,TiedOutput,1,
+		DataflowGraphVocabularyOutputSlot,tied));
+}
+
 int main()
 {
+	CheckTiedOutputProjection();
+#ifdef PIONEER_QWEN35_TIED_OUTPUT_ONLY
+	return 0;
+#endif
 	CompileRoleInterfaces();
 	CheckDynamicWeightAddresses();
 	CheckConcurrentRoles();
@@ -486,13 +561,9 @@ int main()
 	assert(authority.Complete(denseKeyProgram)
 		&& authority.GraphWorkspaceReady(DataflowGraphRecurrentGateWorkspaceIndex)
 		&& authority.GraphWorkspaceRole(DataflowGraphRecurrentGateWorkspaceIndex)==Key);
-	assert(authority.BuildDenseProjection(3,Value,0,denseValueProgram));
-	assert(denseValueProgram.outputRows==1024 && denseValueProgram.activeCores==64);
-	assert(authority.Begin(denseValueProgram)
-		&& authority.PendingProjectionMatches(denseValueProgram));
-	assert(authority.Complete(denseValueProgram)
-		&& authority.GraphWorkspaceReady(DataflowGraphRecurrentGateWorkspaceIndex)
-		&& authority.GraphWorkspaceRole(DataflowGraphRecurrentGateWorkspaceIndex)==Value);
+	// The Value projection is gated on a successful Key cache write, not only
+	// on the Key matrix projection. Dense-attention sequencing covers that path.
+	assert(!authority.BuildDenseProjection(3,Value,0,denseValueProgram));
 	DataflowSiluProgram siluProgram{};
 	assert(authority.BuildSilu(1,siluProgram) && siluProgram.Valid());
 	assert(authority.BeginSilu(siluProgram));

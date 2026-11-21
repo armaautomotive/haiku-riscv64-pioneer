@@ -23,7 +23,8 @@ class DataflowProjectionAuthority {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
 		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7,
 		PendingDelta=8,PendingRecurrentOut=9,PendingDenseGraphProjection=10,
-		PendingDenseAttention=11,PendingDenseAttentionOut=12
+		PendingDenseAttention=11,PendingDenseAttentionOut=12,
+		PendingTiedOutput=13
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -40,12 +41,24 @@ class DataflowProjectionAuthority {
 	unsigned fConvNextPosition[Layers]{};
 	unsigned fDeltaNextPosition[Layers]{};
 	bool fGraphResidualReady=false;
+	bool fFinalNormReady=false;
+	unsigned fFinalNormSlot=ActivationBuffers;
+	bool fVocabularyReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
 	unsigned fPendingKind=PendingNone;
 	unsigned fPendingResidualMode=0;
 	unsigned fPendingLayer=~0U,fPendingPosition=0;
 	unsigned fPendingRole=LayerRoles;
+
+	void InvalidateVocabulary()
+	{
+		const unsigned vocabulary=DataflowGraphVocabularyWorkspaceIndex;
+		fVocabularyReady=false;
+		fGraphWorkspaceReady[vocabulary]=false;
+		fGraphWorkspaceLayer[vocabulary]=~0U;
+		fGraphWorkspaceRole[vocabulary]=LayerRoles;
+	}
 
 	bool Slots(const DataflowProjectionProgram& program,unsigned& input,
 		unsigned& output) const
@@ -251,6 +264,8 @@ public:
 	unsigned GraphWorkspaceRole(unsigned index) const
 		{ return GraphWorkspaceReady(index)?fGraphWorkspaceRole[index]:LayerRoles; }
 	bool GraphResidualReady() const { return fBound && fGraphResidualReady; }
+	bool VocabularyReady() const { return fBound && fVocabularyReady
+		&& GraphWorkspaceReady(DataflowGraphVocabularyWorkspaceIndex); }
 
 	// Starts a new decode request without clearing resident state storage.
 	// Position zero operators are required to ignore the previous request's
@@ -265,6 +280,9 @@ public:
 			fDenseKeyStored[layer]=false;
 			fDenseValueStored[layer]=false;
 		}
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		for (unsigned i=DataflowGraphRecurrentQkvWorkspaceIndex;
 			i<DataflowGraphWorkspaceBufferCount;i++) {
 			fGraphWorkspaceReady[i]=false;
@@ -311,6 +329,9 @@ public:
 	bool BeginConv(const DataflowConvProgram& program)
 	{
 		if (!AuthorizeConv(program)) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
 		fGraphWorkspaceRole[DataflowGraphRecurrentQkvWorkspaceIndex]=LayerRoles;
 		fPending=true;
@@ -390,6 +411,9 @@ public:
 	bool BeginDelta(const DataflowDeltaProgram& program)
 	{
 		if (!AuthorizeDelta(program)) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
 		fGraphWorkspaceReady[DataflowGraphRecurrentAlphaWorkspaceIndex]=false;
 		fGraphWorkspaceReady[DataflowGraphRecurrentBetaWorkspaceIndex]=false;
@@ -438,10 +462,12 @@ public:
 		unsigned outputSlot,DataflowProjectionProgram& program) const
 	{
 		if (!fBound || inputSlot>=ActivationBuffers
-			|| outputSlot>DataflowGraphRecurrentBetaOutputSlot
+			|| outputSlot>DataflowGraphVocabularyOutputSlot
 			|| inputSlot==outputSlot || layer>Layers || role>=LayerRoles)
 			return false;
-		if (outputSlot>=DataflowGraphUpOutputSlot) {
+		if (outputSlot==DataflowGraphVocabularyOutputSlot) {
+			if (layer!=Layers || role!=TiedOutput) return false;
+		} else if (outputSlot>=DataflowGraphUpOutputSlot) {
 			unsigned targetIndex=0,expectedRole=0;
 			if (!DataflowGraphProjectionTarget(outputSlot,targetIndex)
 				|| !DataflowGraphProjectionRole(layer,targetIndex,expectedRole)
@@ -532,6 +558,9 @@ public:
 	bool BeginDenseAttention(const DataflowDenseAttentionProgram& program)
 	{
 		if (!AuthorizeDenseAttention(program)) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fPending=true;
 		fPendingOutput=program.mode==DataflowDenseAttentionRun
 			?DataflowGraphRecurrentQkvOutputSlot
@@ -665,6 +694,9 @@ public:
 	bool BeginSilu(const DataflowSiluProgram& program)
 	{
 		if (!AuthorizeSilu(program)) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fActivationRows[program.gateSlot]=0;
 		fGraphWorkspaceReady[DataflowGraphUpWorkspaceIndex]=false;
 		fPending=true;
@@ -714,6 +746,9 @@ public:
 	bool BeginResidual(const DataflowResidualProgram& program)
 	{
 		if (!AuthorizeResidual(program)) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fGraphResidualReady=false;
 		if (program.mode==DataflowResidualAdd)
 			fActivationRows[program.activationSlot]=0;
@@ -794,6 +829,11 @@ public:
 	bool Authorize(const DataflowProjectionProgram& program) const
 	{
 		if (!fBound || fPending) return false;
+		unsigned tiedInput=ActivationBuffers;
+		if (DataflowProjectionMatchesTiedOutput(fManifest,fGraphWorkspace,
+			fRoutes,program,&tiedInput))
+			return fFinalNormReady && tiedInput==fFinalNormSlot
+				&& fActivationRows[tiedInput]>=Hidden;
 		if (RecurrentOutputMatches(program)) return true;
 		unsigned denseOutput=ActivationBuffers,denseOutputLayer=Layers;
 		if (DataflowProjectionMatchesDenseAttentionOutput(fManifest,
@@ -844,6 +884,26 @@ public:
 	bool Begin(const DataflowProjectionProgram& program)
 	{
 		if (!Authorize(program)) return false;
+		unsigned tiedInput=ActivationBuffers;
+		if (DataflowProjectionMatchesTiedOutput(fManifest,fGraphWorkspace,
+			fRoutes,program,&tiedInput)) {
+			const unsigned vocabulary=DataflowGraphVocabularyWorkspaceIndex;
+			fFinalNormReady=false;
+			fFinalNormSlot=ActivationBuffers;
+			fVocabularyReady=false;
+			fGraphWorkspaceReady[vocabulary]=false;
+			fGraphWorkspaceLayer[vocabulary]=~0U;
+			fGraphWorkspaceRole[vocabulary]=LayerRoles;
+			fPending=true;
+			fPendingOutput=DataflowGraphVocabularyOutputSlot;
+			fPendingKind=PendingTiedOutput;
+			fPendingLayer=Layers;
+			fPendingPosition=tiedInput;
+			return true;
+		}
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		unsigned recurrentOutput=ActivationBuffers,recurrentLayer=Layers;
 		if (RecurrentOutputMatches(program,&recurrentOutput,&recurrentLayer)) {
 			fActivationRows[recurrentOutput]=0;
@@ -896,6 +956,14 @@ public:
 	bool PendingProjectionMatches(const DataflowProjectionProgram& program) const
 	{
 		if (!fBound || !fPending) return false;
+		if (fPendingKind==PendingTiedOutput) {
+			unsigned input=ActivationBuffers;
+			return fPendingOutput==DataflowGraphVocabularyOutputSlot
+				&& DataflowProjectionMatchesTiedOutput(fManifest,fGraphWorkspace,
+					fRoutes,program,&input)
+				&& input==fPendingPosition && input<ActivationBuffers
+				&& fActivationRows[input]>=Hidden;
+		}
 		if (fPendingKind==PendingRecurrentOut) {
 			unsigned output=ActivationBuffers,layer=Layers;
 			return RecurrentOutputMatches(program,&output,&layer)
@@ -937,6 +1005,9 @@ public:
 	{
 		if (!AuthorizeEmbedding(program)
 			|| program.outputSlot>=ActivationBuffers) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fActivationRows[program.outputSlot]=0;
 		fPending=true;
 		fPendingOutput=program.outputSlot;
@@ -948,6 +1019,9 @@ public:
 	{
 		if (!AuthorizeRms(program)
 			|| program.outputSlot>=ActivationBuffers) return false;
+		fFinalNormReady=false;
+		fFinalNormSlot=ActivationBuffers;
+		InvalidateVocabulary();
 		fActivationRows[program.outputSlot]=0;
 		fPending=true;
 		fPendingOutput=program.outputSlot;
@@ -971,7 +1045,13 @@ public:
 	bool Complete(const DataflowProjectionProgram& program)
 	{
 		if (!PendingProjectionMatches(program)) return false;
-		if (fPendingKind==PendingRecurrentOut) {
+		if (fPendingKind==PendingTiedOutput) {
+			const unsigned vocabulary=DataflowGraphVocabularyWorkspaceIndex;
+			fGraphWorkspaceReady[vocabulary]=true;
+			fGraphWorkspaceLayer[vocabulary]=Layers;
+			fGraphWorkspaceRole[vocabulary]=TiedOutput;
+			fVocabularyReady=true;
+		} else if (fPendingKind==PendingRecurrentOut) {
 			if (fPendingOutput>=ActivationBuffers
 				|| program.outputRows>fManifest.activation[fPendingOutput].rows)
 				return false;
@@ -1051,6 +1131,10 @@ public:
 			|| program.output.rows>fManifest.activation[program.outputSlot].rows)
 			return false;
 		fActivationRows[program.outputSlot]=Hidden;
+		if (program.layer==Layers && program.role==FinalNorm) {
+			fFinalNormReady=true;
+			fFinalNormSlot=program.outputSlot;
+		}
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;
@@ -1108,6 +1192,12 @@ public:
 			fGraphWorkspaceReady[DataflowGraphUpWorkspaceIndex]=false;
 			fGraphWorkspaceLayer[DataflowGraphUpWorkspaceIndex]=~0U;
 			fGraphWorkspaceRole[DataflowGraphUpWorkspaceIndex]=LayerRoles;
+		} else if (fPendingKind==PendingTiedOutput) {
+			const unsigned vocabulary=DataflowGraphVocabularyWorkspaceIndex;
+			fGraphWorkspaceReady[vocabulary]=false;
+			fGraphWorkspaceLayer[vocabulary]=~0U;
+			fGraphWorkspaceRole[vocabulary]=LayerRoles;
+			fVocabularyReady=false;
 		} else if (fPendingKind==PendingDenseAttention) {
 			unsigned workspaceIndex=0;
 			if (fPendingLayer>=Layers

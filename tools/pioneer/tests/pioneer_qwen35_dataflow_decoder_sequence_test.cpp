@@ -7,6 +7,7 @@ using namespace PioneerQwen35;
 
 struct FakeDecoderAuthority {
 	unsigned resets=0;
+	unsigned tiedOutputBuilds=0;
 	bool ResetRecurrentState() { resets++; return true; }
 	bool BuildEmbedding(unsigned token,unsigned slot,DataflowEmbeddingProgram& p)
 		{ p.token=token; p.outputSlot=slot; return true; }
@@ -22,8 +23,13 @@ struct FakeDecoderAuthority {
 		{ p.layer=layer; p.position=position; p.mode=mode; return true; }
 	bool BuildDenseAttentionOutput(unsigned,unsigned,DataflowProjectionProgram&)
 		{ return true; }
-	bool BuildProjection(unsigned,unsigned,unsigned,unsigned,DataflowProjectionProgram&)
-		{ return true; }
+	bool BuildProjection(unsigned layer,unsigned role,unsigned,unsigned outputSlot,
+		DataflowProjectionProgram&)
+	{
+		if (layer==Layers && role==TiedOutput
+			&& outputSlot==DataflowGraphVocabularyOutputSlot) tiedOutputBuilds++;
+		return true;
+	}
 	bool BuildSilu(unsigned,DataflowSiluProgram&) { return true; }
 	bool BuildConv(unsigned layer,unsigned position,DataflowConvProgram& p)
 		{ p.layer=layer; p.position=position; return true; }
@@ -58,17 +64,19 @@ static void TestWholeMixedStack()
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	assert(DataflowDecoderSequence::Run(0,17,0,authority,service,service.io,
 		outputSlot,stage)==DataflowDecoderSequenceComplete);
-	assert(authority.resets==1 && outputSlot==1
+	assert(authority.resets==1 && outputSlot==DataflowGraphVocabularyOutputSlot
 		&& stage==DataflowDecoderSequenceComplete);
-	assert(service.embedding==1 && service.projections==248
+	assert(service.embedding==1 && service.projections==249
 		&& service.rms==2*Layers+1 && service.silu==Layers
 		&& service.residual==4*Layers && service.conv==Layers-Layers/4
 		&& service.delta==Layers-Layers/4
-		&& service.denseAttention==3*(Layers/4));
+		&& service.denseAttention==3*(Layers/4)
+		&& authority.tiedOutputBuilds==1);
 
 	assert(DataflowDecoderSequence::Run(1,18,0,authority,service,service.io,
 		outputSlot,stage)==DataflowDecoderSequenceComplete);
-	assert(authority.resets==1 && service.embedding==2);
+	assert(authority.resets==1 && service.embedding==2
+		&& authority.tiedOutputBuilds==2);
 }
 
 static void TestStopsAtFirstLayerFailure()

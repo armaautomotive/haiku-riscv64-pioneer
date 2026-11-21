@@ -8190,7 +8190,7 @@ Qwen35DataflowProject(PioneerProbeCookie* cookie,void* data,size_t length)
 		|| request->layer>PioneerQwen35::Layers
 		|| request->role>=PioneerQwen35::LayerRoles
 		|| request->input_slot>=PioneerQwen35::ActivationBuffers
-		|| request->output_slot>PioneerQwen35::DataflowGraphRecurrentGateOutputSlot
+		|| request->output_slot>PioneerQwen35::DataflowGraphVocabularyOutputSlot
 		|| request->input_slot==request->output_slot
 		|| request->result || request->next_sequence || request->state
 		|| request->recovery_required) {
