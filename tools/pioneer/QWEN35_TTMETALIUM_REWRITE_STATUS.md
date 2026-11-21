@@ -270,9 +270,9 @@ and silicon correctness/performance evidence.
 
 ## Current checkpoint: 2026-11-20
 
-The latest pushed rewrite checkpoint is `2a2405752a` (`Add Qwen35 feed-forward
-sequence`). The offline rewrite has concrete Tensix matrix projection,
-device-side Q6_K token embedding, device-side hidden RMS normalization,
+The latest pushed rewrite checkpoint is `ef1279b585` (`Reserve Qwen35
+recurrent graph scratch`). The offline rewrite has concrete Tensix matrix
+projection, device-side Q6_K token embedding, and hidden RMS normalization,
 manifest-bound graph Up projection, device SiLU×Up, and residual save/add
 across the resident 120-worker service, plus a checked seven-step
 feed-forward-sublayer sequence. The root-only support surface still does not
@@ -346,6 +346,20 @@ driver60 SHA-256 is
 This is an offline-checked, pushed rewrite checkpoint; recurrent/dense
 attention, state updates, final vocabulary readout, and token generation
 remain unimplemented. No Pioneer access or benchmark was performed.
+
+Checkpoint `ef1279b585` extends the validated graph-workspace sidecar to six
+FP32 tensors: Hidden residual, FFN Up, recurrent QKV (`ConvChannels`),
+recurrent gate (`DeltaInner`), and 32-row Alpha and Beta vectors. Manifest
+validation requires all six regions in allocator order; the model-bind ABI is
+now version 3. This gives the upcoming recurrent projection and state
+operators reserved, bounded output storage, but does not implement those
+operators yet. ASan/UBSan activation-plan, projection authority/program,
+SiLU, residual-worker, and owner checks pass. The RV32IMF role compile and
+offline driver60, reload-guard, and default-control builds pass; GGUF test
+compilation passes, but the pinned-model fixture test was not run because no
+local model path is available. The driver60 SHA-256 is
+`6d0c5387435f00fa51e39b58cfda965f1c4d60d563f0a54e15d3c410c03b2803`.
+No Pioneer access or benchmark was performed.
 
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration

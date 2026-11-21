@@ -389,6 +389,16 @@ and dense attention, recurrent/KV state, and full decoder output. The full
 GGUF manifest test was not run because no local pinned-model path was
 available.
 
+Checkpoint `ef1279b585` extends the checked graph-workspace sidecar from two
+to six FP32 regions: residual, FFN Up, recurrent QKV, recurrent gate, Alpha,
+and Beta. Manifest validation checks their shapes and ordered placement, and
+the model-bind ABI is version 3. The activation-plan, projection, SiLU,
+residual, and owner ASan/UBSan checks pass; the RV32IMF compile and all three
+offline driver builds pass. This reserves storage for upcoming Gated DeltaNet
+projection and state operations; the recurrent operator itself is still
+missing. The full GGUF fixture test was not run because no local pinned-model
+path is available.
+
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are
 not integrated. No model has been loaded on the Pioneer, no rewritten
