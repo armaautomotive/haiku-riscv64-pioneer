@@ -174,18 +174,20 @@ rewrite is implemented.
   builder that maps each projection shard to its weight bank, sharded
   activation input/output ranges, and double-buffered reader/compute/writer
   circular-buffer layout.
-- The role operations still have no Blackhole BRISC/TRISC/NCRISC backend,
-  image build, or resident program owner. They are contracts only; this is not
-  a runnable Work path or a throughput result.
+- The lower-level concurrent reader/compute/writer loops remain offline
+  contracts. The current device implementation is the resident BRISC service
+  image and per-core projection worker described below; it overlaps the next
+  NoC 0 weight prefetch with Tensix work. The host PCI image loader and physical
+  mailbox/recovery adapter are not implemented.
 
 ## Rewrite gates
 
 1. Complete offline descriptor and per-core worker checks.
 2. Build the concrete resident worker image with its NoC and Tensix operations
    for the Haiku RV32 image, with no CPU inference or fallback.
-3. Implement the owner that loads the image across all 120 cores, materializes
-   per-core descriptors, and safely drives the mailbox; preserve sharded
-   activations across dependent operations.
+3. Wire the new host owner to the physical PCI transport so it loads the image
+   across all 120 cores, materializes per-core descriptors, drives the mailbox,
+   and preserves sharded activations across dependent operations.
 4. Complete offline target and full-graph correctness gates. Only then begin
    the hardware benchmark and assistant integration phases.
 
@@ -209,13 +211,25 @@ rewrite is implemented.
   role failure, then accepts another only after host acknowledgement. On that
   acknowledgement it verifies the local queues are drained and clears their
   error slots. Two weight pages now overlap a NoC 0 prefetch with Tensix work.
-  The standalone image builder passes and emits a 25,412-byte RV32 image with no
+  The standalone image builder passes and emits a 25,024-byte RV32 image with no
   unresolved imports; the target compile probe still passes without A-extension
   instructions or runtime helpers. The offline mailbox/route check also passes
   under AddressSanitizer and UndefinedBehaviorSanitizer. This is offline image
-  evidence only: no host launch/acknowledgement owner exists, and the image has
-  not been loaded or run on the card. No benchmark or assistant integration
-  was performed.
+  evidence only: the physical host launch/acknowledgement owner is missing,
+  and the image has not been loaded or run on the card. No benchmark or
+  assistant integration was performed.
+- 2026-11-20: Added `PioneerQwen35DataflowOwner.h`, a host-side projection
+  coordinator contract. It checks all 120 workers, materializes and reads back
+  every immutable invocation before publishing any command, waits for terminal
+  receipts from the whole shard set, and only acknowledges after the backend
+  audit succeeds. Ambiguous partial publication moves the owner into a faulted
+  state; `Recover()` requires an all-core backend recovery audit before it
+  acknowledges completed workers and resumes with a higher mailbox sequence.
+  ASan/UBSan mock coverage passes normal two-projection execution and partial
+  launch recovery, including workers resynchronizing across skipped sequence
+  values. This is the orchestration contract and mock only: its physical PCI
+  transport, image load, recovery proof, and all-core graph are still missing.
+  No Pioneer access, benchmark, or assistant integration was performed.
 
 The pre-rewrite Work baseline is `1b2b57c561`; the branch tip immediately
 before adding the BRISC worker was `830ec1011e`. Rewrite checkpoints are pushed
@@ -229,9 +243,9 @@ worker compile. The local Apple Clang 17 build has no RISC-V target.
 
 The lower-level queue role templates remain offline contracts. The current
 concrete path is `PioneerQwen35DataflowBlackholeWorkerEntry`, which binds the
-BRISC-side NoC and Tensix operations into one bounded per-core worker. Its two
-page slots alternate synchronously; they do not overlap transfers with matrix
-work yet. Tenstorrent's open `tt-lab` worker pattern is the closest fit for
+BRISC-side NoC and Tensix operations into one bounded per-core worker. It
+prefetches the next weight tile over NoC 0 while the matrix engine processes
+the current tile. Tenstorrent's open `tt-lab` worker pattern is the closest fit for
 this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
 [BRISC firmware](https://github.com/tenstorrent/tt-lab/blob/main/src/brisc.cpp)).
 It is still missing a resident owner that materializes and launches all 120

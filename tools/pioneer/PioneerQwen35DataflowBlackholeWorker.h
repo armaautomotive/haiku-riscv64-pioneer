@@ -161,6 +161,13 @@ inline void DataflowWorkerPublish(DataflowWorkerMailbox& mailbox,
 	DataflowStoreRelease(mailbox.state,state);
 }
 
+inline bool DataflowWorkerCommandSequenceValid(unsigned completed,
+	unsigned acknowledged,unsigned command)
+{
+	return command && command<=DataflowWorkerSequenceLimit
+		&& acknowledged==completed && command>completed;
+}
+
 inline bool DataflowWorkerMailboxStartupValid(
 	const DataflowWorkerMailbox& mailbox)
 {
@@ -220,28 +227,13 @@ inline bool DataflowWorkerResetQueues()
 	for (;;) {
 		const unsigned sequence=DataflowLoadAcquire(mailbox->commandSequence);
 		if (sequence==completed) continue;
-		if (sequence>DataflowWorkerSequenceLimit || !sequence
-			|| DataflowLoadAcquire(mailbox->acknowledgedSequence)!=completed
+		if (!DataflowWorkerCommandSequenceValid(completed,
+			DataflowLoadAcquire(mailbox->acknowledgedSequence),sequence)
 			|| DataflowLoadAcquire(mailbox->completedSequence)!=completed
 			|| DataflowLoadAcquire(mailbox->state)!=DataflowWorkerReady) {
 			DataflowWorkerPublish(*mailbox,sequence,DataflowWorkerFatal,
 				DataflowFailureQueue,3);
 			for (;;) asm volatile("" ::: "memory");
-		}
-		if (sequence!=completed+1) {
-			DataflowWorkerPublish(*mailbox,sequence,DataflowWorkerFailed,
-				DataflowFailureQueue,4);
-			completed=sequence;
-			while (DataflowLoadAcquire(mailbox->acknowledgedSequence)!=completed)
-				asm volatile("" ::: "memory");
-			if (!DataflowWorkerResetQueues()) {
-				DataflowWorkerPublish(*mailbox,completed,DataflowWorkerFatal,
-					DataflowFailureQueue,6);
-				for (;;) asm volatile("" ::: "memory");
-			}
-			DataflowWorkerPublish(*mailbox,completed,DataflowWorkerReady,0,0);
-			DataflowFence();
-			continue;
 		}
 		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerRunning,0,1);
 		DataflowFence();

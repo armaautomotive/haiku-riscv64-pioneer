@@ -13,6 +13,14 @@ int main()
 	mailbox.version=DataflowWorkerMailboxVersion;
 	mailbox.state=DataflowWorkerReady;
 	assert(DataflowWorkerMailboxStartupValid(mailbox));
+	assert(DataflowWorkerCommandSequenceValid(0,0,1));
+	assert(DataflowWorkerCommandSequenceValid(1,1,2));
+	assert(DataflowWorkerCommandSequenceValid(1,1,7));
+	assert(!DataflowWorkerCommandSequenceValid(1,0,2));
+	assert(!DataflowWorkerCommandSequenceValid(1,1,1));
+	assert(!DataflowWorkerCommandSequenceValid(1,1,0));
+	assert(!DataflowWorkerCommandSequenceValid(1,1,
+		DataflowWorkerSequenceLimit+1));
 
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		const unsigned route=DataflowBlackholeRouteForCore(core);
