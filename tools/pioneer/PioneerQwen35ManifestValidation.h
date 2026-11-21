@@ -12,7 +12,8 @@ namespace PioneerQwen35 {
 // immutable weights, uninitialized sequence state and (in bank 0) RoPE.
 template<class IsInitialized>
 bool ValidateManifest(const DeviceLayout& manifest, Range rope, IsInitialized&& initialized,
-	unsigned uploadedPages)
+	unsigned uploadedPages,const RowSpace* dataflowScratch=nullptr,
+	unsigned dataflowScratchCount=0)
 {
 	constexpr unsigned page=4096;
 	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion || manifest.reserved
@@ -82,6 +83,11 @@ bool ValidateManifest(const DeviceLayout& manifest, Range rope, IsInitialized&& 
 		|| !extent(rope.bank,rope.address,rope.bytes,true)) return false;
 	for (unsigned slot=0;slot<ActivationBuffers;slot++)
 		if (!rows(manifest.activation[slot],Ffn,sizeof(float),16,false)) return false;
+	if (dataflowScratchCount && (!dataflowScratch || dataflowScratchCount!=2))
+		return false;
+	if (dataflowScratchCount
+		&& (!rows(dataflowScratch[0],Hidden,sizeof(float),16,false)
+			|| !rows(dataflowScratch[1],Ffn,sizeof(float),16,false))) return false;
 	for (unsigned bank=0;bank<Banks;bank++)
 		if (end[bank]<workspaceStart[bank]
 			|| end[bank]-workspaceStart[bank]>ActivationWorkspaceBytes) return false;

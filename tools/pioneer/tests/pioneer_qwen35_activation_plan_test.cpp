@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "../PioneerQwen35ActivationPlan.h"
+#include "../PioneerQwen35DataflowGraphWorkspace.h"
 #include "../PioneerQwen35DeviceLayoutBuild.h"
 #include "../PioneerQwen35ManifestValidation.h"
 #include "../PioneerQwen35PackedPlan.h"
@@ -54,6 +55,35 @@ int main()
 	assert(!PioneerQwen35::ValidateManifest(invalidManifest,invalidRope,
 		[](unsigned,unsigned) { return false; },0));
 	FakePackedPlan packed=Workspaces();
+	PioneerQwen35::DeviceLayout graphManifest{};
+	graphManifest.magic=PioneerQwen35::LayoutMagic;
+	graphManifest.version=PioneerQwen35::LayoutVersion;
+	graphManifest.context=128;
+	PioneerQwen35ActivationPlan graphBase;
+	assert(graphBase.InitializeFromPacked(packed,32768));
+	for (unsigned slot=0;slot<PioneerQwen35::ActivationBuffers;slot++) {
+		PioneerQ35ActivationBuffer buffer{};
+		assert(graphBase.AllocateRows(PioneerQwen35::Ffn,sizeof(float),buffer));
+		assert(PioneerQwen35::DataflowActivationBufferToRows(buffer,
+			graphManifest.activation[slot]));
+	}
+	PioneerQwen35::DataflowGraphWorkspace graphWorkspace{};
+	assert(PioneerQwen35::DataflowGraphWorkspaceBuilder::Build(packed,
+		graphManifest,graphWorkspace));
+	assert(graphWorkspace.Valid(graphManifest));
+	assert(graphWorkspace.space[0].rows==PioneerQwen35::Hidden
+		&& graphWorkspace.space[1].rows==PioneerQwen35::Ffn);
+	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
+		const auto& prior=graphManifest.activation[1].parts[bank];
+		const auto& residual=graphWorkspace.space[0].parts[bank];
+		assert(prior.bank==residual.bank
+			&& residual.address>=prior.address+prior.rows*sizeof(float));
+	}
+	PioneerQwen35::DataflowGraphWorkspace forgedGraphWorkspace=graphWorkspace;
+	forgedGraphWorkspace.space[1].parts[0].address
+		=graphManifest.activation[0].parts[0].address;
+	assert(!forgedGraphWorkspace.Valid(graphManifest));
+
 	PioneerQwen35ActivationPlan plan;
 	PioneerQwen35PackedPlan unbuiltPackedPlan;
 	assert(!plan.InitializeFromPacked(unbuiltPackedPlan));

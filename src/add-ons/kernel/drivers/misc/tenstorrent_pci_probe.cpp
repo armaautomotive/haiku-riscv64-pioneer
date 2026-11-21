@@ -7964,7 +7964,7 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 				&& context->initialized[bank*pagesPerBank+page]!=0;
 		};
 		if (!PioneerQwen35::ValidateManifest(request->manifest,request->rope,
-			initialized,context->uploadedPages)) {
+			initialized,context->uploadedPages,request->graphWorkspace.space,2)) {
 			status=B_BAD_VALUE;
 		} else if (!PrepareQ38Dispatch(*context) || !context->io.ProveFleetRoutes()
 			|| !context->io.SelectRuntimeCore(0)) {
@@ -7976,7 +7976,7 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 				status=B_NO_MEMORY;
 			} else if (!context->qwen35DataflowRoutesAudited
 				|| !authority->BindValidatedModel(request->manifest,
-					context->qwen35DataflowRoutes)) {
+					request->graphWorkspace,context->qwen35DataflowRoutes)) {
 				delete authority;
 				status=B_BAD_VALUE;
 			} else {

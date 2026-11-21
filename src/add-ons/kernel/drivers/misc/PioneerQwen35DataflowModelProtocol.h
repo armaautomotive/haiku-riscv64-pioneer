@@ -2,7 +2,7 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_MODEL_PROTOCOL_H
 #define PIONEER_QWEN35_DATAFLOW_MODEL_PROTOCOL_H
 
-#include "../../../../../tools/pioneer/PioneerQwen35DeviceLayout.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphWorkspace.h"
 
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND (B_DEVICE_OP_CODES_END + 0x8838)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT (B_DEVICE_OP_CODES_END + 0x8839)
@@ -12,13 +12,14 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_RMS_NORM (B_DEVICE_OP_CODES_END + 0x883d)
 
 enum : uint32_t {
-	TT_QWEN35_DATAFLOW_MODEL_ABI=1
+	TT_QWEN35_DATAFLOW_MODEL_ABI=2
 };
 
 struct tt_qwen35_dataflow_model_bind {
 	uint32_t version,reserved;
 	PioneerQwen35::Range rope;
 	PioneerQwen35::DeviceLayout manifest;
+	PioneerQwen35::DataflowGraphWorkspace graphWorkspace;
 };
 
 struct tt_qwen35_dataflow_projection {
@@ -57,7 +58,7 @@ static_assert(sizeof(tt_qwen35_dataflow_embed_token)==32,
 static_assert(sizeof(tt_qwen35_dataflow_rms_norm)==36,
 	"fixed RMS normalization ABI");
 
-static_assert(sizeof(tt_qwen35_dataflow_model_bind)==81972,
+static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82228,
 	"fixed manifest binding ABI");
 
 #endif

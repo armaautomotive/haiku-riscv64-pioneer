@@ -2,6 +2,7 @@
 // Actual packed reader and role checks, independently authenticated file.
 #include "../PioneerQwen35FleetPlan.h"
 #include "../PioneerQwen35Preload.h"
+#include "../PioneerQwen35DataflowGraphWorkspace.h"
 #include "../PioneerQwen35ManifestValidation.h"
 #include "../PioneerModelWeightCache.h"
 #include "../TenstorrentGgufQuant.h"
@@ -82,6 +83,21 @@ static void CheckPreload(PioneerQwen35Gguf& model, const PioneerQwen35PackedPlan
  };
  const unsigned count=unsigned(reported/D::LoadPageBytes);
  assert(D::ValidateManifest(manifest,rope,uploaded,count));
+	D::DataflowGraphWorkspace graphWorkspace{};
+	assert(D::DataflowGraphWorkspaceBuilder::Build(plan,manifest,graphWorkspace));
+	assert(D::ValidateManifest(manifest,rope,uploaded,count,
+		graphWorkspace.space,2));
+	D::DataflowGraphWorkspace forgedGraphWorkspace=graphWorkspace;
+	forgedGraphWorkspace.space[1].parts[0].address+=D::LoadPageBytes;
+	assert(!D::ValidateManifest(manifest,rope,uploaded,count,
+		forgedGraphWorkspace.space,2));
+	const auto& graphPage=graphWorkspace.space[0].parts[0];
+	const unsigned graphPageIndex=(graphPage.address-D::BankBase)/D::LoadPageBytes;
+	assert(graphPage.bank<D::Banks && graphPageIndex<pagesPerBank);
+	initialized.at(graphPage.bank*pagesPerBank+graphPageIndex)=1;
+	assert(!D::ValidateManifest(manifest,rope,uploaded,count,
+		graphWorkspace.space,2));
+	initialized.at(graphPage.bank*pagesPerBank+graphPageIndex)=0;
  assert(!D::ValidateManifest(manifest,rope,uploaded,count-1));
  D::Range shifted=rope;
  shifted.address+=D::LoadPageBytes;

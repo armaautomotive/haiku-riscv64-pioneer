@@ -326,6 +326,24 @@ driver60 binary SHA-256 is
 service-image text SHA-256 is
 `025c0012bbc31697ddd181cc802dc796e5ced0cfb2431a699587c3ffec93ce7e`.
 
+The rewrite model-bind ABI now carries a separate, validated graph-workspace
+sidecar while keeping the retained two-buffer model-layout ABI unchanged. The
+sidecar reserves an FP32 residual tensor (Hidden rows) and an FP32 up-projection
+tensor (Ffn rows) after the two existing Ffn-sized activation spaces. Its
+builder replays the pinned activation allocator and checks exact placement;
+model bind checks sequential bank extents, untouched page-ledger state, and
+the existing per-bank workspace limit before authority retains the immutable
+sidecar. ASan/UBSan activation-plan and dataflow-authority tests pass, and the
+GGUF manifest test compiles with positive and tampered-sidecar checks. The
+driver60, reload-guard, and default-control builds pass; the updated driver60
+binary SHA-256 is
+`bbaa3cfab9d9a9c5333dc32c091162879619a2fd323980d836cf51a6d26d3fd7`.
+
+This storage is not consumed by a projection or FFN operator yet. The next
+rewrite step is to authorize the Up projection into its sidecar and add the
+device-side gated activation and residual path. The full GGUF manifest test
+was not run because no local pinned-model path was available.
+
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are
 not integrated. No model has been loaded on the Pioneer, no rewritten

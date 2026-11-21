@@ -298,8 +298,14 @@ int main()
 	normWeight.place.parts[0]={2,BankBase+0x0a000000,0,1};
 	assert(normWeight.place.Valid());
 	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
+	DataflowGraphWorkspace graphWorkspace{};
+	Rows(graphWorkspace.space[0],Hidden,sizeof(float),0x20000000);
+	Rows(graphWorkspace.space[1],Ffn,sizeof(float),0x30000000);
+	assert(graphWorkspace.Valid(manifest));
 	DataflowProjectionAuthority authority;
-	assert(authority.BindValidatedModel(manifest,TestBankRoutes));
+	assert(authority.BindValidatedModel(manifest,graphWorkspace,TestBankRoutes));
+	assert(authority.GraphWorkspace()
+		&& DataflowRowSpacesEqual(authority.GraphWorkspace()->space[0],graphWorkspace.space[0]));
 	assert(!authority.Authorize(program));
 	assert(authority.MarkActivationInitialized(0));
 	assert(authority.MarkActivationInitialized(1));
@@ -333,7 +339,7 @@ int main()
 		unregisteredWeightProgram));
 	assert(!authority.Begin(unregisteredWeightProgram));
 	DataflowProjectionAuthority incompleteAuthority;
-	assert(incompleteAuthority.BindValidatedModel(manifest,TestBankRoutes));
+	assert(incompleteAuthority.BindValidatedModel(manifest,graphWorkspace,TestBankRoutes));
 	assert(incompleteAuthority.MarkActivationInitialized(0));
 	assert(incompleteAuthority.Begin(program));
 	assert(!incompleteAuthority.Complete(unregisteredWeightProgram));

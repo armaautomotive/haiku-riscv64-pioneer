@@ -278,15 +278,21 @@ surface still exposes primitives, not generation. ASan/UBSan worker, owner,
 program, and math checks pass; the Haiku RV32IMF compile and the driver60,
 reload-guard, and default-control builds pass. These are offline checks only.
 
-The next graph-design gate is intermediate storage and authorization for a
-complete FFN subgraph. The existing serialized model layout provides two
-Ffn-sized ping-pong activation spaces. A safe layer schedule also has to keep
-the residual hidden vector while producing both gate and up projections, so
-the rewrite must define additional manifest-bound sharded scratch before
-adding dependent operations. Keep this in rewrite-owned layout/control code;
-do not expand the retained legacy Work dispatcher. Continue offline rewrite
-work only. Defer Pioneer runs, performance benchmarking, and assistant
-integration until the rewrite graph is complete.
+The current graph-design gate is consuming additional intermediate storage in
+rewrite operations. The new model-bind ABI carries a rewrite-only sidecar for
+an FP32 residual tensor (Hidden rows) and an FP32 up-projection tensor (Ffn
+rows), in addition to the existing two Ffn-sized ping-pong buffers. The
+builder replays the pinned allocator; model bind checks contiguous per-bank
+extents, untouched page-ledger state, and the reserved workspace limit before
+the authority retains it. ASan/UBSan activation-plan and authority tests pass,
+and the driver60, reload-guard, and default-control builds pass. The complete
+GGUF fixture test compiles but was not run because no local pinned-model path
+was available. No legacy Work changes are part of this step.
+
+The new sidecar is not yet consumed by an operator. Next implement the device
+Up projection into its scratch rows, followed by the SiLU product and residual
+path. Continue offline rewrite work only. Defer Pioneer runs, performance
+benchmarking, and assistant integration until the rewrite graph is complete.
 
 No model has been loaded on the Pioneer through this rewrite, no rewritten
 operation has been validated on silicon, and there is no generated output or

@@ -5,6 +5,7 @@
 #include "PioneerQwen35DataflowProgram.h"
 #include "PioneerQwen35DataflowEmbeddingProgram.h"
 #include "PioneerQwen35DataflowRmsProgram.h"
+#include "PioneerQwen35DataflowGraphWorkspace.h"
 
 namespace PioneerQwen35 {
 
@@ -15,6 +16,7 @@ namespace PioneerQwen35 {
 class DataflowProjectionAuthority {
 	enum : unsigned { PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3 };
 	DeviceLayout fManifest{};
+	DataflowGraphWorkspace fGraphWorkspace{};
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
@@ -77,6 +79,8 @@ public:
 	bool Bound() const { return fBound; }
 	bool Pending() const { return fPending; }
 	const DeviceLayout* Manifest() const { return fBound?&fManifest:nullptr; }
+	const DataflowGraphWorkspace* GraphWorkspace() const
+		{ return fBound?&fGraphWorkspace:nullptr; }
 	bool ActivationReady(unsigned slot) const
 	{
 		return slot<ActivationBuffers && fActivationRows[slot]!=0;
@@ -130,12 +134,15 @@ public:
 	}
 
 	bool BindValidatedModel(const DeviceLayout& manifest,
+		const DataflowGraphWorkspace& graphWorkspace,
 		const unsigned (&auditedRoutes)[2][Banks])
 	{
 		if (fBound || manifest.magic!=LayoutMagic
 			|| manifest.version!=LayoutVersion || !manifest.context
-			|| !DataflowBankRoutesValid(auditedRoutes)) return false;
+			|| !DataflowBankRoutesValid(auditedRoutes)
+			|| !graphWorkspace.Valid(manifest)) return false;
 		fManifest=manifest;
+		fGraphWorkspace=graphWorkspace;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 			fRoutes[noc][bank]=auditedRoutes[noc][bank];
 		fBound=true;
