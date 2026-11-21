@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_PROGRAM_H
 
 #include "PioneerQwen35DeviceLayout.h"
+#include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35ProgramSchedule.h"
 
 namespace PioneerQwen35 {
@@ -359,6 +360,46 @@ inline bool DataflowProjectionMatchesLayout(const DeviceLayout& manifest,
 	return inputSlot<ActivationBuffers && outputSlot<ActivationBuffers
 		&& inputSlot!=outputSlot && program.inputRows==program.inputs
 		&& program.outputRows==program.weights.rows;
+}
+
+// The graph Up projection is the first external intermediate target. It is
+// restricted to one of the model's exact Up tensors, one declared activation
+// input, and the manifest-bound Ffn scratch row space. Other roles and scratch
+// aliases are not admitted by this path.
+inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest,
+	const DataflowGraphWorkspace& workspace,
+	const unsigned (&auditedRoutes)[2][Banks],
+	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr)
+{
+	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
+		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
+		|| program.outputRows!=Ffn || !DataflowBankRoutesValid(auditedRoutes)
+		|| !DataflowRowSpaceMatches(workspace.space[DataflowGraphUpWorkspaceIndex],
+			program.output)) return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
+
+	unsigned foundInput=ActivationBuffers;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.input))
+			foundInput=slot;
+	if (foundInput>=ActivationBuffers || program.inputRows!=Hidden
+		|| program.inputs!=Hidden) return false;
+
+	bool modelUp=false;
+	for (unsigned layer=0;layer<Layers;layer++) {
+		const TensorSpace* expected=manifest.Weight(layer,Up);
+		if (expected && expected->type==program.type
+			&& expected->inputs==program.inputs
+			&& expected->place.rows==program.outputRows
+			&& DataflowRowSpaceMatches(expected->place,program.weights)) {
+			modelUp=true;
+			break;
+		}
+	}
+	if (!modelUp) return false;
+	if (inputSlot) *inputSlot=foundInput;
+	return true;
 }
 
 // Compact per-core invocation copied into local L1. The host builder keeps the

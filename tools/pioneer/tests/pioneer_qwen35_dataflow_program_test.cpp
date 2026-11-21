@@ -297,6 +297,13 @@ int main()
 	normWeight.place.unit=1;
 	normWeight.place.parts[0]={2,BankBase+0x0a000000,0,1};
 	assert(normWeight.place.Valid());
+	TensorSpace& upWeight=manifest.layers[0].weights[Up];
+	upWeight.type=12;
+	upWeight.inputs=Hidden;
+	Rows(upWeight.place,Ffn,
+		PioneerQwen35Projection::TileBytes(upWeight.type)*(Hidden/256)/16,
+		0x10000000);
+	assert(upWeight.place.Valid());
 	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
 	DataflowGraphWorkspace graphWorkspace{};
 	Rows(graphWorkspace.space[0],Hidden,sizeof(float),0x20000000);
@@ -328,6 +335,17 @@ int main()
 	assert(authority.CompleteRms(rmsProgram));
 	assert(!authority.Pending() && authority.ActivationReady(0)
 		&& authority.ActivationRows(0)==Hidden);
+	DataflowProjectionProgram upProgram{};
+	assert(authority.BuildProjection(0,Up,0,DataflowGraphUpOutputSlot,upProgram));
+	assert(upProgram.Valid()
+		&& DataflowProjectionMatchesGraphWorkspace(manifest,graphWorkspace,
+			TestBankRoutes,upProgram));
+	assert(!DataflowProjectionMatchesLayout(manifest,TestBankRoutes,upProgram));
+	assert(authority.Begin(upProgram));
+	assert(authority.Pending() && !authority.GraphUpReady()
+		&& authority.PendingProjectionMatches(upProgram));
+	assert(authority.Complete(upProgram));
+	assert(!authority.Pending() && authority.GraphUpReady());
 
 	TensorSpace unregisteredWeight=weight;
 	unregisteredWeight.place.parts[0].address+=4096;

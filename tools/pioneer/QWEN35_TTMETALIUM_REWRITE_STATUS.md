@@ -278,21 +278,22 @@ surface still exposes primitives, not generation. ASan/UBSan worker, owner,
 program, and math checks pass; the Haiku RV32IMF compile and the driver60,
 reload-guard, and default-control builds pass. These are offline checks only.
 
-The current graph-design gate is consuming additional intermediate storage in
-rewrite operations. The new model-bind ABI carries a rewrite-only sidecar for
-an FP32 residual tensor (Hidden rows) and an FP32 up-projection tensor (Ffn
-rows), in addition to the existing two Ffn-sized ping-pong buffers. The
-builder replays the pinned allocator; model bind checks contiguous per-bank
-extents, untouched page-ledger state, and the reserved workspace limit before
-the authority retains it. ASan/UBSan activation-plan and authority tests pass,
-and the driver60, reload-guard, and default-control builds pass. The complete
-GGUF fixture test compiles but was not run because no local pinned-model path
-was available. No legacy Work changes are part of this step.
+The graph workspace now participates in the projection path. The projection
+request can select the Up-output sidecar, but the authority admits that target
+only for an exact layer Up tensor and an initialized activation input. The
+existing resident 120-core Tensix projection schedule is reused, and begin,
+all-core audit, commit, and recovery keep Up-scratch readiness distinct from
+the two ping-pong activation states. ASan/UBSan workspace and authority tests,
+the RV32IMF worker compile, and the driver60, reload-guard, and default-control
+builds pass. The driver60 SHA-256 is
+`f7e22d02d4269000aca4ef7750b84db45051b3b0a5f792fda536956ed3b7299d`. The
+complete GGUF fixture test compiles but was not run because no local
+pinned-model path was available. No legacy Work changes are part of this step.
 
-The new sidecar is not yet consumed by an operator. Next implement the device
-Up projection into its scratch rows, followed by the SiLU product and residual
-path. Continue offline rewrite work only. Defer Pioneer runs, performance
-benchmarking, and assistant integration until the rewrite graph is complete.
+Next implement device-side SiLU multiplication of the gate and Up tensors and
+the residual update. Continue offline rewrite work only. Defer Pioneer runs,
+performance benchmarking, and assistant integration until the rewrite graph
+is complete.
 
 No model has been loaded on the Pioneer through this rewrite, no rewritten
 operation has been validated on silicon, and there is no generated output or

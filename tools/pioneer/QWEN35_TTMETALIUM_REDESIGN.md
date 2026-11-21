@@ -339,10 +339,18 @@ driver60, reload-guard, and default-control builds pass; the updated driver60
 binary SHA-256 is
 `bbaa3cfab9d9a9c5333dc32c091162879619a2fd323980d836cf51a6d26d3fd7`.
 
-This storage is not consumed by a projection or FFN operator yet. The next
-rewrite step is to authorize the Up projection into its sidecar and add the
-device-side gated activation and residual path. The full GGUF manifest test
-was not run because no local pinned-model path was available.
+The projection control now accepts the graph Up-output selector, but the
+authority admits it only for an exact layer Up tensor, an initialized
+activation input, and the validated sidecar row space. The normal 120-core
+projection invocation and Tensix path are reused; begin, physical audit, and
+commit track Up-scratch readiness separately. ASan/UBSan authority checks
+cover this output path, and the driver60, reload-guard, and default-control
+builds pass. The updated driver60 SHA-256 is
+`f7e22d02d4269000aca4ef7750b84db45051b3b0a5f792fda536956ed3b7299d`.
+
+The next rewrite step is the device-side gated activation and residual path.
+The full GGUF manifest test was not run because no local pinned-model path was
+available.
 
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are

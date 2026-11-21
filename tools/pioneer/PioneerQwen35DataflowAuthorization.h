@@ -14,12 +14,16 @@ namespace PioneerQwen35 {
 // tables. The authority keeps an immutable layout copy so later caller-side
 // mutations cannot widen a projection's address space.
 class DataflowProjectionAuthority {
-	enum : unsigned { PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3 };
+	enum : unsigned {
+		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
+		PendingGraphProjection=4
+	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
+	bool fGraphUpReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
 	unsigned fPendingKind=PendingNone;
@@ -89,17 +93,23 @@ public:
 	{
 		return slot<ActivationBuffers?fActivationRows[slot]:0;
 	}
+	bool GraphUpReady() const { return fBound && fGraphUpReady; }
 
 	bool BuildProjection(unsigned layer,unsigned role,unsigned inputSlot,
 		unsigned outputSlot,DataflowProjectionProgram& program) const
 	{
 		if (!fBound || inputSlot>=ActivationBuffers
-			|| outputSlot>=ActivationBuffers || inputSlot==outputSlot
-			|| layer>Layers || role>=LayerRoles) return false;
+			|| outputSlot>DataflowGraphUpOutputSlot || inputSlot==outputSlot
+			|| layer>Layers || role>=LayerRoles
+			|| (outputSlot==DataflowGraphUpOutputSlot
+				&& (layer>=Layers || role!=Up))) return false;
 		const TensorSpace* weight=fManifest.Weight(layer,role);
+		const RowSpace* output=outputSlot==DataflowGraphUpOutputSlot
+			?&fGraphWorkspace.space[DataflowGraphUpWorkspaceIndex]
+			:outputSlot<ActivationBuffers?&fManifest.activation[outputSlot]:nullptr;
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fManifest.activation[inputSlot],weight->inputs,
-			fManifest.activation[outputSlot],fRoutes,program)) return false;
+			*output,fRoutes,program)) return false;
 		return Authorize(program);
 	}
 
@@ -175,11 +185,15 @@ public:
 
 	bool Authorize(const DataflowProjectionProgram& program) const
 	{
-		if (!fBound || fPending
-			|| !DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) return false;
-		unsigned input=ActivationBuffers,output=ActivationBuffers;
-		return Slots(program,input,output)
-			&& fActivationRows[input]>=program.inputRows;
+		if (!fBound || fPending) return false;
+		if (DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) {
+			unsigned input=ActivationBuffers,output=ActivationBuffers;
+			return Slots(program,input,output)
+				&& fActivationRows[input]>=program.inputRows;
+		}
+		unsigned input=ActivationBuffers;
+		return DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
+			fRoutes,program,&input) && fActivationRows[input]>=program.inputRows;
 	}
 
 	// Invalidate the destination before descriptors are staged. Any error from
@@ -188,13 +202,38 @@ public:
 	bool Begin(const DataflowProjectionProgram& program)
 	{
 		if (!Authorize(program)) return false;
-		unsigned input=ActivationBuffers,output=ActivationBuffers;
-		if (!Slots(program,input,output)) return false;
-		fActivationRows[output]=0;
+		if (DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) {
+			unsigned input=ActivationBuffers,output=ActivationBuffers;
+			if (!Slots(program,input,output)) return false;
+			fActivationRows[output]=0;
+			fPendingOutput=output;
+			fPendingKind=PendingProjection;
+		} else {
+			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
+				fRoutes,program)) return false;
+			fGraphUpReady=false;
+			fPendingOutput=DataflowGraphUpOutputSlot;
+			fPendingKind=PendingGraphProjection;
+		}
 		fPending=true;
-		fPendingOutput=output;
-		fPendingKind=PendingProjection;
 		return true;
+	}
+
+	bool PendingProjectionMatches(const DataflowProjectionProgram& program) const
+	{
+		if (!fBound || !fPending) return false;
+		if (fPendingKind==PendingProjection) {
+			unsigned input=ActivationBuffers,output=ActivationBuffers;
+			return DataflowProjectionMatchesLayout(fManifest,fRoutes,program)
+				&& Slots(program,input,output) && output==fPendingOutput
+				&& fActivationRows[input]>=program.inputRows;
+		}
+		unsigned input=ActivationBuffers;
+		return fPendingKind==PendingGraphProjection
+			&& fPendingOutput==DataflowGraphUpOutputSlot
+			&& DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
+				fRoutes,program,&input)
+			&& fActivationRows[input]>=program.inputRows;
 	}
 
 	bool BeginEmbedding(const DataflowEmbeddingProgram& program)
@@ -234,13 +273,21 @@ public:
 
 	bool Complete(const DataflowProjectionProgram& program)
 	{
-		if (!fBound || !fPending || fPendingKind!=PendingProjection
-			|| !DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) return false;
-		unsigned input=ActivationBuffers,output=ActivationBuffers;
-		if (!Slots(program,input,output) || output!=fPendingOutput
-			|| fActivationRows[input]<program.inputRows
-			|| program.outputRows>fManifest.activation[output].rows) return false;
-		fActivationRows[output]=program.outputRows;
+		if (!PendingProjectionMatches(program)) return false;
+		if (fPendingKind==PendingGraphProjection) {
+			unsigned input=ActivationBuffers;
+			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
+				fRoutes,program,&input)
+				|| fPendingOutput!=DataflowGraphUpOutputSlot
+				|| fActivationRows[input]<program.inputRows) return false;
+			fGraphUpReady=true;
+		} else {
+			unsigned input=ActivationBuffers,output=ActivationBuffers;
+			if (!Slots(program,input,output) || output!=fPendingOutput
+				|| fActivationRows[input]<program.inputRows
+				|| program.outputRows>fManifest.activation[output].rows) return false;
+			fActivationRows[output]=program.outputRows;
+		}
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;
@@ -279,8 +326,15 @@ public:
 	// The destination stays invalid after an aborted projection.
 	bool AbortPendingProjection()
 	{
-		if (!fBound || !fPending || fPendingOutput>=ActivationBuffers) return false;
-		fActivationRows[fPendingOutput]=0;
+		if (!fBound || !fPending) return false;
+		if (fPendingKind==PendingGraphProjection) {
+			if (fPendingOutput!=DataflowGraphUpOutputSlot) return false;
+			fGraphUpReady=false;
+		} else {
+			if (fPendingKind!=PendingProjection || fPendingOutput>=ActivationBuffers)
+				return false;
+			fActivationRows[fPendingOutput]=0;
+		}
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;

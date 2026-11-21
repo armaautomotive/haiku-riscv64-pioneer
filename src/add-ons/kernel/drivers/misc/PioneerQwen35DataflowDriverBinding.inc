@@ -597,9 +597,8 @@ PioneerSessionIO::AuditProjection(
 	if (!context || !context->qwen35DataflowAuthority
 		|| !program.Valid() || !sequence || !context->qwen35DataflowAuthority->Pending())
 		return false;
-	const auto* manifest=context->qwen35DataflowAuthority->Manifest();
-	if (!manifest || !PioneerQwen35::DataflowProjectionMatchesLayout(*manifest,
-		context->qwen35DataflowRoutes,program)) return false;
+	if (!context->qwen35DataflowAuthority->PendingProjectionMatches(program))
+		return false;
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 		if (receipts[core].commandSequence!=sequence
 			|| receipts[core].completedSequence!=sequence

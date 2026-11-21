@@ -7,6 +7,12 @@
 
 namespace PioneerQwen35 {
 
+enum : unsigned {
+	DataflowGraphResidualWorkspaceIndex=0,
+	DataflowGraphUpWorkspaceIndex=1,
+	DataflowGraphUpOutputSlot=ActivationBuffers
+};
+
 // The model manifest keeps its two established Ffn-sized ping-pong buffers.
 // This rewrite sidecar reserves two additional tensors needed to execute one
 // FFN safely: preserve the residual while the ping-pong buffers hold gate and
