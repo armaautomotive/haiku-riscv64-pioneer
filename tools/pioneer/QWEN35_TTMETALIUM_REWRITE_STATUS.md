@@ -45,10 +45,15 @@ reports returned request fields and precise restore subchecks, skips the
 running-idle proof for the fully restored reset-held root, and retries
 recoverable close failures while the owner retains its snapshots. Its full
 offline variant-60 build passes; owner and PCI-memory ASan/UBSan fixtures and
-the RV32IMF compile pass. No tag0110 hardware run has occurred. The latest
-known Pioneer state is stable driver55 generation2 idle on Haiku, both model
-files unchanged. Continue the rewrite offline before another benchmark. Tag0110
-build details are in
+the RV32IMF compile pass. The guarded hardware run uploaded the full model,
+then failed at the first prompt token in the embedding operation
+(`position0`, `DataflowDecoderEmbeddingRunFailed`). No valid output or decode
+rate was produced; close failed the core0 stop audit. Recovery restored stable
+driver55 generation2 on Haiku, cleared the lock, and confirmed both model
+sizes intact. Continue the rewrite offline before another benchmark. Run and
+recovery evidence are in
+[`benchmarks/qwen35-dataflow-tag0110-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0110-20261121/RUN.md).
+Tag0110 build details are in
 [`benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md).
 
 ## Progress
@@ -63,8 +68,15 @@ build details are in
   `a9b79420fd351bfb7cbcdda2e70565455973a80a154ca54ba985b1d714f3bd5d`, and
   client SHA-256 is
   `b90f94175aa8a847f360b9ac2a118596d1cd092d37e475ea7043f0281a9d43fe`.
-  This is offline-only; no valid output or decode rate exists yet. See
-  `benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md`.
+  Tag0110 uploaded the full model in `326.685735` s after `99.320494` s
+  authentication and `12.779983` s tokenization. Generation failed on prompt
+  position0 during embedding (`stage=4`); `0.609649` s is partial failed
+  prompt time. No output, completed prompt timing, decode time, or tokens/s
+  exists. Close failed the core0 stop audit. The recovery helper restored
+  stable55 generation2 after the authorized power cycle and pinned SD-free
+  handoff; postflight confirmed 64 CPUs, full RAM, cleared lock, and both
+  model sizes. Continue offline rewrite before another hardware run. See
+  `benchmarks/qwen35-dataflow-tag0110-20261121/RUN.md`.
 - 2026-11-21 (tag0109): Added structured generation-ioctl rejection details
   and split fleet-resume diagnostics, plus a bounded 10,000-spin settle window
   before restored-core idle checks. The all-core Tensix rewrite still has no

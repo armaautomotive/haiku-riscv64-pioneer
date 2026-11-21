@@ -45,9 +45,16 @@ PCI-memory ASan/UBSan fixtures pass, including close retry and restore
 diagnostics. The RV32IMF role compile passes without A-extension atomics or
 runtime helpers.
 
-Tag0110 has not been run on hardware. Latest hardware evidence remains
-tag0109: model load completed, generation was rejected because of the missing
-outer ioctl route, and close failed the held-root idle proof. Stable driver55
-generation2 has since been restored. See
-[`tag0109 RUN.md`](../qwen35-dataflow-tag0109-20261121/RUN.md). The next phase
-is still rewrite work; do not benchmark until the rewrite is complete.
+The guarded tag0110 hardware run installed the candidate and uploaded all
+2,740,498,432 bytes, then failed at the first prompt token with
+`DataflowDecoderEmbeddingRunFailed` (position0). No output or decode rate was
+produced; close failed its core0 stop audit. The trial guard retained the
+candidate and stable backup. After one authorized power cycle and a pinned
+SD-free kexec handoff, the recovery helper restored stable driver55
+generation2, cleared the lock, and verified the 4B and 27B model sizes. The
+card is idle on stable55. See [`RUN.md`](RUN.md) and its raw evidence.
+
+The next phase is offline rewrite work: expose the underlying embedding
+worker failure and make the same service owner recover before close. Do not
+schedule another hardware run until those code changes and offline gates are
+complete.
