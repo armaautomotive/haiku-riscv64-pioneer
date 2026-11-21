@@ -22,9 +22,11 @@ command.
 
 Latest recheck (2026-11-21): both saved, host-pinned SSH profiles time out;
 the serial console still ends at shutdown-device teardown with no fresh boot
-banner. Relay status is power-button contact open and SD detached. That relay
-status does not establish whether the board is powered, and no relay action has
-been sent. Stable-driver recovery and the tag0120 hardware diagnostic remain
+banner. Relay status was power-button contact open and SD detached. After the
+shutdown/reset window, one ON pulse was sent; the relay is released, but after
+60 seconds SSH still times out, ARP is incomplete, and serial output is
+unchanged. There is still no confirmed boot, so no further power pulse was
+sent. Stable-driver recovery and the tag0120 hardware diagnostic remain
 pending.
 
 No valid output, prompt completion, decode time, warm run, clean unload, or
