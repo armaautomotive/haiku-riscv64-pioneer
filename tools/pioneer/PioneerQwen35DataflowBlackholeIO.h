@@ -193,25 +193,35 @@ public:
 		unsigned bytes) const
 	{
 		if (!fProgram || &source!=&fProgram->input || !source.Valid()
-			|| rows!=fProgram->inputRows || rows>source.rows
+			|| rows!=fProgram->inputRows
+			|| fProgram->inputBase>source.rows
+			|| rows>source.rows-fProgram->inputBase
 			|| source.rowBytes!=sizeof(float) || source.unit!=16
 			|| bytes!=rows*sizeof(float) || !output
 			|| reinterpret_cast<uintptr_t>(output)!=DataflowActivationCacheAddress)
 			return false;
+		const unsigned rangeEnd=fProgram->inputBase+rows;
 		unsigned covered=0;
 		for (unsigned i=0;i<source.count && covered<rows;i++) {
 			const auto& part=source.parts[i];
-			if (part.firstRow!=covered || (part.firstRow&15) || (part.rows&15))
+			if ((part.firstRow&15) || (part.rows&15))
 				return false;
-			const unsigned partRows=(rows-covered)<part.rows?(rows-covered):part.rows;
-			if (!partRows || (partRows&15)) return false;
+			const unsigned partEnd=part.firstRow+part.rows;
+			if (partEnd<=fProgram->inputBase || part.firstRow>=rangeEnd) continue;
+			const unsigned rangeFirst=part.firstRow>fProgram->inputBase
+				?part.firstRow:fProgram->inputBase;
+			const unsigned rangeLast=partEnd<rangeEnd?partEnd:rangeEnd;
+			if (rangeFirst!=fProgram->inputBase+covered
+				|| rangeLast<=rangeFirst || ((rangeLast-rangeFirst)&15)) return false;
+			const unsigned partRows=rangeLast-rangeFirst;
+			const unsigned localStart=rangeFirst-part.firstRow;
 			for (unsigned localRow=0;localRow<partRows;) {
 				unsigned chunkRows=DataflowNocMaxTransfer/sizeof(float);
 				if (chunkRows>partRows-localRow) chunkRows=partRows-localRow;
 				chunkRows&=~15U;
 				const unsigned chunkBytes=chunkRows*sizeof(float);
 				const uint64_t remote=uint64_t(part.address)
-					+uint64_t(localRow)*sizeof(float);
+					+uint64_t(localStart+localRow)*sizeof(float);
 				const unsigned destinationRow=covered+localRow;
 				if (!chunkRows || remote>UINT32_MAX || remote>=BankLimit
 					|| chunkBytes>BankLimit-remote

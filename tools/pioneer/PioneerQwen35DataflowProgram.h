@@ -10,7 +10,7 @@ namespace PioneerQwen35 {
 
 enum : unsigned {
 	DataflowProgramMagic=0x31504635,
-	DataflowProgramVersion=2,
+	DataflowProgramVersion=3,
 	DataflowCoreCount=120,
 	DataflowMaxSegments=13,
 	DataflowCircularBufferCount=3,
@@ -56,6 +56,7 @@ enum : unsigned {
 	DataflowWorkerStopped=5,
 	DataflowWorkerFatal=6,
 	DataflowActivationChunkInputs=256,
+	DataflowProjectionRecurrentVBase=2*DeltaKeyHeads*DeltaWidth,
 	DataflowInputPageBytes=576,
 	DataflowOutputPageBytes=64,
 	DataflowMaxWeightPageBytes=3392,
@@ -235,7 +236,7 @@ struct DataflowCoreProgram {
 // compute, and writer device roles; no callback here performs inference.
 struct DataflowProjectionProgram {
 	unsigned magic,version,type,inputs,outputRows,groups,blocks,activeCores,kernelRoles;
-	unsigned inputRows,inputFragmentCount,outputFragmentCount;
+	unsigned inputRows,inputBase,inputFragmentCount,outputFragmentCount;
 	// Copied from the validated resident-bank authority; logical bank indices
 	// alone are insufficient to issue a device NoC transfer.
 	unsigned bankRoute[2][Banks];
@@ -249,6 +250,8 @@ struct DataflowProjectionProgram {
 			|| kernelRoles!=DataflowAllRoles || !PioneerQwen35Projection::Supports(type,inputs)
 			|| !outputRows || (outputRows&15) || groups!=outputRows/16
 			|| !activeCores || activeCores>DataflowCoreCount || inputRows!=inputs
+			|| (inputBase&15) || inputBase>input.rows
+			|| inputRows>input.rows-inputBase
 			|| !inputFragmentCount || inputFragmentCount>Banks
 			|| !outputFragmentCount || outputFragmentCount>Banks
 			|| !DataflowBankRoutesValid(bankRoute)
@@ -370,7 +373,7 @@ inline bool DataflowProjectionMatchesLayout(const DeviceLayout& manifest,
 	}
 	return inputSlot<ActivationBuffers && outputSlot<ActivationBuffers
 		&& inputSlot!=outputSlot && program.inputRows==program.inputs
-		&& program.outputRows==program.weights.rows;
+		&& program.inputBase==0 && program.outputRows==program.weights.rows;
 }
 
 // Graph projections target exact model roles and their matching manifest-bound
@@ -394,7 +397,7 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 			break;
 		}
 	}
-	if (targetIndex<DataflowGraphUpWorkspaceIndex
+	if (targetIndex<DataflowGraphUpWorkspaceIndex || program.inputBase!=0
 		|| program.inputs!=Hidden || program.inputRows!=Hidden) return false;
 	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
@@ -426,11 +429,51 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 	return true;
 }
 
+// RecurrentOut consumes only the V channels retained in a recurrent QKV
+// workspace. Keep the complete QKV RowSpace as the source so its fragment map
+// remains valid, and express the V row offset in the projection descriptor.
+inline bool DataflowProjectionMatchesRecurrentOutput(const DeviceLayout& manifest,
+	const DataflowGraphWorkspace& workspace,
+	const unsigned (&auditedRoutes)[2][Banks],
+	const DataflowProjectionProgram& program,unsigned* outputSlot=nullptr,
+	unsigned* modelLayer=nullptr)
+{
+	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
+		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
+		|| !DataflowBankRoutesValid(auditedRoutes)
+		|| program.inputs!=DeltaInner || program.inputRows!=DeltaInner
+		|| program.inputBase!=DataflowProjectionRecurrentVBase
+		|| program.outputRows!=Hidden
+		|| !DataflowRowSpaceMatches(
+			workspace.space[DataflowGraphRecurrentQkvWorkspaceIndex],program.input))
+		return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
+	unsigned foundOutput=ActivationBuffers;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.output))
+			foundOutput=slot;
+	if (foundOutput>=ActivationBuffers) return false;
+	for (unsigned layer=0;layer<Layers;layer++) {
+		if (Dense(layer)) continue;
+		const TensorSpace* expected=manifest.Weight(layer,RecurrentOut);
+		if (expected && expected->type==program.type
+			&& expected->inputs==program.inputs
+			&& expected->place.rows==program.outputRows
+			&& DataflowRowSpaceMatches(expected->place,program.weights)) {
+			if (outputSlot) *outputSlot=foundOutput;
+			if (modelLayer) *modelLayer=layer;
+			return true;
+		}
+	}
+	return false;
+}
+
 // Compact per-core invocation copied into local L1. The host builder keeps the
 // full 120-core schedule; each device core receives only its own assignment.
 struct DataflowCoreInvocation {
 	unsigned magic,version,core,type,inputs,outputRows,groups,blocks,activeCores,kernelRoles;
-	unsigned inputRows,inputFragmentCount,outputFragmentCount;
+	unsigned inputRows,inputBase,inputFragmentCount,outputFragmentCount;
 	unsigned bankRoute[2][Banks];
 	DataflowCircularBuffer circularBuffer[DataflowCircularBufferCount];
 	RowSpace weights,input,output;
@@ -444,6 +487,8 @@ struct DataflowCoreInvocation {
 			|| blocks!=(inputs>>(type==8?5:8)) || !activeCores
 			|| activeCores>DataflowCoreCount
 			|| kernelRoles!=DataflowAllRoles || inputRows!=inputs
+			|| (inputBase&15) || inputBase>input.rows
+			|| inputRows>input.rows-inputBase
 			|| !inputFragmentCount || inputFragmentCount>Banks
 			|| !outputFragmentCount || outputFragmentCount>Banks
 			|| !DataflowBankRoutesValid(bankRoute)
@@ -528,6 +573,7 @@ public:
 		candidate.activeCores=program.activeCores;
 		candidate.kernelRoles=program.kernelRoles;
 		candidate.inputRows=program.inputRows;
+		candidate.inputBase=program.inputBase;
 		candidate.inputFragmentCount=program.inputFragmentCount;
 		candidate.outputFragmentCount=program.outputFragmentCount;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
@@ -545,12 +591,15 @@ public:
 
 	static bool Build(const TensorSpace& weight,const RowSpace& input,
 		unsigned inputRows,const RowSpace& output,
-		const unsigned (&bankRoute)[2][Banks],DataflowProjectionProgram& result)
+		const unsigned (&bankRoute)[2][Banks],DataflowProjectionProgram& result,
+		unsigned inputBase=0)
 	{
 		result={};
 		if (!PioneerQwen35Projection::Supports(weight.type,weight.inputs)
 			|| inputRows!=weight.inputs || !input.Valid() || !output.Valid()
-			|| input.rows<inputRows || input.rowBytes!=sizeof(float) || input.unit!=16
+			|| (inputBase&15) || inputBase>input.rows
+			|| inputRows>input.rows-inputBase
+			|| input.rowBytes!=sizeof(float) || input.unit!=16
 			|| output.rows<weight.place.rows || output.rowBytes!=sizeof(float)
 			|| !DataflowBankRoutesValid(bankRoute)
 			|| output.unit!=16 || !weight.place.Valid() || weight.place.unit!=16
@@ -580,6 +629,7 @@ public:
 		candidate.activeCores=schedule.activeCores;
 		candidate.kernelRoles=DataflowAllRoles;
 		candidate.inputRows=inputRows;
+		candidate.inputBase=inputBase;
 		candidate.inputFragmentCount=input.count;
 		candidate.outputFragmentCount=output.count;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)

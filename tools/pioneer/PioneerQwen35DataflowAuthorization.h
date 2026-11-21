@@ -21,7 +21,7 @@ class DataflowProjectionAuthority {
 	enum : unsigned {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
 		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7,
-		PendingDelta=8
+		PendingDelta=8,PendingRecurrentOut=9
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -162,6 +162,22 @@ class DataflowProjectionAuthority {
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
 				return false;
+		return true;
+	}
+
+	bool RecurrentOutputMatches(const DataflowProjectionProgram& program,
+		unsigned* outputSlot=nullptr,unsigned* modelLayer=nullptr) const
+	{
+		unsigned output=ActivationBuffers,layer=Layers;
+		if (!fBound || !DataflowProjectionMatchesRecurrentOutput(fManifest,
+			fGraphWorkspace,fRoutes,program,&output,&layer)
+			|| layer>=Layers || fDeltaNextPosition[layer]==0
+			|| fConvNextPosition[layer]!=fDeltaNextPosition[layer]
+			|| !GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex)
+			|| GraphWorkspaceLayer(DataflowGraphRecurrentQkvWorkspaceIndex)!=layer)
+			return false;
+		if (outputSlot) *outputSlot=output;
+		if (modelLayer) *modelLayer=layer;
 		return true;
 	}
 
@@ -377,6 +393,23 @@ public:
 		return Authorize(program);
 	}
 
+	bool BuildRecurrentOutput(unsigned layer,unsigned outputSlot,
+		DataflowProjectionProgram& program) const
+	{
+		if (!fBound || fPending || layer>=Layers || Dense(layer)
+			|| outputSlot>=ActivationBuffers || fDeltaNextPosition[layer]==0
+			|| fConvNextPosition[layer]!=fDeltaNextPosition[layer]
+			|| !GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex)
+			|| GraphWorkspaceLayer(DataflowGraphRecurrentQkvWorkspaceIndex)!=layer)
+			return false;
+		const TensorSpace* weight=fManifest.Weight(layer,RecurrentOut);
+		if (!weight || !DataflowProgramBuilder::Build(*weight,
+			fGraphWorkspace.space[DataflowGraphRecurrentQkvWorkspaceIndex],
+			DeltaInner,fManifest.activation[outputSlot],fRoutes,program,
+			DataflowProjectionRecurrentVBase)) return false;
+		return Authorize(program);
+	}
+
 	bool BuildEmbedding(unsigned token,unsigned outputSlot,
 		DataflowEmbeddingProgram& program) const
 	{
@@ -550,6 +583,7 @@ public:
 	bool Authorize(const DataflowProjectionProgram& program) const
 	{
 		if (!fBound || fPending) return false;
+		if (RecurrentOutputMatches(program)) return true;
 		if (DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) {
 			unsigned input=ActivationBuffers,output=ActivationBuffers;
 			return Slots(program,input,output)
@@ -566,7 +600,14 @@ public:
 	bool Begin(const DataflowProjectionProgram& program)
 	{
 		if (!Authorize(program)) return false;
-		if (DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) {
+		unsigned recurrentOutput=ActivationBuffers,recurrentLayer=Layers;
+		if (RecurrentOutputMatches(program,&recurrentOutput,&recurrentLayer)) {
+			fActivationRows[recurrentOutput]=0;
+			fPendingOutput=recurrentOutput;
+			fPendingKind=PendingRecurrentOut;
+			fPendingLayer=recurrentLayer;
+			fPendingPosition=fDeltaNextPosition[recurrentLayer]-1;
+		} else if (DataflowProjectionMatchesLayout(fManifest,fRoutes,program)) {
 			unsigned input=ActivationBuffers,output=ActivationBuffers;
 			if (!Slots(program,input,output)) return false;
 			fActivationRows[output]=0;
@@ -587,6 +628,12 @@ public:
 	bool PendingProjectionMatches(const DataflowProjectionProgram& program) const
 	{
 		if (!fBound || !fPending) return false;
+		if (fPendingKind==PendingRecurrentOut) {
+			unsigned output=ActivationBuffers,layer=Layers;
+			return RecurrentOutputMatches(program,&output,&layer)
+				&& output==fPendingOutput && layer==fPendingLayer
+				&& fDeltaNextPosition[layer]-1==fPendingPosition;
+		}
 		if (fPendingKind==PendingProjection) {
 			unsigned input=ActivationBuffers,output=ActivationBuffers;
 			return DataflowProjectionMatchesLayout(fManifest,fRoutes,program)
@@ -639,7 +686,14 @@ public:
 	bool Complete(const DataflowProjectionProgram& program)
 	{
 		if (!PendingProjectionMatches(program)) return false;
-		if (fPendingKind==PendingGraphProjection) {
+		if (fPendingKind==PendingRecurrentOut) {
+			if (fPendingOutput>=ActivationBuffers
+				|| program.outputRows>fManifest.activation[fPendingOutput].rows)
+				return false;
+			fActivationRows[fPendingOutput]=program.outputRows;
+			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
+			fGraphWorkspaceLayer[DataflowGraphRecurrentQkvWorkspaceIndex]=~0U;
+		} else if (fPendingKind==PendingGraphProjection) {
 			unsigned input=ActivationBuffers,workspaceIndex=0,modelLayer=0;
 			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
 				fRoutes,program,&input,&workspaceIndex,&modelLayer)
@@ -719,6 +773,12 @@ public:
 			fGraphWorkspaceReady[DataflowGraphRecurrentBetaWorkspaceIndex]=false;
 			fGraphWorkspaceLayer[DataflowGraphRecurrentAlphaWorkspaceIndex]=~0U;
 			fGraphWorkspaceLayer[DataflowGraphRecurrentBetaWorkspaceIndex]=~0U;
+		} else if (fPendingKind==PendingRecurrentOut) {
+			if (fPendingOutput>=ActivationBuffers || fPendingLayer>=Layers)
+				return false;
+			fActivationRows[fPendingOutput]=0;
+			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
+			fGraphWorkspaceLayer[DataflowGraphRecurrentQkvWorkspaceIndex]=~0U;
 		} else {
 			if (fPendingKind!=PendingProjection || fPendingOutput>=ActivationBuffers)
 				return false;

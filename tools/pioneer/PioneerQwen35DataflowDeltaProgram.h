@@ -253,6 +253,8 @@ public:
 static_assert(DataflowDeltaPanelCount==256 && DataflowDeltaBaseHeads==0
 	&& DataflowDeltaRemainderHeads==unsigned(DeltaHeads),
 	"the recurrent head owner keeps each RMS normalization group on one worker");
+static_assert(unsigned(DataflowDeltaVBase)==unsigned(DataflowProjectionRecurrentVBase),
+	"the recurrent output projection reads the delta worker's V channel base");
 static_assert(sizeof(DataflowDeltaInvocation)<=DataflowProgramRegionBytes,
 	"the recurrent state invocation fits the resident L1 command slot");
 

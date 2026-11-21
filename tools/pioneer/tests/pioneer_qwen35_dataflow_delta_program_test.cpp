@@ -192,6 +192,8 @@ int main()
 		ConvChannels,0x11000000);
 	manifest.layers[0].weights[RecurrentGate]=MakeProjection(13,Hidden,
 		DeltaInner,0x12000000);
+	manifest.layers[0].weights[RecurrentOut]=MakeProjection(13,DeltaInner,
+		Hidden,0x12500000);
 	manifest.layers[0].weights[Alpha]=MakeProjection(13,Hidden,DeltaHeads,
 		0x13000000);
 	manifest.layers[0].weights[Beta]=MakeProjection(13,Hidden,DeltaHeads,
@@ -262,5 +264,36 @@ int main()
 	DataflowDeltaProgram repeated{};
 	assert(!authority.BuildDelta(0,0,repeated));
 	assert(authority.DeltaNextPosition(0)==1);
+
+	DataflowProjectionProgram recurrentOut{};
+	assert(authority.BuildRecurrentOutput(0,1,recurrentOut));
+	assert(recurrentOut.inputs==DeltaInner && recurrentOut.inputRows==DeltaInner
+		&& recurrentOut.inputBase==DataflowProjectionRecurrentVBase
+		&& recurrentOut.outputRows==Hidden && recurrentOut.activeCores==120);
+	unsigned outputSlot=ActivationBuffers,modelLayer=Layers;
+	assert(DataflowProjectionMatchesRecurrentOutput(manifest,workspace,
+		TestRoutes,recurrentOut,&outputSlot,&modelLayer));
+	assert(outputSlot==1 && modelLayer==0);
+	DataflowProjectionProgram wrongVOffset=recurrentOut;
+	wrongVOffset.inputBase-=16;
+	assert(wrongVOffset.Valid());
+	assert(!DataflowProjectionMatchesRecurrentOutput(manifest,workspace,
+		TestRoutes,wrongVOffset));
+	assert(!authority.Begin(wrongVOffset));
+	unsigned activeCores=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(recurrentOut,core,invocation));
+		assert(invocation.inputBase==DataflowProjectionRecurrentVBase);
+		activeCores+=invocation.assignment.active;
+	}
+	assert(activeCores==DataflowCoreCount);
+	assert(authority.Begin(recurrentOut));
+	assert(authority.Pending() && !authority.ActivationReady(1)
+		&& authority.PendingProjectionMatches(recurrentOut));
+	assert(authority.Complete(recurrentOut));
+	assert(!authority.Pending() && authority.ActivationRows(1)==Hidden
+		&& !authority.GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex));
+	assert(!authority.BuildRecurrentOutput(0,1,recurrentOut));
 	return 0;
 }
