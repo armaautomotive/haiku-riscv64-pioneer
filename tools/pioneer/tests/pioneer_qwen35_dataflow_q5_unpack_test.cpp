@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_Q38_VECTOR_LAYOUT_MACHINE_ONLY
 #include "pioneer_q38_vector_layout_test.cpp"
+#include "../PioneerQwen35DataflowAffine.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 #include "../PioneerQwen35Q5Panel.h"
 #include <cstdio>
@@ -26,6 +27,13 @@ int main()
 			PioneerQ38Panel expected{};
 			assert(PioneerQwen35Q5Panel(tile.data(),unsigned(tile.size()),
 				panel,&expected));
+			PioneerQ38Panel affine{};
+			assert(PioneerQwen35DataflowAffineOnly(13,tile.data(),
+				unsigned(tile.size()),panel,&affine));
+			for (unsigned row=0;row<16;row++) {
+				assert(affine.coefficient[row]==expected.coefficient[row]);
+				assert(affine.minimum[row]==expected.minimum[row]);
+			}
 			PioneerQ38VectorPanelSpan span{};
 			assert(PioneerQwen35DataflowQ5PanelSpan(panel,span));
 			assert(span.second);

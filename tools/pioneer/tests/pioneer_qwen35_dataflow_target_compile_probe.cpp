@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen35DataflowBlackholeIO.h"
+#include "../PioneerQwen35DataflowTensixOps.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 
 using namespace PioneerQwen35;
@@ -9,6 +10,7 @@ using namespace PioneerQwen35;
 // RV32IMF target without relying on the RISC-V A extension or libatomic.
 struct TargetCompileOps {
 	enum { TensixMatrixEngine=1 };
+	bool Bind(const DataflowCoreInvocation&) { return true; }
 	bool ReadActivation(const RowSpace&,unsigned,uint8_t*,unsigned) { return true; }
 	bool ReadWeight(unsigned,uint32_t,uint8_t*,unsigned) { return true; }
 	bool PackActivation(unsigned,unsigned,unsigned,const float*,uint8_t*,unsigned)
@@ -30,6 +32,15 @@ bool PioneerQwen35DataflowQ5UnpackTargetCompileProbe(unsigned panel,
 {
 	TargetCompileTensixEmitter emitter;
 	return PioneerQwen35DataflowVectorUnpack(emitter,13,panel,weightPage);
+}
+
+bool PioneerQwen35DataflowTensixTargetCompileProbe(
+	const DataflowCoreInvocation& program,
+	DataflowQueueView (&queues)[DataflowCircularBufferCount])
+{
+	DataflowBlackholeTensixOps ops;
+	return PioneerQwen35DataflowCompute(program,queues[0],queues[1],
+		queues[2],ops);
 }
 
 bool PioneerQwen35DataflowTargetCompileProbe(

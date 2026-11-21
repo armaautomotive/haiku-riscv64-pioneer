@@ -13,6 +13,21 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-20: Added `PioneerQwen35DataflowTensixOps.h` as the concrete
+  compute-role adapter. It binds one immutable core invocation, selects the
+  right 16-value activation panel and scale, issues the Q8_0/Q4_K/Q5_K/Q6_K
+  unpack and four Tensix matrix phases, validates bounded integer dot
+  readbacks, runs the SFPU affine accumulator, and publishes a 16-row FP32
+  page. Q5 affine scale/minimum extraction is isolated in the rewrite's
+  metadata helper; packed Q5 operand expansion and all projection dots remain
+  on the Tensix path. The MMIO emitter latches config/drain failures and
+  returns through the queue failure channel instead of parking. The compute
+  contract now requires explicit `Bind`. ASan/UBSan host role checks pass,
+  and the Haiku RV32IMF probe instantiates the concrete Q5 and full compute
+  paths without A-extension instructions or runtime helpers. This is compile
+  and instruction-model evidence only: separate runnable device images,
+  resident all-core ownership, and silicon validation are still missing. No
+  Pioneer access or benchmark was performed.
 - 2026-11-20: Added a rewrite-only Q5_K Tensix unpack path. The new panel
   span selects the original `qs` and `qh` byte-major windows from either
   double-buffered weight page; its SFPU instructions combine each low nibble
@@ -20,11 +35,9 @@ rewrite is implemented.
   into Dst for the matrix source path. The offline vector-layout machine
   matches the scalar reference across 2,048 panels and 524,288 operands, and
   the Haiku RV32IMF compile probe instantiates the Q5 path. These checks cover
-  operand decoding and compile lowering only: no native image, compute-role
-  integration, or silicon qualification exists yet. The Tensix Q5 affine
-  metadata path, matrix/accumulator integration, runnable role images, and
-  resident all-core owner remain outstanding. No Pioneer access or benchmark
-  was performed.
+	operand decoding and compile lowering only at that checkpoint: no native
+	image or silicon qualification existed then. No Pioneer access or benchmark
+	was performed.
 - 2026-11-20 status review: the rewrite is at the pushed NoC-role checkpoint
   `eb6518f8a7`; no Tensix compute backend, runnable role images, or resident
   all-core owner exists yet, so this rewrite has no valid tokens/sec result.

@@ -375,7 +375,8 @@ bool PioneerQwen35DataflowCompute(const DataflowCoreInvocation& program,
 	static_assert(Ops::TensixMatrixEngine,
 		"Qwen35 projection compute requires the Tensix matrix engine");
 	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(weights)
-		|| !DataflowQueueValid(inputs) || !DataflowQueueValid(outputs)) {
+		|| !DataflowQueueValid(inputs) || !DataflowQueueValid(outputs)
+		|| !ops.Bind(program)) {
 		DataflowQueueFail(weights,DataflowFailureCompute);
 		DataflowQueueFail(inputs,DataflowFailureCompute);
 		DataflowQueueFail(outputs,DataflowFailureCompute);

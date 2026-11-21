@@ -25,6 +25,7 @@ static bool BuildProgram(const TensorSpace& weight,const RowSpace& input,
 
 struct ContractOps {
 	enum { TensixMatrixEngine=1 };
+	bool Bind(const DataflowCoreInvocation&) { return true; }
 	bool ReadActivation(const RowSpace&,unsigned,uint8_t*,unsigned) { return false; }
 	bool ReadWeight(unsigned,uint32_t,uint8_t*,unsigned) { return false; }
 	bool PackActivation(unsigned,unsigned,unsigned,const float*,uint8_t*,unsigned) { return false; }
@@ -71,6 +72,7 @@ struct RoleTestCounters {
 struct RoleTestOps {
 	enum { TensixMatrixEngine=1 };
 	RoleTestCounters& counters;
+	bool Bind(const DataflowCoreInvocation&) { return true; }
 	bool ReadActivation(const RowSpace& source,unsigned rows,uint8_t* output,unsigned bytes)
 	{
 		if (!output || rows>source.rows || source.rowBytes!=sizeof(float)
