@@ -83,7 +83,8 @@
 	|| (PIONEER_DRIVER_BUILD_TAG != 0x2026112100010105ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010106ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010107ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010108ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010108ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010109ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3375,7 +3376,8 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool StopAndAuditAll(unsigned& failedStage,unsigned& failedCore);
 	bool RestoreCoreState(unsigned core);
 	bool VerifyCoreStateRestored(unsigned core);
-	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore);
+	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore,
+		unsigned& failedDetail);
 #endif
 	bool AllocateFleetWorker(unsigned worker) {
 		if (!fleetEnabled || worker>=120 || !runtimeMapped || runtimeBufferWords!=TT_Q8_BULK_SAVED_BUFFER_WORDS) return false;
@@ -8980,19 +8982,43 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 		sizeof(tt_qwen35_dataflow_generate));
 	if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,sizeof(*request));
-	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
-		|| !request->prompt_count || !request->max_new_tokens
-		|| request->prompt_count>PioneerQwen35::MaxPositions
+	if (status!=B_OK) {
+		free(request);
+		return status;
+	}
+	unsigned validation=0;
+	if (request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI)
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_VERSION;
+	else if (!request->prompt_count
+		|| request->prompt_count>PioneerQwen35::MaxPositions)
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_PROMPT_COUNT;
+	else if (!request->max_new_tokens
 		|| request->max_new_tokens>PioneerQwen35::MaxPositions
-			-request->prompt_count+1
-		|| request->input_slot>=PioneerQwen35::ActivationBuffers
-		|| request->eos_token>PioneerQwen35::Vocabulary
-		|| !request->prompt_tokens || !request->output_tokens
-		|| request->output_count || request->result || request->stage
+			-request->prompt_count+1)
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_OUTPUT_LIMIT;
+	else if (request->input_slot>=PioneerQwen35::ActivationBuffers)
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_INPUT_SLOT;
+	else if (request->eos_token>PioneerQwen35::Vocabulary)
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_EOS_TOKEN;
+	else if (request->output_count || request->result || request->stage
 		|| request->next_sequence || request->state || request->recovery_required
 		|| request->prompt_time_us || request->decode_time_us) {
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_OUTPUT_FIELDS;
+		request->output_count=(request->output_count?1U:0U)
+			|(request->result?2U:0U)|(request->stage?4U:0U)
+			|(request->next_sequence?8U:0U)|(request->state?16U:0U)
+			|(request->recovery_required?32U:0U)
+			|(request->prompt_time_us?64U:0U)
+			|(request->decode_time_us?128U:0U);
+	} else if (!request->prompt_tokens || !request->output_tokens)
+		validation=TT_QWEN35_DATAFLOW_GENERATE_DIAG_POINTER_NULL;
+	if (validation) {
+		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
+		request->stage=validation;
+		request->state=TT_QWEN35_DATAFLOW_STATE_READY;
+		status=user_memcpy(data,request,sizeof(*request));
 		free(request);
-		return status!=B_OK?status:B_BAD_VALUE;
+		return status;
 	}
 	const unsigned promptBytes=request->prompt_count*sizeof(uint32_t);
 	const unsigned outputBytes=request->max_new_tokens*sizeof(uint32_t);
@@ -9004,8 +9030,16 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 		|| requestAddress>UINTPTR_MAX-sizeof(*request)
 		|| (outputAddress<requestAddress+sizeof(*request)
 			&& requestAddress<outputAddress+outputBytes)) {
+		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
+		request->stage=promptAddress>UINTPTR_MAX-promptBytes
+			|| outputAddress>UINTPTR_MAX-outputBytes
+			|| requestAddress>UINTPTR_MAX-sizeof(*request)
+			?TT_QWEN35_DATAFLOW_GENERATE_DIAG_POINTER_RANGE
+			:TT_QWEN35_DATAFLOW_GENERATE_DIAG_POINTER_OVERLAP;
+		request->state=TT_QWEN35_DATAFLOW_STATE_READY;
+		status=user_memcpy(data,request,sizeof(*request));
 		free(request);
-		return B_BAD_VALUE;
+		return status;
 	}
 	auto* prompt=(uint32_t*)malloc(promptBytes);
 	auto* output=(uint32_t*)malloc(outputBytes);
@@ -9017,6 +9051,11 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 	}
 	status=user_memcpy(prompt,(const void*)promptAddress,promptBytes);
 	if (status!=B_OK) {
+		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
+		request->stage=TT_QWEN35_DATAFLOW_GENERATE_DIAG_PROMPT_COPY;
+		request->output_count=uint32_t(status);
+		request->state=TT_QWEN35_DATAFLOW_STATE_READY;
+		status=user_memcpy(data,request,sizeof(*request));
 		free(prompt);
 		free(output);
 		free(request);
@@ -9024,14 +9063,25 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 	}
 	for (unsigned i=0;i<request->prompt_count;i++) {
 		if (prompt[i]>=PioneerQwen35::Vocabulary) {
+			request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
+			request->stage=TT_QWEN35_DATAFLOW_GENERATE_DIAG_PROMPT_TOKEN;
+			request->output_count=prompt[i];
+			request->next_sequence=i;
+			request->state=TT_QWEN35_DATAFLOW_STATE_READY;
+			status=user_memcpy(data,request,sizeof(*request));
 			free(prompt);
 			free(output);
 			free(request);
-			return B_BAD_VALUE;
+			return status;
 		}
 	}
 	status=AcquireProbeLock(cookie,true);
 	if (status!=B_OK) {
+		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
+		request->stage=TT_QWEN35_DATAFLOW_GENERATE_DIAG_LOCK;
+		request->output_count=uint32_t(status);
+		request->state=TT_QWEN35_DATAFLOW_STATE_READY;
+		status=user_memcpy(data,request,sizeof(*request));
 		free(prompt);
 		free(output);
 		free(request);
@@ -9042,7 +9092,24 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
-		status=B_NOT_ALLOWED;
+		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
+		request->stage=TT_QWEN35_DATAFLOW_GENERATE_DIAG_SERVICE;
+		request->output_count=0;
+		if (!context) request->output_count|=1U;
+		else {
+			if (sRuntimeOwner!=cookie) request->output_count|=2U;
+			if (!context->bankStorageOnly) request->output_count|=4U;
+			if (context->bytes!=PioneerResidentBanks::Total)
+				request->output_count|=8U;
+			if (!context->qwen35DataflowAuthority)
+				request->output_count|=16U;
+			if (!context->qwen35DataflowService)
+				request->output_count|=32U;
+			else if (!context->qwen35DataflowService->Ready())
+				request->output_count|=64U;
+		}
+		request->state=TT_QWEN35_DATAFLOW_STATE_EMPTY;
+		status=user_memcpy(data,request,sizeof(*request));
 	} else {
 		unsigned outputCount=0,stage=0;
 		struct Clock {

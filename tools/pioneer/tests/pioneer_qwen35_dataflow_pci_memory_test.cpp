@@ -16,6 +16,7 @@ struct MockPciRaw {
 	bool serviceImage[PioneerQwen35::DataflowCoreCount]{};
 	unsigned selected=UINT32_MAX;
 	unsigned writes=0;
+	unsigned pauses=0;
 	bool mapped=true;
 	bool idle=true;
 	bool idleForWrite=true;
@@ -92,7 +93,7 @@ struct MockPciRaw {
 		} else panel[(address-DataflowPciL1ViewBase)/sizeof(uint32_t)]=value;
 		writes++;
 	}
-	void Pause() {}
+	void Pause() { pauses++; }
 };
 
 using namespace PioneerQwen35;
@@ -208,7 +209,10 @@ int main()
 		assert(memory.RestoreCoreState(core));
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(memory.VerifyCoreStateRestored(core));
-	assert(memory.ResumeRestoredFleet(resumeStage,resumeCore));
+	raw.pauses=0;
+	unsigned resumeDetail=UINT32_MAX;
+	assert(memory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
+	assert(resumeDetail==0 && raw.pauses>=DataflowPciResumeSettlePauses);
 	assert(raw.reset[0]==0x47800);
 	for (unsigned core=1;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(raw.reset[core]==0x46800);

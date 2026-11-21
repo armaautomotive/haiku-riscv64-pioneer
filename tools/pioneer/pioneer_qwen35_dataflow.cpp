@@ -281,7 +281,7 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 		if (request.result || request.recovery_required || request.reserved[0]
 			|| request.reserved[1] || request.reserved[2]) {
 			fprintf(stderr,"P100A_Q35_DATAFLOW close_failed result=%u state=%u "
-				"recovery=%u diag_stage=%u diag_core=%u audit_detail=%u "
+				"recovery=%u diag_stage=%u diag_core=%u diagnostic_detail=%u "
 				"worker_route=0x%08x\n",
 				request.result,request.state,request.recovery_required,
 				request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
@@ -313,7 +313,16 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 	request->prompt_tokens=uint64_t(reinterpret_cast<uintptr_t>(prompt.data()));
 	request->output_tokens=uint64_t(reinterpret_cast<uintptr_t>(tokens.data()));
 	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_GENERATE,request.get(),
-		sizeof(*request))) return false;
+		sizeof(*request))) {
+		fprintf(stderr,"P100A_Q35_DATAFLOW generate_request bytes=%zu version=%u "
+			"prompt_count=%u max_new_tokens=%u input_slot=%u eos=%u "
+			"prompt_ptr=0x%016llx output_ptr=0x%016llx\n",
+			sizeof(*request),request->version,request->prompt_count,
+			request->max_new_tokens,request->input_slot,request->eos_token,
+			static_cast<unsigned long long>(request->prompt_tokens),
+			static_cast<unsigned long long>(request->output_tokens));
+		return false;
+	}
 		if (request->result!=TT_QWEN35_DATAFLOW_RESULT_COMPLETE
 		|| request->state!=TT_QWEN35_DATAFLOW_STATE_READY
 		|| request->recovery_required || request->stage

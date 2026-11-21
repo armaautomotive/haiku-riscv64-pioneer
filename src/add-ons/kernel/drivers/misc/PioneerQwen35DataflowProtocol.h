@@ -49,7 +49,8 @@ struct tt_qwen35_dataflow_request {
 	// audit failures, output packs reserved[0] as stage:8 | core:24 and
 	// reserved[1] as state/detail:8 | failure:8 | phase:8 | zero:8.
 	// reserved[2] contains a raw local route on a phase-2 worker startup fault.
-	// Other actions return zeros.
+	// Other actions return zeros. CLOSE stage9 detail is 1 for reset mismatch,
+	// 2 for the final idle-core proof failure.
 	uint32_t reserved[3];
 };
 

@@ -383,14 +383,17 @@ struct MockDataflowIO {
 	{
 		return core<DataflowCoreCount && restored[core];
 	}
-	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore)
+	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore,
+		unsigned& failedDetail)
 	{
 		failedStage=0;
 		failedCore=DataflowCoreCount;
+		failedDetail=0;
 		resumeCount++;
 		if (failResume) {
 			failedStage=2;
 			failedCore=0;
+			failedDetail=DataflowServiceResumeResetMismatch;
 			return false;
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -579,6 +582,7 @@ int main()
 	resumeFailure.failResume=true;
 	assert(resumeFailureOwner.Close(resumeFailure)==DataflowServiceResumeFailed);
 	assert(resumeFailureOwner.Faulted() && resumeFailure.restoreCount==DataflowCoreCount);
+	assert(resumeFailureOwner.Diagnostic().detail==DataflowServiceResumeResetMismatch);
 	resumeFailure.failResume=false;
 	assert(resumeFailureOwner.Close(resumeFailure)==DataflowServiceClosed);
 	assert(resumeFailure.resumeCount==2);

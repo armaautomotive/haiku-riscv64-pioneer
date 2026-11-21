@@ -11,7 +11,8 @@
 enum : unsigned {
 	DataflowPciL1ViewBase=0x6e000,
 	DataflowPciL1ViewBytes=0x42000,
-	DataflowPciL1ViewWords=DataflowPciL1ViewBytes/sizeof(uint32_t)
+	DataflowPciL1ViewWords=DataflowPciL1ViewBytes/sizeof(uint32_t),
+	DataflowPciResumeSettlePauses=10000
 };
 
 struct DataflowPciCoreSnapshot {
@@ -492,8 +493,16 @@ public:
 
 	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore)
 	{
+		unsigned failedDetail=0;
+		return ResumeRestoredFleet(failedStage,failedCore,failedDetail);
+	}
+
+	bool ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore,
+		unsigned& failedDetail)
+	{
 		failedStage=0;
 		failedCore=PioneerQwen35::DataflowCoreCount;
+		failedDetail=0;
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			failedStage=1;
 			failedCore=core;
@@ -505,11 +514,21 @@ public:
 			failedCore=core;
 			if (fSnapshots[core].reset==0x46800 && !StartCore(core)) return false;
 		}
+		// Let resumed dispatcher harts and their idle NoC state settle before
+		// the final all-core proof. In fleet mode Pause is a bounded 1 us spin.
+		for (unsigned pause=0;pause<DataflowPciResumeSettlePauses;pause++)
+			fRaw.Pause();
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			failedStage=3;
 			failedCore=core;
-			if (!CoreResetMatches(core,fSnapshots[core].reset)
-				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
+			if (!CoreResetMatches(core,fSnapshots[core].reset)) {
+				failedDetail=PioneerQwen35::DataflowServiceResumeResetMismatch;
+				return false;
+			}
+			if (!fRaw.DataflowCoreIdleForHold(core)) {
+				failedDetail=PioneerQwen35::DataflowServiceResumeIdleProofFailed;
+				return false;
+			}
 		}
 		failedStage=0;
 		failedCore=PioneerQwen35::DataflowCoreCount;

@@ -16,63 +16,48 @@ assistant only after the hardware generation and throughput gates pass.
 
 ## Current status (2026-11-21)
 
-The resident dataflow rewrite is connected to a standalone generation client.
-Checkpoint `ae6613a828` is pushed to GitHub. Its offline variant-60 driver and
-Haiku client build successfully. The client uses the vocabulary library only
-for tokenization, performs inference through the 120-worker Tensix-backed
-service with no CPU inference fallback, and measures authentication, model
-load, prompt processing, and decode separately.
+The rewrite now has a standalone Haiku generation client and an offline-built
+120-core resident BRISC/Tensix service. Inference has no CPU fallback, and the
+client reports authentication, model load, prompt processing, and decode
+separately. The target remains two valid warm outputs at 100 decode tokens/s
+or higher, followed by clean unload. No valid output or decode-rate measurement
+has been produced yet.
 
-The guarded tag0102 hardware attempt reached a full 2,740,498,432-byte model
-upload, then the model-bind ioctl returned I/O error during dispatch/fleet
-preflight. No service was installed, no tokens were generated, and no prompt
-or decode timing was produced. The client explicitly closed its session with
-`unload_clean=1 active=0 cold=0`; the wrapper restored stable driver55 at
-generation 16 without reboot. The 27B model file was checked in place before
-the trial. The failure and hashes are recorded in
-`benchmarks/qwen35-dataflow-tag0102-20261121/evidence/tag0102-bind-failure/`.
-Checkpoints `0034491616` and `06c60b0784` archive the failed bind and its
-diagnostic. Tag0103 narrowed the failure to core 1's initial peer state:
-bootstrap keeps its dispatch nonce at zero, while route proof rejected zero
-before verifying the exact idle receipt. Tag0104 removes that redundant
-condition while retaining the status-word, marker, and waiting-PC checks.
-Tag0103 unloaded cleanly and restored stable driver55 at generation 18
-without reboot. Tag0104 passed model binding and route proof but stopped during
-service installation; it unloaded cleanly and restored stable driver55 at
-generation 20. Inspection found the same zero-nonce rejection in the
-install-time idle check. Tag0105 removed it and printed the
-service-install result/state. On-card tag0105 authenticated and tokenized the
-prompt, uploaded all 2,740,498,432 bytes, bound the model, and passed fleet
-route proof. Service install returned result 11 (`DataflowServiceReadyFailed`)
-before prompt processing or token output. Cleanup could not release the owner;
-the wrapper retained the recovery lock and stable-driver backup. No model-load
-duration, valid output, prompt time, or decode rate was produced.
+The latest pushed checkpoint is `7b276e8740` (tag0108 result and recovery).
+Tag0108 uploaded all `2,740,498,432` resident bytes after a guarded preflight.
+Authentication took `100.027643` s, prompt tokenization took `13.277220` s,
+and model load/upload took `334.815789` s. The first generation ioctl returned
+`EINVAL`; no prompt-processing or decode timing was completed. Unload then
+failed at fleet resume, stage9/core0/substage3. Following one authorized cold
+recovery, the guarded helper restored stable driver55 generation2 idle; the
+trial lock is absent, and the 4B and 27B files retain their verified sizes.
+Details and evidence are in
+[`benchmarks/qwen35-dataflow-tag0108-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0108-20261121/RUN.md).
 
-The authorized Linux-to-Haiku handoff restored Haiku hrev99999 with 64 CPUs
-and 137,034,936,320 bytes of RAM, without changing SD media. The committed
-post-cycle helper safely quiesced tag0105 and restored stable driver55 at
-generation2 (`cold0 active_owner0`); the recovery lock is absent. The
-candidate binary and raw failure logs remain preserved. The 4B and 27B model
-files retain their verified sizes. The target remains 100 decode tokens/s; no
-decode-rate measurement exists yet.
-
-Tag0106 records the exact worker-ready stage, core, mailbox state, failure,
-and phase. Its offline 120-core owner test, PCI memory rollback test, RV32IMF
-target compile, and driver/client build pass. On-card preflight confirmed
-stable driver55 generation2, no inference or 27B diagnostic process, 64 CPUs,
-and 137,034,936,320 bytes of RAM. Tag0106 then hot-swapped as generation3,
-uploaded the complete 2,740,498,432-byte model, and passed model binding. Core0
-failed its startup-ready wait with fatal state6/failure4/phase2. The attempted
-close did not restore ownership: the candidate is `cold1 active_owner1`, and
-the wrapper retained its recovery lock and stable041 backup. There was no
-prompt processing, generated output, model-load timing, or decode rate. The
-stop audit's failed subproof is not yet identified; the next rewrite step adds
-bounded waiting for workers still entering their service image and captures
-the exact stop-audit failure stage/core. Stable-driver recovery after the
-required cold boot is pending.
+Tag0109 adds request-rejection diagnostics and a bounded restore settle delay.
+Its full offline variant-60 driver, resident service, reload guard,
+default-control package, and Haiku client build successfully. The owner and
+PCI-memory ASan/UBSan fixtures and RV32IMF target compile pass. Its guarded
+trial/recovery scripts are prepared but have not run on the card. The latest
+known Pioneer state after tag0108 recovery is stable driver55 generation2
+idle on Haiku; a fresh guarded preflight is required immediately before the
+next hardware trial. Tag0109 details and hashes are in
+[`benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md).
 
 ## Progress
 
+- 2026-11-21 (tag0109): Added structured generation-ioctl rejection details
+  and split fleet-resume diagnostics, plus a bounded 10,000-spin settle window
+  before restored-core idle checks. The all-core Tensix rewrite still has no
+  CPU inference path. The full offline variant-60 driver/client build passes;
+  owner and PCI-memory ASan/UBSan fixtures pass; the RV32IMF role compile and
+  both guarded-script syntax checks pass. Driver SHA-256 is
+  `b87123aab5ff32e7080f14addf7e8e8a945c100e6380032eb52745e6a0387f84`, and
+  client SHA-256 is
+  `d55bed03a653529c78383c04d19584def654fda83d874257e06ab48e406be4a0`.
+  Tag0108's failed generation and resume results remain the latest silicon
+  evidence; tag0109 still needs guarded hardware validation. See
+  `benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md`.
 - 2026-11-21: Added the standalone resident-dataflow benchmark client and
   builder. It authenticates the pinned GGUF, uploads the packed model, binds
   its manifest and graph workspace, installs the 120-core resident service,

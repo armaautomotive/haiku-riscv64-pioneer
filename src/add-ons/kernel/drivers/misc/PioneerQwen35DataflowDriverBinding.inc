@@ -1532,10 +1532,16 @@ PioneerSessionIO::VerifyCoreStateRestored(unsigned core)
 }
 
 bool
-PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore)
+PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore,
+	unsigned& failedDetail)
 {
-	return qwen35DataflowContext && qwen35DataflowContext->qwen35DataflowMemory
-		&& qwen35DataflowContext->qwen35DataflowMemory->ResumeRestoredFleet(
-			failedStage,failedCore);
+	if (!qwen35DataflowContext || !qwen35DataflowContext->qwen35DataflowMemory) {
+		failedStage=0;
+		failedCore=PioneerQwen35::DataflowCoreCount;
+		failedDetail=0;
+		return false;
+	}
+	return qwen35DataflowContext->qwen35DataflowMemory->ResumeRestoredFleet(
+		failedStage,failedCore,failedDetail);
 }
 #endif

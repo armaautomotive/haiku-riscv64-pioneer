@@ -81,6 +81,11 @@ enum DataflowServiceDiagnosticStage : unsigned {
 	DataflowServiceDiagnosticResume=9
 };
 
+enum DataflowServiceResumeDetail : unsigned {
+	DataflowServiceResumeResetMismatch=1,
+	DataflowServiceResumeIdleProofFailed=2
+};
+
 struct DataflowServiceDiagnostic {
 	unsigned stage,core,state,failure,phase,detail;
 };
@@ -437,11 +442,12 @@ public:
 				return DataflowServiceRestoreFailed;
 			}
 		}
-		unsigned resumeStage=0,resumeCore=DataflowCoreCount;
-		if (!io.ResumeRestoredFleet(resumeStage,resumeCore)) {
+		unsigned resumeStage=0,resumeCore=DataflowCoreCount,resumeDetail=0;
+		if (!io.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail)) {
 			DataflowWorkerSnapshot snapshot{};
 			snapshot.state=resumeStage;
-			SetDiagnostic(DataflowServiceDiagnosticResume,resumeCore,snapshot);
+			SetDiagnostic(DataflowServiceDiagnosticResume,resumeCore,snapshot,
+				resumeDetail);
 			return DataflowServiceResumeFailed;
 		}
 		ReleaseSnapshots(io);
