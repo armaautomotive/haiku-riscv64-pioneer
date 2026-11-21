@@ -50,12 +50,12 @@ and stable-driver backup. No model-load duration, valid output, prompt time,
 or decode rate was produced.
 
 The authorized Linux-to-Haiku handoff restored Haiku hrev99999 with 64 CPUs
-and 137,034,936,320 bytes of RAM, without changing SD media. The tag0105
-candidate is now idle at generation 1 with `cold0`; its exact stable041 backup
-and failure logs remain preserved. A guarded post-cycle recovery helper is
-being added to restore stable driver55 before the next candidate. The 4B and
-27B model files retain their verified sizes. The target remains 100 decode
-tokens/s; no decode-rate measurement exists yet.
+and 137,034,936,320 bytes of RAM, without changing SD media. The committed
+post-cycle helper safely quiesced tag0105 and restored stable driver55 at
+generation2 (`cold0 active_owner0`); the recovery lock is absent. The
+candidate binary and raw failure logs remain preserved. The 4B and 27B model
+files retain their verified sizes. The target remains 100 decode tokens/s; no
+decode-rate measurement exists yet.
 
 ## Progress
 
@@ -390,9 +390,10 @@ produced. The verified failure and post-cycle recovery state are recorded in
 The offline request/generation loop and standalone benchmark client are
 implemented. The initial preflight verified that the prior 27B diagnostic
 had exited and stable driver55 was idle. The first tag0105 hardware trial
-reached service startup and reported worker-readiness failure. The immediate
-next step is stable-driver restoration, then an instrumented repair of
-service-startup rollback before another guarded hardware trial.
+reached service startup and reported worker-readiness failure. Stable driver55
+has been restored at generation2 with the recovery lock removed. Next, add
+per-worker readiness diagnostics and bounded startup rollback before another
+guarded hardware trial.
 
 The dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS

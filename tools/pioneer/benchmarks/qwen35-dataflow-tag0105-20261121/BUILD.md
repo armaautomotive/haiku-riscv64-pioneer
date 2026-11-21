@@ -43,9 +43,16 @@ raw state, exit code, stdout, stderr, and hashes are under
 
 An authorized single power cycle and the strict-pinned SD-free Linux-to-Haiku
 kexec handoff returned to Haiku hrev99999 with 64 CPUs and
-137,034,936,320 bytes of RAM. After that fresh boot, the candidate reports
+137,034,936,320 bytes of RAM. After that fresh boot, the candidate reported
 generation1, `cold0`, and no active owner. The installed candidate and
-`restore.incoming` still match their pinned SHA-256 values; the 4B and 27B
-model files retain their expected exact sizes. The post-cycle stable-driver
-restore is the next recovery step. Do not start another candidate until
-stable driver55 is verified idle and the recovery lock is removed.
+`restore.incoming` matched their pinned SHA-256 values; the 4B and 27B model
+files retained their expected exact sizes. The recovery helper then quiesced
+tag0105 and hot-swapped the saved stable041 binary. Postflight verified stable
+driver55 tag `2026102100010012`, generation2, `cold0 active_owner0`, with the
+recovery lock absent. The installed driver hash is
+`041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`. The
+recovery output and helper hash are recorded in
+[`evidence/tag0105-ready-failure/recovery-after-kexec.txt`](evidence/tag0105-ready-failure/recovery-after-kexec.txt).
+
+The next candidate remains blocked on diagnosing the worker-ready failure
+and adding bounded install rollback. No decode-rate measurement exists.

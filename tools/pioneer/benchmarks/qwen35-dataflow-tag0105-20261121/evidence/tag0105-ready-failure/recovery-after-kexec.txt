@@ -1,0 +1,12 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+STABLE041_RESTORED
+trial_lock=absent
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+e81c42b141dd43cec1458da369d1e722bda2dd670b945da039524520d5b4b166  /boot/home/pioneer-qwen35-dataflow-0105.d/pioneer_qwen35_dataflow_recover_after_power_cycle.sh
+0:1:600:2740937888
+0:1:600:18973870528
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133793017856 bytes free      (used/max 3241918464 / 137034936320)
+                           (cached    192942080)
