@@ -5,6 +5,8 @@
 
 using namespace PioneerQwen35;
 
+static DataflowProjectionProgram sProjectionScratch;
+
 enum Event {
 	BuildSave=1,RunSave,BuildAttentionNorm,RunAttentionNorm,
 	BuildQkv,RunQkv,BuildGate,RunGate,BuildAlpha,RunAlpha,
@@ -102,7 +104,7 @@ static void TestCompleteLayer()
 	int io=0;
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	assert(DataflowRecurrentLayerSequence::Run(2,17,0,authority,service,io,
-		outputSlot,stage)==DataflowRecurrentLayerComplete);
+		outputSlot,stage,sProjectionScratch)==DataflowRecurrentLayerComplete);
 	assert(outputSlot==0 && stage==DataflowRecurrentLayerComplete);
 	const unsigned expectedBuilds[]={BuildSave,BuildAttentionNorm,BuildQkv,
 		BuildGate,BuildAlpha,BuildBeta,EventBuildConv,EventBuildDelta,
@@ -127,7 +129,8 @@ static void TestInvalidAndEarlyFailure()
 	int io=0;
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	assert(DataflowRecurrentLayerSequence::Run(3,0,0,invalidAuthority,
-		invalidService,io,outputSlot,stage)==DataflowRecurrentLayerInvalidRequest);
+		invalidService,io,outputSlot,stage,sProjectionScratch)
+		==DataflowRecurrentLayerInvalidRequest);
 	assert(outputSlot==ActivationBuffers && stage==DataflowRecurrentLayerInvalidRequest
 		&& invalidAuthority.count==0 && invalidService.count==0);
 
@@ -136,7 +139,7 @@ static void TestInvalidAndEarlyFailure()
 	service.failRun=EventRunDelta;
 	outputSlot=ActivationBuffers;
 	assert(DataflowRecurrentLayerSequence::Run(0,0,1,authority,service,io,
-		outputSlot,stage)==DataflowRecurrentDeltaRunFailed);
+		outputSlot,stage,sProjectionScratch)==DataflowRecurrentDeltaRunFailed);
 	assert(outputSlot==ActivationBuffers && stage==DataflowRecurrentDeltaRunFailed);
 	assert(service.count==8 && service.events[7]==EventRunDelta);
 	assert(authority.count==8 && authority.events[7]==EventBuildDelta);

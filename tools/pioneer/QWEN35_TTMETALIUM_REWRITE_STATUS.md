@@ -16,12 +16,16 @@ assistant only after the hardware generation and throughput gates pass.
 
 ## Current status (2026-11-21)
 
-The rewrite now has a standalone Haiku generation client and an offline-built
-120-core resident BRISC/Tensix service. Inference has no CPU fallback, and the
-client reports authentication, model load, prompt processing, and decode
-separately. The target remains two valid warm outputs at 100 decode tokens/s
-or higher, followed by clean unload. No valid output or decode-rate measurement
-has been produced yet.
+The rewrite has a standalone Haiku generation client and a 120-core resident
+BRISC/Tensix service, with no CPU inference or fallback. Tag0111 panicked in
+the generation ioctl because its temporary projection descriptors consumed
+hundreds of kilobytes of a 20 KiB Haiku kernel stack. The card was recovered
+to stable driver55 generation2, idle, with the 27B model intact. Tag0112 moves
+the large projection workspace to heap-owned session/authority storage. Its
+offline build, RV32IMF compile, focused ASan/UBSan tests, and 15,696/18,432-byte
+conservative stack-budget check pass. Tag0112 has not yet run on silicon. No
+valid output or decode-rate measurement exists; the 100 tokens/s target and
+clean-unload gate remain open.
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -56,32 +60,58 @@ recovery evidence are in
 Tag0110 build details are in
 [`benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md).
 
-Tag0111 is an offline rewrite checkpoint for that embedding failure. The
-resident owner now preserves the failed worker's core, state, failure, phase,
-and command sequence for QUERY/RECOVER diagnostics. The authority can abort a
-pending embedding after the all-core audit, leaving its output activation and
-vocabulary invalid. The client requests same-owner recovery before closing
-the service and retries close after a recoverable stop-audit failure. The
-full driver/client build and focused ASan/UBSan owner, service-owner, and
-authority tests pass. Tag0111 has not been installed on the Pioneer; there is
-no new hardware result, output, or throughput measurement. Build details are
-in [`benchmarks/qwen35-dataflow-tag0111-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0111-20261121/BUILD.md).
+Tag0111 added worker-level embedding failure receipts to QUERY/RECOVER,
+abortable pending embeddings after the all-core audit, and same-owner recovery
+before service close. It built and passed its focused offline tests, but its
+guarded hardware trial panicked in generation. Offline stack-usage evidence
+showed a 194800-byte FFN frame and a 75808-byte projection-builder frame,
+among several others larger than the whole 20 KiB kernel stack. The card was
+recovered to stable55 generation2 idle and the 4B/27B model files remain
+intact. The trial had no valid output or decode-rate result; see
+[`benchmarks/qwen35-dataflow-tag0111-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0111-20261121/RUN.md).
+
+Tag0112 reuses a heap-owned projection descriptor across the layer sequences,
+keeps the 120-core schedule in the heap-owned authority, and builds directly
+into the supplied descriptor without a large temporary copy. The offline
+variant-60 driver/client/service build passes. The builder checks the measured
+kernel stack chain and rejects any Qwen35 frame over 8192 bytes; the
+conservative chain is 15696 bytes against an 18432-byte budget. Seven focused
+ASan/UBSan tests pass, and the RV32IMF compile has no A atomics or unresolved
+runtime helpers. Tag0112 has no silicon result yet; build details are in
+[`benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md).
 
 ## Progress
 
+- 2026-11-21 (tag0112, offline stack rewrite): Moved the reusable projection
+  descriptor to session-owned heap storage, placed the core schedule scratch
+  in the heap-owned projection authority, and made the builder fill the
+  supplied descriptor instead of stacking and copying a second 64 KiB object.
+  Seven focused ASan/UBSan tests pass, as does the RV32IMF compile without A
+  atomics or runtime helpers. The full variant-60 driver/client/service build
+  passes; its stack audit reports a conservative 15696-byte chain against the
+  18432-byte budget, with no Qwen35 frame above 8192 bytes. Tag0112 driver
+  SHA-256 is `b2f3a6be660a07a5c76b363b7ab116ba81b68095126e221c5a741f972a37f664`;
+  the client remains `a043d2c1ba96ed28133bbf46ced63e6e1b9e70811d0ce5fedac764c3011419ae`.
+  Tag0112 is not yet silicon-tested; the 100 tokens/s target remains unmet.
+  See `benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md`.
+- 2026-11-21 (tag0111, hardware failure): The candidate installed after a
+  clean idle preflight, then Haiku panicked during the generation ioctl. The
+  compiler stack report exposed frames of 194800 bytes (FFN) and 75808 bytes
+  (projection builder), exceeding Haiku's 20 KiB kernel stack. After reboot
+  and the pinned SD-free handoff, recovery restored stable driver55 generation2
+  idle and verified the 4B/27B file sizes. Authentication was `99.830468` s,
+  tokenization `13.752066` s; an upload-progress sample reached 2657021952 of
+  2740498432 payload bytes. Damaged logs prevent a completed model-load time;
+  no valid output or decode rate exists. See
+  `benchmarks/qwen35-dataflow-tag0111-20261121/RUN.md`.
 - 2026-11-21 (tag0111, offline rewrite): Added worker-level embedding failure
   receipts to QUERY/RECOVER, made a pending embedding safely abortable after
   the all-core recovery audit, and moved recovery into the same open service
-  ownership window before CLOSE. Focused program, service-owner, and owner
-  ASan/UBSan tests pass. The complete offline tag0111 driver/client/service
-  image build passes; driver SHA-256 is
-  `34b8680b70b9664176492832be457a26bc82263efaf2be39a233f3e1bad29bd4`, and
-  client SHA-256 is
+  ownership window before CLOSE. The complete offline build and focused
+  ASan/UBSan tests passed. Driver SHA-256 was
+  `34b8680b70b9664176492832be457a26bc82263efaf2be39a233f3e1bad29bd4`; the
+  client SHA-256 remains
   `a043d2c1ba96ed28133bbf46ced63e6e1b9e70811d0ce5fedac764c3011419ae`.
-  This is an offline checkpoint only: it has not been installed on the
-  Pioneer. The card remains recovered on stable driver55 generation2; no valid
-  output or decode tokens/s measurement exists. See
-  `benchmarks/qwen35-dataflow-tag0111-20261121/BUILD.md`.
 - 2026-11-21 (tag0110): The tag0109 `EINVAL` was traced to a missing outer
   ioctl route for operations after `RESIDUAL`. `ProbeControl` now routes the
   contiguous rewrite range through generation. Added compile-time range

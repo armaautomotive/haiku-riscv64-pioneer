@@ -5,6 +5,8 @@
 
 using namespace PioneerQwen35;
 
+static DataflowProjectionProgram sProjectionScratch;
+
 struct FakeGenerationClock {
 	uint64_t now=0;
 	uint64_t NowMicros() { return now++; }
@@ -72,7 +74,7 @@ static void TestWholeMixedStack()
 	FakeDecoderService service;
 	unsigned outputToken=Vocabulary,stage=0;
 	assert(DataflowDecoderSequence::Run(0,17,0,authority,service,service.io,
-		outputToken,stage)==DataflowDecoderSequenceComplete);
+		outputToken,stage,sProjectionScratch)==DataflowDecoderSequenceComplete);
 	assert(authority.resets==1 && outputToken==42
 		&& stage==DataflowDecoderSequenceComplete);
 	assert(service.embedding==1 && service.projections==249
@@ -84,7 +86,7 @@ static void TestWholeMixedStack()
 		&& service.argmax==1);
 
 	assert(DataflowDecoderSequence::Run(1,18,0,authority,service,service.io,
-		outputToken,stage)==DataflowDecoderSequenceComplete);
+		outputToken,stage,sProjectionScratch)==DataflowDecoderSequenceComplete);
 	assert(authority.resets==1 && service.embedding==2
 		&& authority.tiedOutputBuilds==2 && authority.argmaxBuilds==2
 		&& service.argmax==2 && outputToken==42);
@@ -97,7 +99,7 @@ static void TestStopsAtFirstLayerFailure()
 	service.failConvLayer=2;
 	unsigned outputToken=Vocabulary,stage=0;
 	assert(DataflowDecoderSequence::Run(0,4,0,authority,service,service.io,
-		outputToken,stage)==DataflowDecoderLayerFailed);
+		outputToken,stage,sProjectionScratch)==DataflowDecoderLayerFailed);
 	assert(stage==(2U<<8|DataflowRecurrentConvRunFailed)
 		&& outputToken==Vocabulary && service.conv==3
 		&& service.embedding==1 && service.denseAttention==0);
@@ -109,7 +111,8 @@ static void TestRejectsInvalidInputBeforeWork()
 	FakeDecoderService service;
 	unsigned outputToken=Vocabulary,stage=0;
 	assert(DataflowDecoderSequence::Run(0,Vocabulary,0,authority,service,
-		service.io,outputToken,stage)==DataflowDecoderSequenceInvalidRequest);
+		service.io,outputToken,stage,sProjectionScratch)
+		==DataflowDecoderSequenceInvalidRequest);
 	assert(authority.resets==0 && service.embedding==0 && outputToken==Vocabulary);
 }
 
@@ -123,7 +126,7 @@ static void TestPromptAndGreedyGenerationLoop()
 	FakeDecoderService service;
 	assert(DataflowGenerationSequence::Run(prompt,3,3,Vocabulary,0,
 		authority,service,service.io,output,outputCount,stage,clock,
-		promptTime,decodeTime)
+		promptTime,decodeTime,sProjectionScratch)
 		==DataflowGenerationSequenceComplete);
 	assert(outputCount==3 && output[0]==42 && output[1]==42 && output[2]==42
 		&& stage==DataflowGenerationSequenceComplete);
@@ -140,7 +143,7 @@ static void TestPromptAndGreedyGenerationLoop()
 	FakeDecoderService earlyService;
 	assert(DataflowGenerationSequence::Run(shortPrompt,1,4,42,0,
 		earlyAuthority,earlyService,earlyService.io,earlyOutput,earlyCount,stage,
-		earlyClock,earlyPromptTime,earlyDecodeTime)
+		earlyClock,earlyPromptTime,earlyDecodeTime,sProjectionScratch)
 		==DataflowGenerationSequenceComplete);
 	assert(earlyCount==1 && earlyOutput[0]==42 && earlyService.argmax==1
 		&& earlyPromptTime>0 && !earlyDecodeTime);
@@ -150,7 +153,8 @@ static void TestPromptAndGreedyGenerationLoop()
 	FakeGenerationClock invalidClock;
 	assert(DataflowGenerationSequence::Run(shortPrompt,MaxPositions,2,
 		Vocabulary,0,invalidAuthority,invalidService,invalidService.io,
-		earlyOutput,earlyCount,stage,invalidClock,earlyPromptTime,earlyDecodeTime)
+		earlyOutput,earlyCount,stage,invalidClock,earlyPromptTime,earlyDecodeTime,
+		sProjectionScratch)
 		==DataflowGenerationSequenceInvalidRequest);
 	assert(!invalidAuthority.resets && !invalidService.embedding);
 }

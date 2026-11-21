@@ -23,6 +23,8 @@
 
 using namespace PioneerQwen35;
 
+static DataflowProjectionProgram sDataflowProjectionScratch;
+
 struct TargetFfnAuthority {
 	bool ResetRecurrentState() { return true; }
 	bool BuildEmbedding(unsigned,unsigned,DataflowEmbeddingProgram&) { return true; }
@@ -65,7 +67,7 @@ bool PioneerQwen35DataflowFfnSequenceTargetCompileProbe(unsigned layer,
 	int io=0;
 	unsigned outputSlot=ActivationBuffers;
 	return DataflowFfnSequence::Run(layer,inputSlot,authority,service,io,
-		outputSlot)==DataflowFfnSequenceComplete;
+		outputSlot,sDataflowProjectionScratch)==DataflowFfnSequenceComplete;
 }
 
 bool PioneerQwen35DataflowRecurrentLayerSequenceTargetCompileProbe(
@@ -76,7 +78,7 @@ bool PioneerQwen35DataflowRecurrentLayerSequenceTargetCompileProbe(
 	int io=0;
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	return DataflowRecurrentLayerSequence::Run(layer,position,inputSlot,
-		authority,service,io,outputSlot,stage)
+		authority,service,io,outputSlot,stage,sDataflowProjectionScratch)
 		==DataflowRecurrentLayerComplete;
 }
 
@@ -88,7 +90,7 @@ bool PioneerQwen35DataflowDenseLayerSequenceTargetCompileProbe(
 	int io=0;
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	return DataflowDenseLayerSequence::Run(layer,position,inputSlot,
-		authority,service,io,outputSlot,stage)
+		authority,service,io,outputSlot,stage,sDataflowProjectionScratch)
 		==DataflowDenseLayerComplete;
 }
 
@@ -100,7 +102,8 @@ bool PioneerQwen35DataflowDecoderSequenceTargetCompileProbe(unsigned position,
 	int io=0;
 	unsigned outputToken=Vocabulary,stage=0;
 	return DataflowDecoderSequence::Run(position,token,inputSlot,authority,
-		service,io,outputToken,stage)==DataflowDecoderSequenceComplete;
+		service,io,outputToken,stage,sDataflowProjectionScratch)
+		==DataflowDecoderSequenceComplete;
 }
 
 bool PioneerQwen35DataflowBlackholeArgmaxTargetCompileProbe(
@@ -124,7 +127,8 @@ bool PioneerQwen35DataflowGenerationSequenceTargetCompileProbe(unsigned token)
 	unsigned output[1]{},outputCount=0,stage=0;
 	uint64_t promptTime=0,decodeTime=0;
 	return DataflowGenerationSequence::Run(prompt,1,1,Vocabulary,0,
-		authority,service,io,output,outputCount,stage,clock,promptTime,decodeTime)
+		authority,service,io,output,outputCount,stage,clock,promptTime,decodeTime,
+		sDataflowProjectionScratch)
 		==DataflowGenerationSequenceComplete && outputCount==1;
 }
 

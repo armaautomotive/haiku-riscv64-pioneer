@@ -29,6 +29,7 @@ class DataflowProjectionAuthority {
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
+	mutable PioneerQ35ProjectionProgram fProjectionScheduleScratch{};
 	Range fRope{};
 	unsigned fRoutes[2][Banks]{};
 	bool fBound=false;
@@ -484,7 +485,7 @@ public:
 			:outputSlot<ActivationBuffers?&fManifest.activation[outputSlot]:nullptr;
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fManifest.activation[inputSlot],weight->inputs,
-			*output,fRoutes,program)) return false;
+			*output,fRoutes,program,fProjectionScheduleScratch)) return false;
 		return Authorize(program);
 	}
 
@@ -544,7 +545,8 @@ public:
 		const TensorSpace* weight=fManifest.Weight(layer,role);
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fManifest.activation[inputSlot],weight->inputs,
-			fGraphWorkspace.space[workspaceIndex],fRoutes,program)) return false;
+			fGraphWorkspace.space[workspaceIndex],fRoutes,program,
+			fProjectionScheduleScratch)) return false;
 		return Authorize(program);
 	}
 
@@ -569,7 +571,8 @@ public:
 		const TensorSpace* weight=fManifest.Weight(layer,AttentionOut);
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fGraphWorkspace.space[context],DenseHeads*DenseHeadWidth,
-			fManifest.activation[outputSlot],fRoutes,program)) return false;
+			fManifest.activation[outputSlot],fRoutes,program,
+			fProjectionScheduleScratch)) return false;
 		return Authorize(program);
 	}
 
@@ -687,7 +690,7 @@ public:
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fGraphWorkspace.space[DataflowGraphRecurrentQkvWorkspaceIndex],
 			DeltaInner,fManifest.activation[outputSlot],fRoutes,program,
-			DataflowProjectionRecurrentVBase)) return false;
+			fProjectionScheduleScratch,DataflowProjectionRecurrentVBase)) return false;
 		return Authorize(program);
 	}
 

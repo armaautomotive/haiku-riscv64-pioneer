@@ -3,7 +3,6 @@
 set -euo pipefail
 umask 077
 
-stage=/boot/home/pioneer-qwen35-dataflow-0111.d
 lock=/boot/home/.pioneer-q35-dataflow-exclusive
 trusted=/boot/home/pioneer-p100a-hot-reload-20261019-a
 admin=$trusted/pioneer-p100a-reload
@@ -49,7 +48,9 @@ health() {
 	sysinfo | awk '/^64 .*running at/{c++; print} /used\/max [0-9]+ \/ 137034936320\)/{m++; print} END{exit !(c==1 && m==1)}'
 }
 
-[ "$#" = 0 ] && [ "$(uname -s):$(id -u)" = Haiku:0 ] || exit 2
+[ "$#" = 1 ] && [ "$(uname -s):$(id -u)" = Haiku:0 ] || exit 2
+stage=$1
+[[ $stage =~ ^/boot/home/pioneer-qwen35-dataflow-0111\.[a-zA-Z0-9]+$ ]] || exit 2
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage
 test -d "$lock" && test ! -L "$lock" && [ "$(stat -c '%u:%a' "$lock")" = 0:700 ] || fail lock
 test -d "$stage/.trial-once" && test ! -L "$stage/.trial-once" || fail trial_marker

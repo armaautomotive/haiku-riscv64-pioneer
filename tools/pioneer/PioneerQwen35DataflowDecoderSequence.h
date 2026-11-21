@@ -31,7 +31,8 @@ public:
 	template<class Authority,class Service,class IO>
 	static DataflowDecoderSequenceResult Run(unsigned position,unsigned token,
 		unsigned inputSlot,Authority& authority,Service& service,IO& io,
-		unsigned& outputToken,unsigned& stage,bool selectNextToken=true)
+		unsigned& outputToken,unsigned& stage,
+		DataflowProjectionProgram& projectionScratch,bool selectNextToken=true)
 	{
 		outputToken=Vocabulary;
 		stage=DataflowDecoderSequenceInvalidRequest;
@@ -55,7 +56,7 @@ public:
 			if (Dense(layer)) {
 				const DataflowDenseLayerSequenceResult result=
 					DataflowDenseLayerSequence::Run(layer,position,currentSlot,
-						authority,service,io,nextSlot,layerStage);
+						authority,service,io,nextSlot,layerStage,projectionScratch);
 				if (result!=DataflowDenseLayerComplete) {
 					stage=(layer<<8)|(layerStage&0xffU);
 					return DataflowDecoderLayerFailed;
@@ -63,7 +64,7 @@ public:
 			} else {
 				const DataflowRecurrentLayerSequenceResult result=
 					DataflowRecurrentLayerSequence::Run(layer,position,currentSlot,
-						authority,service,io,nextSlot,layerStage);
+					authority,service,io,nextSlot,layerStage,projectionScratch);
 				if (result!=DataflowRecurrentLayerComplete) {
 					stage=(layer<<8)|(layerStage&0xffU);
 					return DataflowDecoderLayerFailed;
@@ -90,7 +91,7 @@ public:
 			return static_cast<DataflowDecoderSequenceResult>(
 				stage=DataflowDecoderFinalNormRunFailed);
 
-		DataflowProjectionProgram tiedOutput{};
+		DataflowProjectionProgram& tiedOutput=projectionScratch;
 		if (!authority.BuildProjection(Layers,TiedOutput,normalizedSlot,
 			DataflowGraphVocabularyOutputSlot,tiedOutput))
 			return static_cast<DataflowDecoderSequenceResult>(

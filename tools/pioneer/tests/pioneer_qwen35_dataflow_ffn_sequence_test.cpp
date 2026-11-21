@@ -5,6 +5,8 @@
 
 using namespace PioneerQwen35;
 
+static DataflowProjectionProgram sProjectionScratch;
+
 enum Stage {
 	EventBuildSave=1,EventRunSave,EventBuildNorm,EventRunNorm,
 	EventBuildGate,EventRunGate,EventBuildUp,EventRunUp,
@@ -79,7 +81,8 @@ static void TestCompleteSequence()
 	FakeService service;
 	int io=0;
 	unsigned outputSlot=ActivationBuffers;
-	assert(DataflowFfnSequence::Run(7,1,authority,service,io,outputSlot)
+	assert(DataflowFfnSequence::Run(7,1,authority,service,io,outputSlot,
+		sProjectionScratch)
 		==DataflowFfnSequenceComplete);
 	assert(outputSlot==0);
 	const unsigned expected[]={EventBuildSave,EventBuildNorm,EventBuildGate,
@@ -99,7 +102,7 @@ static void TestInvalidAndEarlyFailure()
 	int io=0;
 	unsigned outputSlot=ActivationBuffers;
 	assert(DataflowFfnSequence::Run(Layers,0,invalidAuthority,invalidService,
-		io,outputSlot)==DataflowFfnSequenceInvalidRequest);
+		io,outputSlot,sProjectionScratch)==DataflowFfnSequenceInvalidRequest);
 	assert(invalidAuthority.count==0 && invalidService.count==0);
 	assert(outputSlot==ActivationBuffers);
 
@@ -107,7 +110,8 @@ static void TestInvalidAndEarlyFailure()
 	FakeService service;
 	service.failRun=EventRunUp;
 	outputSlot=ActivationBuffers;
-	assert(DataflowFfnSequence::Run(3,0,authority,service,io,outputSlot)
+	assert(DataflowFfnSequence::Run(3,0,authority,service,io,outputSlot,
+		sProjectionScratch)
 		==DataflowFfnUpRunFailed);
 	assert(outputSlot==ActivationBuffers);
 	assert(authority.count==4);

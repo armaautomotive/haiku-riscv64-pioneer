@@ -19,7 +19,8 @@ public:
 		unsigned promptCount,unsigned maxNewTokens,unsigned eosToken,
 		unsigned inputSlot,Authority& authority,Service& service,IO& io,
 		unsigned* outputTokens,unsigned& outputCount,unsigned& stage,
-		Timer& timer,uint64_t& promptTimeMicros,uint64_t& decodeTimeMicros)
+		Timer& timer,uint64_t& promptTimeMicros,uint64_t& decodeTimeMicros,
+		DataflowProjectionProgram& projectionScratch)
 	{
 		outputCount=0;
 		stage=DataflowGenerationSequenceInvalidRequest;
@@ -39,7 +40,7 @@ public:
 		for (unsigned position=0;position+1<promptCount;position++) {
 			const DataflowDecoderSequenceResult result=
 				DataflowDecoderSequence::Run(position,promptTokens[position],inputSlot,
-					authority,service,io,nextToken,decoderStage,false);
+					authority,service,io,nextToken,decoderStage,projectionScratch,false);
 			if (result!=DataflowDecoderSequenceComplete) {
 				stage=(position<<16)|(decoderStage&0xffffU);
 				promptTimeMicros=timer.NowMicros()-promptStart;
@@ -50,7 +51,7 @@ public:
 		const unsigned lastPromptPosition=promptCount-1;
 		DataflowDecoderSequenceResult result=DataflowDecoderSequence::Run(
 			lastPromptPosition,promptTokens[lastPromptPosition],inputSlot,
-			authority,service,io,nextToken,decoderStage);
+			authority,service,io,nextToken,decoderStage,projectionScratch);
 		if (result!=DataflowDecoderSequenceComplete) {
 			stage=(lastPromptPosition<<16)|(decoderStage&0xffffU);
 			promptTimeMicros=timer.NowMicros()-promptStart;
@@ -73,7 +74,7 @@ public:
 			const unsigned position=promptCount+generated-1;
 			result=DataflowDecoderSequence::Run(position,
 				outputTokens[generated-1],inputSlot,authority,service,io,
-				nextToken,decoderStage);
+				nextToken,decoderStage,projectionScratch);
 			if (result!=DataflowDecoderSequenceComplete) {
 				stage=(position<<16)|(decoderStage&0xffffU);
 				decodeTimeMicros=timer.NowMicros()-decodeStart;

@@ -35,7 +35,8 @@ public:
 	template<class Authority,class Service,class IO>
 	static DataflowDenseLayerSequenceResult Run(unsigned layer,unsigned position,
 		unsigned inputSlot,Authority& authority,Service& service,IO& io,
-		unsigned& outputSlot,unsigned& stage)
+		unsigned& outputSlot,unsigned& stage,
+		DataflowProjectionProgram& projectionScratch)
 	{
 		outputSlot=ActivationBuffers;
 		stage=DataflowDenseLayerInvalidRequest;
@@ -66,7 +67,7 @@ public:
 		const unsigned runStages[3]={DataflowDenseQueryRunFailed,
 			DataflowDenseKeyRunFailed,DataflowDenseValueRunFailed};
 		for (unsigned index=0;index<3;index++) {
-			DataflowProjectionProgram projection{};
+			DataflowProjectionProgram& projection=projectionScratch;
 			if (!authority.BuildDenseProjection(layer,roles[index],normalizedSlot,
 				projection))
 				return static_cast<DataflowDenseLayerSequenceResult>(
@@ -98,7 +99,7 @@ public:
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseAttentionRunFailed);
 
-		DataflowProjectionProgram attentionOut{};
+		DataflowProjectionProgram& attentionOut=projectionScratch;
 		if (!authority.BuildDenseAttentionOutput(layer,normalizedSlot,attentionOut))
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseOutBuildFailed);
@@ -116,7 +117,7 @@ public:
 
 		unsigned ffnOutput=ActivationBuffers;
 		const DataflowFfnSequenceResult ffn=DataflowFfnSequence::Run(layer,
-			normalizedSlot,authority,service,io,ffnOutput);
+			normalizedSlot,authority,service,io,ffnOutput,projectionScratch);
 		if (ffn!=DataflowFfnSequenceComplete)
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseFfnStageBase+unsigned(ffn));

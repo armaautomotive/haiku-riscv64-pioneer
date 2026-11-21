@@ -45,7 +45,8 @@ public:
 	template<class Authority,class Service,class IO>
 	static DataflowRecurrentLayerSequenceResult Run(unsigned layer,
 		unsigned position,unsigned inputSlot,Authority& authority,
-		Service& service,IO& io,unsigned& outputSlot,unsigned& stage)
+		Service& service,IO& io,unsigned& outputSlot,unsigned& stage,
+		DataflowProjectionProgram& projectionScratch)
 	{
 		outputSlot=ActivationBuffers;
 		stage=DataflowRecurrentLayerInvalidRequest;
@@ -82,7 +83,7 @@ public:
 			DataflowRecurrentGateRunFailed,DataflowRecurrentAlphaRunFailed,
 			DataflowRecurrentBetaRunFailed};
 		for (unsigned i=0;i<4;i++) {
-			DataflowProjectionProgram projection{};
+			DataflowProjectionProgram& projection=projectionScratch;
 			if (!authority.BuildProjection(layer,projectionRoles[i],normalizedSlot,
 				projectionSlots[i],projection))
 				return static_cast<DataflowRecurrentLayerSequenceResult>(
@@ -108,7 +109,7 @@ public:
 			return static_cast<DataflowRecurrentLayerSequenceResult>(
 				stage=DataflowRecurrentDeltaRunFailed);
 
-		DataflowProjectionProgram recurrentOut{};
+		DataflowProjectionProgram& recurrentOut=projectionScratch;
 		if (!authority.BuildRecurrentOutput(layer,normalizedSlot,recurrentOut))
 			return static_cast<DataflowRecurrentLayerSequenceResult>(
 				stage=DataflowRecurrentOutBuildFailed);
@@ -126,7 +127,7 @@ public:
 
 		unsigned ffnOutput=ActivationBuffers;
 		const DataflowFfnSequenceResult ffn=DataflowFfnSequence::Run(layer,
-			normalizedSlot,authority,service,io,ffnOutput);
+			normalizedSlot,authority,service,io,ffnOutput,projectionScratch);
 		if (ffn!=DataflowFfnSequenceComplete)
 			return static_cast<DataflowRecurrentLayerSequenceResult>(
 				stage=DataflowRecurrentFfnStageBase+unsigned(ffn));

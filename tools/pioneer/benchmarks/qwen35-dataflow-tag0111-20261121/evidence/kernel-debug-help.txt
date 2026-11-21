@@ -1,0 +1,124 @@
+4a
+12 ffffffc0446bbdc0 (+  64) ffffffc00011be44   <kernel_riscv64> syscall_dispatch
+er + 0xa10
+13 ffffffc0446bbed0 (+ 272) ffffffc0001d81d0   <kernel_riscv64> STrap + 0x318
+14 ffffffc0446bbff0 (+ 288) ffffffc0001d50b8   <kernel_riscv64> SVecU + 0x78
+15 0000003f73a32a30 (+   0) 0000001a173b17e8   </boot/system/lib/libroot.so> _ke
+rn_ioctl + 0x08
+16 0000003f73a32a50 (+  32) 0000001f08cfa10c   </boot/home/pioneer-qwen35-dataf>
+ _start (nearest) + 0x14c
+17 0000003f73a32b10 (+ 192) 0000001f08cfa898   </boot/home/pioneer-qwen35-dataf>
+ _start (nearest) + 0x8d8
+18 0000003f73a32fa0 (+1168) 0000001f08cf9c7a   </boot/home/pioneer-qwen35-dataf>
+ main + 0xe2a
+19 0000003f73a32fd0 (+  48) 0000001f08cf9ffa   </boot/home/pioneer-qwen35-dataf>
+ _start + 0x3a
+20 0000003f73a33000 (+  48) 00000031ee2c36c6   </boot/system/runtime_loader> run
+time_loader + 0xd4
+21 0000000000000000 (+   0) 0000003ffffe5248   <commpage> commpage_thread_exit +
+ 0x00
+kdebug> help
+debugger commands:
+ aspace                         Dump info about a particular address space
+ aspaces                        Dump a list of all address spaces
+ bfs                            dump a BFS volume
+ bfs_allocator                  dump a BFS block allocator
+ bfs_block_runs                 dump a block run array
+ bfs_btree_header               dump a BFS B+tree header
+ bfs_btree_node                 dump a BFS B+tree node
+ bfs_inode                      dump an Inode object
+ bfs_journal                    dump the journal log entries
+ bootstages                     Print the retained main2 boot-stage timestamps a
+nd dropped count
+ bt                             Same as "sc" (as in gdb)
+ btLocalDevices                 Lists Bluetooth LocalDevices registered in the S
+tack
+ continue                       Leave kernel debugger
+ cpu                            Switches to another CPU.
+ devfs_cookie                   Print info on a private devfs cookie
+ devfs_node                     Print info on a private devfs node
+ dm_tree                        dump device node tree
+ dma_buffer                     dump a DMA buffer
+ error                          Prints a human-readable description for an error
+ code
+ es                             Same as "continue"
+ exit                           Same as "continue"
+ expr                           Evaluates the given expression and prints the re
+sult
+ faults                         Toggles fault handling for debugger commands
+ gdb                            Connect to remote gdb
+ get_usb_keyboard_config                Gets the required config of the USB keyb
+oard
+ get_usb_pipe_for_id            Sets _usbPipe by resolving _usbPipeID
+ grep                           Filters output from another command
+ head                           Prints only the first lines of output from anoth
+er command
+ help                           List all debugger commands
+ iframe                         Dump iframes for the specified thread
+ in16                           dump io shorts (16-bit)
+ in32                           dump io words (32-bit)
+ in8                            dump io bytes (8-bit)
+ in_context                     Executes a command in the context of a given thr
+ead
+ inb                            dump io bytes (8-bit)
+ ins                            dump io shorts (16-bit)
+ inw                            dump io words (32-bit)
+ io_buffer                      dump an I/O buffer
+ io_operation                   dump an I/O operation
+ io_request                     dump an I/O request
+ io_request_owner               Dump an I/O request owner
+ io_scheduler                   Dump an I/O scheduler
+ io_scheduler_roster            Dump an I/O scheduler roster
+ ipv4_multicast                 list all current IPv4 multicast states
+ kdlhangman                     A funny KDL hangman game :-)
+ legacy_device                  info about a legacy device
+ legacy_driver                  info about a legacy driver entry
+ message                        Reprint the message printed when entering KDL
+ net_buffer                     Dump net buffer
+ net_buffer_stats               Print net buffer statistics
+ net_device_interface           Dump the given network device interface
+ net_device_interfaces          Dump network device interfaces
+ net_domains                    Dump network domains
+ net_interface                  Dump the given network interface
+ net_interfaces                 Dump all network interfaces
+ net_local                      Dump all local interface addresses
+ net_route                      Dump the given network route
+ net_timer                      Lists all active network timer
+ on_exit                        Adds a command to be run when leaving the kernel
+ debugger
+ out16                          write io shorts (16-bit)
+ out32                          write io words (32-bit)
+ out8                           write io bytes (8-bit)
+ outb                           write io bytes (8-bit)
+ outs                           write io shorts (16-bit)
+ outw                           write io words (32-bit)
+ panic_commands                 Execute commands associated with the panic() tha
+t caused entering KDL
+ pcirefresh                     refresh and print all pci_info
+ pcistatus                      dump and clear pci device status registers
+ port                           Dump info about a particular port
+ ports                          Dump a list of all active ports (for team, with
+name, etc.)
+ reboot                         Reboot the system
+ sc                             Stack crawl for current thread (or any other)
+ shutdown                       Shut down the system
+ socket                         dumps a socket
+ sockets                        lists all sockets
+ tail                           Prints only the last lines of output from anothe
+r command
+ tcp_endpoint                   dumps a TCP endpoint internal state
+ tcp_endpoints                  lists all open TCP endpoints
+ tty                            Dump info on a tty
+ udp_endpoints                  lists all open UDP endpoints
+ unset                          Unsets the given variable
+ unset_all                      Unsets all variables
+ usb_clear_stall                Tries to issue a clear feature request for the e
+ndpoint halt feature on pipe _usbPipe
+ usb_process_transfer           Transfers _usbTransferData with _usbTransferLeng
+th (and/or _usbRequestData) to pipe _usbPipe
+ user_mutex                     Dump user-mutex info
+ vars                           Lists all defined variables with their values
+ wc                             Counts the lines, words, and characters of anoth
+er command's output
+ where                          Same as "sc"
+kdebug>

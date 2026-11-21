@@ -36,7 +36,8 @@ class DataflowFfnSequence {
 public:
 	template<class Authority,class Service,class IO>
 	static DataflowFfnSequenceResult Run(unsigned layer,unsigned inputSlot,
-		Authority& authority,Service& service,IO& io,unsigned& outputSlot)
+		Authority& authority,Service& service,IO& io,unsigned& outputSlot,
+		DataflowProjectionProgram& projectionScratch)
 	{
 		outputSlot=ActivationBuffers;
 		if (layer>=Layers || inputSlot>=ActivationBuffers)
@@ -55,13 +56,13 @@ public:
 		if (service.RunRms(norm,io)!=0)
 			return DataflowFfnNormRunFailed;
 
-		DataflowProjectionProgram gate{};
+		DataflowProjectionProgram& gate=projectionScratch;
 		if (!authority.BuildProjection(layer,Gate,normalizedSlot,inputSlot,gate))
 			return DataflowFfnGateBuildFailed;
 		if (service.RunProjection(gate,io)!=0)
 			return DataflowFfnGateRunFailed;
 
-		DataflowProjectionProgram up{};
+		DataflowProjectionProgram& up=projectionScratch;
 		if (!authority.BuildProjection(layer,Up,normalizedSlot,
 			DataflowGraphUpOutputSlot,up)) return DataflowFfnUpBuildFailed;
 		if (service.RunProjection(up,io)!=0)
@@ -72,7 +73,7 @@ public:
 		if (service.RunSilu(silu,io)!=0)
 			return DataflowFfnSiluRunFailed;
 
-		DataflowProjectionProgram down{};
+		DataflowProjectionProgram& down=projectionScratch;
 		if (!authority.BuildProjection(layer,Down,inputSlot,normalizedSlot,down))
 			return DataflowFfnDownBuildFailed;
 		if (service.RunProjection(down,io)!=0)

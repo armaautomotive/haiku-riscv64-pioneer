@@ -5,6 +5,8 @@
 
 using namespace PioneerQwen35;
 
+static DataflowProjectionProgram sProjectionScratch;
+
 enum Event {
 	BuildSave=1,RunSave,BuildNorm,RunNorm,BuildQuery,RunQuery,BuildKey,RunKey,
 	BuildPackKey,RunPackKey,BuildValue,RunValue,BuildPackValue,RunPackValue,
@@ -89,7 +91,7 @@ static void TestCompleteSequence()
 	int io=0;
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	assert(DataflowDenseLayerSequence::Run(3,7,0,authority,service,io,
-		outputSlot,stage)==DataflowDenseLayerComplete);
+		outputSlot,stage,sProjectionScratch)==DataflowDenseLayerComplete);
 	assert(outputSlot==0 && stage==DataflowDenseLayerComplete);
 	const unsigned expectedBuilds[]={BuildSave,BuildNorm,BuildQuery,BuildKey,
 		BuildPackKey,BuildValue,BuildPackValue,BuildAttention,BuildAttentionOut,
@@ -110,7 +112,8 @@ static void TestRejectAndStopOnFailure()
 	int io=0;
 	unsigned outputSlot=ActivationBuffers,stage=0;
 	assert(DataflowDenseLayerSequence::Run(2,0,0,invalidAuthority,
-		invalidService,io,outputSlot,stage)==DataflowDenseLayerInvalidRequest);
+		invalidService,io,outputSlot,stage,sProjectionScratch)
+		==DataflowDenseLayerInvalidRequest);
 	assert(invalidAuthority.count==0 && invalidService.count==0);
 
 	FakeAuthority authority;
@@ -118,7 +121,7 @@ static void TestRejectAndStopOnFailure()
 	service.failRun=RunPackKey;
 	outputSlot=ActivationBuffers;
 	assert(DataflowDenseLayerSequence::Run(3,0,0,authority,service,io,
-		outputSlot,stage)==DataflowDensePackKeyRunFailed);
+		outputSlot,stage,sProjectionScratch)==DataflowDensePackKeyRunFailed);
 	assert(stage==DataflowDensePackKeyRunFailed && outputSlot==ActivationBuffers);
 	assert(service.count==5 && service.events[4]==RunPackKey);
 }

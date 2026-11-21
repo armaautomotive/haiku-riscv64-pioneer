@@ -86,7 +86,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010108ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010109ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010110ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010111ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010111ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010112ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3710,6 +3711,7 @@ struct PioneerStoreContext {
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
 	PioneerQwen35::DataflowProjectionAuthority* qwen35DataflowAuthority=NULL;
+	PioneerQwen35::DataflowProjectionProgram* qwen35DataflowProgramScratch=NULL;
 	unsigned qwen35DataflowRoutes[2][PioneerQwen35::Banks]={};
 	unsigned qwen35DataflowLocalRoute[PioneerQwen35::DataflowCoreCount]={};
 	bool qwen35DataflowLocalRouteValid[PioneerQwen35::DataflowCoreCount]={};
@@ -3885,6 +3887,7 @@ struct PioneerStoreContext {
 		delete qwen35DataflowService;
 		delete qwen35DataflowMemory;
 		delete qwen35DataflowAuthority;
+		delete qwen35DataflowProgramScratch;
 #endif
 #ifdef TT_PIONEER_Q35_WORK
 		delete q35Work;
@@ -4115,7 +4118,8 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	PioneerQwen35::DataflowServiceResult InstallDataflowRewrite() {
 		if (qwen35DataflowMemory || qwen35DataflowService
-			|| !qwen35DataflowAuthority || !qwen35DataflowRoutesAudited)
+			|| !qwen35DataflowAuthority || !qwen35DataflowProgramScratch
+			|| !qwen35DataflowRoutesAudited)
 			return PioneerQwen35::DataflowServiceInvalidState;
 		qwen35DataflowMemory=new(std::nothrow) PioneerQwen35DataflowPciMemory<PioneerSessionIO>(io);
 		qwen35DataflowService=new(std::nothrow) PioneerQwen35::DataflowServiceOwner;
@@ -8076,18 +8080,24 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 					status=B_IO_ERROR;
 				} else {
 					auto* authority=new(std::nothrow) PioneerQwen35::DataflowProjectionAuthority;
-					if (!authority) {
+					auto* programScratch=new(std::nothrow)
+						PioneerQwen35::DataflowProjectionProgram;
+					if (!authority || !programScratch) {
+						delete programScratch;
+						delete authority;
 						request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_AUTHORITY_MEMORY;
 						status=B_NO_MEMORY;
 					} else if (!context->qwen35DataflowRoutesAudited
 						|| !authority->BindValidatedModel(request->manifest,
 							request->graphWorkspace,context->qwen35DataflowRoutes,
 							request->rope)) {
+						delete programScratch;
 						delete authority;
 						request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_AUTHORITY_BIND;
 						status=B_BAD_VALUE;
 					} else {
 						context->qwen35DataflowAuthority=authority;
+						context->qwen35DataflowProgramScratch=programScratch;
 					}
 				}
 			}
@@ -8250,10 +8260,11 @@ Qwen35DataflowProject(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
-		PioneerQwen35::DataflowProjectionProgram program{};
+		auto& program=*context->qwen35DataflowProgramScratch;
 		if (!context->qwen35DataflowAuthority->BuildProjection(request->layer,
 			request->role,request->input_slot,request->output_slot,program)) {
 			request->result=PioneerQwen35::DataflowServiceInvalidState;
@@ -8300,6 +8311,7 @@ Qwen35DataflowEmbedToken(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
@@ -8725,13 +8737,15 @@ Qwen35DataflowFfnSequence(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
 		unsigned outputSlot=PioneerQwen35::ActivationBuffers;
 		const auto sequence=PioneerQwen35::DataflowFfnSequence::Run(
 			request->layer,request->input_slot,*context->qwen35DataflowAuthority,
-			*context->qwen35DataflowService,context->io,outputSlot);
+			*context->qwen35DataflowService,context->io,outputSlot,
+			*context->qwen35DataflowProgramScratch);
 		request->stage=sequence;
 		request->result=sequence==PioneerQwen35::DataflowFfnSequenceComplete
 			?PioneerQwen35::DataflowServiceComplete
@@ -8780,6 +8794,7 @@ Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
@@ -8787,7 +8802,8 @@ Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length
 		const auto sequence=PioneerQwen35::DataflowRecurrentLayerSequence::Run(
 			request->layer,request->position,request->input_slot,
 			*context->qwen35DataflowAuthority,
-			*context->qwen35DataflowService,context->io,outputSlot,stage);
+			*context->qwen35DataflowService,context->io,outputSlot,stage,
+			*context->qwen35DataflowProgramScratch);
 		request->stage=stage;
 		request->result=sequence==PioneerQwen35::DataflowRecurrentLayerComplete
 			?PioneerQwen35::DataflowServiceComplete
@@ -8890,6 +8906,7 @@ Qwen35DataflowDenseLayer(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
@@ -8897,7 +8914,8 @@ Qwen35DataflowDenseLayer(PioneerProbeCookie* cookie,void* data,size_t length)
 		const auto sequence=PioneerQwen35::DataflowDenseLayerSequence::Run(
 			request->layer,request->position,request->input_slot,
 			*context->qwen35DataflowAuthority,
-			*context->qwen35DataflowService,context->io,outputSlot,stage);
+			*context->qwen35DataflowService,context->io,outputSlot,stage,
+			*context->qwen35DataflowProgramScratch);
 		request->stage=stage;
 		request->result=sequence==PioneerQwen35::DataflowDenseLayerComplete
 			?PioneerQwen35::DataflowServiceComplete
@@ -8945,6 +8963,7 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
@@ -8952,7 +8971,8 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 		const auto sequence=PioneerQwen35::DataflowDecoderSequence::Run(
 			request->position,request->token,request->input_slot,
 			*context->qwen35DataflowAuthority,
-			*context->qwen35DataflowService,context->io,outputToken,stage);
+			*context->qwen35DataflowService,context->io,outputToken,stage,
+			*context->qwen35DataflowProgramScratch);
 		request->stage=stage;
 		request->result=sequence==PioneerQwen35::DataflowDecoderSequenceComplete
 			?PioneerQwen35::DataflowServiceComplete
@@ -9094,6 +9114,7 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
 		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
 		request->stage=TT_QWEN35_DATAFLOW_GENERATE_DIAG_SERVICE;
@@ -9124,7 +9145,7 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 			request->eos_token,request->input_slot,
 			*context->qwen35DataflowAuthority,
 			*context->qwen35DataflowService,context->io,output,outputCount,stage,
-			clock,promptTime,decodeTime);
+			clock,promptTime,decodeTime,*context->qwen35DataflowProgramScratch);
 		request->output_count=outputCount;
 		request->stage=stage;
 		request->prompt_time_us=promptTime;

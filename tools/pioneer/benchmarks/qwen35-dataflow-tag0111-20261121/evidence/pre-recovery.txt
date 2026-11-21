@@ -1,0 +1,43 @@
+time=Thu Jan  1 08:01:32 GMT 1970
+driver=P100A_RELOAD driver60 tag2026112100010111 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+state=RECOVERY_REQUIRED_UNTIL_STABLE_RESTORED
+processes:
+   Id Team                                               
+    1 kernel_team                                        
+  100 /boot/system/servers/launch_daemon                 
+  105 /boot/system/servers/registrar                     
+  106 /boot/system/servers/debug_server                  
+  108 /boot/system/servers/mount_server                  
+  109 /boot/system/servers/net_server                    
+  110 /boot/system/servers/package_daemon                
+  114 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  116 /boot/system/servers/launch_daemon baron           
+  118 /boot/system/servers/power_daemon                  
+  123 /boot/system/servers/syslog_daemon                 
+  146 /boot/system/servers/media_server                  
+  182 /boot/system/servers/app_server                    
+  194 /boot/system/Tracker                               
+  196 /boot/system/Deskbar                               
+  215 /boot/system/servers/input_server                  
+  240 /boot/system/servers/media_addon_server            
+  281 /boot/system/servers/notification_server           
+  448 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  450 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  451 /bin/bash -c set -eu
+printf "time="; date -u
+printf "driver=";  
+  455 /boot/system/bin/ps -o Id -o Team                  
+lock=present
+0:1:700:2048 /boot/home/pioneer-qwen35-dataflow-0111.EotK9i
+0:1:700:1290528 /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/tenstorrent_pci_probe-driver60
+0:1:755:1062376 /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/restore.incoming
+0:1:755:1290528 /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+133 /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/work.stdout
+9882 /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/work.stderr
+2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+c45d49d24737fde25b8d65c5cc5cdb947525e8c3f40ccf8502e68c3fe5699927  /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/work.stdout
+f35f66060c40a64e9a57d577d77b174723316258cb80e6fddd83ed18204eefd4  /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/work.stderr
+work.exit missing
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/restore.incoming
+34b8680b70b9664176492832be457a26bc82263efaf2be39a233f3e1bad29bd4  /boot/home/pioneer-qwen35-dataflow-0111.EotK9i/tenstorrent_pci_probe-driver60

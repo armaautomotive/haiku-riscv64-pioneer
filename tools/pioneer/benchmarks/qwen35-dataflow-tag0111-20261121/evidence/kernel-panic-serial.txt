@@ -1,0 +1,124 @@
+0003ff943a000
+P211:UE thread 725 entry 0x1a645ae5f2 stack 0x3c38e3c000 tls 0x3c38e3c000 return
+ 0x3ff943a248
+P211:TU runtime_loader entry 0xc3b1825f2 args 0x00000039cdebb200 commpage 0x0000
+003ff66e9000
+P211:UE thread 726 entry 0xc3b1825f2 stack 0x39cdebb000 tls 0x39cdebb000 return
+0x3ff66e9248
+P211:TU runtime_loader entry 0x3360f385f2 args 0x000000338ddb2200 commpage 0x000
+0003ff4a62000
+P211:UE thread 727 entry 0x3360f385f2 stack 0x338ddb2000 tls 0x338ddb2000 return
+ 0x3ff4a62248
+P211:TU runtime_loader entry 0x397107e5f2 args 0x0000003d20b4f200 commpage 0x000
+0003ffb6cb000
+P211:UE thread 724 entry 0x397107e5f2 stack 0x3d20b4f000 tls 0x3d20b4f000 return
+ 0x3ffb6cb248
+Received disconnect from 10.0.0.211 port 51688:11: disconnected by user
+Disconnected from user baron 10.0.0.211 port 51688
+P211:TU runtime_loader entry 0x3a5d18b5f2 args 0x0000003320b3d200 commpage 0x000
+0003ae3499000
+P211:UE thread 728 entry 0x3a5d18b5f2 stack 0x3320b3d000 tls 0x3320b3d000 return
+ 0x3ae3499248
+Accepted publickey for baron from 10.0.0.211 port 51701 ssh2: ED25519 SHA256:4Yh
+n12jvuqyzpFCm7R/nwER/r41CUJchirapXGYkRPE
+P211:TU runtime_loader entry 0x3614fc85f2 args 0x0000003fe3732200 commpage 0x000
+0003f9cad5000
+P211:UE thread 731 entry 0x3614fc85f2 stack 0x3fe3732000 tls 0x3fe3732000 return
+ 0x3f9cad5248
+P211:TU runtime_loader entry 0x311786a5f2 args 0x0000003fe7613200 commpage 0x000
+0003fff75d000
+P211:UE thread 732 entry 0x311786a5f2 stack 0x3fe7613000 tls 0x3fe7613000 return
+ 0x3fff75d248
+P211:TU runtime_loader entry 0x3d138125f2 args 0x0000003e40a45200 commpage 0x000
+0003fbed45000
+P211:UE thread 733 entry 0x3d138125f2 stack 0x3e40a45000 tls 0x3e40a45000 return
+ 0x3fbed45248
+P211:TU runtime_loader entry 0x3db9d515f2 args 0x0000003ff808b200 commpage 0x000
+0003ff38d3000
+P211:TU runtime_loader entry 0x219a0145f2 args 0x00000039155cd200 commpage 0x000
+0003fc2b0c000
+P211:UE thread 734 entry 0x3db9d515f2 stack 0x3ff808b000 tls 0x3ff808b000 return
+ 0x3ff38d3248
+P211:UE thread 735 entry 0x219a0145f2 stack 0x39155cd000 tls 0x39155cd000 return
+ 0x3fc2b0c248
+P211:TU runtime_loader entry 0x350e1565f2 args 0x0000003c2da07200 commpage 0x000
+0003fe0c3d000
+P211:UE thread 731 entry 0x350e1565f2 stack 0x3c2da07000 tls 0x3c2da07000 return
+ 0x3fe0c3d248
+fIONEEPR3-40P:1 0k0eA:r nperlo sbteo orpee nf aurletad ybe
+ ore VM
+P340: cpu 0x0000000000000020
+riscv: kernel page fault trap
+riscv: trap cause 0x000000000000000f
+riscv: trap stval 0xffffffc0445bf000
+riscv: trap epc 0xffffffc0001d4fac
+riscv: trap status 0x8000000200006020
+riscv: trap ra 0xffffffc00703b1c0
+riscv: trap sp 0xffffffc0445bf090
+riscv: trap fp 0xffffffc0446bb660
+riscv: trap a0 0xffffffffffff0000
+riscv: trap a1 0xffffffffffffffff
+riscv: trap a2 0x000000000000000e
+riscv: pte address 0xffffffc0445bf000
+riscv: pte satp 0x800000000002db0d
+riscv: pte thead mae 0x0000000000000001
+riscv: pte level 2 0x7000000000f1d801
+riscv: pte level 1 0x7000000005105821
+riscv: pte level 0 0x3000000000eae4e7
+instruction fetch attempted on execute-protected area 0x6 at 0xffffffc0001d4000
+vm_page_fault: vm_soft_fault returned error 'Permission denied' on fault at 0xff
+ffffc0001d4fac, ip 0xffffffc0001d4fac, write 0, kernel, exec 1, thread 679
+P330: fatal mapping va 0xffffffc0001d4000 pa 0x35c1000 flags 0x7070 query 0 faul
+t -2147483646
+P330: fatal area 6 kernel_riscv64_text base 0xffffffc000080000 size 0x195000 pro
+tection 0x30 page protection 0x30 cache type 1
+PANIC: vm_page_fault: unhandled page fault in kernel space at 0xffffffc0001d4fac
+, ip 0xffffffc0001d4fac
+
+Welcome to Kernel Debugging Land...
+revision:
+Thread 679 "pioneer-q35-dataflow" running on CPU 32
+stack trace for thread 679 "pioneer-q35-dataflow"
+    kernel stack: 0xffffffc0446b7000 to 0xffffffc0446bc000
+      user stack: 0x0000003f6fa33000 to 0x0000003f73a33000
+frame                       caller             <image>:function + offset
+ 0 ffffffc0445beb80 (+  32) ffffffc0001d6870   <kernel_riscv64> arch_debug_call_
+with_fault_handler + 0x20
+ 1 ffffffc0445bebd0 (+  80) ffffffc00014ae02   <kernel_riscv64> debug_call_with_
+fault_handler + 0x78
+ 2 ffffffc0445bec60 (+ 144) ffffffc00014be92   <kernel_riscv64> kgets (nearest)
++ 0x140
+ 3 ffffffc0445becf0 (+ 144) ffffffc00014c2a8   <kernel_riscv64> kgets (nearest)
++ 0x556
+ 4 ffffffc0445bed30 (+  64) ffffffc00014c5f4   <kernel_riscv64> panic + 0x4e
+ 5 ffffffc0445bee60 (+ 304) ffffffc0001bdbc8   <kernel_riscv64> vm_page_fault(un
+signed long, unsigned long, bool, bool, bool, unsigned long*) + 0x312
+ 6 ffffffc0445bef70 (+ 272) ffffffc0001d838c   <kernel_riscv64> STrap + 0x4d4
+ 7 ffffffc0445bf090 (+ 288) ffffffc0001d4ff0   <kernel_riscv64> SVec + 0x60
+ 8 ffffffc0446bb660 (+1033680) ffffffc0001d4fac   <kernel_riscv64> SVec + 0x1c
+ 9 ffffffc0446bbcf0 (+1680) ffffffc00703b1c0   </boot/home/config/non-packaged/a
+dd-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe> _ZN16PioneerSessionIO15Sto
+pAndAuditAllERjS0_ (nearest) + 0x17ff0
+10 ffffffc0446bbd40 (+  80) ffffffc00017f3e8   <kernel_riscv64> get_fd (nearest)
+ + 0x230
+11 ffffffc0446bbd80 (+  64) ffffffc0001802c2   <kernel_riscv64> _user_ioctl + 0x
+4a
+12 ffffffc0446bbdc0 (+  64) ffffffc00011be44   <kernel_riscv64> syscall_dispatch
+er + 0xa10
+13 ffffffc0446bbed0 (+ 272) ffffffc0001d81d0   <kernel_riscv64> STrap + 0x318
+14 ffffffc0446bbff0 (+ 288) ffffffc0001d50b8   <kernel_riscv64> SVecU + 0x78
+15 0000003f73a32a30 (+   0) 0000001a173b17e8   </boot/system/lib/libroot.so> _ke
+rn_ioctl + 0x08
+16 0000003f73a32a50 (+  32) 0000001f08cfa10c   </boot/home/pioneer-qwen35-dataf>
+ _start (nearest) + 0x14c
+17 0000003f73a32b10 (+ 192) 0000001f08cfa898   </boot/home/pioneer-qwen35-dataf>
+ _start (nearest) + 0x8d8
+18 0000003f73a32fa0 (+1168) 0000001f08cf9c7a   </boot/home/pioneer-qwen35-dataf>
+ main + 0xe2a
+19 0000003f73a32fd0 (+  48) 0000001f08cf9ffa   </boot/home/pioneer-qwen35-dataf>
+ _start + 0x3a
+20 0000003f73a33000 (+  48) 00000031ee2c36c6   </boot/system/runtime_loader> run
+time_loader + 0xd4
+21 0000000000000000 (+   0) 0000003ffffe5248   <commpage> commpage_thread_exit +
+ 0x00
+kdebug>

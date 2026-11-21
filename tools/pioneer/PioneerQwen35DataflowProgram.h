@@ -725,9 +725,14 @@ public:
 	static bool Build(const TensorSpace& weight,const RowSpace& input,
 		unsigned inputRows,const RowSpace& output,
 		const unsigned (&bankRoute)[2][Banks],DataflowProjectionProgram& result,
-		unsigned inputBase=0)
+		PioneerQ35ProjectionProgram& schedule,unsigned inputBase=0)
 	{
 		result={};
+		struct ResultGuard {
+			DataflowProjectionProgram& result;
+			bool keep=false;
+			~ResultGuard() { if (!keep) result={}; }
+		} resultGuard{result};
 		if (!PioneerQwen35Projection::Supports(weight.type,weight.inputs)
 			|| inputRows!=weight.inputs || !input.Valid() || !output.Valid()
 			|| (inputBase&15) || inputBase>input.rows
@@ -747,11 +752,10 @@ public:
 			if ((part.firstRow|part.rows)&15) return false;
 			fragments[f]={part.firstRow/16,part.rows/16};
 		}
-		PioneerQ35ProjectionProgram schedule{};
 		if (!PioneerQ35BuildProjectionProgram(fragments,weight.place.count,schedule))
 			return false;
 
-		DataflowProjectionProgram candidate{};
+		DataflowProjectionProgram& candidate=result;
 		candidate.magic=DataflowProgramMagic;
 		candidate.version=DataflowProgramVersion;
 		candidate.type=weight.type;
@@ -832,8 +836,18 @@ public:
 			}
 		}
 		if (!candidate.Valid()) return false;
-		result=candidate;
+		resultGuard.keep=true;
 		return true;
+	}
+
+	static bool Build(const TensorSpace& weight,const RowSpace& input,
+		unsigned inputRows,const RowSpace& output,
+		const unsigned (&bankRoute)[2][Banks],DataflowProjectionProgram& result,
+		unsigned inputBase=0)
+	{
+		PioneerQ35ProjectionProgram schedule{};
+		return Build(weight,input,inputRows,output,bankRoute,result,schedule,
+			inputBase);
 	}
 };
 
