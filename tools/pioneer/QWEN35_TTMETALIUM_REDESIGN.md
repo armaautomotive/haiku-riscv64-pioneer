@@ -221,10 +221,15 @@ projection before model-graph integration or benchmarking.
 
 The first bounded PCI L1 memory transport is now implemented as a standalone
 driver helper. It only accepts the service text, queue state, invocation,
-mailbox, and boot-word ranges; requires a held core for writes; captures the
-full local-memory view and boot/reset state; and restores and verifies that
+mailbox, and boot-word ranges; requires a held core for install and restore
+writes; captures the full local-memory view and boot/reset state; and restores
+and verifies that
 snapshot while held. A fake-PCI test passes the bounds, idle-gate, snapshot,
-and restore cases under AddressSanitizer and UndefinedBehaviorSanitizer. This
+and restore cases under AddressSanitizer and UndefinedBehaviorSanitizer. For
+resident workers, it permits writes only to the invocation and the individual
+command/acknowledgement words, requires reset to remain released, and asks the
+platform adapter for the exact wait/receipt and idle-NoC proof before the
+write. Worker-owned mailbox status fields remain read-only to the host. This
 helper is not yet connected to `PioneerSessionIO`: its stable-mapping and
 physical per-core idle/NoC proofs are still required production hooks, and it
 does not provide the projection route audit or Work-mode lifecycle. The four

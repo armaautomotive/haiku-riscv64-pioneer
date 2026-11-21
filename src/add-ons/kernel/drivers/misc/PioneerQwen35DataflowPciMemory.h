@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_PCI_MEMORY_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowServiceOwner.h"
@@ -38,9 +39,28 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 				+PioneerQwen35::DataflowWorkerMailboxBytes);
 }
 
+static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
+{
+	if (!bytes || (address&3) || (bytes&3)) return false;
+	const unsigned end=address+bytes;
+	if (end<address) return false;
+	const unsigned command=PioneerQwen35::DataflowWorkerMailboxAddress
+		+offsetof(PioneerQwen35::DataflowWorkerMailbox,commandSequence);
+	const unsigned acknowledgement=PioneerQwen35::DataflowWorkerMailboxAddress
+		+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
+	return (address>=PioneerQwen35::DataflowProgramAddress
+			&& end<=PioneerQwen35::DataflowProgramAddress
+				+sizeof(PioneerQwen35::DataflowCoreInvocation))
+		|| (address==command && bytes==sizeof(uint32_t))
+		|| (address==acknowledgement && bytes==sizeof(uint32_t));
+}
+
 // Fixed local-memory transport for the dataflow service. Raw must bind a
 // selected physical core to the full 0x42000 L1 view and implement
-// DataflowCoreIdleForHold(core) from the current worker/reset/NoC proof. The
+// DataflowCoreIdleForHold(core) from the current worker/reset/NoC proof. For
+// a running worker, DataflowCoreIdleForWrite(core,address,bytes) must prove its
+// wait/receipt state, immutable code, and idle NoC before invocation or the
+// single-word command/acknowledgement writes are admitted. The
 // service owner performs that proof for every core before it calls HoldCore.
 // No address or routing value comes from a userspace request.
 template<class Raw>
@@ -115,7 +135,11 @@ public:
 
 	bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes)
 	{
-		if (!input || !RangeAllowed(address,bytes) || !CoreHeld(core)) return false;
+		if (!input || !RangeAllowed(address,bytes) || !SelectMapped(core)) return false;
+		const bool held=CoreHeld(core);
+		if (!held && (fRaw.ResetRead()!=0x46800 || fRaw.ResetRead()!=0x46800
+			|| !DataflowPciRunningWriteRange(address,bytes)
+			|| !fRaw.DataflowCoreIdleForWrite(core,address,bytes))) return false;
 		if (address==PioneerQwen35::DataflowServiceBootAddress) {
 			if (bytes!=sizeof(uint32_t)) return false;
 			const uint32_t value=*static_cast<const uint32_t*>(input);
@@ -127,7 +151,9 @@ public:
 		for (unsigned i=0;i<bytes/sizeof(uint32_t);i++) {
 			const unsigned current=address+i*sizeof(uint32_t);
 			fRaw.Q38PanelWrite(current,words[i]);
-			if (fRaw.Q38PanelRead(current)!=words[i] || !CoreHeld(core)) return false;
+			if (fRaw.Q38PanelRead(current)!=words[i]
+				|| !fRaw.DataflowPanelMappingStable()
+				|| (held && !CoreHeld(core))) return false;
 		}
 		return true;
 	}

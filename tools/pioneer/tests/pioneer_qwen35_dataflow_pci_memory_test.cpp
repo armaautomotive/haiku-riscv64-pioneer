@@ -14,10 +14,13 @@ struct MockPciRaw {
 	unsigned writes=0;
 	bool mapped=true;
 	bool idle=true;
+	bool idleForWrite=true;
 
 	bool SelectRuntimeCore(unsigned core) { selected=core; return core<120; }
 	bool DataflowPanelMappingStable() const { return mapped; }
 	bool DataflowCoreIdleForHold(unsigned core) const { return core<120 && idle; }
+	bool DataflowCoreIdleForWrite(unsigned core,unsigned,unsigned) const
+		{ return core<120 && idleForWrite; }
 	unsigned ResetRead() const { return reset; }
 	unsigned RuntimeCodeRead(unsigned word) const { assert(word==0); return boot; }
 	void RuntimeCodeWrite(unsigned word,unsigned value)
@@ -58,6 +61,12 @@ int main()
 		DataflowServiceTextLimit-4,8));
 	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
 		DataflowServiceEntryAddress+1,4));
+	assert(DataflowPciRunningWriteRange(DataflowProgramAddress,
+		sizeof(DataflowCoreInvocation)));
+	assert(DataflowPciRunningWriteRange(
+		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,commandSequence),4));
+	assert(!DataflowPciRunningWriteRange(
+		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,state),4));
 
 	MockPciRaw raw;
 	for (unsigned i=0;i<DataflowPciL1ViewWords;i++)
@@ -81,6 +90,19 @@ int main()
 	assert(!memory.WriteCoreMemory(3,DataflowServiceTextLimit-4,&text,8));
 	assert(memory.StartCore(3)); // valid boot word starts the core
 	assert(raw.reset==0x46800);
+	const unsigned commandAddress=DataflowWorkerMailboxAddress
+		+offsetof(DataflowWorkerMailbox,commandSequence);
+	raw.idleForWrite=false;
+	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
+	assert(!memory.WriteCoreMemory(3,commandAddress,&text,sizeof(text)));
+	assert(!memory.WriteCoreMemory(3,DataflowWorkerMailboxAddress
+		+offsetof(DataflowWorkerMailbox,state),&text,sizeof(text)));
+	raw.idleForWrite=true;
+	raw.reset=0x87ffff;
+	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
+	raw.reset=0x46800;
+	assert(memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
+	assert(memory.WriteCoreMemory(3,commandAddress,&text,sizeof(text)));
 	assert(memory.HoldCore(3));
 	assert(raw.boot==DataflowServiceBootWord);
 
@@ -93,6 +115,6 @@ int main()
 
 	memory.ReleaseCoreSnapshot(snapshot);
 	assert(!snapshot.captured && !snapshot.localWords);
-	puts("PASS PCI L1 bounds, hold gates, snapshot, and restore");
+	puts("PASS PCI L1 bounds, resident writes, hold gates, snapshot, and restore");
 	return 0;
 }
