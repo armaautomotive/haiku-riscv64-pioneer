@@ -235,12 +235,15 @@ command/acknowledgement words, requires reset to remain released, and asks the
 platform adapter for the exact wait/receipt and idle-NoC proof before the
 write. Worker-owned mailbox status fields remain read-only to the host. The
 helper also implements the resident service owner's per-core snapshot calls.
-Its fake-PCI test captures, restores, and resumes all 120 workers with a mixed
-held/running reset state, and rejects fleet resume when any snapshot is
-missing. It is not yet connected to `PioneerSessionIO`: its stable-mapping and
-physical per-core idle/NoC proofs are still required production hooks, and it
-does not provide the projection route audit or Work-mode lifecycle. The four
-existing owner/service tests and the RV32IMF target compile also still pass.
+Its stop path first audits all 120 cores, requests shutdown only from cores
+running the exact resident image, waits for their stopped receipts, then holds
+the fleet before restoration. The fake-PCI test mixes resident workers with
+original dispatcher waiters and held cores, checks clean stop/restore/resume,
+and rejects fleet resume when any snapshot is missing. It is not yet connected
+to `PioneerSessionIO`: stable mapping, per-core original/service image and
+idle/NoC proofs, route audit, and Work-mode lifecycle remain production hooks.
+The four existing owner/service tests and the RV32IMF target compile also still
+pass.
 The standalone service image builder completes with no imports, a 4-byte boot
 stub, and 25,532 bytes of worker text (SHA-256
 `10d9737cb1835c36acc546d778aee96f68c276ba5651f569f1622d25cb344dd7`). This

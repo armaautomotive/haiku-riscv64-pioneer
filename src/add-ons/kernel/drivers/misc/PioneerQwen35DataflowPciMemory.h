@@ -58,18 +58,51 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 		|| (address==shutdown && bytes==sizeof(uint32_t));
 }
 
+static inline bool DataflowPciMailboxReadyForStop(
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
+{
+	if (mailbox.magic!=PioneerQwen35::DataflowWorkerMailboxMagic
+		|| mailbox.version!=PioneerQwen35::DataflowWorkerMailboxVersion
+		|| mailbox.commandSequence!=mailbox.acknowledgedSequence
+		|| mailbox.acknowledgedSequence!=mailbox.completedSequence
+		|| mailbox.state!=PioneerQwen35::DataflowWorkerReady || mailbox.failure
+		|| mailbox.phase
+		|| (mailbox.shutdownSequence
+			&& mailbox.shutdownSequence!=PioneerQwen35::DataflowWorkerShutdownRequest))
+		return false;
+	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	return true;
+}
+
+static inline bool DataflowPciMailboxStopped(
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
+{
+	if (mailbox.magic!=PioneerQwen35::DataflowWorkerMailboxMagic
+		|| mailbox.version!=PioneerQwen35::DataflowWorkerMailboxVersion
+		|| mailbox.shutdownSequence!=PioneerQwen35::DataflowWorkerShutdownRequest
+		|| mailbox.commandSequence!=mailbox.acknowledgedSequence
+		|| mailbox.acknowledgedSequence!=mailbox.completedSequence
+		|| mailbox.state!=PioneerQwen35::DataflowWorkerStopped || mailbox.failure
+		|| mailbox.phase) return false;
+	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	return true;
+}
+
 // Fixed local-memory transport for the dataflow service. Raw must bind a
 // selected physical core to the full 0x42000 L1 view and implement
-// DataflowCoreIdleForHold(core) from the current worker/reset/NoC proof. For
-// a running worker, DataflowCoreIdleForWrite(core,address,bytes) must prove its
+// DataflowCoreServiceImageMatches(core) as a boot/text readback. Its
+// DataflowCoreIdleForHold(core) must identify either the original dispatcher
+// wait loop or that exact service image with stable status and idle NoC. For a
+// running service, DataflowCoreIdleForWrite(core,address,bytes) must prove its
 // wait/receipt state, immutable code, and idle NoC before invocation or the
-// single-word command/acknowledgement writes are admitted. The
+// single-word command/acknowledgement/shutdown writes are admitted. The
 // service owner performs that proof for every core before it calls HoldCore.
 // No address or routing value comes from a userspace request.
 template<class Raw>
 class PioneerQwen35DataflowPciMemory {
 	Raw& fRaw;
 	DataflowPciCoreSnapshot fSnapshots[PioneerQwen35::DataflowCoreCount]{};
+	static constexpr unsigned StopPollLimit=65536;
 
 	bool SelectMapped(unsigned core)
 	{
@@ -91,6 +124,33 @@ class PioneerQwen35DataflowPciMemory {
 	{
 		return SelectMapped(core) && fRaw.ResetRead()==expected
 			&& fRaw.ResetRead()==expected;
+	}
+
+	bool ReadStableMailbox(unsigned core,PioneerQwen35::DataflowWorkerMailbox& mailbox)
+	{
+		PioneerQwen35::DataflowWorkerMailbox first{},second{};
+		if (!ReadCoreMemory(core,PioneerQwen35::DataflowWorkerMailboxAddress,
+				&first,sizeof(first))) return false;
+		fRaw.Pause();
+		if (!ReadCoreMemory(core,PioneerQwen35::DataflowWorkerMailboxAddress,
+				&second,sizeof(second))
+			|| memcmp(&first,&second,sizeof(first))!=0) return false;
+		mailbox=second;
+		return true;
+	}
+
+	bool QueuesDrained(unsigned core)
+	{
+		PioneerQwen35::DataflowQueueControl queues[
+			PioneerQwen35::DataflowCircularBufferCount]{};
+		if (!ReadCoreMemory(core,PioneerQwen35::DataflowQueueStateAddress,
+				queues,sizeof(queues))) return false;
+		for (const auto& queue:queues) {
+			if (queue.produced || queue.consumed || queue.readerFailure
+				|| queue.computeFailure || queue.writerFailure || queue.queueFailure
+				|| queue.reserved[0] || queue.reserved[1]) return false;
+		}
+		return true;
 	}
 
 public:
@@ -260,6 +320,90 @@ public:
 	{
 		return core<PioneerQwen35::DataflowCoreCount
 			&& VerifyCoreStateRestored(core,fSnapshots[core]);
+	}
+
+	// Stops only recognized resident dataflow workers. A running original
+	// dispatcher remains in its verified wait loop and is simply held after the
+	// all-core audit. Cores already held after a partial install need no stop.
+	bool StopAndAuditAll()
+	{
+		bool held[PioneerQwen35::DataflowCoreCount]{};
+		bool service[PioneerQwen35::DataflowCoreCount]{};
+		bool requestStop[PioneerQwen35::DataflowCoreCount]{};
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (!SelectMapped(core)) return false;
+			const unsigned reset=fRaw.ResetRead();
+			if (reset!=fRaw.ResetRead()) return false;
+			if (reset==0x47800) {
+				held[core]=true;
+				continue;
+			}
+			if (reset!=0x46800 || !fRaw.DataflowCoreIdleForHold(core)) return false;
+			service[core]=fRaw.DataflowCoreServiceImageMatches(core);
+			if (!service[core]) continue;
+			PioneerQwen35::DataflowWorkerMailbox mailbox{};
+			if (!ReadStableMailbox(core,mailbox)) return false;
+			if (DataflowPciMailboxStopped(mailbox)) {
+				if (!QueuesDrained(core)) return false;
+				continue;
+			}
+			if (!DataflowPciMailboxReadyForStop(mailbox)) return false;
+			requestStop[core]=mailbox.state==PioneerQwen35::DataflowWorkerReady
+				&& mailbox.shutdownSequence==0;
+		}
+
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (!requestStop[core]) continue;
+			const uint32_t stop=PioneerQwen35::DataflowWorkerShutdownRequest;
+			const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
+				+offsetof(PioneerQwen35::DataflowWorkerMailbox,shutdownSequence);
+			if (!WriteCoreMemory(core,address,&stop,sizeof(stop))) return false;
+		}
+
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (!service[core] || held[core]) continue;
+			bool stopped=false;
+			for (unsigned poll=0;poll<StopPollLimit;poll++) {
+				uint32_t state=0;
+				const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
+					+offsetof(PioneerQwen35::DataflowWorkerMailbox,state);
+				if (!ReadCoreMemory(core,address,&state,sizeof(state))) return false;
+				if (state==PioneerQwen35::DataflowWorkerStopped) {
+					stopped=true;
+					break;
+				}
+				if (state==PioneerQwen35::DataflowWorkerFatal
+					|| state==PioneerQwen35::DataflowWorkerFailed) return false;
+				fRaw.Pause();
+			}
+			if (!stopped) return false;
+			PioneerQwen35::DataflowWorkerMailbox mailbox{};
+			if (!ReadStableMailbox(core,mailbox)
+				|| !DataflowPciMailboxStopped(mailbox) || !QueuesDrained(core)
+				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
+		}
+
+		// Prove all participants parked before holding any running core.
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (held[core]) continue;
+			if (!SelectMapped(core) || fRaw.ResetRead()!=0x46800
+				|| fRaw.ResetRead()!=0x46800
+				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
+		}
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (held[core]) continue;
+			if (!HoldCore(core) || !CoreHeld(core)) return false;
+		}
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (!CoreHeld(core)) return false;
+			if (service[core] && !held[core]) {
+				PioneerQwen35::DataflowWorkerMailbox mailbox{};
+				if (!ReadStableMailbox(core,mailbox)
+					|| !DataflowPciMailboxStopped(mailbox) || !QueuesDrained(core))
+					return false;
+			}
+		}
+		return true;
 	}
 
 	bool ResumeRestoredFleet()

@@ -10,6 +10,10 @@ struct MockPciRaw {
 	uint32_t panel[DataflowPciL1ViewWords]{};
 	unsigned boot[PioneerQwen35::DataflowCoreCount];
 	unsigned reset[PioneerQwen35::DataflowCoreCount];
+	PioneerQwen35::DataflowWorkerMailbox mailbox[PioneerQwen35::DataflowCoreCount]{};
+	PioneerQwen35::DataflowQueueControl queue[PioneerQwen35::DataflowCoreCount]
+		[PioneerQwen35::DataflowCircularBufferCount]{};
+	bool serviceImage[PioneerQwen35::DataflowCoreCount]{};
 	unsigned selected=UINT32_MAX;
 	unsigned writes=0;
 	bool mapped=true;
@@ -28,6 +32,8 @@ struct MockPciRaw {
 	bool DataflowCoreIdleForHold(unsigned core) const { return core<120 && idle; }
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned,unsigned) const
 		{ return core<120 && idleForWrite; }
+	bool DataflowCoreServiceImageMatches(unsigned core) const
+		{ return core<120 && serviceImage[core]; }
 	unsigned ResetRead() const { assert(selected<120); return reset[selected]; }
 	unsigned RuntimeCodeRead(unsigned word) const
 		{ assert(word==0 && selected<120); return boot[selected]; }
@@ -42,13 +48,43 @@ struct MockPciRaw {
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
 			&& address<DataflowPciL1ViewBase+DataflowPciL1ViewBytes);
+		if (address>=PioneerQwen35::DataflowWorkerMailboxAddress
+			&& address<PioneerQwen35::DataflowWorkerMailboxAddress
+				+PioneerQwen35::DataflowWorkerMailboxBytes) {
+			const uint32_t* words=reinterpret_cast<const uint32_t*>(&mailbox[selected]);
+			return words[(address-PioneerQwen35::DataflowWorkerMailboxAddress)/4];
+		}
+		if (address>=PioneerQwen35::DataflowQueueStateAddress
+			&& address<PioneerQwen35::DataflowQueueStateAddress
+				+PioneerQwen35::DataflowQueueStateBytes) {
+			const uint32_t* words=reinterpret_cast<const uint32_t*>(queue[selected]);
+			return words[(address-PioneerQwen35::DataflowQueueStateAddress)/4];
+		}
 		return panel[(address-DataflowPciL1ViewBase)/sizeof(uint32_t)];
 	}
 	void Q38PanelWrite(unsigned address,uint32_t value)
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
 			&& address<DataflowPciL1ViewBase+DataflowPciL1ViewBytes);
-		panel[(address-DataflowPciL1ViewBase)/sizeof(uint32_t)]=value;
+		if (address>=PioneerQwen35::DataflowWorkerMailboxAddress
+			&& address<PioneerQwen35::DataflowWorkerMailboxAddress
+				+PioneerQwen35::DataflowWorkerMailboxBytes) {
+			uint32_t* words=reinterpret_cast<uint32_t*>(&mailbox[selected]);
+			words[(address-PioneerQwen35::DataflowWorkerMailboxAddress)/4]=value;
+			if (serviceImage[selected]
+				&& address==PioneerQwen35::DataflowWorkerMailboxAddress
+					+offsetof(PioneerQwen35::DataflowWorkerMailbox,shutdownSequence)
+				&& value==PioneerQwen35::DataflowWorkerShutdownRequest) {
+				mailbox[selected].state=PioneerQwen35::DataflowWorkerStopped;
+				mailbox[selected].failure=0;
+				mailbox[selected].phase=0;
+			}
+		} else if (address>=PioneerQwen35::DataflowQueueStateAddress
+			&& address<PioneerQwen35::DataflowQueueStateAddress
+				+PioneerQwen35::DataflowQueueStateBytes) {
+			uint32_t* words=reinterpret_cast<uint32_t*>(queue[selected]);
+			words[(address-PioneerQwen35::DataflowQueueStateAddress)/4]=value;
+		} else panel[(address-DataflowPciL1ViewBase)/sizeof(uint32_t)]=value;
 		writes++;
 	}
 	void Pause() {}
@@ -73,6 +109,8 @@ int main()
 		sizeof(DataflowCoreInvocation)));
 	assert(DataflowPciRunningWriteRange(
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,commandSequence),4));
+	assert(DataflowPciRunningWriteRange(
+		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence),4));
 	assert(!DataflowPciRunningWriteRange(
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,state),4));
 
@@ -148,6 +186,39 @@ int main()
 		assert(raw.reset[core]==0x46800);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		memory.ReleaseCoreSnapshot(core);
-	puts("PASS PCI L1 bounds, resident writes, and 120-core mixed-state restore");
+
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		raw.reset[core]=0x46800;
+		raw.serviceImage[core]=false;
+		raw.mailbox[core]={};
+		raw.mailbox[core].magic=DataflowWorkerMailboxMagic;
+		raw.mailbox[core].version=DataflowWorkerMailboxVersion;
+		raw.mailbox[core].state=DataflowWorkerReady;
+	}
+	raw.reset[0]=0x47800;
+	raw.serviceImage[1]=true;
+	raw.serviceImage[17]=true;
+	raw.serviceImage[119]=true;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.CaptureCoreState(core));
+	assert(memory.StopAndAuditAll());
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(raw.reset[core]==0x47800);
+	assert(raw.mailbox[1].state==DataflowWorkerStopped);
+	assert(raw.mailbox[17].state==DataflowWorkerStopped);
+	assert(raw.mailbox[119].state==DataflowWorkerStopped);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.RestoreCoreState(core));
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.VerifyCoreStateRestored(core));
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		raw.serviceImage[core]=false;
+	assert(memory.ResumeRestoredFleet());
+	assert(raw.reset[0]==0x47800);
+	for (unsigned core=1;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(raw.reset[core]==0x46800);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		memory.ReleaseCoreSnapshot(core);
+	puts("PASS PCI L1 bounds, resident stop, and 120-core clean restore");
 	return 0;
 }
