@@ -244,18 +244,23 @@ PioneerSessionIO::SessionIdle()
 }
 
 bool
-PioneerSessionIO::ProveFleetRoutes()
+PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 {
+	failedStage=1;
+	failedCore=0xff;
 	auto* context=qwen35DataflowContext;
 	if (!context || !context->q38Dispatch || !context->q38DispatchRoutes
 		|| !context->banks.Matches(context->baseline.baseline.baseline.baseline.dram)
 		|| !fleetEnabled || !MapRuntime()) return false;
 	auto& lease=*context->q38Dispatch;
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
+	failedStage=2;
 	if (!lease.booted || lease.closed || lease.unsafe || lease.rootRunning
 		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
 	unsigned auditedRoutes[2][PioneerQwen35::Banks]={};
 	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
+		failedStage=3;
+		failedCore=bank;
 		uint32_t address=0,route=0,index=0;
 		if (!context->banks.Page(dram,bank,0,address,route,index)
 			|| route!=(dram.translated[bank][0]|(dram.translated[bank][1]<<6)))
@@ -263,25 +268,41 @@ PioneerSessionIO::ProveFleetRoutes()
 		auditedRoutes[0][bank]=route;
 		auditedRoutes[1][bank]=route;
 	}
+	failedStage=4;
+	failedCore=0xff;
 	if (!PioneerQwen35::DataflowBankRoutesValid(auditedRoutes)) return false;
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 		const unsigned reset=core?0x46800:0x47800;
 		auto& node=lease.worker[core];
-		if (!SelectRuntimeCore(core) || !MapQ38Panel()
-			|| !DataflowPanelMappingStable()
-			|| node.noc.state!=TT_COMPUTE_NOC_PASSED || !node.noc.tlb_restored
+		failedCore=core;
+		failedStage=5;
+		if (!SelectRuntimeCore(core)) return false;
+		failedStage=6;
+		if (!MapQ38Panel()) return false;
+		failedStage=7;
+		if (!DataflowPanelMappingStable()) return false;
+		failedStage=8;
+		if (node.noc.state!=TT_COMPUTE_NOC_PASSED || !node.noc.tlb_restored
 			|| node.noc.recovery_required
-			|| node.noc.version!=(core?PioneerWorkerVersion(core):1)
-			|| !PioneerWorkerRoute(dram,node.noc.source[0],core)
-			|| !PioneerQ38DispatchSources(*this,dram,context->banks,node,reset)
-			|| !PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
+			|| node.noc.version!=(core?PioneerWorkerVersion(core):1)) return false;
+		failedStage=9;
+		if (!PioneerWorkerRoute(dram,node.noc.source[0],core)) return false;
+		failedStage=10;
+		if (!PioneerQ38DispatchSources(*this,dram,context->banks,node,reset))
+			return false;
+		failedStage=11;
+		if (!PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
+		failedStage=12;
 		if (!core) {
 			if (node.image.running) return false;
 		} else if (!node.image.running || !lease.peerNonce[core-1]
 			|| !PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,&lease))
 			return false;
 	}
+	failedStage=13;
+	failedCore=0xff;
 	if (lease.rootRunning || lease.unsafe || context->banks.Quarantined()) return false;
+	failedStage=14;
 	if (context->qwen35DataflowRoutesAudited
 		&& memcmp(context->qwen35DataflowRoutes,auditedRoutes,sizeof(auditedRoutes))!=0)
 		return false;

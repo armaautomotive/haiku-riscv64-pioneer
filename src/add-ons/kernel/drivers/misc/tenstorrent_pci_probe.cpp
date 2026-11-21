@@ -80,7 +80,7 @@
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010102ULL \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010103ULL \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3245,7 +3245,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool DataflowCoreIdleForHold(unsigned core);
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes);
 	bool SessionIdle();
-	bool ProveFleetRoutes();
+	bool ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore);
 	bool CoreIdle(unsigned core);
 	bool CaptureCoreState(unsigned core);
 	void ReleaseCoreSnapshot(unsigned core);
@@ -8045,24 +8045,45 @@ Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
 		if (!PioneerQwen35::ValidateManifest(request->manifest,request->rope,
 			initialized,context->uploadedPages,request->graphWorkspace.space,
 			PioneerQwen35::DataflowGraphWorkspaceBufferCount)) {
+			request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_MANIFEST;
 			status=B_BAD_VALUE;
-		} else if (!PrepareQ38Dispatch(*context) || !context->io.ProveFleetRoutes()
-			|| !context->io.SelectRuntimeCore(0)) {
-			context->qwen35DataflowLastResult=PioneerQwen35::DataflowServicePreflightFailed;
-			status=B_IO_ERROR;
 		} else {
-			auto* authority=new(std::nothrow) PioneerQwen35::DataflowProjectionAuthority;
-			if (!authority) {
-				status=B_NO_MEMORY;
-			} else if (!context->qwen35DataflowRoutesAudited
-				|| !authority->BindValidatedModel(request->manifest,
-					request->graphWorkspace,context->qwen35DataflowRoutes,
-					request->rope)) {
-				delete authority;
-				status=B_BAD_VALUE;
+			if (!PrepareQ38Dispatch(*context)) {
+				request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_DISPATCH;
+				context->qwen35DataflowLastResult=PioneerQwen35::DataflowServicePreflightFailed;
+				status=B_IO_ERROR;
 			} else {
-				context->qwen35DataflowAuthority=authority;
+				uint32_t routeStage=0,routeCore=0xff;
+				if (!context->io.ProveFleetRoutes(routeStage,routeCore)) {
+					request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_ROUTE
+						|(routeStage<<8)|(routeCore&0xff);
+					context->qwen35DataflowLastResult=PioneerQwen35::DataflowServicePreflightFailed;
+					status=B_IO_ERROR;
+				} else if (!context->io.SelectRuntimeCore(0)) {
+					request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_ROOT_SELECT;
+					context->qwen35DataflowLastResult=PioneerQwen35::DataflowServicePreflightFailed;
+					status=B_IO_ERROR;
+				} else {
+					auto* authority=new(std::nothrow) PioneerQwen35::DataflowProjectionAuthority;
+					if (!authority) {
+						request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_AUTHORITY_MEMORY;
+						status=B_NO_MEMORY;
+					} else if (!context->qwen35DataflowRoutesAudited
+						|| !authority->BindValidatedModel(request->manifest,
+							request->graphWorkspace,context->qwen35DataflowRoutes,
+							request->rope)) {
+						delete authority;
+						request->reserved=TT_QWEN35_DATAFLOW_BIND_DIAG_AUTHORITY_BIND;
+						status=B_BAD_VALUE;
+					} else {
+						context->qwen35DataflowAuthority=authority;
+					}
+				}
 			}
+		}
+		if (status!=B_OK && request->reserved) {
+			const status_t copyStatus=user_memcpy(data,request,sizeof(*request));
+			if (copyStatus!=B_OK) status=copyStatus;
 		}
 	}
 	release_sem(sLock);

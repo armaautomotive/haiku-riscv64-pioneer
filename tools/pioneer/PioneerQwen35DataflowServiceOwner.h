@@ -126,7 +126,8 @@ public:
 	{
 		if (fPhase!=PhaseEmpty) return DataflowServiceInvalidState;
 		if (!image.Valid()) return DataflowServiceInvalidImage;
-		if (!io.SessionIdle() || !io.ProveFleetRoutes()) {
+		uint32_t failedStage=0,failedCore=0xff;
+		if (!io.SessionIdle() || !io.ProveFleetRoutes(failedStage,failedCore)) {
 			return DataflowServicePreflightFailed;
 		}
 		fPhase=PhaseInstalling;

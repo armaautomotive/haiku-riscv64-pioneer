@@ -233,8 +233,14 @@ static bool BindAndInstall(int fd,const D::DeviceLayout& manifest,
 	bind->rope=rope;
 	bind->manifest=manifest;
 	bind->graphWorkspace=graph;
-	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND,bind.get(),sizeof(*bind)))
+	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND,bind.get(),sizeof(*bind))) {
+		if (bind->reserved&TT_QWEN35_DATAFLOW_BIND_DIAG_ROUTE)
+			fprintf(stderr,"P100A_Q35_DATAFLOW bind_route_failure stage=%u core_or_bank=%u\n",
+				(bind->reserved>>8)&0xff,bind->reserved&0xff);
+		else fprintf(stderr,"P100A_Q35_DATAFLOW bind_failure_stage=%u\n",
+			bind->reserved);
 		return false;
+	}
 	authorityBound=true;
 
 	tt_qwen35_dataflow_request request{};

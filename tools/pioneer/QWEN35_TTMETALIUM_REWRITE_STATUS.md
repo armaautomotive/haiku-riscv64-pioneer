@@ -31,8 +31,13 @@ or decode timing was produced. The client explicitly closed its session with
 generation 16 without reboot. The 27B model file was checked in place before
 the trial. The failure and hashes are recorded in
 `benchmarks/qwen35-dataflow-tag0102-20261121/evidence/tag0102-bind-failure/`.
-Next, expose which fleet-preflight substage/core failed without relaxing the
-120-core route checks. The 100 tokens/s target remains unmeasured.
+Checkpoint `0034491616` archives the failed run and its clean recovery on
+GitHub. I added substage/core reporting to the rewritten model-bind path and
+built unique tag0103 offline; it keeps all existing route checks intact.
+Its driver SHA-256 is
+`06153f5c7bfb81179f9b5f3b3d51e176a1ea5465393023a94060edaf345c442c`.
+The next step is another read-only idle/model preflight, then a guarded
+tag0103 trial. The 100 tokens/s target remains unmeasured.
 
 ## Progress
 
