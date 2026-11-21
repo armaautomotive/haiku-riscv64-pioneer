@@ -15,6 +15,7 @@
 #include "../PioneerQwen35DataflowResidualProgram.h"
 #include "../PioneerQwen35DataflowBlackholeResidualWorker.h"
 #include "../PioneerQwen35DataflowFfnSequence.h"
+#include "../PioneerQwen35DataflowRecurrentLayerSequence.h"
 
 using namespace PioneerQwen35;
 
@@ -23,6 +24,10 @@ struct TargetFfnAuthority {
 	bool BuildRms(unsigned,unsigned,unsigned,unsigned,DataflowRmsProgram&) { return true; }
 	bool BuildProjection(unsigned,unsigned,unsigned,unsigned,
 		DataflowProjectionProgram&) { return true; }
+	bool BuildConv(unsigned,unsigned,DataflowConvProgram&) { return true; }
+	bool BuildDelta(unsigned,unsigned,DataflowDeltaProgram&) { return true; }
+	bool BuildRecurrentOutput(unsigned,unsigned,DataflowProjectionProgram&)
+		{ return true; }
 	bool BuildSilu(unsigned,DataflowSiluProgram&) { return true; }
 };
 
@@ -30,6 +35,8 @@ struct TargetFfnService {
 	int RunResidual(const DataflowResidualProgram&,int&) { return 0; }
 	int RunRms(const DataflowRmsProgram&,int&) { return 0; }
 	int RunProjection(const DataflowProjectionProgram&,int&) { return 0; }
+	int RunConv(const DataflowConvProgram&,int&) { return 0; }
+	int RunDelta(const DataflowDeltaProgram&,int&) { return 0; }
 	int RunSilu(const DataflowSiluProgram&,int&) { return 0; }
 };
 
@@ -42,6 +49,18 @@ bool PioneerQwen35DataflowFfnSequenceTargetCompileProbe(unsigned layer,
 	unsigned outputSlot=ActivationBuffers;
 	return DataflowFfnSequence::Run(layer,inputSlot,authority,service,io,
 		outputSlot)==DataflowFfnSequenceComplete;
+}
+
+bool PioneerQwen35DataflowRecurrentLayerSequenceTargetCompileProbe(
+	unsigned layer,unsigned position,unsigned inputSlot)
+{
+	TargetFfnAuthority authority;
+	TargetFfnService service;
+	int io=0;
+	unsigned outputSlot=ActivationBuffers,stage=0;
+	return DataflowRecurrentLayerSequence::Run(layer,position,inputSlot,
+		authority,service,io,outputSlot,stage)
+		==DataflowRecurrentLayerComplete;
 }
 
 bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,

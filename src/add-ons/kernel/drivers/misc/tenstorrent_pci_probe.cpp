@@ -80,7 +80,7 @@
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112000010099ULL \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010100ULL \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -94,6 +94,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowConvProgram.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowFfnSequence.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRecurrentLayerSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35ManifestValidation.h"
 #include "PioneerQwen35DataflowModelProtocol.h"
 #include "PioneerQwen35DataflowPciMemory.h"
@@ -8686,6 +8687,62 @@ Qwen35DataflowFfnSequence(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
+Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_recurrent_layer))
+		return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_recurrent_layer*)malloc(
+		sizeof(tt_qwen35_dataflow_recurrent_layer));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->layer>=PioneerQwen35::Layers
+		|| PioneerQwen35::Dense(request->layer)
+		|| request->position>=PioneerQwen35::MaxPositions
+		|| request->input_slot>=PioneerQwen35::ActivationBuffers
+		|| request->output_slot || request->result || request->stage
+		|| request->next_sequence || request->state || request->recovery_required) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total
+		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
+		|| !context->qwen35DataflowService->Ready()) {
+		status=B_NOT_ALLOWED;
+	} else {
+		unsigned outputSlot=PioneerQwen35::ActivationBuffers,stage=0;
+		const auto sequence=PioneerQwen35::DataflowRecurrentLayerSequence::Run(
+			request->layer,request->position,request->input_slot,
+			*context->qwen35DataflowAuthority,
+			*context->qwen35DataflowService,context->io,outputSlot,stage);
+		request->stage=stage;
+		request->result=sequence==PioneerQwen35::DataflowRecurrentLayerComplete
+			?PioneerQwen35::DataflowServiceComplete
+			:PioneerQwen35::DataflowServiceRecurrentLayerFailed;
+		if (sequence==PioneerQwen35::DataflowRecurrentLayerComplete)
+			request->output_slot=outputSlot;
+		context->qwen35DataflowLastResult=request->result;
+		request->next_sequence=context->qwen35DataflowService->NextSequence();
+		request->state=context->qwen35DataflowService->Faulted()
+			?TT_QWEN35_DATAFLOW_STATE_FAULTED
+			:TT_QWEN35_DATAFLOW_STATE_READY;
+		request->recovery_required=context->qwen35DataflowService->Faulted();
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
 Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!data) return B_BAD_VALUE;
@@ -8707,7 +8764,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 				|TT_QWEN35_DATAFLOW_CAP_RESIDUAL
 				|TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE
 				|TT_QWEN35_DATAFLOW_CAP_RECURRENT_CONV
-				|TT_QWEN35_DATAFLOW_CAP_DELTA_STATE,
+				|TT_QWEN35_DATAFLOW_CAP_DELTA_STATE
+				|TT_QWEN35_DATAFLOW_CAP_RECURRENT_LAYER,
 			TT_QWEN35_DATAFLOW_PROJECTION_MATRIX,
 			TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING};
 		status=user_memcpy(data,&support,sizeof(support));
@@ -8735,6 +8793,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		return Qwen35DataflowConv(cookie,data,length);
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_DELTA)
 		return Qwen35DataflowDelta(cookie,data,length);
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_RECURRENT_LAYER)
+		return Qwen35DataflowRecurrentLayer(cookie,data,length);
 	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
 	tt_qwen35_dataflow_request request={};

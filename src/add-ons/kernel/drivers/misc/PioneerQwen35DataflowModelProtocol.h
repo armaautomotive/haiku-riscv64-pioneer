@@ -17,6 +17,7 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_FFN_SEQUENCE (B_DEVICE_OP_CODES_END + 0x8840)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_CONV (B_DEVICE_OP_CODES_END + 0x8841)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_DELTA (B_DEVICE_OP_CODES_END + 0x8842)
+#define TT_PCI_PROBE_QWEN35_DATAFLOW_RECURRENT_LAYER (B_DEVICE_OP_CODES_END + 0x8843)
 
 enum : uint32_t {
 	TT_QWEN35_DATAFLOW_MODEL_ABI=3,
@@ -24,7 +25,8 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_RESIDUAL_ADD=2,
 	TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE=256U,
 	TT_QWEN35_DATAFLOW_CAP_RECURRENT_CONV=512U,
-	TT_QWEN35_DATAFLOW_CAP_DELTA_STATE=1024U
+	TT_QWEN35_DATAFLOW_CAP_DELTA_STATE=1024U,
+	TT_QWEN35_DATAFLOW_CAP_RECURRENT_LAYER=2048U
 };
 
 struct tt_qwen35_dataflow_model_bind {
@@ -88,6 +90,11 @@ struct tt_qwen35_dataflow_delta {
 	uint32_t next_sequence,state,recovery_required,reserved;
 };
 
+struct tt_qwen35_dataflow_recurrent_layer {
+	uint32_t version,layer,position,input_slot,output_slot;
+	uint32_t result,stage,next_sequence,state,recovery_required;
+};
+
 static_assert(sizeof(tt_qwen35_dataflow_activation_seed)==32,
 	"fixed activation seed ABI");
 static_assert(sizeof(tt_qwen35_dataflow_activation_read)==32,
@@ -106,6 +113,8 @@ static_assert(sizeof(tt_qwen35_dataflow_conv)==32,
 	"fixed recurrent convolution ABI");
 static_assert(sizeof(tt_qwen35_dataflow_delta)==32,
 	"fixed recurrent delta-state ABI");
+static_assert(sizeof(tt_qwen35_dataflow_recurrent_layer)==40,
+	"fixed recurrent layer sequence ABI");
 
 static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82740,
 	"fixed manifest binding ABI");
