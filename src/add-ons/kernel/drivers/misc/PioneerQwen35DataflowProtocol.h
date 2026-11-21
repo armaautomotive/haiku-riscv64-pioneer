@@ -10,7 +10,7 @@
 
 enum : uint32_t {
 	TT_QWEN35_DATAFLOW_DRIVER=60,
-	TT_QWEN35_DATAFLOW_ABI=1,
+	TT_QWEN35_DATAFLOW_ABI=2,
 	TT_QWEN35_DATAFLOW_CORES=120,
 	TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE=1U,
 	TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND=2U,
@@ -45,10 +45,12 @@ struct tt_qwen35_dataflow_support {
 
 struct tt_qwen35_dataflow_request {
 	uint32_t version,action,state,result,next_sequence,recovery_required;
-	// Input must be zero. On INSTALL start/readiness failures, output packs
-	// reserved[0] as stage:8 | core:24 and reserved[1] as state:8 | failure:8
-	// | phase:8 | zero:8. Other actions return zeros.
-	uint32_t reserved[2];
+	// Input must be zero. On INSTALL start/readiness failures and CLOSE stop
+	// audit failures, output packs reserved[0] as stage:8 | core:24 and
+	// reserved[1] as state/detail:8 | failure:8 | phase:8 | zero:8.
+	// reserved[2] contains a raw local route on a phase-2 worker startup fault.
+	// Other actions return zeros.
+	uint32_t reserved[3];
 };
 
 static inline bool
@@ -56,7 +58,8 @@ PioneerQwen35DataflowRequestValid(const tt_qwen35_dataflow_request& request)
 {
 	return request.version==TT_QWEN35_DATAFLOW_ABI
 		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_RECOVER
-		&& request.reserved[0]==0 && request.reserved[1]==0;
+		&& request.reserved[0]==0 && request.reserved[1]==0
+		&& request.reserved[2]==0;
 }
 
 #endif

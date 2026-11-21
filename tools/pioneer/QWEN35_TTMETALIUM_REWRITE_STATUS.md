@@ -692,3 +692,19 @@ service text is unchanged. These checks do not establish silicon recovery.
 The route mismatch and exact stop-audit failure still need evidence. No warm
 output or decode rate exists; the 100 tokens/s goal remains unmet. Assistant
 integration remains deferred until the rewrite and benchmark are complete.
+
+### Tag0107 recovery and route diagnostics
+
+Tag0107 now records the phase-2 worker's raw local route, waits for the full
+120-core startup scan, and reports the stop-audit stage/core. Its special
+recovery proof admits only that exact route-fatal state when the selected
+physical core, service image, captured NoC sources, raw route, queues, and
+idle NoC are stable; it does not admit the route for inference. The protocol
+is ABI 2. Owner and PCI-memory ASan/UBSan tests pass, the RV32IMF service
+compile passes without A atomics/runtime helpers, and the offline package
+build passes. Driver SHA-256:
+`176aacf58aeb972aabbe05d5dca6f89f5af1a1f3648ba96d7c932abea085668`; client
+SHA-256: `232a98fd41c77f3e559e5de983a156febb65ff483c16da5181dcc28f268d72cd`.
+The guarded tag0107 trial and post-cycle recovery helper are prepared, but no
+tag0107 card run has started. Hardware recovery, valid output, timing, and
+throughput remain unverified.

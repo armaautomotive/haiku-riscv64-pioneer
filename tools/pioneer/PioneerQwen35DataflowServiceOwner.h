@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowOwner.h"
 #include "PioneerQwen35DataflowKernels.h"
+#include <stddef.h>
 #include <string.h>
 
 namespace PioneerQwen35 {
@@ -74,11 +75,12 @@ enum DataflowServiceDiagnosticStage : unsigned {
 	DataflowServiceDiagnosticWorkerSnapshot=3,
 	DataflowServiceDiagnosticWorkerProof=4,
 	DataflowServiceDiagnosticOwnerInitialize=5,
-	DataflowServiceDiagnosticOwnerCore=6
+	DataflowServiceDiagnosticOwnerCore=6,
+	DataflowServiceDiagnosticStopAudit=7
 };
 
 struct DataflowServiceDiagnostic {
-	unsigned stage,core,state,failure,phase;
+	unsigned stage,core,state,failure,phase,detail;
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the
@@ -94,13 +96,13 @@ class DataflowServiceOwner {
 	Phase fPhase=PhaseEmpty;
 	bool fSaved[DataflowCoreCount]{};
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
-		DataflowCoreCount,0,0,0};
+		DataflowCoreCount,0,0,0,0};
 	DataflowProjectionOwner fProjectionOwner;
 
 	void SetDiagnostic(unsigned stage,unsigned core,
-		const DataflowWorkerSnapshot& snapshot)
+		const DataflowWorkerSnapshot& snapshot,unsigned detail=0)
 	{
-		fDiagnostic={stage,core,snapshot.state,snapshot.failure,snapshot.phase};
+		fDiagnostic={stage,core,snapshot.state,snapshot.failure,snapshot.phase,detail};
 	}
 
 	template<class IO>
@@ -148,7 +150,7 @@ public:
 	DataflowServiceResult Install(const DataflowServiceImageView& image,IO& io)
 	{
 		if (fPhase!=PhaseEmpty) return DataflowServiceInvalidState;
-		fDiagnostic={DataflowServiceDiagnosticNone,DataflowCoreCount,0,0,0};
+		fDiagnostic={DataflowServiceDiagnosticNone,DataflowCoreCount,0,0,0,0};
 		if (!image.Valid()) return DataflowServiceInvalidImage;
 		uint32_t failedStage=0,failedCore=0xff;
 		if (!io.SessionIdle() || !io.ProveFleetRoutes(failedStage,failedCore)) {
@@ -236,8 +238,18 @@ public:
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
 			if (!io.WaitWorkerReady(core,snapshot)) {
-				if (startupReady)
-					SetDiagnostic(DataflowServiceDiagnosticWorkerWait,core,snapshot);
+				if (startupReady) {
+					unsigned detail=0;
+					if (snapshot.state==DataflowWorkerFatal && snapshot.phase==2) {
+						uint32_t route=0;
+						const unsigned address=DataflowWorkerMailboxAddress
+							+offsetof(DataflowWorkerMailbox,reserved);
+						if (io.ReadCoreMemory(core,address,&route,sizeof(route)))
+							detail=route;
+					}
+					SetDiagnostic(DataflowServiceDiagnosticWorkerWait,core,snapshot,
+						detail);
+				}
 				startupReady=false;
 				continue;
 			}
@@ -399,7 +411,13 @@ public:
 		if (fPhase!=PhaseReady && fPhase!=PhaseFaulted && fPhase!=PhaseInstalling)
 			return DataflowServiceInvalidState;
 		fPhase=PhaseFaulted;
-		if (!io.StopAndAuditAll()) return DataflowServiceStopAuditFailed;
+		unsigned auditStage=0,auditCore=DataflowCoreCount;
+		if (!io.StopAndAuditAll(auditStage,auditCore)) {
+			DataflowWorkerSnapshot snapshot{};
+			snapshot.state=auditStage;
+			SetDiagnostic(DataflowServiceDiagnosticStopAudit,auditCore,snapshot);
+			return DataflowServiceStopAuditFailed;
+		}
 		for (unsigned end=DataflowCoreCount;end;end--) {
 			const unsigned core=end-1;
 			if (!fSaved[core]) continue;

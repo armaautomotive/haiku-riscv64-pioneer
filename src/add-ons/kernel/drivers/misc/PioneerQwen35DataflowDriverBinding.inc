@@ -191,11 +191,44 @@ PioneerSessionIO::DataflowCoreIdleForHold(unsigned core)
 bool
 PioneerSessionIO::DataflowCoreStartupFatalIdle(unsigned core)
 {
-	if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core)) return false;
+	auto* context=qwen35DataflowContext;
 	PioneerQwen35::DataflowWorkerMailbox mailbox{};
-	return PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
-		&& DataflowPciMailboxStartupFatal(mailbox)
-		&& PioneerQwen35DataflowQueuesDrained(*this,core);
+	if (!context || core>=PioneerQwen35::DataflowCoreCount
+		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
+		|| !DataflowPciMailboxStartupFatal(mailbox)
+		|| !PioneerQwen35DataflowQueuesDrained(*this,core)) return false;
+	if (mailbox.phase==1)
+		return PioneerQwen35DataflowCoreRuntimeStable(*this,core);
+
+	// Phase 2 means the image itself rejected the local NoC route. Preserve the
+	// fatal loop only when the selected core, pinned service image, captured
+	// NoC sources, and raw route remain stable and all traffic is idle. This
+	// permits restoring the snapshot for that same physical selection without
+	// pretending the mismatched route was valid for inference.
+	if (mailbox.phase!=2 || !context->q38Dispatch
+		|| !SelectRuntimeCore(core) || !MapQ38Panel()
+		|| !DataflowPanelMappingStable()
+		|| !PioneerSessionIODataflowServiceImageTrusted(*this,core)) return false;
+	const unsigned reset=ResetRead();
+	if (reset!=0x46800 || ResetRead()!=reset) return false;
+	auto& lease=*context->q38Dispatch;
+	if (lease.unsafe || lease.closed || lease.rootRunning
+		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
+	const uint32_t routeFirst=ResidentNocRead(0x14);
+	Pause();
+	const uint32_t routeSecond=ResidentNocRead(0x14);
+	if (routeFirst!=mailbox.reserved[0] || routeSecond!=routeFirst) return false;
+	for (unsigned candidate=0;candidate<PioneerQwen35::DataflowCoreCount;candidate++)
+		if (routeFirst==(PioneerWorkerX(candidate)|(PioneerWorkerY(candidate)<<6)))
+			return false;
+	auto& node=lease.worker[core];
+	auto& dram=context->baseline.baseline.baseline.baseline.dram;
+	return node.noc.state==TT_COMPUTE_NOC_PASSED && node.noc.tlb_restored
+		&& !node.noc.recovery_required
+		&& node.noc.version==(core?PioneerWorkerVersion(core):1)
+		&& PioneerWorkerRoute(dram,node.noc.source[0],core)
+		&& PioneerRuntimeSources(*this,dram,node.noc,node.Store())
+		&& PioneerQwen35DataflowServicePc(*this) && BlackholeResidentIdle(*this);
 }
 
 bool
@@ -1453,10 +1486,11 @@ PioneerSessionIO::AbortPendingProjection()
 }
 
 bool
-PioneerSessionIO::StopAndAuditAll()
+PioneerSessionIO::StopAndAuditAll(unsigned& failedStage,unsigned& failedCore)
 {
 	return qwen35DataflowContext && qwen35DataflowContext->qwen35DataflowMemory
-		&& qwen35DataflowContext->qwen35DataflowMemory->StopAndAuditAll();
+		&& qwen35DataflowContext->qwen35DataflowMemory->StopAndAuditAll(
+			failedStage,failedCore);
 }
 
 bool

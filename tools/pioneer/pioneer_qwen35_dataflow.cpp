@@ -251,14 +251,17 @@ static bool BindAndInstall(int fd,const D::DeviceLayout& manifest,
 		return false;
 	if (request.result==TT_QWEN35_DATAFLOW_RESULT_COMPLETE
 		&& request.state==TT_QWEN35_DATAFLOW_STATE_READY
-		&& !request.recovery_required && !request.reserved[0] && !request.reserved[1])
+		&& !request.recovery_required && !request.reserved[0]
+		&& !request.reserved[1] && !request.reserved[2])
 		return true;
 	fprintf(stderr,"P100A_Q35_DATAFLOW install_failed result=%u state=%u next_sequence=%u "
 		"recovery=%u diag_stage=%u diag_core=%u worker_state=%u "
-		"worker_failure=%u worker_phase=%u\n",request.result,request.state,
+		"worker_failure=%u worker_phase=%u worker_route=0x%08x\n",
+		request.result,request.state,
 		request.next_sequence,request.recovery_required,request.reserved[0]>>24,
 		request.reserved[0]&0x00ffffff,request.reserved[1]>>24,
-		(request.reserved[1]>>16)&0xff,(request.reserved[1]>>8)&0xff);
+		(request.reserved[1]>>16)&0xff,(request.reserved[1]>>8)&0xff,
+		request.reserved[2]);
 	return false;
 }
 
@@ -275,6 +278,15 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 			&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED
 			&& !request.recovery_required;
 		if (serviceClosed) return true;
+		if (request.result || request.recovery_required || request.reserved[0]
+			|| request.reserved[1] || request.reserved[2]) {
+			fprintf(stderr,"P100A_Q35_DATAFLOW close_failed result=%u state=%u "
+				"recovery=%u diag_stage=%u diag_core=%u audit_detail=%u "
+				"worker_route=0x%08x\n",
+				request.result,request.state,request.recovery_required,
+				request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
+				request.reserved[1]>>24,request.reserved[2]);
+		}
 	}
 	request={};
 	request.version=TT_QWEN35_DATAFLOW_ABI;

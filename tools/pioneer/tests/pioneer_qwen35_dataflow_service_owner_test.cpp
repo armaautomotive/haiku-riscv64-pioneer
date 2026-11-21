@@ -128,7 +128,14 @@ struct MockDataflowIO {
 	}
 	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) const
 	{
-		if (core>=DataflowCoreCount || !held[core] || !output || !bytes) return false;
+		if (core>=DataflowCoreCount || !output || !bytes) return false;
+		const unsigned routeAddress=DataflowWorkerMailboxAddress
+			+offsetof(DataflowWorkerMailbox,reserved);
+		if (address==routeAddress && bytes==sizeof(uint32_t) && started[core]) {
+			memcpy(output,&mailbox[core].reserved[0],bytes);
+			return true;
+		}
+		if (!held[core]) return false;
 		if (address>=DataflowServiceEntryAddress
 			&& address+bytes<=DataflowServiceTextLimit) {
 			const unsigned offset=(address-DataflowServiceEntryAddress)/4;
@@ -162,6 +169,7 @@ struct MockDataflowIO {
 			mailbox[core].state=DataflowWorkerFatal;
 			mailbox[core].failure=DataflowFailureQueue;
 			mailbox[core].phase=failReadyPhase;
+			if (failReadyPhase==2) mailbox[core].reserved[0]=0x12345678;
 			result={mailbox[core].commandSequence,
 				mailbox[core].acknowledgedSequence,
 				mailbox[core].completedSequence,mailbox[core].state,
@@ -348,10 +356,16 @@ struct MockDataflowIO {
 		return true;
 	}
 	bool AbortPendingProjection() { return true; }
-	bool StopAndAuditAll()
+	bool StopAndAuditAll(unsigned& failedStage,unsigned& failedCore)
 	{
 		stopCount++;
-		if (failStopAudit) return false;
+		failedStage=0;
+		failedCore=DataflowCoreCount;
+		if (failStopAudit) {
+			failedStage=4;
+			failedCore=17;
+			return false;
+		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (started[core] && mailbox[core].state==DataflowWorkerFatal
 				&& (mailbox[core].commandSequence
@@ -525,13 +539,14 @@ int main()
 	MockDataflowIO startupFailure{};
 	DataflowServiceOwner startupFailureOwner;
 	startupFailure.failReadyCore=29;
+	startupFailure.failReadyPhase=2;
 	assert(startupFailureOwner.Install(image,startupFailure)
 		==DataflowServiceReadyFailed);
 	const auto& readyDiagnostic=startupFailureOwner.Diagnostic();
 	assert(readyDiagnostic.stage==DataflowServiceDiagnosticWorkerWait
 		&& readyDiagnostic.core==29 && readyDiagnostic.state==DataflowWorkerFatal
 		&& readyDiagnostic.failure==DataflowFailureQueue
-		&& readyDiagnostic.phase==1);
+		&& readyDiagnostic.phase==2 && readyDiagnostic.detail==0x12345678);
 	assert(startupFailure.waitCount==DataflowCoreCount
 		&& startupFailure.startCount==DataflowCoreCount);
 	assert(startupFailureOwner.Close(startupFailure)==DataflowServiceClosed);
@@ -555,6 +570,9 @@ int main()
 	unreadable.failStopAudit=true;
 	assert(unreadableOwner.Close(unreadable)==DataflowServiceStopAuditFailed);
 	assert(unreadableOwner.Faulted() && unreadable.restoreCount==0);
+	assert(unreadableOwner.Diagnostic().stage==DataflowServiceDiagnosticStopAudit
+		&& unreadableOwner.Diagnostic().core==17
+		&& unreadableOwner.Diagnostic().state==4);
 	unreadable.failStopAudit=false;
 	assert(unreadableOwner.Close(unreadable)==DataflowServiceClosed);
 	assert(unreadable.restoreCount==DataflowCoreCount && unreadable.resumeCount==1);

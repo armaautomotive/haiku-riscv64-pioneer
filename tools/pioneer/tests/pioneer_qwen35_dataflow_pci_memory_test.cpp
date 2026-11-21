@@ -132,6 +132,12 @@ int main()
 	startupFatal.phase=1;
 	startupFatal.commandSequence=1;
 	assert(!DataflowPciMailboxStartupFatal(startupFatal));
+	startupFatal.commandSequence=0;
+	startupFatal.phase=2;
+	startupFatal.reserved[0]=0x12345678;
+	assert(DataflowPciMailboxStartupFatal(startupFatal));
+	startupFatal.reserved[1]=1;
+	assert(!DataflowPciMailboxStartupFatal(startupFatal));
 
 	MockPciRaw raw;
 	for (unsigned i=0;i<DataflowPciL1ViewWords;i++)
@@ -220,7 +226,9 @@ int main()
 	raw.serviceImage[119]=true;
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(memory.CaptureCoreState(core));
-	assert(memory.StopAndAuditAll());
+	unsigned stopAuditStage=UINT32_MAX,stopAuditCore=UINT32_MAX;
+	assert(memory.StopAndAuditAll(stopAuditStage,stopAuditCore));
+	assert(stopAuditStage==0 && stopAuditCore==DataflowCoreCount);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(raw.reset[core]==0x47800);
 	assert(raw.mailbox[1].state==DataflowWorkerStopped);
@@ -256,7 +264,8 @@ int main()
 	raw.mailbox[17].phase=2;
 	raw.notIdleCore=17;
 	raw.startupFatalCore=17;
-	assert(memory.StopAndAuditAll());
+	assert(memory.StopAndAuditAll(stopAuditStage,stopAuditCore));
+	assert(stopAuditStage==0 && stopAuditCore==DataflowCoreCount);
 	assert(raw.reset[17]==0x47800);
 	assert(raw.mailbox[17].state==DataflowWorkerFatal);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
@@ -271,6 +280,25 @@ int main()
 	assert(memory.ResumeRestoredFleet());
 	assert(raw.mailbox[17].state==DataflowWorkerReady);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		memory.ReleaseCoreSnapshot(core);
+
+	// A failed physical stop proof identifies both its audit stage and core.
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		raw.reset[core]=0x46800;
+		raw.serviceImage[core]=false;
+		raw.mailbox[core]={};
+		raw.mailbox[core].magic=DataflowWorkerMailboxMagic;
+		raw.mailbox[core].version=DataflowWorkerMailboxVersion;
+		raw.mailbox[core].state=DataflowWorkerReady;
+		assert(memory.CaptureCoreState(core));
+	}
+	raw.serviceImage[23]=true;
+	raw.notIdleCore=23;
+	assert(!memory.StopAndAuditAll(stopAuditStage,stopAuditCore));
+	assert(stopAuditStage==1 && stopAuditCore==23);
+	raw.serviceImage[23]=false;
+	raw.notIdleCore=UINT32_MAX;
+	for (unsigned core=0;core<DataflowCoreCount;core++)
 		memory.ReleaseCoreSnapshot(core);
 	puts("PASS PCI L1 bounds, resident stop, and 120-core clean restore");
 	return 0;

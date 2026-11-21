@@ -80,7 +80,8 @@ static inline bool DataflowPciMailboxReadyForStop(
 }
 
 // Only the worker's two pre-command fatal exits may be recovered by holding
-// the core directly. They run before any command or NoC work is published.
+// the core directly. Phase 2 stores the raw local route in reserved[0] for
+// diagnostics; all other reserved words remain zero.
 static inline bool DataflowPciMailboxStartupFatal(
 	const PioneerQwen35::DataflowWorkerMailbox& mailbox)
 {
@@ -91,7 +92,10 @@ static inline bool DataflowPciMailboxStartupFatal(
 		|| mailbox.state!=PioneerQwen35::DataflowWorkerFatal
 		|| mailbox.failure!=PioneerQwen35::DataflowFailureQueue
 		|| (mailbox.phase!=1 && mailbox.phase!=2)) return false;
-	for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+	for (unsigned i=0;i<7;i++) {
+		if (i==0 && mailbox.phase==2) continue;
+		if (mailbox.reserved[i]) return false;
+	}
 	return true;
 }
 
@@ -360,101 +364,126 @@ public:
 	// Stops only recognized resident dataflow workers. A running original
 	// dispatcher remains in its verified wait loop and is simply held after the
 	// all-core audit. Cores already held after a partial install need no stop.
-	bool StopAndAuditAll()
+	bool StopAndAuditAll(unsigned& failedStage,unsigned& failedCore)
 	{
+		failedStage=0;
+		failedCore=PioneerQwen35::DataflowCoreCount;
+		auto fail=[&](unsigned stage,unsigned core) {
+			failedStage=stage;
+			failedCore=core;
+			return false;
+		};
 		bool held[PioneerQwen35::DataflowCoreCount]{};
 		bool service[PioneerQwen35::DataflowCoreCount]{};
 		bool startupFatal[PioneerQwen35::DataflowCoreCount]{};
 		bool requestStop[PioneerQwen35::DataflowCoreCount]{};
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-			if (!SelectMapped(core)) return false;
+			if (!SelectMapped(core)) return fail(1,core);
 			const unsigned reset=fRaw.ResetRead();
-			if (reset!=fRaw.ResetRead()) return false;
+			if (reset!=fRaw.ResetRead()) return fail(1,core);
 			if (reset==0x47800) {
 				held[core]=true;
 				continue;
 			}
-			if (reset!=0x46800) return false;
+			if (reset!=0x46800) return fail(1,core);
 			service[core]=fRaw.DataflowCoreServiceImageMatches(core);
 			const bool idle=fRaw.DataflowCoreIdleForHold(core);
 			if (!idle) {
 				if (!service[core]
-					|| !fRaw.DataflowCoreStartupFatalIdle(core)) return false;
+					|| !fRaw.DataflowCoreStartupFatalIdle(core))
+					return fail(1,core);
 				startupFatal[core]=true;
 			}
 			if (!service[core]) continue;
 			PioneerQwen35::DataflowWorkerMailbox mailbox{};
-			if (!ReadStableMailbox(core,mailbox)) return false;
+			if (!ReadStableMailbox(core,mailbox)) return fail(2,core);
 			if (DataflowPciMailboxStopped(mailbox)) {
-				if (!QueuesDrained(core)) return false;
+				if (!QueuesDrained(core)) return fail(2,core);
 				continue;
 			}
 			if (startupFatal[core]) {
 				if (!DataflowPciMailboxStartupFatal(mailbox)
-					|| !QueuesDrained(core)) return false;
+					|| !QueuesDrained(core)) return fail(2,core);
 				continue;
 			}
-			if (!DataflowPciMailboxReadyForStop(mailbox)) return false;
+			if (!DataflowPciMailboxReadyForStop(mailbox)) return fail(2,core);
 			requestStop[core]=mailbox.state==PioneerQwen35::DataflowWorkerReady
 				&& mailbox.shutdownSequence==0;
 		}
 
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (!requestStop[core]) continue;
+			failedStage=3;
+			failedCore=core;
 			const uint32_t stop=PioneerQwen35::DataflowWorkerShutdownRequest;
 			const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
 				+offsetof(PioneerQwen35::DataflowWorkerMailbox,shutdownSequence);
-			if (!WriteCoreMemory(core,address,&stop,sizeof(stop))) return false;
+			if (!WriteCoreMemory(core,address,&stop,sizeof(stop))) return fail(3,core);
 		}
 
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (!service[core] || held[core] || startupFatal[core]) continue;
+			failedStage=4;
+			failedCore=core;
 			bool stopped=false;
 			for (unsigned poll=0;poll<StopPollLimit;poll++) {
 				uint32_t state=0;
 				const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
 					+offsetof(PioneerQwen35::DataflowWorkerMailbox,state);
-				if (!ReadCoreMemory(core,address,&state,sizeof(state))) return false;
+				if (!ReadCoreMemory(core,address,&state,sizeof(state)))
+					return fail(4,core);
 				if (state==PioneerQwen35::DataflowWorkerStopped) {
 					stopped=true;
 					break;
 				}
 				if (state==PioneerQwen35::DataflowWorkerFatal
-					|| state==PioneerQwen35::DataflowWorkerFailed) return false;
+					|| state==PioneerQwen35::DataflowWorkerFailed)
+					return fail(4,core);
 				fRaw.Pause();
 			}
-			if (!stopped) return false;
+			if (!stopped) return fail(4,core);
 			PioneerQwen35::DataflowWorkerMailbox mailbox{};
 			if (!ReadStableMailbox(core,mailbox)
 				|| !DataflowPciMailboxStopped(mailbox) || !QueuesDrained(core)
-				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
+				|| !fRaw.DataflowCoreIdleForHold(core)) return fail(4,core);
 		}
 
 		// Prove all participants parked before holding any running core.
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (held[core]) continue;
+			failedStage=5;
+			failedCore=core;
 			if (!SelectMapped(core) || fRaw.ResetRead()!=0x46800
-				|| fRaw.ResetRead()!=0x46800) return false;
+				|| fRaw.ResetRead()!=0x46800) return fail(5,core);
 			if (startupFatal[core]) {
-				if (!fRaw.DataflowCoreStartupFatalIdle(core)) return false;
-			} else if (!fRaw.DataflowCoreIdleForHold(core)) return false;
+				if (!fRaw.DataflowCoreStartupFatalIdle(core))
+					return fail(5,core);
+			} else if (!fRaw.DataflowCoreIdleForHold(core))
+				return fail(5,core);
 		}
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 			if (held[core]) continue;
+			failedStage=6;
+			failedCore=core;
 			if (startupFatal[core]) {
-				if (!HoldCoreAfterStartupFatal(core)) return false;
+				if (!HoldCoreAfterStartupFatal(core)) return fail(6,core);
 				held[core]=true;
-			} else if (!HoldCore(core) || !CoreHeld(core)) return false;
+			} else if (!HoldCore(core) || !CoreHeld(core))
+				return fail(6,core);
 		}
 		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-			if (!CoreHeld(core)) return false;
+			failedStage=7;
+			failedCore=core;
+			if (!CoreHeld(core)) return fail(7,core);
 			if (service[core] && !held[core]) {
 				PioneerQwen35::DataflowWorkerMailbox mailbox{};
 				if (!ReadStableMailbox(core,mailbox)
 					|| !DataflowPciMailboxStopped(mailbox) || !QueuesDrained(core))
-					return false;
+					return fail(7,core);
 			}
 		}
+		failedStage=0;
+		failedCore=PioneerQwen35::DataflowCoreCount;
 		return true;
 	}
 

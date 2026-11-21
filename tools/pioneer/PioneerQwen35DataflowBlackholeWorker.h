@@ -271,6 +271,8 @@ inline bool DataflowWorkerResetQueues()
 	const unsigned localRoute=*reinterpret_cast<volatile uint32_t*>(
 		static_cast<uintptr_t>(0xffb20014));
 	if (!DataflowBlackholeLocalCore(localRoute,core)) {
+		DataflowStoreRelease(mailbox->reserved[0],localRoute);
+		DataflowFence();
 		DataflowWorkerPublish(*mailbox,0,DataflowWorkerFatal,
 			DataflowFailureQueue,2);
 		for (;;) asm volatile("" ::: "memory");
