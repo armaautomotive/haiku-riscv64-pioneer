@@ -365,8 +365,9 @@ fixture test was not run because no local pinned-model path is available. No
 Pioneer access or benchmark was performed.
 
 2026-11-20 rewrite progress: added the manifest-bound recurrent convolution
-operator and its resident worker command in checkpoint `a769eea54c`. It reads the completed recurrent
-QKV sidecar, the model's four-tap convolution weights, and the selected
+operator and its resident worker command in checkpoint `a769eea54c`. It reads
+the completed recurrent QKV sidecar, the model's four-tap convolution weights,
+and the selected
 ping-pong history over NoC 0; each of the 120 cores owns four or five of the
 512 channel panels and writes updated history plus the SiLU result over NoC 1.
 The projection feeding this operation remains the rewrite's Tensix matrix
@@ -385,6 +386,23 @@ This is offline-only evidence. No Pioneer access, silicon validation,
 generated output, benchmark, or assistant integration was done. Delta-state
 math and Alpha/Beta projections, dense attention, state/KV IO, vocabulary
 readout, and token generation remain to be implemented before benchmarking.
+
+Checkpoint `281ca54aab` connects the reserved recurrent Alpha and Beta
+workspaces to their exact model roles in the existing Tensix projection
+builder. The scheduler now permits fewer than 120 output panels: all 120
+resident workers still receive, validate, and acknowledge the command, while
+the two workers owning a 32-row gate projection issue matrix work and the
+remaining 118 complete as bounded no-op workers. The graph authority tracks
+each sidecar independently. Offline tests verify Alpha/Beta role and
+workspace binding, active/inactive invocation coverage, and the all-core
+owner barrier. ASan/UBSan projection, owner, and recurrent-convolution tests
+pass; the RV32IMF role compile passes without A atomics or runtime helpers.
+Offline driver60 SHA-256:
+`a001c424f14e1c09dc8c67dba326732bcc7dc33b475941b1477b8cc971e2e59c`;
+service-image text SHA-256:
+`507aa854644964ec091fb7a19271d87edcad0dbf794481125ff0eda593db76b2`.
+The driver, reload-guard, and default-control package builds pass. These
+remain offline checks; no hardware work or performance result exists.
 
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration

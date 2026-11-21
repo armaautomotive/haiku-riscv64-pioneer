@@ -436,3 +436,21 @@ This has not been loaded or run on the Pioneer. Delta-rule state update,
 Alpha/Beta projections, dense attention, state/KV handling, final vocabulary
 readout, and generation remain open rewrite work; benchmarking and assistant
 integration remain deferred.
+
+## Alpha/Beta projection checkpoint `281ca54aab` (2026-11-20)
+
+The recurrent Alpha and Beta output slots now map to their exact manifest
+weight roles and reserved graph-workspace buffers. The Tensix projection
+builder supports small outputs with fewer active matrix workers while keeping
+the all-120-worker resident command, receipt, and acknowledgement barrier.
+For each 32-row Alpha/Beta projection, two workers own the 16-row panels and
+the other 118 workers validate the command and complete without reading the
+full input or touching Tensix. Offline authority/program checks and the
+mocked all-core owner path pass under ASan/UBSan, as do recurrent convolution
+checks and the Haiku RV32IMF role compile. Offline driver60 SHA-256 is
+`a001c424f14e1c09dc8c67dba326732bcc7dc33b475941b1477b8cc971e2e59c` and
+service-image text SHA-256 is
+`507aa854644964ec091fb7a19271d87edcad0dbf794481125ff0eda593db76b2`.
+No rewritten code has run on the Pioneer. Delta-state math, dense attention,
+state/KV IO, final vocabulary readout, and generation remain before the
+hardware benchmark and assistant integration phases.
