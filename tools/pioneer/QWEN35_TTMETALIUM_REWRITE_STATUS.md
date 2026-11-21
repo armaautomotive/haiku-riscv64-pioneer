@@ -270,13 +270,12 @@ and silicon correctness/performance evidence.
 
 ## Current checkpoint: 2026-11-20
 
-The latest pushed rewrite checkpoint before the current SiLU×Up step is
-`74b03ea215` (`Route Qwen35 Up projection to graph scratch`). The offline
-rewrite has concrete Tensix matrix projection, device-side Q6_K token
-embedding, device-side hidden RMS normalization, and a manifest-bound graph
-Up projection across the resident 120-worker service. The root-only support
-surface still exposes primitives, not generation. No hardware test or decode
-rate is available for the rewrite.
+The latest pushed rewrite checkpoint is `8ed176883c` (`Add Qwen35 device
+SiLU path`). The offline rewrite has concrete Tensix matrix projection,
+device-side Q6_K token embedding, device-side hidden RMS normalization,
+manifest-bound graph Up projection, and device SiLU×Up across the resident
+120-worker service. The root-only support surface still exposes primitives,
+not generation. No hardware test or decode rate is available for the rewrite.
 
 The graph workspace now participates in the projection path. The projection
 request can select the Up-output sidecar, but the authority admits that target
@@ -290,7 +289,7 @@ builds pass. The driver60 SHA-256 is
 complete GGUF fixture test compiles but was not run because no local
 pinned-model path was available. No legacy Work changes are part of this step.
 
-The device-side SiLU×Up step is now implemented in the working tree. Its
+The device-side SiLU×Up step is implemented and pushed in `8ed176883c`. Its
 manifest-bound schedule assigns all 576 sixteen-row panels over the 120
 resident workers (96 workers handle five panels and 24 handle four). Each
 worker reads its gate and graph Up panels over NoC, computes SiLU(gate)×Up on

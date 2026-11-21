@@ -348,7 +348,7 @@ cover this output path, and the driver60, reload-guard, and default-control
 builds pass. The updated driver60 SHA-256 is
 `f7e22d02d4269000aca4ef7750b84db45051b3b0a5f792fda536956ed3b7299d`.
 
-The device-side SiLU×Up operation is now implemented in the working tree. Its
+The device-side SiLU×Up operation is implemented and pushed in `8ed176883c`. Its
 manifest-bound program divides all 576 sixteen-row panels among all 120
 resident workers. Each worker reads gate and Up panels over NoC, computes
 SiLU(gate)×Up on the device, and writes the gate activation in place. The
