@@ -18,8 +18,8 @@ enum : unsigned {
 	DataflowDeltaVersion=1,
 	DataflowDeltaPanelsPerHead=DeltaWidth/16,
 	DataflowDeltaPanelCount=DeltaHeads*DataflowDeltaPanelsPerHead,
-	DataflowDeltaBasePanels=DataflowDeltaPanelCount/DataflowCoreCount,
-	DataflowDeltaRemainderPanels=DataflowDeltaPanelCount%DataflowCoreCount,
+	DataflowDeltaBaseHeads=DeltaHeads/DataflowCoreCount,
+	DataflowDeltaRemainderHeads=DeltaHeads%DataflowCoreCount,
 	DataflowDeltaQChannels=DeltaKeyHeads*DeltaWidth,
 	DataflowDeltaKChannels=DeltaKeyHeads*DeltaWidth,
 	DataflowDeltaVBase=DataflowDeltaQChannels+DataflowDeltaKChannels,
@@ -29,28 +29,29 @@ enum : unsigned {
 	DataflowDeltaHeadStateBytes=DeltaStateWords*sizeof(float)
 };
 
-constexpr unsigned DataflowDeltaFirstPanel(unsigned core)
+constexpr unsigned DataflowDeltaFirstHead(unsigned core)
 {
-	return core*DataflowDeltaBasePanels
-		+(core<DataflowDeltaRemainderPanels?core:DataflowDeltaRemainderPanels);
+	return core*DataflowDeltaBaseHeads
+		+(core<DataflowDeltaRemainderHeads?core:DataflowDeltaRemainderHeads);
 }
 
-constexpr unsigned DataflowDeltaPanelsForCore(unsigned core)
+constexpr unsigned DataflowDeltaHeadsForCore(unsigned core)
 {
-	return DataflowDeltaBasePanels
-		+unsigned(core<DataflowDeltaRemainderPanels);
+	return DataflowDeltaBaseHeads
+		+unsigned(core<DataflowDeltaRemainderHeads);
 }
 
 struct DataflowDeltaProgram {
 	unsigned layer,position;
 	unsigned bankRoute[2][Banks];
 	RowSpace qkv,gate,alpha,beta,stateRead,stateWrite;
-	TensorSpace negativeA,deltaBias;
+	TensorSpace negativeA,deltaBias,deltaNorm;
 
 	PIONEER_QWEN35_DELTA_PROGRAM_SIZE_OPT bool ShapeValid() const
 	{
 		const RowSpace& negA=negativeA.place;
 		const RowSpace& bias=deltaBias.place;
+		const RowSpace& norm=deltaNorm.place;
 		if (layer>=Layers || Dense(layer) || position>=MaxPositions
 			|| !DataflowBankRoutesValid(bankRoute)
 			|| !qkv.Valid() || qkv.rows!=ConvChannels
@@ -67,6 +68,9 @@ struct DataflowDeltaProgram {
 			|| deltaBias.type!=0 || deltaBias.inputs!=DeltaHeads
 			|| !bias.Valid() || bias.rows!=1
 			|| bias.rowBytes!=DeltaHeads*sizeof(float) || bias.unit!=1
+			|| deltaNorm.type!=0 || deltaNorm.inputs!=DeltaWidth
+			|| !norm.Valid() || norm.rows!=1
+			|| norm.rowBytes!=DeltaWidth*sizeof(float) || norm.unit!=1
 			|| !stateRead.Valid() || stateRead.rows!=DeltaHeads
 			|| stateRead.rowBytes!=DataflowDeltaHeadStateBytes
 			|| stateRead.unit!=1 || !stateWrite.Valid()
@@ -100,7 +104,15 @@ struct DataflowDeltaProgram {
 			|| !DataflowGraphWorkspace::Disjoint(bias,beta)
 			|| !DataflowGraphWorkspace::Disjoint(bias,stateRead)
 			|| !DataflowGraphWorkspace::Disjoint(bias,stateWrite)
-			|| !DataflowGraphWorkspace::Disjoint(negA,bias)) return false;
+			|| !DataflowGraphWorkspace::Disjoint(negA,bias)
+			|| !DataflowGraphWorkspace::Disjoint(norm,qkv)
+			|| !DataflowGraphWorkspace::Disjoint(norm,gate)
+			|| !DataflowGraphWorkspace::Disjoint(norm,alpha)
+			|| !DataflowGraphWorkspace::Disjoint(norm,beta)
+			|| !DataflowGraphWorkspace::Disjoint(norm,stateRead)
+			|| !DataflowGraphWorkspace::Disjoint(norm,stateWrite)
+			|| !DataflowGraphWorkspace::Disjoint(norm,negA)
+			|| !DataflowGraphWorkspace::Disjoint(norm,bias)) return false;
 		for (unsigned firstHead=0;firstHead<DeltaHeads;firstHead+=16) {
 			Range alphaRange,betaRange;
 			if (!alpha.Resolve(firstHead,16,0,DataflowDeltaHeadsPanelBytes,alphaRange)
@@ -108,11 +120,13 @@ struct DataflowDeltaProgram {
 				|| !AlignedRange(alphaRange,DataflowDeltaHeadsPanelBytes)
 				|| !AlignedRange(betaRange,DataflowDeltaHeadsPanelBytes)) return false;
 		}
-		Range negativeARange,deltaBiasRange;
+		Range negativeARange,deltaBiasRange,deltaNormRange;
 		if (!negativeA.place.Resolve(0,1,0,DeltaHeads*sizeof(float),negativeARange)
 			|| !deltaBias.place.Resolve(0,1,0,DeltaHeads*sizeof(float),deltaBiasRange)
+			|| !deltaNorm.place.Resolve(0,1,0,DeltaWidth*sizeof(float),deltaNormRange)
 			|| !AlignedRange(negativeARange,DeltaHeads*sizeof(float))
-			|| !AlignedRange(deltaBiasRange,DeltaHeads*sizeof(float))) return false;
+			|| !AlignedRange(deltaBiasRange,DeltaHeads*sizeof(float))
+			|| !AlignedRange(deltaNormRange,DeltaWidth*sizeof(float))) return false;
 		return true;
 	}
 
@@ -157,18 +171,20 @@ struct DataflowDeltaProgram {
 };
 
 struct DataflowDeltaInvocation {
-	unsigned magic,version,core,firstPanel,panelCount;
+	unsigned magic,version,core,firstHead,headCount;
 	DataflowDeltaProgram program;
 
 	bool Valid() const
 	{
 		if (magic!=DataflowDeltaMagic || version!=DataflowDeltaVersion
 			|| core>=DataflowCoreCount || !program.ShapeValid()
-			|| firstPanel!=DataflowDeltaFirstPanel(core)
-			|| panelCount!=DataflowDeltaPanelsForCore(core)
-			|| panelCount>DataflowDeltaPanelCount-firstPanel) return false;
-		for (unsigned panel=firstPanel;panel<firstPanel+panelCount;panel++)
-			if (!program.PanelRangesValid(panel)) return false;
+			|| firstHead!=DataflowDeltaFirstHead(core)
+			|| headCount!=DataflowDeltaHeadsForCore(core)
+			|| headCount>DeltaHeads-firstHead) return false;
+		for (unsigned head=firstHead;head<firstHead+headCount;head++)
+			for (unsigned panel=0;panel<DataflowDeltaPanelsPerHead;panel++)
+				if (!program.PanelRangesValid(head*DataflowDeltaPanelsPerHead+panel))
+					return false;
 		return true;
 	}
 };
@@ -187,13 +203,17 @@ public:
 			return false;
 		const TensorSpace* negativeA=manifest.Weight(layer,NegativeA);
 		const TensorSpace* deltaBias=manifest.Weight(layer,DeltaBias);
-		if (!negativeA || !deltaBias || negativeA->type!=0
+		const TensorSpace* deltaNorm=manifest.Weight(layer,DeltaNorm);
+		if (!negativeA || !deltaBias || !deltaNorm || negativeA->type!=0
 			|| negativeA->inputs!=DeltaHeads || negativeA->place.rows!=1
 			|| negativeA->place.rowBytes!=DeltaHeads*sizeof(float)
 			|| negativeA->place.unit!=1 || deltaBias->type!=0
 			|| deltaBias->inputs!=DeltaHeads || deltaBias->place.rows!=1
 			|| deltaBias->place.rowBytes!=DeltaHeads*sizeof(float)
-			|| deltaBias->place.unit!=1) return false;
+			|| deltaBias->place.unit!=1 || deltaNorm->type!=0
+			|| deltaNorm->inputs!=DeltaWidth || deltaNorm->place.rows!=1
+			|| deltaNorm->place.rowBytes!=DeltaWidth*sizeof(float)
+			|| deltaNorm->place.unit!=1) return false;
 		DataflowDeltaProgram candidate{};
 		candidate.layer=layer;
 		candidate.position=position;
@@ -205,6 +225,7 @@ public:
 		candidate.beta=workspace.space[DataflowGraphRecurrentBetaWorkspaceIndex];
 		candidate.negativeA=*negativeA;
 		candidate.deltaBias=*deltaBias;
+		candidate.deltaNorm=*deltaNorm;
 		candidate.stateRead=manifest.layers[layer].delta[position&1];
 		candidate.stateWrite=manifest.layers[layer].delta[(position&1)^1];
 		if (!candidate.Valid()) return false;
@@ -220,8 +241,8 @@ public:
 		candidate.magic=DataflowDeltaMagic;
 		candidate.version=DataflowDeltaVersion;
 		candidate.core=core;
-		candidate.firstPanel=DataflowDeltaFirstPanel(core);
-		candidate.panelCount=DataflowDeltaPanelsForCore(core);
+		candidate.firstHead=DataflowDeltaFirstHead(core);
+		candidate.headCount=DataflowDeltaHeadsForCore(core);
 		candidate.program=program;
 		if (!candidate.Valid()) return false;
 		result=candidate;
@@ -229,9 +250,9 @@ public:
 	}
 };
 
-static_assert(DataflowDeltaPanelCount==256 && DataflowDeltaBasePanels==2
-	&& DataflowDeltaRemainderPanels==16,
-	"the recurrent state update assigns every 16-value panel across all 120 cores");
+static_assert(DataflowDeltaPanelCount==256 && DataflowDeltaBaseHeads==0
+	&& DataflowDeltaRemainderHeads==unsigned(DeltaHeads),
+	"the recurrent head owner keeps each RMS normalization group on one worker");
 static_assert(sizeof(DataflowDeltaInvocation)<=DataflowProgramRegionBytes,
 	"the recurrent state invocation fits the resident L1 command slot");
 

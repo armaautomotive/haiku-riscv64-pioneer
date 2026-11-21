@@ -64,6 +64,15 @@ static TensorSpace MakeScalarVector(unsigned base)
 	return result;
 }
 
+static TensorSpace MakeNormVector(unsigned base)
+{
+	TensorSpace result{};
+	result.type=0;
+	result.inputs=DeltaWidth;
+	result.place=MakeVector(1,DeltaWidth*sizeof(float),base);
+	return result;
+}
+
 struct DeltaOwnerMockIO {
 	DataflowProjectionAuthority& authority;
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
@@ -126,7 +135,7 @@ struct DeltaOwnerMockIO {
 	bool AuditDelta(const DataflowDeltaProgram& program,unsigned sequence,
 		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount])
 	{
-		bool covered[DataflowDeltaPanelCount]{};
+		bool covered[DeltaHeads]{};
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowDeltaInvocation expected{};
 			if (!written[core] || receipts[core].commandSequence!=sequence
@@ -135,14 +144,14 @@ struct DeltaOwnerMockIO {
 				|| receipts[core].failure || receipts[core].phase!=2
 				|| !DataflowDeltaProgramBuilder::BindCore(program,core,expected)
 				|| memcmp(&expected,&invocation[core],sizeof(expected))!=0) return false;
-			for (unsigned panel=expected.firstPanel;
-				panel<expected.firstPanel+expected.panelCount;panel++) {
-				if (covered[panel]) return false;
-				covered[panel]=true;
+			for (unsigned head=expected.firstHead;
+				head<expected.firstHead+expected.headCount;head++) {
+				if (covered[head]) return false;
+				covered[head]=true;
 			}
 		}
-		for (unsigned panel=0;panel<DataflowDeltaPanelCount;panel++)
-			if (!covered[panel]) return false;
+		for (unsigned head=0;head<DeltaHeads;head++)
+			if (!covered[head]) return false;
 		auditCount++;
 		return true;
 	}
@@ -193,6 +202,7 @@ int main()
 		4*sizeof(float),1,0x15000000);
 	manifest.layers[0].weights[NegativeA]=MakeScalarVector(0x16000000);
 	manifest.layers[0].weights[DeltaBias]=MakeScalarVector(0x17000000);
+	manifest.layers[0].weights[DeltaNorm]=MakeNormVector(0x18000000);
 	manifest.layers[0].conv[0]=MakeRows(ConvChannels,3*sizeof(float),1,
 		0x20000000);
 	manifest.layers[0].conv[1]=MakeRows(ConvChannels,3*sizeof(float),1,
@@ -231,15 +241,15 @@ int main()
 	DataflowDeltaProgram delta{};
 	assert(authority.BuildDelta(0,0,delta));
 	assert(delta.Valid());
-	unsigned panelCount=0;
+	unsigned headCount=0;
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		DataflowDeltaInvocation invocation{};
 		assert(DataflowDeltaProgramBuilder::BindCore(delta,core,invocation));
 		assert(invocation.Valid());
-		assert(invocation.panelCount==(core<16?3U:2U));
-		panelCount+=invocation.panelCount;
+		assert(invocation.headCount==(core<DeltaHeads?1U:0U));
+		headCount+=invocation.headCount;
 	}
-	assert(panelCount==DataflowDeltaPanelCount);
+	assert(headCount==DeltaHeads);
 
 	DataflowProjectionOwner owner;
 	DeltaOwnerMockIO ownerIO(authority);

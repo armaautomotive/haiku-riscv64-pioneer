@@ -426,7 +426,16 @@ inline bool DataflowWorkerResetQueues()
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowDeltaStateOutputAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
-							DataflowActivationCacheAddress)),io);
+							DataflowActivationCacheAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowActivationCacheAddress
+								+DataflowDeltaScalarCount*sizeof(float))),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowActivationCacheAddress
+								+(DataflowDeltaScalarCount+DeltaWidth)*sizeof(float))),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowActivationCacheAddress
+								+(DataflowDeltaScalarCount+2*DeltaWidth)*sizeof(float))),io);
 			}
 			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 		} else {

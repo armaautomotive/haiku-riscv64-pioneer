@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdio>
 
+#define PIONEER_Q35_OPERATOR_TEST 1
+#include "../PioneerQwen35Operators.h"
 #include "../PioneerQwen35DataflowBlackholeDeltaWorker.h"
 
 using namespace PioneerQwen35;
@@ -14,6 +16,22 @@ static bool Near(float actual,float expected,float tolerance=2.0e-6f)
 
 int main()
 {
+	float recurrent[DeltaWidth],norm[DeltaWidth],gate[DeltaWidth];
+	float expected[DeltaWidth];
+	for (unsigned i=0;i<DeltaWidth;i++) {
+		recurrent[i]=float(int(i%17)-8)*0.03125f;
+		norm[i]=0.75f+float(i%7)*0.03125f;
+		gate[i]=float(int(i%11)-5)*0.125f;
+	}
+	assert(Rms<DeltaWidth>(recurrent,norm,expected));
+	for (unsigned i=0;i<DeltaWidth;i++)
+		expected[i]*=gate[i]*Sigmoid(gate[i]);
+	float actual[DeltaWidth];
+	for (unsigned i=0;i<DeltaWidth;i++) actual[i]=recurrent[i];
+	assert(DataflowDeltaNormalizeAndGate(actual,norm,gate));
+	for (unsigned i=0;i<DeltaWidth;i++)
+		assert(PioneerAttentionBits(actual[i])==PioneerAttentionBits(expected[i]));
+
 	float query[DeltaWidth]={},key[DeltaWidth]={};
 	query[0]=1.0f;
 	key[0]=1.0f;
@@ -50,6 +68,6 @@ int main()
 
 	query[0]=NAN;
 	assert(!DataflowDeltaNormalizeQk(query,key));
-	std::puts("PASS Qwen35 delta recurrence: Q/K normalization, gates, zero-state and warm-state update");
+	std::puts("PASS Qwen35 delta recurrence: Q/K normalization, state update, RMS and SiLU gate");
 	return 0;
 }

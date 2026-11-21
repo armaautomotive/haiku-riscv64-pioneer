@@ -154,7 +154,11 @@ class DataflowProjectionAuthority {
 			|| program.deltaBias.type!=expected.deltaBias.type
 			|| program.deltaBias.inputs!=expected.deltaBias.inputs
 			|| !DataflowRowSpaceMatches(program.deltaBias.place,
-				expected.deltaBias.place)) return false;
+				expected.deltaBias.place)
+			|| program.deltaNorm.type!=expected.deltaNorm.type
+			|| program.deltaNorm.inputs!=expected.deltaNorm.inputs
+			|| !DataflowRowSpaceMatches(program.deltaNorm.place,
+				expected.deltaNorm.place)) return false;
 		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
 			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
 				return false;

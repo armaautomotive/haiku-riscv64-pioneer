@@ -118,45 +118,100 @@ DataflowDeltaUpdatePanel(const float* query,const float* key,
 	return true;
 }
 
+PIONEER_QWEN35_DELTA_SIZE_OPT inline bool
+DataflowDeltaRoundedMean(const DataflowRmsSum& sum,float& mean)
+{
+	if (!(sum.high|sum.low)) {
+		mean=0;
+		return true;
+	}
+	uint32_t mantissa=(sum.high<<3)|(sum.low>>29);
+	const uint32_t tail=sum.low&0x1fffffffU;
+	int exponent=sum.exponent-7;
+	if (tail>0x10000000U || (tail==0x10000000U && (mantissa&1))) mantissa++;
+	if (mantissa==0x01000000U) { mantissa>>=1; exponent++; }
+	if (exponent>127) return false;
+	mean=exponent< -126?0.0f:PioneerAttentionFloat(
+		(uint32_t(exponent+127)<<23)|(mantissa&0x7fffffU));
+	return true;
+}
+
+PIONEER_QWEN35_DELTA_SIZE_OPT inline bool
+DataflowDeltaNormalizeAndGate(float* output,const float* norm,const float* gate)
+{
+	if (!output || !norm || !gate) return false;
+	DataflowRmsSum sum;
+	for (unsigned i=0;i<DeltaWidth;i++) {
+		if (!DataflowRmsDomain(output[i]) || !DataflowRmsDomain(norm[i])
+			|| !DataflowRmsDomain(gate[i])
+			|| !sum.Add(PioneerQ38PrepareFlush(output[i]*output[i]))) return false;
+	}
+	float mean=0;
+	if (!DataflowDeltaRoundedMean(sum,mean)) return false;
+	const float denominator=PioneerGraphSqrtPositive(mean+1e-6f);
+	if (!(denominator>0) || !DataflowDeltaFinite(denominator)) return false;
+	const float scale=PioneerGraphDividePositive(1.0f,denominator);
+	if (!(scale>0) || !DataflowRmsDomain(scale)) return false;
+	for (unsigned i=0;i<DeltaWidth;i++) {
+		const float normalized=(output[i]*scale)*norm[i];
+		const float magnitude=PioneerAttentionFloat(
+			PioneerAttentionBits(gate[i])&0x7fffffffU);
+		const float exponential=PioneerQ38PrepareNegativeExp(-magnitude);
+		const float sigmoid=PioneerGraphDividePositive(
+			gate[i]>=0?1.0f:exponential,1.0f+exponential);
+		const float result=normalized*(gate[i]*sigmoid);
+		if (!DataflowDeltaFinite(normalized) || !DataflowDeltaFinite(exponential)
+			|| !DataflowDeltaFinite(sigmoid) || !DataflowDeltaFinite(result)) return false;
+		output[i]=result;
+	}
+	return true;
+}
+
 template<class IO>
 PIONEER_QWEN35_DELTA_SIZE_OPT
 bool PioneerQwen35DataflowDeltaWorker(const DataflowDeltaInvocation& invocation,
 	float* queryPage,float* keyPage,float* valuePage,
-	float* stateReadPage,float* stateWritePage,float* scalarPage,IO& io)
+	float* stateReadPage,float* stateWritePage,float* scalarPage,
+	float* headOutput,float* normPage,float* gatePage,IO& io)
 {
 	if (!invocation.Valid() || !queryPage || !keyPage || !valuePage
-		|| !stateReadPage || !stateWritePage || !scalarPage
+		|| !stateReadPage || !stateWritePage || !scalarPage || !headOutput
+		|| !normPage || !gatePage
 		|| !io.Bind(invocation)) return false;
+	if (!invocation.headCount) return true;
 	float* const negativeA=scalarPage+DataflowDeltaNegativeAOffset;
 	float* const deltaBias=scalarPage+DataflowDeltaBiasOffset;
 	float* const alpha=scalarPage+DataflowDeltaAlphaOffset;
 	float* const betaLogit=scalarPage+DataflowDeltaBetaOffset;
-	if (!io.ReadParameters(negativeA,deltaBias,alpha,betaLogit)) return false;
-	unsigned cachedHead=~0U;
-	float decay=0,beta=0;
-	for (unsigned local=0;local<invocation.panelCount;local++) {
-		const unsigned panel=invocation.firstPanel+local;
-		const unsigned head=panel/DataflowDeltaPanelsPerHead;
-		const unsigned subPanel=panel%DataflowDeltaPanelsPerHead;
-		const unsigned firstValue=head*DeltaWidth+subPanel*16;
-		if (head!=cachedHead) {
-			if (!io.ReadQueryKey(head,queryPage,keyPage)
-				|| !DataflowDeltaNormalizeQk(queryPage,keyPage)
-				|| !DataflowDeltaHeadGates(negativeA[head],deltaBias[head],
-					alpha[head],betaLogit[head],decay,beta)) return false;
-			cachedHead=head;
+	if (!io.ReadParameters(negativeA,deltaBias,alpha,betaLogit)
+		|| !io.ReadDeltaNorm(normPage)) return false;
+	for (unsigned local=0;local<invocation.headCount;local++) {
+		const unsigned head=invocation.firstHead+local;
+		if (!io.ReadQueryKey(head,queryPage,keyPage)
+			|| !DataflowDeltaNormalizeQk(queryPage,keyPage)
+			|| !io.ReadGateHead(head,gatePage)) return false;
+		float decay=0,beta=0;
+		if (!DataflowDeltaHeadGates(negativeA[head],deltaBias[head],
+			alpha[head],betaLogit[head],decay,beta)) return false;
+		for (unsigned subPanel=0;subPanel<DataflowDeltaPanelsPerHead;subPanel++) {
+			const unsigned firstValue=head*DeltaWidth+subPanel*16;
+			if (!io.ReadValuePanel(firstValue,valuePage)) return false;
+			if (invocation.program.position) {
+				if (!io.ReadStatePanel(head,subPanel,stateReadPage)) return false;
+			} else {
+				volatile float* zero=stateReadPage;
+				for (unsigned i=0;i<DeltaWidth*16;i++) zero[i]=0.0f;
+			}
+			if (!DataflowDeltaUpdatePanel(queryPage,keyPage,valuePage,stateReadPage,
+				stateWritePage,valuePage,decay,beta)
+				|| !io.WriteStatePanel(head,subPanel,stateWritePage)) return false;
+			for (unsigned lane=0;lane<16;lane++)
+				headOutput[subPanel*16+lane]=valuePage[lane];
 		}
-		if (!io.ReadValuePanel(firstValue,valuePage)) return false;
-		if (invocation.program.position) {
-			if (!io.ReadStatePanel(head,subPanel,stateReadPage)) return false;
-		} else {
-			volatile float* zero=stateReadPage;
-			for (unsigned i=0;i<DeltaWidth*16;i++) zero[i]=0.0f;
-		}
-		if (!DataflowDeltaUpdatePanel(queryPage,keyPage,valuePage,stateReadPage,
-			stateWritePage,valuePage,decay,beta)
-			|| !io.WriteStatePanel(head,subPanel,stateWritePage)
-			|| !io.WriteValuePanel(firstValue,valuePage)) return false;
+		if (!DataflowDeltaNormalizeAndGate(headOutput,normPage,gatePage)) return false;
+		for (unsigned subPanel=0;subPanel<DataflowDeltaPanelsPerHead;subPanel++)
+			if (!io.WriteValuePanel(head*DeltaWidth+subPanel*16,
+				headOutput+subPanel*16)) return false;
 	}
 	return true;
 }
@@ -214,19 +269,19 @@ class DataflowBlackholeDeltaOps {
 		return completed==rows;
 	}
 
-	bool ReadTensor(const TensorSpace& tensor,float* output) const
+	bool ReadTensor(const TensorSpace& tensor,unsigned inputs,float* output) const
 	{
 		if (!fInvocation || !output || tensor.type!=0
-			|| tensor.inputs!=DeltaHeads || !tensor.place.Valid()
+			|| tensor.inputs!=inputs || !tensor.place.Valid()
 			|| tensor.place.rows!=1
-			|| tensor.place.rowBytes!=DeltaHeads*sizeof(float)
+			|| tensor.place.rowBytes!=inputs*sizeof(float)
 			|| tensor.place.unit!=1) return false;
 		Range range;
-		return tensor.place.Resolve(0,1,0,DeltaHeads*sizeof(float),range)
-			&& DataflowDeltaProgram::AlignedRange(range,DeltaHeads*sizeof(float))
+		return tensor.place.Resolve(0,1,0,inputs*sizeof(float),range)
+			&& DataflowDeltaProgram::AlignedRange(range,inputs*sizeof(float))
 			&& fReader.Read(range.address,
 				fInvocation->program.bankRoute[0][range.bank],
-				reinterpret_cast<uint8_t*>(output),DeltaHeads*sizeof(float));
+				reinterpret_cast<uint8_t*>(output),inputs*sizeof(float));
 	}
 
 public:
@@ -241,10 +296,23 @@ public:
 	bool ReadParameters(float* negativeA,float* deltaBias,float* alpha,
 		float* beta) const
 	{
-		return fInvocation && ReadTensor(fInvocation->program.negativeA,negativeA)
-			&& ReadTensor(fInvocation->program.deltaBias,deltaBias)
+		return fInvocation && ReadTensor(fInvocation->program.negativeA,DeltaHeads,negativeA)
+			&& ReadTensor(fInvocation->program.deltaBias,DeltaHeads,deltaBias)
 			&& ReadFloatRows(fInvocation->program.alpha,0,DeltaHeads,alpha)
 			&& ReadFloatRows(fInvocation->program.beta,0,DeltaHeads,beta);
+	}
+
+	bool ReadDeltaNorm(float* norm) const
+	{
+		return fInvocation
+			&& ReadTensor(fInvocation->program.deltaNorm,DeltaWidth,norm);
+	}
+
+	bool ReadGateHead(unsigned head,float* gate) const
+	{
+		return fInvocation && head<DeltaHeads && gate
+			&& ReadFloatRows(fInvocation->program.gate,head*DeltaWidth,
+				DeltaWidth,gate);
 	}
 
 	bool ReadQueryKey(unsigned head,float* query,float* key) const

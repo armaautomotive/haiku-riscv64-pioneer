@@ -12,16 +12,20 @@ objects="$build/objects/haiku/riscv64"
 sdk="$objects/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop"
 umask 077
 mkdir -m 700 "$output"
-flags="-std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32"
+flags="-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32"
 
 "$cross-g++" $flags -I"$directory" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" \
 	-c "$directory/PioneerQwen35DataflowServiceImage.cpp" -o "$output/service.o"
+"$cross-g++" $flags -I"$directory" -I"$sdk/headers" \
+	-idirafter "$sdk/headers/posix" \
+	-c "$directory/PioneerQwen35DataflowMemory.cpp" -o "$output/memory.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
 	"$directory/blackhole_qwen35_dataflow_service_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 	-T "$directory/blackhole_qwen35_dataflow_service.ld" \
-	"$output/start.o" "$output/service.o" -Map "$output/service.map" \
+	"$output/start.o" "$output/service.o" "$output/memory.o" \
+	-Map "$output/service.map" \
 	-o "$output/service.elf"
 "$cross-objcopy" -O binary -j .boot "$output/service.elf" "$output/boot.bin"
 "$cross-objcopy" -O binary -j .text "$output/service.elf" "$output/text.bin"
