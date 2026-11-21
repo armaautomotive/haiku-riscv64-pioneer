@@ -85,7 +85,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010107ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010108ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010109ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010110ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010110ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010111ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -9269,6 +9270,20 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 						|((diagnostic.failure&0xff)<<16)
 						|((diagnostic.phase&0xff)<<8);
 					request.reserved[2]=diagnostic.detail;
+				}
+			}
+			if (request.action==TT_QWEN35_DATAFLOW_ACTION_QUERY
+				|| request.action==TT_QWEN35_DATAFLOW_ACTION_RECOVER) {
+				const auto& diagnostic=service->OwnerDiagnostic();
+				if (diagnostic.operation!=PioneerQwen35::DataflowOwnerOperationNone) {
+					const unsigned core=diagnostic.core
+						<PioneerQwen35::DataflowCoreCount?diagnostic.core:0xffffU;
+					request.reserved[0]=((diagnostic.result&0xffU)<<24)
+						|((core&0xffffU)<<8)|(diagnostic.operation&0xffU);
+					request.reserved[1]=((diagnostic.worker.state&0xffU)<<24)
+						|((diagnostic.worker.failure&0xffU)<<16)
+						|((diagnostic.worker.phase&0xffU)<<8);
+					request.reserved[2]=diagnostic.pendingSequence;
 				}
 			}
 		}

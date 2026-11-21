@@ -265,6 +265,47 @@ static bool BindAndInstall(int fd,const D::DeviceLayout& manifest,
 	return false;
 }
 
+static void PrintOwnerDiagnostic(const char* action,
+	const tt_qwen35_dataflow_request& request)
+{
+	const unsigned packed=request.reserved[0];
+	const unsigned core=(packed>>8)&0xffffU;
+	fprintf(stderr,"P100A_Q35_DATAFLOW %s result=%u state=%u recovery=%u "
+		"owner_result=%u owner_core=%s%u owner_operation=%u "
+		"worker_state=%u worker_failure=%u worker_phase=%u pending_sequence=%u\n",
+		action,request.result,request.state,request.recovery_required,
+		packed>>24,core==0xffffU?"none/":"",core==0xffffU?0:core,
+		packed&0xffU,request.reserved[1]>>24,
+		(request.reserved[1]>>16)&0xffU,(request.reserved[1]>>8)&0xffU,
+		request.reserved[2]);
+}
+
+static bool RecoverRewrite(int fd,bool installAttempted)
+{
+	if (!installAttempted) return true;
+	tt_qwen35_dataflow_request query{};
+	query.version=TT_QWEN35_DATAFLOW_ABI;
+	query.action=TT_QWEN35_DATAFLOW_ACTION_QUERY;
+	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&query,sizeof(query))) {
+		fputs("P100A_Q35_DATAFLOW recover_query_failed\n",stderr);
+		return false;
+	}
+	if (query.state!=TT_QWEN35_DATAFLOW_STATE_FAULTED
+		|| !query.recovery_required) return true;
+	PrintOwnerDiagnostic("recover_before_close",query);
+	tt_qwen35_dataflow_request request{};
+	request.version=TT_QWEN35_DATAFLOW_ABI;
+	request.action=TT_QWEN35_DATAFLOW_ACTION_RECOVER;
+	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request))) {
+		fputs("P100A_Q35_DATAFLOW recover_request_failed\n",stderr);
+		return false;
+	}
+	PrintOwnerDiagnostic("recover_result",request);
+	return request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
+		&& request.state==TT_QWEN35_DATAFLOW_STATE_READY
+		&& !request.recovery_required;
+}
+
 static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 	bool& serviceClosed)
 {
@@ -289,6 +330,15 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 				request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
 				request.reserved[1]>>24,(request.reserved[1]>>16)&0xff,
 				(request.reserved[1]>>8)&0xff,request.reserved[2]);
+		}
+		if (request.result==TT_QWEN35_DATAFLOW_RESULT_STOP_AUDIT_FAILED
+			&& request.recovery_required && attempt<2) {
+			if (RecoverRewrite(fd,installAttempted)) {
+				fprintf(stderr,"P100A_Q35_DATAFLOW close_retry_after_recovery "
+					"attempt=%u\n",attempt+1);
+				continue;
+			}
+			break;
 		}
 		if (request.result!=TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED
 			|| !request.recovery_required || attempt==2) break;
@@ -383,6 +433,7 @@ static bool End(int fd,bool bankOpen,bool spanOpen,bool authorityBound,
 			span.closed,span.recovery_required);
 		okay=ended && okay;
 	}
+	RecoverRewrite(fd,installAttempted);
 	bool serviceClosed=false;
 	const bool closeOkay=CloseRewrite(fd,authorityBound,installAttempted,
 		serviceClosed);

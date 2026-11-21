@@ -152,6 +152,8 @@ public:
 	bool Started() const { return fPhase!=PhaseEmpty; }
 	unsigned NextSequence() const { return fProjectionOwner.NextSequence(); }
 	const DataflowServiceDiagnostic& Diagnostic() const { return fDiagnostic; }
+	const DataflowOwnerDiagnostic& OwnerDiagnostic() const
+		{ return fProjectionOwner.Diagnostic(); }
 
 	template<class IO>
 	DataflowServiceResult Install(const DataflowServiceImageView& image,IO& io)

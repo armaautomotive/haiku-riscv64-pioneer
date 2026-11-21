@@ -56,8 +56,32 @@ recovery evidence are in
 Tag0110 build details are in
 [`benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0110-20261121/BUILD.md).
 
+Tag0111 is an offline rewrite checkpoint for that embedding failure. The
+resident owner now preserves the failed worker's core, state, failure, phase,
+and command sequence for QUERY/RECOVER diagnostics. The authority can abort a
+pending embedding after the all-core audit, leaving its output activation and
+vocabulary invalid. The client requests same-owner recovery before closing
+the service and retries close after a recoverable stop-audit failure. The
+full driver/client build and focused ASan/UBSan owner, service-owner, and
+authority tests pass. Tag0111 has not been installed on the Pioneer; there is
+no new hardware result, output, or throughput measurement. Build details are
+in [`benchmarks/qwen35-dataflow-tag0111-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0111-20261121/BUILD.md).
+
 ## Progress
 
+- 2026-11-21 (tag0111, offline rewrite): Added worker-level embedding failure
+  receipts to QUERY/RECOVER, made a pending embedding safely abortable after
+  the all-core recovery audit, and moved recovery into the same open service
+  ownership window before CLOSE. Focused program, service-owner, and owner
+  ASan/UBSan tests pass. The complete offline tag0111 driver/client/service
+  image build passes; driver SHA-256 is
+  `34b8680b70b9664176492832be457a26bc82263efaf2be39a233f3e1bad29bd4`, and
+  client SHA-256 is
+  `a043d2c1ba96ed28133bbf46ced63e6e1b9e70811d0ce5fedac764c3011419ae`.
+  This is an offline checkpoint only: it has not been installed on the
+  Pioneer. The card remains recovered on stable driver55 generation2; no valid
+  output or decode tokens/s measurement exists. See
+  `benchmarks/qwen35-dataflow-tag0111-20261121/BUILD.md`.
 - 2026-11-21 (tag0110): The tag0109 `EINVAL` was traced to a missing outer
   ioctl route for operations after `RESIDUAL`. `ProbeControl` now routes the
   contiguous rewrite range through generation. Added compile-time range

@@ -19,6 +19,16 @@ struct DataflowWorkerSnapshot {
 	unsigned state,failure,phase;
 };
 
+enum : unsigned {
+	DataflowOwnerOperationNone=0,
+	DataflowOwnerOperationEmbedding=1
+};
+
+struct DataflowOwnerDiagnostic {
+	unsigned operation,result,core,pendingSequence;
+	DataflowWorkerSnapshot worker;
+};
+
 enum DataflowOwnerResult {
 	DataflowOwnerComplete=0,
 	DataflowOwnerInvalidState=1,
@@ -59,6 +69,8 @@ class DataflowProjectionOwner {
 	unsigned fNextSequence=0;
 	unsigned fPendingSequence=0;
 	DataflowWorkerSnapshot fSnapshot[DataflowCoreCount]{};
+	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
+		DataflowOwnerComplete,DataflowCoreCount,0,{}};
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{
@@ -76,6 +88,7 @@ public:
 	bool Initialized() const { return fInitialized; }
 	bool Faulted() const { return fFaulted; }
 	unsigned NextSequence() const { return fNextSequence; }
+	const DataflowOwnerDiagnostic& Diagnostic() const { return fDiagnostic; }
 
 	template<class IO>
 	DataflowOwnerResult Initialize(IO& io)
@@ -303,44 +316,57 @@ public:
 	template<class IO>
 	DataflowOwnerResult RunEmbedding(const DataflowEmbeddingProgram& program,IO& io)
 	{
-		if (!fInitialized || fFaulted) return DataflowOwnerInvalidState;
-		if (!program.Valid()) return DataflowOwnerInvalidProgram;
-		if (fNextSequence>=DataflowWorkerSequenceLimit)
-			return DataflowOwnerSequenceExhausted;
-		if (!io.AuthorizeEmbedding(program))
-			return DataflowOwnerProgramUnauthorized;
-		if (!io.BeginEmbedding(program))
-			return DataflowOwnerProjectionBeginFailed;
-		const unsigned sequence=fNextSequence+1;
-		fPendingSequence=sequence;
-		auto preparationFailed=[&](DataflowOwnerResult result) {
-			fFaulted=true;
+		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
+			DataflowCoreCount,0,{}};
+		auto record=[&](DataflowOwnerResult result,unsigned core,
+			const DataflowWorkerSnapshot* worker,bool faulted) {
+			fDiagnostic.result=result;
+			fDiagnostic.core=core;
+			fDiagnostic.pendingSequence=fPendingSequence;
+			if (worker) fDiagnostic.worker=*worker;
+			if (faulted) fFaulted=true;
 			return result;
 		};
+		if (!fInitialized || fFaulted)
+			return record(DataflowOwnerInvalidState,DataflowCoreCount,nullptr,false);
+		if (!program.Valid())
+			return record(DataflowOwnerInvalidProgram,DataflowCoreCount,nullptr,false);
+		if (fNextSequence>=DataflowWorkerSequenceLimit)
+			return record(DataflowOwnerSequenceExhausted,DataflowCoreCount,nullptr,false);
+		if (!io.AuthorizeEmbedding(program))
+			return record(DataflowOwnerProgramUnauthorized,DataflowCoreCount,nullptr,false);
+		if (!io.BeginEmbedding(program))
+			return record(DataflowOwnerProjectionBeginFailed,DataflowCoreCount,nullptr,false);
+		const unsigned sequence=fNextSequence+1;
+		fPendingSequence=sequence;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
 			if (!io.ReadWorkerSnapshot(core,snapshot)
 				|| !DataflowWorkerSnapshotReady(snapshot)
 				|| !io.CoreReady(core,snapshot))
-				return preparationFailed(DataflowOwnerCoreNotReady);
+				return record(DataflowOwnerCoreNotReady,core,&snapshot,true);
 			fSnapshot[core]=snapshot;
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowEmbeddingInvocation invocation{};
 			if (!DataflowEmbeddingProgramBuilder::BindCore(program,core,invocation))
-				return preparationFailed(DataflowOwnerInvalidProgram);
+				return record(DataflowOwnerInvalidProgram,core,&fSnapshot[core],true);
 			if (!io.WriteEmbeddingInvocation(core,invocation))
-				return preparationFailed(DataflowOwnerInvocationWriteFailed);
+				return record(DataflowOwnerInvocationWriteFailed,core,
+					&fSnapshot[core],true);
 			if (!io.EmbeddingInvocationMatches(core,invocation))
-				return preparationFailed(DataflowOwnerInvocationReadbackFailed);
+				return record(DataflowOwnerInvocationReadbackFailed,core,
+					&fSnapshot[core],true);
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!io.PublishCommand(core,sequence)) {
-				fFaulted=true;
-				return DataflowOwnerCommandPublishFailed;
+				return record(DataflowOwnerCommandPublishFailed,core,
+					&fSnapshot[core],true);
 			}
 		}
 		bool allTerminal=true,allComplete=true;
+		unsigned failedCore=DataflowCoreCount;
+		DataflowWorkerSnapshot failedSnapshot{};
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot receipt{};
 			const bool observed=io.WaitForCompletion(core,sequence,receipt);
@@ -351,19 +377,24 @@ public:
 			} else if (receipt.state!=DataflowWorkerComplete || receipt.failure) {
 				allComplete=false;
 			}
+			if (failedCore==DataflowCoreCount
+				&& (!observed || !Terminal(receipt,sequence)
+					|| receipt.state!=DataflowWorkerComplete || receipt.failure)) {
+				failedCore=core;
+				failedSnapshot=receipt;
+			}
 		}
 		if (!allTerminal || !allComplete) {
-			fFaulted=true;
-			return DataflowOwnerWorkerFailed;
+			return record(DataflowOwnerWorkerFailed,failedCore,
+				&failedSnapshot,true);
 		}
 		if (!io.AuditEmbedding(program,sequence,fSnapshot)) {
-			fFaulted=true;
-			return DataflowOwnerAuditFailed;
+			return record(DataflowOwnerAuditFailed,DataflowCoreCount,nullptr,true);
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!io.Acknowledge(core,sequence)) {
-				fFaulted=true;
-				return DataflowOwnerAcknowledgementFailed;
+				return record(DataflowOwnerAcknowledgementFailed,core,
+					&fSnapshot[core],true);
 			}
 		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -378,17 +409,19 @@ public:
 				}
 			}
 			if (!ready) {
-				fFaulted=true;
-				return DataflowOwnerAcknowledgementFailed;
+				return record(DataflowOwnerAcknowledgementFailed,core,
+					&snapshot,true);
 			}
 			fSnapshot[core]=snapshot;
 		}
 		if (!io.CompleteEmbedding(program,sequence)) {
-			fFaulted=true;
-			return DataflowOwnerProjectionCommitFailed;
+			return record(DataflowOwnerProjectionCommitFailed,DataflowCoreCount,
+				nullptr,true);
 		}
 		fNextSequence=sequence;
 		fPendingSequence=0;
+		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
+			DataflowCoreCount,0,{}};
 		return DataflowOwnerComplete;
 	}
 

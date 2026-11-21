@@ -51,6 +51,7 @@ struct MockDataflowIO {
 	unsigned beginCount=0,completeCount=0;
 	unsigned failStartCore=UINT32_MAX,failIdleCore=UINT32_MAX;
 	unsigned failReadyCore=UINT32_MAX,failReadyPhase=1;
+	unsigned failWorkerCore=UINT32_MAX;
 	bool failStopAudit=false,failResume=false,failBegin=false,failComplete=false;
 	bool authorizeProgram=true;
 
@@ -273,10 +274,13 @@ struct MockDataflowIO {
 	{
 		if (core>=DataflowCoreCount || mailbox[core].commandSequence!=sequence) return false;
 		mailbox[core].completedSequence=sequence;
-		mailbox[core].state=DataflowWorkerComplete;
-		mailbox[core].phase=2;
+		mailbox[core].state=core==failWorkerCore
+			?DataflowWorkerFailed:DataflowWorkerComplete;
+		mailbox[core].failure=core==failWorkerCore
+			?DataflowFailureReader:0;
+		mailbox[core].phase=core==failWorkerCore?5:2;
 		snapshot[core]={sequence,mailbox[core].acknowledgedSequence,sequence,
-			mailbox[core].state,0,2};
+			mailbox[core].state,mailbox[core].failure,mailbox[core].phase};
 		result=snapshot[core];
 		return true;
 	}
@@ -330,18 +334,28 @@ struct MockDataflowIO {
 		snapshot[core]={sequence,sequence,sequence,DataflowWorkerReady,0,0};
 		return true;
 	}
-	bool AuditAndRecoverAll(unsigned sequence,DataflowWorkerSnapshot (&)[DataflowCoreCount])
+	bool AuditAndRecoverAll(unsigned sequence,
+		DataflowWorkerSnapshot (&snapshots)[DataflowCoreCount])
 	{
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
-			if (mailbox[core].commandSequence==sequence
-				&& mailbox[core].completedSequence<sequence) {
-				mailbox[core].completedSequence=sequence;
-				mailbox[core].state=DataflowWorkerFailed;
-				mailbox[core].failure=DataflowFailureQueue;
-				mailbox[core].phase=5;
-				snapshot[core]={sequence,mailbox[core].acknowledgedSequence,
-					sequence,DataflowWorkerFailed,DataflowFailureQueue,5};
+			if (mailbox[core].commandSequence==sequence) {
+				if (mailbox[core].completedSequence<sequence) {
+					mailbox[core].completedSequence=sequence;
+					mailbox[core].state=DataflowWorkerFailed;
+					mailbox[core].failure=DataflowFailureQueue;
+					mailbox[core].phase=5;
+				}
+				if (mailbox[core].state!=DataflowWorkerComplete
+					&& mailbox[core].state!=DataflowWorkerFailed) return false;
+				mailbox[core].acknowledgedSequence=sequence;
+				mailbox[core].state=DataflowWorkerReady;
+				mailbox[core].failure=0;
+				mailbox[core].phase=0;
 			}
+			snapshot[core]={mailbox[core].commandSequence,
+				mailbox[core].acknowledgedSequence,mailbox[core].completedSequence,
+				mailbox[core].state,mailbox[core].failure,mailbox[core].phase};
+			snapshots[core]=snapshot[core];
 		}
 		return true;
 	}
@@ -524,6 +538,32 @@ int main()
 	for (unsigned core=0;core<DataflowCoreCount;core++)
 		assert(io.released[core] && !io.captured[core]
 			&& io.started[core]==io.originalRunning[core]);
+
+	MockDataflowIO embeddingFailure{};
+	DataflowServiceOwner embeddingFailureOwner;
+	assert(embeddingFailureOwner.Install(image,embeddingFailure)
+		==DataflowServiceComplete);
+	embeddingFailure.failWorkerCore=7;
+	assert(embeddingFailureOwner.EmbedToken(embedding,embeddingFailure)
+		==DataflowServiceEmbeddingFailed);
+	const auto& embeddingDiagnostic=embeddingFailureOwner.OwnerDiagnostic();
+	assert(embeddingFailureOwner.Faulted()
+		&& embeddingDiagnostic.operation==DataflowOwnerOperationEmbedding
+		&& embeddingDiagnostic.result==DataflowOwnerWorkerFailed
+		&& embeddingDiagnostic.core==7
+		&& embeddingDiagnostic.pendingSequence==1
+		&& embeddingDiagnostic.worker.state==DataflowWorkerFailed
+		&& embeddingDiagnostic.worker.failure==DataflowFailureReader
+		&& embeddingDiagnostic.worker.phase==5);
+	assert(embeddingFailureOwner.RecoverProjection(embeddingFailure)
+		==DataflowServiceRecovered);
+	assert(embeddingFailureOwner.Ready()
+		&& !embeddingFailureOwner.Faulted()
+		&& embeddingFailureOwner.NextSequence()==1);
+	assert(embeddingFailureOwner.Close(embeddingFailure)==DataflowServiceClosed);
+	assert(embeddingFailure.stopCount==1
+		&& embeddingFailure.restoreCount==DataflowCoreCount
+		&& embeddingFailure.resumeCount==1);
 
 	MockDataflowIO partial{};
 	DataflowServiceOwner partialOwner;

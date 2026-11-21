@@ -304,6 +304,14 @@ static void CheckTiedOutputProjection()
 	assert(authority.BindValidatedModel(manifest,workspace,TestBankRoutes));
 	assert(authority.MarkActivationInitialized(0,Hidden));
 	assert(authority.MarkActivationInitialized(1,Hidden));
+	DataflowEmbeddingProgram embedding{};
+	assert(authority.BuildEmbedding(42,0,embedding));
+	assert(authority.BeginEmbedding(embedding)
+		&& authority.PendingEmbeddingMatches(embedding)
+		&& !authority.ActivationReady(0));
+	assert(authority.AbortPendingProjection() && !authority.Pending()
+		&& !authority.ActivationReady(0) && !authority.VocabularyReady());
+	assert(authority.MarkActivationInitialized(0,Hidden));
 	DataflowProjectionProgram tied{};
 	assert(DataflowProgramBuilder::Build(manifest.tied,manifest.activation[1],Hidden,
 		workspace.space[DataflowGraphVocabularyWorkspaceIndex],TestBankRoutes,tied));

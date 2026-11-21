@@ -1203,6 +1203,10 @@ public:
 			if (fPendingOutput>=ActivationBuffers) return false;
 			fActivationRows[fPendingOutput]=0;
 			fGraphWorkspaceReady[DataflowGraphUpWorkspaceIndex]=false;
+		} else if (fPendingKind==PendingEmbedding) {
+			if (fPendingOutput>=ActivationBuffers) return false;
+			fActivationRows[fPendingOutput]=0;
+			InvalidateVocabulary();
 		} else if (fPendingKind==PendingResidual) {
 			if (fPendingOutput>=ActivationBuffers) return false;
 			if (fPendingResidualMode==DataflowResidualAdd)

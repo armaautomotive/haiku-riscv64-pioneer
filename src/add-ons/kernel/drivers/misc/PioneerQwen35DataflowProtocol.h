@@ -36,6 +36,9 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_STATE_FAULTED=2,
 	TT_QWEN35_DATAFLOW_STATE_CLOSED=3,
 	TT_QWEN35_DATAFLOW_RESULT_COMPLETE=0,
+	TT_QWEN35_DATAFLOW_RESULT_RECOVERY_PENDING=13,
+	TT_QWEN35_DATAFLOW_RESULT_RECOVERED=14,
+	TT_QWEN35_DATAFLOW_RESULT_STOP_AUDIT_FAILED=15,
 	TT_QWEN35_DATAFLOW_RESULT_CLOSED=17,
 	TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED=18
 };
@@ -56,7 +59,11 @@ struct tt_qwen35_dataflow_request {
 	// reserved[2] contains action-specific detail: a raw local route on a
 	// phase-2 worker startup fault, or the resume detail on CLOSE stage9.
 	// Resume detail 1 means reset mismatch, 2 generic idle-proof failure, and
-	// 0x101..0x124 identify the failing restored-core idle subproof.
+	// 0x101..0x124 identify the failing restored-core idle subproof. QUERY and
+	// RECOVER return the last decoder-operation detail in reserved[0] as
+	// owner_result:8 | core:16 | operation:8, reserved[1] as worker
+	// state:8 | failure:8 | phase:8 | zero:8, and reserved[2] as the pending
+	// worker sequence. A core value of 0xffff means no worker was isolated.
 	uint32_t reserved[3];
 };
 
