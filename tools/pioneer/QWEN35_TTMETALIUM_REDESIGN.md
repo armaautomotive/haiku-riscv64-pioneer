@@ -229,8 +229,11 @@ and restore cases under AddressSanitizer and UndefinedBehaviorSanitizer. For
 resident workers, it permits writes only to the invocation and the individual
 command/acknowledgement words, requires reset to remain released, and asks the
 platform adapter for the exact wait/receipt and idle-NoC proof before the
-write. Worker-owned mailbox status fields remain read-only to the host. This
-helper is not yet connected to `PioneerSessionIO`: its stable-mapping and
+write. Worker-owned mailbox status fields remain read-only to the host. The
+helper also implements the resident service owner's per-core snapshot calls.
+Its fake-PCI test captures, restores, and resumes all 120 workers with a mixed
+held/running reset state, and rejects fleet resume when any snapshot is
+missing. It is not yet connected to `PioneerSessionIO`: its stable-mapping and
 physical per-core idle/NoC proofs are still required production hooks, and it
 does not provide the projection route audit or Work-mode lifecycle. The four
 existing owner/service tests and the RV32IMF target compile also still pass.

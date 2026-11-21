@@ -66,6 +66,7 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 template<class Raw>
 class PioneerQwen35DataflowPciMemory {
 	Raw& fRaw;
+	DataflowPciCoreSnapshot fSnapshots[PioneerQwen35::DataflowCoreCount]{};
 
 	bool SelectMapped(unsigned core)
 	{
@@ -78,6 +79,12 @@ class PioneerQwen35DataflowPciMemory {
 	{
 		value=fRaw.Q38PanelRead(address);
 		return true; // every caller has already proved the fixed mapping/range
+	}
+
+	bool CoreResetMatches(unsigned core,unsigned expected)
+	{
+		return SelectMapped(core) && fRaw.ResetRead()==expected
+			&& fRaw.ResetRead()==expected;
 	}
 
 public:
@@ -189,6 +196,21 @@ public:
 		return true;
 	}
 
+	// These overloads match DataflowServiceOwner's per-core lifecycle contract.
+	// A single owner instance retains every snapshot until the whole restored
+	// fleet has resumed successfully.
+	bool CaptureCoreState(unsigned core)
+	{
+		return core<PioneerQwen35::DataflowCoreCount
+			&& CaptureCoreState(core,fSnapshots[core]);
+	}
+
+	void ReleaseCoreSnapshot(unsigned core)
+	{
+		if (core<PioneerQwen35::DataflowCoreCount)
+			ReleaseCoreSnapshot(fSnapshots[core]);
+	}
+
 	bool RestoreCoreState(unsigned core,const DataflowPciCoreSnapshot& snapshot)
 	{
 		if (!snapshot.captured || snapshot.core!=core || !snapshot.localWords
@@ -204,6 +226,12 @@ public:
 		return fRaw.RuntimeCodeRead(0)==snapshot.boot && CoreHeld(core);
 	}
 
+	bool RestoreCoreState(unsigned core)
+	{
+		return core<PioneerQwen35::DataflowCoreCount
+			&& RestoreCoreState(core,fSnapshots[core]);
+	}
+
 	bool VerifyCoreStateRestored(unsigned core,
 		const DataflowPciCoreSnapshot& snapshot)
 	{
@@ -215,6 +243,28 @@ public:
 			if (observed!=snapshot.localWords[i]) return false;
 		}
 		return fRaw.ResetRead()==0x47800;
+	}
+
+	bool VerifyCoreStateRestored(unsigned core)
+	{
+		return core<PioneerQwen35::DataflowCoreCount
+			&& VerifyCoreStateRestored(core,fSnapshots[core]);
+	}
+
+	bool ResumeRestoredFleet()
+	{
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (!fSnapshots[core].captured
+				|| !VerifyCoreStateRestored(core,fSnapshots[core])) return false;
+		}
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (fSnapshots[core].reset==0x46800 && !StartCore(core)) return false;
+		}
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			if (!CoreResetMatches(core,fSnapshots[core].reset)
+				|| !fRaw.DataflowCoreIdleForHold(core)) return false;
+		}
+		return true;
 	}
 
 	static void ReleaseCoreSnapshot(DataflowPciCoreSnapshot& snapshot)

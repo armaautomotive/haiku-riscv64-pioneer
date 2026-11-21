@@ -8,28 +8,36 @@
 
 struct MockPciRaw {
 	uint32_t panel[DataflowPciL1ViewWords]{};
-	unsigned boot=PioneerQwen35::DataflowServiceBootWord;
-	unsigned reset=0x46800;
+	unsigned boot[PioneerQwen35::DataflowCoreCount];
+	unsigned reset[PioneerQwen35::DataflowCoreCount];
 	unsigned selected=UINT32_MAX;
 	unsigned writes=0;
 	bool mapped=true;
 	bool idle=true;
 	bool idleForWrite=true;
 
+	MockPciRaw()
+	{
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+			boot[core]=PioneerQwen35::DataflowServiceBootWord;
+			reset[core]=0x46800;
+		}
+	}
 	bool SelectRuntimeCore(unsigned core) { selected=core; return core<120; }
 	bool DataflowPanelMappingStable() const { return mapped; }
 	bool DataflowCoreIdleForHold(unsigned core) const { return core<120 && idle; }
 	bool DataflowCoreIdleForWrite(unsigned core,unsigned,unsigned) const
 		{ return core<120 && idleForWrite; }
-	unsigned ResetRead() const { return reset; }
-	unsigned RuntimeCodeRead(unsigned word) const { assert(word==0); return boot; }
+	unsigned ResetRead() const { assert(selected<120); return reset[selected]; }
+	unsigned RuntimeCodeRead(unsigned word) const
+		{ assert(word==0 && selected<120); return boot[selected]; }
 	void RuntimeCodeWrite(unsigned word,unsigned value)
 	{
-		assert(word==0);
-		boot=value;
+		assert(word==0 && selected<120);
+		boot[selected]=value;
 		writes++;
 	}
-	void RuntimeResetWrite(unsigned value) { reset=value; }
+	void RuntimeResetWrite(unsigned value) { assert(selected<120); reset[selected]=value; }
 	uint32_t Q38PanelRead(unsigned address) const
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
@@ -89,7 +97,7 @@ int main()
 	assert(!memory.WriteCoreMemory(3,0x7000,&text,sizeof(text)));
 	assert(!memory.WriteCoreMemory(3,DataflowServiceTextLimit-4,&text,8));
 	assert(memory.StartCore(3)); // valid boot word starts the core
-	assert(raw.reset==0x46800);
+	assert(raw.reset[3]==0x46800);
 	const unsigned commandAddress=DataflowWorkerMailboxAddress
 		+offsetof(DataflowWorkerMailbox,commandSequence);
 	raw.idleForWrite=false;
@@ -98,23 +106,48 @@ int main()
 	assert(!memory.WriteCoreMemory(3,DataflowWorkerMailboxAddress
 		+offsetof(DataflowWorkerMailbox,state),&text,sizeof(text)));
 	raw.idleForWrite=true;
-	raw.reset=0x87ffff;
+	raw.reset[3]=0x87ffff;
 	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
-	raw.reset=0x46800;
+	raw.reset[3]=0x46800;
 	assert(memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
 	assert(memory.WriteCoreMemory(3,commandAddress,&text,sizeof(text)));
 	assert(memory.HoldCore(3));
-	assert(raw.boot==DataflowServiceBootWord);
+	assert(raw.boot[3]==DataflowServiceBootWord);
 
 	assert(memory.RestoreCoreState(3,snapshot));
 	assert(memory.VerifyCoreStateRestored(3,snapshot));
-	assert(raw.reset==0x47800);
-	assert(raw.boot==PioneerQwen35::DataflowServiceBootWord);
+	assert(raw.reset[3]==0x47800);
+	assert(raw.boot[3]==PioneerQwen35::DataflowServiceBootWord);
 	for (unsigned i=0;i<DataflowPciL1ViewWords;i++)
 		assert(raw.panel[i]==originalPanel[i]);
 
 	memory.ReleaseCoreSnapshot(snapshot);
 	assert(!snapshot.captured && !snapshot.localWords);
-	puts("PASS PCI L1 bounds, resident writes, hold gates, snapshot, and restore");
+	assert(memory.CaptureCoreState(4));
+	assert(memory.HoldCore(4));
+	const uint32_t changed=0x01020304;
+	assert(memory.WriteCoreMemory(4,DataflowServiceEntryAddress,&changed,sizeof(changed)));
+	assert(memory.RestoreCoreState(4));
+	assert(memory.VerifyCoreStateRestored(4));
+	assert(!memory.ResumeRestoredFleet()); // incomplete 120-core snapshot set
+	memory.ReleaseCoreSnapshot(4);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		raw.reset[core]=0x46800;
+	raw.reset[0]=0x47800;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.CaptureCoreState(core));
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.HoldCore(core));
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.RestoreCoreState(core));
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(memory.VerifyCoreStateRestored(core));
+	assert(memory.ResumeRestoredFleet());
+	assert(raw.reset[0]==0x47800);
+	for (unsigned core=1;core<PioneerQwen35::DataflowCoreCount;core++)
+		assert(raw.reset[core]==0x46800);
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+		memory.ReleaseCoreSnapshot(core);
+	puts("PASS PCI L1 bounds, resident writes, and 120-core mixed-state restore");
 	return 0;
 }
