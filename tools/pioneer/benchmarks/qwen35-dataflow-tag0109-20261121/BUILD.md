@@ -52,7 +52,13 @@ After one authorized cold recovery, the guarded helper restored stable driver55
 generation2; the 4B and 27B model files remained intact. See the tag0108
 [`RUN.md`](../qwen35-dataflow-tag0108-20261121/RUN.md) and its evidence.
 
-Tag0109 is the next guarded trial. No new hardware result is claimed here.
-The target remains two valid warm outputs and at least 100 decode tokens/s,
-with model load, prompt processing, and decode reported separately and a clean
-unload.
+Tag0109 also passed guarded preflight and uploaded the full model.
+Authentication took `100.467732` s, prompt tokenization `13.243073` s, and
+model load/upload `334.616263` s. Its first generation ioctl returned
+`EINVAL`; close again failed at stage9/core0/detail3
+(`DataflowServiceResumeIdleProofFailed`). No prompt processing, valid output,
+decode timing, or tokens/s was produced. The wrapper retained the exclusive
+lock and stable backup; fresh-boot recovery is pending. See [`RUN.md`](RUN.md)
+and the raw evidence. Tag0109 has not validated its diagnostic changes on
+hardware. The target remains two valid warm outputs and at least 100 decode
+tokens/s, with phase timings separated and clean unload.

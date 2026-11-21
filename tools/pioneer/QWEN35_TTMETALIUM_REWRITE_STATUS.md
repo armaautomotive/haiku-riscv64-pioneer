@@ -23,25 +23,25 @@ separately. The target remains two valid warm outputs at 100 decode tokens/s
 or higher, followed by clean unload. No valid output or decode-rate measurement
 has been produced yet.
 
-The latest pushed checkpoint is `7b276e8740` (tag0108 result and recovery).
-Tag0108 uploaded all `2,740,498,432` resident bytes after a guarded preflight.
-Authentication took `100.027643` s, prompt tokenization took `13.277220` s,
-and model load/upload took `334.815789` s. The first generation ioctl returned
-`EINVAL`; no prompt-processing or decode timing was completed. Unload then
-failed at fleet resume, stage9/core0/substage3. Following one authorized cold
-recovery, the guarded helper restored stable driver55 generation2 idle; the
-trial lock is absent, and the 4B and 27B files retain their verified sizes.
-Details and evidence are in
-[`benchmarks/qwen35-dataflow-tag0108-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0108-20261121/RUN.md).
+The latest pushed code checkpoint is `f6d746c23b` (tag0109 rewrite and
+artifact hashes). Tag0109 passed guarded preflight and uploaded all
+`2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
+tokenization `13.243073` s, and model load/upload `334.616263` s. Generation
+ioctl `0xAF56` returned `EINVAL`; the client diagnostic printed the request
+fields, but no prompt processing, valid output, decode timing, or tokens/s was
+produced. Unload again failed at stage9/core0/detail3, the restored-core idle
+proof. The client exited; the guarded wrapper retained the exclusive lock and
+stable-driver backup while the candidate reports generation3 `cold1
+active_owner1`. A cold recovery is pending. The 4B and 27B files retain their
+verified sizes. Run details and raw evidence are in
+[`benchmarks/qwen35-dataflow-tag0109-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0109-20261121/RUN.md).
 
-Tag0109 adds request-rejection diagnostics and a bounded restore settle delay.
-Its full offline variant-60 driver, resident service, reload guard,
-default-control package, and Haiku client build successfully. The owner and
-PCI-memory ASan/UBSan fixtures and RV32IMF target compile pass. Its guarded
-trial/recovery scripts are prepared but have not run on the card. The latest
-known Pioneer state after tag0108 recovery is stable driver55 generation2
-idle on Haiku; a fresh guarded preflight is required immediately before the
-next hardware trial. Tag0109 details and hashes are in
+Tag0109's request-rejection diagnostic and bounded restore settle delay did
+not resolve either hardware failure. The offline variant-60 build, owner and
+PCI-memory ASan/UBSan fixtures, RV32IMF compile, and guarded-script syntax
+checks pass. After restoring stable driver55, continue the rewrite offline to
+make the request ABI acceptance explicit and make error teardown recoverable
+before another benchmark. Tag0109 build hashes are in
 [`benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md).
 
 ## Progress
@@ -55,8 +55,8 @@ next hardware trial. Tag0109 details and hashes are in
   `b87123aab5ff32e7080f14addf7e8e8a945c100e6380032eb52745e6a0387f84`, and
   client SHA-256 is
   `d55bed03a653529c78383c04d19584def654fda83d874257e06ab48e406be4a0`.
-  Tag0108's failed generation and resume results remain the latest silicon
-  evidence; tag0109 still needs guarded hardware validation. See
+  Tag0109 silicon evidence is now recorded. It still has not passed generation
+  or clean unload. See
   `benchmarks/qwen35-dataflow-tag0109-20261121/BUILD.md`.
 - 2026-11-21: Added the standalone resident-dataflow benchmark client and
   builder. It authenticates the pinned GGUF, uploads the packed model, binds
