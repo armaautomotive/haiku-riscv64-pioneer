@@ -15,6 +15,9 @@ enum : unsigned {
 	DataflowServiceBootWord=0x0006c06f,
 	DataflowServiceChunkWords=64
 };
+static_assert(sizeof(DataflowQueueControl)*DataflowCircularBufferCount
+	==DataflowQueueStateBytes,
+	"resident startup clears exactly the reserved queue-control region");
 
 struct DataflowServiceImageView {
 	unsigned bootWord;
@@ -47,13 +50,16 @@ enum DataflowServiceResult {
 	DataflowServiceRecovered=14,
 	DataflowServiceStopAuditFailed=15,
 	DataflowServiceRestoreFailed=16,
-	DataflowServiceClosed=17
+	DataflowServiceClosed=17,
+	DataflowServiceResumeFailed=18
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the
 // only platform-specific layer: it must prove driver/session idleness, save
 // and restore each core's touched L1/runtime state, perform bounded L1 copies,
-// and audit reset, route, worker status, and NoC state. This class does no
+	// and audit reset, route, worker status, and NoC state. RestoreCoreState
+	// must leave cores held; ResumeRestoredFleet restores their captured reset
+	// states only after every core's L1 and boot state has been verified. This class does no
 // inference and starts no core until all 120 images and startup records have
 // been read back successfully.
 class DataflowServiceOwner {
@@ -236,6 +242,7 @@ public:
 				|| !io.VerifyCoreStateRestored(core))
 				return DataflowServiceRestoreFailed;
 		}
+		if (!io.ResumeRestoredFleet()) return DataflowServiceResumeFailed;
 		ReleaseSnapshots(io);
 		fPhase=PhaseClosed;
 		return DataflowServiceClosed;

@@ -236,10 +236,13 @@ rewrite is implemented.
   holds every core, stages the worker image in bounded 256-byte chunks, and
   reads back code, queue controls, mailbox, and boot word before starting any
   worker. It waits for every worker's ready receipt, then delegates projection
-  commands. Close stops and audits the fleet before restoring and verifying
-  every captured core state. The ASan/UBSan mock passes full-fleet startup,
-  preflight refusal, partial-start close, stop-audit retry, projection, and
-  restore. This is still an IO contract and mock: the Haiku PCI/L1/reset
+  commands. Close stops and audits the fleet, restores and verifies all
+  captured L1 and boot state while cores remain held, then resumes each core's
+  captured reset state only after the whole fleet matches. The ASan/UBSan mock
+  passes full-fleet startup, preflight refusal, partial-start close, stop-audit
+  retry, projection, restoration, and original running/held-state recovery. A
+  Haiku RV32IMF compile of the service owner also passes. This is still an IO
+  contract and mock: the Haiku PCI/L1/reset
   adapter, generated-image packaging, full model graph, and physical recovery
   proof remain unimplemented. No Pioneer access, benchmark, or assistant
   integration was performed.

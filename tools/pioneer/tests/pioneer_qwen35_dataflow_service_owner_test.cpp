@@ -34,6 +34,7 @@ struct MockDataflowIO {
 	bool captured[DataflowCoreCount]{};
 	bool held[DataflowCoreCount]{};
 	bool started[DataflowCoreCount]{};
+	bool originalRunning[DataflowCoreCount]{};
 	bool restored[DataflowCoreCount]{};
 	bool released[DataflowCoreCount]{};
 	bool idle[DataflowCoreCount];
@@ -43,14 +44,16 @@ struct MockDataflowIO {
 	DataflowWorkerMailbox mailbox[DataflowCoreCount]{};
 	DataflowCoreInvocation invocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
-	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0;
+	unsigned captureCount=0,writeCount=0,startCount=0,stopCount=0,restoreCount=0,resumeCount=0;
 	unsigned failStartCore=UINT32_MAX,failIdleCore=UINT32_MAX;
-	bool failStopAudit=false;
+	bool failStopAudit=false,failResume=false;
 
 	MockDataflowIO()
 	{
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			idle[core]=true;
+			originalRunning[core]=(core%4)!=0;
+			started[core]=originalRunning[core];
 			snapshot[core].state=DataflowWorkerReady;
 		}
 	}
@@ -86,6 +89,7 @@ struct MockDataflowIO {
 	{
 		if (core>=DataflowCoreCount || !captured[core]) return false;
 		held[core]=true;
+		started[core]=false;
 		return true;
 	}
 	bool CoreHeld(unsigned core) const { return core<DataflowCoreCount && held[core]; }
@@ -249,6 +253,16 @@ struct MockDataflowIO {
 	{
 		return core<DataflowCoreCount && restored[core];
 	}
+	bool ResumeRestoredFleet()
+	{
+		resumeCount++;
+		if (failResume) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			started[core]=originalRunning[core];
+			held[core]=!originalRunning[core];
+		}
+		return true;
+	}
 };
 
 int main()
@@ -286,9 +300,11 @@ int main()
 	assert(owner.RunProjection(program,io)==DataflowServiceComplete);
 	assert(owner.NextSequence()==1);
 	assert(owner.Close(io)==DataflowServiceClosed && owner.Closed());
-	assert(io.stopCount==1 && io.restoreCount==DataflowCoreCount);
+	assert(io.stopCount==1 && io.restoreCount==DataflowCoreCount
+		&& io.resumeCount==1);
 	for (unsigned core=0;core<DataflowCoreCount;core++)
-		assert(io.released[core] && !io.captured[core]);
+		assert(io.released[core] && !io.captured[core]
+			&& io.started[core]==io.originalRunning[core]);
 
 	MockDataflowIO partial{};
 	DataflowServiceOwner partialOwner;
@@ -296,7 +312,9 @@ int main()
 	assert(partialOwner.Install(image,partial)==DataflowServiceStartFailed);
 	assert(partialOwner.Faulted() && partial.captureCount==DataflowCoreCount);
 	assert(partialOwner.Close(partial)==DataflowServiceClosed);
-	assert(partial.restoreCount==DataflowCoreCount);
+	assert(partial.restoreCount==DataflowCoreCount && partial.resumeCount==1);
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		assert(partial.started[core]==partial.originalRunning[core]);
 
 	MockDataflowIO unreadable{};
 	DataflowServiceOwner unreadableOwner;
@@ -306,7 +324,17 @@ int main()
 	assert(unreadableOwner.Faulted() && unreadable.restoreCount==0);
 	unreadable.failStopAudit=false;
 	assert(unreadableOwner.Close(unreadable)==DataflowServiceClosed);
-	assert(unreadable.restoreCount==DataflowCoreCount);
+	assert(unreadable.restoreCount==DataflowCoreCount && unreadable.resumeCount==1);
+
+	MockDataflowIO resumeFailure{};
+	DataflowServiceOwner resumeFailureOwner;
+	assert(resumeFailureOwner.Install(image,resumeFailure)==DataflowServiceComplete);
+	resumeFailure.failResume=true;
+	assert(resumeFailureOwner.Close(resumeFailure)==DataflowServiceResumeFailed);
+	assert(resumeFailureOwner.Faulted() && resumeFailure.restoreCount==DataflowCoreCount);
+	resumeFailure.failResume=false;
+	assert(resumeFailureOwner.Close(resumeFailure)==DataflowServiceClosed);
+	assert(resumeFailure.resumeCount==2);
 
 	std::puts("PASS Qwen35 resident owner preflights 120 cores, verifies image before launch, and restores state after clean or partial launch");
 	return 0;
