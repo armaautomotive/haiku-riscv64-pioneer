@@ -271,8 +271,8 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The latest pushed rewrite checkpoint is `cd6c25e985` (`Compose recurrent
-decoder layer sequence`). The offline rewrite includes Tensix matrix projections,
+The latest pushed rewrite checkpoint is `6e0f12b4ff` (`Authorize dense Qwen35
+projection sequence`). The offline rewrite includes Tensix matrix projections,
 device-side Q6_K token embedding and hidden RMS normalization, manifest-bound
 graph projections, SiLU×Up, residual save/add, feed-forward sequencing,
 recurrent convolution, Alpha/Beta projections, delta-state update, and fused
@@ -284,7 +284,7 @@ residual adds, and the existing FFN sequence. Dense attention/KV, mixed dense
 and recurrent full-model orchestration, final vocabulary readout, and token
 generation remain incomplete. No hardware test or decode rate is available.
 
-2026-11-21 local rewrite progress: added exact authorization and readiness
+Checkpoint `6e0f12b4ff` adds exact authorization and readiness
 tracking for the dense QueryAndGate, Key, and Value Tensix projections. The
 projection test now checks the required QG -> K -> V order, workspace role and
 layer ownership, and all 120 active Tensix assignments for QueryAndGate. The
