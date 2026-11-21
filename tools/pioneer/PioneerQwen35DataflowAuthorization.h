@@ -7,6 +7,7 @@
 #include "PioneerQwen35DataflowRmsProgram.h"
 #include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35DataflowSiluProgram.h"
+#include "PioneerQwen35DataflowResidualProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -17,7 +18,7 @@ namespace PioneerQwen35 {
 class DataflowProjectionAuthority {
 	enum : unsigned {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
-		PendingGraphProjection=4,PendingSilu=5
+		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -25,9 +26,11 @@ class DataflowProjectionAuthority {
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
 	bool fGraphUpReady=false;
+	bool fGraphResidualReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
 	unsigned fPendingKind=PendingNone;
+	unsigned fPendingResidualMode=0;
 
 	bool Slots(const DataflowProjectionProgram& program,unsigned& input,
 		unsigned& output) const
@@ -90,6 +93,20 @@ class DataflowProjectionAuthority {
 		return true;
 	}
 
+	bool ResidualMatches(const DataflowResidualProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowResidualProgram expected{};
+		if (!DataflowResidualProgramBuilder::Build(fManifest,fGraphWorkspace,
+			program.mode,program.activationSlot,fRoutes,expected)
+			|| !DataflowRowSpaceMatches(expected.activation,program.activation)
+			|| !DataflowRowSpaceMatches(expected.residual,program.residual)) return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
+	}
+
 public:
 	DataflowProjectionAuthority()=default;
 	DataflowProjectionAuthority(const DataflowProjectionAuthority&)=delete;
@@ -109,6 +126,7 @@ public:
 		return slot<ActivationBuffers?fActivationRows[slot]:0;
 	}
 	bool GraphUpReady() const { return fBound && fGraphUpReady; }
+	bool GraphResidualReady() const { return fBound && fGraphResidualReady; }
 
 	bool BuildProjection(unsigned layer,unsigned role,unsigned inputSlot,
 		unsigned outputSlot,DataflowProjectionProgram& program) const
@@ -199,6 +217,62 @@ public:
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;
+		return true;
+	}
+
+	bool BuildResidual(unsigned mode,unsigned activationSlot,
+		DataflowResidualProgram& program) const
+	{
+		if (!fBound || fPending || activationSlot>=ActivationBuffers
+			|| fActivationRows[activationSlot]<Hidden
+			|| (mode!=DataflowResidualSave && mode!=DataflowResidualAdd)
+			|| (mode==DataflowResidualAdd && !fGraphResidualReady)
+			|| !DataflowResidualProgramBuilder::Build(fManifest,fGraphWorkspace,
+				mode,activationSlot,fRoutes,program)) return false;
+		return AuthorizeResidual(program);
+	}
+
+	bool AuthorizeResidual(const DataflowResidualProgram& program) const
+	{
+		return fBound && !fPending
+			&& program.activationSlot<ActivationBuffers
+			&& fActivationRows[program.activationSlot]>=Hidden
+			&& (program.mode==DataflowResidualSave
+				|| (program.mode==DataflowResidualAdd && fGraphResidualReady))
+			&& ResidualMatches(program);
+	}
+
+	bool BeginResidual(const DataflowResidualProgram& program)
+	{
+		if (!AuthorizeResidual(program)) return false;
+		fGraphResidualReady=false;
+		if (program.mode==DataflowResidualAdd)
+			fActivationRows[program.activationSlot]=0;
+		fPending=true;
+		fPendingOutput=program.activationSlot;
+		fPendingKind=PendingResidual;
+		fPendingResidualMode=program.mode;
+		return true;
+	}
+
+	bool PendingResidualMatches(const DataflowResidualProgram& program) const
+	{
+		return fBound && fPending && fPendingKind==PendingResidual
+			&& program.activationSlot==fPendingOutput
+			&& program.mode==fPendingResidualMode && ResidualMatches(program);
+	}
+
+	bool CompleteResidual(const DataflowResidualProgram& program)
+	{
+		if (!PendingResidualMatches(program)) return false;
+		if (program.mode==DataflowResidualSave)
+			fGraphResidualReady=true;
+		else
+			fActivationRows[program.activationSlot]=Hidden;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		fPendingResidualMode=0;
 		return true;
 	}
 
@@ -393,6 +467,11 @@ public:
 			if (fPendingOutput>=ActivationBuffers) return false;
 			fActivationRows[fPendingOutput]=0;
 			fGraphUpReady=false;
+		} else if (fPendingKind==PendingResidual) {
+			if (fPendingOutput>=ActivationBuffers) return false;
+			if (fPendingResidualMode==DataflowResidualAdd)
+				fActivationRows[fPendingOutput]=0;
+			fGraphResidualReady=false;
 		} else {
 			if (fPendingKind!=PendingProjection || fPendingOutput>=ActivationBuffers)
 				return false;
@@ -401,6 +480,7 @@ public:
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;
+		fPendingResidualMode=0;
 		return true;
 	}
 };

@@ -12,6 +12,8 @@
 #include "../PioneerQwen35DataflowSilu.h"
 #include "../PioneerQwen35DataflowSiluProgram.h"
 #include "../PioneerQwen35DataflowBlackholeSiluWorker.h"
+#include "../PioneerQwen35DataflowResidualProgram.h"
+#include "../PioneerQwen35DataflowBlackholeResidualWorker.h"
 
 using namespace PioneerQwen35;
 
@@ -33,6 +35,24 @@ bool PioneerQwen35DataflowBlackholeSiluTargetCompileProbe(
 {
 	DataflowBlackholeSiluOps io;
 	return io.Bind(invocation) && PioneerQwen35DataflowSiluWorker(invocation,
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(
+			DataflowInputBufferAddress+DataflowInputPageBytes)),
+		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),io);
+}
+
+bool PioneerQwen35DataflowResidualProgramTargetCompileProbe(
+	const DataflowResidualProgram& program,unsigned core,
+	DataflowResidualInvocation& invocation)
+{
+	return DataflowResidualProgramBuilder::BindCore(program,core,invocation);
+}
+
+bool PioneerQwen35DataflowBlackholeResidualTargetCompileProbe(
+	const DataflowResidualInvocation& invocation)
+{
+	DataflowBlackholeResidualOps io;
+	return io.Bind(invocation) && PioneerQwen35DataflowResidualWorker(invocation,
 		reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress)),
 		reinterpret_cast<float*>(static_cast<uintptr_t>(
 			DataflowInputBufferAddress+DataflowInputPageBytes)),

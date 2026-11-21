@@ -311,7 +311,26 @@ and default-control is
 `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
 These are offline checks only.
 
-Next implement the residual update and continue completing the decoder graph.
+The residual save/add operation is now implemented in the working tree. The
+manifest-bound schedule assigns all 160 hidden-width panels across the 120
+workers (40 workers handle two panels and 80 handle one). `SAVE` copies an
+initialized Hidden-row activation into residual scratch; `ADD` adds that saved
+residual into the activation in place. The authority invalidates residual
+readiness before save and consumes it before add, then commits only after
+all-core invocation readback, terminal receipts, runtime/queue audit, and
+acknowledgement. The root-only `RESIDUAL` opcode exposes the two explicit
+modes without host math or fallback.
+
+ASan/UBSan checks pass for exactly-once coverage and save/add arithmetic on
+all 160 panels, authority save/add transitions, and owner orchestration across
+both modes. The RV32IMF compile passes without A atomics or runtime helpers;
+the offline driver60, reload-guard, and default-control builds pass. The new
+driver60 SHA-256 is
+`5b1aff677a77cc86b75e725e0bd16c2e2a2c34aeb3b277cabbe5164be1c0961a`; the
+service text SHA-256 is
+`279cac1dddbc27f0c6621fec07b248d267714073355fb0cf83b812d6cc3cf9fe`.
+
+Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration
 deferred until the rewrite graph is implemented and its offline correctness
 gates pass.

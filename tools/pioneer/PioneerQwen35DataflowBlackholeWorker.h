@@ -7,6 +7,7 @@
 #include "PioneerQwen35DataflowBlackholeEmbeddingWorker.h"
 #include "PioneerQwen35DataflowBlackholeRmsWorker.h"
 #include "PioneerQwen35DataflowBlackholeSiluWorker.h"
+#include "PioneerQwen35DataflowBlackholeResidualWorker.h"
 
 namespace PioneerQwen35 {
 
@@ -354,6 +355,23 @@ inline bool DataflowWorkerResetQueues()
 				DataflowBlackholeSiluOps io;
 				okay=io.Bind(*silu)
 					&& PioneerQwen35DataflowSiluWorker(*silu,
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowInputBufferAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowInputBufferAddress+DataflowInputPageBytes)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowOutputBufferAddress)),io);
+			}
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+		} else if (invocationMagic==DataflowResidualMagic) {
+			const auto* residual=reinterpret_cast<const DataflowResidualInvocation*>(
+				static_cast<uintptr_t>(DataflowProgramAddress));
+			if (DataflowWorkerQueuesClean() && residual->Valid()
+				&& residual->core==core
+				&& DataflowBlackholeRouteForCore(residual->core)==localRoute) {
+				DataflowBlackholeResidualOps io;
+				okay=io.Bind(*residual)
+					&& PioneerQwen35DataflowResidualWorker(*residual,
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowInputBufferAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(

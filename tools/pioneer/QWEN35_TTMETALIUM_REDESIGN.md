@@ -363,9 +363,21 @@ exactly once), authority, and 120-core owner checks pass. The RV32IMF target
 compile passes without A atomics or unresolved runtime helpers. Offline
 driver60, reload-guard, and default-control builds pass; the driver60 SHA-256
 is `d8435142c513f9b94290a706a17d440449fea8b8dd957c27ece2bf128a9873f2`.
-These checks do not include a physical run. The next rewrite step is the
-residual update. The full GGUF manifest test was not run because no local
-pinned-model path was available.
+These checks do not include a physical run. The residual save/add operation
+is now implemented in the working tree. Its manifest-bound schedule assigns
+all 160 Hidden-width panels over the 120 workers (40 cores handle two and 80
+handle one). `SAVE` copies the activation into graph residual scratch; `ADD`
+adds the saved residual into the activation in place. Authority tracks
+residual readiness separately, consumes it before add, and commits only after
+the all-core invocation, receipt, runtime, and queue audit completes. The
+root-only `RESIDUAL` opcode exposes both modes without host math or fallback.
+ASan/UBSan worker, authority, and owner checks pass; the RV32IMF compile and
+offline driver60/reload-guard/default-control builds pass. The driver60
+SHA-256 is
+`5b1aff677a77cc86b75e725e0bd16c2e2a2c34aeb3b277cabbe5164be1c0961a`.
+The next rewrite work is the recurrent/dense layer operators and decoder
+graph. The full GGUF manifest test was not run because no local pinned-model
+path was available.
 
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are

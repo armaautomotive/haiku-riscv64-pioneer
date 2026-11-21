@@ -355,6 +355,30 @@ int main()
 	assert(authority.CompleteSilu(siluProgram));
 	assert(!authority.Pending() && authority.ActivationReady(1)
 		&& authority.ActivationRows(1)==Ffn && !authority.GraphUpReady());
+	DataflowResidualProgram residualProgram{};
+	assert(!authority.BuildResidual(DataflowResidualAdd,1,residualProgram));
+	assert(authority.BuildResidual(DataflowResidualSave,1,residualProgram));
+	assert(authority.BeginResidual(residualProgram));
+	assert(authority.Pending() && !authority.GraphResidualReady()
+		&& authority.ActivationReady(1)
+		&& authority.PendingResidualMatches(residualProgram));
+	assert(authority.CompleteResidual(residualProgram));
+	assert(!authority.Pending() && authority.GraphResidualReady()
+		&& authority.ActivationReady(1));
+	assert(authority.BuildResidual(DataflowResidualAdd,1,residualProgram));
+	assert(authority.BeginResidual(residualProgram));
+	assert(authority.Pending() && !authority.GraphResidualReady()
+		&& !authority.ActivationReady(1));
+	assert(authority.CompleteResidual(residualProgram));
+	assert(!authority.Pending() && !authority.GraphResidualReady()
+		&& authority.ActivationReady(1)
+		&& authority.ActivationRows(1)==Hidden);
+	assert(authority.BuildResidual(DataflowResidualSave,1,residualProgram));
+	assert(authority.BeginResidual(residualProgram));
+	assert(authority.AbortPendingProjection());
+	assert(!authority.Pending() && !authority.GraphResidualReady()
+		&& authority.ActivationReady(1)
+		&& !authority.BuildResidual(DataflowResidualAdd,1,residualProgram));
 
 	TensorSpace unregisteredWeight=weight;
 	unregisteredWeight.place.parts[0].address+=4096;

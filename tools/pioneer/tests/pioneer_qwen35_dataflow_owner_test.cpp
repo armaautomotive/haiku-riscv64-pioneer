@@ -45,10 +45,19 @@ static uint32_t Signature(const DataflowSiluInvocation& invocation)
 	return value;
 }
 
+static uint32_t Signature(const DataflowResidualInvocation& invocation)
+{
+	const auto* bytes=reinterpret_cast<const uint8_t*>(&invocation);
+	uint32_t value=2166136261U;
+	for (unsigned i=0;i<sizeof(invocation);i++) value=(value^bytes[i])*16777619U;
+	return value;
+}
+
 struct MockOwnerIO {
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	uint32_t invocationSignature[DataflowCoreCount]{};
 	uint32_t siluInvocationSignature[DataflowCoreCount]{};
+	uint32_t residualInvocationSignature[DataflowCoreCount]{};
 	unsigned writes=0,publishes=0,waits=0,audits=0,acknowledgements=0;
 	unsigned begins=0,completes=0,aborts=0;
 	unsigned failPublishCore=UINT32_MAX;
@@ -104,6 +113,20 @@ struct MockOwnerIO {
 		completes++;
 		return !failComplete && sequence && program.Valid();
 	}
+	bool AuthorizeResidual(const DataflowResidualProgram& program) const
+	{
+		return programAuthorized && program.Valid();
+	}
+	bool BeginResidual(const DataflowResidualProgram& program)
+	{
+		begins++;
+		return !failBegin && program.Valid();
+	}
+	bool CompleteResidual(const DataflowResidualProgram& program,unsigned sequence)
+	{
+		completes++;
+		return !failComplete && sequence && program.Valid();
+	}
 
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& invocation)
 	{
@@ -131,6 +154,20 @@ struct MockOwnerIO {
 	{
 		return core<DataflowCoreCount && invocation.core==core
 			&& siluInvocationSignature[core]==Signature(invocation);
+	}
+	bool WriteResidualInvocation(unsigned core,const DataflowResidualInvocation& invocation)
+	{
+		if (core>=DataflowCoreCount || invocation.core!=core || !invocation.Valid())
+			return false;
+		residualInvocationSignature[core]=Signature(invocation);
+		writes++;
+		return true;
+	}
+	bool ResidualInvocationMatches(unsigned core,
+		const DataflowResidualInvocation& invocation) const
+	{
+		return core<DataflowCoreCount && invocation.core==core
+			&& residualInvocationSignature[core]==Signature(invocation);
 	}
 
 	bool PublishCommand(unsigned core,unsigned sequence)
@@ -172,6 +209,18 @@ struct MockOwnerIO {
 	}
 
 	bool AuditSilu(const DataflowSiluProgram& program,unsigned sequence,
+		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount])
+	{
+		if (!program.Valid()) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (receipts[core].state!=DataflowWorkerComplete
+				|| receipts[core].commandSequence!=sequence
+				|| receipts[core].completedSequence!=sequence) return false;
+		audits++;
+		return true;
+	}
+
+	bool AuditResidual(const DataflowResidualProgram& program,unsigned sequence,
 		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount])
 	{
 		if (!program.Valid()) return false;
@@ -277,6 +326,25 @@ int main()
 		assert(DataflowSiluProgramBuilder::BindCore(siluProgram,core,expected)
 			&& siluIO.SiluInvocationMatches(core,expected));
 	}
+	DataflowResidualProgram residualProgram{};
+	assert(DataflowResidualProgramBuilder::Build(siluManifest,siluWorkspace,
+		DataflowResidualSave,0,TestRoutes,residualProgram));
+	MockOwnerIO residualIO{};
+	DataflowProjectionOwner residualOwner;
+	assert(residualOwner.Initialize(residualIO)==DataflowOwnerComplete);
+	assert(residualOwner.RunResidual(residualProgram,residualIO)
+		==DataflowOwnerComplete);
+	residualProgram.mode=DataflowResidualAdd;
+	assert(residualProgram.Valid());
+	assert(residualOwner.RunResidual(residualProgram,residualIO)
+		==DataflowOwnerComplete);
+	assert(residualOwner.NextSequence()==2 && !residualOwner.Faulted()
+		&& residualIO.begins==2 && residualIO.completes==2
+		&& residualIO.writes==2*DataflowCoreCount
+		&& residualIO.publishes==2*DataflowCoreCount
+		&& residualIO.waits==2*DataflowCoreCount
+		&& residualIO.audits==2
+		&& residualIO.acknowledgements==2*DataflowCoreCount);
 	MockOwnerIO beginFailureIO{};
 	DataflowProjectionOwner beginFailureOwner;
 	assert(beginFailureOwner.Initialize(beginFailureIO)==DataflowOwnerComplete);
