@@ -24,7 +24,8 @@ enum DataflowOwnerResult {
 	DataflowOwnerAuditFailed=9,
 	DataflowOwnerAcknowledgementFailed=10,
 	DataflowOwnerRecoveryPending=11,
-	DataflowOwnerRecovered=12
+	DataflowOwnerRecovered=12,
+	DataflowOwnerProgramUnauthorized=13
 };
 
 inline bool DataflowWorkerSnapshotReady(const DataflowWorkerSnapshot& snapshot)
@@ -90,6 +91,8 @@ public:
 	{
 		if (!fInitialized || fFaulted) return DataflowOwnerInvalidState;
 		if (!program.Valid()) return DataflowOwnerInvalidProgram;
+		if (!io.AuthorizeProjection(program))
+			return DataflowOwnerProgramUnauthorized;
 		if (fNextSequence>=DataflowWorkerSequenceLimit)
 			return DataflowOwnerSequenceExhausted;
 		const unsigned sequence=fNextSequence+1;

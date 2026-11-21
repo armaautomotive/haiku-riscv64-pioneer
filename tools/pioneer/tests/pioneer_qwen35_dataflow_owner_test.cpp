@@ -42,7 +42,7 @@ struct MockOwnerIO {
 	uint32_t invocationSignature[DataflowCoreCount]{};
 	unsigned writes=0,publishes=0,waits=0,audits=0,acknowledgements=0;
 	unsigned failPublishCore=UINT32_MAX;
-	bool ambiguousPublishFailure=true,recoveryAllowed=true;
+	bool ambiguousPublishFailure=true,recoveryAllowed=true,programAuthorized=true;
 
 	MockOwnerIO()
 	{
@@ -63,6 +63,11 @@ struct MockOwnerIO {
 		return core<DataflowCoreCount && DataflowWorkerSnapshotReady(observed)
 			&& DataflowBlackholeLocalCore(DataflowBlackholeRouteForCore(core),routeCore)
 			&& routeCore==core;
+	}
+
+	bool AuthorizeProjection(const DataflowProjectionProgram& program) const
+	{
+		return programAuthorized && program.Valid();
 	}
 
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& invocation)
@@ -168,6 +173,10 @@ int main()
 	DataflowProjectionOwner owner;
 	assert(owner.Initialize(io)==DataflowOwnerComplete);
 	assert(owner.NextSequence()==0 && owner.Initialized());
+	io.programAuthorized=false;
+	assert(owner.RunProjection(program,io)==DataflowOwnerProgramUnauthorized);
+	assert(io.writes==0 && io.publishes==0 && owner.NextSequence()==0 && !owner.Faulted());
+	io.programAuthorized=true;
 	assert(owner.RunProjection(program,io)==DataflowOwnerComplete);
 	assert(owner.NextSequence()==1 && !owner.Faulted());
 	assert(io.writes==DataflowCoreCount && io.publishes==DataflowCoreCount

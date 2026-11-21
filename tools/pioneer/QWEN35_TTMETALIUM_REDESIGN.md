@@ -100,11 +100,12 @@ read per token and is not a measured bandwidth result. See Tenstorrent's
 [P100A specifications](https://docs.tenstorrent.com/aibs/blackhole/installation.html).
 
 The new offline sharded activation allocator works over the seven 64 MiB
-workspace regions already reserved by `PioneerQwen35PackedPlan`. It page-aligns
-each bank fragment, stripes 16-row groups across banks, supports resolving a
-row range only when it stays inside one fragment, and tracks allocated ranges
-to reject overlap. The initial use is a pair of ping-pong row buffers large
-enough for the tied vocabulary projection. Its bounds/coverage test passes.
+workspace regions already reserved by `PioneerQwen35PackedPlan`. It can reserve
+the bank-0 prefix used by the existing RoPE table, page-aligns each bank
+fragment, stripes 16-row groups across banks, supports resolving a row range
+only when it stays inside one fragment, and tracks allocated ranges to reject
+overlap. The initial use is a pair of ping-pong row buffers large enough for
+the tied vocabulary projection. Its bounds/coverage test passes.
 This is storage planning only: the Work image does not allocate or use these
 buffers yet, and no hardware performance is claimed. The next implementation
 step is the device-side writer/reader path that lets a projection publish one
@@ -127,9 +128,11 @@ completed 16-row result over NoC 1. Its 64-byte mailbox uses monotonic
 command/completion/acknowledgement sequences; the worker remains resident
 between invocations and permits a new one only after the host acknowledges
 completion or has audited a fault. The standalone image builder produces a
-freestanding image with no unresolved imports. The image has not been loaded
-or run on the card; host-side launch, physical audit, and all-core graph
-ownership remain to be implemented.
+freestanding image with no unresolved imports. `PioneerQwen35DataflowOwner.h`
+specifies the host-side all-core sequencing and recovery contract, with a
+passing offline mock. Its PCI transport, image loader, physical audit adapter,
+and all-core graph ownership remain to be implemented; the image has not been
+loaded or run on the card.
 
 `PioneerQwen35ProgramSchedule.h` builds a stable 120-core partition for a
 whole projection. It assigns contiguous logical row ranges and splits a
@@ -188,3 +191,22 @@ about 811 times higher. Tag92 changes only the faulted STOP cleanup path and
 does not claim a throughput gain. The next performance step remains an
 executable resident device program with sharded activations between
 projections and fewer ROOT/peer synchronization waves.
+
+## 2026-11-20: rewrite checkpoint
+
+The rewrite now has a resident per-core worker image, a stable 120-core
+projection schedule, an all-core projection owner, and a service owner that
+stages/verifies the image, waits for all workers, stops them, audits state,
+restores saved L1/reset state, and resumes the prior fleet. The projection
+owner now requires the IO adapter to authorize each program before it writes
+invocations or publishes commands; denial leaves the sequence and device
+untouched. Four offline worker/owner tests pass with AddressSanitizer and
+UndefinedBehaviorSanitizer, and the freestanding RV32IMF target compile passes
+without atomics or unresolved runtime helpers.
+
+This is still an offline prototype. The physical PCI IO adapter, manifest and
+activation-range authorization, and integration into Work mode have not been
+implemented. No rewritten projection has run on the P100A, so the rewrite has
+no valid-output, warm-run, decode-rate, or physical-unload result. Next is the
+PCI adapter and its route/idle/snapshot/recovery proofs, then a small verified
+projection before model-graph integration or benchmarking.
