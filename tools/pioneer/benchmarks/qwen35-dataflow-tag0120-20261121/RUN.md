@@ -20,6 +20,13 @@ The tag0119 candidate's recovery lock and stable-driver backup were retained;
 stable driver55 generation2 must be verified restored before another hardware
 command.
 
+Latest recheck (2026-11-21): both saved, host-pinned SSH profiles time out;
+the serial console still ends at shutdown-device teardown with no fresh boot
+banner. Relay status is power-button contact open and SD detached. That relay
+status does not establish whether the board is powered, and no relay action has
+been sent. Stable-driver recovery and the tag0120 hardware diagnostic remain
+pending.
+
 No valid output, prompt completion, decode time, warm run, clean unload, or
 throughput result exists for tag0120. The 100 decode tokens/s goal remains
 unmet, and assistant integration remains deferred. Build hashes and offline
