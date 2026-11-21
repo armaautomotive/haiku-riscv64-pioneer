@@ -328,6 +328,26 @@ int main()
 	Rows(recurrentBeta.place,DeltaHeads,
 		PioneerQwen35Projection::TileBytes(recurrentBeta.type)*(Hidden/256)/16,
 		0x14000000);
+	TensorSpace& denseQueryAndGate=manifest.layers[3].weights[QueryAndGate];
+	denseQueryAndGate.type=12;
+	denseQueryAndGate.inputs=Hidden;
+	Rows(denseQueryAndGate.place,8192,
+		PioneerQwen35Projection::TileBytes(denseQueryAndGate.type)*(Hidden/256)/16,
+		0x15000000);
+	TensorSpace& denseKey=manifest.layers[3].weights[Key];
+	denseKey.type=12;
+	denseKey.inputs=Hidden;
+	Rows(denseKey.place,1024,
+		PioneerQwen35Projection::TileBytes(denseKey.type)*(Hidden/256)/16,
+		0x16000000);
+	TensorSpace& denseValue=manifest.layers[3].weights[Value];
+	denseValue.type=12;
+	denseValue.inputs=Hidden;
+	Rows(denseValue.place,1024,
+		PioneerQwen35Projection::TileBytes(denseValue.type)*(Hidden/256)/16,
+		0x17000000);
+	assert(denseQueryAndGate.place.Valid() && denseKey.place.Valid()
+		&& denseValue.place.Valid());
 	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
 	DataflowGraphWorkspace graphWorkspace{};
 	Rows(graphWorkspace.space[0],Hidden,sizeof(float),0x20000000);
@@ -432,6 +452,47 @@ int main()
 	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentBetaWorkspaceIndex));
 	assert(!authority.BuildProjection(3,RecurrentQkv,0,
 		DataflowGraphRecurrentQkvOutputSlot,recurrentQkvProgram));
+	assert(authority.ResetRecurrentState());
+	assert(authority.MarkActivationInitialized(0,Hidden));
+	DataflowProjectionProgram denseKeyProgram{},denseValueProgram{},denseQueryProgram{};
+	assert(DataflowProgramBuilder::Build(denseKey,manifest.activation[0],Hidden,
+		graphWorkspace.space[DataflowGraphRecurrentGateWorkspaceIndex],
+		TestBankRoutes,denseKeyProgram));
+	assert(!authority.Authorize(denseKeyProgram));
+	assert(DataflowProgramBuilder::Build(denseValue,manifest.activation[0],Hidden,
+		graphWorkspace.space[DataflowGraphRecurrentGateWorkspaceIndex],
+		TestBankRoutes,denseValueProgram));
+	assert(!authority.Authorize(denseValueProgram));
+	assert(authority.BuildDenseProjection(3,QueryAndGate,0,denseQueryProgram));
+	assert(denseQueryProgram.outputRows==8192 && denseQueryProgram.activeCores==120);
+	unsigned denseQueryActive=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(denseQueryProgram,core,invocation));
+		denseQueryActive+=invocation.assignment.active;
+	}
+	assert(denseQueryActive==DataflowCoreCount);
+	assert(authority.Begin(denseQueryProgram)
+		&& authority.PendingProjectionMatches(denseQueryProgram));
+	assert(authority.Complete(denseQueryProgram)
+		&& authority.GraphWorkspaceReady(DataflowGraphRecurrentQkvWorkspaceIndex)
+		&& authority.GraphWorkspaceLayer(DataflowGraphRecurrentQkvWorkspaceIndex)==3
+		&& authority.GraphWorkspaceRole(DataflowGraphRecurrentQkvWorkspaceIndex)
+			==QueryAndGate);
+	assert(authority.BuildDenseProjection(3,Key,0,denseKeyProgram));
+	assert(denseKeyProgram.outputRows==1024 && denseKeyProgram.activeCores==64);
+	assert(authority.Begin(denseKeyProgram)
+		&& authority.PendingProjectionMatches(denseKeyProgram));
+	assert(authority.Complete(denseKeyProgram)
+		&& authority.GraphWorkspaceReady(DataflowGraphRecurrentGateWorkspaceIndex)
+		&& authority.GraphWorkspaceRole(DataflowGraphRecurrentGateWorkspaceIndex)==Key);
+	assert(authority.BuildDenseProjection(3,Value,0,denseValueProgram));
+	assert(denseValueProgram.outputRows==1024 && denseValueProgram.activeCores==64);
+	assert(authority.Begin(denseValueProgram)
+		&& authority.PendingProjectionMatches(denseValueProgram));
+	assert(authority.Complete(denseValueProgram)
+		&& authority.GraphWorkspaceReady(DataflowGraphRecurrentGateWorkspaceIndex)
+		&& authority.GraphWorkspaceRole(DataflowGraphRecurrentGateWorkspaceIndex)==Value);
 	DataflowSiluProgram siluProgram{};
 	assert(authority.BuildSilu(1,siluProgram) && siluProgram.Valid());
 	assert(authority.BeginSilu(siluProgram));

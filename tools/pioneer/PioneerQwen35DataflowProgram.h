@@ -383,7 +383,8 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 	const DataflowGraphWorkspace& workspace,
 	const unsigned (&auditedRoutes)[2][Banks],
 	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr,
-	unsigned* workspaceIndex=nullptr,unsigned* modelLayer=nullptr)
+	unsigned* workspaceIndex=nullptr,unsigned* modelLayer=nullptr,
+	unsigned* modelRole=nullptr)
 {
 	unsigned targetIndex=0;
 	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
@@ -420,12 +421,71 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 			&& DataflowRowSpaceMatches(expected->place,program.weights)) {
 			modelWeight=true;
 			if (modelLayer) *modelLayer=layer;
+			if (modelRole) *modelRole=requiredRole;
 			break;
 		}
 	}
 	if (!modelWeight) return false;
 	if (inputSlot) *inputSlot=foundInput;
 	if (workspaceIndex) *workspaceIndex=targetIndex;
+	return true;
+}
+
+// Dense Q/K/V projections use the existing recurrent sidecars as temporary
+// scratch. QueryAndGate owns the 8192-row QKV region; Key and Value reuse the
+// 4096-row gate region in sequence before being packed into the persistent KV
+// cache. Their destinations remain exact workspace bindings, never arbitrary
+// caller supplied ranges.
+inline bool DataflowProjectionMatchesDenseGraphWorkspace(
+	const DeviceLayout& manifest,const DataflowGraphWorkspace& workspace,
+	const unsigned (&auditedRoutes)[2][Banks],
+	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr,
+	unsigned* workspaceIndex=nullptr,unsigned* modelLayer=nullptr,
+	unsigned* modelRole=nullptr)
+{
+	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
+		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
+		|| !DataflowBankRoutesValid(auditedRoutes) || program.inputBase!=0
+		|| program.inputs!=Hidden || program.inputRows!=Hidden) return false;
+	unsigned foundWorkspace=DataflowGraphWorkspaceBufferCount;
+	for (unsigned index=DataflowGraphRecurrentQkvWorkspaceIndex;
+		index<=DataflowGraphRecurrentGateWorkspaceIndex;index++)
+		if (DataflowRowSpaceMatches(workspace.space[index],program.output))
+			foundWorkspace=index;
+	if (foundWorkspace>=DataflowGraphWorkspaceBufferCount) return false;
+	unsigned expectedWorkspace=DataflowGraphWorkspaceBufferCount;
+	unsigned foundRole=LayerRoles;
+	for (unsigned roleIndex=0;roleIndex<3;roleIndex++) {
+		const unsigned role=roleIndex==0?QueryAndGate:roleIndex==1?Key:Value;
+		unsigned target=DataflowGraphWorkspaceBufferCount;
+		if (!DataflowDenseProjectionTarget(role,target) || target!=foundWorkspace)
+			continue;
+		for (unsigned layer=0;layer<Layers;layer++) {
+			if (!Dense(layer)) continue;
+			const TensorSpace* expected=manifest.Weight(layer,role);
+			if (expected && expected->type==program.type
+				&& expected->inputs==program.inputs
+				&& expected->place.rows==program.outputRows
+				&& DataflowRowSpaceMatches(expected->place,program.weights)) {
+				expectedWorkspace=target;
+				foundRole=role;
+				if (modelLayer) *modelLayer=layer;
+				break;
+			}
+		}
+		if (expectedWorkspace<DataflowGraphWorkspaceBufferCount) break;
+	}
+	if (expectedWorkspace!=foundWorkspace || foundRole>=LayerRoles) return false;
+	unsigned foundInput=ActivationBuffers;
+	for (unsigned slot=0;slot<ActivationBuffers;slot++)
+		if (DataflowRowSpaceMatches(manifest.activation[slot],program.input))
+			foundInput=slot;
+	if (foundInput>=ActivationBuffers) return false;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		if (program.bankRoute[noc][bank]!=auditedRoutes[noc][bank]) return false;
+	if (inputSlot) *inputSlot=foundInput;
+	if (workspaceIndex) *workspaceIndex=foundWorkspace;
+	if (modelRole) *modelRole=foundRole;
 	return true;
 }
 

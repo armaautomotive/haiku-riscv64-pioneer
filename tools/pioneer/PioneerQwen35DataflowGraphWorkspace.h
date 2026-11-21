@@ -32,6 +32,19 @@ inline bool DataflowGraphProjectionTarget(unsigned outputSlot,
 	return workspaceIndex<DataflowGraphWorkspaceBufferCount;
 }
 
+inline bool DataflowDenseProjectionTarget(unsigned role,unsigned& workspaceIndex)
+{
+	if (role==QueryAndGate) {
+		workspaceIndex=DataflowGraphRecurrentQkvWorkspaceIndex;
+		return true;
+	}
+	if (role==Key || role==Value) {
+		workspaceIndex=DataflowGraphRecurrentGateWorkspaceIndex;
+		return true;
+	}
+	return false;
+}
+
 inline unsigned DataflowGraphProjectionOutputSlot(unsigned workspaceIndex)
 {
 	return workspaceIndex>=DataflowGraphUpWorkspaceIndex

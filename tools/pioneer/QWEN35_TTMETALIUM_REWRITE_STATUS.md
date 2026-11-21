@@ -284,6 +284,16 @@ residual adds, and the existing FFN sequence. Dense attention/KV, mixed dense
 and recurrent full-model orchestration, final vocabulary readout, and token
 generation remain incomplete. No hardware test or decode rate is available.
 
+2026-11-21 local rewrite progress: added exact authorization and readiness
+tracking for the dense QueryAndGate, Key, and Value Tensix projections. The
+projection test now checks the required QG -> K -> V order, workspace role and
+layer ownership, and all 120 active Tensix assignments for QueryAndGate. The
+focused host test passes with ASan/UBSan, and the Haiku RV32IMF compile check
+passes without A atomics or runtime helpers. Dense RoPE, K/V cache packing and
+writes, attention, AttentionOut, mixed-layer sequencing, vocabulary readout,
+and token generation remain open; there is still no model output or decode-rate
+measurement.
+
 The graph workspace participates in the projection path. The request can
 select the Up, recurrent QKV, or recurrent gate sidecar; the authority maps
 each selector to its exact model role and rejects recurrent targets on dense
