@@ -37,6 +37,8 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
 | Reload guard | `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229` |
 | Default-control driver | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` |
 | Service boot word | `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b` |
+| Guarded two-warm trial wrapper | `08979f117623f033c675888c2d7a2b656bf0c70fcc5f8969522d763f4c0bbd3e` |
+| Post-cycle recovery helper | `2ed4879d8e39c04454fe7f6b5b5109c8aa2d52f180737af28f13bb4ac1ba8102` |
 
 The complete offline driver/client/package build passes. The owner and
 PCI-memory ASan/UBSan fixtures pass, including close retry and restore
