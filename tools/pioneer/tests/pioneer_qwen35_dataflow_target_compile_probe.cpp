@@ -6,6 +6,7 @@
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 #include "../PioneerQwen35DataflowEmbedding.h"
 #include "../PioneerQwen35DataflowEmbeddingProgram.h"
+#include "../PioneerQwen35DataflowRms.h"
 
 using namespace PioneerQwen35;
 
@@ -43,6 +44,12 @@ bool PioneerQwen35DataflowEmbeddingTargetCompileProbe(const uint8_t* tile,
 {
 	return DataflowDecodeQ6KEmbeddingPanel(tile,DataflowQ6KEmbeddingTileBytes,
 		lane,panel,output,DataflowQ6KEmbeddingValuesPerPanel);
+}
+
+bool PioneerQwen35DataflowRmsTargetCompileProbe(const float* input,
+	const float* weight,float* output)
+{
+	return DataflowNormalizeHidden(input,weight,output);
 }
 
 bool PioneerQwen35DataflowEmbeddingProgramTargetCompileProbe(

@@ -307,6 +307,15 @@ acknowledgement. Its support response reports token embedding only, not token
 generation. A service-owner test now exercises an embedding command followed
 by a matrix projection on the same resident service.
 
+The next operation's scalar arithmetic is prototyped in
+`PioneerQwen35DataflowRms.h`. Its hidden-width RMS helper uses the pinned
+software-binary64 reduction and rounded square-root/divide path; an ASan/UBSan
+fixture matches the existing Qwen35 operator bit-for-bit, including in-place
+operation and refusal on non-finite input. It compiles as RV32IMF without A
+atomics or runtime helpers. This arithmetic is not yet bound to a manifest or
+dispatched by the resident worker; the next step is its sharded device program
+and service control.
+
 The Q6_K decoder comparison, 120-core schedule coverage, worker simulation,
 projection-owner tests, and service-owner embedding/projection test pass under
 AddressSanitizer and UndefinedBehaviorSanitizer. The RV32IMF role compile
