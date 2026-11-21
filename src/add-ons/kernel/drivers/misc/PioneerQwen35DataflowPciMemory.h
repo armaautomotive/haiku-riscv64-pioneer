@@ -77,8 +77,11 @@ class PioneerQwen35DataflowPciMemory {
 
 	bool ReadLocal(unsigned address,uint32_t& value)
 	{
+		if ((address&3) || address<DataflowPciL1ViewBase
+			|| address>=DataflowPciL1ViewBase+DataflowPciL1ViewBytes
+			|| !fRaw.DataflowPanelMappingStable()) return false;
 		value=fRaw.Q38PanelRead(address);
-		return true; // every caller has already proved the fixed mapping/range
+		return true;
 	}
 
 	bool CoreResetMatches(unsigned core,unsigned expected)
@@ -136,7 +139,7 @@ public:
 		}
 		uint32_t* words=static_cast<uint32_t*>(output);
 		for (unsigned i=0;i<bytes/sizeof(uint32_t);i++)
-			ReadLocal(address+i*sizeof(uint32_t),words[i]);
+			if (!ReadLocal(address+i*sizeof(uint32_t),words[i])) return false;
 		return true;
 	}
 
@@ -174,15 +177,19 @@ public:
 		uint32_t* words=static_cast<uint32_t*>(malloc(DataflowPciL1ViewBytes));
 		if (!words) return false;
 		const unsigned boot=fRaw.RuntimeCodeRead(0);
-		for (unsigned i=0;i<DataflowPciL1ViewWords;i++)
-			ReadLocal(DataflowPciL1ViewBase+i*sizeof(uint32_t),words[i]);
+		for (unsigned i=0;i<DataflowPciL1ViewWords;i++) {
+			if (!ReadLocal(DataflowPciL1ViewBase+i*sizeof(uint32_t),words[i])) {
+				free(words);
+				return false;
+			}
+		}
 		fRaw.Pause();
 		bool stable=fRaw.ResetRead()==reset && fRaw.ResetRead()==reset
 			&& fRaw.RuntimeCodeRead(0)==boot;
 		for (unsigned i=0;stable && i<DataflowPciL1ViewWords;i++) {
 			uint32_t observed=0;
-			ReadLocal(DataflowPciL1ViewBase+i*sizeof(uint32_t),observed);
-			stable=observed==words[i];
+			stable=ReadLocal(DataflowPciL1ViewBase+i*sizeof(uint32_t),observed)
+				&& observed==words[i];
 		}
 		if (!stable) {
 			free(words);
@@ -219,7 +226,8 @@ public:
 		for (unsigned i=0;i<DataflowPciL1ViewWords;i++) {
 			const unsigned address=DataflowPciL1ViewBase+i*sizeof(uint32_t);
 			fRaw.Q38PanelWrite(address,snapshot.localWords[i]);
-			if (fRaw.Q38PanelRead(address)!=snapshot.localWords[i]
+			uint32_t observed=0;
+			if (!ReadLocal(address,observed) || observed!=snapshot.localWords[i]
 				|| !CoreHeld(core)) return false;
 		}
 		fRaw.RuntimeCodeWrite(0,snapshot.boot);
@@ -239,8 +247,8 @@ public:
 			|| !CoreHeld(core) || fRaw.RuntimeCodeRead(0)!=snapshot.boot) return false;
 		for (unsigned i=0;i<DataflowPciL1ViewWords;i++) {
 			uint32_t observed=0;
-			ReadLocal(DataflowPciL1ViewBase+i*sizeof(uint32_t),observed);
-			if (observed!=snapshot.localWords[i]) return false;
+			if (!ReadLocal(DataflowPciL1ViewBase+i*sizeof(uint32_t),observed)
+				|| observed!=snapshot.localWords[i]) return false;
 		}
 		return fRaw.ResetRead()==0x47800;
 	}

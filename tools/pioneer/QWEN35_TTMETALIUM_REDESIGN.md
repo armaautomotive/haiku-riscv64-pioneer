@@ -237,3 +237,8 @@ missing. It is not yet connected to `PioneerSessionIO`: its stable-mapping and
 physical per-core idle/NoC proofs are still required production hooks, and it
 does not provide the projection route audit or Work-mode lifecycle. The four
 existing owner/service tests and the RV32IMF target compile also still pass.
+The standalone service image builder completes with no imports, a 4-byte boot
+stub, and 25,024 bytes of worker text (SHA-256
+`f1efef29a3b9b1da329da67ab7b23aa3b1f2b654a5efa709cdca2101075893d7`). This
+confirms the freestanding image artifact only; it has not been loaded on the
+P100A.
