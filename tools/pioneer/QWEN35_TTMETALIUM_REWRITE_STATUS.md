@@ -270,12 +270,13 @@ and silicon correctness/performance evidence.
 
 ## Current checkpoint: 2026-11-20
 
-The latest pushed rewrite checkpoint is `8ed176883c` (`Add Qwen35 device
-SiLU path`). The offline rewrite has concrete Tensix matrix projection,
+The latest pushed rewrite checkpoint is `019b7fb29e` (`Add Qwen35 residual
+dataflow`). The offline rewrite has concrete Tensix matrix projection,
 device-side Q6_K token embedding, device-side hidden RMS normalization,
-manifest-bound graph Up projection, and device SiLU×Up across the resident
-120-worker service. The root-only support surface still exposes primitives,
-not generation. No hardware test or decode rate is available for the rewrite.
+manifest-bound graph Up projection, device SiLU×Up, and residual save/add
+across the resident 120-worker service. The root-only support surface still
+exposes primitives, not generation. No hardware test or decode rate is
+available for the rewrite.
 
 The graph workspace now participates in the projection path. The projection
 request can select the Up-output sidecar, but the authority admits that target
@@ -311,7 +312,7 @@ and default-control is
 `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
 These are offline checks only.
 
-The residual save/add operation is now implemented in the working tree. The
+The residual save/add operation is implemented and pushed in `019b7fb29e`. The
 manifest-bound schedule assigns all 160 hidden-width panels across the 120
 workers (40 workers handle two panels and 80 handle one). `SAVE` copies an
 initialized Hidden-row activation into residual scratch; `ADD` adds that saved

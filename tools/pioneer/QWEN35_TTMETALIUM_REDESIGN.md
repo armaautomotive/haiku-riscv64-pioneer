@@ -364,7 +364,7 @@ compile passes without A atomics or unresolved runtime helpers. Offline
 driver60, reload-guard, and default-control builds pass; the driver60 SHA-256
 is `d8435142c513f9b94290a706a17d440449fea8b8dd957c27ece2bf128a9873f2`.
 These checks do not include a physical run. The residual save/add operation
-is now implemented in the working tree. Its manifest-bound schedule assigns
+is implemented and pushed in `019b7fb29e`. Its manifest-bound schedule assigns
 all 160 Hidden-width panels over the 120 workers (40 cores handle two and 80
 handle one). `SAVE` copies the activation into graph residual scratch; `ADD`
 adds the saved residual into the activation in place. Authority tracks
