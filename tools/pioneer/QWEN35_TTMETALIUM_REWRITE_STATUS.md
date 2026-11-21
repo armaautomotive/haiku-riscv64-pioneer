@@ -23,9 +23,16 @@ hundreds of kilobytes of a 20 KiB Haiku kernel stack. The card was recovered
 to stable driver55 generation2, idle, with the 27B model intact. Tag0112 moves
 the large projection workspace to heap-owned session/authority storage. Its
 offline build, RV32IMF compile, focused ASan/UBSan tests, and 15,696/18,432-byte
-conservative stack-budget check pass. Tag0112 has not yet run on silicon. No
-valid output or decode-rate measurement exists; the 100 tokens/s target and
-clean-unload gate remain open.
+conservative stack-budget check pass. Tag0112 ran on the Pioneer and uploaded
+the full packed model in 328.264191 s, but its first prompt embedding failed on
+core0 with a reader-role worker failure. The same-owner QUERY/RECOVER attempt
+and close audit failed, leaving the candidate cold with an active-owner latch.
+The post-reboot recovery helper restored stable55 generation2 and verified
+both model files, 64 CPUs, full RAM, and an absent recovery lock. No valid
+output, completed prompt time, decode time, or tokens/s exists. The 100
+tokens/s target and clean-unload gate remain open; continue the rewrite
+offline before another hardware trial. Details are in
+[`benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -77,10 +84,44 @@ variant-60 driver/client/service build passes. The builder checks the measured
 kernel stack chain and rejects any Qwen35 frame over 8192 bytes; the
 conservative chain is 15696 bytes against an 18432-byte budget. Seven focused
 ASan/UBSan tests pass, and the RV32IMF compile has no A atomics or unresolved
-runtime helpers. Tag0112 has no silicon result yet; build details are in
-[`benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md).
+runtime helpers. Tag0112's hardware run uploaded the model, then failed during
+the first prompt embedding: core0 reported worker state4, reader failure1,
+phase5. The lower-level cause was not exposed by that receipt. QUERY/RECOVER
+returned pending and service close failed its core0 stop audit; a cold recovery
+restored stable55 generation2 and preserved both model files. There is no valid
+output or decode rate. Build details are in
+[`benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md); run details are in
+[`benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md).
+
+Tag0113 is the current rewrite checkpoint. The full variant-60 driver/client/
+resident-service build and RV32IMF compile pass. The conservative stack audit
+passes at 15456/18432 bytes; the compiler inlined the generation sequence into
+the measured ioctl frame. Focused ASan/UBSan owner, service-owner, and
+embedding-worker tests pass. Worker receipts now distinguish embedding
+invocation, IO binding, NoC weight read, Q6_K unpack, and output-write failures.
+QUERY/RECOVER now returns the first all-core audit failure stage and core.
+The rewrite has not yet had a tag0113 hardware trial. The last hardware result
+is still tag0112's failed first prompt embedding, with no output or decode
+rate. Before another trial, preflight must verify the post-reset board is back
+on stable55 and idle; then test whether the new diagnostics identify the
+failure and whether audited recovery can unload cleanly. The 100 tokens/s gate
+remains open. Build results are in
+[`benchmarks/qwen35-dataflow-tag0113-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0113-20261121/BUILD.md).
 
 ## Progress
+
+- 2026-11-21 (tag0113, failure and recovery diagnostics): Added distinct
+  embedding worker failure codes and recovery-audit stage/core receipts while
+  preserving the fixed worker mailbox and request sizes. The full variant-60
+  driver/client/service build, RV32IMF compile, and focused ASan/UBSan owner,
+  service-owner, and embedding-worker tests pass. The conservative stack bound
+  is 15456/18432 bytes, with the generation sequence inlined into the measured
+  ioctl frame. Driver SHA-256 is
+  `e2f7d4bb865cab020c6e52cb411eb99b15ec204b1faa7b1c683496493a0d42cf`; client
+  SHA-256 is
+  `152c5136d707b899e139ed674d3cfb43c85f74f9058c8773795ed6becbbf94e3`. No
+  tag0113 hardware result yet. See
+  `benchmarks/qwen35-dataflow-tag0113-20261121/BUILD.md`.
 
 - 2026-11-21 (tag0112, offline stack rewrite): Moved the reusable projection
   descriptor to session-owned heap storage, placed the core schedule scratch
@@ -92,8 +133,16 @@ runtime helpers. Tag0112 has no silicon result yet; build details are in
   18432-byte budget, with no Qwen35 frame above 8192 bytes. Tag0112 driver
   SHA-256 is `b2f3a6be660a07a5c76b363b7ab116ba81b68095126e221c5a741f972a37f664`;
   the client remains `a043d2c1ba96ed28133bbf46ced63e6e1b9e70811d0ce5fedac764c3011419ae`.
-  Tag0112 is not yet silicon-tested; the 100 tokens/s target remains unmet.
-  See `benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md`.
+  The guarded hardware run then loaded 2740498432 packed bytes in
+  `328.264191` s after `98.363993` s authentication and `13.123478` s
+  tokenization. The first prompt embedding failed: result31/stage4, worker
+  core0 state4/reader1/phase5, partial failed-prompt time `0.612929` s,
+  output0, decode time0. QUERY/RECOVER returned pending; close failed the
+  core0 stop audit and the wrapper retained its lock and stable backup. The
+  authorized cold recovery restored stable55 generation2, cleared the lock,
+  and verified the 4B/27B files and 64-CPU/full-RAM profile. No valid output,
+  completed prompt time, decode time, or tokens/s exists; the 100 tokens/s
+  target remains unmet. See `benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md`.
 - 2026-11-21 (tag0111, hardware failure): The candidate installed after a
   clean idle preflight, then Haiku panicked during the generation ioctl. The
   compiler stack report exposed frames of 194800 bytes (FFN) and 75808 bytes

@@ -43,8 +43,10 @@ Offline validation passed:
 - `sh -n` passed for the driver builder, `bash -n` passed for both guarded
   tag0112 scripts, and `git diff --check` passed.
 
-Tag0112 is an offline rewrite checkpoint. It has not yet been installed on the
-Pioneer, so silicon correctness, generated output, model-load time, prompt
-time, decode time, two warm runs, and the 100 decode tokens/s target remain
-unverified. Tag0111's panic and stable55 recovery evidence are in
+Tag0112 was installed for a guarded hardware trial. It uploaded the model,
+then failed on the first embedding read; it produced no valid token and did
+not unload cleanly. The stable driver was restored after a cold recovery.
+Detailed timings, diagnostics, and evidence hashes are in [`RUN.md`](RUN.md).
+The 100 decode tokens/s target remains unverified. Tag0111's earlier panic
+and recovery evidence are in
 [`../qwen35-dataflow-tag0111-20261121/RUN.md`](../qwen35-dataflow-tag0111-20261121/RUN.md).

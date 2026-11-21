@@ -12,7 +12,14 @@ enum : unsigned {
 	DataflowFailureReader=1,
 	DataflowFailureCompute=2,
 	DataflowFailureWriter=3,
-	DataflowFailureQueue=4
+	DataflowFailureQueue=4,
+	// Embedding failures use the queue slot so the fixed mailbox can report
+	// the worker operation without changing its size or receipt ABI.
+	DataflowFailureEmbeddingInvocation=5,
+	DataflowFailureEmbeddingBind=6,
+	DataflowFailureEmbeddingWeightRead=7,
+	DataflowFailureEmbeddingUnpack=8,
+	DataflowFailureEmbeddingOutputWrite=9
 };
 
 struct DataflowQueueControl {

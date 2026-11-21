@@ -87,7 +87,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010109ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010110ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010111ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010112ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010112ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010113ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3375,7 +3376,8 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool CompleteArgmax(const PioneerQwen35::DataflowArgmaxProgram& program,
 		unsigned sequence,unsigned token);
 	bool AuditAndRecoverAll(unsigned sequence,
-		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount]);
+		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount],
+		unsigned& failureStage,unsigned& failureCore);
 	bool AbortPendingProjection();
 	bool StopAndAuditAll(unsigned& failedStage,unsigned& failedCore);
 	bool RestoreCoreState(unsigned core);
@@ -9301,9 +9303,14 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 						<PioneerQwen35::DataflowCoreCount?diagnostic.core:0xffffU;
 					request.reserved[0]=((diagnostic.result&0xffU)<<24)
 						|((core&0xffffU)<<8)|(diagnostic.operation&0xffU);
-					request.reserved[1]=((diagnostic.worker.state&0xffU)<<24)
-						|((diagnostic.worker.failure&0xffU)<<16)
-						|((diagnostic.worker.phase&0xffU)<<8);
+					const unsigned recoveryCore=diagnostic.recoveryAuditCore
+						<PioneerQwen35::DataflowCoreCount
+						?diagnostic.recoveryAuditCore:0x7fU;
+					request.reserved[1]=((diagnostic.worker.state&0x7U)<<29)
+						|((diagnostic.worker.failure&0xfU)<<25)
+						|((diagnostic.worker.phase&0x7U)<<22)
+						|((diagnostic.recoveryAuditStage&0xfU)<<18)
+						|((recoveryCore&0x7fU)<<11);
 					request.reserved[2]=diagnostic.pendingSequence;
 				}
 			}

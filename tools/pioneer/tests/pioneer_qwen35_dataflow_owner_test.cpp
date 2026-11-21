@@ -299,8 +299,12 @@ struct MockOwnerIO {
 	}
 
 	bool AuditAndRecoverAll(unsigned sequence,
-		DataflowWorkerSnapshot (&)[DataflowCoreCount])
+		DataflowWorkerSnapshot (&)[DataflowCoreCount],unsigned& failureStage,
+		unsigned& failureCore)
 	{
+		failureStage=recoveryAllowed?DataflowRecoveryAuditNone
+			:DataflowRecoveryAuditWorkerWaitTimeout;
+		failureCore=recoveryAllowed?DataflowCoreCount:0;
 		if (!recoveryAllowed) return false;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			auto& state=snapshot[core];
@@ -485,6 +489,12 @@ int main()
 	io.failPublishCore=17;
 	assert(owner.RunProjection(program,io)==DataflowOwnerCommandPublishFailed);
 	assert(owner.Faulted() && owner.NextSequence()==1);
+	io.recoveryAllowed=false;
+	assert(owner.Recover(io)==DataflowOwnerRecoveryPending);
+	assert(owner.Diagnostic().recoveryAuditStage
+		==DataflowRecoveryAuditWorkerWaitTimeout
+		&& owner.Diagnostic().recoveryAuditCore==0);
+	io.recoveryAllowed=true;
 	assert(owner.Recover(io)==DataflowOwnerRecovered);
 	assert(!owner.Faulted() && owner.NextSequence()==2 && io.aborts==1);
 	for (unsigned core=0;core<DataflowCoreCount;core++)

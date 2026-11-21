@@ -61,9 +61,11 @@ struct tt_qwen35_dataflow_request {
 	// Resume detail 1 means reset mismatch, 2 generic idle-proof failure, and
 	// 0x101..0x124 identify the failing restored-core idle subproof. QUERY and
 	// RECOVER return the last decoder-operation detail in reserved[0] as
-	// owner_result:8 | core:16 | operation:8, reserved[1] as worker
-	// state:8 | failure:8 | phase:8 | zero:8, and reserved[2] as the pending
-	// worker sequence. A core value of 0xffff means no worker was isolated.
+	// owner_result:8 | core:16 | operation:8. In reserved[1], bits31..29 are
+	// worker state, 28..25 worker failure, 24..22 worker phase, 21..18 recovery
+	// audit stage, and 17..11 the recovery core (0x7f means none); bits10..0
+	// are zero. reserved[2] is the pending worker sequence. A core value of
+	// 0xffff in reserved[0] means no worker was isolated.
 	uint32_t reserved[3];
 };
 

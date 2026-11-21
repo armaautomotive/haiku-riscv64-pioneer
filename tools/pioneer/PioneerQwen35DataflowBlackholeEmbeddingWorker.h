@@ -14,9 +14,15 @@ namespace PioneerQwen35 {
 template<class IO>
 bool PioneerQwen35DataflowEmbedWorker(
 	const DataflowEmbeddingInvocation& program,uint8_t* weightTile,
-	float* outputPage,IO& io)
+	float* outputPage,IO& io,unsigned* failure=nullptr)
 {
-	if (!program.Valid() || !weightTile || !outputPage) return false;
+	if (failure) *failure=0;
+	auto fail=[&](unsigned reason) {
+		if (failure) *failure=reason;
+		return false;
+	};
+	if (!program.Valid() || !weightTile || !outputPage)
+		return fail(DataflowFailureEmbeddingInvocation);
 	uint32_t previousBlock=UINT32_MAX;
 	for (unsigned i=0;i<program.segmentCount;i++) {
 		const auto& output=program.segment[i];
@@ -25,16 +31,20 @@ bool PioneerQwen35DataflowEmbedWorker(
 		const unsigned panel=(element%256)/DataflowQ6KEmbeddingValuesPerPanel;
 		const uint64_t weightAddress=uint64_t(program.weightBase)
 			+uint64_t(block)*DataflowQ6KEmbeddingTileBytes;
-		if (weightAddress>UINT32_MAX
-			|| (block!=previousBlock
-				&& !io.ReadWeight(program.weightBank,uint32_t(weightAddress),
-					weightTile,DataflowQ6KEmbeddingTileBytes))) return false;
+		if (weightAddress>UINT32_MAX)
+			return fail(DataflowFailureEmbeddingInvocation);
+		if (block!=previousBlock
+			&& !io.ReadWeight(program.weightBank,uint32_t(weightAddress),
+				weightTile,DataflowQ6KEmbeddingTileBytes))
+			return fail(DataflowFailureEmbeddingWeightRead);
 		if (!DataflowDecodeQ6KEmbeddingPanel(weightTile,
 			DataflowQ6KEmbeddingTileBytes,program.lane,panel,outputPage,
-			DataflowQ6KEmbeddingValuesPerPanel)
-			|| !io.WriteOutput(output.bank,output.address,
+			DataflowQ6KEmbeddingValuesPerPanel))
+			return fail(DataflowFailureEmbeddingUnpack);
+		if (!io.WriteOutput(output.bank,output.address,
 				reinterpret_cast<const uint8_t*>(outputPage),
-				DataflowQ6KEmbeddingValuesPerPanel*sizeof(float))) return false;
+				DataflowQ6KEmbeddingValuesPerPanel*sizeof(float)))
+			return fail(DataflowFailureEmbeddingOutputWrite);
 		previousBlock=block;
 	}
 	return true;

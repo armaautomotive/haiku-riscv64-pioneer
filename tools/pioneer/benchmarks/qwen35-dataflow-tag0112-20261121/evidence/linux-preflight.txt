@@ -1,0 +1,12 @@
+helper hashes:
+8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff  /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_smp-20261115-codex.sh
+a9056dbc4317cc52bea715d9687ba223dee6957ca5e625d91cba8f6fb7071a22  /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_uart_keepalive.sh
+root: 0
+mounts: /dev/nvme0n1p3
+/dev/nvme0n1p2
+kexec: 0
+cpu online: 0-63
+SD devices: none
+accelerator PCI: 0x1e52
+0xb140
+0

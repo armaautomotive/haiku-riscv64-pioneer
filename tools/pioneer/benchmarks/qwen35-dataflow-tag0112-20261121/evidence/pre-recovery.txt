@@ -1,0 +1,40 @@
+driver: P100A_RELOAD driver60 tag2026112100010112 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+processes:
+   Id Team                                               
+    1 kernel_team                                        
+  100 /boot/system/servers/launch_daemon                 
+  105 /boot/system/servers/registrar                     
+  106 /boot/system/servers/debug_server                  
+  108 /boot/system/servers/mount_server                  
+  109 /boot/system/servers/net_server                    
+  110 /boot/system/servers/package_daemon                
+  114 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  116 /boot/system/servers/launch_daemon baron           
+  118 /boot/system/servers/power_daemon                  
+  123 /boot/system/servers/syslog_daemon                 
+  146 /boot/system/servers/media_server                  
+  182 /boot/system/servers/app_server                    
+  194 /boot/system/Tracker                               
+  196 /boot/system/Deskbar                               
+  215 /boot/system/servers/input_server                  
+  240 /boot/system/servers/media_addon_server            
+  281 /boot/system/servers/notification_server           
+  548 /boot/system/bin/screen_blanker                    
+  805 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  807 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  808 /bin/bash -c set -eu; printf "driver: "; /boot/home/pioneer-p10 
+  810 /boot/system/bin/ps -o Id -o Team                  
+lock: present
+stage_state: RECOVERY_REQUIRED_UNTIL_STABLE_RESTORED
+trial_marker: present
+exit: 1
+models:
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+health:
+64 (Unknown), revision 0000 running at 1000MHz
+133682708480 bytes free      (used/max 3352227840 / 137034936320)
+     64438 semaphores free (used/max       1098 /      65536)
+      3939 ports free      (used/max        157 /       4096)
+      3892 threads free    (used/max        204 /       4096)
+      2024 teams free      (used/max         24 /       2048)

@@ -335,8 +335,11 @@ struct MockDataflowIO {
 		return true;
 	}
 	bool AuditAndRecoverAll(unsigned sequence,
-		DataflowWorkerSnapshot (&snapshots)[DataflowCoreCount])
+		DataflowWorkerSnapshot (&snapshots)[DataflowCoreCount],
+		unsigned& failureStage,unsigned& failureCore)
 	{
+		failureStage=DataflowRecoveryAuditNone;
+		failureCore=DataflowCoreCount;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (mailbox[core].commandSequence==sequence) {
 				if (mailbox[core].completedSequence<sequence) {

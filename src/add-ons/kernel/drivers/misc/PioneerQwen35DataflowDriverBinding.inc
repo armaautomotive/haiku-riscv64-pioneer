@@ -1466,19 +1466,36 @@ PioneerSessionIO::CompleteArgmax(
 
 bool
 PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
-	PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount])
+	PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount],
+	unsigned& failureStage,unsigned& failureCore)
 {
+	failureStage=PioneerQwen35::DataflowRecoveryAuditNone;
+	failureCore=PioneerQwen35::DataflowCoreCount;
+	auto fail=[&](unsigned stage,unsigned core) {
+		failureStage=stage;
+		failureCore=core;
+		return false;
+	};
 	auto* context=qwen35DataflowContext;
-	if (!context || !sequence || !context->qwen35DataflowAuthority
-		|| !context->qwen35DataflowAuthority->Pending()) return false;
+	if (!context || !sequence || !context->qwen35DataflowAuthority)
+		return fail(PioneerQwen35::DataflowRecoveryAuditInvalidContext,
+			PioneerQwen35::DataflowCoreCount);
+	if (!context->qwen35DataflowAuthority->Pending())
+		return fail(PioneerQwen35::DataflowRecoveryAuditNoPendingSequence,
+			PioneerQwen35::DataflowCoreCount);
 	auto inspect=[&](unsigned core,PioneerQwen35::DataflowWorkerSnapshot& observed,
 		bool& terminal) {
 		terminal=false;
-		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core)
-			|| !ReadWorkerSnapshot(core,observed)) return false;
+		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core))
+			return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core);
+		if (!ReadWorkerSnapshot(core,observed))
+			return fail(PioneerQwen35::DataflowRecoveryAuditSnapshotUnreadable,core);
 		if (PioneerQwen35::DataflowWorkerSnapshotReady(observed)) {
-			if (observed.commandSequence>sequence
-				|| !PioneerQwen35DataflowQueuesDrained(*this,core)) return false;
+			if (observed.commandSequence>sequence)
+				return fail(PioneerQwen35::DataflowRecoveryAuditSequenceAhead,core);
+			if (!PioneerQwen35DataflowQueuesDrained(*this,core))
+				return fail(PioneerQwen35::DataflowRecoveryAuditReadyQueuesNotDrained,
+					core);
 			return true;
 		}
 		if (observed.commandSequence!=sequence || observed.completedSequence!=sequence
@@ -1488,8 +1505,10 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 			|| (observed.state==PioneerQwen35::DataflowWorkerComplete
 				&& (observed.failure || observed.phase!=2))
 			|| (observed.state==PioneerQwen35::DataflowWorkerFailed
-				&& (!observed.failure || observed.phase!=5))
-			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,true)) return false;
+				&& (!observed.failure || observed.phase!=5)))
+			return fail(PioneerQwen35::DataflowRecoveryAuditInvalidReceipt,core);
+		if (!PioneerQwen35DataflowQueuesBalanced(*this,core,true))
+			return fail(PioneerQwen35::DataflowRecoveryAuditQueuesUnbalanced,core);
 		terminal=true;
 		return true;
 	};
@@ -1501,8 +1520,10 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 		for (unsigned poll=0;poll<65536;poll++) {
 			PioneerQwen35::DataflowWorkerSnapshot current{};
 			if (!ReadWorkerSnapshot(core,current)) { Pause(); continue; }
-			if (current.state==PioneerQwen35::DataflowWorkerFatal
-				|| current.commandSequence>sequence) return false;
+			if (current.state==PioneerQwen35::DataflowWorkerFatal)
+				return fail(PioneerQwen35::DataflowRecoveryAuditFatalWorker,core);
+			if (current.commandSequence>sequence)
+				return fail(PioneerQwen35::DataflowRecoveryAuditSequenceAhead,core);
 			if (PioneerQwen35::DataflowWorkerSnapshotReady(current)) {
 				settled=true;
 				break;
@@ -1520,7 +1541,8 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 			}
 			Pause();
 		}
-		if (!settled) return false;
+		if (!settled)
+			return fail(PioneerQwen35::DataflowRecoveryAuditWorkerWaitTimeout,core);
 	}
 
 	PioneerQwen35::DataflowWorkerSnapshot first[PioneerQwen35::DataflowCoreCount]{};
@@ -1534,7 +1556,7 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 			if (pass==0) terminal[core]=isTerminal;
 			else if (terminal[core]!=isTerminal
 				|| memcmp(&first[core],&second[core],sizeof(first[core]))!=0)
-				return false;
+				return fail(PioneerQwen35::DataflowRecoveryAuditReceiptChanged,core);
 		}
 		if (!pass) Pause();
 	}
@@ -1545,15 +1567,20 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 		const unsigned address=PioneerQwen35::DataflowWorkerMailboxAddress
 			+offsetof(PioneerQwen35::DataflowWorkerMailbox,acknowledgedSequence);
 		if (!WriteCoreMemory(core,address,&acknowledgement,sizeof(acknowledgement)))
-			return false;
+			return fail(PioneerQwen35::DataflowRecoveryAuditAcknowledgementWriteFailed,
+				core);
 	}
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 		PioneerQwen35::DataflowWorkerSnapshot ready{};
 		if (!WaitWorkerReady(core,ready)
-			|| ready.completedSequence>sequence) return false;
+			|| ready.completedSequence>sequence)
+			return fail(PioneerQwen35::DataflowRecoveryAuditReadyAfterAckFailed,core);
 		snapshots[core]=ready;
 	}
-	return SelectRuntimeCore(0);
+	if (!SelectRuntimeCore(0))
+		return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeSelectFailed,
+			PioneerQwen35::DataflowCoreCount);
+	return true;
 }
 
 bool

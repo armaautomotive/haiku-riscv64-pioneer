@@ -56,10 +56,11 @@ struct MockEmbeddingIO {
 	const uint8_t (*tiles)[DataflowQ6KEmbeddingTileBytes];
 	float* result;
 	unsigned reads=0,writes=0;
+	bool failRead=false,failWrite=false;
 
 	bool ReadWeight(unsigned bank,uint32_t address,uint8_t* output,unsigned bytes)
 	{
-		if (bank!=weightBank || bytes!=DataflowQ6KEmbeddingTileBytes
+		if (failRead || bank!=weightBank || bytes!=DataflowQ6KEmbeddingTileBytes
 			|| address<weightBase) return false;
 		const unsigned offset=address-weightBase;
 		if (offset%DataflowQ6KEmbeddingTileBytes) return false;
@@ -73,7 +74,7 @@ struct MockEmbeddingIO {
 	bool WriteOutput(unsigned bank,uint32_t address,const uint8_t* input,
 		unsigned bytes)
 	{
-		if (bank!=outputBank || address<outputBase || bytes!=64
+		if (failWrite || bank!=outputBank || address<outputBase || bytes!=64
 			|| ((address-outputBase)&63)) return false;
 		const unsigned first=(address-outputBase)/sizeof(float);
 		if (first>=Hidden || Hidden-first<16) return false;
@@ -124,8 +125,9 @@ int main()
 	for (unsigned i=0;i<Hidden;i++)
 		assert(PioneerAttentionBits(actual[i])==PioneerAttentionBits(expected[i]));
 
-	DataflowEmbeddingInvocation invalid{};
-	assert(DataflowEmbeddingProgramBuilder::BindCore(program,0,invalid));
+	DataflowEmbeddingInvocation goodInvocation{};
+	assert(DataflowEmbeddingProgramBuilder::BindCore(program,0,goodInvocation));
+	DataflowEmbeddingInvocation invalid=goodInvocation;
 	invalid.segment[0].address+=64;
 	uint8_t tileScratch[DataflowQ6KEmbeddingTileBytes];
 	float outputScratch[DataflowQ6KEmbeddingValuesPerPanel];
@@ -134,5 +136,22 @@ int main()
 		program.lane,tiles,actual,0,0};
 	assert(!PioneerQwen35DataflowEmbedWorker(invalid,tileScratch,
 		outputScratch,io));
+	unsigned failure=0;
+	assert(!PioneerQwen35DataflowEmbedWorker(invalid,tileScratch,
+		outputScratch,io,&failure));
+	assert(failure==DataflowFailureEmbeddingInvocation);
+	io.failRead=true;
+	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,tileScratch,
+		outputScratch,io,&failure));
+	assert(failure==DataflowFailureEmbeddingWeightRead);
+	io.failRead=false;
+	io.failWrite=true;
+	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,tileScratch,
+		outputScratch,io,&failure));
+	assert(failure==DataflowFailureEmbeddingOutputWrite);
+	io.failWrite=false;
+	assert(!PioneerQwen35DataflowEmbedWorker(goodInvocation,nullptr,
+		outputScratch,io,&failure));
+	assert(failure==DataflowFailureEmbeddingInvocation);
 	return 0;
 }

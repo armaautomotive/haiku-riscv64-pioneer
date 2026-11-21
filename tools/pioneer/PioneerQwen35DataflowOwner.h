@@ -19,6 +19,25 @@ struct DataflowWorkerSnapshot {
 	unsigned state,failure,phase;
 };
 
+enum DataflowRecoveryAuditStage : unsigned {
+	DataflowRecoveryAuditNone=0,
+	DataflowRecoveryAuditInvalidContext=1,
+	DataflowRecoveryAuditNoPendingSequence=2,
+	DataflowRecoveryAuditWorkerWaitTimeout=3,
+	DataflowRecoveryAuditFatalWorker=4,
+	DataflowRecoveryAuditSequenceAhead=5,
+	DataflowRecoveryAuditRuntimeUnstable=6,
+	DataflowRecoveryAuditSnapshotUnreadable=7,
+	DataflowRecoveryAuditReadyQueuesNotDrained=8,
+	DataflowRecoveryAuditInvalidReceipt=9,
+	DataflowRecoveryAuditQueuesUnbalanced=10,
+	DataflowRecoveryAuditReceiptChanged=11,
+	DataflowRecoveryAuditAcknowledgementWriteFailed=12,
+	DataflowRecoveryAuditReadyAfterAckFailed=13,
+	DataflowRecoveryAuditRuntimeSelectFailed=14,
+	DataflowRecoveryAuditDetailMissing=15
+};
+
 enum : unsigned {
 	DataflowOwnerOperationNone=0,
 	DataflowOwnerOperationEmbedding=1
@@ -27,6 +46,7 @@ enum : unsigned {
 struct DataflowOwnerDiagnostic {
 	unsigned operation,result,core,pendingSequence;
 	DataflowWorkerSnapshot worker;
+	unsigned recoveryAuditStage,recoveryAuditCore;
 };
 
 enum DataflowOwnerResult {
@@ -70,7 +90,8 @@ class DataflowProjectionOwner {
 	unsigned fPendingSequence=0;
 	DataflowWorkerSnapshot fSnapshot[DataflowCoreCount]{};
 	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
-		DataflowOwnerComplete,DataflowCoreCount,0,{}};
+		DataflowOwnerComplete,DataflowCoreCount,0,{},DataflowRecoveryAuditNone,
+		DataflowCoreCount};
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{
@@ -317,7 +338,7 @@ public:
 	DataflowOwnerResult RunEmbedding(const DataflowEmbeddingProgram& program,IO& io)
 	{
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{}};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount};
 		auto record=[&](DataflowOwnerResult result,unsigned core,
 			const DataflowWorkerSnapshot* worker,bool faulted) {
 			fDiagnostic.result=result;
@@ -421,7 +442,7 @@ public:
 		fNextSequence=sequence;
 		fPendingSequence=0;
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{}};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount};
 		return DataflowOwnerComplete;
 	}
 
@@ -972,8 +993,14 @@ public:
 	DataflowOwnerResult Recover(IO& io)
 	{
 		if (!fFaulted || !fPendingSequence) return DataflowOwnerInvalidState;
-		if (!io.AuditAndRecoverAll(fPendingSequence,fSnapshot))
+		fDiagnostic.recoveryAuditStage=DataflowRecoveryAuditNone;
+		fDiagnostic.recoveryAuditCore=DataflowCoreCount;
+		if (!io.AuditAndRecoverAll(fPendingSequence,fSnapshot,
+			fDiagnostic.recoveryAuditStage,fDiagnostic.recoveryAuditCore)) {
+			if (fDiagnostic.recoveryAuditStage==DataflowRecoveryAuditNone)
+				fDiagnostic.recoveryAuditStage=DataflowRecoveryAuditDetailMissing;
 			return DataflowOwnerRecoveryPending;
+		}
 		unsigned newest=fNextSequence;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};

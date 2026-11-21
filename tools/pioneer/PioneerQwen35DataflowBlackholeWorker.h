@@ -290,17 +290,25 @@ inline bool DataflowWorkerResetQueues()
 		} else if (invocationMagic==DataflowEmbeddingMagic) {
 			const auto* embedding=reinterpret_cast<const DataflowEmbeddingInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));
-			if (DataflowWorkerQueuesClean() && embedding->Valid()
-				&& embedding->core==core) {
+			unsigned embeddingFailure=0;
+			if (!DataflowWorkerQueuesClean()) {
+				embeddingFailure=DataflowFailureQueue;
+			} else if (!embedding->Valid() || embedding->core!=core) {
+				embeddingFailure=DataflowFailureEmbeddingInvocation;
+			} else {
 				DataflowBlackholeEmbeddingOps io;
-				okay=io.Bind(*embedding)
-					&& PioneerQwen35DataflowEmbedWorker(*embedding,
+				if (!io.Bind(*embedding)) {
+					embeddingFailure=DataflowFailureEmbeddingBind;
+				} else {
+					okay=PioneerQwen35DataflowEmbedWorker(*embedding,
 						reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(
 							DataflowWeightBufferAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
-							DataflowOutputBufferAddress)),io);
+							DataflowOutputBufferAddress)),io,&embeddingFailure);
+				}
 			}
-			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+			if (!okay) DataflowSignalLocalFailure(embeddingFailure
+				?embeddingFailure:DataflowFailureReader);
 		} else if (invocationMagic==DataflowRmsMagic) {
 			const auto* rms=reinterpret_cast<const DataflowRmsInvocation*>(
 				static_cast<uintptr_t>(DataflowProgramAddress));

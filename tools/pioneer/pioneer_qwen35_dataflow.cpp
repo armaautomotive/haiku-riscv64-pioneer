@@ -270,13 +270,17 @@ static void PrintOwnerDiagnostic(const char* action,
 {
 	const unsigned packed=request.reserved[0];
 	const unsigned core=(packed>>8)&0xffffU;
+	const unsigned worker=request.reserved[1];
+	const unsigned recoveryCore=(worker>>11)&0x7fU;
 	fprintf(stderr,"P100A_Q35_DATAFLOW %s result=%u state=%u recovery=%u "
 		"owner_result=%u owner_core=%s%u owner_operation=%u "
-		"worker_state=%u worker_failure=%u worker_phase=%u pending_sequence=%u\n",
+		"worker_state=%u worker_failure=%u worker_phase=%u "
+		"recovery_audit_stage=%u recovery_audit_core=%s%u pending_sequence=%u\n",
 		action,request.result,request.state,request.recovery_required,
 		packed>>24,core==0xffffU?"none/":"",core==0xffffU?0:core,
-		packed&0xffU,request.reserved[1]>>24,
-		(request.reserved[1]>>16)&0xffU,(request.reserved[1]>>8)&0xffU,
+		packed&0xffU,(worker>>29)&0x7U,(worker>>25)&0xfU,
+		(worker>>22)&0x7U,(worker>>18)&0xfU,
+		recoveryCore==0x7fU?"none/":"",recoveryCore==0x7fU?0:recoveryCore,
 		request.reserved[2]);
 }
 
