@@ -37,7 +37,7 @@ idle() {
 		$1=="Id" && $2=="Team" && NF==2 {header++; next}
 		$1~/^[0-9]+$/ && NF>=2 {
 			teams++
-			if($2~/(^|\/)(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-|pioneer-dram)/) bad++
+			if($2~/(^|\/)(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q35-dataflow|pioneer-native-|pioneer-dram)/) bad++
 			next
 		}
 		NF {bad++}
