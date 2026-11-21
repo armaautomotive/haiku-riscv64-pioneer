@@ -271,8 +271,37 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The latest dense-attention code checkpoint is `e533c033ef` (`Add Qwen35 dense
-attention rewrite path`), following `6e0f12b4ff`. The offline rewrite includes
+The last pushed code checkpoint is `e533c033ef` (`Add Qwen35 dense attention
+rewrite path`), following `6e0f12b4ff`. The local rewrite now adds the first
+whole-model one-position coordinator: token embedding, all 32 mixed recurrent
+and dense layer sequences, then final RMS normalization. It dispatches model
+arithmetic to the resident service and keeps no CPU inference path. The
+decoder-sequence host test passes under ASan/UBSan, including mixed-layer
+counts, recurrent-state reset behavior, first-failure reporting, and invalid
+input rejection. The Haiku `rv32imf_zicsr` target compile also passes without
+RISC-V A-extension instructions or unresolved runtime helpers.
+
+The actual variant-60 rewrite driver now builds offline through the dedicated
+`tools/pioneer/build_qwen35_dataflow_driver.sh` wrapper, which selects the
+variant that compiles the rewrite code. Driver60 SHA-256 is
+`4fcedac0481e0038d72fdfb314b6ac59a92d2c3d63b972d8d8d124d861cf274a`; service
+text SHA-256 is `1166102743dc8017be249c1d6a83a7a55642bc425ebbfa3b8eda74e4dbc98a59`;
+reload guard SHA-256 is
+`d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`; and
+default-control SHA-256 is
+`5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`. An
+earlier claimed driver60 hash (`057b487...`) came from the variant-55 helper
+and did not include the rewrite; that validation claim is superseded. These
+are offline build checks only; the Pioneer has not been touched.
+
+This sequence returns the final-normalized hidden vector, not a generated
+token. The tied vocabulary projection, device-side token selection, and
+request/generation loop remain open. Full model generation and silicon
+correctness/performance evidence are not available; no tokens/sec result exists.
+Continue only the rewrite until those offline gates are complete, then move to
+the previously requested benchmark and assistant integration phases.
+
+The pushed dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS
 normalization, manifest-bound graph projections, SiLU×Up, residual save/add,
 feed-forward sequencing, recurrent convolution, Alpha/Beta projections,
@@ -311,9 +340,8 @@ ASan/UBSan checks pass for the dense math, worker, program/authority/owner, and
 sequence fixtures. The math fixture matches the pinned operators exactly for
 RMS, RoPE, F16 conversion, and online softmax. The RV32IMF target compile
 passes without A atomics or runtime helpers. Offline resident-service-image,
-driver60, reload-guard, and default-control builds pass; service text SHA-256
-is `1166102743dc8017be249c1d6a83a7a55642bc425ebbfa3b8eda74e4dbc98a59`,
-driver60 SHA-256 is `057b487b6543f4103934e8c24bc4f05a0af939b35d2013f4fe74b4e53c0772bc`,
+reload-guard, and default-control builds pass; service text SHA-256 is
+`1166102743dc8017be249c1d6a83a7a55642bc425ebbfa3b8eda74e4dbc98a59`,
 reload guard SHA-256 is
 `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`, and
 default-control SHA-256 is

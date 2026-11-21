@@ -17,10 +17,13 @@
 #include "../PioneerQwen35DataflowFfnSequence.h"
 #include "../PioneerQwen35DataflowRecurrentLayerSequence.h"
 #include "../PioneerQwen35DataflowDenseLayerSequence.h"
+#include "../PioneerQwen35DataflowDecoderSequence.h"
 
 using namespace PioneerQwen35;
 
 struct TargetFfnAuthority {
+	bool ResetRecurrentState() { return true; }
+	bool BuildEmbedding(unsigned,unsigned,DataflowEmbeddingProgram&) { return true; }
 	bool BuildResidual(unsigned,unsigned,DataflowResidualProgram&) { return true; }
 	bool BuildRms(unsigned,unsigned,unsigned,unsigned,DataflowRmsProgram&) { return true; }
 	bool BuildProjection(unsigned,unsigned,unsigned,unsigned,
@@ -39,6 +42,7 @@ struct TargetFfnAuthority {
 };
 
 struct TargetFfnService {
+	int EmbedToken(const DataflowEmbeddingProgram&,int&) { return 0; }
 	int RunResidual(const DataflowResidualProgram&,int&) { return 0; }
 	int RunRms(const DataflowRmsProgram&,int&) { return 0; }
 	int RunProjection(const DataflowProjectionProgram&,int&) { return 0; }
@@ -81,6 +85,17 @@ bool PioneerQwen35DataflowDenseLayerSequenceTargetCompileProbe(
 	return DataflowDenseLayerSequence::Run(layer,position,inputSlot,
 		authority,service,io,outputSlot,stage)
 		==DataflowDenseLayerComplete;
+}
+
+bool PioneerQwen35DataflowDecoderSequenceTargetCompileProbe(unsigned position,
+	unsigned token,unsigned inputSlot)
+{
+	TargetFfnAuthority authority;
+	TargetFfnService service;
+	int io=0;
+	unsigned outputSlot=ActivationBuffers,stage=0;
+	return DataflowDecoderSequence::Run(position,token,inputSlot,authority,
+		service,io,outputSlot,stage)==DataflowDecoderSequenceComplete;
 }
 
 bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,
