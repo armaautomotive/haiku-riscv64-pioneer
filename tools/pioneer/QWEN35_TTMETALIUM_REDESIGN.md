@@ -375,10 +375,11 @@ ASan/UBSan worker, authority, and owner checks pass; the RV32IMF compile and
 offline driver60/reload-guard/default-control builds pass. The driver60
 SHA-256 is
 `5b1aff677a77cc86b75e725e0bd16c2e2a2c34aeb3b277cabbe5164be1c0961a`.
-`DataflowFfnSequence` now composes residual save, post-attention RMS, Gate/Up
-Tensix projections, SiLU×Up, Down projection, and residual add behind a
-rewrite-only root opcode. Host ASan/UBSan checks confirm ordering, invalid
-request handling, and stopping at the first failed command. The Haiku RV32IMF
+`DataflowFfnSequence`, pushed in `2a2405752a`, now composes residual save,
+post-attention RMS, Gate/Up Tensix projections, SiLU×Up, Down projection, and
+residual add behind a rewrite-only root opcode. Host ASan/UBSan checks confirm
+ordering, invalid request handling, and stopping at the first failed command.
+The Haiku RV32IMF
 compile and offline driver60/reload-guard/default-control builds pass; the
 driver60 SHA-256 is
 `5b59a99ea3346af23399ec273bd810c3f9730bb4f5aa8c8cce0c131264045ed9`.

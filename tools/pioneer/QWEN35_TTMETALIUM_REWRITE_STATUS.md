@@ -270,13 +270,14 @@ and silicon correctness/performance evidence.
 
 ## Current checkpoint: 2026-11-20
 
-The latest pushed rewrite checkpoint is `019b7fb29e` (`Add Qwen35 residual
-dataflow`). The offline rewrite has concrete Tensix matrix projection,
+The latest pushed rewrite checkpoint is `2a2405752a` (`Add Qwen35 feed-forward
+sequence`). The offline rewrite has concrete Tensix matrix projection,
 device-side Q6_K token embedding, device-side hidden RMS normalization,
 manifest-bound graph Up projection, device SiLU×Up, and residual save/add
-across the resident 120-worker service. The root-only support surface still
-exposes primitives, not generation. No hardware test or decode rate is
-available for the rewrite.
+across the resident 120-worker service, plus a checked seven-step
+feed-forward-sublayer sequence. The root-only support surface still does not
+provide token generation. No hardware test or decode rate is available for
+the rewrite.
 
 The graph workspace now participates in the projection path. The projection
 request can select the Up-output sidecar, but the authority admits that target
@@ -331,8 +332,8 @@ driver60 SHA-256 is
 service text SHA-256 is
 `279cac1dddbc27f0c6621fec07b248d267714073355fb0cf83b812d6cc3cf9fe`.
 
-The next local rewrite step adds `DataflowFfnSequence`, which composes those
-device operations into a complete feed-forward sublayer: residual save,
+The rewrite step in `2a2405752a` adds `DataflowFfnSequence`, which composes
+those device operations into a complete feed-forward sublayer: residual save,
 post-attention RMS, Gate and Up projections, SiLU×Up, Down projection, and
 residual add. A rewrite-only root opcode exposes this sequence and reports the
 failing stage. The coordinator only builds authorized programs and submits
@@ -342,9 +343,9 @@ The RV32IMF sequence compile check passes without A atomics or runtime helpers.
 The offline driver60, reload-guard, and default-control builds pass; the
 driver60 SHA-256 is
 `5b59a99ea3346af23399ec273bd810c3f9730bb4f5aa8c8cce0c131264045ed9`.
-This is a local, offline-checked rewrite checkpoint; recurrent/dense attention,
-state updates, final vocabulary readout, and token generation remain
-unimplemented. No Pioneer access or benchmark was performed.
+This is an offline-checked, pushed rewrite checkpoint; recurrent/dense
+attention, state updates, final vocabulary readout, and token generation
+remain unimplemented. No Pioneer access or benchmark was performed.
 
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration
