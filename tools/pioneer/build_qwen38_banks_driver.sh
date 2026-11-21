@@ -397,7 +397,7 @@ if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
  case "$variant" in
   50) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026111700010225 ] && [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ] || exit 2;;
   54|55|56|57|58|59) ;;
-  60) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026112100010103 ] || exit 2;;
+  60) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026112100010104 ] || exit 2;;
   *) exit 2;;
  esac
  case "${PIONEER_DRIVER_BUILD_TAG:-}" in ''|*[!0-9a-f]* ) exit 2;; esac
@@ -482,7 +482,7 @@ esac
 case "${PIONEER_Q38_SPAN_PRELOAD:-0}" in
  0) ;;
  1) if [ "$variant" = 60 ]; then
-     [ "${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_Q38_WORK_MODE:-0}:${PIONEER_Q35_WORK_INCLUDE:-}" = "15:1:2026112100010103:0:" ] || exit 2
+     [ "${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_Q38_WORK_MODE:-0}:${PIONEER_Q35_WORK_INCLUDE:-}" = "15:1:2026112100010104:0:" ] || exit 2
     elif [ -z "${PIONEER_Q35_WORK_INCLUDE:-}" ]; then
      [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] && [ "${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 1 ] || exit 2
     fi

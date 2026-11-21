@@ -292,17 +292,23 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 			return false;
 		failedStage=11;
 		if (!PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
-		failedStage=12;
 		if (!core) {
+			failedStage=12;
 			if (node.image.running) return false;
-		} else if (!node.image.running || !lease.peerNonce[core-1]
-			|| !PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,&lease))
-			return false;
+		} else {
+			failedStage=13;
+			if (!node.image.running) return false;
+			// Bootstrap peers are valid at nonce zero. Their exact initial
+			// idle receipt is proved by PeerStatus just like later nonces.
+			failedStage=14;
+			if (!PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,
+				&lease)) return false;
+		}
 	}
-	failedStage=13;
+	failedStage=15;
 	failedCore=0xff;
 	if (lease.rootRunning || lease.unsafe || context->banks.Quarantined()) return false;
-	failedStage=14;
+	failedStage=16;
 	if (context->qwen35DataflowRoutesAudited
 		&& memcmp(context->qwen35DataflowRoutes,auditedRoutes,sizeof(auditedRoutes))!=0)
 		return false;

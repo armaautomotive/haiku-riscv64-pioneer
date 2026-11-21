@@ -27,13 +27,15 @@ exact stage and core/bank. The validation predicates remain unchanged.
 
 ## Hardware status
 
-The prior tag0102 attempt transferred the full 2,740,498,432-byte model and
-failed at model bind with I/O error during dispatch/fleet preflight. Its
-clean-unload evidence is archived at
-`../qwen35-dataflow-tag0102-20261121/evidence/tag0102-bind-failure/`. The
-wrapper restored stable driver55 at generation 16, no reboot. Tag0103 has
-only been built offline so far; the model has not been loaded under this
-candidate and there is no generation or performance result for it.
+Tag0103 was loaded after stable driver55 generation 16 was verified idle. The
+full model upload completed, then bind diagnostics identified the redundant
+zero-peer-nonce rejection on core 1. No service or generation was run. The
+client closed cleanly, and the wrapper restored driver55 at generation 18
+without reboot. Evidence is archived in `evidence/tag0103-peer-nonce/`.
+
+The tag0104 code removes only that redundant rejection. Its updated route
+proof still requires a valid idle peer receipt with the exact status words,
+marker, and waiting PC.
 
 The 27B setup remains preserved. Before the next card trial, rerun the
 wrapper's read-only preflight to verify no diagnostic or inference process is

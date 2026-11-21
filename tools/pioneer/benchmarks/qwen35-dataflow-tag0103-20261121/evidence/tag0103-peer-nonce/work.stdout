@@ -1,0 +1,3 @@
+P100A_Q35_DATAFLOW authentication_seconds=68.289917
+P100A_Q35_DATAFLOW vocabulary_seconds=13.264192 prompt_ids=760,6511,314,9338,369
+P100A_Q35_DATAFLOW unload_clean=1 state=2 active=0 cold=0 service_closed=1

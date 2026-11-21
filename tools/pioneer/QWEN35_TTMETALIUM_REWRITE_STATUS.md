@@ -31,13 +31,15 @@ or decode timing was produced. The client explicitly closed its session with
 generation 16 without reboot. The 27B model file was checked in place before
 the trial. The failure and hashes are recorded in
 `benchmarks/qwen35-dataflow-tag0102-20261121/evidence/tag0102-bind-failure/`.
-Checkpoint `0034491616` archives the failed run and its clean recovery on
-GitHub. I added substage/core reporting to the rewritten model-bind path and
-built unique tag0103 offline; it keeps all existing route checks intact.
-Its driver SHA-256 is
-`06153f5c7bfb81179f9b5f3b3d51e176a1ea5465393023a94060edaf345c442c`.
-The next step is another read-only idle/model preflight, then a guarded
-tag0103 trial. The 100 tokens/s target remains unmeasured.
+Checkpoints `0034491616` and `06c60b0784` archive the failed bind and its
+diagnostic. Tag0103 narrowed the failure to core 1's initial peer state:
+bootstrap keeps its dispatch nonce at zero, while route proof rejected zero
+before verifying the exact idle receipt. Tag0104 removes that redundant
+condition while retaining the status-word, marker, and waiting-PC checks.
+Tag0103 unloaded cleanly and restored stable driver55 at generation 18
+without reboot. The tag0104 driver built offline; a new idle preflight is
+required before its hardware trial. The 100 tokens/s target is still
+unmeasured.
 
 ## Progress
 
