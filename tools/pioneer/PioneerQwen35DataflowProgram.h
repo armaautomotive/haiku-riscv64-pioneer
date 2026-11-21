@@ -31,6 +31,9 @@ enum : unsigned {
 	DataflowAffineCoefficientAddress=0x91200,
 	DataflowAffineMinimumAddress=0x91240,
 	DataflowAffineMetadataBytes=16*sizeof(uint32_t),
+	DataflowConvHistoryBufferAddress=0x93000,
+	DataflowConvNextHistoryBufferAddress=0x93400,
+	DataflowConvHistoryBufferBytes=16*3*sizeof(float),
 	DataflowQ5PanelScratchAddress=0x90fc0,
 	DataflowQ5PanelTileBytes=576,
 	DataflowQ5PanelScratchBytes=704,
@@ -88,6 +91,10 @@ static_assert(DataflowActivationCacheAddress+DataflowActivationCacheBytes
 	&& DataflowInputBufferAddress+DataflowInputPageBytes*DataflowCircularBufferPages
 		<=DataflowOutputBufferAddress
 	&& DataflowOutputBufferAddress+DataflowOutputPageBytes*DataflowCircularBufferPages
+		<=DataflowConvHistoryBufferAddress
+	&& DataflowConvHistoryBufferAddress+DataflowConvHistoryBufferBytes
+		<=DataflowConvNextHistoryBufferAddress
+	&& DataflowConvNextHistoryBufferAddress+DataflowConvHistoryBufferBytes
 		<=DataflowWeightBufferAddress+DataflowWeightBufferPageStride
 	&& DataflowWeightBufferAddress+DataflowWeightBufferPageStride
 		+DataflowMaxWeightPageBytes<=DataflowLocalBufferEnd,
@@ -369,7 +376,7 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 	const DataflowGraphWorkspace& workspace,
 	const unsigned (&auditedRoutes)[2][Banks],
 	const DataflowProjectionProgram& program,unsigned* inputSlot=nullptr,
-	unsigned* workspaceIndex=nullptr)
+	unsigned* workspaceIndex=nullptr,unsigned* modelLayer=nullptr)
 {
 	unsigned targetIndex=0;
 	if (manifest.magic!=LayoutMagic || manifest.version!=LayoutVersion
@@ -405,6 +412,7 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 			&& expected->place.rows==program.outputRows
 			&& DataflowRowSpaceMatches(expected->place,program.weights)) {
 			modelWeight=true;
+			if (modelLayer) *modelLayer=layer;
 			break;
 		}
 	}

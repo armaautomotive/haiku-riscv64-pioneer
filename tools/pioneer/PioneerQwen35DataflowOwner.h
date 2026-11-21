@@ -561,6 +561,96 @@ public:
 	}
 
 	template<class IO>
+	DataflowOwnerResult RunConv(const DataflowConvProgram& program,IO& io)
+	{
+		if (!fInitialized || fFaulted) return DataflowOwnerInvalidState;
+		if (!program.Valid()) return DataflowOwnerInvalidProgram;
+		if (fNextSequence>=DataflowWorkerSequenceLimit)
+			return DataflowOwnerSequenceExhausted;
+		if (!io.AuthorizeConv(program)) return DataflowOwnerProgramUnauthorized;
+		if (!io.BeginConv(program)) return DataflowOwnerProjectionBeginFailed;
+		const unsigned sequence=fNextSequence+1;
+		fPendingSequence=sequence;
+		auto preparationFailed=[&](DataflowOwnerResult result) {
+			fFaulted=true;
+			return result;
+		};
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowWorkerSnapshot snapshot{};
+			if (!io.ReadWorkerSnapshot(core,snapshot)
+				|| !DataflowWorkerSnapshotReady(snapshot)
+				|| !io.CoreReady(core,snapshot))
+				return preparationFailed(DataflowOwnerCoreNotReady);
+			fSnapshot[core]=snapshot;
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowConvInvocation invocation{};
+			if (!DataflowConvProgramBuilder::BindCore(program,core,invocation))
+				return preparationFailed(DataflowOwnerInvalidProgram);
+			if (!io.WriteConvInvocation(core,invocation))
+				return preparationFailed(DataflowOwnerInvocationWriteFailed);
+			if (!io.ConvInvocationMatches(core,invocation))
+				return preparationFailed(DataflowOwnerInvocationReadbackFailed);
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!io.PublishCommand(core,sequence)) {
+				fFaulted=true;
+				return DataflowOwnerCommandPublishFailed;
+			}
+		}
+		bool allTerminal=true,allComplete=true;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowWorkerSnapshot receipt{};
+			const bool observed=io.WaitForCompletion(core,sequence,receipt);
+			fSnapshot[core]=receipt;
+			if (!observed || !Terminal(receipt,sequence)) {
+				allTerminal=false;
+				allComplete=false;
+			} else if (receipt.state!=DataflowWorkerComplete || receipt.failure) {
+				allComplete=false;
+			}
+		}
+		if (!allTerminal || !allComplete) {
+			fFaulted=true;
+			return DataflowOwnerWorkerFailed;
+		}
+		if (!io.AuditConv(program,sequence,fSnapshot)) {
+			fFaulted=true;
+			return DataflowOwnerAuditFailed;
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!io.Acknowledge(core,sequence)) {
+				fFaulted=true;
+				return DataflowOwnerAcknowledgementFailed;
+			}
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowWorkerSnapshot snapshot{};
+			bool ready=false;
+			for (unsigned poll=0;poll<65536;poll++) {
+				if (io.ReadWorkerSnapshot(core,snapshot)
+					&& DataflowWorkerSnapshotReady(snapshot)
+					&& snapshot.completedSequence==sequence) {
+					ready=true;
+					break;
+				}
+			}
+			if (!ready) {
+				fFaulted=true;
+				return DataflowOwnerAcknowledgementFailed;
+			}
+			fSnapshot[core]=snapshot;
+		}
+		if (!io.CompleteConv(program,sequence)) {
+			fFaulted=true;
+			return DataflowOwnerProjectionCommitFailed;
+		}
+		fNextSequence=sequence;
+		fPendingSequence=0;
+		return DataflowOwnerComplete;
+	}
+
+	template<class IO>
 	DataflowOwnerResult Recover(IO& io)
 	{
 		if (!fFaulted || !fPendingSequence) return DataflowOwnerInvalidState;

@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_MODEL_PROTOCOL_H
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphWorkspace.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowConvProgram.h"
 
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND (B_DEVICE_OP_CODES_END + 0x8838)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_PROJECT (B_DEVICE_OP_CODES_END + 0x8839)
@@ -13,12 +14,14 @@
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_SILU (B_DEVICE_OP_CODES_END + 0x883e)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_RESIDUAL (B_DEVICE_OP_CODES_END + 0x883f)
 #define TT_PCI_PROBE_QWEN35_DATAFLOW_FFN_SEQUENCE (B_DEVICE_OP_CODES_END + 0x8840)
+#define TT_PCI_PROBE_QWEN35_DATAFLOW_CONV (B_DEVICE_OP_CODES_END + 0x8841)
 
 enum : uint32_t {
 	TT_QWEN35_DATAFLOW_MODEL_ABI=3,
 	TT_QWEN35_DATAFLOW_RESIDUAL_SAVE=1,
 	TT_QWEN35_DATAFLOW_RESIDUAL_ADD=2,
-	TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE=256U
+	TT_QWEN35_DATAFLOW_CAP_FFN_SEQUENCE=256U,
+	TT_QWEN35_DATAFLOW_CAP_RECURRENT_CONV=512U
 };
 
 struct tt_qwen35_dataflow_model_bind {
@@ -72,6 +75,11 @@ struct tt_qwen35_dataflow_ffn_sequence {
 	uint32_t result,stage,next_sequence,state,recovery_required;
 };
 
+struct tt_qwen35_dataflow_conv {
+	uint32_t version,layer,position,result;
+	uint32_t next_sequence,state,recovery_required,reserved;
+};
+
 static_assert(sizeof(tt_qwen35_dataflow_activation_seed)==32,
 	"fixed activation seed ABI");
 static_assert(sizeof(tt_qwen35_dataflow_activation_read)==32,
@@ -86,6 +94,8 @@ static_assert(sizeof(tt_qwen35_dataflow_residual)==28,
 	"fixed residual update ABI");
 static_assert(sizeof(tt_qwen35_dataflow_ffn_sequence)==36,
 	"fixed feed-forward sequence ABI");
+static_assert(sizeof(tt_qwen35_dataflow_conv)==32,
+	"fixed recurrent convolution ABI");
 
 static_assert(sizeof(tt_qwen35_dataflow_model_bind)==82740,
 	"fixed manifest binding ABI");

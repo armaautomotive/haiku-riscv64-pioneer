@@ -8,6 +8,7 @@
 #include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35DataflowSiluProgram.h"
 #include "PioneerQwen35DataflowResidualProgram.h"
+#include "PioneerQwen35DataflowConvProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -18,7 +19,7 @@ namespace PioneerQwen35 {
 class DataflowProjectionAuthority {
 	enum : unsigned {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
-		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6
+		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -26,11 +27,13 @@ class DataflowProjectionAuthority {
 	bool fBound=false;
 	unsigned fActivationRows[ActivationBuffers]{};
 	bool fGraphWorkspaceReady[DataflowGraphWorkspaceBufferCount]{};
+	unsigned fGraphWorkspaceLayer[DataflowGraphWorkspaceBufferCount]{};
 	bool fGraphResidualReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
 	unsigned fPendingKind=PendingNone;
 	unsigned fPendingResidualMode=0;
+	unsigned fPendingLayer=~0U,fPendingPosition=0;
 
 	bool Slots(const DataflowProjectionProgram& program,unsigned& input,
 		unsigned& output) const
@@ -107,6 +110,26 @@ class DataflowProjectionAuthority {
 		return true;
 	}
 
+	bool ConvMatches(const DataflowConvProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowConvProgram expected{};
+		if (!DataflowConvProgramBuilder::Build(fManifest,fGraphWorkspace,
+			program.layer,program.position,fRoutes,expected)
+			|| program.layer!=expected.layer || program.position!=expected.position
+			|| !DataflowRowSpaceMatches(program.qkv,expected.qkv)
+			|| !DataflowRowSpaceMatches(program.historyRead,expected.historyRead)
+			|| !DataflowRowSpaceMatches(program.historyWrite,expected.historyWrite)
+			|| program.weights.type!=expected.weights.type
+			|| program.weights.inputs!=expected.weights.inputs
+			|| !DataflowRowSpaceMatches(program.weights.place,expected.weights.place))
+			return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
+	}
+
 public:
 	DataflowProjectionAuthority()=default;
 	DataflowProjectionAuthority(const DataflowProjectionAuthority&)=delete;
@@ -130,7 +153,63 @@ public:
 	bool GraphWorkspaceReady(unsigned index) const
 		{ return fBound && index<DataflowGraphWorkspaceBufferCount
 			&& fGraphWorkspaceReady[index]; }
+	unsigned GraphWorkspaceLayer(unsigned index) const
+		{ return GraphWorkspaceReady(index)?fGraphWorkspaceLayer[index]:~0U; }
 	bool GraphResidualReady() const { return fBound && fGraphResidualReady; }
+
+	bool BuildConv(unsigned layer,unsigned position,
+		DataflowConvProgram& program) const
+	{
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		if (!fBound || fPending || layer>=Layers
+			|| !GraphWorkspaceReady(qkv) || GraphWorkspaceLayer(qkv)!=layer
+			|| !DataflowConvProgramBuilder::Build(fManifest,fGraphWorkspace,
+				layer,position,fRoutes,program)) return false;
+		return AuthorizeConv(program);
+	}
+
+	bool AuthorizeConv(const DataflowConvProgram& program) const
+	{
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		return fBound && !fPending && program.layer<Layers
+			&& GraphWorkspaceReady(qkv)
+			&& GraphWorkspaceLayer(qkv)==program.layer
+			&& ConvMatches(program);
+	}
+
+	bool BeginConv(const DataflowConvProgram& program)
+	{
+		if (!AuthorizeConv(program)) return false;
+		fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
+		fPending=true;
+		fPendingOutput=DataflowGraphRecurrentQkvOutputSlot;
+		fPendingKind=PendingConv;
+		fPendingLayer=program.layer;
+		fPendingPosition=program.position;
+		return true;
+	}
+
+	bool PendingConvMatches(const DataflowConvProgram& program) const
+	{
+		return fBound && fPending && fPendingKind==PendingConv
+			&& fPendingOutput==DataflowGraphRecurrentQkvOutputSlot
+			&& program.layer==fPendingLayer && program.position==fPendingPosition
+			&& ConvMatches(program);
+	}
+
+	bool CompleteConv(const DataflowConvProgram& program)
+	{
+		if (!PendingConvMatches(program)) return false;
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		fGraphWorkspaceLayer[qkv]=program.layer;
+		fGraphWorkspaceReady[qkv]=true;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		fPendingLayer=~0U;
+		fPendingPosition=0;
+		return true;
+	}
 
 	bool BuildProjection(unsigned layer,unsigned role,unsigned inputSlot,
 		unsigned outputSlot,DataflowProjectionProgram& program) const
@@ -422,12 +501,13 @@ public:
 	{
 		if (!PendingProjectionMatches(program)) return false;
 		if (fPendingKind==PendingGraphProjection) {
-			unsigned input=ActivationBuffers,workspaceIndex=0;
+			unsigned input=ActivationBuffers,workspaceIndex=0,modelLayer=0;
 			if (!DataflowProjectionMatchesGraphWorkspace(fManifest,fGraphWorkspace,
-				fRoutes,program,&input,&workspaceIndex)
+				fRoutes,program,&input,&workspaceIndex,&modelLayer)
 				|| fPendingOutput!=DataflowGraphProjectionOutputSlot(workspaceIndex)
 				|| fActivationRows[input]<program.inputRows) return false;
 			fGraphWorkspaceReady[workspaceIndex]=true;
+			fGraphWorkspaceLayer[workspaceIndex]=modelLayer;
 		} else {
 			unsigned input=ActivationBuffers,output=ActivationBuffers;
 			if (!Slots(program,input,output) || output!=fPendingOutput
@@ -488,6 +568,10 @@ public:
 			if (fPendingResidualMode==DataflowResidualAdd)
 				fActivationRows[fPendingOutput]=0;
 			fGraphResidualReady=false;
+		} else if (fPendingKind==PendingConv) {
+			if (fPendingOutput!=DataflowGraphRecurrentQkvOutputSlot
+				|| fPendingLayer>=Layers) return false;
+			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
 		} else {
 			if (fPendingKind!=PendingProjection || fPendingOutput>=ActivationBuffers)
 				return false;
@@ -497,6 +581,8 @@ public:
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;
 		fPendingResidualMode=0;
+		fPendingLayer=~0U;
+		fPendingPosition=0;
 		return true;
 	}
 };
