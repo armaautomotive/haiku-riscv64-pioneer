@@ -1,11 +1,15 @@
-# Qwen3.5 Tenstorrent-style code rewrite
+# Qwen3.5 Tenstorrent device-program rewrite
 
 ## Scope
 
-Rewrite the Qwen3.5 Work execution path around a device program with per-core
-reader, Tensix compute, and writer roles; double-buffered local circular
-buffers; sharded intermediate activations; and no host inference path. Keep
-the checkpoint history on `codex/qwen35-4b-p100a`.
+Rewrite the Qwen3.5 Work execution path around one resident BRISC worker per
+Tensix core. Each worker owns one immutable shard, performs bounded NoC 0
+reads, issues projections to the Tensix matrix engine, and sends results with
+NoC 1. Keep two alternating L1 pages for weight and activation staging, sharded
+intermediate activations, and no host inference path. This follows
+Tenstorrent's per-worker BRISC programming pattern; it is not a claim that the
+Haiku image runs TT-Metalium or its separate NCRISC/TRISC kernels. Keep the
+checkpoint history on `codex/qwen35-4b-p100a`.
 
 During this phase, work only on rewrite code and its offline code checks.
 Defer Pioneer benchmark runs and assistant integration until the device-program
@@ -176,29 +180,46 @@ rewrite is implemented.
 
 ## Rewrite gates
 
-1. Complete offline descriptor, queue, and role contract checks.
-2. Implement the Blackhole device operations and build independent reader,
-   Tensix compute, and writer images with a concurrent launch protocol.
-3. Connect those images to a resident Qwen3.5 program owner and preserve
-   sharded activation outputs across dependent operations.
-4. Complete the offline target build and correctness gates, then proceed to
-   the hardware benchmark and assistant integration phases.
+1. Complete offline descriptor and per-core worker checks.
+2. Cross-compile the concrete worker with its NoC and Tensix operations for the
+   Haiku RV32 image, with no CPU inference or fallback.
+3. Connect each worker invocation to a resident Qwen3.5 program owner and
+   preserve sharded activation outputs across dependent operations.
+4. Complete offline target and correctness gates. Only then begin the hardware
+   benchmark and assistant integration phases.
 
-The latest pushed checkpoint before this rewrite is `1b2b57c561`.
-Rewrite checkpoints are pushed incrementally to `codex/qwen35-4b-p100a`; use
-that branch's current tip for the latest checkpoint.
+## Latest rewrite work
+
+- 2026-11-20: Added `PioneerQwen35DataflowBlackholeWorker.h`, a concrete
+  one-BRISC-worker-per-core projection path. Each core reads its input and
+  weight shard over NoC 0, packs Q8 activation chunks locally, alternates its
+  two L1 weight/input pages, issues each output group through the Tensix
+  matrix engine, and writes the sharded result over NoC 1. It validates the
+  fixed per-core queue state before use and publishes bounded Reader, Compute,
+  or Writer failure slots before returning. No host dot-product or inference
+  fallback exists. The target compile probe now instantiates this worker, and
+  the Haiku RV32IMF cross-compile passes without A-extension instructions or
+  runtime helpers. This proves target lowering only; there is still no
+  resident program owner, native device image, or silicon validation. No
+  Pioneer access, benchmark, or assistant integration was performed.
+
+The pre-rewrite Work baseline is `1b2b57c561`; the branch tip immediately
+before adding the BRISC worker was `830ec1011e`. Rewrite checkpoints are pushed
+incrementally to `codex/qwen35-4b-p100a`; use that branch's current tip for the
+latest checkpoint.
 
 The Haiku RV32 cross-compiler is available at
 `/Volumes/HaikuBuildLocal/generated.riscv64`; use
 `tests/run_pioneer_qwen35_dataflow_target_compile_test.sh` for the checked
-role-contract compile. The local Apple Clang 17 build has no RISC-V target.
-The Blackhole Reader/Compute/Writer device operations, role images, and
-resident program owner remain unimplemented.
+worker compile. The local Apple Clang 17 build has no RISC-V target.
 
-The current role functions are still contracts around an `Ops` template. The
-Tenstorrent reference pattern executes reader and writer data movement beside
-one compute kernel on each Tensix core; its compute program is split across
-TRISC unpack, math, and pack processors and uses explicit destination-register
-ownership handoffs. This rewrite still needs those device bindings, including
-the required Q5_K Tensix projection path, before it can pass the offline target
-build gate.
+The lower-level queue role templates remain offline contracts. The current
+concrete path is `PioneerQwen35DataflowBlackholeWorkerEntry`, which binds the
+BRISC-side NoC and Tensix operations into one bounded per-core worker. Its two
+page slots alternate synchronously; they do not overlap transfers with matrix
+work yet. Tenstorrent's open `tt-lab` worker pattern is the closest fit for
+this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
+[BRISC firmware](https://github.com/tenstorrent/tt-lab/blob/main/src/brisc.cpp)).
+It is still missing a resident owner that materializes and launches all 120
+invocations, downstream sharded activation chaining, native image validation,
+and silicon correctness/performance evidence.

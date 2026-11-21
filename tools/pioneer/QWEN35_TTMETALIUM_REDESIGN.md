@@ -6,13 +6,13 @@ showed that local command-register tuning was not addressing the bottleneck.
 ## Upstream pattern
 
 TT-Metalium builds a device `Program` from per-core reader, compute, and writer
-kernels, circular-buffer definitions, and runtime arguments. The reader moves
-tiles from device DRAM to local SRAM, the compute kernel feeds the Tensix
-matrix engine, and the writer streams results back out. Circular-buffer
-producer/consumer synchronization lets data movement overlap matrix work.
-Programs are submitted as device workloads; fast dispatch queues them on the
-device. TT-NN/tt-transformers then retain device weights and KV cache and use
-decode-specific kernels and cached operation programs.
+kernels, circular-buffer definitions, and runtime arguments. Tenstorrent's
+open `tt-lab` also demonstrates a per-worker BRISC firmware pattern that
+coordinates explicit NoC movement and Tensix instructions. The Haiku rewrite
+adopts this per-worker pattern because its current freestanding build has one
+RISC-V firmware image and no NCRISC/TRISC compiler integration. It does not
+link the TT-Metalium runtime. The long-term target remains resident weights,
+recurrent state, KV cache, and reusable decode programs.
 
 References:
 
@@ -41,15 +41,17 @@ problem, not a model-load problem.
 ## Target architecture
 
 Keep the Haiku driver as the control plane and keep inference on the card.
-Port the TT-Metalium device-program pattern into the freestanding Blackhole
-images:
+Port the Tenstorrent per-worker program pattern into the freestanding
+Blackhole images:
 
-1. Give each Tensix core a stable shard of a tensor and a persistent program
-   entry. The program receives a projection or fused-operation descriptor,
-   derives its row range from its core ID, and processes a tile loop locally.
-2. Split each core's dataflow into reader, compute, and writer roles. Use
-   double-buffered local SRAM circular buffers; overlap quantized-weight and
-   activation reads with Tensix matrix operations and result writes.
+1. Give each of the 120 Tensix cores a stable shard and a persistent BRISC
+   entry. The host materializes one immutable invocation per core; each worker
+   processes its projection tile loop locally.
+2. Each worker reads activations and quantized weights with NoC 0, issues
+   projection operations to the Tensix matrix engine, and writes its output
+   shard with NoC 1. Use the two fixed L1 pages for bounded alternating
+   weight/activation staging. The initial worker is synchronous, so transfer
+   and matrix work do not overlap yet.
 3. Keep intermediate activations in sharded device buffers. Pass buffer
    addresses and shape/stride metadata to the next program rather than
    collecting every projection into ROOT L1 and redistributing it.
@@ -79,9 +81,11 @@ images:
    all-core participation, and require measured decode throughput to improve
    before promoting each candidate. The final target remains 100 decode tok/s.
 
-The public TT-Metalium C++ runtime is not currently used by this Haiku driver;
-the implementation work here is to port its device-side programming pattern,
-not to introduce CPU inference or a host fallback.
+The public TT-Metalium C++ runtime is not currently used by this Haiku driver.
+The current implementation adapts the open [tt-lab BRISC worker
+pattern](https://github.com/tenstorrent/tt-lab/blob/main/src/brisc.cpp) to the
+available freestanding image. Numeric projections are issued to Tensix; there
+is no CPU inference or host fallback.
 
 ## Performance budget and activation storage
 
@@ -114,6 +118,14 @@ c++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined \
 ```
 
 ## Prototype status
+
+`PioneerQwen35DataflowBlackholeWorker.h` now contains the concrete one-BRISC
+worker body: it binds the per-core invocation, fetches and packs its activation,
+alternates the two local weight/input pages through a complete output shard,
+and writes each completed 16-row result to its assigned output bank. Failures
+are published into that core's role slots and return to the owner. The target
+compile probe instantiates this code with the actual Blackhole NoC and Tensix
+adapters. It is not yet built into a resident image or launched on silicon.
 
 `PioneerQwen35ProgramSchedule.h` builds a stable 120-core partition for a
 whole projection. It assigns contiguous logical row ranges and splits a

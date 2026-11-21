@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen35DataflowBlackholeIO.h"
 #include "../PioneerQwen35DataflowTensixOps.h"
+#include "../PioneerQwen35DataflowBlackholeWorker.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 
 using namespace PioneerQwen35;
@@ -68,4 +69,18 @@ bool PioneerQwen35DataflowBlackholeTransferTargetCompileProbe(
 		&& PioneerQwen35DataflowReader(program,queues[0],queues[1],
 			activationCache,reader)
 		&& PioneerQwen35DataflowWriter(program,queues[2],writer);
+}
+
+// Compile the concrete one-BRISC-worker-per-core path that owns NoC reads,
+// Tensix projection commands, and NoC writes for one immutable shard.
+bool PioneerQwen35DataflowBlackholeWorkerTargetCompileProbe(
+	const DataflowCoreInvocation& program,
+	DataflowQueueView (&queues)[DataflowCircularBufferCount],
+	uint8_t* activationCache)
+{
+	DataflowBlackholeReaderOps reader;
+	DataflowBlackholeTensixOps compute;
+	DataflowBlackholeWriterOps writer;
+	return PioneerQwen35DataflowBlackholeWorker(program,queues,
+		activationCache,reader,compute,writer);
 }
