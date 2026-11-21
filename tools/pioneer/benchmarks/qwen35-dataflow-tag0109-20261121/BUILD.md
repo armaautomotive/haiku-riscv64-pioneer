@@ -32,7 +32,7 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
 | Default-control driver | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` |
 | Service boot word | `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b` |
 | Guarded two-warm trial wrapper | `ef3a56734785b2c9953e633ee1b2cc1019efc6965f2c6bf37347ebc71511c32a` |
-| Post-cycle recovery helper | `5004ef4a471ada24044a123b0c86b3af93d4fd8d810287d15842362b6067d332` |
+| Post-cycle recovery helper | `4f78442e8300ca4c1997d7f87cdfd9b54593bc0d21858f153b24f2cd96fe9044` |
 
 The owner and PCI-memory ASan/UBSan fixtures pass, including the restored-core
 settle path. The RV32IMF target compile passes without A-extension atomics or
