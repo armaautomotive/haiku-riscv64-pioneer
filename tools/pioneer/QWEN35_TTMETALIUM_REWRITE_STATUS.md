@@ -28,14 +28,17 @@ lock. A live check after the user's accidental power reset again confirmed
 stable55 generation2, idle, with no Qwen process; both model files remain
 intact. Tag0116 now captures the failed transfer stage, status-register index,
 and raw value in the fixed mailbox and query diagnostic without clearing NoC
-commands, resetting cores, or changing either ABI size. Offline build,
-sanitizer fixtures, RV32IMF compile, and the `15712/18432`-byte stack check
-pass. Tag0116 has not been installed; valid output, two warm runs, clean
-unload, in-place recovery, and the 100 tokens/s target remain open. See
+commands, resetting cores, or changing either ABI size. Tag0117 adds a
+single-run, two-token client mode so the failed embedding path can be checked
+without starting the two-run throughput benchmark. Offline build, sanitizer
+fixtures, RV32IMF compile, and the `15712/18432`-byte stack check pass. The
+tag0117 diagnostic run is pending; valid output, two warm runs, clean unload,
+in-place recovery, and the 100 tokens/s target remain open. See
 [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md) and
 [`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
 [`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md), and
-[`tag0116 BUILD`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md).
+[`tag0116 BUILD`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md), and
+[`tag0117 BUILD`](benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -130,6 +133,15 @@ client SHA-256 is `52097a6efb88e89181b96a7476a291fb8afb1d7c828cc9bbf03c1c401c857
 It has not been installed on the card. Details are in
 [`benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md).
 
+Tag0117 adds a guarded one-run client option that requests two tokens and
+skips the second generation. This lets the rewrite validate a full prompt and
+one decode step without running the throughput test. The variant-60 build,
+target compile, sanitizer fixtures, and wrapper syntax checks pass. Driver
+SHA-256 is `e5387ede717a52354f64fe8cb41ca73bf9a9cc1bc5ab86de0155dca6ec59283c`;
+client SHA-256 is `7faaabe33f14399c717b91efc1f690c7defbb7a1d3b74f981d91ced47510276f`.
+The card diagnostic is pending. See
+[`benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md).
+
 ## Progress
 
 - 2026-11-21 (tag0115, bounded read recovery): Added a wait that reads only
@@ -164,6 +176,13 @@ It has not been installed on the card. Details are in
   fixtures pass. Stack use is `15712/18432`. The candidate remains offline;
   Haiku is stable55 generation2 and idle. See
   `benchmarks/qwen35-dataflow-tag0116-20261121/BUILD.md`.
+
+- 2026-11-21 (tag0117, single-run diagnostic): Added a client mode that
+  validates one full prompt and a two-token output, skipping the second run.
+  This is for code diagnosis; throughput acceptance remains deferred. The
+  full build and focused checks pass. The card remains on stable55 pending the
+  tag0117 guarded run. See
+  `benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
   vocabulary load and prompt tokenization `13.168584` s, full model load

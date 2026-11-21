@@ -467,12 +467,14 @@ static bool End(int fd,bool bankOpen,bool spanOpen,bool authorityBound,
 int main(int argc,char** argv)
 {
 	setvbuf(stdout,nullptr,_IOLBF,0);
-	if (argc<5 || argc>6) {
+	const bool oneRunDiagnostic=argc==7
+		&& strcmp(argv[6],"--diagnostic-one-run")==0;
+	if (argc<5 || argc>7 || (argc==7 && !oneRunDiagnostic)) {
 		fprintf(stderr,"usage: %s GGUF ABSOLUTE_VOCAB_LIBRARY PROMPT "
-			"MAX_NEW_TOKENS [CONTEXT]\n",argv[0]);
+			"MAX_NEW_TOKENS [CONTEXT] [--diagnostic-one-run]\n",argv[0]);
 		return 2;
 	}
-	const unsigned context=argc==6?Parse(argv[5],D::MaxPositions):128;
+	const unsigned context=argc>=6?Parse(argv[5],D::MaxPositions):128;
 	const unsigned maxNewTokens=Parse(argv[4],context);
 	if (!context || !maxNewTokens) return 2;
 	const int sourceFD=open(argv[1],O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC);
@@ -554,12 +556,17 @@ int main(int argc,char** argv)
 	std::string firstText,secondText;
 	const bool firstOkay=Generate(fd,vocabulary,prompt,maxNewTokens,1,
 		firstTokens,firstText);
-	const bool secondOkay=firstOkay && Generate(fd,vocabulary,prompt,maxNewTokens,2,
-		secondTokens,secondText);
-	const bool exactPrefix=firstTokens.size()>=2 && secondTokens.size()>=2
-		&& firstTokens[0]==11751 && firstTokens[1]==13
-		&& secondTokens[0]==11751 && secondTokens[1]==13;
-	const bool repeatable=firstTokens==secondTokens && firstText==secondText;
+	const bool secondOkay=oneRunDiagnostic || (firstOkay
+		&& Generate(fd,vocabulary,prompt,maxNewTokens,2,secondTokens,secondText));
+	const bool firstPrefix=firstTokens.size()>=2
+		&& firstTokens[0]==11751 && firstTokens[1]==13;
+	const bool secondPrefix=oneRunDiagnostic || (secondTokens.size()>=2
+		&& secondTokens[0]==11751 && secondTokens[1]==13);
+	const bool exactPrefix=firstPrefix && secondPrefix;
+	const bool repeatable=oneRunDiagnostic
+		|| (firstTokens==secondTokens && firstText==secondText);
+	if (oneRunDiagnostic)
+		printf("P100A_Q35_DATAFLOW diagnostic_one_run=1\n");
 	if (!exactPrefix) fprintf(stderr,
 		"P100A_Q35_DATAFLOW reference prefix mismatch expected=11751,13\n");
 	if (!repeatable) fprintf(stderr,
