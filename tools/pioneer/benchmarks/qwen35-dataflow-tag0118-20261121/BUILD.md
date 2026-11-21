@@ -37,7 +37,12 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
   unresolved runtime helpers.
 - Build and card-wrapper scripts pass shell syntax validation.
 
-Tag0118 has not been installed on the card. The focused one-run card diagnostic
-is gated on strict stable55 idle preflight. Tag0117's failure and the stable
-driver recovery after the accidental power reset are recorded in
-[`tag0117 RUN`](../qwen35-dataflow-tag0117-20261121/RUN.md).
+The guarded tag0118 card diagnostic was run once. It loaded the full model,
+then core0's first prompt embedding timed out with observed completion counter
+`0x00029066` versus expected `0x00029067`. It produced no token and did not
+reach decode. The candidate cold-latched, so the guard retained the lock and
+stable backup. After a fresh Haiku boot through the pinned, SD-free Linux
+kexec recovery path, the guarded helper restored stable55 generation2 and
+cleared the lock. The 4B and 27B files remain intact. Exact phase timings and
+recovery evidence are recorded in [`RUN.md`](RUN.md). Tag0117's preceding
+failure is recorded in [`tag0117 RUN`](../qwen35-dataflow-tag0117-20261121/RUN.md).

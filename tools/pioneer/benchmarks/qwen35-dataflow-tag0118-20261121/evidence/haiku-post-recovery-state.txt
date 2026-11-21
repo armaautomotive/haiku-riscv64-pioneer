@@ -1,0 +1,36 @@
+DRIVER
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+LOCK
+absent
+MODELS
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+HEALTH
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133800497152 bytes free      (used/max 3234439168 / 137034936320)
+                           (cached    191778816)
+PROCESSES
+   Id Team                                               
+    1 kernel_team                                        
+  100 /boot/system/servers/launch_daemon                 
+  105 /boot/system/servers/registrar                     
+  106 /boot/system/servers/debug_server                  
+  108 /boot/system/servers/mount_server                  
+  109 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  113 /boot/system/servers/net_server                    
+  114 /boot/system/servers/package_daemon                
+  117 /boot/system/servers/launch_daemon baron           
+  120 /boot/system/servers/power_daemon                  
+  121 /boot/system/servers/syslog_daemon                 
+  148 /boot/system/servers/media_server                  
+  183 /boot/system/servers/app_server                    
+  195 /boot/system/Tracker                               
+  197 /boot/system/Deskbar                               
+  216 /boot/system/servers/input_server                  
+  241 /boot/system/servers/media_addon_server            
+  288 /boot/system/servers/notification_server           
+  515 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  517 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  518 /boot/system/bin/ps -o Id -o Team                  

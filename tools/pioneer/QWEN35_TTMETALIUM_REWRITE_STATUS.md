@@ -17,24 +17,26 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
-BRISC/Tensix service, with no CPU inference or fallback. The tag0117 focused
-diagnostic loaded all `2740498432` resident model bytes, then failed its first
-core0 embedding read. Authentication took `99.823865` s, vocabulary and prompt
-tokenization `12.747341` s, model load `324.806932` s, and the failed prompt
-operation `0.602222` s. The failure was NoC transfer-counter stage7, counter0
-(index36), with observed value `0x00029066`; tag0117 did not preserve the
-expected value. No valid token or decode rate was produced, and the two-warm
-benchmark has not started. The accidental power reset was recovered through
-the guarded helper: stable55 generation2 is idle, the lock is cleared, and the
-4B/27B files remain intact. Tag0118 now captures both observed and expected
-counter values using reserved mailbox word3 and a read-only query action; the
-64-byte mailbox and control-request size remain fixed. Full build, focused
-ASan/UBSan tests, RV32IMF role compile, and `15712/18432` stack check pass.
-Tag0118 is not installed yet. The next card action is a guarded one-run
-diagnostic, not the throughput benchmark. Valid output, two warm runs, clean
+BRISC/Tensix service, with no CPU inference or fallback. Tag0117 loaded all
+`2740498432` resident model bytes, then failed its first core0 embedding read.
+Authentication took `99.823865` s, vocabulary and prompt tokenization
+`12.747341` s, model load `324.806932` s, and failed prompt processing
+`0.602222` s. Tag0118 added expected-counter capture without changing the
+64-byte mailbox or 36-byte control request. Its guarded one-run diagnostic
+loaded all resident model bytes, then failed the first core0 embedding read:
+observed counter0/index36 `0x00029066`, expected `0x00029067`. Authentication
+took `68.186682` s, tokenization `13.766015` s, model load `334.004328` s, and
+the failed prompt operation `0.615329` s. Neither run produced a token or
+decode rate; the two-warm benchmark has not started. Tag0118 cold-latched at
+generation3; after a fresh Haiku boot, guarded recovery restored stable55
+generation2, cleared the lock, and confirmed the 4B/27B files remain intact.
+Full build, focused ASan/UBSan tests, RV32IMF role compile, and `15712/18432`
+stack check pass. The next rewrite step is read-only capture of a completion
+counter match mask and adjacent NoC state. Valid output, two warm runs, clean
 unload, in-place recovery, and 100 decode tokens/s remain open. See
 [`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
-[`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md), and
+[`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md),
+[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), and
 prior outcomes in [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md),
 [`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
 [`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md), and
@@ -139,7 +141,9 @@ one decode step without running the throughput test. The variant-60 build,
 target compile, sanitizer fixtures, and wrapper syntax checks pass. Driver
 SHA-256 is `e5387ede717a52354f64fe8cb41ca73bf9a9cc1bc5ab86de0155dca6ec59283c`;
 client SHA-256 is `7faaabe33f14399c717b91efc1f690c7defbb7a1d3b74f981d91ced47510276f`.
-The card diagnostic is pending. See
+The one-run card diagnostic failed in the first prompt embedding. It preserved
+the expected completion counter (`0x00029067`) beside the observed value
+(`0x00029066`) and was recovered to stable55 generation2. See
 [`benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0117-20261121/BUILD.md).
 
 ## Progress
@@ -190,8 +194,21 @@ The card diagnostic is pending. See
   reserved word3 and a read-only `QUERY_EXPECTED` action. Fixed mailbox and
   ioctl sizes remain unchanged; dataflow ABI is 4. Full build, focused
   sanitizer tests, RV32IMF role compile, and `15712/18432` stack audit pass.
-  The card remains on stable55 idle at generation2 pending guarded diagnostic.
-  See `benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md`.
+  The guarded diagnostic failed with observed counter0 `0x00029066` versus
+  expected `0x00029067`; recovery restored stable55 generation2 and cleared
+  the lock. See `benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md` and
+  `benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md`.
+
+- 2026-11-21 (tag0118, hardware result and recovery): Authentication took
+  `68.186682` s, prompt tokenization `13.766015` s, full model load
+  `334.004328` s, and failed prompt processing `0.615329` s. The first core0
+  embedding NoC read timed out with counter0/index36 observed at `0x00029066`
+  and expected `0x00029067`; output and decode time are zero. QUERY/RECOVER
+  reported audit stage6/core0/detail1508 and CLOSE failed the core0 stop
+  audit. The cold-latched candidate was quiesced after a fresh Haiku boot;
+  guarded recovery restored stable55 generation2, removed the lock, and
+  verified both model files. No valid output exists. Details and raw evidence
+  are in `benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
   vocabulary load and prompt tokenization `13.168584` s, full model load

@@ -8,7 +8,7 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Current checkpoint: dataflow rewrite tag0118 built, card diagnostic pending
+## Current checkpoint: tag0118 diagnostic failed; stable recovery verified
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
 that rewrite is complete; benchmark acceptance and assistant integration
@@ -17,19 +17,20 @@ service use all 120 Tensix cores and have no CPU inference/fallback path.
 
 Tag0117 loaded all `2740498432` model bytes, then failed the first core0
 embedding read at completion-counter stage7/index36 with observed value
-`0x00029066`. Authentication took `99.823865` s, tokenization
-`12.747341` s, model load `324.806932` s, and failed prompt processing
-`0.602222` s. It produced no valid token or decode rate. The accidental power
-reset was recovered by restoring stable driver55 generation2; no inference
-process or exclusive lock remains, and the 4B/27B model files remain intact.
-
-Tag0118 adds expected-counter capture in the fixed 64-byte worker mailbox and
-a read-only `QUERY_EXPECTED` action without changing the 36-byte control
-request. Full driver/client/service build, focused ASan/UBSan tests, RV32IMF
-role compile, and the `15712/18432` kernel-stack check pass. The focused
-tag0118 card diagnostic is the next rewrite step; the two-warm benchmark is
-still gated. Details are in
-[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md) and
+`0x00029066`. Tag0118 added expected-counter capture in the fixed 64-byte
+worker mailbox and a read-only `QUERY_EXPECTED` action without changing the
+36-byte control request. Its one-run diagnostic loaded the full model, then
+failed the same read: observed `0x00029066`, expected `0x00029067`. Authentication
+took `68.186682` s, tokenization `13.766015` s, model load `334.004328` s,
+and failed prompt processing `0.615329` s. No valid output or decode rate
+exists. The candidate cold-latched; guarded recovery after the accidental
+power reset restored stable driver55 generation2, cleared the lock, and
+confirmed the 4B/27B files remain intact. Offline build, focused sanitizer
+tests, RV32IMF role compile, and the `15712/18432` stack check pass. The next
+rewrite step is a read-only counter-match mask and neighboring NoC-state
+receipt. The two-warm benchmark remains gated. See
+[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
+[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), and
 [`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md).
 
 The last valid output measurement remains a legacy Work-path result at
@@ -49,8 +50,8 @@ Use strict host-key checking and the profile for the OS currently running.
 ## Current verified hardware state
 
 Haiku hrev99999 is reachable at `10.0.0.247` through the pinned Haiku key.
-After tag0117's failed diagnostic and the accidental power reset, the guarded
-recovery helper restored stable driver55 generation2 and cleared the lock:
+After tag0118's failed diagnostic and recovery reboot, the guarded recovery
+helper restored stable driver55 generation2 and cleared the lock:
 
 ```text
 P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
@@ -58,8 +59,10 @@ P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_own
 
 No inference process or exclusive trial lock remains. The Qwen3.5-4B and
 Qwen3.8-27B files remain at `2,740,937,888` and `18,973,870,528` bytes. The
-tag0117 run and recovery evidence are in
-[`tag0117 evidence`](benchmarks/qwen35-dataflow-tag0117-20261121/evidence).
+Tag0117 and tag0118 details are in
+[`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md) and
+[`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md), with raw
+tag0118 run and recovery captures in its `evidence/` directory.
 
 ## Tag61: inner matrix receipt was overwritten
 
