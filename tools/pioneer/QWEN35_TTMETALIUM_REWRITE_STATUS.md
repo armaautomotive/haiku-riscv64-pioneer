@@ -364,6 +364,28 @@ vocabulary readout, and token generation remain unimplemented. The GGUF
 fixture test was not run because no local pinned-model path is available. No
 Pioneer access or benchmark was performed.
 
+2026-11-20 rewrite progress: added the manifest-bound recurrent convolution
+operator and its resident worker command in checkpoint `a769eea54c`. It reads the completed recurrent
+QKV sidecar, the model's four-tap convolution weights, and the selected
+ping-pong history over NoC 0; each of the 120 cores owns four or five of the
+512 channel panels and writes updated history plus the SiLU result over NoC 1.
+The projection feeding this operation remains the rewrite's Tensix matrix
+path; this convolution step is channelwise firmware math, not a matrix
+projection. The new authority transition invalidates QKV while state is
+updated and commits it only after all-core completion, invocation readback,
+queue/runtime audit, acknowledgement, and ready-state checks. A rewrite-only
+driver ioctl exposes the command. The offline fixture checks exact position-0
+and warm-position arithmetic, ping-pong history, complete 120-core coverage,
+authority transitions, and owner sequencing. ASan/UBSan worker/owner and
+existing dataflow tests pass, the Haiku RV32IMF compile passes without A
+atomics/runtime helpers, and the offline driver60, reload-guard, and
+default-control builds pass. Driver60 SHA-256:
+`15e433e1b5c15fa1c2bba19255d9268c8b0e2f91e1e6b4826f518ed5383b18c2`.
+This is offline-only evidence. No Pioneer access, silicon validation,
+generated output, benchmark, or assistant integration was done. Delta-state
+math and Alpha/Beta projections, dense attention, state/KV IO, vocabulary
+readout, and token generation remain to be implemented before benchmarking.
+
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration
 deferred until the rewrite graph is implemented and its offline correctness

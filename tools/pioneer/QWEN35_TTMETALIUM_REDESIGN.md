@@ -412,3 +412,27 @@ projection or embedding has run physically, and there is no valid generated
 text, decode rate, or physical unload result yet. The Pioneer remains
 untouched. Work remains focused on completing this rewrite before benchmark
 and assistant integration.
+
+## Recurrent convolution rewrite checkpoint `a769eea54c` (2026-11-20)
+
+The recurrent path now has a manifest-bound four-tap convolution program,
+resident per-core worker operation, authority commit/abort handling, an
+all-120-worker owner sequence, and a rewrite-only driver ioctl. Each core
+handles four or five 16-channel panels from the 512-panel QKV tensor. It reads
+the current QKV values, four convolution coefficients per channel, and (after
+position zero) the previous three values from NoC 0; then applies the causal
+convolution and SiLU on the device worker and writes the alternate history
+slot and transformed QKV over NoC 1. The preceding QKV projection uses the
+existing Tensix matrix path. This channelwise convolution is firmware scalar
+math, so it is not evidence of a Tensix matrix operation.
+
+The offline test checks zero-history position 0, warm history position 1,
+ping-pong state selection, exactly-once coverage over all 512 panels, authority
+state transitions, and owner orchestration. ASan/UBSan host tests, the
+RV32IMF target compile, and offline driver60/reload-guard/default-control
+builds pass. Driver60 SHA-256 is
+`15e433e1b5c15fa1c2bba19255d9268c8b0e2f91e1e6b4826f518ed5383b18c2`.
+This has not been loaded or run on the Pioneer. Delta-rule state update,
+Alpha/Beta projections, dense attention, state/KV handling, final vocabulary
+readout, and generation remain open rewrite work; benchmarking and assistant
+integration remain deferred.
