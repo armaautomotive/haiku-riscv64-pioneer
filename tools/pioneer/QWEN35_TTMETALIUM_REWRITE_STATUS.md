@@ -57,14 +57,19 @@ files retain their verified sizes. The target remains 100 decode tokens/s; no
 decode-rate measurement exists yet.
 
 Tag0106 records the exact worker-ready stage, core, mailbox state, failure,
-and phase. Its close path recognizes only the firmware's exact pre-command
-fatal-loop signature, proves runtime/NoC/queue idleness, holds that core, and
-restores all captured core state. Unsafe or ambiguous failures still retain
-the cold recovery latch. The 120-core owner test, PCI memory rollback test,
-RV32IMF target compile, and offline driver/client build pass. A new strict
-read-only preflight confirms stable driver55 generation2, no inference or 27B
-diagnostic process, 64 CPUs, and 137,034,936,320 bytes of RAM. Tag0106 is not
-yet installed on the card, and no decode rate has been measured.
+and phase. Its offline 120-core owner test, PCI memory rollback test, RV32IMF
+target compile, and driver/client build pass. On-card preflight confirmed
+stable driver55 generation2, no inference or 27B diagnostic process, 64 CPUs,
+and 137,034,936,320 bytes of RAM. Tag0106 then hot-swapped as generation3,
+uploaded the complete 2,740,498,432-byte model, and passed model binding. Core0
+failed its startup-ready wait with fatal state6/failure4/phase2. The attempted
+close did not restore ownership: the candidate is `cold1 active_owner1`, and
+the wrapper retained its recovery lock and stable041 backup. There was no
+prompt processing, generated output, model-load timing, or decode rate. The
+stop audit's failed subproof is not yet identified; the next rewrite step adds
+bounded waiting for workers still entering their service image and captures
+the exact stop-audit failure stage/core. Stable-driver recovery after the
+required cold boot is pending.
 
 ## Progress
 

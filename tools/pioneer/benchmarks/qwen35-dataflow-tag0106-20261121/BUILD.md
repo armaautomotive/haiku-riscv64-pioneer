@@ -2,12 +2,13 @@
 
 Tag0105 passed model authentication, upload, binding, and route proof, then
 failed at the resident worker-ready barrier. Tag0106 adds per-core startup
-diagnostics and bounded rollback for the exact firmware startup-fatal loop.
-The diagnostic reports stage, core, mailbox state, failure, and phase. During
-close, the driver validates runtime identity, the stable fatal mailbox, drained
-queues, and NoC state before holding a startup-fatal core and restoring all
-captured core state. Other failure states remain fail-closed and keep the
-recovery latch.
+diagnostics and attempts bounded rollback for the exact firmware startup-fatal
+loop. The diagnostic reports stage, core, mailbox state, failure, and phase.
+The rollback code checks runtime identity, the stable fatal mailbox, drained
+queues, and NoC state before holding a startup-fatal core and restoring
+captured state. Unit tests pass, but the silicon trial still left the driver
+cold with its owner retained, so successful hardware rollback is not
+established. Other failure states remain fail-closed.
 
 Built with:
 
@@ -40,8 +41,12 @@ CPUs, 137,034,936,320 bytes of RAM, and stable driver55 tag
 `2026102100010012`, generation2, `quiesced0 cold0 active_owner0 open_count1
 guard1`. The process list contains no 27B diagnostic or inference process.
 Both model files were verified in the previous recovery checkpoint. Tag0106
-has not been installed; no model load, prompt, generation, or decode rate has
-been measured.
+was installed as driver60 generation3. The full 2,740,498,432-byte model was
+uploaded and binding succeeded, but worker 0 failed during startup and the
+cleanup path left the candidate cold with an owner retained. The wrapper
+retained its recovery lock and stable041 backup. No prompt, generation, or
+decode rate was produced. Raw evidence is under
+[`evidence/tag0106-worker0-startup-failure`](evidence/tag0106-worker0-startup-failure/).
 
 The guarded trial wrapper is a one-shot operation. It rechecks the prior
 27B-process and stable-driver preflight, exact model sizes, candidate hashes,
