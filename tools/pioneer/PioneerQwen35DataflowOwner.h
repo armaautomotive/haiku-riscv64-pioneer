@@ -7,6 +7,7 @@
 #include "PioneerQwen35DataflowRmsProgram.h"
 #include "PioneerQwen35DataflowSiluProgram.h"
 #include "PioneerQwen35DataflowResidualProgram.h"
+#include "PioneerQwen35DataflowConvProgram.h"
 
 namespace PioneerQwen35 {
 

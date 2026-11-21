@@ -215,7 +215,7 @@ public:
 		unsigned outputSlot,DataflowProjectionProgram& program) const
 	{
 		if (!fBound || inputSlot>=ActivationBuffers
-			|| outputSlot>DataflowGraphRecurrentGateOutputSlot
+			|| outputSlot>DataflowGraphRecurrentBetaOutputSlot
 			|| inputSlot==outputSlot || layer>Layers || role>=LayerRoles)
 			return false;
 		if (outputSlot>=DataflowGraphUpOutputSlot) {

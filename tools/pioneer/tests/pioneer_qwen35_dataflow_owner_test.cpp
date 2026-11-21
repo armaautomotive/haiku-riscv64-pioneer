@@ -294,6 +294,36 @@ int main()
 	assert(io.writes==DataflowCoreCount && io.publishes==DataflowCoreCount
 		&& io.waits==DataflowCoreCount && io.audits==1
 		&& io.acknowledgements==DataflowCoreCount);
+	TensorSpace smallWeight{};
+	smallWeight.type=13;
+	smallWeight.inputs=Hidden;
+	Rows(smallWeight.place,DeltaHeads,
+		PioneerQwen35Projection::TileBytes(smallWeight.type)*(Hidden/256)/16,
+		0x18000000);
+	RowSpace smallInput{},smallOutput{};
+	Rows(smallInput,Hidden,sizeof(float),0x19000000);
+	Rows(smallOutput,DeltaHeads,sizeof(float),0x1a000000);
+	DataflowProjectionProgram smallProgram{};
+	assert(DataflowProgramBuilder::Build(smallWeight,smallInput,Hidden,
+		smallOutput,TestRoutes,smallProgram));
+	assert(smallProgram.activeCores==2);
+	MockOwnerIO smallIO{};
+	DataflowProjectionOwner smallOwner;
+	assert(smallOwner.Initialize(smallIO)==DataflowOwnerComplete);
+	assert(smallOwner.RunProjection(smallProgram,smallIO)==DataflowOwnerComplete);
+	assert(smallOwner.NextSequence()==1
+		&& smallIO.writes==DataflowCoreCount
+		&& smallIO.publishes==DataflowCoreCount
+		&& smallIO.waits==DataflowCoreCount
+		&& smallIO.acknowledgements==DataflowCoreCount);
+	unsigned smallActive=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(smallProgram,core,invocation));
+		smallActive+=invocation.assignment.active;
+		assert(smallIO.InvocationMatches(core,invocation));
+	}
+	assert(smallActive==2);
 
 	DeviceLayout siluManifest{};
 	siluManifest.magic=LayoutMagic;

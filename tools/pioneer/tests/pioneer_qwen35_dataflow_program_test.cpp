@@ -316,6 +316,18 @@ int main()
 	Rows(recurrentGate.place,DeltaInner,
 		PioneerQwen35Projection::TileBytes(recurrentGate.type)*(Hidden/256)/16,
 		0x12000000);
+	TensorSpace& recurrentAlpha=manifest.layers[0].weights[Alpha];
+	recurrentAlpha.type=12;
+	recurrentAlpha.inputs=Hidden;
+	Rows(recurrentAlpha.place,DeltaHeads,
+		PioneerQwen35Projection::TileBytes(recurrentAlpha.type)*(Hidden/256)/16,
+		0x13000000);
+	TensorSpace& recurrentBeta=manifest.layers[0].weights[Beta];
+	recurrentBeta.type=12;
+	recurrentBeta.inputs=Hidden;
+	Rows(recurrentBeta.place,DeltaHeads,
+		PioneerQwen35Projection::TileBytes(recurrentBeta.type)*(Hidden/256)/16,
+		0x14000000);
 	assert(DataflowProjectionMatchesLayout(manifest,TestBankRoutes,program));
 	DataflowGraphWorkspace graphWorkspace{};
 	Rows(graphWorkspace.space[0],Hidden,sizeof(float),0x20000000);
@@ -389,6 +401,35 @@ int main()
 	assert(authority.Begin(recurrentGateProgram));
 	assert(authority.Complete(recurrentGateProgram));
 	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentGateWorkspaceIndex));
+	DataflowProjectionProgram recurrentAlphaProgram{};
+	assert(authority.BuildProjection(0,Alpha,0,
+		DataflowGraphRecurrentAlphaOutputSlot,recurrentAlphaProgram));
+	assert(recurrentAlphaProgram.outputRows==DeltaHeads
+		&& recurrentAlphaProgram.activeCores==2);
+	unsigned alphaActive=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(recurrentAlphaProgram,core,invocation));
+		alphaActive+=invocation.assignment.active;
+	}
+	assert(alphaActive==2);
+	assert(DataflowProjectionMatchesGraphWorkspace(manifest,graphWorkspace,
+		TestBankRoutes,recurrentAlphaProgram,nullptr,&graphIndex));
+	assert(graphIndex==DataflowGraphRecurrentAlphaWorkspaceIndex);
+	assert(authority.Begin(recurrentAlphaProgram));
+	assert(authority.Complete(recurrentAlphaProgram));
+	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentAlphaWorkspaceIndex));
+	DataflowProjectionProgram recurrentBetaProgram{};
+	assert(authority.BuildProjection(0,Beta,0,
+		DataflowGraphRecurrentBetaOutputSlot,recurrentBetaProgram));
+	assert(recurrentBetaProgram.outputRows==DeltaHeads
+		&& recurrentBetaProgram.activeCores==2);
+	assert(DataflowProjectionMatchesGraphWorkspace(manifest,graphWorkspace,
+		TestBankRoutes,recurrentBetaProgram,nullptr,&graphIndex));
+	assert(graphIndex==DataflowGraphRecurrentBetaWorkspaceIndex);
+	assert(authority.Begin(recurrentBetaProgram));
+	assert(authority.Complete(recurrentBetaProgram));
+	assert(authority.GraphWorkspaceReady(DataflowGraphRecurrentBetaWorkspaceIndex));
 	assert(!authority.BuildProjection(3,RecurrentQkv,0,
 		DataflowGraphRecurrentQkvOutputSlot,recurrentQkvProgram));
 	DataflowSiluProgram siluProgram{};
@@ -651,13 +692,13 @@ int main()
 	for (unsigned chunk=0;chunk<Hidden/256;chunk++)
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
-	TensorSpace tooFew=weight;
-	tooFew.place.rows=Hidden/2;
-	tooFew.place.count=1;
-	tooFew.place.parts[0]={0,0x08000000,0,Hidden/2};
-	for (unsigned i=1;i<Banks;i++) tooFew.place.parts[i]={};
+	TensorSpace invalidCoverage=weight;
+	invalidCoverage.place.rows=Hidden/2;
+	invalidCoverage.place.count=1;
+	invalidCoverage.place.parts[0]={0,0x08000000,0,Hidden/2-16};
+	for (unsigned i=1;i<Banks;i++) invalidCoverage.place.parts[i]={};
 	DataflowProjectionProgram rejected{};
-	assert(!BuildProgram(tooFew,input,Hidden,output,rejected));
+	assert(!BuildProgram(invalidCoverage,input,Hidden,output,rejected));
 	unsigned duplicateRoutes[2][Banks];
 	std::memcpy(duplicateRoutes,TestBankRoutes,sizeof(duplicateRoutes));
 	duplicateRoutes[1][1]=duplicateRoutes[1][0];

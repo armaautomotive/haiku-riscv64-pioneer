@@ -43,6 +43,10 @@ bool PioneerQwen35DataflowBlackholeWorker(
 	}
 	if (reinterpret_cast<uintptr_t>(activationCache)!=DataflowActivationCacheAddress)
 		return fail(DataflowFailureQueue);
+	// Small graph projections still use the fleet-wide receipt protocol. Cores
+	// with no output panel acknowledge the command without reading the full
+	// activation or touching the Tensix engine.
+	if (!program.assignment.active) return true;
 	if (!reader.Bind(program)) return fail(DataflowFailureReader);
 	if (!compute.Bind(program)) return fail(DataflowFailureCompute);
 	if (!writer.Bind(program)) return fail(DataflowFailureWriter);

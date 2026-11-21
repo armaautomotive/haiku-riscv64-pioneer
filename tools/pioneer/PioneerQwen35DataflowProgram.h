@@ -248,7 +248,7 @@ struct DataflowProjectionProgram {
 		if (magic!=DataflowProgramMagic || version!=DataflowProgramVersion
 			|| kernelRoles!=DataflowAllRoles || !PioneerQwen35Projection::Supports(type,inputs)
 			|| !outputRows || (outputRows&15) || groups!=outputRows/16
-			|| activeCores!=DataflowCoreCount || inputRows!=inputs
+			|| !activeCores || activeCores>DataflowCoreCount || inputRows!=inputs
 			|| !inputFragmentCount || inputFragmentCount>Banks
 			|| !outputFragmentCount || outputFragmentCount>Banks
 			|| !DataflowBankRoutesValid(bankRoute)
@@ -280,7 +280,11 @@ struct DataflowProjectionProgram {
 		unsigned active=0,totalGroups=0,nextGroup=0;
 		for (unsigned c=0;c<DataflowCoreCount;c++) {
 			const auto& assignment=core[c];
-			if (!assignment.active || !assignment.groups || !assignment.segmentCount
+			if (!assignment.active) {
+				if (assignment.groups || assignment.segmentCount) return false;
+				continue;
+			}
+			if (!assignment.groups || !assignment.segmentCount
 				|| assignment.segmentCount>DataflowMaxSegments) return false;
 			active++;
 			unsigned coreGroups=0;
@@ -307,7 +311,7 @@ struct DataflowProjectionProgram {
 			if (coreGroups!=assignment.groups || coreGroups>groups-totalGroups) return false;
 			totalGroups+=coreGroups;
 		}
-		return active==DataflowCoreCount && totalGroups==groups;
+		return active==activeCores && totalGroups==groups;
 	}
 };
 
@@ -370,8 +374,8 @@ inline bool DataflowProjectionMatchesLayout(const DeviceLayout& manifest,
 }
 
 // Graph projections target exact model roles and their matching manifest-bound
-// scratch row spaces. Up and recurrent QKV/gate are admitted; unrelated roles,
-// activation aliases, and unreserved output ranges are rejected.
+// scratch row spaces. Up and recurrent QKV/gate/Alpha/Beta are admitted;
+// unrelated roles, activation aliases, and unreserved output ranges are rejected.
 inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest,
 	const DataflowGraphWorkspace& workspace,
 	const unsigned (&auditedRoutes)[2][Banks],
@@ -383,7 +387,7 @@ inline bool DataflowProjectionMatchesGraphWorkspace(const DeviceLayout& manifest
 		|| !manifest.context || !workspace.Valid(manifest) || !program.Valid()
 		|| !DataflowBankRoutesValid(auditedRoutes)) return false;
 	for (unsigned index=DataflowGraphUpWorkspaceIndex;
-		index<=DataflowGraphRecurrentGateWorkspaceIndex;index++) {
+		index<DataflowGraphWorkspaceBufferCount;index++) {
 		if (program.outputRows==DataflowGraphWorkspaceRows(index)
 			&& DataflowRowSpaceMatches(workspace.space[index],program.output)) {
 			targetIndex=index;
@@ -437,7 +441,8 @@ struct DataflowCoreInvocation {
 		if (magic!=DataflowProgramMagic || version!=DataflowProgramVersion
 			|| core>=DataflowCoreCount || !PioneerQwen35Projection::Supports(type,inputs)
 			|| !outputRows || (outputRows&15) || groups!=outputRows/16
-			|| blocks!=(inputs>>(type==8?5:8)) || activeCores!=DataflowCoreCount
+			|| blocks!=(inputs>>(type==8?5:8)) || !activeCores
+			|| activeCores>DataflowCoreCount
 			|| kernelRoles!=DataflowAllRoles || inputRows!=inputs
 			|| !inputFragmentCount || inputFragmentCount>Banks
 			|| !outputFragmentCount || outputFragmentCount>Banks
@@ -448,8 +453,6 @@ struct DataflowCoreInvocation {
 			|| input.unit!=16 || !output.Valid() || output.rows<outputRows
 			|| output.rowBytes!=sizeof(float) || output.unit!=16
 			|| inputFragmentCount!=input.count || outputFragmentCount!=output.count
-			|| !assignment.active || !assignment.groups || !assignment.segmentCount
-			|| assignment.segmentCount>DataflowMaxSegments
 			|| !DataflowLocalCircularBuffersValid(circularBuffer)) return false;
 		for (unsigned c=0;c<DataflowCircularBufferCount;c++) {
 			const auto& buffer=circularBuffer[c];
@@ -463,6 +466,10 @@ struct DataflowCoreInvocation {
 				|| buffer.pageStride!=(c==0?DataflowWeightBufferPageStride:pageBytes)
 				|| !DataflowLocalCircularBufferValid(buffer)) return false;
 		}
+		if (!assignment.active)
+			return !assignment.groups && !assignment.segmentCount;
+		if (!assignment.groups || !assignment.segmentCount
+			|| assignment.segmentCount>DataflowMaxSegments) return false;
 		unsigned groupsSeen=0,nextGroup=assignment.weight[0].firstGroup;
 		for (unsigned i=0;i<assignment.segmentCount;i++) {
 			const auto& weight=assignment.weight[i];
@@ -559,8 +566,8 @@ public:
 			fragments[f]={part.firstRow/16,part.rows/16};
 		}
 		PioneerQ35ProjectionProgram schedule{};
-		if (!PioneerQ35BuildProjectionProgram(fragments,weight.place.count,schedule)
-			|| schedule.activeCores!=DataflowCoreCount) return false;
+		if (!PioneerQ35BuildProjectionProgram(fragments,weight.place.count,schedule))
+			return false;
 
 		DataflowProjectionProgram candidate{};
 		candidate.magic=DataflowProgramMagic;
@@ -594,7 +601,11 @@ public:
 			auto& assignment=candidate.core[core];
 			assignment.active=scheduled.groups!=0;
 			assignment.groups=scheduled.groups;
-			if (!assignment.active || !scheduled.segmentCount
+			if (!assignment.active) {
+				if (scheduled.segmentCount) return false;
+				continue;
+			}
+			if (!scheduled.segmentCount
 				|| scheduled.segmentCount>PioneerQ35ProgramMaxFragments) return false;
 			for (unsigned s=0;s<scheduled.segmentCount;s++) {
 				const auto& segment=scheduled.segment[s];

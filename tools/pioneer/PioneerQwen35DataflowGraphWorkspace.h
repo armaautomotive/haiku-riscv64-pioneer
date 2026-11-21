@@ -17,14 +17,16 @@ enum : unsigned {
 	DataflowGraphWorkspaceBufferCount=6,
 	DataflowGraphUpOutputSlot=ActivationBuffers,
 	DataflowGraphRecurrentQkvOutputSlot=DataflowGraphUpOutputSlot+1,
-	DataflowGraphRecurrentGateOutputSlot=DataflowGraphUpOutputSlot+2
+	DataflowGraphRecurrentGateOutputSlot=DataflowGraphUpOutputSlot+2,
+	DataflowGraphRecurrentAlphaOutputSlot=DataflowGraphUpOutputSlot+3,
+	DataflowGraphRecurrentBetaOutputSlot=DataflowGraphUpOutputSlot+4
 };
 
 inline bool DataflowGraphProjectionTarget(unsigned outputSlot,
 	unsigned& workspaceIndex)
 {
 	if (outputSlot<DataflowGraphUpOutputSlot
-		|| outputSlot>DataflowGraphRecurrentGateOutputSlot) return false;
+		|| outputSlot>DataflowGraphRecurrentBetaOutputSlot) return false;
 	workspaceIndex=DataflowGraphUpWorkspaceIndex
 		+outputSlot-DataflowGraphUpOutputSlot;
 	return workspaceIndex<DataflowGraphWorkspaceBufferCount;
@@ -53,6 +55,14 @@ inline bool DataflowGraphProjectionRole(unsigned layer,unsigned workspaceIndex,
 	}
 	if (workspaceIndex==DataflowGraphRecurrentGateWorkspaceIndex) {
 		role=RecurrentGate;
+		return true;
+	}
+	if (workspaceIndex==DataflowGraphRecurrentAlphaWorkspaceIndex) {
+		role=Alpha;
+		return true;
+	}
+	if (workspaceIndex==DataflowGraphRecurrentBetaWorkspaceIndex) {
+		role=Beta;
 		return true;
 	}
 	return false;
