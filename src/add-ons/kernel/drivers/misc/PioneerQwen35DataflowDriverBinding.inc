@@ -171,6 +171,16 @@ PioneerSessionIO::ProveFleetRoutes()
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	if (!lease.booted || lease.closed || lease.unsafe || lease.rootRunning
 		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
+	unsigned auditedRoutes[2][PioneerQwen35::Banks]={};
+	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
+		uint32_t address=0,route=0,index=0;
+		if (!context->banks.Page(dram,bank,0,address,route,index)
+			|| route!=(dram.translated[bank][0]|(dram.translated[bank][1]<<6)))
+			return false;
+		auditedRoutes[0][bank]=route;
+		auditedRoutes[1][bank]=route;
+	}
+	if (!PioneerQwen35::DataflowBankRoutesValid(auditedRoutes)) return false;
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 		const unsigned reset=core?0x46800:0x47800;
 		auto& node=lease.worker[core];
@@ -188,7 +198,13 @@ PioneerSessionIO::ProveFleetRoutes()
 			|| !PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,&lease))
 			return false;
 	}
-	return !lease.rootRunning && !lease.unsafe && !context->banks.Quarantined();
+	if (lease.rootRunning || lease.unsafe || context->banks.Quarantined()) return false;
+	if (context->qwen35DataflowRoutesAudited
+		&& memcmp(context->qwen35DataflowRoutes,auditedRoutes,sizeof(auditedRoutes))!=0)
+		return false;
+	memcpy(context->qwen35DataflowRoutes,auditedRoutes,sizeof(auditedRoutes));
+	context->qwen35DataflowRoutesAudited=true;
+	return true;
 }
 
 bool

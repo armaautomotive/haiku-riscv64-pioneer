@@ -91,6 +91,9 @@
 #error Qwen35 dataflow rewrite requires its separate all-core build identity and cannot include Work fallback
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
+#include "../../../../../tools/pioneer/PioneerQwen35ManifestValidation.h"
+#include "PioneerQwen35DataflowModelProtocol.h"
 #include "PioneerQwen35DataflowPciMemory.h"
 #include "PioneerQwen35DataflowServiceImage.h"
 #endif
@@ -3580,6 +3583,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
+	PioneerQwen35::DataflowProjectionAuthority* qwen35DataflowAuthority=NULL;
+	unsigned qwen35DataflowRoutes[2][PioneerQwen35::Banks]={};
+	bool qwen35DataflowRoutesAudited=false;
 	unsigned qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
 #endif
 #ifdef TT_PIONEER_Q35_WORK
@@ -3749,6 +3755,7 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 		delete qwen35DataflowService;
 		delete qwen35DataflowMemory;
+		delete qwen35DataflowAuthority;
 #endif
 #ifdef TT_PIONEER_Q35_WORK
 		delete q35Work;
@@ -3978,7 +3985,8 @@ struct PioneerStoreContext {
 	}
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	PioneerQwen35::DataflowServiceResult InstallDataflowRewrite() {
-		if (qwen35DataflowMemory || qwen35DataflowService)
+		if (qwen35DataflowMemory || qwen35DataflowService
+			|| !qwen35DataflowAuthority || !qwen35DataflowRoutesAudited)
 			return PioneerQwen35::DataflowServiceInvalidState;
 		qwen35DataflowMemory=new(std::nothrow) PioneerQwen35DataflowPciMemory<PioneerSessionIO>(io);
 		qwen35DataflowService=new(std::nothrow) PioneerQwen35::DataflowServiceOwner;
@@ -7879,6 +7887,62 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 static status_t
+Qwen35DataflowBindModel(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_qwen35_dataflow_model_bind)) return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_qwen35_dataflow_model_bind*)malloc(
+		sizeof(tt_qwen35_dataflow_model_bind));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_QWEN35_DATAFLOW_MODEL_ABI
+		|| request->reserved) {
+		free(request);
+		return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true);
+	if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
+		|| context->bytes!=PioneerResidentBanks::Total || context->Unsafe()
+		|| !context->initialized || context->qwen35DataflowAuthority
+		|| context->qwen35DataflowService) {
+		status=B_NOT_ALLOWED;
+	} else {
+		constexpr unsigned pagesPerBank=PioneerResidentBanks::Capacity/4096;
+		auto initialized=[&](unsigned bank,unsigned page) {
+			return bank<PioneerQwen35::Banks && page<pagesPerBank
+				&& context->initialized[bank*pagesPerBank+page]!=0;
+		};
+		if (!PioneerQwen35::ValidateManifest(request->manifest,request->rope,
+			initialized,context->uploadedPages)) {
+			status=B_BAD_VALUE;
+		} else if (!PrepareQ38Dispatch(*context) || !context->io.ProveFleetRoutes()) {
+			context->qwen35DataflowLastResult=PioneerQwen35::DataflowServicePreflightFailed;
+			status=B_IO_ERROR;
+		} else {
+			auto* authority=new(std::nothrow) PioneerQwen35::DataflowProjectionAuthority;
+			if (!authority) {
+				status=B_NO_MEMORY;
+			} else if (!context->qwen35DataflowRoutesAudited
+				|| !authority->BindValidatedModel(request->manifest,
+					context->qwen35DataflowRoutes)) {
+				delete authority;
+				status=B_BAD_VALUE;
+			} else {
+				context->qwen35DataflowAuthority=authority;
+			}
+		}
+	}
+	release_sem(sLock);
+	free(request);
+	return status;
+}
+
+static status_t
 Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!data) return B_BAD_VALUE;
@@ -7890,10 +7954,12 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
 		const tt_qwen35_dataflow_support support={TT_QWEN35_DATAFLOW_ABI,
 			TT_QWEN35_DATAFLOW_DRIVER,TT_QWEN35_DATAFLOW_CORES,
-			TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE,0,0};
+			TT_QWEN35_DATAFLOW_CAP_RESIDENT_SERVICE|TT_QWEN35_DATAFLOW_CAP_MANIFEST_BIND,0,0};
 		status=user_memcpy(data,&support,sizeof(support));
 		release_sem(sLock); return status;
 	}
+	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND)
+		return Qwen35DataflowBindModel(cookie,data,length);
 	if (operation!=TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
 		|| length!=sizeof(tt_qwen35_dataflow_request)) return B_BAD_VALUE;
 	tt_qwen35_dataflow_request request={};
@@ -9046,7 +9112,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT
-		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL)
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL
+		|| operation==TT_PCI_PROBE_QWEN35_DATAFLOW_MODEL_BIND)
 		return Qwen35DataflowControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
 		|| operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)

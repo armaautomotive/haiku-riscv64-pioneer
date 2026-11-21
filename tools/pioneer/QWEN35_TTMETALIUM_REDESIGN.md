@@ -269,11 +269,20 @@ protocol. INSTALL prepares the all-core dispatch wait lease internally and
 then installs the resident dataflow service; QUERY reports its lifecycle and
 projection sequence; CLOSE audits and restores the previous core state. The
 rewrite driver rejects the generic dispatch RUN opcode, so this interface has
-no route back to the old inference path. Its support reply currently advertises
-resident-service lifecycle only (`projection_capabilities=0`,
-`token_capabilities=0`). The offline driver60 cross-build passes with this
-control path; candidate SHA-256:
-`da07aeca4e6c57e146fc87d3c241171461e25a60409fa9e14d66b2c625a78d2a`. This adds
-no hardware, output, recovery, or performance evidence. The next rewrite work
-is the native projection IO authorization/audit path and then a verified small
-projection; no benchmark or assistant integration has started.
+no route back to the old inference path. The offline driver60 cross-build
+passes with this control path; candidate SHA-256:
+`da07aeca4e6c57e146fc87d3c241171461e25a60409fa9e14d66b2c625a78d2a`.
+
+The next rewrite step added a root-only model-bind opcode. It validates the
+entire fixed Qwen3.5-4B manifest against the initialized-page ledger before it
+prepares the all-core dispatch lease, then binds an immutable manifest copy to
+the projection authority only after fleet-route proof. The public capability
+bits now expose model binding while projection and token execution remain
+disabled. The offline driver60 build passes; candidate SHA-256:
+`8caa37c06c9e895f2e4fcd96c37a25db481a662f9b40ad2c1b54e4d75caa45fe`.
+The manifest bind is not connected to activation seeding or the projection
+owner's PCI IO methods yet. No model was loaded on the card, no rewritten
+projection or valid output has run, and no rewrite rate or physical unload
+result exists. Continue with verified activation writes/readbacks and native
+projection authorization/audit; benchmark and assistant integration remain
+after the rewrite is ready.
