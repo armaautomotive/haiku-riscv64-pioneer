@@ -57,7 +57,8 @@ enum DataflowServiceResult {
 	DataflowServiceSiluFailed=21,
 	DataflowServiceResidualFailed=22,
 	DataflowServiceFfnFailed=23,
-	DataflowServiceConvFailed=24
+	DataflowServiceConvFailed=24,
+	DataflowServiceDeltaFailed=25
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the
@@ -271,6 +272,17 @@ public:
 		if (fProjectionOwner.RunConv(program,io)!=DataflowOwnerComplete) {
 			fPhase=PhaseFaulted;
 			return DataflowServiceConvFailed;
+		}
+		return DataflowServiceComplete;
+	}
+
+	template<class IO>
+	DataflowServiceResult RunDelta(const DataflowDeltaProgram& program,IO& io)
+	{
+		if (fPhase!=PhaseReady) return DataflowServiceInvalidState;
+		if (fProjectionOwner.RunDelta(program,io)!=DataflowOwnerComplete) {
+			fPhase=PhaseFaulted;
+			return DataflowServiceDeltaFailed;
 		}
 		return DataflowServiceComplete;
 	}

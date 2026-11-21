@@ -9,6 +9,7 @@
 #include "PioneerQwen35DataflowBlackholeSiluWorker.h"
 #include "PioneerQwen35DataflowBlackholeResidualWorker.h"
 #include "PioneerQwen35DataflowBlackholeConvWorker.h"
+#include "PioneerQwen35DataflowBlackholeDeltaWorker.h"
 
 namespace PioneerQwen35 {
 
@@ -403,6 +404,29 @@ inline bool DataflowWorkerResetQueues()
 							DataflowConvNextHistoryBufferAddress)),
 						reinterpret_cast<float*>(static_cast<uintptr_t>(
 							DataflowOutputBufferAddress)),io);
+			}
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+		} else if (invocationMagic==DataflowDeltaMagic) {
+			const auto* delta=reinterpret_cast<const DataflowDeltaInvocation*>(
+				static_cast<uintptr_t>(DataflowProgramAddress));
+			if (DataflowWorkerQueuesClean() && delta->Valid()
+				&& delta->core==core
+				&& DataflowBlackholeRouteForCore(delta->core)==localRoute) {
+				DataflowBlackholeDeltaOps io;
+				okay=io.Bind(*delta)
+					&& PioneerQwen35DataflowDeltaWorker(*delta,
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowInputBufferAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowInputBufferAddress+DataflowInputPageBytes)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowOutputBufferAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowDeltaStateInputAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowDeltaStateOutputAddress)),
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowActivationCacheAddress)),io);
 			}
 			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 		} else {

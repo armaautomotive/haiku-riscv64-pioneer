@@ -9,6 +9,7 @@
 #include "PioneerQwen35DataflowSiluProgram.h"
 #include "PioneerQwen35DataflowResidualProgram.h"
 #include "PioneerQwen35DataflowConvProgram.h"
+#include "PioneerQwen35DataflowDeltaProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -19,7 +20,8 @@ namespace PioneerQwen35 {
 class DataflowProjectionAuthority {
 	enum : unsigned {
 		PendingNone=0,PendingProjection=1,PendingEmbedding=2,PendingRms=3,
-		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7
+		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7,
+		PendingDelta=8
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -29,6 +31,7 @@ class DataflowProjectionAuthority {
 	bool fGraphWorkspaceReady[DataflowGraphWorkspaceBufferCount]{};
 	unsigned fGraphWorkspaceLayer[DataflowGraphWorkspaceBufferCount]{};
 	unsigned fConvNextPosition[Layers]{};
+	unsigned fDeltaNextPosition[Layers]{};
 	bool fGraphResidualReady=false;
 	bool fPending=false;
 	unsigned fPendingOutput=ActivationBuffers;
@@ -131,6 +134,33 @@ class DataflowProjectionAuthority {
 		return true;
 	}
 
+	bool DeltaMatches(const DataflowDeltaProgram& program) const
+	{
+		if (!fBound || !program.Valid()) return false;
+		DataflowDeltaProgram expected{};
+		if (!DataflowDeltaProgramBuilder::Build(fManifest,fGraphWorkspace,
+			program.layer,program.position,fRoutes,expected)
+			|| program.layer!=expected.layer || program.position!=expected.position
+			|| !DataflowRowSpaceMatches(program.qkv,expected.qkv)
+			|| !DataflowRowSpaceMatches(program.gate,expected.gate)
+			|| !DataflowRowSpaceMatches(program.alpha,expected.alpha)
+			|| !DataflowRowSpaceMatches(program.beta,expected.beta)
+			|| !DataflowRowSpaceMatches(program.stateRead,expected.stateRead)
+			|| !DataflowRowSpaceMatches(program.stateWrite,expected.stateWrite)
+			|| program.negativeA.type!=expected.negativeA.type
+			|| program.negativeA.inputs!=expected.negativeA.inputs
+			|| !DataflowRowSpaceMatches(program.negativeA.place,
+				expected.negativeA.place)
+			|| program.deltaBias.type!=expected.deltaBias.type
+			|| program.deltaBias.inputs!=expected.deltaBias.inputs
+			|| !DataflowRowSpaceMatches(program.deltaBias.place,
+				expected.deltaBias.place)) return false;
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (program.bankRoute[noc][bank]!=expected.bankRoute[noc][bank])
+				return false;
+		return true;
+	}
+
 public:
 	DataflowProjectionAuthority()=default;
 	DataflowProjectionAuthority(const DataflowProjectionAuthority&)=delete;
@@ -165,7 +195,7 @@ public:
 	{
 		if (!fBound || fPending) return false;
 		for (unsigned layer=0;layer<Layers;layer++)
-			fConvNextPosition[layer]=0;
+			fConvNextPosition[layer]=fDeltaNextPosition[layer]=0;
 		for (unsigned i=DataflowGraphRecurrentQkvWorkspaceIndex;
 			i<DataflowGraphWorkspaceBufferCount;i++) {
 			fGraphWorkspaceReady[i]=false;
@@ -177,6 +207,11 @@ public:
 	unsigned ConvNextPosition(unsigned layer) const
 	{
 		return fBound && layer<Layers?fConvNextPosition[layer]:~0U;
+	}
+
+	unsigned DeltaNextPosition(unsigned layer) const
+	{
+		return fBound && layer<Layers?fDeltaNextPosition[layer]:~0U;
 	}
 
 	bool BuildConv(unsigned layer,unsigned position,
@@ -228,6 +263,81 @@ public:
 		fGraphWorkspaceLayer[qkv]=program.layer;
 		fGraphWorkspaceReady[qkv]=true;
 		fConvNextPosition[program.layer]=program.position+1;
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		fPendingLayer=~0U;
+		fPendingPosition=0;
+		return true;
+	}
+
+	bool BuildDelta(unsigned layer,unsigned position,DataflowDeltaProgram& program) const
+	{
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		const unsigned gate=DataflowGraphRecurrentGateWorkspaceIndex;
+		const unsigned alpha=DataflowGraphRecurrentAlphaWorkspaceIndex;
+		const unsigned beta=DataflowGraphRecurrentBetaWorkspaceIndex;
+		if (!fBound || fPending || layer>=Layers
+			|| position!=fDeltaNextPosition[layer]
+			|| fConvNextPosition[layer]!=position+1
+			|| !GraphWorkspaceReady(qkv) || GraphWorkspaceLayer(qkv)!=layer
+			|| !GraphWorkspaceReady(gate) || GraphWorkspaceLayer(gate)!=layer
+			|| !GraphWorkspaceReady(alpha) || GraphWorkspaceLayer(alpha)!=layer
+			|| !GraphWorkspaceReady(beta) || GraphWorkspaceLayer(beta)!=layer
+			|| !DataflowDeltaProgramBuilder::Build(fManifest,fGraphWorkspace,
+				layer,position,fRoutes,program)) return false;
+		return AuthorizeDelta(program);
+	}
+
+	bool AuthorizeDelta(const DataflowDeltaProgram& program) const
+	{
+		if (!fBound || fPending || program.layer>=Layers
+			|| program.position!=fDeltaNextPosition[program.layer]
+			|| fConvNextPosition[program.layer]!=program.position+1) return false;
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		const unsigned gate=DataflowGraphRecurrentGateWorkspaceIndex;
+		const unsigned alpha=DataflowGraphRecurrentAlphaWorkspaceIndex;
+		const unsigned beta=DataflowGraphRecurrentBetaWorkspaceIndex;
+		return GraphWorkspaceReady(qkv) && GraphWorkspaceLayer(qkv)==program.layer
+			&& GraphWorkspaceReady(gate) && GraphWorkspaceLayer(gate)==program.layer
+			&& GraphWorkspaceReady(alpha) && GraphWorkspaceLayer(alpha)==program.layer
+			&& GraphWorkspaceReady(beta) && GraphWorkspaceLayer(beta)==program.layer
+			&& DeltaMatches(program);
+	}
+
+	bool BeginDelta(const DataflowDeltaProgram& program)
+	{
+		if (!AuthorizeDelta(program)) return false;
+		fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
+		fGraphWorkspaceReady[DataflowGraphRecurrentAlphaWorkspaceIndex]=false;
+		fGraphWorkspaceReady[DataflowGraphRecurrentBetaWorkspaceIndex]=false;
+		fPending=true;
+		fPendingOutput=DataflowGraphRecurrentQkvOutputSlot;
+		fPendingKind=PendingDelta;
+		fPendingLayer=program.layer;
+		fPendingPosition=program.position;
+		return true;
+	}
+
+	bool PendingDeltaMatches(const DataflowDeltaProgram& program) const
+	{
+		return fBound && fPending && fPendingKind==PendingDelta
+			&& fPendingOutput==DataflowGraphRecurrentQkvOutputSlot
+			&& program.layer==fPendingLayer && program.position==fPendingPosition
+			&& DeltaMatches(program);
+	}
+
+	bool CompleteDelta(const DataflowDeltaProgram& program)
+	{
+		if (!PendingDeltaMatches(program)) return false;
+		const unsigned qkv=DataflowGraphRecurrentQkvWorkspaceIndex;
+		fGraphWorkspaceLayer[qkv]=program.layer;
+		fGraphWorkspaceReady[qkv]=true;
+		fGraphWorkspaceReady[DataflowGraphRecurrentAlphaWorkspaceIndex]=false;
+		fGraphWorkspaceReady[DataflowGraphRecurrentBetaWorkspaceIndex]=false;
+		fGraphWorkspaceLayer[DataflowGraphRecurrentAlphaWorkspaceIndex]=~0U;
+		fGraphWorkspaceLayer[DataflowGraphRecurrentBetaWorkspaceIndex]=~0U;
+		fDeltaNextPosition[program.layer]=program.position+1;
 		fPending=false;
 		fPendingOutput=ActivationBuffers;
 		fPendingKind=PendingNone;
@@ -597,6 +707,14 @@ public:
 			if (fPendingOutput!=DataflowGraphRecurrentQkvOutputSlot
 				|| fPendingLayer>=Layers) return false;
 			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
+		} else if (fPendingKind==PendingDelta) {
+			if (fPendingOutput!=DataflowGraphRecurrentQkvOutputSlot
+				|| fPendingLayer>=Layers) return false;
+			fGraphWorkspaceReady[DataflowGraphRecurrentQkvWorkspaceIndex]=false;
+			fGraphWorkspaceReady[DataflowGraphRecurrentAlphaWorkspaceIndex]=false;
+			fGraphWorkspaceReady[DataflowGraphRecurrentBetaWorkspaceIndex]=false;
+			fGraphWorkspaceLayer[DataflowGraphRecurrentAlphaWorkspaceIndex]=~0U;
+			fGraphWorkspaceLayer[DataflowGraphRecurrentBetaWorkspaceIndex]=~0U;
 		} else {
 			if (fPendingKind!=PendingProjection || fPendingOutput>=ActivationBuffers)
 				return false;
