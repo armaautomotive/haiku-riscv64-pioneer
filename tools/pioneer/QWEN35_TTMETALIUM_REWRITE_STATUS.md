@@ -257,27 +257,29 @@ The Haiku RV32 cross-compiler is available at
 `tests/run_pioneer_qwen35_dataflow_target_compile_test.sh` for the checked
 worker compile. The local Apple Clang 17 build has no RISC-V target.
 
-The lower-level queue role templates remain offline contracts. The current
-concrete path is `PioneerQwen35DataflowBlackholeWorkerEntry`, which binds the
-BRISC-side NoC and Tensix operations into one bounded per-core worker. It
-prefetches the next weight tile over NoC 0 while the matrix engine processes
-the current tile. Tenstorrent's open `tt-lab` worker pattern is the closest fit for
-this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
+The lower-level queue role templates remain offline contracts. The concrete
+per-core path is `PioneerQwen35DataflowBlackholeWorkerEntry`, which binds
+BRISC-side NoC operations and Tensix matrix operations into one bounded worker.
+It prefetches the next weight tile over NoC 0 while the matrix engine processes
+the current tile. Tenstorrent's open `tt-lab` worker pattern is the closest fit
+for this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
 [BRISC firmware](https://github.com/tenstorrent/tt-lab/blob/main/src/brisc.cpp)).
-It is still missing a resident owner that materializes and launches all 120
-invocations, downstream sharded activation chaining, native image validation,
-and silicon correctness/performance evidence.
+The resident all-120-worker owner, driver command path, and offline generated
+image validation are now implemented. Downstream sharded activation chaining,
+full model generation, and silicon correctness/performance evidence remain
+open.
 
-## Current checkpoint: 2026-11-20
+## Current checkpoint: 2026-11-21
 
-The latest pushed rewrite checkpoint is `cd35b0db45` (`Authorize Qwen35
-recurrent graph projections`). The offline rewrite has concrete Tensix matrix
-projection, device-side Q6_K token embedding, and hidden RMS normalization,
-manifest-bound graph Up projection, device SiLU×Up, and residual save/add
-across the resident 120-worker service, plus a checked seven-step
-feed-forward-sublayer sequence. The root-only support surface still does not
-provide token generation. No hardware test or decode rate is available for
-the rewrite.
+The latest pushed rewrite checkpoint is `221022cc34` (`Add Qwen35 delta-state
+worker path`). The offline rewrite includes Tensix matrix projections,
+device-side Q6_K token embedding and hidden RMS normalization, manifest-bound
+graph projections, SiLU×Up, residual save/add, feed-forward sequencing,
+recurrent convolution, Alpha/Beta projections, and the first recurrent
+delta-state update. The resident all-core service has an audited delta-state
+command and driver opcode. Dense attention, post-delta normalization/gating,
+recurrent output projection, final vocabulary readout, and token generation
+remain incomplete. No hardware test or decode rate is available.
 
 The graph workspace participates in the projection path. The request can
 select the Up, recurrent QKV, or recurrent gate sidecar; the authority maps
@@ -288,9 +290,8 @@ checks, the Haiku RV32IMF role compile, and driver60, reload-guard, and
 default-control builds pass. The driver60 SHA-256 is
 `35c2c1e0f5ae691f5943ec56aa18a21a90e3a5bb69c3c691cb919696bf08b90a`.
 These selectors make QKV and recurrent-gate projections available through
-the existing 120-core Tensix path; recurrent convolution, delta-state math,
-state IO, and the complete attention path remain unimplemented. No legacy
-Work changes are part of this step.
+the existing 120-core Tensix path. No legacy Work changes are part of this
+step.
 
 The device-side SiLU×Up step is implemented and pushed in `8ed176883c`. Its
 manifest-bound schedule assigns all 576 sixteen-row panels over the 120
@@ -410,13 +411,47 @@ replay, skipping, and out-of-order requests are rejected. The new
 `ResetRecurrentState()` request boundary resets position tracking and
 invalidates recurrent scratch without writing the large resident state
 regions. This is safe because position-zero convolution substitutes zero
-history instead of reading the old ping-pong slot; the future delta-state
-worker must enforce the same rule. ASan/UBSan tests cover successful advance,
+history instead of reading the old ping-pong slot; the delta-state worker
+likewise substitutes zero state at position zero. ASan/UBSan tests cover successful advance,
 replay rejection, reset, and reprojection before a new position zero. The
 RV32IMF role compile passes, and offline driver60, reload-guard, and
 default-control builds pass. Driver60 SHA-256:
 `a7cd35960b48c7844910e8f2f0df72b661ce19dd014d8b5ca4c1f96d4a715d15`.
 No hardware validation or throughput evidence was produced.
+
+## Delta-state worker `221022cc34` (2026-11-21)
+
+The manifest-bound delta program validates QKV, gate, Alpha/Beta, learned
+gate vectors, and the position-selected state ping-pong ranges. It partitions
+256 sixteen-value panels across the 120 resident cores: 16 cores receive
+three panels each and the other 104 receive two. Every core processes panels.
+The BRISC worker performs Q/K normalization, learned decay and beta gates,
+state decay, key prediction, rank-one state update, and query readout. Model
+projections remain on the Tensix matrix path; recurrent vector/state
+arithmetic runs in device firmware. There is no host inference path.
+
+The projection authority permits a delta command only after matching QKV,
+gate, Alpha, and Beta projections plus the same-position convolution have
+committed. It invalidates QKV and consumes Alpha/Beta while the command is in
+flight, then advances the delta position only after all 120 invocations,
+worker receipts, runtime/queue audits, and acknowledgements pass. Position
+zero ignores stale state and writes the alternate slot. Driver opcode
+`0x8842` exposes this operation through the resident service.
+
+Offline ASan/UBSan fixtures pass for zero-state and warm-state recurrence,
+head gates, descriptor coverage, authority transitions, and the all-core owner
+barrier. The Haiku RV32IMF worker compile passes without A-extension atomics
+or runtime helpers. The resident service image is 56,760 bytes and fits its
+fixed 57,344-byte region. Offline driver60 SHA-256:
+`91b3dc0fcf26dde2244b56b986fcd060aed7dd4b899cc7cf1e9dc596b869fada`;
+service text SHA-256:
+`f38121fb4700345ceac583b0341c4130dbe6e8f23581a0c8e19cf1b84aa9befb`;
+reload guard SHA-256:
+`d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`;
+default-control SHA-256:
+`5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
+These are offline checks only. The operation has not run on the Pioneer and
+has no silicon correctness or performance evidence.
 
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration

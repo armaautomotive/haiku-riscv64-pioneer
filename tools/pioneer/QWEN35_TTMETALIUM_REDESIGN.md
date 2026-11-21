@@ -464,9 +464,34 @@ is refused. `ResetRecurrentState()` resets this bookkeeping and invalidates
 recurrent graph scratch at the request boundary. It leaves the resident
 ping-pong memory in place: position zero must ignore the prior request's
 cells, and the convolution worker already substitutes zero history on that
-position. The future delta-state worker must also ignore its previous state
-slot at position zero. ASan/UBSan tests cover position advance, replay
+position. The delta-state worker now likewise substitutes zero for its prior
+state slot at position zero. ASan/UBSan tests cover position advance, replay
 rejection, reset, and reprojection. The Haiku RV32IMF role compile and
 offline driver60/reload-guard/default-control builds pass. Driver60 SHA-256:
 `a7cd35960b48c7844910e8f2f0df72b661ce19dd014d8b5ca4c1f96d4a715d15`.
 This is offline evidence only.
+
+## Delta-state worker `221022cc34` (2026-11-21)
+
+The rewrite now builds and dispatches the recurrent delta-state operator
+through the resident 120-core service. Its validated descriptor binds the
+current QKV, gate, Alpha/Beta projections, learned decay/bias vectors, layer,
+position, and alternate state slots. The 256 panels are divided across every
+core. BRISC firmware performs Q/K normalization, decay and beta gates,
+prediction, state update, and readout; model projections continue to use the
+Tensix matrix path. Position zero uses zero state regardless of stale
+ping-pong memory.
+
+The authority requires all matching projections and convolution to commit
+before delta dispatch and advances recurrent position only after the all-core
+owner audit and acknowledgements. A driver opcode exposes the command.
+ASan/UBSan arithmetic, descriptor, authority, and owner fixtures pass; the
+Haiku RV32IMF worker compile passes without A atomics or runtime helpers. The
+56,760-byte service image fits its 57,344-byte L1 limit, and the driver60,
+reload-guard, and default-control packages build offline. No Pioneer access,
+silicon output, or throughput result was produced.
+
+Still required are post-delta normalization and SiLU gating, recurrent output
+projection, dense attention and KV handling, layer/token-generation flow, and
+the final vocabulary readout. Hardware benchmarking and assistant integration
+remain deferred until the rewrite graph is implemented.
