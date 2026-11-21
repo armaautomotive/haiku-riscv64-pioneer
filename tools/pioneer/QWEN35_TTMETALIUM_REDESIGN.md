@@ -375,9 +375,18 @@ ASan/UBSan worker, authority, and owner checks pass; the RV32IMF compile and
 offline driver60/reload-guard/default-control builds pass. The driver60
 SHA-256 is
 `5b1aff677a77cc86b75e725e0bd16c2e2a2c34aeb3b277cabbe5164be1c0961a`.
-The next rewrite work is the recurrent/dense layer operators and decoder
-graph. The full GGUF manifest test was not run because no local pinned-model
-path was available.
+`DataflowFfnSequence` now composes residual save, post-attention RMS, Gate/Up
+Tensix projections, SiLU×Up, Down projection, and residual add behind a
+rewrite-only root opcode. Host ASan/UBSan checks confirm ordering, invalid
+request handling, and stopping at the first failed command. The Haiku RV32IMF
+compile and offline driver60/reload-guard/default-control builds pass; the
+driver60 SHA-256 is
+`5b59a99ea3346af23399ec273bd810c3f9730bb4f5aa8c8cce0c131264045ed9`.
+This sequence only submits validated resident-worker operations; it adds no
+host tensor math or legacy Work fallback. The next rewrite work is recurrent
+and dense attention, recurrent/KV state, and full decoder output. The full
+GGUF manifest test was not run because no local pinned-model path was
+available.
 
 This remains a rewrite prototype. The recurrent/dense model graph, state
 updates, tied-vocabulary readout, tokenizer client, and generation loop are

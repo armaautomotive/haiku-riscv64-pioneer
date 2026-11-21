@@ -331,6 +331,21 @@ driver60 SHA-256 is
 service text SHA-256 is
 `279cac1dddbc27f0c6621fec07b248d267714073355fb0cf83b812d6cc3cf9fe`.
 
+The next local rewrite step adds `DataflowFfnSequence`, which composes those
+device operations into a complete feed-forward sublayer: residual save,
+post-attention RMS, Gate and Up projections, SiLU×Up, Down projection, and
+residual add. A rewrite-only root opcode exposes this sequence and reports the
+failing stage. The coordinator only builds authorized programs and submits
+resident worker commands; it performs no tensor arithmetic. Host ASan/UBSan
+checks cover complete ordering, invalid requests, and stop-on-first-failure.
+The RV32IMF sequence compile check passes without A atomics or runtime helpers.
+The offline driver60, reload-guard, and default-control builds pass; the
+driver60 SHA-256 is
+`5b59a99ea3346af23399ec273bd810c3f9730bb4f5aa8c8cce0c131264045ed9`.
+This is a local, offline-checked rewrite checkpoint; recurrent/dense attention,
+state updates, final vocabulary readout, and token generation remain
+unimplemented. No Pioneer access or benchmark was performed.
+
 Continue completing the recurrent/dense layer operators and decoder graph.
 Keep Pioneer runs, performance benchmarking, and assistant integration
 deferred until the rewrite graph is implemented and its offline correctness

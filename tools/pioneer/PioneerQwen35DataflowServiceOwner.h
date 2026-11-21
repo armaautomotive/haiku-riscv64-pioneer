@@ -55,7 +55,8 @@ enum DataflowServiceResult {
 	DataflowServiceEmbeddingFailed=19,
 	DataflowServiceRmsFailed=20,
 	DataflowServiceSiluFailed=21,
-	DataflowServiceResidualFailed=22
+	DataflowServiceResidualFailed=22,
+	DataflowServiceFfnFailed=23
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the

@@ -14,8 +14,35 @@
 #include "../PioneerQwen35DataflowBlackholeSiluWorker.h"
 #include "../PioneerQwen35DataflowResidualProgram.h"
 #include "../PioneerQwen35DataflowBlackholeResidualWorker.h"
+#include "../PioneerQwen35DataflowFfnSequence.h"
 
 using namespace PioneerQwen35;
+
+struct TargetFfnAuthority {
+	bool BuildResidual(unsigned,unsigned,DataflowResidualProgram&) { return true; }
+	bool BuildRms(unsigned,unsigned,unsigned,unsigned,DataflowRmsProgram&) { return true; }
+	bool BuildProjection(unsigned,unsigned,unsigned,unsigned,
+		DataflowProjectionProgram&) { return true; }
+	bool BuildSilu(unsigned,DataflowSiluProgram&) { return true; }
+};
+
+struct TargetFfnService {
+	int RunResidual(const DataflowResidualProgram&,int&) { return 0; }
+	int RunRms(const DataflowRmsProgram&,int&) { return 0; }
+	int RunProjection(const DataflowProjectionProgram&,int&) { return 0; }
+	int RunSilu(const DataflowSiluProgram&,int&) { return 0; }
+};
+
+bool PioneerQwen35DataflowFfnSequenceTargetCompileProbe(unsigned layer,
+	unsigned inputSlot)
+{
+	TargetFfnAuthority authority;
+	TargetFfnService service;
+	int io=0;
+	unsigned outputSlot=ActivationBuffers;
+	return DataflowFfnSequence::Run(layer,inputSlot,authority,service,io,
+		outputSlot)==DataflowFfnSequenceComplete;
+}
 
 bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,
 	float& output)
