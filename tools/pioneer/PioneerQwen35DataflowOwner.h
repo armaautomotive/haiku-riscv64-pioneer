@@ -46,7 +46,7 @@ enum : unsigned {
 struct DataflowOwnerDiagnostic {
 	unsigned operation,result,core,pendingSequence;
 	DataflowWorkerSnapshot worker;
-	unsigned recoveryAuditStage,recoveryAuditCore;
+	unsigned recoveryAuditStage,recoveryAuditCore,recoveryAuditDetail;
 };
 
 enum DataflowOwnerResult {
@@ -91,7 +91,7 @@ class DataflowProjectionOwner {
 	DataflowWorkerSnapshot fSnapshot[DataflowCoreCount]{};
 	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
 		DataflowOwnerComplete,DataflowCoreCount,0,{},DataflowRecoveryAuditNone,
-		DataflowCoreCount};
+		DataflowCoreCount,0};
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{
@@ -338,7 +338,7 @@ public:
 	DataflowOwnerResult RunEmbedding(const DataflowEmbeddingProgram& program,IO& io)
 	{
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0};
 		auto record=[&](DataflowOwnerResult result,unsigned core,
 			const DataflowWorkerSnapshot* worker,bool faulted) {
 			fDiagnostic.result=result;
@@ -442,7 +442,7 @@ public:
 		fNextSequence=sequence;
 		fPendingSequence=0;
 		fDiagnostic={DataflowOwnerOperationEmbedding,DataflowOwnerComplete,
-			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount};
+			DataflowCoreCount,0,{},DataflowRecoveryAuditNone,DataflowCoreCount,0};
 		return DataflowOwnerComplete;
 	}
 
@@ -995,8 +995,10 @@ public:
 		if (!fFaulted || !fPendingSequence) return DataflowOwnerInvalidState;
 		fDiagnostic.recoveryAuditStage=DataflowRecoveryAuditNone;
 		fDiagnostic.recoveryAuditCore=DataflowCoreCount;
+		fDiagnostic.recoveryAuditDetail=0;
 		if (!io.AuditAndRecoverAll(fPendingSequence,fSnapshot,
-			fDiagnostic.recoveryAuditStage,fDiagnostic.recoveryAuditCore)) {
+			fDiagnostic.recoveryAuditStage,fDiagnostic.recoveryAuditCore,
+			fDiagnostic.recoveryAuditDetail)) {
 			if (fDiagnostic.recoveryAuditStage==DataflowRecoveryAuditNone)
 				fDiagnostic.recoveryAuditStage=DataflowRecoveryAuditDetailMissing;
 			return DataflowOwnerRecoveryPending;

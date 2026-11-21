@@ -88,7 +88,7 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010110ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010111ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010112ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010113ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010114ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3377,7 +3377,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		unsigned sequence,unsigned token);
 	bool AuditAndRecoverAll(unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount],
-		unsigned& failureStage,unsigned& failureCore);
+		unsigned& failureStage,unsigned& failureCore,unsigned& failureDetail);
 	bool AbortPendingProjection();
 	bool StopAndAuditAll(unsigned& failedStage,unsigned& failedCore);
 	bool RestoreCoreState(unsigned core);
@@ -9310,7 +9310,8 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 						|((diagnostic.worker.failure&0xfU)<<25)
 						|((diagnostic.worker.phase&0x7U)<<22)
 						|((diagnostic.recoveryAuditStage&0xfU)<<18)
-						|((recoveryCore&0x7fU)<<11);
+						|((recoveryCore&0x7fU)<<11)
+						|(diagnostic.recoveryAuditDetail&0x7ffU);
 					request.reserved[2]=diagnostic.pendingSequence;
 				}
 			}

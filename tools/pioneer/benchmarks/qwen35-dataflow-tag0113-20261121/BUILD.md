@@ -44,10 +44,11 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
 
 ## Hardware status
 
-Tag0113 has not been installed on the Pioneer. Tag0112's last trial completed
-the model upload and failed at the first prompt embedding; same-owner recovery
-and close audit failed. The board was recovered to stable driver55 generation2
-and the 4B/27B files were verified intact. The next hardware preflight must
-recheck the stable driver, idle state, absence of the prior diagnostic, and
-both model files after the user's recent power reset. The 100 decode tokens/s
-target, two valid warm runs, and clean unload remain unverified.
+Tag0113 was installed after a fresh stable55 idle preflight. It authenticated
+and loaded the full packed model, then reproduced the core0 embedding weight
+read failure. QUERY/RECOVER reported runtime-instability audit stage6/core0;
+CLOSE failed its core0 stop audit. The guarded wrapper retained the candidate,
+stable backup, and recovery lock because the candidate reported
+`cold1 active_owner1`. There is no valid output or decode rate, and no clean
+unload. See [`RUN.md`](RUN.md) for timings and raw evidence. Tag0114 adds a
+runtime-audit subcheck diagnostic before the next guarded hardware trial.

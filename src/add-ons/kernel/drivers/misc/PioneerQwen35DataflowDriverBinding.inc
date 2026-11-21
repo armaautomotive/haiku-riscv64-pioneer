@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 
+enum PioneerQwen35RuntimeAuditDetail : unsigned {
+	PioneerDataflowRuntimeDetailContext=1,
+	PioneerDataflowRuntimeDetailMapping=2,
+	PioneerDataflowRuntimeDetailServiceImage=3,
+	PioneerDataflowRuntimeDetailReset=4,
+	PioneerDataflowRuntimeDetailDispatch=5,
+	PioneerDataflowRuntimeDetailLocalRoute=6,
+	PioneerDataflowRuntimeDetailNoC=7,
+	PioneerDataflowRuntimeDetailRoute=8,
+	PioneerDataflowRuntimeDetailSources=9,
+	PioneerDataflowRuntimeDetailServicePC=10,
+	PioneerDataflowRuntimeDetailTensixIdle=11
+};
+
 static bool
 PioneerQwen35DataflowReadStableMailbox(PioneerSessionIO& io,unsigned core,
 	PioneerQwen35::DataflowWorkerMailbox& mailbox)
@@ -142,27 +156,45 @@ PioneerQwen35DataflowLocalRouteMatches(PioneerSessionIO& io,unsigned core)
 }
 
 static bool
-PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core)
+PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core,
+	unsigned* failureDetail=NULL)
 {
+	auto fail=[&](unsigned detail) {
+		if (failureDetail) *failureDetail=detail;
+		return false;
+	};
+	if (failureDetail) *failureDetail=0;
 	auto* context=io.qwen35DataflowContext;
-	if (!context || core>=PioneerQwen35::DataflowCoreCount
-		|| !io.SelectRuntimeCore(core) || !io.MapQ38Panel()
-		|| !io.DataflowPanelMappingStable()
-		|| !PioneerSessionIODataflowServiceImageTrusted(io,core)) return false;
+	if (!context || core>=PioneerQwen35::DataflowCoreCount)
+		return fail(PioneerDataflowRuntimeDetailContext);
+	if (!io.SelectRuntimeCore(core) || !io.MapQ38Panel()
+		|| !io.DataflowPanelMappingStable())
+		return fail(PioneerDataflowRuntimeDetailMapping);
+	if (!PioneerSessionIODataflowServiceImageTrusted(io,core))
+		return fail(PioneerDataflowRuntimeDetailServiceImage);
 	const unsigned reset=io.ResetRead();
-	if (reset!=0x46800 || io.ResetRead()!=reset) return false;
+	if (reset!=0x46800 || io.ResetRead()!=reset)
+		return fail(PioneerDataflowRuntimeDetailReset);
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	if (!context->q38Dispatch || context->q38Dispatch->unsafe
 		|| context->q38Dispatch->closed || context->q38Dispatch->rootRunning)
-		return false;
+		return fail(PioneerDataflowRuntimeDetailDispatch);
 	auto& node=context->q38Dispatch->worker[core];
-	return PioneerQwen35DataflowLocalRouteMatches(io,core)
-		&& node.noc.state==TT_COMPUTE_NOC_PASSED && node.noc.tlb_restored
-		&& !node.noc.recovery_required
-		&& node.noc.version==(core?PioneerWorkerVersion(core):1)
-		&& PioneerWorkerRoute(dram,node.noc.source[0],core)
-		&& PioneerRuntimeSources(io,dram,node.noc,node.Store())
-		&& PioneerQwen35DataflowServicePc(io) && BlackholeResidentIdle(io);
+	if (!PioneerQwen35DataflowLocalRouteMatches(io,core))
+		return fail(PioneerDataflowRuntimeDetailLocalRoute);
+	if (node.noc.state!=TT_COMPUTE_NOC_PASSED || !node.noc.tlb_restored
+		|| node.noc.recovery_required
+		|| node.noc.version!=(core?PioneerWorkerVersion(core):1))
+		return fail(PioneerDataflowRuntimeDetailNoC);
+	if (!PioneerWorkerRoute(dram,node.noc.source[0],core))
+		return fail(PioneerDataflowRuntimeDetailRoute);
+	if (!PioneerRuntimeSources(io,dram,node.noc,node.Store()))
+		return fail(PioneerDataflowRuntimeDetailSources);
+	if (!PioneerQwen35DataflowServicePc(io))
+		return fail(PioneerDataflowRuntimeDetailServicePC);
+	if (!BlackholeResidentIdle(io))
+		return fail(PioneerDataflowRuntimeDetailTensixIdle);
+	return true;
 }
 
 enum PioneerQwen35DataflowIdleDetail : unsigned {
@@ -1467,13 +1499,15 @@ PioneerSessionIO::CompleteArgmax(
 bool
 PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 	PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount],
-	unsigned& failureStage,unsigned& failureCore)
+	unsigned& failureStage,unsigned& failureCore,unsigned& failureDetail)
 {
 	failureStage=PioneerQwen35::DataflowRecoveryAuditNone;
 	failureCore=PioneerQwen35::DataflowCoreCount;
-	auto fail=[&](unsigned stage,unsigned core) {
+	failureDetail=0;
+	auto fail=[&](unsigned stage,unsigned core,unsigned detail=0) {
 		failureStage=stage;
 		failureCore=core;
+		failureDetail=detail;
 		return false;
 	};
 	auto* context=qwen35DataflowContext;
@@ -1486,8 +1520,10 @@ PioneerSessionIO::AuditAndRecoverAll(unsigned sequence,
 	auto inspect=[&](unsigned core,PioneerQwen35::DataflowWorkerSnapshot& observed,
 		bool& terminal) {
 		terminal=false;
-		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core))
-			return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core);
+		unsigned runtimeDetail=0;
+		if (!PioneerQwen35DataflowCoreRuntimeStable(*this,core,&runtimeDetail))
+			return fail(PioneerQwen35::DataflowRecoveryAuditRuntimeUnstable,core,
+				runtimeDetail);
 		if (!ReadWorkerSnapshot(core,observed))
 			return fail(PioneerQwen35::DataflowRecoveryAuditSnapshotUnreadable,core);
 		if (PioneerQwen35::DataflowWorkerSnapshotReady(observed)) {

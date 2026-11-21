@@ -275,13 +275,14 @@ static void PrintOwnerDiagnostic(const char* action,
 	fprintf(stderr,"P100A_Q35_DATAFLOW %s result=%u state=%u recovery=%u "
 		"owner_result=%u owner_core=%s%u owner_operation=%u "
 		"worker_state=%u worker_failure=%u worker_phase=%u "
-		"recovery_audit_stage=%u recovery_audit_core=%s%u pending_sequence=%u\n",
+		"recovery_audit_stage=%u recovery_audit_core=%s%u "
+		"recovery_audit_detail=%u pending_sequence=%u\n",
 		action,request.result,request.state,request.recovery_required,
 		packed>>24,core==0xffffU?"none/":"",core==0xffffU?0:core,
 		packed&0xffU,(worker>>29)&0x7U,(worker>>25)&0xfU,
 		(worker>>22)&0x7U,(worker>>18)&0xfU,
 		recoveryCore==0x7fU?"none/":"",recoveryCore==0x7fU?0:recoveryCore,
-		request.reserved[2]);
+		worker&0x7ffU,request.reserved[2]);
 }
 
 static bool RecoverRewrite(int fd,bool installAttempted)

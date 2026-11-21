@@ -17,22 +17,23 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
-BRISC/Tensix service, with no CPU inference or fallback. Tag0111 panicked in
-the generation ioctl because its temporary projection descriptors consumed
-hundreds of kilobytes of a 20 KiB Haiku kernel stack. The card was recovered
-to stable driver55 generation2, idle, with the 27B model intact. Tag0112 moves
-the large projection workspace to heap-owned session/authority storage. Its
-offline build, RV32IMF compile, focused ASan/UBSan tests, and 15,696/18,432-byte
-conservative stack-budget check pass. Tag0112 ran on the Pioneer and uploaded
-the full packed model in 328.264191 s, but its first prompt embedding failed on
-core0 with a reader-role worker failure. The same-owner QUERY/RECOVER attempt
-and close audit failed, leaving the candidate cold with an active-owner latch.
-The post-reboot recovery helper restored stable55 generation2 and verified
-both model files, 64 CPUs, full RAM, and an absent recovery lock. No valid
-output, completed prompt time, decode time, or tokens/s exists. The 100
-tokens/s target and clean-unload gate remain open; continue the rewrite
-offline before another hardware trial. Details are in
-[`benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md).
+BRISC/Tensix service, with no CPU inference or fallback. Tag0113's full build,
+RV32IMF compile, focused ASan/UBSan tests, and 15456/18432-byte stack check
+passed. Its guarded hardware trial loaded the full model in 330.909273 s, then
+failed core0 embedding with `EmbeddingWeightRead` failure7. QUERY/RECOVER
+reported runtime audit stage6/core0; CLOSE failed its core0 stop audit. The
+wrapper retained tag0113, the stable55 backup, and the exclusive lock because
+the candidate entered `cold1 active_owner1`. A fresh boot and guarded restore
+have since returned the card to stable55 generation2, idle, with the lock
+cleared; this does not meet the recover-without-reboot requirement. Tag0114
+preserves the fixed 64-byte mailbox and adds a runtime-stability subcheck code to the existing owner
+diagnostic. Its offline build and focused sanitizer, owner, service-owner, and
+RV32IMF tests pass. This localizes the next recovery check; it does not yet
+fix or validate in-place recovery. No valid output, completed prompt time,
+decode time, or tokens/s exists. The 100 tokens/s target and clean-unload gate
+remain open. Tag0114 has not run on hardware yet. See
+[`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md) and
+[`tag0114 BUILD`](benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -93,22 +94,55 @@ output or decode rate. Build details are in
 [`benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0112-20261121/BUILD.md); run details are in
 [`benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0112-20261121/RUN.md).
 
-Tag0113 is the current rewrite checkpoint. The full variant-60 driver/client/
-resident-service build and RV32IMF compile pass. The conservative stack audit
-passes at 15456/18432 bytes; the compiler inlined the generation sequence into
-the measured ioctl frame. Focused ASan/UBSan owner, service-owner, and
-embedding-worker tests pass. Worker receipts now distinguish embedding
-invocation, IO binding, NoC weight read, Q6_K unpack, and output-write failures.
-QUERY/RECOVER now returns the first all-core audit failure stage and core.
-The rewrite has not yet had a tag0113 hardware trial. The last hardware result
-is still tag0112's failed first prompt embedding, with no output or decode
-rate. Before another trial, preflight must verify the post-reset board is back
-on stable55 and idle; then test whether the new diagnostics identify the
-failure and whether audited recovery can unload cleanly. The 100 tokens/s gate
-remains open. Build results are in
-[`benchmarks/qwen35-dataflow-tag0113-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0113-20261121/BUILD.md).
+Tag0113 added worker-level embedding failure codes and recovery audit
+stage/core reporting while preserving the fixed worker mailbox and ioctl
+request sizes. It reproduced the first prompt embedding failure on core0:
+failure7 (`EmbeddingWeightRead`), phase5. The all-core runtime audit failed at
+stage6/core0, QUERY/RECOVER remained pending, and CLOSE failed at the core0
+stop audit. The guarded wrapper retained the lock and backup when the driver
+reported `cold1 active_owner1`. Its run record has the distinct authentication,
+vocabulary, model-load, and failed-prompt timings; decode was not reached.
+See [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md).
+
+Tag0114 is the current offline rewrite checkpoint. It identifies which of the
+runtime-stability subchecks rejects recovery, propagating that detail through
+unused bits in the existing request diagnostic. The 64-byte mailbox and request
+size are unchanged, and all safety checks remain enabled. The full variant-60
+driver/client/service build, RV32IMF compile, ASan/UBSan owner and service-owner
+tests pass; the stack bound remains 15456/18432 bytes. Driver SHA-256 is
+`ea4fa51d250c143bd5144156aa6aba71f43e11c9f1c89ece41280ba7a08c3964`; client
+SHA-256 is `80d28f4d75a48612773b07339010308ced09e8c8debf8e7708c35b85f7908da5`.
+Tag0114 has not run on hardware yet. The current card remains cold-latched on
+tag0113 with the guarded lock and stable backup intact. In-place recovery,
+two valid warm outputs, clean unload, and 100 decode tokens/s are all still
+unverified. See
+[`benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md).
 
 ## Progress
+
+- 2026-11-21 (tag0114, recovery subcheck diagnostic): Split the all-core
+  runtime-stability predicate into named failure details and returned the
+  failing subcheck in unused low bits of the existing owner diagnostic. The
+  fixed 64-byte worker mailbox and ioctl request size did not change, and no
+  safety predicate was relaxed. Focused ASan/UBSan owner and service-owner
+  tests pass, as does the RV32IMF compile. The full variant-60 driver/client/
+  service build passes at 15456/18432 conservative stack bytes. Driver
+  SHA-256 is `ea4fa51d250c143bd5144156aa6aba71f43e11c9f1c89ece41280ba7a08c3964`;
+  client SHA-256 is `80d28f4d75a48612773b07339010308ced09e8c8debf8e7708c35b85f7908da5`.
+  It is not installed or hardware-tested yet. Stable55 is idle at generation2
+  after the guarded tag0113 post-boot restore; the lock is cleared and the
+  stable backup matches. Details are in
+  `benchmarks/qwen35-dataflow-tag0114-20261121/BUILD.md`.
+
+- 2026-11-21 (tag0113, first hardware failure): Authentication took
+  `98.782252` s, vocabulary and prompt tokenization `14.065504` s, and model
+  load `330.909273` s for 2740498432 resident bytes. Prompt embedding failed
+  after `0.612365` s on core0 with `EmbeddingWeightRead` failure7, phase5.
+  No token or decode time was produced. QUERY/RECOVER failed at runtime audit
+  stage6/core0; close failed the core0 stop audit. The wrapper retained tag0113,
+  its lock, and the stable55 backup at `cold1 active_owner1`. The recovery
+  details and hashes are in
+  `benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md`.
 
 - 2026-11-21 (tag0113, failure and recovery diagnostics): Added distinct
   embedding worker failure codes and recovery-audit stage/core receipts while
