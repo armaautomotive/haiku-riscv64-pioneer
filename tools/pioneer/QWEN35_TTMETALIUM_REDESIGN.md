@@ -476,22 +476,39 @@ This is offline evidence only.
 The rewrite now builds and dispatches the recurrent delta-state operator
 through the resident 120-core service. Its validated descriptor binds the
 current QKV, gate, Alpha/Beta projections, learned decay/bias vectors, layer,
-position, and alternate state slots. The 256 panels are divided across every
-core. BRISC firmware performs Q/K normalization, decay and beta gates,
-prediction, state update, and readout; model projections continue to use the
-Tensix matrix path. Position zero uses zero state regardless of stale
-ping-pong memory.
+position, and alternate state slots. At this checkpoint, the 256 state panels
+were divided across the 120 workers. BRISC firmware performed Q/K
+normalization, decay and beta gates, prediction, state update, and readout;
+model projections continued to use the Tensix matrix path. Position zero used
+zero state regardless of stale ping-pong memory.
 
 The authority requires all matching projections and convolution to commit
 before delta dispatch and advances recurrent position only after the all-core
 owner audit and acknowledgements. A driver opcode exposes the command.
-ASan/UBSan arithmetic, descriptor, authority, and owner fixtures pass; the
-Haiku RV32IMF worker compile passes without A atomics or runtime helpers. The
-56,760-byte service image fits its 57,344-byte L1 limit, and the driver60,
-reload-guard, and default-control packages build offline. No Pioneer access,
-silicon output, or throughput result was produced.
+ASan/UBSan arithmetic, descriptor, authority, and owner fixtures passed; the
+Haiku RV32IMF worker compile passed. The 56,760-byte service image fit its
+57,344-byte L1 limit at that checkpoint. No Pioneer access, silicon output, or
+throughput result was produced.
 
-Still required are post-delta normalization and SiLU gating, recurrent output
-projection, dense attention and KV handling, layer/token-generation flow, and
-the final vocabulary readout. Hardware benchmarking and assistant integration
-remain deferred until the rewrite graph is implemented.
+## Delta RMS and SiLU gate fusion `061aa5c8ef` (2026-11-21)
+
+The delta worker now reads the learned DeltaNorm vector and recurrent gate
+projection, normalizes each complete head with the pinned Qwen35 RMS rounding,
+applies the gate sigmoid, and stores gated values back to the QKV V region.
+One worker owns each of the 32 heads and all eight state panels for that head,
+so no partial RMS reduction or in-place cross-core race is required. All 120
+workers still receive and acknowledge the command; matrix projections use all
+120 Tensix engines.
+
+The ASan/UBSan arithmetic check compares all 128 outputs bit-for-bit against
+the root RMS-plus-SiLU reference. The program/authority/all-core owner check
+and RV32IMF worker compile pass. The size-optimized service image is 43,964
+bytes with no unresolved imports. Offline driver60 SHA-256:
+`d523169a4c46c51406a7d2c5b63847383095648e23681866b81b230ff4596578`;
+service text SHA-256:
+`8363fdcc559620eee9553a37c8061ab8ce9e7166595e90120dec1d277eca3d0f`.
+No hardware output or performance result exists. Recurrent output projection,
+dense attention/KV, final vocabulary readout, and token generation remain open.
+
+Hardware benchmarking and assistant integration remain deferred until the
+rewrite graph is implemented and offline-validated.

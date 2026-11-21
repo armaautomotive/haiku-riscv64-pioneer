@@ -271,13 +271,13 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The latest pushed rewrite checkpoint is `221022cc34` (`Add Qwen35 delta-state
-worker path`). The offline rewrite includes Tensix matrix projections,
+The latest pushed rewrite checkpoint is `061aa5c8ef` (`Fuse Qwen35 delta RMS
+and gate step`). The offline rewrite includes Tensix matrix projections,
 device-side Q6_K token embedding and hidden RMS normalization, manifest-bound
 graph projections, SiLU×Up, residual save/add, feed-forward sequencing,
-recurrent convolution, Alpha/Beta projections, and the first recurrent
-delta-state update. The resident all-core service has an audited delta-state
-command and driver opcode. Dense attention, post-delta normalization/gating,
+recurrent convolution, Alpha/Beta projections, delta-state update, and fused
+per-head RMS normalization plus SiLU gating. The resident all-core service
+has an audited delta-state command and driver opcode. Dense attention,
 recurrent output projection, final vocabulary readout, and token generation
 remain incomplete. No hardware test or decode rate is available.
 
@@ -421,14 +421,12 @@ No hardware validation or throughput evidence was produced.
 
 ## Delta-state worker `221022cc34` (2026-11-21)
 
-The manifest-bound delta program validates QKV, gate, Alpha/Beta, learned
-gate vectors, and the position-selected state ping-pong ranges. It partitions
-256 sixteen-value panels across the 120 resident cores: 16 cores receive
-three panels each and the other 104 receive two. Every core processes panels.
-The BRISC worker performs Q/K normalization, learned decay and beta gates,
-state decay, key prediction, rank-one state update, and query readout. Model
-projections remain on the Tensix matrix path; recurrent vector/state
-arithmetic runs in device firmware. There is no host inference path.
+At checkpoint `221022cc34`, the manifest-bound delta program validated QKV,
+gate, Alpha/Beta, learned decay/bias vectors, and state ping-pong ranges. It
+partitioned 256 sixteen-value panels across all 120 workers. The BRISC worker
+performed Q/K normalization, decay and beta gates, state update, and readout;
+projections remained on the Tensix matrix path. The following checkpoint
+extends this step with per-head RMS normalization and SiLU gating.
 
 The projection authority permits a delta command only after matching QKV,
 gate, Alpha, and Beta projections plus the same-position convolution have
@@ -438,14 +436,21 @@ worker receipts, runtime/queue audits, and acknowledgements pass. Position
 zero ignores stale state and writes the alternate slot. Driver opcode
 `0x8842` exposes this operation through the resident service.
 
+The `061aa5c8ef` checkpoint assigns each of 32 recurrent heads to one BRISC
+worker. Each owns all eight state panels plus the complete 128-value RMS
+normalization group; gated values are stored back after all source panels for
+that head are read. The 120-worker command/receipt/acknowledgement barrier is
+unchanged, and projections still use all 120 Tensix matrix engines.
+
 Offline ASan/UBSan fixtures pass for zero-state and warm-state recurrence,
-head gates, descriptor coverage, authority transitions, and the all-core owner
-barrier. The Haiku RV32IMF worker compile passes without A-extension atomics
-or runtime helpers. The resident service image is 56,760 bytes and fits its
-fixed 57,344-byte region. Offline driver60 SHA-256:
-`91b3dc0fcf26dde2244b56b986fcd060aed7dd4b899cc7cf1e9dc596b869fada`;
+head gates, bit-for-bit RMS-plus-SiLU comparison with the root operator,
+descriptor coverage, authority transitions, and the all-core owner barrier.
+The Haiku RV32IMF worker compile passes without A-extension instructions. The
+size-optimized service image is 43,964 bytes, has no unresolved imports, and
+fits the fixed 57,344-byte region. Offline driver60 SHA-256:
+`d523169a4c46c51406a7d2c5b63847383095648e23681866b81b230ff4596578`;
 service text SHA-256:
-`f38121fb4700345ceac583b0341c4130dbe6e8f23581a0c8e19cf1b84aa9befb`;
+`8363fdcc559620eee9553a37c8061ab8ce9e7166595e90120dec1d277eca3d0f`;
 reload guard SHA-256:
 `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`;
 default-control SHA-256:
