@@ -271,18 +271,17 @@ open.
 
 ## Current checkpoint: 2026-11-21
 
-The latest pushed rewrite checkpoint is `6e0f12b4ff` (`Authorize dense Qwen35
-projection sequence`). The offline rewrite includes Tensix matrix projections,
-device-side Q6_K token embedding and hidden RMS normalization, manifest-bound
-graph projections, SiLU×Up, residual save/add, feed-forward sequencing,
-recurrent convolution, Alpha/Beta projections, delta-state update, and fused
-per-head RMS normalization plus SiLU gating. RecurrentOut now uses the
-existing Tensix projection path with an explicit input offset into the retained
-QKV V channels. A recurrent layer sequence now composes attention norm, QKV,
-gate, Alpha/Beta and RecurrentOut projections, convolution, delta state,
-residual adds, and the existing FFN sequence. Dense attention/KV, mixed dense
-and recurrent full-model orchestration, final vocabulary readout, and token
-generation remain incomplete. No hardware test or decode rate is available.
+The latest dense-attention code checkpoint is `e533c033ef` (`Add Qwen35 dense
+attention rewrite path`), following `6e0f12b4ff`. The offline rewrite includes
+Tensix matrix projections, device-side Q6_K token embedding and hidden RMS
+normalization, manifest-bound graph projections, SiLU×Up, residual save/add,
+feed-forward sequencing, recurrent convolution, Alpha/Beta projections,
+delta-state update, fused per-head RMS normalization plus SiLU gating, and
+dense attention/KV. RecurrentOut uses the Tensix projection path with an
+explicit input offset into the retained QKV V channels. Recurrent and dense
+layer sequences are implemented. Mixed dense/recurrent full-model
+orchestration, vocabulary readout, and token selection remain incomplete. No
+hardware test or decode rate is available.
 
 Checkpoint `6e0f12b4ff` adds exact authorization and readiness
 tracking for the dense QueryAndGate, Key, and Value Tensix projections. The
@@ -294,7 +293,7 @@ writes, attention, AttentionOut, mixed-layer sequencing, vocabulary readout,
 and token generation remain open; there is still no model output or decode-rate
 measurement.
 
-The current local rewrite adds the dense-attention path. A manifest-bound
+Checkpoint `e533c033ef` adds the dense-attention path. A manifest-bound
 descriptor reserves the model's rotary table, per-layer KV cache, Q/K norms,
 QKV output, gate input, and attention-output scratch. BRISC workers perform
 Q/K RMS normalization, RoPE, half-precision K/V cache packing, and grouped
