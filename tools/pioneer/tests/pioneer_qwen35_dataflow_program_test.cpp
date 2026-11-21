@@ -164,13 +164,15 @@ static void CheckDynamicWeightAddresses()
 {
 	const unsigned rawBases[]={DataflowWeightBufferAddress,
 		DataflowWeightBufferAddress+DataflowWeightBufferPageStride};
-	const unsigned types[]={8,12,14};
+	const unsigned types[]={8,12,13,14};
 	for (unsigned rawBase:rawBases) {
 		for (unsigned type:types) {
 			const unsigned panels=type==8?2U:16U;
 			for (unsigned panel=0;panel<panels;panel++) {
 				PioneerQ38VectorPanelSpan span{};
-				assert(PioneerQ38VectorPanel(type,panel,span));
+				assert(type==13
+					?PioneerQwen35DataflowQ5PanelSpan(panel,span)
+					:PioneerQ38VectorPanel(type,panel,span));
 				UnpackAddressOps ops{};
 				assert(PioneerQwen35DataflowVectorUnpack(ops,type,panel,rawBase));
 				assert(ops.count==(span.second?2U:1U));
@@ -180,17 +182,16 @@ static void CheckDynamicWeightAddresses()
 		}
 	}
 	PioneerQ38VectorPanelSpan q5Span{};
-	assert(PioneerQ38VectorPanel(8,0,q5Span));
-	UnpackAddressOps q5Panel{};
-	assert(PioneerQwen35DataflowVectorUnpack(q5Panel,8,0,
+	assert(PioneerQwen35DataflowQ5PanelSpan(15,q5Span));
+	UnpackAddressOps q5Scratch{};
+	assert(!PioneerQwen35DataflowVectorUnpack(q5Scratch,13,15,
 		DataflowQ5PanelScratchAddress));
-	assert(q5Panel.count==1
-		&& q5Panel.addresses[0]==DataflowQ5PanelScratchAddress+q5Span.low);
+	assert(q5Scratch.count==0);
 	UnpackAddressOps rejected{};
 	assert(!PioneerQwen35DataflowVectorUnpack(rejected,14,0,0x92000));
 	assert(rejected.count==0);
-	assert(!PioneerQwen35DataflowVectorUnpack(rejected,8,1,
-		DataflowQ5PanelScratchAddress));
+	assert(!PioneerQwen35DataflowVectorUnpack(rejected,13,16,
+		DataflowWeightBufferAddress));
 }
 
 static void CheckConcurrentRoles()

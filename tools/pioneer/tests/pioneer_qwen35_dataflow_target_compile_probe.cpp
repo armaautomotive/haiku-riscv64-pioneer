@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen35DataflowBlackholeIO.h"
+#include "../PioneerQwen35DataflowVectorUnpack.h"
 
 using namespace PioneerQwen35;
 
@@ -17,6 +18,19 @@ struct TargetCompileOps {
 	bool TensixFinishOutput(uint8_t*,unsigned) { return true; }
 	bool WriteOutput(unsigned,uint32_t,const uint8_t*,unsigned) { return true; }
 };
+
+struct TargetCompileTensixEmitter {
+	void Config(unsigned,uint32_t) {}
+	void Op(uint32_t) {}
+	void Drain() {}
+};
+
+bool PioneerQwen35DataflowQ5UnpackTargetCompileProbe(unsigned panel,
+	unsigned weightPage)
+{
+	TargetCompileTensixEmitter emitter;
+	return PioneerQwen35DataflowVectorUnpack(emitter,13,panel,weightPage);
+}
 
 bool PioneerQwen35DataflowTargetCompileProbe(
 	const DataflowCoreInvocation& program,

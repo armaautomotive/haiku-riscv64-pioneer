@@ -13,16 +13,27 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-20: Added a rewrite-only Q5_K Tensix unpack path. The new panel
+  span selects the original `qs` and `qh` byte-major windows from either
+  double-buffered weight page; its SFPU instructions combine each low nibble
+  with the selected high bit and write the existing lossless integer overlay
+  into Dst for the matrix source path. The offline vector-layout machine
+  matches the scalar reference across 2,048 panels and 524,288 operands, and
+  the Haiku RV32IMF compile probe instantiates the Q5 path. These checks cover
+  operand decoding and compile lowering only: no native image, compute-role
+  integration, or silicon qualification exists yet. The Tensix Q5 affine
+  metadata path, matrix/accumulator integration, runnable role images, and
+  resident all-core owner remain outstanding. No Pioneer access or benchmark
+  was performed.
 - 2026-11-20 status review: the rewrite is at the pushed NoC-role checkpoint
   `eb6518f8a7`; no Tensix compute backend, runnable role images, or resident
   all-core owner exists yet, so this rewrite has no valid tokens/sec result.
-  The immediate model blocker is Q5_K: the current rewrite vector unpacker
+  At the time of that review, the immediate model blocker was Q5_K: the
+  rewrite vector unpacker
   accepts Q8_0/Q4_K/Q6_K, while the only Q5_K panel packers are explicitly
   scalar/offline references. Since Qwen3.5-4B Q4_K_M uses Q5_K tensors, those
-  helpers cannot be put on the Work path. Next rewrite work must implement and
-  target-check the Q5_K unpack on Tensix before the compute image can be
-  considered complete. No Pioneer access, benchmark, or assistant integration
-  was performed during this review.
+  helpers cannot be put on the Work path. No Pioneer access, benchmark, or
+  assistant integration was performed during that review.
 - 2026-11-20: Added version-2 per-core descriptors with separate bank route
   tables for NoC 0 and NoC 1. Each table is checked for valid, unique XY
   routes and copied into the immutable core invocation; the future device
