@@ -218,3 +218,14 @@ integration. No rewritten projection has run on the P100A, so the rewrite has
 no valid-output, warm-run, decode-rate, or physical-unload result. Next is the
 PCI adapter and its route/idle/snapshot/recovery proofs, then a small verified
 projection before model-graph integration or benchmarking.
+
+The first bounded PCI L1 memory transport is now implemented as a standalone
+driver helper. It only accepts the service text, queue state, invocation,
+mailbox, and boot-word ranges; requires a held core for writes; captures the
+full local-memory view and boot/reset state; and restores and verifies that
+snapshot while held. A fake-PCI test passes the bounds, idle-gate, snapshot,
+and restore cases under AddressSanitizer and UndefinedBehaviorSanitizer. This
+helper is not yet connected to `PioneerSessionIO`: its stable-mapping and
+physical per-core idle/NoC proofs are still required production hooks, and it
+does not provide the projection route audit or Work-mode lifecycle. The four
+existing owner/service tests and the RV32IMF target compile also still pass.
