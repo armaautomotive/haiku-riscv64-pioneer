@@ -566,6 +566,28 @@ PioneerSessionIO::BeginDenseAttention(
 }
 
 bool
+PioneerSessionIO::AuthorizeArgmax(
+	const PioneerQwen35::DataflowArgmaxProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->AuthorizeArgmax(program);
+}
+
+bool
+PioneerSessionIO::BeginArgmax(
+	const PioneerQwen35::DataflowArgmaxProgram& program)
+{
+	auto* context=qwen35DataflowContext;
+	return context && context->qwen35DataflowService
+		&& context->qwen35DataflowService->Ready()
+		&& context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->BeginArgmax(program);
+}
+
+bool
 PioneerSessionIO::WriteInvocation(unsigned core,
 	const PioneerQwen35::DataflowCoreInvocation& invocation)
 {
@@ -768,6 +790,32 @@ PioneerSessionIO::DenseAttentionInvocationMatches(unsigned core,
 	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
 		|| invocation.core!=core) return false;
 	PioneerQwen35::DataflowDenseAttentionInvocation observed{};
+	return ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+		&observed,sizeof(observed))
+		&& memcmp(&invocation,&observed,sizeof(invocation))==0;
+}
+
+bool
+PioneerSessionIO::WriteArgmaxInvocation(unsigned core,
+	const PioneerQwen35::DataflowArgmaxInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowWorkerSnapshot snapshot{};
+	return ReadWorkerSnapshot(core,snapshot)
+		&& PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
+		&& CoreReady(core,snapshot)
+		&& WriteCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+			&invocation,sizeof(invocation));
+}
+
+bool
+PioneerSessionIO::ArgmaxInvocationMatches(unsigned core,
+	const PioneerQwen35::DataflowArgmaxInvocation& invocation)
+{
+	if (core>=PioneerQwen35::DataflowCoreCount || !invocation.Valid()
+		|| invocation.core!=core) return false;
+	PioneerQwen35::DataflowArgmaxInvocation observed{};
 	return ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
 		&observed,sizeof(observed))
 		&& memcmp(&invocation,&observed,sizeof(invocation))==0;
@@ -1121,6 +1169,59 @@ PioneerSessionIO::AuditDenseAttention(
 }
 
 bool
+PioneerSessionIO::ReadArgmaxResult(unsigned sequence,
+	PioneerQwen35::DataflowArgmaxResult& result)
+{
+	if (!sequence) return false;
+	PioneerQwen35::DataflowWorkerMailbox mailbox{};
+	return PioneerQwen35DataflowReadStableMailbox(*this,0,mailbox)
+		&& PioneerQwen35::DataflowArgmaxReadResult(mailbox,sequence,result);
+}
+
+bool
+PioneerSessionIO::AuditArgmax(
+	const PioneerQwen35::DataflowArgmaxProgram& program,unsigned sequence,
+	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount],
+	const PioneerQwen35::DataflowArgmaxResult& result)
+{
+	auto* context=qwen35DataflowContext;
+	if (!context || !context->qwen35DataflowAuthority || !program.Valid()
+		|| !sequence || !PioneerQwen35::DataflowArgmaxResultValid(result)
+		|| result.sequence!=sequence
+		|| !context->qwen35DataflowAuthority->PendingArgmaxMatches(program))
+		return false;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		if (receipts[core].commandSequence!=sequence
+			|| receipts[core].completedSequence!=sequence
+			|| receipts[core].state!=PioneerQwen35::DataflowWorkerComplete
+			|| receipts[core].failure || receipts[core].phase!=2
+			|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
+		PioneerQwen35::DataflowWorkerSnapshot observed{};
+		PioneerQwen35::DataflowArgmaxInvocation invocation{},expected{};
+		if (!ReadWorkerSnapshot(core,observed)
+			|| memcmp(&receipts[core],&observed,sizeof(observed))!=0
+			|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+				&invocation,sizeof(invocation))
+			|| !PioneerQwen35::DataflowArgmaxProgramBuilder::BindCore(
+				program,core,expected)
+			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
+		PioneerQwen35::DataflowWorkerMailbox mailbox{};
+		if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox))
+			return false;
+		if (core==0) {
+			PioneerQwen35::DataflowArgmaxResult observedResult{};
+			if (!PioneerQwen35::DataflowArgmaxReadResult(mailbox,sequence,
+				observedResult)
+				|| memcmp(&result,&observedResult,sizeof(result))!=0) return false;
+		} else {
+			for (unsigned i=0;i<7;i++) if (mailbox.reserved[i]) return false;
+		}
+	}
+	return SelectRuntimeCore(0);
+}
+
+bool
 PioneerSessionIO::Acknowledge(unsigned core,unsigned sequence)
 {
 	if (core>=PioneerQwen35::DataflowCoreCount || !sequence) return false;
@@ -1205,6 +1306,16 @@ PioneerSessionIO::CompleteDenseAttention(
 	auto* context=qwen35DataflowContext;
 	return sequence && context && context->qwen35DataflowAuthority
 		&& context->qwen35DataflowAuthority->CompleteDenseAttention(program);
+}
+
+bool
+PioneerSessionIO::CompleteArgmax(
+	const PioneerQwen35::DataflowArgmaxProgram& program,unsigned sequence,
+	unsigned token)
+{
+	auto* context=qwen35DataflowContext;
+	return sequence && context && context->qwen35DataflowAuthority
+		&& context->qwen35DataflowAuthority->CompleteArgmax(program,token);
 }
 
 bool

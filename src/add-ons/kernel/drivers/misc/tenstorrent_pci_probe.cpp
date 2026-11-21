@@ -80,7 +80,7 @@
 #error Qwen3.5 Work needs its own fixed build identity and seven-bank uploader
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (!defined(TT_PIONEER_DRIVER_RELOAD) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010100ULL \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010101ULL \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -3274,6 +3274,8 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		const PioneerQwen35::DataflowDenseAttentionProgram& program);
 	bool BeginDenseAttention(
 		const PioneerQwen35::DataflowDenseAttentionProgram& program);
+	bool AuthorizeArgmax(const PioneerQwen35::DataflowArgmaxProgram& program);
+	bool BeginArgmax(const PioneerQwen35::DataflowArgmaxProgram& program);
 	bool WriteInvocation(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
 	bool InvocationMatches(unsigned core,const PioneerQwen35::DataflowCoreInvocation& invocation);
 	bool WriteEmbeddingInvocation(unsigned core,
@@ -3304,6 +3306,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		const PioneerQwen35::DataflowDenseAttentionInvocation& invocation);
 	bool DenseAttentionInvocationMatches(unsigned core,
 		const PioneerQwen35::DataflowDenseAttentionInvocation& invocation);
+	bool WriteArgmaxInvocation(unsigned core,
+		const PioneerQwen35::DataflowArgmaxInvocation& invocation);
+	bool ArgmaxInvocationMatches(unsigned core,
+		const PioneerQwen35::DataflowArgmaxInvocation& invocation);
 	bool PublishCommand(unsigned core,unsigned sequence);
 	bool WaitForCompletion(unsigned core,unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot& snapshot);
@@ -3332,6 +3338,12 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		const PioneerQwen35::DataflowDenseAttentionProgram& program,
 		unsigned sequence,
 		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]);
+	bool AuditArgmax(const PioneerQwen35::DataflowArgmaxProgram& program,
+		unsigned sequence,
+		const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount],
+		const PioneerQwen35::DataflowArgmaxResult& result);
+	bool ReadArgmaxResult(unsigned sequence,
+		PioneerQwen35::DataflowArgmaxResult& result);
 	bool Acknowledge(unsigned core,unsigned sequence);
 	bool CompleteProjection(const PioneerQwen35::DataflowProjectionProgram& program,
 		unsigned sequence);
@@ -3350,6 +3362,8 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool CompleteDenseAttention(
 		const PioneerQwen35::DataflowDenseAttentionProgram& program,
 		unsigned sequence);
+	bool CompleteArgmax(const PioneerQwen35::DataflowArgmaxProgram& program,
+		unsigned sequence,unsigned token);
 	bool AuditAndRecoverAll(unsigned sequence,
 		PioneerQwen35::DataflowWorkerSnapshot (&snapshots)[PioneerQwen35::DataflowCoreCount]);
 	bool AbortPendingProjection();
@@ -8887,7 +8901,7 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 		|| request->position>=PioneerQwen35::MaxPositions
 		|| request->token>=PioneerQwen35::Vocabulary
 		|| request->input_slot>=PioneerQwen35::ActivationBuffers
-		|| request->output_slot || request->result || request->stage
+		|| request->output_token || request->result || request->stage
 		|| request->next_sequence || request->state || request->recovery_required) {
 		free(request);
 		return status!=B_OK?status:B_BAD_VALUE;
@@ -8901,17 +8915,17 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
 	} else {
-		unsigned outputSlot=PioneerQwen35::ActivationBuffers,stage=0;
+		unsigned outputToken=PioneerQwen35::Vocabulary,stage=0;
 		const auto sequence=PioneerQwen35::DataflowDecoderSequence::Run(
 			request->position,request->token,request->input_slot,
 			*context->qwen35DataflowAuthority,
-			*context->qwen35DataflowService,context->io,outputSlot,stage);
+			*context->qwen35DataflowService,context->io,outputToken,stage);
 		request->stage=stage;
 		request->result=sequence==PioneerQwen35::DataflowDecoderSequenceComplete
 			?PioneerQwen35::DataflowServiceComplete
 			:PioneerQwen35::DataflowServiceDecoderSequenceFailed;
 		if (sequence==PioneerQwen35::DataflowDecoderSequenceComplete)
-			request->output_slot=outputSlot;
+			request->output_token=outputToken;
 		context->qwen35DataflowLastResult=request->result;
 		request->next_sequence=context->qwen35DataflowService->NextSequence();
 		request->state=context->qwen35DataflowService->Faulted()

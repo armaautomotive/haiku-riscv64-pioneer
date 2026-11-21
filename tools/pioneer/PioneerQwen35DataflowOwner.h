@@ -10,6 +10,7 @@
 #include "PioneerQwen35DataflowConvProgram.h"
 #include "PioneerQwen35DataflowDeltaProgram.h"
 #include "PioneerQwen35DataflowDenseAttentionProgram.h"
+#include "PioneerQwen35DataflowArgmaxProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -198,6 +199,104 @@ public:
 		}
 		fNextSequence=sequence;
 		fPendingSequence=0;
+		return DataflowOwnerComplete;
+	}
+
+	template<class IO>
+	DataflowOwnerResult RunArgmax(const DataflowArgmaxProgram& program,
+		unsigned& token,IO& io)
+	{
+		token=Vocabulary;
+		if (!fInitialized || fFaulted) return DataflowOwnerInvalidState;
+		if (!program.Valid()) return DataflowOwnerInvalidProgram;
+		if (fNextSequence>=DataflowWorkerSequenceLimit)
+			return DataflowOwnerSequenceExhausted;
+		if (!io.AuthorizeArgmax(program)) return DataflowOwnerProgramUnauthorized;
+		if (!io.BeginArgmax(program)) return DataflowOwnerProjectionBeginFailed;
+		const unsigned sequence=fNextSequence+1;
+		fPendingSequence=sequence;
+		auto preparationFailed=[&](DataflowOwnerResult result) {
+			fFaulted=true;
+			return result;
+		};
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowWorkerSnapshot snapshot{};
+			if (!io.ReadWorkerSnapshot(core,snapshot)
+				|| !DataflowWorkerSnapshotReady(snapshot)
+				|| !io.CoreReady(core,snapshot))
+				return preparationFailed(DataflowOwnerCoreNotReady);
+			fSnapshot[core]=snapshot;
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowArgmaxInvocation invocation;
+			DataflowArgmaxZeroWords(invocation);
+			if (!DataflowArgmaxProgramBuilder::BindCore(program,core,invocation))
+				return preparationFailed(DataflowOwnerInvalidProgram);
+			if (!io.WriteArgmaxInvocation(core,invocation))
+				return preparationFailed(DataflowOwnerInvocationWriteFailed);
+			if (!io.ArgmaxInvocationMatches(core,invocation))
+				return preparationFailed(DataflowOwnerInvocationReadbackFailed);
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!io.PublishCommand(core,sequence)) {
+				fFaulted=true;
+				return DataflowOwnerCommandPublishFailed;
+			}
+		}
+		bool allTerminal=true,allComplete=true;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowWorkerSnapshot receipt{};
+			const bool observed=io.WaitForCompletion(core,sequence,receipt);
+			fSnapshot[core]=receipt;
+			if (!observed || !Terminal(receipt,sequence)) {
+				allTerminal=false;
+				allComplete=false;
+			} else if (receipt.state!=DataflowWorkerComplete || receipt.failure) {
+				allComplete=false;
+			}
+		}
+		if (!allTerminal || !allComplete) {
+			fFaulted=true;
+			return DataflowOwnerWorkerFailed;
+		}
+		DataflowArgmaxResult result{};
+		if (!io.ReadArgmaxResult(sequence,result)
+			|| !DataflowArgmaxResultValid(result)
+			|| result.sequence!=sequence
+			|| !io.AuditArgmax(program,sequence,fSnapshot,result)) {
+			fFaulted=true;
+			return DataflowOwnerAuditFailed;
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!io.Acknowledge(core,sequence)) {
+				fFaulted=true;
+				return DataflowOwnerAcknowledgementFailed;
+			}
+		}
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowWorkerSnapshot snapshot{};
+			bool ready=false;
+			for (unsigned poll=0;poll<65536;poll++) {
+				if (io.ReadWorkerSnapshot(core,snapshot)
+					&& DataflowWorkerSnapshotReady(snapshot)
+					&& snapshot.completedSequence==sequence) {
+					ready=true;
+					break;
+				}
+			}
+			if (!ready) {
+				fFaulted=true;
+				return DataflowOwnerAcknowledgementFailed;
+			}
+			fSnapshot[core]=snapshot;
+		}
+		if (!io.CompleteArgmax(program,sequence,result.token)) {
+			fFaulted=true;
+			return DataflowOwnerProjectionCommitFailed;
+		}
+		fNextSequence=sequence;
+		fPendingSequence=0;
+		token=result.token;
 		return DataflowOwnerComplete;
 	}
 

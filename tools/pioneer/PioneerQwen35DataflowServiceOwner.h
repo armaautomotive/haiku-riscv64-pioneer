@@ -62,7 +62,8 @@ enum DataflowServiceResult {
 	DataflowServiceRecurrentLayerFailed=26,
 	DataflowServiceDenseAttentionFailed=27,
 	DataflowServiceDenseLayerFailed=28,
-	DataflowServiceDecoderSequenceFailed=29
+	DataflowServiceDecoderSequenceFailed=29,
+	DataflowServiceArgmaxFailed=30
 };
 
 // Owns the resident image lifecycle and the projection coordinator. IO is the
@@ -299,6 +300,19 @@ public:
 		if (fProjectionOwner.RunDenseAttention(program,io)!=DataflowOwnerComplete) {
 			fPhase=PhaseFaulted;
 			return DataflowServiceDenseAttentionFailed;
+		}
+		return DataflowServiceComplete;
+	}
+
+	template<class IO>
+	DataflowServiceResult RunArgmax(const DataflowArgmaxProgram& program,
+		unsigned& token,IO& io)
+	{
+		token=Vocabulary;
+		if (fPhase!=PhaseReady) return DataflowServiceInvalidState;
+		if (fProjectionOwner.RunArgmax(program,token,io)!=DataflowOwnerComplete) {
+			fPhase=PhaseFaulted;
+			return DataflowServiceArgmaxFailed;
 		}
 		return DataflowServiceComplete;
 	}

@@ -8,6 +8,7 @@ using namespace PioneerQwen35;
 struct FakeDecoderAuthority {
 	unsigned resets=0;
 	unsigned tiedOutputBuilds=0;
+	unsigned argmaxBuilds=0;
 	bool ResetRecurrentState() { resets++; return true; }
 	bool BuildEmbedding(unsigned token,unsigned slot,DataflowEmbeddingProgram& p)
 		{ p.token=token; p.outputSlot=slot; return true; }
@@ -30,6 +31,7 @@ struct FakeDecoderAuthority {
 			&& outputSlot==DataflowGraphVocabularyOutputSlot) tiedOutputBuilds++;
 		return true;
 	}
+	bool BuildArgmax(DataflowArgmaxProgram&) { argmaxBuilds++; return true; }
 	bool BuildSilu(unsigned,DataflowSiluProgram&) { return true; }
 	bool BuildConv(unsigned layer,unsigned position,DataflowConvProgram& p)
 		{ p.layer=layer; p.position=position; return true; }
@@ -40,13 +42,15 @@ struct FakeDecoderAuthority {
 };
 
 struct FakeDecoderService {
-	unsigned embedding=0,projections=0,rms=0,silu=0,residual=0;
+	unsigned embedding=0,projections=0,rms=0,silu=0,residual=0,argmax=0;
 	unsigned conv=0,delta=0,denseAttention=0;
 	int failConvLayer=-1;
 	int io=0;
 
 	int EmbedToken(const DataflowEmbeddingProgram&,int&) { embedding++; return 0; }
 	int RunProjection(const DataflowProjectionProgram&,int&) { projections++; return 0; }
+	int RunArgmax(const DataflowArgmaxProgram&,unsigned& token,int&)
+		{ argmax++; token=42; return 0; }
 	int RunRms(const DataflowRmsProgram&,int&) { rms++; return 0; }
 	int RunSilu(const DataflowSiluProgram&,int&) { silu++; return 0; }
 	int RunResidual(const DataflowResidualProgram&,int&) { residual++; return 0; }
@@ -61,22 +65,24 @@ static void TestWholeMixedStack()
 {
 	FakeDecoderAuthority authority;
 	FakeDecoderService service;
-	unsigned outputSlot=ActivationBuffers,stage=0;
+	unsigned outputToken=Vocabulary,stage=0;
 	assert(DataflowDecoderSequence::Run(0,17,0,authority,service,service.io,
-		outputSlot,stage)==DataflowDecoderSequenceComplete);
-	assert(authority.resets==1 && outputSlot==DataflowGraphVocabularyOutputSlot
+		outputToken,stage)==DataflowDecoderSequenceComplete);
+	assert(authority.resets==1 && outputToken==42
 		&& stage==DataflowDecoderSequenceComplete);
 	assert(service.embedding==1 && service.projections==249
 		&& service.rms==2*Layers+1 && service.silu==Layers
 		&& service.residual==4*Layers && service.conv==Layers-Layers/4
 		&& service.delta==Layers-Layers/4
 		&& service.denseAttention==3*(Layers/4)
-		&& authority.tiedOutputBuilds==1);
+		&& authority.tiedOutputBuilds==1 && authority.argmaxBuilds==1
+		&& service.argmax==1);
 
 	assert(DataflowDecoderSequence::Run(1,18,0,authority,service,service.io,
-		outputSlot,stage)==DataflowDecoderSequenceComplete);
+		outputToken,stage)==DataflowDecoderSequenceComplete);
 	assert(authority.resets==1 && service.embedding==2
-		&& authority.tiedOutputBuilds==2);
+		&& authority.tiedOutputBuilds==2 && authority.argmaxBuilds==2
+		&& service.argmax==2 && outputToken==42);
 }
 
 static void TestStopsAtFirstLayerFailure()
@@ -84,11 +90,11 @@ static void TestStopsAtFirstLayerFailure()
 	FakeDecoderAuthority authority;
 	FakeDecoderService service;
 	service.failConvLayer=2;
-	unsigned outputSlot=ActivationBuffers,stage=0;
+	unsigned outputToken=Vocabulary,stage=0;
 	assert(DataflowDecoderSequence::Run(0,4,0,authority,service,service.io,
-		outputSlot,stage)==DataflowDecoderLayerFailed);
+		outputToken,stage)==DataflowDecoderLayerFailed);
 	assert(stage==(2U<<8|DataflowRecurrentConvRunFailed)
-		&& outputSlot==ActivationBuffers && service.conv==3
+		&& outputToken==Vocabulary && service.conv==3
 		&& service.embedding==1 && service.denseAttention==0);
 }
 
@@ -96,10 +102,10 @@ static void TestRejectsInvalidInputBeforeWork()
 {
 	FakeDecoderAuthority authority;
 	FakeDecoderService service;
-	unsigned outputSlot=ActivationBuffers,stage=0;
+	unsigned outputToken=Vocabulary,stage=0;
 	assert(DataflowDecoderSequence::Run(0,Vocabulary,0,authority,service,
-		service.io,outputSlot,stage)==DataflowDecoderSequenceInvalidRequest);
-	assert(authority.resets==0 && service.embedding==0 && outputSlot==ActivationBuffers);
+		service.io,outputToken,stage)==DataflowDecoderSequenceInvalidRequest);
+	assert(authority.resets==0 && service.embedding==0 && outputToken==Vocabulary);
 }
 
 int main()

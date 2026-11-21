@@ -334,6 +334,21 @@ static void CheckTiedOutputProjection()
 		&& authority.GraphWorkspaceRole(DataflowGraphVocabularyWorkspaceIndex)==TiedOutput);
 	assert(!authority.BuildProjection(Layers,TiedOutput,1,
 		DataflowGraphVocabularyOutputSlot,tied));
+	DataflowArgmaxProgram argmax{};
+	assert(authority.BuildArgmax(argmax) && argmax.Valid());
+	assert(DataflowArgmaxMatchesWorkspace(manifest,workspace,TestBankRoutes,
+		argmax));
+	unsigned activeArgmax=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowArgmaxInvocation invocation{};
+		assert(DataflowArgmaxProgramBuilder::BindCore(argmax,core,invocation));
+		activeArgmax+=invocation.active;
+	}
+	assert(activeArgmax==1);
+	assert(authority.BeginArgmax(argmax)
+		&& authority.PendingArgmaxMatches(argmax));
+	assert(authority.CompleteArgmax(argmax,12345)
+		&& !authority.Pending() && !authority.VocabularyReady());
 }
 
 int main()

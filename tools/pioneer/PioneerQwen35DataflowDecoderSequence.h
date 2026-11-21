@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_DECODER_SEQUENCE_H
 
 #include "PioneerQwen35DataflowDenseLayerSequence.h"
+#include "PioneerQwen35DataflowArgmaxProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -16,7 +17,9 @@ enum DataflowDecoderSequenceResult {
 	DataflowDecoderFinalNormBuildFailed=6,
 	DataflowDecoderFinalNormRunFailed=7,
 	DataflowDecoderOutputBuildFailed=8,
-	DataflowDecoderOutputRunFailed=9
+	DataflowDecoderOutputRunFailed=9,
+	DataflowDecoderArgmaxBuildFailed=10,
+	DataflowDecoderArgmaxRunFailed=11
 };
 
 // Execute one token position across the complete mixed Qwen3.5 decoder stack.
@@ -28,9 +31,9 @@ public:
 	template<class Authority,class Service,class IO>
 	static DataflowDecoderSequenceResult Run(unsigned position,unsigned token,
 		unsigned inputSlot,Authority& authority,Service& service,IO& io,
-		unsigned& outputSlot,unsigned& stage)
+		unsigned& outputToken,unsigned& stage)
 	{
-		outputSlot=ActivationBuffers;
+		outputToken=Vocabulary;
 		stage=DataflowDecoderSequenceInvalidRequest;
 		if (position>=MaxPositions || token>=Vocabulary
 			|| inputSlot>=ActivationBuffers) return DataflowDecoderSequenceInvalidRequest;
@@ -92,7 +95,22 @@ public:
 			return static_cast<DataflowDecoderSequenceResult>(
 				stage=DataflowDecoderOutputRunFailed);
 
-		outputSlot=DataflowGraphVocabularyOutputSlot;
+		DataflowArgmaxProgram argmax;
+		DataflowArgmaxZeroWords(argmax);
+		if (!authority.BuildArgmax(argmax))
+			return static_cast<DataflowDecoderSequenceResult>(
+				stage=DataflowDecoderArgmaxBuildFailed);
+		if (service.RunArgmax(argmax,outputToken,io)!=0) {
+			outputToken=Vocabulary;
+			return static_cast<DataflowDecoderSequenceResult>(
+				stage=DataflowDecoderArgmaxRunFailed);
+		}
+		if (outputToken>=Vocabulary) {
+			outputToken=Vocabulary;
+			return static_cast<DataflowDecoderSequenceResult>(
+				stage=DataflowDecoderArgmaxRunFailed);
+		}
+
 		stage=DataflowDecoderSequenceComplete;
 		return DataflowDecoderSequenceComplete;
 	}

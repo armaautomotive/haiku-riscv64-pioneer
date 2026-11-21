@@ -17,6 +17,27 @@ rewrite is implemented.
 
 ## Progress
 
+- 2026-11-21: Added device-side greedy token selection after the tied Q6_K
+  vocabulary projection. The resident BRISC worker scans the on-card FP32
+  logits and writes a checked token/score/sequence record to core 0's mailbox;
+  all 120 workers still receive, complete, and acknowledge the command. The
+  host owner verifies each invocation readback, the stable result record, all
+  worker receipts, runtime state, and drained queues before committing the
+  selected token. The decoder ioctl now returns `output_token` in its existing
+  40-byte ABI record. ASan/UBSan checks pass for stable greedy ties, NaN
+  rejection, all-core owner choreography, vocabulary authorization, and the
+  full mixed decoder sequence. The Haiku RV32IMF target compile passes with no
+  A-extension instructions or runtime helpers. An offline variant-60 build at
+  tag `2026112100010101` passes: driver SHA-256
+  `1cacb820faa496a9d72eabad3d551fbd166ef7ecc9aa5a40b92bb3977550bedf`,
+  resident service text SHA-256
+  `2e0e144040f9c29f9679d5300ff923847c75216b3bf0e577366be4e929e5f8c8`
+  (52,900 bytes of the 57,344-byte limit), reload guard SHA-256
+  `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`, and
+  default-control SHA-256
+  `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`.
+  This is offline evidence only: the request/generation loop, Pioneer run,
+  correctness on silicon, and decode rate remain open.
 - 2026-11-20: Added `PioneerQwen35DataflowTensixOps.h` as the concrete
   compute-role adapter. It binds one immutable core invocation, selects the
   right 16-value activation panel and scale, issues the Q8_0/Q4_K/Q5_K/Q6_K
@@ -264,53 +285,33 @@ It prefetches the next weight tile over NoC 0 while the matrix engine processes
 the current tile. Tenstorrent's open `tt-lab` worker pattern is the closest fit
 for this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
 [BRISC firmware](https://github.com/tenstorrent/tt-lab/blob/main/src/brisc.cpp)).
-The resident all-120-worker owner, driver command path, and offline generated
-image validation are now implemented. Downstream sharded activation chaining,
-full model generation, and silicon correctness/performance evidence remain
-open.
+The resident all-120-worker owner, driver command path, offline generated-image
+validation, and full decoder sequence through one greedy token are now
+implemented. Repeated request/generation and silicon correctness/performance
+evidence remain open.
 
 ## Current checkpoint: 2026-11-21
 
-The last dense-attention baseline is `e533c033ef`, following `6e0f12b4ff`.
-Checkpoint `69633b9559` adds the whole-model one-position coordinator: token
-embedding, all 32 mixed recurrent and dense layer sequences, and final RMS
-normalization. Its decoder-sequence host test passes under ASan/UBSan,
-including mixed-layer counts, recurrent-state reset behavior, first-failure
-reporting, and invalid input rejection. The Haiku `rv32imf_zicsr` target
-compile passes without RISC-V A-extension instructions or unresolved runtime
-helpers.
+The pushed base is `e5d9e10bfc` (tied Q6_K vocabulary projection). The current
+local rewrite extends it through device-side greedy token selection and returns
+one selected token from each full decoder-sequence ioctl. Tied projection work
+uses all 120 Tensix matrix engines; the BRISC argmax worker scans the finished
+logits, while all 120 resident workers take part in the command barrier and
+receipt protocol. The driver uses build tag `2026112100010101` so this binary
+has a distinct build identity from the prior offline checkpoint.
 
-This rewrite increment adds a reserved 248,320-row FP32 vocabulary logits
-buffer and the manifest-bound tied Q6_K output projection. Authorization
-requires a completed final RMS operation on the same activation slot before
-the tied head can run; the descriptor schedules all 120 Tensix cores. The
-decoder coordinator now dispatches this projection through the resident
-service. The model-bind protocol advances to ABI 4 (82,868 bytes). ASan/UBSan
-checks pass for tied-output authorization and 120-core materialization, the
-full mixed decoder sequence, and the workspace allocator. The RV32IMF target
-compile passes. The actual variant-60 rewrite driver builds offline with SHA
-`fb414203f92f59f28053cdd02d0287e8085f9ef9c04b8964868ef3cecefcdbca`; service
-text, reload-guard, and default-control builds also pass.
+Offline ASan/UBSan tests cover deterministic tie selection, non-finite-logit
+rejection, argmax descriptor authorization, all-core invocation/readback and
+acknowledgement, and decoder integration. The RV32IMF target compile and
+variant-60 driver, resident service image, reload-guard, and default-control
+builds pass. The resident service text is 52,900 bytes and fits the 57,344-byte
+region. No Pioneer hardware was accessed. A repeated request/generation loop,
+physical output validation, prompt/load/decode timing, and tokens/sec are not
+available yet; the current decode rate is unmeasured.
 
-The actual variant-60 rewrite driver now builds offline through the dedicated
-`tools/pioneer/build_qwen35_dataflow_driver.sh` wrapper, which selects the
-variant that compiles the rewrite code. Driver60 SHA-256 is
-`4fcedac0481e0038d72fdfb314b6ac59a92d2c3d63b972d8d8d124d861cf274a`; service
-text SHA-256 is `1166102743dc8017be249c1d6a83a7a55642bc425ebbfa3b8eda74e4dbc98a59`;
-reload guard SHA-256 is
-`d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229`; and
-default-control SHA-256 is
-`5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d`. An
-earlier claimed driver60 hash (`057b487...`) came from the variant-55 helper
-and did not include the rewrite; that validation claim is superseded. These
-are offline build checks only; the Pioneer has not been touched.
-
-This sequence currently produces the tied-head logits, not a generated token.
-Device-side token selection and the request/generation loop remain open. Full
-model generation and silicon correctness/performance evidence are not
-available; no tokens/sec result exists.
-Continue only the rewrite until those offline gates are complete, then move to
-the previously requested benchmark and assistant integration phases.
+Continue only the rewrite through its request/generation loop and offline
+correctness gates. Start hardware benchmarking and assistant integration only
+after those rewrite gates pass.
 
 The dense-attention baseline `e533c033ef` includes
 Tensix matrix projections, device-side Q6_K token embedding and hidden RMS

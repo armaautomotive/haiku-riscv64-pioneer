@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 
 #include "../PioneerQwen35DataflowOwner.h"
 #include "../PioneerQwen35DataflowBlackholeWorker.h"
@@ -53,13 +54,22 @@ static uint32_t Signature(const DataflowResidualInvocation& invocation)
 	return value;
 }
 
+static uint32_t Signature(const DataflowArgmaxInvocation& invocation)
+{
+	const auto* bytes=reinterpret_cast<const uint8_t*>(&invocation);
+	uint32_t value=2166136261U;
+	for (unsigned i=0;i<sizeof(invocation);i++) value=(value^bytes[i])*16777619U;
+	return value;
+}
+
 struct MockOwnerIO {
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 	uint32_t invocationSignature[DataflowCoreCount]{};
 	uint32_t siluInvocationSignature[DataflowCoreCount]{};
 	uint32_t residualInvocationSignature[DataflowCoreCount]{};
+	uint32_t argmaxInvocationSignature[DataflowCoreCount]{};
 	unsigned writes=0,publishes=0,waits=0,audits=0,acknowledgements=0;
-	unsigned begins=0,completes=0,aborts=0;
+	unsigned begins=0,completes=0,aborts=0,completedToken=Vocabulary;
 	unsigned failPublishCore=UINT32_MAX;
 	bool ambiguousPublishFailure=true,recoveryAllowed=true,programAuthorized=true;
 	bool failBegin=false,failComplete=false;
@@ -126,6 +136,51 @@ struct MockOwnerIO {
 	{
 		completes++;
 		return !failComplete && sequence && program.Valid();
+	}
+	bool AuthorizeArgmax(const DataflowArgmaxProgram& program) const
+		{ return programAuthorized && program.Valid(); }
+	bool BeginArgmax(const DataflowArgmaxProgram& program)
+		{ begins++; return !failBegin && program.Valid(); }
+	bool WriteArgmaxInvocation(unsigned core,
+		const DataflowArgmaxInvocation& invocation)
+	{
+		if (core>=DataflowCoreCount || invocation.core!=core || !invocation.Valid())
+			return false;
+		argmaxInvocationSignature[core]=Signature(invocation);
+		writes++;
+		return true;
+	}
+	bool ArgmaxInvocationMatches(unsigned core,
+		const DataflowArgmaxInvocation& invocation) const
+	{
+		return core<DataflowCoreCount && invocation.core==core
+			&& argmaxInvocationSignature[core]==Signature(invocation);
+	}
+	bool ReadArgmaxResult(unsigned sequence,DataflowArgmaxResult& result) const
+	{
+		const unsigned scoreBits=0x40e00000U;
+		result={12345,scoreBits,sequence,
+			DataflowArgmaxResultChecksum(12345,scoreBits,sequence)};
+		return DataflowArgmaxResultValid(result);
+	}
+	bool AuditArgmax(const DataflowArgmaxProgram& program,unsigned sequence,
+		const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount],
+		const DataflowArgmaxResult& result)
+	{
+		if (!program.Valid() || !DataflowArgmaxResultValid(result)) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (receipts[core].state!=DataflowWorkerComplete
+				|| receipts[core].commandSequence!=sequence
+				|| receipts[core].completedSequence!=sequence) return false;
+		audits++;
+		return true;
+	}
+	bool CompleteArgmax(const DataflowArgmaxProgram& program,unsigned sequence,
+		unsigned token)
+	{
+		completes++;
+		completedToken=token;
+		return !failComplete && sequence && program.Valid() && token<Vocabulary;
 	}
 
 	bool WriteInvocation(unsigned core,const DataflowCoreInvocation& invocation)
@@ -294,6 +349,41 @@ int main()
 	assert(io.writes==DataflowCoreCount && io.publishes==DataflowCoreCount
 		&& io.waits==DataflowCoreCount && io.audits==1
 		&& io.acknowledgements==DataflowCoreCount);
+
+	DataflowArgmaxProgram argmaxProgram{};
+	argmaxProgram.magic=DataflowArgmaxMagic;
+	argmaxProgram.version=DataflowArgmaxVersion;
+	for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+		argmaxProgram.bankRoute[noc][bank]=TestRoutes[noc][bank];
+	argmaxProgram.logits.rows=Vocabulary;
+	argmaxProgram.logits.rowBytes=sizeof(float);
+	argmaxProgram.logits.count=1;
+	argmaxProgram.logits.unit=16;
+	argmaxProgram.logits.parts[0]={0,BankBase+0x10000000,0,Vocabulary};
+	assert(argmaxProgram.Valid());
+	MockOwnerIO argmaxIO{};
+	DataflowProjectionOwner argmaxOwner;
+	assert(argmaxOwner.Initialize(argmaxIO)==DataflowOwnerComplete);
+	unsigned selectedToken=Vocabulary;
+	assert(argmaxOwner.RunArgmax(argmaxProgram,selectedToken,argmaxIO)
+		==DataflowOwnerComplete);
+	assert(selectedToken==12345 && argmaxIO.completedToken==12345
+		&& argmaxOwner.NextSequence()==1 && !argmaxOwner.Faulted()
+		&& argmaxIO.begins==1 && argmaxIO.completes==1
+		&& argmaxIO.writes==DataflowCoreCount
+		&& argmaxIO.publishes==DataflowCoreCount
+		&& argmaxIO.waits==DataflowCoreCount
+		&& argmaxIO.audits==1
+		&& argmaxIO.acknowledgements==DataflowCoreCount);
+	unsigned activeArgmax=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		DataflowArgmaxInvocation invocation;
+		DataflowArgmaxZeroWords(invocation);
+		assert(DataflowArgmaxProgramBuilder::BindCore(argmaxProgram,core,invocation)
+			&& argmaxIO.ArgmaxInvocationMatches(core,invocation));
+		activeArgmax+=invocation.active;
+	}
+	assert(activeArgmax==1);
 	TensorSpace smallWeight{};
 	smallWeight.type=13;
 	smallWeight.inputs=Hidden;

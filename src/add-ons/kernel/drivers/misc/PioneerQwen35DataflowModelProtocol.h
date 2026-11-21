@@ -113,7 +113,7 @@ struct tt_qwen35_dataflow_dense_layer {
 };
 
 struct tt_qwen35_dataflow_decoder_sequence {
-	uint32_t version,position,token,input_slot,output_slot;
+	uint32_t version,position,token,input_slot,output_token;
 	uint32_t result,stage,next_sequence,state,recovery_required;
 };
 

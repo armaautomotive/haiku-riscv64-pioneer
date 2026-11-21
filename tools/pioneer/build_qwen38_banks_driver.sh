@@ -397,7 +397,7 @@ if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
  case "$variant" in
   50) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026111700010225 ] && [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ] || exit 2;;
   54|55|56|57|58|59) ;;
-  60) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026112100010100 ] || exit 2;;
+  60) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026112100010101 ] || exit 2;;
   *) exit 2;;
  esac
  case "${PIONEER_DRIVER_BUILD_TAG:-}" in ''|*[!0-9a-f]* ) exit 2;; esac

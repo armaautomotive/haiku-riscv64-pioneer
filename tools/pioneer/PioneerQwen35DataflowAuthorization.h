@@ -11,6 +11,7 @@
 #include "PioneerQwen35DataflowConvProgram.h"
 #include "PioneerQwen35DataflowDeltaProgram.h"
 #include "PioneerQwen35DataflowDenseAttentionProgram.h"
+#include "PioneerQwen35DataflowArgmaxProgram.h"
 
 namespace PioneerQwen35 {
 
@@ -24,7 +25,7 @@ class DataflowProjectionAuthority {
 		PendingGraphProjection=4,PendingSilu=5,PendingResidual=6,PendingConv=7,
 		PendingDelta=8,PendingRecurrentOut=9,PendingDenseGraphProjection=10,
 		PendingDenseAttention=11,PendingDenseAttentionOut=12,
-		PendingTiedOutput=13
+		PendingTiedOutput=13,PendingArgmax=14
 	};
 	DeviceLayout fManifest{};
 	DataflowGraphWorkspace fGraphWorkspace{};
@@ -485,6 +486,52 @@ public:
 			fManifest.activation[inputSlot],weight->inputs,
 			*output,fRoutes,program)) return false;
 		return Authorize(program);
+	}
+
+	bool BuildArgmax(DataflowArgmaxProgram& program) const
+	{
+		if (!fBound || fPending || !VocabularyReady()) return false;
+		return DataflowArgmaxProgramBuilder::Build(fManifest,fGraphWorkspace,
+			fRoutes,program) && AuthorizeArgmax(program);
+	}
+
+	bool AuthorizeArgmax(const DataflowArgmaxProgram& program) const
+	{
+		return fBound && !fPending && VocabularyReady()
+			&& DataflowArgmaxMatchesWorkspace(fManifest,fGraphWorkspace,
+				fRoutes,program);
+	}
+
+	bool BeginArgmax(const DataflowArgmaxProgram& program)
+	{
+		if (!AuthorizeArgmax(program)) return false;
+		fPending=true;
+		fPendingOutput=DataflowGraphVocabularyOutputSlot;
+		fPendingKind=PendingArgmax;
+		return true;
+	}
+
+	bool PendingArgmaxMatches(const DataflowArgmaxProgram& program) const
+	{
+		return fBound && fPending && fPendingKind==PendingArgmax
+			&& fPendingOutput==DataflowGraphVocabularyOutputSlot
+			&& VocabularyReady()
+			&& DataflowArgmaxMatchesWorkspace(fManifest,fGraphWorkspace,
+				fRoutes,program);
+	}
+
+	bool CompleteArgmax(const DataflowArgmaxProgram& program,unsigned token)
+	{
+		if (token>=Vocabulary || !PendingArgmaxMatches(program)) return false;
+		InvalidateVocabulary();
+		fPending=false;
+		fPendingOutput=ActivationBuffers;
+		fPendingKind=PendingNone;
+		fPendingResidualMode=0;
+		fPendingLayer=~0U;
+		fPendingPosition=0;
+		fPendingRole=LayerRoles;
+		return true;
 	}
 
 	bool BuildDenseProjection(unsigned layer,unsigned role,unsigned inputSlot,
@@ -1198,6 +1245,8 @@ public:
 			fGraphWorkspaceLayer[vocabulary]=~0U;
 			fGraphWorkspaceRole[vocabulary]=LayerRoles;
 			fVocabularyReady=false;
+		} else if (fPendingKind==PendingArgmax) {
+			InvalidateVocabulary();
 		} else if (fPendingKind==PendingDenseAttention) {
 			unsigned workspaceIndex=0;
 			if (fPendingLayer>=Layers

@@ -18,12 +18,14 @@
 #include "../PioneerQwen35DataflowRecurrentLayerSequence.h"
 #include "../PioneerQwen35DataflowDenseLayerSequence.h"
 #include "../PioneerQwen35DataflowDecoderSequence.h"
+#include "../PioneerQwen35DataflowBlackholeArgmaxWorker.h"
 
 using namespace PioneerQwen35;
 
 struct TargetFfnAuthority {
 	bool ResetRecurrentState() { return true; }
 	bool BuildEmbedding(unsigned,unsigned,DataflowEmbeddingProgram&) { return true; }
+	bool BuildArgmax(DataflowArgmaxProgram&) { return true; }
 	bool BuildResidual(unsigned,unsigned,DataflowResidualProgram&) { return true; }
 	bool BuildRms(unsigned,unsigned,unsigned,unsigned,DataflowRmsProgram&) { return true; }
 	bool BuildProjection(unsigned,unsigned,unsigned,unsigned,
@@ -43,6 +45,8 @@ struct TargetFfnAuthority {
 
 struct TargetFfnService {
 	int EmbedToken(const DataflowEmbeddingProgram&,int&) { return 0; }
+	int RunArgmax(const DataflowArgmaxProgram&,unsigned& token,int&)
+		{ token=0; return 0; }
 	int RunResidual(const DataflowResidualProgram&,int&) { return 0; }
 	int RunRms(const DataflowRmsProgram&,int&) { return 0; }
 	int RunProjection(const DataflowProjectionProgram&,int&) { return 0; }
@@ -93,9 +97,20 @@ bool PioneerQwen35DataflowDecoderSequenceTargetCompileProbe(unsigned position,
 	TargetFfnAuthority authority;
 	TargetFfnService service;
 	int io=0;
-	unsigned outputSlot=ActivationBuffers,stage=0;
+	unsigned outputToken=Vocabulary,stage=0;
 	return DataflowDecoderSequence::Run(position,token,inputSlot,authority,
-		service,io,outputSlot,stage)==DataflowDecoderSequenceComplete;
+		service,io,outputToken,stage)==DataflowDecoderSequenceComplete;
+}
+
+bool PioneerQwen35DataflowBlackholeArgmaxTargetCompileProbe(
+	const DataflowArgmaxInvocation& invocation)
+{
+	DataflowBlackholeArgmaxOps io;
+	DataflowWorkerMailbox mailbox;
+	DataflowArgmaxZeroWords(mailbox);
+	return io.Bind(invocation) && PioneerQwen35DataflowArgmaxWorker(
+		invocation,1,reinterpret_cast<float*>(static_cast<uintptr_t>(
+			DataflowActivationCacheAddress)),mailbox,io);
 }
 
 bool PioneerQwen35DataflowSiluTargetCompileProbe(float gate,float up,

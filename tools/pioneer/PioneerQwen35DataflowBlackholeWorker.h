@@ -11,6 +11,7 @@
 #include "PioneerQwen35DataflowBlackholeConvWorker.h"
 #include "PioneerQwen35DataflowBlackholeDeltaWorker.h"
 #include "PioneerQwen35DataflowBlackholeDenseAttentionWorker.h"
+#include "PioneerQwen35DataflowBlackholeArgmaxWorker.h"
 
 namespace PioneerQwen35 {
 
@@ -461,6 +462,19 @@ inline bool DataflowWorkerResetQueues()
 						DataflowDenseRopeAddress)),norm,io);
 			}
 			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+		} else if (invocationMagic==DataflowArgmaxMagic) {
+			const auto* argmax=reinterpret_cast<const DataflowArgmaxInvocation*>(
+				static_cast<uintptr_t>(DataflowProgramAddress));
+			if (DataflowWorkerQueuesClean() && argmax->Valid()
+				&& argmax->core==core
+				&& DataflowBlackholeRouteForCore(argmax->core)==localRoute) {
+				DataflowBlackholeArgmaxOps io;
+				okay=io.Bind(*argmax)
+					&& PioneerQwen35DataflowArgmaxWorker(*argmax,sequence,
+						reinterpret_cast<float*>(static_cast<uintptr_t>(
+							DataflowActivationCacheAddress)),*mailbox,io);
+			}
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 		} else {
 			DataflowSignalLocalFailure(DataflowFailureQueue);
 		}
@@ -482,6 +496,9 @@ inline bool DataflowWorkerResetQueues()
 				DataflowFailureQueue,6);
 			for (;;) asm volatile("" ::: "memory");
 		}
+		for (unsigned i=0;i<7;i++)
+			DataflowStoreRelease(reinterpret_cast<volatile uint32_t*>(
+				mailbox->reserved)[i],0);
 		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerReady,0,0);
 		DataflowFence();
 	}
