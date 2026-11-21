@@ -27,7 +27,7 @@ llama inference context or CPU fallback.
 | Resident service text | `2e0e144040f9c29f9679d5300ff923847c75216b3bf0e577366be4e929e5f8c8` |
 | Reload guard | `d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229` |
 | Default-control driver | `5740484449bc285500813b847b6170e2bb292a8fc4d30eccb834a304698f0c0d` |
-| Guarded trial wrapper | `94248a8295d86c115f671d34c5911228300e45581d3c84f41398501f2d20e7a8` |
+| Guarded trial wrapper | `24bd29e63cdc076349cce4d85d8d32a72f58a3387c32ed20a146f1650e41768a` |
 
 ## Guarded hardware trial
 

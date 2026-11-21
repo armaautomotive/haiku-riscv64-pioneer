@@ -12,7 +12,7 @@ guard=/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
 stableTag=2026102100010012
 candidateTag=2026112100010102
-stableSHA=041fef189829c58791e7a4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+stableSHA=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
 model=/boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
 llama=/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so
 candidate=tenstorrent_pci_probe-driver60
@@ -103,7 +103,7 @@ test -f "$original" && test ! -L "$original" && [ "$(stat -c '%u:%h:%a:%s' "$ori
 idle && health || fail busy
 
 if [ "$mode" = --postflight ]; then
-	ab absent "$lock" && exact "$installed" "$stableSHA" || fail postflight_driver
+	absent "$lock" && exact "$installed" "$stableSHA" || fail postflight_driver
 	metadata 55 "$stableTag" "$restoredGeneration" || fail postflight_generation
 	test "$(cat state)" = STABLE041_RESTORED || fail terminal_state
 	valid_output || fail work_output_or_cleanup
