@@ -17,25 +17,24 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-21)
 
 The rewrite has a standalone Haiku generation client and a 120-core resident
-BRISC/Tensix service, with no CPU inference or fallback. Tag0114's full model
-load completed in `329.758232` s, but the first prompt embedding failed on
-core0 (`EmbeddingWeightRead` failure7); partial prompt processing took
-`0.609034` s. No valid token or decode rate was produced. QUERY/RECOVER failed
-runtime audit stage6/core0/detail11, and CLOSE failed its core0 stop audit.
-The wrapper retained the candidate, exact stable55 backup, and lock. The user's
-accidental power reset did not clear the fault: Haiku still reported candidate
-generation3 `cold1 active_owner1`. An authorized host reboot has reached the
-pinned Linux environment; the next step is the SD-free Haiku handoff and
-guarded stable55 restore. The 27B model remains preserved. Tag0115 changes only
-recovery handling for this failed read: it waits a bounded time for read-only
-NoC status to drain, then applies the same strict audit. It never clears NoC
-commands or resets cores. Offline build, focused ASan/UBSan recovery tests,
-RV32IMF compile, and the `15456/18432`-byte stack check pass. Hardware
-recovery, valid output, two warm runs, clean unload, and the 100 tokens/s target
-remain open. See
+BRISC/Tensix service, with no CPU inference or fallback. Tag0114 and tag0115
+both completed full model load, then failed the first core0 embedding read.
+Tag0115's authentication took `99.897654` s, vocabulary/tokenization
+`13.042067` s, model load `330.400460` s, and failed prompt attempt
+`0.611537` s. Its read-only NoC drain wait timed out on NoC0 queue0 after
+`65536` polls (`recovery_audit_detail=260`, index4); no output or decode rate
+was produced. The strict audit kept the driver cold-latched, and the wrapper
+retained the stable55 backup and lock. A guarded post-cycle restore has since
+returned stable55 to generation2, idle, with the lock cleared. Both model
+files remain intact. Tag0116 will add the failed transfer stage and busy
+status value to the diagnostic record; no NoC command clear or core reset is
+authorized by the current safety proof. Offline build, sanitizer test, RV32IMF
+compile, and the `15456/18432`-byte stack check pass. Valid output, two warm
+runs, clean unload, in-place recovery, and the 100 tokens/s target remain open.
+See
 [`tag0113 RUN`](benchmarks/qwen35-dataflow-tag0113-20261121/RUN.md) and
 [`tag0114 RUN`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md),
-[`tag0115 BUILD`](benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md).
+[`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md).
 
 Tag0109 passed guarded preflight and uploaded all
 `2,740,498,432` resident bytes. Authentication took `100.467732` s, prompt
@@ -110,14 +109,15 @@ Tag0114 is the hardware-tested recovery-diagnostic checkpoint. It preserved
 the fixed 64-byte mailbox and ioctl request size, and added the subcheck
 detail. Its failed card run and timings are in
 [`benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md`](benchmarks/qwen35-dataflow-tag0114-20261121/RUN.md).
-Tag0115 is the current offline rewrite checkpoint. It adds the bounded
-read-only NoC drain wait for failure7 before repeating the strict audit. The
-full variant-60 build, focused recovery ASan/UBSan test, RV32IMF compile, and
-`15456/18432` stack bound pass. Driver SHA-256 is
+Tag0115 adds the bounded read-only NoC drain wait for failure7 before
+repeating the strict audit. The full variant-60 build, focused recovery
+ASan/UBSan test, RV32IMF compile, and `15456/18432` stack bound pass. Its
+hardware result identified a persistently busy NoC0 queue0 status; see
+[`tag0115 RUN`](benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md). Driver SHA-256 is
 `52a4a16ceb170767089edac960925aac0fa549160f47cfd949ba657f25e21885`; client
 SHA-256 is `80d28f4d75a48612773b07339010308ced09e8c8debf8e7708c35b85f7908da5`.
-The card still needs the stable55 restore before tag0115 can be installed.
-See [`benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md).
+The card is currently stable55 generation2 after the guarded post-cycle
+restore. See [`benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md).
 
 ## Progress
 
@@ -130,8 +130,18 @@ See [`benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`](benchmarks/qwen35-d
   compile, complete build, and `15456/18432` conservative stack audit pass.
   Driver SHA-256 is
   `52a4a16ceb170767089edac960925aac0fa549160f47cfd949ba657f25e21885`.
-  Hardware trial is pending stable55 restoration. Details are in
+  Hardware trial timed out on NoC0 queue0 and required guarded post-cycle
+  restoration to stable55 generation2. Details are in
   `benchmarks/qwen35-dataflow-tag0115-20261121/BUILD.md`.
+
+- 2026-11-21 (tag0115, hardware result): Authentication took `99.897654` s,
+  vocabulary/tokenization `13.042067` s, model load `330.400460` s, and the
+  failed prompt operation `0.611537` s. Core0 reported embedding weight read
+  failure7; the bounded recovery scan timed out on NoC0 queue0 (index4/detail
+  `260`), with no output or decode time. The wrapper retained the cold
+  candidate, stable backup, and lock. The guarded post-cycle helper restored
+  stable55 generation2 and cleared the lock. See
+  `benchmarks/qwen35-dataflow-tag0115-20261121/RUN.md`.
 
 - 2026-11-21 (tag0114, hardware result): Authentication took `99.340053` s,
   vocabulary load and prompt tokenization `13.168584` s, full model load

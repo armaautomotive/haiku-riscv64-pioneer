@@ -1,0 +1,25 @@
+Linux fedora-riscv 6.1.31 #1 SMP Thu Jun 15 01:30:00 CST 2023 riscv64 GNU/Linux
+8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff  /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_smp-20261115-codex.sh
+a9056dbc4317cc52bea715d9687ba223dee6957ca5e625d91cba8f6fb7071a22  /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_uart_keepalive.sh
+53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c  /boot/extlinux/extlinux.conf
+cpus=0-63
+tainted=0
+mem=MemTotal:       131976904 kB
+/dev/sdc2 on /mnt/ssd type ext4 (rw,relatime)
+kexec_loaded=0
+NAME        TYPE FSTYPE MOUNTPOINTS
+sda         disk        
+└─sda1      part befs   
+sdb         disk        
+└─sdb1      part befs   
+sdc         disk        
+├─sdc1      part ntfs   
+├─sdc2      part ext4   /mnt/ssd
+├─sdc3      part ntfs   
+└─sdc4      part ntfs   
+zram0       disk        [SWAP]
+nvme0n1     disk        
+├─nvme0n1p1 part vfat   /boot/efi
+├─nvme0n1p2 part ext4   /boot
+├─nvme0n1p3 part ext4   /
+└─nvme0n1p4 part befs   

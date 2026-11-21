@@ -38,7 +38,8 @@ python3 tools/pioneer/build_qwen35_dataflow.py \
 - The role contracts compile as RV32IMF with no A-extension atomics or
   unresolved runtime helpers.
 
-The tag0114 hardware run has not been repaired or repeated on tag0115 yet. The
-current board is returning through the pinned Linux-to-Haiku recovery path;
-the guarded tag0114 backup remains staged for restoring stable55 first. No
-valid generation output or decode rate has been produced.
+Tag0115's hardware run reproduced the core0 embedding weight read failure. Its
+bounded wait reached timeout on NoC0 queue0 status, leaving the driver cold
+latched; the exact stable55 backup and lock were retained. The guarded
+post-cycle helper has since restored stable55 generation2 and cleared the
+lock. No valid output or decode rate was produced. See [`tag0115 RUN`](RUN.md).
