@@ -43,6 +43,15 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 		return PioneerQwen35::DataflowGraphInvalid;
 	for (;;) {
 		const auto state=graph.Tick();
+		if (state==PioneerQwen35::DataflowGraphRetain) {
+			using namespace PioneerQwen35;
+			DataflowStoreRelease(mailbox->reserved[1],graph.Fault());
+			DataflowStoreRelease(mailbox->reserved[2],graph.CompletedSteps());
+			DataflowStoreRelease(mailbox->reserved[3],graph.FailureCore());
+			DataflowStoreRelease(mailbox->reserved[4],graph.FailureStatus());
+			DataflowFence();
+			DataflowStoreRelease(mailbox->reserved[0],DataflowGraphFaultMagic);
+		}
 		if (state==PioneerQwen35::DataflowGraphLocalComplete || state==PioneerQwen35::DataflowGraphRetain)
 			return state;
 	}

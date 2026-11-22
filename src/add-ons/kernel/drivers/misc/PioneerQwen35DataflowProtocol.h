@@ -34,6 +34,7 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_EXPECTED=4,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_NOC=5,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST=6,
+	TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_FAILURE=7,
 	TT_QWEN35_DATAFLOW_STATE_EMPTY=0,
 	TT_QWEN35_DATAFLOW_STATE_READY=1,
 	TT_QWEN35_DATAFLOW_STATE_FAULTED=2,
@@ -81,6 +82,9 @@ struct tt_qwen35_dataflow_request {
 	// in reserved[0], returns the target route in reserved[1] bits 0..11, transfer
 	// size in reserved[1] bits 12..31, and remote address in reserved[2]. Core
 	// `0xffff` in reserved[0] bits 8..23 means no worker was isolated.
+	// QUERY_GRAPH_FAILURE returns the captured worker snapshot without a new
+	// hardware read: bit 31 marks availability, bits 0..7 core, 8..11 state,
+	// 12..19 failure, and 20..23 phase; the other words are graph detail/status.
 	uint32_t reserved[3];
 };
 static_assert(sizeof(tt_qwen35_dataflow_request)==36,
@@ -90,7 +94,7 @@ static inline bool
 PioneerQwen35DataflowRequestValid(const tt_qwen35_dataflow_request& request)
 {
 	return request.version==TT_QWEN35_DATAFLOW_ABI
-		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST
+		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_FAILURE
 		&& request.reserved[0]==0 && request.reserved[1]==0
 		&& request.reserved[2]==0;
 }

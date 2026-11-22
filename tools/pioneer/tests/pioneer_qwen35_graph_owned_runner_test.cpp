@@ -35,15 +35,31 @@ int main() {
 			&& io.runAllocations==1 && io.runDeletes==1 && io.candidateAllocations==1
 			&& io.candidateDeletes==1 && !runner.Retained());
 	}
-	SessionIO failed(claim);failed.previous=2;failed.failAudit=7;
+	SessionIO failed(claim);failed.previous=2;failed.failStage=7;
 	assert(runner.Run(*session,live,2,44,true,3,*projection,failed,output,stage)==DataflowGraphSessionRetained
 		&& runner.Retained() && !failed.runDeletes && !failed.candidateDeletes
+		&& stage==DataflowGraphFailureStage(DataflowGraphStagePublish,DataflowGraphPublishStagingFault,7)
 		&& output.token==Vocabulary && live->ConvNextPosition(0)==2);
 	assert(!runner.ReleaseRetainedAfterRestoration(live,failed) && runner.Retained());
 	failed.restored=true; // Simulated restored-fleet proof only.
 	assert(runner.ReleaseRetainedAfterRestoration(live,failed) && !runner.Retained()
 		&& failed.runDeletes==1 && failed.candidateDeletes==1);
 	delete live;
+	// A partially published fleet must retain ownership and identify the
+	// failed command and worker, rather than exposing a generic session code.
+	auto serviceIO2=std::make_unique<MockDataflowIO>();auto service2=std::make_unique<DataflowServiceOwner>();
+	assert(service2->Install(image,*serviceIO2)==DataflowServiceComplete);
+	auto* live2=new DataflowProjectionAuthority;
+	assert(live2->BindValidatedModel(f->manifest,f->workspace,f->routes,f->rope));
+	StreamClaim claim2;SessionIO bindIO2(claim2);auto session2=std::make_unique<DataflowGraphSession>();
+	assert(session2->Bind(*plan,f->routes,0,live2,*service2,bindIO2));
+	DataflowGraphOwnedRunner runner2;SessionIO partial(claim2);partial.previous=0;partial.failPublish=49;
+	assert(runner2.Run(*session2,live2,0,42,false,3,*projection,partial,output,stage)==DataflowGraphSessionRetained
+		&& stage==DataflowGraphFailureStage(DataflowGraphStagePublish,DataflowGraphPublishCommandFault,49)
+		&& partial.published==49 && runner2.Retained() && output.token==Vocabulary);
+	partial.restored=true;
+	assert(runner2.ReleaseRetainedAfterRestoration(live2,partial));
+	delete live2;
 	puts("PASS graph owned runner: allocation failures, promotion, retained fault and proof-gated release; SIMULATED ONLY");
 	return 0;
 }

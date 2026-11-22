@@ -12,10 +12,25 @@ enum : unsigned {
 	DataflowGraphRunMagic=0x31524735,
 	DataflowGraphRunVersion=1,
 	DataflowGraphRunCommand=0x31434735,
+	DataflowGraphFaultMagic=0x31464735,
 	DataflowGraphRunMaxPolls=1048576,
 	DataflowGraphDecodeSteps=548,
 	DataflowGraphPromptSteps=545
 };
+
+// On a retained device-graph failure, the worker records its graph fault,
+// completed step and propagated peer status before publishing failure. The
+// host reads these only from a stable terminal mailbox.
+inline bool DataflowGraphFaultDetail(const DataflowWorkerMailbox& mailbox,
+	unsigned& detail,unsigned& status) {
+	if (mailbox.reserved[0]!=DataflowGraphFaultMagic || !mailbox.reserved[1]
+		|| mailbox.reserved[1]>DataflowGraphQueueFault
+		|| mailbox.reserved[2]>DataflowGraphDecodeSteps
+		|| mailbox.reserved[3]>DataflowCoreCount) return false;
+	detail=0x80000000U | mailbox.reserved[1] | (mailbox.reserved[2]<<4)
+		| (mailbox.reserved[3]<<14);
+	status=mailbox.reserved[4];return true;
+}
 static_assert(Layers==32,"graph completion counts require the fixed Qwen35 decoder");
 static_assert(DataflowBarrierReleaseCommit+DataflowBarrierPacketBytes==DataflowGraphRunAddress
 	&& DataflowGraphRunAddress+DataflowGraphRunBytes<=DataflowBarrierArrivalBase,

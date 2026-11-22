@@ -292,6 +292,10 @@ public:
 		if (!held && (fRaw.ResetRead()!=0x46800 || fRaw.ResetRead()!=0x46800
 			|| !DataflowPciRunningWriteRange(address,bytes)
 			|| !fRaw.DataflowCoreIdleForWrite(core,address,bytes))) return false;
+		// A held-core write can replace code, even when the restored boot word
+		// equals the dataflow boot word. Invalidate before the first write so
+		// a partial write cannot leave a stale trusted-image proof.
+		if (held && !fRaw.DataflowInvalidateServiceImage(core)) return false;
 		if (address==PioneerQwen35::DataflowServiceBootAddress) {
 			if (bytes!=sizeof(uint32_t)) return false;
 			const uint32_t value=*static_cast<const uint32_t*>(input);
@@ -417,6 +421,7 @@ public:
 		if (!snapshot.captured || snapshot.core!=core || !snapshot.localWords
 			|| (snapshot.reset!=0x46800 && snapshot.reset!=0x47800)
 			|| !CoreHeld(core)) return false;
+		if (!fRaw.DataflowInvalidateServiceImage(core)) return false;
 		for (unsigned i=0;i<DataflowPciL1ViewWords;i++) {
 			const unsigned address=DataflowPciL1ViewBase+i*sizeof(uint32_t);
 			fRaw.Q38PanelWrite(address,snapshot.localWords[i]);

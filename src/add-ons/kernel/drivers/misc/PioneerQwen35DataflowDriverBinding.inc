@@ -106,6 +106,15 @@ PioneerSessionIO::DataflowPanelMappingStable()
 }
 
 bool
+PioneerSessionIO::DataflowInvalidateServiceImage(unsigned core)
+{
+	if (!qwen35DataflowContext || core>=PioneerQwen35::DataflowCoreCount)
+		return false;
+	qwen35DataflowContext->qwen35DataflowImageVerified[core]=false;
+	return true;
+}
+
+bool
 PioneerSessionIO::DataflowCoreServiceImageMatches(unsigned core)
 {
 	if (core>=PioneerQwen35::DataflowCoreCount
@@ -561,6 +570,11 @@ PioneerSessionIO::ReadWorkerSnapshot(unsigned core,
 		|| !PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)) return false;
 	snapshot={mailbox.commandSequence,mailbox.acknowledgedSequence,
 		mailbox.completedSequence,mailbox.state,mailbox.failure,mailbox.phase,0,0};
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	if (mailbox.state==PioneerQwen35::DataflowWorkerFailed && mailbox.phase==5
+		&& PioneerQwen35::DataflowGraphFaultDetail(mailbox,snapshot.failureDetail,
+			snapshot.failureStatus)) return true;
+#endif
 	if (mailbox.state==PioneerQwen35::DataflowWorkerFailed
 		&& mailbox.failure==PioneerQwen35::DataflowFailureEmbeddingWeightRead
 		&& mailbox.phase==5) {
@@ -2167,6 +2181,10 @@ public:
 			*context.qwen35DataflowProgramScratch,backend,output,stage);
 	}
 	bool Retained() const { return runner.Retained() || (session.Faulted() && !retiredAfterFault); }
+	bool FailedWorkerSnapshot(unsigned& core,PioneerQwen35::DataflowWorkerSnapshot& snapshot) const {
+		auto* run=session.RetainedRun();
+		return run && runner.Retained() && run->completion.FailedWorkerSnapshot(core,snapshot);
+	}
 	PioneerQwen35::DataflowServiceResult RecoverFaultForClose() {
 		using namespace PioneerQwen35;
 		if (!bound || retiredAfterFault || !runner.Retained() || !session.Faulted())

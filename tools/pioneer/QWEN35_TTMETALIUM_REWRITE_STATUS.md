@@ -29,15 +29,25 @@ and failed; a second close attempted the old stop audit after restoration.
 An authorized NVMe cold recovery restored stable driver55, idle and without a
 recovery lock. See [the run record](benchmarks/qwen35-dataflow-tag0153-20261122/RUN.md).
 
-The next rewrite adds graph phase/core failure codes, preserves an exact
+Tag0154 adds graph phase/core failure codes, preserves an exact
 settled-graph proof across close retries, and retries only the final fleet
 audit after all restored workers have started. A partial start remains
 retained and is not replayed. Recovery responses now expose the service-close
 failure details. Host simulations and the RV32IMF target suite pass; this
-change has not yet been qualified on the card. The exact cause of tag0153's
-graph failure and the cause of its first resume failure remain unknown.
+change was qualified in the diagnostic described below. The exact cause of
+tag0153's graph failure remains unknown.
 Before another card operation, recheck that the 27B diagnostic has exited and
 the stable driver is idle.
+
+Tag0154's diagnostic reached worker 0's graph-completion check without a
+token. Its recovery failure identified stale service-image trust after the
+original dispatcher image was restored, because both images have the same
+boot word. Tag0155 invalidates the cached proof before held-core writes and
+restoration, and records a device-graph fault receipt for a CPU-only host
+query. Partial restoration and timeout cases retain ownership. The 0155
+target/simulation suite and all three builds pass; hardware qualification
+remains open. The card is back on stable driver55 with no lock after NVMe
+cold recovery. See [the tag0154 run record](benchmarks/qwen35-dataflow-tag0154-20261122/RUN.md).
 
 Tag0154's qualification driver SHA-256 is
 `152edda1d9214b869eb74299010d1e973da91c6070e7f8f191a4cbb6f597c223`

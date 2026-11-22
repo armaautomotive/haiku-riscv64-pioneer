@@ -15,12 +15,14 @@ struct MockPciRaw {
 	PioneerQwen35::DataflowQueueControl queue[PioneerQwen35::DataflowCoreCount]
 		[PioneerQwen35::DataflowCircularBufferCount]{};
 	bool serviceImage[PioneerQwen35::DataflowCoreCount]{};
+	bool trustedImage[PioneerQwen35::DataflowCoreCount]{};
 	unsigned selected=UINT32_MAX;
 	unsigned writes=0,resetWrites=0;
 	unsigned pauses=0;
 	bool mapped=true;
 	bool idle=true;
 	bool idleForWrite=true;
+	bool corruptRestoreRead=false;
 	unsigned notIdleCore=UINT32_MAX;
 	unsigned startupFatalCore=UINT32_MAX;
 	unsigned dropResumeCore=UINT32_MAX;
@@ -51,6 +53,10 @@ struct MockPciRaw {
 		{ return core<120 && idleForWrite; }
 	bool DataflowCoreServiceImageMatches(unsigned core) const
 		{ return core<120 && serviceImage[core]; }
+	bool DataflowInvalidateServiceImage(unsigned core) {
+		if (core>=120) return false;
+		trustedImage[core]=false;return true;
+	}
 	unsigned ResetRead() const { assert(selected<120); return reset[selected]; }
 	unsigned RuntimeCodeRead(unsigned word) const
 		{ assert(word==0 && selected<120); return boot[selected]; }
@@ -68,6 +74,8 @@ struct MockPciRaw {
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
 			&& address<DataflowPciL1ViewBase+DataflowPciL1ViewBytes);
+		if (corruptRestoreRead && address==DataflowPciL1ViewBase)
+			return panel[0]^1U;
 		if (address>=PioneerQwen35::DataflowWorkerMailboxAddress
 			&& address<PioneerQwen35::DataflowWorkerMailboxAddress
 				+PioneerQwen35::DataflowWorkerMailboxBytes) {
@@ -238,7 +246,14 @@ int main()
 	assert(memory.HoldCore(3));
 	assert(raw.boot[3]==DataflowServiceBootWord);
 
+	raw.trustedImage[3]=true;
+	raw.corruptRestoreRead=true;
+	assert(!memory.RestoreCoreState(3,snapshot));
+	assert(!raw.trustedImage[3]); // partial restore already invalidated the proof
+	raw.corruptRestoreRead=false;
+	raw.trustedImage[3]=true;
 	assert(memory.RestoreCoreState(3,snapshot));
+	assert(!raw.trustedImage[3]); // the identical boot word cannot preserve trust
 	assert(memory.VerifyCoreStateRestored(3,snapshot));
 	assert(raw.reset[3]==0x47800);
 	assert(raw.boot[3]==PioneerQwen35::DataflowServiceBootWord);

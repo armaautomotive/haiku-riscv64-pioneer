@@ -7,12 +7,19 @@ struct CompletionIO {
 	const PublisherIO& published;
 	unsigned waited=0,audited=0,acks=0,resultReads=0;
 	int failWorker=-1,failAudit=-1,failAck=-1,failReady=-1;
-	bool owner=true,badResult=false,unstableResult=false;
+	bool owner=true,badResult=false,unstableResult=false,terminalFailure=false;
 	bool GraphOwnershipMatches(const DataflowStreamPlan&,const DataflowDynamicTokenContext&,
 		const DataflowGraphRunTicket&,unsigned slot) { return owner && slot==0; }
 	bool WaitForCompletion(unsigned core,unsigned trigger,DataflowWorkerSnapshot& r) {
 		assert(core==waited++);
-		if (int(core)==failWorker) return false;
+		if (int(core)==failWorker) {
+			if (terminalFailure) {
+				r={trigger,published.previous,trigger,DataflowWorkerFailed,6,5,0x80000015U,0x1234U};
+				return true;
+			}
+			r={trigger,published.previous,published.previous,DataflowWorkerRunning,0,1,0,0};
+			return false;
+		}
 		r={trigger,published.previous,trigger,DataflowWorkerComplete,0,2,0,0};return true;
 	}
 	bool AuditGraphCore(unsigned core,const DataflowGraphRunDescriptor& d,const DataflowWorkerSnapshot& r,bool decode) {
@@ -58,6 +65,25 @@ int main() {
 	CompletionIO missing{*published};missing.failWorker=7;DataflowGraphCompletion missingOwner;
 	assert(missingOwner.Finish(publisher,*plan,f->routes,token,missing,scratch,output)==DataflowGraphCompletionWorkerFault
 		&& missingOwner.FailedCore()==7 && !missing.acks && output.token==Vocabulary);
+	unsigned failedCore=0;DataflowWorkerSnapshot failedSnapshot{};
+	assert(missingOwner.FailedWorkerSnapshot(failedCore,failedSnapshot)
+		&& failedCore==7 && failedSnapshot.state==DataflowWorkerRunning
+		&& failedSnapshot.commandSequence==5 && failedSnapshot.completedSequence==4);
+	assert(!done.FailedWorkerSnapshot(failedCore,failedSnapshot));
+	CompletionIO failed{*published};failed.failWorker=4;failed.terminalFailure=true;
+	DataflowGraphCompletion failedOwner;
+	assert(failedOwner.Finish(publisher,*plan,f->routes,token,failed,scratch,output)==DataflowGraphCompletionWorkerFault
+		&& failedOwner.FailedWorkerSnapshot(failedCore,failedSnapshot)
+		&& failedCore==4 && failedSnapshot.state==DataflowWorkerFailed
+		&& failedSnapshot.failureDetail==0x80000015U && failedSnapshot.failureStatus==0x1234U);
+	DataflowWorkerMailbox fault{};unsigned detail=0,status=0;
+	fault.reserved[0]=DataflowGraphFaultMagic;fault.reserved[1]=DataflowGraphDeadlineFault;
+	fault.reserved[2]=12;fault.reserved[3]=119;fault.reserved[4]=0x12345678;
+	assert(DataflowGraphFaultDetail(fault,detail,status)
+		&& (detail>>31)==1 && (detail&0xfU)==DataflowGraphDeadlineFault && ((detail>>4)&0x3ffU)==12
+		&& ((detail>>14)&0x7fU)==119 && status==0x12345678);
+	fault.reserved[3]=DataflowCoreCount+1;
+	assert(!DataflowGraphFaultDetail(fault,detail,status));
 	CompletionIO badAudit{*published};badAudit.failAudit=8;DataflowGraphCompletion badAuditOwner;
 	assert(badAuditOwner.Finish(publisher,*plan,f->routes,token,badAudit,scratch,output)==DataflowGraphCompletionAuditFault
 		&& badAuditOwner.FailedCore()==8 && !badAudit.acks);

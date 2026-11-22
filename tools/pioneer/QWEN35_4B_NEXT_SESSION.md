@@ -48,6 +48,39 @@ the client SHA-256 is
 The checked worker stack envelope is `7632/8192`; the ioctl estimate is
 `13856/18432` including the helper allowance, not a whole-program proof.
 
+The guarded tag0154 one-run qualification completed with no token. After
+`618.119882` s model setup, the first prompt failed after `0.912492` s with
+stage `0x5200`: publication completed, but worker 0 did not pass completion.
+The no-reboot recovery reached the final restored-fleet audit and reported
+stage 3/core 1/detail `0x111` on each attempt, then left the card cold and
+owned. This identifies a stale service-image cache: the original dispatcher
+and the dataflow service share boot word `0x0006c06f`, so the cached service
+proof remains true after the original image is restored. The rewrite now
+invalidates it before any held-core write and before restoration, including
+partial failures. This fix is not yet qualified on hardware.
+
+Tag0154's logs and guarded recovery script are in
+`benchmarks/qwen35-dataflow-tag0154-20261122/evidence/`. After one OFF hold,
+one ON pulse and the pinned NVMe handoff, the guarded script restored stable
+driver55 generation2. An independent check confirmed `cold0 active_owner0`,
+the expected stable SHA-256, no lock and both model files at their recorded
+sizes. This was a correctness diagnostic, not the two-run performance
+acceptance.
+
+Tag0155 invalidates the cached service-image proof before held-core writes and
+snapshot restoration. A device fault now records its graph reason, completed
+step and peer failure in the existing mailbox; the host exposes the retained
+worker snapshot through a CPU-only query before recovery. A timeout can still
+leave the detail unavailable. The RV32IMF suite and normal, qualification,
+and non-loadable witness builds pass; no hardware run has tested this fix.
+Qualification tag `2026112100020155` driver SHA-256:
+`517c14d423493fe7f5fb8b33223da45076dff0d2b69e2b4a73bfcb04a537ee3f`;
+client SHA-256:
+`0ebd53497aeb455cf0d069cb43b61f62db6f12ece9520a87bd904bb3540dd988`.
+The worker envelope is `7648/8192` including the 1024-byte allowance and the
+graph ioctl envelope is `16000/18432` including a 2048-byte helper allowance;
+neither is a whole-program proof.
+
 ## Earlier checkpoint: tag0120 failure and recovery rewrite
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
