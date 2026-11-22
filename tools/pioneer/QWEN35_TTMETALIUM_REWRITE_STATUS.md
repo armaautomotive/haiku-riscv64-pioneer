@@ -1,5 +1,17 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+Tag0158 timed out after 8.258036 s with a worker still running; no token or
+decode rate was produced. Its unsettled graph could not be recovered in place.
+An authorized NVMe power cycle restored stable driver55 idle and preserved both
+model files at their recorded sizes. Tag0159 adds read-only, non-authoritative
+worker step/phase observations in a separate saved L1 word, and a bounded
+progress-aware host wait (30 s inactivity, 600 s total). Tests cover the
+progress encoding, idle and total deadlines, terminal and invalid states, and
+separation from host-running writes. The target suite and all three target
+builds pass; tag0159 has not yet run on the card. The ASIC-reset recovery
+prototype remains unqualified. See the [tag0158 record](benchmarks/qwen35-dataflow-tag0158-20261122/RUN.md).
+
+
 ## Scope
 
 Rewrite the Qwen3.5 Work execution path around one resident BRISC worker per

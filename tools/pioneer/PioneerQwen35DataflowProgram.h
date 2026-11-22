@@ -116,7 +116,8 @@ struct DataflowCircularBuffer {
 // weight read, reserved[0..5] preserve the request address, NoC stage/index and
 // target route, observed and expected counters, counter-match/initiator masks,
 // transfer size, and outstanding transaction-ID slots until the host
-// acknowledges failure. The fixed 64-byte record does not grow.
+// acknowledges failure. Argmax also owns all six reserved words for its
+// result. The fixed 64-byte record does not grow.
 struct alignas(32) DataflowWorkerMailbox {
 	uint32_t magic,version;
 	volatile uint32_t commandSequence,acknowledgedSequence,completedSequence;

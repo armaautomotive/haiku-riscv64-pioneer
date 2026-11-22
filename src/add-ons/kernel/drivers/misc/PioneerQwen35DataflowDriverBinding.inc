@@ -5,6 +5,7 @@
 #include "PioneerQwen35DataflowNoC1Audit.h"
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphFaultTeardown.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphWait.h"
 #endif
 
 enum PioneerQwen35RuntimeAuditDetail : unsigned {
@@ -571,6 +572,14 @@ PioneerSessionIO::ReadWorkerSnapshot(unsigned core,
 	snapshot={mailbox.commandSequence,mailbox.acknowledgedSequence,
 		mailbox.completedSequence,mailbox.state,mailbox.failure,mailbox.phase,0,0};
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	if (mailbox.state==PioneerQwen35::DataflowWorkerRunning && mailbox.phase==1) {
+		uint32_t first=0,second=0;
+		if (ReadCoreMemory(core,PioneerQwen35::DataflowGraphProgressAddress,&first,sizeof(first))
+			&& ReadCoreMemory(core,PioneerQwen35::DataflowGraphProgressAddress,&second,sizeof(second))
+			&& first==second
+			&& PioneerQwen35::DataflowGraphProgressDetail(first,snapshot.failureDetail))
+			return true;
+	}
 	if (mailbox.state==PioneerQwen35::DataflowWorkerFailed && mailbox.phase==5
 		&& PioneerQwen35::DataflowGraphFaultDetail(mailbox,snapshot.failureDetail,
 			snapshot.failureStatus)) return true;
@@ -2027,6 +2036,8 @@ class PioneerQ35GraphBackend {
 	PioneerQ35StreamRecordingWitness& stream;
 	const PioneerDriverRecoveryProof* resetProof;
 	uint64_t resetTicket;
+	uint64_t graphWaitStart=0;
+	bool graphWaitStarted=false;
 public:
 	PioneerQ35GraphBackend(PioneerStoreContext& c,PioneerQ35StreamRecordingWitness& s,
 		const PioneerDriverRecoveryProof* proof=nullptr,uint64_t ticket=0)
@@ -2111,7 +2122,11 @@ public:
 		const auto* descriptor=stream.StageLedger().BeginPublish(c,seq);
 		return descriptor && context.io.PublishGraphCommand(c,*descriptor);
 	}
-	bool WaitForCompletion(unsigned c,unsigned seq,PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.WaitForCompletion(c,seq,s); }
+	uint64_t NowMicros() const { return uint64_t(system_time()); }
+	bool WaitForCompletion(unsigned c,unsigned seq,PioneerQwen35::DataflowWorkerSnapshot& s) {
+		if (!graphWaitStarted) { graphWaitStart=NowMicros();graphWaitStarted=true; }
+		return PioneerQwen35::DataflowGraphWaitForCompletion(*this,c,seq,graphWaitStart,s);
+	}
 	bool AuditGraphCore(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d,
 		const PioneerQwen35::DataflowWorkerSnapshot& s,bool decode) { return context.io.AuditGraphCore(c,d,s,decode); }
 	bool ReadArgmaxResult(unsigned seq,PioneerQwen35::DataflowArgmaxResult& r) { return context.io.ReadArgmaxResult(seq,r); }

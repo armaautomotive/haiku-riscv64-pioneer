@@ -9,14 +9,35 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowGraphRunAddress=0xab100,
 	DataflowGraphRunBytes=512,
+	DataflowGraphProgressAddress=DataflowGraphRunAddress+DataflowGraphRunBytes,
 	DataflowGraphRunMagic=0x31524735,
 	DataflowGraphRunVersion=1,
 	DataflowGraphRunCommand=0x31434735,
 	DataflowGraphFaultMagic=0x31464735,
+	DataflowGraphProgressMagic=0x51350000,
 	DataflowGraphRunMaxPolls=1048576,
 	DataflowGraphDecodeSteps=548,
 	DataflowGraphPromptSteps=545
 };
+
+// This single-word observation is diagnostic only: it does not prove that a
+// transaction has settled or permit the host to release graph resources.
+enum DataflowGraphProgressPhase : unsigned {
+	DataflowGraphProgressFetch=1, DataflowGraphProgressAuthorize=2,
+	DataflowGraphProgressExecute=3, DataflowGraphProgressBarrier=4,
+	DataflowGraphProgressResetQueues=5
+};
+inline uint32_t DataflowGraphProgressWord(unsigned step,unsigned phase) {
+	return step<DataflowGraphDecodeSteps && phase>=DataflowGraphProgressFetch
+		&& phase<=DataflowGraphProgressResetQueues
+		?DataflowGraphProgressMagic | (step<<3) | phase:0;
+}
+inline bool DataflowGraphProgressDetail(uint32_t word,unsigned& detail) {
+	const unsigned step=(word&0xffffU)>>3,phase=word&7U;
+	if ((word&0xffff0000U)!=DataflowGraphProgressMagic
+		|| !DataflowGraphProgressWord(step,phase)) return false;
+	detail=0x40000000U | (step<<4) | phase;return true;
+}
 
 // On a retained device-graph failure, the worker records its graph fault,
 // completed step and propagated peer status before publishing failure. The
@@ -33,8 +54,9 @@ inline bool DataflowGraphFaultDetail(const DataflowWorkerMailbox& mailbox,
 }
 static_assert(Layers==32,"graph completion counts require the fixed Qwen35 decoder");
 static_assert(DataflowBarrierReleaseCommit+DataflowBarrierPacketBytes==DataflowGraphRunAddress
-	&& DataflowGraphRunAddress+DataflowGraphRunBytes<=DataflowBarrierArrivalBase,
-	"run descriptor stays inside saved L1 and outside barrier slots");
+	&& DataflowGraphRunAddress+DataflowGraphRunBytes==DataflowGraphProgressAddress
+	&& DataflowGraphProgressAddress+sizeof(uint32_t)<=DataflowBarrierArrivalBase,
+	"run descriptor and progress word stay inside saved L1 and outside barrier slots");
 
 enum : unsigned {
 	DataflowGraphRunFixedBytes=6*sizeof(uint32_t)+sizeof(DataflowGraphRunTicket)

@@ -471,22 +471,27 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 			graph.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_FAILURE;
 			if (Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&graph,sizeof(graph))
 				&& (graph.reserved[0]&0x80000000U)) {
+				const bool terminalDetail=(graph.reserved[1]&0x80000000U)!=0;
 				fprintf(stderr,"P100A_Q35_DATAFLOW graph_worker core=%u state=%u "
 					"failure=%u phase=%u graph_detail_valid=%u graph_fault=%u graph_steps=%u "
 					"graph_failure_core=%u graph_failure_status=0x%08x\n",
 					graph.reserved[0]&0xffU,(graph.reserved[0]>>8)&0xfU,
 					(graph.reserved[0]>>12)&0xffU,(graph.reserved[0]>>20)&0xfU,
-					graph.reserved[1]>>31,
-					graph.reserved[1]&0xfU,(graph.reserved[1]>>4)&0x3ffU,
-					(graph.reserved[1]>>14)&0x7fU,graph.reserved[2]);
-				if ((graph.reserved[1]&0xfU)==1 && (graph.reserved[2]&0x80000000U)) {
+					unsigned(terminalDetail),terminalDetail?graph.reserved[1]&0xfU:0,
+					terminalDetail?(graph.reserved[1]>>4)&0x3ffU:0,
+					terminalDetail?(graph.reserved[1]>>14)&0x7fU:0,
+					terminalDetail?graph.reserved[2]:0);
+				if ((graph.reserved[1]&0xc0000000U)==0x40000000U)
+					fprintf(stderr,"P100A_Q35_DATAFLOW graph_progress step=%u phase=%u\n",
+						(graph.reserved[1]>>4)&0x3ffU,graph.reserved[1]&0xfU);
+				if (terminalDetail && (graph.reserved[1]&0xfU)==1 && (graph.reserved[2]&0x80000000U)) {
 					const unsigned detail=graph.reserved[2];
 					fprintf(stderr,"P100A_Q35_DATAFLOW graph_fetch stage=%u noc_stage=%u "
 						"noc_index=%u counter_match_mask=0x%02x initiator_busy_mask=0x%x\n",
 						detail&0xfU,(detail>>4)&0xfU,(detail>>8)&0xffU,
 						(detail>>16)&0xffU,(detail>>24)&0xfU);
 				}
-				if ((graph.reserved[1]&0xfU)==3 && (graph.reserved[2]&0x80000000U)) {
+				if (terminalDetail && (graph.reserved[1]&0xfU)==3 && (graph.reserved[2]&0x80000000U)) {
 					const unsigned detail=graph.reserved[2];
 					fprintf(stderr,"P100A_Q35_DATAFLOW rms_worker stage=%u noc_stage=%u "
 						"noc_index=%u counter_match_mask=0x%02x initiator_busy_mask=0x%x\n",

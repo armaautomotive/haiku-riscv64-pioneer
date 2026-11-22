@@ -2,6 +2,28 @@
 #define Q35_PUBLISHER_FIXTURE_ONLY
 #include "pioneer_qwen35_graph_publication_test.cpp"
 #include "../PioneerQwen35DataflowGraphCompletion.h"
+#include "../PioneerQwen35DataflowGraphWait.h"
+
+struct WaitIO {
+	uint64_t now=0,increment=10000000;
+	unsigned reads=0;
+	DataflowWorkerSnapshot samples[8]{};
+	unsigned count=0;
+	bool alwaysAdvance=false;
+	uint64_t NowMicros() const { return now; }
+	bool ReadWorkerSnapshot(unsigned,DataflowWorkerSnapshot& out) {
+		if (alwaysAdvance) {
+			out={5,4,4,DataflowWorkerRunning,0,1,0x40000001U|(reads++<<4),0};
+			return true;
+		}
+		if (!count) return false;
+		out=samples[reads<count?reads:count-1];reads++;return true;
+	}
+	void Pause() { now+=increment; }
+};
+[[maybe_unused]] static DataflowWorkerSnapshot running(unsigned step,unsigned phase,unsigned command=5) {
+	return {command,4,4,DataflowWorkerRunning,0,1,0x40000000U|(step<<4)|phase,0};
+}
 
 struct CompletionIO {
 	const PublisherIO& published;
@@ -84,6 +106,47 @@ int main() {
 		&& ((detail>>14)&0x7fU)==119 && status==0x12345678);
 	fault.reserved[3]=DataflowCoreCount+1;
 	assert(!DataflowGraphFaultDetail(fault,detail,status));
+	uint32_t progress=0;
+	for (unsigned step: {0U,2U,DataflowGraphDecodeSteps-1U}) {
+		for (unsigned phase=DataflowGraphProgressFetch;
+			phase<=DataflowGraphProgressResetQueues;phase++) {
+			progress=DataflowGraphProgressWord(step,phase);
+			assert(DataflowGraphProgressDetail(progress,detail)
+				&& detail==(0x40000000U|(step<<4)|phase));
+		}
+	}
+	assert(!DataflowGraphProgressWord(DataflowGraphDecodeSteps,DataflowGraphProgressFetch));
+	assert(!DataflowGraphProgressWord(0,0) && !DataflowGraphProgressWord(0,6));
+	progress=0;assert(!DataflowGraphProgressDetail(progress,detail));
+	progress=DataflowGraphProgressMagic|(DataflowGraphDecodeSteps<<3)|1;
+	assert(!DataflowGraphProgressDetail(progress,detail));
+	progress=DataflowGraphProgressMagic|6;
+	assert(!DataflowGraphProgressDetail(progress,detail));
+	WaitIO advancing;advancing.increment=20000000;advancing.count=4;
+	advancing.samples[0]=running(0,DataflowGraphProgressFetch);
+	advancing.samples[1]=running(0,DataflowGraphProgressExecute);
+	advancing.samples[2]=running(1,DataflowGraphProgressFetch);
+	advancing.samples[3]={5,4,5,DataflowWorkerComplete,0,2,0,0};
+	DataflowWorkerSnapshot waited{};
+	assert(DataflowGraphWaitForCompletion(advancing,0,5,0,waited)
+		&& advancing.now==60000000 && waited.state==DataflowWorkerComplete);
+	WaitIO stalled;stalled.count=1;stalled.samples[0]=running(2,DataflowGraphProgressExecute);
+	assert(!DataflowGraphWaitForCompletion(stalled,0,5,0,waited)
+		&& stalled.now==DataflowGraphWaitIdleMicros && waited.failureDetail==stalled.samples[0].failureDetail);
+	WaitIO wrongSequence;wrongSequence.count=1;wrongSequence.samples[0]=running(2,DataflowGraphProgressExecute,4);
+	assert(!DataflowGraphWaitForCompletion(wrongSequence,0,5,0,waited)
+		&& wrongSequence.now==DataflowGraphWaitIdleMicros);
+	WaitIO fatal;fatal.count=1;fatal.samples[0]={5,4,4,DataflowWorkerFatal,1,7,0,0};
+	assert(!DataflowGraphWaitForCompletion(fatal,0,5,0,waited) && !fatal.now);
+	WaitIO expired;expired.now=DataflowGraphWaitTotalMicros;
+	expired.count=1;expired.samples[0]={5,4,5,DataflowWorkerComplete,0,2,0,0};
+	assert(!DataflowGraphWaitForCompletion(expired,0,5,0,waited) && !expired.reads);
+	WaitIO progressingTooLong;progressingTooLong.alwaysAdvance=true;
+	assert(!DataflowGraphWaitForCompletion(progressingTooLong,0,5,0,waited)
+		&& progressingTooLong.now==DataflowGraphWaitTotalMicros
+		&& progressingTooLong.reads==60);
+	WaitIO backwards;backwards.now=1;
+	assert(!DataflowGraphWaitForCompletion(backwards,0,5,2,waited));
 	CompletionIO badAudit{*published};badAudit.failAudit=8;DataflowGraphCompletion badAuditOwner;
 	assert(badAuditOwner.Finish(publisher,*plan,f->routes,token,badAudit,scratch,output)==DataflowGraphCompletionAuditFault
 		&& badAuditOwner.FailedCore()==8 && !badAudit.acks);

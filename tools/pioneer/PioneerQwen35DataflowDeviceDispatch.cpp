@@ -22,15 +22,33 @@ struct GraphWitnessExecution {
 	const PioneerQwen35::DataflowGraphRunDescriptor& run;
 	PioneerQwen35::DataflowWorkerMailbox* mailbox;
 	unsigned fetchStage=0;
+	unsigned index=0;
 	PioneerQwen35::DataflowNocDiagnostic fetchNoC{};
-	bool Fetch(unsigned index) {
+	void Mark(unsigned phase) {
+		auto& progress=*reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(
+			PioneerQwen35::DataflowGraphProgressAddress));
+		PioneerQwen35::DataflowStoreRelease(progress,
+			PioneerQwen35::DataflowGraphProgressWord(index,phase));
+	}
+	bool Fetch(unsigned step) {
+		index=step;Mark(PioneerQwen35::DataflowGraphProgressFetch);
 		return PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token,&fetchStage,&fetchNoC);
 	}
-	bool Authorize(unsigned index) { return qwen35_graph_authorize(&run,index); }
-	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
-		status=detail=0;return qwen35_graph_execute(run.core,sequence,mailbox,&detail);
+	bool Authorize(unsigned step) {
+		Mark(PioneerQwen35::DataflowGraphProgressAuthorize);
+		return qwen35_graph_authorize(&run,step);
 	}
-	bool ResetQueues() { return qwen35_graph_reset_queues(); }
+	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
+		Mark(PioneerQwen35::DataflowGraphProgressExecute);
+		status=detail=0;
+		const bool result=qwen35_graph_execute(run.core,sequence,mailbox,&detail);
+		if (result) Mark(PioneerQwen35::DataflowGraphProgressBarrier);
+		return result;
+	}
+	bool ResetQueues() {
+		Mark(PioneerQwen35::DataflowGraphProgressResetQueues);
+		return qwen35_graph_reset_queues();
+	}
 };
 extern "C" unsigned PioneerQwen35DeviceGraphRun(
 	const PioneerQwen35::DataflowGraphRunDescriptor& run,
@@ -57,7 +75,13 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 			DataflowFence();
 			DataflowStoreRelease(mailbox->reserved[0],DataflowGraphFaultMagic);
 		}
-		if (state==PioneerQwen35::DataflowGraphLocalComplete || state==PioneerQwen35::DataflowGraphRetain)
+		if (state==PioneerQwen35::DataflowGraphLocalComplete) {
+			auto& progress=*reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(
+				PioneerQwen35::DataflowGraphProgressAddress));
+			PioneerQwen35::DataflowStoreRelease(progress,0);
+			return state;
+		}
+		if (state==PioneerQwen35::DataflowGraphRetain)
 			return state;
 	}
 }
