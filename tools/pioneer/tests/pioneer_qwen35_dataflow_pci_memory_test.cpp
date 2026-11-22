@@ -145,6 +145,9 @@ int main()
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchAddress,64));
 	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchLimit-4,8));
 	assert(!DataflowPciRunningWriteRange(DataflowServiceDispatchAddress,64));
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowGraphRunAddress,DataflowGraphRunBytes));
+	assert(DataflowPciRunningWriteRange(DataflowGraphRunAddress,DataflowGraphRunBytes));
+	assert(!DataflowPciRunningWriteRange(DataflowGraphRunAddress+DataflowGraphRunBytes-4,8));
 #endif
 	DataflowWorkerMailbox startupFatal{};
 	startupFatal.magic=DataflowWorkerMailboxMagic;
@@ -197,6 +200,9 @@ int main()
 	const unsigned commandAddress=DataflowWorkerMailboxAddress
 		+offsetof(DataflowWorkerMailbox,commandSequence);
 	raw.idleForWrite=false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	assert(!memory.WriteCoreMemory(3,DataflowGraphRunAddress,&text,sizeof(text)));
+#endif
 	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
 	assert(!memory.WriteCoreMemory(3,commandAddress,&text,sizeof(text)));
 	assert(!memory.WriteCoreMemory(3,DataflowWorkerMailboxAddress
@@ -206,6 +212,9 @@ int main()
 	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
 	raw.reset[3]=0x46800;
 	assert(memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	assert(memory.WriteCoreMemory(3,DataflowGraphRunAddress,&text,sizeof(text)));
+#endif
 	assert(memory.WriteCoreMemory(3,commandAddress,&text,sizeof(text)));
 	assert(memory.HoldCore(3));
 	assert(raw.boot[3]==DataflowServiceBootWord);

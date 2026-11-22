@@ -7,6 +7,9 @@
 #include <stdlib.h>
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowServiceOwner.h"
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphRunProtocol.h"
+#endif
 
 enum : unsigned {
 	DataflowPciL1ViewBase=0x6e000,
@@ -33,6 +36,8 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		|| (address>=PioneerQwen35::DataflowServiceDispatchAddress
 			&& end<=PioneerQwen35::DataflowServiceDispatchLimit)
+		|| (address>=PioneerQwen35::DataflowGraphRunAddress
+			&& end<=PioneerQwen35::DataflowGraphRunAddress+PioneerQwen35::DataflowGraphRunBytes)
 #endif
 		|| (address>=PioneerQwen35::DataflowQueueStateAddress
 			&& end<=PioneerQwen35::DataflowQueueStateAddress
@@ -68,6 +73,10 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 	return (address>=PioneerQwen35::DataflowProgramAddress
 			&& end<=PioneerQwen35::DataflowProgramAddress
 				+invocationBytes)
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| (address>=PioneerQwen35::DataflowGraphRunAddress
+			&& end<=PioneerQwen35::DataflowGraphRunAddress+PioneerQwen35::DataflowGraphRunBytes)
+#endif
 		|| (address==command && bytes==sizeof(uint32_t))
 		|| (address==acknowledgement && bytes==sizeof(uint32_t))
 		|| (address==shutdown && bytes==sizeof(uint32_t));

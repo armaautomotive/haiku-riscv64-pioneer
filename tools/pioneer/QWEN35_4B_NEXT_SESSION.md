@@ -285,6 +285,32 @@ result exists. The normal tag0135 driver SHA-256 is
 the non-loadable witness is
 `93fd0da9854f76674f12980c0d26288458e1d8701dea0057daf3257e724ffe27`.
 
+Tag0136 adds a fixed 512-byte per-core graph-run descriptor in the saved L1
+view at `0xab100`, after the barrier release slots. It contains the template
+binding, lease, audited routes, token context, fresh run ticket, trigger and
+poll bound. A corruption checksum is not authorization. The non-loadable
+resident-worker witness recognizes a graph marker, validates a local copy of
+the descriptor and enters the graph loop; its per-command authorization hook
+still rejects every command. The host-side publisher preflights all cores,
+stages and reads back every descriptor and marker, then publishes triggers.
+A failed stage or partial publication retains the graph. Simulated tests
+cover descriptor corruption, staged readback failure, partial trigger and
+L1 write bounds; no worker has executed this on Pioneer.
+
+The split worker witness now uses 55,812 primary and 10,220 dispatch bytes.
+Its build calculates a conservative `7824/8192` worker-stack envelope with
+1,024 bytes allowed for small helpers; it is not a whole-program stack proof.
+The non-loadable driver's conservative recorder stack envelope is
+`17424/18432` with a 2,048-byte allowance and no real ioctl caller. Both
+have limited headroom. The publisher is not connected to a live session,
+and sealed ownership, trusted dynamic context/ticket publication, worker
+authorization, full fleet completion and fault/teardown auditing are still
+required before physical use. Normal tag0136 driver SHA-256:
+`7e89661ffae9792945a07b4583a2de876e588e0653ec084d2e1666d3e15e2951`;
+non-loadable witness:
+`7984c3bd895bf9341289537ed2d1f6128a73a1ad479e55b74df860fca64fcf03`.
+There is no new throughput measurement.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -344,7 +370,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0135. Since tag0121 it records final release of a
+The default build now targets dedicated tag0136. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

@@ -12,6 +12,11 @@
 #include "PioneerQwen35DataflowBlackholeDeltaWorker.h"
 #include "PioneerQwen35DataflowBlackholeDenseAttentionWorker.h"
 #include "PioneerQwen35DataflowBlackholeArgmaxWorker.h"
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#include "PioneerQwen35DataflowGraphRunProtocol.h"
+extern "C" bool qwen35_graph_run_descriptor(
+	const PioneerQwen35::DataflowGraphRunDescriptor*,PioneerQwen35::DataflowWorkerMailbox*);
+#endif
 
 namespace PioneerQwen35 {
 
@@ -477,7 +482,25 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 		}
 		DataflowWorkerPublish(*mailbox,completed,DataflowWorkerRunning,0,1);
 		DataflowFence();
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		DataflowWorkerExecutionResult result;
+		const auto* command=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowProgramAddress));
+		if (DataflowLoadAcquire(*command)==DataflowGraphRunCommand) {
+			DataflowGraphRunDescriptor descriptor{};
+			const auto* source=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowGraphRunAddress));
+			auto* target=reinterpret_cast<uint8_t*>(&descriptor);
+			for (unsigned i=0;i<sizeof(descriptor)/4;i++) {
+				const uint32_t word=DataflowLoadAcquire(source[i]);
+				for (unsigned byte=0;byte<4;byte++) target[i*4+byte]=uint8_t(word>>(byte*8));
+			}
+			result.okay=DataflowGraphRunValid(descriptor,core) && descriptor.triggerSequence==sequence
+				&& qwen35_graph_run_descriptor(&descriptor,mailbox);
+			if (!result.okay) DataflowSignalLocalFailure(DataflowFailureQueue);
+		} else
+			result=DataflowWorkerExecuteAuthorized(core,sequence,mailbox);
+#else
 		const DataflowWorkerExecutionResult result=DataflowWorkerExecuteAuthorized(core,sequence,mailbox);
+#endif
 		const bool okay=result.okay;
 		unsigned failure=0;
 		auto* controls=reinterpret_cast<DataflowQueueControl*>(

@@ -1784,6 +1784,49 @@ PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore
 }
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+bool
+PioneerSessionIO::StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor)
+{
+	using namespace PioneerQwen35;
+	DataflowWorkerSnapshot snapshot{};
+	if (!DataflowGraphRunValid(descriptor,core) || !ReadWorkerSnapshot(core,snapshot)
+		|| !DataflowWorkerSnapshotReady(snapshot) || !CoreReady(core,snapshot)
+		|| descriptor.triggerSequence<=snapshot.completedSequence
+		|| !WriteCoreMemory(core,DataflowGraphRunAddress,&descriptor,sizeof(descriptor))) return false;
+	DataflowGraphRunDescriptor observed{};
+	if (!ReadCoreMemory(core,DataflowGraphRunAddress,&observed,sizeof(observed))
+		|| memcmp(&observed,&descriptor,sizeof(observed))) return false;
+	const uint32_t command=DataflowGraphRunCommand;
+	return WriteCoreMemory(core,DataflowProgramAddress,&command,sizeof(command));
+}
+
+bool
+PioneerSessionIO::GraphRunMatches(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor)
+{
+	using namespace PioneerQwen35;
+	DataflowGraphRunDescriptor observed{};uint32_t command=0;
+	return DataflowGraphRunValid(descriptor,core)
+		&& ReadCoreMemory(core,DataflowGraphRunAddress,&observed,sizeof(observed))
+		&& !memcmp(&observed,&descriptor,sizeof(observed))
+		&& ReadCoreMemory(core,DataflowProgramAddress,&command,sizeof(command))
+		&& command==DataflowGraphRunCommand;
+}
+
+bool
+PioneerSessionIO::PublishGraphCommand(unsigned core,unsigned sequence)
+{
+	using namespace PioneerQwen35;
+	DataflowWorkerSnapshot snapshot{};DataflowGraphRunDescriptor observed{};uint32_t marker=0;
+	if (!ReadWorkerSnapshot(core,snapshot) || !DataflowWorkerSnapshotReady(snapshot)
+		|| !CoreReady(core,snapshot) || sequence<=snapshot.completedSequence
+		|| !ReadCoreMemory(core,DataflowGraphRunAddress,&observed,sizeof(observed))
+		|| !DataflowGraphRunValid(observed,core) || observed.triggerSequence!=sequence
+		|| !ReadCoreMemory(core,DataflowProgramAddress,&marker,sizeof(marker))
+		|| marker!=DataflowGraphRunCommand) return false;
+	return WriteCoreMemory(core,DataflowWorkerMailboxAddress
+		+offsetof(DataflowWorkerMailbox,commandSequence),&sequence,sizeof(sequence));
+}
+
 // Non-loadable backend witness. Caller must hold the global session lock and
 // retain this owner for as long as the bank claim exists. This binds the plan
 // to the already-validated manifest and the driver's own initialized ledger.
@@ -1874,6 +1917,15 @@ PioneerQ35StreamRecordingCompileWitness(PioneerQ35StreamRecordingWitness& graph,
 	unsigned epoch,unsigned position,unsigned token,unsigned inputSlot,bool select,unsigned& stage)
 {
 	return graph.Build(epoch,position,token,inputSlot,select,stage);
+}
+
+__attribute__((used,noinline)) static PioneerQwen35::DataflowGraphPublication
+PioneerQ35GraphPublisherCompileWitness(PioneerStoreContext& context,
+	PioneerQwen35::DataflowGraphPublisher& publisher,const PioneerQwen35::DataflowStreamPlan& plan,
+	const PioneerQwen35::DataflowDynamicTokenContext& token,const PioneerQwen35::DataflowGraphRunTicket& ticket,
+	unsigned trigger,unsigned pollLimit,PioneerQwen35::DataflowGraphRunDescriptor& scratch)
+{
+	return publisher.Start(plan,context.qwen35DataflowRoutes,token,ticket,trigger,pollLimit,context.io,scratch);
 }
 
 __attribute__((used,noinline)) static bool

@@ -12,7 +12,7 @@ objects="$build/objects/haiku/riscv64"
 sdk="$objects/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop"
 umask 077
 mkdir -m 700 "$output"
-flags="-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32"
+flags="-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32"
 service_flags=
 if [ "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" = 1 ]; then
 	[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" = 1 ] || exit 2
@@ -93,3 +93,43 @@ if "$cross-objdump" -d "$output/service.elf" \
 fi
 shasum -a 256 "$output/boot.bin" "$output/text.bin"
 if [ -f "$output/dispatch.bin" ]; then shasum -a 256 "$output/dispatch.bin"; fi
+if [ -f "$output/device-graph.su" ]; then
+python3 - "$output" <<'PY'
+from pathlib import Path
+import sys
+
+out = Path(sys.argv[1])
+entries = []
+for name in ('service.su', 'device-graph.su'):
+    for line in (out / name).read_text().splitlines():
+        parts = line.rsplit('\t', 2)
+        if len(parts) == 3 and parts[1].isdigit():
+            entries.append((parts[0], int(parts[1]), parts[2]))
+groups = (
+    'qwen35_dataflow_service_main()',
+    'PioneerQwen35DataflowBlackholeWorkerService()',
+    'qwen35_graph_run_descriptor(',
+    'PioneerQwen35DeviceGraphCompileProbe(',
+    'DataflowDeviceGraph<IO, BarrierIO>::Tick()',
+    'DataflowDynamicPatch(',
+    'DataflowConvInvocation::Valid()',
+    'DataflowDeviceBarrier<IO>::Poll()',
+    'DataflowBlackholeNoc<Noc>::Transfer(',
+    'qwen35_graph_execute(',
+    'DataflowWorkerExecuteAuthorized(',
+    '::PioneerQwen35DataflowBlackholeWorker(',
+    'DataflowPackActivationCache(',
+    'PioneerQ38ProjectionQuantize(',
+)
+total = 1024  # allowance for small nested helpers; not a whole-program proof
+for marker in groups:
+    matches = [(frame, kind) for name, frame, kind in entries if marker in name]
+    if not matches or any(kind != 'static' for _, kind in matches):
+        raise SystemExit('missing or unbounded worker stack frame: ' + marker)
+    total += max(frame for frame, _ in matches)
+if total > 8192:
+    raise SystemExit(f'worker stack witness envelope {total} exceeds 8192 bytes')
+print(f'qwen35_graph_worker_stack_envelope_bytes={total}/8192 '
+      '(includes 1024-byte allowance; not a whole-program proof)')
+PY
+fi

@@ -149,6 +149,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dynamic_token_test.cpp" \
 	-o "$temporary/dynamic-token-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dynamic-token-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_publication_test.cpp" \
+	-o "$temporary/graph-publication-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-publication-test"
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
 	-ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE \
 	-I"$sdk/headers" -idirafter "$sdk/headers/posix" \

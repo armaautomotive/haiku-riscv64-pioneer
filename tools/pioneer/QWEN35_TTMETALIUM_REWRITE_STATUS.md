@@ -276,6 +276,23 @@ The normal and non-loadable tag0135 driver SHA-256 values are
 `90ef29e142c91a321b32d48dd2a99ae464345969ccb5c1bc3f2dce9dbe752d67`
 and `93fd0da9854f76674f12980c0d26288458e1d8701dea0057daf3257e724ffe27`.
 
+Tag0136 adds a 512-byte graph-run descriptor in each worker's saved L1. A
+non-loadable resident worker recognizes the graph marker and enters the
+graph loop with a checked local descriptor copy. The host publisher checks
+all workers, stages and reads back all 120 descriptors and markers, then
+issues triggers; partial publication is retained as a graph fault. Simulated
+tests cover malformed descriptors, failed readback, partial triggers and
+idle-only descriptor writes. The graph authorization hook still denies all
+commands and no live session invokes the publisher. The worker's conservative
+stack envelope is `7824/8192` bytes including a 1,024-byte helper allowance;
+it is not a whole-program proof. The recorder envelope is `17424/18432` with
+a 2,048-byte allowance, excluding a real ioctl caller. Run ownership, trusted
+ticket/context binding, completion/failure audits, cleanup, the remaining
+mutation paths and hardware qualification remain open. Normal and non-loadable
+tag0136 driver SHA-256 values are
+`7e89661ffae9792945a07b4583a2de876e588e0653ec084d2e1666d3e15e2951`
+and `7984c3bd895bf9341289537ed2d1f6128a73a1ad479e55b74df860fca64fcf03`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
