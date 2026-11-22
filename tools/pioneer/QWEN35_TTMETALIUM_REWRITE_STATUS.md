@@ -129,6 +129,22 @@ The host still performs a separate all-core dispatch lifecycle for each of
 a timing measurement. Moving the checked graph and synchronization onto the
 device is the major outstanding architectural work toward 100 tokens/s.
 
+Tag0128 starts that work with a device-side 120-worker barrier and restricted
+NoC1 peer transport. Worker 0 continues to compute, then collects one receipt
+per peer and distributes a release. Two ordered transfers separate each
+payload from its commit marker; stale/torn markers, timeouts and partial sends
+fail closed. A partial release can permit earlier peers to advance, so the
+entire graph must be retained on uncertainty. The barrier's fixed L1 slots are
+within each core's existing saved snapshot; clear/readback is included only in
+the non-loadable device-dispatch witness. Simulated tests exercise all workers,
+failure selection, stale/torn records, send failures, held-core setup and L1
+restore. RV32IMF compilation of the real transport has no atomic instructions
+or runtime helpers. Normal and non-loadable Haiku builds pass; their driver
+SHA-256 values are `6ae463bb56390e8e1693c57bbdf9b11684b54742e74b379e598d322e1af8b4b7`
+and `dfa3472ad3714c1276bc88e072185c9a3c8574278eb16dce41e466c89f6de1e1`.
+The worker service does not yet invoke this barrier; queued descriptor fetch,
+epoch ownership, timeout/fault integration and hardware qualification remain.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

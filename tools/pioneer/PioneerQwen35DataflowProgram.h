@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DeviceLayout.h"
 #include "PioneerQwen35DataflowNocProtocol.h"
+#include "PioneerQwen35DataflowBarrierLayout.h"
 #include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35ProgramSchedule.h"
 
@@ -101,6 +102,9 @@ static_assert(DataflowActivationCacheAddress+DataflowActivationCacheBytes
 	&& DataflowWeightBufferAddress+DataflowWeightBufferPageStride
 		+DataflowMaxWeightPageBytes<=DataflowLocalBufferEnd,
 	"all dataflow L1 pages and reserved affine metadata have disjoint ranges");
+static_assert(unsigned(DataflowCoreCount)==unsigned(DataflowBarrierWorkers)
+	&& DataflowWorkerMailboxAddress+DataflowWorkerMailboxBytes==DataflowBarrierOutbox,
+	"the barrier follows the mailbox and includes every Tensix worker");
 
 struct DataflowCircularBuffer {
 	unsigned id,address,pageBytes,pages,bytes,pageStride;

@@ -4,6 +4,9 @@
 
 #include "PioneerQwen35DataflowOwner.h"
 #include "PioneerQwen35DataflowKernels.h"
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#include "PioneerQwen35DataflowBarrierSetup.h"
+#endif
 #include <stddef.h>
 #include <string.h>
 
@@ -194,6 +197,14 @@ public:
 				fPhase=PhaseFaulted;
 				return DataflowServiceImageWriteFailed;
 			}
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			// The new queued service uses L1 barrier slots only after the full
+			// fleet is held and snapshotted; partial initialization stays owned.
+			if (!DataflowBarrierPrepareHeldCore(io,core)) {
+				fPhase=PhaseFaulted;
+				return DataflowServiceStartupWriteFailed;
+			}
+#endif
 			DataflowQueueControl queues[DataflowCircularBufferCount]{};
 			DataflowWorkerMailbox mailbox{};
 			mailbox.magic=DataflowWorkerMailboxMagic;

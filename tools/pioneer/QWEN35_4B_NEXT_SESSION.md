@@ -89,6 +89,29 @@ and [prefetch kernel](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal
 show device-consumed command queues and bounded staging, not a claim that
 the current Haiku implementation already runs TT-Metalium.
 
+Tag0128 adds the first device-dispatch synchronization component. A bounded
+NoC1 peer transport admits only the per-worker receipt and release slots;
+worker 0 remains a compute worker and collects one committed receipt from all
+120 workers before sending releases. Payload and commit are separate ordered
+64-byte transfers; stale or torn commits do not release work, and transport
+uncertainty requires retaining the full graph. A partial release can leave
+some workers advanced and must be treated as a whole-graph fault. The existing
+saved L1 view covers these slots; their clear/readback while cores are held is
+compiled only into a non-loadable dispatch witness. Simulated tests cover all
+120 peers, failed and partial sends, stale/torn markers, explicit timeout,
+held-core initialization and full L1 restore. The concrete NoC transport also
+compiles for RV32IMF without atomic instructions or runtime helpers.
+
+This is not yet a working queued graph: descriptor-stream storage and fetch,
+fresh-epoch ownership, worker service integration, bounded deadline and fault
+propagation, and silicon validation are still open. Neither the barrier nor
+its peer NoC writes have run on the card. Normal tag0128 driver SHA-256:
+`6ae463bb56390e8e1693c57bbdf9b11684b54742e74b379e598d322e1af8b4b7`;
+non-loadable dispatch witness SHA-256:
+`dfa3472ad3714c1276bc88e072185c9a3c8574278eb16dce41e466c89f6de1e1`;
+service text SHA-256:
+`b544ef4561f1ec4463b9b73f55a05ead65c81becd7b610aed9634840c1cb35d1`.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -148,7 +171,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0127. Since tag0121 it records final release of a
+The default build now targets dedicated tag0128. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

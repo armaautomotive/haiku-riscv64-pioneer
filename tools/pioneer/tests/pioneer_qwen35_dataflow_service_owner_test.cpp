@@ -46,6 +46,11 @@ struct MockDataflowIO {
 	DataflowEmbeddingInvocation embeddingInvocation[DataflowCoreCount]{};
 	DataflowRmsInvocation rmsInvocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	uint32_t barrierLocal[DataflowCoreCount][3*DataflowBarrierPacketBytes/4]{};
+	uint32_t barrierRoot[(DataflowBarrierArrivalEnd-DataflowBarrierArrivalBase)/4]{};
+	unsigned failBarrierCore=UINT32_MAX,barrierWriteCount[DataflowCoreCount]{};
+#endif
 	unsigned captureCount=0,writeCount=0,startCount=0,waitCount=0,stopCount=0,
 		restoreCount=0,resumeCount=0;
 	unsigned beginCount=0,completeCount=0;
@@ -120,6 +125,16 @@ struct MockDataflowIO {
 		} else if (address==DataflowWorkerMailboxAddress
 			&& bytes==sizeof(mailbox[core])) {
 			memcpy(&mailbox[core],input,bytes);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
+			if (core==failBarrierCore) return false;
+			memcpy(reinterpret_cast<uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,input,bytes);
+			barrierWriteCount[core]++;
+		} else if (core==0 && address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
+			if (core==failBarrierCore) return false;
+			memcpy(reinterpret_cast<uint8_t*>(barrierRoot)+address-DataflowBarrierArrivalBase,input,bytes);
+			barrierWriteCount[core]++;
+#endif
 		} else return false;
 		writeCount++;
 		return true;
@@ -147,6 +162,12 @@ struct MockDataflowIO {
 		} else if (address==DataflowWorkerMailboxAddress
 			&& bytes==sizeof(mailbox[core])) {
 			memcpy(output,&mailbox[core],bytes);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
+			memcpy(output,reinterpret_cast<const uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,bytes);
+		} else if (core==0 && address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
+			memcpy(output,reinterpret_cast<const uint8_t*>(barrierRoot)+address-DataflowBarrierArrivalBase,bytes);
+#endif
 		} else return false;
 		return true;
 	}
@@ -154,6 +175,10 @@ struct MockDataflowIO {
 	{
 		if (core>=DataflowCoreCount || !held[core]
 			|| boot[core]!=DataflowServiceBootWord) return false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		for (unsigned i=0;i<DataflowCoreCount;i++)
+			if (barrierWriteCount[i]!=(i?3U:3U+2U*DataflowCoreCount)) return false;
+#endif
 		if (core==failStartCore) return false;
 		started[core]=true;
 		startCount++;
@@ -535,6 +560,14 @@ int main()
 	assert(owner.Install(image,io)==DataflowServiceComplete);
 	assert(owner.Ready() && io.captureCount==DataflowCoreCount
 		&& io.startCount==DataflowCoreCount);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	MockDataflowIO setupFailure{};
+	DataflowServiceOwner setupFailureOwner;
+	setupFailure.failBarrierCore=2;
+	assert(setupFailureOwner.Install(image,setupFailure)==DataflowServiceStartupWriteFailed
+		&& setupFailureOwner.Faulted() && setupFailure.captureCount==DataflowCoreCount
+		&& setupFailure.startCount==0 && setupFailure.restoreCount==0);
+#endif
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		assert(DataflowWorkerMailboxStartupValid(io.mailbox[core]));
 		assert(io.boot[core]==DataflowServiceBootWord);

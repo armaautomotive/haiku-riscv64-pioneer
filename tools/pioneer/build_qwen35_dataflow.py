@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010127'
+TAG = '2026112100010128'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -101,6 +101,8 @@ def main():
     parser.add_argument('new_output', type=Path)
     parser.add_argument('--compile-recovery-prototype', action='store_true',
                         help='compile the experimental recovery body into a non-loadable driver')
+    parser.add_argument('--compile-device-dispatch-prototype', action='store_true',
+                        help='compile incomplete device dispatch into a non-loadable driver')
     args = parser.parse_args()
 
     build = args.haiku_build.resolve(strict=True)
@@ -115,8 +117,10 @@ def main():
                       PIONEER_DRIVER_BUILD_TAG=TAG,
                       PIONEER_Q38_SPAN_PRELOAD='1',
                       PIONEER_Q38_SPAN_FAST='1')
-    if args.compile_recovery_prototype:
+    if args.compile_recovery_prototype or args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY'] = '1'
+    if args.compile_device_dispatch_prototype:
+        driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
     verify_kernel_stack_budget(driver)

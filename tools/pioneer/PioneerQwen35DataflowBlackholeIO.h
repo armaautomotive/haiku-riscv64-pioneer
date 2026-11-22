@@ -109,14 +109,20 @@ class DataflowBlackholeNoc {
 		return true;
 	}
 
+	template<bool BarrierPeer=false>
 	static bool Transfer(bool write,uint32_t remote,unsigned route,
-		uint8_t* local,unsigned bytes,DataflowNocDiagnostic* detail=nullptr)
+		uint8_t* local,unsigned bytes,DataflowNocDiagnostic* detail=nullptr,
+		unsigned source=0,unsigned destination=0)
 	{
 		if (detail) *detail={};
-		if (!local || !LocalRange(uint32_t(reinterpret_cast<uintptr_t>(local)),bytes)
-			|| !bytes || bytes>DataflowNocMaxTransfer || (bytes&63)
-			|| remote<BankBase || remote>=BankLimit || bytes>BankLimit-remote
-			|| (remote&63) || route>0xfff) {
+		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
+		const bool rangeOkay=BarrierPeer
+			?write && Noc==1 && DataflowBarrierPeerWriteAllowed(source,destination,
+				route,remote,localAddress,bytes)
+			:LocalRange(localAddress,bytes) && remote>=BankBase && remote<BankLimit
+				&& bytes<=BankLimit-remote;
+		if (!local || !rangeOkay || !bytes || bytes>DataflowNocMaxTransfer
+			|| (bytes&63) || (remote&63) || route>0xfff) {
 			if (detail) detail->stage=DataflowNocTransferInvalid;
 			return false;
 		}
@@ -126,10 +132,10 @@ class DataflowBlackholeNoc {
 				quiet.index,quiet.value,0};
 			return false;
 		}
-		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
 		const uint32_t rawSelf=*Words(Base+DataflowNocLogicalIdOffset);
 		uint32_t self=0;
-		if (!DataflowNocDecodeLocalRoute(rawSelf,self)) {
+		if (!DataflowNocDecodeLocalRoute(rawSelf,self)
+			|| (BarrierPeer && !DataflowNocRouteMatchesWorker(self,source))) {
 			if (detail) *detail={DataflowNocTransferIdentity,0xff,rawSelf,0};
 			return false;
 		}
@@ -270,6 +276,15 @@ public:
 	bool Write(uint32_t remote,unsigned route,const uint8_t* local,unsigned bytes) const
 	{
 		return Transfer(true,remote,route,const_cast<uint8_t*>(local),bytes);
+	}
+
+	// The dispatch barrier has two fixed 64-byte packets per message. This is
+	// not a general peer-write interface and is not enabled by the service yet.
+	bool WriteBarrierPacket(unsigned source,unsigned destination,unsigned remote,
+		const uint8_t* local,DataflowNocDiagnostic* detail=nullptr) const
+	{
+		return Transfer<true>(true,remote,DataflowBarrierWorkerRoute(destination),
+			const_cast<uint8_t*>(local),DataflowBarrierPacketBytes,detail,source,destination);
 	}
 };
 

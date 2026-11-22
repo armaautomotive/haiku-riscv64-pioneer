@@ -37,7 +37,12 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 			&& end<=PioneerQwen35::DataflowProgramRegionEnd)
 		|| (address>=PioneerQwen35::DataflowWorkerMailboxAddress
 			&& end<=PioneerQwen35::DataflowWorkerMailboxAddress
-				+PioneerQwen35::DataflowWorkerMailboxBytes);
+				+PioneerQwen35::DataflowWorkerMailboxBytes)
+		|| (address>=PioneerQwen35::DataflowBarrierOutbox
+			&& end<=PioneerQwen35::DataflowBarrierReleaseCommit
+				+PioneerQwen35::DataflowBarrierPacketBytes)
+		|| (address>=PioneerQwen35::DataflowBarrierArrivalBase
+			&& end<=PioneerQwen35::DataflowBarrierArrivalEnd);
 }
 
 static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)

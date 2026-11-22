@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowPciMemory.h"
+#include "../PioneerQwen35DataflowBarrierSetup.h"
 
 struct MockPciRaw {
 	uint32_t panel[DataflowPciL1ViewWords]{};
@@ -117,6 +118,12 @@ int main()
 		DataflowServiceEntryAddress,16));
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
 		DataflowQueueStateAddress,DataflowQueueStateBytes));
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
+		DataflowBarrierOutbox,3*DataflowBarrierPacketBytes));
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
+		DataflowBarrierArrivalBase,DataflowBarrierArrivalEnd-DataflowBarrierArrivalBase));
+	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
+		DataflowBarrierArrivalEnd-4,8));
 	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(0x7000,4));
 	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
 		DataflowServiceTextLimit-4,8));
@@ -132,6 +139,8 @@ int main()
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence),4));
 	assert(!DataflowPciRunningWriteRange(
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,state),4));
+	assert(!DataflowPciRunningWriteRange(DataflowBarrierOutbox,DataflowBarrierPacketBytes));
+	assert(!DataflowPciRunningWriteRange(DataflowBarrierArrivalBase,DataflowBarrierPacketBytes));
 	DataflowWorkerMailbox startupFatal{};
 	startupFatal.magic=DataflowWorkerMailboxMagic;
 	startupFatal.version=DataflowWorkerMailboxVersion;
@@ -167,6 +176,7 @@ int main()
 	assert(memory.CaptureCoreState(3,snapshot));
 	assert(snapshot.captured && snapshot.core==3 && snapshot.reset==0x46800);
 	assert(memory.HoldCore(3) && memory.CoreHeld(3));
+	assert(DataflowBarrierPrepareHeldCore(memory,3));
 
 	const uint32_t text=0x76543210;
 	assert(memory.WriteCoreMemory(3,DataflowServiceEntryAddress,&text,sizeof(text)));
@@ -174,6 +184,7 @@ int main()
 	assert(!memory.WriteCoreMemory(3,DataflowServiceTextLimit-4,&text,8));
 	assert(memory.StartCore(3)); // valid boot word starts the core
 	assert(raw.reset[3]==0x46800);
+	assert(!DataflowBarrierPrepareHeldCore(memory,3));
 	const unsigned commandAddress=DataflowWorkerMailboxAddress
 		+offsetof(DataflowWorkerMailbox,commandSequence);
 	raw.idleForWrite=false;
