@@ -438,6 +438,9 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	"$directory/pioneer_qwen35_dataflow_l2cpu_reset_probe_test.cpp" -o "$temporary/l2cpu-reset-probe-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/l2cpu-reset-probe-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_dataflow_held_fleet_sample_test.cpp" -o "$temporary/held-fleet-sample-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/held-fleet-sample-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_dataflow_role_fleet_pci_io_test.cpp" \
 	-o "$temporary/role-fleet-pci-io-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-pci-io-test"

@@ -35,7 +35,7 @@ struct Scope {
     bool allowed=true;
     unsigned calls=0;
     int failAt=-1;
-    bool ProveRoleL2InspectionAllowed(FakeIO&) { return allowed && int(calls++)!=failAt; }
+    bool ProveRoleStatusInspectionAllowed(FakeIO&) { return allowed && int(calls++)!=failAt; }
 };
 struct Guard {
     FakeIO& io;

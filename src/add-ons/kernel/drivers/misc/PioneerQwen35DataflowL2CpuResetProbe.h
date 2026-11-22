@@ -24,22 +24,22 @@ bool PioneerQwen35SampleL2CpuReset(IO& io,Scope& scope,Guard& guard,
 {
     restoreFailed=false;
     const unsigned core=io.runtimeCore;
-    if (!scope.ProveRoleL2InspectionAllowed(io) || !io.SharedArcResetMapped()
+    if (!scope.ProveRoleStatusInspectionAllowed(io) || !io.SharedArcResetMapped()
         || !guard.ProveSelectedRoute(core)) return false;
     uint32_t saved[3]{};
     for (unsigned word=0;word<3;word++) saved[word]=io.DramTlbRead(1,word);
-    if (!scope.ProveRoleL2InspectionAllowed(io) || !guard.ProveSelectedRoute(core)) return false;
+    if (!scope.ProveRoleStatusInspectionAllowed(io) || !guard.ProveSelectedRoute(core)) return false;
 
     // Consume the attempt before the first write. Even a failed MMIO write
     // can have changed the route, so every exit below must restore it.
     for (unsigned word=0;word<3;word++) {
-        if (!scope.ProveRoleL2InspectionAllowed(io) || io.runtimeCore!=core) {
+        if (!scope.ProveRoleStatusInspectionAllowed(io) || io.runtimeCore!=core) {
             restoreFailed=word!=0; return false;
         }
         io.DramTlbWrite(1,word,BlackholeArcScratchTlbWord(word));
     }
     auto arcRouteMatches=[&]() {
-        if (!scope.ProveRoleL2InspectionAllowed(io) || io.runtimeCore!=core) return false;
+        if (!scope.ProveRoleStatusInspectionAllowed(io) || io.runtimeCore!=core) return false;
         for (unsigned word=0;word<3;word++)
             if (io.DramTlbRead(1,word)!=BlackholeArcScratchTlbWord(word)) return false;
         return true;
@@ -63,18 +63,18 @@ bool PioneerQwen35SampleL2CpuReset(IO& io,Scope& scope,Guard& guard,
     }
 
     // Do not write through a scope whose owner or generation changed.
-    if (!scope.ProveRoleL2InspectionAllowed(io) || io.runtimeCore!=core) {
+    if (!scope.ProveRoleStatusInspectionAllowed(io) || io.runtimeCore!=core) {
         restoreFailed=true; return false;
     }
     for (unsigned word=0;word<3;word++) {
-        if (!scope.ProveRoleL2InspectionAllowed(io) || io.runtimeCore!=core) {
+        if (!scope.ProveRoleStatusInspectionAllowed(io) || io.runtimeCore!=core) {
             restoreFailed=true; return false;
         }
         io.DramTlbWrite(1,word,saved[word]);
     }
     for (unsigned word=0;word<3;word++)
         if (io.DramTlbRead(1,word)!=saved[word]) restoreFailed=true;
-    if (!scope.ProveRoleL2InspectionAllowed(io) || !guard.ProveSelectedRoute(core))
+    if (!scope.ProveRoleStatusInspectionAllowed(io) || !guard.ProveSelectedRoute(core))
         restoreFailed=true;
     if (restoreFailed || !sampled) return false;
     reset=second; return true;

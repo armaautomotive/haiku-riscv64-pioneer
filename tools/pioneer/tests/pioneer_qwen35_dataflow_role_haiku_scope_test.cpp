@@ -38,8 +38,9 @@ namespace PioneerQwen35 { struct DataflowWorkerSnapshot; }
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
 struct FakeService {
     bool ready=true;
+    bool capturePending=false;
     bool Ready() const { return ready; }
-    bool SharedRoleCapturePending() const { return false; }
+    bool SharedRoleCapturePending() const { return capturePending; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
@@ -49,6 +50,9 @@ struct PioneerSessionIO {
     PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=nullptr;
 #endif
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
+    bool simulateArc=false,tlbOverride=false;
+    unsigned selectCalls=0,tlbWrites=0;
+    uint32_t slot1[3]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
@@ -58,7 +62,10 @@ struct PioneerSessionIO {
     unsigned computeStopWrites=0,holdWrites=0; bool dropComputeStopWrite=false,dropHoldWrite=false;
     uint32_t rolePc[2]{};
     uint32_t computePc=0;
-    bool SelectRuntimeCore(unsigned core) { if (core>=DataflowBarrierWorkers) return false; runtimeCore=core; return true; }
+    bool SelectRuntimeCore(unsigned core) {
+        if (core>=DataflowBarrierWorkers) return false;
+        ++selectCalls; runtimeCore=core; tlbOverride=false; return true;
+    }
     bool MapQ38Panel() const { return mapping; }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     bool StopAndAuditAll(unsigned& stage,unsigned& core) { stage=0; core=DataflowBarrierWorkers; return true; }
@@ -77,13 +84,21 @@ struct PioneerSessionIO {
 #endif
     bool DataflowPanelMappingStable() const { return mapping; }
     uint32_t DramTlbRead(unsigned slot,unsigned word) {
+        if (slot==1 && tlbOverride) return slot1[word];
         const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
         return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
     }
-    void DramTlbWrite(unsigned,unsigned,uint32_t) { assert(false); }
-    bool SharedArcResetMapped() const { return false; }
-    uint32_t SharedArcL2CpuResetRead() { assert(false); return UINT32_MAX; }
-    uint32_t ScratchRead(unsigned) { assert(false); return UINT32_MAX; }
+    void DramTlbWrite(unsigned slot,unsigned word,uint32_t value) {
+        assert(simulateArc && slot==1 && word<3);
+        if (!tlbOverride) {
+            for (unsigned i=0;i<3;i++) slot1[i]=DramTlbRead(1,i);
+            tlbOverride=true;
+        }
+        ++tlbWrites; slot1[word]=value;
+    }
+    bool SharedArcResetMapped() const { return simulateArc; }
+    uint32_t SharedArcL2CpuResetRead() { assert(simulateArc && tlbOverride); return 0x0f; }
+    uint32_t ScratchRead(unsigned word) { assert(simulateArc && tlbOverride && word==2); return 5; }
     uint32_t ResetRead() const { return reset; }
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
     uint32_t RuntimePcRead() const { return computePc; }

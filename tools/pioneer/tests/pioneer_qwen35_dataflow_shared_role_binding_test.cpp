@@ -37,6 +37,24 @@ static void ExerciseBinding(PioneerSessionIO& io)
     context->qwen35SharedRoleBinding=nullptr;
 }
 
+static void ExerciseStatusSampling(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    assert(context && io.qwen35BorrowedRoleScope);
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    assert(context->qwen35SharedRoleBinding);
+    io.runtimeCore=7; io.simulateArc=true; io.selectCalls=io.tlbWrites=0;
+    // ARC inspection and both 120-core sweeps can finish, but they cannot
+    // authorize the independent fleet ownership proof or role mapping.
+    assert(!io.SharedCaptureAndStageHeld());
+    assert(io.tlbWrites==6 && io.selectCalls==241 && io.runtimeCore==7);
+    assert(!gMapCalls && !io.sharedResetWrites && !io.holdWrites);
+    assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
+    assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
+    context->qwen35SharedRoleBinding=nullptr;
+    io.simulateArc=false;
+}
+
 int main()
 {
     PioneerStoreContext context; FakeService service; FakeGraph graph;
@@ -47,6 +65,9 @@ int main()
     assert(Qwen35DataflowGenerate(&cookie,nullptr,0)==B_OK);
     assert(Qwen35DataflowControl(&cookie,6,nullptr,0)==B_OK);
     assert(Qwen35DataflowControl(&cookie,7,nullptr,0)==B_OK);
+    service.capturePending=true; gBorrowedScopeHook=ExerciseStatusSampling;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    service.capturePending=false;
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");

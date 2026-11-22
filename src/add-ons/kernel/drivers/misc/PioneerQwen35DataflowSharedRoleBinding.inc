@@ -6,6 +6,7 @@
 #error Shared role binding is a non-loadable recovery witness only
 #endif
 #include "PioneerQwen35DataflowL2CpuResetProbe.h"
+#include "PioneerQwen35DataflowHeldFleetSample.h"
 class PioneerQwen35SharedRoleBinding {
     using Views=PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>;
     using Adapter=PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness,Views>;
@@ -50,15 +51,19 @@ public:
         if (fCaptureAttempted || !Valid()) return false;
         fCaptureAttempted=true;
         auto* scope=Scope();
-        if (!scope || !scope->ProveRoleL2InspectionAllowed(fContext.io)) return false;
+        if (!scope || !scope->ProveRoleStatusInspectionAllowed(fContext.io)) return false;
         PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(fContext.io,*scope);
         uint32_t l2cpuReset=0; bool restoreFailed=false;
         const bool sampled=PioneerQwen35SampleL2CpuReset(fContext.io,*scope,route,l2cpuReset,restoreFailed);
         if (restoreFailed) sColdRecoveryRequired=true;
         if (!sampled || !PioneerQwen35L2CpuRiscsHeld(l2cpuReset)) return false;
-        // No mappings, TLB changes or card writes while the real fleet proof
-        // is unavailable beyond the bounded ARC inspection above. The
-        // global incoming-NoC proof is intentionally false in this build.
+        unsigned failedCore=DataflowBarrierWorkers;
+        const bool heldSample=PioneerQwen35SampleHeldFleet(fContext.io,*scope,route,failedCore,restoreFailed);
+        if (restoreFailed) sColdRecoveryRequired=true;
+        if (!heldSample) return false;
+        // These status samples do not establish the independent global
+        // incoming-NoC/ownership proof, which remains false in this build.
+        // No role mappings or role memory writes occur without that proof.
         if (!scope->ProveRoleFleetHeldAndQuiet(fContext.io,0) || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
         if (!fOwner.CaptureAll(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
