@@ -351,7 +351,9 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 	} else if (invocationMagic==DataflowConvMagic) {
 		const auto* conv=reinterpret_cast<const DataflowConvInvocation*>(
 			static_cast<uintptr_t>(DataflowProgramAddress));
-		if (DataflowWorkerQueuesClean() && conv->Valid()
+		DataflowConvTrace(0,DataflowConvProgressQueues);
+		if (DataflowWorkerQueuesClean()
+			&& (DataflowConvTrace(0,DataflowConvProgressValidate),conv->Valid())
 			&& conv->core==core) {
 			DataflowBlackholeConvOps io;
 			okay=PioneerQwen35DataflowConvWorker(*conv,

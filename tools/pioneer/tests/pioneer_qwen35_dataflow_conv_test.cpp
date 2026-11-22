@@ -43,6 +43,11 @@ struct ConvMockIO {
 	unsigned historyWrites[DataflowConvGroups]{};
 	unsigned readSlot=0,writeSlot=0;
 	bool bound=false;
+	unsigned lastGroup=0,lastStage=0,marks=0,traceCount=0,trace[40]{};
+	void Mark(unsigned group,unsigned stage) {
+		assert(traceCount<40);trace[traceCount++]=(group<<8)|stage;
+		lastGroup=group;lastStage=stage;marks++;
+	}
 
 	bool Bind(const DataflowConvInvocation& invocation)
 	{
@@ -146,7 +151,7 @@ struct ConvOwnerMockIO {
 	bool PublishCommand(unsigned core,unsigned sequence)
 	{
 		if (core>=DataflowCoreCount || !written[core]) return false;
-		snapshot[core]={sequence,0,sequence,DataflowWorkerComplete,0,2};
+		snapshot[core]={sequence,0,sequence,DataflowWorkerComplete,0,2,0,0};
 		return true;
 	}
 
@@ -197,8 +202,27 @@ static void RunAllCores(DataflowConvProgram& program,ConvMockIO& io)
 		assert(DataflowConvProgramBuilder::BindCore(program,core,invocation));
 		assert(invocation.Valid());
 		float qkv[16]{},weights[64]{},history[48]{},next[48]{},output[16]{};
+		const unsigned before=io.marks;
+		io.traceCount=0;
 		assert(PioneerQwen35DataflowConvWorker(invocation,qkv,weights,history,
 			next,output,io));
+		assert(io.marks-before==2+invocation.groupCount*(invocation.position?6:5)
+			&& io.lastGroup==invocation.groupCount-1
+			&& io.lastStage==DataflowConvProgressFinished);
+		unsigned mark=0;
+		assert(io.trace[mark++]==DataflowConvProgressBind);
+		for (unsigned group=0;group<invocation.groupCount;group++) {
+			const unsigned prefix=group<<8;
+			assert(io.trace[mark++]==(prefix|DataflowConvProgressQkvRead));
+			assert(io.trace[mark++]==(prefix|DataflowConvProgressWeightRead));
+			if (invocation.position)
+				assert(io.trace[mark++]==(prefix|DataflowConvProgressHistoryRead));
+			assert(io.trace[mark++]==(prefix|DataflowConvProgressCompute));
+			assert(io.trace[mark++]==(prefix|DataflowConvProgressHistoryWrite));
+			assert(io.trace[mark++]==(prefix|DataflowConvProgressQkvWrite));
+		}
+		assert(io.trace[mark++]==((invocation.groupCount-1)<<8|DataflowConvProgressFinished)
+			&& mark==io.traceCount);
 	}
 }
 

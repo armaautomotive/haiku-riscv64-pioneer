@@ -122,6 +122,18 @@ int main() {
 	assert(!DataflowGraphProgressDetail(progress,detail));
 	progress=DataflowGraphProgressMagic|6;
 	assert(!DataflowGraphProgressDetail(progress,detail));
+	const uint32_t convGraph=DataflowGraphProgressWord(7,DataflowGraphProgressExecute);
+	for (unsigned group=0;group<5;group++)
+		for (unsigned stage=DataflowConvProgressQueues;stage<=DataflowConvProgressFinished;stage++) {
+			const uint32_t word=DataflowConvProgressWord(convGraph,group,stage);
+			assert(DataflowConvProgressDetail(convGraph,word,detail)
+				&& detail==(0x40000000U|(group<<5)|stage));
+			assert(!DataflowConvProgressDetail(DataflowGraphProgressWord(8,DataflowGraphProgressExecute),word,detail));
+		}
+	assert(!DataflowConvProgressDetail(0,0,detail));
+	assert(!DataflowConvProgressWord(convGraph,8,DataflowConvProgressQueues));
+	assert(!DataflowConvProgressWord(convGraph,0,0));
+	assert(!DataflowConvProgressWord(DataflowGraphProgressWord(7,DataflowGraphProgressBarrier),0,DataflowConvProgressQueues));
 	WaitIO advancing;advancing.increment=20000000;advancing.count=4;
 	advancing.samples[0]=running(0,DataflowGraphProgressFetch);
 	advancing.samples[1]=running(0,DataflowGraphProgressExecute);
@@ -130,6 +142,14 @@ int main() {
 	DataflowWorkerSnapshot waited{};
 	assert(DataflowGraphWaitForCompletion(advancing,0,5,0,waited)
 		&& advancing.now==60000000 && waited.state==DataflowWorkerComplete);
+	WaitIO convAdvancing;convAdvancing.increment=20000000;convAdvancing.count=4;
+	for (unsigned i=0;i<3;i++) {
+		convAdvancing.samples[i]=running(7,DataflowGraphProgressExecute);
+		convAdvancing.samples[i].failureStatus=0x40000000U|((i+4)&31U);
+	}
+	convAdvancing.samples[3]={5,4,5,DataflowWorkerComplete,0,2,0,0};
+	assert(DataflowGraphWaitForCompletion(convAdvancing,0,5,0,waited)
+		&& convAdvancing.now==60000000 && waited.state==DataflowWorkerComplete);
 	WaitIO stalled;stalled.count=1;stalled.samples[0]=running(2,DataflowGraphProgressExecute);
 	assert(!DataflowGraphWaitForCompletion(stalled,0,5,0,waited)
 		&& stalled.now==DataflowGraphWaitIdleMicros && waited.failureDetail==stalled.samples[0].failureDetail);

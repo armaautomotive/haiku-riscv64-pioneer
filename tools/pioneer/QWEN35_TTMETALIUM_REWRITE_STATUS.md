@@ -1,5 +1,15 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+Tag0160 adds correlated, read-only per-group convolution progress markers for
+validation, reads, arithmetic and writes. The progress-aware wait recognizes
+forward group/phase movement without treating the marker as a completion or
+recovery proof. A simulated all-120-core convolution test verifies marker
+order and the regular target suite now includes it. The target suite and
+normal, qualification, and non-loadable reset-witness builds pass. Hardware
+qualification has not run. The qualification driver SHA-256 is
+`8c524d28bcb59107d6772d9a7831ff4c1dec6929978e7c2b66f24eb5c3ab4fc7`.
+
+
 The guarded tag0159 run reached step7 (layer0 recurrent convolution), after
 embedding, residual save, normalization, and four projections, then timed
 out with worker0 executing. No token or decode throughput was produced.

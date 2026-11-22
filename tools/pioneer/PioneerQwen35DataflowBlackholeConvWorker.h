@@ -5,25 +5,46 @@
 #include "PioneerQwen35DataflowBlackholeIO.h"
 #include "PioneerQwen35DataflowConvProgram.h"
 #include "PioneerQwen35DataflowSilu.h"
+#include "PioneerQwen35DataflowConvProgress.h"
+#if defined(PIONEER_QWEN35_DEVICE_DISPATCH) && defined(__riscv)
+#include "PioneerQwen35DataflowGraphRunProtocol.h"
+#endif
 
 namespace PioneerQwen35 {
+
+inline void DataflowConvTrace(unsigned group,unsigned stage)
+{
+#if defined(PIONEER_QWEN35_DEVICE_DISPATCH) && defined(__riscv)
+	auto& graph=*reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowGraphProgressAddress));
+	auto& operation=*reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowGraphOperationProgressAddress));
+	const uint32_t word=DataflowConvProgressWord(DataflowLoadAcquire(graph),group,stage);
+	if (word) DataflowStoreRelease(operation,word);
+#else
+	(void)group;(void)stage;
+#endif
+}
 
 template<class IO>
 bool PioneerQwen35DataflowConvWorker(const DataflowConvInvocation& invocation,
 	float* qkvPage,float* weightPage,float* historyPage,float* nextHistoryPage,
 	float* outputPage,IO& io)
 {
+	io.Mark(0,DataflowConvProgressBind);
 	if (!invocation.Valid() || !qkvPage || !weightPage || !historyPage
 		|| !nextHistoryPage || !outputPage || !io.Bind(invocation)) return false;
 	for (unsigned group=0;group<invocation.groupCount;group++) {
 		const unsigned row=(invocation.firstGroup+group)*16;
-		if (!io.ReadQkvPanel(row,qkvPage)
-			|| !io.ReadWeightPanel(row,weightPage)) return false;
+		io.Mark(group,DataflowConvProgressQkvRead);
+		if (!io.ReadQkvPanel(row,qkvPage)) return false;
+		io.Mark(group,DataflowConvProgressWeightRead);
+		if (!io.ReadWeightPanel(row,weightPage)) return false;
 		if (invocation.position) {
+			io.Mark(group,DataflowConvProgressHistoryRead);
 			if (!io.ReadHistoryPanel(row,historyPage)) return false;
 		} else {
 			for (unsigned i=0;i<48;i++) historyPage[i]=0.0f;
 		}
+		io.Mark(group,DataflowConvProgressCompute);
 		for (unsigned channel=0;channel<16;channel++) {
 			const float current=qkvPage[channel];
 			const float* weight=weightPage+channel*4;
@@ -41,9 +62,12 @@ bool PioneerQwen35DataflowConvWorker(const DataflowConvInvocation& invocation,
 			nextHistoryPage[channel*3+2]=current;
 			outputPage[channel]=activated;
 		}
-		if (!io.WriteHistoryPanel(row,nextHistoryPage)
-			|| !io.WriteQkvPanel(row,outputPage)) return false;
+		io.Mark(group,DataflowConvProgressHistoryWrite);
+		if (!io.WriteHistoryPanel(row,nextHistoryPage)) return false;
+		io.Mark(group,DataflowConvProgressQkvWrite);
+		if (!io.WriteQkvPanel(row,outputPage)) return false;
 	}
+	io.Mark(invocation.groupCount-1,DataflowConvProgressFinished);
 	return true;
 }
 
@@ -75,6 +99,7 @@ class DataflowBlackholeConvOps {
 	}
 
 public:
+	void Mark(unsigned group,unsigned stage) const { DataflowConvTrace(group,stage); }
 	bool Bind(const DataflowConvInvocation& program)
 	{
 		fProgram=nullptr;

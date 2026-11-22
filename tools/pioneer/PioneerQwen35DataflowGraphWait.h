@@ -39,7 +39,14 @@ template<class IO> bool DataflowGraphWaitForCompletion(IO& io,unsigned core,
 				&& observed.phase==1 && (detail&0xffffc000U)==0x40000000U
 				&& step<DataflowGraphDecodeSteps && phase>=DataflowGraphProgressFetch
 				&& phase<=DataflowGraphProgressResetQueues) {
-				const unsigned ordinal=(step<<3)|phase;
+				unsigned substep=0;
+				const unsigned group=(observed.failureStatus>>5)&7U;
+				const unsigned stage=observed.failureStatus&31U;
+				if ((observed.failureStatus&0xffffff00U)==0x40000000U
+					&& phase==DataflowGraphProgressExecute
+					&& stage>=DataflowConvProgressQueues && stage<=DataflowConvProgressFinished)
+					substep=(group<<5)|stage;
+				const unsigned ordinal=(((step<<3)|phase)<<10)|substep;
 				if (ordinal>greatest) { greatest=ordinal;lastProgress=now; }
 			}
 		}

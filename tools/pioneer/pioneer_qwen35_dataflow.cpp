@@ -484,6 +484,10 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 				if ((graph.reserved[1]&0xc0000000U)==0x40000000U)
 					fprintf(stderr,"P100A_Q35_DATAFLOW graph_progress step=%u phase=%u\n",
 						(graph.reserved[1]>>4)&0x3ffU,graph.reserved[1]&0xfU);
+				if ((graph.reserved[1]&0xc0000000U)==0x40000000U
+					&& (graph.reserved[2]&0xffffff00U)==0x40000000U)
+					fprintf(stderr,"P100A_Q35_DATAFLOW conv_progress group=%u stage=%u\n",
+						(graph.reserved[2]>>5)&7U,graph.reserved[2]&31U);
 				if (terminalDetail && (graph.reserved[1]&0xfU)==1 && (graph.reserved[2]&0x80000000U)) {
 					const unsigned detail=graph.reserved[2];
 					fprintf(stderr,"P100A_Q35_DATAFLOW graph_fetch stage=%u noc_stage=%u "

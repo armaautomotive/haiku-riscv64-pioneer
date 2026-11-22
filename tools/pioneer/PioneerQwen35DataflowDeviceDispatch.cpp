@@ -31,6 +31,9 @@ struct GraphWitnessExecution {
 			PioneerQwen35::DataflowGraphProgressWord(index,phase));
 	}
 	bool Fetch(unsigned step) {
+		auto& operation=*reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(
+			PioneerQwen35::DataflowGraphOperationProgressAddress));
+		PioneerQwen35::DataflowStoreRelease(operation,0);
 		index=step;Mark(PioneerQwen35::DataflowGraphProgressFetch);
 		return PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token,&fetchStage,&fetchNoC);
 	}

@@ -577,8 +577,14 @@ PioneerSessionIO::ReadWorkerSnapshot(unsigned core,
 		if (ReadCoreMemory(core,PioneerQwen35::DataflowGraphProgressAddress,&first,sizeof(first))
 			&& ReadCoreMemory(core,PioneerQwen35::DataflowGraphProgressAddress,&second,sizeof(second))
 			&& first==second
-			&& PioneerQwen35::DataflowGraphProgressDetail(first,snapshot.failureDetail))
+			&& PioneerQwen35::DataflowGraphProgressDetail(first,snapshot.failureDetail)) {
+			uint32_t op1=0,op2=0;
+			if (ReadCoreMemory(core,PioneerQwen35::DataflowGraphOperationProgressAddress,&op1,sizeof(op1))
+				&& ReadCoreMemory(core,PioneerQwen35::DataflowGraphOperationProgressAddress,&op2,sizeof(op2))
+				&& op1==op2)
+				PioneerQwen35::DataflowConvProgressDetail(first,op1,snapshot.failureStatus);
 			return true;
+		}
 	}
 	if (mailbox.state==PioneerQwen35::DataflowWorkerFailed && mailbox.phase==5
 		&& PioneerQwen35::DataflowGraphFaultDetail(mailbox,snapshot.failureDetail,

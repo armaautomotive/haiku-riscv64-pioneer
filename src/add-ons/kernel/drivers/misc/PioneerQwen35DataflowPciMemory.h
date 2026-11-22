@@ -40,6 +40,8 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 			&& end<=PioneerQwen35::DataflowGraphRunAddress+PioneerQwen35::DataflowGraphRunBytes)
 		|| (address==PioneerQwen35::DataflowGraphProgressAddress
 			&& bytes==sizeof(uint32_t))
+		|| (address==PioneerQwen35::DataflowGraphOperationProgressAddress
+			&& bytes==sizeof(uint32_t))
 #endif
 		|| (address>=PioneerQwen35::DataflowQueueStateAddress
 			&& end<=PioneerQwen35::DataflowQueueStateAddress
