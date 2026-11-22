@@ -241,6 +241,10 @@ int main()
 	assert(raw.reset[3]==0x46800);
 	assert(!memory.WriteCoreMemory(3,DataflowServiceDispatchAddress,&text,sizeof(text)));
 	assert(!DataflowBarrierPrepareHeldCore(memory,3));
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
+	raw.reset[3]=DataflowPciRunningReset;
+#endif
 	const unsigned commandAddress=DataflowWorkerMailboxAddress
 		+offsetof(DataflowWorkerMailbox,commandSequence);
 	raw.idleForWrite=false;
@@ -254,12 +258,13 @@ int main()
 	raw.idleForWrite=true;
 	raw.reset[3]=0x87ffff;
 	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
-	raw.reset[3]=0x46800;
+	raw.reset[3]=DataflowPciRunningReset;
 	assert(memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	assert(memory.WriteCoreMemory(3,DataflowGraphRunAddress,&text,sizeof(text)));
 #endif
 	assert(memory.WriteCoreMemory(3,commandAddress,&text,sizeof(text)));
+	raw.reset[3]=0x46800; // exercise the separate original dispatcher hold
 	assert(memory.HoldCore(3));
 	assert(raw.boot[3]==DataflowServiceBootWord);
 
@@ -321,9 +326,11 @@ int main()
 		raw.mailbox[core].logicalCore=core;
 	}
 	raw.reset[0]=0x47800;
+#ifndef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	raw.serviceImage[1]=true;
 	raw.serviceImage[17]=true;
 	raw.serviceImage[119]=true;
+#endif
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(memory.CaptureCoreState(core));
 	unsigned stopAuditStage=UINT32_MAX,stopAuditCore=UINT32_MAX;
@@ -331,9 +338,11 @@ int main()
 	assert(stopAuditStage==0 && stopAuditCore==DataflowCoreCount);
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(raw.reset[core]==0x47800);
+#ifndef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	assert(raw.mailbox[1].state==DataflowWorkerStopped);
 	assert(raw.mailbox[17].state==DataflowWorkerStopped);
 	assert(raw.mailbox[119].state==DataflowWorkerStopped);
+#endif
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
 		assert(memory.RestoreCoreState(core));
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)

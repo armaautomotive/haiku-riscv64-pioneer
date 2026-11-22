@@ -213,6 +213,19 @@ int main()
         idleRoles.completed[role]=1; idleRoles.status[role]=DataflowRoleComplete;
     }
     assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
+    readyWorker.commandSequence=readyWorker.completedSequence=2;
+    readyWorker.acknowledgedSequence=1; readyWorker.state=DataflowWorkerComplete; readyWorker.phase=2;
+    context.io.queueBoxes[11][0].produced=context.io.queueBoxes[11][0].consumed=3;
+    assert(io.RuntimeStable(11,0x1000,0x100));
+    assert(io.CompletedForAcknowledgement(11,0x1000,0x100));
+    idleRoles.command=2;
+    assert(!io.CompletedForAcknowledgement(11,0x1000,0x100));
+    idleRoles.command=1;
+    context.io.queueBoxes[11][0].consumed=2;
+    assert(!io.CompletedForAcknowledgement(11,0x1000,0x100));
+    context.io.queueBoxes[11][0].consumed=3;
+    readyWorker.state=DataflowWorkerFailed; readyWorker.failure=DataflowFailureQueue; readyWorker.phase=5;
+    assert(!io.CompletedForAcknowledgement(11,0x1000,0x100));
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");

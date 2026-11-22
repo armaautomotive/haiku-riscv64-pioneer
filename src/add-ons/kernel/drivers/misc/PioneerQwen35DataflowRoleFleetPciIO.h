@@ -86,7 +86,7 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         memcpy(&output,&second,sizeof(output)); return true;
     }
-    bool QueuesCleared(unsigned core) {
+    bool QueuesSettled(unsigned core,bool requireZero) {
         using namespace PioneerQwen35;
         DataflowQueueControl first[DataflowCircularBufferCount]{},second[DataflowCircularBufferCount]{};
         if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,first,sizeof(first))) return false;
@@ -94,10 +94,11 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,second,sizeof(second))
             || memcmp(first,second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         for (const auto& queue:second)
-            if (queue.produced || queue.consumed || DataflowQueueFailure(queue)
+            if (queue.produced!=queue.consumed || (requireZero && queue.produced) || DataflowQueueFailure(queue)
                 || queue.reserved[0] || queue.reserved[1]) return false;
         return true;
     }
+    bool QueuesCleared(unsigned core) { return QueuesSettled(core,true); }
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
         :fIO(io),fScope(scope),fViews(views),fGuard(io,scope) {}
@@ -248,6 +249,29 @@ public:
             && DataflowServicePcInImage(pc2,textWords,dispatchWords)
             && fScope.ProveRoleRuntimeSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    bool RuntimeStable(unsigned core,unsigned textWords,unsigned dispatchWords) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !fScope.ProveRoleRuntimeSafe(fIO,core)
+            || !SelectForStop(core)) return false;
+        const uint32_t pc1=fIO.RuntimePcRead(); fIO.Pause(); const uint32_t pc2=fIO.RuntimePcRead();
+        return DataflowServicePcInImage(pc1,textWords,dispatchWords)
+            && DataflowServicePcInImage(pc2,textWords,dispatchWords)
+            && fScope.ProveRoleRuntimeSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    bool CompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
+        using namespace PioneerQwen35;
+        if (!RuntimeStable(core,textWords,dispatchWords)) return false;
+        DataflowWorkerMailbox worker{}; DataflowRoleMailbox roles{};
+        if (!ReadStableWorkerMailbox(core,worker) || worker.magic!=DataflowWorkerMailboxMagic
+            || worker.version!=DataflowWorkerMailboxVersion || worker.logicalCore!=core
+            || worker.shutdownSequence || worker.commandSequence!=worker.completedSequence
+            || worker.commandSequence<=worker.acknowledgedSequence
+            || worker.state!=DataflowWorkerComplete || worker.failure || worker.phase!=2
+            || !ReadStableRoleMailbox(core,roles) || !DataflowRoleMailboxIdle(roles)
+            || !QueuesSettled(core,false)) return false;
+        return RuntimeStable(core,textWords,dispatchWords);
     }
     bool AllRolesHeld(unsigned core) {
         return Select(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)

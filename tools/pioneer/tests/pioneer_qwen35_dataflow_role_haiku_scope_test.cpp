@@ -63,6 +63,8 @@ struct PioneerSessionIO {
     bool SharedFleetHeldAndQuiescent();
     bool SharedStartCore(unsigned);
     bool SharedCoreReady(unsigned,const DataflowWorkerSnapshot&);
+    bool SharedRuntimeStable(unsigned);
+    bool SharedCoreIdleForWrite(unsigned,unsigned,unsigned);
     bool SharedStopAndHoldAll(unsigned&,unsigned&);
     bool SharedRestoreRolesHeld();
     bool SharedVerifyRolesAfterResidentRestore();

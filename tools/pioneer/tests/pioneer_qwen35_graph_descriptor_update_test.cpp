@@ -28,6 +28,7 @@ int main() {
 		{6,546,548},2,100,0,next));
 	auto raw=std::make_unique<DescriptorRaw>();
 	auto memory=std::make_unique<PioneerQwen35DataflowPciMemory<DescriptorRaw>>(*raw);
+	raw->reset[0]=DataflowPciRunningReset;
 	assert(memory->WriteCoreMemory(0,DataflowGraphRunAddress,&first,sizeof(first)));
 	const unsigned firstWrites=raw->writes;
 	assert(firstWrites==128 && memory->UpdateGraphRun(0,1,next));

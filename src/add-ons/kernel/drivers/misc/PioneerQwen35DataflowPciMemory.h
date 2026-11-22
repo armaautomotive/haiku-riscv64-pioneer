@@ -16,7 +16,12 @@ enum : unsigned {
 	DataflowPciL1ViewBase=0x6e000,
 	DataflowPciL1ViewBytes=0x42000,
 	DataflowPciL1ViewWords=DataflowPciL1ViewBytes/sizeof(uint32_t),
-	DataflowPciResumeSettlePauses=10000
+	DataflowPciResumeSettlePauses=10000,
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	DataflowPciRunningReset=0x6000
+#else
+	DataflowPciRunningReset=0x46800
+#endif
 };
 
 struct DataflowPciCoreSnapshot {
@@ -302,7 +307,7 @@ public:
 	{
 		if (!input || !RangeAllowed(address,bytes) || !SelectMapped(core)) return false;
 		const bool held=CoreHeld(core);
-		if (!held && (fRaw.ResetRead()!=0x46800 || fRaw.ResetRead()!=0x46800
+		if (!held && (fRaw.ResetRead()!=DataflowPciRunningReset || fRaw.ResetRead()!=DataflowPciRunningReset
 			|| !DataflowPciRunningWriteRange(address,bytes)
 			|| !fRaw.DataflowCoreIdleForWrite(core,address,bytes))) return false;
 		// A held-core write can replace code, even when the restored boot word
@@ -322,7 +327,9 @@ public:
 			fRaw.Q38PanelWrite(current,words[i]);
 			if (fRaw.Q38PanelRead(current)!=words[i]
 				|| !fRaw.DataflowPanelMappingStable()
-				|| (held && !CoreHeld(core))) return false;
+				|| (held && !CoreHeld(core))
+				|| (!held && (fRaw.ResetRead()!=DataflowPciRunningReset
+					|| fRaw.ResetRead()!=DataflowPciRunningReset))) return false;
 		}
 		return true;
 	}
@@ -339,7 +346,7 @@ public:
 		using namespace PioneerQwen35;
 		if (!previous || !DataflowGraphRunValid(next,core)
 			|| next.triggerSequence!=previous+1 || !SelectMapped(core)
-			|| fRaw.ResetRead()!=0x46800 || fRaw.ResetRead()!=0x46800
+			|| fRaw.ResetRead()!=DataflowPciRunningReset || fRaw.ResetRead()!=DataflowPciRunningReset
 			|| !fRaw.DataflowCoreIdleForWrite(core,DataflowGraphRunAddress,
 				DataflowGraphRunBytes)) return false;
 		DataflowGraphRunDescriptor old{};
@@ -371,7 +378,7 @@ public:
 			if (fRaw.Q38PanelRead(address)!=value
 				|| !fRaw.DataflowPanelMappingStable()) return false;
 		}
-		return fRaw.ResetRead()==0x46800 && fRaw.ResetRead()==0x46800;
+		return fRaw.ResetRead()==DataflowPciRunningReset && fRaw.ResetRead()==DataflowPciRunningReset;
 	}
 #endif
 

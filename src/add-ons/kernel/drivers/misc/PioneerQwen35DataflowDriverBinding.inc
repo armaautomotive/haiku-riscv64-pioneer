@@ -198,13 +198,16 @@ PioneerQwen35DataflowCoreRuntimeStable(PioneerSessionIO& io,unsigned core,
 	auto* context=io.qwen35DataflowContext;
 	if (!context || core>=PioneerQwen35::DataflowCoreCount)
 		return fail(PioneerDataflowRuntimeDetailContext);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	if (!io.SharedRuntimeStable(core)) return fail(PioneerDataflowRuntimeDetailNoCIdle);
+#endif
 	if (!io.SelectRuntimeCore(core) || !io.MapQ38Panel()
 		|| !io.DataflowPanelMappingStable())
 		return fail(PioneerDataflowRuntimeDetailMapping);
 	if (!PioneerSessionIODataflowServiceImageTrusted(io,core))
 		return fail(PioneerDataflowRuntimeDetailServiceImage);
 	const unsigned reset=io.ResetRead();
-	if (reset!=0x46800 || io.ResetRead()!=reset)
+	if (reset!=DataflowPciRunningReset || io.ResetRead()!=reset)
 		return fail(PioneerDataflowRuntimeDetailReset);
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	if (!context->q38Dispatch || context->q38Dispatch->unsafe
@@ -375,6 +378,9 @@ bool
 PioneerSessionIO::DataflowCoreIdleForWrite(unsigned core,unsigned address,
 	unsigned bytes)
 {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	return SharedCoreIdleForWrite(core,address,bytes);
+#else
 	if (core>=PioneerQwen35::DataflowCoreCount
 		|| ResetRead()!=0x46800 || ResetRead()!=0x46800
 		|| !DataflowPciRunningWriteRange(address,bytes)
@@ -403,6 +409,7 @@ PioneerSessionIO::DataflowCoreIdleForWrite(unsigned core,unsigned address,
 		&& mailbox.shutdownSequence==0
 		&& PioneerQwen35DataflowQueuesDrained(*this,core)
 		&& BlackholeResidentIdle(*this);
+#endif
 }
 
 bool
@@ -1832,6 +1839,10 @@ PioneerSessionIO::AuditGraphCore(unsigned core,const PioneerQwen35::DataflowGrap
 		|| receipt.commandSequence!=expected.triggerSequence || receipt.completedSequence!=expected.triggerSequence
 		|| receipt.state!=DataflowWorkerComplete || receipt.failure || receipt.phase!=2
 		|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		|| !SharedCoreIdleForWrite(core,DataflowWorkerMailboxAddress
+			+offsetof(DataflowWorkerMailbox,acknowledgedSequence),sizeof(uint32_t))
+#endif
 		|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	struct NoC1Reader {

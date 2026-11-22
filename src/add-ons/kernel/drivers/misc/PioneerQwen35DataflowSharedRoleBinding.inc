@@ -92,6 +92,27 @@ public:
             sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
             sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t));
     }
+    __attribute__((noinline)) bool RuntimeStable(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+            || !fReleaseAuthorized || !fViews.Opened()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return io.RuntimeStable(core,sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
+            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t));
+    }
+    __attribute__((noinline)) bool CoreIdleForWrite(unsigned core,unsigned address,unsigned bytes) {
+        using namespace PioneerQwen35;
+        auto* scope=Scope();
+        if (!scope || core>=DataflowBarrierWorkers || !fReleaseConfirmed[core]
+            || !fReleaseAuthorized || !fViews.Opened() || !DataflowPciRunningWriteRange(address,bytes)) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        const unsigned acknowledgement=DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,acknowledgedSequence);
+        if (address==acknowledgement && bytes==sizeof(uint32_t))
+            return io.CompletedForAcknowledgement(core,sizeof(DataflowServiceTextWords)/sizeof(uint32_t),
+                sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t));
+        DataflowWorkerSnapshot snapshot{};
+        return fContext.io.ReadWorkerSnapshot(core,snapshot) && CoreReady(core,snapshot);
+    }
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
         // The old stop path understands T0 alone. For released tiles publish
         // or observe one role stop request first; the real scope still denies
@@ -208,6 +229,14 @@ bool PioneerSessionIO::SharedStartCore(unsigned core) {
 bool PioneerSessionIO::SharedCoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
         && qwen35DataflowContext->qwen35SharedRoleBinding->CoreReady(core,snapshot);
+}
+bool PioneerSessionIO::SharedRuntimeStable(unsigned core) {
+    return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
+        && qwen35DataflowContext->qwen35SharedRoleBinding->RuntimeStable(core);
+}
+bool PioneerSessionIO::SharedCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes) {
+    return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
+        && qwen35DataflowContext->qwen35SharedRoleBinding->CoreIdleForWrite(core,address,bytes);
 }
 bool PioneerSessionIO::SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
