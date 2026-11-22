@@ -44,6 +44,7 @@ struct PioneerSessionIO {
 #endif
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
+    unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
     bool SelectRuntimeCore(unsigned core) { if (core>=DataflowBarrierWorkers) return false; runtimeCore=core; return true; }
     bool MapQ38Panel() const { return mapping; }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -64,6 +65,7 @@ struct PioneerSessionIO {
         return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
     }
     uint32_t ResetRead() const { return reset; }
+    bool SharedRoleReleaseReset() { ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000; return true; }
     uint32_t ResidentNocRead(unsigned offset) {
         const unsigned noc=offset>=0x10000?1:0,at=offset-(noc?0x10000:0);
         if (at==DataflowNocLogicalIdOffset) return DataflowBarrierWorkerRoute(runtimeCore);

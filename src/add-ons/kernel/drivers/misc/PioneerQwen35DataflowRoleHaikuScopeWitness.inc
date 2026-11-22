@@ -66,6 +66,9 @@ public:
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return false; }
+    // Must additionally establish partial-fleet cleanup and a role-aware
+    // stop/hold path before permitting any physical reset release.
+    bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool Detach() {
         if (!fAttached || !fContext) return false;
         const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this;

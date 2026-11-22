@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Actual Haiku session/owner/mapping composition for the non-loadable shared
-// role witness. The borrowed scope currently denies all physical proofs and
-// SharedStartCore never releases reset: this is not an executable service.
+// role witness. The borrowed scope currently denies all physical proofs,
+// including role release: this is not an executable service.
 #if !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || !defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Shared role binding is a non-loadable recovery witness only
 #endif
@@ -15,6 +15,8 @@ class PioneerQwen35SharedRoleBinding {
     uint32_t* fCodeSnapshot=NULL;
     uint32_t* fRamSnapshot=NULL;
     bool fCaptureAttempted=false;
+    bool fReleaseAuthorized=false;
+    bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     PioneerQwen35RoleBorrowedScopeWitness* Scope() {
         auto* scope=fContext.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(fContext.io)?scope:NULL;
@@ -57,7 +59,8 @@ public:
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
-        return fOwner.PreparePossibleRelease(io) && fOwner.BeginReleaseAttempt(io);
+        if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)) return false;
+        fReleaseAuthorized=true; return true;
     }
     __attribute__((noinline)) bool FleetHeldAndQuiescent() {
         auto* scope=Scope();
@@ -67,13 +70,21 @@ public:
             if (!io.AllRolesHeld(core)) return false;
         return true;
     }
-    // No reset-release path exists yet. This must fail rather than use the
-    // old single-controller StartCore or claim that reader/writer are live.
-    bool StartCore(unsigned) { return false; }
+    __attribute__((noinline)) bool StartCore(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fReleaseAuthorized || core>=PioneerQwen35::DataflowBarrierWorkers
+            || fReleaseAttempted[core] || !fViews.Opened()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return io.ReleaseCore(core,fReleaseAttempted[core]);
+    }
     bool CoreReady(unsigned,const PioneerQwen35::DataflowWorkerSnapshot&) { return false; }
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
-        // StartCore above never attempts reset. If this changes, replace this
-        // branch with role-aware stop, PC/NoC audits and one-shot hold logic.
+        // The old stop path understands T0 alone. Once any three-role reset
+        // write was attempted, retain everything until a role-aware stop,
+        // PC/NoC audit and one-shot hold path is implemented.
+        for (bool attempted:fReleaseAttempted) if (attempted) {
+            stage=8; core=PioneerQwen35::DataflowBarrierWorkers; return false;
+        }
         return fContext.io.StopAndAuditAll(stage,core);
     }
     __attribute__((noinline)) bool RestoreRolesHeld() {

@@ -3604,6 +3604,14 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	void RuntimeResetWrite(uint32 value) {
 		if (value==0x87ffff || value==0x46800 || value==0x47800) PioneerWrite32(runtimeControl+0x1b0/4,value);
 	}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	// The role adapter checks ownership, exact held state and preserved local
+	// RAM, and records the attempt before calling this fixed transition.
+	bool SharedRoleReleaseReset() {
+		if (!runtimeMapped || !runtimeControl) return false;
+		PioneerWrite32(runtimeControl+0x1b0/4,0x6000); return true;
+	}
+#endif
 	uint32 RuntimePcRead() { return PioneerRead32(runtimePc); }
 	uint32 RuntimeStatusRead(unsigned w) { return w<3?ResidentL1Read((0x1fc0/4)+w):UINT32_MAX; }
 	void RuntimeStatusWrite(unsigned w,uint32 value) { if (w<3) ResidentL1Write((0x1fc0/4)+w,value); }

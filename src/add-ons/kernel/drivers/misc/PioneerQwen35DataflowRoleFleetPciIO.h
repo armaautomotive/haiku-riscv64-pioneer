@@ -64,6 +64,32 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
         :fIO(io),fScope(scope),fViews(views),fGuard(io,scope) {}
+    // The caller owns the fleet release ledger. Consume this tile's attempt
+    // before the MMIO write: an unconfirmed write can still have succeeded.
+    // The independent scope proof must cover both partially released fleets
+    // and role-aware cleanup; held-only proofs are no longer true after the
+    // first release. The real scope denies this operation until that exists.
+    bool ReleaseCore(unsigned core,bool& attempted) {
+        using namespace PioneerQwen35;
+        if (attempted || core>=DataflowBarrierWorkers || !fViews.Opened()
+            || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleReleaseSafe(fIO,core)
+            || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
+            || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
+            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
+        uint32_t first=0,second=0;
+        if (!fViews.Read(core,DataflowRolePhysicalControl,0x224,first,fGuard)
+            || !fViews.Read(core,DataflowRolePhysicalControl,0x224,second,fGuard)
+            || first!=second || (first&DataflowRolePreserveResetMask)!=DataflowRolePreserveResetMask
+            || !fScope.ProveRoleReleaseSafe(fIO,core) || !fGuard.ProveSelectedRoute(core)
+            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
+        attempted=true;
+        // Exact transition: release B, NC and T0; leave T1/T2 held and every
+        // other reset bit unchanged. Never use a broad Tensix reset here.
+        if (!fIO.SharedRoleReleaseReset()) return false;
+        fIO.Pause();
+        return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
     bool AllRolesHeld(unsigned core) {
         return Select(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
             && SelectedHeldAndQuiet(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)

@@ -7,7 +7,7 @@
 #undef main
 
 struct FleetPciTestScope {
-    bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true;
+    bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const
@@ -17,6 +17,7 @@ struct FleetPciTestScope {
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return held; }
     bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
+    bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
 };
 int main()
 {
@@ -74,6 +75,27 @@ int main()
     assert(!io.Read(7,DataflowRoleExtraL1Address,out,4)); context.io.mapping=true;
     scope.routing=false; assert(!io.DefaultBootRouting(7)); scope.routing=true;
     scope.stable=false; assert(!io.LocalRamStable(7)); scope.stable=true;
+    bool attempted=false;
+    context.io.runtimeCore=7;
+    assert(!io.ReleaseCore(8,attempted) && !attempted && context.io.runtimeCore==7
+        && !context.io.sharedResetWrites);
+    scope.release=true;
+    gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowRolePreserveResetMask);
+    assert(!io.ReleaseCore(8,attempted) && !attempted && !context.io.sharedResetWrites);
+    gMemory[DataflowRolePhysicalControl][0x224/4]|=DataflowRolePreserveResetMask;
+    assert(io.ReleaseCore(8,attempted) && attempted && context.io.sharedResetWrites==1
+        && context.io.reset==0x6000);
+    assert(!io.ReleaseCore(8,attempted) && context.io.sharedResetWrites==1);
+    context.io.reset=0x47800; context.io.dropSharedResetWrite=true; attempted=false;
+    assert(!io.ReleaseCore(9,attempted) && attempted && context.io.sharedResetWrites==2);
+    assert(!io.ReleaseCore(9,attempted) && context.io.sharedResetWrites==2);
+    context.io.dropSharedResetWrite=false;
+    bool allAttempts[DataflowBarrierWorkers]{};
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        context.io.reset=0x47800;
+        assert(io.ReleaseCore(core,allAttempts[core]) && allAttempts[core]);
+    }
+    assert(context.io.sharedResetWrites==2+DataflowBarrierWorkers);
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");
