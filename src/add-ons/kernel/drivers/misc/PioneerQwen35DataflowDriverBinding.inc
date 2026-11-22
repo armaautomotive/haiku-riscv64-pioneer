@@ -1930,6 +1930,18 @@ public:
 			PioneerResidentBanks::Capacity,offset,true,words,result,&context.banks,bank,owner);
 	}
 	bool Seal(const void* owner) { return context.banks.SealQ35Stream(owner); }
+	bool SealedMatches(const PioneerQwen35::DataflowStreamPlan& plan,const void* owner) const {
+		using namespace PioneerQwen35;
+		auto& baseline=context.baseline.baseline.baseline.baseline.dram;
+		if (!context.banks.Q35SealedOwner(baseline,owner,DataflowCoreCount)) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			const auto& r=plan.lease[core];
+			if (r.address<BankBase) return false;
+			const PioneerQ35StreamBankRange expected{r.bank,r.address-BankBase,r.bytes};
+			if (!context.banks.Q35SealedRange(owner,core,expected)) return false;
+		}
+		return true;
+	}
 	void Quarantine() {
 		context.banks.Quarantine();context.lease.recovery_required=true;
 		context.io.QuarantineHostPage();sColdRecoveryRequired=true;
@@ -1950,6 +1962,9 @@ class PioneerQ35StreamRecordingWitness {
 	PioneerQwen35::DataflowStreamRecord record;
 	PioneerQwen35::DataflowProjectionProgram scratch;
 	bool attempted=false;
+	bool recorded=false;
+	unsigned recordedSlot=PioneerQwen35::ActivationBuffers;
+	unsigned recordedRoutes[2][PioneerQwen35::Banks]{};
 public:
 	explicit PioneerQ35StreamRecordingWitness(PioneerStoreContext& c)
 		:context(c),io(c),sink(io) {}
@@ -1966,9 +1981,28 @@ public:
 		const unsigned count=selectNextToken?548U:545U;
 		if (!DataflowStreamPlanBuilder::Build(workspace,*manifest,*graph,live.PlanningRope(),
 			context.qwen35DataflowRoutes,epoch,count,plan)) return false;
-		return DataflowStreamRecording::Build(workspace,live,candidate,plan,
+		recorded=DataflowStreamRecording::Build(workspace,live,candidate,plan,
 			context.qwen35DataflowRoutes,position,token,inputSlot,selectNextToken,
 			sink,record,scratch,stage);
+		if (recorded) {
+			recordedSlot=inputSlot;
+			for (unsigned n=0;n<2;n++) for (unsigned b=0;b<Banks;b++)
+				recordedRoutes[n][b]=context.qwen35DataflowRoutes[n][b];
+		}
+		return recorded;
+	}
+	bool SealedMatches(const PioneerQwen35::DataflowStreamPlan& requested,unsigned inputSlot) const {
+		using namespace PioneerQwen35;
+		// The service itself makes context.Unsafe() true while installed. This
+		// proves only the sealed stream identity; the future session owner
+		// must separately prove service state and all other context safety.
+		if (!recorded || recordedSlot!=inputSlot
+			|| !context.qwen35DataflowAuthority || !context.qwen35DataflowRoutesAudited
+			|| !context.qwen35DataflowAuthority->PlanningRoutesMatch(context.qwen35DataflowRoutes)
+			|| !sink.SealedMatches(requested)) return false;
+		for (unsigned n=0;n<2;n++) for (unsigned b=0;b<Banks;b++)
+			if (recordedRoutes[n][b]!=context.qwen35DataflowRoutes[n][b]) return false;
+		return true;
 	}
 };
 
@@ -1977,6 +2011,13 @@ PioneerQ35StreamRecordingCompileWitness(PioneerQ35StreamRecordingWitness& graph,
 	unsigned epoch,unsigned position,unsigned token,unsigned inputSlot,bool select,unsigned& stage)
 {
 	return graph.Build(epoch,position,token,inputSlot,select,stage);
+}
+
+__attribute__((used,noinline)) static bool
+PioneerQ35SealedStreamCompileWitness(const PioneerQ35StreamRecordingWitness& graph,
+	const PioneerQwen35::DataflowStreamPlan& plan,unsigned inputSlot)
+{
+	return graph.SealedMatches(plan,inputSlot);
 }
 
 __attribute__((used,noinline)) static PioneerQwen35::DataflowGraphPublication

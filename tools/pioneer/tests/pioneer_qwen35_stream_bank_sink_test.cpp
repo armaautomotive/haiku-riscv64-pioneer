@@ -24,6 +24,14 @@ struct Storage {
 			offset,true,words,result,&banks,bank,owner);
 	}
 	bool Seal(const void* owner) { return banks.SealQ35Stream(owner); }
+	bool SealedMatches(const DataflowStreamPlan& p,const void* owner) const {
+		if (!banks.Q35SealedOwner(baseline,owner,DataflowCoreCount)) return false;
+		for (unsigned i=0;i<DataflowCoreCount;i++) {
+			const auto& r=p.lease[i];
+			if (r.address<BankBase || !banks.Q35SealedRange(owner,i,{r.bank,r.address-BankBase,r.bytes})) return false;
+		}
+		return true;
+	}
 	void Quarantine() { quarantined=true;banks.Quarantine(); }
 };
 static DataflowStreamPlan Plan(unsigned count) {
@@ -58,6 +66,7 @@ int main() {
 	assert(refused.raw.ReleaseHostPage()==0);refused.raw.Safe();
 	Storage storage;auto sink=std::make_unique<DataflowStreamPageSink<Storage>>(storage);
 	assert(sink->Begin(plan));
+	assert(!sink->SealedMatches(plan));
 	assert(!sink->Seal(plan));
 	uint32_t address=0,route=0,index=0;
 	assert(!storage.banks.Page(storage.baseline,plan.lease[0].bank,plan.lease[0].address-BankBase,address,route,index));
@@ -67,6 +76,15 @@ int main() {
 		assert(sink->StageRecord(plan.binding[core],plan.lease[core],step,record));
 	}
 	assert(storage.writes==240 && sink->Seal(plan) && sink->Sealed() && !storage.quarantined);
+	assert(sink->SealedMatches(plan) && !storage.SealedMatches(plan,&storage));
+	storage.baseline.recovery_required=1;
+	assert(!sink->SealedMatches(plan));
+	storage.baseline.recovery_required=0;
+	assert(sink->SealedMatches(plan));
+	auto changed=plan;changed.lease[19].address+=4096;
+	assert(!sink->SealedMatches(changed) && !storage.SealedMatches(changed,sink.get()));
+	changed=plan;changed.binding[19].route++;
+	assert(!sink->SealedMatches(changed));
 	const auto& first=plan.lease[0];
 	assert(!storage.banks.Q35StreamPage(storage.baseline,sink.get(),first.bank,first.address-BankBase,true,address,route,index));
 	assert(storage.banks.Q35StreamPage(storage.baseline,sink.get(),first.bank,first.address-BankBase,false,address,route,index));
@@ -92,6 +110,8 @@ int main() {
 		assert(std::memcmp(last->second.data(),&expected2,sizeof(expected2))==0);
 		for (unsigned i=512;i<1024;i++) assert(last->second[i]==0);
 	}
+	storage.banks.Quarantine();
+	assert(!sink->SealedMatches(plan));
 	assert(PioneerResidentLeaseEnd(storage.raw,storage.noc,storage.lease));
 	assert(storage.raw.ReleaseHostPage()==0);storage.raw.Safe();
 	Storage failed;auto broken=std::make_unique<DataflowStreamPageSink<Storage>>(failed);

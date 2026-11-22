@@ -350,6 +350,20 @@ non-loadable witness:
 `f56bd0561a08005dd5e80a77bb98fc0ffe3dcc812879f4af6c316aa431f71ae6`.
 No hardware run or performance measurement has been made for this change.
 
+Tag0139 gives the recording witness a sealed-stream identity proof: it retains
+the fixed activation slot and routes, checks the full plan against the sink,
+and verifies the owner and all 120 ranges against the sealed bank ledger.
+Simulation covers a wrong owner, altered plan or range, changed baseline and
+quarantine. This is not a service safety, model identity or ticket proof;
+the publication callback still denies all runs. The existing `Unsafe()`
+reports an installed service as unsafe, so the new read-only seal check does
+not substitute for a future controlled resident-service safety audit. The
+target suite, 27B shared-bank regression and both Haiku builds pass. Normal
+driver SHA-256:
+`305bed311286cb667932385e755129f7dfe08be450779d08a11d20fc71d21236`;
+non-loadable witness:
+`55d17dccbe446ac1adea65ff7738933b5dc241463266552a3ddb7df385db841c`.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -409,7 +423,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0138. Since tag0121 it records final release of a
+The default build now targets dedicated tag0139. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

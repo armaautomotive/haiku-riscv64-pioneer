@@ -65,6 +65,12 @@ public:
 	}
 	void Abort() { if (begun && !unsafe) io.Quarantine();unsafe=true; }
 	bool Sealed() const { return sealed && !unsafe; }
+	bool SealedMatches(const DataflowStreamPlan& expected) const {
+		if (!Sealed() || !expected.ready || expected.epoch!=plan.epoch || expected.count!=plan.count) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (!Same(expected.binding[core],expected.lease[core],core)) return false;
+		return io.SealedMatches(expected,this);
+	}
 	bool Unsafe() const { return unsafe; }
 };
 }

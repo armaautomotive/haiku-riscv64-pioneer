@@ -347,6 +347,22 @@ The non-loadable kernel stack estimate is `18160/18432`, and the worker
 envelope remains `7824/8192` with a 1,024-byte allowance, not a whole-program
 proof. This change is not hardware-qualified and gives no throughput result.
 
+Tag0139 adds a read-only sealed-stream identity proof. The recording witness
+retains its template slot and audited routes; the sink compares the complete
+plan against its recorded copy, and the bank ledger checks the exact owner and
+120 claimed ranges, sealing, current baseline and quarantine state. Simulated
+tests reject altered ranges, changed stream bindings, a different owner, a
+drifting baseline and quarantine. This proves only stream identity: the
+future session must separately prove service safety, model identity, fresh
+ticket ownership and model-state commit. In particular, the existing general
+`Unsafe()` check treats an installed service as unsafe and cannot by itself
+authorize a resident graph. The publication callback still denies all runs.
+The target suite and 27B shared-bank regression pass, as do normal and
+non-loadable Haiku/RISC-V builds. Driver SHA-256 values:
+`305bed311286cb667932385e755129f7dfe08be450779d08a11d20fc71d21236`
+and `55d17dccbe446ac1adea65ff7738933b5dc241463266552a3ddb7df385db841c`.
+No card run or speed measurement has been made.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
