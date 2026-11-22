@@ -18,6 +18,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAuthorized=false;
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fReleaseHeld[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fComputeStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -139,7 +140,14 @@ public:
             if (!scope || !fViews.Opened()) { stage=8;core=PioneerQwen35::DataflowBarrierWorkers;return false; }
             Adapter io(fContext.io,*scope,fViews);
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
-                if (!fReleaseAttempted[i]) continue;
+                if (!fReleaseAttempted[i] || fReleaseConfirmed[i] || fStopAttempted[i]
+                    || fComputeStopAttempted[i] || fHoldAttempted[i]) continue;
+                if (fReleaseHeld[i]) {
+                    if (!io.UnconfirmedReleaseHeld(i)) { stage=15;core=i;return false; }
+                } else if (io.UnconfirmedReleaseHeld(i)) fReleaseHeld[i]=true;
+            }
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool okay=fStopAttempted[i]?io.StopRequestObserved(i,fStopToken[i])
                     :io.RequestStop(i,false,fStopAttempted[i],fStopToken[i]);
@@ -147,7 +155,7 @@ public:
                 if (!okay) { stage=8;core=i;return false; }
             }
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
-                if (!fReleaseAttempted[i]) continue;
+                if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool parked=false;
                 for (unsigned poll=0;poll<65536;poll++) {
@@ -159,14 +167,14 @@ public:
                 if (!parked) { stage=9;core=i;return false; }
             }
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
-                if (!fReleaseAttempted[i]) continue;
+                if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 const bool okay=fComputeStopAttempted[i]?io.ComputeStopObserved(i)
                     :io.RequestComputeStop(i,fComputeStopAttempted[i]);
                 if (!okay) { stage=10;core=i;return false; }
             }
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
-                if (!fReleaseAttempted[i]) continue;
+                if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool parked=false;
                 for (unsigned poll=0;poll<65536;poll++) {
@@ -180,12 +188,14 @@ public:
             // receipts and a stopped compute receipt/park proof. The scope
             // must independently prove the entire fleet and NoCs are quiet.
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
-                if (!fReleaseAttempted[i]) continue;
+                if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i] ? !io.HoldObserved(i) : !io.HoldCore(i,fHoldAttempted[i]))
                     { stage=13;core=i;return false; }
             }
-            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++)
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (fReleaseHeld[i] && !io.UnconfirmedReleaseHeld(i)) { stage=15;core=i;return false; }
                 if (!io.AllRolesHeld(i)) { stage=14;core=i;return false; }
+            }
             stage=0;core=PioneerQwen35::DataflowBarrierWorkers;return true;
         }
         return fContext.io.StopAndAuditAll(stage,core);

@@ -8,7 +8,7 @@
 
 struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
-    bool computeStop=false,computePark=false,hold=false,heldAfter=false;
+    bool computeStop=false,computePark=false,hold=false,heldAfter=false,releaseDrained=false;
     bool runtime=false;
     bool faultAudit=false,faultAck=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
@@ -21,6 +21,7 @@ struct FleetPciTestScope {
     bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
+    bool ProveRoleReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return releaseDrained; }
     bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return stop; }
     bool ProveRolePostStopSafe(PioneerSessionIO&,unsigned) const { return park; }
     bool ProveComputeStopSafe(PioneerSessionIO&,unsigned) const { return computeStop; }
@@ -101,6 +102,13 @@ int main()
     context.io.reset=0x47800; context.io.dropSharedResetWrite=true; attempted=false;
     assert(!io.ReleaseCore(9,attempted) && attempted && context.io.sharedResetWrites==2);
     assert(!io.ReleaseCore(9,attempted) && context.io.sharedResetWrites==2);
+    assert(!io.UnconfirmedReleaseHeld(9)); // a held read is not a write fence
+    scope.releaseDrained=true;
+    assert(io.UnconfirmedReleaseHeld(9));
+    context.io.reset=0x6000;
+    assert(!io.UnconfirmedReleaseHeld(9)); // release really occurred
+    context.io.reset=0x47800;
+    scope.releaseDrained=false;
     context.io.dropSharedResetWrite=false;
     bool allAttempts[DataflowBarrierWorkers]{};
     for (unsigned core=0;core<DataflowBarrierWorkers;core++) {

@@ -126,6 +126,10 @@ public:
     // Must additionally establish partial-fleet cleanup and a role-aware
     // stop/hold path before permitting any physical reset release.
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
+    // A reset read alone cannot rule out a delayed posted release write. This
+    // must prove that the particular attempted write has drained, and that no
+    // other agent can release the tile for the remainder of recovery.
+    bool ProveRoleReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }
     // A stop request requires the retained graph and compute/queue writers
     // to be settled; fault and clean stops need different proofs.
     bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return false; }

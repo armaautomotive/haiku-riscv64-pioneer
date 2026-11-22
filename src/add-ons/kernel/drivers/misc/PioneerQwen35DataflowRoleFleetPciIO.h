@@ -129,6 +129,19 @@ public:
         return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
+    // Only an unconfirmed release may be classified as never released. The
+    // independent proof must fence the attempted write: two held reads alone
+    // cannot exclude a posted write arriving after the reads.
+    bool UnconfirmedReleaseHeld(unsigned core) {
+        if (core>=PioneerQwen35::DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
+            || !fScope.ProveRoleReleaseWriteDrained(fIO,core) || !fIO.SelectRuntimeCore(core)
+            || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable()
+            || !fGuard.ProveSelectedRoute(core)) return false;
+        if (fIO.ResetRead()!=0x47800) return false;
+        fIO.Pause();
+        return fIO.ResetRead()==0x47800 && fGuard.ProveSelectedRoute(core)
+            && fScope.ProveRoleReleaseWriteDrained(fIO,core);
+    }
     // This issues exactly one host-owned mailbox word, never a command or a
     // reset. A write failure may still have reached the tile; the caller
     // retains the attempt and token and may only observe, never reissue.
