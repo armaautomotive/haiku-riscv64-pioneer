@@ -7,6 +7,7 @@
 #endif
 #include "PioneerQwen35DataflowRoleHaikuMap.h"
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
+#include "PioneerQwen35DataflowNocSafetySample.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleReadOnlyViews.h"
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
@@ -271,9 +272,18 @@ public:
     // window, or absence of incoming NoC traffic, and grants no RAM access.
     bool AuditHeldAndQuiet(unsigned core) {
         using namespace PioneerQwen35;
+        auto sampleFifosAndClock=[&]() {
+            return PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) {
+                uint32_t value=UINT32_MAX;
+                const unsigned window=offset>=0x10000?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
+                if (!Read(core,window,offset&0xffffU,value)) return uint32_t(UINT32_MAX);
+                return value;
+            });
+        };
         for (unsigned pass=0;pass<2;pass++) {
             uint32_t reset=0;
-            if (!Read(core,DataflowRolePhysicalControl,0x1b0,reset) || reset!=0x47800)
+            if (!sampleFifosAndClock()
+                || !Read(core,DataflowRolePhysicalControl,0x1b0,reset) || reset!=0x47800)
                 return false;
             for (unsigned noc=0;noc<2;noc++) {
                 const unsigned window=noc?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
@@ -292,7 +302,8 @@ public:
                         return false;
                 }
             }
-            if (!Read(core,DataflowRolePhysicalControl,0x1b0,reset) || reset!=0x47800)
+            if (!sampleFifosAndClock()
+                || !Read(core,DataflowRolePhysicalControl,0x1b0,reset) || reset!=0x47800)
                 return false;
         }
         return true;

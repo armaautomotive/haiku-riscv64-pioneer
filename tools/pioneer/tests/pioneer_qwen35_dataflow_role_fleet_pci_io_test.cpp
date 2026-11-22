@@ -56,6 +56,20 @@ int main()
     PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,decltype(views)> io(context.io,scope,views);
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.AllRolesHeld(core) && io.DefaultBootRouting(core) && io.LocalRamStable(core));
+    for (unsigned noc=0;noc<2;noc++) {
+        context.io.nocConfig[noc]=1U<<12;
+        const unsigned previousReads=context.io.resetReads;
+        assert(!io.AllRolesHeld(7) && context.io.resetReads==previousReads);
+        context.io.nocConfig[noc]=1U<<16;
+        context.io.nocAvailable[noc]=0x10101010U;
+        assert(io.AllRolesHeld(7));
+        context.io.nocAvailable[noc]=0x10100f10U;
+        assert(!io.AllRolesHeld(7));
+        context.io.nocAvailable[noc]=0x10101010U;
+        context.io.nocOverflow[noc]=1;
+        assert(!io.AllRolesHeld(7));
+        context.io.nocConfig[noc]=context.io.nocOverflow[noc]=context.io.nocAvailable[noc]=0;
+    }
     context.io.reset=0x46800;
     assert(!io.AllRolesHeld(7) && !io.DefaultBootRouting(7));
     context.io.reset=0x47800;

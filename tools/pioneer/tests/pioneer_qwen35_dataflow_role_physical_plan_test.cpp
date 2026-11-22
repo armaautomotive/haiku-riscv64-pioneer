@@ -36,7 +36,10 @@ int main()
         for (unsigned i=0;i<4;i++) assert(DataflowRolePhysicalReadAllowed(noc,0x40+i*0x800));
         for (unsigned i=0;i<32;i++) assert(DataflowRolePhysicalReadAllowed(noc,0x240+i*4));
         assert(!DataflowRolePhysicalReadAllowed(noc,0x20c));
-        assert(!DataflowRolePhysicalReadAllowed(noc,0x100));
+        assert(DataflowRolePhysicalReadAllowed(noc,0x64));
+        assert(DataflowRolePhysicalReadAllowed(noc,0x68));
+        assert(DataflowRolePhysicalReadAllowed(noc,0x100));
+        assert(!DataflowRolePhysicalReadAllowed(noc,0x104));
     }
     DataflowRolePhysicalWindow invalid{1,2};
     assert(!DataflowRolePhysicalWindowPlan(DataflowRolePhysicalWindowCount,invalid));

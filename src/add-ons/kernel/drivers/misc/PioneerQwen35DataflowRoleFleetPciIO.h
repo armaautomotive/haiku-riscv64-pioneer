@@ -7,6 +7,7 @@
 #error Role fleet PCI adapter is a non-loadable recovery witness only
 #endif
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
+#include "PioneerQwen35DataflowNocSafetySample.h"
 #include "PioneerQwen35DataflowPciMemory.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleFleetRecoveryOwner.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
@@ -47,7 +48,8 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     bool SelectedHeldAndQuiet(unsigned core) {
         using namespace PioneerQwen35;
         for (unsigned pass=0;pass<2;pass++) {
-            if (fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
+            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fIO.ResidentNocRead(offset); })
+                || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
             for (unsigned noc=0;noc<2;noc++) {
                 const unsigned base=noc?0x10000:0;
                 uint32_t first=0,second=0;
@@ -59,7 +61,8 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
                 for (unsigned i=0;i<32;i++)
                     if (fIO.ResidentNocRead(base+0x240+i*4)&0xffU) return false;
             }
-            if (fIO.ResetRead()!=0x47800 || !fGuard.ProveSelectedRoute(core)) return false;
+            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fIO.ResidentNocRead(offset); })
+                || fIO.ResetRead()!=0x47800 || !fGuard.ProveSelectedRoute(core)) return false;
             fIO.Pause();
         }
         return true;

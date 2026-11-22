@@ -67,7 +67,8 @@ inline bool DataflowRolePhysicalReadAllowed(unsigned which,unsigned offset)
         case DataflowRolePhysicalPc: return offset>=0x138 && offset<=0x148;
         case DataflowRolePhysicalNoc0:
         case DataflowRolePhysicalNoc1:
-            if (offset<=0x24 || offset==0x148 || offset==0x204 || offset==0x208
+            if (offset<=0x24 || offset==0x64 || offset==0x68 || offset==0x100
+                || offset==0x148 || offset==0x204 || offset==0x208
                 || offset==0x210 || offset==0x214 || offset==0x220 || offset==0x228)
                 return true;
             if (offset>=0x240 && offset<0x2c0) return true;

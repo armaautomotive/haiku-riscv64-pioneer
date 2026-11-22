@@ -10,6 +10,9 @@ struct FakeIO {
     unsigned busyAfterSelections=0;
     unsigned wrongIdCore=DataflowBarrierWorkers,resetBadCore=DataflowBarrierWorkers;
     unsigned revokeCore=DataflowBarrierWorkers;
+    unsigned fifoCore=DataflowBarrierWorkers,fifoNoc=0,clockCore=DataflowBarrierWorkers,clockNoc=0;
+    uint32_t fifoAvailable=0x10101010U,fifoOverflow=0;
+    unsigned configReads=0,flipConfigAt=0,resetReads=0;
     int failSelection=-1;
     bool mapped=true,revoked=false,failRestore=false;
     bool SelectRuntimeCore(unsigned core) {
@@ -22,10 +25,19 @@ struct FakeIO {
         return true;
     }
     bool DataflowPanelMappingStable() const { return mapped; }
-    uint32_t ResetRead() const { return runtimeCore==resetBadCore?0x6000:0x47800; }
+    uint32_t ResetRead() { ++resetReads; return runtimeCore==resetBadCore?0x6000:0x47800; }
     uint32_t ResidentNocRead(unsigned offset) {
         const unsigned noc=offset>=0x10000?1:0;
         const unsigned local=offset-(noc?0x10000:0);
+        if (local==0x100) {
+            ++configReads;
+            uint32_t value=runtimeCore==fifoCore && noc==fifoNoc?1U<<16:0;
+            if (runtimeCore==clockCore && noc==clockNoc) value|=1U<<12;
+            if (configReads==flipConfigAt) value^=1U<<16;
+            return value;
+        }
+        if (local==0x64) return fifoAvailable;
+        if (local==0x68) return fifoOverflow;
         if (local==DataflowNocLogicalIdOffset) {
             samples++;
             return DataflowBarrierWorkerRoute(runtimeCore==wrongIdCore
@@ -50,6 +62,27 @@ struct Guard {
 
 int main()
 {
+    for (unsigned noc=0;noc<2;noc++) {
+        FakeIO io; Scope scope; Guard guard{io};
+        io.clockCore=7; io.clockNoc=noc;
+        assert(!PioneerQwen35SampleSelectedHeldTile(io,scope,guard,7));
+        assert(io.resetReads==0); // no RISC register access on a disabled tile
+    }
+    for (unsigned noc=0;noc<2;noc++) {
+        FakeIO io; Scope scope; Guard guard{io};
+        io.fifoCore=7; io.fifoNoc=noc;
+        assert(PioneerQwen35SampleSelectedHeldTile(io,scope,guard,7));
+        io.fifoAvailable=0x10100f10U;
+        assert(!PioneerQwen35SampleSelectedHeldTile(io,scope,guard,7));
+        io.fifoAvailable=0x10101010U; io.fifoOverflow=1;
+        assert(!PioneerQwen35SampleSelectedHeldTile(io,scope,guard,7));
+    }
+    {
+        FakeIO io; Scope scope; Guard guard{io};
+        io.flipConfigAt=2;
+        assert(!PioneerQwen35SampleSelectedHeldTile(io,scope,guard,7));
+        assert(io.resetReads==0);
+    }
     {
         FakeIO io; Scope scope; Guard guard{io}; unsigned failed=0; bool restore=true;
         assert(PioneerQwen35SampleHeldFleet(io,scope,guard,failed,restore));

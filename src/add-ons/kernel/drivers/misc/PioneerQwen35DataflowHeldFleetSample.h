@@ -4,6 +4,7 @@
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowNocProtocol.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowBarrierLayout.h"
+#include "PioneerQwen35DataflowNocSafetySample.h"
 
 // Observe only fixed status registers on an already-selected tile. The scope
 // admits this during the installing service's held-worker callback. A quiet
@@ -13,6 +14,7 @@ bool PioneerQwen35SampleSelectedHeldTile(IO& io,Scope& scope,Guard& guard,unsign
 {
     using namespace PioneerQwen35;
     if (!scope.ProveRoleStatusInspectionAllowed(io) || !guard.ProveSelectedRoute(core)
+        || !PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return io.ResidentNocRead(offset); })
         || io.ResetRead()!=0x47800 || io.ResetRead()!=0x47800) return false;
     for (unsigned noc=0;noc<2;noc++) {
         const unsigned base=noc?0x10000:0;
@@ -25,7 +27,8 @@ bool PioneerQwen35SampleSelectedHeldTile(IO& io,Scope& scope,Guard& guard,unsign
         for (unsigned i=0;i<32;i++)
             if (io.ResidentNocRead(base+0x240+i*4)&0xffU) return false;
     }
-    return io.ResetRead()==0x47800 && scope.ProveRoleStatusInspectionAllowed(io)
+    return PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return io.ResidentNocRead(offset); })
+        && io.ResetRead()==0x47800 && scope.ProveRoleStatusInspectionAllowed(io)
         && guard.ProveSelectedRoute(core);
 }
 

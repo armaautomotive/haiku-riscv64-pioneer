@@ -55,6 +55,7 @@ struct PioneerSessionIO {
     unsigned selectCalls=0,tlbWrites=0;
     uint32_t slot1[3]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
+    uint32_t nocConfig[2]{},nocAvailable[2]{},nocOverflow[2]{};
     mutable unsigned resetReads=0;
     int resetChangeAt=-1;
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
@@ -145,6 +146,9 @@ struct PioneerSessionIO {
     }
     uint32_t ResidentNocRead(unsigned offset) {
         const unsigned noc=offset>=0x10000?1:0,at=offset-(noc?0x10000:0);
+        if (at==0x100) return nocConfig[noc];
+        if (at==0x64) return nocAvailable[noc];
+        if (at==0x68) return nocOverflow[noc];
         if (at==DataflowNocLogicalIdOffset) return DataflowBarrierWorkerRoute(runtimeCore);
         for (unsigned i=0;i<4;i++) if (at==0x40+i*0x800) return nocDoorbell[noc][i];
         if (at>=0x240 && at<0x2c0 && !(at&3)) return nocOutstanding[noc][(at-0x240)/4];
