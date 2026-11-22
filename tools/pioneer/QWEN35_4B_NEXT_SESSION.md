@@ -593,6 +593,27 @@ normal tag `2026112100010152`:
 non-loadable witness:
 `7d0b349751e8324769fb71400eca5d23a24cd08b846201e5260c8c01fe64c121`.
 
+Tag0153 keeps an exact session-owned ledger of the 120 staged descriptors.
+The existing staging transport verifies every first-run word and each changed
+warm-run word; for warm runs it first checks the complete old descriptor and
+its immutable fields. Only after that proof and marker readback does the
+ledger accept a descriptor. It requires the same ticket/token across the
+fleet, all 120 stages and ordered single-use command publication. This removes
+the two additional full 512-byte descriptor reads formerly made between
+staging and each command: 30,720 32-bit MMIO reads per graph by source count.
+The session lock, sealed stream, and restricted peer writes keep descriptors
+owned until command publication; the full post-run descriptor audit remains.
+The ledger stores 61,440 descriptor bytes in the existing aligned, heap-owned
+graph object. Simulated tests exercise two runs, mismatches, partial staging,
+replay and publication order. The target/reload suites and normal, witness
+and qualification cross-builds pass. No card result or timing exists.
+Qualification tag `2026112100020153` driver SHA-256:
+`7d2319caa8c40a57913f567a13e1639b8a10f54ab2aa5ceac2bfd8793601f6b5`;
+normal tag `2026112100010153`:
+`f8a88cffab42bacab19c07c6aa0cf7084e0a2b85a771719dbe956fdd965c6dc0`;
+non-loadable witness:
+`23b00c9419c017301e7eca6dea9a11218b553c9eb3bf266194a0bcac1992d146`.
+
 After the user restored power, strict SSH to the pinned Haiku identity
 succeeded again on 2026-11-22. This was an OS identity check only; the prior
 27B process and stable-driver idle preflight must be checked again before
@@ -657,7 +678,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0152. Since tag0121 it records final release of a
+The default build now targets dedicated tag0153. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

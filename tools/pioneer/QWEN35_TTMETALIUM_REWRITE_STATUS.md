@@ -127,6 +127,24 @@ normal and witness driver SHA-256:
 `dc31e3e98d3f0fd84e2f44baecb06534d7360f87a8439aaa6e6c2ce2d4dabb70` and
 `7d0b349751e8324769fb71400eca5d23a24cd08b846201e5260c8c01fe64c121`.
 
+Tag0153 removes two redundant pre-command full descriptor reads per worker.
+The physical staging path already proves the initial descriptor word by word
+or compares the whole old descriptor and verifies every changed warm word. A
+new graph-session ledger records the exact descriptor only after those checks
+and the marker write succeed, requires matching fleet-wide ticket/token and
+all 120 staged cores, and permits each command once in order. The session lock,
+sealed stream and restricted peer write ranges protect staged records until
+publication; the post-run full descriptor audit is retained. By source count
+this eliminates 30,720 32-bit MMIO reads per graph, while the ledger adds 61,440
+bytes to the aligned, heap-owned graph object. Simulated tests cover stale,
+forged, partial, duplicate and ordered publication across two runs. Target
+and reload suites and all three Haiku cross-builds pass; there is no hardware
+measurement. Qualification driver SHA-256:
+`7d2319caa8c40a57913f567a13e1639b8a10f54ab2aa5ceac2bfd8793601f6b5`;
+normal and witness driver SHA-256:
+`f8a88cffab42bacab19c07c6aa0cf7084e0a2b85a771719dbe956fdd965c6dc0` and
+`23b00c9419c017301e7eca6dea9a11218b553c9eb3bf266194a0bcac1992d146`.
+
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku
 boot. The saved hash-verified recovery script restored stable driver55:
