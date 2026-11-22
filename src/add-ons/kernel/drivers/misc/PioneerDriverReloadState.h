@@ -29,6 +29,13 @@ struct PioneerDriverRecoveryProof {
 	uint32_t retained_owners=0;
 	uint64_t reset_generation=0;
 	uint64_t firmware_generation=0;
+	bool ReadyToRetireOneOwner() const {
+		return version==1 && flags==(PIONEER_RECOVERY_PROOF_REQUIRED
+			& ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED)
+			&& core_count==120 && !reserved && !noc_busy_mask
+			&& !noc_outstanding_mask && !host_dma_active && retained_owners==1
+			&& reset_generation && firmware_generation;
+	}
 	bool Complete() const {
 		return version==1 && flags==PIONEER_RECOVERY_PROOF_REQUIRED
 			&& core_count==120 && !reserved && !noc_busy_mask

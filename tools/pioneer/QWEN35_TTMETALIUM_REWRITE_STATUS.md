@@ -103,10 +103,19 @@ generation match; it refuses the lifetime condition with extra open
 descriptors, a live owner, or a quiesced driver. Extracted real close/status
 fixtures and the target build pass. This status does not initiate a reset,
 release any owner or host buffer, or grant hardware recovery. Tag0121 is not
-installed; its driver SHA-256 is
-`0f2174c3ea206cd136ac6c6f79bc1c2968ac1d80a24914118430b04374e5011c`
+installed; its current driver SHA-256 is
+`e27367c0524fe573ab36e9d3bb95d75948ea3160dfcbbc889f08e687b56f5d1c`
 and its measured stack bound is `15712/18432` bytes. The board remains at
 tag0120 cold with its owner retained.
+
+Tag0121 also contains an in-kernel retirement method for the dedicated
+dataflow session's mapped areas and host buffers. It requires the reset,
+firmware, PCI, core, NoC and DMA evidence with exactly one retained owner,
+rejects duplicate area IDs, and releases host buffers only after other mapped
+areas. On a deletion failure it retains the remaining areas and rejects a
+repeat attempt. Simulated OS tests cover invalid proof, duplicate IDs, release
+order and partial failure. This method is not connected to an ioctl or run on
+the Pioneer; no retained owner or buffer has yet been freed by it.
 
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and

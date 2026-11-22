@@ -112,6 +112,15 @@
 	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010121ULL)
 #error Qwen35 recovery ownership tracking requires the dedicated tag0121 dataflow role
 #endif
+#if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (defined(PIONEER_Q38_NORMAL_CLOCK) \
+	|| defined(PIONEER_Q38_GDN_MUTABLE_STATE) || defined(PIONEER_Q38_EMBEDDING_NATIVE) \
+	|| defined(PIONEER_Q38_PROJECTION_GRAPH_MEMORY) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) \
+	|| defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD))
+#error Qwen35 post-reset retirement supports only its dedicated dataflow resource set
+#endif
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+#include "PioneerDriverReloadState.h"
+#endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowConvProgram.h"
@@ -2892,6 +2901,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (outputArea>=B_OK) QuarantineOutputBuffer();
 		if (wideArea>=B_OK) QuarantineWideOutput();
 	}
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+#include "PioneerPostResetDispose.inc"
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 	bool MapQ38Panel() {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT

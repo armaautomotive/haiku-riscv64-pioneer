@@ -74,6 +74,9 @@ checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. This ioctl does not reset the card or retire any resource;
 the complete recovery operation is still unimplemented. Do not install or run
 tag0121 until the required clean Haiku boot and guarded hardware preflight.
+Tag0121 now also compiles a proof-gated session-area retirement method;
+simulated tests cover invalid evidence, duplicate areas, host-buffer release
+ordering, and partial failure. It is not yet connected to the recovery ioctl.
 
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached
