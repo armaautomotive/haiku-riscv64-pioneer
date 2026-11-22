@@ -20,6 +20,7 @@ object="$temporary/dataflow.o"
 barrier_object="$temporary/device-barrier.o"
 stream_object="$temporary/device-stream.o"
 queued_object="$temporary/queued-compute.o"
+roles_object="$temporary/queued-roles.o"
 
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
@@ -67,6 +68,41 @@ if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/queued-co
 	echo 'queued compute probe uses unsupported atomics' >&2
 	exit 1
 fi
+# Concrete once-only reader, Tensix compute and writer entry bodies. Compile
+# only; no boot vector, image owner or on-card launch is provided here.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$root/tools/pioneer/PioneerQwen35DataflowQueuedRoles.cpp" -o "$roles_object"
+if [ -n "$("$nm" -u "$roles_object")" ]; then
+	echo 'queued role bodies have unresolved runtime helpers' >&2
+	exit 1
+fi
+for role in reader compute writer; do
+	"$nm" "$roles_object" | grep " T qwen35_queued_${role}_once$" >/dev/null
+done
+"$objdump" -d "$roles_object" > "$temporary/queued-roles.disassembly"
+if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/queued-roles.disassembly" >/dev/null; then
+	echo 'queued role bodies use unsupported atomics' >&2
+	exit 1
+fi
+echo 'PASS concrete queued role bodies compile for RV32IMF; OFFLINE ONLY'
+# Separate link-only size witnesses deliberately share a hypothetical base.
+# They are not service images, are not mutually placed, and are never loaded.
+for role in reader compute writer; do
+	witness="$temporary/queued-${role}-size-witness.elf"
+	"$ld" -m elf32lriscv --no-relax --gc-sections -Ttext 0xc0000 \
+		-e "qwen35_queued_${role}_once" "$roles_object" -o "$witness"
+	if [ -n "$("$nm" -u "$witness")" ]; then
+		echo "queued ${role} size witness has unresolved imports" >&2
+		exit 1
+	fi
+	"$size" "$witness"
+done
+echo 'PASS separate queued role link-size witnesses; NOT SERVICE IMAGES'
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_queued_input_test.cpp" \
 	-o "$temporary/queued-input-test"
