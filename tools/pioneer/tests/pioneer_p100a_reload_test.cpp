@@ -35,6 +35,14 @@ int main()
 	assert(sRecoveryGuard.info.flags==B_KEEP_LOADED
 		&& sRecoveryGuard.info.std_ops(B_MODULE_INIT)==B_OK);
 	assert(modules[0]==&sGuard.info && modules[1]==&sRecoveryGuard.info && modules[2]==NULL);
+	// Haiku's VFS resolves the first regular file in the module name. Both
+	// exports must resolve to the same installed reload-guard image; otherwise
+	// get_module(recovery) cannot find the shared pinned state.
+	const char* imagePath="generic/pioneer_p100a_reload_guard";
+	assert(strncmp(sGuard.info.name,imagePath,strlen(imagePath))==0
+		&& sGuard.info.name[strlen(imagePath)]=='/');
+	assert(strncmp(sRecoveryGuard.info.name,imagePath,strlen(imagePath))==0
+		&& sRecoveryGuard.info.name[strlen(imagePath)]=='/');
 	sReloadGuard=&sGuard; assert(sReloadGuard->attach(&sReloadGeneration)==B_OK && sReloadGeneration==1);
 	uint64 duplicate=99; assert(sGuard.attach(&duplicate)==B_DEV_NOT_READY && !duplicate);
 	PioneerProbeCookie cookie,other; sOpenCookies=1;

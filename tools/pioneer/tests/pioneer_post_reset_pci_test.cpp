@@ -37,5 +37,26 @@ int main()
 	disable.disableCardFails=true;
 	assert(!PioneerPostResetPciRestore(disable,result)
 		&& result.stage==PioneerPostResetPciDisable && disable.writes==2);
+	MockIO active;tt_pioneer_mmio_result saved{};tt_pioneer_mmio_transaction transaction{};
+	assert(BlackholePioneerMmioBegin(active,saved,transaction));
+	unsigned stage=0;assert(PioneerPostResetPciFinish(active,saved,stage));
+	assert(stage==PioneerPostResetPciFinishComplete && active.command[0]==0
+		&& active.command[1]==0 && active.mapped);
+	for (unsigned i=0;i<6;i++) assert(active.bars[i]==saved.bars_before[i]);
+	for (unsigned i=0;i<3;i++) assert(active.bridge[i]==saved.bridge_before[i]);
+	MockIO badSaved;assert(BlackholePioneerMmioBegin(badSaved,saved,transaction));
+	saved.bars_before[0]=0xdeadbeef;const unsigned writes=badSaved.writes;
+	assert(!PioneerPostResetPciFinish(badSaved,saved,stage)
+		&& stage==PioneerPostResetPciFinishRefused && badSaved.writes==writes);
+	for (unsigned drop=1;drop<=11;drop++) {
+		MockIO trial;assert(BlackholePioneerMmioBegin(trial,saved,transaction));
+		trial.droppedWrite=trial.writes+drop;
+		const bool okay=PioneerPostResetPciFinish(trial,saved,stage);
+		assert(!(trial.command[0]&4) && !(trial.command[1]&4));
+		if (okay) assert(stage==PioneerPostResetPciFinishComplete
+			&& trial.command[0]==0 && trial.command[1]==0
+			&& memcmp(trial.bars,saved.bars_before,sizeof(trial.bars))==0
+			&& memcmp(trial.bridge,saved.bridge_before,sizeof(trial.bridge))==0);
+	}
 	std::puts("PASS post-reset PCI active-layout restore: real plan, bus-master/marker/interrupt refusal, dropped writes, decoder ordering; SIMULATED PCI ONLY");
 }

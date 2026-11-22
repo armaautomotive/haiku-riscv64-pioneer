@@ -43,8 +43,8 @@ held, idle NoC and host DMA, and released retained owners. The resident guard
 requires a ticket tied to the fault epoch, so a concurrent fault denies
 recovery. The extracted tests pass, as does the full Haiku/RISC-V target
 build (`15712/18432` kernel-stack audit); recovery guard hash after its atomic
-fault-state fix:
-`53e095dc17202434c59bb9a50859e3cbb25847a76394db6431ad2f23039c15d2`.
+fault-state and module-path fixes:
+`8b29c57ac8b47f1c6218dcdf31733cd736f63727ad0527daae3cd12e4fc906aa`.
 An isolated Blackhole reset helper now encodes the exact three PCI config
 writes used by Tenstorrent's KMD, rejects bus mastering or a stale reset marker,
 and waits a bounded number of times for the marker to clear. Its fake-PCI
@@ -107,6 +107,17 @@ installed; its current driver SHA-256 is
 `e27367c0524fe573ab36e9d3bb95d75948ea3160dfcbbc889f08e687b56f5d1c`
 and its measured stack bound is `15712/18432` bytes. The board remains at
 tag0120 cold with its owner retained.
+
+The recovery guard export now uses a name beneath the existing reload-guard
+image path. Haiku's module resolver stops at the first regular file, so the
+previous distinct path would not have found the shared pinned image. The
+module fixture verifies both names resolve through the same image path.
+
+A post-audit PCI teardown restores the original fixed idle BAR and bridge
+state without calling the pre-reset mapping cleanup, which could restore stale
+TLB contents. Simulated PCI tests exercise invalid snapshots and dropped
+writes. The teardown is not yet connected to the recovery operation or
+qualified on the board.
 
 Tag0121 also contains an in-kernel retirement method for the dedicated
 dataflow session's mapped areas and host buffers. It requires the reset,

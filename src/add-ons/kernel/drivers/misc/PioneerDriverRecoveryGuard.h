@@ -5,7 +5,7 @@
 #include "PioneerDriverReloadState.h"
 
 #define PIONEER_DRIVER_RECOVERY_GUARD_MODULE \
-	"generic/pioneer_p100a_recovery_guard/v1"
+	"generic/pioneer_p100a_reload_guard/recovery/v1"
 
 // This API is kernel-module-only. Its proof is produced by the device driver
 // after reset and reinitialization; no userspace ioctl can supply or clear it.

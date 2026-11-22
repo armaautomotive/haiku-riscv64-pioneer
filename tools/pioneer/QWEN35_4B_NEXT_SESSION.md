@@ -77,6 +77,10 @@ tag0121 until the required clean Haiku boot and guarded hardware preflight.
 Tag0121 now also compiles a proof-gated session-area retirement method;
 simulated tests cover invalid evidence, duplicate areas, host-buffer release
 ordering, and partial failure. It is not yet connected to the recovery ioctl.
+The recovery guard now resolves through the existing pinned reload-guard
+image path; its previous separate path could not be found by Haiku's module
+resolver. A simulated-tested PCI teardown restores the idle BAR/bridge state
+without replaying stale TLB snapshots. Integration and hardware checks remain.
 
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached

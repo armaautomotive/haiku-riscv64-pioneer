@@ -67,4 +67,55 @@ bool PioneerPostResetPciRestore(IO& io,PioneerPostResetPciResult& result)
 	return true;
 }
 
+enum PioneerPostResetPciFinishStage {
+	PioneerPostResetPciFinishRefused=0,
+	PioneerPostResetPciFinishDisable=1,
+	PioneerPostResetPciFinishRestore=2,
+	PioneerPostResetPciFinishComplete=3
+};
+
+// After the fresh post-reset mappings are closed and the fleet/DMA audit
+// passes, restore the fixed pre-session PCI layout. The saved values are from
+// the original exclusive session, and must be exactly the known Pioneer idle
+// state. This touches PCI config only; it never invokes old IO::Unmap(), which
+// could write stale pre-reset TLB or core snapshots.
+template<class IO>
+bool PioneerPostResetPciFinish(IO& io,const tt_pioneer_mmio_result& saved,
+	unsigned& stage)
+{
+	stage=PioneerPostResetPciFinishRefused;
+	const auto& profile=io.Profile();
+	PioneerBlackholeBarPlan plan;
+	if (!PioneerMinimumBarLayoutMatches(profile)
+		|| !PioneerPlanBlackholeBars(profile.ranges,TT_PIONEER_RANGE_COUNT,plan)
+		|| plan.hostStart[0]!=profile.bar0_host_start || plan.hostEnd[0]!=profile.bar0_host_end
+		|| plan.hostStart[1]!=profile.bar2_host_start || plan.hostEnd[1]!=profile.bar2_host_end
+		|| saved.version!=1 || saved.commands_before[0] || saved.commands_before[1]
+		|| saved.bridge_before[0]!=0x0001fff1 || saved.bridge_before[1] || saved.bridge_before[2]
+		|| io.CardRead(0,4)!=0xb1401e52 || io.CardRead(0x2c,4)!=0x00431e52
+		|| io.RootRead(0,4)!=0x20421e30 || (io.RootRead(8,4)>>8)!=0x060400
+		|| io.RootRead(0x18,4)!=0x003f0100 || io.RootRead(0x20,4)!=0x0000fff0
+		|| io.CardRead(4,2)!=0x402 || io.RootRead(4,2)!=0x402
+		|| !io.Quiet() || !BlackholeCardControlsQuiet(io)) return false;
+	for (unsigned i=0;i<6;i++) {
+		if (saved.bars_before[i]!=(i%2==0?0x0cU:0U)
+			|| io.CardRead(0x10+4*i,4)!=plan.bars[i]) return false;
+	}
+	for (unsigned i=0;i<3;i++) if (io.RootRead(0x24+4*i,4)!=plan.bridge[i]) return false;
+	stage=PioneerPostResetPciFinishDisable;
+	io.CardWrite(4,2,0);io.RootWrite(4,2,0);
+	if (io.CardRead(4,2)!=0 || io.RootRead(4,2)!=0) return false;
+	stage=PioneerPostResetPciFinishRestore;
+	const unsigned order[]={5,4,1,0,3,2};
+	for (unsigned i:order) io.CardWrite(0x10+4*i,4,saved.bars_before[i]);
+	io.RootWrite(0x28,4,saved.bridge_before[1]);
+	io.RootWrite(0x2c,4,saved.bridge_before[2]);
+	io.RootWrite(0x24,4,saved.bridge_before[0]);
+	for (unsigned i=0;i<6;i++) if (io.CardRead(0x10+4*i,4)!=saved.bars_before[i]) return false;
+	for (unsigned i=0;i<3;i++) if (io.RootRead(0x24+4*i,4)!=saved.bridge_before[i]) return false;
+	if (io.CardRead(4,2)!=0 || io.RootRead(4,2)!=0) return false;
+	stage=PioneerPostResetPciFinishComplete;
+	return true;
+}
+
 #endif
