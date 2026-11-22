@@ -226,6 +226,7 @@ inline bool DataflowWorkerResetQueues()
 // fleet coordination and the decision to reuse or retain the graph.
 struct DataflowWorkerExecutionResult {
 	bool okay=false;
+	uint32_t executionDetail=0;
 	unsigned embeddingFailure=0,embeddingDetail=0;
 	uint32_t embeddingStatus=0,embeddingExpected=0;
 	uint32_t embeddingNoCState=0,embeddingNoCOutstandingIdMask=0;
@@ -292,9 +293,10 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 	} else if (invocationMagic==DataflowRmsMagic) {
 		const auto* rms=reinterpret_cast<const DataflowRmsInvocation*>(
 			static_cast<uintptr_t>(DataflowProgramAddress));
+		unsigned rmsStage=DataflowRmsWorkerInvalid;
+		DataflowBlackholeRmsOps io;
 		if (DataflowWorkerQueuesClean() && rms->Valid()
 			&& rms->core==core) {
-			DataflowBlackholeRmsOps io;
 			okay=io.Bind(*rms,sequence)
 				&& PioneerQwen35DataflowRmsWorker(*rms,sequence,
 					reinterpret_cast<float*>(static_cast<uintptr_t>(
@@ -304,7 +306,14 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 					reinterpret_cast<float*>(static_cast<uintptr_t>(
 						DataflowWeightBufferAddress)),
 					reinterpret_cast<float*>(static_cast<uintptr_t>(
-						DataflowOutputBufferAddress)),io);
+						DataflowOutputBufferAddress)),io,&rmsStage);
+		}
+		if (!okay) {
+			const auto& diagnostic=io.Diagnostic();
+			result.executionDetail=0x80000000U | (rmsStage&0xfU)
+				| ((diagnostic.stage&0xfU)<<4) | ((diagnostic.index&0xffU)<<8)
+				| ((diagnostic.counterMatchMask&0xffU)<<16)
+				| ((diagnostic.initiatorBusyMask&0xfU)<<24);
 		}
 		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 	} else if (invocationMagic==DataflowSiluMagic) {

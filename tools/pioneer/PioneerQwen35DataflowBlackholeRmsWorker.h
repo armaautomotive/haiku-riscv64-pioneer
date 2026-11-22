@@ -57,23 +57,59 @@ struct DataflowRmsScaleRecord {
 
 static_assert(sizeof(DataflowRmsScaleRecord)==64,
 	"RMS scale barrier is one aligned NoC page");
+static_assert((DataflowInputBufferAddress&63)==0 && DataflowInputPageBytes>=sizeof(DataflowRmsScaleRecord)
+	&& DataflowInputBufferAddress>=DataflowLocalBufferStart
+	&& DataflowInputBufferAddress+sizeof(DataflowRmsScaleRecord)<=DataflowLocalBufferEnd,
+	"the temporary scale page is aligned and reachable by the NoC");
+
+inline void DataflowRmsScaleToPage(const DataflowRmsScaleRecord& record,uint32_t* page) {
+	for (unsigned i=0;i<16;i++) page[i]=record.word[i];
+}
+inline void DataflowRmsScaleFromPage(const uint32_t* page,DataflowRmsScaleRecord& record) {
+	for (unsigned i=0;i<16;i++) record.word[i]=page[i];
+}
+template<class Writer> inline bool DataflowRmsWriteScalePage(Writer& writer,const Range& range,
+	unsigned route,const DataflowRmsScaleRecord& record,uint32_t* page,DataflowNocDiagnostic* diagnostic) {
+	if (!page || (reinterpret_cast<uintptr_t>(page)&63) || range.bytes!=sizeof(record)) return false;
+	DataflowRmsScaleToPage(record,page);
+	return writer.Write(range.address,route,reinterpret_cast<const uint8_t*>(page),sizeof(record),diagnostic);
+}
+template<class Reader> inline bool DataflowRmsReadScalePage(Reader& reader,const Range& range,
+	unsigned route,DataflowRmsScaleRecord& record,uint32_t* page,DataflowNocDiagnostic* diagnostic) {
+	if (!page || (reinterpret_cast<uintptr_t>(page)&63) || range.bytes!=sizeof(record)
+		|| !reader.Read(range.address,route,reinterpret_cast<uint8_t*>(page),sizeof(record),diagnostic)) return false;
+	DataflowRmsScaleFromPage(page,record);return true;
+}
+
+enum DataflowRmsWorkerStage : unsigned {
+	DataflowRmsWorkerOkay=0,DataflowRmsWorkerInvalid=1,DataflowRmsWorkerHiddenRead=2,
+	DataflowRmsWorkerScale=3,DataflowRmsWorkerRecordBuild=4,DataflowRmsWorkerRecordWrite=5,
+	DataflowRmsWorkerRecordWait=6,DataflowRmsWorkerInputRead=7,DataflowRmsWorkerWeightRead=8,
+	DataflowRmsWorkerNumeric=9,DataflowRmsWorkerOutputWrite=10
+};
 
 template<class IO>
 bool PioneerQwen35DataflowRmsWorker(const DataflowRmsInvocation& invocation,
 	unsigned sequence,float* inputCache,float* inputPage,float* weightPage,
-	float* outputPage,IO& io)
+	float* outputPage,IO& io,unsigned* failureStage=nullptr)
 {
+	if (failureStage) *failureStage=DataflowRmsWorkerInvalid;
 	if (!invocation.Valid() || !sequence
 		|| sequence>DataflowWorkerSequenceLimit || !inputCache || !inputPage
 		|| !weightPage || !outputPage) return false;
 	float scale=0;
 	if (invocation.core==0) {
+		if (failureStage) *failureStage=DataflowRmsWorkerHiddenRead;
 		if (!io.ReadHiddenInput(inputCache)) return false;
+		if (failureStage) *failureStage=DataflowRmsWorkerScale;
 		if (!DataflowHiddenRmsScale(inputCache,scale)) return false;
 		DataflowRmsScaleRecord record;
-		if (!DataflowRmsScaleRecord::Build(sequence,invocation,scale,record)
-			|| !io.WriteScaleRecord(record)) return false;
+		if (failureStage) *failureStage=DataflowRmsWorkerRecordBuild;
+		if (!DataflowRmsScaleRecord::Build(sequence,invocation,scale,record)) return false;
+		if (failureStage) *failureStage=DataflowRmsWorkerRecordWrite;
+		if (!io.WriteScaleRecord(record)) return false;
 	} else {
+		if (failureStage) *failureStage=DataflowRmsWorkerRecordWait;
 		bool observed=false;
 		DataflowRmsScaleRecord record;
 		for (unsigned poll=0;poll<DataflowRmsScalePollLimit;poll++) {
@@ -88,18 +124,23 @@ bool PioneerQwen35DataflowRmsWorker(const DataflowRmsInvocation& invocation,
 	}
 	for (unsigned segment=0;segment<invocation.segmentCount;segment++) {
 		const auto& output=invocation.segment[segment];
-		if (!io.ReadInputPanel(output.firstRow,inputPage)
-			|| !io.ReadWeightPanel(output.firstRow,weightPage)) return false;
+		if (failureStage) *failureStage=DataflowRmsWorkerInputRead;
+		if (!io.ReadInputPanel(output.firstRow,inputPage)) return false;
+		if (failureStage) *failureStage=DataflowRmsWorkerWeightRead;
+		if (!io.ReadWeightPanel(output.firstRow,weightPage)) return false;
+		if (failureStage) *failureStage=DataflowRmsWorkerNumeric;
 		for (unsigned lane=0;lane<16;lane++) {
 			const float value=(inputPage[lane]*scale)*weightPage[lane];
 			if ((PioneerAttentionBits(value)&0x7f800000U)==0x7f800000U)
 				return false;
 			outputPage[lane]=value;
 		}
+		if (failureStage) *failureStage=DataflowRmsWorkerOutputWrite;
 		if (!io.WriteOutput(output.bank,output.address,
 			reinterpret_cast<const uint8_t*>(outputPage),16*sizeof(float)))
 			return false;
 	}
+	if (failureStage) *failureStage=DataflowRmsWorkerOkay;
 	return true;
 }
 
@@ -108,6 +149,7 @@ class DataflowBlackholeRmsOps {
 	unsigned fSequence=0;
 	DataflowBlackholeNoc<0> fReader;
 	DataflowBlackholeNoc<1> fWriter;
+	mutable DataflowNocDiagnostic fDiagnostic{};
 
 	bool InputRange(unsigned row,unsigned rows,Range& range) const
 	{
@@ -117,6 +159,7 @@ class DataflowBlackholeRmsOps {
 	}
 
 public:
+	const DataflowNocDiagnostic& Diagnostic() const { return fDiagnostic; }
 	bool Bind(const DataflowRmsInvocation& invocation,unsigned sequence)
 	{
 		fInvocation=nullptr;
@@ -143,7 +186,7 @@ public:
 				|| !fReader.Read(expected.address,
 					fInvocation->bankRoute[0][expected.bank],
 					reinterpret_cast<uint8_t*>(output+part.firstRow),
-					rows*sizeof(float))) return false;
+					rows*sizeof(float),&fDiagnostic)) return false;
 			covered+=rows;
 		}
 		return covered==Hidden;
@@ -155,7 +198,7 @@ public:
 		Range range{};
 		return InputRange(row,16,range)
 			&& fReader.Read(range.address,fInvocation->bankRoute[0][range.bank],
-				reinterpret_cast<uint8_t*>(output),16*sizeof(float));
+				reinterpret_cast<uint8_t*>(output),16*sizeof(float),&fDiagnostic);
 	}
 
 	bool ReadWeightPanel(unsigned firstRow,float* output) const
@@ -166,30 +209,30 @@ public:
 		return fInvocation->weight.Resolve(0,1,firstRow*sizeof(float),
 			16*sizeof(float),range)
 			&& fReader.Read(range.address,fInvocation->bankRoute[0][range.bank],
-				reinterpret_cast<uint8_t*>(output),16*sizeof(float));
+				reinterpret_cast<uint8_t*>(output),16*sizeof(float),&fDiagnostic);
 	}
 
 	bool WriteScaleRecord(const DataflowRmsScaleRecord& record) const
 	{
 		if (!fInvocation || fInvocation->core!=0
 			|| !record.Valid(fSequence,*fInvocation)) return false;
+		auto* page=reinterpret_cast<uint32_t*>(static_cast<uintptr_t>(DataflowInputBufferAddress));
 		Range scratch{};
 		return fInvocation->output.Resolve(fInvocation->scratchRow,16,0,
 			sizeof(record),scratch)
-			&& fWriter.Write(scratch.address,
-				fInvocation->bankRoute[1][scratch.bank],
-				reinterpret_cast<const uint8_t*>(&record),sizeof(record));
+			&& DataflowRmsWriteScalePage(fWriter,scratch,
+				fInvocation->bankRoute[1][scratch.bank],record,page,&fDiagnostic);
 	}
 
 	bool ReadScaleRecord(DataflowRmsScaleRecord& record) const
 	{
 		if (!fInvocation || fInvocation->core==0) return false;
+		auto* page=reinterpret_cast<uint32_t*>(static_cast<uintptr_t>(DataflowInputBufferAddress));
 		Range scratch{};
 		return fInvocation->output.Resolve(fInvocation->scratchRow,16,0,
 			sizeof(record),scratch)
-			&& fReader.Read(scratch.address,
-				fInvocation->bankRoute[0][scratch.bank],
-				reinterpret_cast<uint8_t*>(&record),sizeof(record));
+			&& DataflowRmsReadScalePage(fReader,scratch,
+				fInvocation->bankRoute[0][scratch.bank],record,page,&fDiagnostic);
 	}
 
 	bool WriteOutput(unsigned bank,uint32_t address,const uint8_t* input,
@@ -201,7 +244,7 @@ public:
 			if (output.bank==bank && output.address==address
 				&& output.bytes==bytes)
 				return fWriter.Write(address,fInvocation->bankRoute[1][bank],
-					input,bytes);
+					input,bytes,&fDiagnostic);
 		}
 		return false;
 	}

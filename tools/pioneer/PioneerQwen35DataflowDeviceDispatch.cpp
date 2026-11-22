@@ -15,7 +15,7 @@ extern "C" __attribute__((noinline)) bool qwen35_graph_authorize(
 	return DataflowGraphFetchedCommandMatches(*run,index,*record,program,DataflowProgramRegionBytes);
 }
 extern "C" bool qwen35_graph_execute(unsigned core,unsigned sequence,
-	PioneerQwen35::DataflowWorkerMailbox* mailbox);
+	PioneerQwen35::DataflowWorkerMailbox* mailbox,unsigned* detail);
 extern "C" bool qwen35_graph_reset_queues();
 
 struct GraphWitnessExecution {
@@ -28,7 +28,7 @@ struct GraphWitnessExecution {
 	}
 	bool Authorize(unsigned index) { return qwen35_graph_authorize(&run,index); }
 	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
-		status=detail=0;return qwen35_graph_execute(run.core,sequence,mailbox);
+		status=detail=0;return qwen35_graph_execute(run.core,sequence,mailbox,&detail);
 	}
 	bool ResetQueues() { return qwen35_graph_reset_queues(); }
 };

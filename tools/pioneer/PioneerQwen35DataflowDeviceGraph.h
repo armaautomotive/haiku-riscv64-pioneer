@@ -77,7 +77,9 @@ public:
 			if (!io.Fetch(index)) return Retain(DataflowGraphFetchFault);
 			if (!io.Authorize(index)) return Retain(DataflowGraphAuthorityFault);
 			unsigned status=0,detail=0;
-			if (!io.Execute(firstSequence+index,status,detail)) return Retain(DataflowGraphExecutionUncertain);
+			if (!io.Execute(firstSequence+index,status,detail)) {
+				failureCore=core;failureStatus=detail;return Retain(DataflowGraphExecutionUncertain);
+			}
 			if (!status && detail) return Retain(DataflowGraphExecutionUncertain);
 			if (!barrier.Start(core,epoch,index+1,status,detail)) return Retain(DataflowGraphBarrierFault);
 			remaining=pollBudget;state=DataflowGraphWaiting;

@@ -58,28 +58,29 @@ struct MockRmsIO {
 	float* output;
 	DataflowRmsScaleRecord record{};
 	bool recordReady=false;
+	unsigned failStage=0;
 
 	bool ReadHiddenInput(float* destination) const
 	{
-		if (invocation.core!=0) return false;
+		if (invocation.core!=0 || failStage==DataflowRmsWorkerHiddenRead) return false;
 		memcpy(destination,input,Hidden*sizeof(float));
 		return true;
 	}
 	bool ReadInputPanel(unsigned row,float* destination) const
 	{
-		if ((row&15) || row>=Hidden) return false;
+		if ((row&15) || row>=Hidden || failStage==DataflowRmsWorkerInputRead) return false;
 		memcpy(destination,input+row,16*sizeof(float));
 		return true;
 	}
 	bool ReadWeightPanel(unsigned row,float* destination) const
 	{
-		if ((row&15) || row>=Hidden) return false;
+		if ((row&15) || row>=Hidden || failStage==DataflowRmsWorkerWeightRead) return false;
 		memcpy(destination,weight+row,16*sizeof(float));
 		return true;
 	}
 	bool WriteScaleRecord(const DataflowRmsScaleRecord& value)
 	{
-		if (invocation.core!=0 || !value.Valid(1,invocation)) return false;
+		if (invocation.core!=0 || failStage==DataflowRmsWorkerRecordWrite || !value.Valid(1,invocation)) return false;
 		record=value;
 		recordReady=true;
 		return true;
@@ -93,7 +94,7 @@ struct MockRmsIO {
 	bool WriteOutput(unsigned bank,uint32_t address,const uint8_t* bytes,
 		unsigned size) const
 	{
-		if (!bytes || size!=16*sizeof(float)) return false;
+		if (!bytes || size!=16*sizeof(float) || failStage==DataflowRmsWorkerOutputWrite) return false;
 		for (unsigned i=0;i<invocation.segmentCount;i++) {
 			const auto& segment=invocation.segment[i];
 			if (segment.bank==bank && segment.address==address
@@ -103,6 +104,24 @@ struct MockRmsIO {
 			}
 		}
 		return false;
+	}
+};
+
+struct MockScaleNoc {
+	uint32_t* expectedPage;
+	uint32_t remote[16]{};
+	bool fail=false;
+	bool Write(uint32_t address,unsigned route,const uint8_t* local,unsigned bytes,DataflowNocDiagnostic*) {
+		assert(address==0x1000 && route==3 && local==reinterpret_cast<uint8_t*>(expectedPage)
+			&& bytes==sizeof(remote));
+		if (fail) return false;
+		memcpy(remote,local,bytes);return true;
+	}
+	bool Read(uint32_t address,unsigned route,uint8_t* local,unsigned bytes,DataflowNocDiagnostic*) {
+		assert(address==0x1000 && route==3 && local==reinterpret_cast<uint8_t*>(expectedPage)
+			&& bytes==sizeof(remote));
+		if (fail) return false;
+		memcpy(local,remote,bytes);return true;
 	}
 };
 
@@ -129,10 +148,36 @@ int main()
 		if (!core) barrier=io.record;
 	}
 	assert(memcmp(expected,actual,sizeof(expected))==0);
+	alignas(64) uint32_t stagedScale[16]{};
+	DataflowRmsScaleToPage(barrier,stagedScale);
+	DataflowRmsScaleRecord stagedRoundTrip{};
+	DataflowRmsScaleFromPage(stagedScale,stagedRoundTrip);
+	assert(std::memcmp(&barrier,&stagedRoundTrip,sizeof(barrier))==0);
+	MockScaleNoc noc{stagedScale};const Range scratch{0,0x1000,64};
+	assert(DataflowRmsWriteScalePage(noc,scratch,3,barrier,stagedScale,nullptr));
+	std::memset(stagedScale,0,sizeof(stagedScale));stagedRoundTrip={};
+	assert(DataflowRmsReadScalePage(noc,scratch,3,stagedRoundTrip,stagedScale,nullptr)
+		&& std::memcmp(&barrier,&stagedRoundTrip,sizeof(barrier))==0);
+	noc.fail=true;stagedRoundTrip={};
+	assert(!DataflowRmsReadScalePage(noc,scratch,3,stagedRoundTrip,stagedScale,nullptr)
+		&& stagedRoundTrip.word[0]==0);
+	static_assert(DataflowInputBufferAddress>=DataflowLocalBufferStart
+		&& DataflowInputBufferAddress+sizeof(DataflowRmsScaleRecord)<=DataflowLocalBufferEnd,
+		"scale staging belongs to the permitted NoC local range");
 	DataflowRmsScaleRecord corrupt=barrier;
 	corrupt.word[4]^=1;
 	DataflowRmsInvocation invocation{};
 	assert(DataflowRmsProgramBuilder::BindCore(program,0,invocation));
+	MockRmsIO failed{invocation,input,weight,actual};
+	float cache[Hidden],inputPage[16],weightPage[16],outputPage[16];
+	unsigned stage=0;
+	const unsigned faults[]={DataflowRmsWorkerHiddenRead,DataflowRmsWorkerRecordWrite,
+		DataflowRmsWorkerInputRead,DataflowRmsWorkerWeightRead,DataflowRmsWorkerOutputWrite};
+	for (unsigned fault:faults) {
+		failed.failStage=fault;
+		assert(!PioneerQwen35DataflowRmsWorker(invocation,1,cache,inputPage,weightPage,outputPage,failed,&stage)
+			&& stage==fault);
+	}
 	assert(!corrupt.Valid(1,invocation));
 	assert(!barrier.Valid(2,invocation));
 	std::puts("PASS sharded Qwen35 device RMS matches the pinned hidden operator bitwise");

@@ -58,7 +58,7 @@ struct Execution {
 		&& std::memcmp(program,record[index].payload,record[index].header[6])==0; }
 	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
 		assert(sequence==firstSequence+executes);
-		executes++;if (int(sequence-firstSequence)==failExecute) return false;
+		executes++;if (int(sequence-firstSequence)==failExecute) { detail=0x80001234U;return false; }
 		status=int(sequence-firstSequence)==workerFailure?77:0;detail=status?123:0;return true;
 	}
 	bool ResetQueues() { return int(resets++)!=failReset; }
@@ -130,7 +130,8 @@ int main() {
 	Fleet authority;authority.execution[8]->failAuthority=0;authority.Run();
 	assert(authority.graph[8]->Fault()==DataflowGraphAuthorityFault && authority.execution[8]->executes==0);
 	Fleet uncertain;uncertain.execution[9]->failExecute=0;uncertain.Run();
-	assert(uncertain.graph[9]->Fault()==DataflowGraphExecutionUncertain);
+	assert(uncertain.graph[9]->Fault()==DataflowGraphExecutionUncertain
+		&& uncertain.graph[9]->FailureCore()==9 && uncertain.graph[9]->FailureStatus()==0x80001234U);
 	Fleet failure;failure.execution[5]->workerFailure=0;failure.Run();
 	for (auto& g:failure.graph) assert(g->Fault()==DataflowGraphWorkerFault && g->FailureCore()==5 && g->FailureStatus()==77);
 	Fleet partial;partial.fabric.failRelease=12;partial.Run(30);

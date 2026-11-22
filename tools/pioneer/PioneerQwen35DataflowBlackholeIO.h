@@ -264,9 +264,10 @@ public:
 		return Transfer(false,remote,route,local,bytes,detail);
 	}
 
-	bool Write(uint32_t remote,unsigned route,const uint8_t* local,unsigned bytes) const
+	bool Write(uint32_t remote,unsigned route,const uint8_t* local,unsigned bytes,
+		DataflowNocDiagnostic* detail=nullptr) const
 	{
-		return Transfer(true,remote,route,const_cast<uint8_t*>(local),bytes);
+		return Transfer(true,remote,route,const_cast<uint8_t*>(local),bytes,detail);
 	}
 
 	// The dispatch barrier has two fixed 64-byte packets per message. This is

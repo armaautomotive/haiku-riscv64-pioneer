@@ -65,9 +65,8 @@ import sys
 out = Path(sys.argv[1])
 boot = (out / 'boot.bin').read_bytes()
 code = (out / 'text.bin').read_bytes()
-symbols = {name: int(value, 16) for value, kind, name in
-           (line.split() for line in (out / 'symbols.txt').read_text().splitlines())
-           if kind == 'T'}
+symbol_rows = [line.split() for line in (out / 'symbols.txt').read_text().splitlines()]
+symbols = {name: int(value, 16) for value, kind, name in symbol_rows if kind == 'T'}
 if boot != bytes.fromhex('6fc00600') or not 0 < len(code) <= 0xe000 or len(code) % 4:
     raise SystemExit('unexpected resident dataflow image size or boot jump')
 if symbols.get('qwen35_dataflow_entry') != 0x72000:
@@ -77,6 +76,13 @@ dispatch_path = out / 'dispatch.bin'
 dispatch = dispatch_path.read_bytes() if dispatch_path.exists() else b''
 if dispatch and (len(dispatch) > 0x5c00 or len(dispatch) % 4):
     raise SystemExit('unexpected dispatch witness image size')
+if dispatch:
+    rms = [int(value, 16) for value, kind, name in symbol_rows
+           if kind in ('T', 'W') and 'PioneerQwen35DataflowRmsWorker' in name]
+    bridge = symbols.get('qwen35_graph_execute', 0)
+    if len(rms) != 1 or not all(0xa0400 <= address < 0xa0400 + len(dispatch)
+                                for address in (rms[0], bridge)):
+        raise SystemExit('RMS worker or graph bridge is outside the verified dispatch image')
 dispatch_words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', dispatch))
 dispatch_definition = ('inline constexpr unsigned DataflowServiceDispatchWords[]={\n'
                        + dispatch_words + '};\n') if dispatch else ''

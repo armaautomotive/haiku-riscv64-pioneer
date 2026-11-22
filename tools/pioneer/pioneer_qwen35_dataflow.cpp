@@ -486,6 +486,13 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 						detail&0xfU,(detail>>4)&0xfU,(detail>>8)&0xffU,
 						(detail>>16)&0xffU,(detail>>24)&0xfU);
 				}
+				if ((graph.reserved[1]&0xfU)==3 && (graph.reserved[2]&0x80000000U)) {
+					const unsigned detail=graph.reserved[2];
+					fprintf(stderr,"P100A_Q35_DATAFLOW rms_worker stage=%u noc_stage=%u "
+						"noc_index=%u counter_match_mask=0x%02x initiator_busy_mask=0x%x\n",
+						detail&0xfU,(detail>>4)&0xfU,(detail>>8)&0xffU,
+						(detail>>16)&0xffU,(detail>>24)&0xfU);
+				}
 			} else fputs("P100A_Q35_DATAFLOW graph_worker unavailable\n",stderr);
 		}
 		return false;

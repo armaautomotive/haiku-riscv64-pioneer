@@ -122,6 +122,31 @@ Its worker stack envelope is `7600/8192` and graph ioctl envelope is
 `16000/18432`, both including helper allowances and neither a whole-program
 proof.
 
+The guarded tag0157 run passed the first graph fetch and completed embedding
+and residual-save steps before worker 0 failed at RMS step 2. It produced no
+token. Same-owner recovery and model-bank unload succeeded without reboot,
+and the wrapper restored stable driver55 generation9. Independent checks
+found no owner or lock and both models at their recorded sizes. See
+`benchmarks/qwen35-dataflow-tag0157-20261122/RUN.md`.
+
+The next rewrite fixes a definite RMS bug: its 64-byte scale record was passed
+from the worker stack outside the NoC's permitted local buffer range. It now
+stages the record through the aligned input page and adds RMS/NoC failure
+details to graph receipts. Host tests and target compilation pass; hardware
+qualification remains to be completed.
+
+Tag0158's host RMS/fault tests, RV32IMF suite, and normal, qualification and
+non-loadable witness builds pass. The normalization worker and graph bridge
+are linked into the verified dispatch image to keep the primary code out of
+the queue region; the image build checks their placement. Hardware has not
+yet verified this fix. Qualification driver SHA-256:
+`60fba6994ad95b23762fa20a59db3cbefbc37ba8bf65691d5c7c8bf04e0411fb`;
+client SHA-256:
+`c1e42aaad89ddaec8ff0aba994f61a2b3370ef4b9cbc04456fb4b6a31770353b`.
+The worker stack envelope is `7632/8192` including the helper allowance, and
+the graph ioctl envelope is `16000/18432` including its helper allowance;
+neither is a whole-program proof.
+
 ## Earlier checkpoint: tag0120 failure and recovery rewrite
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until

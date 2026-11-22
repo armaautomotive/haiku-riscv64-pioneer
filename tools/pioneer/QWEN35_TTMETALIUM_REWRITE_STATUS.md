@@ -63,6 +63,13 @@ again recovered without reboot. The next rewrite omits that register while
 retaining all supported checks; it needs hardware qualification. See
 [the tag0156 run record](benchmarks/qwen35-dataflow-tag0156-20261122/RUN.md).
 
+Tag0157 passed the initial graph fetch and two steps, then worker 0 failed in
+the first RMS step. The card again recovered and unloaded without reboot. The
+next rewrite stages RMS scale records in the NoC-accessible input page rather
+than on the worker stack, and adds a receipt for the RMS failure stage; that
+fix requires hardware qualification. See
+[the tag0157 run record](benchmarks/qwen35-dataflow-tag0157-20261122/RUN.md).
+
 Tag0154's qualification driver SHA-256 is
 `152edda1d9214b869eb74299010d1e973da91c6070e7f8f191a4cbb6f597c223`
 and its standalone client SHA-256 is
