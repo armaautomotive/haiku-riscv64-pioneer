@@ -55,6 +55,16 @@ int main()
     {
         BootIO io; const auto original=io.shim; const uint32_t b0=io.boot[0],b1=io.boot[1];
         DataflowRoleBootOwner owner;
+        assert(owner.Capture(7,io)); io.defaultRoute=false;
+        assert(!owner.Stage(reader,4,writer,3,io) && owner.RestorationRequired());
+        assert(!owner.Restore(io) && io.writes==0);
+        io.defaultRoute=true; io.shim[20]^=1;
+        assert(owner.Restore(io) && owner.RestoredOriginal());
+        assert(io.boot[0]==b0 && io.boot[1]==b1 && io.shim==original);
+    }
+    {
+        BootIO io; const auto original=io.shim; const uint32_t b0=io.boot[0],b1=io.boot[1];
+        DataflowRoleBootOwner owner;
         io.defaultRoute=false; assert(!owner.Capture(7,io));
         io.defaultRoute=true; assert(owner.Capture(7,io));
         assert(owner.Stage(reader,4,writer,3,io) && owner.StagedAndVerified());

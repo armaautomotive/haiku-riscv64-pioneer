@@ -9,11 +9,17 @@ struct FleetBootIO {
     bool held=true,defaultRoute=true,corruptEnabled=false;
     int failCore=-1,corruptFrom=-1,corruptTarget=-1;
     unsigned writes=0;
+    mutable bool failHeldOnStagedCore=false;
     FleetBootIO():boots(DataflowBarrierWorkers*2),shims(DataflowBarrierWorkers*64) {
         for (unsigned i=0;i<boots.size();i++) boots[i]=i^0x23456789U;
         for (unsigned i=0;i<shims.size();i++) shims[i]=i^0x8a9bcdefU;
     }
-    bool AllRolesHeld(unsigned core) const { return held && core<DataflowBarrierWorkers; }
+    bool AllRolesHeld(unsigned core) const {
+        if (failHeldOnStagedCore && core==3 && writes) {
+            failHeldOnStagedCore=false; return false;
+        }
+        return held && core<DataflowBarrierWorkers;
+    }
     bool DefaultBootRouting(unsigned core) const { return defaultRoute && core<DataflowBarrierWorkers; }
     bool ReadBoot(unsigned core,unsigned address,uint32_t& value) {
         assert(AllRolesHeld(core) && DefaultBootRouting(core));
@@ -54,6 +60,26 @@ struct FleetBootIO {
 int main()
 {
     const uint32_t reader[]={1,2,3,4},writer[]={5,6,7};
+    {
+        FleetBootIO io; const auto boots=io.boots,shims=io.shims;
+        DataflowRoleFleetBootOwner fleet;
+        assert(fleet.CaptureAll(io)); io.failHeldOnStagedCore=true;
+        assert(!fleet.StageAll(reader,4,writer,3,io) && fleet.RestorationRequired());
+        assert(!io.failHeldOnStagedCore && io.writes>0);
+        assert(fleet.RestoreAll(io) && fleet.RestoredOriginal());
+        assert(io.boots==boots && io.shims==shims);
+    }
+    {
+        FleetBootIO io; const auto boots=io.boots,shims=io.shims;
+        DataflowRoleFleetBootOwner fleet;
+        assert(fleet.CaptureAll(io)); io.defaultRoute=false;
+        assert(!fleet.StageAll(reader,4,writer,3,io));
+        assert(fleet.RestorationRequired() && !fleet.RestoreAll(io) && io.writes==0);
+        io.defaultRoute=true; io.shims[119*64]^=1;
+        assert(!fleet.RestoreAll(io) && fleet.RestorationRequired());
+        assert(fleet.RestoreAll(io) && fleet.RestoredOriginal());
+        assert(io.boots==boots && io.shims==shims);
+    }
     {
         FleetBootIO io; const auto boots=io.boots,shims=io.shims;
         DataflowRoleFleetBootOwner fleet;

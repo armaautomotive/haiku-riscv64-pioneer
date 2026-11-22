@@ -10,10 +10,16 @@ struct FleetIO {
     bool held=true,corruptEnabled=false;
     int failCore=-1,corruptFrom=-1,corruptTarget=-1;
     unsigned writes=0;
+    mutable bool failHeldOnStagedCore=false;
     FleetIO():memory(DataflowRoleFleetCodeOwner::RequiredWords()) {
         for (unsigned i=0;i<memory.size();i++) memory[i]=i^0x5a33c5a3U;
     }
-    bool AllRolesHeld(unsigned core) const { return held && core<DataflowBarrierWorkers; }
+    bool AllRolesHeld(unsigned core) const {
+        if (failHeldOnStagedCore && core==3 && writes) {
+            failHeldOnStagedCore=false; return false;
+        }
+        return held && core<DataflowBarrierWorkers;
+    }
     bool Read(unsigned core,unsigned address,uint32_t* out,unsigned bytes) {
         assert(AllRolesHeld(core) && out && DataflowRoleExtraL1Range(address,bytes));
         const unsigned offset=core*PerCore+(address-DataflowRoleExtraL1Address)/4;
@@ -38,6 +44,24 @@ int main()
 {
     std::vector<uint32_t> snapshots(DataflowRoleFleetCodeOwner::RequiredWords());
     std::vector<uint32_t> reader(100,0x12345678U),writer(70,0xabcdef01U);
+    {
+        FleetIO io; const auto original=io.memory; DataflowRoleFleetCodeOwner fleet;
+        assert(fleet.CaptureAll(snapshots.data(),snapshots.size(),io));
+        io.failHeldOnStagedCore=true;
+        assert(!fleet.StageAll(reader.data(),reader.size(),writer.data(),writer.size(),io));
+        assert(fleet.RestorationRequired() && !io.failHeldOnStagedCore && io.writes>0);
+        assert(fleet.RestoreAll(io) && fleet.RegionRestored() && io.memory==original);
+    }
+    {
+        FleetIO io; const auto original=io.memory; DataflowRoleFleetCodeOwner fleet;
+        assert(fleet.CaptureAll(snapshots.data(),snapshots.size(),io));
+        io.held=false;
+        assert(!fleet.StageAll(reader.data(),reader.size(),writer.data(),writer.size(),io));
+        assert(fleet.RestorationRequired() && !fleet.RestoreAll(io) && io.writes==0);
+        io.held=true; io.memory[119*FleetIO::PerCore]^=1;
+        assert(!fleet.RestoreAll(io) && fleet.RestorationRequired());
+        assert(fleet.RestoreAll(io) && fleet.RegionRestored() && io.memory==original);
+    }
     {
         FleetIO io; const auto original=io.memory; DataflowRoleFleetCodeOwner fleet;
         assert(!fleet.CaptureAll(snapshots.data(),snapshots.size()-1,io));

@@ -73,11 +73,8 @@ public:
         const unsigned limit=reader?DataflowRoleReaderCodeLimit:DataflowRoleWriterCodeLimit;
         if ((fPhase!=Captured && fPhase!=Touched) || !code || !words
             || words>(limit-address)/4) return false;
-        if (!io.AllRolesHeld(fCore)) {
-            if (fPhase==Touched) fPhase=Faulted;
-            else { fPhase=Empty; fSnapshot=nullptr; fCore=DataflowBarrierWorkers; }
-            return false;
-        }
+        // Keep the captured state for recovery even before the first write.
+        if (!io.AllRolesHeld(fCore)) { fPhase=Faulted; return false; }
         // A write may partially succeed even if IO reports failure.
         fCodeVerified=false;
         fPhase=Faulted; // no further staging after an uncertain operation

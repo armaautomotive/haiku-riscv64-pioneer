@@ -12,6 +12,7 @@ struct RecoveryIO {
     bool corruptPriorDisableOnWrite=false;
     unsigned failDisableCore=UINT32_MAX;
     unsigned writes=0;
+    mutable unsigned heldChecks=0,failHeldCheck=0;
     RecoveryIO():code(DataflowRoleFleetRecoveryOwner::CodeWords()),
         ram(DataflowRoleFleetRecoveryOwner::RamWords()),boots(DataflowBarrierWorkers*2),
         shims(DataflowBarrierWorkers*64),resetDisable(DataflowBarrierWorkers) {
@@ -21,7 +22,10 @@ struct RecoveryIO {
         for (unsigned i=0;i<shims.size();i++) shims[i]=i^0x9abc1234U;
         for (unsigned i=0;i<resetDisable.size();i++) resetDisable[i]=(i*37U)&0x3ffU;
     }
-    bool AllRolesHeld(unsigned core) const { return held && core<DataflowBarrierWorkers; }
+    bool AllRolesHeld(unsigned core) const {
+        if (++heldChecks==failHeldCheck) return false;
+        return held && core<DataflowBarrierWorkers;
+    }
     bool DefaultBootRouting(unsigned core) const { return defaultRoute && core<DataflowBarrierWorkers; }
     bool LocalRamStable(unsigned core) const { return stable && core<DataflowBarrierWorkers; }
     bool ReadResetDisable(unsigned core,uint32_t& value) {
@@ -98,6 +102,19 @@ int main()
     std::vector<uint32_t> codeSnapshot(DataflowRoleFleetRecoveryOwner::CodeWords());
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
+    // Fail the composed image and inner code fleet preflights after the
+    // parent safety audit, with every original snapshot already captured.
+    for (unsigned check : {DataflowBarrierWorkers+1U,2U*DataflowBarrierWorkers+1U}) {
+        RecoveryIO io; const auto code=io.code,ram=io.ram,boots=io.boots,shims=io.shims,disable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
+        io.heldChecks=0; io.failHeldCheck=check;
+        assert(!owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.RestorationRequired() && io.writes==0 && io.heldChecks==check);
+        assert(owner.RestoreAll(io) && owner.CoveredStateRestored());
+        assert(owner.VerifyAfterResidentRestore(io));
+        assert(io.code==code && io.ram==ram && io.boots==boots && io.shims==shims && io.resetDisable==disable);
+    }
     {
         RecoveryIO io; const auto code=io.code,ram=io.ram,boots=io.boots,shims=io.shims,disable=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;

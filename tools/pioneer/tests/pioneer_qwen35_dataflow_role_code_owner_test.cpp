@@ -74,17 +74,16 @@ int main() {
     assert(io.memory==original);
     assert(!owner.Stage(true,reader.data(),reader.size(),io));
     assert(!owner.Restore(io));
-    // If a role starts after an untouched capture, the snapshot is no
-    // longer trusted; a fresh capture is required before any code write.
+    // If the hold proof fails after capture, preserve the snapshot for
+    // recovery and forbid a new stage until the original is restored.
     SimulatedIO staleIO;
     DataflowRoleCodeOwner stale;
     assert(stale.Capture(4,saved.data(),saved.size(),staleIO));
     staleIO.held=false;
     assert(!stale.Stage(true,reader.data(),reader.size(),staleIO));
+    assert(stale.NeedsRestore() && !stale.Restore(staleIO));
     staleIO.held=true;
     assert(!stale.Stage(true,reader.data(),reader.size(),staleIO));
-    assert(stale.Capture(4,saved.data(),saved.size(),staleIO));
-    assert(stale.Stage(true,reader.data(),reader.size(),staleIO));
     assert(stale.Restore(staleIO) && staleIO.memory==original);
     SimulatedIO damagedIO;
     DataflowRoleCodeOwner damaged;

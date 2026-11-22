@@ -35,7 +35,7 @@ public:
     template<class IO> bool StageAll(const uint32_t* reader,unsigned readerWords,
         const uint32_t* writer,unsigned writerWords,IO& io) {
         if (fPhase!=Captured || !reader || !readerWords || !writer || !writerWords) return false;
-        if (!AllHeld(io)) { fPhase=Unavailable; return false; }
+        if (!AllHeld(io)) { fPhase=Faulted; return false; }
         fPhase=Faulted;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!fCore[core].Stage(reader,readerWords,writer,writerWords,io)) return false;

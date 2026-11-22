@@ -44,7 +44,7 @@ public:
     template<class IO> bool StageAll(const uint32_t* reader,unsigned readerWords,
         const uint32_t* writer,unsigned writerWords,IO& io) {
         if (fPhase!=Captured || !reader || !readerWords || !writer || !writerWords) return false;
-        if (!AllHeld(io)) { fPhase=Unavailable; return false; }
+        if (!AllHeld(io)) { fPhase=Faulted; return false; }
         // From the first attempted stage, retain every snapshot until verified
         // restoration; a failed transfer may have partially written a core.
         fPhase=Faulted;

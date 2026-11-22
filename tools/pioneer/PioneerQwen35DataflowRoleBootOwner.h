@@ -78,7 +78,9 @@ public:
             || readerWords>(DataflowRoleReaderShimLimit-DataflowRoleReaderShimAddress)/4
             || writerWords>(DataflowRoleWriterShimLimit-DataflowRoleWriterShimAddress)/4)
             return false;
-        if (!Held(io)) { fPhase=Empty; fCore=DataflowBarrierWorkers; return false; }
+        // The snapshot must remain available to a fleet recovery even if
+        // held/reset routing becomes uncertain before the first write.
+        if (!Held(io)) { fPhase=Faulted; return false; }
         if (!DataflowRoleBootWord(DataflowRoleReader,DataflowRoleReaderShimAddress,fJump[0])
             || !DataflowRoleBootWord(DataflowRoleWriter,DataflowRoleWriterShimAddress,fJump[1]))
             return false;

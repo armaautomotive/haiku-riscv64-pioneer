@@ -68,6 +68,19 @@ int main()
         ImagesIO io; const auto code=io.code,boots=io.boots,shims=io.shims;
         DataflowRoleFleetImagesOwner owner;
         assert(owner.CaptureAll(storage.data(),storage.size(),io));
+        io.defaultRoute=false;
+        assert(!owner.StageAll(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.RestorationRequired() && !owner.RestoreAll(io) && io.writes==0);
+        io.defaultRoute=true;
+        io.shims[119*64]^=1; // mismatch must be detected and then repaired
+        assert(!owner.RestoreAll(io) && owner.RestorationRequired());
+        assert(owner.RestoreAll(io) && owner.ImagesRestored());
+        assert(io.code==code && io.boots==boots && io.shims==shims);
+    }
+    {
+        ImagesIO io; const auto code=io.code,boots=io.boots,shims=io.shims;
+        DataflowRoleFleetImagesOwner owner;
+        assert(owner.CaptureAll(storage.data(),storage.size(),io));
         assert(owner.StageAll(codeA,3,codeB,2,shimA,2,shimB,2,io));
         assert(owner.StagedAndVerified());
         io.held=false; const unsigned writes=io.writes;

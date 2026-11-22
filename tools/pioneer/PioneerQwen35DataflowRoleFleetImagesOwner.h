@@ -40,7 +40,7 @@ public:
         unsigned readerShimWords,const uint32_t* writerShim,unsigned writerShimWords,IO& io) {
         if (fPhase!=Captured || !reader || !readerWords || !writer || !writerWords
             || !readerShim || !readerShimWords || !writerShim || !writerShimWords) return false;
-        if (!AllHeld(io)) { fPhase=Unavailable; return false; }
+        if (!AllHeld(io)) { fPhase=Faulted; return false; }
         fPhase=Faulted;
         // High code first, shims and reset entry words second. No processor
         // may start here: complete fleet readback is only one launch proof.
