@@ -17,6 +17,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fCaptureAttempted=false;
     bool fReleaseAuthorized=false;
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fComputeStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -79,9 +80,18 @@ public:
         if (!scope || !fReleaseAuthorized || core>=PioneerQwen35::DataflowBarrierWorkers
             || fReleaseAttempted[core] || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
-        return io.ReleaseCore(core,fReleaseAttempted[core]);
+        fReleaseConfirmed[core]=io.ReleaseCore(core,fReleaseAttempted[core]);
+        return fReleaseConfirmed[core];
     }
-    bool CoreReady(unsigned,const PioneerQwen35::DataflowWorkerSnapshot&) { return false; }
+    __attribute__((noinline)) bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
+        auto* scope=Scope();
+        if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+            || !fReleaseAuthorized || !fViews.Opened()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return io.RunningReady(core,snapshot,
+            sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
+            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t));
+    }
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
         // The old stop path understands T0 alone. For released tiles publish
         // or observe one role stop request first; the real scope still denies

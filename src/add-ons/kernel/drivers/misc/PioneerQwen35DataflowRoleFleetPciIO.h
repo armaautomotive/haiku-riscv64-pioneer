@@ -231,6 +231,24 @@ public:
         return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
             && fScope.ProveRoleHeldAfterAttempt(fIO,core) && fGuard.ProveSelectedRoute(core);
     }
+    bool RunningReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& expected,
+        unsigned textWords,unsigned dispatchWords) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !DataflowWorkerSnapshotReady(expected)
+            || !fScope.ProveRoleRuntimeSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowWorkerMailbox worker{};
+        DataflowWorkerSnapshot observed{};
+        DataflowRoleMailbox roles{};
+        if (!fIO.ReadWorkerSnapshot(core,observed) || memcmp(&expected,&observed,sizeof(expected))
+            || !ReadStableWorkerMailbox(core,worker) || !DataflowPciMailboxMatchesReadySnapshot(worker,core,expected)
+            || !ReadStableRoleMailbox(core,roles) || !DataflowRoleMailboxIdle(roles)
+            || !QueuesCleared(core)) return false;
+        const uint32_t pc1=fIO.RuntimePcRead(); fIO.Pause(); const uint32_t pc2=fIO.RuntimePcRead();
+        return DataflowServicePcInImage(pc1,textWords,dispatchWords)
+            && DataflowServicePcInImage(pc2,textWords,dispatchWords)
+            && fScope.ProveRoleRuntimeSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
     bool AllRolesHeld(unsigned core) {
         return Select(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
             && SelectedHeldAndQuiet(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)

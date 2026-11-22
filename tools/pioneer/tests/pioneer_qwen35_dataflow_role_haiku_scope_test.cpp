@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #include <KernelExport.h>
 #include "../PioneerQwen35DataflowRolePhysicalPlan.h"
+#include "../PioneerQwen35DataflowOwner.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
 #include <algorithm>
@@ -87,6 +88,13 @@ struct PioneerSessionIO {
         else if (address==DataflowQueueStateAddress && bytes==sizeof(queueBoxes[core]))
             memcpy(output,queueBoxes[core],bytes);
         else return false;
+        return true;
+    }
+    bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& snapshot) {
+        if (core>=DataflowBarrierWorkers) return false;
+        const auto& box=workerBoxes[core];
+        snapshot={box.commandSequence,box.acknowledgedSequence,box.completedSequence,
+            box.state,box.failure,box.phase,0,0};
         return true;
     }
     void Q38PanelWrite(unsigned address,uint32_t value) {
@@ -211,6 +219,21 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
     if (release!=B_OK) { sColdRecoveryRequired=true; return release; }
     assert(!gLocked);
     return B_OK;
+}
+#endif
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static status_t Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void*,size_t) {
+    if (AcquireProbeLock(cookie,true)!=B_OK) return -1;
+    auto* context=cookie->context;
+    PioneerQwen35RoleBorrowedScopeWitness scope(cookie,context);
+    const bool attached=scope.Attach();
+    if (attached) {
+        assert(context->io.qwen35BorrowedRoleScope==&scope && scope.ProveExclusiveRewrite(context->io));
+        assert(scope.Detach() && !context->io.qwen35BorrowedRoleScope);
+    }
+    const status_t released=release_sem(sLock);
+    if (released!=B_OK) sColdRecoveryRequired=true;
+    return attached?released:-1;
 }
 #endif
 static void ResetMaps() {

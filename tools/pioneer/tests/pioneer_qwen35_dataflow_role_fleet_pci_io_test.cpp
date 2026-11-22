@@ -9,6 +9,7 @@
 struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
     bool computeStop=false,computePark=false,hold=false,heldAfter=false;
+    bool runtime=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const
@@ -25,6 +26,7 @@ struct FleetPciTestScope {
     bool ProveComputePostStopSafe(PioneerSessionIO&,unsigned) const { return computePark; }
     bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return hold; }
     bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return heldAfter; }
+    bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return runtime; }
 };
 int main()
 {
@@ -187,6 +189,30 @@ int main()
     delayedWorker.shutdownSequence=DataflowWorkerShutdownRequest;
     assert(io.ComputeStopObserved(9));
     assert(!io.RequestComputeStop(9,delayedComputeAttempt) && context.io.computeStopWrites==2);
+    initRoleBox(11); auto& readyWorker=context.io.workerBoxes[11];
+    readyWorker.magic=DataflowWorkerMailboxMagic; readyWorker.version=DataflowWorkerMailboxVersion;
+    readyWorker.logicalCore=11; readyWorker.state=DataflowWorkerReady;
+    DataflowWorkerSnapshot readySnapshot{};
+    assert(context.io.ReadWorkerSnapshot(11,readySnapshot));
+    context.io.computePc=DataflowServiceEntryAddress+0x100;
+    assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
+    scope.runtime=true;
+    assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
+    context.io.roleBoxes[11].command=1;
+    assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
+    context.io.roleBoxes[11].command=0;
+    context.io.queueBoxes[11][0].produced=1;
+    assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
+    context.io.queueBoxes[11][0].produced=0;
+    context.io.computePc=DataflowServiceTextLimit;
+    assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
+    context.io.computePc=DataflowServiceEntryAddress+0x100;
+    auto& idleRoles=context.io.roleBoxes[11];
+    idleRoles.command=idleRoles.acknowledged=1;
+    for (unsigned role=0;role<DataflowRoleCount;role++) {
+        idleRoles.completed[role]=1; idleRoles.status[role]=DataflowRoleComplete;
+    }
+    assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");

@@ -13,12 +13,18 @@
 #include "PioneerQwen35DataflowRoleFleetPciIO.h"
 
 static status_t Qwen35DataflowControl(PioneerProbeCookie*,uint32_t,void*,size_t);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static status_t Qwen35DataflowGenerate(PioneerProbeCookie*,void*,size_t);
+#endif
 // Borrow, never reacquire, the lock already held by Qwen35DataflowControl.
 // The private constructor limits creation to that control path. The caller
 // must detach before releasing sLock; no memory or control writes are yet
 // authorized by this witness.
 class PioneerQwen35RoleBorrowedScopeWitness {
     friend status_t Qwen35DataflowControl(PioneerProbeCookie*,uint32_t,void*,size_t);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    friend status_t Qwen35DataflowGenerate(PioneerProbeCookie*,void*,size_t);
+#endif
     PioneerProbeCookie* fCookie;
     PioneerStoreContext* fContext;
     thread_id fThread=-1;
@@ -77,6 +83,10 @@ public:
     bool ProveComputePostStopSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return false; }
+    // Must independently establish the owned role/compute images, routes,
+    // NoC quiescence and session/graph state; mailbox/PC samples alone are
+    // insufficient. This proof is not yet implemented.
+    bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool Detach() {
         if (!fAttached || !fContext) return false;
         const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this;

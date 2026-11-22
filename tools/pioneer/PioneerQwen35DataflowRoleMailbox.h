@@ -92,6 +92,18 @@ inline bool DataflowRoleMailboxReceipt(const DataflowRoleMailbox& box,
     const uint32_t second=DataflowLoadAcquire(box.completed[role]);
     return first==second && first==sequence && status==expectedStatus;
 }
+// An idle service may have completed many projection commands. Its role
+// sequence is independent of the graph command sequence.
+inline bool DataflowRoleMailboxIdle(const DataflowRoleMailbox& box)
+{
+    if (!DataflowRoleMailboxAllStarted(box) || DataflowLoadAcquire(box.stopRequest)) return false;
+    const uint32_t ack=DataflowLoadAcquire(box.acknowledged);
+    if (ack>DataflowWorkerSequenceLimit || DataflowLoadAcquire(box.command)!=ack) return false;
+    const unsigned status=ack?DataflowRoleComplete:DataflowRoleReady;
+    for (unsigned role=0;role<DataflowRoleCount;role++)
+        if (DataflowLoadAcquire(box.stopped[role]) || !DataflowRoleMailboxReceipt(box,role,ack,status)) return false;
+    return true;
+}
 // Only the coordinator may issue. A new sequence cannot reuse queues before
 // both roles and the compute owner have had their previous work acknowledged.
 inline bool DataflowRoleMailboxIssue(DataflowRoleMailbox& box,uint32_t sequence)

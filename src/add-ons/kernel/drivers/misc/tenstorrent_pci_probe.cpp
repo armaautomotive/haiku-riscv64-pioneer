@@ -9464,8 +9464,15 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 		return status;
 	}
 	auto* context=cookie->context;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	PioneerQwen35RoleBorrowedScopeWitness borrowedRoleScope(cookie,context);
+	const bool borrowedRoleScopeValid=borrowedRoleScope.Attach();
+#endif
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		|| !borrowedRoleScopeValid
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		|| !context->qwen35GraphOwner || !context->qwen35GraphOwner->ReadyForSlot(request->input_slot)
 #endif
@@ -9531,7 +9538,13 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 				outputCount*sizeof(uint32_t));
 		if (status==B_OK) status=user_memcpy(data,request,sizeof(*request));
 	}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	if (borrowedRoleScopeValid && !borrowedRoleScope.Detach()) status=B_NOT_ALLOWED;
+	const status_t roleUnlock=release_sem(sLock);
+	if (roleUnlock!=B_OK) { sColdRecoveryRequired=true; status=roleUnlock; }
+#else
 	release_sem(sLock);
+#endif
 	free(prompt);
 	free(output);
 	free(request);

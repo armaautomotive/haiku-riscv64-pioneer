@@ -683,6 +683,9 @@ bool
 PioneerSessionIO::CoreReady(unsigned core,
 	const PioneerQwen35::DataflowWorkerSnapshot& snapshot)
 {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	return SharedCoreReady(core,snapshot);
+#else
 	PioneerQwen35::DataflowWorkerSnapshot observed{};
 	PioneerQwen35::DataflowWorkerMailbox mailbox{};
 	return core<PioneerQwen35::DataflowCoreCount
@@ -693,6 +696,7 @@ PioneerSessionIO::CoreReady(unsigned core,
 		&& PioneerQwen35::DataflowWorkerSnapshotReady(observed)
 		&& PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
 		&& DataflowPciMailboxMatchesReadySnapshot(mailbox,core,snapshot);
+#endif
 }
 
 bool
