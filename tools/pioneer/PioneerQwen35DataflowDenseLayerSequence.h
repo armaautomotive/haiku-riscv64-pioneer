@@ -27,7 +27,7 @@ static_assert(DataflowDenseFfnStageBase+DataflowFfnAddRunFailed<256,
 	"dense layer stage fits its driver ABI field");
 
 // Compose the dense decoder layer from resident all-core Tensix projections
-// and resident BRISC attention workers. Projection math stays on Tensix;
+// and resident TRISC0 attention workers. Projection math stays on Tensix;
 // workers only normalize/rotate heads, append the KV cache, and compute
 // grouped-query online attention.
 class DataflowDenseLayerSequence {

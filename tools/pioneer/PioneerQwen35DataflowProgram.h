@@ -112,7 +112,7 @@ struct DataflowCircularBuffer {
 	unsigned id,address,pageBytes,pages,bytes,pageStride;
 };
 
-// Host and one resident BRISC worker share this fixed 64-byte command/receipt
+// Host and one resident TRISC0 worker share this fixed 64-byte command/receipt
 // record. The host owns commandSequence and acknowledgedSequence; the worker
 // owns completedSequence, state, failure, and phase. During a failed embedding
 // weight read, reserved[0..5] preserve the request address, NoC stage/index and

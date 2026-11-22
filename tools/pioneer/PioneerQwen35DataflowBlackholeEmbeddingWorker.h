@@ -8,7 +8,7 @@
 namespace PioneerQwen35 {
 
 // Device worker for one immutable token-embedding shard. Each of the 120
-// BRISC workers reads only the Q6_K blocks containing its assigned panels,
+// TRISC0 worker reads only the Q6_K blocks containing its assigned panels,
 // unpacks 16 lanes locally, and writes its disjoint activation rows to GDDR.
 // The host supplies no embedding values and performs no inference math.
 template<class IO>

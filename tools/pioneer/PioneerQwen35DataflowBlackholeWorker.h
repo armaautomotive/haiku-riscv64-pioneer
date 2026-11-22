@@ -20,7 +20,7 @@ extern "C" bool qwen35_graph_run_descriptor(
 
 namespace PioneerQwen35 {
 
-// One resident BRISC worker owns one immutable shard. It moves its own pages
+// One resident TRISC0 worker owns one immutable shard. It moves its own pages
 // over NoC 0/1 and issues projection work to the Tensix matrix engine. The
 // two L1 pages alternate as bounded staging buffers; there is no CPU dot
 // product and no producer/consumer wait between firmware roles.

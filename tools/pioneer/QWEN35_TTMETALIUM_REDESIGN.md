@@ -1,3 +1,5 @@
+> **Processor identity correction:** the deployed resident worker runs on TRISC0, not BRISC: the boot word is at `0x6000` and the physical owner releases reset `0x46800`. References below to the tt-lab BRISC pattern identify an inspiration; they do not mean that BRISC executes this Haiku image.
+
 # Qwen3.5 Work: Tenstorrent device-program redesign
 
 This note records the implementation change requested after the Tag75 timing
@@ -44,7 +46,7 @@ Keep the Haiku driver as the control plane and keep inference on the card.
 Port the Tenstorrent per-worker program pattern into the freestanding
 Blackhole images:
 
-1. Give each of the 120 Tensix cores a stable shard and a persistent BRISC
+1. Give each of the 120 Tensix cores a stable shard and a persistent TRISC0
    entry. The host materializes one immutable invocation per core; each worker
    processes its projection tile loop locally.
 2. Each worker reads activations and quantized weights with NoC 0, issues
@@ -477,7 +479,7 @@ The rewrite now builds and dispatches the recurrent delta-state operator
 through the resident 120-core service. Its validated descriptor binds the
 current QKV, gate, Alpha/Beta projections, learned decay/bias vectors, layer,
 position, and alternate state slots. At this checkpoint, the 256 state panels
-were divided across the 120 workers. BRISC firmware performed Q/K
+were divided across the 120 workers. TRISC0 firmware performed Q/K
 normalization, decay and beta gates, prediction, state update, and readout;
 model projections continued to use the Tensix matrix path. Position zero used
 zero state regardless of stale ping-pong memory.
@@ -517,7 +519,7 @@ rewrite graph is implemented and offline-validated.
 
 RecurrentOut now runs through the existing Tensix projection worker using the
 V channels retained in the recurrent QKV workspace. The invocation carries a
-row offset, and the BRISC reader maps that subrange across the source's
+row offset, and the TRISC0 reader maps that subrange across the source's
 manifest-bound fragments. The authority requires the same layer's completed
 delta step, invalidates the output before dispatch, then consumes QKV after
 projection commit. It rejects shifted offsets and repeated projection after

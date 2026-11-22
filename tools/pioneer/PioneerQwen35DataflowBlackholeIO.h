@@ -59,7 +59,7 @@ struct DataflowNocReadTicket {
 
 // Blackhole exposes separate NoC 0 and NoC 1 command/counter banks. This
 // freestanding worker issues input/weight reads on NoC 0 and output writes on
-// NoC 1 from its resident BRISC service. It can leave one NoC 0 read in flight
+// NoC 1 from its resident TRISC0 service. It can leave one NoC 0 read in flight
 // while the Tensix matrix engine consumes the other local weight page.
 template<unsigned Noc>
 class DataflowBlackholeNoc {

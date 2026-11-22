@@ -1,4 +1,8 @@
+> **Processor identity correction:** the current image enters through the TRISC0 boot word at `0x6000`; the driver releases TRISC0 with reset value `0x46800`. Earlier notes calling this resident worker BRISC were incorrect. Each tile still uses its Tensix matrix engine for projections. The BRISC/NoC reference describes an upstream inspiration, not the processor running this image. See `PioneerQwen35DataflowPciMemory.h` and `TENSTORRENT_PORT.md` for the reset contract.
+
 > **Separate-role rewrite, offline only:** the earlier generic reader and writer did not bind the concrete NoC operations, and the concrete Tensix compute adapter accepted only the single-worker activation cache. Reader/writer now bind their shard, with rejection propagated through role failure, and an isolated compile-only compute variant checks that the weight and activation queue pages have the same ticket-owned index. Concurrent mock role tests and target checks cover the contracts. This is not yet a device program: separate RISC images, safe launch/stop, L1 ownership and fault recovery still need implementation and hardware qualification. The currently running tag0168 binary predates these changes.
+
+The next device lifecycle must retain and audit each additional RISC's boot, reset and code state, give its stack and shared queues disjoint saved L1 ownership, and prove all roles stopped before restoring any image. Queue publication must account for Blackhole's optional L1 data cache and its NoC completion/flush rules; ordinary host simulation does not prove cross-RISC visibility. The current owner starts TRISC0 only and must not be treated as an implementation of this lifecycle. See Tenstorrent's [Blackhole bring-up guide](https://github.com/tenstorrent/tt-metal/blob/main/tech_reports/Blackhole/BlackholeBringUpProgrammingGuide.md) and [reader/compute/writer lab](https://github.com/tenstorrent/tt-metal/blob/main/docs/source/tt-metalium/tt_metal/labs/matmul/lab1/lab1.rst).
 
 > **Tag0168 candidate:** within the rewrite, Q4_K/Q5_K panels skip two matrix fidelity phases that are zero for their operand range; Q6_K/Q8_0 retain four. Exact arithmetic and target image tests pass. Hardware correctness and performance remain to be tested; no speedup is claimed yet.
 
@@ -62,7 +66,7 @@ full target suite pass. This follow-up has not yet run on hardware.
 
 
 Tag0160 traced the first convolution stall to arithmetic on group0. Its exact
-worker disassembly contains `fdiv.s` inside `DataflowSiluProduct`; BRISC's
+worker disassembly contains `fdiv.s` inside `DataflowSiluProduct`; the device's
 existing qualified math uses software division. Tag0161 replaces the runtime
 floating divides with that helper and adds an image build guard rejecting
 floating divide and square-root instructions. SiLU, convolution and one million
@@ -114,7 +118,7 @@ prototype remains unqualified. See the [tag0158 record](benchmarks/qwen35-datafl
 
 ## Scope
 
-Rewrite the Qwen3.5 Work execution path around one resident BRISC worker per
+Rewrite the Qwen3.5 Work execution path around one resident TRISC0 worker per
 Tensix core. Each worker owns one immutable shard, performs bounded NoC 0
 reads, issues projections to the Tensix matrix engine, and sends results with
 NoC 1. Keep two alternating L1 pages for weight and activation staging, sharded
@@ -129,7 +133,7 @@ assistant only after the hardware generation and throughput gates pass.
 ## Current status (2026-11-22)
 
 The active work remains the Tenstorrent-style device-program rewrite. It uses
-120 resident BRISC workers and Tensix matrix engines, with no CPU inference
+120 resident TRISC0 workers and Tensix matrix engines, with no CPU inference
 or fallback. Pioneer boots from its existing NVMe: Fedora hands off to Haiku
 with kexec. The user confirmed SD cards are no longer used; do not use or
 recommend an SD-card workflow.
@@ -1255,7 +1259,7 @@ the expected completion counter (`0x00029067`) beside the observed value
   `2e0e144040f9c29f9679d5300ff923847c75216b3bf0e577366be4e929e5f8c8`.
   This code is not yet validated on the Pioneer.
 - 2026-11-21: Added device-side greedy token selection after the tied Q6_K
-  vocabulary projection. The resident BRISC worker scans the on-card FP32
+  vocabulary projection. The resident TRISC0 worker scans the on-card FP32
   logits and writes a checked token/score/sequence record to core 0's mailbox;
   all 120 workers still receive, complete, and acknowledge the command. The
   host owner verifies each invocation readback, the stable result record, all
@@ -1433,7 +1437,7 @@ the expected completion counter (`0x00029067`) beside the observed value
   activation input/output ranges, and double-buffered reader/compute/writer
   circular-buffer layout.
 - The lower-level concurrent reader/compute/writer loops remain offline
-  contracts. The current device implementation is the resident BRISC service
+  contracts. The current device implementation is the resident TRISC0 service
   image and per-core projection worker described below; it overlaps the next
   NoC 0 weight prefetch with Tensix work. The host PCI image loader and physical
   mailbox/recovery adapter are not implemented.
@@ -1452,7 +1456,7 @@ the expected completion counter (`0x00029067`) beside the observed value
 ## Latest rewrite work
 
 - 2026-11-20: Added `PioneerQwen35DataflowBlackholeWorker.h`, a concrete
-  one-BRISC-worker-per-core projection path. Each core reads its input and
+  one-TRISC0-worker-per-core projection path. Each core reads its input and
   weight shard over NoC 0, packs Q8 activation chunks locally, alternates its
   two L1 weight/input pages, issues each output group through the Tensix
   matrix engine, and writes the sharded result over NoC 1. It validates the
@@ -1463,7 +1467,7 @@ the expected completion counter (`0x00029067`) beside the observed value
   runtime helpers. At this initial worker checkpoint, the service loop and
   standalone image builder had not yet been added. No Pioneer access,
   benchmark, or assistant integration was performed.
-- 2026-11-20: Added a 64-byte per-core mailbox ABI and a resident BRISC service
+- 2026-11-20: Added a 64-byte per-core mailbox ABI and a resident TRISC0 service
   loop. The service verifies its local XY route against the immutable core
   assignment, executes one projection invocation, publishes completion or a
   role failure, then accepts another only after host acknowledgement. On that
@@ -1506,7 +1510,7 @@ the expected completion counter (`0x00029067`) beside the observed value
   integration was performed.
 
 The pre-rewrite Work baseline is `1b2b57c561`; the branch tip immediately
-before adding the BRISC worker was `830ec1011e`. Rewrite checkpoints are pushed
+before adding the resident worker was `830ec1011e`. Rewrite checkpoints are pushed
 incrementally to `codex/qwen35-4b-p100a`; use that branch's current tip for the
 latest checkpoint.
 
@@ -1517,7 +1521,7 @@ worker compile. The local Apple Clang 17 build has no RISC-V target.
 
 The lower-level queue role templates remain offline contracts. The concrete
 per-core path is `PioneerQwen35DataflowBlackholeWorkerEntry`, which binds
-BRISC-side NoC operations and Tensix matrix operations into one bounded worker.
+TRISC0-side NoC operations and Tensix matrix operations into one bounded worker.
 It prefetches the next weight tile over NoC 0 while the matrix engine processes
 the current tile. Tenstorrent's open `tt-lab` worker pattern is the closest fit
 for this freestanding Haiku image ([project](https://github.com/tenstorrent/tt-lab),
@@ -1534,7 +1538,7 @@ request-level generation ioctl: token IDs go in, generated token IDs come out,
 and prompt and decode time are returned separately. Prompt timing includes the
 first output token; decode timing covers later output tokens, with throughput
 reported as `(output_count - 1) / decode_time`. Tied projections use all 120
-Tensix matrix engines. The BRISC argmax worker scans logits; all 120 resident
+Tensix matrix engines. The TRISC0 argmax worker scans logits; all 120 resident
 workers take part in each command barrier and receipt protocol. The driver
 uses build tag `2026112100010102`.
 
@@ -1580,7 +1584,7 @@ measurement.
 
 Checkpoint `e533c033ef` adds the dense-attention path. A manifest-bound
 descriptor reserves the model's rotary table, per-layer KV cache, Q/K norms,
-QKV output, gate input, and attention-output scratch. BRISC workers perform
+QKV output, gate input, and attention-output scratch. TRISC0 workers perform
 Q/K RMS normalization, RoPE, half-precision K/V cache packing, and grouped
 query attention with tiled NoC reads and online softmax; the AttentionOut
 matrix projection remains on the Tensix path. Every command materializes and
@@ -1779,7 +1783,7 @@ No hardware validation or throughput evidence was produced.
 
 At checkpoint `221022cc34`, the manifest-bound delta program validated QKV,
 gate, Alpha/Beta, learned decay/bias vectors, and state ping-pong ranges. It
-partitioned 256 sixteen-value panels across all 120 workers. The BRISC worker
+partitioned 256 sixteen-value panels across all 120 workers. The TRISC0 worker
 performed Q/K normalization, decay and beta gates, state update, and readout;
 projections remained on the Tensix matrix path. The following checkpoint
 extends this step with per-head RMS normalization and SiLU gating.
@@ -1792,7 +1796,7 @@ worker receipts, runtime/queue audits, and acknowledgements pass. Position
 zero ignores stale state and writes the alternate slot. Driver opcode
 `0x8842` exposes this operation through the resident service.
 
-The `061aa5c8ef` checkpoint assigns each of 32 recurrent heads to one BRISC
+The `061aa5c8ef` checkpoint assigns each of 32 recurrent heads to one TRISC0
 worker. Each owns all eight state panels plus the complete 128-value RMS
 normalization group; gated values are stored back after all source panels for
 that head are read. The 120-worker command/receipt/acknowledgement barrier is
