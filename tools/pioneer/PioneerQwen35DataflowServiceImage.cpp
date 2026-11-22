@@ -18,5 +18,13 @@ extern "C" bool qwen35_graph_reset_queues() {
 
 extern "C" [[noreturn]] void qwen35_dataflow_service_main()
 {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+	// The role graph accesses shared L1 before its first projection too.
+	// Do not enter the service if the non-coherent cache cannot be bypassed.
+	uint32_t cfg0;
+	asm volatile("fence iorw,iorw\n\tcsrsi 0x7c0,8\n\tcsrr %0,0x7c0"
+		: "=r"(cfg0) :: "memory");
+	if (!(cfg0&8U)) for (;;) asm volatile("" ::: "memory");
+#endif
 	PioneerQwen35::PioneerQwen35DataflowBlackholeWorkerService();
 }

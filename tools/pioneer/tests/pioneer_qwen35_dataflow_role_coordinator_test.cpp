@@ -65,9 +65,49 @@ static void CheckCoordinator(bool computeOkay,bool readerOkay,bool queueOkay)
     reader.join(); writer.join();
     assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
 }
+static void CheckInterleavedGraphSteps()
+{
+    DataflowRoleMailbox box{};
+    box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+    CoordinatorOps ops{};
+    std::atomic<bool> bad{false};
+    auto roleLoop=[&](unsigned role) {
+        DataflowRoleTickState state{}; Body body{};
+        for (unsigned n=0;n<10000000 && !bad.load();n++) {
+            const auto result=DataflowRoleServiceTick(box,role,state,body);
+            if (result==DataflowRoleTickStopRequested) return;
+            if (result==DataflowRoleTickInvalid) { bad.store(true); return; }
+            if ((n&255)==0) std::this_thread::yield();
+        }
+        bad.store(true);
+    };
+    std::thread reader(roleLoop,DataflowRoleReader),writer(roleLoop,DataflowRoleWriter);
+    const bool projection[]={false,true,false,false,true,false,true};
+    unsigned completed=0;
+    for (bool isProjection:projection) {
+        if (!isProjection) { assert(box.acknowledged==completed); continue; }
+        uint32_t sequence=0;
+        assert(DataflowRoleNextProjectionSequence(box,sequence) && sequence==completed+1);
+        assert(DataflowRoleCoordinate(box,sequence,DataflowQueuePollLimit,ops)
+            ==DataflowRoleCoordinatorComplete);
+        assert(box.acknowledged==++completed);
+    }
+    assert(DataflowRoleMailboxRequestStop(box));
+    uint32_t unchanged=99;
+    assert(!DataflowRoleNextProjectionSequence(box,unchanged) && unchanged==99);
+    reader.join(); writer.join();
+    assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
+    DataflowRoleMailbox pending{};
+    pending.magic=DataflowRoleMailboxMagic; pending.version=DataflowRoleMailboxVersion;
+    pending.command=1;
+    assert(!DataflowRoleNextProjectionSequence(pending,unchanged) && unchanged==99);
+    pending.command=pending.acknowledged=DataflowWorkerSequenceLimit;
+    assert(!DataflowRoleNextProjectionSequence(pending,unchanged) && unchanged==99);
+}
 int main()
 {
     CheckQueueReset();
+    CheckInterleavedGraphSteps();
     CheckCoordinator(true,true,true);
     CheckCoordinator(false,true,true);
     CheckCoordinator(true,false,true);
@@ -78,5 +118,5 @@ int main()
     assert(DataflowRoleCoordinate(box,1,1,ops)==DataflowRoleCoordinatorRetainedFault);
     assert(box.command==1 && box.acknowledged==0 && !ops.audits);
     assert(!DataflowRoleMailboxRequestFaultStop(box,true,true,true));
-    std::puts("PASS coordinator retains failed work and resets only clean completed queues; SIMULATED ONLY");
+    std::puts("PASS coordinator interleaved projections, retained faults and clean queue reuse; SIMULATED ONLY");
 }

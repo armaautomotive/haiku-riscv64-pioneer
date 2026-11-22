@@ -12,6 +12,14 @@
 #include "PioneerQwen35DataflowBlackholeDeltaWorker.h"
 #include "PioneerQwen35DataflowBlackholeDenseAttentionWorker.h"
 #include "PioneerQwen35DataflowBlackholeArgmaxWorker.h"
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+#if !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
+#error Shared-role graph bridge is a non-loadable recovery witness only
+#endif
+#include "PioneerQwen35DataflowRoleCoordinator.h"
+extern "C" unsigned qwen35_shared_compute_coordinate(
+	PioneerQwen35::DataflowRoleMailbox*,unsigned,unsigned);
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "PioneerQwen35DataflowGraphRunProtocol.h"
 extern "C" bool qwen35_graph_run_descriptor(
@@ -260,11 +268,23 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 			okay=false;
 		}
 		if (okay) {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+			// The graph sequence also counts non-projection steps. The role
+			// mailbox has its own contiguous sequence for projections only.
+			auto* roleBox=reinterpret_cast<DataflowRoleMailbox*>(
+				static_cast<uintptr_t>(DataflowRoleMailboxAddress));
+			uint32_t roleSequence=0;
+			okay=DataflowRoleNextProjectionSequence(*roleBox,roleSequence)
+				&& qwen35_shared_compute_coordinate(roleBox,roleSequence,
+					DataflowQueuePollLimit)==DataflowRoleCoordinatorComplete;
+			if (!okay) DataflowSignalLocalFailure(DataflowFailureCompute);
+#else
 			DataflowBlackholeReaderOps reader;
 			DataflowBlackholeTensixOps compute;
 			DataflowBlackholeWriterOps writer;
 			okay=PioneerQwen35DataflowBlackholeWorker(*context.program,
 				context.queues,context.activationCache,reader,compute,writer);
+#endif
 		}
 	} else if (invocationMagic==DataflowEmbeddingMagic) {
 		const auto* embedding=reinterpret_cast<const DataflowEmbeddingInvocation*>(

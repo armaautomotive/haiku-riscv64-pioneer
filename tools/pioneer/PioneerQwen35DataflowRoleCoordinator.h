@@ -31,6 +31,18 @@ enum DataflowRoleCoordinatorResult {
     DataflowRoleCoordinatorComplete=1,
     DataflowRoleCoordinatorRetainedFault=2
 };
+// Graph steps include non-projections, so role commands advance only from
+// their own acknowledged sequence. A pending or stopped mailbox cannot be
+// assigned a new projection; the issue operation still validates all receipts.
+inline bool DataflowRoleNextProjectionSequence(const DataflowRoleMailbox& box,uint32_t& next)
+{
+    if (!DataflowRoleMailboxHeaderValid(box)) return false;
+    const uint32_t ack=DataflowLoadAcquire(box.acknowledged);
+    if (ack>=DataflowWorkerSequenceLimit || DataflowLoadAcquire(box.command)!=ack
+        || DataflowLoadAcquire(box.stopRequest)) return false;
+    next=ack+1;
+    return true;
+}
 // Offline contract: coordinator is the sole command/ack writer; Ops.RunCompute
 // runs the device Tensix compute body, Ops.Pause is a bounded poll hint, and
 // Ops.AuditAndResetCleanQueues verifies/rebases queues only after terminal

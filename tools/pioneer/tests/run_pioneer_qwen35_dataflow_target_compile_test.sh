@@ -455,6 +455,68 @@ fi
 # validation, and worker-executor code. Model authority remains host-owned.
 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-service"
+# Link the actual graph executor to the new shared-role compute path. The
+# bridge is compile-only; it does not install role images or own hardware.
+role_flags='-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
+if "$cxx" $role_flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$root/tools/pioneer/PioneerQwen35DataflowServiceImage.cpp" \
+	-o "$temporary/invalid-role-service.o" >"$temporary/invalid-role-service.log" 2>&1; then
+	echo 'shared-role graph bridge compiled without the recovery-only guard' >&2
+	exit 1
+fi
+"$cxx" $role_flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -I"$root/tools/pioneer" -I"$sdk/headers" \
+	-idirafter "$sdk/headers/posix" -c "$root/tools/pioneer/PioneerQwen35DataflowServiceImage.cpp" \
+	-o "$temporary/role-graph-service.o"
+"$cxx" $role_flags -I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$root/tools/pioneer/PioneerQwen35DataflowSharedRoles.cpp" -o "$temporary/role-graph-compute.o"
+"$ld" -m elf32lriscv --no-relax --gc-sections -u PioneerQwen35DeviceGraphRun \
+	-T "$root/tools/pioneer/blackhole_qwen35_dataflow_dispatch_witness.ld" \
+	"$temporary/graph-service/start.o" "$temporary/role-graph-service.o" "$temporary/graph-service/memory.o" \
+	"$temporary/graph-service/device-stream.o" "$temporary/graph-service/device-barrier.o" \
+	"$temporary/graph-service/device-graph.o" "$temporary/role-graph-compute.o" \
+	-o "$temporary/role-graph-witness.elf"
+if [ -n "$("$nm" -u "$temporary/role-graph-witness.elf")" ]; then
+	echo 'shared-role graph witness has unresolved imports' >&2
+	exit 1
+fi
+"$objdump" -d "$temporary/role-graph-witness.elf" > "$temporary/role-graph-witness.disassembly"
+if ! grep -E 'jalr.*<qwen35_shared_compute_coordinate>' "$temporary/role-graph-witness.disassembly" >/dev/null; then
+	echo 'graph witness does not call the shared-role compute coordinator' >&2
+	exit 1
+fi
+"$size" -A "$temporary/role-graph-witness.elf"
+python3 - "$temporary/role-graph-service.su" "$temporary/role-graph-compute.su" \
+	"$temporary/graph-service/device-graph.su" <<'PYROLESTACK'
+from pathlib import Path
+import sys
+entries=[]
+for name in sys.argv[1:]:
+    for line in Path(name).read_text().splitlines():
+        parts=line.rsplit('\t',2)
+        if len(parts)==3 and parts[1].isdigit():
+            entries.append((parts[0],int(parts[1]),parts[2]))
+markers=('qwen35_dataflow_service_main()', 'PioneerQwen35DataflowBlackholeWorkerService()',
+    'qwen35_graph_run_descriptor(', 'PioneerQwen35DeviceGraphRun(',
+    'DataflowDeviceGraph<IO, BarrierIO>::Tick()', 'qwen35_graph_authorize(',
+    'DataflowDynamicPatch(', 'DataflowConvInvocation::Valid()',
+    'DataflowDeviceBarrier<IO>::Poll()', 'DataflowDeviceBarrier<IO>::ReleaseChildren()',
+    'DataflowBlackholeNoc<Noc>::Transfer(', 'qwen35_graph_execute(',
+    'DataflowWorkerExecuteAuthorized(', 'qwen35_shared_compute_coordinate(',
+    'PioneerQwen35SharedActivationCompute(', 'DataflowBlackholeTensixOps::TensixMatmul(',
+    'DataflowBindLocalContext(')
+total=1024
+for marker in markers:
+    matches=[(frame,kind) for name,frame,kind in entries if marker in name]
+    if not matches or any(kind!='static' for _,kind in matches):
+        raise SystemExit('missing or unbounded shared-role graph frame: '+marker)
+    total+=max(frame for frame,_ in matches)
+if total>8192:
+    raise SystemExit(f'shared-role graph stack witness {total} exceeds 8192 bytes')
+print(f'PASS shared-role graph stack witness {total}/8192; not whole-program proof')
+PYROLESTACK
+echo 'PASS actual graph executor links shared-role projection coordinator; NOT LOADABLE OR RUNNING'
 PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
 for section in boot text dispatch; do
