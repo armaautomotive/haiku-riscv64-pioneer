@@ -4329,6 +4329,9 @@ struct PioneerStoreContext {
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "PioneerQwen35DataflowDriverBinding.inc"
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+#include "PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#endif
 #endif
 
 #ifdef PIONEER_Q38_NORMAL_CLOCK

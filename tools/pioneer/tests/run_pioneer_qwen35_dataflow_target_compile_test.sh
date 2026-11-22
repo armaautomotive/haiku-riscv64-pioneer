@@ -365,6 +365,11 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/rol
 awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
 	"$temporary/role-route-guard-kernel.su"
 echo 'PASS role selected-route guard SDK compile; NO LIVE SESSION SCOPE'
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined -I"$directory/role_haiku_stubs" \
+	"$directory/pioneer_qwen35_dataflow_role_haiku_scope_test.cpp" \
+	-o "$temporary/role-haiku-scope-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-haiku-scope-test"
 # Per-tile handoff uses only single-writer words and the existing fences.
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \

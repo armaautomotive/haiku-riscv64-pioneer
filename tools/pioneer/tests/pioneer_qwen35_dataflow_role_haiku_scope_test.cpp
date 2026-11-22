@@ -1,0 +1,140 @@
+/* SPDX-License-Identifier: MIT */
+#define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
+#define PIONEER_QWEN35_DEVICE_DISPATCH 1
+#include <KernelExport.h>
+#include "../PioneerQwen35DataflowRolePhysicalPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
+#include <cassert>
+#include <cstdio>
+#include <vector>
+using namespace PioneerQwen35;
+static tt_pioneer_profile GoodProfile()
+{
+    tt_pioneer_profile p{};
+    p.version=1; p.stage=6; p.ready=1; p.card_bus=3; p.root_bus=2;
+    p.root_buses=0x003f0100; p.root_memory=0x0000fff0; p.root_prefetch=0x0001fff1;
+    p.controller=0x7062000000; p.config=0x4800000000; p.config_length=0x1000;
+    p.ranges[0]={0x4810800000,0x800000,0x400000,2,0};
+    p.ranges[1]={0x4890000000,0x90000000,0x30000000,1,8};
+    p.ranges[2]={0x48c0000000,0xc0000000,0x10000000,1,0};
+    p.ranges[3]={0x4900000000,0x4900000000,0x200000000,1,12};
+    p.ranges[4]={0x4b00000000,0x4b00000000,0x100000000,1,4};
+    p.bar0_host_start=0x4900000000; p.bar0_host_end=0x491fffffff;
+    p.bar2_host_start=0x4920000000; p.bar2_host_end=0x49200fffff;
+    return p;
+}
+struct PioneerStoreContext;
+struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
+struct FakeService { bool ready=true; bool Ready() const { return ready; } };
+struct FakeGraph { bool retained=false; };
+struct PioneerSessionIO {
+    tt_pioneer_profile profile=GoodProfile();
+    PioneerStoreContext* qwen35DataflowContext=nullptr;
+    unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
+    bool DataflowPanelMappingStable() const { return mapping; }
+    uint32_t DramTlbRead(unsigned slot,unsigned word) {
+        const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
+        return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
+    }
+    uint32_t ResidentNocRead(unsigned offset) { assert(offset==DataflowNocLogicalIdOffset); return DataflowBarrierWorkerRoute(runtimeCore); }
+    void Pause() {}
+};
+struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
+struct PioneerStoreContext {
+    PioneerSessionIO io; bool bankStorageOnly=true; uint64 bytes=PioneerResidentBanks::Total;
+    FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;
+    PioneerStoreContext() { io.qwen35DataflowContext=this; }
+};
+static bool PioneerQ35GraphOwnerRetained(const FakeGraph* graph) { return graph && graph->retained; }
+static PioneerProbeCookie* sRuntimeOwner=nullptr;
+static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
+static uint64 sReloadGeneration=42;
+static int32_t sLock=1;
+static bool gLocked=false,gReleaseFail=false;
+static unsigned gReleaseCalls=0,gMapCalls=0,gUnmapCalls=0;
+static int gFailMap=-1,gFailUnmap=-1;
+static thread_id gThread=5;
+static team_id gTeam=11;
+static std::vector<std::vector<uint32_t>> gMemory;
+static std::vector<bool> gMapped;
+static status_t AcquireProbeLock(PioneerProbeCookie* cookie,bool bank) {
+    if (!bank || gLocked || sColdRecoveryRequired || sReloadQuiesced || sRuntimeOwner!=cookie) return -1;
+    gLocked=true; return B_OK;
+}
+thread_id find_thread(const char*) { return gThread; }
+status_t get_thread_info(thread_id id,thread_info* info) {
+    if (id!=gThread || !info) return -1;
+    info->team=gTeam; return B_OK;
+}
+status_t release_sem(int32_t lock) {
+    assert(lock==sLock && gLocked); ++gReleaseCalls;
+    if (gReleaseFail) return -1;
+    gLocked=false; return B_OK;
+}
+area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32_t addressMode,
+    uint32_t flags,void** output) {
+    assert(gLocked && addressMode==B_ANY_KERNEL_ADDRESS && (flags&B_KERNEL_READ_AREA)
+        && (flags&B_UNCACHED_MEMORY) && !(flags&B_KERNEL_WRITE_AREA));
+    const unsigned index=gMapCalls++;
+    DataflowRolePhysicalWindow plan{}; assert(DataflowRolePhysicalWindowPlan(index,plan));
+    assert(physical==0x4900000000ULL+plan.offset && bytes==plan.bytes);
+    if (int(index)==gFailMap) return -1;
+    gMemory[index].assign(bytes/4,0x76540000U+index); gMapped[index]=true;
+    *output=gMemory[index].data(); return int32_t(index);
+}
+status_t delete_area(area_id area) {
+    assert(gLocked && area>=0 && unsigned(area)<gMapped.size() && gMapped[area]);
+    ++gUnmapCalls;
+    if (area==gFailUnmap) { gFailUnmap=-1; return -1; }
+    gMapped[area]=false; return B_OK;
+}
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+static void ResetMaps() {
+    gMapCalls=gUnmapCalls=0; gFailMap=gFailUnmap=-1;
+    gMemory.assign(DataflowRolePhysicalWindowCount,{});
+    gMapped.assign(DataflowRolePhysicalWindowCount,false);
+}
+int main()
+{
+    PioneerStoreContext context; FakeService service; FakeGraph graph;
+    context.qwen35DataflowService=&service; context.qwen35GraphOwner=&graph;
+    PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie;
+    {
+        PioneerQwen35RoleHaikuScopeWitness scope;
+        assert(scope.Open(&cookie) && gLocked && scope.ProveExclusiveRewrite(context.io));
+        assert(!scope.ProveRoleMemoryReadSafe(context.io,0,DataflowRolePhysicalBriscRam));
+        gThread=6; assert(!scope.Close() && gLocked); gThread=5;
+        assert(scope.Close() && !gLocked && !scope.Close());
+    }
+    {
+        PioneerQwen35RoleHaikuScopeWitness scope; gTeam=12;
+        assert(!scope.Open(&cookie) && !gLocked); gTeam=11;
+    }
+    {
+        ResetMaps(); PioneerQwen35RoleHaikuViewsWitness owner;
+        assert(owner.Open(&cookie) && gLocked);
+        uint32_t value=0;
+        assert(owner.Read(0,DataflowRolePhysicalPc,0x140,value));
+        assert(value==0x76540000U+DataflowRolePhysicalPc);
+        value=77;
+        assert(!owner.Read(0,DataflowRolePhysicalBriscRam,0,value) && value==77);
+        assert(!owner.Read(0,DataflowRolePhysicalNoc0,0x20c,value));
+        assert(owner.Close() && !gLocked && gUnmapCalls==DataflowRolePhysicalWindowCount);
+    }
+    {
+        ResetMaps(); gFailMap=4; PioneerQwen35RoleHaikuViewsWitness owner;
+        assert(!owner.Open(&cookie) && gLocked && gMapCalls==5);
+        gFailUnmap=2; assert(!owner.Close() && gLocked);
+        assert(owner.Close() && !gLocked);
+    }
+    {
+        PioneerQwen35RoleHaikuScopeWitness scope;
+        assert(scope.Open(&cookie)); gReleaseFail=true;
+        const unsigned before=gReleaseCalls;
+        assert(!scope.Close() && sColdRecoveryRequired && gReleaseCalls==before+1);
+        assert(!scope.Close() && gReleaseCalls==before+1);
+        gReleaseFail=false; gLocked=false; sColdRecoveryRequired=false;
+    }
+    std::puts("PASS real Haiku scope witness lock, team, read-only map and cleanup faults; SIMULATED ONLY");
+}

@@ -1,4 +1,6 @@
-> **Haiku mapping work, compile-only:** fixed read-only BAR views and a selected-tile guard now compile against the Haiku kernel SDK. Tests reject unsafe register offsets, missing memory/route proofs and wrong TLBs, and exercise partial-map cleanup and retry. No real exclusive-session scope, live ioctl, mapping call, write access or card operation is connected yet.
+> **Non-loadable Haiku session witness:** actual driver cookie/team, same-owner lock, generation, pinned BAR and selected-route types compile together in the recovery-only driver witness. Memory reads remain denied and no ioctl is registered. A full compile succeeded (witness SHA `1c1a0d39e7d73e66fc954fc72aa5f9ffd6b962c04019ca2a930fbef756c6b47d`); do not install this non-loadable binary.
+
+> **Haiku mapping work, compile-only:** fixed read-only BAR views and a selected-tile guard now compile against the Haiku kernel SDK. Tests reject unsafe register offsets, missing memory/route proofs and wrong TLBs, and exercise partial-map cleanup and retry. The real session scope is connected only in the non-loadable witness above; no live ioctl, mapping call, write access or card operation is connected yet.
 
 > **Private RAM recovery ledger, simulation only:** all B/NC private RAM snapshots join the image/boot snapshots; all 120 are marked dirty before a one-shot release attempt and must be restored after the RAM initialization window. The ledger performs no hardware release, and reset, cache, PC/NoC, PCI and existing TRISC0 recovery still need physical integration.
 
