@@ -18,6 +18,7 @@ struct SharedServiceKernelProbeIO {
     bool SharedArmAndBeginRelease() { return okay; }
     bool SharedFleetHeldAndQuiescent() { return okay; }
     bool SharedStartCore(unsigned) { return okay; }
+    void Pause() {}
     bool WaitWorkerReady(unsigned,DataflowWorkerSnapshot&) { return okay; }
     bool SharedCoreReady(unsigned,const DataflowWorkerSnapshot&) { return okay; }
     bool ReadWorkerSnapshot(unsigned,DataflowWorkerSnapshot&) { return okay; }

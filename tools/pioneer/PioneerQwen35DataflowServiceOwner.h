@@ -193,6 +193,33 @@ class DataflowServiceOwner {
 	}
 
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	// A ready-looking compute mailbox is initialized by the host before
+	// release. It cannot prove either separate firmware image has actually
+	// run. Wait for both role-owned receipts and a stable empty handoff before
+	// accepting the tile; leave physical PC/NoC proof to SharedCoreReady.
+	template<class IO>
+	static bool SharedWaitRoleStartup(unsigned core,IO& io)
+	{
+		for (unsigned poll=0;poll<65536;poll++) {
+			DataflowRoleMailbox first{},second{};
+			DataflowWorkerSnapshot compute{};
+			if (!io.ReadWorkerSnapshot(core,compute)) { io.Pause(); continue; }
+			if (compute.state==DataflowWorkerFailed || compute.state==DataflowWorkerFatal) return false;
+			if (!DataflowWorkerSnapshotReady(compute)) { io.Pause(); continue; }
+			if (compute.commandSequence || compute.acknowledgedSequence || compute.completedSequence)
+				return false; // startup cannot inherit an old completed command
+			if (!io.ReadCoreMemory(core,DataflowRoleMailboxAddress,&first,sizeof(first))) return false;
+			io.Pause();
+			if (!io.ReadCoreMemory(core,DataflowRoleMailboxAddress,&second,sizeof(second))) return false;
+			if (!memcmp(&first,&second,sizeof(first)) && DataflowRoleMailboxStartupReady(second)) {
+				DataflowWorkerSnapshot after{};
+				if (io.ReadWorkerSnapshot(core,after) && !memcmp(&compute,&after,sizeof(compute)))
+					return true;
+			}
+		}
+		return false;
+	}
+
 	template<class IO>
 	static bool SharedVerifyStagedFleet(const DataflowServiceImageView& image,IO& io)
 	{
@@ -487,7 +514,7 @@ public:
 				continue;
 			}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
-			if (!io.SharedCoreReady(core,snapshot)) {
+			if (!SharedWaitRoleStartup(core,io) || !io.SharedCoreReady(core,snapshot)) {
 #else
 			if (!io.CoreReady(core,snapshot)) {
 #endif

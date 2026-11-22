@@ -54,6 +54,11 @@ struct MockDataflowIO {
 	bool failRoleFinalize=false;
 	bool corruptPriorResidentOnBoot=false;
 	unsigned corruptRoleMailboxCore=UINT32_MAX;
+	unsigned missingRoleStartupCore=UINT32_MAX,delayedRoleStartupCore=UINT32_MAX;
+	unsigned delayedRoleStartupReads=0,roleStartupReads=0;
+	unsigned transientSnapshotCore=UINT32_MAX;
+	unsigned staleStartupSequenceCore=UINT32_MAX;
+	mutable unsigned transientSnapshotFailures=0;
 	unsigned roleStages=0,roleArms=0,roleStarts=0,roleStops=0,roleRestores=0,roleVerifies=0;
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -175,6 +180,14 @@ struct MockDataflowIO {
 	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes)
 	{
 		if (core>=DataflowCoreCount || !output || !bytes) return false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (started[core] && address==DataflowRoleMailboxAddress && bytes==sizeof(roleMailbox[core])) {
+			if (core==delayedRoleStartupCore && ++roleStartupReads==delayedRoleStartupReads)
+				(void)DataflowRoleMailboxPublishStarted(roleMailbox[core],DataflowRoleWriter);
+			memcpy(output,&roleMailbox[core],bytes);
+			return true;
+		}
+#endif
 		const unsigned routeAddress=DataflowWorkerMailboxAddress
 			+offsetof(DataflowWorkerMailbox,reserved);
 		if (address==routeAddress && bytes==sizeof(uint32_t) && started[core]) {
@@ -253,6 +266,13 @@ struct MockDataflowIO {
 			snapshot[core]=result;
 			return false;
 		}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (core==staleStartupSequenceCore) {
+			mailbox[core].commandSequence=1;
+			mailbox[core].acknowledgedSequence=1;
+			mailbox[core].completedSequence=1;
+		}
+#endif
 		result={mailbox[core].commandSequence,mailbox[core].acknowledgedSequence,
 			mailbox[core].completedSequence,mailbox[core].state,mailbox[core].failure,
 			mailbox[core].phase,0,0};
@@ -262,6 +282,11 @@ struct MockDataflowIO {
 	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& result) const
 	{
 		if (core>=DataflowCoreCount) return false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (core==transientSnapshotCore && transientSnapshotFailures) {
+			--transientSnapshotFailures; return false;
+		}
+#endif
 		result=snapshot[core];
 		return true;
 	}
@@ -317,8 +342,12 @@ struct MockDataflowIO {
 	}
 	bool SharedStartCore(unsigned core) {
 		if (!roleArmed || core>=DataflowCoreCount || roleStarted[core] || !StartCore(core)) return false;
+		if (!DataflowRoleMailboxPublishStarted(roleMailbox[core],DataflowRoleReader)) return false;
+		if (core!=missingRoleStartupCore && core!=delayedRoleStartupCore
+			&& !DataflowRoleMailboxPublishStarted(roleMailbox[core],DataflowRoleWriter)) return false;
 		roleStarted[core]=true; ++roleStarts; return true;
 	}
+	void Pause() {}
 	bool SharedCoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const {
 		return core<DataflowCoreCount && roleStarted[core] && CoreReady(core,observed);
 	}

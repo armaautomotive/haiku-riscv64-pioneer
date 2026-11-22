@@ -31,6 +31,33 @@ int main()
     {
         auto io=std::make_unique<MockDataflowIO>();
         auto owner=std::make_unique<DataflowServiceOwner>();
+        io->delayedRoleStartupCore=47; io->delayedRoleStartupReads=2;
+        io->transientSnapshotCore=47; io->transientSnapshotFailures=2;
+        assert(owner->Install(image,*io)==DataflowServiceComplete && owner->Ready());
+        assert(io->roleStartupReads>=4 && !io->transientSnapshotFailures);
+        assert(owner->Close(*io)==DataflowServiceClosed);
+    }
+    {
+        auto io=std::make_unique<MockDataflowIO>();
+        auto owner=std::make_unique<DataflowServiceOwner>();
+        io->staleStartupSequenceCore=47;
+        assert(owner->Install(image,*io)==DataflowServiceReadyFailed && owner->Faulted());
+        assert(owner->Diagnostic().stage==DataflowServiceDiagnosticWorkerProof
+            && owner->Diagnostic().core==47 && !io->resumeCount);
+        assert(owner->Close(*io)==DataflowServiceClosed);
+    }
+    {
+        auto io=std::make_unique<MockDataflowIO>();
+        auto owner=std::make_unique<DataflowServiceOwner>();
+        io->missingRoleStartupCore=47;
+        assert(owner->Install(image,*io)==DataflowServiceReadyFailed && owner->Faulted());
+        assert(owner->Diagnostic().stage==DataflowServiceDiagnosticWorkerProof
+            && owner->Diagnostic().core==47 && !io->resumeCount);
+        assert(owner->Close(*io)==DataflowServiceClosed);
+    }
+    {
+        auto io=std::make_unique<MockDataflowIO>();
+        auto owner=std::make_unique<DataflowServiceOwner>();
         io->failRoleStage=true;
         assert(owner->Install(image,*io)==DataflowServiceSnapshotFailed && owner->Faulted());
         assert(io->roleStages==1 && !io->roleArms && !io->roleStarts);
