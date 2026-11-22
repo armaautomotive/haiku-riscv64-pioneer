@@ -47,6 +47,7 @@ import sys
 
 out=Path(sys.argv[1])
 arrays=[]
+parks={}
 for role,shim_start,shim_limit,code_start,code_limit in (
         ('reader',0x70000,0x70080,0xb0000,0xb5000),
         ('writer',0x70080,0x70100,0xb5000,0xb8000)):
@@ -60,6 +61,11 @@ for role,shim_start,shim_limit,code_start,code_limit in (
     tick=symbols.get(f'qwen35_shared_{role}_tick',-1)
     if start!=shim_start or not shim_start<=park<shim_limit or not code_start<=tick<code_limit:
         raise SystemExit(f'invalid {role} entry, park or tick address')
+    shim=(out/f'{role}-shim.bin').read_bytes()
+    park_offset=park-shim_start
+    if park_offset%4 or park_offset+4>len(shim) or int.from_bytes(shim[park_offset:park_offset+4],'little')!=0x0000006f:
+        raise SystemExit(f'{role} park is not an aligned self-loop')
+    parks[role]=park
 for role,kind,limit in (('reader','shim',0x80),('reader','code',0x5000),
                         ('writer','shim',0x80),('writer','code',0x3000)):
     data=(out/f'{role}-{kind}.bin').read_bytes()
@@ -69,7 +75,9 @@ for role,kind,limit in (('reader','shim',0x80),('reader','code',0x5000),
     words=''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I',data))
     arrays.append(f'inline constexpr unsigned {name}[]={{\n{words}}};\n')
 (out/'PioneerQwen35SharedRoleImages.h').write_text(
-    '#pragma once\nnamespace PioneerQwen35 {\n'+''.join(arrays)+'}\n',encoding='ascii')
+    '#pragma once\nnamespace PioneerQwen35 {\n'
+    +''.join(f'inline constexpr unsigned DataflowShared{role.capitalize()}ParkAddress=0x{park:08x}U;\n'
+        for role,park in parks.items())+''.join(arrays)+'}\n',encoding='ascii')
 entries=[]
 for line in (out/'shared-roles.su').read_text().splitlines():
     fields=line.rsplit('\t',2)

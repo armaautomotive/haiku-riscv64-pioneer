@@ -17,6 +17,8 @@ class PioneerQwen35SharedRoleBinding {
     bool fCaptureAttempted=false;
     bool fReleaseAuthorized=false;
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+    uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
     PioneerQwen35RoleBorrowedScopeWitness* Scope() {
         auto* scope=fContext.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(fContext.io)?scope:NULL;
@@ -79,11 +81,36 @@ public:
     }
     bool CoreReady(unsigned,const PioneerQwen35::DataflowWorkerSnapshot&) { return false; }
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
-        // The old stop path understands T0 alone. Once any three-role reset
-        // write was attempted, retain everything until a role-aware stop,
-        // PC/NoC audit and one-shot hold path is implemented.
-        for (bool attempted:fReleaseAttempted) if (attempted) {
-            stage=8; core=PioneerQwen35::DataflowBarrierWorkers; return false;
+        // The old stop path understands T0 alone. For released tiles publish
+        // or observe one role stop request first; the real scope still denies
+        // this until it can prove compute/queues settled. Never release saved
+        // state until the subsequent parked-PC/NoC/hold audit exists.
+        bool any=false;
+        for (bool attempted:fReleaseAttempted) any|=attempted;
+        if (any) {
+            auto* scope=Scope();
+            if (!scope || !fViews.Opened()) { stage=8;core=PioneerQwen35::DataflowBarrierWorkers;return false; }
+            Adapter io(fContext.io,*scope,fViews);
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (!fReleaseAttempted[i]) continue;
+                bool okay=fStopAttempted[i]?io.StopRequestObserved(i,fStopToken[i])
+                    :io.RequestStop(i,false,fStopAttempted[i],fStopToken[i]);
+                if (!okay && !fStopAttempted[i]) okay=io.RequestStop(i,true,fStopAttempted[i],fStopToken[i]);
+                if (!okay) { stage=8;core=i;return false; }
+            }
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (!fReleaseAttempted[i]) continue;
+                bool parked=false;
+                for (unsigned poll=0;poll<65536;poll++) {
+                    if (io.RolesStoppedAndParked(i,fStopToken[i],
+                        PioneerQwen35::DataflowSharedReaderParkAddress,
+                        PioneerQwen35::DataflowSharedWriterParkAddress)) { parked=true;break; }
+                    fContext.io.Pause();
+                }
+                if (!parked) { stage=9;core=i;return false; }
+            }
+            // Compute shutdown and a fleet-wide hold audit are still needed.
+            stage=10;core=PioneerQwen35::DataflowBarrierWorkers;return false;
         }
         return fContext.io.StopAndAuditAll(stage,core);
     }

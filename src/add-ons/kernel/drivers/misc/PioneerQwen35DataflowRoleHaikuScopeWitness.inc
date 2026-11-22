@@ -69,6 +69,10 @@ public:
     // Must additionally establish partial-fleet cleanup and a role-aware
     // stop/hold path before permitting any physical reset release.
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
+    // A stop request requires the retained graph and compute/queue writers
+    // to be settled; fault and clean stops need different proofs.
+    bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return false; }
+    bool ProveRolePostStopSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool Detach() {
         if (!fAttached || !fContext) return false;
         const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this;

@@ -7,7 +7,7 @@
 #undef main
 
 struct FleetPciTestScope {
-    bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false;
+    bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const
@@ -18,6 +18,8 @@ struct FleetPciTestScope {
     bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
+    bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return stop; }
+    bool ProveRolePostStopSafe(PioneerSessionIO&,unsigned) const { return park; }
 };
 int main()
 {
@@ -96,6 +98,52 @@ int main()
         assert(io.ReleaseCore(core,allAttempts[core]) && allAttempts[core]);
     }
     assert(context.io.sharedResetWrites==2+DataflowBarrierWorkers);
+    auto initRoleBox=[&](unsigned core) {
+        auto& box=context.io.roleBoxes[core];
+        box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+        for (unsigned role=0;role<DataflowRoleCount;role++)
+            assert(DataflowRoleMailboxPublishStarted(box,role));
+    };
+    initRoleBox(8);
+    bool stopAttempted=false; uint32_t stopToken=0;
+    context.io.runtimeCore=7;
+    assert(!io.RequestStop(8,false,stopAttempted,stopToken)
+        && !stopAttempted && !stopToken && context.io.runtimeCore==7 && !context.io.roleStopWrites);
+    scope.stop=true;
+    assert(io.RequestStop(8,false,stopAttempted,stopToken) && stopAttempted && stopToken==1);
+    assert(io.StopRequestObserved(8,stopToken) && context.io.roleStopWrites==1);
+    assert(!io.RequestStop(8,false,stopAttempted,stopToken) && context.io.roleStopWrites==1);
+    context.io.rolePc[DataflowRoleReader]=DataflowRoleReaderShimAddress+0x30;
+    context.io.rolePc[DataflowRoleWriter]=DataflowRoleWriterShimAddress+0x30;
+    auto& cleanBox=context.io.roleBoxes[8];
+    scope.park=true;
+    assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],context.io.rolePc[1]));
+    assert(DataflowRoleMailboxObserveStop(cleanBox,DataflowRoleReader));
+    assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],context.io.rolePc[1]));
+    assert(DataflowRoleMailboxObserveStop(cleanBox,DataflowRoleWriter));
+    scope.park=false;
+    assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],context.io.rolePc[1]));
+    scope.park=true;
+    assert(io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],context.io.rolePc[1]));
+    assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0]+4,context.io.rolePc[1]));
+    assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],DataflowRoleWriterShimLimit));
+    initRoleBox(9); stopAttempted=false; stopToken=0; context.io.dropRoleStopWrite=true;
+    assert(!io.RequestStop(9,false,stopAttempted,stopToken) && stopAttempted && stopToken==1);
+    assert(!io.StopRequestObserved(9,stopToken) && context.io.roleStopWrites==2);
+    context.io.roleBoxes[9].stopRequest=stopToken; // a delayed MMIO completion
+    assert(io.StopRequestObserved(9,stopToken));
+    assert(!io.RequestStop(9,false,stopAttempted,stopToken) && context.io.roleStopWrites==2);
+    context.io.dropRoleStopWrite=false;
+    initRoleBox(10); auto& faultBox=context.io.roleBoxes[10];
+    assert(DataflowRoleMailboxIssue(faultBox,1));
+    for (unsigned role=0;role<DataflowRoleCount;role++) {
+        assert(DataflowRoleMailboxBegin(faultBox,role,1));
+        assert(DataflowRoleMailboxComplete(faultBox,role,1,role!=DataflowRoleReader));
+    }
+    stopAttempted=false; stopToken=0;
+    assert(!io.RequestStop(10,false,stopAttempted,stopToken) && !stopAttempted);
+    assert(io.RequestStop(10,true,stopAttempted,stopToken) && stopAttempted && stopToken==1);
+    assert(io.StopRequestObserved(10,stopToken) && faultBox.acknowledged==0);
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");

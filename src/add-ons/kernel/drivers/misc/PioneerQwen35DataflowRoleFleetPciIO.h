@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_QWEN35_DATAFLOW_ROLE_FLEET_PCI_IO_H
 #define PIONEER_QWEN35_DATAFLOW_ROLE_FLEET_PCI_IO_H
+#include <stddef.h>
+#include <string.h>
 #if !defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Role fleet PCI adapter is a non-loadable recovery witness only
 #endif
@@ -61,6 +63,20 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         }
         return true;
     }
+    bool SelectForStop(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
+            && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel()
+            && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    bool ReadStableRoleMailbox(unsigned core,PioneerQwen35::DataflowRoleMailbox& output) {
+        PioneerQwen35::DataflowRoleMailbox first{},second{};
+        if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleMailboxAddress,&first,sizeof(first))) return false;
+        fIO.Pause();
+        if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleMailboxAddress,&second,sizeof(second))
+            || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
+        memcpy(&output,&second,sizeof(output)); return true;
+    }
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
         :fIO(io),fScope(scope),fViews(views),fGuard(io,scope) {}
@@ -88,6 +104,58 @@ public:
         if (!fIO.SharedRoleReleaseReset()) return false;
         fIO.Pause();
         return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    // This issues exactly one host-owned mailbox word, never a command or a
+    // reset. A write failure may still have reached the tile; the caller
+    // retains the attempt and token and may only observe, never reissue.
+    bool RequestStop(unsigned core,bool fault,bool& attempted,uint32_t& token) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || attempted || token || !fScope.ProveExclusiveRewrite(fIO)
+            || !fScope.ProveRoleStopSafe(fIO,core,fault) || !SelectForStop(core)) return false;
+        DataflowRoleMailbox snapshot{};
+        if (!ReadStableRoleMailbox(core,snapshot) || !DataflowRoleMailboxAllStarted(snapshot)) return false;
+        const bool valid=fault?DataflowRoleMailboxRequestFaultStop(snapshot,true,true,true)
+            :DataflowRoleMailboxRequestStop(snapshot);
+        if (!valid || !fScope.ProveRoleStopSafe(fIO,core,fault) || !fGuard.ProveSelectedRoute(core)
+            || fIO.ResetRead()!=0x6000 || fIO.ResetRead()!=0x6000) return false;
+        token=DataflowLoadAcquire(snapshot.stopRequest);
+        if (!token) return false;
+        attempted=true;
+        const unsigned address=DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest);
+        fIO.Q38PanelWrite(address,token);
+        return fGuard.ProveSelectedRoute(core) && fIO.Q38PanelRead(address)==token
+            && fGuard.ProveSelectedRoute(core);
+    }
+    bool StopRequestObserved(unsigned core,uint32_t token) {
+        using namespace PioneerQwen35;
+        if (!token || !SelectForStop(core)) return false;
+        DataflowRoleMailbox snapshot{};
+        if (!ReadStableRoleMailbox(core,snapshot) || !DataflowRoleMailboxAllStarted(snapshot)
+            || DataflowLoadAcquire(snapshot.stopRequest)!=token) return false;
+        return DataflowRoleMailboxStopStateValid(snapshot,DataflowLoadAcquire(snapshot.acknowledged),
+            DataflowLoadAcquire(snapshot.command),token);
+    }
+    // Receipts precede the role shims' final fence and park loop. Verify both
+    // receipts and two PC samples, then separately require the scope's fleet
+    // and incoming-NoC proof. Speculative PC snapshots alone are not proof.
+    bool RolesStoppedAndParked(unsigned core,uint32_t token,uint32_t readerPark,uint32_t writerPark) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !token || (readerPark&3) || (writerPark&3)
+            || readerPark<DataflowRoleReaderShimAddress || readerPark>=DataflowRoleReaderShimLimit
+            || writerPark<DataflowRoleWriterShimAddress || writerPark>=DataflowRoleWriterShimLimit
+            || !fScope.ProveRolePostStopSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowRoleMailbox first{},second{};
+        if (!ReadStableRoleMailbox(core,first) || !DataflowRoleMailboxAllStarted(first)
+            || DataflowLoadAcquire(first.stopRequest)!=token || !DataflowRoleMailboxStopReceipts(first)) return false;
+        const uint32_t reader1=fIO.SharedRolePcRead(DataflowRoleReader);
+        const uint32_t writer1=fIO.SharedRolePcRead(DataflowRoleWriter);
+        fIO.Pause();
+        const uint32_t reader2=fIO.SharedRolePcRead(DataflowRoleReader);
+        const uint32_t writer2=fIO.SharedRolePcRead(DataflowRoleWriter);
+        return reader1==readerPark && reader2==readerPark && writer1==writerPark && writer2==writerPark
+            && ReadStableRoleMailbox(core,second) && !memcmp(&first,&second,sizeof(first))
+            && fScope.ProveRolePostStopSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
     bool AllRolesHeld(unsigned core) {

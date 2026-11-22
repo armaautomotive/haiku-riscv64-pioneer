@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <vector>
 using namespace PioneerQwen35;
 static tt_pioneer_profile GoodProfile()
@@ -45,6 +46,9 @@ struct PioneerSessionIO {
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
+    DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
+    unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
+    uint32_t rolePc[2]{};
     bool SelectRuntimeCore(unsigned core) { if (core>=DataflowBarrierWorkers) return false; runtimeCore=core; return true; }
     bool MapQ38Panel() const { return mapping; }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -66,6 +70,20 @@ struct PioneerSessionIO {
     }
     uint32_t ResetRead() const { return reset; }
     bool SharedRoleReleaseReset() { ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000; return true; }
+    uint32_t SharedRolePcRead(unsigned role) { return role<2?rolePc[role]:UINT32_MAX; }
+    bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) {
+        if (core>=DataflowBarrierWorkers || address!=DataflowRoleMailboxAddress
+            || bytes!=sizeof(DataflowRoleMailbox) || !output) return false;
+        runtimeCore=core; memcpy(output,&roleBoxes[core],bytes); return true;
+    }
+    void Q38PanelWrite(unsigned address,uint32_t value) {
+        assert(address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest));
+        ++roleStopWrites; if (!dropRoleStopWrite) roleBoxes[runtimeCore].stopRequest=value;
+    }
+    uint32_t Q38PanelRead(unsigned address) {
+        assert(address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest));
+        return roleBoxes[runtimeCore].stopRequest;
+    }
     uint32_t ResidentNocRead(unsigned offset) {
         const unsigned noc=offset>=0x10000?1:0,at=offset-(noc?0x10000:0);
         if (at==DataflowNocLogicalIdOffset) return DataflowBarrierWorkerRoute(runtimeCore);
