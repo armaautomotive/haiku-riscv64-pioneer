@@ -332,6 +332,12 @@ public:
 	bool OwnsFaultedGraph(const DataflowGraphPublisher& publisher) const {
 		return fPhase==PhaseGraphFaulted && fGraphPublisher==&publisher;
 	}
+	// Close changes PhaseGraphClosing to PhaseFaulted before touching the
+	// fleet. Keep the exact retained publisher identifiable across retries.
+	bool OwnsRetainedFaultGraph(const DataflowGraphPublisher& publisher) const {
+		return (fPhase==PhaseGraphFaulted || fPhase==PhaseGraphClosing || fPhase==PhaseFaulted)
+			&& fGraphPublisher==&publisher;
+	}
 	// This transition permits close only. It never makes a faulted model ready
 	// for inference, and only accepts proof for this service's retained run.
 	bool PermitFaultedGraphClose(const DataflowGraphPublisher& publisher,

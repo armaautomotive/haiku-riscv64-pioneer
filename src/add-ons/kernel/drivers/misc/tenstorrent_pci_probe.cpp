@@ -3865,6 +3865,11 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 class PioneerQ35GraphOwner;
 static void PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner);
 static bool PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static bool PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
+static bool PioneerQ35PromoteRetainedFaultScope(PioneerStoreContext& context);
+static bool PioneerQ35EndRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
+#endif
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 class PioneerQwen35SharedRoleBinding;
@@ -4406,6 +4411,24 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
+static bool
+PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run)
+{
+	auto* scope=context.io.qwen35BorrowedRoleScope;
+	return scope && scope->BeginRetainedFault(context.io,owner,run);
+}
+static bool
+PioneerQ35PromoteRetainedFaultScope(PioneerStoreContext& context)
+{
+	auto* scope=context.io.qwen35BorrowedRoleScope;
+	return scope && scope->PromoteRetainedFaultClose(context.io);
+}
+static bool
+PioneerQ35EndRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run)
+{
+	auto* scope=context.io.qwen35BorrowedRoleScope;
+	return scope && scope->EndRetainedFault(context.io,owner,run);
+}
 #endif
 #endif
 

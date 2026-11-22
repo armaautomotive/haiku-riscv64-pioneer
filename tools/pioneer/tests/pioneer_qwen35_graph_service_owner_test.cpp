@@ -96,6 +96,8 @@ int main() {
 	assert(partialPublisher.Start(*plan,f->routes,token,partialTicket,trigger,3,0,*partialPubIO,scratch)
 		==DataflowGraphPublishStagingFault && !partialService->CancelGraphBeforePublication(partialPublisher));
 	partialService->RetainFaultedGraph();
+	assert(partialService->OwnsRetainedFaultGraph(partialPublisher)
+		&& !partialService->OwnsRetainedFaultGraph(publisher));
 	assert(partialService->Faulted() && partialService->Close(*partialIO)==DataflowServiceInvalidState);
 	DataflowGraphFaultAudit closeAudit,emptyAudit;
 	assert(!partialService->PermitFaultedGraphClose(partialPublisher,emptyAudit));
@@ -103,9 +105,15 @@ int main() {
 	assert(closeAudit.Settle(partialPublisher,3,closeAuditIO)==DataflowGraphFaultAuditSettled);
 	assert(!partialService->PermitFaultedGraphClose(publisher,closeAudit));
 	assert(partialService->PermitFaultedGraphClose(partialPublisher,closeAudit));
+	assert(partialService->OwnsRetainedFaultGraph(partialPublisher));
 	assert(partialService->Faulted() && !partialService->Ready()
 		&& !partialService->BeginGraph(refused,trigger));
+	partialIO->failStopAudit=true;
+	assert(partialService->Close(*partialIO)==DataflowServiceStopAuditFailed
+		&& partialService->OwnsRetainedFaultGraph(partialPublisher));
+	partialIO->failStopAudit=false;
 	assert(partialService->Close(*partialIO)==DataflowServiceClosed && partialService->Closed());
+	assert(!partialService->OwnsRetainedFaultGraph(partialPublisher));
 	puts("PASS graph service lifecycle: exclusive execution, audited commit, sequence adoption and fault retention; SIMULATED ONLY");
 	return 0;
 }

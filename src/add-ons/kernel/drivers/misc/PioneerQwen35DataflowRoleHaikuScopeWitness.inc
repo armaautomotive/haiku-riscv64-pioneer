@@ -31,6 +31,11 @@ class PioneerQwen35RoleBorrowedScopeWitness {
     team_id fTeam=-1;
     uint64 fGeneration=0;
     bool fAttached=false,fAttempted=false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    const void* fFaultOwner=NULL;
+    const void* fFaultRun=NULL;
+    bool fFaultAttempted=false,fFaultClose=false;
+#endif
     PioneerQwen35RoleBorrowedScopeWitness(PioneerProbeCookie* cookie,PioneerStoreContext* context)
         :fCookie(cookie),fContext(context) {}
 public:
@@ -54,18 +59,57 @@ public:
         fThread=current; fTeam=info.team; fGeneration=sReloadGeneration;
         fContext->io.qwen35BorrowedRoleScope=this; fAttached=true; return true;
     }
-    bool ProveExclusiveRewrite(PioneerSessionIO& io) const {
+    bool ProveOwnerIdentity(PioneerSessionIO& io) const {
         if (!fAttached || !fCookie || !fContext || &io!=&fContext->io
             || io.qwen35BorrowedRoleScope!=this || io.qwen35DataflowContext!=fContext
             || fThread<0 || find_thread(NULL)!=fThread || fTeam<0 || fCookie->team!=fTeam
             || fCookie->magic!=0x50313030 || fCookie->context!=fContext
             || sRuntimeOwner!=fCookie || sColdRecoveryRequired || sReloadQuiesced
             || !fGeneration || sReloadGeneration!=fGeneration || !sBankStorageOnly
-            || !fContext->bankStorageOnly || fContext->bytes!=PioneerResidentBanks::Total
-            || PioneerQ35GraphOwnerRetained(fContext->qwen35GraphOwner)) return false;
+            || !fContext->bankStorageOnly || fContext->bytes!=PioneerResidentBanks::Total) return false;
         thread_info info={};
         return get_thread_info(fThread,&info)==B_OK && info.team==fTeam;
     }
+    bool ProveExclusiveRewrite(PioneerSessionIO& io) const {
+        if (!ProveOwnerIdentity(io)) return false;
+        if (!PioneerQ35GraphOwnerRetained(fContext->qwen35GraphOwner)) {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+            return !fFaultOwner;
+#else
+            return true;
+#endif
+        }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+        return fFaultOwner && fFaultOwner==fContext->qwen35GraphOwner && fFaultRun
+            && PioneerQ35GraphOwnerOwnsRetainedRun(fContext->qwen35GraphOwner,fFaultRun);
+#else
+        return false;
+#endif
+    }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    bool BeginRetainedFault(PioneerSessionIO& io,const void* owner,const void* run) {
+        if (fFaultAttempted) return false;
+        fFaultAttempted=true;
+        if (!ProveOwnerIdentity(io) || !owner || owner!=fContext->qwen35GraphOwner || !run
+            || !PioneerQ35GraphOwnerRetained(fContext->qwen35GraphOwner)
+            || !PioneerQ35GraphOwnerOwnsRetainedRun(fContext->qwen35GraphOwner,run)) return false;
+        fFaultOwner=owner;fFaultRun=run;return true;
+    }
+    bool PromoteRetainedFaultClose(PioneerSessionIO& io) {
+        if (fFaultClose || !ProveExclusiveRewrite(io) || !fFaultOwner || !fFaultRun
+            || !PioneerQ35GraphOwnerFaultClosePermitted(fContext->qwen35GraphOwner,fFaultRun)) return false;
+        fFaultClose=true;return true;
+    }
+    bool FaultCloseAuthorized(PioneerSessionIO& io) const {
+        return fFaultClose && ProveExclusiveRewrite(io) && fFaultOwner && fFaultRun
+            && PioneerQ35GraphOwnerFaultClosePermitted(fContext->qwen35GraphOwner,fFaultRun);
+    }
+    bool EndRetainedFault(PioneerSessionIO& io,const void* owner,const void* run) {
+        if (!ProveOwnerIdentity(io) || !fFaultOwner || fFaultOwner!=owner || fFaultRun!=run
+            || owner!=fContext->qwen35GraphOwner) return false;
+        fFaultOwner=NULL;fFaultRun=NULL;fFaultClose=false;return true;
+    }
+#endif
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return false; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
@@ -89,7 +133,11 @@ public:
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool Detach() {
         if (!fAttached || !fContext) return false;
-        const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this;
+        const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+            && !fFaultOwner
+#endif
+            ;
         if (fContext->io.qwen35BorrowedRoleScope==this) fContext->io.qwen35BorrowedRoleScope=NULL;
         fAttached=false;
         if (!valid) sColdRecoveryRequired=true;

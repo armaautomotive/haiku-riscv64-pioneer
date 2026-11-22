@@ -2180,6 +2180,9 @@ public:
 			&& !context.Unsafe(false,true);
 	}
 	PioneerQwen35::DataflowServiceResult CloseFaultedGraphService() {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (!PioneerQ35PromoteRetainedFaultScope(context)) return PioneerQwen35::DataflowServiceRecoveryPending;
+#endif
 		return context.CloseDataflowRewrite();
 	}
 };
@@ -2232,6 +2235,17 @@ public:
 		return LastResult(result) && DataflowGraphTraceRead(context.io,slot,result,output);
 	}
 	bool Retained() const { return runner.Retained() || (session.Faulted() && !retiredAfterFault); }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool OwnsRetainedFault(const void* run) const {
+		const auto* retained=session.RetainedRun();
+		return run && retained==run && bound && !retiredAfterFault && runner.Retained()
+			&& session.Faulted() && context.qwen35GraphOwner==this && context.qwen35DataflowService
+			&& context.qwen35DataflowService->OwnsRetainedFaultGraph(retained->publisher);
+	}
+	bool FaultClosePermitted(const void* run) const {
+		return OwnsRetainedFault(run) && session.FaultClosePermitted(faultAudit);
+	}
+#endif
 	bool FailedWorkerSnapshot(unsigned& core,PioneerQwen35::DataflowWorkerSnapshot& snapshot) const {
 		auto* run=session.RetainedRun();
 		return run && runner.Retained() && run->completion.FailedWorkerSnapshot(core,snapshot);
@@ -2240,10 +2254,20 @@ public:
 		using namespace PioneerQwen35;
 		if (!bound || retiredAfterFault || !runner.Retained() || !session.Faulted())
 			return DataflowServiceInvalidState;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		const void* retainedRun=session.RetainedRun();
+		if (!PioneerQ35BeginRetainedFaultScope(context,this,retainedRun))
+			return DataflowServiceRecoveryPending;
+#endif
 		faultAudit.ResetUnsettled();
 		PioneerQ35GraphBackend backend(context,stream);
 		const auto result=DataflowGraphFaultTeardown::Run(session,runner,faultAudit,
 			context.qwen35DataflowAuthority,65536,backend);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (!PioneerQ35EndRetainedFaultScope(context,this,retainedRun)) {
+			sColdRecoveryRequired=true;return DataflowServiceRecoveryPending;
+		}
+#endif
 		if (result!=DataflowServiceClosed) return result;
 		retiredAfterFault=true;bound=false;
 		return DataflowServiceClosed;
@@ -2268,6 +2292,17 @@ PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner)
 {
 	return owner && owner->Retained();
 }
+
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static bool PioneerQ35GraphOwnerOwnsRetainedRun(const PioneerQ35GraphOwner* owner,const void* run)
+{
+	return owner && owner->OwnsRetainedFault(run);
+}
+static bool PioneerQ35GraphOwnerFaultClosePermitted(const PioneerQ35GraphOwner* owner,const void* run)
+{
+	return owner && owner->FaultClosePermitted(run);
+}
+#endif
 
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 static bool

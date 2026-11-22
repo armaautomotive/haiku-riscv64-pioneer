@@ -45,6 +45,8 @@ int main()
     ResetMaps(); gBorrowedScopeHook=ExerciseBinding;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     assert(Qwen35DataflowGenerate(&cookie,nullptr,0)==B_OK);
+    assert(Qwen35DataflowControl(&cookie,6,nullptr,0)==B_OK);
+    assert(Qwen35DataflowControl(&cookie,7,nullptr,0)==B_OK);
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");

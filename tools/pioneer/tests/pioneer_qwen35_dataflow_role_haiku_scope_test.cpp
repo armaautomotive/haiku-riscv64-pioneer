@@ -37,7 +37,7 @@ namespace PioneerQwen35 { struct DataflowWorkerSnapshot; }
 #endif
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
 struct FakeService { bool ready=true; bool Ready() const { return ready; } };
-struct FakeGraph { bool retained=false; };
+struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; };
 struct PioneerSessionIO {
     tt_pioneer_profile profile=GoodProfile();
     PioneerStoreContext* qwen35DataflowContext=nullptr;
@@ -132,6 +132,14 @@ struct PioneerStoreContext {
     PioneerStoreContext() { io.qwen35DataflowContext=this; }
 };
 static bool PioneerQ35GraphOwnerRetained(const FakeGraph* graph) { return graph && graph->retained; }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static bool PioneerQ35GraphOwnerOwnsRetainedRun(const FakeGraph* graph,const void* run) {
+    return graph && graph->retained && run && graph->run==run;
+}
+static bool PioneerQ35GraphOwnerFaultClosePermitted(const FakeGraph* graph,const void* run) {
+    return PioneerQ35GraphOwnerOwnsRetainedRun(graph,run) && graph->closePermitted;
+}
+#endif
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=42;
@@ -197,6 +205,33 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             context->qwen35GraphOwner->retained=true;
             assert(!scope.ProveExclusiveRewrite(context->io));
             context->qwen35GraphOwner->retained=false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+        } else if (mode==6 || mode==7) {
+            auto* graph=context->qwen35GraphOwner;
+            int run=0,otherRun=0; FakeGraph other;
+            graph->retained=true;graph->run=&run;
+            assert(!scope.ProveExclusiveRewrite(context->io));
+            if (mode==6) {
+                assert(!scope.BeginRetainedFault(context->io,graph,&otherRun));
+                assert(!scope.BeginRetainedFault(context->io,graph,&run)); // one-shot failed authority
+            } else {
+                assert(scope.BeginRetainedFault(context->io,graph,&run));
+                assert(scope.ProveExclusiveRewrite(context->io));
+                assert(!scope.PromoteRetainedFaultClose(context->io));
+                graph->closePermitted=true;
+                assert(scope.PromoteRetainedFaultClose(context->io) && scope.FaultCloseAuthorized(context->io));
+                assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
+                graph->run=&otherRun;assert(!scope.ProveExclusiveRewrite(context->io));graph->run=&run;
+                context->qwen35GraphOwner=&other;assert(!scope.ProveExclusiveRewrite(context->io));
+                assert(!scope.EndRetainedFault(context->io,graph,&run));
+                context->qwen35GraphOwner=graph;
+                graph->run=nullptr; // retained allocation can disappear after successful close
+                assert(scope.EndRetainedFault(context->io,graph,&run));
+                assert(!scope.ProveExclusiveRewrite(context->io));
+                assert(!scope.BeginRetainedFault(context->io,graph,&run));
+            }
+            graph->retained=false;graph->run=nullptr;graph->closePermitted=false;
+#endif
         } else {
             context->qwen35DataflowService->ready=false; // installing is not Ready
             assert(scope.ProveExclusiveRewrite(context->io));
