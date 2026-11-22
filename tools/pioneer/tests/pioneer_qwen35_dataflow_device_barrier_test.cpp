@@ -109,6 +109,10 @@ int main()
 	assert(success.barrier[0]->Poll()==DataflowBarrierPassed);
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(success.barrier[i]->Poll()==DataflowBarrierPassed);
 	assert(fabric.arrivals==119 && fabric.releases==119);
+	for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
+		assert(success.barrier[i]->NextStep());
+		assert(!success.barrier[i]->NextStep());
+	}
 
 	// Old markers from a prior step must never release a new one.
 	Fleet next(fabric);assert(next.barrier[0]->Start(0,17,2,0,0));
@@ -124,6 +128,7 @@ int main()
 		assert(failed.barrier[i]->Start(i,91,1,i==5?7U:i==89?9U:0U,i==5?123U:i==89?456U:0U));
 	assert(failed.barrier[0]->Poll()==DataflowBarrierFailed
 		&& failed.barrier[0]->FailureCore()==5 && failed.barrier[0]->Failure()==7);
+	assert(!failed.barrier[0]->NextStep());
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++)
 		assert(failed.barrier[i]->Poll()==DataflowBarrierFailed && failed.barrier[i]->FailureCore()==5);
 
@@ -131,6 +136,7 @@ int main()
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(corrupted.barrier[i]->Start(i,31,1,0,0));
 	bad.arrival[17].payload.word[4]=18;
 	assert(corrupted.barrier[0]->Poll()==DataflowBarrierUnsafe && !bad.releases);
+	assert(!corrupted.barrier[0]->NextStep());
 	assert(corrupted.barrier[0]->Poll()==DataflowBarrierUnsafe);
 
 	Fabric lost;Fleet partial(lost);assert(partial.barrier[0]->Start(0,41,1,0,0));

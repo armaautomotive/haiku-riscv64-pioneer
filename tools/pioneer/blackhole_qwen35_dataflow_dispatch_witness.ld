@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-/* Offline size witness only. The current driver does not install or verify
- * this second code region, and the resident worker does not invoke it. */
+/* Non-loadable link witness. The resident worker does not invoke this region;
+ * its graph authorization hook denies all commands. */
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 SECTIONS {
@@ -8,6 +8,7 @@ SECTIONS {
 	.dispatch 0xa0400 : {
 		*device-stream.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		*device-barrier.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
+		*device-graph.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		. = ALIGN(4);
 	}
 	.text 0x72000 : {

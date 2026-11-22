@@ -161,6 +161,31 @@ non-loadable witness SHA-256:
 `c9b51667a271c350701729e240af5f90af06d50ddcb7e0a7b8249635d15a27e8`.
 The refactor has not run on the card and establishes no new token rate.
 
+Tag0131 adds a per-worker graph control loop that fetches, authorizes and
+executes each command, then waits for the 120-worker barrier. It uses bounded
+poll counts and retains the graph on failed fetch, authorization, execution,
+barrier, timeout or queue reset. A successful barrier may release some peers
+before a different peer fails; a local completion is therefore not a fleet
+completion proof. Simulated tests run two actual encoded embedding records on
+120 workers through stream fetch and barrier logic, using a fake executor and
+fake authority; they exercise failed fetches, denied authority, uncertain and
+reported execution failures, partial release and timeout. They do not verify
+model math or hardware operation.
+
+A non-loadable RV32IMF witness links this control loop to the real NoC fetch,
+barrier and extracted worker executor, with 54,652 bytes of primary code and
+8,164 bytes of dispatch code. Its authorization hook rejects every command and
+the resident service never enters the graph. Kernel validation of every exact
+model-bound command, immutable stream ownership, fresh non-reused epochs,
+dynamic token/position handling, fleet completion proof, fault reporting and
+physical qualification remain necessary. Reusing an epoch/step can accept a
+stale barrier marker; do not reuse one. A full stream per token is too large to
+upload repeatedly. The normal tag0131 driver SHA-256 is
+`9046b4e81acb393102d79c6c4c1b533819cde9f1b0b2e579393fff7caa5e947c`;
+the non-loadable witness is
+`8d40af3f685cb64b584da5841cc8faa86cfb7c6f46b28d4b677f6b596e19d362`.
+Neither has run on the card; there is no new decode-rate measurement.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -220,7 +245,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0130. Since tag0121 it records final release of a
+The default build now targets dedicated tag0131. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

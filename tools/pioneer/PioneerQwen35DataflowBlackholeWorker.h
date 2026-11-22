@@ -227,6 +227,9 @@ struct DataflowWorkerExecutionResult {
 	uint32_t embeddingAddress=0,embeddingRoute=0,embeddingBytes=0;
 };
 
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+__attribute__((noinline))
+#endif
 inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 	unsigned core,unsigned sequence,DataflowWorkerMailbox* mailbox)
 {

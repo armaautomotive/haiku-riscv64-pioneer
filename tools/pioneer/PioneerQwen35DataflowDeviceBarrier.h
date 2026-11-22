@@ -146,6 +146,16 @@ public:
 	unsigned FailureCore() const { return firstFailureCore; }
 	unsigned Failure() const { return firstFailure; }
 	void Expire() { if (active && !done) unsafe=true; }
+	// Reuse only a successful barrier. Failure or uncertainty keeps the graph
+	// owned; it must not be made runnable by resetting this object.
+	bool NextStep() {
+		if (!done || failed || unsafe || active) return false;
+		core=DataflowBarrierWorkers;epoch=step=firstFailure=0;
+		firstFailureCore=DataflowBarrierWorkers;done=false;
+		volatile bool* slots=seen;
+		for (unsigned i=0;i<DataflowBarrierWorkers;i++) slots[i]=false;
+		return true;
+	}
 };
 
 // Concrete NoC1 transport. Payload and commit use distinct slots and two

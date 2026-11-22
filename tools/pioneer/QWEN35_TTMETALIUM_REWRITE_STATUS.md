@@ -186,6 +186,24 @@ both normal and non-loadable Haiku builds pass. Their driver SHA-256 values are
 and `c9b51667a271c350701729e240af5f90af06d50ddcb7e0a7b8249635d15a27e8`.
 This has not run on the card and does not establish a decode rate.
 
+Tag0131 adds a per-worker control loop for stream fetch, exact-command
+authority, execution and fleet barrier. Bounded polling and any uncertain
+step retain the whole graph; local completion is not fleet completion. A
+120-worker simulation uses real encoded embedding records, the stream fetch
+and the barrier, with fake execution and authority. It covers successful
+two-step execution, rejected authority, failed reads, uncertain execution,
+reported worker failure, partial release, queue failure and deadlines. A
+non-loadable RV32IMF witness links the loop with real NoC transport and the
+worker executor, but its authorization hook rejects every command and the
+service never calls it. Its primary and dispatch sections use 54,652 and
+8,164 bytes respectively. Normal and witness builds pass; their driver
+SHA-256 values are
+`9046b4e81acb393102d79c6c4c1b533819cde9f1b0b2e579393fff7caa5e947c`
+and `8d40af3f685cb64b584da5841cc8faa86cfb7c6f46b28d4b677f6b596e19d362`.
+The kernel must still authorize and protect the exact stream, bind fresh
+epochs, update dynamic fields efficiently, audit fleet completion and report
+faults. Nothing here establishes correctness or speed on Pioneer.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

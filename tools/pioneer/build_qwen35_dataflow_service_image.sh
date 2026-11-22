@@ -13,8 +13,13 @@ sdk="$objects/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/d
 umask 077
 mkdir -m 700 "$output"
 flags="-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32"
+service_flags=
+if [ "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" = 1 ]; then
+	[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" = 1 ] || exit 2
+	service_flags=-DPIONEER_QWEN35_DEVICE_DISPATCH
+fi
 
-"$cross-g++" $flags -I"$directory" -I"$sdk/headers" \
+"$cross-g++" $flags $service_flags -I"$directory" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" \
 	-c "$directory/PioneerQwen35DataflowServiceImage.cpp" -o "$output/service.o"
 "$cross-g++" $flags -I"$directory" -I"$sdk/headers" \
@@ -34,11 +39,13 @@ case "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" in
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" -o "$output/device-stream.o"
 	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" -o "$output/device-barrier.o"
+	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+		-c "$directory/tests/pioneer_qwen35_dataflow_device_graph_target_probe.cpp" -o "$output/device-graph.o"
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
-		-u PioneerQwen35DeviceStreamCompileProbe -u PioneerQwen35DeviceBarrierCompileProbe \
+		-u PioneerQwen35DeviceGraphCompileProbe \
 		-T "$directory/blackhole_qwen35_dataflow_dispatch_witness.ld" \
 		"$output/start.o" "$output/service.o" "$output/memory.o" \
-		"$output/device-stream.o" "$output/device-barrier.o" \
+		"$output/device-stream.o" "$output/device-barrier.o" "$output/device-graph.o" \
 		-Map "$output/service.map" -o "$output/service.elf"
 	"$cross-objcopy" -O binary -j .dispatch "$output/service.elf" "$output/dispatch.bin";;
 *) exit 2;;
