@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_QWEN35_DATAFLOW_NOC_SAFETY_SAMPLE_H
 #define PIONEER_QWEN35_DATAFLOW_NOC_SAFETY_SAMPLE_H
-#include <stdint.h>
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowNocProtocol.h"
 
 // The NIU registers remain readable with the tile clock disabled. With that
 // clock disabled, touching L1 or a RISC register can wedge the NoC. FIFO
@@ -14,17 +14,12 @@
 template<class Read>
 bool PioneerQwen35SampleNocFifosAndClock(Read read)
 {
-    constexpr uint32_t clockDisabled=1U<<12, fifoEnabled=1U<<16;
     for (unsigned noc=0;noc<2;noc++) {
         const unsigned base=noc?0x10000:0;
-        const uint32_t before=read(base+0x100);
-        if (before==UINT32_MAX || (before&clockDisabled)) return false;
-        if (before&fifoEnabled) {
-            if (read(base+0x64)!=0x10101010U || read(base+0x68)!=0) return false;
-        }
-        const uint32_t after=read(base+0x100);
-        if (after==UINT32_MAX || ((before^after)&(clockDisabled|fifoEnabled))
-            || (after&clockDisabled)) return false;
+        uint32_t observed=0;
+        if (PioneerQwen35::DataflowNocCheckFifo(
+                [&](unsigned offset) { return read(base+offset); },observed)
+            !=PioneerQwen35::DataflowNocFifoReady) return false;
     }
     return true;
 }

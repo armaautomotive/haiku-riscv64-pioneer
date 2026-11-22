@@ -14,6 +14,36 @@ constexpr uint32_t DataflowNocWriteControl=0x2092; // nonposted write, static VC
 // after request submission. Preserve checks of all software-defined fields.
 constexpr uint32_t DataflowNocControlReadbackMask=0xf803e3ff;
 
+enum DataflowNocFifoStatus : unsigned {
+	DataflowNocFifoReady=0, DataflowNocFifoBadConfig=1,
+	DataflowNocFifoNotEmpty=2, DataflowNocFifoOverflow=3
+};
+// For FIFO mode, test availability before reading any request counters: the
+// NIU counts a request only after it leaves its FIFO. Callers must ensure the
+// NIU configuration cannot be changed concurrently by another agent.
+// https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#niu-request-fifos
+template<class Read>
+inline DataflowNocFifoStatus DataflowNocCheckFifo(Read read,uint32_t& observed)
+{
+	constexpr uint32_t clockDisabled=1U<<12,fifoEnabled=1U<<16;
+	const uint32_t before=read(0x100);
+	if (before==UINT32_MAX || (before&clockDisabled)) {
+		observed=before; return DataflowNocFifoBadConfig;
+	}
+	if (before&fifoEnabled) {
+		observed=read(0x64);
+		if (observed!=0x10101010U) return DataflowNocFifoNotEmpty;
+		observed=read(0x68);
+		if (observed) return DataflowNocFifoOverflow;
+	}
+	const uint32_t after=read(0x100);
+	if (after==UINT32_MAX || ((before^after)&(clockDisabled|fifoEnabled))
+		|| (after&clockDisabled)) {
+		observed=after; return DataflowNocFifoBadConfig;
+	}
+	observed=after; return DataflowNocFifoReady;
+}
+
 // Blackhole documents NIU_MST_RD_DATA_WORD_RECEIVED (0x20c) as
 // UnsupportedFunctionality when read. Keep its historical diagnostic slot,
 // but never access it or use it as a completion condition.
@@ -44,6 +74,16 @@ template<class Read> inline uint32_t DataflowNocMatchingCounters(Read& read,
 	if (firstMismatch) *firstMismatch=first;
 	if (mismatchValue) *mismatchValue=value;
 	return mask;
+}
+
+// A queued FIFO entry is not reflected in the counters. Do not read a
+// completion counter until the availability value has returned and passed.
+template<class ReadFifo,class ReadCounter>
+inline bool DataflowNocFifoCountersComplete(ReadFifo readFifo,ReadCounter& readCounter,
+	const uint32_t (&expected)[8]) {
+	uint32_t observed=0;
+	return DataflowNocCheckFifo(readFifo,observed)==DataflowNocFifoReady
+		&& DataflowNocMatchingCounters(readCounter,expected)==DataflowNocSupportedCounterMask;
 }
 
 inline bool DataflowNocDecodeLocalRoute(uint32_t raw,uint32_t& route)

@@ -8,8 +8,61 @@
 
 using namespace PioneerQwen35;
 
+struct FifoRegisters {
+	uint32_t config=0,available=0x10101010U,overflow=0;
+	unsigned configReads=0,availableReads=0,overflowReads=0;
+	bool flipConfig=false;
+	uint32_t Read(unsigned offset) {
+		if (offset==0x100) {
+			++configReads;
+			return flipConfig && configReads==2 ? config^(1U<<16) : config;
+		}
+		if (offset==0x64) { ++availableReads; return available; }
+		if (offset==0x68) { ++overflowReads; return overflow; }
+		assert(false); return UINT32_MAX;
+	}
+};
+
 int main()
 {
+	{
+		FifoRegisters regs; uint32_t observed=0;
+		auto sample=[&]() { return DataflowNocCheckFifo([&](unsigned offset) {
+			return regs.Read(offset);
+		},observed); };
+		assert(sample()==DataflowNocFifoReady && regs.configReads==2
+			&& !regs.availableReads && !regs.overflowReads);
+		regs.config=1U<<16;
+		assert(sample()==DataflowNocFifoReady && regs.availableReads==1 && regs.overflowReads==1);
+		for (unsigned initiator=0;initiator<4;initiator++) {
+			regs.available=0x10101010U-(1U<<(initiator*8));
+			const unsigned priorOverflowReads=regs.overflowReads;
+			assert(sample()==DataflowNocFifoNotEmpty && observed==regs.available
+				&& regs.overflowReads==priorOverflowReads);
+		}
+		regs.available=0x10101010U; regs.overflow=4;
+		assert(sample()==DataflowNocFifoOverflow && observed==4);
+		regs.config=1U<<12;
+		assert(sample()==DataflowNocFifoBadConfig && observed==regs.config);
+		regs.config=UINT32_MAX;
+		assert(sample()==DataflowNocFifoBadConfig);
+		regs.config=0; regs.configReads=0; regs.flipConfig=true;
+		assert(sample()==DataflowNocFifoBadConfig && observed==(1U<<16));
+	}
+	{
+		FifoRegisters regs; regs.config=1U<<16;
+		uint32_t expected[8]={}; unsigned counterReads=0;
+		auto fifo=[&](unsigned offset) { return regs.Read(offset); };
+		auto counter=[&](unsigned i) { assert(i<8 && i!=1); ++counterReads; return 0U; };
+		regs.available=0x1010100fU;
+		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && !counterReads);
+		regs.available=0x10101010U; regs.overflow=1;
+		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && !counterReads);
+		regs.overflow=0;
+		assert(DataflowNocFifoCountersComplete(fifo,counter,expected) && counterReads==7);
+		expected[2]=1;
+		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && counterReads==14);
+	}
 	// A stale return-coordinate register may contain a plausible but unrelated
 	// core. The worker and driver must both read the logical-ID register.
 	uint32_t regs[0x150/4]={};

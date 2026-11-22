@@ -4,6 +4,7 @@
 #ifdef PIONEER_QWEN35_QUEUED_COMPUTE
 #error "shared activation compute must validate pointers into the immutable cache"
 #endif
+#define PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY 1
 #include "PioneerQwen35DataflowBlackholeIO.h"
 #include "PioneerQwen35DataflowTensixOps.h"
 #include "PioneerQwen35DataflowRoleCoordinator.h"

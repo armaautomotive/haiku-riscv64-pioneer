@@ -89,9 +89,24 @@ class DataflowBlackholeNoc {
 		return DataflowNocCounterSupported(index) ? *Words(Base+CounterOffset[index]) : 0;
 	}
 
+#if defined(PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY) || defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+	static bool FifoReady(DataflowNocDiagnostic* detail=nullptr)
+	{
+		uint32_t value=0;
+		const auto status=DataflowNocCheckFifo(
+			[](unsigned offset) { return *Words(Base+offset); },value);
+		if (status==DataflowNocFifoReady) return true;
+		if (detail) *detail={0,0x40U+unsigned(status),value,0};
+		return false;
+	}
+#endif
+
 	static bool Quiet(DataflowNocDiagnostic* detail=nullptr)
 	{
 		if (detail) *detail={};
+#if defined(PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY) || defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+		if (!FifoReady(detail)) return false;
+#endif
 		for (unsigned i=0;i<DataflowNocInitiators;i++) {
 			const uint32_t value=*Words(Base+0x40+i*0x800);
 			if (value) {
@@ -171,7 +186,13 @@ class DataflowBlackholeNoc {
 		Fence();
 		for (unsigned attempt=0;attempt<DataflowNocPollLimit;attempt++) {
 			bool complete=!*Words(Base+0x40);
+#if defined(PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY) || defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+			if (!complete) continue;
+			complete=DataflowNocFifoCountersComplete(
+				[](unsigned offset) { return *Words(Base+offset); },readCounter,expected);
+#else
 			complete &= DataflowNocMatchingCounters(readCounter,expected)==DataflowNocSupportedCounterMask;
+#endif
 			if (!complete) continue;
 			Fence();
 			for (unsigned i=0;i<10;i++) {
@@ -254,7 +275,13 @@ public:
 		auto readCounter=[](unsigned i) { return Counter(i); };
 		for (unsigned attempt=0;attempt<DataflowNocPollLimit;attempt++) {
 			bool complete=!*Words(Base+0x40);
+#if defined(PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY) || defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+			if (!complete) continue;
+			complete=DataflowNocFifoCountersComplete(
+				[](unsigned offset) { return *Words(Base+offset); },readCounter,ticket.expected);
+#else
 			complete &= DataflowNocMatchingCounters(readCounter,ticket.expected)==DataflowNocSupportedCounterMask;
+#endif
 			if (!complete) continue;
 			Fence();
 			for (unsigned i=0;i<10;i++)
