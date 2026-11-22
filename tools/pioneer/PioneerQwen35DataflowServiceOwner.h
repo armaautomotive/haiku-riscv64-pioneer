@@ -293,6 +293,11 @@ public:
 	DataflowServiceOwner& operator=(const DataflowServiceOwner&)=delete;
 
 	bool Ready() const { return fPhase==PhaseReady; }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	// True only inside Install's callback after all resident workers have
+	// been snapshotted and held. This is not an incoming-NoC safety proof.
+	bool SharedRoleCapturePending() const { return fPhase==PhaseInstalling && fSharedAttempted; }
+#endif
 	bool Faulted() const { return fPhase==PhaseFaulted
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		|| fPhase==PhaseGraphFaulted || fPhase==PhaseGraphClosing

@@ -118,6 +118,12 @@ public:
     }
 #endif
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return false; }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    bool ProveRoleL2InspectionAllowed(PioneerSessionIO& io) const {
+        return ProveExclusiveRewrite(io) && fContext->qwen35DataflowService
+            && fContext->qwen35DataflowService->SharedRoleCapturePending();
+    }
+#endif
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }

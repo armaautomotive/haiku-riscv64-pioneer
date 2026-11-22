@@ -3608,6 +3608,12 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (value==0x87ffff || value==0x46800 || value==0x47800) PioneerWrite32(runtimeControl+0x1b0/4,value);
 	}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool SharedArcResetMapped() const {
+		return PioneerArcIO::scratchArea>=B_OK && PioneerArcIO::scratch;
+	}
+	uint32 SharedArcL2CpuResetRead() {
+		return SharedArcResetMapped()?PioneerRead32(PioneerArcIO::scratch+0x14/4):UINT32_MAX;
+	}
 	// The role adapter checks ownership, exact held state and preserved local
 	// RAM, and records the attempt before calling this fixed transition.
 	bool SharedRoleReleaseReset() {

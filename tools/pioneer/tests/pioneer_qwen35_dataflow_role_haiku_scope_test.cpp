@@ -36,7 +36,11 @@ class PioneerQwen35SharedRoleBinding;
 namespace PioneerQwen35 { struct DataflowWorkerSnapshot; }
 #endif
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
-struct FakeService { bool ready=true; bool Ready() const { return ready; } };
+struct FakeService {
+    bool ready=true;
+    bool Ready() const { return ready; }
+    bool SharedRoleCapturePending() const { return false; }
+};
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
     tt_pioneer_profile profile=GoodProfile();
@@ -76,6 +80,10 @@ struct PioneerSessionIO {
         const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
         return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
     }
+    void DramTlbWrite(unsigned,unsigned,uint32_t) { assert(false); }
+    bool SharedArcResetMapped() const { return false; }
+    uint32_t SharedArcL2CpuResetRead() { assert(false); return UINT32_MAX; }
+    uint32_t ScratchRead(unsigned) { assert(false); return UINT32_MAX; }
     uint32_t ResetRead() const { return reset; }
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
     uint32_t RuntimePcRead() const { return computePc; }
