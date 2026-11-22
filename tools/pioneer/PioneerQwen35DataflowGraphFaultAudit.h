@@ -49,6 +49,14 @@ public:
 	bool SettledFor(const DataflowGraphPublisher& publisher) const {
 		return settledPublisher==&publisher;
 	}
+	// A failed attempt may have acknowledged only part of the fleet. A new
+	// attempt starts with another host-write fence and re-audits all cores;
+	// the mixed ready/terminal classification handles those acknowledgements.
+	// A completed proof is one-shot and cannot be reset or reused.
+	bool ResetUnsettled() {
+		if (!attempted || settledPublisher) return false;
+		attempted=false;failedCore=DataflowCoreCount;return true;
+	}
 
 	template<class IO> DataflowGraphFaultAuditResult Settle(
 		const DataflowGraphPublisher& publisher,unsigned pollLimit,IO& io) {

@@ -44,6 +44,7 @@ int main() {
 	FaultIO good;DataflowGraphFaultAudit audit;
 	assert(audit.Settle(p,3,good)==DataflowGraphFaultAuditSettled && good.acks==80 && good.fences==2);
 	assert(audit.Settle(p,3,good)==DataflowGraphFaultAuditInvalid);
+	assert(!audit.ResetUnsettled());
 	FaultIO fence;fence.badFence=0;DataflowGraphFaultAudit noFence;
 	assert(noFence.Settle(p,3,fence)==DataflowGraphFaultAuditFenceFailed && !fence.acks);
 	FaultIO unsettled;unsettled.worker[7].state=DataflowWorkerRunning;DataflowGraphFaultAudit timeout;
@@ -54,6 +55,8 @@ int main() {
 	assert(drift.Settle(p,3,changed)==DataflowGraphFaultAuditChanged && drift.FailedCore()==5 && !changed.acks);
 	FaultIO partial;partial.ackCore=9;DataflowGraphFaultAudit badAck;
 	assert(badAck.Settle(p,3,partial)==DataflowGraphFaultAuditAckFailed && partial.acks==9);
+	assert(badAck.ResetUnsettled());partial.ackCore=-1;partial.audits=0;
+	assert(badAck.Settle(p,3,partial)==DataflowGraphFaultAuditSettled && partial.acks==80);
 	FaultIO stuck;stuck.stuckCore=8;DataflowGraphFaultAudit noReady;
 	assert(noReady.Settle(p,3,stuck)==DataflowGraphFaultAuditReadyFailed && noReady.FailedCore()==8);
 	FaultIO finalFence;finalFence.badFence=1;DataflowGraphFaultAudit noFinalFence;

@@ -62,6 +62,16 @@ class DataflowGraphSession {
 		bool ReadArgmaxResult(unsigned sequence,DataflowArgmaxResult& result) { return io.ReadArgmaxResult(sequence,result); }
 		bool Acknowledge(unsigned c,unsigned sequence) { return io.Acknowledge(c,sequence); }
 	};
+	template<class IO> struct FaultAdapter {
+		IO& io;
+		bool FenceGraphHostWrites() { return io.FenceGraphHostWrites(); }
+		void Pause() { io.Pause(); }
+		bool ReadWorkerSnapshot(unsigned c,DataflowWorkerSnapshot& s) { return io.ReadWorkerSnapshot(c,s); }
+		bool AuditGraphRecoveryCore(unsigned c,const DataflowWorkerSnapshot& s) {
+			return io.AuditGraphRecoveryCore(c,s);
+		}
+		bool Acknowledge(unsigned c,unsigned sequence) { return io.AcknowledgeFault(c,sequence); }
+	};
 
 	DataflowGraphSessionResult Retain() {
 		faulted=true;if (service) service->RetainFaultedGraph();return DataflowGraphSessionRetained;
@@ -72,6 +82,22 @@ public:
 	DataflowGraphSession& operator=(const DataflowGraphSession&)=delete;
 	bool Faulted() const { return faulted; }
 	DataflowGraphSessionRun* RetainedRun() const { return faulted?active:nullptr; }
+
+	// A settled fault permits service close only; it never promotes the
+	// candidate or makes this session usable for inference again. The caller
+	// keeps the audit and retained run alive through close and final release.
+	template<class IO> DataflowGraphFaultAuditResult SettleFaultForClose(
+		DataflowGraphFaultAudit& audit,unsigned pollLimit,IO& io) {
+		if (!bound || !faulted || !active || !service
+			|| !service->OwnsFaultedGraph(active->publisher)
+			|| !io.GraphFaultSessionSafe(this,*service,plan,inputSlot))
+			return DataflowGraphFaultAuditInvalid;
+		FaultAdapter<IO> adapter{io};
+		const auto result=audit.Settle(active->publisher,pollLimit,adapter);
+		if (result!=DataflowGraphFaultAuditSettled) return result;
+		return service->PermitFaultedGraphClose(active->publisher,audit)
+			?DataflowGraphFaultAuditSettled:DataflowGraphFaultAuditInvalid;
+	}
 
 	// The supplied stream is already recorded and sealed. The IO check must
 	// bind it to this session's immutable bank claim, slot and audited routes.

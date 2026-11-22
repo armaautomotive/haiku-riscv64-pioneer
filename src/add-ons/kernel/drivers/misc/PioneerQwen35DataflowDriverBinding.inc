@@ -3,6 +3,9 @@
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRuntimeRecovery.h"
 #include "PioneerQwen35DataflowNoC1Audit.h"
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphFaultTeardown.h"
+#endif
 
 enum PioneerQwen35RuntimeAuditDetail : unsigned {
 	PioneerDataflowRuntimeDetailContext=1,
@@ -2056,6 +2059,59 @@ public:
 		const PioneerQwen35::DataflowStreamPlan& p,unsigned slot) { return stream.ReserveGraphSession(owner,p,slot); }
 	bool OwnsGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
 		const PioneerQwen35::DataflowStreamPlan& p,unsigned slot) { return stream.OwnsGraphSession(owner,p,slot); }
+	bool GraphFaultSessionSafe(const PioneerQwen35::DataflowGraphSession* owner,
+		const PioneerQwen35::DataflowServiceOwner& resident,
+		const PioneerQwen35::DataflowStreamPlan& p,unsigned slot) {
+		return owner && context.qwen35GraphOwner && context.qwen35DataflowService==&resident
+			&& resident.Faulted() && context.io.qwen35DataflowContext==&context
+			&& !sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration
+			&& sRuntimeOwner && sRuntimeOwner->magic==0x50313030 && sRuntimeOwner->context==&context
+			&& sBankStorageOnly && context.bankStorageOnly && context.bytes==PioneerResidentBanks::Total
+			&& context.qwen35DataflowMemory && context.qwen35DataflowAuthority
+			&& stream.OwnsGraphSession(owner,p,slot) && !context.Unsafe(false,true);
+	}
+	// Same-device nonposted read drains earlier host writes before inspecting
+	// the retained fleet. Do not reprogram the TLB before that read.
+	bool FenceGraphHostWrites() {
+		if (!context.io.DataflowPanelMappingStable()) return false;
+		const auto magic=context.io.Q38PanelRead(PioneerQwen35::DataflowWorkerMailboxAddress);
+		return context.io.DataflowPanelMappingStable()
+			&& magic==PioneerQwen35::DataflowWorkerMailboxMagic;
+	}
+	void Pause() { context.io.Pause(); }
+	bool AuditGraphRecoveryCore(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
+		using namespace PioneerQwen35;
+		if (!PioneerQwen35DataflowCoreRuntimeStable(context.io,core)
+			|| !PioneerQwen35DataflowQueuesBalanced(context.io,core,true)) return false;
+		auto& dram=context.baseline.baseline.baseline.baseline.dram;
+		struct NoC1Reader {
+			PioneerSessionIO& io;
+			uint32_t Read(unsigned offset) { return io.ResidentNocRead(0x10000+offset); }
+			void Pause() { io.Pause(); }
+		} noC1{context.io};
+		DataflowWorkerMailbox mailbox{};
+		if (!PioneerQwen35DataflowNoC1Audit(noC1,dram,core)
+			|| !PioneerQwen35DataflowReadStableMailbox(context.io,core,mailbox)) return false;
+		return mailbox.magic==DataflowWorkerMailboxMagic && mailbox.version==DataflowWorkerMailboxVersion
+			&& mailbox.logicalCore==core && !mailbox.shutdownSequence
+			&& mailbox.commandSequence==snapshot.commandSequence
+			&& mailbox.acknowledgedSequence==snapshot.acknowledgedSequence
+			&& mailbox.completedSequence==snapshot.completedSequence
+			&& mailbox.state==snapshot.state && mailbox.failure==snapshot.failure
+			&& mailbox.phase==snapshot.phase;
+	}
+	bool AcknowledgeFault(unsigned core,unsigned sequence) {
+		using namespace PioneerQwen35;
+		DataflowWorkerSnapshot s{};
+		if (!sequence || !context.io.ReadWorkerSnapshot(core,s)
+			|| s.commandSequence!=sequence || s.completedSequence!=sequence
+			|| s.acknowledgedSequence>=sequence
+			|| !((s.state==DataflowWorkerComplete && !s.failure && s.phase==2)
+				|| (s.state==DataflowWorkerFailed && s.failure && s.phase==5))) return false;
+		const uint32_t acknowledgement=sequence;
+		return context.io.WriteCoreMemory(core,DataflowWorkerMailboxAddress
+			+offsetof(DataflowWorkerMailbox,acknowledgedSequence),&acknowledgement,sizeof(acknowledgement));
+	}
 	bool ReadWorkerSnapshot(unsigned c,PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.ReadWorkerSnapshot(c,s); }
 	bool CoreReady(unsigned c,const PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.CoreReady(c,s); }
 	bool StageGraphRun(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d) { return context.io.StageGraphRun(c,d); }
@@ -2083,6 +2139,18 @@ public:
 			&& PioneerQ35GraphRecoveryProofMatches(*resetProof,resetTicket,true,
 				context.io.postResetDisposeComplete);
 	}
+	bool GraphFleetRestoredAfterClose(const PioneerQwen35::DataflowGraphSession& session,
+		const PioneerQwen35::DataflowGraphFaultAudit& audit) {
+		auto* run=session.RetainedRun();
+		return run && audit.SettledFor(run->publisher) && context.qwen35DataflowService
+			&& context.qwen35DataflowService->Closed() && !context.qwen35DataflowMemory
+			&& context.io.qwen35DataflowContext==&context && !sColdRecoveryRequired
+			&& !sReloadQuiesced && sRuntimeOwner && sRuntimeOwner->context==&context
+			&& !context.Unsafe(false,true);
+	}
+	PioneerQwen35::DataflowServiceResult CloseFaultedGraphService() {
+		return context.CloseDataflowRewrite();
+	}
 };
 
 // This context-owned object is compiled only in the non-loadable graph
@@ -2093,7 +2161,8 @@ class PioneerQ35GraphOwner {
 	PioneerQ35StreamRecordingWitness stream;
 	PioneerQwen35::DataflowGraphSession session;
 	PioneerQwen35::DataflowGraphOwnedRunner runner;
-	bool recorded=false,bound=false;
+	PioneerQwen35::DataflowGraphFaultAudit faultAudit;
+	bool recorded=false,bound=false,retiredAfterFault=false;
 public:
 	explicit PioneerQ35GraphOwner(PioneerStoreContext& c):context(c),stream(c) {}
 	bool Record(unsigned slot,unsigned& stage) {
@@ -2117,7 +2186,19 @@ public:
 		return runner.Run(session,context.qwen35DataflowAuthority,position,token,decode,polls,
 			*context.qwen35DataflowProgramScratch,backend,output,stage);
 	}
-	bool Retained() const { return runner.Retained() || session.Faulted(); }
+	bool Retained() const { return runner.Retained() || (session.Faulted() && !retiredAfterFault); }
+	PioneerQwen35::DataflowServiceResult RecoverFaultForClose() {
+		using namespace PioneerQwen35;
+		if (!bound || retiredAfterFault || !runner.Retained() || !session.Faulted())
+			return DataflowServiceInvalidState;
+		faultAudit.ResetUnsettled();
+		PioneerQ35GraphBackend backend(context,stream);
+		const auto result=DataflowGraphFaultTeardown::Run(session,runner,faultAudit,
+			context.qwen35DataflowAuthority,65536,backend);
+		if (result!=DataflowServiceClosed) return result;
+		retiredAfterFault=true;bound=false;
+		return DataflowServiceClosed;
+	}
 	bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket) {
 		if (!runner.Retained()) return true;
 		PioneerQ35GraphBackend backend(context,stream,&proof,ticket);

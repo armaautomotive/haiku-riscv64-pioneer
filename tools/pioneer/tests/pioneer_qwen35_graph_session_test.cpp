@@ -64,6 +64,34 @@ struct SessionIO : PublisherIO {
 	}
 };
 
+struct GraphRecoveryIO {
+	StreamClaim& claim;
+	bool safe=true;
+	int badCore=-1;
+	unsigned previous=2;
+	bool acknowledged[DataflowCoreCount]{};
+	unsigned audits=0,acks=0,fences=0;
+	bool GraphFaultSessionSafe(const DataflowGraphSession* session,const DataflowServiceOwner& owner,
+		const DataflowStreamPlan& plan,unsigned slot) {
+		return safe && claim.owner==session && owner.Faulted() && plan.ready && slot==0;
+	}
+	bool FenceGraphHostWrites() { fences++;return true; }
+	void Pause() {}
+	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& s) {
+		const unsigned trigger=previous+1;
+		s=acknowledged[core]?DataflowWorkerSnapshot{trigger,trigger,trigger,DataflowWorkerReady,0,0,0,0}
+			:DataflowWorkerSnapshot{trigger,previous,trigger,DataflowWorkerFailed,1,5,0,0};
+		return true;
+	}
+	bool AuditGraphRecoveryCore(unsigned core,const DataflowWorkerSnapshot&) {
+		audits++;return int(core)!=badCore;
+	}
+	bool AcknowledgeFault(unsigned core,unsigned sequence) {
+		assert(audits==2*DataflowCoreCount && sequence==previous+1);
+		acknowledged[core]=true;acks++;return true;
+	}
+};
+
 #ifndef Q35_GRAPH_SESSION_FIXTURE_ONLY
 int main() {
 	(void)&q35_session_service_fixture_main;(void)&q35_publisher_fixture_main;
@@ -115,6 +143,17 @@ int main() {
 		==DataflowGraphSessionRetained && session->Faulted() && session->RetainedRun()==failed.get()
 		&& service->Faulted() && service->Close(*serviceIO)==DataflowServiceInvalidState
 		&& live==liveOwner.get() && live->ConvNextPosition(0)==2 && !retired && output.token==Vocabulary && !bad.acks);
+	GraphRecoveryIO recovery{claim};auto audit=std::make_unique<DataflowGraphFaultAudit>();
+	recovery.safe=false;
+	assert(session->SettleFaultForClose(*audit,3,recovery)==DataflowGraphFaultAuditInvalid && !recovery.fences);
+	recovery.safe=true;recovery.badCore=119;
+	assert(session->SettleFaultForClose(*audit,3,recovery)==DataflowGraphFaultAuditCoreUnsafe
+		&& !recovery.acks && service->Close(*serviceIO)==DataflowServiceInvalidState);
+	audit=std::make_unique<DataflowGraphFaultAudit>();recovery.badCore=-1;recovery.audits=0;
+	assert(session->SettleFaultForClose(*audit,3,recovery)==DataflowGraphFaultAuditSettled
+		&& recovery.acks==120 && recovery.fences==3 && service->Faulted() && !service->Ready());
+	assert(service->Close(*serviceIO)==DataflowServiceClosed && service->Closed()
+		&& session->Faulted() && live==liveOwner.get() && live->ConvNextPosition(0)==2);
 	puts("PASS graph session: sealed plan, fresh tickets, two audited state commits and retained fault; SIMULATED ONLY");
 	return 0;
 }

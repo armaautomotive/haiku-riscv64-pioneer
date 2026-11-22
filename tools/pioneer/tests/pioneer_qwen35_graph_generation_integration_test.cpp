@@ -3,6 +3,7 @@
 #include "pioneer_qwen35_graph_session_test.cpp"
 #include "../PioneerQwen35DataflowGraphOwnedRunner.h"
 #include "../PioneerQwen35DataflowGraphGeneration.h"
+#include "../PioneerQwen35DataflowGraphFaultTeardown.h"
 
 struct Timer {
 	uint64_t now=0;
@@ -21,6 +22,19 @@ struct IntegratedOwner {
 		calls++;
 		return runner.Run(session,live,position,token,decode,polls,scratch,io,output,stage);
 	}
+};
+
+struct IntegratedRecoveryIO : GraphRecoveryIO {
+	DataflowServiceOwner& service;MockDataflowIO& serviceIO;SessionIO& allocator;
+	IntegratedRecoveryIO(StreamClaim& claim,DataflowServiceOwner& s,MockDataflowIO& io,SessionIO& memory)
+		:GraphRecoveryIO{claim},service(s),serviceIO(io),allocator(memory) {}
+	DataflowServiceResult CloseFaultedGraphService() { return service.Close(serviceIO); }
+	bool GraphFleetRestoredAfterClose(const DataflowGraphSession& session,const DataflowGraphFaultAudit& audit) {
+		const auto* run=session.RetainedRun();
+		return service.Closed() && run && audit.SettledFor(run->publisher);
+	}
+	void DeleteGraphRun(DataflowGraphSessionRun* p) { allocator.DeleteGraphRun(p); }
+	void DeleteGraphCandidate(DataflowProjectionAuthority* p) { allocator.DeleteGraphCandidate(p); }
 };
 
 int main() {
@@ -53,10 +67,15 @@ int main() {
 	assert(DataflowGraphGeneration::Run(prompt,2,3,99,32,3,owner,output,count,stage,failClock,promptUs,decodeUs)
 		==DataflowGenerationSequenceDecoderFailed && count==1 && output[0]==42
 		&& owner.runner.Retained() && service->Faulted() && stage==(2U<<16|0x8002U));
-	SessionIO cleanup(claim);
-	assert(!owner.runner.ReleaseRetainedAfterRestoration(live,cleanup));
-	cleanup.restored=true; // Simulated restored-fleet proof only.
-	assert(owner.runner.ReleaseRetainedAfterRestoration(live,cleanup));
+	SessionIO cleanup(claim);IntegratedRecoveryIO recovery(claim,*service,*serviceIO,cleanup);
+	recovery.previous=8;auto audit=std::make_unique<DataflowGraphFaultAudit>();
+	recovery.badCore=119;
+	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceRecoveryPending
+		&& service->Faulted() && owner.runner.Retained() && !cleanup.runDeletes && !recovery.acks);
+	assert(audit->ResetUnsettled());recovery.badCore=-1;recovery.audits=0;
+	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceClosed
+		&& service->Closed() && !owner.runner.Retained() && cleanup.runDeletes==1
+		&& cleanup.candidateDeletes==1 && recovery.acks==120 && session->Faulted());
 	delete live;
 	puts("PASS graph generation integration: warm requests, prompt/decode timing, retained fault; SIMULATED ONLY");
 	return 0;

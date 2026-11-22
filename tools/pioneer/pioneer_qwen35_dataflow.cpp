@@ -356,9 +356,11 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 		return false;
 	}
 	PrintOwnerDiagnostic(fd,"recover_result",request);
-	return request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
-		&& request.state==TT_QWEN35_DATAFLOW_STATE_READY
-		&& !request.recovery_required;
+	return !request.recovery_required
+		&& ((request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
+				&& request.state==TT_QWEN35_DATAFLOW_STATE_READY)
+			|| (request.result==TT_QWEN35_DATAFLOW_RESULT_CLOSED
+				&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED));
 }
 
 static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,

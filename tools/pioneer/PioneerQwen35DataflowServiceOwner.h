@@ -232,6 +232,9 @@ public:
 	void RetainFaultedGraph() {
 		if (fPhase==PhaseGraphRunning || fPhase==PhaseReady) fPhase=PhaseGraphFaulted;
 	}
+	bool OwnsFaultedGraph(const DataflowGraphPublisher& publisher) const {
+		return fPhase==PhaseGraphFaulted && fGraphPublisher==&publisher;
+	}
 	// This transition permits close only. It never makes a faulted model ready
 	// for inference, and only accepts proof for this service's retained run.
 	bool PermitFaultedGraphClose(const DataflowGraphPublisher& publisher,

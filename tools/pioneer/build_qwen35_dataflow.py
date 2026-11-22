@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010148'
+TAG = '2026112100010149'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -222,6 +222,36 @@ def verify_kernel_stack_budget(driver_directory):
         scope = 'includes measured ioctl and 2048-byte helper allowance' if includes_ioctl else \
                 'includes 2048-byte allowance; real ioctl caller not audited'
         print(f'qwen35_graph_session_stack_envelope_bytes={total}/18432 ({scope})')
+
+    if any('DataflowGraphFaultAudit::Settle(' in n and 'PioneerQ35GraphBackend' in n
+           for n, _, _ in entries):
+        # Count sequential audit and close branches together, plus an explicit
+        # helper allowance. Inlined frames are included in their callers; this
+        # is an envelope, not a whole-program stack proof.
+        groups = [
+            ('control', ('Qwen35DataflowControl(',)),
+            ('fault audit', ('DataflowGraphFaultAudit::Settle(', 'PioneerQ35GraphBackend')),
+            ('fault core audit', ('PioneerQ35GraphBackend::AuditGraphRecoveryCore(',)),
+            ('NoC1 audit', ('PioneerQwen35DataflowNoC1Audit(', 'PioneerQ35GraphBackend::AuditGraphRecoveryCore')),
+            ('runtime audit', ('PioneerQwen35DataflowCoreRuntimeStable(',)),
+            ('queue audit', ('PioneerQwen35DataflowQueuesBalanced(',)),
+            ('snapshot', ('PioneerSessionIO::ReadWorkerSnapshot(',)),
+            ('mailbox', ('PioneerQwen35DataflowReadStableMailbox(',)),
+            ('service close', ('PioneerStoreContext::CloseDataflowRewrite(',)),
+            ('fleet stop', ('PioneerQwen35DataflowPciMemory<Raw>::StopAndAuditAll(', 'PioneerSessionIO')),
+            ('fleet resume', ('PioneerQwen35DataflowPciMemory<Raw>::ResumeRestoredFleet(', 'PioneerSessionIO')),
+        ]
+        total = 2048
+        for label, markers in groups:
+            matches = [(frame, kind) for name, frame, kind in entries
+                       if all(marker in name for marker in markers)]
+            if not matches or any(kind != 'static' for _, kind in matches):
+                raise RuntimeError('missing or unbounded graph fault frame: ' + label)
+            total += max(frame for frame, _ in matches)
+        if total > 18432:
+            raise RuntimeError(f'graph fault recovery stack envelope is {total} bytes')
+        print(f'qwen35_graph_fault_stack_envelope_bytes={total}/18432 '
+              '(includes 2048-byte helper allowance; not a whole-program proof)')
 
 
 def main():

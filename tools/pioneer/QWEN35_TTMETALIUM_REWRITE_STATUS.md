@@ -27,15 +27,14 @@ identity was reachable. This check did not touch the accelerator or verify
 current 27B process/driver-idle state; perform the full preflight before any
 card operation.
 
-Tag0147's offline fault-recovery work adds a bounded graph settlement audit
+Tag0147's offline fault-recovery work added a bounded graph settlement audit
 and a service transition that permits closing but never resumes inference on
 the faulted model. A successful audit requires a host-write fence, stable
 receipts and backend proofs for both NoCs, queues, worker image, routes, and
 graph peer/fetch traffic for all 120 cores before acknowledgements. The
 fixture tests failure retention and partial acknowledgements in simulation.
-The backend, driver ioctl integration, restored-fleet release and hardware
-qualification remain open, so this does not yet provide recovery without
-reboot. The target suite and both Haiku/RISC-V builds pass; the normal
+At tag0147 the backend, driver ioctl integration, restored-fleet release and
+hardware qualification remained open. The target suite and both Haiku/RISC-V builds pass; the normal
 tag0147 driver SHA-256 is
 `48ba20fbd4f3118cf1d8a099f37bad8d505a61e3e45eadf3d2dfb5bed337e7ba`,
 and the non-loadable graph witness is
@@ -54,6 +53,24 @@ builds pass. The normal driver SHA-256 is
 and the non-loadable graph witness is
 `343a690d5ab7e6a189e1bfbee13df75f7ed53b6988e47494f23464d114f4490e`.
 No hardware throughput is implied.
+
+Tag0149 connects that audit to the graph owner's RECOVER request in the
+non-loadable build. It checks the owned stream and surrounding context, fences
+the last host writes with a same-device read, audits both NoCs and each
+worker's stable mailbox and queues, and acknowledges terminal workers only
+after the entire fleet passes. A settled session can close but cannot run a
+new graph. The service restores and resumes saved worker state before the
+retained graph run and candidate are released. Failed or partial audits keep
+the owner; later attempts start with another fence and re-audit all workers.
+Simulated integration covers audit refusal, retry, all-core acknowledgement,
+close and release. The implementation remains non-loadable and has not run
+on Pioneer; uncertain outstanding traffic can still prevent recovery. The
+target and reload suites and both Haiku/RISC-V builds pass. The recovery
+call-path envelope is `6608/18432`, including a 2,048-byte helper allowance;
+it is not a whole-program proof. Normal driver SHA-256:
+`fdab1921ab9ed3f439ed78d8bef826dc1c881709ed709aae3e8caca6a12b30f6`;
+non-loadable graph witness:
+`61063443a267b8e7b10e15a57107429e53bac6ee29b92ce4c91e74ea52e615bf`.
 
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku

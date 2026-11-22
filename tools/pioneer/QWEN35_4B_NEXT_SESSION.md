@@ -486,9 +486,9 @@ earlier host writes are fenced and that both NoCs, queues, routes, worker
 image and graph peer/fetch traffic are safe; it checks stable worker receipts
 twice before acknowledging any terminal worker. Simulated tests cover partial
 publication and acknowledgement, unsettled or changing receipts, failed
-fences and unsafe cores. The prototype is not connected to a hardware backend
-or the driver recovery ioctl, and does not itself restore or release the
-fleet. Do not treat it as working recovery without reboot. The target suite
+fences and unsafe cores. At tag0147 the prototype was not connected to a
+hardware backend or the driver recovery ioctl and did not itself restore or
+release the fleet. The target suite
 and both Haiku/RISC-V builds pass. Tag0147 normal driver SHA-256:
 `48ba20fbd4f3118cf1d8a099f37bad8d505a61e3e45eadf3d2dfb5bed337e7ba`;
 non-loadable graph witness:
@@ -507,6 +507,24 @@ The target suite and both Haiku/RISC-V builds pass. Normal driver SHA-256:
 `96c8f9b2d749c54cce873be27d2b6fc184dd3bc4827a1e02c9f48c8d3d83646b`;
 non-loadable graph witness:
 `343a690d5ab7e6a189e1bfbee13df75f7ed53b6988e47494f23464d114f4490e`.
+
+Tag0149 connects the graph-fault audit to the non-loadable driver's RECOVER
+request. Under the retained owner and session lock, it fences prior host
+writes, checks stable worker state, both NoCs, queues, routes and image across
+all 120 cores, acknowledges settled terminal workers, and permits only a
+service close. It releases retained run allocations only after the service
+has restored its fleet and the context proves safe; a failed or partial audit
+keeps ownership, and a later attempt fences and re-audits the entire fleet.
+The session is never made ready for inference after a fault. Simulation covers
+rejected audit, partial acknowledgement retry, close and release. This path is
+still non-loadable and not hardware-qualified; outstanding traffic or other
+uncertain state may prevent recovery without reset. The target and reload
+test suites and both Haiku/RISC-V builds pass. The new recovery call-path
+stack envelope is `6608/18432` including a 2,048-byte helper allowance, not a
+whole-program proof. Normal driver SHA-256:
+`fdab1921ab9ed3f439ed78d8bef826dc1c881709ed709aae3e8caca6a12b30f6`;
+non-loadable graph witness:
+`61063443a267b8e7b10e15a57107429e53bac6ee29b92ce4c91e74ea52e615bf`.
 
 After the user restored power, strict SSH to the pinned Haiku identity
 succeeded again on 2026-11-22. This was an OS identity check only; the prior
@@ -572,7 +590,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0148. Since tag0121 it records final release of a
+The default build now targets dedicated tag0149. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
