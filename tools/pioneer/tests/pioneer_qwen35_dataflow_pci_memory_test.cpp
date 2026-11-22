@@ -16,13 +16,14 @@ struct MockPciRaw {
 		[PioneerQwen35::DataflowCircularBufferCount]{};
 	bool serviceImage[PioneerQwen35::DataflowCoreCount]{};
 	unsigned selected=UINT32_MAX;
-	unsigned writes=0;
+	unsigned writes=0,resetWrites=0;
 	unsigned pauses=0;
 	bool mapped=true;
 	bool idle=true;
 	bool idleForWrite=true;
 	unsigned notIdleCore=UINT32_MAX;
 	unsigned startupFatalCore=UINT32_MAX;
+	unsigned dropResumeCore=UINT32_MAX;
 
 	MockPciRaw()
 	{
@@ -59,7 +60,10 @@ struct MockPciRaw {
 		boot[selected]=value;
 		writes++;
 	}
-	void RuntimeResetWrite(unsigned value) { assert(selected<120); reset[selected]=value; }
+	void RuntimeResetWrite(unsigned value) {
+		assert(selected<120);resetWrites++;
+		if (value!=0x46800 || selected!=dropResumeCore) reset[selected]=value;
+	}
 	uint32_t Q38PanelRead(unsigned address) const
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
@@ -382,8 +386,28 @@ int main()
 	resumeDetail=UINT32_MAX;
 	assert(!failingMemory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
 	assert(resumeStage==3 && resumeCore==1 && resumeDetail==0x102);
+	const unsigned resumeWrites=failingRaw.resetWrites;
+	failingRaw.notIdleCore=UINT32_MAX;
+	assert(failingMemory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
+	assert(failingRaw.resetWrites==resumeWrites); // retry audits only; no restart
 	for (unsigned core=0;core<DataflowCoreCount;core++)
 		failingMemory.ReleaseCoreSnapshot(core);
+
+	// An uncertain partial fleet start must never be replayed.
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		failingRaw.reset[core]=core?0x46800:0x47800;
+		assert(failingMemory.CaptureCoreState(core));
+	}
+	for (unsigned core=0;core<DataflowCoreCount;core++) assert(failingMemory.HoldCore(core));
+	for (unsigned core=0;core<DataflowCoreCount;core++) assert(failingMemory.RestoreCoreState(core));
+	failingRaw.dropResumeCore=5;
+	assert(!failingMemory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
+	assert(resumeStage==2 && resumeCore==5);
+	const unsigned partialWrites=failingRaw.resetWrites;
+	failingRaw.dropResumeCore=UINT32_MAX;
+	assert(!failingMemory.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail));
+	assert(failingRaw.resetWrites==partialWrites);
+	for (unsigned core=0;core<DataflowCoreCount;core++) failingMemory.ReleaseCoreSnapshot(core);
 	puts("PASS PCI L1 bounds, resident stop, and 120-core clean restore");
 	return 0;
 }

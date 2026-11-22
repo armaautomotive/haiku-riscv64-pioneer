@@ -12,6 +12,14 @@ namespace PioneerQwen35 {
 enum DataflowGraphSessionResult { DataflowGraphSessionInvalid=0,DataflowGraphSessionPreflight=1,
 	DataflowGraphSessionRetained=2,DataflowGraphSessionComplete=3 };
 
+// Fits the low 16 bits of the generation stage; the high 16 bits identify
+// the token position. CoreCount denotes a fault without a specific core.
+enum : unsigned { DataflowGraphStagePublish=0x4000, DataflowGraphStageCompletion=0x5000,
+	DataflowGraphStageCommit=0x6000, DataflowGraphStageRetired=0x6001 };
+inline unsigned DataflowGraphFailureStage(unsigned family,unsigned result,unsigned core) {
+	return family | ((result & 0xfU)<<8) | (core & 0xffU);
+}
+
 // Heap-owned by the session caller. The candidate is separately allocated;
 // after commit it becomes the live authority and the caller must keep it.
 // A retained run and both authorities must not be destroyed until graph fault
@@ -82,6 +90,9 @@ public:
 	DataflowGraphSession& operator=(const DataflowGraphSession&)=delete;
 	bool Faulted() const { return faulted; }
 	DataflowGraphSessionRun* RetainedRun() const { return faulted?active:nullptr; }
+	bool FaultClosePermitted(const DataflowGraphFaultAudit& audit) const {
+		return bound && faulted && active && service && audit.SettledFor(active->publisher);
+	}
 
 	// A settled fault permits service close only; it never promotes the
 	// candidate or makes this session usable for inference again. The caller
@@ -140,14 +151,21 @@ public:
 		Adapter<IO> adapter{*this,run,io};
 		const auto published=run.publisher.Start(plan,routes,run.token,run.ticket,trigger,pollLimit,inputSlot,adapter,run.scratch);
 		if (published!=DataflowGraphPublished) {
+			stage=DataflowGraphFailureStage(DataflowGraphStagePublish,unsigned(published),run.publisher.FailedCore());
 			if (!run.publisher.Unpublished() || !service->CancelGraphBeforePublication(run.publisher)) return Retain();
 			active=nullptr;return DataflowGraphSessionPreflight;
 		}
 		DataflowArgmaxResult result{};
-		if (run.completion.Finish(run.publisher,plan,routes,run.token,adapter,run.scratch,result)!=DataflowGraphCompletionAudited
-			|| !service->CommitGraph(run.publisher,run.completion,adapter)) return Retain();
+		const auto completed=run.completion.Finish(run.publisher,plan,routes,run.token,adapter,run.scratch,result);
+		if (completed!=DataflowGraphCompletionAudited) {
+			stage=DataflowGraphFailureStage(DataflowGraphStageCompletion,unsigned(completed),run.completion.FailedCore());
+			return Retain();
+		}
+		if (!service->CommitGraph(run.publisher,run.completion,adapter)) {
+			stage=DataflowGraphStageCommit;return Retain();
+		}
 		retired=run.model.Retired();
-		if (!retired || *live!=&candidate) return Retain();
+		if (!retired || *live!=&candidate) { stage=DataflowGraphStageRetired;return Retain(); }
 		output=result;active=nullptr;return DataflowGraphSessionComplete;
 	}
 };

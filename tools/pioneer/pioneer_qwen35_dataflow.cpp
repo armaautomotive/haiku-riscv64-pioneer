@@ -355,7 +355,17 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 		fputs("P100A_Q35_DATAFLOW recover_request_failed\n",stderr);
 		return false;
 	}
-	PrintOwnerDiagnostic(fd,"recover_result",request);
+	if (request.result==TT_QWEN35_DATAFLOW_RESULT_STOP_AUDIT_FAILED
+		|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESTORE_FAILED
+		|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED) {
+		fprintf(stderr,"P100A_Q35_DATAFLOW recover_close result=%u state=%u "
+			"recovery=%u diag_stage=%u diag_core=%u diagnostic_state=%u "
+			"diagnostic_failure=%u diagnostic_phase=%u resume_detail=0x%08x\n",
+			request.result,request.state,request.recovery_required,
+			request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
+			request.reserved[1]>>24,(request.reserved[1]>>16)&0xff,
+			(request.reserved[1]>>8)&0xff,request.reserved[2]);
+	} else PrintOwnerDiagnostic(fd,"recover_result",request);
 	return !request.recovery_required
 		&& ((request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
 				&& request.state==TT_QWEN35_DATAFLOW_STATE_READY)

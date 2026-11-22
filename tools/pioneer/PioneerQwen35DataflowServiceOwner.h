@@ -135,6 +135,7 @@ class DataflowServiceOwner {
 	};
 	Phase fPhase=PhaseEmpty;
 	bool fSaved[DataflowCoreCount]{};
+	bool fCloseRestored=false;
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
 		DataflowCoreCount,0,0,0,0};
 	DataflowProjectionOwner fProjectionOwner;
@@ -536,28 +537,31 @@ public:
 			)
 			return DataflowServiceInvalidState;
 		fPhase=PhaseFaulted;
-		unsigned auditStage=0,auditCore=DataflowCoreCount;
-		if (!io.StopAndAuditAll(auditStage,auditCore)) {
-			DataflowWorkerSnapshot snapshot{};
-			snapshot.state=auditStage;
-			SetDiagnostic(DataflowServiceDiagnosticStopAudit,auditCore,snapshot);
-			return DataflowServiceStopAuditFailed;
-		}
-		for (unsigned end=DataflowCoreCount;end;end--) {
-			const unsigned core=end-1;
-			if (!fSaved[core]) continue;
-			if (!io.RestoreCoreState(core)) {
+		if (!fCloseRestored) {
+			unsigned auditStage=0,auditCore=DataflowCoreCount;
+			if (!io.StopAndAuditAll(auditStage,auditCore)) {
 				DataflowWorkerSnapshot snapshot{};
-				snapshot.state=1;
-				SetDiagnostic(DataflowServiceDiagnosticRestore,core,snapshot);
-				return DataflowServiceRestoreFailed;
+				snapshot.state=auditStage;
+				SetDiagnostic(DataflowServiceDiagnosticStopAudit,auditCore,snapshot);
+				return DataflowServiceStopAuditFailed;
 			}
-			if (!io.VerifyCoreStateRestored(core)) {
-				DataflowWorkerSnapshot snapshot{};
-				snapshot.state=2;
-				SetDiagnostic(DataflowServiceDiagnosticRestore,core,snapshot);
-				return DataflowServiceRestoreFailed;
+			for (unsigned end=DataflowCoreCount;end;end--) {
+				const unsigned core=end-1;
+				if (!fSaved[core]) continue;
+				if (!io.RestoreCoreState(core)) {
+					DataflowWorkerSnapshot snapshot{};
+					snapshot.state=1;
+					SetDiagnostic(DataflowServiceDiagnosticRestore,core,snapshot);
+					return DataflowServiceRestoreFailed;
+				}
+				if (!io.VerifyCoreStateRestored(core)) {
+					DataflowWorkerSnapshot snapshot{};
+					snapshot.state=2;
+					SetDiagnostic(DataflowServiceDiagnosticRestore,core,snapshot);
+					return DataflowServiceRestoreFailed;
+				}
 			}
+			fCloseRestored=true;
 		}
 		unsigned resumeStage=0,resumeCore=DataflowCoreCount,resumeDetail=0;
 		if (!io.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail)) {

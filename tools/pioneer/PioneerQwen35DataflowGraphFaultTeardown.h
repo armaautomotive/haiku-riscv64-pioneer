@@ -17,7 +17,8 @@ public:
 		DataflowGraphOwnedRunner& runner,DataflowGraphFaultAudit& audit,
 		DataflowProjectionAuthority* live,unsigned polls,IO& io) {
 		if (!live || !runner.Retained() || !session.Faulted()) return DataflowServiceInvalidState;
-		if (session.SettleFaultForClose(audit,polls,io)!=DataflowGraphFaultAuditSettled)
+		if (!session.FaultClosePermitted(audit)
+			&& session.SettleFaultForClose(audit,polls,io)!=DataflowGraphFaultAuditSettled)
 			return DataflowServiceRecoveryPending;
 		const auto closed=io.CloseFaultedGraphService();
 		if (closed!=DataflowServiceClosed) return closed;

@@ -66,16 +66,23 @@ int main() {
 	owner.failPosition=2;Timer failClock;
 	assert(DataflowGraphGeneration::Run(prompt,2,3,99,32,3,owner,output,count,stage,failClock,promptUs,decodeUs)
 		==DataflowGenerationSequenceDecoderFailed && count==1 && output[0]==42
-		&& owner.runner.Retained() && service->Faulted() && stage==(2U<<16|0x8002U));
+		&& owner.runner.Retained() && service->Faulted()
+		&& stage==(2U<<16|DataflowGraphFailureStage(DataflowGraphStageCompletion,DataflowGraphCompletionAuditFault,7)));
 	SessionIO cleanup(claim);IntegratedRecoveryIO recovery(claim,*service,*serviceIO,cleanup);
 	recovery.previous=8;auto audit=std::make_unique<DataflowGraphFaultAudit>();
 	recovery.badCore=119;
 	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceRecoveryPending
 		&& service->Faulted() && owner.runner.Retained() && !cleanup.runDeletes && !recovery.acks);
 	assert(audit->ResetUnsettled());recovery.badCore=-1;recovery.audits=0;
+	serviceIO->failResume=true;
+	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceResumeFailed
+		&& owner.runner.Retained() && session->FaultClosePermitted(*audit));
+	const unsigned auditsAfterClose=recovery.audits,stopsAfterClose=serviceIO->stopCount;
+	serviceIO->failResume=false;
 	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceClosed
 		&& service->Closed() && !owner.runner.Retained() && cleanup.runDeletes==1
-		&& cleanup.candidateDeletes==1 && recovery.acks==120 && session->Faulted());
+		&& cleanup.candidateDeletes==1 && recovery.acks==120 && session->Faulted()
+		&& recovery.audits==auditsAfterClose && serviceIO->stopCount==stopsAfterClose);
 	delete live;
 	puts("PASS graph generation integration: warm requests, prompt/decode timing, retained fault; SIMULATED ONLY");
 	return 0;

@@ -141,6 +141,7 @@ int main() {
 	SessionIO bad(claim);bad.previous=2;bad.failAudit=7;
 	assert(session->Run(*failed,*retainedCandidate,2,44,true,3,*projection,bad,output,retired,stage)
 		==DataflowGraphSessionRetained && session->Faulted() && session->RetainedRun()==failed.get()
+		&& stage==DataflowGraphFailureStage(DataflowGraphStageCompletion,DataflowGraphCompletionAuditFault,7)
 		&& service->Faulted() && service->Close(*serviceIO)==DataflowServiceInvalidState
 		&& live==liveOwner.get() && live->ConvNextPosition(0)==2 && !retired && output.token==Vocabulary && !bad.acks);
 	GraphRecoveryIO recovery{claim};auto audit=std::make_unique<DataflowGraphFaultAudit>();

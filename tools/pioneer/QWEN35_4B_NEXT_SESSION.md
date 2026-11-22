@@ -8,7 +8,47 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Current checkpoint: tag0120 failed; recovery rewrite in progress
+## Current checkpoint: tag0153 graph qualification failed
+
+The first tag0153 hardware qualification on 2026-11-22 authenticated the
+pinned 4B model and installed the all-120-worker resident graph. Model load
+took `607.268323` s for `2740498432` resident bytes; authentication took
+`101.192867` s and tokenization took `13.030747` s. The first prompt graph
+failed after `0.902885` s with generation result `31`, stage `32770`
+(`0x8002`: graph session retained), zero output tokens and no decode time.
+This does not identify whether staging, publication, or completion failed.
+It is not a throughput result. The no-reboot graph recovery attempted to close
+the service but returned resume failure and then stop-audit failure; the
+wrapper retained the candidate and lock with `cold1 active_owner1` rather than
+restoring unsafely. Logs and the exact one-shot wrapper are in
+`benchmarks/qwen35-dataflow-tag0153-20261122/evidence/`. A single authorized
+OFF hold was sent after syncing, followed by one ON pulse and the pinned NVMe
+Fedora-to-Haiku handoff. The guarded recovery restored the stable driver, and
+an independent check reported driver55 generation2, `cold0 active_owner0`,
+the expected stable SHA-256 `041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`,
+and no recovery lock. The 4B and 27B files remain present at their recorded
+sizes; these size checks are not fresh full-content hashes.
+
+Only the Tenstorrent-style rewrite is in scope until complete. Diagnose the
+graph fault and the failed in-place recovery before another qualification;
+benchmark acceptance and assistant integration follow afterward.
+
+Tag0154 adds publication/completion/commit failure stages (including failed
+core), exposes service-close details on recovery responses, and retains the
+settled-graph proof across a failed close. After snapshots are restored, a
+retry repeats only the fleet resume audit if all starts were confirmed; an
+uncertain partial start remains retained. Fault-injection tests cover the
+retry, absence of repeated reset writes, and refusal to retry partial starts.
+The RV32IMF target/simulation suite, runtime recovery tests, and normal,
+qualification and non-loadable witness builds pass. This is not yet hardware
+proof. The qualification driver tag is `2026112100020154`, SHA-256
+`152edda1d9214b869eb74299010d1e973da91c6070e7f8f191a4cbb6f597c223`;
+the client SHA-256 is
+`21e63fed6cdcc05bc3b168d022042245ba3e6eae0c153aaaeb49ad9a23c2f564`.
+The checked worker stack envelope is `7632/8192`; the ioctl estimate is
+`13856/18432` including the helper allowance, not a whole-program proof.
+
+## Earlier checkpoint: tag0120 failure and recovery rewrite
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
 that rewrite is complete; benchmark acceptance and assistant integration

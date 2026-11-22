@@ -780,7 +780,8 @@ int main()
 	assert(resumeFailureOwner.Diagnostic().detail==DataflowServiceResumeResetMismatch);
 	resumeFailure.failResume=false;
 	assert(resumeFailureOwner.Close(resumeFailure)==DataflowServiceClosed);
-	assert(resumeFailure.resumeCount==2);
+	assert(resumeFailure.resumeCount==2 && resumeFailure.stopCount==1
+		&& resumeFailure.restoreCount==DataflowCoreCount);
 
 	std::puts("PASS Qwen35 resident owner preflights 120 cores, verifies image before launch, and restores state after clean or partial launch");
 	return 0;

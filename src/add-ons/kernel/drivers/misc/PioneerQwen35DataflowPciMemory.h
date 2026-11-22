@@ -165,6 +165,8 @@ template<class Raw>
 class PioneerQwen35DataflowPciMemory {
 	Raw& fRaw;
 	DataflowPciCoreSnapshot fSnapshots[PioneerQwen35::DataflowCoreCount]{};
+	bool fResumeStartAttempted=false;
+	bool fResumeFleetStarted=false;
 	static constexpr unsigned StopPollLimit=65536;
 
 	bool SelectMapped(unsigned core)
@@ -402,8 +404,12 @@ public:
 
 	void ReleaseCoreSnapshot(unsigned core)
 	{
-		if (core<PioneerQwen35::DataflowCoreCount)
+		if (core<PioneerQwen35::DataflowCoreCount) {
 			ReleaseCoreSnapshot(fSnapshots[core]);
+			bool any=false;
+			for (const auto& snapshot:fSnapshots) any |= snapshot.captured;
+			if (!any) fResumeStartAttempted=fResumeFleetStarted=false;
+		}
 	}
 
 	bool RestoreCoreState(unsigned core,const DataflowPciCoreSnapshot& snapshot)
@@ -585,16 +591,23 @@ public:
 		failedStage=0;
 		failedCore=PioneerQwen35::DataflowCoreCount;
 		failedDetail=0;
-		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-			failedStage=1;
-			failedCore=core;
-			if (!fSnapshots[core].captured
-				|| !VerifyCoreStateRestored(core,fSnapshots[core])) return false;
-		}
-		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-			failedStage=2;
-			failedCore=core;
-			if (fSnapshots[core].reset==0x46800 && !StartCore(core)) return false;
+		if (!fResumeFleetStarted) {
+			// A partial start is not safe to repeat. A failure in the final
+			// read-only fleet audit, however, can be audited again.
+			if (fResumeStartAttempted) return false;
+			for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+				failedStage=1;
+				failedCore=core;
+				if (!fSnapshots[core].captured
+					|| !VerifyCoreStateRestored(core,fSnapshots[core])) return false;
+			}
+			fResumeStartAttempted=true;
+			for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+				failedStage=2;
+				failedCore=core;
+				if (fSnapshots[core].reset==0x46800 && !StartCore(core)) return false;
+			}
+			fResumeFleetStarted=true;
 		}
 		// Let resumed dispatcher harts and their idle NoC state settle before
 		// the final all-core proof. In fleet mode Pause is a bounded 1 us spin.

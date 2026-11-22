@@ -14,7 +14,7 @@ checkpoint history on `codex/qwen35-4b-p100a`.
 Complete the device-program rewrite before benchmarking; integrate with the
 assistant only after the hardware generation and throughput gates pass.
 
-## Current status (2026-11-21)
+## Current status (2026-11-22)
 
 The active work remains the Tenstorrent-style device-program rewrite. It uses
 120 resident BRISC workers and Tensix matrix engines, with no CPU inference
@@ -22,10 +22,30 @@ or fallback. Pioneer boots from its existing NVMe: Fedora hands off to Haiku
 with kexec. The user confirmed SD cards are no longer used; do not use or
 recommend an SD-card workflow.
 
-On 2026-11-22, after the power supply was restored, the pinned Haiku SSH
-identity was reachable. This check did not touch the accelerator or verify
-current 27B process/driver-idle state; perform the full preflight before any
-card operation.
+Tag0153's first hardware qualification loaded the verified 4B model and
+installed the graph, but the first prompt graph failed with a retained
+session before any token. The no-reboot recovery reached restored-fleet resume
+and failed; a second close attempted the old stop audit after restoration.
+An authorized NVMe cold recovery restored stable driver55, idle and without a
+recovery lock. See [the run record](benchmarks/qwen35-dataflow-tag0153-20261122/RUN.md).
+
+The next rewrite adds graph phase/core failure codes, preserves an exact
+settled-graph proof across close retries, and retries only the final fleet
+audit after all restored workers have started. A partial start remains
+retained and is not replayed. Recovery responses now expose the service-close
+failure details. Host simulations and the RV32IMF target suite pass; this
+change has not yet been qualified on the card. The exact cause of tag0153's
+graph failure and the cause of its first resume failure remain unknown.
+Before another card operation, recheck that the 27B diagnostic has exited and
+the stable driver is idle.
+
+Tag0154's qualification driver SHA-256 is
+`152edda1d9214b869eb74299010d1e973da91c6070e7f8f191a4cbb6f597c223`
+and its standalone client SHA-256 is
+`21e63fed6cdcc05bc3b168d022042245ba3e6eae0c153aaaeb49ad9a23c2f564`.
+The normal and non-loadable graph/recovery witness builds also passed. The
+worker stack envelope is `7632/8192` and the graph ioctl envelope is
+`13856/18432` including the helper allowance; neither is a whole-program proof.
 
 Tag0147's offline fault-recovery work added a bounded graph settlement audit
 and a service transition that permits closing but never resumes inference on
