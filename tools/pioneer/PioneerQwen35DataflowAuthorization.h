@@ -243,6 +243,39 @@ public:
 	DataflowProjectionAuthority(const DataflowProjectionAuthority&)=delete;
 	DataflowProjectionAuthority& operator=(const DataflowProjectionAuthority&)=delete;
 
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	// A separate, non-loadable graph-planning witness may predict metadata
+	// transitions without asserting that any device work has completed. It
+	// must never replace or mutate the live authority with this candidate.
+	bool CloneForGraphPlanning(DataflowProjectionAuthority& candidate) const {
+		if (!fBound || fPending || &candidate==this || candidate.fBound || candidate.fPending)
+			return false;
+		candidate.fManifest=fManifest;candidate.fGraphWorkspace=fGraphWorkspace;
+		candidate.fRope=fRope;
+		for (unsigned n=0;n<2;n++) for (unsigned b=0;b<Banks;b++) candidate.fRoutes[n][b]=fRoutes[n][b];
+		for (unsigned i=0;i<ActivationBuffers;i++) candidate.fActivationRows[i]=fActivationRows[i];
+		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++) {
+			candidate.fGraphWorkspaceReady[i]=fGraphWorkspaceReady[i];
+			candidate.fGraphWorkspaceLayer[i]=fGraphWorkspaceLayer[i];
+			candidate.fGraphWorkspaceRole[i]=fGraphWorkspaceRole[i];
+		}
+		for (unsigned i=0;i<Layers;i++) {
+			candidate.fDenseKeyStored[i]=fDenseKeyStored[i];candidate.fDenseValueStored[i]=fDenseValueStored[i];
+			candidate.fDenseNextPosition[i]=fDenseNextPosition[i];
+			candidate.fConvNextPosition[i]=fConvNextPosition[i];candidate.fDeltaNextPosition[i]=fDeltaNextPosition[i];
+		}
+		candidate.fGraphResidualReady=fGraphResidualReady;candidate.fFinalNormReady=fFinalNormReady;
+		candidate.fFinalNormSlot=fFinalNormSlot;candidate.fVocabularyReady=fVocabularyReady;
+		candidate.fBound=true;return true;
+	}
+	bool PlanningRoutesMatch(const unsigned (&routes)[2][Banks]) const {
+		if (!fBound) return false;
+		for (unsigned n=0;n<2;n++) for (unsigned b=0;b<Banks;b++) if (fRoutes[n][b]!=routes[n][b]) return false;
+		return true;
+	}
+	Range PlanningRope() const { return fRope; }
+#endif
+
 	bool Bound() const { return fBound; }
 	bool Pending() const { return fPending; }
 	const DeviceLayout* Manifest() const { return fBound?&fManifest:nullptr; }

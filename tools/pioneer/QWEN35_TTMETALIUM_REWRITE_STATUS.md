@@ -204,6 +204,25 @@ The kernel must still authorize and protect the exact stream, bind fresh
 epochs, update dynamic fields efficiently, audit fleet completion and report
 faults. Nothing here establishes correctness or speed on Pioneer.
 
+Tag0132 adds a separate metadata-only stream recorder. It clones the checked
+model authority into an isolated planning candidate, runs the existing full
+decoder sequence, binds each program to all 120 cores, and emits encoded
+records to a write/readback/seal interface. The candidate is speculative and
+must not be promoted to live state without a full physical audit. A synthetic
+full-shape model test produces 548 steps for two positions and covers all nine
+invocation kinds, forged worker IDs, failed writes and failed begin/seal. It
+uses fake storage and performs no inference. The test caught a real stream
+format bug: RMS stores its core field at a different offset; validation now
+uses each invocation's declared offset. A separate RV64 kernel-shaped planner
+compile reports 3,488 bytes as its largest single frame, not a call-chain
+bound. Storage ownership, sealing, dynamic updates, full stack audit and the
+device authorization hook remain open; the recorder is not linked to either
+driver. Normal and non-loadable tag0132 drivers build successfully, with
+SHA-256 values
+`b082707b8dafdfc3e2e76bd2b99349d7d02a6bd4a7180114ee54ff71448aa1b4`
+and `3ffaf3a86e85d45aaa3a067f4d9f9ffc2a0d8e410c89b1e9ca2a65c9db60c313`.
+No new hardware measurement exists.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

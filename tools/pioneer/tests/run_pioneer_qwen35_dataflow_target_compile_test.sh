@@ -134,6 +134,16 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-o "$temporary/device-graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/device-graph-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_stream_recorder_test.cpp" \
+	-o "$temporary/stream-recorder-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/stream-recorder-test"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+	-ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE \
+	-I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_stream_recorder_kernel_probe.cpp" -o "$temporary/stream-recorder-kernel.o"
+awk -F '\t' 'NF==3 { if ($2+0>maximum) maximum=$2+0; if ($3!="static") bad=1; seen=1 }
+	END { if(!seen||bad) exit 1; print "stream_recorder_max_single_frame_bytes=" maximum }' "$temporary/stream-recorder-kernel.su"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined -DPIONEER_QWEN35_DEVICE_DISPATCH \
 	"$directory/pioneer_qwen35_dataflow_service_owner_test.cpp" -o "$temporary/device-barrier-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/device-barrier-owner-test"

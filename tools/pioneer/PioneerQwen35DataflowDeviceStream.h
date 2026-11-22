@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowAuthorization.h"
 #include "PioneerQwen35DataflowBlackholeIO.h"
+#include <stddef.h>
 
 namespace PioneerQwen35 {
 
@@ -94,6 +95,22 @@ inline unsigned DataflowStreamInvocationVersion(unsigned magic)
 	}
 }
 
+inline unsigned DataflowStreamCoreWord(unsigned magic)
+{
+	switch (magic) {
+	case DataflowProgramMagic:return offsetof(DataflowCoreInvocation,core)/sizeof(uint32_t);
+	case DataflowEmbeddingMagic:return offsetof(DataflowEmbeddingInvocation,core)/sizeof(uint32_t);
+	case DataflowRmsMagic:return offsetof(DataflowRmsInvocation,core)/sizeof(uint32_t);
+	case DataflowSiluMagic:return offsetof(DataflowSiluInvocation,core)/sizeof(uint32_t);
+	case DataflowResidualMagic:return offsetof(DataflowResidualInvocation,core)/sizeof(uint32_t);
+	case DataflowConvMagic:return offsetof(DataflowConvInvocation,core)/sizeof(uint32_t);
+	case DataflowDeltaMagic:return offsetof(DataflowDeltaInvocation,core)/sizeof(uint32_t);
+	case DataflowDenseAttentionMagic:return offsetof(DataflowDenseAttentionInvocation,core)/sizeof(uint32_t);
+	case DataflowArgmaxMagic:return offsetof(DataflowArgmaxInvocation,core)/sizeof(uint32_t);
+	default:return DataflowStreamPayloadWords;
+	}
+}
+
 // Detect accidental transfer corruption; this is not an authentication hash.
 inline uint32_t DataflowStreamChecksum(const uint32_t* words,unsigned count)
 {
@@ -139,7 +156,8 @@ inline bool DataflowStreamRecordStructureValid(const DataflowStreamRecord& r,
 		|| r.header[0]!=DataflowStreamRecordMagic || r.header[1]!=DataflowStreamVersion
 		|| r.header[2]!=epoch || r.header[3]!=step || r.header[4]!=core
 		|| !bytes || bytes!=r.header[6] || (bytes&3) || bytes>sizeof(r.payload)
-		|| r.payload[0]!=r.header[5] || r.payload[2]!=core
+		|| r.payload[0]!=r.header[5] || DataflowStreamCoreWord(r.header[5])>=bytes/4
+		|| r.payload[DataflowStreamCoreWord(r.header[5])]!=core
 		|| r.payload[1]!=DataflowStreamInvocationVersion(r.header[5])
 		|| DataflowStreamChecksum(r.payload,bytes/4)!=r.header[7]) return false;
 	for (unsigned i=8;i<DataflowStreamHeaderWords;i++) if (r.header[i]) return false;

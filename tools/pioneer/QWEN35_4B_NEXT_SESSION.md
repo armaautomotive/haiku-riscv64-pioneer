@@ -186,6 +186,31 @@ the non-loadable witness is
 `8d40af3f685cb64b584da5841cc8faa86cfb7c6f46b28d4b677f6b596e19d362`.
 Neither has run on the card; there is no new decode-rate measurement.
 
+Tag0132 adds a metadata-only stream recorder using the existing decoder
+sequence and a separate planning copy of the live model authority. It builds
+each model-bound program, binds and encodes each of the 120 invocations, and
+advances only the private candidate state. A sink interface demands verified
+writes and a seal; no real storage or sealing backend is connected. It must
+never promote the candidate to live state without a complete physical audit.
+Synthetic full-shape model tests record 548 steps across 120 cores for two
+successive positions, cover all nine command types, reject forged worker IDs
+even with a recomputed checksum, and exercise failed writes, begin and seal.
+They use a fake sink and do not execute model math. The tests exposed and fixed
+an RMS record bug: its core field is at a different offset from the other
+invocations. The RV64 kernel-shaped compile witness reports a largest single
+frame of 3,488 bytes; a full call-chain stack audit is still required before
+integrating it into the driver. The witness remains non-loadable, and its
+device authorization hook still denies all commands. The current encoder
+would regenerate about 135 MB per token, so efficient dynamic updates and
+non-reused barrier epochs remain required.
+
+Normal tag0132 driver SHA-256:
+`b082707b8dafdfc3e2e76bd2b99349d7d02a6bd4a7180114ee54ff71448aa1b4`;
+non-loadable dispatch witness:
+`3ffaf3a86e85d45aaa3a067f4d9f9ffc2a0d8e410c89b1e9ca2a65c9db60c313`.
+The recorder is a separate compile/simulation witness and is not connected to
+either driver. No tag0132 code has run on the card.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -245,7 +270,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0131. Since tag0121 it records final release of a
+The default build now targets dedicated tag0132. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
