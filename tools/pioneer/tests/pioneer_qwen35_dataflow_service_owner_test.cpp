@@ -51,6 +51,7 @@ struct MockDataflowIO {
 	bool roleStaged=false,roleArmed=false,roleRestored=false;
 	bool roleStarted[DataflowCoreCount]{};
 	bool failRoleStage=false,failRoleArm=false,failRoleRestore=false,failRoleVerify=false;
+	bool failRoleFinalize=false;
 	bool corruptPriorResidentOnBoot=false;
 	unsigned corruptRoleMailboxCore=UINT32_MAX;
 	unsigned roleStages=0,roleArms=0,roleStarts=0,roleStops=0,roleRestores=0,roleVerifies=0;
@@ -336,6 +337,7 @@ struct MockDataflowIO {
 		for (unsigned core=0;core<DataflowCoreCount;core++) if (!held[core] || !restored[core]) return false;
 		return roleRestored && !failRoleVerify;
 	}
+	bool SharedFinalizeBeforeResume() { return roleRestored && !failRoleFinalize; }
 #endif
 	bool AuthorizeProjection(const DataflowProjectionProgram& program) const
 	{

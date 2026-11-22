@@ -17,13 +17,18 @@ static std::vector<std::vector<uint32_t>> memory;
 static std::vector<bool> mapped;
 area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32_t addressMode,
     uint32_t flags,void** output) {
-    const unsigned i=maps++;
-    DataflowRolePhysicalWindow plan{};
-    assert(i<=DataflowRolePhysicalControl && DataflowRolePhysicalWindowPlan(i,plan));
-    assert(physical==BarStart+plan.offset && bytes==plan.bytes && addressMode==B_ANY_KERNEL_ADDRESS);
+    ++maps;
+    unsigned i=0; DataflowRolePhysicalWindow plan{};
+    for (;i<=DataflowRolePhysicalControl;i++) {
+        assert(DataflowRolePhysicalWindowPlan(i,plan));
+        if (physical==BarStart+plan.offset) break;
+    }
+    assert(i<=DataflowRolePhysicalControl && bytes==plan.bytes && addressMode==B_ANY_KERNEL_ADDRESS);
     assert((flags&B_KERNEL_READ_AREA) && (flags&B_KERNEL_WRITE_AREA) && (flags&B_UNCACHED_MEMORY));
     if (int(i)==failMap) return -1;
-    memory[i].assign(bytes/4,0); mapped[i]=true;
+    assert(!mapped[i]);
+    if (memory[i].empty()) memory[i].assign(bytes/4,0);
+    assert(memory[i].size()==bytes/4); mapped[i]=true;
     *output=int(i)==nullMap?nullptr:memory[i].data(); return int32_t(i);
 }
 status_t delete_area(area_id area) {
@@ -116,6 +121,21 @@ int main()
         nullMap=3;
         assert(!views.Open(BarStart,BarEnd,guard) && views.HasMappings());
         assert(views.Close() && !views.HasMappings() && unmaps==4);
+    }
+    {
+        Reset(); Guard guard; Platform platform; platform.guard=&guard;
+        DataflowRoleWritableViews<Platform> views(platform);
+        const uint32_t word=0xdeadbeefU;
+        assert(views.Open(BarStart,BarEnd,guard));
+        assert(views.WriteWords(3,DataflowRolePhysicalExtraCode,0,&word,4,guard));
+        failUnmap=2; assert(!views.Close() && views.HasMappings() && !views.Opened());
+        guard.pinned=false; assert(!views.ReopenForRecovery(guard)); guard.pinned=true;
+        failMap=4; assert(!views.ReopenForRecovery(guard)); failMap=-1;
+        nullMap=5; assert(!views.ReopenForRecovery(guard)); nullMap=-1;
+        assert(views.ReopenForRecovery(guard) && views.Opened());
+        uint32_t value=0;
+        assert(views.Read(3,DataflowRolePhysicalExtraCode,0,value,guard) && value==word);
+        assert(views.Close() && !views.HasMappings());
     }
     std::puts("PASS scoped writable role views, reset-mask restrictions and cleanup faults; SIMULATED ONLY");
 }

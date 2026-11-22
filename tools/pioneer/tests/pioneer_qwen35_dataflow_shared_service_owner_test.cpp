@@ -83,6 +83,16 @@ int main()
         auto io=std::make_unique<MockDataflowIO>();
         auto owner=std::make_unique<DataflowServiceOwner>();
         assert(owner->Install(image,*io)==DataflowServiceComplete);
+        io->failRoleFinalize=true;
+        assert(owner->Close(*io)==DataflowServiceRestoreFailed && owner->Faulted());
+        assert(!io->resumeCount);
+        io->failRoleFinalize=false;
+        assert(owner->Close(*io)==DataflowServiceClosed && io->resumeCount==1);
+    }
+    {
+        auto io=std::make_unique<MockDataflowIO>();
+        auto owner=std::make_unique<DataflowServiceOwner>();
+        assert(owner->Install(image,*io)==DataflowServiceComplete);
         io->failRoleVerify=true;
         assert(owner->Close(*io)==DataflowServiceRestoreFailed && owner->Faulted());
         assert(io->roleVerifies==1 && !io->resumeCount);

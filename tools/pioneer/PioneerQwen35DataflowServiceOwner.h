@@ -701,6 +701,8 @@ public:
 			for (unsigned core=0;core<DataflowCoreCount;core++)
 				if (fSaved[core] && !io.VerifyCoreStateRestored(core))
 					return DataflowServiceRestoreFailed;
+			if (fSharedAttempted && !io.SharedFinalizeBeforeResume())
+				return DataflowServiceRestoreFailed;
 #endif
 			fCloseRestored=true;
 		}

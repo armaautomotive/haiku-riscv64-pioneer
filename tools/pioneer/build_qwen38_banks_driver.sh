@@ -419,6 +419,12 @@ case "${PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY:-0}" in
     extra="$extra -DPIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY";;
  *) exit 2;;
 esac
+case "${PIONEER_QWEN35_SHARED_ROLE_OWNER_COMPILE_ONLY:-0}" in
+ 0) ;;
+ 1) [ "$variant:${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY:-0}:${PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}" = 60:1:1:1:1:0 ] || exit 2
+    extra="$extra -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS";;
+ *) exit 2;;
+esac
 if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
  case "$variant" in
   50) [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026111700010225 ] && [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ] || exit 2;;
@@ -723,6 +729,11 @@ if [ "$variant" = 60 ]; then
 	dataflow_image="$output/qwen35-dataflow-service-image"
 	sh "$project/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$dataflow_image"
 	set -- "$@" -I"$dataflow_image"
+	if [ "${PIONEER_QWEN35_SHARED_ROLE_OWNER_COMPILE_ONLY:-0}" = 1 ]; then
+		role_image="$output/qwen35-shared-role-images"
+		sh "$project/tools/pioneer/build_qwen35_shared_role_images.sh" "$build" "$role_image"
+		set -- "$@" -I"$role_image"
+	fi
 fi
 if [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ]; then
  [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 50:1:2026111700010225 ] || exit 2

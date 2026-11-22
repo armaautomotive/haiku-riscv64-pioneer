@@ -25,6 +25,7 @@ public:
     }
     DataflowRoleWritableViews(const DataflowRoleWritableViews&)=delete;
     DataflowRoleWritableViews& operator=(const DataflowRoleWritableViews&)=delete;
+    bool Opened() const { return fOpen; }
     bool HasMappings() const { for (auto area:fArea) if (area>=0) return true; return false; }
     template<class Guard> bool Open(uint64_t start,uint64_t end,Guard& guard) {
         if (fAttempted || fOpen || HasMappings() || end<start || end-start==UINT64_MAX
@@ -32,15 +33,39 @@ public:
         uint64_t addresses[Count]{}; unsigned lengths[Count]{};
         for (unsigned i=0;i<Count;i++)
             if (!DataflowRolePhysicalAddress(start,end-start+1,i,addresses[i],lengths[i])) return false;
-        fAttempted=true;
+        fAttempted=true; fBarStart=start; fBarEnd=end;
         for (unsigned i=0;i<Count;i++) {
             int32_t area=-1; volatile uint32_t* view=nullptr;
             const bool okay=fPlatform.MapReadWrite(addresses[i],lengths[i],area,view);
-            if (area>=0) { fArea[i]=area; fView[i]=view; fBytes[i]=lengths[i]; }
+            if (area>=0) { fArea[i]=area; fView[i]=okay?view:nullptr; fBytes[i]=lengths[i]; }
             if (!okay || area<0 || !view) return false;
         }
         if (!guard.ProvePinnedBar(start,end)) return false;
-        fBarStart=start; fBarEnd=end; fOpen=true; return true;
+        fOpen=true; return true;
+    }
+    // A partially failed Close can leave some areas mapped and others gone.
+    // Re-map only the missing fixed windows so a later close transaction can
+    // re-audit snapshots before trying cleanup again. The caller still owns
+    // the session and must keep every core held throughout this operation.
+    template<class Guard> bool ReopenForRecovery(Guard& guard) {
+        if (!fAttempted || fOpen || !HasMappings() || fBarEnd<fBarStart
+            || fBarEnd-fBarStart==UINT64_MAX || !guard.ProvePinnedBar(fBarStart,fBarEnd)) return false;
+        const uint64_t bytes=fBarEnd-fBarStart+1;
+        for (unsigned i=0;i<Count;i++) {
+            if (fArea[i]>=0 && !fView[i]) {
+                if (!fPlatform.Unmap(fArea[i])) return false;
+                fArea[i]=-1; fBytes[i]=0;
+            }
+            if (fArea[i]>=0) continue;
+            uint64_t physical=0; unsigned length=0;
+            if (!DataflowRolePhysicalAddress(fBarStart,bytes,i,physical,length)) return false;
+            int32_t area=-1; volatile uint32_t* view=nullptr;
+            const bool okay=fPlatform.MapReadWrite(physical,length,area,view);
+            if (area>=0) { fArea[i]=area; fView[i]=okay?view:nullptr; fBytes[i]=length; }
+            if (!okay || area<0 || !view) return false;
+        }
+        if (!guard.ProvePinnedBar(fBarStart,fBarEnd)) return false;
+        fOpen=true; return true;
     }
     template<class Guard> bool Read(unsigned core,unsigned which,unsigned offset,uint32_t& output,Guard& guard) {
         if (!fOpen || core>=DataflowBarrierWorkers || which>=Count || fArea[which]<0
@@ -84,7 +109,7 @@ public:
             && guard.ProveControlWriteAllowed(core,expected,desired) && Route(core,guard);
     }
     bool Close() {
-        fOpen=false; fBarStart=fBarEnd=0;
+        fOpen=false;
         bool okay=true;
         for (unsigned n=Count;n>0;n--) {
             const unsigned i=n-1;
@@ -92,7 +117,8 @@ public:
             if (!fPlatform.Unmap(fArea[i])) { okay=false; continue; }
             fArea[i]=-1; fView[i]=nullptr; fBytes[i]=0;
         }
-        return okay && !HasMappings();
+        if (!okay || HasMappings()) return false;
+        fBarStart=fBarEnd=0; return true;
     }
 };
 }

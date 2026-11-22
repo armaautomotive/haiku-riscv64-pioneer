@@ -29,6 +29,10 @@ struct PioneerStoreContext;
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 class PioneerQwen35RoleBorrowedScopeWitness;
 #endif
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+class PioneerQwen35SharedRoleBinding;
+namespace PioneerQwen35 { struct DataflowWorkerSnapshot; }
+#endif
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
 struct FakeService { bool ready=true; bool Ready() const { return ready; } };
 struct FakeGraph { bool retained=false; };
@@ -42,6 +46,18 @@ struct PioneerSessionIO {
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     bool SelectRuntimeCore(unsigned core) { if (core>=DataflowBarrierWorkers) return false; runtimeCore=core; return true; }
     bool MapQ38Panel() const { return mapping; }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    bool StopAndAuditAll(unsigned& stage,unsigned& core) { stage=0; core=DataflowBarrierWorkers; return true; }
+    bool SharedCaptureAndStageHeld();
+    bool SharedArmAndBeginRelease();
+    bool SharedFleetHeldAndQuiescent();
+    bool SharedStartCore(unsigned);
+    bool SharedCoreReady(unsigned,const DataflowWorkerSnapshot&);
+    bool SharedStopAndHoldAll(unsigned&,unsigned&);
+    bool SharedRestoreRolesHeld();
+    bool SharedVerifyRolesAfterResidentRestore();
+    bool SharedFinalizeBeforeResume();
+#endif
     bool DataflowPanelMappingStable() const { return mapping; }
     uint32_t DramTlbRead(unsigned slot,unsigned word) {
         const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
@@ -61,6 +77,9 @@ struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
 struct PioneerStoreContext {
     PioneerSessionIO io; bool bankStorageOnly=true; uint64 bytes=PioneerResidentBanks::Total;
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    PioneerQwen35SharedRoleBinding* qwen35SharedRoleBinding=nullptr;
+#endif
     PioneerStoreContext() { io.qwen35DataflowContext=this; }
 };
 static bool PioneerQ35GraphOwnerRetained(const FakeGraph* graph) { return graph && graph->retained; }
@@ -108,6 +127,9 @@ status_t delete_area(area_id area) {
     gMapped[area]=false; return B_OK;
 }
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static void (*gBorrowedScopeHook)(PioneerSessionIO&)=nullptr;
+#endif
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 // Mirrors the real control path: create the private scope only after the
 // session lock has been acquired and detach before releasing that lock.
@@ -135,6 +157,9 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
             ++sReloadGeneration; assert(!scope.ProveExclusiveRewrite(context->io)); --sReloadGeneration;
             gThread=6; assert(!scope.ProveExclusiveRewrite(context->io)); gThread=5;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+            if (mode==5 && gBorrowedScopeHook) gBorrowedScopeHook(context->io);
+#endif
         }
         if (mode==3) {
             gThread=6; assert(!scope.Detach()); gThread=5;

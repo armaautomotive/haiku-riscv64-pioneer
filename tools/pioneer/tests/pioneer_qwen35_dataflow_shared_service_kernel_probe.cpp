@@ -27,6 +27,7 @@ struct SharedServiceKernelProbeIO {
     bool RestoreCoreState(unsigned) { return okay; }
     bool VerifyCoreStateRestored(unsigned) { return okay; }
     bool SharedVerifyRolesAfterResidentRestore() { return okay; }
+    bool SharedFinalizeBeforeResume() { return okay; }
     bool ResumeRestoredFleet(unsigned&,unsigned&,unsigned&) { return okay; }
 };
 DataflowServiceResult PioneerSharedServiceKernelProbe(DataflowServiceOwner& owner,

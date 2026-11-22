@@ -20,5 +20,6 @@ bool PioneerWritableRoleKernelProbe(
     if (action==2) return views.WriteWords(core,which,offset,words,bytes,guard);
     if (action==3 && words && bytes>=8) return views.WriteResetDisable(core,words[0],words[1],guard);
     if (action==4) return views.Close();
+    if (action==5) return views.ReopenForRecovery(guard);
     return false;
 }

@@ -178,6 +178,9 @@
 #include "PioneerQwen35DataflowModelProtocol.h"
 #include "PioneerQwen35DataflowPciMemory.h"
 #include "PioneerQwen35DataflowServiceImage.h"
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#include "PioneerQwen35SharedRoleImages.h"
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowBoundWorkspace.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowStreamPageSink.h"
@@ -3370,6 +3373,17 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes);
 	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes);
 	bool StartCore(unsigned core);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool SharedCaptureAndStageHeld();
+	bool SharedArmAndBeginRelease();
+	bool SharedFleetHeldAndQuiescent();
+	bool SharedStartCore(unsigned core);
+	bool SharedCoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
+	bool SharedStopAndHoldAll(unsigned& failedStage,unsigned& failedCore);
+	bool SharedRestoreRolesHeld();
+	bool SharedVerifyRolesAfterResidentRestore();
+	bool SharedFinalizeBeforeResume();
+#endif
 	bool WaitWorkerReady(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
@@ -3834,6 +3848,11 @@ class PioneerQ35GraphOwner;
 static void PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner);
 static bool PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner);
 #endif
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+class PioneerQwen35SharedRoleBinding;
+static PioneerQwen35SharedRoleBinding* PioneerQ35CreateSharedRoleBinding(PioneerStoreContext& context);
+static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* binding);
+#endif
 struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
@@ -3845,6 +3864,9 @@ struct PioneerStoreContext {
 #endif
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	PioneerQwen35SharedRoleBinding* qwen35SharedRoleBinding=NULL;
+#endif
 	PioneerQwen35::DataflowProjectionAuthority* qwen35DataflowAuthority=NULL;
 	PioneerQwen35::DataflowProjectionProgram* qwen35DataflowProgramScratch=NULL;
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -4022,6 +4044,9 @@ struct PioneerStoreContext {
 	}
 	~PioneerStoreContext() {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) sColdRecoveryRequired=true;
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		PioneerQ35GraphOwnerDestroy(qwen35GraphOwner);
 #endif
@@ -4273,6 +4298,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	PioneerQwen35::DataflowServiceResult InstallDataflowRewrite() {
 		if (qwen35DataflowMemory || qwen35DataflowService
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			|| qwen35SharedRoleBinding
+#endif
 			|| !qwen35DataflowAuthority || !qwen35DataflowProgramScratch
 			|| !qwen35DataflowRoutesAudited)
 			return PioneerQwen35::DataflowServiceInvalidState;
@@ -4284,6 +4312,14 @@ struct PioneerStoreContext {
 			qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
 			return (PioneerQwen35::DataflowServiceResult)qwen35DataflowLastResult;
 		}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*this);
+		if (!qwen35SharedRoleBinding) {
+			delete qwen35DataflowService;qwen35DataflowService=NULL;
+			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
+			return PioneerQwen35::DataflowServiceInvalidState;
+		}
+#endif
 		const PioneerQwen35::DataflowServiceImageView image={
 			PioneerQwen35::DataflowServiceImageBootWord,
 			PioneerQwen35::DataflowServiceTextWords,
@@ -4297,6 +4333,10 @@ struct PioneerStoreContext {
 		};
 		const auto result=qwen35DataflowService->Install(image,io);
 		if (!qwen35DataflowService->Started()) {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) sColdRecoveryRequired=true;
+			qwen35SharedRoleBinding=NULL;
+#endif
 			delete qwen35DataflowService;qwen35DataflowService=NULL;
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 		}
@@ -4308,6 +4348,14 @@ struct PioneerStoreContext {
 		if (qwen35DataflowService->Closed()) return PioneerQwen35::DataflowServiceClosed;
 		const auto result=qwen35DataflowService->Close(io);
 		if (qwen35DataflowService->Closed()) {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) {
+				sColdRecoveryRequired=true;
+				qwen35DataflowLastResult=PioneerQwen35::DataflowServiceRestoreFailed;
+				return PioneerQwen35::DataflowServiceRestoreFailed;
+			}
+			qwen35SharedRoleBinding=NULL;
+#endif
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 		}
 		qwen35DataflowLastResult=result;
@@ -4337,6 +4385,9 @@ struct PioneerStoreContext {
 #include "PioneerQwen35DataflowDriverBinding.inc"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #include "PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#endif
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#include "PioneerQwen35DataflowSharedRoleBinding.inc"
 #endif
 #endif
 

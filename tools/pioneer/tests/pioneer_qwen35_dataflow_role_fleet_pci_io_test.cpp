@@ -67,7 +67,9 @@ int main()
     scope.write=false;
     assert(!io.Write(7,DataflowRoleExtraL1Address,words,4)); scope.write=true;
     scope.held=false;
-    assert(!io.AllRolesHeld(7) && !io.Write(7,DataflowRoleExtraL1Address,words,4)); scope.held=true;
+    const unsigned selected=context.io.runtimeCore;
+    assert(!io.AllRolesHeld(8) && context.io.runtimeCore==selected);
+    assert(!io.Write(7,DataflowRoleExtraL1Address,words,4)); scope.held=true;
     context.io.mapping=false;
     assert(!io.Read(7,DataflowRoleExtraL1Address,out,4)); context.io.mapping=true;
     scope.routing=false; assert(!io.DefaultBootRouting(7)); scope.routing=true;

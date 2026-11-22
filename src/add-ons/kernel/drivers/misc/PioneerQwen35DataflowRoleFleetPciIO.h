@@ -20,6 +20,9 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     PioneerQwen35RoleRouteGuard<IO,Scope> fGuard;
     bool Select(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
+            // This prerequisite is independent of the selected TLB. Do not
+            // reprogram any route if the whole-fleet proof is unavailable.
+            && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
             && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
             && fGuard.ProveSelectedRoute(core);
     }

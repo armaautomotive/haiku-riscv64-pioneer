@@ -265,6 +265,8 @@ def main():
                         help='compile incomplete device dispatch into a non-loadable driver')
     parser.add_argument('--compile-role-write-prototype', action='store_true',
                         help='compile fail-closed role write mappings into a non-loadable driver')
+    parser.add_argument('--compile-shared-role-owner-prototype', action='store_true',
+                        help='compile the fail-closed shared-role owner into a non-loadable driver')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
                         help='build the dedicated graph qualification driver without ASIC reset')
     args = parser.parse_args()
@@ -272,6 +274,8 @@ def main():
         parser.error('graph qualification cannot enable a recovery compile witness')
     if args.compile_role_write_prototype and not args.compile_device_dispatch_prototype:
         parser.error('role write witness requires the non-loadable device dispatch prototype')
+    if args.compile_shared_role_owner_prototype and not args.compile_role_write_prototype:
+        parser.error('shared-role owner witness requires the non-loadable role write prototype')
 
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
@@ -291,6 +295,9 @@ def main():
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY'] = '1'
     if args.compile_role_write_prototype:
         driver_env['PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY'] = '1'
+    if args.compile_shared_role_owner_prototype:
+        driver_env['PIONEER_QWEN35_SHARED_ROLE_OWNER_COMPILE_ONLY'] = '1'
+        driver_env['PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
