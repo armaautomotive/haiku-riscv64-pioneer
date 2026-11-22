@@ -9,7 +9,9 @@
 namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowGraphTraceAddress=0xab340,
-	DataflowGraphTraceSlots=8
+	DataflowGraphTraceSlots=12,
+	DataflowGraphProjectionTraceFirst=8,
+	DataflowGraphTracePending=0xffffffffU
 };
 struct DataflowGraphTraceRecord {
 	uint32_t sequence,first,last,magnitudeOr;
@@ -21,7 +23,7 @@ static_assert(DataflowGraphTraceAddress>=DataflowGraphOperationProgressAddress+4
 
 inline unsigned DataflowGraphTraceStep(unsigned slot) {
 	const unsigned steps[DataflowGraphTraceSlots]={0,2,3,4,7,9,
-		DataflowGraphPromptSteps,DataflowGraphPromptSteps+1};
+		DataflowGraphPromptSteps,DataflowGraphPromptSteps+1,3,3,3,3};
 	return slot<DataflowGraphTraceSlots?steps[slot]:DataflowGraphDecodeSteps;
 }
 
@@ -38,6 +40,22 @@ inline DataflowGraphTraceRecord DataflowGraphTraceSample(unsigned sequence,
 		result.magnitudeOr|=value&0x7fffffffU;
 	}
 	return result;
+}
+// A projection sample becomes visible only when its graph step has completed.
+// Pending records cannot accidentally pass the sequence validation.
+inline void DataflowGraphTracePendingSample(volatile uint32_t* record,
+	const volatile uint32_t* page) {
+	const auto sample=DataflowGraphTraceSample(1,page);
+	DataflowStoreRelease(record[0],0);
+	DataflowStoreRelease(record[1],sample.first);
+	DataflowStoreRelease(record[2],sample.last);
+	DataflowStoreRelease(record[3],sample.magnitudeOr);
+	DataflowStoreRelease(record[0],DataflowGraphTracePending);
+}
+inline void DataflowGraphTracePublishPending(volatile uint32_t* record,
+	unsigned sequence) {
+	if (sequence && DataflowLoadAcquire(record[0])==DataflowGraphTracePending)
+		DataflowStoreRelease(record[0],sequence);
 }
 inline bool DataflowGraphTraceValid(const DataflowGraphTraceRecord& record,
 	unsigned slot,unsigned lastSequence) {

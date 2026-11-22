@@ -1,3 +1,5 @@
+> **Tag0163 candidate:** restored qualified Tensix source-window initialization and destination clear, and added bounded core0 first-projection samples for packed activation, scale, dot, and coefficient. Candidate is not yet hardware-tested; see `QWEN35_4B_NEXT_SESSION.md` for exact artifact hashes.
+
 > **Tag0162 hardware trace:** token0 embedding samples match the independently decoded GGUF; layer0 and final RMS samples are nonzero, while sampled first QKV, gate, and final output projection pages are all zero. Output remains incorrect; unload was clean and stable driver55 generation6 is idle. See `benchmarks/qwen35-dataflow-tag0162-20261122/RUN.md`. Continue only the rewrite and investigate the projection path.
 
 # Qwen3.5 Tenstorrent device-program rewrite
@@ -10,7 +12,7 @@ release proof. An independent Q6_K decode of token0 from a hash-matched GGUF
 prefix gives rows16/31 as `0xbd2f21c0`/`0x3cb4c800`; these apply to the trace
 only when its last graph input is token0. Trace, protocol, PCI range and full
 target tests pass, as do normal, trial and non-loadable witness builds. No
-tag0162 hardware result exists yet.
+tag0162 hardware result existed at the time of that entry.
 
 
 Tag0161 passed the former convolution stall and completed one graph run, but

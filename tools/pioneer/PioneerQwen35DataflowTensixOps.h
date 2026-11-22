@@ -7,7 +7,11 @@
 #include "PioneerQwen35DataflowAffine.h"
 #include "PioneerQwen35DataflowKernels.h"
 #include "PioneerQwen35DataflowVectorUnpack.h"
+#include "PioneerQwen35DataflowTensixInit.h"
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#include "PioneerQwen35DataflowGraphTrace.h"
+#endif
 
 namespace PioneerQwen35 {
 
@@ -61,7 +65,7 @@ class DataflowBlackholeTensixOps {
 	enum : unsigned {
 		TensixDstInitSource=0xa0000,
 		TensixDstInitSourceBytes=0x400,
-		TensixActivationPanel=0x70920,
+		TensixActivationPanel=DataflowTensixSourceBTile,
 		TensixDotReadback=0xffbd8800,
 		TensixOutputReadback=0xffbd9b00
 	};
@@ -98,6 +102,12 @@ class DataflowBlackholeTensixOps {
 			fEmitter.Config(indices[i],values[i]);
 		fEmitter.Op(0x5e23fc00); fEmitter.Op(0x5e41fc00);
 		fEmitter.Drain();
+		DataflowTensixInitializeSourceWindows(Words(DataflowTensixSourceAHeader),
+			Words(DataflowTensixSourceBHeader),
+			Words(TensixActivationPanel));
+		Fence();
+		// Match the qualified startup state before defining the Dst rows.
+		fEmitter.Op(0x10180000); fEmitter.Drain();
 		return fEmitter.Good();
 	}
 
@@ -114,6 +124,21 @@ class DataflowBlackholeTensixOps {
 		PioneerQ38VectorDstInit(fEmitter,false,true,true);
 		return fEmitter.Good();
 	}
+
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	bool TraceFirstProjection(unsigned block,unsigned panel) const
+	{
+		const auto* progress=Words(DataflowGraphProgressAddress);
+		return fProgram && fProgram->core==0 && !block && !panel
+			&& DataflowLoadAcquire(*progress)==DataflowGraphProgressWord(3,DataflowGraphProgressExecute);
+	}
+	void TraceProjection(unsigned slot,const volatile uint32_t* values) const
+	{
+		auto* record=Words(DataflowGraphTraceAddress
+			+slot*sizeof(DataflowGraphTraceRecord));
+		DataflowGraphTracePendingSample(record,values);
+	}
+#endif
 
 	bool MatrixPanel()
 	{
@@ -218,10 +243,21 @@ public:
 				return false;
 			uint32_t scale=0; int sum=0;
 			if (!LoadActivationPanel(type,block,panel,input,scale,sum)) return false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			const bool trace=TraceFirstProjection(block,panel);
+			if (trace) {
+				TraceProjection(8,input.operand);
+				TraceProjection(9,input.scale);
+				TraceProjection(11,Words(DataflowAffineCoefficientAddress));
+			}
+#endif
 			if (!PioneerQwen35DataflowVectorUnpack(fEmitter,type,panel,
 				unsigned(weightAddress)) || !fEmitter.Good()) return false;
 			if (!MatrixPanel()) return false;
 			volatile uint32_t* dots=Words(TensixDotReadback);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			if (trace) TraceProjection(10,dots);
+#endif
 			for (unsigned row=0;row<16;row++) {
 				const int32_t dot=int32_t(dots[row]);
 				if (dot<-262144 || dot>262144) return false;

@@ -36,6 +36,14 @@ struct GraphWitnessExecution {
 			PioneerQwen35::DataflowGraphOperationProgressAddress));
 		PioneerQwen35::DataflowStoreRelease(operation,0);
 		index=step;Mark(PioneerQwen35::DataflowGraphProgressFetch);
+		if (run.core==0 && step==3) {
+			using namespace PioneerQwen35;
+			for (unsigned slot=DataflowGraphProjectionTraceFirst;slot<DataflowGraphTraceSlots;slot++) {
+				auto* trace=reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(
+					DataflowGraphTraceAddress+slot*sizeof(DataflowGraphTraceRecord)));
+				DataflowStoreRelease(trace[0],0);
+			}
+		}
 		return PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token,&fetchStage,&fetchNoC);
 	}
 	bool Authorize(unsigned step) {
@@ -50,16 +58,19 @@ struct GraphWitnessExecution {
 			using namespace PioneerQwen35;
 			for (unsigned slot=0;slot<DataflowGraphTraceSlots;slot++) {
 				if (DataflowGraphTraceStep(slot)!=index) continue;
-				const auto* page=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowOutputBufferAddress));
-				const auto sample=DataflowGraphTraceSample(sequence,page);
 				auto* trace=reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(
 					DataflowGraphTraceAddress+slot*sizeof(DataflowGraphTraceRecord)));
+				if (slot>=DataflowGraphProjectionTraceFirst) {
+					DataflowGraphTracePublishPending(trace,sequence);
+					continue;
+				}
+				const auto* page=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowOutputBufferAddress));
+				const auto sample=DataflowGraphTraceSample(sequence,page);
 				DataflowStoreRelease(trace[0],0);
 				DataflowStoreRelease(trace[1],sample.first);
 				DataflowStoreRelease(trace[2],sample.last);
 				DataflowStoreRelease(trace[3],sample.magnitudeOr);
 				DataflowStoreRelease(trace[0],sample.sequence);
-				break;
 			}
 		}
 		if (result) Mark(PioneerQwen35::DataflowGraphProgressBarrier);
