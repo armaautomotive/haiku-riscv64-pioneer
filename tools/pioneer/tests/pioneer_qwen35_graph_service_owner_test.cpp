@@ -16,6 +16,17 @@ struct ModelCommit {
 	}
 };
 
+struct CloseAuditIO {
+	unsigned previous;
+	bool FenceGraphHostWrites() { return true; }
+	void Pause() {}
+	bool ReadWorkerSnapshot(unsigned,DataflowWorkerSnapshot& s) {
+		s={previous,previous,previous,DataflowWorkerReady,0,0,0,0};return true;
+	}
+	bool AuditGraphRecoveryCore(unsigned,const DataflowWorkerSnapshot&) { return true; }
+	bool Acknowledge(unsigned,unsigned) { assert(false);return false; }
+};
+
 int main() {
 	(void)&q35_service_fixture_main;(void)&q35_publisher_fixture_main;
 	uint32_t code[96]{},dispatch[80]{};
@@ -86,6 +97,15 @@ int main() {
 		==DataflowGraphPublishStagingFault && !partialService->CancelGraphBeforePublication(partialPublisher));
 	partialService->RetainFaultedGraph();
 	assert(partialService->Faulted() && partialService->Close(*partialIO)==DataflowServiceInvalidState);
+	DataflowGraphFaultAudit closeAudit,emptyAudit;
+	assert(!partialService->PermitFaultedGraphClose(partialPublisher,emptyAudit));
+	CloseAuditIO closeAuditIO{0};
+	assert(closeAudit.Settle(partialPublisher,3,closeAuditIO)==DataflowGraphFaultAuditSettled);
+	assert(!partialService->PermitFaultedGraphClose(publisher,closeAudit));
+	assert(partialService->PermitFaultedGraphClose(partialPublisher,closeAudit));
+	assert(partialService->Faulted() && !partialService->Ready()
+		&& !partialService->BeginGraph(refused,trigger));
+	assert(partialService->Close(*partialIO)==DataflowServiceClosed && partialService->Closed());
 	puts("PASS graph service lifecycle: exclusive execution, audited commit, sequence adoption and fault retention; SIMULATED ONLY");
 	return 0;
 }

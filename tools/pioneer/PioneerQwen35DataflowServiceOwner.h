@@ -7,6 +7,7 @@
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "PioneerQwen35DataflowBarrierSetup.h"
 #include "PioneerQwen35DataflowGraphCompletion.h"
+#include "PioneerQwen35DataflowGraphFaultAudit.h"
 #endif
 #include <stddef.h>
 #include <string.h>
@@ -129,7 +130,7 @@ struct DataflowServiceDiagnostic {
 class DataflowServiceOwner {
 	enum Phase { PhaseEmpty, PhaseInstalling, PhaseReady, PhaseFaulted, PhaseClosed
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-		, PhaseGraphRunning, PhaseGraphFaulted
+		, PhaseGraphRunning, PhaseGraphFaulted, PhaseGraphClosing
 #endif
 	};
 	Phase fPhase=PhaseEmpty;
@@ -197,7 +198,7 @@ public:
 	bool Ready() const { return fPhase==PhaseReady; }
 	bool Faulted() const { return fPhase==PhaseFaulted
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-		|| fPhase==PhaseGraphFaulted
+		|| fPhase==PhaseGraphFaulted || fPhase==PhaseGraphClosing
 #endif
 		; }
 	bool Closed() const { return fPhase==PhaseClosed; }
@@ -230,6 +231,15 @@ public:
 	}
 	void RetainFaultedGraph() {
 		if (fPhase==PhaseGraphRunning || fPhase==PhaseReady) fPhase=PhaseGraphFaulted;
+	}
+	// This transition permits close only. It never makes a faulted model ready
+	// for inference, and only accepts proof for this service's retained run.
+	bool PermitFaultedGraphClose(const DataflowGraphPublisher& publisher,
+		const DataflowGraphFaultAudit& audit) {
+		if (fPhase!=PhaseGraphFaulted || fGraphPublisher!=&publisher
+			|| publisher.PreviousSequence()!=fGraphPrevious
+			|| publisher.TriggerSequence()!=fGraphTrigger || !audit.SettledFor(publisher)) return false;
+		fPhase=PhaseGraphClosing;return true;
 	}
 	template<class IO>
 	bool CommitGraph(const DataflowGraphPublisher& publisher,const DataflowGraphCompletion& completion,IO& io) {
@@ -516,7 +526,11 @@ public:
 	DataflowServiceResult Close(IO& io)
 	{
 		if (fPhase==PhaseClosed) return DataflowServiceClosed;
-		if (fPhase!=PhaseReady && fPhase!=PhaseFaulted && fPhase!=PhaseInstalling)
+		if (fPhase!=PhaseReady && fPhase!=PhaseFaulted && fPhase!=PhaseInstalling
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			&& fPhase!=PhaseGraphClosing
+#endif
+			)
 			return DataflowServiceInvalidState;
 		fPhase=PhaseFaulted;
 		unsigned auditStage=0,auditCore=DataflowCoreCount;

@@ -22,6 +22,25 @@ or fallback. Pioneer boots from its existing NVMe: Fedora hands off to Haiku
 with kexec. The user confirmed SD cards are no longer used; do not use or
 recommend an SD-card workflow.
 
+On 2026-11-22, after the power supply was restored, the pinned Haiku SSH
+identity was reachable. This check did not touch the accelerator or verify
+current 27B process/driver-idle state; perform the full preflight before any
+card operation.
+
+Tag0147's offline fault-recovery work adds a bounded graph settlement audit
+and a service transition that permits closing but never resumes inference on
+the faulted model. A successful audit requires a host-write fence, stable
+receipts and backend proofs for both NoCs, queues, worker image, routes, and
+graph peer/fetch traffic for all 120 cores before acknowledgements. The
+fixture tests failure retention and partial acknowledgements in simulation.
+The backend, driver ioctl integration, restored-fleet release and hardware
+qualification remain open, so this does not yet provide recovery without
+reboot. The target suite and both Haiku/RISC-V builds pass; the normal
+tag0147 driver SHA-256 is
+`48ba20fbd4f3118cf1d8a099f37bad8d505a61e3e45eadf3d2dfb5bed337e7ba`,
+and the non-loadable graph witness is
+`24eca47a2b71b115147bc4263a486960619b20e81827b915e36d67f1c909fa31`.
+
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku
 boot. The saved hash-verified recovery script restored stable driver55:

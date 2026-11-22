@@ -480,6 +480,25 @@ non-loadable witness:
 The generation stack envelope is `15920/18432` including a 2,048-byte helper
 allowance, not a whole-program proof. No card run or decode rate exists.
 
+The next offline graph-fault prototype adds a bounded all-core settlement
+audit and a close-only service transition. It requires a backend proof that
+earlier host writes are fenced and that both NoCs, queues, routes, worker
+image and graph peer/fetch traffic are safe; it checks stable worker receipts
+twice before acknowledging any terminal worker. Simulated tests cover partial
+publication and acknowledgement, unsettled or changing receipts, failed
+fences and unsafe cores. The prototype is not connected to a hardware backend
+or the driver recovery ioctl, and does not itself restore or release the
+fleet. Do not treat it as working recovery without reboot. The target suite
+and both Haiku/RISC-V builds pass. Tag0147 normal driver SHA-256:
+`48ba20fbd4f3118cf1d8a099f37bad8d505a61e3e45eadf3d2dfb5bed337e7ba`;
+non-loadable graph witness:
+`24eca47a2b71b115147bc4263a486960619b20e81827b915e36d67f1c909fa31`.
+
+After the user restored power, strict SSH to the pinned Haiku identity
+succeeded again on 2026-11-22. This was an OS identity check only; the prior
+27B process and stable-driver idle preflight must be checked again before
+touching the card. The active boot path remains NVMe; no SD cards are used.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -491,7 +510,7 @@ and Haiku's safe policy before sending `0xc1`; do not assume the Linux
 default or introduce an unowned DMA buffer. Full PCI state restoration remains
 a separate open requirement.
 
-Haiku is reachable at `10.0.0.247`. Following one authorized power cycle
+In the saved tag0124 recovery, Haiku was reachable at `10.0.0.247`. Following one authorized power cycle
 and the pinned NVMe/kexec handoff, the saved recovery script restored stable55
 at generation2: `cold0 active_owner0 open_count1`. The prior diagnostic has
 exited, the recovery lock is absent, and both model files retain their
@@ -539,7 +558,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0146. Since tag0121 it records final release of a
+The default build now targets dedicated tag0147. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
@@ -571,10 +590,10 @@ Pioneer `10.0.0.247` SSH accounts, identity paths, and separate pinned host
 keys are documented locally in [`PIONEER_SSH_ACCESS.md`](PIONEER_SSH_ACCESS.md).
 Use strict host-key checking and the profile for the OS currently running.
 
-## Current hardware state
+## Saved tag0124 hardware state
 
-Haiku SSH is reachable. The tag0120 client exited; no inference process is
-running. The independently verified stable driver status is:
+At the time of the saved recovery, Haiku SSH was reachable and the tag0120
+client had exited. The independently verified stable driver status was:
 
 ```text
 P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
