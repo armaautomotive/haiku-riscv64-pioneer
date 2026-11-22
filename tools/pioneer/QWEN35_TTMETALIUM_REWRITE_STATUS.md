@@ -430,6 +430,27 @@ and `d5d1959ceadfa18e2ca0577747334dd34ea2fd8eeae04e5c7057a962e4d9ca66`.
 The coordinator stack envelope is `13552/18432`, including a 2,048-byte helper
 allowance but excluding the future ioctl caller. No decode rate is available.
 
+Tag0143 replaces the non-loadable worker's unconditional graph-command denial
+with a local fetched-command consistency check. After the descriptor has been
+validated and the sealed record fetched and patched, it checks the record's
+core, step, structure and checksum, then compares the staged invocation with
+the published L1 program before calling the typed Tensix worker. The check is
+not model authorization: that depends on the host's validated recording,
+disjoint sealed bank claim, private descriptor and session ownership. There is
+still no live session allocation, public graph request, or fault-safe graph
+teardown, and no card run has established the memory/route assumptions. The
+dispatcher has moved from the test directory into the rewrite sources.
+
+Simulated tests cover corrupt headers and payloads, altered program words,
+wrong core/step, prompt bounds and all nine invocation families from a
+dynamically patched recording. The target suite and both Haiku builds pass.
+Normal and non-loadable driver SHA-256 values:
+`ae683b12983e8fd759a0231f6216b6f85342fe72220dd76ede07352ea243f3d4`
+and `48e65c1b0c8a52e92be259c8c997b3b85f01069174fe78d7d08a9f8737b43eb5`.
+The worker witness has a `7792/8192` stack envelope including a 1,024-byte
+helper allowance; it is not a whole-program proof. These checks add work per
+command and have not been benchmarked.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

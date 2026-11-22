@@ -2,9 +2,8 @@
 #include "PioneerQwen35DataflowBlackholeWorker.h"
 
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-// This is a non-loadable link witness. No model-bound authority exists yet,
-// so its graph authorization hook must reject every command.
-extern "C" bool qwen35_graph_authorize(unsigned, unsigned) { return false; }
+// The graph code remains non-loadable. Its local record check is linked from
+// the dispatch witness; the kernel must establish sealed model ownership.
 extern "C" bool qwen35_graph_execute(unsigned core,unsigned sequence,
 	PioneerQwen35::DataflowWorkerMailbox* mailbox)
 {

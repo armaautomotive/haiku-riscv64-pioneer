@@ -3,6 +3,7 @@
 #include "pioneer_qwen35_dataflow_stream_recorder_test.cpp"
 #undef main
 #include "../PioneerQwen35DataflowDynamicToken.h"
+#include "../PioneerQwen35DataflowGraphAuthorization.h"
 #include <vector>
 
 struct CaptureSink {
@@ -62,6 +63,30 @@ int main() {
 	assert(DataflowStreamRecording::Build(fixture->packed,*candidate0,*candidate1,*plan,fixture->routes,
 		1,otherToken,0,true,compare1,*scratch,*projection,stage));
 	assert(compare1.changed>0);
+	// Check the local post-fetch guard against every invocation family from
+	// the real recorded graph, including an inactive worker where applicable.
+	const unsigned magicTypes[]={DataflowEmbeddingMagic,DataflowProgramMagic,DataflowRmsMagic,
+		DataflowSiluMagic,DataflowResidualMagic,DataflowConvMagic,DataflowDeltaMagic,
+		DataflowDenseAttentionMagic,DataflowArgmaxMagic};
+	bool localTested[9]{};DataflowGraphRunTicket localTicket{7,1001,548};
+	alignas(64) uint32_t localProgram[DataflowProgramRegionBytes/4]{};
+	for (unsigned step=0;step<548;step++) {
+		const unsigned magic=base.records[size_t(step)*DataflowCoreCount].header[5];
+		unsigned type=0;while (type<9 && magicTypes[type]!=magic) type++;
+		assert(type<9);if (localTested[type]) continue;localTested[type]=true;
+		for (unsigned core:{0U,119U}) {
+			DataflowGraphRunDescriptor descriptor{};
+			assert(DataflowGraphRunBuild(plan->binding[core],plan->lease[core],fixture->routes,
+				dynamic1,localTicket,5,3,0,descriptor));
+			auto record=base.records[size_t(step)*DataflowCoreCount+core];
+			assert(DataflowDynamicPatch(record,dynamic1,99,step+1,core));
+			for (unsigned word=0;word<record.header[6]/4;word++) localProgram[word]=record.payload[word];
+			assert(DataflowGraphFetchedCommandMatches(descriptor,step,record,localProgram,sizeof(localProgram)));
+			localProgram[0]=0;
+			assert(!DataflowGraphFetchedCommandMatches(descriptor,step,record,localProgram,sizeof(localProgram)));
+		}
+	}
+	for (bool checked:localTested) assert(checked);
 	// The prompt-only program must be byte-identical to the first 545
 	// operations of the decode stream, including after a dynamic token patch.
 	auto promptPlan=std::make_unique<DataflowStreamPlan>();

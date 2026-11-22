@@ -40,9 +40,9 @@ case "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" in
 	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" -o "$output/device-barrier.o"
 	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
-		-c "$directory/tests/pioneer_qwen35_dataflow_device_graph_target_probe.cpp" -o "$output/device-graph.o"
+		-c "$directory/PioneerQwen35DataflowDeviceDispatch.cpp" -o "$output/device-graph.o"
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
-		-u PioneerQwen35DeviceGraphCompileProbe \
+		-u PioneerQwen35DeviceGraphRun \
 		-T "$directory/blackhole_qwen35_dataflow_dispatch_witness.ld" \
 		"$output/start.o" "$output/service.o" "$output/memory.o" \
 		"$output/device-stream.o" "$output/device-barrier.o" "$output/device-graph.o" \
@@ -109,8 +109,9 @@ groups = (
     'qwen35_dataflow_service_main()',
     'PioneerQwen35DataflowBlackholeWorkerService()',
     'qwen35_graph_run_descriptor(',
-    'PioneerQwen35DeviceGraphCompileProbe(',
+    'PioneerQwen35DeviceGraphRun(',
     'DataflowDeviceGraph<IO, BarrierIO>::Tick()',
+    'qwen35_graph_authorize(',
     'DataflowDynamicPatch(',
     'DataflowConvInvocation::Valid()',
     'DataflowDeviceBarrier<IO>::Poll()',

@@ -416,6 +416,22 @@ non-loadable witness:
 The session stack envelope is `13552/18432` including a 2,048-byte allowance,
 excluding a real ioctl caller. No new decode rate exists.
 
+Tag0143 replaces the worker's unconditional graph-command rejection with a
+local consistency check on the fetched, dynamically patched record and staged
+L1 invocation. It checks core, step, structure, checksum and exact program
+words before entering the typed worker. This is not authentication; the
+kernel must guarantee the host-generated stream remains sealed, disjoint from
+device writes and bound to the private model/session. Simulated tests cover
+corruption, bounds and all nine recorded invocation families. The dispatcher
+source is now in `PioneerQwen35DataflowDeviceDispatch.cpp`. The target suite
+and both Haiku builds pass; normal driver SHA-256:
+`ae683b12983e8fd759a0231f6216b6f85342fe72220dd76ede07352ea243f3d4`;
+non-loadable witness:
+`48e65c1b0c8a52e92be259c8c997b3b85f01069174fe78d7d08a9f8737b43eb5`.
+The worker stack envelope is `7792/8192` with a 1,024-byte allowance and no
+whole-program proof. Actual session allocation, graph request, safe teardown
+and all hardware validation remain open; these checks are not a speed result.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -475,7 +491,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0142. Since tag0121 it records final release of a
+The default build now targets dedicated tag0143. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

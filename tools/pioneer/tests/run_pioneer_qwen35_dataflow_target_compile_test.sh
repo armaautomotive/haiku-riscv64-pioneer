@@ -61,12 +61,12 @@ if [ -n "$("$nm" -u "$temporary/dispatch-size-witness.elf")" ]; then
 	exit 1
 fi
 "$size" -A "$temporary/dispatch-size-witness.elf"
-# The graph witness links real stream, barrier, and worker-executor code; its
-# authorization hook rejects all work and the driver is non-loadable.
+# The non-loadable graph witness links real stream, barrier, local record
+# validation, and worker-executor code. Model authority remains host-owned.
 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-service"
 "$size" -A "$temporary/graph-service/service.elf"
-"$nm" "$temporary/graph-service/service.elf" | grep ' T PioneerQwen35DeviceGraphCompileProbe$' >/dev/null
+"$nm" "$temporary/graph-service/service.elf" | grep ' T PioneerQwen35DeviceGraphRun$' >/dev/null
 "$nm" "$temporary/graph-service/service.elf" | grep ' T qwen35_graph_authorize$' >/dev/null
 
 attributes=$("$readelf" -A "$object")
@@ -153,6 +153,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_publication_test.cpp" \
 	-o "$temporary/graph-publication-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-publication-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_authorization_test.cpp" \
+	-o "$temporary/graph-authorization-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-authorization-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_completion_test.cpp" \
 	-o "$temporary/graph-completion-test"
