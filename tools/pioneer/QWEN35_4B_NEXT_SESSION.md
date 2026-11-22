@@ -68,6 +68,13 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. Message-queue initialization
 remains open; this new code has not been run on the card.
 
+The default build now targets dedicated tag0121. It records final release of a
+retained owner under the driver lock and provides a read-only, tag/generation
+checked owner-lifetime status ioctl. Extracted real close/status tests and the
+RISC-V build pass. This ioctl does not reset the card or retire any resource;
+the complete recovery operation is still unimplemented. Do not install or run
+tag0121 until the required clean Haiku boot and guarded hardware preflight.
+
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached
 the 100 tokens/s target.

@@ -3,7 +3,7 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-p100a-reload.XXXXXXXX")
 source=$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp
-for pair in DRIVER_RELOAD_STATE:reload_state DRIVER_RELOAD_CONTROL:reload_control PROBE_LOCK:lock; do
+for pair in DRIVER_RELOAD_STATE:reload_state DRIVER_RELOAD_CONTROL:reload_control PROBE_LOCK:lock QWEN35_PROBE_FREE:probe_free QWEN35_RECOVERY_STATUS:recovery_status Q38_DISPATCH_COOKIE_RELEASE:cookie_release; do
  section=${pair%%:*}; name=${pair#*:}
  awk -v begin="PIONEER_${section}_BEGIN" -v end="PIONEER_${section}_END" '
   index($0,begin) {copying=1;next} index($0,end) {found=1;exit} copying {print} END {if(!found)exit 1}
@@ -24,4 +24,7 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pos
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_post_reset_pci_test.cpp" -o "$temporary/post-reset-pci-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/post-reset-pci-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$temporary" "$directory/pioneer_qwen35_recovery_owner_test.cpp" -o "$temporary/recovery-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-owner-test"
 printf 'Offline reload guard evidence retained at %s\n' "$temporary"

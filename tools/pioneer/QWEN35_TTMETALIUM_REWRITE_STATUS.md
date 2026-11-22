@@ -96,6 +96,18 @@ old generation access before retiring those resources. Host buffers must stay
 wired until the reset, PCI pending-transaction and host-DMA idle proofs pass.
 The PCI, mapping, DMA audit, guard, firmware and ownership steps are not yet orchestrated.
 
+Dedicated candidate tag0121 now records the retained owner's final file
+descriptor free while holding the driver lock. A read-only status ioctl
+reports the owner-lifetime prerequisites only when the exact driver tag and
+generation match; it refuses the lifetime condition with extra open
+descriptors, a live owner, or a quiesced driver. Extracted real close/status
+fixtures and the target build pass. This status does not initiate a reset,
+release any owner or host buffer, or grant hardware recovery. Tag0121 is not
+installed; its driver SHA-256 is
+`0f2174c3ea206cd136ac6c6f79bc1c2968ac1d80a24914118430b04374e5011c`
+and its measured stack bound is `15712/18432` bytes. The board remains at
+tag0120 cold with its owner retained.
+
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and
 assistant integration stay gated until the rewrite and physical recovery path

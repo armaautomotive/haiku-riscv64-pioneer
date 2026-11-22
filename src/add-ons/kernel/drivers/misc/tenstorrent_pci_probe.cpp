@@ -94,7 +94,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010117ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010118ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010119ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010120ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010120ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010121ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -103,6 +104,13 @@
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) \
 	|| defined(TT_PIONEER_Q35_WORK) || defined(TT_PIONEER_Q38_WORK_MODE))
 #error Qwen35 dataflow rewrite requires its separate all-core build identity and cannot include Work fallback
+#endif
+#if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && PIONEER_DRIVER_BUILD_TAG == 0x2026112100010121ULL
+#define PIONEER_QWEN35_INPLACE_RECOVERY 1
+#endif
+#if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (!defined(PIONEER_QWEN35_DATAFLOW_REWRITE) \
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010121ULL)
+#error Qwen35 recovery ownership tracking requires the dedicated tag0121 dataflow role
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
@@ -1117,6 +1125,9 @@ struct PioneerProbeCookie {
 	uint32 magic=0x50313030;
 	team_id team=-1;
 	PioneerStoreContext* context=NULL;
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+	bool finalFreeRetained=false; // protected by sLock; only set by the final free hook
+#endif
 #if defined(PIONEER_Q38_QGWD_RESIDENT_NATIVE_146) || defined(PIONEER_Q38_SMALL_RECURRENT_RESIDENT_HANDOFF_INSPECTION)
  PioneerStoreContext* qgwdResidentPending=NULL; // retained on any uncertain transfer
 #endif
@@ -1637,6 +1648,7 @@ ProbeOpen(const char* name, uint32 flags, void** cookie)
 }
 
 static status_t ProbeClose(void*) { return B_OK; }
+// PIONEER_QWEN35_PROBE_FREE_BEGIN
 static status_t ProbeFree(void* cookie) {
 	status_t status=ReleaseResidentCookie((PioneerProbeCookie*)cookie);
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -1650,6 +1662,7 @@ static status_t ProbeFree(void* cookie) {
 #endif
 	return status;
 }
+// PIONEER_QWEN35_PROBE_FREE_END
 
 struct ConfigIO {
 	uint32 Read(uint16 offset, uint8 size)
@@ -7044,6 +7057,16 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		else
 #endif
 		EndResidentSession(cookie,result,!sColdRecoveryRequired);
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+		// Publish final free while still holding the same lock as the owner.
+		// Never inspect this cookie again after releasing the lock: a later
+		// recovery may retire it once the open-count check also passes.
+		if (cookie->context && cookie->context->dispatchOwnerRetained) {
+			cookie->finalFreeRetained=true;
+			release_sem(sLock);
+			return B_OK;
+		}
+#endif
 		release_sem(sLock);
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
@@ -10464,6 +10487,40 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 // PIONEER_DRIVER_RELOAD_CONTROL_END
 #endif
 
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+#include "PioneerRecoveryProtocol.h"
+// PIONEER_QWEN35_RECOVERY_STATUS_BEGIN
+static status_t
+Qwen35RecoveryStatus(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!cookie || !data || length!=sizeof(tt_pioneer_recovery_status)) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_recovery_status r={};
+	status=user_memcpy(&r,data,sizeof(r));
+	if (status!=B_OK || !PioneerRecoveryStatusRequest(r))
+		return status!=B_OK?status:B_BAD_VALUE;
+	status=acquire_sem(sLock);if (status!=B_OK) return status;
+	if (!sReloadGuard || !sReloadGeneration || r.expected_tag!=PIONEER_DRIVER_BUILD_TAG
+		|| r.expected_generation!=sReloadGeneration) status=B_BAD_VALUE;
+	else {
+		r={};r.version=1;r.build_tag=PIONEER_DRIVER_BUILD_TAG;
+		r.generation=sReloadGeneration;r.cold=sColdRecoveryRequired;
+		r.quiesced=sReloadQuiesced;r.open_count=sOpenCookies;
+		r.owner_present=sRuntimeOwner!=NULL;
+		r.owner_final_free=sRuntimeOwner && sRuntimeOwner->finalFreeRetained;
+		r.owner_retirement_eligible=r.cold && !r.quiesced && sOpenCookies==1
+			&& sRuntimeOwner && sRuntimeOwner!=cookie && !cookie->context
+			&& sRuntimeOwner->context && sRuntimeOwner->context->dispatchOwnerRetained
+			&& sRuntimeOwner->finalFreeRetained;
+		status=user_memcpy(data,&r,sizeof(r));
+	}
+	release_sem(sLock);return status;
+}
+// PIONEER_QWEN35_RECOVERY_STATUS_END
+#endif
+
 #include "PioneerQwen35WorkControl.inc"
 
 static status_t
@@ -10472,6 +10529,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+	if (operation==TT_PCI_PROBE_RECOVERY_STATUS)
+		return Qwen35RecoveryStatus(instance,data,length);
+#endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	// The rewrite's private ioctl numbers are one contiguous range. Routing
 	// the whole range keeps sequence and generation commands on the same
