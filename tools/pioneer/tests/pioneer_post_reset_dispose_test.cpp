@@ -42,13 +42,15 @@ int main() {
 	assert(clean.DisposeAfterVerifiedReset(proof)==B_OK);
 	assert((deleted==std::vector<int>{11,12,13,20,21,22}));
 	assert(clean.q38PanelArea<0 && clean.PioneerHostPageIO::area<0 && !clean.page
-		&& clean.outputArea<0 && !clean.outputPage && clean.wideArea<0 && !clean.widePage && !clean.runtimeMapped);
+		&& clean.outputArea<0 && !clean.outputPage && clean.wideArea<0 && !clean.widePage && !clean.runtimeMapped
+		&& clean.postResetDisposeComplete);
 	assert(clean.DisposeAfterVerifiedReset(proof)==B_NOT_ALLOWED);
 	deleted.clear();FakeIO partial;partial.q38PanelArea=11;partial.runtimeAreas[1]=12;
 	partial.PioneerHostPageIO::area=20;partial.outputArea=21;failArea=12;
 	assert(partial.DisposeAfterVerifiedReset(proof)==B_ERROR);
 	assert((deleted==std::vector<int>{11,12}) && partial.q38PanelArea<0
-		&& partial.runtimeAreas[1]==12 && partial.PioneerHostPageIO::area==20 && partial.outputArea==21);
+		&& partial.runtimeAreas[1]==12 && partial.PioneerHostPageIO::area==20 && partial.outputArea==21
+		&& !partial.postResetDisposeComplete);
 	assert(partial.DisposeAfterVerifiedReset(proof)==B_NOT_ALLOWED && deleted.size()==2);
 	puts("PASS post-reset owner area retirement: proof, duplicate refusal, host-last order and partial-failure retention; SIMULATED OS ONLY");
 }

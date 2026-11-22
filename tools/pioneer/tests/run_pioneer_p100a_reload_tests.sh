@@ -40,8 +40,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_post_reset_dispose_test.cpp" -o "$temporary/post-reset-dispose-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/post-reset-dispose-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_graph_recovery_proof_test.cpp" -o "$temporary/graph-recovery-proof-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-recovery-proof-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/recovery-run-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-run-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTEST_GRAPH_RECOVERY -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/graph-recovery-run-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-recovery-run-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DTEST_RECOVERY_DISABLED -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/recovery-disabled-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-disabled-test"

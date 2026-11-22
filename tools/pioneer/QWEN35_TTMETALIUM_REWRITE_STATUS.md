@@ -495,6 +495,26 @@ neither is a whole-program stack proof. The driver remains non-loadable pending
 fault recovery, teardown review and physical qualification. No card run or
 decode throughput exists for this path.
 
+Tag0146 connects retained graph heap objects to the existing non-loadable
+ASIC-reset recovery prototype. Their release is allowed only after the same
+locked recovery ticket has proved reset, firmware readiness, all 120 cores and
+NoCs quiet, host DMA idle, the temporary mapping closed and the old owner's
+mapping disposal completed. The release is CPU-only and occurs before PCI
+unreserve; a failed proof or release keeps the cold latch. Mapping disposal
+now records completion separately from an attempted or partial disposal.
+Simulated recovery tests exercise the graph-release ordering and refusal, and
+the existing failure-injection suite keeps the owner/cold latch on earlier
+failures. This is not yet an in-place recovery guarantee: the ASIC-reset and
+firmware sequence is non-loadable and unqualified on Pioneer, ordinary graph
+faults still lack a bounded no-reset teardown, and no hardware trial occurred.
+
+The recovery tests, target suite and both Haiku builds pass. Normal and
+non-loadable driver SHA-256 values:
+`44817035ee8ff1728fbf5052c1711c288858727cbbd2aee9dbc70058fd8db93f`
+and `48ed831cec7bf16e01ac42d9965d1539683e81c7d678307b8b8ee7f6aec0b3d3`.
+The graph generation call-path envelope is `15920/18432` with a 2,048-byte
+helper allowance, not a whole-program proof. No decode rate is available.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

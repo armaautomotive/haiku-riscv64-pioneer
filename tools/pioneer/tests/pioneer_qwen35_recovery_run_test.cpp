@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112100010121)
+#ifdef TEST_GRAPH_RECOVERY
+#define PIONEER_QWEN35_DEVICE_DISPATCH 1
+#endif
 #ifndef TEST_RECOVERY_DISABLED
 #define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #endif
@@ -16,6 +19,11 @@ using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uin
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
+#ifdef TEST_GRAPH_RECOVERY
+static bool failGraphRelease=false;
+static unsigned graphReleases=0;
+struct FakeGraphOwner {};
+#endif
 static std::vector<unsigned> trace;
 static bool Step(unsigned stage) { trace.push_back(stage);return failStage!=stage; }
 struct module_info {};
@@ -81,12 +89,23 @@ struct PioneerPostResetMapping {
 };
 struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
+#ifdef TEST_GRAPH_RECOVERY
+	FakeGraphOwner graphOwner;FakeGraphOwner* qwen35GraphOwner=&graphOwner;
+#endif
 	PioneerRecoveryDbiSnapshot recoveryDbi;
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
 	FakeProfile profile;FakePciResult pci;PioneerSessionIO io;
 	FakePciResult& Pci(){return pci;}
 	~PioneerStoreContext(){contextDeleted++;delete recoveryMapping;}
 };
+#ifdef TEST_GRAPH_RECOVERY
+static bool PioneerQ35GraphOwnerReleaseAfterReset(FakeGraphOwner* owner,
+	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
+	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
+		&& proof.firmware_generation==ticket && ticket==9);
+	graphReleases++;return !failGraphRelease;
+}
+#endif
 struct PioneerProbeCookie {uint32 magic=0x50313030;int team=17;PioneerStoreContext* context=nullptr;bool finalFreeRetained=false;
 	~PioneerProbeCookie(){cookieDeleted++;}};
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
@@ -105,6 +124,9 @@ static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
+#ifdef TEST_GRAPH_RECOVERY
+	failGraphRelease=false;graphReleases=0;
+#endif
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
@@ -120,6 +142,14 @@ int main(){
 	Setup();auto r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
 		&& r.operation_status==B_OK && r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
 		&& !sColdRecoveryRequired && !sRuntimeOwner && contextDeleted==1 && cookieDeleted==1 && !abortCount && completeCount==1);
+#ifdef TEST_GRAPH_RECOVERY
+	assert(graphReleases==1);
+	Setup();failGraphRelease=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE && graphReleases==1
+		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1 && !completeCount);
+	Cleanup();
+#endif
 	for(unsigned stage=1;stage<=12;stage++) {
 		Setup();failStage=stage;r=Request();
 		assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status!=B_OK && r.stage==stage);

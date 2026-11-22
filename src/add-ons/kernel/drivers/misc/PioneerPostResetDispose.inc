@@ -3,6 +3,7 @@
 // recovery operation may call this after reset, fresh firmware/fleet/NoC and
 // host-DMA audits. No device access or old TLB/L1 restoration occurs here.
 bool postResetDisposeAttempted=false;
+bool postResetDisposeComplete=false;
 status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& proof)
 {
 	if (postResetDisposeAttempted) return B_NOT_ALLOWED;
@@ -32,5 +33,6 @@ status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& proof)
 	}
 	PioneerHostPageIO::page=NULL;outputPage=NULL;widePage=NULL;
 	runtimeMapped=false;
+	postResetDisposeComplete=true;
 	return B_OK;
 }

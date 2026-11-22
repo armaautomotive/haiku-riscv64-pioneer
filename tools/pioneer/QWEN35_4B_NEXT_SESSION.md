@@ -466,6 +466,20 @@ proof. Before hardware use complete graph-fault recovery and teardown review,
 then verify the prior 27B diagnostic has exited and stable driver is idle.
 No new decode rate exists.
 
+Tag0146 connects retained graph allocations to the non-loadable ASIC-reset
+recovery prototype. Release requires the active reset ticket, successful
+firmware/fleet/NoC/host-DMA proofs, closed temporary mapping and completed
+old-owner mapping disposal. Tests exercise proof refusal, partial disposal,
+graph-release failure and the real recovery operation's ordering in simulation.
+The hardware reset and firmware sequence is still unqualified, and ordinary
+graph-fault teardown without reset is not implemented. The recovery suite,
+target suite and both Haiku builds pass. Normal driver SHA-256:
+`44817035ee8ff1728fbf5052c1711c288858727cbbd2aee9dbc70058fd8db93f`;
+non-loadable witness:
+`48ed831cec7bf16e01ac42d9965d1539683e81c7d678307b8b8ee7f6aec0b3d3`.
+The generation stack envelope is `15920/18432` including a 2,048-byte helper
+allowance, not a whole-program proof. No card run or decode rate exists.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -525,7 +539,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0145. Since tag0121 it records final release of a
+The default build now targets dedicated tag0146. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

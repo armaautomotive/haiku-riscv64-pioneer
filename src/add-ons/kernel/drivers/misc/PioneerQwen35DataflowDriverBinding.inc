@@ -2032,8 +2032,12 @@ public:
 class PioneerQ35GraphBackend {
 	PioneerStoreContext& context;
 	PioneerQ35StreamRecordingWitness& stream;
+	const PioneerDriverRecoveryProof* resetProof;
+	uint64_t resetTicket;
 public:
-	PioneerQ35GraphBackend(PioneerStoreContext& c,PioneerQ35StreamRecordingWitness& s):context(c),stream(s) {}
+	PioneerQ35GraphBackend(PioneerStoreContext& c,PioneerQ35StreamRecordingWitness& s,
+		const PioneerDriverRecoveryProof* proof=nullptr,uint64_t ticket=0)
+		:context(c),stream(s),resetProof(proof),resetTicket(ticket) {}
 	bool GraphSessionSafe(const PioneerQwen35::DataflowServiceOwner& resident) {
 		return context.qwen35DataflowService==&resident && context.io.qwen35DataflowContext==&context
 			&& !sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration
@@ -2069,8 +2073,11 @@ public:
 	void DeleteGraphRun(PioneerQwen35::DataflowGraphSessionRun* p) { PioneerQ35DeleteAligned(p); }
 	void DeleteGraphCandidate(PioneerQwen35::DataflowProjectionAuthority* p) { delete p; }
 	bool GraphFleetRestored() {
-		// Graph-fault recovery has not been connected to the reset proof.
-		volatile bool deny=false;return deny;
+		return resetProof && context.recoveryAttempted && !context.recoveryMapping
+			&& context.io.qwen35DataflowContext==&context && sColdRecoveryRequired
+			&& !sReloadQuiesced && sRuntimeOwner && sRuntimeOwner->context==&context
+			&& PioneerQ35GraphRecoveryProofMatches(*resetProof,resetTicket,true,
+				context.io.postResetDisposeComplete);
 	}
 };
 
@@ -2107,6 +2114,11 @@ public:
 			*context.qwen35DataflowProgramScratch,backend,output,stage);
 	}
 	bool Retained() const { return runner.Retained() || session.Faulted(); }
+	bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket) {
+		if (!runner.Retained()) return true;
+		PioneerQ35GraphBackend backend(context,stream,&proof,ticket);
+		return runner.ReleaseRetainedAfterRestoration(context.qwen35DataflowAuthority,backend);
+	}
 };
 
 static void
@@ -2119,6 +2131,13 @@ static bool
 PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner)
 {
 	return owner && owner->Retained();
+}
+
+static bool
+PioneerQ35GraphOwnerReleaseAfterReset(PioneerQ35GraphOwner* owner,
+	const PioneerDriverRecoveryProof& proof,uint64_t ticket)
+{
+	return !owner || owner->ReleaseAfterVerifiedReset(proof,ticket);
 }
 
 // Ownership is installed before recording can issue any DMA. If recording
