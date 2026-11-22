@@ -1,6 +1,8 @@
+> **Latest hardware: tag0168 qualified one profile run.** Correct ` Paris.`; authentication 67.541939 s, vocabulary 13.236900 s, load 610.801086 s, prompt 18.771527 s, one decode 4.033940 s = 0.247897 tokens/s. Projection cycles fell 5.35% against tag0167; this single-token diagnostic is not a sustained benchmark and 100 tokens/s remains unmet. Guard passed; clean unload and stable driver55 generation20 independently verified idle. See `benchmarks/qwen35-dataflow-tag0168-20261122/RUN.md`.
+
 > **Latest: tag0167 profile completed.** Correct ` Paris.` output, load 610.592493 s, prompt 19.426467 s, single decode 4.175606 s (0.239486 tokens/s). Core0 projection operations consumed 57.975% of measured cycles and sync/other 36.774%; neither is a pure matrix or barrier measurement. The guarded client exited 0, unloaded cleanly, and stable driver55 generation18 was independently verified idle. See `benchmarks/qwen35-dataflow-tag0167-20261122/RUN.md`.
 
-> **Prepared tag0168 rewrite optimization:** Q4_K and Q5_K panels skip two provably zero matrix fidelity phases; Q6_K/Q8_0 keep all four. The bounded profiler timer rejects unstable reads. Exact arithmetic, full target tests, audited image placement, and trial/normal/non-loadable witness builds pass; hardware correctness and performance remain unverified. Trial driver SHA-256 `900c4f427d63778184caeee65ed496c34b1bd8da854110fa4e536284177993f4`, client SHA-256 `6e64e2f9ff63bd26386700ed7313c09eb6a9dc3faf5d138e336aa0fae9a7bd21`, under `/private/tmp/pioneer-q35-tag0168-phases-trial-b/`. Recheck prior diagnostics and stable idle status before testing.
+> **Tested tag0168 rewrite optimization:** Q4_K and Q5_K panels skip two provably zero matrix fidelity phases; Q6_K/Q8_0 keep all four. The bounded profiler timer rejects unstable reads. Exact arithmetic, full target tests, audited image placement, and trial/normal/non-loadable witness builds pass; one correct hardware profile and clean unload are recorded above. Trial driver SHA-256 `900c4f427d63778184caeee65ed496c34b1bd8da854110fa4e536284177993f4`, client SHA-256 `6e64e2f9ff63bd26386700ed7313c09eb6a9dc3faf5d138e336aa0fae9a7bd21`, under `/private/tmp/pioneer-q35-tag0168-phases-trial-b/`. Recheck prior diagnostics and stable idle status before testing.
 
 > **Latest milestone: two valid warm outputs, clean unload.** Tag0166 produced ` Paris.` (`11751,13`) twice. Authentication 69.030922 s, vocabulary 13.081918 s, model load 614.806798 s; prompts 19.469486/19.464716 s; single-token decodes 4.183633/4.184250 s = 0.239027/0.238991 tokens/s. Guard validated both, client exit0, clean unload, stable driver55 generation16 independently verified idle; both model files present at recorded sizes. This satisfies the two-output check but not the 100 tokens/s goal. The tag0167 cycle profiler has since run and cleanly unloaded, as recorded above. See `benchmarks/qwen35-dataflow-tag0166-20261122/RUN.md`.
 
@@ -183,7 +185,7 @@ neither is a whole-program proof.
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
 that rewrite is complete; benchmark acceptance and assistant integration
-follow afterward. The standalone Haiku client and resident BRISC/Tensix
+follow afterward. The standalone Haiku client and resident TRISC0/Tensix
 service use all 120 Tensix cores and have no CPU inference/fallback path.
 
 Pioneer uses Fedora on its existing NVMe and kexec to Haiku; SD cards are no

@@ -103,6 +103,26 @@ for role in reader compute writer; do
 	"$size" "$witness"
 done
 echo 'PASS separate queued role link-size witnesses; NOT SERVICE IMAGES'
+# Check proposed disjoint code slots beyond the currently saved L1 view. This
+# is only a link witness: the current owner must never load either result.
+for role in reader writer; do
+	if [ "$role" = reader ]; then start=0xb0000; limit=0xb4000
+	else start=0xb4000; limit=0xb6000; fi
+	"$ld" -m elf32lriscv --no-relax --gc-sections \
+		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
+		-e "qwen35_queued_${role}_once" \
+		-T "$root/tools/pioneer/blackhole_qwen35_queued_role_witness.ld" \
+		"$roles_object" -o "$temporary/queued-${role}-layout-witness.elf"
+	if [ -n "$("$nm" -u "$temporary/queued-${role}-layout-witness.elf")" ]; then
+		echo "queued ${role} layout witness has unresolved imports" >&2
+		exit 1
+	fi
+	"$size" -A "$temporary/queued-${role}-layout-witness.elf"
+done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_memory_plan_test.cpp" \
+	-o "$temporary/role-memory-plan-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-memory-plan-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_queued_input_test.cpp" \
 	-o "$temporary/queued-input-test"

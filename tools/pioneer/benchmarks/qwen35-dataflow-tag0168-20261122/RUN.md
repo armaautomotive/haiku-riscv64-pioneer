@@ -1,0 +1,11 @@
+# Qwen3.5 dataflow matrix-phase diagnostic, tag0168
+
+After tag0167 had exited and stable driver55 generation18 passed the idle preflight, a guarded single-run diagnostic tested the Q4_K/Q5_K exact matrix-phase reduction. It generated the pinned token IDs `11751,13` (` Paris.`). Authentication took 67.541939 s, vocabulary setup 13.236900 s, and model load 610.801086 s. The five-token prompt took 18.771527 s. One subsequent decode took 4.033940 s, or **0.247897 decode tokens/s**; the first output token is included in prompt time.
+
+The preceding tag0167 diagnostic measured 0.239486 tokens/s, so these short one-token observations differ by about 3.5%. They are not a sustained throughput benchmark. The 100 tokens/s goal remains unmet and two warm outputs for this changed candidate have not been qualified.
+
+For the measured core0 decode, projection work fell from 1,457,309,323 to 1,379,300,626 cycles (5.35%); total measured cycles fell from 2,513,668,268 to 2,399,137,394 (4.56%). Synchronization and other work was 887,831,332 cycles. These are diagnostic buckets including movement, work scheduling and instrumentation, not measurements of pure FPU utilization or barriers. Exact named bins are in the compressed stderr; the guard checked that their sum matched the total.
+
+The validator self-test passed on Haiku before use. The guarded client exited 0, returned the expected output, and reported `unload_clean=1 state=2 active=0 cold=0 service_closed=1`. The wrapper reported `ONE_PROFILE_OUTPUT_VALIDATED`, restored stable driver55 generation20 without reboot, and removed the lock. Independent post-run checks verified `quiesced0 cold0 active_owner0`, no diagnostic process or lock, installed stable SHA-256 `041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`, and both the 4B and preserved 27B model files at their recorded sizes. The size checks are not fresh full-content hashes.
+
+Tested runtime source checkpoint `62d4b589ae`; trial driver SHA-256 `900c4f427d63778184caeee65ed496c34b1bd8da854110fa4e536284177993f4`, client SHA-256 `6e64e2f9ff63bd26386700ed7313c09eb6a9dc3faf5d138e336aa0fae9a7bd21`. Exact client logs, one-shot guard and Haiku-tested validator are in `evidence/`. Later offline separate-role commits do not change this tested binary.
