@@ -1,5 +1,14 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+The guarded tag0159 run reached step7 (layer0 recurrent convolution), after
+embedding, residual save, normalization, and four projections, then timed
+out with worker0 executing. No token or decode throughput was produced.
+In-place recovery failed for this unsettled graph; an authorized NVMe power
+cycle restored stable driver55 and preserved the recorded model-file sizes.
+The progress receipt is diagnostic and proves neither numerical correctness
+nor safe idle. See the [tag0159 record](benchmarks/qwen35-dataflow-tag0159-20261122/RUN.md).
+
+
 Tag0158 timed out after 8.258036 s with a worker still running; no token or
 decode rate was produced. Its unsettled graph could not be recovered in place.
 An authorized NVMe power cycle restored stable driver55 idle and preserved both
