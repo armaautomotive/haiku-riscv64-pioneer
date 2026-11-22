@@ -1787,7 +1787,7 @@ PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore
 // not been integrated. The compile witness must never approve a completion.
 bool
 PioneerSessionIO::GraphOwnershipMatches(const PioneerQwen35::DataflowStreamPlan&,
-	const PioneerQwen35::DataflowDynamicTokenContext&,const PioneerQwen35::DataflowGraphRunTicket&)
+	const PioneerQwen35::DataflowDynamicTokenContext&,const PioneerQwen35::DataflowGraphRunTicket&,unsigned)
 {
 	volatile bool deny=false;
 	return deny;

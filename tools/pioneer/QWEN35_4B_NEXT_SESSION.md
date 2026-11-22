@@ -336,6 +336,20 @@ individual frame of 3,536 bytes; a whole call-chain bound is still required.
 It is not connected to the driver and cannot promote state; connect it only
 under the future immutable-session and audited-completion ownership protocol.
 
+Tag0138 permits a 545-operation prompt run to consume the prefix of the same
+sealed 548-record decode stream; decode runs use all 548 operations. Simulated
+tests compare all core records for prompt positions zero and one, including
+dynamic token patching, and check worker prefix termination and bounds. The
+publisher now requires ownership validation before staging, including the
+template's fixed activation slot. The actual callback still rejects every run;
+the future session must retain and verify that fixed slot, sealed plan, model,
+fresh ticket and live authority before it can authorize publication. The
+target suite and both Haiku/RISC-V builds pass. Normal driver SHA-256:
+`5996e2b386eea9c8df5660830186458cc2ab98e17e57ed6f76468126b03640c6`;
+non-loadable witness:
+`f56bd0561a08005dd5e80a77bb98fc0ffe3dcc812879f4af6c316aa431f71ae6`.
+No hardware run or performance measurement has been made for this change.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -395,7 +409,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0137. Since tag0121 it records final release of a
+The default build now targets dedicated tag0138. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

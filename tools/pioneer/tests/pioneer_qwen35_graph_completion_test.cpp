@@ -9,7 +9,7 @@ struct CompletionIO {
 	int failWorker=-1,failAudit=-1,failAck=-1,failReady=-1;
 	bool owner=true,badResult=false,unstableResult=false;
 	bool GraphOwnershipMatches(const DataflowStreamPlan&,const DataflowDynamicTokenContext&,
-		const DataflowGraphRunTicket&) { return owner; }
+		const DataflowGraphRunTicket&,unsigned slot) { return owner && slot==0; }
 	bool WaitForCompletion(unsigned core,unsigned trigger,DataflowWorkerSnapshot& r) {
 		assert(core==waited++);
 		if (int(core)==failWorker) return false;
@@ -71,11 +71,17 @@ int main() {
 	CompletionIO unready{*published};unready.failReady=17;DataflowGraphCompletion unreadyOwner;
 	assert(unreadyOwner.Finish(publisher,*plan,f->routes,token,unready,scratch,output)==DataflowGraphCompletionReadyFault
 		&& unreadyOwner.FailedCore()==17 && unready.acks==120 && output.token==Vocabulary);
-	assert(DataflowStreamPlanBuilder::Build(f->packed,f->manifest,f->workspace,f->rope,f->routes,100,545,*plan));
+	// Prompt execution uses the first 545 operations of the same 548-record
+	// sealed stream; it does not claim or upload a second stream.
 	ticket={6,2000,545};auto promptPublished=std::make_unique<PublisherIO>();DataflowGraphPublisher promptPublisher;
 	assert(promptPublisher.Start(*plan,f->routes,token,ticket,5,3,0,*promptPublished,scratch)==DataflowGraphPublished);
+	assert(promptPublished->records[0].binding.count==548 && promptPublished->records[0].ticket.count==545);
 	CompletionIO prompt{*promptPublished};DataflowGraphCompletion promptOwner;
 	assert(promptOwner.Finish(promptPublisher,*plan,f->routes,token,prompt,scratch,output)==DataflowGraphCompletionAudited
 		&& output.token==Vocabulary && !prompt.resultReads && prompt.acks==120);
+	auto bad=std::make_unique<PublisherIO>();DataflowGraphPublisher badPublisher;
+	ticket.count=546;
+	assert(badPublisher.Start(*plan,f->routes,token,ticket,5,3,0,*bad,scratch)==DataflowGraphPublishInvalid
+		&& !bad->staged && !bad->published);
 	puts("PASS graph completion: all-core audit before acknowledgement, stable argmax, failure retention; SIMULATED ONLY");
 }

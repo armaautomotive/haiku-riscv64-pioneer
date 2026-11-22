@@ -29,7 +29,9 @@ struct CompareSink {
 		}
 		return true;
 	}
-	bool Seal(const DataflowStreamPlan&) { return current==captured.records.size(); }
+	bool Seal(const DataflowStreamPlan& p) {
+		return current==size_t(p.count)*DataflowCoreCount && current<=captured.records.size();
+	}
 	void Abort() {}
 };
 struct FetchIO {
@@ -60,6 +62,20 @@ int main() {
 	assert(DataflowStreamRecording::Build(fixture->packed,*candidate0,*candidate1,*plan,fixture->routes,
 		1,otherToken,0,true,compare1,*scratch,*projection,stage));
 	assert(compare1.changed>0);
+	// The prompt-only program must be byte-identical to the first 545
+	// operations of the decode stream, including after a dynamic token patch.
+	auto promptPlan=std::make_unique<DataflowStreamPlan>();
+	assert(DataflowStreamPlanBuilder::Build(fixture->packed,fixture->manifest,fixture->workspace,
+		fixture->rope,fixture->routes,99,545,*promptPlan));
+	DataflowDynamicTokenContext dynamic0{};
+	assert(DataflowDynamicTokenContext::Build(fixture->manifest,42,0,dynamic0));
+	auto prompt0=std::make_unique<DataflowProjectionAuthority>();CompareSink comparePrompt0{base,dynamic0};
+	assert(DataflowStreamRecording::Build(fixture->packed,*live,*prompt0,*promptPlan,fixture->routes,
+		0,42,0,false,comparePrompt0,*scratch,*projection,stage));
+	auto prompt1=std::make_unique<DataflowProjectionAuthority>();CompareSink comparePrompt1{base,dynamic1};
+	assert(DataflowStreamRecording::Build(fixture->packed,*candidate0,*prompt1,*promptPlan,fixture->routes,
+		1,otherToken,0,false,comparePrompt1,*scratch,*projection,stage));
+	assert(comparePrompt0.current==545*DataflowCoreCount && comparePrompt1.current==545*DataflowCoreCount);
 	FetchIO read{base.records[0]};DataflowStreamRecord staging{};
 	alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};
 	assert(DataflowStreamFetchDynamic(read,plan->binding[0],plan->lease[0],fixture->routes,

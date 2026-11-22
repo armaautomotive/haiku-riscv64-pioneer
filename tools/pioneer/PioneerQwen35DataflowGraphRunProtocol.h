@@ -58,7 +58,9 @@ inline bool DataflowGraphRunValid(const DataflowGraphRunDescriptor& d,unsigned c
 		|| d.pollLimit>DataflowGraphRunMaxPolls || d.inputSlot>=ActivationBuffers
 		|| !d.ticket.epoch || !d.ticket.firstSequence
 		|| d.ticket.firstSequence>DataflowWorkerSequenceLimit
-		|| !d.ticket.count || d.ticket.count!=d.binding.count
+		|| (d.binding.count!=DataflowGraphPromptSteps && d.binding.count!=DataflowGraphDecodeSteps)
+		|| (d.ticket.count!=DataflowGraphPromptSteps && d.ticket.count!=DataflowGraphDecodeSteps)
+		|| d.ticket.count>d.binding.count
 		|| d.ticket.count-1>DataflowWorkerSequenceLimit-d.ticket.firstSequence
 		|| !d.token.Valid() || !DataflowStreamBindingMatches(d.binding,d.lease,d.routes,core)
 		|| d.checksum!=DataflowGraphRunChecksum(d)) return false;

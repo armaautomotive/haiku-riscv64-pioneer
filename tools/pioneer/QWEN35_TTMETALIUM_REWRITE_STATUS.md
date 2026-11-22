@@ -327,6 +327,26 @@ frame is 3,536 bytes, not a call-chain stack bound. This component is not
 connected to the driver or allowed to promote state, and does not prove device
 execution or measure decode speed.
 
+Tag0138 makes one sealed 548-record decode template usable for prompt tokens:
+the descriptor carries a 545-step prompt ticket or a 548-step decode ticket,
+and each device worker executes exactly that many records. This avoids a
+second protected stream claim and upload. Full-shape simulated recording
+compares all 120 cores' first 545 records against independently recorded
+prompt programs at positions zero and one, including a dynamic token patch;
+the fleet simulator also checks prefix termination and count bounds. Before
+staging any worker, publication now requires the ownership callback to bind
+the sealed stream, model, token, ticket and fixed activation slot. The real
+callback still denies all publication; recording that fixed slot in the live
+session and establishing the immutable ownership proof remain necessary.
+
+The target test suite and normal and non-loadable Haiku/RISC-V builds pass.
+The normal and non-loadable driver SHA-256 values are
+`5996e2b386eea9c8df5660830186458cc2ab98e17e57ed6f76468126b03640c6`
+and `f56bd0561a08005dd5e80a77bb98fc0ffe3dcc812879f4af6c316aa431f71ae6`.
+The non-loadable kernel stack estimate is `18160/18432`, and the worker
+envelope remains `7824/8192` with a 1,024-byte allowance, not a whole-program
+proof. This change is not hardware-qualified and gives no throughput result.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

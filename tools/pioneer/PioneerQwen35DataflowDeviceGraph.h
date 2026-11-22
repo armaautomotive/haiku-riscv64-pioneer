@@ -63,12 +63,13 @@ public:
 	// additionally needs a fresh barrier epoch and non-overlapping sequence
 	// range: RMS scratch and argmax receipts also depend on the sequence.
 	bool Start(const DataflowStreamBinding& binding,unsigned worker,unsigned maxPolls,
-		unsigned runEpoch,unsigned sequenceStart) {
+		unsigned runEpoch,unsigned sequenceStart,unsigned runCount) {
 		if (state!=DataflowGraphInvalid || !binding.Valid() || worker!=binding.core || !maxPolls
 			|| !runEpoch || !sequenceStart || sequenceStart>DataflowWorkerSequenceLimit
-			|| binding.count-1>DataflowWorkerSequenceLimit-sequenceStart)
+			|| !runCount || runCount>binding.count
+			|| runCount-1>DataflowWorkerSequenceLimit-sequenceStart)
 			return false;
-		core=worker;epoch=runEpoch;firstSequence=sequenceStart;count=binding.count;pollBudget=maxPolls;
+		core=worker;epoch=runEpoch;firstSequence=sequenceStart;count=runCount;pollBudget=maxPolls;
 		state=DataflowGraphReady;return true;
 	}
 	DataflowDeviceGraphState Tick() {

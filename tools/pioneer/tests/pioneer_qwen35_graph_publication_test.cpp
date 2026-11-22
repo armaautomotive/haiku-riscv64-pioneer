@@ -8,6 +8,9 @@ struct PublisherIO {
 	DataflowGraphRunDescriptor records[DataflowCoreCount]{};
 	unsigned staged=0,checked=0,published=0;
 	int failPreflight=-1,failStage=-1,failReadback=-1,failPublish=-1;
+	bool owner=true;unsigned sealedSlot=0;
+	bool GraphOwnershipMatches(const DataflowStreamPlan&,const DataflowDynamicTokenContext&,
+		const DataflowGraphRunTicket&,unsigned slot) { return owner && slot==sealedSlot; }
 	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& s) {
 		if (int(core)==failPreflight) return false;
 		s={4,4,4,DataflowWorkerReady,0,0,0,0};return true;
@@ -51,6 +54,12 @@ int main() {
 	auto pre=std::make_unique<PublisherIO>();pre->failPreflight=8;DataflowGraphPublisher preOwner;
 	assert(preOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*pre,scratch)==DataflowGraphPublishPreflight
 		&& !preOwner.Faulted() && !pre->staged && !pre->published);
+	auto wrongSlot=std::make_unique<PublisherIO>();DataflowGraphPublisher slotOwner;
+	assert(slotOwner.Start(*plan,f->routes,token,ticket,5,10000,1,*wrongSlot,scratch)==DataflowGraphPublishPreflight
+		&& !wrongSlot->staged && !wrongSlot->published && !slotOwner.Faulted());
+	auto missingOwner=std::make_unique<PublisherIO>();missingOwner->owner=false;DataflowGraphPublisher missingOwnerPublisher;
+	assert(missingOwnerPublisher.Start(*plan,f->routes,token,ticket,5,10000,0,*missingOwner,scratch)==DataflowGraphPublishPreflight
+		&& !missingOwner->staged && !missingOwner->published);
 	auto stage=std::make_unique<PublisherIO>();stage->failStage=7;DataflowGraphPublisher stageOwner;
 	assert(stageOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*stage,scratch)==DataflowGraphPublishStagingFault
 		&& stageOwner.Faulted() && stageOwner.FailedCore()==7 && !stage->published);

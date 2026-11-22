@@ -30,7 +30,7 @@ struct GraphWitnessExecution {
 extern "C" unsigned PioneerQwen35DeviceGraphCompileProbe(
 	const PioneerQwen35::DataflowStreamBinding& binding,const PioneerQwen35::Range& lease,
 	const unsigned (&routes)[2][PioneerQwen35::Banks],unsigned core,unsigned pollBudget,
-	unsigned runEpoch,unsigned sequenceStart,
+	unsigned runEpoch,unsigned sequenceStart,unsigned runCount,
 	const PioneerQwen35::DataflowDynamicTokenContext& run,
 	PioneerQwen35::DataflowWorkerMailbox* mailbox)
 {
@@ -38,7 +38,7 @@ extern "C" unsigned PioneerQwen35DeviceGraphCompileProbe(
 	PioneerQwen35::DataflowBlackholeBarrierIO transport(core);
 	PioneerQwen35::DataflowDeviceGraph<GraphWitnessExecution,
 		PioneerQwen35::DataflowBlackholeBarrierIO> graph(execution,transport);
-	if (!graph.Start(binding,core,pollBudget,runEpoch,sequenceStart)) return PioneerQwen35::DataflowGraphInvalid;
+	if (!graph.Start(binding,core,pollBudget,runEpoch,sequenceStart,runCount)) return PioneerQwen35::DataflowGraphInvalid;
 	for (;;) {
 		const auto state=graph.Tick();
 		if (state==PioneerQwen35::DataflowGraphLocalComplete || state==PioneerQwen35::DataflowGraphRetain)
@@ -54,5 +54,5 @@ extern "C" bool qwen35_graph_run_descriptor(
 		|| descriptor->triggerSequence!=PioneerQwen35::DataflowLoadAcquire(mailbox->commandSequence)) return false;
 	return PioneerQwen35DeviceGraphCompileProbe(descriptor->binding,descriptor->lease,
 		descriptor->routes,descriptor->core,descriptor->pollLimit,descriptor->ticket.epoch,
-		descriptor->ticket.firstSequence,descriptor->token,mailbox)==PioneerQwen35::DataflowGraphLocalComplete;
+		descriptor->ticket.firstSequence,descriptor->ticket.count,descriptor->token,mailbox)==PioneerQwen35::DataflowGraphLocalComplete;
 }

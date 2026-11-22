@@ -37,11 +37,13 @@ public:
 		output={Vocabulary,0,0,0};
 		if (phase!=Empty || !publisher.Published() || !plan.ready
 			|| (plan.count!=DataflowGraphDecodeSteps && plan.count!=DataflowGraphPromptSteps)
-			|| publisher.Ticket().count!=plan.count) return DataflowGraphCompletionInvalid;
-		if (!io.GraphOwnershipMatches(plan,token,publisher.Ticket()))
+			|| (publisher.Ticket().count!=DataflowGraphDecodeSteps
+				&& publisher.Ticket().count!=DataflowGraphPromptSteps)
+			|| publisher.Ticket().count>plan.count) return DataflowGraphCompletionInvalid;
+		if (!io.GraphOwnershipMatches(plan,token,publisher.Ticket(),publisher.InputSlot()))
 			return Fail(DataflowGraphCompletionOwnershipFault,DataflowCoreCount);
 		const unsigned trigger=publisher.TriggerSequence(),previous=publisher.PreviousSequence();
-		const bool decode=plan.count==DataflowGraphDecodeSteps;
+		const bool decode=publisher.Ticket().count==DataflowGraphDecodeSteps;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			auto& r=receipts[core];
 			if (!io.WaitForCompletion(core,trigger,r) || r.commandSequence!=trigger

@@ -67,13 +67,13 @@ struct Fleet {
 	std::array<std::unique_ptr<Execution>,DataflowBarrierWorkers> execution;
 	std::array<std::unique_ptr<Transport>,DataflowBarrierWorkers> transport;
 	std::array<std::unique_ptr<Graph>,DataflowBarrierWorkers> graph;
-	explicit Fleet(unsigned budget=8,unsigned runEpoch=77,unsigned firstSequence=1) {
+	explicit Fleet(unsigned budget=8,unsigned runEpoch=77,unsigned firstSequence=1,unsigned count=2) {
 		for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
 			execution[i]=std::make_unique<Execution>(i);
 			execution[i]->firstSequence=firstSequence;
 			transport[i]=std::make_unique<Transport>(Transport{fabric,i});
 			graph[i]=std::make_unique<Graph>(*execution[i],*transport[i]);
-			assert(graph[i]->Start(execution[i]->binding,i,budget,runEpoch,firstSequence));
+			assert(graph[i]->Start(execution[i]->binding,i,budget,runEpoch,firstSequence,count));
 		}
 	}
 	void Run(unsigned rounds=10) {
@@ -101,11 +101,18 @@ int main() {
 	Fleet fresh(8,78,1001);fresh.Run();
 	for (auto& g:fresh.graph) assert(g->State()==DataflowGraphLocalComplete);
 	assert(fresh.fabric.release[1].commit.word[0]==78 && fresh.fabric.release[1].commit.word[2]==2);
+	Fleet prefix(8,79,2001,1);prefix.Run();
+	for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
+		assert(prefix.graph[i]->State()==DataflowGraphLocalComplete && prefix.graph[i]->CompletedSteps()==1);
+		assert(prefix.execution[i]->fetches==1 && prefix.execution[i]->executes==1 && !prefix.execution[i]->resets);
+	}
 	Fabric invalidFabric;Execution invalidExecution(0);Transport invalidTransport{invalidFabric,0};
 	Graph invalid(invalidExecution,invalidTransport);
-	assert(!invalid.Start(invalidExecution.binding,0,8,0,1)
-		&& !invalid.Start(invalidExecution.binding,0,8,78,0)
-		&& !invalid.Start(invalidExecution.binding,0,8,78,DataflowWorkerSequenceLimit));
+	assert(!invalid.Start(invalidExecution.binding,0,8,0,1,2)
+		&& !invalid.Start(invalidExecution.binding,0,8,78,0,2)
+		&& !invalid.Start(invalidExecution.binding,0,8,78,DataflowWorkerSequenceLimit,2)
+		&& !invalid.Start(invalidExecution.binding,0,8,78,1,0)
+		&& !invalid.Start(invalidExecution.binding,0,8,78,1,3));
 	Fleet fetch;fetch.execution[7]->failFetch=0;fetch.Run();
 	assert(fetch.graph[7]->Fault()==DataflowGraphFetchFault && fetch.execution[7]->executes==0);
 	for (auto& g:fetch.graph) assert(g->State()==DataflowGraphRetain);
@@ -120,6 +127,6 @@ int main() {
 	for (auto& g:partial.graph) assert(g->State()==DataflowGraphRetain);
 	Fleet reset;reset.execution[7]->failReset=0;reset.Run();
 	assert(reset.graph[7]->Fault()==DataflowGraphQueueFault && reset.execution[7]->fetches==1);
-	assert(!reset.graph[7]->Start(reset.execution[7]->binding,7,8,78,3));
+	assert(!reset.graph[7]->Start(reset.execution[7]->binding,7,8,78,3,2));
 	puts("PASS device graph: 120 simulated workers, checked streams, barriers, retention and bounded deadlines; NO HARDWARE");
 }

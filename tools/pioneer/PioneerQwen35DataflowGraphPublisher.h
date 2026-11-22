@@ -39,10 +39,16 @@ public:
 		const DataflowGraphRunTicket& ticket,unsigned trigger,unsigned pollLimit,unsigned slot,
 		IO& io,DataflowGraphRunDescriptor& scratch)
 	{
-		if (phase!=PhaseEmpty || !plan.ready || !plan.epoch || !plan.count
-			|| plan.count!=ticket.count || !token.Valid() || !trigger
+		if (phase!=PhaseEmpty || !plan.ready || !plan.epoch
+			|| (plan.count!=DataflowGraphPromptSteps && plan.count!=DataflowGraphDecodeSteps)
+			|| (ticket.count!=DataflowGraphPromptSteps && ticket.count!=DataflowGraphDecodeSteps)
+			|| ticket.count>plan.count || !token.Valid() || !trigger
 			|| trigger>DataflowWorkerSequenceLimit || !pollLimit || pollLimit>DataflowGraphRunMaxPolls || slot>=ActivationBuffers
 			|| !DataflowBankRoutesValid(routes)) return DataflowGraphPublishInvalid;
+		// Structural validity is not authority: the owner must bind the
+		// sealed template (including its fixed activation slot), model, token
+		// and fresh ticket before any worker memory is written.
+		if (!io.GraphOwnershipMatches(plan,token,ticket,slot)) return DataflowGraphPublishPreflight;
 		unsigned completed=0;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			DataflowWorkerSnapshot snapshot{};
