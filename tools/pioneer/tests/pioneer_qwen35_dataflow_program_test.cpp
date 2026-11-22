@@ -79,7 +79,7 @@ struct UnpackAddressOps {
 };
 
 struct RoleTestCounters {
-	std::atomic<unsigned> activationReads{0},weightReads{0},packedChunks{0};
+	std::atomic<unsigned> activationReads{0},weightReads{0},packedChunks{0},binds{0};
 	std::atomic<unsigned> outputBegins{0},matmuls{0},outputFinishes{0},outputWrites{0};
 	std::atomic<bool> okay{true};
 	void Fail() { okay.store(false,std::memory_order_relaxed); }
@@ -88,10 +88,14 @@ struct RoleTestCounters {
 struct RoleTestOps {
 	enum { TensixMatrixEngine=1 };
 	RoleTestCounters& counters;
-	bool Bind(const DataflowCoreInvocation&) { return true; }
+	bool bound=false;
+	bool Bind(const DataflowCoreInvocation&) {
+		if (bound) return false;
+		bound=true; counters.binds.fetch_add(1,std::memory_order_relaxed); return true;
+	}
 	bool ReadActivation(const RowSpace& source,unsigned rows,uint8_t* output,unsigned bytes)
 	{
-		if (!output || rows>source.rows || source.rowBytes!=sizeof(float)
+		if (!bound || !output || rows>source.rows || source.rowBytes!=sizeof(float)
 			|| bytes!=rows*sizeof(float)) { counters.Fail(); return false; }
 		float* values=reinterpret_cast<float*>(output);
 		for (unsigned i=0;i<rows;i++) values[i]=float(i);
@@ -149,13 +153,17 @@ struct RoleTestOps {
 	}
 	bool WriteOutput(unsigned bank,uint32_t address,const uint8_t* input,unsigned bytes)
 	{
-		if (bank>=Banks || address<BankBase || address>=BankLimit || !input
+		if (!bound || bank>=Banks || address<BankBase || address>=BankLimit || !input
 			|| bytes!=DataflowOutputPageBytes || input[0]!=0x5a) {
 			counters.Fail(); return false;
 		}
 		counters.outputWrites.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
+};
+
+struct RejectBindOps : RoleTestOps {
+	bool Bind(const DataflowCoreInvocation&) { return false; }
 };
 
 static void CompileRoleInterfaces()
@@ -232,6 +240,23 @@ static void CheckConcurrentRoles()
 	assert(DataflowBindQueues(invocation,controls,local,queues));
 	alignas(float) uint8_t activation[DataflowActivationCacheBytes]{};
 	RoleTestCounters counters{};
+	{
+		DataflowQueueControl rejectControls[DataflowCircularBufferCount]{};
+		DataflowQueueView rejectQueues[DataflowCircularBufferCount]{};
+		assert(DataflowBindQueues(invocation,rejectControls,local,rejectQueues));
+		RejectBindOps reject{{counters}};
+		assert(!PioneerQwen35DataflowReader(invocation,rejectQueues[0],
+			rejectQueues[1],activation,reject));
+		assert(DataflowQueueFailure(rejectControls[0])==DataflowFailureReader);
+	}
+	{
+		DataflowQueueControl rejectControls[DataflowCircularBufferCount]{};
+		DataflowQueueView rejectQueues[DataflowCircularBufferCount]{};
+		assert(DataflowBindQueues(invocation,rejectControls,local,rejectQueues));
+		RejectBindOps reject{{counters}};
+		assert(!PioneerQwen35DataflowWriter(invocation,rejectQueues[2],reject));
+		assert(DataflowQueueFailure(rejectControls[2])==DataflowFailureWriter);
+	}
 	RoleTestOps readerOps{counters},computeOps{counters},writerOps{counters};
 	bool readerOkay=false,computeOkay=false,writerOkay=false;
 	std::thread reader([&] { readerOkay=PioneerQwen35DataflowReader(invocation,
@@ -254,7 +279,7 @@ static void CheckConcurrentRoles()
 	assert(counters.okay.load(std::memory_order_relaxed));
 	const unsigned groups=invocation.assignment.groups;
 	const unsigned tiles=groups*invocation.blocks;
-	assert(counters.activationReads==1
+	assert(counters.binds==3 && counters.activationReads==1
 		&& counters.packedChunks==Hidden/DataflowActivationChunkInputs
 		&& counters.weightReads==tiles && counters.matmuls==tiles
 		&& counters.outputBegins==groups && counters.outputFinishes==groups

@@ -19,6 +19,7 @@ trap 'rm -rf "$temporary"' EXIT HUP INT TERM
 object="$temporary/dataflow.o"
 barrier_object="$temporary/device-barrier.o"
 stream_object="$temporary/device-stream.o"
+queued_object="$temporary/queued-compute.o"
 
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
@@ -46,6 +47,30 @@ stream_object="$temporary/device-stream.o"
 	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 	-c "$directory/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" \
 	-o "$stream_object"
+
+# Offline-only separate compute role: compile the concrete Tensix backend
+# against ticket-paired queue pages. It is not linked into the service image.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_queued_compute_target_probe.cpp" \
+	-o "$queued_object"
+if [ -n "$("$nm" -u "$queued_object")" ]; then
+	echo 'queued compute probe has unresolved runtime helpers' >&2
+	exit 1
+fi
+"$objdump" -d "$queued_object" > "$temporary/queued-compute.disassembly"
+if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/queued-compute.disassembly" >/dev/null; then
+	echo 'queued compute probe uses unsupported atomics' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_queued_input_test.cpp" \
+	-o "$temporary/queued-input-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/queued-input-test"
 
 # This links both compile probes into a second saved L1 region. It is a size
 # witness only: the production image still has one code region and does not

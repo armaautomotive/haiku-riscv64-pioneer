@@ -346,7 +346,7 @@ bool PioneerQwen35DataflowReader(const DataflowCoreInvocation& program,
 	uint8_t* activationCache,Ops& ops)
 {
 	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(weights)
-		|| !DataflowQueueValid(inputs) || !activationCache) {
+		|| !DataflowQueueValid(inputs) || !activationCache || !ops.Bind(program)) {
 		DataflowQueueFail(weights,DataflowFailureReader);
 		DataflowQueueFail(inputs,DataflowFailureReader);
 		return false;
@@ -460,7 +460,8 @@ template<class Ops>
 bool PioneerQwen35DataflowWriter(const DataflowCoreInvocation& program,
 	DataflowQueueView& outputs,Ops& ops)
 {
-	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(outputs)) {
+	if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(outputs)
+		|| !ops.Bind(program)) {
 		DataflowQueueFail(outputs,DataflowFailureWriter);
 		return false;
 	}

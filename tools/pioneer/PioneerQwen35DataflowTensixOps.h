@@ -10,6 +10,9 @@
 #include "PioneerQwen35DataflowTensixInit.h"
 #include "PioneerQwen35DataflowTensixPhases.h"
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_QWEN35_QUEUED_COMPUTE
+#include "PioneerQwen35DataflowQueuedInput.h"
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "PioneerQwen35DataflowGraphTrace.h"
 #endif
@@ -219,6 +222,11 @@ public:
 			|| !inputPage || !fEmitter.Good()) return false;
 		const uintptr_t weightAddress=reinterpret_cast<uintptr_t>(weightPage);
 		const uintptr_t inputAddress=reinterpret_cast<uintptr_t>(inputPage);
+#ifdef PIONEER_QWEN35_QUEUED_COMPUTE
+		// The offline separate-role image consumes matching, ticket-owned pages.
+		// Its role launcher and device lifecycle have not yet been qualified.
+		if (!DataflowQueuedInputPairValid(weightAddress,inputAddress)) return false;
+#else
 		const uint8_t* const expectedInput=DataflowPackedActivationPage(
 			reinterpret_cast<const uint8_t*>(static_cast<uintptr_t>(DataflowActivationCacheAddress)),
 			type,fProgram->inputs,block);
@@ -226,6 +234,7 @@ public:
 			&& weightAddress!=DataflowWeightBufferAddress+DataflowWeightBufferPageStride)
 			|| !expectedInput || inputAddress!=reinterpret_cast<uintptr_t>(expectedInput))
 			return false;
+#endif
 		const unsigned weightBytes=fProgram->circularBuffer[0].pageBytes;
 		const unsigned panels=type==8?2:16;
 		const unsigned affineType=type==13?12:type;
