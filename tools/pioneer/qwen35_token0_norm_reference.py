@@ -25,11 +25,9 @@ def checked(path, length, digest):
     return data
 
 
-def main():
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: qwen35_token0_norm_reference.py GGUF_PREFIX NORM_SLICE")
-    prefix = checked(sys.argv[1], 32 * 1024 * 1024, PREFIX_SHA256)
-    norm = checked(sys.argv[2], 2560 * 4, NORM_SHA256)
+def normalized(prefix_path, norm_path):
+    prefix = checked(prefix_path, 32 * 1024 * 1024, PREFIX_SHA256)
+    norm = checked(norm_path, 2560 * 4, NORM_SHA256)
     embedding = []
     for block in range(10):
         base = EMBEDDING_OFFSET + block * 210
@@ -48,8 +46,15 @@ def main():
         embedding.extend(values)
     weights = struct.unpack("<2560f", norm)
     inverse_rms = 1.0 / math.sqrt(sum(value * value for value in embedding) / 2560 + 1e-6)
+    return [value * inverse_rms * weight for value, weight in zip(embedding, weights)]
+
+
+def main():
+    if len(sys.argv) != 3:
+        raise SystemExit("usage: qwen35_token0_norm_reference.py GGUF_PREFIX NORM_SLICE")
+    values = normalized(sys.argv[1], sys.argv[2])
     for row in (16, 31):
-        value = embedding[row] * inverse_rms * weights[row]
+        value = values[row]
         bits = struct.unpack("<I", struct.pack("<f", value))[0]
         print(f"token=0 layer=0 row={row} bits=0x{bits:08x} value={value:.9g}")
 
