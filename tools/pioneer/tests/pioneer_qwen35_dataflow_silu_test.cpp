@@ -19,6 +19,16 @@ static float Reference(float gate,float up)
 
 int main()
 {
+	for (int step=0;step<=151000;step++) {
+		const float input=-float(step)*0.001f;
+		int actual=1;
+		assert(DataflowSiluTruncateExponent(input,actual));
+		assert(actual==int(std::trunc(input)));
+	}
+	int invalid=0;
+	assert(!DataflowSiluTruncateExponent(0.5f,invalid));
+	assert(!DataflowSiluTruncateExponent(-152.0f,invalid));
+	assert(!DataflowSiluTruncateExponent(NAN,invalid));
 	for (unsigned step=0;step<=104000;step++) {
 		const float input=step==104000?0.0f:-104.0f+float(step)*0.001f;
 		float got=0;

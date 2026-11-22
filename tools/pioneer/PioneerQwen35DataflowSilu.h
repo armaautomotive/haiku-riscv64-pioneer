@@ -19,6 +19,22 @@ inline bool DataflowSiluFinite(float value)
 	return (encoded.bits&0x7f800000U)!=0x7f800000U;
 }
 
+// BabyRISCV conversions ignore the instruction's rounding-mode bits. Decode
+// the small non-positive range explicitly so truncation is independent of
+// the core's always-RNE floating conversion behavior.
+// https://github.com/tenstorrent/tt-isa-documentation/blob/e0b765516b78f8faf34004f93d68ad49c59f4725/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md
+inline bool DataflowSiluTruncateExponent(float value,int& result)
+{
+	if (!DataflowSiluFinite(value) || value>0 || value< -151.0f) return false;
+	DataflowSiluFloatBits encoded{};encoded.value=value;
+	const unsigned absolute=encoded.bits&0x7fffffffU;
+	const unsigned biased=absolute>>23;
+	if (biased<127) { result=0;return true; }
+	if (biased>134) return false;
+	const unsigned magnitude=((absolute&0x7fffffU)|0x800000U)>>(150-biased);
+	result=-int(magnitude);return true;
+}
+
 // Range-reduced FP32 exp for non-positive values. The reduced interval is
 // [-ln(2)/2, ln(2)/2], where the degree-10 Taylor polynomial is well bounded.
 // Scaling by an exact power of two keeps this suitable for the freestanding
@@ -30,7 +46,8 @@ inline bool DataflowExpNonPositive(float value,float& result)
 	constexpr float OneOverLn2=1.4426950408889634f;
 	constexpr float Ln2=0.6931471805599453f;
 	const float scaled=value*OneOverLn2;
-	const int exponent=int(scaled-0.5f); // RV32 conversion truncates toward zero.
+	int exponent=0;
+	if (!DataflowSiluTruncateExponent(scaled-0.5f,exponent)) return false;
 	const float reduced=value-float(exponent)*Ln2;
 	float polynomial=1.0f/3628800.0f;
 	polynomial=1.0f/362880.0f+reduced*polynomial;

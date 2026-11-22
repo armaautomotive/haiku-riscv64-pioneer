@@ -98,8 +98,8 @@ if "$cross-objdump" -d "$output/service.elf" \
 	echo 'resident worker uses an unsupported A-extension atomic' >&2
 	exit 1
 fi
-if grep -E '[[:space:]](fdiv|fsqrt)[.][sd][[:space:]]' "$output/disassembly.txt" >/dev/null; then
-	echo 'resident BRISC worker uses an unqualified floating divide or square root' >&2
+if grep -E '[[:space:]]((fdiv|fsqrt)[.][sd]|fcvt[.](w|wu)[.][sd])[[:space:]]' "$output/disassembly.txt" >/dev/null; then
+	echo 'resident BRISC worker uses an unsupported floating divide/square root or a rounding-sensitive float-to-integer conversion' >&2
 	exit 1
 fi
 shasum -a 256 "$output/boot.bin" "$output/text.bin"

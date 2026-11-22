@@ -1,5 +1,15 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+The [Blackhole BabyRISCV instruction set](https://github.com/tenstorrent/tt-isa-documentation/blob/e0b765516b78f8faf34004f93d68ad49c59f4725/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md)
+confirms that `fdiv.s`/`fsqrt.s` are not implemented and that float rounding
+mode bits are ignored. The SiLU exponent calculation previously emitted
+`fcvt.w.s ... rtz`; it now decodes the small exponent with integer operations
+so its truncation does not depend on hardware rounding mode. The worker-image
+audit rejects these conversions as well as unsupported divide/square root.
+SiLU and convolution numerical tests, the graph service image build and the
+full target suite pass. This follow-up has not yet run on hardware.
+
+
 Tag0160 traced the first convolution stall to arithmetic on group0. Its exact
 worker disassembly contains `fdiv.s` inside `DataflowSiluProduct`; BRISC's
 existing qualified math uses software division. Tag0161 replaces the runtime
