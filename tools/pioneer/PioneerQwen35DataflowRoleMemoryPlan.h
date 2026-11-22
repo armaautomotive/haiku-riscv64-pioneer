@@ -12,9 +12,9 @@ namespace PioneerQwen35 {
 // then prove all roles have stopped before restoring anything.
 enum : unsigned {
     DataflowRoleReaderCodeAddress=0xb0000,
-    DataflowRoleReaderCodeLimit=0xb4000,
-    DataflowRoleWriterCodeAddress=0xb4000,
-    DataflowRoleWriterCodeLimit=0xb6000,
+    DataflowRoleReaderCodeLimit=0xb5000,
+    DataflowRoleWriterCodeAddress=0xb5000,
+    DataflowRoleWriterCodeLimit=0xb8000,
     DataflowRoleExtraL1Address=DataflowRoleReaderCodeAddress,
     DataflowRoleExtraL1Limit=DataflowRoleWriterCodeLimit,
     DataflowRoleBriscBootAddress=0x00000,

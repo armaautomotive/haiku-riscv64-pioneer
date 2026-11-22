@@ -2,6 +2,7 @@
 #include "../PioneerQwen35DataflowKernels.h"
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 #include "../PioneerQwen35DataflowAuthorization.h"
+#include "../PioneerQwen35DataflowRoleCoordinator.h"
 #include <assert.h>
 #include <atomic>
 #include <cstring>
@@ -289,6 +290,95 @@ static void CheckConcurrentRoles()
 			==DataflowLoadAcquire(controls[i].consumed));
 }
 
+static void CheckCoordinatedRoles()
+{
+	TensorSpace weight{}; weight.type=13; weight.inputs=Hidden;
+	Rows(weight.place,Ffn,Hidden/256*(PioneerQwen35Projection::TileBytes(13)/16),0x08000000);
+	RowSpace input{},output{};
+	Rows(input,Ffn,sizeof(float),0x04000000);
+	Rows(output,Ffn,sizeof(float),0x06000000);
+	DataflowProjectionProgram program{};
+	assert(BuildProgram(weight,input,Hidden,output,program));
+	DataflowCoreInvocation invocation{};
+	assert(DataflowProgramBuilder::BindCore(program,0,invocation));
+	DataflowQueueControl controls[DataflowCircularBufferCount]{};
+	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+	DataflowQueueView queues[DataflowCircularBufferCount]{};
+	alignas(float) uint8_t activation[DataflowActivationCacheBytes]{};
+	assert(DataflowBindQueues(invocation,controls,local,queues));
+	RoleTestCounters counters{};
+	RoleTestOps readerOps{counters},computeOps{counters},writerOps{counters};
+	DataflowRoleMailbox box{};
+	box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+	struct ReaderBody {
+		const DataflowCoreInvocation& program; DataflowQueueView* queues;
+		uint8_t* activation; RoleTestOps& ops;
+		bool Run() { return PioneerQwen35DataflowReader(program,queues[0],queues[1],activation,ops); }
+	} readerBody{invocation,queues,activation,readerOps};
+	struct WriterBody {
+		const DataflowCoreInvocation& program; DataflowQueueView* queues; RoleTestOps& ops;
+		bool Run() { return PioneerQwen35DataflowWriter(program,queues[2],ops); }
+	} writerBody{invocation,queues,writerOps};
+	struct Coordinator {
+		const DataflowCoreInvocation& program; DataflowQueueView* queues;
+		DataflowQueueControl* controls; RoleTestOps& ops;
+		bool RunCompute() { return PioneerQwen35DataflowCompute(program,queues[0],queues[1],queues[2],ops); }
+		void Pause() { std::this_thread::yield(); }
+		bool AuditAndResetCleanQueues() { return DataflowRoleCleanQueuesForReuse(controls); }
+	} coordinator{invocation,queues,controls,computeOps};
+	std::atomic<bool> bad{false};
+	auto roleLoop=[&](unsigned role,auto& body) {
+		DataflowRoleTickState state{};
+		for (unsigned n=0;n<10000000 && !bad.load();n++) {
+			const auto result=DataflowRoleServiceTick(box,role,state,body);
+			if (result==DataflowRoleTickStopRequested) return;
+			if (result==DataflowRoleTickInvalid || result==DataflowRoleTickFault
+				|| result==DataflowRoleTickWaitingRecovery) { bad.store(true); return; }
+			if ((n&255)==0) std::this_thread::yield();
+		}
+		bad.store(true);
+	};
+	std::thread reader([&] { roleLoop(DataflowRoleReader,readerBody); });
+	std::thread writer([&] { roleLoop(DataflowRoleWriter,writerBody); });
+	const auto result=DataflowRoleCoordinate(box,1,DataflowQueuePollLimit,coordinator);
+	if (result!=DataflowRoleCoordinatorComplete || !DataflowRoleMailboxRequestStop(box))
+		bad.store(true);
+	reader.join(); writer.join();
+	assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
+	assert(counters.okay && counters.binds==3 && counters.activationReads==1);
+	assert(counters.matmuls==invocation.assignment.groups*invocation.blocks);
+	assert(counters.outputWrites==invocation.assignment.groups);
+	for (const auto& queue:controls) assert(!queue.produced && !queue.consumed);
+}
+
+static void CheckInactiveRoleReader()
+{
+	TensorSpace weight{};
+	weight.type=13; weight.inputs=Hidden;
+	Rows(weight.place,64,Hidden/256*(PioneerQwen35Projection::TileBytes(13)/16),0x08000000);
+	RowSpace input{},output{};
+	Rows(input,Hidden,sizeof(float),0x04000000);
+	Rows(output,64,sizeof(float),0x06000000);
+	DataflowProjectionProgram program{};
+	assert(BuildProgram(weight,input,Hidden,output,program));
+	DataflowCoreInvocation inactive{};
+	bool found=false;
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		assert(DataflowProgramBuilder::BindCore(program,core,inactive));
+		if (!inactive.assignment.active) { found=true; break; }
+	}
+	assert(found && inactive.Valid());
+	DataflowQueueControl controls[DataflowCircularBufferCount]{};
+	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+	DataflowQueueView queues[DataflowCircularBufferCount]{};
+	alignas(float) uint8_t activation[DataflowActivationCacheBytes]{};
+	assert(DataflowBindQueues(inactive,controls,local,queues));
+	RoleTestCounters counters{}; RoleTestOps reader{counters};
+	assert(PioneerQwen35DataflowReader(inactive,queues[0],queues[1],activation,reader));
+	assert(counters.binds==1 && counters.activationReads==0 && counters.weightReads==0
+		&& counters.packedChunks==0);
+}
+
 static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 {
 	space={};
@@ -408,6 +498,8 @@ int main()
 	CompileRoleInterfaces();
 	CheckDynamicWeightAddresses();
 	CheckConcurrentRoles();
+	CheckCoordinatedRoles();
+	CheckInactiveRoleReader();
 	TensorSpace weight{};
 	weight.type=14;
 	weight.inputs=Hidden;

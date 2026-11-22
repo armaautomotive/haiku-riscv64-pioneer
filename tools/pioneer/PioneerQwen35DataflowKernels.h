@@ -351,6 +351,9 @@ bool PioneerQwen35DataflowReader(const DataflowCoreInvocation& program,
 		DataflowQueueFail(inputs,DataflowFailureReader);
 		return false;
 	}
+	// An inactive shard still receives and acknowledges the fleet command,
+	// but has no rows to compute and must not fetch or pack an activation.
+	if (!program.assignment.active) return true;
 	if (!ops.ReadActivation(program.input,program.inputRows,activationCache,
 		program.inputRows*sizeof(float))) {
 		DataflowQueueFail(weights,DataflowFailureReader);

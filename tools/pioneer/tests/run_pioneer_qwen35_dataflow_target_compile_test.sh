@@ -103,14 +103,26 @@ for role in reader compute writer; do
 	"$size" "$witness"
 done
 echo 'PASS separate queued role link-size witnesses; NOT SERVICE IMAGES'
-# Check proposed disjoint code slots beyond the currently saved L1 view. This
-# is only a link witness: the current owner must never load either result.
+# The compute coordinator witness includes the concrete Tensix backend, but
+# it is not placed in the resident graph and is not a loadable service image.
+"$ld" -m elf32lriscv --no-relax --gc-sections -Ttext 0xc0000 \
+	-e qwen35_queued_compute_coordinate "$roles_object" \
+	-o "$temporary/queued-compute-coordinator-witness.elf"
+if [ -n "$("$nm" -u "$temporary/queued-compute-coordinator-witness.elf")" ]; then
+	echo 'queued compute coordinator witness has unresolved imports' >&2
+	exit 1
+fi
+"$size" "$temporary/queued-compute-coordinator-witness.elf"
+echo 'PASS concrete queued Tensix coordinator link witness; NOT A SERVICE IMAGE'
+# Check proposed disjoint code slots including service-tick adapters, beyond
+# the currently saved L1 view. No resident loop, boot shim or owner is linked;
+# the current owner must never load either result.
 for role in reader writer; do
-	if [ "$role" = reader ]; then start=0xb0000; limit=0xb4000
-	else start=0xb4000; limit=0xb6000; fi
+	if [ "$role" = reader ]; then start=0xb0000; limit=0xb5000
+	else start=0xb5000; limit=0xb8000; fi
 	"$ld" -m elf32lriscv --no-relax --gc-sections \
 		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
-		-e "qwen35_queued_${role}_once" \
+		-e "qwen35_queued_${role}_tick" \
 		-T "$root/tools/pioneer/blackhole_qwen35_queued_role_witness.ld" \
 		"$roles_object" -o "$temporary/queued-${role}-layout-witness.elf"
 	if [ -n "$("$nm" -u "$temporary/queued-${role}-layout-witness.elf")" ]; then
@@ -141,6 +153,56 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_code_owner_test.cpp" \
 	-o "$temporary/role-code-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-code-owner-test"
+# Per-tile handoff uses only single-writer words and the existing fences.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_mailbox_target_probe.cpp" \
+	-o "$temporary/role-mailbox.o"
+if [ -n "$("$nm" -u "$temporary/role-mailbox.o")" ]; then
+	echo 'role mailbox target probe has unresolved imports' >&2
+	exit 1
+fi
+"$objdump" -d "$temporary/role-mailbox.o" > "$temporary/role-mailbox.disassembly"
+if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/role-mailbox.disassembly" >/dev/null; then
+	echo 'role mailbox target probe uses unsupported atomics' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_mailbox_test.cpp" \
+	-o "$temporary/role-mailbox-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-mailbox-test"
+# Coordinator simulation exercises concurrent role completion, queue audit,
+# fault retention and missing receipts; the target probe binds only fake IO.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_coordinator_target_probe.cpp" \
+	-o "$temporary/role-coordinator.o"
+if [ -n "$("$nm" -u "$temporary/role-coordinator.o")" ]; then
+	echo 'role coordinator target probe has unresolved imports' >&2
+	exit 1
+fi
+"$objdump" -d "$temporary/role-coordinator.o" > "$temporary/role-coordinator.disassembly"
+if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/role-coordinator.disassembly" >/dev/null; then
+	echo 'role coordinator target probe uses unsupported atomics' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_coordinator_test.cpp" \
+	-o "$temporary/role-coordinator-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-coordinator-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_program_test.cpp" \
+	-o "$temporary/dataflow-program-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-program-test"
+echo 'PASS queued role program, including inactive reader shards; SIMULATED ONLY'
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_queued_input_test.cpp" \
 	-o "$temporary/queued-input-test"

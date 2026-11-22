@@ -3,6 +3,9 @@
 #include <cassert>
 #include <cstdio>
 using namespace PioneerQwen35;
+static_assert(DataflowRoleReaderCodeAddress==0xb0000 && DataflowRoleReaderCodeLimit==0xb5000
+    && DataflowRoleWriterCodeAddress==0xb5000 && DataflowRoleWriterCodeLimit==0xb8000,
+    "witness linker slots match the proposed memory plan");
 int main()
 {
     assert(DataflowRoleExtraL1Range(DataflowRoleReaderCodeAddress,
