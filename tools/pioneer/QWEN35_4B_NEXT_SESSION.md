@@ -36,9 +36,12 @@ path.
 Offline recovery-guard work adds a 48-byte kernel proof for reset completion,
 firmware readiness, PCI restoration, rebuilt mappings, all 120 cores held,
 idle NoC/DMA, and released owners. Ticket and fault-epoch checks reject
-concurrent faults. Focused recovery tests and the full Haiku/RISC-V build pass
-with stack usage `15712/18432`. The ASIC reset ioctl and post-reset resource
-rebuild are not implemented or silicon-qualified yet. See
+concurrent faults. A separate, fail-closed helper now encodes the exact three
+Blackhole ASIC reset PCI writes and bounded reset-marker wait; fake-PCI tests
+pass. It is not connected to a driver ioctl. Focused recovery tests and the
+full Haiku/RISC-V build pass with stack usage `15712/18432`. The reset ioctl,
+post-reset PCI/firmware/resource rebuild, and silicon qualification remain
+open. See
 [`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md),
 [`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md), and
 [`tag0120 RUN`](benchmarks/qwen35-dataflow-tag0120-20261121/RUN.md).

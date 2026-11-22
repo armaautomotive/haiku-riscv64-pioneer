@@ -44,11 +44,15 @@ requires a ticket tied to the fault epoch, so a concurrent fault denies
 recovery. The extracted tests pass, as does the full Haiku/RISC-V target
 build (`15712/18432` kernel-stack audit); new recovery guard hash:
 `f3502649243aa99848960a43b5c1430fd0a97b63f6ce9382974328845eec0c00`.
-This is only a proof-gated guard API foundation: the driver ioctl, Blackhole
-ASIC-reset sequence, post-reset resource rebuild, physical recovery, and
-silicon validation are not implemented. The currently loaded legacy guard is
-`B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel boot
-from the NVMe/kexec path will be required to install the new guard.
+An isolated Blackhole reset helper now encodes the exact three PCI config
+writes used by Tenstorrent's KMD, rejects bus mastering or a stale reset marker,
+and waits a bounded number of times for the marker to clear. Its fake-PCI
+ASan/UBSan test passes with the reload-guard fixture. It is not wired to an
+ioctl. This remains only a proof-gated guard API and reset-sequence foundation:
+the driver ioctl, post-reset PCI/firmware/resource rebuild, physical recovery,
+and silicon validation are not implemented. The currently loaded legacy guard
+is `B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel
+boot from the NVMe/kexec path will be required to install the new guard.
 
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and
@@ -1136,11 +1140,13 @@ firmware is ready. Sources: [Blackhole reset callback](https://github.com/tensto
 [reset ioctl lifecycle](https://github.com/tenstorrent/tt-kmd/blob/6d84325ad6ba3c032c01adac2be01c9eb642fd1c/chardev.c),
 [PCIe reset marker and timer trigger](https://github.com/tenstorrent/tt-kmd/blob/6d84325ad6ba3c032c01adac2be01c9eb642fd1c/pcie.c).
 This is the design reference, not yet a Haiku ASIC-reset implementation. The
-new resident proof gate is compiled and unit-tested, but does not reset the
-ASIC, restore PCI state, rebuild mappings, prove firmware readiness, or clear
-the currently loaded tag0120 guard. A safe port must also account for Haiku's
-retained Qwen35 owner, host pages, mapped PCI windows, and persistent cold
-latch. It must not merely clear the latch or retry the stuck NoC request.
+new resident proof gate is compiled and unit-tested, and an isolated
+fake-PCI-tested helper encodes the three-write reset trigger. Neither one is
+connected to a driver operation: they do not reset the ASIC, restore PCI
+state, rebuild mappings, prove firmware readiness, or clear the currently
+loaded tag0120 guard. A safe port must also account for Haiku's retained Qwen35
+owner, host pages, mapped PCI windows, and persistent cold latch. It must not
+merely clear the latch or retry the stuck NoC request.
 
 The running board is reachable over Haiku SSH and the failed client has exited;
 tag0120 remains cold-latched at generation3 with one owner and the recovery
