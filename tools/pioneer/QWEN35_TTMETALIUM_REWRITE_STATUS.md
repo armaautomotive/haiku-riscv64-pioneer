@@ -37,6 +37,23 @@ initiator mask `0x0`, and outstanding transaction-ID mask `0x00000001`. The
 request was address `0x04185380`, route `0x312`, size `3392` bytes. It
 produced no token; decode timing is unavailable.
 
+Candidate tag0122 fixes a concrete resident-worker routing defect found by
+comparing the Blackhole register definitions with Tenstorrent's NoC code.
+Tag0120 used command-buffer `NOC_RET_ADDR_HI` at offset `0x14` as the local
+coordinate. That register is mutable command state, not the core identity;
+it could route a read response to another core. The worker and host audit now
+use `NOC_CFG(NOC_ID_LOGICAL)` at `0x148`, and the NoC commands use marked,
+static-VC1 read and nonposted write control fields. See Tenstorrent's
+[Blackhole register definitions](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/hw/inc/internal/tt-1xx/blackhole/noc/noc_parameters.h)
+and [NoC initialization and transfers](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/hw/inc/internal/tt-1xx/blackhole/noc_nonblocking_api.h).
+This is a plausible cause of tag0120's missing response, not a confirmed
+hardware diagnosis. A host fixture checks the stale-command-register case and
+the read/write command fields; the RV32IMF role build and Haiku/RISC-V target
+build pass. Tag0122 is not installed or hardware-tested. Its default driver
+SHA-256 is `6a4c03b152b01ec623b078755992b8fc342a558af41567e2d8775a1e9b2c9957`;
+the service text hash is
+`6af17124c1859b34166617577dce72bbbafb06e094146a796546a2650db51089`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
@@ -123,7 +140,7 @@ generation match; it refuses the lifetime condition with extra open
 descriptors, a live owner, or a quiesced driver. Extracted real close/status
 fixtures and the target build pass. This status does not initiate a reset,
 release any owner or host buffer, or grant hardware recovery. Tag0121 is not
-installed; its current default driver SHA-256 is
+installed; its historical default driver SHA-256 is
 `35b04d1f2b2f4654e615a6b343bda8dcbb443c4455eb6178f42c6e73cb29906a`
 and its measured stack bound is `15712/18432` bytes. The board remains at
 tag0120 cold with its owner retained.

@@ -21,7 +21,8 @@ static inline bool BlackholeResidentReadRegister(uint32_t offset)
 {
 	return BlackholeComputeNocReadOffset(offset) || (offset<=0x24 && (offset&3)==0)
 		|| (offset>=0x208 && offset<=0x214 && (offset&3)==0)
-		|| (offset>=0x280 && offset<0x2c0 && (offset&3)==0) || offset==0x178;
+		|| (offset>=0x280 && offset<0x2c0 && (offset&3)==0)
+		|| offset==0x148 || offset==0x178;
 }
 static inline bool BlackholeResidentWriteRegister(uint32_t offset)
 {

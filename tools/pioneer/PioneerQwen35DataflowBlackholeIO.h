@@ -127,8 +127,8 @@ class DataflowBlackholeNoc {
 			return false;
 		}
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
-		const uint32_t self=*Words(Base+0x14);
-		if (!self || self>0xfff) {
+		const uint32_t self=*Words(Base+DataflowNocLogicalIdOffset);
+		if (!DataflowNocLocalRouteValid(self)) {
 			if (detail) *detail={DataflowNocTransferIdentity,0xff,self,0};
 			return false;
 		}
@@ -137,9 +137,8 @@ class DataflowBlackholeNoc {
 		const unsigned delta[8]={write?0U:1U,write?flits:0U,1,
 			write?0U:1U,write?1U:0U,write?flits:0U,1,write?1U:0U};
 		for (unsigned i=0;i<8;i++) expected[i]=Counter(i)+delta[i];
-		const uint32_t command[10]={write?localAddress:remote,0,
-			write?self:route,write?remote:localAddress,0,
-			write?route:self,0,write?0x212U:0U,bytes,0};
+		uint32_t command[10];
+		DataflowNocBuildCommand(write,remote,route,localAddress,self,bytes,command);
 		for (unsigned i=0;i<10;i++) {
 			Words(Base)[i]=command[i];
 			const uint32_t observed=Words(Base)[i];
@@ -222,11 +221,12 @@ public:
 			|| remote<BankBase || remote>=BankLimit || bytes>BankLimit-remote
 			|| (remote&63) || route>0xfff || !Quiet()) return false;
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
-		const uint32_t self=*Words(Base+0x14);
-		if (!self || self>0xfff) return false;
+		const uint32_t self=*Words(Base+DataflowNocLogicalIdOffset);
+		if (!DataflowNocLocalRouteValid(self)) return false;
 		const unsigned delta[8]={1,0,1,1,0,0,1,0};
 		for (unsigned i=0;i<8;i++) ticket.expected[i]=Counter(i)+delta[i];
-		const uint32_t command[10]={remote,0,route,localAddress,0,self,0,0,bytes,0};
+		uint32_t command[10];
+		DataflowNocBuildCommand(false,remote,route,localAddress,self,bytes,command);
 		for (unsigned i=0;i<10;i++) {
 			ticket.command[i]=command[i];
 			Words(Base)[i]=command[i];

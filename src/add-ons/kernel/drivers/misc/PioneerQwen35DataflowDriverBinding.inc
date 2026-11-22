@@ -134,10 +134,10 @@ PioneerQwen35DataflowCaptureLocalRoute(PioneerSessionIO& io,unsigned core)
 	auto* context=io.qwen35DataflowContext;
 	if (!context || core>=PioneerQwen35::DataflowCoreCount
 		|| !io.SelectRuntimeCore(core)) return false;
-	const uint32_t first=io.ResidentNocRead(0x14);
+	const uint32_t first=io.ResidentNocRead(PioneerQwen35::DataflowNocLogicalIdOffset);
 	io.Pause();
-	const uint32_t second=io.ResidentNocRead(0x14);
-	if (!first || first>0xfff || first!=second) return false;
+	const uint32_t second=io.ResidentNocRead(PioneerQwen35::DataflowNocLogicalIdOffset);
+	if (!PioneerQwen35::DataflowNocLocalRouteValid(first) || first!=second) return false;
 	if (context->qwen35DataflowLocalRouteValid[core])
 		return context->qwen35DataflowLocalRoute[core]==first;
 	for (unsigned prior=0;prior<PioneerQwen35::DataflowCoreCount;prior++)
@@ -324,9 +324,9 @@ PioneerSessionIO::DataflowCoreStartupFatalIdle(unsigned core)
 	auto& lease=*context->q38Dispatch;
 	if (lease.unsafe || lease.closed || lease.rootRunning
 		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
-	const uint32_t routeFirst=ResidentNocRead(0x14);
+	const uint32_t routeFirst=ResidentNocRead(PioneerQwen35::DataflowNocLogicalIdOffset);
 	Pause();
-	const uint32_t routeSecond=ResidentNocRead(0x14);
+	const uint32_t routeSecond=ResidentNocRead(PioneerQwen35::DataflowNocLogicalIdOffset);
 	if (routeFirst!=mailbox.reserved[0] || routeSecond!=routeFirst
 		|| routeFirst!=context->qwen35DataflowLocalRoute[core]) return false;
 	auto& node=lease.worker[core];

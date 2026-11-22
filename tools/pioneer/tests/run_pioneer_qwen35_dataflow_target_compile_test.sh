@@ -47,4 +47,8 @@ grep -E '[[:space:]]fence[[:space:]]+r,rw' \
 	"$temporary/dataflow.disassembly" >/dev/null
 grep -E '[[:space:]]fence[[:space:]]+rw,w' \
 	"$temporary/dataflow.disassembly" >/dev/null
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_noc_protocol_test.cpp" \
+	-o "$temporary/noc-protocol-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/noc-protocol-test"
 echo 'PASS: Qwen35 dataflow roles compile as RV32IMF without A atomics or runtime helpers'

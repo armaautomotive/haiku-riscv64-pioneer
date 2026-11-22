@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_PROGRAM_H
 
 #include "PioneerQwen35DeviceLayout.h"
+#include "PioneerQwen35DataflowNocProtocol.h"
 #include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35ProgramSchedule.h"
 

@@ -24,6 +24,15 @@ NoC0 response counter was one behind expectation, with transaction ID0
 outstanding. Tag0120 preserves the failed read's remote address, route, and
 size in the 64-byte worker mailbox, with a read-only `QUERY_READ_REQUEST`.
 
+Tag0122 corrects a concrete NoC route defect in the resident rewrite. The old
+code read mutable command register `0x14` as its own NoC coordinate; the
+worker and driver now read logical-ID register `0x148`, and read/write
+commands use marked static VC1. This could explain the missing embedding
+response, but has not been verified on the card. The host protocol fixture,
+RV32IMF role compile and Haiku/RISC-V target build pass. The tag0122 default
+driver SHA-256 is
+`6a4c03b152b01ec623b078755992b8fc342a558af41567e2d8775a1e9b2c9957`.
+
 Haiku is currently reachable at `10.0.0.247`. Read-only status confirms the
 failed diagnostic client has exited and both model files remain intact, but
 the candidate is still `generation3 cold1 active_owner1 open_count1`; the
@@ -72,7 +81,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. Message-queue initialization
 remains open; this new code has not been run on the card.
 
-The default build now targets dedicated tag0121. It records final release of a
+The default build now targets dedicated tag0122. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

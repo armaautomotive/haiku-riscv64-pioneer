@@ -241,8 +241,8 @@ inline bool DataflowWorkerResetQueues()
 	}
 	const unsigned core=mailbox->logicalCore;
 	const unsigned localRoute=*reinterpret_cast<volatile uint32_t*>(
-		static_cast<uintptr_t>(0xffb20014));
-	if (!localRoute || localRoute>0xfff) {
+		static_cast<uintptr_t>(DataflowNoc0Base+DataflowNocLogicalIdOffset));
+	if (!DataflowNocLocalRouteValid(localRoute)) {
 		DataflowStoreRelease(mailbox->reserved[0],localRoute);
 		DataflowFence();
 		DataflowWorkerPublish(*mailbox,0,DataflowWorkerFatal,
