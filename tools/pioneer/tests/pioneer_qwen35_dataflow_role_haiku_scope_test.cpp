@@ -53,6 +53,7 @@ static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=t
 static uint64 sReloadGeneration=42;
 static int32_t sLock=1;
 static bool gLocked=false,gReleaseFail=false;
+static bool gAllowWrite=false;
 static unsigned gReleaseCalls=0,gMapCalls=0,gUnmapCalls=0;
 static int gFailMap=-1,gFailUnmap=-1;
 static thread_id gThread=5;
@@ -76,7 +77,7 @@ status_t release_sem(int32_t lock) {
 area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32_t addressMode,
     uint32_t flags,void** output) {
     assert(gLocked && addressMode==B_ANY_KERNEL_ADDRESS && (flags&B_KERNEL_READ_AREA)
-        && (flags&B_UNCACHED_MEMORY) && !(flags&B_KERNEL_WRITE_AREA));
+        && (flags&B_UNCACHED_MEMORY) && bool(flags&B_KERNEL_WRITE_AREA)==gAllowWrite);
     const unsigned index=gMapCalls++;
     DataflowRolePhysicalWindow plan{}; assert(DataflowRolePhysicalWindowPlan(index,plan));
     assert(physical==0x4900000000ULL+plan.offset && bytes==plan.bytes);
@@ -93,6 +94,7 @@ status_t delete_area(area_id area) {
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
 static void ResetMaps() {
     gMapCalls=gUnmapCalls=0; gFailMap=gFailUnmap=-1;
+    gAllowWrite=false;
     gMemory.assign(DataflowRolePhysicalWindowCount,{});
     gMapped.assign(DataflowRolePhysicalWindowCount,false);
 }
@@ -168,6 +170,18 @@ int main()
         gFailUnmap=2; assert(!owner.Close() && gLocked);
         assert(owner.Close() && !gLocked);
     }
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+    {
+        ResetMaps(); gAllowWrite=true; PioneerQwen35RoleHaikuWritableViewsWitness owner;
+        assert(owner.Open(&cookie) && gLocked && gMapCalls==DataflowRolePhysicalControl+1);
+        const uint32_t value=0x12345678U;
+        assert(!owner.Write(0,DataflowRolePhysicalExtraCode,0,&value,sizeof(value)));
+        assert(gMemory[DataflowRolePhysicalExtraCode][0]==0x76540000U+DataflowRolePhysicalExtraCode);
+        assert(!owner.WriteResetDisable(0,0,DataflowRolePreserveResetMask));
+        assert(owner.Close() && !gLocked);
+        gAllowWrite=false;
+    }
+#endif
     {
         PioneerQwen35RoleHaikuScopeWitness scope;
         assert(scope.Open(&cookie)); gReleaseFail=true;

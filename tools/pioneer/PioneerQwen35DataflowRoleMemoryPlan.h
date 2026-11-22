@@ -12,6 +12,8 @@ namespace PioneerQwen35 {
 // validate the entire extra region, boot words, reset state and local RAM,
 // then prove all roles have stopped before restoring anything.
 enum : unsigned {
+    // Blackhole DISABLE_RESET bits for B/NC local RAM and debug registers.
+    DataflowRolePreserveResetMask=0x3c0,
     // Proposed low-L1 startup shims sit above the TRISC0 stack top and below
     // its source windows. The existing snapshot covers them, but its PCI
     // write gate does not currently admit them.

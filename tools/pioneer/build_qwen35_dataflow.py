@@ -263,11 +263,15 @@ def main():
                         help='compile the experimental recovery body into a non-loadable driver')
     parser.add_argument('--compile-device-dispatch-prototype', action='store_true',
                         help='compile incomplete device dispatch into a non-loadable driver')
+    parser.add_argument('--compile-role-write-prototype', action='store_true',
+                        help='compile fail-closed role write mappings into a non-loadable driver')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
                         help='build the dedicated graph qualification driver without ASIC reset')
     args = parser.parse_args()
     if args.build_device_dispatch_trial and (args.compile_recovery_prototype or args.compile_device_dispatch_prototype):
         parser.error('graph qualification cannot enable a recovery compile witness')
+    if args.compile_role_write_prototype and not args.compile_device_dispatch_prototype:
+        parser.error('role write witness requires the non-loadable device dispatch prototype')
 
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
@@ -285,6 +289,8 @@ def main():
         driver_env['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY'] = '1'
     if args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY'] = '1'
+    if args.compile_role_write_prototype:
+        driver_env['PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],

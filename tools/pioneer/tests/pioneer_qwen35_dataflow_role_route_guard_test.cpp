@@ -39,6 +39,11 @@ struct MockIO {
 };
 struct Scope {
     bool exclusive=true,memorySafe=false;
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+    bool writeSafe=false,controlSafe=false;
+    bool ProveRoleMemoryWriteSafe(MockIO&,unsigned,unsigned,unsigned,unsigned) const { return writeSafe; }
+    bool ProveRoleControlWriteSafe(MockIO&,unsigned,uint32_t,uint32_t) const { return controlSafe; }
+#endif
     bool ProveExclusiveRewrite(MockIO&) const { return exclusive; }
     bool ProveRoleMemoryReadSafe(MockIO&,unsigned core,unsigned) const { return memorySafe && core<120; }
 };
@@ -55,6 +60,17 @@ int main()
     scope.memorySafe=true; assert(guard.ProveReadAllowed(7,DataflowRolePhysicalBriscRam,0));
     scope.memorySafe=false; assert(guard.ProveReadAllowed(7,DataflowRolePhysicalPc,0x140));
     assert(!guard.ProveReadAllowed(7,DataflowRolePhysicalNoc0,0x20c));
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+    assert(!guard.ProveWriteAllowed(7,DataflowRolePhysicalBriscRam,0,4));
+    scope.writeSafe=true;
+    assert(guard.ProveWriteAllowed(7,DataflowRolePhysicalBriscRam,0,4));
+    assert(!guard.ProveWriteAllowed(7,DataflowRolePhysicalBriscRam,0x1ffc,8));
+    assert(!guard.ProveWriteAllowed(7,DataflowRolePhysicalControl,0x1b0,4));
+    assert(!guard.ProveControlWriteAllowed(7,0x15,0x3d5));
+    scope.controlSafe=true;
+    assert(guard.ProveControlWriteAllowed(7,0x15,0x3d5));
+    assert(!guard.ProveControlWriteAllowed(7,0x15,0x3d4));
+#endif
     io.mapping=false; assert(!guard.ProveSelectedRoute(7)); io.mapping=true;
     io.changeTlb=true; io.tlbReads=0; assert(!guard.ProveSelectedRoute(7)); io.changeTlb=false;
     io.changeRoute=true; io.routeReads=0; assert(!guard.ProveSelectedRoute(7)); io.changeRoute=false;

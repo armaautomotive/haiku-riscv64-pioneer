@@ -76,6 +76,17 @@ inline bool DataflowRolePhysicalReadAllowed(unsigned which,unsigned offset)
         default:return false;
     }
 }
+// Candidate write ranges for the role owner. The reset register, NoCs, PCs,
+// and all other control registers remain excluded. Callers must separately
+// prove exclusive ownership, held/quiet cores, snapshots and exact routing.
+inline bool DataflowRolePhysicalWriteRange(unsigned which,unsigned offset,unsigned bytes)
+{
+    if (!bytes || (offset&3) || (bytes&3) || offset>UINT32_MAX-bytes) return false;
+    if (which==DataflowRolePhysicalControl) return offset==0x224 && bytes==4;
+    if (which>DataflowRolePhysicalNcriscRam) return false;
+    return DataflowRolePhysicalReadAllowed(which,offset)
+        && DataflowRolePhysicalReadAllowed(which,offset+bytes-4);
+}
 inline bool DataflowRolePhysicalAddress(uint64_t barStart,uint64_t barBytes,unsigned which,
     uint64_t& physical,unsigned& bytes)
 {

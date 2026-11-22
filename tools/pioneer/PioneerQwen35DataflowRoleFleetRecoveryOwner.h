@@ -8,7 +8,6 @@ namespace PioneerQwen35 {
 // RAM and debug registers on soft-reset exit. Other bits, including TRISC
 // settings, must remain exactly as found. This owner still needs exclusive
 // hardware ownership and independently proved held/quiet routes.
-enum : uint32_t { DataflowRolePreserveResetMask=0x3c0U };
 // Offline composition for 120 tiles' additional code, low shims, boot words
 // and B/NC private RAM. It does not release or stop RISCs, reset hardware,
 // audit physical PCs/NoCs, own the existing TRISC0 image, or provide PCI IO.

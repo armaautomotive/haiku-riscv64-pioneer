@@ -8,6 +8,9 @@
 #include "PioneerQwen35DataflowRoleHaikuMap.h"
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleReadOnlyViews.h"
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
+#endif
 
 class PioneerQwen35RoleHaikuScopeWitness {
     PioneerProbeCookie* fCookie=NULL;
@@ -49,6 +52,12 @@ public:
     // No held/quiet/reset-window proof is wired yet. Thus even this compile
     // witness denies all boot, L1 and private-RAM reads through its guard.
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return false; }
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+    // No held-fleet, retained-snapshot or RAM-window proof is connected yet.
+    // Mapping and guard types compile, but every actual write is denied.
+    bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
+    bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
+#endif
     bool Close() {
         if (!fHeld || fThread<0 || find_thread(NULL)!=fThread) return false;
         return ReleaseOnce();
@@ -134,3 +143,48 @@ PioneerQwen35RoleHaikuViewsCompileWitness(PioneerQwen35RoleHaikuViewsWitness& ow
     if (action==3) return owner.AuditHeldAndQuiet(core);
     return false;
 }
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+// Separate persistent owner because a failed unmap must retain the lock and
+// area IDs for retry. There is no ioctl/caller and the scope denies writes.
+class PioneerQwen35RoleHaikuWritableViewsWitness {
+    PioneerQwen35RoleHaikuScopeWitness fScope;
+    PioneerQwen35RoleHaikuMap fPlatform;
+    PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> fViews;
+public:
+    PioneerQwen35RoleHaikuWritableViewsWitness():fViews(fPlatform) {}
+    bool Open(PioneerProbeCookie* cookie) {
+        if (!fScope.Open(cookie)) return false;
+        PioneerSessionIO* io=fScope.IO();
+        if (!io) return false;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleHaikuScopeWitness> guard(*io,fScope);
+        return fViews.Open(io->profile.bar0_host_start,io->profile.bar0_host_end,guard);
+    }
+    bool Write(unsigned core,unsigned which,unsigned offset,const uint32_t* data,unsigned bytes) {
+        PioneerSessionIO* io=fScope.IO();
+        if (!io) return false;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleHaikuScopeWitness> guard(*io,fScope);
+        return fViews.WriteWords(core,which,offset,data,bytes,guard);
+    }
+    bool WriteResetDisable(unsigned core,uint32_t expected,uint32_t desired) {
+        PioneerSessionIO* io=fScope.IO();
+        if (!io) return false;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleHaikuScopeWitness> guard(*io,fScope);
+        return fViews.WriteResetDisable(core,expected,desired,guard);
+    }
+    bool Close() {
+        if (!fViews.Close()) return false;
+        return fScope.Close();
+    }
+};
+__attribute__((used)) static bool
+PioneerQwen35RoleHaikuWritableViewsCompileWitness(PioneerQwen35RoleHaikuWritableViewsWitness& owner,
+    PioneerProbeCookie* cookie,unsigned action,unsigned core,unsigned which,unsigned offset,
+    const uint32_t* data,unsigned bytes,uint32_t expected,uint32_t desired)
+{
+    if (action==0) return owner.Open(cookie);
+    if (action==1) return owner.Write(core,which,offset,data,bytes);
+    if (action==2) return owner.WriteResetDisable(core,expected,desired);
+    if (action==3) return owner.Close();
+    return false;
+}
+#endif

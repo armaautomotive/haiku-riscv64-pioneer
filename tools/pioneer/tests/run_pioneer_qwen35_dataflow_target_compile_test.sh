@@ -379,6 +379,31 @@ done
 awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
 	"$temporary/role-haiku-views-kernel.su"
 echo 'PASS read-only Haiku role mapper SDK compile; NO LIVE DRIVER BINDING'
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_dataflow_role_writable_views_test.cpp" \
+	-o "$temporary/role-writable-views-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-writable-views-test"
+if "$cxx" -std=gnu++17 -O2 -fno-exceptions -fno-rtti -ffreestanding -mcmodel=medany -fpic -D_KERNEL_MODE \
+	-DPIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY -I"$sdk/headers" -I"$sdk/headers/os" \
+	-I"$sdk/headers/os/drivers" -I"$sdk/headers/os/kernel" -I"$sdk/headers/os/support" \
+	-I"$sdk/headers/os/storage" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_writable_views_kernel_probe.cpp" \
+	-o "$temporary/invalid-role-writable-views.o" >"$temporary/invalid-role-writable-views.log" 2>&1; then
+	echo 'writable role mapper compiled without recovery-only guard' >&2
+	exit 1
+fi
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+	-ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE \
+	-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY \
+	-I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/drivers" \
+	-I"$sdk/headers/os/kernel" -I"$sdk/headers/os/support" -I"$sdk/headers/os/storage" \
+	-idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_writable_views_kernel_probe.cpp" \
+	-o "$temporary/role-writable-views-kernel.o"
+awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
+	"$temporary/role-writable-views-kernel.su"
+echo 'PASS writable Haiku role mapper SDK compile; NO LIVE DRIVER BINDING'
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_route_guard_test.cpp" \
 	-o "$temporary/role-route-guard-test"
@@ -393,11 +418,25 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/rol
 awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
 	"$temporary/role-route-guard-kernel.su"
 echo 'PASS role selected-route guard SDK compile; NO LIVE SESSION SCOPE'
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY "$directory/pioneer_qwen35_dataflow_role_route_guard_test.cpp" \
+	-o "$temporary/role-write-route-guard-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-write-route-guard-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined -I"$directory/role_haiku_stubs" \
 	"$directory/pioneer_qwen35_dataflow_role_haiku_scope_test.cpp" \
 	-o "$temporary/role-haiku-scope-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-haiku-scope-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY -I"$directory/role_haiku_stubs" \
+	"$directory/pioneer_qwen35_dataflow_role_haiku_scope_test.cpp" -o "$temporary/role-write-haiku-scope-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-write-haiku-scope-test"
+if python3 "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-role-write-prototype \
+	"$build" "$temporary/invalid-role-write-driver" >"$temporary/invalid-role-write-driver.log" 2>&1; then
+	echo 'role write driver accepted an unguarded build' >&2
+	exit 1
+fi
 # Per-tile handoff uses only single-writer words and the existing fences.
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \

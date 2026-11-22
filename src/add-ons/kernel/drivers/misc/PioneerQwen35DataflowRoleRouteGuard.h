@@ -38,6 +38,23 @@ public:
             return fScope.ProveRoleMemoryReadSafe(fIO,core,which);
         return true; // fixed status only; still not an idle proof
     }
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+#error Writable role guard is a non-loadable recovery witness only
+#endif
+    bool ProveWriteAllowed(unsigned core,unsigned which,unsigned offset,unsigned bytes) {
+        using namespace PioneerQwen35;
+        return core<DataflowBarrierWorkers && which<DataflowRolePhysicalControl
+            && fScope.ProveExclusiveRewrite(fIO) && DataflowRolePhysicalWriteRange(which,offset,bytes)
+            && fScope.ProveRoleMemoryWriteSafe(fIO,core,which,offset,bytes);
+    }
+    bool ProveControlWriteAllowed(unsigned core,uint32_t expected,uint32_t desired) {
+        using namespace PioneerQwen35;
+        return core<DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
+            && !((expected^desired)&~uint32_t(DataflowRolePreserveResetMask))
+            && fScope.ProveRoleControlWriteSafe(fIO,core,expected,desired);
+    }
+#endif
     bool ProveSelectedRoute(unsigned core) {
         if (core>=PioneerQwen35::DataflowBarrierWorkers
             || !ProvePinnedBar(fIO.profile.bar0_host_start,fIO.profile.bar0_host_end)
