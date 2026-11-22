@@ -18,6 +18,58 @@ struct PioneerPostResetPciResult {
 	uint32_t cardCommand=0,rootCommand=0;
 };
 
+struct PioneerPciePayloadSnapshot {
+	uint32_t capability=0, version=0, supported=0, control=0;
+	bool valid=false;
+};
+
+// Capture only the endpoint PCIe payload/read-request settings. The device's
+// internal DBI shadow and other capability state still require separate
+// recovery; this helper alone does not make an ASIC reset safe.
+template<class IO>
+bool PioneerPciePayloadRead(IO& io,PioneerPciePayloadSnapshot& out)
+{
+	out={};
+	if (io.CardRead(0,4)!=0xb1401e52 || io.CardRead(0x2c,4)!=0x00431e52
+		|| io.CardRead(4,2)!=0x402 || io.RootRead(4,2)!=0x402) return false;
+	uint32_t cap=io.CardRead(0x34,1);uint64_t seen=0;bool found=false;
+	for (unsigned hops=0;cap && hops<48;hops++) {
+		if (cap<0x40 || cap>0xfc || (cap&3) || (seen&(UINT64_C(1)<<(cap/4)))) return false;
+		seen|=UINT64_C(1)<<(cap/4);
+		const uint32_t header=io.CardRead(cap,2);
+		if (header>0xffff) return false;
+		if ((header&0xff)==0x10) {
+			if (found || cap>0xf4) return false;
+			out.capability=cap;out.version=io.CardRead(cap+2,2);
+			out.supported=io.CardRead(cap+4,4);out.control=io.CardRead(cap+8,2);
+			if (out.version>0xffff || ((out.version&15)!=1 && (out.version&15)!=2)
+				|| out.supported==UINT32_MAX || out.control>0xffff || (out.control&0x8000)
+				|| (out.supported&7)>5 || ((out.control>>5)&7)>(out.supported&7)
+				|| ((out.control>>12)&7)>5) return false;
+			found=true;
+		}
+		cap=(header>>8)&0xff;
+	}
+	if (cap || !found) return false;
+	out.valid=true;return true;
+}
+
+template<class IO>
+bool PioneerPciePayloadRestore(IO& io,const PioneerPciePayloadSnapshot& saved)
+{
+	PioneerPciePayloadSnapshot current{};
+	if (!saved.valid || !PioneerPciePayloadRead(io,current)
+		|| current.capability!=saved.capability || current.version!=saved.version
+		|| current.supported!=saved.supported) return false;
+	const uint32_t mask=0x70e0; // max payload and max read-request size only
+	const uint32_t wanted=(current.control&~mask)|(saved.control&mask);
+	if (wanted!=current.control) io.CardWrite(current.capability+8,2,wanted);
+	PioneerPciePayloadSnapshot after{};
+	return PioneerPciePayloadRead(io,after) && after.capability==saved.capability
+		&& after.version==saved.version && after.supported==saved.supported
+		&& after.control==wanted;
+}
+
 // Disable bus mastering on the retained session before requesting reset.
 // Do not disable memory decoding here: the reset marker and timer use PCI
 // config space, and the post-reset audit will establish fresh MMIO mappings.

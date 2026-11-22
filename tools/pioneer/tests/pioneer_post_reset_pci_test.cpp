@@ -23,6 +23,26 @@ struct DisableMasterIO:MockIO {
 	}
 };
 
+struct PayloadIO:MockIO {
+	uint32_t capability=0x70,version=2,supported=2,control=0x2040;
+	unsigned payloadWrites=0;bool dropPayload=false,cycle=false;
+	uint32_t CardRead(unsigned offset,unsigned width) {
+		if (offset==0x60 && width==2) return 0x7001;
+		if (offset==0x70 && width==2) return cycle?0x7010:0x0010;
+		if (offset==0x72 && width==2) return version;
+		if (offset==0x74 && width==4) return supported;
+		if (offset==0x78 && width==2) return control;
+		return MockIO::CardRead(offset,width);
+	}
+	void CardWrite(unsigned offset,unsigned width,uint32_t value) {
+		if (offset==0x78) {
+			assert(width==2 && command[0]==0x402 && command[1]==0x402 && !(value&0x8000));
+			payloadWrites++;if (!dropPayload) control=value;return;
+		}
+		MockIO::CardWrite(offset,width,value);
+	}
+};
+
 int main()
 {
 	PioneerPostResetPciResult result{};
@@ -85,5 +105,22 @@ int main()
 	lost.command[0]=lost.command[1]=0x406;lost.droppedWrite=lost.writes+1;
 	assert(!PioneerPreResetDisableMaster(lost) && lost.command[0]==0x406
 		&& lost.command[1]==0x406);
-	std::puts("PASS post-reset PCI active-layout restore: real plan, bus-master/marker/interrupt refusal, dropped writes, decoder ordering; SIMULATED PCI ONLY");
+	PayloadIO payload;payload.command[0]=payload.command[1]=0x402;
+	PioneerPciePayloadSnapshot snapshot{};
+	assert(PioneerPciePayloadRead(payload,snapshot) && snapshot.valid && snapshot.capability==0x70);
+	payload.control=0x0004;
+	assert(PioneerPciePayloadRestore(payload,snapshot) && payload.control==0x2044
+		&& payload.payloadWrites==1);
+	assert(PioneerPciePayloadRestore(payload,snapshot) && payload.payloadWrites==1);
+	payload.control=0x0004;payload.dropPayload=true;
+	assert(!PioneerPciePayloadRestore(payload,snapshot) && payload.control==0x0004);
+	payload.dropPayload=false;payload.supported=1;
+	assert(!PioneerPciePayloadRestore(payload,snapshot));
+	payload.supported=2;payload.control=0x8000;
+	assert(!PioneerPciePayloadRead(payload,snapshot));
+	payload.control=0;payload.cycle=true;
+	assert(!PioneerPciePayloadRead(payload,snapshot));
+	payload.cycle=false;payload.command[0]=0x406;
+	assert(!PioneerPciePayloadRead(payload,snapshot));
+	std::puts("PASS post-reset PCI layout and payload settings: capability validation, bus-master/marker/interrupt refusal, dropped writes, decoder ordering; SIMULATED PCI ONLY");
 }

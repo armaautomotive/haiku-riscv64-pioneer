@@ -104,6 +104,18 @@ a separate test verifies the default gate performs no hardware action. A
 separate compile-only build includes the prototype but cannot load as a driver.
 Failed recovery attempts remain cold and are not yet resumable.
 
+The prototype now captures the endpoint PCIe maximum payload and read-request
+settings twice before reset and restores those configuration-space fields
+afterward with bus mastering disabled. Simulated tests cover malformed or
+cyclic capability lists, invalid sizes, dropped writes, and recovery refusal.
+This does not yet restore the device-internal DBI payload shadow or the rest
+of PCI capability state. Tenstorrent's Blackhole driver saves and restores its
+internal payload value and reinitializes hardware after reset; see its
+[Blackhole implementation](https://github.com/tenstorrent/tt-kmd/blob/main/blackhole.c)
+and [reset path](https://github.com/tenstorrent/tt-kmd/blob/main/chardev.c).
+The new path is included only in the disabled prototype and is not qualified
+on the card.
+
 Dedicated candidate tag0121 now records the retained owner's final file
 descriptor free while holding the driver lock. A read-only status ioctl
 reports the owner-lifetime prerequisites only when the exact driver tag and
@@ -112,7 +124,7 @@ descriptors, a live owner, or a quiesced driver. Extracted real close/status
 fixtures and the target build pass. This status does not initiate a reset,
 release any owner or host buffer, or grant hardware recovery. Tag0121 is not
 installed; its current default driver SHA-256 is
-`9d3e434dc9f71df57458b3233e9a181318106dd3d9fad465a22bfb934ca3064d`
+`35b04d1f2b2f4654e615a6b343bda8dcbb443c4455eb6178f42c6e73cb29906a`
 and its measured stack bound is `15712/18432` bytes. The board remains at
 tag0120 cold with its owner retained.
 

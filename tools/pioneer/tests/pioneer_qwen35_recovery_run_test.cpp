@@ -15,6 +15,7 @@
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using status_t=int;
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
+static bool failPayloadRead=false,failPayloadRestore=false;
 static std::vector<unsigned> trace;
 static bool Step(unsigned stage) { trace.push_back(stage);return failStage!=stage; }
 struct module_info {};
@@ -40,6 +41,7 @@ static int guard=1;static int* sReloadGuard=&guard;static uint64 sReloadGenerati
 struct tt_arc_scratch_result {uint32 state=0;};
 struct PioneerPostResetAuditResult {uint32 failure=0,noc=0,core=0;};
 struct PioneerPostResetPciResult {uint32 stage=0;};
+struct PioneerPciePayloadSnapshot {uint32 capability=0x70,version=2,supported=2,control=0x20;bool valid=true;};
 struct BlackholeAsicResetResult {uint32 stage=0;};
 struct FakeProfile {};
 struct PioneerSessionIO {
@@ -50,6 +52,8 @@ struct PioneerSessionIO {
 	}
 };
 static bool PioneerPreResetDisableMaster(PioneerSessionIO&) { return Step(PIONEER_RECOVERY_STAGE_DISABLE_MASTER); }
+static bool PioneerPciePayloadRead(PioneerSessionIO&,PioneerPciePayloadSnapshot&) {return !failPayloadRead;}
+static bool PioneerPciePayloadRestore(PioneerSessionIO&,const PioneerPciePayloadSnapshot&) {return !failPayloadRestore;}
 template<class IO> static bool BlackholeAsicReset(IO&,unsigned,BlackholeAsicResetResult& r) {
 	r.stage=7;return Step(PIONEER_RECOVERY_STAGE_ASIC_RESET);
 }
@@ -92,6 +96,7 @@ static status_t user_memcpy(void* dst,const void* src,size_t n){memcpy(dst,src,n
 static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=3;return r;}
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
+	failPayloadRead=failPayloadRestore=false;
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
@@ -115,6 +120,15 @@ int main(){
 		else assert(!sRuntimeOwner && contextDeleted==1 && cookieDeleted==1 && completeCount==1);
 		Cleanup();
 	}
+	Setup();failPayloadRead=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_DISABLE_MASTER && trace.size()==1
+		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
+	Cleanup();Setup();failPayloadRestore=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_PCI_RESTORE && trace.size()==3
+		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
+	Cleanup();
 	Setup();sRuntimeOwner->finalFreeRetained=false;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
 	Cleanup();Setup();sOpenCookies=2;r=Request();

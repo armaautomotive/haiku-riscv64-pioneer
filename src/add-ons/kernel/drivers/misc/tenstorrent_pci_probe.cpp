@@ -10606,12 +10606,19 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	context->recoveryAttempted=true;
 	r.stage=PIONEER_RECOVERY_STAGE_DISABLE_MASTER;
 	if (!PioneerPreResetDisableMaster(context->io)) return fail(B_DEV_NOT_READY);
+	PioneerPciePayloadSnapshot payload{},payloadCheck{};
+	if (!PioneerPciePayloadRead(context->io,payload)
+		|| !PioneerPciePayloadRead(context->io,payloadCheck)
+		|| payload.capability!=payloadCheck.capability || payload.version!=payloadCheck.version
+		|| payload.supported!=payloadCheck.supported || payload.control!=payloadCheck.control)
+		return fail(B_DEV_NOT_READY);
 	r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
 	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
 	if (!BlackholeAsicReset(resetIo,100,reset)) { r.detail=reset.stage;return fail(B_DEV_NOT_READY); }
 	r.stage=PIONEER_RECOVERY_STAGE_PCI_RESTORE;
 	PioneerPostResetPciResult pci{};
 	if (!PioneerPostResetPciRestore(context->io,pci)) { r.detail=pci.stage;return fail(B_DEV_NOT_READY); }
+	if (!PioneerPciePayloadRestore(context->io,payload)) return fail(B_DEV_NOT_READY);
 	r.stage=PIONEER_RECOVERY_STAGE_MAPPING;
 	if (!context->recoveryMapping->Open()) return fail(B_DEV_NOT_READY);
 	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;

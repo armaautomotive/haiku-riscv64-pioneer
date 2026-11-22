@@ -61,6 +61,10 @@ firmware's channel-0 HDMA now follows the fleet audit and restores its fresh
 TLB snapshot. Recovery orchestration and owner retirement are wired into the
 default-disabled prototype; firmware queue initialization, complete PCI
 capability restoration, and physical verification remain open.
+The disabled prototype also captures and restores PCIe configuration-space
+payload and read-request settings, with simulated failure tests. It still needs
+the separate internal DBI payload shadow and remaining PCI capability state;
+the endpoint configuration fields alone are not full reset restoration.
 
 The post-reset backend now requires a bounded ARC scratch readiness poll and
 the pinned firmware telemetry and harvesting values before fleet and DMA
