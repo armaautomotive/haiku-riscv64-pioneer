@@ -76,7 +76,8 @@ struct tt_qwen35_dataflow_request {
 	// completion-counter value in reserved[2] while preserving the other query
 	// diagnostic fields. QUERY_NOC returns the matching counter bitmask and
 	// initiator-busy mask packed into reserved[1] (counter bits 0..7, initiator
-	// bits 8..11), and the 32-entry outstanding transaction-ID mask in
+	// bits 8..11); bit 1 is unused because Blackhole does not support that
+	// counter read. It also returns the 32-entry outstanding transaction-ID mask in
 	// reserved[2]. Bits 0..15 are response-marked request IDs; bits 16..31 are write
 	// outgoing request IDs. QUERY_READ_REQUEST preserves the diagnostic identity
 	// in reserved[0], returns the target route in reserved[1] bits 0..11, transfer

@@ -43,5 +43,25 @@ int main()
 	assert(!DataflowNocCommandWordMatches(7,0x2090,0x2090^0x2000));
 	assert(!DataflowNocCommandWordMatches(7,0x2090,0x2090^2));
 	assert(!DataflowNocCommandWordMatches(5,0x81,0x481));
+	// 0x20c is unsupported on Blackhole. Neither the baseline nor any poll
+	// may read it, while all supported counters still gate completion.
+	for (unsigned mode=0;mode<2;mode++) {
+		const bool write=mode!=0;
+		uint32_t observed[8]={0xffffffffU,0xdeadbeefU,3,4,5,6,3,8};
+		unsigned reads=0;
+		auto read=[&](unsigned i) { assert(i<8 && i!=1);reads++;return observed[i]; };
+		uint32_t expected[8]{};
+		DataflowNocCaptureExpected(read,write,2048,expected);
+		assert(reads==7 && expected[1]==0);
+		for (unsigned i=0;i<8;i++) if (DataflowNocCounterSupported(i))
+			observed[i]+=DataflowNocCounterDelta(write,2048,i);
+		unsigned mismatch=0;uint32_t value=0;
+		assert(DataflowNocMatchingCounters(read,expected,&mismatch,&value)==DataflowNocSupportedCounterMask
+			&& reads==14 && mismatch==8);
+		observed[3]++;
+		assert(DataflowNocMatchingCounters(read,expected,&mismatch,&value)
+			==(DataflowNocSupportedCounterMask & ~(1U<<3))
+			&& mismatch==3 && value==observed[3]);
+	}
 	std::puts("PASS dataflow NoC logical return route and marked static-VC1 read/write commands; NO HARDWARE");
 }

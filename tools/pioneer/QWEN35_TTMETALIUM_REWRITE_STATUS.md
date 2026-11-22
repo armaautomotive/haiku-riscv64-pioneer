@@ -56,6 +56,13 @@ fetch/NoC stage diagnostics needed to localize the remaining error; simulated
 tests and all builds pass, but tag0156 has not run on hardware. See
 [the tag0155 run record](benchmarks/qwen35-dataflow-tag0155-20261122/RUN.md).
 
+Tag0156 traced the first graph fetch failure to the driver's exact-match check
+on NoC counter `0x20c`. Tenstorrent documents that counter as unsupported to
+read on Blackhole; the other recorded counters matched and the graph fault
+again recovered without reboot. The next rewrite omits that register while
+retaining all supported checks; it needs hardware qualification. See
+[the tag0156 run record](benchmarks/qwen35-dataflow-tag0156-20261122/RUN.md).
+
 Tag0154's qualification driver SHA-256 is
 `152edda1d9214b869eb74299010d1e973da91c6070e7f8f191a4cbb6f597c223`
 and its standalone client SHA-256 is

@@ -103,6 +103,25 @@ Its worker stack envelope is `7600/8192` including the helper allowance and
 its graph ioctl envelope is `16000/18432` including the helper allowance;
 neither is a whole-program proof.
 
+Tag0156 identified the first-record fetch failure as a NoC counter timeout at
+unsupported register `0x20c`; the supported counters matched. The same-owner
+recovery and bank unload succeeded without reboot, then the wrapper restored
+stable driver55 generation7. The lock is absent, driver hash is stable, and
+both models retain their recorded sizes. See
+`benchmarks/qwen35-dataflow-tag0156-20261122/RUN.md`.
+
+The next rewrite no longer reads or waits on the unsupported counter. It
+retains supported counter, command readback, idle and outstanding-request
+proofs. Host fault-injection tests cover reads, writes, wraparound and a
+supported-counter mismatch; the RV32IMF suite and all three builds pass, but
+hardware qualification is still required. Tag0157 qualification driver SHA-256:
+`69dedf00a22b3c833fb26643fd55767db6546470b6e370465346f0d6ddbb6c88`;
+client SHA-256:
+`a4de8f624f48c363f6f4e4bf9b97368e4a53deb8ad289e7dd56561b208a4270d`.
+Its worker stack envelope is `7600/8192` and graph ioctl envelope is
+`16000/18432`, both including helper allowances and neither a whole-program
+proof.
+
 ## Earlier checkpoint: tag0120 failure and recovery rewrite
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until

@@ -66,7 +66,7 @@ class DataflowBlackholeNoc {
 	static_assert(Noc<2,"Blackhole has NoC 0 and NoC 1");
 	static constexpr uint32_t Base=Noc==0?DataflowNoc0Base:DataflowNoc1Base;
 	static constexpr unsigned CounterOffset[8]={
-		0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};
+		0x208,0,0x210,0x214,0x204,0x220,0x210,0x228};
 
 	static volatile uint32_t* Words(uint32_t address)
 	{
@@ -86,7 +86,7 @@ class DataflowBlackholeNoc {
 
 	static uint32_t Counter(unsigned index)
 	{
-		return *Words(Base+CounterOffset[index]);
+		return DataflowNocCounterSupported(index) ? *Words(Base+CounterOffset[index]) : 0;
 	}
 
 	static bool Quiet(DataflowNocDiagnostic* detail=nullptr)
@@ -140,10 +140,8 @@ class DataflowBlackholeNoc {
 			return false;
 		}
 		uint32_t expected[8];
-		const unsigned flits=bytes/64;
-		const unsigned delta[8]={write?0U:1U,write?flits:0U,1,
-			write?0U:1U,write?1U:0U,write?flits:0U,1,write?1U:0U};
-		for (unsigned i=0;i<8;i++) expected[i]=Counter(i)+delta[i];
+		auto readCounter=[](unsigned i) { return Counter(i); };
+		DataflowNocCaptureExpected(readCounter,write,bytes,expected);
 		uint32_t command[10];
 		DataflowNocBuildCommand(write,remote,route,localAddress,self,bytes,command);
 		for (unsigned i=0;i<10;i++) {
@@ -165,7 +163,7 @@ class DataflowBlackholeNoc {
 		Fence();
 		for (unsigned attempt=0;attempt<DataflowNocPollLimit;attempt++) {
 			bool complete=!*Words(Base+0x40);
-			for (unsigned i=0;i<8;i++) complete &= Counter(i)==expected[i];
+			complete &= DataflowNocMatchingCounters(readCounter,expected)==DataflowNocSupportedCounterMask;
 			if (!complete) continue;
 			Fence();
 			for (unsigned i=0;i<10;i++) {
@@ -189,17 +187,10 @@ class DataflowBlackholeNoc {
 			if (detail) *detail={DataflowNocTransferDoorbellTimeout,0xff,doorbell,0};
 			return false;
 		}
-		uint32_t counterMatchMask=0;
 		unsigned mismatch=8;
 		uint32_t mismatchValue=0;
-		for (unsigned i=0;i<8;i++) {
-			const uint32_t observed=Counter(i);
-			if (observed==expected[i]) counterMatchMask|=1U<<i;
-			else if (mismatch==8) {
-				mismatch=i;
-				mismatchValue=observed;
-			}
-		}
+		const uint32_t counterMatchMask=DataflowNocMatchingCounters(readCounter,expected,
+			&mismatch,&mismatchValue);
 		if (mismatch<8) {
 			uint32_t initiatorBusyMask=0,outstandingIdMask=0;
 			for (unsigned i=0;i<DataflowNocInitiators;i++)
@@ -231,8 +222,8 @@ public:
 		const uint32_t rawSelf=*Words(Base+DataflowNocLogicalIdOffset);
 		uint32_t self=0;
 		if (!DataflowNocDecodeLocalRoute(rawSelf,self)) return false;
-		const unsigned delta[8]={1,0,1,1,0,0,1,0};
-		for (unsigned i=0;i<8;i++) ticket.expected[i]=Counter(i)+delta[i];
+		auto readCounter=[](unsigned i) { return Counter(i); };
+		DataflowNocCaptureExpected(readCounter,false,bytes,ticket.expected);
 		uint32_t command[10];
 		DataflowNocBuildCommand(false,remote,route,localAddress,self,bytes,command);
 		for (unsigned i=0;i<10;i++) {
@@ -252,10 +243,10 @@ public:
 	bool CompleteRead(DataflowNocReadTicket& ticket) const
 	{
 		if (!ticket.active) return false;
+		auto readCounter=[](unsigned i) { return Counter(i); };
 		for (unsigned attempt=0;attempt<DataflowNocPollLimit;attempt++) {
 			bool complete=!*Words(Base+0x40);
-			for (unsigned i=0;i<8;i++)
-				complete &= Counter(i)==ticket.expected[i];
+			complete &= DataflowNocMatchingCounters(readCounter,ticket.expected)==DataflowNocSupportedCounterMask;
 			if (!complete) continue;
 			Fence();
 			for (unsigned i=0;i<10;i++)

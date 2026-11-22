@@ -14,6 +14,38 @@ constexpr uint32_t DataflowNocWriteControl=0x2092; // nonposted write, static VC
 // after request submission. Preserve checks of all software-defined fields.
 constexpr uint32_t DataflowNocControlReadbackMask=0xf803e3ff;
 
+// Blackhole documents NIU_MST_RD_DATA_WORD_RECEIVED (0x20c) as
+// UnsupportedFunctionality when read. Keep its historical diagnostic slot,
+// but never access it or use it as a completion condition.
+// https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
+constexpr uint32_t DataflowNocSupportedCounterMask=0xfdU;
+inline bool DataflowNocCounterSupported(unsigned index) {
+	return index<8 && (DataflowNocSupportedCounterMask & (1U<<index));
+}
+inline unsigned DataflowNocCounterDelta(bool write,unsigned bytes,unsigned index) {
+	const unsigned flits=bytes/64;
+	const unsigned delta[8]={write?0U:1U,0,1,write?0U:1U,
+		write?1U:0U,write?flits:0U,1,write?1U:0U};
+	return index<8?delta[index]:0;
+}
+template<class Read> inline void DataflowNocCaptureExpected(Read& read,bool write,
+	unsigned bytes,uint32_t (&expected)[8]) {
+	for (unsigned i=0;i<8;i++)
+		expected[i]=DataflowNocCounterSupported(i)?read(i)+DataflowNocCounterDelta(write,bytes,i):0;
+}
+template<class Read> inline uint32_t DataflowNocMatchingCounters(Read& read,
+	const uint32_t (&expected)[8],unsigned* firstMismatch=nullptr,uint32_t* mismatchValue=nullptr) {
+	uint32_t mask=0;unsigned first=8;uint32_t value=0;
+	for (unsigned i=0;i<8;i++) if (DataflowNocCounterSupported(i)) {
+		const uint32_t observed=read(i);
+		if (observed==expected[i]) mask|=1U<<i;
+		else if (first==8) { first=i;value=observed; }
+	}
+	if (firstMismatch) *firstMismatch=first;
+	if (mismatchValue) *mismatchValue=value;
+	return mask;
+}
+
 inline bool DataflowNocDecodeLocalRoute(uint32_t raw,uint32_t& route)
 {
 	if (raw==UINT32_MAX) return false;
