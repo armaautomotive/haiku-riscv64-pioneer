@@ -256,6 +256,8 @@ public:
 				const int32_t dot=int32_t(dots[row]);
 				if (dot<-262144 || dot>262144) return false;
 			}
+			DataflowTensixPrepareAffineMetadata(fEmitter,loadMetadata);
+			if (!fEmitter.Good()) return false;
 			if (!PioneerQ38SfpuAccumulator<DataflowBlackholeTensixEmitter,true>(
 				fEmitter,affineType,block==0 && panel==0,loadMetadata,scale,sum)
 				|| !fEmitter.Good()) return false;
