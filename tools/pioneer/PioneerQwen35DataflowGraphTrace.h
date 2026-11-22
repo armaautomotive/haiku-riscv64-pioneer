@@ -9,7 +9,8 @@
 namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowGraphTraceAddress=0xab340,
-	DataflowGraphTraceSlots=15,
+	DataflowGraphTraceSlots=28,
+	DataflowGraphProfileTraceFirst=15,
 	DataflowGraphProjectionTraceFirst=8,
 	DataflowGraphTracePending=0xffffffffU
 };
@@ -22,9 +23,10 @@ static_assert(DataflowGraphTraceAddress>=DataflowGraphOperationProgressAddress+4
 		<=DataflowBarrierArrivalBase,"trace is in saved L1, disjoint from commands and barriers");
 
 inline unsigned DataflowGraphTraceStep(unsigned slot) {
-	const unsigned steps[DataflowGraphTraceSlots]={0,2,3,4,7,9,
+	const unsigned steps[DataflowGraphProfileTraceFirst]={0,2,3,4,7,9,
 		DataflowGraphPromptSteps,DataflowGraphPromptSteps+1,3,3,3,3,3,3,3};
-	return slot<DataflowGraphTraceSlots?steps[slot]:DataflowGraphDecodeSteps;
+	if (slot<DataflowGraphProfileTraceFirst) return steps[slot];
+	return slot<DataflowGraphTraceSlots?DataflowGraphDecodeSteps-1:DataflowGraphDecodeSteps;
 }
 
 // Captures raw device bits only; the samples are diagnostic and are never

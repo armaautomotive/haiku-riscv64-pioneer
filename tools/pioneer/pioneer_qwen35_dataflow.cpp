@@ -559,11 +559,21 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 				sample.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_TRACE;
 				sample.next_sequence=slot;
 				if (Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&sample,sizeof(sample))
-					&& (sample.reserved[0]&0x80000000U))
-					fprintf(stderr,"P100A_Q35_DATAFLOW graph_trace slot=%u step=%u nonzero=%u first=0x%08x last=0x%08x\n",
+					&& (sample.reserved[0]&0x80000000U)) {
+					if (slot>=TT_QWEN35_DATAFLOW_GRAPH_PROFILE_FIRST) {
+						static const char* names[]={"embedding","residual","rms","projection",
+							"convolution","delta","silu","dense_attention","argmax","fetch",
+							"authorization","sync_and_other","total"};
+						static_assert(sizeof(names)/sizeof(names[0])==TT_QWEN35_DATAFLOW_GRAPH_PROFILE_BINS,
+							"one diagnostic name per profile bin");
+						const uint64_t cycles=uint64_t(sample.reserved[1])|(uint64_t(sample.reserved[2])<<32);
+						fprintf(stderr,"P100A_Q35_DATAFLOW graph_profile bin=%s cycles=%llu\n",
+							names[slot-TT_QWEN35_DATAFLOW_GRAPH_PROFILE_FIRST],
+							static_cast<unsigned long long>(cycles));
+					} else fprintf(stderr,"P100A_Q35_DATAFLOW graph_trace slot=%u step=%u nonzero=%u first=0x%08x last=0x%08x\n",
 						slot,sample.reserved[0]&0x3ffU,(sample.reserved[0]>>10)&1U,
 						sample.reserved[1],sample.reserved[2]);
-				else fprintf(stderr,"P100A_Q35_DATAFLOW graph_trace slot=%u unavailable\n",slot);
+				} else fprintf(stderr,"P100A_Q35_DATAFLOW graph_trace slot=%u unavailable\n",slot);
 			}
 		} else fputs("P100A_Q35_DATAFLOW graph_result unavailable\n",stderr);
 	}
