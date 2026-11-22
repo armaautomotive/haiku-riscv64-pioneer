@@ -45,6 +45,23 @@ inline void DataflowFence()
 #endif
 }
 
+// A Blackhole baby-RISC fence drains the store queue but does not by itself
+// wait for an L1 store to reach the L1 access port. A subsequent read through
+// that same port, with a real dependent instruction, completes after all
+// earlier L1 stores before the caller can command another device to read L1.
+// The caller supplies a readable aligned word in L1 and retains that region
+// until the consuming device has finished.
+inline void DataflowL1StoresVisible(const volatile uint32_t* word)
+{
+	DataflowFence();
+	const uint32_t observed=*word;
+#if defined(__riscv)
+	__asm__ __volatile__("addi zero,%0,0" :: "r"(observed) : "memory");
+#else
+	__asm__ __volatile__("" :: "r"(observed) : "memory");
+#endif
+}
+
 inline uint32_t DataflowLoadAcquire(const volatile uint32_t& value)
 {
 #if defined(__riscv)

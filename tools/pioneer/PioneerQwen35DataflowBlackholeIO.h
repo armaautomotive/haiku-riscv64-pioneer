@@ -157,7 +157,6 @@ class DataflowBlackholeNoc {
 				quiet.index,quiet.value,0};
 			return false;
 		}
-		Fence();
 		if (write) {
 			// A baby-RISC fence drains its store queue but does not wait for
 			// L1 writes to be processed before a later store to the NoC MMIO
@@ -165,13 +164,8 @@ class DataflowBlackholeNoc {
 			// before ringing the doorbell. The L1 port orders that read after
 			// preceding L1 writes, including the barrier outbox. A compiler-only
 			// barrier is insufficient: the dependent instruction is required.
-			const uint32_t observed=*Words(localAddress+bytes-sizeof(uint32_t));
-#if defined(__riscv)
-			asm volatile("addi zero,%0,0" :: "r"(observed) : "memory");
-#else
-			asm volatile("" :: "r"(observed) : "memory");
-#endif
-		}
+			DataflowL1StoresVisible(Words(localAddress+bytes-sizeof(uint32_t)));
+		} else Fence();
 		*Words(Base+0x40)=1;
 		(void)*Words(Base+0x40);
 		Fence();

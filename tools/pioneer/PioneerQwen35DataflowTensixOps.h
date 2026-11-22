@@ -109,7 +109,7 @@ class DataflowBlackholeTensixOps {
 		DataflowTensixInitializeSourceWindows(Words(DataflowTensixSourceAHeader),
 			Words(DataflowTensixSourceBHeader),
 			Words(TensixActivationPanel));
-		Fence();
+		DataflowL1StoresVisible(Words(TensixActivationPanel)+63);
 		// Match the qualified startup state before defining the Dst rows.
 		fEmitter.Op(0x10180000); fEmitter.Drain();
 		return fEmitter.Good();
@@ -124,7 +124,7 @@ class DataflowBlackholeTensixOps {
 			return false;
 		for (unsigned word=0;word<TensixDstInitSourceBytes/4;word++)
 			Words(TensixDstInitSource)[word]=0;
-		Fence();
+		DataflowL1StoresVisible(Words(TensixDstInitSource)+TensixDstInitSourceBytes/4-1);
 		PioneerQ38VectorDstInit(fEmitter,false,true,true);
 		return fEmitter.Good();
 	}
@@ -162,7 +162,7 @@ class DataflowBlackholeTensixOps {
 			static_cast<uintptr_t>(DataflowAffinePanelScratchAddress));
 		if (!PioneerQwen35DataflowAffineOnly(type,weightPage,bytes,panel,
 			metadata)) return false;
-		Fence();
+		DataflowL1StoresVisible(Words(DataflowAffineMinimumAddress)+15);
 		return true;
 	}
 
@@ -184,7 +184,7 @@ class DataflowBlackholeTensixOps {
 				sum+=(encoded&0x8000)?-magnitude:magnitude;
 			}
 		}
-		(void)destination[7]; Fence();
+		DataflowL1StoresVisible(destination+7);
 		scale=input.scale[scaleIndex];
 		return sum>=-2048 && sum<=2048;
 	}

@@ -592,6 +592,8 @@ fi
 PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
 	PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/shared-graph-service"
+python3 "$directory/pioneer_qwen35_dataflow_tensix_source_order_test.py" \
+	"$temporary/shared-graph-service/disassembly.txt"
 for section in boot text dispatch; do
 	"$objcopy" -O binary -j ".$section" "$temporary/role-graph-witness.elf" "$temporary/expected-role-graph-$section.bin"
 	cmp "$temporary/expected-role-graph-$section.bin" "$temporary/shared-graph-service/$section.bin"
