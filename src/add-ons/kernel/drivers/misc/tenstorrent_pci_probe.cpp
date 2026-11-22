@@ -99,7 +99,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010122ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010123ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010124ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010126ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -111,11 +112,12 @@
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026112100010121ULL \
 	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010122ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010123ULL \
-	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010124ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010125ULL)
+	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010124ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010125ULL \
+	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010126ULL)
 #define PIONEER_QWEN35_INPLACE_RECOVERY 1
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (!defined(PIONEER_QWEN35_DATAFLOW_REWRITE) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL)
+	|| (PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010126ULL))
 #error Qwen35 recovery ownership tracking requires the dedicated tag0121 dataflow role
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (defined(PIONEER_Q38_NORMAL_CLOCK) \
@@ -134,6 +136,7 @@
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 #include "PioneerDriverRecoveryGuard.h"
 #include "BlackholeAsicReset.h"
+#include "PioneerRecoveryDbi.h"
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
@@ -3776,6 +3779,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 	PioneerPostResetMapping* recoveryMapping=NULL;
 	bool recoveryAttempted=false;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	PioneerRecoveryDbiSnapshot recoveryDbi={};
+#endif
 #endif
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
@@ -7116,6 +7122,56 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 }
 // PIONEER_Q38_DISPATCH_COOKIE_RELEASE_END
 
+// PIONEER_QWEN35_DBI_CAPTURE_BEGIN
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+// Capture DBI only during the quiescent session preflight, before a worker or
+// DMA can start. A failed route/TLB check retains the session, not just the
+// temporary aperture. This entire path exists only in the non-loadable
+// recovery compile witness until physical qualification is complete.
+static bool
+CaptureQwen35RecoveryDbi(PioneerStoreContext& c,bool& unsafe)
+{
+	unsafe=false;PioneerPciePayloadSnapshot pci{};
+	if (!PioneerPciePayloadRead(c.io,pci)) { unsafe=true;return false; }
+	struct CaptureIO {
+		PioneerStoreContext& c;const PioneerPciePayloadSnapshot& pci;
+		bool DbiRouteStable() {
+			PioneerPciePayloadSnapshot now{};PioneerBlackholeBarPlan plan;
+			if (!c.io.sii || (c.io.ReadNodeId()&0xfff)!=2
+				|| !PioneerMinimumBarLayoutMatches(c.profile)
+				|| !PioneerPlanBlackholeBars(c.profile.ranges,TT_PIONEER_RANGE_COUNT,plan)
+				|| plan.hostStart[0]!=c.profile.bar0_host_start || plan.hostEnd[0]!=c.profile.bar0_host_end
+				|| plan.hostStart[1]!=c.profile.bar2_host_start || plan.hostEnd[1]!=c.profile.bar2_host_end
+				|| !c.io.Quiet() || !BlackholeCardControlsQuiet(c.io)
+				|| c.io.RootRead(0,4)!=0x20421e30 || (c.io.RootRead(8,4)>>8)!=0x060400
+				|| c.io.RootRead(0x18,4)!=0x003f0100 || c.io.RootRead(0x20,4)!=0x0000fff0
+				|| !PioneerPciePayloadRead(c.io,now) || now.capability!=pci.capability
+				|| now.version!=pci.version || now.supported!=pci.supported || now.control!=pci.control
+				|| !BlackholeHostSourceRoute(c.baseline.baseline.baseline.noc.source[0])
+				|| !BlackholeDramSourceStable(c.io,c.baseline.baseline.baseline.baseline.dram)) return false;
+			for (unsigned i=0;i<6;i++) if (c.io.CardRead(0x10+i*4,4)!=plan.bars[i]) return false;
+			for (unsigned i=0;i<3;i++) if (c.io.RootRead(0x24+i*4,4)!=plan.bridge[i]) return false;
+			uint32 status=0;
+			return BlackholeHostPcieStatus(c.io,0,status) && BlackholeHostPcieStatus(c.io,1,status);
+		}
+		uint32 DbiTlbRead(unsigned n) { return c.io.DramTlbRead(0,n); }
+		void DbiTlbWrite(unsigned n,uint32 v) { c.io.DramTlbWrite(0,n,v); }
+		uint32 DbiApertureRead() {
+			return PioneerRead32((const volatile uint32*)((const volatile uint8*)c.io.sii-0xbc));
+		}
+		void DbiApertureWrite(uint32) {} // this preflight aperture is read-only
+	} io{c,pci};
+	PioneerRecoveryDbiAperture<CaptureIO> aperture(io);
+	PioneerRecoveryDbiSnapshot captured{};
+	const bool okay=aperture.Begin(false) && PioneerRecoveryDbiCapture(aperture,pci.control,captured);
+	const bool restored=aperture.Finish();
+	unsafe=!restored || !io.DbiRouteStable();
+	if (!okay || unsafe) return false;
+	c.recoveryDbi=captured;return true;
+}
+#endif
+// PIONEER_QWEN35_DBI_CAPTURE_END
+
 // sLock held; exact capacity/policy has already been selected by its ABI.
 static status_t
 BeginResidentSession(PioneerProbeCookie* cookie,uint64 capacity,tt_resident_session_result& result,bool bankOnly=false)
@@ -7142,6 +7198,14 @@ BeginResidentSession(PioneerProbeCookie* cookie,uint64 capacity,tt_resident_sess
 #endif
 #else
 	(void)bankOnly;
+#endif
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	bool dbiUnsafe=false;
+	if (ready && bankOnly) ready=CaptureQwen35RecoveryDbi(*context,dbiUnsafe);
+	if (dbiUnsafe) {
+		cookie->context=context;sRuntimeOwner=cookie;context->Snapshot(result);
+		RetainQ38DispatchOwner(*context,result);return B_OK;
+	}
 #endif
 	if (ready) { failure=TT_RESIDENT_SESSION_HOST_FAILED; ready=PioneerPrepareHostPage(context->io,context->host); }
 	cookie->context=context; sRuntimeOwner=cookie;
@@ -10598,6 +10662,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	// initialization are implemented and the complete path is qualified.
 	return B_NOT_ALLOWED;
 #endif
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if (!context->recoveryDbi.valid) return B_NOT_ALLOWED;
+#endif
 	pioneer_driver_recovery_guard_info* guard=NULL;
 	status_t status=get_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE,(module_info**)&guard);
 	if (status!=B_OK) return status;
@@ -10624,6 +10691,10 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		|| payload.capability!=payloadCheck.capability || payload.version!=payloadCheck.version
 		|| payload.supported!=payloadCheck.supported || payload.control!=payloadCheck.control)
 		return fail(B_DEV_NOT_READY);
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if ((payload.control&PIONEER_RECOVERY_DBI_MPS_MASK)!=context->recoveryDbi.mps)
+		return fail(B_DEV_NOT_READY);
+#endif
 	r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
 	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
 	if (!BlackholeAsicReset(resetIo,100,reset)) { r.detail=reset.stage;return fail(B_DEV_NOT_READY); }
@@ -10636,6 +10707,10 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
 	tt_arc_scratch_result firmware{};
 	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) { r.detail=firmware.state;return fail(B_DEV_NOT_READY); }
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,payload.control))
+		return fail(B_DEV_NOT_READY);
+#endif
 	tt_arc_queue_result firmwareQueue{};
 	if (!context->recoveryMapping->InitializeFirmwareQueue(firmware,firmwareQueue)) {
 		r.detail=firmwareQueue.state;return fail(B_DEV_NOT_READY);

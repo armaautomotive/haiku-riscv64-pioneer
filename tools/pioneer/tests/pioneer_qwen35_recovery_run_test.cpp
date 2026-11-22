@@ -15,7 +15,7 @@
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using status_t=int;
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
-static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false;
+static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
 static std::vector<unsigned> trace;
 static bool Step(unsigned stage) { trace.push_back(stage);return failStage!=stage; }
 struct module_info {};
@@ -43,6 +43,8 @@ struct tt_arc_queue_result {uint32 state=0;};
 struct PioneerPostResetAuditResult {uint32 failure=0,noc=0,core=0;};
 struct PioneerPostResetPciResult {uint32 stage=0;};
 struct PioneerPciePayloadSnapshot {uint32 capability=0x70,version=2,supported=2,control=0x20;bool valid=true;};
+constexpr uint32 PIONEER_RECOVERY_DBI_MPS_MASK=0xe0;
+struct PioneerRecoveryDbiSnapshot {uint32 mps=0x20;bool valid=true;};
 struct BlackholeAsicResetResult {uint32 stage=0;};
 struct FakeProfile {};
 struct PioneerSessionIO {
@@ -69,6 +71,9 @@ struct PioneerPostResetMapping {
 	explicit PioneerPostResetMapping(FakeProfile&) {}
 	bool Open(){return Step(PIONEER_RECOVERY_STAGE_MAPPING);}
 	bool ProbeFirmware(unsigned,tt_arc_scratch_result& r){r.state=2;return Step(PIONEER_RECOVERY_STAGE_FIRMWARE);}
+	bool RestoreInternalDbi(const PioneerRecoveryDbiSnapshot& s,uint32 control) {
+		assert(s.valid && s.mps==(control&PIONEER_RECOVERY_DBI_MPS_MASK));return !failDbi;
+	}
 	bool InitializeFirmwareQueue(const tt_arc_scratch_result&,tt_arc_queue_result& r){r.state=3;return !failFirmwareQueue;}
 	bool Audit(PioneerPostResetAuditResult& r){r.failure=2;r.core=7;return Step(PIONEER_RECOVERY_STAGE_FLEET);}
 	bool AuditHostDma(){return Step(PIONEER_RECOVERY_STAGE_HOST_DMA);}
@@ -76,6 +81,7 @@ struct PioneerPostResetMapping {
 };
 struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
+	PioneerRecoveryDbiSnapshot recoveryDbi;
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
 	FakeProfile profile;FakePciResult pci;PioneerSessionIO io;
 	FakePciResult& Pci(){return pci;}
@@ -98,7 +104,7 @@ static status_t user_memcpy(void* dst,const void* src,size_t n){memcpy(dst,src,n
 static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=3;return r;}
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
-	failPayloadRead=failPayloadRestore=failFirmwareQueue=false;
+	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
@@ -133,6 +139,16 @@ int main(){
 	Cleanup();Setup();failFirmwareQueue=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.detail==3
+		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
+	Cleanup();Setup();failDbi=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
+	Cleanup();Setup();sRuntimeOwner->context->recoveryDbi.valid=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED
+		&& trace.empty() && sRuntimeOwner && sColdRecoveryRequired && !abortCount);
+	Cleanup();Setup();sRuntimeOwner->context->recoveryDbi.mps=0x40;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_DISABLE_MASTER && trace.size()==1
 		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
 	Cleanup();
 	Setup();sRuntimeOwner->finalFreeRetained=false;r=Request();

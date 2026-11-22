@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerPostResetAudit.h"
 #include "PioneerQ38ArcQueue.h"
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+#include "PioneerRecoveryDbi.h"
+#endif
 
 // Post-reset audit windows and bounded ARC queue writes; caller owns PCI,
 // holds sLock, has completed the ASIC reset and restored PCI decoding, and
@@ -26,6 +29,11 @@ struct PioneerPostResetMapping : ConfigIO {
 	bool firmwareAttempted=false,firmwareReady=false,topologyReady=false;
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	area_id dbiArea=-1;
+	volatile uint32* dbi=NULL;
+	bool dbiAttempted=false,dbiUnsafe=false;
+#endif
 	unsigned selected=PIONEER_POST_RESET_CORES;
 
 	explicit PioneerPostResetMapping(const tt_pioneer_profile& p):profile(p) {}
@@ -175,6 +183,50 @@ struct PioneerPostResetMapping : ConfigIO {
 			if (PioneerRead32(node+BlackholeDramSourceOffset(i)/4)!=topology.source[i]) return false;
 		return true;
 	}
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	// Fresh post-reset aperture; never consult a pre-reset mapping or TLB.
+	// Both NoCs on all cores must be held and idle before the DBI write. On
+	// every failed access or TLB restoration, keep this mapping and owner.
+	bool RestoreInternalDbi(const PioneerRecoveryDbiSnapshot& snapshot,uint32 pciControl) {
+		if (dbiAttempted || !snapshot.valid || !SourceStable()) return false;
+		dbiAttempted=true;dbiUnsafe=true;
+		PioneerPostResetAuditResult preliminary{};
+		if (!Audit(preliminary) || !AuditHostDma() || !SourceStable()) return false;
+		// The DMA audit uses slot 0 read-only. Restore its fresh post-reset
+		// value before taking the separate DBI snapshot.
+		for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,dmaSaved[i]);
+		for (unsigned i=0;i<3;i++) if (PioneerRead32(tlb-3+i)!=dmaSaved[i]) return false;
+		if (!SourceStable()) return false;
+		dmaModified=false;
+		void* view=NULL;
+		dbiArea=map_physical_memory("P100A fresh post-reset DBI",
+			profile.bar0_host_start+0x19000000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (dbiArea<B_OK || !view) return false;
+		dbi=(volatile uint32*)((uint8*)view+0x78);
+		struct RestoreIO {
+			PioneerPostResetMapping& m;
+			bool DbiRouteStable() {
+				if (!m.dbi || !m.savedValid || !m.SourceStable()
+					|| (PioneerRead32(m.node+0x44/4)&0xfff)!=2
+					|| !BlackholeHostSourceRoute(m.topology.source)) return false;
+				uint32 status=0;
+				return BlackholeHostPcieStatus(m,0,status) && BlackholeHostPcieStatus(m,1,status);
+			}
+			uint32 DbiTlbRead(unsigned n) { return n<3?PioneerRead32(m.tlb-3+n):UINT32_MAX; }
+			void DbiTlbWrite(unsigned n,uint32 v) { if (n<3) PioneerWrite32(m.tlb-3+n,v); }
+			uint32 DbiApertureRead() { return PioneerRead32(m.dbi); }
+			void DbiApertureWrite(uint32 value) { PioneerWrite32(m.dbi,value); }
+		} io{*this};
+		for (unsigned i=0;i<3;i++) if (io.DbiTlbRead(i)!=dmaSaved[i]) return false;
+		PioneerRecoveryDbiAperture<RestoreIO> aperture(io);
+		dmaModified=true;
+		bool wrote=false;
+		if (!aperture.Begin(true) || !PioneerRecoveryDbiRestore(aperture,pciControl,snapshot,wrote)
+			|| !aperture.Finish()) return false;
+		dmaModified=false;dbiUnsafe=false;return true;
+	}
+#endif
 	bool SelectPostResetCore(unsigned core) {
 		selected=PIONEER_POST_RESET_CORES;
 		if (!ready || !firmwareReady || !topologyReady || core>=PIONEER_POST_RESET_CORES || !PciReady()) return false;
@@ -247,6 +299,13 @@ struct PioneerPostResetMapping : ConfigIO {
 	}
 	bool Close() {
 		if (queueUnsafe) return false;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+		if (dbiUnsafe) return false;
+		if (dbiArea>=B_OK) {
+			if (delete_area(dbiArea)!=B_OK) return false;
+			dbiArea=-1;dbi=NULL;
+		}
+#endif
 		if (dmaModified) {
 			if (!savedValid || !PciReady()) return false;
 			for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,dmaSaved[i]);

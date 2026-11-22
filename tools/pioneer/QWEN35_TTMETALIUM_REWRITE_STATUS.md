@@ -97,6 +97,22 @@ handling and physical qualification remain open. The normal driver SHA-256 is
 `fc736ae48530f37785f11ca2be56626077e549cae05e3a321db841ecd9caa366`;
 the enabled prototype remains non-loadable and is used only to compile-check.
 
+Tag0126 connects the DBI payload snapshot and restore to the non-loadable
+recovery witness. The healthy-session adapter checks the fixed PCIe identity,
+BARs, NoC route and status before mapping the control register read-only. The
+post-reset path audits both NoCs across the held fleet and the pinned firmware
+HDMA, then uses a fresh writable mapping and restores its fresh TLB snapshot.
+The owner and mapping are retained on uncertainty. Fake-device tests cover
+the real session adapter, mapping and recovery orchestration, including lost
+writes, route changes, busy DMA and failed TLB restore. Normal and non-loadable
+Haiku/RISC-V builds pass; the dataflow stack bound remains `15712/18432`.
+The normal driver SHA-256 is
+`51b8ccacdb2efaa1a7d65588040aa9e8a835fe265463d0eedb48c331660faad3`;
+the non-loadable witness is
+`43bd02e3763c49866f24ebbd9fbef9236ea0edb649d82c914f7981ec0975979f`.
+This remains untested on Pioneer, is not complete PCI/firmware recovery, and
+does not establish a new decode rate.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

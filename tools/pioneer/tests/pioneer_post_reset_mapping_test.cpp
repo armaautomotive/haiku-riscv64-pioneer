@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #include <assert.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -30,7 +31,7 @@ template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32&
 static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readOnly,unsigned w) {
 	return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
 }
-static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x30000/4],msiPage[1024];
+static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x30000/4],msiPage[1024],dbiPage[1024];
 static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1;static bool wrongNode=false;
 static uint32 cardBars[6]={12,0,12,0,12,0};
 struct Pci {
@@ -58,6 +59,7 @@ static int map_physical_memory(const char*,uint64_t addr,size_t size,int,uint32 
 	else if(addr==base+0x19200000 && size==0x20000 && !(flags&B_KERNEL_WRITE_AREA)) *out=csmPage;
 	else if(addr==base+0x19200000 && size==0x30000 && (flags&B_KERNEL_WRITE_AREA)) *out=csmPage;
 	else if(addr==base+0x192b0000 && size==4096 && (flags&B_KERNEL_WRITE_AREA)) *out=msiPage;
+	else if(addr==base+0x19000000 && size==4096 && (flags&B_KERNEL_WRITE_AREA)) *out=dbiPage;
 	else return -1;
 	return int(call);
 }
@@ -70,10 +72,16 @@ static uint32 PioneerRead32(const volatile uint32* p) {
 	if(p==nocPage+0x48/4)return 0x10000;
 	return *p;
 }
-static bool blockTlbRestore=false;
+static bool blockTlbRestore=false,blockDbiTlbRestore=false,dropDbiWrite=false;
 static bool fakeQueueTimeout=false,fakeQueueBadReply=false;
 static void PioneerWrite32(volatile uint32* p,uint32 value) {
 	if (blockTlbRestore && p==tlbPage+0x96c/4 && value==7) return;
+	if (blockDbiTlbRestore && p==tlbPage+0x960/4 && value==10) return;
+	if (p==dbiPage+0x78/4) {
+		assert(!(value&0xffff0000));
+		if (!dropDbiWrite) *p=(*p&0xffff0000&~value)|(value&0xffff);
+		return;
+	}
 	*p=value;
 	if (p==msiPage && !fakeQueueTimeout) {
 		const unsigned base=0x28000/4;
@@ -96,6 +104,7 @@ static int snooze(int) {
 static void ResetFake() {
 	memset(tlbPage,0,sizeof(tlbPage));memset(nodePage,0,sizeof(nodePage));
 	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));memset(scratchPage,0,sizeof(scratchPage));memset(csmPage,0,sizeof(csmPage));memset(msiPage,0,sizeof(msiPage));
+	memset(dbiPage,0,sizeof(dbiPage));dropDbiWrite=blockDbiTlbRestore=false;
 	mapCalls=unmapCalls=0;failMap=failUnmap=-1;wrongNode=false;
 	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
 	fakeQueueTimeout=fakeQueueBadReply=false;
@@ -127,6 +136,32 @@ int main() {
 	assert(queued.Open() && queued.ProbeFirmware(3,arc)
 		&& queued.InitializeFirmwareQueue(arc,queueResult) && queued.queueReady
 		&& queueResult.submitted && queueResult.acknowledged && queued.Close() && unmapCalls==9);
+	ResetFake();PioneerPostResetMapping dbiRestore(profile);
+	PioneerRecoveryDbiSnapshot dbiSnapshot{};dbiSnapshot.valid=true;dbiSnapshot.mps=0x40;
+	dbiPage[0x78/4]=0x00501002;
+	assert(dbiRestore.Open() && dbiRestore.ProbeFirmware(3,arc)
+		&& dbiRestore.RestoreInternalDbi(dbiSnapshot,0x2040)
+		&& dbiPage[0x78/4]==0x00501042 && !dbiRestore.dbiUnsafe
+		&& dbiRestore.Close() && unmapCalls==8 && tlbPage[0x960/4]==10);
+	ResetFake();PioneerPostResetMapping dbiLost(profile);
+	dbiPage[0x78/4]=0x00501002;dropDbiWrite=true;
+	assert(dbiLost.Open() && dbiLost.ProbeFirmware(3,arc)
+		&& !dbiLost.RestoreInternalDbi(dbiSnapshot,0x2040)
+		&& dbiLost.dbiUnsafe && dbiLost.dmaModified && !dbiLost.Close() && !unmapCalls);
+	ResetFake();PioneerPostResetMapping dbiBusy(profile);
+	nocPage[(0x10000+0x240)/4]=1;
+	assert(dbiBusy.Open() && dbiBusy.ProbeFirmware(3,arc)
+		&& !dbiBusy.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7);
+	assert(dbiBusy.dbiUnsafe && !dbiBusy.Close());
+	ResetFake();PioneerPostResetMapping dbiDmaBusy(profile);
+	hdmaPage[0x100/4]=1;
+	assert(dbiDmaBusy.Open() && dbiDmaBusy.ProbeFirmware(3,arc)
+		&& !dbiDmaBusy.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7
+		&& dbiDmaBusy.dbiUnsafe && !dbiDmaBusy.Close());
+	ResetFake();PioneerPostResetMapping dbiTlbLost(profile);
+	assert(dbiTlbLost.Open() && dbiTlbLost.ProbeFirmware(3,arc));blockDbiTlbRestore=true;
+	assert(!dbiTlbLost.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7
+		&& dbiTlbLost.dbiUnsafe && dbiTlbLost.dmaModified && !dbiTlbLost.Close());
 	for (int failure=7;failure<=8;failure++) {
 		ResetFake();PioneerPostResetMapping partialQueue(profile);
 		assert(partialQueue.Open() && partialQueue.ProbeFirmware(3,arc));failMap=failure;

@@ -50,14 +50,21 @@ normal 27B application-queue tests still pass. This is not a complete or
 hardware-qualified recovery sequence. The normal tag0125 driver SHA-256 is
 `fc736ae48530f37785f11ca2be56626077e549cae05e3a321db841ecd9caa366`.
 
-The recovery rewrite now has a standalone, simulated-only helper for the
-internal PCIe DBI payload setting, following Tenstorrent's Blackhole reset
-state handling. It validates a stable healthy-session snapshot against PCI
-configuration space, preserves unrelated control bits, avoids writing ones to
-the status half, and rejects lost writes and route changes. This helper is not
-connected to a device aperture or to recovery orchestration: route validation,
-session-time capture, fresh post-reset access and hardware qualification are
-still required. The recovery operation remains disabled by default.
+Tag0126 connects the internal PCIe DBI payload setting to the non-loadable
+recovery compile witness. It captures a stable value through the healthy
+session's audited PCIe route before workers start, and requires that snapshot
+and matching PCI configuration before reset. After reset it audits the held
+fleet and firmware HDMA, restores through a fresh mapping, and retains the
+owner and mappings if a write, route, or TLB restoration is uncertain. It
+preserves unrelated control bits and writes zero to the status half. Simulated
+tests exercise the extracted session adapter, fresh mapping, dropped writes,
+busy DMA, route drift and the recovery operation. No tag0126 code has run on
+the card; complete PCI capability and firmware recovery, resumable failures,
+and physical qualification remain open. Recovery remains disabled in the
+loadable build. The normal tag0126 driver SHA-256 is
+`51b8ccacdb2efaa1a7d65588040aa9e8a835fe265463d0eedb48c331660faad3`;
+the non-loadable recovery witness is
+`43bd02e3763c49866f24ebbd9fbef9236ea0edb649d82c914f7981ec0975979f`.
 
 Haiku is reachable at `10.0.0.247`. Following one authorized power cycle
 and the pinned NVMe/kexec handoff, the saved recovery script restored stable55

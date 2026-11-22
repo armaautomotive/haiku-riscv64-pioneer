@@ -7,9 +7,64 @@
 // Blackhole DBI Device Control/Status, addressed through the selected PCIe
 // NoC node. This helper deliberately does not configure an aperture: its IO
 // must prove the route and quiescence and perform bounded 32-bit accesses.
-// No hardware transport is wired up yet; recovery remains disabled.
+// Recovery remains disabled until the hardware transport is qualified.
 static constexpr uint64_t PIONEER_RECOVERY_DBI_ADDRESS = UINT64_C(0xf800000000000078);
 static constexpr uint32_t PIONEER_RECOVERY_DBI_MPS_MASK = 0x00e0;
+
+// The aperture uses the same 2 MiB BAR0 TLB encoding as the existing host
+// DMA audit, but targets the beginning of DBI instead of the HDMA window.
+// It is restricted to the currently supported PCIe node (2,0).
+static inline uint32_t PioneerRecoveryDbiTlbWord(unsigned word,bool writable)
+{
+	const uint64_t base=PIONEER_RECOVERY_DBI_ADDRESS & ~UINT64_C(0x1fffff);
+	if (word==0) return uint32_t(base>>21);
+	if (word==1) return uint32_t((base>>53)&0x7ff)|(2U<<11)|(2U<<23);
+	return word==2?(writable?0x40U:0xa40U):UINT32_MAX;
+}
+
+// IO owns the aperture and supplies independent PCI, route and quiescence
+// checks. Never destroy it or its owner while Dirty(): even a failed TLB write
+// may have changed the device. No destructor attempts hardware cleanup.
+template<class IO>
+class PioneerRecoveryDbiAperture {
+public:
+	explicit PioneerRecoveryDbiAperture(IO& io):fIO(io) {}
+	bool Begin(bool writable)
+	{
+		if (fAttempted || !fIO.DbiRouteStable()) return false;
+		fAttempted=true;fWritable=writable;
+		for (unsigned i=0;i<3;i++) fSaved[i]=fIO.DbiTlbRead(i);
+		if ((fSaved[2]&0xffffc000) || !fIO.DbiRouteStable()) return false;
+		fDirty=true;
+		for (unsigned i=0;i<3;i++) fIO.DbiTlbWrite(i,PioneerRecoveryDbiTlbWord(i,writable));
+		fActive=true;
+		return DbiReady();
+	}
+	bool DbiReady()
+	{
+		if (!fActive || !fIO.DbiRouteStable()) return false;
+		for (unsigned i=0;i<3;i++)
+			if (fIO.DbiTlbRead(i)!=PioneerRecoveryDbiTlbWord(i,fWritable)) return false;
+		return fIO.DbiRouteStable();
+	}
+	uint32_t DbiRead() { return DbiReady()?fIO.DbiApertureRead():UINT32_MAX; }
+	void DbiWrite(uint32_t value) { if (fWritable && DbiReady()) fIO.DbiApertureWrite(value); }
+	bool Finish()
+	{
+		if (!fDirty) return true;
+		if (!fIO.DbiRouteStable()) return false;
+		fActive=false;
+		for (unsigned i=0;i<3;i++) fIO.DbiTlbWrite(i,fSaved[i]);
+		for (unsigned i=0;i<3;i++) if (fIO.DbiTlbRead(i)!=fSaved[i]) return false;
+		if (!fIO.DbiRouteStable()) return false;
+		fDirty=false;return true;
+	}
+	bool Dirty() const { return fDirty; }
+private:
+	IO& fIO;
+	uint32_t fSaved[3]={};
+	bool fAttempted=false,fActive=false,fWritable=false,fDirty=false;
+};
 
 struct PioneerRecoveryDbiSnapshot {
 	uint32_t mps=0;
