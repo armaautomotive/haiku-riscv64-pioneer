@@ -31,6 +31,30 @@ static void CheckQueueReset()
     c[0].reserved[0]=0;
     assert(DataflowRoleCleanQueuesForReuse(c));
     for (const auto& q:c) assert(!q.produced && !q.consumed);
+
+    DataflowRoleMailbox box{};
+    box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleReader));
+    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleWriter));
+    assert(DataflowRoleMailboxIssue(box,1));
+    assert(DataflowRoleMailboxBegin(box,DataflowRoleReader,1));
+    assert(DataflowRoleMailboxBegin(box,DataflowRoleWriter,1));
+    assert(DataflowRoleMailboxComplete(box,DataflowRoleReader,1,false));
+    c[0].produced=1; c[0].readerFailure=DataflowFailureReader;
+    assert(!DataflowRoleDiscardFailedQueues(c,box,true)); // writer still active
+    assert(c[0].produced==1 && c[0].readerFailure==DataflowFailureReader);
+    assert(DataflowRoleMailboxComplete(box,DataflowRoleWriter,1,true));
+    assert(!DataflowRoleDiscardFailedQueues(c,box,false)); // host audit absent
+    c[1].produced=DataflowCircularBufferPages+1;
+    assert(!DataflowRoleDiscardFailedQueues(c,box,true));
+    assert(c[0].produced==1 && c[1].produced==DataflowCircularBufferPages+1);
+    c[1].produced=DataflowCircularBufferPages; c[2].reserved[1]=1;
+    assert(!DataflowRoleDiscardFailedQueues(c,box,true));
+    c[2].reserved[1]=0;
+    assert(DataflowRoleDiscardFailedQueues(c,box,true));
+    for (const auto& q:c)
+        assert(!q.produced && !q.consumed && !DataflowQueueFailure(q));
+    assert(box.command==1 && box.acknowledged==0); // graph remains failed
 }
 static void CheckCoordinator(bool computeOkay,bool readerOkay,bool queueOkay)
 {

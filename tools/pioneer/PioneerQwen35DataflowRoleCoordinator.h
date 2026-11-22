@@ -26,6 +26,34 @@ inline bool DataflowRoleCleanQueuesForReuse(DataflowQueueControl* controls)
     }
     return true;
 }
+// Recovery only: the host has acknowledged a failed graph after independently
+// auditing the entire fleet, both NoCs and role settlement. The compute role
+// is the sole caller, after both other roles returned. Partially filled queues
+// can then be discarded without publishing their contents or resuming the
+// failed graph. This does not itself prove that any NoC request has drained.
+inline bool DataflowRoleDiscardFailedQueues(DataflowQueueControl* controls,
+    const DataflowRoleMailbox& roles,bool auditedFailure)
+{
+    if (!controls || !auditedFailure || !DataflowRoleMailboxFaultSettled(roles)) return false;
+    for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+        const auto& c=controls[i];
+        const uint32_t produced=DataflowLoadAcquire(c.produced);
+        const uint32_t consumed=DataflowLoadAcquire(c.consumed);
+        if (produced-consumed>DataflowCircularBufferPages || c.reserved[0] || c.reserved[1])
+            return false;
+    }
+    for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+        auto& c=controls[i];
+        DataflowStoreRelease(c.produced,0);
+        DataflowStoreRelease(c.consumed,0);
+        DataflowStoreRelease(c.readerFailure,0);
+        DataflowStoreRelease(c.computeFailure,0);
+        DataflowStoreRelease(c.writerFailure,0);
+        DataflowStoreRelease(c.queueFailure,0);
+    }
+    DataflowFence();
+    return true;
+}
 enum DataflowRoleCoordinatorResult {
     DataflowRoleCoordinatorInvalid=0,
     DataflowRoleCoordinatorComplete=1,

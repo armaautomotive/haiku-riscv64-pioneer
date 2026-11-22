@@ -92,6 +92,7 @@ struct RoleTestOps {
 	RoleTestCounters& counters;
 	bool bound=false;
 	unsigned projectionType=13;
+	unsigned generation=0;
 	bool Bind(const DataflowCoreInvocation&) {
 		if (bound) return false;
 		bound=true; counters.binds.fetch_add(1,std::memory_order_relaxed); return true;
@@ -101,7 +102,7 @@ struct RoleTestOps {
 		if (!bound || !output || rows>source.rows || source.rowBytes!=sizeof(float)
 			|| bytes!=rows*sizeof(float)) { counters.Fail(); return false; }
 		float* values=reinterpret_cast<float*>(output);
-		for (unsigned i=0;i<rows;i++) values[i]=float(i);
+		for (unsigned i=0;i<rows;i++) values[i]=float(i+generation*Hidden);
 		counters.activationReads.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
@@ -123,10 +124,10 @@ struct RoleTestOps {
 			|| chunk>=inputs/DataflowActivationChunkInputs
 			|| bytes!=DataflowInputPageBytes
 			|| source[chunk*DataflowActivationChunkInputs]
-				!=float(chunk*DataflowActivationChunkInputs)) {
+				!=float(chunk*DataflowActivationChunkInputs+generation*Hidden)) {
 			counters.Fail(); return false;
 		}
-		std::memset(output,int(chunk),bytes);
+		std::memset(output,int(uint8_t(chunk^generation)),bytes);
 		counters.packedChunks.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
@@ -140,7 +141,7 @@ struct RoleTestOps {
 		const uint8_t* input)
 	{
 		if (type!=projectionType || !weight || !input
-			|| input[0]!=uint8_t(DataflowActivationChunk(type,block))) {
+			|| input[0]!=uint8_t(DataflowActivationChunk(type,block)^generation)) {
 			counters.Fail(); return false;
 		}
 		counters.matmuls.fetch_add(1,std::memory_order_relaxed);
@@ -151,14 +152,14 @@ struct RoleTestOps {
 		if (!output || bytes!=DataflowOutputPageBytes) {
 			counters.Fail(); return false;
 		}
-		std::memset(output,0x5a,bytes);
+		std::memset(output,int(uint8_t(0x5a^generation)),bytes);
 		counters.outputFinishes.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
 	bool WriteOutput(unsigned bank,uint32_t address,const uint8_t* input,unsigned bytes)
 	{
 		if (!bound || bank>=Banks || address<BankBase || address>=BankLimit || !input
-			|| bytes!=DataflowOutputPageBytes || input[0]!=0x5a) {
+			|| bytes!=DataflowOutputPageBytes || input[0]!=uint8_t(0x5a^generation)) {
 			counters.Fail(); return false;
 		}
 		counters.outputWrites.fetch_add(1,std::memory_order_relaxed);
@@ -383,6 +384,19 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	assert(BuildProgram(weight,input,Hidden,output,program));
 	DataflowCoreInvocation invocation{};
 	assert(DataflowProgramBuilder::BindCore(program,0,invocation));
+	const unsigned types[]={8,12,13,14};
+	DataflowCoreInvocation variants[4]{};
+	unsigned firstVariant=4;
+	for (unsigned i=0;i<4;i++) {
+		TensorSpace variant=weight;
+		variant.type=types[i];
+		const unsigned block=types[i]==8?32:256;
+		Rows(variant.place,Ffn,Hidden/block*(PioneerQwen35Projection::TileBytes(types[i])/16),0x08000000);
+		assert(BuildProgram(variant,input,Hidden,output,program));
+		assert(DataflowProgramBuilder::BindCore(program,0,variants[i]));
+		if (types[i]==type) firstVariant=i;
+	}
+	assert(firstVariant<4);
 	DataflowQueueControl controls[DataflowCircularBufferCount]{};
 	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
 	DataflowQueueView queues[DataflowCircularBufferCount]{};
@@ -394,32 +408,44 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	readerOps.projectionType=computeOps.projectionType=writerOps.projectionType=type;
 	DataflowRoleMailbox box{};
 	box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+	std::atomic<unsigned> generation{0};
 	struct ReaderProxy {
 		RoleTestOps& ops; bool failWeight;
 		bool Bind(const DataflowCoreInvocation& p) { return ops.Bind(p); }
 		bool ReadActivation(const RowSpace& r,unsigned n,uint8_t* out,unsigned bytes)
 			{ return ops.ReadActivation(r,n,out,bytes); }
 		bool ReadWeight(unsigned bank,uint32_t address,uint8_t* out,unsigned bytes)
-			{ return !failWeight && ops.ReadWeight(bank,address,out,bytes); }
+			{ return !(failWeight && ops.generation==8) && ops.ReadWeight(bank,address,out,bytes); }
 		bool PackActivation(unsigned t,unsigned n,unsigned c,const float* in,uint8_t* out,unsigned bytes)
 			{ return ops.PackActivation(t,n,c,in,out,bytes); }
 	} readerProxy{readerOps,failReader};
 	struct ReaderBody {
 		const DataflowCoreInvocation& program; DataflowQueueView* queues;
-		uint8_t* activation; ReaderProxy& ops;
-		bool Run() { return PioneerQwen35SharedActivationReader(program,queues[0],queues[1],activation,ops); }
-	} readerBody{invocation,queues,activation,readerProxy};
+		uint8_t* activation; ReaderProxy& ops; std::atomic<unsigned>& generation;
+		bool Run() {
+			ops.ops.bound=false; ops.ops.generation=generation.load(); ops.ops.projectionType=program.type;
+			return PioneerQwen35SharedActivationReader(program,queues[0],queues[1],activation,ops);
+		}
+	} readerBody{invocation,queues,activation,readerProxy,generation};
 	struct WriterBody {
 		const DataflowCoreInvocation& program; DataflowQueueView* queues; RoleTestOps& ops;
-		bool Run() { return PioneerQwen35DataflowWriter(program,queues[2],ops); }
-	} writerBody{invocation,queues,writerOps};
+		std::atomic<unsigned>& generation;
+		bool Run() {
+			ops.bound=false; ops.generation=generation.load(); ops.projectionType=program.type;
+			return PioneerQwen35DataflowWriter(program,queues[2],ops);
+		}
+	} writerBody{invocation,queues,writerOps,generation};
 	struct Coordinator {
 		const DataflowCoreInvocation& program; DataflowQueueView* queues;
 		DataflowQueueControl* controls; const uint8_t* activation; SharedComputeOps& ops;
-		bool RunCompute() { return PioneerQwen35SharedActivationCompute(program,queues[0],queues[1],queues[2],activation,ops); }
+		std::atomic<unsigned>& generation;
+		bool RunCompute() {
+			ops.bound=false; ops.generation=generation.load(); ops.projectionType=program.type;
+			return PioneerQwen35SharedActivationCompute(program,queues[0],queues[1],queues[2],activation,ops);
+		}
 		void Pause() { std::this_thread::yield(); }
 		bool AuditAndResetCleanQueues() { return DataflowRoleCleanQueuesForReuse(controls); }
-	} coordinator{invocation,queues,controls,activation,computeOps};
+	} coordinator{invocation,queues,controls,activation,computeOps,generation};
 	std::atomic<bool> bad{false};
 	auto roleLoop=[&](unsigned role,auto& body) {
 		DataflowRoleTickState state{};
@@ -437,22 +463,38 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	for (unsigned n=0;n<10000000 && !DataflowRoleMailboxAllStarted(box) && !bad.load();n++)
 		if ((n&255)==0) std::this_thread::yield();
 	assert(DataflowRoleMailboxAllStarted(box));
-	const auto result=DataflowRoleCoordinate(box,1,DataflowQueuePollLimit,coordinator);
+	const unsigned runs=failReader?8:64;
+	unsigned completedRuns=0,expectedMatmuls=0,expectedGroups=0;
+	DataflowRoleCoordinatorResult result=DataflowRoleCoordinatorInvalid;
+	for (unsigned run=0;run<runs;run++) {
+		invocation=variants[(firstVariant+run)%4];
+		assert(DataflowBindQueues(invocation,controls,local,queues));
+		generation.store(run+1);
+		uint32_t next=0;
+		if (!DataflowRoleNextProjectionSequence(box,next) || next!=run+1) { bad.store(true); break; }
+		result=DataflowRoleCoordinate(box,next,DataflowQueuePollLimit,coordinator);
+		if (result!=DataflowRoleCoordinatorComplete) break;
+		completedRuns++;
+		expectedMatmuls+=invocation.assignment.groups*invocation.blocks;
+		expectedGroups+=invocation.assignment.groups;
+	}
 	if (failReader) {
-		if (result!=DataflowRoleCoordinatorRetainedFault
+		if (result!=DataflowRoleCoordinatorRetainedFault || !DataflowQueueFailure(controls[0])
+			|| !DataflowRoleDiscardFailedQueues(controls,box,true)
 			|| !DataflowRoleMailboxRequestFaultStop(box,true,true,true)) bad.store(true);
 	} else if (result!=DataflowRoleCoordinatorComplete || !DataflowRoleMailboxRequestStop(box))
 		bad.store(true);
 	reader.join(); writer.join();
 	assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
-	assert(counters.okay && counters.binds==3 && counters.activationReads==1);
+	assert(counters.okay && counters.binds==3*runs && counters.activationReads==runs);
 	if (failReader) {
-		assert(box.acknowledged==0 && DataflowQueueFailure(controls[0]));
+		assert(completedRuns==runs-1 && box.acknowledged==runs-1
+			&& !DataflowQueueFailure(controls[0]));
 	} else {
-		assert(counters.matmuls==invocation.assignment.groups*invocation.blocks);
-		assert(counters.outputWrites==invocation.assignment.groups);
+		assert(completedRuns==runs);
 		for (const auto& queue:controls) assert(!queue.produced && !queue.consumed);
 	}
+	assert(counters.matmuls==expectedMatmuls && counters.outputWrites==expectedGroups);
 }
 
 static void CheckInactiveRoleReader()

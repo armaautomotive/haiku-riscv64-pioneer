@@ -525,7 +525,8 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		DataflowWorkerExecutionResult result;
 		const auto* command=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowProgramAddress));
-		if (DataflowLoadAcquire(*command)==DataflowGraphRunCommand) {
+		const bool graphCommand=DataflowLoadAcquire(*command)==DataflowGraphRunCommand;
+		if (graphCommand) {
 			DataflowGraphRunDescriptor descriptor{};
 			const auto* source=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowGraphRunAddress));
 			auto* target=reinterpret_cast<uint8_t*>(&descriptor);
@@ -570,7 +571,19 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 		completed=sequence;
 		while (DataflowLoadAcquire(mailbox->acknowledgedSequence)!=completed)
 			asm volatile("" ::: "memory");
-		if (!DataflowWorkerResetQueues()) {
+		bool queuesReset=DataflowWorkerResetQueues();
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		// Shared-mode failed acknowledgements are admitted only by the
+		// retained graph's all-core fault audit. A failed role may have left
+		// valid queue pages unconsumed; discard them only after that audit
+		// and after both reader/writer roles have returned.
+		if (!queuesReset && graphCommand && !okay && failure) {
+			const auto* roles=reinterpret_cast<const DataflowRoleMailbox*>(
+				static_cast<uintptr_t>(DataflowRoleMailboxAddress));
+			queuesReset=DataflowRoleDiscardFailedQueues(controls,*roles,true);
+		}
+#endif
+		if (!queuesReset) {
 			DataflowWorkerPublish(*mailbox,completed,DataflowWorkerFatal,
 				DataflowFailureQueue,6);
 			for (;;) asm volatile("" ::: "memory");

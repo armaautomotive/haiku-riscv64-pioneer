@@ -253,7 +253,19 @@ int main()
     context.io.queueBoxes[11][0].readerFailure=DataflowFailureReader;
     assert(io.FaultSettled(11,faultSnapshot,0x1000,0x100));
     context.io.queueBoxes[11][0].consumed=2;
+    assert(io.FaultSettled(11,faultSnapshot,0x1000,0x100)); // one valid retained page
+    assert(io.FaultCompletedForAcknowledgement(11,0x1000,0x100));
+    context.io.queueBoxes[11][0].produced=6; // invalid occupancy cannot be discarded
     assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    context.io.queueBoxes[11][0].produced=3;
+    idleRoles.completed[DataflowRoleWriter]=1; // writer has not returned
+    assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    idleRoles.completed[DataflowRoleWriter]=2;
+    readyWorker.state=DataflowWorkerComplete; readyWorker.failure=0; readyWorker.phase=2;
+    assert(context.io.ReadWorkerSnapshot(11,faultSnapshot));
+    assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100)); // successful work must drain
+    readyWorker.state=DataflowWorkerFailed; readyWorker.failure=DataflowFailureQueue; readyWorker.phase=5;
+    assert(context.io.ReadWorkerSnapshot(11,faultSnapshot));
     context.io.queueBoxes[11][0].consumed=3;
     faultSnapshot.commandSequence++;
     assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));

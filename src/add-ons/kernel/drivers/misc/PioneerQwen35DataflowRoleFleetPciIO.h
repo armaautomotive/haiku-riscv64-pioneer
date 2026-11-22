@@ -86,7 +86,8 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         memcpy(&output,&second,sizeof(output)); return true;
     }
-    bool QueuesSettled(unsigned core,bool requireZero,bool allowFailures=false) {
+    bool QueuesSettled(unsigned core,bool requireZero,bool allowFailures=false,
+        bool allowPending=false) {
         using namespace PioneerQwen35;
         DataflowQueueControl first[DataflowCircularBufferCount]{},second[DataflowCircularBufferCount]{};
         if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,first,sizeof(first))) return false;
@@ -94,7 +95,9 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,second,sizeof(second))
             || memcmp(first,second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         for (const auto& queue:second)
-            if (queue.produced!=queue.consumed || (requireZero && queue.produced)
+            if ((queue.produced!=queue.consumed && (!allowPending
+                    || queue.produced-queue.consumed>DataflowCircularBufferPages))
+                || (requireZero && queue.produced)
                 || (!allowFailures && DataflowQueueFailure(queue))
                 || queue.reserved[0] || queue.reserved[1]) return false;
         return true;
@@ -314,7 +317,8 @@ public:
                 || (expected.state==DataflowWorkerFailed && expected.failure && expected.phase==5));
         return (DataflowWorkerSnapshotReady(expected) || terminal)
             && ReadStableRoleMailbox(core,roles) && DataflowRoleMailboxFaultSettled(roles)
-            && QueuesSettled(core,false,true) && FaultRuntimeStable(core,textWords,dispatchWords);
+            && QueuesSettled(core,false,true,terminal && expected.state==DataflowWorkerFailed)
+            && FaultRuntimeStable(core,textWords,dispatchWords);
     }
     bool FaultCompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
         using namespace PioneerQwen35;

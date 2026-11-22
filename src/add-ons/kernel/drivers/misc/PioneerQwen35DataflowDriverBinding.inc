@@ -2100,12 +2100,15 @@ public:
 	void Pause() { context.io.Pause(); }
 	bool AuditGraphRecoveryCore(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
 		using namespace PioneerQwen35;
-		if (
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
-			!context.io.SharedFaultCoreSettled(core,snapshot) ||
-#endif
-			!PioneerQwen35DataflowCoreRuntimeStable(context.io,core)
+		// The shared audit already verifies stable queue snapshots and admits
+		// bounded pending pages only for a failed, fully settled command.
+		if (!context.io.SharedFaultCoreSettled(core,snapshot)
+			|| !PioneerQwen35DataflowCoreRuntimeStable(context.io,core)) return false;
+#else
+		if (!PioneerQwen35DataflowCoreRuntimeStable(context.io,core)
 			|| !PioneerQwen35DataflowQueuesBalanced(context.io,core,true)) return false;
+#endif
 		auto& dram=context.baseline.baseline.baseline.baseline.dram;
 		struct NoC1Reader {
 			PioneerSessionIO& io;
