@@ -211,6 +211,8 @@ if sh "$root/tools/pioneer/build_qwen35_shared_role_images.sh" "$build" "$tempor
 fi
 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_shared_role_images.sh" "$build" "$temporary/shared-role-images"
+python3 "$directory/pioneer_qwen35_dataflow_noc_source_order_test.py" \
+	"$temporary/shared-role-images/writer.disassembly"
 for role in reader writer; do
 	for section in shim text; do
 		if [ "$section" = text ]; then suffix=code; else suffix=shim; fi

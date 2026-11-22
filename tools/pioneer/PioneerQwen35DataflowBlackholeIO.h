@@ -122,7 +122,7 @@ class DataflowBlackholeNoc {
 			:LocalRange(localAddress,bytes) && remote>=BankBase && remote<BankLimit
 				&& bytes<=BankLimit-remote;
 		if (!local || !rangeOkay || !bytes || bytes>DataflowNocMaxTransfer
-			|| (bytes&63) || (remote&63) || route>0xfff) {
+			|| (bytes&63) || (remote&63) || (write && (localAddress&3)) || route>0xfff) {
 			if (detail) detail->stage=DataflowNocTransferInvalid;
 			return false;
 		}
@@ -158,6 +158,20 @@ class DataflowBlackholeNoc {
 			return false;
 		}
 		Fence();
+		if (write) {
+			// A baby-RISC fence drains its store queue but does not wait for
+			// L1 writes to be processed before a later store to the NoC MMIO
+			// region. Read L1 after the drained stores and consume the result
+			// before ringing the doorbell. The L1 port orders that read after
+			// preceding L1 writes, including the barrier outbox. A compiler-only
+			// barrier is insufficient: the dependent instruction is required.
+			const uint32_t observed=*Words(localAddress+bytes-sizeof(uint32_t));
+#if defined(__riscv)
+			asm volatile("addi zero,%0,0" :: "r"(observed) : "memory");
+#else
+			asm volatile("" :: "r"(observed) : "memory");
+#endif
+		}
 		*Words(Base+0x40)=1;
 		(void)*Words(Base+0x40);
 		Fence();
