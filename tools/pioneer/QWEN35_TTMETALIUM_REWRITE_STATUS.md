@@ -1,4 +1,6 @@
-> **Tag0163 candidate:** restored qualified Tensix source-window initialization and destination clear, and added bounded core0 first-projection samples for packed activation, scale, dot, and coefficient. Candidate is not yet hardware-tested; see `QWEN35_4B_NEXT_SESSION.md` for exact artifact hashes.
+> **Tag0164 next:** trace the loaded Dst metadata and first-panel SFPU accumulator to distinguish a metadata-load fault from arithmetic/readback. Full target suite and builds passed; candidate remains untested on hardware. See `QWEN35_4B_NEXT_SESSION.md`.
+
+> **Tag0163 candidate:** restored qualified Tensix source-window initialization and destination clear, and added bounded core0 first-projection samples for packed activation, scale, dot, and coefficient. Tag0163 hardware showed matching nonzero matrix dots but zero projection output; see `benchmarks/qwen35-dataflow-tag0163-20261122/RUN.md`.
 
 > **Tag0162 hardware trace:** token0 embedding samples match the independently decoded GGUF; layer0 and final RMS samples are nonzero, while sampled first QKV, gate, and final output projection pages are all zero. Output remains incorrect; unload was clean and stable driver55 generation6 is idle. See `benchmarks/qwen35-dataflow-tag0162-20261122/RUN.md`. Continue only the rewrite and investigate the projection path.
 

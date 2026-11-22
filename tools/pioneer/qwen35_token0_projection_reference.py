@@ -36,18 +36,28 @@ def main():
     def encode(value):
         return 0x4000 | (0x8000 | -value if value < 0 else value)
     words = [encode(quant[i]) | (encode(quant[i + 1]) << 16) for i in range(0, 32, 2)]
-    dots, coefficients = [], []
+    dots, coefficients, minima, accumulated = [], [], [], []
+    input_sum = sum(quant[:16])
     for row in range(16):
         block = raw_rows[row * 1760 : row * 1760 + 176]
         d = struct.unpack_from("<e", block, 0)[0]
-        coefficients.append(f32(d * (block[4] & 63)))
+        coefficient = f32(d * (block[4] & 63))
+        minimum = f32(-struct.unpack_from("<e", block, 2)[0] * (block[8] & 63))
+        coefficients.append(coefficient)
+        minima.append(minimum)
         values = [(block[48 + lane] & 15) | ((block[16 + lane] & 1) << 4)
                   for lane in range(16)]
-        dots.append(sum(value * quant[lane] for lane, value in enumerate(values)))
+        dot = sum(value * quant[lane] for lane, value in enumerate(values))
+        dots.append(dot)
+        product = f32(f32(coefficient * scale) * dot)
+        correction = f32(f32(minimum * scale) * input_sum)
+        accumulated.append(f32(product + correction))
     print(f"packed_activation first=0x{words[0]:08x} last=0x{words[-1]:08x}")
     print(f"activation_scale first=0x{bits(scale):08x}")
     print(f"matrix_dot first={dots[0]} last={dots[-1]} first_bits=0x{dots[0]&0xffffffff:08x} last_bits=0x{dots[-1]&0xffffffff:08x}")
     print(f"affine_coefficient first=0x{bits(coefficients[0]):08x} last=0x{bits(coefficients[-1]):08x}")
+    print(f"affine_minimum first=0x{bits(minima[0]):08x} last=0x{bits(minima[-1]):08x}")
+    print(f"first_panel_accumulator first=0x{bits(accumulated[0]):08x} last=0x{bits(accumulated[-1]):08x}")
 
 
 if __name__ == "__main__":

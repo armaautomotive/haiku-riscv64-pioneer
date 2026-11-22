@@ -265,6 +265,14 @@ public:
 			if (!PioneerQ38SfpuAccumulator<DataflowBlackholeTensixEmitter,true>(
 				fEmitter,affineType,block==0 && panel==0,loadMetadata,scale,sum)
 				|| !fEmitter.Good()) return false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			if (trace) {
+				// Read only the already-drained Dst rows for the same panel.
+				TraceProjection(12,Words(0xffbd9800)); // coefficient row 96
+				TraceProjection(13,Words(0xffbd9900)); // minimum row 100
+				TraceProjection(14,Words(TensixOutputReadback)); // accumulator row 108
+			}
+#endif
 		}
 		fNextBlock++;
 		return true;

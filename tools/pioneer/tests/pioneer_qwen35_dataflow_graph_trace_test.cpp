@@ -27,7 +27,7 @@ int main() {
 	assert(!DataflowGraphTraceValid({},DataflowGraphTraceSlots,lastSequence));
 	assert(!DataflowGraphTraceSample(0,page).sequence);
 	assert(!DataflowGraphTraceSample(1,nullptr).sequence);
-	assert(DataflowGraphTraceStep(8)==3 && DataflowGraphTraceStep(11)==3);
+	assert(DataflowGraphTraceStep(8)==3 && DataflowGraphTraceStep(14)==3);
 	uint32_t pending[4]{};
 	DataflowGraphTracePublishPending(pending,1003);assert(!pending[0]);
 	DataflowGraphTracePendingSample(pending,page);
