@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010143'
+TAG = '2026112100010144'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -100,6 +100,7 @@ def verify_kernel_stack_budget(driver_directory):
     if any('PioneerQ35StreamRecordingCompileWitness(' in n for n, _, _ in entries):
         groups = [
             ('recording entry', ('PioneerQ35StreamRecordingCompileWitness(',)),
+            ('owned recording entry', ('PioneerQ35GraphOwnerRecordCompileWitness(',)),
             ('recording build', ('DataflowStreamRecording::Build(',)),
             ('recording decoder', ('DataflowDecoderSequence::Run(', 'DataflowStreamRecorder<')),
             ('recording ffn', ('DataflowFfnSequence::Run(', 'DataflowStreamRecorder<')),
@@ -158,6 +159,7 @@ def verify_kernel_stack_budget(driver_directory):
         # as an intentionally conservative envelope for the complete witness.
         groups = [
             ('session entry', ('PioneerQ35GraphSessionRunCompileWitness(',)),
+            ('owned session entry', ('PioneerQ35GraphOwnerRunCompileWitness(',)),
             ('session run', ('DataflowGraphSession::Run(',)),
             ('model preparation', ('DataflowGraphModelTransaction::Prepare(',)),
             ('metadata decoder', ('DataflowDecoderSequence::Run(', 'DataflowGraphMetadataService')),

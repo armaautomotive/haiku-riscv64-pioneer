@@ -13,8 +13,22 @@ struct SessionIO : PublisherIO {
 	StreamClaim& claim;
 	explicit SessionIO(StreamClaim& c):claim(c) {}
 	unsigned waited=0,audited=0,acks=0,resultReads=0;
-	int failAudit=-1;bool sealed=true,safe=true;
+	unsigned runAllocations=0,runDeletes=0,candidateAllocations=0,candidateDeletes=0;
+	int failAudit=-1;bool sealed=true,safe=true,restored=false,failRunAlloc=false,failCandidateAlloc=false;
+	DataflowProjectionAuthority* aliasCandidate=nullptr;
 	bool GraphSessionSafe(const DataflowServiceOwner&) { return safe; }
+	DataflowGraphSessionRun* NewGraphRun() {
+		if (failRunAlloc) return nullptr;
+		runAllocations++;return new DataflowGraphSessionRun;
+	}
+	DataflowProjectionAuthority* NewGraphCandidate() {
+		if (failCandidateAlloc) return nullptr;
+		if (aliasCandidate) return aliasCandidate;
+		candidateAllocations++;return new DataflowProjectionAuthority;
+	}
+	void DeleteGraphRun(DataflowGraphSessionRun* p) { if (p) { runDeletes++;delete p; } }
+	void DeleteGraphCandidate(DataflowProjectionAuthority* p) { if (p) { candidateDeletes++;delete p; } }
+	bool GraphFleetRestored() { return restored; }
 	bool SealedStreamMatches(const DataflowStreamPlan& p,unsigned slot) {
 		return sealed && p.ready && p.count==548 && slot==0;
 	}
@@ -50,6 +64,7 @@ struct SessionIO : PublisherIO {
 	}
 };
 
+#ifndef Q35_GRAPH_SESSION_FIXTURE_ONLY
 int main() {
 	(void)&q35_session_service_fixture_main;(void)&q35_publisher_fixture_main;
 	uint32_t code[96]{},dispatch[80]{};
@@ -103,3 +118,4 @@ int main() {
 	puts("PASS graph session: sealed plan, fresh tickets, two audited state commits and retained fault; SIMULATED ONLY");
 	return 0;
 }
+#endif

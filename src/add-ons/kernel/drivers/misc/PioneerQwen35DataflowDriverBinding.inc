@@ -2058,7 +2058,92 @@ public:
 		const PioneerQwen35::DataflowWorkerSnapshot& s,bool decode) { return context.io.AuditGraphCore(c,d,s,decode); }
 	bool ReadArgmaxResult(unsigned seq,PioneerQwen35::DataflowArgmaxResult& r) { return context.io.ReadArgmaxResult(seq,r); }
 	bool Acknowledge(unsigned c,unsigned seq) { return context.io.Acknowledge(c,seq); }
+	PioneerQwen35::DataflowGraphSessionRun* NewGraphRun() {
+		return PioneerQ35NewAligned<PioneerQwen35::DataflowGraphSessionRun>();
+	}
+	PioneerQwen35::DataflowProjectionAuthority* NewGraphCandidate() {
+		// The model bind and context destructor already use ordinary new/delete.
+		static_assert(alignof(PioneerQwen35::DataflowProjectionAuthority)<=alignof(void*),"authority needs ordinary kernel allocation");
+		return new(std::nothrow) PioneerQwen35::DataflowProjectionAuthority;
+	}
+	void DeleteGraphRun(PioneerQwen35::DataflowGraphSessionRun* p) { PioneerQ35DeleteAligned(p); }
+	void DeleteGraphCandidate(PioneerQwen35::DataflowProjectionAuthority* p) { delete p; }
+	bool GraphFleetRestored() {
+		// Graph-fault recovery has not been connected to the reset proof.
+		volatile bool deny=false;return deny;
+	}
 };
+
+// This context-owned object is compiled only in the non-loadable graph
+// build. Record before service install, bind after install, and retain the
+// object until the service has been cleanly restored or a reset is proved.
+class PioneerQ35GraphOwner {
+	PioneerStoreContext& context;
+	PioneerQ35StreamRecordingWitness stream;
+	PioneerQwen35::DataflowGraphSession session;
+	PioneerQwen35::DataflowGraphOwnedRunner runner;
+	bool recorded=false,bound=false;
+public:
+	explicit PioneerQ35GraphOwner(PioneerStoreContext& c):context(c),stream(c) {}
+	bool Record(unsigned slot,unsigned& stage) {
+		if (recorded || bound || context.qwen35DataflowService) return false;
+		recorded=stream.Build(1,0,0,slot,true,stage);return recorded;
+	}
+	bool Bind() {
+		const auto* plan=stream.SealedPlan();
+		if (!recorded || bound || !plan || !context.qwen35DataflowService) return false;
+		PioneerQ35GraphBackend backend(context,stream);
+		bound=session.Bind(*plan,context.qwen35DataflowRoutes,stream.SealedSlot(),
+			context.qwen35DataflowAuthority,*context.qwen35DataflowService,backend);
+		return bound;
+	}
+	PioneerQwen35::DataflowGraphSessionResult Run(unsigned position,unsigned token,bool decode,unsigned polls,
+		PioneerQwen35::DataflowArgmaxResult& output,unsigned& stage) {
+		output={PioneerQwen35::Vocabulary,0,0,0};stage=PioneerQwen35::DataflowDecoderSequenceInvalidRequest;
+		if (!bound || !context.qwen35DataflowProgramScratch) return PioneerQwen35::DataflowGraphSessionInvalid;
+		PioneerQ35GraphBackend backend(context,stream);
+		return runner.Run(session,context.qwen35DataflowAuthority,position,token,decode,polls,
+			*context.qwen35DataflowProgramScratch,backend,output,stage);
+	}
+	bool Retained() const { return runner.Retained() || session.Faulted(); }
+};
+
+static void
+PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner)
+{
+	PioneerQ35DeleteAligned(owner);
+}
+
+static bool
+PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner)
+{
+	return owner && owner->Retained();
+}
+
+// Ownership is installed before recording can issue any DMA. If recording
+// fails after a claim, the context keeps this owner and its quarantine state.
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphOwnerRecordCompileWitness(PioneerStoreContext& context,unsigned slot,unsigned& stage)
+{
+	if (context.qwen35GraphOwner || context.qwen35DataflowService) return false;
+	context.qwen35GraphOwner=PioneerQ35NewAligned<PioneerQ35GraphOwner>(context);
+	return context.qwen35GraphOwner && context.qwen35GraphOwner->Record(slot,stage);
+}
+
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphOwnerBindCompileWitness(PioneerStoreContext& context)
+{
+	return context.qwen35GraphOwner && context.qwen35GraphOwner->Bind();
+}
+
+__attribute__((used,noinline)) static PioneerQwen35::DataflowGraphSessionResult
+PioneerQ35GraphOwnerRunCompileWitness(PioneerStoreContext& context,unsigned position,unsigned token,
+	bool decode,unsigned polls,PioneerQwen35::DataflowArgmaxResult& output,unsigned& stage)
+{
+	output={PioneerQwen35::Vocabulary,0,0,0};stage=PioneerQwen35::DataflowDecoderSequenceInvalidRequest;
+	return context.qwen35GraphOwner?context.qwen35GraphOwner->Run(position,token,decode,polls,output,stage)
+		:PioneerQwen35::DataflowGraphSessionInvalid;
+}
 
 __attribute__((used,noinline)) static bool
 PioneerQ35GraphSessionBindCompileWitness(PioneerStoreContext& context,PioneerQ35StreamRecordingWitness& stream,

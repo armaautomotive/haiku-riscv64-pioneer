@@ -451,6 +451,28 @@ The worker witness has a `7792/8192` stack envelope including a 1,024-byte
 helper allowance; it is not a whole-program proof. These checks add work per
 command and have not been benchmarked.
 
+Tag0144 adds a context-owned graph lifetime in the non-loadable driver. It
+retains the recording and session, allocates each run and candidate, transfers
+the candidate into the live model only on success, and retains uncertain runs
+instead of freeing their resources. The context's ordinary unsafe check now
+also catches that retained graph. Normal successful runs free their run object
+and retired authority under the session lock. A simulated allocator/runner
+test covers allocation failure, two promotions, retained fault and release
+only after a simulated restoration proof. The real graph-restoration proof
+still denies release, and graph-fault recovery without reboot is not complete.
+
+The kernel lacks C++17 aligned delete, so 64-byte-aligned graph objects now use
+a checked placement allocation with matching destruction; the ordinary model
+authority keeps its existing new/delete convention. The allocator test, target
+suite, shared 27B bank regression and Haiku builds pass. Normal and non-loadable
+driver SHA-256 values:
+`d35020cfd9200901d585f9f163e44a1d4ea3536273f301f931178819a966d2d6`
+and `f56e29a6a6ddb5e29b580a247a2c95fec5f343f7207d4d5ec201f5e320eafa00`.
+The recording and graph-run stack envelopes are `17552/18432` and
+`13744/18432`, respectively, including 2,048-byte helper allowances and
+excluding a real ioctl caller. Recording, binding and running this owner are
+still compile witnesses, not a public generation path or hardware result.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

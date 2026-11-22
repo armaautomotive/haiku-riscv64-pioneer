@@ -432,6 +432,24 @@ The worker stack envelope is `7792/8192` with a 1,024-byte allowance and no
 whole-program proof. Actual session allocation, graph request, safe teardown
 and all hardware validation remain open; these checks are not a speed result.
 
+Tag0144 introduces a context-owned graph lifetime for the non-loadable driver.
+Its runner allocates each run and candidate, transfers the candidate on audited
+success, and retains uncertain resources until a full fleet-restoration proof.
+The context unsafe check retains faulted graph ownership. Simulation tests
+allocation failures, two successful transfers and proof-gated fault release;
+the real restoration callback still denies release. Haiku kernel graph objects
+use explicit 64-byte aligned allocation and matching destruction because the
+kernel lacks C++17 aligned delete; model authorities retain normal new/delete.
+The allocator test, target suite, 27B shared-bank regression and Haiku builds
+pass. Normal driver SHA-256:
+`d35020cfd9200901d585f9f163e44a1d4ea3536273f301f931178819a966d2d6`;
+non-loadable witness:
+`f56e29a6a6ddb5e29b580a247a2c95fec5f343f7207d4d5ec201f5e320eafa00`.
+Recording and graph-run stack envelopes are `17552/18432` and `13744/18432`
+with 2,048-byte allowances, excluding a real ioctl caller. Connect the owner
+to a graph generation request and safe clean/fault teardown before hardware;
+no new decode rate exists.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -491,7 +509,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0143. Since tag0121 it records final release of a
+The default build now targets dedicated tag0144. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
