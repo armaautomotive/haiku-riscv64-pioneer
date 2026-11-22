@@ -103,4 +103,5 @@ int main() {
 	assert(!broken->StageRecord(plan.binding[0],plan.lease[0],1,record)
 		&& broken->Unsafe() && failed.quarantined && failed.banks.Quarantined());
 	puts("PASS protected stream pages: real bank resolver and DMA store with simulated hardware, odd records and uncertain transfer");
+	return 0;
 }

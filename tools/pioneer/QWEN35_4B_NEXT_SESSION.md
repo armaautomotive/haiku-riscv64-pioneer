@@ -234,6 +234,31 @@ the non-loadable witness is
 `b717dfff0fee41c63f7fc6861e483a47ff0edadccd85e4c1fe157e832aabf1a4`.
 Neither has run on Pioneer; there is no new decode measurement.
 
+Tag0134 connects the metadata recorder, bound-workspace validation, private
+page sink and resident transfer in one non-loadable driver compile witness.
+The full synthetic graph test records 548 operations for 120 cores through
+the real page sink, bank resolver and simulated transfer, and reads back the
+first and last pair for each core. That is 32,880 verified page writes per
+token with the current format: it is not a viable decode strategy for 100
+tokens/s. Another test covers the 545-operation prompt-only sequence. Public
+bank uploads, span uploads, legacy store/stream/bulk uploads and legacy
+Qwen35 dataflow actions now refuse while a stream claim exists; the actual
+bank control fixture checks that outside-lease model writes are rejected.
+Other diagnostic and lifecycle paths still require a complete ownership audit.
+
+The combined non-loadable build reports a conservative recorder stack
+envelope of `17408/18432` bytes including a 2,048-byte allowance. This is
+not an audit of a real ioctl caller; the normal dataflow envelope in the same
+witness is `18160/18432` and the headroom is limited. The owner is not wired
+to a request, graph launch or clean session release. Its device authorization
+hook still rejects all commands; an actual lifetime/epoch protocol, fleet
+completion and failure audit, efficient fixed-record reuse and physical
+qualification remain necessary. The normal tag0134 driver SHA-256 is
+`8966cc4906c61d36dfc8c76fec02c1917f034a190bbaffba0426d41b93717dc5`;
+the non-loadable witness is
+`a41ba66116553b520bc08ca37d152faad379e5687f9142b422eb582b6aae8514`.
+Neither has run on Pioneer and there is no new tokens-per-second result.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -293,7 +318,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0133. Since tag0121 it records final release of a
+The default build now targets dedicated tag0134. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

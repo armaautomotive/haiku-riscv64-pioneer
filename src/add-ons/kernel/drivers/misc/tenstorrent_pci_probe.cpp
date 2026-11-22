@@ -107,7 +107,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010130ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010131ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010132ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010133ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010133ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010134ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -122,13 +123,13 @@
 	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010124ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010125ULL \
 	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010126ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010127ULL \
 	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010128ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010129ULL \
-	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010130ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010131ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010132ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010133ULL)
+	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010130ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010131ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010132ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010133ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010134ULL)
 #define PIONEER_QWEN35_INPLACE_RECOVERY 1
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (!defined(PIONEER_QWEN35_DATAFLOW_REWRITE) \
 	|| (PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010126ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010127ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010128ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010129ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010130ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010131ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010132ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010133ULL))
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010129ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010130ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010131ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010132ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010133ULL && PIONEER_DRIVER_BUILD_TAG != 0x2026112100010134ULL))
 #error Qwen35 recovery ownership tracking requires the dedicated tag0121 dataflow role
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (defined(PIONEER_Q38_NORMAL_CLOCK) \
@@ -168,6 +169,7 @@
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowBoundWorkspace.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowStreamPageSink.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowStreamRecorder.h"
 #endif
 #endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
@@ -7297,6 +7299,9 @@ ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size
 	if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (context==NULL || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	else if (operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD && context->banks.Q35StreamClaimed()) status=B_NOT_ALLOWED;
+#endif
 	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7 || context->runtimeCoreMode==8 || context->runtimeCoreMode==9) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->offset)
 		|| (context->residentAttention.reserved && request->offset>=context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
@@ -7349,6 +7354,9 @@ Q38BankBulkUpload(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	else if (c->banks.Q35StreamClaimed()) status=B_NOT_ALLOWED;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
 #endif
@@ -7466,6 +7474,9 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	else if (operation==TT_PCI_PROBE_Q38_BANK_UPLOAD && c->banks.Q35StreamClaimed()) status=B_NOT_ALLOWED;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
 #endif
@@ -7592,6 +7603,9 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| c->banks.Q35StreamClaimed()
+#endif
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 #if defined(PIONEER_Q38_RECURRENT_KERNEL_COMPILE_ONLY) || defined(PIONEER_Q38_SMALL_RECURRENT_MOCK_ROUTE)
 		|| c->q38HybridReceipt || c->q38Qgw8Receipt || c->q38QgwdReceipt || !c->q38SmallRecurrentReceipt
@@ -8308,6 +8322,9 @@ Qwen35DataflowSeedActivation(PioneerProbeCookie* cookie,void* data,size_t length
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| context->Unsafe()
 		|| !context->qwen35DataflowAuthority || context->qwen35DataflowService
 		|| !context->qwen35DataflowRoutesAudited || !context->initialized
@@ -8430,6 +8447,9 @@ Qwen35DataflowProject(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -8481,6 +8501,9 @@ Qwen35DataflowEmbedToken(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -8534,6 +8557,9 @@ Qwen35DataflowRmsNorm(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
@@ -8585,6 +8611,9 @@ Qwen35DataflowResidual(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
@@ -8635,6 +8664,9 @@ Qwen35DataflowConv(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
@@ -8685,6 +8717,9 @@ Qwen35DataflowDelta(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
@@ -8734,6 +8769,9 @@ Qwen35DataflowSilu(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
@@ -8784,6 +8822,9 @@ Qwen35DataflowReadActivation(PioneerProbeCookie* cookie,void* data,size_t length
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()
 		|| !context->qwen35DataflowAuthority->Manifest()
@@ -8907,6 +8948,9 @@ Qwen35DataflowFfnSequence(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -8964,6 +9008,9 @@ Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -9024,6 +9071,9 @@ Qwen35DataflowDenseAttention(PioneerProbeCookie* cookie,void* data,size_t length
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowService->Ready()) {
 		status=B_NOT_ALLOWED;
@@ -9076,6 +9126,9 @@ Qwen35DataflowDenseLayer(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -9133,6 +9186,9 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -9284,6 +9340,9 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
 		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| context->banks.Q35StreamClaimed()
+#endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
 		|| !context->qwen35DataflowService->Ready()) {
@@ -9532,6 +9591,9 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	else if (context->banks.Q35StreamClaimed()) status=B_NOT_ALLOWED;
+#endif
 	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7 || context->runtimeCoreMode==8 || context->runtimeCoreMode==9) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->offset)
 		|| (context->residentAttention.reserved && request->offset>=context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
@@ -9567,6 +9629,9 @@ BulkUploadControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	else if (context->banks.Q35StreamClaimed()) status=B_NOT_ALLOWED;
+#endif
 	else if (context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=3 && context->runtimeCoreMode!=5 && context->runtimeCoreMode!=8) status=B_NOT_ALLOWED;
 	else if (!PioneerBulkUploadRange(context->bytes,request->offset,request->pages)
 		|| (context->residentAttention.reserved && request->offset+request->pages*4096>context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;

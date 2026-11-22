@@ -120,6 +120,7 @@ public:
 		index=uint32_t(uint64_t(bank)*(Capacity/4096)+offset/4096); return true;
 	}
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	bool Q35StreamClaimed() const { return q35StreamOwner!=nullptr; }
 	// A private, sticky claim. The caller must independently validate the
 	// plan against the live packed model and hold the global session lock.
 	// Ordinary bank access cannot enter these ranges after the claim.

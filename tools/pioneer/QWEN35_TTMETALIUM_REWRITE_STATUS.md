@@ -239,6 +239,23 @@ hardware qualification still need work. Normal and witness driver SHA-256:
 `761d8c9458d7f8d80a2ccfbde53987129edbb76ff203f0d9ebc659cf08152108`
 and `b717dfff0fee41c63f7fc6861e483a47ff0edadccd85e4c1fe157e832aabf1a4`.
 
+Tag0134 composes the real model-bound recorder, workspace validation and
+private page-transfer sink in the non-loadable driver witness. A synthetic
+548-step/120-core test reaches the real bank/store implementation against
+simulated hardware and checks first and last records on every core; prompt-only
+planning produces 545 steps. Public bank/span and legacy uploads and old
+Qwen35 dataflow actions are gated once the claim exists. The actual bank
+control test covers denied outside-lease uploads. Other diagnostic and cleanup
+paths still require an ownership audit. The combined build's conservative
+recorder stack envelope is `17408/18432` bytes including a 2,048-byte
+allowance, without a future ioctl caller; the witness's normal dataflow envelope
+is `18160/18432`. There is no public graph entry, retained session lifecycle,
+device authority, final fleet audit or physical qualification. The current
+32,880 page writes per token also make fixed-record reuse essential. Normal
+and non-loadable driver SHA-256 values are
+`8966cc4906c61d36dfc8c76fec02c1917f034a190bbaffba0426d41b93717dc5`
+and `a41ba66116553b520bc08ca37d152faad379e5687f9142b422eb582b6aae8514`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

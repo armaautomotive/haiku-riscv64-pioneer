@@ -1833,6 +1833,49 @@ public:
 	}
 };
 
+// Compile-only composition of the real authority, recorder, protected page
+// sink, and resident bank transport. This object is large and must be heap
+// owned by the session, retained through all uncertain work and destroyed
+// only after the full graph/session release audit. No such lifecycle or
+// public entry exists yet, so it cannot authorize or launch the graph.
+class PioneerQ35StreamRecordingWitness {
+	PioneerStoreContext& context;
+	PioneerQ35StreamPageIO io;
+	PioneerQwen35::DataflowStreamPageSink<PioneerQ35StreamPageIO> sink;
+	PioneerQwen35::DataflowProjectionAuthority candidate;
+	PioneerQwen35::DataflowStreamPlan plan;
+	PioneerQwen35::DataflowStreamRecord record;
+	PioneerQwen35::DataflowProjectionProgram scratch;
+	bool attempted=false;
+public:
+	explicit PioneerQ35StreamRecordingWitness(PioneerStoreContext& c)
+		:context(c),io(c),sink(io) {}
+	bool Build(unsigned epoch,unsigned position,unsigned token,unsigned inputSlot,
+		bool selectNextToken,unsigned& stage) {
+		using namespace PioneerQwen35;
+		if (attempted || !context.qwen35DataflowAuthority) return false;
+		attempted=true;
+		const auto& live=*context.qwen35DataflowAuthority;
+		const auto* manifest=live.Manifest();const auto* graph=live.GraphWorkspace();
+		DataflowBoundWorkspace workspace;
+		if (!manifest || !graph || !workspace.Initialize(live)) return false;
+		static_assert(Layers==32,"record count requires the Qwen35 32-layer sequence");
+		const unsigned count=selectNextToken?548U:545U;
+		if (!DataflowStreamPlanBuilder::Build(workspace,*manifest,*graph,live.PlanningRope(),
+			context.qwen35DataflowRoutes,epoch,count,plan)) return false;
+		return DataflowStreamRecording::Build(workspace,live,candidate,plan,
+			context.qwen35DataflowRoutes,position,token,inputSlot,selectNextToken,
+			sink,record,scratch,stage);
+	}
+};
+
+__attribute__((used,noinline)) static bool
+PioneerQ35StreamRecordingCompileWitness(PioneerQ35StreamRecordingWitness& graph,
+	unsigned epoch,unsigned position,unsigned token,unsigned inputSlot,bool select,unsigned& stage)
+{
+	return graph.Build(epoch,position,token,inputSlot,select,stage);
+}
+
 __attribute__((used,noinline)) static bool
 PioneerQ35StreamPageBackendCompileWitness(PioneerQ35StreamPageIO& io,
 	PioneerQwen35::DataflowStreamPageSink<PioneerQ35StreamPageIO>& sink,

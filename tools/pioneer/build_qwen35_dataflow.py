@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010133'
+TAG = '2026112100010134'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -93,6 +93,40 @@ def verify_kernel_stack_budget(driver_directory):
     if bound > 18432:
         raise RuntimeError(f'Qwen35 conservative kernel-stack bound is {bound} bytes')
     print(f'qwen35_kernel_stack_conservative_bytes={bound}/18432')
+
+    # The recorder is compiled only in the non-loadable dispatch witness.
+    # Add measured frames from mutually exclusive branches deliberately: this
+    # is an envelope for the witness, not an audit of a future ioctl caller.
+    if any('PioneerQ35StreamRecordingCompileWitness(' in n for n, _, _ in entries):
+        groups = [
+            ('recording entry', ('PioneerQ35StreamRecordingCompileWitness(',)),
+            ('recording build', ('DataflowStreamRecording::Build(',)),
+            ('recording decoder', ('DataflowDecoderSequence::Run(', 'DataflowStreamRecorder<')),
+            ('recording ffn', ('DataflowFfnSequence::Run(', 'DataflowStreamRecorder<')),
+            ('recording service', ('DataflowStreamRecorder<Sink>::Run',)),
+            ('recording emit', ('DataflowStreamRecorder<Sink>::Emit(',)),
+            ('authority method', ('DataflowProjectionAuthority::',)),
+            ('program builder', ('DataflowProgramBuilder::Build(',)),
+            ('projection schedule', ('PioneerQ35BuildProjectionProgram(',)),
+            ('invocation binder', ('ProgramBuilder::BindCore(',)),
+            ('invocation validator', ('Invocation::Valid(',)),
+            ('stream page stage', ('DataflowStreamPageSink<IO>::StageRecord(',)),
+            ('stream reservation', ('PioneerQ35StreamPageIO::Reserve(',)),
+            ('stream plan validation', ('DataflowStreamPlanBuilder::Validate(', 'DataflowBoundWorkspace')),
+            ('page transfer', ('PioneerResidentStorePage(', 'PioneerSessionIO')),
+            ('page command', ('PioneerResidentStoreCommand(', 'PioneerSessionIO')),
+        ]
+        total = 2048  # unmeasured small helpers and future caller are not certified
+        for label, markers in groups:
+            matches = [(frame, kind) for name, frame, kind in entries
+                       if all(marker in name for marker in markers)]
+            if not matches or any(kind != 'static' for _, kind in matches):
+                raise RuntimeError('missing or unbounded stream recorder frame: ' + label)
+            total += max(frame for frame, _ in matches)
+        if total > 18432:
+            raise RuntimeError(f'stream recorder witness stack envelope is {total} bytes')
+        print(f'qwen35_stream_witness_stack_envelope_bytes={total}/18432 '
+              '(includes 2048-byte allowance; real ioctl caller not audited)')
 
 
 def main():

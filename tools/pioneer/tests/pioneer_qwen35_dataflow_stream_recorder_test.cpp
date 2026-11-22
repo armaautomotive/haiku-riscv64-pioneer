@@ -132,6 +132,13 @@ int main() {
 		nextSink,*scratch,*projection,stage));
 	assert(next->ConvNextPosition(0)==2 && candidate->ConvNextPosition(0)==1
 		&& live->ConvNextPosition(0)==0 && nextSink.writes==548*DataflowCoreCount);
+	// Prompt-only execution stops before the final norm, projection and argmax.
+	auto prompt=std::make_unique<DataflowProjectionAuthority>();Sink promptSink;
+	assert(DataflowStreamPlanBuilder::Build(f->packed,f->manifest,f->workspace,f->rope,f->routes,101,545,*plan));
+	assert(DataflowStreamRecording::Build(f->packed,*live,*prompt,*plan,f->routes,0,42,0,false,
+		promptSink,*scratch,*projection,stage));
+	assert(promptSink.writes==545*DataflowCoreCount && !promptSink.kinds[8]
+		&& promptSink.kinds[1]==248*DataflowCoreCount && !live->ActivationReady(0));
 	assert(DataflowStreamPlanBuilder::Build(f->packed,f->manifest,f->workspace,f->rope,f->routes,99,548,*plan));
 	auto failed=std::make_unique<DataflowProjectionAuthority>();Sink lost;lost.failAt=121;
 	assert(!DataflowStreamRecording::Build(f->packed,*live,*failed,*plan,f->routes,0,42,0,true,
@@ -156,4 +163,5 @@ int main() {
 		rejectedSink,*scratch,*projection,stage));
 	assert(!rejectedSink.began && !rejected->Bound());
 	puts("PASS speculative model-authorized stream: 548 steps, 120 cores, isolated live state and aborted writes; SIMULATED ONLY");
+	return 0;
 }

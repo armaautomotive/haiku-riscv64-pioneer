@@ -249,6 +249,23 @@ int main()
 	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_READ,&page,sizeof(page))==B_OK);
 	assert(page.result.state==TT_STORE_MISMATCH && !cookie.context->uploadedPages && !cookie.context->Unsafe());
 	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_READ,&page,sizeof(page))==B_ENTRY_NOT_FOUND); End(cookie);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	// The real handlers deny writes even outside the stream leases: those
+	// pages can hold the model that gave the queued commands their authority.
+	Begin(cookie);page={};page.version=1;page.bank=0;
+	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_UPLOAD,&page,sizeof(page))==B_OK);
+	PioneerQ35StreamBankRange ranges[120];
+	for (unsigned i=0;i<120;i++) ranges[i]={i%7,0x100000+(i/7)*4096,4096};
+	assert(cookie.context->banks.ReserveQ35Stream(cookie.context->baseline.baseline.baseline.baseline.dram,
+		&cookie,ranges,120,cookie.context->initialized,PioneerResidentBanks::Pages));
+	requests=cookie.context->io.requests;
+	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_UPLOAD,&page,sizeof(page))==B_NOT_ALLOWED);
+	bulk={};bulk.version=1;bulk.pages=1;
+	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk))==B_NOT_ALLOWED);
+	assert(cookie.context->io.requests==requests);
+	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_READ,&page,sizeof(page))==B_OK);
+	End(cookie);
+#endif
 	// Actual control handler,not the caller,quarantines ALL banks on an
 	// uncertain request. No later bank operation or legacy call can issue.
 	Begin(cookie); cookie.context->io.failRequest=2; page={}; page.version=1; page.bank=6;
