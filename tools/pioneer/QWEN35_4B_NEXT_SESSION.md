@@ -50,8 +50,10 @@ An offline audit checks both NoCs across all 120 held cores twice and fails on
 unreadable, busy, or outstanding status. The guard now publishes fault epoch
 and cold state atomically; an injected fault during latch clearing leaves the
 old generation recoverable. Both fixtures pass, as does the RISC-V target
-build. The audit still needs a fresh physical mapping backend and integration
-into the reset lifecycle; it has not run on the card.
+build. A fresh post-reset mapping backend now validates PCI BARs, topology and
+each selected core, and restores a TLB value captured after reset. Simulated
+MMIO tests cover mapping and cleanup failure cases. The mapping and audit are
+not yet integrated into the reset lifecycle and have not run on the card.
 
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached

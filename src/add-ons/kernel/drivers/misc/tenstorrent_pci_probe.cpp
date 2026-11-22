@@ -1147,6 +1147,9 @@ struct PioneerColdRecoveryLatch {
 	void operator=(bool failure) {
 		if (failure) { value=true; if (sReloadGuard) sReloadGuard->fault(sReloadGeneration); }
 	}
+	// Called only after the in-driver recovery protocol has reset the ASIC,
+	// reinitialized PCI/firmware, audited every core/NoC, and released owners.
+	void ClearAfterVerifiedRecovery() { value=false; }
 };
 static PioneerColdRecoveryLatch sColdRecoveryRequired;
 // PIONEER_DRIVER_RELOAD_STATE_END
@@ -3714,6 +3717,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	}
 };
 
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#include "PioneerPostResetMapping.inc"
+#endif
 #include "PioneerQwen35WorkBinding.inc"
 
 // The session owns the PCI reservation, mappings and high host page until
