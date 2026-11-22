@@ -1,3 +1,5 @@
+> **Latest hardware result: tag0158 timed out without a token.** The graph waited 8.258036 seconds with worker0 still active; its snapshot has no graph step detail. Recovery returned 13 and the driver retained a cold latch. One authorized NVMe power cycle restored Haiku and stable driver55 generation2; independent checks verified `cold0 active_owner0`, no diagnostic process, no exclusive lock, stable SHA-256 `041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`, and unchanged recorded 4B/27B file sizes. Evidence is in `tools/pioneer/benchmarks/qwen35-dataflow-tag0158-20261122/`. No SD card operations. The reset prototype remains unqualified; do not claim this stuck-worker failure can recover without reboot. Continue only the Tenstorrent-style rewrite: add bounded, non-authoritative graph progress reporting and improve evidence before another guarded correctness test. No valid decode throughput is available.
+
 # Qwen3.5-4B Pioneer bring-up: next-session handoff
 
 Continue the active goal from checkpoint `94117b2279` and
