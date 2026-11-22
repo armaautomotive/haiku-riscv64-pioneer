@@ -28,7 +28,7 @@ struct Transport {
 	}
 };
 struct Execution {
-	unsigned core,routes[2][Banks]{},fetches=0,executes=0,resets=0;
+	unsigned core,routes[2][Banks]{},fetches=0,executes=0,resets=0,firstSequence=1;
 	DataflowStreamBinding binding{};Range lease{};
 	DataflowStreamRecord record[2]{},staging{};
 	alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};
@@ -55,8 +55,9 @@ struct Execution {
 	bool Authorize(unsigned index) { return int(index)!=failAuthority && index<2
 		&& std::memcmp(program,record[index].payload,record[index].header[6])==0; }
 	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
-		executes++;if (int(sequence-1)==failExecute) return false;
-		status=int(sequence-1)==workerFailure?77:0;detail=status?123:0;return true;
+		assert(sequence==firstSequence+executes);
+		executes++;if (int(sequence-firstSequence)==failExecute) return false;
+		status=int(sequence-firstSequence)==workerFailure?77:0;detail=status?123:0;return true;
 	}
 	bool ResetQueues() { return int(resets++)!=failReset; }
 };
@@ -66,12 +67,13 @@ struct Fleet {
 	std::array<std::unique_ptr<Execution>,DataflowBarrierWorkers> execution;
 	std::array<std::unique_ptr<Transport>,DataflowBarrierWorkers> transport;
 	std::array<std::unique_ptr<Graph>,DataflowBarrierWorkers> graph;
-	explicit Fleet(unsigned budget=8) {
+	explicit Fleet(unsigned budget=8,unsigned runEpoch=77,unsigned firstSequence=1) {
 		for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
 			execution[i]=std::make_unique<Execution>(i);
+			execution[i]->firstSequence=firstSequence;
 			transport[i]=std::make_unique<Transport>(Transport{fabric,i});
 			graph[i]=std::make_unique<Graph>(*execution[i],*transport[i]);
-			assert(graph[i]->Start(execution[i]->binding,i,budget));
+			assert(graph[i]->Start(execution[i]->binding,i,budget,runEpoch,firstSequence));
 		}
 	}
 	void Run(unsigned rounds=10) {
@@ -80,11 +82,30 @@ struct Fleet {
 	}
 };
 int main() {
+	DataflowGraphRunIssuer issuer;DataflowGraphRunTicket first{},second{};
+	assert(!issuer.Issue(0,first) && !issuer.Issue(DataflowStreamMaxRecords+1,first));
+	assert(issuer.Issue(548,first) && issuer.Issue(545,second));
+	assert(first.epoch==1 && first.firstSequence==1 && first.count==548
+		&& second.epoch==2 && second.firstSequence==549 && second.count==545);
+	DataflowGraphRunIssuer exhausted;DataflowGraphRunTicket ticket{};
+	for (unsigned n=0;n<DataflowWorkerSequenceLimit/DataflowStreamMaxRecords;n++)
+		assert(exhausted.Issue(DataflowStreamMaxRecords,ticket));
+	const unsigned remainder=DataflowWorkerSequenceLimit%DataflowStreamMaxRecords;
+	assert(remainder && !exhausted.Issue(remainder+1,ticket) && exhausted.Issue(remainder,ticket)
+		&& !exhausted.Issue(1,ticket));
 	Fleet ok;ok.Run();
 	for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
 		assert(ok.graph[i]->State()==DataflowGraphLocalComplete && ok.graph[i]->CompletedSteps()==2);
 		assert(ok.execution[i]->fetches==2 && ok.execution[i]->executes==2 && ok.execution[i]->resets==1);
 	}
+	Fleet fresh(8,78,1001);fresh.Run();
+	for (auto& g:fresh.graph) assert(g->State()==DataflowGraphLocalComplete);
+	assert(fresh.fabric.release[1].commit.word[0]==78 && fresh.fabric.release[1].commit.word[2]==2);
+	Fabric invalidFabric;Execution invalidExecution(0);Transport invalidTransport{invalidFabric,0};
+	Graph invalid(invalidExecution,invalidTransport);
+	assert(!invalid.Start(invalidExecution.binding,0,8,0,1)
+		&& !invalid.Start(invalidExecution.binding,0,8,78,0)
+		&& !invalid.Start(invalidExecution.binding,0,8,78,DataflowWorkerSequenceLimit));
 	Fleet fetch;fetch.execution[7]->failFetch=0;fetch.Run();
 	assert(fetch.graph[7]->Fault()==DataflowGraphFetchFault && fetch.execution[7]->executes==0);
 	for (auto& g:fetch.graph) assert(g->State()==DataflowGraphRetain);
@@ -99,6 +120,6 @@ int main() {
 	for (auto& g:partial.graph) assert(g->State()==DataflowGraphRetain);
 	Fleet reset;reset.execution[7]->failReset=0;reset.Run();
 	assert(reset.graph[7]->Fault()==DataflowGraphQueueFault && reset.execution[7]->fetches==1);
-	assert(!reset.graph[7]->Start(reset.execution[7]->binding,7,8));
+	assert(!reset.graph[7]->Start(reset.execution[7]->binding,7,8,78,3));
 	puts("PASS device graph: 120 simulated workers, checked streams, barriers, retention and bounded deadlines; NO HARDWARE");
 }

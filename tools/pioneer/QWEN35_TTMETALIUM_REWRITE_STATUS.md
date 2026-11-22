@@ -256,6 +256,26 @@ and non-loadable driver SHA-256 values are
 `8966cc4906c61d36dfc8c76fec02c1917f034a190bbaffba0426d41b93717dc5`
 and `a41ba66116553b520bc08ca37d152faad379e5687f9142b422eb582b6aae8514`.
 
+Tag0135 prototypes fixed-record reuse. The worker fetches and checks a sealed
+template, patches token/embedding, position and recurrent ping-pong fields in
+local staging, then publishes the command. Synthetic full-shape tests compare
+every core and operation against freshly generated authorized records for
+positions 1 and 2 and an embedding-shard change; typed-builder comparisons
+cover the last context position and last vocabulary token. Failed patches do
+not publish command magic. The non-loadable RV32IMF worker witness links the
+dynamic fetch but its graph authorization hook denies execution. Its primary
+and dispatch code use 54,652 and 9,996 bytes.
+
+The template epoch is now separate from per-run barrier epochs and command
+sequence ranges. RMS and argmax receipts also require fresh sequences; an
+unbound ticket allocator prototype issues non-overlapping ranges and rejects
+exhaustion. Neither tickets nor the trusted dynamic run context are connected
+to an owned live session, and fleet completion, failure retention, clean
+release, mutation-path audit and hardware qualification remain incomplete.
+The normal and non-loadable tag0135 driver SHA-256 values are
+`90ef29e142c91a321b32d48dd2a99ae464345969ccb5c1bc3f2dce9dbe752d67`
+and `93fd0da9854f76674f12980c0d26288458e1d8701dea0057daf3257e724ffe27`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

@@ -14,6 +14,28 @@ enum DataflowDeviceGraphFault { DataflowGraphNoFault=0, DataflowGraphFetchFault=
 	DataflowGraphBarrierFault=4, DataflowGraphDeadlineFault=5,
 	DataflowGraphWorkerFault=6, DataflowGraphQueueFault=7 };
 
+struct DataflowGraphRunTicket { unsigned epoch,firstSequence,count; };
+
+// A single session owner issues tickets under its lock and retains this
+// counter until teardown. Allocation never rolls back, even if a run fails;
+// callers must still prevent concurrent graphs and audit a prior run before
+// starting the next. A ticket is shared by all 120 workers of one graph.
+class DataflowGraphRunIssuer {
+	unsigned nextEpoch=1,nextSequence=1;
+public:
+	DataflowGraphRunIssuer()=default;
+	DataflowGraphRunIssuer(const DataflowGraphRunIssuer&)=delete;
+	DataflowGraphRunIssuer& operator=(const DataflowGraphRunIssuer&)=delete;
+	bool Issue(unsigned count,DataflowGraphRunTicket& result) {
+		if (!count || count>DataflowStreamMaxRecords || !nextEpoch || !nextSequence
+			|| nextSequence>DataflowWorkerSequenceLimit
+			|| count-1>DataflowWorkerSequenceLimit-nextSequence) return false;
+		result={nextEpoch,nextSequence,count};
+		nextEpoch++;nextSequence+=count;
+		return true;
+	}
+};
+
 // Per-worker control loop. A local completion is not a fleet-completion proof:
 // the host must observe and audit every worker before retiring the graph.
 // IO::Authorize must establish authority over the exact fetched invocation,
@@ -28,7 +50,7 @@ template<class IO,class BarrierIO> class DataflowDeviceGraph {
 	DataflowDeviceBarrier<BarrierIO> barrier;
 	DataflowDeviceGraphState state=DataflowGraphInvalid;
 	DataflowDeviceGraphFault fault=DataflowGraphNoFault;
-	unsigned core=0,epoch=0,count=0,index=0,remaining=0,pollBudget=0;
+	unsigned core=0,epoch=0,firstSequence=0,count=0,index=0,remaining=0,pollBudget=0;
 	unsigned failureCore=DataflowBarrierWorkers,failureStatus=0;
 	DataflowDeviceGraphState Retain(DataflowDeviceGraphFault why) {
 		fault=why;state=DataflowGraphRetain;return state;
@@ -37,10 +59,16 @@ public:
 	DataflowDeviceGraph(IO& execution,BarrierIO& transport):io(execution),barrier(transport) {}
 	DataflowDeviceGraph(const DataflowDeviceGraph&)=delete;
 	DataflowDeviceGraph& operator=(const DataflowDeviceGraph&)=delete;
-	bool Start(const DataflowStreamBinding& binding,unsigned worker,unsigned maxPolls) {
-		if (state!=DataflowGraphInvalid || !binding.Valid() || worker!=binding.core || !maxPolls)
+	// The binding epoch identifies immutable template records. Each execution
+	// additionally needs a fresh barrier epoch and non-overlapping sequence
+	// range: RMS scratch and argmax receipts also depend on the sequence.
+	bool Start(const DataflowStreamBinding& binding,unsigned worker,unsigned maxPolls,
+		unsigned runEpoch,unsigned sequenceStart) {
+		if (state!=DataflowGraphInvalid || !binding.Valid() || worker!=binding.core || !maxPolls
+			|| !runEpoch || !sequenceStart || sequenceStart>DataflowWorkerSequenceLimit
+			|| binding.count-1>DataflowWorkerSequenceLimit-sequenceStart)
 			return false;
-		core=worker;epoch=binding.epoch;count=binding.count;pollBudget=maxPolls;
+		core=worker;epoch=runEpoch;firstSequence=sequenceStart;count=binding.count;pollBudget=maxPolls;
 		state=DataflowGraphReady;return true;
 	}
 	DataflowDeviceGraphState Tick() {
@@ -48,7 +76,7 @@ public:
 			if (!io.Fetch(index)) return Retain(DataflowGraphFetchFault);
 			if (!io.Authorize(index)) return Retain(DataflowGraphAuthorityFault);
 			unsigned status=0,detail=0;
-			if (!io.Execute(index+1,status,detail)) return Retain(DataflowGraphExecutionUncertain);
+			if (!io.Execute(firstSequence+index,status,detail)) return Retain(DataflowGraphExecutionUncertain);
 			if (!status && detail) return Retain(DataflowGraphExecutionUncertain);
 			if (!barrier.Start(core,epoch,index+1,status,detail)) return Retain(DataflowGraphBarrierFault);
 			remaining=pollBudget;state=DataflowGraphWaiting;

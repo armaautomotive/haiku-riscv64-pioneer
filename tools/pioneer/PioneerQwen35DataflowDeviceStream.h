@@ -168,10 +168,10 @@ inline bool DataflowStreamRecordStructureValid(const DataflowStreamRecord& r,
 // A read failure is an uncertain NoC operation: the caller must stop and
 // retain the whole graph. Do not start the copied invocation until the normal
 // worker type/shape checks and the stream owner's model authorization pass.
-template<class IO>
-bool DataflowStreamFetch(IO& io,const DataflowStreamBinding& binding,const Range& lease,
+template<class IO,class Transform>
+bool DataflowStreamFetchTransform(IO& io,const DataflowStreamBinding& binding,const Range& lease,
 	const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
-	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes)
+	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,Transform& transform)
 {
 	if (!DataflowStreamBindingMatches(binding,lease,routes,core)
 		|| index>=binding.count || !program
@@ -187,9 +187,21 @@ bool DataflowStreamFetch(IO& io,const DataflowStreamBinding& binding,const Range
 	DataflowStoreRelease(program[0],0);
 	if (!io.ReadStream(binding.bank,address,binding.route,
 		reinterpret_cast<uint8_t*>(&staging),sizeof(staging))
+		|| !DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)
+		|| !transform(staging)
 		|| !DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)) return false;
 	for (unsigned i=1;i<staging.header[6]/4;i++) program[i]=staging.payload[i];
 	DataflowStoreRelease(program[0],staging.payload[0]);return true;
+}
+
+template<class IO>
+bool DataflowStreamFetch(IO& io,const DataflowStreamBinding& binding,const Range& lease,
+	const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
+	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes)
+{
+	auto unchanged=[](DataflowStreamRecord&) { return true; };
+	return DataflowStreamFetchTransform(io,binding,lease,routes,core,index,
+		staging,program,programBytes,unchanged);
 }
 
 class DataflowBlackholeStreamIO {

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen35DataflowDeviceGraph.h"
+#include "../PioneerQwen35DataflowDynamicToken.h"
 
 // Only linked into the non-loadable device-dispatch witness. The linked
 // authorization hook currently rejects all commands, and the resident
@@ -13,10 +14,11 @@ struct GraphWitnessExecution {
 	const PioneerQwen35::DataflowStreamBinding& binding;
 	const PioneerQwen35::Range& lease;
 	const unsigned (&routes)[2][PioneerQwen35::Banks];
+	const PioneerQwen35::DataflowDynamicTokenContext& run;
 	unsigned core;
 	PioneerQwen35::DataflowWorkerMailbox* mailbox;
 	bool Fetch(unsigned index) {
-		return PioneerQwen35::DataflowBlackholeStreamFetch(binding,lease,routes,core,index);
+		return PioneerQwen35::DataflowBlackholeStreamFetchDynamic(binding,lease,routes,core,index,run);
 	}
 	bool Authorize(unsigned index) { return qwen35_graph_authorize(core,index); }
 	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
@@ -27,13 +29,15 @@ struct GraphWitnessExecution {
 extern "C" unsigned PioneerQwen35DeviceGraphCompileProbe(
 	const PioneerQwen35::DataflowStreamBinding& binding,const PioneerQwen35::Range& lease,
 	const unsigned (&routes)[2][PioneerQwen35::Banks],unsigned core,unsigned pollBudget,
+	unsigned runEpoch,unsigned sequenceStart,
+	const PioneerQwen35::DataflowDynamicTokenContext& run,
 	PioneerQwen35::DataflowWorkerMailbox* mailbox)
 {
-	GraphWitnessExecution execution{binding,lease,routes,core,mailbox};
+	GraphWitnessExecution execution{binding,lease,routes,run,core,mailbox};
 	PioneerQwen35::DataflowBlackholeBarrierIO transport(core);
 	PioneerQwen35::DataflowDeviceGraph<GraphWitnessExecution,
 		PioneerQwen35::DataflowBlackholeBarrierIO> graph(execution,transport);
-	if (!graph.Start(binding,core,pollBudget)) return PioneerQwen35::DataflowGraphInvalid;
+	if (!graph.Start(binding,core,pollBudget,runEpoch,sequenceStart)) return PioneerQwen35::DataflowGraphInvalid;
 	for (;;) {
 		const auto state=graph.Tick();
 		if (state==PioneerQwen35::DataflowGraphLocalComplete || state==PioneerQwen35::DataflowGraphRetain)

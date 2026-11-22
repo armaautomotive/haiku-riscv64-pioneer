@@ -259,6 +259,32 @@ the non-loadable witness is
 `a41ba66116553b520bc08ca37d152faad379e5687f9142b422eb582b6aae8514`.
 Neither has run on Pioneer and there is no new tokens-per-second result.
 
+Tag0135 prototypes reusable template records. Each worker fetches a sealed
+template into local L1, checks it, and patches the token/embedding address,
+position and recurrent ping-pong selectors in the private staging copy. A
+synthetic full-shape test compares every one of the 548 operations on all
+120 cores against newly generated model-authorized plans at positions 1 and
+2, including a token in another embedding shard. Typed-builder tests also
+cover the final context position, last vocabulary token, and active/inactive
+cores. A failed patch leaves the command magic unpublished. The worker link
+witness uses 54,652 bytes of primary and 9,996 bytes of dispatch code; it
+remains non-loadable and its authorization hook still rejects all commands.
+
+Template epoch is now distinct from each run's barrier epoch and sequence
+range. RMS scale and argmax receipts use the command sequence, so recycling
+the same sequence on a later token could accept stale data. A session-ticket
+prototype allocates monotonic, non-overlapping ranges and refuses exhaustion;
+it is not yet bound to the live session or an audited graph lifecycle. The
+run's token, position and embedding row table must be constructed from the
+live validated model, published immutably to every worker and tied to those
+fresh tickets. Completion/fault receipts, guarded teardown, mutation-path
+audit, hardware qualification and measured throughput remain open. Records
+are still fetched from device memory each operation; no physical performance
+result exists. The normal tag0135 driver SHA-256 is
+`90ef29e142c91a321b32d48dd2a99ae464345969ccb5c1bc3f2dce9dbe752d67`;
+the non-loadable witness is
+`93fd0da9854f76674f12980c0d26288458e1d8701dea0057daf3257e724ffe27`.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -318,7 +344,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0134. Since tag0121 it records final release of a
+The default build now targets dedicated tag0135. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
