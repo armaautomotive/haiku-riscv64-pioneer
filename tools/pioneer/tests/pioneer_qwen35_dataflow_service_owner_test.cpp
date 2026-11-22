@@ -50,6 +50,10 @@ struct MockDataflowIO {
 	uint32_t barrierLocal[DataflowCoreCount][3*DataflowBarrierPacketBytes/4]{};
 	uint32_t barrierRoot[(DataflowBarrierArrivalEnd-DataflowBarrierArrivalBase)/4]{};
 	unsigned failBarrierCore=UINT32_MAX,barrierWriteCount[DataflowCoreCount]{};
+	uint32_t dispatchText[DataflowCoreCount][128]{};
+	unsigned dispatchWrites[DataflowCoreCount]{},dispatchReads[DataflowCoreCount]{};
+	unsigned failDispatchWriteCore=UINT32_MAX,failDispatchReadCore=UINT32_MAX;
+	unsigned corruptDispatchReadCore=UINT32_MAX;
 #endif
 	unsigned captureCount=0,writeCount=0,startCount=0,waitCount=0,stopCount=0,
 		restoreCount=0,resumeCount=0;
@@ -117,6 +121,13 @@ struct MockDataflowIO {
 			const unsigned offset=(address-DataflowServiceEntryAddress)/4;
 			if ((address&3) || (bytes&3) || offset+bytes/4>128) return false;
 			memcpy(text[core]+offset,input,bytes);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		} else if (address>=DataflowServiceDispatchAddress && address+bytes<=DataflowServiceDispatchLimit) {
+			if (core==failDispatchWriteCore) return false;
+			const unsigned offset=(address-DataflowServiceDispatchAddress)/4;
+			if ((address&3) || (bytes&3) || offset+bytes/4>128) return false;
+			memcpy(dispatchText[core]+offset,input,bytes);dispatchWrites[core]++;
+#endif
 		} else if (address==DataflowServiceBootAddress && bytes==sizeof(uint32_t)) {
 			memcpy(&boot[core],input,bytes);
 		} else if (address==DataflowQueueStateAddress
@@ -139,7 +150,7 @@ struct MockDataflowIO {
 		writeCount++;
 		return true;
 	}
-	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) const
+	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes)
 	{
 		if (core>=DataflowCoreCount || !output || !bytes) return false;
 		const unsigned routeAddress=DataflowWorkerMailboxAddress
@@ -154,6 +165,14 @@ struct MockDataflowIO {
 			const unsigned offset=(address-DataflowServiceEntryAddress)/4;
 			if ((address&3) || (bytes&3) || offset+bytes/4>128) return false;
 			memcpy(output,text[core]+offset,bytes);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		} else if (address>=DataflowServiceDispatchAddress && address+bytes<=DataflowServiceDispatchLimit) {
+			if (core==failDispatchReadCore) return false;
+			const unsigned offset=(address-DataflowServiceDispatchAddress)/4;
+			if ((address&3) || (bytes&3) || offset+bytes/4>128) return false;
+			memcpy(output,dispatchText[core]+offset,bytes);dispatchReads[core]++;
+			if (core==corruptDispatchReadCore) static_cast<uint32_t*>(output)[0]^=1;
+#endif
 		} else if (address==DataflowServiceBootAddress && bytes==sizeof(uint32_t)) {
 			memcpy(output,&boot[core],bytes);
 		} else if (address==DataflowQueueStateAddress
@@ -549,7 +568,22 @@ int main()
 
 	uint32_t code[96];
 	for (unsigned i=0;i<96;i++) code[i]=0x10000000+i;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	uint32_t dispatchCode[80];
+	for (unsigned i=0;i<80;i++) dispatchCode[i]=0x20000000+i;
+	DataflowServiceImageView image={DataflowServiceBootWord,code,96,dispatchCode,80};
+#else
 	DataflowServiceImageView image={DataflowServiceBootWord,code,96};
+#endif
+	assert(DataflowServicePcInImage(DataflowServiceEntryAddress,96,80));
+	assert(DataflowServicePcInImage(DataflowServiceDispatchAddress,96,80));
+	assert(!DataflowServicePcInImage(DataflowServiceEntryAddress+96*4,96,80));
+	assert(!DataflowServicePcInImage(DataflowServiceDispatchAddress+80*4,96,80));
+	assert(!DataflowServicePcInImage(DataflowServiceDispatchAddress+1,96,80));
+	assert(!DataflowServicePcInImage(DataflowServiceDispatchAddress,96,0));
+	assert(!DataflowServicePcInImage(DataflowServiceEntryAddress,0,80));
+	assert(!DataflowServicePcInImage(DataflowServiceEntryAddress,96,
+		(DataflowServiceDispatchLimit-DataflowServiceDispatchAddress)/4+1));
 
 	MockDataflowIO io{};
 	DataflowServiceOwner owner;
@@ -561,6 +595,25 @@ int main()
 	assert(owner.Ready() && io.captureCount==DataflowCoreCount
 		&& io.startCount==DataflowCoreCount);
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	DataflowServiceImageView invalidImage=image;invalidImage.dispatchWords=nullptr;
+	MockDataflowIO invalidIo{};DataflowServiceOwner invalidOwner;
+	assert(invalidOwner.Install(invalidImage,invalidIo)==DataflowServiceInvalidImage
+		&& !invalidIo.captureCount && !invalidIo.writeCount);
+	invalidImage=image;invalidImage.dispatchWordCount=(DataflowServiceDispatchLimit-DataflowServiceDispatchAddress)/4+1;
+	assert(invalidOwner.Install(invalidImage,invalidIo)==DataflowServiceInvalidImage && !invalidIo.captureCount);
+	MockDataflowIO dispatchFailure{};DataflowServiceOwner dispatchFailureOwner;
+	dispatchFailure.failDispatchWriteCore=2;
+	assert(dispatchFailureOwner.Install(image,dispatchFailure)==DataflowServiceImageWriteFailed
+		&& dispatchFailureOwner.Faulted() && dispatchFailure.captureCount==DataflowCoreCount
+		&& !dispatchFailure.startCount && !dispatchFailure.restoreCount);
+	MockDataflowIO readbackFailure{};DataflowServiceOwner readbackFailureOwner;
+	readbackFailure.failDispatchReadCore=2;
+	assert(readbackFailureOwner.Install(image,readbackFailure)==DataflowServiceImageWriteFailed
+		&& readbackFailureOwner.Faulted() && !readbackFailure.startCount && !readbackFailure.restoreCount);
+	MockDataflowIO corruptReadback{};DataflowServiceOwner corruptReadbackOwner;
+	corruptReadback.corruptDispatchReadCore=2;
+	assert(corruptReadbackOwner.Install(image,corruptReadback)==DataflowServiceImageWriteFailed
+		&& corruptReadbackOwner.Faulted() && !corruptReadback.startCount && !corruptReadback.restoreCount);
 	MockDataflowIO setupFailure{};
 	DataflowServiceOwner setupFailureOwner;
 	setupFailure.failBarrierCore=2;
@@ -572,6 +625,10 @@ int main()
 		assert(DataflowWorkerMailboxStartupValid(io.mailbox[core]));
 		assert(io.boot[core]==DataflowServiceBootWord);
 		for (unsigned i=0;i<96;i++) assert(io.text[core][i]==code[i]);
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		assert(io.dispatchWrites[core]==2 && io.dispatchReads[core]==2);
+		for (unsigned i=0;i<80;i++) assert(io.dispatchText[core][i]==dispatchCode[i]);
+#endif
 	}
 
 	TensorSpace weight{};

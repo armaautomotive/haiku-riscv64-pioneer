@@ -22,11 +22,27 @@ flags="-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-
 	-c "$directory/PioneerQwen35DataflowMemory.cpp" -o "$output/memory.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
 	"$directory/blackhole_qwen35_dataflow_service_start.S" -o "$output/start.o"
-"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
-	-T "$directory/blackhole_qwen35_dataflow_service.ld" \
-	"$output/start.o" "$output/service.o" "$output/memory.o" \
-	-Map "$output/service.map" \
-	-o "$output/service.elf"
+case "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" in
+0)
+	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+		-T "$directory/blackhole_qwen35_dataflow_service.ld" \
+		"$output/start.o" "$output/service.o" "$output/memory.o" \
+		-Map "$output/service.map" -o "$output/service.elf";;
+1)
+	[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" = 1 ] || exit 2
+	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+		-c "$directory/tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" -o "$output/device-stream.o"
+	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+		-c "$directory/tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" -o "$output/device-barrier.o"
+	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+		-u PioneerQwen35DeviceStreamCompileProbe -u PioneerQwen35DeviceBarrierCompileProbe \
+		-T "$directory/blackhole_qwen35_dataflow_dispatch_witness.ld" \
+		"$output/start.o" "$output/service.o" "$output/memory.o" \
+		"$output/device-stream.o" "$output/device-barrier.o" \
+		-Map "$output/service.map" -o "$output/service.elf"
+	"$cross-objcopy" -O binary -j .dispatch "$output/service.elf" "$output/dispatch.bin";;
+*) exit 2;;
+esac
 "$cross-objcopy" -O binary -j .boot "$output/service.elf" "$output/boot.bin"
 "$cross-objcopy" -O binary -j .text "$output/service.elf" "$output/text.bin"
 "$cross-nm" -u "$output/service.elf" > "$output/imports.txt"
@@ -49,10 +65,18 @@ if boot != bytes.fromhex('6fc00600') or not 0 < len(code) <= 0xe000 or len(code)
 if symbols.get('qwen35_dataflow_entry') != 0x72000:
     raise SystemExit('unexpected resident dataflow entry address')
 words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', code))
+dispatch_path = out / 'dispatch.bin'
+dispatch = dispatch_path.read_bytes() if dispatch_path.exists() else b''
+if dispatch and (len(dispatch) > 0x5c00 or len(dispatch) % 4):
+    raise SystemExit('unexpected dispatch witness image size')
+dispatch_words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', dispatch))
+dispatch_definition = ('inline constexpr unsigned DataflowServiceDispatchWords[]={\n'
+                       + dispatch_words + '};\n') if dispatch else ''
 (out / 'PioneerQwen35DataflowServiceImage.h').write_text(
     '#pragma once\nnamespace PioneerQwen35 {\n'
     f'inline constexpr unsigned DataflowServiceImageBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
-    'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words + '};\n}\n',
+    'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words + '};\n'
+    + dispatch_definition + '}\n',
     encoding='ascii')
 PY
 if "$cross-objdump" -d "$output/service.elf" \
@@ -61,3 +85,4 @@ if "$cross-objdump" -d "$output/service.elf" \
 	exit 1
 fi
 shasum -a 256 "$output/boot.bin" "$output/text.bin"
+if [ -f "$output/dispatch.bin" ]; then shasum -a 256 "$output/dispatch.bin"; fi

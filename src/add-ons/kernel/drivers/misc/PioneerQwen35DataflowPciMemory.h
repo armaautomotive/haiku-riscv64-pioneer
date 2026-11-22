@@ -30,6 +30,10 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 	if (end<address) return false;
 	return (address>=PioneerQwen35::DataflowServiceEntryAddress
 			&& end<=PioneerQwen35::DataflowServiceTextLimit)
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| (address>=PioneerQwen35::DataflowServiceDispatchAddress
+			&& end<=PioneerQwen35::DataflowServiceDispatchLimit)
+#endif
 		|| (address>=PioneerQwen35::DataflowQueueStateAddress
 			&& end<=PioneerQwen35::DataflowQueueStateAddress
 				+PioneerQwen35::DataflowQueueStateBytes)

@@ -16,25 +16,49 @@ enum : unsigned {
 	DataflowServiceBootAddress=0x6000,
 	DataflowServiceEntryAddress=0x72000,
 	DataflowServiceTextLimit=0x80000,
+	DataflowServiceDispatchAddress=0xa0400,
+	DataflowServiceDispatchLimit=DataflowProgramAddress,
 	DataflowServiceBootWord=0x0006c06f,
 	DataflowServiceChunkWords=64
 };
 static_assert(sizeof(DataflowQueueControl)*DataflowCircularBufferCount
 	==DataflowQueueStateBytes,
 	"resident startup clears exactly the reserved queue-control region");
+static_assert(DataflowServiceDispatchAddress>=DataflowLocalBufferEnd+0x400
+	&& unsigned(DataflowServiceDispatchLimit)==unsigned(DataflowProgramAddress),
+	"dispatch code follows Tensix initialization and ends before invocations");
 
 struct DataflowServiceImageView {
 	unsigned bootWord;
 	const uint32_t* textWords;
 	unsigned textWordCount;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	const uint32_t* dispatchWords;
+	unsigned dispatchWordCount;
+#endif
 
 	bool Valid() const
 	{
 		return bootWord==DataflowServiceBootWord && textWords && textWordCount
 			&& textWordCount<=((DataflowServiceTextLimit-DataflowServiceEntryAddress)
-				/sizeof(uint32_t));
+				/sizeof(uint32_t))
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			&& dispatchWords && dispatchWordCount
+			&& dispatchWordCount<=((DataflowServiceDispatchLimit-DataflowServiceDispatchAddress)
+				/sizeof(uint32_t))
+#endif
+			;
 	}
 };
+
+inline bool DataflowServicePcInImage(unsigned pc,unsigned textWords,unsigned dispatchWords)
+{
+	if ((pc&3) || !textWords || textWords>(DataflowServiceTextLimit-DataflowServiceEntryAddress)/4
+		|| dispatchWords>(DataflowServiceDispatchLimit-DataflowServiceDispatchAddress)/4) return false;
+	return (pc>=DataflowServiceEntryAddress && pc-DataflowServiceEntryAddress<textWords*4)
+		|| (dispatchWords && pc>=DataflowServiceDispatchAddress
+			&& pc-DataflowServiceDispatchAddress<dispatchWords*4);
+}
 
 enum DataflowServiceResult {
 	DataflowServiceComplete=0,
@@ -116,22 +140,34 @@ class DataflowServiceOwner {
 	}
 
 	template<class IO>
-	static bool WriteAndVerifyImage(unsigned core,const DataflowServiceImageView& image,
-		IO& io)
+	static bool WriteAndVerifyRegion(unsigned core,unsigned start,const uint32_t* text,
+		unsigned count,IO& io)
 	{
 		uint32_t readback[DataflowServiceChunkWords];
-		for (unsigned offset=0;offset<image.textWordCount;) {
-			unsigned words=image.textWordCount-offset;
+		for (unsigned offset=0;offset<count;) {
+			unsigned words=count-offset;
 			if (words>DataflowServiceChunkWords) words=DataflowServiceChunkWords;
-			const unsigned address=DataflowServiceEntryAddress+offset*sizeof(uint32_t);
-			if (!io.WriteCoreMemory(core,address,image.textWords+offset,words*sizeof(uint32_t)))
+			const unsigned address=start+offset*sizeof(uint32_t);
+			if (!io.WriteCoreMemory(core,address,text+offset,words*sizeof(uint32_t)))
 				return false;
 			if (!io.ReadCoreMemory(core,address,readback,words*sizeof(uint32_t)))
 				return false;
 			for (unsigned i=0;i<words;i++)
-				if (readback[i]!=image.textWords[offset+i]) return false;
+				if (readback[i]!=text[offset+i]) return false;
 			offset+=words;
 		}
+		return true;
+	}
+
+	template<class IO>
+	static bool WriteAndVerifyImage(unsigned core,const DataflowServiceImageView& image,IO& io)
+	{
+		if (!WriteAndVerifyRegion(core,DataflowServiceEntryAddress,image.textWords,image.textWordCount,io))
+			return false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		if (!WriteAndVerifyRegion(core,DataflowServiceDispatchAddress,image.dispatchWords,image.dispatchWordCount,io))
+			return false;
+#endif
 		return true;
 	}
 

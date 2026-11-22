@@ -56,14 +56,17 @@ PioneerQwen35DataflowQueuesDrained(PioneerSessionIO& io,unsigned core)
 static bool
 PioneerQwen35DataflowServicePc(PioneerSessionIO& io)
 {
-	const unsigned end=PioneerQwen35::DataflowServiceEntryAddress
-		+sizeof(PioneerQwen35::DataflowServiceTextWords);
+	const unsigned primary=sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t);
+	unsigned dispatch=0;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	dispatch=sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t);
+#endif
 	io.Pause();
 	const uint32_t first=io.RuntimePcRead();
 	io.Pause();
 	const uint32_t second=io.RuntimePcRead();
-	return first>=PioneerQwen35::DataflowServiceEntryAddress && first<end
-		&& second>=PioneerQwen35::DataflowServiceEntryAddress && second<end;
+	return PioneerQwen35::DataflowServicePcInImage(first,primary,dispatch)
+		&& PioneerQwen35::DataflowServicePcInImage(second,primary,dispatch);
 }
 
 static bool
@@ -113,6 +116,14 @@ PioneerSessionIO::DataflowCoreServiceImageMatches(unsigned core)
 		if (Q38PanelRead(address)!=PioneerQwen35::DataflowServiceTextWords[i])
 			return false;
 	}
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	for (unsigned i=0;i<sizeof(PioneerQwen35::DataflowServiceDispatchWords)
+			/sizeof(PioneerQwen35::DataflowServiceDispatchWords[0]);i++) {
+		const unsigned address=PioneerQwen35::DataflowServiceDispatchAddress+i*4;
+		if (Q38PanelRead(address)!=PioneerQwen35::DataflowServiceDispatchWords[i])
+			return false;
+	}
+#endif
 	qwen35DataflowContext->qwen35DataflowImageVerified[core]=true;
 	return true;
 }

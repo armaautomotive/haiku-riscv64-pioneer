@@ -164,9 +164,17 @@ The primary worker has only 2,892 bytes of unused code space. A separate
 offline linker witness places the existing 54,452-byte primary image at
 `0x72000` and the 7,308-byte stream/barrier compile probes at `0xa0400`,
 before the invocation slot at `0xaa000`; both fit and have no unresolved
-imports. The entire range is covered by the existing L1 snapshot. This proves
-only the proposed layout: the current driver does not install or verify the
-second segment and the service does not invoke it.
+imports. The entire range is covered by the existing L1 snapshot. Tag0129's
+non-loadable witness now writes and reads back both segments while the fleet
+is held, includes the second segment in image verification and accepted
+program-counter ranges, and prohibits writes to it while cores are running.
+Simulated tests exercise dropped writes, failed and corrupt readbacks and the
+held/running access boundary. The second segment still contains compile probes,
+not the actual queued service, and no tag0129 image has run on Pioneer. The
+normal driver SHA-256 is
+`8f7a25dc4b2cbddeaf8b6d691a9342386f7e8e5e4c9d565f7b3e766f4ca5eb31`;
+the non-loadable witness SHA-256 is
+`22f4d211d27e3ae0a49c6040a6a3b02871b55e94c98d2fc1997f85f8f6248072`.
 
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores

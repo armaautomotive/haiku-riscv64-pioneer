@@ -102,7 +102,7 @@ compiled only into a non-loadable dispatch witness. Simulated tests cover all
 held-core initialization and full L1 restore. The concrete NoC transport also
 compiles for RV32IMF without atomic instructions or runtime helpers.
 
-This is not yet a working queued graph: descriptor-stream storage and fetch,
+This is not yet a working queued graph: trusted descriptor-stream storage and fetch,
 fresh-epoch ownership, worker service integration, bounded deadline and fault
 propagation, and silicon validation are still open. Neither the barrier nor
 its peer NoC writes have run on the card. Normal tag0128 driver SHA-256:
@@ -136,9 +136,18 @@ and the stream/barrier compile probes in `0xa0400..0xa9fff`, between the
 Tensix destination-init window and the invocation slot. Both ranges lie in
 the existing saved L1 snapshot. The witness links 54,452 bytes of primary
 text and 7,308 bytes of dispatch text within their respective limits, with no
-unresolved imports. The current driver does not install, verify or execute
-this second code region; implementing those lifecycle checks and linking the
-actual queued service is required before this becomes a device image.
+unresolved imports. Tag0129 adds bounded installation and readback of both
+regions while all cores are held, includes the second region in image identity
+and program-counter checks, and refuses writes to it while workers run.
+Injected write failures, failed or corrupt readbacks and the held/running
+access rules pass simulated tests. This installation exists only in the
+non-loadable dispatch witness: its second section contains compile probes,
+and the resident worker does not execute the queued service. The normal
+tag0129 driver SHA-256 is
+`8f7a25dc4b2cbddeaf8b6d691a9342386f7e8e5e4c9d565f7b3e766f4ca5eb31`;
+the non-loadable witness SHA-256 is
+`22f4d211d27e3ae0a49c6040a6a3b02871b55e94c98d2fc1997f85f8f6248072`.
+Neither has run on the card.
 
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
@@ -199,7 +208,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0128. Since tag0121 it records final release of a
+The default build now targets dedicated tag0129. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
