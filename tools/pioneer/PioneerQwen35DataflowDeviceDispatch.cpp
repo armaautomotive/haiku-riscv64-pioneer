@@ -25,12 +25,13 @@ extern "C" bool qwen35_graph_reset_queues();
 // https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
 static inline uint64_t DataflowProfileCycle()
 {
-	uint32_t high,low,again;
-	do {
+	for (unsigned attempt=0;attempt<4;attempt++) {
+		uint32_t high,low,again;
 		asm volatile("csrr %0, 0xc80\n\tcsrr %1, 0xc00\n\tcsrr %2, 0xc80"
 			: "=&r"(high),"=&r"(low),"=&r"(again) :: "memory");
-	} while (high!=again);
-	return (uint64_t(high)<<32)|low;
+		if (high==again) return (uint64_t(high)<<32)|low;
+	}
+	return ~uint64_t(0); // bounded diagnostic failure; never retain inference
 }
 
 struct GraphWitnessExecution {

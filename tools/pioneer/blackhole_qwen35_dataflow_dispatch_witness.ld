@@ -9,6 +9,9 @@ SECTIONS {
 		/* Keep the normalization worker and its graph bridge in the already
 		 * verified dispatch image, leaving room in the primary code region. */
 		*service.o(.text.*PioneerQwen35DataflowRmsWorker*)
+		/* The setup helper executes from the same saved, audited dispatch
+		 * image; keeping it here leaves room for the resident matrix path. */
+		*service.o(.text.*DataflowBlackholeTensixOps*TensixBeginOutput*)
 		*service.o(.text.qwen35_graph_execute)
 		*device-stream.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		*device-barrier.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)

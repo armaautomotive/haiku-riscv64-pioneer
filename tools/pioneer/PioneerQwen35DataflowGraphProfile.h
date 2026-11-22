@@ -38,14 +38,15 @@ class DataflowGraphProfile {
 public:
 	void Add(unsigned bin,uint64_t start,uint64_t end) {
 		if (!fValid) return;
-		if (bin>DataflowProfileOther || end<start) { fValid=false;return; }
+		if (bin>DataflowProfileOther || start==~uint64_t(0)
+			|| end==~uint64_t(0) || end<start) { fValid=false;return; }
 		if (bin==DataflowProfileOther) return; // counted in total remainder
 		const uint64_t delta=end-start,old=fCycles[bin];
 		fCycles[bin]+=delta;
 		if (fCycles[bin]<old) fValid=false;
 	}
 	bool Finish(uint64_t start,uint64_t end) {
-		if (!fValid || end<start) return false;
+		if (!fValid || start==~uint64_t(0) || end==~uint64_t(0) || end<start) return false;
 		const uint64_t total=end-start;
 		uint64_t sum=0;
 		for (unsigned bin=0;bin<DataflowProfileOther;bin++) {

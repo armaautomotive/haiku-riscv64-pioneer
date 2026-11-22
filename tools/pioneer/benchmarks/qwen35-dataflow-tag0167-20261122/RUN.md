@@ -1,0 +1,9 @@
+# Qwen3.5 dataflow decode profile, tag0167
+
+A guarded single-run diagnostic produced the verified token IDs `11751,13` (` Paris.`). Authentication took 68.290153 s, vocabulary setup 12.742383 s, and model load 610.592493 s. The five-token prompt took 19.426467 s. The subsequent single-token decode took 4.175606 s, or **0.239486 decode tokens/s**; the first generated token is included in prompt time. This is a short diagnostic measurement, not a sustained throughput qualification.
+
+Core0 recorded 2,513,668,268 cycles during the decode. Projection operations accounted for 1,457,309,323 cycles (57.975%), synchronization and other work 924,384,435 (36.774%), delta 42,542,675 (1.692%), RMS 41,326,032 (1.644%), fetch 13,330,791 (0.530%), and dense attention 12,340,551 (0.491%). Remaining named bins and exact totals are in the compressed stderr. Projection includes packing, movement, matrix work and output handling; synchronization and other includes queue work, scheduling, waits and instrumentation. Neither bucket measures pure matrix utilization or barriers, and core0 is not a fleet-wide utilization measurement.
+
+The guard validated the output and all timing bins, client exit was 0, and the client reported `unload_clean=1 state=2 active=0 cold=0 service_closed=1`. Stable driver55 generation18 was independently verified idle without reboot, with no diagnostic process, owner or recovery lock. Its installed SHA-256 was `041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403`. The 4B and preserved 27B files remained present at their recorded sizes; these checks were not fresh full-content hashes.
+
+The tested source checkpoint was `cb8487a9f9`. Trial driver SHA-256 `805d79bf27d4758d8ceb1d1df008b219693f4c7c167a7dc68965e0588cf0d2c3`; client SHA-256 `6e64e2f9ff63bd26386700ed7313c09eb6a9dc3faf5d138e336aa0fae9a7bd21`. Exact logs, guard and its Haiku-tested validator self-test are in `evidence/`. The 100 tokens/s goal remains unmet.

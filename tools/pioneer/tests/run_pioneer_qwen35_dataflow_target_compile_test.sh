@@ -81,6 +81,16 @@ echo 'PASS graph qualification image matches witness and excludes reset witness 
 "$size" -A "$temporary/graph-service/service.elf"
 "$nm" "$temporary/graph-service/service.elf" | grep ' T PioneerQwen35DeviceGraphRun$' >/dev/null
 "$nm" "$temporary/graph-service/service.elf" | grep ' T qwen35_graph_authorize$' >/dev/null
+"$nm" -C "$temporary/graph-service/service.elf" > "$temporary/graph-symbols.txt"
+python3 - "$temporary/graph-symbols.txt" <<'PYTEST'
+import sys
+from pathlib import Path
+lines=[line for line in Path(sys.argv[1]).read_text().splitlines() if 'DataflowBlackholeTensixOps::TensixBeginOutput(' in line]
+assert len(lines)==1,lines
+address=int(lines[0].split()[0],16)
+assert 0xa0400<=address<0xaa000,hex(address)
+print('PASS Tensix setup helper resides in the saved dispatch image')
+PYTEST
 
 attributes=$("$readelf" -A "$object")
 printf '%s\n' "$attributes" | grep 'Tag_RISCV_arch: "rv32i' >/dev/null
@@ -198,6 +208,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_affine_layout_test.cpp" \
 	-o "$temporary/dataflow-affine-layout-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-affine-layout-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_phases_test.cpp" \
+	-o "$temporary/dataflow-phases-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-phases-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_tensix_init_test.cpp" \
 	-o "$temporary/dataflow-tensix-init-test"

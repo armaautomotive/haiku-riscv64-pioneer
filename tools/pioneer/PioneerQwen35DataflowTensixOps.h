@@ -8,6 +8,7 @@
 #include "PioneerQwen35DataflowKernels.h"
 #include "PioneerQwen35DataflowVectorUnpack.h"
 #include "PioneerQwen35DataflowTensixInit.h"
+#include "PioneerQwen35DataflowTensixPhases.h"
 #include "PioneerQ38ProjectionInput.h"
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "PioneerQwen35DataflowGraphTrace.h"
@@ -140,18 +141,14 @@ class DataflowBlackholeTensixOps {
 	}
 #endif
 
-	bool MatrixPanel()
+	bool MatrixPanel(unsigned type)
 	{
 		fEmitter.Op(0x3700000f);
 		fEmitter.Op(0x10080004); fEmitter.Op(0x10080005);
 		fEmitter.Drain();
 		fEmitter.Op(0x5160000a); fEmitter.Op(0x5460000f);
 		fEmitter.Op(0x428000c1); fEmitter.Drain();
-		for (unsigned phase=0;phase<4;phase++) {
-			fEmitter.Op(0xb20b0000|phase); fEmitter.Drain();
-			fEmitter.Op(phase==3?0x26c00020:0x26000020);
-			fEmitter.Drain();
-		}
+		DataflowTensixPhases(fEmitter,type);
 		return fEmitter.Good();
 	}
 
@@ -205,6 +202,8 @@ public:
 			|| !fEmitter.Good()) return false;
 		if (!fSetup) {
 			if (!Setup()) return false;
+			DataflowTensixPhaseSetup(fEmitter,type);
+			if (!fEmitter.Good()) return false;
 			fSetup=true;
 		}
 		if (!InitOutputAccumulator()) return false;
@@ -247,7 +246,7 @@ public:
 #endif
 			if (!PioneerQwen35DataflowVectorUnpack(fEmitter,type,panel,
 				unsigned(weightAddress)) || !fEmitter.Good()) return false;
-			if (!MatrixPanel()) return false;
+			if (!MatrixPanel(type)) return false;
 			volatile uint32_t* dots=Words(TensixDotReadback);
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 			if (trace) TraceProjection(10,dots);

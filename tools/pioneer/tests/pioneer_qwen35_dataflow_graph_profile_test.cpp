@@ -39,6 +39,9 @@ int main()
 	assert(!bad.Finish(0,100));
 	uint32_t untouched[DataflowProfileBins*4]{};
 	bad.Publish(untouched,1000);assert(!untouched[0]);
+	DataflowGraphProfile badClock;
+	badClock.Add(DataflowProfileProjection,1,~uint64_t(0));
+	assert(!badClock.Finish(0,100));
 	DataflowGraphProfile inconsistent;
 	inconsistent.Add(DataflowProfileFetch,10,100);
 	assert(!inconsistent.Finish(0,50));
