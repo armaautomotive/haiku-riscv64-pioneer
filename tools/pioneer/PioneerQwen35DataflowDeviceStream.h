@@ -19,6 +19,16 @@ enum : unsigned {
 	// Reuse the second weight page only between completed worker commands.
 	DataflowStreamStagingAddress=DataflowWeightBufferAddress+DataflowWeightBufferPageStride
 };
+enum DataflowStreamFetchStage : unsigned {
+	DataflowStreamFetchOkay=0,DataflowStreamFetchBinding=1,DataflowStreamFetchOverlap=2,
+	DataflowStreamFetchRead=3,DataflowStreamFetchRecord=4,DataflowStreamFetchPatch=5,
+	DataflowStreamFetchPatchedRecord=6
+};
+inline unsigned DataflowStreamFetchDiagnosticCode(unsigned stage,const DataflowNocDiagnostic& noc) {
+	return 0x80000000U | (stage&0xfU) | ((noc.stage&0xfU)<<4)
+		| ((noc.index&0xffU)<<8) | ((noc.counterMatchMask&0xffU)<<16)
+		| ((noc.initiatorBusyMask&0xfU)<<24);
+}
 
 struct alignas(64) DataflowStreamRecord {
 	uint32_t header[DataflowStreamHeaderWords];
@@ -171,27 +181,36 @@ inline bool DataflowStreamRecordStructureValid(const DataflowStreamRecord& r,
 template<class IO,class Transform>
 bool DataflowStreamFetchTransform(IO& io,const DataflowStreamBinding& binding,const Range& lease,
 	const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
-	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,Transform& transform)
+	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,Transform& transform,
+	unsigned* failedStage=nullptr)
 {
+	if (failedStage) *failedStage=DataflowStreamFetchBinding;
 	if (!DataflowStreamBindingMatches(binding,lease,routes,core)
 		|| index>=binding.count || !program
 		|| programBytes<DataflowProgramRegionBytes
 		|| (reinterpret_cast<uintptr_t>(&staging)&63)
 		|| (reinterpret_cast<uintptr_t>(program)&3)) return false;
 	const uintptr_t start=reinterpret_cast<uintptr_t>(&staging),out=reinterpret_cast<uintptr_t>(program);
+	if (failedStage) *failedStage=DataflowStreamFetchOverlap;
 	if (start>UINTPTR_MAX-sizeof(staging) || out>UINTPTR_MAX-programBytes
 		|| !(start+sizeof(staging)<=out || out+programBytes<=start)) return false;
 	const uint32_t address=binding.base+index*DataflowStreamRecordBytes;
 	// Invalidate the prior command before issuing a possibly uncertain read.
 	// Publish the new magic only after all other words have been copied.
 	DataflowStoreRelease(program[0],0);
+	if (failedStage) *failedStage=DataflowStreamFetchRead;
 	if (!io.ReadStream(binding.bank,address,binding.route,
-		reinterpret_cast<uint8_t*>(&staging),sizeof(staging))
-		|| !DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)
-		|| !transform(staging)
-		|| !DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)) return false;
+		reinterpret_cast<uint8_t*>(&staging),sizeof(staging))) return false;
+	if (failedStage) *failedStage=DataflowStreamFetchRecord;
+	if (!DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)) return false;
+	if (failedStage) *failedStage=DataflowStreamFetchPatch;
+	if (!transform(staging)) return false;
+	if (failedStage) *failedStage=DataflowStreamFetchPatchedRecord;
+	if (!DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)) return false;
 	for (unsigned i=1;i<staging.header[6]/4;i++) program[i]=staging.payload[i];
-	DataflowStoreRelease(program[0],staging.payload[0]);return true;
+	DataflowStoreRelease(program[0],staging.payload[0]);
+	if (failedStage) *failedStage=DataflowStreamFetchOkay;
+	return true;
 }
 
 template<class IO>
@@ -206,10 +225,12 @@ bool DataflowStreamFetch(IO& io,const DataflowStreamBinding& binding,const Range
 
 class DataflowBlackholeStreamIO {
 	DataflowBlackholeNoc<0> noc;
+	DataflowNocDiagnostic* diagnostic;
 public:
+	explicit DataflowBlackholeStreamIO(DataflowNocDiagnostic* detail=nullptr):diagnostic(detail) {}
 	bool ReadStream(unsigned bank,unsigned address,unsigned route,uint8_t* output,unsigned bytes) {
 		return bank<Banks && output==reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(DataflowStreamStagingAddress))
-			&& bytes==DataflowStreamRecordBytes && noc.Read(address,route,output,bytes);
+			&& bytes==DataflowStreamRecordBytes && noc.Read(address,route,output,bytes,diagnostic);
 	}
 };
 

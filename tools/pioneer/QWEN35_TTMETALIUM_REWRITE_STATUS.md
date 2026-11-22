@@ -49,6 +49,13 @@ target/simulation suite and all three builds pass; hardware qualification
 remains open. The card is back on stable driver55 with no lock after NVMe
 cold recovery. See [the tag0154 run record](benchmarks/qwen35-dataflow-tag0154-20261122/RUN.md).
 
+Tag0155 narrowed the graph fault to worker 0's first graph-record fetch and
+successfully recovered that settled fault, unloaded the bank and restored the
+stable driver without rebooting. No token was generated. Tag0156 adds the
+fetch/NoC stage diagnostics needed to localize the remaining error; simulated
+tests and all builds pass, but tag0156 has not run on hardware. See
+[the tag0155 run record](benchmarks/qwen35-dataflow-tag0155-20261122/RUN.md).
+
 Tag0154's qualification driver SHA-256 is
 `152edda1d9214b869eb74299010d1e973da91c6070e7f8f191a4cbb6f597c223`
 and its standalone client SHA-256 is

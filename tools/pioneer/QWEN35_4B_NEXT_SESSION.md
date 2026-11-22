@@ -81,6 +81,28 @@ The worker envelope is `7648/8192` including the 1024-byte allowance and the
 graph ioctl envelope is `16000/18432` including a 2048-byte helper allowance;
 neither is a whole-program proof.
 
+The guarded tag0155 run failed before producing any token. Worker 0 reported
+`DataflowGraphFetchFault` on the first graph record, before completing step 0.
+The corrected same-owner graph-fault recovery succeeded without reboot: it
+closed the service and model bank cleanly, then the wrapper restored stable
+driver55. Independent status showed no owner or lock and both models at their
+recorded sizes. The wrapper reported stable generation4; the first independent
+check reported generation5, and two further checks remained at generation5.
+The reason for the intervening increment is unknown. This demonstrates
+recovery for this settled graph fault only. See
+`benchmarks/qwen35-dataflow-tag0155-20261122/RUN.md`.
+
+Tag0156 adds staged fetch diagnostics, including the NoC transfer stage,
+counter-match mask and initiator-busy mask, without changing the inference
+path. The target suite and all three builds pass; it has not run on hardware.
+The qualification driver SHA-256 is
+`b1c63ae8b7078d0d8cc11445e7acb4c3ca99ca45dd5183036a3eddf34577aa1c`,
+and the client SHA-256 is
+`a4de8f624f48c363f6f4e4bf9b97368e4a53deb8ad289e7dd56561b208a4270d`.
+Its worker stack envelope is `7600/8192` including the helper allowance and
+its graph ioctl envelope is `16000/18432` including the helper allowance;
+neither is a whole-program proof.
+
 ## Earlier checkpoint: tag0120 failure and recovery rewrite
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until

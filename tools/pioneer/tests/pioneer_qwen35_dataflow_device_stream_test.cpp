@@ -160,6 +160,32 @@ int main()
 	assert(!DataflowStreamEncode(invalid,17,1,badRecord));
 
 	DataflowStreamRecord staging{};alignas(64) uint32_t output[DataflowProgramRegionBytes/4];
+	unsigned failureStage=99;
+	const DataflowNocDiagnostic diagnostic{DataflowNocTransferCounterTimeout,0x82,0,0,0xfb,3};
+	const unsigned encoded=DataflowStreamFetchDiagnosticCode(DataflowStreamFetchRead,diagnostic);
+	assert((encoded>>31)==1 && (encoded&0xfU)==DataflowStreamFetchRead
+		&& ((encoded>>4)&0xfU)==DataflowNocTransferCounterTimeout
+		&& ((encoded>>8)&0xffU)==0x82 && ((encoded>>16)&0xffU)==0xfb
+		&& ((encoded>>24)&0xfU)==3);
+	auto unchanged=[](DataflowStreamRecord&) { return true; };
+	auto rejectPatch=[](DataflowStreamRecord&) { return false; };
+	auto corruptPatch=[](DataflowStreamRecord& r) { r.payload[10]^=1;return true; };
+	assert(!DataflowStreamFetchTransform(io,binding,tooSmall,routes,7,0,staging,output,sizeof(output),unchanged,&failureStage)
+		&& failureStage==DataflowStreamFetchBinding);
+	io.fail=true;
+	assert(!DataflowStreamFetchTransform(io,binding,lease,routes,7,0,staging,output,sizeof(output),unchanged,&failureStage)
+		&& failureStage==DataflowStreamFetchRead);
+	io.fail=false;io.corrupt=true;
+	assert(!DataflowStreamFetchTransform(io,binding,lease,routes,7,0,staging,output,sizeof(output),unchanged,&failureStage)
+		&& failureStage==DataflowStreamFetchRecord);
+	io.corrupt=false;
+	assert(!DataflowStreamFetchTransform(io,binding,lease,routes,7,0,staging,output,sizeof(output),rejectPatch,&failureStage)
+		&& failureStage==DataflowStreamFetchPatch);
+	assert(!DataflowStreamFetchTransform(io,binding,lease,routes,7,0,staging,output,sizeof(output),corruptPatch,&failureStage)
+		&& failureStage==DataflowStreamFetchPatchedRecord);
+	assert(DataflowStreamFetchTransform(io,binding,lease,routes,7,0,staging,output,sizeof(output),unchanged,&failureStage)
+		&& failureStage==DataflowStreamFetchOkay);
+	io.calls=0;
 	for (auto& word:output) word=0xfeedface;
 	assert(DataflowStreamFetch(io,binding,lease,routes,7,0,staging,output,sizeof(output)) && io.calls==1);
 	assert(std::memcmp(output,&invocation,sizeof(invocation))==0

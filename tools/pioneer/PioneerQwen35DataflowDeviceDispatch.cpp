@@ -21,8 +21,10 @@ extern "C" bool qwen35_graph_reset_queues();
 struct GraphWitnessExecution {
 	const PioneerQwen35::DataflowGraphRunDescriptor& run;
 	PioneerQwen35::DataflowWorkerMailbox* mailbox;
+	unsigned fetchStage=0;
+	PioneerQwen35::DataflowNocDiagnostic fetchNoC{};
 	bool Fetch(unsigned index) {
-		return PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token);
+		return PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token,&fetchStage,&fetchNoC);
 	}
 	bool Authorize(unsigned index) { return qwen35_graph_authorize(&run,index); }
 	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
@@ -48,7 +50,10 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 			DataflowStoreRelease(mailbox->reserved[1],graph.Fault());
 			DataflowStoreRelease(mailbox->reserved[2],graph.CompletedSteps());
 			DataflowStoreRelease(mailbox->reserved[3],graph.FailureCore());
-			DataflowStoreRelease(mailbox->reserved[4],graph.FailureStatus());
+			const unsigned status=graph.Fault()==DataflowGraphFetchFault
+				?DataflowStreamFetchDiagnosticCode(execution.fetchStage,execution.fetchNoC)
+				:graph.FailureStatus();
+			DataflowStoreRelease(mailbox->reserved[4],status);
 			DataflowFence();
 			DataflowStoreRelease(mailbox->reserved[0],DataflowGraphFaultMagic);
 		}
