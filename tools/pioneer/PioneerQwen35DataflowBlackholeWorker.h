@@ -240,10 +240,12 @@ inline bool DataflowWorkerResetQueues()
 		for (;;) asm volatile("" ::: "memory");
 	}
 	const unsigned core=mailbox->logicalCore;
-	const unsigned localRoute=*reinterpret_cast<volatile uint32_t*>(
+	const unsigned rawLocalRoute=*reinterpret_cast<volatile uint32_t*>(
 		static_cast<uintptr_t>(DataflowNoc0Base+DataflowNocLogicalIdOffset));
-	if (!DataflowNocLocalRouteValid(localRoute)) {
-		DataflowStoreRelease(mailbox->reserved[0],localRoute);
+	uint32_t localRoute=0;
+	if (!DataflowNocDecodeLocalRoute(rawLocalRoute,localRoute)
+		|| !DataflowNocRouteMatchesWorker(localRoute,core)) {
+		DataflowStoreRelease(mailbox->reserved[0],rawLocalRoute);
 		DataflowFence();
 		DataflowWorkerPublish(*mailbox,0,DataflowWorkerFatal,
 			DataflowFailureQueue,2);

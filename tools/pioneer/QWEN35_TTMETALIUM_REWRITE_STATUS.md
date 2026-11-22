@@ -54,6 +54,20 @@ SHA-256 is `6a4c03b152b01ec623b078755992b8fc342a558af41567e2d8775a1e9b2c9957`;
 the service text hash is
 `6af17124c1859b34166617577dce72bbbafb06e094146a796546a2650db51089`.
 
+Tag0123 strengthens that fix: the logical ID's upper 20 bits belong to
+firmware and are ignored when decoding its coordinates; the NoC0 coordinate
+must also match the selected worker before launch. Completion checks ignore
+only documented hardware-mutated reserved bits in `NOC_CTRL`, while still
+checking the request type, VC and all other software-controlled fields.
+Without this, a successful transfer could be rejected after hardware changes
+those bits. Tests cover all 120 worker-coordinate mappings, nonzero upper ID
+bits, changed control fields, and allowed reserved-bit changes. The authoritative
+[Blackhole NoC memory map](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md)
+documents both behaviors. Tag0123 has not run on the card; in particular,
+the NoC1 logical-route and destination-translation assumptions remain to be
+verified. Its normal driver SHA-256 is
+`5163d79689ce225100913bbc26b4bc8329e9de22642d5641808c805de839130f`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

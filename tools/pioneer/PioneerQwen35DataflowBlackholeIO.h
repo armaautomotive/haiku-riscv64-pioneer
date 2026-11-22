@@ -127,9 +127,10 @@ class DataflowBlackholeNoc {
 			return false;
 		}
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
-		const uint32_t self=*Words(Base+DataflowNocLogicalIdOffset);
-		if (!DataflowNocLocalRouteValid(self)) {
-			if (detail) *detail={DataflowNocTransferIdentity,0xff,self,0};
+		const uint32_t rawSelf=*Words(Base+DataflowNocLogicalIdOffset);
+		uint32_t self=0;
+		if (!DataflowNocDecodeLocalRoute(rawSelf,self)) {
+			if (detail) *detail={DataflowNocTransferIdentity,0xff,rawSelf,0};
 			return false;
 		}
 		uint32_t expected[8];
@@ -142,7 +143,7 @@ class DataflowBlackholeNoc {
 		for (unsigned i=0;i<10;i++) {
 			Words(Base)[i]=command[i];
 			const uint32_t observed=Words(Base)[i];
-			if (observed!=command[i]) {
+			if (!DataflowNocCommandWordMatches(i,command[i],observed)) {
 				if (detail) *detail={DataflowNocTransferCommandReadback,i,observed,0};
 				return false;
 			}
@@ -163,7 +164,7 @@ class DataflowBlackholeNoc {
 			Fence();
 			for (unsigned i=0;i<10;i++) {
 				const uint32_t observed=Words(Base)[i];
-				if (observed!=command[i]) {
+				if (!DataflowNocCommandWordMatches(i,command[i],observed)) {
 					if (detail) *detail={DataflowNocTransferCommandChanged,i,observed,0};
 					return false;
 				}
@@ -221,8 +222,9 @@ public:
 			|| remote<BankBase || remote>=BankLimit || bytes>BankLimit-remote
 			|| (remote&63) || route>0xfff || !Quiet()) return false;
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
-		const uint32_t self=*Words(Base+DataflowNocLogicalIdOffset);
-		if (!DataflowNocLocalRouteValid(self)) return false;
+		const uint32_t rawSelf=*Words(Base+DataflowNocLogicalIdOffset);
+		uint32_t self=0;
+		if (!DataflowNocDecodeLocalRoute(rawSelf,self)) return false;
 		const unsigned delta[8]={1,0,1,1,0,0,1,0};
 		for (unsigned i=0;i<8;i++) ticket.expected[i]=Counter(i)+delta[i];
 		uint32_t command[10];
@@ -230,7 +232,7 @@ public:
 		for (unsigned i=0;i<10;i++) {
 			ticket.command[i]=command[i];
 			Words(Base)[i]=command[i];
-			if (Words(Base)[i]!=command[i]) return false;
+			if (!DataflowNocCommandWordMatches(i,command[i],Words(Base)[i])) return false;
 		}
 		if (!Quiet()) return false;
 		Fence();
@@ -251,7 +253,7 @@ public:
 			if (!complete) continue;
 			Fence();
 			for (unsigned i=0;i<10;i++)
-				if (Words(Base)[i]!=ticket.command[i]) return false;
+				if (!DataflowNocCommandWordMatches(i,ticket.command[i],Words(Base)[i])) return false;
 			if (!Quiet()) return false;
 			ticket.active=0;
 			return true;
