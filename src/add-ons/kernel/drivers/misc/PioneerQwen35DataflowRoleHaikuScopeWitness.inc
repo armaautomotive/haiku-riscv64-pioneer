@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Compile-only bridge for the actual Haiku session, lock and mapper types.
-// There is NO registered ioctl or caller. This is included only in the
-// non-loadable recovery witness; it is not an accelerator operation.
+// The existing control path can borrow its lock in this non-loadable witness;
+// no writable mapping operation is registered and no accelerator is touched.
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Role scope witness must only be compiled into the non-loadable graph/recovery driver
 #endif
@@ -10,6 +10,71 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleReadOnlyViews.h"
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
+#include "PioneerQwen35DataflowRoleFleetPciIO.h"
+
+static status_t Qwen35DataflowControl(PioneerProbeCookie*,uint32_t,void*,size_t);
+// Borrow, never reacquire, the lock already held by Qwen35DataflowControl.
+// The private constructor limits creation to that control path. The caller
+// must detach before releasing sLock; no memory or control writes are yet
+// authorized by this witness.
+class PioneerQwen35RoleBorrowedScopeWitness {
+    friend status_t Qwen35DataflowControl(PioneerProbeCookie*,uint32_t,void*,size_t);
+    PioneerProbeCookie* fCookie;
+    PioneerStoreContext* fContext;
+    thread_id fThread=-1;
+    team_id fTeam=-1;
+    uint64 fGeneration=0;
+    bool fAttached=false,fAttempted=false;
+    PioneerQwen35RoleBorrowedScopeWitness(PioneerProbeCookie* cookie,PioneerStoreContext* context)
+        :fCookie(cookie),fContext(context) {}
+public:
+    PioneerQwen35RoleBorrowedScopeWitness(const PioneerQwen35RoleBorrowedScopeWitness&)=delete;
+    PioneerQwen35RoleBorrowedScopeWitness& operator=(const PioneerQwen35RoleBorrowedScopeWitness&)=delete;
+    ~PioneerQwen35RoleBorrowedScopeWitness() {
+        if (fAttached) { (void)Detach(); sColdRecoveryRequired=true; }
+    }
+    bool Attach() {
+        if (fAttempted) return false;
+        fAttempted=true;
+        if (fAttached || !fCookie || !fContext || fContext->io.qwen35BorrowedRoleScope
+            || fContext->io.qwen35DataflowContext!=fContext
+            || fCookie->magic!=0x50313030 || fCookie->context!=fContext
+            || sRuntimeOwner!=fCookie || sColdRecoveryRequired || sReloadQuiesced
+            || !sReloadGeneration || !sBankStorageOnly || !fContext->bankStorageOnly
+            || fContext->bytes!=PioneerResidentBanks::Total) return false;
+        const thread_id current=find_thread(NULL); thread_info info={};
+        if (current<0 || fCookie->team<0 || get_thread_info(current,&info)!=B_OK
+            || info.team!=fCookie->team) return false;
+        fThread=current; fTeam=info.team; fGeneration=sReloadGeneration;
+        fContext->io.qwen35BorrowedRoleScope=this; fAttached=true; return true;
+    }
+    bool ProveExclusiveRewrite(PioneerSessionIO& io) const {
+        if (!fAttached || !fCookie || !fContext || &io!=&fContext->io
+            || io.qwen35BorrowedRoleScope!=this || io.qwen35DataflowContext!=fContext
+            || fThread<0 || find_thread(NULL)!=fThread || fTeam<0 || fCookie->team!=fTeam
+            || fCookie->magic!=0x50313030 || fCookie->context!=fContext
+            || sRuntimeOwner!=fCookie || sColdRecoveryRequired || sReloadQuiesced
+            || !fGeneration || sReloadGeneration!=fGeneration || !sBankStorageOnly
+            || !fContext->bankStorageOnly || fContext->bytes!=PioneerResidentBanks::Total
+            || PioneerQ35GraphOwnerRetained(fContext->qwen35GraphOwner)) return false;
+        thread_info info={};
+        return get_thread_info(fThread,&info)==B_OK && info.team==fTeam;
+    }
+    bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return false; }
+    bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
+    bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
+    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return false; }
+    bool Detach() {
+        if (!fAttached || !fContext) return false;
+        const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this;
+        if (fContext->io.qwen35BorrowedRoleScope==this) fContext->io.qwen35BorrowedRoleScope=NULL;
+        fAttached=false;
+        if (!valid) sColdRecoveryRequired=true;
+        return valid;
+    }
+};
 #endif
 
 class PioneerQwen35RoleHaikuScopeWitness {
@@ -185,6 +250,27 @@ PioneerQwen35RoleHaikuWritableViewsCompileWitness(PioneerQwen35RoleHaikuWritable
     if (action==1) return owner.Write(core,which,offset,data,bytes);
     if (action==2) return owner.WriteResetDisable(core,expected,desired);
     if (action==3) return owner.Close();
+    return false;
+}
+// Type-check the real recovery owner against the borrowed session, selected
+// routes and fixed Haiku mappings. The scope denies all fleet/memory proofs,
+// so this static witness cannot capture, write or release anything.
+__attribute__((used)) static bool
+PioneerQwen35RoleFleetPciCompileWitness(PioneerSessionIO& io,
+    PioneerQwen35RoleBorrowedScopeWitness& scope,
+    PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>& views,
+    PioneerQwen35::DataflowRoleFleetRecoveryOwner& owner,uint32_t* codeStorage,
+    uint32_t* ramStorage,const uint32_t* image,unsigned words,unsigned action)
+{
+    using namespace PioneerQwen35;
+    PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness,
+        DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>> adapter(io,scope,views);
+    if (action==0) return adapter.AllRolesHeld(0);
+    if (action==1) return owner.CaptureAll(codeStorage,DataflowRoleFleetRecoveryOwner::CodeWords(),
+        ramStorage,DataflowRoleFleetRecoveryOwner::RamWords(),adapter);
+    if (action==2) return owner.StageImages(image,words,image,words,image,words,image,words,adapter);
+    if (action==3) return owner.PreparePossibleRelease(adapter) && owner.BeginReleaseAttempt(adapter);
+    if (action==4) return owner.RestoreAll(adapter) && owner.VerifyAfterResidentRestore(adapter);
     return false;
 }
 #endif

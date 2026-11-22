@@ -26,19 +26,35 @@ static tt_pioneer_profile GoodProfile()
     return p;
 }
 struct PioneerStoreContext;
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+class PioneerQwen35RoleBorrowedScopeWitness;
+#endif
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
 struct FakeService { bool ready=true; bool Ready() const { return ready; } };
 struct FakeGraph { bool retained=false; };
 struct PioneerSessionIO {
     tt_pioneer_profile profile=GoodProfile();
     PioneerStoreContext* qwen35DataflowContext=nullptr;
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+    PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=nullptr;
+#endif
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
+    uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
+    bool SelectRuntimeCore(unsigned core) { if (core>=DataflowBarrierWorkers) return false; runtimeCore=core; return true; }
+    bool MapQ38Panel() const { return mapping; }
     bool DataflowPanelMappingStable() const { return mapping; }
     uint32_t DramTlbRead(unsigned slot,unsigned word) {
         const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
         return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
     }
-    uint32_t ResidentNocRead(unsigned offset) { assert(offset==DataflowNocLogicalIdOffset); return DataflowBarrierWorkerRoute(runtimeCore); }
+    uint32_t ResetRead() const { return reset; }
+    uint32_t ResidentNocRead(unsigned offset) {
+        const unsigned noc=offset>=0x10000?1:0,at=offset-(noc?0x10000:0);
+        if (at==DataflowNocLogicalIdOffset) return DataflowBarrierWorkerRoute(runtimeCore);
+        for (unsigned i=0;i<4;i++) if (at==0x40+i*0x800) return nocDoorbell[noc][i];
+        if (at>=0x240 && at<0x2c0 && !(at&3)) return nocOutstanding[noc][(at-0x240)/4];
+        assert(false); return UINT32_MAX;
+    }
     void Pause() {}
 };
 struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
@@ -92,6 +108,47 @@ status_t delete_area(area_id area) {
     gMapped[area]=false; return B_OK;
 }
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+// Mirrors the real control path: create the private scope only after the
+// session lock has been acquired and detach before releasing that lock.
+static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,void*,size_t) {
+    if (AcquireProbeLock(cookie,true)!=B_OK) return -1;
+    auto* context=cookie->context;
+    PioneerQwen35RoleBorrowedScopeWitness scope(cookie,context);
+    if (mode==1) gTeam=12;
+    const bool attached=scope.Attach();
+    if (mode==1) {
+        assert(!attached && !context->io.qwen35BorrowedRoleScope);
+        gTeam=11;
+    } else {
+        assert(attached && context->io.qwen35BorrowedRoleScope==&scope && !scope.Attach());
+        if (mode==2) {
+            context->qwen35GraphOwner->retained=true;
+            assert(!scope.ProveExclusiveRewrite(context->io));
+            context->qwen35GraphOwner->retained=false;
+        } else {
+            context->qwen35DataflowService->ready=false; // installing is not Ready
+            assert(scope.ProveExclusiveRewrite(context->io));
+            context->qwen35DataflowService->ready=true;
+            assert(!scope.ProveRoleMemoryReadSafe(context->io,0,0));
+            assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
+            assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
+            ++sReloadGeneration; assert(!scope.ProveExclusiveRewrite(context->io)); --sReloadGeneration;
+            gThread=6; assert(!scope.ProveExclusiveRewrite(context->io)); gThread=5;
+        }
+        if (mode==3) {
+            gThread=6; assert(!scope.Detach()); gThread=5;
+            assert(sColdRecoveryRequired && !context->io.qwen35BorrowedRoleScope);
+        } else assert(scope.Detach() && !context->io.qwen35BorrowedRoleScope);
+        assert(!scope.Attach()); // borrowed scopes cannot be re-used
+    }
+    if (mode==4) gReleaseFail=true;
+    const status_t release=release_sem(sLock);
+    if (release!=B_OK) { sColdRecoveryRequired=true; return release; }
+    assert(!gLocked);
+    return B_OK;
+}
+#endif
 static void ResetMaps() {
     gMapCalls=gUnmapCalls=0; gFailMap=gFailUnmap=-1;
     gAllowWrite=false;
@@ -110,6 +167,18 @@ int main()
         gThread=6; assert(!scope.Close() && gLocked); gThread=5;
         assert(scope.Close() && !gLocked && !scope.Close());
     }
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+    for (unsigned mode=0;mode<5;mode++) {
+        const unsigned releases=gReleaseCalls;
+        const status_t status=Qwen35DataflowControl(&cookie,mode,nullptr,0);
+        assert(gReleaseCalls==releases+1);
+        if (mode==4) {
+            assert(status!=B_OK && sColdRecoveryRequired && gLocked);
+            gReleaseFail=false; gLocked=false; // simulation only
+        } else assert(status==B_OK && !gLocked);
+        sColdRecoveryRequired=false;
+    }
+#endif
     {
         PioneerQwen35RoleHaikuScopeWitness scope; gTeam=12;
         assert(!scope.Open(&cookie) && !gLocked); gTeam=11;
@@ -191,4 +260,5 @@ int main()
         gReleaseFail=false; gLocked=false; sColdRecoveryRequired=false;
     }
     std::puts("PASS real Haiku scope witness lock, held/NoC status samples, map and cleanup faults; SIMULATED ONLY");
+    return 0;
 }

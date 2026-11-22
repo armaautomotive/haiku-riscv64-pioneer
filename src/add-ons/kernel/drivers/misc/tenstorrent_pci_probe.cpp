@@ -2755,6 +2755,9 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 #include "PioneerQ38RecurrentBlockNativeState.h"
 #include "PioneerQ38RecurrentPrefixNativeState.h"
 #include "PioneerQ38TokenNativeState.h"
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+class PioneerQwen35RoleBorrowedScopeWitness;
+#endif
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  bool TokenCallScopeMatches();bool TokenModelSourceScope(bool beginning);
@@ -2896,6 +2899,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool persistentHostStages=false;
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	PioneerStoreContext* qwen35DataflowContext=NULL;
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+	PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=NULL;
+#endif
 #endif
 	bool payloadBlocks=false;
 	area_id coordinatorArea=-1;
@@ -9541,8 +9547,16 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 #endif
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
 	auto* context=cookie->context;
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+	PioneerQwen35RoleBorrowedScopeWitness borrowedRoleScope(cookie,context);
+	const bool borrowedRoleScopeValid=borrowedRoleScope.Attach();
+#endif
 	if (!context || sRuntimeOwner!=cookie || !context->bankStorageOnly
-		|| context->bytes!=PioneerResidentBanks::Total) {
+		|| context->bytes!=PioneerResidentBanks::Total
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+		|| !borrowedRoleScopeValid
+#endif
+		) {
 		status=B_NOT_ALLOWED;
 	} else if (request.action==TT_QWEN35_DATAFLOW_ACTION_INSTALL) {
 		if (context->Unsafe() || context->qwen35DataflowService) {
@@ -9709,7 +9723,14 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		}
 		status=user_memcpy(data,&request,sizeof(request));
 	}
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+	if (borrowedRoleScopeValid && !borrowedRoleScope.Detach()) status=B_NOT_ALLOWED;
+	const status_t roleUnlock=release_sem(sLock);
+	if (roleUnlock!=B_OK) { sColdRecoveryRequired=true; return roleUnlock; }
+	return status;
+#else
 	release_sem(sLock); return status;
+#endif
 }
 #endif
 
