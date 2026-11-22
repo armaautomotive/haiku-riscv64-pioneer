@@ -363,6 +363,26 @@ non-loadable Haiku/RISC-V builds. Driver SHA-256 values:
 and `55d17dccbe446ac1adea65ff7738933b5dc241463266552a3ddb7df385db841c`.
 No card run or speed measurement has been made.
 
+Tag0140 adds a graph phase to the resident service in the non-loadable
+dispatch build. It reserves the next worker-mailbox trigger, binds one
+publisher, blocks normal work and close while the graph is in progress, and
+adopts the new service sequence only after that publisher's completion has
+been audited and the model-state commit callback succeeds. An inert preflight
+may cancel with the same publisher; staged or uncertain graphs retain a fault
+and cannot use the old projection-recovery or close paths. The simulated test
+exercises consecutive prompt/decode graphs, duplicate commit, wrong-publisher
+cancellation, an unaudited result, partial staging and commit failure. The
+real driver commit callback remains deny-all: there is no live candidate
+promotion or complete graph-fault recovery yet. The service owner must retain
+the publisher and all graph resources through the fault.
+
+The graph lifecycle test, full target test suite and normal/non-loadable
+Haiku/RISC-V builds pass. Normal and non-loadable driver SHA-256 values:
+`e90017ffe37b80e4e8f3ffa20318aaa5c7a929cf114010958b069f7eabb305cc`
+and `df9177d08b62e3989ba3b23edf41db799e3b8a4fbf92e9cb15802cc54b635788`.
+The graph worker and recorder stack envelopes retain the previously documented
+limitations. This is simulation and compilation only, with no decode result.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

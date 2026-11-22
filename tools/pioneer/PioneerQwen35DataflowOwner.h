@@ -89,6 +89,9 @@ inline bool DataflowWorkerSnapshotReady(const DataflowWorkerSnapshot& snapshot)
 // fully audited and acknowledged result may pass CompleteProjection. The
 // owner itself performs no numeric work.
 class DataflowProjectionOwner {
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	friend class DataflowServiceOwner;
+#endif
 	bool fInitialized=false;
 	bool fFaulted=false;
 	unsigned fNextSequence=0;
@@ -97,6 +100,14 @@ class DataflowProjectionOwner {
 	DataflowOwnerDiagnostic fDiagnostic={DataflowOwnerOperationNone,
 		DataflowOwnerComplete,DataflowCoreCount,0,{},DataflowRecoveryAuditNone,
 		DataflowCoreCount,0,0,0,0,0,0,0};
+
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	bool CanAdoptGraphSequence(unsigned previous,unsigned trigger) const {
+		return fInitialized && !fFaulted && !fPendingSequence && fNextSequence==previous
+			&& previous<DataflowWorkerSequenceLimit && trigger==previous+1;
+	}
+	void AdoptGraphSequence(unsigned trigger) { fNextSequence=trigger; }
+#endif
 
 	static bool Terminal(const DataflowWorkerSnapshot& snapshot,unsigned sequence)
 	{

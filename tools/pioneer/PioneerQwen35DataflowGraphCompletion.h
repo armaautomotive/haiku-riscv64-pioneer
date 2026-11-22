@@ -18,6 +18,7 @@ enum DataflowGraphCompletionResult { DataflowGraphCompletionInvalid=0,
 class DataflowGraphCompletion {
 	enum Phase { Empty,Audited,Faulted } phase=Empty;
 	unsigned failedCore=DataflowCoreCount;
+	const DataflowGraphPublisher* auditedPublisher=nullptr;
 	DataflowWorkerSnapshot receipts[DataflowCoreCount]{};
 	DataflowGraphCompletionResult Fail(DataflowGraphCompletionResult r,unsigned core) {
 		phase=Faulted;failedCore=core;return r;
@@ -27,6 +28,9 @@ public:
 	DataflowGraphCompletion(const DataflowGraphCompletion&)=delete;
 	DataflowGraphCompletion& operator=(const DataflowGraphCompletion&)=delete;
 	bool FaultedState() const { return phase==Faulted; }
+	bool AuditedFor(const DataflowGraphPublisher& publisher) const {
+		return phase==Audited && auditedPublisher==&publisher;
+	}
 	unsigned FailedCore() const { return failedCore; }
 	template<class IO>
 	DataflowGraphCompletionResult Finish(const DataflowGraphPublisher& publisher,
@@ -81,7 +85,9 @@ public:
 			}
 			if (!ready) return Fail(DataflowGraphCompletionReadyFault,core);
 		}
-		phase=Audited;if (decode) output=candidate;return DataflowGraphCompletionAudited;
+		auditedPublisher=&publisher;phase=Audited;
+		if (decode) output=candidate;
+		return DataflowGraphCompletionAudited;
 	}
 };
 }

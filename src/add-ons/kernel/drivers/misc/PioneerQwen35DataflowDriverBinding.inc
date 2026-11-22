@@ -1794,6 +1794,15 @@ PioneerSessionIO::GraphOwnershipMatches(const PioneerQwen35::DataflowStreamPlan&
 }
 
 bool
+PioneerSessionIO::CommitGraphModelState(const PioneerQwen35::DataflowGraphPublisher&,
+	const PioneerQwen35::DataflowGraphCompletion&)
+{
+	// There is not yet a session-owned candidate or a safe atomic promotion.
+	volatile bool deny=false;
+	return deny;
+}
+
+bool
 PioneerSessionIO::AuditGraphCore(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& expected,
 	const PioneerQwen35::DataflowWorkerSnapshot& receipt,bool decode)
 {
@@ -2036,6 +2045,31 @@ PioneerQ35GraphCompletionCompileWitness(PioneerStoreContext& context,
 	PioneerQwen35::DataflowGraphRunDescriptor& scratch,PioneerQwen35::DataflowArgmaxResult& result)
 {
 	return completion.Finish(publisher,plan,context.qwen35DataflowRoutes,token,context.io,scratch,result);
+}
+
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphServiceBeginCompileWitness(PioneerStoreContext& context,
+	const PioneerQwen35::DataflowGraphPublisher& publisher,unsigned& trigger)
+{
+	return context.qwen35DataflowService
+		&& context.qwen35DataflowService->BeginGraph(publisher,trigger);
+}
+
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphServiceCancelCompileWitness(PioneerStoreContext& context,
+	const PioneerQwen35::DataflowGraphPublisher& publisher)
+{
+	return context.qwen35DataflowService
+		&& context.qwen35DataflowService->CancelGraphBeforePublication(publisher);
+}
+
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphServiceCommitCompileWitness(PioneerStoreContext& context,
+	const PioneerQwen35::DataflowGraphPublisher& publisher,
+	const PioneerQwen35::DataflowGraphCompletion& completion)
+{
+	return context.qwen35DataflowService
+		&& context.qwen35DataflowService->CommitGraph(publisher,completion,context.io);
 }
 
 __attribute__((used,noinline)) static bool

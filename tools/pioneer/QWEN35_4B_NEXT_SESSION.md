@@ -364,6 +364,23 @@ driver SHA-256:
 non-loadable witness:
 `55d17dccbe446ac1adea65ff7738933b5dc241463266552a3ddb7df385db841c`.
 
+Tag0140 adds a non-loadable resident-service graph phase. It binds a single
+publisher and reserves the next mailbox trigger, prevents other work and
+close during the graph, and advances the service sequence only after the
+matching fleet completion audit and a successful model-state commit callback.
+Only the same untouched publisher can cancel a preflight. Partial staging,
+unaudited completion and commit failure retain a graph fault; ordinary
+projection recovery and close do not clear it. Simulated consecutive runs
+and failure cases pass, as do the target suite and Haiku builds. The actual
+commit callback still denies all runs: create and own the candidate, bind it
+to the immutable session, and promote it atomically only after the full audit.
+Retain the publisher, snapshots and allocations on any uncertain graph.
+Normal driver SHA-256:
+`e90017ffe37b80e4e8f3ffa20318aaa5c7a929cf114010958b069f7eabb305cc`;
+non-loadable witness:
+`df9177d08b62e3989ba3b23edf41db799e3b8a4fbf92e9cb15802cc54b635788`.
+No physical test or decode performance measurement has been made.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -423,7 +440,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0139. Since tag0121 it records final release of a
+The default build now targets dedicated tag0140. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

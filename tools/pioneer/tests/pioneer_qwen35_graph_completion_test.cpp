@@ -13,7 +13,7 @@ struct CompletionIO {
 	bool WaitForCompletion(unsigned core,unsigned trigger,DataflowWorkerSnapshot& r) {
 		assert(core==waited++);
 		if (int(core)==failWorker) return false;
-		r={trigger,4,trigger,DataflowWorkerComplete,0,2,0,0};return true;
+		r={trigger,published.previous,trigger,DataflowWorkerComplete,0,2,0,0};return true;
 	}
 	bool AuditGraphCore(unsigned core,const DataflowGraphRunDescriptor& d,const DataflowWorkerSnapshot& r,bool decode) {
 		assert(waited==DataflowCoreCount && core==audited++ && r.state==DataflowWorkerComplete
@@ -34,10 +34,12 @@ struct CompletionIO {
 	}
 	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& s) {
 		if (int(core)==failReady) return false;
-		s={5,5,5,DataflowWorkerReady,0,0,0,0};return true;
+		const unsigned trigger=published.records[core].triggerSequence;
+		s={trigger,trigger,trigger,DataflowWorkerReady,0,0,0,0};return true;
 	}
 	bool CoreReady(unsigned,const DataflowWorkerSnapshot&) { return true; }
 };
+#ifndef Q35_COMPLETION_FIXTURE_ONLY
 int main() {
 	(void)&q35_publisher_fixture_main;
 	auto f=std::make_unique<Fixture>();auto plan=std::make_unique<DataflowStreamPlan>();
@@ -85,3 +87,4 @@ int main() {
 		&& !bad->staged && !bad->published);
 	puts("PASS graph completion: all-core audit before acknowledgement, stable argmax, failure retention; SIMULATED ONLY");
 }
+#endif

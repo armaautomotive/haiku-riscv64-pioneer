@@ -7,13 +7,14 @@
 struct PublisherIO {
 	DataflowGraphRunDescriptor records[DataflowCoreCount]{};
 	unsigned staged=0,checked=0,published=0;
+	unsigned previous=4;
 	int failPreflight=-1,failStage=-1,failReadback=-1,failPublish=-1;
 	bool owner=true;unsigned sealedSlot=0;
 	bool GraphOwnershipMatches(const DataflowStreamPlan&,const DataflowDynamicTokenContext&,
 		const DataflowGraphRunTicket&,unsigned slot) { return owner && slot==sealedSlot; }
 	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& s) {
 		if (int(core)==failPreflight) return false;
-		s={4,4,4,DataflowWorkerReady,0,0,0,0};return true;
+		s={previous,previous,previous,DataflowWorkerReady,0,0,0,0};return true;
 	}
 	bool CoreReady(unsigned,const DataflowWorkerSnapshot&) { return true; }
 	bool StageGraphRun(unsigned core,const DataflowGraphRunDescriptor& d) {

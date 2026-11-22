@@ -27,6 +27,7 @@ public:
 	DataflowGraphPublisher& operator=(const DataflowGraphPublisher&)=delete;
 	bool Faulted() const { return phase==PhaseFaulted; }
 	bool Published() const { return phase==PhasePublished; }
+	bool Unpublished() const { return phase==PhaseEmpty; }
 	unsigned FailedCore() const { return failedCore; }
 	unsigned PreviousSequence() const { return previousSequence; }
 	unsigned TriggerSequence() const { return triggerSequence; }

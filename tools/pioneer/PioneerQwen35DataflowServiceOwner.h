@@ -6,6 +6,7 @@
 #include "PioneerQwen35DataflowKernels.h"
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "PioneerQwen35DataflowBarrierSetup.h"
+#include "PioneerQwen35DataflowGraphCompletion.h"
 #endif
 #include <stddef.h>
 #include <string.h>
@@ -126,12 +127,20 @@ struct DataflowServiceDiagnostic {
 // inference and starts no core until all 120 images and startup records have
 // been read back successfully.
 class DataflowServiceOwner {
-	enum Phase { PhaseEmpty, PhaseInstalling, PhaseReady, PhaseFaulted, PhaseClosed };
+	enum Phase { PhaseEmpty, PhaseInstalling, PhaseReady, PhaseFaulted, PhaseClosed
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		, PhaseGraphRunning, PhaseGraphFaulted
+#endif
+	};
 	Phase fPhase=PhaseEmpty;
 	bool fSaved[DataflowCoreCount]{};
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
 		DataflowCoreCount,0,0,0,0};
 	DataflowProjectionOwner fProjectionOwner;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	unsigned fGraphPrevious=0,fGraphTrigger=0;
+	const DataflowGraphPublisher* fGraphPublisher=nullptr;
+#endif
 
 	void SetDiagnostic(unsigned stage,unsigned core,
 		const DataflowWorkerSnapshot& snapshot,unsigned detail=0)
@@ -186,13 +195,51 @@ public:
 	DataflowServiceOwner& operator=(const DataflowServiceOwner&)=delete;
 
 	bool Ready() const { return fPhase==PhaseReady; }
-	bool Faulted() const { return fPhase==PhaseFaulted; }
+	bool Faulted() const { return fPhase==PhaseFaulted
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		|| fPhase==PhaseGraphFaulted
+#endif
+		; }
 	bool Closed() const { return fPhase==PhaseClosed; }
 	bool Started() const { return fPhase!=PhaseEmpty; }
 	unsigned NextSequence() const { return fProjectionOwner.NextSequence(); }
 	const DataflowServiceDiagnostic& Diagnostic() const { return fDiagnostic; }
 	const DataflowOwnerDiagnostic& OwnerDiagnostic() const
 		{ return fProjectionOwner.Diagnostic(); }
+
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	// The caller holds the exclusive session lock across the transaction.
+	// GraphRunning blocks ordinary commands and close until either an inert
+	// preflight cancellation or a fully audited graph plus state commit.
+	bool BeginGraph(const DataflowGraphPublisher& publisher,unsigned& trigger) {
+		trigger=0;
+		if (fPhase!=PhaseReady || !publisher.Unpublished()
+			|| fProjectionOwner.NextSequence()>=DataflowWorkerSequenceLimit) return false;
+		const unsigned previous=fProjectionOwner.NextSequence();
+		if (!fProjectionOwner.CanAdoptGraphSequence(previous,previous+1)) return false;
+		fGraphPrevious=previous;fGraphTrigger=previous+1;fGraphPublisher=&publisher;fPhase=PhaseGraphRunning;
+		trigger=fGraphTrigger;return true;
+	}
+	bool CancelGraphBeforePublication(const DataflowGraphPublisher& publisher) {
+		if (fPhase!=PhaseGraphRunning || fGraphPublisher!=&publisher || !publisher.Unpublished()) return false;
+		fPhase=PhaseReady;fGraphPrevious=fGraphTrigger=0;fGraphPublisher=nullptr;return true;
+	}
+	void RetainFaultedGraph() {
+		if (fPhase==PhaseGraphRunning) fPhase=PhaseGraphFaulted;
+	}
+	template<class IO>
+	bool CommitGraph(const DataflowGraphPublisher& publisher,const DataflowGraphCompletion& completion,IO& io) {
+		if (fPhase!=PhaseGraphRunning) return false;
+		if (fGraphPublisher!=&publisher || !publisher.Published() || publisher.PreviousSequence()!=fGraphPrevious
+			|| publisher.TriggerSequence()!=fGraphTrigger || !completion.AuditedFor(publisher)
+			|| !fProjectionOwner.CanAdoptGraphSequence(fGraphPrevious,fGraphTrigger)
+			|| !io.CommitGraphModelState(publisher,completion)) {
+			fPhase=PhaseGraphFaulted;return false;
+		}
+		fProjectionOwner.AdoptGraphSequence(fGraphTrigger);
+		fPhase=PhaseReady;fGraphPrevious=fGraphTrigger=0;fGraphPublisher=nullptr;return true;
+	}
+#endif
 
 	template<class IO>
 	DataflowServiceResult Install(const DataflowServiceImageView& image,IO& io)
