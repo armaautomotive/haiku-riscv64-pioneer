@@ -6,6 +6,8 @@ struct FleetRecoveryProbeIO {
     bool AllRolesHeld(unsigned core) { return core<DataflowBarrierWorkers; }
     bool DefaultBootRouting(unsigned) { return true; }
     bool LocalRamStable(unsigned) { return true; }
+    bool ReadResetDisable(unsigned,uint32_t& value) { value=0; return true; }
+    bool WriteResetDisable(unsigned,uint32_t) { return true; }
     bool Read(unsigned,unsigned,uint32_t* out,unsigned bytes) {
         for (unsigned i=0;i<bytes/4;i++) out[i]=0;
         return true;
@@ -32,5 +34,5 @@ bool PioneerQwen35RoleFleetRecoveryOwnerTargetProbe(DataflowRoleFleetRecoveryOwn
             ramStorage,DataflowRoleFleetRecoveryOwner::RamWords(),io)
         && fleet.StageImages(image,words,image,words,image,words,image,words,io)
         && fleet.PreparePossibleRelease(io) && fleet.BeginReleaseAttempt(io)
-        && fleet.RestoreAll(io);
+        && fleet.RestoreAll(io) && fleet.VerifyAfterResidentRestore(io);
 }
