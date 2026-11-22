@@ -42,8 +42,9 @@ post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
 requires a ticket tied to the fault epoch, so a concurrent fault denies
 recovery. The extracted tests pass, as does the full Haiku/RISC-V target
-build (`15712/18432` kernel-stack audit); new recovery guard hash:
-`f3502649243aa99848960a43b5c1430fd0a97b63f6ce9382974328845eec0c00`.
+build (`15712/18432` kernel-stack audit); recovery guard hash after its atomic
+fault-state fix:
+`53e095dc17202434c59bb9a50859e3cbb25847a76394db6431ad2f23039c15d2`.
 An isolated Blackhole reset helper now encodes the exact three PCI config
 writes used by Tenstorrent's KMD, rejects bus mastering or a stale reset marker,
 and waits a bounded number of times for the marker to clear. Its fake-PCI
@@ -53,6 +54,14 @@ the driver ioctl, post-reset PCI/firmware/resource rebuild, physical recovery,
 and silicon validation are not implemented. The currently loaded legacy guard
 is `B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel
 boot from the NVMe/kexec path will be required to install the new guard.
+
+The offline post-reset audit checks both NoC banks on all 120 cores twice,
+with explicit read failures and busy/outstanding transaction checks. Its fake
+backend test covers both networks, a fault on the second pass, and the final
+core. It is not yet connected to fresh physical mappings. A single atomic
+word now publishes the guard's fault epoch and cold latch together; the guard
+test injects a fault during latch clearing and confirms the previous generation
+remains recoverable. These checks do not qualify a physical reset.
 
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and

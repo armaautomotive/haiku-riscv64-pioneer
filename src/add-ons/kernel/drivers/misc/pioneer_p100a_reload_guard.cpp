@@ -7,9 +7,19 @@
 // a quarantined card's cold-recovery latch or its retained host ownership.
 static PioneerDriverReloadState sState;
 static sem_id sStateLock=-1;
-static int32 sForcedCold=0;
-static int32 sFaultEpoch=0;
-static bool Cold() { return atomic_get(&sForcedCold)!=0; }
+// Bit 0 is cold; the remaining bits are a saturating fault epoch. Publishing
+// both in one CAS prevents a recovery from missing a fault between two atomics.
+static int32 sFaultState=0;
+static bool Cold() { return (uint32(atomic_get(&sFaultState))&1)!=0; }
+static void Fault(uint64)
+{
+	for (;;) {
+		const uint32 old=uint32(atomic_get(&sFaultState));
+		const uint32 next=old>=0xfffffffeU?0xffffffffU:((old&~1U)+2U)|1U;
+		if (uint32(atomic_test_and_set(&sFaultState,int32(next),int32(old)))==old)
+			return;
+	}
+}
 static status_t Attach(uint64* generation)
 {
 	if (!generation) return B_BAD_VALUE;
@@ -21,31 +31,25 @@ static status_t Attach(uint64* generation)
 static status_t Detach(uint64 generation,bool clean)
 {
 	status_t status=acquire_sem(sStateLock);
-	if (status!=B_OK) { atomic_or(&sForcedCold,1); return status; }
+	if (status!=B_OK) { Fault(generation); return status; }
 	bool okay=sState.Detach(generation,clean && !Cold());
-	if (!okay) atomic_or(&sForcedCold,1);
+	if (!okay) Fault(generation);
 	release_sem(sStateLock); return okay?B_OK:B_DEV_NOT_READY;
 }
-static void Fault(uint64)
-{
-	// No wait,allocation,PCI/MMIO or cleanup after uncertainty.
-	atomic_add(&sFaultEpoch,1);
-	atomic_or(&sForcedCold,1);
-}
-
 static status_t BeginRecovery(uint64 expectedGeneration,uint64* ticket)
 {
 	if (!ticket) return B_BAD_VALUE;
 	*ticket=0;
 	status_t status=acquire_sem(sStateLock); if (status!=B_OK) return status;
-	if (!Cold() || !sState.attached || expectedGeneration!=sState.generation)
+	const uint32 faultState=uint32(atomic_get(&sFaultState));
+	if (!(faultState&1) || faultState==0xffffffffU || !sState.attached
+		|| expectedGeneration!=sState.generation)
 		status=B_DEV_NOT_READY;
 	else {
 		// Fault() is intentionally lock-free. Mirror its atomic cold latch only
 		// after observing it under the state lock, and capture its epoch.
 		sState.Fault(expectedGeneration);
-		bool okay=sState.BeginRecovery(expectedGeneration,
-			(uint32)atomic_get(&sFaultEpoch),*ticket);
+		bool okay=sState.BeginRecovery(expectedGeneration,faultState,*ticket);
 		if (!okay) status=B_BUSY;
 	}
 	release_sem(sStateLock);
@@ -60,16 +64,16 @@ static status_t CompleteRecovery(uint64 ticket,
 	status_t status=acquire_sem(sStateLock); if (status!=B_OK) return status;
 	uint32 begunFaultEpoch=0;
 	uint64 generation=0;
+	const uint64 oldGeneration=sState.generation;
 	bool okay=Cold() && sState.CompleteRecovery(ticket,
-		(uint32)atomic_get(&sFaultEpoch),*proof,begunFaultEpoch,generation);
+		uint32(atomic_get(&sFaultState)),*proof,begunFaultEpoch,generation);
 	if (okay) {
-		// Clear only the latch covered by this ticket. Fault() publishes its
-		// epoch before its latch, so the second epoch check catches a concurrent
-		// fault on either side of the clear without losing the quarantine.
-		atomic_and(&sForcedCold,~1);
-		if ((uint32)atomic_get(&sFaultEpoch)!=begunFaultEpoch) {
-			sState.Fault(generation);
-			atomic_or(&sForcedCold,1);
+		// The CAS clears exactly the cold state covered by this ticket. A
+		// concurrent fault changes the word, so it can never be erased.
+		if (uint32(atomic_test_and_set(&sFaultState,
+			int32(begunFaultEpoch&~1U),int32(begunFaultEpoch)))!=begunFaultEpoch) {
+			sState.generation=oldGeneration;
+			sState.Fault(oldGeneration);
 			okay=false;
 		}
 	}

@@ -46,6 +46,13 @@ open. See
 [`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md), and
 [`tag0120 RUN`](benchmarks/qwen35-dataflow-tag0120-20261121/RUN.md).
 
+An offline audit checks both NoCs across all 120 held cores twice and fails on
+unreadable, busy, or outstanding status. The guard now publishes fault epoch
+and cold state atomically; an injected fault during latch clearing leaves the
+old generation recoverable. Both fixtures pass, as does the RISC-V target
+build. The audit still needs a fresh physical mapping backend and integration
+into the reset lifecycle; it has not run on the card.
+
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached
 the 100 tokens/s target.

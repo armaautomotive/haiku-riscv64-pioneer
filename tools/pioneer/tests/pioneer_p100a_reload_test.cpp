@@ -123,9 +123,30 @@ int main()
 			&& !newGeneration && Cold());
 		assert(sRecoveryGuard.abort(ticket)==B_OK && Cold());
 	}
+	// Fault publication during the cold-clear CAS must preserve quarantine
+	// and keep the generation reachable for another recovery attempt.
+	{
+		uint64 ticket=0,newGeneration=0;
+		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK);
+		PioneerDriverRecoveryProof proof={};proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED;
+		proof.core_count=120;proof.reset_generation=3;proof.firmware_generation=3;
+		injectAtomicFault=true;
+		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold() && sState.generation==sReloadGeneration);
+		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK);
+		assert(sRecoveryGuard.abort(ticket)==B_OK);
+	}
 	assert(sGuard.detach(sReloadGeneration,false)==B_DEV_NOT_READY);
 	uint64 replacement=123; assert(sGuard.attach(&replacement)==B_DEV_NOT_READY && !replacement);
 	assert(sGuard.info.std_ops(B_MODULE_UNINIT)==B_BUSY);
+	// Epoch exhaustion permanently retains quarantine instead of wrapping and
+	// making an ancient recovery ticket valid again.
+	sFaultState=(int32)0xfffffffdU;
+	sGuard.fault(sReloadGeneration);
+	assert(uint32(atomic_get(&sFaultState))==0xffffffffU && Cold());
+	uint64 exhaustedTicket=0;
+	assert(sRecoveryGuard.begin(sReloadGeneration,&exhaustedTicket)==B_DEV_NOT_READY
+		&& !exhaustedTicket);
 	for (unsigned fault=0;fault<4;fault++) {
 		PioneerDriverReloadState state; uint64_t first=0,second=0;
 		assert(state.Attach(first));
