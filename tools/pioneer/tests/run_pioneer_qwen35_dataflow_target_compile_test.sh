@@ -123,6 +123,24 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_memory_plan_test.cpp" \
 	-o "$temporary/role-memory-plan-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-memory-plan-test"
+# Snapshot/stage/restore remains a simulated IO contract; compile its target
+# instantiation separately and exercise partial failures on the host.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_code_owner_target_probe.cpp" \
+	-o "$temporary/role-code-owner.o"
+if [ -n "$("$nm" -u "$temporary/role-code-owner.o")" ]; then
+	echo 'role code owner target probe has unresolved imports' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_code_owner_test.cpp" \
+	-o "$temporary/role-code-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-code-owner-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_queued_input_test.cpp" \
 	-o "$temporary/queued-input-test"
