@@ -183,6 +183,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-o "$temporary/graph-completion-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-completion-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_graph_trace_test.cpp" \
+	-o "$temporary/dataflow-graph-trace-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-graph-trace-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-I"$directory/cli-stubs" -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_dataflow_trace_protocol_test.cpp" -o "$temporary/dataflow-trace-protocol-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-trace-protocol-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_silu_test.cpp" \
 	-o "$temporary/dataflow-silu-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-silu-test"

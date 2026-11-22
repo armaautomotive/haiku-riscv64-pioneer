@@ -3,6 +3,7 @@
 #include "PioneerQwen35DataflowDynamicToken.h"
 #include "PioneerQwen35DataflowGraphRunProtocol.h"
 #include "PioneerQwen35DataflowGraphAuthorization.h"
+#include "PioneerQwen35DataflowGraphTrace.h"
 
 // The graph dispatcher remains non-loadable until the kernel owns its sealed
 // model and session lifetimes and the device path has been qualified.
@@ -45,6 +46,22 @@ struct GraphWitnessExecution {
 		Mark(PioneerQwen35::DataflowGraphProgressExecute);
 		status=detail=0;
 		const bool result=qwen35_graph_execute(run.core,sequence,mailbox,&detail);
+		if (result && run.core==0) {
+			using namespace PioneerQwen35;
+			for (unsigned slot=0;slot<DataflowGraphTraceSlots;slot++) {
+				if (DataflowGraphTraceStep(slot)!=index) continue;
+				const auto* page=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowOutputBufferAddress));
+				const auto sample=DataflowGraphTraceSample(sequence,page);
+				auto* trace=reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(
+					DataflowGraphTraceAddress+slot*sizeof(DataflowGraphTraceRecord)));
+				DataflowStoreRelease(trace[0],0);
+				DataflowStoreRelease(trace[1],sample.first);
+				DataflowStoreRelease(trace[2],sample.last);
+				DataflowStoreRelease(trace[3],sample.magnitudeOr);
+				DataflowStoreRelease(trace[0],sample.sequence);
+				break;
+			}
+		}
 		if (result) Mark(PioneerQwen35::DataflowGraphProgressBarrier);
 		return result;
 	}

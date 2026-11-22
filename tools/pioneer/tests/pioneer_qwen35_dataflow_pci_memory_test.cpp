@@ -180,6 +180,11 @@ int main()
 	assert(!DataflowPciRunningWriteRange(DataflowGraphProgressAddress,4));
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowGraphOperationProgressAddress,4));
 	assert(!DataflowPciRunningWriteRange(DataflowGraphOperationProgressAddress,4));
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowGraphTraceAddress,
+		DataflowGraphTraceSlots*sizeof(DataflowGraphTraceRecord)));
+	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
+		DataflowGraphTraceAddress+DataflowGraphTraceSlots*sizeof(DataflowGraphTraceRecord)-4,8));
+	assert(!DataflowPciRunningWriteRange(DataflowGraphTraceAddress,4));
 #endif
 	DataflowWorkerMailbox startupFatal{};
 	startupFatal.magic=DataflowWorkerMailboxMagic;

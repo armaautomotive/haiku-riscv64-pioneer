@@ -35,6 +35,9 @@ enum : uint32_t {
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_NOC=5,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_READ_REQUEST=6,
 	TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_FAILURE=7,
+	TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_RESULT=8,
+	TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_TRACE=9,
+	TT_QWEN35_DATAFLOW_GRAPH_TRACE_SLOTS=8,
 	TT_QWEN35_DATAFLOW_STATE_EMPTY=0,
 	TT_QWEN35_DATAFLOW_STATE_READY=1,
 	TT_QWEN35_DATAFLOW_STATE_FAULTED=2,
@@ -86,6 +89,11 @@ struct tt_qwen35_dataflow_request {
 	// QUERY_GRAPH_FAILURE returns the captured worker snapshot without a new
 	// hardware read: bit 31 marks availability, bits 0..7 core, 8..11 state,
 	// 12..19 failure, and 20..23 phase; the other words are graph detail/status.
+	// QUERY_GRAPH_RESULT returns the last audited token/score/sequence. For
+	// QUERY_GRAPH_TRACE, next_sequence supplies a slot number; a successful
+	// response has bit31 set, the step in bits0..9, a nonzero flag at bit10,
+	// and the first and last raw FP32 words in reserved[1..2]. These diagnostic
+	// observations do not establish correctness or authorize device release.
 	uint32_t reserved[3];
 };
 static_assert(sizeof(tt_qwen35_dataflow_request)==36,
@@ -95,7 +103,9 @@ static inline bool
 PioneerQwen35DataflowRequestValid(const tt_qwen35_dataflow_request& request)
 {
 	return request.version==TT_QWEN35_DATAFLOW_ABI
-		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_FAILURE
+		&& request.action<=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_TRACE
+		&& (request.action!=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_TRACE
+			|| request.next_sequence<TT_QWEN35_DATAFLOW_GRAPH_TRACE_SLOTS)
 		&& request.reserved[0]==0 && request.reserved[1]==0
 		&& request.reserved[2]==0;
 }

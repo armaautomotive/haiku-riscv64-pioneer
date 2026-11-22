@@ -448,7 +448,7 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 
 static bool Generate(int fd,const Vocabulary& vocabulary,
 	const std::vector<unsigned>& prompt,unsigned maxNewTokens,unsigned requestId,
-	std::vector<unsigned>& tokens,std::string& text)
+	std::vector<unsigned>& tokens,std::string& text,bool diagnostic)
 {
 	tokens.assign(maxNewTokens,0);
 	auto request=std::make_unique<tt_qwen35_dataflow_generate>();
@@ -545,6 +545,28 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 	printf("\nP100A_Q35_DATAFLOW output_begin run=%u\n",requestId);
 	fwrite(text.data(),1,text.size(),stdout);
 	printf("\nP100A_Q35_DATAFLOW output_end run=%u\n",requestId);
+	if (diagnostic) {
+		tt_qwen35_dataflow_request result{};
+		result.version=TT_QWEN35_DATAFLOW_ABI;
+		result.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_RESULT;
+		if (Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&result,sizeof(result))
+			&& (result.reserved[0]&0x80000000U)) {
+			fprintf(stderr,"P100A_Q35_DATAFLOW graph_result token=%u score_bits=0x%08x sequence=%u\n",
+				result.reserved[0]&0x7fffffffU,result.reserved[1],result.reserved[2]);
+			for (unsigned slot=0;slot<TT_QWEN35_DATAFLOW_GRAPH_TRACE_SLOTS;slot++) {
+				tt_qwen35_dataflow_request sample{};
+				sample.version=TT_QWEN35_DATAFLOW_ABI;
+				sample.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_TRACE;
+				sample.next_sequence=slot;
+				if (Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&sample,sizeof(sample))
+					&& (sample.reserved[0]&0x80000000U))
+					fprintf(stderr,"P100A_Q35_DATAFLOW graph_trace slot=%u step=%u nonzero=%u first=0x%08x last=0x%08x\n",
+						slot,sample.reserved[0]&0x3ffU,(sample.reserved[0]>>10)&1U,
+						sample.reserved[1],sample.reserved[2]);
+				else fprintf(stderr,"P100A_Q35_DATAFLOW graph_trace slot=%u unavailable\n",slot);
+			}
+		} else fputs("P100A_Q35_DATAFLOW graph_result unavailable\n",stderr);
+	}
 	return true;
 }
 
@@ -671,9 +693,9 @@ int main(int argc,char** argv)
 	std::vector<unsigned> firstTokens,secondTokens;
 	std::string firstText,secondText;
 	const bool firstOkay=Generate(fd,vocabulary,prompt,maxNewTokens,1,
-		firstTokens,firstText);
+		firstTokens,firstText,oneRunDiagnostic);
 	const bool secondOkay=oneRunDiagnostic || (firstOkay
-		&& Generate(fd,vocabulary,prompt,maxNewTokens,2,secondTokens,secondText));
+		&& Generate(fd,vocabulary,prompt,maxNewTokens,2,secondTokens,secondText,false));
 	const bool firstPrefix=firstTokens.size()>=2
 		&& firstTokens[0]==11751 && firstTokens[1]==13;
 	const bool secondPrefix=oneRunDiagnostic || (secondTokens.size()>=2

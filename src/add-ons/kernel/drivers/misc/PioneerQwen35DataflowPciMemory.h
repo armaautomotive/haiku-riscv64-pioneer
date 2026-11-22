@@ -9,6 +9,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowServiceOwner.h"
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphRunProtocol.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphTrace.h"
 #endif
 
 enum : unsigned {
@@ -42,6 +43,9 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 			&& bytes==sizeof(uint32_t))
 		|| (address==PioneerQwen35::DataflowGraphOperationProgressAddress
 			&& bytes==sizeof(uint32_t))
+		|| (address>=PioneerQwen35::DataflowGraphTraceAddress
+			&& end<=PioneerQwen35::DataflowGraphTraceAddress
+				+PioneerQwen35::DataflowGraphTraceSlots*sizeof(PioneerQwen35::DataflowGraphTraceRecord))
 #endif
 		|| (address>=PioneerQwen35::DataflowQueueStateAddress
 			&& end<=PioneerQwen35::DataflowQueueStateAddress

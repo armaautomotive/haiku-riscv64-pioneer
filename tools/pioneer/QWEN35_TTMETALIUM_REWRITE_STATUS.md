@@ -1,5 +1,16 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+Tag0162 adds a diagnostic-only root-worker trace at eight graph steps and
+a CPU-side query for the last audited argmax score. It reads raw device bits
+only after graph completion, checks two stable copies and verifies each sample's
+sequence against the audited result. The trace is not an inference input or
+release proof. An independent Q6_K decode of token0 from a hash-matched GGUF
+prefix gives rows16/31 as `0xbd2f21c0`/`0x3cb4c800`; these apply to the trace
+only when its last graph input is token0. Trace, protocol, PCI range and full
+target tests pass, as do normal, trial and non-loadable witness builds. No
+tag0162 hardware result exists yet.
+
+
 Tag0161 passed the former convolution stall and completed one graph run, but
 generated `0,0` (`!!`) instead of the verified `11751,13` (` Paris.`). The
 raw one-token decode rate was 0.242095 tokens/s after 19.186788 s prompt

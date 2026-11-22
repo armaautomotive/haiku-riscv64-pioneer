@@ -6,6 +6,7 @@
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphFaultTeardown.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphWait.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphTrace.h"
 #endif
 
 enum PioneerQwen35RuntimeAuditDetail : unsigned {
@@ -2177,6 +2178,7 @@ class PioneerQ35GraphOwner {
 	PioneerQwen35::DataflowGraphSession session;
 	PioneerQwen35::DataflowGraphOwnedRunner runner;
 	PioneerQwen35::DataflowGraphFaultAudit faultAudit;
+	PioneerQwen35::DataflowGraphDiagnosticResult diagnostic;
 	bool recorded=false,bound=false,retiredAfterFault=false;
 public:
 	explicit PioneerQ35GraphOwner(PioneerStoreContext& c):context(c),stream(c) {}
@@ -2195,11 +2197,24 @@ public:
 	bool ReadyForSlot(unsigned slot) const { return bound && !Retained() && stream.SealedSlot()==slot; }
 	PioneerQwen35::DataflowGraphSessionResult Run(unsigned position,unsigned token,bool decode,unsigned polls,
 		PioneerQwen35::DataflowArgmaxResult& output,unsigned& stage) {
+		diagnostic.Reset();
 		output={PioneerQwen35::Vocabulary,0,0,0};stage=PioneerQwen35::DataflowDecoderSequenceInvalidRequest;
 		if (!bound || !context.qwen35DataflowProgramScratch) return PioneerQwen35::DataflowGraphSessionInvalid;
 		PioneerQ35GraphBackend backend(context,stream);
-		return runner.Run(session,context.qwen35DataflowAuthority,position,token,decode,polls,
+		const auto result=runner.Run(session,context.qwen35DataflowAuthority,position,token,decode,polls,
 			*context.qwen35DataflowProgramScratch,backend,output,stage);
+		if (result==PioneerQwen35::DataflowGraphSessionComplete && decode)
+			diagnostic.Set(output);
+		return result;
+	}
+	bool LastResult(PioneerQwen35::DataflowArgmaxResult& output) const {
+		return bound && !Retained() && context.qwen35DataflowService
+			&& context.qwen35DataflowService->Ready() && diagnostic.Read(output);
+	}
+	bool ReadTrace(unsigned slot,PioneerQwen35::DataflowGraphTraceRecord& output) {
+		using namespace PioneerQwen35;
+		DataflowArgmaxResult result{};
+		return LastResult(result) && DataflowGraphTraceRead(context.io,slot,result,output);
 	}
 	bool Retained() const { return runner.Retained() || (session.Faulted() && !retiredAfterFault); }
 	bool FailedWorkerSnapshot(unsigned& core,PioneerQwen35::DataflowWorkerSnapshot& snapshot) const {
