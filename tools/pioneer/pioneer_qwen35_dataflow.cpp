@@ -21,6 +21,7 @@
 #include "../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "PioneerModelWeightCache.h"
 #include "PioneerQwen35DataflowGraphWorkspace.h"
+#include "PioneerQwen35DataflowRecoveryRetry.h"
 #include "PioneerQwen35Preload.h"
 #include "PioneerQwen35RootImageLayout.h"
 #include "llama.h"
@@ -348,29 +349,50 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 	if (query.state!=TT_QWEN35_DATAFLOW_STATE_FAULTED
 		|| !query.recovery_required) return true;
 	PrintOwnerDiagnostic(fd,"recover_before_close",query);
-	tt_qwen35_dataflow_request request{};
-	request.version=TT_QWEN35_DATAFLOW_ABI;
-	request.action=TT_QWEN35_DATAFLOW_ACTION_RECOVER;
-	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request))) {
-		fputs("P100A_Q35_DATAFLOW recover_request_failed\n",stderr);
-		return false;
-	}
-	if (request.result==TT_QWEN35_DATAFLOW_RESULT_STOP_AUDIT_FAILED
-		|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESTORE_FAILED
-		|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED) {
-		fprintf(stderr,"P100A_Q35_DATAFLOW recover_close result=%u state=%u "
-			"recovery=%u diag_stage=%u diag_core=%u diagnostic_state=%u "
-			"diagnostic_failure=%u diagnostic_phase=%u resume_detail=0x%08x\n",
-			request.result,request.state,request.recovery_required,
-			request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
-			request.reserved[1]>>24,(request.reserved[1]>>16)&0xff,
-			(request.reserved[1]>>8)&0xff,request.reserved[2]);
-	} else PrintOwnerDiagnostic(fd,"recover_result",request);
-	return !request.recovery_required
-		&& ((request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
-				&& request.state==TT_QWEN35_DATAFLOW_STATE_READY)
-			|| (request.result==TT_QWEN35_DATAFLOW_RESULT_CLOSED
-				&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED));
+	tt_qwen35_dataflow_request graph{};
+	graph.version=TT_QWEN35_DATAFLOW_ABI;
+	graph.action=TT_QWEN35_DATAFLOW_ACTION_QUERY_GRAPH_FAILURE;
+	const bool graphRetry=Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&graph,sizeof(graph))
+		&& (graph.reserved[0]&0x80000000U);
+	struct Retry {
+		int fd;
+		bool graphRetry;
+		D::DataflowRecoveryAttemptResult Attempt(unsigned attempt) {
+			tt_qwen35_dataflow_request request{};
+			request.version=TT_QWEN35_DATAFLOW_ABI;
+			request.action=TT_QWEN35_DATAFLOW_ACTION_RECOVER;
+			if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request))) {
+				fputs("P100A_Q35_DATAFLOW recover_request_failed\n",stderr);
+				return D::DataflowRecoveryAttemptStop;
+			}
+			if (request.result==TT_QWEN35_DATAFLOW_RESULT_STOP_AUDIT_FAILED
+				|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESTORE_FAILED
+				|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED) {
+				fprintf(stderr,"P100A_Q35_DATAFLOW recover_close result=%u state=%u "
+					"recovery=%u diag_stage=%u diag_core=%u diagnostic_state=%u "
+					"diagnostic_failure=%u diagnostic_phase=%u resume_detail=0x%08x\n",
+					request.result,request.state,request.recovery_required,
+					request.reserved[0]>>24,request.reserved[0]&0x00ffffff,
+					request.reserved[1]>>24,(request.reserved[1]>>16)&0xff,
+					(request.reserved[1]>>8)&0xff,request.reserved[2]);
+			} else PrintOwnerDiagnostic(fd,"recover_result",request);
+			if (!request.recovery_required
+				&& ((request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERED
+						&& request.state==TT_QWEN35_DATAFLOW_STATE_READY)
+					|| (request.result==TT_QWEN35_DATAFLOW_RESULT_CLOSED
+						&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED)))
+				return D::DataflowRecoveryAttemptComplete;
+			if (graphRetry && request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERY_PENDING
+				&& request.state==TT_QWEN35_DATAFLOW_STATE_FAULTED
+				&& request.recovery_required) {
+				fprintf(stderr,"P100A_Q35_DATAFLOW recover_pending attempt=%u\n",attempt+1);
+				return D::DataflowRecoveryAttemptPending;
+			}
+			return D::DataflowRecoveryAttemptStop;
+		}
+		bool Delay() { return snooze(1000000)==B_OK; }
+	} retry{fd,graphRetry};
+	return D::DataflowRecoveryRetry(retry,4);
 }
 
 static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,

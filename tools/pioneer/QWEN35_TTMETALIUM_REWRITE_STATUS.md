@@ -1,5 +1,14 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+The rewrite client now performs up to four bounded recovery attempts when a
+captured graph fault specifically returns `RECOVERY_PENDING`, keeping the
+original owner open while workers may settle. Every retry uses the existing
+fence and all-core fault audit; all other errors stop retrying. The retry
+policy and real teardown integration pass simulation and target builds. This
+has not been exercised on the card and does not recover a permanently stuck
+NoC or qualify the disabled ASIC-reset prototype.
+
+
 Tag0160 adds correlated, read-only per-group convolution progress markers for
 validation, reads, arithmetic and writes. The progress-aware wait recognizes
 forward group/phase movement without treating the marker as a completion or

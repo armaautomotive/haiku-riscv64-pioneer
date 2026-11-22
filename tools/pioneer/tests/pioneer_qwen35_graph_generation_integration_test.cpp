@@ -4,6 +4,7 @@
 #include "../PioneerQwen35DataflowGraphOwnedRunner.h"
 #include "../PioneerQwen35DataflowGraphGeneration.h"
 #include "../PioneerQwen35DataflowGraphFaultTeardown.h"
+#include "../PioneerQwen35DataflowRecoveryRetry.h"
 
 struct Timer {
 	uint64_t now=0;
@@ -71,12 +72,23 @@ int main() {
 	SessionIO cleanup(claim);IntegratedRecoveryIO recovery(claim,*service,*serviceIO,cleanup);
 	recovery.previous=8;auto audit=std::make_unique<DataflowGraphFaultAudit>();
 	recovery.badCore=119;
-	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceRecoveryPending
-		&& service->Faulted() && owner.runner.Retained() && !cleanup.runDeletes && !recovery.acks);
-	assert(audit->ResetUnsettled());recovery.badCore=-1;recovery.audits=0;
 	serviceIO->failResume=true;
-	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceResumeFailed
-		&& owner.runner.Retained() && session->FaultClosePermitted(*audit));
+	struct Retry {
+		DataflowGraphSession& session;DataflowGraphOwnedRunner& runner;
+		DataflowGraphFaultAudit& audit;DataflowProjectionAuthority* live;
+		IntegratedRecoveryIO& io;unsigned attempts=0,delays=0;
+		DataflowRecoveryAttemptResult Attempt(unsigned n) {
+			assert(n==attempts++);
+			if (n) assert(audit.ResetUnsettled());
+			const auto result=DataflowGraphFaultTeardown::Run(session,runner,audit,live,3,io);
+			if (result==DataflowServiceRecoveryPending) return DataflowRecoveryAttemptPending;
+			return result==DataflowServiceClosed?DataflowRecoveryAttemptComplete:DataflowRecoveryAttemptStop;
+		}
+		bool Delay() { delays++;io.badCore=-1;io.audits=0;return true; }
+	} retry{*session,owner.runner,*audit,live,recovery};
+	assert(!DataflowRecoveryRetry(retry,4) && retry.attempts==2 && retry.delays==1
+		&& owner.runner.Retained() && session->FaultClosePermitted(*audit)
+		&& !cleanup.runDeletes && recovery.acks==120);
 	const unsigned auditsAfterClose=recovery.audits,stopsAfterClose=serviceIO->stopCount;
 	serviceIO->failResume=false;
 	assert(DataflowGraphFaultTeardown::Run(*session,owner.runner,*audit,live,3,recovery)==DataflowServiceClosed
