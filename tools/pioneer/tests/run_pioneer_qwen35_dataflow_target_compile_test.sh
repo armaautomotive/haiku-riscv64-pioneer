@@ -12,10 +12,13 @@ cxx="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++"
 nm="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-nm"
 objdump="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump"
 readelf="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-readelf"
+ld="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld"
+size="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-size"
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-qwen35-dataflow-target.XXXXXX")
 trap 'rm -rf "$temporary"' EXIT HUP INT TERM
 object="$temporary/dataflow.o"
 barrier_object="$temporary/device-barrier.o"
+stream_object="$temporary/device-stream.o"
 
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
@@ -35,6 +38,30 @@ barrier_object="$temporary/device-barrier.o"
 	-c "$directory/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" \
 	-o "$barrier_object"
 
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" \
+	-o "$stream_object"
+
+# This links both compile probes into a second saved L1 region. It is a size
+# witness only: the production image still has one code region and does not
+# load or run either dispatch probe.
+sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/service"
+"$ld" -m elf32lriscv --no-relax --gc-sections \
+	-u PioneerQwen35DeviceStreamCompileProbe -u PioneerQwen35DeviceBarrierCompileProbe \
+	-T "$root/tools/pioneer/blackhole_qwen35_dataflow_dispatch_witness.ld" \
+	"$temporary/service/start.o" "$temporary/service/service.o" "$temporary/service/memory.o" \
+	"$stream_object" "$barrier_object" -o "$temporary/dispatch-size-witness.elf"
+if [ -n "$("$nm" -u "$temporary/dispatch-size-witness.elf")" ]; then
+	echo 'split dispatch witness has unresolved imports' >&2
+	exit 1
+fi
+"$size" -A "$temporary/dispatch-size-witness.elf"
+
 attributes=$("$readelf" -A "$object")
 printf '%s\n' "$attributes" | grep 'Tag_RISCV_arch: "rv32i' >/dev/null
 if printf '%s\n' "$attributes" | grep '_a[0-9]' >/dev/null; then
@@ -47,9 +74,20 @@ if [ -n "$barrier_undefined" ]; then
 	echo 'target device barrier has unresolved runtime helpers' >&2
 	exit 1
 fi
+stream_undefined=$("$nm" -u "$stream_object")
+if [ -n "$stream_undefined" ]; then
+	printf '%s\n' "$stream_undefined" >&2
+	echo 'target device stream has unresolved runtime helpers' >&2
+	exit 1
+fi
 "$objdump" -d "$barrier_object" > "$temporary/device-barrier.disassembly"
 if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/device-barrier.disassembly" >/dev/null; then
 	echo 'target device barrier uses an unsupported atomic instruction' >&2
+	exit 1
+fi
+"$objdump" -d "$stream_object" > "$temporary/device-stream.disassembly"
+if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/device-stream.disassembly" >/dev/null; then
+	echo 'target device stream uses an unsupported atomic instruction' >&2
 	exit 1
 fi
 undefined=$("$nm" -u "$object")
@@ -80,6 +118,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_device_barrier_test.cpp" \
 	-o "$temporary/device-barrier-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/device-barrier-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_device_stream_test.cpp" \
+	-o "$temporary/device-stream-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/device-stream-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined -DPIONEER_QWEN35_DEVICE_DISPATCH \
 	"$directory/pioneer_qwen35_dataflow_service_owner_test.cpp" -o "$temporary/device-barrier-owner-test"

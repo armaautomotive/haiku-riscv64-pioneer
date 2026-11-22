@@ -112,6 +112,34 @@ non-loadable dispatch witness SHA-256:
 service text SHA-256:
 `b544ef4561f1ec4463b9b73f55a05ead65c81becd7b610aed9634840c1cb35d1`.
 
+The device-dispatch rewrite now also has a stream-format and workspace-plan
+prototype. Each core's 2 KiB records hold an existing typed invocation, epoch,
+step, core, and corruption checksum; the NoC0 fetch reuses the idle second
+weight page and publishes command magic last. The prior command is invalidated
+before a read, so an unsuccessful fetch cannot leave it runnable. The planner
+reserves disjoint per-core ranges inside the packed workspace after the rotary,
+activation and graph-scratch ranges; 548 full records on all 120 cores require
+134,676,480 bytes before other workspace use. Synthetic workspace tests check
+all 120 leases, overlap, capacity, forged ranges and record corruption;
+embedding and projection records round-trip. The concrete fetch compiles for
+RV32IMF without runtime helpers or A atomics. The checksum detects accidental
+corruption; it does not authorize model access. The kernel must independently
+verify workspace ownership and each command, keep the stream immutable, and
+bind epochs before the worker can use it. The resident service does not yet
+execute this stream; dynamic token/position patching, worker integration,
+completion/fault handling and hardware validation remain open. Rebuilding all
+records every token would also move about 135 MB per token, so the final path
+must reuse fixed records and update only dynamic fields.
+
+An offline link witness places the current worker image in `0x72000..0x7ffff`
+and the stream/barrier compile probes in `0xa0400..0xa9fff`, between the
+Tensix destination-init window and the invocation slot. Both ranges lie in
+the existing saved L1 snapshot. The witness links 54,452 bytes of primary
+text and 7,308 bytes of dispatch text within their respective limits, with no
+unresolved imports. The current driver does not install, verify or execute
+this second code region; implementing those lifecycle checks and linking the
+actual queued service is required before this becomes a device image.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message

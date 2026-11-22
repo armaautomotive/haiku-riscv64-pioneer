@@ -145,6 +145,29 @@ and `dfa3472ad3714c1276bc88e072185c9a3c8574278eb16dce41e466c89f6de1e1`.
 The worker service does not yet invoke this barrier; queued descriptor fetch,
 epoch ownership, timeout/fault integration and hardware qualification remain.
 
+The queued rewrite now includes a 2 KiB per-core descriptor record, a
+bounded NoC0 fetch into the idle second weight page, and a planner for 120
+non-overlapping streams in the packed model workspace. Fetch checks record
+identity, sequence, core, size and an accidental-corruption checksum; it
+invalidates the old command before reading and publishes the new magic last.
+Synthetic tests cover actual embedding/projection records, all stream leases,
+workspace overlap/capacity, malformed records and read failure. The concrete
+fetch compiles for RV32IMF with no runtime helper or A-extension instruction.
+The checksum is not authorization: trusted kernel lease validation, typed
+model-bound command authorization, immutable storage, dynamic token/position
+handling, worker execution, and hardware tests remain to be implemented. A
+full 548-record stream for all cores occupies 134,676,480 bytes; rebuilding it
+for each token would create substantial transfer overhead, so fixed records
+must be reused and only dynamic fields updated.
+
+The primary worker has only 2,892 bytes of unused code space. A separate
+offline linker witness places the existing 54,452-byte primary image at
+`0x72000` and the 7,308-byte stream/barrier compile probes at `0xa0400`,
+before the invocation slot at `0xaa000`; both fit and have no unresolved
+imports. The entire range is covered by the existing L1 snapshot. This proves
+only the proposed layout: the current driver does not install or verify the
+second segment and the service does not invoke it.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
