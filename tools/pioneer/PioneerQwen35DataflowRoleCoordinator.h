@@ -36,7 +36,7 @@ enum DataflowRoleCoordinatorResult {
 // assigned a new projection; the issue operation still validates all receipts.
 inline bool DataflowRoleNextProjectionSequence(const DataflowRoleMailbox& box,uint32_t& next)
 {
-    if (!DataflowRoleMailboxHeaderValid(box)) return false;
+    if (!DataflowRoleMailboxAllStarted(box)) return false;
     const uint32_t ack=DataflowLoadAcquire(box.acknowledged);
     if (ack>=DataflowWorkerSequenceLimit || DataflowLoadAcquire(box.command)!=ack
         || DataflowLoadAcquire(box.stopRequest)) return false;

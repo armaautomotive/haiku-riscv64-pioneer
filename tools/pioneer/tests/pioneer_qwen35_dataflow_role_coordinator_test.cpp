@@ -9,8 +9,8 @@ struct Body { bool success=true; bool Run() { return success; } };
 struct CoordinatorOps {
     DataflowQueueControl controls[DataflowCircularBufferCount]{};
     bool computeSuccess=true;
-    unsigned audits=0;
-    bool RunCompute() { return computeSuccess; }
+    unsigned audits=0,computes=0;
+    bool RunCompute() { ++computes; return computeSuccess; }
     void Pause() { std::this_thread::yield(); }
     bool AuditAndResetCleanQueues() {
         ++audits; return DataflowRoleCleanQueuesForReuse(controls);
@@ -51,6 +51,9 @@ static void CheckCoordinator(bool computeOkay,bool readerOkay,bool queueOkay)
         bad.store(true);
     };
     std::thread reader(roleLoop,DataflowRoleReader),writer(roleLoop,DataflowRoleWriter);
+    for (unsigned n=0;n<10000000 && !DataflowRoleMailboxAllStarted(box) && !bad.load();n++)
+        if ((n&255)==0) std::this_thread::yield();
+    assert(DataflowRoleMailboxAllStarted(box));
     const auto result=DataflowRoleCoordinate(box,1,DataflowQueuePollLimit,ops);
     const bool success=computeOkay && readerOkay && queueOkay;
     if (success) {
@@ -82,6 +85,9 @@ static void CheckInterleavedGraphSteps()
         bad.store(true);
     };
     std::thread reader(roleLoop,DataflowRoleReader),writer(roleLoop,DataflowRoleWriter);
+    for (unsigned n=0;n<10000000 && !DataflowRoleMailboxAllStarted(box) && !bad.load();n++)
+        if ((n&255)==0) std::this_thread::yield();
+    assert(DataflowRoleMailboxAllStarted(box));
     const bool projection[]={false,true,false,false,true,false,true};
     unsigned completed=0;
     for (bool isProjection:projection) {
@@ -115,6 +121,12 @@ int main()
     DataflowRoleMailbox box{};
     box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
     CoordinatorOps ops{};
+    assert(DataflowRoleCoordinate(box,1,1,ops)==DataflowRoleCoordinatorInvalid);
+    assert(!ops.computes && !box.command);
+    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleReader));
+    assert(DataflowRoleCoordinate(box,1,1,ops)==DataflowRoleCoordinatorInvalid);
+    assert(!ops.computes && !box.command);
+    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleWriter));
     assert(DataflowRoleCoordinate(box,1,1,ops)==DataflowRoleCoordinatorRetainedFault);
     assert(box.command==1 && box.acknowledged==0 && !ops.audits);
     assert(!DataflowRoleMailboxRequestFaultStop(box,true,true,true));

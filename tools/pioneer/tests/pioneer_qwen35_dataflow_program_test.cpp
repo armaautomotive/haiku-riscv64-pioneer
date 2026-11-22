@@ -357,6 +357,9 @@ static void CheckCoordinatedRoles()
 	};
 	std::thread reader([&] { roleLoop(DataflowRoleReader,readerBody); });
 	std::thread writer([&] { roleLoop(DataflowRoleWriter,writerBody); });
+	for (unsigned n=0;n<10000000 && !DataflowRoleMailboxAllStarted(box) && !bad.load();n++)
+		if ((n&255)==0) std::this_thread::yield();
+	assert(DataflowRoleMailboxAllStarted(box));
 	const auto result=DataflowRoleCoordinate(box,1,DataflowQueuePollLimit,coordinator);
 	if (result!=DataflowRoleCoordinatorComplete || !DataflowRoleMailboxRequestStop(box))
 		bad.store(true);
@@ -431,6 +434,9 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	};
 	std::thread reader([&] { roleLoop(DataflowRoleReader,readerBody); });
 	std::thread writer([&] { roleLoop(DataflowRoleWriter,writerBody); });
+	for (unsigned n=0;n<10000000 && !DataflowRoleMailboxAllStarted(box) && !bad.load();n++)
+		if ((n&255)==0) std::this_thread::yield();
+	assert(DataflowRoleMailboxAllStarted(box));
 	const auto result=DataflowRoleCoordinate(box,1,DataflowQueuePollLimit,coordinator);
 	if (failReader) {
 		if (result!=DataflowRoleCoordinatorRetainedFault

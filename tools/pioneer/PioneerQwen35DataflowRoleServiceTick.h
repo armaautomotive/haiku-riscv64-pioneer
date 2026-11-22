@@ -12,7 +12,8 @@ enum DataflowRoleTickResult {
     DataflowRoleTickWaitingRecovery=5,
     DataflowRoleTickStopRequested=PIONEER_Q35_ROLE_STOP_REQUESTED
 };
-struct DataflowRoleTickState { bool stopObserved=false; };
+struct DataflowRoleTickState { bool stopObserved=false,started=false; };
+static_assert(sizeof(DataflowRoleTickState)<=sizeof(uint32_t),"startup shim clears one word");
 // One bounded decision, with no wait or implicit retry. The future service
 // loop owns its poll deadline and must park after StopRequested. A stop receipt
 // alone does not establish a parked PC or quiet NoC; the physical owner must
@@ -22,6 +23,10 @@ template<class Body> DataflowRoleTickResult DataflowRoleServiceTick(
 {
     if (role>=DataflowRoleCount || !DataflowRoleMailboxHeaderValid(box))
         return DataflowRoleTickInvalid;
+    if (!state.started) {
+        if (!DataflowRoleMailboxPublishStarted(box,role)) return DataflowRoleTickInvalid;
+        state.started=true;
+    }
     if (state.stopObserved) return DataflowRoleTickStopRequested;
     if (DataflowLoadAcquire(box.stopRequest)) {
         if (!DataflowRoleMailboxObserveStop(box,role)) return DataflowRoleTickInvalid;

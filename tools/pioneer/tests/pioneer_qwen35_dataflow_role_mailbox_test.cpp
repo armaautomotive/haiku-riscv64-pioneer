@@ -23,6 +23,9 @@ static void CheckConcurrentHandoffs()
         bad.store(true);
     };
     std::thread reader(roleLoop,DataflowRoleReader),writer(roleLoop,DataflowRoleWriter);
+    for (unsigned n=0;n<10000000 && !DataflowRoleMailboxAllStarted(box) && !bad.load();n++)
+        if ((n&255)==0) std::this_thread::yield();
+    if (!DataflowRoleMailboxAllStarted(box)) bad.store(true);
     for (uint32_t sequence=1;sequence<=20 && !bad.load();sequence++) {
         if (!DataflowRoleMailboxIssue(box,sequence)) { bad.store(true); break; }
         bool acknowledged=false;
@@ -46,6 +49,19 @@ int main()
     box.reserved[2]=1;
     assert(!DataflowRoleMailboxIssue(box,1));
     box.reserved[2]=0;
+    assert(!DataflowRoleMailboxIssue(box,1));
+    assert(!DataflowRoleMailboxStartupReady(box));
+    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleReader));
+    assert(!DataflowRoleMailboxIssue(box,1));
+    assert(!DataflowRoleMailboxStartupReady(box));
+    assert(!DataflowRoleMailboxPublishStarted(box,DataflowRoleReader));
+    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleWriter));
+    assert(DataflowRoleMailboxAllStarted(box));
+    assert(DataflowRoleMailboxStartupReady(box));
+    box.started[DataflowRoleWriter]=DataflowRoleStartedReader;
+    assert(!DataflowRoleMailboxAllStarted(box) && !DataflowRoleMailboxStartupReady(box));
+    assert(!DataflowRoleMailboxIssue(box,1));
+    box.started[DataflowRoleWriter]=DataflowRoleStartedWriter;
     box.stopped[0]=1;
     assert(!DataflowRoleMailboxIssue(box,1));
     box.stopped[0]=0;
@@ -85,6 +101,7 @@ int main()
     assert(box.acknowledged==1 && box.command==2);
     DataflowRoleMailbox computeFault{};
     computeFault.magic=DataflowRoleMailboxMagic; computeFault.version=DataflowRoleMailboxVersion;
+    for (unsigned role=0;role<DataflowRoleCount;role++) assert(DataflowRoleMailboxPublishStarted(computeFault,role));
     assert(DataflowRoleMailboxIssue(computeFault,1));
     for (unsigned role=0;role<DataflowRoleCount;role++) {
         assert(DataflowRoleMailboxBegin(computeFault,role,1));
@@ -96,6 +113,7 @@ int main()
     assert(computeFault.acknowledged==0 && computeFault.command==1);
     DataflowRoleMailbox stopped{};
     stopped.magic=DataflowRoleMailboxMagic; stopped.version=DataflowRoleMailboxVersion;
+    for (unsigned role=0;role<DataflowRoleCount;role++) assert(DataflowRoleMailboxPublishStarted(stopped,role));
     assert(DataflowRoleMailboxRequestStop(stopped));
     assert(!DataflowRoleMailboxRequestStop(stopped));
     assert(!DataflowRoleMailboxIssue(stopped,1));
@@ -107,6 +125,7 @@ int main()
     assert(DataflowRoleMailboxStopReceipts(stopped));
     DataflowRoleMailbox commandBox{};
     commandBox.magic=DataflowRoleMailboxMagic; commandBox.version=DataflowRoleMailboxVersion;
+    for (unsigned role=0;role<DataflowRoleCount;role++) assert(DataflowRoleMailboxPublishStarted(commandBox,role));
     TestBody reader{},writer{}; writer.result=false;
     assert(DataflowRoleRunCommand(commandBox,DataflowRoleReader,1,reader)==DataflowRoleCommandInvalid);
     assert(reader.calls==0 && DataflowRoleMailboxIssue(commandBox,1));
@@ -119,6 +138,8 @@ int main()
     DataflowRoleTickState readerState{},writerState{};
     TestBody tickReader{},tickWriter{};
     assert(DataflowRoleServiceTick(ticks,DataflowRoleReader,readerState,tickReader)==DataflowRoleTickIdle);
+    assert(!DataflowRoleMailboxIssue(ticks,1));
+    assert(DataflowRoleServiceTick(ticks,DataflowRoleWriter,writerState,tickWriter)==DataflowRoleTickIdle);
     assert(DataflowRoleMailboxIssue(ticks,1));
     assert(DataflowRoleServiceTick(ticks,DataflowRoleReader,readerState,tickReader)==DataflowRoleTickComplete);
     assert(DataflowRoleServiceTick(ticks,DataflowRoleReader,readerState,tickReader)==DataflowRoleTickWaitingAck);
@@ -135,6 +156,8 @@ int main()
     faultTicks.magic=DataflowRoleMailboxMagic; faultTicks.version=DataflowRoleMailboxVersion;
     DataflowRoleTickState faultReaderState{},faultWriterState{};
     TestBody faultReader{},faultWriter{}; faultReader.result=false;
+    assert(DataflowRoleServiceTick(faultTicks,DataflowRoleReader,faultReaderState,faultReader)==DataflowRoleTickIdle);
+    assert(DataflowRoleServiceTick(faultTicks,DataflowRoleWriter,faultWriterState,faultWriter)==DataflowRoleTickIdle);
     assert(DataflowRoleMailboxIssue(faultTicks,1));
     assert(DataflowRoleServiceTick(faultTicks,DataflowRoleReader,faultReaderState,faultReader)==DataflowRoleTickFault);
     assert(DataflowRoleServiceTick(faultTicks,DataflowRoleReader,faultReaderState,faultReader)==DataflowRoleTickWaitingRecovery);

@@ -14,14 +14,16 @@ namespace PioneerQwen35 {
 enum : unsigned {
     DataflowRoleMailboxAddress=PIONEER_Q35_ROLE_MAILBOX_ADDRESS,
     DataflowRoleMailboxMagic=0x31524d35,
-    DataflowRoleMailboxVersion=1,
+    DataflowRoleMailboxVersion=2,
     DataflowRoleReader=0,
     DataflowRoleWriter=1,
     DataflowRoleCount=2,
     DataflowRoleReady=0,
     DataflowRoleRunning=1,
     DataflowRoleComplete=2,
-    DataflowRoleFailed=3
+    DataflowRoleFailed=3,
+    DataflowRoleStartedReader=0x52333551,
+    DataflowRoleStartedWriter=0x57333551
 };
 struct alignas(32) DataflowRoleMailbox {
     uint32_t magic,version;
@@ -29,7 +31,8 @@ struct alignas(32) DataflowRoleMailbox {
     volatile uint32_t completed[DataflowRoleCount];
     volatile uint32_t status[DataflowRoleCount];
     volatile uint32_t stopRequest,stopped[DataflowRoleCount];
-    uint32_t reserved[5];
+    volatile uint32_t started[DataflowRoleCount];
+    uint32_t reserved[3];
 };
 static_assert(sizeof(DataflowRoleMailbox)==64,"two aligned role handoff records");
 static_assert(DataflowRoleMailboxAddress>=DataflowGraphTraceAddress
@@ -45,6 +48,41 @@ inline bool DataflowRoleMailboxHeaderValid(const DataflowRoleMailbox& box)
         if (box.reserved[i]) return false;
     return true;
 }
+// Each role publishes its own receipt only after its startup shim has disabled
+// the non-coherent L0 cache and initialized its private stack. A zeroed box
+// is not evidence that either processor actually started.
+inline uint32_t DataflowRoleStartedValue(unsigned role)
+{
+    return role==DataflowRoleReader?DataflowRoleStartedReader:DataflowRoleStartedWriter;
+}
+inline bool DataflowRoleMailboxPublishStarted(DataflowRoleMailbox& box,unsigned role)
+{
+    if (role>=DataflowRoleCount || !DataflowRoleMailboxHeaderValid(box)
+        || DataflowLoadAcquire(box.started[role]) || DataflowLoadAcquire(box.command)
+        || DataflowLoadAcquire(box.acknowledged) || DataflowLoadAcquire(box.stopRequest)
+        || DataflowLoadAcquire(box.stopped[role]) || DataflowLoadAcquire(box.completed[role])
+        || DataflowLoadAcquire(box.status[role])!=DataflowRoleReady) return false;
+    DataflowStoreRelease(box.started[role],DataflowRoleStartedValue(role));
+    return true;
+}
+inline bool DataflowRoleMailboxAllStarted(const DataflowRoleMailbox& box)
+{
+    if (!DataflowRoleMailboxHeaderValid(box)) return false;
+    for (unsigned role=0;role<DataflowRoleCount;role++)
+        if (DataflowLoadAcquire(box.started[role])!=DataflowRoleStartedValue(role)) return false;
+    return true;
+}
+// The driver can use this on a stable, freshly read startup snapshot before
+// accepting the service. Receipts do not prove PC location or NoC idleness.
+inline bool DataflowRoleMailboxStartupReady(const DataflowRoleMailbox& box)
+{
+    if (!DataflowRoleMailboxAllStarted(box) || DataflowLoadAcquire(box.command)
+        || DataflowLoadAcquire(box.acknowledged) || DataflowLoadAcquire(box.stopRequest)) return false;
+    for (unsigned role=0;role<DataflowRoleCount;role++)
+        if (DataflowLoadAcquire(box.completed[role]) || DataflowLoadAcquire(box.stopped[role])
+            || DataflowLoadAcquire(box.status[role])!=DataflowRoleReady) return false;
+    return true;
+}
 inline bool DataflowRoleMailboxReceipt(const DataflowRoleMailbox& box,
     unsigned role,uint32_t sequence,unsigned expectedStatus)
 {
@@ -58,7 +96,7 @@ inline bool DataflowRoleMailboxReceipt(const DataflowRoleMailbox& box,
 // both roles and the compute owner have had their previous work acknowledged.
 inline bool DataflowRoleMailboxIssue(DataflowRoleMailbox& box,uint32_t sequence)
 {
-    if (!DataflowRoleMailboxHeaderValid(box)) return false;
+    if (!DataflowRoleMailboxAllStarted(box)) return false;
     const uint32_t ack=DataflowLoadAcquire(box.acknowledged);
     if (ack>=DataflowWorkerSequenceLimit || sequence!=ack+1
         || DataflowLoadAcquire(box.command)!=ack
@@ -122,7 +160,7 @@ inline bool DataflowRoleMailboxAcknowledge(DataflowRoleMailbox& box,uint32_t seq
 // parked, that NoCs are quiet, or that any code or storage can be restored.
 inline bool DataflowRoleMailboxRequestStop(DataflowRoleMailbox& box)
 {
-    if (!DataflowRoleMailboxHeaderValid(box) || DataflowLoadAcquire(box.stopRequest)) return false;
+    if (!DataflowRoleMailboxAllStarted(box) || DataflowLoadAcquire(box.stopRequest)) return false;
     const uint32_t ack=DataflowLoadAcquire(box.acknowledged);
     if (ack>DataflowWorkerSequenceLimit || DataflowLoadAcquire(box.command)!=ack) return false;
     const unsigned expected=ack?DataflowRoleComplete:DataflowRoleReady;
