@@ -11,6 +11,9 @@
 #include "pioneer_qwen35_dataflow_role_fleet_recovery_owner_test.cpp"
 #undef main
 #include <memory>
+#ifdef PIONEER_QWEN35_EXPORTED_SHARED_IMAGES
+#include "PioneerQwen35SharedRoleImages.h"
+#endif
 
 struct CombinedSharedIO : MockDataflowIO {
     RecoveryIO roles;
@@ -26,7 +29,15 @@ struct CombinedSharedIO : MockDataflowIO {
         if (!roleOwner.CaptureAll(savedCode.data(),savedCode.size(),savedRam.data(),savedRam.size(),roles))
             return false;
         roleCaptured=true;
+#ifdef PIONEER_QWEN35_EXPORTED_SHARED_IMAGES
+        return roleOwner.StageImages(DataflowSharedReaderCodeWords,
+            sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),DataflowSharedWriterCodeWords,
+            sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),DataflowSharedReaderShimWords,
+            sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),DataflowSharedWriterShimWords,
+            sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),roles);
+#else
         return roleOwner.StageImages(reader,3,writer,2,readerShim,2,writerShim,2,roles);
+#endif
     }
     bool SharedArmAndBeginRelease() {
         return MockDataflowIO::SharedArmAndBeginRelease()
@@ -80,6 +91,24 @@ int main()
         assert(owner->Install(image,*io)==DataflowServiceComplete && owner->Ready());
         for (unsigned core=0;core<DataflowCoreCount;core++)
             assert(io->roles.resetDisable[core]==(disableBefore[core]|DataflowRolePreserveResetMask));
+#ifdef PIONEER_QWEN35_EXPORTED_SHARED_IMAGES
+        uint32_t readerBoot=0,writerBoot=0;
+        assert(DataflowRoleBootWord(DataflowRoleReader,DataflowRoleReaderShimAddress,readerBoot));
+        assert(DataflowRoleBootWord(DataflowRoleWriter,DataflowRoleWriterShimAddress,writerBoot));
+        for (unsigned core=0;core<DataflowCoreCount;core++) {
+            const unsigned start=core*RecoveryIO::CodePerCore;
+            const unsigned writerOffset=(DataflowRoleWriterCodeAddress-DataflowRoleExtraL1Address)/4;
+            assert(!memcmp(io->roles.code.data()+start,DataflowSharedReaderCodeWords,
+                sizeof(DataflowSharedReaderCodeWords)));
+            assert(!memcmp(io->roles.code.data()+start+writerOffset,DataflowSharedWriterCodeWords,
+                sizeof(DataflowSharedWriterCodeWords)));
+            assert(io->roles.boots[core*2]==readerBoot && io->roles.boots[core*2+1]==writerBoot);
+            assert(!memcmp(io->roles.shims.data()+core*64,DataflowSharedReaderShimWords,
+                sizeof(DataflowSharedReaderShimWords)));
+            assert(!memcmp(io->roles.shims.data()+core*64+32,DataflowSharedWriterShimWords,
+                sizeof(DataflowSharedWriterShimWords)));
+        }
+#endif
         io->corruptAfterResidentRestore=true;
         assert(owner->Close(*io)==DataflowServiceRestoreFailed && !io->resumeCount);
         assert(owner->Close(*io)==DataflowServiceClosed && io->resumeCount==1);

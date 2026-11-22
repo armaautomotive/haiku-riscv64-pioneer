@@ -20,6 +20,14 @@ case "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_
 	1:0:1|0:1:0) dispatch=1; service_flags=-DPIONEER_QWEN35_DEVICE_DISPATCH;;
 	*) exit 2;;
 esac
+role_graph=0
+case "${PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY:-0}" in
+0) ;;
+1) [ "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}:${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" = 1:0:1 ] || exit 2
+	role_graph=1
+	service_flags="$service_flags -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS";;
+*) exit 2;;
+esac
 
 "$cross-g++" $flags $service_flags -I"$directory" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" \
@@ -42,12 +50,23 @@ case "$dispatch" in
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" -o "$output/device-barrier.o"
 	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/PioneerQwen35DataflowDeviceDispatch.cpp" -o "$output/device-graph.o"
-	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+	if [ "$role_graph" = 1 ]; then
+		"$cross-g++" $flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+			-c "$directory/PioneerQwen35DataflowSharedRoles.cpp" -o "$output/shared-roles.o"
+		"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+			-u PioneerQwen35DeviceGraphRun \
+			-T "$directory/blackhole_qwen35_dataflow_dispatch_witness.ld" \
+			"$output/start.o" "$output/service.o" "$output/memory.o" \
+			"$output/device-stream.o" "$output/device-barrier.o" "$output/device-graph.o" \
+			"$output/shared-roles.o" -Map "$output/service.map" -o "$output/service.elf"
+	else
+		"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 		-u PioneerQwen35DeviceGraphRun \
 		-T "$directory/blackhole_qwen35_dataflow_dispatch_witness.ld" \
 		"$output/start.o" "$output/service.o" "$output/memory.o" \
 		"$output/device-stream.o" "$output/device-barrier.o" "$output/device-graph.o" \
 		-Map "$output/service.map" -o "$output/service.elf"
+	fi
 	"$cross-objcopy" -O binary -j .dispatch "$output/service.elf" "$output/dispatch.bin";;
 *) exit 2;;
 esac
@@ -57,6 +76,13 @@ esac
 test ! -s "$output/imports.txt"
 "$cross-nm" -n "$output/service.elf" > "$output/symbols.txt"
 "$cross-objdump" -d "$output/service.elf" > "$output/disassembly.txt"
+if [ "$role_graph" = 1 ]; then
+	grep -E 'jalr.*<qwen35_shared_compute_coordinate>' "$output/disassembly.txt" >/dev/null
+	if "$cross-nm" -C "$output/service.elf" | grep -F 'PioneerQwen35DataflowBlackholeWorker(' >/dev/null; then
+		echo 'shared role graph unexpectedly contains the single-controller projection' >&2
+		exit 1
+	fi
+fi
 python3 - "$output" <<'PY'
 from pathlib import Path
 from struct import iter_unpack, unpack
@@ -105,13 +131,15 @@ fi
 shasum -a 256 "$output/boot.bin" "$output/text.bin"
 if [ -f "$output/dispatch.bin" ]; then shasum -a 256 "$output/dispatch.bin"; fi
 if [ -f "$output/device-graph.su" ]; then
-python3 - "$output" <<'PY'
+python3 - "$output" "$role_graph" <<'PY'
 from pathlib import Path
 import sys
 
 out = Path(sys.argv[1])
+shared = sys.argv[2] == '1'
 entries = []
-for name in ('service.su', 'device-graph.su'):
+for name in (('service.su', 'device-graph.su', 'shared-roles.su') if shared
+             else ('service.su', 'device-graph.su')):
     for line in (out / name).read_text().splitlines():
         parts = line.rsplit('\t', 2)
         if len(parts) == 3 and parts[1].isdigit():
@@ -130,10 +158,11 @@ groups = (
     'DataflowBlackholeNoc<Noc>::Transfer(',
     'qwen35_graph_execute(',
     'DataflowWorkerExecuteAuthorized(',
-    '::PioneerQwen35DataflowBlackholeWorker(',
-    'DataflowPackActivationCache(',
-    'PioneerQ38ProjectionQuantize(',
 )
+groups += (('qwen35_shared_compute_coordinate(', 'PioneerQwen35SharedActivationCompute(',
+            'DataflowBlackholeTensixOps::TensixMatmul(', 'DataflowBindLocalContext(')
+           if shared else ('::PioneerQwen35DataflowBlackholeWorker(',
+                           'DataflowPackActivationCache(', 'PioneerQ38ProjectionQuantize('))
 total = 1024  # allowance for small nested helpers; not a whole-program proof
 for marker in groups:
     matches = [(frame, kind) for name, frame, kind in entries if marker in name]

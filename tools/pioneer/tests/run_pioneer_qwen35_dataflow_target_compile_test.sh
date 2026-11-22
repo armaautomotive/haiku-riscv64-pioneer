@@ -11,6 +11,7 @@ sdk="$objects/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/d
 cxx="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++"
 nm="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-nm"
 objdump="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump"
+objcopy="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-objcopy"
 readelf="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-readelf"
 ld="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld"
 size="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-size"
@@ -204,6 +205,21 @@ for role in reader writer; do
 		exit 1
 	fi
 done
+if sh "$root/tools/pioneer/build_qwen35_shared_role_images.sh" "$build" "$temporary/invalid-role-images" >/dev/null 2>&1; then
+	echo 'shared role images compiled without the recovery-only guard' >&2
+	exit 1
+fi
+PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
+	sh "$root/tools/pioneer/build_qwen35_shared_role_images.sh" "$build" "$temporary/shared-role-images"
+for role in reader writer; do
+	for section in shim text; do
+		if [ "$section" = text ]; then suffix=code; else suffix=shim; fi
+		"$objcopy" -O binary -j ".$section" "$temporary/shared-${role}-start-witness.elf" \
+			"$temporary/expected-${role}-${suffix}.bin"
+		cmp "$temporary/expected-${role}-${suffix}.bin" "$temporary/shared-role-images/${role}-${suffix}.bin"
+	done
+done
+echo 'PASS reproducible shared reader/writer image export; OFFLINE ONLY'
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \
 	-o "$temporary/role-boot-test"
@@ -517,6 +533,19 @@ if total>8192:
 print(f'PASS shared-role graph stack witness {total}/8192; not whole-program proof')
 PYROLESTACK
 echo 'PASS actual graph executor links shared-role projection coordinator; NOT LOADABLE OR RUNNING'
+if PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY=1 \
+	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/invalid-shared-graph" >/dev/null 2>&1; then
+	echo 'shared role graph compiled without the recovery-only guard' >&2
+	exit 1
+fi
+PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
+	PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
+	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/shared-graph-service"
+for section in boot text dispatch; do
+	"$objcopy" -O binary -j ".$section" "$temporary/role-graph-witness.elf" "$temporary/expected-role-graph-$section.bin"
+	cmp "$temporary/expected-role-graph-$section.bin" "$temporary/shared-graph-service/$section.bin"
+done
+echo 'PASS reproducible shared-role graph image export; OFFLINE ONLY'
 PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
 for section in boot text dispatch; do
@@ -740,6 +769,12 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_shared_service_recovery_test.cpp" \
 	-o "$temporary/shared-service-recovery-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-service-recovery-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_EXPORTED_SHARED_IMAGES -I"$temporary/shared-role-images" \
+	"$directory/pioneer_qwen35_dataflow_shared_service_recovery_test.cpp" \
+	-o "$temporary/shared-exported-images-recovery-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-exported-images-recovery-test"
+echo 'PASS exported reader/writer images staged and restored on all 120 simulated tiles; NO HARDWARE'
 shared_owner_flags='-std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS'
 if "$cxx" $shared_owner_flags -I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/support" -idirafter "$sdk/headers/posix" \
 	-c "$directory/pioneer_qwen35_dataflow_shared_service_kernel_probe.cpp" \

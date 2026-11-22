@@ -1,0 +1,86 @@
+#!/bin/sh
+# Build the fixed-address BRISC/NCRISC shared-role images, OFFLINE ONLY.
+# This creates no driver, boot/reset operation, or hardware binding.
+set -eu
+[ "$#" = 2 ] || exit 2
+[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
+directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+build=$(CDPATH= cd -- "$1" && pwd)
+output=$2
+case "$output" in /*) ;; *) exit 2;; esac
+[ ! -e "$output" ] && [ ! -L "$output" ] || exit 2
+cross="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku"
+sdk="$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop"
+umask 077
+mkdir -m 700 "$output"
+flags='-std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
+"$cross-g++" $flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/PioneerQwen35DataflowSharedRoles.cpp" -o "$output/shared-roles.o"
+"$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$directory" "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/shared-start.o"
+for role in reader writer; do
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70080; start=0xb0000; limit=0xb5000
+	else shim=0x70080; shim_limit=0x70100; start=0xb5000; limit=0xb8000; fi
+	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
+		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
+		-e "qwen35_shared_${role}_start" -T "$directory/blackhole_qwen35_shared_role_witness.ld" \
+		"$output/shared-start.o" "$output/shared-roles.o" -o "$output/$role.elf"
+	"$cross-nm" -u "$output/$role.elf" > "$output/$role.imports"
+	test ! -s "$output/$role.imports"
+	"$cross-nm" -n "$output/$role.elf" > "$output/$role.symbols"
+	"$cross-objdump" -d "$output/$role.elf" > "$output/$role.disassembly"
+	grep -E '[[:space:]]csrs[[:space:]]+0x7c0,8' "$output/$role.disassembly" >/dev/null
+	grep -E '[[:space:]]csrr[[:space:]]+[^,]+,0x7c0' "$output/$role.disassembly" >/dev/null
+	if grep -E '[[:space:]](amo[a-z]+[.]w|lr[.]w|sc[.]w|((fdiv|fsqrt)[.][sd])|fcvt[.](w|wu)[.][sd])[[:space:]]' \
+		"$output/$role.disassembly" >/dev/null; then
+		echo "unsupported instruction in $role image" >&2
+		exit 1
+	fi
+	"$cross-objcopy" -O binary -j .shim "$output/$role.elf" "$output/$role-shim.bin"
+	"$cross-objcopy" -O binary -j .text "$output/$role.elf" "$output/$role-code.bin"
+done
+python3 - "$output" <<'PY'
+from pathlib import Path
+from struct import iter_unpack
+import sys
+
+out=Path(sys.argv[1])
+arrays=[]
+for role,shim_start,shim_limit,code_start,code_limit in (
+        ('reader',0x70000,0x70080,0xb0000,0xb5000),
+        ('writer',0x70080,0x70100,0xb5000,0xb8000)):
+    symbols={}
+    for line in (out/f'{role}.symbols').read_text().splitlines():
+        parts=line.split()
+        if len(parts)==3 and parts[1] in ('T','t'):
+            symbols[parts[2]]=int(parts[0],16)
+    start=symbols.get(f'qwen35_shared_{role}_start')
+    park=symbols.get(f'qwen35_shared_{role}_start_park',-1)
+    tick=symbols.get(f'qwen35_shared_{role}_tick',-1)
+    if start!=shim_start or not shim_start<=park<shim_limit or not code_start<=tick<code_limit:
+        raise SystemExit(f'invalid {role} entry, park or tick address')
+for role,kind,limit in (('reader','shim',0x80),('reader','code',0x5000),
+                        ('writer','shim',0x80),('writer','code',0x3000)):
+    data=(out/f'{role}-{kind}.bin').read_bytes()
+    if not data or len(data)>limit or len(data)%4:
+        raise SystemExit(f'invalid {role} {kind} image size')
+    name=f'DataflowShared{role.capitalize()}{kind.capitalize()}Words'
+    words=''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I',data))
+    arrays.append(f'inline constexpr unsigned {name}[]={{\n{words}}};\n')
+(out/'PioneerQwen35SharedRoleImages.h').write_text(
+    '#pragma once\nnamespace PioneerQwen35 {\n'+''.join(arrays)+'}\n',encoding='ascii')
+entries=[]
+for line in (out/'shared-roles.su').read_text().splitlines():
+    fields=line.rsplit('\t',2)
+    if len(fields)!=3 or not fields[1].isdigit() or fields[2]!='static':
+        raise SystemExit('missing or non-static shared role stack frame')
+    entries.append(int(fields[1]))
+total=sum(entries)+16+1024
+if not entries or total>8192:
+    raise SystemExit(f'invalid shared role frame-sum witness {total}/8192')
+print(f'shared_role_frame_sum_bytes={total}/8192 (not a whole-program proof)')
+PY
+shasum -a 256 "$output/reader-shim.bin" "$output/reader-code.bin" \
+	"$output/writer-shim.bin" "$output/writer-code.bin" "$output/PioneerQwen35SharedRoleImages.h"
+echo 'shared role images are offline witnesses; do not install or run them'
