@@ -64,8 +64,10 @@ inline DataflowBarrierReadResult DataflowBarrierReadCommitted(
 }
 
 // A single worker owns an instance. The coordinator is worker 0 and runs the
-// same compute as the other workers. A new step may start only after every
-// worker has published a receipt and received its release. No host action is
+// same compute as the other workers. The coordinator decides only after
+// every worker has published a receipt. Each worker may proceed after its
+// own release and after forwarding that decision to its fixed children; some
+// branches can advance while others are still receiving it. No host action is
 // needed per step. An uncertain send/receipt latches Unsafe and forbids retry.
 // A release failure can leave earlier recipients executing the next step;
 // the entire graph then remains uncertain, even if a peer reported Passed.
@@ -77,6 +79,16 @@ template<class IO> class DataflowDeviceBarrier {
 	unsigned firstFailureCore=DataflowBarrierWorkers,firstFailure=0;
 	bool active=false,unsafe=false,done=false,failed=false;
 	bool seen[DataflowBarrierWorkers];
+	bool ReleaseChildren() {
+		const unsigned first=core*DataflowBarrierReleaseFanout+1;
+		for (unsigned worker=first;worker<first+DataflowBarrierReleaseFanout
+			&& worker<DataflowBarrierWorkers;worker++) {
+			const auto release=DataflowBarrierPayload(epoch,step,worker,
+				failed?firstFailure:0,failed?firstFailureCore:0);
+			if (!io.SendRelease(worker,release,DataflowBarrierCommit(epoch,step))) return false;
+		}
+		return true;
+	}
 public:
 	explicit DataflowDeviceBarrier(IO& transport):io(transport) {
 		volatile bool* slots=seen;
@@ -116,6 +128,7 @@ public:
 			}
 			failed=release.word[5]!=0;firstFailure=release.word[5];
 			firstFailureCore=failed?release.word[6]:DataflowBarrierWorkers;
+			if (!ReleaseChildren()) { unsafe=true;return DataflowBarrierUnsafe; }
 			active=false;done=true;return failed?DataflowBarrierFailed:DataflowBarrierPassed;
 		}
 		bool all=true;
@@ -134,13 +147,7 @@ public:
 		}
 		if (!all) return DataflowBarrierPending;
 		failed=firstFailureCore<DataflowBarrierWorkers;
-		for (unsigned worker=1;worker<DataflowBarrierWorkers;worker++) {
-			const auto release=DataflowBarrierPayload(epoch,step,worker,
-				failed?firstFailure:0,failed?firstFailureCore:0);
-			if (!io.SendRelease(worker,release,DataflowBarrierCommit(epoch,step))) {
-				unsafe=true;return DataflowBarrierUnsafe;
-			}
-		}
+		if (!ReleaseChildren()) { unsafe=true;return DataflowBarrierUnsafe; }
 		active=false;done=true;return failed?DataflowBarrierFailed:DataflowBarrierPassed;
 	}
 	unsigned FailureCore() const { return firstFailureCore; }
@@ -190,7 +197,7 @@ public:
 	}
 	bool SendRelease(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
-		return core==0 && worker && worker<DataflowBarrierWorkers
+		return DataflowBarrierReleaseEdge(core,worker)
 			&& Send(worker,DataflowBarrierReleasePayload,payload)
 			&& Send(worker,DataflowBarrierReleaseCommit,commit);
 	}

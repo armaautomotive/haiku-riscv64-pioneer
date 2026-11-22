@@ -42,7 +42,7 @@ struct FakeBarrierIO {
 		fabric.arrival[core]={payload,commit};return true;
 	}
 	bool SendRelease(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit) {
-		assert(core==0 && worker>0 && worker<DataflowBarrierWorkers);
+		assert(DataflowBarrierReleaseEdge(core,worker));
 		fabric.releases++;if (int(worker)==fabric.failRelease) return false;
 		fabric.release[worker]={payload,commit};return true;
 	}
@@ -94,12 +94,19 @@ int main()
 			const unsigned arrival=DataflowBarrierArrivalAddress(worker,phase);
 			const unsigned release=phase?DataflowBarrierReleaseCommit:DataflowBarrierReleasePayload;
 			assert(DataflowBarrierPeerWriteAllowed(worker,0,DataflowBarrierWorkerRoute(0),arrival,DataflowBarrierOutbox,64));
-			assert(DataflowBarrierPeerWriteAllowed(0,worker,DataflowBarrierWorkerRoute(worker),release,DataflowBarrierOutbox,64));
+			const unsigned parent=DataflowBarrierReleaseParent(worker);
+			assert(DataflowBarrierReleaseEdge(parent,worker) && parent<worker);
+			assert(DataflowBarrierPeerWriteAllowed(parent,worker,DataflowBarrierWorkerRoute(worker),release,DataflowBarrierOutbox,64));
 			assert(!DataflowBarrierPeerWriteAllowed(worker,0,DataflowBarrierWorkerRoute(0),arrival+4,DataflowBarrierOutbox,64));
 			assert(!DataflowBarrierPeerWriteAllowed(worker,0,DataflowBarrierWorkerRoute(0),arrival,DataflowBarrierOutbox,32));
 			assert(!DataflowBarrierPeerWriteAllowed(worker,0,DataflowBarrierWorkerRoute(worker),arrival,DataflowBarrierOutbox,64));
 		}
 	}
+	for (unsigned source=0;source<DataflowBarrierWorkers;source++)
+		for (unsigned destination=1;destination<DataflowBarrierWorkers;destination++)
+			assert(DataflowBarrierPeerWriteAllowed(source,destination,DataflowBarrierWorkerRoute(destination),
+				DataflowBarrierReleasePayload,DataflowBarrierOutbox,64)
+				==DataflowBarrierReleaseEdge(source,destination));
 	assert(!DataflowBarrierPeerWriteAllowed(1,2,DataflowBarrierWorkerRoute(2),DataflowBarrierReleasePayload,DataflowBarrierOutbox,64));
 	assert(DataflowBarrierArrivalAddress(120,false)==UINT32_MAX);
 	Fabric fabric;Fleet success(fabric);
@@ -107,6 +114,7 @@ int main()
 	assert(success.barrier[0]->Poll()==DataflowBarrierPending);
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(success.barrier[i]->Start(i,17,1,0,0));
 	assert(success.barrier[0]->Poll()==DataflowBarrierPassed);
+	assert(fabric.releases==DataflowBarrierReleaseFanout);
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(success.barrier[i]->Poll()==DataflowBarrierPassed);
 	assert(fabric.arrivals==119 && fabric.releases==119);
 	for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
@@ -139,6 +147,15 @@ int main()
 	assert(!corrupted.barrier[0]->NextStep());
 	assert(corrupted.barrier[0]->Poll()==DataflowBarrierUnsafe);
 
+	// A relay cannot forward a stale, torn or misaddressed parent release.
+	Fabric relayFabric;Fleet relay(relayFabric);assert(relay.barrier[0]->Start(0,33,1,0,0));
+	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(relay.barrier[i]->Start(i,33,1,0,0));
+	assert(relay.barrier[0]->Poll()==DataflowBarrierPassed && relayFabric.releases==4);
+	relayFabric.release[1].commit.word[15]^=1;
+	assert(relay.barrier[1]->Poll()==DataflowBarrierPending && relayFabric.releases==4);
+	relayFabric.release[1].commit.word[15]^=1;relayFabric.release[1].payload.word[4]=2;
+	assert(relay.barrier[1]->Poll()==DataflowBarrierUnsafe && relayFabric.releases==4);
+
 	Fabric lost;Fleet partial(lost);assert(partial.barrier[0]->Start(0,41,1,0,0));
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(partial.barrier[i]->Start(i,41,1,0,0));
 	lost.arrival[7].commit.word[15]^=1;
@@ -148,13 +165,12 @@ int main()
 	Fabric sendFailure;sendFailure.failRelease=12;Fleet broken(sendFailure);
 	assert(broken.barrier[0]->Start(0,51,1,0,0));
 	for (unsigned i=1;i<DataflowBarrierWorkers;i++) assert(broken.barrier[i]->Start(i,51,1,0,0));
-	assert(broken.barrier[0]->Poll()==DataflowBarrierUnsafe && sendFailure.releases==12);
-	assert(broken.barrier[0]->Poll()==DataflowBarrierUnsafe && sendFailure.releases==12);
-	for (unsigned i=1;i<12;i++) assert(broken.barrier[i]->Poll()==DataflowBarrierPassed);
-	for (unsigned i=12;i<DataflowBarrierWorkers;i++) {
-		assert(broken.barrier[i]->Poll()==DataflowBarrierPending);
-		broken.barrier[i]->Expire();assert(broken.barrier[i]->Poll()==DataflowBarrierUnsafe);
-	}
+	assert(broken.barrier[0]->Poll()==DataflowBarrierPassed && sendFailure.releases==4);
+	assert(broken.barrier[1]->Poll()==DataflowBarrierPassed && sendFailure.releases==8);
+	assert(broken.barrier[2]->Poll()==DataflowBarrierUnsafe && sendFailure.releases==12);
+	assert(broken.barrier[2]->Poll()==DataflowBarrierUnsafe && sendFailure.releases==12);
+	assert(broken.barrier[12]->Poll()==DataflowBarrierPending);
+	broken.barrier[12]->Expire();assert(broken.barrier[12]->Poll()==DataflowBarrierUnsafe);
 	Fabric arrivalFailure;arrivalFailure.failArrival=7;Fleet unsent(arrivalFailure);
 	assert(unsent.barrier[0]->Start(0,61,1,0,0));
 	assert(!unsent.barrier[7]->Start(7,61,1,0,0));

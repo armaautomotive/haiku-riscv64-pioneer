@@ -13,6 +13,7 @@ namespace PioneerQwen35 {
 // separate release inbox is private to its destination worker.
 enum : unsigned {
 	DataflowBarrierWorkers=120,
+	DataflowBarrierReleaseFanout=4,
 	DataflowBarrierPacketBytes=64,
 	DataflowBarrierOutbox=0xab040,
 	DataflowBarrierReleasePayload=0xab080,
@@ -43,9 +44,24 @@ inline unsigned DataflowBarrierWorkerRoute(unsigned worker)
 		?columns[worker/10]|((2+worker%10)<<6):UINT32_MAX;
 }
 
+// A fixed four-way heap tree distributes a completed coordinator decision.
+// Every non-root worker has exactly one parent with a smaller index. Only
+// that parent may write its release inbox; arrivals still go directly to 0.
+inline unsigned DataflowBarrierReleaseParent(unsigned worker)
+{
+	return worker && worker<DataflowBarrierWorkers
+		?(worker-1)/DataflowBarrierReleaseFanout:UINT32_MAX;
+}
+
+inline bool DataflowBarrierReleaseEdge(unsigned source,unsigned destination)
+{
+	return source<DataflowBarrierWorkers && destination<DataflowBarrierWorkers
+		&& DataflowBarrierReleaseParent(destination)==source;
+}
+
 // No arbitrary address, core or route is supplied to the NoC transport.
-// A peer may publish only its own coordinator slot; only the coordinator may
-// publish a release to a peer. The core-0 local receipt needs no NoC packet.
+// A peer may publish only its own coordinator slot; a release may travel only
+// along the fixed tree. The core-0 local receipt needs no NoC packet.
 inline bool DataflowBarrierPeerWriteAllowed(unsigned source,unsigned destination,
 	unsigned route,unsigned remote,unsigned local,unsigned bytes)
 {
@@ -55,7 +71,7 @@ inline bool DataflowBarrierPeerWriteAllowed(unsigned source,unsigned destination
 	if (destination==0 && source!=0)
 		return remote==DataflowBarrierArrivalAddress(source,false)
 			|| remote==DataflowBarrierArrivalAddress(source,true);
-	if (source==0 && destination!=0)
+	if (DataflowBarrierReleaseEdge(source,destination))
 		return remote==DataflowBarrierReleasePayload || remote==DataflowBarrierReleaseCommit;
 	return false;
 }

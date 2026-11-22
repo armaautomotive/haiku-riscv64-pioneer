@@ -538,8 +538,8 @@ normal tag `2026112100010150` driver:
 non-loadable witness:
 `2e7c2b32598dfa51ff026fba5750782bfe4a44f764c0cf69aba4b9935ee3a05f`.
 
-The rewrite has a serious synchronization throughput issue to address before
-benchmarking: each of 548 decode steps makes worker 0 send two acknowledged
+At tag0150 the rewrite had a serious synchronization throughput issue: each
+of 548 decode steps made worker 0 send two acknowledged
 NoC writes to each of 119 peers, serially: 130,424 release writes per token.
 At 100 tokens/s, a 10 ms token budget would allow about 77 ns per release
 write even if computation, arrivals, host work and all other costs took no
@@ -553,6 +553,26 @@ documents multicast VC and path-reservation constraints, and the
 show why the actual router masks must be checked. Do not assume a generic
 rectangle or unverified receiver count is safe. The trial is preparation for
 qualification, not a reason to bypass the user's rewrite-first order.
+
+Tag0151 changes release distribution to a fixed four-way tree. Worker 0
+collects all 120 arrivals and sends the decision to four children; each
+recipient forwards it to its own children only after validating the payload
+and commit. Every worker still participates in compute. The NoC transport
+admits only the exact parent-to-child edge, and the driver now checks all
+worker destination translations for each sender. The coordinator's release
+transfers fall from 130,424 to 4,384 per decode token. The fleet still sends
+the same total number of unicast release packets, and direct all-core arrival
+collection, per-token host audits and metadata replay remain. Simulated tests
+cover all 120 workers, out-of-order polling, failed relay sends, forged edges,
+stale/torn releases and NoC mapping drift. This is not a measured speedup.
+The trial is not installed or hardware-qualified. Target/reload suites and
+normal, witness and qualification cross-builds pass. Qualification driver
+`2026112100020151` SHA-256:
+`d3580922016123209304a033ac25ca56a25b3630688673a26714125d1cdf090a`;
+normal driver `2026112100010151`:
+`ac7945b2b377c2da2ffc0f4eef2b0a48b5dc59ffafe7220c3fe9acb15bcb2bb0`;
+non-loadable witness:
+`1fa285843b4615fffb638e451df5c1353beaf2f05d1dd19219dc18c00f0beb6d`.
 
 After the user restored power, strict SSH to the pinned Haiku identity
 succeeded again on 2026-11-22. This was an OS identity check only; the prior
@@ -618,7 +638,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0150. Since tag0121 it records final release of a
+The default build now targets dedicated tag0151. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

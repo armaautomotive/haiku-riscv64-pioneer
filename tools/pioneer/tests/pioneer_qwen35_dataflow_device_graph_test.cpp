@@ -9,7 +9,7 @@
 using namespace PioneerQwen35;
 struct Slot { DataflowBarrierPacket payload{},commit{}; };
 struct Fabric { Slot arrival[DataflowBarrierWorkers],release[DataflowBarrierWorkers];
-	int failArrival=-1,failRelease=-1; };
+	int failArrival=-1,failRelease=-1;unsigned sends[DataflowBarrierWorkers]{}; };
 struct Transport {
 	Fabric& f;unsigned core;
 	bool SendArrival(unsigned worker,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
@@ -17,7 +17,8 @@ struct Transport {
 		f.arrival[core]={p,c};return true;
 	}
 	bool SendRelease(unsigned worker,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
-		assert(!core && worker);if (int(worker)==f.failRelease) return false;
+		assert(DataflowBarrierReleaseEdge(core,worker));f.sends[core]++;
+		if (int(worker)==f.failRelease) return false;
 		f.release[worker]={p,c};return true;
 	}
 	DataflowBarrierReadResult ReadArrival(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& out) {
@@ -94,10 +95,19 @@ int main() {
 	assert(remainder && !exhausted.Issue(remainder+1,ticket) && exhausted.Issue(remainder,ticket)
 		&& !exhausted.Issue(1,ticket));
 	Fleet ok;ok.Run();
+	assert(ok.fabric.sends[0]==2*DataflowBarrierReleaseFanout);
 	for (unsigned i=0;i<DataflowBarrierWorkers;i++) {
 		assert(ok.graph[i]->State()==DataflowGraphLocalComplete && ok.graph[i]->CompletedSteps()==2);
 		assert(ok.execution[i]->fetches==2 && ok.execution[i]->executes==2 && ok.execution[i]->resets==1);
 	}
+	// Exercise out-of-order scheduling: every round visits all 120 workers,
+	// but parents are often polled after children and must not lose releases.
+	Fleet shuffled(256,80,3001);
+	for (unsigned round=0;round<32;round++)
+		for (unsigned i=0;i<DataflowBarrierWorkers;i++)
+			shuffled.graph[(round*17+i*37)%DataflowBarrierWorkers]->Tick();
+	for (const auto& graph:shuffled.graph)
+		assert(graph->State()==DataflowGraphLocalComplete && graph->CompletedSteps()==2);
 	Fleet fresh(8,78,1001);fresh.Run();
 	for (auto& g:fresh.graph) assert(g->State()==DataflowGraphLocalComplete);
 	assert(fresh.fabric.release[1].commit.word[0]==78 && fresh.fabric.release[1].commit.word[2]==2);
@@ -123,7 +133,7 @@ int main() {
 	Fleet failure;failure.execution[5]->workerFailure=0;failure.Run();
 	for (auto& g:failure.graph) assert(g->Fault()==DataflowGraphWorkerFault && g->FailureCore()==5 && g->FailureStatus()==77);
 	Fleet partial;partial.fabric.failRelease=12;partial.Run();
-	assert(partial.graph[0]->Fault()==DataflowGraphBarrierFault);
+	assert(partial.graph[2]->Fault()==DataflowGraphBarrierFault);
 	for (auto& g:partial.graph) assert(g->State()==DataflowGraphRetain);
 	Fleet reset;reset.execution[7]->failReset=0;reset.Run();
 	assert(reset.graph[7]->Fault()==DataflowGraphQueueFault && reset.execution[7]->fetches==1);

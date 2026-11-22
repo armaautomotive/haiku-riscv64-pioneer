@@ -61,6 +61,11 @@ int main()
 		bad=io;bad.source[13]|=1U<<dram.translated[0][0];assert(!PioneerQwen35DataflowNoC1Audit(bad,dram,core));
 		bad=io;SetEntry(bad.source,7,dram.translated[0][1],0);
 		assert(!PioneerQwen35DataflowNoC1Audit(bad,dram,core));
+		bad=io;
+		const unsigned otherX=PioneerWorkerX(((core/10+1)%12)*10);
+		const unsigned mapped=BlackholeDramSourceX(bad.source,otherX);
+		SetEntry(bad.source,1,otherX,(mapped+1)%17);
+		assert(!PioneerQwen35DataflowNoC1Audit(bad,dram,core));
 		bad=io;bad.busy=1;assert(!PioneerQwen35DataflowNoC1Audit(bad,dram,core));
 		bad=io;bad.busy=2;assert(!PioneerQwen35DataflowNoC1Audit(bad,dram,core));
 	}

@@ -83,7 +83,7 @@ normal and non-loadable witness drivers:
 `385db06798142123d7efe56bbe8f671217f8a9525d1faab455901df8603681f1` and
 `2e7c2b32598dfa51ff026fba5750782bfe4a44f764c0cf69aba4b9935ee3a05f`.
 
-An important remaining performance limit is the current barrier: 548 decode
+An important tag0150 performance limit was its barrier: 548 decode
 steps times 119 peers times two blocking release writes makes 130,424
 sequential coordinator writes per token. Ten milliseconds per token would
 allow roughly 77 ns per write if every other operation cost zero. This is a
@@ -92,6 +92,23 @@ Tenstorrent-style multicast/semaphore pattern, with explicit proof of the
 actual router masks, NoC1 coordinate mapping, receiver set, acknowledgement
 accounting and data-before-commit ordering. Do not run a benchmark until the
 rewrite is complete.
+
+Tag0151 replaces the serial root release loop with a fixed four-way unicast
+tree. The coordinator still gathers all 120 receipts; every receiver checks
+its committed release before forwarding to its fixed children, and arbitrary
+peer release edges are rejected. All 120 cores remain compute workers. The
+NoC1 audit now checks translation for all used worker coordinates at each
+sender. Root release sends fall from 130,424 to 4,384 64-byte transactions per
+decode token; total unicast releases across the fleet are unchanged. Simulation
+covers out-of-order scheduling, partial relay failure, malformed and torn
+releases, route restrictions and drift. The target/reload suites and normal,
+non-loadable witness and qualification Haiku cross-builds pass, but this is
+not a hardware result or a throughput measurement. Qualification driver tag
+`2026112100020151` SHA-256:
+`d3580922016123209304a033ac25ca56a25b3630688673a26714125d1cdf090a`;
+normal and witness drivers:
+`ac7945b2b377c2da2ffc0f4eef2b0a48b5dc59ffafe7220c3fe9acb15bcb2bb0` and
+`1fa285843b4615fffb638e451df5c1353beaf2f05d1dd19219dc18c00f0beb6d`.
 
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku

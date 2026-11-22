@@ -39,6 +39,21 @@ bool PioneerQwen35DataflowNoC1Audit(IO& io,const tt_dram_samples_result& dram,
 	for (unsigned bank=0;bank<TT_DRAM_BANKS;bank++)
 		if (!matches(dram.translated[bank][0],dram.translated[bank][1],
 			BlackholeDramPhysicalX(bank),BlackholeDramPhysicalY(bank))) return false;
+	// Every worker can now forward a release to fixed child workers. Verify
+	// all possible logical destinations at each sender, not just its own
+	// coordinate and the bank routes, before any peer traffic is admitted.
+	// The NIU translates X and Y independently; cover each used column and
+	// row once instead of rechecking all 120 Cartesian combinations.
+	for (unsigned column=0;column<12;column++) {
+		const unsigned wx=PioneerWorkerX(column*10),wy=PioneerWorkerY(column*10);
+		if (!matches(wx,wy,BlackholeDramSourceX(dram.source,wx),
+				BlackholeDramSourceY(dram.source,wy))) return false;
+	}
+	for (unsigned row=1;row<10;row++) {
+		const unsigned wx=PioneerWorkerX(row),wy=PioneerWorkerY(row);
+		if (!matches(wx,wy,BlackholeDramSourceX(dram.source,wx),
+				BlackholeDramSourceY(dram.source,wy))) return false;
+	}
 	for (unsigned i=0;i<4;i++) if (io.Read(0x40+i*0x800)!=0) return false;
 	for (unsigned i=0;i<32;i++) if (io.Read(0x240+i*4)&255) return false;
 	return true;
