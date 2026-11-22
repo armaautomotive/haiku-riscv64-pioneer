@@ -115,12 +115,22 @@ template<class IO>
 bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& lease,uint64_t capacity,uint64_t offset,
 	bool upload,uint32_t* data,tt_resident_store_result& r,
-	const PioneerResidentBanks* banks=nullptr,unsigned bank=0)
+	const PioneerResidentBanks* banks=nullptr,unsigned bank=0
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	,const void* q35StreamOwner=nullptr
+#endif
+	)
 {
 	r={}; r.version=1;
 	uint32_t address=0,route=0,index=0;
 	if (banks) {
-		if (capacity!=PioneerResidentBanks::Capacity || !banks->Page(baseline,bank,offset,address,route,index)) return false;
+		if (capacity!=PioneerResidentBanks::Capacity) return false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		if (q35StreamOwner) {
+			if (!banks->Q35StreamPage(baseline,q35StreamOwner,bank,offset,upload,address,route,index)) return false;
+		} else
+#endif
+		if (!banks->Page(baseline,bank,offset,address,route,index)) return false;
 	} else {
 		if (bank || !PioneerResidentOffset(capacity,offset)) return false;
 		address=PioneerResidentAddress(capacity,offset);

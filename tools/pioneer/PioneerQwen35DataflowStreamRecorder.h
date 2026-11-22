@@ -10,8 +10,8 @@ namespace PioneerQwen35 {
 
 // Metadata-only speculative recorder. Each Begin/Complete advances only the
 // private planning authority: it is not evidence of device execution. Sink
-// must write and read back the exact record to its validated per-core lease,
-// retain uncertain writes, and prevent mutation once sealed. Its transaction
+// must stage records and verify all page writes before sealing, retain
+// uncertain writes, and prevent mutation once sealed. Its transaction
 // is never permission to start hardware; the driver must bind the packed plan,
 // protect the stream and prove fleet completion before updating live state.
 template<class Sink> class DataflowStreamRecorder {
@@ -28,7 +28,7 @@ template<class Sink> class DataflowStreamRecorder {
 			Invocation invocation{};
 			if (!Builder::BindCore(program,core,invocation)
 				|| !DataflowStreamEncode(invocation,plan.epoch,steps+1,record)
-				|| !sink.WriteAndVerify(plan.binding[core],plan.lease[core],steps,record)) {
+				|| !sink.StageRecord(plan.binding[core],plan.lease[core],steps,record)) {
 				failed=true;return false;
 			}
 		}

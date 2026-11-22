@@ -1783,3 +1783,63 @@ PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore
 		failedStage,failedCore,failedDetail);
 }
 #endif
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+// Non-loadable backend witness. Caller must hold the global session lock and
+// retain this owner for as long as the bank claim exists. This binds the plan
+// to the already-validated manifest and the driver's own initialized ledger.
+class PioneerQ35StreamPageIO {
+	PioneerStoreContext& context;
+public:
+	explicit PioneerQ35StreamPageIO(PioneerStoreContext& c):context(c) {}
+	bool Reserve(const PioneerQwen35::DataflowStreamPlan& plan,const void* owner) {
+		using namespace PioneerQwen35;
+		if (!owner || !context.bankStorageOnly || context.bytes!=PioneerResidentBanks::Total
+			|| !context.initialized || !context.qwen35DataflowAuthority
+			|| context.qwen35DataflowService || context.Unsafe()
+			|| !context.qwen35DataflowRoutesAudited) return false;
+		const auto& authority=*context.qwen35DataflowAuthority;
+		const auto* manifest=authority.Manifest();const auto* graph=authority.GraphWorkspace();
+		DataflowBoundWorkspace workspace;
+		if (!manifest || !graph || !workspace.Initialize(authority)
+			|| !authority.PlanningRoutesMatch(context.qwen35DataflowRoutes)
+			|| !DataflowStreamPlanBuilder::Validate(workspace,*manifest,*graph,
+				authority.PlanningRope(),context.qwen35DataflowRoutes,plan)) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++) if (!context.io.CoreIdle(core)) return false;
+		if (!context.io.SelectRuntimeCore(0) || !context.lease.ready
+			|| context.lease.pending || context.lease.recovery_required) return false;
+		PioneerQ35StreamBankRange ranges[DataflowCoreCount];
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			const auto& r=plan.lease[core];
+			if (r.address<BankBase) return false;
+			ranges[core]={r.bank,r.address-BankBase,r.bytes};
+		}
+		const auto& baseline=context.baseline.baseline.baseline.baseline.dram;
+		return context.banks.ReserveQ35Stream(baseline,owner,ranges,DataflowCoreCount,
+			context.initialized,PioneerResidentBanks::Pages);
+	}
+	bool WriteVerifiedPage(const void* owner,unsigned bank,uint64_t offset,uint32_t* words) {
+		if (!owner || !words || context.qwen35DataflowService || context.Unsafe()
+			|| !context.io.SelectRuntimeCore(0)) return false;
+		auto& dram=context.baseline.baseline.baseline.baseline.dram;
+		auto& noc=context.baseline.baseline.baseline.noc;
+		tt_resident_store_result result{};
+		return PioneerResidentStorePage(context.io,dram,noc,context.host,context.lease,
+			PioneerResidentBanks::Capacity,offset,true,words,result,&context.banks,bank,owner);
+	}
+	bool Seal(const void* owner) { return context.banks.SealQ35Stream(owner); }
+	void Quarantine() {
+		context.banks.Quarantine();context.lease.recovery_required=true;
+		context.io.QuarantineHostPage();sColdRecoveryRequired=true;
+	}
+};
+
+__attribute__((used,noinline)) static bool
+PioneerQ35StreamPageBackendCompileWitness(PioneerQ35StreamPageIO& io,
+	PioneerQwen35::DataflowStreamPageSink<PioneerQ35StreamPageIO>& sink,
+	const PioneerQwen35::DataflowStreamPlan& plan,const PioneerQwen35::DataflowStreamRecord& record)
+{
+	(void)io;
+	return sink.Begin(plan) && sink.StageRecord(plan.binding[0],plan.lease[0],0,record)
+		&& sink.Seal(plan);
+}
+#endif

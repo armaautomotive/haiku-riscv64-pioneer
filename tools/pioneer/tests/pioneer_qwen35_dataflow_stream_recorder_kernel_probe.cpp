@@ -7,7 +7,7 @@ using namespace PioneerQwen35;
 struct PackedProbe { bool Workspace(unsigned,uint32_t&,uint32_t&) const; };
 struct SinkProbe {
 	bool Begin(const DataflowStreamPlan&);
-	bool WriteAndVerify(const DataflowStreamBinding&,const Range&,unsigned,const DataflowStreamRecord&);
+	bool StageRecord(const DataflowStreamBinding&,const Range&,unsigned,const DataflowStreamRecord&);
 	bool Seal(const DataflowStreamPlan&);
 	void Abort();
 };

@@ -211,6 +211,29 @@ non-loadable dispatch witness:
 The recorder is a separate compile/simulation witness and is not connected to
 either driver. No tag0132 code has run on the card.
 
+Tag0133 adds a private page sink in the non-loadable witness. It derives the
+workspace starts from the model authority's already-validated manifest,
+revalidates the 120 stream leases, checks the initialized-page ledger, and
+claims those ranges in the seven-bank owner. Two 2 KiB records share a 4 KiB
+page; an odd final record is zero-padded. The existing resident page transfer
+does full device readback. Ordinary bank range/page access refuses the
+claimed ranges, and the claim's owner cannot write after sealing. Failure of
+a transfer quarantines the owner. The actual driver adapter is compiled only
+as a non-loadable witness; no request invokes it and the recorder is not yet
+connected to it. A simulated-hardware test exercises the real bank resolver
+and page transfer, page pairing, odd records, overlap/initialized-ledger
+rejection, sealed access and an uncertain transfer. The existing seven-bank
+control tests and both Haiku builds pass. The generic interlock only covers
+bank-API access: audit every other mutation path and retain the owner, model,
+stream, and fresh epoch through execution before treating storage as sealed.
+Efficient dynamic updates and physical qualification also remain open.
+
+The tag0133 normal driver SHA-256 is
+`761d8c9458d7f8d80a2ccfbde53987129edbb76ff203f0d9ebc659cf08152108`;
+the non-loadable witness is
+`b717dfff0fee41c63f7fc6861e483a47ff0edadccd85e4c1fe157e832aabf1a4`.
+Neither has run on Pioneer; there is no new decode measurement.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -270,7 +293,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0132. Since tag0121 it records final release of a
+The default build now targets dedicated tag0133. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

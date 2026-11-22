@@ -223,6 +223,22 @@ SHA-256 values
 and `3ffaf3a86e85d45aaa3a067f4d9f9ffc2a0d8e410c89b1e9ca2a65c9db60c313`.
 No new hardware measurement exists.
 
+Tag0133 adds a non-loadable private bank-page sink. It reconstructs workspace
+bounds from the already-validated live manifest, validates the stream plan,
+claims 120 disjoint uninitialized ranges in the bank owner, and buffers two
+records per page. The existing page transfer writes and reads back each full
+page; an odd final record is zero-padded. Generic bank access cannot enter a
+claimed range, the owner cannot write it after sealing, and an uncertain
+transfer quarantines the bank owner. Tests exercise the actual bank resolver
+and transfer using simulated hardware, including partial/failed transfer,
+overlap, occupied pages, incorrect ownership and sealing. The normal seven-bank
+control tests and both Haiku builds pass. The adapter is compile-only and no
+recorder is connected to it. Other mutation paths, ownership across the
+entire graph, fresh epochs, efficient token updates, completion audit and
+hardware qualification still need work. Normal and witness driver SHA-256:
+`761d8c9458d7f8d80a2ccfbde53987129edbb76ff203f0d9ebc659cf08152108`
+and `b717dfff0fee41c63f7fc6861e483a47ff0edadccd85e4c1fe157e832aabf1a4`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

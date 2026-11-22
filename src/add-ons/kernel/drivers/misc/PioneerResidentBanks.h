@@ -14,11 +14,28 @@
 // Only the experimental GDN owner uses this opt-in reservation interlock.
 struct PioneerResidentMutableRange { uint32_t bank,firstPage,pages; };
 #endif
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+struct PioneerQ35StreamBankRange { uint32_t bank,offset,bytes; };
+#endif
 class PioneerResidentBanks {
 	const tt_dram_samples_result* bound = nullptr;
 	uint32_t routes[TT_DRAM_BANKS] = {};
 	uint32_t source[TT_DRAM_SOURCE_WORDS] = {};
 	bool quarantined = false;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	const void* q35StreamOwner=nullptr;
+	PioneerQ35StreamBankRange q35StreamRanges[120]={};
+	unsigned q35StreamCount=0;
+	bool q35StreamSealed=false;
+	bool Q35StreamOverlap(unsigned bank,uint64_t offset,uint64_t bytes) const {
+		for (unsigned i=0;i<q35StreamCount;i++) {
+			const auto& r=q35StreamRanges[i];
+			if (r.bank==bank && offset<uint64_t(r.offset)+r.bytes
+				&& r.offset<offset+bytes) return true;
+		}
+		return false;
+	}
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	const void* mutableOwner=nullptr;
 	// Complete recurrent placement (at most672 extents) plus ONE resident
@@ -88,6 +105,9 @@ public:
 	bool Range(const tt_dram_samples_result& baseline,unsigned bank,uint64_t offset,unsigned pages=1) const {
 		return bank<7 && pages>=1 && pages<=4 && !(offset&4095) && offset<Capacity
 			&& uint64_t(pages)*4096<=Capacity-offset && Matches(baseline)
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			&& !Q35StreamOverlap(bank,offset,uint64_t(pages)*4096)
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 			&& !MutableOverlap(bank,offset,uint64_t(pages)*4096)
 #endif
@@ -99,6 +119,42 @@ public:
 		address=Base+uint32_t(offset); route=routes[bank];
 		index=uint32_t(uint64_t(bank)*(Capacity/4096)+offset/4096); return true;
 	}
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	// A private, sticky claim. The caller must independently validate the
+	// plan against the live packed model and hold the global session lock.
+	// Ordinary bank access cannot enter these ranges after the claim.
+	bool ReserveQ35Stream(const tt_dram_samples_result& baseline,const void* owner,
+		const PioneerQ35StreamBankRange* ranges,unsigned count,const uint8_t* initialized,unsigned pages) {
+		if (!owner || q35StreamOwner || !ranges || count!=120 || !initialized
+			|| pages!=Pages || !Matches(baseline)) return false;
+		for (unsigned i=0;i<count;i++) {
+			const auto& r=ranges[i];
+			if (r.bank>=7 || !r.bytes || (r.offset&4095) || (r.bytes&4095)
+				|| r.offset>=Capacity || r.bytes>Capacity-r.offset) return false;
+			for (unsigned j=0;j<i;j++) {
+				const auto& p=ranges[j];
+				if (r.bank==p.bank && uint64_t(r.offset)<uint64_t(p.offset)+p.bytes
+					&& uint64_t(p.offset)<uint64_t(r.offset)+r.bytes) return false;
+			}
+			const uint64_t first=uint64_t(r.bank)*(Capacity/4096)+r.offset/4096;
+			for (unsigned p=0;p<r.bytes/4096;p++) if (initialized[first+p]) return false;
+		}
+		for (unsigned i=0;i<count;i++) q35StreamRanges[i]=ranges[i];
+		q35StreamCount=count;q35StreamOwner=owner;return true;
+	}
+	bool SealQ35Stream(const void* owner) {
+		if (!owner || owner!=q35StreamOwner || q35StreamSealed) return false;
+		q35StreamSealed=true;return true;
+	}
+	bool Q35StreamPage(const tt_dram_samples_result& baseline,const void* owner,
+		unsigned bank,uint64_t offset,bool write,uint32_t& address,uint32_t& route,uint32_t& index) const {
+		if (!owner || owner!=q35StreamOwner || (write && q35StreamSealed)
+			|| bank>=7 || (offset&4095) || offset>=Capacity || !Matches(baseline)
+			|| !Q35StreamOverlap(bank,offset,4096)) return false;
+		address=Base+uint32_t(offset);route=routes[bank];
+		index=uint32_t(uint64_t(bank)*(Capacity/4096)+offset/4096);return true;
+	}
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	// A larger learned extent must prove ALL bytes disjoint, not just its
 	// first page. This does not widen the legacy <=4-page Range contract.

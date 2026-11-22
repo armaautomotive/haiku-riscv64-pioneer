@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #include "../PioneerQwen35DataflowStreamRecorder.h"
+#include "../PioneerQwen35DataflowBoundWorkspace.h"
 #include "../PioneerQwen35Roles.h"
 #include <cassert>
 #include <cstdio>
@@ -8,8 +9,9 @@
 
 using namespace PioneerQwen35;
 struct Packed {
+	uint32_t start[Banks]{};
 	bool Workspace(unsigned bank,uint32_t& address,uint32_t& bytes) const {
-		if (bank>=Banks) return false;address=0x90000000;bytes=64*1024*1024;return true;
+		if (bank>=Banks) return false;address=start[bank];bytes=64*1024*1024;return true;
 	}
 };
 struct Fixture {
@@ -41,7 +43,8 @@ struct Fixture {
 				Rows(manifest.layers[layer].conv[slot],ConvChannels,3*4,1);
 			}
 		}
-		rope={0,0x90000000,manifest.context*Rotary*4};
+		for (unsigned b=0;b<Banks;b++) packed.start[b]=cursor[b];
+		rope={0,packed.start[0],manifest.context*Rotary*4};
 		PioneerQwen35ActivationPlan activations;
 		assert(activations.InitializeFromPacked(packed,(rope.bytes+4095)&~4095U));
 		for (unsigned i=0;i<ActivationBuffers;i++) {
@@ -68,7 +71,7 @@ struct Sink {
 	unsigned writes=0,aborts=0;int failAt=-1;bool began=false,sealed=false,failBegin=false,failSeal=false;
 	unsigned kinds[9]{};bool coreChecked[9]{};
 	bool Begin(const DataflowStreamPlan&) { began=true;return !failBegin; }
-	bool WriteAndVerify(const DataflowStreamBinding& b,const Range& lease,unsigned index,const DataflowStreamRecord& record) {
+	bool StageRecord(const DataflowStreamBinding& b,const Range& lease,unsigned index,const DataflowStreamRecord& record) {
 		if (int(writes++)==failAt) return false;
 		assert(b.core==(writes-1)%DataflowCoreCount && index==(writes-1)/DataflowCoreCount);
 		if (lease.bank!=b.bank || !DataflowStreamRecordStructureValid(record,b.epoch,index+1,b.core)) {
@@ -98,8 +101,15 @@ int main() {
 	auto f=std::make_unique<Fixture>();
 	auto live=std::make_unique<DataflowProjectionAuthority>();
 	assert(live->BindValidatedModel(f->manifest,f->workspace,f->routes,f->rope));
+	DataflowBoundWorkspace boundWorkspace;
+	assert(boundWorkspace.Initialize(*live));
+	for (unsigned b=0;b<Banks;b++) {
+		uint32_t address=0,bytes=0;assert(boundWorkspace.Workspace(b,address,bytes));
+		assert(address==f->packed.start[b] && bytes==ActivationWorkspaceBytes);
+	}
 	auto plan=std::make_unique<DataflowStreamPlan>();
 	assert(DataflowStreamPlanBuilder::Build(f->packed,f->manifest,f->workspace,f->rope,f->routes,99,548,*plan));
+	assert(DataflowStreamPlanBuilder::Validate(boundWorkspace,f->manifest,f->workspace,f->rope,f->routes,*plan));
 	auto candidate=std::make_unique<DataflowProjectionAuthority>();
 	auto scratch=std::make_unique<DataflowStreamRecord>();
 	auto projection=std::make_unique<DataflowProjectionProgram>();
