@@ -8,7 +8,8 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010149'
+TAG = '2026112100010150'
+GRAPH_TRIAL_TAG = '2026112100020150'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -262,7 +263,11 @@ def main():
                         help='compile the experimental recovery body into a non-loadable driver')
     parser.add_argument('--compile-device-dispatch-prototype', action='store_true',
                         help='compile incomplete device dispatch into a non-loadable driver')
+    parser.add_argument('--build-device-dispatch-trial', action='store_true',
+                        help='build the dedicated graph qualification driver without ASIC reset')
     args = parser.parse_args()
+    if args.build_device_dispatch_trial and (args.compile_recovery_prototype or args.compile_device_dispatch_prototype):
+        parser.error('graph qualification cannot enable a recovery compile witness')
 
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
@@ -273,13 +278,15 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=TAG,
+                      PIONEER_DRIVER_BUILD_TAG=GRAPH_TRIAL_TAG if args.build_device_dispatch_trial else TAG,
                       PIONEER_Q38_SPAN_PRELOAD='1',
                       PIONEER_Q38_SPAN_FAST='1')
     if args.compile_recovery_prototype or args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY'] = '1'
     if args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY'] = '1'
+    if args.build_device_dispatch_trial:
+        driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
     verify_kernel_stack_budget(driver)

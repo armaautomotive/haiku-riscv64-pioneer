@@ -65,6 +65,19 @@ fi
 # validation, and worker-executor code. Model authority remains host-owned.
 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-service"
+PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
+	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
+for section in boot text dispatch; do
+	cmp "$temporary/graph-service/$section.bin" "$temporary/graph-trial-service/$section.bin"
+done
+if python3 "$root/tools/pioneer/build_qwen35_dataflow.py" --build-device-dispatch-trial \
+	--compile-recovery-prototype "$build" "$temporary/invalid-mixed-build" >"$temporary/mixed.log" 2>&1; then
+	echo 'graph trial unexpectedly admitted the reset compile witness' >&2
+	exit 1
+else
+	[ "$?" = 2 ] && grep -q 'cannot enable a recovery compile witness' "$temporary/mixed.log"
+fi
+echo 'PASS graph qualification image matches witness and excludes reset witness mode'
 "$size" -A "$temporary/graph-service/service.elf"
 "$nm" "$temporary/graph-service/service.elf" | grep ' T PioneerQwen35DeviceGraphRun$' >/dev/null
 "$nm" "$temporary/graph-service/service.elf" | grep ' T qwen35_graph_authorize$' >/dev/null

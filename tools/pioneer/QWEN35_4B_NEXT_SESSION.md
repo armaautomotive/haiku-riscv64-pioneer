@@ -526,6 +526,34 @@ whole-program proof. Normal driver SHA-256:
 non-loadable graph witness:
 `61063443a267b8e7b10e15a57107429e53bac6ee29b92ce4c91e74ea52e615bf`.
 
+Tag0150 separates a dedicated, loadable graph qualification build from the
+non-loadable reset witness. The graph trial uses driver tag
+`2026112100020150`, explicitly excludes the unqualified ASIC-reset sequence,
+and includes the graph-fault close path. The service image matches the graph
+witness byte for byte. It has not been installed or run; the normal driver,
+graph witness and trial builds plus target and reload suites pass. Trial driver
+SHA-256: `aaf92ec23d14be2b62edadf230f1c3fc317e4d2bee67f76647a55cdb814a15f6`;
+normal tag `2026112100010150` driver:
+`385db06798142123d7efe56bbe8f671217f8a9525d1faab455901df8603681f1`;
+non-loadable witness:
+`2e7c2b32598dfa51ff026fba5750782bfe4a44f764c0cf69aba4b9935ee3a05f`.
+
+The rewrite has a serious synchronization throughput issue to address before
+benchmarking: each of 548 decode steps makes worker 0 send two acknowledged
+NoC writes to each of 119 peers, serially: 130,424 release writes per token.
+At 100 tokens/s, a 10 ms token budget would allow about 77 ns per release
+write even if computation, arrivals, host work and all other costs took no
+time. This is a source-level count and arithmetic bound, not a measured rate.
+Investigate a device-side multicast/semaphore pattern as used by Tenstorrent,
+while proving actual Pioneer router masks, NoC1 coordinates, destination
+membership, acknowledgement counts and payload-before-commit ordering. The
+Blackhole [NoC memory map](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md)
+documents multicast VC and path-reservation constraints, and the
+[broadcast receiver rules](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/README.md#broadcast-receivers)
+show why the actual router masks must be checked. Do not assume a generic
+rectangle or unverified receiver count is safe. The trial is preparation for
+qualification, not a reason to bypass the user's rewrite-first order.
+
 After the user restored power, strict SSH to the pinned Haiku identity
 succeeded again on 2026-11-22. This was an OS identity check only; the prior
 27B process and stable-driver idle preflight must be checked again before
@@ -590,7 +618,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0149. Since tag0121 it records final release of a
+The default build now targets dedicated tag0150. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

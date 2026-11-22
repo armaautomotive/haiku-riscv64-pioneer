@@ -2199,11 +2199,13 @@ public:
 		retiredAfterFault=true;bound=false;
 		return DataflowServiceClosed;
 	}
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket) {
 		if (!runner.Retained()) return true;
 		PioneerQ35GraphBackend backend(context,stream,&proof,ticket);
 		return runner.ReleaseRetainedAfterRestoration(context.qwen35DataflowAuthority,backend);
 	}
+#endif
 };
 
 static void
@@ -2218,12 +2220,14 @@ PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner)
 	return owner && owner->Retained();
 }
 
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 static bool
 PioneerQ35GraphOwnerReleaseAfterReset(PioneerQ35GraphOwner* owner,
 	const PioneerDriverRecoveryProof& proof,uint64_t ticket)
 {
 	return !owner || owner->ReleaseAfterVerifiedReset(proof,ticket);
 }
+#endif
 
 // Ownership is installed before recording can issue any DMA. If recording
 // fails after a claim, the context keeps this owner and its quarantine state.

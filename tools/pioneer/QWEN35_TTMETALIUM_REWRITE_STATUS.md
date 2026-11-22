@@ -72,6 +72,27 @@ it is not a whole-program proof. Normal driver SHA-256:
 non-loadable graph witness:
 `61063443a267b8e7b10e15a57107429e53bac6ee29b92ce4c91e74ea52e615bf`.
 
+Tag0150 builds a distinct graph qualification driver without enabling the
+ASIC-reset prototype. Its dedicated tag is `2026112100020150`; a build that
+combines the trial and reset-witness modes is rejected. The actual graph
+service sections match the non-loadable graph witness byte for byte. Offline
+target/reload tests and normal, witness and trial cross-builds pass; no trial
+has been installed or run. Trial driver SHA-256:
+`aaf92ec23d14be2b62edadf230f1c3fc317e4d2bee67f76647a55cdb814a15f6`;
+normal and non-loadable witness drivers:
+`385db06798142123d7efe56bbe8f671217f8a9525d1faab455901df8603681f1` and
+`2e7c2b32598dfa51ff026fba5750782bfe4a44f764c0cf69aba4b9935ee3a05f`.
+
+An important remaining performance limit is the current barrier: 548 decode
+steps times 119 peers times two blocking release writes makes 130,424
+sequential coordinator writes per token. Ten milliseconds per token would
+allow roughly 77 ns per write if every other operation cost zero. This is a
+source-level count, not a measurement. Continue the rewrite toward the
+Tenstorrent-style multicast/semaphore pattern, with explicit proof of the
+actual router masks, NoC1 coordinate mapping, receiver set, acknowledgement
+accounting and data-before-commit ordering. Do not run a benchmark until the
+rewrite is complete.
+
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku
 boot. The saved hash-verified recovery script restored stable driver55:

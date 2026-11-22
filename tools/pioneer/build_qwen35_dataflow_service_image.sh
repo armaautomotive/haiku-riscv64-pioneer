@@ -14,10 +14,12 @@ umask 077
 mkdir -m 700 "$output"
 flags="-std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32"
 service_flags=
-if [ "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" = 1 ]; then
-	[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" = 1 ] || exit 2
-	service_flags=-DPIONEER_QWEN35_DEVICE_DISPATCH
-fi
+dispatch=0
+case "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}:${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" in
+	0:0:0|0:0:1) ;;
+	1:0:1|0:1:0) dispatch=1; service_flags=-DPIONEER_QWEN35_DEVICE_DISPATCH;;
+	*) exit 2;;
+esac
 
 "$cross-g++" $flags $service_flags -I"$directory" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" \
@@ -27,14 +29,13 @@ fi
 	-c "$directory/PioneerQwen35DataflowMemory.cpp" -o "$output/memory.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
 	"$directory/blackhole_qwen35_dataflow_service_start.S" -o "$output/start.o"
-case "${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}" in
+case "$dispatch" in
 0)
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 		-T "$directory/blackhole_qwen35_dataflow_service.ld" \
 		"$output/start.o" "$output/service.o" "$output/memory.o" \
 		-Map "$output/service.map" -o "$output/service.elf";;
 1)
-	[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}" = 1 ] || exit 2
 	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" -o "$output/device-stream.o"
 	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
