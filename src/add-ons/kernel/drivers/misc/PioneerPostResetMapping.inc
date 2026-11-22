@@ -6,14 +6,16 @@
 // retains this object on any failure. No pre-reset TLB or L1 snapshot is used.
 struct PioneerPostResetMapping : ConfigIO {
 	const tt_pioneer_profile& profile;
-	area_id areas[4]={-1,-1,-1,-1};
+	area_id areas[5]={-1,-1,-1,-1,-1};
 	volatile uint32* tlb=NULL;
 	const volatile uint32* node=NULL;
 	const volatile uint32* reset=NULL;
 	const volatile uint32* noc=NULL;
+	const volatile uint32* hdma=NULL;
 	tt_dram_samples_result topology={};
-	uint32 saved[3]={};
-	bool attempted=false,ready=false,savedValid=false,modified=false;
+	uint32 saved[3]={},dmaSaved[3]={};
+	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
+	bool fleetAudited=false,dmaAudited=false;
 	unsigned selected=PIONEER_POST_RESET_CORES;
 
 	explicit PioneerPostResetMapping(const tt_pioneer_profile& p):profile(p) {}
@@ -46,10 +48,10 @@ struct PioneerPostResetMapping : ConfigIO {
 		attempted=true;
 		if (!PioneerMinimumBarLayoutMatches(profile) || !PciReady()
 			|| profile.bar0_host_start>UINT64_MAX-0x1fd05000) return false;
-		const uint32 offsets[]={0x1fc00000,0x1fd04000,0x19312000,0x19320000};
-		const size_t lengths[]={B_PAGE_SIZE,B_PAGE_SIZE,B_PAGE_SIZE,0x12000};
-		void* views[4]={};
-		for (unsigned i=0;i<4;i++) {
+		const uint32 offsets[]={0x1fc00000,0x1fd04000,0x19312000,0x19320000,0x19180000};
+		const size_t lengths[]={B_PAGE_SIZE,B_PAGE_SIZE,B_PAGE_SIZE,0x12000,B_PAGE_SIZE};
+		void* views[5]={};
+		for (unsigned i=0;i<5;i++) {
 			uint32 flags=B_KERNEL_READ_AREA|B_UNCACHED_MEMORY;
 			if (!i) flags|=B_KERNEL_WRITE_AREA;
 			areas[i]=map_physical_memory("P100A fresh post-reset audit window",
@@ -61,13 +63,17 @@ struct PioneerPostResetMapping : ConfigIO {
 		node=(const volatile uint32*)views[1];
 		reset=(const volatile uint32*)((const uint8*)views[2]+0x1b0);
 		noc=(const volatile uint32*)views[3];
+		hdma=(const volatile uint32*)views[4];
 		const uint32 id=PioneerRead32(node+0x44/4);
 		if ((id&0xfff)!=2 && (id&0xfff)!=11) return false;
 		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
 			topology.source[i]=PioneerRead32(node+BlackholeDramSourceOffset(i)/4);
 		if (!BlackholeDramBuildRoutes(topology)) return false;
-		for (unsigned i=0;i<3;i++) saved[i]=PioneerRead32(tlb+i);
-		if (saved[2]&0xffffc000) return false;
+		for (unsigned i=0;i<3;i++) {
+			saved[i]=PioneerRead32(tlb+i);
+			dmaSaved[i]=PioneerRead32(tlb-3+i);
+		}
+		if ((saved[2]|dmaSaved[2])&0xffffc000) return false;
 		savedValid=true;ready=true;return true;
 	}
 	bool SourceStable() {
@@ -104,9 +110,55 @@ struct PioneerPostResetMapping : ConfigIO {
 	}
 	void PostResetAuditPause() { spin(100); }
 	bool Audit(PioneerPostResetAuditResult& result) {
-		return ready && SourceStable() && PioneerPostResetAudit(*this,result) && SourceStable();
+		fleetAudited=false;dmaAudited=false;
+		fleetAudited=ready && SourceStable() && PioneerPostResetAudit(*this,result) && SourceStable();
+		return fleetAudited;
+	}
+	uint32 HostPciRead(unsigned peer,uint16 offset,uint8 size) {
+		return peer==0?Read(offset,size):peer==1?RootRead(offset,size):UINT32_MAX;
+	}
+	// The existing pinned firmware uses HDMA channel 0. Check read/write
+	// enables and states as well as PCIe pending/error status on both ends.
+	// The caller still owns and retains every host buffer until all checks and
+	// subsequent resource retirement succeed.
+	bool AuditHostDma() {
+		dmaAudited=false;
+		if (!fleetAudited || !SourceStable() || !savedValid
+			|| (PioneerRead32(node+0x44/4)&0xfff)!=2
+			|| !BlackholeHostSourceRoute(topology.source)) return false;
+		dmaModified=true;
+		for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,BlackholeHostDbiTlbWord(i));
+		for (unsigned i=0;i<3;i++)
+			if (PioneerRead32(tlb-3+i)!=BlackholeHostDbiTlbWord(i)) return false;
+		uint32 firstStatus[2]={},firstDma[4]={};
+		for (unsigned sample=0;sample<3;sample++) {
+			if (!PciReady()) return false;
+			for (unsigned peer=0;peer<2;peer++) {
+				uint32 status=0;
+				if (!BlackholeHostPcieStatus(*this,peer,status)
+					|| (sample && status!=firstStatus[peer])) return false;
+				if (!sample) firstStatus[peer]=status;
+			}
+			for (unsigned i=0;i<4;i++) {
+				const uint32 value=PioneerRead32(hdma+BlackholeHostHdmaOffset(i)/4);
+				if ((i%2==0 && value!=0) || (i%2==1 && value!=0 && value!=3)
+					|| (sample && value!=firstDma[i])) return false;
+				if (!sample) firstDma[i]=value;
+			}
+			if (sample<2) PostResetAuditPause();
+		}
+		uint32 resetState=0;
+		dmaAudited=ReadPostResetState(resetState) && resetState==PIONEER_POST_RESET_HELD
+			&& SourceStable();
+		return dmaAudited;
 	}
 	bool Close() {
+		if (dmaModified) {
+			if (!savedValid || !PciReady()) return false;
+			for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,dmaSaved[i]);
+			for (unsigned i=0;i<3;i++) if (PioneerRead32(tlb-3+i)!=dmaSaved[i]) return false;
+			dmaModified=false;
+		}
 		if (modified) {
 			if (!savedValid || !PciReady()) return false;
 			for (unsigned i=0;i<3;i++) PioneerWrite32(tlb+i,saved[i]);
@@ -114,10 +166,10 @@ struct PioneerPostResetMapping : ConfigIO {
 			modified=false;
 		}
 		ready=false;selected=PIONEER_POST_RESET_CORES;
-		for (unsigned i=0;i<4;i++) if (areas[i]>=B_OK) {
+		for (unsigned i=0;i<5;i++) if (areas[i]>=B_OK) {
 			if (delete_area(areas[i])!=B_OK) return false;
 			areas[i]=-1;
 		}
-		tlb=NULL;node=reset=noc=NULL;return true;
+		tlb=NULL;node=reset=noc=hdma=NULL;return true;
 	}
 };

@@ -72,12 +72,21 @@ word publishes the guard's fault epoch and cold latch together; an injected
 fault during latch clearing leaves the previous generation recoverable. These
 checks do not qualify a physical reset.
 
+The post-reset mapping backend now also checks both PCIe endpoints for pending
+transactions and errors, and checks the pinned firmware's read/write HDMA
+channel 0 enables and states in three stable samples. It requires the fleet
+audit first and restores a TLB value captured after reset. Simulated MMIO tests
+cover busy DMA, a changing DMA state, pending transactions at either PCIe end,
+and restoration. This evidence is limited to the pinned channel-0 firmware
+contract; the operation is not yet connected to owner release or tested on
+silicon.
+
 The failed owner retains its cookie, PCI reservation, snapshots and
 quarantined host buffers after the client exits. The recovery operation must
 distinguish a final-freed owner from a still-live file descriptor and revoke
 old generation access before retiring those resources. Host buffers must stay
 wired until the reset, PCI pending-transaction and host-DMA idle proofs pass.
-The PCI, mapping, guard, firmware and ownership steps are not yet orchestrated.
+The PCI, mapping, DMA audit, guard, firmware and ownership steps are not yet orchestrated.
 
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and

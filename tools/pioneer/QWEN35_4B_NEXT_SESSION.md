@@ -56,8 +56,11 @@ MMIO tests cover mapping and cleanup failure cases. The mapping and audit are
 not yet integrated into the reset lifecycle and have not run on the card.
 A post-reset PCI helper now restores the fixed active BAR/bridge layout with
 bus mastering disabled; simulated PCI tests cover lost writes and unsafe
-states. Firmware initialization, complete PCI capability restoration, DMA
-proof, and release of the retained cookie and host pages remain to be wired.
+states. A simulated-tested audit of both PCIe pending states and the pinned
+firmware's channel-0 HDMA now follows the fleet audit and restores its fresh
+TLB snapshot. Firmware initialization, complete PCI capability restoration,
+recovery orchestration, and release of the retained cookie and host pages
+remain to be wired and physically verified.
 
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached
