@@ -159,15 +159,9 @@ class DataflowBlackholeTensixOps {
 		unsigned panel)
 	{
 		auto* metadata=reinterpret_cast<PioneerQ38Panel*>(
-			static_cast<uintptr_t>(DataflowQ5PanelScratchAddress));
+			static_cast<uintptr_t>(DataflowAffinePanelScratchAddress));
 		if (!PioneerQwen35DataflowAffineOnly(type,weightPage,bytes,panel,
 			metadata)) return false;
-		volatile uint32_t* coefficient=Words(DataflowAffineCoefficientAddress);
-		volatile uint32_t* minimum=Words(DataflowAffineMinimumAddress);
-		for (unsigned row=0;row<16;row++) {
-			coefficient[row]=metadata->coefficient[row];
-			minimum[row]=metadata->minimum[row];
-		}
 		Fence();
 		return true;
 	}

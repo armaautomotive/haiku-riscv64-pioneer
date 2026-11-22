@@ -30,6 +30,7 @@ enum : unsigned {
 	DataflowActivationCacheBytes=9216*sizeof(float),
 	DataflowQueueStateAddress=0x89000,
 	DataflowQueueStateBytes=3*32,
+	DataflowAffinePanelScratchAddress=0x91000,
 	DataflowAffineCoefficientAddress=0x91200,
 	DataflowAffineMinimumAddress=0x91240,
 	DataflowAffineMetadataBytes=16*sizeof(uint32_t),
@@ -83,6 +84,7 @@ static_assert(DataflowActivationCacheAddress+DataflowActivationCacheBytes
 	&& DataflowQueueStateAddress+DataflowQueueStateBytes<=DataflowWeightBufferAddress
 	&& DataflowWeightBufferAddress+DataflowMaxWeightPageBytes
 		<=DataflowQ5PanelScratchAddress
+	&& DataflowAffinePanelScratchAddress>=DataflowQ5PanelScratchAddress
 	&& DataflowQ5PanelScratchAddress+DataflowQ5PanelTileBytes
 		==DataflowAffineCoefficientAddress
 	&& DataflowAffineCoefficientAddress+DataflowAffineMetadataBytes

@@ -6,6 +6,20 @@
 #include "PioneerQ38BinaryScale.h"
 #include "PioneerQwen35DataflowProgram.h"
 
+// The SFPU metadata loader reads 0x91200 and 0x91240 directly. Place the
+// actual PioneerQ38Panel there; its operand prefix is 512 bytes, not the
+// separate offline Q5 test tile's 576 bytes. Copying from the latter base
+// aliases and destroys the minima before they are read.
+static_assert(PioneerQwen35::DataflowAffinePanelScratchAddress
+	+__builtin_offsetof(PioneerQ38Panel,coefficient)
+		==PioneerQwen35::DataflowAffineCoefficientAddress
+	&& PioneerQwen35::DataflowAffinePanelScratchAddress
+	+__builtin_offsetof(PioneerQ38Panel,minimum)
+		==PioneerQwen35::DataflowAffineMinimumAddress
+	&& PioneerQwen35::DataflowAffinePanelScratchAddress+sizeof(PioneerQ38Panel)
+		<=PioneerQwen35::DataflowInputBufferAddress,
+	"affine panel fields land directly in the non-overlapping SFPU source rows");
+
 // Q5_K has the same d/dmin/scales prefix as Q4_K, with its qh/qs planes
 // following at byte offsets 16 and 48. Read only the 16 affine factors here;
 // packed operands and the projection dot are handled by Tensix.

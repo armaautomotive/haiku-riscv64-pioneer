@@ -1,3 +1,5 @@
+> **Tag0165 prepared fix:** the earlier affine staging copy overwrote the source minima with coefficients because `PioneerQ38Panel` has a 512-byte operand prefix, not the offline Q5 tile's 576-byte prefix. The rewrite now places the panel so its fields directly match the SFPU source addresses, with compile-time layout checks and a distinct-values test. Full target suite and builds pass; hardware impact is unverified. Tag0164 is still running and must unload before testing this fix.
+
 > **Tag0164 next:** trace the loaded Dst metadata and first-panel SFPU accumulator to distinguish a metadata-load fault from arithmetic/readback. Full target suite and builds passed; candidate remains untested on hardware. See `QWEN35_4B_NEXT_SESSION.md`.
 
 > **Tag0163 candidate:** restored qualified Tensix source-window initialization and destination clear, and added bounded core0 first-projection samples for packed activation, scale, dot, and coefficient. Tag0163 hardware showed matching nonzero matrix dots but zero projection output; see `benchmarks/qwen35-dataflow-tag0163-20261122/RUN.md`.
