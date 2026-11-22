@@ -10,8 +10,12 @@ failed correctness diagnostic, not an acceptance throughput measurement.
 
 The last graph input token was 0. Core0 embedding rows16 and 31 were exactly
 `0xbd2f21c0` and `0x3cb4c800`, matching independently decoded samples from a
-hash-matched GGUF prefix. The sampled layer0 RMS output was nonzero, as was
-the sampled final RMS output. The sampled first QKV projection, gate
+hash-matched GGUF prefix. The sampled layer0 RMS output rows16 and 31 were `0xc0887261` and
+`0x4008147b`; an independent offline calculation from the verified token0
+embedding and the layer0 norm-weight slice reproduced both exact bits. Run
+`tools/pioneer/qwen35_token0_norm_reference.py` with the hash-checked 32 MiB
+prefix and 10,240-byte layer0 weight slice. The sampled final RMS output was
+nonzero. The sampled first QKV projection, gate
 projection, and final tied-output projection were all zero, and the argmax
 score bits were zero. Each sample covers one 16-value core0 output page, not
 the entire tensor. This points to the projection path but does not prove which
