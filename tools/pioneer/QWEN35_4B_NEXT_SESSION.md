@@ -44,14 +44,14 @@ busy-state mismatches. The fixture and Haiku/RISC-V builds pass, but no card
 run has verified the audit. Its normal driver SHA-256 is
 `3336b78873687f2c491314751e39e0f2942a0bcf0dfccd2d3f9bcdf4f4cc79ea`.
 
-Haiku is currently reachable at `10.0.0.247`. Read-only status confirms the
-failed diagnostic client has exited and both model files remain intact, but
-the candidate is still `generation3 cold1 active_owner1 open_count1`; the
-exclusive recovery lock and stable55 backup remain. Stable55 is not loaded or
-idle. Do not run inference or accelerator commands in this state. The
-currently loaded `B_KEEP_LOADED` legacy guard has no API to clear this latch,
-so the new guard requires one fresh Haiku kernel boot through the NVMe/kexec
-path.
+Haiku is reachable at `10.0.0.247`. Following one authorized power cycle
+and the pinned NVMe/kexec handoff, the saved recovery script restored stable55
+at generation2: `cold0 active_owner0 open_count1`. The prior diagnostic has
+exited, the recovery lock is absent, and both model files retain their
+recorded sizes. The current `B_KEEP_LOADED` guard is still the legacy version;
+after the new guard is staged, it requires another fresh Haiku kernel boot
+through the NVMe/kexec path to activate. See
+[`tag0124 recovery`](benchmarks/qwen35-dataflow-tag0124-20261122/RECOVERY.md).
 
 Offline recovery-guard work adds a 48-byte kernel proof for reset completion,
 firmware readiness, PCI restoration, rebuilt mappings, all 120 cores held,
@@ -127,17 +127,16 @@ Use strict host-key checking and the profile for the OS currently running.
 ## Current hardware state
 
 Haiku SSH is reachable. The tag0120 client exited; no inference process is
-running. Current driver status is:
+running. The independently verified stable driver status is:
 
 ```text
-P100A_RELOAD driver60 tag2026112100010120 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-The exclusive recovery lock and stable55 backup remain, so the driver is not
-idle. Both models are intact: Qwen3.5-4B `2,740,937,888` bytes and Qwen3.8-27B
-`18,973,870,528` bytes. Do not issue another accelerator/reset command until
-the new proof-based recovery operation has been integrated, tested offline,
-and installed after a clean NVMe/kexec Haiku boot.
+The recovery lock has been released. Both models retain their recorded sizes:
+Qwen3.5-4B `2,740,937,888` bytes and Qwen3.8-27B `18,973,870,528` bytes.
+The proof-based in-place recovery operation remains disabled and unqualified;
+complete it and activate its new guard before the next model diagnostic.
 
 ## Tag61: inner matrix receipt was overwritten
 

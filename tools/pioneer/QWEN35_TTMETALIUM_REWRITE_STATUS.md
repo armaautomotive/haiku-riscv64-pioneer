@@ -22,14 +22,15 @@ or fallback. Pioneer boots from its existing NVMe: Fedora hands off to Haiku
 with kexec. The user confirmed SD cards are no longer used; do not use or
 recommend an SD-card workflow.
 
-Tag0120's diagnostic client has exited. A read-only Haiku check now reaches
-`10.0.0.247`; the current reload status is tag `2026112100010120`, generation3,
-`quiesced0 cold1 active_owner1 open_count1`. There is no inference/dataflow
-client, but the exclusive recovery lock and stable55 backup remain. Thus the
-prior diagnostic is gone, while the stable driver is **not idle or loaded**.
-The 4B file remains `2740937888` bytes and preserved 27B file remains
-`18973870528` bytes. No accelerator command has been issued since the
-tag0120 failure. Do not run inference or hardware reset against this state.
+After the tag0120 diagnostic exited cold, a single authorized power-off/on
+cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku
+boot. The saved hash-verified recovery script restored stable driver55:
+tag `2026102100010012`, generation2, `quiesced0 cold0 active_owner0
+open_count1 guard1`. The recovery lock is absent and no inference/dataflow
+client is running. The 4B file remains `2740937888` bytes and the preserved
+27B file remains `18973870528` bytes. No model diagnostic has run after this
+recovery. Details are in
+[`tag0124 recovery`](benchmarks/qwen35-dataflow-tag0124-20261122/RECOVERY.md).
 
 Tag0120 failed the first core0 embedding read: NoC0 response counter index36
 observed `0x00029066`, expected `0x00029067`; completion mask `0xfe`, busy
@@ -102,8 +103,9 @@ clears, while refusing bus mastering, an uncleared marker, unsafe interrupt
 state, and unexpected identities. Simulated PCI tests exercise the real BAR
 plan, dropped writes, and decoder ordering. It does not by itself restore all
 PCI capabilities or establish firmware readiness. The currently loaded legacy guard
-is `B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel
-boot from the NVMe/kexec path will be required to install the new guard.
+is `B_KEEP_LOADED` and cannot be upgraded in place. The completed clean boot
+still loaded that legacy guard; after staging the new guard, another fresh
+Haiku kernel boot through the NVMe/kexec path will be required to activate it.
 
 The post-reset mapping now polls ARC scratch readiness with a bounded wait,
 reads the fresh firmware telemetry table, and requires the pinned firmware
@@ -170,8 +172,8 @@ fixtures and the target build pass. This status does not initiate a reset,
 release any owner or host buffer, or grant hardware recovery. Tag0121 is not
 installed; its historical default driver SHA-256 is
 `35b04d1f2b2f4654e615a6b343bda8dcbb443c4455eb6178f42c6e73cb29906a`
-and its measured stack bound is `15712/18432` bytes. The board remains at
-tag0120 cold with its owner retained.
+and its measured stack bound is `15712/18432` bytes. Stable55 is now loaded
+and idle after the authorized cold recovery.
 
 The recovery guard export now uses a name beneath the existing reload-guard
 image path. Haiku's module resolver stops at the first regular file, so the
