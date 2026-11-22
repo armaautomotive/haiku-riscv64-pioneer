@@ -24,6 +24,15 @@ inline void DataflowTensixPrepareAffineMetadata(E& emitter,bool metadata)
 	if (metadata) emitter.Config(73,0x13);
 }
 
+// Register 3 controls the core's Dst readback conversion. Matrix dot
+// checks require converted signed integers; SFPU results require raw FP32.
+// Call only after the engine work for the affected rows has drained.
+template<class E>
+inline void DataflowTensixSelectReadback(E& emitter,bool floatingPoint)
+{
+	emitter.Config(3,floatingPoint?0U:0x10000U);
+}
+
 // The UNPACK source windows include 16-byte headers and a 256-byte SrcB
 // tile. Each panel replaces only its first 32 bytes. Define every remaining
 // datum before the first panel, as required by the qualified matrix setup.

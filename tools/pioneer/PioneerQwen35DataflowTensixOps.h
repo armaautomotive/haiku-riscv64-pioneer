@@ -263,10 +263,15 @@ public:
 				|| !fEmitter.Good()) return false;
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 			if (trace) {
-				// Read only the already-drained Dst rows for the same panel.
+				// The accumulator drained above. Sample raw FP32, then restore
+				// signed-integer dot conversion before the next matrix panel.
+				DataflowTensixSelectReadback(fEmitter,true);
+				if (!fEmitter.Good()) return false;
 				TraceProjection(12,Words(0xffbd9800)); // coefficient row 96
 				TraceProjection(13,Words(0xffbd9900)); // minimum row 100
 				TraceProjection(14,Words(TensixOutputReadback)); // accumulator row 108
+				DataflowTensixSelectReadback(fEmitter,false);
+				if (!fEmitter.Good()) return false;
 			}
 #endif
 		}
@@ -279,16 +284,20 @@ public:
 		if (!fOutputActive || !fProgram || !outputPage
 			|| bytes!=DataflowOutputPageBytes || fNextBlock!=fProgram->blocks
 			|| !fEmitter.Good()) return false;
+		DataflowTensixSelectReadback(fEmitter,true);
+		if (!fEmitter.Good()) return false;
 		volatile uint32_t* values=Words(TensixOutputReadback);
 		auto* output=reinterpret_cast<volatile uint32_t*>(outputPage);
+		bool finite=true;
 		for (unsigned row=0;row<16;row++) {
 			const uint32_t value=values[row];
-			if ((value&0x7f800000)==0x7f800000) return false;
+			if ((value&0x7f800000)==0x7f800000) finite=false;
 			output[row]=value;
 		}
 		Fence();
+		DataflowTensixSelectReadback(fEmitter,false);
 		fOutputActive=false;
-		return fEmitter.Good();
+		return finite && fEmitter.Good();
 	}
 };
 

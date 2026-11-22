@@ -9,6 +9,12 @@ struct MetadataSelector {
 		assert(index==73); mode=value; writes++;
 	}
 };
+struct ReadbackSelector {
+	unsigned mode=0x10000,writes=0;
+	void Config(unsigned index,uint32_t value) {
+		assert(index==3); mode=value; writes++;
+	}
+};
 
 int main()
 {
@@ -27,4 +33,9 @@ int main()
 	assert(selector.mode==3 && selector.writes==0);
 	PioneerQwen35::DataflowTensixPrepareAffineMetadata(selector,true);
 	assert(selector.mode==0x13 && selector.writes==1);
+	ReadbackSelector readback;
+	PioneerQwen35::DataflowTensixSelectReadback(readback,true);
+	assert(readback.mode==0 && readback.writes==1);
+	PioneerQwen35::DataflowTensixSelectReadback(readback,false);
+	assert(readback.mode==0x10000 && readback.writes==2);
 }
