@@ -1,0 +1,10 @@
+P100A_Q35_DATAFLOW authentication_seconds=100.791845
+P100A_Q35_DATAFLOW vocabulary_seconds=12.649542 prompt_ids=760,6511,314,9338,369
+P100A_Q35_DATAFLOW model_load_seconds=612.118705 resident_bytes=2740498432
+P100A_Q35_DATAFLOW warm_run=1 prompt_tokens=5 prompt_seconds=19.186788 output_tokens=2 decode_seconds=4.130616 decode_tokens_per_second=0.242095
+P100A_Q35_DATAFLOW generated_ids=0,0
+P100A_Q35_DATAFLOW output_begin run=1
+!!
+P100A_Q35_DATAFLOW output_end run=1
+P100A_Q35_DATAFLOW diagnostic_one_run=1
+P100A_Q35_DATAFLOW unload_clean=1 state=2 active=0 cold=0 service_closed=1

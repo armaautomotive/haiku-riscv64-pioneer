@@ -1,5 +1,15 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+Tag0161 passed the former convolution stall and completed one graph run, but
+generated `0,0` (`!!`) instead of the verified `11751,13` (` Paris.`). The
+raw one-token decode rate was 0.242095 tokens/s after 19.186788 s prompt
+processing and 612.118705 s load; because output is incorrect, this is not an
+acceptance benchmark. Unload succeeded and stable driver55 was restored idle
+without reboot. See the [tag0161 record](benchmarks/qwen35-dataflow-tag0161-20261122/RUN.md).
+The rounding-independent SiLU follow-up was not in tag0161; model numerical
+correctness remains the next rewrite problem.
+
+
 The [Blackhole BabyRISCV instruction set](https://github.com/tenstorrent/tt-isa-documentation/blob/e0b765516b78f8faf34004f93d68ad49c59f4725/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md)
 confirms that `fdiv.s`/`fsqrt.s` are not implemented and that float rounding
 mode bits are ignored. The SiLU exponent calculation previously emitted
