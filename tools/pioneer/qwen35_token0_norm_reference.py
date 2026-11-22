@@ -5,7 +5,8 @@ Arguments are the verified 32 MiB GGUF prefix and the 10,240-byte layer-zero
 attention-norm weight slice at GGUF offset 538348704. This diagnostic does not
 load a driver or execute inference in Work mode. The computation follows the
 GGUF Q6_K layout directly and uses host double arithmetic to check the sampled
-values, not the device implementation or its reduction helper.
+values, not the device implementation or its reduction helper. An optional
+token ID is accepted only when its entire embedding is in the pinned prefix.
 """
 import hashlib
 import math
@@ -25,12 +26,15 @@ def checked(path, length, digest):
     return data
 
 
-def normalized(prefix_path, norm_path):
+def normalized(prefix_path, norm_path, token=0):
     prefix = checked(prefix_path, 32 * 1024 * 1024, PREFIX_SHA256)
     norm = checked(norm_path, 2560 * 4, NORM_SHA256)
+    token_start = EMBEDDING_OFFSET + token * 2100
+    if token < 0 or token_start + 2100 > len(prefix):
+        raise ValueError("token embedding lies outside the verified prefix")
     embedding = []
     for block in range(10):
-        base = EMBEDDING_OFFSET + block * 210
+        base = token_start + block * 210
         data = prefix[base : base + 210]
         multiplier = struct.unpack_from("<e", data, 208)[0]
         values = [0.0] * 256
@@ -50,13 +54,14 @@ def normalized(prefix_path, norm_path):
 
 
 def main():
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: qwen35_token0_norm_reference.py GGUF_PREFIX NORM_SLICE")
-    values = normalized(sys.argv[1], sys.argv[2])
+    if len(sys.argv) not in (3, 4):
+        raise SystemExit("usage: qwen35_token0_norm_reference.py GGUF_PREFIX NORM_SLICE [TOKEN_ID]")
+    token = int(sys.argv[3]) if len(sys.argv) == 4 else 0
+    values = normalized(sys.argv[1], sys.argv[2], token)
     for row in (16, 31):
         value = values[row]
         bits = struct.unpack("<I", struct.pack("<f", value))[0]
-        print(f"token=0 layer=0 row={row} bits=0x{bits:08x} value={value:.9g}")
+        print(f"token={token} layer=0 row={row} bits=0x{bits:08x} value={value:.9g}")
 
 
 if __name__ == "__main__":
