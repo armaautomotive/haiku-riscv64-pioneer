@@ -4,6 +4,7 @@
 #include "../PioneerQwen35DataflowAuthorization.h"
 #include "../PioneerQwen35DataflowRoleCoordinator.h"
 #include "../PioneerQwen35DataflowSharedActivationRoles.h"
+#include "../PioneerQ38ProjectionInput.h"
 #include <assert.h>
 #include <atomic>
 #include <cstring>
@@ -87,10 +88,19 @@ struct RoleTestCounters {
 	void Fail() { okay.store(false,std::memory_order_relaxed); }
 };
 
+static float RoleActivationSample(unsigned row,unsigned generation)
+{
+	// Exactly representable mixed-sign inputs, with a changing vector on every
+	// resident command and zero values among nonzero quantization blocks.
+	const int sample=int((row*37U+generation*101U)%2047U)-1023;
+	return float(sample)*0.03125f;
+}
+
 struct RoleTestOps {
 	enum { TensixMatrixEngine=1 };
 	RoleTestCounters& counters;
 	bool bound=false;
+	bool realPack=false;
 	unsigned projectionType=13;
 	unsigned generation=0;
 	bool Bind(const DataflowCoreInvocation&) {
@@ -102,7 +112,7 @@ struct RoleTestOps {
 		if (!bound || !output || rows>source.rows || source.rowBytes!=sizeof(float)
 			|| bytes!=rows*sizeof(float)) { counters.Fail(); return false; }
 		float* values=reinterpret_cast<float*>(output);
-		for (unsigned i=0;i<rows;i++) values[i]=float(i+generation*Hidden);
+		for (unsigned i=0;i<rows;i++) values[i]=RoleActivationSample(i,generation);
 		counters.activationReads.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
@@ -124,10 +134,16 @@ struct RoleTestOps {
 			|| chunk>=inputs/DataflowActivationChunkInputs
 			|| bytes!=DataflowInputPageBytes
 			|| source[chunk*DataflowActivationChunkInputs]
-				!=float(chunk*DataflowActivationChunkInputs+generation*Hidden)) {
+				!=RoleActivationSample(chunk*DataflowActivationChunkInputs,generation)) {
 			counters.Fail(); return false;
 		}
-		std::memset(output,int(uint8_t(chunk^generation)),bytes);
+		if (realPack) {
+			if (!PioneerQ38ProjectionQuantize(type,
+				source+chunk*DataflowActivationChunkInputs,DataflowActivationChunkInputs,
+				reinterpret_cast<PioneerQ38ProjectionInput*>(output))) {
+				counters.Fail(); return false;
+			}
+		} else std::memset(output,int(uint8_t(chunk^generation)),bytes);
 		counters.packedChunks.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
@@ -141,7 +157,7 @@ struct RoleTestOps {
 		const uint8_t* input)
 	{
 		if (type!=projectionType || !weight || !input
-			|| input[0]!=uint8_t(DataflowActivationChunk(type,block)^generation)) {
+			|| (!realPack && input[0]!=uint8_t(DataflowActivationChunk(type,block)^generation))) {
 			counters.Fail(); return false;
 		}
 		counters.matmuls.fetch_add(1,std::memory_order_relaxed);
@@ -170,6 +186,7 @@ struct RoleTestOps {
 struct SharedComputeOps : RoleTestOps {
 	const uint8_t* cache;
 	DataflowQueueControl* ready;
+	const PioneerQ38ProjectionInput* expected=nullptr;
 	SharedComputeOps(RoleTestCounters& counters,const uint8_t* data,DataflowQueueControl* control)
 		:RoleTestOps{counters},cache(data),ready(control) {}
 	bool TensixMatmul(unsigned type,unsigned block,const uint8_t* weight,const uint8_t* input)
@@ -177,6 +194,8 @@ struct SharedComputeOps : RoleTestOps {
 		if (!ready || DataflowLoadAcquire(ready->produced)!=1
 			|| DataflowLoadAcquire(ready->consumed)!=0
 			|| input!=DataflowPackedActivationPage(cache,type,Hidden,block)) return false;
+		if (realPack && (!expected || std::memcmp(input,
+			&expected[DataflowActivationChunk(type,block)],sizeof(*expected)))) return false;
 		return RoleTestOps::TensixMatmul(type,block,weight,input);
 	}
 };
@@ -398,13 +417,16 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	}
 	assert(firstVariant<4);
 	DataflowQueueControl controls[DataflowCircularBufferCount]{};
-	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+	alignas(16) uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
 	DataflowQueueView queues[DataflowCircularBufferCount]{};
 	alignas(float) uint8_t activation[DataflowActivationCacheBytes]{};
 	assert(DataflowBindQueues(invocation,controls,local,queues));
 	RoleTestCounters counters{};
 	RoleTestOps readerOps{counters},writerOps{counters};
 	SharedComputeOps computeOps{counters,activation,&controls[1]};
+	PioneerQ38ProjectionInput expected[Hidden/DataflowActivationChunkInputs]{};
+	readerOps.realPack=computeOps.realPack=true;
+	computeOps.expected=expected;
 	readerOps.projectionType=computeOps.projectionType=writerOps.projectionType=type;
 	DataflowRoleMailbox box{};
 	box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
@@ -469,6 +491,13 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	for (unsigned run=0;run<runs;run++) {
 		invocation=variants[(firstVariant+run)%4];
 		assert(DataflowBindQueues(invocation,controls,local,queues));
+		for (unsigned chunk=0;chunk<Hidden/DataflowActivationChunkInputs;chunk++) {
+			float source[DataflowActivationChunkInputs];
+			for (unsigned i=0;i<DataflowActivationChunkInputs;i++)
+				source[i]=RoleActivationSample(chunk*DataflowActivationChunkInputs+i,run+1);
+			assert(PioneerQ38ProjectionQuantize(DataflowActivationPackingType(invocation.type),
+				source,DataflowActivationChunkInputs,&expected[chunk]));
+		}
 		generation.store(run+1);
 		uint32_t next=0;
 		if (!DataflowRoleNextProjectionSequence(box,next) || next!=run+1) { bad.store(true); break; }
