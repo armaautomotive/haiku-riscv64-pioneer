@@ -19,21 +19,29 @@ enum DataflowGraphPublication { DataflowGraphPublishInvalid=0,DataflowGraphPubli
 class DataflowGraphPublisher {
 	enum Phase { PhaseEmpty,PhasePublished,PhaseFaulted } phase=PhaseEmpty;
 	unsigned failedCore=DataflowCoreCount;
+	unsigned previousSequence=0,triggerSequence=0,polls=0,inputSlot=0;
+	DataflowGraphRunTicket runTicket{};
 public:
 	DataflowGraphPublisher()=default;
 	DataflowGraphPublisher(const DataflowGraphPublisher&)=delete;
 	DataflowGraphPublisher& operator=(const DataflowGraphPublisher&)=delete;
 	bool Faulted() const { return phase==PhaseFaulted; }
+	bool Published() const { return phase==PhasePublished; }
 	unsigned FailedCore() const { return failedCore; }
+	unsigned PreviousSequence() const { return previousSequence; }
+	unsigned TriggerSequence() const { return triggerSequence; }
+	unsigned PollLimit() const { return polls; }
+	unsigned InputSlot() const { return inputSlot; }
+	const DataflowGraphRunTicket& Ticket() const { return runTicket; }
 	template<class IO>
 	DataflowGraphPublication Start(const DataflowStreamPlan& plan,
 		const unsigned (&routes)[2][Banks],const DataflowDynamicTokenContext& token,
-		const DataflowGraphRunTicket& ticket,unsigned trigger,unsigned pollLimit,
+		const DataflowGraphRunTicket& ticket,unsigned trigger,unsigned pollLimit,unsigned slot,
 		IO& io,DataflowGraphRunDescriptor& scratch)
 	{
 		if (phase!=PhaseEmpty || !plan.ready || !plan.epoch || !plan.count
 			|| plan.count!=ticket.count || !token.Valid() || !trigger
-			|| trigger>DataflowWorkerSequenceLimit || !pollLimit || pollLimit>DataflowGraphRunMaxPolls
+			|| trigger>DataflowWorkerSequenceLimit || !pollLimit || pollLimit>DataflowGraphRunMaxPolls || slot>=ActivationBuffers
 			|| !DataflowBankRoutesValid(routes)) return DataflowGraphPublishInvalid;
 		unsigned completed=0;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -46,13 +54,14 @@ public:
 			completed=snapshot.completedSequence;
 			if (plan.binding[core].epoch!=plan.epoch || plan.binding[core].count!=plan.count
 				|| !DataflowGraphRunBuild(plan.binding[core],plan.lease[core],routes,
-					token,ticket,trigger,pollLimit,scratch)) {
+					token,ticket,trigger,pollLimit,slot,scratch)) {
 				failedCore=core;return DataflowGraphPublishPreflight;
 			}
 		}
+		previousSequence=completed;triggerSequence=trigger;polls=pollLimit;inputSlot=slot;runTicket=ticket;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!DataflowGraphRunBuild(plan.binding[core],plan.lease[core],routes,
-					token,ticket,trigger,pollLimit,scratch)
+					token,ticket,trigger,pollLimit,slot,scratch)
 				|| !io.StageGraphRun(core,scratch) || !io.GraphRunMatches(core,scratch)) {
 				phase=PhaseFaulted;failedCore=core;return DataflowGraphPublishStagingFault;
 			}

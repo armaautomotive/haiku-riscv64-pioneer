@@ -12,8 +12,11 @@ enum : unsigned {
 	DataflowGraphRunMagic=0x31524735,
 	DataflowGraphRunVersion=1,
 	DataflowGraphRunCommand=0x31434735,
-	DataflowGraphRunMaxPolls=1048576
+	DataflowGraphRunMaxPolls=1048576,
+	DataflowGraphDecodeSteps=548,
+	DataflowGraphPromptSteps=545
 };
+static_assert(Layers==32,"graph completion counts require the fixed Qwen35 decoder");
 static_assert(DataflowBarrierReleaseCommit+DataflowBarrierPacketBytes==DataflowGraphRunAddress
 	&& DataflowGraphRunAddress+DataflowGraphRunBytes<=DataflowBarrierArrivalBase,
 	"run descriptor stays inside saved L1 and outside barrier slots");
@@ -26,7 +29,7 @@ enum : unsigned {
 static_assert(unsigned(DataflowGraphRunFixedBytes)<=unsigned(DataflowGraphRunBytes)
 	&& (DataflowGraphRunFixedBytes%4)==0,"graph descriptor fields fit one fixed record");
 struct alignas(64) DataflowGraphRunDescriptor {
-	uint32_t magic,version,core,triggerSequence,pollLimit,reserved0;
+	uint32_t magic,version,core,triggerSequence,pollLimit,inputSlot;
 	DataflowGraphRunTicket ticket;
 	DataflowStreamBinding binding;
 	Range lease;
@@ -52,7 +55,7 @@ inline bool DataflowGraphRunValid(const DataflowGraphRunDescriptor& d,unsigned c
 	if (d.magic!=DataflowGraphRunMagic || d.version!=DataflowGraphRunVersion
 		|| core>=DataflowCoreCount || d.core!=core || !d.triggerSequence
 		|| d.triggerSequence>DataflowWorkerSequenceLimit || !d.pollLimit
-		|| d.pollLimit>DataflowGraphRunMaxPolls || d.reserved0
+		|| d.pollLimit>DataflowGraphRunMaxPolls || d.inputSlot>=ActivationBuffers
 		|| !d.ticket.epoch || !d.ticket.firstSequence
 		|| d.ticket.firstSequence>DataflowWorkerSequenceLimit
 		|| !d.ticket.count || d.ticket.count!=d.binding.count
@@ -67,12 +70,12 @@ inline bool DataflowGraphRunValid(const DataflowGraphRunDescriptor& d,unsigned c
 // by this byte checksum or by a user-supplied descriptor.
 inline bool DataflowGraphRunBuild(const DataflowStreamBinding& binding,const Range& lease,
 	const unsigned (&routes)[2][Banks],const DataflowDynamicTokenContext& token,
-	const DataflowGraphRunTicket& ticket,unsigned trigger,unsigned pollLimit,
+	const DataflowGraphRunTicket& ticket,unsigned trigger,unsigned pollLimit,unsigned inputSlot,
 	DataflowGraphRunDescriptor& output)
 {
 	DataflowGraphRunDescriptor d{};
 	d.magic=DataflowGraphRunMagic;d.version=DataflowGraphRunVersion;d.core=binding.core;
-	d.triggerSequence=trigger;d.pollLimit=pollLimit;d.ticket=ticket;d.binding=binding;
+	d.triggerSequence=trigger;d.pollLimit=pollLimit;d.inputSlot=inputSlot;d.ticket=ticket;d.binding=binding;
 	d.lease=lease;d.token=token;
 	for (unsigned n=0;n<2;n++) for (unsigned b=0;b<Banks;b++) d.routes[n][b]=routes[n][b];
 	d.checksum=DataflowGraphRunChecksum(d);

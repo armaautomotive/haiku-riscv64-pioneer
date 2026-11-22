@@ -141,6 +141,21 @@ int main()
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,state),4));
 	assert(!DataflowPciRunningWriteRange(DataflowBarrierOutbox,DataflowBarrierPacketBytes));
 	assert(!DataflowPciRunningWriteRange(DataflowBarrierArrivalBase,DataflowBarrierPacketBytes));
+	DataflowWorkerMailbox readyMailbox{};
+	readyMailbox.magic=DataflowWorkerMailboxMagic;readyMailbox.version=DataflowWorkerMailboxVersion;
+	readyMailbox.logicalCore=7;readyMailbox.state=DataflowWorkerReady;
+	DataflowWorkerSnapshot readySnapshot{0,0,0,DataflowWorkerReady,0,0,0,0};
+	assert(DataflowPciMailboxMatchesReadySnapshot(readyMailbox,7,readySnapshot));
+	readyMailbox.commandSequence=readyMailbox.acknowledgedSequence=readyMailbox.completedSequence=31;
+	readySnapshot.commandSequence=readySnapshot.acknowledgedSequence=readySnapshot.completedSequence=31;
+	assert(!DataflowWorkerMailboxStartupValid(readyMailbox)
+		&& DataflowPciMailboxMatchesReadySnapshot(readyMailbox,7,readySnapshot));
+	readySnapshot.completedSequence=30;
+	assert(!DataflowPciMailboxMatchesReadySnapshot(readyMailbox,7,readySnapshot));
+	readySnapshot.completedSequence=31;readyMailbox.shutdownSequence=DataflowWorkerShutdownRequest;
+	assert(!DataflowPciMailboxMatchesReadySnapshot(readyMailbox,7,readySnapshot));
+	readyMailbox.shutdownSequence=0;readyMailbox.reserved[2]=1;
+	assert(!DataflowPciMailboxMatchesReadySnapshot(readyMailbox,7,readySnapshot));
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchAddress,64));
 	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchLimit-4,8));

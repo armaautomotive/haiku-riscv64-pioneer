@@ -99,6 +99,22 @@ static inline bool DataflowPciMailboxReadyForStop(
 	return true;
 }
 
+// Startup requires sequence zero; an idle resident worker after an
+// acknowledged command keeps its nonzero sequence. Verify the stable
+// mailbox against the separately sampled ready snapshot instead.
+static inline bool DataflowPciMailboxMatchesReadySnapshot(
+	const PioneerQwen35::DataflowWorkerMailbox& mailbox,unsigned core,
+	const PioneerQwen35::DataflowWorkerSnapshot& snapshot)
+{
+	return DataflowPciMailboxReadyForStop(mailbox,core) && !mailbox.shutdownSequence
+		&& PioneerQwen35::DataflowWorkerSnapshotReady(snapshot)
+		&& snapshot.commandSequence==mailbox.commandSequence
+		&& snapshot.acknowledgedSequence==mailbox.acknowledgedSequence
+		&& snapshot.completedSequence==mailbox.completedSequence
+		&& snapshot.state==mailbox.state && snapshot.failure==mailbox.failure
+		&& snapshot.phase==mailbox.phase;
+}
+
 // Only the worker's two pre-command fatal exits may be recovered by holding
 // the selected core directly. The host assigned logicalCore before start;
 // phase 2 may store an invalid raw local route in reserved[0] for diagnostics.

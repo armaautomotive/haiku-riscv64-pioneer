@@ -293,6 +293,31 @@ tag0136 driver SHA-256 values are
 `7e89661ffae9792945a07b4583a2de876e588e0653ec084d2e1666d3e15e2951`
 and `7984c3bd895bf9341289537ed2d1f6128a73a1ad479e55b74df860fca64fcf03`.
 
+Tag0137 fixes a repeated-run readiness check: a fully acknowledged worker may
+have a nonzero command sequence, so requiring the startup mailbox's zero
+sequences rejected a ready worker after its first command. The new check
+requires an idle mailbox matching a stable ready snapshot, and rejects stale
+snapshots, shutdown and unexpected reserved fields. This is a code-level fix;
+it does not establish the cause of tag0120's embedding failure.
+
+A non-loadable graph completion prototype now waits for all 120 terminal
+workers, audits their descriptors, final commands, runtime and NoC state, and
+checks a stable argmax for decode before acknowledging any worker. It retains
+the graph on incomplete, inconsistent or partially acknowledged results.
+Simulated decode and prompt tests cover success and fault cases. The actual
+driver's ownership gate still rejects every graph, and completion does not
+commit model state. A real session must establish immutable model and ticket
+ownership, connect authorization and completion, commit model state exactly
+once, and implement safe cleanup before hardware use. The normal and
+non-loadable Haiku/RISC-V builds and the resident-bank regressions pass. Their
+driver SHA-256 values are
+`d11e3806d24913a1b248d612b0b06dd78413b3f324009a342464c1b83f31c9ea`
+and `4d5bddfc3b5f5e576c00ee585a24c31acfbd8af67da0af184271d34cdca52dbc`.
+The non-loadable build's reported conservative kernel stack is `18160/18432`;
+the existing recorder and worker envelopes still exclude a real caller and
+whole-program proof respectively. This work has not run on the card and
+provides no throughput measurement.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

@@ -659,8 +659,7 @@ PioneerSessionIO::CoreReady(unsigned core,
 		&& memcmp(&snapshot,&observed,sizeof(snapshot))==0
 		&& PioneerQwen35::DataflowWorkerSnapshotReady(observed)
 		&& PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox)
-		&& mailbox.logicalCore==core
-		&& PioneerQwen35::DataflowWorkerMailboxStartupValid(mailbox);
+		&& DataflowPciMailboxMatchesReadySnapshot(mailbox,core,snapshot);
 }
 
 bool
@@ -1784,6 +1783,67 @@ PioneerSessionIO::ResumeRestoredFleet(unsigned& failedStage,unsigned& failedCore
 }
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+// The session owner, immutable stream proof and fresh-ticket lifetime have
+// not been integrated. The compile witness must never approve a completion.
+bool
+PioneerSessionIO::GraphOwnershipMatches(const PioneerQwen35::DataflowStreamPlan&,
+	const PioneerQwen35::DataflowDynamicTokenContext&,const PioneerQwen35::DataflowGraphRunTicket&)
+{
+	volatile bool deny=false;
+	return deny;
+}
+
+bool
+PioneerSessionIO::AuditGraphCore(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& expected,
+	const PioneerQwen35::DataflowWorkerSnapshot& receipt,bool decode)
+{
+	using namespace PioneerQwen35;
+	auto* context=qwen35DataflowContext;
+	if (!context || !context->qwen35DataflowAuthority || !DataflowGraphRunValid(expected,core)
+		|| decode!=(expected.ticket.count==DataflowGraphDecodeSteps)
+		|| (!decode && expected.ticket.count!=DataflowGraphPromptSteps)
+		|| receipt.commandSequence!=expected.triggerSequence || receipt.completedSequence!=expected.triggerSequence
+		|| receipt.state!=DataflowWorkerComplete || receipt.failure || receipt.phase!=2
+		|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
+		|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
+	auto& dram=context->baseline.baseline.baseline.baseline.dram;
+	struct NoC1Reader {
+		PioneerSessionIO& io;
+		uint32_t Read(unsigned offset) { return io.ResidentNocRead(0x10000+offset); }
+		void Pause() { io.Pause(); }
+	} noC1{*this};
+	if (!PioneerQwen35DataflowNoC1Audit(noC1,dram,core)) return false;
+	DataflowWorkerSnapshot observed{};DataflowGraphRunDescriptor descriptor{};
+	if (!ReadWorkerSnapshot(core,observed) || memcmp(&receipt,&observed,sizeof(receipt))
+		|| !ReadCoreMemory(core,DataflowGraphRunAddress,&descriptor,sizeof(descriptor))
+		|| memcmp(&descriptor,&expected,sizeof(descriptor))) return false;
+	const auto* manifest=context->qwen35DataflowAuthority->Manifest();
+	const auto* graph=context->qwen35DataflowAuthority->GraphWorkspace();
+	if (!manifest || !graph) return false;
+	if (decode) {
+		DataflowArgmaxProgram program{};DataflowArgmaxInvocation want{},actual{};
+		if (!DataflowArgmaxProgramBuilder::Build(*manifest,*graph,expected.routes,program)
+			|| !DataflowArgmaxProgramBuilder::BindCore(program,core,want)
+			|| !ReadCoreMemory(core,DataflowProgramAddress,&actual,sizeof(actual))
+			|| memcmp(&want,&actual,sizeof(want))) return false;
+	} else {
+		DataflowResidualProgram program{};DataflowResidualInvocation want{},actual{};
+		if (!DataflowResidualProgramBuilder::Build(*manifest,*graph,DataflowResidualAdd,
+				expected.inputSlot,expected.routes,program)
+			|| !DataflowResidualProgramBuilder::BindCore(program,core,want)
+			|| !ReadCoreMemory(core,DataflowProgramAddress,&actual,sizeof(actual))
+			|| memcmp(&want,&actual,sizeof(want))) return false;
+	}
+	DataflowWorkerMailbox mailbox{};
+	if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox) || mailbox.logicalCore!=core) return false;
+	if (decode && !core) {
+		DataflowArgmaxResult result{};
+		return DataflowArgmaxReadResult(mailbox,expected.ticket.firstSequence+expected.ticket.count-1,result);
+	}
+	for (unsigned i=0;i<6;i++) if (mailbox.reserved[i]) return false;
+	return true;
+}
+
 bool
 PioneerSessionIO::StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor)
 {
@@ -1923,9 +1983,18 @@ __attribute__((used,noinline)) static PioneerQwen35::DataflowGraphPublication
 PioneerQ35GraphPublisherCompileWitness(PioneerStoreContext& context,
 	PioneerQwen35::DataflowGraphPublisher& publisher,const PioneerQwen35::DataflowStreamPlan& plan,
 	const PioneerQwen35::DataflowDynamicTokenContext& token,const PioneerQwen35::DataflowGraphRunTicket& ticket,
-	unsigned trigger,unsigned pollLimit,PioneerQwen35::DataflowGraphRunDescriptor& scratch)
+	unsigned trigger,unsigned pollLimit,unsigned inputSlot,PioneerQwen35::DataflowGraphRunDescriptor& scratch)
 {
-	return publisher.Start(plan,context.qwen35DataflowRoutes,token,ticket,trigger,pollLimit,context.io,scratch);
+	return publisher.Start(plan,context.qwen35DataflowRoutes,token,ticket,trigger,pollLimit,inputSlot,context.io,scratch);
+}
+
+__attribute__((used,noinline)) static PioneerQwen35::DataflowGraphCompletionResult
+PioneerQ35GraphCompletionCompileWitness(PioneerStoreContext& context,
+	PioneerQwen35::DataflowGraphCompletion& completion,const PioneerQwen35::DataflowGraphPublisher& publisher,
+	const PioneerQwen35::DataflowStreamPlan& plan,const PioneerQwen35::DataflowDynamicTokenContext& token,
+	PioneerQwen35::DataflowGraphRunDescriptor& scratch,PioneerQwen35::DataflowArgmaxResult& result)
+{
+	return completion.Finish(publisher,plan,context.qwen35DataflowRoutes,token,context.io,scratch,result);
 }
 
 __attribute__((used,noinline)) static bool

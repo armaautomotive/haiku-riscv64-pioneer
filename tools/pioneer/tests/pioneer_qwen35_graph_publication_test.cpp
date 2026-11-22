@@ -30,6 +30,7 @@ struct PublisherIO {
 		published++;return true;
 	}
 };
+#ifndef Q35_PUBLISHER_FIXTURE_ONLY
 int main() {
 	(void)&q35_publisher_fixture_main;
 	auto f=std::make_unique<Fixture>();auto plan=std::make_unique<DataflowStreamPlan>();
@@ -37,9 +38,9 @@ int main() {
 	DataflowDynamicTokenContext token{};assert(DataflowDynamicTokenContext::Build(f->manifest,42,0,token));
 	DataflowGraphRunTicket ticket{5,1001,548};DataflowGraphRunDescriptor scratch{};
 	auto io=std::make_unique<PublisherIO>();DataflowGraphPublisher success;
-	assert(success.Start(*plan,f->routes,token,ticket,5,10000,*io,scratch)==DataflowGraphPublished
+	assert(success.Start(*plan,f->routes,token,ticket,5,10000,0,*io,scratch)==DataflowGraphPublished
 		&& io->staged==120 && io->checked==120 && io->published==120 && !success.Faulted());
-	assert(!success.Start(*plan,f->routes,token,ticket,6,10000,*io,scratch));
+	assert(!success.Start(*plan,f->routes,token,ticket,6,10000,0,*io,scratch));
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		assert(DataflowGraphRunValid(io->records[core],core));
 		auto forged=io->records[core];forged.token.token^=1;
@@ -48,21 +49,23 @@ int main() {
 		assert(!DataflowGraphRunValid(io->records[core],(core+1)%DataflowCoreCount));
 	}
 	auto pre=std::make_unique<PublisherIO>();pre->failPreflight=8;DataflowGraphPublisher preOwner;
-	assert(preOwner.Start(*plan,f->routes,token,ticket,5,10000,*pre,scratch)==DataflowGraphPublishPreflight
+	assert(preOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*pre,scratch)==DataflowGraphPublishPreflight
 		&& !preOwner.Faulted() && !pre->staged && !pre->published);
 	auto stage=std::make_unique<PublisherIO>();stage->failStage=7;DataflowGraphPublisher stageOwner;
-	assert(stageOwner.Start(*plan,f->routes,token,ticket,5,10000,*stage,scratch)==DataflowGraphPublishStagingFault
+	assert(stageOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*stage,scratch)==DataflowGraphPublishStagingFault
 		&& stageOwner.Faulted() && stageOwner.FailedCore()==7 && !stage->published);
 	auto read=std::make_unique<PublisherIO>();read->failReadback=9;DataflowGraphPublisher readOwner;
-	assert(readOwner.Start(*plan,f->routes,token,ticket,5,10000,*read,scratch)==DataflowGraphPublishStagingFault
+	assert(readOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*read,scratch)==DataflowGraphPublishStagingFault
 		&& readOwner.Faulted() && readOwner.FailedCore()==9 && !read->published);
 	auto partial=std::make_unique<PublisherIO>();partial->failPublish=49;DataflowGraphPublisher partialOwner;
-	assert(partialOwner.Start(*plan,f->routes,token,ticket,5,10000,*partial,scratch)==DataflowGraphPublishCommandFault
+	assert(partialOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*partial,scratch)==DataflowGraphPublishCommandFault
 		&& partialOwner.Faulted() && partialOwner.FailedCore()==49 && partial->published==49);
-	assert(!partialOwner.Start(*plan,f->routes,token,ticket,5,10000,*partial,scratch));
+	assert(!partialOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*partial,scratch));
 	auto invalid=std::make_unique<PublisherIO>();DataflowGraphPublisher invalidOwner;
 	ticket.firstSequence=DataflowWorkerSequenceLimit;
-	assert(invalidOwner.Start(*plan,f->routes,token,ticket,5,10000,*invalid,scratch)==DataflowGraphPublishPreflight
+	assert(invalidOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*invalid,scratch)==DataflowGraphPublishPreflight
 		&& !invalid->staged && !invalid->published);
 	puts("PASS graph run publication: verified descriptors on 120 workers before start; partial writes retained; SIMULATED ONLY");
+	return 0;
 }
+#endif

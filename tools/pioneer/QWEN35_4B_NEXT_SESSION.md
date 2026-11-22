@@ -311,6 +311,23 @@ non-loadable witness:
 `7984c3bd895bf9341289537ed2d1f6128a73a1ad479e55b74df860fca64fcf03`.
 There is no new throughput measurement.
 
+Tag0137 corrects the ready check to accept a fully acknowledged worker with a
+nonzero sequence while rejecting stale snapshots, shutdown and unexpected
+reserved fields. Its non-loadable graph completion prototype audits all 120
+terminal workers and the stable decode argmax before any acknowledgement;
+faults and partial acknowledgements retain the graph. Simulated prompt,
+decode and failure tests pass. The real ownership gate denies every graph,
+and no live model state is committed. Complete immutable session ownership,
+worker authorization, exactly-once state commit, and cleanup before hardware
+qualification. The Haiku/RISC-V normal and non-loadable builds and the
+resident-bank regressions pass. Normal driver SHA-256:
+`d11e3806d24913a1b248d612b0b06dd78413b3f324009a342464c1b83f31c9ea`;
+non-loadable witness:
+`4d5bddfc3b5f5e576c00ee585a24c31acfbd8af67da0af184271d34cdca52dbc`.
+The non-loadable kernel stack estimate is `18160/18432`; recorder and worker
+estimates have the limitations noted above. This does not diagnose the tag0120
+embedding failure and is not a decode performance result.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -370,7 +387,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0136. Since tag0121 it records final release of a
+The default build now targets dedicated tag0137. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
