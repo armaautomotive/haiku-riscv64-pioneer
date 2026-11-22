@@ -7,6 +7,13 @@
 .globl \name
 .type \name,@function
 \name:
+    /* Blackhole cfg0.DisLowCash: bypass the non-coherent L0 data cache.
+       This is required before the first shared mailbox or queue read. */
+    fence iorw,iorw
+    csrsi 0x7c0,8
+    csrr t0,0x7c0
+    andi t0,t0,8
+    beqz t0,2f                 /* do not access shared state if bypass failed */
     li sp,PIONEER_Q35_ROLE_PRIVATE_STACK_TOP
     addi sp,sp,-16
     sw zero,0(sp)               /* private DataflowRoleTickState */

@@ -154,6 +154,12 @@ if [ -n "$("$nm" -u "$temporary/shared-compute-witness.elf")" ]; then
 	exit 1
 fi
 "$size" "$temporary/shared-compute-witness.elf"
+"$objdump" -d "$temporary/shared-compute-witness.elf" > "$temporary/shared-compute.disassembly"
+if ! grep -E '[[:space:]]csrs[[:space:]]+0x7c0,8' "$temporary/shared-compute.disassembly" >/dev/null \
+	|| ! grep -E '[[:space:]]csrr[[:space:]]+[^,]+,0x7c0' "$temporary/shared-compute.disassembly" >/dev/null; then
+	echo 'shared compute witness missing cache-bypass set/readback' >&2
+	exit 1
+fi
 echo 'PASS shared activation reader, Tensix compute and writer witnesses; OFFLINE ONLY'
 python3 - "$temporary/shared-roles.su" <<'PYSTACK'
 from pathlib import Path
@@ -191,6 +197,12 @@ for role in reader writer; do
 		exit 1
 	fi
 	"$size" -A "$temporary/shared-${role}-start-witness.elf"
+	"$objdump" -d "$temporary/shared-${role}-start-witness.elf" > "$temporary/shared-${role}-start.disassembly"
+	if ! grep -E '[[:space:]]csrs[[:space:]]+0x7c0,8' "$temporary/shared-${role}-start.disassembly" >/dev/null \
+		|| ! grep -E '[[:space:]]csrr[[:space:]]+[^,]+,0x7c0' "$temporary/shared-${role}-start.disassembly" >/dev/null; then
+		echo "shared ${role} start witness missing cache-bypass set/readback" >&2
+		exit 1
+	fi
 done
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \

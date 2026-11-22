@@ -37,7 +37,13 @@ extern "C" unsigned qwen35_shared_writer_tick(DataflowRoleMailbox* box,DataflowR
 extern "C" unsigned qwen35_shared_compute_coordinate(
     DataflowRoleMailbox* box,unsigned sequence,unsigned polls)
 {
-    if (!box) return DataflowRoleCoordinatorInvalid;
+    // Match Tenstorrent's Blackhole set_l1_data_cache<false>() policy before
+    // this TRISC reads any shared role state. Preserve every other cfg0 bit.
+    // This witness does not yet own the old TRISC0 state or its restoration.
+    uint32_t cfg0;
+    asm volatile("fence iorw,iorw\n\tcsrsi 0x7c0,8\n\tcsrr %0,0x7c0"
+        : "=r"(cfg0) :: "memory");
+    if (!(cfg0&8U) || !box) return DataflowRoleCoordinatorInvalid;
     DataflowDeviceContext context;
     if (!DataflowBindLocalContext(context,DataflowFailureQueue))
         return DataflowRoleCoordinatorInvalid;
