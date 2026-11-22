@@ -64,8 +64,9 @@ inline DataflowBarrierReadResult DataflowBarrierReadCommitted(
 }
 
 // A single worker owns an instance. The coordinator is worker 0 and runs the
-// same compute as the other workers. The coordinator decides only after
-// every worker has published a receipt. Each worker may proceed after its
+// same compute as the other workers. Subtree receipts are aggregated upward;
+// the coordinator decides only after every worker has published a receipt.
+// Each worker may proceed after its
 // own release and after forwarding that decision to its fixed children; some
 // branches can advance while others are still receiving it. No host action is
 // needed per step. An uncertain send/receipt latches Unsafe and forbids retry.
@@ -77,9 +78,9 @@ template<class IO> class DataflowDeviceBarrier {
 	IO& io;
 	unsigned core=DataflowBarrierWorkers,epoch=0,step=0;
 	unsigned firstFailureCore=DataflowBarrierWorkers,firstFailure=0;
-	bool active=false,unsafe=false,done=false,failed=false;
-	bool seen[DataflowBarrierWorkers];
-	bool ReleaseChildren() {
+	bool active=false,unsafe=false,done=false,failed=false,arrivalSent=false;
+	unsigned seen=0;
+	__attribute__((noinline)) bool ReleaseChildren() {
 		const unsigned first=core*DataflowBarrierReleaseFanout+1;
 		for (unsigned worker=first;worker<first+DataflowBarrierReleaseFanout
 			&& worker<DataflowBarrierWorkers;worker++) {
@@ -90,10 +91,7 @@ template<class IO> class DataflowDeviceBarrier {
 		return true;
 	}
 public:
-	explicit DataflowDeviceBarrier(IO& transport):io(transport) {
-		volatile bool* slots=seen;
-		for (unsigned i=0;i<DataflowBarrierWorkers;i++) slots[i]=false;
-	}
+	explicit DataflowDeviceBarrier(IO& transport):io(transport) {}
 	DataflowDeviceBarrier(const DataflowDeviceBarrier&)=delete;
 	DataflowDeviceBarrier& operator=(const DataflowDeviceBarrier&)=delete;
 	bool Start(unsigned worker,unsigned epochValue,unsigned stepValue,
@@ -102,15 +100,7 @@ public:
 		if (active || unsafe || done || worker>=DataflowBarrierWorkers
 			|| !epochValue || !stepValue || (!status && detail)) return false;
 		core=worker;epoch=epochValue;step=stepValue;active=true;
-		const auto payload=DataflowBarrierPayload(epoch,step,core,status,detail);
-		if (core==0) {
-			seen[0]=true;
-			if (status) { firstFailureCore=0;firstFailure=status; }
-			return true;
-		}
-		if (!io.SendArrival(core,payload,DataflowBarrierCommit(epoch,step))) {
-			unsafe=true;return false;
-		}
+		if (status) { firstFailureCore=core;firstFailure=status; }
 		return true;
 	}
 	DataflowBarrierResult Poll()
@@ -118,12 +108,46 @@ public:
 		if (unsafe) return DataflowBarrierUnsafe;
 		if (done) return failed?DataflowBarrierFailed:DataflowBarrierPassed;
 		if (!active) return DataflowBarrierUnsafe;
-		if (core!=0) {
+		if (!arrivalSent) {
+			bool all=true;
+			const unsigned first=core*DataflowBarrierReleaseFanout+1;
+			for (unsigned child=first;child<first+DataflowBarrierReleaseFanout
+				&& child<DataflowBarrierWorkers;child++) {
+				const unsigned bit=1U<<(child-first);
+				if (seen&bit) continue;
+				DataflowBarrierPacket arrival;
+				const auto result=io.ReadArrival(child,epoch,step,arrival);
+				if (result==DataflowBarrierWaiting) { all=false;continue; }
+				if (result!=DataflowBarrierReady || !DataflowBarrierPayloadValid(arrival,epoch,step,child)
+					|| (arrival.word[5] && !DataflowBarrierSubtreeContains(child,arrival.word[6]))) {
+					unsafe=true;return DataflowBarrierUnsafe;
+				}
+				seen|=bit;
+				if (arrival.word[5] && arrival.word[6]<firstFailureCore) {
+					firstFailureCore=arrival.word[6];firstFailure=arrival.word[5];
+				}
+			}
+			if (!all) return DataflowBarrierPending;
+			failed=firstFailureCore<DataflowBarrierWorkers;
+			if (core==0) {
+				if (!ReleaseChildren()) { unsafe=true;return DataflowBarrierUnsafe; }
+				active=false;done=true;return failed?DataflowBarrierFailed:DataflowBarrierPassed;
+			}
+			const auto payload=DataflowBarrierPayload(epoch,step,core,failed?firstFailure:0,
+				failed?firstFailureCore:0);
+			if (!io.SendArrival(core,payload,DataflowBarrierCommit(epoch,step))) {
+				unsafe=true;return DataflowBarrierUnsafe;
+			}
+			arrivalSent=true;
+		}
+		{
 			DataflowBarrierPacket release;
 			const auto result=io.ReadRelease(core,epoch,step,release);
 			if (result==DataflowBarrierWaiting) return DataflowBarrierPending;
 			if (result!=DataflowBarrierReady || !DataflowBarrierPayloadValid(release,epoch,step,core)
-				|| (release.word[5] && release.word[6]>=DataflowBarrierWorkers)) {
+				|| (release.word[5] && release.word[6]>=DataflowBarrierWorkers)
+				|| (failed && (!release.word[5] || release.word[6]>firstFailureCore
+					|| (release.word[6]==firstFailureCore && release.word[5]!=firstFailure)))) {
 				unsafe=true;return DataflowBarrierUnsafe;
 			}
 			failed=release.word[5]!=0;firstFailure=release.word[5];
@@ -131,24 +155,6 @@ public:
 			if (!ReleaseChildren()) { unsafe=true;return DataflowBarrierUnsafe; }
 			active=false;done=true;return failed?DataflowBarrierFailed:DataflowBarrierPassed;
 		}
-		bool all=true;
-		for (unsigned worker=1;worker<DataflowBarrierWorkers;worker++) {
-			if (seen[worker]) continue;
-			DataflowBarrierPacket arrival;
-			const auto result=io.ReadArrival(worker,epoch,step,arrival);
-			if (result==DataflowBarrierWaiting) { all=false;continue; }
-			if (result!=DataflowBarrierReady || !DataflowBarrierPayloadValid(arrival,epoch,step,worker)) {
-				unsafe=true;return DataflowBarrierUnsafe;
-			}
-			seen[worker]=true;
-			if (arrival.word[5] && worker<firstFailureCore) {
-				firstFailureCore=worker;firstFailure=arrival.word[5];
-			}
-		}
-		if (!all) return DataflowBarrierPending;
-		failed=firstFailureCore<DataflowBarrierWorkers;
-		if (!ReleaseChildren()) { unsafe=true;return DataflowBarrierUnsafe; }
-		active=false;done=true;return failed?DataflowBarrierFailed:DataflowBarrierPassed;
 	}
 	unsigned FailureCore() const { return firstFailureCore; }
 	unsigned Failure() const { return firstFailure; }
@@ -158,9 +164,7 @@ public:
 	bool NextStep() {
 		if (!done || failed || unsafe || active) return false;
 		core=DataflowBarrierWorkers;epoch=step=firstFailure=0;
-		firstFailureCore=DataflowBarrierWorkers;done=false;
-		volatile bool* slots=seen;
-		for (unsigned i=0;i<DataflowBarrierWorkers;i++) slots[i]=false;
+		firstFailureCore=DataflowBarrierWorkers;done=false;arrivalSent=false;seen=0;
 		return true;
 	}
 };
@@ -191,9 +195,10 @@ public:
 	explicit DataflowBlackholeBarrierIO(unsigned worker):core(worker) {}
 	bool SendArrival(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
-		return worker==core && worker && worker<DataflowBarrierWorkers
-			&& Send(0,DataflowBarrierArrivalAddress(worker,false),payload)
-			&& Send(0,DataflowBarrierArrivalAddress(worker,true),commit);
+		const unsigned parent=DataflowBarrierReleaseParent(worker);
+		return worker==core && parent<DataflowBarrierWorkers
+			&& Send(parent,DataflowBarrierArrivalAddress(worker,false),payload)
+			&& Send(parent,DataflowBarrierArrivalAddress(worker,true),commit);
 	}
 	bool SendRelease(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
@@ -203,7 +208,7 @@ public:
 	}
 	DataflowBarrierReadResult ReadArrival(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& packet)
 	{
-		return core==0 && worker && worker<DataflowBarrierWorkers
+		return DataflowBarrierReleaseEdge(core,worker)
 			?Read(DataflowBarrierArrivalAddress(worker,false),DataflowBarrierArrivalAddress(worker,true),epoch,step,packet)
 			:DataflowBarrierInvalid;
 	}

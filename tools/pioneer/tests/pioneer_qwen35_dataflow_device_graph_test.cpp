@@ -22,6 +22,7 @@ struct Transport {
 		f.release[worker]={p,c};return true;
 	}
 	DataflowBarrierReadResult ReadArrival(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& out) {
+		assert(DataflowBarrierReleaseEdge(core,worker));
 		return DataflowBarrierReadCommitted(f.arrival[worker].payload.word,f.arrival[worker].commit.word,epoch,step,out);
 	}
 	DataflowBarrierReadResult ReadRelease(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& out) {
@@ -132,7 +133,7 @@ int main() {
 	assert(uncertain.graph[9]->Fault()==DataflowGraphExecutionUncertain);
 	Fleet failure;failure.execution[5]->workerFailure=0;failure.Run();
 	for (auto& g:failure.graph) assert(g->Fault()==DataflowGraphWorkerFault && g->FailureCore()==5 && g->FailureStatus()==77);
-	Fleet partial;partial.fabric.failRelease=12;partial.Run();
+	Fleet partial;partial.fabric.failRelease=12;partial.Run(30);
 	assert(partial.graph[2]->Fault()==DataflowGraphBarrierFault);
 	for (auto& g:partial.graph) assert(g->State()==DataflowGraphRetain);
 	Fleet reset;reset.execution[7]->failReset=0;reset.Run();

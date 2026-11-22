@@ -72,7 +72,7 @@ public:
 		core=worker;epoch=runEpoch;firstSequence=sequenceStart;count=runCount;pollBudget=maxPolls;
 		state=DataflowGraphReady;return true;
 	}
-	DataflowDeviceGraphState Tick() {
+	__attribute__((noinline)) DataflowDeviceGraphState Tick() {
 		if (state==DataflowGraphReady) {
 			if (!io.Fetch(index)) return Retain(DataflowGraphFetchFault);
 			if (!io.Authorize(index)) return Retain(DataflowGraphAuthorityFault);

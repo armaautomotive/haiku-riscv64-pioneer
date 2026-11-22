@@ -574,6 +574,25 @@ normal driver `2026112100010151`:
 non-loadable witness:
 `1fa285843b4615fffb638e451df5c1353beaf2f05d1dd19219dc18c00f0beb6d`.
 
+Tag0152 also aggregates arrivals through the four-way tree. Each parent
+waits for committed receipts from its own children before sending one
+aggregate upward; worker 0 checks four arrivals rather than 119. Failure
+reports must identify a member of the reporting subtree, and a release cannot
+erase a failure already observed below it. Per-parent arrival slots are
+cleared and read back while the cores are held. Simulated tests cover all 120
+workers, out-of-order polling, subtree forgery, lost messages, partial
+releases and failure propagation. The same number of unicast packets still
+crosses the fleet; no hardware throughput has been measured. The worker
+stack envelope is `7632/8192` with a 1,024-byte helper allowance, not a
+whole-program proof. Normal, non-loadable and qualification cross-builds,
+target tests and reload tests pass. Qualification tag `2026112100020152`
+driver SHA-256:
+`1d527077af67276ca9024f8011f91f56e9fde8b7f053fe4268000cea041da82d`;
+normal tag `2026112100010152`:
+`dc31e3e98d3f0fd84e2f44baecb06534d7360f87a8439aaa6e6c2ce2d4dabb70`;
+non-loadable witness:
+`7d0b349751e8324769fb71400eca5d23a24cd08b846201e5260c8c01fe64c121`.
+
 After the user restored power, strict SSH to the pinned Haiku identity
 succeeded again on 2026-11-22. This was an OS identity check only; the prior
 27B process and stable-driver idle preflight must be checked again before
@@ -638,7 +657,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0151. Since tag0121 it records final release of a
+The default build now targets dedicated tag0152. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

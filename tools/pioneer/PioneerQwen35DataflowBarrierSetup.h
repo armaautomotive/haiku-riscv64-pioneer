@@ -23,7 +23,9 @@ bool DataflowBarrierPrepareHeldCore(IO& io,unsigned core)
 	};
 	if (!clear(DataflowBarrierOutbox) || !clear(DataflowBarrierReleasePayload)
 		|| !clear(DataflowBarrierReleaseCommit)) return false;
-	if (core==0) for (unsigned worker=0;worker<DataflowBarrierWorkers;worker++)
+	const unsigned first=core*DataflowBarrierReleaseFanout+1;
+	for (unsigned worker=first;worker<first+DataflowBarrierReleaseFanout
+		&& worker<DataflowBarrierWorkers;worker++)
 		if (!clear(DataflowBarrierArrivalAddress(worker,false))
 			|| !clear(DataflowBarrierArrivalAddress(worker,true))) return false;
 	return true;

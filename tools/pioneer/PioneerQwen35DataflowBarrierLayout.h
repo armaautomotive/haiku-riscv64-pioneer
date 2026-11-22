@@ -44,9 +44,8 @@ inline unsigned DataflowBarrierWorkerRoute(unsigned worker)
 		?columns[worker/10]|((2+worker%10)<<6):UINT32_MAX;
 }
 
-// A fixed four-way heap tree distributes a completed coordinator decision.
-// Every non-root worker has exactly one parent with a smaller index. Only
-// that parent may write its release inbox; arrivals still go directly to 0.
+// A fixed four-way heap tree aggregates arrivals and distributes the
+// coordinator decision. Every non-root worker has one smaller-index parent.
 inline unsigned DataflowBarrierReleaseParent(unsigned worker)
 {
 	return worker && worker<DataflowBarrierWorkers
@@ -59,16 +58,23 @@ inline bool DataflowBarrierReleaseEdge(unsigned source,unsigned destination)
 		&& DataflowBarrierReleaseParent(destination)==source;
 }
 
+inline bool DataflowBarrierSubtreeContains(unsigned root,unsigned worker)
+{
+	if (root>=DataflowBarrierWorkers || worker>=DataflowBarrierWorkers) return false;
+	while (worker>root) worker=DataflowBarrierReleaseParent(worker);
+	return worker==root;
+}
+
 // No arbitrary address, core or route is supplied to the NoC transport.
-// A peer may publish only its own coordinator slot; a release may travel only
-// along the fixed tree. The core-0 local receipt needs no NoC packet.
+// A peer may publish only its own slot in its parent's L1; release travels
+// down the same fixed tree. The core-0 local receipt needs no NoC packet.
 inline bool DataflowBarrierPeerWriteAllowed(unsigned source,unsigned destination,
 	unsigned route,unsigned remote,unsigned local,unsigned bytes)
 {
 	if (source>=DataflowBarrierWorkers || destination>=DataflowBarrierWorkers
 		|| source==destination || route!=DataflowBarrierWorkerRoute(destination)
 		|| local!=DataflowBarrierOutbox || bytes!=DataflowBarrierPacketBytes) return false;
-	if (destination==0 && source!=0)
+	if (DataflowBarrierReleaseEdge(destination,source))
 		return remote==DataflowBarrierArrivalAddress(source,false)
 			|| remote==DataflowBarrierArrivalAddress(source,true);
 	if (DataflowBarrierReleaseEdge(source,destination))

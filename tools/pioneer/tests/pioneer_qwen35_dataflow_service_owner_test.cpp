@@ -48,7 +48,7 @@ struct MockDataflowIO {
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	uint32_t barrierLocal[DataflowCoreCount][3*DataflowBarrierPacketBytes/4]{};
-	uint32_t barrierRoot[(DataflowBarrierArrivalEnd-DataflowBarrierArrivalBase)/4]{};
+	uint32_t barrierChildren[DataflowCoreCount][DataflowBarrierReleaseFanout][DataflowBarrierArrivalStride/4]{};
 	unsigned failBarrierCore=UINT32_MAX,barrierWriteCount[DataflowCoreCount]{};
 	uint32_t dispatchText[DataflowCoreCount][128]{};
 	unsigned dispatchWrites[DataflowCoreCount]{},dispatchReads[DataflowCoreCount]{};
@@ -141,9 +141,12 @@ struct MockDataflowIO {
 			if (core==failBarrierCore) return false;
 			memcpy(reinterpret_cast<uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,input,bytes);
 			barrierWriteCount[core]++;
-		} else if (core==0 && address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
+		} else if (address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
 			if (core==failBarrierCore) return false;
-			memcpy(reinterpret_cast<uint8_t*>(barrierRoot)+address-DataflowBarrierArrivalBase,input,bytes);
+			const unsigned offset=address-DataflowBarrierArrivalBase;
+			const unsigned child=offset/DataflowBarrierArrivalStride,within=offset%DataflowBarrierArrivalStride;
+			if (!DataflowBarrierReleaseEdge(core,child) || bytes>DataflowBarrierArrivalStride-within) return false;
+			memcpy(reinterpret_cast<uint8_t*>(barrierChildren[core][child-(core*DataflowBarrierReleaseFanout+1)])+within,input,bytes);
 			barrierWriteCount[core]++;
 #endif
 		} else return false;
@@ -184,8 +187,11 @@ struct MockDataflowIO {
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
 			memcpy(output,reinterpret_cast<const uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,bytes);
-		} else if (core==0 && address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
-			memcpy(output,reinterpret_cast<const uint8_t*>(barrierRoot)+address-DataflowBarrierArrivalBase,bytes);
+		} else if (address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
+			const unsigned offset=address-DataflowBarrierArrivalBase;
+			const unsigned child=offset/DataflowBarrierArrivalStride,within=offset%DataflowBarrierArrivalStride;
+			if (!DataflowBarrierReleaseEdge(core,child) || bytes>DataflowBarrierArrivalStride-within) return false;
+			memcpy(output,reinterpret_cast<const uint8_t*>(barrierChildren[core][child-(core*DataflowBarrierReleaseFanout+1)])+within,bytes);
 #endif
 		} else return false;
 		return true;
@@ -195,8 +201,12 @@ struct MockDataflowIO {
 		if (core>=DataflowCoreCount || !held[core]
 			|| boot[core]!=DataflowServiceBootWord) return false;
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-		for (unsigned i=0;i<DataflowCoreCount;i++)
-			if (barrierWriteCount[i]!=(i?3U:3U+2U*DataflowCoreCount)) return false;
+		for (unsigned i=0;i<DataflowCoreCount;i++) {
+			const unsigned first=i*DataflowBarrierReleaseFanout+1;
+			const unsigned children=first>=DataflowCoreCount?0
+				:(DataflowCoreCount-first<DataflowBarrierReleaseFanout?DataflowCoreCount-first:DataflowBarrierReleaseFanout);
+			if (barrierWriteCount[i]!=3+2*children) return false;
+		}
 #endif
 		if (core==failStartCore) return false;
 		started[core]=true;

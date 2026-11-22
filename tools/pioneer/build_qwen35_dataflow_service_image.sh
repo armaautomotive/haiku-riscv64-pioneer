@@ -116,6 +116,7 @@ groups = (
     'DataflowDynamicPatch(',
     'DataflowConvInvocation::Valid()',
     'DataflowDeviceBarrier<IO>::Poll()',
+    'DataflowDeviceBarrier<IO>::ReleaseChildren()',
     'DataflowBlackholeNoc<Noc>::Transfer(',
     'qwen35_graph_execute(',
     'DataflowWorkerExecuteAuthorized(',

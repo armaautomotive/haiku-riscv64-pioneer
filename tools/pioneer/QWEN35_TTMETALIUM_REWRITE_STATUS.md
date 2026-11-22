@@ -110,6 +110,23 @@ normal and witness drivers:
 `ac7945b2b377c2da2ffc0f4eef2b0a48b5dc59ffafe7220c3fe9acb15bcb2bb0` and
 `1fa285843b4615fffb638e451df5c1353beaf2f05d1dd19219dc18c00f0beb6d`.
 
+Tag0152 extends the tree to collect arrivals. Every node checks the committed
+receipts from its own children, aggregates the earliest failing worker and
+sends one receipt to its parent. Worker 0 therefore polls four child receipts
+instead of 119 direct receipts at each graph step. Arrival slots are cleared
+and checked on every relevant held core, and the transport admits only a
+child-to-parent arrival or a parent-to-child release. Failure identities
+outside the reporting subtree and releases that erase known failures are
+rejected. The target/reload suites, all-core simulated failure and scheduling
+tests, and normal/witness/qualification cross-builds pass. These checks do not
+measure hardware speed; fleet-wide unicast traffic and host audits remain.
+The worker stack envelope is `7632/8192` including a 1,024-byte helper
+allowance, not a whole-program proof. Qualification driver SHA-256:
+`1d527077af67276ca9024f8011f91f56e9fde8b7f053fe4268000cea041da82d`;
+normal and witness driver SHA-256:
+`dc31e3e98d3f0fd84e2f44baecb06534d7360f87a8439aaa6e6c2ce2d4dabb70` and
+`7d0b349751e8324769fb71400eca5d23a24cd08b846201e5260c8c01fe64c121`.
+
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku
 boot. The saved hash-verified recovery script restored stable driver55:

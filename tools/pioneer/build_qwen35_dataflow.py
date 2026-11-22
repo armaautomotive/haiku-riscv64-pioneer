@@ -8,8 +8,8 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010151'
-GRAPH_TRIAL_TAG = '2026112100020151'
+TAG = '2026112100010152'
+GRAPH_TRIAL_TAG = '2026112100020152'
 
 
 def verify_kernel_stack_budget(driver_directory):
