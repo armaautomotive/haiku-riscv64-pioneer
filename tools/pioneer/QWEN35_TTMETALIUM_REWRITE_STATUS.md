@@ -50,8 +50,13 @@ writes used by Tenstorrent's KMD, rejects bus mastering or a stale reset marker,
 and waits a bounded number of times for the marker to clear. Its fake-PCI
 ASan/UBSan test passes with the reload-guard fixture. It is not wired to an
 ioctl. This remains only a proof-gated guard API and reset-sequence foundation:
-the driver ioctl, post-reset PCI/firmware/resource rebuild, physical recovery,
-and silicon validation are not implemented. The currently loaded legacy guard
+the driver ioctl, post-reset firmware/resource rebuild, physical recovery,
+and silicon validation are not implemented. A compiled PCI restoration helper
+reestablishes the fixed active BAR and bridge layout after the reset marker
+clears, while refusing bus mastering, an uncleared marker, unsafe interrupt
+state, and unexpected identities. Simulated PCI tests exercise the real BAR
+plan, dropped writes, and decoder ordering. It does not by itself restore all
+PCI capabilities or establish firmware readiness. The currently loaded legacy guard
 is `B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel
 boot from the NVMe/kexec path will be required to install the new guard.
 
@@ -66,6 +71,13 @@ not wired into a recovery operation or exercised on the card. A single atomic
 word publishes the guard's fault epoch and cold latch together; an injected
 fault during latch clearing leaves the previous generation recoverable. These
 checks do not qualify a physical reset.
+
+The failed owner retains its cookie, PCI reservation, snapshots and
+quarantined host buffers after the client exits. The recovery operation must
+distinguish a final-freed owner from a still-live file descriptor and revoke
+old generation access before retiring those resources. Host buffers must stay
+wired until the reset, PCI pending-transaction and host-DMA idle proofs pass.
+The PCI, mapping, guard, firmware and ownership steps are not yet orchestrated.
 
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and

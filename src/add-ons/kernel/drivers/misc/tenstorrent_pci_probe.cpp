@@ -3718,6 +3718,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 };
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#include "PioneerPostResetPci.h"
 #include "PioneerPostResetMapping.inc"
 #endif
 #include "PioneerQwen35WorkBinding.inc"
