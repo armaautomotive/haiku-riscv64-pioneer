@@ -31,6 +31,14 @@ unchanged. There is still no confirmed boot, so no further power pulse was
 sent. Stable-driver recovery and the tag0120 hardware diagnostic remain
 pending.
 
+After that unsuccessful ON attempt, the user reported switching off the
+external power supply and waiting five minutes before retrying. Following the
+rest, both host-pinned SSH profiles still time out, ARP remains incomplete,
+and the serial console is unchanged. Relay status remains power-button open
+and SD detached. The agent has not switched the supply or sent another relay
+pulse; the supply's current state needs confirmation before interpreting the
+missing boot response.
+
 No valid output, prompt completion, decode time, warm run, clean unload, or
 throughput result exists for tag0120. The 100 decode tokens/s goal remains
 unmet, and assistant integration remains deferred. Build hashes and offline
