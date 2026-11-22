@@ -43,7 +43,7 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     assert(context && io.qwen35BorrowedRoleScope);
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     assert(context->qwen35SharedRoleBinding);
-    io.runtimeCore=7; io.simulateArc=true; io.selectCalls=io.tlbWrites=0;
+    io.runtimeCore=7; io.simulateArc=true; io.firmwareMatches=true; io.selectCalls=io.tlbWrites=0;
     // ARC inspection and both 120-core sweeps can finish, but they cannot
     // authorize the independent fleet ownership proof or role mapping.
     assert(!io.SharedCaptureAndStageHeld());
@@ -52,7 +52,21 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr;
-    io.simulateArc=false;
+    io.simulateArc=false; io.firmwareMatches=false;
+}
+
+static void ExerciseUnexpectedFirmware(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    assert(context && io.qwen35BorrowedRoleScope);
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    assert(context->qwen35SharedRoleBinding);
+    io.runtimeCore=7; io.simulateArc=true; io.firmwareMatches=false;
+    io.selectCalls=io.tlbWrites=0;
+    assert(!io.SharedCaptureAndStageHeld());
+    assert(!io.tlbWrites && !io.selectCalls && !gMapCalls && io.runtimeCore==7);
+    assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
+    context->qwen35SharedRoleBinding=nullptr; io.simulateArc=false;
 }
 
 int main()
@@ -65,7 +79,9 @@ int main()
     assert(Qwen35DataflowGenerate(&cookie,nullptr,0)==B_OK);
     assert(Qwen35DataflowControl(&cookie,6,nullptr,0)==B_OK);
     assert(Qwen35DataflowControl(&cookie,7,nullptr,0)==B_OK);
-    service.capturePending=true; gBorrowedScopeHook=ExerciseStatusSampling;
+    service.capturePending=true; gBorrowedScopeHook=ExerciseUnexpectedFirmware;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    gBorrowedScopeHook=ExerciseStatusSampling;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     service.capturePending=false;
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);

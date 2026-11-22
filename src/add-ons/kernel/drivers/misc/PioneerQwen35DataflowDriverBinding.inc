@@ -3,6 +3,13 @@
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRuntimeRecovery.h"
 #include "PioneerQwen35DataflowNoC1Audit.h"
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#include "PioneerQwen35DataflowFirmwareIdentity.h"
+bool PioneerSessionIO::SharedRoleFirmwareMatches() const {
+	return qwen35DataflowContext && PioneerQwen35ReportedFirmwareMatches(
+		qwen35DataflowContext->baseline.baseline.baseline.baseline.control.control.telemetry);
+}
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphFaultTeardown.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphWait.h"

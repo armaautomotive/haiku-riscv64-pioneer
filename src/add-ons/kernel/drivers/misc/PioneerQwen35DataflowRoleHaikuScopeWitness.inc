@@ -121,7 +121,8 @@ public:
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     bool ProveRoleStatusInspectionAllowed(PioneerSessionIO& io) const {
         return ProveExclusiveRewrite(io) && fContext->qwen35DataflowService
-            && fContext->qwen35DataflowService->SharedRoleCapturePending();
+            && fContext->qwen35DataflowService->SharedRoleCapturePending()
+            && io.SharedRoleFirmwareMatches();
     }
 #endif
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }

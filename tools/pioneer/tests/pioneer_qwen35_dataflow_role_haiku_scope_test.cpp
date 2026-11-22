@@ -51,6 +51,7 @@ struct PioneerSessionIO {
 #endif
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
     bool simulateArc=false,tlbOverride=false;
+    bool firmwareMatches=false;
     unsigned selectCalls=0,tlbWrites=0;
     uint32_t slot1[3]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
@@ -83,6 +84,7 @@ struct PioneerSessionIO {
     bool SharedFinalizeBeforeResume();
 #endif
     bool DataflowPanelMappingStable() const { return mapping; }
+    bool SharedRoleFirmwareMatches() const { return firmwareMatches; }
     uint32_t DramTlbRead(unsigned slot,unsigned word) {
         if (slot==1 && tlbOverride) return slot1[word];
         const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
