@@ -50,6 +50,15 @@ normal 27B application-queue tests still pass. This is not a complete or
 hardware-qualified recovery sequence. The normal tag0125 driver SHA-256 is
 `fc736ae48530f37785f11ca2be56626077e549cae05e3a321db841ecd9caa366`.
 
+The recovery rewrite now has a standalone, simulated-only helper for the
+internal PCIe DBI payload setting, following Tenstorrent's Blackhole reset
+state handling. It validates a stable healthy-session snapshot against PCI
+configuration space, preserves unrelated control bits, avoids writing ones to
+the status half, and rejects lost writes and route changes. This helper is not
+connected to a device aperture or to recovery orchestration: route validation,
+session-time capture, fresh post-reset access and hardware qualification are
+still required. The recovery operation remains disabled by default.
+
 Haiku is reachable at `10.0.0.247`. Following one authorized power cycle
 and the pinned NVMe/kexec handoff, the saved recovery script restored stable55
 at generation2: `cold0 active_owner0 open_count1`. The prior diagnostic has
