@@ -15,5 +15,6 @@ bool PioneerQwen35RoleCodeOwnerTargetProbe(DataflowRoleCodeOwner& owner,
 {
     RoleCodeProbeIO io;
     return owner.Capture(core,snapshot,DataflowRoleCodeOwner::RequiredWords(),io)
-        && owner.Stage(true,code,words,io) && owner.Restore(io);
+        && owner.Stage(true,code,words,io) && owner.Stage(false,code,words,io)
+        && owner.VerifyStaged(io) && owner.Restore(io);
 }

@@ -10,7 +10,7 @@ enum DataflowRoleTickResult {
     DataflowRoleTickWaitingAck=3,
     DataflowRoleTickFault=4,
     DataflowRoleTickWaitingRecovery=5,
-    DataflowRoleTickStopRequested=6
+    DataflowRoleTickStopRequested=PIONEER_Q35_ROLE_STOP_REQUESTED
 };
 struct DataflowRoleTickState { bool stopObserved=false; };
 // One bounded decision, with no wait or implicit retry. The future service

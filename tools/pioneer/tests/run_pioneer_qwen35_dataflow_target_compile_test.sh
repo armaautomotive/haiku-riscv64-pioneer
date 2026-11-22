@@ -114,6 +114,156 @@ if [ -n "$("$nm" -u "$temporary/queued-compute-coordinator-witness.elf")" ]; the
 fi
 "$size" "$temporary/queued-compute-coordinator-witness.elf"
 echo 'PASS concrete queued Tensix coordinator link witness; NOT A SERVICE IMAGE'
+# Alternative shared-activation bodies: these are separately linked witnesses,
+# never simultaneous with the queued-input variants and never loaded.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$root/tools/pioneer/PioneerQwen35DataflowSharedRoles.cpp" -o "$temporary/shared-roles.o"
+if [ -n "$("$nm" -u "$temporary/shared-roles.o")" ]; then
+	echo 'shared activation role witness has unresolved imports' >&2
+	exit 1
+fi
+"$objdump" -d "$temporary/shared-roles.o" > "$temporary/shared-roles.disassembly"
+if grep -E '[[:space:]](amo[a-z]+|lr\.w|sc\.w)[[:space:]]' "$temporary/shared-roles.disassembly" >/dev/null; then
+	echo 'shared activation role witness uses unsupported atomics' >&2
+	exit 1
+fi
+if grep -E '[[:space:]]((fdiv|fsqrt)[.][sd]|fcvt[.](w|wu)[.][sd])[[:space:]]' "$temporary/shared-roles.disassembly" >/dev/null; then
+	echo 'shared role witness uses an unsupported divide, square root or rounding-sensitive conversion' >&2
+	exit 1
+fi
+for role in reader writer; do
+	if [ "$role" = reader ]; then start=0xb0000; limit=0xb5000
+	else start=0xb5000; limit=0xb8000; fi
+	"$ld" -m elf32lriscv --no-relax --gc-sections \
+		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
+		-e "qwen35_shared_${role}_tick" \
+		-T "$root/tools/pioneer/blackhole_qwen35_queued_role_witness.ld" \
+		"$temporary/shared-roles.o" -o "$temporary/shared-${role}-witness.elf"
+	"$size" -A "$temporary/shared-${role}-witness.elf"
+done
+"$ld" -m elf32lriscv --no-relax --gc-sections -Ttext 0xc0000 \
+	-e qwen35_shared_compute_coordinate "$temporary/shared-roles.o" \
+	-o "$temporary/shared-compute-witness.elf"
+if [ -n "$("$nm" -u "$temporary/shared-compute-witness.elf")" ]; then
+	echo 'shared activation compute witness has unresolved imports' >&2
+	exit 1
+fi
+"$size" "$temporary/shared-compute-witness.elf"
+echo 'PASS shared activation reader, Tensix compute and writer witnesses; OFFLINE ONLY'
+python3 - "$temporary/shared-roles.su" <<'PYSTACK'
+from pathlib import Path
+import sys
+entries=[]
+for line in Path(sys.argv[1]).read_text().splitlines():
+    parts=line.rsplit('\t',2)
+    if len(parts)!=3 or not parts[1].isdigit() or parts[2]!='static':
+        raise SystemExit('missing or non-static shared role stack frame')
+    entries.append(int(parts[1]))
+if not entries:
+    raise SystemExit('missing shared role stack usage')
+total=sum(entries)+16+1024
+if total>8192:
+    raise SystemExit(f'shared role frame-sum witness {total} exceeds 8192 bytes')
+print(f'PASS shared role frame-sum witness {total}/8192 bytes; not a recursion or whole-program proof')
+PYSTACK
+# Startup/park shims are link witnesses only. No boot vector, reset write,
+# physical owner, memory transfer or live service installation is provided.
+"$cxx" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" "$root/tools/pioneer/blackhole_qwen35_shared_role_start.S" \
+	-o "$temporary/shared-start.o"
+for role in reader writer; do
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70080; start=0xb0000; limit=0xb5000
+	else shim=0x70080; shim_limit=0x70100; start=0xb5000; limit=0xb8000; fi
+	"$ld" -m elf32lriscv --no-relax --gc-sections \
+		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
+		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
+		-e "qwen35_shared_${role}_start" \
+		-T "$root/tools/pioneer/blackhole_qwen35_shared_role_witness.ld" \
+		"$temporary/shared-start.o" "$temporary/shared-roles.o" \
+		-o "$temporary/shared-${role}-start-witness.elf"
+	if [ -n "$("$nm" -u "$temporary/shared-${role}-start-witness.elf")" ]; then
+		echo "shared ${role} start witness has unresolved imports" >&2
+		exit 1
+	fi
+	"$size" -A "$temporary/shared-${role}-start-witness.elf"
+done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \
+	-o "$temporary/role-boot-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-boot-test"
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_boot_owner_target_probe.cpp" \
+	-o "$temporary/role-boot-owner.o"
+if [ -n "$("$nm" -u "$temporary/role-boot-owner.o")" ]; then
+	echo 'role boot owner target probe has unresolved imports' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_owner_test.cpp" \
+	-o "$temporary/role-boot-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-boot-owner-test"
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_fleet_boot_owner_target_probe.cpp" \
+	-o "$temporary/role-fleet-boot-owner.o"
+if [ -n "$("$nm" -u "$temporary/role-fleet-boot-owner.o")" ]; then
+	echo 'role fleet boot owner target probe has unresolved imports' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_fleet_boot_owner_test.cpp" \
+	-o "$temporary/role-fleet-boot-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-boot-owner-test"
+# Composed fleet image ownership remains a fake-IO-only contract.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_fleet_images_owner_target_probe.cpp" \
+	-o "$temporary/role-fleet-images-owner.o"
+if [ -n "$("$nm" -u "$temporary/role-fleet-images-owner.o")" ]; then
+	echo 'role fleet images owner target probe has unresolved imports' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_fleet_images_owner_test.cpp" \
+	-o "$temporary/role-fleet-images-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-images-owner-test"
+# B/NC private RAM and composed recovery are simulated; no reset is issued.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_fleet_recovery_owner_target_probe.cpp" \
+	-o "$temporary/role-fleet-recovery-owner.o"
+if [ -n "$("$nm" -u "$temporary/role-fleet-recovery-owner.o")" ]; then
+	echo 'role fleet recovery target probe has unresolved imports' >&2
+	exit 1
+fi
+for test in role_local_ram_owner role_fleet_local_ram_owner role_fleet_recovery_owner; do
+	${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+		-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_${test}_test.cpp" \
+		-o "$temporary/${test}-test"
+	ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/${test}-test"
+done
 # Check proposed disjoint code slots including service-tick adapters, beyond
 # the currently saved L1 view. No resident loop, boot shim or owner is linked;
 # the current owner must never load either result.
@@ -153,6 +303,24 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_code_owner_test.cpp" \
 	-o "$temporary/role-code-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-code-owner-test"
+# The 120-core code snapshot contract is simulation only and does not bind
+# a physical PCI implementation or prove boot/reset/NoC recovery.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_fleet_code_owner_target_probe.cpp" \
+	-o "$temporary/role-fleet-code-owner.o"
+if [ -n "$("$nm" -u "$temporary/role-fleet-code-owner.o")" ]; then
+	echo 'fleet code owner target probe has unresolved imports' >&2
+	exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_fleet_code_owner_test.cpp" \
+	-o "$temporary/role-fleet-code-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-code-owner-test"
 # Per-tile handoff uses only single-writer words and the existing fences.
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \

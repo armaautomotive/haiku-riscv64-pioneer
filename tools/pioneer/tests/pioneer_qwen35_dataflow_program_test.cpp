@@ -3,6 +3,7 @@
 #include "../PioneerQwen35DataflowVectorUnpack.h"
 #include "../PioneerQwen35DataflowAuthorization.h"
 #include "../PioneerQwen35DataflowRoleCoordinator.h"
+#include "../PioneerQwen35DataflowSharedActivationRoles.h"
 #include <assert.h>
 #include <atomic>
 #include <cstring>
@@ -90,6 +91,7 @@ struct RoleTestOps {
 	enum { TensixMatrixEngine=1 };
 	RoleTestCounters& counters;
 	bool bound=false;
+	unsigned projectionType=13;
 	bool Bind(const DataflowCoreInvocation&) {
 		if (bound) return false;
 		bound=true; counters.binds.fetch_add(1,std::memory_order_relaxed); return true;
@@ -117,7 +119,7 @@ struct RoleTestOps {
 	bool PackActivation(unsigned type,unsigned inputs,unsigned chunk,
 		const float* source,uint8_t* output,unsigned bytes)
 	{
-		if (type!=12 || inputs!=Hidden || !source || !output
+		if (type!=DataflowActivationPackingType(projectionType) || inputs!=Hidden || !source || !output
 			|| chunk>=inputs/DataflowActivationChunkInputs
 			|| bytes!=DataflowInputPageBytes
 			|| source[chunk*DataflowActivationChunkInputs]
@@ -130,14 +132,15 @@ struct RoleTestOps {
 	}
 	bool TensixBeginOutput(unsigned type)
 	{
-		if (type!=13) { counters.Fail(); return false; }
+		if (type!=projectionType) { counters.Fail(); return false; }
 		counters.outputBegins.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
 	bool TensixMatmul(unsigned type,unsigned block,const uint8_t* weight,
 		const uint8_t* input)
 	{
-		if (type!=13 || !weight || !input || input[0]!=uint8_t(block)) {
+		if (type!=projectionType || !weight || !input
+			|| input[0]!=uint8_t(DataflowActivationChunk(type,block))) {
 			counters.Fail(); return false;
 		}
 		counters.matmuls.fetch_add(1,std::memory_order_relaxed);
@@ -160,6 +163,20 @@ struct RoleTestOps {
 		}
 		counters.outputWrites.fetch_add(1,std::memory_order_relaxed);
 		return true;
+	}
+};
+
+struct SharedComputeOps : RoleTestOps {
+	const uint8_t* cache;
+	DataflowQueueControl* ready;
+	SharedComputeOps(RoleTestCounters& counters,const uint8_t* data,DataflowQueueControl* control)
+		:RoleTestOps{counters},cache(data),ready(control) {}
+	bool TensixMatmul(unsigned type,unsigned block,const uint8_t* weight,const uint8_t* input)
+	{
+		if (!ready || DataflowLoadAcquire(ready->produced)!=1
+			|| DataflowLoadAcquire(ready->consumed)!=0
+			|| input!=DataflowPackedActivationPage(cache,type,Hidden,block)) return false;
+		return RoleTestOps::TensixMatmul(type,block,weight,input);
 	}
 };
 
@@ -351,6 +368,87 @@ static void CheckCoordinatedRoles()
 	for (const auto& queue:controls) assert(!queue.produced && !queue.consumed);
 }
 
+static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=false)
+{
+	TensorSpace weight{}; weight.type=type; weight.inputs=Hidden;
+	const unsigned blockInputs=type==8?32:256;
+	Rows(weight.place,Ffn,Hidden/blockInputs*(PioneerQwen35Projection::TileBytes(type)/16),0x08000000);
+	RowSpace input{},output{};
+	Rows(input,Ffn,sizeof(float),0x04000000);
+	Rows(output,Ffn,sizeof(float),0x06000000);
+	DataflowProjectionProgram program{};
+	assert(BuildProgram(weight,input,Hidden,output,program));
+	DataflowCoreInvocation invocation{};
+	assert(DataflowProgramBuilder::BindCore(program,0,invocation));
+	DataflowQueueControl controls[DataflowCircularBufferCount]{};
+	uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+	DataflowQueueView queues[DataflowCircularBufferCount]{};
+	alignas(float) uint8_t activation[DataflowActivationCacheBytes]{};
+	assert(DataflowBindQueues(invocation,controls,local,queues));
+	RoleTestCounters counters{};
+	RoleTestOps readerOps{counters},writerOps{counters};
+	SharedComputeOps computeOps{counters,activation,&controls[1]};
+	readerOps.projectionType=computeOps.projectionType=writerOps.projectionType=type;
+	DataflowRoleMailbox box{};
+	box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+	struct ReaderProxy {
+		RoleTestOps& ops; bool failWeight;
+		bool Bind(const DataflowCoreInvocation& p) { return ops.Bind(p); }
+		bool ReadActivation(const RowSpace& r,unsigned n,uint8_t* out,unsigned bytes)
+			{ return ops.ReadActivation(r,n,out,bytes); }
+		bool ReadWeight(unsigned bank,uint32_t address,uint8_t* out,unsigned bytes)
+			{ return !failWeight && ops.ReadWeight(bank,address,out,bytes); }
+		bool PackActivation(unsigned t,unsigned n,unsigned c,const float* in,uint8_t* out,unsigned bytes)
+			{ return ops.PackActivation(t,n,c,in,out,bytes); }
+	} readerProxy{readerOps,failReader};
+	struct ReaderBody {
+		const DataflowCoreInvocation& program; DataflowQueueView* queues;
+		uint8_t* activation; ReaderProxy& ops;
+		bool Run() { return PioneerQwen35SharedActivationReader(program,queues[0],queues[1],activation,ops); }
+	} readerBody{invocation,queues,activation,readerProxy};
+	struct WriterBody {
+		const DataflowCoreInvocation& program; DataflowQueueView* queues; RoleTestOps& ops;
+		bool Run() { return PioneerQwen35DataflowWriter(program,queues[2],ops); }
+	} writerBody{invocation,queues,writerOps};
+	struct Coordinator {
+		const DataflowCoreInvocation& program; DataflowQueueView* queues;
+		DataflowQueueControl* controls; const uint8_t* activation; SharedComputeOps& ops;
+		bool RunCompute() { return PioneerQwen35SharedActivationCompute(program,queues[0],queues[1],queues[2],activation,ops); }
+		void Pause() { std::this_thread::yield(); }
+		bool AuditAndResetCleanQueues() { return DataflowRoleCleanQueuesForReuse(controls); }
+	} coordinator{invocation,queues,controls,activation,computeOps};
+	std::atomic<bool> bad{false};
+	auto roleLoop=[&](unsigned role,auto& body) {
+		DataflowRoleTickState state{};
+		for (unsigned n=0;n<10000000 && !bad.load();n++) {
+			const auto result=DataflowRoleServiceTick(box,role,state,body);
+			if (result==DataflowRoleTickStopRequested) return;
+			if (result==DataflowRoleTickInvalid || (!failReader && (result==DataflowRoleTickFault
+				|| result==DataflowRoleTickWaitingRecovery))) { bad.store(true); return; }
+			if ((n&255)==0) std::this_thread::yield();
+		}
+		bad.store(true);
+	};
+	std::thread reader([&] { roleLoop(DataflowRoleReader,readerBody); });
+	std::thread writer([&] { roleLoop(DataflowRoleWriter,writerBody); });
+	const auto result=DataflowRoleCoordinate(box,1,DataflowQueuePollLimit,coordinator);
+	if (failReader) {
+		if (result!=DataflowRoleCoordinatorRetainedFault
+			|| !DataflowRoleMailboxRequestFaultStop(box,true,true,true)) bad.store(true);
+	} else if (result!=DataflowRoleCoordinatorComplete || !DataflowRoleMailboxRequestStop(box))
+		bad.store(true);
+	reader.join(); writer.join();
+	assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
+	assert(counters.okay && counters.binds==3 && counters.activationReads==1);
+	if (failReader) {
+		assert(box.acknowledged==0 && DataflowQueueFailure(controls[0]));
+	} else {
+		assert(counters.matmuls==invocation.assignment.groups*invocation.blocks);
+		assert(counters.outputWrites==invocation.assignment.groups);
+		for (const auto& queue:controls) assert(!queue.produced && !queue.consumed);
+	}
+}
+
 static void CheckInactiveRoleReader()
 {
 	TensorSpace weight{};
@@ -499,6 +597,8 @@ int main()
 	CheckDynamicWeightAddresses();
 	CheckConcurrentRoles();
 	CheckCoordinatedRoles();
+	for (unsigned type:{8U,12U,13U,14U}) CheckCoordinatedSharedActivationRoles(type);
+	CheckCoordinatedSharedActivationRoles(13,true);
 	CheckInactiveRoleReader();
 	TensorSpace weight{};
 	weight.type=14;

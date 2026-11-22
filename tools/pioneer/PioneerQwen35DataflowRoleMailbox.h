@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowKernels.h"
 #include "PioneerQwen35DataflowGraphTrace.h"
+#include "PioneerQwen35DataflowRoleAsmConstants.h"
 
 namespace PioneerQwen35 {
 // Proposed per-tile handoff, in already-saved L1. The coordinator owns
@@ -11,7 +12,7 @@ namespace PioneerQwen35 {
 // This protocol alone does not launch processors, establish cache visibility,
 // audit queues, recover failed work, or authorize resource release.
 enum : unsigned {
-    DataflowRoleMailboxAddress=0xab500,
+    DataflowRoleMailboxAddress=PIONEER_Q35_ROLE_MAILBOX_ADDRESS,
     DataflowRoleMailboxMagic=0x31524d35,
     DataflowRoleMailboxVersion=1,
     DataflowRoleReader=0,

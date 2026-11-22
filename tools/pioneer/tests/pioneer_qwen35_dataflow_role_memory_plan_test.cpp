@@ -3,6 +3,9 @@
 #include <cassert>
 #include <cstdio>
 using namespace PioneerQwen35;
+static_assert(DataflowRoleReaderShimAddress==0x70000 && DataflowRoleReaderShimLimit==0x70080
+    && DataflowRoleWriterShimAddress==0x70080 && DataflowRoleWriterShimLimit==0x70100,
+    "proposed shims fit the saved low-L1 gap");
 static_assert(DataflowRoleReaderCodeAddress==0xb0000 && DataflowRoleReaderCodeLimit==0xb5000
     && DataflowRoleWriterCodeAddress==0xb5000 && DataflowRoleWriterCodeLimit==0xb8000,
     "witness linker slots match the proposed memory plan");

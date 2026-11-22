@@ -52,7 +52,9 @@ int main() {
     assert(!owner.Stage(true,reader.data(),(DataflowRoleReaderCodeLimit-DataflowRoleReaderCodeAddress)/4+1,io));
     assert(!owner.NeedsRestore());
     assert(owner.Stage(true,reader.data(),reader.size(),io));
+    assert(!owner.VerifyStaged(io) && !owner.CodeVerified());
     assert(owner.Stage(false,writer.data(),writer.size(),io));
+    assert(owner.VerifyStaged(io) && owner.CodeVerified());
     assert(owner.NeedsRestore());
     io.held=false;
     const unsigned writes=io.writes;
@@ -84,6 +86,23 @@ int main() {
     assert(stale.Capture(4,saved.data(),saved.size(),staleIO));
     assert(stale.Stage(true,reader.data(),reader.size(),staleIO));
     assert(stale.Restore(staleIO) && staleIO.memory==original);
+    SimulatedIO damagedIO;
+    DataflowRoleCodeOwner damaged;
+    assert(damaged.Capture(4,saved.data(),saved.size(),damagedIO));
+    assert(damaged.Stage(true,reader.data(),reader.size(),damagedIO));
+    assert(damaged.Stage(false,writer.data(),writer.size(),damagedIO));
+    damagedIO.memory[0]^=1;
+    assert(!damaged.VerifyStaged(damagedIO) && damaged.NeedsRestore());
+    assert(!damaged.Stage(true,reader.data(),reader.size(),damagedIO));
+    assert(damaged.Restore(damagedIO) && damagedIO.memory==original);
+    SimulatedIO holeIO;
+    DataflowRoleCodeOwner hole;
+    assert(hole.Capture(4,saved.data(),saved.size(),holeIO));
+    assert(hole.Stage(true,reader.data(),reader.size(),holeIO));
+    assert(hole.Stage(false,writer.data(),writer.size(),holeIO));
+    holeIO.memory[reader.size()+5]^=1; // outside both staged code images
+    assert(!hole.VerifyStaged(holeIO) && hole.NeedsRestore());
+    assert(hole.Restore(holeIO) && holeIO.memory==original);
     SimulatedIO failedIO;
     DataflowRoleCodeOwner failed;
     assert(failed.Capture(4,saved.data(),saved.size(),failedIO));
