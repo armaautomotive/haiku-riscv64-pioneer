@@ -1,3 +1,5 @@
+> **Haiku mapping work, compile-only:** fixed read-only BAR views and a selected-tile guard now compile against the Haiku kernel SDK. Tests reject unsafe register offsets, missing memory/route proofs and wrong TLBs, and exercise partial-map cleanup and retry. No real exclusive-session scope, live ioctl, mapping call, write access or card operation is connected yet.
+
 > **Private RAM recovery ledger, simulation only:** all B/NC private RAM snapshots join the image/boot snapshots; all 120 are marked dirty before a one-shot release attempt and must be restored after the RAM initialization window. The ledger performs no hardware release, and reset, cache, PC/NoC, PCI and existing TRISC0 recovery still need physical integration.
 
 > **Composed fleet image recovery, simulation only:** code, boot words and low shims are captured before staging, then restored in boot-before-code order and rechecked across all 120 tiles; injected cross-region corruption requires a retry. Private local RAM, reset, cache, NoC, queues and physical PCI integration remain outside the contract, so this is not yet a complete driver recovery path.

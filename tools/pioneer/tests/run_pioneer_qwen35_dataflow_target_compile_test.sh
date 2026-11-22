@@ -321,6 +321,50 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_fleet_code_owner_test.cpp" \
 	-o "$temporary/role-fleet-code-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-code-owner-test"
+# Fixed read-only PCI view planning, partial-map cleanup and SDK adapter;
+# the guard here is fake and the object is not linked to the live driver.
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
+	-fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 \
+	-mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_views_target_probe.cpp" \
+	-o "$temporary/role-views.o"
+if [ -n "$("$nm" -u "$temporary/role-views.o")" ]; then
+	echo 'role views target probe has unresolved imports' >&2
+	exit 1
+fi
+for test in role_physical_plan role_read_only_views; do
+	${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+		-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_${test}_test.cpp" \
+		-o "$temporary/${test}-test"
+	ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/${test}-test"
+done
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+	-ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE \
+	-I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/drivers" \
+	-I"$sdk/headers/os/kernel" -I"$sdk/headers/os/support" -I"$sdk/headers/os/storage" \
+	-idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_haiku_views_kernel_compile.cpp" \
+	-o "$temporary/role-haiku-views-kernel.o"
+awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
+	"$temporary/role-haiku-views-kernel.su"
+echo 'PASS read-only Haiku role mapper SDK compile; NO LIVE DRIVER BINDING'
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_route_guard_test.cpp" \
+	-o "$temporary/role-route-guard-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-route-guard-test"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+	-ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE \
+	-I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/drivers" \
+	-I"$sdk/headers/os/kernel" -I"$sdk/headers/os/support" -I"$sdk/headers/os/storage" \
+	-idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_role_route_guard_kernel_compile.cpp" \
+	-o "$temporary/role-route-guard-kernel.o"
+awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
+	"$temporary/role-route-guard-kernel.su"
+echo 'PASS role selected-route guard SDK compile; NO LIVE SESSION SCOPE'
 # Per-tile handoff uses only single-writer words and the existing fences.
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \
 	-fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
