@@ -97,7 +97,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010120ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010121ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010122ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010123ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010123ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010124ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -108,11 +109,12 @@
 #error Qwen35 dataflow rewrite requires its separate all-core build identity and cannot include Work fallback
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026112100010121ULL \
-	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010122ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010123ULL)
+	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010122ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010123ULL \
+	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010124ULL)
 #define PIONEER_QWEN35_INPLACE_RECOVERY 1
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (!defined(PIONEER_QWEN35_DATAFLOW_REWRITE) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010123ULL)
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010124ULL)
 #error Qwen35 recovery ownership tracking requires the dedicated tag0121 dataflow role
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (defined(PIONEER_Q38_NORMAL_CLOCK) \
@@ -2406,8 +2408,14 @@ struct PioneerComputeNocIO : PioneerDramSamplesIO {
 		void* address=NULL;
 		// Both NIU command-register pages; target reads only. TLB 201 is
 		// saved/restored by policy, forced to the fixed selected (1,2)/(1,3).
-		nocArea=map_physical_memory("P100A compute NoC0 read-only state",
-			profile.bar0_host_start+0x19320000,2*B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+		nocArea=map_physical_memory("P100A compute NoC read-only state",
+			profile.bar0_host_start+0x19320000,
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+			0x12000,
+#else
+			2*B_PAGE_SIZE,
+#endif
+			B_ANY_KERNEL_ADDRESS,
 			B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&address);
 		if (nocArea<B_OK) return false;
 		nocRegisters=(const volatile uint32*)address; return true;

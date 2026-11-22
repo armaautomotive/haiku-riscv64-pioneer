@@ -19,6 +19,12 @@ struct tt_resident_read_result {
 };
 static inline bool BlackholeResidentReadRegister(uint32_t offset)
 {
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	// The dataflow fleet proof observes NoC1 through the same selected-core
+	// TLB. The mapping is read-only; no NoC1 control writes are exposed.
+	if (offset>=0x10000 && offset<0x12000)
+		return BlackholeResidentReadRegister(offset-0x10000);
+#endif
 	return BlackholeComputeNocReadOffset(offset) || (offset<=0x24 && (offset&3)==0)
 		|| (offset>=0x208 && offset<=0x214 && (offset&3)==0)
 		|| (offset>=0x280 && offset<0x2c0 && (offset&3)==0)

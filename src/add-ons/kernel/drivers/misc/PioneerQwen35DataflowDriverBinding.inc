@@ -2,6 +2,7 @@
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRuntimeRecovery.h"
+#include "PioneerQwen35DataflowNoC1Audit.h"
 
 enum PioneerQwen35RuntimeAuditDetail : unsigned {
 	PioneerDataflowRuntimeDetailContext=1,
@@ -446,6 +447,13 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 		failedStage=10;
 		if (!PioneerQ38DispatchSources(*this,dram,context->banks,node,reset))
 			return false;
+		failedStage=17;
+		struct NoC1Reader {
+			PioneerSessionIO& io;
+			uint32_t Read(unsigned offset) { return io.ResidentNocRead(0x10000+offset); }
+			void Pause() { io.Pause(); }
+		} noC1{*this};
+		if (!PioneerQwen35DataflowNoC1Audit(noC1,dram,core)) return false;
 		failedStage=11;
 		if (!PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
 		if (!core) {

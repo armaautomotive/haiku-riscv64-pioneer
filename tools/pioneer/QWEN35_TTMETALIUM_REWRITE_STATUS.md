@@ -68,6 +68,20 @@ the NoC1 logical-route and destination-translation assumptions remain to be
 verified. Its normal driver SHA-256 is
 `5163d79689ce225100913bbc26b4bc8329e9de22642d5641808c805de839130f`.
 
+Tag0124 adds a read-only NoC1 fleet audit before starting the dataflow service.
+The previous route proof copied the NoC0 bank routes to NoC1 without checking
+the second NIU's translation. The new audit samples each worker twice, checks
+its NoC1 identity and idle state, and verifies all seven bank routes against
+the independently established NoC0 geometry and the reversed 17-by-12 NoC
+coordinate system. It refuses unsupported DDR translation modes and FIFO
+state. The NoC1 aperture is read-only and is present only in the dedicated
+dataflow build. Simulated tests cover all 120 workers, altered bank routes,
+changing registers, busy traffic and invalid identities. The Haiku/RISC-V
+target builds pass, but this audit has not been exercised on the Pioneer.
+See Tenstorrent's [Blackhole coordinate documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Coordinates.md).
+The tag0124 normal driver SHA-256 is
+`3336b78873687f2c491314751e39e0f2942a0bcf0dfccd2d3f9bcdf4f4cc79ea`.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

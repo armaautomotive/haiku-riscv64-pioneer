@@ -38,6 +38,11 @@ hardware changes to reserved `NOC_CTRL` bits when comparing completed
 commands. The NoC1 logical-route and destination-translation assumptions are
 not yet verified on hardware. The tag0123 normal driver SHA-256 is
 `5163d79689ce225100913bbc26b4bc8329e9de22642d5641808c805de839130f`.
+Tag0124 adds a read-only NoC1 audit for all 120 workers and the seven bank
+routes before the service starts; it rejects identity, translation, drift or
+busy-state mismatches. The fixture and Haiku/RISC-V builds pass, but no card
+run has verified the audit. Its normal driver SHA-256 is
+`3336b78873687f2c491314751e39e0f2942a0bcf0dfccd2d3f9bcdf4f4cc79ea`.
 
 Haiku is currently reachable at `10.0.0.247`. Read-only status confirms the
 failed diagnostic client has exited and both model files remain intact, but
@@ -87,7 +92,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. Message-queue initialization
 remains open; this new code has not been run on the card.
 
-The default build now targets dedicated tag0123. Since tag0121 it records final release of a
+The default build now targets dedicated tag0124. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

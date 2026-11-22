@@ -51,4 +51,8 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_noc_protocol_test.cpp" \
 	-o "$temporary/noc-protocol-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/noc-protocol-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_noc1_audit_test.cpp" \
+	-o "$temporary/noc1-audit-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/noc1-audit-test"
 echo 'PASS: Qwen35 dataflow roles compile as RV32IMF without A atomics or runtime helpers'
