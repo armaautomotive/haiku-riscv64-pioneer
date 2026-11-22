@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010140'
+TAG = '2026112100010141'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -126,6 +126,31 @@ def verify_kernel_stack_budget(driver_directory):
         if total > 18432:
             raise RuntimeError(f'stream recorder witness stack envelope is {total} bytes')
         print(f'qwen35_stream_witness_stack_envelope_bytes={total}/18432 '
+              '(includes 2048-byte allowance; real ioctl caller not audited)')
+
+    # The model transaction is a distinct non-loadable witness. Sum the
+    # metadata decoder's measured call frames and conservative branches;
+    # this still does not certify a future session/ioctl caller.
+    if any('PioneerQ35GraphModelPrepareCompileWitness(' in n for n, _, _ in entries):
+        groups = [
+            ('model entry', ('PioneerQ35GraphModelPrepareCompileWitness(',)),
+            ('metadata decoder', ('DataflowDecoderSequence::Run(', 'DataflowGraphMetadataService')),
+            ('metadata ffn', ('DataflowFfnSequence::Run(', 'DataflowGraphMetadataService')),
+            ('metadata service', ('DataflowGraphMetadata.h:', 'DataflowGraphMetadataService::')),
+            ('authority method', ('DataflowProjectionAuthority::',)),
+            ('program builder', ('DataflowProgramBuilder::Build(',)),
+            ('projection schedule', ('PioneerQ35BuildProjectionProgram(',)),
+        ]
+        total = 2048
+        for label, markers in groups:
+            matches = [(frame, kind) for name, frame, kind in entries
+                       if all(marker in name for marker in markers)]
+            if not matches or any(kind != 'static' for _, kind in matches):
+                raise RuntimeError('missing or unbounded graph model frame: ' + label)
+            total += max(frame for frame, _ in matches)
+        if total > 18432:
+            raise RuntimeError(f'graph model witness stack envelope is {total} bytes')
+        print(f'qwen35_graph_model_stack_envelope_bytes={total}/18432 '
               '(includes 2048-byte allowance; real ioctl caller not audited)')
 
 

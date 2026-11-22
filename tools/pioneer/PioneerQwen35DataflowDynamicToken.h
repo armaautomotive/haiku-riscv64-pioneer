@@ -27,6 +27,12 @@ struct DataflowDynamicTokenContext {
 	}
 };
 
+inline bool DataflowDynamicTokenMatches(const DataflowDynamicTokenContext& a,
+	const DataflowDynamicTokenContext& b) {
+	return a.Valid() && b.Valid() && a.token==b.token && a.position==b.position
+		&& a.context==b.context && DataflowRowSpaceMatches(a.tied,b.tied);
+}
+
 template<class Invocation>
 inline void DataflowDynamicRead(const DataflowStreamRecord& record,Invocation& invocation) {
 	const auto* input=reinterpret_cast<const uint8_t*>(record.payload);

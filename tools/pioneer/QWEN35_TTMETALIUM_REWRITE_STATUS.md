@@ -383,6 +383,30 @@ and `df9177d08b62e3989ba3b23edf41db799e3b8a4fbf92e9cb15802cc54b635788`.
 The graph worker and recorder stack envelopes retain the previously documented
 limitations. This is simulation and compilation only, with no decode result.
 
+Tag0141 adds a session-lock-scoped model transaction for the queued graph.
+It builds a private candidate from the current model, binds the exact token,
+ticket, activation slot and publisher, and captures compact snapshots of all
+mutable metadata for both original and candidate. Promotion swaps the live
+authority pointer exactly once only after the matching publisher is audited
+and both snapshots still match. The retired authority stays owned by the
+session until references are ruled out. Static layout and routes are immutable
+after binding and still require the separate sealed-stream/session proof.
+The simulated service test connects this transaction through a prompt and a
+decode step; other tests reject forged token layout, changed live or candidate
+state, wrong publisher, missing audit and repeated commit. No tensor work is
+performed by this host metadata transaction.
+
+The real driver's publication and commit callbacks still deny execution: the
+transaction, its candidate, ticket issuer and sealed recording are not yet
+owned by an actual driver session, and device authorization and graph-fault
+cleanup remain open. The target suite and normal/non-loadable Haiku builds
+pass. Normal and non-loadable driver SHA-256 values:
+`9207eb940020793ef91e0510f7fdb8051cde16aa5854003d3f2ca3d6ddd06eb1`
+and `a2abbd831a7841ed3325e4af7f289d29e845c1ff020314c59e353a7d0cd6656c`.
+The new model-planning stack envelope is `9472/18432`, including a 2,048-byte
+helper allowance but excluding a real ioctl caller. No hardware or speed
+result exists for this change.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

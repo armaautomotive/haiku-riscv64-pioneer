@@ -381,6 +381,23 @@ non-loadable witness:
 `df9177d08b62e3989ba3b23edf41db799e3b8a4fbf92e9cb15802cc54b635788`.
 No physical test or decode performance measurement has been made.
 
+Tag0141 adds a graph model transaction that predicts a private candidate,
+binds the token, ticket, fixed slot and publisher, and compares compact
+snapshots of the original and candidate mutable metadata before promotion.
+After the matching fleet audit it swaps the live authority pointer exactly
+once; the owner retains the retired object until no references remain.
+Simulation joins this transaction to the service owner for consecutive
+prompt and decode steps and checks forged token layout, stale original or
+candidate state, wrong publisher and missing or repeated commit. The actual
+driver callbacks still deny execution: session allocation, sealed-stream and
+ticket ownership, worker authorization and safe fault cleanup remain to be
+connected. The target suite and Haiku builds pass. Normal driver SHA-256:
+`9207eb940020793ef91e0510f7fdb8051cde16aa5854003d3f2ca3d6ddd06eb1`;
+non-loadable witness:
+`a2abbd831a7841ed3325e4af7f289d29e845c1ff020314c59e353a7d0cd6656c`.
+The model-planning stack envelope is `9472/18432` with a 2,048-byte helper
+allowance, excluding a real ioctl caller. There is no hardware throughput result.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -440,7 +457,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0140. Since tag0121 it records final release of a
+The default build now targets dedicated tag0141. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

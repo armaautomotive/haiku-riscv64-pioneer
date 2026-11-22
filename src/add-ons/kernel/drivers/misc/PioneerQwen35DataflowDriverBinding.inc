@@ -2048,6 +2048,23 @@ PioneerQ35GraphCompletionCompileWitness(PioneerStoreContext& context,
 }
 
 __attribute__((used,noinline)) static bool
+PioneerQ35GraphModelPrepareCompileWitness(PioneerQwen35::DataflowGraphModelTransaction& transaction,
+	PioneerQwen35::DataflowProjectionAuthority*& live,PioneerQwen35::DataflowProjectionAuthority& after,
+	const PioneerQwen35::DataflowGraphPublisher& publisher,
+	const PioneerQwen35::DataflowGraphRunTicket& ticket,const PioneerQwen35::DataflowDynamicTokenContext& token,
+	unsigned slot,PioneerQwen35::DataflowProjectionProgram& scratch,unsigned& stage)
+{
+	return transaction.Prepare(live,after,publisher,ticket,token,slot,scratch,stage);
+}
+
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphModelCommitCompileWitness(PioneerQwen35::DataflowGraphModelTransaction& transaction,
+	const PioneerQwen35::DataflowGraphPublisher& publisher,const PioneerQwen35::DataflowGraphCompletion& completion)
+{
+	return transaction.Commit(publisher,completion);
+}
+
+__attribute__((used,noinline)) static bool
 PioneerQ35GraphServiceBeginCompileWitness(PioneerStoreContext& context,
 	const PioneerQwen35::DataflowGraphPublisher& publisher,unsigned& trigger)
 {

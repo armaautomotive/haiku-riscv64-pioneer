@@ -21,6 +21,7 @@ class DataflowGraphPublisher {
 	unsigned failedCore=DataflowCoreCount;
 	unsigned previousSequence=0,triggerSequence=0,polls=0,inputSlot=0;
 	DataflowGraphRunTicket runTicket{};
+	DataflowDynamicTokenContext runToken{};
 public:
 	DataflowGraphPublisher()=default;
 	DataflowGraphPublisher(const DataflowGraphPublisher&)=delete;
@@ -34,6 +35,9 @@ public:
 	unsigned PollLimit() const { return polls; }
 	unsigned InputSlot() const { return inputSlot; }
 	const DataflowGraphRunTicket& Ticket() const { return runTicket; }
+	bool TokenMatches(const DataflowDynamicTokenContext& token) const {
+		return Published() && DataflowDynamicTokenMatches(runToken,token);
+	}
 	template<class IO>
 	DataflowGraphPublication Start(const DataflowStreamPlan& plan,
 		const unsigned (&routes)[2][Banks],const DataflowDynamicTokenContext& token,
@@ -65,7 +69,7 @@ public:
 				failedCore=core;return DataflowGraphPublishPreflight;
 			}
 		}
-		previousSequence=completed;triggerSequence=trigger;polls=pollLimit;inputSlot=slot;runTicket=ticket;
+		previousSequence=completed;triggerSequence=trigger;polls=pollLimit;inputSlot=slot;runTicket=ticket;runToken=token;
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!DataflowGraphRunBuild(plan.binding[core],plan.lease[core],routes,
 					token,ticket,trigger,pollLimit,slot,scratch)

@@ -15,6 +15,15 @@
 
 namespace PioneerQwen35 {
 
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+// Compact snapshot of all mutable model metadata. Static layout and routes
+// remain immutable after bind and are checked by the session owner.
+struct DataflowGraphAuthorityState {
+	static constexpr unsigned Words=ActivationBuffers+3*DataflowGraphWorkspaceBufferCount+5*Layers+4;
+	uint32_t word[Words]{};
+};
+#endif
+
 // Bind only after ValidateManifest has checked the pinned packed plan,
 // initialized-page ledger, and after the adapter has audited both NoC route
 // tables. The authority keeps an immutable layout copy so later caller-side
@@ -267,6 +276,30 @@ public:
 		candidate.fGraphResidualReady=fGraphResidualReady;candidate.fFinalNormReady=fFinalNormReady;
 		candidate.fFinalNormSlot=fFinalNormSlot;candidate.fVocabularyReady=fVocabularyReady;
 		candidate.fBound=true;return true;
+	}
+	bool CaptureGraphState(DataflowGraphAuthorityState& state) const {
+		if (!fBound || fPending) return false;
+		unsigned at=0;
+		for (unsigned i=0;i<ActivationBuffers;i++) state.word[at++]=fActivationRows[i];
+		for (unsigned i=0;i<DataflowGraphWorkspaceBufferCount;i++) {
+			state.word[at++]=fGraphWorkspaceReady[i];state.word[at++]=fGraphWorkspaceLayer[i];
+			state.word[at++]=fGraphWorkspaceRole[i];
+		}
+		for (unsigned i=0;i<Layers;i++) {
+			state.word[at++]=fDenseKeyStored[i];state.word[at++]=fDenseValueStored[i];
+			state.word[at++]=fDenseNextPosition[i];state.word[at++]=fConvNextPosition[i];
+			state.word[at++]=fDeltaNextPosition[i];
+		}
+		state.word[at++]=fGraphResidualReady;state.word[at++]=fFinalNormReady;
+		state.word[at++]=fFinalNormSlot;state.word[at++]=fVocabularyReady;
+		return at==DataflowGraphAuthorityState::Words;
+	}
+	bool GraphStateMatches(const DataflowGraphAuthorityState& expected) const {
+		DataflowGraphAuthorityState actual{};
+		if (!CaptureGraphState(actual)) return false;
+		for (unsigned i=0;i<DataflowGraphAuthorityState::Words;i++)
+			if (actual.word[i]!=expected.word[i]) return false;
+		return true;
 	}
 	bool PlanningRoutesMatch(const unsigned (&routes)[2][Banks]) const {
 		if (!fBound) return false;
