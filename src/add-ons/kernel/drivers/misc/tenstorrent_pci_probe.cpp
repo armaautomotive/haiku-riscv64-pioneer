@@ -3611,6 +3611,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (!runtimeMapped || !runtimeControl) return false;
 		PioneerWrite32(runtimeControl+0x1b0/4,0x6000); return true;
 	}
+	bool SharedRoleHoldReset() {
+		if (!runtimeMapped || !runtimeControl) return false;
+		PioneerWrite32(runtimeControl+0x1b0/4,0x47800); return true;
+	}
 	uint32 SharedRolePcRead(unsigned role) {
 		if (!runtimeMapped || !runtimePc || role>=2) return UINT32_MAX;
 		return PioneerRead32(runtimePc-(role==0?2:1));

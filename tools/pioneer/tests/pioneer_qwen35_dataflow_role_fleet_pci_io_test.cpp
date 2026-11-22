@@ -8,6 +8,7 @@
 
 struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
+    bool computeStop=false,computePark=false,hold=false,heldAfter=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const
@@ -20,6 +21,10 @@ struct FleetPciTestScope {
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
     bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return stop; }
     bool ProveRolePostStopSafe(PioneerSessionIO&,unsigned) const { return park; }
+    bool ProveComputeStopSafe(PioneerSessionIO&,unsigned) const { return computeStop; }
+    bool ProveComputePostStopSafe(PioneerSessionIO&,unsigned) const { return computePark; }
+    bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return hold; }
+    bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return heldAfter; }
 };
 int main()
 {
@@ -144,6 +149,44 @@ int main()
     assert(!io.RequestStop(10,false,stopAttempted,stopToken) && !stopAttempted);
     assert(io.RequestStop(10,true,stopAttempted,stopToken) && stopAttempted && stopToken==1);
     assert(io.StopRequestObserved(10,stopToken) && faultBox.acknowledged==0);
+    auto& worker=context.io.workerBoxes[8];
+    worker.magic=DataflowWorkerMailboxMagic; worker.version=DataflowWorkerMailboxVersion;
+    worker.logicalCore=8; worker.state=DataflowWorkerReady;
+    bool computeAttempted=false;
+    assert(!io.RequestComputeStop(8,computeAttempted) && !computeAttempted && !context.io.computeStopWrites);
+    scope.computeStop=true;
+    assert(io.RequestComputeStop(8,computeAttempted) && computeAttempted && context.io.computeStopWrites==1);
+    assert(io.ComputeStopObserved(8));
+    context.io.computePc=DataflowServiceEntryAddress+0x100;
+    scope.computePark=true;
+    assert(!io.ComputeStoppedAndParked(8,context.io.computePc));
+    worker.state=DataflowWorkerStopped;
+    context.io.queueBoxes[8][0].produced=1;
+    assert(!io.ComputeStoppedAndParked(8,context.io.computePc));
+    context.io.queueBoxes[8][0].produced=0;
+    assert(io.ComputeStoppedAndParked(8,context.io.computePc));
+    assert(!io.ComputeStoppedAndParked(8,context.io.computePc+4));
+    bool holdAttempted=false;
+    assert(!io.HoldCore(8,holdAttempted) && !holdAttempted && !context.io.holdWrites);
+    scope.hold=true; scope.heldAfter=true;
+    assert(io.HoldCore(8,holdAttempted) && holdAttempted && context.io.reset==0x47800);
+    assert(io.HoldObserved(8));
+    assert(!io.HoldCore(8,holdAttempted) && context.io.holdWrites==1);
+    context.io.reset=0x6000; context.io.dropHoldWrite=true; holdAttempted=false;
+    assert(!io.HoldCore(8,holdAttempted) && holdAttempted && context.io.holdWrites==2);
+    assert(!io.HoldObserved(8));
+    context.io.reset=0x47800; // delayed reset write became visible
+    assert(io.HoldObserved(8));
+    context.io.reset=0x6000;
+    auto& delayedWorker=context.io.workerBoxes[9];
+    delayedWorker.magic=DataflowWorkerMailboxMagic; delayedWorker.version=DataflowWorkerMailboxVersion;
+    delayedWorker.logicalCore=9; delayedWorker.state=DataflowWorkerReady;
+    bool delayedComputeAttempt=false; context.io.dropComputeStopWrite=true;
+    assert(!io.RequestComputeStop(9,delayedComputeAttempt) && delayedComputeAttempt);
+    assert(!io.ComputeStopObserved(9));
+    delayedWorker.shutdownSequence=DataflowWorkerShutdownRequest;
+    assert(io.ComputeStopObserved(9));
+    assert(!io.RequestComputeStop(9,delayedComputeAttempt) && context.io.computeStopWrites==2);
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");

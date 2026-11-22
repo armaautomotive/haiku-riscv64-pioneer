@@ -73,6 +73,10 @@ public:
     // to be settled; fault and clean stops need different proofs.
     bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return false; }
     bool ProveRolePostStopSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveComputeStopSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveComputePostStopSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return false; }
     bool Detach() {
         if (!fAttached || !fContext) return false;
         const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this;

@@ -7,14 +7,15 @@
 #error Role fleet PCI adapter is a non-loadable recovery witness only
 #endif
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
+#include "PioneerQwen35DataflowPciMemory.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleFleetRecoveryOwner.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
 
 // Adapter from the existing role recovery owner's exact ranges to the fixed
 // Haiku BAR views. Scope must prove the caller already owns the driver lock,
 // every relevant tile is held and quiet, private RAM is stable, and snapshots
-// authorize the operation. This class does not establish those facts or reset
-// a core. The real borrowed scope currently refuses every memory/control write.
+// authorize the operation. Reset and stop writes require additional scope
+// proofs; the real borrowed scope currently refuses those proofs.
 template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     IO& fIO;
     Scope& fScope;
@@ -76,6 +77,26 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleMailboxAddress,&second,sizeof(second))
             || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         memcpy(&output,&second,sizeof(output)); return true;
+    }
+    bool ReadStableWorkerMailbox(unsigned core,PioneerQwen35::DataflowWorkerMailbox& output) {
+        PioneerQwen35::DataflowWorkerMailbox first{},second{};
+        if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowWorkerMailboxAddress,&first,sizeof(first))) return false;
+        fIO.Pause();
+        if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowWorkerMailboxAddress,&second,sizeof(second))
+            || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
+        memcpy(&output,&second,sizeof(output)); return true;
+    }
+    bool QueuesCleared(unsigned core) {
+        using namespace PioneerQwen35;
+        DataflowQueueControl first[DataflowCircularBufferCount]{},second[DataflowCircularBufferCount]{};
+        if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,first,sizeof(first))) return false;
+        fIO.Pause();
+        if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,second,sizeof(second))
+            || memcmp(first,second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
+        for (const auto& queue:second)
+            if (queue.produced || queue.consumed || DataflowQueueFailure(queue)
+                || queue.reserved[0] || queue.reserved[1]) return false;
+        return true;
     }
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
@@ -157,6 +178,58 @@ public:
             && ReadStableRoleMailbox(core,second) && !memcmp(&first,&second,sizeof(first))
             && fScope.ProveRolePostStopSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    bool RequestComputeStop(unsigned core,bool& attempted) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || attempted || !fScope.ProveExclusiveRewrite(fIO)
+            || !fScope.ProveComputeStopSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowWorkerMailbox box{};
+        if (!ReadStableWorkerMailbox(core,box) || !DataflowPciMailboxReadyForStop(box,core)
+            || box.shutdownSequence || !fScope.ProveComputeStopSafe(fIO,core)
+            || !fGuard.ProveSelectedRoute(core) || fIO.ResetRead()!=0x6000) return false;
+        attempted=true;
+        const unsigned address=DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence);
+        fIO.Q38PanelWrite(address,DataflowWorkerShutdownRequest);
+        return fGuard.ProveSelectedRoute(core) && fIO.Q38PanelRead(address)==DataflowWorkerShutdownRequest
+            && fGuard.ProveSelectedRoute(core);
+    }
+    bool ComputeStopObserved(unsigned core) {
+        using namespace PioneerQwen35;
+        if (!SelectForStop(core)) return false;
+        DataflowWorkerMailbox box{};
+        return ReadStableWorkerMailbox(core,box) && box.shutdownSequence==DataflowWorkerShutdownRequest
+            && (DataflowPciMailboxReadyForStop(box,core) || DataflowPciMailboxStopped(box,core));
+    }
+    bool ComputeStoppedAndParked(unsigned core,uint32_t park) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || (park&3) || park<DataflowServiceEntryAddress
+            || park>=DataflowServiceTextLimit || !fScope.ProveComputePostStopSafe(fIO,core)
+            || !SelectForStop(core)) return false;
+        DataflowWorkerMailbox first{},second{};
+        if (!ReadStableWorkerMailbox(core,first) || !DataflowPciMailboxStopped(first,core)
+            || !QueuesCleared(core)) return false;
+        const uint32_t pc1=fIO.RuntimePcRead(); fIO.Pause(); const uint32_t pc2=fIO.RuntimePcRead();
+        return pc1==park && pc2==park && ReadStableWorkerMailbox(core,second)
+            && !memcmp(&first,&second,sizeof(first)) && QueuesCleared(core)
+            && fScope.ProveComputePostStopSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    bool HoldCore(unsigned core,bool& attempted) {
+        if (core>=PioneerQwen35::DataflowBarrierWorkers || attempted
+            || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleHoldSafe(fIO,core)
+            || !SelectForStop(core) || !fScope.ProveRoleHoldSafe(fIO,core)
+            || !fGuard.ProveSelectedRoute(core)) return false;
+        attempted=true;
+        if (!fIO.SharedRoleHoldReset()) return false;
+        fIO.Pause();
+        return fGuard.ProveSelectedRoute(core) && fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800;
+    }
+    bool HoldObserved(unsigned core) {
+        if (core>=PioneerQwen35::DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
+            || !fScope.ProveRoleHeldAfterAttempt(fIO,core) || !fIO.SelectRuntimeCore(core)
+            || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)) return false;
+        return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
+            && fScope.ProveRoleHeldAfterAttempt(fIO,core) && fGuard.ProveSelectedRoute(core);
     }
     bool AllRolesHeld(unsigned core) {
         return Select(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)

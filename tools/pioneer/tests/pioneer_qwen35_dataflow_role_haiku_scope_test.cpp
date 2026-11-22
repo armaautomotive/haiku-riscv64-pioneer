@@ -47,8 +47,12 @@ struct PioneerSessionIO {
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
+    DataflowWorkerMailbox workerBoxes[DataflowBarrierWorkers]{};
+    DataflowQueueControl queueBoxes[DataflowBarrierWorkers][DataflowCircularBufferCount]{};
     unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
+    unsigned computeStopWrites=0,holdWrites=0; bool dropComputeStopWrite=false,dropHoldWrite=false;
     uint32_t rolePc[2]{};
+    uint32_t computePc=0;
     bool SelectRuntimeCore(unsigned core) { if (core>=DataflowBarrierWorkers) return false; runtimeCore=core; return true; }
     bool MapQ38Panel() const { return mapping; }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -69,20 +73,35 @@ struct PioneerSessionIO {
         return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
     }
     uint32_t ResetRead() const { return reset; }
+    bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
+    uint32_t RuntimePcRead() const { return computePc; }
     bool SharedRoleReleaseReset() { ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000; return true; }
     uint32_t SharedRolePcRead(unsigned role) { return role<2?rolePc[role]:UINT32_MAX; }
     bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) {
-        if (core>=DataflowBarrierWorkers || address!=DataflowRoleMailboxAddress
-            || bytes!=sizeof(DataflowRoleMailbox) || !output) return false;
-        runtimeCore=core; memcpy(output,&roleBoxes[core],bytes); return true;
+        if (core>=DataflowBarrierWorkers || !output) return false;
+        runtimeCore=core;
+        if (address==DataflowRoleMailboxAddress && bytes==sizeof(DataflowRoleMailbox))
+            memcpy(output,&roleBoxes[core],bytes);
+        else if (address==DataflowWorkerMailboxAddress && bytes==sizeof(DataflowWorkerMailbox))
+            memcpy(output,&workerBoxes[core],bytes);
+        else if (address==DataflowQueueStateAddress && bytes==sizeof(queueBoxes[core]))
+            memcpy(output,queueBoxes[core],bytes);
+        else return false;
+        return true;
     }
     void Q38PanelWrite(unsigned address,uint32_t value) {
-        assert(address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest));
-        ++roleStopWrites; if (!dropRoleStopWrite) roleBoxes[runtimeCore].stopRequest=value;
+        if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest)) {
+            ++roleStopWrites; if (!dropRoleStopWrite) roleBoxes[runtimeCore].stopRequest=value;
+        } else {
+            assert(address==DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence));
+            ++computeStopWrites; if (!dropComputeStopWrite) workerBoxes[runtimeCore].shutdownSequence=value;
+        }
     }
     uint32_t Q38PanelRead(unsigned address) {
-        assert(address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest));
-        return roleBoxes[runtimeCore].stopRequest;
+        if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest))
+            return roleBoxes[runtimeCore].stopRequest;
+        assert(address==DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence));
+        return workerBoxes[runtimeCore].shutdownSequence;
     }
     uint32_t ResidentNocRead(unsigned offset) {
         const unsigned noc=offset>=0x10000?1:0,at=offset-(noc?0x10000:0);

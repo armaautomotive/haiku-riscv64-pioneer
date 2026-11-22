@@ -19,6 +19,8 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fComputeStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fHoldAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     PioneerQwen35RoleBorrowedScopeWitness* Scope() {
         auto* scope=fContext.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(fContext.io)?scope:NULL;
@@ -93,6 +95,7 @@ public:
             Adapter io(fContext.io,*scope,fViews);
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
                 if (!fReleaseAttempted[i]) continue;
+                if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool okay=fStopAttempted[i]?io.StopRequestObserved(i,fStopToken[i])
                     :io.RequestStop(i,false,fStopAttempted[i],fStopToken[i]);
                 if (!okay && !fStopAttempted[i]) okay=io.RequestStop(i,true,fStopAttempted[i],fStopToken[i]);
@@ -100,6 +103,7 @@ public:
             }
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
                 if (!fReleaseAttempted[i]) continue;
+                if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool parked=false;
                 for (unsigned poll=0;poll<65536;poll++) {
                     if (io.RolesStoppedAndParked(i,fStopToken[i],
@@ -109,8 +113,35 @@ public:
                 }
                 if (!parked) { stage=9;core=i;return false; }
             }
-            // Compute shutdown and a fleet-wide hold audit are still needed.
-            stage=10;core=PioneerQwen35::DataflowBarrierWorkers;return false;
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (!fReleaseAttempted[i]) continue;
+                if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
+                const bool okay=fComputeStopAttempted[i]?io.ComputeStopObserved(i)
+                    :io.RequestComputeStop(i,fComputeStopAttempted[i]);
+                if (!okay) { stage=10;core=i;return false; }
+            }
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (!fReleaseAttempted[i]) continue;
+                if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
+                bool parked=false;
+                for (unsigned poll=0;poll<65536;poll++) {
+                    if (io.ComputeStoppedAndParked(i,PioneerQwen35::DataflowServiceStoppedParkAddress))
+                        { parked=true;break; }
+                    fContext.io.Pause();
+                }
+                if (!parked) { stage=12;core=i;return false; }
+            }
+            // No reset is asserted until every started tile has both role
+            // receipts and a stopped compute receipt/park proof. The scope
+            // must independently prove the entire fleet and NoCs are quiet.
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                if (!fReleaseAttempted[i]) continue;
+                if (fHoldAttempted[i] ? !io.HoldObserved(i) : !io.HoldCore(i,fHoldAttempted[i]))
+                    { stage=13;core=i;return false; }
+            }
+            for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++)
+                if (!io.AllRolesHeld(i)) { stage=14;core=i;return false; }
+            stage=0;core=PioneerQwen35::DataflowBarrierWorkers;return true;
         }
         return fContext.io.StopAndAuditAll(stage,core);
     }

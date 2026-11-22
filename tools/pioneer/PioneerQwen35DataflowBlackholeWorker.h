@@ -499,7 +499,16 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 			}
 			DataflowWorkerPublish(*mailbox,completed,DataflowWorkerStopped,0,0);
 			DataflowFence();
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+			// The driver needs a fixed PC to distinguish the clean stopped
+			// loop from a ready or failed worker in the same text image.
+			asm volatile(".globl qwen35_dataflow_stopped_park\n"
+				"qwen35_dataflow_stopped_park:\n"
+				"j qwen35_dataflow_stopped_park\n" ::: "memory");
+			__builtin_unreachable();
+#else
 			for (;;) asm volatile("" ::: "memory");
+#endif
 		}
 		const unsigned sequence=DataflowLoadAcquire(mailbox->commandSequence);
 		if (sequence==completed) continue;

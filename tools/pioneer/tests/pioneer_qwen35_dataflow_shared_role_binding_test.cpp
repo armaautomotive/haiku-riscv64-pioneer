@@ -9,6 +9,7 @@
 #include <new>
 #include "../PioneerQwen35DataflowOwner.h"
 #include "PioneerQwen35SharedRoleImages.h"
+#include "PioneerQwen35DataflowServiceImage.h"
 #define main qwen35_haiku_scope_test_main
 #include "pioneer_qwen35_dataflow_role_haiku_scope_test.cpp"
 #undef main

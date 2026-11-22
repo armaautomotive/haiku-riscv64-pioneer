@@ -83,12 +83,13 @@ if [ "$role_graph" = 1 ]; then
 		exit 1
 	fi
 fi
-python3 - "$output" <<'PY'
+python3 - "$output" "$role_graph" <<'PY'
 from pathlib import Path
 from struct import iter_unpack, unpack
 import sys
 
 out = Path(sys.argv[1])
+role_graph = sys.argv[2] == '1'
 boot = (out / 'boot.bin').read_bytes()
 code = (out / 'text.bin').read_bytes()
 symbol_rows = [line.split() for line in (out / 'symbols.txt').read_text().splitlines()]
@@ -97,6 +98,13 @@ if boot != bytes.fromhex('6fc00600') or not 0 < len(code) <= 0xe000 or len(code)
     raise SystemExit('unexpected resident dataflow image size or boot jump')
 if symbols.get('qwen35_dataflow_entry') != 0x72000:
     raise SystemExit('unexpected resident dataflow entry address')
+park_definition = ''
+if role_graph:
+    park = symbols.get('qwen35_dataflow_stopped_park', 0)
+    offset = park - 0x72000
+    if offset < 0 or offset % 4 or offset + 4 > len(code) or code[offset:offset+4] != bytes.fromhex('6f000000'):
+        raise SystemExit('unexpected shared compute stopped park')
+    park_definition = f'inline constexpr unsigned DataflowServiceStoppedParkAddress=0x{park:08x}U;\n'
 words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', code))
 dispatch_path = out / 'dispatch.bin'
 dispatch = dispatch_path.read_bytes() if dispatch_path.exists() else b''
@@ -115,7 +123,8 @@ dispatch_definition = ('inline constexpr unsigned DataflowServiceDispatchWords[]
 (out / 'PioneerQwen35DataflowServiceImage.h').write_text(
     '#pragma once\nnamespace PioneerQwen35 {\n'
     f'inline constexpr unsigned DataflowServiceImageBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
-    'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words + '};\n'
+    + park_definition
+    + 'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words + '};\n'
     + dispatch_definition + '}\n',
     encoding='ascii')
 PY
