@@ -398,6 +398,24 @@ non-loadable witness:
 The model-planning stack envelope is `9472/18432` with a 2,048-byte helper
 allowance, excluding a real ioctl caller. There is no hardware throughput result.
 
+Tag0142 joins the graph pieces into a session coordinator that exclusively
+claims one sealed stream, issues non-reused tickets and runs publication,
+completion and model-state commit under the session lock. Simulation covers
+two consecutive prompt/decode runs, a duplicate stream claim, preflight
+rejection and retained audit fault. The non-loadable driver compile witness
+uses the real sealed-bank proof and PCI adapter; its controlled safety check
+allows only the bound ready/running dataflow service while preserving the
+other context safety checks. There is no real session allocation or public
+graph request yet, and the device command authorization hook still denies
+execution. Implement their ownership, teardown and fault handling before
+hardware use. The target suite, 27B shared-bank regression and both Haiku
+builds pass. Normal driver SHA-256:
+`60f47279614f341405f471e35dcdf578d7cf0d16124676ab2eebc919447378cd`;
+non-loadable witness:
+`d5d1959ceadfa18e2ca0577747334dd34ea2fd8eeae04e5c7057a962e4d9ca66`.
+The session stack envelope is `13552/18432` including a 2,048-byte allowance,
+excluding a real ioctl caller. No new decode rate exists.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -457,7 +475,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0141. Since tag0121 it records final release of a
+The default build now targets dedicated tag0142. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

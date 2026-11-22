@@ -1974,6 +1974,7 @@ class PioneerQ35StreamRecordingWitness {
 	bool recorded=false;
 	unsigned recordedSlot=PioneerQwen35::ActivationBuffers;
 	unsigned recordedRoutes[2][PioneerQwen35::Banks]{};
+	const PioneerQwen35::DataflowGraphSession* graphSession=nullptr;
 public:
 	explicit PioneerQ35StreamRecordingWitness(PioneerStoreContext& c)
 		:context(c),io(c),sink(io) {}
@@ -2013,7 +2014,74 @@ public:
 			if (recordedRoutes[n][b]!=context.qwen35DataflowRoutes[n][b]) return false;
 		return true;
 	}
+	const PioneerQwen35::DataflowStreamPlan* SealedPlan() const { return recorded?&plan:nullptr; }
+	unsigned SealedSlot() const { return recordedSlot; }
+	bool ReserveGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
+		const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) {
+		if (!owner || graphSession || !SealedMatches(requested,slot)) return false;
+		graphSession=owner;return true;
+	}
+	bool OwnsGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
+		const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) const {
+		return owner && graphSession==owner && SealedMatches(requested,slot);
+	}
 };
+
+// Compile-only adapter for the real session transport and sealed bank claim.
+// The caller must hold the global probe lock and retain all graph resources.
+class PioneerQ35GraphBackend {
+	PioneerStoreContext& context;
+	PioneerQ35StreamRecordingWitness& stream;
+public:
+	PioneerQ35GraphBackend(PioneerStoreContext& c,PioneerQ35StreamRecordingWitness& s):context(c),stream(s) {}
+	bool GraphSessionSafe(const PioneerQwen35::DataflowServiceOwner& resident) {
+		return context.qwen35DataflowService==&resident && context.io.qwen35DataflowContext==&context
+			&& !sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration
+			&& sRuntimeOwner && sRuntimeOwner->magic==0x50313030 && sRuntimeOwner->context==&context
+			&& sBankStorageOnly && context.bankStorageOnly && context.bytes==PioneerResidentBanks::Total
+			&& context.initialized && context.qwen35DataflowAuthority && context.qwen35DataflowMemory
+			&& context.qwen35DataflowProgramScratch && context.qwen35DataflowRoutesAudited
+			&& (resident.Ready() || resident.GraphRunning()) && !context.Unsafe(true);
+	}
+	bool SealedStreamMatches(const PioneerQwen35::DataflowStreamPlan& p,unsigned slot) { return stream.SealedMatches(p,slot); }
+	bool ReserveGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
+		const PioneerQwen35::DataflowStreamPlan& p,unsigned slot) { return stream.ReserveGraphSession(owner,p,slot); }
+	bool OwnsGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
+		const PioneerQwen35::DataflowStreamPlan& p,unsigned slot) { return stream.OwnsGraphSession(owner,p,slot); }
+	bool ReadWorkerSnapshot(unsigned c,PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.ReadWorkerSnapshot(c,s); }
+	bool CoreReady(unsigned c,const PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.CoreReady(c,s); }
+	bool StageGraphRun(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d) { return context.io.StageGraphRun(c,d); }
+	bool GraphRunMatches(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d) { return context.io.GraphRunMatches(c,d); }
+	bool PublishGraphCommand(unsigned c,unsigned seq) { return context.io.PublishGraphCommand(c,seq); }
+	bool WaitForCompletion(unsigned c,unsigned seq,PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.WaitForCompletion(c,seq,s); }
+	bool AuditGraphCore(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d,
+		const PioneerQwen35::DataflowWorkerSnapshot& s,bool decode) { return context.io.AuditGraphCore(c,d,s,decode); }
+	bool ReadArgmaxResult(unsigned seq,PioneerQwen35::DataflowArgmaxResult& r) { return context.io.ReadArgmaxResult(seq,r); }
+	bool Acknowledge(unsigned c,unsigned seq) { return context.io.Acknowledge(c,seq); }
+};
+
+__attribute__((used,noinline)) static bool
+PioneerQ35GraphSessionBindCompileWitness(PioneerStoreContext& context,PioneerQ35StreamRecordingWitness& stream,
+	PioneerQwen35::DataflowGraphSession& session)
+{
+	const auto* plan=stream.SealedPlan();
+	if (!plan || !context.qwen35DataflowService) return false;
+	PioneerQ35GraphBackend backend(context,stream);
+	return session.Bind(*plan,context.qwen35DataflowRoutes,stream.SealedSlot(),
+		context.qwen35DataflowAuthority,*context.qwen35DataflowService,backend);
+}
+
+__attribute__((used,noinline)) static PioneerQwen35::DataflowGraphSessionResult
+PioneerQ35GraphSessionRunCompileWitness(PioneerStoreContext& context,PioneerQ35StreamRecordingWitness& stream,
+	PioneerQwen35::DataflowGraphSession& session,PioneerQwen35::DataflowGraphSessionRun& run,
+	PioneerQwen35::DataflowProjectionAuthority& candidate,unsigned position,unsigned token,bool decode,unsigned polls,
+	PioneerQwen35::DataflowArgmaxResult& output,PioneerQwen35::DataflowProjectionAuthority*& retired,unsigned& stage)
+{
+	if (!context.qwen35DataflowProgramScratch) return PioneerQwen35::DataflowGraphSessionInvalid;
+	PioneerQ35GraphBackend backend(context,stream);
+	return session.Run(run,candidate,position,token,decode,polls,*context.qwen35DataflowProgramScratch,
+		backend,output,retired,stage);
+}
 
 __attribute__((used,noinline)) static bool
 PioneerQ35StreamRecordingCompileWitness(PioneerQ35StreamRecordingWitness& graph,

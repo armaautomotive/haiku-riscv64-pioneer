@@ -220,12 +220,16 @@ public:
 		fGraphPrevious=previous;fGraphTrigger=previous+1;fGraphPublisher=&publisher;fPhase=PhaseGraphRunning;
 		trigger=fGraphTrigger;return true;
 	}
+	bool OwnsGraph(const DataflowGraphPublisher& publisher) const {
+		return fPhase==PhaseGraphRunning && fGraphPublisher==&publisher;
+	}
+	bool GraphRunning() const { return fPhase==PhaseGraphRunning; }
 	bool CancelGraphBeforePublication(const DataflowGraphPublisher& publisher) {
 		if (fPhase!=PhaseGraphRunning || fGraphPublisher!=&publisher || !publisher.Unpublished()) return false;
 		fPhase=PhaseReady;fGraphPrevious=fGraphTrigger=0;fGraphPublisher=nullptr;return true;
 	}
 	void RetainFaultedGraph() {
-		if (fPhase==PhaseGraphRunning) fPhase=PhaseGraphFaulted;
+		if (fPhase==PhaseGraphRunning || fPhase==PhaseReady) fPhase=PhaseGraphFaulted;
 	}
 	template<class IO>
 	bool CommitGraph(const DataflowGraphPublisher& publisher,const DataflowGraphCompletion& completion,IO& io) {

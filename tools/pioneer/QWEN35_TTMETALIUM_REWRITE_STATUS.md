@@ -407,6 +407,29 @@ The new model-planning stack envelope is `9472/18432`, including a 2,048-byte
 helper allowance but excluding a real ioctl caller. No hardware or speed
 result exists for this change.
 
+Tag0142 composes the sealed stream, fresh ticket issuer, resident service,
+publisher, all-core completion audit and model transaction into a synchronous
+graph-session coordinator. One recording can be claimed by only one session,
+preventing a second issuer from reusing its barrier epochs. The coordinator
+returns output only after the state commit; uncertain publication or audit
+retains the run, candidate and service fault. Simulated tests exercise two
+successive prompt/decode runs, duplicate stream claims, failed preflight and
+an audit fault. A non-loadable driver witness now connects this coordinator to
+the real recording's bank proof and the PCI transport. Its controlled context
+safety check permits only this ready/running dataflow service while preserving
+the other `Unsafe()` checks; it also verifies the runtime owner, cold/reload
+state and seven-bank model session. This code has not run on the card.
+
+There is still no actual session allocation, public graph request or retained
+object teardown, and the device's per-command authorization hook denies all
+commands. Those must be implemented before a hardware trial. The target suite,
+27B shared-bank regression and both Haiku builds pass. Normal and non-loadable
+driver SHA-256 values:
+`60f47279614f341405f471e35dcdf578d7cf0d16124676ab2eebc919447378cd`
+and `d5d1959ceadfa18e2ca0577747334dd34ea2fd8eeae04e5c7057a962e4d9ca66`.
+The coordinator stack envelope is `13552/18432`, including a 2,048-byte helper
+allowance but excluding the future ioctl caller. No decode rate is available.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

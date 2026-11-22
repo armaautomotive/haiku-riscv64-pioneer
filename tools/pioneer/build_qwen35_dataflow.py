@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010141'
+TAG = '2026112100010142'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -151,6 +151,36 @@ def verify_kernel_stack_budget(driver_directory):
         if total > 18432:
             raise RuntimeError(f'graph model witness stack envelope is {total} bytes')
         print(f'qwen35_graph_model_stack_envelope_bytes={total}/18432 '
+              '(includes 2048-byte allowance; real ioctl caller not audited)')
+
+    if any('PioneerQ35GraphSessionRunCompileWitness(' in n for n, _, _ in entries):
+        # Sum mutually exclusive preparation, publication and audit branches
+        # as an intentionally conservative envelope for the complete witness.
+        groups = [
+            ('session entry', ('PioneerQ35GraphSessionRunCompileWitness(',)),
+            ('session run', ('DataflowGraphSession::Run(',)),
+            ('model preparation', ('DataflowGraphModelTransaction::Prepare(',)),
+            ('metadata decoder', ('DataflowDecoderSequence::Run(', 'DataflowGraphMetadataService')),
+            ('metadata ffn', ('DataflowFfnSequence::Run(', 'DataflowGraphMetadataService')),
+            ('metadata service', ('DataflowGraphMetadata.h:', 'DataflowGraphMetadataService::')),
+            ('authority method', ('DataflowProjectionAuthority::',)),
+            ('program builder', ('DataflowProgramBuilder::Build(',)),
+            ('projection schedule', ('PioneerQ35BuildProjectionProgram(',)),
+            ('publisher', ('DataflowGraphPublisher::Start(', 'PioneerQ35GraphBackend')),
+            ('completion', ('DataflowGraphCompletion::Finish(', 'PioneerQ35GraphBackend')),
+            ('core audit', ('PioneerSessionIO::AuditGraphCore(',)),
+            ('invocation binder', ('ProgramBuilder::BindCore(',)),
+        ]
+        total = 2048
+        for label, markers in groups:
+            matches = [(frame, kind) for name, frame, kind in entries
+                       if all(marker in name for marker in markers)]
+            if not matches or any(kind != 'static' for _, kind in matches):
+                raise RuntimeError('missing or unbounded graph session frame: ' + label)
+            total += max(frame for frame, _ in matches)
+        if total > 18432:
+            raise RuntimeError(f'graph session witness stack envelope is {total} bytes')
+        print(f'qwen35_graph_session_stack_envelope_bytes={total}/18432 '
               '(includes 2048-byte allowance; real ioctl caller not audited)')
 
 
