@@ -450,6 +450,22 @@ with 2,048-byte allowances, excluding a real ioctl caller. Connect the owner
 to a graph generation request and safe clean/fault teardown before hardware;
 no new decode rate exists.
 
+Tag0145 connects graph recording and binding to install and graph execution to
+the existing generation request in the non-loadable build. The fixed template
+uses activation slot 0. Prompt processing includes the first selected token;
+decode timing covers later tokens, so the client uses `output_count-1` for
+decode throughput. Recording is included in model-load time. Simulated tests
+cover ordering, EOS, invalid output, timing, two warm requests and a retained
+fault. The target suite and both Haiku builds pass. Normal driver SHA-256:
+`813d44299bb77faeb02bc3d45f805afbe4d499fdd9456f87aeec5bfa22557582`;
+non-loadable witness:
+`6d4d5c72f94fc90187df7889b4cf6022ef2dcc7b0632af991e42e746e1c149d7`.
+The install and generation call-path envelopes are `16400/18432` and
+`15872/18432`, each with a 2,048-byte helper allowance and no whole-program
+proof. Before hardware use complete graph-fault recovery and teardown review,
+then verify the prior 27B diagnostic has exited and stable driver is idle.
+No new decode rate exists.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -509,7 +525,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0144. Since tag0121 it records final release of a
+The default build now targets dedicated tag0145. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

@@ -8,7 +8,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-TAG = '2026112100010144'
+TAG = '2026112100010145'
 
 
 def verify_kernel_stack_budget(driver_directory):
@@ -65,7 +65,7 @@ def verify_kernel_stack_budget(driver_directory):
             # handler. Its stack usage is then included in the measured
             # Qwen35DataflowControl frame, and no separate .su record exists.
             sizes[key] = 0
-            print('qwen35_generation_frame=inlined_into_control')
+            print('qwen35_legacy_generation_frame_absent_or_inlined')
             continue
         if not matches or any(kind != 'static' for _, kind in matches):
             raise RuntimeError('missing or unbounded Qwen35 stack frame: ' + key)
@@ -100,7 +100,7 @@ def verify_kernel_stack_budget(driver_directory):
     if any('PioneerQ35StreamRecordingCompileWitness(' in n for n, _, _ in entries):
         groups = [
             ('recording entry', ('PioneerQ35StreamRecordingCompileWitness(',)),
-            ('owned recording entry', ('PioneerQ35GraphOwnerRecordCompileWitness(',)),
+            ('owned recording entry', ('PioneerQ35GraphOwnerRecord(',)),
             ('recording build', ('DataflowStreamRecording::Build(',)),
             ('recording decoder', ('DataflowDecoderSequence::Run(', 'DataflowStreamRecorder<')),
             ('recording ffn', ('DataflowFfnSequence::Run(', 'DataflowStreamRecorder<')),
@@ -118,16 +118,35 @@ def verify_kernel_stack_budget(driver_directory):
             ('page command', ('PioneerResidentStoreCommand(', 'PioneerSessionIO')),
         ]
         total = 2048  # unmeasured small helpers and future caller are not certified
+        recorded_frames = {}
         for label, markers in groups:
             matches = [(frame, kind) for name, frame, kind in entries
                        if all(marker in name for marker in markers)]
             if not matches or any(kind != 'static' for _, kind in matches):
                 raise RuntimeError('missing or unbounded stream recorder frame: ' + label)
-            total += max(frame for frame, _ in matches)
+            recorded_frames[label] = max(frame for frame, _ in matches)
+            total += recorded_frames[label]
         if total > 18432:
             raise RuntimeError(f'stream recorder witness stack envelope is {total} bytes')
         print(f'qwen35_stream_witness_stack_envelope_bytes={total}/18432 '
               '(includes 2048-byte allowance; real ioctl caller not audited)')
+        if any('DataflowGraphGeneration::Run(' in n for n, _, _ in entries):
+            # INSTALL calls recording directly from the control handler. The
+            # reserve/plan-validation branch precedes the decoder branch, so
+            # bound them separately rather than adding both call paths.
+            f = recorded_frames
+            prefix = sizes['control'] + f['owned recording entry'] + f['recording build'] + 2048
+            record_path = (prefix + f['recording decoder'] + f['recording ffn']
+                           + f['recording service'] + f['recording emit']
+                           + f['authority method'] + f['program builder'] + f['projection schedule']
+                           + f['invocation binder'] + f['invocation validator']
+                           + f['stream page stage'] + f['page transfer'] + f['page command'])
+            reserve_path = prefix + f['stream reservation'] + f['stream plan validation']
+            install_bound = max(record_path, reserve_path)
+            if install_bound > 18432:
+                raise RuntimeError(f'graph install stack envelope is {install_bound} bytes')
+            print(f'qwen35_graph_install_stack_envelope_bytes={install_bound}/18432 '
+                  '(includes 2048-byte helper allowance; not a whole-program proof)')
 
     # The model transaction is a distinct non-loadable witness. Sum the
     # metadata decoder's measured call frames and conservative branches;
@@ -159,7 +178,7 @@ def verify_kernel_stack_budget(driver_directory):
         # as an intentionally conservative envelope for the complete witness.
         groups = [
             ('session entry', ('PioneerQ35GraphSessionRunCompileWitness(',)),
-            ('owned session entry', ('PioneerQ35GraphOwnerRunCompileWitness(',)),
+            ('owned session entry', ('PioneerQ35GraphOwnerRun(',)),
             ('session run', ('DataflowGraphSession::Run(',)),
             ('model preparation', ('DataflowGraphModelTransaction::Prepare(',)),
             ('metadata decoder', ('DataflowDecoderSequence::Run(', 'DataflowGraphMetadataService')),
@@ -180,10 +199,29 @@ def verify_kernel_stack_budget(driver_directory):
             if not matches or any(kind != 'static' for _, kind in matches):
                 raise RuntimeError('missing or unbounded graph session frame: ' + label)
             total += max(frame for frame, _ in matches)
+        includes_ioctl = any('DataflowGraphGeneration::Run(' in n for n, _, _ in entries)
+        if includes_ioctl:
+            for label, markers in [
+                ('graph ioctl', ('Qwen35DataflowControl(',)),
+                ('graph generation', ('DataflowGraphGeneration::Run(',)),
+                ('generation dispatch', ('DataflowGraphGeneration::Run<', '::<lambda(')),
+            ]:
+                matches = [(frame, kind) for name, frame, kind in entries
+                           if all(marker in name for marker in markers)]
+                if not matches or any(kind != 'static' for _, kind in matches):
+                    raise RuntimeError('missing or unbounded graph generation frame: ' + label)
+                total += max(frame for frame, _ in matches)
+            generate_handler = [(frame, kind) for name, frame, kind in entries
+                                if 'status_t Qwen35DataflowGenerate(' in name]
+            if any(kind != 'static' for _, kind in generate_handler):
+                raise RuntimeError('unbounded Qwen35 graph generate handler frame')
+            if generate_handler:
+                total += max(frame for frame, _ in generate_handler)
         if total > 18432:
             raise RuntimeError(f'graph session witness stack envelope is {total} bytes')
-        print(f'qwen35_graph_session_stack_envelope_bytes={total}/18432 '
-              '(includes 2048-byte allowance; real ioctl caller not audited)')
+        scope = 'includes measured ioctl and 2048-byte helper allowance' if includes_ioctl else \
+                'includes 2048-byte allowance; real ioctl caller not audited'
+        print(f'qwen35_graph_session_stack_envelope_bytes={total}/18432 ({scope})')
 
 
 def main():

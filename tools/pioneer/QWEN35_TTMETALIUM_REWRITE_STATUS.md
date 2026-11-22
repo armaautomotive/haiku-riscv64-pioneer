@@ -473,6 +473,28 @@ The recording and graph-run stack envelopes are `17552/18432` and
 excluding a real ioctl caller. Recording, binding and running this owner are
 still compile witnesses, not a public generation path or hardware result.
 
+Tag0145 connects the context-owned graph to the existing install and generation
+requests in the non-loadable dispatch build. Install records a sealed decode
+template for activation slot 0, starts the resident service and binds the
+graph session. Generation uses only the graph runner: prompt tokens use the
+545-step prefix, the last prompt token and decode tokens use 548 steps, and
+there is no host tensor inference fallback. Prompt time includes the first
+selected token; decode time covers the remaining output tokens, matching the
+client's `(output_count-1)/decode_seconds` calculation. Recording is included
+in model-load time. Requests for another activation slot are rejected.
+
+Simulation covers token ordering, EOS, invalid output, separate timing, two
+warm requests through the owned runner and retained audit failure. The target
+suite and normal/non-loadable Haiku builds pass. Normal and non-loadable driver
+SHA-256 values:
+`813d44299bb77faeb02bc3d45f805afbe4d499fdd9456f87aeec5bfa22557582`
+and `6d4d5c72f94fc90187df7889b4cf6022ef2dcc7b0632af991e42e746e1c149d7`.
+The measured install and generation call-path envelopes are `16400/18432`
+and `15872/18432`, respectively, each including a 2,048-byte helper allowance;
+neither is a whole-program stack proof. The driver remains non-loadable pending
+fault recovery, teardown review and physical qualification. No card run or
+decode throughput exists for this path.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
