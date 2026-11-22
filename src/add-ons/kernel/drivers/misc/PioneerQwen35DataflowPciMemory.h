@@ -308,6 +308,54 @@ public:
 		return true;
 	}
 
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	// Once the first descriptor has been verified, a warm graph only changes
+	// the trigger, poll budget, ticket, token/position and checksum. Compare
+	// the complete old record to the trusted next record before writing any
+	// word, and retain the graph on any partial write or unexpected change.
+	// The worker is idle and the global session lock excludes other writers.
+	bool UpdateGraphRun(unsigned core,unsigned previous,
+		const PioneerQwen35::DataflowGraphRunDescriptor& next)
+	{
+		using namespace PioneerQwen35;
+		if (!previous || !DataflowGraphRunValid(next,core)
+			|| next.triggerSequence!=previous+1 || !SelectMapped(core)
+			|| fRaw.ResetRead()!=0x46800 || fRaw.ResetRead()!=0x46800
+			|| !fRaw.DataflowCoreIdleForWrite(core,DataflowGraphRunAddress,
+				DataflowGraphRunBytes)) return false;
+		DataflowGraphRunDescriptor old{};
+		if (!ReadCoreMemory(core,DataflowGraphRunAddress,&old,sizeof(old))
+			|| !DataflowGraphRunValid(old,core) || old.triggerSequence!=previous)
+			return false;
+		constexpr unsigned Words=DataflowGraphRunBytes/sizeof(uint32_t);
+		auto wordAt=[](const DataflowGraphRunDescriptor& record,unsigned word) {
+			uint32_t value=0;
+			memcpy(&value,reinterpret_cast<const uint8_t*>(&record)+word*sizeof(value),sizeof(value));
+			return value;
+		};
+		auto mutableWord=[](unsigned byte) {
+			return byte==offsetof(DataflowGraphRunDescriptor,triggerSequence)
+				|| byte==offsetof(DataflowGraphRunDescriptor,pollLimit)
+				|| (byte>=offsetof(DataflowGraphRunDescriptor,ticket)
+					&& byte<offsetof(DataflowGraphRunDescriptor,ticket)+sizeof(DataflowGraphRunTicket))
+				|| byte==offsetof(DataflowGraphRunDescriptor,token)
+				|| byte==offsetof(DataflowGraphRunDescriptor,token)+sizeof(uint32_t)
+				|| byte==offsetof(DataflowGraphRunDescriptor,checksum);
+		};
+		for (unsigned word=0;word<Words;word++)
+			if (wordAt(old,word)!=wordAt(next,word) && !mutableWord(word*sizeof(uint32_t))) return false;
+		for (unsigned word=0;word<Words;word++) {
+			const uint32_t value=wordAt(next,word);
+			if (wordAt(old,word)==value) continue;
+			const unsigned address=DataflowGraphRunAddress+word*sizeof(uint32_t);
+			fRaw.Q38PanelWrite(address,value);
+			if (fRaw.Q38PanelRead(address)!=value
+				|| !fRaw.DataflowPanelMappingStable()) return false;
+		}
+		return fRaw.ResetRead()==0x46800 && fRaw.ResetRead()==0x46800;
+	}
+#endif
+
 	bool CaptureCoreState(unsigned core,DataflowPciCoreSnapshot& snapshot)
 	{
 		if (snapshot.captured || snapshot.localWords || !SelectMapped(core)

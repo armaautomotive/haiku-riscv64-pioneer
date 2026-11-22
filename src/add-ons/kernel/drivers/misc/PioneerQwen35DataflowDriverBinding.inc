@@ -1860,11 +1860,15 @@ PioneerSessionIO::StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraph
 	DataflowWorkerSnapshot snapshot{};
 	if (!DataflowGraphRunValid(descriptor,core) || !ReadWorkerSnapshot(core,snapshot)
 		|| !DataflowWorkerSnapshotReady(snapshot) || !CoreReady(core,snapshot)
-		|| descriptor.triggerSequence<=snapshot.completedSequence
-		|| !WriteCoreMemory(core,DataflowGraphRunAddress,&descriptor,sizeof(descriptor))) return false;
-	DataflowGraphRunDescriptor observed{};
-	if (!ReadCoreMemory(core,DataflowGraphRunAddress,&observed,sizeof(observed))
-		|| memcmp(&observed,&descriptor,sizeof(observed))) return false;
+		|| descriptor.triggerSequence!=snapshot.completedSequence+1) return false;
+	if (snapshot.completedSequence) {
+		if (!qwen35DataflowContext || !qwen35DataflowContext->qwen35DataflowMemory
+			|| !qwen35DataflowContext->qwen35DataflowMemory->UpdateGraphRun(
+				core,snapshot.completedSequence,descriptor)) return false;
+	} else if (!WriteCoreMemory(core,DataflowGraphRunAddress,&descriptor,sizeof(descriptor)))
+		return false;
+	// The publisher immediately calls GraphRunMatches for a complete
+	// descriptor readback before it can issue any command to any worker.
 	const uint32_t command=DataflowGraphRunCommand;
 	return WriteCoreMemory(core,DataflowProgramAddress,&command,sizeof(command));
 }

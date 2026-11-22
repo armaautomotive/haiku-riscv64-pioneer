@@ -41,6 +41,20 @@ tag0147 driver SHA-256 is
 and the non-loadable graph witness is
 `24eca47a2b71b115147bc4263a486960619b20e81827b915e36d67f1c909fa31`.
 
+Tag0148 updates the real non-loadable graph staging adapter to avoid
+rewriting unchanged descriptor words on warm runs. It validates the entire
+old record and its completed sequence, rejects changes outside the allowed
+dynamic words, verifies each changed write, and retains the graph on any
+uncertainty. The publisher still reads and compares the complete new record
+before any trigger. In a simulated prompt-to-decode transition this reduces
+descriptor writes from 128 to seven per core; multiple full-record reads and
+the host's per-step metadata replay remain. The target suite and both Haiku
+builds pass. The normal driver SHA-256 is
+`96c8f9b2d749c54cce873be27d2b6fc184dd3bc4827a1e02c9f48c8d3d83646b`,
+and the non-loadable graph witness is
+`343a690d5ab7e6a189e1bfbee13df75f7ed53b6988e47494f23464d114f4490e`.
+No hardware throughput is implied.
+
 After the tag0120 diagnostic exited cold, a single authorized power-off/on
 cycle and the verified NVMe Fedora-to-Haiku handoff restored a fresh Haiku
 boot. The saved hash-verified recovery script restored stable driver55:

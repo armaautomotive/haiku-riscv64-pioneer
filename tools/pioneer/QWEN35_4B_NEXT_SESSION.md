@@ -494,6 +494,20 @@ and both Haiku/RISC-V builds pass. Tag0147 normal driver SHA-256:
 non-loadable graph witness:
 `24eca47a2b71b115147bc4263a486960619b20e81827b915e36d67f1c909fa31`.
 
+Tag0148 reduces host writes for repeated graph descriptors in the non-loadable
+dispatch build. After the first fully written record, it checks the entire
+previous record and its sequence against the ready worker, rejects unexpected
+static changes, and writes only changed trigger, poll, ticket, token/position
+and checksum words. The publisher still performs a complete descriptor
+readback before triggering any worker; an uncertain or partial update retains
+the graph. The fixture's prompt-to-decode example uses seven writes instead
+of 128 per core. Full-record reads, per-core auditing and metadata replay are
+still present; this is an operation count, not a hardware speed measurement.
+The target suite and both Haiku/RISC-V builds pass. Normal driver SHA-256:
+`96c8f9b2d749c54cce873be27d2b6fc184dd3bc4827a1e02c9f48c8d3d83646b`;
+non-loadable graph witness:
+`343a690d5ab7e6a189e1bfbee13df75f7ed53b6988e47494f23464d114f4490e`.
+
 After the user restored power, strict SSH to the pinned Haiku identity
 succeeded again on 2026-11-22. This was an OS identity check only; the prior
 27B process and stable-driver idle preflight must be checked again before
@@ -558,7 +572,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0147. Since tag0121 it records final release of a
+The default build now targets dedicated tag0148. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
