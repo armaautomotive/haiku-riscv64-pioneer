@@ -98,6 +98,10 @@ if "$cross-objdump" -d "$output/service.elf" \
 	echo 'resident worker uses an unsupported A-extension atomic' >&2
 	exit 1
 fi
+if grep -E '[[:space:]](fdiv|fsqrt)[.][sd][[:space:]]' "$output/disassembly.txt" >/dev/null; then
+	echo 'resident BRISC worker uses an unqualified floating divide or square root' >&2
+	exit 1
+fi
 shasum -a 256 "$output/boot.bin" "$output/text.bin"
 if [ -f "$output/dispatch.bin" ]; then shasum -a 256 "$output/dispatch.bin"; fi
 if [ -f "$output/device-graph.su" ]; then

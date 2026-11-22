@@ -1,0 +1,14 @@
+   772dc:	01c12983          	lw	s3,28(sp)
+   772e0:	03010113          	add	sp,sp,48
+   772e4:	00008067          	ret
+   772e8:	000807b7          	lui	a5,0x80
+   772ec:	aa07a787          	flw	fa5,-1376(a5) # 7faa0 <_ZZL15PioneerGraphExpfE1c+0x88>
+   772f0:	fdc42707          	flw	fa4,-36(s0)
+   772f4:	00e7f753          	fadd.s	fa4,fa5,fa4
+   772f8:	7f8007b7          	lui	a5,0x7f800
+   772fc:	18e7f7d3          	fdiv.s	fa5,fa5,fa4
+   77300:	f0048753          	fmv.w.x	fa4,s1
+   77304:	10e7f7d3          	fmul.s	fa5,fa5,fa4
+   77308:	f0090753          	fmv.w.x	fa4,s2
+   7730c:	10e7f7d3          	fmul.s	fa5,fa5,fa4
+   77310:	e0078553          	fmv.x.w	a0,fa5

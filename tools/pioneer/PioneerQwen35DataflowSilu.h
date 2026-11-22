@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_SILU_H
 
 #include <stdint.h>
+#include "PioneerGraphMath.h"
 
 namespace PioneerQwen35 {
 
@@ -65,11 +66,11 @@ inline bool DataflowSiluProduct(float gate,float up,float& result)
 	if (gate>=0) {
 		float exponential=0;
 		if (!DataflowExpNonPositive(-gate,exponential)) return false;
-		sigmoid=1.0f/(1.0f+exponential);
+		sigmoid=PioneerGraphDividePositive(1.0f,1.0f+exponential);
 	} else {
 		float exponential=0;
 		if (!DataflowExpNonPositive(gate,exponential)) return false;
-		sigmoid=exponential/(1.0f+exponential);
+		sigmoid=PioneerGraphDividePositive(exponential,1.0f+exponential);
 	}
 	result=(gate*sigmoid)*up;
 	return DataflowSiluFinite(result);

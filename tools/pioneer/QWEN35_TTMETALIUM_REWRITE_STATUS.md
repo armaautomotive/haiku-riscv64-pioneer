@@ -1,5 +1,16 @@
 # Qwen3.5 Tenstorrent device-program rewrite
 
+Tag0160 traced the first convolution stall to arithmetic on group0. Its exact
+worker disassembly contains `fdiv.s` inside `DataflowSiluProduct`; BRISC's
+existing qualified math uses software division. Tag0161 replaces the runtime
+floating divides with that helper and adds an image build guard rejecting
+floating divide and square-root instructions. SiLU, convolution and one million
+independent software-division comparisons pass; the target suite and all three
+Haiku builds pass. This diagnosis and fix still require hardware confirmation.
+Tag0160 needed an NVMe power cycle to restore stable driver55; no token or
+decode rate was obtained. See [the run record](benchmarks/qwen35-dataflow-tag0160-20261122/RUN.md).
+
+
 The rewrite client now performs up to four bounded recovery attempts when a
 captured graph fault specifically returns `RECOVERY_PENDING`, keeping the
 original owner open while workers may settle. Every retry uses the existing
