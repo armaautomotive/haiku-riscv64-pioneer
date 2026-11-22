@@ -149,6 +149,18 @@ the non-loadable witness SHA-256 is
 `22f4d211d27e3ae0a49c6040a6a3b02871b55e94c98d2fc1997f85f8f6248072`.
 Neither has run on the card.
 
+Tag0130 extracts the existing worker's single-command executor from the
+host-driven service loop so a future queued service can reuse the same Tensix
+and auxiliary operations. The caller remains responsible for proving command
+authority, publication, fleet coordination and fault ownership; extraction
+does not supply those checks or connect the stream. The resident image is
+54,536 bytes, within its 57,344-byte allocation, and the RV32IMF and simulated
+role tests pass. Normal and non-loadable Haiku builds pass. Normal driver
+SHA-256: `66fc673b05a400cf090de5d621840c1ef73a42c68b1222b1d7c21c24d766d75d`;
+non-loadable witness SHA-256:
+`c9b51667a271c350701729e240af5f90af06d50ddcb7e0a7b8249635d15a27e8`.
+The refactor has not run on the card and establishes no new token rate.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
@@ -208,7 +220,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0129. Since tag0121 it records final release of a
+The default build now targets dedicated tag0130. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

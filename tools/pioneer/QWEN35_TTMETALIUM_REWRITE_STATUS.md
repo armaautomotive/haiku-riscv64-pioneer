@@ -176,6 +176,16 @@ normal driver SHA-256 is
 the non-loadable witness SHA-256 is
 `22f4d211d27e3ae0a49c6040a6a3b02871b55e94c98d2fc1997f85f8f6248072`.
 
+Tag0130 extracts execution of one local command from the service loop for
+reuse by the future queued worker. The existing service still supplies the
+command and retains its publication, completion and acknowledgment protocol;
+the new executor does not itself authorize queued commands or coordinate the
+fleet. The RV32IMF image is 54,536 bytes, the synthetic role tests pass, and
+both normal and non-loadable Haiku builds pass. Their driver SHA-256 values are
+`66fc673b05a400cf090de5d621840c1ef73a42c68b1222b1d7c21c24d766d75d`
+and `c9b51667a271c350701729e240af5f90af06d50ddcb7e0a7b8249635d15a27e8`.
+This has not run on the card and does not establish a decode rate.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
