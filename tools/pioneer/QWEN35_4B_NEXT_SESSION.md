@@ -38,10 +38,10 @@ firmware readiness, PCI restoration, rebuilt mappings, all 120 cores held,
 idle NoC/DMA, and released owners. Ticket and fault-epoch checks reject
 concurrent faults. A separate, fail-closed helper now encodes the exact three
 Blackhole ASIC reset PCI writes and bounded reset-marker wait; fake-PCI tests
-pass. It is not connected to a driver ioctl. Focused recovery tests and the
-full Haiku/RISC-V build pass with stack usage `15712/18432`. The reset ioctl,
-post-reset PCI/firmware/resource rebuild, and silicon qualification remain
-open. See
+pass. It is connected to a default-disabled recovery prototype. Focused
+recovery tests and the full Haiku/RISC-V build pass with stack usage
+`15712/18432`. PCIe capability restoration, firmware queue initialization,
+and silicon qualification remain open. See
 [`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md),
 [`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md), and
 [`tag0120 RUN`](benchmarks/qwen35-dataflow-tag0120-20261121/RUN.md).
@@ -53,14 +53,14 @@ old generation recoverable. Both fixtures pass, as does the RISC-V target
 build. A fresh post-reset mapping backend now validates PCI BARs, topology and
 each selected core, and restores a TLB value captured after reset. Simulated
 MMIO tests cover mapping and cleanup failure cases. The mapping and audit are
-not yet integrated into the reset lifecycle and have not run on the card.
+integrated into the default-disabled prototype and have not run on the card.
 A post-reset PCI helper now restores the fixed active BAR/bridge layout with
 bus mastering disabled; simulated PCI tests cover lost writes and unsafe
 states. A simulated-tested audit of both PCIe pending states and the pinned
 firmware's channel-0 HDMA now follows the fleet audit and restores its fresh
-TLB snapshot. Firmware initialization, complete PCI capability restoration,
-recovery orchestration, and release of the retained cookie and host pages
-remain to be wired and physically verified.
+TLB snapshot. Recovery orchestration and owner retirement are wired into the
+default-disabled prototype; firmware queue initialization, complete PCI
+capability restoration, and physical verification remain open.
 
 The post-reset backend now requires a bounded ARC scratch readiness poll and
 the pinned firmware telemetry and harvesting values before fleet and DMA
@@ -71,16 +71,20 @@ remains open; this new code has not been run on the card.
 The default build now targets dedicated tag0121. It records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
-RISC-V build pass. This ioctl does not reset the card or retire any resource;
-the complete recovery operation is still unimplemented. Do not install or run
-tag0121 until the required clean Haiku boot and guarded hardware preflight.
+RISC-V build pass. The status ioctl does not reset the card or retire any
+resource. A separate recovery-run prototype is disabled by default until PCIe
+capability restoration and firmware queue initialization are implemented and
+the path is qualified. Do not install or run tag0121 until the required clean
+Haiku boot and guarded hardware preflight.
 Tag0121 now also compiles a proof-gated session-area retirement method;
 simulated tests cover invalid evidence, duplicate areas, host-buffer release
-ordering, and partial failure. It is not yet connected to the recovery ioctl.
+ordering, and partial failure. It is called by the disabled prototype only.
 The recovery guard now resolves through the existing pinned reload-guard
 image path; its previous separate path could not be found by Haiku's module
 resolver. A simulated-tested PCI teardown restores the idle BAR/bridge state
-without replaying stale TLB snapshots. Integration and hardware checks remain.
+without replaying stale TLB snapshots. The recovery sequence is compiled in a
+separate non-loadable prototype build. Hardware checks and resumable recovery
+after a failed attempt remain open.
 
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached

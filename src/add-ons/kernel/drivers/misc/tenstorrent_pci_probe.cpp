@@ -118,8 +118,16 @@
 	|| defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD))
 #error Qwen35 post-reset retirement supports only its dedicated dataflow resource set
 #endif
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
+#error Recovery execution is not hardware-qualified and may only be built as a non-loadable compile witness
+#endif
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && (!defined(PIONEER_QWEN35_INPLACE_RECOVERY) \
+	|| !defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE))
+#error Recovery compile witness requires the tag0121 dataflow recovery sequence
+#endif
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
-#include "PioneerDriverReloadState.h"
+#include "PioneerDriverRecoveryGuard.h"
+#include "BlackholeAsicReset.h"
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
@@ -1519,7 +1527,7 @@ FindCard(pci_module_info* pci, pci_info& card)
 status_t
 init_hardware()
 {
-#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return B_NOT_ALLOWED; // COMPILE witness:even renamed entry must do ZERO PCI/module IO
 #endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -1548,7 +1556,7 @@ init_hardware()
 status_t
 init_driver()
 {
-#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return B_NOT_ALLOWED; // no reload-guard attachment,PCI module or semaphore creation
 #endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -1594,7 +1602,7 @@ init_driver()
 void
 uninit_driver()
 {
-#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return; // no guard/module/sem/host teardown from a compile-only object
 #endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -1623,7 +1631,7 @@ uninit_driver()
 const char**
 publish_devices()
 {
-#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return NULL;
 #endif
 	return sNames;
@@ -3753,6 +3761,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+	PioneerPostResetMapping* recoveryMapping=NULL;
+	bool recoveryAttempted=false;
+#endif
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
 	PioneerQwen35::DataflowProjectionAuthority* qwen35DataflowAuthority=NULL;
@@ -3929,6 +3941,9 @@ struct PioneerStoreContext {
 	}
 	~PioneerStoreContext() {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+		delete recoveryMapping; // only after its explicit successful Close
+#endif
 		delete qwen35DataflowService;
 		delete qwen35DataflowMemory;
 		delete qwen35DataflowAuthority;
@@ -10531,6 +10546,130 @@ Qwen35RecoveryStatus(PioneerProbeCookie* cookie,void* data,size_t length)
 	release_sem(sLock);return status;
 }
 // PIONEER_QWEN35_RECOVERY_STATUS_END
+
+// PIONEER_QWEN35_RECOVERY_RUN_BEGIN
+struct Qwen35RecoveryResetIO {
+	PioneerSessionIO& io;
+	bool delayFailed=false;
+	explicit Qwen35RecoveryResetIO(PioneerSessionIO& owned):io(owned) {}
+	uint32 CardRead(uint16 offset,uint8 size) { return delayFailed?UINT32_MAX:io.CardRead(offset,size); }
+	uint32 RootRead(uint16 offset,uint8 size) { return delayFailed?UINT32_MAX:io.RootRead(offset,size); }
+	void CardWrite(uint16 offset,uint8 size,uint32 value) { io.CardWrite(offset,size,value); }
+	void RecoveryDelay() { if (snooze(100000)!=B_OK) delayFailed=true; }
+};
+
+// sLock held for the complete operation. The only inputs from userspace are
+// the expected build and generation; every device fact and proof is produced
+// by this driver. A failed attempt retains the owner and cold latch.
+static status_t
+Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r)
+{
+	if (!sReloadGuard || !sReloadGeneration || r.expected_tag!=PIONEER_DRIVER_BUILD_TAG
+		|| r.expected_generation!=sReloadGeneration) return B_BAD_VALUE;
+	if (!sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
+		|| !sRuntimeOwner || sRuntimeOwner==inspector || inspector->context
+		|| !sRuntimeOwner->finalFreeRetained || !sRuntimeOwner->context
+		|| !sRuntimeOwner->context->dispatchOwnerRetained) return B_BUSY;
+	PioneerProbeCookie* owner=sRuntimeOwner;
+	PioneerStoreContext* context=owner->context;
+	if (context->recoveryAttempted || context->recoveryMapping
+		|| !context->transaction.config_attempted || !context->transaction.map_attempted)
+		return B_NOT_ALLOWED;
+	const auto& saved=context->Pci();
+	if (saved.version!=1 || saved.commands_before[0] || saved.commands_before[1]
+		|| saved.bridge_before[0]!=0x0001fff1 || saved.bridge_before[1] || saved.bridge_before[2])
+		return B_BAD_VALUE;
+	for (unsigned i=0;i<6;i++) if (saved.bars_before[i]!=(i%2==0?0x0cU:0U)) return B_BAD_VALUE;
+#ifndef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	// The sequence is compiled and exercised with fake hardware, but cannot
+	// touch a real device until PCI capability restoration and firmware queue
+	// initialization are implemented and the complete path is qualified.
+	return B_NOT_ALLOWED;
+#endif
+	pioneer_driver_recovery_guard_info* guard=NULL;
+	status_t status=get_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE,(module_info**)&guard);
+	if (status!=B_OK) return status;
+	uint64 ticket=0;
+	if (!guard || guard->version!=1) status=B_BAD_VALUE;
+	else status=guard->begin(sReloadGeneration,&ticket);
+	if (status!=B_OK || !ticket) {
+		put_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE);
+		return status!=B_OK?status:B_DEV_NOT_READY;
+	}
+	auto fail=[&](status_t failure) {
+		guard->abort(ticket);
+		put_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE);
+		return failure;
+	};
+	context->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
+	if (!context->recoveryMapping) return fail(B_NO_MEMORY);
+	context->recoveryAttempted=true;
+	r.stage=PIONEER_RECOVERY_STAGE_DISABLE_MASTER;
+	if (!PioneerPreResetDisableMaster(context->io)) return fail(B_DEV_NOT_READY);
+	r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
+	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
+	if (!BlackholeAsicReset(resetIo,100,reset)) { r.detail=reset.stage;return fail(B_DEV_NOT_READY); }
+	r.stage=PIONEER_RECOVERY_STAGE_PCI_RESTORE;
+	PioneerPostResetPciResult pci{};
+	if (!PioneerPostResetPciRestore(context->io,pci)) { r.detail=pci.stage;return fail(B_DEV_NOT_READY); }
+	r.stage=PIONEER_RECOVERY_STAGE_MAPPING;
+	if (!context->recoveryMapping->Open()) return fail(B_DEV_NOT_READY);
+	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
+	tt_arc_scratch_result firmware{};
+	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) { r.detail=firmware.state;return fail(B_DEV_NOT_READY); }
+	r.stage=PIONEER_RECOVERY_STAGE_FLEET;
+	PioneerPostResetAuditResult fleet{};
+	if (!context->recoveryMapping->Audit(fleet)) {
+		r.detail=((fleet.failure&0xffU)<<24)|((fleet.noc&0xffU)<<16)|(fleet.core&0xffffU);
+		return fail(B_DEV_NOT_READY);
+	}
+	r.stage=PIONEER_RECOVERY_STAGE_HOST_DMA;
+	if (!context->recoveryMapping->AuditHostDma()) return fail(B_DEV_NOT_READY);
+	r.stage=PIONEER_RECOVERY_STAGE_CLOSE_MAPPING;
+	if (!context->recoveryMapping->Close()) return fail(B_DEV_NOT_READY);
+	delete context->recoveryMapping;context->recoveryMapping=NULL;
+	r.stage=PIONEER_RECOVERY_STAGE_PCI_IDLE;
+	unsigned finishStage=0;
+	if (!PioneerPostResetPciFinish(context->io,saved,finishStage)) { r.detail=finishStage;return fail(B_DEV_NOT_READY); }
+	PioneerDriverRecoveryProof proof={};
+	proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+	proof.core_count=120;proof.retained_owners=1;
+	// The guard ticket uniquely identifies this reset and its firmware audit.
+	proof.reset_generation=ticket;proof.firmware_generation=ticket;
+	r.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;
+	status=context->io.DisposeAfterVerifiedReset(proof);
+	if (status!=B_OK) return fail(status);
+	r.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
+	status=sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+	if (status!=B_OK) return fail(status);
+	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
+	delete context;owner->magic=0;delete owner;
+	proof.flags|=PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;proof.retained_owners=0;
+	r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
+	uint64 nextGeneration=0;
+	status=guard->complete(ticket,&proof,&nextGeneration);
+	if (status!=B_OK || !nextGeneration) return fail(status!=B_OK?status:B_DEV_NOT_READY);
+	sReloadGeneration=nextGeneration;sColdRecoveryRequired.ClearAfterVerifiedRecovery();
+	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
+	put_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE);
+	return B_OK;
+}
+
+static status_t
+Qwen35RecoveryRun(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!cookie || !data || length!=sizeof(tt_pioneer_recovery_run)) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_recovery_run r={};status=user_memcpy(&r,data,sizeof(r));
+	if (status!=B_OK || !PioneerRecoveryRunRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
+	status=acquire_sem(sLock);if (status!=B_OK) return status;
+	r.operation_status=Qwen35RecoveryRunLocked(cookie,r);r.build_tag=PIONEER_DRIVER_BUILD_TAG;
+	status=user_memcpy(data,&r,sizeof(r));
+	release_sem(sLock);return status;
+}
+// PIONEER_QWEN35_RECOVERY_RUN_END
 #endif
 
 #include "PioneerQwen35WorkControl.inc"
@@ -10544,6 +10683,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 	if (operation==TT_PCI_PROBE_RECOVERY_STATUS)
 		return Qwen35RecoveryStatus(instance,data,length);
+	if (operation==TT_PCI_PROBE_RECOVERY_RUN)
+		return Qwen35RecoveryRun(instance,data,length);
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	// The rewrite's private ioctl numbers are one contiguous range. Routing

@@ -4,6 +4,25 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPostResetPci.h"
 #include <cstdio>
 
+struct DisableMasterIO:MockIO {
+	void CardWrite(unsigned offset,unsigned width,uint32_t value) {
+		if (offset==4 && value==0x402 && command[0]==0x406) {
+			assert(width==2 && (command[0]==0x402 || command[0]==0x406));
+			if (++writes!=droppedWrite) command[0]=value;
+			return;
+		}
+		MockIO::CardWrite(offset,width,value);
+	}
+	void RootWrite(unsigned offset,unsigned width,uint32_t value) {
+		if (offset==4 && value==0x402 && command[1]==0x406) {
+			assert(width==2 && command[0]==0x402);
+			if (++writes!=droppedWrite) command[1]=value;
+			return;
+		}
+		MockIO::RootWrite(offset,width,value);
+	}
+};
+
 int main()
 {
 	PioneerPostResetPciResult result{};
@@ -58,5 +77,13 @@ int main()
 			&& memcmp(trial.bars,saved.bars_before,sizeof(trial.bars))==0
 			&& memcmp(trial.bridge,saved.bridge_before,sizeof(trial.bridge))==0);
 	}
+	DisableMasterIO before;assert(BlackholePioneerMmioBegin(before,saved,transaction));
+	before.command[0]=before.command[1]=0x406;
+	assert(PioneerPreResetDisableMaster(before) && before.command[0]==0x402
+		&& before.command[1]==0x402);
+	DisableMasterIO lost;assert(BlackholePioneerMmioBegin(lost,saved,transaction));
+	lost.command[0]=lost.command[1]=0x406;lost.droppedWrite=lost.writes+1;
+	assert(!PioneerPreResetDisableMaster(lost) && lost.command[0]==0x406
+		&& lost.command[1]==0x406);
 	std::puts("PASS post-reset PCI active-layout restore: real plan, bus-master/marker/interrupt refusal, dropped writes, decoder ordering; SIMULATED PCI ONLY");
 }

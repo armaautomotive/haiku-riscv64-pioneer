@@ -18,6 +18,31 @@ struct PioneerPostResetPciResult {
 	uint32_t cardCommand=0,rootCommand=0;
 };
 
+// Disable bus mastering on the retained session before requesting reset.
+// Do not disable memory decoding here: the reset marker and timer use PCI
+// config space, and the post-reset audit will establish fresh MMIO mappings.
+template<class IO>
+bool PioneerPreResetDisableMaster(IO& io)
+{
+	const auto& profile=io.Profile();PioneerBlackholeBarPlan plan;
+	if (!PioneerMinimumBarLayoutMatches(profile)
+		|| !PioneerPlanBlackholeBars(profile.ranges,TT_PIONEER_RANGE_COUNT,plan)
+		|| plan.hostStart[0]!=profile.bar0_host_start || plan.hostEnd[0]!=profile.bar0_host_end
+		|| plan.hostStart[1]!=profile.bar2_host_start || plan.hostEnd[1]!=profile.bar2_host_end
+		|| !io.Quiet() || !BlackholeCardControlsQuiet(io)
+		|| io.CardRead(0,4)!=0xb1401e52 || io.CardRead(0x2c,4)!=0x00431e52
+		|| io.RootRead(0,4)!=0x20421e30 || (io.RootRead(8,4)>>8)!=0x060400
+		|| io.RootRead(0x18,4)!=0x003f0100 || io.RootRead(0x20,4)!=0x0000fff0) return false;
+	const uint32_t card=io.CardRead(4,2),root=io.RootRead(4,2);
+	if ((card!=0x402 && card!=0x406) || (root!=0x402 && root!=0x406)) return false;
+	for (unsigned i=0;i<6;i++) if (io.CardRead(0x10+4*i,4)!=plan.bars[i]) return false;
+	for (unsigned i=0;i<3;i++) if (io.RootRead(0x24+4*i,4)!=plan.bridge[i]) return false;
+	if (card==0x406) io.CardWrite(4,2,0x402);
+	if (io.CardRead(4,2)!=0x402) return false;
+	if (root==0x406) io.RootWrite(4,2,0x402);
+	return io.CardRead(4,2)==0x402 && io.RootRead(4,2)==0x402;
+}
+
 // Re-establish only the P100A's fixed active BAR/bridge layout after the ASIC
 // reset marker has cleared. This does not restore all PCI capabilities or
 // establish firmware readiness. The caller retains the exclusive reservation,

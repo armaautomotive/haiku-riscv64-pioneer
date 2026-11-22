@@ -99,6 +99,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('haiku_build', type=Path)
     parser.add_argument('new_output', type=Path)
+    parser.add_argument('--compile-recovery-prototype', action='store_true',
+                        help='compile the experimental recovery body into a non-loadable driver')
     args = parser.parse_args()
 
     build = args.haiku_build.resolve(strict=True)
@@ -113,6 +115,8 @@ def main():
                       PIONEER_DRIVER_BUILD_TAG=TAG,
                       PIONEER_Q38_SPAN_PRELOAD='1',
                       PIONEER_Q38_SPAN_FAST='1')
+    if args.compile_recovery_prototype:
+        driver_env['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
     verify_kernel_stack_budget(driver)

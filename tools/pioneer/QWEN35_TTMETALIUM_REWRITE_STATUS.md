@@ -48,10 +48,10 @@ fault-state and module-path fixes:
 An isolated Blackhole reset helper now encodes the exact three PCI config
 writes used by Tenstorrent's KMD, rejects bus mastering or a stale reset marker,
 and waits a bounded number of times for the marker to clear. Its fake-PCI
-ASan/UBSan test passes with the reload-guard fixture. It is not wired to an
-ioctl. This remains only a proof-gated guard API and reset-sequence foundation:
-the driver ioctl, post-reset firmware/resource rebuild, physical recovery,
-and silicon validation are not implemented. A compiled PCI restoration helper
+ASan/UBSan test passes with the reload-guard fixture. A prototype ioctl
+connects it to the recovery sequence but is disabled by default. Complete
+PCIe capability restoration, firmware queue initialization, physical recovery,
+and silicon validation remain open. A compiled PCI restoration helper
 reestablishes the fixed active BAR and bridge layout after the reset marker
 clears, while refusing bus mastering, an uncleared marker, unsafe interrupt
 state, and unexpected identities. Simulated PCI tests exercise the real BAR
@@ -74,8 +74,8 @@ mapping implementation validates PCI BARs, captures the TLB only after reset,
 checks the fresh topology and each selected core's identity, and restores the
 post-reset TLB value before releasing mappings. Simulated-MMIO fixtures cover
 both networks, PCI/BAR rejection, partial map failure, wrong core identity,
-and retained mappings on failed cleanup. The implementation is compiled but
-not wired into a recovery operation or exercised on the card. A single atomic
+and retained mappings on failed cleanup. The implementation is wired into the
+default-disabled prototype but has not been exercised on the card. A single atomic
 word publishes the guard's fault epoch and cold latch together; an injected
 fault during latch clearing leaves the previous generation recoverable. These
 checks do not qualify a physical reset.
@@ -86,15 +86,23 @@ channel 0 enables and states in three stable samples. It requires the fleet
 audit first and restores a TLB value captured after reset. Simulated MMIO tests
 cover busy DMA, a changing DMA state, pending transactions at either PCIe end,
 and restoration. This evidence is limited to the pinned channel-0 firmware
-contract; the operation is not yet connected to owner release or tested on
-silicon.
+contract; the prototype connects it to owner release but remains disabled by
+default and has not been tested on silicon.
 
 The failed owner retains its cookie, PCI reservation, snapshots and
 quarantined host buffers after the client exits. The recovery operation must
 distinguish a final-freed owner from a still-live file descriptor and revoke
 old generation access before retiring those resources. Host buffers must stay
 wired until the reset, PCI pending-transaction and host-DMA idle proofs pass.
-The PCI, mapping, DMA audit, guard, firmware and ownership steps are not yet orchestrated.
+The PCI, mapping, DMA audit, guard, firmware and ownership steps now have a
+single prototype recovery operation. The default driver refuses that
+operation before any card access: complete PCIe capability restoration and
+firmware message-queue initialization still need implementation and the
+sequence has not been hardware-qualified. An extracted test runs the real
+operation body against simulated hardware and injects a failure at every stage;
+a separate test verifies the default gate performs no hardware action. A
+separate compile-only build includes the prototype but cannot load as a driver.
+Failed recovery attempts remain cold and are not yet resumable.
 
 Dedicated candidate tag0121 now records the retained owner's final file
 descriptor free while holding the driver lock. A read-only status ioctl
@@ -103,8 +111,8 @@ generation match; it refuses the lifetime condition with extra open
 descriptors, a live owner, or a quiesced driver. Extracted real close/status
 fixtures and the target build pass. This status does not initiate a reset,
 release any owner or host buffer, or grant hardware recovery. Tag0121 is not
-installed; its current driver SHA-256 is
-`e27367c0524fe573ab36e9d3bb95d75948ea3160dfcbbc889f08e687b56f5d1c`
+installed; its current default driver SHA-256 is
+`9d3e434dc9f71df57458b3233e9a181318106dd3d9fad465a22bfb934ca3064d`
 and its measured stack bound is `15712/18432` bytes. The board remains at
 tag0120 cold with its owner retained.
 
@@ -116,8 +124,8 @@ module fixture verifies both names resolve through the same image path.
 A post-audit PCI teardown restores the original fixed idle BAR and bridge
 state without calling the pre-reset mapping cleanup, which could restore stale
 TLB contents. Simulated PCI tests exercise invalid snapshots and dropped
-writes. The teardown is not yet connected to the recovery operation or
-qualified on the board.
+writes. The teardown is connected to the default-disabled recovery prototype
+and is not qualified on the board.
 
 Tag0121 also contains an in-kernel retirement method for the dedicated
 dataflow session's mapped areas and host buffers. It requires the reset,
@@ -125,8 +133,9 @@ firmware, PCI, core, NoC and DMA evidence with exactly one retained owner,
 rejects duplicate area IDs, and releases host buffers only after other mapped
 areas. On a deletion failure it retains the remaining areas and rejects a
 repeat attempt. Simulated OS tests cover invalid proof, duplicate IDs, release
-order and partial failure. This method is not connected to an ioctl or run on
-the Pioneer; no retained owner or buffer has yet been freed by it.
+order and partial failure. The prototype ioctl calls it only after its other
+checks; the ioctl is disabled by default and has not run on the Pioneer. No
+retained owner or buffer has yet been freed by it.
 
 No valid output, two warm runs, clean unload, or decode-rate measurement has
 been established; 100 tokens/s remains unmet. The two-warm benchmark and
