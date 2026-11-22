@@ -337,14 +337,18 @@ public:
     }
     bool DefaultBootRouting(unsigned core) {
         using namespace PioneerQwen35;
-        if (!Select(core) || !fScope.ProveRoleDefaultBootRouting(fIO,core)) return false;
+        if (!Select(core) || !fScope.ProveRoleBootRoutingInspectionAllowed(fIO,core)
+            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
         uint32_t trisc1=0,trisc2=0,ncrisc1=0,ncrisc2=0;
         return fViews.Read(core,DataflowRolePhysicalControl,0x234,trisc1,fGuard)
             && fViews.Read(core,DataflowRolePhysicalControl,0x23c,ncrisc1,fGuard)
             && fViews.Read(core,DataflowRolePhysicalControl,0x234,trisc2,fGuard)
             && fViews.Read(core,DataflowRolePhysicalControl,0x23c,ncrisc2,fGuard)
             && trisc1==trisc2 && ncrisc1==ncrisc2 && !(trisc1&1U) && !(ncrisc1&1U)
-            && fScope.ProveRoleDefaultBootRouting(fIO,core) && fGuard.ProveSelectedRoute(core);
+            && fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
+            && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+            && fScope.ProveRoleBootRoutingInspectionAllowed(fIO,core)
+            && fGuard.ProveSelectedRoute(core);
     }
     bool LocalRamStable(unsigned core) {
         return Select(core) && fScope.ProveRoleLocalRamStable(fIO,core)

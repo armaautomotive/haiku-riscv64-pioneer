@@ -55,6 +55,8 @@ struct PioneerSessionIO {
     unsigned selectCalls=0,tlbWrites=0;
     uint32_t slot1[3]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
+    mutable unsigned resetReads=0;
+    int resetChangeAt=-1;
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
     DataflowWorkerMailbox workerBoxes[DataflowBarrierWorkers]{};
@@ -101,7 +103,9 @@ struct PioneerSessionIO {
     bool SharedArcResetMapped() const { return simulateArc; }
     uint32_t SharedArcL2CpuResetRead() { assert(simulateArc && tlbOverride); return 0x0f; }
     uint32_t ScratchRead(unsigned word) { assert(simulateArc && tlbOverride && word==2); return 5; }
-    uint32_t ResetRead() const { return reset; }
+    uint32_t ResetRead() const {
+        return int(resetReads++)==resetChangeAt ? 0x6000 : reset;
+    }
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
     uint32_t RuntimePcRead() const { return computePc; }
     bool SharedRoleReleaseReset() { ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000; return true; }
@@ -277,6 +281,21 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleMemoryReadSafe(context->io,0,0));
             assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
             assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
+            const unsigned savedCore=context->io.runtimeCore;
+            const bool savedFirmware=context->io.firmwareMatches;
+            context->io.runtimeCore=7; context->io.firmwareMatches=true;
+            assert(scope.ProveRoleBootRoutingInspectionAllowed(context->io,7));
+            assert(!scope.ProveRoleBootRoutingInspectionAllowed(context->io,8));
+            assert(!scope.ProveRoleBootRoutingInspectionAllowed(context->io,DataflowBarrierWorkers));
+            context->io.mapping=false;
+            assert(!scope.ProveRoleBootRoutingInspectionAllowed(context->io,7));
+            context->io.mapping=true;
+            gThread=6; assert(!scope.ProveRoleBootRoutingInspectionAllowed(context->io,7)); gThread=5;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+            context->io.firmwareMatches=false;
+            assert(!scope.ProveRoleBootRoutingInspectionAllowed(context->io,7));
+#endif
+            context->io.runtimeCore=savedCore; context->io.firmwareMatches=savedFirmware;
             ++sReloadGeneration; assert(!scope.ProveExclusiveRewrite(context->io)); --sReloadGeneration;
             gThread=6; assert(!scope.ProveExclusiveRewrite(context->io)); gThread=5;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS

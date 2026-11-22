@@ -128,7 +128,17 @@ public:
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
-    bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return false; }
+    // This admits fixed status reads only. The adapter must separately prove
+    // the fleet is held, verify the selected route, and inspect both hardware
+    // reset-PC override registers; this method does not assert their values.
+    bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO& io,unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && ProveExclusiveRewrite(io)
+            && io.runtimeCore==core && io.DataflowPanelMappingStable()
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+            && io.SharedRoleFirmwareMatches()
+#endif
+            ;
+    }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return false; }
     // Must additionally establish partial-fleet cleanup and a role-aware
     // stop/hold path before permitting any physical reset release.

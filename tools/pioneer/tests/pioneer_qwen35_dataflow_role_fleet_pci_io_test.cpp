@@ -18,7 +18,7 @@ struct FleetPciTestScope {
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const
         { return held && stable && control; }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return held; }
-    bool ProveRoleDefaultBootRouting(PioneerSessionIO&,unsigned) const { return held && routing; }
+    bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
     bool ProveRoleReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return releaseDrained; }
@@ -31,6 +31,16 @@ struct FleetPciTestScope {
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return runtime; }
     bool ProveRoleFaultAuditSafe(PioneerSessionIO&,unsigned) const { return faultAudit; }
     bool ProveRoleFaultAckSafe(PioneerSessionIO&,unsigned) const { return faultAck; }
+};
+struct DriftViews {
+    DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>& views;
+    unsigned reads=0;
+    template<class Guard>
+    bool Read(unsigned core,unsigned which,unsigned offset,uint32_t& value,Guard& guard) {
+        if (!views.Read(core,which,offset,value,guard)) return false;
+        if (reads++==0) gMemory[DataflowRolePhysicalControl][0x234/4]^=1U;
+        return true;
+    }
 };
 int main()
 {
@@ -46,7 +56,9 @@ int main()
     PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,decltype(views)> io(context.io,scope,views);
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.AllRolesHeld(core) && io.DefaultBootRouting(core) && io.LocalRamStable(core));
-    context.io.reset=0x46800; assert(!io.AllRolesHeld(7)); context.io.reset=0x47800;
+    context.io.reset=0x46800;
+    assert(!io.AllRolesHeld(7) && !io.DefaultBootRouting(7));
+    context.io.reset=0x47800;
     context.io.nocDoorbell[1][3]=1; assert(!io.AllRolesHeld(7)); context.io.nocDoorbell[1][3]=0;
     context.io.nocOutstanding[0][31]=1; assert(!io.AllRolesHeld(7)); context.io.nocOutstanding[0][31]=0;
     gMemory[DataflowRolePhysicalControl][0x23c/4]|=1U;
@@ -55,6 +67,17 @@ int main()
     gMemory[DataflowRolePhysicalControl][0x234/4]|=1U;
     assert(!io.DefaultBootRouting(7));
     gMemory[DataflowRolePhysicalControl][0x234/4]&=~1U;
+    // T1/T2 remain held; their override selectors do not alter T0's boot PC.
+    gMemory[DataflowRolePhysicalControl][0x234/4]|=6U;
+    assert(io.DefaultBootRouting(7));
+    gMemory[DataflowRolePhysicalControl][0x234/4]&=~6U;
+    context.io.resetReads=0; context.io.resetChangeAt=2;
+    assert(!io.DefaultBootRouting(7));
+    context.io.resetChangeAt=-1;
+    DriftViews drift{views};
+    PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,DriftViews> unstable(context.io,scope,drift);
+    assert(!unstable.DefaultBootRouting(7) && drift.reads==4);
+    gMemory[DataflowRolePhysicalControl][0x234/4]^=1U;
     uint32_t words[]={0x11223344,0x55667788},out[2]={};
     assert(io.WriteBoot(7,DataflowRoleBriscBootAddress,words[0]));
     assert(io.ReadBoot(7,DataflowRoleBriscBootAddress,out[0]) && out[0]==words[0]);
