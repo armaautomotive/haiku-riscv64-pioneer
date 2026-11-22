@@ -1,0 +1,21 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_DRIVER_RECOVERY_GUARD_H
+#define PIONEER_DRIVER_RECOVERY_GUARD_H
+#include <module.h>
+#include "PioneerDriverReloadState.h"
+
+#define PIONEER_DRIVER_RECOVERY_GUARD_MODULE \
+	"generic/pioneer_p100a_recovery_guard/v1"
+
+// This API is kernel-module-only. Its proof is produced by the device driver
+// after reset and reinitialization; no userspace ioctl can supply or clear it.
+struct pioneer_driver_recovery_guard_info {
+	module_info info;
+	uint32 version;
+	status_t (*begin)(uint64 expectedGeneration,uint64* ticket);
+	status_t (*complete)(uint64 ticket,
+		const PioneerDriverRecoveryProof* proof,uint64* newGeneration);
+	status_t (*abort)(uint64 ticket);
+};
+
+#endif

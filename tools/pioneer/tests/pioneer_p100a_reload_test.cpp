@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
-#define TT_PIONEER_DRIVER_RELOAD
+#define TT_PIONEER_DRIVER_RELOAD 1
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026101900010001)
 #include "../../../src/add-ons/kernel/drivers/misc/pioneer_p100a_reload_guard.cpp"
@@ -32,6 +32,9 @@ static tt_pioneer_driver_reload Request(bool quiesce=false) {
 int main()
 {
 	assert(sGuard.info.flags==B_KEEP_LOADED && sGuard.info.std_ops(B_MODULE_INIT)==B_OK);
+	assert(sRecoveryGuard.info.flags==B_KEEP_LOADED
+		&& sRecoveryGuard.info.std_ops(B_MODULE_INIT)==B_OK);
+	assert(modules[0]==&sGuard.info && modules[1]==&sRecoveryGuard.info && modules[2]==NULL);
 	sReloadGuard=&sGuard; assert(sReloadGuard->attach(&sReloadGeneration)==B_OK && sReloadGeneration==1);
 	uint64 duplicate=99; assert(sGuard.attach(&duplicate)==B_DEV_NOT_READY && !duplicate);
 	PioneerProbeCookie cookie,other; sOpenCookies=1;
@@ -76,6 +79,50 @@ int main()
 		auto r=Request(); assert(DriverReloadControl(&cookie,TT_PCI_PROBE_RELOAD_STATUS,&r,sizeof(r))==B_OK && r.cold);
 		r=Request(true); assert(DriverReloadControl(&cookie,TT_PCI_PROBE_RELOAD_QUIESCE,&r,sizeof(r))==B_BUSY);
 	}
+	// The recovery interface keeps the legacy reload ABI intact. It refuses
+	// incomplete device evidence, stale tickets, and a fault racing the reset.
+	{
+		uint64 ticket=0,newGeneration=0;
+		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK && ticket);
+		PioneerDriverRecoveryProof proof={};
+		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
+		assert(sRecoveryGuard.abort(ticket)==B_OK && Cold());
+		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY);
+		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK && ticket);
+		proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED;
+		proof.core_count=120; proof.reset_generation=1; proof.firmware_generation=1;
+		PioneerDriverRecoveryProof incomplete=proof;
+		incomplete.core_count=119;
+		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
+		incomplete=proof; incomplete.noc_outstanding_mask=1;
+		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
+		incomplete=proof; incomplete.retained_owners=1;
+		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
+		const uint64 before=sReloadGeneration;
+		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_OK
+			&& newGeneration==before+1 && !Cold());
+		assert(sRecoveryGuard.abort(ticket)==B_BAD_VALUE);
+		sReloadGeneration=newGeneration;
+		sColdRecoveryRequired.ClearAfterVerifiedRecovery();
+		assert(!sColdRecoveryRequired && !sGuard.cold());
+	}
+	// A new fault during a recovery ticket invalidates its proof, even when
+	// all device audit fields otherwise pass.
+	{
+		sColdRecoveryRequired=true;
+		uint64 ticket=0,newGeneration=0;
+		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK && ticket);
+		PioneerDriverRecoveryProof proof={}; proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED;
+		proof.core_count=120; proof.reset_generation=2; proof.firmware_generation=2;
+		sGuard.fault(sReloadGeneration);
+		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
+		assert(sRecoveryGuard.abort(ticket)==B_OK && Cold());
+	}
 	assert(sGuard.detach(sReloadGeneration,false)==B_DEV_NOT_READY);
 	uint64 replacement=123; assert(sGuard.attach(&replacement)==B_DEV_NOT_READY && !replacement);
 	assert(sGuard.info.std_ops(B_MODULE_UNINIT)==B_BUSY);
@@ -88,5 +135,5 @@ int main()
 		if (fault==3) { state.Fault(first+1); assert(!state.Detach(first,true)); }
 		assert(state.cold && !state.Attach(second) && !second);
 	}
-	puts("PASS actual resident guard+extracted driver control:clean generations,active/extra FD/stale identity refusal,quiesce blocks ALL hardware,failed reply remains blocked,cold survives unload/reload and cannot clear;NO PCI/MMIO/reset/native qualification");
+	puts("PASS resident reload/recovery guard+extracted control:clean generations,exclusive/stale identity refusal,proof-gated recovery,NoC/core/owner and concurrent-fault refusal,cold survives abort/unload;NO PCI/MMIO/reset/native qualification");
 }

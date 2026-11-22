@@ -18,42 +18,42 @@ assistant only after the hardware generation and throughput gates pass.
 
 The active work remains the Tenstorrent-style device-program rewrite. It uses
 120 resident BRISC workers and Tensix matrix engines, with no CPU inference
-or fallback. Hardware access is through the verified SD-free path: Fedora on
-the existing NVMe boots Haiku from NVMe with kexec. No SD-card workflow is
-used.
+or fallback. Pioneer boots from its existing NVMe: Fedora hands off to Haiku
+with kexec. The user confirmed SD cards are no longer used; do not use or
+recommend an SD-card workflow.
 
-Before tag0120, the prior diagnostic process had exited and stable driver55
-was verified idle at generation2. The tag0119 recovery helper had restored it
-without rebooting Haiku. Tag0120 was then installed and ran one guarded
-diagnostic. Authentication took `99.767714` s, prompt tokenization
-`12.726700` s, model load/residency `337.246020` s for `2740498432` bytes,
-and failed prompt processing `0.612460` s. It produced no output token, so
-decode time and tokens/s are both unavailable. The first core0 embedding read
-failed: NoC0 response counter index36 observed `0x00029066`, expected
-`0x00029067`; completion mask `0xfe`, busy initiator mask `0x0`, and
-outstanding transaction-ID mask `0x00000001`. The captured request was
-address `0x04185380`, route `0x312`, size `3392` bytes. No read retry or
-counter clear was issued.
+Tag0120's diagnostic client has exited. A read-only Haiku check now reaches
+`10.0.0.247`; the current reload status is tag `2026112100010120`, generation3,
+`quiesced0 cold1 active_owner1 open_count1`. There is no inference/dataflow
+client, but the exclusive recovery lock and stable55 backup remain. Thus the
+prior diagnostic is gone, while the stable driver is **not idle or loaded**.
+The 4B file remains `2740937888` bytes and preserved 27B file remains
+`18973870528` bytes. No accelerator command has been issued since the
+tag0120 failure. Do not run inference or hardware reset against this state.
 
-Tag0120's recovery audit and normal close both failed. The reload status is
-tag `2026112100010120`, generation3, `cold1 active_owner1`; the candidate,
-exclusive recovery lock, and stable55 backup remain retained. The client has
-exited. Both model files were rechecked at their exact expected sizes:
-Qwen3.5-4B `2740937888` bytes and preserved Qwen3.8-27B `18973870528` bytes.
-No accelerator commands have been issued since the latched failure.
+Tag0120 failed the first core0 embedding read: NoC0 response counter index36
+observed `0x00029066`, expected `0x00029067`; completion mask `0xfe`, busy
+initiator mask `0x0`, and outstanding transaction-ID mask `0x00000001`. The
+request was address `0x04185380`, route `0x312`, size `3392` bytes. It
+produced no token; decode timing is unavailable.
 
-The offline build and target checks pass, but the rewrite does not yet have a
-safe in-place device recovery path. Official Tenstorrent `tt-kmd` provides a
-useful pattern: serialize reset with an exclusive reset lock; invalidate old
-device mappings and resource generations; issue the Blackhole ASIC reset;
-then wait for post-reset firmware readiness and reinitialize hardware before
-allowing new work. The Haiku driver currently has no equivalent recovery
-operation, and its persistent reload guard deliberately cannot clear a cold
-latch. The next rewrite step is to implement and validate this explicit
-recovery state machine, including proof that all 120 cores and NoC transactions
-are idle after reinitialization. The two-warm benchmark remains gated until the
-read path yields valid output and the service unloads cleanly. Valid output,
-two warm runs, clean unload, and 100 decode tokens/s remain open. See
+Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
+post-reset firmware readiness, restored PCI state and mappings, all 120 cores
+held, idle NoC and host DMA, and released retained owners. The resident guard
+requires a ticket tied to the fault epoch, so a concurrent fault denies
+recovery. The extracted tests pass, as does the full Haiku/RISC-V target
+build (`15712/18432` kernel-stack audit); new recovery guard hash:
+`f3502649243aa99848960a43b5c1430fd0a97b63f6ce9382974328845eec0c00`.
+This is only a proof-gated guard API foundation: the driver ioctl, Blackhole
+ASIC-reset sequence, post-reset resource rebuild, physical recovery, and
+silicon validation are not implemented. The currently loaded legacy guard is
+`B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel boot
+from the NVMe/kexec path will be required to install the new guard.
+
+No valid output, two warm runs, clean unload, or decode-rate measurement has
+been established; 100 tokens/s remains unmet. The two-warm benchmark and
+assistant integration stay gated until the rewrite and physical recovery path
+are complete. See
 [`tag0117 RUN`](benchmarks/qwen35-dataflow-tag0117-20261121/RUN.md),
 [`tag0118 BUILD`](benchmarks/qwen35-dataflow-tag0118-20261121/BUILD.md),
 [`tag0118 RUN`](benchmarks/qwen35-dataflow-tag0118-20261121/RUN.md),
@@ -1125,7 +1125,7 @@ result, or clean unload has been established; 100 tokens/s remains unmet.
 Assistant integration remains deferred. Build and run evidence are in
 [`benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md).
 
-### In-place recovery design investigation (2026-11-21)
+### In-place recovery guard foundation (2026-11-21)
 
 The official `tt-kmd` Blackhole driver exposes an ASIC reset that sends the
 PCIe interface timer interrupt after setting a reset marker. Its chardev
@@ -1135,7 +1135,16 @@ readiness as required. A separate POST_RESET wait/poll path gates reuse until
 firmware is ready. Sources: [Blackhole reset callback](https://github.com/tenstorrent/tt-kmd/blob/6d84325ad6ba3c032c01adac2be01c9eb642fd1c/blackhole.c),
 [reset ioctl lifecycle](https://github.com/tenstorrent/tt-kmd/blob/6d84325ad6ba3c032c01adac2be01c9eb642fd1c/chardev.c),
 [PCIe reset marker and timer trigger](https://github.com/tenstorrent/tt-kmd/blob/6d84325ad6ba3c032c01adac2be01c9eb642fd1c/pcie.c).
-This is the design reference, not yet a Haiku implementation. A safe port must
-also account for Haiku's retained Qwen35 owner, host pages, mapped PCI windows,
-and the persistent cold latch. It must not merely clear the latch or retry the
-stuck NoC request.
+This is the design reference, not yet a Haiku ASIC-reset implementation. The
+new resident proof gate is compiled and unit-tested, but does not reset the
+ASIC, restore PCI state, rebuild mappings, prove firmware readiness, or clear
+the currently loaded tag0120 guard. A safe port must also account for Haiku's
+retained Qwen35 owner, host pages, mapped PCI windows, and persistent cold
+latch. It must not merely clear the latch or retry the stuck NoC request.
+
+The running board is reachable over Haiku SSH and the failed client has exited;
+tag0120 remains cold-latched at generation3 with one owner and the recovery
+lock retained. Both model files are intact. The stable55 driver is not loaded
+or idle. No board-side reset or accelerator command has followed the failure.
+The next permitted boot/recovery route is Fedora on the existing NVMe followed
+by kexec to Haiku. No SD cards are used.

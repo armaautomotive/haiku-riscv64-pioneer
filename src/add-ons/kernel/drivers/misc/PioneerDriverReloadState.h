@@ -2,14 +2,56 @@
 #ifndef PIONEER_DRIVER_RELOAD_STATE_H
 #define PIONEER_DRIVER_RELOAD_STATE_H
 #include <stdint.h>
-// CPU metadata only. The resident guard module serializes every call.
-// There is deliberately NO recovery/reset/clear-cold operation.
+
+enum : uint32_t {
+	PIONEER_RECOVERY_PROOF_ASIC_RESET_COMPLETE = 1u << 0,
+	PIONEER_RECOVERY_PROOF_POST_RESET_FW_READY = 1u << 1,
+	PIONEER_RECOVERY_PROOF_PCI_STATE_RESTORED = 1u << 2,
+	PIONEER_RECOVERY_PROOF_MAPPINGS_REBUILT = 1u << 3,
+	PIONEER_RECOVERY_PROOF_ALL_CORES_HELD = 1u << 4,
+	PIONEER_RECOVERY_PROOF_NOC_IDLE = 1u << 5,
+	PIONEER_RECOVERY_PROOF_HOST_DMA_IDLE = 1u << 6,
+	PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED = 1u << 7,
+	PIONEER_RECOVERY_PROOF_REQUIRED = (1u << 8) - 1
+};
+
+// This proof is produced inside the kernel after a full device reset. It is
+// never copied from userspace. Keep it fixed-width so the resident guard can
+// validate the same contract independently of the candidate driver.
+struct PioneerDriverRecoveryProof {
+	uint32_t version=1;
+	uint32_t flags=0;
+	uint32_t core_count=0;
+	uint32_t reserved=0;
+	uint32_t noc_busy_mask=0;
+	uint32_t noc_outstanding_mask=0;
+	uint32_t host_dma_active=0;
+	uint32_t retained_owners=0;
+	uint64_t reset_generation=0;
+	uint64_t firmware_generation=0;
+	bool Complete() const {
+		return version==1 && flags==PIONEER_RECOVERY_PROOF_REQUIRED
+			&& core_count==120 && !reserved && !noc_busy_mask
+			&& !noc_outstanding_mask && !host_dma_active && !retained_owners
+			&& reset_generation && firmware_generation;
+	}
+};
+
+static_assert(sizeof(PioneerDriverRecoveryProof)==48,
+	"fixed-width in-kernel recovery proof");
+
+// CPU metadata only. The resident guard serializes recovery-ticket changes;
+// clearing cold requires a fresh ticket, a complete device proof, and an
+// unchanged fault epoch.
 struct PioneerDriverReloadState {
 	uint64_t generation=0;
 	bool attached=false,cold=false;
+	uint64_t nextRecoveryTicket=0,pendingRecoveryTicket=0;
+	uint64_t pendingRecoveryGeneration=0;
+	uint32_t pendingFaultEpoch=0;
 	bool Attach(uint64_t& result) {
 		result=0;
-		if (cold || attached || generation==UINT64_MAX) return false;
+		if (cold || attached || pendingRecoveryTicket || generation==UINT64_MAX) return false;
 		attached=true; result=++generation; return true;
 	}
 	bool Detach(uint64_t owner,bool clean) {
@@ -17,5 +59,40 @@ struct PioneerDriverReloadState {
 		attached=false; cold |= !clean; return !cold;
 	}
 	void Fault(uint64_t) { cold=true; } // stale owner is NOT permission to clear safety state
+	bool BeginRecovery(uint64_t expectedGeneration,uint32_t faultEpoch,
+		uint64_t& ticket) {
+		ticket=0;
+		if (!attached || !cold || pendingRecoveryTicket
+			|| !expectedGeneration || expectedGeneration!=generation
+			|| nextRecoveryTicket==UINT64_MAX) return false;
+		pendingRecoveryTicket=++nextRecoveryTicket;
+		pendingRecoveryGeneration=generation;
+		pendingFaultEpoch=faultEpoch;
+		ticket=pendingRecoveryTicket;
+		return true;
+	}
+	bool AbortRecovery(uint64_t ticket) {
+		if (!ticket || ticket!=pendingRecoveryTicket) return false;
+		pendingRecoveryTicket=0;
+		pendingRecoveryGeneration=0;
+		pendingFaultEpoch=0;
+		return true; // cold deliberately remains set
+	}
+	bool CompleteRecovery(uint64_t ticket,uint32_t faultEpoch,
+		const PioneerDriverRecoveryProof& proof,uint32_t& begunFaultEpoch,
+		uint64_t& newGeneration) {
+		begunFaultEpoch=0;
+		newGeneration=0;
+		if (!ticket || ticket!=pendingRecoveryTicket || !attached || !cold
+			|| generation!=pendingRecoveryGeneration || generation==UINT64_MAX
+			|| faultEpoch!=pendingFaultEpoch || !proof.Complete()) return false;
+		begunFaultEpoch=pendingFaultEpoch;
+		newGeneration=++generation;
+		cold=false;
+		pendingRecoveryTicket=0;
+		pendingRecoveryGeneration=0;
+		pendingFaultEpoch=0;
+		return true;
+	}
 };
 #endif

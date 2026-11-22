@@ -8,36 +8,37 @@ prompt-processing, and decode timings, clean Work unload, intact Qwen3.8-27B
 setup, and the tested checkpoint pushed to GitHub. Historical Tag70 measured
 0.115 tokens/s; Tag96 produced no valid output. No run has reached 100 tokens/s.
 
-## Current checkpoint: tag0120 built; hardware recovery pending
+## Current checkpoint: tag0120 failed; recovery rewrite in progress
 
 Only the Tenstorrent-style resident device-program rewrite is in scope until
 that rewrite is complete; benchmark acceptance and assistant integration
 follow afterward. The standalone Haiku client and resident BRISC/Tensix
 service use all 120 Tensix cores and have no CPU inference/fallback path.
 
-Tag0119 loaded the full model, then failed the first core0 embedding read.
-Authentication took `100.664302` s, tokenization `13.757776` s, model load
-`333.142334` s, and failed prompt processing `0.615593` s. It produced no
-token; decode time and dataflow decode rate are unavailable. The expected
-NoC0 read-response counter was one ahead of the observed value, with
-transaction ID0 outstanding. Tag0120 corrects the counter label and preserves
-the failed read's remote address, route, and size in the existing 64-byte
-worker mailbox, with a read-only `QUERY_READ_REQUEST`; the control request is
-still 36 bytes. Full variant-60 build, RV32IMF compile, focused ASan/UBSan,
-runtime-recovery checks, and the `15712/18432` stack check pass. Tag0120 has
-not been installed or run on the Pioneer.
+Pioneer uses Fedora on its existing NVMe and kexec to Haiku; SD cards are no
+longer used. Tag0120 loaded the full 4B model, then failed the first core0
+embedding read. Authentication took `99.767714` s, tokenization `12.726700` s,
+model load `337.246020` s, and failed prompt processing `0.612460` s. It
+produced no token; decode time and dataflow decode rate are unavailable. The
+NoC0 response counter was one behind expectation, with transaction ID0
+outstanding. Tag0120 preserves the failed read's remote address, route, and
+size in the 64-byte worker mailbox, with a read-only `QUERY_READ_REQUEST`.
 
-Haiku accepted a reboot after tag0119 cold-latched at generation3 with
-`active_owner=1`; the recovery lock and stable-driver backup were retained.
-Following the reported accidental power reset, one ON pulse was sent. Haiku
-SSH still times out, ARP is incomplete, and serial shows no fresh boot banner.
-Relay status is released/open and SD detached; current board power and
-stable55 generation2 are unverified. The 4B and 27B files were last verified
-intact before reboot. First regain a fresh Haiku boot, then use the guarded
-tag0119 recovery helper to restore stable55 generation2 and verify idle state,
-no inference process/lock, and both model files. Only then stage tag0120 and
-run one diagnostic to capture the failed-read identity. Keep the two-warm
-benchmark gated on a successful diagnostic and clean unload. See
+Haiku is currently reachable at `10.0.0.247`. Read-only status confirms the
+failed diagnostic client has exited and both model files remain intact, but
+the candidate is still `generation3 cold1 active_owner1 open_count1`; the
+exclusive recovery lock and stable55 backup remain. Stable55 is not loaded or
+idle. Do not run inference or accelerator commands in this state. The
+currently loaded `B_KEEP_LOADED` legacy guard has no API to clear this latch,
+so the new guard requires one fresh Haiku kernel boot through the NVMe/kexec
+path.
+
+Offline recovery-guard work adds a 48-byte kernel proof for reset completion,
+firmware readiness, PCI restoration, rebuilt mappings, all 120 cores held,
+idle NoC/DMA, and released owners. Ticket and fault-epoch checks reject
+concurrent faults. Focused recovery tests and the full Haiku/RISC-V build pass
+with stack usage `15712/18432`. The ASIC reset ioctl and post-reset resource
+rebuild are not implemented or silicon-qualified yet. See
 [`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md),
 [`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md), and
 [`tag0120 RUN`](benchmarks/qwen35-dataflow-tag0120-20261121/RUN.md).
@@ -58,21 +59,18 @@ Use strict host-key checking and the profile for the OS currently running.
 
 ## Current hardware state
 
-No post-reboot Haiku state has been verified. The host is unreachable over the
-pinned SSH profile; serial has no fresh boot banner. The last known driver
-status before tag0119 was stable driver55 generation2:
+Haiku SSH is reachable. The tag0120 client exited; no inference process is
+running. Current driver status is:
 
 ```text
-P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver60 tag2026112100010120 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
 ```
 
-Tag0119 later left the candidate at driver60 generation3, cold-latched with
-`active_owner=1`, and retained its recovery lock and stable-driver backup.
-The current process list, lock, driver status, and board power are unknown.
-Before tag0119, the Qwen3.5-4B and Qwen3.8-27B files were
-`2,740,937,888` and `18,973,870,528` bytes. Do not issue another driver or
-model command until Haiku is reachable and guarded recovery verifies the
-stable driver, idle owner, and both model files.
+The exclusive recovery lock and stable55 backup remain, so the driver is not
+idle. Both models are intact: Qwen3.5-4B `2,740,937,888` bytes and Qwen3.8-27B
+`18,973,870,528` bytes. Do not issue another accelerator/reset command until
+the new proof-based recovery operation has been integrated, tested offline,
+and installed after a clean NVMe/kexec Haiku boot.
 
 ## Tag61: inner matrix receipt was overwritten
 
