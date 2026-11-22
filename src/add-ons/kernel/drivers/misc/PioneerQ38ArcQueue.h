@@ -7,7 +7,7 @@
 // stops immediately: no acknowledgement, restore, second attempt or later IO.
 // A native caller MUST retain its context/cookie/PCI/ALL mappings and host
 // leases, and latch cold recovery. This object alone cannot do that.
-template<class IO> class PioneerQ38ArcQueue {
+template<class IO,bool RecoveryState0=false> class PioneerQ38ArcQueue {
 	IO& io;
 	bool unsafe=false;
 	bool Fault(tt_arc_queue_result& r) { unsafe=true; r.recovery_required=1; return false; }
@@ -28,7 +28,7 @@ public:
 		tt_arc_queue_result& r,uint32_t message) {
 		if (unsafe) return false; // even the result stays unchanged after fault
 		r={}; r.version=1; r.request_restored=r.tlb_restored=1;
-		if ((message!=0x34 && message!=0x52 && message!=0x54)
+		if ((RecoveryState0 ? message!=0xa0 : (message!=0x34 && message!=0x52 && message!=0x54))
 			|| arc.version!=1 || arc.state!=TT_ARC_SCRATCH_READY || arc.tlb_restored!=1
 			|| health.version!=1 || health.state!=TT_ARC_TELEMETRY_OK || health.tlb_restored!=1
 			|| (health.present_mask&0x3c1)!=0x3c1 || health.values[0]!=0x12050001
@@ -57,7 +57,9 @@ public:
 		if ((r.msi_status&0x301)!=1) return Fault(r);
 		if (!Configure(false)) return Fault(r);
 		for (unsigned w=0;w<4;w++) if (io.CsmRead(arc.message_queue+w*4)!=r.descriptor[w]) return Fault(r);
-		r.base=allBase+3*288; r.state=TT_ARC_QUERY_BUSY;
+		// Queue 0 is the kernel firmware channel; existing private clock
+		// operations remain on application queue 3.
+		r.base=allBase+(RecoveryState0?0:3)*288; r.state=TT_ARC_QUERY_BUSY;
 		uint32_t current[8]; BlackholeArcQueueHeader(io,r.base,r.before);
 		io.Pause(); BlackholeArcQueueHeader(io,r.base,current);
 		if (!BlackholeArcQueueHeaderValid(r.before) || !BlackholeArcQueueSame(current,r.before)
@@ -108,9 +110,12 @@ public:
 		uint32_t response[8]; for (unsigned w=0;w<8;w++) response[w]=io.CsmRead(r.response_address+w*4);
 		r.status=response[0]; r.clock_mhz=response[1]; r.clock_mode=response[2];
 		r.state=TT_ARC_QUERY_BAD_RESPONSE;
-		if (r.status || (message==0x34?(r.clock_mhz<200 || r.clock_mhz>1400 || r.clock_mode<1 || r.clock_mode>3)
-			:r.clock_mhz || r.clock_mode)) return Fault(r);
-		for (unsigned w=3;w<8;w++) if (response[w]) return Fault(r);
+		if (r.status) return Fault(r);
+		if (!RecoveryState0) {
+			if (message==0x34?(r.clock_mhz<200 || r.clock_mhz>1400 || r.clock_mode<1 || r.clock_mode>3)
+				:r.clock_mhz || r.clock_mode) return Fault(r);
+			for (unsigned w=3;w<8;w++) if (response[w]) return Fault(r);
+		}
 		BlackholeArcQueueHeader(io,r.base,r.after);
 		if (!BlackholeArcQueueSame(current,r.after)) { r.state=TT_ARC_QUERY_CHANGED; return Fault(r); }
 		for (unsigned w=0;w<4;w++) if (io.CsmRead(arc.message_queue+w*4)!=r.descriptor[w]) return Fault(r);

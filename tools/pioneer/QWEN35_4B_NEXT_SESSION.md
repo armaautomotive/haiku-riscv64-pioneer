@@ -43,6 +43,12 @@ routes before the service starts; it rejects identity, translation, drift or
 busy-state mismatches. The fixture and Haiku/RISC-V builds pass, but no card
 run has verified the audit. Its normal driver SHA-256 is
 `3336b78873687f2c491314751e39e0f2942a0bcf0dfccd2d3f9bcdf4f4cc79ea`.
+Tag0125 adds a post-reset ARC state0 exchange on firmware queue 0 to the
+disabled recovery prototype. Simulated tests cover wraparound, dropped
+writes, timeout, bad responses, partial mappings and retained resources; the
+normal 27B application-queue tests still pass. This is not a complete or
+hardware-qualified recovery sequence. The normal tag0125 driver SHA-256 is
+`fc736ae48530f37785f11ca2be56626077e549cae05e3a321db841ecd9caa366`.
 
 Haiku is reachable at `10.0.0.247`. Following one authorized power cycle
 and the pinned NVMe/kexec handoff, the saved recovery script restored stable55
@@ -60,7 +66,7 @@ concurrent faults. A separate, fail-closed helper now encodes the exact three
 Blackhole ASIC reset PCI writes and bounded reset-marker wait; fake-PCI tests
 pass. It is connected to a default-disabled recovery prototype. Focused
 recovery tests and the full Haiku/RISC-V build pass with stack usage
-`15712/18432`. PCIe capability restoration, firmware queue initialization,
+`15712/18432`. PCIe capability restoration, remaining firmware initialization,
 and silicon qualification remain open. See
 [`tag0119 RUN`](benchmarks/qwen35-dataflow-tag0119-20261121/RUN.md),
 [`tag0120 BUILD`](benchmarks/qwen35-dataflow-tag0120-20261121/BUILD.md), and
@@ -79,7 +85,7 @@ bus mastering disabled; simulated PCI tests cover lost writes and unsafe
 states. A simulated-tested audit of both PCIe pending states and the pinned
 firmware's channel-0 HDMA now follows the fleet audit and restores its fresh
 TLB snapshot. Recovery orchestration and owner retirement are wired into the
-default-disabled prototype; firmware queue initialization, complete PCI
+default-disabled prototype; remaining firmware initialization, complete PCI
 capability restoration, and physical verification remain open.
 The disabled prototype also captures and restores PCIe configuration-space
 payload and read-request settings, with simulated failure tests. It still needs
@@ -89,15 +95,15 @@ the endpoint configuration fields alone are not full reset restoration.
 The post-reset backend now requires a bounded ARC scratch readiness poll and
 the pinned firmware telemetry and harvesting values before fleet and DMA
 auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
-interrupted wait, and failed TLB restoration. Message-queue initialization
-remains open; this new code has not been run on the card.
+interrupted wait, and failed TLB restoration. The new state0 queue exchange
+and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0124. Since tag0121 it records final release of a
+The default build now targets dedicated tag0125. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any
 resource. A separate recovery-run prototype is disabled by default until PCIe
-capability restoration and firmware queue initialization are implemented and
+capability restoration and remaining firmware initialization are implemented and
 the path is qualified. Do not install or run tag0121 until the required clean
 Haiku boot and guarded hardware preflight.
 Tag0121 now also compiles a proof-gated session-area retirement method;

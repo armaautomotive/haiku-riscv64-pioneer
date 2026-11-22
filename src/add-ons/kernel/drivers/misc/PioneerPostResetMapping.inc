@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerPostResetAudit.h"
+#include "PioneerQ38ArcQueue.h"
 
-// Dedicated post-reset read-only windows. The caller owns the PCI reservation,
+// Post-reset audit windows and bounded ARC queue writes; caller owns PCI,
 // holds sLock, has completed the ASIC reset and restored PCI decoding, and
 // retains this object on any failure. No pre-reset TLB or L1 snapshot is used.
 struct PioneerPostResetMapping : ConfigIO {
@@ -14,11 +15,16 @@ struct PioneerPostResetMapping : ConfigIO {
 	const volatile uint32* hdma=NULL;
 	const volatile uint32* scratch=NULL;
 	const volatile uint32* csm=NULL;
+	area_id queueArea=-1,queueMsiArea=-1;
+	volatile uint32* queueView=NULL;
+	volatile uint32* queueMsi=NULL;
+	uint32 queueBase=0,queueRequest=0;
 	tt_dram_samples_result topology={};
 	tt_arc_telemetry_result firmwareTelemetry={};
 	uint32 saved[3]={},dmaSaved[3]={};
 	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
 	bool firmwareAttempted=false,firmwareReady=false,topologyReady=false;
+	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
 	unsigned selected=PIONEER_POST_RESET_CORES;
 
@@ -119,6 +125,50 @@ struct PioneerPostResetMapping : ConfigIO {
 		topologyReady=BlackholeDramBuildRoutes(topology);
 		return topologyReady;
 	}
+	// State0 uses firmware's queue 0 after reset. Queue pointers are advanced
+	// only by the normal protocol; an uncertain exchange retains all areas.
+	bool InitializeFirmwareQueue(const tt_arc_scratch_result& arc,tt_arc_queue_result& result) {
+		result={};
+		if (!ready || !firmwareReady || !topologyReady || queueAttempted || !PciReady()) return false;
+		queueAttempted=true;void* view=NULL;
+		queueArea=map_physical_memory("P100A post-reset ARC queue",
+			profile.bar0_host_start+0x19200000,TT_ARC_QUEUE_CSM_BYTES,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (queueArea<B_OK || !view) return false;
+		queueView=(volatile uint32*)view;view=NULL;
+		queueMsiArea=map_physical_memory("P100A post-reset ARC notification",
+			profile.bar0_host_start+0x192b0000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (queueMsiArea<B_OK || !view) return false;
+		queueMsi=(volatile uint32*)view;
+		struct Transport {
+			PioneerPostResetMapping& m;
+			bool delayFailed=false;
+			bool Accessible() { return !delayFailed && m.PciReady(); }
+			uint32 TlbRead(unsigned w) { return Accessible()?m.TlbRead(w):UINT32_MAX; }
+			void TlbWrite(unsigned w,uint32 v) { if (Accessible()) m.TlbWrite(w,v); }
+			uint32 CsmRead(uint32 a) { return Accessible() && BlackholeArcQueueRange(a,4)
+				?PioneerRead32(m.queueView+(a-0x10000000)/4):UINT32_MAX; }
+			void SetQueueBounds(uint32 base,uint32 request,uint32) {
+				if (BlackholeArcQueueRange(base,288) && request>=base+32
+					&& request<=base+128 && (request-base-32)%32==0)
+					{ m.queueBase=base;m.queueRequest=request; }
+			}
+			void QueueWrite(uint32 a,uint32 v) {
+				if (!Accessible() || !m.queueBase || !BlackholeArcQueueRange(a,4)) return;
+				if (a!=m.queueBase && a!=m.queueBase+4
+					&& (a<m.queueRequest || a>=m.queueRequest+32)) return;
+				PioneerWrite32(m.queueView+(a-0x10000000)/4,v);
+			}
+			uint32 MsiStatusRead() { return Accessible()?PioneerRead32(m.queueMsi+2):UINT32_MAX; }
+			void NotifyArc() { if (Accessible()) PioneerWrite32(m.queueMsi,0); }
+			void Pause() { if (snooze(500)!=B_OK) delayFailed=true; }
+		} io{*this};
+		PioneerQ38ArcQueue<Transport,true> queue(io);
+		queueReady=queue.Message(arc,firmwareTelemetry,result,0xa0) && PciReady();
+		queueUnsafe=queue.Unsafe() || result.recovery_required || !PciReady();
+		return queueReady && !queueUnsafe;
+	}
 	bool SourceStable() {
 		if (!ready || !firmwareReady || !topologyReady || !PciReady()) return false;
 		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
@@ -196,6 +246,7 @@ struct PioneerPostResetMapping : ConfigIO {
 		return dmaAudited;
 	}
 	bool Close() {
+		if (queueUnsafe) return false;
 		if (dmaModified) {
 			if (!savedValid || !PciReady()) return false;
 			for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,dmaSaved[i]);
@@ -209,6 +260,14 @@ struct PioneerPostResetMapping : ConfigIO {
 			modified=false;
 		}
 		ready=false;selected=PIONEER_POST_RESET_CORES;
+		if (queueMsiArea>=B_OK) {
+			if (delete_area(queueMsiArea)!=B_OK) return false;
+			queueMsiArea=-1;queueMsi=NULL;
+		}
+		if (queueArea>=B_OK) {
+			if (delete_area(queueArea)!=B_OK) return false;
+			queueArea=-1;queueView=NULL;
+		}
 		for (unsigned i=0;i<7;i++) if (areas[i]>=B_OK) {
 			if (delete_area(areas[i])!=B_OK) return false;
 			areas[i]=-1;

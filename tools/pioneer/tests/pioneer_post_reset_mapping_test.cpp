@@ -30,7 +30,7 @@ template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32&
 static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readOnly,unsigned w) {
 	return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
 }
-static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x20000/4];
+static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x30000/4],msiPage[1024];
 static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1;static bool wrongNode=false;
 static uint32 cardBars[6]={12,0,12,0,12,0};
 struct Pci {
@@ -56,6 +56,8 @@ static int map_physical_memory(const char*,uint64_t addr,size_t size,int,uint32 
 	else if(addr==base+0x19180000 && size==4096 && !(flags&B_KERNEL_WRITE_AREA)) *out=hdmaPage;
 	else if(addr==base+0x19230000 && size==4096 && !(flags&B_KERNEL_WRITE_AREA)) *out=scratchPage;
 	else if(addr==base+0x19200000 && size==0x20000 && !(flags&B_KERNEL_WRITE_AREA)) *out=csmPage;
+	else if(addr==base+0x19200000 && size==0x30000 && (flags&B_KERNEL_WRITE_AREA)) *out=csmPage;
+	else if(addr==base+0x192b0000 && size==4096 && (flags&B_KERNEL_WRITE_AREA)) *out=msiPage;
 	else return -1;
 	return int(call);
 }
@@ -69,9 +71,17 @@ static uint32 PioneerRead32(const volatile uint32* p) {
 	return *p;
 }
 static bool blockTlbRestore=false;
+static bool fakeQueueTimeout=false,fakeQueueBadReply=false;
 static void PioneerWrite32(volatile uint32* p,uint32 value) {
 	if (blockTlbRestore && p==tlbPage+0x96c/4 && value==7) return;
 	*p=value;
+	if (p==msiPage && !fakeQueueTimeout) {
+		const unsigned base=0x28000/4;
+		const unsigned req=csmPage[base],resp=csmPage[base+1];
+		assert(csmPage[base+8+((req+7)%8%4)*8]==0xa0);
+		csmPage[base+4]=req;csmPage[base+5]=(resp+1)%8;csmPage[base+6]++;
+		csmPage[base+40+(resp%4)*8]=fakeQueueBadReply?1:0;
+	}
 }
 static unsigned spins=0,mutateAfter=0;
 static void spin(unsigned) { if (mutateAfter && ++spins==mutateAfter) hdmaPage[0x80/4]=3; }
@@ -85,11 +95,13 @@ static int snooze(int) {
 
 static void ResetFake() {
 	memset(tlbPage,0,sizeof(tlbPage));memset(nodePage,0,sizeof(nodePage));
-	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));memset(scratchPage,0,sizeof(scratchPage));memset(csmPage,0,sizeof(csmPage));
+	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));memset(scratchPage,0,sizeof(scratchPage));memset(csmPage,0,sizeof(csmPage));memset(msiPage,0,sizeof(msiPage));
 	mapCalls=unmapCalls=0;failMap=failUnmap=-1;wrongNode=false;
 	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
+	fakeQueueTimeout=fakeQueueBadReply=false;
 	cardBars[0]=12;nodePage[0x44/4]=2;resetPage[0x1b0/4]=0x47800;
 	scratchPage[(0x400+2*4)/4]=5;
+	scratchPage[(0x400+11*4)/4]=0x10001800;
 	scratchPage[(0x400+12*4)/4]=0x10001000;
 	scratchPage[(0x400+13*4)/4]=0x10000100;
 	const uint32 tags[]={28,29,11,36,22,50,34};
@@ -99,6 +111,7 @@ static void ResetFake() {
 		csmPage[(0x108+4*i)/4]=tags[i]|(i<<16);
 		csmPage[(0x1000+4*i)/4]=values[i];
 	}
+	csmPage[0x1800/4]=0x10028000;csmPage[0x1804/4]=0x404;msiPage[2]=1;
 	tlbPage[0x96c/4]=7;tlbPage[0x970/4]=8;tlbPage[0x974/4]=9;
 	tlbPage[0x960/4]=10;tlbPage[0x964/4]=11;tlbPage[0x968/4]=12;
 }
@@ -110,6 +123,27 @@ int main() {
 		&& clean.AuditHostDma() && clean.Close());
 	assert(unmapCalls==7 && tlbPage[0x96c/4]==7 && tlbPage[0x970/4]==8 && tlbPage[0x974/4]==9
 		&& tlbPage[0x960/4]==10 && tlbPage[0x964/4]==11 && tlbPage[0x968/4]==12);
+	ResetFake();PioneerPostResetMapping queued(profile);tt_arc_queue_result queueResult{};
+	assert(queued.Open() && queued.ProbeFirmware(3,arc)
+		&& queued.InitializeFirmwareQueue(arc,queueResult) && queued.queueReady
+		&& queueResult.submitted && queueResult.acknowledged && queued.Close() && unmapCalls==9);
+	for (int failure=7;failure<=8;failure++) {
+		ResetFake();PioneerPostResetMapping partialQueue(profile);
+		assert(partialQueue.Open() && partialQueue.ProbeFirmware(3,arc));failMap=failure;
+		assert(!partialQueue.InitializeFirmwareQueue(arc,queueResult) && !partialQueue.queueReady
+			&& !partialQueue.queueUnsafe && partialQueue.Close() && unmapCalls==unsigned(failure));
+	}
+	ResetFake();PioneerPostResetMapping failedQueue(profile);
+	assert(failedQueue.Open() && failedQueue.ProbeFirmware(3,arc));fakeQueueTimeout=true;
+	assert(!failedQueue.InitializeFirmwareQueue(arc,queueResult) && failedQueue.queueUnsafe
+		&& queueResult.submitted && !queueResult.acknowledged && !failedQueue.Close() && !unmapCalls);
+	ResetFake();PioneerPostResetMapping badReply(profile);
+	assert(badReply.Open() && badReply.ProbeFirmware(3,arc));fakeQueueBadReply=true;
+	assert(!badReply.InitializeFirmwareQueue(arc,queueResult) && badReply.queueUnsafe && !badReply.Close());
+	ResetFake();PioneerPostResetMapping interruptedQueue(profile);
+	assert(interruptedQueue.Open() && interruptedQueue.ProbeFirmware(3,arc));sleepFails=true;
+	assert(!interruptedQueue.InitializeFirmwareQueue(arc,queueResult)
+		&& interruptedQueue.queueUnsafe && !queueResult.submitted && !interruptedQueue.Close());
 	ResetFake();cardBars[0]=0;PioneerPostResetMapping badBar(profile);
 	assert(!badBar.Open() && !mapCalls && badBar.Close());
 	ResetFake();failMap=2;PioneerPostResetMapping partial(profile);

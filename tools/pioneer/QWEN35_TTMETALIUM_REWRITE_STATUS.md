@@ -83,6 +83,20 @@ See Tenstorrent's [Blackhole coordinate documentation](https://github.com/tensto
 The tag0124 normal driver SHA-256 is
 `3336b78873687f2c491314751e39e0f2942a0bcf0dfccd2d3f9bcdf4f4cc79ea`.
 
+Tag0125 connects the disabled recovery prototype to a bounded ARC state0
+exchange on firmware queue 0 after reset and telemetry checks. The transport
+uses fresh mappings, validates queue ownership, and retains the mappings and
+cold latch if publication or completion is uncertain. Simulated tests cover
+pointer wrap, every dropped queue write, timeout, bad replies and partial
+mapping; the existing 27B application-queue tests still pass. The state0
+operation follows Tenstorrent's [Blackhole initialization](https://github.com/tenstorrent/tt-kmd/blob/main/blackhole.c)
+and [firmware queue protocol](https://github.com/tenstorrent/tt-kmd/blob/main/msgqueue.c).
+This is only one part of firmware reinitialization and has not run on the
+card. Full PCI/DBI restoration, remaining firmware setup, resumable failure
+handling and physical qualification remain open. The normal driver SHA-256 is
+`fc736ae48530f37785f11ca2be56626077e549cae05e3a321db841ecd9caa366`;
+the enabled prototype remains non-loadable and is used only to compile-check.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard
@@ -96,7 +110,7 @@ writes used by Tenstorrent's KMD, rejects bus mastering or a stale reset marker,
 and waits a bounded number of times for the marker to clear. Its fake-PCI
 ASan/UBSan test passes with the reload-guard fixture. A prototype ioctl
 connects it to the recovery sequence but is disabled by default. Complete
-PCIe capability restoration, firmware queue initialization, physical recovery,
+PCIe capability restoration, remaining firmware initialization, physical recovery,
 and silicon validation remain open. A compiled PCI restoration helper
 reestablishes the fixed active BAR and bridge layout after the reset marker
 clears, while refusing bus mastering, an uncleared marker, unsafe interrupt
@@ -112,8 +126,8 @@ reads the fresh firmware telemetry table, and requires the pinned firmware
 bundle and harvesting values before the fleet audit. Simulated tests cover a
 delayed boot, timeout, ARC error, wrong firmware, interrupted wait, and TLB
 restore failure. This confirms only the selected scratch and telemetry
-contract; firmware message-queue initialization and the complete recovery
-lifecycle still need implementation and hardware qualification.
+contract; the queue state0 exchange is now wired to the disabled prototype,
+while the complete recovery lifecycle still needs hardware qualification.
 
 The post-reset audit checks both NoC banks on all 120 cores twice, with
 explicit read failures and busy/outstanding transaction checks. A dedicated
@@ -144,8 +158,8 @@ wired until the reset, PCI pending-transaction and host-DMA idle proofs pass.
 The PCI, mapping, DMA audit, guard, firmware and ownership steps now have a
 single prototype recovery operation. The default driver refuses that
 operation before any card access: complete PCIe capability restoration and
-firmware message-queue initialization still need implementation and the
-sequence has not been hardware-qualified. An extracted test runs the real
+remaining firmware initialization still need implementation and the sequence
+has not been hardware-qualified. An extracted test runs the real
 operation body against simulated hardware and injects a failure at every stage;
 a separate test verifies the default gate performs no hardware action. A
 separate compile-only build includes the prototype but cannot load as a driver.

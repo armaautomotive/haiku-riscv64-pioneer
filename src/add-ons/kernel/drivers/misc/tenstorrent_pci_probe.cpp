@@ -98,7 +98,8 @@
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010121ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010122ULL \
 		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010123ULL \
-		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010124ULL) \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010124ULL \
+		&& PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) \
 	|| !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) \
@@ -110,11 +111,11 @@
 #endif
 #if defined(PIONEER_QWEN35_DATAFLOW_REWRITE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026112100010121ULL \
 	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010122ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010123ULL \
-	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010124ULL)
+	|| PIONEER_DRIVER_BUILD_TAG == 0x2026112100010124ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026112100010125ULL)
 #define PIONEER_QWEN35_INPLACE_RECOVERY 1
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (!defined(PIONEER_QWEN35_DATAFLOW_REWRITE) \
-	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010124ULL)
+	|| PIONEER_DRIVER_BUILD_TAG != 0x2026112100010125ULL)
 #error Qwen35 recovery ownership tracking requires the dedicated tag0121 dataflow role
 #endif
 #if defined(PIONEER_QWEN35_INPLACE_RECOVERY) && (defined(PIONEER_Q38_NORMAL_CLOCK) \
@@ -10593,7 +10594,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	for (unsigned i=0;i<6;i++) if (saved.bars_before[i]!=(i%2==0?0x0cU:0U)) return B_BAD_VALUE;
 #ifndef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	// The sequence is compiled and exercised with fake hardware, but cannot
-	// touch a real device until PCI capability restoration and firmware queue
+	// touch a real device until PCI/DBI restoration and remaining firmware
 	// initialization are implemented and the complete path is qualified.
 	return B_NOT_ALLOWED;
 #endif
@@ -10635,6 +10636,10 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
 	tt_arc_scratch_result firmware{};
 	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) { r.detail=firmware.state;return fail(B_DEV_NOT_READY); }
+	tt_arc_queue_result firmwareQueue{};
+	if (!context->recoveryMapping->InitializeFirmwareQueue(firmware,firmwareQueue)) {
+		r.detail=firmwareQueue.state;return fail(B_DEV_NOT_READY);
+	}
 	r.stage=PIONEER_RECOVERY_STAGE_FLEET;
 	PioneerPostResetAuditResult fleet{};
 	if (!context->recoveryMapping->Audit(fleet)) {

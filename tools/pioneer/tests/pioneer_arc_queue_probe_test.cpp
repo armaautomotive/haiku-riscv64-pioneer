@@ -12,9 +12,11 @@ struct MockQueue {
 	unsigned tlbWrites = 0, writes = 0, polls = 0, pauses = 0, notifications = 0;
 	unsigned dropTlb = 0, dropWrite = 0;
 	bool notified = false, timeout = false, badReply = false, changed = false, failRestore = false;
+	bool statePayload = false;
 	bool ignoreBusy = false, ignoreIdle = false;
 	uint32_t& At(uint32_t address) { assert(BlackholeArcQueueRange(address,4)); return csm[(address-0x10000000)/4]; }
-	MockQueue(unsigned req = 0, unsigned resp = 0) {
+	MockQueue(unsigned req = 0, unsigned resp = 0, unsigned queue = 3) {
+		assert(queue<4);base=0x10029ea8+queue*288;
 		At(0x10001000) = 0x10029ea8; At(0x10001004) = 0x404;
 		At(base) = At(base+16) = req; At(base+4) = At(base+20) = resp;
 		At(base+24) = 0xffffffff; // counter wraps normally
@@ -31,11 +33,12 @@ struct MockQueue {
 			At(base+16) = At(base);
 			At(base+20) = (At(base+4)+1)%8; At(base+24)++;
 			uint32_t message = At(request);
-			assert(message == 0x34 || message == 0x52 || message == 0x54);
+			assert(message == 0x34 || message == 0x52 || message == 0x54 || message == 0xa0);
 			if (message == 0x52 && !ignoreBusy) clock = 1350;
 			if (message == 0x54 && !ignoreIdle) clock = 800;
 			At(response) = badReply ? 0xff : 0;
 			At(response+4) = message == 0x34 ? clock : 0; At(response+8) = message == 0x34 ? mode : 0;
+			if (message == 0xa0 && statePayload) At(response+4)=0x1234;
 			if (changed) At(base+4) = (At(base+4)+2)%8;
 		}
 		return At(a);
