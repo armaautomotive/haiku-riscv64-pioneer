@@ -86,6 +86,37 @@ public:
         PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleHaikuScopeWitness> guard(*io,fScope);
         return fViews.Read(core,window,offset,output,guard);
     }
+    // Selected tile only. This samples known status registers twice; it does
+    // not prove fleet-wide quiescence, completion of the local-RAM reset
+    // window, or absence of incoming NoC traffic, and grants no RAM access.
+    bool AuditHeldAndQuiet(unsigned core) {
+        using namespace PioneerQwen35;
+        for (unsigned pass=0;pass<2;pass++) {
+            uint32_t reset=0;
+            if (!Read(core,DataflowRolePhysicalControl,0x1b0,reset) || reset!=0x47800)
+                return false;
+            for (unsigned noc=0;noc<2;noc++) {
+                const unsigned window=noc?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
+                uint32_t raw=0,route=0;
+                if (!Read(core,window,DataflowNocLogicalIdOffset,raw)
+                    || !DataflowNocDecodeLocalRoute(raw,route)
+                    || !DataflowNocRouteMatchesWorker(route,core)) return false;
+                for (unsigned initiator=0;initiator<4;initiator++) {
+                    uint32_t status=0;
+                    if (!Read(core,window,0x40+initiator*0x800,status) || status)
+                        return false;
+                }
+                for (unsigned id=0;id<32;id++) {
+                    uint32_t status=0;
+                    if (!Read(core,window,0x240+id*4,status) || (status&0xffU))
+                        return false;
+                }
+            }
+            if (!Read(core,DataflowRolePhysicalControl,0x1b0,reset) || reset!=0x47800)
+                return false;
+        }
+        return true;
+    }
     bool Close() {
         if (!fViews.Close()) return false;
         return fScope.Close();
@@ -100,5 +131,6 @@ PioneerQwen35RoleHaikuViewsCompileWitness(PioneerQwen35RoleHaikuViewsWitness& ow
     if (action==0) return owner.Open(cookie);
     if (action==1) return owner.Read(core,window,offset,value);
     if (action==2) return owner.Close();
+    if (action==3) return owner.AuditHeldAndQuiet(core);
     return false;
 }

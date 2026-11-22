@@ -5,6 +5,7 @@
 #include "../PioneerQwen35DataflowRolePhysicalPlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <vector>
@@ -120,6 +121,45 @@ int main()
         value=77;
         assert(!owner.Read(0,DataflowRolePhysicalBriscRam,0,value) && value==77);
         assert(!owner.Read(0,DataflowRolePhysicalNoc0,0x20c,value));
+        gMemory[DataflowRolePhysicalControl][0x1b0/4]=0x47800;
+        for (unsigned noc=0;noc<2;noc++) {
+            const unsigned window=noc?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
+            std::fill(gMemory[window].begin(),gMemory[window].end(),0);
+        }
+        for (unsigned core=0;core<120;core++) {
+            context.io.runtimeCore=core;
+            for (unsigned noc=0;noc<2;noc++) {
+                const unsigned window=noc?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
+                gMemory[window][DataflowNocLogicalIdOffset/4]=DataflowBarrierWorkerRoute(core);
+            }
+            assert(owner.AuditHeldAndQuiet(core));
+        }
+        context.io.runtimeCore=0;
+        for (unsigned noc=0;noc<2;noc++) {
+            const unsigned window=noc?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
+            gMemory[window][DataflowNocLogicalIdOffset/4]=DataflowBarrierWorkerRoute(0);
+        }
+        gMemory[DataflowRolePhysicalControl][0x1b0/4]=0x46800;
+        assert(!owner.AuditHeldAndQuiet(0));
+        gMemory[DataflowRolePhysicalControl][0x1b0/4]=0x47800;
+        for (unsigned noc=0;noc<2;noc++) {
+            const unsigned window=noc?DataflowRolePhysicalNoc1:DataflowRolePhysicalNoc0;
+            for (unsigned initiator=0;initiator<4;initiator++) {
+                const unsigned index=(0x40+initiator*0x800)/4;
+                gMemory[window][index]=1; assert(!owner.AuditHeldAndQuiet(0));
+                gMemory[window][index]=0;
+            }
+            for (unsigned id=0;id<32;id++) {
+                const unsigned index=(0x240+id*4)/4;
+                gMemory[window][index]=1; assert(!owner.AuditHeldAndQuiet(0));
+                gMemory[window][index]=0;
+            }
+            gMemory[window][DataflowNocLogicalIdOffset/4]=DataflowBarrierWorkerRoute(1);
+            assert(!owner.AuditHeldAndQuiet(0));
+            gMemory[window][DataflowNocLogicalIdOffset/4]=DataflowBarrierWorkerRoute(0);
+        }
+        assert(owner.AuditHeldAndQuiet(0));
+        assert(!owner.Read(0,DataflowRolePhysicalBriscRam,0,value));
         assert(owner.Close() && !gLocked && gUnmapCalls==DataflowRolePhysicalWindowCount);
     }
     {
@@ -136,5 +176,5 @@ int main()
         assert(!scope.Close() && gReleaseCalls==before+1);
         gReleaseFail=false; gLocked=false; sColdRecoveryRequired=false;
     }
-    std::puts("PASS real Haiku scope witness lock, team, read-only map and cleanup faults; SIMULATED ONLY");
+    std::puts("PASS real Haiku scope witness lock, held/NoC status samples, map and cleanup faults; SIMULATED ONLY");
 }
