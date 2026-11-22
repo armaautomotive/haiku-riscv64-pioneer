@@ -60,6 +60,14 @@ PCI capabilities or establish firmware readiness. The currently loaded legacy gu
 is `B_KEEP_LOADED` and cannot be upgraded in place, so one fresh Haiku kernel
 boot from the NVMe/kexec path will be required to install the new guard.
 
+The post-reset mapping now polls ARC scratch readiness with a bounded wait,
+reads the fresh firmware telemetry table, and requires the pinned firmware
+bundle and harvesting values before the fleet audit. Simulated tests cover a
+delayed boot, timeout, ARC error, wrong firmware, interrupted wait, and TLB
+restore failure. This confirms only the selected scratch and telemetry
+contract; firmware message-queue initialization and the complete recovery
+lifecycle still need implementation and hardware qualification.
+
 The post-reset audit checks both NoC banks on all 120 cores twice, with
 explicit read failures and busy/outstanding transaction checks. A dedicated
 mapping implementation validates PCI BARs, captures the TLB only after reset,

@@ -6,15 +6,19 @@
 // retains this object on any failure. No pre-reset TLB or L1 snapshot is used.
 struct PioneerPostResetMapping : ConfigIO {
 	const tt_pioneer_profile& profile;
-	area_id areas[5]={-1,-1,-1,-1,-1};
+	area_id areas[7]={-1,-1,-1,-1,-1,-1,-1};
 	volatile uint32* tlb=NULL;
 	const volatile uint32* node=NULL;
 	const volatile uint32* reset=NULL;
 	const volatile uint32* noc=NULL;
 	const volatile uint32* hdma=NULL;
+	const volatile uint32* scratch=NULL;
+	const volatile uint32* csm=NULL;
 	tt_dram_samples_result topology={};
+	tt_arc_telemetry_result firmwareTelemetry={};
 	uint32 saved[3]={},dmaSaved[3]={};
 	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
+	bool firmwareAttempted=false,firmwareReady=false,topologyReady=false;
 	bool fleetAudited=false,dmaAudited=false;
 	unsigned selected=PIONEER_POST_RESET_CORES;
 
@@ -48,10 +52,10 @@ struct PioneerPostResetMapping : ConfigIO {
 		attempted=true;
 		if (!PioneerMinimumBarLayoutMatches(profile) || !PciReady()
 			|| profile.bar0_host_start>UINT64_MAX-0x1fd05000) return false;
-		const uint32 offsets[]={0x1fc00000,0x1fd04000,0x19312000,0x19320000,0x19180000};
-		const size_t lengths[]={B_PAGE_SIZE,B_PAGE_SIZE,B_PAGE_SIZE,0x12000,B_PAGE_SIZE};
-		void* views[5]={};
-		for (unsigned i=0;i<5;i++) {
+		const uint32 offsets[]={0x1fc00000,0x1fd04000,0x19312000,0x19320000,0x19180000,0x19230000,0x19200000};
+		const size_t lengths[]={B_PAGE_SIZE,B_PAGE_SIZE,B_PAGE_SIZE,0x12000,B_PAGE_SIZE,B_PAGE_SIZE,0x20000};
+		void* views[7]={};
+		for (unsigned i=0;i<7;i++) {
 			uint32 flags=B_KERNEL_READ_AREA|B_UNCACHED_MEMORY;
 			if (!i) flags|=B_KERNEL_WRITE_AREA;
 			areas[i]=map_physical_memory("P100A fresh post-reset audit window",
@@ -64,11 +68,10 @@ struct PioneerPostResetMapping : ConfigIO {
 		reset=(const volatile uint32*)((const uint8*)views[2]+0x1b0);
 		noc=(const volatile uint32*)views[3];
 		hdma=(const volatile uint32*)views[4];
+		scratch=(const volatile uint32*)views[5];
+		csm=(const volatile uint32*)views[6];
 		const uint32 id=PioneerRead32(node+0x44/4);
 		if ((id&0xfff)!=2 && (id&0xfff)!=11) return false;
-		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
-			topology.source[i]=PioneerRead32(node+BlackholeDramSourceOffset(i)/4);
-		if (!BlackholeDramBuildRoutes(topology)) return false;
 		for (unsigned i=0;i<3;i++) {
 			saved[i]=PioneerRead32(tlb+i);
 			dmaSaved[i]=PioneerRead32(tlb-3+i);
@@ -76,15 +79,55 @@ struct PioneerPostResetMapping : ConfigIO {
 		if ((saved[2]|dmaSaved[2])&0xffffc000) return false;
 		savedValid=true;ready=true;return true;
 	}
+	uint32 TlbRead(unsigned i) { return i<3?PioneerRead32(tlb+i):UINT32_MAX; }
+	void TlbWrite(unsigned i,uint32 value) {
+		if (i<3) { modified=true;PioneerWrite32(tlb+i,value); }
+	}
+	uint32 ScratchRead(unsigned n) {
+		if (n!=2 && n!=4 && n!=11 && n!=12 && n!=13) return UINT32_MAX;
+		return PioneerRead32(scratch+(0x400+n*4)/4);
+	}
+	uint32 CsmRead(uint32 address) {
+		return BlackholeTelemetryRange(address,4)
+			?PioneerRead32(csm+(address-0x10000000)/4):UINT32_MAX;
+	}
+	// One bounded attempt. A failed TLB restore ends the attempt immediately;
+	// the caller retains this mapping and the old owner for diagnosis.
+	bool ProbeFirmware(unsigned pollLimit,tt_arc_scratch_result& result) {
+		result={};
+		if (!ready || firmwareAttempted || !pollLimit || pollLimit>100 || !PciReady()) return false;
+		firmwareAttempted=true;
+		bool bootReady=false;
+		for (unsigned poll=0;poll<pollLimit;poll++) {
+			if (!PciReady()) return false;
+			if (BlackholeArcScratchProbe(*this,result)) {
+				bootReady=true;break;
+			}
+			if (!result.tlb_restored || result.state!=TT_ARC_SCRATCH_NOT_READY) return false;
+			if (poll+1<pollLimit && snooze(100000)!=B_OK) return false;
+		}
+		if (!bootReady || !PciReady()
+			|| !BlackholeArcTelemetryProbe(*this,result,firmwareTelemetry)
+			|| (firmwareTelemetry.present_mask&0x3c1)!=0x3c1
+			|| firmwareTelemetry.values[0]!=0x12050001
+			|| firmwareTelemetry.values[6]!=0xf7 || firmwareTelemetry.values[7]!=0x5515
+			|| firmwareTelemetry.values[8]!=0 || firmwareTelemetry.values[9]!=0xfff
+			|| !PciReady()) return false;
+		firmwareReady=true;
+		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
+			topology.source[i]=PioneerRead32(node+BlackholeDramSourceOffset(i)/4);
+		topologyReady=BlackholeDramBuildRoutes(topology);
+		return topologyReady;
+	}
 	bool SourceStable() {
-		if (!ready || !PciReady()) return false;
+		if (!ready || !firmwareReady || !topologyReady || !PciReady()) return false;
 		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
 			if (PioneerRead32(node+BlackholeDramSourceOffset(i)/4)!=topology.source[i]) return false;
 		return true;
 	}
 	bool SelectPostResetCore(unsigned core) {
 		selected=PIONEER_POST_RESET_CORES;
-		if (!ready || core>=PIONEER_POST_RESET_CORES || !PciReady()) return false;
+		if (!ready || !firmwareReady || !topologyReady || core>=PIONEER_POST_RESET_CORES || !PciReady()) return false;
 		const unsigned x=PioneerWorkerX(core),y=PioneerWorkerY(core);
 		modified=true;
 		for (unsigned i=0;i<3;i++) PioneerWrite32(tlb+i,BlackholeDramFixedTlbWord(0xffa00000,x,y,true,i));
@@ -166,10 +209,10 @@ struct PioneerPostResetMapping : ConfigIO {
 			modified=false;
 		}
 		ready=false;selected=PIONEER_POST_RESET_CORES;
-		for (unsigned i=0;i<5;i++) if (areas[i]>=B_OK) {
+		for (unsigned i=0;i<7;i++) if (areas[i]>=B_OK) {
 			if (delete_area(areas[i])!=B_OK) return false;
 			areas[i]=-1;
 		}
-		tlb=NULL;node=reset=noc=hdma=NULL;return true;
+		tlb=NULL;node=reset=noc=hdma=scratch=csm=NULL;return true;
 	}
 };

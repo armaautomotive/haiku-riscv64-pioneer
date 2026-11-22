@@ -62,6 +62,12 @@ TLB snapshot. Firmware initialization, complete PCI capability restoration,
 recovery orchestration, and release of the retained cookie and host pages
 remain to be wired and physically verified.
 
+The post-reset backend now requires a bounded ARC scratch readiness poll and
+the pinned firmware telemetry and harvesting values before fleet and DMA
+auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
+interrupted wait, and failed TLB restoration. Message-queue initialization
+remains open; this new code has not been run on the card.
+
 The last valid output measurement remains a legacy Work-path result at
 `0.115` decode tokens/s. No dataflow run has produced a valid token or reached
 the 100 tokens/s target.

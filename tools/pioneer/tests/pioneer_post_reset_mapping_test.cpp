@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcTelemetryProbe.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using area_id=int;
 enum {B_OK=0,B_PAGE_SIZE=4096,B_KERNEL_READ_AREA=1,B_KERNEL_WRITE_AREA=2,
 	B_UNCACHED_MEMORY=4,B_ANY_KERNEL_ADDRESS=0,TT_PIONEER_RANGE_COUNT=1,TT_DRAM_SOURCE_WORDS=16};
@@ -29,7 +30,7 @@ template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32&
 static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readOnly,unsigned w) {
 	return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
 }
-static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024];
+static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x20000/4];
 static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1;static bool wrongNode=false;
 static uint32 cardBars[6]={12,0,12,0,12,0};
 struct Pci {
@@ -53,6 +54,8 @@ static int map_physical_memory(const char*,uint64_t addr,size_t size,int,uint32 
 	else if(addr==base+0x19312000 && size==4096 && !(flags&B_KERNEL_WRITE_AREA)) *out=resetPage;
 	else if(addr==base+0x19320000 && size==0x12000 && !(flags&B_KERNEL_WRITE_AREA)) *out=nocPage;
 	else if(addr==base+0x19180000 && size==4096 && !(flags&B_KERNEL_WRITE_AREA)) *out=hdmaPage;
+	else if(addr==base+0x19230000 && size==4096 && !(flags&B_KERNEL_WRITE_AREA)) *out=scratchPage;
+	else if(addr==base+0x19200000 && size==0x20000 && !(flags&B_KERNEL_WRITE_AREA)) *out=csmPage;
 	else return -1;
 	return int(call);
 }
@@ -65,59 +68,99 @@ static uint32 PioneerRead32(const volatile uint32* p) {
 	if(p==nocPage+0x48/4)return 0x10000;
 	return *p;
 }
-static void PioneerWrite32(volatile uint32* p,uint32 value) {*p=value;}
+static bool blockTlbRestore=false;
+static void PioneerWrite32(volatile uint32* p,uint32 value) {
+	if (blockTlbRestore && p==tlbPage+0x96c/4 && value==7) return;
+	*p=value;
+}
 static unsigned spins=0,mutateAfter=0;
 static void spin(unsigned) { if (mutateAfter && ++spins==mutateAfter) hdmaPage[0x80/4]=3; }
+static unsigned sleeps=0,firmwareReadyAfter=0;static bool sleepFails=false;
+static int snooze(int) {
+	++sleeps;
+	if (firmwareReadyAfter && sleeps==firmwareReadyAfter) scratchPage[(0x400+2*4)/4]=5;
+	return sleepFails?-1:0;
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPostResetMapping.inc"
 
 static void ResetFake() {
 	memset(tlbPage,0,sizeof(tlbPage));memset(nodePage,0,sizeof(nodePage));
-	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));
+	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));memset(scratchPage,0,sizeof(scratchPage));memset(csmPage,0,sizeof(csmPage));
 	mapCalls=unmapCalls=0;failMap=failUnmap=-1;wrongNode=false;
-	fakePciPendingPeer=-1;spins=mutateAfter=0;
+	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
 	cardBars[0]=12;nodePage[0x44/4]=2;resetPage[0x1b0/4]=0x47800;
+	scratchPage[(0x400+2*4)/4]=5;
+	scratchPage[(0x400+12*4)/4]=0x10001000;
+	scratchPage[(0x400+13*4)/4]=0x10000100;
+	const uint32 tags[]={28,29,11,36,22,50,34};
+	const uint32 values[]={0x12050001,1,1,0xf7,0x5515,0,0xfff};
+	csmPage[0x100/4]=0x10000;csmPage[0x104/4]=7;
+	for (unsigned i=0;i<7;i++) {
+		csmPage[(0x108+4*i)/4]=tags[i]|(i<<16);
+		csmPage[(0x1000+4*i)/4]=values[i];
+	}
 	tlbPage[0x96c/4]=7;tlbPage[0x970/4]=8;tlbPage[0x974/4]=9;
 	tlbPage[0x960/4]=10;tlbPage[0x964/4]=11;tlbPage[0x968/4]=12;
 }
 int main() {
-	tt_pioneer_profile profile;PioneerPostResetAuditResult r;
+	tt_pioneer_profile profile;PioneerPostResetAuditResult r;tt_arc_scratch_result arc{};
 	ResetFake();PioneerPostResetMapping clean(profile);
-	assert(clean.Open() && !clean.AuditHostDma() && clean.Audit(r) && r.audited==240
+	assert(clean.Open() && !clean.Audit(r) && !clean.AuditHostDma()
+		&& clean.ProbeFirmware(3,arc) && clean.Audit(r) && r.audited==240
 		&& clean.AuditHostDma() && clean.Close());
-	assert(unmapCalls==5 && tlbPage[0x96c/4]==7 && tlbPage[0x970/4]==8 && tlbPage[0x974/4]==9
+	assert(unmapCalls==7 && tlbPage[0x96c/4]==7 && tlbPage[0x970/4]==8 && tlbPage[0x974/4]==9
 		&& tlbPage[0x960/4]==10 && tlbPage[0x964/4]==11 && tlbPage[0x968/4]==12);
 	ResetFake();cardBars[0]=0;PioneerPostResetMapping badBar(profile);
 	assert(!badBar.Open() && !mapCalls && badBar.Close());
 	ResetFake();failMap=2;PioneerPostResetMapping partial(profile);
 	assert(!partial.Open() && partial.Close() && unmapCalls==2);
 	ResetFake();wrongNode=true;PioneerPostResetMapping wrong(profile);
-	assert(wrong.Open() && !wrong.Audit(r) && r.failure==PioneerPostResetAuditSelect);
+	assert(wrong.Open() && wrong.ProbeFirmware(3,arc) && !wrong.Audit(r) && r.failure==PioneerPostResetAuditSelect);
 	assert(wrong.Close() && tlbPage[0x96c/4]==7);
 	ResetFake();nocPage[(0x10000+0x240)/4]=1;PioneerPostResetMapping busy(profile);
-	assert(busy.Open() && !busy.Audit(r) && r.failure==PioneerPostResetAuditOutstanding && r.noc==1);
+	assert(busy.Open() && busy.ProbeFirmware(3,arc) && !busy.Audit(r) && r.failure==PioneerPostResetAuditOutstanding && r.noc==1);
 	assert(busy.Close());
 	ResetFake();PioneerPostResetMapping retained(profile);
-	assert(retained.Open() && retained.SelectPostResetCore(0));
+	assert(retained.Open() && retained.ProbeFirmware(3,arc) && retained.SelectPostResetCore(0));
 	cardBars[0]=0;assert(!retained.Close() && !unmapCalls);
 	cardBars[0]=12;assert(retained.Close());
 	ResetFake();PioneerPostResetMapping dmaBusy(profile);
-	assert(dmaBusy.Open() && dmaBusy.Audit(r));
+	assert(dmaBusy.Open() && dmaBusy.ProbeFirmware(3,arc) && dmaBusy.Audit(r));
 	hdmaPage[0x100/4]=1;assert(!dmaBusy.AuditHostDma());
 	assert(dmaBusy.Close() && tlbPage[0x960/4]==10);
 	ResetFake();PioneerPostResetMapping pending(profile);
-	assert(pending.Open() && pending.Audit(r));
+	assert(pending.Open() && pending.ProbeFirmware(3,arc) && pending.Audit(r));
 	fakePciPendingPeer=0;assert(!pending.AuditHostDma());
 	assert(pending.Close());
 	ResetFake();PioneerPostResetMapping rootPending(profile);
-	assert(rootPending.Open() && rootPending.Audit(r));
+	assert(rootPending.Open() && rootPending.ProbeFirmware(3,arc) && rootPending.Audit(r));
 	fakePciPendingPeer=1;assert(!rootPending.AuditHostDma());
 	assert(rootPending.Close());
 	ResetFake();PioneerPostResetMapping changingDma(profile);
-	assert(changingDma.Open() && changingDma.Audit(r));
+	assert(changingDma.Open() && changingDma.ProbeFirmware(3,arc) && changingDma.Audit(r));
 	spins=0;mutateAfter=1;assert(!changingDma.AuditHostDma());
 	assert(changingDma.Close());
 	ResetFake();nodePage[0x44/4]=11;PioneerPostResetMapping otherPcie(profile);
-	assert(otherPcie.Open() && otherPcie.Audit(r) && !otherPcie.AuditHostDma());
+	assert(otherPcie.Open() && otherPcie.ProbeFirmware(3,arc) && otherPcie.Audit(r) && !otherPcie.AuditHostDma());
 	assert(otherPcie.Close());
-	puts("PASS post-reset mapping and DMA: core/NoC audit, PCI pending and HDMA busy refusal, both fresh TLB restores; SIMULATED MMIO ONLY");
+	ResetFake();scratchPage[(0x400+2*4)/4]=0;firmwareReadyAfter=2;
+	PioneerPostResetMapping delayed(profile);
+	assert(delayed.Open() && delayed.ProbeFirmware(3,arc) && sleeps==2 && delayed.Close());
+	ResetFake();scratchPage[(0x400+2*4)/4]=0;PioneerPostResetMapping notReady(profile);
+	assert(notReady.Open() && !notReady.ProbeFirmware(2,arc)
+		&& sleeps==1 && arc.state==TT_ARC_SCRATCH_NOT_READY && !notReady.Audit(r) && notReady.Close());
+	ResetFake();scratchPage[(0x400+2*4)/4]=0;sleepFails=true;
+	PioneerPostResetMapping interrupted(profile);
+	assert(interrupted.Open() && !interrupted.ProbeFirmware(3,arc) && sleeps==1 && interrupted.Close());
+	ResetFake();scratchPage[(0x400+4*4)/4]=2;PioneerPostResetMapping fwError(profile);
+	assert(fwError.Open() && !fwError.ProbeFirmware(1,arc) && fwError.Close());
+	ResetFake();csmPage[0x1000/4]=0x13000000;PioneerPostResetMapping wrongFirmware(profile);
+	assert(wrongFirmware.Open() && !wrongFirmware.ProbeFirmware(1,arc)
+		&& !wrongFirmware.Audit(r) && wrongFirmware.Close());
+	ResetFake();PioneerPostResetMapping badRestore(profile);
+	assert(badRestore.Open());blockTlbRestore=true;
+	assert(!badRestore.ProbeFirmware(3,arc) && arc.state==TT_ARC_SCRATCH_RESTORE_FAILED
+		&& !sleeps && !badRestore.Close() && !unmapCalls);
+	blockTlbRestore=false;assert(badRestore.Close());
+	puts("PASS post-reset ARC scratch/telemetry, fleet mapping and DMA gates; SIMULATED MMIO ONLY");
 }
