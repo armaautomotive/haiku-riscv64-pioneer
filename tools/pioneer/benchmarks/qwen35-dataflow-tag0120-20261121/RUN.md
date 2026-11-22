@@ -1,47 +1,47 @@
-# Qwen3.5 dataflow rewrite tag0120 hardware status
+# Qwen3.5 dataflow rewrite tag0120 hardware run
 
-Status: tag0120 has a correctly tagged offline build and guarded one-run / post-
-power-cycle recovery scripts, but it has not been installed or run on the
-Pioneer. It is a diagnostic-only rewrite checkpoint, not a model run or
-performance result.
+Status: one guarded diagnostic was completed; no valid model output was
+produced. This is failure evidence for the device-program rewrite, not a
+throughput benchmark. The two-warm benchmark remains gated.
 
-Tag0119's one-run diagnostic failed before output. Its read-request counter
-advanced, but the `NIU_MST_RD_RESP_RECEIVED` counter did not; outstanding
-transaction ID 0 remained set. The tag0119 log named this mask as a busy queue,
-which was inaccurate. Tag0120 corrects the name and preserves the failed
-embedding read's remote address, route, and size in the existing 64-byte
-mailbox. See [`tag0119 RUN`](../qwen35-dataflow-tag0119-20261121/RUN.md).
+## Preflight and setup
 
-After the tag0119 trial, Haiku accepted a reboot request. Both pinned SSH
-profiles later timed out, the ARP entry stayed incomplete, and the existing
-serial console stopped at shutdown-device teardown without a new boot banner.
-The user reported an accidental power reset during this recovery window. At
-that check, no relay action was sent while the current board power state
-remained unclear.
-The tag0119 candidate's recovery lock and stable-driver backup were retained;
-stable driver55 generation2 must be verified restored before another hardware
-command.
+The prior diagnostic process had exited before the card was touched. The
+tag0119 recovery helper had hot-restored stable driver55 at generation2, and
+the stable driver reported idle before tag0120 was staged. The model files
+were present at their expected sizes: Qwen3.5-4B `2740937888` bytes and the
+preserved Qwen3.8-27B `18973870528` bytes. The candidate and client matched
+the tag0120 build hashes recorded in [`BUILD.md`](BUILD.md). The verified
+hardware handoff was Fedora Linux on the existing NVMe to Haiku on that NVMe
+through kexec. No SD-card workflow was used.
 
-Latest recheck (2026-11-21): both saved, host-pinned SSH profiles time out;
-the serial console still ends at shutdown-device teardown with no fresh boot
-banner. Relay status was power-button contact open and SD detached. After the
-shutdown/reset window, one ON pulse was sent; the relay is released, but after
-60 seconds SSH still times out, ARP is incomplete, and serial output is
-unchanged. There is still no confirmed boot, so no further power pulse was
-sent. Stable-driver recovery and the tag0120 hardware diagnostic remain
-pending.
+## One-run diagnostic
 
-After that unsuccessful ON attempt, the user reported switching off the
-external power supply and waiting five minutes before retrying. Following the
-rest, both host-pinned SSH profiles still time out, ARP remains incomplete,
-and the serial console is unchanged. Relay status remains power-button open
-and SD detached. The agent has not switched the supply or sent another relay
-pulse; the supply's current state needs confirmation before interpreting the
-missing boot response.
+- Authentication: `99.767714` s
+- Prompt tokenization: `12.726700` s
+- Model load/residency: `337.246020` s; `2740498432` resident bytes
+- Prompt processing: failed after `0.612460` s
+- Decode: `0` s; no token produced, so tokens/s is unavailable
 
-No valid output, prompt completion, decode time, warm run, clean unload, or
-throughput result exists for tag0120. The 100 decode tokens/s goal remains
-unmet, and assistant integration remains deferred. Build hashes and offline
-validation are in [`BUILD.md`](BUILD.md). The runtime-tagged one-run and
-recovery scripts are present beside this file; wait for a verified Haiku boot
-and stable-driver recovery before staging them.
+The first core0 embedding read failed. NoC0 completion counter index36 read
+`0x00029066`, expected `0x00029067`; completion mask was `0xfe`, busy
+initiator mask was `0x0`, and outstanding transaction-ID mask was
+`0x00000001`. The read request receipt was address `0x04185380`, route
+`0x312`, `3392` bytes. The failed request was not retried and no counter was
+cleared.
+
+Generation returned result31 at stage4, state2, recovery1, output0. The
+recovery audit returned result13; owner result8; core0 reported worker state4,
+failure7, phase5; audit stage6/core0/detail1508. Normal close failed with
+result15 at the stop audit. The client exited, but the guard reports candidate
+tag `2026112100010120`, generation3, `cold1 active_owner1`. The exclusive
+recovery lock and stable55 restore backup were retained. Do not reload or issue
+more accelerator work while the latch and active owner remain. No read retry,
+counter clear, Tensix reset, or host reboot was performed after the failure.
+
+Both model files were rechecked and remain intact at their expected sizes.
+No valid output, decode rate, warm-run result, or clean unload exists. The
+100 decode tokens/s goal remains unmet. The in-place recovery state machine
+must be implemented and validated before another model diagnostic. Current
+source research and the SD-free kexec path are recorded in
+[`QWEN35_TTMETALIUM_REWRITE_STATUS.md`](../../QWEN35_TTMETALIUM_REWRITE_STATUS.md).

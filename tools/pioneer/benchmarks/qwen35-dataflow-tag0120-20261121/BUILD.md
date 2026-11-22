@@ -1,14 +1,12 @@
 # Qwen3.5 dataflow rewrite tag0120
 
 Tag0120 corrects the interpretation of the tag0119 NoC snapshot and preserves
-the failed read request's identity for the next hardware diagnostic. The
-worker mailbox remains exactly 64 bytes; the control ioctl remains 36 bytes
-and dataflow ABI 5. A new read-only `QUERY_READ_REQUEST` action returns the
-remote address, target route, and transfer size without issuing another NoC
-request.
+the failed read request identity for diagnostics. The worker mailbox remains
+64 bytes; the control ioctl remains 36 bytes; dataflow ABI is 5. A new
+read-only `QUERY_READ_REQUEST` action returns the remote address, target route,
+and transfer size without issuing another NoC request.
 
-On a timed-out embedding read, the existing six reserved mailbox words now
-hold:
+On a timed-out embedding read, the six existing reserved mailbox words hold:
 
 | Word | Contents |
 | --- | --- |
@@ -21,8 +19,7 @@ hold:
 
 The 32 slots are the 16 response-marked request-ID counters followed by the 16
 write-outgoing-ID counters at NoC offsets `0x240..0x2bc`; they are not command
-queues. This follows the official
-[Blackhole NIU counter documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md).
+queues. See the official [Blackhole NIU counter documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md).
 
 ## Build outputs
 
@@ -50,35 +47,26 @@ was compiled with tag0119 and is superseded; do not stage that driver.
 
 - Full variant-60 driver, service image, and client build pass.
 - Conservative kernel stack use is `15712/18432` bytes.
-- The target worker compile passes for RV32IMF with no A-extension atomics or
-  unresolved runtime helpers.
-- Embedding-worker and service-owner ASan/UBSan fixtures pass, including
-  request address/route/size propagation and fixed-mailbox packing.
-- The runtime-recovery fixture passes; it leaves an outstanding NoC request
-  untouched rather than clearing or retrying it.
-- The tag0120 one-run trial and post-power-cycle stable-driver recovery scripts
-  pass Bash syntax validation. They pin the tag0120 driver hash and keep the
-  two-warm benchmark out of this diagnostic step.
+- The target worker compile passes for RV32IMF with no A-extension atomics or unresolved runtime helpers.
+- Embedding-worker and service-owner ASan/UBSan fixtures pass, including request address/route/size propagation and fixed-mailbox packing.
+- The runtime-recovery fixture passes; it leaves an outstanding NoC request untouched rather than clearing or retrying it.
+- The tag0120 trial and post-boot stable-driver recovery scripts pass Bash syntax validation. The trial script pins the driver and client hashes and accepts only a one-run diagnostic.
 
-When Haiku and stable55 generation2 are verified again, stage the build8
-driver as `tenstorrent_pci_probe-driver60`, the client as
-`pioneer-q35-dataflow`, and both scripts under a root-owned mode-0700 directory
-matching `/boot/home/pioneer-qwen35-dataflow-0120.diagnostic` on the installed
-driver's filesystem. The scripts also require the preserved 27B file, idle
-process list, 64 CPUs, and the exact model file metadata. Run only:
+## Hardware outcome
 
-```sh
-pioneer_qwen35_dataflow_trial.sh --preflight /boot/home/pioneer-qwen35-dataflow-0120.diagnostic 2
-pioneer_qwen35_dataflow_trial.sh --diagnostic /boot/home/pioneer-qwen35-dataflow-0120.diagnostic 2
-```
+Tag0120 was installed and run after the tag0119 recovery helper restored stable
+driver55 at generation2 and idle was verified. The exact one-run timings and
+failure are in [`RUN.md`](RUN.md). It failed on the first core0 embedding
+read, produced no output, and left tag0120 generation3 cold-latched with an
+active owner. The candidate, recovery lock, and stable55 backup remain
+retained.
 
-The trial script pins both the driver and client hashes. It accepts no
-two-warm mode. If the diagnostic cold-latches, wait for a fresh Haiku boot,
-then run the tag0120 recovery script with the same stage path before any new
-driver or model command.
+The existing recovery script is for use after a fresh Haiku boot; it does not
+provide in-place ASIC recovery. The verified host handoff is Fedora Linux to
+Haiku through kexec from the existing NVMe. No SD-card workflow is used.
 
-The failing tag0119 run and unresolved hardware recovery are in
-[`../qwen35-dataflow-tag0119-20261121/RUN.md`](../qwen35-dataflow-tag0119-20261121/RUN.md).
-Tag0120 has not been staged on or run on the Pioneer. Its current trial and
-recovery scripts are [`pioneer_qwen35_dataflow_trial.sh`](pioneer_qwen35_dataflow_trial.sh)
-and [`pioneer_qwen35_dataflow_recover_after_power_cycle.sh`](pioneer_qwen35_dataflow_recover_after_power_cycle.sh).
+The next rewrite checkpoint needs a guarded Blackhole ASIC reset, post-reset
+firmware readiness and hardware reinitialization, then proof that all 120
+cores and NoC transactions are idle before it clears the cold latch. This
+recovery path is not implemented or hardware-validated yet. No valid output,
+decode rate, two-warm run, or clean unload has been established.
