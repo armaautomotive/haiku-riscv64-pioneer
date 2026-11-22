@@ -318,6 +318,15 @@ the existing recorder and worker envelopes still exclude a real caller and
 whole-program proof respectively. This work has not run on the card and
 provides no throughput measurement.
 
+The next offline component replays the graph's authority transitions into a
+private candidate without regenerating the 120 per-core records. Simulated
+prompt and decode tests compare the candidate with the full recorder for two
+successive positions and verify that the original authority remains unchanged.
+The standalone Haiku/RISC-V kernel compile passes; its largest individual
+frame is 3,536 bytes, not a call-chain stack bound. This component is not
+connected to the driver or allowed to promote state, and does not prove device
+execution or measure decode speed.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

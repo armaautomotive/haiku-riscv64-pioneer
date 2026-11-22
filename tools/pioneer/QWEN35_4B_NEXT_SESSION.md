@@ -328,6 +328,14 @@ The non-loadable kernel stack estimate is `18160/18432`; recorder and worker
 estimates have the limitations noted above. This does not diagnose the tag0120
 embedding failure and is not a decode performance result.
 
+An offline graph-metadata replay now predicts the candidate authority without
+regenerating 120 per-core records. Its simulated prompt and decode states
+match the full recorder across two positions while the original state remains
+unchanged. The standalone Haiku/RISC-V kernel probe compiles with a largest
+individual frame of 3,536 bytes; a whole call-chain bound is still required.
+It is not connected to the driver and cannot promote state; connect it only
+under the future immutable-session and audited-completion ownership protocol.
+
 Remaining firmware policy: the local Tenstorrent KMD checkout at
 `22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
 sets MRRS to 4096, sends state0, then requests watchdog timeout message
