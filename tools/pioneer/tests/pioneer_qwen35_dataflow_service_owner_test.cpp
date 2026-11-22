@@ -46,6 +46,15 @@ struct MockDataflowIO {
 	DataflowEmbeddingInvocation embeddingInvocation[DataflowCoreCount]{};
 	DataflowRmsInvocation rmsInvocation[DataflowCoreCount]{};
 	DataflowWorkerSnapshot snapshot[DataflowCoreCount]{};
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	DataflowRoleMailbox roleMailbox[DataflowCoreCount]{};
+	bool roleStaged=false,roleArmed=false,roleRestored=false;
+	bool roleStarted[DataflowCoreCount]{};
+	bool failRoleStage=false,failRoleArm=false,failRoleRestore=false,failRoleVerify=false;
+	bool corruptPriorResidentOnBoot=false;
+	unsigned corruptRoleMailboxCore=UINT32_MAX;
+	unsigned roleStages=0,roleArms=0,roleStarts=0,roleStops=0,roleRestores=0,roleVerifies=0;
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	uint32_t barrierLocal[DataflowCoreCount][3*DataflowBarrierPacketBytes/4]{};
 	uint32_t barrierChildren[DataflowCoreCount][DataflowBarrierReleaseFanout][DataflowBarrierArrivalStride/4]{};
@@ -130,12 +139,21 @@ struct MockDataflowIO {
 #endif
 		} else if (address==DataflowServiceBootAddress && bytes==sizeof(uint32_t)) {
 			memcpy(&boot[core],input,bytes);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (corruptPriorResidentOnBoot && core==37) {
+				text[0][0]^=1; corruptPriorResidentOnBoot=false;
+			}
+#endif
 		} else if (address==DataflowQueueStateAddress
 			&& bytes==sizeof(queue[core])) {
 			memcpy(queue[core],input,bytes);
 		} else if (address==DataflowWorkerMailboxAddress
 			&& bytes==sizeof(mailbox[core])) {
 			memcpy(&mailbox[core],input,bytes);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		} else if (address==DataflowRoleMailboxAddress && bytes==sizeof(roleMailbox[core])) {
+			memcpy(&roleMailbox[core],input,bytes);
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
 			if (core==failBarrierCore) return false;
@@ -184,6 +202,11 @@ struct MockDataflowIO {
 		} else if (address==DataflowWorkerMailboxAddress
 			&& bytes==sizeof(mailbox[core])) {
 			memcpy(output,&mailbox[core],bytes);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		} else if (address==DataflowRoleMailboxAddress && bytes==sizeof(roleMailbox[core])) {
+			memcpy(output,&roleMailbox[core],bytes);
+			if (core==corruptRoleMailboxCore) static_cast<uint32_t*>(output)[0]^=1;
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
 			memcpy(output,reinterpret_cast<const uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,bytes);
@@ -270,6 +293,50 @@ struct MockDataflowIO {
 			&& mailbox[core].logicalCore==core
 			&& DataflowWorkerSnapshotReady(observed);
 	}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool SharedCaptureAndStageHeld() {
+		++roleStages;
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (!held[core] || !captured[core]) return false;
+		roleStaged=true;
+		return !failRoleStage;
+	}
+	bool SharedArmAndBeginRelease() {
+		++roleArms;
+		if (!roleStaged || roleArmed || failRoleArm) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (!held[core] || roleMailbox[core].magic!=DataflowRoleMailboxMagic
+				|| roleMailbox[core].version!=DataflowRoleMailboxVersion) return false;
+		roleArmed=true; return true;
+	}
+	bool SharedFleetHeldAndQuiescent() const {
+		for (unsigned core=0;core<DataflowCoreCount;core++)
+			if (!held[core] || roleStarted[core]) return false;
+		return true;
+	}
+	bool SharedStartCore(unsigned core) {
+		if (!roleArmed || core>=DataflowCoreCount || roleStarted[core] || !StartCore(core)) return false;
+		roleStarted[core]=true; ++roleStarts; return true;
+	}
+	bool SharedCoreReady(unsigned core,const DataflowWorkerSnapshot& observed) const {
+		return core<DataflowCoreCount && roleStarted[core] && CoreReady(core,observed);
+	}
+	bool SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
+		++roleStops;
+		return StopAndAuditAll(stage,core);
+	}
+	bool SharedRestoreRolesHeld() {
+		++roleRestores;
+		for (unsigned core=0;core<DataflowCoreCount;core++) if (!held[core]) return false;
+		if (failRoleRestore) return false;
+		roleRestored=true; return true;
+	}
+	bool SharedVerifyRolesAfterResidentRestore() {
+		++roleVerifies;
+		for (unsigned core=0;core<DataflowCoreCount;core++) if (!held[core] || !restored[core]) return false;
+		return roleRestored && !failRoleVerify;
+	}
+#endif
 	bool AuthorizeProjection(const DataflowProjectionProgram& program) const
 	{
 		return authorizeProgram && program.Valid();

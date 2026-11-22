@@ -733,7 +733,34 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	"$directory/pioneer_qwen35_dataflow_service_owner_test.cpp" -o "$temporary/device-barrier-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/device-barrier-owner-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_shared_service_owner_test.cpp" \
+	-o "$temporary/shared-service-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-service-owner-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_shared_service_recovery_test.cpp" \
+	-o "$temporary/shared-service-recovery-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-service-recovery-test"
+shared_owner_flags='-std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS'
+if "$cxx" $shared_owner_flags -I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/support" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_shared_service_kernel_probe.cpp" \
+	-o "$temporary/invalid-shared-service-kernel.o" >"$temporary/invalid-shared-service-kernel.log" 2>&1; then
+	echo 'shared service owner compiled without the recovery-only guard' >&2
+	exit 1
+fi
+"$cxx" $shared_owner_flags -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/support" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_dataflow_shared_service_kernel_probe.cpp" \
+	-o "$temporary/shared-service-kernel.o"
+awk -F '\t' 'NF==3 {if($2+0>2048||$3!="static")bad=1;seen=1} END{exit !(seen&&!bad)}' \
+	"$temporary/shared-service-kernel.su"
+echo 'PASS shared service lifecycle Haiku kernel SDK compile; NO LIVE DRIVER BINDING'
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined -DPIONEER_QWEN35_DEVICE_DISPATCH \
 	"$directory/pioneer_qwen35_dataflow_pci_memory_test.cpp" -o "$temporary/device-dispatch-pci-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/device-dispatch-pci-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS \
+	"$directory/pioneer_qwen35_dataflow_pci_memory_test.cpp" -o "$temporary/shared-role-pci-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-role-pci-test"
 echo 'PASS: Qwen35 dataflow roles compile as RV32IMF without A atomics or runtime helpers'

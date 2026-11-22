@@ -171,4 +171,5 @@ int main()
         assert(io.code==code && io.ram==ram && io.boots==boots && io.shims==shims);
     }
     std::puts("PASS 120-core composed image/private-RAM recovery and cross-region faults; SIMULATED ONLY");
+    return 0;
 }

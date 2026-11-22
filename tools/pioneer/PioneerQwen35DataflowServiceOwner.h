@@ -2,6 +2,13 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_SERVICE_OWNER_H
 #define PIONEER_QWEN35_DATAFLOW_SERVICE_OWNER_H
 
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#if !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
+#error Shared-role service lifecycle is a non-loadable recovery witness only
+#endif
+#include "PioneerQwen35DataflowRoleMailbox.h"
+#endif
+
 #include "PioneerQwen35DataflowOwner.h"
 #include "PioneerQwen35DataflowKernels.h"
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -136,6 +143,9 @@ class DataflowServiceOwner {
 	Phase fPhase=PhaseEmpty;
 	bool fSaved[DataflowCoreCount]{};
 	bool fCloseRestored=false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool fSharedAttempted=false;
+#endif
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
 		DataflowCoreCount,0,0,0,0};
 	DataflowProjectionOwner fProjectionOwner;
@@ -181,6 +191,65 @@ class DataflowServiceOwner {
 #endif
 		return true;
 	}
+
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	template<class IO>
+	static bool SharedVerifyStagedFleet(const DataflowServiceImageView& image,IO& io)
+	{
+		static_assert(DataflowServiceChunkWords*sizeof(uint32_t)>=DataflowBarrierPacketBytes,
+			"shared staged audit buffer must hold a barrier packet");
+		static_assert(DataflowServiceChunkWords*sizeof(uint32_t)>=sizeof(DataflowRoleMailbox)
+			&& DataflowServiceChunkWords*sizeof(uint32_t)>=sizeof(DataflowWorkerMailbox)
+			&& DataflowServiceChunkWords*sizeof(uint32_t)>=sizeof(DataflowQueueControl)*DataflowCircularBufferCount,
+			"shared staged audit buffer must hold each startup record");
+		if (!io.SharedFleetHeldAndQuiescent()) return false;
+		uint32_t readback[DataflowServiceChunkWords];
+		auto verifyRegion=[&](unsigned core,unsigned address,const uint32_t* words,unsigned count) {
+			for (unsigned offset=0;offset<count;) {
+				unsigned n=count-offset;
+				if (n>DataflowServiceChunkWords) n=DataflowServiceChunkWords;
+				if (!io.CoreHeld(core) || !io.ReadCoreMemory(core,address+offset*4,readback,n*4))
+					return false;
+				for (unsigned i=0;i<n;i++) if (readback[i]!=words[offset+i]) return false;
+				offset+=n;
+			}
+			return true;
+		};
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			DataflowQueueControl queues[DataflowCircularBufferCount]{};
+			DataflowWorkerMailbox mailbox{};
+			DataflowRoleMailbox role{};
+			mailbox.magic=DataflowWorkerMailboxMagic; mailbox.version=DataflowWorkerMailboxVersion;
+			mailbox.state=DataflowWorkerReady; mailbox.logicalCore=core;
+			role.magic=DataflowRoleMailboxMagic; role.version=DataflowRoleMailboxVersion;
+			uint32_t boot=0;
+			if (!io.CoreHeld(core)
+				|| !verifyRegion(core,DataflowServiceEntryAddress,image.textWords,image.textWordCount)
+				|| !verifyRegion(core,DataflowServiceDispatchAddress,image.dispatchWords,image.dispatchWordCount)
+				|| !io.ReadCoreMemory(core,DataflowServiceBootAddress,&boot,sizeof(boot)) || boot!=image.bootWord
+				|| !io.ReadCoreMemory(core,DataflowQueueStateAddress,readback,sizeof(queues))
+				|| memcmp(queues,readback,sizeof(queues))
+				|| !io.ReadCoreMemory(core,DataflowWorkerMailboxAddress,readback,sizeof(mailbox))
+				|| memcmp(&mailbox,readback,sizeof(mailbox))
+				|| !io.ReadCoreMemory(core,DataflowRoleMailboxAddress,readback,sizeof(role))
+				|| memcmp(&role,readback,sizeof(role))) return false;
+			auto zeroPacket=[&](unsigned address) {
+				if (!io.ReadCoreMemory(core,address,readback,DataflowBarrierPacketBytes)) return false;
+				for (unsigned i=0;i<DataflowBarrierPacketBytes/sizeof(uint32_t);i++)
+					if (readback[i]) return false;
+				return true;
+			};
+			if (!zeroPacket(DataflowBarrierOutbox) || !zeroPacket(DataflowBarrierReleasePayload)
+				|| !zeroPacket(DataflowBarrierReleaseCommit)) return false;
+			const unsigned first=core*DataflowBarrierReleaseFanout+1;
+			for (unsigned worker=first;worker<first+DataflowBarrierReleaseFanout
+				&& worker<DataflowBarrierWorkers;worker++)
+				if (!zeroPacket(DataflowBarrierArrivalAddress(worker,false))
+					|| !zeroPacket(DataflowBarrierArrivalAddress(worker,true))) return false;
+		}
+		return io.SharedFleetHeldAndQuiescent();
+	}
+#endif
 
 	template<class IO>
 	void ReleaseSnapshots(IO& io)
@@ -291,6 +360,16 @@ public:
 			}
 		}
 
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		// The caller already owns the session lock. The role transaction must
+		// retain partial snapshots/writes on failure and support safe cleanup.
+		fSharedAttempted=true;
+		if (!io.SharedCaptureAndStageHeld()) {
+			fPhase=PhaseFaulted;
+			return DataflowServiceSnapshotFailed;
+		}
+#endif
+
 		// Every original state is captured and every core held before the first
 		// image write. No partially staged core is allowed to start.
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -318,6 +397,21 @@ public:
 				fPhase=PhaseFaulted;
 				return DataflowServiceStartupWriteFailed;
 			}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			DataflowRoleMailbox roleMailbox{};
+			roleMailbox.magic=DataflowRoleMailboxMagic;
+			roleMailbox.version=DataflowRoleMailboxVersion;
+			if (!io.WriteCoreMemory(core,DataflowRoleMailboxAddress,&roleMailbox,sizeof(roleMailbox))) {
+				fPhase=PhaseFaulted;
+				return DataflowServiceStartupWriteFailed;
+			}
+			DataflowRoleMailbox roleReadback{};
+			if (!io.ReadCoreMemory(core,DataflowRoleMailboxAddress,&roleReadback,sizeof(roleReadback))
+				|| memcmp(&roleMailbox,&roleReadback,sizeof(roleMailbox))!=0) {
+				fPhase=PhaseFaulted;
+				return DataflowServiceStartupReadbackFailed;
+			}
+#endif
 			DataflowQueueControl queueReadback[DataflowCircularBufferCount];
 			DataflowWorkerMailbox mailboxReadback{};
 			if (!io.ReadCoreMemory(core,DataflowQueueStateAddress,
@@ -342,8 +436,19 @@ public:
 			}
 		}
 
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		// The one-shot fleet ledger must be consumed before any reset release.
+		if (!io.SharedArmAndBeginRelease() || !SharedVerifyStagedFleet(image,io)) {
+			fPhase=PhaseFaulted;
+			return DataflowServiceStartFailed;
+		}
+#endif
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (!io.SharedStartCore(core)) {
+#else
 			if (!io.StartCore(core)) {
+#endif
 				DataflowWorkerSnapshot snapshot{};
 				SetDiagnostic(DataflowServiceDiagnosticWorkerStart,core,snapshot);
 				fPhase=PhaseFaulted;
@@ -381,7 +486,11 @@ public:
 				startupReady=false;
 				continue;
 			}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (!io.SharedCoreReady(core,snapshot)) {
+#else
 			if (!io.CoreReady(core,snapshot)) {
+#endif
 				if (startupReady)
 					SetDiagnostic(DataflowServiceDiagnosticWorkerProof,core,snapshot);
 				startupReady=false;
@@ -391,12 +500,27 @@ public:
 			fPhase=PhaseFaulted;
 			return DataflowServiceReadyFailed;
 		}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		struct SharedReadyView {
+			IO& io;
+			bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& snapshot)
+				{ return io.ReadWorkerSnapshot(core,snapshot); }
+			bool CoreReady(unsigned core,const DataflowWorkerSnapshot& snapshot)
+				{ return io.SharedCoreReady(core,snapshot); }
+		} readyView{io};
+		if (fProjectionOwner.Initialize(readyView)!=DataflowOwnerComplete) {
+#else
 		if (fProjectionOwner.Initialize(io)!=DataflowOwnerComplete) {
+#endif
 			for (unsigned core=0;core<DataflowCoreCount;core++) {
 				DataflowWorkerSnapshot snapshot{};
 				if (!io.ReadWorkerSnapshot(core,snapshot)
 					|| !DataflowWorkerSnapshotReady(snapshot)
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+					|| !io.SharedCoreReady(core,snapshot)) {
+#else
 					|| !io.CoreReady(core,snapshot)) {
+#endif
 					SetDiagnostic(DataflowServiceDiagnosticOwnerCore,core,snapshot);
 					break;
 				}
@@ -539,12 +663,22 @@ public:
 		fPhase=PhaseFaulted;
 		if (!fCloseRestored) {
 			unsigned auditStage=0,auditCore=DataflowCoreCount;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (!(fSharedAttempted?io.SharedStopAndHoldAll(auditStage,auditCore)
+				:io.StopAndAuditAll(auditStage,auditCore))) {
+#else
 			if (!io.StopAndAuditAll(auditStage,auditCore)) {
+#endif
 				DataflowWorkerSnapshot snapshot{};
 				snapshot.state=auditStage;
 				SetDiagnostic(DataflowServiceDiagnosticStopAudit,auditCore,snapshot);
 				return DataflowServiceStopAuditFailed;
 			}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			// Must be retryable and leave every core held on any failure.
+			if (fSharedAttempted && !io.SharedRestoreRolesHeld())
+				return DataflowServiceRestoreFailed;
+#endif
 			for (unsigned end=DataflowCoreCount;end;end--) {
 				const unsigned core=end-1;
 				if (!fSaved[core]) continue;
@@ -561,6 +695,13 @@ public:
 					return DataflowServiceRestoreFailed;
 				}
 			}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			if (fSharedAttempted && !io.SharedVerifyRolesAfterResidentRestore())
+				return DataflowServiceRestoreFailed;
+			for (unsigned core=0;core<DataflowCoreCount;core++)
+				if (fSaved[core] && !io.VerifyCoreStateRestored(core))
+					return DataflowServiceRestoreFailed;
+#endif
 			fCloseRestored=true;
 		}
 		unsigned resumeStage=0,resumeCore=DataflowCoreCount,resumeDetail=0;

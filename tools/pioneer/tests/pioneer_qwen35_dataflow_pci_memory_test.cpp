@@ -153,6 +153,13 @@ int main()
 		DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,state),4));
 	assert(!DataflowPciRunningWriteRange(DataflowBarrierOutbox,DataflowBarrierPacketBytes));
 	assert(!DataflowPciRunningWriteRange(DataflowBarrierArrivalBase,DataflowBarrierPacketBytes));
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
+		DataflowRoleMailboxAddress,sizeof(DataflowRoleMailbox)));
+	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(
+		DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)-4,8));
+	assert(!DataflowPciRunningWriteRange(DataflowRoleMailboxAddress,sizeof(DataflowRoleMailbox)));
+#endif
 	DataflowWorkerMailbox readyMailbox{};
 	readyMailbox.magic=DataflowWorkerMailboxMagic;readyMailbox.version=DataflowWorkerMailboxVersion;
 	readyMailbox.logicalCore=7;readyMailbox.state=DataflowWorkerReady;

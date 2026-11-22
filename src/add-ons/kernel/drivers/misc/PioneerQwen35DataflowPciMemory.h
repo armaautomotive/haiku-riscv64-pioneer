@@ -55,6 +55,11 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 		|| (address>=PioneerQwen35::DataflowWorkerMailboxAddress
 			&& end<=PioneerQwen35::DataflowWorkerMailboxAddress
 				+PioneerQwen35::DataflowWorkerMailboxBytes)
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		|| (address>=PioneerQwen35::DataflowRoleMailboxAddress
+			&& end<=PioneerQwen35::DataflowRoleMailboxAddress
+				+sizeof(PioneerQwen35::DataflowRoleMailbox))
+#endif
 		|| (address>=PioneerQwen35::DataflowBarrierOutbox
 			&& end<=PioneerQwen35::DataflowBarrierReleaseCommit
 				+PioneerQwen35::DataflowBarrierPacketBytes)
