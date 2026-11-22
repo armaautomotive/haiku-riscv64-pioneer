@@ -2100,7 +2100,11 @@ public:
 	void Pause() { context.io.Pause(); }
 	bool AuditGraphRecoveryCore(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
 		using namespace PioneerQwen35;
-		if (!PioneerQwen35DataflowCoreRuntimeStable(context.io,core)
+		if (
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			!context.io.SharedFaultCoreSettled(core,snapshot) ||
+#endif
+			!PioneerQwen35DataflowCoreRuntimeStable(context.io,core)
 			|| !PioneerQwen35DataflowQueuesBalanced(context.io,core,true)) return false;
 		auto& dram=context.baseline.baseline.baseline.baseline.dram;
 		struct NoC1Reader {
@@ -2245,6 +2249,11 @@ public:
 	bool FaultClosePermitted(const void* run) const {
 		return OwnsRetainedFault(run) && session.FaultClosePermitted(faultAudit);
 	}
+	bool FaultAcknowledgementPermitted(const void* run,unsigned core) const {
+		const auto* retained=session.RetainedRun();
+		return OwnsRetainedFault(run) && retained
+			&& faultAudit.AcknowledgementPermittedFor(retained->publisher,core,retained->publisher.TriggerSequence());
+	}
 #endif
 	bool FailedWorkerSnapshot(unsigned& core,PioneerQwen35::DataflowWorkerSnapshot& snapshot) const {
 		auto* run=session.RetainedRun();
@@ -2301,6 +2310,10 @@ static bool PioneerQ35GraphOwnerOwnsRetainedRun(const PioneerQ35GraphOwner* owne
 static bool PioneerQ35GraphOwnerFaultClosePermitted(const PioneerQ35GraphOwner* owner,const void* run)
 {
 	return owner && owner->FaultClosePermitted(run);
+}
+static bool PioneerQ35GraphOwnerFaultAckPermitted(const PioneerQ35GraphOwner* owner,const void* run,unsigned core)
+{
+	return owner && owner->FaultAcknowledgementPermitted(run,core);
 }
 #endif
 

@@ -37,7 +37,7 @@ namespace PioneerQwen35 { struct DataflowWorkerSnapshot; }
 #endif
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
 struct FakeService { bool ready=true; bool Ready() const { return ready; } };
-struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; };
+struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
     tt_pioneer_profile profile=GoodProfile();
     PioneerStoreContext* qwen35DataflowContext=nullptr;
@@ -64,6 +64,7 @@ struct PioneerSessionIO {
     bool SharedStartCore(unsigned);
     bool SharedCoreReady(unsigned,const DataflowWorkerSnapshot&);
     bool SharedRuntimeStable(unsigned);
+    bool SharedFaultCoreSettled(unsigned,const DataflowWorkerSnapshot&);
     bool SharedCoreIdleForWrite(unsigned,unsigned,unsigned);
     bool SharedStopAndHoldAll(unsigned&,unsigned&);
     bool SharedRestoreRolesHeld();
@@ -138,6 +139,9 @@ static bool PioneerQ35GraphOwnerOwnsRetainedRun(const FakeGraph* graph,const voi
 }
 static bool PioneerQ35GraphOwnerFaultClosePermitted(const FakeGraph* graph,const void* run) {
     return PioneerQ35GraphOwnerOwnsRetainedRun(graph,run) && graph->closePermitted;
+}
+static bool PioneerQ35GraphOwnerFaultAckPermitted(const FakeGraph* graph,const void* run,unsigned core) {
+    return PioneerQ35GraphOwnerOwnsRetainedRun(graph,run) && graph->ackCore==core;
 }
 #endif
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
@@ -217,9 +221,18 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             } else {
                 assert(scope.BeginRetainedFault(context->io,graph,&run));
                 assert(scope.ProveExclusiveRewrite(context->io));
+                assert(scope.RetainedFaultAuditActive(context->io));
+                assert(!scope.FaultAcknowledgementAuthorized(context->io,3));
+                graph->ackCore=3;
+                assert(scope.FaultAcknowledgementAuthorized(context->io,3)
+                    && !scope.FaultAcknowledgementAuthorized(context->io,4));
+                assert(!scope.ProveRoleFaultAuditSafe(context->io,0)
+                    && !scope.ProveRoleFaultAckSafe(context->io,0));
                 assert(!scope.PromoteRetainedFaultClose(context->io));
                 graph->closePermitted=true;
                 assert(scope.PromoteRetainedFaultClose(context->io) && scope.FaultCloseAuthorized(context->io));
+                assert(!scope.RetainedFaultAuditActive(context->io));
+                assert(!scope.FaultAcknowledgementAuthorized(context->io,3));
                 assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
                 graph->run=&otherRun;assert(!scope.ProveExclusiveRewrite(context->io));graph->run=&run;
                 context->qwen35GraphOwner=&other;assert(!scope.ProveExclusiveRewrite(context->io));
@@ -230,7 +243,7 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
                 assert(!scope.ProveExclusiveRewrite(context->io));
                 assert(!scope.BeginRetainedFault(context->io,graph,&run));
             }
-            graph->retained=false;graph->run=nullptr;graph->closePermitted=false;
+            graph->retained=false;graph->run=nullptr;graph->closePermitted=false;graph->ackCore=UINT32_MAX;
 #endif
         } else {
             context->qwen35DataflowService->ready=false; // installing is not Ready

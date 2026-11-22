@@ -6,6 +6,8 @@
 struct FaultIO {
 	DataflowWorkerSnapshot worker[DataflowCoreCount]{};
 	unsigned reads[DataflowCoreCount]{},fences=0,acks=0,audits=0;
+	const DataflowGraphFaultAudit* authority=nullptr;
+	const DataflowGraphPublisher* publisher=nullptr;
 	int badCore=-1,changeCore=-1,ackCore=-1,stuckCore=-1,badFence=-1;
 	FaultIO() {
 		for (unsigned c=0;c<DataflowCoreCount;c++) {
@@ -26,6 +28,11 @@ struct FaultIO {
 	}
 	bool Acknowledge(unsigned c,unsigned sequence) {
 		assert(audits==2*DataflowCoreCount && sequence==5);
+		if (authority && publisher) {
+			assert(authority->AcknowledgementPermittedFor(*publisher,c,sequence));
+			assert(!authority->AcknowledgementPermittedFor(*publisher,80,sequence));
+			assert(!authority->AcknowledgementPermittedFor(*publisher,c,sequence+1));
+		}
 		if (int(c)==ackCore) return false;
 		acks++;
 		if (int(c)!=stuckCore) worker[c]={5,5,5,DataflowWorkerReady,0,0,0,0};
@@ -42,7 +49,10 @@ int main() {
 	auto publish=std::make_unique<PublisherIO>();publish->failPublish=50;DataflowGraphPublisher p;
 	assert(p.Start(*plan,f->routes,token,ticket,5,3,0,*publish,scratch)==DataflowGraphPublishCommandFault);
 	FaultIO good;DataflowGraphFaultAudit audit;
+	good.authority=&audit;good.publisher=&p;
+	assert(!audit.AcknowledgementPermittedFor(p,0,5));
 	assert(audit.Settle(p,3,good)==DataflowGraphFaultAuditSettled && good.acks==80 && good.fences==2);
+	assert(!audit.AcknowledgementPermittedFor(p,0,5));
 	assert(audit.Settle(p,3,good)==DataflowGraphFaultAuditInvalid);
 	assert(!audit.ResetUnsettled());
 	FaultIO fence;fence.badFence=0;DataflowGraphFaultAudit noFence;
@@ -54,7 +64,9 @@ int main() {
 	FaultIO changed;changed.changeCore=5;DataflowGraphFaultAudit drift;
 	assert(drift.Settle(p,3,changed)==DataflowGraphFaultAuditChanged && drift.FailedCore()==5 && !changed.acks);
 	FaultIO partial;partial.ackCore=9;DataflowGraphFaultAudit badAck;
+	partial.authority=&badAck;partial.publisher=&p;
 	assert(badAck.Settle(p,3,partial)==DataflowGraphFaultAuditAckFailed && partial.acks==9);
+	assert(!badAck.AcknowledgementPermittedFor(p,9,5));
 	assert(badAck.ResetUnsettled());partial.ackCore=-1;partial.audits=0;
 	assert(badAck.Settle(p,3,partial)==DataflowGraphFaultAuditSettled && partial.acks==80);
 	FaultIO stuck;stuck.stuckCore=8;DataflowGraphFaultAudit noReady;

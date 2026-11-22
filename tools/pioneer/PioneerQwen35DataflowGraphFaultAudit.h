@@ -27,6 +27,7 @@ class DataflowGraphFaultAudit {
 	unsigned failedCore=DataflowCoreCount;
 	bool attempted=false;
 	const DataflowGraphPublisher* settledPublisher=nullptr;
+	const DataflowGraphPublisher* acknowledgingPublisher=nullptr;
 
 	static bool Classify(const DataflowWorkerSnapshot& s,unsigned previous,
 		unsigned trigger,bool& isTerminal) {
@@ -48,6 +49,14 @@ public:
 	unsigned FailedCore() const { return failedCore; }
 	bool SettledFor(const DataflowGraphPublisher& publisher) const {
 		return settledPublisher==&publisher;
+	}
+	// Valid only inside Settle's acknowledgement loop, after both full
+	// fleet audits. The exact terminal snapshot and sequence are retained.
+	bool AcknowledgementPermittedFor(const DataflowGraphPublisher& publisher,
+		unsigned core,unsigned sequence) const {
+		return acknowledgingPublisher==&publisher && core<DataflowCoreCount && terminal[core]
+			&& sequence==publisher.TriggerSequence() && first[core].commandSequence==sequence
+			&& first[core].completedSequence==sequence && first[core].acknowledgedSequence<sequence;
 	}
 	// A failed attempt may have acknowledged only part of the fleet. A new
 	// attempt starts with another host-write fence and re-audits all cores;
@@ -91,9 +100,16 @@ public:
 			}
 			if (!pass) io.Pause();
 		}
-		for (unsigned core=0;core<DataflowCoreCount;core++) {
-			if (terminal[core] && !io.Acknowledge(core,trigger)) {
-				failedCore=core;return DataflowGraphFaultAuditAckFailed;
+		{
+			acknowledgingPublisher=&publisher;
+			struct ClearAcknowledgementPhase {
+				const DataflowGraphPublisher*& publisher;
+				~ClearAcknowledgementPhase() { publisher=nullptr; }
+			} clear{acknowledgingPublisher};
+			for (unsigned core=0;core<DataflowCoreCount;core++) {
+				if (terminal[core] && !io.Acknowledge(core,trigger)) {
+					failedCore=core;return DataflowGraphFaultAuditAckFailed;
+				}
 			}
 		}
 		if (!io.FenceGraphHostWrites()) return DataflowGraphFaultAuditFenceFailed;

@@ -86,7 +86,7 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         memcpy(&output,&second,sizeof(output)); return true;
     }
-    bool QueuesSettled(unsigned core,bool requireZero) {
+    bool QueuesSettled(unsigned core,bool requireZero,bool allowFailures=false) {
         using namespace PioneerQwen35;
         DataflowQueueControl first[DataflowCircularBufferCount]{},second[DataflowCircularBufferCount]{};
         if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,first,sizeof(first))) return false;
@@ -94,7 +94,8 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         if (!fIO.ReadCoreMemory(core,DataflowQueueStateAddress,second,sizeof(second))
             || memcmp(first,second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         for (const auto& queue:second)
-            if (queue.produced!=queue.consumed || (requireZero && queue.produced) || DataflowQueueFailure(queue)
+            if (queue.produced!=queue.consumed || (requireZero && queue.produced)
+                || (!allowFailures && DataflowQueueFailure(queue))
                 || queue.reserved[0] || queue.reserved[1]) return false;
         return true;
     }
@@ -272,6 +273,45 @@ public:
             || !ReadStableRoleMailbox(core,roles) || !DataflowRoleMailboxIdle(roles)
             || !QueuesSettled(core,false)) return false;
         return RuntimeStable(core,textWords,dispatchWords);
+    }
+    bool FaultRuntimeStable(unsigned core,unsigned textWords,unsigned dispatchWords) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !fScope.ProveRoleFaultAuditSafe(fIO,core)
+            || !SelectForStop(core)) return false;
+        const uint32_t pc1=fIO.RuntimePcRead(); fIO.Pause(); const uint32_t pc2=fIO.RuntimePcRead();
+        return DataflowServicePcInImage(pc1,textWords,dispatchWords)
+            && DataflowServicePcInImage(pc2,textWords,dispatchWords)
+            && fScope.ProveRoleFaultAuditSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    bool FaultSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& expected,
+        unsigned textWords,unsigned dispatchWords) {
+        using namespace PioneerQwen35;
+        if (!FaultRuntimeStable(core,textWords,dispatchWords)) return false;
+        DataflowWorkerSnapshot observed{}; DataflowWorkerMailbox worker{}; DataflowRoleMailbox roles{};
+        if (!fIO.ReadWorkerSnapshot(core,observed) || memcmp(&expected,&observed,sizeof(expected))
+            || !ReadStableWorkerMailbox(core,worker) || worker.magic!=DataflowWorkerMailboxMagic
+            || worker.version!=DataflowWorkerMailboxVersion || worker.logicalCore!=core || worker.shutdownSequence
+            || worker.commandSequence!=expected.commandSequence || worker.acknowledgedSequence!=expected.acknowledgedSequence
+            || worker.completedSequence!=expected.completedSequence || worker.state!=expected.state
+            || worker.failure!=expected.failure || worker.phase!=expected.phase) return false;
+        const bool terminal=expected.commandSequence==expected.completedSequence
+            && expected.commandSequence>expected.acknowledgedSequence
+            && ((expected.state==DataflowWorkerComplete && !expected.failure && expected.phase==2)
+                || (expected.state==DataflowWorkerFailed && expected.failure && expected.phase==5));
+        return (DataflowWorkerSnapshotReady(expected) || terminal)
+            && ReadStableRoleMailbox(core,roles) && DataflowRoleMailboxFaultSettled(roles)
+            && QueuesSettled(core,false,true) && FaultRuntimeStable(core,textWords,dispatchWords);
+    }
+    bool FaultCompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
+        using namespace PioneerQwen35;
+        if (!fScope.ProveRoleFaultAckSafe(fIO,core)) return false;
+        DataflowWorkerSnapshot snapshot{};
+        if (!fIO.ReadWorkerSnapshot(core,snapshot) || snapshot.commandSequence!=snapshot.completedSequence
+            || snapshot.commandSequence<=snapshot.acknowledgedSequence
+            || !((snapshot.state==DataflowWorkerComplete && !snapshot.failure && snapshot.phase==2)
+                || (snapshot.state==DataflowWorkerFailed && snapshot.failure && snapshot.phase==5))) return false;
+        return FaultSettled(core,snapshot,textWords,dispatchWords) && fScope.ProveRoleFaultAckSafe(fIO,core);
     }
     bool AllRolesHeld(unsigned core) {
         return Select(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)

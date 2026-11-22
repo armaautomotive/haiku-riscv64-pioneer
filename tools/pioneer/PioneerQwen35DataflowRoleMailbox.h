@@ -104,6 +104,22 @@ inline bool DataflowRoleMailboxIdle(const DataflowRoleMailbox& box)
         if (DataflowLoadAcquire(box.stopped[role]) || !DataflowRoleMailboxReceipt(box,role,ack,status)) return false;
     return true;
 }
+// On graph failure the coordinator may leave a command unacknowledged. Both
+// roles must have returned a terminal receipt before the driver can audit
+// the failed graph; this does not itself prove queues or NoCs are quiet.
+inline bool DataflowRoleMailboxFaultSettled(const DataflowRoleMailbox& box)
+{
+    if (DataflowRoleMailboxIdle(box)) return true;
+    if (!DataflowRoleMailboxAllStarted(box) || DataflowLoadAcquire(box.stopRequest)) return false;
+    const uint32_t ack=DataflowLoadAcquire(box.acknowledged);
+    const uint32_t command=DataflowLoadAcquire(box.command);
+    if (ack>=DataflowWorkerSequenceLimit || command!=ack+1) return false;
+    for (unsigned role=0;role<DataflowRoleCount;role++)
+        if (DataflowLoadAcquire(box.stopped[role])
+            || (!DataflowRoleMailboxReceipt(box,role,command,DataflowRoleComplete)
+                && !DataflowRoleMailboxReceipt(box,role,command,DataflowRoleFailed))) return false;
+    return true;
+}
 // Only the coordinator may issue. A new sequence cannot reuse queues before
 // both roles and the compute owner have had their previous work acknowledged.
 inline bool DataflowRoleMailboxIssue(DataflowRoleMailbox& box,uint32_t sequence)

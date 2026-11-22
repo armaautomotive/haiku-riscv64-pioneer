@@ -104,6 +104,13 @@ public:
         return fFaultClose && ProveExclusiveRewrite(io) && fFaultOwner && fFaultRun
             && PioneerQ35GraphOwnerFaultClosePermitted(fContext->qwen35GraphOwner,fFaultRun);
     }
+    bool RetainedFaultAuditActive(PioneerSessionIO& io) const {
+        return fFaultOwner && fFaultRun && !fFaultClose && ProveExclusiveRewrite(io);
+    }
+    bool FaultAcknowledgementAuthorized(PioneerSessionIO& io,unsigned core) const {
+        return RetainedFaultAuditActive(io) && core<PioneerQwen35::DataflowBarrierWorkers
+            && PioneerQ35GraphOwnerFaultAckPermitted(fContext->qwen35GraphOwner,fFaultRun,core);
+    }
     bool EndRetainedFault(PioneerSessionIO& io,const void* owner,const void* run) {
         if (!ProveOwnerIdentity(io) || !fFaultOwner || fFaultOwner!=owner || fFaultRun!=run
             || owner!=fContext->qwen35GraphOwner) return false;
@@ -131,6 +138,15 @@ public:
     // NoC quiescence and session/graph state; mailbox/PC samples alone are
     // insufficient. This proof is not yet implemented.
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    // Fault audit requires image/route/both-NoC proof. Acknowledgement also
+    // requires the exact retained graph's all-core two-pass audit; neither is
+    // established by the retained identity alone.
+    bool ProveRoleFaultAuditSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleFaultAckSafe(PioneerSessionIO& io,unsigned core) const {
+        return FaultAcknowledgementAuthorized(io,core) && ProveRoleFaultAuditSafe(io,core);
+    }
+#endif
     bool Detach() {
         if (!fAttached || !fContext) return false;
         const bool valid=find_thread(NULL)==fThread && fContext->io.qwen35BorrowedRoleScope==this

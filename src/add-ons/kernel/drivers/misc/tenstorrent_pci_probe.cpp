@@ -3380,6 +3380,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool SharedStartCore(unsigned core);
 	bool SharedCoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool SharedRuntimeStable(unsigned core);
+	bool SharedFaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool SharedCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes);
 	bool SharedStopAndHoldAll(unsigned& failedStage,unsigned& failedCore);
 	bool SharedRestoreRolesHeld();

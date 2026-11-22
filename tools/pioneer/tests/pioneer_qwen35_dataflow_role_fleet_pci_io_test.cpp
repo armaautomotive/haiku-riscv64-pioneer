@@ -10,6 +10,7 @@ struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
     bool computeStop=false,computePark=false,hold=false,heldAfter=false;
     bool runtime=false;
+    bool faultAudit=false,faultAck=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const
@@ -27,6 +28,8 @@ struct FleetPciTestScope {
     bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return hold; }
     bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return heldAfter; }
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return runtime; }
+    bool ProveRoleFaultAuditSafe(PioneerSessionIO&,unsigned) const { return faultAudit; }
+    bool ProveRoleFaultAckSafe(PioneerSessionIO&,unsigned) const { return faultAck; }
 };
 int main()
 {
@@ -226,6 +229,26 @@ int main()
     context.io.queueBoxes[11][0].consumed=3;
     readyWorker.state=DataflowWorkerFailed; readyWorker.failure=DataflowFailureQueue; readyWorker.phase=5;
     assert(!io.CompletedForAcknowledgement(11,0x1000,0x100));
+    DataflowWorkerSnapshot faultSnapshot{};
+    assert(context.io.ReadWorkerSnapshot(11,faultSnapshot));
+    assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    scope.faultAudit=true;
+    assert(io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    assert(!io.FaultCompletedForAcknowledgement(11,0x1000,0x100));
+    scope.faultAck=true;
+    assert(io.FaultCompletedForAcknowledgement(11,0x1000,0x100));
+    idleRoles.command=2;idleRoles.completed[DataflowRoleReader]=2;
+    idleRoles.status[DataflowRoleReader]=DataflowRoleFailed;
+    assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    idleRoles.completed[DataflowRoleWriter]=2;idleRoles.status[DataflowRoleWriter]=DataflowRoleComplete;
+    assert(io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    context.io.queueBoxes[11][0].readerFailure=DataflowFailureReader;
+    assert(io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    context.io.queueBoxes[11][0].consumed=2;
+    assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+    context.io.queueBoxes[11][0].consumed=3;
+    faultSnapshot.commandSequence++;
+    assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");
