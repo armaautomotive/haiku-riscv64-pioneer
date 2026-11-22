@@ -278,6 +278,22 @@ inline unsigned DataflowActivationChunk(unsigned type,unsigned block)
 	return type==8?block/8:block;
 }
 
+// Packed activations remain immutable for the complete projection. The
+// projection worker can read a chunk directly instead of copying it to an
+// intermediate L1 page for every output group and weight block.
+inline const uint8_t* DataflowPackedActivationPage(const uint8_t* cache,
+	unsigned type,unsigned inputs,unsigned block)
+{
+	if (!cache || !PioneerQwen35Projection::Supports(type,inputs)
+		|| !inputs || inputs%DataflowActivationChunkInputs) return nullptr;
+	const unsigned blocks=inputs/(type==8?32U:DataflowActivationChunkInputs);
+	if (block>=blocks) return nullptr;
+	const unsigned chunk=DataflowActivationChunk(type,block);
+	const unsigned offset=chunk*DataflowInputPageBytes;
+	if (offset>DataflowActivationCacheBytes-DataflowInputPageBytes) return nullptr;
+	return cache+offset;
+}
+
 // Q5_K weights use the Q8_K activation format, just like Q4_K/Q6_K. Keep
 // the projection weight type out of the Q8_0-vs-Q8_K activation decision.
 inline unsigned DataflowActivationPackingType(unsigned projectionType)

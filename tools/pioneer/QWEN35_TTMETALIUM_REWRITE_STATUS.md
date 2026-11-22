@@ -113,6 +113,22 @@ the non-loadable witness is
 This remains untested on Pioneer, is not complete PCI/firmware recovery, and
 does not establish a new decode rate.
 
+Tag0127 removes a repeated per-block 576-byte activation copy in the resident
+projection worker. It passes the exact packed L1 cache chunk directly to the
+existing Tensix code, with bounds tied to the format, input width and block.
+ASan/UBSan tests check all bytes and chunk reuse for Q8_0, Q4_K, Q5_K and Q6_K;
+the RV32IMF worker compile and normal and non-loadable Haiku builds pass. The
+normal driver SHA-256 is
+`f6c6ef24e5e41bbcd97a960cf85e49f458776655e1718af7eb1a4aedbeeee4e9` and
+service text SHA-256 is
+`529c47979f45426c2114241e7063b2e74fc03403a296cb0afd4a19fbe8492ff9`.
+There is no physical correctness or throughput evidence for this change.
+
+The host still performs a separate all-core dispatch lifecycle for each of
+548 resident operations per generated token. This source-level count is not
+a timing measurement. Moving the checked graph and synchronization onto the
+device is the major outstanding architectural work toward 100 tokens/s.
+
 Offline recovery-guard work now defines a 48-byte proof requiring ASIC reset,
 post-reset firmware readiness, restored PCI state and mappings, all 120 cores
 held, idle NoC and host DMA, and released retained owners. The resident guard

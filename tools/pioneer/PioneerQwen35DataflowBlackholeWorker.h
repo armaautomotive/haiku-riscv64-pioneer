@@ -60,10 +60,8 @@ bool PioneerQwen35DataflowBlackholeWorker(
 		return fail(DataflowFailureReader);
 
 	uint8_t* const weightBase=queues[0].local;
-	uint8_t* const inputBase=queues[1].local;
 	uint8_t* const outputPage=queues[2].local;
 	const unsigned tileBytes=program.circularBuffer[0].pageBytes;
-	const unsigned inputStride=program.circularBuffer[1].pageStride;
 	for (unsigned segmentIndex=0;segmentIndex<program.assignment.segmentCount;
 		segmentIndex++) {
 		const auto& weight=program.assignment.weight[segmentIndex];
@@ -86,15 +84,14 @@ bool PioneerQwen35DataflowBlackholeWorker(
 				const unsigned page=block%DataflowCircularBufferPages;
 				uint8_t* const weightPage=weightBase
 					+page*program.circularBuffer[0].pageStride;
-				uint8_t* const inputPage=inputBase+page*inputStride;
-				const unsigned activationChunk=DataflowActivationChunk(
-					program.type,block);
+				const uint8_t* const inputPage=DataflowPackedActivationPage(
+					activationCache,program.type,program.inputs,block);
 				const uint64_t weightOffset=uint64_t(group)*16*program.weights.rowBytes
 					+uint64_t(block)*tileBytes;
 				const uint64_t weightAddress=uint64_t(weight.address)+weightOffset;
 				if (weightOffset>weight.bytes || tileBytes>weight.bytes-weightOffset
 					|| weightAddress>UINT32_MAX
-					|| activationChunk>=program.inputs/DataflowActivationChunkInputs)
+					|| !inputPage)
 					return fail(DataflowFailureReader);
 				DataflowNocReadTicket nextRead;
 				nextRead.active=0;
@@ -111,11 +108,6 @@ bool PioneerQwen35DataflowBlackholeWorker(
 							nextPage,tileBytes,nextRead))
 						return fail(DataflowFailureReader);
 				}
-				const uint8_t* const packed=activationCache
-					+activationChunk*DataflowInputPageBytes;
-				for (unsigned byte=0;byte<DataflowInputPageBytes;byte++)
-					inputPage[byte]=packed[byte];
-				DataflowFence();
 				if (!compute.TensixMatmul(program.type,block,weightPage,inputPage))
 					return fail(DataflowFailureCompute);
 				if (hasNext && !reader.CompleteWeightRead(nextRead))

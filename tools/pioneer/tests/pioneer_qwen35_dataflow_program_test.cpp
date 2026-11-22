@@ -50,6 +50,21 @@ struct PackTestOps {
 	}
 };
 
+static void CheckPackedActivationPages(const uint8_t* cache,unsigned type,unsigned inputs)
+{
+	const unsigned blocks=inputs/(type==8?32U:256U);
+	assert(!DataflowPackedActivationPage(nullptr,type,inputs,0));
+	assert(!DataflowPackedActivationPage(cache,type,inputs,blocks));
+	for (unsigned block=0;block<blocks;block++) {
+		const unsigned chunk=type==8?block/8:block;
+		const uint8_t* page=DataflowPackedActivationPage(cache,type,inputs,block);
+		assert(page==cache+chunk*DataflowInputPageBytes);
+		for (unsigned i=0;i<DataflowInputPageBytes-1;i++)
+			assert(page[i]==uint8_t(chunk));
+		assert(page[DataflowInputPageBytes-1]==uint8_t(chunk^0x5a));
+	}
+}
+
 struct UnpackAddressOps {
 	unsigned addresses[2]{},count=0;
 	void Config(unsigned index,uint32_t value)
@@ -731,6 +746,7 @@ int main()
 	PackTestOps packOps{};
 	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
 	assert(DataflowPackActivationCache(corePlan,queues[1],activationCache,packOps));
+	CheckPackedActivationPages(activationCache,14,Hidden);
 	for (unsigned chunk=0;chunk<Hidden/256;chunk++) {
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 		assert(activationCache[(chunk+1)*DataflowInputPageBytes-1]
@@ -791,6 +807,7 @@ int main()
 	assert(DataflowProgramBuilder::BindCore(q4Program,0,q4Core));
 	for (unsigned i=0;i<Ffn;i++) activation[i]=float(i);
 	assert(DataflowPackActivationCache(q4Core,queues[1],activationCache,packOps));
+	CheckPackedActivationPages(activationCache,12,Ffn);
 	for (unsigned chunk=0;chunk<Ffn/256;chunk++)
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
@@ -807,6 +824,7 @@ int main()
 	assert(DataflowProgramBuilder::BindCore(q5Program,0,q5Core));
 	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
 	assert(DataflowPackActivationCache(q5Core,queues[1],activationCache,packOps));
+	CheckPackedActivationPages(activationCache,13,Hidden);
 	for (unsigned chunk=0;chunk<Hidden/256;chunk++)
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 
@@ -844,6 +862,7 @@ int main()
 	assert(DataflowProgramBuilder::BindCore(q8Program,0,q8Core));
 	for (unsigned i=0;i<Hidden;i++) activation[i]=float(i);
 	assert(DataflowPackActivationCache(q8Core,queues[1],activationCache,packOps));
+	CheckPackedActivationPages(activationCache,8,Hidden);
 	for (unsigned chunk=0;chunk<Hidden/256;chunk++)
 		assert(activationCache[chunk*DataflowInputPageBytes]==uint8_t(chunk));
 

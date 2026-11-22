@@ -66,6 +66,40 @@ loadable build. The normal tag0126 driver SHA-256 is
 the non-loadable recovery witness is
 `43bd02e3763c49866f24ebbd9fbef9236ea0edb649d82c914f7981ec0975979f`.
 
+Tag0127 removes the repeated 576-byte local activation copy before every
+weight block in the resident projection worker. The Tensix path reads each
+already-packed, immutable activation chunk directly from its bounded L1
+cache. ASan/UBSan checks cover all chunk bytes for Q8_0, Q4_K, Q5_K and Q6_K,
+including Q8's eight blocks per chunk; the RV32IMF service and both Haiku
+builds pass. This is an offline change, not a performance measurement.
+The normal driver SHA-256 is
+`f6c6ef24e5e41bbcd97a960cf85e49f458776655e1718af7eb1a4aedbeeee4e9`,
+and the service text SHA-256 is
+`529c47979f45426c2114241e7063b2e74fc03403a296cb0afd4a19fbe8492ff9`.
+
+The main remaining throughput architecture issue is dispatch. The current
+decoder executes 548 separate resident worker operations for a generated
+token, each of which the host stages, publishes, audits and acknowledges per
+core; this is a source-level count, not a timing result. Continue the rewrite
+toward device-side queued graph execution with bounded per-core descriptors,
+device-side synchronization and fault receipts, while retaining all 120
+matrix workers and validated model ownership. Tenstorrent's
+[dispatch kernel](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/kernels/cq_dispatch.cpp)
+and [prefetch kernel](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/kernels/cq_prefetch.cpp)
+show device-consumed command queues and bounded staging, not a claim that
+the current Haiku implementation already runs TT-Metalium.
+
+Remaining firmware policy: the local Tenstorrent KMD checkout at
+`22cca4cb33455d962cf8340a8f5b896dae696fd7` restores PCI state and DBI MPS,
+sets MRRS to 4096, sends state0, then requests watchdog timeout message
+`0xc1` (default 10,000 ms), and optionally configures firmware log DMA. Its
+log buffer setup requires IOMMU translation. The Haiku prototype currently
+restores the prior MRRS, sends state0, and does not set that watchdog or
+enable firmware log DMA. Determine the pinned firmware's watchdog semantics
+and Haiku's safe policy before sending `0xc1`; do not assume the Linux
+default or introduce an unowned DMA buffer. Full PCI state restoration remains
+a separate open requirement.
+
 Haiku is reachable at `10.0.0.247`. Following one authorized power cycle
 and the pinned NVMe/kexec handoff, the saved recovery script restored stable55
 at generation2: `cold0 active_owner0 open_count1`. The prior diagnostic has
@@ -104,9 +138,9 @@ TLB snapshot. Recovery orchestration and owner retirement are wired into the
 default-disabled prototype; remaining firmware initialization, complete PCI
 capability restoration, and physical verification remain open.
 The disabled prototype also captures and restores PCIe configuration-space
-payload and read-request settings, with simulated failure tests. It still needs
-the separate internal DBI payload shadow and remaining PCI capability state;
-the endpoint configuration fields alone are not full reset restoration.
+payload and read-request settings, with simulated failure tests. Tag0126 adds
+the separate internal DBI payload shadow; remaining PCI capability state is
+still required for full reset restoration.
 
 The post-reset backend now requires a bounded ARC scratch readiness poll and
 the pinned firmware telemetry and harvesting values before fleet and DMA
@@ -114,7 +148,7 @@ auditing. Simulated tests cover delayed or failed firmware, wrong telemetry,
 interrupted wait, and failed TLB restoration. The new state0 queue exchange
 and remaining initialization have not been run on the card.
 
-The default build now targets dedicated tag0125. Since tag0121 it records final release of a
+The default build now targets dedicated tag0127. Since tag0121 it records final release of a
 retained owner under the driver lock and provides a read-only, tag/generation
 checked owner-lifetime status ioctl. Extracted real close/status tests and the
 RISC-V build pass. The status ioctl does not reset the card or retire any

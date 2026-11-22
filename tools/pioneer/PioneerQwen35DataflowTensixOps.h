@@ -201,10 +201,12 @@ public:
 			|| !inputPage || !fEmitter.Good()) return false;
 		const uintptr_t weightAddress=reinterpret_cast<uintptr_t>(weightPage);
 		const uintptr_t inputAddress=reinterpret_cast<uintptr_t>(inputPage);
+		const uint8_t* const expectedInput=DataflowPackedActivationPage(
+			reinterpret_cast<const uint8_t*>(static_cast<uintptr_t>(DataflowActivationCacheAddress)),
+			type,fProgram->inputs,block);
 		if ((weightAddress!=DataflowWeightBufferAddress
 			&& weightAddress!=DataflowWeightBufferAddress+DataflowWeightBufferPageStride)
-			|| (inputAddress!=DataflowInputBufferAddress
-			&& inputAddress!=DataflowInputBufferAddress+DataflowInputPageBytes))
+			|| !expectedInput || inputAddress!=reinterpret_cast<uintptr_t>(expectedInput))
 			return false;
 		const unsigned weightBytes=fProgram->circularBuffer[0].pageBytes;
 		const unsigned panels=type==8?2:16;
