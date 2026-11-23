@@ -32,6 +32,9 @@ static tt_pioneer_profile GoodProfile()
 struct PioneerStoreContext;
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 static void SelectRoleTestWindows(unsigned previous,unsigned next);
+#ifdef TEST_ROLE_STAGE_QUALIFY
+static bool FailSelectAfterStageWrite();
+#endif
 #endif
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 class PioneerQwen35RoleBorrowedScopeWitness;
@@ -94,6 +97,9 @@ struct PioneerSessionIO {
         if (core>=DataflowBarrierWorkers) return false;
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         SelectRoleTestWindows(runtimeCore,core);
+#ifdef TEST_ROLE_STAGE_QUALIFY
+        if (FailSelectAfterStageWrite()) return false;
+#endif
         if (perCoreReset) { tileReset[runtimeCore]=reset;reset=tileReset[core]; }
 #endif
         ++selectCalls; runtimeCore=core; tlbOverride=false; tlb0Override=false; return true;
@@ -265,6 +271,9 @@ struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
 #ifdef TEST_FLEET_INSPECTION_CONTROL
 struct FakeInspectionDispatch { unsigned prepared=0;bool bootAttempted=false,booted=false,closed=false,unsafe=false; };
 #endif
+#ifdef TEST_ROLE_STAGE_QUALIFY
+class PioneerQ35RoleStageQualification;
+#endif
 struct PioneerStoreContext {
     PioneerSessionIO io; bool bankStorageOnly=true; uint64 bytes=PioneerResidentBanks::Total;
 #ifdef TEST_SHARED_POST_RESET
@@ -273,12 +282,16 @@ struct PioneerStoreContext {
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;
 #ifdef TEST_FLEET_INSPECTION_CONTROL
     bool initialized=true,dispatchOwnerRetained=false,q38DispatchRoutes=false,qwen35DedicatedFleet=false;
-    bool qwen35FleetInspectionAttempted=false;
+    bool qwen35FleetInspectionAttempted=false,qwen35FleetInspectionPassed=false;
     unsigned uploadedPages=0;
     FakeInspectionDispatch dispatch;
     FakeInspectionDispatch* q38Dispatch=nullptr;
     void* qwen35DataflowMemory=nullptr;
     bool Unsafe() const { return false; }
+#ifdef TEST_ROLE_STAGE_QUALIFY
+    bool qwen35RoleStageAttempted=false;
+    PioneerQ35RoleStageQualification* qwen35RoleStageQualification=nullptr;
+#endif
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     PioneerQwen35SharedRoleBinding* qwen35SharedRoleBinding=nullptr;
@@ -325,6 +338,16 @@ static std::vector<std::vector<uint32_t>> gRoleTileWindows[DataflowBarrierWorker
 static uint32_t RoleWindowInitial(unsigned core,unsigned window) {
     return (0x76540000U+window) ^ (core*0x10001U);
 }
+#ifdef TEST_ROLE_STAGE_QUALIFY
+static bool gFailAfterStageWrite=false,gStageWriteFailureInjected=false;
+static bool FailSelectAfterStageWrite() {
+    if (gFailAfterStageWrite && gPerCoreRoleWindows && gMapped[DataflowRolePhysicalExtraCode]
+        && gMemory[DataflowRolePhysicalExtraCode][0]!=RoleWindowInitial(gRoleWindowCore,DataflowRolePhysicalExtraCode)) {
+        gStageWriteFailureInjected=true;return true;
+    }
+    return false;
+}
+#endif
 static void SelectRoleTestWindows(unsigned previous,unsigned next) {
     if (!gPerCoreRoleWindows) return;
     assert(previous==gRoleSelectedCore && next<DataflowBarrierWorkers);

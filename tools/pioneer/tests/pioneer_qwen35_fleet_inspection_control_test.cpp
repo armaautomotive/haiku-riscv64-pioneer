@@ -7,7 +7,11 @@
 #define PIONEER_QWEN35_RECOVERY_QUALIFY 1
 #define PIONEER_QWEN35_DEDICATED_FLEET_WITNESS 1
 #define PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY 1
+#ifdef TEST_ROLE_STAGE_QUALIFY
+#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112300030005)
+#else
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112300030004)
+#endif
 #define main qwen35_scope_test_unused_main
 #include "pioneer_qwen35_dataflow_role_haiku_scope_test.cpp"
 #undef main
@@ -49,6 +53,7 @@ struct Fixture {
     status_t Run() { return Qwen35FleetInspectionControl(&cookie,&request,sizeof(request)); }
 };
 
+#ifndef TEST_ROLE_STAGE_QUALIFY
 int main()
 {
     (void)&Qwen35DataflowGenerate;
@@ -95,3 +100,4 @@ int main()
     }
     std::puts("PASS restricted held-fleet control, admission, one-shot, failed restore and lost reply; SIMULATED ONLY");
 }
+#endif

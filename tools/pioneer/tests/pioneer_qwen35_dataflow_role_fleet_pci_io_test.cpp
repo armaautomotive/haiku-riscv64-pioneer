@@ -82,6 +82,18 @@ struct DriftViews {
         return true;
     }
 };
+struct CountingCopyViews {
+    DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>& views;
+    unsigned copies=0,reads=0;
+    template<class Guard>
+    bool CopyWords(unsigned core,unsigned which,unsigned offset,uint32_t* output,unsigned words,Guard& guard) {
+        ++copies;return views.CopyWords(core,which,offset,output,words,guard);
+    }
+    template<class Guard>
+    bool Read(unsigned core,unsigned which,unsigned offset,uint32_t& value,Guard& guard) {
+        ++reads;return views.Read(core,which,offset,value,guard);
+    }
+};
 struct ChangingImageViews {
     DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>& views;
     unsigned matches=0;
@@ -122,6 +134,13 @@ int main()
     PioneerQwen35RoleRouteGuard<PioneerSessionIO,FleetPciTestScope> guard(context.io,scope);
     assert(views.Open(context.io.profile.bar0_host_start,context.io.profile.bar0_host_end,guard));
     PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,decltype(views)> io(context.io,scope,views);
+    CountingCopyViews counted{views};
+    PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,CountingCopyViews> countedIo(context.io,scope,counted);
+    uint32_t copied[4]{};
+    assert(countedIo.Read(7,DataflowRoleExtraL1Address,copied,sizeof(copied))
+        && counted.copies==1 && counted.reads==0);
+    assert(countedIo.ReadRam(7,DataflowRoleReader,DataflowRoleBriscLocalRam,copied,sizeof(copied))
+        && counted.copies==1 && counted.reads==4);
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.AllRolesHeld(core) && io.DefaultBootRouting(core) && io.LocalRamStable(core));
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS

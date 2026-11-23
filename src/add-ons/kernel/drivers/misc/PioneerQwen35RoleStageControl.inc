@@ -1,0 +1,114 @@
+/* SPDX-License-Identifier: MIT */
+// Held-core, fixed-image snapshot/stage/restore qualification. It never
+// releases a core, issues a reset, uploads model data or performs inference.
+// Any uncertain operation retains the heap owner and its snapshots/mappings.
+#if !defined(PIONEER_QWEN35_ROLE_STAGE_QUALIFY) || !defined(PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY) || !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+#error Role stage qualification requires its restricted held-fleet build
+#endif
+#include "PioneerQwen35RoleStageProtocol.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleFleetImagesOwner.h"
+
+class PioneerQ35RoleStageQualification {
+public:
+    PioneerQwen35RoleHaikuMap platform;
+    PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> views;
+    PioneerQwen35::DataflowRoleFleetImagesOwner images;
+    uint32_t* snapshot;
+    PioneerQ35RoleStageQualification():views(platform),snapshot(
+        static_cast<uint32_t*>(malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetImagesOwner::RequiredWords()))) {}
+    ~PioneerQ35RoleStageQualification() { free(snapshot); }
+    PioneerQ35RoleStageQualification(const PioneerQ35RoleStageQualification&)=delete;
+    PioneerQ35RoleStageQualification& operator=(const PioneerQ35RoleStageQualification&)=delete;
+};
+
+static void
+PioneerQ35RoleStageProgress(unsigned phase)
+{
+#ifdef _KERNEL_MODE
+    dprintf("P100A_Q35_ROLE_STAGE_PROGRESS phase=%u;HELD_CORES_NO_RELEASE\n",phase);
+#else
+    (void)phase;
+#endif
+}
+
+static status_t
+Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+    using namespace PioneerQwen35;
+    if (!cookie || !data || length!=sizeof(tt_q35_role_stage_qualification)) return B_BAD_VALUE;
+    thread_info info={};status_t status=get_thread_info(find_thread(NULL),&info);
+    if (status!=B_OK) return status;
+    if (info.team!=cookie->team) return B_NOT_ALLOWED;
+    tt_q35_role_stage_qualification r={};status=user_memcpy(&r,data,sizeof(r));
+    if (status!=B_OK || !PioneerQ35RoleStageQualificationRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
+    status=acquire_sem(sLock);if (status!=B_OK) return status;
+    PioneerStoreContext* c=cookie->context;
+    if (r.expected_tag!=PIONEER_DRIVER_BUILD_TAG || r.expected_generation!=sReloadGeneration)
+        r.operation_status=B_BAD_VALUE;
+    else if (!c || c->qwen35RoleStageAttempted || c->qwen35RoleStageQualification
+        || !c->qwen35FleetInspectionPassed || c->uploadedPages || c->Unsafe())
+        r.operation_status=B_NOT_ALLOWED;
+    else {
+        PioneerQ35FleetInspectionScope scope(cookie,c);
+        if (!scope.ProveRoleStatusInspectionAllowed(c->io)) r.operation_status=B_NOT_ALLOWED;
+        else {
+            c->qwen35RoleStageAttempted=true;
+            PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQ35FleetInspectionScope> route(c->io,scope);
+            PioneerQwen35FleetInspectionResult observation;
+            r.stage=1;PioneerQ35RoleStageProgress(r.stage);
+            if (!PioneerQwen35InspectHeldFleet(c->io,scope,route,observation)) {
+                r.operation_status=B_DEV_NOT_READY;
+                if (observation.restoreFailed) {
+                    tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+                }
+            } else {
+                r.stage=2;PioneerQ35RoleStageProgress(r.stage);
+                auto* owner=new(std::nothrow) PioneerQ35RoleStageQualification;
+                if (!owner || !owner->snapshot) { delete owner;r.operation_status=B_NO_MEMORY; }
+                else {
+                    // Publish retained ownership before the first mapping or
+                    // device image access; BANK_END refuses this owner.
+                    c->qwen35RoleStageQualification=owner;
+                    r.stage=3;PioneerQ35RoleStageProgress(r.stage);
+                    bool okay=scope.BeginStage(c->io)
+                        && owner->views.Open(c->io.profile.bar0_host_start,c->io.profile.bar0_host_end,route);
+                    PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                        DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>> adapter(c->io,scope,owner->views);
+                    if (okay) {
+                        r.stage=4;PioneerQ35RoleStageProgress(r.stage);
+                        okay=owner->images.CaptureAll(owner->snapshot,
+                            DataflowRoleFleetImagesOwner::RequiredWords(),adapter);
+                        r.captured=okay;
+                    }
+                    if (okay) {
+                        r.stage=5;PioneerQ35RoleStageProgress(r.stage);
+                        okay=scope.EnableStageWrites(c->io)
+                            && owner->images.StageAll(DataflowSharedReaderCodeWords,
+                                sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
+                                DataflowSharedWriterCodeWords,sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),
+                                DataflowSharedReaderShimWords,sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
+                                DataflowSharedWriterShimWords,sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),adapter);
+                        r.staged=okay;
+                    }
+                    if (okay) {
+                        r.stage=6;PioneerQ35RoleStageProgress(r.stage);
+                        okay=owner->images.RestoreAll(adapter);r.restored=okay;
+                    }
+                    if (okay) {
+                        r.stage=7;PioneerQ35RoleStageProgress(r.stage);
+                        okay=owner->views.Close() && !owner->views.HasMappings();r.mappings_closed=okay;
+                    }
+                    if (okay) {
+                        delete owner;c->qwen35RoleStageQualification=NULL;
+                        r.stage=TT_Q35_ROLE_STAGE_COMPLETE;PioneerQ35RoleStageProgress(r.stage);r.operation_status=B_OK;
+                    } else {
+                        tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+                        r.operation_status=B_DEV_NOT_READY;
+                    }
+                }
+            }
+        }
+    }
+    r.build_tag=PIONEER_DRIVER_BUILD_TAG;r.generation=sReloadGeneration;
+    status=user_memcpy(data,&r,sizeof(r));release_sem(sLock);return status;
+}

@@ -16,6 +16,9 @@ class PioneerQ35FleetInspectionScope {
     PioneerStoreContext* fContext;
     thread_id fThread;
     uint64 fGeneration;
+#ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
+    bool fStageObserved=false,fStageWritable=false;
+#endif
 public:
     PioneerQ35FleetInspectionScope(PioneerProbeCookie* cookie,PioneerStoreContext* context)
         :fCookie(cookie),fContext(context),fThread(find_thread(NULL)),fGeneration(sReloadGeneration) {}
@@ -40,6 +43,46 @@ public:
     bool ProveRoleStatusInspectionAllowed(PioneerSessionIO& io) const {
         return ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches();
     }
+#ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
+    // Admit this locked staging attempt only after a fresh inspection. The
+    // observations do not establish exclusion of external firmware writers.
+    bool BeginStage(PioneerSessionIO& io) {
+        if (fStageObserved || !fContext->qwen35FleetInspectionPassed
+            || !fContext->qwen35RoleStageQualification || !ProveRoleStatusInspectionAllowed(io)) return false;
+        fStageObserved=true;return true;
+    }
+    bool EnableStageWrites(PioneerSessionIO& io) {
+        if (fStageWritable || !ProveRoleDedicatedObservedStage(io)) return false;
+        fStageWritable=true;return true;
+    }
+    bool ProveRoleDedicatedObservedStage(PioneerSessionIO& io) const {
+        return fStageObserved && fContext->qwen35RoleStageQualification
+            && ProveRoleStatusInspectionAllowed(io);
+    }
+    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleMemoryReadSafe(PioneerSessionIO& io,unsigned core,unsigned which) const {
+        return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+            && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && ProveRoleDedicatedObservedStage(io) && io.DataflowPanelMappingStable()
+            && PioneerQwen35WithSelectedClock(io,core,[&]() {
+                return io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
+            });
+    }
+    bool ProveRoleMemoryWriteSafe(PioneerSessionIO& io,unsigned core,unsigned which,
+        unsigned offset,unsigned bytes) const {
+        return fStageWritable && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
+            && ProveRoleMemoryReadSafe(io,core,which);
+    }
+    bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
+    bool ProveRoleImageInspectionAllowed(PioneerSessionIO& io,unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && io.DataflowPanelMappingStable() && ProveRoleDedicatedObservedStage(io);
+    }
+    bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO& io,unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && io.DataflowPanelMappingStable() && ProveRoleDedicatedObservedStage(io);
+    }
+#endif
 };
 
 static status_t
@@ -75,6 +118,7 @@ Qwen35FleetInspectionControl(PioneerProbeCookie* cookie,void* data,size_t length
             PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQ35FleetInspectionScope> route(c->io,scope);
             PioneerQwen35FleetInspectionResult result;
             const bool inspected=PioneerQwen35InspectHeldFleet(c->io,scope,route,result);
+            c->qwen35FleetInspectionPassed=inspected;
             r.stage=result.stage;r.failed_core=result.failedCore;r.l2cpu_reset=result.l2cpuReset;
             r.restore_failed=result.restoreFailed;
             r.operation_status=inspected?B_OK:B_DEV_NOT_READY;

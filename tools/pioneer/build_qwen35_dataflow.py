@@ -14,6 +14,7 @@ GRAPH_TRIAL_TAG = '2026112100020168'
 RECOVERY_QUALIFICATION_TAG = '2026112300030001'
 FIRMWARE_RECOVERY_QUALIFICATION_TAG = '2026112300030002'
 FLEET_INSPECTION_QUALIFICATION_TAG = '2026112300030004'
+ROLE_STAGE_QUALIFICATION_TAG = '2026112300030005'
 
 
 def verify_snapshot_witness_refuses_load(build, driver):
@@ -31,7 +32,7 @@ def verify_snapshot_witness_refuses_load(build, driver):
 
 
 def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False,
-                               fleet_inspection=False):
+                               fleet_inspection=False, role_stage=False):
     usage_file = driver_directory / 'tenstorrent_pci_probe.su'
     entries = []
     for line in usage_file.read_text().splitlines():
@@ -50,11 +51,22 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
                    'BeginResidentSession', 'EndResidentSession', 'ProbeControl',
                    'PioneerWorkerNocProbe', 'PioneerResidentLease',
                    'Q38CohortPeerLease', 'BlackholeDramAllCoresHeld')
+        if role_stage:
+            markers += ('Qwen35RoleStage', 'PioneerQ35RoleStageQualification',
+                        'DataflowRoleFleetImagesOwner', 'DataflowRoleFleetCodeOwner',
+                        'DataflowRoleFleetBootOwner', 'DataflowRoleCodeOwner',
+                        'DataflowRoleBootOwner', 'PioneerQwen35RoleFleetPciIO')
         selected = [(name, frame, kind) for name, frame, kind in entries
-                    if any(marker in name for marker in markers)]
-        for required in ('Qwen35FleetInspectionControl(', 'PioneerQwen35InspectHeldFleet(',
+                    if any(marker in name for marker in markers)
+                    and (not role_stage or 'PioneerQwen35RoleBorrowedScopeWitness' not in name)]
+        required_frames = ['Qwen35FleetInspectionControl(', 'PioneerQwen35InspectHeldFleet(',
                          'PioneerQwen35DedicatedFleetPrepare(', 'PioneerQwen35DedicatedFleetClose(',
-                         'Q38BankControl(', 'ProbeControl('):
+                         'Q38BankControl(', 'ProbeControl(']
+        if role_stage:
+            required_frames += ['Qwen35RoleStageControl(', 'DataflowRoleFleetImagesOwner::CaptureAll(',
+                                'DataflowRoleCodeOwner::Stage(', 'DataflowRoleBootOwner::Stage(',
+                                'DataflowRoleFleetImagesOwner::RestoreAll(']
+        for required in required_frames:
             if not any(required in name for name, _, _ in selected):
                 raise RuntimeError('missing fleet inspection stack frame: ' + required)
         if any(kind != 'static' for _, _, kind in selected):
@@ -378,7 +390,13 @@ def main():
                         help='build the restricted idle-session firmware reset qualification driver')
     parser.add_argument('--build-fleet-inspection-qualification', action='store_true',
                         help='build the restricted held-fleet inspection driver without reset or inference')
+    parser.add_argument('--build-role-stage-qualification', action='store_true',
+                        help='build the restricted held-role image staging and restoration driver')
     args = parser.parse_args()
+    if args.build_role_stage_qualification:
+        if args.build_fleet_inspection_qualification:
+            parser.error('role staging selects its own fleet inspection')
+        args.build_fleet_inspection_qualification = True
     if args.build_fleet_inspection_qualification:
         if args.build_recovery_qualification or args.build_firmware_recovery_qualification:
             parser.error('select only one qualification')
@@ -419,7 +437,8 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=(FLEET_INSPECTION_QUALIFICATION_TAG if args.build_fleet_inspection_qualification
+                      PIONEER_DRIVER_BUILD_TAG=(ROLE_STAGE_QUALIFICATION_TAG if args.build_role_stage_qualification
+                                               else FLEET_INSPECTION_QUALIFICATION_TAG if args.build_fleet_inspection_qualification
                                                else FIRMWARE_RECOVERY_QUALIFICATION_TAG if args.build_firmware_recovery_qualification
                                                else RECOVERY_QUALIFICATION_TAG if args.build_recovery_qualification
                                                else GRAPH_TRIAL_TAG if args.build_device_dispatch_trial else TAG),
@@ -444,6 +463,8 @@ def main():
         driver_env['PIONEER_QWEN35_FIRMWARE_RESET_QUALIFY'] = '1'
     if args.build_fleet_inspection_qualification:
         driver_env['PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY'] = '1'
+    if args.build_role_stage_qualification:
+        driver_env['PIONEER_QWEN35_ROLE_STAGE_QUALIFY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
@@ -451,7 +472,7 @@ def main():
     verify_kernel_stack_budget(driver, args.build_recovery_qualification,
                                args.build_firmware_recovery_qualification or
                                (args.compile_recovery_prototype and not args.compile_device_dispatch_prototype),
-                               args.build_fleet_inspection_qualification)
+                               args.build_fleet_inspection_qualification, args.build_role_stage_qualification)
     if args.compile_snapshot_takeover_prototype:
         verify_snapshot_witness_refuses_load(build, driver / 'tenstorrent_pci_probe-driver60')
 

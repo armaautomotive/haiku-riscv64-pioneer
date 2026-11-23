@@ -56,6 +56,11 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         if (!output || !bytes || (offset&3) || (bytes&3) || offset>UINT32_MAX-bytes
             || !DataflowRolePhysicalReadAllowed(which,offset)
             || !DataflowRolePhysicalReadAllowed(which,offset+bytes-4) || !Select(core)) return false;
+        // Image windows use bounded copies that recheck route and authority
+        // around every 64 words. A failed copy is never a valid snapshot.
+        // RAM and control reads retain their per-word checks.
+        if (which<=DataflowRolePhysicalExtraCode)
+            return fViews.CopyWords(core,which,offset,output,bytes/4,fGuard);
         for (unsigned n=0;n<bytes/4;n++)
             if (!fViews.Read(core,which,offset+n*4,output[n],fGuard)) return false;
         return true;
