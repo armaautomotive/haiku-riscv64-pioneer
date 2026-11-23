@@ -50,7 +50,10 @@ health() {
 
 [ "$#" = 1 ] && [ "$(uname -s):$(id -u)" = Haiku:0 ] || exit 2
 stage=$1
-[ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123 ] || exit 2
+case "$stage" in
+	/boot/home/pioneer-q35-recovery-qualify-20261123|/boot/home/pioneer-q35-recovery-qualify-20261123-b) ;;
+	*) exit 2;;
+esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage
 test -d "$lock" && test ! -L "$lock" && [ "$(stat -c '%u:%a' "$lock")" = 0:700 ] || fail lock
 test -d "$stage/.qualification-once" && test ! -L "$stage/.qualification-once" || fail trial_marker

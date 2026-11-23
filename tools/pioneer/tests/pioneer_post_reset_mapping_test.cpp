@@ -143,18 +143,18 @@ int main() {
 	dbiPage[0x78/4]=0x00501002;
 	assert(dbiRestore.Open() && dbiRestore.ProbeFirmware(3,arc)
 		&& dbiRestore.RestoreInternalDbi(dbiSnapshot,0x2040)
-		&& dbiPage[0x78/4]==0x00501042 && !dbiRestore.dbiUnsafe
+		&& dbiPage[0x78/4]==0x00501042 && !dbiRestore.dbiUnsafe && !dbiRestore.dbiDiagnostic
 		&& dbiRestore.Close() && unmapCalls==8 && tlbPage[0x960/4]==10);
 	ResetFake();PioneerPostResetMapping dbiLost(profile);
 	dbiPage[0x78/4]=0x00501002;dropDbiWrite=true;
 	assert(dbiLost.Open() && dbiLost.ProbeFirmware(3,arc)
 		&& !dbiLost.RestoreInternalDbi(dbiSnapshot,0x2040)
-		&& dbiLost.dbiUnsafe && dbiLost.dmaModified && !dbiLost.Close() && !unmapCalls);
+		&& dbiLost.dbiUnsafe && dbiLost.dbiDiagnostic==5 && dbiLost.dmaModified && !dbiLost.Close() && !unmapCalls);
 	ResetFake();PioneerPostResetMapping dbiBusy(profile);
 	nocPage[(0x10000+0x240)/4]=1;
 	assert(dbiBusy.Open() && dbiBusy.ProbeFirmware(3,arc)
 		&& !dbiBusy.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7);
-	assert(dbiBusy.dbiUnsafe && !dbiBusy.Close());
+	assert(dbiBusy.dbiUnsafe && dbiBusy.dbiDiagnostic==2 && !dbiBusy.Close());
 	ResetFake();PioneerPostResetMapping dbiDmaBusy(profile);
 	hdmaPage[0x100/4]=1;
 	assert(dbiDmaBusy.Open() && dbiDmaBusy.ProbeFirmware(3,arc)

@@ -11507,7 +11507,8 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
 	tt_arc_scratch_result firmware{};
 	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) {
-		r.detail=firmware.state;
+		r.detail=PIONEER_RECOVERY_DETAIL_FIRMWARE_PROBE
+			| (context->recoveryMapping->firmwareDiagnostic&0xff);
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 		if (context->recoveryMapping->FirmwareRetryable()) {
 			context->recoveryFirmwarePending=true;context->recoveryFirmwareTicket=ticket;
@@ -11520,12 +11521,16 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	}
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	context->recoveryFirmwarePending=false;context->recoveryFirmwareTicket=0;
-	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,payload.control))
+	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,payload.control)) {
+		r.detail=PIONEER_RECOVERY_DETAIL_FIRMWARE_DBI
+			| (context->recoveryMapping->dbiDiagnostic&0xff);
 		return fail(B_DEV_NOT_READY);
+	}
 #endif
 	tt_arc_queue_result firmwareQueue{};
 	if (!context->recoveryMapping->InitializeFirmwareQueue(firmware,firmwareQueue)) {
-		r.detail=firmwareQueue.state;return fail(B_DEV_NOT_READY);
+		r.detail=PIONEER_RECOVERY_DETAIL_FIRMWARE_QUEUE | (firmwareQueue.state&0xff);
+		return fail(B_DEV_NOT_READY);
 	}
 	r.stage=PIONEER_RECOVERY_STAGE_FLEET;
 	PioneerPostResetAuditResult fleet{};

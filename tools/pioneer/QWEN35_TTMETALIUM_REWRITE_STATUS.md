@@ -2239,8 +2239,10 @@ merely clear the latch or retry the stuck NoC request.
 The tag0120 incident above was subsequently recovered. See the latest entry in
 `QWEN35_4B_NEXT_SESSION.md` for the newer qualification failure and restoration.
 On 2026-11-23 a restricted empty-session reset qualification failed without
-recording its failure stage; it retained a cold owner. A full power cycle and
-verified NVMe-to-Haiku boot restored stable55, which reports generation 2,
+recording its failure stage; it retained a cold owner. A later diagnostic
+attempt reached firmware reinitialization but its detail did not identify the
+failing operation. After full power cycles and verified NVMe-to-Haiku boots,
+stable55 was restored, and it reports generation 2,
 `cold0 active_owner0`, and no exclusive lock. The new recovery guard is loaded;
 the old guard is backed up. This is not a successful no-reboot recovery and
 does not establish model correctness or performance. Model-file metadata was

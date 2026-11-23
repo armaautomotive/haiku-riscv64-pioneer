@@ -28,6 +28,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
 	bool mappingAllocationFailed=false;
 	bool firmwareAttempted=false,firmwareRetryable=false,firmwareReady=false,topologyReady=false;
+	uint32 firmwareDiagnostic=0,dbiDiagnostic=0;
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
@@ -126,10 +127,12 @@ struct PioneerPostResetMapping : ConfigIO {
 	bool FirmwareRetryable() const { return ready && firmwareRetryable; }
 	bool ProbeFirmware(unsigned pollLimit,tt_arc_scratch_result& result) {
 		result={};
+		firmwareDiagnostic=1; // admission and PCI route
 		if (firmwareAttempted && !firmwareRetryable) return false;
 		firmwareRetryable=false;
 		if (!ready || !pollLimit || pollLimit>100 || !PciReady()) return false;
 		firmwareAttempted=true;
+		firmwareDiagnostic=2; // scratch poll and TLB restoration
 		bool bootReady=false;
 		for (unsigned poll=0;poll<pollLimit;poll++) {
 			if (!PciReady() || !savedValid) return false;
@@ -147,6 +150,7 @@ struct PioneerPostResetMapping : ConfigIO {
 				if (TlbRead(i)!=saved[i]) firmwareRetryable=false;
 			return false;
 		}
+		firmwareDiagnostic=3; // telemetry and pinned firmware identity
 		if (!PciReady()
 			|| !BlackholeArcTelemetryProbe(*this,result,firmwareTelemetry)
 			|| (firmwareTelemetry.present_mask&0x3c1)!=0x3c1
@@ -155,9 +159,11 @@ struct PioneerPostResetMapping : ConfigIO {
 			|| firmwareTelemetry.values[8]!=0 || firmwareTelemetry.values[9]!=0xfff
 			|| !PciReady()) return false;
 		firmwareReady=true;
+		firmwareDiagnostic=4; // DRAM topology and routes
 		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
 			topology.source[i]=PioneerRead32(node+BlackholeDramSourceOffset(i)/4);
 		topologyReady=BlackholeDramBuildRoutes(topology);
+		if (topologyReady) firmwareDiagnostic=0;
 		return topologyReady;
 	}
 	// State0 uses firmware's queue 0 after reset. Queue pointers are advanced
@@ -215,16 +221,20 @@ struct PioneerPostResetMapping : ConfigIO {
 	// Both NoCs on all cores must be held and idle before the DBI write. On
 	// every failed access or TLB restoration, keep this mapping and owner.
 	bool RestoreInternalDbi(const PioneerRecoveryDbiSnapshot& snapshot,uint32 pciControl) {
+		dbiDiagnostic=1; // source and admission
 		if (dbiAttempted || !snapshot.valid || !SourceStable()) return false;
 		dbiAttempted=true;dbiUnsafe=true;
 		PioneerPostResetAuditResult preliminary{};
+		dbiDiagnostic=2; // held fleet and host DMA audit
 		if (!Audit(preliminary) || !AuditHostDma() || !SourceStable()) return false;
 		// The DMA audit uses slot 0 read-only. Restore its fresh post-reset
 		// value before taking the separate DBI snapshot.
+		dbiDiagnostic=3; // restore the audit TLB
 		for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,dmaSaved[i]);
 		for (unsigned i=0;i<3;i++) if (PioneerRead32(tlb-3+i)!=dmaSaved[i]) return false;
 		if (!SourceStable()) return false;
 		dmaModified=false;
+		dbiDiagnostic=4; // map the fresh DBI aperture
 		void* view=NULL;
 		dbiArea=map_physical_memory("P100A fresh post-reset DBI",
 			profile.bar0_host_start+0x19000000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
@@ -245,13 +255,14 @@ struct PioneerPostResetMapping : ConfigIO {
 			uint32 DbiApertureRead() { return PioneerRead32(m.dbi); }
 			void DbiApertureWrite(uint32 value) { PioneerWrite32(m.dbi,value); }
 		} io{*this};
+		dbiDiagnostic=5; // route, DBI read/write and TLB restoration
 		for (unsigned i=0;i<3;i++) if (io.DbiTlbRead(i)!=dmaSaved[i]) return false;
 		PioneerRecoveryDbiAperture<RestoreIO> aperture(io);
 		dmaModified=true;
 		bool wrote=false;
 		if (!aperture.Begin(true) || !PioneerRecoveryDbiRestore(aperture,pciControl,snapshot,wrote)
 			|| !aperture.Finish()) return false;
-		dmaModified=false;dbiUnsafe=false;return true;
+		dmaModified=false;dbiUnsafe=false;dbiDiagnostic=0;return true;
 	}
 #endif
 	bool SelectPostResetCore(unsigned core) {
