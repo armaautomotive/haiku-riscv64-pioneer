@@ -22,6 +22,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fRunningImagesObserved[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStackReleaseSubmitted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseWriting[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseDrainedAbsent[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -120,7 +121,7 @@ public:
         using namespace PioneerQwen35;
         auto* scope=Scope();
         if (!scope || core>=DataflowBarrierWorkers || !fReleaseAuthorized
-            || !fReleaseConfirmed[core] || fStackReleaseAttempted[core] || !fViews.Opened()
+            || !fReleaseConfirmed[core] || fStackReleaseSubmitted[core] || !fViews.Opened()
             || !scope->ProveRoleStartupHandoffSafe(fContext.io,core)) return false;
         Adapter io(fContext.io,*scope,fViews);
         bool ready=false;
@@ -132,11 +133,10 @@ public:
             || !io.InspectRunningRoleRamCopies(core,fOwner.OriginalRamWords(core,DataflowRoleReader),
                 fOwner.OriginalRamWords(core,DataflowRoleWriter))
             || !io.StartupHandoffWriteAllowed(core)) return false;
-        // A failed posted write may still arrive: never retry or forget it.
-        fStackReleaseAttempted[core]=true; fStackReleaseWriting[core]=true;
-        const uint32_t release=DataflowRoleSnapshotRelease;
-        const bool okay=fContext.io.WriteCoreMemory(core,DataflowRoleSnapshotHandoffAddress
-            +offsetof(DataflowRoleSnapshotHandoff,release),&release,sizeof(release));
+        // Consume the one-shot submission before calling the transport. The
+        // transport marks the actual store immediately before issuing it.
+        fStackReleaseSubmitted[core]=true; fStackReleaseWriting[core]=true;
+        const bool okay=fContext.io.WriteStackReleaseTracked(core,fStackReleaseAttempted[core]);
         fStackReleaseWriting[core]=false;
         fStackReleaseConfirmed[core]=okay;
         return okay;
@@ -191,7 +191,7 @@ public:
         const unsigned stackRelease=DataflowRoleSnapshotHandoffAddress
             +offsetof(DataflowRoleSnapshotHandoff,release);
         if (address==stackRelease && bytes==sizeof(uint32_t))
-            return fStackReleaseAttempted[core] && fStackReleaseWriting[core]
+            return fStackReleaseSubmitted[core] && !fStackReleaseAttempted[core] && fStackReleaseWriting[core]
                 && io.StartupHandoffWriteAllowed(core);
         if (!fStackReleaseConfirmed[core]) return false;
         const unsigned acknowledgement=DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,acknowledgedSequence);

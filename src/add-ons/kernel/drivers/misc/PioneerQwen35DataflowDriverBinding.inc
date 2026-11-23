@@ -574,6 +574,15 @@ PioneerSessionIO::WriteCoreMemory(unsigned core,unsigned address,const void* inp
 		&& qwen35DataflowContext->qwen35DataflowMemory->WriteCoreMemory(core,address,input,bytes);
 }
 
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+bool
+PioneerSessionIO::WriteStackReleaseTracked(unsigned core,bool& issued)
+{
+	return qwen35DataflowContext && qwen35DataflowContext->qwen35DataflowMemory
+		&& qwen35DataflowContext->qwen35DataflowMemory->WriteStackReleaseTracked(core,issued);
+}
+#endif
+
 bool
 PioneerSessionIO::ReadCoreMemory(unsigned core,unsigned address,void* output,
 	unsigned bytes)

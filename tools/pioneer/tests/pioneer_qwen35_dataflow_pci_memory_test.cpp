@@ -23,6 +23,10 @@ struct MockPciRaw {
 	bool idle=true;
 	bool idleForWrite=true;
 	bool corruptRestoreRead=false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool dropStackReleaseWrite=false;
+	bool* stackIssueWitness=nullptr;
+#endif
 	unsigned notIdleCore=UINT32_MAX;
 	unsigned startupFatalCore=UINT32_MAX;
 	unsigned dropResumeCore=UINT32_MAX;
@@ -94,6 +98,13 @@ struct MockPciRaw {
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
 			&& address<DataflowPciL1ViewBase+DataflowPciL1ViewBytes);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		if (address==PioneerQwen35::DataflowRoleSnapshotHandoffAddress
+			+offsetof(PioneerQwen35::DataflowRoleSnapshotHandoff,release) && stackIssueWitness) {
+			assert(*stackIssueWitness);
+			if (dropStackReleaseWrite) { writes++; return; }
+		}
+#endif
 		if (address>=PioneerQwen35::DataflowWorkerMailboxAddress
 			&& address<PioneerQwen35::DataflowWorkerMailboxAddress
 				+PioneerQwen35::DataflowWorkerMailboxBytes) {
@@ -260,6 +271,28 @@ int main()
 	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
 	raw.reset[3]=DataflowPciRunningReset;
 	assert(memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	{
+		bool issued=false;
+		raw.stackIssueWitness=&issued;
+		const unsigned before=raw.writes;
+		raw.idleForWrite=false;
+		assert(!memory.WriteStackReleaseTracked(3,issued) && !issued && raw.writes==before);
+		raw.idleForWrite=true; raw.mapped=false;
+		assert(!memory.WriteStackReleaseTracked(3,issued) && !issued && raw.writes==before);
+		raw.mapped=true; raw.reset[3]=0x47800;
+		assert(!memory.WriteStackReleaseTracked(3,issued) && !issued && raw.writes==before);
+		raw.reset[3]=DataflowPciRunningReset; raw.dropStackReleaseWrite=true;
+		assert(!memory.WriteStackReleaseTracked(3,issued) && issued && raw.writes==before+1);
+		raw.dropStackReleaseWrite=false;
+		assert(!memory.WriteStackReleaseTracked(3,issued) && raw.writes==before+1);
+		bool nextIssued=false; raw.stackIssueWitness=&nextIssued;
+		raw.reset[4]=DataflowPciRunningReset; // independent tile/transaction
+		assert(memory.WriteStackReleaseTracked(4,nextIssued) && nextIssued && raw.writes==before+2);
+		raw.reset[4]=0x46800;
+		raw.stackIssueWitness=nullptr;
+	}
+#endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	assert(memory.WriteCoreMemory(3,DataflowGraphRunAddress,&text,sizeof(text)));
 #endif

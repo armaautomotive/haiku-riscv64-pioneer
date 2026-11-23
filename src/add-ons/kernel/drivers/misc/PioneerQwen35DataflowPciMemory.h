@@ -314,8 +314,28 @@ public:
 
 	bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes)
 	{
+		return WriteCoreMemoryInternal(core,address,input,bytes,nullptr);
+	}
+
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	// The one-shot ledger changes immediately before the actual MMIO store,
+	// after all software preflight checks. A failure before that point is
+	// distinguishable from an issued write with uncertain completion.
+	bool WriteStackReleaseTracked(unsigned core,bool& issued)
+	{
+		if (issued) return false;
+		const uint32_t value=PioneerQwen35::DataflowRoleSnapshotRelease;
+		return WriteCoreMemoryInternal(core,PioneerQwen35::DataflowRoleSnapshotHandoffAddress
+			+offsetof(PioneerQwen35::DataflowRoleSnapshotHandoff,release),&value,sizeof(value),&issued);
+	}
+#endif
+
+private:
+	bool WriteCoreMemoryInternal(unsigned core,unsigned address,const void* input,unsigned bytes,bool* issued)
+	{
 		if (!input || !RangeAllowed(address,bytes) || !SelectMapped(core)) return false;
 		const bool held=CoreHeld(core);
+		if (issued && held) return false; // tracked handoff is only for a running tile
 		if (!held && (fRaw.ResetRead()!=DataflowPciRunningReset || fRaw.ResetRead()!=DataflowPciRunningReset
 			|| !DataflowPciRunningWriteRange(address,bytes)
 			|| !fRaw.DataflowCoreIdleForWrite(core,address,bytes))) return false;
@@ -333,6 +353,10 @@ public:
 		const uint32_t* words=static_cast<const uint32_t*>(input);
 		for (unsigned i=0;i<bytes/sizeof(uint32_t);i++) {
 			const unsigned current=address+i*sizeof(uint32_t);
+			if (issued) {
+				*issued=true;
+				asm volatile("" ::: "memory");
+			}
 			fRaw.Q38PanelWrite(current,words[i]);
 			if (fRaw.Q38PanelRead(current)!=words[i]
 				|| !fRaw.DataflowPanelMappingStable()
@@ -342,6 +366,8 @@ public:
 		}
 		return true;
 	}
+
+public:
 
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	// Once the first descriptor has been verified, a warm graph only changes

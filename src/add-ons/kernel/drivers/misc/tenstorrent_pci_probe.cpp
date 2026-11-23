@@ -3378,6 +3378,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes);
 	bool StartCore(unsigned core);
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	bool WriteStackReleaseTracked(unsigned core,bool& issued);
 	bool SharedCaptureAndStageHeld();
 	bool SharedArmAndBeginRelease();
 	bool SharedFleetHeldAndQuiescent();

@@ -145,6 +145,12 @@ struct PioneerSessionIO {
             || address!=DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release)) return false;
         memcpy(&roleHandoffs[core].release,input,bytes); return true;
     }
+    bool WriteStackReleaseTracked(unsigned core,bool& issued) {
+        if (issued || core>=DataflowBarrierWorkers) return false;
+        issued=true; const uint32_t value=DataflowRoleSnapshotRelease;
+        return WriteCoreMemory(core,DataflowRoleSnapshotHandoffAddress
+            +offsetof(DataflowRoleSnapshotHandoff,release),&value,sizeof(value));
+    }
     bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& snapshot) {
         if (core>=DataflowBarrierWorkers) return false;
         const auto& box=workerBoxes[core];
