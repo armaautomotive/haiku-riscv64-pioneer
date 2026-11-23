@@ -47,7 +47,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	uint32 RootRead(uint16 offset,uint8 size) {
 		return sPCI->read_pci_config(profile.root_bus,0,0,offset,size);
 	}
-	bool PciReady() {
+	bool PciReady(bool resetMarker=false) {
 		PioneerBlackholeBarPlan plan;
 		if (!PioneerMinimumBarLayoutMatches(profile)
 			|| !PioneerPlanBlackholeBars(profile.ranges,TT_PIONEER_RANGE_COUNT,plan)
@@ -57,7 +57,7 @@ struct PioneerPostResetMapping : ConfigIO {
 			|| plan.hostEnd[1]!=profile.bar2_host_end) return false;
 		if (!(Read(0,4)==0xb1401e52 && Read(0x2c,4)==0x00431e52
 			&& RootRead(0,4)==0x20421e30 && (RootRead(8,4)>>8)==0x060400
-			&& Read(4,2)==0x402 && RootRead(4,2)==0x402
+			&& Read(4,2)==(resetMarker?0x442U:0x402U) && RootRead(4,2)==0x402
 			&& RootRead(0x18,4)==0x003f0100 && RootRead(0x20,4)==0x0000fff0)) return false;
 		for (unsigned i=0;i<6;i++) if (Read(0x10+4*i,4)!=plan.bars[i]) return false;
 		for (unsigned i=0;i<3;i++) if (RootRead(0x24+4*i,4)!=plan.bridge[i]) return false;

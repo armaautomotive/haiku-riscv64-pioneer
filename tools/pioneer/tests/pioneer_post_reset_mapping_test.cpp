@@ -34,16 +34,17 @@ static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readO
 static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x30000/4],msiPage[1024],dbiPage[1024];
 static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1,mapFailureStatus=B_NO_MEMORY;static bool wrongNode=false;
 static uint32 cardBars[6]={12,0,12,0,12,0};
+static uint32 cardCommand=0x402,rootCommand=0x402;
 struct Pci {
 	uint32 read_pci_config(unsigned,unsigned,unsigned,unsigned offset,unsigned) {
-		if(offset==0)return 0x20421e30;if(offset==8)return 0x06040000;if(offset==4)return 0x402;
+		if(offset==0)return 0x20421e30;if(offset==8)return 0x06040000;if(offset==4)return rootCommand;
 		if(offset==0x18)return 0x003f0100;if(offset==0x20)return 0x0000fff0;
 		if(offset>=0x24 && offset<=0x2c)return (offset-0x24)/4+1;return 0;
 	}
 } pci,*sPCI=&pci;
 struct ConfigIO {
 	uint32 Read(uint16 offset,uint8) {
-		if(offset==0)return 0xb1401e52;if(offset==0x2c)return 0x00431e52;if(offset==4)return 0x402;
+		if(offset==0)return 0xb1401e52;if(offset==0x2c)return 0x00431e52;if(offset==4)return cardCommand;
 		if(offset>=0x10 && offset<=0x24)return cardBars[(offset-0x10)/4];return 0;
 	}
 };
@@ -110,7 +111,7 @@ static void ResetFake() {
 	mapCalls=unmapCalls=0;failMap=failUnmap=-1;mapFailureStatus=B_NO_MEMORY;wrongNode=false;
 	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
 	fakeQueueTimeout=fakeQueueBadReply=false;
-	cardBars[0]=12;nodePage[0x44/4]=2;resetPage[0x1b0/4]=0x47800;
+	cardBars[0]=12;cardCommand=rootCommand=0x402;nodePage[0x44/4]=2;resetPage[0x1b0/4]=0x47800;
 	scratchPage[(0x400+2*4)/4]=5;
 	scratchPage[(0x400+11*4)/4]=0x10001800;
 	scratchPage[(0x400+12*4)/4]=0x10001000;
@@ -128,6 +129,10 @@ static void ResetFake() {
 }
 int main() {
 	tt_pioneer_profile profile;PioneerPostResetAuditResult r;tt_arc_scratch_result arc{};
+	ResetFake();PioneerPostResetMapping marker(profile);
+	assert(marker.PciReady() && !marker.PciReady(true));
+	cardCommand=0x442;assert(!marker.PciReady() && marker.PciReady(true));
+	rootCommand=0x406;assert(!marker.PciReady(true));
 	ResetFake();PioneerPostResetMapping clean(profile);
 	assert(clean.Open() && !clean.Audit(r) && !clean.AuditHostDma()
 		&& clean.ProbeFirmware(3,arc) && clean.Audit(r) && r.audited==240
