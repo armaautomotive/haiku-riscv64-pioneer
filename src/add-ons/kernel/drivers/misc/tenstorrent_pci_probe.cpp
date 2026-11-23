@@ -3897,6 +3897,11 @@ struct PioneerStoreContext {
 	bool recoveryAttempted=false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	PioneerRecoveryDbiSnapshot recoveryDbi={};
+	PioneerPciePayloadSnapshot recoveryPayload={};
+	PioneerDriverRecoveryProof recoveryFinishProof={};
+	uint64 recoveryFinishTicket=0;
+	bool recoveryFinishPending=false;
+	bool recoveryFinishNeedsAudit=false;
 #endif
 #endif
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
@@ -11000,6 +11005,123 @@ struct Qwen35RecoveryResetIO {
 	void RecoveryDelay() { if (snooze(100000)!=B_OK) delayFailed=true; }
 };
 
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+// A resumed cleanup can be arbitrarily later than the original audit. Reopen
+// a fresh PCI/firmware view and repeat the fleet and DMA audits before the
+// guard may clear quarantine. This never issues another ASIC reset; any
+// uncertain PCI, mapping, firmware or TLB operation retains the owner.
+static status_t
+Qwen35RecoveryReauditLocked(PioneerStoreContext* context,tt_pioneer_recovery_run& r)
+{
+	if (context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryDbi.valid)
+		return B_BAD_VALUE;
+	context->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
+	if (!context->recoveryMapping) return B_NO_MEMORY;
+	r.stage=PIONEER_RECOVERY_STAGE_PCI_RESTORE;
+	PioneerPostResetPciResult pci{};
+	if (!PioneerPostResetPciRestore(context->io,pci)) { r.detail=pci.stage;return B_DEV_NOT_READY; }
+	if (!PioneerPciePayloadRestore(context->io,context->recoveryPayload)) return B_DEV_NOT_READY;
+	r.stage=PIONEER_RECOVERY_STAGE_MAPPING;
+	if (!context->recoveryMapping->Open()) return B_DEV_NOT_READY;
+	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
+	tt_arc_scratch_result firmware{};
+	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) { r.detail=firmware.state;return B_DEV_NOT_READY; }
+	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,context->recoveryPayload.control))
+		return B_DEV_NOT_READY;
+	tt_arc_queue_result firmwareQueue{};
+	if (!context->recoveryMapping->InitializeFirmwareQueue(firmware,firmwareQueue)) {
+		r.detail=firmwareQueue.state;return B_DEV_NOT_READY;
+	}
+	r.stage=PIONEER_RECOVERY_STAGE_FLEET;
+	PioneerPostResetAuditResult fleet{};
+	if (!context->recoveryMapping->Audit(fleet)) {
+		r.detail=((fleet.failure&0xffU)<<24)|((fleet.noc&0xffU)<<16)|(fleet.core&0xffffU);
+		return B_DEV_NOT_READY;
+	}
+	r.stage=PIONEER_RECOVERY_STAGE_HOST_DMA;
+	if (!context->recoveryMapping->AuditHostDma()) return B_DEV_NOT_READY;
+	r.stage=PIONEER_RECOVERY_STAGE_CLOSE_MAPPING;
+	if (!context->recoveryMapping->Close()) return B_DEV_NOT_READY;
+	delete context->recoveryMapping;context->recoveryMapping=NULL;
+	r.stage=PIONEER_RECOVERY_STAGE_PCI_IDLE;
+	unsigned finishStage=0;
+	if (!PioneerPostResetPciFinish(context->io,context->Pci(),finishStage)) {
+		r.detail=finishStage;return B_DEV_NOT_READY;
+	}
+	return B_OK;
+}
+
+// The only retryable phase is host-side retirement after a completed reset,
+// firmware/fleet/DMA audit, PCI-idle transition and session-area disposal.
+// Keep the same pinned ticket and owner while cleanup is incomplete. Never
+// repeat the ASIC reset or an uncertain PCI unreserve through this path.
+static status_t
+Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* context,
+	pioneer_driver_recovery_guard_v2_info* guard,tt_pioneer_recovery_run& r)
+{
+	const uint64 ticket=context->recoveryFinishTicket;
+	const PioneerDriverRecoveryProof proof=context->recoveryFinishProof;
+	auto retain=[&](status_t failure) {
+		context->recoveryFinishNeedsAudit=true;
+		put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return failure;
+	};
+	auto abandon=[&](status_t failure) {
+		context->recoveryFinishPending=false;context->recoveryFinishTicket=0;
+		guard->abort(ticket);
+		return retain(failure);
+	};
+	r.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;
+	if (!owner || owner!=sRuntimeOwner || owner->context!=context || !context->recoveryAttempted
+		|| !context->recoveryFinishPending || !ticket || !proof.ReadyToRetireOneOwner()
+		|| proof.reset_generation!=ticket || proof.firmware_generation!=ticket
+		|| context->recoveryMapping || !context->io.postResetDisposeComplete)
+		return abandon(B_BAD_VALUE);
+	status_t status=guard->validate(ticket);
+	if (status!=B_OK) return retain(status);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	if (!PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,ticket))
+		return retain(B_DEV_NOT_READY);
+	status=guard->validate(ticket);
+	if (status!=B_OK) return retain(status);
+#endif
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	if (!PioneerQ35GraphOwnerReleaseAfterReset(context->qwen35GraphOwner,proof,ticket))
+		return retain(B_DEV_NOT_READY);
+	status=guard->validate(ticket);
+	if (status!=B_OK) return retain(status);
+#endif
+	if (context->recoveryFinishNeedsAudit) {
+		status=Qwen35RecoveryReauditLocked(context,r);
+		if (status==B_NO_MEMORY) return retain(status);
+		if (status!=B_OK) return abandon(status);
+		context->recoveryFinishNeedsAudit=false;
+		status=guard->validate(ticket);
+		if (status!=B_OK) return retain(status);
+	}
+	r.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
+	status=sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+	if (status!=B_OK) return abandon(status);
+	// All device/host mappings, retained graph resources and the PCI
+	// reservation are gone. Keep the inert context and cookie until the
+	// guard accepts the final epoch check, so a raced fault retains them.
+	PioneerDriverRecoveryProof complete=proof;
+	complete.flags|=PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;complete.retained_owners=0;
+	r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
+	uint64 nextGeneration=0;
+	status=guard->complete(ticket,&complete,&nextGeneration);
+	if (status!=B_OK || !nextGeneration) {
+		if (status==B_OK) sColdRecoveryRequired=true;
+		return abandon(status!=B_OK?status:B_DEV_NOT_READY);
+	}
+	sReloadGeneration=nextGeneration;
+	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
+	delete context;owner->magic=0;delete owner;
+	sColdRecoveryRequired.ClearAfterVerifiedRecovery();
+	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
+	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return B_OK;
+}
+#endif
+
 // sLock held for the complete operation. The only inputs from userspace are
 // the expected build and generation; every device fact and proof is produced
 // by this driver. A failed attempt retains the owner and cold latch.
@@ -11014,7 +11136,11 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		|| !sRuntimeOwner->context->dispatchOwnerRetained) return B_BUSY;
 	PioneerProbeCookie* owner=sRuntimeOwner;
 	PioneerStoreContext* context=owner->context;
-	if (context->recoveryAttempted || context->recoveryMapping
+	if ((context->recoveryAttempted
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+		&& !context->recoveryFinishPending
+#endif
+		) || context->recoveryMapping
 		|| !context->transaction.config_attempted || !context->transaction.map_attempted)
 		return B_NOT_ALLOWED;
 	const auto& saved=context->Pci();
@@ -11031,21 +11157,39 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (!context->recoveryDbi.valid) return B_NOT_ALLOWED;
 #endif
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	pioneer_driver_recovery_guard_v2_info* guard=NULL;
+	const char* guardName=PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE;
+#else
 	pioneer_driver_recovery_guard_info* guard=NULL;
-	status_t status=get_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE,(module_info**)&guard);
+	const char* guardName=PIONEER_DRIVER_RECOVERY_GUARD_MODULE;
+#endif
+	status_t status=get_module(guardName,(module_info**)&guard);
 	if (status!=B_OK) return status;
 	uint64 ticket=0;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if (!guard || guard->version!=2 || !guard->begin || !guard->complete || !guard->abort || !guard->validate)
+		status=B_BAD_VALUE;
+	else if (context->recoveryFinishPending) {
+		ticket=context->recoveryFinishTicket;
+		status=ticket?guard->validate(ticket):B_BAD_VALUE;
+	} else status=guard->begin(sReloadGeneration,&ticket);
+#else
 	if (!guard || guard->version!=1) status=B_BAD_VALUE;
 	else status=guard->begin(sReloadGeneration,&ticket);
+#endif
 	if (status!=B_OK || !ticket) {
-		put_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE);
+		put_module(guardName);
 		return status!=B_OK?status:B_DEV_NOT_READY;
 	}
 	auto fail=[&](status_t failure) {
 		guard->abort(ticket);
-		put_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE);
+		put_module(guardName);
 		return failure;
 	};
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if (context->recoveryFinishPending) return Qwen35RecoveryFinishLocked(owner,context,guard,r);
+#endif
 	context->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
 	if (!context->recoveryMapping) return fail(B_NO_MEMORY);
 	context->recoveryAttempted=true;
@@ -11060,6 +11204,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if ((payload.control&PIONEER_RECOVERY_DBI_MPS_MASK)!=context->recoveryDbi.mps)
 		return fail(B_DEV_NOT_READY);
+	context->recoveryPayload=payload;
 #endif
 	r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
 	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
@@ -11103,32 +11248,14 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	r.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;
 	status=context->io.DisposeAfterVerifiedReset(proof);
 	if (status!=B_OK) return fail(status);
-#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
-	// A reset invalidates the old role snapshots. Their distinct BAR areas
-	// must be unmapped and their owner retired before the context or guard.
-	if (!PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,ticket))
-		return fail(B_DEV_NOT_READY);
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	context->recoveryFinishTicket=ticket;context->recoveryFinishProof=proof;
+	context->recoveryFinishPending=true;
+	return Qwen35RecoveryFinishLocked(owner,context,guard,r);
+#else
+	// Unreachable: this build rejects recovery before obtaining a ticket.
+	return fail(B_NOT_ALLOWED);
 #endif
-#if defined(PIONEER_QWEN35_DEVICE_DISPATCH) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
-	// Only the completed reset/fleet/host-DMA proof and successful disposal of
-	// the old mappings permit the graph's retained heap objects to be freed.
-	if (!PioneerQ35GraphOwnerReleaseAfterReset(context->qwen35GraphOwner,proof,ticket))
-		return fail(B_DEV_NOT_READY);
-#endif
-	r.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
-	status=sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
-	if (status!=B_OK) return fail(status);
-	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
-	delete context;owner->magic=0;delete owner;
-	proof.flags|=PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;proof.retained_owners=0;
-	r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
-	uint64 nextGeneration=0;
-	status=guard->complete(ticket,&proof,&nextGeneration);
-	if (status!=B_OK || !nextGeneration) return fail(status!=B_OK?status:B_DEV_NOT_READY);
-	sReloadGeneration=nextGeneration;sColdRecoveryRequired.ClearAfterVerifiedRecovery();
-	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
-	put_module(PIONEER_DRIVER_RECOVERY_GUARD_MODULE);
-	return B_OK;
 }
 
 static status_t

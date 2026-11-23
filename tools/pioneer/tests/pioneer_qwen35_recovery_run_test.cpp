@@ -14,15 +14,19 @@
 #include <cstring>
 #include <new>
 #include <vector>
+#include <algorithm>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerRecoveryProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using status_t=int;
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
+static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
+static unsigned validateCalls=0,invalidateOnValidate=0;
 #ifdef TEST_GRAPH_RECOVERY
 static bool failGraphRelease=false;
 static bool failSharedRoleRelease=false;
+static bool graphReleased=false;
 static unsigned graphReleases=0,sharedRoleReleases=0;
 struct FakeGraphOwner {};
 struct FakeSharedRoleOwner {};
@@ -35,17 +39,39 @@ struct pioneer_driver_recovery_guard_info {
 	status_t (*begin)(uint64,uint64*);status_t (*complete)(uint64,const PioneerDriverRecoveryProof*,uint64*);
 	status_t (*abort)(uint64);
 };
-static status_t Begin(uint64 g,uint64* t) { if (g!=3)return B_BAD_VALUE;*t=9;return B_OK; }
-static status_t Complete(uint64 t,const PioneerDriverRecoveryProof* p,uint64* g) {
-	completeCount++;assert(t==9 && p->Complete());if (!Step(PIONEER_RECOVERY_STAGE_GUARD_COMPLETE)) return B_DEV_NOT_READY;
-	*g=4;return B_OK;
+struct pioneer_driver_recovery_guard_v2_info {
+	module_info info;uint32 version=2;
+	status_t (*begin)(uint64,uint64*);status_t (*complete)(uint64,const PioneerDriverRecoveryProof*,uint64*);
+	status_t (*abort)(uint64);status_t (*validate)(uint64);
+};
+static status_t Begin(uint64 g,uint64* t) {
+	if (g!=3 || ticketPending)return B_BAD_VALUE;
+	ticketPending=true;*t=9;return B_OK;
 }
-static status_t Abort(uint64 t) { assert(t==9);abortCount++;return B_OK; }
+static status_t Complete(uint64 t,const PioneerDriverRecoveryProof* p,uint64* g) {
+	completeCount++;assert(t==9 && ticketPending && !invalidTicket && p->Complete()
+		&& p->reset_generation==t && p->firmware_generation==t);
+	if (!Step(PIONEER_RECOVERY_STAGE_GUARD_COMPLETE)) return B_DEV_NOT_READY;
+	ticketPending=false;*g=4;return B_OK;
+}
+static status_t Abort(uint64 t) { assert(t==9);abortCount++;ticketPending=false;return B_OK; }
+static status_t Validate(uint64 t) {
+	if (++validateCalls==invalidateOnValidate) invalidTicket=true;
+	return t==9 && ticketPending && !invalidTicket?B_OK:B_DEV_NOT_READY;
+}
 static pioneer_driver_recovery_guard_info recoveryGuard{{},1,Begin,Complete,Abort};
+static pioneer_driver_recovery_guard_v2_info recoveryGuardV2{{},2,Begin,Complete,Abort,Validate};
 #define PIONEER_DRIVER_RECOVERY_GUARD_MODULE "fake/guard"
-static status_t get_module(const char*,module_info** out) { *out=&recoveryGuard.info;return B_OK; }
+#define PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE "fake/guard/v2"
+static status_t get_module(const char* name,module_info** out) {
+	if (guardV2Missing && !strcmp(name,PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE)) return B_DEV_NOT_READY;
+	*out=!strcmp(name,PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE)?&recoveryGuardV2.info:&recoveryGuard.info;
+	return B_OK;
+}
 static void put_module(const char*) {}
-struct ColdLatch { bool value=true;operator bool()const{return value;}void ClearAfterVerifiedRecovery(){value=false;} };
+struct ColdLatch { bool value=true;operator bool()const{return value;}
+	ColdLatch& operator=(bool v){value=v;return *this;}
+	void ClearAfterVerifiedRecovery(){value=false;} };
 static ColdLatch sColdRecoveryRequired;
 static bool sReloadQuiesced=false,sBankStorageOnly=true;
 static int guard=1;static int* sReloadGuard=&guard;static uint64 sReloadGeneration=3;static uint32 sOpenCookies=1;
@@ -95,6 +121,8 @@ struct PioneerPostResetMapping {
 };
 struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
+	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
+	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
 #ifdef TEST_GRAPH_RECOVERY
 	FakeGraphOwner graphOwner;FakeGraphOwner* qwen35GraphOwner=&graphOwner;
 	FakeSharedRoleOwner sharedRoleOwner;FakeSharedRoleOwner* qwen35SharedRoleBinding=&sharedRoleOwner;
@@ -108,6 +136,7 @@ struct PioneerStoreContext {
 #ifdef TEST_GRAPH_RECOVERY
 static bool PioneerQ35ReleaseSharedRoleAfterReset(FakeSharedRoleOwner*& owner,
 	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
+	if (!owner) return true;
 	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
 		&& proof.firmware_generation==ticket && ticket==9);
 	assert(!trace.empty() && trace.back()==PIONEER_RECOVERY_STAGE_OWNER_RELEASE);
@@ -117,19 +146,21 @@ static bool PioneerQ35ReleaseSharedRoleAfterReset(FakeSharedRoleOwner*& owner,
 }
 static bool PioneerQ35GraphOwnerReleaseAfterReset(FakeGraphOwner* owner,
 	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
+	if (graphReleased) return true;
 	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
 		&& proof.firmware_generation==ticket && ticket==9);
-	graphReleases++;return !failGraphRelease;
+	graphReleases++;if (failGraphRelease) return false;
+	graphReleased=true;return true;
 }
 #endif
 struct PioneerProbeCookie {uint32 magic=0x50313030;int team=17;PioneerStoreContext* context=nullptr;bool finalFreeRetained=false;
 	~PioneerProbeCookie(){cookieDeleted++;}};
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
-struct FakeCard {int bus=0,device=0,function=0;} sCard;static int sCookie;
+struct FakeCard {int bus=0,device=0,function=0;} sCard;[[maybe_unused]] static int sCookie;
 #define TT_PCI_PROBE_DEVICE "fake"
 struct FakePci {status_t unreserve_device(int,int,int,const char*,void*) {
 	return Step(PIONEER_RECOVERY_STAGE_UNRESERVE)?B_OK:B_DEV_NOT_READY;
-}} pci,*sPCI=&pci;
+}} pci;[[maybe_unused]] static FakePci* sPCI=&pci;
 static int snooze(int){return B_OK;}
 struct thread_info {int team;};static int activeTeam=17,sLock=1,held=0;
 static int find_thread(void*){return 1;}static int get_thread_info(int,thread_info* t){t->team=activeTeam;return B_OK;}
@@ -140,8 +171,10 @@ static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
+	ticketPending=invalidTicket=guardV2Missing=false;
+	validateCalls=invalidateOnValidate=0;
 #ifdef TEST_GRAPH_RECOVERY
-	failGraphRelease=failSharedRoleRelease=false;graphReleases=sharedRoleReleases=0;
+	failGraphRelease=failSharedRoleRelease=graphReleased=false;graphReleases=sharedRoleReleases=0;
 #endif
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
@@ -155,6 +188,12 @@ int main(){
 		&& trace.empty() && sRuntimeOwner && sColdRecoveryRequired && !abortCount && !completeCount);
 	Cleanup();puts("PASS default recovery gate: no guard, PCI or owner actions; SIMULATED HARDWARE ONLY");
 #else
+	Setup();guardV2Missing=true;auto unavailable=Request();
+	assert(Qwen35RecoveryRun(&inspector,&unavailable,sizeof(unavailable))==B_OK
+		&& unavailable.operation_status==B_DEV_NOT_READY && trace.empty() && sRuntimeOwner
+		&& !sRuntimeOwner->context->recoveryAttempted && sColdRecoveryRequired
+		&& !ticketPending && !abortCount && !completeCount);
+	Cleanup();
 	Setup();auto r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
 		&& r.operation_status==B_OK && r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
 		&& !sColdRecoveryRequired && !sRuntimeOwner && contextDeleted==1 && cookieDeleted==1 && !abortCount && completeCount==1);
@@ -164,12 +203,53 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE && sharedRoleReleases==1 && !graphReleases
 		&& sRuntimeOwner && sRuntimeOwner->context->qwen35SharedRoleBinding
-		&& sColdRecoveryRequired && abortCount==1 && !completeCount);
-	Cleanup();
+		&& sColdRecoveryRequired && !abortCount && !completeCount && ticketPending);
+	failSharedRoleRelease=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && completeCount==1 && !abortCount
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_FLEET)==2
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_HOST_DMA)==2);
 	Setup();failGraphRelease=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE && graphReleases==1 && sharedRoleReleases==1
-		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1 && !completeCount);
+		&& sRuntimeOwner && sColdRecoveryRequired && !abortCount && !completeCount && ticketPending);
+	failGraphRelease=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && graphReleases==2 && sharedRoleReleases==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_FLEET)==2);
+	Setup();failSharedRoleRelease=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	failSharedRoleRelease=false;failStage=PIONEER_RECOVERY_STAGE_FLEET;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_FLEET && sRuntimeOwner && sColdRecoveryRequired
+		&& sRuntimeOwner->context->recoveryMapping && !sRuntimeOwner->context->recoveryFinishPending
+		&& !ticketPending && abortCount==1 && !completeCount
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1
+		&& !std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_UNRESERVE));
+	Cleanup();
+	Setup();failSharedRoleRelease=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	invalidTicket=true;failSharedRoleRelease=false;const auto traceBefore=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==traceBefore && sRuntimeOwner && sColdRecoveryRequired && ticketPending
+		&& sharedRoleReleases==1 && !graphReleases && !completeCount);
+	Cleanup();
+	Setup();invalidateOnValidate=2;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner && sColdRecoveryRequired && ticketPending && sharedRoleReleases==1
+		&& !sRuntimeOwner->context->qwen35SharedRoleBinding && !graphReleases && !completeCount);
+	const auto faultTrace=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==faultTrace && sRuntimeOwner && ticketPending && !graphReleases);
+	Cleanup();
+	Setup();failSharedRoleRelease=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	sRuntimeOwner->context->recoveryFinishProof.firmware_generation=10;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BAD_VALUE
+		&& sRuntimeOwner && sColdRecoveryRequired && !ticketPending && abortCount==1
+		&& sharedRoleReleases==1 && !graphReleases && !completeCount);
 	Cleanup();
 #endif
 	for(unsigned stage=1;stage<=12;stage++) {
@@ -177,7 +257,7 @@ int main(){
 		assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status!=B_OK && r.stage==stage);
 		assert(sColdRecoveryRequired && sReloadGeneration==3 && abortCount==1);
 		if(stage<12) assert(sRuntimeOwner && !contextDeleted && !cookieDeleted && !completeCount);
-		else assert(!sRuntimeOwner && contextDeleted==1 && cookieDeleted==1 && completeCount==1);
+		else assert(sRuntimeOwner && !contextDeleted && !cookieDeleted && completeCount==1);
 		Cleanup();
 	}
 	Setup();failPayloadRead=true;r=Request();
