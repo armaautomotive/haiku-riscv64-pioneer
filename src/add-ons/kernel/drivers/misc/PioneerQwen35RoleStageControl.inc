@@ -17,6 +17,12 @@
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
 #include "PioneerQwen35LocalRestoreProbeImages.h"
 #endif
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+#if !defined(PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY)
+#error Service qualification requires the separately guarded local-restore probe
+#endif
+#include "PioneerQwen35RoleServiceProbeImages.h"
+#endif
 
 class PioneerQ35RoleStageQualification {
 public:
@@ -106,6 +112,14 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         okay=scope.EnableStageWrites(c->io);
                         if (okay) {
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                            if (r.version==4) okay=owner->images.StageOne(0,DataflowServiceProbeReaderCodeWords,
+                                sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
+                                DataflowServiceProbeWriterCodeWords,sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t),
+                                DataflowServiceProbeReaderShimWords,sizeof(DataflowServiceProbeReaderShimWords)/sizeof(uint32_t),
+                                DataflowServiceProbeWriterShimWords,sizeof(DataflowServiceProbeWriterShimWords)/sizeof(uint32_t),adapter);
+                            else
+#endif
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             if (r.version==3) okay=owner->images.StageOne(0,DataflowLocalProbeReaderCodeWords,
                                 sizeof(DataflowLocalProbeReaderCodeWords)/sizeof(uint32_t),
@@ -134,8 +148,16 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             || r.version==3
 #endif
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                            || r.version==4
+#endif
                         )) {
                         r.stage=9;PioneerQ35RoleStageProgress(r.stage);
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                        if (r.version==4) okay=prestack.Run(DataflowServiceProbeReaderParkAddress,
+                            DataflowServiceProbeWriterParkAddress,65536,false,true);
+                        else
+#endif
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                         if (r.version==3) okay=prestack.Run(DataflowLocalProbeReaderParkAddress,
                             DataflowLocalProbeWriterParkAddress,65536,true);
@@ -152,6 +174,9 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                     if (okay && (r.version==2
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             || r.version==3
+#endif
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                            || r.version==4
 #endif
                         )) okay=prestack.VerifyAfterImages();
 #endif
@@ -191,6 +216,9 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         delete owner;c->qwen35RoleStageQualification=NULL;
                         r.stage=
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                            r.version==4?TT_Q35_ROLE_SERVICE_COMPLETE:
+#endif
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             r.version==3?TT_Q35_ROLE_LOCAL_RESTORE_COMPLETE:
 #endif

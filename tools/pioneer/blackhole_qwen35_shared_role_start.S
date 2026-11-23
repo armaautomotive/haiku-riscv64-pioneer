@@ -2,7 +2,7 @@
 /* Offline-only entry/park witnesses; no reset or memory ownership is provided. */
 #include "PioneerQwen35DataflowRoleAsmConstants.h"
 
-.macro ROLE_START name, tick, ram_copy, ready_offset, ready_value, cancelled_value
+.macro ROLE_START name, tick, ram_copy, ready_offset, ready_value, cancelled_value, restore_code
 .section .text.\name,"ax",@progbits
 .globl \name
 .type \name,@function
@@ -74,6 +74,12 @@
     beqz a0,2f                 /* malformed state: retain, then park */
     li t0,PIONEER_Q35_ROLE_STOP_REQUESTED
     bne a0,t0,1b
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_PROBE
+    /* Restricted probe only: after the real role has stopped, execute the
+       separately verified stackless restore before leaving this processor. */
+    li t0,\restore_code
+    jr t0
+#endif
 2:
     fence rw,rw
 .globl \name\()_park
@@ -82,5 +88,5 @@
 .size \name, .-\name
 .endm
 
-ROLE_START qwen35_shared_reader_start, qwen35_shared_reader_tick, PIONEER_Q35_ROLE_READER_RAM_COPY, 0, PIONEER_Q35_ROLE_SNAPSHOT_READER_READY, PIONEER_Q35_ROLE_SNAPSHOT_READER_CANCELLED
-ROLE_START qwen35_shared_writer_start, qwen35_shared_writer_tick, PIONEER_Q35_ROLE_WRITER_RAM_COPY, 4, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_READY, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_CANCELLED
+ROLE_START qwen35_shared_reader_start, qwen35_shared_reader_tick, PIONEER_Q35_ROLE_READER_RAM_COPY, 0, PIONEER_Q35_ROLE_SNAPSHOT_READER_READY, PIONEER_Q35_ROLE_SNAPSHOT_READER_CANCELLED, 0xb4e00
+ROLE_START qwen35_shared_writer_start, qwen35_shared_writer_tick, PIONEER_Q35_ROLE_WRITER_RAM_COPY, 4, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_READY, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_CANCELLED, 0xb7e00

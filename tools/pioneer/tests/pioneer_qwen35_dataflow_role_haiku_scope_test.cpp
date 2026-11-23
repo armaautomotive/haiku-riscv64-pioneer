@@ -183,6 +183,10 @@ struct PioneerSessionIO {
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
     bool simulateLocalRestore=false;
     unsigned localRestoreMutations=0;
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+    bool simulateService=false,dropServiceStop=false;
+    unsigned serviceStarts=0,serviceStops=0;
+#endif
 #endif
     bool SharedRolePrestackReleaseReset() {
         ++sharedResetWrites;
@@ -250,6 +254,32 @@ struct PioneerSessionIO {
         return true;
     }
     void Q38PanelWrite(unsigned address,uint32_t value) {
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (address>=DataflowRoleMailboxAddress && address<DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)) {
+            auto& box=roleBoxes[runtimeCore];
+            const unsigned offset=address-DataflowRoleMailboxAddress;
+            if (reset==0x7000 && simulateService && dropServiceStop
+                && offset==offsetof(DataflowRoleMailbox,stopRequest) && value==1) {
+                ++serviceStops;return;
+            }
+            std::memcpy(reinterpret_cast<uint8_t*>(&box)+offset,&value,sizeof(value));
+            if (reset==0x7000 && simulateService && offset==offsetof(DataflowRoleMailbox,stopRequest) && value==1) {
+                ++serviceStops;
+                if (!dropServiceStop) {
+                    assert(DataflowRoleMailboxObserveStop(box,DataflowRoleReader)
+                        && DataflowRoleMailboxObserveStop(box,DataflowRoleWriter));
+                    ++localRestoreMutations;
+                    const bool okay=SimulateLocalRestore();
+                    auto& handoff=roleHandoffs[runtimeCore];
+                    handoff.readerReady=okay?PIONEER_Q35_ROLE_RESTORE_READER_DONE:PIONEER_Q35_ROLE_RESTORE_READER_FAILED;
+                    handoff.writerReady=PIONEER_Q35_ROLE_RESTORE_WRITER_DONE;
+                    rolePc[DataflowRoleReader]=DataflowServiceProbeReaderParkAddress;
+                    rolePc[DataflowRoleWriter]=DataflowServiceProbeWriterParkAddress;
+                }
+            }
+            return;
+        }
+#endif
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
         if (address>=DataflowRoleSnapshotHandoffAddress && address<DataflowRoleSnapshotHandoffAddress+12) {
             auto& handoff=roleHandoffs[runtimeCore];
@@ -257,6 +287,16 @@ struct PioneerSessionIO {
             else if (address==DataflowRoleSnapshotHandoffAddress+4) handoff.writerReady=value;
             else {
                 ++stackCancelWrites;handoff.release=value;
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                if (reset==0x7000 && simulateService && value==DataflowRoleSnapshotRelease) {
+                    auto& box=roleBoxes[runtimeCore];
+                    assert(DataflowRoleMailboxPublishStarted(box,DataflowRoleReader)
+                        && DataflowRoleMailboxPublishStarted(box,DataflowRoleWriter));
+                    rolePc[DataflowRoleReader]=DataflowRoleReaderCodeAddress+4;
+                    rolePc[DataflowRoleWriter]=DataflowRoleWriterCodeAddress+4;
+                    ++serviceStarts;
+                }
+#endif
                 if (reset==0x7000 && simulatePrestack && value==DataflowRoleSnapshotCancel) {
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                     if (simulateLocalRestore) {
@@ -315,6 +355,14 @@ struct PioneerSessionIO {
         }
     }
     uint32_t Q38PanelRead(unsigned address) {
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (address>=DataflowRoleMailboxAddress && address<DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)) {
+            uint32_t value=0;
+            std::memcpy(&value,reinterpret_cast<const uint8_t*>(&roleBoxes[runtimeCore])
+                +(address-DataflowRoleMailboxAddress),sizeof(value));
+            return value;
+        }
+#endif
         if (address==DataflowRoleSnapshotHandoffAddress) return roleHandoffs[runtimeCore].readerReady;
         if (address==DataflowRoleSnapshotHandoffAddress+4) return roleHandoffs[runtimeCore].writerReady;
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest))

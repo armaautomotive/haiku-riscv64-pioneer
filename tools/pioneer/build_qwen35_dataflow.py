@@ -17,6 +17,7 @@ FLEET_INSPECTION_QUALIFICATION_TAG = '2026112300030004'
 ROLE_STAGE_QUALIFICATION_TAG = '2026112300030005'
 ROLE_PRESTACK_QUALIFICATION_TAG = '2026112300030010'
 ROLE_LOCAL_RESTORE_QUALIFICATION_TAG = '2026112300030011'
+ROLE_SERVICE_QUALIFICATION_TAG = '2026112300030012'
 
 
 def verify_snapshot_witness_refuses_load(build, driver):
@@ -402,7 +403,13 @@ def main():
                         help='build the restricted one-core B/NC pre-stack startup and cancellation driver')
     parser.add_argument('--build-role-local-restore-qualification', action='store_true',
                         help='build the restricted one-core B/NC local-RAM restore probe driver')
+    parser.add_argument('--build-role-service-qualification', action='store_true',
+                        help='build the restricted one-core resident role startup/stop/restore driver')
     args = parser.parse_args()
+    if args.build_role_service_qualification:
+        if args.build_role_local_restore_qualification:
+            parser.error('service qualification selects its own local-restore qualification')
+        args.build_role_local_restore_qualification = True
     if args.build_role_local_restore_qualification:
         if args.build_role_prestack_qualification:
             parser.error('local-restore qualification selects its own pre-stack qualification')
@@ -455,7 +462,8 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=(ROLE_LOCAL_RESTORE_QUALIFICATION_TAG if args.build_role_local_restore_qualification
+                      PIONEER_DRIVER_BUILD_TAG=(ROLE_SERVICE_QUALIFICATION_TAG if args.build_role_service_qualification
+                                               else ROLE_LOCAL_RESTORE_QUALIFICATION_TAG if args.build_role_local_restore_qualification
                                                else ROLE_PRESTACK_QUALIFICATION_TAG if args.build_role_prestack_qualification
                                                else ROLE_STAGE_QUALIFICATION_TAG if args.build_role_stage_qualification
                                                else FLEET_INSPECTION_QUALIFICATION_TAG if args.build_fleet_inspection_qualification
@@ -489,6 +497,8 @@ def main():
         driver_env['PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY'] = '1'
     if args.build_role_local_restore_qualification:
         driver_env['PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY'] = '1'
+    if args.build_role_service_qualification:
+        driver_env['PIONEER_QWEN35_ROLE_SERVICE_QUALIFY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],

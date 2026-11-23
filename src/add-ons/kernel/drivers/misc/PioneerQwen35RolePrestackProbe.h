@@ -6,6 +6,9 @@
 #endif
 #include "PioneerQwen35DataflowRoleFleetPciIO.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleBoot.h"
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleMailbox.h"
+#endif
 
 // Qualification only. A held-image owner must already retain the entire
 // fleet's boot, shim and extra-L1 snapshots. This starts B/NC on worker zero
@@ -23,6 +26,12 @@ struct PioneerQwen35RolePrestackState {
     bool attempted=false,captured=false,preserveAttempted=false,releaseAttempted=false;
     bool copiesCaptured=false,cancelAttempted=false,holdAttempted=false,copiesVerified=false;
     bool resetRestoreAttempted=false,complete=false;
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+    uint32_t mailbox[16]{},mailboxReadFirst[16]{},mailboxReadSecond[16]{};
+    uint32_t mailboxInitAttempts=0,mailboxRestoreAttempts=0;
+    bool mailboxCaptured=false,serviceReleaseAttempted=false,serviceStarted=false;
+    bool serviceStopAttempted=false,serviceStopped=false,mailboxRestored=false;
+#endif
 };
 template<class IO,class Scope,class Views,class Adapter>
 class PioneerQwen35RolePrestackProbe {
@@ -92,6 +101,81 @@ class PioneerQwen35RolePrestackProbe {
         fIO.Q38PanelWrite(address,value); // one attempt; failure retains the owner
         return fIO.Q38PanelRead(address)==value && Select(reset);
     }
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+    bool ReadMailbox(uint32_t reset,PioneerQwen35::DataflowRoleMailbox& out) {
+        using namespace PioneerQwen35;
+        static_assert(sizeof(DataflowRoleMailbox)==16*sizeof(uint32_t),"fixed mailbox size");
+        if (!Select(reset)) return false;
+        auto& first=fState.mailboxReadFirst;auto& second=fState.mailboxReadSecond;
+        for (unsigned i=0;i<16;i++) first[i]=fIO.Q38PanelRead(DataflowRoleMailboxAddress+i*4);
+        fIO.Pause();
+        for (unsigned i=0;i<16;i++) second[i]=fIO.Q38PanelRead(DataflowRoleMailboxAddress+i*4);
+        if (memcmp(first,second,sizeof(fState.mailboxReadFirst)) || !Select(reset)) return false;
+        memcpy(&out,second,sizeof(out));return true;
+    }
+    bool WriteMailbox(uint32_t reset,unsigned word,uint32_t value) {
+        using namespace PioneerQwen35;
+        if (word>=16 || !Select(reset)) return false;
+        const unsigned address=DataflowRoleMailboxAddress+word*4;
+        fIO.Q38PanelWrite(address,value);
+        return fIO.Q38PanelRead(address)==value && Select(reset);
+    }
+    bool InitializeMailbox() {
+        using namespace PioneerQwen35;
+        DataflowRoleMailbox previous{};
+        if (!ReadMailbox(Held,previous)) return false;
+        memcpy(fState.mailbox,&previous,sizeof(previous));fState.mailboxCaptured=true;
+        for (unsigned i=0;i<16;i++) {
+            const uint32_t value=i==0?uint32_t(DataflowRoleMailboxMagic)
+                :i==1?uint32_t(DataflowRoleMailboxVersion):0U;
+            fState.mailboxInitAttempts|=1U<<i;
+            if (!WriteMailbox(Held,i,value)) return false;
+        }
+        DataflowRoleMailbox expected{};
+        expected.magic=DataflowRoleMailboxMagic;expected.version=DataflowRoleMailboxVersion;
+        return ReadMailbox(Held,previous) && !memcmp(&previous,&expected,sizeof(expected));
+    }
+    bool RestoreMailbox() {
+        using namespace PioneerQwen35;
+        if (!fState.mailboxCaptured || !fState.serviceStopped || !fState.copiesVerified) return false;
+        for (unsigned i=0;i<16;i++) {
+            fState.mailboxRestoreAttempts|=1U<<i;
+            if (!WriteMailbox(Held,i,fState.mailbox[i])) return false;
+        }
+        DataflowRoleMailbox restored{};
+        fState.mailboxRestored=ReadMailbox(Held,restored)
+            && !memcmp(&restored,fState.mailbox,sizeof(restored));
+        return fState.mailboxRestored;
+    }
+    bool RunIdleService(unsigned polls) {
+        using namespace PioneerQwen35;
+        fState.serviceReleaseAttempted=true;
+        if (!WriteHandoff(Running,2,DataflowRoleSnapshotRelease)) return false;
+        for (unsigned n=0;n<polls;n++) {
+            DataflowRoleMailbox box{};
+            if (ReadMailbox(Running,box) && DataflowRoleMailboxStartupReady(box)) {
+                const uint32_t r=fIO.SharedRolePcRead(DataflowRoleReader),w=fIO.SharedRolePcRead(DataflowRoleWriter);
+                if (r>=DataflowRoleReaderCodeAddress && r<DataflowRoleReaderCodeLimit
+                    && w>=DataflowRoleWriterCodeAddress && w<DataflowRoleWriterCodeLimit
+                    && Select(Running)) { fState.serviceStarted=true;break; }
+            }
+            fIO.Pause();
+        }
+        if (!fState.serviceStarted) return false;
+        DataflowRoleMailbox box{};
+        if (!ReadMailbox(Running,box) || !DataflowRoleMailboxRequestStop(box)) return false;
+        fState.serviceStopAttempted=true;
+        constexpr unsigned stopWord=offsetof(DataflowRoleMailbox,stopRequest)/sizeof(uint32_t);
+        if (!WriteMailbox(Running,stopWord,1)) return false;
+        for (unsigned n=0;n<polls;n++) {
+            if (ReadMailbox(Running,box) && DataflowRoleMailboxStopReceipts(box)) {
+                fState.serviceStopped=true;return true;
+            }
+            fIO.Pause();
+        }
+        return false;
+    }
+#endif
     bool ResetDisable(uint32_t expected) {
         using namespace PioneerQwen35;
         uint32_t first=0,second=0;
@@ -142,15 +226,20 @@ public:
     bool Complete() const { return fState.complete; }
 
     __attribute__((noinline)) bool Run(uint32_t readerPark,uint32_t writerPark,unsigned polls,
-        bool localRestoreProbe=false) {
+        bool localRestoreProbe=false,bool serviceProbe=false) {
         using namespace PioneerQwen35;
 #ifndef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
         if (localRestoreProbe) return false;
 #endif
-        const unsigned readerFirst=localRestoreProbe?DataflowRoleReaderCodeAddress:DataflowRoleReaderShimAddress;
-        const unsigned readerLimit=localRestoreProbe?DataflowRoleReaderCodeLimit:DataflowRoleReaderShimLimit;
-        const unsigned writerFirst=localRestoreProbe?DataflowRoleWriterCodeAddress:DataflowRoleWriterShimAddress;
-        const unsigned writerLimit=localRestoreProbe?DataflowRoleWriterCodeLimit:DataflowRoleWriterShimLimit;
+#ifndef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (serviceProbe) return false;
+#endif
+        if (localRestoreProbe && serviceProbe) return false;
+        const bool restoresLocal=localRestoreProbe || serviceProbe;
+        const unsigned readerFirst=restoresLocal?DataflowRoleReaderCodeAddress:DataflowRoleReaderShimAddress;
+        const unsigned readerLimit=restoresLocal?DataflowRoleReaderCodeLimit:DataflowRoleReaderShimLimit;
+        const unsigned writerFirst=restoresLocal?DataflowRoleWriterCodeAddress:DataflowRoleWriterShimAddress;
+        const unsigned writerLimit=restoresLocal?DataflowRoleWriterCodeLimit:DataflowRoleWriterShimLimit;
         if (fState.attempted || !polls || polls>65536
             || (readerPark&3) || readerPark<readerFirst || readerPark>=readerLimit
             || (writerPark&3) || writerPark<writerFirst || writerPark>=writerLimit)
@@ -162,6 +251,9 @@ public:
             || !fViews.Read(Core,DataflowRolePhysicalControl,0x224,first,fGuard)
             || !fViews.Read(Core,DataflowRolePhysicalControl,0x224,second,fGuard) || first!=second) return false;
         fState.resetDisable=first;fState.captured=true;Progress(1);
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (serviceProbe && !InitializeMailbox()) return false;
+#endif
         for (unsigned i=0;i<3;i++) {
             fState.handoffZeroAttempts|=1U<<i;
             if (!WriteHandoff(Held,i,0)) return false;
@@ -184,16 +276,21 @@ public:
         Progress(3);
         if (!CaptureRunningCopies()) return false;
         fState.cancelAttempted=true;
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (serviceProbe) {
+            if (!RunIdleService(polls)) return false;
+        } else
+#endif
         if (!WriteHandoff(Running,2,DataflowRoleSnapshotCancel)) return false;
         bool parked=false;
         for (unsigned n=0;n<polls;n++) {
             uint32_t handoff[3]{};
-            const uint32_t readerDone=localRestoreProbe?uint32_t(PIONEER_Q35_ROLE_RESTORE_READER_DONE)
+            const uint32_t readerDone=restoresLocal?uint32_t(PIONEER_Q35_ROLE_RESTORE_READER_DONE)
                 :uint32_t(DataflowRoleSnapshotReaderCancelled);
-            const uint32_t writerDone=localRestoreProbe?uint32_t(PIONEER_Q35_ROLE_RESTORE_WRITER_DONE)
+            const uint32_t writerDone=restoresLocal?uint32_t(PIONEER_Q35_ROLE_RESTORE_WRITER_DONE)
                 :uint32_t(DataflowRoleSnapshotWriterCancelled);
             if (ReadHandoff(Running,handoff) && handoff[0]==readerDone
-                && handoff[1]==writerDone && handoff[2]==DataflowRoleSnapshotCancel) {
+                && handoff[1]==writerDone && handoff[2]==(serviceProbe?DataflowRoleSnapshotRelease:DataflowRoleSnapshotCancel)) {
                 const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
                 fIO.Pause();
                 const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
@@ -215,6 +312,9 @@ public:
         Progress(44);
         if (!CompareHeldCopies()) return false;
         fState.copiesVerified=true;Progress(5);
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (serviceProbe && !RestoreMailbox()) return false;
+#endif
         for (unsigned i=0;i<3;i++) {
             fState.handoffRestoreAttempts|=1U<<i;
             if (!WriteHandoff(Held,i,fState.handoff[i])) return false;
@@ -229,7 +329,16 @@ public:
     // Called after the containing owner restores the entire saved image fleet.
     bool VerifyAfterImages() {
         uint32_t restored[3]{};
-        const bool okay=fState.complete && ReadHandoff(Held,restored)
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        PioneerQwen35::DataflowRoleMailbox mailbox{};
+        const bool mailboxOkay=!fState.mailboxCaptured || (fState.mailboxRestored
+            && ReadMailbox(Held,mailbox) && !memcmp(&mailbox,fState.mailbox,sizeof(mailbox)));
+#endif
+        const bool okay=fState.complete
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+            && mailboxOkay
+#endif
+            && ReadHandoff(Held,restored)
             && !memcmp(restored,fState.handoff,sizeof(restored)) && ResetDisable(fState.resetDisable)
             && fAdapter.AllRolesHeld(Core);
         if (okay) Progress(7);

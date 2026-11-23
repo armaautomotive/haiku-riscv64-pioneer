@@ -1,0 +1,76 @@
+#!/bin/sh
+# Restricted startup/idle-stop/restore qualification images; offline only.
+set -eu
+[ "$#" = 2 ] || exit 2
+[ "${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_ROLE_SERVICE_PROBE_BUILD:-0}" = 1:1:1 ] || exit 2
+directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+build=$(CDPATH= cd -- "$1" && pwd)
+output=$2
+case "$output" in /*) ;; *) exit 2;; esac
+[ ! -e "$output" ] && [ ! -L "$output" ] || exit 2
+cross="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku"
+umask 077
+mkdir -m 700 "$output"
+sh "$directory/build_qwen35_shared_role_images.sh" "$build" "$output/shared"
+PIONEER_QWEN35_LOCAL_RESTORE_PROBE_BUILD=1 sh "$directory/build_qwen35_local_restore_probe_images.sh" "$build" "$output/local-probe"
+"$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+    -DPIONEER_QWEN35_ROLE_SERVICE_PROBE=1 -I"$directory" \
+    "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/service-shim.o"
+for role in reader writer; do
+    if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
+    else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+    "$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+        --defsym ROLE_SHIM_ADDRESS="$shim" --defsym ROLE_SHIM_LIMIT="$shim_limit" \
+        --defsym ROLE_ADDRESS="$start" --defsym ROLE_LIMIT="$limit" \
+        -e "qwen35_shared_${role}_start" -T "$directory/blackhole_qwen35_shared_role_witness.ld" \
+        "$output/service-shim.o" "$output/shared/shared-roles.o" -o "$output/$role.elf"
+    "$cross-nm" -u "$output/$role.elf" > "$output/$role.imports"
+    test ! -s "$output/$role.imports"
+    "$cross-nm" -n "$output/$role.elf" > "$output/$role.symbols"
+    "$cross-objcopy" -O binary -j .shim "$output/$role.elf" "$output/$role-shim.bin"
+    "$cross-objcopy" -O binary -j .text "$output/$role.elf" "$output/$role-service.bin"
+    # The qualification must use the exact resident role code, not a mock.
+    cmp "$output/$role-service.bin" "$output/shared/$role-code.bin"
+done
+python3 - "$output" <<'PY'
+from pathlib import Path
+from struct import iter_unpack
+import sys
+
+out=Path(sys.argv[1])
+parts=['#pragma once\nnamespace PioneerQwen35 {\n']
+for role,shim,shim_end,start,restore,limit in (
+    ('reader',0x70000,0x70100,0xb0000,0xb4e00,0xb5000),
+    ('writer',0x70100,0x70200,0xb5000,0xb7e00,0xb8000)):
+    startup=(out/f'{role}-shim.bin').read_bytes()
+    service=(out/f'{role}-service.bin').read_bytes()
+    local_restore=(out/'local-probe'/'local-restore'/f'{role}.bin').read_bytes()
+    # The local-probe builder has independently rejected PC-relative control
+    # flow that would escape the relocated restore image.
+    if (not startup or len(startup)%4 or len(startup)>shim_end-shim
+            or not service or len(service)%4 or start+len(service)>restore
+            or not local_restore or len(local_restore)%4 or restore+len(local_restore)>limit):
+        raise SystemExit(f'invalid {role} service/restore placement')
+    symbols={}
+    for line in (out/'local-probe'/'local-restore'/f'{role}.symbols').read_text().splitlines():
+        fields=line.split()
+        if len(fields)==3 and fields[1] in ('T','t'):
+            symbols[fields[2]]=int(fields[0],16)
+    original=f'qwen35_restore_{role}_start'
+    original_park=symbols.get(original+'_park',-1)
+    if symbols.get(original)!=shim or not shim<=original_park<shim+len(local_restore):
+        raise SystemExit(f'invalid {role} restore park symbol')
+    code=service+bytes(restore-start-len(service))+local_restore
+    cap=role.capitalize()
+    parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}RestoreAddress=0x{restore:08x}U;\n')
+    parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}ParkAddress=0x{restore+original_park-shim:08x}U;\n')
+    for kind,data in (('Shim',startup),('Code',code)):
+        parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}{kind}Words[]={{\n')
+        parts.extend(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I',data))
+        parts.append('};\n')
+    (out/f'{role}-composite.bin').write_bytes(code)
+parts.append('}\n')
+(out/'PioneerQwen35RoleServiceProbeImages.h').write_text(''.join(parts),encoding='ascii')
+PY
+shasum -a 256 "$output/reader-shim.bin" "$output/writer-shim.bin" "$output/reader-composite.bin" "$output/writer-composite.bin" "$output/PioneerQwen35RoleServiceProbeImages.h"
+echo 'restricted service probe images are offline only; no hardware authority'
