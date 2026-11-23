@@ -33,12 +33,12 @@ struct MockQueue {
 			At(base+16) = At(base);
 			At(base+20) = (At(base+4)+1)%8; At(base+24)++;
 			uint32_t message = At(request);
-			assert(message == 0x34 || message == 0x52 || message == 0x54 || message == 0xa0);
+			assert(message == 0x34 || message == 0x52 || message == 0x54 || message == 0xa0 || message == 0x90);
 			if (message == 0x52 && !ignoreBusy) clock = 1350;
 			if (message == 0x54 && !ignoreIdle) clock = 800;
 			At(response) = badReply ? 0xff : 0;
 			At(response+4) = message == 0x34 ? clock : 0; At(response+8) = message == 0x34 ? mode : 0;
-			if (message == 0xa0 && statePayload) At(response+4)=0x1234;
+			if ((message == 0xa0 || message == 0x90) && statePayload) At(response+4)=0x1234;
 			if (changed) At(base+4) = (At(base+4)+2)%8;
 		}
 		return At(a);
