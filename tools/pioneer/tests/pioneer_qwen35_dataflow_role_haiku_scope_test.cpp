@@ -94,6 +94,9 @@ struct PioneerSessionIO {
     bool SharedFaultCoreSettled(unsigned,const DataflowWorkerSnapshot&);
     bool SharedCoreIdleForWrite(unsigned,unsigned,unsigned);
     bool SharedStopAndHoldAll(unsigned&,unsigned&);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool SharedTakeoverResetRequired();
+#endif
     bool SharedRestoreRolesHeld();
     bool SharedVerifyRolesAfterResidentRestore();
     bool SharedFinalizeBeforeResume();

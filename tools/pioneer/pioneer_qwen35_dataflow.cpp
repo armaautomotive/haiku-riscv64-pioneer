@@ -18,6 +18,9 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowModelProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowProtocol.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerRecoveryProtocol.h"
+#include "../../src/add-ons/kernel/drivers/misc/BlackholeAsicReset.h"
 #include "../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "PioneerModelWeightCache.h"
 #include "PioneerQwen35DataflowGraphWorkspace.h"
@@ -395,10 +398,45 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 	return D::DataflowRecoveryRetry(retry,4);
 }
 
+// PIONEER_QWEN35_LIVE_RESET_CLIENT_BEGIN
+static bool ResetStoppedRewrite(int fd)
+{
+	tt_pioneer_driver_reload before{};before.version=1;
+	if (!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&before,sizeof(before))
+		|| before.driver!=TT_QWEN35_DATAFLOW_DRIVER || !before.build_tag || !before.generation
+		|| !before.cold || before.quiesced || !before.active_owner || before.open_count!=1) return false;
+	auto verifyIdle=[&](uint64_t expectedGeneration,bool exact) {
+		tt_pioneer_driver_reload after{};after.version=1;
+		return Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&after,sizeof(after))
+			&& after.driver==TT_QWEN35_DATAFLOW_DRIVER && after.build_tag==before.build_tag
+			&& after.generation && after.generation!=before.generation
+			&& (!exact || after.generation==expectedGeneration)
+			&& !after.cold && !after.quiesced && !after.active_owner && after.open_count==1;
+	};
+	for (unsigned attempt=0;attempt<4;attempt++) {
+		tt_pioneer_recovery_run reset{};reset.version=1;
+		reset.expected_tag=before.build_tag;reset.expected_generation=before.generation;
+		// A lost ioctl reply may follow successful reset completion. Recheck
+		// the guard state; never issue a second request on an unknown reply.
+		if (!Call(fd,TT_PCI_PROBE_RECOVERY_RUN,&reset,sizeof(reset))) return verifyIdle(0,false);
+		if (reset.operation_status==B_OK)
+			return reset.stage==PIONEER_RECOVERY_STAGE_COMPLETE && reset.build_tag==before.build_tag
+				&& reset.new_generation && verifyIdle(reset.new_generation,true);
+		const bool pending=reset.operation_status==B_DEV_NOT_READY
+			&& ((reset.stage==PIONEER_RECOVERY_STAGE_ASIC_RESET && reset.detail==BLACKHOLE_ASIC_RESET_TIMEOUT)
+				|| reset.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE);
+		if (!pending || attempt==3 || snooze(1000000)!=B_OK) return false;
+	}
+	return false;
+}
+// PIONEER_QWEN35_LIVE_RESET_CLIENT_END
+
+// PIONEER_QWEN35_CLOSE_CLIENT_BEGIN
 static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
-	bool& serviceClosed)
+	bool& serviceClosed,bool& resetCompleted)
 {
 	serviceClosed=!installAttempted;
+	resetCompleted=false;
 	if (!installAttempted) return true;
 	for (unsigned attempt=0;attempt<3;attempt++) {
 		tt_qwen35_dataflow_request request{};
@@ -410,6 +448,12 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 			&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED
 			&& !request.recovery_required;
 		if (serviceClosed) return true;
+		if (request.result==TT_QWEN35_DATAFLOW_RESULT_RESET_REQUIRED
+			&& request.state==TT_QWEN35_DATAFLOW_STATE_FAULTED && request.recovery_required) {
+			resetCompleted=ResetStoppedRewrite(fd);
+			serviceClosed=resetCompleted;
+			return resetCompleted;
+		}
 		if (request.result || request.recovery_required || request.reserved[0]
 			|| request.reserved[1] || request.reserved[2]) {
 			fprintf(stderr,"P100A_Q35_DATAFLOW close_failed result=%u state=%u "
@@ -445,6 +489,7 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 				&& !request.recovery_required);
 	return serviceClosed;
 }
+// PIONEER_QWEN35_CLOSE_CLIENT_END
 
 static bool Generate(int fd,const Vocabulary& vocabulary,
 	const std::vector<unsigned>& prompt,unsigned maxNewTokens,unsigned requestId,
@@ -580,6 +625,7 @@ static bool Generate(int fd,const Vocabulary& vocabulary,
 	return true;
 }
 
+// PIONEER_QWEN35_END_CLIENT_BEGIN
 static bool End(int fd,bool bankOpen,bool spanOpen,bool authorityBound,
 	bool installAttempted)
 {
@@ -594,23 +640,26 @@ static bool End(int fd,bool bankOpen,bool spanOpen,bool authorityBound,
 		okay=ended && okay;
 	}
 	RecoverRewrite(fd,installAttempted);
-	bool serviceClosed=false;
+	bool serviceClosed=false,resetCompleted=false;
 	const bool closeOkay=CloseRewrite(fd,authorityBound,installAttempted,
-		serviceClosed);
+		serviceClosed,resetCompleted);
 	okay=closeOkay && okay;
 	tt_q38_bank_session session{};
 	session.version=TT_Q38_BANK_PROTOCOL;
-	const bool bankEnded=!bankOpen || (okay
+	const bool bankEnded=!bankOpen || (okay && resetCompleted) || (okay
 		&& Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
 		&& session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored
 		&& session.result.host_released && !session.result.cold);
-	if (bankOpen) printf("P100A_Q35_DATAFLOW unload_clean=%u state=%u active=%u "
+	if (bankOpen && resetCompleted) printf("P100A_Q35_DATAFLOW unload_clean=%u reset_completed=1 service_closed=%u\n",
+		unsigned(bankEnded),unsigned(serviceClosed));
+	else if (bankOpen) printf("P100A_Q35_DATAFLOW unload_clean=%u state=%u active=%u "
 		"cold=%u service_closed=%u\n",unsigned(bankEnded),
 		session.result.state,session.result.active,session.result.cold,
 		unsigned(serviceClosed));
 	return bankEnded && okay;
 }
+// PIONEER_QWEN35_END_CLIENT_END
 
 // PIONEER_QWEN35_EXCLUSIVE_CLIENT_BEGIN
 static int OpenExclusiveDataflowDriver()

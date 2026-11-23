@@ -101,7 +101,8 @@ enum DataflowServiceResult {
 	DataflowServiceDenseLayerFailed=28,
 	DataflowServiceDecoderSequenceFailed=29,
 	DataflowServiceArgmaxFailed=30,
-	DataflowServiceGenerationFailed=31
+	DataflowServiceGenerationFailed=31,
+	DataflowServiceResetRequired=32
 };
 
 enum DataflowServiceDiagnosticStage : unsigned {
@@ -145,6 +146,9 @@ class DataflowServiceOwner {
 	bool fCloseRestored=false;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool fSharedAttempted=false;
+#endif
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool fStoppedResetReady=false;
 #endif
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
 		DataflowCoreCount,0,0,0,0};
@@ -308,6 +312,9 @@ public:
 		; }
 	bool Closed() const { return fPhase==PhaseClosed; }
 	bool Started() const { return fPhase!=PhaseEmpty; }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool StoppedResetReady() const { return fStoppedResetReady && fPhase==PhaseFaulted; }
+#endif
 	unsigned NextSequence() const { return fProjectionOwner.NextSequence(); }
 	const DataflowServiceDiagnostic& Diagnostic() const { return fDiagnostic; }
 	const DataflowOwnerDiagnostic& OwnerDiagnostic() const
@@ -714,6 +721,9 @@ public:
 	DataflowServiceResult Close(IO& io)
 	{
 		if (fPhase==PhaseClosed) return DataflowServiceClosed;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		if (StoppedResetReady()) return DataflowServiceResetRequired;
+#endif
 		if (fPhase!=PhaseReady && fPhase!=PhaseFaulted && fPhase!=PhaseInstalling
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 			&& fPhase!=PhaseGraphClosing
@@ -735,6 +745,13 @@ public:
 				return DataflowServiceStopAuditFailed;
 			}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+			// A stopped takeover intentionally discarded old role RAM. Keep
+			// the owner alive until the reset/reinitialization transaction.
+			if (fSharedAttempted && io.SharedTakeoverResetRequired()) {
+				fStoppedResetReady=true;return DataflowServiceResetRequired;
+			}
+#endif
 			// Must be retryable and leave every core held on any failure.
 			if (fSharedAttempted && !io.SharedRestoreRolesHeld())
 				return DataflowServiceRestoreFailed;

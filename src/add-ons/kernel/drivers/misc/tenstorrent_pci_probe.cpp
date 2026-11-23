@@ -3411,6 +3411,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool SharedFaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool SharedCoreIdleForWrite(unsigned core,unsigned address,unsigned bytes);
 	bool SharedStopAndHoldAll(unsigned& failedStage,unsigned& failedCore);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool SharedTakeoverResetRequired();
+#endif
 	bool SharedRestoreRolesHeld();
 	bool SharedVerifyRolesAfterResidentRestore();
 	bool SharedFinalizeBeforeResume();
@@ -9778,6 +9781,13 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 		} else
 	#endif
 		request.result=context->CloseDataflowRewrite();
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		if (request.result==PioneerQwen35::DataflowServiceResetRequired
+			&& context->qwen35DataflowService && context->qwen35DataflowService->StoppedResetReady()) {
+			tt_resident_session_result retained={};
+			RetainQ38DispatchOwner(*context,retained);
+		}
+#endif
 	} else if (request.action==TT_QWEN35_DATAFLOW_ACTION_RECOVER) {
 	#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		if (PioneerQ35GraphOwnerRetained(context->qwen35GraphOwner)) {
@@ -11121,7 +11131,7 @@ Qwen35RecoveryReauditLocked(PioneerStoreContext* context,tt_pioneer_recovery_run
 // repeat the ASIC reset or an uncertain PCI unreserve through this path.
 static status_t
 Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* context,
-	pioneer_driver_recovery_guard_v2_info* guard,tt_pioneer_recovery_run& r)
+	pioneer_driver_recovery_guard_v2_info* guard,tt_pioneer_recovery_run& r,bool keepOwnerCookie)
 {
 	const uint64 ticket=context->recoveryFinishTicket;
 	const PioneerDriverRecoveryProof proof=context->recoveryFinishProof;
@@ -11179,7 +11189,8 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 	}
 	sReloadGeneration=nextGeneration;
 	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
-	delete context;owner->magic=0;delete owner;
+	delete context;
+	if (!keepOwnerCookie) { owner->magic=0;delete owner; }
 	sColdRecoveryRequired.ClearAfterVerifiedRecovery();
 	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
 	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return B_OK;
@@ -11194,10 +11205,21 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 {
 	if (!sReloadGuard || !sReloadGeneration || r.expected_tag!=PIONEER_DRIVER_BUILD_TAG
 		|| r.expected_generation!=sReloadGeneration) return B_BAD_VALUE;
+	bool liveTakeoverOwner=false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	// A fully stopped takeover can reset through its own live fd. The
+	// borrowed ioctl scope must have detached before recovery may free state.
+	liveTakeoverOwner=sRuntimeOwner && sRuntimeOwner==inspector && !inspector->finalFreeRetained
+		&& sQwen35ExclusiveCookie==inspector && sBankStorageOnly && inspector->context
+		&& inspector->context->bankStorageOnly && inspector->context->dispatchOwnerRetained
+		&& inspector->context->qwen35DataflowService
+		&& inspector->context->qwen35DataflowService->StoppedResetReady()
+		&& !inspector->context->io.qwen35BorrowedRoleScope;
+#endif
 	if (!sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
-		|| !sRuntimeOwner || sRuntimeOwner==inspector || inspector->context
-		|| !sRuntimeOwner->finalFreeRetained || !sRuntimeOwner->context
-		|| !sRuntimeOwner->context->dispatchOwnerRetained) return B_BUSY;
+		|| !sRuntimeOwner || !sRuntimeOwner->context || !sRuntimeOwner->context->dispatchOwnerRetained
+		|| (!liveTakeoverOwner && (sRuntimeOwner==inspector || inspector->context
+			|| !sRuntimeOwner->finalFreeRetained))) return B_BUSY;
 	PioneerProbeCookie* owner=sRuntimeOwner;
 	PioneerStoreContext* context=owner->context;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
@@ -11264,7 +11286,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		return failure;
 	};
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-	if (context->recoveryFinishPending) return Qwen35RecoveryFinishLocked(owner,context,guard,r);
+	if (context->recoveryFinishPending) return Qwen35RecoveryFinishLocked(owner,context,guard,r,liveTakeoverOwner);
 #endif
 	PioneerPciePayloadSnapshot payload{},payloadCheck{};
 	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
@@ -11362,7 +11384,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	context->recoveryFinishTicket=ticket;context->recoveryFinishProof=proof;
 	context->recoveryFinishPending=true;
-	return Qwen35RecoveryFinishLocked(owner,context,guard,r);
+	return Qwen35RecoveryFinishLocked(owner,context,guard,r,liveTakeoverOwner);
 #else
 	// Unreachable: this build rejects recovery before obtaining a ticket.
 	return fail(B_NOT_ALLOWED);

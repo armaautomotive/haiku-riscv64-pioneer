@@ -111,6 +111,9 @@ public:
         && !fTakeover.ResetRequired()
 #endif
         ; }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool TakeoverResetRequired() const { return fTakeover.ResetRequired(); }
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
     // the host BAR views without restoring those stale snapshots. The reset
@@ -519,6 +522,12 @@ bool PioneerSessionIO::SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
         && qwen35DataflowContext->qwen35SharedRoleBinding->StopAndHoldAll(stage,core);
 }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+bool PioneerSessionIO::SharedTakeoverResetRequired() {
+    return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
+        && qwen35DataflowContext->qwen35SharedRoleBinding->TakeoverResetRequired();
+}
+#endif
 bool PioneerSessionIO::SharedRestoreRolesHeld() {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
         && qwen35DataflowContext->qwen35SharedRoleBinding->RestoreRolesHeld();

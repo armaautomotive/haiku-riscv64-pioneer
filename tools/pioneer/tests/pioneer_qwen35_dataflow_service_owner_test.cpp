@@ -373,6 +373,9 @@ struct MockDataflowIO {
 		++roleStops;
 		return StopAndAuditAll(stage,core);
 	}
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool SharedTakeoverResetRequired() { return false; }
+#endif
 	bool SharedRestoreRolesHeld() {
 		++roleRestores;
 		for (unsigned core=0;core<DataflowCoreCount;core++) if (!held[core]) return false;

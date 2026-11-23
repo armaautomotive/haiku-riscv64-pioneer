@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112100010121)
+#ifdef TEST_LIVE_TAKEOVER
+#ifndef TEST_GRAPH_RECOVERY
+#error Live takeover recovery test requires the shared-role and graph owners
+#endif
+#define PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS 1
+#endif
 #ifdef TEST_GRAPH_RECOVERY
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
@@ -91,6 +97,9 @@ struct BlackholeAsicResetResult {
 struct FakeProfile {};
 struct PioneerSessionIO {
 	bool postResetDisposeComplete=false;
+#ifdef TEST_LIVE_TAKEOVER
+	void* qwen35BorrowedRoleScope=nullptr;
+#endif
 	uint32 CardRead(uint16,uint8){return 0;} uint32 RootRead(uint16,uint8){return 0;}
 	void CardWrite(uint16,uint8,uint32){}
 	status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& p) {
@@ -139,6 +148,9 @@ struct PioneerPostResetMapping {
 	bool AuditHostDma(){return Step(PIONEER_RECOVERY_STAGE_HOST_DMA);}
 	bool Close(){return Step(PIONEER_RECOVERY_STAGE_CLOSE_MAPPING);}
 };
+#ifdef TEST_LIVE_TAKEOVER
+struct FakeDataflowService { bool ready=true;bool StoppedResetReady()const{return ready;} };
+#endif
 struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
@@ -149,6 +161,10 @@ struct PioneerStoreContext {
 	FakeSharedRoleOwner sharedRoleOwner;FakeSharedRoleOwner* qwen35SharedRoleBinding=&sharedRoleOwner;
 #endif
 	PioneerRecoveryDbiSnapshot recoveryDbi;
+#ifdef TEST_LIVE_TAKEOVER
+	bool bankStorageOnly=true;
+	FakeDataflowService service;FakeDataflowService* qwen35DataflowService=&service;
+#endif
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
 	FakeProfile profile;FakePciResult pci;PioneerSessionIO io;
 	FakePciResult& Pci(){return pci;}
@@ -177,6 +193,9 @@ static bool PioneerQ35GraphOwnerReleaseAfterReset(FakeGraphOwner* owner,
 struct PioneerProbeCookie {uint32 magic=0x50313030;int team=17;PioneerStoreContext* context=nullptr;bool finalFreeRetained=false;
 	~PioneerProbeCookie(){cookieDeleted++;}};
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
+#ifdef TEST_LIVE_TAKEOVER
+static PioneerProbeCookie* sQwen35ExclusiveCookie=nullptr;
+#endif
 struct FakeCard {int bus=0,device=0,function=0;} sCard;[[maybe_unused]] static int sCookie;
 #define TT_PCI_PROBE_DEVICE "fake"
 struct FakePci {status_t unreserve_device(int,int,int,const char*,void*) {
@@ -199,6 +218,9 @@ static void Setup() {
 	failGraphRelease=failSharedRoleRelease=graphReleased=false;graphReleases=sharedRoleReleases=0;
 #endif
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
+	#ifdef TEST_LIVE_TAKEOVER
+	sQwen35ExclusiveCookie=nullptr;
+	#endif
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
 static void Cleanup(){if(sRuntimeOwner){delete sRuntimeOwner->context;delete sRuntimeOwner;sRuntimeOwner=nullptr;}}
@@ -330,6 +352,40 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
 	Cleanup();Setup();r=Request();r.expected_generation=2;
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BAD_VALUE && trace.empty());
-	Cleanup();puts("PASS actual recovery operation: ordered success, every injected stage failure stays cold, owner/FD/generation admission; SIMULATED HARDWARE ONLY");
+	Cleanup();
+#ifdef TEST_LIVE_TAKEOVER
+	Setup();auto* live=sRuntimeOwner;live->finalFreeRetained=false;sQwen35ExclusiveCookie=live;
+	live->context->io.qwen35BorrowedRoleScope=reinterpret_cast<void*>(1);r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
+	live->context->io.qwen35BorrowedRoleScope=nullptr;live->context->service.ready=false;r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
+	live->context->service.ready=true;sQwen35ExclusiveCookie=nullptr;r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
+	sQwen35ExclusiveCookie=live;r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && !sRuntimeOwner && !sColdRecoveryRequired
+		&& contextDeleted==1 && !cookieDeleted && live->magic==0x50313030 && !live->context
+		&& sQwen35ExclusiveCookie==live && sOpenCookies==1);
+	sQwen35ExclusiveCookie=nullptr;delete live;
+	Setup();live=sRuntimeOwner;live->finalFreeRetained=false;sQwen35ExclusiveCookie=live;
+	failSharedRoleRelease=true;r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner==live && live->context && !cookieDeleted && ticketPending && sColdRecoveryRequired);
+	failSharedRoleRelease=false;r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !live->context && !cookieDeleted && !sColdRecoveryRequired
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	sQwen35ExclusiveCookie=nullptr;delete live;
+	Setup();live=sRuntimeOwner;live->finalFreeRetained=false;sQwen35ExclusiveCookie=live;resetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& live->context->recoveryResetPending && ticketPending);
+	// If the live fd is closed mid-wait, a separate inspector may resume the
+	// same reset ticket and retire the retained cookie without a second reset.
+	live->finalFreeRetained=true;sQwen35ExclusiveCookie=nullptr;resetTimeout=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && cookieDeleted==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+#endif
+	puts("PASS actual recovery operation: ordered success, every injected stage failure stays cold, owner/FD/generation admission; SIMULATED HARDWARE ONLY");
 #endif
 }

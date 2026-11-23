@@ -11,6 +11,7 @@
 
 struct DedicatedIO : MockDataflowIO {
     unsigned releaseAttempts=0;
+    bool allowStop=false;
     bool SharedStartCore(unsigned core) {
         assert(core==releaseAttempts++ && roleArmed);
         if (!StartCore(core)) return false;
@@ -23,8 +24,9 @@ struct DedicatedIO : MockDataflowIO {
     bool SharedPrepareRoleStacks(unsigned)=delete;
     bool SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
         stage=17;core=releaseAttempts?releaseAttempts-1:DataflowCoreCount;
-        ++roleStops;return false; // physical dedicated stop is not wired yet
+        ++roleStops;return allowStop;
     }
+    bool SharedTakeoverResetRequired() { return true; }
 };
 int main() {
     assert(!DataflowPciRunningWriteRange(DataflowRoleSnapshotHandoffAddress
@@ -40,10 +42,18 @@ int main() {
     }
     {
         auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
+        assert(owner->Install(image,*io)==DataflowServiceComplete);io->allowStop=true;
+        assert(owner->Close(*io)==DataflowServiceResetRequired && owner->StoppedResetReady());
+        assert(owner->Close(*io)==DataflowServiceResetRequired && io->roleStops==1 && !io->restoreCount);
+    }
+    {
+        auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
         io->failStartCore=3;
         assert(owner->Install(image,*io)==DataflowServiceStartFailed);
         assert(io->releaseAttempts==4 && io->roleStarts==3);
         assert(owner->Close(*io)==DataflowServiceStopAuditFailed && io->restoreCount==0);
+        io->allowStop=true;
+        assert(owner->Close(*io)==DataflowServiceResetRequired && owner->StoppedResetReady());
     }
     std::puts("PASS dedicated service starts 120 workers without snapshot handoffs and retains failed starts; SIMULATED ONLY");
 }
