@@ -36,7 +36,7 @@ struct FakeStopIO {
         held[core]=true;return true;
     }
     bool HoldObserved(unsigned core) { return held[core]; }
-    bool AllRolesHeld(unsigned core) { return held[core]; }
+    bool AllRolesHeldForStop(unsigned core) { return held[core]; }
     void Pause() {}
 };
 static bool Run(DataflowExclusiveRoleStop& owner,const bool* released,const bool* confirmed,

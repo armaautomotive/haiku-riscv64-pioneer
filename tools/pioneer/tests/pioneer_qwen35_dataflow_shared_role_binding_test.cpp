@@ -42,6 +42,21 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         assert(!binding.fTakeover.Stage(binding.RoleImage(),io));
         return binding.fTakeover.ResetRequired();
     }
+    static void AllowSimulatedRelease(PioneerQwen35RoleBorrowedScopeWitness& scope) {
+        scope.fTestDedicatedReleaseAllowed=true;
+    }
+    static bool Attempted(const PioneerQwen35SharedRoleBinding& binding,unsigned core) {
+        return binding.fReleaseAttempted[core];
+    }
+    static bool Confirmed(const PioneerQwen35SharedRoleBinding& binding,unsigned core) {
+        return binding.fReleaseConfirmed[core];
+    }
+    static bool AuditHeldForStop(PioneerQwen35SharedRoleBinding& binding,unsigned core) {
+        auto* scope=binding.Scope();
+        if (!scope) return false;
+        PioneerQwen35SharedRoleBinding::Adapter io(binding.fContext.io,*scope,binding.fViews);
+        return io.AllRolesHeldForStop(core);
+    }
 #endif
     static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
         Guard guard;
@@ -317,6 +332,79 @@ static void ExerciseObservedStageMisroute(PioneerSessionIO& io)
     io.postResetDisposeComplete=false;io.simulateArc=io.simulateHdma=io.firmwareMatches=false;
     gAllowWrite=false;
 }
+
+// The injected authorization is only a mock proof, but the binding, role
+// image staging, release ledger and PCI adapter are the real implementation.
+static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    auto* binding=context->qwen35SharedRoleBinding;
+    assert(binding && io.qwen35BorrowedRoleScope);
+    io.runtimeCore=7;io.simulateArc=io.simulateHdma=io.firmwareMatches=true;
+    io.hdmaSourceStable=true;io.reset=0x47800;io.resetReads=0;io.sharedResetWrites=0;
+    std::fill(std::begin(io.tileReset),std::end(io.tileReset),0x47800);
+    io.perCoreReset=true;io.dropReleaseCore=failCore;
+    gAllowWrite=true;gPerCoreRoleWindows=true;gRoleWindowCore=gRoleSelectedCore=io.runtimeCore;
+    assert(io.SharedCaptureAndStageHeld());
+    assert(!io.SharedArmAndBeginRelease()); // real proof remains unavailable
+    PioneerQ35SharedRoleBindingTestAccess::AllowSimulatedRelease(*io.qwen35BorrowedRoleScope);
+    assert(io.SharedArmAndBeginRelease());
+    assert(!io.SharedStartCore(1) && !PioneerQ35SharedRoleBindingTestAccess::Attempted(*binding,1));
+    const unsigned successful=failCore<DataflowBarrierWorkers?failCore:DataflowBarrierWorkers;
+    for (unsigned core=0;core<successful;core++) {
+        assert(io.SharedStartCore(core));
+        assert(PioneerQ35SharedRoleBindingTestAccess::Attempted(*binding,core)
+            && PioneerQ35SharedRoleBindingTestAccess::Confirmed(*binding,core));
+    }
+    if (failCore<DataflowBarrierWorkers) {
+        assert(!io.SharedStartCore(failCore)
+            && PioneerQ35SharedRoleBindingTestAccess::Attempted(*binding,failCore)
+            && !PioneerQ35SharedRoleBindingTestAccess::Confirmed(*binding,failCore));
+        assert(!io.SharedStartCore(failCore) && !io.SharedStartCore(failCore+1));
+        assert(io.sharedResetWrites==failCore+1);
+    } else {
+        assert(io.sharedResetWrites==DataflowBarrierWorkers && !io.SharedStartCore(0));
+    }
+    assert(io.SelectRuntimeCore((io.runtimeCore+1)%DataflowBarrierWorkers));
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        assert(io.tileReset[core]==(core<successful?0x6000U:0x47800U));
+        if (core>failCore && failCore<DataflowBarrierWorkers)
+            assert(!PioneerQ35SharedRoleBindingTestAccess::Attempted(*binding,core));
+    }
+    assert(!io.qwen35BorrowedRoleScope->ProveRoleDedicatedObservedStage(io));
+    // Close is no longer in the capture phase. A held tile can still be
+    // inspected through the actual scope; a running tile or changed firmware
+    // cannot satisfy the held audit.
+    context->qwen35DataflowService->capturePending=false;
+    assert(!PioneerQ35SharedRoleBindingTestAccess::AuditHeldForStop(*binding,0));
+    if (failCore<DataflowBarrierWorkers) {
+        assert(PioneerQ35SharedRoleBindingTestAccess::AuditHeldForStop(*binding,failCore));
+        io.firmwareMatches=false;
+        assert(!PioneerQ35SharedRoleBindingTestAccess::AuditHeldForStop(*binding,failCore));
+        io.firmwareMatches=true;
+    }
+    context->qwen35DataflowService->capturePending=true;
+    unsigned stage=0,core=0;
+    assert(!io.SharedStopAndHoldAll(stage,core));
+    assert(stage==(failCore<DataflowBarrierWorkers?15U:8U));
+    assert(binding->TakeoverResetRequired());
+    gPerCoreRoleWindows=false;for (auto& windows:gRoleTileWindows) windows.clear();
+    io.perCoreReset=false;io.dropReleaseCore=UINT32_MAX;io.reset=0x47800;
+    PioneerDriverRecoveryProof proof{};
+    proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+    proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
+    proof.reset_generation=proof.firmware_generation=9;io.postResetDisposeComplete=true;
+    assert(PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,9));
+    io.postResetDisposeComplete=false;io.simulateArc=io.simulateHdma=io.firmwareMatches=false;
+    io.sharedResetWrites=0;gAllowWrite=false;
+}
+static void ExerciseCompleteReleaseBinding(PioneerSessionIO& io) {
+    ExerciseReleaseBinding(io,DataflowBarrierWorkers);
+}
+static void ExercisePartialReleaseBinding(PioneerSessionIO& io) {
+    ExerciseReleaseBinding(io,17);
+}
 #endif
 
 int main()
@@ -347,6 +435,10 @@ int main()
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     ResetMaps();gBorrowedScopeHook=ExerciseObservedStageMisroute;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    ResetMaps();gBorrowedScopeHook=ExerciseCompleteReleaseBinding;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    ResetMaps();gBorrowedScopeHook=ExercisePartialReleaseBinding;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
 #endif
 #ifdef TEST_SHARED_POST_RESET
     gBorrowedScopeHook=ExerciseResetRetirement;
@@ -356,7 +448,7 @@ int main()
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
-    std::puts("PASS dedicated per-tile staging, misroute rejection and denied release using actual role binding; SIMULATED ONLY");
+    std::puts("PASS dedicated per-tile staging and real release ledger with mock proof; SIMULATED ONLY");
 #else
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");
 #endif

@@ -588,6 +588,18 @@ public:
 #endif
             && fGuard.ProveSelectedRoute(core);
     }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    // Final shutdown audit is read-only and happens after staging admission
+    // was revoked. Samples are not a fleet-wide exclusion guarantee.
+    bool AllRolesHeldForStop(unsigned core) {
+        return fScope.ProveRoleDedicatedHeldStatusAllowed(fIO,core)
+            && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel()
+            && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
+            && SelectedHeldAndQuiet(core)
+            && fScope.ProveRoleDedicatedHeldStatusAllowed(fIO,core)
+            && fGuard.ProveSelectedRoute(core);
+    }
+#endif
     bool DefaultBootRouting(unsigned core) {
         using namespace PioneerQwen35;
         if (!Select(core) || !fScope.ProveRoleBootRoutingInspectionAllowed(fIO,core)

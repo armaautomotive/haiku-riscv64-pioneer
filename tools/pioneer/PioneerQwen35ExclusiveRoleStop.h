@@ -80,7 +80,7 @@ public:
         }
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             if (fHeldBeforeStop[core] && !io.UnconfirmedReleaseHeld(core)) return fail(15,core);
-            if (!io.AllRolesHeld(core)) return fail(14,core);
+            if (!io.AllRolesHeldForStop(core)) return fail(14,core);
         }
         stage=0;failedCore=DataflowBarrierWorkers;return true;
     }

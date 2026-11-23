@@ -5,6 +5,9 @@
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Role scope witness must only be compiled into the non-loadable graph/recovery driver
 #endif
+#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST) && defined(__riscv)
+#error Mock role authorization must not be compiled for the Pioneer
+#endif
 #include "PioneerQwen35DataflowRoleHaikuMap.h"
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
 #include "PioneerQwen35DataflowNocSafetySample.h"
@@ -29,6 +32,10 @@ class PioneerQwen35RoleBorrowedScopeWitness {
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     friend class PioneerQwen35SharedRoleBinding;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
+    friend struct PioneerQ35SharedRoleBindingTestAccess;
+    bool fTestDedicatedReleaseAllowed=false;
+#endif
 #endif
     PioneerProbeCookie* fCookie;
     PioneerStoreContext* fContext;
@@ -172,6 +179,12 @@ public:
     bool ProveRoleDedicatedObservedStage(PioneerSessionIO& io) const {
         return fDedicatedStageObserved && ProveRoleStatusInspectionAllowed(io);
     }
+    // Read-only, point-in-time authorization for the final stop audit. The
+    // staging admission ends at first release and cannot authorize shutdown.
+    bool ProveRoleDedicatedHeldStatusAllowed(PioneerSessionIO& io,unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && ProveExclusiveRewrite(io)
+            && io.SharedRoleFirmwareMatches() && io.DataflowPanelMappingStable();
+    }
 #endif
     // This admits fixed status reads only. The adapter must separately prove
     // the fleet is held, verify the selected route, and inspect both hardware
@@ -225,7 +238,16 @@ public:
     // This independent dedicated-takeover proof must cover exclusive
     // ownership, role/compute stop and hold, and reset/reinitialization for
     // every partial launch; it does not rely on snapshot-path recovery.
-    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO& io,unsigned core) const {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
+        // Test-only injected proof: exercises the real binding and release
+        // ledger against mock MMIO. It is never a physical safety claim.
+        return fTestDedicatedReleaseAllowed && core<PioneerQwen35::DataflowBarrierWorkers
+            && ProveRoleStatusInspectionAllowed(io);
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
 #endif
     // A reset read alone cannot rule out a delayed posted release write. This
     // must prove that the particular attempted write has drained, and that no

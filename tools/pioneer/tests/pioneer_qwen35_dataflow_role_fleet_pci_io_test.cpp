@@ -23,7 +23,11 @@ struct FleetPciTestScope {
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool dedicatedRelease=false;
     bool dedicatedObservedStage=false;
+    bool dedicatedHeldStatus=true;
     bool ProveRoleDedicatedObservedStage(PioneerSessionIO&) const { return dedicatedObservedStage; }
+    bool ProveRoleDedicatedHeldStatusAllowed(PioneerSessionIO&,unsigned core) const {
+        return dedicatedHeldStatus && core<DataflowBarrierWorkers;
+    }
     mutable unsigned dedicatedChecks=0;
     unsigned dedicatedFailAt=UINT32_MAX;
     unsigned dedicatedDisableClockAt=UINT32_MAX;
@@ -117,6 +121,19 @@ int main()
     PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,decltype(views)> io(context.io,scope,views);
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.AllRolesHeld(core) && io.DefaultBootRouting(core) && io.LocalRamStable(core));
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    // The final stop audit uses status admission even after stage access has
+    // been revoked; it must still reject unsafe or inaccessible samples.
+    scope.held=false;scope.dedicatedObservedStage=false;
+    assert(!io.AllRolesHeld(7) && io.AllRolesHeldForStop(7));
+    scope.dedicatedHeldStatus=false;assert(!io.AllRolesHeldForStop(7));
+    scope.dedicatedHeldStatus=true;context.io.reset=0x6000;
+    assert(!io.AllRolesHeldForStop(7));
+    context.io.reset=0x47800;context.io.nocConfig[0]=1U<<12;
+    context.io.resetReadsClockDisabled=0;
+    assert(!io.AllRolesHeldForStop(7) && !context.io.resetReadsClockDisabled);
+    context.io.nocConfig[0]=0;scope.held=true;
+#endif
     for (unsigned noc=0;noc<2;noc++) {
         context.io.nocConfig[noc]=1U<<12;
         const unsigned previousReads=context.io.resetReads;

@@ -68,6 +68,11 @@ struct PioneerSessionIO {
     mutable unsigned resetReads=0,resetReadsClockDisabled=0;
     int resetChangeAt=-1;
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false,disableClockAfterRelease=false;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    bool perCoreReset=false;
+    uint32_t tileReset[DataflowBarrierWorkers]{};
+    unsigned dropReleaseCore=UINT32_MAX;
+#endif
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff roleHandoffs[DataflowBarrierWorkers]{};
     unsigned handoffReads=0,handoffChangeAt=UINT32_MAX;
@@ -84,6 +89,7 @@ struct PioneerSessionIO {
         if (core>=DataflowBarrierWorkers) return false;
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         SelectRoleTestWindows(runtimeCore,core);
+        if (perCoreReset) { tileReset[runtimeCore]=reset;reset=tileReset[core]; }
 #endif
         ++selectCalls; runtimeCore=core; tlbOverride=false; tlb0Override=false; return true;
     }
@@ -148,7 +154,12 @@ struct PioneerSessionIO {
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
     uint32_t RuntimePcRead() const { return computePc; }
     bool SharedRoleReleaseReset() {
-        ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000;
+        ++sharedResetWrites;
+        bool drop=dropSharedResetWrite;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        drop=drop || runtimeCore==dropReleaseCore;
+#endif
+        if (!drop) reset=0x6000;
         if (disableClockAfterRelease) nocConfig[0]|=1U<<12;
         return true;
     }
