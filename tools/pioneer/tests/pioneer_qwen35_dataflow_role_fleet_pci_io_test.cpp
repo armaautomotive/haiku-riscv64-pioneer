@@ -31,7 +31,7 @@ struct FleetPciTestScope {
     mutable unsigned dedicatedChecks=0;
     unsigned dedicatedFailAt=UINT32_MAX;
     unsigned dedicatedDisableClockAt=UINT32_MAX;
-    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO& io,unsigned) const {
+    bool CanAttemptDedicatedObservedRelease(PioneerSessionIO& io,unsigned) const {
         const unsigned check=dedicatedChecks++;
         if (check==dedicatedDisableClockAt) io.nocConfig[0]|=1U<<12;
         return dedicatedRelease && check!=dedicatedFailAt;

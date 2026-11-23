@@ -42,9 +42,6 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         assert(!binding.fTakeover.Stage(binding.RoleImage(),io));
         return binding.fTakeover.ResetRequired();
     }
-    static void AllowSimulatedRelease(PioneerQwen35RoleBorrowedScopeWitness& scope) {
-        scope.fTestDedicatedReleaseAllowed=true;
-    }
     static bool Attempted(const PioneerQwen35SharedRoleBinding& binding,unsigned core) {
         return binding.fReleaseAttempted[core];
     }
@@ -237,7 +234,8 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     assert(!scope->ProveRoleMemoryReadSafe(io,selected,DataflowRolePhysicalExtraCode)
         && !io.resetReads);
     io.nocConfig[0]=0;
-    assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
+    io.firmwareMatches=false;assert(!io.SharedArmAndBeginRelease());
+    io.firmwareMatches=true;assert(io.SharedArmAndBeginRelease() && !io.SharedStartCore(1));
     assert(!io.sharedResetWrites && !io.holdWrites);
     PioneerDriverRecoveryProof proof{};
     proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
@@ -333,8 +331,8 @@ static void ExerciseObservedStageMisroute(PioneerSessionIO& io)
     gAllowWrite=false;
 }
 
-// The injected authorization is only a mock proof, but the binding, role
-// image staging, release ledger and PCI adapter are the real implementation.
+// Exercise the actual compile-only admission, binding, image staging,
+// release ledger and PCI adapter against per-tile simulated MMIO.
 static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
 {
     auto* context=io.qwen35DataflowContext;
@@ -347,8 +345,8 @@ static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
     io.perCoreReset=true;io.dropReleaseCore=failCore;
     gAllowWrite=true;gPerCoreRoleWindows=true;gRoleWindowCore=gRoleSelectedCore=io.runtimeCore;
     assert(io.SharedCaptureAndStageHeld());
-    assert(!io.SharedArmAndBeginRelease()); // real proof remains unavailable
-    PioneerQ35SharedRoleBindingTestAccess::AllowSimulatedRelease(*io.qwen35BorrowedRoleScope);
+    io.firmwareMatches=false;assert(!io.SharedArmAndBeginRelease());
+    io.firmwareMatches=true;
     assert(io.SharedArmAndBeginRelease());
     assert(!io.SharedStartCore(1) && !PioneerQ35SharedRoleBindingTestAccess::Attempted(*binding,1));
     const unsigned successful=failCore<DataflowBarrierWorkers?failCore:DataflowBarrierWorkers;
@@ -388,6 +386,9 @@ static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
     unsigned stage=0,core=0;
     assert(!io.SharedStopAndHoldAll(stage,core));
     assert(stage==(failCore<DataflowBarrierWorkers?15U:8U));
+    const unsigned writesBeforeRetry=io.sharedResetWrites;
+    assert(!io.SharedStartCore(failCore<DataflowBarrierWorkers?failCore+1:0)
+        && io.sharedResetWrites==writesBeforeRetry);
     assert(binding->TakeoverResetRequired());
     gPerCoreRoleWindows=false;for (auto& windows:gRoleTileWindows) windows.clear();
     io.perCoreReset=false;io.dropReleaseCore=UINT32_MAX;io.reset=0x47800;
@@ -448,7 +449,7 @@ int main()
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
-    std::puts("PASS dedicated per-tile staging and real release ledger with mock proof; SIMULATED ONLY");
+    std::puts("PASS observed dedicated release and partial-stop retention with actual binding; SIMULATED ONLY");
 #else
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");
 #endif

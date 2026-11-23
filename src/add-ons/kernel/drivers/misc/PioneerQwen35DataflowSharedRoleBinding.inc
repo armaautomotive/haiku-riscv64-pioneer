@@ -171,9 +171,9 @@ public:
     __attribute__((noinline)) bool ArmAndBeginRelease() {
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         auto* scope=Scope();
-        if (!scope || !fViews.Opened() || !scope->ProveRoleDedicatedReleaseSafe(fContext.io,0)) return false;
+        if (!scope || !fViews.Opened() || !scope->ProveRoleDedicatedObservedStage(fContext.io)) return false;
         Adapter io(fContext.io,*scope,fViews);
-        if (!fTakeover.Arm(io)) return false;
+        if (!fTakeover.Arm(io) || !scope->BeginDedicatedObservedRelease(fContext.io)) return false;
         fReleaseAuthorized=true; return true;
 #else
         auto* scope=Scope();
@@ -318,6 +318,10 @@ public:
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
         fStartOrder.Close();
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        // A close attempt must never allow a later launch of the remaining
+        // partially released fleet, even when stop itself needs recovery.
+        if (auto* scope=Scope()) scope->EndDedicatedObservedRelease();
+        fReleaseAuthorized=false;
         bool any=false;
         for (bool attempted:fReleaseAttempted) any|=attempted;
         if (!any) return fContext.io.StopAndAuditAll(stage,core);

@@ -168,19 +168,18 @@ public:
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-    // The dedicated shim initializes its own private state. Its scope gate
-    // must establish ownership, partial-fleet cleanup and reset recovery for
-    // this takeover; the snapshot-path release proof is not applicable.
+    // Compile-only dedicated release uses observed admission, not a physical
+    // proof of ownership, partial-fleet cleanup or reset recovery.
     bool ReleaseDedicatedCore(unsigned core,bool& attempted) {
         using namespace PioneerQwen35;
         if (attempted || core>=DataflowBarrierWorkers || !fViews.Opened()
-            || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleDedicatedReleaseSafe(fIO,core)
+            || !fScope.ProveExclusiveRewrite(fIO) || !fScope.CanAttemptDedicatedObservedRelease(fIO,core)
             || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
             || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
             || !PioneerQwen35WithSelectedClock(fIO,core,[&]() {
                 return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800;
             })
-            || !fScope.ProveRoleDedicatedReleaseSafe(fIO,core)
+            || !fScope.CanAttemptDedicatedObservedRelease(fIO,core)
             || !fGuard.ProveSelectedRoute(core)) return false;
         // The authorization check can take time. Re-sample the clock before
         // touching reset, and again before readback after the attempted write.

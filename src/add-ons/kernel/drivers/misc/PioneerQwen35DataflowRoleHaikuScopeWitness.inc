@@ -5,9 +5,6 @@
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Role scope witness must only be compiled into the non-loadable graph/recovery driver
 #endif
-#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST) && defined(__riscv)
-#error Mock role authorization must not be compiled for the Pioneer
-#endif
 #include "PioneerQwen35DataflowRoleHaikuMap.h"
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
 #include "PioneerQwen35DataflowNocSafetySample.h"
@@ -32,10 +29,6 @@ class PioneerQwen35RoleBorrowedScopeWitness {
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     friend class PioneerQwen35SharedRoleBinding;
-#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
-    friend struct PioneerQ35SharedRoleBindingTestAccess;
-    bool fTestDedicatedReleaseAllowed=false;
-#endif
 #endif
     PioneerProbeCookie* fCookie;
     PioneerStoreContext* fContext;
@@ -44,7 +37,7 @@ class PioneerQwen35RoleBorrowedScopeWitness {
     uint64 fGeneration=0;
     bool fAttached=false,fAttempted=false;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-    bool fDedicatedStageObserved=false;
+    bool fDedicatedStageObserved=false,fDedicatedReleaseObserved=false;
     // The binding calls this only after its ARC, fleet and DMA observations.
     // It records a point-in-time admission, not firmware write exclusion.
     bool BeginDedicatedObservedStage(PioneerSessionIO& io) {
@@ -52,6 +45,14 @@ class PioneerQwen35RoleBorrowedScopeWitness {
         fDedicatedStageObserved=true;return true;
     }
     void EndDedicatedObservedStage() { fDedicatedStageObserved=false; }
+    // Called only after the complete staged fleet has been verified and the
+    // software release ledger armed. This is an observation-based compile
+    // witness, not proof of concurrent firmware exclusion or recovery.
+    bool BeginDedicatedObservedRelease(PioneerSessionIO& io) {
+        if (fDedicatedReleaseObserved || !ProveRoleDedicatedObservedStage(io)) return false;
+        fDedicatedReleaseObserved=true;return true;
+    }
+    void EndDedicatedObservedRelease() { fDedicatedReleaseObserved=false; }
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     const void* fFaultOwner=NULL;
@@ -235,18 +236,12 @@ public:
     // stop/hold path before permitting any physical reset release.
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-    // This independent dedicated-takeover proof must cover exclusive
-    // ownership, role/compute stop and hold, and reset/reinitialization for
-    // every partial launch; it does not rely on snapshot-path recovery.
-    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO& io,unsigned core) const {
-#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
-        // Test-only injected proof: exercises the real binding and release
-        // ledger against mock MMIO. It is never a physical safety claim.
-        return fTestDedicatedReleaseAllowed && core<PioneerQwen35::DataflowBarrierWorkers
+    // Only permits the non-loadable witness to exercise the release path.
+    // Samples and session ownership do not qualify physical release, stop,
+    // firmware exclusion, or no-reboot recovery.
+    bool CanAttemptDedicatedObservedRelease(PioneerSessionIO& io,unsigned core) const {
+        return fDedicatedReleaseObserved && core<PioneerQwen35::DataflowBarrierWorkers
             && ProveRoleStatusInspectionAllowed(io);
-#else
-        (void)io;(void)core;return false;
-#endif
     }
 #endif
     // A reset read alone cannot rule out a delayed posted release write. This
@@ -290,7 +285,7 @@ public:
             ;
         if (fContext->io.qwen35BorrowedRoleScope==this) fContext->io.qwen35BorrowedRoleScope=NULL;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-        fDedicatedStageObserved=false;
+        fDedicatedStageObserved=false;fDedicatedReleaseObserved=false;
 #endif
         fAttached=false;
         if (!valid) sColdRecoveryRequired=true;
