@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowDeviceStream.h"
 #include "PioneerQwen35DataflowRoleAsmConstants.h"
+#include "PioneerQwen35DataflowActivationReuse.h"
 
 namespace PioneerQwen35 {
 enum : unsigned {
@@ -21,7 +22,7 @@ struct alignas(64) DataflowResidentStreamCache {
 	uint32_t readBytes[DataflowResidentStreamCacheEntries];
 };
 static_assert(DataflowResidentStreamCacheAddress>=PIONEER_Q35_ROLE_SNAPSHOT_HANDOFF+12
-	&& DataflowResidentStreamCacheAddress+sizeof(DataflowResidentStreamCache)<=DataflowBarrierArrivalBase,
+	&& DataflowResidentStreamCacheAddress+sizeof(DataflowResidentStreamCache)<=DataflowActivationReuseAddress,
 	"resident length cache must not overlap role handoff or barrier arrivals");
 
 inline void DataflowResidentStreamCacheReset(DataflowResidentStreamCache& cache)

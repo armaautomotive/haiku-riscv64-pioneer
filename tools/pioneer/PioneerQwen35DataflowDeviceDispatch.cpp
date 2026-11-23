@@ -104,6 +104,11 @@ struct GraphWitnessExecution {
 	bool Execute(unsigned sequence,unsigned& status,unsigned& detail) {
 		Mark(PioneerQwen35::DataflowGraphProgressExecute);
 		status=detail=0;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		auto* reuse=reinterpret_cast<PioneerQwen35::DataflowActivationReuse*>(static_cast<uintptr_t>(
+			PioneerQwen35::DataflowActivationReuseAddress));
+		PioneerQwen35::DataflowActivationReuseSetStep(*reuse,run.ticket.epoch,index+1);
+#endif
 		const auto* program=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(
 			PioneerQwen35::DataflowProgramAddress));
 		const unsigned operation=profile?PioneerQwen35::DataflowGraphProfileOperation(*program):0;
@@ -144,6 +149,8 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 	if (!mailbox || !PioneerQwen35::DataflowGraphRunValid(run,mailbox->logicalCore)) return PioneerQwen35::DataflowGraphInvalid;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
 	if (!qwen35_resident_stream_cache_bind(&run.binding)) return PioneerQwen35::DataflowGraphInvalid;
+	PioneerQwen35::DataflowActivationReuseReset(*reinterpret_cast<PioneerQwen35::DataflowActivationReuse*>(
+		static_cast<uintptr_t>(PioneerQwen35::DataflowActivationReuseAddress)));
 #endif
 	PioneerQwen35::DataflowGraphProfile profile;
 	GraphWitnessExecution execution{run,mailbox};

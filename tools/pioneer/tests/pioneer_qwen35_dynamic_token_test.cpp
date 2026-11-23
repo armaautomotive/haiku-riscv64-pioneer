@@ -59,6 +59,25 @@ int main() {
 	CaptureSink base;unsigned stage=0;
 	assert(DataflowStreamRecording::Build(fixture->packed,*live,*candidate0,*plan,fixture->routes,
 		0,42,0,true,base,*scratch,*projection,stage));
+	// Replay the captured schedule through the real cache policy for all
+	// workers. Non-projection steps advance the context without blessing reuse.
+	auto activationReuse=std::make_unique<DataflowActivationReuse[]>(DataflowCoreCount);
+	unsigned reusedActivations=0,activeProjections=0;
+	for (unsigned core=0;core<DataflowCoreCount;core++) DataflowActivationReuseReset(activationReuse[core]);
+	for (unsigned step=0;step<548;step++) for (unsigned core=0;core<DataflowCoreCount;core++) {
+		auto& state=activationReuse[core];DataflowActivationReuseSetStep(state,1,step+1);
+		const auto& record=base.records[size_t(step)*DataflowCoreCount+core];
+		if (record.header[5]!=DataflowProgramMagic) continue;
+		DataflowCoreInvocation invocation{};std::memcpy(&invocation,record.payload,sizeof(invocation));
+		assert(invocation.Valid());
+		if (!invocation.assignment.active) { DataflowStoreRelease(state.magic,0);continue; }
+		activeProjections++;
+		if (DataflowActivationReuseHit(state,invocation)) reusedActivations++;
+		DataflowActivationReuseCommit(state,invocation);
+	}
+	assert(reusedActivations && reusedActivations<activeProjections);
+	std::printf("resident activation reuse simulation: %u/%u active projections avoid a reload and pack\n",
+		reusedActivations,activeProjections);
 	const unsigned otherToken=fixture->manifest.tied.place.parts[0].rows+17;
 	DataflowDynamicTokenContext dynamic1{};
 	assert(DataflowDynamicTokenContext::Build(fixture->manifest,otherToken,1,dynamic1));

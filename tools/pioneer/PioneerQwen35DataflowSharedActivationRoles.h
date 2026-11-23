@@ -2,6 +2,7 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_SHARED_ACTIVATION_ROLES_H
 #define PIONEER_QWEN35_DATAFLOW_SHARED_ACTIVATION_ROLES_H
 #include "PioneerQwen35DataflowKernels.h"
+#include "PioneerQwen35DataflowActivationReuse.h"
 namespace PioneerQwen35 {
 // Offline multi-role variant: the reader packs the immutable activation once,
 // publishes one input-ready ticket, then streams only weight pages. Compute
@@ -10,7 +11,8 @@ namespace PioneerQwen35 {
 // compute completes. This is not a cache-coherence or launch proof.
 template<class Ops>
 bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
-    DataflowQueueView& weights,DataflowQueueView& ready,uint8_t* activationCache,Ops& ops)
+    DataflowQueueView& weights,DataflowQueueView& ready,uint8_t* activationCache,Ops& ops,
+    DataflowActivationReuse* reuse=nullptr)
 {
     // BeginWeightRead fills the command/counter fields before setting active.
     // Initialize only that field so the freestanding role needs no memset.
@@ -31,8 +33,10 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
     };
     if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(weights)
         || !DataflowQueueValid(ready) || !activationCache || !ops.Bind(program)) return fail();
-    if (!program.assignment.active) return true;
-    if (!ops.ReadActivation(program.input,program.inputRows,activationCache,
+    if (!program.assignment.active) { if (reuse) DataflowStoreRelease(reuse->magic,0);return true; }
+    const bool reusable=reuse && DataflowActivationReuseHit(*reuse,program);
+    if (reuse) DataflowStoreRelease(reuse->magic,0);
+    if (!reusable && !ops.ReadActivation(program.input,program.inputRows,activationCache,
             program.inputRows*sizeof(float))) return fail();
     const unsigned tileBytes=program.circularBuffer[0].pageBytes;
     const auto& firstWeight=program.assignment.weight[0];
@@ -45,7 +49,7 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
     // the one allowed drain before returning the retained fault.
     firstReadPending=true;
     if (!ops.BeginWeightRead(firstWeight.bank,firstWeight.address,firstPage,tileBytes,firstRead)) return fail();
-    if (!DataflowPackActivationCache(program,ready,activationCache,ops)) return fail();
+    if (!reusable && !DataflowPackActivationCache(program,ready,activationCache,ops)) return fail();
     uint32_t readyTicket=0;
     if (!DataflowQueueReserveBack(ready,readyTicket) || readyTicket!=0
         || !DataflowQueuePublishBack(ready,readyTicket)) return fail();
@@ -71,6 +75,7 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
             }
         }
     }
+    if (reuse) DataflowActivationReuseCommit(*reuse,program);
     return true;
 }
 

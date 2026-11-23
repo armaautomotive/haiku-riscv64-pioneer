@@ -16,7 +16,8 @@ extern "C" bool qwen35_shared_reader_once()
     if (!DataflowBindLocalContext(context,DataflowFailureReader)) return false;
     DataflowBlackholeReaderOps reader;
     return PioneerQwen35SharedActivationReader(*context.program,context.queues[0],
-        context.queues[1],context.activationCache,reader);
+        context.queues[1],context.activationCache,reader,
+        reinterpret_cast<DataflowActivationReuse*>(static_cast<uintptr_t>(DataflowActivationReuseAddress)));
 }
 extern "C" bool qwen35_shared_writer_once()
 {

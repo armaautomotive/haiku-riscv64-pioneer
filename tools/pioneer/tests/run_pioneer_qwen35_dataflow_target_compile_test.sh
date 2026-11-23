@@ -671,6 +671,14 @@ fi
 PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
 	PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/shared-graph-service"
+for image in "$temporary/shared-role-images/reader.disassembly" \
+	"$temporary/shared-graph-service/disassembly.txt"; do
+	if ! grep -E '# abe40([[:space:]]|$)' "$image" >/dev/null; then
+		echo 'exported shared reader/graph is missing activation reuse metadata' >&2
+		exit 1
+	fi
+done
+echo 'PASS exported reader and graph use the shared activation reuse address; OFFLINE ONLY'
 python3 "$directory/pioneer_qwen35_dataflow_tensix_source_order_test.py" \
 	"$temporary/shared-graph-service/disassembly.txt"
 python3 "$directory/pioneer_qwen35_dataflow_noc_fifo_image_test.py" \

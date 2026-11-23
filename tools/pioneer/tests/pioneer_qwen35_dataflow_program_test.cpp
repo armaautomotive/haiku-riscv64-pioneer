@@ -403,7 +403,7 @@ static void CheckCoordinatedRoles()
 	for (const auto& queue:controls) assert(!queue.produced && !queue.consumed);
 }
 
-static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=false)
+static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=false,bool reuseSameInput=false)
 {
 	TensorSpace weight{}; weight.type=type; weight.inputs=Hidden;
 	const unsigned blockInputs=type==8?32:256;
@@ -441,6 +441,8 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	computeOps.expected=expected;
 	readerOps.projectionType=computeOps.projectionType=writerOps.projectionType=type;
 	DataflowRoleMailbox box{};
+	DataflowActivationReuse reuse{};
+	DataflowActivationReuseReset(reuse);
 	box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
 	std::atomic<unsigned> generation{0};
 	struct ReaderProxy {
@@ -469,31 +471,35 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 			{ if (!c) { if (!pending) return false; overlaps++; } return !failPack && ops.PackActivation(t,n,c,in,out,bytes); }
 	} readerProxy{readerOps,failReader};
 	readerProxy.weightControl=&controls[0];
-	for (unsigned fault=0;fault<2;fault++) {
+	for (unsigned fault=0;fault<3;fault++) {
 		DataflowQueueControl failedControls[DataflowCircularBufferCount]{};
 		alignas(16) uint8_t failedLocal[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
 		alignas(float) uint8_t failedActivation[DataflowActivationCacheBytes]{};
 		DataflowQueueView failedQueues[DataflowCircularBufferCount]{};
 		assert(DataflowBindQueues(invocation,failedControls,failedLocal,failedQueues));
 		RoleTestCounters failureCounters{}; RoleTestOps failureOps{failureCounters};
-		failureOps.projectionType=type;
-		ReaderProxy failedReader{failureOps,false};
+		failureOps.projectionType=type;failureOps.generation=fault==2?8:0;
+		ReaderProxy failedReader{failureOps,fault==2};
 		failedReader.weightControl=&failedControls[0];
 		failedReader.failPack=fault==0; failedReader.failBeginAfterIssue=fault==1;
-		assert(!PioneerQwen35SharedActivationReader(invocation,failedQueues[0],failedQueues[1],failedActivation,failedReader));
+		DataflowActivationReuse failedReuse{};DataflowActivationReuseReset(failedReuse);
+		DataflowActivationReuseSetStep(failedReuse,1,1);DataflowActivationReuseCommit(failedReuse,invocation);
+		DataflowActivationReuseSetStep(failedReuse,1,3); // force a miss, then fail
+		assert(!PioneerQwen35SharedActivationReader(invocation,failedQueues[0],failedQueues[1],failedActivation,failedReader,&failedReuse));
 		assert(failedReader.begins==1 && failedReader.completions==1
-			&& failedReader.overlaps==(fault==0?1U:0U) && !failedReader.pending && !failedReader.earlyPublished);
-		assert(!failedControls[0].produced && !failedControls[1].produced
+			&& failedReader.overlaps==(fault==1?0U:1U) && !failedReader.pending && !failedReader.earlyPublished);
+		assert(!failedReuse.magic && !failedControls[0].produced && failedControls[1].produced==(fault==2?1U:0U)
 			&& DataflowQueueFailure(failedControls[0]) && DataflowQueueFailure(failedControls[1]));
 	}
 	struct ReaderBody {
 		const DataflowCoreInvocation& program; DataflowQueueView* queues;
 		uint8_t* activation; ReaderProxy& ops; std::atomic<unsigned>& generation;
+		DataflowActivationReuse* reuse;
 		bool Run() {
 			ops.ops.bound=false; ops.ops.generation=generation.load(); ops.ops.projectionType=program.type;
-			return PioneerQwen35SharedActivationReader(program,queues[0],queues[1],activation,ops);
+			return PioneerQwen35SharedActivationReader(program,queues[0],queues[1],activation,ops,reuse);
 		}
-	} readerBody{invocation,queues,activation,readerProxy,generation};
+	} readerBody{invocation,queues,activation,readerProxy,generation,reuseSameInput?&reuse:nullptr};
 	struct WriterBody {
 		const DataflowCoreInvocation& program; DataflowQueueView* queues; RoleTestOps& ops;
 		std::atomic<unsigned>& generation;
@@ -531,19 +537,24 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 		if ((n&255)==0) std::this_thread::yield();
 	assert(DataflowRoleMailboxAllStarted(box));
 	const unsigned runs=failReader?8:64;
-	unsigned completedRuns=0,expectedMatmuls=0,expectedGroups=0;
+	unsigned completedRuns=0,expectedMatmuls=0,expectedGroups=0,expectedReads=0,lastPacking=0;
 	DataflowRoleCoordinatorResult result=DataflowRoleCoordinatorInvalid;
 	for (unsigned run=0;run<runs;run++) {
 		invocation=variants[(firstVariant+run)%4];
+		const unsigned testGeneration=reuseSameInput?1:run+1;
+		const unsigned packing=DataflowActivationReusePacking(invocation.type);
+		if (!reuseSameInput || !run || packing!=lastPacking) expectedReads++;
+		lastPacking=packing;
+		if (reuseSameInput) DataflowActivationReuseSetStep(reuse,17,run+1);
 		assert(DataflowBindQueues(invocation,controls,local,queues));
 		for (unsigned chunk=0;chunk<Hidden/DataflowActivationChunkInputs;chunk++) {
 			float source[DataflowActivationChunkInputs];
 			for (unsigned i=0;i<DataflowActivationChunkInputs;i++)
-				source[i]=RoleActivationSample(chunk*DataflowActivationChunkInputs+i,run+1);
+				source[i]=RoleActivationSample(chunk*DataflowActivationChunkInputs+i,testGeneration);
 			assert(PioneerQ38ProjectionQuantize(DataflowActivationPackingType(invocation.type),
 				source,DataflowActivationChunkInputs,&expected[chunk]));
 		}
-		generation.store(run+1);
+		generation.store(testGeneration);
 		uint32_t next=0;
 		if (!DataflowRoleNextProjectionSequence(box,next) || next!=run+1) { bad.store(true); break; }
 		result=DataflowRoleCoordinate(box,next,DataflowQueuePollLimit,coordinator);
@@ -561,8 +572,8 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	reader.join(); writer.join();
 	assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
 	assert(readerProxy.begins==runs && readerProxy.completions==runs
-		&& readerProxy.overlaps==runs && !readerProxy.pending && !readerProxy.earlyPublished);
-	assert(counters.okay && counters.binds==3*runs && counters.activationReads==runs);
+		&& readerProxy.overlaps==expectedReads && !readerProxy.pending && !readerProxy.earlyPublished);
+	assert(counters.okay && counters.binds==3*runs && counters.activationReads==expectedReads);
 	if (failReader) {
 		assert(completedRuns==runs-1 && box.acknowledged==runs-1
 			&& !DataflowQueueFailure(controls[0]));
@@ -615,6 +626,44 @@ static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 		space.parts[space.count++]={bank,base+bank*0x01000000,first*16,count*16};
 		first+=count;
 	}
+}
+
+static void CheckActivationReusePolicy()
+{
+	TensorSpace weight{};weight.type=12;weight.inputs=Hidden;
+	Rows(weight.place,Ffn,Hidden/256*(PioneerQwen35Projection::TileBytes(12)/16),0x08000000);
+	RowSpace input{},output{};Rows(input,Ffn,sizeof(float),0x04000000);
+	Rows(output,Ffn,sizeof(float),0x06000000);
+	DataflowProjectionProgram program{};assert(BuildProgram(weight,input,Hidden,output,program));
+	DataflowCoreInvocation invocation{};assert(DataflowProgramBuilder::BindCore(program,0,invocation));
+	DataflowActivationReuse reuse{};DataflowActivationReuseReset(reuse);
+	DataflowActivationReuseSetStep(reuse,7,1);assert(!DataflowActivationReuseHit(reuse,invocation));
+	DataflowActivationReuseCommit(reuse,invocation);
+	assert(!DataflowActivationReuseHit(reuse,invocation));
+	DataflowActivationReuseSetStep(reuse,7,2);assert(DataflowActivationReuseHit(reuse,invocation));
+	auto other=invocation;other.type=13;assert(DataflowActivationReuseHit(reuse,other));
+	other.type=14;assert(DataflowActivationReuseHit(reuse,other));
+	other.type=8;assert(!DataflowActivationReuseHit(reuse,other));
+	other=invocation;other.input.parts[0].address+=4096;
+	assert(!DataflowActivationReuseHit(reuse,other));
+	other=invocation;other.inputBase=16;assert(!DataflowActivationReuseHit(reuse,other));
+	DataflowActivationReuseSetStep(reuse,7,3);assert(!DataflowActivationReuseHit(reuse,invocation));
+	DataflowActivationReuseSetStep(reuse,8,2);assert(!DataflowActivationReuseHit(reuse,invocation));
+	other=invocation;other.output=other.input;
+	assert(!DataflowActivationReuseDisjoint(other.input,other.output));
+	DataflowActivationReuseCommit(reuse,other);DataflowActivationReuseSetStep(reuse,8,3);
+	assert(!DataflowActivationReuseHit(reuse,invocation));
+	RowSpace a{},b{};a.rows=b.rows=2048;a.rowBytes=b.rowBytes=4;
+	a.count=b.count=1;a.unit=b.unit=16;
+	a.parts[0]={0,0x04000000,0,2048};b.parts[0]={0,0x04001000,0,2048};
+	assert(!DataflowActivationReuseDisjoint(a,b));
+	b.parts[0].address=0x04002000;assert(DataflowActivationReuseDisjoint(a,b));
+	b.parts[0].address=0x04001000;b.parts[0].bank=1;assert(DataflowActivationReuseDisjoint(a,b));
+	DataflowActivationReuseReset(reuse);assert(!DataflowActivationReuseHit(reuse,invocation));
+	float source[256];for (unsigned i=0;i<256;i++) source[i]=RoleActivationSample(i,1);
+	PioneerQ38ProjectionInput q4{},q6{};
+	assert(PioneerQ38ProjectionQuantize(12,source,256,&q4)
+		&& PioneerQ38ProjectionQuantize(14,source,256,&q6) && !std::memcmp(&q4,&q6,sizeof(q4)));
 }
 
 static void CheckSharedWriterCoalescing()
@@ -782,9 +831,11 @@ int main()
 	CompileRoleInterfaces();
 	CheckDynamicWeightAddresses();
 	CheckConcurrentRoles();
+	CheckActivationReusePolicy();
 	CheckSharedWriterCoalescing();
 	CheckCoordinatedRoles();
 	for (unsigned type:{8U,12U,13U,14U}) CheckCoordinatedSharedActivationRoles(type);
+	CheckCoordinatedSharedActivationRoles(12,false,true);
 	CheckCoordinatedSharedActivationRoles(13,true);
 	CheckInactiveRoleReader();
 	TensorSpace weight{};
