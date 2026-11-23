@@ -24,6 +24,8 @@ class DataflowRoleFleetRecoveryOwner {
     uint32_t fResetDisable[DataflowBarrierWorkers]{};
     bool fResetDisableCaptured=false,fResetDisableTouched=false;
     bool fStackless=false;
+    bool fCoreLocalRestoreMode=false;
+    bool fCoreLocalReleaseLedger=false;
     template<class IO> static bool AllSafe(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!io.AllRolesHeld(core) || !io.DefaultBootRouting(core)
@@ -91,6 +93,13 @@ public:
         return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted;
     }
     bool CoveredStateRestored() const { return fPhase==Restored; }
+    // Opt-in for the future core-local restore lifecycle. This changes only
+    // the ledger; it does not provide physical scope or release authority.
+    bool SelectCoreLocalRestoreMode() {
+        if (fPhase!=Empty || fCoreLocalRestoreMode) return false;
+        fCoreLocalRestoreMode=true;return true;
+    }
+    bool CoreLocalRestoreMode() const { return fCoreLocalRestoreMode; }
     const uint32_t* OriginalRamWords(unsigned core,unsigned role) const {
         return fRam.OriginalWords(core,role);
     }
@@ -103,7 +112,7 @@ public:
     bool Untouched() const { return fPhase==Empty || fPhase==Captured || fPhase==Unavailable; }
     template<class IO> bool CaptureAll(uint32_t* code,unsigned codeWords,uint32_t* ram,
         unsigned ramWords,IO& io) {
-        if (fPhase!=Empty || !AllSafe(io)) return false;
+        if (fPhase!=Empty || fCoreLocalRestoreMode || !AllSafe(io)) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             uint32_t first=0,second=0;
             if (!io.AllRolesHeld(core) || !io.ReadResetDisable(core,first)
@@ -155,6 +164,21 @@ public:
         if (!fRam.MarkStacklessMayRun(core,io)) { fPhase=Faulted; return false; }
         return true;
     }
+    // The real scope must prove the exact retained source, fresh restore
+    // receipt, held routes and writer exclusion. This records RAM proof only;
+    // image retirement, reset restoration and safe resume remain separate.
+    template<class IO> bool MarkCoreRestoredByCore(unsigned core,IO& io) {
+        if (!fCoreLocalRestoreMode || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)) return false;
+        fPhase=Faulted;
+        return fRam.MarkCoreRestoredByCore(core,io);
+    }
+    template<class IO> bool VerifyCoreLocalRestores(IO& io) {
+        if (!fCoreLocalRestoreMode || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)) return false;
+        fPhase=Faulted;
+        return fRam.VerifyStacklessRestoredByCore(io);
+    }
     template<class IO> bool StageImages(const uint32_t* reader,unsigned readerWords,
         const uint32_t* writer,unsigned writerWords,const uint32_t* readerShim,
         unsigned readerShimWords,const uint32_t* writerShim,unsigned writerShimWords,IO& io) {
@@ -204,6 +228,12 @@ public:
             if (!AllStacklessPreparationSafe(io) || !fRam.StacklessCapturePrepared()
                 || !VerifyResetDisable(io,true) || !fImages.VerifyStagedAll(io)
                 || !AllStacklessPreparationSafe(io)) return false;
+            if (fCoreLocalRestoreMode) {
+                // Sticky before the copy-retention ledger is attempted. A
+                // later failure must never expose saved copies to old cleanup.
+                fCoreLocalReleaseLedger=true;
+                if (!fImages.BeginCopyAwareOwnership()) return false;
+            }
             fPhase=ReleaseAttempted; return true;
         }
         if (!AllSafe(io) || !fRam.MarkedForPossibleRelease() || !VerifyResetDisable(io,true)
@@ -213,6 +243,9 @@ public:
     template<class IO> bool RestoreAll(IO& io) {
         if (fPhase!=Faulted && fPhase!=Staged && fPhase!=Armed && fPhase!=ReleaseAttempted) return false;
         fPhase=Faulted;
+        // Copy-aware image retirement is not implemented. The old cleanup
+        // would use host private-RAM accesses and could erase retained copies.
+        if (fCoreLocalReleaseLedger) return false;
         if (fStackless) {
             if (!AllHeldAndRouted(io)) return false;
             if (fRam.RestoredOriginal()) {

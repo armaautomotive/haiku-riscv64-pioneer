@@ -255,22 +255,26 @@ for role in reader writer; do
         "$temporary/local-restore-images/${role}.bin" "$role"
 done
 python3 "$directory/pioneer_qwen35_role_local_restore_images_test.py" "$temporary/local-restore-images"
-"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
-    -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
-    -fstack-usage -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
-    -c "$directory/pioneer_qwen35_copy_aware_kernel_compile.cpp" -o "$temporary/copy-aware-kernel.o"
-python3 - "$temporary/copy-aware-kernel.su" <<'PYSTACK'
+for witness in copy_aware core_release; do
+    "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+        -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
+        -fstack-usage -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+        -c "$directory/pioneer_qwen35_${witness}_kernel_compile.cpp" -o "$temporary/${witness}_kernel.o"
+done
+python3 - "$temporary/copy_aware_kernel.su" "$temporary/core_release_kernel.su" <<'PYSTACK'
 from pathlib import Path
 import sys
-rows=[line.rsplit('\t',2) for line in Path(sys.argv[1]).read_text().splitlines()]
-if not rows or any(len(row)!=3 or not row[1].isdigit() or row[2]!='static' for row in rows):
-    raise SystemExit('copy-aware compile witness has missing or non-static stack frames')
-if not any('PioneerQ35CopyAwareCompileWitness' in row[0] for row in rows):
-    raise SystemExit('copy-aware compile witness entry is missing')
-total=sum(int(row[1]) for row in rows)
-if total>4096:
-    raise SystemExit(f'copy-aware compile witness selected frames exceed budget: {total}')
-print(f'PASS copy-aware Haiku SDK compile, selected frames {total}/4096; IO/caller not audited')
+for filename,markers in ((sys.argv[1],('PioneerQ35CopyAwareCompileWitness','PioneerQ35CoreLocalFleetCompileWitness')),
+                         (sys.argv[2],('PioneerQ35CoreLocalReleaseCompileWitness',))):
+    rows=[line.rsplit('\t',2) for line in Path(filename).read_text().splitlines()]
+    if not rows or any(len(row)!=3 or not row[1].isdigit() or row[2]!='static' for row in rows):
+        raise SystemExit('copy-aware compile witness has missing or non-static stack frames')
+    if any(not any(marker in row[0] for row in rows) for marker in markers):
+        raise SystemExit('copy-aware compile witness entry is missing')
+    total=sum(int(row[1]) for row in rows)
+    if total>4096:
+        raise SystemExit(f'copy-aware compile witness selected frames exceed budget: {total}')
+    print(f'PASS {Path(filename).name} selected frames {total}/4096; IO/caller not audited')
 PYSTACK
 # Dedicated takeover entry has no private-RAM preservation or snapshot
 # handoff. Keep it separately linked and unavailable to the existing owner.

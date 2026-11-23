@@ -11,6 +11,8 @@ struct RecoveryIO {
     bool held=true,defaultRoute=true,stable=true,corruptRamOnBoot=false,corruptBootOnRam=false;
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
+    bool coreRestoreProof=false;
+    const uint32_t* retainedRam=nullptr;
     unsigned privateRamReads=0;
     unsigned copyCalls=0,failCopyCall=UINT32_MAX;
     unsigned failDisableCore=UINT32_MAX;
@@ -37,6 +39,13 @@ struct RecoveryIO {
     }
     bool StacklessUncapturedRamProtected(unsigned core) const {
         return held && uncapturedProtected && core<DataflowBarrierWorkers;
+    }
+    bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) const {
+        if (!coreRestoreProof || !AllRolesHeld(core) || !retainedRam) return false;
+        const uint32_t* expected=retainedRam+core*RamPerCore;
+        if (reader!=expected || writer!=expected+DataflowRoleLocalRamWords) return false;
+        for (unsigned i=0;i<RamPerCore;i++) if (ram[core*RamPerCore+i]!=expected[i]) return false;
+        return true;
     }
     bool StacklessCopiesSafe(unsigned core) const {
         return !held && stacklessSafe && core<DataflowBarrierWorkers;
@@ -125,6 +134,45 @@ int main()
     std::vector<uint32_t> codeSnapshot(DataflowRoleFleetRecoveryOwner::CodeWords());
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
+    {
+        // Before any release ledger, cleanup has no captured private RAM to
+        // touch and can safely restore staged images without a host RAM read.
+        RecoveryIO io; const auto code=io.code,boots=io.boots,shims=io.shims,disable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectCoreLocalRestoreMode()
+            && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io)
+            && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.RestoreAll(io) && owner.CoveredStateRestored() && !io.privateRamReads);
+        assert(io.code==code && io.boots==boots && io.shims==shims && io.resetDisable==disable);
+    }
+    {
+        RecoveryIO io; const auto original=io.ram; DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectCoreLocalRestoreMode() && owner.CoreLocalRestoreMode()
+            && !owner.SelectCoreLocalRestoreMode());
+        assert(!owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        assert(!owner.SelectCoreLocalRestoreMode());
+        io.held=false;
+        assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io)
+            && owner.CaptureStacklessCore(1,io) && owner.MarkStacklessMayRun(1,io));
+        io.ram[0]^=1;io.ram[RecoveryIO::RamPerCore]^=1;io.held=true;
+        io.retainedRam=ramSnapshot.data();const unsigned writes=io.writes,reads=io.privateRamReads;
+        assert(!owner.RestoreAll(io) && owner.RestorationRequired()
+            && io.writes==writes && io.privateRamReads==reads);
+        assert(!owner.MarkCoreRestoredByCore(0,io));
+        io.coreRestoreProof=true;
+        assert(!owner.MarkCoreRestoredByCore(0,io)); // private data still differs
+        io.ram[0]=original[0];
+        assert(owner.MarkCoreRestoredByCore(0,io) && !owner.VerifyCoreLocalRestores(io));
+        io.ram[RecoveryIO::RamPerCore]=original[RecoveryIO::RamPerCore];
+        assert(owner.MarkCoreRestoredByCore(1,io) && owner.VerifyCoreLocalRestores(io));
+        assert(owner.RestorationRequired() && !owner.CoveredStateRestored()
+            && !owner.RestoreAll(io) && io.writes==writes && io.privateRamReads==reads);
+    }
     {
         RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
         io.stacklessPreparation=false;
