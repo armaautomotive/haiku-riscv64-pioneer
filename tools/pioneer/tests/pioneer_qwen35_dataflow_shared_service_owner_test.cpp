@@ -8,9 +8,43 @@
 #include "pioneer_qwen35_dataflow_service_owner_test.cpp"
 #undef main
 #include <memory>
+#include "../PioneerQwen35DataflowRoleStartOrder.h"
+
+static void ExerciseStartOrder()
+{
+    DataflowRoleStartOrder complete;
+    assert(!complete.BeginRelease(0) && !complete.BeginHandoff(0));
+    assert(complete.Arm() && !complete.Arm() && !complete.BeginRelease(1));
+    for (unsigned core=0;core<DataflowCoreCount;core++) {
+        assert(complete.BeginRelease(core));
+        assert(!complete.BeginRelease(core) && !complete.BeginRelease(core+1));
+        assert(!complete.BeginHandoff(core) && !complete.ConfirmRelease(core+1));
+        assert(complete.ConfirmRelease(core) && complete.BeginHandoff(core));
+        assert(!complete.BeginHandoff(core) && !complete.BeginRelease(core+1));
+        assert(!complete.ConfirmHandoff(core+1) && complete.ConfirmHandoff(core));
+    }
+    assert(!complete.BeginRelease(DataflowCoreCount) && !complete.Arm());
+    complete.Close();
+    assert(!complete.BeginRelease(0) && !complete.Arm());
+
+    DataflowRoleStartOrder uncertainRelease;
+    assert(uncertainRelease.Arm() && uncertainRelease.BeginRelease(0));
+    // No confirmation after an error: neither retry nor a later tile starts.
+    assert(!uncertainRelease.BeginRelease(0) && !uncertainRelease.BeginRelease(1));
+    uncertainRelease.Close();
+    assert(!uncertainRelease.ConfirmRelease(0) && !uncertainRelease.Arm());
+
+    DataflowRoleStartOrder uncertainHandoff;
+    assert(uncertainHandoff.Arm() && uncertainHandoff.BeginRelease(0)
+        && uncertainHandoff.ConfirmRelease(0) && uncertainHandoff.BeginHandoff(0));
+    assert(!uncertainHandoff.BeginHandoff(0) && !uncertainHandoff.BeginRelease(1));
+    uncertainHandoff.Close();
+    assert(!uncertainHandoff.ConfirmHandoff(0) && !uncertainHandoff.BeginRelease(1));
+}
 
 int main()
 {
+    ExerciseStartOrder();
     uint32_t code[96]{},dispatch[80]{};
     for (unsigned i=0;i<96;i++) code[i]=0x10000000U+i;
     for (unsigned i=0;i<80;i++) dispatch[i]=0x20000000U+i;

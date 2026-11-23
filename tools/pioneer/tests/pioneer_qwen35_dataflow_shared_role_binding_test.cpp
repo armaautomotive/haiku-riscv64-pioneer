@@ -27,7 +27,8 @@ static void ExerciseBinding(PioneerSessionIO& io)
     assert(!io.SharedCaptureAndStageHeld());
     assert(!io.SharedCaptureAndStageHeld()); // one-shot, even after a denied proof
     assert(!io.SharedArmAndBeginRelease() && !io.SharedFleetHeldAndQuiescent());
-    assert(!io.SharedStartCore(0));
+    assert(!io.SharedStartCore(0) && !io.SharedPrepareRoleStacks(0));
+    assert(!io.SharedStartCore(1));
     DataflowWorkerSnapshot snapshot{};
     assert(!io.SharedCoreReady(0,snapshot));
     assert(!gMapCalls && io.runtimeCore==7 && io.reset==0x47800);

@@ -7,6 +7,7 @@
 #endif
 #include "PioneerQwen35DataflowL2CpuResetProbe.h"
 #include "PioneerQwen35DataflowHeldFleetSample.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 class PioneerQwen35SharedRoleBinding {
     using Views=PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>;
     using Adapter=PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness,Views>;
@@ -14,6 +15,7 @@ class PioneerQwen35SharedRoleBinding {
     PioneerQwen35RoleHaikuMap fPlatform;
     Views fViews;
     PioneerQwen35::DataflowRoleFleetRecoveryOwner fOwner;
+    PioneerQwen35::DataflowRoleStartOrder fStartOrder;
     uint32_t* fCodeSnapshot=NULL;
     uint32_t* fRamSnapshot=NULL;
     bool fCaptureAttempted=false;
@@ -102,7 +104,8 @@ public:
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
-        if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)) return false;
+        if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)
+            || !fStartOrder.Arm()) return false;
         fReleaseAuthorized=true; return true;
     }
     __attribute__((noinline)) bool FleetHeldAndQuiescent() {
@@ -114,15 +117,17 @@ public:
         return true;
     }
     __attribute__((noinline)) bool StartCore(unsigned core) {
+        if (!fStartOrder.BeginRelease(core)) return false;
         auto* scope=Scope();
         if (!scope || !fReleaseAuthorized || core>=PioneerQwen35::DataflowBarrierWorkers
             || fReleaseAttempted[core] || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         fReleaseConfirmed[core]=io.ReleaseCore(core,fReleaseAttempted[core]);
-        return fReleaseConfirmed[core];
+        return fReleaseConfirmed[core] && fReleaseAttempted[core] && fStartOrder.ConfirmRelease(core);
     }
     __attribute__((noinline)) bool PrepareRoleStacks(unsigned core) {
         using namespace PioneerQwen35;
+        if (!fStartOrder.BeginHandoff(core)) return false;
         auto* scope=Scope();
         if (!scope || core>=DataflowBarrierWorkers || !fReleaseAuthorized
             || !fReleaseConfirmed[core] || fStackReleaseSubmitted[core] || !fViews.Opened()
@@ -144,7 +149,8 @@ public:
         const bool okay=fContext.io.WriteStackReleaseTracked(core,fStackReleaseAttempted[core]);
         fStackReleaseWriting[core]=false;
         fStackReleaseConfirmed[core]=okay;
-        return okay;
+        return okay && fStackReleaseAttempted[core] && fOwner.StacklessCopiesCaptured(core)
+            && fStartOrder.ConfirmHandoff(core);
     }
     __attribute__((noinline)) bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
@@ -213,6 +219,7 @@ public:
         return fContext.io.ReadWorkerSnapshot(core,snapshot) && CoreReady(core,snapshot);
     }
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
+        fStartOrder.Close();
         // The old stop path understands T0 alone. For released tiles publish
         // or observe one role stop request first; the real scope still denies
         // this until it can prove compute/queues settled. Never release saved
@@ -308,6 +315,7 @@ public:
         return fContext.io.StopAndAuditAll(stage,core);
     }
     __attribute__((noinline)) bool RestoreRolesHeld() {
+        fStartOrder.Close();
         if (fOwner.Untouched()) return true;
         auto* scope=Scope();
         if (!scope || !OpenForRecovery(*scope)) return false;
