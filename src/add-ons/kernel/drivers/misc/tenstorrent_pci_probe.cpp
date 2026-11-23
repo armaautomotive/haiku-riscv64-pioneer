@@ -448,6 +448,7 @@
 #endif
 #include "tenstorrent_pci_probe.h"
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#include "PioneerQwen35DedicatedPeerLease.h"
 #include "PioneerQwen35DedicatedFleet.h"
 #endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE

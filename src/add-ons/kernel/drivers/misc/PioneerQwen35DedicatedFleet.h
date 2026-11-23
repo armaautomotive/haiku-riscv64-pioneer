@@ -14,7 +14,7 @@ bool PioneerQwen35DedicatedFleetPrepare(IO& io,const Dram& dram,Banks& banks,Lea
 		auto& node=lease.worker[core];
 		lease.prepared=core+1; // includes any partially touched lease
 		if (!io.SelectRuntimeCore(core) || !io.MapQ38Panel()
-			|| (core && !PioneerQ38CohortPeerLeaseBegin(io,dram,core,node))
+			|| (core && !PioneerQwen35DedicatedPeerLeaseBegin(io,dram,core,node))
 			|| node.image.saved || node.image.ready || node.image.running || node.image.unsafe
 			|| !PioneerQ38DispatchSources(io,dram,banks,node,0x47800))
 			return PioneerQ38DispatchQuarantine(lease,banks);
@@ -37,7 +37,7 @@ bool PioneerQwen35DedicatedFleetClose(IO& io,const Dram& dram,Banks& banks,Lease
 	}
 	for (unsigned end=120;end>1;end--) {
 		auto& node=lease.worker[end-1];
-		if (!io.SelectRuntimeCore(end-1) || !PioneerQ38DispatchPeerLeaseEnd(io,node.noc,node.Store()))
+		if (!io.SelectRuntimeCore(end-1) || !PioneerQwen35DedicatedPeerLeaseEnd(io,node.noc,node.Store()))
 			return PioneerQ38DispatchQuarantine(lease,banks);
 	}
 	if (!io.SelectRuntimeCore(0)) return PioneerQ38DispatchQuarantine(lease,banks);

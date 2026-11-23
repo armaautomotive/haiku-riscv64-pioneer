@@ -20,7 +20,7 @@ struct IO {
     bool MapQ38Panel() { ++maps;return true; }
     bool MapRuntime() { return true; }
 };
-static bool PioneerQ38CohortPeerLeaseBegin(IO& io,const Dram&,unsigned core,Node& n) {
+static bool PioneerQwen35DedicatedPeerLeaseBegin(IO& io,const Dram&,unsigned core,Node& n) {
     assert(io.selected==core);++io.prepares;
     n.store.ready=true;return core!=io.failPrepare;
 }
@@ -28,7 +28,7 @@ static bool PioneerQ38DispatchSources(IO& io,const Dram&,Banks&,Node& n,unsigned
     assert(reset==0x47800 && io.selected<120);++io.audits;
     return n.Store().ready && io.selected!=io.failAudit;
 }
-static bool PioneerQ38DispatchPeerLeaseEnd(IO& io,unsigned&,MockStore& s) {
+static bool PioneerQwen35DedicatedPeerLeaseEnd(IO& io,unsigned&,MockStore& s) {
     assert(io.audits>=120 && s.ready);++io.restores;
     if (io.selected==io.failRestore) return false;
     s.ready=false;return true;
