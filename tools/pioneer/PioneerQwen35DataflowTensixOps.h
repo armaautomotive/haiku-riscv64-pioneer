@@ -9,6 +9,7 @@
 #include "PioneerQwen35DataflowVectorUnpack.h"
 #include "PioneerQwen35DataflowTensixInit.h"
 #include "PioneerQwen35DataflowTensixPhases.h"
+#include "PioneerQwen35DataflowActivationSums.h"
 #include "PioneerQ38ProjectionInput.h"
 #ifdef PIONEER_QWEN35_QUEUED_COMPUTE
 #include "PioneerQwen35DataflowQueuedInput.h"
@@ -76,7 +77,7 @@ class DataflowBlackholeTensixOps {
 
 	const DataflowCoreInvocation* fProgram=nullptr;
 	DataflowBlackholeTensixEmitter fEmitter;
-	bool fBound=false,fSetup=false,fOutputActive=false;
+	bool fBound=false,fSetup=false,fOutputActive=false,fSharedActivationSums=false;
 	unsigned fNextBlock=0;
 
 	static volatile uint32_t* Words(uint32_t address)
@@ -177,11 +178,13 @@ class DataflowBlackholeTensixOps {
 		const unsigned scaleIndex=type==8?block%8:0;
 		if (wordBase>128-8 || scaleIndex>=16) return false;
 		volatile uint32_t* destination=Words(TensixActivationPanel);
-		sum=0;
+		sum=fSharedActivationSums?DataflowActivationSum(
+			reinterpret_cast<const uint8_t*>(static_cast<uintptr_t>(DataflowActivationCacheAddress)),
+			type,block,panel):0;
 		for (unsigned word=0;word<8;word++) {
 			const uint32_t value=input.operand[wordBase+word];
 			destination[word]=value;
-			for (unsigned lane=0;lane<2;lane++) {
+			if (!fSharedActivationSums) for (unsigned lane=0;lane<2;lane++) {
 				const uint16_t encoded=uint16_t(value>>(lane*16));
 				if (!PioneerInt8OperandValid(encoded)) return false;
 				const int magnitude=int(encoded&1023);
@@ -195,6 +198,9 @@ class DataflowBlackholeTensixOps {
 
 public:
 	enum { TensixMatrixEngine=1 };
+
+	// Only the shared reader publishes a validated sidecar before ready.
+	void UseSharedActivationSums() { if (!fBound) fSharedActivationSums=true; }
 
 	bool Bind(const DataflowCoreInvocation& program)
 	{

@@ -55,6 +55,7 @@ extern "C" unsigned qwen35_shared_compute_coordinate(
         DataflowDeviceContext& context;
         DataflowBlackholeTensixOps compute;
         bool RunCompute() {
+            compute.UseSharedActivationSums();
             return PioneerQwen35SharedActivationCompute(*context.program,
                 context.queues[0],context.queues[1],context.queues[2],
                 context.activationCache,compute);

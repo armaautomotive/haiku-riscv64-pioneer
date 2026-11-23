@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_SHARED_ACTIVATION_ROLES_H
 #include "PioneerQwen35DataflowKernels.h"
 #include "PioneerQwen35DataflowActivationReuse.h"
+#include "PioneerQwen35DataflowActivationSums.h"
 namespace PioneerQwen35 {
 // Offline multi-role variant: the reader packs the immutable activation once,
 // publishes one input-ready ticket, then streams only weight pages. Compute
@@ -49,7 +50,8 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
     // the one allowed drain before returning the retained fault.
     firstReadPending=true;
     if (!ops.BeginWeightRead(firstWeight.bank,firstWeight.address,firstPage,tileBytes,firstRead)) return fail();
-    if (!reusable && !DataflowPackActivationCache(program,ready,activationCache,ops)) return fail();
+    if (!reusable && (!DataflowPackActivationCache(program,ready,activationCache,ops)
+        || !DataflowPrepareActivationSums(activationCache,program.type,program.inputs))) return fail();
     uint32_t readyTicket=0;
     if (!DataflowQueueReserveBack(ready,readyTicket) || readyTicket!=0
         || !DataflowQueuePublishBack(ready,readyTicket)) return fail();

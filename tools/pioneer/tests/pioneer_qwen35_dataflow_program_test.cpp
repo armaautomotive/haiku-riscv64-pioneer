@@ -208,6 +208,16 @@ struct SharedComputeOps : RoleTestOps {
 			|| input!=DataflowPackedActivationPage(cache,type,Hidden,block)) return false;
 		if (realPack && (!expected || std::memcmp(input,
 			&expected[DataflowActivationChunk(type,block)],sizeof(*expected)))) return false;
+		const auto& packed=*reinterpret_cast<const PioneerQ38ProjectionInput*>(input);
+		const unsigned panel=block%(type==8?2:16);
+		const unsigned wordBase=type==8?(block%8)*16+panel*8:panel*8;
+		int sum=0;
+		for (unsigned word=0;word<8;word++) for (unsigned lane=0;lane<2;lane++) {
+			const uint16_t v=uint16_t(packed.operand[wordBase+word]>>(16*lane));
+			if (!PioneerInt8OperandValid(v)) return false;
+			sum+=(v&0x8000)?-int(v&1023):int(v&1023);
+		}
+		if (DataflowActivationSum(cache,type,block,panel)!=sum) return false;
 		return RoleTestOps::TensixMatmul(type,block,weight,input);
 	}
 };
@@ -478,7 +488,7 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 		DataflowQueueView failedQueues[DataflowCircularBufferCount]{};
 		assert(DataflowBindQueues(invocation,failedControls,failedLocal,failedQueues));
 		RoleTestCounters failureCounters{}; RoleTestOps failureOps{failureCounters};
-		failureOps.projectionType=type;failureOps.generation=fault==2?8:0;
+		failureOps.projectionType=type;failureOps.realPack=true;failureOps.generation=fault==2?8:0;
 		ReaderProxy failedReader{failureOps,fault==2};
 		failedReader.weightControl=&failedControls[0];
 		failedReader.failPack=fault==0; failedReader.failBeginAfterIssue=fault==1;
