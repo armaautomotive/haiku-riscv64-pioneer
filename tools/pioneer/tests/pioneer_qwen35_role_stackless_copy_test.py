@@ -13,6 +13,7 @@ def signed(value, bits):
 def run(code, role, bypass_works, decision):
     base, target = (0x70000, 0xB8000) if role == "reader" else (0x70100, 0xBA000)
     handoff, ready_value = 0xAB540, (0x31 if role == "reader" else 0x32)
+    cancelled_value = 0x71 if role == "reader" else 0x72
     receipt_address = handoff + (0 if role == "reader" else 4)
     local_base, count = 0xFFB00000, 2048
     original = [(0x9E3779B9 * (i + 1) ^ 0xA1556C3D) & 0xFFFFFFFF for i in range(count)]
@@ -21,7 +22,7 @@ def run(code, role, bypass_works, decision):
     regs = [0] * 32
     pc, cfg = base, 0
     writes, fences, visible, dependent, stack_writes = 0, 0, False, False, 0
-    receipt, polls, release = 0, 0, 0
+    receipt, polls, release, cancel_visible, cancel_dependent = 0, 0, 0, False, False
     for _ in range(30000):
         assert base <= pc <= base + len(code) - 4 and not (pc & 3)
         insn = struct.unpack_from("<I", code, pc - base)[0]
@@ -38,6 +39,8 @@ def run(code, role, bypass_works, decision):
                 result = (regs[rs1] + immediate) & 0xFFFFFFFF
                 if rd == 0 and rs1 == 28 and immediate == 0 and visible:
                     dependent = True
+                    if cancel_visible:
+                        cancel_dependent = True
             else:
                 assert funct3 == 7
                 result = regs[rs1] & immediate
@@ -53,8 +56,12 @@ def run(code, role, bypass_works, decision):
                 if polls == 3:
                     if decision == "wait":
                         return
-                    release = 0x53 if decision == "release" else 0x43
+                    release = 0x53 if decision == "release" else 0x43 if decision == "cancel" else 0x44
                 result = release
+            elif address == receipt_address:
+                assert decision == "cancel" and receipt == cancelled_value and fences >= 3
+                result = receipt
+                cancel_visible = True
             else:
                 assert address == target + count * 4 - 4 and writes == count and fences >= 2
                 assert copied == original
@@ -69,9 +76,13 @@ def run(code, role, bypass_works, decision):
                 copied[writes] = regs[rs2]
                 writes += 1
             elif address == receipt_address:
-                assert not receipt and regs[rs2] == ready_value
                 assert writes == count and copied == original and dependent and not stack_writes
-                receipt = regs[rs2]
+                if not receipt:
+                    assert regs[rs2] == ready_value
+                    receipt = regs[rs2]
+                else:
+                    assert receipt == ready_value and release == 0x43 and regs[rs2] == cancelled_value
+                    receipt = regs[rs2]
             else:
                 assert address == local_base + count * 4 - 16
                 assert writes == count and copied == original and dependent and release == 0x53 and polls >= 3
@@ -102,7 +113,8 @@ def run(code, role, bypass_works, decision):
             if insn == 0x6F:
                 assert not stack_writes
                 if bypass_works:
-                    assert decision == "cancel" and receipt == ready_value and release == 0x43
+                    assert (decision == "cancel" and receipt == cancelled_value and release == 0x43 and cancel_dependent) or (
+                        decision == "invalid" and receipt == ready_value and release == 0x44)
                 else:
                     assert not writes and not receipt
                 return
@@ -122,7 +134,7 @@ if len(sys.argv) != 3 or sys.argv[2] not in ("reader", "writer"):
     raise SystemExit("usage: test.py SHIM reader|writer")
 image = Path(sys.argv[1]).read_bytes()
 assert image and len(image) <= 256 and len(image) % 4 == 0
-for decision in ("wait", "release", "cancel"):
+for decision in ("wait", "release", "cancel", "invalid"):
     run(image, sys.argv[2], True, decision)
 run(image, sys.argv[2], False, "wait")
 print(f"PASS {sys.argv[2]} RV32 pre-stack copy, wait, release, cancel and failed-cache-bypass park; SIMULATED ONLY")

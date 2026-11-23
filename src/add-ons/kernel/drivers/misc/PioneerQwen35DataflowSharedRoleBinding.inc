@@ -24,6 +24,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fStackReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseWriting[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStackCancelAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseHeld[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -217,7 +218,8 @@ public:
             if (!scope || !fViews.Opened()) { stage=8;core=PioneerQwen35::DataflowBarrierWorkers;return false; }
             Adapter io(fContext.io,*scope,fViews);
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
-                if (!fReleaseAttempted[i] || fReleaseConfirmed[i] || fStopAttempted[i]
+                if (!fReleaseAttempted[i] || fReleaseConfirmed[i] || fStackReleaseAttempted[i]
+                    || fStackCancelAttempted[i] || fStopAttempted[i]
                     || fComputeStopAttempted[i] || fHoldAttempted[i]) continue;
                 if (fReleaseHeld[i]) {
                     if (!io.UnconfirmedReleaseHeld(i)) { stage=15;core=i;return false; }
@@ -226,6 +228,14 @@ public:
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
                 if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
+                if (!fStackReleaseConfirmed[i]) {
+                    // A possibly posted release can race cancellation.
+                    if (fStackReleaseAttempted[i]) { stage=16;core=i;return false; }
+                    if (!fStackCancelAttempted[i]
+                        && !io.RequestStackCancel(i,fStackCancelAttempted[i]))
+                        { stage=16;core=i;return false; }
+                    continue;
+                }
                 bool okay=fStopAttempted[i]?io.StopRequestObserved(i,fStopToken[i])
                     :io.RequestStop(i,false,fStopAttempted[i],fStopToken[i]);
                 if (!okay && !fStopAttempted[i]) okay=io.RequestStop(i,true,fStopAttempted[i],fStopToken[i]);
@@ -236,9 +246,14 @@ public:
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool parked=false;
                 for (unsigned poll=0;poll<65536;poll++) {
-                    if (io.RolesStoppedAndParked(i,fStopToken[i],
-                        PioneerQwen35::DataflowSharedReaderParkAddress,
-                        PioneerQwen35::DataflowSharedWriterParkAddress)) { parked=true;break; }
+                    const bool stopped=fStackReleaseConfirmed[i]
+                        ?io.RolesStoppedAndParked(i,fStopToken[i],
+                            PioneerQwen35::DataflowSharedReaderParkAddress,
+                            PioneerQwen35::DataflowSharedWriterParkAddress)
+                        :fStackCancelAttempted[i] && io.StackCancelledAndParked(i,
+                            PioneerQwen35::DataflowSharedReaderParkAddress,
+                            PioneerQwen35::DataflowSharedWriterParkAddress);
+                    if (stopped) { parked=true;break; }
                     fContext.io.Pause();
                 }
                 if (!parked) { stage=9;core=i;return false; }
@@ -261,9 +276,10 @@ public:
                 }
                 if (!parked) { stage=12;core=i;return false; }
             }
-            // No reset is asserted until every started tile has both role
-            // receipts and a stopped compute receipt/park proof. The scope
-            // must independently prove the entire fleet and NoCs are quiet.
+            // No reset is asserted until every started tile has either both
+            // normal stop receipts or both stackless cancellation receipts,
+            // plus a stopped compute receipt/park proof. The scope must
+            // independently prove the entire fleet and NoCs are quiet.
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
                 if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i] ? !io.HoldObserved(i) : !io.HoldCore(i,fHoldAttempted[i]))

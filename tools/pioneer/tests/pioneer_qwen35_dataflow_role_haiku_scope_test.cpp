@@ -67,6 +67,7 @@ struct PioneerSessionIO {
     DataflowWorkerMailbox workerBoxes[DataflowBarrierWorkers]{};
     DataflowQueueControl queueBoxes[DataflowBarrierWorkers][DataflowCircularBufferCount]{};
     unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
+    unsigned stackCancelWrites=0; bool dropStackCancelWrite=false;
     unsigned computeStopWrites=0,holdWrites=0; bool dropComputeStopWrite=false,dropHoldWrite=false;
     uint32_t rolePc[2]{};
     unsigned rolePcReads[2]{},rolePcChangeAt[2]{UINT32_MAX,UINT32_MAX};
@@ -154,6 +155,8 @@ struct PioneerSessionIO {
     void Q38PanelWrite(unsigned address,uint32_t value) {
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest)) {
             ++roleStopWrites; if (!dropRoleStopWrite) roleBoxes[runtimeCore].stopRequest=value;
+        } else if (address==DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release)) {
+            ++stackCancelWrites; if (!dropStackCancelWrite) roleHandoffs[runtimeCore].release=value;
         } else {
             assert(address==DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence));
             ++computeStopWrites; if (!dropComputeStopWrite) workerBoxes[runtimeCore].shutdownSequence=value;
@@ -162,6 +165,8 @@ struct PioneerSessionIO {
     uint32_t Q38PanelRead(unsigned address) {
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest))
             return roleBoxes[runtimeCore].stopRequest;
+        if (address==DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release))
+            return roleHandoffs[runtimeCore].release;
         assert(address==DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence));
         return workerBoxes[runtimeCore].shutdownSequence;
     }
@@ -309,6 +314,8 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleMemoryReadSafe(context->io,0,0));
             assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
             assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
+            assert(!scope.ProveRoleStackCancelSafe(context->io,0));
+            assert(!scope.ProveRoleStackCancelledSafe(context->io,0));
             const unsigned savedCore=context->io.runtimeCore;
             const bool savedFirmware=context->io.firmwareMatches;
             context->io.runtimeCore=7; context->io.firmwareMatches=true;

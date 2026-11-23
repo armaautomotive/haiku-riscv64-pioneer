@@ -2,7 +2,7 @@
 /* Offline-only entry/park witnesses; no reset or memory ownership is provided. */
 #include "PioneerQwen35DataflowRoleAsmConstants.h"
 
-.macro ROLE_START name, tick, ram_copy, ready_offset, ready_value
+.macro ROLE_START name, tick, ram_copy, ready_offset, ready_value, cancelled_value
 .section .text.\name,"ax",@progbits
 .globl \name
 .type \name,@function
@@ -31,7 +31,8 @@
     mv zero,t3
     /* Until the host has verified the copy, no instruction may write local
        RAM. Each role owns one receipt; the host alone owns the release word.
-       Any nonzero value other than RELEASE parks without touching the stack. */
+       CANCEL publishes a separate receipt before parking; any other nonzero
+       value parks without a cancellation receipt or touching the stack. */
     li t0,PIONEER_Q35_ROLE_SNAPSHOT_HANDOFF
     li t1,\ready_value
     sw t1,\ready_offset(t0)
@@ -40,6 +41,13 @@
     lw t2,8(t0)
     beq t2,t1,5f
     beqz t2,4b
+    li t1,PIONEER_Q35_ROLE_SNAPSHOT_CANCEL
+    bne t2,t1,2f
+    li t1,\cancelled_value
+    sw t1,\ready_offset(t0)
+    fence rw,rw
+    lw t3,\ready_offset(t0)
+    mv zero,t3
     j 2f
 5:
     fence rw,rw
@@ -61,5 +69,5 @@
 .size \name, .-\name
 .endm
 
-ROLE_START qwen35_shared_reader_start, qwen35_shared_reader_tick, PIONEER_Q35_ROLE_READER_RAM_COPY, 0, PIONEER_Q35_ROLE_SNAPSHOT_READER_READY
-ROLE_START qwen35_shared_writer_start, qwen35_shared_writer_tick, PIONEER_Q35_ROLE_WRITER_RAM_COPY, 4, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_READY
+ROLE_START qwen35_shared_reader_start, qwen35_shared_reader_tick, PIONEER_Q35_ROLE_READER_RAM_COPY, 0, PIONEER_Q35_ROLE_SNAPSHOT_READER_READY, PIONEER_Q35_ROLE_SNAPSHOT_READER_CANCELLED
+ROLE_START qwen35_shared_writer_start, qwen35_shared_writer_tick, PIONEER_Q35_ROLE_WRITER_RAM_COPY, 4, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_READY, PIONEER_Q35_ROLE_SNAPSHOT_WRITER_CANCELLED

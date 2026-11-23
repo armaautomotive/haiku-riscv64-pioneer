@@ -96,6 +96,14 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         memcpy(&output,&second,sizeof(output)); return true;
     }
+    bool ReadStableStackHandoff(unsigned core,PioneerQwen35::DataflowRoleSnapshotHandoff& output) {
+        PioneerQwen35::DataflowRoleSnapshotHandoff first{},second{};
+        if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleSnapshotHandoffAddress,&first,sizeof(first))) return false;
+        fIO.Pause();
+        if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleSnapshotHandoffAddress,&second,sizeof(second))
+            || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
+        output=second; return true;
+    }
     bool ReadStableWorkerMailbox(unsigned core,PioneerQwen35::DataflowWorkerMailbox& output) {
         PioneerQwen35::DataflowWorkerMailbox first{},second{};
         if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowWorkerMailboxAddress,&first,sizeof(first))) return false;
@@ -164,6 +172,48 @@ public:
         fIO.Pause();
         return fIO.ResetRead()==0x47800 && fGuard.ProveSelectedRoute(core)
             && fScope.ProveRoleReleaseWriteDrained(fIO,core);
+    }
+    // Only called if no stack-release write was ever attempted on the tile.
+    // Consume the cancellation before the write; a posted write may arrive
+    // even if readback fails, so retries may observe but must not reissue it.
+    bool RequestStackCancel(unsigned core,bool& attempted) {
+        using namespace PioneerQwen35;
+        if (attempted || core>=DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
+            || !fScope.ProveRoleStackCancelSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowRoleSnapshotHandoff snapshot{};
+        if (!ReadStableStackHandoff(core,snapshot)
+            || snapshot.readerReady!=DataflowRoleSnapshotReaderReady
+            || snapshot.writerReady!=DataflowRoleSnapshotWriterReady || snapshot.release
+            || !fScope.ProveRoleStackCancelSafe(fIO,core) || !fGuard.ProveSelectedRoute(core)
+            || fIO.ResetRead()!=0x6000 || fIO.ResetRead()!=0x6000) return false;
+        attempted=true;
+        const unsigned address=DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release);
+        fIO.Q38PanelWrite(address,DataflowRoleSnapshotCancel);
+        return fGuard.ProveSelectedRoute(core) && fIO.Q38PanelRead(address)==DataflowRoleSnapshotCancel
+            && fGuard.ProveSelectedRoute(core);
+    }
+    // The cancellation receipts are from the stackless shims, not normal
+    // role stop receipts. Speculative PC samples are supplemental only: the
+    // independent scope proof must exclude writers and in-flight traffic.
+    bool StackCancelledAndParked(unsigned core,uint32_t readerPark,uint32_t writerPark) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || (readerPark&3) || (writerPark&3)
+            || readerPark<DataflowRoleReaderShimAddress || readerPark>=DataflowRoleReaderShimLimit
+            || writerPark<DataflowRoleWriterShimAddress || writerPark>=DataflowRoleWriterShimLimit
+            || !fScope.ProveRoleStackCancelledSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowRoleSnapshotHandoff first{},second{};
+        if (!ReadStableStackHandoff(core,first) || first.release!=DataflowRoleSnapshotCancel
+            || first.readerReady!=DataflowRoleSnapshotReaderCancelled
+            || first.writerReady!=DataflowRoleSnapshotWriterCancelled) return false;
+        const uint32_t reader1=fIO.SharedRolePcRead(DataflowRoleReader);
+        const uint32_t writer1=fIO.SharedRolePcRead(DataflowRoleWriter);
+        fIO.Pause();
+        const uint32_t reader2=fIO.SharedRolePcRead(DataflowRoleReader);
+        const uint32_t writer2=fIO.SharedRolePcRead(DataflowRoleWriter);
+        return reader1==readerPark && reader2==readerPark && writer1==writerPark && writer2==writerPark
+            && ReadStableStackHandoff(core,second) && !memcmp(&first,&second,sizeof(first))
+            && fScope.ProveRoleStackCancelledSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
     // This issues exactly one host-owned mailbox word, never a command or a
     // reset. A write failure may still have reached the tile; the caller

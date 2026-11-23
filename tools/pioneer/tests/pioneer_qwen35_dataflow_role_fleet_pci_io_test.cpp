@@ -10,6 +10,7 @@ struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
     bool computeStop=false,computePark=false,hold=false,heldAfter=false,releaseDrained=false;
     bool runtime=false;
+    bool stackCancel=false,stackCancelled=false;
     bool imageInspection=false;
     bool faultAudit=false,faultAck=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
@@ -22,6 +23,8 @@ struct FleetPciTestScope {
     bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return runtime; }
+    bool ProveRoleStackCancelSafe(PioneerSessionIO&,unsigned) const { return stackCancel; }
+    bool ProveRoleStackCancelledSafe(PioneerSessionIO&,unsigned) const { return stackCancelled; }
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
     bool ProveRoleReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return releaseDrained; }
     bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return stop; }
@@ -197,6 +200,50 @@ int main()
         assert(io.ReleaseCore(core,allAttempts[core]) && allAttempts[core]);
     }
     assert(context.io.sharedResetWrites==2+DataflowBarrierWorkers);
+    {
+        const unsigned core=16;
+        auto& handoff=context.io.roleHandoffs[core];
+        handoff.readerReady=DataflowRoleSnapshotReaderReady;
+        handoff.writerReady=DataflowRoleSnapshotWriterReady;
+        bool cancelAttempted=false;
+        assert(!io.RequestStackCancel(core,cancelAttempted) && !cancelAttempted && !context.io.stackCancelWrites);
+        scope.stackCancel=true;
+        handoff.writerReady=0;
+        assert(!io.RequestStackCancel(core,cancelAttempted) && !cancelAttempted);
+        handoff.writerReady=DataflowRoleSnapshotWriterReady;
+        handoff.release=DataflowRoleSnapshotRelease;
+        assert(!io.RequestStackCancel(core,cancelAttempted) && !cancelAttempted);
+        handoff.release=0;
+        assert(io.RequestStackCancel(core,cancelAttempted) && cancelAttempted && context.io.stackCancelWrites==1);
+        assert(!io.RequestStackCancel(core,cancelAttempted) && context.io.stackCancelWrites==1);
+        const unsigned readerPark=DataflowRoleReaderShimAddress+0x30;
+        const unsigned writerPark=DataflowRoleWriterShimAddress+0x30;
+        context.io.rolePc[0]=readerPark; context.io.rolePc[1]=writerPark;
+        scope.stackCancelled=true;
+        assert(!io.StackCancelledAndParked(core,readerPark,writerPark));
+        handoff.readerReady=DataflowRoleSnapshotReaderCancelled;
+        assert(!io.StackCancelledAndParked(core,readerPark,writerPark));
+        handoff.writerReady=DataflowRoleSnapshotWriterCancelled;
+        assert(io.StackCancelledAndParked(core,readerPark,writerPark));
+        context.io.handoffReads=0; context.io.handoffChangeAt=1;
+        assert(!io.StackCancelledAndParked(core,readerPark,writerPark));
+        context.io.handoffChangeAt=UINT32_MAX;
+        context.io.rolePcChangeAt[0]=context.io.rolePcReads[0]+1;
+        context.io.rolePcChanged[0]=readerPark+4;
+        assert(!io.StackCancelledAndParked(core,readerPark,writerPark));
+        context.io.rolePcChangeAt[0]=UINT32_MAX;
+        assert(!io.StackCancelledAndParked(core,readerPark+4,writerPark));
+        scope.stackCancelled=false;
+        assert(!io.StackCancelledAndParked(core,readerPark,writerPark));
+        auto& uncertain=context.io.roleHandoffs[17];
+        uncertain.readerReady=DataflowRoleSnapshotReaderReady;
+        uncertain.writerReady=DataflowRoleSnapshotWriterReady;
+        context.io.dropStackCancelWrite=true; cancelAttempted=false;
+        assert(!io.RequestStackCancel(17,cancelAttempted) && cancelAttempted && context.io.stackCancelWrites==2);
+        context.io.dropStackCancelWrite=false;
+        uncertain.release=DataflowRoleSnapshotCancel; // delayed write, observed only
+        assert(!io.RequestStackCancel(17,cancelAttempted) && context.io.stackCancelWrites==2);
+    }
     auto initRoleBox=[&](unsigned core) {
         auto& box=context.io.roleBoxes[core];
         box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;

@@ -44,7 +44,10 @@ enum : unsigned {
     DataflowRoleSnapshotHandoffAddress=PIONEER_Q35_ROLE_SNAPSHOT_HANDOFF,
     DataflowRoleSnapshotReaderReady=PIONEER_Q35_ROLE_SNAPSHOT_READER_READY,
     DataflowRoleSnapshotWriterReady=PIONEER_Q35_ROLE_SNAPSHOT_WRITER_READY,
-    DataflowRoleSnapshotRelease=PIONEER_Q35_ROLE_SNAPSHOT_RELEASE
+    DataflowRoleSnapshotRelease=PIONEER_Q35_ROLE_SNAPSHOT_RELEASE,
+    DataflowRoleSnapshotCancel=PIONEER_Q35_ROLE_SNAPSHOT_CANCEL,
+    DataflowRoleSnapshotReaderCancelled=PIONEER_Q35_ROLE_SNAPSHOT_READER_CANCELLED,
+    DataflowRoleSnapshotWriterCancelled=PIONEER_Q35_ROLE_SNAPSHOT_WRITER_CANCELLED
 };
 static_assert(sizeof(DataflowRoleSnapshotHandoff)==12
     && DataflowRoleSnapshotHandoffAddress>=DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)
