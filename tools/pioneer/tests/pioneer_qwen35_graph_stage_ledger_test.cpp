@@ -5,9 +5,13 @@
 
 struct LedgerPublisherIO : PublisherIO {
 	DataflowGraphStageLedger& ledger;
+	bool requireAudit=false;
 	explicit LedgerPublisherIO(DataflowGraphStageLedger& owner):ledger(owner) { previous=0; }
 	bool StageGraphRun(unsigned core,const DataflowGraphRunDescriptor& d) {
-		return ledger.CanStage(core,d) && PublisherIO::StageGraphRun(core,d) && ledger.Record(core,d);
+		if (!ledger.CanStage(core,d)) return false;
+		const auto* old=d.triggerSequence>1?ledger.TakeAudited(core,d.triggerSequence-1):nullptr;
+		if (requireAudit && (!old || old->triggerSequence+1!=d.triggerSequence)) return false;
+		return PublisherIO::StageGraphRun(core,d) && ledger.Record(core,d);
 	}
 	bool GraphRunMatches(unsigned core,const DataflowGraphRunDescriptor& d) {
 		if (core!=checked || !ledger.Verify(core,d)) return false;
@@ -47,15 +51,28 @@ int main() {
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		const auto* owned=ledger->BeginPublish(core,1);
 		assert(owned && owned->core==core && owned->triggerSequence==1 && DataflowGraphRunValid(*owned,core));
+		if (core<DataflowCoreCount-1) assert(!ledger->RecordAudit(core,*owned));
 		assert(!ledger->BeginPublish(core,1));
 	}
 	assert(!ledger->BeginPublish(0,1));
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		assert(DataflowGraphRunBuild(plan->binding[core],plan->lease[core],f->routes,token,ticket,1,100,0,descriptor));
+		if (!core) {
+			forged=descriptor;forged.checksum^=1;
+			assert(!ledger->RecordAudit(core,forged));
+		}
+		assert(ledger->RecordAudit(core,descriptor) && !ledger->RecordAudit(core,descriptor));
+	}
 	assert(DataflowDynamicTokenContext::Build(f->manifest,43,1,token));ticket={2,549,545};
 	assert(DataflowGraphRunBuild(plan->binding[0],plan->lease[0],f->routes,token,ticket,2,100,0,descriptor));
+	assert(!ledger->TakeAudited(1,1) && !ledger->TakeAudited(0,2));
+	const auto* consumed=ledger->TakeAudited(0,1);
+	assert(consumed && !ledger->TakeAudited(0,1) && !ledger->RecordAudit(0,*consumed));
 	assert(ledger->CanStage(0,descriptor) && ledger->Record(0,descriptor) && ledger->Verify(0,descriptor));
 	assert(!ledger->BeginPublish(0,2)); // A partially staged fleet cannot launch.
 	for (unsigned core=1;core<DataflowCoreCount;core++) {
 		assert(DataflowGraphRunBuild(plan->binding[core],plan->lease[core],f->routes,token,ticket,2,100,0,descriptor));
+		assert(ledger->TakeAudited(core,1));
 		assert(ledger->Record(core,descriptor) && ledger->Verify(core,descriptor));
 	}
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -70,7 +87,10 @@ int main() {
 	ticket={1,1,548};assert(DataflowDynamicTokenContext::Build(f->manifest,42,0,token));
 	assert(firstPublisher.Start(*plan,f->routes,token,ticket,1,100,0,*firstIO,descriptor)==DataflowGraphPublished
 		&& firstIO->staged==120 && firstIO->checked==120 && firstIO->published==120);
+	for (unsigned core=0;core<DataflowCoreCount;core++)
+		assert(integrated->RecordAudit(core,firstIO->records[core]));
 	auto nextIO=std::make_unique<LedgerPublisherIO>(*integrated);nextIO->previous=1;DataflowGraphPublisher nextPublisher;
+	nextIO->requireAudit=true;
 	ticket={2,549,545};assert(DataflowDynamicTokenContext::Build(f->manifest,43,1,token));
 	assert(nextPublisher.Start(*plan,f->routes,token,ticket,2,100,0,*nextIO,descriptor)==DataflowGraphPublished
 		&& nextIO->published==120);

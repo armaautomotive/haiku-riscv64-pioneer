@@ -206,6 +206,13 @@ public:
     // NoC quiescence and session/graph state; mailbox/PC samples alone are
     // insufficient. This proof is not yet implemented.
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    // This stronger, lifetime-spanning guarantee must cover the interval
+    // from the prior completion audit through the next command publication,
+    // including other agents and firmware, even across separate ioctls.
+    // The session lock and current route/PC samples do not establish it.
+    bool ProveRoleAuditedDescriptorContinuity(PioneerSessionIO&,unsigned) const { return false; }
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     // Fault audit requires image/route/both-NoC proof. Acknowledgement also
     // requires the exact retained graph's all-core two-pass audit; neither is

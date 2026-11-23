@@ -3432,7 +3432,8 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool ReadWorkerSnapshot(unsigned core,PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-	bool StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor);
+	bool StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor,
+		const PioneerQwen35::DataflowGraphRunDescriptor* audited=nullptr);
 	bool PublishGraphCommand(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor);
 	bool AuditGraphCore(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& expected,
 		const PioneerQwen35::DataflowWorkerSnapshot& receipt,bool decode);
@@ -3923,6 +3924,9 @@ static bool PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner);
 static bool PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
 static bool PioneerQ35PromoteRetainedFaultScope(PioneerStoreContext& context);
 static bool PioneerQ35EndRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+static bool PioneerQ35AuditedDescriptorContinuity(PioneerStoreContext& context,unsigned core);
+#endif
 #endif
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -4508,6 +4512,14 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 		&& BlackholeHostPcieStatus(*this,0,status) && BlackholeHostPcieStatus(*this,1,status);
 }
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+static bool
+PioneerQ35AuditedDescriptorContinuity(PioneerStoreContext& context,unsigned core)
+{
+	auto* scope=context.io.qwen35BorrowedRoleScope;
+	return scope && scope->ProveRoleAuditedDescriptorContinuity(context.io,core);
+}
+#endif
 static bool
 PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run)
 {

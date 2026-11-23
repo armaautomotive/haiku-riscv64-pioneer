@@ -14,6 +14,8 @@ namespace PioneerQwen35 {
 // exact copy of each staged descriptor until its command is attempted.
 class DataflowGraphStageLedger {
 	DataflowGraphRunDescriptor staged[DataflowCoreCount]{};
+	enum AuditState : uint8_t { AuditNone,AuditAvailable,AuditTaken };
+	AuditState audit[DataflowCoreCount]{};
 	unsigned nextStage=0,nextPublish=0,current=0,previous=0;
 	bool awaitingVerification=false,publishing=false;
 public:
@@ -36,7 +38,24 @@ public:
 	bool Record(unsigned core,const DataflowGraphRunDescriptor& descriptor) {
 		if (!CanStage(core,descriptor)) return false;
 		if (!core) current=descriptor.triggerSequence;
-		staged[core]=descriptor;nextStage++;awaitingVerification=true;return true;
+		audit[core]=AuditNone;staged[core]=descriptor;nextStage++;awaitingVerification=true;return true;
+	}
+	// Call only after the actual completion audit compared the full device
+	// descriptor with this exact record. This receipt is not itself a proof
+	// that another agent cannot write L1; the exclusive session must supply
+	// that continuity until the next command has been published.
+	bool RecordAudit(unsigned core,const DataflowGraphRunDescriptor& descriptor) {
+		if (core>=DataflowCoreCount || publishing || nextStage || awaitingVerification
+			|| !previous || descriptor.triggerSequence!=previous || audit[core]!=AuditNone
+			|| memcmp(&staged[core],&descriptor,sizeof(descriptor))) return false;
+		audit[core]=AuditAvailable;return true;
+	}
+	// One-shot: a failed or partial update must never reuse its old receipt.
+	const DataflowGraphRunDescriptor* TakeAudited(unsigned core,unsigned sequence) {
+		if (core>=DataflowCoreCount || core!=nextStage || publishing || awaitingVerification
+			|| audit[core]!=AuditAvailable || sequence!=previous
+			|| staged[core].triggerSequence!=sequence) return nullptr;
+		audit[core]=AuditTaken;return &staged[core];
 	}
 	bool Verify(unsigned core,const DataflowGraphRunDescriptor& descriptor) {
 		if (!awaitingVerification || !nextStage || core!=nextStage-1

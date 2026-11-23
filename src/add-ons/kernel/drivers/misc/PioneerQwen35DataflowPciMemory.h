@@ -371,12 +371,14 @@ public:
 
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	// Once the first descriptor has been verified, a warm graph only changes
-	// the trigger, poll budget, ticket, token/position and checksum. Compare
-	// the complete old record to the trusted next record before writing any
-	// word, and retain the graph on any partial write or unexpected change.
-	// The worker is idle and the global session lock excludes other writers.
+	// the trigger, poll budget, ticket, token/position and checksum. An audited
+	// previous record may be reused only while exclusive ownership prevents
+	// intervening L1 writers; otherwise read the entire record. Even with an
+	// audited record, compare every mutable device word before the first write.
+	// The worker validates the complete descriptor and checksum before use.
 	bool UpdateGraphRun(unsigned core,unsigned previous,
-		const PioneerQwen35::DataflowGraphRunDescriptor& next)
+		const PioneerQwen35::DataflowGraphRunDescriptor& next,
+		const PioneerQwen35::DataflowGraphRunDescriptor* audited=nullptr)
 	{
 		using namespace PioneerQwen35;
 		if (!previous || !DataflowGraphRunValid(next,core)
@@ -385,8 +387,9 @@ public:
 			|| !fRaw.DataflowCoreIdleForWrite(core,DataflowGraphRunAddress,
 				DataflowGraphRunBytes)) return false;
 		DataflowGraphRunDescriptor old{};
-		if (!ReadCoreMemory(core,DataflowGraphRunAddress,&old,sizeof(old))
-			|| !DataflowGraphRunValid(old,core) || old.triggerSequence!=previous)
+		if (audited) old=*audited;
+		else if (!ReadCoreMemory(core,DataflowGraphRunAddress,&old,sizeof(old))) return false;
+		if (!DataflowGraphRunValid(old,core) || old.triggerSequence!=previous)
 			return false;
 		constexpr unsigned Words=DataflowGraphRunBytes/sizeof(uint32_t);
 		auto wordAt=[](const DataflowGraphRunDescriptor& record,unsigned word) {
@@ -405,6 +408,13 @@ public:
 		};
 		for (unsigned word=0;word<Words;word++)
 			if (wordAt(old,word)!=wordAt(next,word) && !mutableWord(word*sizeof(uint32_t))) return false;
+		if (audited) {
+			for (unsigned word=0;word<Words;word++) {
+				if (!mutableWord(word*sizeof(uint32_t))) continue;
+				if (fRaw.Q38PanelRead(DataflowGraphRunAddress+word*sizeof(uint32_t))!=wordAt(old,word)
+					|| !fRaw.DataflowPanelMappingStable()) return false;
+			}
+		}
 		for (unsigned word=0;word<Words;word++) {
 			const uint32_t value=wordAt(next,word);
 			if (wordAt(old,word)==value) continue;

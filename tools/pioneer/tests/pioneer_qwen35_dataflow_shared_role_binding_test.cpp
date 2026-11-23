@@ -118,6 +118,9 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     io.runtimeCore=7; io.simulateArc=true; io.simulateHdma=true; io.firmwareMatches=true;
     io.selectCalls=io.tlbWrites=io.hdmaReads=0;
     auto* scope=io.qwen35BorrowedRoleScope;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    assert(!scope->ProveRoleAuditedDescriptorContinuity(io,7));
+#endif
     assert(scope->ProveRoleImageInspectionAllowed(io,7));
     assert(!scope->ProveRoleImageInspectionAllowed(io,8));
     io.firmwareMatches=false;

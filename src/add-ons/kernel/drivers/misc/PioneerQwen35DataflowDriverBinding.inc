@@ -1941,7 +1941,8 @@ PioneerSessionIO::AuditGraphCore(unsigned core,const PioneerQwen35::DataflowGrap
 }
 
 bool
-PioneerSessionIO::StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor)
+PioneerSessionIO::StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraphRunDescriptor& descriptor,
+	const PioneerQwen35::DataflowGraphRunDescriptor* audited)
 {
 	using namespace PioneerQwen35;
 	DataflowWorkerSnapshot snapshot{};
@@ -1951,12 +1952,12 @@ PioneerSessionIO::StageGraphRun(unsigned core,const PioneerQwen35::DataflowGraph
 	if (snapshot.completedSequence) {
 		if (!qwen35DataflowContext || !qwen35DataflowContext->qwen35DataflowMemory
 			|| !qwen35DataflowContext->qwen35DataflowMemory->UpdateGraphRun(
-				core,snapshot.completedSequence,descriptor)) return false;
+				core,snapshot.completedSequence,descriptor,audited)) return false;
 	} else if (!WriteCoreMemory(core,DataflowGraphRunAddress,&descriptor,sizeof(descriptor)))
 		return false;
-	// Every descriptor word has either been read back after writing or was
-	// verified unchanged by UpdateGraphRun. The locked owner records the
-	// exact staged descriptor before the publisher may issue any command.
+	// The locked owner records the exact staged descriptor before publishing.
+	// An audited previous descriptor additionally requires exclusive L1
+	// ownership to remain valid between the prior audit and this update.
 	const uint32_t command=DataflowGraphRunCommand;
 	return WriteCoreMemory(core,DataflowProgramAddress,&command,sizeof(command));
 }
@@ -2200,7 +2201,15 @@ public:
 	bool CoreReady(unsigned c,const PioneerQwen35::DataflowWorkerSnapshot& s) { return context.io.CoreReady(c,s); }
 	bool StageGraphRun(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d) {
 		auto& ledger=stream.StageLedger();
-		return ledger.CanStage(c,d) && context.io.StageGraphRun(c,d) && ledger.Record(c,d);
+		if (!ledger.CanStage(c,d)) return false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		const auto* audited=d.triggerSequence>1
+			&& PioneerQ35AuditedDescriptorContinuity(context,c)
+			?ledger.TakeAudited(c,d.triggerSequence-1):nullptr;
+		return context.io.StageGraphRun(c,d,audited) && ledger.Record(c,d);
+#else
+		return context.io.StageGraphRun(c,d) && ledger.Record(c,d);
+#endif
 	}
 	bool GraphRunMatches(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d) {
 		return stream.StageLedger().Verify(c,d);
@@ -2215,7 +2224,14 @@ public:
 		return PioneerQwen35::DataflowGraphWaitForCompletion(*this,c,seq,graphWaitStart,s);
 	}
 	bool AuditGraphCore(unsigned c,const PioneerQwen35::DataflowGraphRunDescriptor& d,
-		const PioneerQwen35::DataflowWorkerSnapshot& s,bool decode) { return context.io.AuditGraphCore(c,d,s,decode); }
+		const PioneerQwen35::DataflowWorkerSnapshot& s,bool decode) {
+		if (!context.io.AuditGraphCore(c,d,s,decode)) return false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		return stream.StageLedger().RecordAudit(c,d);
+#else
+		return true;
+#endif
+	}
 	bool ReadArgmaxResult(unsigned seq,PioneerQwen35::DataflowArgmaxResult& r) { return context.io.ReadArgmaxResult(seq,r); }
 	bool Acknowledge(unsigned c,unsigned seq) { return context.io.Acknowledge(c,seq); }
 	PioneerQwen35::DataflowGraphSessionRun* NewGraphRun() {
