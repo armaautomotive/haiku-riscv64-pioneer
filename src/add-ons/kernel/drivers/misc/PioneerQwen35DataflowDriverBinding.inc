@@ -1276,35 +1276,45 @@ PioneerSessionIO::WaitForCompletion(unsigned core,unsigned sequence,
 	return false;
 }
 
+// Keep receipt/queue auditing separate from model authorization so the fixed
+// all-worker qualification can reuse the same audit once it is connected.
+static bool
+PioneerQwen35DataflowAuditProjectionReceipts(PioneerSessionIO& io,
+	const PioneerQwen35::DataflowProjectionProgram& program,unsigned sequence,
+	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount])
+{
+	if (!program.Valid() || !sequence) return false;
+	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+		if (receipts[core].commandSequence!=sequence
+			|| receipts[core].completedSequence!=sequence
+			|| receipts[core].state!=PioneerQwen35::DataflowWorkerComplete
+			|| receipts[core].failure || receipts[core].phase!=2
+			|| !PioneerQwen35DataflowCoreRuntimeStable(io,core)
+			|| !PioneerQwen35DataflowQueuesBalanced(io,core,false)) return false;
+		PioneerQwen35::DataflowWorkerSnapshot observed{};
+		PioneerQwen35::DataflowCoreInvocation invocation{};
+		if (!io.ReadWorkerSnapshot(core,observed)
+			|| memcmp(&receipts[core],&observed,sizeof(observed))!=0
+			|| !io.ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
+				&invocation,sizeof(invocation))) return false;
+		PioneerQwen35::DataflowCoreInvocation expected{};
+		if (!PioneerQwen35::DataflowProgramBuilder::BindCore(program,core,expected)
+			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
+	}
+	return io.SelectRuntimeCore(0);
+}
+
 bool
 PioneerSessionIO::AuditProjection(
 	const PioneerQwen35::DataflowProjectionProgram& program,unsigned sequence,
 	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount])
 {
 	auto* context=qwen35DataflowContext;
-	if (!context || !context->qwen35DataflowAuthority
-		|| !program.Valid() || !sequence || !context->qwen35DataflowAuthority->Pending())
-		return false;
-	if (!context->qwen35DataflowAuthority->PendingProjectionMatches(program))
-		return false;
-	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-		if (receipts[core].commandSequence!=sequence
-			|| receipts[core].completedSequence!=sequence
-			|| receipts[core].state!=PioneerQwen35::DataflowWorkerComplete
-			|| receipts[core].failure || receipts[core].phase!=2
-			|| !PioneerQwen35DataflowCoreRuntimeStable(*this,core)
-			|| !PioneerQwen35DataflowQueuesBalanced(*this,core,false)) return false;
-		PioneerQwen35::DataflowWorkerSnapshot observed{};
-		PioneerQwen35::DataflowCoreInvocation invocation{};
-		if (!ReadWorkerSnapshot(core,observed)
-			|| memcmp(&receipts[core],&observed,sizeof(observed))!=0
-			|| !ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
-				&invocation,sizeof(invocation))) return false;
-		PioneerQwen35::DataflowCoreInvocation expected{};
-		if (!PioneerQwen35::DataflowProgramBuilder::BindCore(program,core,expected)
-			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
-	}
-	return SelectRuntimeCore(0);
+	return context && context->qwen35DataflowAuthority
+		&& program.Valid() && sequence
+		&& context->qwen35DataflowAuthority->Pending()
+		&& context->qwen35DataflowAuthority->PendingProjectionMatches(program)
+		&& PioneerQwen35DataflowAuditProjectionReceipts(*this,program,sequence,receipts);
 }
 
 bool

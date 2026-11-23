@@ -202,4 +202,5 @@ int main()
         assert(Fixture::OutputMatches(row,bits));
     }
     std::puts("PASS fixed Q4_K projection partitions and exact results for 120 simulated workers; NO HARDWARE");
+    return 0;
 }

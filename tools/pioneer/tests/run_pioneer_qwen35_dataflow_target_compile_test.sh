@@ -1098,6 +1098,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_shared_service_owner_test.cpp" \
 	-o "$temporary/shared-service-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-service-owner-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_projection_service_integration_test.cpp" \
+	-o "$temporary/projection-service-integration-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-service-integration-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_shared_service_recovery_test.cpp" \
 	-o "$temporary/shared-service-recovery-test"
