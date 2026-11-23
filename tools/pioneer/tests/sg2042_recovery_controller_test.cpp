@@ -10,7 +10,7 @@
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;
 using vuint8=volatile uint8;using vuint16=volatile uint16;using vuint32=volatile uint32;
 using addr_t=uintptr_t;using thread_id=int;using status_t=int;
-enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4};
+enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5};
 enum {PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
 static constexpr uint32 kSg2042AtPciAddress0=0,kSg2042AtDescriptor0=8;
 #define ROUNDDOWN(value,alignment) ((value)&~((alignment)-1))
@@ -39,6 +39,7 @@ public:
 	alignas(4) uint8 root[4096]={},config[4096]={},translation[16]={};
 	volatile uint8* fControllerRegs=root;volatile uint8* fRegs=config;volatile uint8* fAtRegs=translation;
 	bool fRootConfigReadLogged=true,fDownstreamConfigReadLogged=true;uint8 fSg2042FunctionsLogged=0;
+	status_t RunPioneerRecovery(status_t (*operation)(void*),void* argument,status_t* operationStatus);
 	status_t BeginPioneerRecovery(uint64& ticket);
 	status_t EndPioneerRecovery(uint64 ticket);
 	status_t WaitPioneerConfigAccess();
@@ -48,13 +49,31 @@ public:
 #include "sg2042_recovery_controller.inc"
 #include "sg2042_config_access.inc"
 
+struct CallbackContext {ECAMPCIController* controller; int calls;};
+static status_t FailingOperation(void* arg) {
+	CallbackContext& context=*static_cast<CallbackContext*>(arg);
+	++context.calls;uint64 nested=0;
+	assert(context.controller->BeginPioneerRecovery(nested)==B_BUSY && !nested);
+	uint32 value=0;
+	assert(context.controller->ReadSg2042Config(0,0,0,0,4,value)==B_OK);
+	return B_ERROR;
+}
 int main()
 {
 	ECAMPCIController controller,other;current=11;uint64 ticket=0,wrong=0;
+	CallbackContext context{&controller,0};status_t result=B_OK;
+	assert(controller.RunPioneerRecovery(nullptr,&context,&result)==B_BAD_VALUE);
+	assert(controller.RunPioneerRecovery(FailingOperation,&context,nullptr)==B_BAD_VALUE);
+	controller.fPrivatePioneerRoot=false;
+	assert(controller.RunPioneerRecovery(FailingOperation,&context,&result)==B_NOT_ALLOWED);
+	assert(context.calls==0 && result==B_ERROR);
+	controller.fPrivatePioneerRoot=true;
+	assert(controller.RunPioneerRecovery(FailingOperation,&context,&result)==B_OK);
+	assert(context.calls==1 && result==B_ERROR && !controller.fPioneerRecoveryLease.Active());
 	controller.fPrivatePioneerRoot=false;
 	assert(controller.BeginPioneerRecovery(ticket)==B_NOT_ALLOWED && !ticket);
 	controller.fPrivatePioneerRoot=true;
-	assert(controller.BeginPioneerRecovery(ticket)==B_OK && ticket==1);
+	assert(controller.BeginPioneerRecovery(ticket)==B_OK && ticket==2);
 	assert(controller.BeginPioneerRecovery(wrong)==B_BUSY && !wrong);
 	mutex_lock(&controller.fLock);assert(controller.WaitPioneerConfigAccess()==B_OK);mutex_unlock(&controller.fLock);
 	std::atomic<bool> done{false};

@@ -5,16 +5,16 @@
 
 #define PIONEER_SG2042_RECOVERY_MODULE "busses/pci/ecam/pioneer_recovery/v1"
 
-// Compile witness only: its exported callbacks refuse all requests, and the
-// ordinary ECAM driver does not export this module. Before any loadable
-// version, resolve legacy read/write error propagation and owner teardown.
-// Kernel-only. cookie must be the retained ECAM driver cookie for the exact
-// private Pioneer FDT root. Begin/End must run on the same locked driver
-// thread; the caller must end the lease before dropping its node/module refs.
-// This controls PCI config calls through this controller only, not DMA/MMIO.
+// Compile witness only: the exported callback refuses every request and the
+// ordinary ECAM driver does not export this module. The callback is executed
+// synchronously on the calling thread; the controller releases its lease before
+// returning. The retained controller cookie and module must outlive the call.
+// This controls controller-mediated PCI config access only, not DMA or MMIO.
+// The operation must not wait for a thread that may require this controller.
+typedef status_t (*pioneer_sg2042_recovery_operation)(void* argument);
 struct pioneer_sg2042_recovery_module_info {
 	module_info info;
-	status_t (*begin)(void* cookie,uint64* ticket);
-	status_t (*end)(void* cookie,uint64 ticket);
+	status_t (*run)(void* cookie, pioneer_sg2042_recovery_operation operation,
+		void* argument, status_t* operationStatus);
 };
 #endif

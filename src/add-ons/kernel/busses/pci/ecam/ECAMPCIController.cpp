@@ -192,6 +192,24 @@ ECAMPCIController::ConfigAddress(uint8 bus, uint8 device, uint8 function, uint16
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
 // PIONEER_SG2042_RECOVERY_LEASE_BEGIN
 status_t
+ECAMPCIController::RunPioneerRecovery(status_t (*operation)(void*),
+	void* argument, status_t* operationStatus)
+{
+	if (operation == NULL || operationStatus == NULL)
+		return B_BAD_VALUE;
+	*operationStatus = B_ERROR;
+	uint64 ticket = 0;
+	status_t status = BeginPioneerRecovery(ticket);
+	if (status != B_OK)
+		return status;
+	// No controller lock is held during the callback. The callback must not
+	// wait on another thread that could need this controller's config lock.
+	*operationStatus = operation(argument);
+	return EndPioneerRecovery(ticket);
+}
+
+
+status_t
 ECAMPCIController::BeginPioneerRecovery(uint64& ticket)
 {
 	ticket = 0;

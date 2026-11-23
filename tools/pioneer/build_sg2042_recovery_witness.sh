@@ -55,7 +55,7 @@ grep -q 'lui.*a0,0x80000' "$output/witness/init.txt"
 grep -q 'add.*a0,a0,15' "$output/witness/init.txt"
 "$objdump" -Cd "$output/witness/kernel_interface.o" > "$output/witness/interface.txt"
 sed -n '/<gPioneerRecovery.*_FUN/,/^$/p' "$output/witness/interface.txt" > "$output/witness/callbacks.txt"
-[ "$(grep -c 'lui.*a0,0x80000' "$output/witness/callbacks.txt")" = 2 ]
-[ "$(grep -c 'add.*a0,a0,15' "$output/witness/callbacks.txt")" = 2 ]
+[ "$(grep -c 'lui.*a0,0x80000' "$output/witness/callbacks.txt")" = 1 ]
+[ "$(grep -c 'add.*a0,a0,15' "$output/witness/callbacks.txt")" = 1 ]
 shasum -a 256 "$output/control/ecam" "$output/witness/ecam"
-echo 'PASS SG2042 recovery witness rejects controller initialization and both service calls; NOT LOADABLE'
+echo 'PASS SG2042 recovery witness rejects controller initialization and the service call; NOT LOADABLE'

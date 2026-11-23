@@ -151,6 +151,8 @@ public:
 
 	status_t GetRange(uint32 index, pci_resource_range* range);
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	status_t RunPioneerRecovery(status_t (*operation)(void*), void* argument,
+		status_t* operationStatus);
 	status_t BeginPioneerRecovery(uint64& ticket);
 	status_t EndPioneerRecovery(uint64 ticket);
 	status_t WaitPioneerConfigAccess(); // fLock held on entry and return

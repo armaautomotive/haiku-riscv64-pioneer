@@ -1,40 +1,41 @@
 /* Distributed under the MIT License. */
 #ifndef PIONEER_PCI_ROOT_LEASE_SCOPE_H
 #define PIONEER_PCI_ROOT_LEASE_SCOPE_H
-#include <stdint.h>
 
-// A single locked recovery call borrows the ECAM module and retained root
-// cookie. The scope never stores either beyond its own lifetime. A failed or
-// ambiguous release is not repeated and must quarantine the caller's owner.
-// IO::Quarantine() is kernel-memory-only; it must not touch PCI or MMIO.
+// The service owns the lease for the duration of one synchronous call. The
+// caller borrows the module and retained controller cookie only for that call.
+// Quarantine is memory-only. Any failure after entry into the operation has
+// uncertain release state; never retry it automatically.
 template<class IO,class Service> class PioneerPciRootLeaseScope {
 	IO& io;
-	Service* service=nullptr;
-	void* cookie=nullptr;
-	uint64_t ticket=0;
-	bool attempted=false,active=false,closeAttempted=false;
+	bool attempted=false;
+	struct Invocation {
+		status_t (*operation)(void*);
+		void* argument;
+		unsigned calls=0;
+	};
+	static status_t Invoke(void* opaque) {
+		Invocation& invocation=*static_cast<Invocation*>(opaque);
+		if (++invocation.calls!=1) return B_NOT_ALLOWED;
+		return invocation.operation(invocation.argument);
+	}
 public:
 	explicit PioneerPciRootLeaseScope(IO& owned):io(owned) {}
 	PioneerPciRootLeaseScope(const PioneerPciRootLeaseScope&)=delete;
 	PioneerPciRootLeaseScope& operator=(const PioneerPciRootLeaseScope&)=delete;
-	~PioneerPciRootLeaseScope() { if (active && !closeAttempted) (void)Close(); }
-	bool Begin(Service* module,void* controller) {
-		if (attempted || !module || !module->begin || !module->end || !controller) return false;
-		attempted=true;service=module;cookie=controller;
-		const status_t status=service->begin(cookie,&ticket);
-		if (status!=B_OK || !ticket) {
-			if (ticket || status==B_OK) io.Quarantine();
-			return false;
+	status_t Run(Service* service,void* cookie,status_t (*operation)(void*),
+		void* argument,status_t* operationStatus) {
+		if (attempted || !service || !service->run || !cookie || !operation || !operationStatus)
+			return B_NOT_ALLOWED;
+		attempted=true;
+		Invocation invocation{operation,argument};
+		const status_t status=service->run(cookie,Invoke,&invocation,operationStatus);
+		if (invocation.calls>1 || (status==B_OK && invocation.calls!=1)
+			|| (status!=B_OK && invocation.calls!=0)) {
+			io.Quarantine();
+			return status==B_OK ? B_ERROR : status;
 		}
-		active=true;return true;
+		return status;
 	}
-	status_t Close() {
-		if (!active || closeAttempted) return B_NOT_ALLOWED;
-		closeAttempted=true;
-		const status_t status=service->end(cookie,ticket);
-		if (status!=B_OK) { io.Quarantine();return status; }
-		active=false;return B_OK;
-	}
-	bool Active() const { return active; }
 };
 #endif

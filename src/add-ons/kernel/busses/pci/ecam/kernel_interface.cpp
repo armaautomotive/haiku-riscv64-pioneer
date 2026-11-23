@@ -64,11 +64,10 @@ pci_controller_module_info gPciControllerDriver = {
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
 pioneer_sg2042_recovery_module_info gPioneerRecovery = {
 	.info = { .name = PIONEER_SG2042_RECOVERY_MODULE },
-	.begin = [](void* cookie, uint64* ticket) {
-		(void)cookie;(void)ticket;return B_NOT_ALLOWED;
-	},
-	.end = [](void* cookie, uint64 ticket) {
-		(void)cookie;(void)ticket;return B_NOT_ALLOWED;
+	.run = [](void* cookie, pioneer_sg2042_recovery_operation operation,
+		void* argument, status_t* operationStatus) {
+		(void)cookie; (void)operation; (void)argument; (void)operationStatus;
+		return B_NOT_ALLOWED;
 	}
 };
 #endif
