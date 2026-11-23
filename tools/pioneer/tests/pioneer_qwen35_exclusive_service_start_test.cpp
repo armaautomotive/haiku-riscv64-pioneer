@@ -59,12 +59,16 @@ int main() {
         assert(io->releaseAttempts==DataflowCoreCount && io->roleStarts==DataflowCoreCount && !io->captureCount);
         for (unsigned i=0;i<DataflowCoreCount;i++) assert(!io->roleHandoff[i].release);
         assert(owner->Close(*io)==DataflowServiceStopAuditFailed && io->restoreCount==0);
+        assert(owner->SharedDedicatedCleanStopPending());
+        io->allowStop=true;
+        assert(owner->Close(*io)==DataflowServiceResetRequired && owner->SharedDedicatedCleanStopPending());
     }
     {
         auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
         io->failHoldCore=3;
         assert(owner->Install(image,*io)==DataflowServiceHoldFailed && owner->Faulted());
         assert(io->held[3] && !io->captureCount && !io->roleStages && !io->releaseAttempts);
+        assert(!owner->SharedDedicatedCleanStopPending());
         assert(owner->Close(*io)==DataflowServiceResetRequired && owner->StoppedResetReady());
         assert(io->stopCount==1 && !io->restoreCount && !io->resumeCount);
     }

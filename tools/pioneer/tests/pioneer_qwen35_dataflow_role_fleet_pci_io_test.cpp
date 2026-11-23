@@ -322,11 +322,25 @@ int main()
             assert(DataflowRoleMailboxPublishStarted(box,role));
     };
     initRoleBox(8);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    for (unsigned core=8;core<=9;core++) {
+        auto& box=context.io.workerBoxes[core];
+        box.magic=DataflowWorkerMailboxMagic;box.version=DataflowWorkerMailboxVersion;
+        box.logicalCore=core;box.state=DataflowWorkerReady;
+    }
+#endif
     bool stopAttempted=false; uint32_t stopToken=0;
     context.io.runtimeCore=7;
     assert(!io.RequestStop(8,false,stopAttempted,stopToken)
         && !stopAttempted && !stopToken && context.io.runtimeCore==7 && !context.io.roleStopWrites);
     scope.stop=true;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    context.io.queueBoxes[8][0].produced=1;
+    assert(!io.RequestStop(8,false,stopAttempted,stopToken) && !stopAttempted && !context.io.roleStopWrites);
+    context.io.queueBoxes[8][0].produced=0;context.io.workerBoxes[8].state=DataflowWorkerComplete;
+    assert(!io.RequestStop(8,false,stopAttempted,stopToken) && !stopAttempted && !context.io.roleStopWrites);
+    context.io.workerBoxes[8].state=DataflowWorkerReady;
+#endif
     assert(io.RequestStop(8,false,stopAttempted,stopToken) && stopAttempted && stopToken==1);
     assert(io.StopRequestObserved(8,stopToken) && context.io.roleStopWrites==1);
     assert(!io.RequestStop(8,false,stopAttempted,stopToken) && context.io.roleStopWrites==1);

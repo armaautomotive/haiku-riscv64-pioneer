@@ -248,14 +248,38 @@ public:
     // must prove that the particular attempted write has drained, and that no
     // other agent can release the tile for the remainder of recovery.
     bool ProveRoleReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }
-    // A stop request requires the retained graph and compute/queue writers
-    // to be settled; fault and clean stops need different proofs.
-    bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return false; }
-    bool ProveRolePostStopSafe(PioneerSessionIO&,unsigned) const { return false; }
-    bool ProveComputeStopSafe(PioneerSessionIO&,unsigned) const { return false; }
-    bool ProveComputePostStopSafe(PioneerSessionIO&,unsigned) const { return false; }
-    bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return false; }
-    bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return false; }
+    // Only the non-loadable dedicated clean-close path uses this observed
+    // admission. Faulted graphs, firmware exclusion and physical recovery
+    // require separate evidence; the stop owner checks receipts and ordering.
+    bool CanObserveDedicatedCleanStop(PioneerSessionIO& io,unsigned core) const {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        auto* service=fContext?fContext->qwen35DataflowService:NULL;
+        return core<PioneerQwen35::DataflowBarrierWorkers && service
+            && service->SharedDedicatedCleanStopPending() && ProveExclusiveRewrite(io)
+            && !PioneerQ35GraphOwnerRetained(fContext->qwen35GraphOwner)
+            && !RetainedFaultAuditActive(io) && io.SharedRoleFirmwareMatches();
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
+    bool ProveRoleStopSafe(PioneerSessionIO& io,unsigned core,bool fault) const {
+        return !fault && CanObserveDedicatedCleanStop(io,core);
+    }
+    bool ProveRolePostStopSafe(PioneerSessionIO& io,unsigned core) const {
+        return CanObserveDedicatedCleanStop(io,core);
+    }
+    bool ProveComputeStopSafe(PioneerSessionIO& io,unsigned core) const {
+        return CanObserveDedicatedCleanStop(io,core);
+    }
+    bool ProveComputePostStopSafe(PioneerSessionIO& io,unsigned core) const {
+        return CanObserveDedicatedCleanStop(io,core);
+    }
+    bool ProveRoleHoldSafe(PioneerSessionIO& io,unsigned core) const {
+        return CanObserveDedicatedCleanStop(io,core);
+    }
+    bool ProveRoleHeldAfterAttempt(PioneerSessionIO& io,unsigned core) const {
+        return CanObserveDedicatedCleanStop(io,core);
+    }
     // Must independently establish the owned role/compute images, routes,
     // NoC quiescence and session/graph state; mailbox/PC samples alone are
     // insufficient. This proof is not yet implemented.

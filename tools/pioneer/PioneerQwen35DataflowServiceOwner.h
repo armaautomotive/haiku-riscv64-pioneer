@@ -150,6 +150,7 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	bool fStoppedResetReady=false;
 	bool fDedicatedTakeoverTouched=false;
+	bool fDedicatedCleanStopPending=false;
 #endif
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
 		DataflowCoreCount,0,0,0,0};
@@ -320,6 +321,9 @@ public:
 	bool Started() const { return fPhase!=PhaseEmpty; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	bool StoppedResetReady() const { return fStoppedResetReady && fPhase==PhaseFaulted; }
+	bool SharedDedicatedCleanStopPending() const {
+		return fDedicatedCleanStopPending && fPhase==PhaseFaulted;
+	}
 #endif
 	unsigned NextSequence() const { return fProjectionOwner.NextSequence(); }
 	const DataflowServiceDiagnostic& Diagnostic() const { return fDiagnostic; }
@@ -745,6 +749,11 @@ public:
 #endif
 			)
 			return DataflowServiceInvalidState;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		// Remember only a clean ready-to-close transition. A retry after a
+		// partial stop retains this marker; failed startup/graph does not.
+		if (fPhase==PhaseReady) fDedicatedCleanStopPending=fSharedAttempted;
+#endif
 		fPhase=PhaseFaulted;
 		if (!fCloseRestored) {
 			unsigned auditStage=0,auditCore=DataflowCoreCount;

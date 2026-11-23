@@ -45,9 +45,11 @@ struct FakeService {
     bool ready=true;
     bool capturePending=false;
     bool graphRunning=false;
+    bool cleanStopPending=false;
     bool Ready() const { return ready; }
     bool SharedRoleCapturePending() const { return capturePending; }
     bool GraphRunning() const { return graphRunning; }
+    bool SharedDedicatedCleanStopPending() const { return cleanStopPending; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
@@ -72,6 +74,7 @@ struct PioneerSessionIO {
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false,disableClockAfterRelease=false;
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
     bool perCoreReset=false;
+    bool simulateCleanStop=false;
     uint32_t tileReset[DataflowBarrierWorkers]{};
     unsigned dropReleaseCore=UINT32_MAX;
 #endif
@@ -207,12 +210,32 @@ struct PioneerSessionIO {
     }
     void Q38PanelWrite(unsigned address,uint32_t value) {
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest)) {
-            ++roleStopWrites; if (!dropRoleStopWrite) roleBoxes[runtimeCore].stopRequest=value;
+            ++roleStopWrites;
+            if (!dropRoleStopWrite) {
+                roleBoxes[runtimeCore].stopRequest=value;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+                if (simulateCleanStop) {
+                    assert(DataflowRoleMailboxObserveStop(roleBoxes[runtimeCore],DataflowRoleReader)
+                        && DataflowRoleMailboxObserveStop(roleBoxes[runtimeCore],DataflowRoleWriter));
+                    rolePc[DataflowRoleReader]=DataflowExclusiveReaderParkAddress;
+                    rolePc[DataflowRoleWriter]=DataflowExclusiveWriterParkAddress;
+                }
+#endif
+            }
         } else if (address==DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release)) {
             ++stackCancelWrites; if (!dropStackCancelWrite) roleHandoffs[runtimeCore].release=value;
         } else {
             assert(address==DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,shutdownSequence));
-            ++computeStopWrites; if (!dropComputeStopWrite) workerBoxes[runtimeCore].shutdownSequence=value;
+            ++computeStopWrites;
+            if (!dropComputeStopWrite) {
+                workerBoxes[runtimeCore].shutdownSequence=value;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+                if (simulateCleanStop) {
+                    workerBoxes[runtimeCore].state=DataflowWorkerStopped;
+                    computePc=DataflowServiceStoppedParkAddress;
+                }
+#endif
+            }
         }
     }
     uint32_t Q38PanelRead(unsigned address) {

@@ -341,6 +341,7 @@ static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
     assert(binding && io.qwen35BorrowedRoleScope);
     io.runtimeCore=7;io.simulateArc=io.simulateHdma=io.firmwareMatches=true;
     io.hdmaSourceStable=true;io.reset=0x47800;io.resetReads=0;io.sharedResetWrites=0;
+    io.roleStopWrites=io.computeStopWrites=io.holdWrites=0;
     std::fill(std::begin(io.tileReset),std::end(io.tileReset),0x47800);
     io.perCoreReset=true;io.dropReleaseCore=failCore;
     gAllowWrite=true;gPerCoreRoleWindows=true;gRoleWindowCore=gRoleSelectedCore=io.runtimeCore;
@@ -434,8 +435,20 @@ static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
     }
     context->qwen35DataflowService->capturePending=true;
     unsigned stage=0,core=0;
-    assert(!io.SharedStopAndHoldAll(stage,core));
-    assert(stage==(failCore<DataflowBarrierWorkers?15U:8U));
+    if (failCore==DataflowBarrierWorkers) {
+        context->qwen35DataflowService->cleanStopPending=true;io.simulateCleanStop=true;
+        assert(io.SharedStopAndHoldAll(stage,core) && !stage && core==DataflowBarrierWorkers);
+        assert(io.roleStopWrites==DataflowBarrierWorkers && io.computeStopWrites==DataflowBarrierWorkers
+            && io.holdWrites==DataflowBarrierWorkers);
+        assert(io.SharedStopAndHoldAll(stage,core)); // observations only, no duplicate writes
+        assert(io.roleStopWrites==DataflowBarrierWorkers && io.computeStopWrites==DataflowBarrierWorkers
+            && io.holdWrites==DataflowBarrierWorkers);
+        assert(io.SelectRuntimeCore((io.runtimeCore+1)%DataflowBarrierWorkers));
+        for (uint32_t reset:io.tileReset) assert(reset==0x47800);
+        context->qwen35DataflowService->cleanStopPending=false;io.simulateCleanStop=false;
+    } else {
+        assert(!io.SharedStopAndHoldAll(stage,core) && stage==15);
+    }
     const unsigned writesBeforeRetry=io.sharedResetWrites;
     assert(!io.SharedStartCore(failCore<DataflowBarrierWorkers?failCore+1:0)
         && io.sharedResetWrites==writesBeforeRetry);
