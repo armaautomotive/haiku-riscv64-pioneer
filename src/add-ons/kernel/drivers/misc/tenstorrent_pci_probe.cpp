@@ -11200,6 +11200,18 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 }
 #endif
 
+// A retained graph can be faulted while the service itself is still ready.
+// A cold latch also denotes a session that cannot use ordinary close ioctls.
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+static bool
+Qwen35LiveRecoveryFaultPresent(const PioneerStoreContext* context)
+{
+	return context && (sColdRecoveryRequired
+		|| (context->qwen35DataflowService && context->qwen35DataflowService->Faulted())
+		|| PioneerQ35GraphOwnerRetained(context->qwen35GraphOwner));
+}
+#endif
+
 // sLock held for the complete operation. The only inputs from userspace are
 // the expected build and generation; every device fact and proof is produced
 // by this driver. A failed attempt retains the owner and cold latch.
@@ -11215,10 +11227,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	liveTakeoverOwner=sRuntimeOwner && sRuntimeOwner==inspector && !inspector->finalFreeRetained
 		&& sQwen35ExclusiveCookie==inspector && sBankStorageOnly && inspector->context
 		&& inspector->context->bankStorageOnly && inspector->context->dispatchOwnerRetained
-		&& inspector->context->qwen35DataflowService
-		&& (inspector->context->qwen35DataflowService->StoppedResetReady()
-			|| (inspector->context->qwen35LiveFaultRecoveryRequested
-				&& inspector->context->qwen35DataflowService->Faulted()))
+		&& ((inspector->context->qwen35DataflowService
+				&& inspector->context->qwen35DataflowService->StoppedResetReady())
+			|| inspector->context->qwen35LiveFaultRecoveryRequested)
 		&& !inspector->context->io.qwen35BorrowedRoleScope;
 #endif
 	if (!sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
@@ -11414,7 +11425,7 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 		else if (sReloadQuiesced || sOpenCookies!=1 || sRuntimeOwner!=cookie
 			|| sQwen35ExclusiveCookie!=cookie || cookie->finalFreeRetained
 			|| !sBankStorageOnly || !context || !context->bankStorageOnly
-			|| !context->qwen35DataflowService || !context->qwen35DataflowService->Faulted()
+			|| !Qwen35LiveRecoveryFaultPresent(context)
 			|| context->io.qwen35BorrowedRoleScope) r.operation_status=B_BUSY;
 		else {
 			if (!context->dispatchOwnerRetained) {

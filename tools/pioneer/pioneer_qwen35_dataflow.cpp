@@ -443,8 +443,14 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 		tt_qwen35_dataflow_request request{};
 		request.version=TT_QWEN35_DATAFLOW_ABI;
 		request.action=TT_QWEN35_DATAFLOW_ACTION_CLOSE;
-		if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request)))
-			break;
+		if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_CONTROL,&request,sizeof(request))) {
+			// A cold latch refuses ordinary close, and the reply may also be
+			// lost after a fault. The driver's explicit recovery admission
+			// checks the live owner and fault before touching the device.
+			resetCompleted=ResetStoppedRewrite(fd,true);
+			serviceClosed=resetCompleted;
+			return resetCompleted;
+		}
 		serviceClosed=request.result==TT_QWEN35_DATAFLOW_RESULT_CLOSED
 			&& request.state==TT_QWEN35_DATAFLOW_STATE_CLOSED
 			&& !request.recovery_required;

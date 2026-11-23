@@ -36,7 +36,7 @@ static bool failGraphRelease=false;
 static bool failSharedRoleRelease=false;
 static bool graphReleased=false;
 static unsigned graphReleases=0,sharedRoleReleases=0;
-struct FakeGraphOwner {};
+struct FakeGraphOwner { bool retained=false; };
 struct FakeSharedRoleOwner {};
 #endif
 static std::vector<unsigned> trace;
@@ -196,6 +196,9 @@ struct PioneerProbeCookie {uint32 magic=0x50313030;int team=17;PioneerStoreConte
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 #ifdef TEST_LIVE_TAKEOVER
 static PioneerProbeCookie* sQwen35ExclusiveCookie=nullptr;
+static bool PioneerQ35GraphOwnerRetained(const FakeGraphOwner* owner) {
+	return owner && owner->retained;
+}
 struct tt_resident_session_result {};
 static unsigned retainCalls=0;
 static void RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result&) {
@@ -386,6 +389,22 @@ int main(){
 	assert(Qwen35RecoveryRun(fault,&r,sizeof(r))==B_OK && r.operation_status==B_OK
 		&& !sRuntimeOwner && !fault->context && !sColdRecoveryRequired && retainCalls==1
 		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	sQwen35ExclusiveCookie=nullptr;delete fault;
+	// A retained graph is a fault even if its service has not changed phase.
+	Setup();fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
+	fault->context->service.ready=true;fault->context->service.faulted=false;
+	fault->context->graphOwner.retained=true;fault->context->dispatchOwnerRetained=false;
+	sColdRecoveryRequired=false;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& retainCalls==1 && !sRuntimeOwner && !fault->context && !sColdRecoveryRequired);
+	sQwen35ExclusiveCookie=nullptr;delete fault;
+	// The cold latch blocks ordinary close even if service setup did not
+	// complete. A valid exclusive owner can still request the guarded reset.
+	Setup();fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
+	fault->context->qwen35DataflowService=nullptr;fault->context->dispatchOwnerRetained=false;
+	r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& retainCalls==1 && !sRuntimeOwner && !fault->context && !sColdRecoveryRequired);
 	sQwen35ExclusiveCookie=nullptr;delete fault;
 	Setup();fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
 	fault->context->service.ready=false;fault->context->dispatchOwnerRetained=false;
