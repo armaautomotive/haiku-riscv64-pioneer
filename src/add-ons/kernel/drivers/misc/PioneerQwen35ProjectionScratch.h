@@ -72,6 +72,7 @@ public:
     PioneerQ35ProjectionScratch()=default;
     PioneerQ35ProjectionScratch(const PioneerQ35ProjectionScratch&)=delete;
     PioneerQ35ProjectionScratch& operator=(const PioneerQ35ProjectionScratch&)=delete;
+    bool IsEmpty() const { return phase==Empty; }
     bool IsCaptured() const { return phase==Captured; }
     bool IsStaged() const { return phase==Staged; }
     bool IsRunning() const { return phase==Running; }

@@ -4060,7 +4060,7 @@ static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* b
 class PioneerQ35RoleStageQualification;
 #endif
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
-#include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualification.h"
+#include "PioneerQwen35ProjectionQualificationOwner.h"
 #endif
 struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
@@ -4227,6 +4227,11 @@ struct PioneerStoreContext {
 	PioneerQ38PanelLease panelProbe;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	// Declared before banks: the sticky claim dies before its heap owner.
+	PioneerQ35ProjectionQualificationOwner qwen35QualificationOwner;
+	bool qwen35QualificationInternalActive=false;
+#endif
 	PioneerResidentBanks banks;
 	bool bankStorageOnly=false;
 #endif
@@ -4288,6 +4293,9 @@ struct PioneerStoreContext {
 	}
 	~PioneerStoreContext() {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+		if (qwen35QualificationOwner.Active()) sColdRecoveryRequired=true;
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 		if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) sColdRecoveryRequired=true;
 #endif
@@ -4404,6 +4412,13 @@ struct PioneerStoreContext {
 #endif
 		) {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+// PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_BEGIN
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+		// A diagnostic claim blocks ordinary control and context teardown. Its
+		// locked internal calls explicitly bracket their own checked admission.
+		if (qwen35QualificationOwner.Active() && !qwen35QualificationInternalActive) return true;
+#endif
+// PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_END
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		if (PioneerQ35GraphOwnerRetained(qwen35GraphOwner) && !controlledQ35Fault) return true;
 #endif
@@ -4547,6 +4562,15 @@ struct PioneerStoreContext {
 	}
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 private:
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	struct QualificationInternalScope {
+		bool& active;
+		explicit QualificationInternalScope(bool& flag):active(flag) { active=true; }
+		~QualificationInternalScope() { active=false; }
+		QualificationInternalScope(const QualificationInternalScope&)=delete;
+		QualificationInternalScope& operator=(const QualificationInternalScope&)=delete;
+	};
+#endif
 	PioneerQwen35::DataflowServiceResult InstallDataflowServiceResources() {
 		if (qwen35DataflowMemory || qwen35DataflowService
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -4602,25 +4626,69 @@ public:
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 	// Separate non-loadable diagnostic witness. The scope must establish the
 	// locked session, scratch ownership and held fleet before any actual use.
+	template<class Scope>
+	bool AllocateDataflowQualification(Scope& scope) {
+		if (qwen35QualificationInternalActive || qwen35QualificationOwner.Active()
+			|| qwen35DataflowAuthority || qwen35DataflowProgramScratch || qwen35GraphOwner
+			|| qwen35DataflowMemory || qwen35DataflowService || Unsafe()
+			|| !scope.QualificationOwnerAllocationAllowed(*this)) return false;
+		return qwen35QualificationOwner.Allocate();
+	}
 	template<class Scratch,class Scope>
 	bool PrepareDataflowQualificationRoutes(Scratch& scratch,Scope& scope,uint32_t& stage,uint32_t& core) {
 		stage=0;core=0xff;
 		auto& dram=baseline.baseline.baseline.baseline.dram;
-		return !qwen35DataflowAuthority && !qwen35DataflowProgramScratch && !qwen35GraphOwner
-			&& !qwen35DataflowMemory && !qwen35DataflowService && scratch.IsStaged()
-			&& banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount)
-			&& scope.QualificationPrepareRoutesAllowed(scratch,*this)
+		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Owns(scratch)
+			|| qwen35DataflowAuthority || qwen35DataflowProgramScratch || qwen35GraphOwner
+			|| qwen35DataflowMemory || qwen35DataflowService || !scratch.IsStaged()
+			|| !banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount)) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return scope.QualificationPrepareRoutesAllowed(scratch,*this)
 			&& io.SessionIdle() && io.ProveFleetRoutes(stage,core);
 	}
 	template<class Scratch,class Scope>
 	PioneerQwen35::DataflowServiceResult InstallDataflowQualification(Scratch& scratch,Scope& scope) {
 		auto& dram=baseline.baseline.baseline.baseline.dram;
-		if (qwen35DataflowAuthority || qwen35DataflowProgramScratch || qwen35GraphOwner
+		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Owns(scratch)
+			|| qwen35DataflowAuthority || qwen35DataflowProgramScratch || qwen35GraphOwner
 			|| !scratch.IsStaged() || !qwen35DataflowRoutesAudited
-			|| !banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount)
-			|| !scope.QualificationInstallationAllowed(scratch,*this))
+			|| !banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount))
 			return PioneerQwen35::DataflowServiceInvalidState;
-		return InstallDataflowServiceResources();
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return scope.QualificationInstallationAllowed(scratch,*this)
+			?InstallDataflowServiceResources():PioneerQwen35::DataflowServiceInvalidState;
+	}
+	template<class Scope>
+	PioneerQwen35::DataflowServiceResult RunDataflowQualification(Scope& scope) {
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		auto* qualification=qwen35QualificationOwner.Qualification();
+		if (qwen35QualificationInternalActive || !scratch || !qualification || !qwen35DataflowService)
+			return PioneerQwen35::DataflowServiceInvalidState;
+		PioneerQwen35::DataflowServiceResult result=PioneerQwen35::DataflowServiceInvalidState;
+		{
+			QualificationInternalScope admission(qwen35QualificationInternalActive);
+			if (!scope.QualificationRunAllowed(qwen35QualificationOwner,*scratch,*qualification,*this))
+				return result;
+			result=qualification->Run(*qwen35DataflowService,io,*scratch,scope);
+		}
+		if (result!=PioneerQwen35::DataflowServiceComplete) qwen35QualificationOwner.Retain();
+		return result;
+	}
+	template<class Scope>
+	PioneerQwen35::DataflowServiceResult CloseDataflowQualification(Scope& scope) {
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		auto* qualification=qwen35QualificationOwner.Qualification();
+		if (qwen35QualificationInternalActive || !scratch || !qualification || !qwen35DataflowService)
+			return PioneerQwen35::DataflowServiceInvalidState;
+		PioneerQwen35::DataflowServiceResult result=PioneerQwen35::DataflowServiceInvalidState;
+		{
+			QualificationInternalScope admission(qwen35QualificationInternalActive);
+			if (!scope.QualificationCloseAllowed(qwen35QualificationOwner,*scratch,*qualification,*this))
+				return result;
+			result=CloseDataflowRewrite();
+		}
+		if (result!=PioneerQwen35::DataflowServiceClosed) qwen35QualificationOwner.Retain();
+		return result;
 	}
 #endif
 	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
@@ -4856,6 +4924,16 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+// PIONEER_Q35_PROJECTION_OWNER_END_GUARD_BEGIN
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	// Never run fleet/host teardown while a diagnostic still owns a sticky
+	// scratch claim or retained snapshots, including after a lost ioctl.
+	if (c.qwen35QualificationOwner.Active()) {
+		c.qwen35QualificationOwner.Retain();
+		clean=false;RetainQ38DispatchOwner(c,result);return false;
+	}
+#endif
+// PIONEER_Q35_PROJECTION_OWNER_END_GUARD_END
 // PIONEER_Q35_ROLE_STAGE_END_GUARD_BEGIN
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
 	// A live image snapshot or mapping must never fall through to the normal
@@ -11440,6 +11518,11 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 		|| proof.reset_generation!=ticket || proof.firmware_generation!=ticket
 		|| context->recoveryMapping || !context->io.postResetDisposeComplete)
 		return abandon(B_BAD_VALUE);
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	// The diagnostic scratch snapshot has not yet been integrated into the
+	// reset proof. Never free it or clear quarantine via the generic path.
+	if (context->qwen35QualificationOwner.Active()) return retain(B_DEV_NOT_READY);
+#endif
 	status_t status=guard->validate(ticket);
 	if (status!=B_OK) return retain(status);
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -11525,6 +11608,13 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 			|| !sRuntimeOwner->finalFreeRetained))) return B_BUSY;
 	PioneerProbeCookie* owner=sRuntimeOwner;
 	PioneerStoreContext* context=owner->context;
+// PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	// Until reset recovery knows how to retire this snapshot, reject before a
+	// reset can invalidate it. Keep the existing owner and quarantine intact.
+	if (context->qwen35QualificationOwner.Active()) return B_NOT_ALLOWED;
+#endif
+// PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_END
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (context->recoveryPreparePending && (context->recoveryFinishPending
 		|| context->recoveryResetPending || context->recoveryFirmwarePending || context->recoveryMappingPending

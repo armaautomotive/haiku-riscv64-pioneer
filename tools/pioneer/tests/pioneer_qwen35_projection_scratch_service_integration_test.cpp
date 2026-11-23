@@ -6,9 +6,12 @@
 #define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
 #include "pioneer_qwen35_projection_scratch_test.cpp"
 #include "../PioneerQwen35DataflowProjectionQualificationService.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
 
 struct CombinedScope : ScratchScope {
     ScratchDevice<>& device;
+    DataflowServiceOwner* service=nullptr;
+    PioneerQ35ProjectionQualificationOwner* holder=nullptr;
     explicit CombinedScope(ScratchDevice<>& d):device(d) {}
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& s,unsigned bank,unsigned address,
         unsigned bytes,const unsigned (&routes)[2][Banks]) const {
@@ -34,22 +37,41 @@ struct CombinedScope : ScratchScope {
         }
         return true;
     }
-    void RetainQualification(const void*,const void* s) { assert(s==owner);retained=true; }
+    void RetainScratch(const void* s) {
+        ScratchScope::RetainScratch(s);if (holder) holder->Retain();
+    }
+    void RetainQualification(const void*,const void* s) {
+        assert(s==owner);retained=true;if (holder) holder->Retain();
+    }
+    bool QualificationOwnerRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService& q) const {
+        return allowed && stopped && !retained && service && service->Closed()
+            && holder.Owns(s) && s.IsRestored() && q.IsAudited();
+    }
+    bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner&) const {
+        return allowed && !retained;
+    }
 };
 
 int main()
 {
     (void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
-    auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
+    auto holder=std::make_unique<PioneerQ35ProjectionQualificationOwner>();
+    assert(holder->Allocate() && holder->Active() && !holder->Allocate());
+    auto* scratch=holder->Scratch();auto* qualification=holder->Qualification();
+    assert(scratch && qualification && holder->Snapshot());
     auto device=std::make_unique<ScratchDevice<>>();
     auto io=std::make_unique<ProjectionServiceIO>();
     io->memory.base=Fixture::ScratchAddress;
     auto service=std::make_unique<DataflowServiceOwner>();
-    auto qualification=std::make_unique<DataflowProjectionQualificationService>();
     CombinedScope scope(*device);
+    scope.service=service.get();
+    scope.holder=holder.get();
     assert(scratch->Capture(device->io,scope,device->dram,device->noc,device->host,device->lease,
         device->banks,0,Fixture::ScratchOffset,device->initialized.data(),device->initialized.size(),
-        device->snapshot.data(),device->snapshot.size()));
+        holder->Snapshot(),PioneerQ35ProjectionScratch::SavedWords));
+    assert(!holder->Retire(scope,device->banks,device->dram));
+    assert(!holder->AbandonUnclaimed(scope,device->banks));
     assert(scratch->Stage(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
     assert(qualification->Bind(*scratch,scope,0,Fixture::ScratchAddress,TestRoutes));
     // Copy the staged bank into the test-only device model; actual hardware
@@ -84,9 +106,34 @@ int main()
     assert(scratch->VerifyOutput(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
     assert(scratch->Restore(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks)
         && scratch->IsRestored() && !scope.retained);
+    assert(holder->Retire(scope,device->banks,device->dram) && holder->Retired() && !holder->Active()
+        && device->banks.Q35StreamClaimed());
     for (unsigned n=0;n<Fixture::ScratchPages;n++) {
         const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
         for (unsigned i=0;i<1024;i++) assert(p[i]==device->original[n*1024+i]);
+    }
+    PioneerResidentBanks unclaimed;
+    PioneerQ35ProjectionQualificationOwner unused;
+    assert(unused.Allocate() && unused.AbandonUnclaimed(scope,unclaimed) && unused.Retired());
+    PioneerQ35ProjectionQualificationOwner retained;
+    assert(retained.Allocate());retained.Retain();
+    assert(retained.Active() && retained.Retained() && !retained.AbandonUnclaimed(scope,unclaimed));
+    {
+        auto failedHolder=std::make_unique<PioneerQ35ProjectionQualificationOwner>();
+        assert(failedHolder->Allocate());
+        auto failedDevice=std::make_unique<ScratchDevice<>>();
+        CombinedScope failedScope(*failedDevice);failedScope.holder=failedHolder.get();
+        auto* failedScratch=failedHolder->Scratch();
+        assert(failedScratch->Capture(failedDevice->io,failedScope,failedDevice->dram,failedDevice->noc,
+            failedDevice->host,failedDevice->lease,failedDevice->banks,0,Fixture::ScratchOffset,
+            failedDevice->initialized.data(),failedDevice->initialized.size(),failedHolder->Snapshot(),
+            PioneerQ35ProjectionScratch::SavedWords));
+        failedDevice->io.failRequest=failedDevice->io.doorbells+1;
+        assert(!failedScratch->Stage(failedDevice->io,failedScope,failedDevice->dram,failedDevice->noc,
+            failedDevice->host,failedDevice->lease,failedDevice->banks));
+        assert(failedHolder->Active() && failedHolder->Retained() && failedScope.retained
+            && !failedHolder->AbandonUnclaimed(failedScope,failedDevice->banks)
+            && failedDevice->banks.Q35StreamClaimed());
     }
     std::puts("PASS claimed scratch, 120-worker resident projection, result and full restoration; SIMULATED ONLY");
     return 0;
