@@ -162,6 +162,39 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
         assert(!BlackholeResidentWriteRegister(noc*0x10000+0x68));
     }
     PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(io,*scope);
+    // Exercise the actual combined inspection with the real route guard and
+    // sampled transports. Every failed stage reports where it stopped, and
+    // a failed route restoration is distinguishable from an ordinary refusal.
+    PioneerQwen35FleetInspectionResult inspection;
+    io.firmwareMatches=false;
+    assert(!PioneerQwen35InspectHeldFleet(io,*scope,route,inspection)
+        && inspection.stage==PioneerQwen35FleetInspectionResult::Admission
+        && !inspection.restoreFailed);
+    io.firmwareMatches=true;io.simulateArc=false;
+    assert(!PioneerQwen35InspectHeldFleet(io,*scope,route,inspection)
+        && inspection.stage==PioneerQwen35FleetInspectionResult::ArcReset
+        && !inspection.restoreFailed && !io.tlbWrites);
+    io.simulateArc=true;io.resetReads=0;io.resetChangeAt=0;
+    assert(!PioneerQwen35InspectHeldFleet(io,*scope,route,inspection)
+        && inspection.stage==PioneerQwen35FleetInspectionResult::HeldFleet
+        && inspection.failedCore==0 && !inspection.restoreFailed
+        && io.runtimeCore==7 && route.ProveSelectedRoute(7));
+    io.resetChangeAt=-1;io.hdmaWords[0]=1;
+    assert(!PioneerQwen35InspectHeldFleet(io,*scope,route,inspection)
+        && inspection.stage==PioneerQwen35FleetInspectionResult::HostDma
+        && !inspection.restoreFailed && io.runtimeCore==7 && route.ProveSelectedRoute(7));
+    io.hdmaWords[0]=0;io.hdmaReads=0;io.dropHdmaRestore=true;
+    assert(!PioneerQwen35InspectHeldFleet(io,*scope,route,inspection)
+        && inspection.stage==PioneerQwen35FleetInspectionResult::HostDma
+        && inspection.restoreFailed);
+    io.dropHdmaRestore=false;
+    assert(io.SelectRuntimeCore(7) && route.ProveSelectedRoute(7));
+    io.hdmaReads=0;
+    assert(PioneerQwen35InspectHeldFleet(io,*scope,route,inspection)
+        && inspection.stage==PioneerQwen35FleetInspectionResult::Complete
+        && inspection.l2cpuReset==0x0f && inspection.failedCore==DataflowBarrierWorkers
+        && !inspection.restoreFailed && io.runtimeCore==7 && route.ProveSelectedRoute(7));
+    io.selectCalls=io.tlbWrites=io.hdmaReads=0;
     bool restoreFailed=false;
     io.simulateHdma=false;
     assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
@@ -270,6 +303,23 @@ static void ExerciseUnexpectedFirmware(PioneerSessionIO& io)
     assert(!io.tlbWrites && !io.selectCalls && !gMapCalls && io.runtimeCore==7);
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr; io.simulateArc=false;
+}
+
+static void ExerciseInspectionRestoreFailure(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    assert(context->qwen35SharedRoleBinding && !sColdRecoveryRequired);
+    io.runtimeCore=7;io.simulateArc=io.simulateHdma=io.firmwareMatches=true;
+    io.hdmaSourceStable=true;io.hdmaReads=0;io.dropHdmaRestore=true;
+    assert(!io.SharedCaptureAndStageHeld() && sColdRecoveryRequired);
+    assert(!gMapCalls && !io.sharedResetWrites && !io.holdWrites);
+    assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
+    context->qwen35SharedRoleBinding=nullptr;
+    // Restore the fake route for subsequent tests; this does not clear the
+    // actual binding's cold latch, which is checked after the locked call.
+    io.dropHdmaRestore=false;assert(io.SelectRuntimeCore(7));
+    io.simulateArc=io.simulateHdma=io.firmwareMatches=false;
 }
 
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
@@ -494,6 +544,9 @@ int main()
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     gBorrowedScopeHook=ExerciseStatusSampling;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    ResetMaps();gBorrowedScopeHook=ExerciseInspectionRestoreFailure;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK && sColdRecoveryRequired);
+    sColdRecoveryRequired=false; // simulated external recovery, not a driver operation
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
     ResetMaps();gBorrowedScopeHook=ExerciseObservedStageResetDrift;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);

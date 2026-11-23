@@ -5,9 +5,7 @@
 #if !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || !defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Shared role binding is a non-loadable recovery witness only
 #endif
-#include "PioneerQwen35DataflowL2CpuResetProbe.h"
-#include "PioneerQwen35DataflowHeldFleetSample.h"
-#include "PioneerQwen35DataflowHostDmaSample.h"
+#include "PioneerQwen35DataflowFleetInspection.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleFleet.h"
@@ -137,17 +135,10 @@ public:
         auto* scope=Scope();
         if (!scope || !scope->ProveRoleStatusInspectionAllowed(fContext.io)) return false;
         PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(fContext.io,*scope);
-        uint32_t l2cpuReset=0; bool restoreFailed=false;
-        const bool sampled=PioneerQwen35SampleL2CpuReset(fContext.io,*scope,route,l2cpuReset,restoreFailed);
-        if (restoreFailed) sColdRecoveryRequired=true;
-        if (!sampled || !PioneerQwen35L2CpuRiscsHeld(l2cpuReset)) return false;
-        unsigned failedCore=DataflowBarrierWorkers;
-        const bool heldSample=PioneerQwen35SampleHeldFleet(fContext.io,*scope,route,failedCore,restoreFailed);
-        if (restoreFailed) sColdRecoveryRequired=true;
-        if (!heldSample) return false;
-        const bool dmaSample=PioneerQwen35SampleHostDma(fContext.io,*scope,route,restoreFailed);
-        if (restoreFailed) sColdRecoveryRequired=true;
-        if (!dmaSample) return false;
+        PioneerQwen35FleetInspectionResult inspection;
+        const bool sampled=PioneerQwen35InspectHeldFleet(fContext.io,*scope,route,inspection);
+        if (inspection.restoreFailed) sColdRecoveryRequired=true;
+        if (!sampled) return false;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         // Admit only this locked staging attempt after the observations.
         // This does not establish absence of firmware writes or enable release.
