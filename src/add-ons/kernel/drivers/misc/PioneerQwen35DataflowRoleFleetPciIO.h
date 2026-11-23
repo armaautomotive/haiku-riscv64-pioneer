@@ -598,6 +598,13 @@ public:
     bool StacklessCoreRestoreReleaseReady(unsigned,const uint32_t*,const uint32_t*) {
         return false;
     }
+    // These remain denied until a live scope owns and fences the handoff,
+    // exact restore shims and completed-core state for the whole transaction.
+    bool RestoreHandoffHeldSafe(unsigned) { return false; }
+    bool RestoreCompletionSafe(unsigned) { return false; }
+    bool RestoreCompletedAndHeld(unsigned) { return false; }
+    bool ReadRestoreHandoff(unsigned,PioneerQwen35::DataflowRoleSnapshotHandoff&) { return false; }
+    bool WriteRestoreHandoffWord(unsigned,unsigned,uint32_t) { return false; }
     // A matching L1 copy alone does not prove the core restored private RAM.
     // Scope must additionally prove the exact one-shot restore, fresh result,
     // stopped roles, preserved source and writer exclusion. It currently

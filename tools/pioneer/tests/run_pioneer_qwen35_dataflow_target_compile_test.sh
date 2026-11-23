@@ -255,18 +255,19 @@ for role in reader writer; do
         "$temporary/local-restore-images/${role}.bin" "$role"
 done
 python3 "$directory/pioneer_qwen35_role_local_restore_images_test.py" "$temporary/local-restore-images"
-for witness in copy_aware core_release core_restore_stage; do
+for witness in copy_aware core_release core_restore_stage core_restore_handoff; do
     "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
         -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
         -fstack-usage -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
         -c "$directory/pioneer_qwen35_${witness}_kernel_compile.cpp" -o "$temporary/${witness}_kernel.o"
 done
-python3 - "$temporary/copy_aware_kernel.su" "$temporary/core_release_kernel.su" "$temporary/core_restore_stage_kernel.su" <<'PYSTACK'
+python3 - "$temporary/copy_aware_kernel.su" "$temporary/core_release_kernel.su" "$temporary/core_restore_stage_kernel.su" "$temporary/core_restore_handoff_kernel.su" <<'PYSTACK'
 from pathlib import Path
 import sys
 for filename,markers in ((sys.argv[1],('PioneerQ35CopyAwareCompileWitness','PioneerQ35CoreLocalFleetCompileWitness')),
                          (sys.argv[2],('PioneerQ35CoreLocalReleaseCompileWitness',)),
-                         (sys.argv[3],('PioneerQ35CoreRestoreStageCompileWitness','PioneerQ35CoreRestoreReleaseCompileWitness'))):
+                         (sys.argv[3],('PioneerQ35CoreRestoreStageCompileWitness','PioneerQ35CoreRestoreReleaseCompileWitness')),
+                         (sys.argv[4],('PioneerQ35CoreRestoreHandoffCompileWitness',))):
     rows=[line.rsplit('\t',2) for line in Path(filename).read_text().splitlines()]
     if not rows or any(len(row)!=3 or not row[1].isdigit() or row[2]!='static' for row in rows):
         raise SystemExit('copy-aware compile witness has missing or non-static stack frames')
@@ -399,7 +400,7 @@ if [ -n "$("$nm" -u "$temporary/role-fleet-recovery-owner.o")" ]; then
 	echo 'role fleet recovery target probe has unresolved imports' >&2
 	exit 1
 fi
-for test in role_local_ram_owner role_fleet_local_ram_owner role_fleet_recovery_owner; do
+for test in role_local_ram_owner role_fleet_local_ram_owner role_restore_handoff_owner role_fleet_recovery_owner; do
 	${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 		-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_${test}_test.cpp" \
 		-o "$temporary/${test}-test"

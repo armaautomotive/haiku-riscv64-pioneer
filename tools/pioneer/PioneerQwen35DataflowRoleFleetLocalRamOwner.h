@@ -66,6 +66,9 @@ public:
     bool StacklessCopiesCaptured(unsigned core) const {
         return core<DataflowBarrierWorkers && fStacklessCaptured[core];
     }
+    bool CoreRestoredByCore(unsigned core) const {
+        return core<DataflowBarrierWorkers && fStacklessCaptured[core] && fCore[core].RestoredByCore();
+    }
     bool RestorationRequired() const {
         return fPhase==Dirty || fPhase==StacklessPrepared || fPhase==StacklessFaulted;
     }

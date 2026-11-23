@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_ROLE_FLEET_RECOVERY_OWNER_H
 #include "PioneerQwen35DataflowRoleFleetImagesOwner.h"
 #include "PioneerQwen35DataflowRoleFleetLocalRamOwner.h"
+#include "PioneerQwen35DataflowRoleRestoreHandoffOwner.h"
 namespace PioneerQwen35 {
 // Blackhole RISCV_DEBUG_REG_DISABLE_RESET bits 6..9 preserve BRISC/NC local
 // RAM and debug registers on soft-reset exit. Other bits, including TRISC
@@ -28,6 +29,7 @@ class DataflowRoleFleetRecoveryOwner {
     bool fCoreLocalReleaseLedger=false;
     bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
+    DataflowRoleRestoreHandoffOwner fCoreRestoreHandoff[DataflowBarrierWorkers];
     template<class IO> static bool AllSafe(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!io.AllRolesHeld(core) || !io.DefaultBootRouting(core)
@@ -212,6 +214,16 @@ public:
             && VerifyHeldCopyLedger(io) && VerifyResetDisable(io,true) && AllHeldAndRouted(io))) return false;
         fCoreRestoreStaged[core]=true;return true;
     }
+    // Retain and clear the actual handoff only after the fixed restore shim
+    // has been staged. IO must own the words and drain competing writers.
+    template<class IO> bool PrepareCoreLocalRestoreHandoff(unsigned core,IO& io) {
+        if (!fCoreLocalRestoreMode || fPhase!=Faulted || core>=DataflowBarrierWorkers
+            || !fCoreRestoreStaged[core] || fCoreRestoreReleaseAttempted[core]
+            || !AllHeldAndRouted(io) || !VerifyHeldCopyLedger(io) || !VerifyResetDisable(io,true))
+            return false;
+        return fCoreRestoreHandoff[core].Capture(core,io)
+            && fCoreRestoreHandoff[core].ClearForRelease(io);
+    }
     // Consume a distinct one-shot ledger immediately before a restore-shim
     // release attempt, including one that may be uncertain. IO must also
     // establish fresh cleared receipts, verified shim/reset state and lifetime
@@ -219,7 +231,8 @@ public:
     template<class IO> bool BeginCoreLocalRestoreRelease(unsigned core,IO& io) {
         if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
             || fPhase!=Faulted || core>=DataflowBarrierWorkers || !fCoreRestoreStaged[core]
-            || fCoreRestoreReleaseAttempted[core] || !fRam.StacklessCopiesCaptured(core)) return false;
+            || fCoreRestoreReleaseAttempted[core] || !fRam.StacklessCopiesCaptured(core)
+            || !fCoreRestoreHandoff[core].ArmedForRelease()) return false;
         const uint32_t* reader=fRam.OriginalWords(core,DataflowRoleReader);
         const uint32_t* writer=fRam.OriginalWords(core,DataflowRoleWriter);
         if (!reader || !writer || !AllHeldAndRouted(io) || !VerifyHeldCopyLedger(io)
@@ -228,7 +241,14 @@ public:
             || !VerifyHeldCopyLedger(io) || !VerifyResetDisable(io,true)
             || !AllHeldAndRouted(io)
             || !io.StacklessCoreRestoreReleaseReady(core,reader,writer)) return false;
+        if (!fCoreRestoreHandoff[core].BeginReleaseAttempt(io)) return false;
         fCoreRestoreReleaseAttempted[core]=true;return true;
+    }
+    // Read completion while the released shims are parked; the IO scope must
+    // prove their identity, fresh receipts and exclusion of competing writers.
+    template<class IO> bool ConfirmCoreLocalRestoreHandoff(unsigned core,IO& io) {
+        return fCoreLocalRestoreMode && fPhase==Faulted && core<DataflowBarrierWorkers
+            && fCoreRestoreReleaseAttempted[core] && fCoreRestoreHandoff[core].ConfirmCompletion(io);
     }
     // The real scope must prove the exact retained source, fresh restore
     // receipt, held routes and writer exclusion. This records RAM proof only;
@@ -236,9 +256,16 @@ public:
     template<class IO> bool MarkCoreRestoredByCore(unsigned core,IO& io) {
         if (!fCoreLocalRestoreMode || !fStackless
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
-            || core>=DataflowBarrierWorkers || !fCoreRestoreReleaseAttempted[core]) return false;
+            || core>=DataflowBarrierWorkers || !fCoreRestoreReleaseAttempted[core]
+            || !fCoreRestoreHandoff[core].CompletionConfirmed()) return false;
         fPhase=Faulted;
         return fRam.MarkCoreRestoredByCore(core,io);
+    }
+    template<class IO> bool RestoreCoreLocalHandoff(unsigned core,IO& io) {
+        if (!fCoreLocalRestoreMode || fPhase!=Faulted || core>=DataflowBarrierWorkers
+            || (fCoreRestoreHandoff[core].ReleaseWasAttempted() && !fRam.CoreRestoredByCore(core)))
+            return false;
+        return fCoreRestoreHandoff[core].RestoreOriginal(io);
     }
     template<class IO> bool VerifyCoreLocalRestores(IO& io) {
         if (!fCoreLocalRestoreMode || !fStackless

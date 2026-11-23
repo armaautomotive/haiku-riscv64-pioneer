@@ -135,11 +135,29 @@ public:
         Adapter io(fContext.io,*scope,fViews);
         return fOwner.BeginCoreLocalRestoreRelease(core,io);
     }
+    __attribute__((noinline)) bool PrepareCoreLocalRestoreHandoff(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return fOwner.PrepareCoreLocalRestoreHandoff(core,io);
+    }
+    __attribute__((noinline)) bool ConfirmCoreLocalRestoreHandoff(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return fOwner.ConfirmCoreLocalRestoreHandoff(core,io);
+    }
     __attribute__((noinline)) bool MarkCoreLocalRestoreComplete(unsigned core) {
         auto* scope=Scope();
         if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
         Adapter io(fContext.io,*scope,fViews);
         return fOwner.MarkCoreRestoredByCore(core,io);
+    }
+    __attribute__((noinline)) bool RestoreCoreLocalHandoff(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return fOwner.RestoreCoreLocalHandoff(core,io);
     }
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
@@ -498,6 +516,9 @@ PioneerQ35CoreLocalBindingCompileWitness(PioneerQwen35SharedRoleBinding* binding
         case 1: return binding->StageCoreLocalRestore(core);
         case 2: return binding->BeginCoreLocalRestoreRelease(core);
         case 3: return binding->MarkCoreLocalRestoreComplete(core);
+        case 4: return binding->PrepareCoreLocalRestoreHandoff(core);
+        case 5: return binding->ConfirmCoreLocalRestoreHandoff(core);
+        case 6: return binding->RestoreCoreLocalHandoff(core);
         default: return false;
     }
 }

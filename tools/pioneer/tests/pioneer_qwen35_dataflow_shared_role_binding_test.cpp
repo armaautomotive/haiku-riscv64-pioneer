@@ -108,7 +108,8 @@ static void ExerciseCoreLocalBinding(PioneerSessionIO& io)
     assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
     const unsigned resetWrites=io.sharedResetWrites;
     assert(!binding->StageCoreLocalRestore(0) && !binding->BeginCoreLocalRestoreRelease(0)
-        && !binding->MarkCoreLocalRestoreComplete(0));
+        && !binding->MarkCoreLocalRestoreComplete(0) && !binding->PrepareCoreLocalRestoreHandoff(0)
+        && !binding->ConfirmCoreLocalRestoreHandoff(0) && !binding->RestoreCoreLocalHandoff(0));
     assert(io.sharedResetWrites==resetWrites);
     assert(binding->FinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
     binding=nullptr;gAllowWrite=false;

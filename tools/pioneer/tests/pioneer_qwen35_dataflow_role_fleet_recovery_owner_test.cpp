@@ -12,6 +12,8 @@ struct RecoveryIO {
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
+    bool restoreCompletion=false,restoreCompletedHeld=false;
+    DataflowRoleSnapshotHandoff restoreHandoff[DataflowBarrierWorkers]{};
     unsigned releaseReadyCalls=0,failReleaseReadyCall=0;
     bool copyProof=true,copyCaptured[DataflowBarrierWorkers]{};
     bool wrongCopyPointer=false,corruptCopyOnShimWrite=false;
@@ -71,6 +73,21 @@ struct RecoveryIO {
     bool StacklessCoreRestoreReleaseReady(unsigned core,const uint32_t* reader,const uint32_t* writer) {
         return ++releaseReadyCalls!=failReleaseReadyCall && restoreReleaseReady && !staleRestoreReceipt
             && StacklessHeldCopySourceSafe(core,reader,writer);
+    }
+    bool RestoreHandoffHeldSafe(unsigned core) const { return held && core<DataflowBarrierWorkers; }
+    bool RestoreCompletionSafe(unsigned core) const { return !held && restoreCompletion && core<DataflowBarrierWorkers; }
+    bool RestoreCompletedAndHeld(unsigned core) const { return held && restoreCompletedHeld && core<DataflowBarrierWorkers; }
+    bool ReadRestoreHandoff(unsigned core,DataflowRoleSnapshotHandoff& result) const {
+        if (core>=DataflowBarrierWorkers) return false;
+        result=restoreHandoff[core];return true;
+    }
+    bool WriteRestoreHandoffWord(unsigned core,unsigned word,uint32_t value) {
+        if (!RestoreHandoffHeldSafe(core) || word>=3) return false;
+        ++writes;
+        if (word==0) restoreHandoff[core].readerReady=value;
+        else if (word==1) restoreHandoff[core].writerReady=value;
+        else restoreHandoff[core].release=value;
+        return true;
     }
     bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) const {
         if (!coreRestoreProof || !AllRolesHeld(core) || !retainedRam) return false;
@@ -207,6 +224,9 @@ int main()
         assert(owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
         assert(owner.StageCoreLocalRestore(1,shimB,2,shimA,2,io));
         assert(!owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
+        assert(!owner.BeginCoreLocalRestoreRelease(0,io)); // handoff not armed
+        assert(owner.PrepareCoreLocalRestoreHandoff(0,io) && owner.PrepareCoreLocalRestoreHandoff(1,io));
+        assert(!owner.PrepareCoreLocalRestoreHandoff(0,io));
         assert(!owner.BeginCoreLocalRestoreRelease(0,io)); // scope denies release
         io.restoreReleaseReady=true;io.staleRestoreReceipt=true;
         assert(!owner.BeginCoreLocalRestoreRelease(0,io));
@@ -254,8 +274,15 @@ int main()
         assert(!owner.MarkCoreRestoredByCore(0,io)); // no restore release ledger
         assert(owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io)
             && owner.StageCoreLocalRestore(1,shimB,2,shimA,2,io));
+        assert(owner.PrepareCoreLocalRestoreHandoff(0,io) && owner.PrepareCoreLocalRestoreHandoff(1,io));
         io.restoreReleaseReady=true;
         assert(owner.BeginCoreLocalRestoreRelease(0,io) && owner.BeginCoreLocalRestoreRelease(1,io));
+        assert(!owner.MarkCoreRestoredByCore(0,io)); // no fresh completion
+        io.held=false;io.restoreCompletion=true;
+        io.restoreHandoff[0]={PIONEER_Q35_ROLE_RESTORE_READER_DONE,PIONEER_Q35_ROLE_RESTORE_WRITER_DONE,0};
+        io.restoreHandoff[1]=io.restoreHandoff[0];
+        assert(owner.ConfirmCoreLocalRestoreHandoff(0,io) && owner.ConfirmCoreLocalRestoreHandoff(1,io));
+        io.held=true;io.restoreCompletedHeld=true;
         const unsigned writes=io.writes,reads=io.privateRamReads;
         assert(!owner.RestoreAll(io) && owner.RestorationRequired()
             && io.writes==writes && io.privateRamReads==reads);
@@ -266,8 +293,9 @@ int main()
         assert(owner.MarkCoreRestoredByCore(0,io) && !owner.VerifyCoreLocalRestores(io));
         io.ram[RecoveryIO::RamPerCore]=original[RecoveryIO::RamPerCore];
         assert(owner.MarkCoreRestoredByCore(1,io) && owner.VerifyCoreLocalRestores(io));
+        assert(owner.RestoreCoreLocalHandoff(0,io) && owner.RestoreCoreLocalHandoff(1,io));
         assert(owner.RestorationRequired() && !owner.CoveredStateRestored()
-            && !owner.RestoreAll(io) && io.writes==writes && io.privateRamReads==reads);
+            && !owner.RestoreAll(io) && io.writes==writes+6 && io.privateRamReads==reads);
     }
     {
         RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
