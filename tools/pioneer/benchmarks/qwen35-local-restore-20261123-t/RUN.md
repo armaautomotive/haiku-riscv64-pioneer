@@ -17,8 +17,8 @@ images; mappings closed and the bank session ended cleanly. See the
 The wrapper returned success and hot-reloaded stable55 without a reboot. The
 independent postflight observed generation 6 idle (`cold0 active_owner0`), the
 expected stable driver hash, no model or 27B diagnostic process, no exclusive
-lock and expected metadata for both model files. Both full hashes matched before
-the trial; a separate postflight content-hash check was started afterward.
+lock and expected metadata for both model files. Both full model hashes matched before and after the trial; see the
+[postflight model hashes](post-model-hashes.txt).
 
 This is a restricted one-worker restore qualification, not a complete resident
 service, a proof of firmware exclusion, recovery from a real worker fault, or

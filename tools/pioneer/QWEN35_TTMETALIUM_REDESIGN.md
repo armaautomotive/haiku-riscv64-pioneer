@@ -1,3 +1,5 @@
+> **Status update (2026-11-23):** This document describes the original redesign and the older Work path as it existed when the plan was written. The rewrite has since built separate resident reader and writer role images and a queued Tensix compute path; the 120-worker service has been exercised in simulation, but not yet as a complete inference service on hardware. A restricted one-worker local-RAM restore qualification has passed on the Pioneer. It does not establish full-service execution, no-reboot fault recovery, model output or throughput. See [rewrite status](QWEN35_TTMETALIUM_REWRITE_STATUS.md) and [latest progress](QWEN35_4B_NEXT_SESSION.md). The Haiku implementation adapts Tenstorrent design patterns and does not link the TT-Metalium runtime.
+
 > **Processor identity correction:** the deployed resident worker runs on TRISC0, not BRISC: the boot word is at `0x6000` and the physical owner releases reset `0x46800`. References below to the tt-lab BRISC pattern identify an inspiration; they do not mean that BRISC executes this Haiku image.
 
 # Qwen3.5 Work: Tenstorrent device-program redesign
