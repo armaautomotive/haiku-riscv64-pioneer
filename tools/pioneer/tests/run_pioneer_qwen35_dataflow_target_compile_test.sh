@@ -665,6 +665,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_program_test.cpp" \
 	-o "$temporary/dataflow-program-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-program-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
+	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_projection_qualification_test.cpp" \
+	-o "$temporary/dataflow-projection-qualification-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dataflow-projection-qualification-test"
 echo 'PASS queued role program, including inactive reader shards; SIMULATED ONLY'
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
     -fsanitize=address,undefined "$directory/pioneer_qwen35_activation_sums_test.cpp" \
