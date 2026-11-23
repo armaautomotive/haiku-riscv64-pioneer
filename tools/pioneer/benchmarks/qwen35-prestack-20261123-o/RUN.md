@@ -19,7 +19,8 @@ no in-place recovery for this failure is qualified. After Linux booted, the
 hash-pinned helper started Haiku without changing the boot disk. The preserved
 stable driver was restored and independently reported driver55 generation 2
 with `cold0 active_owner0`, no exclusive lock and expected 4B/27B file
-metadata. Metadata alone is not a model content hash.
+metadata. Subsequent full [model checksums](model-sha256.txt) matched the
+recorded 4B and 27B SHA-256 values.
 
 A recovery script transferred while the old driver was cold had the correct
 length but an incorrect SHA-256. Its contents included bytes also present in
