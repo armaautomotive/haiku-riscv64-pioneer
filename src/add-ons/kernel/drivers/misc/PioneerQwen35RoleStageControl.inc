@@ -98,10 +98,35 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.stage=7;PioneerQ35RoleStageProgress(r.stage);
                         okay=owner->views.Close() && !owner->views.HasMappings();r.mappings_closed=okay;
                     }
+                    // A transient image-stage or image-restore error can be
+                    // recovered while this same locked owner still holds all
+                    // snapshots and routes. Do not clear quarantine or retry
+                    // an uncertain mapping operation. Restoration performs
+                    // the complete fleet-wide original-image audit; a second
+                    // failure retains the owner exactly as before.
+                    if (!okay && r.captured && !r.mappings_closed
+                        && owner->views.Opened() && owner->views.ImageWritesConfirmed() && !c->Unsafe()
+                        && scope.ProveRoleDedicatedObservedStage(c->io)) {
+                        const bool restored=owner->images.RestorationRequired()
+                            ?owner->images.RestoreAll(adapter)
+                            :owner->images.ImagesRestored()
+                                && owner->images.VerifyOriginalAll(adapter);
+                        if (restored) {
+                            r.restored=1;
+                            r.mappings_closed=owner->views.Close() && !owner->views.HasMappings();
+                            if (r.mappings_closed) {
+                                delete owner;c->qwen35RoleStageQualification=NULL;
+                                // The original operation still failed: the
+                                // client must report failure and end the bank.
+                                r.operation_status=B_DEV_NOT_READY;
+                                owner=NULL;
+                            }
+                        }
+                    }
                     if (okay) {
                         delete owner;c->qwen35RoleStageQualification=NULL;
                         r.stage=TT_Q35_ROLE_STAGE_COMPLETE;PioneerQ35RoleStageProgress(r.stage);r.operation_status=B_OK;
-                    } else {
+                    } else if (owner) {
                         tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
                         r.operation_status=B_DEV_NOT_READY;
                     }

@@ -339,11 +339,21 @@ static uint32_t RoleWindowInitial(unsigned core,unsigned window) {
     return (0x76540000U+window) ^ (core*0x10001U);
 }
 #ifdef TEST_ROLE_STAGE_QUALIFY
-static bool gFailAfterStageWrite=false,gStageWriteFailureInjected=false;
+static bool gFailAfterStageWrite=false,gStageWriteFailureInjected=false,gFailStageWriteOnce=false;
+static bool gFailGuardAfterStageWrite=false,gStageGuardFailureInjected=false;
+static bool FailGuardAfterStageWrite() {
+    if (gFailGuardAfterStageWrite && gPerCoreRoleWindows && gMapped[DataflowRolePhysicalExtraCode]
+        && gMemory[DataflowRolePhysicalExtraCode][0]!=RoleWindowInitial(gRoleWindowCore,DataflowRolePhysicalExtraCode)) {
+        gFailGuardAfterStageWrite=false;gStageGuardFailureInjected=true;return true;
+    }
+    return false;
+}
 static bool FailSelectAfterStageWrite() {
     if (gFailAfterStageWrite && gPerCoreRoleWindows && gMapped[DataflowRolePhysicalExtraCode]
         && gMemory[DataflowRolePhysicalExtraCode][0]!=RoleWindowInitial(gRoleWindowCore,DataflowRolePhysicalExtraCode)) {
-        gStageWriteFailureInjected=true;return true;
+        gStageWriteFailureInjected=true;
+        if (gFailStageWriteOnce) gFailAfterStageWrite=false;
+        return true;
     }
     return false;
 }
@@ -379,6 +389,9 @@ static status_t AcquireProbeLock(PioneerProbeCookie* cookie,bool bank) {
 thread_id find_thread(const char*) { return gThread; }
 status_t get_thread_info(thread_id id,thread_info* info) {
     if (id!=gThread || !info) return -1;
+#ifdef TEST_ROLE_STAGE_QUALIFY
+    if (FailGuardAfterStageWrite()) return -1;
+#endif
     info->team=gTeam; return B_OK;
 }
 status_t release_sem(int32_t lock) {

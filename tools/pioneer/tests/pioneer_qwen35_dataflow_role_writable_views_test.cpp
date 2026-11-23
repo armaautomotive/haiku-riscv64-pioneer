@@ -85,6 +85,7 @@ int main()
         assert(views.WriteWords(3,DataflowRolePhysicalExtraCode,extraTail,words,8,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalBriscRam,0x1ff8,words,8,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalNcriscRam,0x1ff8,words,8,guard));
+        assert(views.ImageWritesConfirmed());
         assert(views.Matches(3,DataflowRolePhysicalExtraCode,extraTail,words,2,guard));
         uint32_t copied[2]{};
         assert(views.CopyWords(3,DataflowRolePhysicalExtraCode,extraTail,copied,2,guard));
@@ -127,13 +128,17 @@ int main()
         assert(memory[DataflowRolePhysicalControl][0x224/4]==0x3d5);
         assert(views.WriteResetDisable(3,0x3d5,0x15,guard));
         guard.write=false; assert(!views.WriteWords(3,DataflowRolePhysicalExtraCode,0,words,4,guard));
+        assert(views.ImageWritesConfirmed()); // refused before the store
         guard.write=true; platform.driftAfter=platform.writes+1;
         assert(!views.WriteWords(3,DataflowRolePhysicalExtraCode,0,words,8,guard));
+        assert(!views.ImageWritesConfirmed()); // store may still be posted
         assert(memory[DataflowRolePhysicalExtraCode][0]==words[0]
             && memory[DataflowRolePhysicalExtraCode][1]==0);
         guard.route=true; platform.driftAfter=0; platform.corruptReadback=true;
         assert(!views.WriteWords(3,DataflowRolePhysicalExtraCode,8,words,4,guard));
         platform.corruptReadback=false;
+        assert(views.WriteWords(3,DataflowRolePhysicalExtraCode,8,words,4,guard));
+        assert(!views.ImageWritesConfirmed()); // a later success cannot clear it
         assert(views.Close() && !views.HasMappings() && unmaps==DataflowRolePhysicalControl+1);
     }
     {

@@ -15,7 +15,7 @@ template<class Platform> class DataflowRoleWritableViews {
     volatile uint32_t* fView[Count]{};
     unsigned fBytes[Count]{};
     uint64_t fBarStart=0,fBarEnd=0;
-    bool fAttempted=false,fOpen=false;
+    bool fAttempted=false,fOpen=false,fImageWriteUnconfirmed=false;
     template<class Guard> bool Route(unsigned core,Guard& guard) {
         return guard.ProvePinnedBar(fBarStart,fBarEnd) && guard.ProveSelectedRoute(core);
     }
@@ -27,6 +27,9 @@ public:
     DataflowRoleWritableViews& operator=(const DataflowRoleWritableViews&)=delete;
     bool Opened() const { return fOpen; }
     bool HasMappings() const { for (auto area:fArea) if (area>=0) return true; return false; }
+    // Sticky for this mapping lifetime: a failed post-store check may leave a
+    // posted write in flight. A later successful write cannot prove it drained.
+    bool ImageWritesConfirmed() const { return !fImageWriteUnconfirmed; }
     template<class Guard> bool Open(uint64_t start,uint64_t end,Guard& guard) {
         if (fAttempted || fOpen || HasMappings() || end<start || end-start==UINT64_MAX
             || !guard.ProvePinnedBar(start,end)) return false;
@@ -130,10 +133,13 @@ public:
             const unsigned at=offset+n*4;
             if (!Route(core,guard) || !guard.ProveWriteAllowed(core,which,at,4)
                 || !Route(core,guard)) return false;
+            const bool previousUnconfirmed=fImageWriteUnconfirmed;
+            fImageWriteUnconfirmed=true;
             fPlatform.WriteWord(fView[which]+at/4,input[n]);
             if (!Route(core,guard) || !guard.ProveWriteAllowed(core,which,at,4)
                 || !Route(core,guard) || fPlatform.ReadWord(fView[which]+at/4)!=input[n]
                 || !guard.ProveWriteAllowed(core,which,at,4) || !Route(core,guard)) return false;
+            fImageWriteUnconfirmed=previousUnconfirmed;
         }
         return true;
     }

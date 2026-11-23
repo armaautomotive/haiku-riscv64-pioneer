@@ -27,7 +27,8 @@ public:
     bool StagedAndVerified() const { return fPhase==Staged; }
     bool RestorationRequired() const { return fPhase==Faulted || fPhase==Staged; }
     bool ImagesRestored() const { return fPhase==Restored; }
-    template<class IO> bool CaptureAll(uint32_t* storage,unsigned words,IO& io) {
+    // Keep a distinct frame for the Haiku qualification's stack-budget audit.
+    template<class IO> __attribute__((noinline)) bool CaptureAll(uint32_t* storage,unsigned words,IO& io) {
         if (fPhase!=Empty || !AllHeld(io)) return false;
         if (!fCode.CaptureAll(storage,words,io) || !fBoot.CaptureAll(io) || !AllHeld(io)) {
             fPhase=Unavailable; return false;
