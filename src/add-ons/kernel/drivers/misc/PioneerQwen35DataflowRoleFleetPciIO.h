@@ -603,6 +603,7 @@ public:
     bool RestoreHandoffHeldSafe(unsigned) { return false; }
     bool RestoreCompletionSafe(unsigned) { return false; }
     bool RestoreCompletedAndHeld(unsigned) { return false; }
+    bool RestoreHandoffRetrySafe(unsigned) { return false; }
     bool ReadRestoreHandoff(unsigned,PioneerQwen35::DataflowRoleSnapshotHandoff&) { return false; }
     bool WriteRestoreHandoffWord(unsigned,unsigned,uint32_t) { return false; }
     // A matching L1 copy alone does not prove the core restored private RAM.

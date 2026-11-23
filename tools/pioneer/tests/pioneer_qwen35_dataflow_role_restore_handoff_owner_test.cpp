@@ -5,13 +5,17 @@
 using namespace PioneerQwen35;
 struct RestoreHandoffIO {
     DataflowRoleSnapshotHandoff handoff{0x1234,0x5678,0x9abc};
-    bool held=true,completion=false,completedHeld=false;
+    bool held=true,completion=false,completedHeld=false,retrySafe=true;
     unsigned writes=0,reads=0,heldChecks=0,failHeldCheck=0,failWrite=0,driftRead=0;
+    unsigned retryChecks=0,failRetryCheck=0;
     bool RestoreHandoffHeldSafe(unsigned core) {
         return core==3 && held && ++heldChecks!=failHeldCheck;
     }
     bool RestoreCompletionSafe(unsigned core) { return core==3 && !held && completion; }
     bool RestoreCompletedAndHeld(unsigned core) { return core==3 && held && completedHeld; }
+    bool RestoreHandoffRetrySafe(unsigned core) {
+        return core==3 && held && retrySafe && ++retryChecks!=failRetryCheck;
+    }
     bool ReadRestoreHandoff(unsigned core,DataflowRoleSnapshotHandoff& out) {
         if (core!=3) return false;
         out=handoff;
@@ -61,7 +65,9 @@ int main()
         assert(owner.Capture(3,io));io.failWrite=2;
         assert(!owner.ClearForRelease(io) && owner.ClearAttempts()==3 && owner.RestorationRequired());
         assert(!owner.ClearForRelease(io) && !owner.BeginReleaseAttempt(io));
-        io.failWrite=0;assert(owner.RestoreOriginal(io) && owner.HandoffRestored());
+        io.failWrite=0;io.retrySafe=false;
+        assert(!owner.RestoreOriginal(io));
+        io.retrySafe=true;assert(owner.RestoreOriginal(io) && owner.HandoffRestored());
         assert(io.handoff.readerReady==0x1234 && io.handoff.writerReady==0x5678 && io.handoff.release==0x9abc);
     }
     {
@@ -69,8 +75,21 @@ int main()
         assert(owner.Capture(3,io) && owner.ClearForRelease(io));
         io.failWrite=io.writes+1;
         assert(!owner.RestoreOriginal(io) && owner.RestoreAttempts()==1 && owner.RestorationRequired());
-        const unsigned writes=io.writes;io.failWrite=0;
+        const unsigned writes=io.writes;io.failWrite=0;io.retrySafe=false;
         assert(!owner.RestoreOriginal(io) && io.writes==writes);
+        io.retrySafe=true;
+        assert(owner.RestoreOriginal(io) && owner.HandoffRestored() && io.writes==writes+3);
+        assert(io.handoff.readerReady==0x1234 && io.handoff.writerReady==0x5678 && io.handoff.release==0x9abc);
     }
-    std::puts("PASS restore handoff freshness, one-shot writes and proof-gated cleanup; SIMULATED ONLY");
+    {
+        RestoreHandoffIO io;DataflowRoleRestoreHandoffOwner owner;
+        assert(owner.Capture(3,io) && owner.ClearForRelease(io));
+        io.failWrite=io.writes+1;
+        assert(!owner.RestoreOriginal(io));
+        io.failWrite=0;io.failRetryCheck=2;
+        assert(!owner.RestoreOriginal(io) && owner.RestorationRequired() && !owner.HandoffRestored());
+        io.failRetryCheck=0;
+        assert(owner.RestoreOriginal(io) && owner.HandoffRestored());
+    }
+    std::puts("PASS restore handoff freshness, one-shot release and proof-gated cleanup retry; SIMULATED ONLY");
 }

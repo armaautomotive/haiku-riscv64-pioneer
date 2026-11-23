@@ -77,6 +77,7 @@ struct RecoveryIO {
     bool RestoreHandoffHeldSafe(unsigned core) const { return held && core<DataflowBarrierWorkers; }
     bool RestoreCompletionSafe(unsigned core) const { return !held && restoreCompletion && core<DataflowBarrierWorkers; }
     bool RestoreCompletedAndHeld(unsigned core) const { return held && restoreCompletedHeld && core<DataflowBarrierWorkers; }
+    bool RestoreHandoffRetrySafe(unsigned core) const { return held && core<DataflowBarrierWorkers; }
     bool ReadRestoreHandoff(unsigned core,DataflowRoleSnapshotHandoff& result) const {
         if (core>=DataflowBarrierWorkers) return false;
         result=restoreHandoff[core];return true;

@@ -20,6 +20,7 @@ struct CopyAwareCompileIO {
     bool RestoreHandoffHeldSafe(unsigned);
     bool RestoreCompletionSafe(unsigned);
     bool RestoreCompletedAndHeld(unsigned);
+    bool RestoreHandoffRetrySafe(unsigned);
     bool ReadRestoreHandoff(unsigned,PioneerQwen35::DataflowRoleSnapshotHandoff&);
     bool WriteRestoreHandoffWord(unsigned,unsigned,uint32_t);
     bool StacklessUncapturedRamProtected(unsigned);

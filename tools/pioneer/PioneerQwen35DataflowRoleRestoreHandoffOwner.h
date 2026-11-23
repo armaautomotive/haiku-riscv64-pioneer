@@ -81,11 +81,15 @@ public:
     // interrupted clear. After one, only proved completion permits cleanup.
     // HeldSafe must also drain every earlier host write. After release, IO
     // must separately preserve the completed-core proof while the receipt
-    // is overwritten. A failed restore write is retained and never repeated.
+    // is overwritten. A retry after an uncertain write additionally needs
+    // independent drainage, route, fleet protection and writer-exclusion
+    // proof; its repeated writes are idempotent saved handoff values only.
     template<class IO> bool RestoreOriginal(IO& io) {
-        if (!fHasOriginal || (fPhase!=Clearing && fPhase!=Armed && fPhase!=Completed)
+        if (!fHasOriginal || (fPhase!=Clearing && fPhase!=Armed && fPhase!=Completed && fPhase!=Restoring)
             || !io.RestoreHandoffHeldSafe(fCore)
             || (fReleaseAttempted && !io.RestoreCompletedAndHeld(fCore))) return false;
+        const bool retry=fPhase==Restoring || (fPhase==Clearing && fClearAttempts);
+        if (retry && !io.RestoreHandoffRetrySafe(fCore)) return false;
         fPhase=Restoring;
         const uint32_t original[3]={fOriginal.readerReady,fOriginal.writerReady,fOriginal.release};
         for (unsigned word=0;word<3;word++) {
@@ -95,7 +99,8 @@ public:
         }
         DataflowRoleSnapshotHandoff observed{};
         if (!ReadHeld(io,observed) || !Same(observed,fOriginal)
-            || (fReleaseAttempted && !io.RestoreCompletedAndHeld(fCore))) return false;
+            || (fReleaseAttempted && !io.RestoreCompletedAndHeld(fCore))
+            || (retry && !io.RestoreHandoffRetrySafe(fCore))) return false;
         fPhase=Restored;return true;
     }
 };
