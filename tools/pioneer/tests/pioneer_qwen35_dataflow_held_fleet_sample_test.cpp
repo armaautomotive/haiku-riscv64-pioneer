@@ -12,9 +12,9 @@ struct FakeIO {
     unsigned revokeCore=DataflowBarrierWorkers;
     unsigned fifoCore=DataflowBarrierWorkers,fifoNoc=0,clockCore=DataflowBarrierWorkers,clockNoc=0;
     uint32_t fifoAvailable=0x10101010U,fifoOverflow=0;
-    unsigned configReads=0,flipConfigAt=0,resetReads=0;
+    unsigned configReads=0,flipConfigAt=0,flipClockAt=0,resetReads=0;
     int failSelection=-1;
-    bool mapped=true,revoked=false,failRestore=false;
+    bool mapped=true,revoked=false,failRestore=false,revokeMappingOnPause=false;
     bool SelectRuntimeCore(unsigned core) {
         const unsigned attempt=selections++;
         if (int(attempt)==failSelection || (failRestore && attempt==240)) {
@@ -34,6 +34,7 @@ struct FakeIO {
             uint32_t value=runtimeCore==fifoCore && noc==fifoNoc?1U<<16:0;
             if (runtimeCore==clockCore && noc==clockNoc) value|=1U<<12;
             if (configReads==flipConfigAt) value^=1U<<16;
+            if (configReads==flipClockAt) value^=1U<<12;
             return value;
         }
         if (local==0x64) return fifoAvailable;
@@ -47,7 +48,7 @@ struct FakeIO {
             && selections>=busyAfterSelections) return 1;
         return 0;
     }
-    void Pause() {}
+    void Pause() { if (revokeMappingOnPause) mapped=false; }
 };
 struct Scope {
     bool allowed=true;
@@ -62,6 +63,50 @@ struct Guard {
 
 int main()
 {
+    {
+        FakeIO io; unsigned inspected=0;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            io.runtimeCore=core;
+            assert(PioneerQwen35WithSelectedClock(io,core,[&]() {
+                ++inspected; return io.ResetRead()==0x47800;
+            }));
+        }
+        assert(inspected==DataflowBarrierWorkers && io.resetReads==DataflowBarrierWorkers);
+    }
+    for (unsigned noc=0;noc<2;noc++) {
+        FakeIO io; unsigned touched=0;
+        io.clockCore=7; io.clockNoc=noc;
+        assert(!PioneerQwen35WithSelectedClock(io,7,[&]() { ++touched; return io.ResetRead()!=0; }));
+        assert(!touched && !io.resetReads);
+    }
+    for (unsigned noc=0;noc<2;noc++) {
+        FakeIO io; unsigned touched=0;
+        io.flipClockAt=2+2*noc;
+        assert(!PioneerQwen35WithSelectedClock(io,7,[&]() { ++touched; return true; }));
+        assert(!touched && !io.resetReads);
+    }
+    {
+        FakeIO io; unsigned touched=0;
+        io.wrongIdCore=7;
+        assert(!PioneerQwen35WithSelectedClock(io,7,[&]() { ++touched; return true; }));
+        assert(!touched);
+        io.wrongIdCore=DataflowBarrierWorkers; io.mapped=false;
+        assert(!PioneerQwen35WithSelectedClock(io,7,[&]() { ++touched; return true; }));
+        assert(!touched);
+        io.mapped=true;
+        assert(!PioneerQwen35WithSelectedClock(io,8,[&]() { ++touched; return true; }));
+        assert(!touched);
+        io.revokeMappingOnPause=true;
+        assert(!PioneerQwen35WithSelectedClock(io,7,[&]() { ++touched; return true; }));
+        assert(!touched);
+    }
+    {
+        FakeIO io; unsigned touched=0;
+        io.fifoCore=7; io.fifoNoc=0; io.fifoAvailable=0x10100f10U;
+        // A clock check does not claim that the running NIU is idle.
+        assert(PioneerQwen35WithSelectedClock(io,7,[&]() { ++touched; return true; }));
+        assert(touched==1);
+    }
     for (unsigned noc=0;noc<2;noc++) {
         FakeIO io; Scope scope; Guard guard{io};
         io.clockCore=7; io.clockNoc=noc;

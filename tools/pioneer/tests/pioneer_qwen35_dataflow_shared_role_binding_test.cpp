@@ -44,6 +44,15 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     assert(context->qwen35SharedRoleBinding);
     io.runtimeCore=7; io.simulateArc=true; io.firmwareMatches=true; io.selectCalls=io.tlbWrites=0;
+    unsigned sensitive=0;
+    for (unsigned noc=0;noc<2;noc++) {
+        io.nocConfig[noc]=1U<<12; io.resetReads=0;
+        assert(!PioneerQwen35WithSelectedClock(io,7,[&]() { ++sensitive; return io.ResetRead()!=0; }));
+        assert(!sensitive && !io.resetReads);
+        io.nocConfig[noc]=0;
+    }
+    assert(PioneerQwen35WithSelectedClock(io,7,[&]() { ++sensitive; return io.ResetRead()==0x47800; }));
+    assert(sensitive==1);
     for (unsigned noc=0;noc<2;noc++) {
         io.nocConfig[noc]=1U<<16; io.nocAvailable[noc]=0x10101010U;
         assert(BlackholeResidentReadRegister(noc*0x10000+0x64));

@@ -5,6 +5,7 @@
 #include "PioneerQwen35DataflowNoC1Audit.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35DataflowFirmwareIdentity.h"
+#include "PioneerQwen35DataflowNocSafetySample.h"
 bool PioneerSessionIO::SharedRoleFirmwareMatches() const {
 	return qwen35DataflowContext && PioneerQwen35ReportedFirmwareMatches(
 		qwen35DataflowContext->baseline.baseline.baseline.baseline.control.control.telemetry);
@@ -477,6 +478,13 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 		if (!MapQ38Panel()) return false;
 		failedStage=7;
 		if (!DataflowPanelMappingStable()) return false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		// The existing dispatcher checks below read RISC state and L1. Refuse
+		// before those reads if the selected tile is clock-disabled or routed
+		// incorrectly. This does not prevent an external clock change.
+		failedStage=18;
+		if (!PioneerQwen35WithSelectedClock(*this,core,[&]() {
+#endif
 		failedStage=8;
 		if (node.noc.state!=TT_COMPUTE_NOC_PASSED || !node.noc.tlb_restored
 			|| node.noc.recovery_required
@@ -507,6 +515,10 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 			if (!PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,
 				&lease)) return false;
 		}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		return true;
+		})) return false;
+#endif
 	}
 	failedStage=15;
 	failedCore=0xff;
